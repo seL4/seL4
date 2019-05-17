@@ -60,12 +60,12 @@ BEGIN_FUNC(arm_vector_table)
     ventry  cur_el_sync                    // Current EL Synchronous (EL1/2)
     ventry  cur_el_irq                     // IRQ
     ventry  invalid_vector_entry           // FIQ
-    ventry  invalid_vector_entry           // SError
+    ventry  cur_el_serr                    // SError
 
     ventry  lower_el_sync                  // Synchronous 64-bit EL0/EL1
     ventry  lower_el_irq                   // IRQ 64-bit EL0/EL1
     ventry  invalid_vector_entry           // FIQ 64-bit EL0/EL1
-    ventry  invalid_vector_entry           // SError 64-bit EL0/EL1
+    ventry  lower_el_serr                  // SError 64-bit EL0/EL1
 
     ventry  invalid_vector_entry           // Synchronous 32-bit EL0/EL1
     ventry  invalid_vector_entry           // IRQ 32-bit EL0/EL1
@@ -146,6 +146,14 @@ BEGIN_FUNC(cur_el_irq)
     b       c_handle_interrupt
 END_FUNC(cur_el_irq)
 
+BEGIN_FUNC(cur_el_serr)
+#ifdef CONFIG_PLAT_TX2
+    eret
+#else
+    b       invalid_vector_entry
+#endif
+END_FUNC(cur_el_serr)
+
 BEGIN_FUNC(lower_el_sync)
     kernel_enter
 
@@ -219,3 +227,11 @@ BEGIN_FUNC(lower_el_irq)
     lsp_i   x19
     b       c_handle_interrupt
 END_FUNC(lower_el_irq)
+
+BEGIN_FUNC(lower_el_serr)
+#ifdef CONFIG_PLAT_TX2
+    eret
+#else
+    b       invalid_vector_entry
+#endif
+END_FUNC(lower_el_serr)
