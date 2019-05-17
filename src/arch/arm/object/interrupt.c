@@ -90,6 +90,12 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
             return status;
         }
 
+        if (target >= CONFIG_MAX_NUM_NODES) {
+            current_syscall_error.type = seL4_InvalidArgument;
+            userError("Target core %lu is invalid.", target);
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
         if (isIRQActive(irq)) {
             current_syscall_error.type = seL4_RevokeFirst;
             userError("Rejecting request for IRQ %u. Already active.", (int)irq);
