@@ -28,6 +28,8 @@
 /* This is the mapping of the kernel (mapped above the kernel window currently) */
 #define KERNEL_BASE      0xFFFFFFFF80000000lu
 #define KERNEL_ELF_BASE  0xFFFFFFFF84000000lu
+/* Start of kernel device mapping region in highest 1GiB of memory. */
+#define PPTR_KDEV        0xFFFFFFFFC0000000lu
 #else
 #error Only PT_LEVELS == 3 is supported
 #endif

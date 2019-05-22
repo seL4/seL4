@@ -20,5 +20,7 @@
 /* This is the mapping of the kernel (mapped above the kernel window currently) */
 #define KERNEL_BASE 0xFF800000lu
 #define KERNEL_ELF_BASE KERNEL_BASE
+/* Start of kernel device mapping region in highest 4MiB of memory. */
+#define PPTR_KDEV 0xFFC00000
 
 #endif

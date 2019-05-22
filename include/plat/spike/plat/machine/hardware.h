@@ -43,9 +43,10 @@
 
 /* The highest valid physical address that can be indexed in the kernel window */
 #define PADDR_TOP (KERNEL_BASE - PPTR_BASE + PADDR_BASE)
-/* The highest valid physical address that can be used for the kernel image. We offset by
- * PADDR_LOAD as the window for the kernel image is mapped started at PADDR_LOAD */
-#define PADDR_HIGH_TOP (-KERNEL_ELF_BASE + PADDR_LOAD)
+/* A contiguous region of physical address space at PADDR_LOAD is mapped
+ * to KERNEL_ELF_BASE, and the size of this region is PPTR_KDEV-KERNEL_ELF_BASE.
+ * PADDR_HIGH_TOP is the end of this physical address region. */
+#define PADDR_HIGH_TOP (PPTR_KDEV - KERNEL_ELF_BASE + PADDR_LOAD)
 
 /* Translates from a physical address and a value in the kernel image */
 #define KERNEL_BASE_OFFSET (KERNEL_ELF_BASE - PADDR_LOAD)
