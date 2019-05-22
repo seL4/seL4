@@ -55,7 +55,7 @@
 #define kernelBase KERNEL_BASE
 /* This is the top of the kernel window, not including the kernel image */
 #define PPTR_TOP KERNEL_BASE
-#define PPTR_USER_TOP PPTR_BASE
+#define PPTR_USER_TOP seL4_UserTop
 #define BASE_OFFSET (PPTR_BASE - PADDR_BASE)
 
 #ifndef __ASSEMBLER__
