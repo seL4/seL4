@@ -39,19 +39,6 @@
 
 #define RESET_CYCLES ((CONFIG_SPIKE_CLOCK_FREQ / MS_IN_S) * CONFIG_TIMER_TICK_MS)
 
-/* Available physical memory regions on platform (RAM minus kernel image). */
-/* NOTE: Regions are not allowed to be adjacent! */
-
-static p_region_t BOOT_DATA avail_p_regs[] = {
-    /* The first 2MB are reserved for the SBI in the BBL */
-#if defined(CONFIG_BUILD_ROCKET_CHIP_ZEDBOARD)
-    { /*.start = */ 0x0, /* .end = */ 0x10000000}
-#elif defined(CONFIG_ARCH_RISCV64)
-    { /*.start = */ 0x80200000, /* .end = */ 0x17FF00000}
-#elif defined(CONFIG_ARCH_RISCV32)
-    { /*.start = */ 0x80200000, /* .end = */ 0xFD000000}
-#endif
-};
 
 BOOT_CODE int get_num_avail_p_regs(void)
 {

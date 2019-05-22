@@ -20,6 +20,17 @@
 #define __PLAT_MACHINE_H
 
 #ifndef __ASSEMBLER__
+
+#if defined(CONFIG_BUILD_SPIKE_QEMU)
+#include <plat/instance/qemu/hardware.h>
+#elif defined(CONFIG_BUILD_ROCKET_CHIP_ZEDBOARD)
+#include <plat/instance/rocket-chip/hardware.h>
+#elif defined(CONFIG_BUILD_HI_FIVE_UNLEASHED)
+#include <plat/instance/hifive/hardware.h>
+#else
+#error "Unsupported spike platform chosen"
+#endif
+
 enum IRQConstants {
     INTERRUPT_SW = 0,
     INTERRUPT_TIMER = 5,
