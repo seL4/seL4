@@ -24,4 +24,19 @@ static p_region_t BOOT_DATA avail_p_regs[] = {
 #endif
 };
 
+static const paddr_t BOOT_RODATA kernel_devices[] = {
+    /* Plic0 */
+    0x00000000,
+};
+
+static const p_region_t BOOT_RODATA dev_p_regs[] = {
+    { 0x10010000, 0x10011000 }, /* UART0 */
+    { 0x10011000, 0x10012000 }, /* UART1 */
+    { 0x10020000, 0x10021000 }, /* PWM0 */
+    { 0x10021000, 0x10022000 }, /* PWM1 */
+    { 0x10060000, 0x10061000 }, /* GPIO */
+    { 0x10090000, 0x10091000 }, /* ETH */
+};
+
+
 #endif

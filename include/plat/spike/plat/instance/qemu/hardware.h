@@ -24,4 +24,8 @@ static p_region_t BOOT_DATA avail_p_regs[] = {
 #endif
 };
 
+static const paddr_t BOOT_RODATA *kernel_devices = NULL;
+
+static const p_region_t BOOT_RODATA *dev_p_regs = NULL;
+
 #endif
