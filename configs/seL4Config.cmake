@@ -102,13 +102,22 @@ unset(CONFIGURE_NUM_PPI CACHE)
 unset(CONFIGURE_INTERRUPT_CONTROLLER CACHE)
 unset(CONFIGURE_TIMER CACHE)
 unset(CONFIGURE_SMMU CACHE)
+unset(CONFIGURE_CLK_SHIFT CACHE)
+unset(CONFIGURE_CLK_MAGIC CACHE)
+unset(CONFIGURE_KERNEL_WCET CACHE)
+unset(CONFIGURE_TIMER_PRECISION CACHE)
+# CLK_SHIFT and CLK_MAGIC are generated from tools/reciprocal.py
+# based on the TIMER_CLK_HZ to simulate division.
+# This could be moved to a cmake function
+# in future to build the values on the first build. Note the calculation
+# can take a long time though.
 function(declare_default_headers)
     cmake_parse_arguments(
         PARSE_ARGV
         0
         CONFIGURE
         ""
-        "TIMER_FREQUENCY;MAX_IRQ;NUM_PPI;PLIC_MAX_NUM_INT;INTERRUPT_CONTROLLER;TIMER;SMMU"
+        "TIMER_FREQUENCY;MAX_IRQ;NUM_PPI;PLIC_MAX_NUM_INT;INTERRUPT_CONTROLLER;TIMER;SMMU;CLK_SHIFT;CLK_MAGIC;KERNEL_WCET;TIMER_PRECISION"
         ""
     )
     set(CONFIGURE_TIMER_FREQUENCY "${CONFIGURE_TIMER_FREQUENCY}" CACHE INTERNAL "")
@@ -118,6 +127,10 @@ function(declare_default_headers)
     set(CONFIGURE_INTERRUPT_CONTROLLER "${CONFIGURE_INTERRUPT_CONTROLLER}" CACHE INTERNAL "")
     set(CONFIGURE_TIMER "${CONFIGURE_TIMER}" CACHE INTERNAL "")
     set(CONFIGURE_SMMU "${CONFIGURE_SMMU}" CACHE INTERNAL "")
+    set(CONFIGURE_CLK_SHIFT "${CONFIGURE_CLK_SHIFT}" CACHE INTERNAL "")
+    set(CONFIGURE_CLK_MAGIC "${CONFIGURE_CLK_MAGIC}" CACHE INTERNAL "")
+    set(CONFIGURE_KERNEL_WCET "${CONFIGURE_KERNEL_WCET}" CACHE INTERNAL "")
+    set(CONFIGURE_TIMER_PRECISION "${CONFIGURE_TIMER_PRECISION}" CACHE INTERNAL "")
 endfunction()
 
 # For all of the common variables we set a default value here if they haven't

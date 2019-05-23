@@ -84,6 +84,9 @@ if(DEFINED CONFIGURE_MAX_IRQ)
         math(EXPR BITS "${BITS} + 1")
     endif()
     set(CONFIGURE_IRQ_SLOT_BITS "${BITS}" CACHE INTERNAL "")
+    if(NOT DEFINED ${CONFIGURE_TIMER_PRECISION})
+        set(CONFIGURE_TIMER_PRECISION "0")
+    endif()
     configure_file(
         src/arch/${KernelArch}/platform_gen.h.in
         ${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/platform_gen.h @ONLY

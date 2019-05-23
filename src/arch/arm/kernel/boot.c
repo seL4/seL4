@@ -487,6 +487,10 @@ static BOOT_CODE bool_t try_init_kernel(
     }
     write_it_asid_pool(it_ap_cap, it_pd_cap);
 
+#ifdef CONFIG_KERNEL_MCS
+    NODE_STATE(ksCurTime) = getCurrentTime();
+#endif
+
     /* create the idle thread */
     if (!create_idle_thread()) {
         return false;

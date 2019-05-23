@@ -13,7 +13,13 @@
 #ifndef __ARM_PLAT_H
 #define __ARM_PLAT_H
 
+#include <autoconf.h>
+
 #define TIMER_CLOCK_HZ @CONFIGURE_TIMER_FREQUENCY@
+#define CLK_MAGIC @CONFIGURE_CLK_MAGIC@
+#define CLK_SHIFT @CONFIGURE_CLK_SHIFT@
+#define TIMER_PRECISION @CONFIGURE_TIMER_PRECISION@
+
 enum IRQConstants {
     maxIRQ                      = @CONFIGURE_MAX_IRQ@
 } platform_interrupt_t;
@@ -27,4 +33,12 @@ enum IRQConstants {
 #if (defined(CONFIGURE_SMMU) && defined(CONFIG_ARM_SMMU))
 #include CONFIGURE_SMMU
 #endif
+
+#ifdef CONFIG_KERNEL_MCS
+static inline CONST time_t getKernelWcetUs(void)
+{
+    return @CONFIGURE_KERNEL_WCET@;
+}
+#endif
+
 #endif /* !__ARM_PLAT_H */

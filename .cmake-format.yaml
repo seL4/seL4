@@ -53,3 +53,7 @@ additional_commands:
         NUM_PPI: '*'
         INTERRUPT_CONTROLLER: '*'
         TIMER: '*'
+        KERNEL_WCET: '*'
+        CLK_MAGIC: '*'
+        CLK_SHIFT: '*'
+        TIMER_PRECISION: '*'
