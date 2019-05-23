@@ -77,6 +77,7 @@ void initTimer(void);
 void initL2Cache(void);
 
 void initIRQController(void);
+void setIRQTrigger(irq_t irq, bool_t trigger);
 
 void handleSpuriousIRQ(void);
 

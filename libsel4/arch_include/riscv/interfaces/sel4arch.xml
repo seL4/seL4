@@ -194,4 +194,24 @@
             </param>
         </method>
     </interface>
+    <interface name="seL4_IRQControl" manual_name="IRQ Control" cap_description="An IRQControl capability. This gives you the authority to make this call.">
+
+       <method id="RISCVIRQIssueIRQHandlerTrigger" name="GetTrigger" manual_name="GetTrigger"
+           manual_label="irq_controlgettrigger">
+            <brief>
+                Create an IRQ handler capability and specify the trigger method (edge or level).
+            </brief>
+            <description>
+                <docref>See <autoref label="sec:interrupts"/>.</docref>
+            </description>
+            <param dir="in" name="irq" type="seL4_Word" description="The IRQ that you want this capability to handle."/>
+
+            <param dir="in" name="trigger" type="seL4_Word" description="Indicates whether this IRQ is edge (1) or level (0) triggered."/>
+            <param dir="in" name="root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
+            <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
+        </method>
+
+    </interface>
+
 </api>
