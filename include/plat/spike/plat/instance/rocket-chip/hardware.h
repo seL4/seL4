@@ -13,6 +13,26 @@
 #ifndef __PLAT_INSTANCE_HARDWARE_H
 #define __PLAT_INSTANCE_HARDWARE_H
 
+#define PLIC_MAX_NUM_INT   0
+
+static inline interrupt_t plic_get_claim(void)
+{
+    return irqInvalid;
+}
+
+static inline void plic_complete_claim(interrupt_t irq)
+{
+}
+
+static inline void plic_mask_irq(bool_t disable, interrupt_t irq)
+{
+}
+
+static inline void plic_init_controller(void)
+{
+
+}
+
 /* Available physical memory regions on platform (RAM minus kernel image). */
 /* NOTE: Regions are not allowed to be adjacent! */
 static p_region_t BOOT_DATA avail_p_regs[] = {
