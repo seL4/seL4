@@ -14,6 +14,7 @@
 #define __PLAT_INSTANCE_HARDWARE_H
 
 #define PLIC_MAX_NUM_INT   0
+#define IRQ_CNODE_SLOT_BITS 1
 
 static inline interrupt_t plic_get_claim(void)
 {
