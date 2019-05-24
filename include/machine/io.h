@@ -12,6 +12,9 @@
 /* io for dumping capdl */
 unsigned char kernel_getDebugChar(void);
 #endif
+/* for reset */
+void handleUartIRQ(void);
+void init_serial(void);
 
 
 #ifdef CONFIG_PRINTING

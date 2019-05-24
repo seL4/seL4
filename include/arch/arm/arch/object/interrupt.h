@@ -18,6 +18,11 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
 /* Handle a platform-reserved IRQ. */
 static inline void handleReservedIRQ(irq_t irq)
 {
+#ifdef CONFIG_IRQ_REPORTING
+    if (IRQT_TO_IRQ(irq) != KERNEL_UART_IRQ) {
+        printf("Received reserved IRQ: %d\n", (int)IRQT_TO_IRQ(irq));
+    }
+#endif
 
 #ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
     if (IRQT_TO_IRQ(irq) == KERNEL_PMU_IRQ) {
@@ -48,6 +53,11 @@ static inline void handleReservedIRQ(irq_t irq)
 #ifdef CONFIG_IRQ_REPORTING
     printf("Received unhandled reserved IRQ: 0x%lx\n", IRQT_TO_IRQ(irq));
 #endif
+
+    if (IRQT_TO_IRQ(irq) == KERNEL_UART_IRQ) {
+        handleUartIRQ();
+        return;
+    }
 }
 
 
