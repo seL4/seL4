@@ -200,6 +200,14 @@ devices:
         macro: CONFIG_PRINTING
         user: true
         kernel_size: 0x1000
+    interrupts:
+      KERNEL_UART_IRQ: 0
+  - compatible:
+    - amlogic,meson-gx-wdt
+    - amlogic,meson-gxbb-wdt
+    regions:
+      - index: 0
+        kernel: WDOG_PPTR
 
   # SiFive U54/U74 PLIC (HiFive, Polarfire)
   - compatible:
