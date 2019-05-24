@@ -240,6 +240,14 @@ devices:
         kernel: UART_PPTR
         macro: CONFIG_PRINTING
         user: true
+    interrupts:
+      KERNEL_UART_IRQ: 0
+  - compatible:
+    - amlogic,meson-gx-wdt
+    - amlogic,meson-gxbb-wdt
+    regions:
+      - index: 0
+        kernel: WDOG_PPTR
 
   # RISC-V PLIC
   - compatible:
