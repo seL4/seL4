@@ -79,7 +79,7 @@
 #define PT_ELR_EL1                  (32 * 8)
 #define PT_SPSR_EL1                 (33 * 8)
 #define PT_TPIDRURW                 (35 * 8)
-#define PT_FaultInstruction         (34 * 8)
+#define PT_FaultIP                  (34 * 8)
 
 #ifndef __ASSEMBLER__ /* C only definitions */
 
@@ -136,10 +136,10 @@ enum _register {
 
     SP_EL0                      = 31,   /* 0xf8 */
     ELR_EL1                     = 32,   /* 0x100 */
-    LR_svc                      = 32,
+    NextIP                      = 32,   /* LR_svc */
     SPSR_EL1                    = 33,   /* 0x108 */
 
-    FaultInstruction            = 34,   /* 0x110 */
+    FaultIP                     = 34,   /* 0x110 */
     /* user readable/writable thread ID register.
      * name comes from the ARM manual */
     TPIDRURW                    = 35,
@@ -151,7 +151,7 @@ enum _register {
 
 compile_assert(sp_offset_correct, SP_EL0 *sizeof(word_t) == PT_SP_EL0)
 compile_assert(lr_svc_offset_correct, ELR_EL1 *sizeof(word_t) == PT_ELR_EL1)
-compile_assert(faultinstruction_offset_correct, FaultInstruction *sizeof(word_t) == PT_FaultInstruction)
+compile_assert(faultinstruction_offset_correct, FaultIP *sizeof(word_t) == PT_FaultIP)
 
 typedef word_t register_t;
 
@@ -165,7 +165,7 @@ enum messageSizes {
 
 #define EXCEPTION_MESSAGE \
  {\
-    [seL4_UserException_FaultIP] = FaultInstruction,\
+    [seL4_UserException_FaultIP] = FaultIP,\
     [seL4_UserException_SP] = SP_EL0,\
     [seL4_UserException_SPSR] = SPSR_EL1\
  }
@@ -180,7 +180,7 @@ enum messageSizes {
     [seL4_UnknownSyscall_X5] = X5,\
     [seL4_UnknownSyscall_X6] = X6,\
     [seL4_UnknownSyscall_X7] = X7,\
-    [seL4_UnknownSyscall_FaultIP] = FaultInstruction,\
+    [seL4_UnknownSyscall_FaultIP] = FaultIP,\
     [seL4_UnknownSyscall_SP] = SP_EL0,\
     [seL4_UnknownSyscall_LR] = ELR_EL1,\
     [seL4_UnknownSyscall_SPSR] = SPSR_EL1\

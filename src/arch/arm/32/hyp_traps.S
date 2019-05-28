@@ -111,8 +111,8 @@ END_FUNC(arm_vector_table)
 
 /* Prepare to enter the kernel */
 .macro PUSH_STACK
-    /* store FaultInstruction */
-    str lr, [sp, #(PT_FaultInstruction - PT_SP)]
+    /* store FaultIP */
+    str lr, [sp, #(PT_FaultIP - PT_SP)]
     /* Stack all user registers */
     push {r0-r12}
     /* Load the kernel's real stack pointer */

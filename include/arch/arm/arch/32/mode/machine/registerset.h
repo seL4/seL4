@@ -40,10 +40,10 @@
 /* Offsets within the user context, these need to match the order in
  * register_t below */
 #define PT_SP               (13  * 4)
-#define PT_LR_svc           (15 * 4)
+#define PT_NextIP           (15 * 4)
 #define PT_ELR_hyp          (15 * 4)
 #define PT_TPIDRURW         (18 * 4)
-#define PT_FaultInstruction (17 * 4)
+#define PT_FaultIP          (17 * 4)
 #define PT_R8               (8  * 4)
 
 #ifndef __ASSEMBLER__ /* C only definitions */
@@ -88,13 +88,13 @@ enum _register {
 
     /* End of GP registers, the following are additional kernel-saved state. */
 
-    LR_svc = 15,
+    NextIP = 15, /* LR_svc */
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     ELR_hyp = 15,
 #endif
     CPSR = 16,
 
-    FaultInstruction = 17,
+    FaultIP  = 17,
     TLS_BASE = 18,
 #ifndef CONFIG_ARCH_ARM_V6
     /* user readable/writable thread ID register.
@@ -106,14 +106,14 @@ enum _register {
 #endif
 };
 
-#define NEXT_PC_REG LR_svc
+#define NEXT_PC_REG NextIP
 
 compile_assert(sp_offset_correct, SP *sizeof(word_t) == PT_SP)
-compile_assert(lr_svc_offset_correct, LR_svc *sizeof(word_t) == PT_LR_svc)
+compile_assert(lr_svc_offset_correct, NextIP *sizeof(word_t) == PT_NextIP)
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 compile_assert(elr_hyp_offset_correct, ELR_hyp *sizeof(word_t) == PT_ELR_hyp)
 #endif
-compile_assert(faultinstruction_offset_correct, FaultInstruction *sizeof(word_t) == PT_FaultInstruction)
+compile_assert(faultinstruction_offset_correct, FaultIP *sizeof(word_t) == PT_FaultIP)
 compile_assert(r8_offset_correct, R8 *sizeof(word_t) == PT_R8)
 
 typedef word_t register_t;
@@ -128,7 +128,7 @@ enum messageSizes {
 
 #define EXCEPTION_MESSAGE \
  {\
-    [seL4_UserException_FaultIP] = FaultInstruction,\
+    [seL4_UserException_FaultIP] = FaultIP,\
     [seL4_UserException_SP] = SP,\
     [seL4_UserException_CPSR] = CPSR\
  }
@@ -143,7 +143,7 @@ enum messageSizes {
     [seL4_UnknownSyscall_R5] = R5,\
     [seL4_UnknownSyscall_R6] = R6,\
     [seL4_UnknownSyscall_R7] = R7,\
-    [seL4_UnknownSyscall_FaultIP] = FaultInstruction,\
+    [seL4_UnknownSyscall_FaultIP] = FaultIP,\
     [seL4_UnknownSyscall_SP] = SP,\
     [seL4_UnknownSyscall_LR] = LR,\
     [seL4_UnknownSyscall_CPSR] = CPSR\

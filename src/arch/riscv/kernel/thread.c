@@ -33,7 +33,7 @@ void Arch_switchToThread(tcb_t *tcb)
 
 BOOT_CODE void Arch_configureIdleThread(tcb_t *tcb)
 {
-    setRegister(tcb, NEXTPC, (word_t)idleThreadStart);
+    setRegister(tcb, NextIP, (word_t)idleThreadStart);
 
     /* Enable interrupts and keep working in supervisor mode */
     setRegister(tcb, SSTATUS, (word_t) SSTATUS_SPP | SSTATUS_SPIE);

@@ -15,7 +15,7 @@ const register_t msgRegisters[] = {
 };
 
 const register_t frameRegisters[] = {
-    FaultInstruction, SP, CPSR,
+    FaultIP, SP, CPSR,
     R0, R1, R8, R9, R10, R11, R12
 };
 

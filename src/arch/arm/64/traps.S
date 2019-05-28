@@ -170,7 +170,7 @@ BEGIN_FUNC(lower_el_sync)
     cmp     x24, #ESR_EC_LEL_HVC64
     b.eq    lel_syscall
     mrs     x20, ELR
-    str     x20, [sp, #PT_FaultInstruction]
+    str     x20, [sp, #PT_FaultIP]
 
     lsp_i   x19
     /* move the ESR as the input */
@@ -184,14 +184,14 @@ BEGIN_FUNC(lower_el_sync)
 
 lel_da:
     mrs     x20, ELR
-    str     x20, [sp, #PT_FaultInstruction]
+    str     x20, [sp, #PT_FaultIP]
 
     lsp_i   x19
     b       c_handle_data_fault
 
 lel_ia:
     mrs     x20, ELR
-    str     x20, [sp, #PT_FaultInstruction]
+    str     x20, [sp, #PT_FaultIP]
 
     lsp_i   x19
     b       c_handle_instruction_fault
@@ -199,7 +199,7 @@ lel_ia:
 lel_syscall:
     mrs     x20, ELR
     sub     x20, x20, #4
-    str     x20, [sp, #PT_FaultInstruction]
+    str     x20, [sp, #PT_FaultIP]
 
     lsp_i   x19
     mov     x2, x7
@@ -213,7 +213,7 @@ el0_enfp:
 
 el0_user:
     mrs     x20, ELR
-    str     x20, [sp, #PT_FaultInstruction]
+    str     x20, [sp, #PT_FaultIP]
 
     lsp_i   x19
     b       c_handle_undefined_instruction
@@ -222,7 +222,7 @@ END_FUNC(lower_el_sync)
 BEGIN_FUNC(lower_el_irq)
     kernel_enter
     mrs     x20, ELR
-    str     x20, [sp, #PT_FaultInstruction]
+    str     x20, [sp, #PT_FaultIP]
 
     lsp_i   x19
     b       c_handle_interrupt

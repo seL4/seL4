@@ -15,7 +15,7 @@
 
 word_t PURE getRestartPC(tcb_t *thread)
 {
-    return getRegister(thread, FaultInstruction);
+    return getRegister(thread, FaultIP);
 }
 
 void setNextPC(tcb_t *thread, word_t v)

@@ -29,7 +29,7 @@ void VISIBLE NORETURN c_handle_undefined_instruction(void)
 
 #ifdef TRACK_KERNEL_ENTRIES
     ksKernelEntry.path = Entry_UserLevelFault;
-    ksKernelEntry.word = getRegister(NODE_STATE(ksCurThread), LR_svc);
+    ksKernelEntry.word = getRegister(NODE_STATE(ksCurThread), NextIP);
 #endif
 
 #if defined(CONFIG_HAVE_FPU) && defined(CONFIG_ARCH_AARCH32)
@@ -75,7 +75,7 @@ static inline void NORETURN c_handle_vm_fault(vm_fault_type_t type)
 
 #ifdef TRACK_KERNEL_ENTRIES
     ksKernelEntry.path = Entry_VMFault;
-    ksKernelEntry.word = getRegister(NODE_STATE(ksCurThread), LR_svc);
+    ksKernelEntry.word = getRegister(NODE_STATE(ksCurThread), NextIP);
 #endif
 
     handleVMFaultEvent(type);

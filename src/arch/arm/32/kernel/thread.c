@@ -29,7 +29,7 @@ void Arch_switchToThread(tcb_t *tcb)
 BOOT_CODE void Arch_configureIdleThread(tcb_t *tcb)
 {
     setRegister(tcb, CPSR, CPSR_IDLETHREAD);
-    setRegister(tcb, LR_svc, (word_t)idleThreadStart);
+    setRegister(tcb, NextIP, (word_t)idleThreadStart);
 }
 
 void Arch_switchToIdleThread(void)

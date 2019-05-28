@@ -70,10 +70,10 @@ enum _register {
     t6 = 30,
 
     /* End of GP registers, the following are additional kernel-saved state. */
-    SCAUSE,
-    SSTATUS,
-    SEPC,
-    NEXTPC,
+    SCAUSE = 31,
+    SSTATUS = 32,
+    FaultIP = 33, /* SEPC */
+    NextIP = 34,
 
     /* TODO: add other user-level CSRs if needed (i.e. to avoid channels) */
 
@@ -113,14 +113,14 @@ static inline word_t CONST sanitiseRegister(register_t reg, word_t v, bool_t arc
 
 #define EXCEPTION_MESSAGE \
  {\
-    [seL4_UserException_FaultIP] = SEPC,\
+    [seL4_UserException_FaultIP] = FaultIP,\
     [seL4_UserException_SP] = SP,\
     [seL4_UserException_Number] = a7,\
  }
 
 #define SYSCALL_MESSAGE \
 {\
-    [seL4_UnknownSyscall_FaultIP] = SEPC,\
+    [seL4_UnknownSyscall_FaultIP] = FaultIP,\
     [seL4_UnknownSyscall_SP] = SP,\
     [seL4_UnknownSyscall_RA] = LR,\
     [seL4_UnknownSyscall_A0] = a0,\

@@ -99,18 +99,18 @@ trap_entry:
 syscall:
   /* Set the return address to sepc + 4 in the case of a system/environment call */
   addi x1, x1, 4
-  /* Save NEXTPC */
+  /* Save NextIP */
   STORE   x1, (34*REGBYTES)(t0)
 
   j c_handle_syscall
 
 /* Not an interrupt or a syscall */
 exception:
-  /* Save NEXTPC */
+  /* Save NextIP */
   STORE   x1, (34*REGBYTES)(t0)
   j c_handle_exception
 
 interrupt:
-  /* Save NEXTPC */
+  /* Save NextIP */
   STORE   x1, (34*REGBYTES)(t0)
   j c_handle_interrupt

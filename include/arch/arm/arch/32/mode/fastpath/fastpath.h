@@ -174,7 +174,7 @@ static inline void NORETURN fastpath_restore(word_t badge, word_t msgInfo, tcb_t
                      : [badge]"r"(badge_reg),
                      [msginfo]"r"(msgInfo_reg),
                      [cur_thread]"r"(cur_thread_reg),
-                     [LR_SVC_OFFSET]"i"(LR_svc * sizeof(word_t))
+                     [LR_SVC_OFFSET]"i"(NextIP * sizeof(word_t))
                      : "memory"
                     );
     }

@@ -51,7 +51,7 @@ BEGIN_FUNC(arm_undefined_inst_exception)
     stmdb sp, {r0-lr}^
     ldr r8, [sp]
     sub r8, r8, #4
-    str r8, [sp, #(PT_FaultInstruction - PT_LR_svc)]
+    str r8, [sp, #(PT_FaultIP - PT_NextIP)]
 #ifdef CONFIG_ARCH_ARM_V6
     ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
 #else
@@ -62,17 +62,17 @@ BEGIN_FUNC(arm_undefined_inst_exception)
 END_FUNC(arm_undefined_inst_exception)
 
 BEGIN_FUNC(arm_swi_syscall)
-    /* Store CPSR and LR_svc on supervisor stack, which currently points
+    /* Store CPSR and NextIP on supervisor stack, which currently points
        at the end of the current thread's user context */
     srsia #PMODE_SUPERVISOR
 
-    /* Set the FaultInstruction address, which in ARM mode is the LR_svc - 4.
+    /* Set the FaultIP address, which in ARM mode is the NextIP - 4.
      * NOTE: This is completely wrong and broken in thumb mode.
      */
     sub lr, lr, #4
 
-    /* Store FaultInstruction */
-    str lr, [sp, #(PT_FaultInstruction - PT_LR_svc)]
+    /* Store FaultIP */
+    str lr, [sp, #(PT_FaultIP - PT_NextIP)]
 
     /* Stack all user registers */
     stmdb sp, {r0-lr}^
@@ -111,7 +111,7 @@ BEGIN_FUNC(arm_prefetch_abort_exception)
     bne     kernel_prefetch_fault
 
     /* Store faulting address in TCB and call handleVMFaultEvent. */
-    str r8, [sp, #(PT_FaultInstruction - PT_LR_svc)]
+    str r8, [sp, #(PT_FaultIP - PT_NextIP)]
 
 #ifdef CONFIG_ARCH_ARM_V6
     ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
@@ -163,7 +163,7 @@ BEGIN_FUNC(arm_data_abort_exception)
     bne     kernel_data_fault
 
     /* Store faulting address in TCB and call handleVMFaultEvent. */
-    str r8, [sp, #(PT_FaultInstruction - PT_LR_svc)]
+    str r8, [sp, #(PT_FaultIP - PT_NextIP)]
 #ifdef CONFIG_ARCH_ARM_V6
     ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
 #else
@@ -203,7 +203,7 @@ BEGIN_FUNC(arm_irq_exception)
     ldr r8, [sp]
     sub r8, r8, #4
     str r8, [sp]
-    str r8, [sp, #(PT_FaultInstruction - PT_LR_svc)]
+    str r8, [sp, #(PT_FaultIP - PT_NextIP)]
 #ifdef CONFIG_ARCH_ARM_V6
     ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
 #else
