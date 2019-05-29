@@ -610,30 +610,22 @@ BOOT_CODE void init_freemem(word_t n_available, const p_region_t *available,
     word_t r = 0;
     /* Now iterate through the available regions, removing any reserved regions. */
     while (a < n_available && r < n_reserved) {
-        /* We take local copies of array entries for use in the following `if`
-         * conditions. This works around an issue in the binary correctness
-         * proofs. Note however, that the temporaries are reset at the
-         * beginning of each loop iteration, so updates to the current region
-         * must still write to the array, not the temporary. */
-        region_t avail = avail_reg[a];
-        region_t res = reserved[r];
-
-        if (res.start == res.end) {
+        if (reserved[r].start == reserved[r].end) {
             /* reserved region is empty - skip it */
             r++;
-        } else if (avail.start >= avail.end) {
+        } else if (avail_reg[a].start >= avail_reg[a].end) {
             /* skip the entire region - it's empty now after trimming */
             a++;
-        } else if (res.end <= avail.start) {
+        } else if (reserved[r].end <= avail_reg[a].start) {
             /* the reserved region is below the available region - skip it*/
             r++;
-        } else if (res.start > avail.end) {
+        } else if (reserved[r].start > avail_reg[a].end) {
             /* the reserved region is above the available region - take the whole thing */
             insert_region(avail_reg[a]);
             a++;
         } else {
             /* the reserved region overlaps with the available region */
-            if (res.start <= avail.start) {
+            if (reserved[r].start <= avail_reg[a].start) {
                 /* the region overlaps with the start of the available region.
                  * trim start of the available region */
                 avail_reg[a].start = reserved[r].end;
@@ -641,8 +633,9 @@ BOOT_CODE void init_freemem(word_t n_available, const p_region_t *available,
             } else {
                 /* take the first chunk of the available region and move
                  * the start to the end of the reserved region */
-                avail.end = reserved[r].start;
-                insert_region(avail);
+                region_t m = avail_reg[a];
+                m.end = reserved[r].start;
+                insert_region(m);
                 avail_reg[a].start = reserved[r].end;
                 r++;
             }
