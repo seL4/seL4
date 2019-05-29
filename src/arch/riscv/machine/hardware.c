@@ -139,7 +139,7 @@ static uint32_t active_irq[CONFIG_MAX_NUM_NODES] = { irqInvalid };
  *
  * @return     The active irq.
  */
-irq_t getActiveIRQ(void)
+static inline irq_t getActiveIRQ(void)
 {
 
     uint32_t irq;
@@ -182,7 +182,7 @@ void setIRQTrigger(irq_t irq, bool_t edge_triggered)
  * core signalling which isn't currently supported.
  * TODO: Add SSIP check when SMP support is added.
  */
-bool_t isIRQPending(void)
+static inline bool_t isIRQPending(void)
 {
     word_t sip = read_sip();
     return (sip & (BIT(STIMER_IP) | BIT(SEXTERNAL_IP)));
@@ -198,7 +198,7 @@ bool_t isIRQPending(void)
  * @param[in]  disable  The disable
  * @param[in]  irq      The irq
  */
-void maskInterrupt(bool_t disable, interrupt_t irq)
+static inline void maskInterrupt(bool_t disable, irq_t irq)
 {
     assert(IS_IRQ_VALID(irq));
     if (irq == INTERRUPT_CORE_TIMER) {
@@ -226,7 +226,7 @@ void maskInterrupt(bool_t disable, interrupt_t irq)
  *
  * @param[in]  irq   The irq
  */
-void ackInterrupt(irq_t irq)
+static inline void ackInterrupt(irq_t irq)
 {
     assert(IS_IRQ_VALID(irq));
     active_irq[CURRENT_CPU_INDEX()] = irqInvalid;
@@ -312,7 +312,7 @@ BOOT_CODE void initIRQController(void)
     plic_init_controller();
 }
 
-void handleSpuriousIRQ(void)
+static inline void handleSpuriousIRQ(void)
 {
     /* Do nothing */
     printf("Superior IRQ!! SIP %lx\n", read_sip());

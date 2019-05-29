@@ -12,13 +12,12 @@
 
 #include <config.h>
 #include <types.h>
+#include <machine/interrupt.h>
 #include <armv/machine.h>
 
-typedef uint8_t interrupt_t;
 enum irqNumbers {
     irqInvalid = 255
 };
-typedef uint8_t irq_t;
 
 #define CMPER_REG(base, off) ((volatile uint32_t *)((base) + (off)))
 #define CMPER_TIMER3_CLKCTRL    0x84
@@ -71,10 +70,10 @@ volatile struct INTC_map {
 } *intc = (volatile void *)INTC_PPTR;
 
 
-static inline interrupt_t getActiveIRQ(void)
+static inline irq_t getActiveIRQ(void)
 {
     uint32_t intcps_sir_irq = intc->intcps_sir_irq;
-    interrupt_t irq = (interrupt_t)(intcps_sir_irq & 0x7f);
+    irq_t irq = (irq_t)(intcps_sir_irq & 0x7f);
 
     if ((intcps_sir_irq & INTCPS_SIR_IRQ_SPURIOUSIRQFLAG) == 0) {
         assert((irq / 32) < (sizeof intc->intcps_n / sizeof intc->intcps_n[0]));
@@ -92,7 +91,7 @@ static inline bool_t isIRQPending(void)
 }
 
 /* Enable or disable irq according to the 'disable' flag. */
-static inline void maskInterrupt(bool_t disable, interrupt_t irq)
+static inline void maskInterrupt(bool_t disable, irq_t irq)
 {
     if (likely(irq < maxIRQ)) {
         if (disable) {

@@ -222,11 +222,6 @@ int get_num_dev_p_regs(void);
 p_region_t get_dev_p_reg(word_t i);
 void map_kernel_devices(void);
 
-typedef uint32_t irq_t;
-void ackInterrupt(irq_t irq);
-bool_t isIRQPending(void);
-void maskInterrupt(bool_t enable, irq_t irq);
-irq_t getActiveIRQ(void);
 static inline void setInterruptMode(irq_t irq, bool_t levelTrigger, bool_t polarityLow) { }
 /** MODIFIES: [*] */
 void initTimer(void);
@@ -235,8 +230,6 @@ void initL2Cache(void);
 void initLocalIRQController(void);
 void initIRQController(void);
 void setIRQTrigger(irq_t irq, bool_t trigger);
-
-void handleSpuriousIRQ(void);
 
 #ifdef ENABLE_SMP_SUPPORT
 #define irq_remote_call_ipi     (INTERRUPT_IPI_0)

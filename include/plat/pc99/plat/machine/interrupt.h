@@ -18,6 +18,7 @@
 #include <arch/object/structures.h>
 #include <arch/model/statedata.h>
 #include <arch/kernel/apic.h>
+#include <machine/interrupt.h>
 #include <plat/machine/acpi.h>
 #include <plat/machine/ioapic.h>
 #include <plat/machine/pic.h>

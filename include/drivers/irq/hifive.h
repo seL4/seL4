@@ -57,8 +57,6 @@
 
 #endif
 
-typedef uint32_t interrupt_t;
-
 static inline void write_sie(word_t value)
 {
     asm volatile("csrw sie,  %0" :: "r"(value));
@@ -122,21 +120,21 @@ static inline word_t get_hart_id(void)
 #endif
 }
 
-static inline interrupt_t plic_get_claim(void)
+static inline irq_t plic_get_claim(void)
 {
     /* Read the claim register for our HART interrupt context */
     word_t hart_id = get_hart_id();
     return readl(PLIC_PPTR_BASE + plic_claim_offset(hart_id, PLIC_SVC_CONTEXT));
 }
 
-static inline void plic_complete_claim(interrupt_t irq)
+static inline void plic_complete_claim(irq_t irq)
 {
     /* Complete the IRQ claim by writing back to the claim register. */
     word_t hart_id = get_hart_id();
     writel(irq, PLIC_PPTR_BASE + plic_claim_offset(hart_id, PLIC_SVC_CONTEXT));
 }
 
-static inline void plic_mask_irq(bool_t disable, interrupt_t irq)
+static inline void plic_mask_irq(bool_t disable, irq_t irq)
 {
     uint64_t addr = 0;
     uint32_t val = 0;

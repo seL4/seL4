@@ -11,6 +11,8 @@
 #ifndef __PLAT_MACHINE_H
 #define __PLAT_MACHINE_H
 
+#include <machine/interrupt.h>
+
 #define PIC_IRQ_LINES 16
 #define IOAPIC_IRQ_LINES 24
 
@@ -67,8 +69,6 @@ typedef enum _platform_irq_t {
      * are well defined and behave as expected */
     irqInvalid                  = 255,
 } platform_irq_t;
-
-typedef uint8_t irq_t;
 
 #define KERNEL_TIMER_IRQ irq_timer
 #define BIOS_PADDR_START 0x0e0000

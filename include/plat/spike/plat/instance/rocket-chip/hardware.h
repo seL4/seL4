@@ -16,16 +16,16 @@
 #define PLIC_MAX_NUM_INT   0
 #define IRQ_CNODE_SLOT_BITS 1
 
-static inline interrupt_t plic_get_claim(void)
+static inline irq_t plic_get_claim(void)
 {
     return irqInvalid;
 }
 
-static inline void plic_complete_claim(interrupt_t irq)
+static inline void plic_complete_claim(irq_t irq)
 {
 }
 
-static inline void plic_mask_irq(bool_t disable, interrupt_t irq)
+static inline void plic_mask_irq(bool_t disable, irq_t irq)
 {
 }
 

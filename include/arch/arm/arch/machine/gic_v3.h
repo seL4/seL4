@@ -233,7 +233,7 @@ static inline void gic_enable_set(irq_t irq)
 
 }
 
-static inline interrupt_t getActiveIRQ(void)
+static inline irq_t getActiveIRQ(void)
 {
     uint32_t irq;
 
@@ -265,7 +265,7 @@ static inline bool_t isIRQPending(void)
     return IS_IRQ_VALID(val);
 }
 
-static inline void maskInterrupt(bool_t disable, interrupt_t irq)
+static inline void maskInterrupt(bool_t disable, irq_t irq)
 {
 #if defined ENABLE_SMP_SUPPORT
     assert(!(IRQ_IS_PPI(irq)) || (IDX_TO_CORE(irq) == getCurrentCPUIndex()));

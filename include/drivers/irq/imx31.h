@@ -13,13 +13,11 @@
 
 #include <config.h>
 #include <basic_types.h>
+#include <machine/interrupt.h>
 
 enum irqNumbers {
     irqInvalid = 255
 };
-
-typedef word_t interrupt_t;
-typedef word_t irq_t;
 
 /* Memory map for AVIC (Advanced Vectored Interrupt Controller). */
 volatile struct avic_map {
@@ -50,11 +48,11 @@ volatile struct avic_map {
  * multiple times per interrupt received, we store the
  * current active IRQ in a global variable.
  */
-extern interrupt_t active_irq;
+extern irq_t active_irq;
 
 /* Get the active IRQ number from the AVIC.  Returns 0xff if
  * there isn't one. Note this is also known as irqInvalid */
-static inline interrupt_t getActiveIRQ(void)
+static inline irq_t getActiveIRQ(void)
 {
     if (active_irq == irqInvalid) {
         /* Read the IRQ number from the IRQ controller.
@@ -77,7 +75,7 @@ static inline bool_t isIRQPending(void)
 }
 
 /* Enable or disable irq according to the 'disable' flag. */
-static inline void maskInterrupt(bool_t disable, interrupt_t irq)
+static inline void maskInterrupt(bool_t disable, irq_t irq)
 {
     if (disable) {
         avic->intdisnum = irq;

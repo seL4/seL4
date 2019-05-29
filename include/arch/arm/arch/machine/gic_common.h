@@ -15,6 +15,7 @@
 
 #include <autoconf.h>
 #include <stdint.h>
+#include <machine/interrupt.h>
 
 /* Shift positions for GICD_SGIR register */
 #define GICD_SGIR_SGIINTID_SHIFT          0
@@ -62,11 +63,8 @@
 #define IRQ_BIT(IRQ) ((IRQ) & 0x1f)
 #define IS_IRQ_VALID(X) (((X) & IRQ_MASK) < SPECIAL_IRQ_START)
 
-typedef uint16_t interrupt_t;
-typedef uint16_t irq_t;
-
 enum irqNumbers {
-    irqInvalid = (irq_t) - 1
+    irqInvalid = (uint16_t) -1
 };
 
 /*

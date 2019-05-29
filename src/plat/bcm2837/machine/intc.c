@@ -30,7 +30,7 @@ BOOT_CODE void initIRQController(void)
 
 BOOT_CODE void cpu_initLocalIRQController(void) {}
 
-interrupt_t getActiveIRQ(void)
+static inline irq_t getActiveIRQ(void)
 {
     uint32_t pending;
     uint32_t irq;
@@ -73,7 +73,7 @@ interrupt_t getActiveIRQ(void)
     return irqInvalid;
 }
 
-void maskInterrupt(bool_t disable, interrupt_t irq)
+static inline void maskInterrupt(bool_t disable, irq_t irq)
 {
     switch (irq) {
     case INTERRUPT_CORE_CNTPSIRQ :

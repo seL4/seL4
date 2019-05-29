@@ -17,15 +17,13 @@
 #include <arch/kernel/vspace.h>
 #include <linker.h>
 #include <armv/machine.h>
+#include <machine/interrupt.h>
 
 #define INTCPS_SIR_IRQ_SPURIOUSIRQFLAG 0xFF0000
 
 enum irqNumbers {
     irqInvalid = 255
 };
-
-typedef uint8_t interrupt_t;
-typedef uint8_t irq_t;
 
 /*
  * The struct below is used to discourage the compiler from generating literals
@@ -60,10 +58,10 @@ volatile struct INTC_map {
     uint32_t intcps_ilr[96];
 } *intc = (volatile void *)INTC_PPTR;
 
-static inline interrupt_t getActiveIRQ(void)
+static inline irq_t getActiveIRQ(void)
 {
     uint32_t intcps_sir_irq = intc->intcps_sir_irq;
-    interrupt_t irq = (interrupt_t)(intcps_sir_irq & 0x7f);
+    irq_t irq = (irq_t)(intcps_sir_irq & 0x7f);
 
     /* Ignore spurious interrupts. */
     if ((intcps_sir_irq & INTCPS_SIR_IRQ_SPURIOUSIRQFLAG) == 0) {
@@ -84,7 +82,7 @@ static inline bool_t isIRQPending(void)
 }
 
 /* Enable or disable irq according to the 'disable' flag. */
-static inline void maskInterrupt(bool_t disable, interrupt_t irq)
+static inline void maskInterrupt(bool_t disable, irq_t irq)
 {
     if (likely(irq < maxIRQ)) {
         if (disable) {

@@ -153,6 +153,8 @@ BOOT_CODE void initL2Cache(void)
 #endif
 }
 
+irq_t active_irq = irqInvalid;
+
 BOOT_CODE void initIRQController(void)
 {
     /* Do nothing */

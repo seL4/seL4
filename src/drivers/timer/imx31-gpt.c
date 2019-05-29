@@ -34,8 +34,6 @@ enum IPGConstants {
     IPG_CLK_32K = 3
 };
 
-interrupt_t active_irq = irqInvalid;
-
 BOOT_CODE void initTimer(void)
 {
     /* reset the gpt */

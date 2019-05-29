@@ -31,35 +31,34 @@
  * gets to process the IRQ and subsequent HARTs won't receive a claim for the same IRQ.
  *
  * We require each platform to provide the following functions:
- *   interrupt_t plic_get_claim(void): If called when an IRQ is pending, returns
+ *   irq_t plic_get_claim(void): If called when an IRQ is pending, returns
  *     the pending priority and starts a claim process.  Will return irqInvalid
  *     if no IRQs are pending.
- *   void plic_complete_claim(interrupt_t irq): Complete a claim process for an
+ *   void plic_complete_claim(irq_t irq): Complete a claim process for an
  *     interrupt.
- *   void plic_mask_irq(bool_t disable, interrupt_t irq): Disables or enables an
+ *   void plic_mask_irq(bool_t disable, irq_t irq): Disables or enables an
  *     IRQ at the PLIC.
- *   void plic_irq_set_trigger(interrupt_t irq, bool_t edge_triggered): Configure
+ *   void plic_irq_set_trigger(irq_t irq, bool_t edge_triggered): Configure
  *     an IRQ source on the PLIC to be edge or level triggered. This function does
  *     not need to be implemented if the PLIC doesn't support configuring this.
  *   void plic_init_controller(void): Perform PLIC initialisation during boot.
  */
-typedef uint32_t interrupt_t;
 
-static inline interrupt_t plic_get_claim(void)
+static inline irq_t plic_get_claim(void)
 {
     return irqInvalid;
 }
 
-static inline void plic_complete_claim(interrupt_t irq)
+static inline void plic_complete_claim(irq_t irq)
 {
 }
 
-static inline void plic_mask_irq(bool_t disable, interrupt_t irq)
+static inline void plic_mask_irq(bool_t disable, irq_t irq)
 {
 }
 
 #ifdef HAVE_SET_TRIGGER
-static inline void plic_irq_set_trigger(interrupt_t irq, bool_t edge_triggered);
+static inline void plic_irq_set_trigger(irq_t irq, bool_t edge_triggered);
 #endif
 
 static inline void plic_init_controller(void)

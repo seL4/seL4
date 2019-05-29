@@ -14,6 +14,7 @@
 #define __DRIVERS_IRQ_BCM_H
 #include <plat/machine/devices_gen.h>
 #include <machine/io.h>
+#include <machine/interrupt.h>
 
 #define BASIC_IRQ_OFFSET                32
 #define NORMAL_IRQ_OFFSET               (BASIC_IRQ_OFFSET + 32)
@@ -124,18 +125,9 @@ volatile struct core_regs {
 #define LOCAL_TIMER_CTRL_EN_BIT 28
 #define LOCAL_TIMER_CTRL_RL_MASK MASK(28)
 
-typedef uint8_t interrupt_t;
-typedef uint8_t irq_t;
-
 enum irqNumbers {
-    irqInvalid = (irq_t) - 1
+    irqInvalid = 255
 };
-
-interrupt_t
-getActiveIRQ(void);
-
-void
-maskInterrupt(bool_t disable, interrupt_t irq);
 
 static inline bool_t isIRQPending(void)
 {

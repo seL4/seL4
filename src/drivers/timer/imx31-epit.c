@@ -33,8 +33,6 @@ enum IPGConstants {
 
 #define TIMER_CLOCK_SRC   IPG_CLK_32K
 
-interrupt_t active_irq = irqInvalid;
-
 /* Configure EPIT1 as kernel preemption timer */
 BOOT_CODE void initTimer(void)
 {

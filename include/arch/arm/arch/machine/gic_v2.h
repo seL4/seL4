@@ -160,7 +160,7 @@ static inline void dist_enable_set(irq_t irq)
     gic_dist->enable_set[word] = BIT(bit);
 }
 
-static inline interrupt_t getActiveIRQ(void)
+static inline irq_t getActiveIRQ(void)
 {
     uint32_t irq;
     if (!IS_IRQ_VALID(active_irq[CURRENT_CPU_INDEX()])) {
@@ -186,7 +186,7 @@ static inline bool_t isIRQPending(void)
     return IS_IRQ_VALID(gic_cpuiface->hi_pend);
 }
 
-static inline void maskInterrupt(bool_t disable, interrupt_t irq)
+static inline void maskInterrupt(bool_t disable, irq_t irq)
 {
 #if defined ENABLE_SMP_SUPPORT && defined CONFIG_ARCH_ARM
     assert(!(IRQ_IS_PPI(irq)) || (IDX_TO_CORE(irq) == getCurrentCPUIndex()));
