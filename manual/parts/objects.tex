@@ -395,6 +395,20 @@ the size of the resulting objects.
 For all other object types, the size is fixed, and the \texttt{size\_bits}
 argument to \apifunc{seL4\_Untyped\_Retype}{untyped_retype} is ignored.
 
+\begin{table}[htb]
+  \renewcommand{\arraystretch}{1.5}
+  \begin{tabularx}{\textwidth}{p{0.15\textwidth}XXXX}
+    \toprule
+    Type & Meaning of \texttt{size\_bits} & Size in Bytes  \\
+    \midrule
+    \obj{CNode} & $\log_2$ number of slots & $2^\texttt{size\_bits} \cdot 16$ \\
+    \obj{Untyped} & $\log_2$ size in bytes & $2^\texttt{size\_bits}$ \\
+    \bottomrule
+  \end{tabularx}
+  \caption{\label{tab:objsize} Meaning of \texttt{size\_bits} for object types of
+	variable size}
+\end{table}
+
 A single call to \apifunc{seL4\_Untyped\_Retype}{untyped_retype} can retype a
 single \obj{Untyped Object} into multiple objects. The number of objects
 to create is specified by its \texttt{num\_objects} argument. All created
