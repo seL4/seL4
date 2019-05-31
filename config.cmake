@@ -103,7 +103,10 @@ if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
     if("${DTC_TOOL}" STREQUAL "DTC_TOOL-NOTFOUND")
         message(FATAL_ERROR "Cannot find 'dtc' program.")
     endif()
-
+    find_program(STAT_TOOL stat)
+    if("${STAT_TOOL}" STREQUAL "STAT_TOOL-NOTFOUND")
+        message(FATAL_ERROR "Cannot find 'stat' program.")
+    endif()
     # Generate final DTS based on Linux DTS + seL4 overlay[s]
     foreach(entry ${KernelDTSList})
         get_absolute_source_or_binary(dts_tmp ${entry})
@@ -122,6 +125,21 @@ if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
             COMMAND
                 ${DTC_TOOL} -q -I dts -O dtb -o ${KernelDTBPath} ${KernelDTSIntermediate}
         )
+        # Track the size of the DTB for downstream tools
+        execute_process(
+            COMMAND
+                ${STAT_TOOL} -c '%s' ${KernelDTBPath}
+            OUTPUT_VARIABLE KernelDTBSize
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        string(
+            REPLACE
+                "\'"
+                ""
+                KernelDTBSize
+                ${KernelDTBSize}
+        )
+        set(KernelDTBSize "${KernelDTBSize}" CACHE INTERNAL "Size of DTB blob, in bytes")
     endif()
 
     set(deps ${KernelDTBPath} ${config_file} ${config_schema} ${HARDWARE_GEN_PATH})
