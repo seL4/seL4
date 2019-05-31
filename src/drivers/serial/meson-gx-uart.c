@@ -35,6 +35,8 @@
 static const char *reset = "reset";
 static int index = 0;
 
+void uart_drv_putchar(unsigned char c);
+
 void init_serial(void)
 {
     /* enable tx, rx and rx irq */
@@ -48,7 +50,7 @@ void handleUartIRQ(void)
     /* while there are chars to process */
     while (!(*UART_REG(UART_STATUS) & UART_RX_EMPTY)) {
         char c = *UART_REG(UART_RFIFO);
-        putDebugChar(c);
+        uart_drv_putchar(c);
         if (c == 'r') {
             index = 1;
         } else if (c == reset[index]) {
@@ -66,7 +68,6 @@ void handleUartIRQ(void)
     }
 }
 
-#ifdef CONFIG_PRINTING
 void uart_drv_putchar(unsigned char c)
 {
     while ((*UART_REG(UART_STATUS) & UART_TX_FULL));
@@ -74,7 +75,6 @@ void uart_drv_putchar(unsigned char c)
     /* Add character to the buffer. */
     *UART_REG(UART_WFIFO) = c;
 }
-#endif /* CONFIG_PRINTING */
 
 #ifdef CONFIG_DEBUG_BUILD
 unsigned char uart_drv_getchar(void)

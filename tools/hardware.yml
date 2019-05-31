@@ -196,7 +196,6 @@ devices:
     regions:
       - index: 0
         kernel: UART_PPTR
-        macro: CONFIG_PRINTING
         user: true
         kernel_size: 0x1000
     interrupts:
