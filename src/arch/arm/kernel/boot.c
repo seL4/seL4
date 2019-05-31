@@ -39,7 +39,7 @@ extern char ki_end[1];
 BOOT_DATA static volatile int node_boot_lock = 0;
 #endif /* ENABLE_SMP_SUPPORT */
 
-#define ARCH_RESERVED 4 // kernel + user image + dtb + rootserver objects
+#define ARCH_RESERVED 3 // kernel + user image + dtb
 #define MAX_RESERVED (ARCH_RESERVED + MODE_RESERVED)
 BOOT_DATA static region_t reserved[MAX_RESERVED];
 
@@ -56,11 +56,6 @@ BOOT_CODE static void arch_init_freemem(region_t ui_reg, region_t dtb_reg, v_reg
         reserved[index].end = dtb_reg.end;
         index++;
     }
-    reserved[index].start = ui_reg.start;
-    reserved[index].end = ui_reg.end;
-    index++;
-    reserved[index] = create_rootserver_objects(ui_reg.end, it_v_reg, extra_bi_size_bits);
-    index++;
 
 
     if (MODE_RESERVED == 1) {
@@ -83,9 +78,7 @@ BOOT_CODE static void arch_init_freemem(region_t ui_reg, region_t dtb_reg, v_reg
         index++;
     }
 
-    reserved[index] = create_rootserver_objects(ui_reg.start, it_v_reg, extra_bi_size_bits);
-    index++;
-    init_freemem(get_num_avail_p_regs(), get_avail_p_regs(), index, reserved);
+    init_freemem(get_num_avail_p_regs(), get_avail_p_regs(), index, reserved, it_v_reg, extra_bi_size_bits);
 }
 
 BOOT_CODE static void init_irqs(cap_t root_cnode_cap)

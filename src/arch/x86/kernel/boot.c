@@ -27,7 +27,7 @@
 
 #include <plat/machine/intel-vtd.h>
 
-#define MAX_RESERVED 2
+#define MAX_RESERVED 1
 BOOT_DATA static region_t reserved[MAX_RESERVED];
 
 /* functions exactly corresponding to abstract specification */
@@ -217,8 +217,7 @@ BOOT_CODE static void arch_init_freemem(p_region_t ui_p_reg, v_region_t v_reg,
 {
     ui_p_reg.start = 0;
     reserved[0] = paddr_to_pptr_reg(ui_p_reg);
-    reserved[1] = create_rootserver_objects(reserved[0].end, v_reg, extra_bi_size_bits);
-    init_freemem(mem_p_regs->count, mem_p_regs->list, MAX_RESERVED, reserved);
+    init_freemem(mem_p_regs->count, mem_p_regs->list, MAX_RESERVED, reserved, v_reg, extra_bi_size_bits);
 }
 
 /* This function initialises a node's kernel state. It does NOT initialise the CPU. */

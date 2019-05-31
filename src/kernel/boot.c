@@ -69,6 +69,13 @@ BOOT_CODE static pptr_t alloc_rootserver_obj(word_t size_bits, word_t n)
     return allocated;
 }
 
+BOOT_CODE static word_t rootserver_max_size_bits(word_t extra_bi_size_bits)
+{
+    word_t cnode_size_bits = CONFIG_ROOT_CNODE_SIZE_BITS + seL4_SlotBits;
+    word_t max = MAX(cnode_size_bits, seL4_VSpaceBits);
+    return MAX(max, extra_bi_size_bits);
+}
+
 BOOT_CODE static word_t calculate_rootserver_size(v_region_t v_reg, word_t extra_bi_size_bits)
 {
     /* work out how much memory we need for root server objects */
@@ -89,16 +96,15 @@ BOOT_CODE static void maybe_alloc_extra_bi(word_t cmp_size_bits, word_t extra_bi
     }
 }
 
-BOOT_CODE region_t create_rootserver_objects(pptr_t start, v_region_t v_reg, word_t extra_bi_size_bits)
+BOOT_CODE void create_rootserver_objects(pptr_t start, v_region_t v_reg, word_t extra_bi_size_bits)
 {
     /* the largest object the PD, the root cnode, or the extra boot info */
     word_t cnode_size_bits = CONFIG_ROOT_CNODE_SIZE_BITS + seL4_SlotBits;
-    word_t max = MAX(cnode_size_bits, seL4_VSpaceBits);
-    max = MAX(max, extra_bi_size_bits);
+    word_t max = rootserver_max_size_bits(extra_bi_size_bits);
 
-    start = ROUND_UP(start, max);
+    word_t size = calculate_rootserver_size(v_reg, extra_bi_size_bits);
     rootserver_mem.start = start;
-    rootserver_mem.end = start + calculate_rootserver_size(v_reg, extra_bi_size_bits);
+    rootserver_mem.end = start + size;
 
     maybe_alloc_extra_bi(max, extra_bi_size_bits);
 
@@ -136,10 +142,6 @@ BOOT_CODE region_t create_rootserver_objects(pptr_t start, v_region_t v_reg, wor
 #endif
     /* we should have allocated all our memory */
     assert(rootserver_mem.start == rootserver_mem.end);
-    return (region_t) {
-        .start = start,
-        .end = rootserver_mem.end
-    };
 }
 
 BOOT_CODE void write_slot(slot_ptr_t slot_ptr, cap_t cap)
@@ -524,7 +526,8 @@ static BOOT_DATA region_t avail_reg[MAX_NUM_FREEMEM_REG];
  * A region represents an area of memory.
  */
 BOOT_CODE void init_freemem(word_t n_available, const p_region_t *available,
-                            word_t n_reserved, region_t *reserved)
+                            word_t n_reserved, region_t *reserved,
+                            v_region_t it_v_reg, word_t extra_bi_size_bits)
 {
     /* Force ordering and exclusivity of reserved regions */
     for (word_t i = 0; n_reserved > 0 && i < n_reserved - 1; i++) {
@@ -595,6 +598,35 @@ BOOT_CODE void init_freemem(word_t n_available, const p_region_t *available,
     for (; a < n_available; a++) {
         if (avail_reg[a].start < avail_reg[a].end) {
             insert_region(avail_reg[a]);
+        }
+    }
+
+    /* now try to fit the root server objects into a region */
+    word_t i = MAX_NUM_FREEMEM_REG - 1;
+    if (!is_reg_empty(ndks_boot.freemem[i])) {
+        printf("Insufficient MAX_NUM_FREEMEM_REG");
+        halt();
+    }
+    /* skip any empty regions */
+    for (; is_reg_empty(ndks_boot.freemem[i]) && i >= 0; i--);
+
+    /* try to grab the last available p region to create the root server objects
+     * from. If possible, retain any left over memory as an extra p region */
+    word_t size = calculate_rootserver_size(it_v_reg, extra_bi_size_bits);
+    word_t max = rootserver_max_size_bits(extra_bi_size_bits);
+    for (; i >= 0; i--) {
+        word_t next = i + 1;
+        pptr_t start = ROUND_DOWN(ndks_boot.freemem[i].end - size, max);
+        if (start >= ndks_boot.freemem[i].start) {
+            create_rootserver_objects(start, it_v_reg, extra_bi_size_bits);
+            if (i < MAX_NUM_FREEMEM_REG) {
+                ndks_boot.freemem[next].end = ndks_boot.freemem[i].end;
+                ndks_boot.freemem[next].start = start + size;
+            }
+            ndks_boot.freemem[i].end = start;
+            break;
+        } else if (i < MAX_NUM_FREEMEM_REG) {
+            ndks_boot.freemem[next] = ndks_boot.freemem[i];
         }
     }
 }

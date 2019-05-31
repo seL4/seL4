@@ -35,7 +35,7 @@ extern char ki_boot_end[1];
 /* pointer to end of kernel image */
 extern char ki_end[1];
 
-#define MAX_RESERVED 3
+#define MAX_RESERVED 2
 BOOT_DATA static region_t res_reg[MAX_RESERVED];
 
 BOOT_CODE static bool_t create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg)
@@ -99,9 +99,8 @@ BOOT_CODE static void arch_init_freemem(region_t ui_reg, v_region_t ui_v_reg)
     res_reg[0].end = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void *)ki_end));
     res_reg[1].start = ui_reg.start;
     res_reg[1].end = ui_reg.end;
-    res_reg[2] = create_rootserver_objects(ui_reg.end, ui_v_reg, 0);
 
-    init_freemem(get_num_avail_p_regs(), get_avail_p_regs(), MAX_RESERVED, res_reg);
+    init_freemem(get_num_avail_p_regs(), get_avail_p_regs(), MAX_RESERVED, res_reg, ui_v_reg, 0);
 }
 
 BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
