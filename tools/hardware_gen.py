@@ -964,8 +964,8 @@ def output_regions(args, devices, memory, kernel, irqs, fp):
 
 def main(args):
     attempt_imports()
-    schema = yaml.load(args.schema)
-    kernel_devices = yaml.load(args.config)
+    schema = yaml.load(args.schema, Loader=yaml.FullLoader)
+    kernel_devices = yaml.load(args.config, Loader=yaml.FullLoader)
     validate(kernel_devices, schema)
     cfg = Config(kernel_devices)
 
