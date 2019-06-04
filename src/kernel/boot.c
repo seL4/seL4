@@ -41,6 +41,8 @@ BOOT_CODE bool_t insert_region(region_t reg)
             return true;
         }
     }
+    printf("Dropping memory region 0x%lx-0x%lx, try increasing MAX_NUM_FREEMEM_REG (currently %d)\n",
+           reg.start, reg.end, (int)MAX_NUM_FREEMEM_REG);
     return false;
 }
 
