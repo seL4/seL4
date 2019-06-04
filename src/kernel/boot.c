@@ -41,8 +41,19 @@ BOOT_CODE bool_t insert_region(region_t reg)
             return true;
         }
     }
+#ifdef CONFIG_ARCH_ARM
+    /* boot.h should have calculated MAX_NUM_FREEMEM_REG correctly.
+     * If we've run out, then something is wrong.
+     * Note that the capDL allocation toolchain does not know about
+     * MAX_NUM_FREEMEM_REG, so throwing away regions may prevent
+     * capDL applications from being loaded! */
+    printf("Can't fit memory region 0x%lx-0x%lx, try increasing MAX_NUM_FREEMEM_REG (currently %d)\n",
+           reg.start, reg.end, (int)MAX_NUM_FREEMEM_REG);
+    assert(!"Ran out of freemem slots");
+#else
     printf("Dropping memory region 0x%lx-0x%lx, try increasing MAX_NUM_FREEMEM_REG (currently %d)\n",
            reg.start, reg.end, (int)MAX_NUM_FREEMEM_REG);
+#endif
     return false;
 }
 
