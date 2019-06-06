@@ -16,7 +16,11 @@ cmake_minimum_required(VERSION 3.7.2)
 
 if(KernelPlatformSpike)
     config_set(KernelPlatform PLAT "spike")
-    list(APPEND KernelDTSList "tools/dts/spike.dts")
+    if(Kernel32)
+        list(APPEND KernelDTSList "tools/dts/spike32.dts")
+    else()
+        list(APPEND KernelDTSList "tools/dts/spike.dts")
+    endif()
     declare_default_headers(TIMER_FREQUENCY 10000000llu PLIC_MAX_NUM_INT 2
 	    INTERRUPT_CONTROLLER arch/machine/plic.h)
 endif()
