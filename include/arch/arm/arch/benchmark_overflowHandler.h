@@ -30,8 +30,8 @@ static inline void handleOverflowIRQ(void)
         NODE_STATE(ksCurThread)->benchmark.schedule_start_time = 0;
 
         ccnt_num_overflows++;
-        armv_handleOverflowIRQ();
     }
+    armv_handleOverflowIRQ();
 }
 #endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
