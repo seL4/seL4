@@ -13,7 +13,6 @@
 
 #include <config.h>
 #include <basic_types.h>
-#include <arch/benchmark_overflowHandler.h>
 
 enum irqNumbers {
     irqInvalid = 255

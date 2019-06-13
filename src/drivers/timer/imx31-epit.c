@@ -16,7 +16,6 @@
 #include <arch/kernel/vspace.h>
 #include <linker.h>
 #include <drivers/timer/imx31-epit_gen.h>
-#include <arch/benchmark_overflowHandler.h>
 
 #define L2_LINE_SIZE_BITS 5
 #define L2_LINE_SIZE BIT(L2_LINE_SIZE_BITS)
