@@ -38,7 +38,7 @@ extern uint64_t ccnt_num_overflows;
 static inline void handleOverflowIRQ(void)
 {
     if (likely(benchmark_log_utilisation_enabled)) {
-        NODE_STATE(ksCurThread)->benchmark.utilisation += 0xFFFFFFFFU - NODE_STATE(ksCurThread)->benchmark.schedule_start_time;
+        NODE_STATE(ksCurThread)->benchmark.utilisation += UINT32_MAX - NODE_STATE(ksCurThread)->benchmark.schedule_start_time;
         NODE_STATE(ksCurThread)->benchmark.schedule_start_time = 0;
         ccnt_num_overflows++;
     }

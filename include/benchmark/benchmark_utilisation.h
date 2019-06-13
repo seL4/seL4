@@ -41,7 +41,7 @@ static inline void benchmark_utilisation_switch(tcb_t *heir, tcb_t *next)
 
         } else {
 #ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
-            heir->benchmark.utilisation += (0xFFFFFFFFU - heir->benchmark.schedule_start_time) + ksEnter;
+            heir->benchmark.utilisation += (UINT32_MAX - heir->benchmark.schedule_start_time) + ksEnter;
             armv_handleOverflowIRQ();
 #endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
         }
