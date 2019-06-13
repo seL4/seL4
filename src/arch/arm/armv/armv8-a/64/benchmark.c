@@ -25,10 +25,6 @@ void armv_init_ccnt(void)
     /* enable the cycle count */
     val = PMCNTENSET_CYCLE_COUNT_ENABLE;
     MSR("PMCNTENSET_EL0", val);
-
-    /* allow PL1 to access the PMU */
-    val = PMUSERENR_EL0_EN ;
-    MSR("PMUSERENR_EL0", val);
 }
 
 #endif

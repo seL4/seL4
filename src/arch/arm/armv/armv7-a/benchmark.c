@@ -28,14 +28,6 @@ void armv_init_ccnt(void)
     );
 #endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
 
-    /* enable them */
-    val = 1;
-    asm volatile(
-        "mcr p15, 0, %0, c9, c14, 0\n"
-        :
-        : "r"(val)
-    );
-
     /* reset to 0 and make available at user level */
     pmcr = (1 << 2) | 1;
     asm volatile(
