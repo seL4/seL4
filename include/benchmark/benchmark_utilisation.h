@@ -52,11 +52,6 @@ static inline void benchmark_utilisation_switch(tcb_t *heir, tcb_t *next)
     }
 }
 
-static inline void benchmark_utilisation_kentry_stamp(void)
-{
-    ksEnter = timestamp();
-}
-
 /* Add the time between the last thread got scheduled and when to stop
  * benchmarks
  */
