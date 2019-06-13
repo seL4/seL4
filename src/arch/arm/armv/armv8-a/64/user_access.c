@@ -15,6 +15,7 @@
 
 #define EL0VCTEN BIT(1)
 #define EL0PCTEN BIT(0)
+#define PMUSERENR_EL0_EN BIT(0)
 
 static void check_export_pmu(void)
 {
