@@ -26,8 +26,8 @@ extern bool_t benchmark_log_utilisation_enabled;
 static inline void handleOverflowIRQ(void)
 {
     if (likely(benchmark_log_utilisation_enabled)) {
-        ksCurThread->benchmark.utilisation += 0xFFFFFFFFU - ksCurThread->benchmark.schedule_start_time;
-        ksCurThread->benchmark.schedule_start_time = 0;
+        NODE_STATE(ksCurThread)->benchmark.utilisation += 0xFFFFFFFFU - NODE_STATE(ksCurThread)->benchmark.schedule_start_time;
+        NODE_STATE(ksCurThread)->benchmark.schedule_start_time = 0;
 
         ccnt_num_overflows++;
         armv_handleOverflowIRQ();
