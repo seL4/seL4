@@ -15,10 +15,6 @@ cmake_minimum_required(VERSION 3.7.2)
 add_sources(
     DEP "KernelArchArmV7a"
     PREFIX src/arch/arm/armv/armv7-a
-    CFILES
-        benchmark.c
-        cache.c
-        user_access.c
-        tlb.c
+    CFILES cache.c user_access.c tlb.c
     ASMFILES machine_asm.S
 )

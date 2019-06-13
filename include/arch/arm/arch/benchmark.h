@@ -18,7 +18,12 @@
 #include <mode/machine.h>
 #include <model/statedata.h>
 
-void armv_init_ccnt(void);
+/* these values are consistent across all arm PMUs */
+#define PMCR_ENABLE 0
+#define PMCR_ECNT_RESET 1
+#define PMCR_CCNT_RESET 2
+
+void arm_init_ccnt(void);
 
 static inline timestamp_t timestamp(void)
 {

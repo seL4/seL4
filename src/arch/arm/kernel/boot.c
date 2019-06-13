@@ -196,7 +196,7 @@ BOOT_CODE static bool_t init_cpu(void)
     cpu_initLocalIRQController();
 
 #ifdef CONFIG_ENABLE_BENCHMARKS
-    armv_init_ccnt();
+    arm_init_ccnt();
 #endif /* CONFIG_ENABLE_BENCHMARKS */
 
     /* Export selected CPU features for access by PL0 */
