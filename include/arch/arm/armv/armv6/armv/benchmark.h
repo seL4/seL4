@@ -11,6 +11,7 @@
 #ifndef ARMV_BENCHMARK_H
 #define ARMV_BENCHMARK_H
 
+#include <config.h>
 #ifdef CONFIG_ENABLE_BENCHMARKS
 
 #define CCNT "p15, 0, %0, c15, c12, 1"
