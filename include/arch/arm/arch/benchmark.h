@@ -29,6 +29,7 @@ static inline timestamp_t timestamp(void)
 
 #ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
 extern bool_t benchmark_log_utilisation_enabled;
+extern uint64_t ccnt_num_overflows;
 static inline void handleOverflowIRQ(void)
 {
     if (likely(benchmark_log_utilisation_enabled)) {
@@ -39,6 +40,10 @@ static inline void handleOverflowIRQ(void)
     armv_handleOverflowIRQ();
 }
 
+static inline void benchmark_arch_utilisation_reset(void)
+{
+    ccnt_num_overflows = 0;
+}
 #endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
 #endif /* CONFIG_ENABLE_BENCHMARKS */
 
