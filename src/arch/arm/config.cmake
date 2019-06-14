@@ -29,6 +29,7 @@ config_choice(
     "kzm;KernelPlatformKZM;PLAT_KZM;KernelSel4ArchAarch32"
     "omap3;KernelPlatformOMAP3;PLAT_OMAP3;KernelSel4ArchAarch32"
     "am335x-boneblack;KernelPlatformAM335XBoneBlack;PLAT_AM335X_BONEBLACK;KernelSel4ArchAarch32"
+    "am335x-boneblue;KernelPlatformAM335XBoneBlue;PLAT_AM335X_BONEBLUE;KernelSel4ArchAarch32"
     "exynos4;KernelPlatformExynos4;PLAT_EXYNOS4;KernelSel4ArchAarch32"
     "exynos5410;KernelPlatformExynos5410;PLAT_EXYNOS5410;KernelSel4ArchAarch32 OR KernelSel4ArchArmHyp"
     "exynos5422;KernelPlatformExynos5422;PLAT_EXYNOS5422;KernelSel4ArchAarch32 OR KernelSel4ArchArmHyp"
