@@ -18,6 +18,7 @@ if(KernelPlatformAM335XBoneBlack)
     config_set(KernelPlatform PLAT "am335x")
     config_set(KernelPlatformAM335X PLAT_AM335X ON)
     list(APPEND KernelDTSList "tools/dts/am335x-boneblack.dts")
+    list(APPEND KernelDTSList "src/plat/am335x/overlay-am335x-boneblack.dts")
     list(APPEND KernelDTSList "src/plat/am335x/overlay-am335x.dts")
 
     declare_default_headers(
