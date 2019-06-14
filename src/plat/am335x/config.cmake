@@ -12,11 +12,12 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-if(KernelPlatformAM335X)
+if(KernelPlatformAM335XBoneBlack)
     set(KernelArmCortexA8 ON)
     set(KernelArchArmV7a ON)
     config_set(KernelPlatform PLAT "am335x")
-    list(APPEND KernelDTSList "tools/dts/am335x.dts")
+    config_set(KernelPlatformAM335X PLAT_AM335X ON)
+    list(APPEND KernelDTSList "tools/dts/am335x-boneblack.dts")
     list(APPEND KernelDTSList "src/plat/am335x/overlay-am335x.dts")
 
     declare_default_headers(
