@@ -43,7 +43,7 @@ LICENSE="/*
 "
 
 ARM_DTBS="
-am335x-bone=am335x
+am335x-boneblack=am335x-boneblack
 bcm2837-rpi-3-b=rpi3
 exynos4412-odroidx=exynos4
 exynos5250-arndale=exynos5250
