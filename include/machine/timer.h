@@ -10,6 +10,8 @@
 #ifndef __TIMER_H
 #define __TIMER_H
 
+#include <arch/machine/timer.h>
+
 static inline void resetTimer(void);
 
 #endif

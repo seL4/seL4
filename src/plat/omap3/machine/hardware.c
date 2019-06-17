@@ -18,7 +18,6 @@
 #include <linker.h>
 #include <plat/machine/devices_gen.h>
 #include <plat/machine/hardware.h>
-#include <plat/machine/timer.h>
 
 #define INTCPS_SYSCONFIG_SOFTRESET BIT(1)
 #define INTCPS_SYSSTATUS_RESETDONE BIT(0)

@@ -15,6 +15,7 @@
 #include <config.h>
 #include <arch/model/statedata.h>
 #include <plat/machine.h>
+#include <plat/machine/timer.h>
 
 BOOT_CODE uint32_t tsc_init(void);
 

@@ -18,7 +18,6 @@
 #include <linker.h>
 #include <plat/machine/devices_gen.h>
 #include <plat/machine/hardware.h>
-#include <plat/machine/timer.h>
 
 #define TIOCP_CFG_SOFTRESET BIT(0)
 

@@ -17,7 +17,6 @@
 #include <plat/machine.h>
 #include <linker.h>
 #include <plat/machine/hardware.h>
-#include <plat/machine/timer.h>
 
 #define TIMER_CTL_EN_FLAG               BIT(0)
 #define TIMER_CTL_RELOAD_FLAG           BIT(1)

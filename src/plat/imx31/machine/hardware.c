@@ -17,7 +17,6 @@
 #include <plat/machine.h>
 #include <linker.h>
 #include <plat/machine/hardware.h>
-#include <plat/machine/timer.h>
 
 #define L2_LINE_SIZE_BITS 5
 #define L2_LINE_SIZE BIT(L2_LINE_SIZE_BITS)

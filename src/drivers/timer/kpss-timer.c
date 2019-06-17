@@ -10,7 +10,6 @@
 /* @AUTHOR(akroh@ertos.nicta.com.au) */
 
 #include <plat/machine/hardware.h>
-#include <plat/machine/timer.h>
 
 #define DGT_TIMER_PPTR (TIMER_PPTR + 0x024)
 
