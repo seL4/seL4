@@ -15,7 +15,7 @@
 
 #include <config.h>
 
-#if defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_EXPORT_PMU_USER)
+#if defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_EXPORT_PMU_USER) || defined(CONFIG_ENABLE_BENCHMARKS)
 
 #include <mode/machine/debug.h>
 #include <mode/machine.h> /* MRC/MCR */
