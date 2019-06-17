@@ -222,6 +222,18 @@ static inline void schedule_used(sched_context_t *sc, refill_t new)
     }
 }
 
+static inline void ensure_sufficient_head(sched_context_t *sc)
+{
+    /* ensure the refill head is sufficient, such that when we wake in awaken,
+     * there is enough budget to run */
+    while (REFILL_HEAD(sc).rAmount < MIN_BUDGET || refill_full(sc)) {
+        refill_t refill = refill_pop_head(sc);
+        REFILL_HEAD(sc).rAmount += refill.rAmount;
+        /* this loop is guaranteed to terminate as the sum of
+         * rAmount in a refill must be >= MIN_BUDGET */
+    }
+}
+
 void refill_budget_check(ticks_t usage, ticks_t capacity)
 {
     sched_context_t *sc = NODE_STATE(ksCurSC);
@@ -266,14 +278,7 @@ void refill_budget_check(ticks_t usage, ticks_t capacity)
         refill_split_check(usage);
     }
 
-    /* ensure the refill head is sufficient, such that when we wake in awaken,
-     * there is enough budget to run */
-    while (REFILL_HEAD(sc).rAmount < MIN_BUDGET || refill_full(sc)) {
-        refill_t refill = refill_pop_head(sc);
-        REFILL_HEAD(sc).rAmount += refill.rAmount;
-        /* this loop is guaranteed to terminate as the sum of
-         * rAmount in a refill must be >= MIN_BUDGET */
-    }
+    ensure_sufficient_head(sc);
 
     REFILL_SANITY_END(sc);
 }
@@ -310,6 +315,7 @@ void refill_split_check(ticks_t usage)
             refill_pop_head(sc);
             REFILL_HEAD(sc).rAmount += remnant;
             schedule_used(sc, new);
+            ensure_sufficient_head(sc);
         }
         assert(refill_ordered(sc));
     } else {
