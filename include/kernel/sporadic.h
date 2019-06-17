@@ -33,6 +33,11 @@
  * at least this much budget - see comment on refill_sufficient */
 #define MIN_BUDGET_US (2u * getKernelWcetUs() * CONFIG_KERNEL_WCET_SCALE)
 #define MIN_BUDGET    (2u * getKernelWcetTicks() * CONFIG_KERNEL_WCET_SCALE)
+#if (CONFIG_KERNEL_STATIC_MAX_BUDGET_US) != 0
+#define MAX_BUDGET_US (CONFIG_KERNEL_STATIC_MAX_BUDGET_US)
+#else
+#define MAX_BUDGET_US getMaxUsToTicks()
+#endif /* CONFIG_KERNEL_STATIC_MAX_BUDGET_US != 0 */
 
 /* Short hand for accessing refill queue items */
 #define REFILL_INDEX(sc, index) (((refill_t *) (SC_REF(sc) + sizeof(sched_context_t)))[index])

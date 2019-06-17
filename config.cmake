@@ -460,4 +460,13 @@ config_string(
     DEPENDS "KernelIsMCS" UNDEF_DISABLED
 )
 
+config_string(
+    KernelStaticMaxBudgetUs KERNEL_STATIC_MAX_BUDGET_US
+    "Specifies a static maximum to which scheduling context can have \
+    either its period or budget configured."
+    DEFAULT 0
+    UNQUOTE
+    DEPENDS "KernelIsMCS" UNDEF_DISABLED
+)
+
 add_config_library(kernel "${configure_string}")
