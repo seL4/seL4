@@ -62,11 +62,29 @@ BOOT_CODE static void arch_init_freemem(region_t ui_reg, region_t dtb_reg, v_reg
     reserved[index] = create_rootserver_objects(ui_reg.end, it_v_reg, extra_bi_size_bits);
     index++;
 
-    for (word_t i = 0; i < MODE_RESERVED; i++) {
-        reserved[i + index] = mode_reserved_region[i];
+
+    if (MODE_RESERVED == 1) {
+        if (ui_reg.end > mode_reserved_region[0].start) {
+            reserved[index] = mode_reserved_region[0];
+            reserved[index + 1].start = ui_reg.start;
+            reserved[index + 1].end = ui_reg.end;
+        } else {
+            reserved[index].start = ui_reg.start;
+            reserved[index].end = ui_reg.end;
+            reserved[index + 1] = mode_reserved_region[0];
+        }
+        index += 2;
+    } else if (MODE_RESERVED > 1) {
+        printf("MODE_RESERVED > 1 unsupported!\n");
+        halt();
+    } else {
+        reserved[index].start = ui_reg.start;
+        reserved[index].end = ui_reg.end;
         index++;
     }
 
+    reserved[index] = create_rootserver_objects(ui_reg.start, it_v_reg, extra_bi_size_bits);
+    index++;
     init_freemem(get_num_avail_p_regs(), get_avail_p_regs(), index, reserved);
 }
 
