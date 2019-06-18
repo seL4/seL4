@@ -43,38 +43,45 @@ BOOT_DATA static volatile int node_boot_lock = 0;
 #define MAX_RESERVED (ARCH_RESERVED + MODE_RESERVED)
 BOOT_DATA static region_t reserved[MAX_RESERVED];
 
-BOOT_CODE static void arch_init_freemem(region_t ui_reg, region_t dtb_reg, v_region_t it_v_reg,
+BOOT_CODE static void arch_init_freemem(p_region_t ui_p_reg, p_region_t dtb_p_reg, v_region_t it_v_reg,
                                         word_t extra_bi_size_bits)
 {
     reserved[0].start = kernelBase;
     reserved[0].end = (pptr_t)ki_end;
 
     int index = 1;
-    if (dtb_reg.start) {
+    if (dtb_p_reg.start) {
         /* the dtb region could be empty */
-        reserved[index].start = dtb_reg.start;
-        reserved[index].end = dtb_reg.end;
+        reserved[index].start = (pptr_t) paddr_to_pptr(dtb_p_reg.start);
+        reserved[index].end = (pptr_t) paddr_to_pptr(dtb_p_reg.end);
         index++;
     }
 
+    if (MODE_RESERVED > 1) {
+        printf("MODE_RESERVED > 1 unsupported!\n");
+        halt();
+    }
 
-    if (MODE_RESERVED == 1) {
-        if (ui_reg.end > mode_reserved_region[0].start) {
-            reserved[index] = mode_reserved_region[0];
-            reserved[index + 1].start = ui_reg.start;
-            reserved[index + 1].end = ui_reg.end;
+    if (ui_p_reg.start < PADDR_TOP) {
+        region_t ui_reg = paddr_to_pptr_reg(ui_p_reg);
+        if (MODE_RESERVED == 1) {
+            if (ui_reg.end > mode_reserved_region[0].start) {
+                reserved[index] = mode_reserved_region[0];
+                reserved[index + 1].start = ui_reg.start;
+                reserved[index + 1].end = ui_reg.end;
+            } else {
+                reserved[index].start = ui_reg.start;
+                reserved[index].end = ui_reg.end;
+                reserved[index + 1] = mode_reserved_region[0];
+            }
+            index += 2;
         } else {
             reserved[index].start = ui_reg.start;
             reserved[index].end = ui_reg.end;
-            reserved[index + 1] = mode_reserved_region[0];
+            index++;
         }
-        index += 2;
-    } else if (MODE_RESERVED > 1) {
-        printf("MODE_RESERVED > 1 unsupported!\n");
-        halt();
-    } else {
-        reserved[index].start = ui_reg.start;
-        reserved[index].end = ui_reg.end;
+    } else if (MODE_RESERVED == 1) {
+        reserved[index] = mode_reserved_region[0];
         index++;
     }
 
@@ -300,9 +307,10 @@ static BOOT_CODE bool_t try_init_kernel(
     cap_t it_ap_cap;
     cap_t it_pd_cap;
     cap_t ipcbuf_cap;
-    region_t ui_reg = paddr_to_pptr_reg((p_region_t) {
+    p_region_t ui_p_reg = (p_region_t) {
         ui_p_reg_start, ui_p_reg_end
-    });
+    };
+    region_t ui_reg = paddr_to_pptr_reg(ui_p_reg);
     region_t dtb_reg;
     word_t extra_bi_size;
     pptr_t extra_bi_offset = 0;
@@ -323,15 +331,16 @@ static BOOT_CODE bool_t try_init_kernel(
     extra_bi_frame_vptr = bi_frame_vptr + BIT(PAGE_BITS);
 
     /* If no DTB was provided, skip allocating extra bootinfo */
+    p_region_t dtb_p_reg = {
+        dtb_addr_start, ROUND_UP(dtb_addr_end, PAGE_BITS)
+    };
     if (dtb_addr_start == 0) {
         extra_bi_size = 0;
         dtb_reg = (region_t) {
             0, 0
         };
     } else {
-        dtb_reg = paddr_to_pptr_reg((p_region_t) {
-            dtb_addr_start, ROUND_UP(dtb_addr_end, PAGE_BITS)
-        });
+        dtb_reg = paddr_to_pptr_reg(dtb_p_reg);
         extra_bi_size = sizeof(seL4_BootInfoHeader) + (dtb_reg.end - dtb_reg.start);
     }
     word_t extra_bi_size_bits = calculate_extra_bi_size_bits(extra_bi_size);
@@ -359,8 +368,7 @@ static BOOT_CODE bool_t try_init_kernel(
     /* initialise the platform */
     init_plat();
 
-
-    arch_init_freemem(ui_reg, dtb_reg, it_v_reg, extra_bi_size_bits);
+    arch_init_freemem(ui_p_reg, dtb_p_reg, it_v_reg, extra_bi_size_bits);
 
     /* create the root cnode */
     root_cnode_cap = create_root_cnode();
