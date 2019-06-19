@@ -140,7 +140,10 @@ if(DEFINED KernelDTSList)
     )
     set(compatibility_outfile "${CMAKE_CURRENT_BINARY_DIR}/kernel_compat.txt")
     set(device_dest "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/devices_gen.h")
-    set(platform_yaml "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/platform_gen.yaml")
+    set(
+        platform_yaml "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/platform_gen.yaml"
+        CACHE INTERNAL "Location of platform YAML description"
+    )
     set(config_file "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware.yml")
     set(config_schema "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware_schema.yml")
 
