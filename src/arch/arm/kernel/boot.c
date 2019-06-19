@@ -67,14 +67,16 @@ BOOT_CODE static void arch_init_freemem(p_region_t ui_p_reg, p_region_t dtb_p_re
         if (MODE_RESERVED == 1) {
             if (ui_reg.end > mode_reserved_region[0].start) {
                 reserved[index] = mode_reserved_region[0];
-                reserved[index + 1].start = ui_reg.start;
-                reserved[index + 1].end = ui_reg.end;
+                index++;
+                reserved[index].start = ui_reg.start;
+                reserved[index].end = ui_reg.end;
             } else {
                 reserved[index].start = ui_reg.start;
                 reserved[index].end = ui_reg.end;
-                reserved[index + 1] = mode_reserved_region[0];
+                index++;
+                reserved[index] = mode_reserved_region[0];
             }
-            index += 2;
+            index++;
         } else {
             reserved[index].start = ui_reg.start;
             reserved[index].end = ui_reg.end;
