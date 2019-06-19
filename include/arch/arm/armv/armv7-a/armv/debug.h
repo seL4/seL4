@@ -25,8 +25,11 @@
 static inline word_t readDscrCp(void)
 {
     word_t v;
-
+#ifdef CONFIG_ARM_CORTEX_A8
+    MRC(DBGDSCR_int, v);
+#else
     MRC(DBGDSCR_ext, v);
+#endif
     return v;
 }
 

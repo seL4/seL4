@@ -31,7 +31,8 @@ static void check_export_pmu(void)
 #if defined CONFIG_EXPORT_PMU_USER || defined CONFIG_ENABLE_BENCHMARKS
     /* Export performance counters */
     uint32_t v;
-    v = PMUSERENR_ENABLE;
+    MRC(PMUSERENR, v);
+    v |= PMUSERENR_ENABLE;
     MCR(PMUSERENR, v);
 
     /* enable user-level pmu event counter if we're in secure mode */
