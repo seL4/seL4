@@ -70,7 +70,7 @@
 
 static volatile tk1_mc_regs_t *smmu_regs = (volatile tk1_mc_regs_t *)(SMMU_PPTR);
 
-static iopde_t *smmu_ioasid_to_pd[ARM_PLAT_NUM_SMMU];
+static char smmu_pds[ARM_PLAT_NUM_SMMU][BIT(SMMU_PD_INDEX_BITS)] ALIGN(BIT(SMMU_PD_INDEX_BITS));
 
 static void do_smmu_enable(void)
 {
@@ -157,15 +157,7 @@ BOOT_CODE int plat_smmu_init(void)
     smmu_disable();
 
     for (asid = SMMU_FIRST_ASID; asid <= SMMU_LAST_ASID; asid++) {
-        iopde_t *pd = (iopde_t *)alloc_region(SMMU_PD_INDEX_BITS);
-
-        if (pd == 0) {
-            printf("Failed to allocate SMMU IOPageDirectory for ASID %d\n", asid);
-            return 0;
-        }
-
-        /* put the PD in the lookup table */
-        smmu_ioasid_to_pd[asid - SMMU_FIRST_ASID] = pd;
+        iopde_t *pd = (iopde_t *) smmu_pds[asid - SMMU_FIRST_ASID];
 
         memset(pd, 0, BIT(SMMU_PD_INDEX_BITS));
         cleanCacheRange_RAM((word_t)pd, ((word_t)pd + BIT(SMMU_PD_INDEX_BITS)),
@@ -230,7 +222,7 @@ iopde_t *plat_smmu_lookup_iopd_by_asid(uint32_t asid)
     /* There should be no way to generate bad ASID values through the kernel
      * so this is an assertion and not a check */
     assert(asid >= SMMU_FIRST_ASID && asid <= SMMU_LAST_ASID);
-    return smmu_ioasid_to_pd[asid - SMMU_FIRST_ASID];
+    return (iopde_t *) smmu_pds[asid - SMMU_FIRST_ASID];
 }
 
 void plat_smmu_handle_interrupt(void)
