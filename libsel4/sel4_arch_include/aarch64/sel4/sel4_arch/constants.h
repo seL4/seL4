@@ -105,15 +105,16 @@ enum {
     /* thread pointer/ID registers EL0/EL1 */
     seL4_VCPUReg_TPIDR_EL1,
 
-    /* generic timer registers, to be completed */
-    seL4_VCPUReg_CNTV_CTL,
-    seL4_VCPUReg_CNTV_TVAL,
-    seL4_VCPUReg_CNTV_CVAL,
-
     /* general registers x0 to x30 have been saved by traps.S */
     seL4_VCPUReg_SP_EL1,
     seL4_VCPUReg_ELR_EL1,
     seL4_VCPUReg_SPSR_EL1, // 32-bit
+
+    /* generic timer registers, to be completed */
+    seL4_VCPUReg_CNTV_CTL,
+    seL4_VCPUReg_CNTV_CVAL,
+    seL4_VCPUReg_CNTVOFF,
+
     seL4_VCPUReg_Num,
 } seL4_VCPUReg;
 

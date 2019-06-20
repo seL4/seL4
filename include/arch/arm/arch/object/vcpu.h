@@ -61,7 +61,14 @@ struct gicVCpuIface {
     virq_t lr[GIC_VCPU_MAX_NUM_LR];
 };
 
+#ifdef CONFIG_VTIMER_UPDATE_VOFFSET
+struct vTimer {
+    uint64_t last_pcount;
+};
+#endif
+
 enum VPPIEventIRQ {
+    VPPIEventIRQ_VTimer,
     n_VPPIEventIRQ,
     VPPIEventIRQ_invalid = n_VPPIEventIRQ,
 };
@@ -73,6 +80,9 @@ struct vcpu {
     struct gicVCpuIface vgic;
     word_t regs[seL4_VCPUReg_Num];
     bool_t vppi_masked[n_VPPIEventIRQ];
+#ifdef CONFIG_VTIMER_UPDATE_VOFFSET
+    struct vTimer virtTimer;
+#endif
 };
 typedef struct vcpu vcpu_t;
 compile_assert(vcpu_size_correct, sizeof(struct vcpu) <= BIT(VCPU_SIZE_BITS))
@@ -174,6 +184,9 @@ static inline void vcpu_write_reg(vcpu_t *vcpu, word_t reg, word_t value)
 static inline VPPIEventIRQ_t irqVPPIEventIndex(irq_t irq)
 {
     switch (IRQT_TO_IRQ(irq)) {
+    case INTERRUPT_VTIMER_EVENT:
+        return VPPIEventIRQ_VTimer;
+
     default:
         return VPPIEventIRQ_invalid;
     }

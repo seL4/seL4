@@ -17,8 +17,7 @@
 #include <arch/machine/debug.h> /* Arch_debug[A/Di]ssociateVCPUTCB() */
 #include <arch/machine/debug_conf.h>
 #include <arch/machine/gic_v2.h>
-
-
+#include <drivers/timer/arm_generic.h>
 
 BOOT_CODE void vcpu_boot_init(void)
 {
@@ -46,6 +45,7 @@ static void vcpu_save(vcpu_t *vcpu, bool_t active)
     if (active) {
         vcpu_save_reg(vcpu, seL4_VCPUReg_SCTLR);
         vcpu->vgic.hcr = get_gic_vcpu_ctrl_hcr();
+        save_virt_timer(vcpu);
     }
 
     /* Store GIC VCPU control state */
@@ -205,6 +205,10 @@ void vcpu_init(vcpu_t *vcpu)
     armv_vcpu_init(vcpu);
     /* GICH VCPU interface control */
     vcpu->vgic.hcr = VGIC_HCR_EN;
+#ifdef CONFIG_VTIMER_UPDATE_VOFFSET
+    /* Virtual Timer interface */
+    vcpu->virtTimer.last_pcount = 0;
+#endif
 }
 
 void vcpu_switch(vcpu_t *new)

@@ -18,6 +18,7 @@
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 
 #include <arch/object/vcpu.h>
+#include <drivers/timer/arm_generic.h>
 
 /* Trap WFI/WFE/SMC and override CPSR.AIF */
 #define HCR_COMMON ( HCR_TSC | HCR_TWE | HCR_TWI | HCR_AMO | HCR_IMO \
@@ -296,6 +297,85 @@ static inline void set_cntv_ctl(word_t val)
     MCR(CNTV_CTL, val);
 }
 
+static inline void set_cntv_cval_64(uint64_t val)
+{
+    MCRR(CNTV_CVAL, val);
+}
+
+static inline uint64_t get_cntv_cval_64(void)
+{
+    uint64_t ret = 0;
+    MRRC(CNTV_CVAL, ret);
+    return ret;
+}
+
+static inline void set_cntv_cval_high(word_t val)
+{
+    uint64_t ret = get_cntv_cval_64();
+    uint64_t cval_high = (uint64_t) val << 32 ;
+    uint64_t cval_low = (ret << 32) >> 32;
+    set_cntv_cval_64(cval_high | cval_low);
+}
+
+static inline word_t get_cntv_cval_high(void)
+{
+    uint64_t ret = get_cntv_cval_64();
+    return (word_t)(ret >> 32);
+}
+
+static inline void set_cntv_cval_low(word_t val)
+{
+    uint64_t ret = get_cntv_cval_64();
+    uint64_t cval_high = (ret >> 32) << 32;
+    uint64_t cval_low = (uint64_t) val;
+    set_cntv_cval_64(cval_high | cval_low);
+}
+
+static inline word_t get_cntv_cval_low(void)
+{
+    uint64_t ret = get_cntv_cval_64();
+    return (word_t) ret;
+}
+
+static inline void set_cntv_off_64(uint64_t val)
+{
+    MCRR(CNTVOFF, val);
+}
+
+static inline uint64_t get_cntv_off_64(void)
+{
+    uint64_t ret = 0;
+    MRRC(CNTVOFF, ret);
+    return ret;
+}
+
+static inline void set_cntv_off_high(word_t val)
+{
+    uint64_t ret = get_cntv_off_64();
+    uint64_t cv_off_high = (uint64_t) val << 32 ;
+    uint64_t cv_off_low = (ret << 32) >> 32;
+    set_cntv_off_64(cv_off_high | cv_off_low);
+}
+
+static inline word_t get_cntv_off_high(void)
+{
+    uint64_t ret = get_cntv_off_64();
+    return (word_t)(ret >> 32);
+}
+
+static inline void set_cntv_off_low(word_t val)
+{
+    uint64_t ret = get_cntv_off_64();
+    uint64_t cv_off_high = (ret >> 32) << 32;
+    uint64_t cv_off_low = (uint64_t) val;
+    set_cntv_off_64(cv_off_high | cv_off_low);
+}
+
+static inline word_t get_cntv_off_low(void)
+{
+    uint64_t ret = get_cntv_off_64();
+    return (word_t) ret;
+}
 
 static word_t vcpu_hw_read_reg(word_t reg_index)
 {
@@ -337,10 +417,6 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
         return readTPIDRURO();
     case seL4_VCPUReg_FPEXC:
         return reg;
-    case seL4_VCPUReg_CNTV_TVAL:
-        return get_cntv_tval();
-    case seL4_VCPUReg_CNTV_CTL:
-        return get_cntv_ctl();
     case seL4_VCPUReg_LRsvc:
         return get_lr_svc();
     case seL4_VCPUReg_SPsvc:
@@ -381,6 +457,16 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
         return get_spsr_irq();
     case seL4_VCPUReg_SPSRfiq:
         return get_spsr_fiq();
+    case seL4_VCPUReg_CNTV_CTL:
+        return get_cntv_ctl();
+    case seL4_VCPUReg_CNTV_CVALhigh:
+        return get_cntv_cval_high();
+    case seL4_VCPUReg_CNTV_CVALlow:
+        return get_cntv_cval_low();
+    case seL4_VCPUReg_CNTVOFFhigh:
+        return get_cntv_off_high();
+    case seL4_VCPUReg_CNTVOFFlow:
+        return get_cntv_off_low();
     default:
         fail("ARM/HYP: Invalid register index");
     }
@@ -442,12 +528,6 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
         break;
     case seL4_VCPUReg_FPEXC:
         break;
-    case seL4_VCPUReg_CNTV_TVAL:
-        set_cntv_tval(reg);
-        break;
-    case seL4_VCPUReg_CNTV_CTL:
-        set_cntv_ctl(reg);
-        break;
     case seL4_VCPUReg_LRsvc:
         set_lr_svc(reg);
         break;
@@ -507,6 +587,21 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
         break;
     case seL4_VCPUReg_SPSRfiq:
         set_spsr_fiq(reg);
+        break;
+    case seL4_VCPUReg_CNTV_CTL:
+        set_cntv_ctl(reg);
+        break;
+    case seL4_VCPUReg_CNTV_CVALhigh:
+        set_cntv_cval_high(reg);
+        break;
+    case seL4_VCPUReg_CNTV_CVALlow:
+        set_cntv_cval_low(reg);
+        break;
+    case seL4_VCPUReg_CNTVOFFhigh:
+        set_cntv_off_high(reg);
+        break;
+    case seL4_VCPUReg_CNTVOFFlow:
+        set_cntv_off_low(reg);
         break;
     default:
         fail("ARM/HYP: Invalid register index");
@@ -657,6 +752,9 @@ static inline void vcpu_enable(vcpu_t *vcpu)
     vcpu->vcpuTCB->tcbArch.tcbContext.fpuState.fpexc = vcpu_read_reg(vcpu, seL4_VCPUReg_FPEXC);
     access_fpexc(vcpu, true);
 #endif
+    /* Restore virtual timer state */
+    restore_virt_timer(vcpu);
+
 }
 
 static inline void vcpu_disable(vcpu_t *vcpu)
@@ -699,6 +797,12 @@ static inline void vcpu_disable(vcpu_t *vcpu)
     setHDCRTrapDebugExceptionState(true);
 #endif
     isb();
+    if (likely(vcpu)) {
+        /* Save virtual timer state */
+        save_virt_timer(vcpu);
+        /* Mask the virtual timer interrupt */
+        maskInterrupt(true, CORE_IRQ_TO_IRQT(CURRENT_CPU_INDEX(), INTERRUPT_VTIMER_EVENT));
+    }
 }
 
 static inline void armv_vcpu_init(vcpu_t *vcpu)

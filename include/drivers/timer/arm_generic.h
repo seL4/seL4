@@ -51,4 +51,10 @@ static inline void resetTimer(void)
 
 BOOT_CODE void initGenericTimer(void);
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+static uint64_t read_cntpct(void) UNUSED;
+static void save_virt_timer(vcpu_t *vcpu);
+static void restore_virt_timer(vcpu_t *vcpu);
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
+
 #endif /* __DRIVERS_TIMER_ARM_GENERIC_H_ */

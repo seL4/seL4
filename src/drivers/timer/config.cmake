@@ -117,3 +117,12 @@ config_option(
     DEFAULT OFF
     DEPENDS "KernelArmHaveGenericTimer"
 )
+
+config_option(
+    KernelArmVtimerUpdateVOffset VTIMER_UPDATE_VOFFSET
+    "When set the kernel will update the VOFFSET \
+    register of a VCPU when restoring it so that its view of Virtual time hasn't increased while it \
+    was suspended.  When unset the VOFFSET won't be updated other than by the read and write register api."
+    DEFAULT ON
+    DEPENDS "KernelArmHypervisorSupport"
+)

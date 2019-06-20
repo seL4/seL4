@@ -108,6 +108,9 @@ Upcoming release: BINARY COMPATIBLE
       VCPU faults for these interrupt numbers.
     - Additionally a new VCPU invocation is introduced: seL4_ARM_VCPU_AckVPPI.
       This is used to acknowledge a virtual PPI that was delivered as a fault.
+* Virtualise Arm VTimer and Vtimer interrupts to support sharing across VCPUs.
+  - A VCPU will now save and restore VTimer registers for the generic timer and also deliver a VTimer IRQ via a
+    seL4_Fault_VPPIEvent fault. This enables multiple VCPUs bound to the same physical core to share this device.
 
 ## Upgrade Notes
 

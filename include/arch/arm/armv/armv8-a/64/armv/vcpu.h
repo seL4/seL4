@@ -18,6 +18,7 @@
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 
 #include <arch/object/vcpu.h>
+#include <drivers/timer/arm_generic.h>
 
 /* Note that the HCR_DC for ARMv8 disables S1 translation if enabled */
 /* Trap WFI/WFE/SMC and override CPSR.AIF */
@@ -112,6 +113,8 @@
 #define REG_CPACR_EL1       "cpacr_el1"
 #define REG_CNTV_TVAL_EL0   "cntv_tval_el0"
 #define REG_CNTV_CTL_EL0    "cntv_ctl_el0"
+#define REG_CNTV_CVAL_EL0   "cntv_cval_el0"
+#define REG_CNTVOFF_EL2     "cntvoff_el2"
 #define REG_HCR_EL2         "hcr_el2"
 #define REG_VTCR_EL2        "vtcr_el2"
 #define REG_ID_AA64MMFR0_EL1 "id_aa64mmfr0_el1"
@@ -351,6 +354,30 @@ static inline void writeCNTV_CTL_EL0(word_t reg)
     MSR(REG_CNTV_CTL_EL0, reg);
 }
 
+static inline word_t readCNTV_CVAL_EL0(void)
+{
+    word_t reg;
+    MRS(REG_CNTV_CVAL_EL0, reg);
+    return reg;
+}
+
+static inline void writeCNTV_CVAL_EL0(word_t reg)
+{
+    MSR(REG_CNTV_CVAL_EL0, reg);
+}
+
+static inline word_t readCNTVOFF_EL2(void)
+{
+    word_t reg;
+    MRS(REG_CNTVOFF_EL2, reg);
+    return reg;
+}
+
+static inline void writeCNTVOFF_EL2(word_t reg)
+{
+    MSR(REG_CNTVOFF_EL2, reg);
+}
+
 static word_t vcpu_hw_read_reg(word_t reg_index)
 {
     word_t reg = 0;
@@ -387,18 +414,18 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
         return readVBAR();
     case seL4_VCPUReg_TPIDR_EL1:
         return readTPIDR_EL1();
-    case seL4_VCPUReg_CNTV_TVAL:
-        return readCNTV_TVAL_EL0();
-    case seL4_VCPUReg_CNTV_CTL:
-        return readCNTV_CTL_EL0();
-    case seL4_VCPUReg_CNTV_CVAL:
-        return 0;
     case seL4_VCPUReg_SP_EL1:
         return readSP_EL1();
     case seL4_VCPUReg_ELR_EL1:
         return readELR_EL1();
     case seL4_VCPUReg_SPSR_EL1:
         return readSPSR_EL1();
+    case seL4_VCPUReg_CNTV_CTL:
+        return readCNTV_CTL_EL0();
+    case seL4_VCPUReg_CNTV_CVAL:
+        return readCNTV_CVAL_EL0();
+    case seL4_VCPUReg_CNTVOFF:
+        return readCNTVOFF_EL2();
     default:
         fail("ARM/HYP: Invalid register index");
     }
@@ -442,18 +469,18 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
         return writeVBAR(reg);
     case seL4_VCPUReg_TPIDR_EL1:
         return writeTPIDR_EL1(reg);
-    case seL4_VCPUReg_CNTV_TVAL:
-        return writeCNTV_TVAL_EL0(reg);
-    case seL4_VCPUReg_CNTV_CTL:
-        return writeCNTV_CTL_EL0(reg);
-    case seL4_VCPUReg_CNTV_CVAL:
-        return;
     case seL4_VCPUReg_SP_EL1:
         return writeSP_EL1(reg);
     case seL4_VCPUReg_ELR_EL1:
         return writeELR_EL1(reg);
     case seL4_VCPUReg_SPSR_EL1:
         return writeSPSR_EL1(reg);
+    case seL4_VCPUReg_CNTV_CTL:
+        return writeCNTV_CTL_EL0(reg);
+    case seL4_VCPUReg_CNTV_CVAL:
+        return writeCNTV_CVAL_EL0(reg);
+    case seL4_VCPUReg_CNTVOFF:
+        return writeCNTVOFF_EL2(reg);
     default:
         fail("ARM/HYP: Invalid register index");
     }
@@ -531,6 +558,8 @@ static inline void vcpu_enable(vcpu_t *vcpu)
 #ifdef CONFIG_HAVE_FPU
     vcpu_restore_reg(vcpu, seL4_VCPUReg_CPACR);
 #endif
+    /* Restore virtual timer state */
+    restore_virt_timer(vcpu);
 }
 
 static inline void vcpu_disable(vcpu_t *vcpu)
@@ -564,6 +593,12 @@ static inline void vcpu_disable(vcpu_t *vcpu)
      */
     enableFpuEL01();
 #endif
+    if (likely(vcpu)) {
+        /* Save virtual timer state */
+        save_virt_timer(vcpu);
+        /* Mask the virtual timer interrupt */
+        maskInterrupt(true, CORE_IRQ_TO_IRQT(CURRENT_CPU_INDEX(), INTERRUPT_VTIMER_EVENT));
+    }
 }
 
 static inline void armv_vcpu_init(vcpu_t *vcpu)

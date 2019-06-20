@@ -103,8 +103,6 @@ enum {
     seL4_VCPUReg_TPIDRPRW,
     seL4_VCPUReg_TPIDRURO,
     seL4_VCPUReg_FPEXC,
-    seL4_VCPUReg_CNTV_TVAL,
-    seL4_VCPUReg_CNTV_CTL,
     seL4_VCPUReg_LRsvc,
     seL4_VCPUReg_SPsvc,
     seL4_VCPUReg_LRabt,
@@ -125,6 +123,11 @@ enum {
     seL4_VCPUReg_SPSRund,
     seL4_VCPUReg_SPSRirq,
     seL4_VCPUReg_SPSRfiq,
+    seL4_VCPUReg_CNTV_CTL,
+    seL4_VCPUReg_CNTV_CVALhigh,
+    seL4_VCPUReg_CNTV_CVALlow,
+    seL4_VCPUReg_CNTVOFFhigh,
+    seL4_VCPUReg_CNTVOFFlow,
     seL4_VCPUReg_Num,
 } seL4_VCPUReg;
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
