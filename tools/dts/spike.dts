@@ -1,0 +1,56 @@
+/*
+ * The code contained herein is licensed under the GNU General Public
+ * License. You may obtain a copy of the GNU General Public License
+ * Version 2 or later at the following locations:
+ *
+ * http://www.opensource.org/licenses/gpl-license.html
+ * http://www.gnu.org/copyleft/gpl.html
+ *
+ * @TAG(OTHER_GPL)
+ */
+
+/dts-v1/;
+
+/ {
+  #address-cells = <0x00000002>;
+  #size-cells = <0x00000002>;
+  compatible = "ucbbar,spike-bare-dev";
+  model = "ucbbar,spike-bare,qemu";
+  chosen {
+    bootargs = "";
+  };
+  cpus {
+    #address-cells = <0x00000001>;
+    #size-cells = <0x00000000>;
+    timebase-frequency = <0x00989680>;
+    cpu@0 {
+      device_type = "cpu";
+      reg = <0x00000000>;
+      status = "okay";
+      compatible = "riscv";
+      riscv,isa = "rv64imafdcsu";
+      mmu-type = "riscv,sv48";
+      clock-frequency = <0x3b9aca00>;
+      interrupt-controller {
+        #interrupt-cells = <0x00000001>;
+        interrupt-controller;
+        compatible = "riscv,cpu-intc";
+        linux,phandle = <0x00000001>;
+        phandle = <0x00000001>;
+      };
+    };
+  };
+  memory@80000000 {
+    device_type = "memory";
+    reg = <0x00000000 0x80000000 0x00000000 0xfff00000>;
+  };
+  soc {
+    #address-cells = <0x00000002>;
+    #size-cells = <0x00000002>;
+    compatible = "simple-bus";
+    ranges;
+  };
+  htif {
+    compatible = "ucb,htif0";
+  };
+};

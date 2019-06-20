@@ -21,4 +21,18 @@
 #define LOAD  lw
 #define STORE sw
 
+/* Contain the typical location of memory */
+#define PADDR_BASE 0x80000000lu
+/* This represents the physical address that the kernel image will be linked to. This needs to
+ * be on a 1gb boundary as we currently require being able to creating a mapping to this address
+ * as the largest frame size */
+#define PADDR_LOAD 0x84000000
+/* This is the base of the kernel window, which is directly mapped to PADDR_BASE */
+#define PPTR_BASE  seL4_UserTop
+/* This is the mapping of the kernel (mapped above the kernel window currently) */
+#define KERNEL_BASE 0xFF800000
+#define KERNEL_ELF_BASE KERNEL_BASE
+/* Start of kernel device mapping region in highest 4MiB of memory. */
+#define KDEV_PPTR 0xFFC00000
+
 #endif /* __ARCH_MODE_HARDWARE_H */

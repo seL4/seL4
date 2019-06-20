@@ -20,21 +20,11 @@ OUTPUT_ARCH(riscv)
 ENTRY(_start)
 
 #include <config.h>
+#define __ASSEMBLER__
+#include <mode/hardware.h>
+#include <sel4/plat/api/constants.h>
+#include <plat/machine/devices_gen.h>
 
-#if CONFIG_PT_LEVELS == 2
-KERNEL_ELF_BASE  = 0xFF800000;
-#elif CONFIG_PT_LEVELS == 3
-KERNEL_ELF_BASE  = 0xFFFFFFFF84000000;
-#elif CONFIG_PT_LEVELS == 4
-#error PT_LEVELS == 4 is not supported yet
-#endif
-
-/* WARNING: constants also defined in plat/machine/hardware.h */
-#ifdef CONFIG_BUILD_ROCKET_CHIP_ZEDBOARD
-PADDR_LOAD     = 0x0000000088000000;
-#else
-PADDR_LOAD     = 0x0000000084000000;
-#endif
 KERNEL_OFFSET = KERNEL_ELF_BASE - PADDR_LOAD;
 
 SECTIONS

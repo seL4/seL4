@@ -46,4 +46,9 @@ typedef dom_t seL4_Domain;
 
 #define wordBits BIT(wordRadix)
 
+typedef struct kernel_frame {
+    paddr_t paddr;
+    pptr_t pptr;
+} kernel_frame_t;
+
 #endif

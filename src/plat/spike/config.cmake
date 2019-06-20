@@ -16,6 +16,9 @@ cmake_minimum_required(VERSION 3.7.2)
 
 if(KernelPlatformSpike)
     config_set(KernelPlatform PLAT "spike")
+    list(APPEND KernelDTSList "tools/dts/spike.dts")
+    declare_default_headers(TIMER_FREQUENCY 10000000llu PLIC_MAX_NUM_INT 2
+	    INTERRUPT_CONTROLLER arch/machine/plic.h)
 endif()
 
 config_choice(
@@ -35,7 +38,6 @@ config_string(
 
 set(DefaultFirstHartID 0)
 # Include all of the different instances of the Spike platform
-include(src/plat/spike/instance/qemu/config.cmake)
 include(src/plat/spike/instance/rocket-chip/config.cmake)
 include(src/plat/spike/instance/freedom/config.cmake)
 
@@ -45,4 +47,3 @@ config_string(
     UNQUOTE
 )
 
-add_sources(DEP "KernelPlatformSpike" CFILES src/plat/spike/machine/hardware.c)

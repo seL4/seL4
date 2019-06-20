@@ -12,6 +12,4 @@
 #ifndef __ARCH_MACHINE_TIMER_H
 #define __ARCH_MACHINE_TIMER_H
 
-#include <plat/machine/timer.h>
-
 #endif /* __ARCH_MACHINE_TIMER_H */

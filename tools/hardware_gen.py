@@ -833,6 +833,7 @@ HEADER_TEMPLATE = """
 
 #ifndef __ASSEMBLER__
 
+{% if kernel -%}
 static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
 {% for reg in kernel %}{{ reg.get_macro_string() }}
     { /* {{ ' '.join(sorted(reg.names)) }} */
@@ -843,13 +844,18 @@ static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
       /* region contains {{ ', '.join(reg.var_names) }} */
       {{ "KDEV_PPTR + 0x%x" % reg.kaddr }},
       {%- endif %}
+      {% if args.arch == 'arm' -%}
       {{ "true" if reg.executeNever else "false" }} /* armExecuteNever */
+      {%- endif %}
     },
 {% if reg.get_macro_end() -%}
 {{ reg.get_macro_end()}}
 {% endif -%}
 {% endfor %}
 };
+{% else -%}
+static const kernel_frame_t BOOT_RODATA *kernel_devices = NULL;
+{% endif -%}
 
 static const p_region_t BOOT_RODATA avail_p_regs[] = {
     {%- for reg in memory %}
@@ -857,6 +863,7 @@ static const p_region_t BOOT_RODATA avail_p_regs[] = {
     {%- endfor %}
 };
 
+{% if devices -%}
 static const p_region_t BOOT_RODATA dev_p_regs[] = {
     {%- for reg in devices %}
     {%- if reg.user_macro %}
@@ -868,6 +875,9 @@ static const p_region_t BOOT_RODATA dev_p_regs[] = {
     {%- endif %}
     {%- endfor %}
 };
+{% else -%}
+static const p_region_t BOOT_RODATA *dev_p_regs = NULL;
+{% endif -%}
 
 #endif /* !__ASSEMBLER__ */
 
@@ -891,10 +901,12 @@ static const p_region_t BOOT_RODATA dev_p_regs[] = {
 
 
 def add_build_rules(devices, output):
-    devices[-1] = devices[-1] + ";"
-    # print result to cmake variable
-    print(';'.join(devices), file=output)
+    if devices:
+       devices[-1] = devices[-1] + ";"
+       # print result to cmake variable
+       print(';'.join(devices), file=output)
 
+MEGA_PAGE_SIZE = 0x200000
 
 def output_regions(args, devices, memory, kernel, irqs, fp):
     """ generate the device list for the C header file """
@@ -929,14 +941,22 @@ def output_regions(args, devices, memory, kernel, irqs, fp):
 
     kernel += extra_kernel
     kernel.sort(key=lambda a: a.start)
-    # make sure physBase is at least 16MB (supersection) aligned for the ELF loader's sake.
-    # TODO: this may need to be larger for aarch64. It seems to work OK on currently supported platforms though.
-    #
-    # XXX: This also assumes that the kernel image is the first memory region
-    # described, and propgates that assumption forward.  What enforces that?
-    paddr = align_up(memory[0].start, 1 << args.phys_align)
-    memory[0].size -= paddr - memory[0].start
-    memory[0].start = paddr
+    if args.arch == 'arm':
+        # make sure physBase is at least 16MB (supersection) aligned for the ELF loader's sake.
+        # TODO: this may need to be larger for aarch64. It seems to work OK on currently supported platforms though.
+        #
+        # XXX: This also assumes that the kernel image is the first memory region
+        # described, and propagates that assumption forward.  What enforces that?
+        paddr = align_up(memory[0].start, 1 << args.phys_align)
+        memory[0].size -= paddr - memory[0].start
+        memory[0].start = paddr
+    elif args.arch == 'riscv':
+        # BBL is loaded to the physical memory starting from "memory[0].start".
+        # Moving up the start to skip the BBL memory, making it unavailable
+        # to the kernel.
+        paddr = memory[0].start
+        memory[0].start += MEGA_PAGE_SIZE
+        memory[0].size -= MEGA_PAGE_SIZE
 
     # Write out what we need to consume in YAML format.
     yaml_out = {
@@ -1036,6 +1056,7 @@ if __name__ == '__main__':
     parser.add_argument('--page-bits', help='number of bits per page', default=12, type=int)
     parser.add_argument(
         '--phys-align', help='alignment in bits of the base address of the kernel', default=24, type=int)
+    parser.add_argument('--arch', help='arch of the targeting platform', default="arm")
     args = parser.parse_args()
     main(args)
 else:

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Data61
+ * Copyright 2019, Data61
  * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
  * ABN 41 687 119 230.
  *
@@ -9,18 +9,6 @@
  *
  * @TAG(DATA61_GPL)
  */
-
-/*
- *
- * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
- * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
- */
-
-#ifndef __PLAT_MACHINE_H
-#define __PLAT_MACHINE_H
-
-#ifndef __ASSEMBLER__
-
 
 /*
  * RISC-V defines a Platform-level interrupt controller (PLIC) (priv-1.10).
@@ -53,44 +41,25 @@
  *   void plic_init_controller(void): Perform PLIC initialisation during boot.
  */
 typedef uint32_t interrupt_t;
-typedef uint32_t irq_t;
 
-enum irqNumbers {
-    irqInvalid = 0
-};
+static inline interrupt_t plic_get_claim(void)
+{
+    return irqInvalid;
+}
 
-#if defined(CONFIG_BUILD_SPIKE_QEMU)
-#include <plat/instance/qemu/hardware.h>
-#elif defined(CONFIG_BUILD_ROCKET_CHIP_ZEDBOARD)
-#include <plat/instance/rocket-chip/hardware.h>
-#elif defined(CONFIG_BUILD_HI_FIVE_UNLEASHED)
-#include <plat/instance/hifive/hardware.h>
-#else
-#error "Unsupported spike platform chosen"
+static inline void plic_complete_claim(interrupt_t irq)
+{
+}
+
+static inline void plic_mask_irq(bool_t disable, interrupt_t irq)
+{
+}
+
+#ifdef HAVE_SET_TRIGGER
+static inline void plic_irq_set_trigger(interrupt_t irq, bool_t edge_triggered);
 #endif
 
-/*
- * seL4 assigns all IRQs global interrupt numbers that are used in interrupt
- * invocations. On RISC-V we have 3 different types of interrupts: core timer,
- * core software generated, and global external IRQs delivered through the PLIC.
- * Only global external interrupts are available from user level and so it is
- * nice to be able to match PLIC IRQ numbers to seL4 IRQ numbers. The PLIC uses
- * IRQ 0 to refer to no IRQ pending and so we can also use 0 for irqInvalid in
- * the global IRQ number space and not have any aliasing issues. We then place
- * the kernel timer interrupts after the last PLIC interrupt and intend on
- * placing software generated interrupts after this in the future. As the kernel
- * timer and SGI interrupts are never seen outside of the kernel, it doesn't
- * matter what number they get assigned to as we can refer to them by their enum
- * field name.
- */
-enum IRQConstants {
-    PLIC_IRQ_OFFSET = 0,
-    PLIC_MAX_IRQ = PLIC_IRQ_OFFSET + PLIC_MAX_NUM_INT,
-    INTERRUPT_CORE_TIMER,
-    maxIRQ = INTERRUPT_CORE_TIMER,
-} platform_interrupt_t;
+static inline void plic_init_controller(void)
+{
+}
 
-#define KERNEL_TIMER_IRQ INTERRUPT_CORE_TIMER
-
-#endif /* !__ASSEMBLER__ */
-#endif

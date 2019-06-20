@@ -68,36 +68,6 @@ elseif(KernelSel4ArchAarch64)
     set_kernel_64()
 endif()
 
-function(declare_default_headers)
-    cmake_parse_arguments(
-        PARSE_ARGV
-        0
-        CONFIGURE
-        ""
-        "TIMER_FREQUENCY;MAX_IRQ;INTERRUPT_CONTROLLER;TIMER;SMMU"
-        ""
-    )
-    # calculate the irq cnode size based on MAX_IRQ
-    set(BITS "0")
-    set(MAX "${CONFIGURE_MAX_IRQ}")
-    while(MAX GREATER "0")
-        math(EXPR BITS "${BITS} + 1")
-        math(EXPR MAX "${MAX} >> 1")
-    endwhile()
-    math(EXPR SLOTS "1 << ${BITS}")
-    if("${SLOTS}" LESS "${CONFIGURE_MAX_IRQ}")
-        math(EXPR BITS "${BITS} + 1")
-    endif()
-    set(CONFIGURE_IRQ_SLOT_BITS "${BITS}")
-    # variables parsed by the above will be prepended with CONFIGURE_, so pipe them
-    # straight to configure_file
-    configure_file(
-        src/arch/arm/platform_gen.h.in ${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/platform_gen.h
-        @ONLY
-    )
-    include_directories(include/plat/default)
-endfunction()
-
 # Include all the platforms. For all of the common variables we set a default value here
 # and let the platforms override them.
 set(KernelArmMachFeatureModifiers "" CACHE INTERNAL "")
@@ -132,79 +102,6 @@ include(src/plat/tx2/config.cmake)
 include(src/plat/zynq7000/config.cmake)
 include(src/plat/zynqmp/config.cmake)
 include(src/plat/odroidc2/config.cmake)
-
-if(DEFINED KernelDTSList)
-    set(KernelDTSIntermediate "${CMAKE_CURRENT_BINARY_DIR}/kernel.dts")
-    set(
-        KernelDTBPath "${CMAKE_CURRENT_BINARY_DIR}/kernel.dtb"
-        CACHE INTERNAL "Location of kernel DTB file"
-    )
-    set(compatibility_outfile "${CMAKE_CURRENT_BINARY_DIR}/kernel_compat.txt")
-    set(device_dest "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/devices_gen.h")
-    set(
-        platform_yaml "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/platform_gen.yaml"
-        CACHE INTERNAL "Location of platform YAML description"
-    )
-    set(config_file "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware.yml")
-    set(config_schema "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware_schema.yml")
-
-    find_program(DTC_TOOL dtc)
-    if("${DTC_TOOL}" STREQUAL "DTC_TOOL-NOTFOUND")
-        message(FATAL_ERROR "Cannot find 'dtc' program.")
-    endif()
-
-    # Generate final DTS based on Linux DTS + seL4 overlay[s]
-    foreach(entry ${KernelDTSList})
-        get_absolute_source_or_binary(dts_tmp ${entry})
-        list(APPEND dts_list "${dts_tmp}")
-    endforeach()
-
-    check_outfile_stale(regen ${KernelDTBPath} dts_list ${CMAKE_CURRENT_BINARY_DIR}/dts.cmd)
-    if(regen)
-        file(REMOVE "${KernelDTSIntermediate}")
-        foreach(entry ${dts_list})
-            file(READ ${entry} CONTENTS)
-            file(APPEND "${KernelDTSIntermediate}" "${CONTENTS}")
-        endforeach()
-        # Compile DTS to DTB
-        execute_process(
-            COMMAND
-                ${DTC_TOOL} -q -I dts -O dtb -o ${KernelDTBPath} ${KernelDTSIntermediate}
-        )
-    endif()
-
-    set(deps ${KernelDTBPath} ${config_file} ${config_schema} ${HARDWARE_GEN_PATH})
-    check_outfile_stale(regen ${device_dest} deps ${CMAKE_CURRENT_BINARY_DIR}/gen_header.cmd)
-    if(regen)
-        # Generate devices_gen header based on DTB
-        message(STATUS "${device_dest} is out of date. Regenerating...")
-        file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/")
-        execute_process(
-            COMMAND
-                ${PYTHON} "${HARDWARE_GEN_PATH}" --dtb "${KernelDTBPath}" --compatibility-strings
-                "${compatibility_outfile}" --output "${device_dest}" --config "${config_file}"
-                --schema "${config_schema}" --yaml "${platform_yaml}"
-            INPUT_FILE /dev/stdin
-            OUTPUT_FILE /dev/stdout
-            ERROR_FILE /dev/stderr
-            RESULT_VARIABLE error
-        )
-        if(error)
-            message(FATAL_ERROR "Failed to generate: ${device_dest}")
-        endif()
-    endif()
-    file(READ "${compatibility_outfile}" compatibility_strings)
-
-    # Mark all file dependencies as CMake rerun dependencies.
-    set(cmake_deps ${deps} ${KernelDTSIntermediate} ${KernelDTSList} ${compatibility_outfile})
-    set_property(
-        DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-        APPEND
-        PROPERTY CMAKE_CONFIGURE_DEPENDS ${cmake_deps}
-    )
-
-    include(src/drivers/config.cmake)
-endif()
 
 # Now enshrine all the common variables in the config
 config_set(KernelArmCortexA7 ARM_CORTEX_A7 "${KernelArmCortexA7}")

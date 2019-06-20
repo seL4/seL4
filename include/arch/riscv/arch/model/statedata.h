@@ -26,7 +26,6 @@
 #include <util.h>
 #include <object/structures.h>
 #include <arch/types.h>
-#include <plat/machine/devices.h>
 
 
 NODE_STATE_BEGIN(archNodeState)

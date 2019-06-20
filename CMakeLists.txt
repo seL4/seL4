@@ -510,6 +510,8 @@ set_property(SOURCE kernel_all.i PROPERTY LANGUAGE C)
 
 if(KernelArchARM)
     set(linker_source "src/arch/arm/common_arm.lds")
+elseif(KernelArchRiscV)
+    set(linker_source "src/arch/riscv/common_riscv.lds")
 else()
     set(linker_source "src/plat/${KernelPlatform}/linker.lds")
 endif()

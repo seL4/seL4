@@ -131,6 +131,47 @@ static inline void Arch_finaliseInterrupt(void)
 {
 }
 
-#endif // __ASSEMBLER__
+int get_num_avail_p_regs(void);
+p_region_t *get_avail_p_regs(void);
+int get_num_dev_p_regs(void);
+p_region_t get_dev_p_reg(word_t i);
+void map_kernel_devices(void);
+
+typedef uint32_t irq_t;
+void ackInterrupt(irq_t irq);
+bool_t isIRQPending(void);
+void maskInterrupt(bool_t enable, irq_t irq);
+irq_t getActiveIRQ(void);
+static inline void setInterruptMode(irq_t irq, bool_t levelTrigger, bool_t polarityLow) { }
+/** MODIFIES: [*] */
+void initTimer(void);
+/* L2 cache control */
+void initL2Cache(void);
+
+void initIRQController(void);
+void setIRQTrigger(irq_t irq, bool_t trigger);
+
+void handleSpuriousIRQ(void);
+
+void plat_cleanL2Range(paddr_t start, paddr_t end);
+
+void plat_invalidateL2Range(paddr_t start, paddr_t end);
+
+void plat_cleanInvalidateL2Range(paddr_t start, paddr_t end);
+
+static inline void *CONST paddr_to_kpptr(paddr_t paddr)
+{
+    assert(paddr < PADDR_HIGH_TOP);
+    assert(paddr >= PADDR_LOAD);
+    return (void *)(paddr + KERNEL_BASE_OFFSET);
+}
+
+static inline paddr_t CONST kpptr_to_paddr(void *pptr)
+{
+    assert((word_t)pptr >= KERNEL_BASE);
+    return (paddr_t)pptr - KERNEL_BASE_OFFSET;
+}
+
+#endif // !__ASSEMBLER__
 #endif
 

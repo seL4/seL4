@@ -34,7 +34,6 @@
 #include <arch/api/invocation.h>
 #include <arch/kernel/vspace.h>
 #include <linker.h>
-#include <plat/machine/devices.h>
 #include <arch/machine.h>
 #include <plat/machine/hardware.h>
 #include <kernel/stack.h>

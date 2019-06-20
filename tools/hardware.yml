@@ -235,7 +235,11 @@ devices:
         macro: CONFIG_PRINTING
         user: true
 
-
-
-
+  # RISC-V PLIC
+  - compatible:
+    - riscv,plic0
+    regions:
+      - executeNever: true
+        index: 0
+        kernel: PLIC_PPTR
 
