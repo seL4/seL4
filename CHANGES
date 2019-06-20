@@ -30,6 +30,9 @@ Upcoming release: BREAKING
 * Support added for passing a device tree from the bootloader to the root task on ARM.
 * Add seL4_VSpaceBits, the size of the top level page table.
 * The root cnode size is now a minimum of 4K.
+* Fix seL4_MappingFailedLookupLevel() for EPTs on x86.
+    - add SEL4_MAPING_LOOKUP_NO_[EPTPDPT, EPTPD, EPTPT] which now correspond to
+      the value returned by seL4_MappingFailedLookupLevel on X86 EPT mapping calls.
 
 ## Upgrade Notes
 ---

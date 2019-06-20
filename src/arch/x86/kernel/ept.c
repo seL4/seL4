@@ -107,7 +107,7 @@ static lookupEPTPDPTSlot_ret_t CONST lookupEPTPDPTSlot(ept_pml4e_t *pml4, vptr_t
     pml4Slot = lookupEPTPML4Slot(pml4, vptr);
 
     if (!ept_pml4e_ptr_get_read(pml4Slot)) {
-        current_lookup_fault = lookup_fault_missing_capability_new(22);
+        current_lookup_fault = lookup_fault_missing_capability_new(EPT_PML4_INDEX_OFFSET);
 
         ret.pdptSlot = NULL;
         ret.status = EXCEPTION_LOOKUP_FAULT;
@@ -137,7 +137,7 @@ static lookupEPTPDSlot_ret_t lookupEPTPDSlot(ept_pml4e_t *pml4, vptr_t vptr)
     }
 
     if (!ept_pdpte_ptr_get_read(lu_ret.pdptSlot)) {
-        current_lookup_fault = lookup_fault_missing_capability_new(22);
+        current_lookup_fault = lookup_fault_missing_capability_new(EPT_PDPT_INDEX_OFFSET);
 
         ret.pdSlot = NULL;
         ret.status = EXCEPTION_LOOKUP_FAULT;
@@ -168,7 +168,7 @@ static lookupEPTPTSlot_ret_t lookupEPTPTSlot(ept_pml4e_t *pml4, vptr_t vptr)
 
     if ((ept_pde_ptr_get_page_size(lu_ret.pdSlot) != ept_pde_ept_pde_pt) ||
         !ept_pde_ept_pde_pt_ptr_get_read(lu_ret.pdSlot)) {
-        current_lookup_fault = lookup_fault_missing_capability_new(22);
+        current_lookup_fault = lookup_fault_missing_capability_new(EPT_PD_INDEX_OFFSET);
 
         ret.ptSlot = NULL;
         ret.status = EXCEPTION_LOOKUP_FAULT;
