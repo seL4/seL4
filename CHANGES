@@ -33,6 +33,8 @@ Upcoming release: BREAKING
 * Fix seL4_MappingFailedLookupLevel() for EPTs on x86.
     - add SEL4_MAPING_LOOKUP_NO_[EPTPDPT, EPTPD, EPTPT] which now correspond to
       the value returned by seL4_MappingFailedLookupLevel on X86 EPT mapping calls.
+* BeagleBone Black renamed from am335x to am335x-boneblack.
+* Supported added for BeagleBone Blue (am335x-boneblue).
 
 ## Upgrade Notes
 ---
