@@ -61,17 +61,25 @@ struct gicVCpuIface {
     virq_t lr[GIC_VCPU_MAX_NUM_LR];
 };
 
+enum VPPIEventIRQ {
+    n_VPPIEventIRQ,
+    VPPIEventIRQ_invalid = n_VPPIEventIRQ,
+};
+typedef word_t VPPIEventIRQ_t;
+
 struct vcpu {
     /* TCB associated with this VCPU. */
     struct tcb *vcpuTCB;
     struct gicVCpuIface vgic;
     word_t regs[seL4_VCPUReg_Num];
+    bool_t vppi_masked[n_VPPIEventIRQ];
 };
 typedef struct vcpu vcpu_t;
 compile_assert(vcpu_size_correct, sizeof(struct vcpu) <= BIT(VCPU_SIZE_BITS))
 
 void VGICMaintenance(void);
 void handleVCPUFault(word_t hsr);
+void VPPIEvent(irq_t irq);
 
 void vcpu_init(vcpu_t *vcpu);
 
@@ -103,11 +111,13 @@ exception_t decodeVCPUWriteReg(cap_t cap, unsigned int length, word_t *buffer);
 exception_t decodeVCPUReadReg(cap_t cap, unsigned int length, bool_t call, word_t *buffer);
 exception_t decodeVCPUInjectIRQ(cap_t cap, unsigned int length, word_t *buffer);
 exception_t decodeVCPUSetTCB(cap_t cap, extra_caps_t extraCaps);
+exception_t decodeVCPUAckVPPI(cap_t cap, unsigned int length, word_t *buffer);
 
 exception_t invokeVCPUWriteReg(vcpu_t *vcpu, word_t field, word_t value);
 exception_t invokeVCPUReadReg(vcpu_t *vcpu, word_t field, bool_t call);
 exception_t invokeVCPUInjectIRQ(vcpu_t *vcpu, unsigned long index, virq_t virq);
 exception_t invokeVCPUSetTCB(vcpu_t *vcpu, tcb_t *tcb);
+exception_t invokeVCPUAckVPPI(vcpu_t *vcpu, VPPIEventIRQ_t vppi);
 static word_t vcpu_hw_read_reg(word_t reg_index);
 static void vcpu_hw_write_reg(word_t reg_index, word_t reg);
 
@@ -159,6 +169,14 @@ static inline void vcpu_write_reg(vcpu_t *vcpu, word_t reg, word_t value)
         return;
     }
     vcpu->regs[reg] = value;
+}
+
+static inline VPPIEventIRQ_t irqVPPIEventIndex(irq_t irq)
+{
+    switch (IRQT_TO_IRQ(irq)) {
+    default:
+        return VPPIEventIRQ_invalid;
+    }
 }
 
 #else /* end of CONFIG_ARM_HYPERVISOR_SUPPORT */

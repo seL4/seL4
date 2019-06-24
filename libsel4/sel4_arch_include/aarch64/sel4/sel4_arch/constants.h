@@ -69,6 +69,12 @@ enum {
 } seL4_VGICMaintenance_Msg;
 
 enum {
+    seL4_VPPIEvent_IRQ,
+    SEL4_FORCE_LONG_ENUM(seL4_VPPIEvent_Msg),
+} seL4_VPPIEvent_Msg;
+
+
+enum {
     seL4_VCPUFault_HSR,
     seL4_VCPUFault_Length,
     SEL4_FORCE_LONG_ENUM(seL4_VCPUFault_Msg),

@@ -124,6 +124,17 @@ void vcpu_restore(vcpu_t *vcpu)
     vcpu_enable(vcpu);
 }
 
+void VPPIEvent(irq_t irq)
+{
+    if (ARCH_NODE_STATE(armHSVCPUActive)) {
+        maskInterrupt(true, irq);
+        assert(irqVPPIEventIndex(irq) != VPPIEventIRQ_invalid);
+        ARCH_NODE_STATE(armHSCurVCPU)->vppi_masked[irqVPPIEventIndex(irq)] = true;
+        current_fault = seL4_Fault_VPPIEvent_new(IRQT_TO_IRQ(irq));
+        handleFault(NODE_STATE(ksCurThread));
+    }
+}
+
 void VGICMaintenance(void)
 {
     uint32_t eisr0, eisr1;
@@ -450,11 +461,41 @@ exception_t decodeARMVCPUInvocation(
         return decodeVCPUWriteReg(cap, length, buffer);
     case ARMVCPUInjectIRQ:
         return decodeVCPUInjectIRQ(cap, length, buffer);
+    case ARMVCPUAckVPPI:
+        return decodeVCPUAckVPPI(cap, length, buffer);
     default:
         userError("VCPU: Illegal operation.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
+}
+
+exception_t decodeVCPUAckVPPI(cap_t cap, unsigned int length, word_t *buffer)
+{
+    vcpu_t *vcpu = VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap));
+
+    if (length < 1) {
+        current_syscall_error.type = seL4_TruncatedMessage;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+    irq_t irq = getSyscallArg(0, buffer);
+
+    VPPIEventIRQ_t vppi = irqVPPIEventIndex(irq);
+
+    if (vppi == VPPIEventIRQ_invalid) {
+        userError("VCPUAckVPPI: Invalid irq number.");
+        current_syscall_error.type = seL4_InvalidArgument;
+        current_syscall_error.invalidArgumentNumber = 0;
+    }
+
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+    return invokeVCPUAckVPPI(vcpu, vppi);
+}
+
+exception_t invokeVCPUAckVPPI(vcpu_t *vcpu, VPPIEventIRQ_t vppi)
+{
+    vcpu->vppi_masked[vppi] = false;
+    return EXCEPTION_NONE;
 }
 
 exception_t decodeVCPUSetTCB(cap_t cap, extra_caps_t extraCaps)

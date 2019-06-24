@@ -37,6 +37,11 @@ static inline void handleReservedIRQ(irq_t irq)
         VGICMaintenance();
         return;
     }
+
+    if (irqVPPIEventIndex(irq) != VPPIEventIRQ_invalid) {
+        VPPIEvent(irq);
+        return;
+    }
 #endif
 
 #ifdef CONFIG_ARM_SMMU

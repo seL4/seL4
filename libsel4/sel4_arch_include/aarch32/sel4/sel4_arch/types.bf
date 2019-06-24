@@ -87,6 +87,14 @@ block VCPUFault {
     padding 28
     field seL4_FaultType 4
 }
+
+block VPPIEvent {
+   padding 384
+   field irq 32
+   padding 28
+   field seL4_FaultType 4
+}
+
 #endif
 
 #ifdef CONFIG_HARDWARE_DEBUG_API

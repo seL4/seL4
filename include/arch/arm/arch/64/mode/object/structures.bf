@@ -170,6 +170,13 @@ block VCPUFault {
     padding         28
     field seL4_FaultType  4
 }
+
+block VPPIEvent {
+    field irq             64
+    padding         32
+    padding         28
+    field seL4_FaultType  4
+}
 #endif
 
 -- VM attributes

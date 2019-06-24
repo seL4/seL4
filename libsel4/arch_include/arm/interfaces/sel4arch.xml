@@ -264,6 +264,19 @@
             <param dir="in" name="value" type="seL4_Word"
             description="Value to be written to the VCPU register"/>
         </method>
+        <method id="ARMVCPUAckVPPI" name="AckVPPI" condition="defined(CONFIG_ARM_HYPERVISOR_SUPPORT)"
+            manual_name="Acknowledge Virtual PPI IRQ">
+                <brief>
+                    Acknowledge a PPI IRQ previously forwarded from a VPPIEvent fault
+                </brief>
+            <description>
+                Acknowledge and unmask the PPI interrupt so that further interrupts can be forwarded
+                through VPPIEvent faults.
+            </description>
+            <param dir="in" name="irq" type="seL4_Word"
+            description="irq to ack."/>
+
+        </method>
     </interface>
    <interface name="seL4_IRQControl" manual_name="IRQ Control" cap_description="An IRQControl capability. This gives you the authority to make this call.">
 
