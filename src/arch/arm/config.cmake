@@ -144,6 +144,13 @@ config_option(
     DEPENDS "KernelArchArmV7a OR KernelArchArmV8a;NOT KernelArmCortexA8"
 )
 
+config_option(
+    KernelArmDisableWFIWFETraps DISABLE_WFI_WFE_TRAPS "Disable the trapping of WFI \
+    and WFE instructions when configuring the \
+    Hyp Configuration Registor (HCR) of a VCPU"
+    DEFAULT OFF
+    DEPENDS "KernelArchArmV7a OR KernelArchArmV8a;KernelArmHypervisorSupport"
+)
 config_option(KernelARMSMMUInterruptEnable SMMU_INTERRUPT_ENABLE "Enable SMMU interrupts. \
     SMMU interrupts currently only serve a debug purpose as \
     they are not forwarded to user level. Enabling this will \

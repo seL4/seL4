@@ -21,8 +21,13 @@
 #include <drivers/timer/arm_generic.h>
 
 /* Note that the HCR_DC for ARMv8 disables S1 translation if enabled */
+#ifdef CONFIG_DISABLE_WFI_WFE_TRAPS
+/* Trap SMC and override CPSR.AIF */
+#define HCR_COMMON ( HCR_VM | HCR_RW | HCR_AMO | HCR_IMO | HCR_FMO )
+#else
 /* Trap WFI/WFE/SMC and override CPSR.AIF */
 #define HCR_COMMON ( HCR_TWI | HCR_TWE | HCR_VM | HCR_RW | HCR_AMO | HCR_IMO | HCR_FMO )
+#endif
 
 /* Allow native tasks to run at EL0, but restrict access */
 #define HCR_NATIVE ( HCR_COMMON | HCR_TGE | HCR_TVM | HCR_TTLB | HCR_DC \

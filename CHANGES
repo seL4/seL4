@@ -111,6 +111,7 @@ Upcoming release: BINARY COMPATIBLE
 * Virtualise Arm VTimer and Vtimer interrupts to support sharing across VCPUs.
   - A VCPU will now save and restore VTimer registers for the generic timer and also deliver a VTimer IRQ via a
     seL4_Fault_VPPIEvent fault. This enables multiple VCPUs bound to the same physical core to share this device.
+* Build config option for whether WFE/WFI traps on VCPUs when running in Arm hypervisor mode
 
 ## Upgrade Notes
 
