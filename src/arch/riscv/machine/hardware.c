@@ -27,7 +27,7 @@
 #define SEXTERNAL_IE 9
 #define SEXTERNAL_CAUSE 9
 
-#define RESET_CYCLES ((CONFIG_SPIKE_CLOCK_FREQ / MS_IN_S) * CONFIG_TIMER_TICK_MS)
+#define RESET_CYCLES ((TIMER_CLOCK_HZ / MS_IN_S) * CONFIG_TIMER_TICK_MS)
 
 #define IS_IRQ_VALID(X) (((X)) <= maxIRQ && (X)!= irqInvalid)
 
@@ -80,7 +80,7 @@ BOOT_CODE void map_kernel_devices(void)
         return;
     }
 
-    for (int i = 0; i < (sizeof(kernel_devices) / sizeof(paddr_t)); i++) {
+    for (int i = 0; i < (sizeof(kernel_devices) / sizeof(kernel_frame_t)); i++) {
         map_kernel_frame(kernel_devices[i].paddr, KDEV_PPTR,
                          VMKernelOnly);
     }

@@ -10,6 +10,9 @@
  * @TAG(DATA61_GPL)
  */
 
+#ifndef __ARCH_MACHINE_PLIC_H
+#define __ARCH_MACHINE_PLIC_H
+
 /*
  * RISC-V defines a Platform-level interrupt controller (PLIC) (priv-1.10).
  * It is responsible for managing global interrupts in a RISC-V system.
@@ -63,3 +66,4 @@ static inline void plic_init_controller(void)
 {
 }
 
+#endif /* __ARCH_MACHINE_PLIC_H */

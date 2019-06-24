@@ -25,7 +25,12 @@ config_choice(
     RISCV_PLAT
     "Select the platform for the architecture"
     "spike;KernelPlatformSpike;PLAT_SPIKE;KernelArchRiscV"
+    "hifive;KernelPlatformHifive;PLAT_HIFIVE;KernelSel4ArchRiscV64"
 )
+
+# Include all the platforms.
+include(src/plat/spike/config.cmake)
+include(src/plat/hifive/config.cmake)
 
 if(KernelArchRiscV)
     config_set(KernelSel4Arch SEL4_ARCH "${KernelRiscVSel4Arch}")
@@ -36,9 +41,6 @@ if(KernelSel4ArchRiscV32)
 elseif(KernelSel4ArchRiscV64)
     set_kernel_64()
 endif()
-
-# Include all the platforms.
-include(src/plat/spike/config.cmake)
 
 config_string(
     KernelPTLevels PT_LEVELS "Number of page \

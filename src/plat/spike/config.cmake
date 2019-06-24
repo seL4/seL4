@@ -16,38 +16,14 @@ cmake_minimum_required(VERSION 3.7.2)
 
 if(KernelPlatformSpike)
     config_set(KernelPlatform PLAT "spike")
+    config_set(KernelPlatformFirstHartID FIRST_HART_ID 0)
     if(Kernel32)
         list(APPEND KernelDTSList "tools/dts/spike32.dts")
     else()
         list(APPEND KernelDTSList "tools/dts/spike.dts")
     endif()
-    declare_default_headers(TIMER_FREQUENCY 10000000llu PLIC_MAX_NUM_INT 2
-	    INTERRUPT_CONTROLLER arch/machine/plic.h)
+    declare_default_headers(
+        TIMER_FREQUENCY 10000000llu PLIC_MAX_NUM_INT 0
+        INTERRUPT_CONTROLLER arch/machine/plic.h
+    )
 endif()
-
-config_choice(
-    KernelSpikeInstance
-    RISCV_SPIKE_INSTANCE
-    "Select the instance for Spike to run on"
-    "qemu;KernelPlatformSpikeQemu;BUILD_SPIKE_QEMU;KernelArchRiscV"
-    "rocket-chip-zedboard;KernelPlatformSpikeRocketChip;BUILD_ROCKET_CHIP_ZEDBOARD;KernelSel4ArchRiscV64"
-    "hi-five-unleashed;KernelPlatformSpikeSiFiveFreedom;BUILD_HI_FIVE_UNLEASHED;KernelSel4ArchRiscV64"
-)
-
-config_string(
-    KernelPlatformSpikeClockFrequency SPIKE_CLOCK_FREQ "Frequency of Clock used for Scheduler"
-    DEFAULT 10000000
-    UNQUOTE
-)
-
-set(DefaultFirstHartID 0)
-# Include all of the different instances of the Spike platform
-include(src/plat/spike/instance/rocket-chip/config.cmake)
-include(src/plat/spike/instance/freedom/config.cmake)
-
-config_string(
-    KernelPlatformSpikeFirstHartID FIRST_HART_ID "HART ID of the first kernel HART "
-    DEFAULT ${DefaultFirstHartID}
-    UNQUOTE
-)
-

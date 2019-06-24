@@ -902,11 +902,13 @@ static const p_region_t BOOT_RODATA *dev_p_regs = NULL;
 
 def add_build_rules(devices, output):
     if devices:
-       devices[-1] = devices[-1] + ";"
-       # print result to cmake variable
-       print(';'.join(devices), file=output)
+        devices[-1] = devices[-1] + ";"
+        # print result to cmake variable
+        print(';'.join(devices), file=output)
+
 
 MEGA_PAGE_SIZE = 0x200000
+
 
 def output_regions(args, devices, memory, kernel, irqs, fp):
     """ generate the device list for the C header file """

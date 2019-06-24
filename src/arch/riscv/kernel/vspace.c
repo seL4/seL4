@@ -99,6 +99,7 @@ static pte_t pte_next(word_t phys_addr, bool_t is_leaf)
 
 BOOT_CODE void map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights)
 {
+    paddr = ROUND_DOWN(paddr, RISCV_GET_LVL_PGSIZE_BITS(1));
     assert((paddr % RISCV_GET_LVL_PGSIZE(1)) == 0);
     kernel_root_pageTable[RISCV_GET_PT_INDEX(vaddr, 1)] = pte_next(paddr, true);
 }

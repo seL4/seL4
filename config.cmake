@@ -71,7 +71,8 @@ function(declare_default_headers)
     )
     # calculate the irq cnode size based on MAX_IRQ
     if("${KernelArch}" STREQUAL "riscv")
-        set(MAX_IRQ "${CONFIGURE_PLIC_MAX_NUM_INT} + 2")
+        set(MAX_IRQ "${CONFIGURE_PLIC_MAX_NUM_INT}")
+        math(EXPR MAX_IRQ "${MAX_IRQ} + 2")
     else()
         set(MAX_IRQ "${CONFIGURE_MAX_IRQ}")
     endif()
@@ -89,8 +90,8 @@ function(declare_default_headers)
     # variables parsed by the above will be prepended with CONFIGURE_, so pipe them
     # straight to configure_file
     configure_file(
-        src/arch/${KernelArch}/platform_gen.h.in ${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/platform_gen.h
-        @ONLY
+        src/arch/${KernelArch}/platform_gen.h.in
+        ${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/platform_gen.h @ONLY
     )
     include_directories(include/plat/default)
 endfunction()
