@@ -117,7 +117,7 @@ function(GenBFCommand args target_name pbf_path pbf_target deps)
     add_custom_command(
         OUTPUT "${target_name_absolute}"
         COMMAND
-            "${PYTHON}" "${BF_GEN_PATH}" "${args}" "${pbf_path_absolute}" "${target_name_absolute}"
+            "${PYTHON3}" "${BF_GEN_PATH}" "${args}" "${pbf_path_absolute}" "${target_name_absolute}"
         DEPENDS
             "${BF_GEN_PATH}"
             "${pbf_path_absolute}"

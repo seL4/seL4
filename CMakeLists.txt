@@ -33,6 +33,7 @@ include(tools/internal.cmake)
 
 # Define tools used by the kernel
 set(PYTHON "python" CACHE INTERNAL "")
+set(PYTHON3 "python3" CACHE INTERNAL "")
 RequireTool(CPP_GEN_PATH cpp_gen.sh)
 RequireTool(CIRCULAR_INCLUDES circular_includes.py)
 RequireTool(BF_GEN_PATH bitfield_gen.py)
@@ -319,7 +320,7 @@ add_custom_command(
     COMMAND
         ${CMAKE_COMMAND} -E remove -f "${syscall_dest}"
     COMMAND
-        ${PYTHON} "${SYSCALL_ID_GEN_PATH}"
+        ${PYTHON3} "${SYSCALL_ID_GEN_PATH}"
         --xml "${syscall_xml_base}/syscall.xml"
         --kernel_header "${syscall_dest}"
     DEPENDS

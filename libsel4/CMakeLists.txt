@@ -126,7 +126,7 @@ add_custom_command(
             "${CMAKE_CURRENT_SOURCE_DIR}/include/api/syscall.xsd"
             "${CMAKE_CURRENT_SOURCE_DIR}/include/api/syscall.xml"
     COMMAND
-        ${PYTHON} "${SYSCALL_ID_GEN_PATH}"
+        ${PYTHON3} "${SYSCALL_ID_GEN_PATH}"
         --xml "${CMAKE_CURRENT_SOURCE_DIR}/include/api/syscall.xml"
         --libsel4_header include/sel4/syscall.h
     DEPENDS
@@ -148,7 +148,7 @@ add_custom_command(
     COMMAND
         echo "CONFIG_WORD_SIZE=${KernelWordSize}" > config
     COMMAND
-        "${PYTHON}" "${SYSCALL_STUB_GEN_PATH}" ${buffer} -a "${KernelSel4Arch}" -c config -o
+        "${PYTHON3}" "${SYSCALL_STUB_GEN_PATH}" ${buffer} -a "${KernelSel4Arch}" -c config -o
         include/interfaces/sel4_client.h ${interface_xmls}
     DEPENDS
         "${SYSCALL_STUB_GEN_PATH}"

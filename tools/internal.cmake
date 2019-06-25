@@ -44,7 +44,7 @@ function(gen_invocation_header)
         OUTPUT "${GEN_OUTPUT}"
         COMMAND rm -f "${GEN_OUTPUT}"
         COMMAND
-            "${PYTHON}" "${INVOCATION_ID_GEN_PATH}"
+            "${PYTHON3}" "${INVOCATION_ID_GEN_PATH}"
             --xml "${xml_absolute}" ${libsel4_setting} ${arch_setting}
             --dest "${GEN_OUTPUT}"
         DEPENDS "${xml_absolute}" "${INVOCATION_ID_GEN_PATH}"

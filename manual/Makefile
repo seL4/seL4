@@ -40,7 +40,7 @@ mv	   = mv
 awk	   = awk
 R	   = R
 doxygen = doxygen
-PYTHON ?= python
+PYTHON ?= python3
 
 # To add a second target, simply append the basename of the .tex file here
 Targets    = manual

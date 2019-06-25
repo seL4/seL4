@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright 2017, Data61
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
@@ -417,7 +417,7 @@ class MarkdownGenerator(Generator):
     def generate_enumerate_list(self, para, ref_dict, output):
         """ Returns a Markdown number list """
 
-        for num, item in zip(xrange(sys.maxint), para.contents):
+        for num, item in zip(range(sys.maxsize), para.contents):
             parsed_item = self.parse_para(item, ref_dict)
             output += "%d. %s" % (num, parsed_item) if parsed_item.rstrip() else ""
         return output
