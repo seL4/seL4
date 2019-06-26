@@ -91,7 +91,7 @@
 /* This represents the physical address that the kernel image will be linked to. This needs to
  * be on a 1gb boundary as we currently require being able to creating a mapping to this address
  * as the largest frame size */
-#define PADDR_LOAD UL_CONST(physBase + 0x4000000)
+#define PADDR_LOAD (physBase + UL_CONST(0x4000000))
 /* This is the base of the kernel window, which is directly mapped to PADDR_BASE */
 #define PPTR_BASE        0xFFFFFFC000000000lu
 /* This is the mapping of the kernel (mapped above the kernel window currently) */
