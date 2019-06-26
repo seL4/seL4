@@ -336,6 +336,20 @@ seL4_DebugCapIdentify(seL4_CPtr cap);
  */
 LIBSEL4_INLINE_FUNC void
 seL4_DebugNameThread(seL4_CPtr tcb, const char *name);
+#if CONFIG_MAX_NUM_NODES > 1 && defined CONFIG_ARCH_ARM
+/**
+ * @xmlonly <manual name="Send SGI 0-15" label="sel4_debugsendipi"/> @endxmlonly
+ * @brief Sends arbitrary SGI.
+ *
+ * Send an arbitrary SGI (core-specific interrupt 0-15) to the specified target core.
+ *
+ * @param target The target core ID.
+ * @param irq The SGI number (0-15).
+ *
+ */
+LIBSEL4_INLINE_FUNC void
+seL4_DebugSendIPI(seL4_Uint8 target, unsigned irq);
+#endif
 #endif
 
 #ifdef CONFIG_DANGEROUS_CODE_INJECTION

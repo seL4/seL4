@@ -360,6 +360,13 @@ LIBSEL4_INLINE_FUNC void seL4_DebugNameThread(seL4_CPtr tcb, const char *name)
 
     arm_sys_send_recv(seL4_SysDebugNameThread, tcb, &unused0, 0, &unused1, &unused2, &unused3, &unused4, &unused5);
 }
+
+#if CONFIG_MAX_NUM_NODES > 1
+LIBSEL4_INLINE_FUNC void seL4_DebugSendIPI(seL4_Uint8 target, unsigned irq)
+{
+    arm_sys_send(seL4_SysDebugSendIPI, target, irq, 0, 0, 0, 0);
+}
+#endif
 #endif
 
 #ifdef CONFIG_DANGEROUS_CODE_INJECTION

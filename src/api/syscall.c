@@ -119,6 +119,24 @@ exception_t handleUnknownSyscall(word_t w)
         setThreadName(TCB_PTR(cap_thread_cap_get_capTCBPtr(lu_ret.cap)), name);
         return EXCEPTION_NONE;
     }
+#if defined ENABLE_SMP_SUPPORT && defined CONFIG_ARCH_ARM
+    if (w == SysDebugSendIPI) {
+        seL4_Word target = getRegister(NODE_STATE(ksCurThread), capRegister);
+        irq_t irq = getRegister(NODE_STATE(ksCurThread), msgInfoRegister);
+
+        if (target > CONFIG_MAX_NUM_NODES) {
+            userError("SysDebugSendIPI: Invalid target, halting");
+            halt();
+        }
+        if (irq > 15) {
+            userError("SysDebugSendIPI: Invalid IRQ, not a SGI, halting");
+            halt();
+        }
+
+        ipi_send_target(irq, BIT(target));
+        return EXCEPTION_NONE;
+    }
+#endif /* ENABLE_SMP_SUPPORT && CONFIG_ARCH_ARM */
 #endif /* CONFIG_DEBUG_BUILD */
 
 #ifdef CONFIG_DANGEROUS_CODE_INJECTION
