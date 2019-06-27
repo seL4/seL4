@@ -260,8 +260,8 @@ function(config_option optionname configname doc)
             unset(${optionname}_DISABLED CACHE)
         endif()
     else()
-        set(${optionname} "${CONFIG_DEFAULT_DISABLED}" CACHE INTERNAL "${doc}")
-        set(${optionname}_DISABLED TRUE CACHE INTERNAL "")
+        set(${optionname} "${CONFIG_DEFAULT_DISABLED}" CACHE INTERNAL "${doc}" FORCE)
+        set(${optionname}_DISABLED TRUE CACHE INTERNAL "" FORCE)
     endif()
     set(local_config_string "${configure_string}")
     if(${optionname})
@@ -275,7 +275,7 @@ endfunction(config_option)
 # configuration headers.
 # If the option is not OFF it adds to the global configure_string variable (see add_config_library)
 macro(config_set optionname configname value)
-    set(${optionname} "${value}" CACHE INTERNAL "")
+    set(${optionname} "${value}" CACHE INTERNAL "" FORCE)
     if("${value}" STREQUAL "ON")
         list(APPEND configure_string "#define CONFIG_${configname} 1")
     elseif("${value}" STREQUAL "OFF")
@@ -358,7 +358,7 @@ function(config_string optionname configname doc)
             unset(${optionname} CACHE)
         else()
             # Forcively change the value to its disabled_value
-            set(${optionname} "${CONFIG_DEFAULT_DISABLED}" CACHE INTERNAL "")
+            set(${optionname} "${CONFIG_DEFAULT_DISABLED}" CACHE INTERNAL "" FORCE)
             list(
                 APPEND
                     local_config_string
@@ -366,7 +366,7 @@ function(config_string optionname configname doc)
             )
         endif()
         # Sset _UNAVAILABLE so we can detect when the option because enabled again
-        set(${optionname}_UNAVAILABLE ON CACHE INTERNAL "")
+        set(${optionname}_UNAVAILABLE ON CACHE INTERNAL "" FORCE)
     endif()
     set(configure_string "${local_config_string}" PARENT_SCOPE)
 endfunction(config_string)
@@ -457,11 +457,11 @@ function(config_choice optionname configname doc)
             endif()
             # Check if this option is the one that is currently set
             if("${${optionname}}" STREQUAL "${option_value}")
-                set(${option_cache} ON CACHE INTERNAL "")
+                set(${option_cache} ON CACHE INTERNAL "" FORCE)
                 list(APPEND local_config_string "#define CONFIG_${option_config} 1")
                 set(found_current ON)
             else()
-                set(${option_cache} OFF CACHE INTERNAL "")
+                set(${option_cache} OFF CACHE INTERNAL "" FORCE)
             endif()
         else()
             # Remove this config as it's not valid
@@ -484,13 +484,13 @@ function(config_choice optionname configname doc)
             # The option is actually enabled, but we didn't enable the correct
             # choice earlier, since we didn't know we were going to revert to
             # the default. So add the option setting here
-            set(${first_cache} ON CACHE INTERNAL "")
+            set(${first_cache} ON CACHE INTERNAL "" FORCE)
             list(APPEND local_config_string "#define CONFIG_${first_config} 1")
         endif()
     endif()
     # Save all possible options to an internal value.  This is to allow enumerating the options elsewhere.
     # We create a new variable because cmake doesn't support arbitrary properties on cache variables.
-    set(${optionname}_all_strings ${all_strings} CACHE INTERNAL "")
+    set(${optionname}_all_strings ${all_strings} CACHE INTERNAL "" FORCE)
     set(configure_string "${local_config_string}" PARENT_SCOPE)
 endfunction(config_choice)
 
