@@ -401,7 +401,10 @@ argument to \apifunc{seL4\_Untyped\_Retype}{untyped_retype} is ignored.
     \toprule
     Type & Meaning of \texttt{size\_bits} & Size in Bytes  \\
     \midrule
-    \obj{CNode} & $\log_2$ number of slots & $2^\texttt{size\_bits} \cdot 16$ \\
+    \obj{CNode} & $\log_2$ number of slots & $2^\texttt{size\_bits} \cdot 2^\texttt{seL4\_SlotBits}$
+	  \texttt{seL4\_SlotBits} is: \newline
+	  \emph{on 32-bit architectures:} 4 \newline
+	  \emph{on 64-bit architectures:} 5 \\
     \obj{Untyped} & $\log_2$ size in bytes & $2^\texttt{size\_bits}$ \\
     \bottomrule
   \end{tabularx}

@@ -63,9 +63,10 @@ individual capabilities within their CSpaces when invoking methods.
 CSpaces are created by creating and manipulating \obj{CNode} objects.
 When creating a \obj{CNode} the user must specify the number of slots
 that it will have, and this determines the amount of memory that it
-will use. Each slot requires 16 bytes of physical memory and has the
-capacity to hold exactly one capability. Like any other object, a
-\obj{CNode} must be created by calling
+will use. Each slot requires $2^\texttt{seL4\_SlotBits}$ bytes of physical
+memory and has the capacity to hold exactly one capability. This is 16
+bytes on 32-bit architectures and 32 bytes on 64-bit architectures.
+Like any other object, a \obj{CNode} must be created by calling
 \apifunc{seL4\_Untyped\_Retype}{untyped_retype} on an appropriate
 amount of untyped memory (see \autoref{sec:object_sizes}).  The caller
 must therefore have a capability to enough untyped memory as well as
