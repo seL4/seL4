@@ -128,8 +128,8 @@
                 <description>
                     Map a page directory (level 2) to an upper page directory (level 1)
                 </description>
-            <param dir="in" name="pud" type="seL4_CPtr"
-            description="Upper page directory"/>
+            <param dir="in" name="vspace" type="seL4_CPtr"
+            description="Top level translation table. Must be assigned to an ASID pool."/>
             <param dir="in" name="vaddr" type="seL4_Word"
             description="Virtual adress"/>
             <param dir="in" name="attr" type="seL4_ARM_VMAttributes"
