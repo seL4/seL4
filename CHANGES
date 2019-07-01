@@ -38,6 +38,7 @@ Upcoming release: BREAKING
 * Remove IPC Buffer register in user space on all platforms
 * Add managed TLS register for all platforms
 * Add configurable system call allowing userspace to set TLS register without capability on all platforms.
+* Non-hyp support added for Arm GICv3 interrupt controller.
 
 ## Upgrade Notes
 ---
