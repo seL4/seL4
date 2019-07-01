@@ -54,6 +54,35 @@ int_##number:                                \
 
 #define SET_KERNEL_STACK SET_KERNEL_STACK_FROM(4 * n_contextRegisters)
 
+# switch to the user data segments as the rest of our entry/exit code assumes that's
+# what they will be
+
+#define SET_SELECTOR(selector, value, tmp) \
+    movl %selector, %tmp; \
+    cmpl $value, %tmp; \
+    je 1f; \
+    movl $value, %tmp; \
+    movl %tmp, %selector; \
+    1:
+
+/* user-level selectors from </arch/mode/object/structures.h> */
+#define GDT_DS_0    2
+#define GDT_DS_3    4
+#define GDT_FS      6
+#define GDT_GS      7
+
+/* user-level selectors from </arch/object/structures.h> */
+#define SEL_CS_3    ((GDT_CS_3 << 3) | 3)
+#define SEL_DS_3    ((GDT_DS_3 << 3) | 3)
+#define SEL_FS      ((GDT_FS << 3) | 3)
+#define SEL_GS      ((GDT_GS << 3) | 3)
+
+#define RESET_SELECTORS(tmp) \
+    SET_SELECTOR(ds, SEL_DS_3, tmp) \
+    SET_SELECTOR(es, SEL_DS_3, tmp) \
+    SET_SELECTOR(fs, SEL_FS, tmp) \
+    SET_SELECTOR(gs, SEL_GS, tmp)
+
 .section .text
 
 INT_HANDLER_WITHOUT_ERR_CODE(00)
@@ -329,10 +358,8 @@ INT_HANDLER_WITHOUT_ERR_CODE(fe)
 INT_HANDLER_WITHOUT_ERR_CODE(ff)
 
 handle_interrupt:
-    # set kernel data segments
-    movl    $0x23, %edx # 0x23 = SEL_DS_3
-    movl    %edx,  %ds
-    movl    %edx,  %es
+    # Reset segment selectors
+    RESET_SELECTORS(edx)
 
     # determine if we have a kernel exception
     testl   $3, (4 * CS)(%esp)     # extract CPL (current privilege level)
@@ -475,15 +502,8 @@ BEGIN_FUNC(handle_vmexit)
     pushl   %ebx
     pushl   %eax
 
-    # switch to the user data segments as the rest of our entry/exit code assumes that's
-    # what they will be
-    movl $0x23, %ecx
-    movl %ecx, %ds
-    movl %ecx, %es
-    movl $0x33, %ecx         # load register cx with seg selector FS
-    movl %ecx,   %fs
-    movl $0x3b, %ecx         # load register cx with seg selector GS
-    movl %ecx,   %gs
+    # Reset segment selectors
+    RESET_SELECTORS(ecx)
 
     # switch to kernel stack
     SET_KERNEL_STACK_FROM(7 * 4)
@@ -521,11 +541,8 @@ BEGIN_FUNC(handle_syscall)
     pushl   %eax            # save EAX (syscall number)
     pushl   $0
 
-    # switch to the user data segments as the rest of our entry/exit code assumes that's
-    # what they will be
-    movl $0x23, %ecx
-    movl %ecx, %ds
-    movl %ecx, %es
+    # Reset segment selectors
+    RESET_SELECTORS(ecx)
 
     # switch to kernel stack
     SET_KERNEL_STACK
