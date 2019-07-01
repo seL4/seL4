@@ -49,7 +49,8 @@
         <member name="tpidr_el0"/>
         <member name="tpidrro_el0"/>
     </struct>
-    <interface name="seL4_ARM_VSpace" manual_name="Page Global Directory">
+    <interface name="seL4_ARM_VSpace" manual_name="Page Global Directory"
+        cap_description="Capability to the top level translation table being operated on.">
         <method id="ARMVSpaceClean_Data" name="Clean_Data" manual_label="vspace_clean"
             manual_name="Clean Data">
                 <brief>
@@ -97,43 +98,63 @@
              <description>
                  <docref>See <autoref label="ch:vspace"/>.</docref>
              </description>
-            <param dir="in" name="start" type="seL4_Word"/>
-            <param dir="in" name="end" type="seL4_Word"/>
+             <param dir="in" name="start" type="seL4_Word"
+             description="Start address"/>
+             <param dir="in" name="end" type="seL4_Word"
+	     description="End address"/>
         </method>
     </interface>
-    <interface name="seL4_ARM_PageUpperDirectory" manual_name="Page Upper Directory">
+    <interface name="seL4_ARM_PageUpperDirectory" manual_name="Page Upper Directory"
+        cap_description="Capability to the upper page directory being operated on.">
         <method id="ARMPageUpperDirectoryMap" name="Map" condition="!(defined CONFIG_ARM_HYPERVISOR_SUPPORT &amp;&amp; defined CONFIG_ARM_PA_SIZE_BITS_40)">
                 <brief>
                     Map an upper page directory
                 </brief>
                 <description>
-                    Map an upper page directory (level 1) to a top level translation table (level 0)
+                    Map an upper page directory (level 1) to a top level translation table (level 0).
+                    If the upper page directory is already mapped this operation will fail,
+                    returning a seL4_InvalidCapability error. If another object is already mapped at this
+                    level for the virtual address this operation will fail,
+                    returning a seL4_DeleteFirst error.
                 </description>
             <param dir="in" name="vspace" type="seL4_CPtr"
-            description="top level translation table"/>
+            description="Top level translation table. Must be assigned to an ASID pool."/>
             <param dir="in" name="vaddr" type="seL4_Word"
             description="Virtual address"/>
-            <param dir="in" name="attr" type="seL4_ARM_VMAttributes"
-            description="Memory attributes"/>
+            <param dir="in" name="attr" type="seL4_ARM_VMAttributes">
+                <description>
+                    VM Attributes for the mapping.<docref>Possible values for this type are given in <autoref label="ch:vspace"/>  .</docref>
+                </description>
+            </param>
         </method>
         <method id="ARMPageUpperDirectoryUnmap" name="Unmap"
             condition="!(defined CONFIG_ARM_HYPERVISOR_SUPPORT &amp;&amp; defined CONFIG_ARM_PA_SIZE_BITS_40)">
         </method>
     </interface>
-    <interface name="seL4_ARM_PageDirectory" manual_name="Page Directory">
+    <interface name="seL4_ARM_PageDirectory" manual_name="Page Directory"
+        cap_description="Capability to the page directory being operated on.">
         <method id="ARMPageDirectoryMap" name="Map">
                 <brief>
                     Map a page directory
                 </brief>
                 <description>
-                    Map a page directory (level 2) to an upper page directory (level 1)
+                    Map a page directory (level 2) to an upper page directory (level 1).
+                    If an upper page directory does not exist for the virtual address this
+                    operation will fail, returning a seL4_FailedLookup error. If the page
+                    directory is already mapped this operation will fail,
+                    returning a seL4_InvalidCapability error. If another object is already mapped
+                    at this level for the virtual address this operation will
+                    fail, returning a seL4_DeleteFirst error.
                 </description>
             <param dir="in" name="vspace" type="seL4_CPtr"
             description="Top level translation table. Must be assigned to an ASID pool."/>
             <param dir="in" name="vaddr" type="seL4_Word"
             description="Virtual adress"/>
-            <param dir="in" name="attr" type="seL4_ARM_VMAttributes"
-            description="Memory attributes"/>
+            <param dir="in" name="attr" type="seL4_ARM_VMAttributes">
+                <description>
+                    VM Attributes for the mapping.<docref>Possible values for this type are given in <autoref label="ch:vspace"/>  .</docref>
+                </description>
+            </param>
         </method>
         <method id="ARMPageDirectoryUnmap" name="Unmap">
                 <brief>
