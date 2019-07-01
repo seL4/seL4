@@ -180,6 +180,18 @@ if(KernelAArch32FPUEnableContextSwitch OR KernelSel4ArchAarch64)
     set(KernelHaveFPU ON)
 endif()
 
+if(
+    KernelArmCortexA7
+    OR KernelArmCortexA8
+    OR KernelArmCortexA15
+    OR KernelArmCortexA53
+    OR KernelArmCortexA57
+)
+    config_set(KernelArmCacheLineSizeBits L1_CACHE_LINE_SIZE_BITS "6")
+elseif(KernelArmCortexA9 OR KernelArm1136JF_S)
+    config_set(KernelArmCacheLineSizeBits L1_CACHE_LINE_SIZE_BITS "5")
+endif()
+
 if(KernelArchArmV6)
     # This is currently needed in ARMv6 to provide thread IDs via the
     # globals frame. The globals frame should be removed along with this

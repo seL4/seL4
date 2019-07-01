@@ -18,20 +18,6 @@
 
 #define PAGE_BITS seL4_PageBits
 
-#if defined(CONFIG_ARM_CORTEX_A53)
-#define L1_CACHE_LINE_SIZE_BITS  6 /* 64 bytes */
-#endif
-
-#if defined(CONFIG_ARM_CORTEX_A57)
-#define L1_CACHE_LINE_SIZE_BITS  6 /* 64 bytes */
-#endif
-
-#ifndef L1_CACHE_LINE_SIZE_BITS
-#error Unable to determine L1 cache line size
-#endif
-
-#define L1_CACHE_LINE_SIZE BIT(L1_CACHE_LINE_SIZE_BITS)
-
 /* Control register fields */
 #define CONTROL_M         0  /* MMU enable */
 #define CONTROL_A         1  /* Alignment check enable */

@@ -15,7 +15,6 @@
 
 #define LINE_START(a) ROUND_DOWN(a, L1_CACHE_LINE_SIZE_BITS)
 #define LINE_INDEX(a) (LINE_START(a)>>L1_CACHE_LINE_SIZE_BITS)
-#define L1_CACHE_LINE_SIZE BIT(L1_CACHE_LINE_SIZE_BITS)
 
 static void cleanCacheRange_PoC(vptr_t start, vptr_t end, paddr_t pstart)
 {
