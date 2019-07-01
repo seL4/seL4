@@ -44,3 +44,4 @@ register_driver(
     PREFIX src/drivers/serial
     CFILES "meson-gx-uart.c"
 )
+register_driver(compatibility_strings "fsl,imx8qm-lpuart" CFILES src/drivers/serial/imx8qm-lpuart.c)
