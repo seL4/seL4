@@ -29,7 +29,7 @@ devices:
         index: 1
         kernel: GIC_V2_CONTROLLER_PPTR
         # GICV
-      - executeNever: false
+      - executeNever: true
         index: 2
         kernel: GIC_V2_VCPUCTRL_PPTR
         macro: CONFIG_ARM_HYPERVISOR_SUPPORT
