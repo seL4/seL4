@@ -15,13 +15,25 @@ static inline word_t CONST sanitiseRegister(register_t reg, word_t v, bool_t arc
 {
     if (reg == SPSR_EL1) {
         if (archInfo) {
-            switch (v & 0x1f) {
-            case PMODE_EL0t:
-            case PMODE_EL1t:
-            case PMODE_EL1h:
-                return v;
-            default:
-                break;
+            if (v & BIT(4)) {
+                switch (v & 0x3) {
+                case PMODE_USER:
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+                case PMODE_SUPERVISOR:
+#endif
+                    return v;
+                default:
+                    break;
+                }
+            } else {
+                switch (v & 0x1f) {
+                case PMODE_EL0t:
+                case PMODE_EL1t:
+                case PMODE_EL1h:
+                    return v;
+                default:
+                    break;
+                }
             }
         }
         return (v & 0xf0000000) | PSTATE_USER;

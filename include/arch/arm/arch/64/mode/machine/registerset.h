@@ -29,6 +29,10 @@
 #define PMODE_EL1h              5
 #define PMODE_EL2h              9
 
+/* PSTATE register in aarch32 */
+#define PMODE_USER 0
+#define PMODE_SUPERVISOR 3
+
 /* DAIF register */
 #define DAIF_FIRQ               (1 << 6)
 #define DAIF_IRQ                (1 << 7)
