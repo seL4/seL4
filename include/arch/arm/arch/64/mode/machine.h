@@ -261,6 +261,7 @@ static inline void invalidateByVA(vptr_t vaddr, paddr_t paddr)
 static inline void invalidateByVA_I(vptr_t vaddr, paddr_t paddr)
 {
     asm volatile("ic ivau, %0" : : "r"(vaddr));
+    dmb();
     isb();
 }
 
