@@ -12,7 +12,6 @@
 #include <armv/vcpu.h>
 #include <arch/machine/debug.h> /* Arch_debug[A/Di]ssociateVCPUTCB() */
 #include <arch/machine/debug_conf.h>
-#include <arch/machine/gic_v2.h>
 #include <drivers/timer/arm_generic.h>
 
 BOOT_CODE void vcpu_boot_init(void)

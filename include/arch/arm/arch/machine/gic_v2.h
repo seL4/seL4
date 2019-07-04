@@ -17,7 +17,7 @@
 #include <linker.h>
 #include <mode/smp/smp.h>
 #include <model/statedata.h>
-
+#include <mode/machine/gic_v2_gen.h>
 #include "gic_common.h"
 
 #define IRQ_MASK MASK(10u)
