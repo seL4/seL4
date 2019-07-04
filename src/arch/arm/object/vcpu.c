@@ -139,7 +139,6 @@ void VPPIEvent(irq_t irq)
 
 void VGICMaintenance(void)
 {
-    uint32_t eisr0, eisr1;
     uint32_t flags;
 
 #ifdef CONFIG_KERNEL_MCS
@@ -160,44 +159,19 @@ void VGICMaintenance(void)
         return;
     }
 
-    eisr0 = get_gic_vcpu_ctrl_eisr0();
-    eisr1 = get_gic_vcpu_ctrl_eisr1();
     flags = get_gic_vcpu_ctrl_misr();
 
     if (flags & VGIC_MISR_EOI) {
-        int irq_idx;
-        if (eisr0) {
-            irq_idx = ctzl(eisr0);
-        } else if (eisr1) {
-            irq_idx = ctzl(eisr1) + 32;
-        } else {
-            irq_idx = -1;
-        }
+        int irq_idx = get_vgic_irq_idx();
 
         /* the hardware should never give us an invalid index, but we don't
          * want to trust it that far */
-        if (irq_idx == -1  || irq_idx >= gic_vcpu_num_list_regs) {
+        if (irq_idx == GIC_INVALID_IRQ_IDX || !gic_valid_irq_idx(irq_idx)) {
             current_fault = seL4_Fault_VGICMaintenance_new(0, 0);
         } else {
-            virq_t virq = get_gic_vcpu_ctrl_lr(irq_idx);
-            switch (virq_get_virqType(virq)) {
-            case virq_virq_active:
-                virq = virq_virq_active_set_virqEOIIRQEN(virq, 0);
-                break;
-            case virq_virq_pending:
-                virq = virq_virq_pending_set_virqEOIIRQEN(virq, 0);
-                break;
-            case virq_virq_invalid:
-                virq = virq_virq_invalid_set_virqEOIIRQEN(virq, 0);
-                break;
-            }
-            set_gic_vcpu_ctrl_lr(irq_idx, virq);
-            /* decodeVCPUInjectIRQ below checks the vgic.lr register,
-             * so we should also sync the shadow data structure as well */
+            gic_handle_virq(irq_idx);
             assert(ARCH_NODE_STATE(armHSCurVCPU) != NULL && ARCH_NODE_STATE(armHSVCPUActive));
-            if (ARCH_NODE_STATE(armHSCurVCPU) != NULL && ARCH_NODE_STATE(armHSVCPUActive)) {
-                ARCH_NODE_STATE(armHSCurVCPU)->vgic.lr[irq_idx] = virq;
-            } else {
+            if (!ARCH_NODE_STATE(armHSVCPUActive)) {
                 /* FIXME This should not happen */
             }
             current_fault = seL4_Fault_VGICMaintenance_new(irq_idx, 1);
@@ -429,7 +403,7 @@ exception_t decodeVCPUInjectIRQ(cap_t cap, unsigned int length, word_t *buffer)
         current_syscall_error.type = seL4_RangeError;
         return EXCEPTION_SYSCALL_ERROR;
     }
-    if (priority > 31) {
+    if (priority > GIC_MAX_PRIO) {
         current_syscall_error.type = seL4_RangeError;
         current_syscall_error.rangeErrorMin = 0;
         current_syscall_error.rangeErrorMax = 31;
@@ -460,8 +434,7 @@ exception_t decodeVCPUInjectIRQ(cap_t cap, unsigned int length, word_t *buffer)
         current_syscall_error.type = seL4_DeleteFirst;
         return EXCEPTION_SYSCALL_ERROR;
     }
-    virq_t virq = virq_virq_pending_new(group, priority, 1, vid);
-
+    virq_t virq = gic_virq_pending_new(group, priority, vid);
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeVCPUInjectIRQ(vcpu, index, virq);
 }

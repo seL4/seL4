@@ -230,4 +230,22 @@ volatile struct gich_vcpu_ctrl_map *gic_vcpu_ctrl =
 
 unsigned int gic_vcpu_num_list_regs;
 
+void gic_handle_virq(int irq_idx)
+{
+    virq_t virq = get_gic_vcpu_ctrl_lr(irq_idx);
+    switch (virq_get_virqType(virq)) {
+    case virq_virq_active:
+        virq = virq_virq_active_set_virqEOIIRQEN(virq, 0);
+        break;
+    case virq_virq_pending:
+        virq = virq_virq_pending_set_virqEOIIRQEN(virq, 0);
+        break;
+    case virq_virq_invalid:
+        virq = virq_virq_invalid_set_virqEOIIRQEN(virq, 0);
+        break;
+    }
+    set_gic_vcpu_ctrl_lr(irq_idx, virq);
+    ARCH_NODE_STATE(armHSCurVCPU)->vgic.lr[irq_idx] = virq;
+}
+
 #endif /* End of CONFIG_ARM_HYPERVISOR_SUPPORT */

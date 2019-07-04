@@ -21,6 +21,7 @@
 #include "gic_common.h"
 
 #define IRQ_MASK MASK(10u)
+#define GIC_MAX_PRIO 31
 
 /* Helpers for VGIC */
 #define VGIC_HCR_EOI_INVALID_COUNT(hcr) (((hcr) >> 27) & 0x1f)
@@ -297,4 +298,29 @@ static inline void set_gic_vcpu_ctrl_lr(int num, virq_t lr)
     gic_vcpu_ctrl->lr[num] = lr.words[0];
 }
 
+#define GIC_INVALID_IRQ_IDX -1
+static inline int get_vgic_irq_idx(void) {
+    uint32_t eisr0 = get_gic_vcpu_ctrl_eisr0();
+    if (eisr0) {
+        return ctzl(eisr0);
+    }
+    uint32_t eisr1 = get_gic_vcpu_ctrl_eisr1();
+    if (eisr1) {
+        return ctzl(eisr1) + 32;
+    }
+
+    return GIC_INVALID_IRQ_IDX;
+}
+
+static inline virq_t gic_virq_pending_new(word_t group, word_t priority, word_t vid)
+{
+    return virq_virq_pending_new(group, priority, 1, vid);
+}
+
+static inline bool_t gic_valid_irq_idx(int irq_idx)
+{
+    return irq_idx < gic_vcpu_num_list_regs;
+}
+
+void gic_handle_virq(int irq_idx);
 #endif /* End of CONFIG_ARM_HYPERVISOR_SUPPORT */
