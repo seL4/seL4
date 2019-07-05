@@ -14,13 +14,17 @@
 /* tell the kernel we have the set trigger feature */
 #define HAVE_SET_TRIGGER 1
 
+#include <config.h>
 #include <stdint.h>
 #include <util.h>
 #include <linker.h>
 #include <mode/smp/smp.h>
 #include <model/statedata.h>
 #include <armv/machine.h>
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 #include <mode/machine/gic_v3_gen.h>
+#endif
 
 #include "gic_common.h"
 
@@ -29,6 +33,7 @@
 #define GIC_PRI_HIGHEST    0x80 /* Higher priorities belong to Secure-World */
 
 #define IRQ_MASK MASK(16u)
+#define GIC_MAX_PRIO 256
 
 /* Register bits */
 #define GICD_CTL_ENABLE 0x1
@@ -40,7 +45,8 @@
 
 #define GICD_TYPE_LINESNR 0x01f
 
-#define GICC_SRE_EL1_SRE             BIT(0)
+#define GICC_SRE_SRE                BIT(0)
+#define GICC_SRE_EL2_EL1            BIT(3)
 
 #define GICR_WAKER_ProcessorSleep    BIT(1)
 #define GICR_WAKER_ChildrenAsleep    BIT(2)
@@ -73,6 +79,33 @@
 #define ICC_SRE_EL1     " p15, 0,  %0, c12,  c12, 5"
 #define MPIDR           " p15, 0,  %0, c0,  c0, 5"
 #endif
+
+#define ICC_SRE_EL2     "S3_4_C12_C9_5"
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+#define ICC_SRE ICC_SRE_EL2
+#else
+#define ICC_SRE ICC_SRE_EL1
+#endif
+
+#define ICH_LR0(x) "S3_4_C12_C12_"STRINGIFY(x)
+#define ICH_LR8(x) "S3_4_C12_C13_"STRINGIFY(x)
+
+/* System registers for GIC virtual interface control */
+#define ICH_HCR_EL2     "S3_4_C12_C11_0"
+#define ICH_VTR_EL2     "S3_4_C12_C11_1"
+#define ICH_MISR_EL2    "S3_4_C12_C11_2"
+#define ICH_EISR_EL2    "S3_4_C12_C11_3"
+#define ICH_VMCR_EL2    "S3_4_C12_C11_7"
+
+#define ICH_VMCR_EL2_LISTREGS(x) (((x) & 0x1f) + 1)
+#define VGIC_VTR_NLISTREGS(x) ICH_VMCR_EL2_LISTREGS(x)
+
+#define ICH_HCR_EL2_EN      (1)
+#define VGIC_HCR_EN         ICH_HCR_EL2_EN
+
+#define ICH_MISR_EL2_EOI (1)
+#define VGIC_MISR_EOI    ICH_MISR_EL2_EOI
 
 /* Memory map for GIC distributor */
 struct gic_dist_map {
@@ -291,4 +324,210 @@ static inline void ackInterrupt(irq_t irq)
     active_irq[CURRENT_CPU_INDEX()] = IRQ_NONE;
 
 }
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+/* GIC VCPU Control Interface */
+extern unsigned int gic_vcpu_num_list_regs;
+
+static inline uint32_t get_gic_vcpu_ctrl_hcr(void)
+{
+    word_t hcr = 0;
+    SYSTEM_READ_WORD(ICH_HCR_EL2, hcr);
+    return (uint32_t) hcr;
+}
+
+static inline void set_gic_vcpu_ctrl_hcr(uint32_t hcr)
+{
+    SYSTEM_WRITE_WORD(ICH_HCR_EL2, hcr);
+}
+
+static inline uint32_t get_gic_vcpu_ctrl_vmcr(void)
+{
+    word_t vmcr;
+    SYSTEM_READ_WORD(ICH_VMCR_EL2, vmcr);
+    return (uint32_t) vmcr;
+}
+
+static inline void set_gic_vcpu_ctrl_vmcr(uint32_t vmcr)
+{
+    SYSTEM_WRITE_WORD(ICH_VMCR_EL2, vmcr);
+}
+
+static inline uint32_t
+get_gic_vcpu_ctrl_apr(void)
+{
+    return 0;
+}
+
+static inline void
+set_gic_vcpu_ctrl_apr(uint32_t apr)
+{
+    return;
+}
+
+static inline uint32_t get_gic_vcpu_ctrl_vtr(void)
+{
+    word_t vtr;
+    SYSTEM_READ_WORD(ICH_VTR_EL2, vtr);
+    return (uint32_t) vtr;
+}
+
+static inline uint32_t get_gic_vcpu_ctrl_eisr0(void)
+{
+    word_t eisr;
+    SYSTEM_READ_WORD(ICH_EISR_EL2, eisr);
+    return (uint32_t) eisr;
+}
+
+static inline uint32_t get_gic_vcpu_ctrl_misr(void)
+{
+    word_t misr;
+    SYSTEM_READ_WORD(ICH_MISR_EL2, misr);
+    return (uint32_t) misr;
+}
+
+static inline virq_t get_gic_vcpu_ctrl_lr(word_t n)
+{
+    virq_t virq = {0};
+    uint64_t lr = 0;
+    switch (n) {
+    case 0:
+        SYSTEM_READ_WORD(ICH_LR0(0), lr);
+        break;
+    case 1:
+        SYSTEM_READ_WORD(ICH_LR0(1), lr);
+        break;
+    case 2:
+        SYSTEM_READ_WORD(ICH_LR0(2), lr);
+        break;
+    case 3:
+        SYSTEM_READ_WORD(ICH_LR0(3), lr);
+        break;
+    case 4:
+        SYSTEM_READ_WORD(ICH_LR0(4), lr);
+        break;
+    case 5:
+        SYSTEM_READ_WORD(ICH_LR0(5), lr);
+        break;
+    case 6:
+        SYSTEM_READ_WORD(ICH_LR0(6), lr);
+        break;
+    case 7:
+        SYSTEM_READ_WORD(ICH_LR0(7), lr);
+        break;
+    case 8:
+        SYSTEM_READ_WORD(ICH_LR8(0), lr);
+        break;
+    case 9:
+        SYSTEM_READ_WORD(ICH_LR8(1), lr);
+        break;
+    case 10:
+        SYSTEM_READ_WORD(ICH_LR8(2), lr);
+        break;
+    case 11:
+        SYSTEM_READ_WORD(ICH_LR8(3), lr);
+        break;
+    case 12:
+        SYSTEM_READ_WORD(ICH_LR8(4), lr);
+        break;
+    case 13:
+        SYSTEM_READ_WORD(ICH_LR8(5), lr);
+        break;
+    case 14:
+        SYSTEM_READ_WORD(ICH_LR8(6), lr);
+        break;
+    case 15:
+        SYSTEM_READ_WORD(ICH_LR8(7), lr);
+        break;
+    default:
+        fail("GICv3: Invalid ICH_LR_EL2");
+        break;
+    }
+    virq.words[0] = lr;
+    return virq;
+}
+
+static inline void set_gic_vcpu_ctrl_lr(word_t n, virq_t lr)
+{
+    switch (n) {
+    case 0:
+        SYSTEM_WRITE_WORD(ICH_LR0(0), lr.words[0]);
+        break;
+    case 1:
+        SYSTEM_WRITE_WORD(ICH_LR0(1), lr.words[0]);
+        break;
+    case 2:
+        SYSTEM_WRITE_WORD(ICH_LR0(2), lr.words[0]);
+        break;
+    case 3:
+        SYSTEM_WRITE_WORD(ICH_LR0(3), lr.words[0]);
+        break;
+    case 4:
+        SYSTEM_WRITE_WORD(ICH_LR0(4), lr.words[0]);
+        break;
+    case 5:
+        SYSTEM_WRITE_WORD(ICH_LR0(5), lr.words[0]);
+        break;
+    case 6:
+        SYSTEM_WRITE_WORD(ICH_LR0(6), lr.words[0]);
+        break;
+    case 7:
+        SYSTEM_WRITE_WORD(ICH_LR0(7), lr.words[0]);
+        break;
+    case 8:
+        SYSTEM_WRITE_WORD(ICH_LR8(0), lr.words[0]);
+        break;
+    case 9:
+        SYSTEM_WRITE_WORD(ICH_LR8(1), lr.words[0]);
+        break;
+    case 10:
+        SYSTEM_WRITE_WORD(ICH_LR8(2), lr.words[0]);
+        break;
+    case 11:
+        SYSTEM_WRITE_WORD(ICH_LR8(3), lr.words[0]);
+        break;
+    case 12:
+        SYSTEM_WRITE_WORD(ICH_LR8(4), lr.words[0]);
+        break;
+    case 13:
+        SYSTEM_WRITE_WORD(ICH_LR8(5), lr.words[0]);
+        break;
+    case 14:
+        SYSTEM_WRITE_WORD(ICH_LR8(6), lr.words[0]);
+        break;
+    case 15:
+        SYSTEM_WRITE_WORD(ICH_LR8(7), lr.words[0]);
+        break;
+    default:
+        fail("GICv3: Invalid ICH_LR_EL2");
+        break;
+
+    }
+}
+
+#define GIC_INVALID_IRQ_IDX 0
+static inline int get_vgic_irq_idx(void) {
+    int irq_idx = GIC_INVALID_IRQ_IDX;
+    uint32_t eisr0 = get_gic_vcpu_ctrl_eisr0();
+
+    for (int i = 0; i < gic_vcpu_num_list_regs; i++) {
+        if (eisr0 & BIT(i)) {
+            irq_idx |= BIT(i);
+        }
+    }
+    return irq_idx;
+}
+
+static inline virq_t gic_virq_pending_new(word_t group, word_t priority, word_t vid)
+{
+    return virq_virq_pending_new(0, group, priority, 0x200, vid);
+}
+
+static inline bool_t gic_valid_irq_idx(int irq_idx)
+{
+    return !(irq_idx & ~MASK(gic_vcpu_num_list_regs));
+}
+
+void gic_handle_virq(int irq_idx);
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
