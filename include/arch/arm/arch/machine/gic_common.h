@@ -15,6 +15,10 @@
 #define GICD_SGIR_CPUTARGETLIST_SHIFT     16
 #define GICD_SGIR_TARGETLISTFILTER_SHIFT  24
 
+/* Bits in the VMCR */
+#define VGIC_VMCR_VENG1 BIT(1)
+#define VGIC_VMCR_VPMR  (0xFFlu << 24lu)
+
 /* Special IRQ's */
 #define SPECIAL_IRQ_START 1020u
 #define IRQ_NONE          1023u

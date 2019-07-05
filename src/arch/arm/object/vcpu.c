@@ -200,6 +200,7 @@ void vcpu_init(vcpu_t *vcpu)
     /* Virtual Timer interface */
     vcpu->virtTimer.last_pcount = 0;
 #endif
+    vcpu->vgic.vmcr = VGIC_VMCR_VPMR | VGIC_VMCR_VENG1;
 }
 
 void vcpu_switch(vcpu_t *new)
