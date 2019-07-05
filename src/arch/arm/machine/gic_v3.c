@@ -25,6 +25,17 @@
 #define GIC_DEADLINE_MS 2
 #define GIC_REG_WIDTH   32
 
+#ifdef CONFIG_ARCH_AARCH64
+#define ICC_SGI1R_EL1 "S3_0_C12_C11_5"
+#else
+#define ICC_SGI1R_EL1 "p15, 0, %Q0, %R0, c12"
+#endif
+
+#define ICC_SGI1R_INTID_SHIFT          (24)
+#define ICC_SGI1R_AFF1_SHIFT           (16)
+#define ICC_SGI1R_IRM_BIT              (40)
+#define ICC_SGI1R_CPUTARGETLIST_MASK   0xffff
+
 volatile struct gic_dist_map *const gic_dist = (volatile struct gic_dist_map *)(GICD_PPTR);
 volatile void *const gicr_base = (volatile uint8_t *)(GICR_PPTR);
 
@@ -335,26 +346,24 @@ BOOT_CODE void cpu_initLocalIRQController(void)
 }
 
 #ifdef ENABLE_SMP_SUPPORT
-/*
-* 25-24: target lister filter
-* 0b00 - send the ipi to the CPU interfaces specified in the CPU target list
-* 0b01 - send the ipi to all CPU interfaces except the cpu interface.
-*        that requrested teh ipi
-* 0b10 - send the ipi only to the CPU interface that requested the IPI.
-* 0b11 - reserved
-*.
-* 23-16: CPU targets list
-* each bit of CPU target list [7:0] refers to the corresponding CPU interface.
-* 3-0:   SGIINTID
-* software generated interrupt id, from 0 to 15...
-*/
-void ipiBroadcast(irq_t irq, bool_t includeSelfCPU)
-{
-    gic_dist->sgi_control = (!includeSelfCPU << GICD_SGIR_TARGETLISTFILTER_SHIFT) | (irq << GICD_SGIR_SGIINTID_SHIFT);
-}
+#define MPIDR_MT(x)   (x & BIT(24))
 
 void ipi_send_target(irq_t irq, word_t cpuTargetList)
 {
-    gic_dist->sgi_control = (cpuTargetList << GICD_SGIR_CPUTARGETLIST_SHIFT) | (irq << GICD_SGIR_SGIINTID_SHIFT);
+    uint64_t sgi1r = ((word_t) irq) << ICC_SGI1R_INTID_SHIFT;
+    if (MPIDR_MT(mpidr_map[getCurrentCPUIndex()])) {
+        for (word_t i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
+            if (cpuTargetList & BIT(i)) {
+                sgi1r = (irq << ICC_SGI1R_INTID_SHIFT) |
+                        (i << ICC_SGI1R_AFF1_SHIFT) | 1;
+
+                SYSTEM_WRITE_64(ICC_SGI1R_EL1, sgi1r);
+            }
+        }
+    } else {
+        sgi1r |= cpuTargetList;
+        SYSTEM_WRITE_64(ICC_SGI1R_EL1, sgi1r);
+    }
+    isb();
 }
 #endif /* ENABLE_SMP_SUPPORT */
