@@ -22,7 +22,10 @@ bool_t Arch_handleFaultReply(tcb_t *receiver, tcb_t *sender, word_t faultType)
     switch (faultType) {
     case seL4_Fault_VMFault:
         return true;
-
+#ifdef CONFIG_RISCV_HE
+    case seL4_Fault_VCPUFault:
+        return true;
+#endif
     default:
         fail("Invalid fault");
     }
@@ -33,6 +36,10 @@ word_t Arch_setMRs_fault(tcb_t *sender, tcb_t *receiver, word_t *receiveIPCBuffe
     switch (faultType) {
     case seL4_Fault_VMFault: {
         setMR(receiver, receiveIPCBuffer, seL4_VMFault_IP, getRestartPC(sender));
+#ifdef CONFIG_RISCV_HE
+        setMR(receiver, receiveIPCBuffer, seL4_VMFault_Instruction,
+                seL4_Fault_VMFault_get_instruction(sender->tcbFault));
+#endif
         setMR(receiver, receiveIPCBuffer, seL4_VMFault_Addr,
               seL4_Fault_VMFault_get_address(sender->tcbFault));
         setMR(receiver, receiveIPCBuffer, seL4_VMFault_PrefetchFault,
@@ -40,6 +47,10 @@ word_t Arch_setMRs_fault(tcb_t *sender, tcb_t *receiver, word_t *receiveIPCBuffe
         return setMR(receiver, receiveIPCBuffer, seL4_VMFault_FSR,
                      seL4_Fault_VMFault_get_FSR(sender->tcbFault));
     }
+#ifdef CONFIG_RISCV_HE
+    case seL4_Fault_VCPUFault:
+        return setMR(receiver, receiveIPCBuffer, seL4_VCPUFault_Cause, seL4_Fault_VCPUFault_get_cause(sender->tcbFault));
+#endif
     default:
         fail("Invalid fault");
     }
