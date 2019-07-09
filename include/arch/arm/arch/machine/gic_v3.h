@@ -73,6 +73,7 @@
 #define DEFAULT_PMR_VALUE            0xff
 
 /* System registers for GIC CPU interface */
+#ifdef CONFIG_ARCH_AARCH64
 #define ICC_IAR1_EL1    "S3_0_C12_C12_0"
 #define ICC_EOIR1_EL1   "S3_0_C12_C12_1"
 #define ICC_HPPIR1_EL1  "S3_0_C12_C12_2"
@@ -82,6 +83,19 @@
 #define ICC_CTLR_EL1    "S3_0_C12_C12_4"
 #define ICC_IGRPEN1_EL1 "S3_0_C12_C12_7"
 #define ICC_SRE_EL1     "S3_0_C12_C12_5"
+#define MPIDR           "mpidr_el1"
+#else
+#define ICC_IAR1_EL1    " p15, 0,  %0, c12,  c12, 0"
+#define ICC_EOIR1_EL1   " p15, 0,  %0, c12,  c12, 1"
+#define ICC_HPPIR1_EL1  " p15, 0,  %0, c12,  c12, 2"
+#define ICC_BPR1_EL1    " p15, 0,  %0, c12,  c12, 3"
+#define ICC_DIR_EL1     " p15, 0,  %0, c12,  c11, 1"
+#define ICC_PMR_EL1     " p15, 0,  %0, c4,  c6, 0"
+#define ICC_CTLR_EL1    " p15, 0,  %0, c12,  c12, 4"
+#define ICC_IGRPEN1_EL1 " p15, 0,  %0, c12,  c12, 7"
+#define ICC_SRE_EL1     " p15, 0,  %0, c12,  c12, 5"
+#define MPIDR           " p15, 0,  %0, c0,  c0, 5"
+#endif
 
 /* Memory map for GIC distributor */
 struct gic_dist_map {

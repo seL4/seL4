@@ -32,20 +32,27 @@ uint32_t active_irq[CONFIG_MAX_NUM_NODES] = {IRQ_NONE};
 volatile struct gic_rdist_map *gic_rdist_map[CONFIG_MAX_NUM_NODES] = { 0 };
 volatile struct gic_rdist_sgi_ppi_map *gic_rdist_sgi_ppi_map[CONFIG_MAX_NUM_NODES] = { 0 };
 
+#ifdef CONFIG_ARCH_AARCH64
 #define MPIDR_AFF0(x) (x & 0xff)
 #define MPIDR_AFF1(x) ((x >> 8) & 0xff)
 #define MPIDR_AFF2(x) ((x >> 16) & 0xff)
 #define MPIDR_AFF3(x) ((x >> 32) & 0xff)
+#else
+#define MPIDR_AFF0(x) (x & 0xff)
+#define MPIDR_AFF1(x) ((x >> 8) & 0xff)
+#define MPIDR_AFF2(x) ((x >> 16) & 0xff)
+#define MPIDR_AFF3(x) (0)
+#endif
 #define MPIDR_MT(x)   (x & BIT(24))
 
-static uint64_t mpidr_map[CONFIG_MAX_NUM_NODES];
+static word_t mpidr_map[CONFIG_MAX_NUM_NODES];
 
-static inline uint64_t get_mpidr(word_t core_id)
+static inline word_t get_mpidr(word_t core_id)
 {
     return mpidr_map[core_id];
 }
 
-static inline uint64_t get_current_mpidr(void)
+static inline word_t get_current_mpidr(void)
 {
     word_t core_id = CURRENT_CPU_INDEX();
     return get_mpidr(core_id);
@@ -53,9 +60,9 @@ static inline uint64_t get_current_mpidr(void)
 
 static inline uint64_t mpidr_to_gic_affinity(void)
 {
-    uint64_t mpidr = get_current_mpidr();
+    word_t mpidr = get_current_mpidr();
     uint64_t affinity = 0;
-    affinity = MPIDR_AFF3(mpidr) << 32 | MPIDR_AFF2(mpidr) << 16 |
+    affinity = (uint64_t)MPIDR_AFF3(mpidr) << 32 | MPIDR_AFF2(mpidr) << 16 |
                MPIDR_AFF1(mpidr) << 8  | MPIDR_AFF0(mpidr);
     return affinity;
 }
@@ -165,9 +172,9 @@ BOOT_CODE static void dist_init(void)
 
 BOOT_CODE static void gicr_locate_interface(void)
 {
-    uint64_t offset;
+    word_t offset;
     int core_id = SMP_TERNARY(getCurrentCPUIndex(), 0);
-    uint64_t mpidr = get_current_mpidr();
+    word_t mpidr = get_current_mpidr();
     uint32_t val;
 
     /*
@@ -316,8 +323,8 @@ BOOT_CODE void initIRQController(void)
 
 BOOT_CODE void cpu_initLocalIRQController(void)
 {
-    uint64_t mpidr = 0;
-    SYSTEM_READ_WORD("mpidr_el1", mpidr);
+    word_t mpidr = 0;
+    SYSTEM_READ_WORD(MPIDR, mpidr);
 
     mpidr_map[CURRENT_CPU_INDEX()] = mpidr;
 
