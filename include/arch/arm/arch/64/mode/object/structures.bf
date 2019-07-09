@@ -202,6 +202,13 @@ tagged_union pgde pgde_type {
     tag pgde_pud                    3
 }
 
+block pude_invalid {
+    field stored_hw_asid            8
+    field stored_asid_valid         1
+    padding                         53
+    field pude_type                 2
+}
+
 block pude_1g {
     padding                         9
     field UXN                       1
@@ -229,6 +236,7 @@ block pude_pd {
 }
 
 tagged_union pude pude_type {
+    tag pude_invalid                0
     tag pude_1g                     1
     tag pude_pd                     3
 }

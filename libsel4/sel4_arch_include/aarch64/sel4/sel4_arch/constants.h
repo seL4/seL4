@@ -140,17 +140,32 @@ enum {
 #define seL4_IOPageTableBits 12
 #define seL4_WordSizeBits 3
 
+#define seL4_PUDEntryBits 3
+
+#if defined(CONFIG_ARM_HYPERVISOR_SUPPORT) && defined (CONFIG_ARM_PA_SIZE_BITS_40)
+/* for a 3 level translation, we skip the PGD */
+#define seL4_PGDBits 0
+#define seL4_PGDEntryBits 0
+#define seL4_PGDIndexBits    0
+
+#define seL4_PUDBits 13
+#define seL4_PUDIndexBits 10
+
+#define seL4_VSpaceBits seL4_PUDBits
+#define seL4_VSpaceIndexBits seL4_PUDIndexBits
+#define seL4_ARM_VSpaceObject seL4_ARM_PageUpperDirectoryObject
+#else
 #define seL4_PGDBits 12
 #define seL4_PGDEntryBits 3
 #define seL4_PGDIndexBits    9
 
 #define seL4_PUDBits 12
-#define seL4_PUDEntryBits 3
 #define seL4_PUDIndexBits 9
 
 #define seL4_VSpaceBits seL4_PGDBits
 #define seL4_VSpaceIndexBits seL4_PGDIndexBits
 #define seL4_ARM_VSpaceObject seL4_ARM_PageGlobalDirectoryObject
+#endif
 
 #define seL4_ARM_VCPUBits   12
 #define seL4_VCPUBits       12
@@ -195,7 +210,14 @@ SEL4_SIZE_SANITY(seL4_PUDEntryBits, seL4_PUDIndexBits, seL4_PUDBits);
  * address size fault.
  */
 /* First address in the virtual address space that is not accessible to user level */
+#if defined(CONFIG_ARM_PA_SIZE_BITS_44)
 #define seL4_UserTop 0x00000fffffffffff
+#elif defined(CONFIG_ARM_PA_SIZE_BITS_40)
+#define seL4_UserTop 0x000000ffffffffff
+#else
+#error "Unknown physical address width"
+#endif
+
 #else
 /* First address in the virtual address space that is not accessible to user level */
 #define seL4_UserTop 0x00007fffffffffff

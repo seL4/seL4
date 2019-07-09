@@ -486,13 +486,20 @@ static inline void vcpu_init_vtcr(void)
     }
 
     /* Set up the stage-2 translation control register for cores supporting 44-bit PA */
-    uint32_t vtcr_el2 = VTCR_EL2_T0SZ(20);                   // 44-bit input IPA
+    uint32_t vtcr_el2;
+#ifdef CONFIG_ARM_PA_SIZE_BITS_40
+    vtcr_el2 = VTCR_EL2_T0SZ(24);                            // 40-bit input IPA
+    vtcr_el2 |= VTCR_EL2_PS(PS_1T);                          // 40-bit PA size
+    vtcr_el2 |= VTCR_EL2_SL0(SL0_4K_L1);                     // 4KiB, start at level 1
+#else
+    vtcr_el2 = VTCR_EL2_T0SZ(20);                            // 44-bit input IPA
+    vtcr_el2 |= VTCR_EL2_PS(PS_16T);                         // 44-bit PA size
     vtcr_el2 |= VTCR_EL2_SL0(SL0_4K_L0);                     // 4KiB, start at level 0
+#endif
     vtcr_el2 |= VTCR_EL2_IRGN0(NORMAL_WB_WA_CACHEABLE);      // inner write-back, read/write allocate
     vtcr_el2 |= VTCR_EL2_ORGN0(NORMAL_WB_WA_CACHEABLE);      // outer write-back, read/write allocate
     vtcr_el2 |= VTCR_EL2_SH0(SH0_INNER);                     // inner shareable
     vtcr_el2 |= VTCR_EL2_TG0(TG0_4K);                        // 4KiB page size
-    vtcr_el2 |= VTCR_EL2_PS(PS_16T);                         // 44-bit PA size
     vtcr_el2 |= BIT(31);                                     // reserved as 1
 
     MSR(REG_VTCR_EL2, vtcr_el2);

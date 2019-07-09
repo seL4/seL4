@@ -38,10 +38,18 @@ enum vm_rights {
 };
 typedef word_t vm_rights_t;
 
-#define PGDE_SIZE_BITS      seL4_PGDEntryBits
-#define PGD_INDEX_BITS      seL4_PGDIndexBits
-#define PUDE_SIZE_BITS      seL4_PUDEntryBits
-#define PUD_INDEX_BITS      seL4_PUDIndexBits
+/* If hypervisor support for aarch64 is enabled and we run on processors with
+ * 40-bit PA, the stage-2 translation for EL1/EL0 uses a 3-level translation, skipping the PGD level.
+ * Yet the kernel will still use a stage-1 translation with 48 bit input addresses and a 4-level
+ * translation.  Therefore, PUD and PGD size for the kernel can be different from EL1/EL0
+ * so we do not use the libsel4 definitions */
+#define PGD_SIZE_BITS       12
+#define PGD_INDEX_BITS      9
+#define PUD_SIZE_BITS       12
+#define PUD_INDEX_BITS      9
+#define UPUD_SIZE_BITS      seL4_PUDBits
+#define UPUD_INDEX_BITS     seL4_PUDIndexBits
+
 #define PDE_SIZE_BITS       seL4_PageDirEntryBits
 #define PD_INDEX_BITS       seL4_PageDirIndexBits
 #define PTE_SIZE_BITS       seL4_PageTableEntryBits
@@ -54,11 +62,19 @@ typedef word_t vm_rights_t;
 
 #define VCPU_SIZE_BITS      seL4_VCPUBits
 
+#ifdef AARCH64_VSPACE_S2_START_L1
+/* For hyp with 40 bit PA, EL1 and EL0 use a 3 level translation and skips the PGD */
+typedef pude_t vspace_root_t;
+#else
+/* Otherwise we use a 4-level translation */
 typedef pgde_t vspace_root_t;
+#endif
+
 #define VSPACE_PTR(r)       ((vspace_root_t *)(r))
 
 #define GET_PGD_INDEX(x)    (((x) >> (PGD_INDEX_OFFSET)) & MASK(PGD_INDEX_BITS))
 #define GET_PUD_INDEX(x)    (((x) >> (PUD_INDEX_OFFSET)) & MASK(PUD_INDEX_BITS))
+#define GET_UPUD_INDEX(x)   (((x) >> (PUD_INDEX_OFFSET)) & MASK(UPUD_INDEX_BITS))
 #define GET_PD_INDEX(x)     (((x) >> (PD_INDEX_OFFSET)) & MASK(PD_INDEX_BITS))
 #define GET_PT_INDEX(x)     (((x) >> (PT_INDEX_OFFSET)) & MASK(PT_INDEX_BITS))
 

@@ -144,16 +144,24 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
     case cap_page_global_directory_cap:
         if (final && cap_page_global_directory_cap_get_capPGDIsMapped(cap)) {
             deleteASID(cap_page_global_directory_cap_get_capPGDMappedASID(cap),
-                     (vspace_root_t *)(cap_page_global_directory_cap_get_capPGDBasePtr(cap)));
+                       VSPACE_PTR(cap_page_global_directory_cap_get_capPGDBasePtr(cap)));
         }
         break;
 
     case cap_page_upper_directory_cap:
+#ifdef AARCH64_VSPACE_S2_START_L1
+        if (final && cap_page_upper_directory_cap_get_capPUDIsMapped(cap)) {
+            deleteASID(cap_page_upper_directory_cap_get_capPUDMappedASID(cap),
+                       PUDE_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(cap)));
+        }
+#else
         if (final && cap_page_upper_directory_cap_get_capPUDIsMapped(cap)) {
             unmapPageUpperDirectory(cap_page_upper_directory_cap_get_capPUDMappedASID(cap),
                                     cap_page_upper_directory_cap_get_capPUDMappedAddress(cap),
                                     PUDE_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(cap)));
         }
+
+#endif
         break;
 
     case cap_page_directory_cap:
@@ -292,8 +300,10 @@ word_t Arch_getObjectSize(word_t t)
         return seL4_PageDirBits;
     case seL4_ARM_PageUpperDirectoryObject:
         return seL4_PUDBits;
+#ifndef AARCH64_VSPACE_S2_START_L1
     case seL4_ARM_PageGlobalDirectoryObject:
         return seL4_PGDBits;
+#endif
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case seL4_ARM_VCPUObject:
         return VCPU_SIZE_BITS;
@@ -336,14 +346,14 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
                    VMReadWrite,           /* capFVMRights */
                    !!deviceMemory         /* capFIsDevice */
                );
-
+#ifndef AARCH64_VSPACE_S2_START_L1
     case seL4_ARM_PageGlobalDirectoryObject:
         return cap_page_global_directory_cap_new(
                    asidInvalid,           /* capPGDMappedASID   */
                    (word_t)regionBase,    /* capPGDBasePtr      */
                    0                      /* capPGDIsMapped     */
                );
-
+#endif
     case seL4_ARM_PageUpperDirectoryObject:
         return cap_page_upper_directory_cap_new(
                    asidInvalid,           /* capPUDMappedASID    */

@@ -89,4 +89,10 @@
 #define ENABLE_SMP_SUPPORT
 #endif
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+#ifdef CONFIG_ARM_PA_SIZE_BITS_40
+#define AARCH64_VSPACE_S2_START_L1
+#endif
+#endif
+
 #endif /* __CONFIG_H */

@@ -37,7 +37,7 @@
  * 8-bit VMID. Note that this assumes that the IPA size for S2
  * translation does not use full 48-bit.
  */
-#define VTABLE_VMID_SLOT   511
+#define VTABLE_VMID_SLOT   MASK(seL4_VSpaceIndexBits)
 #define RESERVED 3
 
 /*
@@ -319,10 +319,14 @@ static BOOT_CODE void map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap, bool_t
 
     assert(cap_frame_cap_get_capFMappedASID(frame_cap) != 0);
 
+#ifdef AARCH64_VSPACE_S2_START_L1
+    pud = vspaceRoot;
+#else
     vspaceRoot += GET_PGD_INDEX(vptr);
     assert(pgde_pgde_pud_ptr_get_present(vspaceRoot));
     pud = paddr_to_pptr(pgde_pgde_pud_ptr_get_pud_base_address(vspaceRoot));
-    pud += GET_PUD_INDEX(vptr);
+#endif
+    pud += GET_UPUD_INDEX(vptr);
     assert(pude_pude_pd_ptr_get_present(pud));
     pd = paddr_to_pptr(pude_pude_pd_ptr_get_pd_base_address(pud));
     pd += GET_PD_INDEX(vptr);
@@ -377,10 +381,14 @@ static BOOT_CODE void map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
 
     assert(cap_page_table_cap_get_capPTIsMapped(pt_cap));
 
+#ifdef AARCH64_VSPACE_S2_START_L1
+    pud = vspaceRoot;
+#else
     vspaceRoot += GET_PGD_INDEX(vptr);
     assert(pgde_pgde_pud_ptr_get_present(vspaceRoot));
     pud = paddr_to_pptr(pgde_pgde_pud_ptr_get_pud_base_address(vspaceRoot));
-    pud += GET_PUD_INDEX(vptr);
+#endif
+    pud += GET_UPUD_INDEX(vptr);
     assert(pude_pude_pd_ptr_get_present(pud));
     pd = paddr_to_pptr(pude_pude_pd_ptr_get_pd_base_address(pud));
     *(pd + GET_PD_INDEX(vptr)) = pde_pde_small_new(
@@ -410,10 +418,14 @@ static BOOT_CODE void map_it_pd_cap(cap_t vspace_cap, cap_t pd_cap)
 
     assert(cap_page_directory_cap_get_capPDIsMapped(pd_cap));
 
+#ifdef AARCH64_VSPACE_S2_START_L1
+    pud = vspaceRoot;
+#else
     vspaceRoot += GET_PGD_INDEX(vptr);
     assert(pgde_pgde_pud_ptr_get_present(vspaceRoot));
     pud = paddr_to_pptr(pgde_pgde_pud_ptr_get_pud_base_address(vspaceRoot));
-    *(pud + GET_PUD_INDEX(vptr)) = pude_pude_pd_new(
+#endif
+    *(pud + GET_UPUD_INDEX(vptr)) = pude_pude_pd_new(
                                         pptr_to_paddr(pd)
                                     );
 }
@@ -431,6 +443,7 @@ static BOOT_CODE cap_t create_it_pd_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vp
     return cap;
 }
 
+#ifndef AARCH64_VSPACE_S2_START_L1
 static BOOT_CODE void map_it_pud_cap(cap_t vspace_cap, cap_t pud_cap)
 {
     pgde_t *pgd = PGD_PTR(pptr_of_cap(vspace_cap));
@@ -455,12 +468,15 @@ static BOOT_CODE cap_t create_it_pud_cap(cap_t vspace_cap, pptr_t pptr, vptr_t v
     map_it_pud_cap(vspace_cap, cap);
     return cap;
 }
-
+#endif /* AARCH64_VSPACE_S2_START_L1 */
 BOOT_CODE word_t arch_get_n_paging(v_region_t it_v_reg)
 {
-    return get_n_paging(it_v_reg, PGD_INDEX_OFFSET) +
-           get_n_paging(it_v_reg, PUD_INDEX_OFFSET) +
-           get_n_paging(it_v_reg, PD_INDEX_OFFSET);
+    return
+#ifndef AARCH64_VSPACE_S2_START_L1
+        get_n_paging(it_v_reg, PGD_INDEX_OFFSET) +
+#endif
+        get_n_paging(it_v_reg, PUD_INDEX_OFFSET) +
+        get_n_paging(it_v_reg, PD_INDEX_OFFSET);
 }
 
 BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
@@ -479,6 +495,7 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
     slot_pos_before = ndks_boot.slot_pos_cur;
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadVSpace), vspace_cap);
 
+#ifndef AARCH64_VSPACE_S2_START_L1
     /* Create any PUDs needed for the user land image */
     for (vptr = ROUND_DOWN(it_v_reg.start, PGD_INDEX_OFFSET);
          vptr < it_v_reg.end;
@@ -487,7 +504,7 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
             return cap_null_cap_new();
         }
     }
-
+#endif
     /* Create any PDs needed for the user land image */
     for (vptr = ROUND_DOWN(it_v_reg.start, PUD_INDEX_OFFSET);
          vptr < it_v_reg.end;
@@ -642,10 +659,16 @@ static lookupPGDSlot_ret_t lookupPGDSlot(vspace_root_t *vspace, vptr_t vptr)
 
 static lookupPUDSlot_ret_t lookupPUDSlot(vspace_root_t *vspace, vptr_t vptr)
 {
-    lookupPGDSlot_ret_t pgdSlot;
     lookupPUDSlot_ret_t ret;
 
-    pgdSlot = lookupPGDSlot(vspace, vptr);
+#ifdef AARCH64_VSPACE_S2_START_L1
+    pude_t *pud = PUDE_PTR(vspace);
+    word_t pudIndex = GET_UPUD_INDEX(vptr);
+    ret.status = EXCEPTION_NONE;
+    ret.pudSlot = pud + pudIndex;
+    return ret;
+#else
+    lookupPGDSlot_ret_t pgdSlot = lookupPGDSlot(vspace, vptr);
 
     if (!pgde_pgde_pud_ptr_get_present(pgdSlot.pgdSlot)) {
         current_lookup_fault = lookup_fault_missing_capability_new(PGD_INDEX_OFFSET);
@@ -656,7 +679,7 @@ static lookupPUDSlot_ret_t lookupPUDSlot(vspace_root_t *vspace, vptr_t vptr)
     } else {
         pude_t *pud;
         pude_t *pudSlot;
-        word_t pudIndex = GET_PUD_INDEX(vptr);
+        word_t pudIndex = GET_UPUD_INDEX(vptr);
         pud = paddr_to_pptr(pgde_pgde_pud_ptr_get_pud_base_address(pgdSlot.pgdSlot));
         pudSlot = pud + pudIndex;
 
@@ -664,6 +687,7 @@ static lookupPUDSlot_ret_t lookupPUDSlot(vspace_root_t *vspace, vptr_t vptr)
         ret.pudSlot = pudSlot;
         return ret;
     }
+#endif
 }
 
 static lookupPDSlot_ret_t lookupPDSlot(vspace_root_t *vspace, vptr_t vptr)
@@ -1394,7 +1418,7 @@ static void doFlush(int invLabel, vptr_t start, vptr_t end, paddr_t pstart)
 /* ================= INVOCATION HANDLING STARTS HERE ================== */
 
 static exception_t performVSpaceFlush(int invLabel, vspace_root_t *vspaceRoot, asid_t asid,
-                                                   vptr_t start, vptr_t end, paddr_t pstart)
+                                      vptr_t start, vptr_t end, paddr_t pstart)
 {
 
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
@@ -1419,6 +1443,7 @@ static exception_t performVSpaceFlush(int invLabel, vspace_root_t *vspaceRoot, a
     return EXCEPTION_NONE;
 }
 
+#ifndef AARCH64_VSPACE_S2_START_L1
 static exception_t performUpperPageDirectoryInvocationMap(cap_t cap, cte_t *ctSlot, pgde_t pgde, pgde_t *pgdSlot)
 {
     ctSlot->cap = cap;
@@ -1440,6 +1465,7 @@ static exception_t performUpperPageDirectoryInvocationUnmap(cap_t cap, cte_t *ct
     cap_page_upper_directory_cap_ptr_set_capPUDIsMapped(&(ctSlot->cap), 0);
     return EXCEPTION_NONE;
 }
+#endif
 
 static exception_t performPageDirectoryInvocationMap(cap_t cap, cte_t *ctSlot, pude_t pude, pude_t *pudSlot)
 {
@@ -1611,8 +1637,8 @@ static exception_t performASIDControlInvocation(void *frame, cte_t *slot,
 }
 
 static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, unsigned int length,
-                                                          cte_t *cte, cap_t cap, extra_caps_t extraCaps,
-                                                          word_t *buffer)
+                                                 cte_t *cte, cap_t cap, extra_caps_t extraCaps,
+                                                 word_t *buffer)
 {
     vptr_t start, end;
     paddr_t pstart;
@@ -1708,6 +1734,7 @@ static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, unsigned int l
     }
 }
 
+#ifndef AARCH64_VSPACE_S2_START_L1
 static exception_t decodeARMPageUpperDirectoryInvocation(word_t invLabel, unsigned int length,
                                                          cte_t *cte, cap_t cap, extra_caps_t extraCaps,
                                                          word_t *buffer)
@@ -1794,6 +1821,7 @@ static exception_t decodeARMPageUpperDirectoryInvocation(word_t invLabel, unsign
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return performUpperPageDirectoryInvocationMap(cap, cte, pgde, pgdSlot.pgdSlot);
 }
+#endif
 
 static exception_t decodeARMPageDirectoryInvocation(word_t invLabel, unsigned int length,
                                                     cte_t *cte, cap_t cap, extra_caps_t extraCaps,
@@ -2268,10 +2296,11 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
     switch (cap_get_capType(cap)) {
     case cap_vtable_root_cap:
         return decodeARMVSpaceRootInvocation(invLabel, length, cte, cap, extraCaps, buffer);
+#ifndef AARCH64_VSPACE_S2_START_L1
     case cap_page_upper_directory_cap:
         return decodeARMPageUpperDirectoryInvocation(invLabel, length, cte,
                                                      cap, extraCaps, buffer);
-
+#endif
     case cap_page_directory_cap:
         return decodeARMPageDirectoryInvocation(invLabel, length, cte,
                                                 cap, extraCaps, buffer);
@@ -2496,7 +2525,7 @@ void Arch_userStackTrace(tcb_t *tptr)
         return;
     }
 
-    vspaceRoot = VSPACE_PTR(cap_vtable_root_get_basePtr(threadRoot));
+    vspaceRoot = cap_vtable_root_get_basePtr(threadRoot);
     sp = getRegister(tptr, SP_EL0);
 
     /* check for alignment so we don't have to worry about accessing

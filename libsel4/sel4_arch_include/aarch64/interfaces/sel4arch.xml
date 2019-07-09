@@ -101,7 +101,7 @@
         </method>
     </interface>
     <interface name="seL4_ARM_PageUpperDirectory" manual_name="Page Upper Directory">
-        <method id="ARMPageUpperDirectoryMap" name="Map">
+        <method id="ARMPageUpperDirectoryMap" name="Map" condition="!(defined CONFIG_ARM_HYPERVISOR_SUPPORT &amp;&amp; defined CONFIG_ARM_PA_SIZE_BITS_40)">
                 <brief>
                     Map an upper page directory
                 </brief>
@@ -115,7 +115,8 @@
             <param dir="in" name="attr" type="seL4_ARM_VMAttributes"
             description="Memory attributes"/>
         </method>
-        <method id="ARMPageUpperDirectoryUnmap" name="Unmap">
+        <method id="ARMPageUpperDirectoryUnmap" name="Unmap"
+            condition="!(defined CONFIG_ARM_HYPERVISOR_SUPPORT &amp;&amp; defined CONFIG_ARM_PA_SIZE_BITS_40)">
         </method>
     </interface>
     <interface name="seL4_ARM_PageDirectory" manual_name="Page Directory">
