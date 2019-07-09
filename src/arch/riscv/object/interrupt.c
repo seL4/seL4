@@ -13,6 +13,11 @@
 exception_t Arch_checkIRQ(word_t irq)
 {
     if (irq > maxIRQ || irq == irqInvalid) {
+#if CONFIG_RISCV_NUM_VTIMERS > 0
+    if (irq >= INTERRUPT_VTIMER_START && irq <= INTERRUPT_VTIMER_END) {
+        return EXCEPTION_NONE;
+    }
+#endif
         current_syscall_error.type = seL4_RangeError;
         current_syscall_error.rangeErrorMin = 1;
         current_syscall_error.rangeErrorMax = maxIRQ;

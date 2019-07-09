@@ -7,3 +7,6 @@
 
 #pragma once
 
+#define VCPU_SIZE_BITS      10
+
+#endif /* __ARCH_OBJECT_STRUCTURES_64_H */

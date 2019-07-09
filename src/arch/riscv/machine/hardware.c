@@ -31,6 +31,8 @@ void setNextPC(tcb_t *thread, word_t v)
 
 BOOT_CODE void map_kernel_devices(void)
 {
+    map_kernel_frame(0x00000000, PLIC_PPTR, VMKernelOnly);
+
     /* If there are no kernel device frames at all, then kernel_device_frames is
      * NULL. Thus we can't use ARRAY_SIZE(kernel_device_frames) here directly,
      * but have to use NUM_KERNEL_DEVICE_FRAMES that is defined accordingly.
@@ -46,6 +48,58 @@ BOOT_CODE void map_kernel_devices(void)
         }
     }
 }
+
+#if CONFIG_RISCV_NUM_VTIMERS > 0
+#define VTIMER_MAX_CYCLES   0xffffffffffffffff
+#define NUM_VTIMERS     (CONFIG_RISCV_NUM_VTIMERS + 1)
+static uint64_t vtimer_cycles[NUM_VTIMERS];
+static uint64_t vtimer_next_cycles = VTIMER_MAX_CYCLES;
+static word_t   vtimer_next = NUM_VTIMERS;
+
+#define KERNEL_PREEMPT_VTIMER 0
+
+
+static void initVTimer(void)
+{
+    for (int i = 0; i < NUM_VTIMERS; i++) {
+        vtimer_cycles[i] = VTIMER_MAX_CYCLES;
+    }
+}
+
+void setVTimer(word_t vtimer, uint64_t cycles)
+{
+    vtimer_cycles[vtimer] = cycles;
+    if (cycles < vtimer_next_cycles) {
+        vtimer_next = vtimer;
+        vtimer_next_cycles = cycles;
+    }
+
+    sbi_set_timer(vtimer_next_cycles);
+    return;
+}
+
+static irq_t handleVTimer(void)
+{
+    assert(vtimer_next != NUM_VTIMERS);
+    irq_t irq = KERNEL_TIMER_IRQ + vtimer_next;
+    vtimer_cycles[vtimer_next] = vtimer_next_cycles = VTIMER_MAX_CYCLES;
+
+    /* Now need to scan for the next to set */
+    for (int i = 0; i < NUM_VTIMERS; i++) {
+        if (vtimer_cycles[i] < vtimer_next_cycles) {
+            vtimer_next_cycles = vtimer_cycles[i];
+            vtimer_next = i;
+        }
+    }
+    if (vtimer_next_cycles == VTIMER_MAX_CYCLES) {
+        /* no next timer */
+        vtimer_next = NUM_VTIMERS;
+    }
+    sbi_set_timer(vtimer_next_cycles);
+    return irq;
+}
+
+#endif
 
 /*
  * The following assumes familiarity with RISC-V interrupt delivery and the PLIC.
@@ -108,7 +162,12 @@ static inline irq_t getActiveIRQ(void)
         irq = ipi_get_irq();
 #endif
     } else if (sip & BIT(SIP_STIP)) {
+#if CONFIG_RISCV_NUM_VTIMERS > 0
+        irq = handleVTimer();
+#else
+        // Supervisor timer interrupt
         irq = KERNEL_TIMER_IRQ;
+#endif
     } else {
         /* Seems none of the known sources has a pending interrupt. This can
          * happen if e.g. if another hart context has claimed the interrupt
@@ -245,13 +304,18 @@ static inline int read_current_timer(unsigned long *timer_val)
 #ifndef CONFIG_KERNEL_MCS
 void resetTimer(void)
 {
+
     uint64_t target;
     // repeatedly try and set the timer in a loop as otherwise there is a race and we
     // may set a timeout in the past, resulting in it never getting triggered
     do {
-        target = riscv_read_time() + RESET_CYCLES;
+        target = get_cycles() + RESET_CYCLES;
+#if CONFIG_RISCV_NUM_VTIMERS > 0
+        setVTimer(KERNEL_PREEMPT_VTIMER, target);
+#else
         sbi_set_timer(target);
-    } while (riscv_read_time() > target);
+#endif
+    } while (get_cycles() > target);
 }
 
 /**
@@ -259,7 +323,12 @@ void resetTimer(void)
  */
 BOOT_CODE void initTimer(void)
 {
-    sbi_set_timer(riscv_read_time() + RESET_CYCLES);
+#if CONFIG_RISCV_NUM_VTIMERS > 0
+    initVTimer();
+    setVTimer(KERNEL_PREEMPT_VTIMER, get_cycles() + RESET_CYCLES);
+#else
+    sbi_set_timer(get_cycles() + RESET_CYCLES);
+#endif
 }
 #endif /* !CONFIG_KERNEL_MCS */
 
