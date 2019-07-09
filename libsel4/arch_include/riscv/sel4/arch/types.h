@@ -16,6 +16,8 @@ typedef seL4_CPtr seL4_RISCV_Page;
 typedef seL4_CPtr seL4_RISCV_PageTable;
 typedef seL4_CPtr seL4_RISCV_ASIDControl;
 typedef seL4_CPtr seL4_RISCV_ASIDPool;
+typedef seL4_CPtr seL4_RISCV_VCPU;
+typedef seL4_CPtr seL4_RISCV_S2RootPageTable;
 
 
 #define seL4_EndpointBits     4
