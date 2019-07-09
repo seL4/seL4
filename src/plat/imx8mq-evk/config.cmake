@@ -12,10 +12,20 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-declare_platform(imx8mq-evk KernelPlatformImx8mq-evk PLAT_IMX8MQ_EVK KernelSel4ArchAarch64)
+declare_platform(imx8mq-evk KernelPlatformImx8mq-evk PLAT_IMX8MQ_EVK KernelArchARM)
 
 if(KernelPlatformImx8mq-evk)
-    declare_seL4_arch(aarch64)
+    if("${KernelSel4Arch}" STREQUAL aarch32)
+        declare_seL4_arch(aarch32)
+    elseif("${KernelSel4Arch}" STREQUAL aarch64)
+        declare_seL4_arch(aarch64)
+    else()
+        message(
+            STATUS "Selected platform ${KernelPlatform} supports multiple architectures but none were given"
+        )
+        message(STATUS "  Defaulting to aarch64")
+        declare_seL4_arch(aarch64)
+    endif()
     set(KernelArmCortexA53 ON)
     set(KernelArchArmV8a ON)
     config_set(KernelARMPlatform PLAT "imx8mq-evk")
@@ -23,6 +33,9 @@ if(KernelPlatformImx8mq-evk)
     set(KernelArmPASizeBits40 ON)
     list(APPEND KernelDTSList "tools/dts/imx8mq-evk.dts")
     list(APPEND KernelDTSList "src/plat/imx8mq-evk/overlay-imx8m.dts")
+    if(KernelSel4ArchAarch32)
+        list(APPEND KernelDTSList "src/plat/imx8mq-evk/overlay-imx8m-32bit.dts")
+    endif()
     declare_default_headers(
         TIMER_FREQUENCY 8000000llu
         MAX_IRQ 160
