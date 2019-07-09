@@ -22,6 +22,15 @@
 
 #define PLIC_PPTR_BASE      (PLIC_PPTR + 0x0C000000)
 
+/* The memory map is based on the PLIC section in
+ * https://static.dev.sifive.com/U54-MC-RVCoreIP.pdf
+ */
+
+#define PLIC_PPTR_BASE      (PLIC_PPTR + 0x0C000000)
+#define PLIC_NUM_INTERRUPTS 511
+
+/* We care about supervisor context */
+#define PLIC_SVC_CONTEXT    1
 
 #define PLIC_HART_ID (CONFIG_FIRST_HART_ID)
 
@@ -122,6 +131,16 @@ static inline word_t get_hart_id(void)
 #endif
 }
 
+static inline bool_t plic_pending_interrupt(word_t interrupt)
+{
+    word_t addr = PLIC_PPTR_BASE + PLIC_PENDING + (interrupt / 32) * 4;
+    word_t bit = interrupt % 32;
+    if (readl(addr) & BIT(bit)) {
+        return true;
+    } else {
+        return false;
+    }
+}
 static inline interrupt_t plic_get_claim(void)
 {
     /* Read the claim register for our HART interrupt context */
@@ -171,14 +190,18 @@ static inline void plic_init_hart(void)
 
 static inline void plic_init_controller(void)
 {
-
     for (int i = 1; i <= PLIC_NUM_INTERRUPTS; i++) {
         /* Clear all pending bits */
         if (plic_pending_interrupt(i)) {
             readl(PLIC_PPTR_BASE + plic_claim_offset(PLIC_HART_ID, PLIC_SVC_CONTEXT));
             writel(i, PLIC_PPTR_BASE + plic_claim_offset(PLIC_HART_ID, PLIC_SVC_CONTEXT));
         }
+        /* Disable interrupts */
+        plic_mask_irq(true, i);
     }
+
+    /* Set threshold to zero */
+    writel(0, (PLIC_PPTR_BASE + plic_thres_offset(PLIC_HART_ID, PLIC_SVC_CONTEXT)));
 
     /* Set the priorities of all interrupts to 1 */
     for (int i = 1; i <= PLIC_MAX_IRQ + 1; i++) {

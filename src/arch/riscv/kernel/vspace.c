@@ -293,7 +293,11 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
 
 BOOT_CODE void activate_kernel_vspace(void)
 {
+#ifdef CONFIG_RISCV_HE
+    setKernelVSpaceRoot(kpptr_to_paddr(&kernel_root_pageTable), 0);
+#else
     setVSpaceRoot(kpptr_to_paddr(&kernel_root_pageTable), 0);
+#endif
 }
 
 BOOT_CODE void write_it_asid_pool(cap_t it_ap_cap, cap_t it_lvl1pt_cap)
@@ -402,24 +406,63 @@ lookupPTSlot_ret_t lookupPTSlot(pte_t *lvl1pt, vptr_t vptr)
     return ret;
 }
 
+#ifdef CONFIG_RISCV_HE
+/* We get the actual faulting instruction, so that the user-mode
+ * VMM does not need to do nested page table walking.
+ */
+static uint32_t fetch_instruction(vm_fault_type_t type)
+{
+    word_t hstatus = read_hstatus();
+    if (hstatus & HSTATUS_STL) {
+        if (type == RISCVLoadPageFault ||
+            type == RISCVStorePageFault) {
+            write_hstatus(hstatus | HSTATUS_SPRV);
+            word_t pc = getRestartPC(ksCurThread);
+            uint32_t inst = *(uint32_t *)(pc);
+            write_hstatus(hstatus);
+            /* Not sure why there needs an instruction fence. Could be a QEMU bug? */
+            asm volatile("fence.i" ::: "memory");
+            return inst;
+        }
+    }
+    return 0;
+}
+#endif
+
 exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
 {
     uint64_t addr;
 
     addr = read_sbadaddr();
-
+#ifdef CONFIG_RISCV_HE
+    uint32_t instruction = 0;
+#endif
     switch (vm_faultType) {
     case RISCVLoadPageFault:
     case RISCVLoadAccessFault:
-        current_fault = seL4_Fault_VMFault_new(addr, RISCVLoadAccessFault, false);
+#ifdef CONFIG_RISCV_HE
+        instruction = fetch_instruction(vm_faultType);
+        current_fault = seL4_Fault_VMFault_new(addr, instruction, RISCVLoadAccessFault, false);
+#else
+        current_fault = seL4_Fault_VMFault_new(addr, RISCVLoadAccessFault, fsr);
+#endif
         return EXCEPTION_FAULT;
     case RISCVStorePageFault:
     case RISCVStoreAccessFault:
-        current_fault = seL4_Fault_VMFault_new(addr, RISCVStoreAccessFault, false);
+#ifdef CONFIG_RISCV_HE
+        instruction = fetch_instruction(vm_faultType);
+        current_fault = seL4_Fault_VMFault_new(addr, instruction, RISCVStoreAccessFault, false);
+#else
+        current_fault = seL4_Fault_VMFault_new(addr, RISCVStoreAccessFault, fsr);
+#endif
         return EXCEPTION_FAULT;
     case RISCVInstructionPageFault:
     case RISCVInstructionAccessFault:
+#ifdef CONFIG_RISCV_HE
+        current_fault = seL4_Fault_VMFault_new(addr, 0, RISCVInstructionAccessFault, true);
+#else
         current_fault = seL4_Fault_VMFault_new(addr, RISCVInstructionAccessFault, true);
+#endif
         return EXCEPTION_FAULT;
 
     default:
@@ -582,6 +625,9 @@ void setVMRoot(tcb_t *tcb)
     }
 
     setVSpaceRoot(addrFromPPtr(lvl1pt), asid);
+#ifdef CONFIG_RISCV_HE
+    vcpu_switch(tcb->tcbArch.tcbVCPU);
+#endif
 }
 
 bool_t CONST isValidVTableRoot(cap_t cap)

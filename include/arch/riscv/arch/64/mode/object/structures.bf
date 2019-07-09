@@ -56,6 +56,21 @@ block page_table_cap {
     field_high  capPTMappedAddress  39
 }
 
+#ifdef CONFIG_RISCV_HE
+-- The size of root page table for stage-2 translation is
+-- 16 KiB, so we add a new captype to reflect the difference.
+block s2_root_page_table_cap {
+    field       capPTMappedASID     16
+    field_high  capPTBasePtr        39
+    padding                         9
+
+    field       capType             5
+    padding                         19
+    field       capPTIsMapped       1
+    field_high  capPTMappedAddress  39
+}
+#endif
+
 -- Cap to the table of 2^6 ASID pools
 block asid_control_cap {
     padding 64
@@ -73,6 +88,34 @@ block asid_pool_cap {
     padding                     6
     field_high  capASIDPool     37
 }
+
+#ifdef CONFIG_RISCV_HE
+block vcpu_cap {
+    padding                     64
+
+    field       capType         5
+    field_high  capVCPUPtr      39
+    padding                     20
+}
+
+block vmid_control_cap {
+    padding                     64
+
+    field   capType             5
+    padding                     59
+}
+
+
+block vmid_pool_cap {
+    padding                     64
+
+    field       capType         5
+    field       capVMIDBase     16
+    padding                     6
+    field_high  capVMIDPool     37
+}
+
+#endif
 
 -- NB: odd numbers are arch caps (see isArchCap())
 tagged_union cap capType {
@@ -98,20 +141,40 @@ tagged_union cap capType {
     tag page_table_cap      3
     tag asid_control_cap    11
     tag asid_pool_cap       13
+#ifdef CONFIG_RISCV_HE
+    tag vcpu_cap                15
+    tag s2_root_page_table_cap  17
+    tag vmid_control_cap        19
+    tag vmid_pool_cap           21
+#endif
 }
 
 ---- Arch-independent object types
 
 block VMFault {
     field     address           64
-
+#ifdef CONFIG_RISCV_HE
+    field     instruction       32
+#else
     padding                     32
+#endif
     field     FSR               5
     padding                     7
     field     instructionFault  1
     padding                     15
     field     seL4_FaultType    4
 }
+
+#ifdef CONFIG_RISCV_HE
+
+block VCPUFault {
+    field   cause               64
+
+    padding                     60
+    field    seL4_FaultType     4
+}
+
+#endif
 
 -- VM attributes
 
@@ -152,6 +215,14 @@ block pte {
 block satp {
     field mode          4
     field asid          16
+    field ppn           44
+}
+
+-- HGATP stage-2 translation for hypervisor extension
+block hgatp {
+    field mode          4
+    padding             2
+    field vmid          14
     field ppn           44
 }
 

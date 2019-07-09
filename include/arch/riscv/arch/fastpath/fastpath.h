@@ -50,7 +50,9 @@ static inline void FORCE_INLINE switchToThread_fp(tcb_t *thread, pte_t *vroot, p
     asid_t asid = (asid_t)(stored_hw_asid.words[0]);
 
     setVSpaceRoot(addrFromPPtr(vroot), asid);
-
+#ifdef CONFIG_RISCV_HE
+    vcpu_switch(thread->tcbArch.tcbVCPU);
+#endif
     NODE_STATE(ksCurThread) = thread;
 }
 

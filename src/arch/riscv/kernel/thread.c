@@ -28,6 +28,10 @@ extern char kernel_stack_alloc[CONFIG_MAX_NUM_NODES][BIT(CONFIG_KERNEL_STACK_BIT
 
 void Arch_switchToThread(tcb_t *tcb)
 {
+
+#ifdef CONFIG_RISCV_HE
+    hstatus_set(HSTATUS_SPV);
+#endif
     setVMRoot(tcb);
 }
 
@@ -51,10 +55,16 @@ BOOT_CODE void Arch_configureIdleThread(tcb_t *tcb)
 
 void Arch_switchToIdleThread(void)
 {
+#ifdef CONFIG_RISCV_HE
+    /* Idle thread runs in HS-mode */
+    hstatus_clear(HSTATUS_SPV);
+    vcpu_switch(NULL);
+#else
     tcb_t *tcb = NODE_STATE(ksIdleThread);
 
     /* Force the idle thread to run on kernel page table */
     setVMRoot(tcb);
+#endif
 }
 
 void Arch_activateIdleThread(tcb_t *tcb)

@@ -47,24 +47,54 @@
 #define seL4_HugePageBits      30
 #define seL4_TeraPageBits      39
 #define seL4_PageTableBits     12
+#define seL4_S2RootPageTableBits 14
+#ifdef CONFIG_RISCV_HE
+#define seL4_VSpaceBits        seL4_S2RootPageTableBits
+#else
 #define seL4_VSpaceBits        seL4_PageTableBits
+#endif
+
+#ifdef CONFIG_RISCV_HE
+/* Assume 14-bit VMID for the RISCV64 */
+#define seL4_NumASIDPoolsBits   5
+#define seL4_ASIDPoolIndexBits  9
+#else
 
 #define seL4_NumASIDPoolsBits   7
 #define seL4_ASIDPoolIndexBits  9
+
+#endif
 #define seL4_ASIDPoolBits       12
 
 /* Untyped size limits */
 #define seL4_MinUntypedBits     4
 #define seL4_MaxUntypedBits     38
+
+/* VCPU-related definitions */
+#define seL4_RISCV_VCPUBits         10
+#define seL4_VCPUBits               10
+/* The root page table for stage2 translation is 16 KiB */
+#define seL4_S2RootPageTableBits    14
+
 #ifndef __ASSEMBLER__
 
 enum {
     seL4_VMFault_IP,
+#ifdef CONFIG_RISCV_HE
+    seL4_VMFault_Instruction,
+#endif
     seL4_VMFault_Addr,
     seL4_VMFault_PrefetchFault,
     seL4_VMFault_FSR,
     seL4_VMFault_Length,
 } seL4_VMFault_Msg;
+
+#ifdef CONFIG_RISCV_HE
+enum {
+    seL4_VCPUFault_Cause,
+    seL4_VCPUFault_Length,
+} seL4_VCPUFault_Msg;
+#endif
 
 enum {
     seL4_UnknownSyscall_FaultIP,
@@ -133,6 +163,25 @@ enum {
     seL4_Timeout_Length,
 } seL4_TimeoutMsg;
 #endif
+
+#ifdef CONFIG_RISCV_HE
+
+enum {
+    seL4_VCPUReg_SSTATUS = 0,
+    seL4_VCPUReg_SIE,
+    seL4_VCPUReg_STVEC,
+    seL4_VCPUReg_SSTRATCH,
+    seL4_VCPUReg_SEPC,
+    seL4_VCPUReg_SCAUSE,
+    seL4_VCPUReg_STVAL,
+    seL4_VCPUReg_SIP,
+    seL4_VCPUReg_SATP,
+    seL4_VCPUReg_TIMER,
+    seL4_VCPUReg_Num,
+} seL4_VCPUReg;
+
+#endif /* end of CONFIG_RISCV_HE */
+
 #endif /* __ASSEMBLER__ */
 
 /* First address in the virtual address space that is not accessible to user level */

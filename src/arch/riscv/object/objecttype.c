@@ -54,6 +54,13 @@ deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
         ret.status = EXCEPTION_NONE;
         return ret;
 
+#ifdef CONFIG_RISCV_HE
+    case cap_vcpu_cap:
+        ret.cap = cap;
+        ret.status = EXCEPTION_NONE;
+        return ret;
+#endif
+
     default:
         /* This assert has no equivalent in haskell,
          * as the options are restricted by type */
@@ -122,6 +129,13 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
         break;
     case cap_asid_control_cap:
         break;
+#ifdef CONFIG_RISCV_HE
+    case cap_vcpu_cap:
+        if (final) {
+            vcpu_finalise(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)));
+        }
+        break;
+#endif
     }
     fc_ret.remainder = cap_null_cap_new();
     fc_ret.cleanupInfo = cap_null_cap_new();
@@ -160,6 +174,14 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
                    cap_asid_pool_cap_get_capASIDPool(cap_b);
         }
         break;
+
+#ifdef CONFIG_RISCV_HE
+    case cap_vcpu_cap:
+        if (cap_get_capType(cap_b) == cap_vcpu_cap) {
+            return cap_vcpu_cap_get_capVCPUPtr(cap_a) ==
+                   cap_vcpu_cap_get_capVCPUPtr(cap_b);
+        }
+#endif
     }
 
     return false;
@@ -195,6 +217,10 @@ word_t Arch_getObjectSize(word_t t)
 #if CONFIG_PT_LEVELS > 3
     case seL4_RISCV_Tera_Page:
         return seL4_TeraPageBits;
+#endif
+#ifdef CONFIG_RISCV_HE
+    case seL4_RISCV_VCPUObject:
+        return VCPU_SIZE_BITS;
 #endif
     default:
         fail("Invalid object type");
@@ -248,6 +274,12 @@ cap_t Arch_createObject(object_t t, void *regionBase, int userSize, bool_t
                    0                       /* capPTMappedAddress */
                );
 
+#ifdef CONFIG_RISCV_HE
+    case seL4_RISCV_VCPUObject:
+        vcpu_init(VCPU_PTR(regionBase));
+        printf("region %p\n", regionBase);
+        return cap_vcpu_cap_new(VCPU_REF(regionBase));
+#endif
     default:
         /*
          * This is a conflation of the haskell error: "Arch.createNewCaps
@@ -269,11 +301,24 @@ exception_t Arch_decodeInvocation(
     word_t *buffer
 )
 {
+#ifdef CONFIG_RISCV_HE
+    switch (cap_get_capType(cap)) {
+        case cap_vcpu_cap:
+            return decodeRISCVVCPUInvocation(label, length, cptr, slot, cap, extraCaps, call, buffer);
+        default:
+            break;
+    }
+#endif
     return decodeRISCVMMUInvocation(label, length, cptr, slot, cap, extraCaps, buffer);
 }
 
 void Arch_prepareThreadDelete(tcb_t *thread)
 {
+#ifdef CONFIG_RISCV_HE
+    if (thread->tcbArch.tcbVCPU) {
+        dissociateVCPUTCB(thread->tcbArch.tcbVCPU, thread);
+    }
+#endif
     /* No action required on RISCV. */
 }
 

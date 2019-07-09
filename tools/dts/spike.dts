@@ -44,6 +44,15 @@
     device_type = "memory";
     reg = <0x00000000 0x80000000 0x00000000 0xfff00000>;
   };
+
+  uart@10000000 {
+    interrupts = <0x0000000a>;
+    interrupt-parent = <0x00000001>;
+    clock-frequency = <0x00384000>;
+    reg = <0x00000000 0x10000000 0x00000000 0x00000100>;
+    compatible = "ns16550a";
+  };
+
   soc {
     #address-cells = <0x00000002>;
     #size-cells = <0x00000002>;

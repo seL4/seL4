@@ -193,4 +193,39 @@
 
     </interface>
 
+    <interface name="seL4_RISCV_VCPU" manual_name="VCPU">
+        <method id="RISCVVCPUSetTCB" name="SetTCB" condition="defined(CONFIG_RISCV_HE)"
+            manual_name="Set TCB">
+                <brief>
+                    Bind a TCB to a virtual CPU
+                </brief>
+             <description>
+                 There is a 1:1 relationship between a virtual CPU and a TCB. If either (or both) of them is
+                 associated with another one, they will be dissociated, and then associated to the
+                 ones called in this system calls.
+             </description>
+            <param dir="in" name="tcb" type="seL4_TCB"
+            description="Capability to TCB to bind to a virtual CPU"/>
+        </method>
+        <method id="RISCVVCPUReadReg" name="ReadRegs" condition="defined(CONFIG_RISCV_HE)"
+            manual_name="Read Registers">
+                <brief>
+                    Read a virtual CPU register
+                </brief>
+            <param dir="in" name="field" type="seL4_Word"
+            description="Register to read from a VCPU"/>
+            <param dir="out" name="value" type="seL4_Word"
+            description="Returned value of the VCPU register"/>
+        </method>
+        <method id="RISCVVCPUWriteReg" name="WriteRegs" condition="defined(CONFIG_RISCV_HE)"
+            manual_name="Write Registers">
+                <brief>
+                    Write a virtual CPU register
+                </brief>
+            <param dir="in" name="field" type="seL4_Word"
+            description="Register ID to write to a VCPU"/>
+            <param dir="in" name="value" type="seL4_Word"
+            description="Value to be written to the VCPU register"/>
+        </method>
+    </interface>
 </api>

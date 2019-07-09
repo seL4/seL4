@@ -99,6 +99,7 @@
 #define KERNEL_ELF_BASE  UL_CONST(0xFFFFFFFF84000000)
 /* Start of kernel device mapping region in highest 1GiB of memory. */
 #define KDEV_BASE        0xFFFFFFFFC0000000lu
+#define PLIC_PPTR        KDEV_BASE
 #else
 #error Only PT_LEVELS == 3 is supported
 #endif

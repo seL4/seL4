@@ -47,6 +47,9 @@ typedef struct asid_pool asid_pool_t;
 
 typedef struct arch_tcb {
     user_context_t tcbContext;
+#ifdef CONFIG_RISCV_HE
+    struct vcpu *tcbVCPU;
+#endif
 } arch_tcb_t;
 
 enum vm_rights {
@@ -73,6 +76,9 @@ typedef pte_t pde_t;
 
 #define PTE_SIZE_BITS   seL4_PageTableEntryBits
 #define PT_INDEX_BITS   seL4_PageTableIndexBits
+
+#define VCPU_PTR(r) ((struct vcpu *)(r))
+#define VCPU_REF(p) ((word_t)(p))
 
 #define WORD_BITS   (8 * sizeof(word_t))
 #define WORD_PTR(r) ((word_t *)(r))

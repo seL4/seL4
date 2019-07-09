@@ -130,6 +130,12 @@ BOOT_CODE static void init_cpu(void)
 #ifndef CONFIG_KERNEL_MCS
     initTimer();
 #endif
+
+    activate_kernel_vspace();
+
+#ifdef CONFIG_RISCV_HE
+    vcpu_boot_init();
+#endif
 }
 
 /* This and only this function initialises the platform. It does NOT initialise any kernel state. */

@@ -37,3 +37,7 @@ pte_t kernel_image_level2_pt[BIT(PT_INDEX_BITS)] ALIGN_BSS(BIT(seL4_PageTableBit
 #endif
 
 SMP_STATE_DEFINE(core_map_t, coreMap);
+#ifdef CONFIG_RISCV_HE
+UP_STATE_DEFINE(vcpu_t, *riscvHSCurVCPU);
+UP_STATE_DEFINE(bool_t, riscvHSVCPUActive);
+#endif

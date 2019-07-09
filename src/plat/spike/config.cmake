@@ -32,8 +32,11 @@ if(KernelPlatformSpike)
         list(APPEND KernelDTSList "tools/dts/spike.dts")
     endif()
     declare_default_headers(
-        TIMER_FREQUENCY 10000000llu PLIC_MAX_NUM_INT 0
-        INTERRUPT_CONTROLLER arch/machine/plic.h
+        TIMER_FREQUENCY 10000000llu PLIC_MAX_NUM_INT 128
+        INTERRUPT_CONTROLLER drivers/irq/hifive.h
+        #        TIMER_FREQUENCY 10000000llu PLIC_MAX_NUM_INT 0
+        #INTERRUPT_CONTROLLER arch/machine/plic.h
+
     )
 else()
     unset(KernelPlatformFirstHartID CACHE)

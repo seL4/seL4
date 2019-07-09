@@ -32,6 +32,18 @@ block VMFault {
     field     seL4_FaultType    4
 }
 
+#ifdef CONFIG_RISCV_HE
+block VCPUFault {
+    padding 512
+    padding 128
+
+    field cause 64
+
+    padding 60
+    field seL4_FaultType 4
+}
+#endif
+
 -- VM attributes
 block vm_attributes {
     padding 32
