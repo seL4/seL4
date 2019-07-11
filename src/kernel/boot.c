@@ -472,6 +472,35 @@ BOOT_CODE bool_t create_untypeds_for_region(
     return true;
 }
 
+BOOT_CODE bool_t create_device_untypeds(cap_t root_cnode_cap, seL4_SlotPos first_untyped_slot)
+{
+    /* convert remaining freemem into UT objects and provide the caps */
+    pptr_t start = BASE_OFFSET;
+    for (word_t i = 0; i < MAX_NUM_FREEMEM_REG; i++) {
+        if (start < ndks_boot.freemem[i].start) {
+            region_t notram = {
+                .start = start,
+                .end = MIN(ndks_boot.freemem[i].start, PPTR_TOP)
+            };
+            if (!create_untypeds_for_region(root_cnode_cap, true, notram, first_untyped_slot)) {
+                return false;
+            }
+            start = notram.end;
+        }
+    }
+
+    if (start < PPTR_TOP) {
+        region_t notram = {
+            .start = start,
+            .end = PPTR_TOP
+        };
+        if (!create_untypeds_for_region(root_cnode_cap, true, notram, first_untyped_slot)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 BOOT_CODE bool_t create_kernel_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg,
                                         seL4_SlotPos first_untyped_slot)
 {
