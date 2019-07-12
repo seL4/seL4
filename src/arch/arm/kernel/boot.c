@@ -194,7 +194,7 @@ BOOT_CODE static bool_t init_cpu(void)
 
     /* Disable FPU to avoid channels where a platform has an FPU but doesn't make use of it */
     if (haveHWFPU) {
-        disableFpu();
+        Arch_disableFpu();
     }
 
 #ifdef CONFIG_HAVE_FPU

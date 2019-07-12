@@ -14,14 +14,13 @@
 #include <arch/machine/fpu.h>
 #include <mode/model/statedata.h>
 
-bool_t isFPUEnabledCached[CONFIG_MAX_NUM_NODES];
-
 #ifdef CONFIG_HAVE_FPU
 /* Initialise the FP/SIMD for this machine. */
 BOOT_CODE bool_t fpsimd_init(void)
 {
     /* Set the FPU to lazy switch mode */
-    disableFpu();
+    NODE_STATE(ksFPUEnabled) = false;
+    Arch_disableFpu();
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         enableFpuEL01();
     }

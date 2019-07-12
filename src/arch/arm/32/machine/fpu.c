@@ -16,12 +16,6 @@
 #include <config.h>
 #include <util.h>
 
-/* We cache the following value to avoid reading the coprocessor when isFpuEnable()
- * is called. enableFpu() and disableFpu(), the value is set to cache/reflect the
- * actual HW FPU enable/disable state.
- */
-bool_t isFPUEnabledCached[CONFIG_MAX_NUM_NODES];
-
 /*
  * The following function checks if the subarchitecture support asynchronous exceptions
  */
@@ -82,7 +76,8 @@ BOOT_CODE bool_t fpsimd_init(void)
 
     isFPUD32SupportedCached = isFPUD32Supported();
     /* Set the FPU to lazy switch mode */
-    disableFpu();
+    NODE_STATE(ksFPUEnabled) = false;
+    Arch_disableFpu();
 
     return true;
 }
