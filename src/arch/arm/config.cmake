@@ -171,11 +171,11 @@ if(KernelAArch32FPUEnableContextSwitch OR KernelSel4ArchAarch64)
 endif()
 
 if(KernelArchArmV6)
-	# This is currently needed in ARMv6 to provide thread IDs via the
-	# globals frame. The globals frame should be removed along with this
-	# in favour of reserving r9 as a thread ID register.
-	#
-	# See SELFOUR-2253
+    # This is currently needed in ARMv6 to provide thread IDs via the
+    # globals frame. The globals frame should be removed along with this
+    # in favour of reserving r9 as a thread ID register.
+    #
+    # See SELFOUR-2253
     set(KernelSetTLSBaseSelf ON)
 endif()
 
