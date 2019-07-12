@@ -24,7 +24,7 @@
 #include <plat/machine/hardware.h>
 #include <machine.h>
 #include <arch/machine/timer.h>
-#include <arch/machine/fpu.h>
+#include <machine/fpu.h>
 #include <arch/machine/tlb.h>
 
 /* pointer to the end of boot code/data in kernel image */
