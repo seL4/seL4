@@ -63,6 +63,7 @@ Upcoming release: BREAKING
     - PLATFORM=qemu-arm-virt
     - ARM_CPU={cortex-a15, cortex-a53, cortex-a57}
     - QEMU_MEMORY=1024 (default)
+* Support added for rockpro64.
 
 ## Upgrade Notes
 ---

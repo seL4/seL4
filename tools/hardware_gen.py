@@ -87,13 +87,18 @@ def make_number(cells, array):
 
 
 def parse_arm_gic_irq(self, child, by_phandle, data):
-    # 3 cells:
+    # 4 cells:
     # first cell is 1 if PPI, 0 if SPI
     # second cell: PPI or SPI number
     # third cell: interrupt trigger flags, ignored by us
+    # fourth cell: PPI information (if applicable)
+
     is_spi = data.pop(0) == 0
     number = data.pop(0)
     flags = data.pop(0)
+
+    if self.get_interrupt_cells(by_phandle) == 4 and data:
+        ppi = data.pop(0)
 
     number += 16  # SGI takes 0-15
     if is_spi:
