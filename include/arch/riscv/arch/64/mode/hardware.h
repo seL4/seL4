@@ -103,4 +103,19 @@
 #error Only PT_LEVELS == 3 is supported
 #endif
 
+#ifndef __ASSEMBLER__
+
+#include <stdint.h>
+
+static inline uint64_t riscv_read_time(void)
+{
+    uint64_t n;
+    asm volatile(
+        "rdtime %0"
+        : "=r"(n));
+    return n;
+}
+
+#endif /* __ASSEMBLER__ */
+
 #endif /* __ARCH_MODE_HARDWARE_H */

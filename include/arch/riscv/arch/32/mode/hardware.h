@@ -35,4 +35,20 @@
 /* Start of kernel device mapping region in highest 4MiB of memory. */
 #define KDEV_PPTR UL_CONST(0xFFC00000)
 
+#ifndef __ASSEMBLER__
+
+#include <stdint.h>
+
+static inline uint64_t riscv_read_time(void)
+{
+    uint32_t nH, nL;
+    asm volatile(
+        "rdtimeh %0\n"
+        "rdtime  %1\n"
+        : "=r"(nH), "=r"(nL));
+    return ((uint64_t)((uint64_t) nH << 32)) | (nL);
+}
+
+#endif /* __ASSEMBLER__ */
+
 #endif /* __ARCH_MODE_HARDWARE_H */

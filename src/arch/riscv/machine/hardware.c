@@ -239,29 +239,9 @@ void ackInterrupt(irq_t irq)
     }
 }
 
-static inline uint64_t get_cycles(void)
-#if __riscv_xlen == 32
-{
-    uint32_t nH, nL;
-    asm volatile(
-        "rdtimeh %0\n"
-        "rdtime  %1\n"
-        : "=r"(nH), "=r"(nL));
-    return ((uint64_t)((uint64_t) nH << 32)) | (nL);
-}
-#else
-{
-    uint64_t n;
-    asm volatile(
-        "rdtime %0"
-        : "=r"(n));
-    return n;
-}
-#endif
-
 static inline int read_current_timer(unsigned long *timer_val)
 {
-    *timer_val = get_cycles();
+    *timer_val = riscv_read_time();
     return 0;
 }
 
@@ -271,9 +251,9 @@ void resetTimer(void)
     // repeatedly try and set the timer in a loop as otherwise there is a race and we
     // may set a timeout in the past, resulting in it never getting triggered
     do {
-        target = get_cycles() + RESET_CYCLES;
+        target = riscv_read_time() + RESET_CYCLES;
         sbi_set_timer(target);
-    } while (get_cycles() > target);
+    } while (riscv_read_time() > target);
 }
 
 /**
@@ -281,7 +261,7 @@ void resetTimer(void)
  */
 BOOT_CODE void initTimer(void)
 {
-    sbi_set_timer(get_cycles() + RESET_CYCLES);
+    sbi_set_timer(riscv_read_time() + RESET_CYCLES);
 }
 
 void plat_cleanL2Range(paddr_t start, paddr_t end)
