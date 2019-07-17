@@ -34,7 +34,11 @@ NORETURN;
 void fastpath_call(word_t cptr, word_t r_msgInfo)
 NORETURN;
 
+#ifdef CONFIG_KERNEL_MCS
+void fastpath_reply_recv(word_t cptr, word_t r_msgInfo, word_t reply)
+#else
 void fastpath_reply_recv(word_t cptr, word_t r_msgInfo)
+#endif
 NORETURN;
 
 /* Use macros to not break verification */
