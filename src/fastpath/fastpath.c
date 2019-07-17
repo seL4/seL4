@@ -98,7 +98,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
 #endif
 
 #ifdef CONFIG_ARCH_AARCH64
-    stored_hw_asid.words[0] = cap_page_global_directory_cap_get_capPGDMappedASID(newVTable);
+    stored_hw_asid.words[0] = cap_vtable_root_get_mappedASID(newVTable);
 #endif
 
 #ifdef CONFIG_ARCH_RISCV
@@ -288,7 +288,7 @@ void fastpath_reply_recv(word_t cptr, word_t msgInfo)
 #endif
 
 #ifdef CONFIG_ARCH_AARCH64
-    stored_hw_asid.words[0] = cap_page_global_directory_cap_get_capPGDMappedASID(newVTable);
+    stored_hw_asid.words[0] = cap_vtable_root_get_mappedASID(newVTable);
 #endif
 
 #ifdef CONFIG_ARCH_RISCV

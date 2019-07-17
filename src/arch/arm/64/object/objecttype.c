@@ -144,7 +144,7 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
     case cap_page_global_directory_cap:
         if (final && cap_page_global_directory_cap_get_capPGDIsMapped(cap)) {
             deleteASID(cap_page_global_directory_cap_get_capPGDMappedASID(cap),
-                       PGDE_PTR(cap_page_global_directory_cap_get_capPGDBasePtr(cap)));
+                     (vspace_root_t *)(cap_page_global_directory_cap_get_capPGDBasePtr(cap)));
         }
         break;
 

@@ -42,4 +42,26 @@ hw_asid_t getHWASID(asid_t asid);
 
 static const region_t BOOT_RODATA *mode_reserved_region = NULL;
 
+#define cap_vtable_root_cap cap_page_global_directory_cap
+#define cap_vtable_root_get_mappedASID(_c) \
+    cap_page_global_directory_cap_get_capPGDMappedASID(_c)
+#define cap_vtable_root_get_basePtr(_c) \
+    PGDE_PTR(cap_page_global_directory_cap_get_capPGDBasePtr(_c))
+#define cap_vtable_root_isMapped(_c) cap_page_global_directory_cap_get_capPGDIsMapped(_c)
+#define cap_vtable_cap_new(_a, _v, _m) \
+    cap_page_global_directory_cap_new(_a, _v, _m)
+#define vtable_invalid_new(_a, _v) pgde_pgde_invalid_new(_a, _v)
+#define vtable_invalid_get_stored_asid_valid(_v) \
+    pgde_pgde_invalid_get_stored_asid_valid(_v)
+#define vtable_invalid_get_stored_hw_asid(_v) pgde_pgde_invalid_get_stored_hw_asid(_v)
+
+static inline exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *poolPtr, cte_t *cte)
+{
+    cap_page_global_directory_cap_ptr_set_capPGDMappedASID(&cte->cap, asid);
+    cap_page_global_directory_cap_ptr_set_capPGDIsMapped(&cte->cap, 1);
+    poolPtr->array[asid & MASK(asidLowBits)] =
+        PGDE_PTR(cap_page_global_directory_cap_get_capPGDBasePtr(cte->cap));
+
+    return EXCEPTION_NONE;
+}
 #endif /* __ARCH_MODE_KERNEL_VSPACE_H_ */

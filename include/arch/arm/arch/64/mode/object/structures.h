@@ -55,6 +55,7 @@ typedef word_t vm_rights_t;
 #define VCPU_SIZE_BITS      seL4_VCPUBits
 
 typedef pgde_t vspace_root_t;
+#define VSPACE_PTR(r)       ((vspace_root_t *)(r))
 
 #define GET_PGD_INDEX(x)    (((x) >> (PGD_INDEX_OFFSET)) & MASK(PGD_INDEX_BITS))
 #define GET_PUD_INDEX(x)    (((x) >> (PUD_INDEX_OFFSET)) & MASK(PUD_INDEX_BITS))

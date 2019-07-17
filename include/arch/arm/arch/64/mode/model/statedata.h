@@ -24,7 +24,7 @@ extern asid_pool_t *armKSASIDTable[BIT(asidHighBits)] VISIBLE;
 
 /* This is the temporary userspace page table in kernel. It is required before running
  * user thread to avoid speculative page table walking with the wrong page table. */
-extern pgde_t armKSGlobalUserPGD[BIT(PGD_INDEX_BITS)] VISIBLE;
+extern vspace_root_t armKSGlobalUserVSpace[BIT(seL4_VSpaceIndexBits)] VISIBLE;
 extern pgde_t armKSGlobalKernelPGD[BIT(PGD_INDEX_BITS)] VISIBLE;
 
 extern pude_t armKSGlobalKernelPUD[BIT(PUD_INDEX_BITS)] VISIBLE;

@@ -147,7 +147,10 @@ enum {
 #define seL4_PUDBits 12
 #define seL4_PUDEntryBits 3
 #define seL4_PUDIndexBits 9
-#define seL4_VSpaceBits seL4_PUDBits
+
+#define seL4_VSpaceBits seL4_PGDBits
+#define seL4_VSpaceIndexBits seL4_PGDIndexBits
+#define seL4_ARM_VSpaceObject seL4_ARM_PageGlobalDirectoryObject
 
 #define seL4_ARM_VCPUBits   12
 #define seL4_VCPUBits       12
