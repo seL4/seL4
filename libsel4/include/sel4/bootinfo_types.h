@@ -47,12 +47,12 @@ enum {
 /* types */
 typedef seL4_Word seL4_SlotPos;
 
-typedef struct {
+typedef struct seL4_SlotRegion {
     seL4_SlotPos start; /* first CNode slot position OF region */
     seL4_SlotPos end;   /* first CNode slot position AFTER region */
 } seL4_SlotRegion;
 
-typedef struct {
+typedef struct seL4_UntypedDesc {
     seL4_Word  paddr;   /* physical address of untyped cap  */
     seL4_Uint8 padding1;
     seL4_Uint8 padding2;
@@ -60,7 +60,7 @@ typedef struct {
     seL4_Uint8 isDevice;/* whether the untyped is a device  */
 } seL4_UntypedDesc;
 
-typedef struct {
+typedef struct seL4_BootInfo {
     seL4_Word         extraLen;        /* length of any additional bootinfo information */
     seL4_NodeId       nodeID;          /* ID [0..numNodes-1] of the seL4 node (0 if uniprocessor) */
     seL4_Word         numNodes;        /* number of seL4 nodes (1 if uniprocessor) */
@@ -86,7 +86,7 @@ typedef struct {
 /* If extraLen > 0 then 4K after the start of bootinfo is a region of extraLen additional
  * bootinfo structures. Bootinfo structures are arch/platform specific and may or may not
  * exist in any given execution. */
-typedef struct {
+typedef struct seL4_BootInfoHeader {
     /* identifier of the following chunk. IDs are arch/platform specific */
     seL4_Word id;
     /* length of the chunk, including this header */
