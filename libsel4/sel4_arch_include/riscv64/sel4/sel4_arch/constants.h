@@ -84,6 +84,50 @@ enum {
     seL4_UserException_Code,
     seL4_UserException_Length,
 } seL4_UserException_Msg;
+
+#ifdef CONFIG_KERNEL_MCS
+enum {
+    seL4_TimeoutReply_FaultIP,
+    seL4_TimeoutReply_LR,
+    seL4_TimeoutReply_SP,
+    seL4_TimeoutReply_GP,
+    seL4_TimeoutReply_s0,
+    seL4_TimeoutReply_s1,
+    seL4_TimeoutReply_s2,
+    seL4_TimeoutReply_s3,
+    seL4_TimeoutReply_s4,
+    seL4_TimeoutReply_s5,
+    seL4_TimeoutReply_s6,
+    seL4_TimeoutReply_s7,
+    seL4_TimeoutReply_s8,
+    seL4_TimeoutReply_s9,
+    seL4_TimeoutReply_s10,
+    seL4_TimeoutReply_s11,
+    seL4_TimeoutReply_a0,
+    seL4_TimeoutReply_a1,
+    seL4_TimeoutReply_a2,
+    seL4_TimeoutReply_a3,
+    seL4_TimeoutReply_a4,
+    seL4_TimeoutReply_a5,
+    seL4_TimeoutReply_a6,
+    seL4_TimeoutReply_a7,
+    seL4_TimeoutReply_t0,
+    seL4_TimeoutReply_t1,
+    seL4_TimeoutReply_t2,
+    seL4_TimeoutReply_t3,
+    seL4_TimeoutReply_t4,
+    seL4_TimeoutReply_t5,
+    seL4_TimeoutReply_t6,
+    seL4_TimeoutReply_TP,
+    seL4_TimeoutReply_Length,
+} seL4_TimeoutReply_Msg;
+
+enum {
+    seL4_Timeout_Data,
+    seL4_Timeout_Consumed,
+    seL4_Timeout_Length,
+} seL4_TimeoutMsg;
+#endif
 #endif /* __ASSEMBLER__ */
 
 /* First address in the virtual address space that is not accessible to user level */

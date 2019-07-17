@@ -33,8 +33,8 @@ enum _register {
     ra = 0, LR = 0,
 
     sp = 1, SP = 1,
-    gp = 2,
-    tp = 3,
+    gp = 2, GP = 2,
+    tp = 3, TP = 3,
     TLS_BASE = tp,
 
     t0 = 4,
@@ -92,7 +92,10 @@ enum messageSizes {
     n_frameRegisters = 16,
     n_gpRegisters = 16,
     n_exceptionMessage = 3,
-    n_syscallMessage = 10
+    n_syscallMessage = 10,
+#ifdef CONFIG_KERNEL_MCS
+    n_timeoutMessage = 32,
+#endif
 };
 
 extern const register_t msgRegisters[] VISIBLE;
@@ -135,6 +138,42 @@ static inline word_t CONST sanitiseRegister(register_t reg, word_t v, bool_t arc
     [seL4_UnknownSyscall_A4] = a4,\
     [seL4_UnknownSyscall_A5] = a5,\
     [seL4_UnknownSyscall_A6] = a6,\
+}
+
+#define TIMEOUT_REPLY_MESSAGE \
+{\
+    [seL4_TimeoutReply_FaultIP] = FaultIP,\
+    [seL4_TimeoutReply_LR] = LR, \
+    [seL4_TimeoutReply_SP] = SP, \
+    [seL4_TimeoutReply_GP] = GP, \
+    [seL4_TimeoutReply_s0] = s0, \
+    [seL4_TimeoutReply_s1] = s1, \
+    [seL4_TimeoutReply_s2] = s2, \
+    [seL4_TimeoutReply_s3] = s3, \
+    [seL4_TimeoutReply_s4] = s4, \
+    [seL4_TimeoutReply_s5] = s5, \
+    [seL4_TimeoutReply_s6] = s6, \
+    [seL4_TimeoutReply_s7] = s7, \
+    [seL4_TimeoutReply_s8] = s8, \
+    [seL4_TimeoutReply_s9] = s9, \
+    [seL4_TimeoutReply_s10] = s10, \
+    [seL4_TimeoutReply_s11] = s11, \
+    [seL4_TimeoutReply_a0] = a0, \
+    [seL4_TimeoutReply_a1] = a1, \
+    [seL4_TimeoutReply_a2] = a2, \
+    [seL4_TimeoutReply_a3] = a3, \
+    [seL4_TimeoutReply_a4] = a4, \
+    [seL4_TimeoutReply_a5] = a5, \
+    [seL4_TimeoutReply_a6] = a6, \
+    [seL4_TimeoutReply_a7] = a7, \
+    [seL4_TimeoutReply_t0] = t0, \
+    [seL4_TimeoutReply_t1] = t1, \
+    [seL4_TimeoutReply_t2] = t2, \
+    [seL4_TimeoutReply_t3] = t3, \
+    [seL4_TimeoutReply_t4] = t4, \
+    [seL4_TimeoutReply_t5] = t5, \
+    [seL4_TimeoutReply_t6] = t6, \
+    [seL4_TimeoutReply_TP] = TP, \
 }
 
 #endif /* __ASSEMBLER__ */

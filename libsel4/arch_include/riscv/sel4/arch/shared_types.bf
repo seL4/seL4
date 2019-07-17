@@ -17,6 +17,13 @@ tagged_union seL4_Fault seL4_FaultType {
     tag CapFault 1
     tag UnknownSyscall 2
     tag UserException 3
+#ifdef CONFIG_KERNEL_MCS
+    tag Timeout 5
+
+    -- arch specific faults
+    tag VMFault 6
+#else
     -- arch specific faults
     tag VMFault 5
+#endif
 }
