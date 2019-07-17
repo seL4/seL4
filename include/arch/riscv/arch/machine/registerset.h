@@ -38,6 +38,9 @@ enum _register {
     TLS_BASE = tp,
 
     t0 = 4,
+#ifdef CONFIG_KERNEL_MCS
+    nbsendRecvDest = 4,
+#endif
     t1 = 5,
     t2 = 6,
     s0 = 7,
@@ -51,8 +54,10 @@ enum _register {
     a4 = 13,
     a5 = 14,
     a6 = 15,
+#ifdef CONFIG_KERNEL_MCS
+    replyRegister = 15,
+#endif
     a7 = 16,
-
     s2 = 17,
     s3 = 18,
     s4 = 19,

@@ -45,3 +45,10 @@ compile_assert(
     consistent_gp_registers,
     sizeof(gpRegisters) / sizeof(gpRegisters[0]) == n_gpRegisters
 );
+
+#ifdef CONFIG_KERNEL_MCS
+word_t getNBSendRecvDest(void)
+{
+    return getRegister(NODE_STATE(ksCurThread), nbsendRecvDest);
+}
+#endif
