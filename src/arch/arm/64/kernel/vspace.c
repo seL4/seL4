@@ -1359,22 +1359,22 @@ void deleteASIDPool(asid_t asid_base, asid_pool_t *pool)
 static void doFlush(int invLabel, vptr_t start, vptr_t end, paddr_t pstart)
 {
     switch (invLabel) {
-    case ARMPageGlobalDirectoryClean_Data:
+    case ARMVSpaceClean_Data:
     case ARMPageClean_Data:
         cleanCacheRange_RAM(start, end, pstart);
         break;
 
-    case ARMPageGlobalDirectoryInvalidate_Data:
+    case ARMVSpaceInvalidate_Data:
     case ARMPageInvalidate_Data:
         invalidateCacheRange_RAM(start, end, pstart);
         break;
 
-    case ARMPageGlobalDirectoryCleanInvalidate_Data:
+    case ARMVSpaceCleanInvalidate_Data:
     case ARMPageCleanInvalidate_Data:
         cleanInvalidateCacheRange_RAM(start, end, pstart);
         break;
 
-    case ARMPageGlobalDirectoryUnify_Instruction:
+    case ARMVSpaceUnify_Instruction:
     case ARMPageUnify_Instruction:
         /* First clean data lines to point of unification... */
         cleanCacheRange_PoU(start, end, pstart);
@@ -1622,10 +1622,10 @@ static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, unsigned int l
     findVSpaceForASID_ret_t find_ret;
 
     switch (invLabel) {
-    case ARMPageGlobalDirectoryClean_Data:
-    case ARMPageGlobalDirectoryInvalidate_Data:
-    case ARMPageGlobalDirectoryCleanInvalidate_Data:
-    case ARMPageGlobalDirectoryUnify_Instruction:
+    case ARMVSpaceClean_Data:
+    case ARMVSpaceInvalidate_Data:
+    case ARMVSpaceCleanInvalidate_Data:
+    case ARMVSpaceUnify_Instruction:
 
         if (length < 2) {
             userError("VSpaceRoot Flush: Truncated message.");
