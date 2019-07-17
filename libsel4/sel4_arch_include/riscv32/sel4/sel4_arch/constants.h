@@ -28,7 +28,12 @@
 #define seL4_WordSizeBits       2
 
 #define seL4_SlotBits           4
+#ifdef CONFIG_KERNEL_MCS
+#define seL4_NotificationBits   5
+#define seL4_ReplyBits          4
+#else
 #define seL4_NotificationBits   4
+#endif
 #define seL4_EndpointBits       4
 #define seL4_IPCBufferSizeBits  9
 #define seL4_TCBBits            9
