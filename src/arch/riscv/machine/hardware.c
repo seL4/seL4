@@ -27,7 +27,9 @@
 #define SEXTERNAL_IE 9
 #define SEXTERNAL_CAUSE 9
 
+#ifndef CONFIG_KERNEL_MCS
 #define RESET_CYCLES ((TIMER_CLOCK_HZ / MS_IN_S) * CONFIG_TIMER_TICK_MS)
+#endif /* !CONFIG_KERNEL_MCS */
 
 #define IS_IRQ_VALID(X) (((X)) <= maxIRQ && (X)!= irqInvalid)
 
@@ -245,6 +247,7 @@ static inline int read_current_timer(unsigned long *timer_val)
     return 0;
 }
 
+#ifndef CONFIG_KERNEL_MCS
 void resetTimer(void)
 {
     uint64_t target;
@@ -263,6 +266,7 @@ BOOT_CODE void initTimer(void)
 {
     sbi_set_timer(riscv_read_time() + RESET_CYCLES);
 }
+#endif /* !CONFIG_KERNEL_MCS */
 
 void plat_cleanL2Range(paddr_t start, paddr_t end)
 {

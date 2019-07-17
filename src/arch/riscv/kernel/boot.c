@@ -138,7 +138,9 @@ BOOT_CODE static void init_cpu(void)
 BOOT_CODE static void init_plat(void)
 {
     initIRQController();
+#ifndef CONFIG_KERNEL_MCS
     initTimer();
+#endif
 }
 
 /* Main kernel initialisation function. */
