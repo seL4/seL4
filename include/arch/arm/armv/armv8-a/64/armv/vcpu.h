@@ -72,6 +72,9 @@
 #define TG0_64K             1
 #define TG0_16K             2
 
+#define ID_AA64MMFR0_EL1_PARANGE(x) ((x) & 0xf)
+#define ID_AA64MMFR0_TGRAN4(x)      (((x) >> 28u) & 0xf)
+
 /* Shareability attributes */
 #define SH0_NONE            0
 #define SH0_OUTER           2
@@ -113,6 +116,7 @@
 #define REG_CNTV_CTL_EL0    "cntv_ctl_el0"
 #define REG_HCR_EL2         "hcr_el2"
 #define REG_VTCR_EL2        "vtcr_el2"
+#define REG_ID_AA64MMFR0_EL1 "id_aa64mmfr0_el1"
 
 /* for EL1 SCTLR */
 static inline word_t getSCTLR(void)
@@ -465,6 +469,22 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
 
 static inline void vcpu_init_vtcr(void)
 {
+
+    /* check that the processor supports the configuration */
+    uint32_t val;
+    MRS(REG_ID_AA64MMFR0_EL1, val);
+    uint32_t pa_range = ID_AA64MMFR0_EL1_PARANGE(val);
+    if (config_set(CONFIG_ARM_PA_SIZE_BITS_40) && pa_range < PS_1T) {
+        fail("Processor does not support a 40 bit PA");
+    }
+    if (config_set(CONFIG_ARM_PA_SIZE_BITS_44) && pa_range < PS_16T) {
+        fail("Processor does not support a 44 bit PA");
+    }
+    uint32_t granule = ID_AA64MMFR0_TGRAN4(val);
+    if (granule) {
+        fail("Processor does not support 4KB");
+    }
+
     /* Set up the stage-2 translation control register for cores supporting 44-bit PA */
     uint32_t vtcr_el2 = VTCR_EL2_T0SZ(20);                   // 44-bit input IPA
     vtcr_el2 |= VTCR_EL2_SL0(SL0_4K_L0);                     // 4KiB, start at level 0
