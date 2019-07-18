@@ -50,5 +50,6 @@ additional_commands:
     kwargs:
         TIMER_FREQUENCY: '*'
         MAX_IRQ: '*'
+        NUM_PPI: '*'
         INTERRUPT_CONTROLLER: '*'
         TIMER: '*'
