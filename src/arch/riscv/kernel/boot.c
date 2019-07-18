@@ -220,6 +220,10 @@ static BOOT_CODE bool_t try_init_kernel(
         bi_frame_vptr
     );
 
+#ifdef CONFIG_KERNEL_MCS
+    init_sched_control(root_cnode_cap, CONFIG_MAX_NUM_NODES);
+#endif
+
     /* create the initial thread's IPC buffer */
     ipcbuf_cap = create_ipcbuf_frame_cap(root_cnode_cap, it_pd_cap, ipcbuf_vptr);
     if (cap_get_capType(ipcbuf_cap) == cap_null_cap) {
@@ -246,6 +250,10 @@ static BOOT_CODE bool_t try_init_kernel(
         return false;
     }
     write_it_asid_pool(it_ap_cap, it_pd_cap);
+
+#ifdef CONFIG_KERNEL_MCS
+    NODE_STATE(ksCurTime) = getCurrentTime();
+#endif
 
     /* create the idle thread */
     if (!create_idle_thread()) {
@@ -304,6 +312,10 @@ BOOT_CODE VISIBLE void init_kernel(
         fail("Kernel init failed for some reason :(");
     }
 
+#ifdef CONFIG_KERNEL_MCS
+    NODE_STATE(ksCurTime) = getCurrentTime();
+    NODE_STATE(ksConsumed) = 0;
+#endif
     schedule();
     activateThread();
 }
