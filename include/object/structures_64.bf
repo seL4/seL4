@@ -25,7 +25,7 @@ block untyped_cap {
     field capFreeIndex 39
     padding 18
 #else
-#error "Unspecified cannonical address range"
+#error "Unspecified canonical address range"
 #endif
     field capIsDevice 1
     field capBlockSize 6
@@ -38,7 +38,7 @@ block untyped_cap {
     padding 20
     field_high capPtr 39
 #else
-#error "Unspecified cannonical address range"
+#error "Unspecified canonical address range"
 #endif
 }
 
@@ -58,7 +58,7 @@ block endpoint_cap(capEPBadge, capCanGrantReply, capCanGrant, capCanSend,
     padding 16
     field_high capEPPtr 39
 #else
-#error "Unspecified cannonical address range"
+#error "Unspecified canonical address range"
 #endif
 
 }
@@ -76,7 +76,7 @@ block notification_cap {
     padding 18
     field_high capNtfnPtr 39
 #else
-#error "Unspecified cannonical address range"
+#error "Unspecified canonical address range"
 #endif
 }
 
@@ -119,7 +119,7 @@ block cnode_cap(capCNodeRadix, capCNodeGuardSize, capCNodeGuard,
     padding 9
     field_high capCNodePtr 38
 #else
-#error "Unspecified cannonical address range"
+#error "Unspecified canonical address range"
 #endif
 }
 
@@ -134,7 +134,7 @@ block thread_cap {
     padding 20
     field_high capTCBPtr 39
 #else
-#error "Unspecified cannonical address range"
+#error "Unspecified canonical address range"
 #endif
 }
 
@@ -203,7 +203,7 @@ block endpoint {
     padding 25
     field_high epQueue_tail 37
 #else
-#error "Unspecified cannonical address range"
+#error "Unspecified canonical address range"
 #endif
     field state 2
 }
@@ -225,7 +225,7 @@ block notification {
     padding 25
     field_high ntfnBoundTCB 39
 #else
-#error "Unspecified cannonical address range"
+#error "Unspecified canonical address range"
 #endif
 
     field ntfnMsgIdentifier 64
@@ -237,7 +237,7 @@ block notification {
     padding 25
     field_high ntfnQueue_head 39
 #else
-#error "Unspecified cannonical address range"
+#error "Unspecified canonical address range"
 #endif
 
 #if BF_CANONICAL_RANGE == 48
@@ -247,7 +247,7 @@ block notification {
     field_high ntfnQueue_tail 39
     padding 23
 #else
-#error "Unspecified cannonical address range"
+#error "Unspecified canonical address range"
 #endif
     field state 2
 }
@@ -261,7 +261,7 @@ block mdb_node {
     padding 25
     field_high mdbNext 37
 #else
-#error "Unspecified cannonical address range"
+#error "Unspecified canonical address range"
 #endif
     field mdbRevocable 1
     field mdbFirstBadged 1
@@ -445,7 +445,7 @@ block thread_state(blockingIPCBadge, blockingIPCCanGrant,
     padding 25
     field_high blockingObject 35
 #else
-#error "Unspecified cannonical address range"
+#error "Unspecified canonical address range"
 #endif
     field tsType 4
 }
