@@ -92,7 +92,14 @@ block reply_cap {
 block call_stack(callStackPtr, isHead) {
     padding 15
     field isHead 1
+#if BF_CANONICAL_RANGE == 48
     field_high callStackPtr 48
+#elif BF_CANONICAL_RANGE == 39
+	padding 9
+    field_high callStackPtr 39
+#else
+#error "Unspecified canonical address range"
+#endif
 }
 #else
 block reply_cap(capReplyCanGrant, capReplyMaster, capTCBPtr, capType) {
@@ -174,7 +181,14 @@ block domain_cap {
 
 #ifdef CONFIG_KERNEL_MCS
 block sched_context_cap {
+#if BF_CANONICAL_RANGE == 48
     field_high capSCPtr 48
+#elif BF_CANONICAL_RANGE == 39
+    padding 9
+    field_high capSCPtr 39
+#else
+#error "Unspecified canonical address range"
+#endif
     field capSCSizeBits 6
     padding 10
 
@@ -425,8 +439,15 @@ block thread_state(blockingIPCBadge, blockingIPCCanGrant,
     field blockingIPCBadge 64
 
 #ifdef CONFIG_KERNEL_MCS
+#if BF_CANONICAL_RANGE == 48
     padding 15
     field_high replyObject 44
+#elif BF_CANONICAL_RANGE == 39
+    padding 24
+    field_high replyObject 35
+#else
+#error "Unspecified canonical address range"
+#endif
 #else
     padding 60
 #endif
