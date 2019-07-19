@@ -84,9 +84,15 @@ NODE_STATE_END(nodeState);
 
 extern word_t ksNumCPUs;
 
+#if defined ENABLE_SMP_SUPPORT && defined CONFIG_ARCH_ARM
+#define INT_STATE_ARRAY_SIZE ((CONFIG_MAX_NUM_NODES - 1) * NUM_PPI + maxIRQ + 1)
+#else
+#define INT_STATE_ARRAY_SIZE (maxIRQ + 1)
+#endif
 extern word_t ksWorkUnitsCompleted;
 extern irq_state_t intStateIRQTable[];
 extern cte_t intStateIRQNode[];
+
 extern const dschedule_t ksDomSchedule[];
 extern const word_t ksDomScheduleLength;
 extern word_t ksDomScheduleIdx;

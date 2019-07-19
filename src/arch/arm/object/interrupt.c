@@ -51,7 +51,13 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
             return status;
         }
 
-        if (isIRQActive(irq)) {
+#if defined ENABLE_SMP_SUPPORT
+        if (HW_IRQ_IS_PPI(irq)) {
+            userError("Trying to get a handler on a PPI: use GetTriggerCore.");
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+#endif
+        if (isIRQActive(CORE_IRQ_TO_IDX(0, irq))) {
             current_syscall_error.type = seL4_RevokeFirst;
             userError("Rejecting request for IRQ %u. Already active.", (int)irq);
             return EXCEPTION_SYSCALL_ERROR;
@@ -74,17 +80,17 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
         }
 
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        return Arch_invokeIRQControl(irq, destSlot, srcSlot, trigger);
+        return Arch_invokeIRQControl(CORE_IRQ_TO_IDX(0, irq), destSlot, srcSlot, trigger);
 #ifdef ENABLE_SMP_SUPPORT
     } else if (invLabel == ARMIRQIssueIRQHandlerTriggerCore) {
         word_t irq_w = getSyscallArg(0, buffer);
-        irq_t irq = (irq_t) irq_w;
         bool_t trigger = !!getSyscallArg(1, buffer);
         word_t index = getSyscallArg(2, buffer);
         word_t depth = getSyscallArg(3, buffer) & 0xfful;
         seL4_Word target = getSyscallArg(4, buffer);
         cap_t cnodeCap = excaps.excaprefs[0]->cap;
         exception_t status = Arch_checkIRQ(irq_w);
+        irq_t irq = CORE_IRQ_TO_IDX(target, irq_w);
 
         if (status != EXCEPTION_NONE) {
             return status;
@@ -96,7 +102,7 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        if (isIRQActive(irq)) {
+        if (isIRQActive(CORE_IRQ_TO_IDX(target, irq))) {
             current_syscall_error.type = seL4_RevokeFirst;
             userError("Rejecting request for IRQ %u. Already active.", (int)irq);
             return EXCEPTION_SYSCALL_ERROR;
@@ -119,7 +125,13 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
         }
 
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        setIRQTarget(irq, target);
+
+        /* If the IRQ is not a private interrupt, then the role of the syscall is to set
+         * target core to which the shared interrupt will be physically delivered.
+         */
+        if (!IRQ_IS_PPI(irq)) {
+            setIRQTarget(irq, target);
+        }
         return Arch_invokeIRQControl(irq, destSlot, srcSlot, trigger);
 #endif /* ENABLE_SMP_SUPPORT */
     } else {

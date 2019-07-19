@@ -75,9 +75,9 @@ void ipiStallCoreCallback(bool_t irqPath)
 
 void handleIPI(irq_t irq, bool_t irqPath)
 {
-    if (irq == irq_remote_call_ipi) {
+    if (IDX_TO_IRQ(irq) == irq_remote_call_ipi) {
         handleRemoteCall(remoteCall, get_ipi_arg(0), get_ipi_arg(1), get_ipi_arg(2), irqPath);
-    } else if (irq == irq_reschedule_ipi) {
+    } else if (IDX_TO_IRQ(irq) == irq_reschedule_ipi) {
         rescheduleRequired();
     } else {
         fail("Invalid IPI");

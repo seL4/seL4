@@ -41,7 +41,7 @@ exception_t decodeIRQControlInvocation(word_t invLabel, word_t length,
             return EXCEPTION_SYSCALL_ERROR;
         }
         irq_w = getSyscallArg(0, buffer);
-        irq = (irq_t) irq_w;
+        irq = CORE_IRQ_TO_IDX(0, irq_w);
         index = getSyscallArg(1, buffer);
         depth = getSyscallArg(2, buffer);
 
@@ -142,6 +142,12 @@ void invokeIRQHandler_AckIRQ(irq_t irq)
 #ifdef CONFIG_ARCH_RISCV
     plic_complete_claim(irq);
 #else
+#if defined ENABLE_SMP_SUPPORT && defined CONFIG_ARCH_ARM
+    if (IRQ_IS_PPI(irq) && IDX_TO_CORE(irq) != getCurrentCPUIndex()) {
+        doRemoteMaskPrivateInterrupt(IDX_TO_CORE(irq), false, irq);
+        return;
+    }
+#endif
     maskInterrupt(false, irq);
 #endif
 }
@@ -181,7 +187,7 @@ void deletedIRQHandler(irq_t irq)
 
 void handleInterrupt(irq_t irq)
 {
-    if (unlikely(irq > maxIRQ)) {
+    if (unlikely(IDX_TO_IRQ(irq) > maxIRQ)) {
         /* mask, ack and pretend it didn't happen. We assume that because
          * the interrupt controller for the platform returned this IRQ that
          * it is safe to use in mask and ack operations, even though it is
@@ -258,5 +264,11 @@ bool_t isIRQActive(irq_t irq)
 void setIRQState(irq_state_t irqState, irq_t irq)
 {
     intStateIRQTable[irq] = irqState;
+#if defined ENABLE_SMP_SUPPORT && defined CONFIG_ARCH_ARM
+    if (IRQ_IS_PPI(irq) && IDX_TO_CORE(irq) != getCurrentCPUIndex()) {
+        doRemoteMaskPrivateInterrupt(IDX_TO_CORE(irq), irqState == IRQInactive, irq);
+        return;
+    }
+#endif
     maskInterrupt(irqState == IRQInactive, irq);
 }

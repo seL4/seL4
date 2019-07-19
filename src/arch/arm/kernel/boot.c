@@ -94,20 +94,20 @@ BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
 {
     irq_t i;
 
-    for (i = 0; i <= maxIRQ; i++) {
-        setIRQState(IRQInactive, i);
+    for (i = 0; i <= maxIRQ ; i++) {
+        setIRQState(IRQInactive, CORE_IRQ_TO_IDX(0, i));
     }
-    setIRQState(IRQTimer, KERNEL_TIMER_IRQ);
+    setIRQState(IRQTimer, CORE_IRQ_TO_IDX(0, KERNEL_TIMER_IRQ));
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    setIRQState(IRQReserved, INTERRUPT_VGIC_MAINTENANCE);
+    setIRQState(IRQReserved, CORE_IRQ_TO_IDX(0, INTERRUPT_VGIC_MAINTENANCE));
 #endif
 #ifdef CONFIG_ARM_SMMU
-    setIRQState(IRQReserved, INTERRUPT_SMMU);
+    setIRQState(IRQReserved, CORE_IRQ_TO_IDX(0, INTERRUPT_SMMU));
 #endif
 
 #ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
 #ifdef KERNEL_PMU_IRQ
-    setIRQState(IRQReserved, KERNEL_PMU_IRQ);
+    setIRQState(IRQReserved, CORE_IRQ_TO_IDX(0, KERNEL_PMU_IRQ));
 #if (defined CONFIG_PLAT_TX1 && defined ENABLE_SMP_SUPPORT)
 //SELFOUR-1252
 #error "This platform doesn't support tracking CPU utilisation on multicore"
@@ -118,9 +118,9 @@ BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
 #endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
 
 #ifdef ENABLE_SMP_SUPPORT
-    setIRQState(IRQIPI, irq_remote_call_ipi);
-    setIRQState(IRQIPI, irq_reschedule_ipi);
-#endif /* ENABLE_SMP_SUPPORT */
+    setIRQState(IRQIPI, CORE_IRQ_TO_IDX(getCurrentCPUIndex(), irq_remote_call_ipi));
+    setIRQState(IRQIPI, CORE_IRQ_TO_IDX(getCurrentCPUIndex(), irq_reschedule_ipi));
+#endif
 
     /* provide the IRQ control cap */
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapIRQControl), cap_irq_control_cap_new());
@@ -248,14 +248,21 @@ BOOT_CODE static void init_plat(void)
 #ifdef ENABLE_SMP_SUPPORT
 BOOT_CODE static bool_t try_init_kernel_secondary_core(void)
 {
+    unsigned i;
+
     /* need to first wait until some kernel init has been done */
     while (!node_boot_lock);
 
     /* Perform cpu init */
     init_cpu();
 
+    for (i = 0; i < NUM_PPI; i++) {
+        maskInterrupt(true, CORE_IRQ_TO_IDX(getCurrentCPUIndex(), i));
+    }
+    setIRQState(IRQIPI, CORE_IRQ_TO_IDX(getCurrentCPUIndex(), irq_remote_call_ipi));
+    setIRQState(IRQIPI, CORE_IRQ_TO_IDX(getCurrentCPUIndex(), irq_reschedule_ipi));
     /* Enable per-CPU timer interrupts */
-    maskInterrupt(false, KERNEL_TIMER_IRQ);
+    maskInterrupt(false, CORE_IRQ_TO_IDX(getCurrentCPUIndex(), KERNEL_TIMER_IRQ));
 
     NODE_LOCK_SYS;
 
