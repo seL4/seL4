@@ -22,6 +22,7 @@ typedef enum {
     IpiRemoteCall_InvalidateTranslationASID,
     IpiRemoteCall_InvalidateTranslationAll,
     IpiRemoteCall_switchFpuOwner,
+    IpiRemoteCall_MaskPrivateInterrupt,
     /* Add relevant calls here upon required */
     IpiNumArchRemoteCall
 } IpiRemoteCall_t;

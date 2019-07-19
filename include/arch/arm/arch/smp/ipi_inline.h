@@ -43,5 +43,10 @@ static inline void doRemoteInvalidateTranslationAll(word_t mask)
 {
     doRemoteMaskOp0Arg(IpiRemoteCall_InvalidateTranslationAll, mask);
 }
+
+static inline void doRemoteMaskPrivateInterrupt(word_t cpu, word_t disable, word_t irq)
+{
+    doRemoteOp2Arg(IpiRemoteCall_MaskPrivateInterrupt, disable, irq, cpu);
+}
 #endif /* ENABLE_SMP_SUPPORT */
 #endif /* __ARCH_SMP_IPI_INLINE_H */

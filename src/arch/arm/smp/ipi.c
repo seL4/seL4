@@ -61,6 +61,10 @@ static void handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0,
             invalidateTranslationAllLocal();
             break;
 
+        case IpiRemoteCall_MaskPrivateInterrupt:
+            maskInterrupt(arg0, arg1);
+            break;
+
         default:
             fail("Invalid remote call");
             break;
