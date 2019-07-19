@@ -44,6 +44,7 @@ if(KernelPlatImx6)
         TIMER_FREQUENCY 400000000llu
         MAX_IRQ 159
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h
+        NUM_PPI 32
         TIMER drivers/timer/arm_priv.h
     )
 endif()

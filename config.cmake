@@ -50,15 +50,25 @@ if(DEFINED CONFIGURE_MAX_IRQ)
     # calculate the irq cnode size based on MAX_IRQ
     if("${KernelArch}" STREQUAL "riscv")
         set(MAX_IRQ "${CONFIGURE_PLIC_MAX_NUM_INT}")
-        math(EXPR MAX_IRQ "${MAX_IRQ} + 2")
+        math(EXPR MAX_NUM_IRQ "${MAX_IRQ} + 2")
     else()
-        set(MAX_IRQ "${CONFIGURE_MAX_IRQ}")
+        if(
+            DEFINED KernelMaxNumNodes
+            AND CONFIGURE_NUM_PPI GREATER "0"
+            AND "${KernelArch}" STREQUAL "arm"
+        )
+            math(
+                EXPR MAX_NUM_IRQ
+                "(${KernelMaxNumNodes}-1)*${CONFIGURE_NUM_PPI} + ${CONFIGURE_MAX_IRQ}"
+            )
+        else()
+            set(MAX_NUM_IRQ "${CONFIGURE_MAX_IRQ}")
+        endif()
     endif()
     set(BITS "0")
-    set(MAX "${MAX_IRQ}")
-    while(MAX GREATER "0")
+    while(MAX_NUM_IRQ GREATER "0")
         math(EXPR BITS "${BITS} + 1")
-        math(EXPR MAX "${MAX} >> 1")
+        math(EXPR MAX_NUM_IRQ "${MAX_NUM_IRQ} >> 1")
     endwhile()
     math(EXPR SLOTS "1 << ${BITS}")
     if("${SLOTS}" LESS "${MAX_IRQ}")

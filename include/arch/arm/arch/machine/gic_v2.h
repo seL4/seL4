@@ -42,6 +42,30 @@
 #define IRQ_MASK MASK(10u)
 #define IS_IRQ_VALID(X) (((X) & IRQ_MASK) < SPECIAL_IRQ_START)
 
+#define NUM_PPI 32
+#define HW_IRQ_IS_PPI(irq) ((irq) < NUM_PPI)
+#define IRQ_IS_PPI(irq) ((irq) < NUM_PPI*CONFIG_MAX_NUM_NODES)
+
+#if defined ENABLE_SMP_SUPPORT
+/* Takes a target core and an irq number and converts it to the intState index */
+#define CORE_IRQ_TO_IDX(tgt, irq) (HW_IRQ_IS_PPI(irq) ? \
+                                 (tgt)*NUM_PPI + (irq) : \
+                                 (CONFIG_MAX_NUM_NODES-1)*NUM_PPI + (irq))
+
+/* Takes an intSate index and extracts the hardware irq number */
+#define IDX_TO_IRQ(idx) (IRQ_IS_PPI(idx) ? \
+                        (idx) - ((idx)/NUM_PPI)*NUM_PPI : \
+                        (idx) - (CONFIG_MAX_NUM_NODES-1)*NUM_PPI)
+
+/* Takes an intState index and extracts the target CPU number */
+#define IDX_TO_CORE(idx) (IRQ_IS_PPI(idx) ? \
+                        (idx) / NUM_PPI : 0)
+#else
+#define CORE_IRQ_TO_IDX(tgt, irq) ((irq_t) (irq))
+#define IDX_TO_IRQ(idx) (idx)
+#define IDX_TO_CORE(idx) 0
+#endif
+
 /* Helpers for VGIC */
 #define VGIC_HCR_EOI_INVALID_COUNT(hcr) (((hcr) >> 27) & 0x1f)
 #define VGIC_HCR_VGRP1DIE               (1U << 7)
@@ -188,7 +212,7 @@ static inline interrupt_t getActiveIRQ(void)
         irq = irqInvalid;
     }
 
-    return irq;
+    return CORE_IRQ_TO_IDX(SMP_TERNARY(getCurrentCPUIndex(), 0), irq);
 }
 
 /*
@@ -203,19 +227,22 @@ static inline bool_t isIRQPending(void)
 
 static inline void maskInterrupt(bool_t disable, interrupt_t irq)
 {
+#if defined ENABLE_SMP_SUPPORT && defined CONFIG_ARCH_ARM
+    assert(!(IRQ_IS_PPI(irq)) || (IDX_TO_CORE(irq) == getCurrentCPUIndex()));
+#endif
     if (disable) {
-        dist_enable_clr(irq);
+        dist_enable_clr(IDX_TO_IRQ(irq));
     } else {
-        dist_enable_set(irq);
+        dist_enable_set(IDX_TO_IRQ(irq));
     }
 }
 
 static inline void ackInterrupt(irq_t irq)
 {
     assert(IS_IRQ_VALID(active_irq[SMP_TERNARY(getCurrentCPUIndex(), 0)])
-           && (active_irq[SMP_TERNARY(getCurrentCPUIndex(), 0)] & IRQ_MASK) == irq);
-    if (is_irq_edge_triggered(irq)) {
-        dist_pending_clr(irq);
+           && (active_irq[SMP_TERNARY(getCurrentCPUIndex(), 0)] & IRQ_MASK) == IDX_TO_IRQ(irq));
+    if (is_irq_edge_triggered(IDX_TO_IRQ(irq))) {
+        dist_pending_clr(IDX_TO_IRQ(irq));
     }
     gic_cpuiface->eoi = active_irq[SMP_TERNARY(getCurrentCPUIndex(), 0)];
     active_irq[SMP_TERNARY(getCurrentCPUIndex(), 0)] = IRQ_NONE;

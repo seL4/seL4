@@ -88,8 +88,12 @@ block irq_control_cap {
 }
 
 block irq_handler_cap {
-    padding       24
-    field capIRQ   8
+#ifdef ENABLE_SMP_SUPPORT
+    field capIRQ   32
+#else
+    padding 24
+    field capIRQ 8
+#endif
 
     padding       24
     field capType  8

@@ -24,6 +24,7 @@ if(KernelPlatformZynq7000)
     declare_default_headers(
         TIMER_FREQUENCY 400000000llu
         MAX_IRQ 92
+        NUM_PPI 32
         TIMER drivers/timer/arm_priv.h
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h
     )

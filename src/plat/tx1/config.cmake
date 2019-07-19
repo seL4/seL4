@@ -27,6 +27,7 @@ if(KernelPlatformTx1)
         TIMER_FREQUENCY 19200000llu
         MAX_IRQ 224
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h
+        NUM_PPI 32
         TIMER drivers/timer/arm_generic.h
     )
 endif()
