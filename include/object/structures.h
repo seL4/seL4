@@ -345,12 +345,12 @@ struct sched_context {
     /* thread that yielded to this scheduling context */
     tcb_t *scYieldFrom;
 
-    /* Amount of refills this sc tracks */
+    /* Maximum number of refills this sc can track */
     word_t scRefillMax;
     /* Index of the head of the refill circular buffer */
     word_t scRefillHead;
-    /* Index of the tail of the refill circular buffer */
-    word_t scRefillTail;
+    /* Number of refills in the refill buffer */
+    word_t scRefillCount;
 };
 
 struct reply {
