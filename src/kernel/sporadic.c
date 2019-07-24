@@ -234,10 +234,11 @@ static inline void ensure_sufficient_head(sched_context_t *sc)
     }
 }
 
-void refill_budget_check(ticks_t usage, ticks_t capacity)
+void refill_budget_check(ticks_t usage)
 {
     sched_context_t *sc = NODE_STATE(ksCurSC);
     /* this function should only be called when the sc is out of budget */
+    ticks_t capacity = refill_capacity(NODE_STATE(ksCurSC), usage);
     assert(capacity < MIN_BUDGET || refill_full(sc));
     assert(sc->scPeriod > 0);
     REFILL_SANITY_START(sc);
