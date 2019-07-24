@@ -20,6 +20,21 @@
 #define GICD_SGIR_CPUTARGETLIST_SHIFT     16
 #define GICD_SGIR_TARGETLISTFILTER_SHIFT  24
 
+/* Special IRQ's */
+#define SPECIAL_IRQ_START 1020u
+#define IRQ_NONE          1023u
+
+/* CPU specific IRQ's */
+#define SGI_START         0u
+#define PPI_START         16u
+
+/* Shared Peripheral Interrupts */
+#define SPI_START         32u
+
+/* Setters/getters helpers for hardware irqs */
+#define IRQ_REG(IRQ) ((IRQ) >> 5u)
+#define IRQ_BIT(IRQ) ((IRQ) & 0x1f)
+#define IS_IRQ_VALID(X) (((X) & IRQ_MASK) < SPECIAL_IRQ_START)
 
 typedef uint16_t interrupt_t;
 typedef uint16_t irq_t;

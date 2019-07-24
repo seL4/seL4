@@ -30,10 +30,6 @@
 
 #include "gic_common.h"
 
-/* Special IRQ's */
-#define SPECIAL_IRQ_START 1020u
-#define IRQ_NONE          1023u
-
 #define NR_GIC_LOCAL_IRQS  32
 #define NR_GIC_SGI         16
 
@@ -47,11 +43,7 @@
 #define GIC_PRI_IRQ        0xa0
 #define GIC_PRI_HIGHEST    0x80 /* Higher priorities belong to Secure-World */
 
-/* Setters/getters helpers */
-#define IRQ_REG(IRQ) ((IRQ) >> 5u)
-#define IRQ_BIT(IRQ) ((IRQ) & 0x1f)
 #define IRQ_MASK MASK(16u)
-#define IS_IRQ_VALID(X) (((X) & IRQ_MASK) < SPECIAL_IRQ_START)
 
 /* Register bits */
 #define GICD_CTL_ENABLE 0x1

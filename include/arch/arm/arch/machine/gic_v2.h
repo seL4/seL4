@@ -25,23 +25,7 @@
 
 #include "gic_common.h"
 
-/* CPU specific IRQ's */
-#define SGI_START         0u
-#define PPI_START         16u
-
-/* Shared Peripheral Interrupts */
-#define SPI_START         32u
-
-/* Special IRQ's */
-#define SPECIAL_IRQ_START 1020u
-#define IRQ_NONE          1023u
-
-/* Setters/getters helpers */
-#define IRQ_REG(IRQ) ((IRQ) >> 5u)
-#define IRQ_BIT(IRQ) ((IRQ) & 0x1f)
 #define IRQ_MASK MASK(10u)
-#define IS_IRQ_VALID(X) (((X) & IRQ_MASK) < SPECIAL_IRQ_START)
-
 #define NUM_PPI 32
 #define HW_IRQ_IS_PPI(irq) ((irq) < NUM_PPI)
 #define IRQ_IS_PPI(irq) ((irq) < NUM_PPI*CONFIG_MAX_NUM_NODES)
