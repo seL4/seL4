@@ -37,7 +37,7 @@
 /* Short hand for accessing refill queue items */
 #define REFILL_INDEX(sc, index) (((refill_t *) (SC_REF(sc) + sizeof(sched_context_t)))[index])
 #define REFILL_HEAD(sc) REFILL_INDEX((sc), (sc)->scRefillHead)
-#define REFILL_TAIL(sc) REFILL_INDEX((sc), (sc)->scRefillTail)
+#define REFILL_TAIL(sc) REFILL_INDEX((sc), refill_tail_index(sc))
 
 
 /* Scheduling context objects consist of a sched_context_t at the start, followed by a
@@ -55,29 +55,49 @@ static inline word_t refill_absolute_max(cap_t sc_cap)
 /* @return the current amount of empty slots in the refill buffer */
 static inline word_t refill_size(sched_context_t *sc)
 {
-    if (sc->scRefillHead <= sc->scRefillTail) {
-        return (sc->scRefillTail - sc->scRefillHead + 1u);
-    }
-    return sc->scRefillTail + 1u + (sc->scRefillMax - sc->scRefillHead);
+    return sc->scRefillCount;
 }
 
 /* @return true if the circular buffer of refills is current full (all slots in the
  * buffer are currently being used */
 static inline bool_t refill_full(sched_context_t *sc)
 {
-    return refill_size(sc) == sc->scRefillMax;
+    return sc->scRefillCount == sc->scRefillMax;
+}
+
+static inline bool_t refill_empty(sched_context_t *sc)
+{
+    return sc->scRefillCount == 0;
+}
+
+static inline word_t refill_tail_index(sched_context_t *sc)
+{
+    assert(sc->scRefillHead <= sc->scRefillMax);
+    assert(sc->scRefillCount <= sc->scRefillMax);
+    assert(sc->scRefillCount >= 1);
+
+    word_t index = sc->scRefillHead + sc->scRefillCount - 1;
+
+    if (index >= sc->scRefillMax) {
+        index -= sc->scRefillMax;
+    }
+
+    assert(index < sc->scRefillMax);
+    return index;
 }
 
 /* @return true if the ciruclar buffer only contains 1 used slot */
 static inline bool_t refill_single(sched_context_t *sc)
 {
-    return sc->scRefillHead == sc->scRefillTail;
+    return sc->scRefillCount == 1;
 }
 
 /* Return the amount of budget this scheduling context
  * has available if usage is charged to it. */
 static inline ticks_t refill_capacity(sched_context_t *sc, ticks_t usage)
 {
+    assert(!refill_empty(sc));
+
     if (unlikely(usage > REFILL_HEAD(sc).rAmount)) {
         return 0;
     }
@@ -91,6 +111,7 @@ static inline ticks_t refill_capacity(sched_context_t *sc, ticks_t usage)
  */
 static inline bool_t refill_sufficient(sched_context_t *sc, ticks_t usage)
 {
+    assert(!refill_empty(sc));
     return refill_capacity(sc, usage) >= MIN_BUDGET;
 }
 
@@ -102,6 +123,7 @@ static inline bool_t refill_sufficient(sched_context_t *sc, ticks_t usage)
  */
 static inline bool_t refill_ready(sched_context_t *sc)
 {
+    assert(!refill_empty(sc));
     return REFILL_HEAD(sc).rTime <= (NODE_STATE_ON_CORE(ksCurTime, sc->scCore) + getKernelWcetTicks());
 }
 
