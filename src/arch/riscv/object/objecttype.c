@@ -202,7 +202,7 @@ word_t Arch_getObjectSize(word_t t)
     }
 }
 
-cap_t Arch_createObject(object_t t, void *regionBase, int userSize, bool_t
+cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t
                         deviceMemory)
 {
     switch (t) {

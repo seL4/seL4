@@ -23,7 +23,7 @@ cap_t CONST Arch_maskCapRights(seL4_CapRights_t cap_rights_mask, cap_t cap);
 finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final);
 bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b);
 bool_t CONST Arch_sameObjectAs(cap_t cap_a, cap_t cap_b);
-cap_t Arch_createObject(object_t t, void *regionBase, int userSize, bool_t deviceMemory);
+cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory);
 exception_t Arch_decodeInvocation(word_t label, unsigned int length,
                                   cptr_t cptr, cte_t *slot, cap_t cap,
                                   extra_caps_t extraCaps, bool_t call, word_t *buffer);
