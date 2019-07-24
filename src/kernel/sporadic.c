@@ -25,10 +25,6 @@
  * [x][t][][][][h][x][x]
  *
  * The queue has a minimum size of 1, so it is possible that h == t.
- *
- * The queue is implemented as head + tail rather than head + size as
- * we cannot use the mod operator on all architectures without accessing
- * the fpu or implementing divide.
  */
 
 /* return the index of the next item in the refill queue */
@@ -48,14 +44,14 @@ UNUSED static inline void print_index(sched_context_t *sc, word_t index)
 
 UNUSED static inline void refill_print(sched_context_t *sc)
 {
-    printf("Head %lu tail %lu\n", sc->scRefillHead, sc->scRefillTail);
-    word_t current = sc->scRefillHead;
-    /* always print the head */
-    print_index(sc, current);
+    printf("Head %lu length %lu\n", sc->scRefillHead, sc->scRefillCount);
 
-    while (current != sc->scRefillTail) {
-        current = refill_next(sc, current);
+    word_t current = sc->scRefillHead;
+    word_t seen = 0;
+    while (seen != sc->scRefillCount) {
         print_index(sc, current);
+        current = refill_next(sc, current);
+        seen += 1;
     }
 
 }
@@ -66,14 +62,16 @@ static UNUSED bool_t refill_ordered(sched_context_t *sc)
 {
     word_t current = sc->scRefillHead;
     word_t next = refill_next(sc, sc->scRefillHead);
+    word_t seen = 1;
 
-    while (current != sc->scRefillTail) {
+    while (seen != sc->scRefillCount) {
         if (!(REFILL_INDEX(sc, current).rTime <= REFILL_INDEX(sc, next).rTime)) {
             refill_print(sc);
             return false;
         }
         current = next;
         next = refill_next(sc, current);
+        seen += 1;
     }
 
     return true;
@@ -98,12 +96,14 @@ static UNUSED bool_t refill_ordered(sched_context_t *sc)
 /* compute the sum of a refill queue */
 static UNUSED ticks_t refill_sum(sched_context_t *sc)
 {
-    ticks_t sum = REFILL_HEAD(sc).rAmount;
+    ticks_t sum = 0;
     word_t current = sc->scRefillHead;
+    word_t seen = 0;
 
-    while (current != sc->scRefillTail) {
-        current = refill_next(sc, current);
+    while (seen < sc->scRefillCount) {
         sum += REFILL_INDEX(sc, current).rAmount;
+        current = refill_next(sc, current);
+        seen += 1;
     }
 
     return sum;
@@ -112,12 +112,13 @@ static UNUSED ticks_t refill_sum(sched_context_t *sc)
 /* pop head of refill queue */
 static inline refill_t refill_pop_head(sched_context_t *sc)
 {
-    /* queues cannot be smaller than 1 */
-    assert(!refill_single(sc));
+    /* queues cannot be empty */
+    assert(!refill_empty(sc));
 
     UNUSED word_t prev_size = refill_size(sc);
     refill_t refill = REFILL_HEAD(sc);
     sc->scRefillHead = refill_next(sc, sc->scRefillHead);
+    sc->scRefillCount -= 1;
 
     /* sanity */
     assert(prev_size == (refill_size(sc) + 1));
@@ -131,12 +132,8 @@ static inline void refill_add_tail(sched_context_t *sc, refill_t refill)
     /* cannot add beyond queue size */
     assert(refill_size(sc) < sc->scRefillMax);
 
-    word_t new_tail = refill_next(sc, sc->scRefillTail);
-    sc->scRefillTail = new_tail;
+    sc->scRefillCount += 1;
     REFILL_TAIL(sc) = refill;
-
-    /* sanity */
-    assert(new_tail < sc->scRefillMax);
 }
 
 static inline void maybe_add_empty_tail(sched_context_t *sc)
@@ -157,7 +154,7 @@ void refill_new(sched_context_t *sc, word_t max_refills, ticks_t budget, ticks_t
 {
     sc->scPeriod = period;
     sc->scRefillHead = 0;
-    sc->scRefillTail = 0;
+    sc->scRefillCount = 1;
     sc->scRefillMax = max_refills;
     assert(budget > MIN_BUDGET);
     /* full budget available */
@@ -183,7 +180,7 @@ void refill_update(sched_context_t *sc, ticks_t new_period, ticks_t new_budget, 
     REFILL_INDEX(sc, 0) = REFILL_HEAD(sc);
     sc->scRefillHead = 0;
     /* truncate refill list to size 1 */
-    sc->scRefillTail = sc->scRefillHead;
+    sc->scRefillCount = 1;
     /* update max refills */
     sc->scRefillMax = new_max_refills;
     /* update period */
@@ -210,16 +207,24 @@ void refill_update(sched_context_t *sc, ticks_t new_period, ticks_t new_budget, 
 
 static inline void schedule_used(sched_context_t *sc, refill_t new)
 {
-    /* schedule the used amount */
-    if (new.rAmount < MIN_BUDGET && !refill_single(sc)) {
-        /* used amount is to small - merge with last and delay */
-        REFILL_TAIL(sc).rAmount += new.rAmount;
-        REFILL_TAIL(sc).rTime = MAX(new.rTime, REFILL_TAIL(sc).rTime);
-    } else if (new.rTime <= REFILL_TAIL(sc).rTime) {
-        REFILL_TAIL(sc).rAmount += new.rAmount;
-    } else {
+    if (refill_empty(sc)) {
+        assert(new.rAmount >= MIN_BUDGET);
         refill_add_tail(sc, new);
+    } else {
+        /* We should never try to append overlapping refills to the tail */
+        assert(new.rTime >= REFILL_TAIL(sc).rTime + REFILL_TAIL(sc).rAmount);
+
+        /* schedule the used amount */
+        if (new.rAmount < MIN_BUDGET || refill_full(sc)) {
+            /* Merge with existing tail */
+            REFILL_TAIL(sc).rTime = new.rTime - REFILL_TAIL(sc).rAmount;
+            REFILL_TAIL(sc).rAmount += new.rAmount;
+        } else {
+            refill_add_tail(sc, new);
+        }
     }
+
+    assert(!refill_empty(sc));
 }
 
 void refill_budget_check(ticks_t usage, ticks_t capacity)
