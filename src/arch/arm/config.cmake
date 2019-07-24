@@ -16,6 +16,12 @@ if(KernelArchARM)
     set_property(TARGET kernel_config_target APPEND PROPERTY TOPLEVELTYPES pde_C)
 endif()
 
+if(KernelArmCortexA53)
+    config_set(KernelArmPASizeBits40 ARM_PA_SIZE_BITS_40 "${KernelArmPASizeBits40}")
+elseif(KernelArmCortexA57)
+    config_set(KernelArmPASizeBits44 ARM_PA_SIZE_BITS_44 "${KernelArmPASizeBits44}")
+endif()
+
 include(src/arch/arm/armv/armv6/config.cmake)
 include(src/arch/arm/armv/armv7-a/config.cmake)
 include(src/arch/arm/armv/armv8-a/config.cmake)

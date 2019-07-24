@@ -20,7 +20,6 @@ if(KernelPlatformTx1)
     set(KernelArchArmV8a ON)
     config_set(KernelARMPlatform ARM_PLAT tx1)
     config_set(KernelArmMach MACH "nvidia")
-    set(KernelArmPASizeBits44 ON)
     list(APPEND KernelDTSList "tools/dts/tx1.dts")
     list(APPEND KernelDTSList "src/plat/tx1/overlay-tx1.dts")
     declare_default_headers(
