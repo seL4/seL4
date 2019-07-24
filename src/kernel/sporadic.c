@@ -227,47 +227,27 @@ static inline void schedule_used(sched_context_t *sc, refill_t new)
     assert(!refill_empty(sc));
 }
 
-void refill_budget_check(ticks_t usage, ticks_t capacity)
+void refill_budget_check(ticks_t usage)
 {
     sched_context_t *sc = NODE_STATE(ksCurSC);
     /* this function should only be called when the sc is out of budget */
-    assert(capacity < MIN_BUDGET || refill_full(sc));
     assert(sc->scPeriod > 0);
     REFILL_SANITY_START(sc);
 
-    if (capacity == 0) {
-        while (REFILL_HEAD(sc).rAmount <= usage) {
-            /* exhaust and schedule replenishment */
-            usage -= REFILL_HEAD(sc).rAmount;
-            if (refill_single(sc)) {
-                /* update in place */
-                REFILL_HEAD(sc).rTime += sc->scPeriod;
-            } else {
-                refill_t old_head = refill_pop_head(sc);
-                old_head.rTime = old_head.rTime + sc->scPeriod;
-                schedule_used(sc, old_head);
-            }
-        }
-
-        /* budget overrun */
-        if (usage > 0) {
-            /* budget reduced when calculating capacity */
-            /* due to overrun delay next replenishment */
-            REFILL_HEAD(sc).rTime += usage;
-            /* merge front two replenishments if times overlap */
-            if (!refill_single(sc) &&
-                REFILL_HEAD(sc).rTime + REFILL_HEAD(sc).rAmount >=
-                REFILL_INDEX(sc, refill_next(sc, sc->scRefillHead)).rTime) {
-
-                refill_t refill = refill_pop_head(sc);
-                REFILL_HEAD(sc).rAmount += refill.rAmount;
-                REFILL_HEAD(sc).rTime = refill.rTime;
-            }
+    while (unlikely(REFILL_HEAD(sc).rAmount <= usage)) {
+        /* exhaust and schedule replenishment */
+        usage -= REFILL_HEAD(sc).rAmount;
+        if (refill_single(sc)) {
+            /* update in place */
+            REFILL_HEAD(sc).rTime += sc->scPeriod;
+        } else {
+            refill_t old_head = refill_pop_head(sc);
+            old_head.rTime = old_head.rTime + sc->scPeriod;
+            schedule_used(sc, old_head);
         }
     }
 
-    capacity = refill_capacity(sc, usage);
-    if (capacity > 0 && refill_ready(sc)) {
+    if (usage > 0) {
         refill_split_check(usage);
     }
 

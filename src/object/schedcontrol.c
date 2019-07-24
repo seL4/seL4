@@ -35,10 +35,7 @@ static exception_t invokeSchedControl_Configure(sched_context_t *target, word_t 
                 commitTime();
 #ifdef ENABLE_SMP_SUPPORT
             } else {
-                /* if its a remote core, manually charge the budget */
-                ticks_t capacity = refill_capacity(target, NODE_STATE_ON_CORE(ksConsumed, target->scCore));
-
-                chargeBudget(capacity, NODE_STATE_ON_CORE(ksConsumed, target->scCore), false, target->scCore, false);
+                chargeBudget(NODE_STATE_ON_CORE(ksConsumed, target->scCore), false, target->scCore, false);
                 doReschedule(target->scCore);
             }
 #endif /* ENABLE_SMP_SUPPORT */

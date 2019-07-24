@@ -141,14 +141,10 @@ void refill_update(sched_context_t *sc, ticks_t new_period, ticks_t new_budget, 
 
 
 /* Charge `usage` to the current scheduling context.
- * This function should only be called only when charging `used` will deplete
- * the head refill, resulting in refill_sufficient failing.
  *
  * @param usage the amount of time to charge.
- * @param capacity the value returned by refill_capacity. At most call sites this
- * has already been calculated so pass the value in rather than calculating it again.
  */
-void refill_budget_check(ticks_t used, ticks_t capacity);
+void refill_budget_check(ticks_t used);
 
 /*
  * Charge a the current scheduling context `used` amount from its
