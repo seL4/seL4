@@ -262,7 +262,7 @@ BOOT_CODE static bool_t try_init_kernel_secondary_core(void)
     setIRQState(IRQIPI, CORE_IRQ_TO_IDX(getCurrentCPUIndex(), irq_remote_call_ipi));
     setIRQState(IRQIPI, CORE_IRQ_TO_IDX(getCurrentCPUIndex(), irq_reschedule_ipi));
     /* Enable per-CPU timer interrupts */
-    maskInterrupt(false, CORE_IRQ_TO_IDX(getCurrentCPUIndex(), KERNEL_TIMER_IRQ));
+    setIRQState(IRQTimer, CORE_IRQ_TO_IDX(getCurrentCPUIndex(), KERNEL_TIMER_IRQ));
 
     NODE_LOCK_SYS;
 
