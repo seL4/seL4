@@ -244,7 +244,7 @@ static inline interrupt_t getActiveIRQ(void)
     }
 
     if (IS_IRQ_VALID(active_irq[CURRENT_CPU_INDEX()])) {
-        irq = active_irq[CURRENT_CPU_INDEX()] & IRQ_MASK;
+        irq = CORE_IRQ_TO_IDX(CURRENT_CPU_INDEX(), active_irq[CURRENT_CPU_INDEX()] & IRQ_MASK);
     } else {
         irq = irqInvalid;
     }
@@ -267,18 +267,24 @@ static inline bool_t isIRQPending(void)
 
 static inline void maskInterrupt(bool_t disable, interrupt_t irq)
 {
+#if defined ENABLE_SMP_SUPPORT
+    assert(!(IRQ_IS_PPI(irq)) || (IDX_TO_CORE(irq) == getCurrentCPUIndex()));
+#endif
+
     if (disable) {
-        gic_enable_clr(irq);
+        gic_enable_clr(IDX_TO_IRQ(irq));
     } else {
-        gic_enable_set(irq);
+        gic_enable_set(IDX_TO_IRQ(irq));
     }
 }
 
 static inline void ackInterrupt(irq_t irq)
 {
-    assert(IS_IRQ_VALID(active_irq[CURRENT_CPU_INDEX()]) && (active_irq[CURRENT_CPU_INDEX()] & IRQ_MASK) == irq);
-    if (is_irq_edge_triggered(irq)) {
-        gic_pending_clr(irq);
+    irq_t hw_irq = IDX_TO_IRQ(irq);
+    assert(IS_IRQ_VALID(active_irq[CURRENT_CPU_INDEX()]) && (active_irq[CURRENT_CPU_INDEX()] & IRQ_MASK) == hw_irq);
+
+    if (is_irq_edge_triggered(hw_irq)) {
+        gic_pending_clr(hw_irq);
     }
 
     /* Set End of Interrupt for active IRQ: ICC_EOIR1_EL1 */
