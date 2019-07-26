@@ -13,6 +13,7 @@
 #ifndef __ARCH_MACHINE_GIC_COMMON_H
 #define __ARCH_MACHINE_GIC_COMMON_H
 
+#include <autoconf.h>
 #include <stdint.h>
 
 /* Shift positions for GICD_SGIR register */
@@ -30,6 +31,30 @@
 
 /* Shared Peripheral Interrupts */
 #define SPI_START         32u
+
+#define NUM_PPI SPI_START
+#define HW_IRQ_IS_PPI(irq) ((irq) < NUM_PPI)
+#define IRQ_IS_PPI(irq) ((irq) < NUM_PPI*CONFIG_MAX_NUM_NODES)
+
+#if defined ENABLE_SMP_SUPPORT
+/* Takes a target core and an irq number and converts it to the intState index */
+#define CORE_IRQ_TO_IDX(tgt, irq) (HW_IRQ_IS_PPI(irq) ? \
+                                 (tgt)*NUM_PPI + (irq) : \
+                                 (CONFIG_MAX_NUM_NODES-1)*NUM_PPI + (irq))
+
+/* Takes an intSate index and extracts the hardware irq number */
+#define IDX_TO_IRQ(idx) (IRQ_IS_PPI(idx) ? \
+                        (idx) - ((idx)/NUM_PPI)*NUM_PPI : \
+                        (idx) - (CONFIG_MAX_NUM_NODES-1)*NUM_PPI)
+
+/* Takes an intState index and extracts the target CPU number */
+#define IDX_TO_CORE(idx) (IRQ_IS_PPI(idx) ? \
+                         (idx) / NUM_PPI : 0)
+#else
+#define CORE_IRQ_TO_IDX(tgt, irq) ((irq_t) (irq))
+#define IDX_TO_IRQ(idx) (idx)
+#define IDX_TO_CORE(idx) 0
+#endif
 
 /* Setters/getters helpers for hardware irqs */
 #define IRQ_REG(IRQ) ((IRQ) >> 5u)
