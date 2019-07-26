@@ -286,13 +286,13 @@ void setIRQTrigger(irq_t irq, bool_t trigger)
     /* GICv3 has read-only GICR_ICFG0 for SGI with
      * default value 0xaaaaaaaa, and read-write GICR_ICFG1
      * for PPI with default 0x00000000.*/
-    if (is_sgi(irq)) {
+    if (HW_IRQ_IS_SGI(irq)) {
         return;
     }
     int word = irq >> 4;
     int bit = ((irq & 0xf) * 2);
     uint32_t icfgr = 0;
-    if (is_ppi(irq)) {
+    if (HW_IRQ_IS_PPI(irq)) {
         icfgr = gic_rdist_sgi_ppi_map[CURRENT_CPU_INDEX()]->icfgr1;
     } else {
         icfgr = gic_dist->icfgrn[word];
@@ -304,7 +304,7 @@ void setIRQTrigger(irq_t irq, bool_t trigger)
         icfgr &= ~(0b11 << bit);
     }
 
-    if (is_ppi(irq)) {
+    if (HW_IRQ_IS_PPI(irq)) {
         gic_rdist_sgi_ppi_map[CURRENT_CPU_INDEX()]->icfgr1 = icfgr;
     } else {
         /* Update GICD_ICFGR<n>. Note that the interrupt should

@@ -30,14 +30,6 @@
 
 #include "gic_common.h"
 
-#define NR_GIC_SGI         16
-
-#define GIC_SGI_START            (0)
-#define GIC_SGI_END              (15)
-#define GIC_PPI_START            (16)
-#define GIC_PPI_END              (31)
-
-
 #define GIC_PRI_LOWEST     0xf0
 #define GIC_PRI_IRQ        0xa0
 #define GIC_PRI_HIGHEST    0x80 /* Higher priorities belong to Secure-World */
@@ -183,17 +175,6 @@ extern volatile struct gic_dist_map *const gic_dist;
 extern volatile struct gic_rdist_map *gic_rdist_map[CONFIG_MAX_NUM_NODES];
 extern volatile struct gic_rdist_sgi_ppi_map *gic_rdist_sgi_ppi_map[CONFIG_MAX_NUM_NODES];
 
-
-static inline bool_t is_sgi(irq_t irq)
-{
-    return (irq >= GIC_SGI_START) && (irq <= GIC_SGI_END);
-}
-
-static inline bool_t is_ppi(irq_t irq)
-{
-    return (irq >= GIC_PPI_START) && (irq <= GIC_PPI_END);
-}
-
 /* Helpers */
 static inline int is_irq_edge_triggered(irq_t irq)
 {
@@ -201,10 +182,10 @@ static inline int is_irq_edge_triggered(irq_t irq)
     int word = irq >> 4;
     int bit = ((irq & 0xf) * 2);
 
-    if (is_sgi(irq)) {
+    if (HW_IRQ_IS_SGI(irq)) {
         return 0;
     }
-    if (is_ppi(irq)) {
+    if (HW_IRQ_IS_PPI(irq)) {
         icfgr = gic_rdist_sgi_ppi_map[CURRENT_CPU_INDEX()]->icfgr1;
     } else {
         icfgr = gic_dist->icfgrn[word];

@@ -33,6 +33,7 @@
 #define SPI_START         32u
 
 #define NUM_PPI SPI_START
+#define HW_IRQ_IS_SGI(irq) ((irq) < PPI_START)
 #define HW_IRQ_IS_PPI(irq) ((irq) < NUM_PPI)
 #define IRQ_IS_PPI(irq) ((irq) < NUM_PPI*CONFIG_MAX_NUM_NODES)
 
