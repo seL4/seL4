@@ -143,18 +143,18 @@ BOOT_CODE static void dist_init(void)
     nr_lines = GIC_REG_WIDTH * ((type & GICD_TYPE_LINESNR) + 1);
 
     /* Assume level-triggered */
-    for (i = NR_GIC_LOCAL_IRQS; i < nr_lines; i += 16) {
+    for (i = SPI_START; i < nr_lines; i += 16) {
         gic_dist->icfgrn[(i / 16)] = 0;
     }
 
     /* Default priority for global interrupts */
     priority = (GIC_PRI_IRQ << 24 | GIC_PRI_IRQ << 16 | GIC_PRI_IRQ << 8 |
                 GIC_PRI_IRQ);
-    for (i = NR_GIC_LOCAL_IRQS; i < nr_lines; i += 4) {
+    for (i = SPI_START; i < nr_lines; i += 4) {
         gic_dist->ipriorityrn[(i / 4)] = priority;
     }
     /* Disable and clear all global interrupts */
-    for (i = NR_GIC_LOCAL_IRQS; i < nr_lines; i += 32) {
+    for (i = SPI_START; i < nr_lines; i += 32) {
         gic_dist->icenablern[(i / 32)] = IRQ_SET_ALL;
         gic_dist->icpendrn[(i / 32)] = IRQ_SET_ALL;
     }
@@ -165,7 +165,7 @@ BOOT_CODE static void dist_init(void)
 
     /* Route all global IRQs to this CPU */
     affinity = mpidr_to_gic_affinity();
-    for (i = NR_GIC_LOCAL_IRQS; i < nr_lines; i++) {
+    for (i = SPI_START; i < nr_lines; i++) {
         gic_dist->iroutern[i] = affinity;
     }
 }
@@ -238,7 +238,7 @@ BOOT_CODE static void gicr_init(void)
     /* Set priority on PPI and SGI interrupts */
     priority = (GIC_PRI_IRQ << 24 | GIC_PRI_IRQ << 16 | GIC_PRI_IRQ << 8 |
                 GIC_PRI_IRQ);
-    for (i = 0; i < NR_GIC_LOCAL_IRQS; i += 4) {
+    for (i = 0; i < SPI_START; i += 4) {
         gic_rdist_sgi_ppi_map[CURRENT_CPU_INDEX()]->ipriorityrn[i / 4] = priority;
     }
 

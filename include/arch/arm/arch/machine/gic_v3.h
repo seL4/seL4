@@ -30,7 +30,6 @@
 
 #include "gic_common.h"
 
-#define NR_GIC_LOCAL_IRQS  32
 #define NR_GIC_SGI         16
 
 #define GIC_SGI_START            (0)
@@ -220,7 +219,7 @@ static inline void gic_pending_clr(irq_t irq)
     int bit = IRQ_BIT(irq);
     /* Using |= here is detrimental to your health */
     /* Applicable for SPI and PPIs */
-    if (irq < NR_GIC_LOCAL_IRQS) {
+    if (irq < SPI_START) {
         gic_rdist_sgi_ppi_map[CURRENT_CPU_INDEX()]->icpendr0 = BIT(bit);
     } else {
         gic_dist->icpendrn[word] = BIT(bit);
@@ -232,7 +231,7 @@ static inline void gic_enable_clr(irq_t irq)
     int word = IRQ_REG(irq);
     int bit = IRQ_BIT(irq);
     /* Using |= here is detrimental to your health */
-    if (irq < NR_GIC_LOCAL_IRQS) {
+    if (irq < SPI_START) {
         gic_rdist_sgi_ppi_map[CURRENT_CPU_INDEX()]->icenabler0 = BIT(bit);
     } else {
         gic_dist->icenablern[word] = BIT(bit);
@@ -245,7 +244,7 @@ static inline void gic_enable_set(irq_t irq)
     int word = IRQ_REG(irq);
     int bit = IRQ_BIT(irq);
 
-    if (irq < NR_GIC_LOCAL_IRQS) {
+    if (irq < SPI_START) {
         gic_rdist_sgi_ppi_map[CURRENT_CPU_INDEX()]->isenabler0 = BIT(bit);
     } else {
         gic_dist->isenablern[word] = BIT(bit);
