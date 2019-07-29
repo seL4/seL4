@@ -165,6 +165,12 @@ config_option(
     DEFAULT_DISABLED OFF
 )
 
+config_option(
+    KernelAllowSMCCalls ALLOW_SMC_CALLS "Allow virtualized guests to make SMC calls"
+    DEFAULT OFF
+    DEPENDS "KernelArmHypervisorSupport"
+)
+
 if(KernelAArch32FPUEnableContextSwitch OR KernelSel4ArchAarch64)
     set(KernelHaveFPU ON)
 endif()
