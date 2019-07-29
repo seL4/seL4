@@ -26,7 +26,14 @@
 /* Allow native tasks to run at EL0, but restrict access */
 #define HCR_NATIVE ( HCR_COMMON | HCR_TGE | HCR_TVM | HCR_TTLB | HCR_DC \
                    | HCR_TAC | HCR_SWIO |  HCR_TSC | HCR_IMO | HCR_FMO | HCR_AMO)
+
+#ifdef CONFIG_ALLOW_SMC_CALLS
+/* This should only be a temporary fix. Guests should be able to call into EL3. These
+ * SMC calls should be virtualized in the VMM */
+#define HCR_VCPU   ( HCR_COMMON )
+#else
 #define HCR_VCPU   ( HCR_COMMON | HCR_TSC)
+#endif
 
 #define SCTLR_EL1_UCI       BIT(26)     /* Enable EL0 access to DC CVAU, DC CIVAC, DC CVAC,
                                            and IC IVAU in AArch64 state   */
@@ -595,4 +602,3 @@ static inline bool_t armv_handleVCPUFault(word_t hsr)
 #endif /* End of CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 #endif
-
