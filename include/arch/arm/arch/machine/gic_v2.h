@@ -207,12 +207,12 @@ static inline interrupt_t getActiveIRQ(void)
     }
 
     if (IS_IRQ_VALID(active_irq[CURRENT_CPU_INDEX()])) {
-        irq = active_irq[CURRENT_CPU_INDEX()] & IRQ_MASK;
+        irq = CORE_IRQ_TO_IDX(CURRENT_CPU_INDEX(), active_irq[CURRENT_CPU_INDEX()] & IRQ_MASK);
     } else {
         irq = irqInvalid;
     }
 
-    return CORE_IRQ_TO_IDX(CURRENT_CPU_INDEX(), irq);
+    return irq;
 }
 
 /*

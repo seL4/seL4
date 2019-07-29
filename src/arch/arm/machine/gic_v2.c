@@ -168,6 +168,8 @@ void setIRQTrigger(irq_t irq, bool_t trigger)
 
 BOOT_CODE void initIRQController(void)
 {
+    /* irqInvalid cannot correspond to a valid IRQ index into the irq state array */
+    assert(INT_STATE_ARRAY_SIZE < irqInvalid);
     dist_init();
 }
 
