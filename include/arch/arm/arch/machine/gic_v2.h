@@ -202,17 +202,17 @@ static inline void dist_enable_set(irq_t irq)
 static inline interrupt_t getActiveIRQ(void)
 {
     uint32_t irq;
-    if (!IS_IRQ_VALID(active_irq[SMP_TERNARY(getCurrentCPUIndex(), 0)])) {
-        active_irq[SMP_TERNARY(getCurrentCPUIndex(), 0)] = gic_cpuiface->int_ack;
+    if (!IS_IRQ_VALID(active_irq[CURRENT_CPU_INDEX()])) {
+        active_irq[CURRENT_CPU_INDEX()] = gic_cpuiface->int_ack;
     }
 
-    if (IS_IRQ_VALID(active_irq[SMP_TERNARY(getCurrentCPUIndex(), 0)])) {
-        irq = active_irq[SMP_TERNARY(getCurrentCPUIndex(), 0)] & IRQ_MASK;
+    if (IS_IRQ_VALID(active_irq[CURRENT_CPU_INDEX()])) {
+        irq = active_irq[CURRENT_CPU_INDEX()] & IRQ_MASK;
     } else {
         irq = irqInvalid;
     }
 
-    return CORE_IRQ_TO_IDX(SMP_TERNARY(getCurrentCPUIndex(), 0), irq);
+    return CORE_IRQ_TO_IDX(CURRENT_CPU_INDEX(), irq);
 }
 
 /*
@@ -239,13 +239,13 @@ static inline void maskInterrupt(bool_t disable, interrupt_t irq)
 
 static inline void ackInterrupt(irq_t irq)
 {
-    assert(IS_IRQ_VALID(active_irq[SMP_TERNARY(getCurrentCPUIndex(), 0)])
-           && (active_irq[SMP_TERNARY(getCurrentCPUIndex(), 0)] & IRQ_MASK) == IDX_TO_IRQ(irq));
+    assert(IS_IRQ_VALID(active_irq[CURRENT_CPU_INDEX()])
+           && (active_irq[CURRENT_CPU_INDEX()] & IRQ_MASK) == IDX_TO_IRQ(irq));
     if (is_irq_edge_triggered(IDX_TO_IRQ(irq))) {
         dist_pending_clr(IDX_TO_IRQ(irq));
     }
-    gic_cpuiface->eoi = active_irq[SMP_TERNARY(getCurrentCPUIndex(), 0)];
-    active_irq[SMP_TERNARY(getCurrentCPUIndex(), 0)] = IRQ_NONE;
+    gic_cpuiface->eoi = active_irq[CURRENT_CPU_INDEX()];
+    active_irq[CURRENT_CPU_INDEX()] = IRQ_NONE;
 
 }
 
