@@ -33,6 +33,7 @@ DEPS = [
     'ply',
     'psutil',
     'bs4',
+    'pyelftools',
     'sh',
     'pexpect',
     'pyaml',
@@ -45,7 +46,7 @@ DEPS = [
 
 setup(
     name='sel4-deps',
-    version='0.2.4',
+    version='0.2.5',
     description='Metapackage for downloading build dependencies for the seL4 microkernel',
     url="https://sel4.systems",
     licence='BSD2',
