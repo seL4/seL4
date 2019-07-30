@@ -22,7 +22,8 @@ if(KernelPlatformImx8mq-evk OR KernelPlatformImx8mm-evk)
         declare_seL4_arch(aarch64)
     else()
         message(
-            STATUS "Selected platform ${KernelPlatform} supports multiple architectures but none were given"
+            STATUS
+                "Selected platform ${KernelPlatform} supports multiple architectures but none were given"
         )
         message(STATUS "  Defaulting to aarch64")
         declare_seL4_arch(aarch64)
