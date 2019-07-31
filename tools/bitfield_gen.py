@@ -1248,6 +1248,13 @@ def sign_extend_proof(high, base_bits, base_sign_extend):
         return ""
 
 
+def det_values(*dicts):
+    """Deterministically iterate over the values of each dict in `dicts`."""
+    def values(d):
+        return (d[key] for key in sorted(d.keys()))
+    return itertools.chain(*(values(d) for d in dicts))
+
+
 class TaggedUnion:
     def __init__(self, name, tagname, classes, tags):
         self.name = name
@@ -2750,7 +2757,7 @@ if __name__ == '__main__':
 
     # Prune list of names to generate
     name_list = []
-    for e in itertools.chain(blocks.values(), unions.values()):
+    for e in det_values(blocks, unions):
         name_list += e.make_names()
 
     name_list = set(name_list)
@@ -2783,7 +2790,7 @@ if __name__ == '__main__':
             print(defs_global_lemmas, file=out_file)
             print(file=out_file)
 
-            for e in blocks.values() + unions.values():
+            for e in det_values(blocks, unions):
                 e.generate_hol_defs(options)
 
             print("end", file=out_file)
@@ -2793,13 +2800,13 @@ if __name__ == '__main__':
             print("  \"%s/KernelState_C\"" % (
                 os.path.relpath(options.cspec_dir,
                                 os.path.dirname(out_file.filename))), file=out_file)
-            for e in blocks.values() + unions.values():
+            for e in det_values(blocks, unions):
                 print("  %s_%s_defs" % (module_name, e.name),
                       file=out_file)
             print("begin", file=out_file)
             print("end", file=out_file)
 
-            for e in blocks.values() + unions.values():
+            for e in det_values(blocks, unions):
                 base_filename = \
                     os.path.basename(options.multifile_base).split('.')[0]
                 submodule_name = base_filename + "_" + \
@@ -2819,7 +2826,8 @@ if __name__ == '__main__':
                 print("end", file=out_file)
     elif options.hol_proofs:
         def is_bit_type(tp):
-            return (umm.is_base(tp) & (umm.base_name(tp) in map(lambda e: e.name + '_C', blocks.values() + unions.values())))
+            return umm.is_base(tp) & (umm.base_name(tp) in
+                                      map(lambda e: e.name + '_C', det_values(blocks, unions)))
 
         tps = umm.build_types(options.umm_types_file)
         type_map = {}
@@ -2843,7 +2851,7 @@ if __name__ == '__main__':
             print(file=out_file)
             print(file=out_file)
 
-            for e in blocks.values() + unions.values():
+            for e in det_values(blocks, unions):
                 e.generate_hol_proofs(options, type_map)
 
             print("end", file=out_file)
@@ -2851,13 +2859,13 @@ if __name__ == '__main__':
             # top types are broken here.
             print("theory %s_proofs" % module_name, file=out_file)
             print("imports", file=out_file)
-            for e in blocks.values() + unions.values():
+            for e in det_values(blocks, unions):
                 print("  %s_%s_proofs" % (module_name, e.name),
                       file=out_file)
             print("begin", file=out_file)
             print("end", file=out_file)
 
-            for e in blocks.values() + unions.values():
+            for e in det_values(blocks, unions):
                 base_filename = \
                     os.path.basename(options.multifile_base).split('.')[0]
                 submodule_name = base_filename + "_" + \
@@ -2881,7 +2889,7 @@ if __name__ == '__main__':
               {'guard': guard}, file=out_file)
         print('\n'.join(map(lambda x: '#include <%s>' % x,
                             INCLUDES[options.environment])), file=out_file)
-        for e in itertools.chain(blocks.values(), unions.values()):
+        for e in det_values(blocks, unions):
             e.generate(options)
         print("#endif", file=out_file)
 
