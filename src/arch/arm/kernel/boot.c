@@ -264,6 +264,10 @@ BOOT_CODE static bool_t try_init_kernel_secondary_core(void)
     /* Enable per-CPU timer interrupts */
     setIRQState(IRQTimer, CORE_IRQ_TO_IDX(getCurrentCPUIndex(), KERNEL_TIMER_IRQ));
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    setIRQState(IRQReserved, CORE_IRQ_TO_IDX(getCurrentCPUIndex(), INTERRUPT_VGIC_MAINTENANCE));
+#endif
+
     NODE_LOCK_SYS;
 
     ksNumCPUs++;

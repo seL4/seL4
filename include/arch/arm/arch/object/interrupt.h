@@ -35,7 +35,7 @@ static inline void handleReservedIRQ(irq_t irq)
 #endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    if (irq == INTERRUPT_VGIC_MAINTENANCE) {
+    if (IDX_TO_IRQ(irq) == INTERRUPT_VGIC_MAINTENANCE) {
         VGICMaintenance();
         return;
     }
