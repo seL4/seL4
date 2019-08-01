@@ -146,6 +146,10 @@ unset(KernelArmMachFeatureModifiers CACHE)
 unset(KernelArmCPU CACHE)
 unset(KernelArmArmV CACHE)
 
+# Blacklist platforms without MCS support
+unset(KernelPlatformSupportsMCS CACHE)
+set(KernelPlatformSupportsMCS ON)
+
 file(GLOB result ${CMAKE_CURRENT_LIST_DIR}/../src/plat/*/config.cmake)
 list(SORT result)
 
@@ -167,6 +171,7 @@ config_set(KernelArchArmV6 ARCH_ARM_V6 "${KernelArchArmV6}")
 config_set(KernelArchArmV7a ARCH_ARM_V7A "${KernelArchArmV7a}")
 config_set(KernelArchArmV7ve ARCH_ARM_V7VE "${KernelArchArmV7ve}")
 config_set(KernelArchArmV8a ARCH_ARM_V8A "${KernelArchArmV8a}")
+set(KernelPlatformSupportsMCS "${KernelPlatformSupportsMCS}" CACHE INTERNAL "" FORCE)
 
 # Check for v7ve before v7a as v7ve is a superset and we want to set the
 # actual armv to that, but leave armv7a config enabled for anything that

@@ -14,8 +14,17 @@ cmake_minimum_required(VERSION 3.7.2)
 
 set(configure_string "${config_configure_string}")
 
-# Set kernel branch
-config_set(KernelIsMaster KERNEL_MASTER ON)
+config_option(
+    KernelIsMCS KERNEL_MCS "Use the MCS kernel configuration, which is not verified."
+    DEFAULT OFF
+)
+
+# Error for unsupported MCS platforms
+if(KernelIsMCS AND (NOT KernelPlatformSupportsMCS))
+    message(
+        FATAL_ERROR "KernelIsMCS selected, but platform: ${KernelPlatform} does not support it."
+    )
+endif()
 
 # Proof based configuration variables
 set(CSPEC_DIR "." CACHE PATH "")
