@@ -31,6 +31,10 @@
 #include <arch/types.h>
 #include <sel4/sel4_arch/constants.h>
 
+/* The size is for HiFive Unleashed */
+#define L1_CACHE_LINE_SIZE_BITS     6
+#define L1_CACHE_LINE_SIZE          BIT(L1_CACHE_LINE_SIZE_BITS)
+
 /* The highest valid physical address that can be indexed in the kernel window */
 #define PADDR_TOP (KERNEL_BASE - PPTR_BASE + PADDR_BASE)
 /* A contiguous region of physical address space at PADDR_LOAD is mapped
@@ -126,5 +130,10 @@ static inline unsigned int CONST pageBitsForSize(vm_page_size_t pagesize)
 
 #define LOAD_S STRINGIFY(LOAD)
 #define STORE_S STRINGIFY(STORE)
+
+#define IPI_MEM_BARRIER \
+    do { \
+        asm volatile("fence rw,rw" ::: "memory"); \
+    } while (0)
 
 #endif /* !__ARCH_MACHINE_HARDWARE_H */
