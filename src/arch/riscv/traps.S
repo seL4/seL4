@@ -35,10 +35,19 @@
 
 trap_entry:
 
+#ifdef ENABLE_SMP_SUPPORT
+/* The sscratch contains the stack for the current core */
+  csrrw sp, sscratch, sp
+/* Now we have a valid kernel stack */
+  STORE t0, (-2*REGBYTES)(sp)
+  LOAD  t0, (-1*REGBYTES)(sp)
+#else
   csrrw t0, sscratch, t0
-
+#endif
   STORE ra, (0*REGBYTES)(t0)
+#ifndef ENABLE_SMP_SUPPORT
   STORE sp, (1*REGBYTES)(t0)
+#endif
   STORE gp, (2*REGBYTES)(t0)
   STORE tp, (3*REGBYTES)(t0)
   STORE t1, (5*REGBYTES)(t0)
@@ -67,9 +76,12 @@ trap_entry:
   STORE t4, (28*REGBYTES)(t0)
   STORE t5, (29*REGBYTES)(t0)
   STORE t6, (30*REGBYTES)(t0)
-
   /* save t0 value */
+#ifdef ENABLE_SMP_SUPPORT
+  LOAD  x1, (-2*REGBYTES)(sp)
+#else
   csrr  x1, sscratch
+#endif
   STORE    x1, (4*REGBYTES)(t0)
 
   csrr x1, sstatus
@@ -78,14 +90,22 @@ trap_entry:
   csrr s0, scause
   STORE s0, (31*REGBYTES)(t0)
 
+  la gp, __global_pointer$
+
+#ifdef ENABLE_SMP_SUPPORT
+  /* save the user sp */
+  csrr  x1, sscratch
+  STORE x1, (1*REGBYTES)(t0)
+  /* restore the sscratch */
+  csrw  sscratch, sp
+#else
+  /* Load kernel's stack address */
+  la sp, (kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS))
+#endif
+
   /* Save exception PC */
   csrr x1,  sepc
   STORE   x1, (33*REGBYTES)(t0)
-
-  la gp, __global_pointer$
-
-  /* Load kernel's stack address */
-  la sp, (kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS))
 
   /* Check if it's an interrupt */
   srli s2, s0, (CONFIG_WORD_SIZE - 1)
