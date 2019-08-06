@@ -24,6 +24,7 @@
 #include <config.h>
 #include <types.h>
 #include <util.h>
+#include <model/statedata.h>
 #include <object/structures.h>
 #include <arch/types.h>
 
@@ -44,4 +45,5 @@ extern pte_t kernel_root_pageTable[BIT(PT_INDEX_BITS)] VISIBLE;
 #if __riscv_xlen != 32
 extern pte_t kernel_image_level2_pt[BIT(PT_INDEX_BITS)];
 #endif
+
 #endif
