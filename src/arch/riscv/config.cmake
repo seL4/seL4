@@ -47,6 +47,7 @@ add_sources(
         object/interrupt.c
         object/objecttype.c
         object/tcb.c
+        smp/ipi.c
     ASMFILES halt.S head.S traps.S
 )
 
