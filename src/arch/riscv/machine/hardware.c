@@ -242,6 +242,27 @@ void ackInterrupt(irq_t irq)
 #endif
 }
 
+static inline uint64_t get_cycles(void)
+#if __riscv_xlen == 32
+{
+    uint32_t nH, nL;
+    asm volatile(
+        "rdtimeh %0\n"
+        "rdtime  %1\n"
+        : "=r"(nH), "=r"(nL));
+    return ((uint64_t)((uint64_t) nH << 32)) | (nL);
+}
+#else
+{
+    uint64_t n;
+    asm volatile(
+        "rdtime %0"
+        : "=r"(n));
+    return n;
+}
+#endif
+}
+
 static inline int read_current_timer(unsigned long *timer_val)
 {
     *timer_val = riscv_read_time();
