@@ -15,6 +15,7 @@
  * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
  */
+#include <config.h>
 #include <types.h>
 #include <machine/registerset.h>
 #include <machine/timer.h>
@@ -283,12 +284,32 @@ BOOT_CODE void initL2Cache(void)
 {
 }
 
+BOOT_CODE void initLocalIRQController(void)
+{
+    printf("Init local IRQ\n");
+
+#ifdef CONFIG_PLAT_HIFIVE
+    /* Init per-hart PLIC */
+    plic_init_hart();
+#endif
+
+    word_t sie = 0;
+    sie |= BIT(SEXTERNAL_IE);
+    sie |= BIT(STIMER_IE);
+
+#ifdef ENABLE_SMP_SUPPORT
+    /* enable the software-generated interrupts */
+    sie |= BIT(SIPI_IE);
+#endif
+
+    set_sie_mask(sie);
+}
+
 BOOT_CODE void initIRQController(void)
 {
     printf("Initialing PLIC...\n");
 
     plic_init_controller();
-    set_sie_mask(BIT(9));
 }
 
 void handleSpuriousIRQ(void)

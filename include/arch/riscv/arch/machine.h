@@ -210,7 +210,7 @@ static inline void setInterruptMode(irq_t irq, bool_t levelTrigger, bool_t polar
 void initTimer(void);
 /* L2 cache control */
 void initL2Cache(void);
-
+void initLocalIRQController(void);
 void initIRQController(void);
 void setIRQTrigger(irq_t irq, bool_t trigger);
 
