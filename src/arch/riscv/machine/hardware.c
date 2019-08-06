@@ -315,5 +315,6 @@ BOOT_CODE void initIRQController(void)
 void handleSpuriousIRQ(void)
 {
     /* Do nothing */
-    printf("Superior IRQ!! \n");
+    word_t sip = read_sip();
+    printf("Superior IRQ!! SIP %lx\n", sip);
 }
