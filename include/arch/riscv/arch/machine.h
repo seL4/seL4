@@ -47,9 +47,57 @@ static inline void sfence_local(void)
     asm volatile("sfence.vma" ::: "memory");
 }
 
-static inline void hwASIDFlush(asid_t asid)
+static inline void ifence(void)
+{
+    ifence_local();
+
+#ifdef ENABLE_SMP_SUPPORT
+    unsigned long mask = 0;
+    for (int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
+        if (i != getCurrentCPUIndex()) {
+            mask |= BIT(cpuIndexToID(i));
+        }
+    }
+    sbi_remote_fence_i(&mask);
+#endif
+}
+
+static inline void sfence(void)
+{
+#ifdef ENABLE_SMP_SUPPORT
+    fence_w_rw();
+#endif
+    sfence_local();
+
+#ifdef ENABLE_SMP_SUPPORT
+    unsigned long mask = 0;
+    for (int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
+        if (i != getCurrentCPUIndex()) {
+            mask |= BIT(cpuIndexToID(i));
+        }
+    }
+    sbi_remote_sfence_vma(&mask, 0, 0);
+#endif
+}
+
+static inline void hwASIDFlushLocal(asid_t asid)
 {
     asm volatile("sfence.vma x0, %0" :: "r"(asid): "memory");
+}
+
+static inline void hwASIDFlush(asid_t asid)
+{
+    hwASIDFlushLocal(asid);
+
+#ifdef ENABLE_SMP_SUPPORT
+    unsigned long mask = 0;
+    for (int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
+        if (i != getCurrentCPUIndex()) {
+            mask |= BIT(cpuIndexToID(i));
+        }
+    }
+    sbi_remote_sfence_vma_asid(&mask, 0, 0, asid);
+#endif
 }
 
 word_t PURE getRestartPC(tcb_t *thread);
