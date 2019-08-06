@@ -20,7 +20,11 @@
 #include <machine/registerset.h>
 #include <machine/timer.h>
 #include <arch/machine.h>
+#include <arch/smp/ipi.h>
 
+
+#define SIPI_IP   1
+#define SIPI_IE   1
 #define STIMER_IP 5
 #define STIMER_IE 5
 #define STIMER_CAUSE 5
@@ -121,19 +125,20 @@ static irq_t getNewActiveIRQ(void)
 {
 
     uint64_t sip = read_sip();
-
-    if (sip & BIT(STIMER_IP)) {
-        // Supervisor timer interrupt
-        return INTERRUPT_CORE_TIMER;
-    } else if (BIT(SEXTERNAL_IP)) {
-        /* External IRQ */
+    /* Interrupt priority (high to low ): external -> software -> timer */
+    if (sip & BIT(SEXTERNAL_IP)) {
         return plic_get_claim();
-    } else {
-        return irqInvalid;
+    } else if (sip & BIT(SIPI_IP)) {
+        sbi_clear_ipi();
+        return ipi_get_irq();
+    } else if (sip & BIT(STIMER_IP)) {
+        return INTERRUPT_CORE_TIMER;
     }
+
+    return irqInvalid;
 }
 
-static uint32_t active_irq = irqInvalid;
+static uint32_t active_irq[CONFIG_MAX_NUM_NODES] = { irqInvalid };
 
 
 /**
@@ -152,12 +157,12 @@ irq_t getActiveIRQ(void)
 {
 
     uint32_t irq;
-    if (!IS_IRQ_VALID(active_irq)) {
-        active_irq = getNewActiveIRQ();
+    if (!IS_IRQ_VALID(active_irq[CURRENT_CPU_INDEX()])) {
+        active_irq[CURRENT_CPU_INDEX()] = getNewActiveIRQ();
     }
 
-    if (IS_IRQ_VALID(active_irq)) {
-        irq = active_irq;
+    if (IS_IRQ_VALID(active_irq[CURRENT_CPU_INDEX()])) {
+        irq = active_irq[CURRENT_CPU_INDEX()];
     } else {
         irq = irqInvalid;
     }
@@ -216,6 +221,10 @@ void maskInterrupt(bool_t disable, interrupt_t irq)
         } else {
             set_sie_mask(BIT(STIMER_IE));
         }
+#ifdef ENABLE_SMP_SUPPORT
+    } else if (irq == irq_reschedule_ipi || irq == irq_remote_call_ipi) {
+        return;
+#endif
     } else {
         plic_mask_irq(disable, irq);
     }
@@ -234,12 +243,17 @@ void maskInterrupt(bool_t disable, interrupt_t irq)
 void ackInterrupt(irq_t irq)
 {
     assert(IS_IRQ_VALID(irq));
-    active_irq = irqInvalid;
+    active_irq[CURRENT_CPU_INDEX()] = irqInvalid;
 
     if (irq == INTERRUPT_CORE_TIMER) {
         /* Reprogramming the timer has cleared the interrupt. */
         return;
     }
+#ifdef ENABLE_SMP_SUPPORT
+    if (irq == irq_reschedule_ipi || irq == irq_remote_call_ipi) {
+        ipi_clear_irq(irq);
+    }
+#endif
 }
 
 static inline int read_current_timer(unsigned long *timer_val)
