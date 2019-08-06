@@ -27,7 +27,22 @@
 #include <arch/model/statedata.h>
 #include <arch/sbi.h>
 
-static inline void sfence(void)
+static inline void fence_rw_rw(void)
+{
+    asm volatile("fence rw, rw" ::: "memory");
+}
+
+static inline void fence_w_rw(void)
+{
+    asm volatile("fence w, rw" ::: "memory");
+}
+
+static inline void ifence_local(void)
+{
+    asm volatile("fence.i":::"memory");
+}
+
+static inline void sfence_local(void)
 {
     asm volatile("sfence.vma" ::: "memory");
 }
@@ -124,7 +139,7 @@ static inline void setVSpaceRoot(paddr_t addr, asid_t asid)
     write_sptbr(satp.words[0]);
 
     /* Order read/write operations */
-    sfence();
+    sfence_local();
 }
 
 static inline void Arch_finaliseInterrupt(void)
