@@ -153,6 +153,18 @@ void setIRQTrigger(irq_t irq, bool_t trigger);
 
 void handleSpuriousIRQ(void);
 
+#ifdef ENABLE_SMP_SUPPORT
+#define irq_remote_call_ipi     (INTERRUPT_IPI_0)
+#define irq_reschedule_ipi      (INTERRUPT_IPI_1)
+
+static inline void arch_pause(void)
+{
+    // use a memory fence to delay a bit.
+    // other alternatives?
+    asm volatile("fence rw,rw");
+}
+
+#endif
 void plat_cleanL2Range(paddr_t start, paddr_t end);
 
 void plat_invalidateL2Range(paddr_t start, paddr_t end);
