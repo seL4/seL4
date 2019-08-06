@@ -19,6 +19,7 @@
 #ifndef __ARCH_KERNEL_BOOT_H
 #define __ARCH_KERNEL_BOOT_H
 
+#include <config.h>
 #include <types.h>
 
 cap_t create_unmapped_it_frame_cap(pptr_t pptr, bool_t use_large);
@@ -30,6 +31,11 @@ void init_kernel(
     paddr_t ui_p_reg_end,
     sword_t pv_offset,
     vptr_t  v_entry
+#ifdef ENABLE_SMP_SUPPORT
+    ,
+    word_t hart_id,
+    word_t core_id
+#endif
 );
 
 #endif
