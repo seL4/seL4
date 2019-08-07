@@ -27,8 +27,15 @@ irq_t ipi_get_irq(void);
 void  ipi_clear_irq(irq_t irq);
 
 #else
-static inline irq_t ipi_get_irq(void) { return irqInvalid; }
-static inline void  ipi_clear_irq(irq_t irq) { return; }
+static inline irq_t ipi_get_irq(void)
+{
+    return irqInvalid;
+}
+
+static inline void  ipi_clear_irq(irq_t irq)
+{
+    return;
+}
 #endif
 
 #endif /* __ARCH_SMP_IPI_H */

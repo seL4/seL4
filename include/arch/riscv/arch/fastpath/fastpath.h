@@ -111,7 +111,7 @@ static inline void NORETURN fastpath_restore(word_t badge, word_t msgInfo, tcb_t
     word_t sp;
     asm volatile("csrr %0, sscratch" : "=r"(sp));
     sp -= sizeof(word_t);
-    *((word_t *)sp)= TCB_REF(cur_thread);
+    *((word_t *)sp) = TCB_REF(cur_thread);
 #endif
 
     c_exit_hook();
