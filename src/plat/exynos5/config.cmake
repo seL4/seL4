@@ -12,12 +12,14 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-declare_platform(
-    exynos5
-    KernelPlatExynos5
-    PLAT_EXYNOS5
-    "KernelSel4ArchAarch32 OR KernelSel4ArchArmHyp"
-)
+# We introduce a variable to hold this long expression to prevent the
+# code styler from line-wrapping the declare_platform() statement.  We
+# want to keep that on one line so the `griddle` tool (or humans) can
+# easily `grep` a list of supported platforms.  As of 2019-08-07, this
+# platform is the only one requiring this workaround.
+set(AArch32OrArchArmHyp "KernelSel4ArchAarch32 OR KernelSel4ArchArmHyp")
+declare_platform(exynos5 KernelPlatExynos5 PLAT_EXYNOS5 ${AArch32OrArchArmHyp})
+unset(${AArch32OrArchArmHyp} CACHE)
 
 set(cmake_configs KernelPlatformExynos5250 KernelPlatformExynos5410 KernelPlatformExynos5422)
 set(c_configs PLAT_EXYNOS5250 PLAT_EXYNOS5410 PLAT_EXYNOS5422)
