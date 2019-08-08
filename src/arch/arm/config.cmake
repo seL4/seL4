@@ -221,9 +221,15 @@ add_sources(
         machine/hardware.c
         object/interrupt.c
         object/tcb.c
-        object/iospace.c
         object/vcpu.c
         smp/ipi.c
+)
+
+add_sources(
+    DEP "NOT KernelPlatformTK1"
+    PREFIX src/arch/arm
+    CFILES
+        object/iospace.c
 )
 
 add_bf_source_old("KernelArchARM" "structures.bf" "include/arch/arm" "arch/object")
