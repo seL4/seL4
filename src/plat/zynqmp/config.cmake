@@ -52,6 +52,8 @@ if(KernelPlatformZynqmp)
         CLK_SHIFT 37u
         KERNEL_WCET 10u
         SMMU arch/machine/smmu.h
+        SMMU_SIZE 0x20000
+        SMMU_CB 16
     )
 endif()
 
