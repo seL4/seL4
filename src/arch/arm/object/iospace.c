@@ -241,7 +241,7 @@ static exception_t performARMIOPTInvocationMap(cap_t cap, cte_t *slot, iopde_t *
     plat_smmu_tlb_flush_all();
 
     slot->cap = cap;
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return EXCEPTION_NONE;
 }
 
@@ -268,7 +268,7 @@ exception_t decodeARMIOPTInvocation(
         deleteIOPageTable(slot->cap);
         slot->cap = cap_io_page_table_cap_set_capIOPTIsMapped(slot->cap, 0);
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return EXCEPTION_NONE;
     }
 
@@ -343,7 +343,7 @@ static exception_t performARMIOMapInvocation(cap_t cap, cte_t *slot, iopte_t *io
 
     slot->cap = cap;
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return EXCEPTION_NONE;
 }
 
