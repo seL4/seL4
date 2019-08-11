@@ -504,7 +504,7 @@ Type | Name | Description
         return ''
 
 
-def generate_general_syscall_doc(generator, input_file_name, level):
+def generate_general_syscall_doc(generator, input_file_name, level, ref_dict):
     """
     Takes a path to a file containing doxygen-generated xml,
     and return a string containing latex suitable for inclusion
@@ -515,7 +515,6 @@ def generate_general_syscall_doc(generator, input_file_name, level):
     with open(input_file_name, "r") as f:
         output = ""
         soup = BeautifulSoup(f, "lxml")
-        ref_dict = generator.build_ref_dict(soup)
         elements = soup.find_all("memberdef")
         summary = soup.find('compounddef')
         # parse any top level descriptions
@@ -529,7 +528,7 @@ def generate_general_syscall_doc(generator, input_file_name, level):
             new_input_file = os.path.join(dir_name, new_input_file_name)
             output += generator.level_to_heading(level, inner_group.text)
             output += generator.gen_label(inner_group["refid"])
-            output += generate_general_syscall_doc(generator, new_input_file, level + 1)
+            output += generate_general_syscall_doc(generator, new_input_file, level + 1, ref_dict)
 
         # parse all of the function definitions
         if len(elements) == 0 and output == "":
@@ -572,7 +571,19 @@ def main():
     elif args.format == "markdown":
         generator = MarkdownGenerator()
 
-    output_str = generate_general_syscall_doc(generator, args.input, args.level)
+    dir_name = os.path.dirname(args.input)
+
+    # create the refdict from all the group__*SystemCalls.xml files
+    ref_dict = {}
+    for (r, d, files) in os.walk(dir_name):
+        for f in files:
+            if "SystemCalls" not in f:
+                continue
+            with open(os.path.join(dir_name, f), "r") as source:
+                soup = BeautifulSoup(source, "lxml")
+                ref_dict.update(generator.build_ref_dict(soup))
+
+    output_str = generate_general_syscall_doc(generator, args.input, args.level, ref_dict)
 
     with open(args.output, "w") as output_file:
         output_file.write(output_str)
