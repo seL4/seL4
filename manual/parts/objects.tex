@@ -22,12 +22,17 @@ The basic services seL4 provides are as follows:
     \item[Threads] are an abstraction of CPU execution that supports
     running software;
 
+    \item[Scheduling contexts] (MCS only) are an abstraction of CPU execuion time.
+
     \item[Address spaces] are virtual memory spaces that each contain an
     application. Applications are limited to accessing memory in their
     address space;
 
     \item[Inter-process communication] (IPC) via \emph{endpoints} allows
     threads to communicate using message passing;
+
+    \item[Reply objects] (MCS only) are used to store single-use reply capabilities,
+    and are provided by the receiver during message passing.
 
     \item[Notifications] provide a non-blocking signalling mechanism
       similar to binary semaphores;
@@ -94,12 +99,16 @@ capabilities through the system is controlled by a
 \section{System Calls}
 \label{sec:syscalls}
 \label{sec:sys_send}
+\label{sec:sys_wait}
+\label{sec:sys_nbwait}
 \label{sec:sys_recv}
 \label{sec:sys_call}
 \label{sec:sys_reply}
 \label{sec:sys_nbsend}
 \label{sec:sys_replyrecv}
 \label{sec:sys_nbrecv}
+\label{sec:sys_nbsendrecv}
+\label{sec:sys_nbsendwait}
 \label{sec:sys_yield}
 
 The seL4 kernel provides a message-passing service for communication between
@@ -132,6 +141,7 @@ By using functions provided by the libsel4 API you are guaranteed to always use 
 appropriate one.
 The \emph{Yield} system call is not associated with any kernel
 object and is the only operation that does not invoke a capability.
+On the MCS kernel, \emph{Wait} is a variant of \emph{Receive} that does not require a reply object to be provided.
 
 The complete set of system calls is:
 \begin{description}
@@ -150,6 +160,17 @@ The complete set of system calls is:
     on the destination \obj{Endpoint}, the message is silently dropped. Like
     \apifunc{seL4\_Send}{sel4_send}, no error code or response will be returned.
 
+    \item[\apifunc{seL4\_Wait}{sel4_wait}] (MCS only) is used by a thread to receive
+    messages through endpoints or notifications. If no sender or
+    notification is pending, the caller
+    will block until a message or notification can be delivered. This system call works only on
+    \obj{Endpoint} or \obj{Notification} capabilities, raising a fault (see section \ref{sec:faults}) when
+    attempted with other capability types.
+
+    \item[\apifunc{seL4\_NBWait}{sel4_nbwait}] (MCS only) is used by a thread to poll for
+    messages through endpoints or notifications. If no sender or
+    notification is pending, the system call returns immediately.
+
     \item[\apifunc{seL4\_Call}{sel4_call}] combines \apifunc{seL4\_Send}{sel4_send}
       and \apifunc{seL4\_Recv}{sel4_recv} with some important differences. The call
       blocks the sending thread until its message is delivered and a reply
@@ -161,11 +182,16 @@ The complete set of system calls is:
 
       When the sent message is delivered to another thread (via an
       \obj{Endpoint}), the kernel does the same operation as
-      \apifunc{seL4\_Send}{sel4_send}, then deposits a \emph{reply} capability
+      \apifunc{seL4\_Send}{sel4_send}. What follows next depends on the kernel configuration.
+      For MCS configurations, the kernel then updates the \emph{reply object}
+      provided by the receiver. A \emph{reply object} is a vessel for tracking
+      reply messages, used to to send a reply message and wake up the caller,
+      Without MCS, the kernel then deposits a \emph{reply} capability
       in a dedicated slot in the receiver's \obj{TCB}. A \emph{reply} capability
       is a single-use right to send a reply message and wake up the caller,
       meaning that the kernel invalidates it as soon as it has been invoked.
-      The calling thread is blocked until the reply capability is invoked.
+	  For both variants, the calling thread is blocked until a capability to
+      the reply object is invoked.
       For more information, see \autoref{sec:ep-cal}.
 
     \item[\apifunc{seL4\_Recv}{sel4_recv}] is used by a thread to receive
@@ -196,12 +222,19 @@ The complete set of system calls is:
     capabilities, raising a fault (see section \ref{sec:faults}) when attempted
     with other capability types.
 
+    \item[\apifunc{seL4\_NBSendWait}{sel4_nbsendwait}] (MCS only) combined an \apifunc{seL4\_NBSend}{sel4_nbsend} and
+        \apifunc{seL4\_Wait}{sel4_wait} into one atomic system call.
+
+    \item[\apifunc{seL4\_NBSendRecv}{sel4_nbsendwait}] (MCS only) combined an \apifunc{seL4\_NBSend}{sel4_nbsend} and
+        \apifunc{seL4\_Recv}{sel4_recv} into one atomic system call.
+
     \item[\apifunc{seL4\_Yield}{sel4_yield}] is the only system call that does not require
     a capability to be used. It forfeits the remainder of the calling thread's
     timeslice and causes invocation of the kernel's scheduler.
     If there are no other runnable threads with the same
     priority as the caller, the calling thread will immediately be
-    scheduled with a fresh timeslice.
+    scheduled with a fresh timeslice. On the MCS kernel this behavior depends on the
+    state of the scheduling context, see \autoref{sec:scheduling_contexts}.
 \end{description}
 
 \section{Kernel Objects}
@@ -226,6 +259,13 @@ manipulation, and combination of these kernel objects:
     scheduled, blocked, unblocked, etc., depending on the application's
     interaction with other threads.
 
+   \item[Scheduling contexts] (MCS only) (\obj{SchedulingContext}s; see \autoref{ch:threads}) represent
+       CPU time in seL4. Users can create scheduling contexts from untyped objects, however on
+       creation scheduling contexts are \textit{empty} and do not represent any time.
+       Initially, there is a capability to \obj{SchedControl} for each node, which
+       allows scheduling context to be populated with parameters, which combined with priority
+       control thread's access to CPU time.
+
     \item[\obj{Endpoints}] (see \autoref{ch:ipc}) facilitate message-passing
     communication between threads. IPC is synchronous: A thread
     trying to send or receive on an endpoint blocks until the message
@@ -238,6 +278,10 @@ manipulation, and combination of these kernel objects:
     send-only or receive-only. Additionally, \obj{Endpoint}
     capabilities can have the grant right, which allows sending
     capabilities as part of the message.
+
+   \item[\obj{Reply objects}] (MCS only) (see \autoref{ch:ipc}) track scheduling
+    context donation and provide a container for single-use reply capabilities.
+    They are provided by \apifunc{seL4\_Recv}{sel4_recv}.
 
     \item[\obj{Notification} Objects] (see \autoref{ch:notifications})
       provide a simple signalling mechanism. A \obj{Notification}

@@ -117,7 +117,7 @@ Capabilities are managed largely through invoking \obj{CNode} methods.
 \item[\apifunc{seL4\_CNode\_SaveCaller}{cnode_savecaller}] moves a
   kernel-generated reply capability of the current thread from the
   special \obj{TCB} slot it was created in, into the designated CSpace
-  slot.
+  slot (non-MCS only).
 \item[\apifunc{seL4\_CNode\_CancelBadgedSends}{cnode_cancelbadgedsends}] cancels
   any outstanding sends that use the same badge and object as the
   specified capability.
