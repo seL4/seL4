@@ -313,6 +313,19 @@ class Device:
         phandle = self.props['interrupt-parent'].words[0]
         return by_phandle[phandle]
 
+    def get_affinities(self):
+        """
+        @brief      Gets the interrupt affinities of this device node.
+
+        @param      self  device node
+
+        @return     A list of affinities.
+        """
+        affinities = []
+        if 'interrupt-affinity' in self.props:
+            affinities = list(self.props['interrupt-affinity'].words)
+        return affinities
+
     def get_interrupts(self, config, by_phandle):
         irqs = []
         if 'compatible' not in self.props:
@@ -329,10 +342,7 @@ class Device:
                 interrupt_parent = by_phandle[phandle]
                 irqs.append(interrupt_parent.parse_interrupt(self, by_phandle, data))
         if len(irqs) > 0:
-            affinities = []
-            if 'interrupt-affinity' in self.props:
-                affinities = list(self.props['interrupt-affinity'].words)
-            return set(config.get_irqs(self, irqs, affinities, by_phandle))
+            return set(config.get_irqs(self, irqs, self.get_affinities(), by_phandle))
         return set()
 
     def _recursive_get_addr_cells(self):
