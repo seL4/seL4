@@ -548,30 +548,6 @@ class Config:
 
         return self.aliases[name].strings[0]
 
-    def _is_chosen(self, device, rule, by_phandle):
-        if 'chosen' not in rule:
-            return True
-        if self.chosen is None:
-            return False
-
-        prop = rule['chosen']
-        if prop not in self.chosen:
-            return False
-
-        val = self.chosen[prop]
-        # a "chosen" field will either have a phandle, or
-        # a path or an alias, then a ":", then other data.
-        # the path/alias may not contain a ":".
-        if isinstance(val, pyfdt.pyfdt.FdtPropertyWords):
-            return 'phandle' in device and device['phandle'].words[0] == val.words[0]
-        val = val.strings[0].split(':')[0]
-
-        # path starts with '/'.
-        if val[0] == '/':
-            return device.name == val
-        else:
-            return device.name == self._lookup_alias(val)
-
     def split_regions(self, device, by_phandle):
         """
         @brief      Wraps Device.regions() and splits into user, kernel groups
@@ -597,8 +573,6 @@ class Config:
             default_user = True
             for rule in self.devices[compatible]:
                 regs = []
-                if not self._is_chosen(device, rule, by_phandle):
-                    continue
                 if 'regions' in rule:
                     for reg_rule in rule['regions']:
                         if 'index' not in reg_rule:
@@ -638,10 +612,8 @@ class Config:
                 continue
 
             for rule in self.devices[compatible]:
-                if self._is_chosen(device, rule, by_phandle):
-                    self.matched_devices.add(compatible)
 
-                if 'interrupts' not in rule or not self._is_chosen(device, rule, by_phandle):
+                if 'interrupts' not in rule:
                     continue
 
                 irqs = device.get_interrupts(by_phandle)
@@ -688,8 +660,43 @@ class Config:
                 break
         return ret
 
-    def get_matched_devices(self):
-        return sorted(self.matched_devices)
+    def get_chosen_devices(self, devices):
+        """
+        @brief      Returns a list of device nodes that were specified by `seL4,kernel-devices`
+
+        @param      self     The Config object
+        @param      devices  All of the devices in the device tree
+
+        @return     The chosen devices matched from `seL4,kernel-devices`.
+        """
+        seL4_device_paths = self.chosen['seL4,kernel-devices']
+        kernel_chosen_devices = []
+        if not isinstance(seL4_device_paths, pyfdt.pyfdt.FdtPropertyStrings):
+            # seL4_device_paths is an empty property
+            return []
+
+        for device_path in seL4_device_paths:
+            val = device_path.split(':')[0]
+            # path starts with '/'.
+            if val[0] == '/':
+                device_path = val
+            else:
+                device_path = self._lookup_alias(val)
+
+            assert device_path in devices, "get_chosen_devices: %s is not a valid device path" % device_path
+            device = devices[device_path]
+            compat = device['compatible']
+            for compatible in compat.strings:
+                if compatible not in self.devices:
+                    continue
+                self.matched_devices.add(compatible)
+                break
+            else:
+                assert False, "The kernel isn't aware of this device type: %s" % "\\0".join(
+                    device['compatible'])
+
+            kernel_chosen_devices.append(device)
+        return kernel_chosen_devices
 
 
 @memoize()
@@ -1025,40 +1032,31 @@ def main(args):
     fdt = pyfdt.pyfdt.FdtBlobParse(args.dtb).to_fdt()
     devices, by_phandle = find_devices(fdt, cfg)
 
+    # Handle kernel devices
+    kernel_chosen_devices = cfg.get_chosen_devices(devices)
+    kernel_irqs = []
+    for device in kernel_chosen_devices:
+        kernel_irqs.extend(cfg.get_irqs(device, by_phandle))
+        _, kernel_mappings = cfg.split_regions(device, by_phandle)
+        kernel.update(kernel_mappings)
+    kernel = fixup_device_regions(kernel, 1 << args.page_bits)
+
+
     rsvmem = []
     if '/reserved-memory' in devices:
         rsvmem = parse_reserved_memory(devices['/reserved-memory'].node, devices, cfg, by_phandle)
     rsvmem += fdt.reserve_entries
-    kernel_irqs = set()
     for d in devices.values():
-        kernel_irqs.update(cfg.get_irqs(d, by_phandle))
         if d.is_memory():
             for e in d.regions():
                 memory.update(e.remove_subregions(rsvmem))
+        elif d in kernel_chosen_devices:
+            user_mappings, _ = cfg.split_regions(d, by_phandle)
+            user.update(user_mappings)
         else:
-            (u, k) = cfg.split_regions(d, by_phandle)
-            user.update(u)
-            kernel.update(k)
-
-    irq_dict = {}
-    for el in kernel_irqs:
-        if el.name in irq_dict:
-            irq_dict[el.name].append(el)
-        else:
-            irq_dict[el.name] = [el]
-
-    kernel_irqs = []
-    for el in irq_dict:
-
-        irq_dict[el].sort(key=lambda a: a.priority, reverse=True)
-        max_prio = irq_dict[el][0].priority
-        for irq in irq_dict[el]:
-            if irq.priority != max_prio:
-                break
-            kernel_irqs.append(irq)
+            user.update(set(d.regions()))
 
     user = fixup_device_regions(user, 1 << args.page_bits, merge=True)
-    kernel = fixup_device_regions(kernel, 1 << args.page_bits)
     output_regions(args, user, memory, kernel, kernel_irqs, args.output)
 
     # generate cmake

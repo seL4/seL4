@@ -21,6 +21,7 @@ if(KernelPlatformOdroidc2)
     config_set(KernelARMPlatform ARM_PLAT odroidc2)
     set(KernelArmMachFeatureModifiers "+crc" CACHE INTERNAL "")
     list(APPEND KernelDTSList "tools/dts/odroidc2.dts")
+    list(APPEND KernelDTSList "src/plat/odroidc2/overlay-odroidc2.dts")
     declare_default_headers(
         TIMER_FREQUENCY 24000000llu
         MAX_IRQ 250

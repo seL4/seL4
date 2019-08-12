@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Data61
+ * Copyright 2019, Data61
  * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
  * ABN 41 687 119 230.
  *
@@ -12,15 +12,6 @@
 
 / {
 	chosen {
-		seL4,kernel-devices =
-		    "serial0",
-		    &{/soc/interrupt-controller@2000000},
-		    &{/soc/timer@200a000};
-	};
-
-	memory@80000000 {
-		device_type = "memory";
-		/* skip one page to avoid overflow */
-		reg = <0x80000000 0x7ffff000>;
+		seL4,kernel-devices;
 	};
 };

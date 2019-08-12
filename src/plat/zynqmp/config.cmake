@@ -41,6 +41,7 @@ if(KernelPlatformZynqmp)
     if(NOT KernelPlatformUltra96)
         list(APPEND KernelDTSList "tools/dts/zynqmp.dts")
     endif()
+    list(APPEND KernelDTSList "src/plat/zynqmp/overlay-zynqmp.dts")
 
     declare_default_headers(
         TIMER_FREQUENCY 100000000llu

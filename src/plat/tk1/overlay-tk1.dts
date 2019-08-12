@@ -11,6 +11,13 @@
  */
 
 / {
+	chosen {
+		seL4,kernel-devices =
+		    "serial0",
+		    &{/interrupt-controller@50041000},
+		    &{/timer};
+	};
+
 	memory@80000000 {
 		/* 1MiB carveout at 0xa7f00000 for the elfloader's monitor mode hooks */
 		reg = <0x0 0x80000000 0x0 0x27f00000>;

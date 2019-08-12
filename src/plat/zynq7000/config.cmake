@@ -21,6 +21,7 @@ if(KernelPlatformZynq7000)
     config_set(KernelARMPlatform ARM_PLAT zynq7000)
     config_set(KernelArmMach MACH "zynq")
     list(APPEND KernelDTSList "tools/dts/zynq7000.dts")
+    list(APPEND KernelDTSList "src/plat/zynq7000/overlay-zynq7000.dts")
     declare_default_headers(
         TIMER_FREQUENCY 400000000llu
         MAX_IRQ 92

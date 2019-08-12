@@ -11,6 +11,12 @@
  */
 
 / {
+	chosen {
+		seL4,kernel-devices =
+		    "serial0",
+		    &{/soc/interrupt-controller@31001000},
+		    &{/timer};
+	};
 	/* Upstream bug: the memory node doesn't have a device_type,
 	 * but there is an empty memory node with a device_type. */
 	/delete-node/ memory;

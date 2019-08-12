@@ -11,6 +11,14 @@
  */
 
 / {
+	chosen {
+		seL4,kernel-devices =
+		    "serial1",
+		    &{/soc/interrupt-controller@10490000},
+		    &{/soc/l2-cache-controller@10502000},
+		    &{/soc/mct@10050000};
+	};
+
 	/delete-node/ memory;
 	memory@40000000 {
 		device_type = "memory";

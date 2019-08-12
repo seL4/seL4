@@ -11,6 +11,12 @@
  */
 
 / {
+    chosen {
+        seL4,kernel-devices =
+            "serial1",
+            &{/interrupt-controller@38800000},
+            &{/timer};
+    };
 
     /* These devices exists in the SOC documentation, but not in the DTS from Linux */
     gpt@302d0000 {

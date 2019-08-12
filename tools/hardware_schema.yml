@@ -45,34 +45,6 @@ definitions:
         patternProperties:
           '^[A-Za-z_][A-Za-z0-9_]*$':
             $ref: '#/definitions/interrupt'
-      chosen:
-        description: >
-          Apply this rule only to the device referenced by the correspondingly named
-          property in the chosen node. For instance, a dts like this
-
-          aliases {
-            serial0 = &serial_0;
-          };
-
-          chosen {
-            stdout-path = "serial0";
-          };
-
-          serial_0: serial@13800000 {
-            compatible = "samsung,exynos4210-uart";
-            reg = <0x13800000 0x100>;
-            /* etc */
-          };
-
-          serial_1: serial@13810000 {
-            compatible = "samsung,exynos4210-uart";
-            reg = <0x13810000 0x100>;
-            /* etc */
-          };
-
-          and a device with the property chosen set to stdout-path will only match the serial@13800000
-          device and not any other device with the samsung,exynos4210-uart compatible.
-        type: string
     required: [compatible]
   region:
     type: object

@@ -12,7 +12,13 @@
 
 / {
 	chosen {
-		seL4,timer = &dmtimer0;
+		seL4,kernel-devices =
+		    "serial0",
+		    &{/ocp/interrupt-controller@48200000},
+		    /* The following devices are used to support the timer used by the kernel */
+		    &dmtimer0, /* OMAP Dual-Mode timer */
+		    &{/ocp/l4_wkup@44c00000/prcm@200000}, /* Power reset and clock manager */
+		    &{/ocp/wdt@44e35000}; /* Watchdog timer */
 	};
 
 	ocp {

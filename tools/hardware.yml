@@ -196,7 +196,6 @@ devices:
         kernel: TIMER_PPTR
     interrupts:
       KERNEL_TIMER_IRQ: 0
-    chosen: seL4,timer
   # TI prcm (arm/omap/prcm.txt)
   - compatible:
     - ti,am3-prcm
@@ -227,7 +226,6 @@ devices:
     - snps,dw-apb-uart
     - ti,omap3-uart
     - xlnx,xuartps
-    chosen: stdout-path
     regions:
       - executeNever: true
         index: 0

@@ -13,6 +13,10 @@
 / {
 	chosen {
 		stdout-path = "serial0:115200n8";
+		seL4,kernel-devices =
+		    "serial0",
+		    &{/interrupt-controller@f6801000},
+		    &{/timer};
 	};
 
 	pmu {

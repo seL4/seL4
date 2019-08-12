@@ -14,6 +14,11 @@
 	/* Pick serial console */
 	chosen {
 		stdout-path = "serial0";
+		seL4,kernel-devices =
+		    "serial0",
+		    &{/interrupt-controller@68000000},
+		    &{/l2cc@30000000},
+		    &{/soc/aips@53f00000/timer@53f94000};
 	};
 
 	/* Upstream bug: the memory node doesn't have a device_type,

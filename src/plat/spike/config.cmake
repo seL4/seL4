@@ -35,6 +35,7 @@ if(KernelPlatformSpike)
     else()
         list(APPEND KernelDTSList "tools/dts/spike.dts")
     endif()
+    list(APPEND KernelDTSList "src/plat/spike/overlay-spike.dts")
     declare_default_headers(
         TIMER_FREQUENCY 10000000llu PLIC_MAX_NUM_INT 0
         INTERRUPT_CONTROLLER arch/machine/plic.h
