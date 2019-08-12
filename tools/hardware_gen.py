@@ -659,18 +659,6 @@ class Config:
         return sorted(self.matched_devices)
 
 
-def is_compatible(node, compatibles):
-    """ returns True if node matches a compatible in the given list """
-    try:
-        prop = node.index("compatible")
-    except ValueError:
-        return False
-    for c in compatibles:
-        if c in node[prop].strings:
-            return True
-    return False
-
-
 @memoize()
 def should_parse_regions(root, node):
     """ returns True if we should parse regions found in this node. """
