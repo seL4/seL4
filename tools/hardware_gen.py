@@ -475,12 +475,19 @@ class Device:
     def is_memory(self):
         return 'device_type' in self.props and self.props['device_type'].strings[0] == 'memory'
 
-    def regions(self, config, by_phandle):
+    def regions(self):
+        """
+        @brief      Parses the Device's `reg` property and returns list of absolute physical address ranges.
+
+        @param      self  The Device node in the tree.
+
+        @return     [] if no regions otherwise a list of Regions that have been translated to absoulte addresses.
+        """
         addr_cells = self.parent.get_addr_cells()
         size_cells = self.parent.get_size_cells()
 
         if addr_cells == 0 or size_cells == 0 or 'reg' not in self:
-            return (set(), set())
+            return []
 
         regions = []
         prop = self['reg']
@@ -492,13 +499,7 @@ class Device:
             regions.append(Region(self.parent.translate_child_address(
                 base), length, self.node.get_name()))
 
-        if not self.is_memory() and 'compatible' in self.props:
-            (user, kernel) = config.split_regions(self, regions, by_phandle)
-        else:
-            user = set(regions)
-            kernel = set()
-
-        return (user, kernel)
+        return regions
 
     def __getitem__(self, val):
         return self.props[val]
@@ -571,7 +572,20 @@ class Config:
         else:
             return device.name == self._lookup_alias(val)
 
-    def split_regions(self, device, regions, by_phandle):
+    def split_regions(self, device, by_phandle):
+        """
+        @brief      Wraps Device.regions() and splits into user, kernel groups
+
+        @param      self        Configuration with kernel match rules
+        @param      device      device to be split
+        @param      by_phandle  phandle array
+
+        @return     A tuple of user regions and kernel regions.
+        """
+        regions = device.regions()
+        if 'compatible' not in device:
+            return (set(regions), set())
+
         compat = device['compatible']
         for compatible in compat.strings:
             if compatible not in self.devices:
@@ -711,8 +725,7 @@ def parse_reserved_memory(node, devices, cfg, by_phandle):
         del devices[child.path]
 
         if 'reg' in dev and 'no-map' in dev:
-            reg, _ = dev.regions(cfg, by_phandle)
-            for r in reg:
+            for r in dev.regions():
                 regions.append({'address': r.start, 'size': r.size})
 
     return regions
@@ -1020,13 +1033,10 @@ def main(args):
     for d in devices.values():
         kernel_irqs.update(cfg.get_irqs(d, by_phandle))
         if d.is_memory():
-            m, _ = d.regions(cfg, by_phandle)  # second set is always empty for memory
-            res = set()
-            for e in m:
-                res.update(set(e.remove_subregions(rsvmem)))
-            memory.update(res)
+            for e in d.regions():
+                memory.update(e.remove_subregions(rsvmem))
         else:
-            (u, k) = d.regions(cfg, by_phandle)
+            (u, k) = cfg.split_regions(d, by_phandle)
             user.update(u)
             kernel.update(k)
 
