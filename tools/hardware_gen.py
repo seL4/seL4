@@ -326,10 +326,16 @@ class Device:
             affinities = list(self.props['interrupt-affinity'].words)
         return affinities
 
-    def get_interrupts(self, config, by_phandle):
+    def get_interrupts(self, by_phandle):
+        """
+        @brief      Return an array of interrupt numbers that are translated to seL4 IRQs
+
+        @param      self        device node to query
+        @param      by_phandle  phandle array
+
+        @return     An array of interrupt numbers. Indexes have node specific meanings.
+        """
         irqs = []
-        if 'compatible' not in self.props:
-            return set()
         if 'interrupts' in self.props:
             interrupt_parent = self.get_interrupt_parent(by_phandle)
             data = list(self.props['interrupts'].words)
@@ -341,9 +347,7 @@ class Device:
                 phandle = data.pop(0)
                 interrupt_parent = by_phandle[phandle]
                 irqs.append(interrupt_parent.parse_interrupt(self, by_phandle, data))
-        if len(irqs) > 0:
-            return set(config.get_irqs(self, irqs, self.get_affinities(), by_phandle))
-        return set()
+        return irqs
 
     def _recursive_get_addr_cells(self):
         if '#address-cells' in self:
@@ -601,8 +605,19 @@ class Config:
             return (user, kernel)
         return (set(regions), set())
 
-    def get_irqs(self, device, irqs, affinities, by_phandle):
+    def get_irqs(self, device, by_phandle):
+        """
+        @brief      Return list of `Interrupt`s for a kernel device
+
+        @param      self        Configuration object
+        @param      device      The device
+        @param      by_phandle  phandle array
+
+        @return     [] if no interrupt rule otherwise list of matched interrupts.
+        """
         ret = set()
+        if 'compatible' not in device:
+            return ret
         compat = device['compatible']
         for compatible in compat.strings:
             if compatible not in self.devices:
@@ -614,6 +629,10 @@ class Config:
 
                 if 'interrupts' not in rule or not self._is_chosen(device, rule, by_phandle):
                     continue
+
+                irqs = device.get_interrupts(by_phandle)
+                affinities = device.get_affinities()
+
                 for irq in rule['interrupts']:
                     irq_rule = rule['interrupts'][irq]
                     if type(irq_rule) is dict:
@@ -999,7 +1018,7 @@ def main(args):
     rsvmem += fdt.reserve_entries
     kernel_irqs = set()
     for d in devices.values():
-        kernel_irqs.update(d.get_interrupts(cfg, by_phandle))
+        kernel_irqs.update(cfg.get_irqs(d, by_phandle))
         if d.is_memory():
             m, _ = d.regions(cfg, by_phandle)  # second set is always empty for memory
             res = set()
