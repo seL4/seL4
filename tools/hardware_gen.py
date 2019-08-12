@@ -514,16 +514,13 @@ class Config:
         self.blob = blob
         self.chosen = None
         self.aliases = None
-        self.matched_devices = set()
 
         # wrangle the json a little so it's easier
         # to figure out which rules apply to a given device
         for dev in blob['devices']:
             for compat in dev['compatible']:
-                if compat in self.devices:
-                    self.devices[compat].append(dev)
-                else:
-                    self.devices[compat] = [dev]
+                assert compat not in self.devices, "Duplicate compat string"
+                self.devices[compat] = dev
 
     def set_chosen(self, chosen):
         self.chosen = chosen
@@ -559,39 +556,30 @@ class Config:
         @return     A tuple of user regions and kernel regions.
         """
         regions = device.regions()
-        if 'compatible' not in device:
-            return (set(regions), set())
+        user = set()
+        kernel = set()
 
-        compat = device['compatible']
-        for compatible in compat.strings:
-            if compatible not in self.devices:
-                continue
+        default_user = True
+        (compatible, rule) = device.matched_compat_rule
+        regs = []
+        if 'regions' in rule:
+            for reg_rule in rule['regions']:
+                if 'index' not in reg_rule:
+                    default_user = reg_rule['user']
+                    continue
+                if reg_rule['index'] >= len(regions):
+                    continue
+                reg = self._apply_rule(regions[reg_rule['index']], reg_rule)
+                if reg.user_macro or ('user' in reg_rule and reg_rule['user'] == True):
+                    user.add(reg)
+                regs.append(reg)
 
-            user = set()
-            kernel = set()
+        kernel.update(set(regs))
 
-            default_user = True
-            for rule in self.devices[compatible]:
-                regs = []
-                if 'regions' in rule:
-                    for reg_rule in rule['regions']:
-                        if 'index' not in reg_rule:
-                            default_user = reg_rule['user']
-                            continue
-                        if reg_rule['index'] >= len(regions):
-                            continue
-                        reg = self._apply_rule(regions[reg_rule['index']], reg_rule)
-                        if reg.user_macro or ('user' in reg_rule and reg_rule['user'] == True):
-                            user.add(reg)
-                        regs.append(reg)
+        if default_user:
+            user = user.union(set(regions).difference(kernel))
 
-                kernel.update(set(regs))
-
-            if default_user:
-                user = user.union(set(regions).difference(kernel))
-
-            return (user, kernel)
-        return (set(regions), set())
+        return (user, kernel)
 
     def get_irqs(self, device, by_phandle):
         """
@@ -604,60 +592,52 @@ class Config:
         @return     [] if no interrupt rule otherwise list of matched interrupts.
         """
         ret = set()
-        if 'compatible' not in device:
+        (compatible, rule) = device.matched_compat_rule
+
+        if 'interrupts' not in rule:
+            # No interrupts to extract
             return ret
-        compat = device['compatible']
-        for compatible in compat.strings:
-            if compatible not in self.devices:
-                continue
 
-            for rule in self.devices[compatible]:
+        irqs = device.get_interrupts(by_phandle)
+        affinities = device.get_affinities()
 
-                if 'interrupts' not in rule:
-                    continue
-
-                irqs = device.get_interrupts(by_phandle)
-                affinities = device.get_affinities()
-
-                for irq in rule['interrupts']:
-                    irq_rule = rule['interrupts'][irq]
-                    if type(irq_rule) is dict:
-                        idx = irq_rule['index']
-                        macro = irq_rule.get('macro', None)
-                        prio = irq_rule.get('priority', 0)
+        for irq in rule['interrupts']:
+            irq_rule = rule['interrupts'][irq]
+            if type(irq_rule) is dict:
+                idx = irq_rule['index']
+                macro = irq_rule.get('macro', None)
+                prio = irq_rule.get('priority', 0)
+            else:
+                idx = irq_rule
+                macro = None
+                prio = 0
+            if idx == 'boot-cpu':
+                if self.chosen is not None and 'seL4,boot-cpu' in self.chosen:
+                    bootcpu = self.chosen['seL4,boot-cpu'].words[0]
+                    if bootcpu in affinities:
+                        num = affinities.index(bootcpu)
                     else:
-                        idx = irq_rule
-                        macro = None
-                        prio = 0
-                    if idx == 'boot-cpu':
-                        if self.chosen is not None and 'seL4,boot-cpu' in self.chosen:
-                            bootcpu = self.chosen['seL4,boot-cpu'].words[0]
-                            if bootcpu in affinities:
-                                num = affinities.index(bootcpu)
-                            else:
-                                # skip this rule - no matching IRQ.
-                                continue
-                        else:
-                            num = 0
-                    elif type(idx) is dict:
-                        res = Interrupt(irqs[idx['defined']], irq, idx['macro'], prio)
-                        res.desc = "%s '%s' IRQ %d" % (device.name, compatible, idx['defined'])
-                        ret.add(res)
-
-                        res = Interrupt(irqs[idx['undefined']], irq, '!' + idx['macro'], prio)
-                        res.desc = "%s '%s' IRQ %d" % (device.name, compatible, idx['undefined'])
-                        ret.add(res)
+                        # skip this rule - no matching IRQ.
                         continue
-                    elif type(irq_rule) is int:
-                        num = irq_rule
-                    else:
-                        num = idx
-                    if num < len(irqs):
-                        irq = Interrupt(irqs[num], irq, macro if macro != 'all' else None, prio)
-                        irq.desc = "%s '%s' IRQ %d" % (device.name, compatible, num)
-                        ret.add(irq)
-            if len(ret) > 0:
-                break
+                else:
+                    num = 0
+            elif type(idx) is dict:
+                res = Interrupt(irqs[idx['defined']], irq, idx['macro'], prio)
+                res.desc = "%s '%s' IRQ %d" % (device.name, compatible, idx['defined'])
+                ret.add(res)
+
+                res = Interrupt(irqs[idx['undefined']], irq, '!' + idx['macro'], prio)
+                res.desc = "%s '%s' IRQ %d" % (device.name, compatible, idx['undefined'])
+                ret.add(res)
+                continue
+            elif type(irq_rule) is int:
+                num = irq_rule
+            else:
+                num = idx
+            if num < len(irqs):
+                irq = Interrupt(irqs[num], irq, macro if macro != 'all' else None, prio)
+                irq.desc = "%s '%s' IRQ %d" % (device.name, compatible, num)
+                ret.add(irq)
         return ret
 
     def get_chosen_devices(self, devices):
@@ -689,7 +669,7 @@ class Config:
             for compatible in compat.strings:
                 if compatible not in self.devices:
                     continue
-                self.matched_devices.add(compatible)
+                device.matched_compat_rule = (compatible, self.devices[compatible])
                 break
             else:
                 assert False, "The kernel isn't aware of this device type: %s" % "\\0".join(
@@ -937,13 +917,6 @@ static const p_region_t BOOT_RODATA *dev_p_regs = NULL;
 """
 
 
-def add_build_rules(devices, output):
-    if devices:
-        devices[-1] = devices[-1] + ";"
-        # print result to cmake variable
-        print(';'.join(devices), file=output)
-
-
 MEGA_PAGE_SIZE = 0x200000
 
 
@@ -1041,11 +1014,11 @@ def main(args):
         kernel.update(kernel_mappings)
     kernel = fixup_device_regions(kernel, 1 << args.page_bits)
 
-
     rsvmem = []
     if '/reserved-memory' in devices:
         rsvmem = parse_reserved_memory(devices['/reserved-memory'].node, devices, cfg, by_phandle)
     rsvmem += fdt.reserve_entries
+
     for d in devices.values():
         if d.is_memory():
             for e in d.regions():
@@ -1055,13 +1028,14 @@ def main(args):
             user.update(user_mappings)
         else:
             user.update(set(d.regions()))
-
     user = fixup_device_regions(user, 1 << args.page_bits, merge=True)
+
     output_regions(args, user, memory, kernel, kernel_irqs, args.output)
 
     # generate cmake
     if args.compatibility_strings:
-        add_build_rules(cfg.get_matched_devices(), args.compatibility_strings)
+        compat_strings = [d.matched_compat_rule[0] for d in kernel_chosen_devices]
+        print(';'.join(compat_strings)+';', file=args.compatibility_strings)
 
 
 if __name__ == '__main__':
