@@ -82,51 +82,66 @@ BOOT_CODE void map_kernel_devices(void)
 
 #if CONFIG_RISCV_NUM_VTIMERS > 0
 #define VTIMER_MAX_CYCLES   0xffffffffffffffff
-#define NUM_VTIMERS     (CONFIG_RISCV_NUM_VTIMERS + 1)
-static uint64_t vtimer_cycles[NUM_VTIMERS];
-static uint64_t vtimer_next_cycles = VTIMER_MAX_CYCLES;
-static word_t   vtimer_next = NUM_VTIMERS;
+#define NUM_VTIMERS     ((CONFIG_RISCV_NUM_VTIMERS + 1))
+
+struct vtimer {
+    uint64_t    cycles[NUM_VTIMERS];
+    uint64_t    next_cycles;
+    uint64_t    next;
+    PAD_TO_NEXT_CACHE_LN(sizeof(uint64_t) * (2 + NUM_VTIMERS));
+};
+static struct vtimer vtimers[CONFIG_MAX_NUM_NODES];
 
 #define KERNEL_PREEMPT_VTIMER 0
 
-
 static void initVTimer(void)
 {
+    word_t core_id = CURRENT_CPU_INDEX();
     for (int i = 0; i < NUM_VTIMERS; i++) {
-        vtimer_cycles[i] = VTIMER_MAX_CYCLES;
+        vtimers[core_id].cycles[i] = VTIMER_MAX_CYCLES;
     }
+    vtimers[core_id].next_cycles = VTIMER_MAX_CYCLES;
+    vtimers[core_id].next = NUM_VTIMERS;
 }
 
 void setVTimer(word_t vtimer, uint64_t cycles)
 {
-    vtimer_cycles[vtimer] = cycles;
-    if (cycles < vtimer_next_cycles) {
-        vtimer_next = vtimer;
-        vtimer_next_cycles = cycles;
+    word_t core_id = CURRENT_CPU_INDEX();
+    vtimers[core_id].cycles[vtimer] = cycles;
+    if (cycles < vtimers[core_id].next_cycles) {
+        vtimers[core_id].next = vtimer;
+        vtimers[core_id].next_cycles = cycles;
     }
 
-    sbi_set_timer(vtimer_next_cycles);
+    sbi_set_timer(vtimers[core_id].next_cycles);
     return;
 }
 
 static irq_t handleVTimer(void)
 {
-    assert(vtimer_next != NUM_VTIMERS);
-    irq_t irq = INTERRUPT_CORE_TIMER + vtimer_next;
-    vtimer_cycles[vtimer_next] = vtimer_next_cycles = VTIMER_MAX_CYCLES;
+    word_t core_id = CURRENT_CPU_INDEX();
+
+    assert(vtimers[core_id].next != NUM_VTIMERS);
+    irq_t irq = 0;
+    if (vtimers[core_id].next == KERNEL_PREEMPT_VTIMER) {
+        irq = INTERRUPT_CORE_TIMER;
+    } else {
+        irq = INTERRUPT_CORE_TIMER + core_id * CONFIG_RISCV_NUM_VTIMERS + vtimers[core_id].next;
+    }
+    vtimers[core_id].cycles[vtimers[core_id].next] = vtimers[core_id].next_cycles = VTIMER_MAX_CYCLES;
 
     /* Now need to scan for the next to set */
     for (int i = 0; i < NUM_VTIMERS; i++) {
-        if (vtimer_cycles[i] < vtimer_next_cycles) {
-            vtimer_next_cycles = vtimer_cycles[i];
-            vtimer_next = i;
+        if (vtimers[core_id].cycles[i] < vtimers[core_id].next_cycles) {
+            vtimers[core_id].next_cycles = vtimers[core_id].cycles[i];
+            vtimers[core_id].next = i;
         }
     }
-    if (vtimer_next_cycles == VTIMER_MAX_CYCLES) {
+    if (vtimers[core_id].next_cycles == VTIMER_MAX_CYCLES) {
         /* no next timer */
-        vtimer_next = NUM_VTIMERS;
+        vtimers[core_id].next = NUM_VTIMERS;
     }
-    sbi_set_timer(vtimer_next_cycles);
+    sbi_set_timer(vtimers[core_id].next_cycles);
     return irq;
 }
 
