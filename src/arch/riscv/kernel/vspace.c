@@ -416,8 +416,8 @@ static uint32_t fetch_instruction(vm_fault_type_t type)
     if (hstatus & HSTATUS_STL) {
         if (type == RISCVLoadPageFault ||
             type == RISCVStorePageFault) {
+            word_t pc = getRestartPC(NODE_STATE(ksCurThread));
             write_hstatus(hstatus | HSTATUS_SPRV);
-            word_t pc = getRestartPC(ksCurThread);
             uint32_t inst = *(uint32_t *)(pc);
             write_hstatus(hstatus);
             /* Not sure why there needs an instruction fence. Could be a QEMU bug? */
