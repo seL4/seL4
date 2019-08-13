@@ -8,7 +8,7 @@
   @TAG(GD_GPL)
 -->
 
-The seL4 Repository
+Hello
 ===================
 
 This repository contains the source code of seL4 microkernel.
