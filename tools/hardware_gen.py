@@ -532,7 +532,7 @@ class Config:
         if 'kernel' in rule and rule['kernel'] != False:
             region.kernel_var.append(Offset(rule['kernel'], 0, rule.get('macro', None)))
             region.executeNever = rule['executeNever']
-            region.kernel_size = rule.get('kernel_size', 0)
+            region.kernel_size = rule.get('kernel_size', 0x1000)
             region.user_macro = (not rule.get('user', False)) and 'macro' in rule
         return region
 
