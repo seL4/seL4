@@ -169,9 +169,11 @@ if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
         file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/")
         execute_process(
             COMMAND
-                ${PYTHON3} "${HARDWARE_GEN_PATH}" --dtb "${KernelDTBPath}" --compatibility-strings
-                "${compatibility_outfile}" --output "${device_dest}" --config "${config_file}"
-                --schema "${config_schema}" --yaml "${platform_yaml}" --arch "${KernelArch}"
+                ${PYTHON3} "${HARDWARE_GEN_PATH}" --dtb "${KernelDTBPath}" --compat-strings
+                --compat-strings-out "${compatibility_outfile}" --c-header --header-out
+                "${device_dest}" --hardware-config "${config_file}" --hardware-schema
+                "${config_schema}" --yaml --yaml-out "${platform_yaml}" --arch "${KernelArch}"
+                --addrspace-bits "${KernelPaddrBits}"
             INPUT_FILE /dev/stdin
             OUTPUT_FILE /dev/stdout
             ERROR_FILE /dev/stderr
