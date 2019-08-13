@@ -156,6 +156,9 @@ static inline irq_t getActiveIRQ(void)
          * has claimed it in a multicore system.
          */
         irq = plic_get_claim();
+        if (irq != irqInvalid) {
+            plic_complete_claim(irq);
+        }
 #ifdef ENABLE_SMP_SUPPORT
     } else if (sip & BIT(SIP_SSIP)) {
         sbi_clear_ipi();
