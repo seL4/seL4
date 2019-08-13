@@ -166,7 +166,11 @@ static irq_t getNewActiveIRQ(void)
     uint64_t sip = read_sip();
     /* Interrupt priority (high to low ): external -> software -> timer */
     if (sip & BIT(SEXTERNAL_IP)) {
-        return plic_get_claim();
+        irq_t irq = plic_get_claim();
+        if (irq != irqInvalid) {
+            plic_complete_claim(irq);
+        }
+        return irq;
 #ifdef ENABLE_SMP_SUPPORT
     } else if (sip & BIT(SIPI_IP)) {
         sbi_clear_ipi();

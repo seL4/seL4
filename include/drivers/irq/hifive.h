@@ -131,16 +131,6 @@ static inline word_t get_hart_id(void)
 #endif
 }
 
-static inline bool_t plic_pending_interrupt(word_t interrupt)
-{
-    word_t addr = PLIC_PPTR_BASE + PLIC_PENDING + (interrupt / 32) * 4;
-    word_t bit = interrupt % 32;
-    if (readl(addr) & BIT(bit)) {
-        return true;
-    } else {
-        return false;
-    }
-}
 static inline interrupt_t plic_get_claim(void)
 {
     /* Read the claim register for our HART interrupt context */
