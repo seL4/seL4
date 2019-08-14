@@ -38,6 +38,7 @@ if(KernelPlatformZynqmp)
 
     if(KernelArmHypervisorSupport)
         set(KernelAllowSMCCalls ON)
+        list(APPEND KernelDTSList "src/plat/zynqmp/overlay-zynqmp-hyp.dts")
     endif()
 
     declare_default_headers(
