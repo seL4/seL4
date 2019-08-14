@@ -15,6 +15,7 @@
 		seL4,kernel-devices =
 		    "serial0",
 		    &{/interrupt-controller@50041000},
+		    &{/memory-controller@70019000}, /* SMMU */
 		    &{/timer};
 	};
 
