@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <config.h>
 #include <types.h>
 #include <api/failures.h>
 #include <object/structures.h>
