@@ -299,7 +299,8 @@ static inline void set_gic_vcpu_ctrl_lr(int num, virq_t lr)
 }
 
 #define GIC_INVALID_IRQ_IDX -1
-static inline int get_vgic_irq_idx(void) {
+static inline int get_vgic_irq_idx(void)
+{
     uint32_t eisr0 = get_gic_vcpu_ctrl_eisr0();
     if (eisr0) {
         return ctzl(eisr0);

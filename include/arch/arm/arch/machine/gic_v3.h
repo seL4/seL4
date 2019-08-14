@@ -353,14 +353,12 @@ static inline void set_gic_vcpu_ctrl_vmcr(uint32_t vmcr)
     SYSTEM_WRITE_WORD(ICH_VMCR_EL2, vmcr);
 }
 
-static inline uint32_t
-get_gic_vcpu_ctrl_apr(void)
+static inline uint32_t get_gic_vcpu_ctrl_apr(void)
 {
     return 0;
 }
 
-static inline void
-set_gic_vcpu_ctrl_apr(uint32_t apr)
+static inline void set_gic_vcpu_ctrl_apr(uint32_t apr)
 {
     return;
 }
@@ -506,7 +504,8 @@ static inline void set_gic_vcpu_ctrl_lr(word_t n, virq_t lr)
 }
 
 #define GIC_INVALID_IRQ_IDX 0
-static inline int get_vgic_irq_idx(void) {
+static inline int get_vgic_irq_idx(void)
+{
     int irq_idx = GIC_INVALID_IRQ_IDX;
     uint32_t eisr0 = get_gic_vcpu_ctrl_eisr0();
 
