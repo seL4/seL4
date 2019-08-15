@@ -28,6 +28,9 @@ if(KernelPlatformImx8mq-evk OR KernelPlatformImx8mm-evk)
         message(STATUS "  Defaulting to aarch64")
         declare_seL4_arch(aarch64)
     endif()
+    # MCS is not supported on imx8m.
+    # It requires a timer driver that implements the tickless programming requirements.
+    set(KernelPlatformSupportsMCS OFF)
     set(KernelArmCortexA53 ON)
     set(KernelArchArmV8a ON)
     config_set(KernelARMPlatform PLAT ${KernelPlatform})

@@ -22,6 +22,11 @@ endforeach()
 
 if(KernelPlatformAM335X)
     declare_seL4_arch(aarch32)
+
+    # MCS is not supported on am335x.
+    # It requires a timer driver that implements the tickless programming requirements.
+    set(KernelPlatformSupportsMCS OFF)
+
     set(KernelArmCortexA8 ON)
     set(KernelArchArmV7a ON)
     if("${KernelARMPlatform}" STREQUAL "")

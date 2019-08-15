@@ -19,6 +19,11 @@ if(KernelPlatformAllwinnerA20)
     set(KernelArmCortexA7 ON)
     set(KernelArchArmV7a ON)
     config_set(KernelARMPlatform ARM_PLAT allwinnerA20)
+
+    # MCS is not supported on allwinnerA20.
+    # It requires a timer driver that implements the tickless programming requirements.
+    set(KernelPlatformSupportsMCS OFF)
+
     list(APPEND KernelDTSList "tools/dts/allwinnerA20.dts")
     list(APPEND KernelDTSList "src/plat/allwinnerA20/overlay-allwinnerA20.dts")
 

@@ -16,6 +16,11 @@ declare_platform(exynos4 KernelPlatformExynos4 PLAT_EXYNOS4 KernelSel4ArchAarch3
 
 if(KernelPlatformExynos4)
     declare_seL4_arch(aarch32)
+
+    # MCS is not supported on exynos4 yet.
+    # It requires a timer driver that implements the tickless programming requirements.
+    set(KernelPlatformSupportsMCS OFF)
+
     set(KernelArmCortexA9 ON)
     set(KernelArchArmV7a ON)
     config_set(KernelARMPlatform ARM_PLAT exynos4)
