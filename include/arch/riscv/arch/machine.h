@@ -37,6 +37,16 @@ static inline void fence_w_rw(void)
     asm volatile("fence w, rw" ::: "memory");
 }
 
+static inline void fence_r_rw(void)
+{
+    asm volatile("fence r,rw" ::: "memory");
+}
+
+static inline void fence_w_r(void)
+{
+    asm volatile("fence w,r" ::: "memory");
+}
+
 static inline void ifence_local(void)
 {
     asm volatile("fence.i":::"memory");
