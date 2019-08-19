@@ -27,6 +27,8 @@
 #include <arch/model/statedata.h>
 #include <arch/sbi.h>
 
+#ifdef ENABLE_SMP_SUPPORT
+
 static inline void fence_rw_rw(void)
 {
     asm volatile("fence rw, rw" ::: "memory");
@@ -61,7 +63,6 @@ static inline void ifence(void)
 {
     ifence_local();
 
-#ifdef ENABLE_SMP_SUPPORT
     unsigned long mask = 0;
     for (int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
         if (i != getCurrentCPUIndex()) {
@@ -69,17 +70,13 @@ static inline void ifence(void)
         }
     }
     sbi_remote_fence_i(&mask);
-#endif
 }
 
 static inline void sfence(void)
 {
-#ifdef ENABLE_SMP_SUPPORT
     fence_w_rw();
-#endif
     sfence_local();
 
-#ifdef ENABLE_SMP_SUPPORT
     unsigned long mask = 0;
     for (int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
         if (i != getCurrentCPUIndex()) {
@@ -87,7 +84,6 @@ static inline void sfence(void)
         }
     }
     sbi_remote_sfence_vma(&mask, 0, 0);
-#endif
 }
 
 static inline void hwASIDFlushLocal(asid_t asid)
@@ -99,7 +95,6 @@ static inline void hwASIDFlush(asid_t asid)
 {
     hwASIDFlushLocal(asid);
 
-#ifdef ENABLE_SMP_SUPPORT
     unsigned long mask = 0;
     for (int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
         if (i != getCurrentCPUIndex()) {
@@ -107,8 +102,21 @@ static inline void hwASIDFlush(asid_t asid)
         }
     }
     sbi_remote_sfence_vma_asid(&mask, 0, 0, asid);
-#endif
 }
+
+#else
+
+static inline void sfence(void)
+{
+    asm volatile("sfence.vma" ::: "memory");
+}
+
+static inline void hwASIDFlush(asid_t asid)
+{
+    asm volatile("sfence.vma x0, %0" :: "r"(asid): "memory");
+}
+
+#endif /* end of !ENABLE_SMP_SUPPORT */
 
 word_t PURE getRestartPC(tcb_t *thread);
 void setNextPC(tcb_t *thread, word_t v);
@@ -197,7 +205,11 @@ static inline void setVSpaceRoot(paddr_t addr, asid_t asid)
     write_sptbr(satp.words[0]);
 
     /* Order read/write operations */
+#ifdef ENABLE_SMP_SUPPORT
     sfence_local();
+#else
+    sfence();
+#endif
 }
 
 static inline void Arch_finaliseInterrupt(void)
