@@ -25,17 +25,17 @@
 
 #define PLIC_HART_ID (CONFIG_FIRST_HART_ID)
 
-#define PLIC_PRIO            0x0
-#define PLIC_PRIO_PER_ID     0x4
+#define PLIC_PRIO               0x0
+#define PLIC_PRIO_PER_ID        0x4
 
-#define PLIC_PENDING        0x1000
-#define PLIC_EN             0x2000
-#define PLIC_EN_PER_HART    0x100
-#define PLIC_EN_PER_CONTEXT 0x80
+#define PLIC_PENDING            0x1000
+#define PLIC_EN                 0x2000
+#define PLIC_EN_PER_HART        0x100
+#define PLIC_EN_PER_CONTEXT     0x80
 
 
 #define PLIC_THRES              0x200000
-#define PLIC_SVC_CONTEXT    1
+#define PLIC_SVC_CONTEXT        1
 #define PLIC_THRES_PER_HART     0x2000
 #define PLIC_THRES_PER_CONTEXT  0x1000
 #define PLIC_THRES_CLAIM        0x4

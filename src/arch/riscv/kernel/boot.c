@@ -363,7 +363,6 @@ BOOT_CODE VISIBLE void init_kernel(
                                     ui_p_reg_end,
                                     pv_offset,
                                     v_entry);
-
 #endif
     if (!result) {
         fail("Kernel init failed for some reason :(");
