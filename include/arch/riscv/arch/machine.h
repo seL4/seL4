@@ -246,7 +246,7 @@ static inline void arch_pause(void)
 {
     // use a memory fence to delay a bit.
     // other alternatives?
-    asm volatile("fence rw,rw");
+    fence_rw_rw();
 }
 
 #endif
