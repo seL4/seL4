@@ -156,22 +156,21 @@ BOOT_CODE static bool_t try_init_kernel_secondary_core(word_t hart_id, word_t co
 {
     while (!node_boot_lock);
 
-    asm volatile("fence r,rw" ::: "memory");
-
+    fence_r_rw();
 
     init_cpu();
     NODE_LOCK_SYS;
 
     ksNumCPUs++;
     init_core_state(SchedulerAction_ResumeCurrentThread);
-    asm volatile("fence.i");
+    ifence_local();
     return true;
 }
 
 BOOT_CODE static void release_secondary_cores(void)
 {
     node_boot_lock = 1;
-    asm volatile("fence w,r" ::: "memory");
+    fence_w_r();
 
     while (ksNumCPUs != CONFIG_MAX_NUM_NODES) {
         __atomic_signal_fence(__ATOMIC_ACQ_REL);
