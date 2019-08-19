@@ -128,9 +128,11 @@ static irq_t getNewActiveIRQ(void)
     /* Interrupt priority (high to low ): external -> software -> timer */
     if (sip & BIT(SEXTERNAL_IP)) {
         return plic_get_claim();
+#ifdef ENABLE_SMP_SUPPORT
     } else if (sip & BIT(SIPI_IP)) {
         sbi_clear_ipi();
         return ipi_get_irq();
+#endif
     } else if (sip & BIT(STIMER_IP)) {
         return INTERRUPT_CORE_TIMER;
     }
