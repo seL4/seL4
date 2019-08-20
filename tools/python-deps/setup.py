@@ -36,7 +36,7 @@ DEPS = [
     'pyelftools',
     'sh',
     'pexpect',
-    'pyaml',
+    'pyaml>=5.1',
     'jsonschema',
     'pyfdt',
     'cmake-format==0.4.5',
