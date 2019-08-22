@@ -629,7 +629,7 @@ LIBSEL4_INLINE_FUNC seL4_Uint64 seL4_X86DangerousRDMSR(seL4_Uint32 msr)
     seL4_Word unused3 = 0;
     seL4_Word unused4 = 0;
     seL4_Word val;
-    x64_sys_recv(seL4_SysX86DangerousRDMSR, msr, &unused0, &unused1, &val, &unused2, &unused3, &unused4);
+    x64_sys_recv(seL4_SysX86DangerousRDMSR, msr, &unused0, &unused1, &val, &unused2, &unused3, &unused4, 0);
     return val;
 }
 #endif
