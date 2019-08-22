@@ -92,6 +92,10 @@ tagged_union cap capType {
     tag irq_handler_cap     0x1e
     tag zombie_cap          0x2e
     tag domain_cap          0x3e
+#ifdef CONFIG_KERNEL_MCS
+    tag sched_context_cap   0x4e
+    tag sched_control_cap   0x5e
+#endif
 }
 
 ---- Arch-independent object types
