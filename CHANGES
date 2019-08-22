@@ -47,6 +47,9 @@ Upcoming release: BREAKING
       as depending on the PA the top level translation structure can change.
     - all `seL4_ARM_PageGlobalDirectory` invocations are now `seL4_ARM_VSpace` invocations.
     - new constants 'seL4_ARM_VSpaceObject` and `seL4_VSpaceIndexBits`.
+* Merged MCS kernel feature.
+  - this is not verified and is under active verification.
+  - The goals of the MCS kernel is to provide strong temporal isolation and a basis for reasoning about time.
 
 ## Upgrade Notes
 ---
