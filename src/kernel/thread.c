@@ -345,9 +345,6 @@ static void switchSchedContext(void)
         /* if we are reprogamming, we have acted on the new kernel time and cannot
          * rollback -> charge the current thread */
         commitTime();
-    } else {
-        /* otherwise, we don't need to do anything - avoid reprogramming the timer */
-        rollbackTime();
     }
 
     NODE_STATE(ksCurSC) = NODE_STATE(ksCurThread)->tcbSchedContext;

@@ -130,16 +130,6 @@ static inline void commitTime(void)
     NODE_STATE(ksConsumed) = 0llu;
 }
 
-static inline void rollbackTime(void)
-{
-    /* it is invalid to rollback time if we
-     * have already acted on the new time */
-    assert(!NODE_STATE(ksReprogram) || NODE_STATE(ksConsumed) == 0);
-
-    NODE_STATE(ksCurTime) -= NODE_STATE(ksConsumed);
-    NODE_STATE(ksConsumed) = 0llu;
-}
-
 static inline bool_t PURE isSchedulable(const tcb_t *thread)
 {
     return isRunnable(thread) &&
