@@ -42,11 +42,12 @@ DEPS = [
     'cmake-format==0.4.5',
     'guardonce',
     'autopep8==1.4.3',
+    'libarchive',
 ]
 
 setup(
     name='sel4-deps',
-    version='0.2.5',
+    version='0.3.0',
     description='Metapackage for downloading build dependencies for the seL4 microkernel',
     url="https://sel4.systems",
     licence='BSD2',
