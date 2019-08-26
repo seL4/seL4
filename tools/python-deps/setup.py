@@ -41,7 +41,7 @@ DEPS = [
     'pyfdt',
     'cmake-format==0.4.5',
     'guardonce',
-    'autopep8==1.4.3'
+    'autopep8==1.4.3',
 ]
 
 setup(
