@@ -8,6 +8,9 @@
 #include <arch/machine/fpu.h>
 #include <mode/model/statedata.h>
 
+#define FPU_NOT_IMPLEMENTED (0xF)
+#define IS_FPU_ENABLED(id_aa64pfr0, shift) ((((id_aa64pfr0) >> (shift)) & MASK(4)) != FPU_NOT_IMPLEMENTED)
+
 bool_t isFPUEnabledCached[CONFIG_MAX_NUM_NODES];
 
 #ifdef CONFIG_HAVE_FPU
@@ -30,10 +33,10 @@ BOOT_CODE bool_t fpsimd_HWCapTest(void)
 
     /* Check if the hardware has FP and ASIMD support... */
     MRS("id_aa64pfr0_el1", id_aa64pfr0);
-    if (((id_aa64pfr0 >> ID_AA64PFR0_EL1_FP) & MASK(4)) == MASK(4) ||
-        ((id_aa64pfr0 >> ID_AA64PFR0_EL1_ASIMD) & MASK(4)) == MASK(4)) {
-        return false;
+    if (IS_FPU_ENABLED(id_aa64pfr0, ID_AA64PFR0_EL1_FP) ||
+        IS_FPU_ENABLED(id_aa64pfr0, ID_AA64PFR0_EL1_ASIMD)) {
+        return true;
     }
 
-    return true;
+    return false;
 }
