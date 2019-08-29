@@ -72,15 +72,12 @@ definitions:
         $ref: '#/definitions/macro'
       user:
         description: >
-          Whether or not to make a device untyped for userspace.
-          If true, will always expose this device to userspace.
-          If there is a macro and the macro is undefined, and user is not present,
-          the device will be made.
-          If false, the device will never be made.
+          Whether or not to make a device untyped for userspace for this region.
+          If true, will always expose this region to userspace.
+          If false, region will only be exposed if kernel is not using it.
+        default: false
         type: boolean
-    dependencies:
-      kernel: [executeNever, index]
-      executeNever: [kernel]
+    required: [index, kernel, executeNever]
   interrupt:
     oneOf:
       - type: object

@@ -33,9 +33,6 @@ devices:
         index: 2
         kernel: GIC_V2_VCPUCTRL_PPTR
         macro: CONFIG_ARM_HYPERVISOR_SUPPORT
-        user: false # never expose to userspace, even if macro is false.
-        # other regions (i.e. GICH)
-      - user: true
     interrupts:
       INTERRUPT_VGIC_MAINTENANCE: 0
   # ARM GICv3
