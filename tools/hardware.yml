@@ -21,16 +21,13 @@ devices:
     - qcom,msm-qgic2
     regions:
         # distributor
-      - executeNever: true
-        index: 0
+      - index: 0
         kernel: GIC_V2_DISTRIBUTOR_PPTR
         # controller
-      - executeNever: true
-        index: 1
+      - index: 1
         kernel: GIC_V2_CONTROLLER_PPTR
         # GICV
-      - executeNever: true
-        index: 2
+      - index: 2
         kernel: GIC_V2_VCPUCTRL_PPTR
         macro: CONFIG_ARM_HYPERVISOR_SUPPORT
     interrupts:
@@ -42,13 +39,11 @@ devices:
       - arm,gic-v3
     regions:
         # GICDistributor
-      - executeNever: true
-        index: 0
+      - index: 0
         kernel: GICD_PPTR
         kernel_size: 0x10000
         # GICRedistributor
-      - executeNever: true
-        index: 1
+      - index: 1
         kernel: GICR_PPTR
         # Assume 8 cores max
         kernel_size: 0x100000
@@ -61,36 +56,31 @@ devices:
     - ti,am33xx-intc
     - ti,omap3-intc
     regions:
-      - executeNever: true
-        index: 0
+      - index: 0
         kernel: INTC_PPTR
   # Broadcom top level IRQ controller (interrupt-controller/brcm,bcm2836-l1-intc.txt)
   - compatible:
     - brcm,bcm2836-l1-intc
     regions:
-      - executeNever: true
-        index: 0
+      - index: 0
         kernel: ARM_LOCAL_PPTR
   # i.MX AVIC (no Linux docs, used in arch/arm/mach-imx/avic.c)
   - compatible:
     - fsl,imx31-avic
     regions:
-      - executeNever: true
-        index: 0
+      - index: 0
         kernel: AVIC_PPTR
   # ARM PL310 L2 cache controller (arm/l2c2x0.txt)
   - compatible:
     - arm,pl310-cache
     regions:
-      - executeNever: true
-        index: 0
+      - index: 0
         kernel: L2CC_L2C310_PPTR
   # i.MX31 L2CC (seL4 only)
   - compatible:
     - fsl,imx31-l2cc
     regions:
-      - executeNever: true
-        index: 0
+      - index: 0
         kernel: L2CC_PPTR
   # Exynos multi core timer (timer/samsung,exynos4210-mct.txt)
   # Exynos4412 MCT is separate as we use it for the timer IRQ.
@@ -98,16 +88,14 @@ devices:
   - compatible:
     - samsung,exynos4412-mct
     regions:
-      - executeNever: true
-        index: 0
+      - index: 0
         kernel: EXYNOS_MCT_PPTR
     interrupts:
       KERNEL_TIMER_IRQ: 0
   - compatible:
     - samsung,exynos4210-mct
     regions:
-      - executeNever: true
-        index: 0
+      - index: 0
         kernel: EXYNOS_MCT_PPTR
   # ARM PMU (arm/pmu.txt)
   - compatible:
@@ -126,8 +114,7 @@ devices:
   - compatible:
     - nvidia,tegra124-mc
     regions:
-      - executeNever: false
-        index: 0
+      - index: 0
         kernel: SMMU_PPTR
         macro: CONFIG_ARM_SMMU
     interrupts:
@@ -146,8 +133,7 @@ devices:
   - compatible:
     - allwinner,sun4i-a10-timer
     regions:
-      - executeNever: true
-        index: 0
+      - index: 0
         kernel: TIMER0_PPTR
     interrupts:
       # A20 also has the ARM architected timer,
@@ -160,8 +146,7 @@ devices:
   - compatible:
     - arm,cortex-a9-twd-timer
     regions:
-      - executeNever: true
-        index: 0
+      - index: 0
         kernel: ARM_MP_PRIV_TIMER_PPTR
     interrupts:
       KERNEL_TIMER_IRQ: 0
@@ -169,8 +154,7 @@ devices:
   - compatible:
     - arm,cortex-a9-global-timer
     regions:
-      - executeNever: true
-        index: 0
+      - index: 0
         kernel: TIMER_PPTR
     interrupts:
       # IMX6 also has the imx31-gpt.
@@ -179,8 +163,7 @@ devices:
   - compatible:
     - fsl,imx31-epit
     regions:
-      - executeNever: true
-        index: 0
+      - index: 0
         kernel: EPIT_PPTR
     interrupts:
       KERNEL_TIMER_IRQ: 0
@@ -188,8 +171,7 @@ devices:
   - compatible:
     - fsl,imx31-gpt
     regions:
-      - executeNever: true
-        index: 0
+      - index: 0
         kernel: TIMER_PPTR
     interrupts:
       KERNEL_TIMER_IRQ: 0
@@ -197,8 +179,7 @@ devices:
   - compatible:
     - qcom,kpss-timer
     regions:
-      - executeNever: true
-        index: 0
+      - index: 0
         kernel: TIMER_PPTR
     interrupts:
       KERNEL_TIMER_IRQ: 0
@@ -207,8 +188,7 @@ devices:
     - ti,am335x-timer
     - ti,omap3430-timer
     regions:
-      - executeNever: true
-        index: 0
+      - index: 0
         kernel: TIMER_PPTR
     interrupts:
       KERNEL_TIMER_IRQ: 0
@@ -216,16 +196,14 @@ devices:
   - compatible:
     - ti,am3-prcm
     regions:
-      - executeNever: true
-        index: 0
+      - index: 0
         kernel: CMPER_PPTR
         user: true
   # TI watchdog
   - compatible:
     - ti,omap3-wdt
     regions:
-      - executeNever: true
-        index: 0
+      - index: 0
         kernel: WDT1_PPTR
         user: true
   # various serial consoles (`grep <compatible> serial/*`)
@@ -243,8 +221,7 @@ devices:
     - ti,omap3-uart
     - xlnx,xuartps
     regions:
-      - executeNever: true
-        index: 0
+      - index: 0
         kernel: UART_PPTR
         macro: CONFIG_PRINTING
         user: true
@@ -253,7 +230,6 @@ devices:
   - compatible:
     - riscv,plic0
     regions:
-      - executeNever: true
-        index: 0
+      - index: 0
         kernel: PLIC_PPTR
 

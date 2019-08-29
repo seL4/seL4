@@ -50,9 +50,6 @@ definitions:
     type: object
     additionalProperties: false
     properties:
-      executeNever:
-        description: should this region be mapped as execute never?
-        type: boolean
       index:
         description: Region index this property should apply to
         type: integer
@@ -77,7 +74,7 @@ definitions:
           If false, region will only be exposed if kernel is not using it.
         default: false
         type: boolean
-    required: [index, kernel, executeNever]
+    required: [index, kernel]
   interrupt:
     oneOf:
       - type: object
