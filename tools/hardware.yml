@@ -14,19 +14,19 @@
 devices:
   # ARM GIC (interrupt-controller/arm,gic.txt)
   - compatible:
-    - arm,cortex-a15-gic
-    - arm,cortex-a7-gic
-    - arm,cortex-a9-gic
-    - arm,gic-400
-    - qcom,msm-qgic2
+      - arm,cortex-a15-gic
+      - arm,cortex-a7-gic
+      - arm,cortex-a9-gic
+      - arm,gic-400
+      - qcom,msm-qgic2
     regions:
-        # distributor
+      # distributor
       - index: 0
         kernel: GIC_V2_DISTRIBUTOR_PPTR
-        # controller
+      # controller
       - index: 1
         kernel: GIC_V2_CONTROLLER_PPTR
-        # GICV
+      # GICV
       - index: 2
         kernel: GIC_V2_VCPUCTRL_PPTR
         macro: CONFIG_ARM_HYPERVISOR_SUPPORT
@@ -38,11 +38,11 @@ devices:
   - compatible:
       - arm,gic-v3
     regions:
-        # GICDistributor
+      # GICDistributor
       - index: 0
         kernel: GICD_PPTR
         kernel_size: 0x10000
-        # GICRedistributor
+      # GICRedistributor
       - index: 1
         kernel: GICR_PPTR
         # Assume 8 cores max
@@ -52,33 +52,33 @@ devices:
   # Broadcom second level IRQ controller (interrupt-controller/brcm,bcm2835-armctrl-ic.txt),
   # TI AM33XX/OMAP3 intc (interrupt-controller/ti,omap-intc-irq.txt)
   - compatible:
-    - brcm,bcm2836-armctrl-ic
-    - ti,am33xx-intc
-    - ti,omap3-intc
+      - brcm,bcm2836-armctrl-ic
+      - ti,am33xx-intc
+      - ti,omap3-intc
     regions:
       - index: 0
         kernel: INTC_PPTR
   # Broadcom top level IRQ controller (interrupt-controller/brcm,bcm2836-l1-intc.txt)
   - compatible:
-    - brcm,bcm2836-l1-intc
+      - brcm,bcm2836-l1-intc
     regions:
       - index: 0
         kernel: ARM_LOCAL_PPTR
   # i.MX AVIC (no Linux docs, used in arch/arm/mach-imx/avic.c)
   - compatible:
-    - fsl,imx31-avic
+      - fsl,imx31-avic
     regions:
       - index: 0
         kernel: AVIC_PPTR
   # ARM PL310 L2 cache controller (arm/l2c2x0.txt)
   - compatible:
-    - arm,pl310-cache
+      - arm,pl310-cache
     regions:
       - index: 0
         kernel: L2CC_L2C310_PPTR
   # i.MX31 L2CC (seL4 only)
   - compatible:
-    - fsl,imx31-l2cc
+      - fsl,imx31-l2cc
     regions:
       - index: 0
         kernel: L2CC_PPTR
@@ -86,33 +86,33 @@ devices:
   # Exynos4412 MCT is separate as we use it for the timer IRQ.
   # Other Exynos platforms use the ARM architecture timer.
   - compatible:
-    - samsung,exynos4412-mct
+      - samsung,exynos4412-mct
     regions:
       - index: 0
         kernel: EXYNOS_MCT_PPTR
     interrupts:
       KERNEL_TIMER_IRQ: 0
   - compatible:
-    - samsung,exynos4210-mct
+      - samsung,exynos4210-mct
     regions:
       - index: 0
         kernel: EXYNOS_MCT_PPTR
   # ARM PMU (arm/pmu.txt)
   - compatible:
-    - arm,armv8-pmuv3
-    - arm,cortex-a15-pmu
-    - arm,cortex-a7-pmu
-    - arm,cortex-a9-pmu
+      - arm,armv8-pmuv3
+      - arm,cortex-a15-pmu
+      - arm,cortex-a7-pmu
+      - arm,cortex-a9-pmu
     interrupts:
       KERNEL_PMU_IRQ: boot-cpu
   # i.MX evtmon (no Linux binding, this one is seL4-specific.)
   - compatible:
-    - fsl,imx31-evtmon
+      - fsl,imx31-evtmon
     interrupts:
       KERNEL_PMU_IRQ: 0
   # Tegra SMMU (memory-controllers/nvidia,tegra30-mc.txt)
   - compatible:
-    - nvidia,tegra124-mc
+      - nvidia,tegra124-mc
     regions:
       - index: 0
         kernel: SMMU_PPTR
@@ -121,8 +121,8 @@ devices:
       INTERRUPT_SMMU: 0
   # ARM architected timer (timer/arm,arch_timer.txt)
   - compatible:
-    - arm,armv7-timer
-    - arm,armv8-timer
+      - arm,armv7-timer
+      - arm,armv8-timer
     interrupts:
       KERNEL_TIMER_IRQ:
         sel_macro: CONFIG_ARM_HYPERVISOR_SUPPORT
@@ -130,7 +130,7 @@ devices:
         undef_index: 2
   # Allwinner A10 Timer (timer/allwinner,sun4i-timer.txt)
   - compatible:
-    - allwinner,sun4i-a10-timer
+      - allwinner,sun4i-a10-timer
     regions:
       - index: 0
         kernel: TIMER0_PPTR
@@ -139,11 +139,11 @@ devices:
       # but we want to use the allwinner timer
       # for now at least.
       KERNEL_TIMER_IRQ:
-          index: 0
-          priority: 1
+        index: 0
+        priority: 1
   # ARM per-core timer-watchdog (timer/arm,twd.txt)
   - compatible:
-    - arm,cortex-a9-twd-timer
+      - arm,cortex-a9-twd-timer
     regions:
       - index: 0
         kernel: ARM_MP_PRIV_TIMER_PPTR
@@ -151,7 +151,7 @@ devices:
       KERNEL_TIMER_IRQ: 0
   # Cortex-a9 global timer (timer/arm,global_timer.yaml)
   - compatible:
-    - arm,cortex-a9-global-timer
+      - arm,cortex-a9-global-timer
     regions:
       - index: 0
         kernel: TIMER_PPTR
@@ -160,7 +160,7 @@ devices:
       KERNEL_TIMER_IRQ: 0
   # i.MX EPIT (no Linux binding, this is seL4-specific.)
   - compatible:
-    - fsl,imx31-epit
+      - fsl,imx31-epit
     regions:
       - index: 0
         kernel: EPIT_PPTR
@@ -168,7 +168,7 @@ devices:
       KERNEL_TIMER_IRQ: 0
   # i.MX GPT
   - compatible:
-    - fsl,imx31-gpt
+      - fsl,imx31-gpt
     regions:
       - index: 0
         kernel: TIMER_PPTR
@@ -176,7 +176,7 @@ devices:
       KERNEL_TIMER_IRQ: 0
   # QCOM Krait timer (timer/qcom,msm-timer.txt)
   - compatible:
-    - qcom,kpss-timer
+      - qcom,kpss-timer
     regions:
       - index: 0
         kernel: TIMER_PPTR
@@ -184,8 +184,8 @@ devices:
       KERNEL_TIMER_IRQ: 0
   # TI AM335x/OMAP3430 timer
   - compatible:
-    - ti,am335x-timer
-    - ti,omap3430-timer
+      - ti,am335x-timer
+      - ti,omap3430-timer
     regions:
       - index: 0
         kernel: TIMER_PPTR
@@ -193,32 +193,32 @@ devices:
       KERNEL_TIMER_IRQ: 0
   # TI prcm (arm/omap/prcm.txt)
   - compatible:
-    - ti,am3-prcm
+      - ti,am3-prcm
     regions:
       - index: 0
         kernel: CMPER_PPTR
         user: true
   # TI watchdog
   - compatible:
-    - ti,omap3-wdt
+      - ti,omap3-wdt
     regions:
       - index: 0
         kernel: WDT1_PPTR
         user: true
   # various serial consoles (`grep <compatible> serial/*`)
   - compatible:
-    - amlogic,meson-gx-uart
-    - arm,pl011
-    - brcm,bcm2835-aux-uart
-    - fsl,imx31-uart
-    - fsl,imx6q-uart
-    - nvidia,tegra124-hsuart
-    - nvidia,tegra20-uart
-    - qcom,msm-uartdm
-    - samsung,exynos4210-uart
-    - snps,dw-apb-uart
-    - ti,omap3-uart
-    - xlnx,xuartps
+      - amlogic,meson-gx-uart
+      - arm,pl011
+      - brcm,bcm2835-aux-uart
+      - fsl,imx31-uart
+      - fsl,imx6q-uart
+      - nvidia,tegra124-hsuart
+      - nvidia,tegra20-uart
+      - qcom,msm-uartdm
+      - samsung,exynos4210-uart
+      - snps,dw-apb-uart
+      - ti,omap3-uart
+      - xlnx,xuartps
     regions:
       - index: 0
         kernel: UART_PPTR
@@ -227,8 +227,7 @@ devices:
 
   # RISC-V PLIC
   - compatible:
-    - riscv,plic0
+      - riscv,plic0
     regions:
       - index: 0
         kernel: PLIC_PPTR
-
