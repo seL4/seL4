@@ -125,10 +125,9 @@ devices:
     - arm,armv8-timer
     interrupts:
       KERNEL_TIMER_IRQ:
-        index:
-          macro: CONFIG_ARM_HYPERVISOR_SUPPORT
-          defined: 3
-          undefined: 2
+        sel_macro: CONFIG_ARM_HYPERVISOR_SUPPORT
+        index: 3
+        undef_index: 2
   # Allwinner A10 Timer (timer/allwinner,sun4i-timer.txt)
   - compatible:
     - allwinner,sun4i-a10-timer

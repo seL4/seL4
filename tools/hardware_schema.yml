@@ -80,47 +80,53 @@ definitions:
       - type: object
         additionalProperties: false
         properties:
-          macro:
-            description: only set interrupt if this macro is defined
+          # TODO: remove enable_macro altogether. We don't use it.
+          enable_macro:
+            description: only set interrupt if this macro is defined - this rule will be ignored if the given macro is false.
             $ref: '#/definitions/macro'
           index:
             description: index of interrupt in device's interrupts array
             $ref: '#/definitions/interrupt_index'
+          sel_macro:
+            description: >
+              if macro is defined, use 'index' as IRQ, otherwise use undef_index.
+              For example if a device had interrupts = [1, 2, 3]
+              and a rule like
+                MY_INTERRUPT:
+                  index: 0
+                  sel_macro: MY_MACRO
+                  undef_index: 2
+              then the C header output would look like
+              #ifdef MY_MACRO
+              #define MY_INTERRUPT 1 /* interrupt 0 of device */
+              #else
+              #define MY_INTERRUPT 3 /* interrupt 2 of device */
+              #endif /* MY_MACRO */
+            $ref: '#/definitions/macro'
+          undef_index:
+            description: index of interrupt in device's array to use when sel_macro is undefined
+            $ref: '#/definitions/interrupt_index'
           priority:
-            description: if multiple conflicting IRQs are present, the IRQ with the highest priority will be selected.
+            description: if multiple conflicting IRQs are present, the IRQ with the  highest priority will be selected.
+            default: 0
             type: integer
         required: [index]
-      - type: integer
-        description: index of interrupt in device's interrupts array
-        minimum: 0
-      - $ref: '#/definitions/boot-cpu'
+        dependencies:
+          sel_macro: [undef_index]
+          undef_index: [sel_macro]
+      - $ref: '#/definitions/interrupt_index'
   interrupt_index:
     oneOf:
-      - type: object
-        additionalProperties: false
-        properties:
-          macro:
-            description: macro to use when picking index
-            $ref: '#/definitions/macro'
-          defined:
-            description: if macro is defined, use this index in the interrupts array
-            type: integer
-            minimum: 0
-          undefined:
-            description: if macro is undefined, use this index in the interrupts array.
-            type: integer
-            minimum: 0
-        required: [macro, defined, undefined]
       - type: integer
         description: index of interrupt in device's interrupts array
         minimum: 0
       - $ref: '#/definitions/boot-cpu'
   macro:
     type: string
-    pattern: '^[A-Za-z_][A-Za-z0-9_]*$'
+    pattern: '^!?[A-Za-z_][A-Za-z0-9_]*$'
     minLength: 1
   boot-cpu:
-    type: string # TODO: why does 'const' not work here?
+    type: string  # TODO: why does 'const' not work here?
     description: >
       Use interrupt associated with the seL4,boot-cpu set in the chosen node.
       For instance, a chosen node like
