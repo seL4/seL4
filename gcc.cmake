@@ -20,19 +20,41 @@ set(CMAKE_SYSTEM_PROCESSOR seL4CPU)
 set(CMAKE_SYSROOT "${CMAKE_BINARY_DIR}")
 set(CMAKE_STAGING_PREFIX "${CMAKE_BINARY_DIR}/staging")
 
+# When this file is passed to configure_file in cmake, these variables get set to
+# the kernel platform configuration.
+set(sel4_arch @KernelSel4Arch@)
+set(arch @KernelArch@)
+set(mode @KernelWordSize@)
+
 if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
-    if(AARCH32 OR ARM)
-        set(CROSS_COMPILER_PREFIX "arm-linux-gnueabi-" CACHE INTERNAL "")
-        if(ARM)
-            message("ARM flag is deprecated, please use AARCH32")
+    if(("${arch}" STREQUAL "arm") OR ("${arch}" STREQUAL "x86") OR ("${arch}" STREQUAL "riscv"))
+        if(${sel4_arch} STREQUAL "aarch32" OR ${sel4_arch} STREQUAL "arm_hyp")
+            set(CROSS_COMPILER_PREFIX "arm-linux-gnueabi-" CACHE INTERNAL "")
+        elseif(${sel4_arch} STREQUAL "aarch64")
+            set(CROSS_COMPILER_PREFIX "aarch64-linux-gnu-" CACHE INTERNAL "")
+        elseif(${arch} STREQUAL "riscv")
+            set(CROSS_COMPILER_PREFIX "riscv64-unknown-linux-gnu-" CACHE INTERNAL "")
         endif()
-    elseif(AARCH32HF)
-        set(CROSS_COMPILER_PREFIX "arm-linux-gnueabihf-" CACHE INTERNAL "")
-    elseif(AARCH64)
-        set(CROSS_COMPILER_PREFIX "aarch64-linux-gnu-" CACHE INTERNAL "")
-    elseif(RISCV32 OR RISCV64)
-        set(CROSS_COMPILER_PREFIX "riscv64-unknown-linux-gnu-" CACHE INTERNAL "")
     else()
+        # For backwards compatibility reasons we allow this file to work without templating.
+        # If initialised with -DCMAKE_TOOLCHAIN_FILE="$SCRIPT_PATH/gcc.cmake" this script
+        # understood the following arguments: ARM, AARCH32, AARCH32HF, AARCH64, RISCV32, RISCV64, APPLE
+        if(AARCH32 OR ARM)
+            set(CROSS_COMPILER_PREFIX "arm-linux-gnueabi-" CACHE INTERNAL "")
+            if(ARM)
+                message("ARM flag is deprecated, please use AARCH32")
+            endif()
+        elseif(AARCH64)
+            set(CROSS_COMPILER_PREFIX "aarch64-linux-gnu-" CACHE INTERNAL "")
+        elseif(RISCV32 OR RISCV64)
+            set(CROSS_COMPILER_PREFIX "riscv64-unknown-linux-gnu-" CACHE INTERNAL "")
+        endif()
+    endif()
+    if(AARCH32HF)
+        set(CROSS_COMPILER_PREFIX "arm-linux-gnueabihf-" CACHE INTERNAL "")
+    endif()
+
+    if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
         # If we haven't set a target above we assume x86_64/ia32 target
         if(APPLE)
             # APPLE is a CMake variable that evaluates to True on a Mac OSX system
