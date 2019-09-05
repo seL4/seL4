@@ -24,6 +24,21 @@ config_string(
 if(KernelSel4ArchRiscV32)
     set(KernelPTLevels 2 CACHE STRING "" FORCE)
 endif()
+if(KernelPTLevels EQUAL 2)
+    if(KernelSel4ArchRiscV32)
+        # seL4 on RISCV32 uses 32-bit ints for addresses,
+        # so limit the maximum paddr to 32-bits.
+        math(EXPR KernelPaddrUserTop "(1 << 32) - 1")
+    else()
+        math(EXPR KernelPaddrUserTop "(1 << 34) - 1")
+    endif()
+elseif(KernelPTLevels EQUAL 3)
+    # RISC-V technically supports 56-bit paddrs,
+    # but structures.bf limits us to using 39 of those bits.
+    math(EXPR KernelPaddrUserTop "(1 << 39) - 1")
+elseif(KernelPTLevels EQUAL 4)
+    math(EXPR KernelPaddrUserTop "(1 << 56) - 1")
+endif()
 
 # This is not supported on RISC-V
 set(KernelHardwareDebugAPIUnsupported ON CACHE INTERNAL "")

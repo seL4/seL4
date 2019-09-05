@@ -20,11 +20,19 @@ set(KernelArmPASizeBits40 OFF)
 set(KernelArmPASizeBits44 OFF)
 if(KernelArmCortexA53)
     set(KernelArmPASizeBits40 ON)
+    math(EXPR KernelPaddrUserTop "(1 << 40) - 1")
 elseif(KernelArmCortexA57)
     set(KernelArmPASizeBits44 ON)
+    math(EXPR KernelPaddrUserTop "(1 << 44) - 1")
 endif()
 config_set(KernelArmPASizeBits40 ARM_PA_SIZE_BITS_40 "${KernelArmPASizeBits40}")
 config_set(KernelArmPASizeBits44 ARM_PA_SIZE_BITS_44 "${KernelArmPASizeBits44}")
+
+if(KernelSel4ArchAarch32)
+    # 64-bit targets may be building in 32-bit mode,
+    # so make sure maximum paddr is 32-bit.
+    math(EXPR KernelPaddrUserTop "(1 << 32) - 1")
+endif()
 
 include(src/arch/arm/armv/armv6/config.cmake)
 include(src/arch/arm/armv/armv7-a/config.cmake)
