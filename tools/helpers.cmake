@@ -663,3 +663,45 @@ macro(check_outfile_stale stale outfile deps_list arg_cache)
         file(WRITE "${arg_cache}" "${_outfile_command}")
     endif()
 endmacro()
+
+# This macro only works when cmake is invoked with -P (script mode) on a kernel
+# verified configuration. The result is configuring and building a verified kernel.
+# CMAKE_ARGC and CMAKE_ARGV# contain command line argument information.
+# It runs the following commands to produce kernel.elf and kernel_all_pp.c:
+# cmake -G Ninja ${args} -C ${CMAKE_ARGV2} ${CMAKE_CURRENT_LIST_DIR}/..
+# ninja kernel.elf
+# ninja kernel_all_pp_wrapper
+macro(cmake_script_build_kernel)
+    if(NOT "${CMAKE_ARGC}" STREQUAL "")
+        set(args "")
+        foreach(i RANGE 3 ${CMAKE_ARGC})
+            if("${CMAKE_ARGV${i}}" STREQUAL "FORCE")
+                # Consume arg and force reinit of build dir by deleting CMakeCache.txt
+                file(REMOVE CMakeCache.txt)
+                file(REMOVE gcc.cmake)
+            else()
+                list(APPEND args ${CMAKE_ARGV${i}})
+            endif()
+        endforeach()
+        execute_process(
+            COMMAND
+                cmake -G Ninja ${args} -C ${CMAKE_ARGV2} ${CMAKE_CURRENT_LIST_DIR}/..
+            INPUT_FILE /dev/stdin
+            OUTPUT_FILE /dev/stdout
+            ERROR_FILE /dev/stderr
+        )
+        execute_process(
+            COMMAND ninja kernel.elf
+            INPUT_FILE /dev/stdin
+            OUTPUT_FILE /dev/stdout
+            ERROR_FILE /dev/stderr
+        )
+        execute_process(
+            COMMAND ninja kernel_all_pp_wrapper
+            INPUT_FILE /dev/stdin
+            OUTPUT_FILE /dev/stdout
+            ERROR_FILE /dev/stderr
+        )
+        return()
+    endif()
+endmacro()
