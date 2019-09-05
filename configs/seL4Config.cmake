@@ -267,6 +267,19 @@ if(
     ("${CMAKE_TOOLCHAIN_FILE}" STREQUAL "")
     OR ("${CMAKE_TOOLCHAIN_FILE}" STREQUAL "${toolchain_outputfile}")
 )
-    configure_file("${CMAKE_CURRENT_LIST_DIR}/../${toolchain_file}" "${toolchain_outputfile}" @ONLY)
+    configure_file(
+        "${CMAKE_CURRENT_LIST_DIR}/../${toolchain_file}" "${toolchain_outputfile}.temp" @ONLY
+    )
+    if(EXISTS "${toolchain_outputfile}")
+        file(READ "${toolchain_outputfile}.temp" filea)
+        file(READ "${toolchain_outputfile}" fileb)
+        if(NOT "${filea}" STREQUAL "${fileb}")
+            message(
+                FATAL_ERROR
+                    "Config changes have resulted in a different toolchain file. This is not supported"
+            )
+        endif()
+    endif()
+    file(RENAME "${toolchain_outputfile}.temp" "${toolchain_outputfile}")
     set(CMAKE_TOOLCHAIN_FILE "${toolchain_outputfile}" CACHE PATH "")
 endif()
