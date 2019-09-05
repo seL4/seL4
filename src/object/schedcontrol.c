@@ -99,7 +99,9 @@ static exception_t decodeSchedControl_Configure(word_t length, cap_t cap, extra_
     }
 
     time_t budget_us = mode_parseTimeArg(0, buffer);
+    ticks_t budget_ticks = usToTicks(budget_us);
     time_t period_us = mode_parseTimeArg(TIME_ARG_SIZE, buffer);
+    ticks_t period_ticks = usToTicks(period_us);
     word_t extra_refills = getSyscallArg(TIME_ARG_SIZE * 2, buffer);
     word_t badge = getSyscallArg(TIME_ARG_SIZE * 2 + 1, buffer);
 
@@ -111,7 +113,7 @@ static exception_t decodeSchedControl_Configure(word_t length, cap_t cap, extra_
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (budget_us > MAX_BUDGET_US || budget_us < MIN_BUDGET_US) {
+    if (budget_us > MAX_BUDGET_US || budget_ticks < MIN_BUDGET) {
         userError("SchedControl_Configure: budget out of range.");
         current_syscall_error.type = seL4_RangeError;
         current_syscall_error.rangeErrorMin = MIN_BUDGET_US;
@@ -119,7 +121,7 @@ static exception_t decodeSchedControl_Configure(word_t length, cap_t cap, extra_
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (period_us > MAX_BUDGET_US || period_us < MIN_BUDGET_US) {
+    if (period_us > MAX_BUDGET_US || period_ticks < MIN_BUDGET) {
         userError("SchedControl_Configure: period out of range.");
         current_syscall_error.type = seL4_RangeError;
         current_syscall_error.rangeErrorMin = MIN_BUDGET_US;
@@ -127,7 +129,7 @@ static exception_t decodeSchedControl_Configure(word_t length, cap_t cap, extra_
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (budget_us > period_us) {
+    if (budget_ticks > period_ticks) {
         userError("SchedControl_Configure: budget must be <= period");
         current_syscall_error.type = seL4_RangeError;
         current_syscall_error.rangeErrorMin = MIN_BUDGET_US;
@@ -148,8 +150,8 @@ static exception_t decodeSchedControl_Configure(word_t length, cap_t cap, extra_
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeSchedControl_Configure(SC_PTR(cap_sched_context_cap_get_capSCPtr(targetCap)),
                                         cap_sched_control_cap_get_core(cap),
-                                        usToTicks(budget_us),
-                                        usToTicks(period_us),
+                                        budget_ticks,
+                                        period_ticks,
                                         extra_refills + MIN_REFILLS,
                                         badge);
 }
