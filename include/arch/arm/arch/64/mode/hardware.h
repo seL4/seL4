@@ -40,7 +40,7 @@
  * +-----------------------------------+ <- 0xFFFFFFFF_FFFFFFFF
  * | Canonical high portion - unusable |
  * | virtual addrs                     |
- * +-----------------------------------+ <- 256TiB mark (top of 48 bits)
+ * +-----------------------------------+ <- PPTR_TOP: 256TiB mark (top of 48 bits)
  * | seL4 EL2 kernel                   |    ^
  * |                                   |    |
  * |                                   |    512GiB
@@ -48,7 +48,7 @@
  * |                                   |    into memory.
  * |                                   |    |
  * |                                   |    v
- * +-----------------------------------+ <- Kernel Base, @ 256TiB minus 512GiB.
+ * +-----------------------------------+ <- kernelBase: 256TiB minus 512GiB.
  * | Unused virtual addresses within   |    ^
  * | the EL2 kernel's                  |    |
  * | separate vaddrspace.              |    Rest of the
@@ -65,8 +65,16 @@
 #define kernelBase          0xffffff8000000000
 #endif
 
+/* last accessible virtual address in user space */
 #define USER_TOP seL4_UserTop
-#define BASE_OFFSET (kernelBase - physBase)
+/* the base physical address that the kernel can address */
+#define PADDR_BASE 0x0
+/* the physical address that the kernel image is linked to */
+#define PADDR_LOAD physBase
+
+/* offset between physical addresses and kernel virtual addresses */
+#define BASE_OFFSET (kernelBase - PADDR_BASE)
+#define KERNEL_ELF_BASE (PADDR_LOAD + BASE_OFFSET)
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 #define PPTR_TOP 0xffffc0000000lu

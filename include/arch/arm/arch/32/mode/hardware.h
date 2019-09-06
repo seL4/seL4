@@ -36,6 +36,9 @@
 #define KDEV_PPTR 0xfff00000
 #define PADDR_TOP (PPTR_TOP - BASE_OFFSET)
 
+#define KERNEL_ELF_BASE kernelBase
+#define PADDR_LOAD      physBase
+
 #ifndef __ASSEMBLER__
 #include <plat/machine/hardware.h>
 #endif

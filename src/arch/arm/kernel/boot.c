@@ -46,7 +46,7 @@ BOOT_DATA static region_t reserved[MAX_RESERVED];
 BOOT_CODE static void arch_init_freemem(p_region_t ui_p_reg, p_region_t dtb_p_reg, v_region_t it_v_reg,
                                         word_t extra_bi_size_bits)
 {
-    reserved[0].start = kernelBase;
+    reserved[0].start = KERNEL_ELF_BASE;
     reserved[0].end = (pptr_t)ki_end;
 
     int index = 1;
@@ -522,7 +522,7 @@ static BOOT_CODE bool_t try_init_kernel(
     if (!create_untypeds(
             root_cnode_cap,
     (region_t) {
-    kernelBase, (pptr_t)ki_boot_end
+    KERNEL_ELF_BASE, (pptr_t)ki_boot_end
     } /* reusable boot code/data */
         )) {
         return false;

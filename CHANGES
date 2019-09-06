@@ -50,6 +50,9 @@ Upcoming release: BREAKING
 * Merged MCS kernel feature.
   - this is not verified and is under active verification.
   - The goals of the MCS kernel is to provide strong temporal isolation and a basis for reasoning about time.
+* Moved aarch64 kernel window
+    - aarch64 kernel window is now placed at 0, meaning the kernel can access memory
+      below where the kernel image is mapped.
 
 ## Upgrade Notes
 ---

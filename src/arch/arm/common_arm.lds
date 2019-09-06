@@ -18,13 +18,11 @@
 
 ENTRY(_start)
 
-KERNEL_BASE   = kernelBase;
-PHYS_BASE     = physBase;
-KERNEL_OFFSET = KERNEL_BASE - PHYS_BASE;
+KERNEL_OFFSET = KERNEL_ELF_BASE - PADDR_LOAD;
 
 SECTIONS
 {
-    . = KERNEL_BASE;
+    . = KERNEL_ELF_BASE;
 
     .boot . : AT(ADDR(.boot) - KERNEL_OFFSET)
     {

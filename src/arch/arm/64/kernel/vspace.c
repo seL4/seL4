@@ -272,7 +272,7 @@ BOOT_CODE void map_kernel_window(void)
 
     /* map the kernel window using large pages */
     vaddr = kernelBase;
-    for (paddr = physBase; paddr < PADDR_TOP; paddr += BIT(seL4_LargePageBits)) {
+    for (paddr = PADDR_BASE; paddr < PADDR_TOP; paddr += BIT(seL4_LargePageBits)) {
         armKSGlobalKernelPDs[GET_PUD_INDEX(vaddr)][GET_PD_INDEX(vaddr)] = pde_pde_large_new(
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
                                                                               0, // XN
@@ -552,7 +552,7 @@ BOOT_CODE void activate_kernel_vspace(void)
     setCurrentUserVSpaceRoot(ttbr_new(0, pptr_to_paddr(armKSGlobalUserVSpace)));
 
     invalidateLocalTLB();
-    lockTLBEntry(kernelBase);
+    lockTLBEntry(KERNEL_ELF_BASE);
 }
 
 BOOT_CODE void write_it_asid_pool(cap_t it_ap_cap, cap_t it_vspace_cap)
