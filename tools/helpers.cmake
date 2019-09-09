@@ -259,6 +259,11 @@ function(config_option optionname configname doc)
             set(${optionname} "${CONFIG_DEFAULT}" CACHE BOOL "${doc}" FORCE)
             unset(${optionname}_DISABLED CACHE)
         endif()
+        # This is a directory scope setting used to allow or prevent config options
+        # from appearing in the cmake config GUI
+        if(SEL4_CONFIG_DEFAULT_ADVANCED)
+            mark_as_advanced(${optionname})
+        endif()
     else()
         set(${optionname} "${CONFIG_DEFAULT_DISABLED}" CACHE INTERNAL "${doc}" FORCE)
         set(${optionname}_DISABLED TRUE CACHE INTERNAL "" FORCE)
@@ -353,6 +358,11 @@ function(config_string optionname configname doc)
             APPEND
                 local_config_string "#define CONFIG_${configname} ${quote}@${optionname}@${quote}"
         )
+        # This is a directory scope setting used to allow or prevent config options
+        # from appearing in the cmake config GUI
+        if(SEL4_CONFIG_DEFAULT_ADVANCED)
+            mark_as_advanced(${optionname})
+        endif()
     else()
         if(CONFIG_UNDEF_DISABLED)
             unset(${optionname} CACHE)
@@ -479,6 +489,11 @@ function(config_choice optionname configname doc)
         list(APPEND local_config_string "#define CONFIG_${configname} @${optionname}@")
         set(configure_string "${local_config_string}" PARENT_SCOPE)
         set(${optionname} "${default}" CACHE STRING "${doc}" ${force_default})
+        # This is a directory scope setting used to allow or prevent config options
+        # from appearing in the cmake config GUI
+        if(SEL4_CONFIG_DEFAULT_ADVANCED)
+            mark_as_advanced(${optionname})
+        endif()
         set_property(CACHE ${optionname} PROPERTY STRINGS ${strings})
         if(NOT found_current)
             # The option is actually enabled, but we didn't enable the correct
