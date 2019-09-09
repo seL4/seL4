@@ -98,12 +98,8 @@ endif()
 set(KernelHaveFPU OFF)
 set(KernelSetTLSBaseSelf OFF)
 
-include(src/arch/arm/config.cmake)
-include(src/arch/riscv/config.cmake)
-include(src/arch/x86/config.cmake)
-
-include(include/32/mode/config.cmake)
-include(include/64/mode/config.cmake)
+include(src/arch/${KernelArch}/config.cmake)
+include(include/${KernelWordSize}/mode/config.cmake)
 include(src/config.cmake)
 
 if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))

@@ -379,5 +379,4 @@ add_sources(DEP "KernelArchX86;KernelDebugBuild" CFILES src/arch/x86/machine/cap
 
 add_bf_source_old("KernelArchX86" "structures.bf" "include/arch/x86" "arch/object")
 
-include(src/arch/x86/32/config.cmake)
-include(src/arch/x86/64/config.cmake)
+include(src/arch/x86/${KernelWordSize}/config.cmake)
