@@ -14,6 +14,7 @@ if(KernelPlatformTx2)
     # the 44-bit PA for Cortex-A57 cores would need to be downgraded to 40bit.
     set(KernelArmCortexA57 ON)
     set(KernelArchArmV8a ON)
+    set(KernelArmSMMU ON)
     config_set(KernelARMPlatform ARM_PLAT tx2)
     config_set(KernelArmMach MACH "nvidia")
     list(APPEND KernelDTSList "tools/dts/tx2.dts")
@@ -27,6 +28,7 @@ if(KernelPlatformTx2)
         CLK_SHIFT 57u
         CLK_MAGIC 4611686019u
         KERNEL_WCET 10u
+        SMMU drivers/smmu/smmuv2.h
     )
 endif()
 

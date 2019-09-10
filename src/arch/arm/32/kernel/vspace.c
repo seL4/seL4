@@ -478,7 +478,7 @@ static BOOT_CODE cap_t create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid
                 wordFromVMRights(VMReadWrite), /* capFVMRights       */
                 vptr,                          /* capFMappedAddress  */
                 false,                         /* capFIsDevice       */
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
                 0,                             /* IOSpace            */
 #endif
                 ASID_HIGH(asid),               /* capFMappedASIDHigh */
@@ -1031,7 +1031,7 @@ bool_t CONST isValidVTableRoot(cap_t cap)
 
 bool_t CONST isIOSpaceFrameCap(cap_t cap)
 {
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
     return cap_get_capType(cap) == cap_small_frame_cap && cap_small_frame_cap_get_capFIsIOSpace(cap);
 #else
     return false;
@@ -2427,7 +2427,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
     }
 
     case ARMPageUnmap: {
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
         if (isIOSpaceFrameCap(cap)) {
             setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
             return performPageInvocationUnmapIO(cap, cte);
@@ -2439,7 +2439,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
         }
     }
 
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
     case ARMPageMapIO: {
         return decodeARMIOMapInvocation(invLabel, length, cte, cap, excaps, buffer);
     }

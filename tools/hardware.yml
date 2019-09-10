@@ -117,6 +117,7 @@ devices:
   # Tegra SMMU (memory-controllers/nvidia,tegra30-mc.txt)
   - compatible:
       - nvidia,tegra124-mc
+      - arm,mmu-500
     regions:
       - index: 0
         kernel: SMMU_PPTR

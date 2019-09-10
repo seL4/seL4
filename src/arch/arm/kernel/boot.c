@@ -98,7 +98,7 @@ BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
     setIRQState(IRQReserved, CORE_IRQ_TO_IRQT(0, INTERRUPT_VGIC_MAINTENANCE));
     setIRQState(IRQReserved, CORE_IRQ_TO_IRQT(0, INTERRUPT_VTIMER_EVENT));
 #endif
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
     setIRQState(IRQReserved, CORE_IRQ_TO_IRQT(0, INTERRUPT_SMMU));
 #endif
 
@@ -225,6 +225,9 @@ BOOT_CODE static void init_plat(void)
 {
     initIRQController();
     initL2Cache();
+#ifdef CONFIG_ARM_SMMU
+    plat_smmu_init();
+#endif
 }
 
 #ifdef ENABLE_SMP_SUPPORT
@@ -397,7 +400,7 @@ static BOOT_CODE bool_t try_init_kernel(
         *(seL4_BootInfoHeader *)(rootserver.extra_bi + extra_bi_offset) = header;
     }
 
-    if (config_set(CONFIG_ARM_SMMU)) {
+    if (config_set(CONFIG_TK1_SMMU)) {
         ndks_boot.bi_frame->ioSpaceCaps = create_iospace_caps(root_cnode_cap);
         if (ndks_boot.bi_frame->ioSpaceCaps.start == 0 &&
             ndks_boot.bi_frame->ioSpaceCaps.end == 0) {

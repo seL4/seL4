@@ -114,7 +114,13 @@ config_option(
 )
 
 config_option(
-    KernelArmSMMU ARM_SMMU "Enable SystemMMU for the Tegra TK1 SoC"
+    KernelArmSMMU ARM_SMMU "Enable SystemMMU"
+    DEFAULT OFF
+    DEPENDS "KernelPlatformTx2"
+)
+
+config_option(
+    KernelTk1SMMU TK1_SMMU "Enable SystemMMU for the Tegra TK1 SoC"
     DEFAULT OFF
     DEPENDS "KernelPlatformTK1"
 )
