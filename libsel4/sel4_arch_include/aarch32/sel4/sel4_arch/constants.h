@@ -216,7 +216,7 @@ enum {
 #define seL4_PageDirBits 14
 #define seL4_VSpaceBits seL4_PageDirBits
 
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
 #define seL4_NumASIDPoolsBits 6
 #else
 #define seL4_NumASIDPoolsBits 7

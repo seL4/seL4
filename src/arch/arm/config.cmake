@@ -114,10 +114,17 @@ config_option(
 )
 
 config_option(
-    KernelArmSMMU ARM_SMMU "Enable SystemMMU for the Tegra TK1 SoC"
+    KernelArmSMMU ARM_SMMU "Enable SystemMMU"
+    DEFAULT OFF
+    DEPENDS "KernelPlatformTx2"
+)
+
+config_option(
+    KernelTk1SMMU TK1_SMMU "Enable SystemMMU for the Tegra TK1 SoC"
     DEFAULT OFF
     DEPENDS "KernelPlatformTK1"
 )
+
 
 config_option(KernelArmEnableA9Prefetcher ENABLE_A9_PREFETCHER "Enable Cortex-A9 prefetcher \
     Cortex-A9 has an L1 and L2 prefetcher. By default \

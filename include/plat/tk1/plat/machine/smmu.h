@@ -8,7 +8,7 @@
 
 #include <config.h>
 
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
 
 #include <types.h>
 #include <plat/machine/hardware_gen.h>
@@ -157,7 +157,7 @@ void plat_smmu_ptc_flush_all(void);
 iopde_t *plat_smmu_lookup_iopd_by_asid(uint32_t asid);
 void plat_smmu_handle_interrupt(void);
 
-#else /* !CONFIG_ARM_SMMU */
+#else /* !CONFIG_TK1_SMMU */
 
 /* dummy functions */
 static inline void plat_smmu_handle_interrupt(void)
@@ -165,5 +165,5 @@ static inline void plat_smmu_handle_interrupt(void)
     return;
 }
 
-#endif /* CONFIG_ARM_SMMU */
+#endif /* CONFIG_TK1_SMMU */
 
