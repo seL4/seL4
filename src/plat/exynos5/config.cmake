@@ -67,6 +67,10 @@ if(KernelPlatExynos5)
         config_set(KernelPlatExynos54xx PLAT_EXYNOS54XX OFF)
     endif()
 
+    if(NOT KernelPlatformExynos5422)
+        set(KernelHardwareDebugAPIUnsupported ON CACHE INTERNAL "")
+    endif()
+
     list(APPEND KernelDTSList "tools/dts/${KernelARMPlatform}.dts")
     list(APPEND KernelDTSList "src/plat/exynos5/overlay-${KernelARMPlatform}.dts")
     declare_default_headers(

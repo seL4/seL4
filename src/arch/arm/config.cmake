@@ -160,6 +160,10 @@ if(KernelAArch32FPUEnableContextSwitch OR KernelSel4ArchAarch64)
     set(KernelHaveFPU ON)
 endif()
 
+if(KernelSel4ArchAarch64)
+    set(KernelHardwareDebugAPIUnsupported ON CACHE INTERNAL "")
+endif()
+
 if(
     KernelArmCortexA7
     OR KernelArmCortexA8

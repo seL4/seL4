@@ -25,6 +25,9 @@ if(KernelSel4ArchRiscV32)
     set(KernelPTLevels 2 CACHE STRING "" FORCE)
 endif()
 
+# This is not supported on RISC-V
+set(KernelHardwareDebugAPIUnsupported ON CACHE INTERNAL "")
+
 add_sources(
     DEP "KernelArchRiscV"
     PREFIX src/arch/riscv

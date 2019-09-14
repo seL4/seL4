@@ -320,7 +320,7 @@ config_option(
     allows userspace processes to set breakpoints, watchpoints and to \
     single-step through thread execution."
     DEFAULT OFF
-    DEPENDS "NOT KernelVerificationBuild"
+    DEPENDS "NOT KernelVerificationBuild;NOT KernelHardwareDebugAPIUnsupported"
 )
 config_option(
     KernelPrinting PRINTING
