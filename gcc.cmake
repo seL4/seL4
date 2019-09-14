@@ -75,3 +75,13 @@ set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
 mark_as_advanced(FORCE CMAKE_TOOLCHAIN_FILE)
+
+# Invoke compiler via ccache. This has no effect if ccache cannot be found.
+# Projects can override this effect by resetting the RULE_LAUNCH_COMPILE and
+# RULE_LAUNCH_LINK properties.
+find_program(CCACHE ccache)
+if(NOT ("${CCACHE}" STREQUAL CCACHE-NOTFOUND))
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ${CCACHE})
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ${CCACHE})
+endif()
+mark_as_advanced(CCACHE)
