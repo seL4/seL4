@@ -125,6 +125,7 @@ if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
     if("${STAT_TOOL}" STREQUAL "STAT_TOOL-NOTFOUND")
         message(FATAL_ERROR "Cannot find 'stat' program.")
     endif()
+    mark_as_advanced(DTC_TOOL STAT_TOOL)
     # Generate final DTS based on Linux DTS + seL4 overlay[s]
     foreach(entry ${KernelDTSList})
         get_absolute_source_or_binary(dts_tmp ${entry})
@@ -264,6 +265,9 @@ find_file(
     DOC "A C file providing the symbols ksDomSchedule and ksDomeScheudleLength \
         to be linked with the kernel as a scheduling configuration."
 )
+if(SEL4_CONFIG_DEFAULT_ADVANCED)
+    mark_as_advanced(KernelDomainSchedule)
+endif()
 
 config_string(
     KernelNumPriorities NUM_PRIORITIES "The number of priority levels per domain. Valid range 1-256"
