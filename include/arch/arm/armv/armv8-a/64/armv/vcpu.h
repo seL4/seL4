@@ -105,9 +105,7 @@
 #define REG_FAR_EL1         "far_el1"
 #define REG_ISR_EL1         "isr_el1"
 #define REG_VBAR_EL1        "vbar_el1"
-#define REG_TPIDR_EL0       "tpidr_el0"
 #define REG_TPIDR_EL1       "tpidr_el1"
-#define REG_TPIDRRO_EL0     "tpidrro_el0"
 #define REG_SP_EL1          "sp_el1"
 #define REG_ELR_EL1         "elr_el1"
 #define REG_SPSR_EL1        "spsr_el1"
@@ -389,8 +387,6 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
         return readVBAR();
     case seL4_VCPUReg_TPIDR_EL1:
         return readTPIDR_EL1();
-    case seL4_VCPUReg_TPIDRRO_EL0:
-        return readTPIDRRO_EL0();
     case seL4_VCPUReg_CNTV_TVAL:
         return readCNTV_TVAL_EL0();
     case seL4_VCPUReg_CNTV_CTL:
@@ -446,8 +442,6 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
         return writeVBAR(reg);
     case seL4_VCPUReg_TPIDR_EL1:
         return writeTPIDR_EL1(reg);
-    case seL4_VCPUReg_TPIDRRO_EL0:
-        return writeTPIDRRO_EL0(reg);
     case seL4_VCPUReg_CNTV_TVAL:
         return writeCNTV_TVAL_EL0(reg);
     case seL4_VCPUReg_CNTV_CTL:
@@ -532,7 +526,6 @@ static inline void armv_vcpu_enable(vcpu_t *vcpu)
 #ifdef CONFIG_HAVE_FPU
     vcpu_hw_write_reg(seL4_VCPUReg_CPACR, vcpu->regs[seL4_VCPUReg_CPACR]);
 #endif
-    vcpu_hw_write_reg(seL4_VCPUReg_TPIDRRO_EL0, vcpu->regs[seL4_VCPUReg_TPIDRRO_EL0]);
 }
 
 static inline void armv_vcpu_disable(vcpu_t *vcpu)
@@ -547,7 +540,6 @@ static inline void armv_vcpu_disable(vcpu_t *vcpu)
 #ifdef CONFIG_HAVE_FPU
         vcpu->regs[seL4_VCPUReg_CPACR] = vcpu_hw_read_reg(seL4_VCPUReg_CPACR);
 #endif
-        vcpu->regs[seL4_VCPUReg_TPIDRRO_EL0] = vcpu_hw_read_reg(seL4_VCPUReg_TPIDRRO_EL0);
         isb();
     }
     /* Turn off the VGIC */

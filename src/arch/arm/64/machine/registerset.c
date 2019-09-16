@@ -33,7 +33,7 @@ compile_assert(
 const register_t gpRegisters[] = {
     X9, X10, X11, X12, X13, X14, X15,
     X19, X20, X21, X22, X23, X24, X25, X26, X27, X28,
-    TPIDR_EL0,
+    TPIDR_EL0, TPIDRRO_EL0,
 };
 compile_assert(
     consistent_gp_registers,

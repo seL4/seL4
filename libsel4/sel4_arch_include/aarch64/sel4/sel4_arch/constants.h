@@ -98,7 +98,6 @@ enum {
 
     /* thread pointer/ID registers EL0/EL1 */
     seL4_VCPUReg_TPIDR_EL1,
-    seL4_VCPUReg_TPIDRRO_EL0,
 
     /* generic timer registers, to be completed */
     seL4_VCPUReg_CNTV_CTL,

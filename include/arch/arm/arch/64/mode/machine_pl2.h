@@ -15,18 +15,6 @@
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 
-static inline void writeTPIDRRO_EL0(word_t reg)
-{
-    MSR("tpidrro_el0", reg);
-}
-
-static inline word_t readTPIDRRO_EL0(void)
-{
-    word_t reg;
-    MRS("tpidrro_el0", reg);
-    return reg;
-}
-
 static inline void writeTPIDR_EL2(word_t reg)
 {
     MSR("tpidr_el2", reg);

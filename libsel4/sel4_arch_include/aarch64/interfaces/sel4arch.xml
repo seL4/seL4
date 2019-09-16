@@ -47,6 +47,7 @@
         <member name="x27"/>
         <member name="x28"/>
         <member name="tpidr_el0"/>
+        <member name="tpidrro_el0"/>
     </struct>
     <interface name="seL4_ARM_VSpace" manual_name="Page Global Directory">
         <method id="ARMVSpaceClean_Data" name="Clean_Data" manual_label="vspace_clean"

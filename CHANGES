@@ -53,6 +53,8 @@ Upcoming release: BREAKING
 * Moved aarch64 kernel window
     - aarch64 kernel window is now placed at 0, meaning the kernel can access memory
       below where the kernel image is mapped.
+* aarch64: Moved TPIDRRO_EL0 (EL0 Read-Only Thread ID register) to TCB register context from VCPU registers. This means
+  changes to this register from user level have to go via seL4_TCB_Write Registers instead of seL4_ARM_VCPU_WriteRegs.
 
 ## Upgrade Notes
 ---
