@@ -50,9 +50,16 @@ devices:
     interrupts:
       INTERRUPT_VGIC_MAINTENANCE: 0
   # Broadcom second level IRQ controller (interrupt-controller/brcm,bcm2835-armctrl-ic.txt),
-  # TI AM33XX/OMAP3 intc (interrupt-controller/ti,omap-intc-irq.txt)
   - compatible:
       - brcm,bcm2836-armctrl-ic
+    regions:
+      - index: 0
+        kernel: INTC_PPTR
+        # the pi 3 exposes another timer at 0x3f00b400, which is in the same page as
+        # this, so we need to give this region to userspace :-(
+        user: true
+  # TI AM33XX/OMAP3 intc (interrupt-controller/ti,omap-intc-irq.txt)
+  - compatible:
       - ti,am33xx-intc
       - ti,omap3-intc
     regions:
