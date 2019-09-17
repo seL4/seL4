@@ -1129,8 +1129,8 @@ exception_t decodeTCBConfigure(cap_t cap, word_t length, cte_t *slot,
                cRootCap, cRootSlot,
                vRootCap, vRootSlot,
                bufferAddr, bufferCap,
-               bufferSlot, thread_control_update_space |
-               thread_control_update_ipc_buffer);
+               bufferSlot, thread_control_caps_update_space |
+               thread_control_caps_update_ipc_buffer);
 #else
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
@@ -1175,7 +1175,7 @@ exception_t decodeSetPriority(cap_t cap, word_t length, extra_caps_t excaps, wor
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), NULL,
                cap_null_cap_new(), NULL,
                NULL_PRIO, newPrio,
-               NULL, thread_control_update_priority);
+               NULL, thread_control_sched_update_priority);
 #else
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), NULL,
@@ -1219,7 +1219,7 @@ exception_t decodeSetMCPriority(cap_t cap, word_t length, extra_caps_t excaps, w
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), NULL,
                cap_null_cap_new(), NULL,
                newMcp, NULL_PRIO,
-               NULL, thread_control_update_mcp);
+               NULL, thread_control_sched_update_mcp);
 #else
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), NULL,
@@ -1257,7 +1257,7 @@ exception_t decodeSetTimeoutEndpoint(cap_t cap, cte_t *slot, extra_caps_t excaps
                cap_null_cap_new(), NULL,
                cap_null_cap_new(), NULL,
                0, cap_null_cap_new(), NULL,
-               thread_control_update_timeout);
+               thread_control_caps_update_timeout);
 }
 #endif
 
@@ -1353,10 +1353,10 @@ exception_t decodeSetSchedParams(cap_t cap, word_t length, extra_caps_t excaps, 
                fhCap, fhSlot,
                newMcp, newPrio,
                sc,
-               thread_control_update_mcp |
-               thread_control_update_priority |
-               thread_control_update_sc |
-               thread_control_update_fault);
+               thread_control_sched_update_mcp |
+               thread_control_sched_update_priority |
+               thread_control_sched_update_sc |
+               thread_control_sched_update_fault);
 #else
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), NULL,
@@ -1413,7 +1413,7 @@ exception_t decodeSetIPCBuffer(cap_t cap, word_t length, cte_t *slot,
                cap_null_cap_new(), NULL,
                cap_null_cap_new(), NULL,
                cptr_bufferPtr, bufferCap,
-               bufferSlot, thread_control_update_ipc_buffer);
+               bufferSlot, thread_control_caps_update_ipc_buffer);
 #else
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
@@ -1529,7 +1529,7 @@ exception_t decodeSetSpace(cap_t cap, word_t length, cte_t *slot,
                cap_null_cap_new(), NULL,
                cRootCap, cRootSlot,
                vRootCap, vRootSlot,
-               0, cap_null_cap_new(), NULL, thread_control_update_space | thread_control_update_fault);
+               0, cap_null_cap_new(), NULL, thread_control_caps_update_space | thread_control_caps_update_fault);
 #else
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
@@ -1695,7 +1695,7 @@ exception_t invokeTCB_ThreadControlCaps(tcb_t *target, cte_t *slot,
     exception_t e;
     cap_t tCap = cap_thread_cap_new((word_t)target);
 
-    if (updateFlags & thread_control_update_fault) {
+    if (updateFlags & thread_control_caps_update_fault) {
         e = installTCBCap(target, tCap, slot, tcbFaultHandler, fh_newCap, fh_srcSlot);
         if (e != EXCEPTION_NONE) {
             return e;
@@ -1703,14 +1703,14 @@ exception_t invokeTCB_ThreadControlCaps(tcb_t *target, cte_t *slot,
 
     }
 
-    if (updateFlags & thread_control_update_timeout) {
+    if (updateFlags & thread_control_caps_update_timeout) {
         e = installTCBCap(target, tCap, slot, tcbTimeoutHandler, th_newCap, th_srcSlot);
         if (e != EXCEPTION_NONE) {
             return e;
         }
     }
 
-    if (updateFlags & thread_control_update_space) {
+    if (updateFlags & thread_control_caps_update_space) {
         e = installTCBCap(target, tCap, slot, tcbCTable, cRoot_newCap, cRoot_srcSlot);
         if (e != EXCEPTION_NONE) {
             return e;
@@ -1722,7 +1722,7 @@ exception_t invokeTCB_ThreadControlCaps(tcb_t *target, cte_t *slot,
         }
     }
 
-    if (updateFlags & thread_control_update_ipc_buffer) {
+    if (updateFlags & thread_control_caps_update_ipc_buffer) {
         cte_t *bufferSlot;
 
         bufferSlot = TCB_PTR_CTE_PTR(target, tcbBuffer);
@@ -1827,7 +1827,7 @@ exception_t invokeTCB_ThreadControlSched(tcb_t *target, cte_t *slot,
                                          sched_context_t *sc,
                                          thread_control_flag_t updateFlags)
 {
-    if (updateFlags & thread_control_update_fault) {
+    if (updateFlags & thread_control_sched_update_fault) {
         cap_t tCap = cap_thread_cap_new((word_t)target);
         exception_t e = installTCBCap(target, tCap, slot, tcbFaultHandler, fh_newCap, fh_srcSlot);
         if (e != EXCEPTION_NONE) {
@@ -1835,15 +1835,15 @@ exception_t invokeTCB_ThreadControlSched(tcb_t *target, cte_t *slot,
         }
     }
 
-    if (updateFlags & thread_control_update_mcp) {
+    if (updateFlags & thread_control_sched_update_mcp) {
         setMCPriority(target, mcp);
     }
 
-    if (updateFlags & thread_control_update_priority) {
+    if (updateFlags & thread_control_sched_update_priority) {
         setPriority(target, priority);
     }
 
-    if (updateFlags & thread_control_update_sc) {
+    if (updateFlags & thread_control_sched_update_sc) {
         if (sc != NULL && sc != target->tcbSchedContext) {
             schedContext_bindTCB(sc, target);
         } else if (sc == NULL && target->tcbSchedContext != NULL) {
