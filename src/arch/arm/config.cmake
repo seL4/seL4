@@ -136,26 +136,6 @@ config_option(
     DEPENDS "KernelArchArmV7a OR KernelArchArmV8a;NOT KernelArmCortexA8"
 )
 
-config_option(
-    KernelArmExportPCNTUser EXPORT_PCNT_USER "PL0 access to generic timer CNTPCT and CNTFRQ. \
-    Grant user access to physical counter and counter \
-    frequency registers of the generic timer. \
-    WARNING: selecting this option opens a timing \
-    channel"
-    DEFAULT OFF
-    DEPENDS "KernelArmCortexA15"
-)
-
-config_option(
-    KernelArmExportVCNTUser EXPORT_VCNT_USER "PL0 access to generic timer CNTVCT and CNTFRQ. \
-    Grant user access to virtual counter and counter \
-    frequency registers of the generic timer. \
-    WARNING: selecting this option opens a timing \
-    channel"
-    DEFAULT OFF
-    DEPENDS "KernelArmCortexA15 OR KernelArmCortexA53"
-)
-
 config_option(KernelARMSMMUInterruptEnable SMMU_INTERRUPT_ENABLE "Enable SMMU interrupts. \
     SMMU interrupts currently only serve a debug purpose as \
     they are not forwarded to user level. Enabling this will \

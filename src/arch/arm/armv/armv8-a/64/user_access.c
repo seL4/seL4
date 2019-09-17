@@ -16,6 +16,7 @@
 /* bits in the CNTKCTL_EL1 */
 #define EL0VCTEN BIT(1)
 #define EL0PCTEN BIT(0)
+#define EL0VTEN  BIT(8)
 #define EL0PTEN  BIT(9)
 
 /* bits in CNTHCTL_EL2 */
@@ -38,18 +39,27 @@ static void check_export_arch_timer(void)
     uint32_t val;
     MRS("CNTKCTL_EL1", val);
 #ifdef CONFIG_EXPORT_PCNT_USER
-    val |= (EL0PCTEN | EL0PTEN);
-#endif
+    val |= EL0PCTEN;
+#endif /* CONFIG_EXPORT_PCNT_USER */
+#ifdef CONFIG_EXPORT_PTMR_USER
+    val |= EL0PTEN;
+#endif /* CONFIG_EXPORT_PTMR_USER */
 #ifdef CONFIG_EXPORT_VCNT_USER
-    val |= (EL0VCTEN | EL0VCTEN);
-#endif
+    val |= EL0VCTEN;
+#endif /* CONFIG_EXPORT_VCNT_USER */
+#ifdef CONFIG_EXPORT_VTMR_USER
+    val |= EL0VTEN;
+#endif /* CONFIG_EXPORT_VTMR_USER */
     MSR("CNTKCTL_EL1", val);
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     MRS("CNTHCTL_EL2", val);
 #ifdef CONFIG_EXPORT_PCNT_USER
-    val |= (EL1PCEN | EL1PCTEN);
-#endif
+    val |= EL1PCTEN;
+#endif /* CONFIG_EXPORT_PCNT_USER */
+#ifdef CONFIG_EXPORT_PTMR_USER
+    val |= EL1PCEN;
+#endif /* CONFIG_EXPORT_PTMR_USER */
     MSR("CNTHCTL_EL2", val);
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 }
