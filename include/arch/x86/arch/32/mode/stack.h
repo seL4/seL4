@@ -45,7 +45,12 @@ static inline void setKernelEntryStackPointer(tcb_t *target_thread)
     /* The first item to be pushed onto the stack should always be SS */
     register_context_top = (word_t)&target_thread->tcbArch.tcbContext.registers[SS + 1];
 
-    tss_ptr_set_esp0(&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.tss, register_context_top);
+    /*
+     * Work around -Waddress-of-packed-member. TSS is the first thing
+     * in the struct and so it's safe to take its address.
+     */
+    void *tss = &x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.tss;
+    tss_ptr_set_esp0(tss, register_context_top);
 
     if (config_set(CONFIG_HARDWARE_DEBUG_API)) {
         x86_wrmsr(IA32_SYSENTER_ESP_MSR, register_context_top);

@@ -493,8 +493,13 @@ BOOT_CODE bool_t init_vm_state(void)
         SMP_COND_STATEMENT(return false);
     }
 
-    init_tss(&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.tss);
-    init_gdt(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt, &x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.tss);
+    /*
+     * Work around -Waddress-of-packed-member. TSS is the first thing
+     * in the struct and so it's safe to take its address.
+     */
+    void *tss_ptr = &x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.tss;
+    init_tss(tss_ptr);
+    init_gdt(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt, tss_ptr);
     init_idt(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSidt);
     return true;
 }
