@@ -88,6 +88,22 @@ config_option(
     DEPENDS "KernelArchX86;NOT KernelVerificationBuild"
 )
 
+config_option(
+    KernelIOMMU IOMMU "IOMMU support for VT-d enabled chipset"
+    DEFAULT ON
+    DEPENDS "KernelPlatPC99; NOT KernelVerificationBuild"
+    DEFAULT_DISABLED OFF
+)
+
+config_string(
+    KernelMaxRMRREntries MAX_RMRR_ENTRIES
+    "Setsthe maximum number of Reserved Memory Region Reporting structures we support \
+    recording from the ACPI tables"
+    DEFAULT 32
+    DEPENDS "KernelIOMMU" DEFAULT_DISABLED 1
+    UNQUOTE
+)
+
 config_string(
     KernelMaxVPIDs MAX_VPIDS
     "The kernel maintains a mapping of 16-bit VPIDs to VCPUs. This option should be \
