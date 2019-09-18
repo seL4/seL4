@@ -235,9 +235,6 @@ void handleInterrupt(irq_t irq)
 #endif /* ENABLE_SMP_SUPPORT */
 
     case IRQReserved:
-#ifdef CONFIG_IRQ_REPORTING
-        printf("Received reserved IRQ: %d", (int)irq);
-#endif
         handleReservedIRQ(irq);
         break;
 

@@ -18,7 +18,7 @@
 static inline void handleReservedIRQ(irq_t irq)
 {
 #ifdef CONFIG_IRQ_REPORTING
-    printf("Received reserved IRQ: %d\n", (int)irq);
+    printf("Received unhandled reserved IRQ: %d\n", (int)irq);
 #endif
 }
 

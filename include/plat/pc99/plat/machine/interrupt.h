@@ -25,15 +25,15 @@
 
 static inline void handleReservedIRQ(irq_t irq)
 {
-#ifdef CONFIG_IRQ_REPORTING
-    printf("Received reserved IRQ: %d\n", (int)irq);
-#endif
-
 #ifdef CONFIG_IOMMU
     if (irq == irq_iommu) {
         vtd_handle_fault();
         return;
     }
+#endif
+
+#ifdef CONFIG_IRQ_REPORTING
+    printf("Received unhandled reserved IRQ: %d\n", (int)irq);
 #endif
 }
 
