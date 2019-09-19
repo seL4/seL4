@@ -25,7 +25,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/../tools/helpers.cmake)
 # aarch32, aarch64, arm_hyp, riscv32, riscv64, x86_64, ia32
 # This macro is intended to be called from within a platform config.
 macro(declare_seL4_arch sel4_arch)
-    set(KernelSel4Arch "${sel4_arch}" CACHE STRING "")
+    set(KernelSel4Arch "${sel4_arch}" CACHE STRING "" FORCE)
     config_choice(
         KernelSel4Arch
         SEL4_ARCH
