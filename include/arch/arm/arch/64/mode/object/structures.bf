@@ -105,6 +105,44 @@ block vcpu_cap {
 }
 #endif
 
+#ifdef CONFIG_ARM_SMMU 
+
+block sid_control_cap {
+    padding 64
+
+    field capType  5
+    padding 59
+}
+
+block sid_cap {
+
+    padding 58
+    field capSID 8
+
+    field capType  5
+    padding 59
+}
+
+block cb_control_cap {
+    padding 64
+
+    field capType  5
+    padding 59
+}
+
+
+block cb_cap {
+
+    padding 58
+    field capCB 8
+
+
+    field capType  5
+    padding 59
+}
+
+#endif 
+
 -- NB: odd numbers are arch caps (see isArchCap())
 tagged_union cap capType {
     -- 5-bit tag caps
@@ -135,6 +173,12 @@ tagged_union cap capType {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     tag vcpu_cap                    15
 #endif
+#ifdef CONFIG_ARM_SMMU
+    tag sid_control_cap             17 
+    tag sid_cap                     19 
+    tag cb_control_cap              21
+    tag cb_cap                      23
+#endif 
 }
 
 ---- Arch-independent object types

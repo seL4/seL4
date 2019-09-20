@@ -86,6 +86,7 @@ BOOT_CODE static void arch_init_freemem(p_region_t ui_p_reg, p_region_t dtb_p_re
     init_freemem(get_num_avail_p_regs(), get_avail_p_regs(), index, reserved, it_v_reg, extra_bi_size_bits);
 }
 
+
 BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
 {
     unsigned i;
@@ -122,6 +123,19 @@ BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
     /* provide the IRQ control cap */
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapIRQControl), cap_irq_control_cap_new());
 }
+
+#ifdef CONFIG_ARM_SMMU
+BOOT_CODE static void init_smmu (cap_t root_cnode_cap) {
+
+
+    plat_smmu_init(); 
+
+    /*provide the SID and CB control cap*/
+    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapSMMUSIDControl), cap_sid_control_cap_new());
+    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapSMMUCBControl), cap_cb_control_cap_new());
+}
+
+#endif 
 
 BOOT_CODE static bool_t create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg)
 {
@@ -225,10 +239,7 @@ BOOT_CODE static void init_plat(void)
 {
     initIRQController();
     initL2Cache();
-    
-#ifdef CONFIG_ARM_SMMU 
-    plat_smmu_init(); 
-#endif     
+       
 }
 
 #ifdef ENABLE_SMP_SUPPORT
@@ -380,6 +391,10 @@ static BOOT_CODE bool_t try_init_kernel(
     /* initialise the IRQ states and provide the IRQ control cap */
     init_irqs(root_cnode_cap);
 
+#ifdef CONFIG_ARM_SMMU
+    /* initialise the SMMU and provide the SMMU control caps*/
+    init_smmu(root_cnode_cap); 
+#endif 
     populate_bi_frame(0, CONFIG_MAX_NUM_NODES, ipcbuf_vptr, extra_bi_size);
 
     /* put DTB in the bootinfo block, if present. */

@@ -103,3 +103,17 @@ UP_STATE_DEFINE(bool_t, armHSVCPUActive);
 asid_t armKSHWASIDTable[BIT(hwASIDBits)];
 hw_asid_t armKSNextASID;
 #endif
+
+#ifdef CONFIG_ARM_SMMU 
+/*recording the state of created SID caps*/
+bool_t smmuStateSIDTable[SMMU_NUM_SID];
+/* CNode containing the cb_cap that is assigned to sids*/
+cte_t smmuStateSIDNode[BIT(SMMU_SID_CNODE_SLOT_BITS)] ALIGN(BIT(SMMU_SID_CNODE_SLOT_BITS + seL4_SlotBits));
+compile_assert(smmuStateSIDCNodeSize, sizeof(smmuStateSIDNode) >= ((SMMU_NUM_SID) * sizeof(cte_t)));
+
+/*recording the state of the created cb caps*/
+bool_t smmuStateCBTable[SMMU_NUM_CB]; 
+/* CNode containing the vcapce root cap that is assigned to sids*/
+cte_t smmuStateCBNode[BIT(SMMU_CB_CNODE_SLOT_BITS)] ALIGN(BIT(SMMU_CB_CNODE_SLOT_BITS + seL4_SlotBits));
+compile_assert(smmuStateCBCNodeSize, sizeof(smmuStateCBNode) >= ((SMMU_NUM_CB) * sizeof(cte_t)));
+#endif
