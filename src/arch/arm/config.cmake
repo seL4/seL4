@@ -222,6 +222,7 @@ add_sources(
         object/tcb.c
         object/iospace.c
         object/vcpu.c
+        object/smmu.c
         smp/ipi.c
 )
 

@@ -52,3 +52,5 @@ additional_commands:
         CLK_MAGIC: '*'
         CLK_SHIFT: '*'
         TIMER_PRECISION: '*'
+        MAX_SID: '*'
+        MAX_CB: '*'

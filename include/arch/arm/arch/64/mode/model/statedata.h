@@ -12,6 +12,10 @@
 #include <util.h>
 #include <object/structures.h>
 
+#ifdef CONFIG_ARM_SMMU
+#include <arch/object/smmu.h>
+#endif
+
 /* The top level asid mapping table */
 extern asid_pool_t *armKSASIDTable[BIT(asidHighBits)] VISIBLE;
 
@@ -34,3 +38,10 @@ extern hw_asid_t armKSNextASID VISIBLE;
 pde_t *armKSGlobalLogPDE;
 #endif
 
+
+#ifdef CONFIG_ARM_SMMU
+extern bool_t smmuStateSIDTable[SMMU_MAX_SID];
+extern cte_t smmuStateSIDNode[BIT(SMMU_SID_CNODE_SLOT_BITS)];
+extern bool_t smmuStateCBTable[SMMU_MAX_CB];
+extern cte_t smmuStateCBNode[BIT(SMMU_CB_CNODE_SLOT_BITS)];
+#endif
