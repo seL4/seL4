@@ -64,7 +64,7 @@ static inline exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *po
     asid_map_t asid_map;
     cap_page_upper_directory_cap_ptr_set_capPUDMappedASID(&cte->cap, asid);
     cap_page_upper_directory_cap_ptr_set_capPUDIsMapped(&cte->cap, 1);
-    asid_map = asid_map_asid_map_vspace_new(cap_page_upper_directory_cap_get_capPUDBasePtr(cte->cap));
+    asid_map = asid_map_asid_map_vspace_new(cap_page_upper_directory_cap_get_capPUDBasePtr(cte->cap), 0, false);
     poolPtr->array[asid & MASK(asidLowBits)] = asid_map;
 
     return EXCEPTION_NONE;
@@ -90,7 +90,7 @@ static inline exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *po
     asid_map_t asid_map;
     cap_page_global_directory_cap_ptr_set_capPGDMappedASID(&cte->cap, asid);
     cap_page_global_directory_cap_ptr_set_capPGDIsMapped(&cte->cap, 1);
-    asid_map = asid_map_asid_map_vspace_new(cap_page_global_directory_cap_get_capPGDBasePtr(cte->cap));
+    asid_map = asid_map_asid_map_vspace_new(cap_page_global_directory_cap_get_capPGDBasePtr(cte->cap), 0, false);
     poolPtr->array[asid & MASK(asidLowBits)] = asid_map;
 
     return EXCEPTION_NONE;

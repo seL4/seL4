@@ -190,7 +190,9 @@ block asid_map_none {
 
 block asid_map_vspace {
     field_high vspace_root          48
-    padding                         14
+    padding                         5
+    field hw_asid                   8
+    field hw_asid_valid             1
     field type                      2
 }
 
@@ -202,11 +204,8 @@ tagged_union asid_map type {
 -- PGDE, PUDE, PDEs and PTEs, assuming 48-bit physical address
 base 64(48,0)
 
--- hw_asids are required in hyp mode
 block pgde_invalid {
-    field stored_hw_asid            8
-    field stored_asid_valid         1
-    padding                         53
+    padding                         62
     field pgde_type                 2
 }
 
@@ -223,9 +222,7 @@ tagged_union pgde pgde_type {
 }
 
 block pude_invalid {
-    field stored_hw_asid            8
-    field stored_asid_valid         1
-    padding                         53
+    padding                         62
     field pude_type                 2
 }
 
