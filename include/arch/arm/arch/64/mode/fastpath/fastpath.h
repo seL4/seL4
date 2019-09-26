@@ -35,10 +35,8 @@ compile_assert(SysReplyRecv_Minus2, SysReplyRecv == -2)
 #define cap_vtable_cap_get_vspace_root_fp(vtable_cap) cap_vtable_root_get_basePtr(vtable_cap)
 
 static inline void FORCE_INLINE
-switchToThread_fp(tcb_t *thread, vspace_root_t *vroot, pde_t stored_hw_asid)
+switchToThread_fp(tcb_t *thread, vspace_root_t *vroot, asid_t asid)
 {
-    asid_t asid = (asid_t)(stored_hw_asid.words[0] & 0xffff);
-
     armv_contextSwitch(vroot, asid);
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         vcpu_switch(thread->tcbArch.tcbVCPU);

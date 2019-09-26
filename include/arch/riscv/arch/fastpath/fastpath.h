@@ -45,10 +45,8 @@ NORETURN;
 #define endpoint_ptr_get_epQueue_tail_fp(ep_ptr) TCB_PTR(endpoint_ptr_get_epQueue_tail(ep_ptr))
 #define cap_vtable_cap_get_vspace_root_fp(vtable_cap) PTE_PTR(cap_page_table_cap_get_capPTBasePtr(vtable_cap))
 
-static inline void FORCE_INLINE switchToThread_fp(tcb_t *thread, pte_t *vroot, pte_t stored_hw_asid)
+static inline void FORCE_INLINE switchToThread_fp(tcb_t *thread, pte_t *vroot, asid_t asid)
 {
-    asid_t asid = (asid_t)(stored_hw_asid.words[0]);
-
     setVSpaceRoot(addrFromPPtr(vroot), asid);
 
     NODE_STATE(ksCurThread) = thread;

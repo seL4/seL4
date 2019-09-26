@@ -33,7 +33,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
     word_t badge;
     cap_t newVTable;
     vspace_root_t *cap_pd;
-    pde_t stored_hw_asid;
+    asid_t asid;
     word_t fault_type;
     dom_t dom;
 
@@ -89,22 +89,19 @@ fastpath_call(word_t cptr, word_t msgInfo)
     }
 
 #ifdef CONFIG_ARCH_AARCH32
-    /* Get HW ASID */
-    stored_hw_asid = cap_pd[PD_ASID_SLOT];
+    asid = cap_page_directory_cap_get_capPDMappedASID(newVTable);
 #endif
 
 #ifdef CONFIG_ARCH_X86_64
-    /* borrow the stored_hw_asid for PCID */
-    stored_hw_asid.words[0] = cap_pml4_cap_get_capPML4MappedASID_fp(newVTable);
+    asid = cap_pml4_cap_get_capPML4MappedASID_fp(newVTable);
 #endif
 
 #ifdef CONFIG_ARCH_AARCH64
-    stored_hw_asid.words[0] = cap_vtable_root_get_mappedASID(newVTable);
+    asid = cap_vtable_root_get_mappedASID(newVTable);
 #endif
 
 #ifdef CONFIG_ARCH_RISCV
-    /* Get HW ASID */
-    stored_hw_asid.words[0] = cap_page_table_cap_get_capPTMappedASID(newVTable);
+    asid = cap_page_table_cap_get_capPTMappedASID(newVTable);
 #endif
 
     /* let gcc optimise this out for 1 domain */
@@ -123,7 +120,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
     }
 
 #ifdef CONFIG_ARCH_AARCH32
-    if (unlikely(!pde_pde_invalid_get_stored_asid_valid(stored_hw_asid))) {
+    if (unlikely(!pde_pde_invalid_get_stored_asid_valid(cap_pd[PD_ASID_SLOT]))) {
         slowpath(SysCall);
     }
 #endif
@@ -212,7 +209,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
     /* Dest thread is set Running, but not queued. */
     thread_state_ptr_set_tsType_np(&dest->tcbState,
                                    ThreadState_Running);
-    switchToThread_fp(dest, cap_pd, stored_hw_asid);
+    switchToThread_fp(dest, cap_pd, asid);
 
     msgInfo = wordFromMessageInfo(seL4_MessageInfo_set_capsUnwrapped(info, 0));
 
@@ -236,7 +233,7 @@ void fastpath_reply_recv(word_t cptr, word_t msgInfo)
 
     cap_t newVTable;
     vspace_root_t *cap_pd;
-    pde_t stored_hw_asid;
+    asid_t asid;
     dom_t dom;
 
     /* Get message info and length */
@@ -334,20 +331,19 @@ void fastpath_reply_recv(word_t cptr, word_t msgInfo)
     }
 
 #ifdef CONFIG_ARCH_AARCH32
-    /* Get HWASID. */
-    stored_hw_asid = cap_pd[PD_ASID_SLOT];
+    asid = cap_page_directory_cap_get_capPDMappedASID(newVTable);
 #endif
 
 #ifdef CONFIG_ARCH_X86_64
-    stored_hw_asid.words[0] = cap_pml4_cap_get_capPML4MappedASID(newVTable);
+    asid = cap_pml4_cap_get_capPML4MappedASID_fp(newVTable);
 #endif
 
 #ifdef CONFIG_ARCH_AARCH64
-    stored_hw_asid.words[0] = cap_vtable_root_get_mappedASID(newVTable);
+    asid = cap_vtable_root_get_mappedASID(newVTable);
 #endif
 
 #ifdef CONFIG_ARCH_RISCV
-    stored_hw_asid.words[0] = cap_page_table_cap_get_capPTMappedASID(newVTable);
+    asid = cap_page_table_cap_get_capPTMappedASID(newVTable);
 #endif
 
     /* Ensure the original caller can be scheduled directly. */
@@ -358,7 +354,7 @@ void fastpath_reply_recv(word_t cptr, word_t msgInfo)
 
 #ifdef CONFIG_ARCH_AARCH32
     /* Ensure the HWASID is valid. */
-    if (unlikely(!pde_pde_invalid_get_stored_asid_valid(stored_hw_asid))) {
+    if (unlikely(!pde_pde_invalid_get_stored_asid_valid(cap_pd[PD_ASID_SLOT]))) {
         slowpath(SysReplyRecv);
     }
 #endif
@@ -473,7 +469,7 @@ void fastpath_reply_recv(word_t cptr, word_t msgInfo)
     /* Dest thread is set Running, but not queued. */
     thread_state_ptr_set_tsType_np(&caller->tcbState,
                                    ThreadState_Running);
-    switchToThread_fp(caller, cap_pd, stored_hw_asid);
+    switchToThread_fp(caller, cap_pd, asid);
 
     msgInfo = wordFromMessageInfo(seL4_MessageInfo_set_capsUnwrapped(info, 0));
 

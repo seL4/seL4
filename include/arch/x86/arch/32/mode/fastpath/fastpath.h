@@ -30,7 +30,7 @@ static inline vspace_root_t *cap_vtable_cap_get_vspace_root_fp(cap_t vtable_cap)
     return PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(vtable_cap));
 }
 
-static inline void FORCE_INLINE switchToThread_fp(tcb_t *thread, vspace_root_t *pd, pde_t stored_hw_asid)
+static inline void FORCE_INLINE switchToThread_fp(tcb_t *thread, vspace_root_t *pd, asid_t asid)
 {
     uint32_t new_pd = pptr_to_paddr(pd);
 

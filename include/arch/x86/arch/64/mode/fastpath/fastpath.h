@@ -41,11 +41,9 @@ static inline word_t cap_pml4_cap_get_capPML4MappedASID_fp(cap_t vtable_cap)
     return (uint32_t)vtable_cap.words[0];
 }
 
-static inline void FORCE_INLINE switchToThread_fp(tcb_t *thread, vspace_root_t *vroot, pde_t stored_hw_asid)
+static inline void FORCE_INLINE switchToThread_fp(tcb_t *thread, vspace_root_t *vroot, asid_t asid)
 {
     word_t new_vroot = pptr_to_paddr(vroot);
-    /* the asid is the 12-bit PCID */
-    asid_t asid = (asid_t)(stored_hw_asid.words[0] & 0xfff);
     cr3_t next_cr3 = makeCR3(new_vroot, asid);
     if (likely(getCurrentUserCR3().words[0] != next_cr3.words[0])) {
         SMP_COND_STATEMENT(tlb_bitmap_set(vroot, getCurrentCPUIndex());)
