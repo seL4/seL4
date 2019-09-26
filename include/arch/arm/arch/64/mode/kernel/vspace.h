@@ -73,13 +73,11 @@ static const region_t BOOT_RODATA *mode_reserved_region = NULL;
 #define cap_vtable_root_ptr_set_mappedCB(_c, cb) \
     cap_page_upper_directory_cap_ptr_set_capPUDMappedCB(_c, cb)
 #define cap_vtable_cap_new(_a, _v, _m) cap_page_upper_directory_cap_new(_a, _v, _m, 0, CB_INVALID)
-#define vtable_invalid_new(_a, _v) pude_pude_invalid_new(_a, _v, 0)
-#define vtable_invalid_smmu_new(_cb) pude_pude_invalid_new(0, false, _cb)
+#define vtable_invalid_smmu_new(_cb) pude_pude_invalid_new(_cb)
 #define vtable_invalid_get_bind_cb(_v) \
     pude_pude_invalid_get_bind_cb(_v)
 #else
 #define cap_vtable_cap_new(_a, _v, _m) cap_page_upper_directory_cap_new(_a, _v, _m, 0)
-#define vtable_invalid_new(_a, _v) pude_pude_invalid_new(_a, _v)
 #endif  /*!CONFIG_ARM_SMMU*/
 
 #define vtable_invalid_get_stored_asid_valid(_v) \
@@ -90,7 +88,11 @@ static inline exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *po
 {
     cap_page_upper_directory_cap_ptr_set_capPUDMappedASID(&cte->cap, asid);
     cap_page_upper_directory_cap_ptr_set_capPUDIsMapped(&cte->cap, 1);
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    asid_map_t asid_map = asid_map_asid_map_vspace_new(cap_page_upper_directory_cap_get_capPUDBasePtr(cte->cap), 0, false);
+#else
     asid_map_t asid_map = asid_map_asid_map_vspace_new(cap_page_upper_directory_cap_get_capPUDBasePtr(cte->cap));
+#endif
     poolPtr->array[asid & MASK(asidLowBits)] = asid_map;
 #ifdef CONFIG_ARM_SMMU
     vspace_root_t *vtable = (vspace_root_t *)cap_page_upper_directory_cap_get_capPUDBasePtr(cte->cap);
@@ -116,14 +118,12 @@ static inline exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *po
     cap_page_global_directory_cap_ptr_set_capPGDMappedCB(_c, cb)
 #define cap_vtable_cap_new(_a, _v, _m) \
     cap_page_global_directory_cap_new(_a, _v, _m, CB_INVALID)
-#define vtable_invalid_new(_a, _v) pgde_pgde_invalid_new(_a, _v, 0)
-#define vtable_invalid_smmu_new(_cb) pgde_pgde_invalid_new(0, false, _cb)
+#define vtable_invalid_smmu_new(_cb) pgde_pgde_invalid_new(_cb)
 #define vtable_invalid_get_bind_cb(_v) \
     pgde_pgde_invalid_get_bind_cb(_v)
 #else
 #define cap_vtable_cap_new(_a, _v, _m) \
     cap_page_global_directory_cap_new(_a, _v, _m)
-#define vtable_invalid_new(_a, _v) pgde_pgde_invalid_new(_a, _v)
 #endif /*!CONFIG_ARM_SMMU*/
 
 #define vtable_invalid_get_stored_asid_valid(_v) \
@@ -134,7 +134,11 @@ static inline exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *po
 {
     cap_page_global_directory_cap_ptr_set_capPGDMappedASID(&cte->cap, asid);
     cap_page_global_directory_cap_ptr_set_capPGDIsMapped(&cte->cap, 1);
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    asid_map_t asid_map = asid_map_asid_map_vspace_new(cap_page_global_directory_cap_get_capPGDBasePtr(cte->cap), 0, false);
+#else
     asid_map_t asid_map = asid_map_asid_map_vspace_new(cap_page_global_directory_cap_get_capPGDBasePtr(cte->cap));
+#endif
     poolPtr->array[asid & MASK(asidLowBits)] = asid_map;
 
 #ifdef CONFIG_ARM_SMMU
