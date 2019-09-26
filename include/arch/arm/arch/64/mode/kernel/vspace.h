@@ -40,6 +40,8 @@ void deleteASID(asid_t asid, vspace_root_t *vspace);
 hw_asid_t getHWASID(asid_t asid);
 #endif
 
+asid_map_t findMapForASID(asid_t asid);
+
 static const region_t BOOT_RODATA *mode_reserved_region = NULL;
 
 #ifdef AARCH64_VSPACE_S2_START_L1
@@ -59,10 +61,11 @@ static const region_t BOOT_RODATA *mode_reserved_region = NULL;
 
 static inline exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *poolPtr, cte_t *cte)
 {
+    asid_map_t asid_map;
     cap_page_upper_directory_cap_ptr_set_capPUDMappedASID(&cte->cap, asid);
     cap_page_upper_directory_cap_ptr_set_capPUDIsMapped(&cte->cap, 1);
-    poolPtr->array[asid & MASK(asidLowBits)] =
-        PUDE_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(cte->cap));
+    asid_map = asid_map_asid_map_vspace_new(cap_page_upper_directory_cap_get_capPUDBasePtr(cte->cap));
+    poolPtr->array[asid & MASK(asidLowBits)] = asid_map;
 
     return EXCEPTION_NONE;
 }
@@ -84,10 +87,11 @@ static inline exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *po
 
 static inline exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *poolPtr, cte_t *cte)
 {
+    asid_map_t asid_map;
     cap_page_global_directory_cap_ptr_set_capPGDMappedASID(&cte->cap, asid);
     cap_page_global_directory_cap_ptr_set_capPGDIsMapped(&cte->cap, 1);
-    poolPtr->array[asid & MASK(asidLowBits)] =
-        PGDE_PTR(cap_page_global_directory_cap_get_capPGDBasePtr(cte->cap));
+    asid_map = asid_map_asid_map_vspace_new(cap_page_global_directory_cap_get_capPGDBasePtr(cte->cap));
+    poolPtr->array[asid & MASK(asidLowBits)] = asid_map;
 
     return EXCEPTION_NONE;
 }

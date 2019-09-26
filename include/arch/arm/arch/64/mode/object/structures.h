@@ -110,7 +110,7 @@ typedef pgde_t vspace_root_t;
 #define VCPU_REF(p)       ((word_t)(p))
 
 struct asid_pool {
-    vspace_root_t *array[BIT(asidLowBits)];
+    asid_map_t array[BIT(asidLowBits)];
 };
 typedef struct asid_pool asid_pool_t;
 
