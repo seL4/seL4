@@ -49,6 +49,8 @@ void deleteASID(asid_t asid, vspace_root_t *vspace);
 hw_asid_t getHWASID(asid_t asid);
 #endif
 
+asid_map_t findMapForASID(asid_t asid);
+
 #ifdef __clang__
 static const region_t BOOT_RODATA mode_reserved_region[] = {};
 #else
@@ -88,10 +90,10 @@ static inline exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *po
 {
     cap_page_upper_directory_cap_ptr_set_capPUDMappedASID(&cte->cap, asid);
     cap_page_upper_directory_cap_ptr_set_capPUDIsMapped(&cte->cap, 1);
-    poolPtr->array[asid & MASK(asidLowBits)] =
-        PUDE_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(cte->cap));
+    asid_map_t asid_map = asid_map_asid_map_vspace_new(cap_page_upper_directory_cap_get_capPUDBasePtr(cte->cap));
+    poolPtr->array[asid & MASK(asidLowBits)] = asid_map;
 #ifdef CONFIG_ARM_SMMU
-    vspace_root_t *vtable = poolPtr->array[asid & MASK(asidLowBits)];
+    vspace_root_t *vtable = (vspace_root_t *)cap_page_upper_directory_cap_get_capPUDBasePtr(cte->cap);
     vtable[VTABLE_SMMU_SLOT] = vtable_invalid_smmu_new(0);
 #endif
     return EXCEPTION_NONE;
@@ -132,11 +134,11 @@ static inline exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *po
 {
     cap_page_global_directory_cap_ptr_set_capPGDMappedASID(&cte->cap, asid);
     cap_page_global_directory_cap_ptr_set_capPGDIsMapped(&cte->cap, 1);
-    poolPtr->array[asid & MASK(asidLowBits)] =
-        PGDE_PTR(cap_page_global_directory_cap_get_capPGDBasePtr(cte->cap));
+    asid_map_t asid_map = asid_map_asid_map_vspace_new(cap_page_global_directory_cap_get_capPGDBasePtr(cte->cap));
+    poolPtr->array[asid & MASK(asidLowBits)] = asid_map;
 
 #ifdef CONFIG_ARM_SMMU
-    vspace_root_t *vtable = poolPtr->array[asid & MASK(asidLowBits)];
+    vspace_root_t *vtable = (vspace_root_t *)cap_page_global_directory_cap_get_capPGDBasePtr(cte->cap);
     vtable[VTABLE_SMMU_SLOT] = vtable_invalid_smmu_new(0);
 #endif
     return EXCEPTION_NONE;

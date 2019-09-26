@@ -239,6 +239,23 @@ block vm_attributes {
 
 ---- ARM-specific object types
 
+block asid_map_none {
+    padding                         63
+    field type                      1
+}
+
+block asid_map_vspace {
+    padding                         16
+    field_high vspace_root          36
+    padding                         11
+    field type                      1
+}
+
+tagged_union asid_map type {
+    tag asid_map_none 0
+    tag asid_map_vspace 1
+}
+
 -- PGDE, PUDE, PDEs and PTEs, assuming 48-bit physical address
 base 64(48,0)
 
