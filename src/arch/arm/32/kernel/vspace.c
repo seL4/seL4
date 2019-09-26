@@ -635,7 +635,7 @@ BOOT_CODE void activate_global_pd(void)
 BOOT_CODE void write_it_asid_pool(cap_t it_ap_cap, cap_t it_pd_cap)
 {
     asid_pool_t *ap = ASID_POOL_PTR(pptr_of_cap(it_ap_cap));
-    asid_map_t asid_map = asid_map_asid_map_vspace_new(pptr_of_cap(it_pd_cap));
+    asid_map_t asid_map = asid_map_asid_map_vspace_new(pptr_of_cap(it_pd_cap), 0, false);
     ap->array[IT_ASID] = asid_map;
     armKSASIDTable[IT_ASID >> asidLowBits] = ap;
 }
@@ -652,6 +652,16 @@ asid_map_t findMapForASID(asid_t asid)
     }
 
     return poolPtr->array[asid & MASK(asidLowBits)];
+}
+
+static asid_map_t *findMapRefForASID(asid_t asid)
+{
+    asid_pool_t        *poolPtr;
+
+    poolPtr = armKSASIDTable[asid >> asidLowBits];
+    assert(poolPtr != NULL);
+
+    return &poolPtr->array[asid & MASK(asidLowBits)];
 }
 
 findPDForASID_ret_t findPDForASID(asid_t asid)
@@ -1122,52 +1132,24 @@ pde_t *pageTableMapped(asid_t asid, vptr_t vaddr, pte_t *pt)
 
 static void invalidateASID(asid_t asid)
 {
-    asid_pool_t *asidPool;
-    pde_t *pd;
+    asid_map_t *asid_map;
 
-    asidPool = armKSASIDTable[asid >> asidLowBits];
-    assert(asidPool);
+    asid_map = findMapRefForASID(asid);
+    assert(asid_map_get_type(*asid_map) == asid_map_asid_map_vspace);
 
-    asid_map_t asid_map = asidPool->array[asid & MASK(asidLowBits)];
-    assert(asid_map_get_type(asid_map) == asid_map_asid_map_vspace);
-
-    pd = (pde_t *)asid_map_asid_map_vspace_get_vspace_root(asid_map);
-
-    pd[PD_ASID_SLOT] = pde_pde_invalid_new(0, false);
-}
-
-static pde_t PURE loadHWASID(asid_t asid)
-{
-    asid_pool_t *asidPool;
-    pde_t *pd;
-
-    asidPool = armKSASIDTable[asid >> asidLowBits];
-    assert(asidPool);
-
-    asid_map_t asid_map = asidPool->array[asid & MASK(asidLowBits)];
-    assert(asid_map_get_type(asid_map) == asid_map_asid_map_vspace);
-
-    pd = (pde_t *)asid_map_asid_map_vspace_get_vspace_root(asid_map);
-
-    return pd[PD_ASID_SLOT];
+    asid_map_asid_map_vspace_ptr_set_hw_asid(asid_map, 0);
+    asid_map_asid_map_vspace_ptr_set_hw_asid_valid(asid_map, false);
 }
 
 static void storeHWASID(asid_t asid, hw_asid_t hw_asid)
 {
-    asid_pool_t *asidPool;
-    pde_t *pd;
+    asid_map_t *asid_map;
 
-    asidPool = armKSASIDTable[asid >> asidLowBits];
-    assert(asidPool);
+    asid_map = findMapRefForASID(asid);
+    assert(asid_map_get_type(*asid_map) == asid_map_asid_map_vspace);
 
-    asid_map_t asid_map = asidPool->array[asid & MASK(asidLowBits)];
-    assert(asid_map_get_type(asid_map) == asid_map_asid_map_vspace);
-
-    pd = (pde_t *)asid_map_asid_map_vspace_get_vspace_root(asid_map);
-
-    /* Store HW ASID in the last entry
-       Masquerade as an invalid PDE */
-    pd[PD_ASID_SLOT] = pde_pde_invalid_new(hw_asid, true);
+    asid_map_asid_map_vspace_ptr_set_hw_asid(asid_map, hw_asid);
+    asid_map_asid_map_vspace_ptr_set_hw_asid_valid(asid_map, true);
 
     armKSHWASIDTable[hw_asid] = asid;
 }
@@ -1204,11 +1186,11 @@ hw_asid_t findFreeHWASID(void)
 
 hw_asid_t getHWASID(asid_t asid)
 {
-    pde_t stored_hw_asid;
+    asid_map_t asid_map;
 
-    stored_hw_asid = loadHWASID(asid);
-    if (pde_pde_invalid_get_stored_asid_valid(stored_hw_asid)) {
-        return pde_pde_invalid_get_stored_hw_asid(stored_hw_asid);
+    asid_map = findMapForASID(asid);
+    if (asid_map_asid_map_vspace_get_hw_asid_valid(asid_map)) {
+        return asid_map_asid_map_vspace_get_hw_asid(asid_map);
     } else {
         hw_asid_t new_hw_asid;
 
@@ -1220,11 +1202,11 @@ hw_asid_t getHWASID(asid_t asid)
 
 static void invalidateASIDEntry(asid_t asid)
 {
-    pde_t stored_hw_asid;
+    asid_map_t asid_map;
 
-    stored_hw_asid = loadHWASID(asid);
-    if (pde_pde_invalid_get_stored_asid_valid(stored_hw_asid)) {
-        armKSHWASIDTable[pde_pde_invalid_get_stored_hw_asid(stored_hw_asid)] =
+    asid_map = findMapForASID(asid);
+    if (asid_map_asid_map_vspace_get_hw_asid_valid(asid_map)) {
+        armKSHWASIDTable[asid_map_asid_map_vspace_get_hw_asid(asid_map)] =
             asidInvalid;
     }
     invalidateASID(asid);
@@ -1241,7 +1223,7 @@ void unmapPageTable(asid_t asid, vptr_t vaddr, pte_t *pt)
         pdIndex = vaddr >> (PT_INDEX_BITS + PAGE_BITS);
         pdSlot = pd + pdIndex;
 
-        *pdSlot = pde_pde_invalid_new(0, 0);
+        *pdSlot = pde_pde_invalid_new();
         cleanByVA_PoU((word_t)pdSlot, addrFromPPtr(pdSlot));
         flushTable(pd, asid, vaddr, pt);
     }
@@ -1484,7 +1466,7 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
             return;
         }
 
-        *pd = pde_pde_invalid_new(0, 0);
+        *pd = pde_pde_invalid_new();
         cleanByVA_PoU((word_t)pd, addrFromPPtr(pd));
 
         break;
@@ -1511,7 +1493,7 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
         }
 
         for (i = 0; i < SECTIONS_PER_SUPER_SECTION; i++) {
-            pd[i] = pde_pde_invalid_new(0, 0);
+            pd[i] = pde_pde_invalid_new();
         }
         cleanCacheRange_PoU((word_t)&pd[0], LAST_BYTE_PDE(pd, SECTIONS_PER_SUPER_SECTION),
                             addrFromPPtr(&pd[0]));
@@ -1530,7 +1512,7 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
 
 void flushPage(vm_page_size_t page_size, pde_t *pd, asid_t asid, word_t vptr)
 {
-    pde_t stored_hw_asid;
+    asid_map_t asid_map;
     word_t base_addr;
     bool_t root_switched;
 
@@ -1538,13 +1520,13 @@ void flushPage(vm_page_size_t page_size, pde_t *pd, asid_t asid, word_t vptr)
 
     /* Switch to the address space to allow a cache clean by VA */
     root_switched = setVMRootForFlush(pd, asid);
-    stored_hw_asid = loadHWASID(asid);
+    asid_map = findMapForASID(asid);
 
-    if (pde_pde_invalid_get_stored_asid_valid(stored_hw_asid)) {
+    if (asid_map_asid_map_vspace_get_hw_asid_valid(asid_map)) {
         base_addr = vptr & ~MASK(12);
 
         /* Do the TLB flush */
-        invalidateTranslationSingle(base_addr | pde_pde_invalid_get_stored_hw_asid(stored_hw_asid));
+        invalidateTranslationSingle(base_addr | asid_map_asid_map_vspace_get_hw_asid(asid_map));
 
         if (root_switched) {
             setVMRoot(NODE_STATE(ksCurThread));
@@ -1554,17 +1536,17 @@ void flushPage(vm_page_size_t page_size, pde_t *pd, asid_t asid, word_t vptr)
 
 void flushTable(pde_t *pd, asid_t asid, word_t vptr, pte_t *pt)
 {
-    pde_t stored_hw_asid;
+    asid_map_t asid_map;
     bool_t root_switched;
 
     assert((vptr & MASK(PT_INDEX_BITS + ARMSmallPageBits)) == 0);
 
     /* Switch to the address space to allow a cache clean by VA */
     root_switched = setVMRootForFlush(pd, asid);
-    stored_hw_asid = loadHWASID(asid);
+    asid_map = findMapForASID(asid);
 
-    if (pde_pde_invalid_get_stored_asid_valid(stored_hw_asid)) {
-        invalidateTranslationASID(pde_pde_invalid_get_stored_hw_asid(stored_hw_asid));
+    if (asid_map_asid_map_vspace_get_hw_asid_valid(asid_map)) {
+        invalidateTranslationASID(asid_map_asid_map_vspace_get_hw_asid(asid_map));
         if (root_switched) {
             setVMRoot(NODE_STATE(ksCurThread));
         }
@@ -1573,9 +1555,9 @@ void flushTable(pde_t *pd, asid_t asid, word_t vptr, pte_t *pt)
 
 void flushSpace(asid_t asid)
 {
-    pde_t stored_hw_asid;
+    asid_map_t asid_map;
 
-    stored_hw_asid = loadHWASID(asid);
+    asid_map = findMapForASID(asid);
 
     /* Clean the entire data cache, to guarantee that any VAs mapped
      * in the deleted space are clean (because we can't clean by VA after
@@ -1584,28 +1566,28 @@ void flushSpace(asid_t asid)
 
     /* If the given ASID doesn't have a hardware ASID
      * assigned, then it can't have any mappings in the TLB */
-    if (!pde_pde_invalid_get_stored_asid_valid(stored_hw_asid)) {
+    if (!asid_map_asid_map_vspace_get_hw_asid_valid(asid_map)) {
         return;
     }
 
     /* Do the TLB flush */
-    invalidateTranslationASID(pde_pde_invalid_get_stored_hw_asid(stored_hw_asid));
+    invalidateTranslationASID(asid_map_asid_map_vspace_get_hw_asid(asid_map));
 }
 
 void invalidateTLBByASID(asid_t asid)
 {
-    pde_t stored_hw_asid;
+    asid_map_t asid_map;
 
-    stored_hw_asid = loadHWASID(asid);
+    asid_map = findMapForASID(asid);
 
     /* If the given ASID doesn't have a hardware ASID
      * assigned, then it can't have any mappings in the TLB */
-    if (!pde_pde_invalid_get_stored_asid_valid(stored_hw_asid)) {
+    if (!asid_map_asid_map_vspace_get_hw_asid_valid(asid_map)) {
         return;
     }
 
     /* Do the TLB flush */
-    invalidateTranslationASID(pde_pde_invalid_get_stored_hw_asid(stored_hw_asid));
+    invalidateTranslationASID(asid_map_asid_map_vspace_get_hw_asid(asid_map));
 }
 
 static inline bool_t CONST checkVPAlignment(vm_page_size_t sz, word_t w)
@@ -2035,7 +2017,7 @@ static exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *poolPtr,
     asid_map_t asid_map;
     cap_page_directory_cap_ptr_set_capPDMappedASID(&pdCapSlot->cap, asid);
     cap_page_directory_cap_ptr_set_capPDIsMapped(&pdCapSlot->cap, 1);
-    asid_map = asid_map_asid_map_vspace_new(cap_page_directory_cap_get_capPDBasePtr(pdCapSlot->cap));
+    asid_map = asid_map_asid_map_vspace_new(cap_page_directory_cap_get_capPDBasePtr(pdCapSlot->cap), 0, false);
     poolPtr->array[asid & MASK(asidLowBits)] = asid_map;
 
     return EXCEPTION_NONE;

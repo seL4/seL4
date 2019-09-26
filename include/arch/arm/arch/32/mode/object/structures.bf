@@ -243,9 +243,7 @@ block stored_hw_asid {
 
 -- Page directory entries
 block pde_invalid {
-    field stored_hw_asid 8
-    field stored_asid_valid 1
-    padding 21
+    padding 30
     field pdeType 2
 }
 
@@ -341,9 +339,7 @@ tagged_union pte pteSize {
 
 block pdeS2_invalid {
     padding 32
-    field stored_hw_asid 8
-    field stored_asid_valid 1
-    padding 21
+    padding 30
     field pdeS2Type 2
 }
 
@@ -606,7 +602,9 @@ block asid_map_none {
 block asid_map_vspace {
     field_high vspace_root          32
 
-    padding                         30
+    padding                         21
+    field hw_asid                   8
+    field hw_asid_valid             1
     field type                      2
 }
 

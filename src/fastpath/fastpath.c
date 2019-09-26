@@ -120,7 +120,8 @@ fastpath_call(word_t cptr, word_t msgInfo)
     }
 
 #ifdef CONFIG_ARCH_AARCH32
-    if (unlikely(!pde_pde_invalid_get_stored_asid_valid(cap_pd[PD_ASID_SLOT]))) {
+    asid_map_t asid_map = findMapForASID(asid);
+    if (unlikely(!asid_map_asid_map_vspace_get_hw_asid_valid(asid_map))) {
         slowpath(SysCall);
     }
 #endif
@@ -354,7 +355,8 @@ void fastpath_reply_recv(word_t cptr, word_t msgInfo)
 
 #ifdef CONFIG_ARCH_AARCH32
     /* Ensure the HWASID is valid. */
-    if (unlikely(!pde_pde_invalid_get_stored_asid_valid(cap_pd[PD_ASID_SLOT]))) {
+    asid_map_t asid_map = findMapForASID(asid);
+    if (unlikely(!asid_map_asid_map_vspace_get_hw_asid_valid(asid_map))) {
         slowpath(SysReplyRecv);
     }
 #endif
