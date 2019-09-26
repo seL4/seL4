@@ -52,8 +52,8 @@
 #define seL4_PageTableBits      12
 #define seL4_VSpaceBits         seL4_PageTableBits
 
-#define seL4_NumASIDPoolsBits    5
-#define seL4_ASIDPoolIndexBits  4
+#define seL4_NumASIDPoolsBits    3
+#define seL4_ASIDPoolIndexBits   9
 #define seL4_ASIDPoolBits       12
 #ifndef __ASSEMBLER__
 

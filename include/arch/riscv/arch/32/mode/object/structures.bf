@@ -26,9 +26,8 @@ base 32
 
 -- frames
 block frame_cap {
-    field       capFMappedASID      9
+    field       capFMappedASID      12
     field_high  capFBasePtr         20
-    padding                         3
 
     padding                         2
     field       capFSize            2
@@ -40,9 +39,8 @@ block frame_cap {
 
 -- N-level page table
 block page_table_cap {
-    field       capPTMappedASID     9
+    field       capPTMappedASID     12
     field_high  capPTBasePtr        20
-    padding                         3
 
     padding                         7
     field       capPTIsMapped       1
