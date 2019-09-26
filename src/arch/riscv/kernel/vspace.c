@@ -299,20 +299,32 @@ BOOT_CODE void activate_kernel_vspace(void)
 BOOT_CODE void write_it_asid_pool(cap_t it_ap_cap, cap_t it_lvl1pt_cap)
 {
     asid_pool_t *ap = ASID_POOL_PTR(pptr_of_cap(it_ap_cap));
-    ap->array[IT_ASID] = PTE_PTR(pptr_of_cap(it_lvl1pt_cap));
+    asid_map_t asid_map = asid_map_asid_map_vspace_new(pptr_of_cap(it_lvl1pt_cap));
+    ap->array[IT_ASID] = asid_map;
     riscvKSASIDTable[IT_ASID >> asidLowBits] = ap;
 }
 
 /* ==================== BOOT CODE FINISHES HERE ==================== */
 
-static findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
+asid_map_t findMapForASID(asid_t asid)
 {
-    findVSpaceForASID_ret_t ret;
     asid_pool_t        *poolPtr;
-    pte_t     *vspace_root;
 
     poolPtr = riscvKSASIDTable[asid >> asidLowBits];
     if (!poolPtr) {
+        return asid_map_asid_map_none_new();
+    }
+
+    return poolPtr->array[asid & MASK(asidLowBits)];
+}
+
+static findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
+{
+    findVSpaceForASID_ret_t ret;
+    asid_map_t asid_map;
+
+    asid_map = findMapForASID(asid);
+    if (asid_map_get_type(asid_map) != asid_map_asid_map_vspace) {
         current_lookup_fault = lookup_fault_invalid_root_new();
 
         ret.vspace_root = NULL;
@@ -320,16 +332,7 @@ static findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
         return ret;
     }
 
-    vspace_root = poolPtr->array[asid & MASK(asidLowBits)];
-    if (!vspace_root) {
-        current_lookup_fault = lookup_fault_invalid_root_new();
-
-        ret.vspace_root = NULL;
-        ret.status = EXCEPTION_LOOKUP_FAULT;
-        return ret;
-    }
-
-    ret.vspace_root = vspace_root;
+    ret.vspace_root = (vspace_root_t *)asid_map_asid_map_vspace_get_vspace_root(asid_map);
     ret.status = EXCEPTION_NONE;
     return ret;
 }
@@ -461,6 +464,7 @@ static exception_t performASIDControlInvocation(void *frame, cte_t *slot, cte_t 
 
 static exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *poolPtr, cte_t *vspaceCapSlot)
 {
+    asid_map_t asid_map;
     pte_t *regionBase = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(vspaceCapSlot->cap));
     cap_t cap = vspaceCapSlot->cap;
     cap = cap_page_table_cap_set_capPTMappedASID(cap, asid);
@@ -469,7 +473,8 @@ static exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *poolPtr, 
 
     copyGlobalMappings(regionBase);
 
-    poolPtr->array[asid & MASK(asidLowBits)] = regionBase;
+    asid_map = asid_map_asid_map_vspace_new((word_t)regionBase);
+    poolPtr->array[asid & MASK(asidLowBits)] = asid_map;
 
     return EXCEPTION_NONE;
 }
@@ -479,10 +484,14 @@ void deleteASID(asid_t asid, pte_t *vspace)
     asid_pool_t *poolPtr;
 
     poolPtr = riscvKSASIDTable[asid >> asidLowBits];
-    if (poolPtr != NULL && poolPtr->array[asid & MASK(asidLowBits)] == vspace) {
-        hwASIDFlush(asid);
-        poolPtr->array[asid & MASK(asidLowBits)] = NULL;
-        setVMRoot(NODE_STATE(ksCurThread));
+    if (poolPtr != NULL) {
+        asid_map_t asid_map = poolPtr->array[asid & MASK(asidLowBits)];
+        if (asid_map_get_type(asid_map) == asid_map_asid_map_vspace &&
+            (pte_t *)asid_map_asid_map_vspace_get_vspace_root(asid_map) == vspace) {
+            hwASIDFlush(asid);
+            poolPtr->array[asid & MASK(asidLowBits)] = asid_map_asid_map_none_new();
+            setVMRoot(NODE_STATE(ksCurThread));
+        }
     }
 }
 
@@ -1045,7 +1054,8 @@ exception_t decodeRISCVMMUInvocation(word_t label, unsigned int length, cptr_t c
 
         /* Find first free ASID */
         asid = cap_asid_pool_cap_get_capASIDBase(cap);
-        for (i = 0; i < BIT(asidLowBits) && (asid + i == 0 || pool->array[i]); i++);
+        for (i = 0; i < BIT(asidLowBits) && (asid + i == 0
+                                             || (asid_map_get_type(pool->array[i]) != asid_map_asid_map_none)); i++);
 
         if (i == BIT(asidLowBits)) {
             current_syscall_error.type = seL4_DeleteFirst;

@@ -140,4 +140,24 @@ block satp {
     field asid          9
     field ppn           22
 }
+
+block asid_map_none {
+    padding                         32
+
+    padding                         30
+    field type                      2
+}
+
+block asid_map_vspace {
+    field_high vspace_root          32
+
+    padding                         30
+    field type                      2
+}
+
+tagged_union asid_map type {
+    tag asid_map_none 0
+    tag asid_map_vspace 1
+}
+
 #include <sel4/arch/shared_types.bf>

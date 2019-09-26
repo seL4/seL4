@@ -33,7 +33,7 @@
 #define tcbArchCNodeEntries tcbCNodeEntries
 
 struct asid_pool {
-    pte_t *array[BIT(asidLowBits)];
+    asid_map_t array[BIT(asidLowBits)];
 };
 
 typedef struct asid_pool asid_pool_t;

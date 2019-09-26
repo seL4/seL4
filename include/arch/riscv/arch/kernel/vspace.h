@@ -51,6 +51,8 @@ struct findVSpaceForASID_ret {
 };
 typedef struct findVSpaceForASID_ret findVSpaceForASID_ret_t;
 
+asid_map_t findMapForASID(asid_t asid);
+
 void copyGlobalMappings(pte_t *newlvl1pt);
 word_t *PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread);
 lookupPTSlot_ret_t lookupPTSlot(pte_t *lvl1pt, vptr_t vptr);
