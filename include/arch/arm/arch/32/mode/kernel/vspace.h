@@ -46,6 +46,7 @@ struct lookupPTSlot_ret {
 };
 typedef struct lookupPTSlot_ret lookupPTSlot_ret_t;
 
+
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 hw_asid_t getHWASID(asid_t asid);
 #endif
@@ -63,6 +64,7 @@ void flushPage(vm_page_size_t page_size, pde_t *pd, asid_t asid, word_t vptr);
 void flushTable(pde_t *pd, asid_t asid, word_t vptr, pte_t *pt);
 void flushSpace(asid_t asid);
 void invalidateTLBByASID(asid_t asid);
+asid_map_t findMapForASID(asid_t asid);
 
 bool_t CONST isIOSpaceFrameCap(cap_t cap);
 

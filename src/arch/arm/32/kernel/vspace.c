@@ -635,20 +635,32 @@ BOOT_CODE void activate_global_pd(void)
 BOOT_CODE void write_it_asid_pool(cap_t it_ap_cap, cap_t it_pd_cap)
 {
     asid_pool_t *ap = ASID_POOL_PTR(pptr_of_cap(it_ap_cap));
-    ap->array[IT_ASID] = PDE_PTR(pptr_of_cap(it_pd_cap));
+    asid_map_t asid_map = asid_map_asid_map_vspace_new(pptr_of_cap(it_pd_cap));
+    ap->array[IT_ASID] = asid_map;
     armKSASIDTable[IT_ASID >> asidLowBits] = ap;
 }
 
 /* ==================== BOOT CODE FINISHES HERE ==================== */
 
+asid_map_t findMapForASID(asid_t asid)
+{
+    asid_pool_t        *poolPtr;
+
+    poolPtr = armKSASIDTable[asid >> asidLowBits];
+    if (!poolPtr) {
+        return asid_map_asid_map_none_new();
+    }
+
+    return poolPtr->array[asid & MASK(asidLowBits)];
+}
+
 findPDForASID_ret_t findPDForASID(asid_t asid)
 {
     findPDForASID_ret_t ret;
-    asid_pool_t *poolPtr;
-    pde_t *pd;
+    asid_map_t asid_map;
 
-    poolPtr = armKSASIDTable[asid >> asidLowBits];
-    if (unlikely(!poolPtr)) {
+    asid_map = findMapForASID(asid);
+    if (asid_map_get_type(asid_map) != asid_map_asid_map_vspace) {
         current_lookup_fault = lookup_fault_invalid_root_new();
 
         ret.pd = NULL;
@@ -656,16 +668,7 @@ findPDForASID_ret_t findPDForASID(asid_t asid)
         return ret;
     }
 
-    pd = poolPtr->array[asid & MASK(asidLowBits)];
-    if (unlikely(!pd)) {
-        current_lookup_fault = lookup_fault_invalid_root_new();
-
-        ret.pd = NULL;
-        ret.status = EXCEPTION_LOOKUP_FAULT;
-        return ret;
-    }
-
-    ret.pd = pd;
+    ret.pd = (pde_t *)asid_map_asid_map_vspace_get_vspace_root(asid_map);
     ret.status = EXCEPTION_NONE;
     return ret;
 }
@@ -1125,8 +1128,10 @@ static void invalidateASID(asid_t asid)
     asidPool = armKSASIDTable[asid >> asidLowBits];
     assert(asidPool);
 
-    pd = asidPool->array[asid & MASK(asidLowBits)];
-    assert(pd);
+    asid_map_t asid_map = asidPool->array[asid & MASK(asidLowBits)];
+    assert(asid_map_get_type(asid_map) == asid_map_asid_map_vspace);
+
+    pd = (pde_t *)asid_map_asid_map_vspace_get_vspace_root(asid_map);
 
     pd[PD_ASID_SLOT] = pde_pde_invalid_new(0, false);
 }
@@ -1139,8 +1144,10 @@ static pde_t PURE loadHWASID(asid_t asid)
     asidPool = armKSASIDTable[asid >> asidLowBits];
     assert(asidPool);
 
-    pd = asidPool->array[asid & MASK(asidLowBits)];
-    assert(pd);
+    asid_map_t asid_map = asidPool->array[asid & MASK(asidLowBits)];
+    assert(asid_map_get_type(asid_map) == asid_map_asid_map_vspace);
+
+    pd = (pde_t *)asid_map_asid_map_vspace_get_vspace_root(asid_map);
 
     return pd[PD_ASID_SLOT];
 }
@@ -1153,8 +1160,10 @@ static void storeHWASID(asid_t asid, hw_asid_t hw_asid)
     asidPool = armKSASIDTable[asid >> asidLowBits];
     assert(asidPool);
 
-    pd = asidPool->array[asid & MASK(asidLowBits)];
-    assert(pd);
+    asid_map_t asid_map = asidPool->array[asid & MASK(asidLowBits)];
+    assert(asid_map_get_type(asid_map) == asid_map_asid_map_vspace);
+
+    pd = (pde_t *)asid_map_asid_map_vspace_get_vspace_root(asid_map);
 
     /* Store HW ASID in the last entry
        Masquerade as an invalid PDE */
@@ -1339,7 +1348,8 @@ void deleteASIDPool(asid_t asid_base, asid_pool_t *pool)
 
     if (armKSASIDTable[asid_base >> asidLowBits] == pool) {
         for (offset = 0; offset < BIT(asidLowBits); offset++) {
-            if (pool->array[offset]) {
+            asid_map_t asid_map = pool->array[offset];
+            if (asid_map_get_type(asid_map) == asid_map_asid_map_vspace) {
                 flushSpace(asid_base + offset);
                 invalidateASIDEntry(asid_base + offset);
             }
@@ -1355,11 +1365,15 @@ void deleteASID(asid_t asid, pde_t *pd)
 
     poolPtr = armKSASIDTable[asid >> asidLowBits];
 
-    if (poolPtr != NULL && poolPtr->array[asid & MASK(asidLowBits)] == pd) {
-        flushSpace(asid);
-        invalidateASIDEntry(asid);
-        poolPtr->array[asid & MASK(asidLowBits)] = NULL;
-        setVMRoot(NODE_STATE(ksCurThread));
+    if (poolPtr != NULL) {
+        asid_map_t asid_map = poolPtr->array[asid & MASK(asidLowBits)];
+        if (asid_map_get_type(asid_map) == asid_map_asid_map_vspace &&
+            (pde_t *)asid_map_asid_map_vspace_get_vspace_root(asid_map) == pd) {
+            flushSpace(asid);
+            invalidateASIDEntry(asid);
+            poolPtr->array[asid & MASK(asidLowBits)] = asid_map_asid_map_none_new();
+            setVMRoot(NODE_STATE(ksCurThread));
+        }
     }
 }
 
@@ -2018,10 +2032,11 @@ static exception_t performPageGetAddress(void *vbase_ptr)
 static exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *poolPtr,
                                              cte_t *pdCapSlot)
 {
+    asid_map_t asid_map;
     cap_page_directory_cap_ptr_set_capPDMappedASID(&pdCapSlot->cap, asid);
     cap_page_directory_cap_ptr_set_capPDIsMapped(&pdCapSlot->cap, 1);
-    poolPtr->array[asid & MASK(asidLowBits)] =
-        PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(pdCapSlot->cap));
+    asid_map = asid_map_asid_map_vspace_new(cap_page_directory_cap_get_capPDBasePtr(pdCapSlot->cap));
+    poolPtr->array[asid & MASK(asidLowBits)] = asid_map;
 
     return EXCEPTION_NONE;
 }
@@ -2694,7 +2709,8 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
 
         /* Find first free ASID */
         asid = cap_asid_pool_cap_get_capASIDBase(cap);
-        for (i = 0; i < (1 << asidLowBits) && (asid + i == 0 || pool->array[i]); i++);
+        for (i = 0; i < (1 << asidLowBits) && (asid + i == 0
+                                               || (asid_map_get_type(pool->array[i]) != asid_map_asid_map_none)); i++);
 
         if (unlikely(i == 1 << asidLowBits)) {
             userError("ASIDPoolAssign: No free ASID.");

@@ -90,7 +90,7 @@ typedef word_t pde_type_t;
 #define LPAE_PT_REF(p) ((unsigned int)p)
 
 struct asid_pool {
-    pde_t *array[BIT(asidLowBits)];
+    asid_map_t array[BIT(asidLowBits)];
 };
 
 typedef struct asid_pool asid_pool_t;
