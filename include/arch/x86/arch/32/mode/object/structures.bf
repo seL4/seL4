@@ -21,15 +21,14 @@ base 32
 ---- IA32-specific cap types
 
 block frame_cap {
-    padding                         1
+    padding                         2
     field       capFSize            1
-    field       capFMappedASIDLow   10
+    field       capFMappedASIDLow   9
     field_high  capFMappedAddress   20
 
-    padding                         1
     field       capFMapType         2
     field       capFIsDevice        1
-    field       capFMappedASIDHigh  2
+    field       capFMappedASIDHigh  3
     field       capFVMRights        2
     field_high  capFBasePtr         20
     field       capType             4
@@ -540,20 +539,24 @@ block vmx_eptp {
 #endif
 
 block asid_map_none {
+    padding                         32
+
     padding                         30
     field type                      2
 }
 
 block asid_map_vspace {
-    field_high vspace_root          20
-    padding                         10
+    field_high vspace_root          32
+
+    padding                         30
     field type                      2
 }
 
 #ifdef CONFIG_VTX
 block asid_map_ept {
-    field_high ept_root             20
-    padding                         10
+    field_high ept_root             32
+
+    padding                         30
     field type                      2
 }
 #endif
