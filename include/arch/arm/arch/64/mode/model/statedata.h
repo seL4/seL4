@@ -41,7 +41,7 @@ pde_t *armKSGlobalLogPDE;
 
 #ifdef CONFIG_ARM_SMMU 
 extern bool_t smmuStateSIDTable[SMMU_MAX_SID];
-//extern cte_t smmuStateSIDNode[BIT(SMMU_SID_CNODE_SLOT_BITS)]; 
+extern cte_t smmuStateSIDNode[BIT(SMMU_SID_CNODE_SLOT_BITS)]; 
 extern bool_t smmuStateCBTable[SMMU_MAX_CB]; 
-//extern cte_t smmuStateCBNode[BIT(SMMU_CB_CNODE_SLOT_BITS)];
+extern cte_t smmuStateCBNode[BIT(SMMU_CB_CNODE_SLOT_BITS)];
 #endif

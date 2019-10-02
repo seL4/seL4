@@ -25,16 +25,14 @@ enum {
     seL4_CapBootInfoFrame       =  9, /* bootinfo frame cap */
     seL4_CapInitThreadIPCBuffer = 10, /* initial thread's IPC buffer frame cap */
     seL4_CapDomain              = 11, /* global domain controller cap */
+    seL4_CapSMMUSIDControl      = 12,  /*global SMMU SID controller cap, null cap if not supported*/
+    seL4_CapSMMUCBControl       = 13,  /*global SMMU CB controller cap, null cap if not supported*/  
 #ifdef CONFIG_KERNEL_MCS
-    seL4_CapInitThreadSC        = 12, /* initial thread's scheduling context cap */
+    seL4_CapInitThreadSC        = 14, /* initial thread's scheduling context cap */
+    seL4_NumInitialCaps         = 15 
+#else
+    seL4_NumInitialCaps         = 14 
 #endif /* !CONFIG_KERNEL_MCS */
-#ifdef CONFIG_ARM_SMMU
-    seL4_CapSMMUSIDControl      = 12, /*global SMMU SID controller cap*/
-    seL4_CapSMMUCBControl       = 13, /*global SMMU CB controller cap*/
-    seL4_NumInitialCaps         = 14
-#else /* CONFIG_ARM_SMMU */
-    seL4_NumInitialCaps         = 12
-#endif /* !CONFIG_ARM_SMMU */   
 };
 
 /* Legacy code will have assumptions on the vspace root being a Page Directory
