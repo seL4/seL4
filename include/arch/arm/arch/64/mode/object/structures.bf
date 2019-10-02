@@ -116,7 +116,7 @@ block sid_control_cap {
 
 block sid_cap {
 
-    padding 58
+    padding 56
     field capSID 8
 
     field capType  5
@@ -133,7 +133,7 @@ block cb_control_cap {
 
 block cb_cap {
 
-    padding 58
+    padding 56
     field capCB 8
 
 
