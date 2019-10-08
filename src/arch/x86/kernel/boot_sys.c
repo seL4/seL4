@@ -210,6 +210,11 @@ static BOOT_CODE bool_t add_mem_p_regs(p_region_t reg)
         printf("Dropping memory region 0x%lx-0x%lx, try increasing MAX_NUM_FREEMEM_REG\n", reg.start, reg.end);
         return false;
     }
+    if (reg.end > PADDR_TOP) {
+        assert(reg.start <= PADDR_TOP);
+        /* Clamp a region to the top of the kernel window if it extends beyond */
+        reg.end = PADDR_TOP;
+    }
     printf("Adding physical memory region 0x%lx-0x%lx\n", reg.start, reg.end);
     boot_state.mem_p_regs.list[boot_state.mem_p_regs.count] = reg;
     boot_state.mem_p_regs.count++;
