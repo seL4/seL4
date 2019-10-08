@@ -16,11 +16,6 @@ declare_platform(exynos4 KernelPlatformExynos4 PLAT_EXYNOS4 KernelSel4ArchAarch3
 
 if(KernelPlatformExynos4)
     declare_seL4_arch(aarch32)
-
-    # MCS is not supported on exynos4 yet.
-    # It requires a timer driver that implements the tickless programming requirements.
-    set(KernelPlatformSupportsMCS OFF)
-
     set(KernelArmCortexA9 ON)
     set(KernelArchArmV7a ON)
     config_set(KernelARMPlatform ARM_PLAT exynos4)
@@ -33,6 +28,10 @@ if(KernelPlatformExynos4)
         NUM_PPI 32
         TIMER drivers/timer/exynos4412-mct.h
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h
+        KERNEL_WCET 10u
+        CLK_MAGIC 2863311531llu
+        CLK_SHIFT 36u
+        TIMER_PRECISION 0u
     )
 endif()
 

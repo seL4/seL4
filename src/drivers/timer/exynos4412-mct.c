@@ -17,6 +17,25 @@
 
 timer_t *mct = (timer_t *) EXYNOS_MCT_PPTR;
 
+#ifdef CONFIG_KERNEL_MCS
+
+BOOT_CODE void initTimer(void)
+{
+
+    mct_clear_write_status();
+    mct->global.comp0_add_inc = 0;
+    /* Enable interrupts */
+    mct->global.int_en = GINT_COMP0_IRQ;
+    while (mct->global.wstat != (GWSTAT_COMP0_ADD_INC));
+    mct->global.wstat = (GWSTAT_COMP0_ADD_INC);
+    /* enable interrupts */
+    mct->global.tcon = GTCON_EN | GTCON_COMP0_EN;
+    while (mct->global.wstat != GWSTAT_TCON);
+    mct->global.wstat = GWSTAT_TCON;
+}
+
+#else /* CONFIG_KERNEL_MCS */
+
 BOOT_CODE void initTimer(void)
 {
 
@@ -41,3 +60,4 @@ BOOT_CODE void initTimer(void)
     while (mct->global.wstat != GWSTAT_TCON);
     mct->global.wstat = GWSTAT_TCON;
 }
+#endif /* CONFIG_KERNEL_MCS */
