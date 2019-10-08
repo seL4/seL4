@@ -62,10 +62,6 @@
 #define KERNEL_BASE_OFFSET (KERNEL_BASE - PADDR_BASE)
 #define kernelBase KERNEL_BASE
 
-/* The maximum physical address for device untypeds that we export to
- * the user */
-#define PADDR_USER_DEVICE_TOP BIT(47)
-
 #define BASE_OFFSET PPTR_BASE
 
 #ifndef __ASSEMBLER__

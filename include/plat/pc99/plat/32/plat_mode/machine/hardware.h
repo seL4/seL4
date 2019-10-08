@@ -49,10 +49,6 @@
 
 #define PADDR_TOP   (PPTR_TOP - BASE_OFFSET)
 
-/* The maximum physical address for device untypeds that we export to
- * the user */
-#define PADDR_USER_DEVICE_TOP 0xffff0000
-
 /* The kernel base offset is a way to translate the kernel image segment
  * from virtual to physical. This translation must be a single offset for
  * for the entire segment (i.e. the kernel image must be contiguous both

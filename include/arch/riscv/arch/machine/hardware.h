@@ -54,6 +54,8 @@
 
 #define PAGE_BITS seL4_PageBits
 
+#define MODE_RESERVED 0
+
 /* MMU RISC-V related definitions. See RISC-V manual priv-1.10 */
 
 /* Extract the n-level PT index from a virtual address. This works for any

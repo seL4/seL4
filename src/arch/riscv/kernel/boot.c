@@ -46,21 +46,10 @@ BOOT_CODE static bool_t create_untypeds(cap_t root_cnode_cap, region_t boot_mem_
 {
     seL4_SlotPos   slot_pos_before;
     seL4_SlotPos   slot_pos_after;
-    region_t       dev_reg;
 
     slot_pos_before = ndks_boot.slot_pos_cur;
+    create_device_untypeds(root_cnode_cap, slot_pos_before);
     bool_t res = create_kernel_untypeds(root_cnode_cap, boot_mem_reuse_reg, slot_pos_before);
-
-    UNUSED paddr_t current_region_pos = 0;
-    for (int i = 0; i < get_num_dev_p_regs(); i++) {
-        assert(get_dev_p_reg(i).start >= current_region_pos);
-        current_region_pos = get_dev_p_reg(i).end;
-        dev_reg = paddr_to_pptr_reg(get_dev_p_reg(i));
-        if (!create_untypeds_for_region(root_cnode_cap, true,
-                                        dev_reg, slot_pos_before)) {
-            return false;
-        }
-    }
 
     slot_pos_after = ndks_boot.slot_pos_cur;
     ndks_boot.bi_frame->untyped = (seL4_SlotRegion) {

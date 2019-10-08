@@ -91,6 +91,11 @@ static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
         {% if args.arch == 'arm' %}
         true, /* armExecuteNever */
         {% endif %}
+        {% if group.user_ok %}
+        true, /* userAvailable */
+        {% else %}
+        false, /* userAvailable */
+        {% endif %}
     },
     {% endfor %}
     {% if group.has_macro() %}
@@ -109,18 +114,6 @@ static const p_region_t BOOT_RODATA avail_p_regs[] = {
     {% endfor %}
 };
 
-/* DEVICE MEMORY */
-/* using {{ physBits }} bits of address space */
-/* excluded regions:
-{% for reg in excluded_regions %}
- * {{ "0x{:x}".format(reg.base) }} - {{ "0x{:x}".format(reg.base + reg.size) }} {{ reg.desc }} {{ reg.user_ok }}
-{% endfor %}
- */
-static const p_region_t BOOT_RODATA dev_p_regs[] = {
-    {% for reg in device_regions %}
-    { {{ "0x{:x}".format(reg.base) }}, {{ "0x{:x}".format(reg.base + reg.size) }} },
-    {% endfor %}
-};
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __PLAT_DEVICES_GEN_H */
@@ -183,15 +176,11 @@ def run(tree: fdt.FdtParser, hardware: rule.HardwareYaml, config: config.Config,
     physical_memory, reserved, physBase = memory.get_physical_memory(tree, config)
     kernel_regions, kernel_macros = get_kernel_devices(tree, hardware)
     kernel_irqs = get_interrupts(tree, hardware)
-    device_regions = memory.get_addrspace_exclude(
-        list(reserved) + kernel_regions + physical_memory, config)
     template = Environment(loader=BaseLoader, trim_blocks=True,
                            lstrip_blocks=True).from_string(HEADER_TEMPLATE)
 
     template_args = dict(builtins.__dict__, **{
         'args': args,
-        'device_regions': device_regions,
-        'excluded_regions': list(reserved) + kernel_regions + physical_memory,
         'kernel_irqs': kernel_irqs,
         'kernel_macros': kernel_macros,
         'kernel_regions': kernel_regions,

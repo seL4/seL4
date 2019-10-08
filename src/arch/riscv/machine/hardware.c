@@ -58,29 +58,6 @@ BOOT_CODE p_region_t *get_avail_p_regs(void)
     return (p_region_t *) avail_p_regs;
 }
 
-BOOT_CODE int get_num_dev_p_regs(void)
-{
-    if (dev_p_regs != NULL) {
-        return (sizeof(dev_p_regs) / sizeof(p_region_t));
-    } else {
-        return 0;
-    }
-}
-
-BOOT_CODE p_region_t get_dev_p_reg(word_t i)
-{
-    /* We need this if guard as some RISC-V configurations don't declare any
-     * device regions and some compilers complain about indexing an empty array
-     * due to not being able to infer that get_dev_p_reg is only called if
-     * dev_p_regs contains entries.
-     */
-    if (get_num_dev_p_regs() == 0) {
-        printf("%s: No devices present.\n", __func__);
-        halt();
-    }
-    return dev_p_regs[i];
-}
-
 BOOT_CODE void map_kernel_devices(void)
 {
     if (kernel_devices == NULL) {
@@ -90,6 +67,13 @@ BOOT_CODE void map_kernel_devices(void)
     for (int i = 0; i < (sizeof(kernel_devices) / sizeof(kernel_frame_t)); i++) {
         map_kernel_frame(kernel_devices[i].paddr, KDEV_PPTR,
                          VMKernelOnly);
+        if (!kernel_devices[i].userAvailable) {
+            p_region_t reg = {
+                .start = kernel_devices[i].paddr,
+                .end = kernel_devices[i].paddr + (1 << PAGE_BITS),
+            };
+            reserve_region(reg);
+        }
     }
 }
 

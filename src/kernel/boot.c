@@ -27,6 +27,77 @@ ndks_boot_t ndks_boot BOOT_DATA;
 rootserver_mem_t rootserver BOOT_DATA;
 static region_t rootserver_mem BOOT_DATA;
 
+BOOT_CODE static void merge_regions(void)
+{
+    /* Walk through reserved regions and see if any can be merged */
+    for (word_t i = 1; i < ndks_boot.resv_count;) {
+        if (ndks_boot.reserved[i - 1].end == ndks_boot.reserved[i].start) {
+            /* extend earlier region */
+            ndks_boot.reserved[i - 1].end = ndks_boot.reserved[i].end;
+            /* move everything else down */
+            for (word_t j = i + 1; j < ndks_boot.resv_count; j++) {
+                ndks_boot.reserved[j - 1] = ndks_boot.reserved[j];
+            }
+
+            ndks_boot.resv_count--;
+            /* don't increment i in case there are multiple adjacent regions */
+        } else {
+            i++;
+        }
+    }
+}
+
+BOOT_CODE bool_t reserve_region(p_region_t reg)
+{
+    word_t i;
+    assert(reg.start <= reg.end);
+    if (reg.start == reg.end) {
+        return true;
+    }
+
+    /* keep the regions in order */
+    for (i = 0; i < ndks_boot.resv_count; i++) {
+        /* Try and merge the region to an existing one, if possible */
+        if (ndks_boot.reserved[i].start == reg.end) {
+            ndks_boot.reserved[i].start = reg.start;
+            merge_regions();
+            return true;
+        }
+        if (ndks_boot.reserved[i].end == reg.start) {
+            ndks_boot.reserved[i].end = reg.end;
+            merge_regions();
+            return true;
+        }
+        /* Otherwise figure out where it should go. */
+        if (ndks_boot.reserved[i].start > reg.end) {
+            /* move regions down, making sure there's enough room */
+            if (ndks_boot.resv_count + 1 >= MAX_NUM_RESV_REG) {
+                printf("Can't mark region 0x%lx-0x%lx as reserved, try increasing MAX_NUM_RESV_REG (currently %d)\n",
+                       reg.start, reg.end, (int)MAX_NUM_RESV_REG);
+                return false;
+            }
+            for (word_t j = ndks_boot.resv_count; j > i; j--) {
+                ndks_boot.reserved[j] = ndks_boot.reserved[j - 1];
+            }
+            /* insert the new region */
+            ndks_boot.reserved[i] = reg;
+            ndks_boot.resv_count++;
+            return true;
+        }
+    }
+
+    if (i + 1 == MAX_NUM_RESV_REG) {
+        printf("Can't mark region 0x%lx-0x%lx as reserved, try increasing MAX_NUM_RESV_REG (currently %d)\n",
+               reg.start, reg.end, (int)MAX_NUM_RESV_REG);
+        return false;
+    }
+
+    ndks_boot.reserved[i] = reg;
+    ndks_boot.resv_count++;
+
+    return true;
+}
+
 BOOT_CODE bool_t insert_region(region_t reg)
 {
     word_t i;
@@ -37,6 +108,7 @@ BOOT_CODE bool_t insert_region(region_t reg)
     }
     for (i = 0; i < MAX_NUM_FREEMEM_REG; i++) {
         if (is_reg_empty(ndks_boot.freemem[i])) {
+            reserve_region(pptr_to_paddr_reg(reg));
             ndks_boot.freemem[i] = reg;
             return true;
         }
@@ -550,6 +622,40 @@ BOOT_CODE bool_t create_untypeds_for_region(
     return true;
 }
 
+BOOT_CODE bool_t create_device_untypeds(cap_t root_cnode_cap, seL4_SlotPos slot_pos_before)
+{
+    paddr_t start = 0;
+    for (word_t i = 0; i < ndks_boot.resv_count; i++) {
+        if (start < ndks_boot.reserved[i].start) {
+            region_t reg = paddr_to_pptr_reg((p_region_t) {
+                start, ndks_boot.reserved[i].start
+            });
+            if (!create_untypeds_for_region(root_cnode_cap, true, reg, slot_pos_before)) {
+                return false;
+            }
+        }
+
+        start = ndks_boot.reserved[i].end;
+    }
+
+    if (start < CONFIG_PADDR_USER_DEVICE_TOP) {
+        region_t reg = paddr_to_pptr_reg((p_region_t) {
+            start, CONFIG_PADDR_USER_DEVICE_TOP
+        });
+        /*
+         * The auto-generated bitfield code will get upset if the
+         * end pptr is larger than the maximum pointer size for this architecture.
+         */
+        if (reg.end > PPTR_TOP) {
+            reg.end = PPTR_TOP;
+        }
+        if (!create_untypeds_for_region(root_cnode_cap, true, reg, slot_pos_before)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 BOOT_CODE bool_t create_kernel_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg,
                                         seL4_SlotPos first_untyped_slot)
 {
@@ -640,6 +746,7 @@ BOOT_CODE void init_freemem(word_t n_available, const p_region_t *available,
             a++;
         } else if (reserved[r].end <= avail_reg[a].start) {
             /* the reserved region is below the available region - skip it*/
+            reserve_region(pptr_to_paddr_reg(reserved[r]));
             r++;
         } else if (reserved[r].start >= avail_reg[a].end) {
             /* the reserved region is above the available region - take the whole thing */
@@ -651,6 +758,7 @@ BOOT_CODE void init_freemem(word_t n_available, const p_region_t *available,
                 /* the region overlaps with the start of the available region.
                  * trim start of the available region */
                 avail_reg[a].start = MIN(avail_reg[a].end, reserved[r].end);
+                reserve_region(pptr_to_paddr_reg(reserved[r]));
                 r++;
             } else {
                 assert(reserved[r].start < avail_reg[a].end);
@@ -661,11 +769,18 @@ BOOT_CODE void init_freemem(word_t n_available, const p_region_t *available,
                 insert_region(m);
                 if (avail_reg[a].end > reserved[r].end) {
                     avail_reg[a].start = reserved[r].end;
+                    reserve_region(pptr_to_paddr_reg(reserved[r]));
                     r++;
                 } else {
                     a++;
                 }
             }
+        }
+    }
+
+    for (; r < n_reserved; r++) {
+        if (reserved[r].start < reserved[r].end) {
+            reserve_region(pptr_to_paddr_reg(reserved[r]));
         }
     }
 

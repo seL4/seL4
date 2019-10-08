@@ -12,6 +12,7 @@
 #define __KERNEL_BOOT_H
 
 #include <bootinfo.h>
+#include <arch/bootinfo.h>
 
 #ifndef CONFIG_ARCH_ARM
 #define MAX_NUM_FREEMEM_REG 16
@@ -21,6 +22,23 @@
  *  + 1: possible gap between ELF images and rootserver objects;
  *       see arm/arch_init_freemem */
 #define MAX_NUM_FREEMEM_REG (ARRAY_SIZE(avail_p_regs) + MODE_RESERVED + 1 + 1)
+#endif
+
+#ifdef CONFIG_ARCH_X86
+#else
+/* The maximum number of reserved regions is:
+ * - 1 for each physical memory region (MAX_NUM_FREEMEM_REG)
+ * - 1 for each kernel device (ARRAY_SIZE(kernel_devices))
+ * - 1 for each mode-reserved region. (MODE_RESERVED)
+ * - 1 each for kernel, dtb, and user image. (3)
+ */
+#ifndef CONFIG_PLAT_SPIKE
+#define MAX_NUM_RESV_REG (MAX_NUM_FREEMEM_REG + ARRAY_SIZE(kernel_devices) + MODE_RESERVED + 3)
+#else
+/* spike has no devices */
+#define MAX_NUM_RESV_REG (MAX_NUM_FREEMEM_REG + MODE_RESERVED + 3)
+#endif
+
 #endif
 
 /*
@@ -35,6 +53,8 @@ typedef cte_t *slot_ptr_t;
 /* (node-local) state accessed only during bootstrapping */
 
 typedef struct ndks_boot {
+    p_region_t reserved[MAX_NUM_RESV_REG];
+    word_t resv_count;
     region_t   freemem[MAX_NUM_FREEMEM_REG];
     seL4_BootInfo      *bi_frame;
     seL4_SlotPos slot_pos_cur;
@@ -53,6 +73,7 @@ static inline bool_t is_reg_empty(region_t reg)
 void init_freemem(word_t n_available, const p_region_t *available,
                   word_t n_reserved, region_t *reserved,
                   v_region_t it_v_reg, word_t extra_bi_size_bits);
+bool_t reserve_region(p_region_t reg);
 bool_t insert_region(region_t reg);
 void write_slot(slot_ptr_t slot_ptr, cap_t cap);
 cap_t create_root_cnode(void);
@@ -62,6 +83,7 @@ void write_it_pd_pts(cap_t root_cnode_cap, cap_t it_pd_cap);
 bool_t create_idle_thread(void);
 bool_t create_untypeds_for_region(cap_t root_cnode_cap, bool_t device_memory, region_t reg,
                                   seL4_SlotPos first_untyped_slot);
+bool_t create_device_untypeds(cap_t root_cnode_cap, seL4_SlotPos slot_pos_before);
 bool_t create_kernel_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg, seL4_SlotPos first_untyped_slot);
 void bi_finalise(void);
 void create_domain_cap(cap_t root_cnode_cap);

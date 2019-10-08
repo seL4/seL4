@@ -198,6 +198,7 @@ endif()
 
 # Enshrine common variables in the config
 config_set(KernelHaveFPU HAVE_FPU "${KernelHaveFPU}")
+config_set(KernelPaddrUserTop PADDR_USER_DEVICE_TOP "${KernelPaddrUserTop}")
 
 # System parameters
 config_string(

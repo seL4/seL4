@@ -28,16 +28,6 @@ BOOT_CODE int get_num_avail_p_regs(void)
     return sizeof(avail_p_regs) / sizeof(p_region_t);
 }
 
-BOOT_CODE int get_num_dev_p_regs(void)
-{
-    return sizeof(dev_p_regs) / sizeof(p_region_t);
-}
-
-BOOT_CODE p_region_t get_dev_p_reg(word_t i)
-{
-    return dev_p_regs[i];
-}
-
 BOOT_CODE const p_region_t *get_avail_p_regs(void)
 {
     return (const p_region_t *) avail_p_regs;
@@ -51,6 +41,13 @@ BOOT_CODE void map_kernel_devices(void)
                          VMKernelOnly,
                          vm_attributes_new(kernel_devices[i].armExecuteNever,
                                            false, false));
+        if (!kernel_devices[i].userAvailable) {
+            p_region_t reg = {
+                .start = kernel_devices[i].paddr,
+                .end = kernel_devices[i].paddr + (1 << PAGE_BITS),
+            };
+            reserve_region(reg);
+        }
     }
 }
 

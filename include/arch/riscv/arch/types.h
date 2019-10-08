@@ -49,6 +49,7 @@ typedef dom_t seL4_Domain;
 typedef struct kernel_frame {
     paddr_t paddr;
     pptr_t pptr;
+    int userAvailable;
 } kernel_frame_t;
 
 #endif
