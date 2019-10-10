@@ -58,6 +58,7 @@ Upcoming release: BREAKING
 * Merge ARCH_Page_Remap functionality into ARCH_Page_Map. Remap was used for updating the mapping attributes of a page
   without changing its virtual address. Now ARCH_Page_Map can be performed on an existing mapping to achieve the same
   result. The ARCH_Page_Remap invocation has been removed from all configurations.
+* riscv64: Experimental SMP support for RISCV64 on HiFive.
 
 ## Upgrade Notes
 ---
