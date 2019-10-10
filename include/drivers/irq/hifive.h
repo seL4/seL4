@@ -164,16 +164,7 @@ static inline void plic_init_hart(void)
         /* Disable interrupts */
         plic_mask_irq(true, i);
     }
-#if 0
-    while (1) {
-        interrupt_t i = readl(PLIC_PPTR_BASE + plic_claim_offset(hart_id, PLIC_SVC_CONTEXT));
-        if (i != irqInvalid) {
-            writel(i, PLIC_PPTR_BASE + plic_claim_offset(hart_id, PLIC_SVC_CONTEXT));
-        } else {
-            break;
-        }
-    }
-#endif
+
     /* Set threshold to zero */
     writel(0, (PLIC_PPTR_BASE + plic_thres_offset(hart_id, PLIC_SVC_CONTEXT)));
 }
