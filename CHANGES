@@ -59,6 +59,10 @@ Upcoming release: BREAKING
   without changing its virtual address. Now ARCH_Page_Map can be performed on an existing mapping to achieve the same
   result. The ARCH_Page_Remap invocation has been removed from all configurations.
 * riscv64: Experimental SMP support for RISCV64 on HiFive.
+* Support added for QEMU ARM virt platform, with 3 CPUs: cortex-a15, cortex-a53 and cortex-a57
+    - PLATFORM=qemu-arm-virt
+    - ARM_CPU={cortex-a15, cortex-a53, cortex-a57}
+    - QEMU_MEMORY=1024 (default)
 
 ## Upgrade Notes
 ---
