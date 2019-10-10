@@ -307,6 +307,29 @@
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
             <param dir="in" name="target" type="seL4_Word" description="Indicates the target core ID to which this irq will be sent."/>
         </method>
-
+    </interface>
+    <interface name="seL4_ARM_SIDControl" manual_name="SID Control" cap_description="A SIDControl capability. This gives you the authority to make this call.">
+       <method id="ARMSIDIssueSIDManager" name="GetSID" manual_name="GetSID"
+           manual_label="sid_controlgetsid">
+            <brief>
+                Create a SID capability.
+            </brief>
+            <param dir="in" name="sid" type="seL4_Word" description="The SID that you want this capability to manage."/>
+            <param dir="in" name="root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
+            <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
+        </method>
+    </interface>
+    <interface name="seL4_ARM_CBControl" manual_name="CB Control" cap_description="A CBControl capability. This gives you the authority to make this call.">
+       <method id="ARMCBIssueCBManager" name="GetCB" manual_name="GetCB"
+           manual_label="cb_controlgetcb">
+            <brief>
+                Create a CB capability.
+            </brief>
+            <param dir="in" name="cb" type="seL4_Word" description="The CB that you want this capability to manage."/>
+            <param dir="in" name="root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
+            <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
+        </method>
     </interface>
 </api>
