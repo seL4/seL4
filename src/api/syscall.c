@@ -23,6 +23,9 @@
 #include <machine/io.h>
 #include <plat/machine/hardware.h>
 #include <object/interrupt.h>
+#ifdef CONFIG_KERNEL_MCS
+#include <object/schedcontext.h>
+#endif
 #include <model/statedata.h>
 #include <string.h>
 #include <kernel/traps.h>
@@ -464,6 +467,13 @@ static void handleRecv(bool_t isBlocking)
         handleFault(NODE_STATE(ksCurThread));
         return;
     }
+
+#ifdef CONFIG_KERNEL_MCS
+    if (isBlocking) {
+        /* Return any SC donated from a notification object */
+        schedContext_maybeReturnToNtfn(NODE_STATE(ksCurThread)->tcbSchedContext, NODE_STATE(ksCurThread));
+    }
+#endif
 
     switch (cap_get_capType(lu_ret.cap)) {
     case cap_endpoint_cap:
