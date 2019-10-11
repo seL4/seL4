@@ -349,6 +349,18 @@ void schedContext_unbindNtfn(sched_context_t *sc)
     }
 }
 
+void schedContext_maybeReturnToNtfn(sched_context_t *sc, tcb_t *tcb)
+{
+    assert(sc->scTcb == tcb);
+    assert(tcb->tcbSchedContext == sc);
+    if (sc->scNotification != NULL) {
+        assert(SC_PTR(notification_ptr_get_ntfnSchedContext(sc->scNotification)) == sc);
+        sc->scTcb = NULL;
+        tcb->tcbSchedContext = NULL;
+        rescheduleRequired();
+    }
+}
+
 time_t schedContext_updateConsumed(sched_context_t *sc)
 {
     ticks_t consumed = sc->scConsumed;
