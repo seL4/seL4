@@ -204,9 +204,6 @@ enum {
 #define seL4_PageTableIndexBits 9
 #define seL4_SectionBits 21
 #define seL4_SuperSectionBits 25
-#define seL4_PGDEntryBits 3
-#define seL4_PGDIndexBits 2
-#define seL4_PGDBits 5
 #define seL4_PageDirEntryBits 3
 #define seL4_PageDirIndexBits 11
 #define seL4_VCPUBits 12

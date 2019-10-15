@@ -41,6 +41,10 @@ typedef word_t vm_rights_t;
 
 typedef pde_t vspace_root_t;
 
+#define seL4_PGDEntryBits 3
+#define seL4_PGDIndexBits 2
+#define seL4_PGDBits 5
+
 #define PGDE_SIZE_BITS seL4_PGDEntryBits
 #define PDE_SIZE_BITS  seL4_PageDirEntryBits
 #define PTE_SIZE_BITS  seL4_PageTableEntryBits
