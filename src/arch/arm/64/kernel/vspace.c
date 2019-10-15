@@ -2189,9 +2189,19 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
             return EXCEPTION_SYSCALL_ERROR;
         }
 
+        word_t pstart = pptr_to_paddr((void *)cap_frame_cap_get_capFBasePtr(cap)) + start;
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+        /* Don't let applications flush outside of the kernel window */
+        if (pstart < PADDR_BASE || ((end - start) + pstart) > PADDR_TOP) {
+            userError("Page Flush: Overlaps kernel region.");
+            current_syscall_error.type = seL4_IllegalOperation;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+#endif
+
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performPageFlush(invLabel, find_ret.vspace_root, asid, vaddr + start, vaddr + end - 1,
-                                pptr_to_paddr((void *)cap_frame_cap_get_capFBasePtr(cap)) + start);
+                                pstart);
     }
 
     case ARMPageGetAddress:

@@ -2517,6 +2517,15 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
         start += vaddr;
         end += vaddr;
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+        /* Don't let applications flush outside of the kernel window */
+        if (pstart < physBase || ((end - start) + pstart) > PADDR_TOP) {
+            userError("Page Flush: Overlaps kernel region.");
+            current_syscall_error.type = seL4_IllegalOperation;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+#endif
+
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performPageFlush(invLabel, pd.pd, asid, start, end - 1, pstart);
     }
