@@ -140,12 +140,14 @@ void VGICMaintenance(void)
     uint32_t eisr0, eisr1;
     uint32_t flags;
 
-    /* The current thread must be runnable at this point as we can only get
-     * a VGIC maintenance whilst we are actively running a thread with an
-     * associated VCPU. For the moment for the proof we leave a redundant
-     * check in here that this is indeed not happening */
-    if (!isRunnable(NODE_STATE(ksCurThread))) {
-        printf("Received VGIC maintenance on non-runnable thread!\n");
+    /* We shouldn't get a VGICMaintenance interrupt while a VCPU isn't active,
+     * but if one becomes pending before the VGIC is disabled we might get one
+     * when returning to userlevel after disabling the current VCPU. In this
+     * case we simply return and rely on the interrupt being raised again when
+     * the VCPU is reenabled.
+     */
+    if (!ARCH_NODE_STATE(armHSVCPUActive)) {
+        printf("Received VGIC maintenance without active VCPU!\n");
         return;
     }
 
