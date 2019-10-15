@@ -513,6 +513,218 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
     }
 }
 
+#ifdef CONFIG_HAVE_FPU
+static inline void access_fpexc(vcpu_t *vcpu, bool_t write)
+{
+    /* save a copy of the current status since
+     * the enableFpuHyp modifies the armHSFPUEnabled
+     */
+    bool_t flag = ARCH_NODE_STATE(armHSFPUEnabled);
+    if (!flag) {
+        enableFpuInstInHyp();
+    }
+    if (write) {
+        VMSR(FPEXC, vcpu_read_reg(vcpu, seL4_VCPUReg_FPEXC));
+    } else {
+        word_t fpexc;
+        VMRS(FPEXC, fpexc);
+        vcpu_write_reg(vcpu, seL4_VCPUReg_FPEXC, fpexc);
+    }
+    /* restore the status */
+    if (!flag) {
+        trapFpuInstToHyp();
+    }
+}
+#endif
+
+static inline void armv_vcpu_boot_init(void)
+{
+#if defined(ARM_HYP_TRAP_CP14_IN_VCPU_THREADS) || defined(ARM_HYP_TRAP_CP14_IN_NATIVE_USER_THREADS)
+    /* On the verified build, we have implemented a workaround that ensures
+     * that we don't need to save and restore the debug coprocessor's state
+     * (and therefore don't have to expose the CP14 registers to verification).
+     *
+     * This workaround is simple: we just trap and intercept all Guest VM
+     * accesses to the debug coprocessor, and deliver them as VMFault
+     * messages to the VM Monitor. To that end, the VM Monitor can then
+     * choose to either kill the Guest VM, or it can also choose to silently
+     * step over the Guest VM's accesses to the debug coprocessor, thereby
+     * silently eliminating the communication channel between the Guest VMs
+     * (because the debug coprocessor acted as a communication channel
+     * unless we saved/restored its state between VM switches).
+     *
+     * This workaround delegates the communication channel responsibility
+     * from the kernel to the VM Monitor, essentially.
+     */
+    initHDCR();
+#endif
+}
+static inline void armv_vcpu_save(vcpu_t *vcpu, bool_t active)
+{
+    /* save registers */
+    vcpu_save_reg_range(vcpu, seL4_VCPUReg_ACTLR, seL4_VCPUReg_SPSRfiq);
+
+#ifdef ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS
+    /* This is done when we are asked to save and restore the CP14 debug context
+     * of VCPU threads; the register context is saved into the underlying TCB.
+     */
+    saveAllBreakpointState(vcpu->vcpuTCB);
+#endif
+    isb();
+#ifdef CONFIG_HAVE_FPU
+    /* Other FPU registers are still lazily saved and restored when
+     * handleFPUFault is called. See the comments in vcpu_enable
+     * for more information.
+     */
+    if (active && nativeThreadUsingFPU(vcpu->vcpuTCB)) {
+        access_fpexc(vcpu, false);
+    }
+#endif
+}
+
+
+static inline void armv_vcpu_enable(vcpu_t *vcpu)
+{
+    vcpu_restore_reg(vcpu, seL4_VCPUReg_SCTLR);
+    vcpu_restore_reg(vcpu, seL4_VCPUReg_TPIDRURO);
+    setHCR(HCR_VCPU);
+    isb();
+
+    /* Turn on the VGIC */
+    set_gic_vcpu_ctrl_hcr(vcpu->vgic.hcr);
+
+#if !defined(ARM_CP14_SAVE_AND_RESTORE_NATIVE_THREADS) && defined(ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS)
+    /* This is guarded by an #ifNdef (negation) ARM_CP14_SAVE_AND_RESTORE_NATIVE_THREADS
+     * because if it wasn't, we'd be calling restore_user_debug_context twice
+     * on a debug-API build; recall that restore_user_debug_context is called
+     * in restore_user_context.
+     *
+     * We call restore_user_debug_context here, because vcpu_restore calls this
+     * function (vcpu_enable). It's better to embed the
+     * restore_user_debug_context call in here than to call it in the outer
+     * level caller (vcpu_switch), because if the structure of this VCPU code
+     * changes later on, it will be less likely that the person who changes
+     * the code will be able to omit the debug register context restore, if
+     * it's done here.
+     */
+    restore_user_debug_context(vcpu->vcpuTCB);
+#endif
+#if defined(ARM_HYP_TRAP_CP14_IN_NATIVE_USER_THREADS)
+    /* Disable debug exception trapping and let the PL1 Guest VM handle all
+     * of its own debug faults.
+     */
+    setHDCRTrapDebugExceptionState(false);
+#endif
+#ifdef CONFIG_HAVE_FPU
+    /* We need to restore the FPEXC value early for the following reason:
+     *
+     * 1: When an application inside a VM is trying to execute an FPU
+     * instruction and the EN bit of FPEXC is disabled, an undefined
+     * instruction exception is sent to the guest Linux kernel instead of
+     * the seL4. Until the Linux kernel examines the EN bit of the FPEXC
+     * to determine if the exception FPU related, a VCPU trap is sent to
+     * the seL4 kernel. However, it can be too late to restore the value
+     * of saved FPEXC in the VCPU trap handler: if the EN bit of the saved
+     * FPEXC is enabled, the Linux kernel thinks the FPU is enabled and
+     * thus refuses to handle the exception. The result is the application
+     * is killed with the cause of illegal instruction.
+     *
+     * Note that we restore the FPEXC here, but the current FPU owner
+     * can be a different thread. Thus, it seems that we are modifying
+     * another thread's FPEXC. However, the modification is OK.
+     *
+     * 1: If the other thread is a native thread, even if the EN bit of
+     * the FPEXC is enabled, a trap th HYP mode will be triggered when
+     * the thread tries to use the FPU.
+     *
+     * 2: If the other thread has a VCPU, the FPEXC is already saved
+     * in the VCPU's vcpu->fpexc when the VCPU is saved or disabled.
+     *
+     * We also overwrite the fpuState.fpexc with the value saved in
+     * vcpu->fpexc. Since the following scenario can happen:
+     *
+     * VM0 (the FPU owner) -> VM1 (update the FPEXC in vcpu_enable) ->
+     * switchLocalFpuOwner (save VM0 with modified FPEXC) ->
+     * VM1 (the new FPU owner)
+     *
+     * In the case above, the fpuState.fpexc of VM0 saves the value written
+     * by the VM1, but the vcpu->fpexc of VM0 still contains the correct
+     * value when VM0 is disabed (vcpu_disable) or saved (vcpu_save).
+     *
+     *
+     */
+
+    vcpu->vcpuTCB->tcbArch.tcbContext.fpuState.fpexc = vcpu_read_reg(vcpu, seL4_VCPUReg_FPEXC);
+    access_fpexc(vcpu, true);
+#endif
+}
+
+static inline void armv_vcpu_disable(vcpu_t *vcpu)
+{
+    uint32_t hcr;
+    dsb();
+    if (likely(vcpu)) {
+        vcpu_save_reg(vcpu, seL4_VCPUReg_TPIDRURO);
+        vcpu_hw_write_reg(seL4_VCPUReg_TPIDRURO, 0);
+        hcr = get_gic_vcpu_ctrl_hcr();
+        vcpu->vgic.hcr = hcr;
+        vcpu_save_reg(vcpu, seL4_VCPUReg_SCTLR);
+        isb();
+#ifdef CONFIG_HAVE_FPU
+        if (nativeThreadUsingFPU(vcpu->vcpuTCB)) {
+            access_fpexc(vcpu, false);
+        }
+#endif
+    }
+    /* Turn off the VGIC */
+    set_gic_vcpu_ctrl_hcr(0);
+    isb();
+
+    /* Stage 1 MMU off */
+    setSCTLR(SCTLR_DEFAULT);
+    setHCR(HCR_NATIVE);
+
+#if defined(ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS)
+    /* Disable all breakpoint registers from triggering their
+     * respective events, so that when we switch from a guest VM
+     * to a native thread, the native thread won't trigger events
+     * that were caused by things the guest VM did.
+     */
+    loadAllDisabledBreakpointState();
+#endif
+#if defined(ARM_HYP_TRAP_CP14_IN_NATIVE_USER_THREADS)
+    /* Enable debug exception trapping and let seL4 trap all PL0 (user) native
+     * seL4 threads' debug exceptions, so it can deliver them as fault messages.
+     */
+    setHDCRTrapDebugExceptionState(true);
+#endif
+    isb();
+}
+
+static inline void armv_vcpu_init(vcpu_t *vcpu)
+{
+    vcpu_write_reg(vcpu, seL4_VCPUReg_SCTLR, SCTLR_DEFAULT);
+    vcpu_write_reg(vcpu, seL4_VCPUReg_ACTLR, ACTLR_DEFAULT);
+}
+
+#define HSR_FPU_FAULT   (0x1fe0000a)
+#define HSR_TASE_FAULT  (0x1fe00020)
+
+static inline bool_t armv_handleVCPUFault(word_t hsr)
+{
+#ifdef CONFIG_HAVE_FPU
+    if (hsr == HSR_FPU_FAULT || hsr == HSR_TASE_FAULT) {
+        assert(!isFpuEnable());
+        handleFPUFault();
+        setNextPC(NODE_STATE(ksCurThread), getRestartPC(NODE_STATE(ksCurThread)));
+        return true;
+    }
+#endif
+
+    return false;
+}
+
+
 #endif /* End of CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 

@@ -515,6 +515,11 @@ static inline void armv_vcpu_boot_init(void)
     isb();
 }
 
+static inline void armv_vcpu_save(vcpu_t *vcpu, UNUSED bool_t active)
+{
+    vcpu_save_reg_range(vcpu, seL4_VCPUReg_TTBR0, seL4_VCPUReg_SPSR_EL1);
+}
+
 static inline void armv_vcpu_enable(vcpu_t *vcpu)
 {
     MSR(REG_HCR_EL2, HCR_VCPU);
