@@ -19,15 +19,6 @@
 #include <arch/machine/gic_v2.h>
 
 
-static void vcpu_enable(vcpu_t *vcpu)
-{
-    armv_vcpu_enable(vcpu);
-}
-
-static void vcpu_disable(vcpu_t *vcpu)
-{
-    armv_vcpu_disable(vcpu);
-}
 
 BOOT_CODE void vcpu_boot_init(void)
 {

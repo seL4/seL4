@@ -583,7 +583,7 @@ static inline void armv_vcpu_save(vcpu_t *vcpu, bool_t active)
 }
 
 
-static inline void armv_vcpu_enable(vcpu_t *vcpu)
+static inline void vcpu_enable(vcpu_t *vcpu)
 {
     vcpu_restore_reg(vcpu, seL4_VCPUReg_SCTLR);
     vcpu_restore_reg(vcpu, seL4_VCPUReg_TPIDRURO);
@@ -659,7 +659,7 @@ static inline void armv_vcpu_enable(vcpu_t *vcpu)
 #endif
 }
 
-static inline void armv_vcpu_disable(vcpu_t *vcpu)
+static inline void vcpu_disable(vcpu_t *vcpu)
 {
     uint32_t hcr;
     dsb();
