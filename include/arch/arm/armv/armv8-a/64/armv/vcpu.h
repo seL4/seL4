@@ -524,12 +524,12 @@ static inline void vcpu_enable(vcpu_t *vcpu)
 {
     MSR(REG_HCR_EL2, HCR_VCPU);
     isb();
-    vcpu_hw_write_reg(seL4_VCPUReg_SCTLR, vcpu->regs[seL4_VCPUReg_SCTLR]);
+    vcpu_restore_reg(vcpu, seL4_VCPUReg_SCTLR);
     isb();
 
     set_gic_vcpu_ctrl_hcr(vcpu->vgic.hcr);
 #ifdef CONFIG_HAVE_FPU
-    vcpu_hw_write_reg(seL4_VCPUReg_CPACR, vcpu->regs[seL4_VCPUReg_CPACR]);
+    vcpu_restore_reg(vcpu, seL4_VCPUReg_CPACR);
 #endif
 }
 
@@ -541,9 +541,9 @@ static inline void vcpu_disable(vcpu_t *vcpu)
     if (likely(vcpu)) {
         hcr = get_gic_vcpu_ctrl_hcr();
         vcpu->vgic.hcr = hcr;
-        vcpu->regs[seL4_VCPUReg_SCTLR] = vcpu_hw_read_reg(seL4_VCPUReg_SCTLR);
+        vcpu_save_reg(vcpu, seL4_VCPUReg_SCTLR);
 #ifdef CONFIG_HAVE_FPU
-        vcpu->regs[seL4_VCPUReg_CPACR] = vcpu_hw_read_reg(seL4_VCPUReg_CPACR);
+        vcpu_save_reg(vcpu, seL4_VCPUReg_CPACR);
 #endif
         isb();
     }
@@ -568,7 +568,7 @@ static inline void vcpu_disable(vcpu_t *vcpu)
 
 static inline void armv_vcpu_init(vcpu_t *vcpu)
 {
-    vcpu->regs[seL4_VCPUReg_SCTLR] = SCTLR_EL1_VM;
+    vcpu_write_reg(vcpu, seL4_VCPUReg_SCTLR, SCTLR_EL1_VM);
 }
 
 static inline bool_t armv_handleVCPUFault(word_t hsr)
