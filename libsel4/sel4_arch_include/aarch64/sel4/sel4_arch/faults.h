@@ -46,6 +46,12 @@ LIBSEL4_INLINE_FUNC seL4_Fault_t seL4_getArchFault(seL4_MessageInfo_t tag)
                                       seL4_GetMR(seL4_VMFault_Addr),
                                       seL4_GetMR(seL4_VMFault_PrefetchFault),
                                       seL4_GetMR(seL4_VMFault_FSR));
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    case seL4_Fault_VGICMaintenance:
+        return seL4_Fault_VGICMaintenance_new(seL4_GetMR(seL4_VGICMaintenance_IDX));
+    case seL4_Fault_VCPUFault:
+        return seL4_Fault_VCPUFault_new(seL4_GetMR(seL4_VCPUFault_HSR));
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 #ifdef CONFIG_KERNEL_MCS
     case seL4_Fault_Timeout:
         return seL4_Fault_Timeout_new(seL4_GetMR(seL4_Timeout_Data),
