@@ -14,6 +14,8 @@ cmake_minimum_required(VERSION 3.7.2)
 
 declare_platform(qemu-arm-virt KernelPlatformQEMUArmVirt PLAT_QEMU_ARM_VIRT KernelArchARM)
 
+set(MIN_QEMU_VERSION "3.1.0")
+
 if(KernelPlatformQEMUArmVirt)
     if("${ARM_CPU}" STREQUAL "cortex-a15")
         declare_seL4_arch(aarch32)
@@ -38,16 +40,33 @@ if(KernelPlatformQEMUArmVirt)
         set(KernelArmCortexA53 ON)
         set(KernelArchArmV8a ON)
     endif()
+    execute_process(COMMAND qemu-system-${QEMU_ARCH} -version OUTPUT_VARIABLE QEMU_VERSION_STR)
+    string(
+        REGEX
+            MATCH
+            "[0-9](\\.[0-9])+"
+            QEMU_VERSION
+            ${QEMU_VERSION_STR}
+    )
+    if("${QEMU_VERSION}" VERSION_LESS "${MIN_QEMU_VERSION}")
+        message(WARNING "Warning: qemu version should be at least ${MIN_QEMU_VERSION}")
+    endif()
+
     if("${QEMU_MEMORY}" STREQUAL "")
         set(QEMU_MEMORY "1024")
     endif()
     config_set(KernelARMPlatform ARM_PLAT qemu-arm-virt)
     set(DTBPath "${CMAKE_BINARY_DIR}/virt.dtb")
     set(DTSPath "${CMAKE_BINARY_DIR}/virt.dts")
+    if(KernelArmHypervisorSupport)
+        set(QEMU_VIRT_OPTION "virtualization=on")
+    else()
+        set(QEMU_VIRT_OPTION "virtualization=off")
+    endif()
     execute_process(
         COMMAND
-            qemu-system-${QEMU_ARCH} -machine virt,dumpdtb=${DTBPath} -m ${QEMU_MEMORY} -cpu
-            ${ARM_CPU} -nographic
+            qemu-system-${QEMU_ARCH} -machine virt,dumpdtb=${DTBPath},${QEMU_VIRT_OPTION} -m ${QEMU_MEMORY}
+            -cpu ${ARM_CPU} -nographic
     )
     execute_process(
         COMMAND
