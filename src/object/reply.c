@@ -19,11 +19,6 @@ void reply_push(tcb_t *tcb_caller, tcb_t *tcb_callee, reply_t *reply, bool_t can
     assert(reply != NULL);
     assert(reply->replyTCB == NULL);
 
-    if (tcb_callee->tcbSchedContext) {
-        /* receiver already has sc */
-        canDonate = false;
-    }
-
     assert(call_stack_get_callStackPtr(reply->replyPrev) == 0);
     assert(call_stack_get_callStackPtr(reply->replyNext) == 0);
 
@@ -40,9 +35,7 @@ void reply_push(tcb_t *tcb_caller, tcb_t *tcb_callee, reply_t *reply, bool_t can
     thread_state_ptr_set_replyObject(&tcb_caller->tcbState, REPLY_REF(reply));
     setThreadState(tcb_caller, ThreadState_BlockedOnReply);
 
-    if (sc_donated != NULL && canDonate) {
-        assert(tcb_callee->tcbSchedContext == NULL);
-
+    if (sc_donated != NULL && tcb_callee->tcbSchedContext == NULL && canDonate) {
         reply_t *old_caller = sc_donated->scReply;
 
         /* check stack integrity */
