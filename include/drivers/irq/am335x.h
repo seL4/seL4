@@ -22,11 +22,16 @@ typedef uint8_t irq_t;
 
 #define CMPER_REG(base, off) ((volatile uint32_t *)((base) + (off)))
 #define CMPER_TIMER3_CLKCTRL    0x84
+#define CMPER_TIMER4_CLKCTRL    0x88
+
 #define CMPER_CLKCTRL_DISABLE   0
 #define CMPER_CLKCTRL_ENABLE    2
+
 #define CMPER_CLKSEL_TIMER3     0x50c
+#define CMPER_CLKSEL_TIMER4     0x510
 #define CMPER_CKLSEL_MOSC       1
 
+#define RESERVED                3
 
 #define INTCPS_SYSCONFIG_SOFTRESET BIT(1)
 #define INTCPS_SYSSTATUS_RESETDONE BIT(0)
