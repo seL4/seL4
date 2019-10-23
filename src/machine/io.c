@@ -17,10 +17,10 @@
 
 void putchar(char c)
 {
-    putDebugChar(c);
     if (c == '\n') {
         putDebugChar('\r');
     }
+    putDebugChar(c);
 }
 
 static unsigned int print_spaces(int n)
