@@ -101,7 +101,7 @@ BOOT_CODE static void dist_init(void)
 
     /* group 0 for secure; group 1 for non-secure */
     for (i = 0; i < nirqs; i += 32) {
-        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT) && !config_set(CONFIG_PLAT_QEMU_ARM_VIRT)) {
             gic_dist->security[i >> 5] = 0xffffffff;
         } else {
             gic_dist->security[i >> 5] = 0;
@@ -120,7 +120,7 @@ BOOT_CODE static void cpu_iface_init(void)
     gic_dist->pending_clr[0] = IRQ_SET_ALL;
 
     /* put everything in group 0; group 1 if in hyp mode */
-    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT) && !config_set(CONFIG_PLAT_QEMU_ARM_VIRT)) {
         gic_dist->security[0] = 0xffffffff;
         gic_dist->priority[0] = 0x80808080;
     } else {

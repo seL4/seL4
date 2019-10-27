@@ -55,17 +55,19 @@ if(KernelPlatformQEMUArmVirt)
     if("${QEMU_MEMORY}" STREQUAL "")
         set(QEMU_MEMORY "1024")
     endif()
+    message("QEMU MEMORY is: ${QEMU_MEMORY}")
     config_set(KernelARMPlatform ARM_PLAT qemu-arm-virt)
     set(DTBPath "${CMAKE_BINARY_DIR}/virt.dtb")
     set(DTSPath "${CMAKE_BINARY_DIR}/virt.dts")
     if(KernelArmHypervisorSupport)
-        set(QEMU_VIRT_OPTION "virtualization=on")
+        set(QEMU_VIRT_OPTION "virtualization=on,highmem=off,secure=off")
     else()
         set(QEMU_VIRT_OPTION "virtualization=off")
     endif()
+    find_program(QEMU_BINARY qemu-system-${QEMU_ARCH})
     execute_process(
         COMMAND
-            qemu-system-${QEMU_ARCH} -machine virt,dumpdtb=${DTBPath},${QEMU_VIRT_OPTION} -m ${QEMU_MEMORY}
+            ${QEMU_BINARY} -machine virt,dumpdtb=${DTBPath},${QEMU_VIRT_OPTION} -m ${QEMU_MEMORY}
             -cpu ${ARM_CPU} -nographic
     )
     execute_process(
