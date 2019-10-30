@@ -396,10 +396,10 @@ block UnknownSyscall {
 }
 
 block UserException {
-    padding 64
-
     field number 32
-    field code 28
+    field code   32
+
+    padding 60
     field seL4_FaultType 4
 }
 
