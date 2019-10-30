@@ -410,21 +410,26 @@ lookupPTSlot_ret_t lookupPTSlot(pte_t *lvl1pt, vptr_t vptr)
 /* We get the actual faulting instruction, so that the user-mode
  * VMM does not need to do nested page table walking.
  */
-static uint32_t fetch_instruction(vm_fault_type_t type)
+uint32_t fetch_faulting_instruction(vm_fault_type_t type)
 {
     word_t hstatus = read_hstatus();
-    if (hstatus & HSTATUS_STL) {
-        if (type == RISCVLoadPageFault ||
-            type == RISCVStorePageFault) {
-            word_t pc = getRestartPC(NODE_STATE(ksCurThread));
-            write_hstatus(hstatus | HSTATUS_SPRV);
-            uint32_t inst = *(uint32_t *)(pc);
-            write_hstatus(hstatus);
-            /* Not sure why there needs an instruction fence. Could be a QEMU bug? */
-            asm volatile("fence.i" ::: "memory");
-            return inst;
-        }
+
+    if (((hstatus & HSTATUS_STL) && (type == RISCVLoadPageFault || type == RISCVStorePageFault)) ||
+        (hstatus & HSTATUS_SPV && type == RISCVInstructionIllegal)) {
+        word_t pc = getRestartPC(NODE_STATE(ksCurThread));
+        uint32_t inst = 0;
+        asm volatile(
+                "li a5, 1\n\t"
+                "csrrs a4, "STRINGIFY(HSTATUS)", a5\n\t"
+                "lw %0, (%1)\n\t"
+                "csrw "STRINGIFY(HSTATUS)", a4\n\t"
+                : "=r"(inst)
+                : "r"(pc)
+                : "a4", "a5", "memory"
+                );
+        return inst;
     }
+
     return 0;
 }
 #endif
@@ -441,7 +446,7 @@ exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
     case RISCVLoadPageFault:
     case RISCVLoadAccessFault:
 #ifdef CONFIG_RISCV_HE
-        instruction = fetch_instruction(vm_faultType);
+        instruction = fetch_faulting_instruction(vm_faultType);
         current_fault = seL4_Fault_VMFault_new(addr, instruction, RISCVLoadAccessFault, false);
 #else
         current_fault = seL4_Fault_VMFault_new(addr, RISCVLoadAccessFault, fsr);
@@ -450,7 +455,7 @@ exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
     case RISCVStorePageFault:
     case RISCVStoreAccessFault:
 #ifdef CONFIG_RISCV_HE
-        instruction = fetch_instruction(vm_faultType);
+        instruction = fetch_faulting_instruction(vm_faultType);
         current_fault = seL4_Fault_VMFault_new(addr, instruction, RISCVStoreAccessFault, false);
 #else
         current_fault = seL4_Fault_VMFault_new(addr, RISCVStoreAccessFault, fsr);

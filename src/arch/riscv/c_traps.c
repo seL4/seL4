@@ -132,6 +132,9 @@ void VISIBLE NORETURN c_handle_exception(void)
     case RISCVEnvHypCall:
         handleVCPUFault(scause);
         break;
+    case RISCVInstructionIllegal:
+        handleUserLevelFault(scause, fetch_faulting_instruction(scause));
+        break;
 #endif
     default:
         handleUserLevelFault(scause, 0);
