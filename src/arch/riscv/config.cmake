@@ -31,7 +31,7 @@ config_option(
 config_string(
     KernelRiscVHVersion RISCV_HE_VER
     "Support for RISCV HE draft versions"
-    DEFAULT 4
+    DEFAULT 3
     DEPENDS "KernelRiscVHypervisorSupport"
     UNQUOTE
 )
