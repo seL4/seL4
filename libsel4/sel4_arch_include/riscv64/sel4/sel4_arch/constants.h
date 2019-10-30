@@ -170,7 +170,7 @@ enum {
     seL4_VCPUReg_SSTATUS = 0,
     seL4_VCPUReg_SIE,
     seL4_VCPUReg_STVEC,
-    seL4_VCPUReg_SSTRATCH,
+    seL4_VCPUReg_SSCRATCH,
     seL4_VCPUReg_SEPC,
     seL4_VCPUReg_SCAUSE,
     seL4_VCPUReg_STVAL,

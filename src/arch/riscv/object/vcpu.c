@@ -55,8 +55,8 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
         case seL4_VCPUReg_STVEC:
             reg = read_bstvec();
             break;
-        case seL4_VCPUReg_SSTRATCH:
-            reg = read_bsstratch();
+        case seL4_VCPUReg_SSCRATCH:
+            reg = read_bsscratch();
             break;
         case seL4_VCPUReg_SEPC:
             reg = read_bsepc();
@@ -91,8 +91,8 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
         case seL4_VCPUReg_STVEC:
             write_bstvec(reg);
             break;
-        case seL4_VCPUReg_SSTRATCH:
-            write_bsstratch(reg);
+        case seL4_VCPUReg_SSCRATCH:
+            write_bsscratch(reg);
             break;
         case seL4_VCPUReg_SEPC:
             write_bsepc(reg);
@@ -178,7 +178,7 @@ static inline void vcpu_native(void)
     write_bsip(0);
     write_bsie(0);
     write_bstvec(0);
-    write_bsstratch(0);
+    write_bsscratch(0);
     write_bsepc(0);
     write_bscause(0);
     write_bstval(0);

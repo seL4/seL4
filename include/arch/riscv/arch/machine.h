@@ -221,7 +221,7 @@ static inline void clear_sie_mask(word_t mask_low)
 #define BSSTATUS    0x200
 #define BSIE        0x204
 #define BSTVEC      0x205
-#define BSSTRATCH   0x240
+#define BSSCRATCH   0x240
 #define BSEPC       0x241
 #define BSCAUSE     0x242
 #define BSTVAL      0x243
@@ -355,16 +355,16 @@ static inline void write_bstvec(word_t v)
     asm volatile("csrw "STRINGIFY(BSTVEC)", %0" :: "r"(v));
 }
 
-static inline word_t read_bsstratch(void)
+static inline word_t read_bsscratch(void)
 {
     word_t r;
-    asm volatile("csrr %0, "STRINGIFY(BSSTRATCH) : "=r"(r));
+    asm volatile("csrr %0, "STRINGIFY(BSSCRATCH) : "=r"(r));
     return r;
 }
 
-static inline void write_bsstratch(word_t v)
+static inline void write_bsscratch(word_t v)
 {
-    asm volatile("csrw "STRINGIFY(BSSTRATCH)", %0" :: "r"(v));
+    asm volatile("csrw "STRINGIFY(BSSCRATCH)", %0" :: "r"(v));
 }
 
 static inline word_t read_bsepc(void)
