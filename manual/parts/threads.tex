@@ -16,7 +16,7 @@
 
 seL4 provides threads to represent an execution context. On MCS configurations of
 the kernel, scheduling contexts are used to manage processor time. Without MCS, processor
-time is also reprented by the thread abstraction.
+time is also represented by the thread abstraction.
 A thread is represented in seL4 by its thread control block
 object (\obj{TCB}).
 
@@ -79,7 +79,7 @@ deleted.
 \subsection{Scheduling}
 \label{sec:sched}
 
-seL4 uses a preemptive, tickless, scheduler with 256 priority levels (0 --- 255).  All threads have
+seL4 uses a preemptive, tickless scheduler with 256 priority levels (0 --- 255).  All threads have
 a maximum controlled priority (MCP) and a priority, the latter being the effective priority of the
 thread.
 When a thread modifies a another threads priority (including itself) it must provide a
@@ -331,8 +331,8 @@ Timeout faults are registered per thread, which means that while clients may
 not have a timeout fault handler, servers may, allowing single-threaded,
 time-sensitive, passive servers to use a timeout exception handler to recover
 from malicious or untrusted clients whose budget expires while the server is
-completing the request.  Timeout fault handlers can access server reply objcets
-reply with an error to the client, then reset the server to handle the next
+completing the request.  Timeout fault handlers can access server reply objects
+and reply with an error to the client, then reset the server to handle the next
 client request.
 
 If a reply message is sent to a nested server and a scheduling context without
@@ -566,12 +566,12 @@ the fault-reply to a single-step debug fault.
 Timeout faults are raised when a thread consumes all of its budget and has a
 timeout fault handler that is not a null capability.  They allow a timeout
 exception handler to take some action to restore the thread, and deliver a
-message containting the schedluing context data word, as well as the amount of
+message containing the scheduling context data word, as well as the amount of
 time consumed since the last timeout fault occured on this scheduling context,
 or since \apifunc{seL4\_SchedContext\_YieldTo}{schedcontext_yieldto} or
 \apifunc{seL4\_SchedContext\_Consumed}{schedcontext_consumed} was last called.
 Timeout exception handlers can reply to a temporal fault with the registers set
-in the same format as in outlined in \autoref{sec:read_write_registers}.
+in the same format as outlined in \autoref{sec:read_write_registers}.
 
 \begin{table}[htb] \noindent\begin{tabularx}{\textwidth}{XX} \toprule
     \textbf{Meaning} & \textbf{IPC buffer location} \\ \midrule Data word from
@@ -659,7 +659,7 @@ A \obj{TCB} with a bound \obj{VCPU} has two execution modes; one is the original
 if there was no bound \obj{VCPU}, and the other is the guest mode execution using the
 \obj{VCPU}. Switching from regular execution mode into the guest execution mode is
 done by using the \apifunc{seL4\_VMEnter}{sel4_vmenter} syscall. Executing this syscall causes the thread, whenever
-it is scheduled thereafter, to execute using the higher privlidged mode controlled by the \obj{VCPU}.
+it is scheduled thereafter, to execute using the higher privileged mode controlled by the \obj{VCPU}.
 Should the guest execution mode generate any kind of fault, or if a message arrives
 on the \obj{TCB}s bound notification, the \obj{TCB} will be switched back to regular mode
 and the \apifunc{seL4\_VMEnter}{sel4_vmenter} syscall will return with a message indicating the reason for return.
@@ -680,7 +680,7 @@ which serves as the vspace root when executing in guest mode, with the vspace ro
 with \apifunc{seL4\_TCB\_SetSPace}{tcb_setspace} or \apifunc{seL4\_TCB\_Configure}{tcb_configure}
 continuing to provide translation when the TCB is executing in its normal mode.
 
-Direct access to I/O ports can be given to the privlidged execution mode through the
+Direct access to I/O ports can be given to the privileged execution mode through the
 \apifunc{seL4\_X86\_VCPU\_EnableIOPort}{x86_vcpu_enableioport} invocation and allows the provided I/O port capability to be
 linked to the VCPU, and a subset of its I/O port range to be made accessible to the \obj{VCPU}.
 Linking means that an I/O port capability can only be used in a single \apifunc{seL4\_X86\_VCPU\_EnableIOPort}{x86_vcpu_enableioport}
