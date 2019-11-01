@@ -127,9 +127,6 @@ BOOT_CODE void initTimer(void)
     /* Clear the read register */
     SET_REGISTER(timer->tcrr, 0u);
 
-    /* configure prescaler */
-    SET_REGISTER(timer->tclr, (TCLR_PRESCALE_ENABLE));
-
     /* start the timer */
     SET_REGISTER(timer->tclr, (TCLR_AUTORELOAD | TCLR_STARTTIMER | TCLR_COMPAREENABLE));
 }
