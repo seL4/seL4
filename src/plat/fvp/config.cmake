@@ -18,7 +18,7 @@ if(KernelPlatformFVP)
     declare_seL4_arch(aarch64)
     set(KernelArmCortexA57 ON)
     set(KernelArchArmV8a ON)
-    config_set(KernelARMPlatform PLAT "fvp")
+    config_set(KernelARMPlatform ARM_PLAT "fvp")
     list(APPEND KernelDTSList "tools/dts/fvp.dts")
     list(APPEND KernelDTSList "src/plat/fvp/overlay-fvp.dts")
     declare_default_headers(
