@@ -22,11 +22,7 @@ if(KernelPlatformSpike)
     elseif("${KernelSel4Arch}" STREQUAL riscv64)
         declare_seL4_arch(riscv64)
     else()
-        message(
-            STATUS "Selected platform spike supports multiple architectures but none were given"
-        )
-        message(STATUS "  Defaulting to riscv64")
-        declare_seL4_arch(riscv64)
+        fallback_declare_seL4_arch_default(riscv64)
     endif()
     config_set(KernelRiscVPlatform RISCV_PLAT "spike")
     config_set(KernelPlatformFirstHartID FIRST_HART_ID 0)

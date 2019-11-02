@@ -34,24 +34,14 @@ if(KernelPlatExynos5)
     elseif("${KernelSel4Arch}" STREQUAL arm_hyp)
         declare_seL4_arch(arm_hyp)
     else()
-        message(
-            STATUS "Selected platform exynos5 supports multiple architectures but none were given"
-        )
-        message(STATUS "  Defaulting to aarch32")
-        declare_seL4_arch(aarch32)
+        fallback_declare_seL4_arch_default(aarch32)
     endif()
     set(KernelArmCortexA15 ON)
     set(KernelArchArmV7ve ON)
     # v7ve is a superset of v7a, so we enable that as well
     set(KernelArchArmV7a ON)
     config_set(KernelArmMach MACH "exynos")
-    if("${KernelARMPlatform}" STREQUAL "")
-        message(
-            STATUS "Selected platform exynos5 supports multiple sub platforms but none were given"
-        )
-        message(STATUS "  Defaulting to exynos5250")
-        set(KernelARMPlatform exynos5250)
-    endif()
+    check_platform_and_fallback_to_default(KernelARMPlatform "exynos5250")
 
     list(FIND plat_lists "${KernelARMPlatform}" index)
     if("${index}" STREQUAL "-1")

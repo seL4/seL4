@@ -27,13 +27,7 @@ if(KernelPlatformAM335X)
 
     set(KernelArmCortexA8 ON)
     set(KernelArchArmV7a ON)
-    if("${KernelARMPlatform}" STREQUAL "")
-        message(
-            STATUS "Selected platform am335x supports multiple sub platforms but none were given"
-        )
-        message(STATUS "  Defaulting to am335x-boneblack")
-        set(KernelARMPlatform am335x-boneblack)
-    endif()
+    check_platform_and_fallback_to_default(KernelARMPlatform "am335x-boneblack")
     list(FIND plat_lists ${KernelARMPlatform} index)
     if("${index}" STREQUAL "-1")
         message(FATAL_ERROR "Which am335x platform not specified")

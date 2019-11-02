@@ -21,12 +21,7 @@ if(KernelPlatformImx8mq-evk OR KernelPlatformImx8mm-evk)
     elseif("${KernelSel4Arch}" STREQUAL aarch64)
         declare_seL4_arch(aarch64)
     else()
-        message(
-            STATUS
-                "Selected platform ${KernelPlatform} supports multiple architectures but none were given"
-        )
-        message(STATUS "  Defaulting to aarch64")
-        declare_seL4_arch(aarch64)
+        fallback_declare_seL4_arch_default(aarch64)
     endif()
     # MCS is not supported on imx8m.
     # It requires a timer driver that implements the tickless programming requirements.

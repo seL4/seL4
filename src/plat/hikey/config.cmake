@@ -20,11 +20,7 @@ if(KernelPlatformHikey)
     elseif("${KernelSel4Arch}" STREQUAL aarch64)
         declare_seL4_arch(aarch64)
     else()
-        message(
-            STATUS "Selected platform hikey supports multiple architectures but none were given"
-        )
-        message(STATUS "  Defaulting to aarch32")
-        declare_seL4_arch(aarch32)
+        fallback_declare_seL4_arch_default(aarch32)
     endif()
     set(KernelArmCortexA53 ON)
     set(KernelArchArmV8a ON)

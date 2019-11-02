@@ -75,6 +75,13 @@ macro(declare_seL4_arch sel4_arch)
 
 endmacro()
 
+# helper macro to unify messages printed output
+# Usage example: print_message_multiple_options_helper("architectures" aarch32)
+macro(print_message_multiple_options_helper str_type default_str)
+    message(STATUS "platform ${KernelPlatform} supports multiple ${str_type}, none was given")
+    message(STATUS "  defaulting to: ${default_str}")
+endmacro()
+
 # Register a platform's config options to be set if it is selected.
 # Additionally, the kernel_platforms variable can be used as a record of all
 # platforms that can be built once the platform configuration files have been
@@ -93,6 +100,24 @@ macro(declare_platform name config1 config2 enable_test)
     else()
         set(${config1} OFF CACHE INTERNAL "" FORCE)
     endif()
+endmacro()
+
+# helper macro that prints a message that no sub platform is specified and
+# the default sub platform will be used
+# Usage example: fallback_declare_seL4_arch_default(aarch32)
+macro(check_platform_and_fallback_to_default default_sub_plat var_cmake_kernel_plat)
+    if("${${var_cmake_kernel_plat}}" STREQUAL "")
+        print_message_multiple_options_helper("sub platforms" ${default_sub_plat})
+        set(${var_cmake_kernel_plat} ${default_sub_plat})
+    endif()
+endmacro()
+
+# helper macro that prints a message that no architecture is specified and
+# the default architecture will be used
+# Usage example: fallback_declare_seL4_arch_default(aarch32)
+macro(fallback_declare_seL4_arch_default default_arch)
+    print_message_multiple_options_helper("architectures" ${default_arch})
+    declare_seL4_arch(${default_arch})
 endmacro()
 
 unset(CONFIGURE_PLIC_MAX_NUM_INT CACHE)
