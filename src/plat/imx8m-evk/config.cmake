@@ -12,10 +12,12 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-declare_platform(imx8mq-evk KernelPlatformImx8mq-evk PLAT_IMX8MQ_EVK KernelArchARM)
-declare_platform(imx8mm-evk KernelPlatformImx8mm-evk PLAT_IMX8MM_EVK KernelArchARM)
+declare_platform(imx8 KernelPlatformImx8 PLAT_IMX8 KernelArchARM
+    "imx8mq-evk,KernelPlatformImx8mq-evk,PLAT_IMX8MQ_EVK"
+    "imx8mm-evk,KernelPlatformImx8mm-evk,PLAT_IMX8MM_EVK"
+)
 
-if(KernelPlatformImx8mq-evk OR KernelPlatformImx8mm-evk)
+if(KernelPlatformImx8)
     if("${KernelSel4Arch}" STREQUAL aarch32)
         declare_seL4_arch(aarch32)
     elseif("${KernelSel4Arch}" STREQUAL aarch64)
@@ -29,8 +31,8 @@ if(KernelPlatformImx8mq-evk OR KernelPlatformImx8mm-evk)
     set(KernelArmCortexA53 ON)
     set(KernelArchArmV8a ON)
     set(KernelArmMach "imx" CACHE INTERNAL "")
-    list(APPEND KernelDTSList "tools/dts/${KernelPlatform}.dts")
-    list(APPEND KernelDTSList "src/plat/imx8m-evk/overlay-${KernelPlatform}.dts")
+    list(APPEND KernelDTSList "tools/dts/${KernelARMPlatform}.dts")
+    list(APPEND KernelDTSList "src/plat/imx8m-evk/overlay-${KernelARMPlatform}.dts")
     if(KernelSel4ArchAarch32)
         list(APPEND KernelDTSList "src/plat/imx8m-evk/overlay-imx8m-32bit.dts")
     endif()
