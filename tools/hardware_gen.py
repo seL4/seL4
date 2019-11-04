@@ -17,12 +17,13 @@ import logging
 import yaml
 
 from hardware import config, fdt
-from hardware.outputs import c_header, compat_strings, yaml as yaml_out
+from hardware.outputs import c_header, compat_strings, yaml as yaml_out, elfloader
 from hardware.utils.rule import HardwareYaml
 
 OUTPUTS = {
     'c_header': c_header,
     'compat_strings': compat_strings,
+    'elfloader': elfloader,
     'yaml': yaml_out,
 }
 
