@@ -38,7 +38,7 @@ HEADER_TEMPLATE = '''/*
 #define __PLAT_DEVICES_GEN_H
 #include <linker.h>
 
-#ifndef KDEV_PPTR
+#ifndef KDEV_BASE
 #include <mode/hardware.h>
 #endif
 
@@ -67,7 +67,7 @@ HEADER_TEMPLATE = '''/*
 
 /* KERNEL DEVICES */
 {% for (addr, macro) in sorted(kernel_macros.items()) %}
-#define {{ macro }} (KDEV_PPTR + {{ "0x{:x}".format(addr) }})
+#define {{ macro }} (KDEV_BASE + {{ "0x{:x}".format(addr) }})
 {% endfor %}
 
 #ifndef __ASSEMBLER__
@@ -86,7 +86,7 @@ static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
         {{ kernel_macros[map_addr] }},
         {% else %}
         /* contains {{ ', '.join(group.labels.keys()) }} */
-        KDEV_PPTR + {{ "0x{:x}".format(map_addr) }},
+        KDEV_BASE + {{ "0x{:x}".format(map_addr) }},
         {% endif %}
         {% if args.arch == 'arm' %}
         true, /* armExecuteNever */
@@ -124,7 +124,7 @@ def get_kernel_devices(tree: fdt.FdtParser, rules: rule.HardwareYaml):
     ''' Given a device tree and a set of rules, returns a tuple (groups, offsets).
 
         Groups is a list of 'KernelRegionGroups', each of which represents a single contiguous region of memory that is associated with a device.
-        Offsets is a dict of offset -> label, where label is the name given to the kernel for that address (e.g. SERIAL_PPTR) and offset is the offset from KDEV_PPTR at which it's mapped.'''
+        Offsets is a dict of offset -> label, where label is the name given to the kernel for that address (e.g. SERIAL_PPTR) and offset is the offset from KDEV_BASE at which it's mapped.'''
     kernel_devices = tree.get_kernel_devices()
 
     kernel_offset = 0

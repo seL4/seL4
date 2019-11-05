@@ -43,7 +43,7 @@
 /* This then marks the end of where physical memory gets mapped */
 #define PPTR_TOP KS_LOG_PPTR
 
-#define PPTR_KDEV   0xffff0000
+#define KDEV_BASE   0xffff0000
 #define BASE_OFFSET (PPTR_BASE - PADDR_BASE)
 #define kernelBase PPTR_USER_TOP
 

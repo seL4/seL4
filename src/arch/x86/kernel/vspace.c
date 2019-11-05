@@ -131,7 +131,7 @@ bool_t CONST isValidVTableRoot(cap_t cap)
 BOOT_CODE bool_t map_kernel_window_devices(pte_t *pt, uint32_t num_ioapic, paddr_t *ioapic_paddrs, uint32_t num_drhu,
                                            paddr_t *drhu_list)
 {
-    word_t idx = (PPTR_KDEV & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS;
+    word_t idx = (KDEV_BASE & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS;
     paddr_t phys;
     pte_t pte;
     unsigned int i;

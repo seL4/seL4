@@ -33,7 +33,7 @@
 #define KERNEL_BASE UL_CONST(0xFF800000)
 #define KERNEL_ELF_BASE KERNEL_BASE
 /* Start of kernel device mapping region in highest 4MiB of memory. */
-#define KDEV_PPTR UL_CONST(0xFFC00000)
+#define KDEV_BASE UL_CONST(0xFFC00000)
 
 #ifndef __ASSEMBLER__
 

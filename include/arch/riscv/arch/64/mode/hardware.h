@@ -42,7 +42,7 @@
  *
  *                   +-----------------------------+ 2^64
  *                   |        Kernel Devices       |
- *                -> +-------------------KDEV_PPTR-+ 2^64 - 1GiB
+ *                -> +-------------------KDEV_BASE-+ 2^64 - 1GiB
  *                |  |         Kernel ELF          |
  *            ----|  +-------------KERNEL_ELF_BASE-+ --+ 2^64 - 2GiB + (PADDR_LOAD % 1GiB)
  *            |   |  |                             |
@@ -70,7 +70,7 @@
  *                   |            User             |        |      |  |                         |
  *                   |                             |        |      |  |                         |
  *                   |                             |        +------+  +-------------------------+  PADDR_HIGH_TOP =
- *                   |                             |     kernel    |  |        Kernel ELF       |    (KDEV_PPTR - KERNEL_ELF_BASE + PADDR_LOAD)
+ *                   |                             |     kernel    |  |        Kernel ELF       |    (KDEV_BASE - KERNEL_ELF_BASE + PADDR_LOAD)
  *                   |                             |   addressable |  +-------------------------+  PADDR_LOAD
  *                   |                             |               |  |                         |
  *                   |                             |               |  |                         |
@@ -98,7 +98,7 @@
 #define KERNEL_BASE      0xFFFFFFFF80000000lu
 #define KERNEL_ELF_BASE  UL_CONST(0xFFFFFFFF84000000)
 /* Start of kernel device mapping region in highest 1GiB of memory. */
-#define KDEV_PPTR        0xFFFFFFFFC0000000lu
+#define KDEV_BASE        0xFFFFFFFFC0000000lu
 #else
 #error Only PT_LEVELS == 3 is supported
 #endif

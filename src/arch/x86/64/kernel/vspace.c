@@ -64,9 +64,9 @@ BOOT_CODE bool_t map_kernel_window(
      * the second last entry of the PDPT, is 1gb aligned and 1gb in size */
     assert(GET_PML4_INDEX(KERNEL_BASE) == BIT(PML4_INDEX_BITS) - 1);
     assert(GET_PDPT_INDEX(KERNEL_BASE) == BIT(PML4_INDEX_BITS) - 2);
-    assert(GET_PDPT_INDEX(PPTR_KDEV) == BIT(PML4_INDEX_BITS) - 1);
+    assert(GET_PDPT_INDEX(KDEV_BASE) == BIT(PML4_INDEX_BITS) - 1);
     assert(IS_ALIGNED(KERNEL_BASE, seL4_HugePageBits));
-    assert(IS_ALIGNED(PPTR_KDEV, seL4_HugePageBits));
+    assert(IS_ALIGNED(KDEV_BASE, seL4_HugePageBits));
     /* place the PDPT into the PML4 */
     x64KSKernelPML4[GET_PML4_INDEX(PPTR_BASE)] = pml4e_new(
                                                      0, /* xd */
@@ -117,7 +117,7 @@ BOOT_CODE bool_t map_kernel_window(
     }
 
     /* put the PD into the PDPT */
-    x64KSKernelPDPT[GET_PDPT_INDEX(PPTR_KDEV)] = pdpte_pdpte_pd_new(
+    x64KSKernelPDPT[GET_PDPT_INDEX(KDEV_BASE)] = pdpte_pdpte_pd_new(
                                                      0, /* xd */
                                                      kpptr_to_paddr(x64KSKernelPD),
                                                      0, /* accessed */
@@ -148,9 +148,9 @@ BOOT_CODE bool_t map_kernel_window(
      * the second last entry of the PDPT, is 1gb aligned and 1gb in size */
     assert(GET_PML4_INDEX(KERNEL_BASE) == BIT(PML4_INDEX_BITS) - 1);
     assert(GET_PDPT_INDEX(KERNEL_BASE) == BIT(PML4_INDEX_BITS) - 2);
-    assert(GET_PDPT_INDEX(PPTR_KDEV) == BIT(PML4_INDEX_BITS) - 1);
+    assert(GET_PDPT_INDEX(KDEV_BASE) == BIT(PML4_INDEX_BITS) - 1);
     assert(IS_ALIGNED(KERNEL_BASE, seL4_HugePageBits));
-    assert(IS_ALIGNED(PPTR_KDEV, seL4_HugePageBits));
+    assert(IS_ALIGNED(KDEV_BASE, seL4_HugePageBits));
 
     /* place the PDPT into the PML4 */
     x64KSKernelPML4[GET_PML4_INDEX(PPTR_BASE)] = pml4e_new(
@@ -215,7 +215,7 @@ BOOT_CODE bool_t map_kernel_window(
     }
 
     /* put the PD into the PDPT */
-    x64KSKernelPDPT[GET_PDPT_INDEX(PPTR_KDEV)] = pdpte_pdpte_pd_new(
+    x64KSKernelPDPT[GET_PDPT_INDEX(KDEV_BASE)] = pdpte_pdpte_pd_new(
                                                      0, /* xd */
                                                      kpptr_to_paddr(&x64KSKernelPDs[BIT(PDPT_INDEX_BITS) - 1][0]),
                                                      0, /* accessed */
@@ -243,7 +243,7 @@ BOOT_CODE bool_t map_kernel_window(
     /* use the last PD entry as the benchmark log storage.
      * the actual backing physical memory will be filled
      * later by using alloc_region */
-    ksLog = (ks_log_entry_t *)(PPTR_KDEV + 0x200000 * (BIT(PD_INDEX_BITS) - 1));
+    ksLog = (ks_log_entry_t *)(KDEV_BASE + 0x200000 * (BIT(PD_INDEX_BITS) - 1));
 #endif
 
     /* now map in the kernel devices */

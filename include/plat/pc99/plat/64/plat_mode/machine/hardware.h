@@ -36,14 +36,14 @@
  * 1GB. This means they are precisely after the kernel binary
  * region. This is 2^48 - 2^30
  */
-#define PPTR_KDEV UL_CONST(0xffffffffc0000000)
+#define KDEV_BASE UL_CONST(0xffffffffc0000000)
 
 /* PADDR_TOP is the end of our larger kernel window, just before the
  * kernel image itself */
 #define PADDR_TOP (KERNEL_BASE - PPTR_BASE)
 
 /* Define the top of our static 'kernel window', which is the top 1GiB of memory */
-#define PADDR_HIGH_TOP (PPTR_KDEV - KERNEL_BASE)
+#define PADDR_HIGH_TOP (KDEV_BASE - KERNEL_BASE)
 
 /* Below the main kernel window we have any slots for the TLB bitmap */
 #define TLBBITMAP_PML4_RESERVED (TLBBITMAP_ROOT_ENTRIES * BIT(PML4_INDEX_OFFSET))

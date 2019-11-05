@@ -304,9 +304,9 @@ BOOT_CODE bool_t map_kernel_window(
     ia32KSGlobalPT[idx] = pte;
     idx++;
 
-    /* null mappings up to PPTR_KDEV */
+    /* null mappings up to KDEV_BASE */
 
-    while (idx < (PPTR_KDEV &MASK(LARGE_PAGE_BITS)) >> PAGE_BITS) {
+    while (idx < (KDEV_BASE &MASK(LARGE_PAGE_BITS)) >> PAGE_BITS) {
         pte = pte_new(
                   0,      /* page_base_address    */
                   0,      /* avl                  */
