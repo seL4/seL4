@@ -18,7 +18,6 @@ if(KernelPlatformAllwinnerA20)
     declare_seL4_arch(aarch32)
     set(KernelArmCortexA7 ON)
     set(KernelArchArmV7a ON)
-    config_set(KernelARMPlatform ARM_PLAT allwinnerA20)
 
     # MCS is not supported on allwinnerA20.
     # It requires a timer driver that implements the tickless programming requirements.

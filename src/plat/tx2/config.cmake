@@ -20,7 +20,6 @@ if(KernelPlatformTx2)
     # the 44-bit PA for Cortex-A57 cores would need to be downgraded to 40bit.
     set(KernelArmCortexA57 ON)
     set(KernelArchArmV8a ON)
-    config_set(KernelARMPlatform ARM_PLAT tx2)
     config_set(KernelArmMach MACH "nvidia")
     list(APPEND KernelDTSList "tools/dts/tx2.dts")
     list(APPEND KernelDTSList "src/plat/tx2/overlay-tx2.dts")

@@ -41,7 +41,6 @@ if(KernelPlatformQEMUArmVirt)
     if("${QEMU_MEMORY}" STREQUAL "")
         set(QEMU_MEMORY "1024")
     endif()
-    config_set(KernelARMPlatform ARM_PLAT qemu-arm-virt)
     set(DTBPath "${CMAKE_BINARY_DIR}/virt.dtb")
     set(DTSPath "${CMAKE_BINARY_DIR}/virt.dts")
     execute_process(

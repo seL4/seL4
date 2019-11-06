@@ -12,7 +12,10 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-declare_platform(imx31 KernelPlatformKZM PLAT_KZM KernelSel4ArchAarch32)
+declare_platform(imx31 KernelPlatformImx31 PLAT_IMX31 KernelSel4ArchAarch32
+    "kzm,KernelPlatformKZM,PLAT_KZM"
+    # ToDo: refactor the code to make this C define PLAT_IMX31_KZM
+)
 
 if(KernelPlatformKZM)
     declare_seL4_arch(aarch32)

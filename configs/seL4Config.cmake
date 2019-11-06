@@ -82,6 +82,27 @@ macro(print_message_multiple_options_helper str_type default_str)
     message(STATUS "  defaulting to: ${default_str}")
 endmacro()
 
+# each sub platform configuration is a string of the form
+#    "[sub platfrom name],[CMake variable],[C define]"
+# Having "," as separator avoids clashing with native CMakes lists, which are
+# simply strings using ";" as item separator. To process items of our ","
+# separated list, we can simply replace the "," by ";" and it becomes a CMake
+# list.
+# This macro takes optional arguments of variable name, which are populated
+# with the config items.
+macro(get_sub_platform_items sub_plat_cfg)
+    string(REPLACE "," ";" __tmp_plat_cfg_list ${sub_plat_cfg})
+    if(${ARGC} GREATER 1) # get sub platform name
+        list(GET __tmp_plat_cfg_list 0 ${ARGV1})
+        if(${ARGC} GREATER 2) # get sub platform CMake variale
+            list(GET __tmp_plat_cfg_list 1 ${ARGV2})
+            if(${ARGC} GREATER 3) # get sub platform C define
+                list(GET __tmp_plat_cfg_list 2 ${ARGV3})
+            endif()
+        endif()
+    endif()
+endmacro()
+
 # Register a platform's config options to be set if it is selected.
 # Additionally, the kernel_platforms variable can be used as a record of all
 # platforms that can be built once the platform configuration files have been
@@ -91,24 +112,100 @@ endmacro()
 # config2: the C header file config name without CONFIG_. Such as PLAT_IMX7_SABRE.
 # enable_test: A CMake boolean formula that allows the option to be selected.
 #     e.g. "KernelSel4ArchAarch32", or "KernelSel4ArchX86_64 OR KernelSel4ArchIA32"
+# optional arguments are a list of sub platforms of the form
+#    "[sub platfrom name],[CMake variable],[C define]"
+# for example "foo,KernelPlatformFoo,PLAT_FOO"
+# The first sub platform in the list is used as default platform if no sub
+# platform is specified.
+
 macro(declare_platform name config1 config2 enable_test)
+
     list(APPEND kernel_platforms "${name}\;${config1}\;${config2}\;${enable_test}")
-    if("${KernelPlatform}" STREQUAL ${name})
+
+    unset(__var_cmake_kernel_plat)
+    unset(__arch_c_define)
+
+    if("${enable_test}" MATCHES "^(KernelArchARM|KernelSel4ArchAarch32|KernelSel4ArchAarch64|KernelSel4ArchArmHyp)(\ OR\ .*)?$")
+        set(__var_cmake_kernel_plat "KernelARMPlatform")
+        set(__arch_c_define "ARM_PLAT")
+    elseif("${enable_test}" MATCHES "^(KernelArchRiscV|KernelSel4ArchRiscV32|KernelSel4ArchRiscV64)$")
+        set(__var_cmake_kernel_plat "KernelRiscVPlatform")
+        set(__arch_c_define "RISCV_PLAT")
+    elseif("${enable_test}" MATCHES "^(KernelArchX86)$")
+        set(__var_cmake_kernel_plat "KernelX86Platform")
+        set(__arch_c_define "X86_PLAT")
+    else()
+        message(FATAL_ERROR "unsupported filter: ${enable_test}")
+    endif()
+
+    set(__all_sub_plat_cfg ${ARGN})
+    foreach(__plat_cfg IN LISTS __all_sub_plat_cfg)
+        get_sub_platform_items(${__plat_cfg} __sub_name __var_cmake_sub_plat)
+
+        if("${KernelPlatform}" STREQUAL "${__sub_name}")
+            message(STATUS "replacing KernelPlatform=${KernelPlatform} with")
+            message(STATUS "  KernelPlatform=${name}, ${__var_cmake_kernel_plat}=${__sub_name}")
+
+            set(${__var_cmake_sub_plat} ON CACHE INTERNAL "" FORCE)
+            set(KernelPlatform ${name} CACHE STRING "" FORCE)
+            set(${__var_cmake_kernel_plat} ${__sub_name} CACHE STRING "" FORCE)
+        else()
+            unset(${__var_cmake_sub_plat} CACHE)
+        endif()
+    endforeach()
+
+    if("${KernelPlatform}" STREQUAL "${name}")
+
         set(${config1} ON CACHE INTERNAL "" FORCE)
+
         # Write KernelPlatform into the cache in case it is only a local variable
         set(KernelPlatform ${KernelPlatform} CACHE STRING "")
-    else()
-        set(${config1} OFF CACHE INTERNAL "" FORCE)
-    endif()
-endmacro()
 
-# helper macro that prints a message that no sub platform is specified and
-# the default sub platform will be used
-# Usage example: fallback_declare_seL4_arch_default(aarch32)
-macro(check_platform_and_fallback_to_default default_sub_plat var_cmake_kernel_plat)
-    if("${${var_cmake_kernel_plat}}" STREQUAL "")
-        print_message_multiple_options_helper("sub platforms" ${default_sub_plat})
-        set(${var_cmake_kernel_plat} ${default_sub_plat})
+        # check platform is valid and fall back to default sub platform
+        list(LENGTH __all_sub_plat_cfg __cnt)
+        if(${__cnt} EQUAL 0)
+
+            set(__plat_name "${name}")
+
+        else()
+
+            if("${${__var_cmake_kernel_plat}}" STREQUAL "")
+                list(GET __all_sub_plat_cfg 0 __plat_cfg_default)
+                get_sub_platform_items(${__plat_cfg_default} __sub_plat_name_default)
+                print_message_multiple_options_helper("sub platforms" ${__sub_plat_name_default})
+                set(${__var_cmake_kernel_plat} ${__sub_plat_name_default})
+            endif()
+
+            # check if the sub platform is valid.
+            unset(__is_sub_plat_valid)
+            foreach(__plat_cfg IN LISTS __all_sub_plat_cfg)
+                get_sub_platform_items(${__plat_cfg} __plat_name __plat_var_cmake __plat_c_define)
+                if(${${__var_cmake_kernel_plat}} STREQUAL "${__plat_name}")
+
+                    set(__is_sub_plat_valid "1")
+
+                    # Followig the example from abve, this is effectively
+                    #   config_set(KernelPlatformFoo PLAT_FOO ON)
+                    config_set(${__plat_var_cmake} ${__plat_c_define} ON)
+
+                    break()
+                endif()
+            endforeach()
+
+            if("${__is_sub_plat_valid}" STREQUAL "")
+                message(FATAL_ERROR "${KernelPlatform} platform unknown: ${${__var_cmake_kernel_plat}}")
+            endif()
+        endif()
+
+        # Followig the example from above, this is effectivelly
+        #   config_set(KernelARMPlatform ARM_PLAT "foo")
+        config_set(${__var_cmake_kernel_plat} ${__arch_c_define} "${__plat_name}")
+
+    else()
+
+        set(${config1} OFF CACHE INTERNAL "" FORCE)
+        config_set(${config1} ${config2} OFF)
+
     endif()
 endmacro()
 

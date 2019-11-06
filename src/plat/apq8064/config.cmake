@@ -24,7 +24,6 @@ if(KernelPlatformAPQ8064)
     set(KernelArmCortexA15 ON)
     set(KernelArchArmV7a ON)
     set(KernelArchArmV7ve ON)
-    config_set(KernelARMPlatform ARM_PLAT apq8064)
     list(APPEND KernelDTSList "tools/dts/apq8064.dts")
     list(APPEND KernelDTSList "src/plat/apq8064/overlay-apq8064.dts")
 

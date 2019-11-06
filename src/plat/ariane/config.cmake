@@ -16,7 +16,6 @@ declare_platform(ariane KernelPlatformAriane PLAT_ARIANE KernelArchRiscV)
 
 if(KernelPlatformAriane)
     declare_seL4_arch(riscv64)
-    config_set(KernelRiscVPlatform RISCV_PLAT "ariane")
     config_set(KernelPlatformFirstHartID FIRST_HART_ID 0)
     list(APPEND KernelDTSList "tools/dts/ariane.dts")
     list(APPEND KernelDTSList "src/plat/ariane/overlay-ariane.dts")

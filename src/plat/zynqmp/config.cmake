@@ -12,14 +12,10 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-declare_platform(ultra96 KernelPlatformUltra96 PLAT_ZYNQMP_ULTRA96 KernelArchARM)
-declare_platform(zynqmp KernelPlatformZynqmp PLAT_ZYNQMP KernelArchARM)
-
-if(KernelPlatformUltra96)
-    # Ultra96 is is basically Zynqmp
-    list(APPEND KernelDTSList "tools/dts/ultra96.dts")
-    config_set(KernelPlatformZynqmp PLAT_ZYNQMP ON)
-endif()
+declare_platform(zynqmp KernelPlatformZynqmp PLAT_ZYNQMP KernelArchARM
+    "zynqmp-zcu102,KernelPlatformZynqmpZCU102,PLAT_ZYNQMP_ZCU102"
+    "ultra96,KernelPlatformUltra96,PLAT_ZYNQMP_ULTRA96"
+)
 
 if(KernelPlatformZynqmp)
     if("${KernelSel4Arch}" STREQUAL aarch32)
@@ -34,7 +30,6 @@ if(KernelPlatformZynqmp)
     set(KernelPlatformSupportsMCS OFF)
     set(KernelArmCortexA53 ON)
     set(KernelArchArmV8a ON)
-    config_set(KernelARMPlatform ARM_PLAT zynqmp)
     config_set(KernelArmMach MACH "zynq")
 
     if(NOT KernelPlatformUltra96)

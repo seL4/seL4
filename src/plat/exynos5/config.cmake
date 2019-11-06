@@ -18,16 +18,15 @@ cmake_minimum_required(VERSION 3.7.2)
 # easily `grep` a list of supported platforms.  As of 2019-08-07, this
 # platform is the only one requiring this workaround.
 set(AArch32OrArchArmHyp "KernelSel4ArchAarch32 OR KernelSel4ArchArmHyp")
-declare_platform(exynos5 KernelPlatExynos5 PLAT_EXYNOS5 ${AArch32OrArchArmHyp})
+declare_platform(exynos5 KernelPlatExynos5 PLAT_EXYNOS5 ${AArch32OrArchArmHyp}
+    "exynos5250,KernelPlatformExynos5250,PLAT_EXYNOS5250"
+    "exynos5410,KernelPlatformExynos5410,PLAT_EXYNOS5410"
+    "exynos5422,KernelPlatformExynos5422,PLAT_EXYNOS5422"
+)
+
 unset(${AArch32OrArchArmHyp} CACHE)
 
-set(cmake_configs KernelPlatformExynos5250 KernelPlatformExynos5410 KernelPlatformExynos5422)
-set(c_configs PLAT_EXYNOS5250 PLAT_EXYNOS5410 PLAT_EXYNOS5422)
-set(plat_lists exynos5250 exynos5410 exynos5422)
-foreach(config IN LISTS cmake_configs)
-    unset(${config} CACHE)
-endforeach()
-unset(KernelPlatExynos54xx CACHE)
+
 if(KernelPlatExynos5)
     if("${KernelSel4Arch}" STREQUAL aarch32)
         declare_seL4_arch(aarch32)
@@ -41,16 +40,7 @@ if(KernelPlatExynos5)
     # v7ve is a superset of v7a, so we enable that as well
     set(KernelArchArmV7a ON)
     config_set(KernelArmMach MACH "exynos")
-    check_platform_and_fallback_to_default(KernelARMPlatform "exynos5250")
 
-    list(FIND plat_lists "${KernelARMPlatform}" index)
-    if("${index}" STREQUAL "-1")
-        message(FATAL_ERROR "Invalid exynos5 platform selected: \"${KernelARMPlatform}\"")
-    endif()
-    list(GET c_configs ${index} c_config)
-    list(GET cmake_configs ${index} cmake_config)
-    config_set(KernelARMPlatform ARM_PLAT ${KernelARMPlatform})
-    config_set(${cmake_config} ${c_config} ON)
     if(KernelPlatformExynos5410 OR KernelPlatformExynos5422)
         config_set(KernelPlatExynos54xx PLAT_EXYNOS54XX ON)
     else()

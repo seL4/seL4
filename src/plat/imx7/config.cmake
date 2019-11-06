@@ -12,13 +12,14 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-declare_platform(imx7 KernelPlatImx7 PLAT_IMX7_SABRE KernelSel4ArchAarch32)
+declare_platform(imx7 KernelPlatImx7 PLAT_IMX7 KernelSel4ArchAarch32
+    "imx7sabre,KernelPlatformImx7Sabre,PLAT_IMX7_SABRE"
+)
 
 if(KernelPlatImx7)
     declare_seL4_arch(aarch32)
     set(KernelArmCortexA7 ON)
     set(KernelArchArmV7a ON)
-    config_set(KernelARMPlatform ARM_PLAT imx7sabre)
     set(KernelArmMach "imx" CACHE INTERNAL "")
     list(APPEND KernelDTSList "tools/dts/imx7sabre.dts")
     list(APPEND KernelDTSList "src/plat/imx7/overlay-imx7sabre.dts")
@@ -32,8 +33,6 @@ if(KernelPlatImx7)
         CLK_SHIFT 8u
         KERNEL_WCET 10u
     )
-else()
-    config_set(KernelPlatImx7 PLAT_IMX7 OFF)
 endif()
 
 add_sources(
