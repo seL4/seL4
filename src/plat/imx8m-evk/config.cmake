@@ -12,10 +12,15 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-declare_platform(imx8mq-evk KernelPlatformImx8mq-evk PLAT_IMX8MQ_EVK KernelArchARM)
-declare_platform(imx8mm-evk KernelPlatformImx8mm-evk PLAT_IMX8MM_EVK KernelArchARM)
+declare_platform(imx8m KernelPlatImx8m PLAT_IMX8 KernelArchARM)
 
-if(KernelPlatformImx8mq-evk OR KernelPlatformImx8mm-evk)
+set(c_configs PLAT_IMX8MQ_EVK PLAT_IMX8MM_EVK)
+set(cmake_configs KernelPlatformImx8mq KernelPlatformImx8mm)
+set(plat_lists imx8mq-evk imx8mm-evk)
+foreach(config IN LISTS cmake_configs)
+    unset(${config} CACHE)
+endforeach()
+if(KernelPlatImx8m)
     if("${KernelSel4Arch}" STREQUAL aarch32)
         declare_seL4_arch(aarch32)
     elseif("${KernelSel4Arch}" STREQUAL aarch64)
@@ -33,10 +38,23 @@ if(KernelPlatformImx8mq-evk OR KernelPlatformImx8mm-evk)
     set(KernelPlatformSupportsMCS OFF)
     set(KernelArmCortexA53 ON)
     set(KernelArchArmV8a ON)
-    config_set(KernelARMPlatform PLAT ${KernelPlatform})
     set(KernelArmMach "imx" CACHE INTERNAL "")
-    list(APPEND KernelDTSList "tools/dts/${KernelPlatform}.dts")
-    list(APPEND KernelDTSList "src/plat/imx8m-evk/overlay-${KernelPlatform}.dts")
+    if("${KernelARMPlatform}" STREQUAL "")
+        message(STATUS "Selected platform imx8 supports multiple sub platforms but none were given")
+        message(STATUS "  Defaulting to imx8mq-evk")
+        set(KernelARMPlatform imx8mq-evk)
+    endif()
+    list(FIND plat_lists ${KernelARMPlatform} index)
+    if("${index}" STREQUAL "-1")
+        message(FATAL_ERROR "Which imx8 platform not specified")
+    endif()
+    list(GET c_configs ${index} c_config)
+    list(GET cmake_configs ${index} cmake_config)
+    config_set(KernelARMPlatform ARM_PLAT ${KernelARMPlatform})
+    config_set(${cmake_config} ${c_config} ON)
+
+    list(APPEND KernelDTSList "tools/dts/${KernelARMPlatform}.dts")
+    list(APPEND KernelDTSList "src/plat/imx8m-evk/overlay-${KernelARMPlatform}.dts")
     if(KernelSel4ArchAarch32)
         list(APPEND KernelDTSList "src/plat/imx8m-evk/overlay-imx8m-32bit.dts")
     endif()
@@ -50,6 +68,6 @@ if(KernelPlatformImx8mq-evk OR KernelPlatformImx8mm-evk)
 endif()
 
 add_sources(
-    DEP "KernelPlatformImx8mq-evk OR KernelPlatformImx8mm-evk"
+    DEP "KernelPlatImx8m"
     CFILES src/arch/arm/machine/gic_v3.c src/arch/arm/machine/l2c_nop.c
 )
