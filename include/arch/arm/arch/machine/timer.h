@@ -16,6 +16,9 @@
 #include <config.h>
 #include <stdint.h>
 
+/* convert to khz first to avoid overflow */
+#define TICKS_PER_MS (TIMER_CLOCK_HZ / HZ_IN_KHZ)
+
 #ifdef CONFIG_KERNEL_MCS
 #include <types.h>
 #include <util.h>
@@ -61,8 +64,7 @@ static inline CONST ticks_t getTimerPrecision(void)
 #include <plat/machine/hardware.h>
 
 #define HZ_IN_KHZ 1000llu
-/* convert to khz first to avoid overflow */
-#define TICKS_PER_MS (TIMER_CLOCK_HZ / HZ_IN_KHZ)
+
 /* but multiply by timer tick ms */
 #define TIMER_RELOAD    (TICKS_PER_MS * CONFIG_TIMER_TICK_MS)
 

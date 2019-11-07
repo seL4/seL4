@@ -23,9 +23,7 @@ if(KernelPlatformImx8mq-evk OR KernelPlatformImx8mm-evk)
     else()
         fallback_declare_seL4_arch_default(aarch64)
     endif()
-    # MCS is not supported on imx8m.
-    # It requires a timer driver that implements the tickless programming requirements.
-    set(KernelPlatformSupportsMCS OFF)
+
     set(KernelArmCortexA53 ON)
     set(KernelArchArmV8a ON)
     config_set(KernelARMPlatform ARM_PLAT ${KernelPlatform})
@@ -41,6 +39,9 @@ if(KernelPlatformImx8mq-evk OR KernelPlatformImx8mm-evk)
         TIMER drivers/timer/arm_generic.h
         INTERRUPT_CONTROLLER arch/machine/gic_v3.h
         NUM_PPI 32
+        CLK_MAGIC 1llu
+        CLK_SHIFT 3u
+        KERNEL_WCET 10u
     )
 endif()
 
