@@ -293,10 +293,4 @@ static inline void ackInterrupt(irq_t irq)
 
 }
 
-#ifdef ENABLE_SMP_SUPPORT
-void ipiBroadcast(irq_t irq, bool_t includeSelfCPU);
-void ipi_send_target(irq_t irq, word_t cpuTargetList);
-void setIRQTarget(irq_t irq, seL4_Word target);
-#endif /* ENABLE_SMP_SUPPORT */
-
 #endif /* ARCH_MACHINE_GIC_3_H */
