@@ -192,11 +192,6 @@ BOOT_CODE void cpu_initLocalIRQController(void)
 * 3-0:   SGIINTID
 * software generated interrupt id, from 0 to 15...
 */
-void ipiBroadcast(irq_t irq, bool_t includeSelfCPU)
-{
-    gic_dist->sgi_control = (!includeSelfCPU << GICD_SGIR_TARGETLISTFILTER_SHIFT) | (irq << GICD_SGIR_SGIINTID_SHIFT);
-}
-
 void ipi_send_target(irq_t irq, word_t cpuTargetList)
 {
     if (config_set(CONFIG_PLAT_TX2)) {
