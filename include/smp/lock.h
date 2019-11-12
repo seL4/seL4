@@ -76,7 +76,7 @@ static inline void *sel4_atomic_exchange(void *ptr, bool_t
             /* we only handle irq_remote_call_ipi here as other type of IPIs
              * are async and could be delayed. 'handleIPI' may not return
              * based on value of the 'irqPath'. */
-            handleIPI(irq_remote_call_ipi, irqPath);
+            handleIPI(CORE_IRQ_TO_IRQT(cpu, irq_remote_call_ipi), irqPath);
         }
 
         arch_pause();
@@ -104,7 +104,7 @@ static inline void FORCE_INLINE clh_lock_acquire(word_t cpu, bool_t irqPath)
             /* we only handle irq_remote_call_ipi here as other type of IPIs
              * are async and could be delayed. 'handleIPI' may not return
              * based on value of the 'irqPath'. */
-            handleIPI(irq_remote_call_ipi, irqPath);
+            handleIPI(CORE_IRQ_TO_IRQT(cpu, irq_remote_call_ipi), irqPath);
             /* We do not need to perform a memory release here as we would have only modified
              * local state that we do not need to make visible */
         }

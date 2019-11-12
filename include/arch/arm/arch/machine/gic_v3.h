@@ -176,7 +176,7 @@ extern volatile struct gic_rdist_map *gic_rdist_map[CONFIG_MAX_NUM_NODES];
 extern volatile struct gic_rdist_sgi_ppi_map *gic_rdist_sgi_ppi_map[CONFIG_MAX_NUM_NODES];
 
 /* Helpers */
-static inline int is_irq_edge_triggered(irq_t irq)
+static inline int is_irq_edge_triggered(word_t irq)
 {
     uint32_t icfgr = 0;
     int word = irq >> 4;
@@ -194,7 +194,7 @@ static inline int is_irq_edge_triggered(irq_t irq)
     return !!(icfgr & BIT(bit + 1));
 }
 
-static inline void gic_pending_clr(irq_t irq)
+static inline void gic_pending_clr(word_t irq)
 {
     int word = IRQ_REG(irq);
     int bit = IRQ_BIT(irq);
@@ -207,7 +207,7 @@ static inline void gic_pending_clr(irq_t irq)
     }
 }
 
-static inline void gic_enable_clr(irq_t irq)
+static inline void gic_enable_clr(word_t irq)
 {
     int word = IRQ_REG(irq);
     int bit = IRQ_BIT(irq);
@@ -220,7 +220,7 @@ static inline void gic_enable_clr(irq_t irq)
 
 }
 
-static inline void gic_enable_set(irq_t irq)
+static inline void gic_enable_set(word_t irq)
 {
     int word = IRQ_REG(irq);
     int bit = IRQ_BIT(irq);
@@ -235,7 +235,7 @@ static inline void gic_enable_set(irq_t irq)
 
 static inline irq_t getActiveIRQ(void)
 {
-    uint32_t irq;
+    irq_t irq;
 
     if (!IS_IRQ_VALID(active_irq[CURRENT_CPU_INDEX()])) {
         uint32_t val = 0;
@@ -244,7 +244,7 @@ static inline irq_t getActiveIRQ(void)
     }
 
     if (IS_IRQ_VALID(active_irq[CURRENT_CPU_INDEX()])) {
-        irq = CORE_IRQ_TO_IDX(CURRENT_CPU_INDEX(), active_irq[CURRENT_CPU_INDEX()] & IRQ_MASK);
+        irq = CORE_IRQ_TO_IRQT(CURRENT_CPU_INDEX(), active_irq[CURRENT_CPU_INDEX()] & IRQ_MASK);
     } else {
         irq = irqInvalid;
     }
@@ -268,19 +268,19 @@ static inline bool_t isIRQPending(void)
 static inline void maskInterrupt(bool_t disable, irq_t irq)
 {
 #if defined ENABLE_SMP_SUPPORT
-    assert(!(IRQ_IS_PPI(irq)) || (IDX_TO_CORE(irq) == getCurrentCPUIndex()));
+    assert(!(IRQ_IS_PPI(irq)) || (IRQT_TO_CORE(irq) == getCurrentCPUIndex()));
 #endif
 
     if (disable) {
-        gic_enable_clr(IDX_TO_IRQ(irq));
+        gic_enable_clr(IRQT_TO_IRQ(irq));
     } else {
-        gic_enable_set(IDX_TO_IRQ(irq));
+        gic_enable_set(IRQT_TO_IRQ(irq));
     }
 }
 
 static inline void ackInterrupt(irq_t irq)
 {
-    irq_t hw_irq = IDX_TO_IRQ(irq);
+    word_t hw_irq = IRQT_TO_IRQ(irq);
     assert(IS_IRQ_VALID(active_irq[CURRENT_CPU_INDEX()]) && (active_irq[CURRENT_CPU_INDEX()] & IRQ_MASK) == hw_irq);
 
     if (is_irq_edge_triggered(hw_irq)) {

@@ -47,7 +47,7 @@ exception_t handleInterruptEntry(void)
     }
 #endif
 
-    if (irq != irqInvalid) {
+    if (IRQT_TO_IRQ(irq) != IRQT_TO_IRQ(irqInvalid)) {
         handleInterrupt(irq);
         Arch_finaliseInterrupt();
     } else {
@@ -134,7 +134,7 @@ exception_t handleUnknownSyscall(word_t w)
 #if defined ENABLE_SMP_SUPPORT && defined CONFIG_ARCH_ARM
     if (w == SysDebugSendIPI) {
         seL4_Word target = getRegister(NODE_STATE(ksCurThread), capRegister);
-        irq_t irq = getRegister(NODE_STATE(ksCurThread), msgInfoRegister);
+        seL4_Word irq = getRegister(NODE_STATE(ksCurThread), msgInfoRegister);
 
         if (target > CONFIG_MAX_NUM_NODES) {
             userError("SysDebugSendIPI: Invalid target, halting");
@@ -145,7 +145,7 @@ exception_t handleUnknownSyscall(word_t w)
             halt();
         }
 
-        ipi_send_target(irq, BIT(target));
+        ipi_send_target(CORE_IRQ_TO_IRQT(0, irq), BIT(target));
         return EXCEPTION_NONE;
     }
 #endif /* ENABLE_SMP_SUPPORT && CONFIG_ARCH_ARM */
@@ -519,7 +519,7 @@ static void handleRecv(bool_t isBlocking)
 #ifdef CONFIG_KERNEL_MCS
 static inline void mcsIRQ(irq_t irq)
 {
-    if (irq == KERNEL_TIMER_IRQ) {
+    if (IRQT_TO_IRQ(irq) == KERNEL_TIMER_IRQ) {
         /* if this is a timer irq we must update the time as we need to reprogram the timer, and we
          * can't lose the time that has just been used by the kernel. */
         updateTimestamp();
@@ -569,7 +569,7 @@ exception_t handleSyscall(syscall_t syscall)
             ret = handleInvocation(false, true, false, false, getRegister(NODE_STATE(ksCurThread), capRegister));
             if (unlikely(ret != EXCEPTION_NONE)) {
                 irq = getActiveIRQ();
-                if (irq != irqInvalid) {
+                if (IRQT_TO_IRQ(irq) != IRQT_TO_IRQ(irqInvalid)) {
                     mcsIRQ(irq);
                     handleInterrupt(irq);
                     Arch_finaliseInterrupt();
@@ -582,7 +582,7 @@ exception_t handleSyscall(syscall_t syscall)
             ret = handleInvocation(false, false, false, false, getRegister(NODE_STATE(ksCurThread), capRegister));
             if (unlikely(ret != EXCEPTION_NONE)) {
                 irq = getActiveIRQ();
-                if (irq != irqInvalid) {
+                if (IRQT_TO_IRQ(irq) != IRQT_TO_IRQ(irqInvalid)) {
                     mcsIRQ(irq);
                     handleInterrupt(irq);
                     Arch_finaliseInterrupt();
@@ -594,7 +594,7 @@ exception_t handleSyscall(syscall_t syscall)
             ret = handleInvocation(true, true, true, false, getRegister(NODE_STATE(ksCurThread), capRegister));
             if (unlikely(ret != EXCEPTION_NONE)) {
                 irq = getActiveIRQ();
-                if (irq != irqInvalid) {
+                if (IRQT_TO_IRQ(irq) != IRQT_TO_IRQ(irqInvalid)) {
                     mcsIRQ(irq);
                     handleInterrupt(irq);
                     Arch_finaliseInterrupt();
@@ -637,7 +637,7 @@ exception_t handleSyscall(syscall_t syscall)
             ret = handleInvocation(false, false, true, true, dest);
             if (unlikely(ret != EXCEPTION_NONE)) {
                 irq = getActiveIRQ();
-                if (irq != irqInvalid) {
+                if (IRQT_TO_IRQ(irq) != IRQT_TO_IRQ(irqInvalid)) {
                     mcsIRQ(irq);
                     handleInterrupt(irq);
                     Arch_finaliseInterrupt();
@@ -652,7 +652,7 @@ exception_t handleSyscall(syscall_t syscall)
             ret = handleInvocation(false, false, true, true, getRegister(NODE_STATE(ksCurThread), replyRegister));
             if (unlikely(ret != EXCEPTION_NONE)) {
                 irq = getActiveIRQ();
-                if (irq != irqInvalid) {
+                if (IRQT_TO_IRQ(irq) != IRQT_TO_IRQ(irqInvalid)) {
                     mcsIRQ(irq);
                     handleInterrupt(irq);
                     Arch_finaliseInterrupt();

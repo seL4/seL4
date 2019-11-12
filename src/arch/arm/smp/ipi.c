@@ -62,7 +62,7 @@ static void handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0,
             break;
 
         case IpiRemoteCall_MaskPrivateInterrupt:
-            maskInterrupt(arg0, arg1);
+            maskInterrupt(arg0, IDX_TO_IRQT(arg1));
             break;
 
         default:

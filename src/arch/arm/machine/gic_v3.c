@@ -39,7 +39,7 @@
 volatile struct gic_dist_map *const gic_dist = (volatile struct gic_dist_map *)(GICD_PPTR);
 volatile void *const gicr_base = (volatile uint8_t *)(GICR_PPTR);
 
-uint32_t active_irq[CONFIG_MAX_NUM_NODES] = {IRQ_NONE};
+word_t active_irq[CONFIG_MAX_NUM_NODES] = {IRQ_NONE};
 volatile struct gic_rdist_map *gic_rdist_map[CONFIG_MAX_NUM_NODES] = { 0 };
 volatile struct gic_rdist_sgi_ppi_map *gic_rdist_sgi_ppi_map[CONFIG_MAX_NUM_NODES] = { 0 };
 
@@ -298,8 +298,8 @@ void setIRQTrigger(irq_t irq, bool_t trigger)
     /* GICv3 has read-only GICR_ICFG0 for SGI with
      * default value 0xaaaaaaaa, and read-write GICR_ICFG1
      * for PPI with default 0x00000000.*/
-    irq_t hw_irq = IDX_TO_IRQ(irq);
-    word_t core = IDX_TO_CORE(irq);
+    word_t hw_irq = IRQT_TO_IRQ(irq);
+    word_t core = IRQT_TO_CORE(irq);
     if (HW_IRQ_IS_SGI(hw_irq)) {
         return;
     }
@@ -351,11 +351,11 @@ BOOT_CODE void cpu_initLocalIRQController(void)
 
 void ipi_send_target(irq_t irq, word_t cpuTargetList)
 {
-    uint64_t sgi1r = ((word_t) irq) << ICC_SGI1R_INTID_SHIFT;
+    uint64_t sgi1r = ((word_t) IRQT_TO_IRQ(irq)) << ICC_SGI1R_INTID_SHIFT;
     if (MPIDR_MT(mpidr_map[getCurrentCPUIndex()])) {
         for (word_t i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
             if (cpuTargetList & BIT(i)) {
-                sgi1r = (irq << ICC_SGI1R_INTID_SHIFT) |
+                sgi1r = (IRQT_TO_IRQ(irq) << ICC_SGI1R_INTID_SHIFT) |
                         (i << ICC_SGI1R_AFF1_SHIFT) | 1;
 
                 SYSTEM_WRITE_64(ICC_SGI1R_EL1, sgi1r);
@@ -375,7 +375,7 @@ void setIRQTarget(irq_t irq, seL4_Word target)
         return;
     }
 
-    irq_t hw_irq = IDX_TO_IRQ(irq);
+    word_t hw_irq = IRQT_TO_IRQ(irq);
     gic_dist->iroutern[hw_irq] = MPIDR_AFF_MASK(mpidr_map[target]);
 }
 

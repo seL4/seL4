@@ -38,7 +38,7 @@ volatile struct gic_cpu_iface_map *const gic_cpuiface =
     (volatile struct gic_cpu_iface_map *)(GIC_V2_CONTROLLER_PPTR);
 #endif /* GIC_CONTROLLER_PPTR */
 
-uint32_t active_irq[CONFIG_MAX_NUM_NODES] = {IRQ_NONE};
+word_t active_irq[CONFIG_MAX_NUM_NODES] = {IRQ_NONE};
 
 /* Get the target id for this processor. We rely on the constraint that the registers
  * for PPI are read only and return only the current processor as the target.
@@ -156,8 +156,8 @@ void setIRQTrigger(irq_t irq, bool_t trigger)
     /* in the gic_config, there is a 2 bit field for each irq,
      * setting the most significant bit of this field makes the irq edge-triggered,
      * while 0 indicates that it is level-triggered */
-    word_t index = IDX_TO_IRQ(irq) / 16u;
-    word_t offset = (IDX_TO_IRQ(irq) % 16u) * 2;
+    word_t index = IRQT_TO_IRQ(irq) / 16u;
+    word_t offset = (IRQT_TO_IRQ(irq) % 16u) * 2;
     if (trigger) {
         /* set the bit */
         gic_dist->config[index] |= BIT(offset + 1);
@@ -169,7 +169,7 @@ void setIRQTrigger(irq_t irq, bool_t trigger)
 BOOT_CODE void initIRQController(void)
 {
     /* irqInvalid cannot correspond to a valid IRQ index into the irq state array */
-    assert(INT_STATE_ARRAY_SIZE < irqInvalid);
+    assert(INT_STATE_ARRAY_SIZE < IRQT_TO_IRQ(irqInvalid));
     dist_init();
 }
 
@@ -201,7 +201,8 @@ void ipi_send_target(irq_t irq, word_t cpuTargetList)
          * in cluster 0. */
         cpuTargetList = ((cpuTargetList & 0xf) << 4) | ((cpuTargetList & 0xf0) >> 4);
     }
-    gic_dist->sgi_control = (cpuTargetList << (GICD_SGIR_CPUTARGETLIST_SHIFT)) | (irq << GICD_SGIR_SGIINTID_SHIFT);
+    gic_dist->sgi_control = (cpuTargetList << (GICD_SGIR_CPUTARGETLIST_SHIFT)) | (IRQT_TO_IRQ(
+                                                                                      irq) << GICD_SGIR_SGIINTID_SHIFT);
 }
 
 /*
@@ -211,7 +212,7 @@ void setIRQTarget(irq_t irq, seL4_Word target)
 {
     uint8_t targetList = 1 << target;
     uint8_t *targets = (void *)(gic_dist->targets);
-    word_t hwIRQ = IDX_TO_IRQ(irq);
+    word_t hwIRQ = IRQT_TO_IRQ(irq);
 
     /* Return early if PPI */
     if (IRQ_IS_PPI(irq)) {

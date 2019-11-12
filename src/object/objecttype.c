@@ -245,7 +245,7 @@ finaliseCap_ret_t finaliseCap(cap_t cap, bool_t final, bool_t exposed)
 
     case cap_irq_handler_cap:
         if (final) {
-            irq_t irq = cap_irq_handler_cap_get_capIRQ(cap);
+            irq_t irq = IDX_TO_IRQT(cap_irq_handler_cap_get_capIRQ(cap));
 
             deletingIRQHandler(irq);
 
@@ -349,8 +349,8 @@ bool_t CONST sameRegionAs(cap_t cap_a, cap_t cap_b)
 
     case cap_irq_handler_cap:
         if (cap_get_capType(cap_b) == cap_irq_handler_cap) {
-            return (irq_t)cap_irq_handler_cap_get_capIRQ(cap_a) ==
-                   (irq_t)cap_irq_handler_cap_get_capIRQ(cap_b);
+            return (word_t)cap_irq_handler_cap_get_capIRQ(cap_a) ==
+                   (word_t)cap_irq_handler_cap_get_capIRQ(cap_b);
         }
         break;
 
@@ -742,7 +742,7 @@ exception_t decodeInvocation(word_t invLabel, word_t length,
 
     case cap_irq_handler_cap:
         return decodeIRQHandlerInvocation(invLabel,
-                                          cap_irq_handler_cap_get_capIRQ(cap), excaps);
+                                          IDX_TO_IRQT(cap_irq_handler_cap_get_capIRQ(cap)), excaps);
 
 #ifdef CONFIG_KERNEL_MCS
     case cap_sched_control_cap:

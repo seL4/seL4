@@ -39,7 +39,7 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
         }
 
         word_t irq_w = getSyscallArg(0, buffer);
-        irq_t irq = (irq_t) irq_w;
+        irq_t irq = (irq_t) CORE_IRQ_TO_IRQT(0, irq_w);
         bool_t trigger = !!getSyscallArg(1, buffer);
         word_t index = getSyscallArg(2, buffer);
         word_t depth = getSyscallArg(3, buffer);
@@ -52,21 +52,21 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
         }
 
 #if defined ENABLE_SMP_SUPPORT
-        if (HW_IRQ_IS_PPI(irq)) {
+        if (IRQ_IS_PPI(irq)) {
             userError("Trying to get a handler on a PPI: use GetTriggerCore.");
             return EXCEPTION_SYSCALL_ERROR;
         }
 #endif
-        if (isIRQActive(CORE_IRQ_TO_IDX(0, irq))) {
+        if (isIRQActive(irq)) {
             current_syscall_error.type = seL4_RevokeFirst;
-            userError("Rejecting request for IRQ %u. Already active.", (int)irq);
+            userError("Rejecting request for IRQ %u. Already active.", (int)IRQT_TO_IRQ(irq));
             return EXCEPTION_SYSCALL_ERROR;
         }
 
         lookupSlot_ret_t lu_ret = lookupTargetSlot(cnodeCap, index, depth);
         if (lu_ret.status != EXCEPTION_NONE) {
             userError("Target slot for new IRQ Handler cap invalid: cap %lu, IRQ %u.",
-                      getExtraCPtr(buffer, 0), (int)irq);
+                      getExtraCPtr(buffer, 0), (int)IRQT_TO_IRQ(irq));
             return lu_ret.status;
         }
 
@@ -75,12 +75,12 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
         status = ensureEmptySlot(destSlot);
         if (status != EXCEPTION_NONE) {
             userError("Target slot for new IRQ Handler cap not empty: cap %lu, IRQ %u.",
-                      getExtraCPtr(buffer, 0), (int)irq);
+                      getExtraCPtr(buffer, 0), (int)IRQT_TO_IRQ(irq));
             return status;
         }
 
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        return Arch_invokeIRQControl(CORE_IRQ_TO_IDX(0, irq), destSlot, srcSlot, trigger);
+        return Arch_invokeIRQControl(irq, destSlot, srcSlot, trigger);
 #ifdef ENABLE_SMP_SUPPORT
     } else if (invLabel == ARMIRQIssueIRQHandlerTriggerCore) {
         word_t irq_w = getSyscallArg(0, buffer);
@@ -90,7 +90,7 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
         seL4_Word target = getSyscallArg(4, buffer);
         cap_t cnodeCap = excaps.excaprefs[0]->cap;
         exception_t status = Arch_checkIRQ(irq_w);
-        irq_t irq = CORE_IRQ_TO_IDX(target, irq_w);
+        irq_t irq = CORE_IRQ_TO_IRQT(target, irq_w);
 
         if (status != EXCEPTION_NONE) {
             return status;
@@ -102,16 +102,16 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        if (isIRQActive(CORE_IRQ_TO_IDX(target, irq))) {
+        if (isIRQActive(irq)) {
             current_syscall_error.type = seL4_RevokeFirst;
-            userError("Rejecting request for IRQ %u. Already active.", (int)irq);
+            userError("Rejecting request for IRQ %u. Already active.", (int)IRQT_TO_IRQ(irq));
             return EXCEPTION_SYSCALL_ERROR;
         }
 
         lookupSlot_ret_t lu_ret = lookupTargetSlot(cnodeCap, index, depth);
         if (lu_ret.status != EXCEPTION_NONE) {
             userError("Target slot for new IRQ Handler cap invalid: cap %lu, IRQ %u.",
-                      getExtraCPtr(buffer, 0), (int)irq);
+                      getExtraCPtr(buffer, 0), (int)IRQT_TO_IRQ(irq));
             return lu_ret.status;
         }
 
@@ -120,7 +120,7 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
         status = ensureEmptySlot(destSlot);
         if (status != EXCEPTION_NONE) {
             userError("Target slot for new IRQ Handler cap not empty: cap %lu, IRQ %u.",
-                      getExtraCPtr(buffer, 0), (int)irq);
+                      getExtraCPtr(buffer, 0), (int)IRQT_TO_IRQ(irq));
             return status;
         }
 

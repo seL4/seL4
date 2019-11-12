@@ -15,7 +15,46 @@
 
 #include <basic_types.h>
 
+
+
+/**
+ * irq_t is an identifier that represents a hardware interrupt.
+ * irq handler capabilities refer to an irq_t which is then used by the
+ * kernel to track irq state. An irq_t is also used to interface with an
+ * interrupt controller driver using the functions below.
+ * For most configurations an irq_t is a word_t type and the irq_t values
+ * directly map to harware irq numbers and are also used as indexes into the
+ * kernel's irq cnode that it uses for tracking state.
+ * However on SMP configurations where there can be multiple irq_t identifiers
+ * for a single hardware irq number, such as when there are core local interrupts,
+ * irq_t cannot be assumed to be only a hardware irq number.
+ * In this case, irq_t can be defined as a struct containing additional information.
+ *
+ * Macros are provided to hide this structural difference across configurations:
+ * CORE_IRQ_TO_IRQT: converts from a core id and hw irq number to an irq_t
+ * IRQT_TO_IDX: converts an irq_t to an index in the irq cnode. It is also used
+ *   to encode the irq_t as a single word_t type for sending over IPIs.
+ * IDX_TO_IRQT: converts an index in the irq cnode to an irq_t
+ * IRQT_TO_CORE: extracts the core out of an irq_t
+ * IRQT_TO_IRQL extracts a hw irq out of an irq_t.
+ *
+ * It is expected that interrupt controller drivers that support SMP provide
+ * implementations of these Macros.
+ * Currently only Arm SMP configurations use this scheme.
+ */
+#if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_ARCH_ARM)
+typedef struct {
+    word_t irq;
+    word_t target_core;
+} irq_t;
+#else
 typedef word_t irq_t;
+#define CORE_IRQ_TO_IRQT(tgt, irq) (irq)
+#define IRQT_TO_IDX(irq) (irq)
+#define IDX_TO_IRQT(idx) (idx)
+#define IRQT_TO_CORE(irqt) 0
+#define IRQT_TO_IRQ(irqt) (irqt)
+#endif
 
 /**
  * Return a currently pending IRQ.

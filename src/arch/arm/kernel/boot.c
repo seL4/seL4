@@ -92,22 +92,22 @@ BOOT_CODE static void arch_init_freemem(p_region_t ui_p_reg, p_region_t dtb_p_re
 
 BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
 {
-    irq_t i;
+    unsigned i;
 
     for (i = 0; i <= maxIRQ ; i++) {
-        setIRQState(IRQInactive, CORE_IRQ_TO_IDX(0, i));
+        setIRQState(IRQInactive, CORE_IRQ_TO_IRQT(0, i));
     }
-    setIRQState(IRQTimer, CORE_IRQ_TO_IDX(0, KERNEL_TIMER_IRQ));
+    setIRQState(IRQTimer, CORE_IRQ_TO_IRQT(0, KERNEL_TIMER_IRQ));
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    setIRQState(IRQReserved, CORE_IRQ_TO_IDX(0, INTERRUPT_VGIC_MAINTENANCE));
+    setIRQState(IRQReserved, CORE_IRQ_TO_IRQT(0, INTERRUPT_VGIC_MAINTENANCE));
 #endif
 #ifdef CONFIG_ARM_SMMU
-    setIRQState(IRQReserved, CORE_IRQ_TO_IDX(0, INTERRUPT_SMMU));
+    setIRQState(IRQReserved, CORE_IRQ_TO_IRQT(0, INTERRUPT_SMMU));
 #endif
 
 #ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
 #ifdef KERNEL_PMU_IRQ
-    setIRQState(IRQReserved, CORE_IRQ_TO_IDX(0, KERNEL_PMU_IRQ));
+    setIRQState(IRQReserved, CORE_IRQ_TO_IRQT(0, KERNEL_PMU_IRQ));
 #if (defined CONFIG_PLAT_TX1 && defined ENABLE_SMP_SUPPORT)
 //SELFOUR-1252
 #error "This platform doesn't support tracking CPU utilisation on multicore"
@@ -118,8 +118,8 @@ BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
 #endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
 
 #ifdef ENABLE_SMP_SUPPORT
-    setIRQState(IRQIPI, CORE_IRQ_TO_IDX(getCurrentCPUIndex(), irq_remote_call_ipi));
-    setIRQState(IRQIPI, CORE_IRQ_TO_IDX(getCurrentCPUIndex(), irq_reschedule_ipi));
+    setIRQState(IRQIPI, CORE_IRQ_TO_IRQT(getCurrentCPUIndex(), irq_remote_call_ipi));
+    setIRQState(IRQIPI, CORE_IRQ_TO_IRQT(getCurrentCPUIndex(), irq_reschedule_ipi));
 #endif
 
     /* provide the IRQ control cap */
@@ -242,12 +242,12 @@ BOOT_CODE static bool_t try_init_kernel_secondary_core(void)
     init_cpu();
 
     for (i = 0; i < NUM_PPI; i++) {
-        maskInterrupt(true, CORE_IRQ_TO_IDX(getCurrentCPUIndex(), i));
+        maskInterrupt(true, CORE_IRQ_TO_IRQT(getCurrentCPUIndex(), i));
     }
-    setIRQState(IRQIPI, CORE_IRQ_TO_IDX(getCurrentCPUIndex(), irq_remote_call_ipi));
-    setIRQState(IRQIPI, CORE_IRQ_TO_IDX(getCurrentCPUIndex(), irq_reschedule_ipi));
+    setIRQState(IRQIPI, CORE_IRQ_TO_IRQT(getCurrentCPUIndex(), irq_remote_call_ipi));
+    setIRQState(IRQIPI, CORE_IRQ_TO_IRQT(getCurrentCPUIndex(), irq_reschedule_ipi));
     /* Enable per-CPU timer interrupts */
-    setIRQState(IRQTimer, CORE_IRQ_TO_IDX(getCurrentCPUIndex(), KERNEL_TIMER_IRQ));
+    setIRQState(IRQTimer, CORE_IRQ_TO_IRQT(getCurrentCPUIndex(), KERNEL_TIMER_IRQ));
 
     NODE_LOCK_SYS;
 
