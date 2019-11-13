@@ -85,7 +85,7 @@ exception_t decodeARMCBControlInvocation(word_t label, unsigned int length, cptr
 	exception_t status;
 
 	if (label != ARMCBIssueCBManager) {
-		userError("CBControl: Illegal operation.");
+		userError("ARMCBControl: Illegal operation.");
 		current_syscall_error.type = seL4_IllegalOperation;
 		return EXCEPTION_SYSCALL_ERROR;
 	}
@@ -128,7 +128,7 @@ exception_t decodeARMCBControlInvocation(word_t label, unsigned int length, cptr
 
 	setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
 	smmuStateCBTable[cb] = true;
-	cteInsert(cap_cb_cap_new(cb), srcSlot, destSlot);
+	cteInsert(cap_cb_cap_new(0, SID_INVALID, cb), srcSlot, destSlot);
 	return EXCEPTION_NONE;
 }
 
@@ -136,11 +136,53 @@ exception_t decodeARMCBInvocation(word_t label, unsigned int length, cptr_t cptr
 	cte_t *srcSlot, cap_t cap, extra_caps_t extraCaps,
 	bool_t call, word_t *buffer) {
 
-	userError("CB: Illegal operation.");
-	current_syscall_error.type = seL4_IllegalOperation;
-	return EXCEPTION_SYSCALL_ERROR;
+	cap_t vspaceCap;
+	cte_t *vspaceCapSlot;
+	cte_t *cbSlot;
+	exception_t status;
+	word_t cb; 
 
+	if (unlikely(label != ARMCBAssignVspace)) {
+		userError("ARMCB: Illegal operation.");
+		current_syscall_error.type = seL4_IllegalOperation;
+		return EXCEPTION_SYSCALL_ERROR;
+	}
+	if (unlikely(extraCaps.excaprefs[0] == NULL)) {
+		current_syscall_error.type = seL4_TruncatedMessage;
+		return EXCEPTION_SYSCALL_ERROR;
+	}
+
+	vspaceCapSlot = extraCaps.excaprefs[0];
+	vspaceCap = vspaceCapSlot->cap;
+
+
+	if (unlikely(!isVTableRoot(vspaceCap) || !cap_vtable_root_isMapped(vspaceCap))) {
+		current_syscall_error.type = seL4_InvalidCapability;
+		current_syscall_error.invalidCapNumber = 1;
+		return EXCEPTION_SYSCALL_ERROR;
+	}
+	if (unlikely(cap_cb_cap_get_capCBIsMapped(cap))) {
+		current_syscall_error.type = seL4_InvalidCapability;
+		current_syscall_error.invalidCapNumber = 1;
+		return EXCEPTION_SYSCALL_ERROR;
+	}
+	/*the cb number must be valid as it is created via the ARMCBIssueCBManager*/
+	cb = cap_cb_cap_get_capCB(cap); 
+	cbSlot = smmuStateCBNode + cb;
+	status = ensureEmptySlot(cbSlot);
+	if (status != EXCEPTION_NONE) {
+		userError("The CB already assigned with a vspace root."); 
+		return status;
+	}
+	cap_cb_cap_ptr_set_capCBIsMapped(&(srcSlot->cap), 1); 
+	/*setting up cb in smmu*/
+	smmu_cb_assign_vspace(cb, cap_vtable_root_get_basePtr(vspaceCap), 
+		cap_vtable_root_get_mappedASID(vspaceCap)); 
+	setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+	/*building connection between the vspace cap and  cb*/
+	cteInsert(vspaceCap, vspaceCapSlot, cbSlot);
+	cap_vtable_root_ptr_set_mappedCB(&(cbSlot->cap), cb); 
+	return EXCEPTION_NONE;
 }
-
 #endif
 

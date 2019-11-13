@@ -19,6 +19,7 @@ typedef seL4_CPtr seL4_ARM_IOSpace;
 typedef seL4_CPtr seL4_ARM_IOPageTable;
 typedef seL4_CPtr seL4_ARM_SIDControl;
 typedef seL4_CPtr seL4_ARM_CBControl;
+typedef seL4_CPtr seL4_ARM_CB;
 
 typedef enum {
     seL4_ARM_PageCacheable = 0x01,

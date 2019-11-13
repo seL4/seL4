@@ -126,10 +126,7 @@ BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
 
 #ifdef CONFIG_ARM_SMMU
 BOOT_CODE static void init_smmu (cap_t root_cnode_cap) {
-
-
     plat_smmu_init();
-
     /*provide the SID and CB control cap*/
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapSMMUSIDControl), cap_sid_control_cap_new());
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapSMMUCBControl), cap_cb_control_cap_new());
