@@ -125,116 +125,125 @@ interpreted as a method invocation in a manner specific to the type of kernel
 object. For example, invoking a thread control block (TCB) capability with a
 correctly formatted message will suspend the target thread.
 
+% TODO: The \apifunc{}{} refs in the paragraphs below (up to the section on
+% kernel objects) go to the API reference which is very terse and not nearly as
+% useful for cross-references at this point in the manual.  We should consider
+% making these prose descriptions of the system calls legitimate targets for
+% references, and cross-reference to those instead.
 
-Logically, the kernel provides three system calls, \emph{Send},
-\emph{Receive} and \emph{Yield}. However, there are also combinations
-and variants of the basic \emph{Send} and \emph{Receive} calls. An
+Fundamentally, we can regard the kernel as providing three system calls:
+\emph{Send}, \emph{Receive} and \emph{Yield}.  However, there are also
+combinations and variants of the basic \emph{Send} and \emph{Receive} calls.  An
 important variant is the \emph{Call} operation, which consists of a standard
-\emph{Send} operation atomically followed by a variant of \emph{Receive} which is waiting
-for a \emph{Reply}. Replying is
-always targeted at a specific thread instead of going through standard IPC mechanics.
+\emph{Send} operation atomically followed by a variant of \emph{Receive} which
+waits for a \emph{Reply}.  A \emph{reply} message is always delivered via a
+special resource instead of using the standard IPC mechanism; see
+\apifunc{seL4\_Call}{sel4_call} below for details.
 
-Invoking Methods on kernel object other than endpoints and notifications
-is done with \emph{Send} or \emph{Call},
-depending on whether or not the invoker wants a reply from the kernel.
-By using functions provided by the libsel4 API you are guaranteed to always use the most
-appropriate one.
-The \emph{Yield} system call is not associated with any kernel
-object and is the only operation that does not invoke a capability.
-On the MCS kernel, \emph{Wait} is a variant of \emph{Receive} that does not require a reply object to be provided.
+Invoking methods on kernel objects other than endpoints and notifications is
+done with \emph{Send} or \emph{Call}, depending on whether the invoker
+wants a reply from the kernel (\emph{Call}) or not (\emph{Send}).  By using
+functions provided by the libsel4 API you are guaranteed to always use the more
+appropriate one.  The \emph{Yield} system call is not associated with any kernel
+object and is the only operation that does not invoke a capability.  On the MCS
+kernel, \emph{Wait} is a variant of \emph{Receive} that does not require a reply
+object to be provided.
 
-The complete set of system calls is:
+The fundamental system calls are:
 \begin{description}
+    \item[\apifunc{seL4\_Yield}{sel4_yield}] is the only system call that does
+    not require a capability to be used.  It forfeits the remainder of the
+    calling thread's timeslice and causes invocation of the kernel's scheduler.
+    If there are no other runnable threads with the same priority as the caller,
+    the calling thread will immediately be scheduled with a fresh timeslice.  On
+    the MCS kernel, this behaviour depends on the state of the scheduling
+    context; see \autoref{sec:scheduling_contexts}.
+
     \item[\apifunc{seL4\_Send}{sel4_send}] delivers a message through the named
-    capability and the application to continue. If the invoked
-    capability is an endpoint, and no receiver is ready to receive the message
-    immediately, the sending thread will block until the message can be
-    delivered. No error code or response will be returned by the receiving
-    object.
-
-    \item[\apifunc{seL4\_NBSend}{sel4_nbsend}] performs a polling send
-      on an endpoint. It
-    is similar to \apifunc{seL4\_Send}{sel4_send}, except that it is
-    guaranteed not to block. If the message
-    cannot be delivered immediately, i.e.\ there is no receiver waiting
-    on the destination \obj{Endpoint}, the message is silently dropped. Like
-    \apifunc{seL4\_Send}{sel4_send}, no error code or response will be returned.
-
-    \item[\apifunc{seL4\_Wait}{sel4_wait}] (MCS only) is used by a thread to receive
-    messages through endpoints or notifications. If no sender or
-    notification is pending, the caller
-    will block until a message or notification can be delivered. This system call works only on
-    \obj{Endpoint} or \obj{Notification} capabilities, raising a fault (see section \ref{sec:faults}) when
-    attempted with other capability types.
-
-    \item[\apifunc{seL4\_NBWait}{sel4_nbwait}] (MCS only) is used by a thread to poll for
-    messages through endpoints or notifications. If no sender or
-    notification is pending, the system call returns immediately.
-
-    \item[\apifunc{seL4\_Call}{sel4_call}] combines \apifunc{seL4\_Send}{sel4_send}
-      and \apifunc{seL4\_Recv}{sel4_recv} with some important differences. The call
-      blocks the sending thread until its message is delivered and a reply
-      message is received.
-
-      When invoking capabilities to kernel services other than endpoints, using
-      \apifunc{seL4\_Call}{sel4_call} allows the kernel to return an error code
-      or other response through the reply message.
-
-      When the sent message is delivered to another thread (via an
-      \obj{Endpoint}), the kernel does the same operation as
-      \apifunc{seL4\_Send}{sel4_send}. What follows next depends on the kernel configuration.
-      For MCS configurations, the kernel then updates the \emph{reply object}
-      provided by the receiver. A \emph{reply object} is a vessel for tracking
-      reply messages, used to to send a reply message and wake up the caller,
-      Without MCS, the kernel then deposits a \emph{reply} capability
-      in a dedicated slot in the receiver's \obj{TCB}. A \emph{reply} capability
-      is a single-use right to send a reply message and wake up the caller,
-      meaning that the kernel invalidates it as soon as it has been invoked.
-	  For both variants, the calling thread is blocked until a capability to
-      the reply object is invoked.
-      For more information, see \autoref{sec:ep-cal}.
+    capability.  If the invoked capability is an endpoint, and no receiver is
+    ready to receive the message immediately, the sending thread will block
+    until the message can be delivered.  No error code or response will be
+    returned by the receiving object.
 
     \item[\apifunc{seL4\_Recv}{sel4_recv}] is used by a thread to receive
-    messages through endpoints or notifications. If no sender or
-    notification is pending, the caller
-    will block until a message or notification can be delivered. This system call works only on
-    \obj{Endpoint} or \obj{Notification} capabilities, raising a fault
-    (see section \ref{sec:faults}) when
-    attempted with other capability types.
+    messages through endpoints or notifications.  If no sender or notification
+    is pending, the caller will block until a message or notification can be
+    delivered.  This system call works only on \obj{Endpoint} or
+    \obj{Notification} capabilities, raising a fault (see section
+    \ref{sec:faults}) when attempted with other capability types.
+\end{description}
 
-    \item[\apifunc{seL4\_Reply}{sel4_reply}] is used to respond to a
-      \apifunc{seL4\_Call}{sel4_call}, by invoking the reply capability
-      generated by the \apifunc{seL4\_Call}{sel4_call} system call and
-      stored in a dedicated slot in the replying thread's TCB. It has exactly the
-      same behavior as invoking the reply cap with
-      \apifunc{seL4\_Send}{sel4_send} which is described in
-      \autoref{sec:ep-cal}.
+The remaining system calls are variants and combinations of
+\apifunc{seL4\_Send}{sel4_send} and \apifunc{seL4\_Recv}{sel4_recv} efficiently
+accommodate common use cases in systems programming.
 
-    \item[\apifunc{seL4\_ReplyRecv}{sel4_replyrecv}] combines \apifunc{seL4\_Reply}{sel4_reply} and
-    \apifunc{seL4\_Recv}{sel4_recv}. It exists mostly for efficiency reasons: the common case of
-    replying to a request and waiting for the next can be performed in
-    a single kernel system call instead of two. The transition from
-    the reply to the receive phase is also atomic.
+\begin{description}
+    \item[\apifunc{seL4\_NBSend}{sel4_nbsend}] performs a polling send on an
+    endpoint.  If the message cannot be delivered immediately, i.e., there is no
+    receiver waiting on the destination \obj{Endpoint}, the message is silently
+    dropped.  The sending thread continues execution.  As with
+    \apifunc{seL4\_Send}{sel4_send}, no error code or response will be returned.
 
     \item[\apifunc{seL4\_NBRecv}{sel4_nbrecv}] is used by a thread to check for
-    signals pending on a notification object or messages pending on an endpoint without blocking.
-    This system call works only on endpoints and notification object 
-    capabilities, raising a fault (see section \ref{sec:faults}) when attempted
-    with other capability types.
+    signals pending on a notification object or messages pending on an endpoint
+    without blocking.  This system call works only on endpoints and notification
+    object capabilities, raising a fault (see section \ref{sec:faults}) when
+    attempted with other capability types.
 
-    \item[\apifunc{seL4\_NBSendWait}{sel4_nbsendwait}] (MCS only) combined an \apifunc{seL4\_NBSend}{sel4_nbsend} and
-        \apifunc{seL4\_Wait}{sel4_wait} into one atomic system call.
+    \item[\apifunc{seL4\_Call}{sel4_call}] combines
+    \apifunc{seL4\_Send}{sel4_send} and \apifunc{seL4\_Recv}{sel4_recv} with
+    some important differences.  The call blocks the sending thread until its
+    message is delivered and a reply message is received.
 
-    \item[\apifunc{seL4\_NBSendRecv}{sel4_nbsendwait}] (MCS only) combined an \apifunc{seL4\_NBSend}{sel4_nbsend} and
-        \apifunc{seL4\_Recv}{sel4_recv} into one atomic system call.
+    When invoking capabilities to kernel services other than endpoints, using
+    \apifunc{seL4\_Call}{sel4_call} allows the kernel to return an error code or
+    other response through the reply message.
 
-    \item[\apifunc{seL4\_Yield}{sel4_yield}] is the only system call that does not require
-    a capability to be used. It forfeits the remainder of the calling thread's
-    timeslice and causes invocation of the kernel's scheduler.
-    If there are no other runnable threads with the same
-    priority as the caller, the calling thread will immediately be
-    scheduled with a fresh timeslice. On the MCS kernel this behavior depends on the
-    state of the scheduling context, see \autoref{sec:scheduling_contexts}.
+    When the sent message is delivered to another thread via an \obj{Endpoint},
+    the kernel does the same operation as \apifunc{seL4\_Send}{sel4_send}.  What
+    happens next depends on the kernel configuration.  For MCS configurations,
+    the kernel then updates the \emph{reply object} provided by the receiver.  A
+    \emph{reply object} is a vessel for tracking reply messages, used to to send
+    a reply message and wake up the caller.  Without MCS, the kernel then
+    deposits a \emph{reply} capability in a dedicated slot in the receiver's
+    \obj{TCB}.  A \emph{reply} capability is a single-use right to send a reply
+    message and wake up the caller, meaning that the kernel invalidates it as
+    soon as it has been invoked.  For both variants, the calling thread is
+    blocked until a capability to the reply object is invoked.  For more
+    information, see \autoref{sec:ep-cal}.
+
+    \item[\apifunc{seL4\_Reply}{sel4_reply}] is used to respond to a
+    \apifunc{seL4\_Call}{sel4_call}, by invoking the reply capability generated
+    by the \apifunc{seL4\_Call}{sel4_call} system call and stored in a dedicated
+    slot in the replying thread's TCB.  It has exactly the same behaviour as
+    invoking the reply capability with \apifunc{seL4\_Send}{sel4_send} which is
+    described in \autoref{sec:ep-cal}.
+
+    \item[\apifunc{seL4\_ReplyRecv}{sel4_replyrecv}] combines
+    \apifunc{seL4\_Reply}{sel4_reply} and \apifunc{seL4\_Recv}{sel4_recv}.  It
+    exists mostly for efficiency reasons, namely the common case of replying to
+    a request and waiting for the next can be performed in a single kernel
+    system call instead of two.  The transition from the reply to the receive
+    phase is also atomic.
+
+    \item[\apifunc{seL4\_Wait}{sel4_wait}] (MCS only) is used by a thread to
+    receive messages through endpoints or notifications.  If no sender or
+    notification is pending, the caller will block until a message or
+    notification can be delivered.  This system call works only on
+    \obj{Endpoint} or \obj{Notification} capabilities, raising a fault (see
+    section \ref{sec:faults}) when attempted with other capability types.
+
+    \item[\apifunc{seL4\_NBWait}{sel4_nbwait}] (MCS only) is used by a thread to
+    poll for messages through endpoints or notifications.  If no sender or
+    notification is pending, the system call returns immediately.
+
+    \item[\apifunc{seL4\_NBSendWait}{sel4_nbsendwait}] (MCS only) combines an
+    \apifunc{seL4\_NBSend}{sel4_nbsend} and \apifunc{seL4\_Wait}{sel4_wait} into
+    one atomic system call.
+
+    \item[\apifunc{seL4\_NBSendRecv}{sel4_nbsendwait}] (MCS only) combines an
+    \apifunc{seL4\_NBSend}{sel4_nbsend} and \apifunc{seL4\_Recv}{sel4_recv} into
+    one atomic system call.
 \end{description}
 
 \section{Kernel Objects}
