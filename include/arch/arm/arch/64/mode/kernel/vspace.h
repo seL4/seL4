@@ -48,7 +48,24 @@ static const region_t BOOT_RODATA *mode_reserved_region = NULL;
     VSPACE_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(_c))
 #define cap_vtable_root_isMapped(_c) \
     cap_page_upper_directory_cap_get_capPUDIsMapped(_c)
+
+#ifdef CONFIG_ARM_SMMU 
+
+#define cap_vtable_root_get_mappedCB(_c) \
+    cap_page_upper_directory_cap_get_capPUDMappedCB(_c) 
+
+#define cap_vtable_root_ptr_set_mappedCB(_c, cb) \
+    cap_page_upper_directory_cap_ptr_set_capPUDMappedCB(_c, cb) 
+       
+#define cap_vtable_cap_new(_a, _v, _m) cap_page_upper_directory_cap_new(_a, _v, _m, 0, CB_INVALID)
+
+#else 
+
 #define cap_vtable_cap_new(_a, _v, _m) cap_page_upper_directory_cap_new(_a, _v, _m, 0)
+
+#endif  /*!CONFIG_ARM_SMMU*/
+
+
 #define vtable_invalid_new(_a, _v) pude_pude_invalid_new(_a, _v)
 #define vtable_invalid_get_stored_asid_valid(_v) \
     pude_pude_invalid_get_stored_asid_valid(_v)
@@ -64,6 +81,7 @@ static inline exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *po
     return EXCEPTION_NONE;
 }
 
+
 #else
 
 #define cap_vtable_root_cap cap_page_global_directory_cap
@@ -72,8 +90,24 @@ static inline exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *po
 #define cap_vtable_root_get_basePtr(_c) \
     PGDE_PTR(cap_page_global_directory_cap_get_capPGDBasePtr(_c))
 #define cap_vtable_root_isMapped(_c) cap_page_global_directory_cap_get_capPGDIsMapped(_c)
+
+#ifdef CONFIG_ARM_SMMU
+
+#define cap_vtable_root_get_mappedCB(_c) \
+    cap_page_global_directory_cap_get_capPGDMappedCB(_c) 
+
+#define cap_vtable_root_ptr_set_mappedCB(_c, cb) \
+    cap_page_global_directory_cap_ptr_set_capPGDMappedCB(_c, cb)    
+
+#define cap_vtable_cap_new(_a, _v, _m) \
+    cap_page_global_directory_cap_new(_a, _v, _m, CB_INVALID)
+#else 
+
 #define cap_vtable_cap_new(_a, _v, _m) \
     cap_page_global_directory_cap_new(_a, _v, _m)
+#endif /*!CONFIG_ARM_SMMU*/
+
+
 #define vtable_invalid_new(_a, _v) pgde_pgde_invalid_new(_a, _v)
 #define vtable_invalid_get_stored_asid_valid(_v) \
     pgde_pgde_invalid_get_stored_asid_valid(_v)
@@ -88,4 +122,6 @@ static inline exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *po
 
     return EXCEPTION_NONE;
 }
+
+
 #endif

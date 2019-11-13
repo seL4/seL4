@@ -342,12 +342,23 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
                );
 #ifndef AARCH64_VSPACE_S2_START_L1
     case seL4_ARM_PageGlobalDirectoryObject:
-        return cap_page_global_directory_cap_new(
+    #ifdef CONFIG_ARM_SMMU
+
+    return cap_page_global_directory_cap_new(
+                   asidInvalid,           /* capPGDMappedASID   */
+                   (word_t)regionBase,    /* capPGDBasePtr      */
+                   0,                     /* capPGDIsMapped     */
+                   CB_INVALID             /* capPGDMappedCB     */
+     );
+    #else 
+
+    return cap_page_global_directory_cap_new(
                    asidInvalid,           /* capPGDMappedASID   */
                    (word_t)regionBase,    /* capPGDBasePtr      */
                    0                      /* capPGDIsMapped     */
-               );
-#endif
+     );
+    #endif /*!CONFIG_ARM_SMMU*/ 
+#endif /*!AARCH64_VSPACE_S2_START_L1*/
     case seL4_ARM_PageUpperDirectoryObject:
         return cap_page_upper_directory_cap_new(
                    asidInvalid,           /* capPUDMappedASID    */

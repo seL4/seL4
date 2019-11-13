@@ -64,7 +64,12 @@ block page_upper_directory_cap {
     field capType                    5
     field capPUDIsMapped             1
     field_high capPUDMappedAddress   10
+#if defined (CONFIG_ARM_SMMU)  && defined (AARCH64_VSPACE_S2_START_L1)
+    field capPUDMappedCB             12
+    padding                          36
+#else 
     padding                          48
+#endif 
 }
 
 -- First-level page table (page global directory)
@@ -74,7 +79,12 @@ block page_global_directory_cap {
 
     field capType                    5
     field capPGDIsMapped             1
+#ifdef CONFIG_ARM_SMMU 
+    field capPGDMappedCB             12
+    padding                          46
+#else 
     padding                          58
+#endif 
 }
 
 -- Cap to the table of 2^7 ASID pools
@@ -116,8 +126,8 @@ block sid_control_cap {
 
 block sid_cap {
 
-    padding 56
-    field capSID 8
+    padding 52
+    field capSID 12
 
     field capType  5
     padding 59
@@ -133,12 +143,14 @@ block cb_control_cap {
 
 block cb_cap {
 
-    padding 56
-    field capCB 8
+    padding               39
+    field capCBIsMapped   1
+    field bindSID         12
+    field capCB           12
 
 
-    field capType  5
-    padding 59
+    field capType         5
+    padding               59
 }
 
 #endif 

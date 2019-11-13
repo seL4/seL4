@@ -332,4 +332,14 @@
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
         </method>
     </interface>
+    <interface name="seL4_ARM_CB" manual_name="CB" cap_description="A CB capability. This gives you the authority to make this call.">
+       <method id="ARMCBAssignVspace" name="AssignVspace" manual_name="AssignVspace"
+           manual_label="cb_assignvspace">
+            <brief>
+                Assigning a vspace to a context bank.
+            </brief>
+           <param dir="in" name="vspace" type="seL4_CPtr"
+            description="The VSpace that is being assigned to a context bank. Must already has an assigned ASID."/>
+        </method>
+    </interface>
 </api>

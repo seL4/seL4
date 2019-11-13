@@ -49,7 +49,6 @@
 #define SMMU_CBn_BASE_PPTR(n)                  ((SSMU_CB_BASE_PPTR) + (n) * (SMMU_PAGE_4KB))
 
 
-
 /*global register space 0 registers*/ 
 #define SMMU_sCR0                                0x000 
 #define SMMU_SCR1                                0x004 
@@ -220,6 +219,8 @@
 #define IDR2_PTFSV8_64                           BIT(14)
 #define IDR2_PTFSV8_16                           BIT(13)
 #define IDR2_PTFSV8_4                            BIT(12)
+#define IDR2_UBS                                 (0xf << 8)
+#define IDR2_UBS_VAL(v)                          ((v) >> 8)
 #define IDR2_OAS                                 (0xf << 4)
 #define IDR2_OAS_VAL(v)                          ((v) >> 4)
 #define IDR2_IAS                                 0xf
@@ -327,6 +328,106 @@
 #define TLBSYNC_LOOP                         1000 
 
 
+/*SMMU_CBARn*/ 
+#define CBARn_TYPE_SET(v)                     ((v) << 16)
+#define CBARn_BPSHCFG_SET(v)                  ((v) << 8)
+#define CBARn_VMID_SET(v)                     ((v) & 0xff)
+
+#define CBARn_TYPE_STAGE2                      0 
+#define CBARn_TYPE_STAGE1                      1   /*stage 1 with stage 2 by pass*/
+
+#define CBARn_BPSHCFG_OUTER                    1 
+#define CBARn_BPSHCFG_INNER                    2 
+#define CBARn_BPSHCFG_NONE                     3
+
+#define CBARn_MemAttr_SET(v)                  ((v) << 12)
+#define MemAttr_OWB_IWB                        0xf /*outer & inner write-back cacheable*/
+
+/*SMMU_CBA2Rn*/
+#define CBA2Rn_VMID_SET(v)                 (((v) & 0xffff) << 16)
+#define CBA2Rn_VA64_SET                    1
+
+/*SMMU_CBn_TCR when SMMU_CBn_CBA2R.VA64 is 1*/
+#define CBn_TCR_TG1_SET(v)                 ((v) << 30) 
+#define CBn_TCR_SH1_SET(v)                 ((v) << 28) 
+#define CBn_TCR_ORGN1_SET(v)               ((v) << 26) 
+#define CBn_TCR_IRGN1_SET(v)               ((v) << 24) 
+#define CBn_TCR_EPD1_DIS                   (1 << 23)     /*translation disabled for TTBR1 region*/
+#define CBn_TCR_A1_EN                      (1 << 22) 
+#define CBn_TCR_T1SZ_SET(v)                (((v) & 0x3f) << 16) 
+#define CBn_TCR_TG0_SET(v)                 ((v) << 14) 
+#define CBn_TCR_SH0_SET(v)                 ((v) << 12) 
+#define CBn_TCR_ORGN0_SET(v)               ((v) << 10) 
+#define CBn_TCR_IRGN0_SET(v)               ((v) << 8) 
+#define CBn_TCR_T0SZ_SET(v)                ((v) & 0x3f) 
+
+
+#define CBn_TCR_TG_4K                      0
+#define CBn_TCR_TG_64K                     1
+#define CBn_TCR_TG_16K                     2
+
+#define CBn_TCR_SH_NONE                    0 
+#define CBn_TCR_SH_OUTER                   2
+#define CBn_TCR_SH_INNER                   3
+
+#define CBn_TCR_GN_NCACHE                  0
+#define CBn_TCR_GN_WB_WA_CACHE             1
+#define CBn_TCR_GN_WT_CACHE                2
+#define CBn_TCR_GN_WB_NWA_CACHE            3
+
+
+/*SMMU_CBn_TCR2*/ 
+#define CBn_TCR2_SEP_SET(v)                 ((v) << 15) 
+#define CBn_TCR2_AS_SET(v)                  ((v) << 4) 
+#define CBn_TCR2_PASize_SET(v)              (v)
+
+
+#define CBn_TCR2_SEP_UPSTREAM_SIZE           7
+#define CBn_TCR2_AS_16                       1
+#define CBn_TCR2_PASize_32                   0 
+#define CBn_TCR2_PASize_36                   1 
+#define CBn_TCR2_PASize_40                   2 
+#define CBn_TCR2_PASize_42                   3 
+#define CBn_TCR2_PASize_44                   4 
+#define CBn_TCR2_PASize_48                   5 
+
+
+/*SMMU_CBn_TTBRm*/
+#define CBn_TTBRm_ASID_SET(v)                (((v) & 0xffffull) << 48) 
+
+/*SMMU_CBn_MAIRm, 
+this is the same as the MAIR in core*/
+
+/*MAIR0*/
+#define CBn_MAIRm_ATTR_DEVICE_nGnRnE         0x00
+#define CBn_MAIRm_ATTR_ID_DEVICE_nGnRnE      0 
+
+#define CBn_MAIRm_ATTR_DEVICE_nGnRE          0x04
+#define CBn_MAIRm_ATTR_ID_DEVICE_nGnRE       1 
+
+#define CBn_MAIRm_ATTR_DEVICE_GRE            0xc
+#define CBn_MAIRm_ATTR_ID_DEVICE_GRE         2
+
+#define CBn_MAIRm_ATTR_NC                    0x44   /*non-cacheable normal memory*/
+#define CBn_MAIRm_ATTR_ID_NC                 3      /*index for non-cacheable attribute*/
+
+/*MAIR1*/
+/*R/W allocate, normal memory, outer/innner write back*/
+#define CBn_MAIRm_ATTR_CACHE                0xff 
+#define CBn_MAIRm_ATTR_ID_CACHE              0
+
+/*8 bit per attribute*/
+#define CBn_MAIRm_ATTR_SHIFT(n)              ((n) << 3)
+
+/*SMMU_CBn_SCTLR*/ 
+#define CBn_SCTLR_CFIE                         (1 << 6)
+#define CBn_SCTLR_CFRE                         (1 << 5)
+#define CBn_SCTLR_AFE                          (1 << 2)
+#define CBn_SCTLR_TRE                          (1 << 1)
+#define CBn_SCTLR_M                            1
+
+
+void smmu_cb_assgin_vspace(int cb, vspace_root_t *vspace, asid_t asid); 
 void plat_smmu_init(void); 
 
 #endif  /*__DRIVER_SMMUV2_H*/

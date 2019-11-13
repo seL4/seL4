@@ -28,6 +28,9 @@
 #define TRANS_PAGES_64KB       (1 << 5)
 
 
+/*the default vritual address bits for partition TTBR0 and TTBR1*/
+#define SMMU_VA_DEFAULT_BITS      48 
+
 struct  smmu_feature {
 	bool_t stream_match;              /*stream match register funtionality included*/
 	bool_t trans_op;                  /*address translation operations supported*/
@@ -43,12 +46,24 @@ struct  smmu_feature {
 	uint32_t smmu_num_pages;          /*number of pages in global or context bank address space*/
 	uint32_t num_s2_cbanks;           /*cbanks that support stage 2 only*/ 
 	uint32_t num_cbanks;              /*total number of context banks*/
-	uint32_t pa_size;                 /*PA address size*/
-	uint32_t ipa_size;                /*IPA address size*/
+	uint32_t va_bits;                 /*upstream address size*/
+	uint32_t pa_bits;                 /*PA address size*/
+	uint32_t ipa_bits;                /*IPA address size*/
 	pptr_t cb_base;                   /*base of context bank address space*/
 }; 
 
+
+struct smmu_table_config {
+
+	uint32_t tcr[2];                    /*SMMU_CBn_TCRm*/
+	uint32_t mair[2];                  /*SMMU_CBn_MAIRm*/
+	uint64_t ttbr[2];                  /*SMMU_CBn_TTBRm*/
+
+}; 
+
 static struct smmu_feature smmu_dev_knowledge; 
+
+static struct smmu_table_config smmu_stage_table_config; 
 
 static inline uint32_t smmu_read_reg32(pptr_t base, uint32_t index) {
 
@@ -86,6 +101,51 @@ static void smmu_tlb_sync(pptr_t base, uint32_t sync, uint32_t status) {
 	}
 }
 
+
+static inline uint32_t smmu_obs_size_to_bits(uint32_t size) {
+
+	/*coverting the output bus address size into address bit, defined in 
+	IDx registers*/ 
+	switch (size) {
+		case 0: 
+			return 32; 
+		case 1: 
+			return 36; 
+		case 2: 
+			return 40; 
+		case 3:
+			return 42; 
+		case 4: 
+			return 44; 
+		case 5: 
+		default:
+			return 48; 
+	}
+}
+
+
+static inline uint32_t smmu_ubs_size_to_bits(uint32_t size) {
+
+	/*coverting the upstream address size into address bit, defined in 
+	IDx registers*/ 
+	switch (size) {
+		case 0: 
+			return 32; 
+		case 1: 
+			return 36; 
+		case 2: 
+			return 40; 
+		case 3: 
+			return 42; 
+		case 4: 
+			return 44; 
+		case 5: 
+			return 49;
+		case 0xf: 	
+		default:
+			return 64; 
+	}
+}
 
 BOOT_CODE static void smmu_mapping_init(void) {
 
@@ -280,13 +340,17 @@ BOOT_CODE static void smmu_config_prob(void) {
 		smmu_dev_knowledge.supported_fmt & TRANS_PAGES_16KB ? "true" : "flase",
 		smmu_dev_knowledge.supported_fmt & TRANS_PAGES_4KB ? "true" : "flase");
 
-	/*TODO: add checking for the va size, kernel expect 48 bits for 
-	Aarch64 and 32 bits for Aarch32.*/
-
+	/*UBS virtual address size*/ 
+	smmu_dev_knowledge.va_bits = smmu_ubs_size_to_bits(IDR2_UBS_VAL(reg & IDR2_UBS)); 
+	
 	/*OAS*/
-	smmu_dev_knowledge.pa_size = IDR2_OAS_VAL(reg & IDR2_OAS); 
+	smmu_dev_knowledge.pa_bits = smmu_obs_size_to_bits(IDR2_OAS_VAL(reg & IDR2_OAS)); 
 	/*IAS*/ 
-	smmu_dev_knowledge.ipa_size = reg & IDR2_IAS; 
+	smmu_dev_knowledge.ipa_bits = smmu_obs_size_to_bits(reg & IDR2_IAS); 
+
+
+	printf("smmu upper stream address bits  %d,  physical address bits %d, IPA bits  %d \n", 
+		smmu_dev_knowledge.va_bits, smmu_dev_knowledge.pa_bits, smmu_dev_knowledge.ipa_bits); 
 
 }
 
@@ -378,7 +442,9 @@ BOOT_CODE  static void smmu_dev_reset(void) {
 	/*raise fault for stream match conflict*/
 	reg |= CR0_SMCFCFG; 
 
-	/*disable the VMID private name space*/ 
+	/*disable the VMID private name space*/  
+	/*TODO: using the private name space for now, 
+	enable when the kernel provide support on allocating VMID*/
 	reg &= ~CR0_VMIDPNE; 
 
 	/*TLB is maintained together with the rest of the system*/
@@ -390,7 +456,8 @@ BOOT_CODE  static void smmu_dev_reset(void) {
 	/*enable client access, ie transaction enforced by SMMU*/
 	reg &= ~CR0_CLIENTPD; 
 
-	/*TODO: checking the VMID bits used in the system*/
+	/*TODO: checking the VMID bits used in the system, only need to 
+	configure when the hypermode is enabled*/
 
 	/*Not upgrade barrier*/
 	reg &= ~CR0_BSU; 
@@ -404,10 +471,13 @@ BOOT_CODE  static void smmu_dev_reset(void) {
 }
 
 
-BOOT_CODE  void plat_smmu_init(void) {
+BOOT_CODE void plat_smmu_init(void) {
 
+	
 	printf("plat_smmu_init....start\n");
+
 	smmu_config_prob(); 
+
 
 	smmu_mapping_init(); 
 	
@@ -417,6 +487,204 @@ BOOT_CODE  void plat_smmu_init(void) {
 
 }
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+static void smmu_config_stage2 (struct smmu_table_config *cfg, 
+	bool_t coherence, uint32_t pa_bits, 
+	vspace_root_t *vspace, asid_t asid) {
 
+
+
+} 
+
+#else 
+static void smmu_config_stage1 (struct smmu_table_config *cfg, 
+	bool_t coherence, uint32_t pa_bits,
+	vspace_root_t *vspace, asid_t asid) {
+
+	uint32_t reg = 0;  
+
+	/*SMMU_CBn_TCR*/
+	if (coherence) {
+
+		reg |= CBn_TCR_SH0_SET(CBn_TCR_SH_INNER); 
+		reg |= CBn_TCR_ORGN0_SET(CBn_TCR_GN_WB_WA_CACHE); 
+		reg |= CBn_TCR_IRGN0_SET(CBn_TCR_GN_WB_WA_CACHE); 
+
+	} else {
+
+		reg |= CBn_TCR_SH0_SET(CBn_TCR_SH_OUTER); 
+		reg |= CBn_TCR_ORGN0_SET(CBn_TCR_GN_NCACHE); 
+		reg |= CBn_TCR_IRGN0_SET(CBn_TCR_GN_NCACHE); 
+
+	}
+
+	/*page size is configed as 4k*/
+	reg |= CBn_TCR_TG0_SET(CBn_TCR_TG_4K); 
+	
+	/*the TTBR0 size, caculated according to the aarch64 formula*/
+	reg |= CBn_TCR_T0SZ_SET(64 - SMMU_VA_DEFAULT_BITS); 
+
+	/*disable (speculative) page table walks through TTBR1*/
+	reg |= CBn_TCR_EPD1_DIS; 
+
+	cfg->tcr[0] = reg; 
+
+	/*TCR2*/
+	reg = 0; 
+	switch (pa_bits) {
+		case 32: 
+			reg |= CBn_TCR2_PASize_SET(CBn_TCR2_PASize_32); 
+			break; 
+		case 36: 
+			reg |= CBn_TCR2_PASize_SET(CBn_TCR2_PASize_36); 
+			break; 
+		case 40: 
+			reg |= CBn_TCR2_PASize_SET(CBn_TCR2_PASize_40); 
+			break; 		
+		case 42: 
+			reg |= CBn_TCR2_PASize_SET(CBn_TCR2_PASize_42); 
+			break; 		
+		case 44: 
+			reg |= CBn_TCR2_PASize_SET(CBn_TCR2_PASize_44); 
+			break; 		
+		case 48: 
+		default: 
+			reg |= CBn_TCR2_PASize_SET(CBn_TCR2_PASize_48); 
+			break; 		
+	}
+
+	/*currently only support AArch64*/
+	reg |= CBn_TCR2_SEP_SET(CBn_TCR2_SEP_UPSTREAM_SIZE) | CBn_TCR2_AS_SET(CBn_TCR2_AS_16); 
+	cfg->tcr[1] = reg; 
+
+
+	/*MAIR0*/
+	reg = CBn_MAIRm_ATTR_DEVICE_nGnRnE << CBn_MAIRm_ATTR_SHIFT(CBn_MAIRm_ATTR_ID_DEVICE_nGnRnE); 
+	reg |= CBn_MAIRm_ATTR_DEVICE_nGnRE << CBn_MAIRm_ATTR_SHIFT(CBn_MAIRm_ATTR_ID_DEVICE_nGnRE); 
+	reg |= CBn_MAIRm_ATTR_DEVICE_GRE << CBn_MAIRm_ATTR_SHIFT(CBn_MAIRm_ATTR_ID_DEVICE_GRE);
+	reg |= CBn_MAIRm_ATTR_NC << CBn_MAIRm_ATTR_SHIFT(CBn_MAIRm_ATTR_ID_NC);
+
+	cfg->mair[0] = reg; 
+
+	/*MAIR1*/
+	reg = CBn_MAIRm_ATTR_CACHE << CBn_MAIRm_ATTR_SHIFT(CBn_MAIRm_ATTR_ID_CACHE); 
+	cfg->mair[1] = reg; 
+	
+	/*TTBRs*/
+	/*NOTE: the smmu only configured with user-level address space, TTBR0.*/
+	cfg->ttbr[0] = ttbr_new(asid, pptr_to_paddr(vspace)).words[0]; 
+	cfg->ttbr[1] = 0; 
+
+
+}
+#endif /*CONFIG_ARM_HYPERVISOR_SUPPORT*/
+
+void smmu_cb_assgin_vspace(int cb, vspace_root_t *vspace, asid_t asid) {
+
+	uint32_t reg = 0; 
+	/*currently only support private vmid space, using cb index*/
+	uint32_t vmid = cb; 
+
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+
+
+	smmu_config_stage2(&smmu_stage_table_config, 
+		smmu_dev_knowledge.cotable_walk, 
+		smmu_dev_knowledge.pa_bits, 
+		vspace, 
+		asid); 
+
+#else 
+
+	smmu_config_stage1(&smmu_stage_table_config, 
+		smmu_dev_knowledge.cotable_walk, 
+		smmu_dev_knowledge.ipa_bits, 
+		vspace, 
+		asid); 
+
+#endif /*CONFIG_ARM_HYPERVISOR_SUPPORT*/
+
+
+	/*see table 2-6 for ttbr requirement 
+	see tabel 1-7 for ttbr ragions on stage 1 */
+
+	/*CBA2R*/ 
+	/*currently only support aarch64*/
+	reg = CBA2Rn_VA64_SET; 
+
+	if (smmu_dev_knowledge.vmid16) 
+		reg |= CBA2Rn_VMID_SET(vmid); 
+
+	smmu_write_reg32(SMMU_GR1_PPTR, SMMU_CBA2Rn(cb), reg); 
+
+	printf("GR1 SMMU_CBA2Rn 0x%x\n", reg);
+
+	/*CBAR*/
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+
+	/*stage 2 translation only, CBAR_TYPE_S2_TRANS*/
+	/*for the stage 2 translation, the VMID not shared with the 
+	system by using private vmid space, and the vmid number is the same 
+	with the context bank number */
+
+	reg = CBARn_TYPE_SET(CBARn_TYPE_STAGE2); 
+
+	/*8 bit VMID*/
+	if (!smmu_dev_knowledge.vmid16) 
+		reg |= CBARn_VMID_SET(vmid); 
+
+#else 
+	/*stage 1 translation only, CBAR_TYPE_S1_TRANS_S2_BYPASS*/ 
+	reg = CBARn_TYPE_SET(CBARn_TYPE_STAGE1); 
+
+	/*the weakest shareability/memory types, so they can be overwritten 
+	by ttbcr or pte*/
+	reg |= CBARn_BPSHCFG_SET(CBARn_BPSHCFG_NONE); 
+	reg |= CBARn_MemAttr_SET(MemAttr_OWB_IWB); 
+
+#endif 	/*CONFIG_ARM_HYPERVISOR_SUPPORT*/
+
+	smmu_write_reg32(SMMU_GR1_PPTR, SMMU_CBARn(cb), reg); 
+	printf("GR1 SMMU_CBARn 0x%x\n", reg);
+	
+	/*TCR2*/
+	smmu_write_reg32(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_TCR2, smmu_stage_table_config.tcr[1]); 
+
+	printf("SMMU_CBn_TCR2 0x%x\n", smmu_stage_table_config.tcr[1]);
+	/*TCR*/
+	smmu_write_reg32(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_TCR, smmu_stage_table_config.tcr[0]); 
+
+	printf("SMMU_CBn_TCR 0x%x\n", smmu_stage_table_config.tcr[0]);
+
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
+	/*stage 1 requires ttbr 1 and ttbr 0 
+	stage 2 only require ttbr 0*/
+	smmu_write_reg64(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_TTBR1, smmu_stage_table_config.ttbr[1]); 
+#endif /*!CONFIG_ARM_HYPERVISOR_SUPPORT*/
+
+	/*ttbr0 (user space)*/ 
+	smmu_write_reg64(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_TTBR0, smmu_stage_table_config.ttbr[0]); 
+
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
+
+	/*MAIRs stage 1 only*/
+	smmu_write_reg32(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_MAIR0, smmu_stage_table_config.mair[0]); 
+
+	smmu_write_reg32(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_MAIR1, smmu_stage_table_config.mair[1]);
+
+	printf("SMMU_CBn_MAIR0 0x%x\n", smmu_stage_table_config.mair[0]);
+
+	printf("SMMU_CBn_MAIR1 0x%x\n", smmu_stage_table_config.mair[1]);
+
+#endif /*!CONFIG_ARM_HYPERVISOR_SUPPORT*/
+
+	/*SCTLR, */
+	reg = CBn_SCTLR_CFIE | CBn_SCTLR_CFRE | CBn_SCTLR_AFE | CBn_SCTLR_TRE | CBn_SCTLR_M; 
+	
+	smmu_write_reg32(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_SCTLR, reg);
+
+	printf("SMMU_CBn_SCTLR 0x%x\n", reg);
+}
 
 
