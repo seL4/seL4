@@ -300,7 +300,7 @@ static inline word_t readELR_EL1(void)
 
 static inline void writeELR_EL1(word_t reg)
 {
-    MRS(REG_ELR_EL1, reg);
+    MSR(REG_ELR_EL1, reg);
 }
 
 static inline word_t readSPSR_EL1(void)
