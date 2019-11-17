@@ -256,7 +256,7 @@ static inline word_t readFAR(void)
 
 static inline void writeFAR(word_t reg)
 {
-    MSR(REG_FAR_EL1, (uint32_t)reg);
+    MSR(REG_FAR_EL1, reg);
 }
 
 /* ISR is read-only */
