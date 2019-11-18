@@ -89,8 +89,30 @@ extern const register_t msgRegisters[] VISIBLE;
 extern const register_t frameRegisters[] VISIBLE;
 extern const register_t gpRegisters[] VISIBLE;
 
+#ifdef CONFIG_HAVE_FPU
+
+#define RISCV_NUM_FP_REGS   32
+
+#if defined(CONFIG_RISCV_EXT_D)
+typedef uint64_t fp_reg_t;
+#elif defined(CONFIG_RISCV_EXT_F)
+typedef uint32_t fp_reg_t;
+#else
+#error Unknown RISCV FPU extension
+#endif
+
+typedef struct user_fpu_state {
+    fp_reg_t regs[RISCV_NUM_FP_REGS];
+    uint32_t fcsr;
+} user_fpu_state_t;
+
+#endif
+
 struct user_context {
     word_t registers[n_contextRegisters];
+#ifdef CONFIG_HAVE_FPU
+    user_fpu_state_t fpuState;
+#endif
 };
 typedef struct user_context user_context_t;
 
