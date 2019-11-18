@@ -36,6 +36,9 @@ void ipiStallCoreCallback(bool_t irqPath)
 
         /* Let the cpu requesting this IPI to continue while we waiting on lock */
         big_kernel_lock.node_owners[getCurrentCPUIndex()].ipi = 0;
+#ifdef CONFIG_ARCH_RISCV
+        ipi_clear_irq(irq_remote_call_ipi);
+#endif
         ipi_wait(totalCoreBarrier);
 
         /* Continue waiting on lock */

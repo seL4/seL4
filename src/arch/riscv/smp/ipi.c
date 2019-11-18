@@ -11,8 +11,9 @@
 
 #ifdef ENABLE_SMP_SUPPORT
 
-static IpiRemoteCall_t remoteCall;   /* the remote call being requested */
-static irq_t           ipiIrq[CONFIG_MAX_NUM_NODES];
+/* the remote call being requested */
+static volatile IpiRemoteCall_t  remoteCall;
+static volatile irq_t            ipiIrq[CONFIG_MAX_NUM_NODES];
 
 static inline void init_ipi_args(IpiRemoteCall_t func,
                                  word_t data1, word_t data2, word_t data3,
@@ -50,6 +51,7 @@ static void handleRemoteCall(IpiRemoteCall_t call, word_t arg0,
         }
 
         big_kernel_lock.node_owners[getCurrentCPUIndex()].ipi = 0;
+        ipiIrq[getCurrentCPUIndex()] = irqInvalid;
         ipi_wait(totalCoreBarrier);
     }
 }
@@ -62,13 +64,12 @@ void ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
 
 irq_t ipi_get_irq(void)
 {
-    assert(ipiIrq[getCurrentCPUIndex()] != irqInvalid);
+    assert(!(ipiIrq[getCurrentCPUIndex()] == irqInvalid && big_kernel_lock.node_owners[getCurrentCPUIndex()].ipi == 1));
     return ipiIrq[getCurrentCPUIndex()];
 }
 
 void ipi_clear_irq(irq_t irq)
 {
-    assert(ipiIrq[getCurrentCPUIndex()] != irqInvalid);
     ipiIrq[getCurrentCPUIndex()] = irqInvalid;
     return;
 }
@@ -80,11 +81,10 @@ void ipi_send_target(irq_t irq, word_t hart_id)
     word_t core_id = hartIDToCoreID(hart_id);
     assert(core_id < CONFIG_MAX_NUM_NODES);
     hart_mask = BIT(hart_id);
-    while (ipiIrq[core_id] != irqInvalid) {
-        NODE_UNLOCK_IF_HELD;
-        arch_pause();
-        NODE_LOCK(false);
-    }
+
+    assert((ipiIrq[core_id] == irqInvalid) || (ipiIrq[core_id] == irq_reschedule_ipi) ||
+           (ipiIrq[core_id] == irq_remote_call_ipi && big_kernel_lock.node_owners[core_id].ipi == 0));
+
     ipiIrq[core_id] = irq;
     asm volatile("fence rw,rw");
     sbi_send_ipi(&hart_mask);
