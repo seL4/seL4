@@ -15,6 +15,18 @@ config_string(
     DEPENDS "KernelArchRiscV"
 )
 
+config_option(
+    KernelRiscvExtF RISCV_EXT_F "RISCV extension for single-preciison floating-point"
+    DEFAULT OFF
+    DEPENDS "KernelArchRiscV"
+)
+
+config_option(
+    KernelRiscvExtD RISCV_EXT_D "RISCV extension for double-precision floating-point"
+    DEFAULT OFF
+    DEPENDS "KernelArchRiscV"
+)
+
 if(KernelSel4ArchRiscV32)
     set(KernelPTLevels 2 CACHE STRING "" FORCE)
 endif()
@@ -32,6 +44,15 @@ elseif(KernelPTLevels EQUAL 3)
     math(EXPR KernelPaddrUserTop "(1 << 39) - 1")
 elseif(KernelPTLevels EQUAL 4)
     math(EXPR KernelPaddrUserTop "(1 << 56) - 1")
+endif()
+
+if(KernelRiscvExtD)
+    set(KernelRiscvExtF ON)
+    set(KernelHaveFPU ON)
+endif()
+
+if(KernelRiscvExtF)
+    set(KernelHaveFPU ON)
 endif()
 
 # This is not supported on RISC-V
@@ -52,6 +73,7 @@ add_sources(
         machine/hardware.c
         machine/registerset.c
         machine/io.c
+        machine/fpu.c
         model/statedata.c
         object/interrupt.c
         object/objecttype.c
