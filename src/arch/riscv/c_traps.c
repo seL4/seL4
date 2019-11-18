@@ -125,6 +125,17 @@ void VISIBLE NORETURN c_handle_exception(void)
     case RISCVInstructionPageFault:
         handleVMFaultEvent(scause);
         break;
+    case RISCVInstructionIllegal:
+#ifdef CONFIG_HAVE_FPU
+        if (!isFpuEnabled()) {
+            /* we assume the illegal instruction is caused by FPU first */
+            handleFPUFault();
+            setNextPC(NODE_STATE(ksCurThread), getRestartPC(NODE_STATE(ksCurThread)));
+            break;
+        }
+#endif
+        handleUserLevelFault(scause, 0);
+        break;
     default:
         handleUserLevelFault(scause, 0);
         break;
