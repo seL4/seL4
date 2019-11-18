@@ -24,23 +24,6 @@
 #define MAX_NUM_FREEMEM_REG (ARRAY_SIZE(avail_p_regs) + MODE_RESERVED + 1 + 1)
 #endif
 
-#ifdef CONFIG_ARCH_X86
-#else
-/* The maximum number of reserved regions is:
- * - 1 for each physical memory region (MAX_NUM_FREEMEM_REG)
- * - 1 for each kernel device (ARRAY_SIZE(kernel_devices))
- * - 1 for each mode-reserved region. (MODE_RESERVED)
- * - 1 each for kernel, dtb, and user image. (3)
- */
-#ifndef CONFIG_PLAT_SPIKE
-#define MAX_NUM_RESV_REG (MAX_NUM_FREEMEM_REG + ARRAY_SIZE(kernel_devices) + MODE_RESERVED + 3)
-#else
-/* spike has no devices */
-#define MAX_NUM_RESV_REG (MAX_NUM_FREEMEM_REG + MODE_RESERVED + 3)
-#endif
-
-#endif
-
 /*
  * Resolve naming differences between the abstract specifications
  * of the bootstrapping phase and the runtime phase of the kernel.
