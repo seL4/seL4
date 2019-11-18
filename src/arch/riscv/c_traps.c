@@ -13,6 +13,8 @@
 #include <api/syscall.h>
 #include <util.h>
 #include <arch/machine/hardware.h>
+#include <arch/machine/fpu.h>
+#include <machine/fpu.h>
 
 #include <benchmark/benchmark_track.h>
 #include <benchmark/benchmark_utilisation.h>
@@ -29,6 +31,12 @@ void VISIBLE NORETURN restore_user_context(void)
     asm volatile("csrr %0, sscratch" : "=r"(sp));
     sp -= sizeof(word_t);
     *((word_t *)sp) = cur_thread_reg;
+#endif
+
+
+#ifdef CONFIG_HAVE_FPU
+    lazyFPURestore(NODE_STATE(ksCurThread));
+    set_tcb_fs_state(NODE_STATE(ksCurThread), isFpuEnabled());
 #endif
 
     asm volatile(

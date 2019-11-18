@@ -8,6 +8,7 @@
 
 #include <util.h>
 #include <arch/machine/registerset.h>
+#include <arch/smp/ipi_inline.h>
 
 #ifdef CONFIG_HAVE_FPU
 

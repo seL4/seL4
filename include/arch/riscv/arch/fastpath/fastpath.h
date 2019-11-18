@@ -15,6 +15,8 @@
 #include <api/types.h>
 #include <smp/lock.h>
 #include <arch/machine/hardware.h>
+#include <arch/machine/fpu.h>
+#include <machine/fpu.h>
 
 void slowpath(syscall_t syscall)
 NORETURN;
@@ -103,6 +105,11 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
 #endif
 
     c_exit_hook();
+
+#ifdef CONFIG_HAVE_FPU
+    lazyFPURestore(NODE_STATE(ksCurThread));
+    set_tcb_fs_state(NODE_STATE(ksCurThread), isFpuEnabled());
+#endif
 
     register word_t badge_reg asm("a0") = badge;
     register word_t msgInfo_reg asm("a1") = msgInfo;
