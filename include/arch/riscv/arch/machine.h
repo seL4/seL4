@@ -13,6 +13,7 @@
 #include <arch/machine/hardware.h>
 #include <arch/model/statedata.h>
 #include <arch/sbi.h>
+#include <mode/machine.h>
 
 #ifdef ENABLE_SMP_SUPPORT
 
@@ -172,6 +173,19 @@ static inline void clear_sie_mask(word_t mask_low)
     word_t temp;
     asm volatile("csrrc %0, sie, %1" : "=r"(temp) : "rK"(mask_low));
 }
+
+static inline uint32_t read_fcsr(void)
+{
+    uint32_t fcsr;
+    asm volatile("csrr %0, fcsr" : "=r"(fcsr));
+    return fcsr;
+}
+
+static inline void write_fcsr(uint32_t value)
+{
+    asm volatile("csrw fcsr, %0" :: "rK"(value));
+}
+
 
 #if CONFIG_PT_LEVELS == 2
 #define SATP_MODE SATP_MODE_SV32
