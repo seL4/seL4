@@ -304,7 +304,9 @@ exception_t Arch_decodeInvocation(
 
 void Arch_prepareThreadDelete(tcb_t *thread)
 {
-    /* No action required on RISCV. */
+#ifdef CONFIG_HAVE_FPU
+    fpuThreadDelete(thread);
+#endif
 }
 
 bool_t Arch_isFrameType(word_t type)
