@@ -109,6 +109,14 @@ extern char trap_entry[1];
 
 /* This and only this function initialises the CPU. It does NOT initialise any kernel state. */
 
+#ifdef CONFIG_HAVE_FPU
+BOOT_CODE static void init_fpu(void)
+{
+    write_fcsr(0);
+    disableFpu();
+}
+#endif
+
 BOOT_CODE static void init_cpu(void)
 {
 
@@ -118,6 +126,9 @@ BOOT_CODE static void init_cpu(void)
     initLocalIRQController();
 #ifndef CONFIG_KERNEL_MCS
     initTimer();
+#endif
+#ifdef CONFIG_HAVE_FPU
+    init_fpu();
 #endif
 }
 
