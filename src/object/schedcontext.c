@@ -5,6 +5,9 @@
  */
 
 #include <machine/timer.h>
+#include <kernel/sporadic.h>
+#include <kernel/thread.h>
+#include <object/structures.h>
 #include <object/schedcontext.h>
 
 static exception_t invokeSchedContext_UnbindObject(sched_context_t *sc, cap_t cap)
@@ -101,6 +104,12 @@ static exception_t decodeSchedContext_Bind(sched_context_t *sc, extra_caps_t ext
     case cap_thread_cap:
         if (TCB_PTR(cap_thread_cap_get_capTCBPtr(cap))->tcbSchedContext != NULL) {
             userError("SchedContext_Bind: tcb already bound.");
+            current_syscall_error.type = seL4_IllegalOperation;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        if (isBlocked(TCB_PTR(cap_thread_cap_get_capTCBPtr(cap))) && !sc_released(sc)) {
+            userError("SchedContext_Bind: tcb blocked and scheduling context not schedulable.");
             current_syscall_error.type = seL4_IllegalOperation;
             return EXCEPTION_SYSCALL_ERROR;
         }
