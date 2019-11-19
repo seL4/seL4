@@ -10,6 +10,8 @@
  * @TAG(DATA61_GPL)
  */
 #include <machine/timer.h>
+#include <kernel/sporadic.h>
+#include <object/structures.h>
 #include <object/schedcontext.h>
 
 static exception_t invokeSchedContext_UnbindObject(sched_context_t *sc, cap_t cap)
@@ -108,6 +110,18 @@ static exception_t decodeSchedContext_Bind(sched_context_t *sc, extra_caps_t ext
             userError("SchedContext_Bind: tcb already bound.");
             current_syscall_error.type = seL4_IllegalOperation;
             return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        switch (thread_state_get_tsType(TCB_PTR(cap_thread_cap_get_capTCBPtr(cap))->tcbState)) {
+        case ThreadState_BlockedOnReceive:
+        case ThreadState_BlockedOnSend:
+        case ThreadState_BlockedOnNotification:
+        case ThreadState_BlockedOnReply:
+            if (!refill_sufficient(sc, 0) || !refill_ready(sc)) {
+                userError("SchedContext_Bind: tcb blocked and scheduling context not schedulable.");
+                current_syscall_error.type = seL4_IllegalOperation;
+                return EXCEPTION_SYSCALL_ERROR;
+            }
         }
 
         break;
