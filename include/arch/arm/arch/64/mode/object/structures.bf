@@ -126,7 +126,8 @@ block sid_control_cap {
 
 block sid_cap {
 
-    padding 52
+    padding              51
+    field capSIDIsMapped 1
     field capSID 12
 
     field capType  5
@@ -145,7 +146,7 @@ block cb_cap {
 
     padding               39
     field capCBIsMapped   1
-    field bindSID         12
+    field capBindSID         12
     field capCB           12
 
 

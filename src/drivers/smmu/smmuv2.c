@@ -336,8 +336,8 @@ BOOT_CODE  static void smmu_dev_reset(void)
 	reg |= CR0_FB;
 	/*enable client access, ie transaction enforced by SMMU*/
 	reg &= ~CR0_CLIENTPD;
-	/*Not upgrade barrier*/
-	reg &= ~CR0_BSU;
+	/*upgrade barrier to full system*/
+	reg &= ~CR0_BSU(CR0_BSU_ALL);
 	/*syn above issued TLB operations*/
 	smmu_tlb_sync(SMMU_GR0_PPTR, SMMU_sTLBGSYNC, SMMU_sTLBGSTATUS);
 	/*enable the SMMU*/
@@ -440,8 +440,8 @@ static void smmu_config_stage1 (struct smmu_table_config *cfg,
 }
 #endif /*CONFIG_ARM_HYPERVISOR_SUPPORT*/
 
-void smmu_cb_assign_vspace(int cb, vspace_root_t *vspace, asid_t asid) {
 
+void smmu_cb_assign_vspace(word_t cb, vspace_root_t *vspace, asid_t asid) {
 	uint32_t reg = 0;
 	uint32_t vmid = cb;
 	/* For the stage 2 translation, the VMID space is designed as a private
