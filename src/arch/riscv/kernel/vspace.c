@@ -99,9 +99,9 @@ static pte_t pte_next(word_t phys_addr, bool_t is_leaf)
 
 BOOT_CODE void map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights)
 {
-    paddr = ROUND_DOWN(paddr, RISCV_GET_LVL_PGSIZE_BITS(1));
-    assert((paddr % RISCV_GET_LVL_PGSIZE(1)) == 0);
-    kernel_root_pageTable[RISCV_GET_PT_INDEX(vaddr, 1)] = pte_next(paddr, true);
+    paddr = ROUND_DOWN(paddr, RISCV_GET_LVL_PGSIZE_BITS(0));
+    assert((paddr % RISCV_GET_LVL_PGSIZE(0)) == 0);
+    kernel_root_pageTable[RISCV_GET_PT_INDEX(vaddr, 0)] = pte_next(paddr, true);
 }
 
 BOOT_CODE VISIBLE void map_kernel_window(void)
@@ -115,41 +115,41 @@ BOOT_CODE VISIBLE void map_kernel_window(void)
     /* first we map in memory from PADDR_BASE */
     word_t paddr = PADDR_BASE;
     while (pptr < KERNEL_BASE) {
-        assert(IS_ALIGNED(pptr, RISCV_GET_LVL_PGSIZE_BITS(1)));
-        assert(IS_ALIGNED(paddr, RISCV_GET_LVL_PGSIZE_BITS(1)));
+        assert(IS_ALIGNED(pptr, RISCV_GET_LVL_PGSIZE_BITS(0)));
+        assert(IS_ALIGNED(paddr, RISCV_GET_LVL_PGSIZE_BITS(0)));
 
-        kernel_root_pageTable[RISCV_GET_PT_INDEX(pptr, 1)] = pte_next(paddr, true);
+        kernel_root_pageTable[RISCV_GET_PT_INDEX(pptr, 0)] = pte_next(paddr, true);
 
-        pptr += RISCV_GET_LVL_PGSIZE(1);
-        paddr += RISCV_GET_LVL_PGSIZE(1);
+        pptr += RISCV_GET_LVL_PGSIZE(0);
+        paddr += RISCV_GET_LVL_PGSIZE(0);
     }
     /* now we should be mapping the 1GiB kernel base */
     assert(pptr == KERNEL_BASE);
-    paddr = ROUND_DOWN(PADDR_LOAD, RISCV_GET_LVL_PGSIZE_BITS(1));
+    paddr = ROUND_DOWN(PADDR_LOAD, RISCV_GET_LVL_PGSIZE_BITS(0));
 
 #if __riscv_xlen == 32
-    kernel_root_pageTable[RISCV_GET_PT_INDEX(pptr, 1)] = pte_next(paddr, true);
-    pptr += RISCV_GET_LVL_PGSIZE(1);
-    paddr += RISCV_GET_LVL_PGSIZE(1);
+    kernel_root_pageTable[RISCV_GET_PT_INDEX(pptr, 0)] = pte_next(paddr, true);
+    pptr += RISCV_GET_LVL_PGSIZE(0);
+    paddr += RISCV_GET_LVL_PGSIZE(0);
 #else
     word_t index = 0;
     /* The kernel image are mapped twice, locating the two indexes in the
      * root page table, pointing them to the same second level page table.
      */
-    kernel_root_pageTable[RISCV_GET_PT_INDEX(PADDR_LOAD + BASE_OFFSET, 1)] =
+    kernel_root_pageTable[RISCV_GET_PT_INDEX(PADDR_LOAD + BASE_OFFSET, 0)] =
         pte_next(kpptr_to_paddr(kernel_image_level2_pt), false);
-    kernel_root_pageTable[RISCV_GET_PT_INDEX(pptr, 1)] =
+    kernel_root_pageTable[RISCV_GET_PT_INDEX(pptr, 0)] =
         pte_next(kpptr_to_paddr(kernel_image_level2_pt), false);
-    while (pptr < KERNEL_BASE + RISCV_GET_LVL_PGSIZE(1)) {
+    while (pptr < KERNEL_BASE + RISCV_GET_LVL_PGSIZE(0)) {
         kernel_image_level2_pt[index] = pte_next(paddr, true);
         index++;
-        pptr += RISCV_GET_LVL_PGSIZE(2);
-        paddr += RISCV_GET_LVL_PGSIZE(2);
+        pptr += RISCV_GET_LVL_PGSIZE(1);
+        paddr += RISCV_GET_LVL_PGSIZE(1);
     }
 #endif
 
     /* There should be 1GiB free where we put device mapping */
-    assert(pptr == UINTPTR_MAX - RISCV_GET_LVL_PGSIZE(1) + 1);
+    assert(pptr == UINTPTR_MAX - RISCV_GET_LVL_PGSIZE(0) + 1);
     map_kernel_devices();
 }
 
@@ -242,8 +242,8 @@ static BOOT_CODE cap_t create_it_pt_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vp
 BOOT_CODE word_t arch_get_n_paging(v_region_t it_v_reg)
 {
     word_t n = 0;
-    for (int i = 2; i <= CONFIG_PT_LEVELS; i++) {
-        n += get_n_paging(it_v_reg, RISCV_GET_LVL_PGSIZE_BITS(i - 1));
+    for (int i = 0; i < CONFIG_PT_LEVELS - 1; i++) {
+        n += get_n_paging(it_v_reg, RISCV_GET_LVL_PGSIZE_BITS(i));
     }
     return n;
 }
@@ -269,11 +269,11 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadVSpace), lvl1pt_cap);
 
     /* create all n level PT caps necessary to cover userland image in 4KiB pages */
-    for (int i = 2; i <= CONFIG_PT_LEVELS; i++) {
+    for (int i = 0; i < CONFIG_PT_LEVELS - 1; i++) {
 
-        for (pt_vptr = ROUND_DOWN(it_v_reg.start, RISCV_GET_LVL_PGSIZE_BITS(i - 1));
+        for (pt_vptr = ROUND_DOWN(it_v_reg.start, RISCV_GET_LVL_PGSIZE_BITS(i));
              pt_vptr < it_v_reg.end;
-             pt_vptr += RISCV_GET_LVL_PGSIZE(i - 1)) {
+             pt_vptr += RISCV_GET_LVL_PGSIZE(i)) {
             if (!provide_cap(root_cnode_cap,
                              create_it_pt_cap(lvl1pt_cap, it_alloc_paging(), pt_vptr, IT_ASID))
                ) {
@@ -339,7 +339,7 @@ void copyGlobalMappings(pte_t *newLvl1pt)
     unsigned int i;
     pte_t *global_kernel_vspace = kernel_root_pageTable;
 
-    for (i = RISCV_GET_PT_INDEX(PPTR_BASE, 1); i < BIT(PT_INDEX_BITS); i++) {
+    for (i = RISCV_GET_PT_INDEX(PPTR_BASE, 0); i < BIT(PT_INDEX_BITS); i++) {
         newLvl1pt[i] = global_kernel_vspace[i];
     }
 }
@@ -498,7 +498,7 @@ void unmapPageTable(asid_t asid, vptr_t vptr, pte_t *target_pt)
     pte_t *ptSlot = NULL;
     pte_t *pt = find_ret.vspace_root;
 
-    for (int i = 1; i < CONFIG_PT_LEVELS && pt != target_pt; i++) {
+    for (int i = 0; i < CONFIG_PT_LEVELS - 1 && pt != target_pt; i++) {
         ptSlot = pt + RISCV_GET_PT_INDEX(vptr, i);
         if (unlikely(!isPTEPageTable(ptSlot))) {
             /* couldn't find it */
