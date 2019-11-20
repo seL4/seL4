@@ -460,7 +460,9 @@ BOOT_CODE  static void smmu_dev_reset(void) {
 	configure when the hypermode is enabled*/
 
 	/*Not upgrade barrier*/
-	reg &= ~CR0_BSU; 
+	reg &= ~CR0_BSU(CR0_BSU_ALL); 
+
+	printf("SMMU_sCR0, val 0x%x\n", reg); 
 
 	/*syn above issued TLB operations*/
 	smmu_tlb_sync(SMMU_GR0_PPTR, SMMU_sTLBGSYNC, SMMU_sTLBGSTATUS); 
@@ -579,11 +581,11 @@ static void smmu_config_stage1 (struct smmu_table_config *cfg,
 }
 #endif /*CONFIG_ARM_HYPERVISOR_SUPPORT*/
 
-void smmu_cb_assgin_vspace(int cb, vspace_root_t *vspace, asid_t asid) {
+void smmu_cb_assgin_vspace(word_t cb, vspace_root_t *vspace, asid_t asid) {
 
 	uint32_t reg = 0; 
 	/*currently only support private vmid space, using cb index*/
-	uint32_t vmid = cb; 
+	word_t vmid = cb; 
 
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
@@ -687,4 +689,26 @@ void smmu_cb_assgin_vspace(int cb, vspace_root_t *vspace, asid_t asid) {
 	printf("SMMU_CBn_SCTLR 0x%x\n", reg);
 }
 
+void smmu_sid_bind_cb(word_t sid, word_t cb) {
+
+	uint32_t reg = 0; 
+
+	reg = S2CR_PRIVCFG_SET(S2CR_PRIVCFG_DEFAULT); 
+	reg |= S2CR_TYPE_SET(S2CR_TYPE_CB); 
+	reg |= S2CR_CBNDX_SET(cb); 
+
+	printf("SMMU_S2CRn 0x%x\n", reg);
+
+	smmu_write_reg32(SMMU_GR0_PPTR, SMMU_S2CRn(sid), reg);  
+
+	/*the number of stream-to-context is realted to the stream indexing method
+	currently supports one to on mapping, one sid in on group, and never change*/
+	if (smmu_dev_knowledge.stream_match) {
+
+		reg = SMR_VALID_SET(SMR_VALID_EN) | SMR_ID_SET(sid); 
+		smmu_write_reg32(SMMU_GR0_PPTR, SMMU_SMRn(sid), reg); 
+
+		printf("SMMU_SMRn 0x%x\n", reg);
+	}		
+} 
 

@@ -320,6 +320,16 @@
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
         </method>
     </interface>
+    <interface name="seL4_ARM_SID" manual_name="SID" cap_description="A SID capability. This gives you the authority to make this call.">
+       <method id="ARMSIDBindCB" name="BindCB" manual_name="BindCB"
+           manual_label="sid_bindcb">
+            <brief>
+                Binding a context bank to a stream ID.
+            </brief>
+           <param dir="in" name="cb" type="seL4_CPtr"
+            description="The CB that is being binded to a stream ID. Must already has an assigned vspace."/>
+        </method>
+    </interface>
     <interface name="seL4_ARM_CBControl" manual_name="CB Control" cap_description="A CBControl capability. This gives you the authority to make this call.">
        <method id="ARMCBIssueCBManager" name="GetCB" manual_name="GetCB"
            manual_label="cb_controlgetcb">
