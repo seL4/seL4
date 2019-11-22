@@ -1,11 +1,23 @@
-Revision history for seL4
+# Revision History for seL4
 
-For more information see the release notes at https://docs.sel4.systems/sel4_release/
+<!--
+    Document maintainers: Wrap lines in this file at 120 characters.
 
-This file should be word wrapped to 120 characters
+    Kernel engineers: When making changes to code (rather than documentation or comments) in the kernel repository,
+    include a change item entry here, at the end of the list for the upcoming release, describing the change, and
+    evaluate whether the compatibility breakage level must be promoted as a consequence.  As some rules of thumb:
+    * If the change affects only the sources of the kernel (`src/`, `/include`), it is a BINARY-COMPATIBLE change.
+    * If the change adds visible C preprocessor or language symbols in `libsel4/`, it is a BINARY-COMPATIBLE change.
+    * If the change alters existing symbol definitions, types, or implementations in `libsel4/`, it is a
+      SOURCE-COMPATIBLE change.
+    * Otherwise, it is BREAKING.
+-->
 
-The upcoming release notes should indicate whether it is a SOURCE COMPATIBLE, BINARY COMPATIBLE or BREAKING change. As
-changes are added the compatibility information should be updated.
+The following is a high-level description of changes to the seL4 kernel project, grouped by release.  It is aimed at
+engineers who desire a summary of changes in more coarse-grained form than the Git commit history.  Each release
+description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BREAKING relative to the previous release.
+
+Further information about [seL4 releases](https://docs.sel4.systems/sel4_release/) is available.
 
 ---
 Upcoming release: BINARY COMPATIBLE
