@@ -16,6 +16,7 @@
     serial1 = <0x2f736f63 0x2f736572 0x69616c40 0x31303031 0x31303030>;
   };
   chosen {
+    stdout-path = "/soc/serial@10010000";
   };
   firmware {
     sifive,fsbl = "2018-03-20";
