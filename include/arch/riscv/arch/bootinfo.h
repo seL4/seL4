@@ -21,7 +21,7 @@
  * - 1 for each mode-reserved region. (MODE_RESERVED)
  * - 1 each for kernel, dtb, and user image. (3)
  */
-#ifndef CONFIG_PLAT_SPIKE
+#ifdef CONFIG_PLAT_HIFIVE
 #define MAX_NUM_RESV_REG (MAX_NUM_FREEMEM_REG + ARRAY_SIZE(kernel_devices) + MODE_RESERVED + 3)
 #else
 /* spike has no devices, and ARRAY_SIZE(NULL) is invalid. */
