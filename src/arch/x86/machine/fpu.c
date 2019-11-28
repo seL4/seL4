@@ -32,8 +32,7 @@ BOOT_CODE bool_t Arch_initFpu(void)
 
     /* Enable the FPU in general. */
     write_cr0((read_cr0() & ~CR0_EMULATION) | CR0_MONITOR_COPROC | CR0_NUMERIC_ERROR);
-    Arch_enableFpu();
-    NODE_STATE(ksFPUEnabled) = true;
+    enableFpu();
 
     /* Initialize the fpu state */
     finit();

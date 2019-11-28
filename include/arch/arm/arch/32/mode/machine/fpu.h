@@ -41,6 +41,8 @@
 #define FPEXC_DEX_BIT                29
 #define FPEXC_FP2V_BIT               28
 
+extern bool_t isFPUEnabledCached[CONFIG_MAX_NUM_NODES];
+
 static void clearEnFPEXC(void)
 {
     word_t fpexc;
@@ -161,7 +163,7 @@ static inline void saveFpuState(user_fpu_state_t *dest)
  *
  */
 
-static inline void Arch_enableFpu(void)
+static inline void enableFpu(void)
 {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     enableFpuInstInHyp();
@@ -171,6 +173,13 @@ static inline void Arch_enableFpu(void)
 #else
     setEnFPEXC();
 #endif
+    isFPUEnabledCached[SMP_TERNARY(getCurrentCPUIndex(), 0)] = true;
+}
+
+/* Check if FPU is enable */
+static inline bool_t isFpuEnable(void)
+{
+    return isFPUEnabledCached[SMP_TERNARY(getCurrentCPUIndex(), 0)];
 }
 
 /* Load FPU state from memory into the FPU registers. */
@@ -198,8 +207,8 @@ static inline void loadFpuState(user_fpu_state_t *src)
     /* Load FPSCR. */
     VMSR(FPSCR, src->fpscr);
 
-    /* Restore FPEXC ensuring that it is enabled. */
-    VMSR(FPEXC, src->fpexc | BIT(FPEXC_EN_BIT));
+    /* Restore FPEXC. */
+    VMSR(FPEXC, src->fpexc);
 }
 
 #endif /* CONFIG_HAVE_FPU */
@@ -214,13 +223,14 @@ static inline void loadFpuState(user_fpu_state_t *src)
  * When a VM is running, always, a trap to HYP mode is triggered.
  * Thus, we do not need to modify the EN bit of the FPEXC.
  */
-static inline void Arch_disableFpu(void)
+static inline void disableFpu(void)
 {
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         trapFpuInstToHyp();
     } else {
         clearEnFPEXC();
     }
+    isFPUEnabledCached[SMP_TERNARY(getCurrentCPUIndex(), 0)] = false;
 }
 
 #endif /* __MODE_MACHINE_FPU_H */

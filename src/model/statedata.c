@@ -50,7 +50,6 @@ UP_STATE_DEFINE(tcb_t *, ksSchedulerAction);
 UP_STATE_DEFINE(user_fpu_state_t *, ksActiveFPUState);
 
 UP_STATE_DEFINE(word_t, ksFPURestoresSinceSwitch);
-UP_STATE_DEFINE(word_t, ksFPUEnabled);
 #endif /* CONFIG_HAVE_FPU */
 #ifdef CONFIG_KERNEL_MCS
 /* the amount of time passed since the kernel time was last updated */

@@ -24,7 +24,7 @@
 #include <plat/machine/hardware.h>
 #include <machine.h>
 #include <arch/machine/timer.h>
-#include <machine/fpu.h>
+#include <arch/machine/fpu.h>
 #include <arch/machine/tlb.h>
 
 /* pointer to the end of boot code/data in kernel image */
@@ -194,7 +194,7 @@ BOOT_CODE static bool_t init_cpu(void)
 
     /* Disable FPU to avoid channels where a platform has an FPU but doesn't make use of it */
     if (haveHWFPU) {
-        Arch_disableFpu();
+        disableFpu();
     }
 
 #ifdef CONFIG_HAVE_FPU

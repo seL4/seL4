@@ -15,6 +15,8 @@
 
 #include <mode/machine/registerset.h>
 
+extern bool_t isFPUEnabledCached[CONFIG_MAX_NUM_NODES];
+
 #ifdef CONFIG_HAVE_FPU
 /* Store state in the FPU registers into memory. */
 static inline void saveFpuState(user_fpu_state_t *dest)
@@ -125,24 +127,31 @@ static inline void disableFpuEL0(void)
 
 /* Enable the FPU to be used without faulting.
  * Required even if the kernel attempts to use the FPU. */
-static inline void Arch_enableFpu(void)
+static inline void enableFpu(void)
 {
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         disableTrapFpu();
     } else {
         enableFpuEL01();
     }
+    isFPUEnabledCached[SMP_TERNARY(getCurrentCPUIndex(), 0)] = true;
+}
+
+static inline bool_t isFpuEnable(void)
+{
+    return isFPUEnabledCached[SMP_TERNARY(getCurrentCPUIndex(), 0)];
 }
 #endif /* CONFIG_HAVE_FPU */
 
 /* Disable the FPU so that usage of it causes a fault */
-static inline void Arch_disableFpu(void)
+static inline void disableFpu(void)
 {
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         enableTrapFpu();
     } else {
         disableFpuEL0();
     }
+    isFPUEnabledCached[SMP_TERNARY(getCurrentCPUIndex(), 0)] = false;
 }
 
 #endif /* __MODE_MACHINE_FPU_H */
