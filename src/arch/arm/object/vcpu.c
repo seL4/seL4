@@ -492,6 +492,7 @@ exception_t decodeVCPUAckVPPI(cap_t cap, unsigned int length, word_t *buffer)
         userError("VCPUAckVPPI: Invalid irq number.");
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 0;
+        return EXCEPTION_SYSCALL_ERROR;
     }
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
