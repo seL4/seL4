@@ -28,9 +28,11 @@ static exception_t invokeSchedControl_Configure(sched_context_t *target, word_t 
 #ifdef ENABLE_SMP_SUPPORT
             if (target->scCore == getCurrentCPUIndex()) {
 #endif /* ENABLE_SMP_SUPPORT */
-                if (checkBudget()) {
-                    commitTime();
-                }
+                /* This could potentially mutate state but if it returns
+                 * true no state was modified, thus removing it should
+                 * be the same. */
+                assert(checkBudget());
+                commitTime();
 #ifdef ENABLE_SMP_SUPPORT
             } else {
                 /* if its a remote core, manually charge the budget */
