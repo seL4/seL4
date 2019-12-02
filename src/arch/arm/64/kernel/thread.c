@@ -19,6 +19,9 @@
 
 void Arch_switchToThread(tcb_t *tcb)
 {
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        vcpu_switch(tcb->tcbArch.tcbVCPU);
+    }
     setVMRoot(tcb);
 }
 

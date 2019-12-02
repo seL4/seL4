@@ -37,12 +37,13 @@ compile_assert(SysReplyRecv_Minus2, SysReplyRecv == -2)
 static inline void FORCE_INLINE
 switchToThread_fp(tcb_t *thread, vspace_root_t *vroot, pde_t stored_hw_asid)
 {
-    asid_t asid = (asid_t)(stored_hw_asid.words[0] & 0xffff);
+    asid_t asid;
 
-    armv_contextSwitch(vroot, asid);
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         vcpu_switch(thread->tcbArch.tcbVCPU);
     }
+    asid = (asid_t)(stored_hw_asid.words[0] & 0xffff);
+    armv_contextSwitch(vroot, asid);
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
     benchmark_utilisation_switch(NODE_STATE(ksCurThread), thread);
