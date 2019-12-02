@@ -31,7 +31,11 @@
 #include <sel4/shared_types.h>
 #include <sel4/mode/types.h>
 
-#define seL4_UntypedRetypeMaxObjects 256
+#ifdef CONFIG_RETYPE_FAN_OUT_LIMIT
+#  define seL4_UntypedRetypeMaxObjects CONFIG_RETYPE_FAN_OUT_LIMIT
+#else
+#  define seL4_UntypedRetypeMaxObjects 256
+#endif
 
 typedef seL4_CPtr seL4_CNode;
 typedef seL4_CPtr seL4_IRQHandler;
