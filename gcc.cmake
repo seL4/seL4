@@ -116,14 +116,14 @@ mark_as_advanced(CCACHE)
 # We upgrade this to -fdiagnostics-color=always if FORCE_COLORED_OUTPUT is set
 # We default FORCE_COLORED_OUTPUT=ON if GCC_COLORS is set in the environment
 # otherwise FORCE_COLORED_OUTPUT is left off.
-if ($ENV{GCC_COLORS})
+if($ENV{GCC_COLORS})
     set(coloured_output ON)
 else()
     set(coloured_output OFF)
 endif()
 option(FORCE_COLORED_OUTPUT "Always produce ANSI-colored output." ${coloured_output})
 mark_as_advanced(FORCE_COLORED_OUTPUT)
-if (${FORCE_COLORED_OUTPUT})
+if(${FORCE_COLORED_OUTPUT})
     include_guard(GLOBAL)
     add_compile_options(-fdiagnostics-color=always)
-endif ()
+endif()
