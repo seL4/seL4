@@ -108,8 +108,7 @@ static exception_t decodeSchedContext_Bind(sched_context_t *sc, extra_caps_t ext
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        if (isBlocked(TCB_PTR(cap_thread_cap_get_capTCBPtr(cap))) && (!sc_active(sc) || !refill_sufficient(sc, 0)
-                                                                      || !refill_ready(sc))) {
+        if (isBlocked(TCB_PTR(cap_thread_cap_get_capTCBPtr(cap))) && !sc_released(sc)) {
             userError("SchedContext_Bind: tcb blocked and scheduling context not schedulable.");
             current_syscall_error.type = seL4_IllegalOperation;
             return EXCEPTION_SYSCALL_ERROR;

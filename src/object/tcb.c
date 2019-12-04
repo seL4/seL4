@@ -1343,7 +1343,7 @@ exception_t decodeSetSchedParams(cap_t cap, word_t length, extra_caps_t excaps, 
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (isBlocked(tcb) && (!sc_active(sc) || !refill_sufficient(sc, 0) || !refill_ready(sc))) {
+    if (isBlocked(tcb) && !sc_released(sc)) {
         userError("TCB Configure: tcb blocked and scheduling context not schedulable.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
