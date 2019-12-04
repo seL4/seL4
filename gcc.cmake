@@ -26,10 +26,31 @@ set(sel4_arch @KernelSel4Arch@)
 set(arch @KernelArch@)
 set(mode @KernelWordSize@)
 
+# This function hunts for an extant `gcc` with one of the candidate prefixes
+# specified in `ARGN`, allowing us to try different target triple prefixes for
+# cross-compilers built in various ways.
+function(FindPrefixedGCC out_var)
+    set("${out_var}" "PrefixedGCC-NOTFOUND")
+    foreach(prefix ${ARGN})
+        set("test_var" "_GCC_${prefix}")
+        find_program("${test_var}" "${prefix}gcc")
+        if(${test_var})
+            message(STATUS "Found GCC with prefix ${prefix}")
+            set("${out_var}" "${prefix}")
+            break()
+        endif()
+    endforeach()
+    if(${out_var})
+        set("${out_var}" "${${out_var}}" PARENT_SCOPE)
+    else()
+        message(FATAL_ERROR "Unable to find valid cross-compiling GCC")
+    endif()
+endfunction(FindPrefixedGCC)
+
 if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
     if(("${arch}" STREQUAL "arm") OR ("${arch}" STREQUAL "x86") OR ("${arch}" STREQUAL "riscv"))
         if(${sel4_arch} STREQUAL "aarch32" OR ${sel4_arch} STREQUAL "arm_hyp")
-            set(CROSS_COMPILER_PREFIX "arm-linux-gnueabi-" CACHE INTERNAL "")
+            FindPrefixedGCC(CROSS_COMPILER_PREFIX "arm-linux-gnueabi-" "arm-linux-gnu-")
         elseif(${sel4_arch} STREQUAL "aarch64")
             set(CROSS_COMPILER_PREFIX "aarch64-linux-gnu-" CACHE INTERNAL "")
         elseif(${arch} STREQUAL "riscv")
@@ -40,7 +61,7 @@ if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
         # If initialised with -DCMAKE_TOOLCHAIN_FILE="$SCRIPT_PATH/gcc.cmake" this script
         # understood the following arguments: ARM, AARCH32, AARCH32HF, AARCH64, RISCV32, RISCV64, APPLE
         if(AARCH32 OR ARM)
-            set(CROSS_COMPILER_PREFIX "arm-linux-gnueabi-" CACHE INTERNAL "")
+            FindPrefixedGCC(CROSS_COMPILER_PREFIX "arm-linux-gnueabi-" "arm-linux-gnu-")
             if(ARM)
                 message("ARM flag is deprecated, please use AARCH32")
             endif()
@@ -51,7 +72,11 @@ if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
         endif()
     endif()
     if(AARCH32HF)
-        set(CROSS_COMPILER_PREFIX "arm-linux-gnueabihf-" CACHE INTERNAL "")
+        FindPrefixedGCC(
+            CROSS_COMPILER_PREFIX
+            "arm-linux-gnueabihf-"
+            "arm-linux-gnu-" # Later checks should confirm this has `hardfp`
+        )
     endif()
 
     if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
