@@ -349,7 +349,7 @@ BOOT_CODE static void smmu_config_prob(void) {
 	smmu_dev_knowledge.ipa_bits = smmu_obs_size_to_bits(reg & IDR2_IAS); 
 
 
-	printf("smmu upper stream address bits  %d,  physical address bits %d, IPA bits  %d \n", 
+	printf("smmu upper stream (vritual) address bits  %d,  physical address bits %d, IPA bits  %d \n", 
 		smmu_dev_knowledge.va_bits, smmu_dev_knowledge.pa_bits, smmu_dev_knowledge.ipa_bits); 
 
 }
@@ -491,10 +491,33 @@ BOOT_CODE void plat_smmu_init(void) {
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 static void smmu_config_stage2 (struct smmu_table_config *cfg, 
-	bool_t coherence, uint32_t pa_bits, 
-	vspace_root_t *vspace, asid_t asid) {
+	vspace_root_t *vspace) {
 
+	uint32_t reg = 0; 
 
+	/*SMMU_CBn_TCR*/
+	reg |= CBn_TCR_SH0_SET(CBn_TCR_SH_INNER); 
+	reg |= CBn_TCR_ORGN0_SET(CBn_TCR_GN_WB_WA_CACHE); 
+	reg |= CBn_TCR_IRGN0_SET(CBn_TCR_GN_WB_WA_CACHE); 
+	reg |= CBn_TCR_TG0_SET(CBn_TCR_TG_4K); 
+
+	/*setting according to the  vcpu_init_vtcr in vcpu.h*/
+#ifdef CONFIG_ARM_PA_SIZE_BITS_40    
+	reg |= CBn_TCR_T0SZ_SET(24);                                                                                           
+	reg |= CBn_TCR_PASize_SET(CBn_TCR2_PASize_40);        
+	reg |= CBn_TCR_SL0_SET(CBn_TCR_SL0_4KB_L1);                                                                                               
+#else 
+	reg |= CBn_TCR_T0SZ_SET(20);     	
+	reg |= CBn_TCR_PASize_SET(CBn_TCR2_PASize_44);     
+	reg |= CBn_TCR_SL0_SET(CBn_TCR_SL0_4KB_L0);                                                                                                  
+#endif
+	/*reserved as 1*/
+	reg |= BIT(31);       
+
+	cfg->tcr[0] = reg; 
+
+	/*vttbr*/ 
+	cfg->ttbr[0] = ttbr_new(0, pptr_to_paddr(vspace)).words[0];                         
 
 } 
 
@@ -590,12 +613,8 @@ void smmu_cb_assgin_vspace(word_t cb, vspace_root_t *vspace, asid_t asid) {
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 
-
 	smmu_config_stage2(&smmu_stage_table_config, 
-		smmu_dev_knowledge.cotable_walk, 
-		smmu_dev_knowledge.pa_bits, 
-		vspace, 
-		asid); 
+		vspace); 
 
 #else 
 
@@ -650,16 +669,16 @@ void smmu_cb_assgin_vspace(word_t cb, vspace_root_t *vspace, asid_t asid) {
 	smmu_write_reg32(SMMU_GR1_PPTR, SMMU_CBARn(cb), reg); 
 	printf("GR1 SMMU_CBARn 0x%x\n", reg);
 	
-	/*TCR2*/
-	smmu_write_reg32(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_TCR2, smmu_stage_table_config.tcr[1]); 
-
-	printf("SMMU_CBn_TCR2 0x%x\n", smmu_stage_table_config.tcr[1]);
 	/*TCR*/
 	smmu_write_reg32(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_TCR, smmu_stage_table_config.tcr[0]); 
 
 	printf("SMMU_CBn_TCR 0x%x\n", smmu_stage_table_config.tcr[0]);
 
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
+		/*TCR2*/
+	smmu_write_reg32(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_TCR2, smmu_stage_table_config.tcr[1]); 
+
+	printf("SMMU_CBn_TCR2 0x%x\n", smmu_stage_table_config.tcr[1]);
 	/*stage 1 requires ttbr 1 and ttbr 0 
 	stage 2 only require ttbr 0*/
 	smmu_write_reg64(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_TTBR1, smmu_stage_table_config.ttbr[1]); 

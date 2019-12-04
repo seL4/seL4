@@ -348,7 +348,7 @@
 #define CBA2Rn_VMID_SET(v)                 (((v) & 0xffff) << 16)
 #define CBA2Rn_VA64_SET                    1
 
-/*SMMU_CBn_TCR when SMMU_CBn_CBA2R.VA64 is 1*/
+/*SMMU_CBn_TCR stage1/2 when SMMU_CBn_CBA2R.VA64 is 1*/
 #define CBn_TCR_TG1_SET(v)                 ((v) << 30) 
 #define CBn_TCR_SH1_SET(v)                 ((v) << 28) 
 #define CBn_TCR_ORGN1_SET(v)               ((v) << 26) 
@@ -376,6 +376,13 @@
 #define CBn_TCR_GN_WT_CACHE                2
 #define CBn_TCR_GN_WB_NWA_CACHE            3
 
+/*SMMU_CBn_TCR stage 2 when SMMU_CBn_CBA2R.VA64 is 1*/
+#define CBn_TCR_PASize_SET(v)               ((v) << 16) 
+#define CBn_TCR_SL0_SET(v)                  ((v) << 6) 
+
+#define CBn_TCR_SL0_4KB_L2                  0 
+#define CBn_TCR_SL0_4KB_L1                  1
+#define CBn_TCR_SL0_4KB_L0                  2 
 
 /*SMMU_CBn_TCR2*/ 
 #define CBn_TCR2_SEP_SET(v)                 ((v) << 15) 
@@ -391,6 +398,7 @@
 #define CBn_TCR2_PASize_42                   3 
 #define CBn_TCR2_PASize_44                   4 
 #define CBn_TCR2_PASize_48                   5 
+
 
 
 /*SMMU_CBn_TTBRm*/
