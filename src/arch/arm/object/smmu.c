@@ -140,6 +140,12 @@ exception_t decodeARMCBControlInvocation(word_t label, unsigned int length, cptr
 	lookupSlot_ret_t lu_ret;
 	exception_t status;
 
+	if (label == ARMCBTLBInvalidateAll) { 
+		setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+		smmu_tlb_invalidate_all();
+		return EXCEPTION_NONE;
+	}
+
 	if (label != ARMCBIssueCBManager) {
 		userError("ARMCBControl: Illegal operation.");
 		current_syscall_error.type = seL4_IllegalOperation;
@@ -198,6 +204,18 @@ exception_t decodeARMCBInvocation(word_t label, unsigned int length, cptr_t cptr
 	exception_t status;
 	word_t cb; 
 
+	if (label == ARMCBTLBInvalidate) {
+		if (unlikely(!cap_cb_cap_get_capCBIsMapped(cap))) {
+			userError("ARMCBTLBInvalidate: the CB does not have a vspace root.");
+			current_syscall_error.type = seL4_IllegalOperation;
+			return EXCEPTION_SYSCALL_ERROR;
+		}
+		setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+		cb = cap_cb_cap_get_capCB(cap);
+		cbSlot = smmuStateCBNode + cb;
+		smmu_tlb_invalidate_cb(cb, cap_vtable_root_get_mappedASID(cbSlot->cap));
+		return EXCEPTION_NONE;
+	}
 	if (unlikely(label != ARMCBAssignVspace)) {
 		userError("ARMCBAssignVspace: Illegal operation.");
 		current_syscall_error.type = seL4_IllegalOperation;

@@ -493,6 +493,7 @@ void smmu_cb_assign_vspace(word_t cb, vspace_root_t *vspace, asid_t asid) {
 	smmu_write_reg64(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_TTBR1, smmu_stage_table_config.ttbr[1]);
 #endif /*!CONFIG_ARM_HYPERVISOR_SUPPORT*/
 
+	/*ttbr0 (user space), for both stage 1 and stage 2*/
 	smmu_write_reg64(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_TTBR0, smmu_stage_table_config.ttbr[0]);
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
 	/*MAIRs is required by stage 1 only*/
@@ -518,4 +519,32 @@ void smmu_sid_bind_cb(word_t sid, word_t cb) {
 		reg = SMR_VALID_SET(SMR_VALID_EN) | SMR_ID_SET(sid);
 		smmu_write_reg32(SMMU_GR0_PPTR, SMMU_SMRn(sid), reg);
 	}
+}
+
+void smmu_tlb_invalidate_all(void) {
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+	/*on hyp entries*/
+	smmu_write_reg32(SMMU_GR0_PPTR, SMMU_TLBIALLH, SMMU_TLB_INVALL_MASK);
+#else
+	/*on non-secure non-hyp entries*/
+	smmu_write_reg32(SMMU_GR0_PPTR, SMMU_TLBIALLNSNH, SMMU_TLB_INVALL_MASK);
+#endif
+	/*syn above TLB operations*/
+	smmu_tlb_sync(SMMU_GR0_PPTR, SMMU_sTLBGSYNC, SMMU_sTLBGSTATUS);
+}
+
+void smmu_tlb_invalidate_cb(int cb, asid_t asid) {
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+	/*stage 2*/
+	/* SMMU uses a private VMID space. Each context bank assigns its VMID with its
+	 * context bnak number.*/
+	uint32_t reg = TLBIVMID_SET(cb);
+	smmu_write_reg32(SMMU_GR0_PPTR, SMMU_TLBIVMID, reg);
+	smmu_tlb_sync(SMMU_GR0_PPTR, SMMU_sTLBGSYNC, SMMU_sTLBGSTATUS);
+#else
+	/*stage 1*/
+	uint32_t reg = CBn_TLBIASID_SET(asid);
+	smmu_write_reg32(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_TLBIASID, reg);
+	smmu_tlb_sync(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_TLBSYNC, SMMU_CBn_TLBSTATUS);
+#endif
 }
