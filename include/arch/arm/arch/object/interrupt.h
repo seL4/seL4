@@ -11,6 +11,7 @@
 #ifndef __ARCH_OBJECT_INTERRUPT_H
 #define __ARCH_OBJECT_INTERRUPT_H
 
+#include <config.h>
 #include <types.h>
 #include <api/failures.h>
 #include <object/structures.h>

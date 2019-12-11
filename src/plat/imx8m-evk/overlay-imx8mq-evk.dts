@@ -28,4 +28,9 @@
 		status = "disabled";
 	};
 
+    guestvm@b0000000 {
+        reg = <0x0 0xb0000000 0x0 0x8000000>;
+        status = "okay";
+    };
+
 };
