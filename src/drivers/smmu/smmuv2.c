@@ -675,7 +675,7 @@ void smmu_cb_assgin_vspace(word_t cb, vspace_root_t *vspace, asid_t asid) {
 	printf("SMMU_CBn_TCR 0x%x\n", smmu_stage_table_config.tcr[0]);
 
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
-		/*TCR2*/
+		/*TCR2 is used for stage 1 only*/
 	smmu_write_reg32(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_TCR2, smmu_stage_table_config.tcr[1]); 
 
 	printf("SMMU_CBn_TCR2 0x%x\n", smmu_stage_table_config.tcr[1]);
@@ -684,12 +684,12 @@ void smmu_cb_assgin_vspace(word_t cb, vspace_root_t *vspace, asid_t asid) {
 	smmu_write_reg64(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_TTBR1, smmu_stage_table_config.ttbr[1]); 
 #endif /*!CONFIG_ARM_HYPERVISOR_SUPPORT*/
 
-	/*ttbr0 (user space)*/ 
+	/*ttbr0 (user space), for both stage 1 and stage 2*/ 
 	smmu_write_reg64(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_TTBR0, smmu_stage_table_config.ttbr[0]); 
 
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
 
-	/*MAIRs stage 1 only*/
+	/*MAIRs is used for stage 1 only*/
 	smmu_write_reg32(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_MAIR0, smmu_stage_table_config.mair[0]); 
 
 	smmu_write_reg32(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_MAIR1, smmu_stage_table_config.mair[1]);
@@ -731,3 +731,35 @@ void smmu_sid_bind_cb(word_t sid, word_t cb) {
 	}		
 } 
 
+void smmu_tlb_invalidate_all(void) {
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+	/*for hyp entries*/
+	smmu_write_reg32(SMMU_GR0_PPTR, SMMU_TLBIALLH, SMMU_TLB_INVALL_MASK); 
+#else 
+	/*for non-secure non-hyp entries*/
+	smmu_write_reg32(SMMU_GR0_PPTR, SMMU_TLBIALLNSNH, SMMU_TLB_INVALL_MASK); 
+#endif 
+		/*syn above issued TLB operations*/
+	smmu_tlb_sync(SMMU_GR0_PPTR, SMMU_sTLBGSYNC, SMMU_sTLBGSTATUS); 
+}
+
+void smmu_tlb_invalidate_cb(int cb, asid_t asid) { 
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+	/*stage 2*/
+	/*vmid is currently a private space, equal with cb*/
+	uint32_t reg = TLBIVMID_SET(cb); 
+
+	smmu_write_reg32(SMMU_GR0_PPTR, SMMU_TLBIVMID, reg);
+	printf("SMMU_TLBIVMID 0x%x\n", reg);	
+	smmu_tlb_sync(SMMU_GR0_PPTR, SMMU_sTLBGSYNC, SMMU_sTLBGSTATUS); 
+#else 	
+	/*stage 1*/
+	uint32_t reg = CBn_TLBIASID_SET(asid); 
+
+	smmu_write_reg32(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_TLBIASID, reg);
+	printf("SMMU_CBn_TLBIASID 0x%x\n", reg);		
+	smmu_tlb_sync(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_TLBSYNC, SMMU_CBn_TLBSTATUS); 
+#endif
+}

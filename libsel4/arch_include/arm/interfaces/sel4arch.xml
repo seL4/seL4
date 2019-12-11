@@ -341,6 +341,12 @@
             <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
         </method>
+        <method id="ARMCBTLBInvalidateAll" name="TLBInvalidateAll" manual_name="TLBInvalidateAll"
+           manual_label="cb_controltlbinvalidate">
+            <brief>
+                Invalidate all TLB entries.
+            </brief>
+        </method>
     </interface>
     <interface name="seL4_ARM_CB" manual_name="CB" cap_description="A CB capability. This gives you the authority to make this call.">
        <method id="ARMCBAssignVspace" name="AssignVspace" manual_name="AssignVspace"
@@ -350,6 +356,12 @@
             </brief>
            <param dir="in" name="vspace" type="seL4_CPtr"
             description="The VSpace that is being assigned to a context bank. Must already has an assigned ASID."/>
+        </method>
+        <method id="ARMCBTLBInvalidate" name="TLBInvalidate" manual_name="TLBInvalidate"
+           manual_label="cb_tlbinvalidate">
+            <brief>
+                Invalidating TLB entries used by the current ASID in this context bank.
+            </brief>
         </method>
     </interface>
 </api>

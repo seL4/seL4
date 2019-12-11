@@ -435,9 +435,16 @@ this is the same as the MAIR in core*/
 #define CBn_SCTLR_TRE                          (1 << 1)
 #define CBn_SCTLR_M                            1
 
+/*SMMU_CBn_TLBIASID*/ 
+#define CBn_TLBIASID_SET(v)                    ((v) & 0xffff)
+
+/*SMMU_TLBIVMID*/ 
+#define TLBIVMID_SET(v)                        ((v) & 0xffff)
 
 void smmu_cb_assgin_vspace(word_t cb, vspace_root_t *vspace, asid_t asid); 
 void smmu_sid_bind_cb(word_t sid, word_t cb);
 void plat_smmu_init(void); 
+void smmu_tlb_invalidate_all(void); 
+void smmu_tlb_invalidate_cb(int cb, asid_t asid); 
 
 #endif  /*__DRIVER_SMMUV2_H*/
