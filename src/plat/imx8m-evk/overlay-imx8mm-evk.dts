@@ -12,6 +12,10 @@
 
 / {
     chosen {
+        seL4,elfloader-devices =
+            "serial1",
+            &{/psci};
+
         seL4,kernel-devices =
             "serial1",
             &{/interrupt-controller@38800000},

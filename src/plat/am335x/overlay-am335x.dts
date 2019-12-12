@@ -12,6 +12,8 @@
 
 / {
 	chosen {
+		seL4,elfloader-devices =
+		    "serial0";
 		seL4,kernel-devices =
 		    "serial0",
 		    &{/ocp/interrupt-controller@48200000},

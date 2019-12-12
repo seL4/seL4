@@ -18,9 +18,10 @@ import logging
 import pyfdt.pyfdt
 
 from jinja2 import Environment, BaseLoader
+from typing import List
 
-from hardware import config, fdt
-from hardware.utils import memory, rule
+from hardware import config, device, fdt
+from hardware.utils import cpu, memory, rule
 
 
 HEADER_TEMPLATE = '''/*
@@ -40,6 +41,11 @@ HEADER_TEMPLATE = '''/*
 
 #pragma once
 
+#include <types.h>
+{% if uses_psci %}
+#include <psci.h>
+{% endif %}
+
 #define MAX_NUM_REGIONS {{ max_reg }}
 
 struct elfloader_driver;
@@ -48,6 +54,13 @@ struct elfloader_device {
     const char *compat;
     volatile void *region_bases[MAX_NUM_REGIONS];
     struct elfloader_driver *drv;
+};
+
+struct elfloader_cpu {
+    const char *compat;
+    const char *enable_method;
+    word_t cpu_id;
+    word_t extra_data;
 };
 
 #ifdef DRIVER_COMMON
@@ -77,33 +90,73 @@ struct elfloader_device elfloader_devices[] = {
     },
 {% endif %}
 };
+
+struct elfloader_cpu elfloader_cpus[] = {
+    {% for cpu in cpus %}
+    {
+        /* {{ cpu['path'] }} */
+        .compat = "{{ cpu['compat'] }}",
+        .enable_method = {{ '"{}"'.format(cpu['enable_method']) if cpu['enable_method'] else 'NULL' }},
+        .cpu_id = {{ "0x{:x}".format(cpu['cpuid']) }},
+        .extra_data = {{ cpu['extra'] }}
+    },
+    {% endfor %}
+    { .compat = NULL /* sentinel */ },
+};
 #else
-struct elfloader_device *elfloader_devices;
+extern struct elfloader_device elfloader_devices[];
+extern struct elfloader_cpu elfloader_cpus[];
 #endif
 '''
 
 
-def get_elfloader_devices(tree: fdt.FdtParser, rules: rule.HardwareYaml):
-    devices = []
+def get_elfloader_cpus(tree: fdt.FdtParser, devices: List[device.WrappedNode]) -> List[dict]:
+    cpus = cpu.get_cpus(tree)
+    PSCI_COMPAT = ['arm,psci-0.2', 'arm,psci-1.0']
+    psci_node = [n for n in devices if n.has_prop('compatible')
+                 and n.get_prop('compatible').strings[0] in PSCI_COMPAT]
 
-    # serial device
-    chosen = tree.get_path('/chosen')
-    if not chosen.has_prop('stdout-path') or type(chosen.get_prop('stdout-path')) != pyfdt.pyfdt.FdtPropertyStrings:
-        logging.info('DT has no stdout-path, elfloader may not produce output!')
+    if len(psci_node) > 0:
+        psci_node = psci_node[0]
     else:
-        val = chosen.get_prop('stdout-path').strings[0]
-        if val[0] == '/':
-            path = val
-        else:
-            path = tree.lookup_alias(val)
-        devices.append(tree.get_path(path))
-    return devices
+        psci_node = None
+
+    cpu_info = []
+    for i, cpu_node in enumerate(sorted(cpus, key=lambda a: a.path)):
+        enable_method = None
+        if cpu_node.has_prop('enable-method'):
+            enable_method = cpu_node.get_prop('enable-method').strings[0]
+
+        cpuid = i
+        if cpu_node.has_prop('reg'):
+            cpuid = cpu_node.parse_address(list(cpu_node.get_prop('reg').words))
+
+        extra_data = 0
+        if enable_method == 'psci' and psci_node:
+            extra_data = 'PSCI_METHOD_' + psci_node.get_prop('method').strings[0].upper()
+        elif enable_method == 'spin-table':
+            extra_data = '0x{:x}'.format(
+                device.Utils.make_number(2, list(cpu_node.get_prop('cpu-release-addr').words)))
+
+        obj = {
+            'compat': cpu_node.get_prop('compatible').strings[0],
+            'enable_method': enable_method,
+            'cpuid': cpuid,
+            'path': cpu_node.path,
+            'extra': extra_data,
+        }
+        cpu_info.append(obj)
+
+    # guarantee that cpus in the same cluster will be consecutive
+    return sorted(cpu_info, key=lambda a: a['cpuid'])
 
 
 def run(tree: fdt.FdtParser, hardware: rule.HardwareYaml, config: config.Config, args: argparse.Namespace):
-    devices = get_elfloader_devices(tree, hardware)
-    device_info = []
+    devices = tree.get_elfloader_devices()
+    cpu_info = get_elfloader_cpus(tree, devices)
+
     max_reg = 1
+    device_info = []
     for dev in devices:
         obj = {
             'compat': hardware.get_matched_compatible(dev),
@@ -120,8 +173,10 @@ def run(tree: fdt.FdtParser, hardware: rule.HardwareYaml, config: config.Config,
                            lstrip_blocks=True).from_string(HEADER_TEMPLATE)
 
     template_args = dict(builtins.__dict__, **{
+        'cpus': cpu_info,
         'devices': device_info,
-        'max_reg': max_reg
+        'max_reg': max_reg,
+        'uses_psci': any([c['enable_method'] == 'psci' for c in cpu_info])
     })
 
     data = template.render(template_args)

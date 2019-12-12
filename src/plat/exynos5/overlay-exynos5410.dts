@@ -14,6 +14,8 @@
 	/* pick the right boot CPU */
 	chosen {
 		seL4,boot-cpu = <&{/cpus/cpu@0}>;
+		seL4,elfloader-devices =
+		    "serial2";
 		seL4,kernel-devices =
 		    "serial2",
 		    &{/soc/interrupt-controller@10481000},

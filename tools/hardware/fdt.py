@@ -79,13 +79,19 @@ class FdtParser:
         return prop.strings[0]
 
     def get_kernel_devices(self) -> List[WrappedNode]:
+        return self.get_devices_list('seL4,kernel-devices')
+
+    def get_elfloader_devices(self) -> List[WrappedNode]:
+        return self.get_devices_list('seL4,elfloader-devices')
+
+    def get_devices_list(self, prop) -> List[WrappedNode]:
         ''' Returns a list of devices that are used by the kernel '''
         chosen = self.get_path('/chosen')
-        if not chosen.has_prop('seL4,kernel-devices'):
+        if not chosen.has_prop(prop):
             return []
 
         ret = []
-        paths = chosen.get_prop('seL4,kernel-devices').strings
+        paths = chosen.get_prop(prop).strings
 
         for path in paths:
             if path[0] != '/':
@@ -104,4 +110,4 @@ class FdtParser:
 
     def visit(self, visitor: Any):
         ''' Walk the tree, calling the given visitor function on each node '''
-        self.wrapped_root.visit(visitor)
+        return self.wrapped_root.visit(visitor)

@@ -12,6 +12,9 @@
 
 / {
 	chosen {
+		seL4,elfloader-devices =
+		    "serial1";
+
 		seL4,kernel-devices =
 		    "serial1",
 		    &{/soc/interrupt-controller@10490000},

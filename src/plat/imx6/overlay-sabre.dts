@@ -12,6 +12,10 @@
 
 / {
 	chosen {
+               seL4,elfloader-devices =
+                   "serial1",
+                   &{/soc/aips-bus@2000000/src@20d8000};
+
 		seL4,kernel-devices =
 		    "serial1",
 		    &{/soc/interrupt-controller@a01000},

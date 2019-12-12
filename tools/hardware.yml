@@ -238,3 +238,12 @@ devices:
     regions:
       - index: 0
         kernel: PLIC_PPTR
+
+  # elfloader rules
+  - compatible:
+      - arm,psci-0.2
+      - arm,psci-1.0
+  - compatible:
+      - fsl,imx6q-src
+  - compatible:
+      - xlnx,zynq-reset

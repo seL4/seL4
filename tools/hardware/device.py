@@ -113,6 +113,11 @@ class WrappedNode:
             reg.append(Region(self.parent._translate_child_address(r[0]), r[1], self))
         return reg
 
+    def parse_address(self, array) -> int:
+        ''' parse a single address from the array. will pop values from the array '''
+        size = self.parent.get_addr_cells()
+        return Utils.make_number(size, array)
+
     def get_interrupts(self, tree: 'FdtParser') -> List[int]:
         irqs = []
         if 'interrupts-extended' in self.props:
@@ -135,9 +140,12 @@ class WrappedNode:
 
     def visit(self, visitor: Any):
         ''' Visit this node and all its children '''
-        visitor(self)
+        ret = [visitor(self)]
+        if ret[0] is None:
+            ret = []
         for child in self.children.values():
-            child.visit(visitor)
+            ret += child.visit(visitor)
+        return ret
 
     def __iter__(self) -> Generator['WrappedNode', None, None]:
         ''' Iterate over all immediate children of this node '''
