@@ -18,14 +18,17 @@ set(CMAKE_SYSTEM_NAME Generic)
 set(CMAKE_SYSTEM_PROCESSOR seL4CPU)
 
 set(LLVM_TOOLCHAIN ON)
+set(TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/llvm.cmake")
 
 set(CMAKE_ASM_COMPILER "clang")
 set(CMAKE_ASM_COMPILER_ID Clang)
 set(CMAKE_ASM_COMPILER_TARGET ${TRIPLE})
 
 string(APPEND asm_common_flags " -Wno-unused-command-line-argument")
+string(APPEND asm_common_flags " -target ${TRIPLE}")
 
 set(CMAKE_C_COMPILER "clang")
+set(C_COMPILER "clang")
 set(CMAKE_C_COMPILER_ID Clang)
 set(CMAKE_C_COMPILER_TARGET ${TRIPLE})
 
@@ -35,6 +38,7 @@ set(CMAKE_CXX_COMPILER_TARGET ${TRIPLE})
 
 string(APPEND c_common_flags " -Qunused-arguments")
 string(APPEND c_common_flags " -Wno-constant-logical-operand")
+string(APPEND c_common_flags " -target ${TRIPLE}")
 
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
