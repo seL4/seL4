@@ -102,6 +102,12 @@ static exception_t decodeSchedContext_Bind(sched_context_t *sc, extra_caps_t ext
         return EXCEPTION_SYSCALL_ERROR;
     }
 
+    if (sc->scRefillMax == 0 || !refill_ready(sc) || !refill_sufficient(sc, 0)) {
+        userError("SchedContext_Bind: sched context requires re-configuration.");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
     switch (cap_get_capType(cap)) {
     case cap_thread_cap:
         if (TCB_PTR(cap_thread_cap_get_capTCBPtr(cap))->tcbSchedContext != NULL) {

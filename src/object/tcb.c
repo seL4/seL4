@@ -1337,6 +1337,11 @@ exception_t decodeSetSchedParams(cap_t cap, word_t length, extra_caps_t excaps, 
             current_syscall_error.type = seL4_IllegalOperation;
             return EXCEPTION_SYSCALL_ERROR;
         }
+        if (sc->scRefillMax == 0 || !refill_ready(sc) || !refill_sufficient(sc, 0)) {
+            userError("TCB Configure: sched context requires re-configuration.");
+            current_syscall_error.type = seL4_IllegalOperation;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
         break;
     case cap_null_cap:
         if (tcb == NODE_STATE(ksCurThread)) {
