@@ -97,6 +97,16 @@ static inline bool_t isCurDomainExpired(void)
            ksDomainTime < (NODE_STATE(ksConsumed) + MIN_BUDGET);
 }
 
+static inline bool_t threadFaulted(tcb_t *thread)
+{
+    return seL4_Fault_get_seL4_FaultType(thread->tcbFault) != seL4_Fault_NullFault;
+}
+
+static inline bool_t threadTimeoutFaulted(tcb_t *thread)
+{
+    return seL4_Fault_get_seL4_FaultType(thread->tcbFault) == seL4_Fault_Timeout;
+}
+
 static inline void commitTime(void)
 {
     if (NODE_STATE(ksCurSC)->scRefillMax) {

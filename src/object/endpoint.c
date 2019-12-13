@@ -90,8 +90,7 @@ void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
             reply_unlink(reply);
         }
 
-        if (do_call ||
-            seL4_Fault_ptr_get_seL4_FaultType(&thread->tcbFault) != seL4_Fault_NullFault) {
+        if (do_call || threadFaulted(thread)) {
             if (reply != NULL && (canGrant || canGrantReply)) {
                 reply_push(thread, dest, reply, canDonate);
             } else {
@@ -225,8 +224,7 @@ void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
             do_call = thread_state_ptr_get_blockingIPCIsCall(&sender->tcbState);
 
 #ifdef CONFIG_KERNEL_MCS
-            if (do_call ||
-                seL4_Fault_get_seL4_FaultType(sender->tcbFault) != seL4_Fault_NullFault) {
+            if (do_call || threadFaulted(sender)) {
                 if ((canGrant || canGrantReply) && replyPtr != NULL) {
                     reply_push(sender, thread, replyPtr, sender->tcbSchedContext != NULL);
                 } else {
