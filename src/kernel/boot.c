@@ -306,11 +306,12 @@ BOOT_CODE word_t calculate_extra_bi_size_bits(word_t extra_size)
     }
 
     word_t clzl_ret = clzl(ROUND_UP(extra_size, seL4_PageBits));
+    word_t msb = seL4_WordBits - 1 - clzl_ret;
     /* If region is bigger than a page, make sure we overallocate rather than underallocate */
-    if (extra_size & ((1 << clzl_ret) - 1)) {
-        clzl_ret--;
+    if (extra_size > BIT(msb)) {
+        msb++;
     }
-    return seL4_WordBits - 1 - clzl_ret;
+    return msb;
 }
 
 BOOT_CODE void populate_bi_frame(node_id_t node_id, word_t num_nodes, vptr_t ipcbuf_vptr,
