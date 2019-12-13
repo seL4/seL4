@@ -11,9 +11,8 @@
  */
 #include <object/reply.h>
 
-void reply_push(tcb_t *tcb_caller, tcb_t *tcb_callee, reply_t *reply, bool_t canDonate)
+void reply_push(tcb_t *tcb_caller, tcb_t *tcb_callee, reply_t *reply, bool_t isTimeout)
 {
-    sched_context_t *sc_donated = tcb_caller->tcbSchedContext;
 
     assert(tcb_caller != NULL);
     assert(reply != NULL);
@@ -35,7 +34,11 @@ void reply_push(tcb_t *tcb_caller, tcb_t *tcb_callee, reply_t *reply, bool_t can
     thread_state_ptr_set_replyObject(&tcb_caller->tcbState, REPLY_REF(reply));
     setThreadState(tcb_caller, ThreadState_BlockedOnReply);
 
-    if (sc_donated != NULL && tcb_callee->tcbSchedContext == NULL && canDonate) {
+    if (tcb_caller->tcbSchedContext != NULL && tcb_callee->tcbSchedContext == NULL && !isTimeout) {
+        /* Donation occurs when the receiver has no SC, the sender has
+         * an SC, and the send is not the result of a timeout. */
+        sched_context_t *sc_donated = tcb_caller->tcbSchedContext;
+
         reply_t *old_caller = sc_donated->scReply;
 
         /* check stack integrity */

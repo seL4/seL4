@@ -92,11 +92,14 @@ void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
 
         if (do_call || threadFaulted(thread)) {
             if (reply != NULL && (canGrant || canGrantReply)) {
-                reply_push(thread, dest, reply, canDonate);
+                reply_push(thread, dest, reply, threadTimeoutFaulted(thread));
             } else {
                 setThreadState(thread, ThreadState_Inactive);
             }
-        } else if (canDonate && dest->tcbSchedContext == NULL) {
+        }
+
+        /* Try and donate if receiver still hase no scheduling context */
+        if (!threadTimeoutFaulted(thread) && thread->tcbSchedContext != NULL && dest->tcbSchedContext == NULL) {
             schedContext_donate(thread->tcbSchedContext, dest);
         }
 
@@ -226,14 +229,23 @@ void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
 #ifdef CONFIG_KERNEL_MCS
             if (do_call || threadFaulted(sender)) {
                 if ((canGrant || canGrantReply) && replyPtr != NULL) {
-                    reply_push(sender, thread, replyPtr, sender->tcbSchedContext != NULL);
+                    reply_push(sender, thread, replyPtr, threadTimeoutFaulted(thread));
                 } else {
                     setThreadState(sender, ThreadState_Inactive);
                 }
             } else {
                 setThreadState(sender, ThreadState_Running);
+            }
+
+            /* Try and donate if receiver still hase no scheduling context */
+            if (!threadTimeoutFaulted(sender) && sender->tcbSchedContext != NULL && thread->tcbSchedContext == NULL) {
+                schedContext_donate(sender->tcbSchedContext, thread);
+            }
+
+            if (isRunnable(sender)) {
                 possibleSwitchTo(sender);
                 assert(sender->tcbSchedContext == NULL || refill_sufficient(sender->tcbSchedContext, 0));
+                assert(sender->tcbSchedContext == NULL || refill_ready(sender->tcbSchedContext));
             }
 #else
             if (do_call) {

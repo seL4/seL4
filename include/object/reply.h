@@ -29,7 +29,7 @@ static inline void reply_unlink(reply_t *reply)
 }
 
 /* Push a reply object onto the call stack */
-void reply_push(tcb_t *tcb_caller, tcb_t *tcb_callee, reply_t *reply, bool_t canDonate);
+void reply_push(tcb_t *tcb_caller, tcb_t *tcb_callee, reply_t *reply, bool_t isTimeout);
 /* Pop the head reply from the call stack */
 void reply_pop(reply_t *reply);
 /* Remove a reply from the call stack - replyTCB must be in ThreadState_BlockedOnReply */
