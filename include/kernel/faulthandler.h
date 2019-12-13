@@ -21,7 +21,7 @@ static inline bool_t validTimeoutHandler(tcb_t *tptr)
 
 void handleTimeout(tcb_t *tptr);
 void handleNoFaultHandler(tcb_t *tptr);
-bool_t sendFaultIPC(tcb_t *tptr, cap_t handlerCap, bool_t can_donate);
+bool_t sendFaultIPC(tcb_t *tptr, cap_t handlerCap);
 #else
 exception_t sendFaultIPC(tcb_t *tptr);
 void handleDoubleFault(tcb_t *tptr, seL4_Fault_t ex1);

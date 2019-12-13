@@ -34,10 +34,7 @@ void createNewObjects(object_t t, cte_t *parent, slot_range_t slots,
 exception_t decodeInvocation(word_t invLabel, word_t length,
                              cptr_t capIndex, cte_t *slot, cap_t cap,
                              extra_caps_t excaps, bool_t block, bool_t call,
-                             bool_t canDonate, bool_t firstPhase, word_t *buffer);
-exception_t performInvocation_Endpoint(endpoint_t *ep, word_t badge,
-                                       bool_t canGrant, bool_t canGrantReply,
-                                       bool_t block, bool_t call, bool_t canDonate);
+                             bool_t firstPhase, word_t *buffer);
 exception_t performInvocation_Notification(notification_t *ntfn,
                                            word_t badge);
 exception_t performInvocation_Reply(tcb_t *thread, reply_t *reply, bool_t canGrant);
@@ -46,13 +43,13 @@ exception_t decodeInvocation(word_t invLabel, word_t length,
                              cptr_t capIndex, cte_t *slot, cap_t cap,
                              extra_caps_t excaps, bool_t block, bool_t call,
                              word_t *buffer);
-exception_t performInvocation_Endpoint(endpoint_t *ep, word_t badge,
-                                       bool_t canGrant, bool_t canGrantReply,
-                                       bool_t block, bool_t call);
 exception_t performInvocation_Notification(notification_t *ntfn,
                                            word_t badge);
 exception_t performInvocation_Reply(tcb_t *thread, cte_t *slot, bool_t canGrant);
 #endif
+exception_t performInvocation_Endpoint(endpoint_t *ep, word_t badge,
+                                       bool_t canGrant, bool_t canGrantReply,
+                                       bool_t block, bool_t call);
 word_t getObjectSize(word_t t, word_t userObjSize);
 
 static inline void postCapDeletion(cap_t cap)

@@ -18,8 +18,7 @@
 #ifdef CONFIG_KERNEL_MCS
 void handleFault(tcb_t *tptr)
 {
-    bool_t hasFaultHandler = sendFaultIPC(tptr, TCB_PTR_CTE_PTR(tptr, tcbFaultHandler)->cap,
-                                          tptr->tcbSchedContext != NULL);
+    bool_t hasFaultHandler = sendFaultIPC(tptr, TCB_PTR_CTE_PTR(tptr, tcbFaultHandler)->cap);
     if (!hasFaultHandler) {
         handleNoFaultHandler(tptr);
     }
@@ -28,10 +27,10 @@ void handleFault(tcb_t *tptr)
 void handleTimeout(tcb_t *tptr)
 {
     assert(validTimeoutHandler(tptr));
-    sendFaultIPC(tptr, TCB_PTR_CTE_PTR(tptr, tcbTimeoutHandler)->cap, false);
+    sendFaultIPC(tptr, TCB_PTR_CTE_PTR(tptr, tcbTimeoutHandler)->cap);
 }
 
-bool_t sendFaultIPC(tcb_t *tptr, cap_t handlerCap, bool_t can_donate)
+bool_t sendFaultIPC(tcb_t *tptr, cap_t handlerCap)
 {
     if (cap_get_capType(handlerCap) == cap_endpoint_cap) {
         assert(cap_endpoint_cap_get_capCanSend(handlerCap));
@@ -42,7 +41,7 @@ bool_t sendFaultIPC(tcb_t *tptr, cap_t handlerCap, bool_t can_donate)
                 cap_endpoint_cap_get_capEPBadge(handlerCap),
                 cap_endpoint_cap_get_capCanGrant(handlerCap),
                 cap_endpoint_cap_get_capCanGrantReply(handlerCap),
-                can_donate, tptr,
+                tptr,
                 EP_PTR(cap_endpoint_cap_get_capEPPtr(handlerCap)));
 
         return true;

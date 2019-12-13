@@ -24,16 +24,13 @@ static inline tcb_queue_t PURE ep_ptr_get_queue(endpoint_t *epptr)
     return queue;
 }
 
-#ifdef CONFIG_KERNEL_MCS
-void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
-             bool_t canGrant, bool_t canGrantReply, bool_t canDonate, tcb_t *thread,
-             endpoint_t *epptr);
-void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking, cap_t replyCPtr);
-void reorderEP(endpoint_t *epptr, tcb_t *thread);
-#else
 void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
              bool_t canGrant, bool_t canGrantReply, tcb_t *thread,
              endpoint_t *epptr);
+#ifdef CONFIG_KERNEL_MCS
+void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking, cap_t replyCPtr);
+void reorderEP(endpoint_t *epptr, tcb_t *thread);
+#else
 void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking);
 #endif
 void cancelIPC(tcb_t *tptr);
