@@ -396,7 +396,7 @@ BOOT_CODE cap_t create_it_asid_pool(cap_t root_cnode_cap)
 BOOT_CODE static bool_t configure_sched_context(tcb_t *tcb, sched_context_t *sc_pptr, ticks_t timeslice)
 {
     tcb->tcbSchedContext = sc_pptr;
-    refill_new(tcb->tcbSchedContext, MIN_REFILLS, timeslice, 0);
+    refill_new(tcb->tcbSchedContext, MIN_REFILLS, timeslice, 0, CURRENT_CPU_INDEX());
 
     tcb->tcbSchedContext->scTcb = tcb;
     return true;
