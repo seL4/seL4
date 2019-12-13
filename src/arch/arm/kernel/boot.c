@@ -341,7 +341,7 @@ static BOOT_CODE bool_t try_init_kernel(
 
     /* The region of the initial thread is the user image + ipcbuf and boot info */
     it_v_reg.start = ui_v_reg.start;
-    it_v_reg.end = extra_bi_frame_vptr + extra_bi_size;
+    it_v_reg.end = extra_bi_frame_vptr + BIT(extra_bi_size_bits);
 
     if (it_v_reg.end > kernelBase) {
         printf("Userland image virtual end address too high\n");

@@ -160,7 +160,7 @@ BOOT_CODE bool_t init_sys_state(
 
     /* The region of the initial thread is the user image + ipcbuf and boot info */
     it_v_reg.start = ui_v_reg.start;
-    it_v_reg.end = ROUND_UP(extra_bi_frame_vptr + extra_bi_size, PAGE_BITS);
+    it_v_reg.end = ROUND_UP(extra_bi_frame_vptr + BIT(extra_bi_size_bits), PAGE_BITS);
 #ifdef CONFIG_IOMMU
     /* calculate the number of io pts before initialising memory */
     if (!vtd_init_num_iopts(num_drhu)) {
