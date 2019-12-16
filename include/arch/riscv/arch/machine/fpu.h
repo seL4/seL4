@@ -10,15 +10,12 @@
 #include <arch/machine/registerset.h>
 #include <arch/smp/ipi_inline.h>
 
+static inline void set_fs_off(void)
+{
+    asm volatile("csrc sstatus, %0" :: "rK"(SSTATUS_FS));
+}
+
 #ifdef CONFIG_HAVE_FPU
-
-typedef struct fpu_status {
-    bool_t enabled;
-
-    PAD_TO_NEXT_CACHE_LN(sizeof(bool_t));
-} fpu_status_t;
-
-extern fpu_status_t fpu_status[CONFIG_MAX_NUM_NODES];
 
 #if defined(CONFIG_RISCV_EXT_D)
 
@@ -33,11 +30,6 @@ extern fpu_status_t fpu_status[CONFIG_MAX_NUM_NODES];
 #define FP_REG_TYPES "4"
 
 #endif
-
-static inline void set_fs_off(void)
-{
-    asm volatile("csrc sstatus, %0" :: "rK"(SSTATUS_FS));
-}
 
 static inline void set_fs_clean(void)
 {
@@ -154,20 +146,10 @@ static inline void loadFpuState(user_fpu_state_t *src)
     write_fcsr(src->fcsr);
 }
 
-static inline void enableFpu(void)
-{
-    fpu_status[SMP_TERNARY(getCurrentCPUIndex(), 0)].enabled = true;
-}
+static inline void Arch_enableFpu(void) { }
 
-static inline bool_t isFpuEnabled(void)
-{
-    return fpu_status[SMP_TERNARY(getCurrentCPUIndex(), 0)].enabled;
-}
+static inline void Arch_disableFpu(void) { }
 
-static inline void disableFpu(void)
-{
-    fpu_status[SMP_TERNARY(getCurrentCPUIndex(), 0)].enabled = false;
-}
 static inline void set_tcb_fs_state(tcb_t *tcb, bool_t enabled)
 {
     word_t sstatus = getRegister(tcb, SSTATUS);
@@ -178,6 +160,7 @@ static inline void set_tcb_fs_state(tcb_t *tcb, bool_t enabled)
     setRegister(tcb, SSTATUS, sstatus);
 }
 
-#endif
+#endif /* end of CONFIG_HAVE_FPU */
+
 
 #endif /* __ARCH_MACHINE_FPU_H */

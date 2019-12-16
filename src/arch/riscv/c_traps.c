@@ -36,7 +36,7 @@ void VISIBLE NORETURN restore_user_context(void)
 
 #ifdef CONFIG_HAVE_FPU
     lazyFPURestore(NODE_STATE(ksCurThread));
-    set_tcb_fs_state(NODE_STATE(ksCurThread), isFpuEnabled());
+    set_tcb_fs_state(NODE_STATE(ksCurThread), isFpuEnable());
 #endif
 
     asm volatile(
@@ -127,7 +127,7 @@ void VISIBLE NORETURN c_handle_exception(void)
         break;
     case RISCVInstructionIllegal:
 #ifdef CONFIG_HAVE_FPU
-        if (!isFpuEnabled()) {
+        if (!isFpuEnable()) {
             /* we assume the illegal instruction is caused by FPU first */
             handleFPUFault();
             setNextPC(NODE_STATE(ksCurThread), getRestartPC(NODE_STATE(ksCurThread)));
