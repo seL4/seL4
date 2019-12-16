@@ -112,6 +112,7 @@ extern char trap_entry[1];
 #ifdef CONFIG_HAVE_FPU
 BOOT_CODE static void init_fpu(void)
 {
+    set_fs_clean();
     write_fcsr(0);
     disableFpu();
 }
@@ -127,6 +128,10 @@ BOOT_CODE static void init_cpu(void)
 #ifndef CONFIG_KERNEL_MCS
     initTimer();
 #endif
+
+    /* disable FPU access */
+    set_fs_off();
+
 #ifdef CONFIG_HAVE_FPU
     init_fpu();
 #endif
