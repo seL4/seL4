@@ -206,6 +206,7 @@ devices:
     regions:
       - index: 0
         kernel: WDOG_PPTR
+        user: true
 
   # SiFive U54/U74 PLIC (HiFive, Polarfire)
   - compatible:
