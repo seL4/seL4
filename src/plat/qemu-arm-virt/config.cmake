@@ -80,6 +80,7 @@ if(KernelPlatformQEMUArmVirt)
     declare_default_headers(
         TIMER_FREQUENCY 1200000llu
         MAX_IRQ 159
+        NUM_PPI 32
         TIMER drivers/timer/arm_generic.h
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h
         CLK_MAGIC 458129845llu
