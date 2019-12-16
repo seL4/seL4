@@ -247,6 +247,7 @@ devices:
     regions:
       - index: 0
         kernel: WDOG_PPTR
+        user: true
 
   # RISC-V PLIC
   - compatible:
