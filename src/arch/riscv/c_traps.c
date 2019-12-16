@@ -13,7 +13,6 @@
 #include <api/syscall.h>
 #include <util.h>
 #include <arch/machine/hardware.h>
-#include <arch/machine/fpu.h>
 #include <machine/fpu.h>
 
 #include <benchmark/benchmark_track.h>

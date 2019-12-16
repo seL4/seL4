@@ -15,7 +15,6 @@
 #include <api/types.h>
 #include <smp/lock.h>
 #include <arch/machine/hardware.h>
-#include <arch/machine/fpu.h>
 #include <machine/fpu.h>
 
 void slowpath(syscall_t syscall)
