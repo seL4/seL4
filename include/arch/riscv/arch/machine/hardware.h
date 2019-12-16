@@ -14,6 +14,7 @@
 /* Privileged CSR definitions */
 #define SSTATUS_SPIE  0x00000020
 #define SSTATUS_SPP   0x00000100
+#define SSTATUS_FS    0x00006000
 
 #define SATP_MODE_OFF  0
 #define SATP_MODE_SV32 1

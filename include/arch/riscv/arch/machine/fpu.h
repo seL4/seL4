@@ -8,6 +8,7 @@
 
 #include <util.h>
 #include <arch/machine/registerset.h>
+#include <arch/machine/hardware.h>
 #include <arch/smp/ipi_inline.h>
 
 static inline void set_fs_off(void)
@@ -161,6 +162,3 @@ static inline void set_tcb_fs_state(tcb_t *tcb, bool_t enabled)
 }
 
 #endif /* end of CONFIG_HAVE_FPU */
-
-
-#endif /* __ARCH_MACHINE_FPU_H */
