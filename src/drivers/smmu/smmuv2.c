@@ -234,7 +234,7 @@ BOOT_CODE static void smmu_config_prob(void) {
 		smmu_dev_knowledge.stream_match = true; 
 
 	/*address translation operation*/
-	if (reg & IDR0_ATOSNS) 
+	if ((reg & IDR0_ATOSNS) == 0)  
 		smmu_dev_knowledge.trans_op = true; 
 	
 	printf("supporting address translation %s \n",  
