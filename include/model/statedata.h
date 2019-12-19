@@ -83,8 +83,6 @@ NODE_STATE_DECLARE(sched_context_t, *ksCurSC);
 NODE_STATE_DECLARE(user_fpu_state_t *, ksActiveFPUState);
 /* Number of times we have restored a user context with an active FPU without switching it */
 NODE_STATE_DECLARE(word_t, ksFPURestoresSinceSwitch);
-/* Whether the FPU is currently enabled or disabled */
-NODE_STATE_DECLARE(bool_t, ksFPUEnabled);
 #endif /* CONFIG_HAVE_FPU */
 #ifdef CONFIG_DEBUG_BUILD
 NODE_STATE_DECLARE(tcb_t *, ksDebugTCBs);

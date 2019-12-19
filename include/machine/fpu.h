@@ -31,30 +31,6 @@ void switchLocalFpuOwner(user_fpu_state_t *new_owner);
 /* Switch the current owner of the FPU state on the core specified by 'cpu'. */
 void switchFpuOwner(user_fpu_state_t *new_owner, word_t cpu);
 
-/* Check if FPU is enable */
-static inline bool_t isFpuEnable(void)
-{
-    return NODE_STATE(ksFPUEnabled);
-}
-
-/* Enable the FPU if not already enabled. */
-static inline void enableFpu(void)
-{
-    if (!isFpuEnable()) {
-        Arch_enableFpu();
-        NODE_STATE(ksFPUEnabled) = true;
-    }
-}
-
-/* Disable the FPU if not already disabled. */
-static inline void disableFpu(void)
-{
-    if (isFpuEnable()) {
-        Arch_disableFpu();
-        NODE_STATE(ksFPUEnabled) = false;
-    }
-}
-
 /* Returns whether or not the passed thread is using the current active fpu state */
 static inline bool_t nativeThreadUsingFPU(tcb_t *thread)
 {

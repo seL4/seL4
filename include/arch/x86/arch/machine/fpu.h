@@ -103,7 +103,7 @@ static inline void finit(void)
  * Enable the FPU to be used without faulting.
  * Required even if the kernel attempts to use the FPU.
  */
-static inline void Arch_enableFpu(void)
+static inline void enableFpu(void)
 {
     asm volatile("clts" :: "m"(control_reg_order));
 }
@@ -111,7 +111,7 @@ static inline void Arch_enableFpu(void)
 /*
  * Disable the FPU so that usage of it causes a fault
  */
-static inline void Arch_disableFpu(void)
+static inline void disableFpu(void)
 {
     write_cr0(read_cr0() | CR0_TASK_SWITCH);
 }
