@@ -198,8 +198,8 @@ static inline void loadFpuState(user_fpu_state_t *src)
     /* Load FPSCR. */
     VMSR(FPSCR, src->fpscr);
 
-    /* Restore FPEXC ensuring that it is enabled. */
-    VMSR(FPEXC, src->fpexc | BIT(FPEXC_EN_BIT));
+    /* Restore FPEXC. */
+    VMSR(FPEXC, src->fpexc);
 }
 
 #endif /* CONFIG_HAVE_FPU */
