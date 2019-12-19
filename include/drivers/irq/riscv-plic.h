@@ -1,17 +1,13 @@
 /*
- * Copyright 2019, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __DRIVER_IRQ_ARIANE_H
-#define __DRIVER_IRQ_ARIANE_H
+#pragma once
+/* tell the kernel we have the set trigger feature */
+#define HAVE_SET_TRIGGER 1
+
 
 #include <plat/machine/devices_gen.h>
 #include <arch/model/smp.h>
@@ -40,11 +36,28 @@
 #define PLIC_THRES_PER_CONTEXT  0x1000
 #define PLIC_THRES_CLAIM        0x4
 
+#ifdef CONFIG_PLAT_HIFIVE
+/* SiFive U54-MC has 5 cores, and the first core does not
+ * have supervisor mode. Therefore, we need to compensate
+ * for the addresses.
+ */
+#define PLIC_NUM_INTERRUPTS 53
+#define PLAT_PLIC_THRES_ADJUST(x) ((x) - PLIC_THRES_PER_CONTEXT)
+#define PLAT_PLIC_EN_ADJUST(x)    ((x) - PLIC_EN_PER_CONTEXT)
+
+#elif defined CONFIG_PLAT_ARIANE
+
 #define PLIC_NUM_INTERRUPTS 30
 #define PLAT_PLIC_THRES_ADJUST(x)   (x)
 #define PLAT_PLIC_EN_ADJUST(x)      (x)
 
-typedef uint32_t interrupt_t;
+#else
+
+#define PLIC_NUM_INTERRUPTS 511
+#define PLAT_PLIC_THRES_ADJUST(x)   (x)
+#define PLAT_PLIC_EN_ADJUST(x)      (x)
+
+#endif
 
 static inline void write_sie(word_t value)
 {
@@ -58,16 +71,14 @@ static inline word_t read_sie(void)
     return temp;
 }
 
-static inline uint32_t readl(const volatile uint64_t addr)
+static inline uint32_t readl(uint64_t addr)
 {
-    uint32_t val;
-    asm volatile("lw %0, 0(%1)" : "=r"(val) : "r"(addr));
-    return val;
+    return *((volatile uint32_t *)(addr));
 }
 
-static inline void writel(uint32_t val, volatile uint64_t addr)
+static inline void writel(uint32_t val, uint64_t addr)
 {
-    asm volatile("sw %0, 0(%1)" : : "r"(val), "r"(addr));
+    *((volatile uint32_t *)(addr)) = val;
 }
 
 static inline word_t plic_enable_offset(word_t hart_id, word_t context_id)
@@ -109,21 +120,21 @@ static inline word_t get_hart_id(void)
 #endif
 }
 
-static inline interrupt_t plic_get_claim(void)
+static inline irq_t plic_get_claim(void)
 {
     /* Read the claim register for our HART interrupt context */
     word_t hart_id = get_hart_id();
     return readl(PLIC_PPTR_BASE + plic_claim_offset(hart_id, PLIC_SVC_CONTEXT));
 }
 
-static inline void plic_complete_claim(interrupt_t irq)
+static inline void plic_complete_claim(irq_t irq)
 {
     /* Complete the IRQ claim by writing back to the claim register. */
     word_t hart_id = get_hart_id();
     writel(irq, PLIC_PPTR_BASE + plic_claim_offset(hart_id, PLIC_SVC_CONTEXT));
 }
 
-static inline void plic_mask_irq(bool_t disable, interrupt_t irq)
+static inline void plic_mask_irq(bool_t disable, irq_t irq)
 {
     uint64_t addr = 0;
     uint32_t val = 0;
@@ -174,4 +185,11 @@ static inline void plic_init_controller(void)
 
 }
 
-#endif /* __DRIVER_IRQ_ARIANE_H */
+
+/*
+ * Provide a dummy definition of set trigger as the Hifive platform currently
+ * has all global interrupt positive-level triggered.
+ */
+static inline void plic_irq_set_trigger(irq_t irq, bool_t edge_triggered)
+{
+}
