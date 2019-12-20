@@ -131,7 +131,13 @@ void VPPIEvent(irq_t irq)
         assert(irqVPPIEventIndex(irq) != VPPIEventIRQ_invalid);
         ARCH_NODE_STATE(armHSCurVCPU)->vppi_masked[irqVPPIEventIndex(irq)] = true;
         current_fault = seL4_Fault_VPPIEvent_new(IRQT_TO_IRQ(irq));
-        handleFault(NODE_STATE(ksCurThread));
+        /* Current VCPU being active should indicate that the current thread
+         * is runnable. At present, verification cannot establish this so we
+         * perform an extra check. */
+        assert(isRunnable(NODE_STATE(ksCurThread)));
+        if (isRunnable(NODE_STATE(ksCurThread))) {
+            handleFault(NODE_STATE(ksCurThread));
+        }
     }
 }
 
@@ -199,7 +205,13 @@ void VGICMaintenance(void)
         current_fault = seL4_Fault_VGICMaintenance_new(0, 0);
     }
 
-    handleFault(NODE_STATE(ksCurThread));
+    /* Current VCPU being active should indicate that the current thread
+     * is runnable. At present, verification cannot establish this so we
+     * perform an extra check. */
+    assert(isRunnable(NODE_STATE(ksCurThread)));
+    if (isRunnable(NODE_STATE(ksCurThread))) {
+        handleFault(NODE_STATE(ksCurThread));
+    }
 }
 
 void vcpu_init(vcpu_t *vcpu)
