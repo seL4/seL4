@@ -496,10 +496,15 @@ exception_t decodeVCPUAckVPPI(cap_t cap, unsigned int length, word_t *buffer)
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
-    irq_t irq = getSyscallArg(0, buffer);
+
+    word_t irq_w = getSyscallArg(0, buffer);
+    irq_t irq = (irq_t) CORE_IRQ_TO_IRQT(CURRENT_CPU_INDEX(), irq_w);
+    exception_t status = Arch_checkIRQ(irq_w);
+    if (status != EXCEPTION_NONE) {
+        return status;
+    }
 
     VPPIEventIRQ_t vppi = irqVPPIEventIndex(irq);
-
     if (vppi == VPPIEventIRQ_invalid) {
         userError("VCPUAckVPPI: Invalid irq number.");
         current_syscall_error.type = seL4_InvalidArgument;
