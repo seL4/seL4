@@ -118,35 +118,33 @@ block vcpu_cap {
 #ifdef CONFIG_ARM_SMMU
 
 block sid_control_cap {
-    padding 64
+    padding        64
 
     field capType  5
-    padding 59
+    padding        59
 }
 
 block sid_cap {
 
-    padding              51
-    field capSIDIsMapped 1
-    field capSID 12
+    padding              52
+    field capSID         12
 
-    field capType  5
+    field capType        5
     padding 59
 }
 
 block cb_control_cap {
-    padding 64
+    padding              64
 
-    field capType  5
-    padding 59
+    field capType        5
+    padding              59
 }
 
 
 block cb_cap {
 
-    padding               39
-    field capCBIsMapped   1
-    field capBindSID         12
+    padding               40
+    field capBindSID      12
     field capCB           12
 
 
