@@ -15,7 +15,15 @@
 
 #include <arch/object/smmu.h>
 
+static exception_t checkARMCBVspace(cap_t cap) {
+		word_t cb = cap_cb_cap_get_capCB(cap); 
+		cte_t *cbSlot = smmuStateCBNode + cb;
 
+		if (unlikely(!isVTableRoot(cbSlot->cap))) {
+			return EXCEPTION_SYSCALL_ERROR;
+		}
+		return EXCEPTION_NONE; 
+}
 
 exception_t decodeARMSIDControlInvocation(word_t label, unsigned int length, cptr_t cptr,
 	cte_t *srcSlot, cap_t cap, extra_caps_t extraCaps,
@@ -72,11 +80,8 @@ exception_t decodeARMSIDControlInvocation(word_t label, unsigned int length, cpt
 	}
 
 	setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-
 	smmuStateSIDTable[sid] = true;
-
-    cteInsert(cap_sid_cap_new(0,sid), srcSlot, destSlot);
-
+    cteInsert(cap_sid_cap_new(sid), srcSlot, destSlot);
 	return EXCEPTION_NONE;
 }
 
@@ -93,14 +98,12 @@ exception_t decodeARMSIDInvocation(word_t label, unsigned int length, cptr_t cpt
 	if (unlikely(label != ARMSIDBindCB)) {
 		userError("ARMSID: Illegal operation.");
 		current_syscall_error.type = seL4_IllegalOperation;
-
 		return EXCEPTION_SYSCALL_ERROR;
 	}
 
 	if (unlikely(extraCaps.excaprefs[0] == NULL)) {
 		userError("ARMSIDBindCB: Invalid CB cap.");
 		current_syscall_error.type = seL4_TruncatedMessage;
-
 		return EXCEPTION_SYSCALL_ERROR;
 	}
 
@@ -111,22 +114,13 @@ exception_t decodeARMSIDInvocation(word_t label, unsigned int length, cptr_t cpt
 		userError("ARMSIDBindCB: Invalid CB cap.");
 		current_syscall_error.type = seL4_InvalidCapability;
 		current_syscall_error.invalidCapNumber = 1;
-
 		return EXCEPTION_SYSCALL_ERROR;
 	}
 
-	if (unlikely(!cap_cb_cap_get_capCBIsMapped(cbCap))) {
+	if (unlikely(checkARMCBVspace(cbCap) != EXCEPTION_NONE)) {
 		userError("ARMSIDBindCB: Invalid CB cap.");
 		current_syscall_error.type = seL4_InvalidCapability;
 		current_syscall_error.invalidCapNumber = 1;
-
-		return EXCEPTION_SYSCALL_ERROR;
-	}
-
-
-	if (unlikely(cap_sid_cap_get_capSIDIsMapped(cap))) {
-		userError("ARMSIDBindCB: The SID is already bound with a context bank.");
-		current_syscall_error.type = seL4_RevokeFirst;
 		return EXCEPTION_SYSCALL_ERROR;
 	}
 
@@ -142,25 +136,17 @@ exception_t decodeARMSIDInvocation(word_t label, unsigned int length, cptr_t cpt
 		return status;
 	}
 
-
-	cap_sid_cap_ptr_set_capSIDIsMapped(&(srcSlot->cap), 1); 
-
+	setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
 	/*binding the sid with cb in smmu driver*/
 	smmu_sid_bind_cb(sid, cap_cb_cap_get_capCB(cbCap)); 
-
-
-	setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-
 	/*building the connection by creating a copy of the orginial cb cap 
 	in sid cnode*/
 	cteInsert(cbCap, cbCapSlot, cbAssignSlot);
-
 	/*recording SID number therefore can trigger a 
 	cleanup/unbinding if the cb cap is deleted. 
 	Because a cb can bound to multiple SIDs, 
 	the sid number is only recored in the copy.*/
 	cap_cb_cap_ptr_set_capBindSID(&(cbAssignSlot->cap), sid); 
-
 	return EXCEPTION_NONE;
 }
 
@@ -212,12 +198,11 @@ exception_t decodeARMCBControlInvocation(word_t label, unsigned int length, cptr
 
 	lu_ret = lookupTargetSlot(cnodeCap, index, depth);
 	if (lu_ret.status != EXCEPTION_NONE) {
-		userError("Target slot for new SID Handler cap invalid: cap %lu, CB %u.",
+		userError("Target slot for new CB Handler cap invalid: cap %lu, CB %u.",
 			getExtraCPtr(buffer, 0), (int)cb);
 		return lu_ret.status;
 	}
 	destSlot = lu_ret.slot;
-
 	status = ensureEmptySlot(destSlot);
 	if (status != EXCEPTION_NONE) {
 		userError("Target slot for new CB Handler cap not empty: cap %lu, CB %u.",
@@ -226,10 +211,8 @@ exception_t decodeARMCBControlInvocation(word_t label, unsigned int length, cptr
 	}
 
 	setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-
 	smmuStateCBTable[cb] = true;
-	cteInsert(cap_cb_cap_new(0, SID_INVALID, cb), srcSlot, destSlot);
-
+	cteInsert(cap_cb_cap_new(SID_INVALID, cb), srcSlot, destSlot);
 	return EXCEPTION_NONE;
 }
 
@@ -243,16 +226,15 @@ exception_t decodeARMCBInvocation(word_t label, unsigned int length, cptr_t cptr
 	exception_t status;
 	word_t cb; 
 
-
 	if (label == ARMCBTLBInvalidate) {
-		if (unlikely(!cap_cb_cap_get_capCBIsMapped(cap))) {
+		if (unlikely(checkARMCBVspace(cap) != EXCEPTION_NONE)) {
 			userError("ARMCBTLBInvalidate: the CB does not have a vspace root."); 
 			current_syscall_error.type = seL4_IllegalOperation;
 			return EXCEPTION_SYSCALL_ERROR;
 		}
-		setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
 		cb = cap_cb_cap_get_capCB(cap); 
 		cbSlot = smmuStateCBNode + cb;
+		setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
 		smmu_tlb_invalidate_cb(cb, cap_vtable_root_get_mappedASID(cbSlot->cap)); 
 		return EXCEPTION_NONE; 
 	}
@@ -260,13 +242,11 @@ exception_t decodeARMCBInvocation(word_t label, unsigned int length, cptr_t cptr
 	if (unlikely(label != ARMCBAssignVspace)) {
 		userError("ARMCBAssignVspace: Illegal operation.");
 		current_syscall_error.type = seL4_IllegalOperation;
-
 		return EXCEPTION_SYSCALL_ERROR;
 	}
 
 	if (unlikely(extraCaps.excaprefs[0] == NULL)) {
 		current_syscall_error.type = seL4_TruncatedMessage;
-
 		return EXCEPTION_SYSCALL_ERROR;
 	}
 
@@ -277,39 +257,25 @@ exception_t decodeARMCBInvocation(word_t label, unsigned int length, cptr_t cptr
 		userError("ARMCBAssignVspace: the vspace is invalid"); 
 		current_syscall_error.type = seL4_InvalidCapability;
 		current_syscall_error.invalidCapNumber = 1;
-
-		return EXCEPTION_SYSCALL_ERROR;
-	}
-
-	if (unlikely(cap_cb_cap_get_capCBIsMapped(cap))) {
-		userError("ARMCBAssignVspace: the CB already assigned with a vspace root."); 
-		current_syscall_error.type = seL4_RevokeFirst;
 		return EXCEPTION_SYSCALL_ERROR;
 	}
 
 	/*the cb number must be valid as assigned by the ARMCBIssueCBManager*/
 	cb = cap_cb_cap_get_capCB(cap); 
 	cbSlot = smmuStateCBNode + cb;
-
 	status = ensureEmptySlot(cbSlot);
 	if (status != EXCEPTION_NONE) {
 		userError("ARMCBAssignVspace: the CB already assigned with a vspace root."); 
 		return status;
 	}
 
-	cap_cb_cap_ptr_set_capCBIsMapped(&(srcSlot->cap), 1); 
-
+	setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
 	/*setting up cb in smmu*/
 	smmu_cb_assgin_vspace(cb, cap_vtable_root_get_basePtr(vspaceCap), 
 		cap_vtable_root_get_mappedASID(vspaceCap)); 
-
-	setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-
 	/*building connection between the vspace cap and  cb*/
 	cteInsert(vspaceCap, vspaceCapSlot, cbSlot);
-
 	cap_vtable_root_ptr_set_mappedCB(&(cbSlot->cap), cb); 
-
 	return EXCEPTION_NONE;
 }
 
