@@ -97,6 +97,18 @@ deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
         ret.status = EXCEPTION_NONE;
         return ret;
 #endif
+#ifdef CONFIG_ARM_SMMU
+    case cap_sid_control_cap:
+    case cap_cb_control_cap:
+        ret.cap = cap_null_cap_new();
+        ret.status = EXCEPTION_NONE;
+        return ret;
+    case cap_sid_cap:
+    case cap_cb_cap:
+        ret.cap = cap;
+        ret.status = EXCEPTION_NONE;
+        return ret;
+#endif
     default:
         /* This assert has no equivalent in haskell,
          * as the options are restricted by type */
