@@ -446,5 +446,6 @@ void smmu_sid_bind_cb(word_t sid, word_t cb);
 void plat_smmu_init(void); 
 void smmu_tlb_invalidate_all(void); 
 void smmu_tlb_invalidate_cb(int cb, asid_t asid); 
+void smmu_cb_disable(word_t cb, asid_t asid); 
 
 #endif  /*__DRIVER_SMMUV2_H*/

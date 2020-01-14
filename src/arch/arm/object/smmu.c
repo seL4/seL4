@@ -16,13 +16,13 @@
 #include <arch/object/smmu.h>
 
 static exception_t checkARMCBVspace(cap_t cap) {
-		word_t cb = cap_cb_cap_get_capCB(cap); 
-		cte_t *cbSlot = smmuStateCBNode + cb;
+	word_t cb = cap_cb_cap_get_capCB(cap); 
+	cte_t *cbSlot = smmuStateCBNode + cb;
 
-		if (unlikely(!isVTableRoot(cbSlot->cap))) {
-			return EXCEPTION_SYSCALL_ERROR;
-		}
-		return EXCEPTION_NONE; 
+	if (unlikely(!isVTableRoot(cbSlot->cap))) {
+		return EXCEPTION_SYSCALL_ERROR;
+	}
+	return EXCEPTION_NONE; 
 }
 
 exception_t decodeARMSIDControlInvocation(word_t label, unsigned int length, cptr_t cptr,
@@ -51,13 +51,13 @@ exception_t decodeARMSIDControlInvocation(word_t label, unsigned int length, cpt
 
 	cnodeCap = extraCaps.excaprefs[0]->cap;
 
-    if (sid >= SMMU_MAX_SID) {
-        current_syscall_error.type = seL4_RangeError;
-        current_syscall_error.rangeErrorMin = 0;
-        current_syscall_error.rangeErrorMax = SMMU_MAX_SID - 1;
-        userError("Rejecting request for SID %u. SID is greater than or equal to SMMU_MAX_SID.", (int)sid);
-        return EXCEPTION_SYSCALL_ERROR;
-    }
+	if (sid >= SMMU_MAX_SID) {
+		current_syscall_error.type = seL4_RangeError;
+		current_syscall_error.rangeErrorMin = 0;
+		current_syscall_error.rangeErrorMax = SMMU_MAX_SID - 1;
+		userError("Rejecting request for SID %u. SID is greater than or equal to SMMU_MAX_SID.", (int)sid);
+		return EXCEPTION_SYSCALL_ERROR;
+	}
 	if (smmuStateSIDTable[sid]) {
 		current_syscall_error.type = seL4_RevokeFirst;
 		userError("Rejecting request for SID %u. Already active.", (int)sid);
@@ -81,7 +81,7 @@ exception_t decodeARMSIDControlInvocation(word_t label, unsigned int length, cpt
 
 	setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
 	smmuStateSIDTable[sid] = true;
-    cteInsert(cap_sid_cap_new(sid), srcSlot, destSlot);
+	cteInsert(cap_sid_cap_new(sid), srcSlot, destSlot);
 	return EXCEPTION_NONE;
 }
 
@@ -183,13 +183,13 @@ exception_t decodeARMCBControlInvocation(word_t label, unsigned int length, cptr
 
 	cnodeCap = extraCaps.excaprefs[0]->cap;
 
-    if (cb >= SMMU_MAX_CB) {
-        current_syscall_error.type = seL4_RangeError;
-        current_syscall_error.rangeErrorMin = 0;
-        current_syscall_error.rangeErrorMax = SMMU_MAX_CB - 1;
-        userError("Rejecting request for CB %u. CB is greater than or equal to SMMU_MAX_CB.", (int)cb);
-        return EXCEPTION_SYSCALL_ERROR;
-    }
+	if (cb >= SMMU_MAX_CB) {
+		current_syscall_error.type = seL4_RangeError;
+		current_syscall_error.rangeErrorMin = 0;
+		current_syscall_error.rangeErrorMax = SMMU_MAX_CB - 1;
+		userError("Rejecting request for CB %u. CB is greater than or equal to SMMU_MAX_CB.", (int)cb);
+		return EXCEPTION_SYSCALL_ERROR;
+	}
 	if (smmuStateCBTable[cb]) {
 		current_syscall_error.type = seL4_RevokeFirst;
 		userError("Rejecting request for CB %u. Already active.", (int)cb);
@@ -226,57 +226,74 @@ exception_t decodeARMCBInvocation(word_t label, unsigned int length, cptr_t cptr
 	exception_t status;
 	word_t cb; 
 
-	if (label == ARMCBTLBInvalidate) {
-		if (unlikely(checkARMCBVspace(cap) != EXCEPTION_NONE)) {
-			userError("ARMCBTLBInvalidate: the CB does not have a vspace root."); 
+	switch (label) {
+		case ARMCBTLBInvalidate: 
+			if (unlikely(checkARMCBVspace(cap) != EXCEPTION_NONE)) {
+				userError("ARMCBTLBInvalidate: the CB does not have a vspace root."); 
+				current_syscall_error.type = seL4_IllegalOperation;
+				return EXCEPTION_SYSCALL_ERROR;
+			}
+			cb = cap_cb_cap_get_capCB(cap); 
+			cbSlot = smmuStateCBNode + cb;
+			setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+			smmu_tlb_invalidate_cb(cb, cap_vtable_root_get_mappedASID(cbSlot->cap)); 
+			return EXCEPTION_NONE; 
+		
+		case ARMCBAssignVspace: 
+			if (unlikely(extraCaps.excaprefs[0] == NULL)) {
+				current_syscall_error.type = seL4_TruncatedMessage;
+				return EXCEPTION_SYSCALL_ERROR;
+			}
+
+			vspaceCapSlot = extraCaps.excaprefs[0];
+			vspaceCap = vspaceCapSlot->cap;
+
+			if (unlikely(!isVTableRoot(vspaceCap) || !cap_vtable_root_isMapped(vspaceCap))) {
+				userError("ARMCBAssignVspace: the vspace is invalid"); 
+				current_syscall_error.type = seL4_InvalidCapability;
+				current_syscall_error.invalidCapNumber = 1;
+				return EXCEPTION_SYSCALL_ERROR;
+			}
+
+			/*the cb number must be valid as assigned by the ARMCBIssueCBManager*/
+			cb = cap_cb_cap_get_capCB(cap); 
+			cbSlot = smmuStateCBNode + cb;
+			status = ensureEmptySlot(cbSlot);
+			if (status != EXCEPTION_NONE) {
+				userError("ARMCBAssignVspace: the CB already assigned with a vspace root."); 
+				return status;
+			}
+
+			setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+			/*setting up cb in smmu*/
+			smmu_cb_assgin_vspace(cb, cap_vtable_root_get_basePtr(vspaceCap), 
+			cap_vtable_root_get_mappedASID(vspaceCap)); 
+			/*building connection between the vspace cap and  cb*/
+			cteInsert(vspaceCap, vspaceCapSlot, cbSlot);
+			cap_vtable_root_ptr_set_mappedCB(&(cbSlot->cap), cb); 
+			return EXCEPTION_NONE;
+		
+		case ARMCBUnassignVspace: 
+			if (unlikely(checkARMCBVspace(cap) != EXCEPTION_NONE)) {
+				userError("ARMCBUnassignVspace: the CB does not have an assigned VSpace.");
+				current_syscall_error.type = seL4_IllegalOperation;
+				return EXCEPTION_SYSCALL_ERROR;
+			}
+			cb = cap_cb_cap_get_capCB(cap); 
+			cbSlot = smmuStateCBNode + cb;
+			status = cteDelete(cbSlot, true); 
+			if (unlikely(status != EXCEPTION_NONE)) {
+				userError("ARMCBUnassignVspace: the Assigned VSpace cannot be deleted."); 				
+				return status;
+			}
+			setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+			return EXCEPTION_NONE;		
+		default: 
+			userError("ARMCBInvocation: Illegal operation.");
 			current_syscall_error.type = seL4_IllegalOperation;
 			return EXCEPTION_SYSCALL_ERROR;
-		}
-		cb = cap_cb_cap_get_capCB(cap); 
-		cbSlot = smmuStateCBNode + cb;
-		setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-		smmu_tlb_invalidate_cb(cb, cap_vtable_root_get_mappedASID(cbSlot->cap)); 
-		return EXCEPTION_NONE; 
+
 	}
-
-	if (unlikely(label != ARMCBAssignVspace)) {
-		userError("ARMCBAssignVspace: Illegal operation.");
-		current_syscall_error.type = seL4_IllegalOperation;
-		return EXCEPTION_SYSCALL_ERROR;
-	}
-
-	if (unlikely(extraCaps.excaprefs[0] == NULL)) {
-		current_syscall_error.type = seL4_TruncatedMessage;
-		return EXCEPTION_SYSCALL_ERROR;
-	}
-
-	vspaceCapSlot = extraCaps.excaprefs[0];
-	vspaceCap = vspaceCapSlot->cap;
-
-	if (unlikely(!isVTableRoot(vspaceCap) || !cap_vtable_root_isMapped(vspaceCap))) {
-		userError("ARMCBAssignVspace: the vspace is invalid"); 
-		current_syscall_error.type = seL4_InvalidCapability;
-		current_syscall_error.invalidCapNumber = 1;
-		return EXCEPTION_SYSCALL_ERROR;
-	}
-
-	/*the cb number must be valid as assigned by the ARMCBIssueCBManager*/
-	cb = cap_cb_cap_get_capCB(cap); 
-	cbSlot = smmuStateCBNode + cb;
-	status = ensureEmptySlot(cbSlot);
-	if (status != EXCEPTION_NONE) {
-		userError("ARMCBAssignVspace: the CB already assigned with a vspace root."); 
-		return status;
-	}
-
-	setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-	/*setting up cb in smmu*/
-	smmu_cb_assgin_vspace(cb, cap_vtable_root_get_basePtr(vspaceCap), 
-		cap_vtable_root_get_mappedASID(vspaceCap)); 
-	/*building connection between the vspace cap and  cb*/
-	cteInsert(vspaceCap, vspaceCapSlot, cbSlot);
-	cap_vtable_root_ptr_set_mappedCB(&(cbSlot->cap), cb); 
-	return EXCEPTION_NONE;
 }
 
 #endif 
