@@ -505,6 +505,14 @@ void smmu_cb_assign_vspace(word_t cb, vspace_root_t *vspace, asid_t asid) {
 	smmu_write_reg32(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_SCTLR, reg);
 }
 
+void smmu_cb_disable(word_t cb, asid_t asid) {
+
+	uint32_t reg = smmu_read_reg32(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_SCTLR);
+	reg &= ~CBn_SCTLR_M;
+	smmu_write_reg32(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_SCTLR, reg);
+	smmu_tlb_invalidate_cb(cb, asid);
+}
+
 void smmu_sid_bind_cb(word_t sid, word_t cb) {
 
 	uint32_t reg = 0;

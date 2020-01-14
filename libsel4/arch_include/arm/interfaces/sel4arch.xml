@@ -357,6 +357,12 @@
            <param dir="in" name="vspace" type="seL4_CPtr"
             description="The VSpace that is being assigned to a context bank. Must already has an assigned ASID."/>
         </method>
+        <method id="ARMCBUnassignVspace" name="UnassignVspace" manual_name="UnassignVspace"
+           manual_label="cb_unassignvspace">
+            <brief>
+                Unassigning a vspace to a context bank.
+            </brief>
+        </method>
         <method id="ARMCBTLBInvalidate" name="TLBInvalidate" manual_name="TLBInvalidate"
            manual_label="cb_tlbinvalidate">
             <brief>

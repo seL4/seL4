@@ -152,6 +152,12 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
             deleteASID(cap_page_global_directory_cap_get_capPGDMappedASID(cap),
                        VSPACE_PTR(cap_page_global_directory_cap_get_capPGDBasePtr(cap)));
         }
+#ifdef CONFIG_ARM_SMMU
+        if (cap_page_global_directory_cap_get_capPGDMappedCB(cap) != CB_INVALID) {
+            smmu_cb_disable(cap_page_global_directory_cap_get_capPGDMappedCB(cap),
+                            cap_page_global_directory_cap_get_capPGDMappedASID(cap));
+        }
+#endif 
         break;
 
     case cap_page_upper_directory_cap:
@@ -160,6 +166,12 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
             deleteASID(cap_page_upper_directory_cap_get_capPUDMappedASID(cap),
                        PUDE_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(cap)));
         }
+#ifdef CONFIG_ARM_SMMU
+        if (cap_page_upper_directory_cap_get_capPGDMappedCB(cap) != CB_INVALID) {
+            smmu_cb_disable(cap_page_upper_directory_cap_get_capPGDMappedCB(cap),
+                            cap_page_upper_directory_cap_get_capPUDMappedASID(cap)); 
+        }
+#endif 
 #else
         if (final && cap_page_upper_directory_cap_get_capPUDIsMapped(cap)) {
             unmapPageUpperDirectory(cap_page_upper_directory_cap_get_capPUDMappedASID(cap),
