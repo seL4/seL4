@@ -84,53 +84,68 @@ exception_t decodeARMSIDInvocation(word_t label, unsigned int length, cptr_t cpt
 	exception_t status;
 	word_t sid;
 
-	if (unlikely(label != ARMSIDBindCB)) {
-		userError("ARMSID: Illegal operation.");
-		current_syscall_error.type = seL4_IllegalOperation;
-		return EXCEPTION_SYSCALL_ERROR;
+	switch (label) {
+		case ARMSIDBindCB:
+			if (unlikely(extraCaps.excaprefs[0] == NULL)) {
+				userError("ARMSIDBindCB: Invalid CB cap.");
+				current_syscall_error.type = seL4_TruncatedMessage;
+				return EXCEPTION_SYSCALL_ERROR;
+			}
+			cbCapSlot = extraCaps.excaprefs[0];
+			cbCap = cbCapSlot->cap;
+			if (unlikely(cap_get_capType(cbCap) != cap_cb_cap)) {
+				userError("ARMSIDBindCB: Invalid CB cap.");
+				current_syscall_error.type = seL4_InvalidCapability;
+				current_syscall_error.invalidCapNumber = 1;
+				return EXCEPTION_SYSCALL_ERROR;
+			}
+			if (unlikely(checkARMCBVspace(cbCap) != EXCEPTION_NONE)) {
+				userError("ARMSIDBindCB: Invalid CB cap.");
+				current_syscall_error.type = seL4_InvalidCapability;
+				current_syscall_error.invalidCapNumber = 1;
+				return EXCEPTION_SYSCALL_ERROR;
+			}
+			sid = cap_sid_cap_get_capSID(cap);
+			cbAssignSlot = smmuStateSIDNode + sid;
+			status = ensureEmptySlot(cbAssignSlot);
+			if (status != EXCEPTION_NONE) {
+				userError("ARMSIDBindCB: The SID is already bound with a context bank.");
+				return status;
+			}
+			setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+			/*binding the sid to cb in SMMU*/
+			smmu_sid_bind_cb(sid, cap_cb_cap_get_capCB(cbCap));
+			/* Building the connection between SID and CB caps by placing a 
+			 * copy of the given cb cap in sid's cnode*/
+			cteInsert(cbCap, cbCapSlot, cbAssignSlot);
+			/* Recording the SID number in the copied CB cap.
+			 * Deleting the copied CB cap will trigger unbinding
+			 * operations. As a CB can be used (bound)
+			 * by multiple SID caps, each copied CB caps resulted from
+			 * binding operations keeps track of its serving SID numbers.*/
+			cap_cb_cap_ptr_set_capBindSID(&(cbAssignSlot->cap), sid);
+			return EXCEPTION_NONE;
+		
+		case ARMSIDUnbindCB:
+			sid = cap_sid_cap_get_capSID(cap);
+			cbAssignSlot = smmuStateSIDNode + sid;
+			if (unlikely(cap_get_capType(cbAssignSlot->cap) != cap_cb_cap)) {
+				userError("ARMSIDUnbindCB: The SID is not assigned with a context bank.");
+				current_syscall_error.type = seL4_IllegalOperation;
+				return EXCEPTION_SYSCALL_ERROR;
+			}
+			status = cteDelete(cbAssignSlot, true);
+			if (unlikely(status != EXCEPTION_NONE)) {
+				userError("ARMSIDUnbindCB: the Assigned context bank cannot be unassigned.");
+				return status;
+			}
+			setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+			return EXCEPTION_NONE;
+		default:
+			userError("ARMSID: Illegal operation.");
+			current_syscall_error.type = seL4_IllegalOperation;
+			return EXCEPTION_SYSCALL_ERROR;
 	}
-	if (unlikely(extraCaps.excaprefs[0] == NULL)) {
-		userError("ARMSIDBindCB: Invalid CB cap.");
-		current_syscall_error.type = seL4_TruncatedMessage;
-		return EXCEPTION_SYSCALL_ERROR;
-	}
-
-	cbCapSlot = extraCaps.excaprefs[0];
-	cbCap = cbCapSlot->cap;
-
-	if (unlikely(cap_get_capType(cbCap) != cap_cb_cap)) {
-		userError("ARMSIDBindCB: Invalid CB cap.");
-		current_syscall_error.type = seL4_InvalidCapability;
-		current_syscall_error.invalidCapNumber = 1;
-		return EXCEPTION_SYSCALL_ERROR;
-	}
-	if (unlikely(checkARMCBVspace(cbCap) != EXCEPTION_NONE)) {
-		userError("ARMSIDBindCB: Invalid CB cap.");
-		current_syscall_error.type = seL4_InvalidCapability;
-		current_syscall_error.invalidCapNumber = 1;
-		return EXCEPTION_SYSCALL_ERROR;
-	}
-	/*the SID number is valid as created by ARMSIDIssueSIDManager*/
-	sid = cap_sid_cap_get_capSID(cap);
-	cbAssignSlot = smmuStateSIDNode + sid;
-	status = ensureEmptySlot(cbAssignSlot);
-	if (status != EXCEPTION_NONE) {
-		userError("ARMSIDBindCB: The SID is already bound with a context bank.");
-		return status;
-	}
-	setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-	/*binding the sid to cb in SMMU*/
-	smmu_sid_bind_cb(sid, cap_cb_cap_get_capCB(cbCap));
-	/* Building the connection between SID and CB caps by placing a
-	 * copy of the given cb cap in sid's cnode*/
-	cteInsert(cbCap, cbCapSlot, cbAssignSlot);
-	/* Recording the SID number in the copied CB cap.
-	 * Deleting the copied CB cap will trigger unbinding
-	 * operations. As a CB can be used (bound)
-	 * by multiple SID caps, each copied CB caps resulted from
-	 * binding operations keeps track of its serving SID numbers.*/
-	cap_cb_cap_ptr_set_capBindSID(&(cbAssignSlot->cap), sid);
-	return EXCEPTION_NONE;
 }
 
 exception_t decodeARMCBControlInvocation(word_t label, unsigned int length, cptr_t cptr,
@@ -274,6 +289,20 @@ exception_t decodeARMCBInvocation(word_t label, unsigned int length, cptr_t cptr
 			current_syscall_error.type = seL4_IllegalOperation;
 			return EXCEPTION_SYSCALL_ERROR;
 	}
+}
+
+exception_t smmu_delete_cb(cap_t cap)
+{
+	word_t cb;
+	cte_t *cbSlot;
+	exception_t status = EXCEPTION_NONE;
+	/*deleting assigned vspace root if exists*/
+	if (unlikely(checkARMCBVspace(cap) == EXCEPTION_NONE)) {
+		cb = cap_cb_cap_get_capCB(cap);
+		cbSlot = smmuStateCBNode + cb;
+		status = cteDelete(cbSlot, true);
+	}
+	return status;
 }
 #endif
 

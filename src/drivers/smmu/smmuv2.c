@@ -529,6 +529,17 @@ void smmu_sid_bind_cb(word_t sid, word_t cb) {
 	}
 }
 
+void smmu_sid_unbind(word_t sid)
+{
+
+	uint32_t reg = 	S2CR_TYPE_SET(S2CR_TYPE_FAULT);
+	smmu_write_reg32(SMMU_GR0_PPTR, SMMU_S2CRn(sid), reg);
+	if (smmu_dev_knowledge.stream_match) {
+		reg = SMR_VALID_SET(SMR_VALID_DIS);
+		smmu_write_reg32(SMMU_GR0_PPTR, SMMU_SMRn(sid), reg);
+	}
+}
+
 void smmu_tlb_invalidate_all(void) {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 	/*on hyp entries*/

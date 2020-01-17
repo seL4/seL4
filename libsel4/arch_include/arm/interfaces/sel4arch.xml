@@ -329,6 +329,12 @@
            <param dir="in" name="cb" type="seL4_CPtr"
             description="The CB that is being binded to a stream ID. Must already has an assigned vspace."/>
         </method>
+       <method id="ARMSIDUnbindCB" name="UnbindCB" manual_name="UnbindCB"
+           manual_label="sid_unbindcb">
+            <brief>
+                Unbinding a context bank from a stream ID.
+            </brief>
+        </method>
     </interface>
     <interface name="seL4_ARM_CBControl" manual_name="CB Control" cap_description="A CBControl capability. This gives you the authority to make this call.">
        <method id="ARMCBIssueCBManager" name="GetCB" manual_name="GetCB"
