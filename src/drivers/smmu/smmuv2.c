@@ -706,6 +706,7 @@ void smmu_cb_assgin_vspace(word_t cb, vspace_root_t *vspace, asid_t asid) {
 	smmu_write_reg32(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_SCTLR, reg);
 
 	printf("SMMU_CBn_SCTLR 0x%x\n", reg);
+	printf("smmu_cb_assgin_vspace done\n");
 }
 
 void smmu_cb_disable(word_t cb, asid_t asid) {
@@ -715,6 +716,7 @@ void smmu_cb_disable(word_t cb, asid_t asid) {
 	smmu_write_reg32(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_SCTLR, reg);
 
 	smmu_tlb_invalidate_cb(cb, asid); 
+	printf("smmu_cb_disable for cb %lu asid 0x%lx\n", cb, asid);
 }
 
 void smmu_sid_bind_cb(word_t sid, word_t cb) {
@@ -726,7 +728,6 @@ void smmu_sid_bind_cb(word_t sid, word_t cb) {
 	reg |= S2CR_CBNDX_SET(cb); 
 
 	printf("SMMU_S2CRn 0x%x\n", reg);
-
 	smmu_write_reg32(SMMU_GR0_PPTR, SMMU_S2CRn(sid), reg);  
 
 	/*the number of stream-to-context is realted to the stream indexing method
@@ -739,6 +740,18 @@ void smmu_sid_bind_cb(word_t sid, word_t cb) {
 		printf("SMMU_SMRn 0x%x\n", reg);
 	}		
 } 
+
+void smmu_sid_unbind(word_t sid) {
+
+	uint32_t reg = 	S2CR_TYPE_SET(S2CR_TYPE_FAULT);
+	smmu_write_reg32(SMMU_GR0_PPTR, SMMU_S2CRn(sid), reg);  
+	if (smmu_dev_knowledge.stream_match) {
+		reg = SMR_VALID_SET(SMR_VALID_DIS); 
+		smmu_write_reg32(SMMU_GR0_PPTR, SMMU_SMRn(sid), reg); 
+	}		
+	printf("smmu_sid_unbind sid number %lu\n", sid);
+}
+
 
 void smmu_tlb_invalidate_all(void) {
 
