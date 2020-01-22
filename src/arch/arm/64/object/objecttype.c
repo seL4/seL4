@@ -299,19 +299,28 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
         }
 #endif
 #ifdef CONFIG_ARM_SMMU
-    case cap_cb_cap:
-        if (cap_get_capType(cap_b) == cap_cb_cap) {
-            return cap_cb_cap_get_capCB(cap_a) ==
-                   cap_cb_cap_get_capCB(cap_b);
+    case cap_sid_control_cap:
+        if (cap_get_capType(cap_b) == cap_sid_control_cap ||
+            cap_get_capType(cap_b) == cap_sid_cap) {
+            return true;
+        }
+    case cap_cb_control_cap:
+        if (cap_get_capType(cap_b) == cap_cb_control_cap ||
+            cap_get_capType(cap_b) == cap_cb_cap) {
+            return true;
         }
      case cap_sid_cap: 
         if (cap_get_capType(cap_b) == cap_sid_cap) {
             return cap_sid_cap_get_capSID(cap_a) ==
                    cap_sid_cap_get_capSID(cap_b);
         } 
+    case cap_cb_cap:
+        if (cap_get_capType(cap_b) == cap_cb_cap) {
+            return cap_cb_cap_get_capCB(cap_a) ==
+                   cap_cb_cap_get_capCB(cap_b);
+        }
 #endif 
     }
-
     return false;
 }
 
@@ -327,6 +336,16 @@ bool_t CONST Arch_sameObjectAs(cap_t cap_a, cap_t cap_b)
                      (cap_frame_cap_get_capFIsDevice(cap_b) == 0)));
         }
     }
+#ifdef CONFIG_ARM_SMMU
+    if (cap_get_capType(cap_a) == cap_sid_control_cap &&
+        cap_get_capType(cap_b) == cap_sid_cap) {
+        return false;
+    }
+    if (cap_get_capType(cap_a) == cap_cb_control_cap &&
+        cap_get_capType(cap_b) == cap_cb_cap) {
+        return false;
+    }
+#endif
     return Arch_sameRegionAs(cap_a, cap_b);
 }
 
