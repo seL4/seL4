@@ -168,8 +168,8 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
         }
 #ifdef CONFIG_ARM_SMMU
         if (cap_page_upper_directory_cap_get_capPGDMappedCB(cap) != CB_INVALID) {
-            smmu_cb_disable(cap_page_upper_directory_cap_get_capPGDMappedCB(cap),
-                            cap_page_upper_directory_cap_get_capPUDMappedASID(cap)); 
+            smmu_cb_disable(cap_page_upper_directory_cap_get_capPUDMappedCB(cap),
+                            cap_page_upper_directory_cap_get_capPUDMappedASID(cap));
         }
 #endif 
 #else
@@ -221,6 +221,12 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
         if (final) {
             smmu_delete_cb(cap); 
         }
+        break;
+    case cap_sid_cap:
+        if (final) {
+            smmu_delete_sid(cap);
+        }
+        break;
 #endif 
     }
 
