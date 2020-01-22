@@ -64,7 +64,7 @@ BOOT_CODE bool_t apic_init(bool_t mask_legacy_irqs)
     if (!(cpuid & BIT(CPUID_TSC_DEADLINE_BIT))) {
         apic_khz = apic_measure_freq();
         x86KSapicRatio = div64((uint64_t)x86KStscMhz * 1000llu, apic_khz);
-        printf("Apic Khz %lu, TSC Mhz %lu, ratio %lu\n", (long) x86KStscMhz, (long) apic_khz, (long) x86KSapicRatio);
+        printf("Apic Khz %lu, TSC Mhz %lu, ratio %lu\n", (long) apic_khz, (long) x86KStscMhz, (long) x86KSapicRatio);
     } else {
         // use tsc deadline mode
         x86KSapicRatio = 0;
