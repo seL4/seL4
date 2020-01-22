@@ -23,13 +23,13 @@ if(KernelPlatformTx1)
     list(APPEND KernelDTSList "tools/dts/tx1.dts")
     list(APPEND KernelDTSList "src/plat/tx1/overlay-tx1.dts")
     declare_default_headers(
-        TIMER_FREQUENCY 19200000llu
+        TIMER_FREQUENCY 12000000llu
         MAX_IRQ 224
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h
         NUM_PPI 32
         TIMER drivers/timer/arm_generic.h
-        CLK_MAGIC 458129845llu
-        CLK_SHIFT 43u
+        CLK_MAGIC 2863311531llu
+        CLK_SHIFT 35u
         KERNEL_WCET 10u
     )
 endif()
