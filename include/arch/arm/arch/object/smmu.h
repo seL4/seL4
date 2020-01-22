@@ -41,5 +41,6 @@ exception_t decodeARMCBInvocation(word_t label, unsigned int length, cptr_t cptr
 											cte_t *srcSlot, cap_t cap, extra_caps_t extraCaps,
 											bool_t call, word_t *buffer);
 exception_t smmu_delete_cb(cap_t cap);
+exception_t smmu_delete_sid(cap_t cap); 
 
 #endif  /*__ARCH_OBJECT_SMMU_H*/

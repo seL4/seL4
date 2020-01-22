@@ -162,6 +162,18 @@ exception_t decodeARMSIDInvocation(word_t label, unsigned int length, cptr_t cpt
 	}
 }
 
+exception_t smmu_delete_sid(cap_t cap) {
+	word_t sid = cap_sid_cap_get_capSID(cap); 
+	cte_t *cbAssignSlot = smmuStateSIDNode + sid;
+	exception_t status = EXCEPTION_NONE;
+	/*delete the assigned Vspace cap*/
+	if (unlikely(cap_get_capType(cbAssignSlot->cap) == cap_cb_cap)) {
+		status = cteDelete(cbAssignSlot, true); 
+	} 
+	smmuStateSIDTable[sid] = false; 
+	return status; 
+}
+
 exception_t decodeARMCBControlInvocation(word_t label, unsigned int length, cptr_t cptr,
 	cte_t *srcSlot, cap_t cap, extra_caps_t extraCaps,
 	bool_t call, word_t *buffer) {
@@ -307,15 +319,15 @@ exception_t decodeARMCBInvocation(word_t label, unsigned int length, cptr_t cptr
 	}
 }
 exception_t smmu_delete_cb(cap_t cap) {
-	word_t cb; 
+	word_t cb = cap_cb_cap_get_capCB(cap); 
 	cte_t *cbSlot;
 	exception_t status = EXCEPTION_NONE;
 	/*delete the assigned Vspace cap*/
 	if (unlikely(checkARMCBVspace(cap) == EXCEPTION_NONE)) {
-		cb = cap_cb_cap_get_capCB(cap); 
 		cbSlot = smmuStateCBNode + cb;
 		status = cteDelete(cbSlot, true); 
 	} 
+	smmuStateCBTable[cb] = false; 
 	return status; 
 }
 
