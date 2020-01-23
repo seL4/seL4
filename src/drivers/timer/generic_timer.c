@@ -54,6 +54,8 @@ BOOT_CODE void initTimer(void)
 #include <arch/object/vcpu.h>
 #include <armv/vcpu.h>
 
+/** MODIFIES: */
+/** DONT_TRANSLATE */
 static inline uint64_t read_cntpct(void)
 {
     uint64_t val;

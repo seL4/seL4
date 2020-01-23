@@ -303,11 +303,15 @@ static inline void set_cntv_ctl(word_t val)
     MCR(CNTV_CTL, val);
 }
 
+/** MODIFIES: phantom_machine_state */
+/** DONT_TRANSLATE */
 static inline void set_cntv_cval_64(uint64_t val)
 {
     MCRR(CNTV_CVAL, val);
 }
 
+/** MODIFIES: */
+/** DONT_TRANSLATE */
 static inline uint64_t get_cntv_cval_64(void)
 {
     uint64_t ret = 0;
@@ -343,11 +347,15 @@ static inline word_t get_cntv_cval_low(void)
     return (word_t) ret;
 }
 
+/** MODIFIES: phantom_machine_state */
+/** DONT_TRANSLATE */
 static inline void set_cntv_off_64(uint64_t val)
 {
     MCRR(CNTVOFF, val);
 }
 
+/** MODIFIES: */
+/** DONT_TRANSLATE */
 static inline uint64_t get_cntv_off_64(void)
 {
     uint64_t ret = 0;
