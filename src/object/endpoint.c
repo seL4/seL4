@@ -226,7 +226,9 @@ void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
             if (do_call ||
                 seL4_Fault_get_seL4_FaultType(sender->tcbFault) != seL4_Fault_NullFault) {
                 if ((canGrant || canGrantReply) && replyPtr != NULL) {
-                    reply_push(sender, thread, replyPtr, sender->tcbSchedContext != NULL);
+                    bool_t canDonate = sender->tcbSchedContext != NULL
+                                       && seL4_Fault_get_seL4_FaultType(sender->tcbFault) != seL4_Fault_Timeout;
+                    reply_push(sender, thread, replyPtr, canDonate);
                 } else {
                     setThreadState(sender, ThreadState_Inactive);
                 }
