@@ -52,6 +52,12 @@
 				reg = <0x53f94000 0x4000>;
 				interrupts = <0x1c>;
 			};
+
+			timer@53f98000 {
+				compatible = "fsl,imx31-epit";
+				reg = <0x53f98000 0x4000>;
+				interrupts = <0x1b>;
+			};
 		};
 	};
 };
