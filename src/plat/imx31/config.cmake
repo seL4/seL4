@@ -25,7 +25,7 @@ if(KernelPlatformKZM)
     list(APPEND KernelDTSList "src/plat/imx31/overlay-kzm.dts")
     if(KernelIsMCS)
         list(APPEND KernelDTSList "src/plat/imx31/mcs-overlay-kzm.dts")
-        set(TimerFrequency 18600000llu) # 18.6MHz -- calculated by trial and error, roughly precise
+        set(TimerFrequency 35000000llu) # 35MHz -- calculated by trial and error, roughly precise
         set(TimerDriver drivers/timer/imx31-gpt.h)
     else()
         set(TimerFrequency 32768llu)
@@ -38,8 +38,8 @@ if(KernelPlatformKZM)
         INTERRUPT_CONTROLLER drivers/irq/imx31.h
         TIMER ${TimerDriver}
         KERNEL_WCET 10u
-        CLK_SHIFT 47u
-        CLK_MAGIC 7566531633llu
+        CLK_SHIFT 38u
+        CLK_MAGIC 7853654485llu
     )
 endif()
 
