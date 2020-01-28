@@ -64,11 +64,16 @@ if(KernelPlatformQEMUArmVirt)
     else()
         set(QEMU_VIRT_OPTION "virtualization=off")
     endif()
+    if(KernelMaxNumNodes)
+        set(QEMU_SMP_OPTION "${KernelMaxNumNodes}")
+    else()
+        set(QEMU_SMP_OPTION "1")
+    endif()
     find_program(QEMU_BINARY qemu-system-${QEMU_ARCH})
     execute_process(
         COMMAND
             ${QEMU_BINARY} -machine virt,dumpdtb=${DTBPath},${QEMU_VIRT_OPTION} -m ${QEMU_MEMORY}
-            -cpu ${ARM_CPU} -nographic
+            -cpu ${ARM_CPU} -smp ${QEMU_SMP_OPTION} -nographic
     )
     execute_process(
         COMMAND
