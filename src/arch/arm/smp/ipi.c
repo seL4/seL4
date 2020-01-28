@@ -65,6 +65,15 @@ static void handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0,
             maskInterrupt(arg0, IDX_TO_IRQT(arg1));
             break;
 
+#if defined CONFIG_ARM_HYPERVISOR_SUPPORT && defined ENABLE_SMP_SUPPORT
+        case IpiRemoteCall_VCPUInjectInterrupt: {
+            virq_t virq;
+            virq.words[0] = arg2;
+            handleVCPUInjectInterruptIPI((vcpu_t *) arg0, arg1, virq);
+            break;
+        }
+#endif
+
         default:
             fail("Invalid remote call");
             break;

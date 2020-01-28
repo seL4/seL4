@@ -150,6 +150,11 @@ static void inline doRemoteOp2Arg(IpiRemoteCall_t func, word_t data1, word_t dat
     doRemoteOp(func, data1, data2, 0, cpu);
 }
 
+static void inline doRemoteOp3Arg(IpiRemoteCall_t func, word_t data1, word_t data2, word_t data3, word_t cpu)
+{
+    doRemoteOp(func, data1, data2, data3, cpu);
+}
+
 /* This is asynchronous call and could be called outside the lock.
  * Returns immediately.
  *

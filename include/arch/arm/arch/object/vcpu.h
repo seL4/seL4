@@ -116,6 +116,9 @@ exception_t decodeARMVCPUInvocation(
 
 void vcpu_restore(vcpu_t *cpu);
 void vcpu_switch(vcpu_t *cpu);
+#ifdef ENABLE_SMP_SUPPORT
+void handleVCPUInjectInterruptIPI(vcpu_t *vcpu, unsigned long index, virq_t virq);
+#endif /* ENABLE_SMP_SUPPORT */
 
 exception_t decodeVCPUWriteReg(cap_t cap, unsigned int length, word_t *buffer);
 exception_t decodeVCPUReadReg(cap_t cap, unsigned int length, bool_t call, word_t *buffer);
