@@ -118,6 +118,9 @@ enum {
     seL4_VCPUReg_R10fiq,
     seL4_VCPUReg_R11fiq,
     seL4_VCPUReg_R12fiq,
+#if  CONFIG_MAX_NUM_NODES > 1
+    seL4_VCPUReg_VMPIDR,
+#endif /* CONFIG_MAX_NUM_NODES > 1 */
     seL4_VCPUReg_SPSRsvc,
     seL4_VCPUReg_SPSRabt,
     seL4_VCPUReg_SPSRund,
