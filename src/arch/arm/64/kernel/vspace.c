@@ -367,6 +367,9 @@ static BOOT_CODE cap_t create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid
             frame_size,                    /* capFSize */
             vptr,                          /* capFMappedAddress */
             wordFromVMRights(VMReadWrite), /* capFVMRights */
+#ifdef CONFIG_ARM_SMMU
+            false,                         /* IOSpace */
+#endif
             false                          /* capFIsDevice */
         );
 }
@@ -987,6 +990,15 @@ bool_t CONST isValidNativeRoot(cap_t cap)
 bool_t CONST isValidVTableRoot(cap_t cap)
 {
     return isValidNativeRoot(cap);
+}
+
+bool_t CONST isIOSpaceFrameCap(cap_t cap)
+{
+#ifdef CONFIG_ARM_SMMU
+    return cap_frame_cap_get_capFSize(cap) == ARMSmallPage && cap_frame_cap_get_capFIsIOSpace(cap);
+#else
+    return false;
+#endif
 }
 
 void setVMRoot(tcb_t *tcb)
@@ -2132,9 +2144,24 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
         }
     }
 
-    case ARMPageUnmap:
+    case ARMPageUnmap: {
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        return performPageInvocationUnmap(cap, cte);
+
+#ifdef CONFIG_ARM_SMMU
+        if (isIOSpaceFrameCap(cap)) {
+            return performPageInvocationUnmapIO(cap, cte);
+        } else
+#endif
+        {
+            return performPageInvocationUnmap(cap, cte);
+        }
+    }
+
+#ifdef CONFIG_ARM_SMMU
+    case ARMPageMapIO: {
+        return decodeARMIOMapInvocation(invLabel, length, cte, cap, extraCaps, buffer);
+    }
+#endif
 
     case ARMPageClean_Data:
     case ARMPageInvalidate_Data:
@@ -2518,4 +2545,3 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
     return EXCEPTION_NONE;
 }
 #endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
-

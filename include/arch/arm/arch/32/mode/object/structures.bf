@@ -106,7 +106,7 @@ block vcpu_cap {
 }
 #endif
 
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
 -- IO space caps
 -- each module has an engine that can be enabled
 -- the clients use the same module can be separately enabled
@@ -124,7 +124,74 @@ block io_space_capdata {
     field   moduleID        16
     field   clientID        16
 }
+#endif
 
+#ifdef CONFIG_ARM_SMMU_V2
+-- IO space caps
+block io_space_cap {
+    field   capStreamID    16
+
+    padding                40
+    field   capType         8
+}
+
+block io_space_capdata {
+    padding                48
+
+    field streamID         16
+}
+
+block iopde {
+    padding            32
+    field_high address 20
+    padding            10
+    field pdeType      2
+}
+
+#ifdef CONFIG_SMMU_S1_TRANS
+block iopte {
+    padding                     9
+    field XN                    1
+    field PXN                   1
+    padding                     21
+    field_high address          20
+    field nG                    1
+    field AF                    1
+    field SH                    2
+    field AP                    2
+    field NS                    1
+    field AttrIndx              3
+    field pteType               2
+}
+#else
+block iopte {
+    padding                     9
+    field XN                    1
+    padding                     22
+    field_high address          20
+    padding                     1
+    field AF                    1
+    field SH                    2
+    field S2AP                  2
+    field Attr                  4
+    field pteType               2
+}
+#endif
+
+block io_page_table_cap (capType, capIOPTIsMapped, capIOPTASID, capIOPTLevel, capIOPTBasePtr, capIOPTMappedAddress) {
+    field_high  capIOPTBasePtr          20
+    padding                             12
+
+    field_high  capIOPTMappedAddress    10
+    padding                             2
+    field       capIOPTLevel            4
+    field       capIOPTASID             7
+    field       capIOPTIsMapped         1
+    field       capType                 8
+}
+#endif
+
+#ifdef CONFIG_TK1_SMMU
 block io_page_table_cap (capType, capIOPTIsMapped, capIOPTASID, capIOPTBasePtr, capIOPTMappedAddress) {
     field_high  capIOPTBasePtr          20
     padding                             12

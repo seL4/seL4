@@ -1,17 +1,16 @@
 /*
  * Copyright 2016, General Dynamics C4 Systems
- * Copyright 2018, DornerWorks
  *
  * This software may be distributed and modified according to the terms of
  * the GNU General Public License version 2. Note that NO WARRANTY is provided.
  * See "LICENSE_GPLv2.txt" for details.
  *
- * @TAG(GD_DORNERWORKS_GPL)
+ * @TAG(GD_GPL)
  */
 
 #include <config.h>
 
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
 
 #include <api/syscall.h>
 #include <machine/io.h>
@@ -21,211 +20,107 @@
 #include <arch/model/statedata.h>
 #include <object/structures.h>
 #include <linker.h>
-#include <arch/machine/smmu.h>
+#include <plat/machine/smmu.h>
 
-BOOT_CODE cap_t
-master_iospace_cap(void)
-{
-    return cap_io_space_cap_new(0);
-}
-
-static inline iopde_t iopde_new_invalid(void)
-{
-   iopde_t pde;
-
-   pde = iopde_new(0, 0);
-
-   return pde;
-}
-
-static inline iopde_t iopde_arm_new(word_t paddr)
-{
-   iopde_t pde;
-
-   pde = iopde_new(
-             paddr,
-             0x3    /* Coarse */
-         );
-
-   return pde;
-}
-
-static inline iopte_t iopte_arm_new(bool_t read, bool_t write, word_t paddr)
-{
-   iopte_t pte;
-
-#ifdef CONFIG_SMMU_S1_TRANS
-   int ap = (write ? 0x1 : 0x3);
-#else
-   int ap = (write ? 0x3 : 0x1);
-#endif
-
-
-   pte = iopte_new(
-             1,     /* Do not Execute */
-#ifdef CONFIG_SMMU_S1_TRANS
-             1,     /* Ditto */
-#endif
-             paddr,
-#ifdef CONFIG_SMMU_S1_TRANS
-             1,     /* Non-Global */
-#endif
-             1,     /* Access Flag.  Always 1. */
-             0,     /* Non-shareable */
-             ap,
-#ifdef CONFIG_SMMU_S1_TRANS
-             1,     /* Non-Secure */
-             0,     /* Normal, Non-cacheable */
-#else
-             0x5,   /* Normal, Non-cacheable */
-#endif
-             0x3    /* small */
-           );
-
-   return pte;
-}
-
-static inline iopte_t iopte_new_invalid(void)
-{
-   iopte_t pte;
-
-   pte = iopte_new(0, 0, 0, 0, 0, 0, 0
-#ifdef CONFIG_SMMU_S1_TRANS
-                   ,0, 0, 0
-#endif
-      );
-
-   return pte;
-}
 
 typedef struct lookupIOPDSlot_ret {
     exception_t status;
     iopde_t     *iopdSlot;
-    int         level;
 } lookupIOPDSlot_ret_t;
+
+typedef struct lookupIOPTSlot_ret {
+    exception_t status;
+    iopte_t     *ioptSlot;
+} lookupIOPTSlot_ret_t;
+
+
+#define IOPDE_VALID_MASK    0xe0000000
+#define IOPTE_EMPTY_MASK    0xe0000000
 
 static bool_t isIOPDEValid(iopde_t *iopde)
 {
     assert(iopde != 0);
-
-#ifdef CONFIG_ARCH_AARCH64
-    return (iopde_ptr_get_pde_type(iopde) == 0x3);
-#else
-    return (iopde_ptr_get_pdeType(iopde) == 0x3);
-#endif
+    return (iopde->words[0] & IOPDE_VALID_MASK) != 0;
 }
 
 static bool_t isIOPTEEmpty(iopte_t *iopte)
 {
     assert(iopte != 0);
-
-    return (iopte_ptr_get_pteType(iopte) != 0x3);
+    return (iopte->words[0] & IOPTE_EMPTY_MASK) == 0;
 }
 
-/* Recursively find the a page table slot for a physical address. */
-static lookupIOPDSlot_ret_t lookupIOPDSlot_resolve_levels(iopde_t *iopd, word_t translation,
-                                                          word_t levels_to_resolve, word_t levels_remaining)
-{
-    lookupIOPDSlot_ret_t ret;
-
-    word_t   iopd_index = 0;
-    iopde_t *iopd_slot = 0;
-    iopde_t *next_iopd_slot = 0;
-
-    /*
-       Convert function parameters to actual MMU level.
-
-       On ARM, this should start at 0 and go down to one less than the total
-       number of translation levels.
-    */
-    int current_level = levels_to_resolve - levels_remaining;
-
-    if (!iopd) {
-        ret.iopdSlot = 0;
-        ret.level = current_level;
-        ret.status = EXCEPTION_LOOKUP_FAULT;
-        return ret;
-    }
-
-#if defined(CONFIG_ARCH_AARCH64) && defined(CONFIG_SMMU_S1_TRANS)
-    switch (current_level) {
-    case 3:
-        iopd_index = GET_PT_INDEX(translation);
-        break;
-    case 2:
-        iopd_index = GET_PD_INDEX(translation);
-        break;
-    case 1:
-        iopd_index = GET_PUD_INDEX(translation);
-        break;
-    default:
-        iopd_index = GET_PGD_INDEX(translation);
-        break;
-    }
-#elif defined(CONFIG_ARCH_AARCH64)
-    switch (current_level) {
-    case 2:
-        iopd_index = GET_PT_INDEX(translation);
-        break;
-    case 1:
-        iopd_index = GET_PD_INDEX(translation);
-        break;
-    default:
-        iopd_index = GET_PUD_INDEX(translation);
-        break;
-    }
-#else
-    switch (current_level) {
-    case 1:
-        iopd_index = GET_PT_INDEX(translation);
-        break;
-    default:
-        iopd_index = GET_PD_INDEX(translation);
-        break;
-    }
-#endif
-
-    iopd_slot = iopd + iopd_index;
-
-    /*
-       Two possibilities, same return values.
-       - Page index not valid, cannot finish translation.  Return all
-         information to the caller, so it can add a mapping in this slot
-         if that is its intent.
-
-       - No more levels, translation complete.
-    */
-    if (!isIOPDEValid(iopd_slot) || levels_remaining == 0) {
-        ret.iopdSlot = iopd_slot;
-        ret.level = current_level;
-        ret.status = EXCEPTION_NONE;
-        return ret;
-    }
-
-    /* Handle next level */
-    next_iopd_slot = (iopde_t *)paddr_to_pptr(iopde_ptr_get_address(iopd_slot));
-    return lookupIOPDSlot_resolve_levels(next_iopd_slot, translation, levels_to_resolve, levels_remaining - 1);
-}
 
 static lookupIOPDSlot_ret_t lookupIOPDSlot(iopde_t *iopd, word_t io_address)
 {
-    if (!iopd) {
-        lookupIOPDSlot_ret_t ret;
-        ret.iopdSlot = 0;
-        ret.level = 0;
-        ret.status = EXCEPTION_LOOKUP_FAULT;
-        return ret;
-    } else {
-#ifdef CONFIG_ARCH_AARCH64
-#ifdef CONFIG_SMMU_S1_TRANS
-       return lookupIOPDSlot_resolve_levels(iopd, io_address, 3, 3);
-#else
-       return lookupIOPDSlot_resolve_levels(iopd, io_address, 2, 2);
-#endif
-#else
-       return lookupIOPDSlot_resolve_levels(iopd, io_address, 1, 1);
-#endif
+    lookupIOPDSlot_ret_t ret;
+    uint32_t index = plat_smmu_iopd_index(io_address);
+    ret.status = EXCEPTION_NONE;
+    ret.iopdSlot = iopd + index;
+    return ret;
+}
+
+static lookupIOPTSlot_ret_t lookupIOPTSlot(iopde_t *iopd, word_t io_address)
+{
+    lookupIOPTSlot_ret_t pt_ret;
+    uint32_t index;
+    iopte_t *pt;
+
+    lookupIOPDSlot_ret_t pd_ret = lookupIOPDSlot(iopd, io_address);
+    if (pd_ret.status != EXCEPTION_NONE) {
+        pt_ret.status = EXCEPTION_LOOKUP_FAULT;
+        pt_ret.ioptSlot = 0;
+        return pt_ret;
     }
+
+    if (!isIOPDEValid(pd_ret.iopdSlot) ||
+        iopde_ptr_get_page_size(pd_ret.iopdSlot) != iopde_iopde_pt) {
+        pt_ret.status = EXCEPTION_LOOKUP_FAULT;
+        pt_ret.ioptSlot = 0;
+        return pt_ret;
+    }
+
+    index = plat_smmu_iopt_index(io_address);
+    pt = (iopte_t *)paddr_to_pptr(iopde_iopde_pt_ptr_get_address(pd_ret.iopdSlot));
+
+    if (pt == 0) {
+        pt_ret.status = EXCEPTION_LOOKUP_FAULT;
+        pt_ret.ioptSlot = 0;
+        return pt_ret;
+    }
+
+    pt_ret.status = EXCEPTION_NONE;
+    pt_ret.ioptSlot = pt + index;
+    return pt_ret;
+}
+
+BOOT_CODE seL4_SlotRegion create_iospace_caps(cap_t root_cnode_cap)
+{
+    seL4_SlotPos start = ndks_boot.slot_pos_cur;
+    seL4_SlotPos end = 0;
+    cap_t        io_space_cap;
+    int i = 0;
+    int num_smmu = plat_smmu_init();
+
+    if (num_smmu == 0) {
+        printf("SMMU init failuer\n");
+        return S_REG_EMPTY;
+    }
+
+    /* the 0 is reserved as an invalidASID,
+     * assuming each module is assigned an unique ASID
+     * and the ASIDs are contiguous
+     * */
+    for (i = 1; i <= num_smmu; i++) {
+        io_space_cap = cap_io_space_cap_new(i, i);
+        if (!provide_cap(root_cnode_cap, io_space_cap)) {
+            return S_REG_EMPTY;
+        }
+    }
+    end = ndks_boot.slot_pos_cur;
+    printf("Region [%x to %x) for SMMU caps\n", (unsigned int)start, (unsigned int)end);
+    return (seL4_SlotRegion) {
+        start, end
+    };
 }
 
 static exception_t performARMIOPTInvocationMap(cap_t cap, cte_t *slot, iopde_t *iopdSlot,
@@ -241,7 +136,7 @@ static exception_t performARMIOPTInvocationMap(cap_t cap, cte_t *slot, iopde_t *
     plat_smmu_tlb_flush_all();
 
     slot->cap = cap;
-    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+    setThreadState(ksCurThread, ThreadState_Restart);
     return EXCEPTION_NONE;
 }
 
@@ -258,7 +153,7 @@ exception_t decodeARMIOPTInvocation(
     cap_t      io_space;
     word_t     io_address;
     word_t     paddr;
-    uint16_t   stream_id;
+    uint16_t   module_id;
     uint32_t   asid;
     iopde_t    *pd;
     iopde_t    iopde;
@@ -268,7 +163,7 @@ exception_t decodeARMIOPTInvocation(
         deleteIOPageTable(slot->cap);
         slot->cap = cap_io_page_table_cap_set_capIOPTIsMapped(slot->cap, 0);
 
-        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+        setThreadState(ksCurThread, ThreadState_Restart);
         return EXCEPTION_NONE;
     }
 
@@ -285,7 +180,7 @@ exception_t decodeARMIOPTInvocation(
     }
 
     io_space     = excaps.excaprefs[0]->cap;
-    io_address   = getSyscallArg(0, buffer) & ~MASK(PD_INDEX_OFFSET);
+    io_address   = getSyscallArg(0, buffer) & ~MASK(SMMU_IOPD_INDEX_SHIFT);
 
     if (cap_io_page_table_cap_get_capIOPTIsMapped(cap)) {
         userError("IOPTMap: Cap already mapped.");
@@ -301,31 +196,31 @@ exception_t decodeARMIOPTInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    stream_id = cap_io_space_cap_get_capStreamID(io_space);
-    asid = plat_smmu_get_asid_by_stream_id(stream_id);
+    module_id = cap_io_space_cap_get_capModuleID(io_space);
+    asid = plat_smmu_get_asid_by_module_id(module_id);
     assert(asid != asidInvalid);
+
+    paddr = pptr_to_paddr((void *)cap_io_page_table_cap_get_capIOPTBasePtr(cap));
 
     pd = plat_smmu_lookup_iopd_by_asid(asid);
 
-    lu_ret  = lookupIOPDSlot(pd, io_address);
+    lu_ret = lookupIOPDSlot(pd, io_address);
 
-    if (lu_ret.status != EXCEPTION_NONE) {
-        current_syscall_error.type = seL4_FailedLookup;
-        current_syscall_error.failedLookupWasSource = false;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    if (iopde_ptr_get_address(lu_ret.iopdSlot) != 0) {
+    if (isIOPDEValid(lu_ret.iopdSlot)) {
+        userError("IOPTMap: Delete first.");
         current_syscall_error.type = seL4_DeleteFirst;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    paddr = pptr_to_paddr((void *)cap_io_page_table_cap_get_capIOPTBasePtr(cap));
-    iopde = iopde_arm_new(paddr);
+    iopde = iopde_iopde_pt_new(
+                1,      /* read         */
+                1,      /* write        */
+                1,      /* nonsecure    */
+                paddr
+            );
 
     cap = cap_io_page_table_cap_set_capIOPTIsMapped(cap, 1);
     cap = cap_io_page_table_cap_set_capIOPTASID(cap, asid);
-    cap = cap_io_page_table_cap_set_capIOPTLevel(cap, lu_ret.level);
     cap = cap_io_page_table_cap_set_capIOPTMappedAddress(cap, io_address);
 
     return performARMIOPTInvocationMap(cap, slot, lu_ret.iopdSlot, iopde);
@@ -343,7 +238,7 @@ static exception_t performARMIOMapInvocation(cap_t cap, cte_t *slot, iopte_t *io
 
     slot->cap = cap;
 
-    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+    setThreadState(ksCurThread, ThreadState_Restart);
     return EXCEPTION_NONE;
 }
 
@@ -359,14 +254,13 @@ exception_t decodeARMIOMapInvocation(
     cap_t      io_space;
     paddr_t    io_address;
     paddr_t    paddr;
-    uint16_t   stream_id;
+    uint32_t   module_id;
     uint32_t   asid;
     iopde_t    *pd;
-    iopte_t    *ioptSlot;
     iopte_t    iopte;
     vm_rights_t     frame_cap_rights;
     seL4_CapRights_t    dma_cap_rights_mask;
-    lookupIOPDSlot_ret_t lu_ret;
+    lookupIOPTSlot_ret_t lu_ret;
 
     if (excaps.excaprefs[0] == NULL || length < 2) {
         userError("IOMap: Truncated message.");
@@ -381,7 +275,7 @@ exception_t decodeARMIOMapInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (generic_frame_cap_get_capFMappedASID(cap) != asidInvalid) {
+    if (cap_small_frame_cap_get_capFMappedASID(cap) != asidInvalid) {
         userError("IOMap: Frame all ready mapped.");
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 0;
@@ -390,7 +284,7 @@ exception_t decodeARMIOMapInvocation(
 
     io_space    = excaps.excaprefs[0]->cap;
     io_address  = getSyscallArg(1, buffer) & ~MASK(PAGE_BITS);
-    paddr       = pptr_to_paddr((void *)generic_frame_cap_get_capFBasePtr(cap));
+    paddr       = pptr_to_paddr((void *)cap_small_frame_cap_get_capFBasePtr(cap));
 
     if (cap_get_capType(io_space) != cap_io_space_cap) {
         userError("IOMap: Invalid IOSpace cap.");
@@ -399,51 +293,63 @@ exception_t decodeARMIOMapInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    stream_id = cap_io_space_cap_get_capStreamID(io_space);
-    asid = plat_smmu_get_asid_by_stream_id(stream_id);
+    module_id = cap_io_space_cap_get_capModuleID(io_space);
+    asid = plat_smmu_get_asid_by_module_id(module_id);
     assert(asid != asidInvalid);
 
     pd = plat_smmu_lookup_iopd_by_asid(asid);
 
-    lu_ret = lookupIOPDSlot(pd, io_address);
-
-    if (lu_ret.status != EXCEPTION_NONE ||
-#ifdef CONFIG_ARCH_AARCH64
-#ifdef CONFIG_SMMU_S1_TRANS
-        lu_ret.level != 3
-#else
-        lu_ret.level != 2
-#endif
-#else
-        lu_ret.level != 1
-#endif
-       ) {
+    lu_ret = lookupIOPTSlot(pd, io_address);
+    if (lu_ret.status != EXCEPTION_NONE) {
         current_syscall_error.type = seL4_FailedLookup;
         current_syscall_error.failedLookupWasSource = false;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    ioptSlot = (iopte_t*)lu_ret.iopdSlot;
-    if (!isIOPTEEmpty(ioptSlot)) {
+    if (!isIOPTEEmpty(lu_ret.ioptSlot)) {
         userError("IOMap: Delete first.");
         current_syscall_error.type = seL4_DeleteFirst;
         return EXCEPTION_SYSCALL_ERROR;
     }
-    frame_cap_rights = generic_frame_cap_get_capFVMRights(cap);
+    frame_cap_rights = cap_small_frame_cap_get_capFVMRights(cap);
     dma_cap_rights_mask = rightsFromWord(getSyscallArg(0, buffer));
 
     if ((frame_cap_rights == VMReadOnly) && seL4_CapRights_get_capAllowRead(dma_cap_rights_mask)) {
-        iopte = iopte_arm_new(true, false, paddr);
+        /* read only */
+        iopte = iopte_new(
+                    1,      /* read         */
+                    0,      /* write        */
+                    1,      /* nonsecure    */
+                    paddr
+                );
     } else if (frame_cap_rights == VMReadWrite) {
         if (seL4_CapRights_get_capAllowRead(dma_cap_rights_mask) &&
             !seL4_CapRights_get_capAllowWrite(dma_cap_rights_mask)) {
-            iopte = iopte_arm_new(true, false, paddr);
+            /* read only */
+            iopte = iopte_new(
+                        1,      /* read         */
+                        0,      /* write        */
+                        1,      /* nonsecure    */
+                        paddr
+                    );
         } else if (!seL4_CapRights_get_capAllowRead(dma_cap_rights_mask) &&
                    seL4_CapRights_get_capAllowWrite(dma_cap_rights_mask)) {
-            iopte = iopte_arm_new(false, true, paddr);
+            /* write only */
+            iopte = iopte_new(
+                        0,      /* read         */
+                        1,      /* write        */
+                        1,      /* nonsecure    */
+                        paddr
+                    );
         } else if (seL4_CapRights_get_capAllowRead(dma_cap_rights_mask) &&
                    seL4_CapRights_get_capAllowWrite(dma_cap_rights_mask)) {
-            iopte = iopte_arm_new(true, true, paddr);
+            /* read write */
+            iopte = iopte_new(
+                        1,      /* read         */
+                        1,      /* write        */
+                        1,      /* nonsecure    */
+                        paddr
+                    );
         } else {
             userError("IOMap: Invalid argument.");
             current_syscall_error.type = seL4_InvalidArgument;
@@ -459,10 +365,11 @@ exception_t decodeARMIOMapInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    cap = generic_frame_cap_set_capFIsIOSpace(cap, 1);
-    cap = generic_frame_cap_set_capFMappedAddress(cap, asid, io_address);
+    cap = cap_small_frame_cap_set_capFIsIOSpace(cap, 1);
+    cap = cap_small_frame_cap_set_capFMappedASID(cap, asid);
+    cap = cap_small_frame_cap_set_capFMappedAddress(cap, io_address);
 
-    return performARMIOMapInvocation(cap, slot, ioptSlot, iopte);
+    return performARMIOMapInvocation(cap, slot, lu_ret.ioptSlot, iopte);
 }
 
 
@@ -473,29 +380,26 @@ void deleteIOPageTable(cap_t io_pt_cap)
     iopde_t *pd;
     lookupIOPDSlot_ret_t lu_ret;
     word_t io_address;
-    uint32_t             level;
-
     if (cap_io_page_table_cap_get_capIOPTIsMapped(io_pt_cap)) {
         io_pt_cap = cap_io_page_table_cap_set_capIOPTIsMapped(io_pt_cap, 0);
-        level = cap_io_page_table_cap_get_capIOPTLevel(io_pt_cap);
         asid = cap_io_page_table_cap_get_capIOPTASID(io_pt_cap);
         assert(asid != asidInvalid);
-
         pd = plat_smmu_lookup_iopd_by_asid(asid);
         io_address = cap_io_page_table_cap_get_capIOPTMappedAddress(io_pt_cap);
 
-        lu_ret = lookupIOPDSlot_resolve_levels(pd, io_address, level, level);
-        if (lu_ret.status != EXCEPTION_NONE || lu_ret.level != level) {
+        lu_ret = lookupIOPDSlot(pd, io_address);
+        if (lu_ret.status != EXCEPTION_NONE) {
             return;
         }
 
         if (isIOPDEValid(lu_ret.iopdSlot) &&
-            iopde_ptr_get_address(lu_ret.iopdSlot) != (pptr_to_paddr((void *)cap_io_page_table_cap_get_capIOPTBasePtr(
-                                                                         io_pt_cap)))) {
+            iopde_ptr_get_page_size(lu_ret.iopdSlot) == iopde_iopde_pt &&
+            iopde_iopde_pt_ptr_get_address(lu_ret.iopdSlot) != (pptr_to_paddr((void *)cap_io_page_table_cap_get_capIOPTBasePtr(
+                                                                                  io_pt_cap)))) {
             return;
         }
 
-        *lu_ret.iopdSlot = iopde_new_invalid();
+        *lu_ret.iopdSlot = iopde_iopde_pt_new(0, 0, 0, 0);
         cleanCacheRange_RAM((word_t)lu_ret.iopdSlot,
                             ((word_t)lu_ret.iopdSlot) + sizeof(iopde_t),
                             addrFromPPtr(lu_ret.iopdSlot));
@@ -508,31 +412,29 @@ void deleteIOPageTable(cap_t io_pt_cap)
 
 void unmapIOPage(cap_t cap)
 {
-    lookupIOPDSlot_ret_t lu_ret;
+    lookupIOPTSlot_ret_t lu_ret;
     iopde_t *pd;
-    iopte_t *ioptSlot;
     word_t  io_address;
     uint32_t asid;
 
-    io_address = generic_frame_cap_get_capFMappedAddress(cap);
-    asid = generic_frame_cap_get_capFMappedASID(cap);
+    io_address = cap_small_frame_cap_get_capFMappedAddress(cap);
+    asid = cap_small_frame_cap_get_capFMappedASID(cap);
     assert(asid != asidInvalid);
     pd = plat_smmu_lookup_iopd_by_asid(asid);
 
-    lu_ret = lookupIOPDSlot(pd, io_address);
+    lu_ret = lookupIOPTSlot(pd, io_address);
+
     if (lu_ret.status != EXCEPTION_NONE) {
         return;
     }
-
-    ioptSlot = (iopte_t*)lu_ret.iopdSlot;
-    if (iopte_ptr_get_address(ioptSlot) != pptr_to_paddr((void *)generic_frame_cap_get_capFBasePtr(cap))) {
+    if (iopte_ptr_get_address(lu_ret.ioptSlot) != pptr_to_paddr((void *)cap_small_frame_cap_get_capFBasePtr(cap))) {
         return;
     }
 
-    *ioptSlot = iopte_new_invalid();
-    cleanCacheRange_RAM((word_t)ioptSlot,
-                        ((word_t)ioptSlot) + sizeof(iopte_t),
-                        addrFromPPtr(ioptSlot));
+    *lu_ret.ioptSlot = iopte_new(0, 0, 0, 0);
+    cleanCacheRange_RAM((word_t)lu_ret.ioptSlot,
+                        ((word_t)lu_ret.ioptSlot) + sizeof(iopte_t),
+                        addrFromPPtr(lu_ret.ioptSlot));
 
     plat_smmu_tlb_flush_all();
 
@@ -541,13 +443,16 @@ void unmapIOPage(cap_t cap)
 
 void clearIOPageDirectory(cap_t cap)
 {
-    uint16_t stream_id = cap_io_space_cap_get_capStreamID(cap);
-    uint32_t asid;
-
-    asid = plat_smmu_get_asid_by_stream_id(stream_id);
+    iopde_t  *pd;
+    uint32_t asid = cap_io_space_cap_get_capModuleID(cap);
+    word_t   size = BIT((SMMU_PD_INDEX_BITS));
     assert(asid != asidInvalid);
+    pd = plat_smmu_lookup_iopd_by_asid(asid);
 
-    plat_smmu_release_asid(asid);
+    memset((void *)pd, 0, size);
+    cleanCacheRange_RAM((word_t)pd, (word_t)pd + size, addrFromPPtr(pd));
+
+    plat_smmu_tlb_flush_all();
 
     return;
 }
@@ -558,8 +463,9 @@ exception_t performPageInvocationUnmapIO(
 )
 {
     unmapIOPage(slot->cap);
-    slot->cap = generic_frame_cap_set_capFMappedAddress(slot->cap, asidInvalid, 0);
-    slot->cap = generic_frame_cap_set_capFIsIOSpace(slot->cap, 0);
+    slot->cap = cap_small_frame_cap_set_capFMappedAddress(slot->cap, 0);
+    slot->cap = cap_small_frame_cap_set_capFIsIOSpace(slot->cap, 0);
+    slot->cap = cap_small_frame_cap_set_capFMappedASID(slot->cap, asidInvalid);
 
     return EXCEPTION_NONE;
 }
@@ -570,4 +476,4 @@ exception_t decodeARMIOSpaceInvocation(word_t invLabel, cap_t cap)
     current_syscall_error.type = seL4_IllegalOperation;
     return EXCEPTION_SYSCALL_ERROR;
 }
-#endif /* end of CONFIG_ARM_SMMU */
+#endif /* end of CONFIG_TK1_SMMU */

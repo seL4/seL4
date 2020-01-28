@@ -30,6 +30,8 @@ enum IRQConstants {
 #include <@CONFIGURE_TIMER@>
 
 #cmakedefine CONFIGURE_SMMU <@CONFIGURE_SMMU@>
+#define SMMU_SIZE @CONFIGURE_SMMU_SIZE@
+#define ARM_PLAT_NUM_CB @CONFIGURE_SMMU_CB@
 #if (defined(CONFIGURE_SMMU) && defined(CONFIG_ARM_SMMU))
 #include CONFIGURE_SMMU
 #endif

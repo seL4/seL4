@@ -51,10 +51,13 @@ if(KernelPlatformZynqmp)
         CLK_MAGIC 1374389535llu
         CLK_SHIFT 37u
         KERNEL_WCET 10u
+        SMMU arch/machine/smmu.h
+        SMMU_SIZE 0x20000
+        SMMU_CB 16
     )
 endif()
 
 add_sources(
     DEP "KernelPlatformZynqmp"
-    CFILES src/arch/arm/machine/gic_v2.c src/arch/arm/machine/l2c_nop.c
+    CFILES src/arch/arm/machine/smmu.c src/arch/arm/machine/gic_v2.c src/arch/arm/machine/l2c_nop.c
 )

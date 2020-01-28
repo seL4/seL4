@@ -126,6 +126,17 @@ devices:
         macro: CONFIG_ARM_SMMU
     interrupts:
       INTERRUPT_SMMU: 0
+  # SMMU
+  - compatible:
+    - arm,mmu-500
+    regions:
+      - executeNever: false
+        index: 0
+        kernel: SMMU_PPTR
+        macro: CONFIG_ARM_SMMU
+        kernel_size: 0x20000
+    interrupts:
+      INTERRUPT_SMMU: 0
   # ARM architected timer (timer/arm,arch_timer.txt)
   - compatible:
       - arm,armv7-timer

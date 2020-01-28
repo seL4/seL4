@@ -120,9 +120,35 @@ config_option(
 )
 
 config_option(
-    KernelArmSMMU ARM_SMMU "Enable SystemMMU for the Tegra TK1 SoC"
+    KernelArmSMMUTK1 TK1_SMMU "Enable SystemMMU for the Tegra TK1 SoC"
     DEFAULT OFF
     DEPENDS "KernelPlatformTK1"
+)
+
+config_option(KernelArmSMMU ARM_SMMU "Enable SystemMMU support"
+    DEFAULT OFF
+    DEPENDS "KernelArmSMMUTK1 OR KernelArmSMMUv2"
+)
+
+config_option(KernelArmSMMUv2 ARM_SMMU_V2 "Enable SystemMMUv2 Support"
+    DEFAULT OFF
+    DEPENDS "KernelPlatformZynqmp"
+)
+
+config_option(KernelArmSMMUUnknownFault ARM_SMMU_UNKNOWN_STREAM_FAULT
+    "Enable faults for unknown Stream IDs. \
+    Fault when a master with a stream ID that does not match any \
+    current SMMU mappings attempts to use the bus. This prevents \
+    any surreptitious DMA transactions through the SMMU."
+    DEFAULT ON
+    DEPENDS "KernelArmSMMUv2"
+)
+
+config_option(KernelArmSMMUS1Trans SMMU_S1_TRANS
+    "Support stage 1 SMMU mappings.  Can be useful when the IPA space \
+    is limited."
+    DEFAULT OFF
+    DEPENDS "KernelArmSMMUv2"
 )
 
 config_option(KernelArmEnableA9Prefetcher ENABLE_A9_PREFETCHER "Enable Cortex-A9 prefetcher \
@@ -221,9 +247,15 @@ add_sources(
         machine/hardware.c
         object/interrupt.c
         object/tcb.c
-        object/iospace.c
         object/vcpu.c
         smp/ipi.c
+)
+
+add_sources(
+    DEP "NOT KernelPlatformTK1"
+    PREFIX src/arch/arm
+    CFILES
+        object/iospace.c
 )
 
 add_bf_source_old("KernelArchARM" "structures.bf" "include/arch/arm" "arch/object")

@@ -11,7 +11,7 @@
 #include <types.h>
 #include <config.h>
 
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
 
 #include <plat/machine/smmu.h>
 #include <linker.h>
@@ -148,6 +148,7 @@ void plat_smmu_tlb_flush_all(void)
 {
     uint32_t cmd = TLB_FLUSH_ALL;
     smmu_regs->smmu_tlb_flush = cmd;
+    plat_smmu_ptc_flush_all();
 }
 
 BOOT_CODE int plat_smmu_init(void)

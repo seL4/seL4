@@ -1035,7 +1035,7 @@ bool_t CONST isValidVTableRoot(cap_t cap)
 bool_t CONST isIOSpaceFrameCap(cap_t cap)
 {
 #ifdef CONFIG_ARM_SMMU
-    return cap_get_capType(cap) == cap_small_frame_cap && cap_small_frame_cap_get_capFIsIOSpace(cap);
+    return generic_frame_cap_get_capFSize(cap) == ARMSmallPage && generic_frame_cap_get_capFIsIOSpace(cap);
 #else
     return false;
 #endif
