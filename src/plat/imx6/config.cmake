@@ -43,7 +43,7 @@ if(KernelPlatImx6)
         set(timer_freq 498000000llu)
     else()
         set(timer_file drivers/timer/arm_priv.h)
-        set(timer_freq 400000000llu)
+        set(timer_freq 498000000llu)
     endif()
 
     declare_default_headers(
