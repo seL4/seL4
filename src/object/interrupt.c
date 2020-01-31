@@ -41,7 +41,7 @@ exception_t decodeIRQControlInvocation(word_t invLabel, word_t length,
             return EXCEPTION_SYSCALL_ERROR;
         }
         irq_w = getSyscallArg(0, buffer);
-        irq = CORE_IRQ_TO_IDX(0, irq_w);
+        irq = CORE_IRQ_TO_IDX(getCurrentCPUIndex(), irq_w);
         index = getSyscallArg(1, buffer);
         depth = getSyscallArg(2, buffer);
 
