@@ -574,5 +574,6 @@ static inline void setACTLR(word_t actlr)
 }
 
 void arch_clean_invalidate_caches(void);
+void arch_clean_invalidate_L1_caches(word_t type);
 
 #endif /* __ARCH_MACHINE_32_H */

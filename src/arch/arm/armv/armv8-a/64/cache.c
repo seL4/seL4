@@ -80,6 +80,22 @@ void clean_D_PoU(void)
     }
 }
 
+static inline void cleanInvalidate_D_by_level(int l)
+{
+    word_t lsize = readCacheSize(l, 0);
+    int lbits = LINEBITS(lsize);
+    int assoc = ASSOC(lsize);
+    int assoc_bits = wordBits - clzl(assoc - 1);
+    int nsets = NSETS(lsize);
+
+    for (int w = 0; w < assoc; w++) {
+        for (int s = 0; s < nsets; s++) {
+            cleanInvalidateByWSL((w << (32 - assoc_bits)) |
+                                 (s << lbits) | (l << 1));
+        }
+    }
+}
+
 void cleanInvalidate_D_PoC(void)
 {
     int clid = readCLID();
@@ -87,18 +103,12 @@ void cleanInvalidate_D_PoC(void)
 
     for (int l = 0; l < loc; l++) {
         if (CTYPE(clid, l) > ARMCacheI) {
-            word_t lsize = readCacheSize(l, 0);
-            int lbits = LINEBITS(lsize);
-            int assoc = ASSOC(lsize);
-            int assoc_bits = wordBits - clzl(assoc - 1);
-            int nsets = NSETS(lsize);
-
-            for (int w = 0; w < assoc; w++) {
-                for (int s = 0; s < nsets; s++) {
-                    cleanInvalidateByWSL((w << (32 - assoc_bits)) |
-                                         (s << lbits) | (l << 1));
-                }
-            }
+            cleanInvalidate_D_by_level(l);
         }
     }
+}
+
+void cleanInvalidate_L1D(void)
+{
+    cleanInvalidate_D_by_level(0);
 }

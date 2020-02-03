@@ -372,5 +372,6 @@ static inline word_t ats2e0r(word_t va)
 }
 
 void arch_clean_invalidate_caches(void);
+void arch_clean_invalidate_L1_caches(word_t type);
 
 #endif /* __ARCH_MODE_MACHINE_H */

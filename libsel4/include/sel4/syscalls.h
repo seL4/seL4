@@ -250,6 +250,20 @@ seL4_BenchmarkNullSyscall(void);
 LIBSEL4_INLINE_FUNC void
 seL4_BenchmarkFlushCaches(void);
 
+#ifdef CONFIG_ARCH_ARM
+/**
+ * @xmlonly <manual name="Flush L1 Caches" label="sel4_benchmarkflushl1caches"/> @endxmlonly
+ * @brief Flush L1 caches.
+ *
+ * Flush L1 caches for this platform (currently only support for ARM). Allow to specify the cache type
+ * to be flushed (i.e. instruction cache only, data cache only and both instruction cache and data cache).
+ *
+ * @param[in] cache_type L1 Cache Type to be flushed
+ */
+LIBSEL4_INLINE_FUNC void
+seL4_BenchmarkFlushL1Caches(seL4_Word cache_type);
+#endif
+
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 /**
  * @xmlonly <manual name="Get Thread Utilisation" label="sel4_benchmarkgetthreadutilisation"/> @endxmlonly

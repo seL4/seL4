@@ -183,3 +183,17 @@ void arch_clean_invalidate_caches(void)
     cleanInvalidateL1Caches();
     isb();
 }
+
+void arch_clean_invalidate_L1_caches(word_t type)
+{
+    dsb();
+    if (type & BIT(1)) {
+        cleanInvalidate_L1D();
+        dsb();
+    }
+    if (type & BIT(0)) {
+        invalidate_I_PoU();
+        dsb();
+        isb();
+    }
+}

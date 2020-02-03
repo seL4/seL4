@@ -189,7 +189,16 @@ exception_t handleUnknownSyscall(word_t w)
 
 #ifdef CONFIG_ENABLE_BENCHMARKS
     if (w == SysBenchmarkFlushCaches) {
+#ifdef CONFIG_ARCH_ARM
+        tcb_t *thread = NODE_STATE(ksCurThread);
+        if (getRegister(thread, capRegister)) {
+            arch_clean_invalidate_L1_caches(getRegister(thread, msgInfoRegister));
+        } else {
+            arch_clean_invalidate_caches();
+        }
+#else
         arch_clean_invalidate_caches();
+#endif
         return EXCEPTION_NONE;
     } else if (w == SysBenchmarkResetLog) {
 #ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER

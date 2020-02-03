@@ -47,6 +47,7 @@ void branchFlushRange(word_t start, word_t end, paddr_t pstart);
 
 void clean_D_PoU(void);
 void cleanInvalidate_D_PoC(void);
+void cleanInvalidate_L1D(void);
 void cleanCaches_PoU(void);
 void cleanInvalidateL1Caches(void);
 

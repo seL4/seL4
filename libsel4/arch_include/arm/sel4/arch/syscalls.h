@@ -711,7 +711,13 @@ LIBSEL4_INLINE_FUNC void seL4_BenchmarkNullSyscall(void)
 
 LIBSEL4_INLINE_FUNC void seL4_BenchmarkFlushCaches(void)
 {
-    arm_sys_null(seL4_SysBenchmarkFlushCaches);
+    arm_sys_send_null(seL4_SysBenchmarkFlushCaches, 0, 0);
+    asm volatile("" ::: "memory");
+}
+
+LIBSEL4_INLINE_FUNC void seL4_BenchmarkFlushL1Caches(seL4_Word cache_type)
+{
+    arm_sys_send_null(seL4_SysBenchmarkFlushCaches, 1, cache_type);
     asm volatile("" ::: "memory");
 }
 

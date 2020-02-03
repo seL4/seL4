@@ -34,4 +34,11 @@ typedef enum {
     SEL4_FORCE_LONG_ENUM(seL4_ARM_VMAttributes),
 } seL4_ARM_VMAttributes;
 
+typedef enum {
+    seL4_ARM_CacheI   = 1,
+    seL4_ARM_CacheD   = 2,
+    seL4_ARM_CacheID  = 3,
+    SEL4_FORCE_LONG_ENUM(seL4_ARM_CacheType),
+} seL4_ARM_CacheType;
+
 #endif /* __ARCH_SEL4TYPES_H__ */
