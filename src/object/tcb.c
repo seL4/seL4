@@ -610,7 +610,7 @@ static exception_t decodeSetBreakpoint(cap_t cap, word_t *buffer)
             current_syscall_error.invalidArgumentNumber = 4;
             return EXCEPTION_SYSCALL_ERROR;
         }
-        if (bp_num >= seL4_FirstWatchpoint
+        if ((seL4_FirstWatchpoint == -1 || bp_num >= seL4_FirstWatchpoint)
             && seL4_FirstBreakpoint != seL4_FirstWatchpoint) {
             userError("Debug: Can't specify a watchpoint ID with type seL4_InstructionBreakpoint.");
             current_syscall_error.type = seL4_InvalidArgument;
@@ -624,7 +624,7 @@ static exception_t decodeSetBreakpoint(cap_t cap, word_t *buffer)
             current_syscall_error.invalidArgumentNumber = 3;
             return EXCEPTION_SYSCALL_ERROR;
         }
-        if (bp_num < seL4_FirstWatchpoint) {
+        if (seL4_FirstWatchpoint != -1 && bp_num < seL4_FirstWatchpoint) {
             userError("Debug: Data watchpoints cannot specify non-data watchpoint ID.");
             current_syscall_error.type = seL4_InvalidArgument;
             current_syscall_error.invalidArgumentNumber = 2;
