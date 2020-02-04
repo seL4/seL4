@@ -98,6 +98,10 @@ fastpath_call(word_t cptr, word_t msgInfo)
     stored_hw_asid.words[0] = cap_pml4_cap_get_capPML4MappedASID_fp(newVTable);
 #endif
 
+#ifdef CONFIG_ARCH_IA32
+    /* stored_hw_asid is unused on ia32 fastpath, but gets passed into a function below. */
+    stored_hw_asid.words[0] = 0;
+#endif
 #ifdef CONFIG_ARCH_AARCH64
     stored_hw_asid.words[0] = cap_vtable_root_get_mappedASID(newVTable);
 #endif
@@ -341,7 +345,10 @@ void fastpath_reply_recv(word_t cptr, word_t msgInfo)
 #ifdef CONFIG_ARCH_X86_64
     stored_hw_asid.words[0] = cap_pml4_cap_get_capPML4MappedASID(newVTable);
 #endif
-
+#ifdef CONFIG_ARCH_IA32
+    /* stored_hw_asid is unused on ia32 fastpath, but gets passed into a function below. */
+    stored_hw_asid.words[0] = 0;
+#endif
 #ifdef CONFIG_ARCH_AARCH64
     stored_hw_asid.words[0] = cap_vtable_root_get_mappedASID(newVTable);
 #endif
