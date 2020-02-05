@@ -33,11 +33,11 @@ static inline void isb(void)
     asm volatile("isb sy" ::: "memory");
 }
 
-#define MRS(reg, v)  asm volatile("mrs %0," reg : "=r"(v))
+#define MRS(reg, v)  asm volatile("mrs %x0," reg : "=r"(v))
 #define MSR(reg, v)                                \
     do {                                           \
         word_t _v = v;                             \
-        asm volatile("msr " reg ",%0" :: "r" (_v));\
+        asm volatile("msr " reg ",%x0" :: "r" (_v));\
     }while(0)
 
 #define SYSTEM_WRITE_WORD(reg, v) MSR(reg, v)
