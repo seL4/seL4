@@ -27,6 +27,24 @@ exception_t decodeARMSIDControlInvocation(word_t label, unsigned int length, cpt
 	cap_t cnodeCap;
 	lookupSlot_ret_t lu_ret;
 	exception_t status;
+	uint32_t faultStatus, faultSyndrome_0, faultSyndrome_1;
+
+	if (label == ARMSIDGetFault) {
+		smmu_read_fault_state(&faultStatus, &faultSyndrome_0, &faultSyndrome_1);
+		setRegister(NODE_STATE(ksCurThread), msgRegisters[0], faultStatus);
+		setRegister(NODE_STATE(ksCurThread), msgRegisters[1], faultSyndrome_0);
+		setRegister(NODE_STATE(ksCurThread), msgRegisters[2], faultSyndrome_1);
+		setRegister(NODE_STATE(ksCurThread), msgInfoRegister,
+                    wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, 3)));
+		setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+		return EXCEPTION_NONE;
+	}
+
+	if (label == ARMSIDClearFault) {
+		smmu_clear_fault_state();
+		setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+		return EXCEPTION_NONE;
+	}
 
 	if (label != ARMSIDIssueSIDManager) {
 		userError("SIDControl: Illegal operation.");
@@ -234,6 +252,8 @@ exception_t decodeARMCBInvocation(word_t label, unsigned int length, cptr_t cptr
 	cte_t *cbSlot;
 	exception_t status;
 	word_t cb; 
+	uint32_t faultStatus;
+	word_t faultAddress;
 
 	switch (label) {
 		case ARMCBTLBInvalidate:
@@ -297,6 +317,21 @@ exception_t decodeARMCBInvocation(word_t label, unsigned int length, cptr_t cptr
 			}
 			setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
 			return EXCEPTION_NONE;
+		
+		case ARMCBGetFault:
+			smmu_cb_read_fault_state(cap_cb_cap_get_capCB(cap), &faultStatus, &faultAddress);
+			setRegister(NODE_STATE(ksCurThread), msgRegisters[0], faultStatus);
+			setRegister(NODE_STATE(ksCurThread), msgRegisters[1], faultAddress);
+			setRegister(NODE_STATE(ksCurThread), msgInfoRegister,
+                        wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, 2)));
+			setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+			return EXCEPTION_NONE;
+			
+		case ARMCBClearFault:
+			smmu_cb_clear_fault_state(cap_cb_cap_get_capCB(cap));
+			setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+			return EXCEPTION_NONE;
+		
 		default:
 			userError("ARMCBInvocation: Illegal operation.");
 			current_syscall_error.type = seL4_IllegalOperation;

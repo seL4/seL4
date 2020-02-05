@@ -319,6 +319,29 @@
             <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
         </method>
+       <method id="ARMSIDGetFault" name="GetFault" manual_name="GetFault"
+           manual_label="sid_controlgetfault">
+            <brief>
+                Get the fault status of the SMMU.
+            </brief>
+            <return>
+                A <texttt text='seL4_ARM_SMMU_GetFault_t'/> struct that contains a
+                <texttt text='seL4_Word status'/>, which holds the global fault status of the SMMU,
+                <texttt text='seL4_Word syndrome_0'/>, which holds the global fault syndrome 0 of the SMMU,
+                <texttt text='seL4_Word syndrome_1'/>, which holds the global fault syndrome 1 of the SMMU,
+                and <texttt text='int error'/>.<docref> See <autoref label='sec:errors'/> for a description
+                of the message register and tag contents upon error.</docref>
+            </return>
+            <param dir="out" name="status" type="seL4_Word"/>
+            <param dir="out" name="syndrome_0" type="seL4_Word"/>
+            <param dir="out" name="syndrome_1" type="seL4_Word"/>
+        </method>
+        <method id="ARMSIDClearFault" name="ClearFault" manual_name="ClearFault"
+           manual_label="sid_controlclearfault">
+            <brief>
+                Clear the fault status of the SMMU.
+            </brief>
+        </method>
     </interface>
     <interface name="seL4_ARM_SID" manual_name="SID" cap_description="A SID capability. This gives you the authority to make this call.">
        <method id="ARMSIDBindCB" name="BindCB" manual_name="BindCB"
@@ -373,6 +396,27 @@
            manual_label="cb_tlbinvalidate">
             <brief>
                 Invalidating TLB entries used by the current ASID in this context bank.
+            </brief>
+        </method>
+        <method id="ARMCBGetFault" name="CBGetFault" manual_name="CBGetFault"
+           manual_label="cb_getfault">
+            <brief>
+                Get the fault status of the context bank.
+            </brief>
+            <return>
+                A <texttt text='seL4_ARM_SMMU_CB_GetFault_t'/> struct that contains a
+                <texttt text='seL4_Word status'/>, which holds the fault status of the context bank,
+                <texttt text='seL4_Word address'/>, which holds the faulty address,
+                and <texttt text='int error'/>.<docref> See <autoref label='sec:errors'/> for a description
+                of the message register and tag contents upon error.</docref>
+            </return>
+            <param dir="out" name="status" type="seL4_Word"/>
+            <param dir="out" name="address" type="seL4_Word"/>
+        </method>
+        <method id="ARMCBClearFault" name="CBClearFault" manual_name="CBClearFault"
+           manual_label="cb_clearfault">
+            <brief>
+                 Clear the fault status of the context bank.
             </brief>
         </method>
     </interface>

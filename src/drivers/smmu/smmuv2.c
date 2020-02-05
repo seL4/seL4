@@ -259,13 +259,17 @@ BOOT_CODE static void smmu_config_prob(void)
 }
 
 
+
 BOOT_CODE  static void smmu_dev_reset(void)
 {
-	uint32_t reg;
+	uint32_t reg = 0;
 	pptr_t cb_bank_ptr;
 	uint32_t major;
 
-	/*clear the global FSR by writing back the read value*/
+	/*clear the fault syndrom registers*/
+	smmu_write_reg32(SMMU_GR0_PPTR, SMMU_sGFSYNR0, reg);
+	smmu_write_reg32(SMMU_GR0_PPTR, SMMU_sGFSYNR1, reg);
+	/*clear the global FSR by writing back the read value*/	
 	reg = smmu_read_reg32(SMMU_GR0_PPTR, SMMU_sGFSR);
 	smmu_write_reg32(SMMU_GR0_PPTR, SMMU_sGFSR, reg);
 
@@ -306,8 +310,9 @@ BOOT_CODE  static void smmu_dev_reset(void)
 		cb_bank_ptr = SMMU_CBn_BASE_PPTR(i);
 		/*disable context banks and clear the context bank fault registers*/
 		smmu_write_reg32(cb_bank_ptr, SMMU_CBn_SCTLR, 0);
+		/*clear the syndrom register*/
+		smmu_write_reg64(cb_bank_ptr, SMMU_CBn_FAR, 0ULL);
 		smmu_write_reg32(cb_bank_ptr, SMMU_CBn_FSR, CBn_FSR_CLEAR_ALL);
-
 		/*special init requested by the smmu-500: start*/
 		/*disable MMU-500's next page prefetch due to errata 841119 and 826419*/
 		reg = smmu_read_reg32(cb_bank_ptr, SMMU_CBn_ACTLR);
@@ -567,3 +572,28 @@ void smmu_tlb_invalidate_cb(int cb, asid_t asid) {
 	smmu_tlb_sync(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_TLBSYNC, SMMU_CBn_TLBSTATUS);
 #endif
 }
+
+void smmu_read_fault_state(uint32_t *status, uint32_t *syndrome_0, uint32_t *syndrome_1)
+{
+	*status = smmu_read_reg32(SMMU_GR0_PPTR, SMMU_sGFSR);
+	*syndrome_0 = smmu_read_reg32(SMMU_GR0_PPTR, SMMU_sGFSYNR0);
+	*syndrome_1 = smmu_read_reg32(SMMU_GR0_PPTR, SMMU_sGFSYNR1);
+}
+
+void smmu_clear_fault_state(void)
+{
+	uint32_t reg = smmu_read_reg32(SMMU_GR0_PPTR, SMMU_sGFSR);
+	smmu_write_reg32(SMMU_GR0_PPTR, SMMU_sGFSR, reg);
+}
+
+void smmu_cb_read_fault_state(int cb, uint32_t *status, word_t *address)
+{
+	*status = smmu_read_reg32(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_FSR);
+	*address = smmu_read_reg64(SMMU_CBn_BASE_PPTR(cb),SMMU_CBn_FAR);
+} 
+
+void smmu_cb_clear_fault_state(int cb)
+{
+	smmu_write_reg32(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_FSR, CBn_FSR_CLEAR_ALL);
+} 
+
