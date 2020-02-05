@@ -29,17 +29,17 @@ typedef enum {
 
 static void inline doRemoteInvalidateTLBEntry(vptr_t vptr, word_t mask)
 {
-    doRemoteMaskOp1Arg(IpiRemoteCall_InvalidateTLBEntry, vptr, mask);
+    doRemoteMaskOp1Arg((IpiRemoteCall_t)IpiRemoteCall_InvalidateTLBEntry, vptr, mask);
 }
 
 static void inline doRemoteInvalidatePageStructureCache(word_t mask)
 {
-    doRemoteMaskOp0Arg(IpiRemoteCall_InvalidatePageStructureCache, mask);
+    doRemoteMaskOp0Arg((IpiRemoteCall_t)IpiRemoteCall_InvalidatePageStructureCache, mask);
 }
 
 static void inline doRemoteInvalidateTLB(word_t mask)
 {
-    doRemoteMaskOp0Arg(IpiRemoteCall_InvalidateTLB, mask);
+    doRemoteMaskOp0Arg((IpiRemoteCall_t)IpiRemoteCall_InvalidateTLB, mask);
 }
 
 void Mode_handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0, word_t arg1, word_t arg2);

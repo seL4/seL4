@@ -19,11 +19,11 @@
 
 static IpiModeRemoteCall_t remoteCall;   /* the remote call being requested */
 
-static inline void init_ipi_args(IpiModeRemoteCall_t func,
+static inline void init_ipi_args(IpiRemoteCall_t func,
                                  word_t data1, word_t data2, word_t data3,
                                  word_t mask)
 {
-    remoteCall = func;
+    remoteCall = (IpiModeRemoteCall_t)func;
     ipi_args[0] = data1;
     ipi_args[1] = data2;
     ipi_args[2] = data3;

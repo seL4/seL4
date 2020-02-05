@@ -30,12 +30,12 @@ void Mode_handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0, word_t arg1, w
 
 static inline void doRemoteInvalidatePCID(word_t type, void *vaddr, asid_t asid, word_t mask)
 {
-    doRemoteMaskOp3Arg(IpiRemoteCall_InvalidatePCID, type, (word_t)vaddr, asid, mask);
+    doRemoteMaskOp3Arg((IpiRemoteCall_t)IpiRemoteCall_InvalidatePCID, type, (word_t)vaddr, asid, mask);
 }
 
 static inline void doRemoteInvalidateASID(vspace_root_t *vspace, asid_t asid, word_t mask)
 {
-    doRemoteMaskOp2Arg(IpiRemoteCall_InvalidateASID, (word_t)vspace, asid, mask);
+    doRemoteMaskOp2Arg((IpiRemoteCall_t)IpiRemoteCall_InvalidateASID, (word_t)vspace, asid, mask);
 }
 
 #endif /* ENABLE_SMP_SUPPORT */
