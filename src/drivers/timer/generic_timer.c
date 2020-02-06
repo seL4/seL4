@@ -122,8 +122,14 @@ static void restore_virt_timer(vcpu_t *vcpu)
 #endif
     set_cntv_off_64(offset);
 #endif
+    /* For verification, need to ensure we don't unmask an inactive interrupt;
+     * the virtual timer should never get disabled, but the knowledge is not
+     * available at this point */
     /* Restore interrupt mask state */
-    maskInterrupt(vcpu->vppi_masked[irqVPPIEventIndex(INTERRUPT_VTIMER_EVENT)], INTERRUPT_VTIMER_EVENT);
+    if (likely(isIRQActive(CORE_IRQ_TO_IRQT(CURRENT_CPU_INDEX(), INTERRUPT_VTIMER_EVENT)))) {
+        maskInterrupt(vcpu->vppi_masked[irqVPPIEventIndex(CORE_IRQ_TO_IRQT(CURRENT_CPU_INDEX(), INTERRUPT_VTIMER_EVENT))],
+                      CORE_IRQ_TO_IRQT(CURRENT_CPU_INDEX(), INTERRUPT_VTIMER_EVENT));
+    }
     /* Restore virtual timer control register */
     vcpu_restore_reg(vcpu, seL4_VCPUReg_CNTV_CTL);
 }
