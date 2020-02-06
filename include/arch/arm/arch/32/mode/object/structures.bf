@@ -217,8 +217,8 @@ block VCPUFault {
 }
 
 block VPPIEvent {
-    field irq_w     32
-    padding         28
+    field irq_w     10
+    padding         50
     field seL4_FaultType  4
 }
 #endif
