@@ -72,7 +72,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
 
     /* ensure we are not single stepping the destination in ia32 */
 #if defined(CONFIG_HARDWARE_DEBUG_API) && defined(CONFIG_ARCH_IA32)
-    if (dest->tcbArch.tcbContext.breakpointState.single_step_enabled) {
+    if (unlikely(dest->tcbArch.tcbContext.breakpointState.single_step_enabled)) {
         slowpath(SysCall);
     }
 #endif
@@ -114,8 +114,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
     /* let gcc optimise this out for 1 domain */
     dom = maxDom ? ksCurDomain : 0;
     /* ensure only the idle thread or lower prio threads are present in the scheduler */
-    if (likely(dest->tcbPriority < NODE_STATE(ksCurThread->tcbPriority)) &&
-        !isHighestPrio(dom, dest->tcbPriority)) {
+    if (unlikely(dest->tcbPriority < NODE_STATE(ksCurThread->tcbPriority)) && !isHighestPrio(dom, dest->tcbPriority)) {
         slowpath(SysCall);
     }
 
@@ -276,8 +275,8 @@ void fastpath_reply_recv(word_t cptr, word_t msgInfo)
 #endif
 
     /* Check there is nothing waiting on the notification */
-    if (NODE_STATE(ksCurThread)->tcbBoundNotification &&
-        notification_ptr_get_state(NODE_STATE(ksCurThread)->tcbBoundNotification) == NtfnState_Active) {
+    if (unlikely(NODE_STATE(ksCurThread)->tcbBoundNotification &&
+                 notification_ptr_get_state(NODE_STATE(ksCurThread)->tcbBoundNotification) == NtfnState_Active)) {
         slowpath(SysReplyRecv);
     }
 
@@ -314,7 +313,7 @@ void fastpath_reply_recv(word_t cptr, word_t msgInfo)
 
     /* ensure we are not single stepping the caller in ia32 */
 #if defined(CONFIG_HARDWARE_DEBUG_API) && defined(CONFIG_ARCH_IA32)
-    if (caller->tcbArch.tcbContext.breakpointState.single_step_enabled) {
+    if (unlikely(caller->tcbArch.tcbContext.breakpointState.single_step_enabled)) {
         slowpath(SysReplyRecv);
     }
 #endif
