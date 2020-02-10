@@ -117,7 +117,7 @@ static inline int fastpath_reply_cap_check(cap_t cap)
 #endif
 
 /** DONT_TRANSLATE */
-static inline void NORETURN fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
+static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 {
     NODE_UNLOCK;
 
