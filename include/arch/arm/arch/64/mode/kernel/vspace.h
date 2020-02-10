@@ -40,7 +40,11 @@ void deleteASID(asid_t asid, vspace_root_t *vspace);
 hw_asid_t getHWASID(asid_t asid);
 #endif
 
+#ifdef __clang__
 static const region_t BOOT_RODATA mode_reserved_region[] = {};
+#else
+static const region_t BOOT_RODATA *mode_reserved_region = NULL;
+#endif
 
 #ifdef AARCH64_VSPACE_S2_START_L1
 
