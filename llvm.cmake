@@ -17,6 +17,9 @@ set(CMAKE_SYSTEM_NAME Generic)
 # obvious if someone accidentally uses it
 set(CMAKE_SYSTEM_PROCESSOR seL4CPU)
 
+if (KernelArchRiscV)
+    message(FATAL_ERROR "Riscv is not yet supported when compiling with clang")
+endif()
 set(LLVM_TOOLCHAIN ON)
 
 set(CMAKE_ASM_COMPILER "clang")
