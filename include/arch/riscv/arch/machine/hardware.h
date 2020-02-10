@@ -91,8 +91,10 @@ typedef uint32_t vm_fault_type_t;
 enum frameSizeConstants {
     RISCVPageBits        = seL4_PageBits,
     RISCVMegaPageBits    = seL4_LargePageBits,
+#if CONFIG_PT_LEVELS > 2
     RISCVGigaPageBits    = seL4_HugePageBits,
-#if CONFIG_PT_LEVELS == 4
+#endif
+#if CONFIG_PT_LEVELS > 3
     RISCVTeraPageBits    = seL4_TeraPageBits
 #endif
 };
@@ -119,7 +121,7 @@ static inline unsigned int CONST pageBitsForSize(vm_page_size_t pagesize)
         return RISCVGigaPageBits;
 #endif
 
-#if CONFIG_PT_LEVELS == 4
+#if CONFIG_PT_LEVELS > 3
     case RISCV_Tera_Page:
         return RISCVTeraPageBits;
 #endif

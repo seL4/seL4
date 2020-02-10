@@ -48,7 +48,6 @@
 
 #define seL4_PageBits           12
 #define seL4_LargePageBits      22
-#define seL4_HugePageBits       29
 #define seL4_PageTableBits      12
 #define seL4_VSpaceBits         seL4_PageTableBits
 
