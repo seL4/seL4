@@ -855,7 +855,7 @@ LIBSEL4_INLINE_FUNC void seL4_DebugNameThread(seL4_CPtr tcb, const char *name)
 }
 #endif
 
-#ifdef SEL4_DANGEROUS_CODE_INJECTION_KERNEL
+#ifdef CONFIG_DANGEROUS_CODE_INJECTION
 LIBSEL4_INLINE_FUNC void seL4_DebugRun(void (* userfn)(void *), void *userarg)
 {
     register seL4_Word arg1 asm("a0") = (seL4_Word)userfn;
