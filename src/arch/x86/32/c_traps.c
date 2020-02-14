@@ -23,7 +23,7 @@
 #include <util.h>
 
 #ifdef CONFIG_VTX
-static void NORETURN vmlaunch_failed(void)
+USED static void NORETURN vmlaunch_failed(void)
 {
     NODE_LOCK_SYS;
 
@@ -62,12 +62,11 @@ static void NORETURN restore_vmx(void)
 #ifdef ENABLE_SMP_SUPPORT
             "movl (%%esp), %%esp\n"
 #else
-            "leal kernel_stack_alloc + %c2, %%esp\n"
+            "leal kernel_stack_alloc + %c1, %%esp\n"
 #endif
-            "call %1\n"
+            "call vmlaunch_failed\n"
             :
             : "r"(&NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->gp_registers[VCPU_EAX]),
-            "m"(vmlaunch_failed),
             "i"(BIT(CONFIG_KERNEL_STACK_BITS) - sizeof(word_t))
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
@@ -91,12 +90,11 @@ static void NORETURN restore_vmx(void)
 #ifdef ENABLE_SMP_SUPPORT
             "movl (%%esp), %%esp\n"
 #else
-            "leal kernel_stack_alloc + %c2, %%esp\n"
+            "leal kernel_stack_alloc + %c1, %%esp\n"
 #endif
-            "call %1\n"
+            "call vmlaunch_failed\n"
             :
             : "r"(&NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->gp_registers[VCPU_EAX]),
-            "m"(vmlaunch_failed),
             "i"(BIT(CONFIG_KERNEL_STACK_BITS) - sizeof(word_t))
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler

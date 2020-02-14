@@ -73,11 +73,11 @@ static void NORETURN restore_vmx(void)
 #else
             "leaq kernel_stack_alloc + %c[stack_size], %%rsp\n"
 #endif
-            "leaq %[failed], %%rax\n"
+            "movq %[failed], %%rax\n"
             "jmp *%%rax\n"
             :
             : [reg]"r"(&cur_thread->tcbArch.tcbVCPU->gp_registers[VCPU_EAX]),
-            [failed]"m"(vmlaunch_failed),
+            [failed]"i"(&vmlaunch_failed),
             [stack_size]"i"(BIT(CONFIG_KERNEL_STACK_BITS))
 #ifdef ENABLE_SMP_SUPPORT
             , [stack_offset]"i"(OFFSETOF(nodeInfo_t, stackTop))
@@ -114,11 +114,11 @@ static void NORETURN restore_vmx(void)
 #else
             "leaq kernel_stack_alloc + %c[stack_size], %%rsp\n"
 #endif
-            "leaq %[failed], %%rax\n"
+            "movq %[failed], %%rax\n"
             "jmp *%%rax\n"
             :
             : [reg]"r"(&cur_thread->tcbArch.tcbVCPU->gp_registers[VCPU_EAX]),
-            [failed]"m"(vmlaunch_failed),
+            [failed]"i"(&vmlaunch_failed),
             [stack_size]"i"(BIT(CONFIG_KERNEL_STACK_BITS))
 #ifdef ENABLE_SMP_SUPPORT
             , [stack_offset]"i"(OFFSETOF(nodeInfo_t, stackTop))
