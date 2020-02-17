@@ -88,10 +88,18 @@ BEGIN_FUNC(arm_swi_syscall)
      * unmodified (cptr and msgInfo) respectively.  On MCS configurations we also
      * pass the reply cptr in r3.
      */
-    mov r2, r7
+
+#ifdef CONFIG_FASTPATH
+    cmp r7, #SYSCALL_CALL
+    beq c_handle_fastpath_call
+    cmp r7, #SYSCALL_REPLY_RECV
 #ifdef CONFIG_KERNEL_MCS
-    mov r3, r6
+    moveq r2, r6
 #endif
+    beq c_handle_fastpath_reply_recv
+#endif
+
+    mov r2, r7
     b c_handle_syscall
 
 END_FUNC(arm_swi_syscall)

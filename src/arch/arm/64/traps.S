@@ -202,10 +202,18 @@ lel_syscall:
     str     x20, [sp, #PT_FaultIP]
 
     lsp_i   x19
-    mov     x2, x7
+
+#ifdef CONFIG_FASTPATH
+    cmp     x7, #SYSCALL_CALL
+    b.eq    c_handle_fastpath_call
+    cmp     x7, #SYSCALL_REPLY_RECV
 #ifdef CONFIG_KERNEL_MCS
-    mov     x3, x6
+    mov     x2, x6
 #endif
+    b.eq    c_handle_fastpath_reply_recv
+#endif
+
+    mov     x2, x7
     b       c_handle_syscall
 
 el0_enfp:

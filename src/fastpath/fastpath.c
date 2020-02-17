@@ -19,11 +19,10 @@
 #endif
 #include <benchmark/benchmark_utilisation.h>
 
-void
-#ifdef ARCH_X86
-NORETURN
+#ifdef CONFIG_ARCH_ARM
+inline FORCE_INLINE
 #endif
-fastpath_call(word_t cptr, word_t msgInfo)
+void NORETURN fastpath_call(word_t cptr, word_t msgInfo)
 {
     seL4_MessageInfo_t info;
     cap_t ep_cap;
@@ -114,7 +113,8 @@ fastpath_call(word_t cptr, word_t msgInfo)
     /* let gcc optimise this out for 1 domain */
     dom = maxDom ? ksCurDomain : 0;
     /* ensure only the idle thread or lower prio threads are present in the scheduler */
-    if (unlikely(dest->tcbPriority < NODE_STATE(ksCurThread->tcbPriority)) && !isHighestPrio(dom, dest->tcbPriority)) {
+    if (unlikely(dest->tcbPriority < NODE_STATE(ksCurThread->tcbPriority) &&
+                 !isHighestPrio(dom, dest->tcbPriority))) {
         slowpath(SysCall);
     }
 
@@ -222,10 +222,13 @@ fastpath_call(word_t cptr, word_t msgInfo)
     fastpath_restore(badge, msgInfo, NODE_STATE(ksCurThread));
 }
 
+#ifdef CONFIG_ARCH_ARM
+inline FORCE_INLINE
+#endif
 #ifdef CONFIG_KERNEL_MCS
-void fastpath_reply_recv(word_t cptr, word_t msgInfo, word_t reply)
+void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo, word_t reply)
 #else
-void fastpath_reply_recv(word_t cptr, word_t msgInfo)
+void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo)
 #endif
 {
     seL4_MessageInfo_t info;
