@@ -289,7 +289,7 @@ reader_template = \
     %(type)s ret;
     ret = (%(block)s.words[%(index)d] & 0x%(mask)x%(suf)s) %(r_shift_op)s %(shift)d;
     /* Possibly sign extend */
-    if (%(sign_extend)d && (ret & (1%(suf)s << (%(extend_bit)d)))) {
+    if (__builtin_expect(!!(%(sign_extend)d && (ret & (1%(suf)s << (%(extend_bit)d)))), %(sign_extend)d)) {
         ret |= 0x%(high_bits)x;
     }
     return ret;
@@ -302,7 +302,7 @@ ptr_reader_template = \
     ret = (%(block)s_ptr->words[%(index)d] & 0x%(mask)x%(suf)s) """ \
     """%(r_shift_op)s %(shift)d;
     /* Possibly sign extend */
-    if (%(sign_extend)d && (ret & (1%(suf)s << (%(extend_bit)d)))) {
+    if (__builtin_expect(!!(%(sign_extend)d && (ret & (1%(suf)s << (%(extend_bit)d)))), %(sign_extend)d)) {
         ret |= 0x%(high_bits)x;
     }
     return ret;
@@ -357,7 +357,7 @@ union_reader_template = \
 
     ret = (%(union)s.words[%(index)d] & 0x%(mask)x%(suf)s) %(r_shift_op)s %(shift)d;
     /* Possibly sign extend */
-    if (%(sign_extend)d && (ret & (1%(suf)s << (%(extend_bit)d)))) {
+    if (__builtin_expect(!!(%(sign_extend)d && (ret & (1%(suf)s << (%(extend_bit)d)))), %(sign_extend)d)) {
         ret |= 0x%(high_bits)x;
     }
     return ret;
@@ -374,7 +374,7 @@ ptr_union_reader_template = \
     ret = (%(union)s_ptr->words[%(index)d] & 0x%(mask)x%(suf)s) """ \
     """%(r_shift_op)s %(shift)d;
     /* Possibly sign extend */
-    if (%(sign_extend)d && (ret & (1%(suf)s << (%(extend_bit)d)))) {
+    if (__builtin_expect(!!(%(sign_extend)d && (ret & (1%(suf)s << (%(extend_bit)d)))), %(sign_extend)d)) {
         ret |= 0x%(high_bits)x;
     }
     return ret;
