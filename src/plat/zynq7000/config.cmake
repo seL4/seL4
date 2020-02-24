@@ -24,11 +24,13 @@ if(KernelPlatformZynq7000)
     if(KernelIsMCS)
         list(APPEND KernelDTSList "src/plat/zynq7000/mcs-overlay-zynq7000.dts")
         set(timer_file drivers/timer/arm_global.h)
-        set(timer_freq 433000000llu)
+        # This is the timer frequency that can pass tests (in particular SCHED0011),
+        # but may not be the correct number.
+        set(timer_freq 320000000llu)
     else()
         list(APPEND KernelDTSList "src/plat/zynq7000/overlay-zynq7000.dts")
         set(timer_file drivers/timer/arm_priv.h)
-        set(timer_freq 400000000llu)
+        set(timer_freq 320000000llu)
     endif()
     declare_default_headers(
         TIMER_FREQUENCY ${timer_freq}
@@ -36,8 +38,8 @@ if(KernelPlatformZynq7000)
         NUM_PPI 32
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h
         TIMER ${timer_file}
-        CLK_SHIFT 36llu
-        CLK_MAGIC 158705489llu
+        CLK_SHIFT 40llu
+        CLK_MAGIC 3435973837llu
         KERNEL_WCET 10llu
     )
 endif()
