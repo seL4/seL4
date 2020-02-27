@@ -42,6 +42,11 @@ if(KernelPlatformZynqmp)
     endif()
     list(APPEND KernelDTSList "src/plat/zynqmp/overlay-zynqmp.dts")
 
+    if(KernelArmHypervisorSupport)
+        set(KernelAllowSMCCalls ON)
+        list(APPEND KernelDTSList "src/plat/zynqmp/overlay-zynqmp-hyp.dts")
+    endif()
+
     declare_default_headers(
         TIMER_FREQUENCY 100000000llu
         MAX_IRQ 187
