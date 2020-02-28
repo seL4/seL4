@@ -83,13 +83,13 @@ if(KernelPlatformQEMUArmVirt)
     list(APPEND KernelDTSList "${DTSPath}")
     list(APPEND KernelDTSList "src/plat/qemu-arm-virt/overlay-qemu-arm-virt.dts")
     declare_default_headers(
-        TIMER_FREQUENCY 1200000llu
+        TIMER_FREQUENCY 62500000llu
         MAX_IRQ 159
         NUM_PPI 32
         TIMER drivers/timer/arm_generic.h
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h
-        CLK_MAGIC 458129845llu
-        CLK_SHIFT 39u
+        CLK_MAGIC 4611686019llu
+        CLK_SHIFT 58u
         KERNEL_WCET 10u
     )
 endif()
