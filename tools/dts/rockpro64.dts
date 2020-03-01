@@ -6,7 +6,7 @@
  * http://www.opensource.org/licenses/gpl-license.html
  * http://www.gnu.org/copyleft/gpl.html
  *
- * @TAG(OTHER_GPL)
+ * @TAG(OTHER_GPL2P)
  */
 
 /dts-v1/;
@@ -1808,7 +1808,7 @@
 		clocks = < 0x08 0x17c >;
 		interrupts = < 0x00 0x78 0x04 0x00 >;
 	};
-/* 
+/*
 For future reference timer blocks are 0x20
 and sit next to one another from a base address.
 */
