@@ -1317,7 +1317,7 @@ exception_t decodeSetSchedParams(cap_t cap, word_t length, extra_caps_t excaps, 
     status = checkPrio(newPrio, authTCB);
     if (status != EXCEPTION_NONE) {
         userError("TCB SetSchedParams: Requested priority %lu too high (max %lu).",
-                  (unsigned long) newMcp, (unsigned long) authTCB->tcbMCP);
+                  (unsigned long) newPrio, (unsigned long) authTCB->tcbMCP);
         return status;
     }
 
