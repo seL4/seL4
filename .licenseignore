@@ -4,6 +4,7 @@ LICENSE_GPLv2.txt
 VERSION
 configs/*/autoconf.h
 manual/figs/*
+manual/references.bib
 .licenseignore
 *.pyc
 .git/*
