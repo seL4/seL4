@@ -1,3 +1,5 @@
+% @TAG(OTHER_LPPL)
+
 %%
 %% This is file `export.bst',
 %% generated with the docstrip utility.
