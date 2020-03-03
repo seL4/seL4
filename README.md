@@ -51,6 +51,20 @@ See the seL4 website for [build instructions][6].
 License
 =======
 
-The files in this repository are released under standard open source licenses.
-Please see the individual file headers and `LICENSE_GPLv2.txt` and
-`LICENSE_BSD2.txt` files for details.
+The files in this repository are released under standard open source
+licenses, identified by [SPDX license tags][7]. Generally, kernel-level
+code is licensed under GPLv2 and user-level code under the 2-clause BSD
+license. See the individual file headers for details, or use one of the
+publicly available SPDX tools to generate a bill of materials. The
+directory `LICENSES` contains the text for all licenses that are
+mentioned by files in this repository.
+
+### GPL syscall note
+Note that, as in the [Linux syscall note for the GPL][8], the seL4
+kernel GPL license does *not* cover user-level code that uses kernel
+services by normal system calls - this is merely considered normal use
+of the kernel, and does *not* fall under the heading of "derived work".
+Syscall headers are provided under BSD.
+
+[7]: https://spdx.org
+[8]: https://spdx.org/licenses/Linux-syscall-note.html
