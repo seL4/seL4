@@ -489,7 +489,7 @@ void vcpu_finalise(vcpu_t *vcpu)
     }
     if (ARCH_NODE_STATE_ON_CORE(x86KSCurrentVCPU, vcpu->last_cpu) == vcpu) {
 #ifdef ENABLE_SMP_SUPPORT
-        if (vcpu->last_cpu == getCurrentCPUIndex()) {
+        if (vcpu->last_cpu != getCurrentCPUIndex()) {
             doRemoteClearCurrentVCPU(vcpu->last_cpu);
         } else
 #endif /* ENABLE_SMP_SUPPORT */
@@ -601,7 +601,7 @@ static exception_t decodeDisableIOPort(cap_t cap, word_t length, word_t *buffer)
     uint16_t low, high;
 
     if (length < 2) {
-        userError("VCPU EnableIOPort: Truncated message.");
+        userError("VCPU DisableIOPort: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
