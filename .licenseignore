@@ -13,3 +13,4 @@ manual/references.bib
 .git/*
 *parsetab.py
 CHANGES
+.reuse/dep5
