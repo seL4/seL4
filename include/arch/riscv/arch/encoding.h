@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: BSD-3-Clause */
+
 /* Copyright (c) 2010-2017, The Regents of the University of California
  * (Regents).  All Rights Reserved.
  *

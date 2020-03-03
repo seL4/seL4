@@ -10,5 +10,3 @@ manual/references.bib
 .git/*
 *parsetab.py
 CHANGES
-include/arch/riscv/arch/sbi.h
-include/arch/riscv/arch/encoding.h
