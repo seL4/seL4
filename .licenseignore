@@ -5,7 +5,6 @@ VERSION
 configs/*/autoconf.h
 manual/figs/*
 .licenseignore
-.gitignore
 *.pyc
 .git/*
 *parsetab.py
