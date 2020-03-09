@@ -16,7 +16,10 @@
 #include <benchmark/benchmark_utilisation.h>
 
 #ifdef CONFIG_ARCH_ARM
-inline FORCE_INLINE
+static inline
+#ifndef CONFIG_ARCH_ARM_V6
+FORCE_INLINE
+#endif
 #endif
 void NORETURN fastpath_call(word_t cptr, word_t msgInfo)
 {
@@ -219,7 +222,10 @@ void NORETURN fastpath_call(word_t cptr, word_t msgInfo)
 }
 
 #ifdef CONFIG_ARCH_ARM
-inline FORCE_INLINE
+static inline
+#ifndef CONFIG_ARCH_ARM_V6
+FORCE_INLINE
+#endif
 #endif
 #ifdef CONFIG_KERNEL_MCS
 void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo, word_t reply)

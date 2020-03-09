@@ -15,15 +15,17 @@
 void slowpath(syscall_t syscall)
 NORETURN;
 
+static inline
 void fastpath_call(word_t cptr, word_t r_msgInfo)
-NORETURN SECTION(".vectors.fastpath_call");
+NORETURN;
 
+static inline
 #ifdef CONFIG_KERNEL_MCS
 void fastpath_reply_recv(word_t cptr, word_t r_msgInfo, word_t reply)
 #else
 void fastpath_reply_recv(word_t cptr, word_t r_msgInfo)
 #endif
-NORETURN SECTION(".vectors.fastpath_reply_recv");
+NORETURN;
 
 #endif /* __ARCH_FASTPATH_H */
 
