@@ -173,6 +173,7 @@ void VISIBLE c_handle_fastpath_reply_recv(word_t cptr, word_t msgInfo)
 #else
     fastpath_reply_recv(cptr, msgInfo);
 #endif
+    UNREACHABLE();
 }
 
 #endif

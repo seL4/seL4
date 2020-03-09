@@ -82,7 +82,7 @@ BEGIN_FUNC(arm_swi_syscall)
 
     /* Load system call number as a c_handle_syscall argument. r0 and r1 are passed
      * unmodified (cptr and msgInfo) respectively.  On MCS configurations we also
-     * pass the reply cptr in r3.
+     * pass the reply cptr in r2 for fastpath_reply_recv.
      */
 
 #ifdef CONFIG_FASTPATH
