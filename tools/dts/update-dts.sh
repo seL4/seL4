@@ -24,7 +24,15 @@ make ARCH=arm -j4 dtbs
 make ARCH=arm64 defconfig
 make ARCH=arm64 -j4 dtbs
 
-LICENSE="/* SPDX-License-Identifier: GPL-2.0-or-later */
+LICENSE="/*
+ * Copyright Linux Kernel Team
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * This file is derived from an intermediate build stage of the
+ * Linux kernel. The licenses of all input files to this process
+ * are compatible with GPL-2.0-only.
+ */
 "
 
 ARM_DTBS="
