@@ -91,6 +91,10 @@ void restart(tcb_t *target)
         cancelIPC(target);
 #ifdef CONFIG_KERNEL_MCS
         setThreadState(target, ThreadState_Restart);
+        if (target->tcbSchedContext != NULL) {
+            assert(target->tcbSchedContext != NODE_STATE(ksCurSC));
+            refill_unblock_check(target->tcbSchedContext);
+        }
         schedContext_resume(target->tcbSchedContext);
         if (isSchedulable(target)) {
             possibleSwitchTo(target);
@@ -137,6 +141,10 @@ void doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, bool_t grant)
     reply_remove(reply, receiver);
     assert(thread_state_get_replyObject(receiver->tcbState) == REPLY_REF(0));
     assert(reply->replyTCB == NULL);
+
+    if (receiver->tcbSchedContext && receiver->tcbSchedContext != NODE_STATE(ksCurSC)) {
+        refill_unblock_check(receiver->tcbSchedContext);
+    }
 #else
     assert(thread_state_get_tsType(receiver->tcbState) ==
            ThreadState_BlockedOnReply);
@@ -316,8 +324,6 @@ static void switchSchedContext(void)
 {
     if (unlikely(NODE_STATE(ksCurSC) != NODE_STATE(ksCurThread)->tcbSchedContext) && NODE_STATE(ksCurSC)->scRefillMax) {
         NODE_STATE(ksReprogram) = true;
-        refill_unblock_check(NODE_STATE(ksCurThread->tcbSchedContext));
-
         assert(refill_ready(NODE_STATE(ksCurThread->tcbSchedContext)));
         assert(refill_sufficient(NODE_STATE(ksCurThread->tcbSchedContext), 0));
     }
