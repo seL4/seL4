@@ -19,6 +19,7 @@ set(CMAKE_STAGING_PREFIX "${CMAKE_BINARY_DIR}/staging")
 set(sel4_arch @KernelSel4Arch@)
 set(arch @KernelArch@)
 set(mode @KernelWordSize@)
+set(CROSS_COMPILER_PREFIX @CROSS_COMPILER_PREFIX@)
 
 # This function hunts for an extant `gcc` with one of the candidate prefixes
 # specified in `ARGN`, allowing us to try different target triple prefixes for
