@@ -22,9 +22,14 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 Further information about [seL4 releases](https://docs.sel4.systems/sel4_release/) is available.
 
 ---
-Upcoming release: BINARY COMPATIBLE
+Upcoming release: BREAKING
 
 ## Changes
+
+* Scheduling contexts can be configured as constant-bandwidth or sporadic server
+  - Constant bandwidth observes a continuous constant bandwidth of budget/period
+  - Sporadic server behaves as described by Sprunt et. al.
+  - In an overcommitted system, sporadic preserves accumulated time
 
 
 ## Upgrade Notes

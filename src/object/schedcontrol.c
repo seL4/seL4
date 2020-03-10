@@ -10,8 +10,8 @@
 #include <object/schedcontrol.h>
 #include <kernel/sporadic.h>
 
-static exception_t invokeSchedControl_Configure(sched_context_t *target, word_t core, ticks_t budget,
-                                                ticks_t period, word_t max_refills, word_t badge)
+static exception_t invokeSchedControl_ConfigureFlags(sched_context_t *target, word_t core, ticks_t budget,
+                                                     ticks_t period, word_t max_refills, word_t badge, word_t flags)
 {
 
     target->scBadge = badge;
@@ -41,6 +41,8 @@ static exception_t invokeSchedControl_Configure(sched_context_t *target, word_t 
 #endif /* ENABLE_SMP_SUPPORT */
         }
     }
+
+    target->scSporadic = (flags & seL4_SchedContext_Sporadic) != 0;
 
     if (budget == period) {
         /* this is a cool hack: for round robin, we set the
@@ -84,16 +86,16 @@ static exception_t invokeSchedControl_Configure(sched_context_t *target, word_t 
     return EXCEPTION_NONE;
 }
 
-static exception_t decodeSchedControl_Configure(word_t length, cap_t cap, word_t *buffer)
+static exception_t decodeSchedControl_ConfigureFlags(word_t length, cap_t cap, word_t *buffer)
 {
     if (current_extra_caps.excaprefs[0] == NULL) {
-        userError("SchedControl_Configure: Truncated message.");
+        userError("SchedControl_ConfigureFlags: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     if (length < (TIME_ARG_SIZE * 2) + 2) {
-        userError("SchedControl_configure: truncated message.");
+        userError("SchedControl_configureFlags: truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -104,17 +106,18 @@ static exception_t decodeSchedControl_Configure(word_t length, cap_t cap, word_t
     ticks_t period_ticks = usToTicks(period_us);
     word_t extra_refills = getSyscallArg(TIME_ARG_SIZE * 2, buffer);
     word_t badge = getSyscallArg(TIME_ARG_SIZE * 2 + 1, buffer);
+    word_t flags = getSyscallArg(TIME_ARG_SIZE * 2 + 2, buffer);
 
     cap_t targetCap = current_extra_caps.excaprefs[0]->cap;
     if (unlikely(cap_get_capType(targetCap) != cap_sched_context_cap)) {
-        userError("SchedControl_Configure: target cap not a scheduling context cap");
+        userError("SchedControl_ConfigureFlags: target cap not a scheduling context cap");
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     if (budget_us > MAX_BUDGET_US || budget_ticks < MIN_BUDGET) {
-        userError("SchedControl_Configure: budget out of range.");
+        userError("SchedControl_ConfigureFlags: budget out of range.");
         current_syscall_error.type = seL4_RangeError;
         current_syscall_error.rangeErrorMin = MIN_BUDGET_US;
         current_syscall_error.rangeErrorMax = MAX_BUDGET_US;
@@ -122,7 +125,7 @@ static exception_t decodeSchedControl_Configure(word_t length, cap_t cap, word_t
     }
 
     if (period_us > MAX_BUDGET_US || period_ticks < MIN_BUDGET) {
-        userError("SchedControl_Configure: period out of range.");
+        userError("SchedControl_ConfigureFlags: period out of range.");
         current_syscall_error.type = seL4_RangeError;
         current_syscall_error.rangeErrorMin = MIN_BUDGET_US;
         current_syscall_error.rangeErrorMax = MAX_BUDGET_US;
@@ -130,7 +133,7 @@ static exception_t decodeSchedControl_Configure(word_t length, cap_t cap, word_t
     }
 
     if (budget_ticks > period_ticks) {
-        userError("SchedControl_Configure: budget must be <= period");
+        userError("SchedControl_ConfigureFlags: budget must be <= period");
         current_syscall_error.type = seL4_RangeError;
         current_syscall_error.rangeErrorMin = MIN_BUDGET_US;
         current_syscall_error.rangeErrorMax = period_us;
@@ -148,19 +151,20 @@ static exception_t decodeSchedControl_Configure(word_t length, cap_t cap, word_t
     }
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    return invokeSchedControl_Configure(SC_PTR(cap_sched_context_cap_get_capSCPtr(targetCap)),
-                                        cap_sched_control_cap_get_core(cap),
-                                        budget_ticks,
-                                        period_ticks,
-                                        extra_refills + MIN_REFILLS,
-                                        badge);
+    return invokeSchedControl_ConfigureFlags(SC_PTR(cap_sched_context_cap_get_capSCPtr(targetCap)),
+                                             cap_sched_control_cap_get_core(cap),
+                                             budget_ticks,
+                                             period_ticks,
+                                             extra_refills + MIN_REFILLS,
+                                             badge,
+                                             flags);
 }
 
 exception_t decodeSchedControlInvocation(word_t label, cap_t cap, word_t length, word_t *buffer)
 {
     switch (label) {
-    case SchedControlConfigure:
-        return  decodeSchedControl_Configure(length, cap, buffer);
+    case SchedControlConfigureFlags:
+        return  decodeSchedControl_ConfigureFlags(length, cap, buffer);
     default:
         userError("SchedControl invocation: Illegal operation attempted.");
         current_syscall_error.type = seL4_IllegalOperation;
