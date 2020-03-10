@@ -8,37 +8,46 @@ This file lists known caveats in the seL4 API and implementation.
 
 * Implementation Correctness
 
-Only the ARMv7 version on the imx6 platform of seL4 has a correctness proof.
-This proof covers the functional behaviour of the C code of the kernel. It
-does not cover machine code, compiler, linker, boot code, cache and TLB
-management. Compiler and linker can be removed from this list by additionally
-running the binary verification phase of the proof. The proof shows that the
-seL4 C code implements the abstract API specification of seL4, and that this
-specification satisfies the following high-level security properties:
-  * integrity (no write without authority), 
+Only the ARMv7 version on the imx6 platform of seL4 has the full stack of
+correctness proofs. This proof covers the functional behaviour of the C code of
+the kernel. It does not cover machine code, compiler, linker, boot code, cache
+and TLB management. Compiler and linker can be removed from this list by
+additionally running the binary verification tool chain for seL4. The proof
+shows that the seL4 C code implements the abstract API specification of seL4,
+and that this specification satisfies the following high-level security
+properties:
+
+  * integrity (no write without authority),
   * confidentiality (no read without authority), and
-  * intransitive non-interference (isolation between adequately 
+  * intransitive non-interference (isolation between adequately
     configured user-level components).
 
 The security property proofs depend on additional assumptions on the correct
-configuration of the system.
+configuration of the system. See the `l4v` repository on github for more
+details.
+
+The x64 port of the kernel without VT-x and VT-d support has a functional
+correctness proof between abstract specification and C code, but without
+security theorems, and the ARMv7 version of the kernel with hypervisor
+extensions also has a functional correctness proofs, but without the security
+theorems. For the precise configuration of these three verified platforms, see
+the corresponding files in the `config/` directory.
+
+Proofs for the MCS version (mixed-criticality systems) and for seL4 on the
+RISC-V architecture are in progress.
 
 
 * Real Time
 
-This version of seL4 is not a real-time kernel. It has a small number of
-potentially long-running kernel operations that are not preemptible (e.g.,
-endpoint deletion and recycling, scheduling, frame and CNode initialisation).
-This may change in future versions.
+The default version of seL4 must be configured carefully for use in real-time
+requirements. It has a small number of potentially long-running kernel
+operations that are not preemptible (e.g., endpoint deletion, certain
+scheduling states, frame and CNode initialisation). These can (and must) be
+avoided by careful system configuration if low latency is required.
 
-
-* Recycle Operation
-
-The Recycle operation will not necessarily reset all aspects of an object to
-its initial state. For instance, Recycle for a badged endpoint capability will
-only cancel messages with this badge. Recycle for a page directory will not
-revoke all installed page caps, it will only unmap them. For the precise
-behaviour see the specification.
+The MCS configuration of the kernel addresses many of these problems and
+provides principled access control for execution time, but its formal
+verification is currently still in progress.
 
 
 * IPC buffer in globals frame may be stale
