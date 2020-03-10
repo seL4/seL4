@@ -1077,7 +1077,7 @@ def main():
     else:
         wordsize = int(args.wsize)
 
-    if wordsize is -1:
+    if wordsize == -1:
         print("Invalid word size.")
         sys.exit(2)
 
