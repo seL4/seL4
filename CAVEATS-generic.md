@@ -1,12 +1,12 @@
-#
-# Copyright 2014, General Dynamics C4 Systems
-#
-# SPDX-License-Identifier: GPL-2.0-only
-#
+<!--
+    Copyright 2014, General Dynamics C4 Systems
 
-This file lists known caveats in the seL4 API and implementation.
+    SPDX-License-Identifier: GPL-2.0-only
+-->
 
-* Implementation Correctness
+# Known caveats in the seL4 API and implementation
+
+## Implementation Correctness
 
 Only the ARMv7 version on the imx6 platform of seL4 has the full stack of
 correctness proofs. This proof covers the functional behaviour of the C code of
@@ -37,7 +37,7 @@ Proofs for the MCS version (mixed-criticality systems) and for seL4 on the
 RISC-V architecture are in progress.
 
 
-* Real Time
+## Real Time
 
 The default version of seL4 must be configured carefully for use in real-time
 requirements. It has a small number of potentially long-running kernel
@@ -50,7 +50,7 @@ provides principled access control for execution time, but its formal
 verification is currently still in progress.
 
 
-* IPC buffer in globals frame may be stale
+## IPC buffer in globals frame may be stale
 
 When a thread invokes its own TCB object to (re-)register its IPC buffer and
 the thread is re-scheduled immediately, the userland IPC buffer pointer in the
@@ -58,7 +58,7 @@ globals frame may still show the old value. It is updated on the next thread
 switch.
 
 
-* Re-using Address Spaces (ARM and x86):
+## Re-using Address Spaces (ARM and x86):
 
 Before an ASID/page directory/page table can be reused, all frame caps
 installed in it should be revoked. The kernel will not do this automatically
