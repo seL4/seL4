@@ -172,7 +172,6 @@ static exception_t invokeSchedContext_YieldTo(sched_context_t *sc, word_t *buffe
 
     bool_t return_now = true;
     if (isSchedulable(sc->scTcb)) {
-        refill_unblock_check(sc);
         if (SMP_COND_STATEMENT(sc->scCore != getCurrentCPUIndex() ||)
             sc->scTcb->tcbPriority < NODE_STATE(ksCurThread)->tcbPriority) {
             tcbSchedDequeue(sc->scTcb);
@@ -278,6 +277,7 @@ void schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb)
 
     SMP_COND_STATEMENT(migrateTCB(tcb, sc->scCore));
 
+    refill_unblock_check(sc);
     schedContext_resume(sc);
     if (isSchedulable(tcb)) {
         SCHED_ENQUEUE(tcb);

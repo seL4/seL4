@@ -85,6 +85,12 @@ void sendSignal(notification_t *ntfnPtr, word_t badge)
                 cancelIPC(tcb);
                 setThreadState(tcb, ThreadState_Running);
                 setRegister(tcb, badgeRegister, badge);
+#ifdef CONFIG_KERNEL_MCS
+                if (tcb->tcbSchedContext != NULL) {
+                    assert(tcb->tcbSchedContext != NODE_STATE(ksCurSC));
+                    refill_unblock_check(tcb->tcbSchedContext);
+                }
+#endif
                 MCS_DO_IF_SC(tcb, ntfnPtr, {
                     possibleSwitchTo(tcb);
                 })
@@ -138,6 +144,13 @@ void sendSignal(notification_t *ntfnPtr, word_t badge)
         if (!ntfn_queue.head) {
             notification_ptr_set_state(ntfnPtr, NtfnState_Idle);
         }
+
+#ifdef CONFIG_KERNEL_MCS
+        if (dest->tcbSchedContext != NULL) {
+            assert(dest->tcbSchedContext != NODE_STATE(ksCurSC));
+            refill_unblock_check(dest->tcbSchedContext);
+        }
+#endif
 
         setThreadState(dest, ThreadState_Running);
         setRegister(dest, badgeRegister, badge);
@@ -219,6 +232,10 @@ void cancelAllSignals(notification_t *ntfnPtr)
         for (; thread; thread = thread->tcbEPNext) {
             setThreadState(thread, ThreadState_Restart);
 #ifdef CONFIG_KERNEL_MCS
+            if (thread->tcbSchedContext != NULL) {
+                assert(thread->tcbSchedContext != NODE_STATE(ksCurSC));
+                refill_unblock_check(thread->tcbSchedContext);
+            }
             possibleSwitchTo(thread);
 #else
             SCHED_ENQUEUE(thread);
