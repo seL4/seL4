@@ -54,9 +54,9 @@ typedef struct arch_tcb {
 
 #define VTD_RT_SIZE_BITS  12
 
-#define VTD_CTE_SIZE_BITS 3
+#define VTD_CTE_SIZE_BITS 4
 #define VTD_CTE_PTR(r)    ((vtd_cte_t*)(r))
-#define VTD_CT_BITS       9
+#define VTD_CT_BITS       8
 #define VTD_CT_SIZE_BITS  (VTD_CT_BITS + VTD_CTE_SIZE_BITS)
 
 #define VTD_PTE_SIZE_BITS 3
