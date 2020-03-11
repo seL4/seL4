@@ -32,6 +32,7 @@ LICENSE="/*
 "
 
 ARM_DTBS="
+am335x-bone=am335x-bone
 am335x-boneblack=am335x-boneblack
 am335x-boneblue=am335x-boneblue
 bcm2837-rpi-3-b=rpi3
