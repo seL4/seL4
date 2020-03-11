@@ -19,7 +19,18 @@ set(CMAKE_STAGING_PREFIX "${CMAKE_BINARY_DIR}/staging")
 set(sel4_arch @KernelSel4Arch@)
 set(arch @KernelArch@)
 set(mode @KernelWordSize@)
-set(CROSS_COMPILER_PREFIX @CROSS_COMPILER_PREFIX@)
+set(cross_prefix @CROSS_COMPILER_PREFIX@)
+
+# If this file is used without templating, then cross_prefix will
+# have an invalid value and should only be assigned to CROSS_COMPILER_PREFIX
+# if it has been set to something different.
+# We need to build the test string dynamically otherwise the templating would
+# overwrite it.
+set(cross_prefix_test @CROSS_COMPILER_PREFIX)
+string(APPEND cross_prefix_test @)
+if(NOT "${cross_prefix}" STREQUAL "${cross_prefix_test}")
+    set(CROSS_COMPILER_PREFIX ${cross_prefix})
+endif()
 
 # This function hunts for an extant `gcc` with one of the candidate prefixes
 # specified in `ARGN`, allowing us to try different target triple prefixes for
