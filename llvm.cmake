@@ -11,7 +11,7 @@ set(CMAKE_SYSTEM_NAME Generic)
 # obvious if someone accidentally uses it
 set(CMAKE_SYSTEM_PROCESSOR seL4CPU)
 
-if (KernelArchRiscV)
+if(KernelArchRiscV)
     message(FATAL_ERROR "Riscv is not yet supported when compiling with clang")
 endif()
 set(LLVM_TOOLCHAIN ON)
@@ -52,5 +52,3 @@ if(NOT ("${CCACHE}" STREQUAL CCACHE-NOTFOUND))
     set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ${CCACHE})
 endif()
 mark_as_advanced(CCACHE)
-
-
