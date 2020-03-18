@@ -31,7 +31,8 @@ bool_t sendFaultIPC(tcb_t *tptr, cap_t handlerCap, bool_t can_donate)
 {
     if (cap_get_capType(handlerCap) == cap_endpoint_cap) {
         assert(cap_endpoint_cap_get_capCanSend(handlerCap));
-        assert(cap_endpoint_cap_get_capCanGrant(handlerCap));
+        assert(cap_endpoint_cap_get_capCanGrant(handlerCap) ||
+               cap_endpoint_cap_get_capCanGrantReply(handlerCap));
 
         tptr->tcbFault = current_fault;
         sendIPC(true, false,

@@ -1008,7 +1008,8 @@ static bool_t validFaultHandler(cap_t cap)
     switch (cap_get_capType(cap)) {
     case cap_endpoint_cap:
         if (!cap_endpoint_cap_get_capCanSend(cap) ||
-            !cap_endpoint_cap_get_capCanGrant(cap)) {
+            (!cap_endpoint_cap_get_capCanGrant(cap) &&
+             !cap_endpoint_cap_get_capCanGrantReply(cap))) {
             current_syscall_error.type = seL4_InvalidCapability;
             return false;
         }
