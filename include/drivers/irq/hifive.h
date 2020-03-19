@@ -63,16 +63,14 @@ static inline word_t read_sie(void)
     return temp;
 }
 
-static inline uint32_t readl(const volatile uint64_t addr)
+static inline uint32_t readl(uint64_t addr)
 {
-    uint32_t val;
-    asm volatile("lw %0, 0(%1)" : "=r"(val) : "r"(addr));
-    return val;
+    return *((volatile uint32_t *)(addr));
 }
 
-static inline void writel(uint32_t val, volatile uint64_t addr)
+static inline void writel(uint32_t val, uint64_t addr)
 {
-    asm volatile("sw %0, 0(%1)" : : "r"(val), "r"(addr));
+    *((volatile uint32_t *)(addr)) = val;
 }
 
 static inline word_t plic_enable_offset(word_t hart_id, word_t context_id)
