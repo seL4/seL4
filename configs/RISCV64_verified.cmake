@@ -10,7 +10,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/../tools/helpers.cmake)
 cmake_script_build_kernel()
 
 set(KernelSel4Arch "riscv64" CACHE STRING "")
-set(KernelPlatform "spike" CACHE STRING "")
+set(KernelPlatform "hifive" CACHE STRING "")
 set(KernelPTLevels "3" CACHE STRING "")
 set(KernelVerificationBuild ON CACHE BOOL "")
 set(KernelMaxNumNodes "1" CACHE STRING "")
