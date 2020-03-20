@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_SEL4_SEL4_ARCH_OBJECTTYPE_H_
-#define __LIBSEL4_SEL4_SEL4_ARCH_OBJECTTYPE_H_
+#pragma once
 
 typedef enum _mode_object {
     seL4_ARM_HugePageObject = seL4_NonArchObjectTypeCount,
@@ -13,5 +12,3 @@ typedef enum _mode_object {
     seL4_ARM_PageGlobalDirectoryObject,
     seL4_ModeObjectTypeCount
 } seL4_ModeObjectType;
-
-#endif /* __LIBSEL4_SEL4_SEL4_ARCH_OBJECTTYPE_H_ */
