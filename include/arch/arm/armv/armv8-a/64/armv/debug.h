@@ -4,8 +4,5 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_ARMV_DEBUG_H_
-#define __ARCH_ARMV_DEBUG_H_
+#pragma once
 
-
-#endif /* __ARCH_ARMV_DEBUG_H_ */

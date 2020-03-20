@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __OBJECT_TCB_H
-#define __OBJECT_TCB_H
+#pragma once
 
 #include <types.h>
 #include <api/failures.h>
@@ -214,4 +213,3 @@ void Arch_migrateTCB(tcb_t *thread);
 void setThreadName(tcb_t *thread, const char *name);
 #endif /* CONFIG_DEBUG_BUILD */
 
-#endif

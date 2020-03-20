@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __OBJECT_STRUCTURES_H
-#define __OBJECT_STRUCTURES_H
+#pragma once
 
 #include <config.h>
 #include <api/types.h>
@@ -602,4 +601,3 @@ static inline bool_t CONST isCapRevocable(cap_t derivedCap, cap_t srcCap)
     }
 }
 
-#endif

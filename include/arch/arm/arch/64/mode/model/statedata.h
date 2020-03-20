@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODEL_STATEDATA_64_H
-#define __ARCH_MODEL_STATEDATA_64_H
+#pragma once
 
 #include <config.h>
 #include <types.h>
@@ -35,4 +34,3 @@ extern hw_asid_t armKSNextASID VISIBLE;
 pde_t *armKSGlobalLogPDE;
 #endif
 
-#endif /* __ARCH_MODEL_STATEDATA_64_H */

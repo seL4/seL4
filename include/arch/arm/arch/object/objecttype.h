@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_OBJECT_OBJECTTYPE_H
-#define __ARCH_OBJECT_OBJECTTYPE_H
+#pragma once
 
 #include <types.h>
 #include <api/failures.h>
@@ -30,5 +29,3 @@ word_t Arch_getObjectSize(word_t t);
 static inline void Arch_postCapDeletion(cap_t cap)
 {
 }
-
-#endif

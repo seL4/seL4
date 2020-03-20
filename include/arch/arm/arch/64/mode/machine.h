@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODE_MACHINE_H
-#define __ARCH_MODE_MACHINE_H
+#pragma once
 
 #include <config.h>
 #include <stdint.h>
@@ -371,4 +370,4 @@ static inline word_t ats2e0r(word_t va)
 void arch_clean_invalidate_caches(void);
 void arch_clean_invalidate_L1_caches(word_t type);
 
-#endif /* __ARCH_MODE_MACHINE_H */
+

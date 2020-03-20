@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_KERNEL_X2APIC_H_
-#define __ARCH_KERNEL_X2APIC_H_
+#pragma once
 
 #include <config.h>
 #include <arch/machine.h>
@@ -69,4 +68,3 @@ static inline void apic_write_icr(word_t high, word_t low)
 #define IPI_ICR_BARRIER  asm volatile("mfence" ::: "memory")
 #define IPI_MEM_BARRIER  IPI_ICR_BARRIER
 #endif /* CONFIG_X2APIC */
-#endif /* __ARCH_KERNEL_X2APIC_H_ */

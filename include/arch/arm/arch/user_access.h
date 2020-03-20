@@ -3,10 +3,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
-
-#ifndef ARCH_USER_ACCESS_H
-#define ARCH_USER_ACCESS_H
+#pragma once
 
 void armv_init_user_access(void);
 
-#endif /* ARCH_USER_ACCESS_H */

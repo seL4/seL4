@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __OBJECT_CAP_H
-#define __OBJECT_CAP_H
+#pragma once
 
 struct deriveCap_ret {
     exception_t status;
@@ -21,4 +20,3 @@ struct finaliseCap_ret {
 };
 typedef struct finaliseCap_ret finaliseCap_ret_t;
 
-#endif

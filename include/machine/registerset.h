@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MACHINE_REGISTERSET_H
-#define __MACHINE_REGISTERSET_H
+#pragma once
 
 #include <util.h>
 #include <arch/types.h>
@@ -41,4 +40,3 @@ static inline word_t PURE getRegister(tcb_t *thread, register_t reg)
 word_t getNBSendRecvDest(void);
 #endif
 
-#endif

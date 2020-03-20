@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __LINKER_H
-#define __LINKER_H
+#pragma once
 
 #include <util.h>
 #include <arch/linker.h>
@@ -32,4 +31,4 @@
 /* bss data that is permitted to be used in the restricted SKIM address space */
 #define SKIM_BSS SECTION(".skim.bss")
 
-#endif /* __LINKER_H */
+

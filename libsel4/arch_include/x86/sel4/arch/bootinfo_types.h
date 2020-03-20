@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_ARCH_BOOTINFO_TYPES_H
-#define __LIBSEL4_ARCH_BOOTINFO_TYPES_H
+#pragma once
 
 #define SEL4_MULTIBOOT_MAX_MMAP_ENTRIES 50
 #define SEL4_MULTIBOOT_RAM_REGION_TYPE 1
@@ -131,4 +130,3 @@ typedef struct seL4_X86_BootInfo_mmap {
 
 typedef struct multiboot2_fb seL4_X86_BootInfo_fb_t;
 
-#endif // __LIBSEL4_ARCH_BOOTINFO_TYPES_H

@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_SEL4_SEL4_ARCH_SYSCALLS_H_
-#define __LIBSEL4_SEL4_SEL4_ARCH_SYSCALLS_H_
+#pragma once
 
 #include <autoconf.h>
 #ifdef CONFIG_KERNEL_MCS
@@ -768,4 +767,3 @@ LIBSEL4_INLINE_FUNC void seL4_SetTLSBase(seL4_Word tls_base)
 }
 #endif /* CONFIG_SET_TLS_BASE_SELF */
 
-#endif /* __LIBSEL4_SEL4_SEL4_ARCH_SYSCALLS_H_ */

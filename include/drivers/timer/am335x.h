@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __DRIVER_TIMER_AM335X_H
-#define __DRIVER_TIMER_AM335X_H
+#pragma once
 
 #define TISR_MATCH_FLAG     BIT(0)
 #define TISR_OVF_FLAG       BIT(1)
@@ -90,4 +89,4 @@ static inline void resetTimer(void)
     ackInterrupt(KERNEL_TIMER_IRQ);
 }
 #endif /* !CONFIG_KERNEL_MCS */
-#endif /* __DRIVER_TIMER_AM335X_H */
+

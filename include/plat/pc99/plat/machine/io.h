@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __PLAT_MACHINE_IO_H_
-#define __PLAT_MACHINE_IO_H_
+#pragma once
 
 #include <config.h>
 #include <linker.h>
@@ -28,4 +27,3 @@ uint32_t in32(uint16_t port);
 void serial_init(uint16_t port);
 #endif
 
-#endif /* __PLAT_MACHINE_IO_H_ */

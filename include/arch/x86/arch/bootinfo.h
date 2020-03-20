@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_BOOTINFO_H
-#define __ARCH_BOOTINFO_H
+#pragma once
 
 #define MAX_NUM_FREEMEM_REG 16
 
@@ -20,4 +19,3 @@
  */
 #define MAX_NUM_RESV_REG (MAX_NUM_FREEMEM_REG + CONFIG_MAX_NUM_IOAPIC + MAX_NUM_DRHU + 2)
 
-#endif

@@ -5,8 +5,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef ARCH_BENCHMARK_H
-#define ARCH_BENCHMARK_H
+#pragma once
 
 #include <config.h>
 #include <arch/object/structures.h>
@@ -14,4 +13,4 @@
 #ifdef CONFIG_ENABLE_BENCHMARK
 #error "RISC-V doesn't support timestamp() function yet"
 #endif /* CONFIG_ENABLE_BENCHMARK */
-#endif /* ARCH_BENCHMARK_H */
+

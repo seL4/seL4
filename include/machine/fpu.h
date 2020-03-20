@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MACHINE_FPU_H
-#define __MACHINE_FPU_H
+#pragma once
 
 #include <config.h>
 #include <object/structures.h>
@@ -58,4 +57,4 @@ static inline void FORCE_INLINE lazyFPURestore(tcb_t *thread)
 }
 
 #endif /* CONFIG_HAVE_FPU */
-#endif /* __MACHINE_FPU_H */
+

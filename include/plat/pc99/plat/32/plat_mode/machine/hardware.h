@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __PLAT_MODE_MACHINE_HARDWARE_H
-#define __PLAT_MODE_MACHINE_HARDWARE_H
+#pragma once
 
 #include <config.h>
 #include <arch/kernel/tlb_bitmap_defs.h>
@@ -56,4 +55,3 @@
 #define paddr_to_kpptr(x) paddr_to_pptr(x)
 #define kpptr_to_paddr(x) pptr_to_paddr(x)
 
-#endif

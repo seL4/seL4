@@ -4,11 +4,9 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_ARCH_DEPRECATED_H
-#define __LIBSEL4_ARCH_DEPRECATED_H
+#pragma once
 
 #include <autoconf.h>
 #include <sel4/macros.h>
 #include <sel4/sel4_arch/deprecated.h>
 
-#endif /* __SEL4_ARCH_DEPRECATED_H__ */

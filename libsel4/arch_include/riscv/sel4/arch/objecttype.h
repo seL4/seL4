@@ -5,8 +5,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_OBJECTTYPE_H
-#define __ARCH_OBJECTTYPE_H
+#pragma once
 
 #ifdef HAVE_AUTOCONF
 #include <autoconf.h>
@@ -21,5 +20,4 @@ typedef enum _object {
 
 typedef seL4_Word object_t;
 
-#endif /* __ARCH_OBJECTTYPE_H */
 

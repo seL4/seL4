@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __OBJECT_H
-#define __OBJECT_H
+#pragma once
 
 #include <object/structures.h>
 #include <object/objecttype.h>
@@ -18,4 +17,3 @@
 #include <object/tcb.h>
 #include <object/untyped.h>
 
-#endif

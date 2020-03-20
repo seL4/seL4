@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MODE_SMP_H_
-#define __MODE_SMP_H_
+#pragma once
 
 #include <config.h>
 #include <util.h>
@@ -35,4 +34,3 @@ getCurrentCPUIndex(void)
 }
 
 #endif /* ENABLE_SMP_SUPPORT */
-#endif /* __MODE_SMP_H_ */

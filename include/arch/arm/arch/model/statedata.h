@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODEL_STATEDATA_H
-#define __ARCH_MODEL_STATEDATA_H
+#pragma once
 
 #include <config.h>
 #include <arch/object/vcpu.h>
@@ -34,4 +33,3 @@ extern user_breakpoint_state_t armKSNullBreakpointState VISIBLE;
 extern word_t armKSGlobalsFrame[BIT(ARMSmallPageBits) / sizeof(word_t)];
 #endif
 
-#endif /* __ARCH_MODEL_STATEDATA_H */

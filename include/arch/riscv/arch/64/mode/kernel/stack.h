@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __KERNEL_MODE_STACK_H
-#define __KERNEL_MODE_STACK_H
+#pragma once
 
 #include <config.h>
 #include <util.h>
@@ -16,4 +15,4 @@
 #define KERNEL_STACK_ALIGNMENT 8
 #endif
 
-#endif /* __KERNEL_MODE_STACK_H */
+

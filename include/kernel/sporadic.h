@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __KERNEL_SPORADIC_H
-#define __KERNEL_SPORADIC_H
+#pragma once
 /* This header presents the interface for sporadic servers,
  * implemented according to Stankcovich et. al in
  * "Defects of the POSIX Spoardic Server and How to correct them",
@@ -138,4 +137,3 @@ void refill_split_check(ticks_t used);
  */
 void refill_unblock_check(sched_context_t *sc);
 
-#endif

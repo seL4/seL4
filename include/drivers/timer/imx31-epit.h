@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __DRIVERS_TIMER_IMX31_EPIT_H
-#define __DRIVERS_TIMER_IMX31_EPIT_H
+#pragma once
 
 /* Memory map for EPIT (Enhanced Periodic Interrupt Timer). */
 struct timer {
@@ -24,4 +23,4 @@ static inline void resetTimer(void)
     /* Timer resets automatically */
 }
 
-#endif /* !__DRIVERS_TIMER_IMX31_EPIT_H */
+

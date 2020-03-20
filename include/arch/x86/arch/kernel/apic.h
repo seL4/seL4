@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_KERNEL_APIC_H
-#define __ARCH_KERNEL_APIC_H
+#pragma once
 
 #include <config.h>
 #include <types.h>
@@ -32,4 +31,4 @@ void apic_send_ipi_core(irq_t vector, cpu_id_t cpu_id);
 void apic_send_ipi_cluster(irq_t vector, word_t mda);
 
 #define ipi_send_target apic_send_ipi_core
-#endif
+

@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MODE_KERNEL_VSPACE_H
-#define __MODE_KERNEL_VSPACE_H
+#pragma once
 
 #include <arch/kernel/vspace.h>
 
@@ -63,4 +62,3 @@ static inline CONST pml4e_t x86_make_empty_root_mapping(void)
            );
 }
 
-#endif /* __MODE_KERNEL_VSPACE_H */

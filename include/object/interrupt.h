@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __OBJECT_INTERRUPT_H
-#define __OBJECT_INTERRUPT_H
+#pragma once
 
 #include <types.h>
 #include <api/failures.h>
@@ -28,4 +27,3 @@ void handleInterrupt(irq_t irq);
 bool_t isIRQActive(irq_t irq);
 void setIRQState(irq_state_t irqState, irq_t irq);
 
-#endif

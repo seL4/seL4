@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __OBJECT_ENDPOINT_H
-#define __OBJECT_ENDPOINT_H
+#pragma once
 
 #include <types.h>
 #include <object/structures.h>
@@ -38,4 +37,3 @@ void cancelBadgedSends(endpoint_t *epptr, word_t badge);
 void replyFromKernel_error(tcb_t *thread);
 void replyFromKernel_success_empty(tcb_t *thread);
 
-#endif

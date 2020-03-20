@@ -5,8 +5,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_HARDWARE_H
-#define __ARCH_MACHINE_HARDWARE_H
+#pragma once
 
 #include <util.h>
 
@@ -129,4 +128,3 @@ static inline unsigned int CONST pageBitsForSize(vm_page_size_t pagesize)
         asm volatile("fence rw,rw" ::: "memory"); \
     } while (0)
 
-#endif /* !__ARCH_MACHINE_HARDWARE_H */

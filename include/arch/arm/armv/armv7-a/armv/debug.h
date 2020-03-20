@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_ARMV_DEBUG_H_
-#define __ARCH_ARMV_DEBUG_H_
+#pragma once
 
 #include <config.h>
 
@@ -172,4 +171,4 @@ static inline bool_t Arch_breakpointIsMismatch(dbg_bcr_t in_val)
 }
 
 #endif /* CONFIG_HARDWARE_DEBUG_API */
-#endif /* __ARCH_ARMV_DEBUG_H_ */
+

@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_KERNEL_BOOT_H
-#define __ARCH_KERNEL_BOOT_H
+#pragma once
 
 #include <types.h>
 
@@ -22,4 +21,3 @@ void init_kernel(
     uint32_t dtb_size
 );
 
-#endif

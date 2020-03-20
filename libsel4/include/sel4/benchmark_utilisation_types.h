@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef BENCHMARK_TRACK_UTIL_TYPES_H
-#define BENCHMARK_TRACK_UTIL_TYPES_H
+#pragma once
 
 #ifdef HAVE_AUTOCONF
 #include <autoconf.h>
@@ -20,4 +19,4 @@ enum benchmark_track_util_ipc_index {
 };
 
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
-#endif /* BENCHMARK_TRACK_UTIL_TYPES_H */
+

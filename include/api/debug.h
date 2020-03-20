@@ -7,8 +7,7 @@
 #include <config.h>
 
 #ifdef CONFIG_DEBUG_BUILD
-#ifndef __API_DEBUG_H
-#define __API_DEBUG_H
+#pragma once
 
 #include <benchmark/benchmark_track.h>
 #include <arch/api/syscall.h>
@@ -133,6 +132,5 @@ static inline void debug_dumpScheduler(void)
     }
 }
 #endif /* CONFIG_PRINTING */
-#endif /* __API_DEBUG_H */
 #endif /* CONFIG_DEBUG_BUILD */
 

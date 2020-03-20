@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_KERNEL_TLB_H
-#define __ARCH_KERNEL_TLB_H
+#pragma once
 
 #include <arch/smp/ipi_inline.h>
 
@@ -33,4 +32,4 @@ static inline void invalidateTranslationAll(word_t mask)
     SMP_COND_STATEMENT(doRemoteInvalidateTranslationAll(mask));
 }
 
-#endif /* __ARCH_KERNEL_TLB_H */
+

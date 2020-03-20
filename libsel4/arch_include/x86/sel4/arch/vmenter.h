@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_ARCH_VMENTER
-#define __LIBSEL4_ARCH_VMENTER
+#pragma once
 
 /*
  * When performing a seL4_SysVMEnter seL4 expects certain guest state to be
@@ -61,4 +60,3 @@
 #define SEL4_VMENTER_RESULT_FAULT_LEN 17
 #define SEL4_VMENTER_RESULT_NOTIF_LEN 3
 
-#endif /* __LIBSEL4_ARCH_VMENTER */

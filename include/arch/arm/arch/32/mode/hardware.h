@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_HARDWARE_32_H
-#define __ARCH_HARDWARE_32_H
+#pragma once
 
 #include <config.h>
 #ifndef __ASSEMBLER__
@@ -37,4 +36,3 @@
 #include <plat/machine/hardware.h>
 #endif
 
-#endif /* __ARCH_HARDWARE_32_H */

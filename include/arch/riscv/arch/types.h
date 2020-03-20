@@ -5,8 +5,8 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_TYPES_H
-#define __ARCH_TYPES_H
+#pragma once
+
 
 #include <config.h>
 #include <assert.h>
@@ -41,4 +41,3 @@ typedef struct kernel_frame {
     int userAvailable;
 } kernel_frame_t;
 
-#endif

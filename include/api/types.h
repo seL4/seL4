@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __API_TYPES_H
-#define __API_TYPES_H
+#pragma once
 
 #include <config.h>
 #include <stdint.h>
@@ -130,4 +129,3 @@ static inline word_t CONST wordFromMessageInfo(seL4_MessageInfo_t mi)
 #define userError(...)
 #endif
 
-#endif

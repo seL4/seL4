@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __PLAT_SMMU_H
-#define __PLAT_SMMU_H
+#pragma once
 
 #include <config.h>
 
@@ -168,4 +167,3 @@ static inline void plat_smmu_handle_interrupt(void)
 
 #endif /* CONFIG_ARM_SMMU */
 
-#endif /* __PLAT_SMMU_H */

@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODE_MACHINE_PL2_H
-#define __ARCH_MODE_MACHINE_PL2_H
+#pragma once
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 
@@ -41,4 +40,3 @@ static inline paddr_t addressTranslateS1CPR(vptr_t vaddr)
     return vaddr;
 }
 
-#endif /* __ARCH_MODE_MACHINE_H */

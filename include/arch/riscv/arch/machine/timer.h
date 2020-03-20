@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_TIMER_H
-#define __ARCH_MACHINE_TIMER_H
+#pragma once
 
 #ifdef CONFIG_KERNEL_MCS
 
@@ -68,5 +67,3 @@ static inline void ackDeadlineIRQ(void)
 }
 
 #endif /* CONFIG_KERNEL_MCS */
-
-#endif /* __ARCH_MACHINE_TIMER_H */

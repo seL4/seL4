@@ -9,8 +9,7 @@
  * Arm Generic Interrupt Controller v3
  */
 
-#ifndef ARCH_MACHINE_GIC_3_H
-#define ARCH_MACHINE_GIC_3_H
+#pragma once
 
 /* tell the kernel we have the set trigger feature */
 #define HAVE_SET_TRIGGER 1
@@ -287,4 +286,3 @@ static inline void ackInterrupt(irq_t irq)
 
 }
 
-#endif /* ARCH_MACHINE_GIC_3_H */

@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __KERNEL_THREAD_H
-#define __KERNEL_THREAD_H
+#pragma once
 
 #include <types.h>
 #include <util.h>
@@ -265,4 +264,3 @@ void awaken(void);
 void postpone(sched_context_t *sc);
 #endif
 
-#endif

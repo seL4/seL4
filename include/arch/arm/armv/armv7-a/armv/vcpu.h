@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_ARMV_VCPU_H_
-#define __ARCH_ARMV_VCPU_H_
+#pragma once
 
 #include <config.h>
 
@@ -862,6 +861,4 @@ static inline bool_t armv_handleVCPUFault(word_t hsr)
 
 #endif /* End of CONFIG_ARM_HYPERVISOR_SUPPORT */
 
-
-#endif
 

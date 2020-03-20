@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODE_MODEL_STATEDATA_H_
-#define __ARCH_MODE_MODEL_STATEDATA_H_
+#pragma once
 
 #include <config.h>
 #include <object/structures.h>
@@ -50,4 +49,3 @@ NODE_STATE_END(modeNodeState);
 #define IRQ_STACK_SIZE 6
 extern word_t x64KSIRQStack[CONFIG_MAX_NUM_NODES][IRQ_STACK_SIZE + 2] ALIGN(64) VISIBLE SKIM_BSS;
 
-#endif /* __ARCH_MODE_MODEL_STATEDATA_H_ */

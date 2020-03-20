@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ASSERT_H
-#define __ASSERT_H
+#pragma once
 
 #include <config.h>
 #include <util.h>
@@ -51,4 +50,3 @@ void _assert_fail(
 #define unverified_compile_assert compile_assert
 #endif
 
-#endif

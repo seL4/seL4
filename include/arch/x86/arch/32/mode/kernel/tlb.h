@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MODE_KERNEL_TLB_H
-#define __MODE_KERNEL_TLB_H
+#pragma once
 
 #include <mode/smp/ipi.h>
 #include <arch/kernel/tlb.h>
@@ -28,4 +27,3 @@ static inline void invalidateTLB(word_t mask)
     SMP_COND_STATEMENT(doRemoteInvalidateTLB(mask));
 }
 
-#endif /* __MODE_KERNEL_TLB_H */

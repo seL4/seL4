@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef ARCH_MACHINE_DEBUG_CONF_H
-#define ARCH_MACHINE_DEBUG_CONF_H
+#pragma once
 
 #include <config.h>
 
@@ -46,4 +45,3 @@
 #define ARM_HYP_TRAP_CP14
 #endif
 
-#endif /* ARCH_MACHINE_DEBUG_CONF_H */

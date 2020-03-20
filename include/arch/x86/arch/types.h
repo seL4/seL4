@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_TYPES_H
-#define __ARCH_TYPES_H
+#pragma once
 
 #include <config.h>
 #include <assert.h>
@@ -40,4 +39,4 @@ typedef paddr_t seL4_PAddr;
 typedef dom_t seL4_Domain;
 
 typedef uint64_t timestamp_t;
-#endif
+

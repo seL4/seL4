@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_SIMPLE_TYPES_H
-#define __LIBSEL4_SIMPLE_TYPES_H
+#pragma once
 
 /* Get the architectural types seL4_{u}int{N} */
 #include <sel4/arch/simple_types.h>
@@ -23,4 +22,3 @@ typedef seL4_Int8 seL4_Bool;
 #define seL4_Null ((void*)0)
 #endif // __cplusplus
 
-#endif // __LIBSEL4_SIMPLE_TYPES_H

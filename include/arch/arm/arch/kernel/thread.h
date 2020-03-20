@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_KERNEL_THREAD_H
-#define __ARCH_KERNEL_THREAD_H
+#pragma once
 
 #include <object.h>
 #include <mode/kernel/thread.h>
@@ -15,4 +14,3 @@ void Arch_switchToIdleThread(void);
 void Arch_configureIdleThread(tcb_t *tcb);
 void Arch_activateIdleThread(tcb_t *tcb);
 
-#endif

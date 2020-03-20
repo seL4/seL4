@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_ARCH_CONSTANTS_H
-#define __LIBSEL4_ARCH_CONSTANTS_H
+#pragma once
 
 /* Currently MSIs do not go through a vt-d translation by
  * the kernel, therefore when the user programs an MSI they
@@ -42,5 +41,3 @@
 #define seL4_X86_EPTPTEntryBits   3
 #define seL4_X86_EPTPTIndexBits   9
 #define seL4_X86_EPTPTBits   (seL4_X86_EPTPTEntryBits + seL4_X86_EPTPTIndexBits)
-
-#endif

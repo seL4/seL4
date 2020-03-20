@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __KERNEL_TRAPS_H
-#define __KERNEL_TRAPS_H
+#pragma once
 
 #include <config.h>
 #include <util.h>
@@ -35,4 +34,3 @@ static inline void c_exit_hook(void)
     arch_c_exit_hook();
 }
 
-#endif /* __KERNEL_TRAPS_H */

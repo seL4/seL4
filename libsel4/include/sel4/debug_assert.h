@@ -10,8 +10,7 @@
  * is a NOP, otherwise it invokes the unconditional version
  * in sel4/assert.h.
  */
-#ifndef __LIBSEL4_DEBUG_ASSERT_H
-#define __LIBSEL4_DEBUG_ASSERT_H
+#pragma once
 
 #ifdef NDEBUG
 
@@ -29,4 +28,3 @@
 
 #endif // NDEBUG
 
-#endif // __LIBSEL4_DEBUG_ASSERT_H

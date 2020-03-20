@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __ERRORS_H
-#define __ERRORS_H
+#pragma once
 
 typedef enum {
     seL4_NoError = 0,
@@ -26,5 +25,3 @@ typedef enum {
      */
     seL4_NumErrors
 } seL4_Error;
-
-#endif

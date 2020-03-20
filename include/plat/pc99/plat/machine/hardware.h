@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __PLAT_MACHINE_HARDWARE_H
-#define __PLAT_MACHINE_HARDWARE_H
+#pragma once
 
 #include <plat/machine/interrupt.h>
 #include <plat/machine.h>
@@ -14,4 +13,4 @@
 
 bool_t platAddDevices(void);
 
-#endif
+

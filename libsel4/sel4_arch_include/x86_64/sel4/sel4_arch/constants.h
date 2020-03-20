@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_SEL4_SEL4_ARCH_CONSTANTS_H_
-#define __LIBSEL4_SEL4_SEL4_ARCH_CONSTANTS_H_
+#pragma once
 
 #include <autoconf.h>
 
@@ -156,4 +155,3 @@ enum {
 /* First address in the virtual address space that is not accessible to user level */
 #define seL4_UserTop 0x00007ffffffff000
 
-#endif /* __LIBSEL4_SEL4_SEL4_ARCH_CONSTANTS_H_ */

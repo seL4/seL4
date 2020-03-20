@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __KERNEL_CSPACE_H
-#define __KERNEL_CSPACE_H
+#pragma once
 
 #include <types.h>
 #include <api/failures.h>
@@ -60,4 +59,3 @@ resolveAddressBits_ret_t resolveAddressBits(cap_t nodeCap,
                                             cptr_t capptr,
                                             word_t n_bits);
 
-#endif

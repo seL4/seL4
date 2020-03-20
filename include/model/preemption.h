@@ -4,11 +4,9 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MODEL_PREEMPTION_H
-#define __MODEL_PREEMPTION_H
+#pragma once
 
 #include <api/failures.h>
 
 exception_t preemptionPoint(void);
 
-#endif

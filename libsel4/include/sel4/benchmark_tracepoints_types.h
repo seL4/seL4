@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef BENCHMARK_TRACE_POINTS_TYPES_H
-#define BENCHMARK_TRACE_POINTS_TYPES_H
+#pragma once
 
 #ifdef HAVE_AUTOCONF
 #include <autoconf.h>
@@ -18,4 +17,3 @@ typedef struct benchmark_tracepoint_log_entry {
 } benchmark_tracepoint_log_entry_t;
 #endif /* CONFIG_BENCHMARK_TRACEPOINTS */
 
-#endif /* BENCHMARK_TRACE_POINTS_TYPES_H */

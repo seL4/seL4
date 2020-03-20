@@ -5,7 +5,6 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_OBJECT_STRUCTURES_32_H
-#define __ARCH_OBJECT_STRUCTURES_32_H
+#pragma once
 
-#endif /* __ARCH_OBJECT_STRUCTURES_32_H */
+

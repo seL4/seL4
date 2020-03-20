@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_ARCH_MAPPING
-#define __LIBSEL4_ARCH_MAPPING
+#pragma once
 
 #include <sel4/sel4_arch/mapping.h>
 
@@ -13,4 +12,3 @@
 #define SEL4_MAPPING_LOOKUP_NO_EPTPD 30
 #define SEL4_MAPPING_LOOKUP_NO_EPTPT 21
 
-#endif

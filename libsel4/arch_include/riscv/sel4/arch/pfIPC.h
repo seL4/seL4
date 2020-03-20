@@ -4,9 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_ARCH_PAGEFAULT_IPC
-#define __LIBSEL4_ARCH_PAGEFAULT_IPC
+#pragma once
 
 #include <sel4/deprecated.h>
 
-#endif

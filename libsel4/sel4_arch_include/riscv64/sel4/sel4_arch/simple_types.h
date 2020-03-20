@@ -4,11 +4,9 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_SEL4_ARCH_SIMPLE_TYPES_H_
-#define __LIBSEL4_SEL4_ARCH_SIMPLE_TYPES_H_
+#pragma once
 
 typedef signed long seL4_Int64;
 typedef unsigned long seL4_Uint64;
 
-#endif // __LIBSEL4_SEL4_ARCH_SIMPLE_TYPES_H_
 

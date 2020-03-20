@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef BENCHMARK_TRACK_H
-#define BENCHMARK_TRACK_H
+#pragma once
 
 #include <config.h>
 #include <arch/benchmark.h>
@@ -59,4 +58,3 @@ static inline void benchmark_debug_syscall_start(word_t cptr, word_t msgInfo, wo
 }
 #endif
 
-#endif /* BENCHMARK_TRACK_H */

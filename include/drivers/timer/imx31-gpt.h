@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __DRIVERS_TIMER_IMX31_GPT_H
-#define __DRIVERS_TIMER_IMX31_GPT_H
+#pragma once
 
 #include <config.h>
 
@@ -63,4 +62,3 @@ static inline void ackDeadlineIRQ(void)
     gpt->gptsr |= (BIT(OF1IE) | BIT(ROV));
 }
 
-#endif /* !__DRIVERS_TIMER_IMX31_GPT_H */

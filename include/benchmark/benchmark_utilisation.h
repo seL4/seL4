@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef BENCHMARK_UTILISATION_H
-#define BENCHMARK_UTILISATION_H
+#pragma once
 
 #include <config.h>
 #include <arch/benchmark.h>
@@ -61,4 +60,3 @@ static inline void benchmark_utilisation_finalise(void)
 }
 
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
-#endif /* BENCHMARK_UTILISATION_H */

@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_REGISTERSET_64_H
-#define __ARCH_MACHINE_REGISTERSET_64_H
+#pragma once
 
 #include <config.h>
 
@@ -268,4 +267,3 @@ static inline void Arch_initContext(user_context_t *context)
 
 #endif /* !__ASSEMBLER__ */
 
-#endif /* __ARCH_MACHINE_REGISTERSET_64_H */

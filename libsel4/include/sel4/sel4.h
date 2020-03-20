@@ -4,9 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_SEL4_H
-#define __LIBSEL4_SEL4_H
-
+#pragma once
 #include <sel4/types.h>
 #include <sel4/macros.h>
 
@@ -25,4 +23,4 @@
 #include <sel4/arch/constants.h>
 #include <sel4/plat/api/constants.h>
 
-#endif // __LIBSEL4_SEL4_H
+

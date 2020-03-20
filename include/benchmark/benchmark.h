@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef BENCHMARK_H
-#define BENCHMARK_H
+#pragma once
 
 #include <arch/benchmark.h>
 #include <machine/io.h>
@@ -62,4 +61,3 @@ static inline void trace_point_stop(word_t id)
 
 #endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
 
-#endif /* BENCHMARK_H */

@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODE_MACHINE_H_
-#define __ARCH_MODE_MACHINE_H_
+#pragma once
 
 #include <config.h>
 #include <arch/model/statedata.h>
@@ -335,4 +334,3 @@ static inline void x86_set_tls_segment_base(word_t tls_base)
     x86_write_fs_base(tls_base, SMP_TERNARY(getCurrentCPUIndex(), 0));
 }
 
-#endif /* __ARCH_MODE_MACHINE_H_ */

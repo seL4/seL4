@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_H
-#define __ARCH_MACHINE_H
+#pragma once
 
 #include <arch/types.h>
 #include <arch/object/structures.h>
@@ -976,4 +975,3 @@ void int_ff(void);
 void handle_vmexit(void);
 #endif
 
-#endif

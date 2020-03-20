@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MACHINE_DEBUG_H_
-#define __MACHINE_DEBUG_H_
+#pragma once
 
 #include <config.h>
 
@@ -89,4 +88,3 @@ static inline bool_t singleStepFaultCounterReady(tcb_t *t)
 
 #endif /* CONFIG_HARDWARE_DEBUG_API */
 
-#endif /* __MACHINE_DEBUG_H_ */

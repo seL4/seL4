@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MACHINE_H
-#define __MACHINE_H
+#pragma once
 
 #include <plat/machine.h>
 #include <machine/registerset.h>
@@ -40,4 +39,3 @@ static inline p_region_t CONST pptr_to_paddr_reg(region_t reg)
 #define paddr_to_pptr ptrFromPAddr
 #define pptr_to_paddr(x) addrFromPPtr(x)
 
-#endif

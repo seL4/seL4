@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODE_HARDWARE_H
-#define __ARCH_MODE_HARDWARE_H
+#pragma once
 
 #include <config.h>
 #include <arch/machine/hardware.h>
@@ -80,4 +79,4 @@
 
 #define PADDR_TOP (PPTR_TOP - BASE_OFFSET)
 
-#endif /* __ARCH_MODE_HARDWARE_H */
+

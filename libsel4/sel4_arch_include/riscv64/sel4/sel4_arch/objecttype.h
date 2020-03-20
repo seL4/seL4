@@ -5,8 +5,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __SEL4_ARCH_OBJECT_TYPE_H
-#define __SEL4_ARCH_OBJECT_TYPE_H
+#pragma once
 
 #ifdef HAVE_AUTOCONF
 #include <autoconf.h>
@@ -24,4 +23,3 @@ typedef enum _mode_object {
 #define seL4_RISCV_Tera_Page 0xffffffff
 #endif
 
-#endif

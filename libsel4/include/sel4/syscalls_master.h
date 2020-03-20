@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_MASTER_SYSCALLSH
-#define __LIBSEL4_MASTER_SYSCALLSH
+#pragma once
 #include <autoconf.h>
 
 /**
@@ -228,4 +227,3 @@ seL4_Poll(seL4_CPtr src, seL4_Word *sender);
 
 /** @} */
 
-#endif /* __LIBSEL4_MASTER_SYSCALLSH */

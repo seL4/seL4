@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_OBJECT_IOPORT_H
-#define __ARCH_OBJECT_IOPORT_H
+#pragma once
 
 #include <types.h>
 #include <api/failures.h>
@@ -24,4 +23,3 @@ exception_t decodeX86PortControlInvocation(word_t invLabel, word_t length, cptr_
 /* used to clean up the final capability to an allocated I/O port range */
 void freeIOPortRange(uint16_t first_port, uint16_t last_port);
 
-#endif

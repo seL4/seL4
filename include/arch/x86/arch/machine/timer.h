@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_TIMER_H
-#define __ARCH_MACHINE_TIMER_H
+#pragma once
 
 #include <config.h>
 #include <arch/model/statedata.h>
@@ -75,4 +74,3 @@ static inline void resetTimer(void)
 
 BOOT_CODE uint32_t tsc_init(void);
 
-#endif /* __ARCH_MACHINE_TIMER_H */

@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_ARMV7A_MACHINE_H
-#define __ARCH_ARMV7A_MACHINE_H
+#pragma once
 
 #include <util.h>
 
@@ -49,5 +48,3 @@ void lockTLBEntryCritical(unsigned int addr, unsigned int x, unsigned int y);
 #define SYSTEM_READ_WORD(reg, v)  MRC(reg, v)
 #define SYSTEM_WRITE_64(reg, v)  MCRR(reg, v)
 #define SYSTEM_READ_64(reg, v)   MRRC(reg, v)
-
-#endif

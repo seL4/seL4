@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_SEL4_DEPRECATED_H
-#define __LIBSEL4_SEL4_DEPRECATED_H
+#pragma once
 
 #include <sel4/macros.h>
 #include <sel4/arch/deprecated.h>
@@ -128,5 +127,4 @@ static inline SEL4_DEPRECATED("Use seL4_CNode_CapData_new().words[0]") seL4_Word
     return seL4_CNode_CapData_new(guard, bits).words[0];
 }
 
-#endif // __LIBSEL4_SEL4_DEPRECATED_H
 

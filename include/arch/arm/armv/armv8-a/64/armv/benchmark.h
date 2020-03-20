@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef ARMV_BENCHMARK_H
-#define ARMV_BENCHMARK_H
+#pragma once
 
 #include <config.h>
 #ifdef CONFIG_ENABLE_BENCHMARKS
@@ -32,4 +31,4 @@ static inline void armv_handleOverflowIRQ(void)
 }
 
 #endif /* CONFIG_ENABLE_BENCHMARKS */
-#endif /* ARMV_BENCHMARK_H */
+

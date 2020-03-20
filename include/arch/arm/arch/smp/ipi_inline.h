@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_SMP_IPI_INLINE_H
-#define __ARCH_SMP_IPI_INLINE_H
+#pragma once
 
 #include <config.h>
 #include <smp/ipi.h>
@@ -43,4 +42,4 @@ static inline void doRemoteMaskPrivateInterrupt(word_t cpu, word_t disable, word
     doRemoteOp2Arg(IpiRemoteCall_MaskPrivateInterrupt, disable, irq, cpu);
 }
 #endif /* ENABLE_SMP_SUPPORT */
-#endif /* __ARCH_SMP_IPI_INLINE_H */
+

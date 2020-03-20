@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef BENCHMARK_TRACK_TYPES_H
-#define BENCHMARK_TRACK_TYPES_H
+#pragma once
 
 #include <stdint.h>
 
@@ -67,4 +66,3 @@ typedef struct benchmark_syscall_log_entry {
 
 #endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES || CONFIG_DEBUG_BUILD */
 
-#endif /* BENCHMARK_TRACK_TYPES_H */

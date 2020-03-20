@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MACHINE_CAPDL_H
-#define __MACHINE_CAPDL_H
+#pragma once
 
 #define ESCAPE               0xaa
 #define START                0xff
@@ -30,4 +29,3 @@
 
 #define CAPDL_VERSION        0
 
-#endif

@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __OBJECT_REPLY_H
-#define __OBJECT_REPLY_H
+#pragma once
 
 #include <types.h>
 #include <api/failures.h>
@@ -32,4 +31,3 @@ void reply_remove(reply_t *reply);
 /* Remove a specific tcb, and the reply it is blocking on, from the call stack */
 void reply_remove_tcb(tcb_t *tcb);
 
-#endif /* __OBJECT_REPLY_H */

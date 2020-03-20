@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_SMP_IPI_H
-#define __ARCH_SMP_IPI_H
+#pragma once
 
 #include <config.h>
 
@@ -21,4 +20,3 @@ irq_t ipi_get_irq(void);
 void  ipi_clear_irq(irq_t irq);
 #endif
 
-#endif /* __ARCH_SMP_IPI_H */

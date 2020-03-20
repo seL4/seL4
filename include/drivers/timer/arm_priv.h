@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __DRIVERS_TIMER_ARM_PRIV_H_
-#define __DRIVERS_TIMER_ARM_PRIV_H_
+#pragma once
 
 #define TMR_INTS_EVENT       BIT(0)
 
@@ -24,4 +23,3 @@ static inline void resetTimer(void)
     priv_timer->ints = TMR_INTS_EVENT;
 }
 
-#endif /* __DRIVERS_TIMER_ARM_PRIV_H_ */

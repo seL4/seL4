@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_OBJECT_IOSPACE_H
-#define __ARCH_OBJECT_IOSPACE_H
+#pragma once
 
 #include <types.h>
 #include <api/failures.h>
@@ -68,5 +67,4 @@ static inline void clearIOPageDirectory(cap_t cap)
 
 #endif /* end of !CONFIG_ARM_SMMU */
 
-#endif
 

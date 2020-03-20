@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __DRIVERS_IRQ_BCM_H
-#define __DRIVERS_IRQ_BCM_H
+#pragma once
+
 #include <plat/machine/devices_gen.h>
 #include <machine/io.h>
 #include <machine/interrupt.h>
@@ -143,4 +143,4 @@ static inline void handleSpuriousIRQ(void)
     /* Nothing to do here */
 }
 
-#endif /* !__DRIVERS_IRQ_BCM_H */
+

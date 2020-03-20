@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __IPC_BUFFER_H
-#define __IPC_BUFFER_H
+#pragma once
 
 #include <types.h>
 #include <api/syscall.h>
@@ -21,4 +20,4 @@ static inline word_t mode_setTimeArg(word_t i, time_t time, word_t *buffer, tcb_
     setMR(thread, buffer, i, (uint32_t) time);
     return setMR(thread, buffer, i + 1, (uint32_t)(time >> 32llu));
 }
-#endif /* __IPC_BUFFER_H */
+

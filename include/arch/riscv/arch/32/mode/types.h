@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODE_TYPES_H
-#define __ARCH_MODE_TYPES_H
+#pragma once
 
 #include <config.h>
 #include <assert.h>
@@ -15,4 +14,3 @@ compile_assert(long_is_32bits, sizeof(unsigned long) == 4)
 
 #define wordRadix 5
 
-#endif

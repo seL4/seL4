@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_FASTPATH_H
-#define __ARCH_FASTPATH_H
+#pragma once
 
 #include <linker.h>
 #include <mode/fastpath/fastpath.h>
@@ -27,5 +26,4 @@ void fastpath_reply_recv(word_t cptr, word_t r_msgInfo)
 #endif
 NORETURN;
 
-#endif /* __ARCH_FASTPATH_H */
 

@@ -4,9 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_SEL4_SEL4_ARCH_MAPPING_H_
-#define __LIBSEL4_SEL4_SEL4_ARCH_MAPPING_H_
-
+#pragma once
 #define SEL4_MAPPING_LOOKUP_LEVEL 2
 #define SEL4_MAPPING_LOOKUP_NO_PT 21
 #define SEL4_MAPPING_LOOKUP_NO_PD 30
@@ -17,4 +15,4 @@ LIBSEL4_INLINE_FUNC seL4_Word seL4_MappingFailedLookupLevel(void)
     return seL4_GetMR(SEL4_MAPPING_LOOKUP_LEVEL);
 }
 
-#endif /* __LIBSEL4_SEL4_SEL4_ARCH_MAPPING_H_ */
+

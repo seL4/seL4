@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MACHINE_INTERRUPT_H
-#define __MACHINE_INTERRUPT_H
+#pragma once
 
 #include <basic_types.h>
 
@@ -117,4 +116,3 @@ static inline void handleSpuriousIRQ(void);
  */
 static inline void handleReservedIRQ(irq_t irq);
 
-#endif /* __MACHINE_INTERRUPT_H */

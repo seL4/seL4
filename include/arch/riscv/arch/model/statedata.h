@@ -6,8 +6,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODEL_STATEDATA_H
-#define __ARCH_MODEL_STATEDATA_H
+#pragma once
 
 #include <config.h>
 #include <types.h>
@@ -34,4 +33,3 @@ extern pte_t kernel_root_pageTable[BIT(PT_INDEX_BITS)] VISIBLE;
 extern pte_t kernel_image_level2_pt[BIT(PT_INDEX_BITS)];
 #endif
 
-#endif

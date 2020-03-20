@@ -5,8 +5,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __LIBSEL4_ARCH_FUNCTIONS_H
-#define __LIBSEL4_ARCH_FUNCTIONS_H
+#pragma once
 
 #include <sel4/types.h>
 #include <sel4/syscalls.h>
@@ -84,4 +83,4 @@ LIBSEL4_INLINE_FUNC void seL4_SetCapReceivePath(seL4_CPtr receiveCNode, seL4_CPt
     ipcbuffer->receiveIndex = receiveIndex;
     ipcbuffer->receiveDepth = receiveDepth;
 }
-#endif
+

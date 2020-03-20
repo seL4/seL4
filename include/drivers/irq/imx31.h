@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __DRIVER_IRQ_IMX31_H
-#define __DRIVER_IRQ_IMX31_H
+#pragma once
 
 #include <config.h>
 #include <basic_types.h>
@@ -95,4 +94,3 @@ static inline void handleSpuriousIRQ(void)
     /* do nothing */
 }
 
-#endif

@@ -8,8 +8,7 @@
  * ARM L2 Cache controller L2C-310
  */
 
-#ifndef __ARCH_MACHINE_L2C_310_H
-#define __ARCH_MACHINE_L2C_310_H
+#pragma once
 
 #include <arch/types.h>
 
@@ -22,4 +21,3 @@ void plat_cleanL2Range(paddr_t start, paddr_t end);
 void plat_invalidateL2Range(paddr_t start, paddr_t end);
 void plat_cleanInvalidateL2Range(paddr_t start, paddr_t end);
 
-#endif /* !__ARCH_MACHINE_L2C_310_H */

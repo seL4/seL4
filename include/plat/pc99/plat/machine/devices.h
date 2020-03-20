@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __PLAT_MACHINE_DEVICES_H
-#define __PLAT_MACHINE_DEVICES_H
+#pragma once
 
 #include <config.h>
 
@@ -16,4 +15,3 @@
 
 #define MAX_NUM_DRHU    ((-PPTR_DRHU_START) >> PAGE_BITS)
 
-#endif

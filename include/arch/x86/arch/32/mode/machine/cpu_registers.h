@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MODE_MACHINE_CPU_REGISTERS_H
-#define __MODE_MACHINE_CPU_REGISTERS_H
+#pragma once
+
 
 static inline unsigned long read_cr3(void)
 {
@@ -50,4 +50,3 @@ static inline void write_cr4(unsigned long value)
     asm volatile("movl %0, %%cr4" :: "r"(value), "m"(control_reg_order));
 }
 
-#endif

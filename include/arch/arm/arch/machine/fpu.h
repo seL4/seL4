@@ -4,12 +4,10 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_FPU_H
-#define __ARCH_MACHINE_FPU_H
-
+#pragma once
 #include <mode/machine/fpu.h>
 
 bool_t fpsimd_HWCapTest(void);
 bool_t fpsimd_init(void);
 
-#endif /* __ARCH_MACHINE_FPU_H */
+

@@ -5,8 +5,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __LIBSEL4_SEL4_ARCH_CONSTANTS_H
-#define __LIBSEL4_SEL4_ARCH_CONSTANTS_H
+#pragma once
 
 #ifdef HAVE_AUTOCONF
 #include <autoconf.h>
@@ -126,5 +125,3 @@ enum {
 
 /* First address in the virtual address space that is not accessible to user level */
 #define seL4_UserTop 0x0000003ffffff000
-
-#endif

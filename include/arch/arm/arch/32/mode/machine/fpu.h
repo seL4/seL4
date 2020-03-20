@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MODE_MACHINE_FPU_H
-#define __MODE_MACHINE_FPU_H
+#pragma once
 
 #include <config.h>
 #include <mode/machine/registerset.h>
@@ -227,4 +226,3 @@ static inline void disableFpu(void)
     isFPUEnabledCached[SMP_TERNARY(getCurrentCPUIndex(), 0)] = false;
 }
 
-#endif /* __MODE_MACHINE_FPU_H */

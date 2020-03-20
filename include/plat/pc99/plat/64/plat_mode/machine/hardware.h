@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __PLAT_MODE_MACHINE_HARDWARE_H_
-#define __PLAT_MODE_MACHINE_HARDWARE_H_
+#pragma once
 
 #include <util.h>
 
@@ -91,4 +90,3 @@ static inline paddr_t CONST kpptr_to_paddr(void *pptr)
 
 #endif /* __ASSEMBLER__ */
 
-#endif /* __PLAT_MODE_MACHINE_HARDWARE_H_ */

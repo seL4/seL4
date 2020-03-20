@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_BOOTINFO_H
-#define __LIBSEL4_BOOTINFO_H
+#pragma once
 
 #include <sel4/types.h>
 #include <sel4/bootinfo_types.h>
@@ -16,4 +15,3 @@ SEL4_DEPRECATED("libsel4 management of bootinfo is deprecated, see the BootInfo 
 seL4_BootInfo *seL4_GetBootInfo(void)
 SEL4_DEPRECATED("libsel4 management of bootinfo is deprecated, see the BootInfo Frame section of the manual");
 
-#endif // __LIBSEL4_BOOTINFO_H

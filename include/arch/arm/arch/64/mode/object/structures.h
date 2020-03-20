@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_OBJECT_STRUCTURES_64_H
-#define __ARCH_OBJECT_STRUCTURES_64_H
+#pragma once
 
 #include <config.h>
 #include <assert.h>
@@ -280,4 +279,3 @@ static inline pte_t pte_invalid_new(void)
     };
 }
 
-#endif /* __ARCH_OBJECT_STRUCTURES_64_H */

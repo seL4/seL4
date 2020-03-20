@@ -4,11 +4,8 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __API_H
-#define __API_H
+#pragma once
 
 #include <api/types.h>
 #include <api/failures.h>
 #include <api/syscall.h>
-
-#endif

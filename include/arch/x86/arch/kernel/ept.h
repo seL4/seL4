@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_KERNEL_EPT_H
-#define __ARCH_KERNEL_EPT_H
+#pragma once
 
 #include <config.h>
 #include <object/structures.h>
@@ -61,4 +60,3 @@ void unmapEPTPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr
 
 #endif /* CONFIG_VTX */
 
-#endif /* __ARCH_KERNEL_EPT_H */

@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_TIMER_H_
-#define __ARCH_MACHINE_TIMER_H_
+#pragma once
 
 #include <config.h>
 #include <stdint.h>
@@ -69,4 +68,3 @@ static inline CONST ticks_t getTimerPrecision(void)
 void initTimer(void);
 #endif
 
-#endif /* __ARCH_MACHINE_TIMER_H_ */

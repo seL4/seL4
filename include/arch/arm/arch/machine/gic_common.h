@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_GIC_COMMON_H
-#define __ARCH_MACHINE_GIC_COMMON_H
+#pragma once
 
 #include <autoconf.h>
 #include <stdint.h>
@@ -80,4 +79,3 @@ static inline void handleSpuriousIRQ(void)
 void initIRQController(void);
 
 
-#endif /* __ARCH_MACHINE_GIC_COMMON_H */

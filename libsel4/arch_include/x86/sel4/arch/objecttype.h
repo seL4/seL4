@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __ARCH_OBJECT_TYPE_H
-#define __ARCH_OBJECT_TYPE_H
+#pragma once
 
 #ifdef HAVE_AUTOCONF
 #include <autoconf.h>
@@ -42,4 +41,3 @@ typedef seL4_Word object_t;
 #define seL4_X86_EPTPTObject 0xfffffa
 #endif
 
-#endif

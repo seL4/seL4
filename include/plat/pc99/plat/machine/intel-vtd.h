@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __PLAT_MACHINE_INTEL_VTD_H
-#define __PLAT_MACHINE_INTEL_VTD_H
+#pragma once
 
 #include <config.h>
 
@@ -21,5 +20,3 @@ bool_t vtd_init_num_iopts(uint32_t num_drhu);
 bool_t vtd_init(cpu_id_t  cpu_id, acpi_rmrr_list_t *rmrr_list);
 
 #endif /* CONFIG_IOMMU */
-
-#endif

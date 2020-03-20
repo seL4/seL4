@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_REGISTERSET_H
-#define __ARCH_MACHINE_REGISTERSET_H
+#pragma once
 
 #include <config.h>
 #include <arch/types.h>
@@ -90,4 +89,3 @@ unverified_compile_assert(
 )
 #endif
 
-#endif

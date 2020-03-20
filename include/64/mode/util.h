@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MODE_UTIL_H
-#define __MODE_UTIL_H
+#pragma once
 
 #include <config.h>
 #include <types.h>
@@ -16,4 +15,3 @@ static inline CONST uint64_t div64(uint64_t numerator, uint32_t denominator)
     return numerator / denominator;
 }
 
-#endif /* __MODE_UTIL_H */

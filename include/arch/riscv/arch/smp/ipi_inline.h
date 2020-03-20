@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_SMP_IPI_INLINE_H
-#define __ARCH_SMP_IPI_INLINE_H
+#pragma once
 
 #ifdef ENABLE_SMP_SUPPORT
 
@@ -22,5 +21,3 @@ static inline void doRemoteswitchFpuOwner(user_fpu_state_t *new_owner, word_t cp
 #endif /* CONFIG_HAVE_FPU */
 
 #endif
-
-#endif /* __ARCH_SMP_IPI_INLINE_H */

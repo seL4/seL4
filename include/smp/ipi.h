@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __IPI_H
-#define __IPI_H
+#pragma once
 
 #include <config.h>
 #include <types.h>
@@ -170,4 +169,4 @@ static void inline doReschedule(word_t cpu)
 }
 
 #endif /* ENABLE_SMP_SUPPORT */
-#endif /* __IPI_H */
+

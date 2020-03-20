@@ -4,7 +4,4 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MODE_SMP_IPI_H
-#define __MODE_SMP_IPI_H
-
-#endif /* __MODE_SMP_IPI_H */
+#pragma once

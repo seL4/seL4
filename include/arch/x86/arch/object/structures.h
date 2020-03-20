@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_OBJECT_STRUCTURES_H
-#define __ARCH_OBJECT_STRUCTURES_H
+#pragma once
 
 #include <assert.h>
 #include <config.h>
@@ -307,5 +306,3 @@ static inline bool_t CONST Arch_isCapRevocable(cap_t derivedCap, cap_t srcCap)
         return false;
     }
 }
-
-#endif /* __ARCH_OBJECT_STRUCTURES_H */

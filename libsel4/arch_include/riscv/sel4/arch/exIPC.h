@@ -4,7 +4,4 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_ARCH_EXCEPTION_IPC
-#define __LIBSEL4_ARCH_EXCEPTION_IPC
-
-#endif
+#pragma once

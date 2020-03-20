@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __KERNEL_STACK_H
-#define __KERNEL_STACK_H
+#pragma once
 
 #include <config.h>
 #include <util.h>
@@ -18,4 +17,3 @@
  */
 extern char kernel_stack_alloc[CONFIG_MAX_NUM_NODES][BIT(CONFIG_KERNEL_STACK_BITS)];
 
-#endif /* __KERNEL_STACK_H */

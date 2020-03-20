@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODE_HARDWARE_H
-#define __ARCH_MODE_HARDWARE_H
+#pragma once
 
 #define LOAD  lw
 #define STORE sw
@@ -49,4 +48,3 @@ static inline uint64_t riscv_read_time(void)
 
 #endif /* __ASSEMBLER__ */
 
-#endif /* __ARCH_MODE_HARDWARE_H */

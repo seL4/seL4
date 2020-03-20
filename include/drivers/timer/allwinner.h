@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __DRIVER_TIMER_ALLWINNER_H
-#define __DRIVER_TIMER_ALLWINNER_H
+#pragma once
 
 #define TMR0_IRQ_PEND_FLAG          BIT(0)
 
@@ -25,4 +24,3 @@ static inline void resetTimer(void)
     timer->tmr_irq_sta_reg = TMR0_IRQ_PEND_FLAG;
 }
 
-#endif /* !__DRIVER_TIMER_ALLWINNER_H */

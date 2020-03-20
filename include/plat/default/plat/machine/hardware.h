@@ -4,12 +4,10 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __PLAT_MACHINE_HARDWARE_H
-#define __PLAT_MACHINE_HARDWARE_H
+#pragma once
 #include <config.h>
 #include <types.h>
 #include <basic_types.h>
 #include <linker.h>
 #include <machine/io.h>
 
-#endif /* !__PLAT_MACHINE_HARDWARE_H */

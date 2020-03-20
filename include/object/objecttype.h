@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __OBJECT_OBJECTTYPE_H
-#define __OBJECT_OBJECTTYPE_H
+#pragma once
 
 #include <types.h>
 #include <api/failures.h>
@@ -61,4 +60,3 @@ static inline void postCapDeletion(cap_t cap)
     }
 }
 
-#endif

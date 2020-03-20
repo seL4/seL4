@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __OBJECT_NOTIFICATION_H
-#define __OBJECT_NOTIFICATION_H
+#pragma once
 
 #include <types.h>
 #include <object/structures.h>
@@ -22,4 +21,4 @@ void bindNotification(tcb_t *tcb, notification_t *ntfnPtr);
 void reorderNTFN(notification_t *notification, tcb_t *thread);
 #endif
 
-#endif
+

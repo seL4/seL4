@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_OBJECT_VCPU_H
-#define __ARCH_OBJECT_VCPU_H
+#pragma once
 
 #include <config.h>
 
@@ -200,4 +199,3 @@ static inline void VGICMaintenance(void) {}
 
 #endif /* end of !CONFIG_ARM_HYPERVISOR_SUPPORT */
 
-#endif /* __ARCH_OBJECT_VCPU_H */

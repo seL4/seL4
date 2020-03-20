@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MODE_MACHINE_H
-#define __MODE_MACHINE_H
+#pragma once
 
 #include <model/statedata.h>
 #include <arch/machine/cpu_registers.h>
@@ -190,4 +189,3 @@ static inline void init_syscall_msrs(void)
     fail("syscall not supported on ia32");
 }
 
-#endif

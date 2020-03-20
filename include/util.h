@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __UTIL_H
-#define __UTIL_H
+#pragma once
 
 #define MASK(n) (BIT(n)-1ul)
 #define IS_ALIGNED(n, b) (!((n) & MASK(b)))
@@ -181,4 +180,4 @@ CONST popcountl(unsigned long mask)
 #define UL_CONST(x) x
 
 #endif /* !__ASSEMBLER__ */
-#endif /* __UTIL_H */
+

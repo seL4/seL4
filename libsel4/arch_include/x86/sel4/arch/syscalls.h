@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_ARCH_SYSCALLS_H
-#define __LIBSEL4_ARCH_SYSCALLS_H
+#pragma once
 
 #include <autoconf.h>
 #include <sel4/functions.h>
@@ -27,4 +26,3 @@ LIBSEL4_INLINE_FUNC seL4_MessageInfo_t seL4_Poll(seL4_CPtr src, seL4_Word *sende
     return seL4_NBRecv(src, sender);
 }
 #endif /* !CONFIG_KERNEL_MCS */
-#endif

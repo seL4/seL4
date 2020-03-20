@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_BOOTINFO_TYPES_H
-#define __LIBSEL4_BOOTINFO_TYPES_H
+#pragma once
 
 #ifdef HAVE_AUTOCONF
 #include <autoconf.h>
@@ -97,4 +96,3 @@ typedef struct seL4_BootInfoHeader {
 #define SEL4_BOOTINFO_HEADER_FDT 6
 #define SEL4_BOOTINFO_HEADER_NUM SEL4_BOOTINFO_HEADER_FDT + 1
 
-#endif // __LIBSEL4_BOOTINFO_TYPES_H

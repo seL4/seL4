@@ -5,8 +5,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __LIBSEL4_ARCH_TYPES_H
-#define __LIBSEL4_ARCH_TYPES_H
+#pragma once
 
 #include <autoconf.h>
 #include <sel4/simple_types.h>
@@ -70,5 +69,3 @@ typedef enum {
     seL4_RISCV_Default_VMAttributes = 0,
     SEL4_FORCE_LONG_ENUM(seL4_RISCV_VMAttributes)
 } seL4_RISCV_VMAttributes;
-
-#endif

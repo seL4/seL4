@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_HARDWARE_64_H
-#define __ARCH_MACHINE_HARDWARE_64_H
+#pragma once
 
 #include <config.h>
 #include <sel4/sel4_arch/constants.h>
@@ -58,4 +57,3 @@ static inline word_t CONST pageBitsForSize(vm_page_size_t pagesize)
 
 #endif /* __ASSEMBLER__ */
 
-#endif /* __ARCH_MACHINE_HARDWARE_64_H */

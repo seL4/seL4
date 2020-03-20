@@ -5,8 +5,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_KERNEL_THREAD_H
-#define __ARCH_KERNEL_THREAD_H
+#pragma once
 
 #include <object.h>
 
@@ -20,4 +19,3 @@ static inline bool_t CONST Arch_getSanitiseRegisterInfo(tcb_t *thread)
     return 0;
 }
 
-#endif

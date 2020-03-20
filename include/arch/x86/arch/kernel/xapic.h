@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_KERNEL_XAPIC_H_
-#define __ARCH_KERNEL_XAPIC_H_
+#pragma once
 
 #include <config.h>
 #include <plat_mode/machine/hardware.h>
@@ -70,4 +69,4 @@ static inline void apic_write_icr(word_t high, word_t low)
 #define IPI_ICR_BARRIER  asm volatile("" ::: "memory")
 #define IPI_MEM_BARRIER IPI_ICR_BARRIER
 #endif  /* CONFIG_XAPIC */
-#endif /* __ARCH_KERNEL_XAPIC_H_ */
+

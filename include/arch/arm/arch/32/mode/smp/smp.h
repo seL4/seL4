@@ -4,9 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MODE_SMP_H_
-#define __MODE_SMP_H_
-
+#pragma once
 #include <config.h>
 
 #ifdef ENABLE_SMP_SUPPORT
@@ -36,4 +34,4 @@ static inline CONST cpu_id_t getCurrentCPUIndex(void)
 }
 
 #endif /* ENABLE_SMP_SUPPORT */
-#endif /* __MODE_SMP_H_ */
+

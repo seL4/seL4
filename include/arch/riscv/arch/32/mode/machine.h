@@ -4,9 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODE_MACHINE_H
-#define __ARCH_MODE_MACHINE_H
+#pragma once
 
 /* Place holder for 32-bit machine header */
 
-#endif /* __ARCH_MODE_MACHINE_H */

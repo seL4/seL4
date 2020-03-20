@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MODEL_SMP_H_
-#define __MODEL_SMP_H_
+#pragma once
 
 #include <config.h>
 #include <arch/types.h>
@@ -26,4 +25,3 @@ void migrateTCB(tcb_t *tcb, word_t new_core);
 
 #endif /* ENABLE_SMP_SUPPORT */
 
-#endif /* __MODEL_SMP_H_ */

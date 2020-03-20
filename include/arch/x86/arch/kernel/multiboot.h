@@ -4,9 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_KERNEL_MULTIBOOT_H
-#define __ARCH_KERNEL_MULTIBOOT_H
-
+#pragma once
 /* Adapted from the MultiBoot Specification:  */
 /* www.gnu.org/software/grub/manual/multiboot */
 
@@ -72,4 +70,3 @@ typedef struct multiboot_info {
 #define MULTIBOOT_MMAP_ACPI_NVS_TYPE    4
 #define MULTIBOOT_MMAP_BAD_TYPE         5
 
-#endif

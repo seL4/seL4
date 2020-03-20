@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __KERNEL_FAULTHANDLER_H
-#define __KERNEL_FAULTHANDLER_H
+#pragma once
 
 #include <object.h>
 
@@ -24,4 +23,3 @@ void handleDoubleFault(tcb_t *tptr, seL4_Fault_t ex1);
 #endif
 void handleFault(tcb_t *tptr);
 
-#endif

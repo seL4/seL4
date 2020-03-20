@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __PLAT_MACHINE_INTERRUPT_H
-#define __PLAT_MACHINE_INTERRUPT_H
+#pragma once
 
 #include <config.h>
 #include <types.h>
@@ -145,4 +144,3 @@ static inline void maskInterrupt(bool_t disable, irq_t irq)
     }
 }
 
-#endif

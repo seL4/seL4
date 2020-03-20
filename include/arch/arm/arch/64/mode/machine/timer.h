@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODE_MACHINE_TIMER_H_
-#define __ARCH_MODE_MACHINE_TIMER_H_
+#pragma once
 
 #include <config.h>
 #ifdef CONFIG_KERNEL_MCS
@@ -31,4 +30,4 @@ static inline CONST time_t ticksToUs(ticks_t ticks)
 #endif
 }
 #endif /* CONFIG_KERNEL_MCS */
-#endif /*  __ARCH_MODE_MACHINE_TIMER_H_ */
+

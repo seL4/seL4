@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MACHINE_ASSEMBLER_H__
-#define __MACHINE_ASSEMBLER_H__
+#pragma once
 
 /* This file contains useful macros for assembly code. */
 
@@ -38,5 +37,5 @@ _name:
 #warning "Including assembly-specific header in C code"
 #endif
 
-#endif /* __MACHINE_ASSEMBLER_H__ */
+
 

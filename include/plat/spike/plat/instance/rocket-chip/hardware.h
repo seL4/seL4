@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __PLAT_INSTANCE_HARDWARE_H
-#define __PLAT_INSTANCE_HARDWARE_H
+#pragma once
 
 #define PLIC_MAX_NUM_INT   0
 #define IRQ_CNODE_SLOT_BITS 1
@@ -38,4 +37,3 @@ static p_region_t BOOT_DATA avail_p_regs[] = {
 static const paddr_t BOOT_RODATA *kernel_devices = NULL;
 
 static const p_region_t BOOT_RODATA *dev_p_regs = NULL;
-#endif

@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __DRIVERS_TIMER_ARM_GLOBAL_H
-#define __DRIVERS_TIMER_ARM_GLOBAL_H
+#pragma once
 
 #include <util.h>
 #include <config.h>
@@ -84,4 +83,4 @@ static inline void ackDeadlineIRQ(void)
     globalTimer->isr = 1;
 }
 
-#endif /* __DRIVERS_TIMER_ARM_GLOBAL_H */
+

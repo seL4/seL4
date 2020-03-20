@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODEL_STATEDATA_32_H
-#define __ARCH_MODEL_STATEDATA_32_H
+#pragma once
+
 
 #include <config.h>
 #include <object/structures.h>
@@ -23,4 +23,3 @@ NODE_STATE_BEGIN(modeNodeState)
 NODE_STATE_DECLARE(paddr_t, ia32KSCurrentPD);
 NODE_STATE_END(modeNodeState);
 
-#endif

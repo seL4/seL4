@@ -5,8 +5,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __KERNEL_RISCV_TRAPS_H
-#define __KERNEL_RISCV_TRAPS_H
+#pragma once
 
 #include <config.h>
 #include <util.h>
@@ -33,4 +32,4 @@ void restore_user_context(void)
 VISIBLE NORETURN;
 
 void handle_exception(void);
-#endif /* __KERNEL_RISCV_TRAPS_H */
+

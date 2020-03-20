@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __DRIVERS_IRQ_AM335X_H
-#define __DRIVERS_IRQ_AM335X_H
+#pragma once
 
 #include <config.h>
 #include <types.h>
@@ -118,4 +117,4 @@ static inline void handleSpuriousIRQ(void)
     intc->intcps_control = INTCPS_CONTROL_NEWIRQAGR;
     dsb();
 }
-#endif /* __DRIVERS_IRQ_AM335X_H */
+

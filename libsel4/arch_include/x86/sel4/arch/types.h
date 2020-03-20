@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_ARCH_TYPES_H
-#define __LIBSEL4_ARCH_TYPES_H
+#pragma once
 
 #include <autoconf.h>
 #include <sel4/simple_types.h>
@@ -40,5 +39,3 @@ typedef enum {
 typedef struct seL4_VCPUContext_ {
     seL4_Word eax, ebx, ecx, edx, esi, edi, ebp;
 } seL4_VCPUContext;
-
-#endif

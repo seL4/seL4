@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __FAILURES_H
-#define __FAILURES_H
+#pragma once
 
 #include <types.h>
 #include <sel4/errors.h>
@@ -40,4 +39,3 @@ extern lookup_fault_t current_lookup_fault;
 extern seL4_Fault_t current_fault;
 extern syscall_error_t current_syscall_error;
 
-#endif

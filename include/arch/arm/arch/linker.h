@@ -4,9 +4,6 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __ARCH_LINKER_H
-#define __ARCH_LINKER_H
-
+#pragma once
 /* Place-holder for ARM-related linker definitions */
 
-#endif /* __ARCH_LINKER_H */

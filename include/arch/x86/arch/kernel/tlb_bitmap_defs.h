@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_KERNEL_TLB_BITMAP_DEFS_H_
-#define __ARCH_KERNEL_TLB_BITMAP_DEFS_H_
+#pragma once
 
 #include <config.h>
 
@@ -28,4 +27,4 @@
 #define TLBBITMAP_ROOT_ENTRIES 0
 #endif /* ENABLE_SMP_SUPPORT */
 
-#endif /* __ARCH_KERNEL_TLB_BITMAP_DEFS_H_ */
+

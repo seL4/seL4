@@ -4,9 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_SMP_IPI_H
-#define __ARCH_SMP_IPI_H
-
+#pragma once
 #include <config.h>
 
 #ifdef ENABLE_SMP_SUPPORT
@@ -25,4 +23,4 @@ typedef enum {
 } IpiRemoteCall_t;
 
 #endif /* ENABLE_SMP_SUPPORT */
-#endif /* __ARCH_SMP_IPI_H */
+

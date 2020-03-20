@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_OBJECT_IOSPACE_H
-#define __ARCH_OBJECT_IOSPACE_H
+#pragma once
 
 #include <config.h>
 
@@ -46,4 +45,3 @@ void unmapVTDContextEntry(cap_t cap);
 
 #endif /* CONFIG_IOMMU */
 
-#endif

@@ -4,9 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODE_MACHINE_DEBUG_H_
-#define __ARCH_MODE_MACHINE_DEBUG_H_
-
+#pragma once
 #include <assert.h>
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
@@ -124,4 +122,3 @@ static inline void loadBreakpointState(tcb_t *source)
 }
 
 #endif /* CONFIG_HARDWARE_DEBUG_API */
-#endif /* __ARCH_MODE_MACHINE_DEBUG_H_ */

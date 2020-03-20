@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef _BENCHMARK_UTILISATION_H
-#define _BENCHMARK_UTILISATION_H
+#pragma once
 
 #include <config.h>
 #include <basic_types.h>
@@ -17,4 +16,3 @@ typedef struct {
 } benchmark_util_t;
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 
-#endif /* _BENCHMARK_UTILISATION_H */

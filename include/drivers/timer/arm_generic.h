@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __DRIVERS_TIMER_ARM_GENERIC_H_
-#define __DRIVERS_TIMER_ARM_GENERIC_H_
+#pragma once
 
 #include <config.h>
 #include <mode/machine.h>
@@ -51,4 +50,3 @@ static void save_virt_timer(vcpu_t *vcpu);
 static void restore_virt_timer(vcpu_t *vcpu);
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
-#endif /* __DRIVERS_TIMER_ARM_GENERIC_H_ */

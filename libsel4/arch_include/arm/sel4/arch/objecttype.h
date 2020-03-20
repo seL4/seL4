@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __ARCH_OBJECTTYPE_H
-#define __ARCH_OBJECTTYPE_H
+#pragma once
 
 #ifdef HAVE_AUTOCONF
 #include <autoconf.h>
@@ -39,5 +38,4 @@ typedef seL4_Word object_t;
 #define seL4_ARM_IOPageTableObject 0xffff
 #endif
 
-#endif /* __ARCH_OBJECTTYPE_H */
 

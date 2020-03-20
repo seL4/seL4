@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODE_KERNEL_VSPACE_H
-#define __ARCH_MODE_KERNEL_VSPACE_H
+#pragma once
 
 #include <config.h>
 #include <types.h>
@@ -71,4 +70,3 @@ static const region_t BOOT_RODATA mode_reserved_region[] = {
 };
 #define MODE_RESERVED ARRAY_SIZE(mode_reserved_region)
 
-#endif /* __ARCH_MODE_KERNEL_VSPACE_H */

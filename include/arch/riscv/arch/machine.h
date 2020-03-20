@@ -5,8 +5,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_H
-#define __ARCH_MACHINE_H
+#pragma once
 
 #ifndef __ASSEMBLER__
 #include <arch/types.h>
@@ -259,5 +258,5 @@ static inline void Arch_setTLSRegister(word_t tls_base)
 }
 
 #endif // __ASSEMBLER__
-#endif
+
 

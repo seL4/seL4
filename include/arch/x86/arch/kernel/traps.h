@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __KERNEL_X86_TRAPS_H
-#define __KERNEL_X86_TRAPS_H
+#pragma once
 
 #include <config.h>
 #include <util.h>
@@ -43,5 +42,3 @@ VISIBLE NORETURN;
 
 void c_handle_vmexit(void)
 VISIBLE NORETURN;
-
-#endif /* __KERNEL_X86_TRAPS_H */

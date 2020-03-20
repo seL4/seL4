@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef __ARCH_API_TYPES
-#define __ARCH_API_TYPES
+#pragma once
 
 #include <config.h>
 #include <sel4/objecttype.h>
@@ -27,4 +26,4 @@ enum asidConstants {
 
 typedef word_t asid_t;
 
-#endif
+

@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __ARCH_LINKER_H
-#define __ARCH_LINKER_H
+#pragma once
 
 #include <util.h>
 
@@ -18,4 +17,3 @@
 /* bss data that is linked to physical addresses */
 #define PHYS_BSS SECTION(".phys.bss")
 
-#endif /* __ARCH_LINKER_H */

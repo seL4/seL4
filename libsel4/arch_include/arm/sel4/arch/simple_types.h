@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_ARCH_SIMPLE_TYPES_H_
-#define __LIBSEL4_ARCH_SIMPLE_TYPES_H_
+#pragma once
 
 #include <sel4/sel4_arch/simple_types.h>
 
@@ -17,4 +16,3 @@ typedef unsigned char seL4_Uint8;
 typedef unsigned short seL4_Uint16;
 typedef unsigned int seL4_Uint32;
 
-#endif // __LIBSEL4_ARCH_SIMPLE_TYPES

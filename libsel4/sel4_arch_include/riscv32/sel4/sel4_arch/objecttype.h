@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __SEL4_ARCH_OBJECT_TYPE_H
-#define __SEL4_ARCH_OBJECT_TYPE_H
+#pragma once
 
 #ifdef HAVE_AUTOCONF
 #include <autoconf.h>
@@ -15,4 +14,3 @@ typedef enum _mode_object {
     seL4_ModeObjectTypeCount = seL4_NonArchObjectTypeCount
 } seL4_ModeObjectType;
 
-#endif

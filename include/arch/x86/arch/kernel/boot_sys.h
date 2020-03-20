@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_KERNEL_BOOT_SYS_H
-#define __ARCH_KERNEL_BOOT_SYS_H
+#pragma once
 
 #include <arch/kernel/multiboot.h>
 #include <arch/kernel/multiboot2.h>
@@ -39,4 +38,3 @@ void boot_sys(
     void *multiboot
 );
 
-#endif

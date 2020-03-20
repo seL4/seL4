@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_OBJECT_VCPU_H
-#define __ARCH_OBJECT_VCPU_H
+#pragma once
 
 #include <config.h>
 #include <api/failures.h>
@@ -379,5 +378,3 @@ static inline void vmwrite(word_t field, word_t value)
 #else /* CONFIG_VTX */
 #define VTX_TERNARY(vtx, nonvtx) nonvtx
 #endif /* CONFIG_VTX */
-
-#endif

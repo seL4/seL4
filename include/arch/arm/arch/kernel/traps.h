@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __KERNEL_ARM_TRAPS_H
-#define __KERNEL_ARM_TRAPS_H
+#pragma once
 
 #include <config.h>
 #include <machine.h>
@@ -60,4 +59,3 @@ void c_handle_enfp(void)
 VISIBLE SECTION(".vectors.text");
 #endif /* CONFIG_HAVE_FPU */
 
-#endif /* __KERNEL_ARM_TRAPS_H */

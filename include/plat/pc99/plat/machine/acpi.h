@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __PLAT_MACHINE_ACPI_H
-#define __PLAT_MACHINE_ACPI_H
+#pragma once
 
 #include <assert.h>
 #include <config.h>
@@ -85,5 +84,3 @@ void acpi_dmar_scan(
 bool_t acpi_fadt_scan(
     acpi_rsdp_t *acpi_rsdp
 );
-
-#endif

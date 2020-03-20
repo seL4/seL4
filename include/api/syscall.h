@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __API_SYSCALL_H
-#define __API_SYSCALL_H
+#pragma once
 
 #include <config.h> // for arch/api/syscall.h
 #include <machine.h>
@@ -48,4 +47,3 @@ static inline word_t PURE getSyscallArg(word_t i, word_t *ipc_buffer)
 
 extern extra_caps_t current_extra_caps;
 
-#endif

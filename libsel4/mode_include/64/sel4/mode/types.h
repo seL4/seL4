@@ -4,11 +4,8 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_MODE_TYPES_H
-#define __LIBSEL4_MODE_TYPES_H
+#pragma once
 
 #define seL4_GuardSizeBits 6
 #define seL4_GuardBits 58
 #define seL4_BadgeBits 64
-
-#endif

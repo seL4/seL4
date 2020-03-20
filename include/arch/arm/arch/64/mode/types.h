@@ -4,12 +4,11 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODE_TYPES_H_
-#define __ARCH_MODE_TYPES_H_
+#pragma once
 
 #define wordRadix 6
 #define wordBits (1 << wordRadix)
 
 typedef uint64_t timestamp_t;
 
-#endif /* __ARCH_MODE_TYPES_H_ */
+

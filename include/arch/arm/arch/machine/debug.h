@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_DEBUG_H
-#define __ARCH_MACHINE_DEBUG_H
+#pragma once
 
 #include <util.h>
 #include <api/types.h>
@@ -270,4 +269,3 @@ static inline syscall_error_t Arch_decodeUnsetBreakpoint(tcb_t *t, uint16_t bp_n
 
 #endif /* CONFIG_HARDWARE_DEBUG_API */
 
-#endif /* !__ARCH_MACHINE_DEBUG_H */

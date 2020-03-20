@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_API_TYPES
-#define __ARCH_API_TYPES
+#pragma once
 
 #include <sel4/objecttype.h>
 #include <config.h>
@@ -21,5 +20,3 @@ enum asidConstants {
 #define asidMax (BIT(asidLowBits + asidHighBits) - 1)
 
 typedef word_t asid_t;
-
-#endif

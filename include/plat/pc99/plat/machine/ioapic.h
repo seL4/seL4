@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __PLAT_MACHINE_IOAPIC_H
-#define __PLAT_MACHINE_IOAPIC_H
+#pragma once
 
 #include <types.h>
 #include <plat/machine.h>
@@ -20,4 +19,4 @@ exception_t ioapic_decode_map_pin_to_vector(word_t ioapic, word_t pin, word_t le
 /* The function maps a pin to an interrupt vector, does not perform
  * any checks, use ioapic_decode_map_pin_to_vector first */
 void ioapic_map_pin_to_vector(word_t ioapic, word_t pin, word_t level, word_t polarity, word_t vector);
-#endif
+

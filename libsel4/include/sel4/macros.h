@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_MACROS_H
-#define __LIBSEL4_MACROS_H
+#pragma once
 
 #include <autoconf.h>
 
@@ -49,4 +48,3 @@
 
 #define SEL4_COMPILE_ASSERT(name, expr) typedef int __assert_failed_##name[(expr) ? 1 : -1];
 #define SEL4_SIZE_SANITY(index, entry, size) SEL4_COMPILE_ASSERT(index##entry##size, index + entry == size)
-#endif

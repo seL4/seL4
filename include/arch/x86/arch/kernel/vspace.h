@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_KERNEL_VSPACE_H
-#define __ARCH_KERNEL_VSPACE_H
+#pragma once
 
 #include <config.h>
 #include <types.h>
@@ -138,4 +137,3 @@ static inline bool_t checkVPAlignment(vm_page_size_t sz, word_t w)
     return IS_ALIGNED(w, pageBitsForSize(sz));
 }
 
-#endif

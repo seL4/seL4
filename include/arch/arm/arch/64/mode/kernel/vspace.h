@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODE_KERNEL_VSPACE_H_
-#define __ARCH_MODE_KERNEL_VSPACE_H_
+#pragma once
 
 #include <config.h>
 #include <types.h>
@@ -90,4 +89,3 @@ static inline exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *po
     return EXCEPTION_NONE;
 }
 #endif
-#endif /* __ARCH_MODE_KERNEL_VSPACE_H_ */

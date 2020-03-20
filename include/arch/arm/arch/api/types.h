@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_API_TYPES_H
-#define __ARCH_API_TYPES_H
+#pragma once
 
 #include <sel4/objecttype.h>
 #include <sel4/sel4_arch/objecttype.h>
@@ -21,4 +20,4 @@ enum asidConstants {
 
 typedef word_t asid_t;
 
-#endif
+

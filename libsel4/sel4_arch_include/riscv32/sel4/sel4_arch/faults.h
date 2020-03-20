@@ -5,8 +5,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __LIBSEL4_SEL4_ARCH_FAULTS_H
-#define __LIBSEL4_SEL4_ARCH_FAULTS_H
+#pragma once
 
 #include <autoconf.h>
 #include <sel4/faults.h>
@@ -51,4 +50,3 @@ LIBSEL4_INLINE_FUNC seL4_Fault_t seL4_getArchFault(seL4_MessageInfo_t tag)
     }
 }
 
-#endif /* __LIBSEL4_SEL4_ARCH_FAULTS_H */

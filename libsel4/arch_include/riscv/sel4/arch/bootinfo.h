@@ -4,9 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_ARCH_BOOTINFO_H
-#define __LIBSEL4_ARCH_BOOTINFO_H
+#pragma once
 
 /* Dummy include. No arch bootinfo on riscv yet */
 
-#endif

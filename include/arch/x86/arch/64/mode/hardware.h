@@ -4,11 +4,9 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_HARDWARE_32_H
-#define __ARCH_HARDWARE_32_H
+#pragma once
 
 #include <config.h>
 #include <arch/machine/hardware.h>
 #include <plat_mode/machine/hardware.h>
 
-#endif /* __ARCH_HARDWARE_32_H */

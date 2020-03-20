@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_KERNEL_MULTIBOOT2_H
-#define __ARCH_KERNEL_MULTIBOOT2_H
+#pragma once
 
 #define MULTIBOOT2_MAGIC 0x36d76289
 
@@ -53,4 +52,3 @@ enum multiboot2_tags {
     MULTIBOOT2_TAG_ACPI_2  = 15,
 };
 
-#endif

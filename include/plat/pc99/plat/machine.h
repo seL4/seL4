@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __PLAT_MACHINE_H
-#define __PLAT_MACHINE_H
+#pragma once
 
 #include <machine/interrupt.h>
 
@@ -75,4 +74,3 @@ typedef enum _platform_irq_t {
 #define BIOS_PADDR_VIDEO_RAM_TEXT_MODE_START 0x000B8000
 #define BIOS_PADDR_IVDEO_RAM_END 0x000C0000
 
-#endif

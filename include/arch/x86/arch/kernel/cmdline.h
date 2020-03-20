@@ -3,10 +3,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
-
-#ifndef __ARCH_KERNEL_CMDLINE_H
-#define __ARCH_KERNEL_CMDLINE_H
-
+#pragma once
 #include <config.h>
 
 typedef struct cmdline_opt {
@@ -21,4 +18,3 @@ typedef struct cmdline_opt {
 
 void cmdline_parse(const char *cmdline, cmdline_opt_t *cmdline_opt);
 
-#endif

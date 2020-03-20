@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODE_STACK_H_
-#define __ARCH_MODE_STACK_H_
+#pragma once
 
 #include <config.h>
 #include <mode/model/smp.h>
@@ -51,4 +50,3 @@ static inline void setKernelEntryStackPointer(tcb_t *target_thread)
     }
 }
 
-#endif /* __ARCH_MODE_STACK_H_ */

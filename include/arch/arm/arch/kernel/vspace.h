@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_KERNEL_VSPACE_H
-#define __ARCH_KERNEL_VSPACE_H
+#pragma once
 
 #include <config.h>
 #include <types.h>
@@ -52,4 +51,3 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
 void Arch_userStackTrace(tcb_t *tptr);
 #endif
 
-#endif /* __ARCH_KERNEL_VSPACE_H */

@@ -3,9 +3,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
-
-#ifndef __OBJECT_SCHED_CONTEXT_H
-#define __OBJECT_SCHED_CONTEXT_H
+#pragma once
 
 #include <types.h>
 #include <api/failures.h>
@@ -72,4 +70,3 @@ time_t schedContext_updateConsumed(sched_context_t *sc);
 void schedContext_completeYieldTo(tcb_t *yielder);
 void schedContext_cancelYieldTo(tcb_t *yielder);
 
-#endif /* __OBJECT_SCHED_CONTEXT_H */

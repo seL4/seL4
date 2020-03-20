@@ -4,10 +4,8 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __TYPES_H
-#define __TYPES_H
+#pragma once
 
 #include <basic_types.h>
 #include <compound_types.h>
 
-#endif

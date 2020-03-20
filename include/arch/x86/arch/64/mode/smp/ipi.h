@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MODE_SMP_IPI_H
-#define __MODE_SMP_IPI_H
+#pragma once
 
 #include <config.h>
 #include <types.h>
@@ -33,4 +32,4 @@ static inline void doRemoteInvalidateASID(vspace_root_t *vspace, asid_t asid, wo
 }
 
 #endif /* ENABLE_SMP_SUPPORT */
-#endif /* __ARCH_SMP_IPI_H */
+

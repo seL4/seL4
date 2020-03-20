@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MODE_KERNEL_THREAD_H
-#define __MODE_KERNEL_THREAD_H
+#pragma once
 
 static inline word_t CONST sanitiseRegister(register_t reg, word_t v, bool_t archInfo)
 {
@@ -35,4 +34,3 @@ static inline bool_t CONST Arch_getSanitiseRegisterInfo(tcb_t *thread)
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 }
 
-#endif

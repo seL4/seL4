@@ -11,8 +11,7 @@
  * 2007 Ported to seL4 C kernel by Philip Derrin
  */
 
-#ifndef __MACHINE__PROFILER_H__
-#define __MACHINE__PROFILER_H__
+#pragma once
 
 #include <machine/registerset.h>
 #include <machine/hardware.h>
@@ -75,5 +74,4 @@ extern profiler_entry_t profiler_entries[MAX_UNIQUE_INSTRUCTIONS];
 
 #endif /* PROFILER */
 
-#endif /* !__MACHINE__PROFILER_H__ */
 

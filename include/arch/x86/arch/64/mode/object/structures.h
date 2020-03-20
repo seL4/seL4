@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODE_OBJECT_STRUCTURES_H_
-#define __ARCH_MODE_OBJECT_STRUCTURES_H_
+#pragma once
 
 #include <sel4/macros.h>
 /* x86-64 specific object types */
@@ -194,4 +193,3 @@ static inline void *CONST cap_get_modeCapPtr(cap_t cap)
     }
 }
 
-#endif /* __ARCH_MODE_OBJECT_STRUCTURES_H_ */

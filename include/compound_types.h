@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __COMPOUND_TYPES_H
-#define __COMPOUND_TYPES_H
+#pragma once
 
 #include <stdint.h>
 #include <api/types.h>
@@ -31,4 +30,3 @@ struct extra_caps {
 };
 typedef struct extra_caps extra_caps_t;
 
-#endif /* __COMPOUND_TYPES_H */

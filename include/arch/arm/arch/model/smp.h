@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODEL_SMP_H_
-#define __ARCH_MODEL_SMP_H_
+#pragma once
 
 #include <config.h>
 #include <mode/smp/smp.h>
@@ -47,4 +46,3 @@ static inline bool_t try_arch_atomic_exchange(void *ptr, void *new_val, void **p
 
 #endif /* ENABLE_SMP_SUPPORT */
 
-#endif /* __ARCH_MODEL_SMP_H_ */

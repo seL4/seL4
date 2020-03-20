@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MODE_KERNEL_VSPACE_H
-#define __MODE_KERNEL_VSPACE_H
+#pragma once
+
 
 #include <arch/kernel/vspace.h>
 
@@ -36,4 +36,3 @@ static inline CONST pde_t x86_make_empty_root_mapping(void)
     return makeUserPDEInvalid();
 }
 
-#endif /* __MODE_KERNEL_VSPACE_H */

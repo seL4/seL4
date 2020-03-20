@@ -12,9 +12,7 @@
  * sl4_DebugCompileTimeAsssert.
  */
 
-#ifndef __LIBSEL4_ASSERT_H
-#define __LIBSEL4_ASSERT_H
-
+#pragma once
 /**
  * Hidden function, use the macros seL4_Fail or seL4_Assert.
  */
@@ -45,4 +43,3 @@ void __assert_fail(const char  *str, const char *file, int line, const char *fun
 #define seL4_CompileTimeAssert(expr) \
     extern char __seL4_CompileTimeAssertFailed_ ## __COUNTER__[__builtin_constant_p(expr) ? ((expr) ? 1 : -1) : -1] __attribute__((unused))
 
-#endif // __LIBSEL4_ASSERT_H

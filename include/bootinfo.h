@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __BOOTINFO_H
-#define __BOOTINFO_H
+#pragma once
 
 #include <config.h>
 #include <types.h>
@@ -19,4 +18,3 @@
 /* adjust constants in config.h if this assert fails */
 compile_assert(bi_size, sizeof(seL4_BootInfo) <= BIT(BI_FRAME_SIZE_BITS))
 
-#endif

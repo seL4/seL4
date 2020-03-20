@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_ARMV_MACHINE_H
-#define __ARCH_ARMV_MACHINE_H
+#pragma once
 
 static inline void wfi(void)
 {
@@ -39,4 +38,3 @@ static inline void isb(void)
 #define SYSTEM_WRITE_64(reg, v)   MSR(reg, v)
 #define SYSTEM_READ_64(reg, v)    MRS(reg, v)
 
-#endif /* __ARCH_ARMV_MACHINE_H */

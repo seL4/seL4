@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_FPU_H
-#define __ARCH_MACHINE_FPU_H
+#pragma once
 
 #include <config.h>
 #include <types.h>
@@ -118,4 +117,4 @@ static inline bool_t vcpuThreadUsingFPU(tcb_t *thread)
     return thread->tcbArch.tcbVCPU && &thread->tcbArch.tcbVCPU->fpuState == NODE_STATE(ksActiveFPUState);
 }
 #endif /* CONFIG_VTX */
-#endif /* __ARCH_MACHINE_FPU_H */
+

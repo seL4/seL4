@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __LIBSEL4_ARCH_SIMPLE_TYPES_H_
-#define __LIBSEL4_ARCH_SIMPLE_TYPES_H_
+#pragma once
 
 typedef signed char seL4_Int8;
 typedef signed short seL4_Int16;
@@ -15,4 +14,3 @@ typedef unsigned char seL4_Uint8;
 typedef unsigned short seL4_Uint16;
 typedef unsigned int seL4_Uint32;
 
-#endif

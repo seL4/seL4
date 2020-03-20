@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_SEL4_ARCH_TYPES_H
-#define __LIBSEL4_SEL4_ARCH_TYPES_H
+#pragma once
 
 #include <sel4/simple_types.h>
 
@@ -24,4 +23,3 @@ typedef struct seL4_UserContext_ {
     seL4_Word tpidrurw;
 } seL4_UserContext;
 
-#endif /* __LIBSEL4_SEL4_ARCH_TYPES_H */

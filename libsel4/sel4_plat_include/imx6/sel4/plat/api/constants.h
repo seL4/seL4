@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_SEL4_PLAT_API_CONSTANTS_H_
-#define __LIBSEL4_SEL4_PLAT_API_CONSTANTS_H_
+#pragma once
 
 #ifdef HAVE_AUTOCONF
 #include <autoconf.h>
@@ -23,4 +22,4 @@
 /* First address in the virtual address space that is not accessible to user level */
 #define seL4_UserTop 0xe0000000
 
-#endif /* __LIBSEL4_SEL4_PLAT_API_CONSTANTS_H_ */
+

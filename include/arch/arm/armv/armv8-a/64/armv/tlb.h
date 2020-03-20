@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_ARMV_TLB_H
-#define __ARCH_ARMV_TLB_H
+#pragma once
 
 #include <config.h>
 #include <mode/machine.h>
@@ -51,5 +50,4 @@ static inline void invalidateLocalTLB_IPA_VMID(word_t ipa_plus_vmid)
     }
 }
 
-#endif
 

@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __OBJECT_UNTYPED_H
-#define __OBJECT_UNTYPED_H
+#pragma once
 
 #include <config.h>
 #include <types.h>
@@ -36,4 +35,3 @@ exception_t invokeUntyped_Retype(cte_t *srcSlot, bool_t reset,
                                  void *retypeBase, object_t newType,
                                  word_t userSize, slot_range_t destSlots,
                                  bool_t deviceMemory);
-#endif

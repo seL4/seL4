@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_BOOTINFO_H
-#define __ARCH_BOOTINFO_H
+#pragma once
 
 /* Modifiers:
  *  + 1: allow the kernel to release its own boot data region
@@ -21,4 +20,4 @@
  */
 #define MAX_NUM_RESV_REG (MAX_NUM_FREEMEM_REG + ARRAY_SIZE(kernel_devices) + MODE_RESERVED + 3)
 
-#endif
+

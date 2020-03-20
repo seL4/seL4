@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODEL_STATEDATA_H
-#define __ARCH_MODEL_STATEDATA_H
+#pragma once
 
 #include <config.h>
 #include <types.h>
@@ -94,4 +93,3 @@ extern uint32_t x86KStscMhz;
 extern uint32_t x86KSapicRatio;
 #endif
 
-#endif

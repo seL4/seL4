@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __SMP_LOCK_H_
-#define __SMP_LOCK_H_
+#pragma once
 
 #include <config.h>
 #include <types.h>
@@ -155,4 +154,4 @@ static inline bool_t FORCE_INLINE clh_is_self_in_queue(void)
 #define NODE_LOCK_IRQ NODE_LOCK(true)
 #define NODE_LOCK_SYS_IF(_cond) NODE_LOCK_IF(_cond, false)
 #define NODE_LOCK_IRQ_IF(_cond) NODE_LOCK_IF(_cond, true)
-#endif /* __SMP_LOCK_H_ */
+

@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __DRIVER_IRQ_HIFIVE_H
-#define __DRIVER_IRQ_HIFIVE_H
+#pragma once
 
 #include <plat/machine/devices_gen.h>
 #include <arch/model/smp.h>
@@ -177,4 +176,4 @@ static inline void plic_init_controller(void)
 
 }
 
-#endif /* __DRIVER_IRQ_HIFIVE_H */
+

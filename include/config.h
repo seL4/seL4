@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __CONFIG_H
-#define __CONFIG_H
+#pragma once
 
 /* Compile-time configuration parameters. Might be set by the build system. */
 
@@ -105,4 +104,3 @@
 #endif
 #endif
 
-#endif /* __CONFIG_H */

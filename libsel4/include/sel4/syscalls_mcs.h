@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_MCS_SYSCALLSH
-#define __LIBSEL4_MCS_SYSCALLSH
+#pragma once
 #include <autoconf.h>
 
 /**
@@ -298,4 +297,3 @@ seL4_Signal(seL4_CPtr dest);
 
 /** @} */
 
-#endif /* __LIBSEL4_MCS_SYSCALLSH */

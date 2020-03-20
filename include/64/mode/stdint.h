@@ -4,9 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MODE_STDINT_H
-#define __MODE_STDINT_H
+#pragma once
 
 #define UINTPTR_MAX UINT64_MAX
 
-#endif

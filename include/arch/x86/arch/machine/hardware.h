@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_HARDWARE_H
-#define __ARCH_MACHINE_HARDWARE_H
+#pragma once
 
 #include <basic_types.h>
 #include <config.h>
@@ -122,5 +121,3 @@ static inline void arch_clean_invalidate_caches(void)
 
 /* Initialize Indirect Branch Restricted Speculation into the mode specified by the build configuration */
 bool_t init_ibrs(void);
-
-#endif

@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_TYPES_H
-#define __LIBSEL4_TYPES_H
+#pragma once
 
 #ifdef HAVE_AUTOCONF
 #include <autoconf.h>
@@ -45,4 +44,3 @@ typedef seL4_Uint64 seL4_Time;
 
 #include <sel4/arch/constants.h>
 
-#endif

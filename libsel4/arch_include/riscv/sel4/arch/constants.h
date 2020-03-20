@@ -4,7 +4,5 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_ARCH_CONSTANTS_H
-#define __LIBSEL4_ARCH_CONSTANTS_H
+#pragma once
 
-#endif

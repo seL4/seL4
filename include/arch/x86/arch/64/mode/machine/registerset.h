@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODE_MACHINE_REGISTERSET_H_
-#define __ARCH_MODE_MACHINE_REGISTERSET_H_
+#pragma once
 
 /* These are the indices of the registers in the
  * saved thread context. The values are determined
@@ -144,4 +143,3 @@ extern const register_t gpRegisters[];
 
 #define FPU_PADDING word_t padding[1];
 
-#endif /* __ARCH_MODE_MACHINE_REGISTERSET_H_ */

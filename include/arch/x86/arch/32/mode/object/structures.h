@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MODE_OBJECT_STRUCTURES_H
-#define __MODE_OBJECT_STRUCTURES_H
+#pragma once
 
 #include <config.h>
 #include <sel4/macros.h>
@@ -118,4 +117,3 @@ static inline void *CONST cap_get_modeCapPtr(cap_t cap)
     fail("Invalid mode cap type");
 }
 
-#endif

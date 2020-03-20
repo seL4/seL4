@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_OBJECT_INTERRUPT_H
-#define __ARCH_OBJECT_INTERRUPT_H
+#pragma once
 
 #include <types.h>
 #include <api/failures.h>
@@ -65,4 +64,3 @@ static inline exception_t Arch_checkIRQ(word_t irq_w)
     return EXCEPTION_NONE;
 }
 
-#endif

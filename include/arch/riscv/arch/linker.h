@@ -5,9 +5,8 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_LINKER_H
-#define __ARCH_LINKER_H
+#pragma once
 
 #include <util.h>
 
-#endif
+

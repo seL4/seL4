@@ -4,9 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_KERNEL_SMP_SYS_H_
-#define __ARCH_KERNEL_SMP_SYS_H_
-
+#pragma once
 /* Lower memory address to copy APs boot code in real mode. Actual memory starts at
  * 0x500 but we need to round up to a page aligned address in order to send the
  * startup IPI */
@@ -20,4 +18,3 @@ BOOT_CODE void start_boot_aps(void);
 BOOT_CODE bool_t copy_boot_code_aps(uint32_t mem_lower);
 #endif /* ENABLE_SMP_SUPPORT */
 
-#endif /* __ARCH_KERNEL_SMP_SYS_H_ */

@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_PL2_32_H
-#define __ARCH_MACHINE_PL2_32_H
+#pragma once
 
 #include <config.h>
 #include <arch/object/vcpu.h>
@@ -211,4 +210,3 @@ static inline paddr_t addressTranslateS1CPR(vptr_t vaddr)
 }
 
 #endif /* !CONFIG_ARM_HYPERVISOR_SUPPORT */
-#endif /* __ARCH_MACHINE_PL2_32_H */

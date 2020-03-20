@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_ARCH_TYPES_H
-#define __LIBSEL4_ARCH_TYPES_H
+#pragma once
 
 #include <sel4/simple_types.h>
 #include <sel4/sel4_arch/types.h>
@@ -35,4 +34,3 @@ typedef enum {
     SEL4_FORCE_LONG_ENUM(seL4_ARM_CacheType),
 } seL4_ARM_CacheType;
 
-#endif /* __ARCH_SEL4TYPES_H__ */

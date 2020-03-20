@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_FASTPATH_32_H
-#define __ARCH_FASTPATH_32_H
+#pragma once
+
 
 #include <util.h>
 #include <linker.h>
@@ -135,4 +135,3 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
     UNREACHABLE();
 }
 
-#endif

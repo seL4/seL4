@@ -4,9 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_BOOTINFO_H
-#define __ARCH_BOOTINFO_H
-
+#pragma once
 #define MAX_NUM_FREEMEM_REG 16
 
 /* The maximum number of reserved regions is:
@@ -22,4 +20,3 @@
 #define MAX_NUM_RESV_REG (MAX_NUM_FREEMEM_REG + MODE_RESERVED + 3)
 #endif
 
-#endif

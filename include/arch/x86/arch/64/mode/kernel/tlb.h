@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MODE_KERNEL_TLB_H
-#define __MODE_KERNEL_TLB_H
+#pragma once
 
 #include <smp/ipi.h>
 #include <arch/kernel/tlb.h>
@@ -39,4 +38,3 @@ static inline void invalidateASID(vspace_root_t *vspace, asid_t asid, word_t mas
     SMP_COND_STATEMENT(doRemoteInvalidateASID(vspace, asid, mask));
 }
 
-#endif /* __MODE_KERNEL_TLB_H */

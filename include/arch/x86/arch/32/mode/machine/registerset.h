@@ -3,9 +3,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
-
-#ifndef __MODE_MACHINE_REGISTERSET_H
-#define __MODE_MACHINE_REGISTERSET_H
+#pragma once
 
 /* These are the indices of the registers in the
  * saved thread context. The values are determined
@@ -115,5 +113,3 @@ enum messageSizes {
 extern const register_t msgRegisters[];
 extern const register_t frameRegisters[];
 extern const register_t gpRegisters[];
-
-#endif

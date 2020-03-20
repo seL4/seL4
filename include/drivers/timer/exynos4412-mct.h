@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __DRIVER_TIMER_MCT_EXYNOS4412_H
-#define __DRIVER_TIMER_MCT_EXYNOS4412_H
+#pragma once
 
 #include <drivers/timer/mct.h>
 
@@ -55,4 +54,4 @@ static inline void ackDeadlineIRQ(void)
 
 #endif
 
-#endif /* !__DRIVER_TIMER_MCT_EXYNOS4412_H */
+

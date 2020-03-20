@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __STDINT_H
-#define __STDINT_H
+#pragma once
 
 #include <mode/stdint.h>
 
@@ -24,4 +23,3 @@ typedef signed long long int64_t;
 #define INT64_MAX  (0x7FFFFFFFFFFFFFFF)
 #define INT32_MAX  (0x7FFFFFFF)
 
-#endif

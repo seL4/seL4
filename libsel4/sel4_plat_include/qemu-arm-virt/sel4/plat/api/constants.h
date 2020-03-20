@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_SEL4_PLAT_API_CONSTANTS_H_
-#define __LIBSEL4_SEL4_PLAT_API_CONSTANTS_H_
+#pragma once
 
 
 #ifdef HAVE_AUTOCONF
@@ -27,4 +26,4 @@
 
 #define seL4_UserTop 0xa0000000
 #endif
-#endif /* __LIBSEL4_SEL4_PLAT_API_CONSTANTS_H_ */
+

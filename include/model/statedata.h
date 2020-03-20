@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MODEL_STATEDATA_H_
-#define __MODEL_STATEDATA_H_
+#pragma once
 
 #include <config.h>
 #include <types.h>
@@ -123,4 +122,3 @@ extern paddr_t ksUserLogBuffer;
 #define ARCH_NODE_STATE(_state)    ARCH_NODE_STATE_ON_CORE(_state, getCurrentCPUIndex())
 #define NODE_STATE(_state)         NODE_STATE_ON_CORE(_state, getCurrentCPUIndex())
 
-#endif /* __MODEL_STATEDATA_H_ */

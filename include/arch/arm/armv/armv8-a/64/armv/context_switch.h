@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARMV_CONTEXT_SWITCH_H__
-#define __ARMV_CONTEXT_SWITCH_H__
+#pragma once
 
 #include <config.h>
 #include <arch/kernel/vspace.h>
@@ -22,4 +21,3 @@ static inline void armv_contextSwitch(vspace_root_t *vspace, asid_t asid)
     setCurrentUserVSpaceRoot(ttbr_new(asid, pptr_to_paddr(vspace)));
 }
 
-#endif /* __ARMV_CONTEXT_SWITCH_H__ */

@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_PAT_H
-#define __ARCH_MACHINE_PAT_H
+#pragma once
 
 #define IA32_PAT_MSR            0x277
 
@@ -16,4 +15,3 @@
 #define IA32_PAT_MT_WRITE_BACK      0x06
 #define IA32_PAT_MT_UNCACHED        0x07
 
-#endif

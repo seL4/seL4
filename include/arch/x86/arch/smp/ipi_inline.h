@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_KERNEL_IPI_INLINE_H
-#define __ARCH_KERNEL_IPI_INLINE_H
+#pragma once
 
 #include <config.h>
 #include <smp/ipi.h>
@@ -54,4 +53,4 @@ static inline void doRemoteVMCheckBoundNotification(word_t cpu, tcb_t *tcb)
 #endif
 
 #endif /* ENABLE_SMP_SUPPORT */
-#endif /* __ARCH_KERNEL_IPI_INLINE_H */
+

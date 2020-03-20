@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __LIBSEL4_SEL4_ARCH_TYPES_H
-#define __LIBSEL4_SEL4_ARCH_TYPES_H
+#pragma once
 
 #include <autoconf.h>
 #include <sel4/simple_types.h>
@@ -13,4 +12,3 @@
 #define seL4_WordBits        64
 typedef seL4_Uint64 seL4_Word;
 
-#endif

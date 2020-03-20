@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __DRIVER_TIMER_OMAP3_H
-#define __DRIVER_TIMER_OMAP3_H
+#pragma once
 
 #include <config.h>
 
@@ -74,4 +73,3 @@ static inline void resetTimer(void)
     ackInterrupt(KERNEL_TIMER_IRQ);
 }
 #endif /* !CONFIG_KERNEL_MCS */
-#endif /* !__DRIVER_TIMER_OMAP3_H */

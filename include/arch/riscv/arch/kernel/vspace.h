@@ -5,8 +5,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_KERNEL_VSPACE_H
-#define __ARCH_KERNEL_VSPACE_H
+#pragma once
 
 #include <types.h>
 #include <api/failures.h>
@@ -67,4 +66,3 @@ void setVMRoot(tcb_t *tcb);
 void Arch_userStackTrace(tcb_t *tptr);
 #endif
 
-#endif

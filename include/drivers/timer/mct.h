@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __DRIVERS_TIMER_MCT_H
-#define __DRIVERS_TIMER_MCT_H
+#pragma once
 
 #include <stdint.h>
 
@@ -127,4 +126,3 @@ static inline void mct_clear_write_status(void)
 }
 
 
-#endif /* __DRIVERS_TIMER_MCT_H */

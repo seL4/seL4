@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MACHINE_TIMER_H
-#define __MACHINE_TIMER_H
+#pragma once
 
 #include <config.h>
 #include <arch/machine/timer.h>
@@ -32,4 +31,4 @@ static PURE inline ticks_t getKernelWcetTicks(void)
 #else /* CONFIG_KERNEL_MCS */
 static inline void resetTimer(void);
 #endif /* !CONFIG_KERNEL_MCS */
-#endif /* __MACHINE_TIMER_H */
+

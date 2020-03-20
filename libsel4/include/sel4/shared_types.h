@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_SHARED_TYPES_H
-#define __LIBSEL4_SHARED_TYPES_H
+#pragma once
 
 /* this file is shared between the kernel and libsel4 */
 
@@ -41,4 +40,3 @@ enum {
 #define seL4_NoRead        seL4_CapRights_new(1, 1, 0, 1)
 #define seL4_NoRights      seL4_CapRights_new(0, 0, 0, 0)
 
-#endif
