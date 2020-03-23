@@ -125,8 +125,6 @@ block pte {
 }
 
 -- RISC-V SATP (priv-1.10) Supervisor Address Translation and Protection
--- This register was originally named sptbr and some toolchains still use
--- sptbr when it refers to satp.
 
 block satp {
     field mode          1
