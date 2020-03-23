@@ -11,7 +11,6 @@
 #include <arch/types.h>
 #include <arch/object/structures.h>
 #include <arch/machine/hardware.h>
-#include <arch/encoding.h>
 #include <arch/model/statedata.h>
 #include <arch/sbi.h>
 
@@ -173,18 +172,18 @@ static inline void clear_sie_mask(word_t mask_low)
 }
 
 #if CONFIG_PT_LEVELS == 2
-#define SATP_MODE SPTBR_MODE_SV32
+#define SATP_MODE SATP_MODE_SV32
 #elif CONFIG_PT_LEVELS == 3
-#define SATP_MODE SPTBR_MODE_SV39
+#define SATP_MODE SATP_MODE_SV39
 #elif CONFIG_PT_LEVELS == 4
-#define SATP_MODE SPTBR_MODE_SV48
+#define SATP_MODE SATP_MODE_SV48
 #else
 #error "Unsupported PT levels"
 #endif
 static inline void setVSpaceRoot(paddr_t addr, asid_t asid)
 {
     satp_t satp = satp_new(SATP_MODE,              /* mode */
-                           asid,                         /* asid */
+                           asid,                   /* asid */
                            addr >> seL4_PageBits); /* PPN */
 
     write_satp(satp.words[0]);

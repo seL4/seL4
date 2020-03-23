@@ -8,7 +8,6 @@
 #pragma once
 
 #include "hardware.h"
-#include <arch/encoding.h>
 
 #ifndef __ASSEMBLER__
 
