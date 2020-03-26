@@ -150,7 +150,11 @@ void refill_new(sched_context_t *sc, word_t max_refills, ticks_t budget, ticks_t
     /* full budget available */
     REFILL_HEAD(sc).rAmount = budget;
     /* budget can be used from now */
-    REFILL_HEAD(sc).rTime = NODE_STATE_ON_CORE(ksCurTime, core);
+    if (period == 0) {
+        REFILL_HEAD(sc).rTime = 0;
+    } else {
+        REFILL_HEAD(sc).rTime = NODE_STATE_ON_CORE(ksCurTime, core);
+    }
     REFILL_SANITY_CHECK(sc, budget);
 }
 
@@ -204,7 +208,9 @@ void refill_update(sched_context_t *sc, ticks_t new_period, ticks_t new_budget, 
     /* update period */
     sc->scPeriod = new_period;
 
-    if (refill_ready(sc)) {
+    if (new_period == 0) {
+        REFILL_HEAD(sc).rTime = 0;
+    } else if (refill_ready(sc)) {
         REFILL_HEAD(sc).rTime = NODE_STATE_ON_CORE(ksCurTime, sc->scCore);
     }
 
@@ -245,8 +251,9 @@ void refill_budget_check_round_robin(ticks_t usage)
         REFILL_HEAD(sc).rAmount -= usage;
         /* Consume only a portion of the head refill */
         if (refill_single(sc)) {
+            assert(REFILL_HEAD(sc).rTime == 0);
             refill_t new = {
-                .rTime = REFILL_HEAD(sc).rTime + REFILL_HEAD(sc).rAmount,
+                .rTime = REFILL_HEAD(sc).rAmount,
                 .rAmount = usage,
             };
             refill_add_tail(sc, new);
@@ -262,7 +269,7 @@ void refill_budget_check_round_robin(ticks_t usage)
         sc->scRefillCount = 1;
     }
 
-    assert(REFILL_HEAD(sc).rTime == NODE_STATE(ksCurTime));
+    assert(REFILL_HEAD(sc).rTime == 0);
     REFILL_SANITY_END(sc);
     return;
 }
