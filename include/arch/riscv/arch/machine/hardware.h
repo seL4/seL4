@@ -127,6 +127,11 @@ static inline unsigned int CONST pageBitsForSize(vm_page_size_t pagesize)
         fail("Invalid page size");
     }
 }
+
+static inline void arch_clean_invalidate_caches(void)
+{
+    /* RISC-V doesn't have an architecture defined way of flushing caches */
+}
 #endif /* __ASSEMBLER__ */
 
 #define LOAD_S STRINGIFY(LOAD)
