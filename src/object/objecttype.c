@@ -353,8 +353,10 @@ bool_t CONST sameRegionAs(cap_t cap_a, cap_t cap_b)
 #ifdef CONFIG_KERNEL_MCS
     case cap_sched_context_cap:
         if (cap_get_capType(cap_b) == cap_sched_context_cap) {
-            return cap_sched_context_cap_get_capSCPtr(cap_a) ==
-                   cap_sched_context_cap_get_capSCPtr(cap_b);
+            return (cap_sched_context_cap_get_capSCPtr(cap_a) ==
+                    cap_sched_context_cap_get_capSCPtr(cap_b)) &&
+                   (cap_sched_context_cap_get_capSCSizeBits(cap_a) ==
+                    cap_sched_context_cap_get_capSCSizeBits(cap_b));
         }
         break;
     case cap_sched_control_cap:
