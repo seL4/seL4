@@ -19,7 +19,7 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final);
 bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b);
 bool_t CONST Arch_sameObjectAs(cap_t cap_a, cap_t cap_b);
 cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory);
-exception_t Arch_decodeInvocation(word_t label, unsigned int length,
+exception_t Arch_decodeInvocation(word_t label, word_t length,
                                   cptr_t cptr, cte_t *slot, cap_t cap,
                                   extra_caps_t extraCaps, bool_t call, word_t *buffer);
 void Arch_prepareThreadDelete(tcb_t *thread);

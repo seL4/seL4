@@ -102,9 +102,9 @@ enum vm_page_size {
     RISCV_Giga_Page,
     RISCV_Tera_Page
 };
-typedef uint32_t vm_page_size_t;
+typedef word_t vm_page_size_t;
 
-static inline unsigned int CONST pageBitsForSize(vm_page_size_t pagesize)
+static inline word_t CONST pageBitsForSize(vm_page_size_t pagesize)
 {
     switch (pagesize) {
     case RISCV_4K_Page:

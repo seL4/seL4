@@ -324,7 +324,7 @@ static findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
 
 void copyGlobalMappings(pte_t *newLvl1pt)
 {
-    unsigned int i;
+    unsigned long i;
     pte_t *global_kernel_vspace = kernel_root_pageTable;
 
     for (i = RISCV_GET_PT_INDEX(PPTR_BASE, 0); i < BIT(PT_INDEX_BITS); i++) {
@@ -351,8 +351,7 @@ word_t *PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
     vm_rights = cap_frame_cap_get_capFVMRights(bufferCap);
     if (likely(vm_rights == VMReadWrite ||
                (!isReceiver && vm_rights == VMReadOnly))) {
-        word_t basePtr;
-        unsigned int pageBits;
+        word_t basePtr, pageBits;
 
         basePtr = cap_frame_cap_get_capFBasePtr(bufferCap);
         pageBits = pageBitsForSize(cap_frame_cap_get_capFSize(bufferCap));
@@ -651,7 +650,7 @@ static inline bool_t CONST checkVPAlignment(vm_page_size_t sz, word_t w)
     return (w & MASK(pageBitsForSize(sz))) == 0;
 }
 
-static exception_t decodeRISCVPageTableInvocation(word_t label, unsigned int length,
+static exception_t decodeRISCVPageTableInvocation(word_t label, word_t length,
                                                   cte_t *cte, cap_t cap, extra_caps_t extraCaps,
                                                   word_t *buffer)
 {
@@ -771,7 +770,7 @@ static exception_t decodeRISCVPageTableInvocation(word_t label, unsigned int len
     return performPageTableInvocationMap(cap, cte, pte, ptSlot);
 }
 
-static exception_t decodeRISCVFrameInvocation(word_t label, unsigned int length,
+static exception_t decodeRISCVFrameInvocation(word_t label, word_t length,
                                               cte_t *cte, cap_t cap, extra_caps_t extraCaps,
                                               word_t *buffer)
 {
@@ -902,7 +901,7 @@ static exception_t decodeRISCVFrameInvocation(word_t label, unsigned int length,
 
 }
 
-exception_t decodeRISCVMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
+exception_t decodeRISCVMMUInvocation(word_t label, word_t length, cptr_t cptr,
                                      cte_t *cte, cap_t cap, extra_caps_t extraCaps,
                                      word_t *buffer)
 {
