@@ -102,7 +102,7 @@ static inline bool_t refill_sufficient(sched_context_t *sc, ticks_t usage)
  */
 static inline bool_t refill_ready(sched_context_t *sc)
 {
-    return REFILL_HEAD(sc).rTime <= (NODE_STATE(ksCurTime) + getKernelWcetTicks());
+    return REFILL_HEAD(sc).rTime <= (NODE_STATE_ON_CORE(ksCurTime, sc->scCore) + getKernelWcetTicks());
 }
 
 /* Create a new refill in a non-active sc */
