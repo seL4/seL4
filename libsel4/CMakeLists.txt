@@ -35,6 +35,14 @@ config_option(
     DEFAULT OFF
 )
 
+config_string(
+    LibSel4PrintInvocationErrors LIB_SEL4_PRINT_INVOCATION_ERRORS
+    "Generated stubs on error will print the message contained in the IPC buffer"
+    DEFAULT 1
+    DEPENDS "KernelInvocationReportErrorIPC" DEFAULT_DISABLED 0
+    UNQUOTE
+)
+
 if(LibSel4StubsUseIPCBufferOnly)
     set(buffer "--buffer")
 endif()

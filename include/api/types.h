@@ -110,24 +110,29 @@ static inline word_t CONST wordFromMessageInfo(seL4_MessageInfo_t mi)
 #define THREAD_NAME ""
 #endif
 
+#ifdef CONFIG_KERNEL_INVOCATION_REPORT_ERROR_IPC
 extern struct debug_syscall_error current_debug_error;
+
+#define out_error(...) \
+    snprintf((char *)current_debug_error.errorMessage, \
+            DEBUG_MESSAGE_MAXLEN * sizeof(word_t), __VA_ARGS__);
+#else
+#define out_error printf
+#endif
 
 /*
  * Print to serial a message helping userspace programmers to determine why the
  * kernel is not performing their requested operation.
  */
-#define userError(...) \
+#define userError(M, ...) \
     do {                                                                     \
-        printf(ANSI_DARK "<<" ANSI_GREEN "seL4(CPU %lu)" ANSI_DARK           \
-                " [%s/%d T%p \"%s\" @%lx]: ",                                \
+        out_error(ANSI_DARK "<<" ANSI_GREEN "seL4(CPU %lu)" ANSI_DARK        \
+                " [%s/%d T%p \"%s\" @%lx]: " M ">>" ANSI_RESET "\n",         \
                 SMP_TERNARY(getCurrentCPUIndex(), 0lu),                      \
                 __func__, __LINE__, NODE_STATE(ksCurThread),                 \
                 THREAD_NAME,                                                 \
-                (word_t)getRestartPC(NODE_STATE(ksCurThread)));              \
-        printf(__VA_ARGS__);                                                 \
-        printf(">>" ANSI_RESET "\n");                                        \
-        snprintf((char *)current_debug_error.errorMessage,                   \
-                DEBUG_MESSAGE_MAXLEN * sizeof(word_t), __VA_ARGS__);         \
+                (word_t)getRestartPC(NODE_STATE(ksCurThread)),               \
+                ## __VA_ARGS__);                                             \
     } while (0)
 #else /* !CONFIG_PRINTING */
 #define userError(...)

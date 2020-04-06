@@ -13,6 +13,26 @@
 extern __thread seL4_IPCBuffer *__sel4_ipc_buffer;
 __thread __attribute__((weak)) seL4_IPCBuffer *__sel4_ipc_buffer;
 
+#ifdef CONFIG_KERNEL_INVOCATION_REPORT_ERROR_IPC
+extern __thread char __sel4_print_error;
+
+LIBSEL4_INLINE_FUNC char *seL4_GetDebugError(void)
+{
+    return (char *)(__sel4_ipc_buffer->msg + DEBUG_MESSAGE_START);
+}
+
+LIBSEL4_INLINE_FUNC void seL4_SetPrintError(char print_error)
+{
+    __sel4_print_error = print_error;
+    return;
+}
+
+LIBSEL4_INLINE_FUNC char seL4_CanPrintError(void)
+{
+    return __sel4_print_error;
+}
+#endif
+
 LIBSEL4_INLINE_FUNC void seL4_SetIPCBuffer(seL4_IPCBuffer *ipc_buffer)
 {
     __sel4_ipc_buffer = ipc_buffer;

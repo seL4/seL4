@@ -786,6 +786,14 @@ LIBSEL4_INLINE_FUNC void seL4_DebugPutChar(char c)
                         &unused4, &unused5, 0);
 }
 
+LIBSEL4_INLINE_FUNC void seL4_DebugPutString(char *str)
+{
+    for (char *s = str; *s; s++) {
+        seL4_DebugPutChar(*s);
+    }
+    return;
+}
+
 LIBSEL4_INLINE_FUNC void seL4_DebugDumpScheduler(void)
 {
     seL4_Word unused0 = 0;

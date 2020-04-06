@@ -97,6 +97,7 @@ static inline seL4_Word seL4_MaxExtraRefills(seL4_Word size)
 #endif /* !__ASSEMBLER__ */
 #endif /* CONFIG_KERNEL_MCS */
 
+#ifdef CONFIG_KERNEL_INVOCATION_REPORT_ERROR_IPC
 #define DEBUG_MESSAGE_START 6
 #define DEBUG_MESSAGE_MAXLEN 50
-
+#endif

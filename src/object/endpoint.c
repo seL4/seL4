@@ -262,11 +262,13 @@ void replyFromKernel_error(tcb_t *thread)
     setRegister(thread, badgeRegister, 0);
     len = setMRs_syscall_error(thread, ipcBuffer);
 
+#ifdef CONFIG_KERNEL_INVOCATION_REPORT_ERROR_IPC
     char *debugBuffer = (char *)(ipcBuffer + DEBUG_MESSAGE_START + 1);
     word_t add = strlcpy(debugBuffer, (char *)current_debug_error.errorMessage,
                          DEBUG_MESSAGE_MAXLEN * sizeof(word_t));
 
     len += (add / sizeof(word_t)) + 1;
+#endif
 
     setRegister(thread, msgInfoRegister, wordFromMessageInfo(
                     seL4_MessageInfo_new(current_syscall_error.type, 0, 0, len)));
