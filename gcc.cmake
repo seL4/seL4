@@ -60,7 +60,9 @@ if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
         elseif(${sel4_arch} STREQUAL "aarch64")
             set(CROSS_COMPILER_PREFIX "aarch64-linux-gnu-")
         elseif(${arch} STREQUAL "riscv")
-            set(CROSS_COMPILER_PREFIX "riscv64-unknown-linux-gnu-")
+            FindPrefixedGCC(
+                CROSS_COMPILER_PREFIX "riscv64-unknown-linux-gnu-" "riscv64-unknown-elf-"
+            )
         endif()
     else()
         # For backwards compatibility reasons we allow this file to work without templating.
@@ -74,7 +76,9 @@ if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
         elseif(AARCH64)
             set(CROSS_COMPILER_PREFIX "aarch64-linux-gnu-")
         elseif(RISCV32 OR RISCV64)
-            set(CROSS_COMPILER_PREFIX "riscv64-unknown-linux-gnu-")
+            FindPrefixedGCC(
+                CROSS_COMPILER_PREFIX "riscv64-unknown-linux-gnu-" "riscv64-unknown-elf-"
+            )
         endif()
     endif()
     if(AARCH32HF)
