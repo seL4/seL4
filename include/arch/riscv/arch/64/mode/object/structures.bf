@@ -28,9 +28,9 @@ block frame_cap {
 
     field       capType             5
     field       capFSize            2
-    field       capFVMRights        3
+    field       capFVMRights        2
     field       capFIsDevice        1
-    padding                         14
+    padding                         15
     field_high  capFMappedAddress   39
 }
 
