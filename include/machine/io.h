@@ -27,9 +27,10 @@ unsigned char getDebugChar(void);
 void putchar(char c);
 #define kernel_putchar(c) putchar(c)
 word_t kprintf(const char *format, ...) VISIBLE FORMAT(printf, 1, 2);
+word_t ksnprintf(char *str, word_t size, const char *format, ...);
 word_t puts(const char *s) VISIBLE;
-word_t print_unsigned_long(unsigned long x, word_t ui_base) VISIBLE;
 #define printf(args...) kprintf(args)
+#define snprintf(args...) ksnprintf(args)
 #else /* CONFIG_PRINTING */
 /* printf will NOT result in output */
 #define kernel_putchar(c) ((void)(0))

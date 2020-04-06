@@ -10,3 +10,4 @@
 lookup_fault_t current_lookup_fault;
 seL4_Fault_t current_fault;
 syscall_error_t current_syscall_error;
+debug_syscall_error_t current_debug_error;

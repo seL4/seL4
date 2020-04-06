@@ -5,6 +5,8 @@
  */
 
 #include <types.h>
+#include <string.h>
+#include <sel4/constants.h>
 #include <kernel/thread.h>
 #include <kernel/vspace.h>
 #include <machine/registerset.h>
@@ -259,6 +261,13 @@ void replyFromKernel_error(tcb_t *thread)
     ipcBuffer = lookupIPCBuffer(true, thread);
     setRegister(thread, badgeRegister, 0);
     len = setMRs_syscall_error(thread, ipcBuffer);
+
+    char *debugBuffer = (char *)(ipcBuffer + DEBUG_MESSAGE_START + 1);
+    word_t add = strlcpy(debugBuffer, (char *)current_debug_error.errorMessage,
+                         DEBUG_MESSAGE_MAXLEN * sizeof(word_t));
+
+    len += (add / sizeof(word_t)) + 1;
+
     setRegister(thread, msgInfoRegister, wordFromMessageInfo(
                     seL4_MessageInfo_new(current_syscall_error.type, 0, 0, len)));
 }

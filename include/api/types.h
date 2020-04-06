@@ -110,6 +110,8 @@ static inline word_t CONST wordFromMessageInfo(seL4_MessageInfo_t mi)
 #define THREAD_NAME ""
 #endif
 
+extern struct debug_syscall_error current_debug_error;
+
 /*
  * Print to serial a message helping userspace programmers to determine why the
  * kernel is not performing their requested operation.
@@ -124,6 +126,8 @@ static inline word_t CONST wordFromMessageInfo(seL4_MessageInfo_t mi)
                 (word_t)getRestartPC(NODE_STATE(ksCurThread)));              \
         printf(__VA_ARGS__);                                                 \
         printf(">>" ANSI_RESET "\n");                                        \
+        snprintf((char *)current_debug_error.errorMessage,                   \
+                DEBUG_MESSAGE_MAXLEN * sizeof(word_t), __VA_ARGS__);         \
     } while (0)
 #else /* !CONFIG_PRINTING */
 #define userError(...)
