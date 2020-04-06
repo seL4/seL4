@@ -33,6 +33,13 @@ unverified platform, etc, or they should come with proof updates to `l4v`.
 If you have larger changes or additions, it is a good idea to get in contact
 with us as <devel@sel4.systems>, so we can help you get started.
 
+The people responsible for the technical direction, procedures, and quality
+control are the [Technical Steering Committee][2] (TSC) of the seL4
+foundation. You can contact them either on the developer mailing list or on
+directly via email available from their profile pages.
+
+[2]: https://sel4.systems/Foundation/TSC
+
 ## Developer Certificate of Origin (DCO)
 
 This repository uses the same sign-off process as the Linux kernel. For every
