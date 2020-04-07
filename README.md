@@ -20,7 +20,7 @@ We welcome contributions to seL4. Please see the website for information
 on [how to contribute][3].
 
 This repository is usually not used in isolation, but as part of the build
-system in a larger project.
+system in a larger project..
 
   [1]: http://sel4.systems/
   [2]: http://sel4.systems/Info/FAQ/
