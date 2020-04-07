@@ -38,7 +38,8 @@ static exception_t performPageGetAddress(void *vbase_ptr);
 
 static word_t CONST RISCVGetWriteFromVMRights(vm_rights_t vm_rights)
 {
-    return vm_rights != VMReadOnly;
+    /* Write-only frame cap rights not currently supported. */
+    return vm_rights == VMReadWrite;
 }
 
 static word_t RISCVGetUserFromVMRights(vm_rights_t vm_rights)
@@ -48,7 +49,9 @@ static word_t RISCVGetUserFromVMRights(vm_rights_t vm_rights)
 
 static inline word_t CONST RISCVGetReadFromVMRights(vm_rights_t vm_rights)
 {
-    return vm_rights != VMWriteOnly;
+    /* Write-only frame cap rights not currently supported.
+     * Kernel-only conveys no user rights. */
+    return vm_rights != VMKernelOnly;
 }
 
 static inline bool_t isPTEPageTable(pte_t *pte)
@@ -603,26 +606,15 @@ exception_t checkValidIPCBuffer(vptr_t vptr, cap_t cap)
 
 vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_rights_mask)
 {
-    if (vm_rights == VMReadOnly &&
-        seL4_CapRights_get_capAllowRead(cap_rights_mask)) {
+    if (vm_rights == VMReadOnly && seL4_CapRights_get_capAllowRead(cap_rights_mask)) {
         return VMReadOnly;
     }
-    if (vm_rights == VMReadWrite &&
-        (seL4_CapRights_get_capAllowRead(cap_rights_mask) || seL4_CapRights_get_capAllowWrite(cap_rights_mask))) {
+    if (vm_rights == VMReadWrite && seL4_CapRights_get_capAllowRead(cap_rights_mask)) {
         if (!seL4_CapRights_get_capAllowWrite(cap_rights_mask)) {
             return VMReadOnly;
-        } else if (!seL4_CapRights_get_capAllowRead(cap_rights_mask)) {
-            return VMWriteOnly;
         } else {
             return VMReadWrite;
         }
-    }
-    if (vm_rights == VMWriteOnly &&
-        seL4_CapRights_get_capAllowWrite(cap_rights_mask)) {
-        return VMWriteOnly;
-    }
-    if (vm_rights == VMKernelOnly) {
-        return VMKernelOnly;
     }
     return VMKernelOnly;
 }
