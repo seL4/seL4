@@ -112,6 +112,7 @@ enum {
     seL4_VCPUReg_CNTV_CTL,
     seL4_VCPUReg_CNTV_CVAL,
     seL4_VCPUReg_CNTVOFF,
+    seL4_VCPUReg_CNTKCTL_EL1,
 
     seL4_VCPUReg_Num,
 } seL4_VCPUReg;
