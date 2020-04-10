@@ -83,7 +83,7 @@ enum vm_fault_type {
     RISCVStorePageFault = 15
                           /* >= 16 reserved */
 };
-typedef uint32_t vm_fault_type_t;
+typedef word_t vm_fault_type_t;
 
 enum frameSizeConstants {
     RISCVPageBits        = seL4_PageBits,
