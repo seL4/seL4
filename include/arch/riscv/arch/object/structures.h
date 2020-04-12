@@ -85,7 +85,8 @@ static inline bool_t CONST cap_get_archCapIsPhysical(cap_t cap)
         return true;
 
     default:
-        fail("Invalid arch cap type");
+        /* unreachable */
+        return false;
     }
 }
 
