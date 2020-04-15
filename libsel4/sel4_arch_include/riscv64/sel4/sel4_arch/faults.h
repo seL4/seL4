@@ -31,7 +31,6 @@ LIBSEL4_INLINE_FUNC seL4_Fault_t seL4_getArchFault(seL4_MessageInfo_t tag)
     case seL4_Fault_UserException:
         return seL4_Fault_UserException_new(seL4_GetMR(seL4_UserException_FaultIP),
                                             seL4_GetMR(seL4_UserException_SP),
-                                            seL4_GetMR(seL4_UserException_FLAGS),
                                             seL4_GetMR(seL4_UserException_Number),
                                             seL4_GetMR(seL4_UserException_Code));
     case seL4_Fault_VMFault:

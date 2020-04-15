@@ -65,10 +65,9 @@ block UnknownSyscall {
 }
 
 block UserException {
-   padding 192
+   padding 224
    field FaultIP 32
    field SP      32
-   field FLAGS   32
    field Number  32
    field Code    32
    padding 28
