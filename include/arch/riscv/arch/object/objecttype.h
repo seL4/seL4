@@ -24,7 +24,7 @@ exception_t Arch_decodeInvocation(word_t label, word_t length,
                                   extra_caps_t extraCaps, bool_t call, word_t *buffer);
 void Arch_prepareThreadDelete(tcb_t *thread);
 word_t Arch_getObjectSize(word_t t);
-bool_t Arch_isFrameType(word_t t);
+bool_t Arch_isFrameType(word_t type);
 
 static inline void Arch_postCapDeletion(cap_t cap)
 {

@@ -307,9 +307,9 @@ void Arch_prepareThreadDelete(tcb_t *thread)
     /* No action required on RISCV. */
 }
 
-bool_t Arch_isFrameType(word_t t)
+bool_t Arch_isFrameType(word_t type)
 {
-    switch (t) {
+    switch (type) {
 #if CONFIG_PT_LEVELS == 4
     case seL4_RISCV_Tera_Page:
 #endif
