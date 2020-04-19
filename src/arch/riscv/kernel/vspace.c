@@ -372,22 +372,24 @@ static inline pte_t *getPPtrFromHWPTE(pte_t *pte)
 lookupPTSlot_ret_t lookupPTSlot(pte_t *lvl1pt, vptr_t vptr)
 {
     lookupPTSlot_ret_t ret;
+
+    word_t level = CONFIG_PT_LEVELS - 1;
+    pte_t *pt = lvl1pt;
+
     /* this is how many bits we potentially have left to decode. Initially we have the
      * full address space to decode, and every time we walk this will be reduced. The
      * final value of this after the walk is the size of the frame that can be inserted,
-     * or already exists, in ret.ptSlot */
-    ret.ptBitsLeft = PT_INDEX_BITS * CONFIG_PT_LEVELS + seL4_PageBits;
-    ret.ptSlot = NULL;
+     * or already exists, in ret.ptSlot. The following formulation is an invariant of
+     * the loop: */
+    ret.ptBitsLeft = PT_INDEX_BITS * level + seL4_PageBits;
+    ret.ptSlot = pt + ((vptr >> ret.ptBitsLeft) & MASK(PT_INDEX_BITS));
 
-    pte_t *pt = lvl1pt;
-    do {
+    while (isPTEPageTable(ret.ptSlot) && likely(0 < level)) {
+        level--;
         ret.ptBitsLeft -= PT_INDEX_BITS;
-        word_t index = (vptr >> ret.ptBitsLeft) & MASK(PT_INDEX_BITS);
-        ret.ptSlot = pt + index;
         pt = getPPtrFromHWPTE(ret.ptSlot);
-        /* stop when we find something that isn't a page table - either a mapped frame or
-         * an empty slot */
-    } while (isPTEPageTable(ret.ptSlot));
+        ret.ptSlot = pt + ((vptr >> ret.ptBitsLeft) & MASK(PT_INDEX_BITS));
+    }
 
     return ret;
 }
