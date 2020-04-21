@@ -42,11 +42,6 @@ static word_t CONST RISCVGetWriteFromVMRights(vm_rights_t vm_rights)
     return vm_rights == VMReadWrite;
 }
 
-static word_t RISCVGetUserFromVMRights(vm_rights_t vm_rights)
-{
-    return vm_rights != VMKernelOnly;
-}
-
 static inline word_t CONST RISCVGetReadFromVMRights(vm_rights_t vm_rights)
 {
     /* Write-only frame cap rights not currently supported.
@@ -625,18 +620,24 @@ vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_right
 
 static pte_t CONST makeUserPTE(paddr_t paddr, bool_t executable, vm_rights_t vm_rights)
 {
-    return pte_new(
-               paddr >> seL4_PageBits,
-               0, /* sw */
-               1, /* dirty */
-               1, /* accessed */
-               0, /* global */
-               RISCVGetUserFromVMRights(vm_rights),   /* user */
-               executable, /* execute */
-               RISCVGetWriteFromVMRights(vm_rights),  /* write */
-               RISCVGetReadFromVMRights(vm_rights), /* read */
-               1 /* valid */
-           );
+    word_t write = RISCVGetWriteFromVMRights(vm_rights);
+    word_t read = RISCVGetReadFromVMRights(vm_rights);
+    if (unlikely(!read && !write && !executable)) {
+        return pte_pte_invalid_new();
+    } else {
+        return pte_new(
+                   paddr >> seL4_PageBits,
+                   0, /* sw */
+                   1, /* dirty */
+                   1, /* accessed */
+                   0, /* global */
+                   1, /* user */
+                   executable, /* execute */
+                   RISCVGetWriteFromVMRights(vm_rights), /* write */
+                   RISCVGetReadFromVMRights(vm_rights), /* read */
+                   1 /* valid */
+               );
+    }
 }
 
 static inline bool_t CONST checkVPAlignment(vm_page_size_t sz, word_t w)
