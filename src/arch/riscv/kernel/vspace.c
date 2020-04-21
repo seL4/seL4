@@ -655,18 +655,17 @@ static exception_t decodeRISCVPageTableInvocation(word_t label, word_t length,
             current_syscall_error.type = seL4_RevokeFirst;
             return EXCEPTION_SYSCALL_ERROR;
         }
-        if (unlikely(!cap_page_table_cap_get_capPTIsMapped(cap))) {
-            /* It is not an error to call unmap on a PT that is not already mapped. */
-            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-            return EXCEPTION_NONE;
-        }
-        asid_t asid = cap_page_table_cap_get_capPTMappedASID(cap);
-        findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
-        pte_t *pte = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
-        if (unlikely(find_ret.status == EXCEPTION_NONE && find_ret.vspace_root == pte)) {
-            userError("RISCVPageTableUnmap: cannot call unmap on top level PageTable");
-            current_syscall_error.type = seL4_RevokeFirst;
-            return EXCEPTION_SYSCALL_ERROR;
+        /* Ensure that if the page table is mapped, it is not a top level table */
+        if (likely(cap_page_table_cap_get_capPTIsMapped(cap))) {
+            asid_t asid = cap_page_table_cap_get_capPTMappedASID(cap);
+            findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
+            pte_t *pte = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
+            if (unlikely(find_ret.status == EXCEPTION_NONE &&
+                         find_ret.vspace_root == pte)) {
+                userError("RISCVPageTableUnmap: cannot call unmap on top level PageTable");
+                current_syscall_error.type = seL4_RevokeFirst;
+                return EXCEPTION_SYSCALL_ERROR;
+            }
         }
 
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
