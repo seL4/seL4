@@ -1002,7 +1002,9 @@ exception_t decodeRISCVMMUInvocation(word_t label, word_t length, cptr_t cptr,
         vspaceCapSlot = extraCaps.excaprefs[0];
         vspaceCap = vspaceCapSlot->cap;
 
-        if (cap_page_table_cap_get_capPTIsMapped(vspaceCap)) {
+        if (unlikely(
+                cap_get_capType(vspaceCap) != cap_page_table_cap ||
+                cap_page_table_cap_get_capPTIsMapped(vspaceCap))) {
             userError("RISCVASIDPool: Invalid vspace root.");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
