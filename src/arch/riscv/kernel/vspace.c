@@ -452,9 +452,10 @@ static exception_t performASIDControlInvocation(void *frame, cte_t *slot, cte_t 
 
 static exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *poolPtr, cte_t *vspaceCapSlot)
 {
-    pte_t *regionBase = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(vspaceCapSlot->cap));
     cap_t cap = vspaceCapSlot->cap;
+    pte_t *regionBase = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
     cap = cap_page_table_cap_set_capPTMappedASID(cap, asid);
+    cap = cap_page_table_cap_set_capPTMappedAddress(cap, 0);
     cap = cap_page_table_cap_set_capPTIsMapped(cap, 1);
     vspaceCapSlot->cap = cap;
 
@@ -1107,7 +1108,6 @@ exception_t performPageInvocationMapPTE(cap_t cap, cte_t *ctSlot,
 
 exception_t performPageInvocationUnmap(cap_t cap, cte_t *ctSlot)
 {
-
     if (cap_frame_cap_get_capFMappedASID(cap) != asidInvalid) {
         unmapPage(cap_frame_cap_get_capFSize(cap),
                   cap_frame_cap_get_capFMappedASID(cap),
@@ -1115,8 +1115,12 @@ exception_t performPageInvocationUnmap(cap_t cap, cte_t *ctSlot)
                   cap_frame_cap_get_capFBasePtr(cap)
                  );
     }
-    ctSlot->cap = cap_frame_cap_set_capFMappedAddress(ctSlot->cap, 0);
-    ctSlot->cap = cap_frame_cap_set_capFMappedASID(ctSlot->cap, asidInvalid);
+
+    cap_t slotCap = ctSlot->cap;
+    slotCap = cap_frame_cap_set_capFMappedAddress(slotCap, 0);
+    slotCap = cap_frame_cap_set_capFMappedASID(slotCap, asidInvalid);
+    ctSlot->cap = slotCap;
+
     return EXCEPTION_NONE;
 }
 
