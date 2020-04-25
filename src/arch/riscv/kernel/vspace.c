@@ -490,7 +490,7 @@ void unmapPageTable(asid_t asid, vptr_t vptr, pte_t *target_pt)
     pte_t *ptSlot = NULL;
     pte_t *pt = find_ret.vspace_root;
 
-    for (int i = 0; i < CONFIG_PT_LEVELS - 1 && pt != target_pt; i++) {
+    for (word_t i = 0; i < CONFIG_PT_LEVELS - 1 && pt != target_pt; i++) {
         ptSlot = pt + RISCV_GET_PT_INDEX(vptr, i);
         if (unlikely(!isPTEPageTable(ptSlot))) {
             /* couldn't find it */
