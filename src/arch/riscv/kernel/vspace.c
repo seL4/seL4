@@ -848,8 +848,8 @@ static exception_t decodeRISCVFrameInvocation(word_t label, word_t length,
             word_t mapped_vaddr = cap_frame_cap_get_capFMappedAddress(cap);
             if (unlikely(mapped_vaddr != vaddr)) {
                 userError("RISCVPageMap: attempting to map frame into multiple addresses");
-                current_syscall_error.type = seL4_IllegalOperation;
-                return EXCEPTION_SYSCALL_ERROR;
+                current_syscall_error.type = seL4_InvalidArgument;
+                current_syscall_error.invalidArgumentNumber = 0;
             }
             if (unlikely(isPTEPageTable(lu_ret.ptSlot))) {
                 userError("RISCVPageMap: no mapping to remap.");
