@@ -850,6 +850,7 @@ static exception_t decodeRISCVFrameInvocation(word_t label, word_t length,
                 userError("RISCVPageMap: attempting to map frame into multiple addresses");
                 current_syscall_error.type = seL4_InvalidArgument;
                 current_syscall_error.invalidArgumentNumber = 0;
+                return EXCEPTION_SYSCALL_ERROR;
             }
             if (unlikely(isPTEPageTable(lu_ret.ptSlot))) {
                 userError("RISCVPageMap: no mapping to remap.");
