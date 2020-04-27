@@ -852,10 +852,11 @@ static exception_t decodeRISCVFrameInvocation(word_t label, word_t length,
                 current_syscall_error.invalidArgumentNumber = 0;
                 return EXCEPTION_SYSCALL_ERROR;
             }
+            /* this check is redundant, as lookupPTSlot does not stop on a page
+             * table PTE */
             if (unlikely(isPTEPageTable(lu_ret.ptSlot))) {
                 userError("RISCVPageMap: no mapping to remap.");
-                current_syscall_error.type = seL4_InvalidCapability;
-                current_syscall_error.invalidCapNumber = 0;
+                current_syscall_error.type = seL4_DeleteFirst;
                 return EXCEPTION_SYSCALL_ERROR;
             }
         } else {
