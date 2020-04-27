@@ -836,16 +836,16 @@ static exception_t decodeRISCVFrameInvocation(word_t label, word_t length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-
-        if (unlikely(cap_frame_cap_get_capFMappedASID(cap)) != asidInvalid) {
+        asid_t frame_asid = cap_frame_cap_get_capFMappedASID(cap);
+        if (unlikely(frame_asid != asidInvalid)) {
             /* this frame is already mapped */
-            word_t mapped_vaddr = cap_frame_cap_get_capFMappedAddress(cap);
-            if (cap_page_table_cap_get_capPTMappedASID(lvl1ptCap) != asid) {
-                userError("RISCVPageMap: ASID lookup failed");
+            if (frame_asid != asid) {
+                userError("RISCVPageMap: Attempting to remap a frame that does not belong to the passed address space");
                 current_syscall_error.type = seL4_InvalidCapability;
                 current_syscall_error.invalidCapNumber = 1;
                 return EXCEPTION_SYSCALL_ERROR;
             }
+            word_t mapped_vaddr = cap_frame_cap_get_capFMappedAddress(cap);
             if (unlikely(mapped_vaddr != vaddr)) {
                 userError("RISCVPageMap: attempting to map frame into multiple addresses");
                 current_syscall_error.type = seL4_IllegalOperation;
