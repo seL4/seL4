@@ -6,3 +6,4 @@
 
 #include <arch/machine/fpu.h>
 
+bool_t isFPUEnabledCached[CONFIG_MAX_NUM_NODES];

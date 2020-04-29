@@ -114,7 +114,6 @@ BOOT_CODE static void init_fpu(void)
 {
     set_fs_clean();
     write_fcsr(0);
-    NODE_STATE(ksFPUEnabled) = false;
     disableFpu();
 }
 #endif

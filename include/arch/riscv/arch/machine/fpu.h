@@ -11,6 +11,8 @@
 #include <arch/machine/hardware.h>
 #include <arch/smp/ipi_inline.h>
 
+extern bool_t isFPUEnabledCached[CONFIG_MAX_NUM_NODES];
+
 static inline void set_fs_off(void)
 {
     asm volatile("csrc sstatus, %0" :: "rK"(SSTATUS_FS));
@@ -147,9 +149,20 @@ static inline void loadFpuState(user_fpu_state_t *src)
     write_fcsr(src->fcsr);
 }
 
-static inline void Arch_enableFpu(void) { }
+static inline void enableFpu(void)
+{
+    isFPUEnabledCached[SMP_TERNARY(getCurrentCPUIndex(), 0)] = true;
+}
 
-static inline void Arch_disableFpu(void) { }
+static inline void disableFpu(void)
+{
+    isFPUEnabledCached[SMP_TERNARY(getCurrentCPUIndex(), 0)] = false;
+}
+
+static inline bool_t isFpuEnable(void)
+{
+    return isFPUEnabledCached[SMP_TERNARY(getCurrentCPUIndex(), 0)];
+}
 
 static inline void set_tcb_fs_state(tcb_t *tcb, bool_t enabled)
 {
