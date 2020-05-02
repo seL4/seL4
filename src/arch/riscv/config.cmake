@@ -27,6 +27,12 @@ config_option(
     DEPENDS "KernelArchRiscV"
 )
 
+config_option(
+    KernelRiscVBBL RISCV_BBL "Use the Berkeley Boot Loader."
+    DEFAULT ON
+    DEPENDS "KernelArchRiscV"
+)
+
 if(KernelSel4ArchRiscV32)
     set(KernelPTLevels 2 CACHE STRING "" FORCE)
 endif()
