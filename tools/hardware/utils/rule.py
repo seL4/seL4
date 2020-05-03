@@ -233,7 +233,7 @@ class HardwareYaml:
                 return self.rules[compat]
 
         raise ValueError('Failed to match compatibles "{}" for node {}!'.format(
-            ', '.join(device.get_prop('compatible').strings, device.path)))
+            ', '.join(device.get_prop('compatible').strings), device.path))
 
     def get_matched_compatible(self, device: WrappedNode) -> str:
         ''' Returns the best matching compatible string for this device '''
