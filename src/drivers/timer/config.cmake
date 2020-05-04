@@ -11,52 +11,67 @@ register_driver(
     PREFIX src/drivers/timer
     CFILES "am335x-timer.c"
 )
+
 register_driver(
     compatibility_strings "qcom,kpss-timer"
     PREFIX src/drivers/timer
     CFILES "kpss-timer.c"
 )
+
 register_driver(
     compatibility_strings "samsung,exynos4210-mct"
     PREFIX src/drivers/timer
     CFILES "exynos4210-mct.c"
 )
+
 register_driver(
     compatibility_strings "samsung,exynos4412-mct"
     PREFIX src/drivers/timer
     CFILES "exynos4412-mct.c"
 )
+
 register_driver(
     compatibility_strings "fsl,imx31-epit"
     PREFIX src/drivers/timer
     CFILES "imx31-epit.c"
 )
-register_driver(compatibility_strings "fsl,imx31-gpt" PREFIX src/drivers/timer CFILES "imx31-gpt.c")
+
+register_driver(
+    compatibility_strings "fsl,imx31-gpt"
+    PREFIX src/drivers/timer
+    CFILES "imx31-gpt.c"
+)
+
 register_driver(
     compatibility_strings "ti,omap3430-timer"
     PREFIX src/drivers/timer
     CFILES "omap3430-timer.c"
 )
+
 register_driver(
     compatibility_strings "arm,cortex-a9-twd-timer"
     PREFIX src/drivers/timer
     CFILES "priv_timer.c"
 )
+
 register_driver(
     compatibility_strings "arm,cortex-a9-global-timer"
     PREFIX src/drivers/timer
     CFILES "global_timer.c"
 )
+
 register_driver(
     compatibility_strings "arm,armv7-timer"
     PREFIX src/drivers/timer
     CFILES "generic_timer.c"
 )
+
 register_driver(
     compatibility_strings "arm,armv8-timer"
     PREFIX src/drivers/timer
     CFILES "generic_timer.c"
 )
+
 register_driver(
     compatibility_strings "allwinner,sun4i-a10-timer"
     PREFIX src/drivers/timer
