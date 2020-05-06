@@ -7,11 +7,10 @@
 #pragma once
 
 #include <config.h>
+#include <util.h>
 #include <arch/machine/hardware.h>
 #include <sel4/plat/api/constants.h>
 
-
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 /* EL2 kernel address map:
  *
  * The EL2 mode kernel uses TTBR0_EL2 which covers the range of
@@ -52,31 +51,156 @@
  * |                                   |    |
  * |                                   |    v
  * +-----------------------------------+ <- 0x0
+ *
+ * !defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
+ *
+ *           0x0 +-------------------+
+ *               |                   |
+ *               |       User        |
+ *               |                   |
+ *          2^48 +-------------------+ USER_TOP
+ *               |                   |
+ *               |   Unaddressable   |
+ *               |                   |
+ *   2^64 - 2^48 +-------------------+
+ *               |                   |
+ *               |     Unmapped      |
+ *               |                   |
+ *               +-------------------+
+ *               |    TLB Bitmaps    |
+ *   2^64 - 2^39 +-------------------+ PPTR_BASE
+ *               | Kernel Page PDPT  | -+
+ *          2^64 +-------------------+  |
+ *                                      |
+ *                         +------------+
+ *                         |
+ *                         v
+ *   2^64 - 2^39 +-------------------+ PPTR_BASE
+ *               |                   |
+ *               |  Physical Memory  |
+ *               |       Window      |
+ *               |                   |
+ *               +-------------------+ KERNEL_ELF_BASE
+ *               |                   |
+ *               |                   |     +------+
+ *               |    Kernel ELF     | --> |  PD  |
+ *               |                   |     +------+
+ *               |                   |
+ *               +-------------------+
+ *               |                   |
+ *               |  Physical Memory  |
+ *               |       Window      |
+ *               |                   |
+ *   2^64 - 2^30 +-------------------+ PPTR_TOP
+ *               |                   |
+ *               |                   |     +------+
+ *               | Kernel Page Table | --> |  PD  | --+
+ *               |                   |     +------+   |
+ *               |                   |                |
+ *          2^64 +-------------------+                |
+ *                                                    |
+ *                                +-------------------+
+ *                                |
+ *                                v
+ *          2^64 - 2^21 +-------------------+ KDEV_BASE
+ *                      |                   |
+ *                      |  Kernel Devices   |
+ *                      |                   |
+ *   2^64 - 2^21 + 2^12 +-------------------+
+ *
+ *
+ * defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
+ *
+ *           0x0 +-------------------+
+ *               |                   |
+ *               |     Unmapped      |
+ *               |                   |
+ *               +-------------------+
+ *               |    TLB Bitmaps    |
+ *   2^48 - 2^39 +-------------------+ PPTR_BASE
+ *               | Kernel Page PDPT  | -+
+ *          2^48 +-------------------+  |
+ *               |                   |  |
+ *               |   Unaddressable   |  |
+ *               |                   |  |
+ *          2^64 +-------------------+  |
+ *                                      |
+ *                         +------------+
+ *                         |
+ *                         v
+ *   2^48 - 2^39 +-------------------+ PPTR_BASE
+ *               |                   |
+ *               |  Physical Memory  |
+ *               |       Window      |
+ *               |                   |
+ *               +-------------------+ KERNEL_ELF_BASE
+ *               |                   |
+ *               |                   |     +------+
+ *               |    Kernel ELF     | --> |  PD  |
+ *               |                   |     +------+
+ *               |                   |
+ *               +-------------------+
+ *               |                   |
+ *               |  Physical Memory  |
+ *               |       Window      |
+ *               |                   |
+ *   2^48 - 2^30 +-------------------+ PPTR_TOP
+ *               |                   |
+ *               |                   |     +------+
+ *               | Kernel Page Table | --> |  PD  | --+
+ *               |                   |     +------+   |
+ *               |                   |                |
+ *          2^48 +-------------------+                |
+ *                                                    |
+ *                                +-------------------+
+ *                                |
+ *                                v
+ *          2^48 - 2^21 +-------------------+ KDEV_BASE
+ *                      |                   |
+ *                      |  Kernel Devices   |
+ *                      |                   |
+ *   2^48 - 2^21 + 2^12 +-------------------+
+ *
  */
-#define kernelBase          0x0000ff8000000000
-#else
-#define kernelBase          0xffffff8000000000
-#endif
 
 /* last accessible virtual address in user space */
 #define USER_TOP seL4_UserTop
-/* the base physical address that the kernel can address */
-#define PADDR_BASE 0x0
-/* the physical address that the kernel image is linked to */
-#define PADDR_LOAD physBase
 
-/* offset between physical addresses and kernel virtual addresses */
-#define BASE_OFFSET (kernelBase - PADDR_BASE)
-#define KERNEL_ELF_BASE (PADDR_LOAD + BASE_OFFSET)
+/* The first physical address to map into the kernel's physical memory
+ * window */
+#define PADDR_BASE UL_CONST(0x0)
 
+/* The base address in virtual memory to use for the 1:1 physical memory
+ * mapping */
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-#define PPTR_TOP 0xffffc0000000lu
-#define KDEV_BASE 0xffffffe00000lu
+#define PPTR_BASE UL_CONST(0x0000ff8000000000)
 #else
-#define PPTR_TOP 0xffffffffc0000000
-#define KDEV_BASE 0xffffffffffe00000lu
+#define PPTR_BASE UL_CONST(0xffffff8000000000)
 #endif
 
-#define PADDR_TOP (PPTR_TOP - BASE_OFFSET)
+/* Top of the physical memory window */
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+#define PPTR_TOP UL_CONST(0x0000ffffc0000000)
+#else
+#define PPTR_TOP UL_CONST(0xffffffffc0000000)
+#endif
+
+/* The physical memory address to use for mapping the kernel ELF */
+#define KERNEL_ELF_PADDR_BASE physBase
+
+/* The base address in virtual memory to use for the kernel ELF mapping */
+#define KERNEL_ELF_BASE (PPTR_BASE_OFFSET + KERNEL_ELF_PADDR_BASE)
+
+/* This is a page table mapping at the end of the virtual address space
+ * to map objects with 4KiB pages rather than 4MiB large pages. */
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+#define KERNEL_PT_BASE UL_CONST(0x0000ffffffe00000)
+#else
+#define KERNEL_PT_BASE UL_CONST(0xffffffffffe00000)
+#endif
+
+/* The base address in virtual memory to use for the kernel device
+ * mapping region. These are mapped in the kernel page table. */
+#define KDEV_BASE KERNEL_PT_BASE
 
 

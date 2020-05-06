@@ -37,23 +37,6 @@
 #define L1_CACHE_LINE_SIZE_BITS     6
 #define L1_CACHE_LINE_SIZE          BIT(L1_CACHE_LINE_SIZE_BITS)
 
-/* The highest valid physical address that can be indexed in the kernel window */
-#define PADDR_TOP (KERNEL_BASE - PPTR_BASE + PADDR_BASE)
-/* A contiguous region of physical address space at PADDR_LOAD is mapped
- * to KERNEL_ELF_BASE, and the size of this region is KDEV_BASE-KERNEL_ELF_BASE.
- * PADDR_HIGH_TOP is the end of this physical address region. */
-#define PADDR_HIGH_TOP (KDEV_BASE - KERNEL_ELF_BASE + PADDR_LOAD)
-
-/* Translates from a physical address and a value in the kernel image */
-#define KERNEL_BASE_OFFSET (KERNEL_ELF_BASE - PADDR_LOAD)
-
-/* Convert our values into general values expected by the common code */
-#define kernelBase KERNEL_BASE
-/* This is the top of the kernel window, not including the kernel image */
-#define PPTR_TOP KERNEL_BASE
-#define PPTR_USER_TOP seL4_UserTop
-#define BASE_OFFSET (PPTR_BASE - PADDR_BASE)
-
 #define PAGE_BITS seL4_PageBits
 
 #define MODE_RESERVED 0

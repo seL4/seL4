@@ -8,7 +8,9 @@
 
 
 #include <config.h>
+#ifndef __ASSEMBLER__
 #include <arch/machine/hardware.h>
 #include <arch/kernel/tlb_bitmap.h>
+#endif
 #include <plat_mode/machine/hardware.h>
 

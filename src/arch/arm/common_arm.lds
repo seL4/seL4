@@ -6,13 +6,13 @@
 
 #include <config.h>
 #define __ASSEMBLER__
-#include <mode/hardware.h>
+#include <hardware.h>
 #include <sel4/plat/api/constants.h>
 #include <plat/machine/devices_gen.h>
 
 ENTRY(_start)
 
-KERNEL_OFFSET = KERNEL_ELF_BASE - PADDR_LOAD;
+KERNEL_OFFSET = KERNEL_ELF_BASE - KERNEL_ELF_PADDR_BASE;
 
 SECTIONS
 {

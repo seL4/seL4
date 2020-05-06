@@ -7,6 +7,8 @@
 #pragma once
 
 #include <config.h>
-#include <arch/machine/hardware.h>
 #include <plat_mode/machine/hardware.h>
 
+#ifndef __ASSEMBLER__
+#include <arch/machine/hardware.h>
+#endif

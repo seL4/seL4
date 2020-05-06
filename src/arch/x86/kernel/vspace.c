@@ -993,8 +993,8 @@ exception_t decodeX86FrameInvocation(
         } else {
             vtop = vaddr + BIT(pageBitsForSize(frameSize));
 
-            /* check vaddr and vtop against PPTR_USER_TOP to catch case where vaddr + frame_size wrapped around */
-            if (vaddr > PPTR_USER_TOP || vtop > PPTR_USER_TOP) {
+            /* check vaddr and vtop against USER_TOP to catch case where vaddr + frame_size wrapped around */
+            if (vaddr > USER_TOP || vtop > USER_TOP) {
                 userError("X86Frame: Mapping address too high.");
                 current_syscall_error.type = seL4_InvalidArgument;
                 current_syscall_error.invalidArgumentNumber = 0;
@@ -1191,7 +1191,7 @@ static exception_t decodeX86PageTableInvocation(
     vspace = (vspace_root_t *)pptr_of_cap(vspaceCap);
     asid = cap_get_capMappedASID(vspaceCap);
 
-    if (vaddr > PPTR_USER_TOP) {
+    if (vaddr > USER_TOP) {
         userError("X86PageTable: Mapping address too high.");
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 0;

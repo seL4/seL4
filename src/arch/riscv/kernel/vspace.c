@@ -100,7 +100,7 @@ BOOT_CODE VISIBLE void map_kernel_window(void)
 
     /* first we map in memory from PADDR_BASE */
     word_t paddr = PADDR_BASE;
-    while (pptr < KERNEL_BASE) {
+    while (pptr < PPTR_TOP) {
         assert(IS_ALIGNED(pptr, RISCV_GET_LVL_PGSIZE_BITS(0)));
         assert(IS_ALIGNED(paddr, RISCV_GET_LVL_PGSIZE_BITS(0)));
 
@@ -110,8 +110,8 @@ BOOT_CODE VISIBLE void map_kernel_window(void)
         paddr += RISCV_GET_LVL_PGSIZE(0);
     }
     /* now we should be mapping the 1GiB kernel base */
-    assert(pptr == KERNEL_BASE);
-    paddr = ROUND_DOWN(PADDR_LOAD, RISCV_GET_LVL_PGSIZE_BITS(0));
+    assert(pptr == PPTR_TOP);
+    paddr = ROUND_DOWN(KERNEL_ELF_PADDR_BASE, RISCV_GET_LVL_PGSIZE_BITS(0));
 
 #if __riscv_xlen == 32
     kernel_root_pageTable[RISCV_GET_PT_INDEX(pptr, 0)] = pte_next(paddr, true);
@@ -122,11 +122,11 @@ BOOT_CODE VISIBLE void map_kernel_window(void)
     /* The kernel image are mapped twice, locating the two indexes in the
      * root page table, pointing them to the same second level page table.
      */
-    kernel_root_pageTable[RISCV_GET_PT_INDEX(PADDR_LOAD + BASE_OFFSET, 0)] =
+    kernel_root_pageTable[RISCV_GET_PT_INDEX(KERNEL_ELF_PADDR_BASE + PPTR_BASE_OFFSET, 0)] =
         pte_next(kpptr_to_paddr(kernel_image_level2_pt), false);
     kernel_root_pageTable[RISCV_GET_PT_INDEX(pptr, 0)] =
         pte_next(kpptr_to_paddr(kernel_image_level2_pt), false);
-    while (pptr < KERNEL_BASE + RISCV_GET_LVL_PGSIZE(0)) {
+    while (pptr < PPTR_TOP + RISCV_GET_LVL_PGSIZE(0)) {
         kernel_image_level2_pt[index] = pte_next(paddr, true);
         index++;
         pptr += RISCV_GET_LVL_PGSIZE(1);
@@ -710,7 +710,7 @@ static exception_t decodeRISCVPageTableInvocation(word_t label, word_t length,
     pte_t *lvl1pt = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(lvl1ptCap));
     asid_t asid = cap_page_table_cap_get_capPTMappedASID(lvl1ptCap);
 
-    if (unlikely(vaddr >= PPTR_USER_TOP)) {
+    if (unlikely(vaddr >= USER_TOP)) {
         userError("RISCVPageTableMap: Virtual address cannot be in kernel window.");
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 0;
@@ -817,7 +817,7 @@ static exception_t decodeRISCVFrameInvocation(word_t label, word_t length,
 
         /* check the vaddr is valid */
         word_t vtop = vaddr + BIT(pageBitsForSize(frameSize)) - 1;
-        if (unlikely(vtop >= PPTR_USER_TOP)) {
+        if (unlikely(vtop >= USER_TOP)) {
             current_syscall_error.type = seL4_InvalidArgument;
             current_syscall_error.invalidArgumentNumber = 0;
             return EXCEPTION_SYSCALL_ERROR;

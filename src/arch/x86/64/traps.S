@@ -85,11 +85,11 @@
  */
 #ifdef CONFIG_SUPPORT_PCID
 #define LOAD_KERNEL_AS(reg) \
-    movabs $x64KSKernelPML4 - KERNEL_BASE_OFFSET + (1 << 63), %reg; \
+    movabs $x64KSKernelPML4 - KERNEL_ELF_BASE_OFFSET + (1 << 63), %reg; \
     movq %reg, %cr3;
 #else /* !CONFIG_SUPPORT_PCID */
 #define LOAD_KERNEL_AS(reg) \
-    lea x64KSKernelPML4 - KERNEL_BASE_OFFSET, %reg; \
+    lea x64KSKernelPML4 - KERNEL_ELF_BASE_OFFSET, %reg; \
     movq %reg, %cr3;
 #endif /* CONFIG_SUPPORT_PCID */
 #else /* !CONFIG_KERNEL_SKIM_WINDOW */
