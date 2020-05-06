@@ -82,8 +82,3 @@
 /* The base address in virtual memory to use for the kernel device
  * mapping region. These are mapped in the kernel page table. */
 #define KDEV_BASE KERNEL_PT_BASE
-
-/* For a 32-bit system there is no difference in how we translates
- * physical address for the kernel symbols or anything else */
-#define paddr_to_kpptr(x) paddr_to_pptr(x)
-#define kpptr_to_paddr(x) pptr_to_paddr(x)
