@@ -85,7 +85,7 @@ static inline void smmu_disable(void)
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         /* in hyp mode, we need call the hook in monitor mode */
         /* we need physical address here */
-        paddr_t addr = addrFromPPtr(&do_smmu_disable);
+        paddr_t addr = addrFromKPPtr(&do_smmu_disable);
         asm(".arch_extension sec\n");
         asm volatile("mov r0, %0\n\t"
                      "dsb\nisb\n"
@@ -102,7 +102,7 @@ static inline void smmu_disable(void)
 static inline void smmu_enable(void)
 {
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        paddr_t addr = addrFromPPtr(&do_smmu_enable);
+        paddr_t addr = addrFromKPPtr(&do_smmu_enable);
         asm(".arch_extension sec\n");
         asm volatile("mov r0, %0\n\t"
                      "dsb\nisb\n"
