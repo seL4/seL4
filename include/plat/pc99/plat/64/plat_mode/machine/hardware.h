@@ -116,23 +116,5 @@
 compile_assert(user_top_tlbbitmap_no_overlap, GET_PML4_INDEX(USER_TOP) != GET_PML4_INDEX(TLBBITMAP_PPTR))
 #endif
 
-/* since we have two kernel VM windows, we have two pptr to paddr
- * conversion functions.
- * paddr_to_kpptr converts physical address to the second small kernel
- * window which locates at the top 2GiB.
- */
-static inline void *CONST
-paddr_to_kpptr(paddr_t paddr)
-{
-    assert(paddr < KERNEL_ELF_PADDR_TOP);
-    return (void *)(paddr + KERNEL_ELF_BASE_OFFSET);
-}
-
-static inline paddr_t CONST kpptr_to_paddr(void *pptr)
-{
-    assert((word_t)pptr >= KERNEL_ELF_BASE);
-    return (paddr_t)pptr - KERNEL_ELF_BASE_OFFSET;
-}
-
 #endif /* __ASSEMBLER__ */
 
