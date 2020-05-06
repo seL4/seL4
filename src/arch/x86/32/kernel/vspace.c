@@ -245,7 +245,7 @@ BOOT_CODE bool_t map_kernel_window(
 #ifdef CONFIG_KERNEL_LOG_BUFFER
     /* Map global page table for the log buffer */
     pde = pde_pde_pt_new(
-              pptr_to_paddr(ia32KSGlobalLogPT), /* pt_base_address  */
+              kpptr_to_paddr(ia32KSGlobalLogPT), /* pt_base_address  */
               0,                 /* avl              */
               0,                 /* accessed         */
               0,                 /* cache_disabled   */
@@ -271,7 +271,7 @@ BOOT_CODE bool_t map_kernel_window(
 
     /* map page table of last 4M of virtual address space to page directory */
     pde = pde_pde_pt_new(
-              pptr_to_paddr(ia32KSGlobalPT), /* pt_base_address  */
+              kpptr_to_paddr(ia32KSGlobalPT), /* pt_base_address  */
               0,                 /* avl              */
               0,                 /* accessed         */
               0,                 /* cache_disabled   */
@@ -597,7 +597,7 @@ void setVMRoot(tcb_t *tcb)
     vspace_root = getValidNativeRoot(threadRoot);
     if (!vspace_root) {
         SMP_COND_STATEMENT(tlb_bitmap_unset(paddr_to_pptr(getCurrentPD()), getCurrentCPUIndex());)
-        setCurrentPD(pptr_to_paddr(ia32KSGlobalPD));
+        setCurrentPD(kpptr_to_paddr(ia32KSGlobalPD));
         return;
     }
 
@@ -605,7 +605,7 @@ void setVMRoot(tcb_t *tcb)
     find_ret = findVSpaceForASID(asid);
     if (find_ret.status != EXCEPTION_NONE || find_ret.vspace_root != vspace_root) {
         SMP_COND_STATEMENT(tlb_bitmap_unset(paddr_to_pptr(getCurrentPD()), getCurrentCPUIndex());)
-        setCurrentPD(pptr_to_paddr(ia32KSGlobalPD));
+        setCurrentPD(kpptr_to_paddr(ia32KSGlobalPD));
         return;
     }
 
