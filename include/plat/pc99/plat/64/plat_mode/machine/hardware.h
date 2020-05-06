@@ -116,14 +116,14 @@ compile_assert(user_top_tlbbitmap_no_overlap, GET_PML4_INDEX(USER_TOP) != GET_PM
 static inline void *CONST
 paddr_to_kpptr(paddr_t paddr)
 {
-    assert(paddr < PADDR_HIGH_TOP);
-    return (void *)(paddr + KERNEL_BASE_OFFSET);
+    assert(paddr < KERNEL_ELF_PADDR_TOP);
+    return (void *)(paddr + KERNEL_ELF_BASE_OFFSET);
 }
 
 static inline paddr_t CONST kpptr_to_paddr(void *pptr)
 {
-    assert((word_t)pptr >= KERNEL_BASE);
-    return (paddr_t)pptr - KERNEL_BASE_OFFSET;
+    assert((word_t)pptr >= KERNEL_ELF_BASE);
+    return (paddr_t)pptr - KERNEL_ELF_BASE_OFFSET;
 }
 
 #endif /* __ASSEMBLER__ */

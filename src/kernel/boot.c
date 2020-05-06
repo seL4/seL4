@@ -14,7 +14,7 @@
 #include <arch/kernel/boot.h>
 #include <arch/kernel/vspace.h>
 #include <linker.h>
-#include <plat/machine/hardware.h>
+#include <hardware.h>
 #include <util.h>
 
 /* (node-local) state accessed only during bootstrapping */

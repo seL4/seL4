@@ -10,6 +10,7 @@
 #include <config.h>
 #include <object/structures.h>
 #include <arch/types.h>
+#include <model/statedata.h>
 
 extern pde_t ia32KSGlobalPD[BIT(PD_INDEX_BITS)];
 extern pte_t ia32KSGlobalPT[BIT(PT_INDEX_BITS)];

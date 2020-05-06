@@ -7,11 +7,11 @@
 #pragma once
 
 #include <config.h>
+#include <hardware.h>
 #include <arch/model/statedata.h>
 #include <arch/machine/cpu_registers.h>
 #include <arch/model/smp.h>
 #include <arch/machine.h>
-#include <plat_mode/machine/hardware.h>
 
 static inline cr3_t makeCR3(paddr_t addr, word_t pcid)
 {

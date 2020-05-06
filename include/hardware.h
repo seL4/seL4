@@ -5,8 +5,6 @@
  */
 #pragma once
 
-#include <mode/hardware.h>
-
 /* Each architecture defines a set of constants in #defines. These
  * constants describe the memory regions of the kernel's portion of the
  * address space including the physical memory window, the kernel ELF
@@ -53,3 +51,5 @@ extern char ki_end[];
 #define KERNEL_ELF_PADDR_TOP (KERNEL_ELF_TOP - KERNEL_ELF_BASE_OFFSET)
 
 #endif /* __ASSEMBLER__ */
+
+#include <mode/hardware.h>

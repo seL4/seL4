@@ -6,7 +6,7 @@
 
 #include <machine/assembler.h>
 #include <config.h>
-#include <plat_mode/machine/hardware.h>
+#include <hardware.h>
 
 /*
  * The exception in 64-bit mode:

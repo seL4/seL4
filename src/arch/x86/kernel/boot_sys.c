@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <util.h>
+#include <hardware.h>
 #include <machine/io.h>
 #include <arch/machine.h>
 #include <arch/kernel/apic.h>

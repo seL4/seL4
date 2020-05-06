@@ -12,6 +12,7 @@
 
 #ifdef CONFIG_KERNEL_MCS
 #include <mode/util.h>
+#include <arch/kernel/xapic.h>
 
 static inline CONST time_t getKernelWcetUs(void)
 {
