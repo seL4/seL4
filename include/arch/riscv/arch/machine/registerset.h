@@ -8,7 +8,6 @@
 #pragma once
 
 #include "hardware.h"
-#include <arch/encoding.h>
 
 #ifndef __ASSEMBLER__
 
@@ -79,7 +78,7 @@ enum messageSizes {
     n_msgRegisters = 4,
     n_frameRegisters = 16,
     n_gpRegisters = 16,
-    n_exceptionMessage = 3,
+    n_exceptionMessage = 2,
     n_syscallMessage = 10,
 #ifdef CONFIG_KERNEL_MCS
     n_timeoutMessage = 32,
@@ -111,7 +110,6 @@ static inline word_t CONST sanitiseRegister(register_t reg, word_t v, bool_t arc
  {\
     [seL4_UserException_FaultIP] = FaultIP,\
     [seL4_UserException_SP] = SP,\
-    [seL4_UserException_Number] = a7,\
  }
 
 #define SYSCALL_MESSAGE \

@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_SEL4_ARCH_CONSTANTS_H
-#define __LIBSEL4_SEL4_ARCH_CONSTANTS_H
+#pragma once
 
 #ifdef HAVE_AUTOCONF
 #include <autoconf.h>
@@ -113,6 +112,7 @@ enum {
     seL4_VCPUReg_CNTV_CTL,
     seL4_VCPUReg_CNTV_CVAL,
     seL4_VCPUReg_CNTVOFF,
+    seL4_VCPUReg_CNTKCTL_EL1,
 
     seL4_VCPUReg_Num,
 } seL4_VCPUReg;
@@ -279,6 +279,4 @@ SEL4_SIZE_SANITY(seL4_PUDEntryBits, seL4_PUDIndexBits, seL4_PUDBits);
 #else
 /* First address in the virtual address space that is not accessible to user level */
 #define seL4_UserTop 0x00007fffffffffff
-#endif
-
 #endif

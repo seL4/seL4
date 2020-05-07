@@ -60,7 +60,7 @@ static exception_t invokeSchedControl_Configure(sched_context_t *target, word_t 
     } else {
         /* the scheduling context isn't active - it's budget is not being used, so
          * we can just populate the parameters from now */
-        refill_new(target, max_refills, budget, period);
+        REFILL_NEW(target, max_refills, budget, period, core);
     }
 
 #ifdef ENABLE_SMP_SUPPORT

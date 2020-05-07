@@ -815,6 +815,15 @@ LIBSEL4_INLINE_FUNC void seL4_DebugPutChar(char c)
     x86_sys_send_recv(seL4_SysDebugPutChar, c, &unused0, 0, &unused1, &unused2, MCS_COND(0, &unused3));
 }
 
+LIBSEL4_INLINE_FUNC void seL4_DebugPutString(char *str)
+{
+    for (char *s = str; *s; s++) {
+        seL4_DebugPutChar(*s);
+    }
+    return;
+}
+
+
 LIBSEL4_INLINE_FUNC void seL4_DebugDumpScheduler(void)
 {
     seL4_Word unused0 = 0;

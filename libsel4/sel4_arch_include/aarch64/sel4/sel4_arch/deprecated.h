@@ -4,8 +4,4 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_SEL4_ARCH_SEL4_DEPRECATED_H
-#define __LIBSEL4_SEL4_ARCH_SEL4_DEPRECATED_H
-
-
-#endif /* __LIBSEL4_SEL4_ARCH_SEL4_DEPRECATED_H */
+#pragma once

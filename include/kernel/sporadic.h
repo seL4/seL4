@@ -102,11 +102,17 @@ static inline bool_t refill_sufficient(sched_context_t *sc, ticks_t usage)
  */
 static inline bool_t refill_ready(sched_context_t *sc)
 {
-    return REFILL_HEAD(sc).rTime <= (NODE_STATE(ksCurTime) + getKernelWcetTicks());
+    return REFILL_HEAD(sc).rTime <= (NODE_STATE_ON_CORE(ksCurTime, sc->scCore) + getKernelWcetTicks());
 }
 
 /* Create a new refill in a non-active sc */
+#ifdef ENABLE_SMP_SUPPORT
+void refill_new(sched_context_t *sc, word_t max_refills, ticks_t budget, ticks_t period, word_t core);
+#define REFILL_NEW(sc, max_refills, budget, period, core) refill_new(sc, max_refills, budget, period, core)
+#else
 void refill_new(sched_context_t *sc, word_t max_refills, ticks_t budget, ticks_t period);
+#define REFILL_NEW(sc, max_refills, budget, period, core) refill_new(sc, max_refills, budget, period)
+#endif
 
 /* Update refills in an active sc without violating bandwidth constraints */
 void refill_update(sched_context_t *sc, ticks_t new_period, ticks_t new_budget, word_t new_max_refills);

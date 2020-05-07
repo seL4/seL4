@@ -72,7 +72,6 @@ enum {
 enum {
     seL4_UserException_FaultIP,
     seL4_UserException_SP,
-    seL4_UserException_FLAGS,
     seL4_UserException_Number,
     seL4_UserException_Code,
     seL4_UserException_Length,

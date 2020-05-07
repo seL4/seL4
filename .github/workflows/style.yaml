@@ -1,0 +1,47 @@
+# Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+#
+# SPDX-License-Identifier: BSD-2-Clause
+
+name: Style
+
+on:
+  pull_request:
+
+jobs:
+  style:
+    name: Check Style
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: technote-space/get-diff-action@v1
+    - uses: actions/checkout@v2
+      with:
+        repository: seL4/sel4_tools
+        path: sel4_tools
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.7'
+    - name: Install python packages
+      run: pip install sel4-deps
+    - name: Install astyle
+      run: sudo apt-get install astyle
+    - name: Run style check
+      run: |
+        sel4_tools/misc/style-all.sh ${{ env.GIT_DIFF }}
+        [ -z "$(git status -u no --porcelain)" ] || (git diff; exit 1)
+
+  shell:
+    name: Check shell scripts
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: technote-space/get-diff-action@v1
+    - uses: actions/checkout@v2
+      with:
+        repository: seL4/sel4_tools
+        path: sel4_tools
+    - name: Install
+      run: sudo apt-get install devscripts
+    - name: Run shell script check
+      run: |
+        sel4_tools/misc/is-valid-shell-script ${{ env.GIT_DIFF }}

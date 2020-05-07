@@ -21,9 +21,9 @@ block frame_cap {
     field_high  capFBasePtr         20
     padding                         3
 
-    padding                         2
+    padding                         3
     field       capFSize            2
-    field       capFVMRights        3
+    field       capFVMRights        2
     field       capFIsDevice        1
     field_high  capFMappedAddress   20
     field       capType             4
@@ -125,8 +125,6 @@ block pte {
 }
 
 -- RISC-V SATP (priv-1.10) Supervisor Address Translation and Protection
--- This register was originally named sptbr and some toolchains still use
--- sptbr when it refers to satp.
 
 block satp {
     field mode          1

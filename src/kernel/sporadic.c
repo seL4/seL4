@@ -149,7 +149,11 @@ static inline void maybe_add_empty_tail(sched_context_t *sc)
     }
 }
 
+#ifdef ENABLE_SMP_SUPPORT
+void refill_new(sched_context_t *sc, word_t max_refills, ticks_t budget, ticks_t period, word_t core)
+#else
 void refill_new(sched_context_t *sc, word_t max_refills, ticks_t budget, ticks_t period)
+#endif
 {
     sc->scPeriod = period;
     sc->scRefillHead = 0;
@@ -159,7 +163,7 @@ void refill_new(sched_context_t *sc, word_t max_refills, ticks_t budget, ticks_t
     /* full budget available */
     REFILL_HEAD(sc).rAmount = budget;
     /* budget can be used from now */
-    REFILL_HEAD(sc).rTime = NODE_STATE(ksCurTime);
+    REFILL_HEAD(sc).rTime = NODE_STATE_ON_CORE(ksCurTime, core);
     maybe_add_empty_tail(sc);
     REFILL_SANITY_CHECK(sc, budget);
 }
@@ -186,7 +190,7 @@ void refill_update(sched_context_t *sc, ticks_t new_period, ticks_t new_budget, 
     sc->scPeriod = new_period;
 
     if (refill_ready(sc)) {
-        REFILL_HEAD(sc).rTime = NODE_STATE(ksCurTime);
+        REFILL_HEAD(sc).rTime = NODE_STATE_ON_CORE(ksCurTime, sc->scCore);
     }
 
     if (REFILL_HEAD(sc).rAmount >= new_budget) {
@@ -330,16 +334,16 @@ void refill_unblock_check(sched_context_t *sc)
     /* advance earliest activation time to now */
     REFILL_SANITY_START(sc);
     if (refill_ready(sc)) {
-        REFILL_HEAD(sc).rTime = NODE_STATE(ksCurTime);
+        REFILL_HEAD(sc).rTime = NODE_STATE_ON_CORE(ksCurTime, sc->scCore);
         NODE_STATE(ksReprogram) = true;
 
         /* merge available replenishments */
         while (!refill_single(sc)) {
             ticks_t amount = REFILL_HEAD(sc).rAmount;
-            if (REFILL_INDEX(sc, refill_next(sc, sc->scRefillHead)).rTime <= NODE_STATE(ksCurTime) + amount) {
+            if (REFILL_INDEX(sc, refill_next(sc, sc->scRefillHead)).rTime <= NODE_STATE_ON_CORE(ksCurTime, sc->scCore) + amount) {
                 refill_pop_head(sc);
                 REFILL_HEAD(sc).rAmount += amount;
-                REFILL_HEAD(sc).rTime = NODE_STATE(ksCurTime);
+                REFILL_HEAD(sc).rTime = NODE_STATE_ON_CORE(ksCurTime, sc->scCore);
             } else {
                 break;
             }

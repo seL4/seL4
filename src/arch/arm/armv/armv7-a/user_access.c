@@ -43,8 +43,7 @@ static void check_export_pmu(void)
 
 static void check_export_arch_timer(void)
 {
-    uint32_t v;
-    MRC(CNTKCTL, v);
+    uint32_t v = 0;
 #ifdef CONFIG_EXPORT_PCNT_USER
     v |= CNTKCTL_PL0PCTEN;
 #endif

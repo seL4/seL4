@@ -11,6 +11,15 @@
 
 #include <mode/hardware.h>
 
+/* Privileged CSR definitions */
+#define SSTATUS_SPIE  0x00000020
+#define SSTATUS_SPP   0x00000100
+
+#define SATP_MODE_OFF  0
+#define SATP_MODE_SV32 1
+#define SATP_MODE_SV39 8
+#define SATP_MODE_SV48 9
+
 #ifndef __ASSEMBLER__
 
 #include <config.h>
@@ -74,7 +83,7 @@ enum vm_fault_type {
     RISCVStorePageFault = 15
                           /* >= 16 reserved */
 };
-typedef uint32_t vm_fault_type_t;
+typedef word_t vm_fault_type_t;
 
 enum frameSizeConstants {
     RISCVPageBits        = seL4_PageBits,
@@ -93,9 +102,9 @@ enum vm_page_size {
     RISCV_Giga_Page,
     RISCV_Tera_Page
 };
-typedef uint32_t vm_page_size_t;
+typedef word_t vm_page_size_t;
 
-static inline unsigned int CONST pageBitsForSize(vm_page_size_t pagesize)
+static inline word_t CONST pageBitsForSize(vm_page_size_t pagesize)
 {
     switch (pagesize) {
     case RISCV_4K_Page:
@@ -117,6 +126,11 @@ static inline unsigned int CONST pageBitsForSize(vm_page_size_t pagesize)
     default:
         fail("Invalid page size");
     }
+}
+
+static inline void arch_clean_invalidate_caches(void)
+{
+    /* RISC-V doesn't have an architecture defined way of flushing caches */
 }
 #endif /* __ASSEMBLER__ */
 

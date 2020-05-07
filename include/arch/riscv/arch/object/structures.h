@@ -38,12 +38,11 @@ typedef struct arch_tcb {
 } arch_tcb_t;
 
 enum vm_rights {
-    VMKernelOnly = 0,
-    VMReadOnly = 1,
-    VMWriteOnly = 2,
+    VMKernelOnly = 1,
+    VMReadOnly = 2,
     VMReadWrite = 3
 };
-typedef uint32_t vm_rights_t;
+typedef word_t vm_rights_t;
 
 typedef pte_t vspace_root_t;
 
@@ -53,7 +52,7 @@ typedef pte_t vspace_root_t;
 typedef pte_t pde_t;
 
 #define PTE_PTR(r) ((pte_t *)(r))
-#define PTE_REF(p) ((unsigned int)(p))
+#define PTE_REF(p) ((word_t)(p))
 
 #define PT_SIZE_BITS 12
 #define PT_PTR(r) ((pte_t *)(r))
@@ -86,11 +85,12 @@ static inline bool_t CONST cap_get_archCapIsPhysical(cap_t cap)
         return true;
 
     default:
-        fail("Invalid arch cap type");
+        /* unreachable */
+        return false;
     }
 }
 
-static inline unsigned int CONST cap_get_archCapSizeBits(cap_t cap)
+static inline word_t CONST cap_get_archCapSizeBits(cap_t cap)
 {
     cap_tag_t ctag;
 

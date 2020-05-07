@@ -30,8 +30,7 @@ static void check_export_pmu(void)
 
 static void check_export_arch_timer(void)
 {
-    uint32_t val;
-    MRS("CNTKCTL_EL1", val);
+    uint32_t val = 0;
 #ifdef CONFIG_EXPORT_PCNT_USER
     val |= EL0PCTEN;
 #endif /* CONFIG_EXPORT_PCNT_USER */
@@ -47,7 +46,7 @@ static void check_export_arch_timer(void)
     MSR("CNTKCTL_EL1", val);
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    MRS("CNTHCTL_EL2", val);
+    val = 0;
 #ifdef CONFIG_EXPORT_PCNT_USER
     val |= EL1PCTEN;
 #endif /* CONFIG_EXPORT_PCNT_USER */

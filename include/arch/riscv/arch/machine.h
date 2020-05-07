@@ -11,7 +11,6 @@
 #include <arch/types.h>
 #include <arch/object/structures.h>
 #include <arch/machine/hardware.h>
-#include <arch/encoding.h>
 #include <arch/model/statedata.h>
 #include <arch/sbi.h>
 
@@ -115,9 +114,9 @@ static inline void clearMemory(void *ptr, unsigned int bits)
     memzero(ptr, BIT(bits));
 }
 
-static inline void write_sptbr(word_t value)
+static inline void write_satp(word_t value)
 {
-    asm volatile("csrw sptbr, %0" :: "rK"(value));
+    asm volatile("csrw satp, %0" :: "rK"(value));
 }
 
 static inline void write_stvec(word_t value)
@@ -153,6 +152,8 @@ static inline word_t read_sstatus(void)
     return temp;
 }
 
+/** MODIFIES: */
+/** DONT_TRANSLATE */
 static inline word_t read_sip(void)
 {
     word_t temp;
@@ -173,24 +174,21 @@ static inline void clear_sie_mask(word_t mask_low)
 }
 
 #if CONFIG_PT_LEVELS == 2
-#define SATP_MODE SPTBR_MODE_SV32
+#define SATP_MODE SATP_MODE_SV32
 #elif CONFIG_PT_LEVELS == 3
-#define SATP_MODE SPTBR_MODE_SV39
+#define SATP_MODE SATP_MODE_SV39
 #elif CONFIG_PT_LEVELS == 4
-#define SATP_MODE SPTBR_MODE_SV48
+#define SATP_MODE SATP_MODE_SV48
 #else
 #error "Unsupported PT levels"
 #endif
 static inline void setVSpaceRoot(paddr_t addr, asid_t asid)
 {
     satp_t satp = satp_new(SATP_MODE,              /* mode */
-                           asid,                         /* asid */
+                           asid,                   /* asid */
                            addr >> seL4_PageBits); /* PPN */
 
-    /* Current toolchain still uses sptbr register name although it got renamed in priv-1.10.
-     * This will most likely need to change with newer toolchains
-     */
-    write_sptbr(satp.words[0]);
+    write_satp(satp.words[0]);
 
     /* Order read/write operations */
 #ifdef ENABLE_SMP_SUPPORT

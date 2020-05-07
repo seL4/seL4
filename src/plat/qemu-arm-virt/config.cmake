@@ -76,6 +76,9 @@ if(KernelPlatformQEMUArmVirt)
     )
     list(APPEND KernelDTSList "${DTSPath}")
     list(APPEND KernelDTSList "src/plat/qemu-arm-virt/overlay-qemu-arm-virt.dts")
+    if(KernelArmHypervisorSupport)
+        list(APPEND KernelDTSList "src/plat/qemu-arm-virt/overlay-reserve-vm-memory.dts")
+    endif()
     declare_default_headers(
         TIMER_FREQUENCY 62500000llu
         MAX_IRQ 159

@@ -11,6 +11,35 @@
 
 #include <stdarg.h>
 
+/*
+ * a handle defining how to output a character
+ */
+typedef void (*out_fn)(char character, char *buf, word_t idx);
+
+/*
+ * structure to allow a generic vprintf
+ * a out_fn handle and a buf to work on
+ */
+typedef struct {
+    out_fn putchar;
+    char *buf;
+    word_t idx;
+    word_t maxlen;
+} out_wrap_t;
+
+/*
+ * putchar would then just call the handle with its buf
+ * and current idx and then increment idx
+ */
+static void putchar_wrap(out_wrap_t *out, char c)
+{
+    if (out->maxlen < 0 || out->idx < out->maxlen) {
+        out->putchar(c, out->buf, out->idx);
+        out->idx++;
+    }
+}
+
+
 void putchar(char c)
 {
     if (c == '\n') {
@@ -19,21 +48,21 @@ void putchar(char c)
     putDebugChar(c);
 }
 
-static unsigned int print_spaces(int n)
+static unsigned int print_spaces(out_wrap_t *out, int n)
 {
     for (int i = 0; i < n; i++) {
-        kernel_putchar(' ');
+        putchar_wrap(out, ' ');
     }
 
     return n;
 }
 
-static unsigned int print_string(const char *s)
+static unsigned int print_string(out_wrap_t *out, const char *s)
 {
     unsigned int n;
 
     for (n = 0; *s; s++, n++) {
-        kernel_putchar(*s);
+        putchar_wrap(out, *s);
     }
 
     return n;
@@ -63,7 +92,7 @@ static unsigned long xmod(unsigned long x, unsigned int denom)
     }
 }
 
-word_t print_unsigned_long(unsigned long x, word_t ui_base)
+static word_t print_unsigned_long(out_wrap_t *out_wrap, unsigned long x, word_t ui_base)
 {
     char out[sizeof(unsigned long) * 2 + 3];
     word_t i, j;
@@ -78,7 +107,7 @@ word_t print_unsigned_long(unsigned long x, word_t ui_base)
     }
 
     if (x == 0) {
-        kernel_putchar('0');
+        putchar_wrap(out_wrap, '0');
         return 1;
     }
 
@@ -93,7 +122,7 @@ word_t print_unsigned_long(unsigned long x, word_t ui_base)
     }
 
     for (j = i; j > 0; j--) {
-        kernel_putchar(out[j - 1]);
+        putchar_wrap(out_wrap, out[j - 1]);
     }
 
     return i;
@@ -104,7 +133,7 @@ word_t print_unsigned_long(unsigned long x, word_t ui_base)
 compile_assert(print_unsigned_long_long_sizes, sizeof(unsigned int) * 2 == sizeof(unsigned long long))
 
 static unsigned int
-print_unsigned_long_long(unsigned long long x, unsigned int ui_base)
+print_unsigned_long_long(out_wrap_t *out, unsigned long long x, unsigned int ui_base)
 {
     unsigned int upper, lower;
     unsigned int n = 0;
@@ -122,10 +151,10 @@ print_unsigned_long_long(unsigned long long x, unsigned int ui_base)
 
     /* print first 32 bits if they exist */
     if (upper > 0) {
-        n += print_unsigned_long(upper, ui_base);
+        n += print_unsigned_long(out, upper, ui_base);
         /* print leading 0s */
         while (!(mask & lower)) {
-            kernel_putchar('0');
+            putchar_wrap(out, '0');
             n++;
             mask = mask >> 4;
             shifts++;
@@ -135,7 +164,7 @@ print_unsigned_long_long(unsigned long long x, unsigned int ui_base)
         }
     }
     /* print last 32 bits */
-    n += print_unsigned_long(lower, ui_base);
+    n += print_unsigned_long(out, lower, ui_base);
 
     return n;
 }
@@ -151,7 +180,7 @@ static inline int atoi(char c)
     return c - '0';
 }
 
-static int vprintf(const char *format, va_list ap)
+static int vprintf(out_wrap_t *out, const char *format, va_list ap)
 {
     unsigned int n;
     unsigned int formatting;
@@ -174,7 +203,7 @@ static int vprintf(const char *format, va_list ap)
             }
             switch (*format) {
             case '%':
-                kernel_putchar('%');
+                putchar_wrap(out, '%');
                 n++;
                 format++;
                 break;
@@ -183,40 +212,40 @@ static int vprintf(const char *format, va_list ap)
                 int x = va_arg(ap, int);
 
                 if (x < 0) {
-                    kernel_putchar('-');
+                    putchar_wrap(out, '-');
                     n++;
                     x = -x;
                 }
 
-                n += print_unsigned_long(x, 10);
+                n += print_unsigned_long(out, x, 10);
                 format++;
                 break;
             }
 
             case 'u':
-                n += print_unsigned_long(va_arg(ap, unsigned int), 10);
+                n += print_unsigned_long(out, va_arg(ap, unsigned int), 10);
                 format++;
                 break;
 
             case 'x':
-                n += print_unsigned_long(va_arg(ap, unsigned int), 16);
+                n += print_unsigned_long(out, va_arg(ap, unsigned int), 16);
                 format++;
                 break;
 
             case 'p': {
                 unsigned long p = va_arg(ap, unsigned long);
                 if (p == 0) {
-                    n += print_string("(nil)");
+                    n += print_string(out, "(nil)");
                 } else {
-                    n += print_string("0x");
-                    n += print_unsigned_long(p, 16);
+                    n += print_string(out, "0x");
+                    n += print_unsigned_long(out, p, 16);
                 }
                 format++;
                 break;
             }
 
             case 's':
-                n += print_string(va_arg(ap, char *));
+                n += print_string(out, va_arg(ap, char *));
                 format++;
                 break;
 
@@ -227,27 +256,27 @@ static int vprintf(const char *format, va_list ap)
                     long x = va_arg(ap, long);
 
                     if (x < 0) {
-                        kernel_putchar('-');
+                        putchar_wrap(out, '-');
                         n++;
                         x = -x;
                     }
 
-                    n += print_unsigned_long((unsigned long)x, 10);
+                    n += print_unsigned_long(out, (unsigned long)x, 10);
                     format++;
                 }
                 break;
                 case 'l':
                     if (*(format + 1) == 'x') {
-                        n += print_unsigned_long_long(va_arg(ap, unsigned long long), 16);
+                        n += print_unsigned_long_long(out, va_arg(ap, unsigned long long), 16);
                     }
                     format += 2;
                     break;
                 case 'u':
-                    n += print_unsigned_long(va_arg(ap, unsigned long), 10);
+                    n += print_unsigned_long(out, va_arg(ap, unsigned long), 10);
                     format++;
                     break;
                 case 'x':
-                    n += print_unsigned_long(va_arg(ap, unsigned long), 16);
+                    n += print_unsigned_long(out, va_arg(ap, unsigned long), 16);
                     format++;
                     break;
 
@@ -261,7 +290,9 @@ static int vprintf(const char *format, va_list ap)
                 return -1;
             }
 
-            n += print_spaces(nspaces - n);
+            if (nspaces > n) {
+                n += print_spaces(out, nspaces - n);
+            }
             nspaces = 0;
             formatting = 0;
         } else {
@@ -272,7 +303,7 @@ static int vprintf(const char *format, va_list ap)
                 break;
 
             default:
-                kernel_putchar(*format);
+                putchar_wrap(out, *format);
                 n++;
                 format++;
                 break;
@@ -281,6 +312,18 @@ static int vprintf(const char *format, va_list ap)
     }
 
     return n;
+}
+
+// sprintf fills its buf with the given character
+static void buf_out_fn(char c, char *buf, word_t idx)
+{
+    buf[idx] = c;
+}
+
+// printf only needs to call kernel_putchar
+static void kernel_out_fn(char c, char *buf, word_t idx)
+{
+    kernel_putchar(c);
 }
 
 word_t puts(const char *s)
@@ -297,9 +340,31 @@ word_t kprintf(const char *format, ...)
     va_list args;
     word_t i;
 
+    out_wrap_t out = { kernel_out_fn, NULL, 0, -1 };
+
     va_start(args, format);
-    i = vprintf(format, args);
+    i = vprintf(&out, format, args);
     va_end(args);
+    return i;
+}
+
+word_t ksnprintf(char *str, word_t size, const char *format, ...)
+{
+    va_list args;
+    word_t i;
+
+    out_wrap_t out = { buf_out_fn, str, 0, size };
+
+    va_start(args, format);
+    i = vprintf(&out, format, args);
+    va_end(args);
+
+    // make sure there is space for a 0 byte
+    if (i >= size) {
+        i = size - 1;
+    }
+    str[i] = 0;
+
     return i;
 }
 

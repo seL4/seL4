@@ -38,17 +38,15 @@ static exception_t performPageGetAddress(void *vbase_ptr);
 
 static word_t CONST RISCVGetWriteFromVMRights(vm_rights_t vm_rights)
 {
-    return vm_rights != VMReadOnly;
-}
-
-static word_t RISCVGetUserFromVMRights(vm_rights_t vm_rights)
-{
-    return vm_rights != VMKernelOnly;
+    /* Write-only frame cap rights not currently supported. */
+    return vm_rights == VMReadWrite;
 }
 
 static inline word_t CONST RISCVGetReadFromVMRights(vm_rights_t vm_rights)
 {
-    return vm_rights != VMWriteOnly;
+    /* Write-only frame cap rights not currently supported.
+     * Kernel-only conveys no user rights. */
+    return vm_rights != VMKernelOnly;
 }
 
 static inline bool_t isPTEPageTable(pte_t *pte)
@@ -324,7 +322,7 @@ static findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
 
 void copyGlobalMappings(pte_t *newLvl1pt)
 {
-    unsigned int i;
+    unsigned long i;
     pte_t *global_kernel_vspace = kernel_root_pageTable;
 
     for (i = RISCV_GET_PT_INDEX(PPTR_BASE, 0); i < BIT(PT_INDEX_BITS); i++) {
@@ -351,8 +349,7 @@ word_t *PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
     vm_rights = cap_frame_cap_get_capFVMRights(bufferCap);
     if (likely(vm_rights == VMReadWrite ||
                (!isReceiver && vm_rights == VMReadOnly))) {
-        word_t basePtr;
-        unsigned int pageBits;
+        word_t basePtr, pageBits;
 
         basePtr = cap_frame_cap_get_capFBasePtr(bufferCap);
         pageBits = pageBitsForSize(cap_frame_cap_get_capFSize(bufferCap));
@@ -370,22 +367,24 @@ static inline pte_t *getPPtrFromHWPTE(pte_t *pte)
 lookupPTSlot_ret_t lookupPTSlot(pte_t *lvl1pt, vptr_t vptr)
 {
     lookupPTSlot_ret_t ret;
+
+    word_t level = CONFIG_PT_LEVELS - 1;
+    pte_t *pt = lvl1pt;
+
     /* this is how many bits we potentially have left to decode. Initially we have the
      * full address space to decode, and every time we walk this will be reduced. The
      * final value of this after the walk is the size of the frame that can be inserted,
-     * or already exists, in ret.ptSlot */
-    ret.ptBitsLeft = PT_INDEX_BITS * CONFIG_PT_LEVELS + seL4_PageBits;
-    ret.ptSlot = NULL;
+     * or already exists, in ret.ptSlot. The following formulation is an invariant of
+     * the loop: */
+    ret.ptBitsLeft = PT_INDEX_BITS * level + seL4_PageBits;
+    ret.ptSlot = pt + ((vptr >> ret.ptBitsLeft) & MASK(PT_INDEX_BITS));
 
-    pte_t *pt = lvl1pt;
-    do {
+    while (isPTEPageTable(ret.ptSlot) && likely(0 < level)) {
+        level--;
         ret.ptBitsLeft -= PT_INDEX_BITS;
-        word_t index = (vptr >> ret.ptBitsLeft) & MASK(PT_INDEX_BITS);
-        ret.ptSlot = pt + index;
         pt = getPPtrFromHWPTE(ret.ptSlot);
-        /* stop when we find something that isn't a page table - either a mapped frame or
-         * an empty slot */
-    } while (isPTEPageTable(ret.ptSlot));
+        ret.ptSlot = pt + ((vptr >> ret.ptBitsLeft) & MASK(PT_INDEX_BITS));
+    }
 
     return ret;
 }
@@ -428,10 +427,14 @@ void deleteASIDPool(asid_t asid_base, asid_pool_t *pool)
 
 static exception_t performASIDControlInvocation(void *frame, cte_t *slot, cte_t *parent, asid_t asid_base)
 {
+    /** AUXUPD: "(True, typ_region_bytes (ptr_val \<acute>frame) 12)" */
+    /** GHOSTUPD: "(True, gs_clear_region (ptr_val \<acute>frame) 12)" */
     cap_untyped_cap_ptr_set_capFreeIndex(&(parent->cap),
                                          MAX_FREE_INDEX(cap_untyped_cap_get_capBlockSize(parent->cap)));
 
-    memzero(frame, 1 << pageBitsForSize(RISCV_4K_Page));
+    memzero(frame, BIT(pageBitsForSize(RISCV_4K_Page)));
+    /** AUXUPD: "(True, ptr_retyps 1 (Ptr (ptr_val \<acute>frame) :: asid_pool_C ptr))" */
+
     cteInsert(
         cap_asid_pool_cap_new(
             asid_base,          /* capASIDBase  */
@@ -449,9 +452,10 @@ static exception_t performASIDControlInvocation(void *frame, cte_t *slot, cte_t 
 
 static exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *poolPtr, cte_t *vspaceCapSlot)
 {
-    pte_t *regionBase = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(vspaceCapSlot->cap));
     cap_t cap = vspaceCapSlot->cap;
+    pte_t *regionBase = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
     cap = cap_page_table_cap_set_capPTMappedASID(cap, asid);
+    cap = cap_page_table_cap_set_capPTMappedAddress(cap, 0);
     cap = cap_page_table_cap_set_capPTIsMapped(cap, 1);
     vspaceCapSlot->cap = cap;
 
@@ -486,7 +490,7 @@ void unmapPageTable(asid_t asid, vptr_t vptr, pte_t *target_pt)
     pte_t *ptSlot = NULL;
     pte_t *pt = find_ret.vspace_root;
 
-    for (int i = 0; i < CONFIG_PT_LEVELS - 1 && pt != target_pt; i++) {
+    for (word_t i = 0; i < CONFIG_PT_LEVELS - 1 && pt != target_pt; i++) {
         ptSlot = pt + RISCV_GET_PT_INDEX(vptr, i);
         if (unlikely(!isPTEPageTable(ptSlot))) {
             /* couldn't find it */
@@ -604,26 +608,15 @@ exception_t checkValidIPCBuffer(vptr_t vptr, cap_t cap)
 
 vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_rights_mask)
 {
-    if (vm_rights == VMReadOnly &&
-        seL4_CapRights_get_capAllowRead(cap_rights_mask)) {
+    if (vm_rights == VMReadOnly && seL4_CapRights_get_capAllowRead(cap_rights_mask)) {
         return VMReadOnly;
     }
-    if (vm_rights == VMReadWrite &&
-        (seL4_CapRights_get_capAllowRead(cap_rights_mask) || seL4_CapRights_get_capAllowWrite(cap_rights_mask))) {
+    if (vm_rights == VMReadWrite && seL4_CapRights_get_capAllowRead(cap_rights_mask)) {
         if (!seL4_CapRights_get_capAllowWrite(cap_rights_mask)) {
             return VMReadOnly;
-        } else if (!seL4_CapRights_get_capAllowRead(cap_rights_mask)) {
-            return VMWriteOnly;
         } else {
             return VMReadWrite;
         }
-    }
-    if (vm_rights == VMWriteOnly &&
-        seL4_CapRights_get_capAllowWrite(cap_rights_mask)) {
-        return VMWriteOnly;
-    }
-    if (vm_rights == VMKernelOnly) {
-        return VMKernelOnly;
     }
     return VMKernelOnly;
 }
@@ -632,18 +625,24 @@ vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_right
 
 static pte_t CONST makeUserPTE(paddr_t paddr, bool_t executable, vm_rights_t vm_rights)
 {
-    return pte_new(
-               paddr >> seL4_PageBits,
-               0, /* sw */
-               1, /* dirty */
-               1, /* accessed */
-               0, /* global */
-               RISCVGetUserFromVMRights(vm_rights),   /* user */
-               executable, /* execute */
-               RISCVGetWriteFromVMRights(vm_rights),  /* write */
-               RISCVGetReadFromVMRights(vm_rights), /* read */
-               1 /* valid */
-           );
+    word_t write = RISCVGetWriteFromVMRights(vm_rights);
+    word_t read = RISCVGetReadFromVMRights(vm_rights);
+    if (unlikely(!read && !write && !executable)) {
+        return pte_pte_invalid_new();
+    } else {
+        return pte_new(
+                   paddr >> seL4_PageBits,
+                   0, /* sw */
+                   1, /* dirty */
+                   1, /* accessed */
+                   0, /* global */
+                   1, /* user */
+                   executable, /* execute */
+                   RISCVGetWriteFromVMRights(vm_rights), /* write */
+                   RISCVGetReadFromVMRights(vm_rights), /* read */
+                   1 /* valid */
+               );
+    }
 }
 
 static inline bool_t CONST checkVPAlignment(vm_page_size_t sz, word_t w)
@@ -651,7 +650,7 @@ static inline bool_t CONST checkVPAlignment(vm_page_size_t sz, word_t w)
     return (w & MASK(pageBitsForSize(sz))) == 0;
 }
 
-static exception_t decodeRISCVPageTableInvocation(word_t label, unsigned int length,
+static exception_t decodeRISCVPageTableInvocation(word_t label, word_t length,
                                                   cte_t *cte, cap_t cap, extra_caps_t extraCaps,
                                                   word_t *buffer)
 {
@@ -661,18 +660,17 @@ static exception_t decodeRISCVPageTableInvocation(word_t label, unsigned int len
             current_syscall_error.type = seL4_RevokeFirst;
             return EXCEPTION_SYSCALL_ERROR;
         }
-        if (unlikely(!cap_page_table_cap_get_capPTIsMapped(cap))) {
-            /* It is not an error to call unmap on a PT that is not already mapped. */
-            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-            return EXCEPTION_NONE;
-        }
-        asid_t asid = cap_page_table_cap_get_capPTMappedASID(cap);
-        findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
-        pte_t *pte = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
-        if (unlikely(find_ret.status == EXCEPTION_NONE && find_ret.vspace_root == pte)) {
-            userError("RISCVPageTableUnmap: cannot call unmap on top level PageTable");
-            current_syscall_error.type = seL4_RevokeFirst;
-            return EXCEPTION_SYSCALL_ERROR;
+        /* Ensure that if the page table is mapped, it is not a top level table */
+        if (likely(cap_page_table_cap_get_capPTIsMapped(cap))) {
+            asid_t asid = cap_page_table_cap_get_capPTMappedASID(cap);
+            findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
+            pte_t *pte = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
+            if (unlikely(find_ret.status == EXCEPTION_NONE &&
+                         find_ret.vspace_root == pte)) {
+                userError("RISCVPageTableUnmap: cannot call unmap on top level PageTable");
+                current_syscall_error.type = seL4_RevokeFirst;
+                return EXCEPTION_SYSCALL_ERROR;
+            }
         }
 
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
@@ -771,7 +769,7 @@ static exception_t decodeRISCVPageTableInvocation(word_t label, unsigned int len
     return performPageTableInvocationMap(cap, cte, pte, ptSlot);
 }
 
-static exception_t decodeRISCVFrameInvocation(word_t label, unsigned int length,
+static exception_t decodeRISCVFrameInvocation(word_t label, word_t length,
                                               cte_t *cte, cap_t cap, extra_caps_t extraCaps,
                                               word_t *buffer)
 {
@@ -838,25 +836,27 @@ static exception_t decodeRISCVFrameInvocation(word_t label, unsigned int length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-
-        if (unlikely(cap_frame_cap_get_capFMappedASID(cap)) != asidInvalid) {
+        asid_t frame_asid = cap_frame_cap_get_capFMappedASID(cap);
+        if (unlikely(frame_asid != asidInvalid)) {
             /* this frame is already mapped */
-            word_t mapped_vaddr = cap_frame_cap_get_capFMappedAddress(cap);
-            if (cap_page_table_cap_get_capPTMappedASID(lvl1ptCap) != asid) {
-                userError("RISCVPageMap: ASID lookup failed");
+            if (frame_asid != asid) {
+                userError("RISCVPageMap: Attempting to remap a frame that does not belong to the passed address space");
                 current_syscall_error.type = seL4_InvalidCapability;
                 current_syscall_error.invalidCapNumber = 1;
                 return EXCEPTION_SYSCALL_ERROR;
             }
+            word_t mapped_vaddr = cap_frame_cap_get_capFMappedAddress(cap);
             if (unlikely(mapped_vaddr != vaddr)) {
                 userError("RISCVPageMap: attempting to map frame into multiple addresses");
-                current_syscall_error.type = seL4_IllegalOperation;
+                current_syscall_error.type = seL4_InvalidArgument;
+                current_syscall_error.invalidArgumentNumber = 0;
                 return EXCEPTION_SYSCALL_ERROR;
             }
+            /* this check is redundant, as lookupPTSlot does not stop on a page
+             * table PTE */
             if (unlikely(isPTEPageTable(lu_ret.ptSlot))) {
                 userError("RISCVPageMap: no mapping to remap.");
-                current_syscall_error.type = seL4_InvalidCapability;
-                current_syscall_error.invalidCapNumber = 0;
+                current_syscall_error.type = seL4_DeleteFirst;
                 return EXCEPTION_SYSCALL_ERROR;
             }
         } else {
@@ -902,7 +902,7 @@ static exception_t decodeRISCVFrameInvocation(word_t label, unsigned int length,
 
 }
 
-exception_t decodeRISCVMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
+exception_t decodeRISCVMMUInvocation(word_t label, word_t length, cptr_t cptr,
                                      cte_t *cte, cap_t cap, extra_caps_t extraCaps,
                                      word_t *buffer)
 {
@@ -1009,7 +1009,9 @@ exception_t decodeRISCVMMUInvocation(word_t label, unsigned int length, cptr_t c
         vspaceCapSlot = extraCaps.excaprefs[0];
         vspaceCap = vspaceCapSlot->cap;
 
-        if (cap_page_table_cap_get_capPTIsMapped(vspaceCap)) {
+        if (unlikely(
+                cap_get_capType(vspaceCap) != cap_page_table_cap ||
+                cap_page_table_cap_get_capPTIsMapped(vspaceCap))) {
             userError("RISCVASIDPool: Invalid vspace root.");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
@@ -1108,7 +1110,6 @@ exception_t performPageInvocationMapPTE(cap_t cap, cte_t *ctSlot,
 
 exception_t performPageInvocationUnmap(cap_t cap, cte_t *ctSlot)
 {
-
     if (cap_frame_cap_get_capFMappedASID(cap) != asidInvalid) {
         unmapPage(cap_frame_cap_get_capFSize(cap),
                   cap_frame_cap_get_capFMappedASID(cap),
@@ -1116,8 +1117,12 @@ exception_t performPageInvocationUnmap(cap_t cap, cte_t *ctSlot)
                   cap_frame_cap_get_capFBasePtr(cap)
                  );
     }
-    ctSlot->cap = cap_frame_cap_set_capFMappedAddress(ctSlot->cap, 0);
-    ctSlot->cap = cap_frame_cap_set_capFMappedASID(ctSlot->cap, asidInvalid);
+
+    cap_t slotCap = ctSlot->cap;
+    slotCap = cap_frame_cap_set_capFMappedAddress(slotCap, 0);
+    slotCap = cap_frame_cap_set_capFMappedASID(slotCap, asidInvalid);
+    ctSlot->cap = slotCap;
+
     return EXCEPTION_NONE;
 }
 

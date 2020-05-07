@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_SEL4_SEL4_ARCH_SYSCALLS_H_
-#define __LIBSEL4_SEL4_SEL4_ARCH_SYSCALLS_H_
+#pragma once
 
 #include <autoconf.h>
 #include <sel4/functions.h>
@@ -221,5 +220,3 @@ static inline void arm_sys_null(seL4_Word sys)
         : "r"(scno)
     );
 }
-
-#endif /* __LIBSEL4_SEL4_SEL4_ARCH_SYSCALLS_H_ */

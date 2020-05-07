@@ -330,6 +330,15 @@ config_option(
     DEPENDS "NOT KernelVerificationBuild"
     DEFAULT_DISABLED OFF
 )
+
+config_option(
+    KernelInvocationReportErrorIPC KERNEL_INVOCATION_REPORT_ERROR_IPC
+    "Allows the kernel to write the userError to the IPC buffer"
+    DEFAULT OFF
+    DEPENDS "KernelPrinting"
+    DEFAULT_DISABLED OFF
+)
+
 config_choice(
     KernelBenchmarks
     KERNEL_BENCHMARK
