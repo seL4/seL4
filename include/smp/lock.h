@@ -83,7 +83,7 @@ static inline void FORCE_INLINE clh_lock_acquire(word_t cpu, bool_t irqPath)
     clh_qnode_t *prev;
     big_kernel_lock.node_owners[cpu].node->value = CLHState_Pending;
 
-    prev = sel4_atomic_exchange(&big_kernel_lock.head, irqPath, cpu, __ATOMIC_ACQUIRE);
+    prev = sel4_atomic_exchange(&big_kernel_lock.head, irqPath, cpu, __ATOMIC_ACQ_REL);
 
     big_kernel_lock.node_owners[cpu].next = prev;
 
