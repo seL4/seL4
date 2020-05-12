@@ -34,7 +34,7 @@ exception_t decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
     lookupSlot_ret_t lu_ret;
     word_t nodeSize;
     word_t i;
-    slot_range_t slots;
+    cte_t *destCNode;
     word_t freeRef, alignedFreeRef, objectSize, untypedFreeBytes;
     word_t freeIndex;
     bool_t deviceMemory;
@@ -159,11 +159,9 @@ exception_t decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
     }
 
     /* Ensure that the destination slots are all empty. */
-    slots.cnode = CTE_PTR(cap_cnode_cap_get_capCNodePtr(nodeCap));
-    slots.offset = nodeOffset;
-    slots.length = nodeWindow;
+    destCNode = CTE_PTR(cap_cnode_cap_get_capCNodePtr(nodeCap));
     for (i = nodeOffset; i < nodeOffset + nodeWindow; i++) {
-        status = ensureEmptySlot(slots.cnode + i);
+        status = ensureEmptySlot(destCNode + i);
         if (status != EXCEPTION_NONE) {
             userError("Untyped Retype: Slot #%d in destination window non-empty.",
                       (int)i);
@@ -231,7 +229,7 @@ exception_t decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeUntyped_Retype(slot, reset,
                                 (void *)alignedFreeRef, newType, userObjSize,
-                                slots, deviceMemory);
+                                destCNode, nodeOffset, nodeWindow, deviceMemory);
 }
 
 static exception_t resetUntypedCap(cte_t *srcSlot)
@@ -275,7 +273,8 @@ static exception_t resetUntypedCap(cte_t *srcSlot)
 exception_t invokeUntyped_Retype(cte_t *srcSlot,
                                  bool_t reset, void *retypeBase,
                                  object_t newType, word_t userSize,
-                                 slot_range_t destSlots, bool_t deviceMemory)
+                                 cte_t *destCNode, word_t destOffset, word_t destLength,
+                                 bool_t deviceMemory)
 {
     word_t freeRef;
     word_t totalObjectSize;
@@ -294,14 +293,14 @@ exception_t invokeUntyped_Retype(cte_t *srcSlot,
      * Note that userSize is not necessarily the true size of the object in
      * memory. In the case where newType is seL4_CapTableObject, the size is
      * transformed by getObjectSize. */
-    totalObjectSize = destSlots.length << getObjectSize(newType, userSize);
+    totalObjectSize = destLength << getObjectSize(newType, userSize);
     freeRef = (word_t)retypeBase + totalObjectSize;
     srcSlot->cap = cap_untyped_cap_set_capFreeIndex(srcSlot->cap,
                                                     GET_FREE_INDEX(regionBase, freeRef));
 
     /* Create new objects and caps. */
-    createNewObjects(newType, srcSlot, destSlots, retypeBase, userSize,
-                     deviceMemory);
+    createNewObjects(newType, srcSlot, destCNode, destOffset, destLength,
+                     retypeBase, userSize, deviceMemory);
 
     return EXCEPTION_NONE;
 }

@@ -23,7 +23,8 @@ bool_t CONST sameObjectAs(cap_t cap_a, cap_t cap_b);
 cap_t CONST updateCapData(bool_t preserve, word_t newData, cap_t cap);
 cap_t CONST maskCapRights(seL4_CapRights_t seL4_CapRights, cap_t cap);
 cap_t createObject(object_t t, void *regionBase, word_t, bool_t deviceMemory);
-void createNewObjects(object_t t, cte_t *parent, slot_range_t slots,
+void createNewObjects(object_t t, cte_t *parent,
+                      cte_t *destCNode, word_t destOffset, word_t destLength,
                       void *regionBase, word_t userSize, bool_t deviceMemory);
 #ifdef CONFIG_KERNEL_MCS
 exception_t decodeInvocation(word_t invLabel, word_t length,

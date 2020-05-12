@@ -583,7 +583,8 @@ cap_t createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceM
     }
 }
 
-void createNewObjects(object_t t, cte_t *parent, slot_range_t slots,
+void createNewObjects(object_t t, cte_t *parent,
+                      cte_t *destCNode, word_t destOffset, word_t destLength,
                       void *regionBase, word_t userSize, bool_t deviceMemory)
 {
     word_t objectSize;
@@ -593,19 +594,19 @@ void createNewObjects(object_t t, cte_t *parent, slot_range_t slots,
 
     /* ghost check that we're visiting less bytes than the max object size */
     objectSize = getObjectSize(t, userSize);
-    totalObjectSize = slots.length << objectSize;
+    totalObjectSize = destLength << objectSize;
     /** GHOSTUPD: "(gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state = 0
         \<or> \<acute>totalObjectSize <= gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state, id)" */
 
     /* Create the objects. */
     nextFreeArea = regionBase;
-    for (i = 0; i < slots.length; i++) {
+    for (i = 0; i < destLength; i++) {
         /* Create the object. */
         /** AUXUPD: "(True, typ_region_bytes (ptr_val \<acute> nextFreeArea + ((\<acute> i) << unat (\<acute> objectSize))) (unat (\<acute> objectSize)))" */
         cap_t cap = createObject(t, (void *)((word_t)nextFreeArea + (i << objectSize)), userSize, deviceMemory);
 
         /* Insert the cap into the user's cspace. */
-        insertNewCap(parent, &slots.cnode[slots.offset + i], cap);
+        insertNewCap(parent, &destCNode[destOffset + i], cap);
 
         /* Move along to the next region of memory. been merged into a formula of i */
     }

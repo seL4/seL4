@@ -10,13 +10,6 @@
 #include <api/failures.h>
 #include <object/structures.h>
 
-struct slot_range {
-    cte_t *cnode;
-    word_t offset;
-    word_t length;
-};
-typedef struct slot_range slot_range_t;
-
 exception_t decodeCNodeInvocation(word_t invLabel, word_t length,
                                   cap_t cap, word_t *buffer);
 exception_t invokeCNodeRevoke(cte_t *destSlot);
