@@ -174,6 +174,7 @@ static inline void clear_sie_mask(word_t mask_low)
     asm volatile("csrrc %0, sie, %1" : "=r"(temp) : "rK"(mask_low));
 }
 
+#ifdef CONFIG_HAVE_FPU
 static inline uint32_t read_fcsr(void)
 {
     uint32_t fcsr;
@@ -185,7 +186,7 @@ static inline void write_fcsr(uint32_t value)
 {
     asm volatile("csrw fcsr, %0" :: "rK"(value));
 }
-
+#endif
 
 #if CONFIG_PT_LEVELS == 2
 #define SATP_MODE SATP_MODE_SV32

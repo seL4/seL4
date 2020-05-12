@@ -11,15 +11,12 @@
 #include <arch/machine/hardware.h>
 #include <arch/smp/ipi_inline.h>
 
-extern bool_t isFPUEnabledCached[CONFIG_MAX_NUM_NODES];
-
 static inline void set_fs_off(void)
 {
     asm volatile("csrc sstatus, %0" :: "rK"(SSTATUS_FS));
 }
 
 #ifdef CONFIG_HAVE_FPU
-
 #if defined(CONFIG_RISCV_EXT_D)
 
 #define FL "fld"
@@ -33,6 +30,8 @@ static inline void set_fs_off(void)
 #define FP_REG_TYPES "4"
 
 #endif
+
+extern bool_t isFPUEnabledCached[CONFIG_MAX_NUM_NODES];
 
 static inline void set_fs_clean(void)
 {
