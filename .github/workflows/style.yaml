@@ -28,7 +28,7 @@ jobs:
     - name: Run style check
       run: |
         sel4_tools/misc/style.sh ${{ env.GIT_DIFF }}
-        [ -z "$(git status -u no --porcelain)" ] || (git diff; exit 1)
+        [ -z "$(git status -uno --porcelain)" ] || (git diff; exit 1)
 
   shell:
     name: Check shell scripts
