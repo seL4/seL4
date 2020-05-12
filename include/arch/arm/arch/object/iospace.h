@@ -13,10 +13,8 @@
 #ifdef CONFIG_TK1_SMMU
 
 seL4_SlotRegion create_iospace_caps(cap_t root_cnode_cap);
-exception_t decodeARMIOPTInvocation(word_t invLabel, uint32_t length, cte_t *slot, cap_t cap, extra_caps_t excaps,
-                                    word_t *buffer);
-exception_t decodeARMIOMapInvocation(word_t invLabel, uint32_t length, cte_t *slot, cap_t cap, extra_caps_t excaps,
-                                     word_t *buffer);
+exception_t decodeARMIOPTInvocation(word_t invLabel, uint32_t length, cte_t *slot, cap_t cap, word_t *buffer);
+exception_t decodeARMIOMapInvocation(word_t invLabel, uint32_t length, cte_t *slot, cap_t cap, word_t *buffer);
 exception_t performPageInvocationUnmapIO(cap_t cap, cte_t *slot);
 exception_t decodeARMIOSpaceInvocation(word_t invLabel, cap_t cap);
 void unmapIOPage(cap_t cap);
@@ -32,13 +30,13 @@ static inline seL4_SlotRegion create_iospace_caps(cap_t root_cnode_cap)
 }
 
 static inline exception_t decodeARMIOPTInvocation(word_t invLabel, uint32_t length, cte_t *slot, cap_t cap,
-                                                  extra_caps_t excaps, word_t *buffer)
+                                                  word_t *buffer)
 {
     return EXCEPTION_NONE;
 }
 
 static inline exception_t decodeARMIOMapInvocation(word_t invLabel, uint32_t length, cte_t *slot, cap_t cap,
-                                                   extra_caps_t excaps, word_t *buffer)
+                                                   word_t *buffer)
 {
     return EXCEPTION_NONE;
 }

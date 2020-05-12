@@ -10,6 +10,5 @@
 #include <api/failures.h>
 #include <object/structures.h>
 
-exception_t decodeSchedControlInvocation(word_t label, cap_t cap, word_t length, extra_caps_t extra_caps,
-                                         word_t *buffer);
+exception_t decodeSchedControlInvocation(word_t label, cap_t cap, word_t length, word_t *buffer);
 

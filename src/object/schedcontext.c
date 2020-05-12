@@ -26,15 +26,15 @@ static exception_t invokeSchedContext_UnbindObject(sched_context_t *sc, cap_t ca
     return EXCEPTION_NONE;
 }
 
-static exception_t decodeSchedContext_UnbindObject(sched_context_t *sc, extra_caps_t extraCaps)
+static exception_t decodeSchedContext_UnbindObject(sched_context_t *sc)
 {
-    if (extraCaps.excaprefs[0] == NULL) {
+    if (current_extra_caps.excaprefs[0] == NULL) {
         userError("SchedContext_Unbind: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    cap_t cap = extraCaps.excaprefs[0]->cap;
+    cap_t cap = current_extra_caps.excaprefs[0]->cap;
     switch (cap_get_capType(cap)) {
     case cap_thread_cap:
         if (sc->scTcb != TCB_PTR(cap_thread_cap_get_capTCBPtr(cap))) {
@@ -84,15 +84,15 @@ static exception_t invokeSchedContext_Bind(sched_context_t *sc, cap_t cap)
     return EXCEPTION_NONE;
 }
 
-static exception_t decodeSchedContext_Bind(sched_context_t *sc, extra_caps_t extraCaps)
+static exception_t decodeSchedContext_Bind(sched_context_t *sc)
 {
-    if (extraCaps.excaprefs[0] == NULL) {
+    if (current_extra_caps.excaprefs[0] == NULL) {
         userError("SchedContext_Bind: Truncated Message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    cap_t cap = extraCaps.excaprefs[0]->cap;
+    cap_t cap = current_extra_caps.excaprefs[0]->cap;
 
     if (sc->scTcb != NULL || sc->scNotification != NULL) {
         userError("SchedContext_Bind: sched context already bound.");
@@ -233,7 +233,7 @@ static exception_t decodeSchedContext_YieldTo(sched_context_t *sc, word_t *buffe
     return invokeSchedContext_YieldTo(sc, buffer);
 }
 
-exception_t decodeSchedContextInvocation(word_t label, cap_t cap, extra_caps_t extraCaps, word_t *buffer)
+exception_t decodeSchedContextInvocation(word_t label, cap_t cap, word_t *buffer)
 {
     sched_context_t *sc = SC_PTR(cap_sched_context_cap_get_capSCPtr(cap));
 
@@ -245,9 +245,9 @@ exception_t decodeSchedContextInvocation(word_t label, cap_t cap, extra_caps_t e
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return invokeSchedContext_Consumed(sc, buffer);
     case SchedContextBind:
-        return decodeSchedContext_Bind(sc, extraCaps);
+        return decodeSchedContext_Bind(sc);
     case SchedContextUnbindObject:
-        return decodeSchedContext_UnbindObject(sc, extraCaps);
+        return decodeSchedContext_UnbindObject(sc);
     case SchedContextUnbind:
         /* no decode */
         if (sc->scTcb == NODE_STATE(ksCurThread)) {

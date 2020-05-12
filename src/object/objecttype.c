@@ -614,18 +614,18 @@ void createNewObjects(object_t t, cte_t *parent, slot_range_t slots,
 #ifdef CONFIG_KERNEL_MCS
 exception_t decodeInvocation(word_t invLabel, word_t length,
                              cptr_t capIndex, cte_t *slot, cap_t cap,
-                             extra_caps_t excaps, bool_t block, bool_t call,
+                             bool_t block, bool_t call,
                              bool_t canDonate, bool_t firstPhase, word_t *buffer)
 #else
 exception_t decodeInvocation(word_t invLabel, word_t length,
                              cptr_t capIndex, cte_t *slot, cap_t cap,
-                             extra_caps_t excaps, bool_t block, bool_t call,
+                             bool_t block, bool_t call,
                              word_t *buffer)
 #endif
 {
     if (isArchCap(cap)) {
         return Arch_decodeInvocation(invLabel, length, capIndex,
-                                     slot, cap, excaps, call, buffer);
+                                     slot, cap, call, buffer);
     }
 
     switch (cap_get_capType(cap)) {
@@ -713,8 +713,7 @@ exception_t decodeInvocation(word_t invLabel, word_t length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 #endif
-        return decodeTCBInvocation(invLabel, length, cap,
-                                   slot, excaps, call, buffer);
+        return decodeTCBInvocation(invLabel, length, cap, slot, call, buffer);
 
     case cap_domain_cap:
 #ifdef CONFIG_KERNEL_MCS
@@ -725,7 +724,7 @@ exception_t decodeInvocation(word_t invLabel, word_t length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 #endif
-        return decodeDomainInvocation(invLabel, length, excaps, buffer);
+        return decodeDomainInvocation(invLabel, length, buffer);
 
     case cap_cnode_cap:
 #ifdef CONFIG_KERNEL_MCS
@@ -736,19 +735,17 @@ exception_t decodeInvocation(word_t invLabel, word_t length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 #endif
-        return decodeCNodeInvocation(invLabel, length, cap, excaps, buffer);
+        return decodeCNodeInvocation(invLabel, length, cap, buffer);
 
     case cap_untyped_cap:
-        return decodeUntypedInvocation(invLabel, length, slot, cap, excaps,
-                                       call, buffer);
+        return decodeUntypedInvocation(invLabel, length, slot, cap, call, buffer);
 
     case cap_irq_control_cap:
-        return decodeIRQControlInvocation(invLabel, length, slot,
-                                          excaps, buffer);
+        return decodeIRQControlInvocation(invLabel, length, slot, buffer);
 
     case cap_irq_handler_cap:
         return decodeIRQHandlerInvocation(invLabel,
-                                          IDX_TO_IRQT(cap_irq_handler_cap_get_capIRQ(cap)), excaps);
+                                          IDX_TO_IRQT(cap_irq_handler_cap_get_capIRQ(cap)));
 
 #ifdef CONFIG_KERNEL_MCS
     case cap_sched_control_cap:
@@ -758,7 +755,7 @@ exception_t decodeInvocation(word_t invLabel, word_t length,
             current_syscall_error.invalidCapNumber = 0;
             return EXCEPTION_SYSCALL_ERROR;
         }
-        return decodeSchedControlInvocation(invLabel, cap, length, excaps, buffer);
+        return decodeSchedControlInvocation(invLabel, cap, length, buffer);
 
     case cap_sched_context_cap:
         if (unlikely(firstPhase)) {
@@ -767,7 +764,7 @@ exception_t decodeInvocation(word_t invLabel, word_t length,
             current_syscall_error.invalidCapNumber = 0;
             return EXCEPTION_SYSCALL_ERROR;
         }
-        return decodeSchedContextInvocation(invLabel, cap, excaps, buffer);
+        return decodeSchedContextInvocation(invLabel, cap, buffer);
 #endif
     default:
         fail("Invalid cap type");

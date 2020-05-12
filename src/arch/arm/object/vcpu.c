@@ -452,14 +452,13 @@ exception_t decodeARMVCPUInvocation(
     cptr_t cptr,
     cte_t *slot,
     cap_t cap,
-    extra_caps_t extraCaps,
     bool_t call,
     word_t *buffer
 )
 {
     switch (label) {
     case ARMVCPUSetTCB:
-        return decodeVCPUSetTCB(cap, extraCaps);
+        return decodeVCPUSetTCB(cap);
     case ARMVCPUReadReg:
         return decodeVCPUReadReg(cap, length, call, buffer);
     case ARMVCPUWriteReg:
@@ -509,15 +508,15 @@ exception_t invokeVCPUAckVPPI(vcpu_t *vcpu, VPPIEventIRQ_t vppi)
     return EXCEPTION_NONE;
 }
 
-exception_t decodeVCPUSetTCB(cap_t cap, extra_caps_t extraCaps)
+exception_t decodeVCPUSetTCB(cap_t cap)
 {
     cap_t tcbCap;
-    if (extraCaps.excaprefs[0] == NULL) {
+    if (current_extra_caps.excaprefs[0] == NULL) {
         userError("VCPU SetTCB: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
-    tcbCap  = extraCaps.excaprefs[0]->cap;
+    tcbCap  = current_extra_caps.excaprefs[0]->cap;
 
     if (cap_get_capType(tcbCap) != cap_thread_cap) {
         userError("TCB cap is not a TCB cap.");

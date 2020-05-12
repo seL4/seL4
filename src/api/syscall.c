@@ -416,13 +416,12 @@ static exception_t handleInvocation(bool_t isCall, bool_t isBlocking)
 #ifdef CONFIG_KERNEL_MCS
     status = decodeInvocation(seL4_MessageInfo_get_label(info), length,
                               cptr, lu_ret.slot, lu_ret.cap,
-                              current_extra_caps, isBlocking, isCall,
+                              isBlocking, isCall,
                               canDonate, firstPhase, buffer);
 #else
     status = decodeInvocation(seL4_MessageInfo_get_label(info), length,
                               cptr, lu_ret.slot, lu_ret.cap,
-                              current_extra_caps, isBlocking, isCall,
-                              buffer);
+                              isBlocking, isCall, buffer);
 #endif
 
     if (unlikely(status == EXCEPTION_PREEMPTED)) {

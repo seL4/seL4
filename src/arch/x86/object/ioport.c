@@ -106,7 +106,6 @@ exception_t decodeX86PortControlInvocation(
     cptr_t cptr,
     cte_t *slot,
     cap_t cap,
-    extra_caps_t excaps,
     word_t *buffer
 )
 {
@@ -124,7 +123,7 @@ exception_t decodeX86PortControlInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (length < 4 || excaps.excaprefs[0] == NULL) {
+    if (length < 4 || current_extra_caps.excaprefs[0] == NULL) {
         userError("IOPortControl: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -135,7 +134,7 @@ exception_t decodeX86PortControlInvocation(
     index = getSyscallArg(2, buffer);
     depth = getSyscallArg(3, buffer);
 
-    cnodeCap = excaps.excaprefs[0]->cap;
+    cnodeCap = current_extra_caps.excaprefs[0]->cap;
 
     if (last_port < first_port) {
         userError("IOPortControl: Last port must be > first port.");
@@ -236,7 +235,6 @@ exception_t decodeX86PortInvocation(
     cptr_t cptr,
     cte_t *slot,
     cap_t cap,
-    extra_caps_t excaps,
     bool_t call,
     word_t *buffer
 )

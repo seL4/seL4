@@ -245,7 +245,6 @@ exception_t decodeIA32PageDirectoryInvocation(
     word_t length,
     cte_t *cte,
     cap_t cap,
-    extra_caps_t excaps,
     word_t *buffer
 )
 {

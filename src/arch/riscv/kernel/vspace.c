@@ -674,8 +674,7 @@ static inline bool_t CONST checkVPAlignment(vm_page_size_t sz, word_t w)
 }
 
 static exception_t decodeRISCVPageTableInvocation(word_t label, word_t length,
-                                                  cte_t *cte, cap_t cap, extra_caps_t extraCaps,
-                                                  word_t *buffer)
+                                                  cte_t *cte, cap_t cap, word_t *buffer)
 {
     if (label == RISCVPageTableUnmap) {
         if (unlikely(!isFinalCapability(cte))) {
@@ -706,7 +705,7 @@ static exception_t decodeRISCVPageTableInvocation(word_t label, word_t length,
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (unlikely(length < 2 || extraCaps.excaprefs[0] == NULL)) {
+    if (unlikely(length < 2 || current_extra_caps.excaprefs[0] == NULL)) {
         userError("RISCVPageTable: truncated message");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -719,7 +718,7 @@ static exception_t decodeRISCVPageTableInvocation(word_t label, word_t length,
     }
 
     word_t vaddr = getSyscallArg(0, buffer);
-    cap_t lvl1ptCap = extraCaps.excaprefs[0]->cap;
+    cap_t lvl1ptCap = current_extra_caps.excaprefs[0]->cap;
 
     if (unlikely(cap_get_capType(lvl1ptCap) != cap_page_table_cap ||
                  cap_page_table_cap_get_capPTIsMapped(lvl1ptCap) == asidInvalid)) {
@@ -793,12 +792,11 @@ static exception_t decodeRISCVPageTableInvocation(word_t label, word_t length,
 }
 
 static exception_t decodeRISCVFrameInvocation(word_t label, word_t length,
-                                              cte_t *cte, cap_t cap, extra_caps_t extraCaps,
-                                              word_t *buffer)
+                                              cte_t *cte, cap_t cap, word_t *buffer)
 {
     switch (label) {
     case RISCVPageMap: {
-        if (unlikely(length < 3 || extraCaps.excaprefs[0] == NULL)) {
+        if (unlikely(length < 3 || current_extra_caps.excaprefs[0] == NULL)) {
             userError("RISCVPageMap: Truncated message.");
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
@@ -807,7 +805,7 @@ static exception_t decodeRISCVFrameInvocation(word_t label, word_t length,
         word_t vaddr = getSyscallArg(0, buffer);
         word_t w_rightsMask = getSyscallArg(1, buffer);
         vm_attributes_t attr = vmAttributesFromWord(getSyscallArg(2, buffer));
-        cap_t lvl1ptCap = extraCaps.excaprefs[0]->cap;
+        cap_t lvl1ptCap = current_extra_caps.excaprefs[0]->cap;
 
         vm_page_size_t frameSize = cap_frame_cap_get_capFSize(cap);
         vm_rights_t capVMRights = cap_frame_cap_get_capFVMRights(cap);
@@ -926,16 +924,15 @@ static exception_t decodeRISCVFrameInvocation(word_t label, word_t length,
 }
 
 exception_t decodeRISCVMMUInvocation(word_t label, word_t length, cptr_t cptr,
-                                     cte_t *cte, cap_t cap, extra_caps_t extraCaps,
-                                     word_t *buffer)
+                                     cte_t *cte, cap_t cap, word_t *buffer)
 {
     switch (cap_get_capType(cap)) {
 
     case cap_page_table_cap:
-        return decodeRISCVPageTableInvocation(label, length, cte, cap, extraCaps, buffer);
+        return decodeRISCVPageTableInvocation(label, length, cte, cap, buffer);
 
     case cap_frame_cap:
-        return decodeRISCVFrameInvocation(label, length, cte, cap, extraCaps, buffer);
+        return decodeRISCVFrameInvocation(label, length, cte, cap, buffer);
 
     case cap_asid_control_cap: {
         word_t     i;
@@ -956,17 +953,17 @@ exception_t decodeRISCVMMUInvocation(word_t label, word_t length, cptr_t cptr,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        if (length < 2 || extraCaps.excaprefs[0] == NULL
-            || extraCaps.excaprefs[1] == NULL) {
+        if (length < 2 || current_extra_caps.excaprefs[0] == NULL
+            || current_extra_caps.excaprefs[1] == NULL) {
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
         }
 
         index = getSyscallArg(0, buffer);
         depth = getSyscallArg(1, buffer);
-        parentSlot = extraCaps.excaprefs[0];
+        parentSlot = current_extra_caps.excaprefs[0];
         untyped = parentSlot->cap;
-        root = extraCaps.excaprefs[1]->cap;
+        root = current_extra_caps.excaprefs[1]->cap;
 
         /* Find first free pool */
         for (i = 0; i < nASIDPools && riscvKSASIDTable[i]; i++);
@@ -1023,13 +1020,13 @@ exception_t decodeRISCVMMUInvocation(word_t label, word_t length, cptr_t cptr,
 
             return EXCEPTION_SYSCALL_ERROR;
         }
-        if (extraCaps.excaprefs[0] == NULL) {
+        if (current_extra_caps.excaprefs[0] == NULL) {
             current_syscall_error.type = seL4_TruncatedMessage;
 
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        vspaceCapSlot = extraCaps.excaprefs[0];
+        vspaceCapSlot = current_extra_caps.excaprefs[0];
         vspaceCap = vspaceCapSlot->cap;
 
         if (unlikely(

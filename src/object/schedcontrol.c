@@ -84,9 +84,9 @@ static exception_t invokeSchedControl_Configure(sched_context_t *target, word_t 
     return EXCEPTION_NONE;
 }
 
-static exception_t decodeSchedControl_Configure(word_t length, cap_t cap, extra_caps_t extraCaps, word_t *buffer)
+static exception_t decodeSchedControl_Configure(word_t length, cap_t cap, word_t *buffer)
 {
-    if (extraCaps.excaprefs[0] == NULL) {
+    if (current_extra_caps.excaprefs[0] == NULL) {
         userError("SchedControl_Configure: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -105,7 +105,7 @@ static exception_t decodeSchedControl_Configure(word_t length, cap_t cap, extra_
     word_t extra_refills = getSyscallArg(TIME_ARG_SIZE * 2, buffer);
     word_t badge = getSyscallArg(TIME_ARG_SIZE * 2 + 1, buffer);
 
-    cap_t targetCap = extraCaps.excaprefs[0]->cap;
+    cap_t targetCap = current_extra_caps.excaprefs[0]->cap;
     if (unlikely(cap_get_capType(targetCap) != cap_sched_context_cap)) {
         userError("SchedControl_Configure: target cap not a scheduling context cap");
         current_syscall_error.type = seL4_InvalidCapability;
@@ -156,12 +156,11 @@ static exception_t decodeSchedControl_Configure(word_t length, cap_t cap, extra_
                                         badge);
 }
 
-exception_t decodeSchedControlInvocation(word_t label, cap_t cap, word_t length, extra_caps_t extraCaps,
-                                         word_t *buffer)
+exception_t decodeSchedControlInvocation(word_t label, cap_t cap, word_t length, word_t *buffer)
 {
     switch (label) {
     case SchedControlConfigure:
-        return  decodeSchedControl_Configure(length, cap, extraCaps, buffer);
+        return  decodeSchedControl_Configure(length, cap, buffer);
     default:
         userError("SchedControl invocation: Illegal operation attempted.");
         current_syscall_error.type = seL4_IllegalOperation;
