@@ -20,6 +20,6 @@ typedef struct seL4_UserContext_ {
     /* other integer registers */
     seL4_Word r2, r3, r4, r5, r6, r7, r14;
     /* Thread ID registers */
-    seL4_Word tpidrurw;
+    seL4_Word tpidrurw, tpidruro;
 } seL4_UserContext;
 

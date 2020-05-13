@@ -271,7 +271,7 @@ def init_arch_types(wordsize):
             CapType("seL4_ARM_VCPU", wordsize),
             CapType("seL4_ARM_IOSpace", wordsize),
             CapType("seL4_ARM_IOPageTable", wordsize),
-            StructType("seL4_UserContext", wordsize * 18, wordsize),
+            StructType("seL4_UserContext", wordsize * 19, wordsize),
         ],
 
         "aarch64": [
@@ -300,7 +300,7 @@ def init_arch_types(wordsize):
             CapType("seL4_ARM_VCPU", wordsize),
             CapType("seL4_ARM_IOSpace", wordsize),
             CapType("seL4_ARM_IOPageTable", wordsize),
-            StructType("seL4_UserContext", wordsize * 18, wordsize),
+            StructType("seL4_UserContext", wordsize * 19, wordsize),
         ],
 
         "ia32": [

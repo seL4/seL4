@@ -108,7 +108,9 @@ enum _register {
      * name comes from the ARM manual */
     TPIDRURW = 18,
     TLS_BASE = TPIDRURW,
-    n_contextRegisters = 19,
+    /* user readonly thread ID register. */
+    TPIDRURO = 19,
+    n_contextRegisters = 20,
 };
 
 #define NEXT_PC_REG NextIP
@@ -126,7 +128,7 @@ typedef word_t register_t;
 enum messageSizes {
     n_msgRegisters = seL4_FastMessageRegisters,
     n_frameRegisters = 10,
-    n_gpRegisters = 8,
+    n_gpRegisters = 9,
     n_exceptionMessage = 3,
     n_syscallMessage = 12,
 #ifdef CONFIG_KERNEL_MCS

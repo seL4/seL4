@@ -94,7 +94,6 @@ enum {
     seL4_VCPUReg_NMRR,
     seL4_VCPUReg_CIDR,
     seL4_VCPUReg_TPIDRPRW,
-    seL4_VCPUReg_TPIDRURO,
     seL4_VCPUReg_FPEXC,
     seL4_VCPUReg_LRsvc,
     seL4_VCPUReg_SPsvc,

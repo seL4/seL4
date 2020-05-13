@@ -26,7 +26,7 @@ compile_assert(
 
 const register_t gpRegisters[] = {
     R2, R3, R4, R5, R6, R7, R14,
-    TPIDRURW,
+    TPIDRURW, TPIDRURO
 };
 compile_assert(
     consistent_gp_registers,
