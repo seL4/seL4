@@ -6,10 +6,10 @@
 
 #pragma once
 
-#define MASK(n) (BIT(n)-1ul)
+#define MASK(n) (BIT(n)-UL_CONST(1))
 #define IS_ALIGNED(n, b) (!((n) & MASK(b)))
 #define ROUND_DOWN(n, b) (((n) >> (b)) << (b))
-#define ROUND_UP(n, b) (((((n) - 1ul) >> (b)) + 1ul) << (b))
+#define ROUND_UP(n, b) (((((n) - UL_CONST(1)) >> (b)) + UL_CONST(1)) << (b))
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
