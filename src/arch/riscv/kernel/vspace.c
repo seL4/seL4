@@ -92,7 +92,8 @@ BOOT_CODE void map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_righ
 
 BOOT_CODE VISIBLE void map_kernel_window(void)
 {
-    /* mapping of kernelBase (virtual address) to kernel's physBase  */
+    /* mapping of KERNEL_ELF_BASE (virtual address) to kernel's
+     * KERNEL_ELF_PHYS_BASE  */
     assert(CONFIG_PT_LEVELS > 1 && CONFIG_PT_LEVELS <= 4);
 
     /* kernel window starts at PPTR_BASE */

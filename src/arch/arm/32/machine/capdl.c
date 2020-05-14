@@ -139,7 +139,7 @@ static void sendPD(unsigned int address)
 #endif
             exists = 1;
         }
-        if (exists != 0 && i < kernelBase >> pageBitsForSize(ARMSection)) {
+        if (exists != 0 && i < USER_TOP >> pageBitsForSize(ARMSection)) {
             sendWord(i);
             sendWord(pde.words[0]);
         }

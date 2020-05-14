@@ -579,7 +579,7 @@ static exception_t decodeSetBreakpoint(cap_t cap, word_t *buffer)
     /* We disallow the user to set breakpoint addresses that are in the kernel
      * vaddr range.
      */
-    if (vaddr >= (word_t)kernelBase) {
+    if (vaddr >= (word_t)USER_TOP) {
         userError("Debug: Invalid address %lx: bp addresses must be userspace "
                   "addresses.",
                   vaddr);

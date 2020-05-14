@@ -40,7 +40,7 @@
  * |                                   |    into memory.
  * |                                   |    |
  * |                                   |    v
- * +-----------------------------------+ <- kernelBase: 256TiB minus 512GiB.
+ * +-----------------------------------+ <- PPTR_BASE: 256TiB minus 512GiB.
  * | Unused virtual addresses within   |    ^
  * | the EL2 kernel's                  |    |
  * | separate vaddrspace.              |    Rest of the

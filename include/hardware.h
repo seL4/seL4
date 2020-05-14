@@ -38,9 +38,6 @@
  * physical memory window */
 #define PADDR_TOP (PPTR_TOP - PPTR_BASE_OFFSET)
 
-/* Alias of KERNEL_ELF_BASE constant */
-#define kernelBase KERNEL_ELF_BASE
-
 /* The kernel base offset is a way to translate the kernel image segment
  * from virtual to physical. This translation must be a single offset
  * for for the entire segment (i.e. the kernel image must be contiguous
