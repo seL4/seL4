@@ -76,6 +76,11 @@ struct vcpu {
     word_t regs[seL4_VCPUReg_Num];
     bool_t vppi_masked[n_VPPIEventIRQ];
 #ifdef CONFIG_VTIMER_UPDATE_VOFFSET
+    /* vTimer is 8-bytes wide and has same alignment requirement.
+     * To keep the struct packed on 32-bit platforms when accompanied by an
+     * odd number of 32-bit words, we need to add a padding word.
+     * */
+    word_t vcpu_padding;
     struct vTimer virtTimer;
 #endif
 };
