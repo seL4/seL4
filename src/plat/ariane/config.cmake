@@ -15,7 +15,7 @@ if(KernelPlatformAriane)
     list(APPEND KernelDTSList "tools/dts/ariane.dts")
     list(APPEND KernelDTSList "src/plat/ariane/overlay-ariane.dts")
     declare_default_headers(
-        TIMER_FREQUENCY 10000000llu PLIC_MAX_NUM_INT 30
+        TIMER_FREQUENCY 25000000llu PLIC_MAX_NUM_INT 30
         INTERRUPT_CONTROLLER drivers/irq/riscv-plic.h
     )
 else()
