@@ -18,6 +18,10 @@
 #define PMCR_ECNT_RESET 1
 #define PMCR_CCNT_RESET 2
 
+#if defined(CONFIG_BENCHMARK_TRACK_UTILISATION) && defined(KERNEL_PMU_IRQ)
+#define CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT 1
+#endif
+
 void arm_init_ccnt(void);
 
 static inline timestamp_t timestamp(void)
@@ -39,11 +43,13 @@ static inline void handleOverflowIRQ(void)
     }
     armv_handleOverflowIRQ();
 }
+#endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
 
 static inline void benchmark_arch_utilisation_reset(void)
 {
+#ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
     ccnt_num_overflows = 0;
-}
 #endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
+}
 #endif /* CONFIG_ENABLE_BENCHMARKS */
 
