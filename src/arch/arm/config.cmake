@@ -194,14 +194,6 @@ if(KernelArchArmV6)
     set(KernelSetTLSBaseSelf ON)
 endif()
 
-# TODO: this config has no business being in the build system, and should
-# be moved to C headers, but for now must be emulated here for compatibility
-if(KernelBenchmarksTrackUtilisation AND KernelArchARM)
-    config_set(KernelArmEnablePMUOverflowInterrupt ARM_ENABLE_PMU_OVERFLOW_INTERRUPT ON)
-else()
-    config_set(KernelArmEnablePMUOverflowInterrupt ARM_ENABLE_PMU_OVERFLOW_INTERRUPT OFF)
-endif()
-
 # Provides a 4K region of read-only memory mapped into every vspace to
 # provide a virtual thread-id register not otherwise provided by the
 # platform.
