@@ -80,6 +80,12 @@ NODE_STATE_DECLARE(word_t, ksFPURestoresSinceSwitch);
 #ifdef CONFIG_DEBUG_BUILD
 NODE_STATE_DECLARE(tcb_t *, ksDebugTCBs);
 #endif /* CONFIG_DEBUG_BUILD */
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+NODE_STATE_DECLARE(bool_t, benchmark_log_utilisation_enabled);
+NODE_STATE_DECLARE(timestamp_t, benchmark_start_time);
+NODE_STATE_DECLARE(timestamp_t, benchmark_end_time);
+NODE_STATE_DECLARE(timestamp_t, benchmark_kernel_time);
+#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 
 NODE_STATE_END(nodeState);
 

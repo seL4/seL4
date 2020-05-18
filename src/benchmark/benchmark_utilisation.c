@@ -9,11 +9,7 @@
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 
-bool_t benchmark_log_utilisation_enabled;
 timestamp_t ksEnter;
-timestamp_t benchmark_start_time;
-timestamp_t benchmark_end_time;
-timestamp_t benchmark_kernel_time;
 
 void benchmark_track_utilisation_dump(void)
 {
@@ -44,11 +40,11 @@ void benchmark_track_utilisation_dump(void)
 
 #ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
     buffer[BENCHMARK_TOTAL_UTILISATION] =
-        (ccnt_num_overflows * 0xFFFFFFFFU) + benchmark_end_time - benchmark_start_time;
+        (NODE_STATE(ccnt_num_overflows) * 0xFFFFFFFFU) + NODE_STATE(benchmark_end_time) - NODE_STATE(benchmark_start_time);
 #else
-    buffer[BENCHMARK_TOTAL_UTILISATION] = benchmark_end_time - benchmark_start_time; /* Overall time */
+    buffer[BENCHMARK_TOTAL_UTILISATION] = NODE_STATE(benchmark_end_time) - NODE_STATE(benchmark_start_time); /* Overall time */
 #endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
-    buffer[BENCHMARK_KERNEL_UTILISATION] = benchmark_kernel_time;
+    buffer[BENCHMARK_KERNEL_UTILISATION] = NODE_STATE(benchmark_kernel_time);
 
 }
 

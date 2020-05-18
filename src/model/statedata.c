@@ -61,6 +61,12 @@ UP_STATE_DEFINE(sched_context_t *, ksCurSC);
 #ifdef CONFIG_DEBUG_BUILD
 UP_STATE_DEFINE(tcb_t *, ksDebugTCBs);
 #endif /* CONFIG_DEBUG_BUILD */
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+UP_STATE_DEFINE(bool_t, benchmark_log_utilisation_enabled);
+UP_STATE_DEFINE(timestamp_t, benchmark_start_time);
+UP_STATE_DEFINE(timestamp_t, benchmark_end_time);
+UP_STATE_DEFINE(timestamp_t, benchmark_kernel_time);
+#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 
 /* Units of work we have completed since the last time we checked for
  * pending interrupts */
