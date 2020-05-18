@@ -248,6 +248,19 @@ exception_t handleUnknownSyscall(word_t w)
         benchmark_track_reset_utilisation();
         return EXCEPTION_NONE;
     }
+#ifdef CONFIG_DEBUG_BUILD
+    else if (w == SysBenchmarkDumpAllThreadsUtilisation) {
+        for (tcb_t *curr = NODE_STATE(ksDebugTCBs); curr != NULL; curr = curr->tcbDebugNext) {
+            printf("%s,%ld\n", curr->tcbName, (word_t) curr->benchmark.utilisation);
+        }
+        return EXCEPTION_NONE;
+    } else if (w == SysBenchmarkResetAllThreadsUtilisation) {
+        for (tcb_t *curr = NODE_STATE(ksDebugTCBs); curr != NULL; curr = curr->tcbDebugNext) {
+            curr->benchmark.utilisation = 0;
+        }
+        return EXCEPTION_NONE;
+    }
+#endif /* CONFIG_DEBUG_BUILD */
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 
     else if (w == SysBenchmarkNullSyscall) {
