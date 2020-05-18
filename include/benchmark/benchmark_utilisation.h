@@ -17,6 +17,7 @@ extern bool_t benchmark_log_utilisation_enabled;
 extern timestamp_t ksEnter;
 extern timestamp_t benchmark_start_time;
 extern timestamp_t benchmark_end_time;
+extern timestamp_t benchmark_kernel_time;
 
 void benchmark_track_utilisation_dump(void);
 

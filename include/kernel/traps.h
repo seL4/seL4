@@ -31,6 +31,13 @@ static inline void c_exit_hook(void)
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
     benchmark_track_exit();
 #endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+    if (likely(benchmark_log_utilisation_enabled)) {
+        timestamp_t exit = timestamp();
+        benchmark_kernel_time += exit - ksEnter;
+    }
+#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
+
     arch_c_exit_hook();
 }
 

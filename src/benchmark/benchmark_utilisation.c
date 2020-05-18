@@ -13,6 +13,7 @@ bool_t benchmark_log_utilisation_enabled;
 timestamp_t ksEnter;
 timestamp_t benchmark_start_time;
 timestamp_t benchmark_end_time;
+timestamp_t benchmark_kernel_time;
 
 void benchmark_track_utilisation_dump(void)
 {
@@ -47,6 +48,7 @@ void benchmark_track_utilisation_dump(void)
 #else
     buffer[BENCHMARK_TOTAL_UTILISATION] = benchmark_end_time - benchmark_start_time; /* Overall time */
 #endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
+    buffer[BENCHMARK_KERNEL_UTILISATION] = benchmark_kernel_time;
 
 }
 
