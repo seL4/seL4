@@ -20,33 +20,33 @@
  * 0xffffc000 global page  (arch/machine/hardware.h)
  *
  *
- *  0x0 +-------------------+
- *      |                   |
- *      |       User        |
- *      |                   |
- *      +-------------------+ USER_TOP / PPTR_BASE / KERNEL_ELF_BASE
- *      |    Kernel ELF     |
- *      +-------------------+
- *      |                   |
- *      |  Physical Memory  |
- *      |       Window      |
- *      |                   |
+ * 2^32 +-------------------+
+ *      | Kernel Page Table | --+
+ *      +-------------------+   |
+ *      |    Log Buffer     |   |
  *      +-------------------+ PPTR_TOP
- *      |    Log Buffer     |
- *      +-------------------+
- *      | Kernel Page Table | -+
- * 2^32 +-------------------+  |
- *                             |
- *                        +----+
+ *      |                   |   |
+ *      |  Physical Memory  |   |
+ *      |       Window      |   |
+ *      |                   |   |
+ *      +-------------------+   |
+ *      |    Kernel ELF     |   |
+ *      +-------------------+ USER_TOP / PPTR_BASE / KERNEL_ELF_BASE
+ *      |                   |   |
+ *      |       User        |   |
+ *      |                   |   |
+ *  0x0 +-------------------+   |
+ *                              |
+ *                        +-----+
  *                        |
  *                        v
- *  2^32 - 2^20 +-------------------+ KDEV_BASE
- *              |  Kernel Devices   |
+ *         2^32 +-------------------+
+ *              |    Global Page    |
  *              +-------------------+
  *              |      Vectors      |
  *              +-------------------+
- *              |    Global Page    |
- *         2^32 +-------------------+
+ *              |  Kernel Devices   |
+ *  2^32 - 2^20 +-------------------+ KDEV_BASE
  */
 
 /* last accessible virtual address in user space */

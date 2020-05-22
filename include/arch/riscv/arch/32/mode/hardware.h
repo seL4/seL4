@@ -9,20 +9,20 @@
 #include <util.h>
 
 /*
- *          0x0 +-------------------+
- *              |                   |
- *              |       User        |
- *              |                   |
- *              +-------------------+ USER_TOP / PPTR_BASE
+ *         2^32 +-------------------+
+ *              |  Kernel Devices   |
+ *  2^32 - 2^22 +-------------------+ KDEV_BASE
+ *              |    Kernel ELF     |
+ *  2^32 - 2^23 +-------------------+ PPTR_TOP / KERNEL_ELF_BASE
  *              |                   |
  *              |  Physical Memory  |
  *              |       Window      |
  *              |                   |
- *  2^32 - 2^23 +-------------------+ PPTR_TOP / KERNEL_ELF_BASE
- *              |    Kernel ELF     |
- *  2^32 - 2^22 +-------------------+ KDEV_BASE
- *              |  Kernel Devices   |
- *         2^32 +-------------------+
+ *              +-------------------+ USER_TOP / PPTR_BASE
+ *              |                   |
+ *              |       User        |
+ *              |                   |
+ *          0x0 +-------------------+
  */
 
 /* last accessible virtual address in user space */
