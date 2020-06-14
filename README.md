@@ -38,7 +38,7 @@ seL4 Basics
 - [Tutorials](https://docs.sel4.systems/Tutorials)
 - [Documentation](https://docs.sel4.systems/projects/sel4/documentation)
 - [seL4 libraries](https://docs.sel4.systems/projects/user_libs)
-- [seL4Test](https://docs.sel4.systems/project/sel4test)
+- [seL4Test](https://docs.sel4.systems/projects/sel4test/)
 - [Debugging guide](https://docs.sel4.systems/projects/sel4-tutorials/debugging-guide)
 - [Benchmarking guide](https://docs.sel4.systems/projects/sel4-tutorials/benchmarking-guide.html)
 - [Virtualization on seL4](https://docs.sel4.systems/projects/virtualization/)
@@ -52,8 +52,8 @@ Community
 - Mailing lists
   - [seL4 Announce](https://sel4.systems/lists/listinfo/announce)
   - [seL4 Devel](https://sel4.systems/lists/listinfo/devel)
-- [Suggested projects](/SuggestedProjects)
-- [CommunityProjects](/CommunityProjects)
+- [Suggested projects](https://docs.sel4.systems/SuggestedProjects)
+- [CommunityProjects](https://docs.sel4.systems/CommunityProjects)
 
 
 Manual
