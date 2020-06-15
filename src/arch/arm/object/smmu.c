@@ -300,6 +300,9 @@ exception_t decodeARMCBInvocation(word_t label, unsigned int length, cptr_t cptr
 			/*Connecting vspace cap to context bank*/
 			cteInsert(vspaceCap, vspaceCapSlot, cbSlot);
 			cap_vtable_root_ptr_set_mappedCB(&(cbSlot->cap), cb);
+			/*set relationship between CB and ASID*/
+			smmuStateCBAsidTable[cb] = cap_vtable_root_get_mappedASID(vspaceCap);
+			increaseASIDBindCB(cap_vtable_root_get_mappedASID(vspaceCap));
 			return EXCEPTION_NONE;
 		
 		case ARMCBUnassignVspace:
@@ -348,10 +351,50 @@ exception_t smmu_delete_cb(cap_t cap)
 	/*deleting assigned vspace root if exists*/
 	if (unlikely(checkARMCBVspace(cap) == EXCEPTION_NONE)) {
 		cbSlot = smmuStateCBNode + cb;
+		/*the relationship between CB and ASID is reset at the vspace deletion
+		triggered by the cteDelete*/
 		status = cteDelete(cbSlot, true);
 	}
 	smmuStateCBTable[cb] = false;
 	return status;
 }
+
+void smmu_cb_delete_vspace(word_t cb, asid_t asid)
+{
+	/* Deleting the vsapce cap stored in context bank's CNode, causing:
+	 * -reset the relationship between context bank and vspace's ASID
+	 * -disabe the context bank as its vspace no longer exists*/
+	smmuStateCBAsidTable[cb] = ASID_INVALID;
+	decreaseASIDBindCB(asid);
+	smmu_cb_disable(cb, asid);
+}
+
+void invalidateSMMUTLBByASID(asid_t asid, word_t bind_cb)
+{
+	/* Due to the requirement of one vspace (ASID) can be shared by
+	 * multiple threads and drivers, there is no obvious way to
+	 * directly locate all context banks associated with a given ASID without a
+	 * serch. Another possible solution is representing all context banks in
+	 * bitmaps, which also requires a search. This operation can only be triggered
+	 * by ASID invalidation or similar operations, hence the performance is not a major issue.*/
+	for (int cb = 0; cb < SMMU_MAX_CB && bind_cb; cb++) {
+		if (unlikely(smmuStateCBAsidTable[cb] == asid)) {
+				smmu_tlb_invalidate_cb(cb, asid);
+				bind_cb--;
+			}
+	}
+}
+
+void invalidateSMMUTLBByASIDVA(asid_t asid, vptr_t vaddr, word_t bind_cb)
+{
+	/* Implemeneted in the same way as invalidateSMMUTLBByASID */
+	for (int cb = 0; cb < SMMU_MAX_CB && bind_cb; cb++) {
+		if (unlikely(smmuStateCBAsidTable[cb] == asid)) {
+			smmu_tlb_invalidate_cb_va(cb, asid, vaddr);
+			bind_cb--;
+		}
+	}
+}
+
 #endif
 

@@ -417,13 +417,20 @@ this is the same as the MAIR in core*/
 /*SMMU_TLBIVMID*/
 #define TLBIVMID_SET(v)                        ((v) & 0xffff)
 
-void smmu_cb_assign_vspace(word_t cb, vspace_root_t *vspace, asid_t asid);
+/*SMMU_CBn_TLBIVA*/
+#define CBn_TLBIVA_SET(asid, vaddr)            (((asid) & 0xffff) << 48 | ((vaddr) >> 12 & 0xfffffffffff))
+
+/*SMMU_CBn_TLBIIPAS2*/
+#define CBn_TLBIIPAS2_SET(vaddr)               ((vaddr) >> 12 & 0xfffffffff)
+
+void smmu_cb_assign_vspace(word_t cb, vspace_root_t *vspace, asid_t asid); 
 void smmu_sid_bind_cb(word_t sid, word_t cb);
 void plat_smmu_init(void);
 void smmu_tlb_invalidate_all(void);
 void smmu_tlb_invalidate_cb(int cb, asid_t asid);
+void smmu_tlb_invalidate_cb_va(int cb, asid_t asid, vptr_t vaddr);
 void smmu_cb_disable(word_t cb, asid_t asid);
-void smmu_sid_unbind(word_t sid);
+void smmu_sid_unbind(word_t sid); 
 void smmu_read_fault_state(uint32_t *status, uint32_t *syndrome_0, uint32_t *syndrome_1);
 void smmu_clear_fault_state(void);
 void smmu_cb_read_fault_state(int cb, uint32_t *status, word_t *address);

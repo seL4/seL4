@@ -573,6 +573,23 @@ void smmu_tlb_invalidate_cb(int cb, asid_t asid) {
 #endif
 }
 
+void smmu_tlb_invalidate_cb_va(int cb, asid_t asid, vptr_t vaddr)
+{
+	#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+	/*stage 2*/
+	/* invalidate all unlocated TLB entries in the stage 2 translation
+	* associated with the given IPA*/
+	uint64_t reg = CBn_TLBIIPAS2_SET(vaddr);
+	smmu_write_reg64(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_TLBIIPAS2, reg);
+	smmu_tlb_sync(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_TLBSYNC, SMMU_CBn_TLBSTATUS);
+#else
+	/*stage 1*/
+	uint64_t reg = CBn_TLBIVA_SET(asid, vaddr);
+	smmu_write_reg64(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_TLBIVA, reg);
+	smmu_tlb_sync(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_TLBSYNC, SMMU_CBn_TLBSTATUS);
+#endif
+}
+
 void smmu_read_fault_state(uint32_t *status, uint32_t *syndrome_0, uint32_t *syndrome_1)
 {
 	*status = smmu_read_reg32(SMMU_GR0_PPTR, SMMU_sGFSR);

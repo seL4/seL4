@@ -246,7 +246,12 @@ base 64(48,0)
 block pgde_invalid {
     field stored_hw_asid            8
     field stored_asid_valid         1
+#ifdef CONFIG_ARM_SMMU
+    field bind_cb                   12
+    padding                         41
+#else
     padding                         53
+#endif
     field pgde_type                 2
 }
 
@@ -265,7 +270,12 @@ tagged_union pgde pgde_type {
 block pude_invalid {
     field stored_hw_asid            8
     field stored_asid_valid         1
+ #ifdef CONFIG_ARM_SMMU
+    field bind_cb                   12
+    padding                         41
+#else
     padding                         53
+#endif
     field pude_type                 2
 }
 

@@ -121,4 +121,6 @@ bool_t smmuStateCBTable[SMMU_MAX_CB];
 /* CNode containing the vcapce root cap that is assigned to sids*/
 cte_t smmuStateCBNode[BIT(SMMU_CB_CNODE_SLOT_BITS)] ALIGN(BIT(SMMU_CB_CNODE_SLOT_BITS + seL4_SlotBits));
 compile_assert(smmuStateCBCNodeSize, sizeof(smmuStateCBNode) >= ((SMMU_MAX_CB) * sizeof(cte_t)));
+/*recording the context bank to ASID relationship*/
+asid_t smmuStateCBAsidTable[SMMU_MAX_CB];
 #endif
