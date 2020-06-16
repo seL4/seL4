@@ -43,10 +43,9 @@ static inline void add_hart_to_core_map(word_t hart_id, word_t core_id)
     coreMap.map[core_id] = hart_id;
 }
 
-static inline bool_t try_arch_atomic_exchange(void *ptr, void *new_val, void **prev,
-                                              int success_memorder, int failuer_memorder)
+static inline bool_t try_arch_atomic_exchange_rlx(void *ptr, void *new_val, void **prev)
 {
-    *prev = __atomic_exchange_n((void **)ptr, new_val, success_memorder);
+    *prev = __atomic_exchange_n((void **)ptr, new_val, __ATOMIC_RELAXED);
     return true;
 }
 

@@ -62,9 +62,15 @@ static inline void *sel4_atomic_exchange(void *ptr, bool_t
 {
     clh_qnode_t *prev;
 
-    while (!try_arch_atomic_exchange(&big_kernel_lock.head,
-                                     (void *) big_kernel_lock.node_owners[cpu].node, (void **) &prev,
-                                     memorder, __ATOMIC_ACQUIRE)) {
+    if (memorder == __ATOMIC_RELEASE || memorder == __ATOMIC_ACQ_REL) {
+        __atomic_thread_fence(__ATOMIC_RELEASE);
+    } else if (memorder == __ATOMIC_SEQ_CST) {
+        __atomic_thread_fence(__ATOMIC_SEQ_CST);
+    }
+
+    while (!try_arch_atomic_exchange_rlx(&big_kernel_lock.head,
+                                         (void *) big_kernel_lock.node_owners[cpu].node,
+                                         (void **) &prev)) {
         if (clh_is_ipi_pending(cpu)) {
             /* we only handle irq_remote_call_ipi here as other type of IPIs
              * are async and could be delayed. 'handleIPI' may not return
@@ -73,6 +79,12 @@ static inline void *sel4_atomic_exchange(void *ptr, bool_t
         }
 
         arch_pause();
+    }
+
+    if (memorder == __ATOMIC_ACQUIRE || memorder == __ATOMIC_ACQ_REL) {
+        __atomic_thread_fence(__ATOMIC_ACQUIRE);
+    } else if (memorder == __ATOMIC_SEQ_CST) {
+        __atomic_thread_fence(__ATOMIC_SEQ_CST);
     }
 
     return prev;

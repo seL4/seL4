@@ -16,8 +16,7 @@ static inline cpu_id_t cpuIndexToID(word_t index)
     return BIT(index);
 }
 
-static inline bool_t try_arch_atomic_exchange(void *ptr, void *new_val, void **prev, int success_memorder,
-                                              int failure_memorder)
+static inline bool_t try_arch_atomic_exchange_rlx(void *ptr, void *new_val, void **prev)
 {
     uint32_t atomic_status;
     void *temp;
@@ -31,14 +30,6 @@ static inline bool_t try_arch_atomic_exchange(void *ptr, void *new_val, void **p
     );
 
     *prev = temp;
-
-    /* Atomic operation success */
-    if (likely(!atomic_status)) {
-        __atomic_thread_fence(success_memorder);
-    } else {
-        /* Atomic operation failure */
-        __atomic_thread_fence(failure_memorder);
-    }
 
     /* On ARM if an atomic operation succeeds, it returns 0 */
     return (atomic_status == 0);
