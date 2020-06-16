@@ -22,6 +22,16 @@ static inline bool_t try_arch_atomic_exchange(void *ptr, void *new_val, void **p
     uint32_t atomic_status;
     void *temp;
 
+    /* On failure there is no store.
+        Thus we can ignore release in the failure memory order,
+        and place a release barrier only if the success memory order implies
+        such an ordering. */
+    if (success_memorder == __ATOMIC_RELEASE || success_memorder == __ATOMIC_ACQ_REL) {
+        __atomic_thread_fence(__ATOMIC_RELEASE);
+    } else if (success_memorder == __ATOMIC_SEQ_CST) {
+        __atomic_thread_fence(__ATOMIC_SEQ_CST);
+    }
+
     asm volatile(
         LD_EX "%[prev_output], [%[ptr_val]]             \n\t" /* ret = *ptr */
         ST_EX "%" OP_WIDTH "[atomic_var], %[new_val] , [%[ptr_val]] \n\t"  /* *ptr = new */
@@ -34,7 +44,11 @@ static inline bool_t try_arch_atomic_exchange(void *ptr, void *new_val, void **p
 
     /* Atomic operation success */
     if (likely(!atomic_status)) {
-        __atomic_thread_fence(success_memorder);
+        if (success_memorder == __ATOMIC_ACQUIRE || success_memorder == __ATOMIC_ACQ_REL) {
+            __atomic_thread_fence(__ATOMIC_ACQUIRE);
+        } else if (success_memorder == __ATOMIC_SEQ_CST) {
+            __atomic_thread_fence(__ATOMIC_SEQ_CST);
+        }
     } else {
         /* Atomic operation failure */
         __atomic_thread_fence(failure_memorder);
