@@ -2,7 +2,8 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause
 
-name: License
+# Actions to run on Push and Pull Request
+name: CI
 
 on:
   push:
@@ -15,6 +16,10 @@ jobs:
     name: License Check
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Check
-      uses: fsfe/reuse-action@master
+    - uses: seL4/ci-actions/license-check@master
+
+  links:
+    name: Links
+    runs-on: ubuntu-latest
+    steps:
+      - uses: seL4/ci-actions/link-check@master
