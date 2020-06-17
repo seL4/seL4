@@ -1,0 +1,247 @@
+#
+# Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+#
+# SPDX-License-Identifier: GPL-2.0-only
+#
+
+
+# Documentation for bindings is relative to Documentation/devicetree/bindings in Linux,
+# unless otherwise noted.
+
+devices:
+  # ARM GIC (interrupt-controller/arm,gic.txt)
+  - compatible:
+      - arm,cortex-a15-gic
+      - arm,cortex-a7-gic
+      - arm,cortex-a9-gic
+      - arm,gic-400
+      - qcom,msm-qgic2
+    regions:
+      # distributor
+      - index: 0
+        kernel: GIC_V2_DISTRIBUTOR_PPTR
+      # controller
+      - index: 1
+        kernel: GIC_V2_CONTROLLER_PPTR
+      # GICV
+      - index: 2
+        kernel: GIC_V2_VCPUCTRL_PPTR
+        macro: CONFIG_ARM_HYPERVISOR_SUPPORT
+    interrupts:
+      INTERRUPT_VGIC_MAINTENANCE: 0
+  # ARM GICv3
+  # We only need GIC distributor and GIC redistributor regions and
+  # use system registers for GICC, GICH.
+  - compatible:
+      - arm,gic-v3
+    regions:
+      # GICDistributor
+      - index: 0
+        kernel: GICD_PPTR
+        kernel_size: 0x10000
+      # GICRedistributor
+      - index: 1
+        kernel: GICR_PPTR
+        # Assume 8 cores max
+        kernel_size: 0x100000
+    interrupts:
+      INTERRUPT_VGIC_MAINTENANCE: 0
+  # Broadcom second level IRQ controller (interrupt-controller/brcm,bcm2835-armctrl-ic.txt),
+  - compatible:
+      - brcm,bcm2836-armctrl-ic
+    regions:
+      - index: 0
+        kernel: INTC_PPTR
+        # the pi 3 exposes another timer at 0x3f00b400, which is in the same page as
+        # this, so we need to give this region to userspace :-(
+        user: true
+  # TI AM33XX/OMAP3 intc (interrupt-controller/ti,omap-intc-irq.txt)
+  - compatible:
+      - ti,am33xx-intc
+      - ti,omap3-intc
+    regions:
+      - index: 0
+        kernel: INTC_PPTR
+  # Broadcom top level IRQ controller (interrupt-controller/brcm,bcm2836-l1-intc.txt)
+  - compatible:
+      - brcm,bcm2836-l1-intc
+    regions:
+      - index: 0
+        kernel: ARM_LOCAL_PPTR
+  # i.MX AVIC (no Linux docs, used in arch/arm/mach-imx/avic.c)
+  - compatible:
+      - fsl,imx31-avic
+    regions:
+      - index: 0
+        kernel: AVIC_PPTR
+  # ARM PL310 L2 cache controller (arm/l2c2x0.txt)
+  - compatible:
+      - arm,pl310-cache
+    regions:
+      - index: 0
+        kernel: L2CC_L2C310_PPTR
+  # i.MX31 L2CC (seL4 only)
+  - compatible:
+      - fsl,imx31-l2cc
+    regions:
+      - index: 0
+        kernel: L2CC_PPTR
+  # Exynos multi core timer (timer/samsung,exynos4210-mct.txt)
+  # Exynos4412 MCT is separate as we use it for the timer IRQ.
+  # Other Exynos platforms use the ARM architecture timer.
+  - compatible:
+      - samsung,exynos4412-mct
+    regions:
+      - index: 0
+        kernel: EXYNOS_MCT_PPTR
+    interrupts:
+      KERNEL_TIMER_IRQ: 0
+  - compatible:
+      - samsung,exynos4210-mct
+    regions:
+      - index: 0
+        kernel: EXYNOS_MCT_PPTR
+  # ARM PMU (arm/pmu.txt)
+  - compatible:
+      - arm,armv8-pmuv3
+      - arm,cortex-a15-pmu
+      - arm,cortex-a7-pmu
+      - arm,cortex-a9-pmu
+    interrupts:
+      KERNEL_PMU_IRQ: boot-cpu
+  # i.MX evtmon (no Linux binding, this one is seL4-specific.)
+  - compatible:
+      - fsl,imx31-evtmon
+    interrupts:
+      KERNEL_PMU_IRQ: 0
+  # Tegra SMMU (memory-controllers/nvidia,tegra30-mc.txt)
+  - compatible:
+      - nvidia,tegra124-mc
+    regions:
+      - index: 0
+        kernel: SMMU_PPTR
+        macro: CONFIG_ARM_SMMU
+    interrupts:
+      INTERRUPT_SMMU: 0
+  # ARM architected timer (timer/arm,arch_timer.txt)
+  - compatible:
+      - arm,armv7-timer
+      - arm,armv8-timer
+    interrupts:
+      KERNEL_TIMER_IRQ:
+        sel_macro: CONFIG_ARM_HYPERVISOR_SUPPORT
+        index: 3
+        undef_index: 2
+      INTERRUPT_VTIMER_EVENT: 2
+  # Allwinner A10 Timer (timer/allwinner,sun4i-timer.txt)
+  - compatible:
+      - allwinner,sun4i-a10-timer
+    regions:
+      - index: 0
+        kernel: TIMER0_PPTR
+    interrupts:
+      # A20 also has the ARM architected timer,
+      # but we want to use the allwinner timer
+      # for now at least.
+      KERNEL_TIMER_IRQ:
+        index: 0
+        priority: 1
+  # ARM per-core timer-watchdog (timer/arm,twd.txt)
+  - compatible:
+      - arm,cortex-a9-twd-timer
+    regions:
+      - index: 0
+        kernel: ARM_MP_PRIV_TIMER_PPTR
+    interrupts:
+      KERNEL_TIMER_IRQ: 0
+  # Cortex-a9 global timer (timer/arm,global_timer.yaml)
+  - compatible:
+      - arm,cortex-a9-global-timer
+    regions:
+      - index: 0
+        kernel: TIMER_PPTR
+    interrupts:
+      # IMX6 also has the imx31-gpt.
+      KERNEL_TIMER_IRQ: 0
+  # i.MX EPIT (no Linux binding, this is seL4-specific.)
+  - compatible:
+      - fsl,imx31-epit
+    regions:
+      - index: 0
+        kernel: EPIT_PPTR
+    interrupts:
+      KERNEL_TIMER_IRQ: 0
+  # i.MX GPT
+  - compatible:
+      - fsl,imx31-gpt
+    regions:
+      - index: 0
+        kernel: TIMER_PPTR
+    interrupts:
+      KERNEL_TIMER_IRQ: 0
+  # QCOM Krait timer (timer/qcom,msm-timer.txt)
+  - compatible:
+      - qcom,kpss-timer
+    regions:
+      - index: 0
+        kernel: TIMER_PPTR
+    interrupts:
+      KERNEL_TIMER_IRQ: 0
+  # TI AM335x/OMAP3430 timer
+  - compatible:
+      - ti,am335x-timer
+      - ti,omap3430-timer
+    regions:
+      - index: 0
+        kernel: TIMER_PPTR
+    interrupts:
+      KERNEL_TIMER_IRQ: 0
+  # TI prcm (arm/omap/prcm.txt)
+  - compatible:
+      - ti,am3-prcm
+    regions:
+      - index: 0
+        kernel: CMPER_PPTR
+        user: true
+  # TI watchdog
+  - compatible:
+      - ti,omap3-wdt
+    regions:
+      - index: 0
+        kernel: WDT1_PPTR
+        user: true
+  # various serial consoles (`grep <compatible> serial/*`)
+  - compatible:
+      - amlogic,meson-gx-uart
+      - arm,pl011
+      - brcm,bcm2835-aux-uart
+      - fsl,imx31-uart
+      - fsl,imx6q-uart
+      - nvidia,tegra124-hsuart
+      - nvidia,tegra20-uart
+      - qcom,msm-uartdm
+      - samsung,exynos4210-uart
+      - snps,dw-apb-uart
+      - ti,omap3-uart
+      - xlnx,xuartps
+    regions:
+      - index: 0
+        kernel: UART_PPTR
+        macro: CONFIG_PRINTING
+        user: true
+
+  # RISC-V PLIC
+  - compatible:
+      - riscv,plic0
+    regions:
+      - index: 0
+        kernel: PLIC_PPTR
+
+  # elfloader rules
+  - compatible:
+      - arm,psci-0.2
+      - arm,psci-1.0
+  - compatible:
+      - fsl,imx6q-src
+  - compatible:
+      - xlnx,zynq-reset

@@ -1,0 +1,17 @@
+/*
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+	chosen {
+		stdout-path = "serial2";
+		seL4,elfloader-devices =
+		    "serial2";
+		seL4,kernel-devices =
+		    "serial2",
+		    &{/ocp@68000000/interrupt-controller@48200000},
+		    &{/ocp@68000000/timer@49040000};
+	};
+};

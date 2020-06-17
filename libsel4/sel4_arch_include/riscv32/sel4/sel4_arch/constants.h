@@ -1,23 +1,11 @@
 /*
- * Copyright 2018, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
- *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
- */
-
-/*
- *
- * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __LIBSEL4_SEL4_ARCH_CONSTANTS_H
-#define __LIBSEL4_SEL4_ARCH_CONSTANTS_H
+#pragma once
 
 #ifdef HAVE_AUTOCONF
 #include <autoconf.h>
@@ -28,7 +16,12 @@
 #define seL4_WordSizeBits       2
 
 #define seL4_SlotBits           4
+#ifdef CONFIG_KERNEL_MCS
+#define seL4_NotificationBits   5
+#define seL4_ReplyBits          4
+#else
 #define seL4_NotificationBits   4
+#endif
 #define seL4_EndpointBits       4
 #define seL4_IPCBufferSizeBits  9
 #define seL4_TCBBits            9
@@ -43,11 +36,13 @@
 
 #define seL4_PageBits           12
 #define seL4_LargePageBits      22
-#define seL4_HugePageBits       29
 #define seL4_PageTableBits      12
+#define seL4_VSpaceBits         seL4_PageTableBits
 
+#define seL4_NumASIDPoolsBits    5
 #define seL4_ASIDPoolIndexBits  4
 #define seL4_ASIDPoolBits       12
+#ifndef __ASSEMBLER__
 
 enum {
     seL4_VMFault_IP,
@@ -75,10 +70,56 @@ enum {
 enum {
     seL4_UserException_FaultIP,
     seL4_UserException_SP,
-    seL4_UserException_FLAGS,
     seL4_UserException_Number,
     seL4_UserException_Code,
     seL4_UserException_Length,
 } seL4_UserException_Msg;
 
+#ifdef CONFIG_KERNEL_MCS
+enum {
+    seL4_TimeoutReply_FaultIP,
+    seL4_TimeoutReply_LR,
+    seL4_TimeoutReply_SP,
+    seL4_TimeoutReply_GP,
+    seL4_TimeoutReply_s0,
+    seL4_TimeoutReply_s1,
+    seL4_TimeoutReply_s2,
+    seL4_TimeoutReply_s3,
+    seL4_TimeoutReply_s4,
+    seL4_TimeoutReply_s5,
+    seL4_TimeoutReply_s6,
+    seL4_TimeoutReply_s7,
+    seL4_TimeoutReply_s8,
+    seL4_TimeoutReply_s9,
+    seL4_TimeoutReply_s10,
+    seL4_TimeoutReply_s11,
+    seL4_TimeoutReply_a0,
+    seL4_TimeoutReply_a1,
+    seL4_TimeoutReply_a2,
+    seL4_TimeoutReply_a3,
+    seL4_TimeoutReply_a4,
+    seL4_TimeoutReply_a5,
+    seL4_TimeoutReply_a6,
+    seL4_TimeoutReply_a7,
+    seL4_TimeoutReply_t0,
+    seL4_TimeoutReply_t1,
+    seL4_TimeoutReply_t2,
+    seL4_TimeoutReply_t3,
+    seL4_TimeoutReply_t4,
+    seL4_TimeoutReply_t5,
+    seL4_TimeoutReply_t6,
+    seL4_TimeoutReply_TP,
+    seL4_TimeoutReply_Length,
+} seL4_TimeoutReply_Msg;
+
+enum {
+    seL4_Timeout_Data,
+    seL4_Timeout_Consumed_HighBits,
+    seL4_Timeout_Consumed_LowBits,
+    seL4_Timeout_Length,
+} seL4_TimeoutMsg;
 #endif
+#endif /* __ASSEMBLER__ */
+
+/* First address in the virtual address space that is not accessible to user level */
+#define seL4_UserTop 0x80000000lu

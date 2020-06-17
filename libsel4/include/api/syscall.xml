@@ -1,19 +1,14 @@
 <?xml version="1.0" ?>
 <!--
-  Copyright 2017, Data61
-  Commonwealth Scientific and Industrial Research Organisation (CSIRO)
-  ABN 41 687 119 230.
+     Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 
-  This software may be distributed and modified according to the terms of
-  the BSD 2-Clause license. Note that NO WARRANTY is provided.
-  See "LICENSE_BSD2.txt" for details.
+     SPDX-License-Identifier: BSD-2-Clause
+-->
 
-     @TAG(DATA61_BSD)
-  -->
 <!-- Please see syscalls.xsd to see the format of this file -->
 <syscalls>
     <!-- official API syscalls -->
-    <api>
+    <api-master>
         <config>
             <syscall name="Call"      />
             <syscall name="ReplyRecv" />
@@ -22,9 +17,24 @@
             <syscall name="Recv"      />
             <syscall name="Reply"     />
             <syscall name="Yield"     />
-            <syscall name="NBRecv"      />
+            <syscall name="NBRecv"    />
         </config>
-    </api>
+    </api-master>
+    <api-mcs>
+        <config>
+            <syscall name="Call"      />
+            <syscall name="ReplyRecv" />
+            <syscall name="NBSendRecv" />
+            <syscall name="NBSendWait" />
+            <syscall name="Send"      />
+            <syscall name="NBSend"    />
+            <syscall name="Recv"      />
+            <syscall name="NBRecv"    />
+            <syscall name="Wait"      />
+            <syscall name="NBWait"    />
+            <syscall name="Yield"     />
+        </config>
+    </api-mcs>
     <!-- Syscalls on the unknown syscall path. These definitions will be wrapped in #if condition -->
     <debug>
         <config condition="defined CONFIG_PRINTING">
@@ -36,6 +46,9 @@
             <syscall name="DebugCapIdentify"   />
             <syscall name="DebugSnapshot" />
             <syscall name="DebugNameThread"/>
+        </config>
+        <config condition="defined CONFIG_DEBUG_BUILD &amp;&amp; CONFIG_MAX_NUM_NODES > 1">
+            <syscall name="DebugSendIPI"/>
         </config>
         <config condition="defined CONFIG_DANGEROUS_CODE_INJECTION">
             <syscall name="DebugRun"/>
@@ -61,6 +74,9 @@
              passing to handleUnknownSyscall -->
         <config condition="defined CONFIG_VTX">
             <syscall name="VMEnter"/>
+        </config>
+        <config condition="defined CONFIG_SET_TLS_BASE_SELF">
+            <syscall name="SetTLSBase"/>
         </config>
     </debug>
 </syscalls>

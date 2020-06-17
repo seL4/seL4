@@ -1,0 +1,35 @@
+/*
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+	chosen {
+		stdout-path = "serial0:115200n8";
+
+		seL4,elfloader-devices =
+		    "serial0",
+		    &{/psci};
+
+		seL4,kernel-devices =
+		    "serial0",
+		    &{/interrupt-controller@f6801000},
+		    &{/timer};
+	};
+
+	pmu {
+		compatible = "arm,armv8-pmuv3";
+		interrupts = <0x00 0x63 0x04>;
+	};
+
+	memory@0 {
+		/*
+		 * Ignore the first 512MB of RAM (0x0-0x1fffffff), to match what was hardcoded in the kernel
+		 * before the switch to DTS. If we try and use all of RAM, in 32-bit mode the ELF loader
+		 * gets loaded where the kernel wants to be loaded.
+		 * The last 16MB of RAM (0x3f000000-0x3fffffff) are reserved for OP-TEE.
+		 */
+		reg = <0x00 0x20000000 0x00 0x1f000000>;
+	};
+};

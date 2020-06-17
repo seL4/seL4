@@ -1,14 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
-# Copyright 2017, Data61
-# Commonwealth Scientific and Industrial Research Organisation (CSIRO)
-# ABN 41 687 119 230.
+# Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 #
-# This software may be distributed and modified according to the terms of
-# the BSD 2-Clause license. Note that NO WARRANTY is provided.
-# See "LICENSE_BSD2.txt" for details.
-#
-# @TAG(DATA61_BSD)
+# SPDX-License-Identifier: BSD-2-Clause
 #
 
 """
@@ -22,6 +16,7 @@ import re
 from bs4 import BeautifulSoup
 import six
 
+
 class Generator(object):
     # Dict mapping characters to their escape sequence in latex
     ESCAPE_PATTERNS = {}
@@ -29,19 +24,19 @@ class Generator(object):
     def get_parse_table(self):
         # table of translations of xml children of 'para' elements
         parse_table = {
-            'para'          : self.parse_recurse,
+            'para': self.parse_recurse,
             'computeroutput': lambda p, r: '%s' % self.get_text(p),
-            'texttt'        : lambda p, r: '%s' % self.get_text(p['text']),
-            'ref'           : self.ref_to_format,
-            'nameref'       : self.nref_to_format,
-            'shortref'      : lambda p, r: "%s" % p['sec'],
-            'obj'           : lambda p, r: "%s" % p['name'],
-            'errorenumdesc' : lambda p, r: "",
-            'orderedlist'   : self.parse_ordered_list,
-            'listitem'      : lambda p, r: self.parse_para(p.para, r),
-            'itemizedlist'  : self.parse_itemized_list,
-            'autoref'       : lambda p, r: "%s" % p['label'],
-            'docref'        : self.parse_recurse
+            'texttt': lambda p, r: '%s' % self.get_text(p['text']),
+            'ref': self.ref_to_format,
+            'nameref': self.nref_to_format,
+            'shortref': lambda p, r: "%s" % p['sec'],
+            'obj': lambda p, r: "%s" % p['name'],
+            'errorenumdesc': lambda p, r: "",
+            'orderedlist': self.parse_ordered_list,
+            'listitem': lambda p, r: self.parse_para(p.para, r),
+            'itemizedlist': self.parse_itemized_list,
+            'autoref': lambda p, r: "%s" % p['label'],
+            'docref': self.parse_recurse
         }
         return parse_table
 
@@ -224,7 +219,7 @@ class Generator(object):
             ref_id = member['id']
             data = {
                 "name": self.text_escape(name),
-                "original_name" : name,
+                "original_name": name,
                 "label": label,
                 "ref": ref_id,
                 "heading": heading,
@@ -251,6 +246,7 @@ class Generator(object):
         """
         return s if s else "TODO"
 
+
 class LatexGenerator(Generator):
     """
     A class that represents the generator for Doxygen to Latex. A child of the Generator class.
@@ -265,7 +261,7 @@ class LatexGenerator(Generator):
         parse_table = super(LatexGenerator, self).get_parse_table()
         parse_table['computeroutput'] = lambda p, r: '\\texttt{%s}' % self.get_text(p)
         parse_table['texttt'] = lambda p, r: '\\texttt{%s}' % self.get_text(p['text'])
-        parse_table['shortref'] =  lambda p, r: "\\ref{sec:%s}" % p['sec']
+        parse_table['shortref'] = lambda p, r: "\\ref{sec:%s}" % p['sec']
         parse_table['obj'] = lambda p, r: "\\obj{%s}" % p['name']
         parse_table['errorenumdesc'] = lambda p, r: "\\errorenumdesc"
         parse_table['listitem'] = lambda p, r: "\\item " + self.parse_para(p.para, r) + "\n"
@@ -302,9 +298,9 @@ class LatexGenerator(Generator):
 
     def generate_param_string(self, param_info, param_name):
         return "\\param{%(type)s}{%(name)s}{%(desc)s}\n" % {
-                    "type": self.get_text(param_info["type"]),
-                    "name": self.get_text(param_name),
-                    "desc": self.todo_if_empty(param_info.get("desc", "").strip()),
+            "type": self.get_text(param_info["type"]),
+            "name": self.get_text(param_name),
+            "desc": self.todo_if_empty(param_info.get("desc", "").strip()),
         }
 
     def generate_empty_param_string(self):
@@ -351,6 +347,7 @@ class LatexGenerator(Generator):
     def gen_label(self, label):
         return '\\label{' + label + '}\n'
 
+
 class MarkdownGenerator(Generator):
     """
     A class that represents the generator for Doxygen to Markdown. A child of the Generator class
@@ -358,15 +355,15 @@ class MarkdownGenerator(Generator):
 
     # Dict mapping characters to their escape sequence in markdown
     ESCAPE_PATTERNS = {
-        "`" : "\`",
-        "#" : "\#",
-        "_" : "\_",
-        "*" : "\*",
-        "[" : "\[",
-        "]" : "\]",
-        "-" : "\-",
-        "+" : "\+",
-        "!" : "\!",
+        "`": "\`",
+        "#": "\#",
+        "_": "\_",
+        "*": "\*",
+        "[": "\[",
+        "]": "\]",
+        "-": "\-",
+        "+": "\+",
+        "!": "\!",
     }
 
     def get_parse_table(self):
@@ -379,7 +376,6 @@ class MarkdownGenerator(Generator):
         parse_table['autoref'] = lambda p, r: "autoref[%s]" % p['label']
         parse_table['docref'] = lambda p, r: "DOCREF"
         return parse_table
-
 
     def default_return_doc(self, ret_type):
         """
@@ -409,22 +405,22 @@ class MarkdownGenerator(Generator):
 
         for item in para.contents:
             parsed_item = self.parse_para(item, ref_dict)
-            output +="* %s" % parsed_item if parsed_item.rstrip() else ""
+            output += "* %s" % parsed_item if parsed_item.rstrip() else ""
         return output
 
     def generate_enumerate_list(self, para, ref_dict, output):
         """ Returns a Markdown number list """
 
-        for num,item in zip(xrange(sys.maxint),para.contents):
+        for num, item in zip(range(sys.maxsize), para.contents):
             parsed_item = self.parse_para(item, ref_dict)
-            output +="%d. %s" % (num, parsed_item) if parsed_item.rstrip() else ""
+            output += "%d. %s" % (num, parsed_item) if parsed_item.rstrip() else ""
         return output
 
     def parse_list(self, para, ref_dict, tag):
         """Parse an ordered list element"""
 
         if tag == "enumerate":
-            list_generator =  self.generate_enumerate_list
+            list_generator = self.generate_enumerate_list
         elif tag == "itemize":
             list_generator = self.generate_itemize_list
         output = '\n'
@@ -449,9 +445,9 @@ Type | Name | Description
 
     def generate_param_string(self, param_info, param_name):
         return "`%(type)s` | `%(name)s` | %(desc)s\n" % {
-                    "type": self.get_text(param_info["type"],escape=False),
-                    "name": self.get_text(param_name,escape=False),
-                    "desc": self.todo_if_empty(param_info.get("desc", "").strip()),
+            "type": self.get_text(param_info["type"], escape=False),
+            "name": self.get_text(param_name, escape=False),
+            "desc": self.todo_if_empty(param_info.get("desc", "").strip()),
         }
 
     def generate_api_doc(self, level, member, params, ret, details):
@@ -459,7 +455,7 @@ Type | Name | Description
 
         # Descriptions that just contain a document reference are removed.
         # Found by the 'DOCREF' symbol
-        match_details = re.match( r'^DOCREF$', details, re.M|re.I)
+        match_details = re.match(r'^DOCREF$', details, re.M | re.I)
         if match_details:
             details_string = ""
         else:
@@ -482,14 +478,14 @@ Type | Name | Description
 
 %(details)s
 """ % {
-                "hash": self.level_to_header(level),
-                "name": self.text_escape(manual_node["name"]),
-                "label": manual_node["label"],
-                "brief": self.todo_if_empty(self.parse_brief(member)),
-                "prototype": self.parse_prototype(member, escape=False),
-                "params": self.generate_params(params_string),
-                "ret": ret_string,
-                "details": details_string,
+            "hash": self.level_to_header(level),
+            "name": self.text_escape(manual_node["name"]),
+            "label": manual_node["label"],
+            "brief": self.todo_if_empty(self.parse_brief(member)),
+            "prototype": self.parse_prototype(member, escape=False),
+            "params": self.generate_params(params_string),
+            "ret": ret_string,
+            "details": details_string,
         }
 
     def level_to_header(self, level):
@@ -501,7 +497,8 @@ Type | Name | Description
     def gen_label(self, label):
         return ''
 
-def generate_general_syscall_doc(generator, input_file_name, level):
+
+def generate_general_syscall_doc(generator, input_file_name, level, ref_dict):
     """
     Takes a path to a file containing doxygen-generated xml,
     and return a string containing latex suitable for inclusion
@@ -512,7 +509,6 @@ def generate_general_syscall_doc(generator, input_file_name, level):
     with open(input_file_name, "r") as f:
         output = ""
         soup = BeautifulSoup(f, "lxml")
-        ref_dict = generator.build_ref_dict(soup)
         elements = soup.find_all("memberdef")
         summary = soup.find('compounddef')
         # parse any top level descriptions
@@ -526,7 +522,7 @@ def generate_general_syscall_doc(generator, input_file_name, level):
             new_input_file = os.path.join(dir_name, new_input_file_name)
             output += generator.level_to_heading(level, inner_group.text)
             output += generator.gen_label(inner_group["refid"])
-            output += generate_general_syscall_doc(generator, new_input_file, level + 1)
+            output += generate_general_syscall_doc(generator, new_input_file, level + 1, ref_dict)
 
         # parse all of the function definitions
         if len(elements) == 0 and output == "":
@@ -537,6 +533,7 @@ def generate_general_syscall_doc(generator, input_file_name, level):
             details, params, ret = generator.parse_detailed_desc(member, ref_dict)
             output += generator.generate_api_doc(level, member, params, ret, details)
         return output
+
 
 def process_args():
     """Process script arguments"""
@@ -555,6 +552,7 @@ def process_args():
 
     return parser
 
+
 def main():
     """Convert doxygen xml into a seL4 API LaTeX manual format"""
     args = process_args().parse_args()
@@ -567,10 +565,23 @@ def main():
     elif args.format == "markdown":
         generator = MarkdownGenerator()
 
-    output_str = generate_general_syscall_doc(generator, args.input, args.level)
+    dir_name = os.path.dirname(args.input)
+
+    # create the refdict from all the group__*SystemCalls.xml files
+    ref_dict = {}
+    for (r, d, files) in os.walk(dir_name):
+        for f in files:
+            if "SystemCalls" not in f:
+                continue
+            with open(os.path.join(dir_name, f), "r") as source:
+                soup = BeautifulSoup(source, "lxml")
+                ref_dict.update(generator.build_ref_dict(soup))
+
+    output_str = generate_general_syscall_doc(generator, args.input, args.level, ref_dict)
 
     with open(args.output, "w") as output_file:
         output_file.write(output_str)
+
 
 if __name__ == "__main__":
     sys.exit(main())

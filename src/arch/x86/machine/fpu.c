@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <model/statedata.h>
@@ -17,8 +13,7 @@
 /*
  * Setup the FPU register state for a new thread.
  */
-void
-Arch_initFpuContext(user_context_t *context)
+void Arch_initFpuContext(user_context_t *context)
 {
     context->fpuState = x86KSnullFpuState;
 }
@@ -26,8 +21,7 @@ Arch_initFpuContext(user_context_t *context)
 /*
  * Initialise the FPU for this machine.
  */
-BOOT_CODE bool_t
-Arch_initFpu(void)
+BOOT_CODE bool_t Arch_initFpu(void)
 {
     /* Enable FPU / SSE / SSE2 / SSE3 / SSSE3 / SSE4 Extensions. */
     write_cr4(read_cr4() | CR4_OSFXSR);

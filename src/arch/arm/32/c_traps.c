@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -38,11 +34,6 @@ void VISIBLE NORETURN restore_user_context(void)
     lazyFPURestore(NODE_STATE(ksCurThread));
 #endif /* CONFIG_HAVE_FPU */
 
-#ifndef CONFIG_ARCH_ARM_V6
-    writeTPIDRURW(getRegister(NODE_STATE(ksCurThread), TPIDRURW));
-    writeTPIDRURO(getRegister(NODE_STATE(ksCurThread), TLS_BASE));
-#endif
-
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         asm volatile(
             /* Set stack pointer to point at the r0 of the user context. */
@@ -63,7 +54,7 @@ void VISIBLE NORETURN restore_user_context(void)
             /* Return to user */
             "eret"
             : /* no output */
-            : [cur_thread_reg] "r" (cur_thread_reg)
+            : [cur_thread_reg] "r"(cur_thread_reg)
             : "memory"
         );
     } else {
@@ -71,7 +62,7 @@ void VISIBLE NORETURN restore_user_context(void)
                   ldmdb sp, {r0-lr}^ \n\
                   rfeia sp"
                      : /* no output */
-                     : [cur_thread] "r" (cur_thread_reg + LR_svc * sizeof(word_t))
+                     : [cur_thread] "r"(cur_thread_reg + NextIP * sizeof(word_t))
                     );
     }
     UNREACHABLE();

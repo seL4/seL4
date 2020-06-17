@@ -1,43 +1,33 @@
 #
-# Copyright 2018, Data61
-# Commonwealth Scientific and Industrial Research Organisation (CSIRO)
-# ABN 41 687 119 230.
+# Copyright 2020, DornerWorks
+# Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 #
-# Copyright 2018, DornerWorks
-#
-# This software may be distributed and modified according to the terms of
-# the GNU General Public License version 2. Note that NO WARRANTY is provided.
-# See "LICENSE_GPLv2.txt" for details.
-#
-# @TAG(DATA61_DORNERWORKS_GPL)
+# SPDX-License-Identifier: GPL-2.0-only
 #
 
 cmake_minimum_required(VERSION 3.7.2)
 
+declare_platform(spike KernelPlatformSpike PLAT_SPIKE KernelArchRiscV)
+
 if(KernelPlatformSpike)
-    config_set(KernelPlatform PLAT "spike")
+    if("${KernelSel4Arch}" STREQUAL riscv32)
+        declare_seL4_arch(riscv32)
+    elseif("${KernelSel4Arch}" STREQUAL riscv64)
+        declare_seL4_arch(riscv64)
+    else()
+        fallback_declare_seL4_arch_default(riscv64)
+    endif()
+    config_set(KernelRiscVPlatform RISCV_PLAT "spike")
+    config_set(KernelPlatformFirstHartID FIRST_HART_ID 0)
+    if(KernelSel4ArchRiscV32)
+        list(APPEND KernelDTSList "tools/dts/spike32.dts")
+    else()
+        list(APPEND KernelDTSList "tools/dts/spike.dts")
+    endif()
+    declare_default_headers(
+        TIMER_FREQUENCY 10000000llu PLIC_MAX_NUM_INT 0
+        INTERRUPT_CONTROLLER arch/machine/plic.h
+    )
+else()
+    unset(KernelPlatformFirstHartID CACHE)
 endif()
-
-config_choice(KernelSpikeInstance RISCV_SPIKE_INSTANCE "Select the instance for Spike to run on"
-    "qemu;KernelPlatformSpikeQemu;BUILD_SPIKE_QEMU;KernelArchRiscV"
-    "rocket-chip-zedboard;KernelPlatformSpikeRocketChip;BUILD_ROCKET_CHIP_ZEDBOARD;KernelSel4ArchRiscV64"
-    "hi-five-unleashed;KernelPlatformSpikeSiFiveFreedom;BUILD_HI_FIVE_UNLEASHED;KernelSel4ArchRiscV64"
-)
-
-config_string(KernelPlatformSpikeClockFrequency SPIKE_CLOCK_FREQ
-    "Frequency of Clock used for Scheduler"
-    DEFAULT 10000000
-    UNQUOTE
-)
-
-# Include all of the different instances of the Spike platform
-include(src/plat/spike/instance/qemu/config.cmake)
-include(src/plat/spike/instance/rocket-chip/config.cmake)
-include(src/plat/spike/instance/freedom/config.cmake)
-
-add_sources(
-    DEP "KernelPlatformSpike"
-    CFILES
-        src/plat/spike/machine/fdt.c
-        src/plat/spike/machine/hardware.c
-)

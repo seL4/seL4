@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_32_H
-#define __ARCH_MACHINE_32_H
+#pragma once
 
 #include <config.h>
 #include <stdint.h>
@@ -25,23 +20,23 @@
 #include <mode/hardware.h>
 #include <kernel/stack.h>
 
-#define MRC(cpreg, v)  asm volatile("mrc  " cpreg :  "=r"(v))
-#define MRRC(cpreg, v) asm volatile("mrrc " cpreg :  "=r"(v))
-#define MCR(cpreg, v)                               \
-    do {                                            \
-        word_t _v = v;                            \
-        asm volatile("mcr  " cpreg :: "r" (_v));    \
-    }while(0)
-#define MCRR(cpreg, v)                              \
-    do {                                            \
-        uint64_t _v = v;                            \
-        asm volatile("mcrr " cpreg :: "r" (_v));    \
-    }while(0)
+/* The new spec requires the use of vmsr/vmrs to access floating point
+ * registers (including control registers).
+ *
+ * GCC will still accept the old MRC/MCR instructions but Clang will not.
+ * Both result in the same encoding and are here only to satisfy compilers. */
+#define VMRS(vfp_reg, v) asm volatile(".fpu vfp\n" \
+                                      "vmrs %0, " vfp_reg : "=r"(v))
+#define VMSR(vfp_reg, v)                                 \
+    do {                                                 \
+        word_t _v = v;                                   \
+        asm volatile(".fpu vfp\n"                        \
+                     "vmsr " vfp_reg ", %0" :: "r"(_v)); \
+    } while(0)
 
-#define SYSTEM_WRITE_WORD(reg, v) MCR(reg, v)
-#define SYSTEM_READ_WORD(reg, v)  MRC(reg, v)
-#define SYSTEM_WRITE_64(reg, v)  MCRR(reg, v)
-#define SYSTEM_READ_64(reg, v)   MRRC(reg, v)
+/* VFP registers. */
+#define FPEXC      "fpexc" /* 32-bit Floating-Point Exception Control register */
+#define FPSCR      "fpscr" /* 32-bit Floating-Point Status and Control register */
 
 /** Generic timer CP15 registers **/
 #define CNTFRQ     " p15, 0,  %0, c14,  c0, 0" /* 32-bit RW Counter Frequency register */
@@ -63,7 +58,21 @@
 #define ID_DFR0    " p15, 0,  %0,  c0,  c1, 2" /* 32-bit RO Debug feature register */
 #define ID_PFR1    " p15, 0,  %0,  c0,  c1, 1" /* 32-bit RO CPU feature register */
 #define CPACR      " p15, 0,  %0,  c1,  c0, 2" /* 32-bit Architectural Feature Access Control Register */
-#define FPEXC      " p10, 7,  %0, cr8, cr0, 0" /* 32-bit Floating-Point Exception Control register */
+#define VMPIDR     " p15, 4,  %0,  c0,  c0, 5" /* 32-bit RW Virtualization Multiprocessor ID Register */
+
+/* Use Hypervisor Physical timer */
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+#define CNT_TVAL CNTHP_TVAL
+#define CNT_CT   CNTPCT
+#define CNT_CTL  CNTHP_CTL
+#define CNT_CVAL CNTHP_CVAL
+#else
+/* Use virtual timer */
+#define CNT_TVAL CNTV_TVAL
+#define CNT_CT   CNTVCT
+#define CNT_CTL  CNTV_CTL
+#define CNT_CVAL CNTV_CVAL
+#endif
 
 #ifdef ENABLE_SMP_SUPPORT
 /* Use the first two SGI (Software Generated Interrupt) IDs
@@ -185,21 +194,36 @@ static inline void writeTTBCR(word_t val)
 
 static inline void writeTPIDRURW(word_t reg)
 {
+#ifdef CONFIG_KERNEL_GLOBALS_FRAME
+    armKSGlobalsFrame[GLOBALS_TPIDRURW] = reg;
+#else
     asm volatile("mcr p15, 0, %0, c13, c0, 2" :: "r"(reg));
+#endif
 }
 
 static inline word_t readTPIDRURW(void)
 {
+#ifdef CONFIG_KERNEL_GLOBALS_FRAME
+    return armKSGlobalsFrame[GLOBALS_TPIDRURW];
+#else
     word_t reg;
     asm volatile("mrc p15, 0, %0, c13, c0, 2" : "=r"(reg));
     return reg;
+#endif
 }
-
 
 static inline void writeTPIDRURO(word_t reg)
 {
     asm volatile("mcr p15, 0, %0, c13, c0, 3" :: "r"(reg));
 }
+
+static inline word_t readTPIDRURO(void)
+{
+    word_t reg;
+    asm volatile("mrc p15, 0, %0, c13, c0, 3" : "=r"(reg));
+    return reg;
+}
+
 
 static inline void writeTPIDRPRW(word_t reg)
 {
@@ -213,18 +237,28 @@ static inline word_t readTPIDRPRW(void)
     return reg;
 }
 
-static inline word_t readTPIDRURO(void)
+static void arm_save_thread_id(tcb_t *thread)
 {
-    word_t reg;
-    asm volatile("mrc p15, 0, %0, c13, c0, 3" : "=r"(reg));
-    return reg;
+#ifndef CONFIG_KERNEL_GLOBALS_FRAME
+    /* TPIDRURW is writeable from EL0 but not with globals frame. */
+    setRegister(thread, TPIDRURW, readTPIDRURW());
+    /* This register is read only from userlevel, but could still be updated
+     * if the thread is running in a higher priveleged level with a VCPU attached.
+     */
+    setRegister(thread, TPIDRURO, readTPIDRURO());
+#endif /* CONFIG_KERNEL_GLOBALS_FRAME */
 }
 
+static void arm_load_thread_id(tcb_t *thread)
+{
+    writeTPIDRURW(getRegister(thread, TPIDRURW));
+    writeTPIDRURO(getRegister(thread, TPIDRURO));
+}
 
 static inline word_t readMPIDR(void)
 {
     word_t reg;
-    asm volatile ("mrc p15, 0, %0, c0, c0, 5" : "=r"(reg));
+    asm volatile("mrc p15, 0, %0, c0, c0, 5" : "=r"(reg));
     return reg;
 }
 
@@ -260,7 +294,7 @@ static inline void setKernelStack(word_t stack_address)
      * Load the (per-core) kernel stack pointer to TPIDRPRW for faster reloads on traps.
      */
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        setHTPIDR(stack_address);
+        writeHTPIDR(stack_address);
     } else {
         writeTPIDRPRW(stack_address);
     }
@@ -271,7 +305,7 @@ static inline word_t getKernelStack(void)
 {
 #ifndef CONFIG_ARCH_ARM_V6
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        return getHTPIDR();
+        return readHTPIDR();
     } else {
         return readTPIDRPRW();
     }
@@ -544,15 +578,14 @@ static inline void setCIDR(word_t cidr)
 static inline word_t getACTLR(void)
 {
     word_t ACTLR;
-    asm volatile ("mrc p15, 0, %0, c1, c0, 1" : "=r"(ACTLR));
+    asm volatile("mrc p15, 0, %0, c1, c0, 1" : "=r"(ACTLR));
     return ACTLR;
 }
 
 static inline void setACTLR(word_t actlr)
 {
-    asm volatile ("mcr p15, 0, %0, c1, c0, 1" :: "r"(actlr));
+    asm volatile("mcr p15, 0, %0, c1, c0, 1" :: "r"(actlr));
 }
 
 void arch_clean_invalidate_caches(void);
-
-#endif /* __ARCH_MACHINE_32_H */
+void arch_clean_invalidate_L1_caches(word_t type);

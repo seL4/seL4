@@ -1,11 +1,7 @@
 %
 % Copyright 2014, General Dynamics C4 Systems
 %
-% This software may be distributed and modified according to the terms of
-% the GNU General Public License version 2. Note that NO WARRANTY is provided.
-% See "LICENSE_GPLv2.txt" for details.
-%
-% @TAG(GD_GPL)
+% SPDX-License-Identifier: GPL-2.0-only
 %
 
 \chapter{\label{ch:cspace}Capability Spaces}
@@ -63,9 +59,10 @@ individual capabilities within their CSpaces when invoking methods.
 CSpaces are created by creating and manipulating \obj{CNode} objects.
 When creating a \obj{CNode} the user must specify the number of slots
 that it will have, and this determines the amount of memory that it
-will use. Each slot requires 16 bytes of physical memory and has the
-capacity to hold exactly one capability. Like any other object, a
-\obj{CNode} must be created by calling
+will use. Each slot requires $2^\texttt{seL4\_SlotBits}$ bytes of physical
+memory and has the capacity to hold exactly one capability. This is 16
+bytes on 32-bit architectures and 32 bytes on 64-bit architectures.
+Like any other object, a \obj{CNode} must be created by calling
 \apifunc{seL4\_Untyped\_Retype}{untyped_retype} on an appropriate
 amount of untyped memory (see \autoref{sec:object_sizes}).  The caller
 must therefore have a capability to enough untyped memory as well as
@@ -116,7 +113,7 @@ Capabilities are managed largely through invoking \obj{CNode} methods.
 \item[\apifunc{seL4\_CNode\_SaveCaller}{cnode_savecaller}] moves a
   kernel-generated reply capability of the current thread from the
   special \obj{TCB} slot it was created in, into the designated CSpace
-  slot.
+  slot (non-MCS only).
 \item[\apifunc{seL4\_CNode\_CancelBadgedSends}{cnode_cancelbadgedsends}] cancels
   any outstanding sends that use the same badge and object as the
   specified capability.
@@ -142,10 +139,13 @@ As mentioned previously, some capability types have \emph{access
   rights} associated with them. Currently, access rights are
 associated with capabilities for \obj{Endpoint}s (see
 \autoref{ch:ipc}), \obj{Notification}s (see
-\autoref{ch:notifications}) and \obj{Page}s (see \autoref{ch:vspace}).  The
+\autoref{ch:notifications}), \obj{Page}s (see \autoref{ch:vspace}) and
+\obj{Reply}ing (see \autoref{ch:ipc}).  The
 access rights associated with a capability determine the methods that
-can be invoked.  seL4 supports three orthogonal access rights, which
-are Read, Write and Grant.  The meaning of each right is interpreted
+can be invoked.  seL4 supports four access rights, which
+are Read, Write, Grant and GrantReply. Read, Write and Grant are orthogonal to
+each other. GrantReply is a less powerful form of Grant e.g. if you already have
+Grant, having GrantReply or not is irrelevant.  The meaning of each right is interpreted
 relative to the various object types, as detailed
 in~\autoref{tab:rights}.
 
@@ -158,17 +158,23 @@ rights than the source capability is specified for the destination
 capability in either of these invocations, the destination rights are
 silently downgraded to those of the source.
 
+%TODO it looks ugly now
 \begin{table}[htb]
-  \begin{tabularx}{\textwidth}{p{0.15\textwidth}XXX}
+  \renewcommand{\arraystretch}{1.5}
+  \begin{tabularx}{\textwidth}{p{0.15\textwidth}XXXX}
     \toprule
-    Type & Read & Write & Grant \\
+    Type & Read & Write & Grant & GrantReply \\
     \midrule
-    \obj{Endpoint} & Required to receive. & Required to send. & Required to send capabilities (including reply capabilities).\\
-    \obj{Notification} & Required to wait. & Required to signal. & N/A \\
-    \obj{Page} & Required to map the page readable. & Required to map the page writable. & N/A \\
+    \obj{Endpoint} & Receiving & Sending & Sending any
+    capabilities & Sending reply
+    capabilities \\
+    \obj{Notification} & Waiting & Signaling & N/A & N/A \\
+    \obj{Page} & Mapping the page readable. & Mapping the page writable. & N/A & N/A \\
+    \obj{Reply} & N/A & N/A & Sending any capabilities in reply message & N/A \\
     \bottomrule
   \end{tabularx}
-  \caption{\label{tab:rights}seL4 access rights.}
+  \caption{\label{tab:rights}seL4 access rights: What a specific right entitles a
+  capability to do}
 \end{table}
 
 \subsection{Capability Derivation Tree}
@@ -227,7 +233,7 @@ capabilities.  Further copies of these derived capabilities will
 create siblings, in this case remaining on level 5. There is an
 exception to this scheme for \obj{Endpoint} and \obj{Notification} capabilities --- they support an
 additional layer of depth though \emph{badging}.
-The original \obj{Endpoint} or \emph{Notification} capability will be unbadged. Using
+The original \obj{Endpoint} or \obj{Notification} capability will be unbadged. Using
 the mint method, a copy of the capability with a specific \emph{badge} can be
 created (see \autoref{s:ep-badge}, \autoref{s:notif-badge}). This new, badged capability to the same object is treated as
 an original capability (the ``original badged endpoint capability'')

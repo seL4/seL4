@@ -1,17 +1,10 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODE_MACHINE_H
-#define __ARCH_MODE_MACHINE_H
+#pragma once
 
 #include <config.h>
 #include <stdint.h>
@@ -26,18 +19,20 @@
 #include <mode/machine_pl2.h>
 #include <mode/hardware.h>
 
-#define MRS(reg, v)  asm volatile("mrs %0," reg : "=r"(v))
-#define MSR(reg, v)                                \
-    do {                                           \
-        word_t _v = v;                             \
-        asm volatile("msr " reg ",%0" :: "r" (_v));\
-    }while(0)
+#define CNTPCT   "cntpct_el0"
+#define CNTV_CTL "cntv_ctl_el0"
 
-#define SYSTEM_WRITE_WORD(reg, v) MSR(reg, v)
-#define SYSTEM_READ_WORD(reg, v)  MRS(reg, v)
-#define SYSTEM_WRITE_64(reg, v)   MSR(reg, v)
-#define SYSTEM_READ_64(reg, v)    MRS(reg, v)
-
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+#define CNT_TVAL "cnthp_tval_el2"
+#define CNT_CVAL "cnthp_cval_el2"
+#define CNT_CTL  "cnthp_ctl_el2"
+#else
+#define CNT_TVAL "cntv_tval_el0"
+#define CNT_CVAL "cntv_cval_el0"
+#define CNT_CTL  CNTV_CTL
+#endif
+#define CNTFRQ   "cntfrq_el0"
+#define CNT_CT   "cntvct_el0"
 
 #ifdef ENABLE_SMP_SUPPORT
 /* Use the first two SGI (Software Generated Interrupt) IDs
@@ -81,30 +76,52 @@ static inline void writeAuxiliaryControlRegister(word_t acr)
     MSR("actlr_el1", acr);
 }
 
-static inline void writeTPIDRPRW(word_t reg)
-{
-    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        MSR("tpidr_el2", reg);
-    } else {
-        MSR("tpidr_el1", reg);
-    }
-}
-
-static inline void writeTPIDRURW(word_t reg)
+static inline void writeTPIDR_EL0(word_t reg)
 {
     MSR("tpidr_el0", reg);
 }
 
-static inline void writeTPIDRURO(word_t reg)
-{
-    MSR("tpidrro_el0", reg);
-}
-
-static inline word_t readTPIDRURW(void)
+static inline word_t readTPIDR_EL0(void)
 {
     word_t reg;
     MRS("tpidr_el0", reg);
     return reg;
+}
+
+static inline void writeTPIDRRO_EL0(word_t reg)
+{
+    MSR("tpidrro_el0", reg);
+}
+
+static inline word_t readTPIDRRO_EL0(void)
+{
+    word_t reg;
+    MRS("tpidrro_el0", reg);
+    return reg;
+}
+
+static inline void writeTPIDR_EL1(word_t reg)
+{
+    MSR("tpidr_el1", reg);
+}
+
+static inline word_t readTPIDR_EL1(void)
+{
+    word_t reg;
+    MRS("tpidr_el1", reg);
+    return reg;
+}
+
+static void arm_save_thread_id(tcb_t *thread)
+{
+    setRegister(thread, TPIDR_EL0, readTPIDR_EL0());
+    setRegister(thread, TPIDRRO_EL0, readTPIDRRO_EL0());
+}
+
+static void arm_load_thread_id(tcb_t *thread)
+{
+    writeTPIDR_EL0(getRegister(thread, TPIDR_EL0));
+    writeTPIDRRO_EL0(getRegister(thread, TPIDRRO_EL0));
 }
 
 #define TCR_EL2_RES1 (BIT(23) | BIT(31))
@@ -113,11 +130,25 @@ static inline word_t readTPIDRURW(void)
 #define TCR_EL2_ORGN0_WBWC  BIT(10)
 #define TCR_EL2_SH0_ISH     (3 << 12)
 #define TCR_EL2_TG0_4K      (0 << 14)
-#define TCR_EL2_TCR_PS_16T  (4 << 16)
 
-/* The default value for TCR_EL2 is for 44-bit PARange. */
+#define TCR_EL2_TCR_PS_4G   0
+#define TCR_EL2_TCR_PS_64G  1
+#define TCR_EL2_TCR_PS_1T   2
+#define TCR_EL2_TCR_PS_4T   3
+#define TCR_EL2_TCR_PS_16T  4
+#define TCR_EL2_TCR_PS_256T 5
+#define TCR_EL2_TCR_PS_4P   6
+#define TCR_EL2_TCR_PS_SHIFT 16
+
+#ifdef AARCH64_VSPACE_S2_START_L1
+#define TCR_EL2_TCR_PS TCR_EL2_TCR_PS_1T
+#else
+#define TCR_EL2_TCR_PS TCR_EL2_TCR_PS_16T
+#endif
+
 #define TCR_EL2_DEFAULT (TCR_EL2_T0SZ | TCR_EL2_IRGN0_WBWC | TCR_EL2_ORGN0_WBWC | \
-                 TCR_EL2_SH0_ISH | TCR_EL2_TG0_4K | TCR_EL2_TCR_PS_16T  | \
+                 TCR_EL2_SH0_ISH | TCR_EL2_TG0_4K | \
+                 (TCR_EL2_TCR_PS << TCR_EL2_TCR_PS_SHIFT) | \
                  TCR_EL2_RES1)
 
 /* Check if the elfloader set up the TCR_EL2 correctly. */
@@ -136,7 +167,7 @@ static inline void setCurrentKernelVSpaceRoot(ttbr_t ttbr)
         MSR("ttbr0_el2", ttbr.words[0]);
         dsb();
         isb();
-        asm volatile ("ic ialluis");
+        asm volatile("ic ialluis");
         dsb();
     } else {
         MSR("ttbr1_el1", ttbr.words[0]);
@@ -164,7 +195,11 @@ static inline word_t getVTTBR(void)
 
 static inline void setKernelStack(word_t stack_address)
 {
-    writeTPIDRPRW(stack_address);
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        writeTPIDR_EL2(stack_address);
+    } else {
+        writeTPIDR_EL1(stack_address);
+    }
 }
 
 static inline void setVtable(pptr_t addr)
@@ -180,12 +215,12 @@ static inline void setVtable(pptr_t addr)
 
 static inline void invalidateLocalTLB_EL2(void)
 {
-    asm volatile ("tlbi alle2");
+    asm volatile("tlbi alle2");
 }
 
 static inline void invalidateLocalTLB_EL1(void)
 {
-    asm volatile ("tlbi alle1");
+    asm volatile("tlbi alle1");
 }
 
 static inline void invalidateLocalTLB(void)
@@ -207,7 +242,7 @@ static inline void invalidateLocalTLB_ASID(asid_t asid)
     assert(asid < BIT(16));
 
     dsb();
-    asm volatile("tlbi aside1, %0" : : "r" (asid << 48));
+    asm volatile("tlbi aside1, %0" : : "r"(asid << 48));
     dsb();
     isb();
 }
@@ -215,7 +250,7 @@ static inline void invalidateLocalTLB_ASID(asid_t asid)
 static inline void invalidateLocalTLB_VAASID(word_t mva_plus_asid)
 {
     dsb();
-    asm volatile("tlbi vae1, %0" : : "r" (mva_plus_asid));
+    asm volatile("tlbi vae1, %0" : : "r"(mva_plus_asid));
     dsb();
     isb();
 }
@@ -224,7 +259,7 @@ static inline void invalidateLocalTLB_VAASID(word_t mva_plus_asid)
  * EL1 with the current VMID which is specified by vttbr_el2 */
 static inline void invalidateLocalTLB_VMALLS12E1(void)
 {
-    asm volatile ("tlbi vmalls12e1");
+    asm volatile("tlbi vmalls12e1");
     dsb();
     isb();
 }
@@ -232,9 +267,9 @@ static inline void invalidateLocalTLB_VMALLS12E1(void)
 /* Invalidate IPA with the current VMID */
 static inline void invalidateLocalTLB_IPA(word_t ipa)
 {
-    asm volatile ("tlbi ipas2e1, %0" :: "r"(ipa));
+    asm volatile("tlbi ipas2e1, %0" :: "r"(ipa));
     dsb();
-    asm volatile ("tlbi vmalle1");
+    asm volatile("tlbi vmalle1");
     dsb();
     isb();
 }
@@ -243,25 +278,26 @@ void lockTLBEntry(vptr_t vaddr);
 
 static inline void cleanByVA(vptr_t vaddr, paddr_t paddr)
 {
-    asm volatile("dc cvac, %0" : : "r" (vaddr));
+    asm volatile("dc cvac, %0" : : "r"(vaddr));
     dmb();
 }
 
 static inline void cleanByVA_PoU(vptr_t vaddr, paddr_t paddr)
 {
-    asm volatile("dc cvau, %0" : : "r" (vaddr));
+    asm volatile("dc cvau, %0" : : "r"(vaddr));
     dmb();
 }
 
 static inline void invalidateByVA(vptr_t vaddr, paddr_t paddr)
 {
-    asm volatile("dc ivac, %0" : : "r" (vaddr));
+    asm volatile("dc ivac, %0" : : "r"(vaddr));
     dmb();
 }
 
 static inline void invalidateByVA_I(vptr_t vaddr, paddr_t paddr)
 {
-    asm volatile("ic ivau, %0" : : "r" (vaddr));
+    asm volatile("ic ivau, %0" : : "r"(vaddr));
+    dsb();
     isb();
 }
 
@@ -273,7 +309,7 @@ static inline void invalidate_I_PoU(void)
 
 static inline void cleanInvalByVA(vptr_t vaddr, paddr_t paddr)
 {
-    asm volatile("dc civac, %0" : : "r" (vaddr));
+    asm volatile("dc civac, %0" : : "r"(vaddr));
     dsb();
 }
 
@@ -309,7 +345,7 @@ static inline word_t PURE getFAR(void)
 static inline word_t ats1e2r(word_t va)
 {
     word_t par;
-    asm volatile ("at s1e2r, %0" :: "r"(va));
+    asm volatile("at s1e2r, %0" :: "r"(va));
     MRS("par_el1", par);
     return par;
 }
@@ -317,7 +353,7 @@ static inline word_t ats1e2r(word_t va)
 static inline word_t ats1e1r(word_t va)
 {
     word_t par;
-    asm volatile ("at s1e1r, %0" :: "r"(va));
+    asm volatile("at s1e1r, %0" :: "r"(va));
     MRS("par_el1", par);
     return par;
 }
@@ -326,11 +362,12 @@ static inline word_t ats1e1r(word_t va)
 static inline word_t ats2e0r(word_t va)
 {
     word_t par;
-    asm volatile ("at s12e0r, %0" :: "r"(va));
+    asm volatile("at s12e0r, %0" :: "r"(va));
     MRS("par_el1", par);
     return par;
 }
 
 void arch_clean_invalidate_caches(void);
+void arch_clean_invalidate_L1_caches(word_t type);
 
-#endif /* __ARCH_MODE_MACHINE_H */
+

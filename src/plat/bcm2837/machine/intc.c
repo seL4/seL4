@@ -1,20 +1,13 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <util.h>
 #include <stdint.h>
 #include <plat/machine.h>
-BOOT_CODE void
-initIRQController(void)
+BOOT_CODE void initIRQController(void)
 {
     /* Disable all interrupts */
     intc_regs->bfDisableIRQs[0] = 0xffffffff;
@@ -31,8 +24,7 @@ initIRQController(void)
 
 BOOT_CODE void cpu_initLocalIRQController(void) {}
 
-interrupt_t
-getActiveIRQ(void)
+static inline irq_t getActiveIRQ(void)
 {
     uint32_t pending;
     uint32_t irq;
@@ -75,8 +67,7 @@ getActiveIRQ(void)
     return irqInvalid;
 }
 
-void
-maskInterrupt(bool_t disable, interrupt_t irq)
+static inline void maskInterrupt(bool_t disable, irq_t irq)
 {
     switch (irq) {
     case INTERRUPT_CORE_CNTPSIRQ :

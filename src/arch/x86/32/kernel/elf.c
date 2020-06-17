@@ -1,13 +1,7 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <arch/kernel/elf.h>
@@ -15,8 +9,7 @@
 
 /* minimal ELF functionality for loading GRUB boot module */
 
-BOOT_CODE bool_t
-elf_checkFile(Elf32_Header_t* elfFile)
+BOOT_CODE bool_t elf_checkFile(Elf32_Header_t *elfFile)
 {
     return (
                elfFile->e_ident[0] == '\177' &&
@@ -27,10 +20,9 @@ elf_checkFile(Elf32_Header_t* elfFile)
            );
 }
 
-BOOT_CODE v_region_t
-elf_getMemoryBounds(Elf32_Header_t* elfFile)
+BOOT_CODE v_region_t elf_getMemoryBounds(Elf32_Header_t *elfFile)
 {
-    Elf32_Phdr_t* phdr = (Elf32_Phdr_t*)((paddr_t)elfFile + elfFile->e_phoff);
+    Elf32_Phdr_t *phdr = (Elf32_Phdr_t *)((paddr_t)elfFile + elfFile->e_phoff);
     v_region_t elf_reg;
     vptr_t     sect_start;
     vptr_t     sect_end;
@@ -56,10 +48,9 @@ elf_getMemoryBounds(Elf32_Header_t* elfFile)
     return elf_reg;
 }
 
-BOOT_CODE void
-elf_load(Elf32_Header_t* elfFile, seL4_Word offset)
+BOOT_CODE void elf_load(Elf32_Header_t *elfFile, seL4_Word offset)
 {
-    Elf32_Phdr_t* phdr = (Elf32_Phdr_t*)((paddr_t)elfFile + elfFile->e_phoff);
+    Elf32_Phdr_t *phdr = (Elf32_Phdr_t *)((paddr_t)elfFile + elfFile->e_phoff);
     paddr_t       src;
     paddr_t       dst;
     uint32_t      len;
@@ -70,8 +61,8 @@ elf_load(Elf32_Header_t* elfFile, seL4_Word offset)
         src = (paddr_t)elfFile + phdr[i].p_offset;
         dst = phdr[i].p_vaddr + offset;
         len = phdr[i].p_filesz;
-        memcpy((void*)dst, (char*)src, len);
+        memcpy((void *)dst, (char *)src, len);
         dst += len;
-        memset((void*)dst, 0, phdr[i].p_memsz - len);
+        memset((void *)dst, 0, phdr[i].p_memsz - len);
     }
 }

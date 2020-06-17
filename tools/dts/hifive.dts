@@ -1,0 +1,526 @@
+/* Copyright (c) 2018 SiFive, Inc */
+/* SPDX-License-Identifier: Apache-2.0 */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+
+/dts-v1/;
+
+/ {
+  #address-cells = <0x00000002>;
+  #size-cells = <0x00000002>;
+  compatible = "sifive,fu540g", "sifive,fu500";
+  model = "sifive,hifive-unleashed-a00";
+  aliases {
+    serial0 = <0x2f736f63 0x2f736572 0x69616c40 0x31303031 0x30303030>;
+    serial1 = <0x2f736f63 0x2f736572 0x69616c40 0x31303031 0x31303030>;
+  };
+  chosen {
+    stdout-path = "/soc/serial@10010000";
+  };
+  firmware {
+    sifive,fsbl = "2018-03-20";
+  };
+  cpus {
+    #address-cells = <0x00000001>;
+    #size-cells = <0x00000000>;
+    timebase-frequency = <0x000f4240>;
+    cpu@0 {
+      clock-frequency = <0x00000000>;
+      compatible = "sifive,rocket0", "riscv";
+      device_type = "cpu";
+      i-cache-block-size = <0x00000040>;
+      i-cache-sets = <0x00000080>;
+      i-cache-size = <0x00004000>;
+      next-level-cache = <0x00000001 0x00000002>;
+      reg = <0x00000000>;
+      riscv,isa = "rv64imac";
+      sifive,dtim = <0x00000003>;
+      sifive,itim = <0x00000004>;
+      status = "masked";
+      interrupt-controller {
+        #interrupt-cells = <0x00000001>;
+        compatible = "riscv,cpu-intc";
+        interrupt-controller;
+        linux,phandle = <0x0000000f>;
+        phandle = <0x0000000f>;
+      };
+    };
+    cpu@1 {
+      clock-frequency = <0x00000000>;
+      compatible = "sifive,rocket0", "riscv";
+      d-cache-block-size = <0x00000040>;
+      d-cache-sets = <0x00000040>;
+      d-cache-size = <0x00008000>;
+      d-tlb-sets = <0x00000001>;
+      d-tlb-size = <0x00000020>;
+      device_type = "cpu";
+      i-cache-block-size = <0x00000040>;
+      i-cache-sets = <0x00000040>;
+      i-cache-size = <0x00008000>;
+      i-tlb-sets = <0x00000001>;
+      i-tlb-size = <0x00000020>;
+      mmu-type = "riscv,sv39";
+      next-level-cache = <0x00000001 0x00000002>;
+      reg = <0x00000001>;
+      riscv,isa = "rv64imafdc";
+      sifive,itim = <0x00000005>;
+      status = "okay";
+      tlb-split;
+      interrupt-controller {
+        #interrupt-cells = <0x00000001>;
+        compatible = "riscv,cpu-intc";
+        interrupt-controller;
+        linux,phandle = <0x00000010>;
+        phandle = <0x00000010>;
+      };
+    };
+    cpu@2 {
+      clock-frequency = <0x00000000>;
+      compatible = "sifive,rocket0", "riscv";
+      d-cache-block-size = <0x00000040>;
+      d-cache-sets = <0x00000040>;
+      d-cache-size = <0x00008000>;
+      d-tlb-sets = <0x00000001>;
+      d-tlb-size = <0x00000020>;
+      device_type = "cpu";
+      i-cache-block-size = <0x00000040>;
+      i-cache-sets = <0x00000040>;
+      i-cache-size = <0x00008000>;
+      i-tlb-sets = <0x00000001>;
+      i-tlb-size = <0x00000020>;
+      mmu-type = "riscv,sv39";
+      next-level-cache = <0x00000001 0x00000002>;
+      reg = <0x00000002>;
+      riscv,isa = "rv64imafdc";
+      sifive,itim = <0x00000006>;
+      status = "okay";
+      tlb-split;
+      interrupt-controller {
+        #interrupt-cells = <0x00000001>;
+        compatible = "riscv,cpu-intc";
+        interrupt-controller;
+        linux,phandle = <0x00000011>;
+        phandle = <0x00000011>;
+      };
+    };
+    cpu@3 {
+      clock-frequency = <0x00000000>;
+      compatible = "sifive,rocket0", "riscv";
+      d-cache-block-size = <0x00000040>;
+      d-cache-sets = <0x00000040>;
+      d-cache-size = <0x00008000>;
+      d-tlb-sets = <0x00000001>;
+      d-tlb-size = <0x00000020>;
+      device_type = "cpu";
+      i-cache-block-size = <0x00000040>;
+      i-cache-sets = <0x00000040>;
+      i-cache-size = <0x00008000>;
+      i-tlb-sets = <0x00000001>;
+      i-tlb-size = <0x00000020>;
+      mmu-type = "riscv,sv39";
+      next-level-cache = <0x00000001 0x00000002>;
+      reg = <0x00000003>;
+      riscv,isa = "rv64imafdc";
+      sifive,itim = <0x00000007>;
+      status = "okay";
+      tlb-split;
+      interrupt-controller {
+        #interrupt-cells = <0x00000001>;
+        compatible = "riscv,cpu-intc";
+        interrupt-controller;
+        linux,phandle = <0x00000012>;
+        phandle = <0x00000012>;
+      };
+    };
+    cpu@4 {
+      clock-frequency = <0x00000000>;
+      compatible = "sifive,rocket0", "riscv";
+      d-cache-block-size = <0x00000040>;
+      d-cache-sets = <0x00000040>;
+      d-cache-size = <0x00008000>;
+      d-tlb-sets = <0x00000001>;
+      d-tlb-size = <0x00000020>;
+      device_type = "cpu";
+      i-cache-block-size = <0x00000040>;
+      i-cache-sets = <0x00000040>;
+      i-cache-size = <0x00008000>;
+      i-tlb-sets = <0x00000001>;
+      i-tlb-size = <0x00000020>;
+      mmu-type = "riscv,sv39";
+      next-level-cache = <0x00000001 0x00000002>;
+      reg = <0x00000004>;
+      riscv,isa = "rv64imafdc";
+      sifive,itim = <0x00000008>;
+      status = "okay";
+      tlb-split;
+      interrupt-controller {
+        #interrupt-cells = <0x00000001>;
+        compatible = "riscv,cpu-intc";
+        interrupt-controller;
+        linux,phandle = <0x00000013>;
+        phandle = <0x00000013>;
+      };
+    };
+  };
+  memory@80000000 {
+    device_type = "memory";
+    reg = <0x00000000 0x80000000 0x00000002 0x00000000>;
+    linux,phandle = <0x0000000e>;
+    phandle = <0x0000000e>;
+  };
+  soc {
+    #address-cells = <0x00000002>;
+    #size-cells = <0x00000002>;
+    compatible = "SiFive,FU540G-soc", "fu500-soc", "sifive-soc", "simple-bus";
+    ranges;
+    refclk {
+      #clock-cells = <0x00000000>;
+      compatible = "fixed-clock";
+      clock-frequency = <0x01fca055>;
+      clock-output-names = "xtal";
+      linux,phandle = <0x00000009>;
+      phandle = <0x00000009>;
+    };
+    prci@10000000 {
+      compatible = "sifive,aloeprci0";
+      reg = <0x00000000 0x10000000 0x00000000 0x00001000>;
+      reg-names = "control";
+      clocks = <0x00000009>;
+      #clock-cells = <0x00000001>;
+      linux,phandle = <0x0000000a>;
+      phandle = <0x0000000a>;
+    };
+    tlclk {
+      compatible = "fixed-factor-clock";
+      clocks = <0x0000000a 0x00000000>;
+      #clock-cells = <0x00000000>;
+      clock-div = <0x00000002>;
+      clock-mult = <0x00000001>;
+      linux,phandle = <0x00000016>;
+      phandle = <0x00000016>;
+    };
+    cadence-gemgxl-mgmt@100a0000 {
+      compatible = "sifive,cadencegemgxlmgmt0";
+      reg = <0x00000000 0x100a0000 0x00000000 0x00001000>;
+      reg-names = "control";
+      #clock-cells = <0x00000000>;
+      linux,phandle = <0x00000014>;
+      phandle = <0x00000014>;
+    };
+    bus-blocker@100b8000 {
+      compatible = "sifive,bus-blocker0";
+      reg = <0x00000000 0x100b8000 0x00000000 0x00001000>;
+      reg-names = "control";
+    };
+    cache-controller@2010000 {
+      cache-block-size = <0x00000040>;
+      cache-level = <0x00000002>;
+      cache-sets = <0x00000800>;
+      cache-size = <0x00200000>;
+      cache-unified;
+      compatible = "sifive,ccache0", "cache";
+      interrupt-parent = <0x0000000b>;
+      interrupts = <0x00000001 0x00000002 0x00000003>;
+      next-level-cache = <0x0000000c 0x0000000d 0x0000000e>;
+      reg = <0x00000000 0x02010000 0x00000000 0x00001000 0x00000000 0x08000000 0x00000000 0x02000000>;
+      reg-names = "control", "sideband";
+      linux,phandle = <0x00000002>;
+      phandle = <0x00000002>;
+    };
+    cadence-ddr-mgmt@100c0000 {
+      compatible = "sifive,cadenceddrmgmt0";
+      reg = <0x00000000 0x100c0000 0x00000000 0x00001000>;
+      reg-names = "control";
+    };
+    chiplink@40000000 {
+      #address-cells = <0x00000002>;
+      #size-cells = <0x00000002>;
+      compatible = "sifive,chiplink", "simple-bus";
+      ranges = <0x00000000 0x60000000 0x00000000 0x60000000 0x00000000 0x20000000 0x00000030 0x00000000 0x00000030 0x00000000 0x00000010 0x00000000 0x00000000 0x40000000 0x00000000 0x40000000 0x00000000 0x20000000 0x00000020 0x00000000 0x00000020 0x00000000 0x00000010 0x00000000>;
+      linux,phandle = <0x0000000d>;
+      phandle = <0x0000000d>;
+    };
+    dma@3000000 {
+      #dma-cells = <0x00000001>;
+      compatible = "riscv,dma0";
+      dma-channels = <0x00000004>;
+      dma-requests = <0x00000000>;
+      interrupt-parent = <0x0000000b>;
+      interrupts = <0x00000017 0x00000018 0x00000019 0x0000001a 0x0000001b 0x0000001c 0x0000001d 0x0000001e>;
+      reg = <0x00000000 0x03000000 0x00000000 0x00100000>;
+      reg-names = "control";
+      riscv,dma-pools = <0x00000001>;
+    };
+    dtim@1000000 {
+      compatible = "sifive,dtim0";
+      reg = <0x00000000 0x01000000 0x00000000 0x00002000>;
+      reg-names = "mem";
+      linux,phandle = <0x00000003>;
+      phandle = <0x00000003>;
+    };
+    ememoryotp@10070000 {
+      compatible = "sifive,ememoryotp0";
+      reg = <0x00000000 0x10070000 0x00000000 0x00001000>;
+      reg-names = "control";
+    };
+    error-device@18000000 {
+      compatible = "sifive,error0";
+      reg = <0x00000000 0x18000000 0x00000000 0x08000000>;
+      reg-names = "mem";
+      linux,phandle = <0x00000001>;
+      phandle = <0x00000001>;
+    };
+    ethernet@10090000 {
+      compatible = "cdns,macb";
+      interrupt-parent = <0x0000000b>;
+      interrupts = <0x00000035>;
+      reg = <0x00000000 0x10090000 0x00000000 0x00002000>;
+      reg-names = "control";
+      local-mac-address = <0x70b3d592>;
+      phy-mode = "gmii";
+      clock-names = <0x70636c6b 0x0068636c 0x6b007478 0x5f636c6b>;
+      clocks = <0x0000000a 0x00000001 0x0000000a 0x00000001 0x00000014>;
+      #address-cells = <0x00000001>;
+      #size-cells = <0x00000000>;
+      ethernet-phy@0 {
+        reg = <0x00000000>;
+        reset-gpios = <0x00000015 0x0000000c 0x00000001>;
+      };
+    };
+    gpio@10060000 {
+      compatible = "sifive,gpio0";
+      interrupt-parent = <0x0000000b>;
+      interrupts = <0x00000007 0x00000008 0x00000009 0x0000000a 0x0000000b 0x0000000c 0x0000000d 0x0000000e 0x0000000f 0x00000010 0x00000011 0x00000012 0x00000013 0x00000014 0x00000015 0x00000016>;
+      reg = <0x00000000 0x10060000 0x00000000 0x00001000>;
+      reg-names = "control";
+      gpio-controller;
+      #gpio-cells = <0x00000002>;
+      interrupt-controller;
+      #interrupt-cells = <0x00000002>;
+      linux,phandle = <0x00000015>;
+      phandle = <0x00000015>;
+    };
+    gpio-restart {
+      compatible = "gpio-restart";
+      gpios = <0x00000015 0x0000000a 0x00000001>;
+    };
+    i2c@10030000 {
+      compatible = "sifive,i2c0", "opencores,i2c-ocores";
+      reg = <0x00000000 0x10030000 0x00000000 0x00001000>;
+      reg-names = "control";
+      clocks = <0x00000016>;
+      reg-shift = <0x00000002>;
+      reg-io-width = <0x00000001>;
+      #address-cells = <0x00000001>;
+      #size-cells = <0x00000000>;
+    };
+    interrupt-controller@c000000 {
+      #interrupt-cells = <0x00000001>;
+      compatible = "riscv,plic0";
+      interrupt-controller;
+      interrupts-extended = <0x0000000f 0xffffffff 0x00000010 0xffffffff 0x00000010 0x00000009 0x00000011 0xffffffff 0x00000011 0x00000009 0x00000012 0xffffffff 0x00000012 0x00000009 0x00000013 0xffffffff 0x00000013 0x00000009>;
+      reg = <0x00000000 0x0c000000 0x00000000 0x04000000>;
+      reg-names = "control";
+      riscv,max-priority = <0x00000007>;
+      riscv,ndev = <0x00000035>;
+      linux,phandle = <0x0000000b>;
+      phandle = <0x0000000b>;
+    };
+    itim@1800000 {
+      compatible = "sifive,itim0";
+      reg = <0x00000000 0x01800000 0x00000000 0x00004000>;
+      reg-names = "mem";
+      linux,phandle = <0x00000004>;
+      phandle = <0x00000004>;
+    };
+    itim@1808000 {
+      compatible = "sifive,itim0";
+      reg = <0x00000000 0x01808000 0x00000000 0x00008000>;
+      reg-names = "mem";
+      linux,phandle = <0x00000005>;
+      phandle = <0x00000005>;
+    };
+    itim@1810000 {
+      compatible = "sifive,itim0";
+      reg = <0x00000000 0x01810000 0x00000000 0x00008000>;
+      reg-names = "mem";
+      linux,phandle = <0x00000006>;
+      phandle = <0x00000006>;
+    };
+    itim@1818000 {
+      compatible = "sifive,itim0";
+      reg = <0x00000000 0x01818000 0x00000000 0x00008000>;
+      reg-names = "mem";
+      linux,phandle = <0x00000007>;
+      phandle = <0x00000007>;
+    };
+    itim@1820000 {
+      compatible = "sifive,itim0";
+      reg = <0x00000000 0x01820000 0x00000000 0x00008000>;
+      reg-names = "mem";
+      linux,phandle = <0x00000008>;
+      phandle = <0x00000008>;
+    };
+    memory-controller@100b0000 {
+      compatible = "sifive,aloeddr0";
+      interrupt-parent = <0x0000000b>;
+      interrupts = <0x0000001f>;
+      reg = <0x00000000 0x100b0000 0x00000000 0x00004000>;
+      reg-names = "control";
+    };
+    pci@2000000000 {
+      #address-cells = <0x00000003>;
+      #interrupt-cells = <0x00000001>;
+      #size-cells = <0x00000002>;
+      compatible = "ms-pf,axi-pcie-host";
+      device_type = "pci";
+      interrupt-map = <0x00000000 0x00000000 0x00000000 0x00000001 0x00000017 0x00000001 0x00000000 0x00000000 0x00000000 0x00000002 0x00000017 0x00000002 0x00000000 0x00000000 0x00000000 0x00000003 0x00000017 0x00000003 0x00000000 0x00000000 0x00000000 0x00000004 0x00000017 0x00000004>;
+      interrupt-map-mask = <0x00000000 0x00000000 0x00000000 0x00000007>;
+      interrupt-parent = <0x0000000b>;
+      interrupts = <0x00000020>;
+      ranges = <0x02000000 0x00000000 0x40000000 0x00000000 0x40000000 0x00000000 0x20000000>;
+      reg = <0x00000020 0x00000000 0x00000000 0x04000000>;
+      reg-names = "control";
+      interrupt-controller {
+        #address-cells = <0x00000000>;
+        #interrupt-cells = <0x00000001>;
+        interrupt-controller;
+        linux,phandle = <0x00000017>;
+        phandle = <0x00000017>;
+      };
+    };
+    pinctrl@10080000 {
+      compatible = "sifive,pinctrl0";
+      reg = <0x00000000 0x10080000 0x00000000 0x00001000>;
+      reg-names = "control";
+    };
+    pwm@10020000 {
+      compatible = "sifive,pwm0";
+      interrupt-parent = <0x0000000b>;
+      interrupts = <0x0000002a 0x0000002b 0x0000002c 0x0000002d>;
+      reg = <0x00000000 0x10020000 0x00000000 0x00001000>;
+      reg-names = "control";
+      clocks = <0x00000016>;
+      sifive,approx-period = <0x000f4240>;
+      #pwm-cells = <0x00000002>;
+      linux,phandle = <0x00000018>;
+      phandle = <0x00000018>;
+    };
+    pwm@10021000 {
+      compatible = "sifive,pwm0";
+      interrupt-parent = <0x0000000b>;
+      interrupts = <0x0000002e 0x0000002f 0x00000030 0x00000031>;
+      reg = <0x00000000 0x10021000 0x00000000 0x00001000>;
+      reg-names = "control";
+      clocks = <0x00000016>;
+      sifive,approx-period = <0x000f4240>;
+      #pwm-cells = <0x00000002>;
+    };
+    pwmleds {
+      compatible = "pwm-leds";
+      heartbeat {
+        pwms = <0x00000018 0x00000000 0x00000000>;
+        max-brightness = <0x000000ff>;
+        linux,default-trigger = "heartbeat";
+      };
+      mtd {
+        pwms = <0x00000018 0x00000001 0x00000000>;
+        max-brightness = <0x000000ff>;
+        linux,default-trigger = "mtd";
+      };
+      netdev {
+        pwms = <0x00000018 0x00000002 0x00000000>;
+        max-brightness = <0x000000ff>;
+        linux,default-trigger = "netdev";
+      };
+      panic {
+        pwms = <0x00000018 0x00000003 0x00000000>;
+        max-brightness = <0x000000ff>;
+        linux,default-trigger = "panic";
+      };
+    };
+    rom@1000 {
+      compatible = "sifive,modeselect0";
+      reg = <0x00000000 0x00001000 0x00000000 0x00001000>;
+      reg-names = "mem";
+    };
+    rom@10000 {
+      compatible = "sifive,maskrom0";
+      reg = <0x00000000 0x00010000 0x00000000 0x00008000>;
+      reg-names = "mem";
+    };
+    rom@a000000 {
+      compatible = "ucbbar,cacheable-zero0";
+      reg = <0x00000000 0x0a000000 0x00000000 0x02000000>;
+      reg-names = "mem";
+      linux,phandle = <0x0000000c>;
+      phandle = <0x0000000c>;
+    };
+    serial@10010000 {
+      compatible = "sifive,uart0";
+      interrupt-parent = <0x0000000b>;
+      interrupts = <0x00000004>;
+      reg = <0x00000000 0x10010000 0x00000000 0x00001000>;
+      reg-names = "control";
+      clocks = <0x00000016>;
+    };
+    serial@10011000 {
+      compatible = "sifive,uart0";
+      interrupt-parent = <0x0000000b>;
+      interrupts = <0x00000005>;
+      reg = <0x00000000 0x10011000 0x00000000 0x00001000>;
+      reg-names = "control";
+      clocks = <0x00000016>;
+    };
+    spi@10040000 {
+      compatible = "sifive,spi0";
+      interrupt-parent = <0x0000000b>;
+      interrupts = <0x00000033>;
+      reg = <0x00000000 0x10040000 0x00000000 0x00001000 0x00000000 0x20000000 0x00000000 0x10000000>;
+      reg-names = "control", "mem";
+      clocks = <0x00000016>;
+      #address-cells = <0x00000001>;
+      #size-cells = <0x00000000>;
+      flash@0 {
+        compatible = "issi,is25wp256d", "jedec,spi-nor";
+        reg = <0x00000000>;
+        spi-max-frequency = <0x02faf080>;
+        m25p,fast-read;
+        spi-tx-bus-width = <0x00000004>;
+        spi-rx-bus-width = <0x00000004>;
+      };
+    };
+    spi@10041000 {
+      compatible = "sifive,spi0";
+      interrupt-parent = <0x0000000b>;
+      interrupts = <0x00000034>;
+      reg = <0x00000000 0x10041000 0x00000000 0x00001000 0x00000000 0x30000000 0x00000000 0x10000000>;
+      reg-names = "control", "mem";
+      clocks = <0x00000016>;
+      #address-cells = <0x00000001>;
+      #size-cells = <0x00000000>;
+    };
+    spi@10050000 {
+      compatible = "sifive,spi0";
+      interrupt-parent = <0x0000000b>;
+      interrupts = <0x00000006>;
+      reg = <0x00000000 0x10050000 0x00000000 0x00001000>;
+      reg-names = "control";
+      clocks = <0x00000016>;
+      #address-cells = <0x00000001>;
+      #size-cells = <0x00000000>;
+      mmc@0 {
+        compatible = "mmc-spi-slot";
+        reg = <0x00000000>;
+        spi-max-frequency = <0x01312d00>;
+        voltage-ranges = <0x00000ce4 0x00000ce4>;
+        disable-wp;
+        gpios = <0x00000015 0x0000000b 0x00000001>;
+      };
+    };
+    teststatus@4000 {
+      compatible = "sifive,test0";
+      reg = <0x00000000 0x00004000 0x00000000 0x00001000>;
+      reg-names = "control";
+    };
+  };
+};

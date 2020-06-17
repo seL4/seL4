@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 /*
@@ -43,8 +39,7 @@ profiler_entry_t profiler_entries[MAX_UNIQUE_INSTRUCTIONS];
 bool_t profiler_enabled VISIBLE = true;
 
 #ifdef CHECKPOINT_PROFILER
-void
-profiler_reset(void)
+void profiler_reset(void)
 {
     word_t i;
 
@@ -55,8 +50,7 @@ profiler_reset(void)
     checkpoint = 0;
 }
 
-void
-profiler_list(void)
+void profiler_list(void)
 {
     unsigned int samples, i, count;
 
@@ -75,8 +69,7 @@ profiler_list(void)
     printf("%u checkpoints, %u sample(s)\n", count, samples);
 }
 
-void
-profiler_record_sample(word_t pc)
+void profiler_record_sample(word_t pc)
 {
     if (checkpoint > max_checkpoint) {
         max_checkpoint = checkpoint;

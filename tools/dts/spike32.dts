@@ -1,0 +1,124 @@
+/*
+ * Copyright Linux Kernel Team
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * This file is derived from an intermediate build stage of the
+ * Linux kernel. The licenses of all input files to this process
+ * are compatible with GPL-2.0-only.
+ */
+
+/dts-v1/;
+
+/ {
+  #address-cells = <0x00000002>;
+  #size-cells = <0x00000002>;
+  compatible = "riscv-virtio";
+  model = "riscv-virtio,qemu";
+  chosen {
+    bootargs = "";
+    stdout-path = <0x2f756172 0x74403130 0x30303030>;
+  };
+  uart@10000000 {
+    interrupts = <0x0000000a>;
+    interrupt-parent = <0x00000002>;
+    clock-frequency = <0x00384000>;
+    reg = <0x00000000 0x10000000 0x00000000 0x00000100>;
+    compatible = "ns16550a";
+  };
+  test@100000 {
+    reg = <0x00000000 0x00100000 0x00000000 0x00001000>;
+    compatible = "sifive,test0";
+  };
+  virtio_mmio@10008000 {
+    interrupts = <0x00000008>;
+    interrupt-parent = <0x00000002>;
+    reg = <0x00000000 0x10008000 0x00000000 0x00001000>;
+    compatible = "virtio,mmio";
+  };
+  virtio_mmio@10007000 {
+    interrupts = <0x00000007>;
+    interrupt-parent = <0x00000002>;
+    reg = <0x00000000 0x10007000 0x00000000 0x00001000>;
+    compatible = "virtio,mmio";
+  };
+  virtio_mmio@10006000 {
+    interrupts = <0x00000006>;
+    interrupt-parent = <0x00000002>;
+    reg = <0x00000000 0x10006000 0x00000000 0x00001000>;
+    compatible = "virtio,mmio";
+  };
+  virtio_mmio@10005000 {
+    interrupts = <0x00000005>;
+    interrupt-parent = <0x00000002>;
+    reg = <0x00000000 0x10005000 0x00000000 0x00001000>;
+    compatible = "virtio,mmio";
+  };
+  virtio_mmio@10004000 {
+    interrupts = <0x00000004>;
+    interrupt-parent = <0x00000002>;
+    reg = <0x00000000 0x10004000 0x00000000 0x00001000>;
+    compatible = "virtio,mmio";
+  };
+  virtio_mmio@10003000 {
+    interrupts = <0x00000003>;
+    interrupt-parent = <0x00000002>;
+    reg = <0x00000000 0x10003000 0x00000000 0x00001000>;
+    compatible = "virtio,mmio";
+  };
+  virtio_mmio@10002000 {
+    interrupts = <0x00000002>;
+    interrupt-parent = <0x00000002>;
+    reg = <0x00000000 0x10002000 0x00000000 0x00001000>;
+    compatible = "virtio,mmio";
+  };
+  virtio_mmio@10001000 {
+    interrupts = <0x00000001>;
+    interrupt-parent = <0x00000002>;
+    reg = <0x00000000 0x10001000 0x00000000 0x00001000>;
+    compatible = "virtio,mmio";
+  };
+  cpus {
+    #address-cells = <0x00000001>;
+    #size-cells = <0x00000000>;
+    timebase-frequency = <0x00989680>;
+    cpu@0 {
+      device_type = "cpu";
+      reg = <0x00000000>;
+      status = "okay";
+      compatible = "riscv";
+      riscv,isa = "rv32imafdcsu";
+      mmu-type = "riscv,sv48";
+      clock-frequency = <0x3b9aca00>;
+      interrupt-controller {
+        #interrupt-cells = <0x00000001>;
+        interrupt-controller;
+        compatible = "riscv,cpu-intc";
+        linux,phandle = <0x00000001>;
+        phandle = <0x00000001>;
+      };
+    };
+  };
+  memory@80000000 {
+    device_type = "memory";
+    reg = <0x00000000 0x80000000 0x00000000 0x7d000000>;
+  };
+  soc {
+    #address-cells = <0x00000002>;
+    #size-cells = <0x00000002>;
+    compatible = "simple-bus";
+    ranges;
+    interrupt-controller@c000000 {
+      linux,phandle = <0x00000002>;
+      phandle = <0x00000002>;
+      riscv,ndev = <0x0000000a>;
+      riscv,max-priority = <0x00000007>;
+      reg-names = "control";
+      reg = <0x00000000 0x0c000000 0x00000000 0x04000000>;
+      interrupts-extended = <0x00000001 0xffffffff 0x00000001 0x00000009>;
+      interrupt-controller;
+      compatible = "riscv,plic0";
+      #interrupt-cells = <0x00000001>;
+    };
+  };
+};

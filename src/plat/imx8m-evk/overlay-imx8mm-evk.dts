@@ -1,0 +1,38 @@
+/*
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+    chosen {
+        seL4,elfloader-devices =
+            "serial1",
+            &{/psci};
+
+        seL4,kernel-devices =
+            "serial1",
+            &{/interrupt-controller@38800000},
+            &{/timer};
+    };
+
+    /* These devices exists in the SOC documentation, but not in the DTS from Linux */
+    gpt@302d0000 {
+        compatible = "fsl,imx8mq-gpt\0fsl,imx7d-gpt";
+        reg = < 0x00 0x302d0000 0x00 0x10000 >;
+        interrupts = < 0x00 0x37 0x04 >;
+        clocks = < 0x04 0xc5 0x04 0xc5 0x04 0xf9 >;
+        clock-names = "ipg\0per\0osc_per";
+        status = "disabled";
+    };
+
+    gpt@302e0000 {
+        compatible = "fsl,imx8mq-gpt\0fsl,imx7d-gpt";
+        reg = < 0x00 0x302e0000 0x00 0x10000 >;
+        interrupts = < 0x00 0x36 0x04 >;
+        clocks = < 0x04 0xc5 0x04 0xc5 0x04 0xf9 >;
+        clock-names = "ipg\0per\0osc_per";
+        status = "disabled";
+    };
+
+};

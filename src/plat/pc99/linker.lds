@@ -1,41 +1,36 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
+#define __ASSEMBLER__
 #include <config.h>
+#include <hardware.h>
 
 ENTRY(_start)
+
+KLOAD_PADDR = KERNEL_ELF_PADDR_BASE;
+KLOAD_VADDR = KERNEL_ELF_BASE;
 
 /* WARNING: constants also defined in plat/machine/hardware.h */
 #if defined(CONFIG_ARCH_IA32)
 #undef i386
-PADDR_BASE = 0x00000000;
-PADDR_LOAD = 0x00100000;
-KERNEL_BASE  = 0xe0000000;
 OUTPUT_ARCH(i386)
 OUTPUT_FORMAT(elf32-i386)
 #elif defined(CONFIG_ARCH_X86_64)
-PADDR_BASE = 0x00000000;
-PADDR_LOAD = 0x00100000;
-KERNEL_BASE = 0xffffffff80000000;
 OUTPUT_FORMAT(elf64-x86-64)
 #if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
 nodeSkimScratchOffset = nodeSkimScratch - node_info;
 #endif
 #endif
 
-KERNEL_OFFSET = KERNEL_BASE - PADDR_BASE;
+KERNEL_OFFSET = KLOAD_VADDR - KLOAD_PADDR;
 
 SECTIONS
 {
     /* load kernel to 1M to avoid the famous IA-32 memory holes below */
-    . = PADDR_LOAD;
+    . = KLOAD_PADDR;
 
     /* code/data only needed during bootstrapping, linked to physical addresses */
 
@@ -132,6 +127,13 @@ SECTIONS
         _ehframe = .;
         *(.eh_frame)
         . = ALIGN(4K);
+    }
+
+    ._idle_thread . : AT(ADDR(._idle_thread) - KERNEL_OFFSET)
+    {
+	__idle_thread_start = .;
+        *(._idle_thread)
+	__idle_thread_end = .;
     }
 
     . = ALIGN(4K);

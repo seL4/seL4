@@ -1,15 +1,10 @@
 <?xml version="1.0" ?>
 <!--
-  Copyright 2017, Data61
-  Commonwealth Scientific and Industrial Research Organisation (CSIRO)
-  ABN 41 687 119 230.
+     Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 
-  This software may be distributed and modified according to the terms of
-  the BSD 2-Clause license. Note that NO WARRANTY is provided.
-  See "LICENSE_BSD2.txt" for details.
+     SPDX-License-Identifier: BSD-2-Clause
+-->
 
-     @TAG(DATA61_BSD)
-  -->
 <api name="ObjectApi">
 
     <interface name="seL4_Untyped" manual_name="Untyped" cap_description="CPTR to an untyped object.">
@@ -116,7 +111,7 @@
                 description="Architecture dependent flags. These have no mearing on either x86 or ARM."/>
         </method>
 
-        <method id="TCBConfigure" name="Configure" manual_name="Configure" manual_label="tcb_configure">
+        <method id="TCBConfigure" name="Configure" manual_name="Configure" manual_label="tcb_configure" condition="!defined(CONFIG_KERNEL_MCS)">
             <brief>
                 Set the parameters of a TCB
             </brief>
@@ -129,7 +124,27 @@
                 description="The new CSpace root."/>
             <param dir="in" name="cspace_root_data" type="seL4_Word"
                 description="Optionally set the guard and guard size of the new root CNode. If set to zero, this parameter has no effect."/>
-            <param dir="in" name="vspace_root" type="seL4_CNode"
+            <param dir="in" name="vspace_root" type="seL4_CPtr"
+                description="The new VSpace root."/>
+            <param dir="in" name="vspace_root_data" type="seL4_Word"
+                description="Has no effect on x86 or ARM processors."/>
+            <param dir="in" name="buffer" type="seL4_Word"
+                description="Location of the thread's IPC buffer. Must be 512-byte aligned. The IPC buffer may not cross a page boundary."/>
+            <param dir="in" name="bufferFrame" type="seL4_CPtr"
+                description="Capability to a page containing the thread's IPC buffer."/>
+        </method>
+        <method id="TCBConfigure" name="Configure" manual_name="Configure (MCS)" manual_label="tcb_configure_mcs" condition="defined(CONFIG_KERNEL_MCS)">
+            <brief>
+                Set the parameters of a TCB
+            </brief>
+            <description>
+                <docref>See <autoref label="sec:threads"/></docref>
+            </description>
+            <param dir="in" name="cspace_root" type="seL4_CNode"
+                description="The new CSpace root."/>
+            <param dir="in" name="cspace_root_data" type="seL4_Word"
+                description="Optionally set the guard and guard size of the new root CNode. If set to zero, this parameter has no effect."/>
+            <param dir="in" name="vspace_root" type="seL4_CPtr"
                 description="The new VSpace root."/>
             <param dir="in" name="vspace_root_data" type="seL4_Word"
                 description="Has no effect on x86 or ARM processors."/>
@@ -146,7 +161,7 @@
             <description>
                 <docref>See <autoref label="sec:sched"/></docref>
             </description>
-            <param dir="in" name="authority" type="seL4_CPtr"
+            <param dir="in" name="authority" type="seL4_TCB"
                 description="Capability to the TCB to use the MCP from when setting the priority."/>
             <param dir="in" name="priority" type="seL4_Word"
                 description="The thread's new priority."/>
@@ -159,27 +174,56 @@
             <description>
                 <docref>See <autoref label="sec:sched"/></docref>
             </description>
-            <param dir="in" name="authority" type="seL4_CPtr"
+            <param dir="in" name="authority" type="seL4_TCB"
                 description="Capability to the TCB to use the MCP from when setting the MCP."/>
             <param dir="in" name="mcp" type="seL4_Word"
                 description="The thread's new maximum controlled priority."/>
         </method>
 
-        <method id="TCBSetSchedParams" name="SetSchedParams" manual_name="Set Sched Params" manual_label="tcb_setschedparams">
+        <method id="TCBSetSchedParams" name="SetSchedParams" manual_name="Set Sched Params" manual_label="tcb_setschedparams" condition="!defined(CONFIG_KERNEL_MCS)">
             <brief>
                 Change a thread's priority and maximum controlled priority.
             </brief>
             <description>
                 <docref>See <autoref label="sec:sched"/></docref>
             </description>
-            <param dir="in" name="authority" type="seL4_CPtr"
+            <param dir="in" name="authority" type="seL4_TCB"
                 description="Capability to the TCB to use the MCP from when setting the priority and MCP."/>
             <param dir="in" name="mcp" type="seL4_Word"
                 description="The thread's new maximum controlled priority."/>
             <param dir="in" name="priority" type="seL4_Word"
                 description="The thread's new priority."/>
         </method>
+        <method id="TCBSetSchedParams" name="SetSchedParams" manual_name="Set Sched Params (MCS)" manual_label="tcb_setschedparams_mcs" condition="defined(CONFIG_KERNEL_MCS)">
+            <brief>
+                Change a thread's priority, maximum controlled priority, scheduling context
+                and fault handler.
+            </brief>
+            <description>
+                <docref>See <autoref label="sec:sched"/></docref>
+            </description>
+            <param dir="in" name="authority" type="seL4_TCB"
+                description="Capability to the TCB to use the MCP from when setting the priority and MCP."/>
+            <param dir="in" name="mcp" type="seL4_Word"
+                description="The thread's new maximum controlled priority."/>
+            <param dir="in" name="priority" type="seL4_Word"
+                description="The thread's new priority."/>
+            <param dir="in" name="sched_context" type="seL4_CPtr"
+                description="Capability to the scheduling context that the TCB should run on. If the scheduling context is already bound to a notification or TCB that is not this TCB this operation will fail. Similarly, if this TCB is already bound to a scheduling context that is not this scheduling context, this will also fail."/>
+            <param dir="in" name="fault_ep" type="seL4_CPtr"
+                description="CPTR to the endpoint which receives IPCs when this thread faults."/>
+        </method>
 
+        <method id="TCBSetTimeoutEndpoint" name="SetTimeoutEndpoint" manual_name="Set Timeout Endpoint" manual_label="tcb_settimeoutendpoint" condition="defined(CONFIG_KERNEL_MCS)">
+            <brief>
+                Set a thread's timeout endpoint.
+            </brief>
+            <description>
+                Timeout exception messages will be delivered to this endpoint if it is not a null capability.
+            </description>
+            <param dir="in" name="timeout_fault_ep" type="seL4_CPtr"
+                description="CPTR to the endpoint which receives IPCs when this thread triggers timeout faults. Can be null."/>
+        </method>
         <method id="TCBSetIPCBuffer" name="SetIPCBuffer" manual_name="Set IPC Buffer" manual_label="tcb_setipcbuffer">
             <brief>
                 Set a thread's IPC buffer
@@ -193,7 +237,7 @@
                 description="Capability to a page containing the thread's IPC buffer."/>
         </method>
 
-        <method id="TCBSetSpace" name="SetSpace" manual_name="Set Space" manual_label="tcb_setspace">
+        <method id="TCBSetSpace" name="SetSpace" manual_name="Set Space" manual_label="tcb_setspace" condition="!defined(CONFIG_KERNEL_MCS)">
             <brief>
                 Set the fault endpoint, CSpace and VSpace of a thread
             </brief>
@@ -206,7 +250,26 @@
                 description="The new CSpace root."/>
             <param dir="in" name="cspace_root_data" type="seL4_Word"
                 description="Optionally set the guard and guard size of the new root CNode. If set to zero, this parameter has no effect."/>
-            <param dir="in" name="vspace_root" type="seL4_CNode"
+            <param dir="in" name="vspace_root" type="seL4_CPtr"
+                description="The new VSpace root."/>
+            <param dir="in" name="vspace_root_data" type="seL4_Word"
+                description="Has no effect on x86 or ARM processors."/>
+        </method>
+
+        <method id="TCBSetSpace" name="SetSpace" manual_name="Set Space" manual_label="tcb_setspace_mcs" condition="defined(CONFIG_KERNEL_MCS)">
+            <brief>
+                Set the fault endpoint, CSpace and VSpace of a thread
+            </brief>
+            <description>
+                <docref>See <autoref label="sec:threads"/></docref>
+            </description>
+            <param dir="in" name="fault_ep" type="seL4_CPtr"
+                description="CPTR to the endpoint which receives IPCs when this thread faults. On MCS this cap gets copied into the TCB."/>
+            <param dir="in" name="cspace_root" type="seL4_CNode"
+                description="The new CSpace root."/>
+            <param dir="in" name="cspace_root_data" type="seL4_Word"
+                description="Optionally set the guard and guard size of the new root CNode. If set to zero, this parameter has no effect."/>
+            <param dir="in" name="vspace_root" type="seL4_CPtr"
                 description="The new VSpace root."/>
             <param dir="in" name="vspace_root_data" type="seL4_Word"
                 description="Has no effect on x86 or ARM processors."/>
@@ -249,7 +312,7 @@
             </description>
         </method>
 
-        <method id="TCBSetAffinity" name="SetAffinity" condition="CONFIG_MAX_NUM_NODES > 1" manual_name="Set CPU Affinity" manual_label="tcb_setaffinity">
+        <method id="TCBSetAffinity" name="SetAffinity" condition="(!defined CONFIG_KERNEL_MCS) &amp;&amp; CONFIG_MAX_NUM_NODES > 1" manual_name="Set CPU Affinity" manual_label="tcb_setaffinity">
             <brief>
                 Change a thread's current CPU in multicore machine
             </brief>
@@ -446,7 +509,7 @@
                     The rights inherited by the new capability.<docref>Possible values for this type are given in <autoref label="sec:cap_rights"/>  .</docref>
                 </description>
             </param>
-            <param dir="in" name="badge" type="seL4_Word" description="Badge or guard to be applied to the new capability. For badges the high 4 bits are ignored."/>
+            <param dir="in" name="badge" type="seL4_Word" description="Badge or guard to be applied to the new capability. For badges on 32-bit platforms, the high 4 bits are ignored."/>
         </method>
 
         <method id="CNodeMove" name="Move" manual_name="Move" manual_label="cnode_move">
@@ -477,7 +540,7 @@
             <param dir="in" name="src_root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the source CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="src_index" type="seL4_Word" description="CPTR to the source slot. Resolved from the root of the source CSpace."/>
             <param dir="in" name="src_depth" type="seL4_Uint8" description="Number of bits of src_index to resolve to find the source slot."/>
-            <param dir="in" name="badge" type="seL4_Word" description="Badge or guard to be applied to the new capability. For badges the high 4 bits are ignored."/>
+            <param dir="in" name="badge" type="seL4_Word" description="Badge or guard to be applied to the new capability. For badges on 32-bit platforms, the high 4 bits are ignored."/>
         </method>
 
         <method id="CNodeRotate" name="Rotate" manual_name="Rotate" manual_label="cnode_rotate">
@@ -501,7 +564,7 @@
             <param dir="in" name="src_depth" type="seL4_Uint8" description="Depth to resolve src_index to."/>
         </method>
 
-        <method id="CNodeSaveCaller" name="SaveCaller" manual_name="Save Caller" manual_label="cnode_savecaller">
+        <method id="CNodeSaveCaller" name="SaveCaller" manual_name="Save Caller" manual_label="cnode_savecaller" condition="!defined(CONFIG_KERNEL_MCS)">
             <brief>
                 Save the reply capability from the last time the thread was called in the given CSpace so that it can be invoked later
             </brief>
@@ -524,7 +587,7 @@
             <description>
                 <docref>See <autoref label="sec:interrupts"/>.</docref>
             </description>
-            <param dir="in" name="irq" type="int" description="The IRQ that you want this capability to handle."/>
+            <param dir="in" name="irq" type="seL4_Word" description="The IRQ that you want this capability to handle."/>
             <param dir="in" name="root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
@@ -577,7 +640,116 @@
             <param dir="in" name="domain" type="seL4_Uint8" description="The thread's new domain."/>
             <param dir="in" name="thread" type="seL4_TCB" description="Capability to the TCB which is being operated on."/>
         </method>
+    </interface>
 
+    <interface name="seL4_SchedControl">
+
+        <method id="SchedControlConfigure" name="Configure" manual_name="Configure" manual_label="schedcontrol_configure" condition="defined(CONFIG_KERNEL_MCS)">
+            <brief>
+                Set the parameters of a scheduling context by invoking the scheduling control capability. If the scheduling context is bound to a currently running thread, the parameters will take effect immediately: that is the current budget will be increased or reduced by the difference between the new and previous budget and the replenishment time will be updated according to any difference in the period. This can result in active threads being post-poned or released depending on the nature of the parameter change and the state of the thread. Additionally, if the scheduling context was previously empty (no budget) but bound to a runnable thread, this can result in a thread running for the first time since it now has access to CPU time. This call will return seL4 Invalid Argument if the parameters are too small (smaller than the kernel WCET for this platform) or too large (will overflow the timer).
+            </brief>
+            <description>
+                See <autoref label="sec:threads"/>
+            </description>
+            <return><errorenumdesc/></return>
+            <param dir="in" name="schedcontext" type="seL4_SchedContext"
+                description="Capability to the scheduling context which is being operated on."/>
+            <param dir="in" name="budget" type="seL4_Time"
+                description="Timeslice in microseconds, when the budget expires the thread will be pre-empted."/>
+            <param dir="in" name="period" type="seL4_Time"
+                description="Period in microseconds, if equal to budget, this thread will be treated as a round-robin thread. Otherwise, sporadic servers will be used to assure the scheduling context does not exceed the budget over the specified period."/>
+            <param dir="in" name="extra_refills" type="seL4_Word"
+                description="Number of extra sporadic replenishments this scheduling context should use. Ignored for round-robin threads."/>
+            <param dir="in" name="badge" type="seL4_Word"
+                description="Identifier for this scheduling context. Delivered to timeout exception handler. Can be used to determine which scheduling context triggered the timeout." />
+        </method>
+
+    </interface>
+
+    <interface name="seL4_SchedContext">
+
+        <method id="SchedContextBind" name="Bind"
+            manual_name="Bind" manual_label="schedcontext_bind" condition="defined(CONFIG_KERNEL_MCS)">
+            <brief>
+                Bind an object to a scheduling context. The object can be a notification object or a
+                thread.
+
+                If the object is a thread and the thread is in a runnable state and the scheduling
+                context has available budget, this will start the thread running.
+
+                If the object is a notification, when passive threads wait on the notification object and
+                a signal arrives, the passive thread will receive the scheduling context and possess it
+                until it waits on the notification object again.
+
+                This operation will fail if the scheduling context is already bound to a thread or
+                notification object.
+            </brief>
+            <description>
+                See <autoref label="sec:threads"/>
+            </description>
+            <return><errorenumdesc/></return>
+            <param dir="in" name="cap" type="seL4_CPtr"
+                description="Capability to a TCB or a notification object"/>
+        </method>
+
+        <method id="SchedContextUnbind" name="Unbind"
+            manual_name="Unbind" manual_label="schedcontext_unbind" condition="defined(CONFIG_KERNEL_MCS)">
+            <brief>
+                Unbind any objects (threads or notification objects) from a scheduling context. This
+                will render the bound thread passive, see Section 6.1.5.
+            </brief>
+            <description>
+                See <autoref label="sec:threads"/>
+            </description>
+            <return><errorenumdesc/></return>
+        </method>
+
+        <method id="SchedContextUnbindObject" name="UnbindObject"
+            manual_name="UnbindObject" manual_label="schedcontext_unbindobject" condition="defined(CONFIG_KERNEL_MCS)">
+            <brief>
+                Unbind an object from a scheduling context. The object can be either a thread or a
+                notification.
+
+                If the thread being unbound is the thread that is bound to this scheduling context,
+                this will render the thread passive. However if the thread being
+                unbound received the scheduling context via scheduling context donation over IPC,
+                the scheduling context will be returned to the thread that it was originally bound to.
+
+                If the object is a notification and it is bound to the scheduling context, unbind it.
+            </brief>
+            <description>
+                See <autoref label="sec:passive"/>
+            </description>
+            <return><errorenumdesc/></return>
+            <param dir="in" name="cap" type="seL4_CPtr"
+                description="Capability to a notification that is bound to the scheduling context or capability to a tcb that is bound to this scheduling context or has received it through scheduling context donation."/>
+        </method>
+        <method id="SchedContextConsumed" name="Consumed" manual_name="Consumed"
+                manual_label="schedcontext_consumed" condition="defined(CONFIG_KERNEL_MCS)">
+            <brief>
+                Return the amount of time used by this scheduling context since this function was last called or a timeout exception triggered.
+            </brief>
+            <description>
+                See <autoref label="sec:threads"/>
+            </description>
+        <return><errorenumdesc/></return>
+        <param dir="out" name="consumed" type="seL4_Time"
+               description="Amount consumed by this scheduling context."/>
+
+       </method>
+       <method id="SchedContextYieldTo" name="YieldTo"
+           manual_name="YieldTo" manual_label="schedcontext_yieldto" condition="defined(CONFIG_KERNEL_MCS)">
+           <brief>
+              If a thread is currently runnable and running on this scheduling context and the scheduling context has available budget, place it at the head of the scheduling queue.
+              If the caller is at an equal priority to the thread this will result in the thread being scheduled.
+              If the caller is at a higher priority the thread will not run until the threads priority is the highest priority in the system.
+              The caller must have a maximum control priority greater than or equal to the threads priority.
+          </brief>
+          <description>
+              TODO
+          </description>
+            <param dir="out" name="consumed" type="seL4_Time"/>
+        </method>
     </interface>
 
 </api>

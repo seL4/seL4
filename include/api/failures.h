@@ -1,18 +1,14 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __FAILURES_H
-#define __FAILURES_H
+#pragma once
 
 #include <types.h>
-#include <api/errors.h>
+#include <sel4/errors.h>
+#include <sel4/constants.h>
 /* These datatypes differ markedly from haskell, due to the
  * different implementation of the various fault monads */
 
@@ -40,8 +36,15 @@ struct syscall_error {
 };
 typedef struct syscall_error syscall_error_t;
 
+#ifdef CONFIG_KERNEL_INVOCATION_REPORT_ERROR_IPC
+struct debug_syscall_error {
+    word_t errorMessage[DEBUG_MESSAGE_MAXLEN];
+};
+typedef struct debug_syscall_error debug_syscall_error_t;
+
+extern debug_syscall_error_t current_debug_error;
+#endif
 extern lookup_fault_t current_lookup_fault;
 extern seL4_Fault_t current_fault;
 extern syscall_error_t current_syscall_error;
 
-#endif

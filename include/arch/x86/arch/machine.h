@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_H
-#define __ARCH_MACHINE_H
+#pragma once
 
 #include <arch/types.h>
 #include <arch/object/structures.h>
@@ -25,6 +20,7 @@
 #define IA32_SYSENTER_CS_MSR    0x174
 #define IA32_SYSENTER_ESP_MSR   0x175
 #define IA32_SYSENTER_EIP_MSR   0x176
+#define IA32_TSC_DEADLINE_MSR   0x6e0
 #define IA32_FS_BASE_MSR        0xC0000100
 #define IA32_GS_BASE_MSR        0xC0000101
 #define IA32_LSTAR_MSR          0xC0000082
@@ -139,11 +135,11 @@ static inline uint32_t x86_cpuid_edx(uint32_t eax, uint32_t ecx)
 {
     uint32_t edx, ebx;
     asm volatile("cpuid"
-                 : "=a" (eax),
-                 "=b" (ebx),
-                 "=c" (ecx),
-                 "=d" (edx)
-                 : "a" (eax), "c" (ecx)
+                 : "=a"(eax),
+                 "=b"(ebx),
+                 "=c"(ecx),
+                 "=d"(edx)
+                 : "a"(eax), "c"(ecx)
                  : "memory");
     return edx;
 }
@@ -152,11 +148,11 @@ static inline uint32_t x86_cpuid_eax(uint32_t eax, uint32_t ecx)
 {
     uint32_t edx, ebx;
     asm volatile("cpuid"
-                 : "=a" (eax),
-                 "=b" (ebx),
-                 "=c" (ecx),
-                 "=d" (edx)
-                 : "a" (eax), "c" (ecx)
+                 : "=a"(eax),
+                 "=b"(ebx),
+                 "=c"(ecx),
+                 "=d"(edx)
+                 : "a"(eax), "c"(ecx)
                  : "memory");
     return eax;
 }
@@ -165,11 +161,11 @@ static inline uint32_t x86_cpuid_ecx(uint32_t eax, uint32_t ecx)
 {
     uint32_t edx, ebx;
     asm volatile("cpuid"
-                 : "=a" (eax),
-                 "=b" (ebx),
-                 "=c" (ecx),
-                 "=d" (edx)
-                 : "a" (eax), "c" (ecx)
+                 : "=a"(eax),
+                 "=b"(ebx),
+                 "=c"(ecx),
+                 "=d"(edx)
+                 : "a"(eax), "c"(ecx)
                  : "memory");
     return ecx;
 }
@@ -178,11 +174,11 @@ static inline uint32_t x86_cpuid_ebx(uint32_t eax, uint32_t ecx)
 {
     uint32_t edx, ebx;
     asm volatile("cpuid"
-                 : "=a" (eax),
-                 "=b" (ebx),
-                 "=c" (ecx),
-                 "=d" (edx)
-                 : "a" (eax), "c" (ecx)
+                 : "=a"(eax),
+                 "=b"(ebx),
+                 "=c"(ecx),
+                 "=d"(edx)
+                 : "a"(eax), "c"(ecx)
                  : "memory");
     return ebx;
 }
@@ -191,8 +187,8 @@ static inline uint64_t x86_rdtsc(void)
 {
     uint32_t hi, lo;
     asm volatile("rdtsc"
-                 : "=a" (lo),
-                 "=d" (hi)
+                 : "=a"(lo),
+                 "=d"(hi)
                 );
     return ((uint64_t) hi) << 32llu | (uint64_t) lo;
 }
@@ -238,6 +234,16 @@ x86_cpu_identity_t *x86_cpuid_get_model_info(void);
  */
 cpu_identity_t *x86_cpuid_get_identity(void);
 
+/*
+ * Forward declarations here as these may instead be later defined in
+ * mode-specific machine.h
+ */
+
+static inline void x86_write_fs_base_impl(word_t base);
+static inline word_t x86_read_fs_base_impl(void);
+static inline void x86_write_gs_base_impl(word_t base);
+static inline word_t x86_read_gs_base_impl(void);
+
 #ifdef CONFIG_FSGSBASE_MSR
 
 static inline void x86_write_fs_base_impl(word_t base)
@@ -245,22 +251,45 @@ static inline void x86_write_fs_base_impl(word_t base)
     x86_wrmsr(IA32_FS_BASE_MSR, base);
 }
 
-static inline void x86_write_gs_base_impl(word_t base)
-{
-    x86_wrmsr(IA32_GS_BASE_MSR, base);
-}
-
 static inline word_t x86_read_fs_base_impl(void)
 {
     return x86_rdmsr(IA32_FS_BASE_MSR);
 }
 
-static inline word_t x86_read_gs_base_impl(void)
+#endif
+
+
+#ifdef CONFIG_FSGSBASE_INST
+
+/*
+ * With fsgsbase, these registers can and are allowed to be changed from
+ * user-space.
+ *
+ * These calls are also cheap as they read from the hidden register
+ * state for the segment selectors rather than from the GDT.
+ */
+
+static inline void x86_write_fs_base(word_t base, cpu_id_t cpu)
 {
-    return x86_rdmsr(IA32_GS_BASE_MSR);
+    x86_write_fs_base_impl(base);
 }
 
-#endif
+static inline void x86_write_gs_base(word_t base, cpu_id_t cpu)
+{
+    x86_write_gs_base_impl(base);
+}
+
+static inline word_t x86_read_fs_base(cpu_id_t cpu)
+{
+    return x86_read_fs_base_impl();
+}
+
+static inline word_t x86_read_gs_base(cpu_id_t cpu)
+{
+    return x86_read_gs_base_impl();
+}
+
+#else
 
 /* Writing the fs/gs bases can be expensive (especially if it requires a MSR
    write), so we avoid actually writing them if they aren't actually changed. */
@@ -291,8 +320,25 @@ static inline word_t x86_read_gs_base(cpu_id_t cpu)
     return ARCH_NODE_STATE_ON_CORE(x86KSCurrentGSBase, cpu);
 }
 
+#endif
+
+
+static inline void x86_load_fsgs_base(tcb_t *thread, cpu_id_t cpu)
+{
+    /*
+     * Restore the FS and GS base registers.
+     *
+     * These should only be accessed inside the kernel, between the
+     * entry and exit calls to swapgs if used.
+     */
+    word_t fs_base = getRegister(thread, FS_BASE);
+    x86_write_fs_base(fs_base, cpu);
+    word_t gs_base = getRegister(thread, GS_BASE);
+    x86_write_gs_base(gs_base, cpu);
+}
+
 /* Cleaning memory before user-level access */
-static inline void clearMemory(void* ptr, unsigned int bits)
+static inline void clearMemory(void *ptr, unsigned int bits)
 {
     memzero(ptr, BIT(bits));
     /* no cleaning of caches necessary on IA-32 */
@@ -316,6 +362,31 @@ static inline unsigned long getFaultAddr(void)
 static inline void Arch_finaliseInterrupt(void)
 {
     ARCH_NODE_STATE(x86KScurInterrupt) = int_invalid;
+}
+
+static inline void x86_set_tls_segment_base(word_t tls_base);
+
+/* Update the value of the actual regsiter to hold the expected value */
+static inline exception_t Arch_setTLSRegister(word_t tls_base)
+{
+    word_t sanitised = Mode_sanitiseRegister(TLS_BASE, tls_base);
+
+    if (sanitised != tls_base) {
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+#ifndef CONFIG_FSGSBASE_INST
+    /*
+     * The context is only updated from the register on a context switch
+     * if the FSGS instructions are enabled. When they aren't it msut be
+     * manually stored here.
+     */
+    setRegister(NODE_STATE(ksCurThread), TLS_BASE, tls_base);
+#endif
+
+    x86_set_tls_segment_base(sanitised);
+
+    return EXCEPTION_NONE;
 }
 
 /* we do not cache the IBRS value as writing the enable bit is meaningful even if it
@@ -904,4 +975,3 @@ void int_ff(void);
 void handle_vmexit(void);
 #endif
 
-#endif

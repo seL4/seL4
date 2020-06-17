@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -24,7 +20,7 @@
 #include <arch/object/vcpu.h>
 #include <plat/machine/intel-vtd.h>
 
-deriveCap_ret_t Arch_deriveCap(cte_t* slot, cap_t cap)
+deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
 {
     deriveCap_ret_t ret;
 
@@ -152,9 +148,9 @@ cap_t CONST Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
         uint16_t PCIDevice = io_space_capdata_get_PCIDevice(w);
         uint16_t domainID = io_space_capdata_get_domainID(w);
         if (!preserve && cap_io_space_cap_get_capPCIDevice(cap) == 0 &&
-                domainID >= x86KSFirstValidIODomain &&
-                domainID != 0                        &&
-                domainID <= MASK(x86KSnumIODomainIDBits)) {
+            domainID >= x86KSFirstValidIODomain &&
+            domainID != 0                        &&
+            domainID <= MASK(x86KSnumIODomainIDBits)) {
             return cap_io_space_cap_new(domainID, PCIDevice);
         } else {
             return cap_null_cap_new();
@@ -252,7 +248,7 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
     case cap_ept_pml4_cap:
         if (final && cap_ept_pml4_cap_get_capPML4IsMapped(cap)) {
             deleteEPTASID(cap_ept_pml4_cap_get_capPML4MappedASID(cap),
-                          (ept_pml4e_t*)cap_ept_pml4_cap_get_capPML4BasePtr(cap));
+                          (ept_pml4e_t *)cap_ept_pml4_cap_get_capPML4BasePtr(cap));
         }
         break;
 
@@ -261,7 +257,7 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
             unmapEPTPDPT(
                 cap_ept_pdpt_cap_get_capPDPTMappedASID(cap),
                 cap_ept_pdpt_cap_get_capPDPTMappedAddress(cap),
-                (ept_pdpte_t*)cap_ept_pdpt_cap_get_capPDPTBasePtr(cap));
+                (ept_pdpte_t *)cap_ept_pdpt_cap_get_capPDPTBasePtr(cap));
         }
         break;
 
@@ -270,7 +266,7 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
             unmapEPTPageDirectory(
                 cap_ept_pd_cap_get_capPDMappedASID(cap),
                 cap_ept_pd_cap_get_capPDMappedAddress(cap),
-                (ept_pde_t*)cap_ept_pd_cap_get_capPDBasePtr(cap));
+                (ept_pde_t *)cap_ept_pd_cap_get_capPDBasePtr(cap));
         }
         break;
 
@@ -279,7 +275,7 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
             unmapEPTPageTable(
                 cap_ept_pt_cap_get_capPTMappedASID(cap),
                 cap_ept_pt_cap_get_capPTMappedAddress(cap),
-                (ept_pte_t*)cap_ept_pt_cap_get_capPTBasePtr(cap));
+                (ept_pte_t *)cap_ept_pt_cap_get_capPTBasePtr(cap));
         }
         break;
 #endif
@@ -301,8 +297,8 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
             word_t botA, botB, topA, topB;
             botA = cap_frame_cap_get_capFBasePtr(cap_a);
             botB = cap_frame_cap_get_capFBasePtr(cap_b);
-            topA = botA + MASK (pageBitsForSize(cap_frame_cap_get_capFSize(cap_a)));
-            topB = botB + MASK (pageBitsForSize(cap_frame_cap_get_capFSize(cap_b)));
+            topA = botA + MASK(pageBitsForSize(cap_frame_cap_get_capFSize(cap_a)));
+            topB = botB + MASK(pageBitsForSize(cap_frame_cap_get_capFSize(cap_b)));
             return ((botA <= botB) && (topA >= topB) && (botB <= topB));
         }
         break;
@@ -336,7 +332,7 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
 
     case cap_io_port_control_cap:
         if (cap_get_capType(cap_b) == cap_io_port_control_cap ||
-                cap_get_capType(cap_b) == cap_io_port_cap) {
+            cap_get_capType(cap_b) == cap_io_port_cap) {
             return true;
         }
         break;
@@ -412,7 +408,7 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
 bool_t CONST Arch_sameObjectAs(cap_t cap_a, cap_t cap_b)
 {
     if (cap_get_capType(cap_a) == cap_io_port_control_cap &&
-            cap_get_capType(cap_b) == cap_io_port_cap) {
+        cap_get_capType(cap_b) == cap_io_port_cap) {
         return false;
     }
     if (cap_get_capType(cap_a) == cap_frame_cap) {
@@ -428,8 +424,7 @@ bool_t CONST Arch_sameObjectAs(cap_t cap_a, cap_t cap_b)
     return Arch_sameRegionAs(cap_a, cap_b);
 }
 
-word_t
-Arch_getObjectSize(word_t t)
+word_t Arch_getObjectSize(word_t t)
 {
     switch (t) {
     case seL4_X86_4K:
@@ -461,8 +456,7 @@ Arch_getObjectSize(word_t t)
     }
 }
 
-cap_t
-Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
+cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
 {
 #ifdef CONFIG_VTX
     switch (t) {
@@ -507,16 +501,15 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
 #endif
 }
 
-exception_t
-Arch_decodeInvocation(
+exception_t Arch_decodeInvocation(
     word_t invLabel,
     word_t length,
     cptr_t cptr,
-    cte_t* slot,
+    cte_t *slot,
     cap_t cap,
     extra_caps_t excaps,
     bool_t call,
-    word_t* buffer
+    word_t *buffer
 )
 {
     switch (cap_get_capType(cap)) {
@@ -547,8 +540,7 @@ Arch_decodeInvocation(
     }
 }
 
-void
-Arch_prepareThreadDelete(tcb_t *thread)
+void Arch_prepareThreadDelete(tcb_t *thread)
 {
     /* Notify the lazy FPU module about this thread's deletion. */
     fpuThreadDelete(thread);

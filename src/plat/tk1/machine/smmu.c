@@ -1,11 +1,7 @@
 /*
  * Copyright 2016, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <types.h>
@@ -15,11 +11,11 @@
 
 #include <plat/machine/smmu.h>
 #include <linker.h>
-#include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
 #include <object/structures.h>
 
 
+#define MC_PADDR                    0x70019000
 #define SMMU_CONFIG_OFFSET          0x10
 
 #define PTB_DATA_BASE_SHIFT         12
@@ -70,34 +66,31 @@
 
 static volatile tk1_mc_regs_t *smmu_regs = (volatile tk1_mc_regs_t *)(SMMU_PPTR);
 
-static iopde_t *smmu_ioasid_to_pd[ARM_PLAT_NUM_SMMU];
+static char smmu_pds[ARM_PLAT_NUM_SMMU][BIT(SMMU_PD_INDEX_BITS)] ALIGN(BIT(SMMU_PD_INDEX_BITS));
 
-static void
-do_smmu_enable(void)
+static void do_smmu_enable(void)
 {
     volatile uint32_t *config = (volatile uint32_t *)(MC_PADDR + SMMU_CONFIG_OFFSET);
     *config = 1;
 }
 
-static void
-do_smmu_disable(void)
+static void do_smmu_disable(void)
 {
     volatile uint32_t *config = (volatile uint32_t *)(MC_PADDR + SMMU_CONFIG_OFFSET);
     *config = 0;
 }
 
-static inline void
-smmu_disable(void)
+static inline void smmu_disable(void)
 {
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         /* in hyp mode, we need call the hook in monitor mode */
         /* we need physical address here */
         paddr_t addr = addrFromPPtr(&do_smmu_disable);
-        asm (".arch_extension sec\n");
-        asm volatile ("mov r0, %0\n\t"
-                      "dsb\nisb\n"
-                      "smc #0\n"
-                      ::"r"(addr):"r0", "r1", "r2", "r3", "ip");
+        asm(".arch_extension sec\n");
+        asm volatile("mov r0, %0\n\t"
+                     "dsb\nisb\n"
+                     "smc #0\n"
+                     ::"r"(addr):"r0", "r1", "r2", "r3", "ip");
     } else {
         /* in secure mode, can enable it directly */
         smmu_regs->smmu_config = 0;
@@ -106,16 +99,15 @@ smmu_disable(void)
     return;
 }
 
-static inline void
-smmu_enable(void)
+static inline void smmu_enable(void)
 {
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         paddr_t addr = addrFromPPtr(&do_smmu_enable);
-        asm (".arch_extension sec\n");
-        asm volatile ("mov r0, %0\n\t"
-                      "dsb\nisb\n"
-                      "smc #0\n"
-                      ::"r"(addr):"r0", "r1", "r2", "r3", "ip");
+        asm(".arch_extension sec\n");
+        asm volatile("mov r0, %0\n\t"
+                     "dsb\nisb\n"
+                     "smc #0\n"
+                     ::"r"(addr):"r0", "r1", "r2", "r3", "ip");
     } else {
         smmu_regs->smmu_config = 1;
     }
@@ -124,8 +116,7 @@ smmu_enable(void)
 }
 
 
-static uint32_t
-make_ptb_data(uint32_t pd_base, bool_t read, bool_t write, bool_t nonsecure)
+static uint32_t make_ptb_data(uint32_t pd_base, bool_t read, bool_t write, bool_t nonsecure)
 {
     uint32_t ret = 0;
     ret = (pd_base >> PTB_DATA_BASE_SHIFT);
@@ -143,37 +134,26 @@ make_ptb_data(uint32_t pd_base, bool_t read, bool_t write, bool_t nonsecure)
     return ret;
 }
 
-void
-plat_smmu_ptc_flush_all(void)
+void plat_smmu_ptc_flush_all(void)
 {
     uint32_t cmd = PTC_FLUSH_ALL;
     smmu_regs->smmu_ptc_flush = cmd;
 }
 
-void
-plat_smmu_tlb_flush_all(void)
+void plat_smmu_tlb_flush_all(void)
 {
     uint32_t cmd = TLB_FLUSH_ALL;
     smmu_regs->smmu_tlb_flush = cmd;
 }
 
-BOOT_CODE int
-plat_smmu_init(void)
+BOOT_CODE int plat_smmu_init(void)
 {
     uint32_t asid;
 
     smmu_disable();
 
     for (asid = SMMU_FIRST_ASID; asid <= SMMU_LAST_ASID; asid++) {
-        iopde_t *pd = (iopde_t *)alloc_region(SMMU_PD_INDEX_BITS);
-
-        if (pd == 0) {
-            printf("Failed to allocate SMMU IOPageDirectory for ASID %d\n", asid);
-            return 0;
-        }
-
-        /* put the PD in the lookup table */
-        smmu_ioasid_to_pd[asid - SMMU_FIRST_ASID] = pd;
+        iopde_t *pd = (iopde_t *) smmu_pds[asid - SMMU_FIRST_ASID];
 
         memset(pd, 0, BIT(SMMU_PD_INDEX_BITS));
         cleanCacheRange_RAM((word_t)pd, ((word_t)pd + BIT(SMMU_PD_INDEX_BITS)),
@@ -233,17 +213,15 @@ plat_smmu_init(void)
     return ARM_PLAT_NUM_SMMU;
 }
 
-iopde_t *
-plat_smmu_lookup_iopd_by_asid(uint32_t asid)
+iopde_t *plat_smmu_lookup_iopd_by_asid(uint32_t asid)
 {
     /* There should be no way to generate bad ASID values through the kernel
      * so this is an assertion and not a check */
     assert(asid >= SMMU_FIRST_ASID && asid <= SMMU_LAST_ASID);
-    return smmu_ioasid_to_pd[asid - SMMU_FIRST_ASID];
+    return (iopde_t *) smmu_pds[asid - SMMU_FIRST_ASID];
 }
 
-void
-plat_smmu_handle_interrupt(void)
+void plat_smmu_handle_interrupt(void)
 {
     uint32_t status = smmu_regs->intstatus;
     uint32_t clear_status = 0;

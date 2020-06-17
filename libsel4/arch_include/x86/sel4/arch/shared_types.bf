@@ -1,14 +1,9 @@
 --
--- Copyright 2017, Data61
--- Commonwealth Scientific and Industrial Research Organisation (CSIRO)
--- ABN 41 687 119 230.
+-- Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 --
--- This software may be distributed and modified according to the terms of
--- the BSD 2-Clause license. Note that NO WARRANTY is provided.
--- See "LICENSE_BSD2.txt" for details.
+-- SPDX-License-Identifier: BSD-2-Clause
 --
--- @TAG(DATA61_BSD)
---
+
 -- this file contains sel4arch specific types shared between libsel4 and the kernel
 
 tagged_union seL4_Fault seL4_FaultType {
@@ -20,6 +15,13 @@ tagged_union seL4_Fault seL4_FaultType {
 #ifdef CONFIG_HARDWARE_DEBUG_API
     tag DebugException 4
 #endif
+#ifdef CONFIG_KERNEL_MCS
+    tag Timeout       5
+
+    -- arch specific faults
+    tag VMFault 6
+#else
     -- arch specific faults
     tag VMFault 5
+#endif
 }

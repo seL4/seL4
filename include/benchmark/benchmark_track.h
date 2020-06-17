@@ -1,20 +1,15 @@
 /*
  * Copyright 2016, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef BENCHMARK_TRACK_H
-#define BENCHMARK_TRACK_H
+#pragma once
 
 #include <config.h>
 #include <arch/benchmark.h>
-#include <benchmark/benchmark_track_types.h>
-#include <arch/api/constants.h>
+#include <sel4/benchmark_track_types.h>
+#include <sel4/arch/constants.h>
 #include <machine/io.h>
 #include <kernel/cspace.h>
 #include <model/statedata.h>
@@ -46,15 +41,13 @@ void benchmark_track_exit(void);
  * @brief Start logging kernel entries
  *
  */
-static inline void
-benchmark_track_start(void)
+static inline void benchmark_track_start(void)
 {
     ksEnter = timestamp();
 }
 #endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
 
-static inline void
-benchmark_debug_syscall_start(word_t cptr, word_t msgInfo, word_t syscall)
+static inline void benchmark_debug_syscall_start(word_t cptr, word_t msgInfo, word_t syscall)
 {
     seL4_MessageInfo_t info = messageInfoFromWord_raw(msgInfo);
     lookupCapAndSlot_ret_t lu_ret = lookupCapAndSlot(NODE_STATE(ksCurThread), cptr);
@@ -65,4 +58,3 @@ benchmark_debug_syscall_start(word_t cptr, word_t msgInfo, word_t syscall)
 }
 #endif
 
-#endif /* BENCHMARK_TRACK_H */

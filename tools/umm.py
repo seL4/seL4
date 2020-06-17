@@ -1,15 +1,8 @@
-#!/usr/bin/env python
-
+#!/usr/bin/env python3
 #
-# Copyright 2017, Data61
-# Commonwealth Scientific and Industrial Research Organisation (CSIRO)
-# ABN 41 687 119 230.
+# Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 #
-# This software may be distributed and modified according to the terms of
-# the BSD 2-Clause license. Note that NO WARRANTY is provided.
-# See "LICENSE_BSD2.txt" for details.
-#
-# @TAG(DATA61_BSD)
+# SPDX-License-Identifier: BSD-2-Clause
 #
 
 from __future__ import print_function
@@ -17,10 +10,12 @@ import sys
 import six
 from functools import reduce
 
-## We assume length tp > 0
+# We assume length tp > 0
+
+
 def parse_type(tps):
     def helper(tps):
-        tp   = tps[0]
+        tp = tps[0]
         rest = tps[1:]
 
         if tp == 'Word':
@@ -31,7 +26,7 @@ def parse_type(tps):
             return ('Ptr', tp2), rest
 
         elif tp == 'Unit':
-            return ('Unit',) , rest
+            return ('Unit',), rest
 
         elif tp == 'Array':
             tp2, rest = helper(rest)
@@ -42,6 +37,7 @@ def parse_type(tps):
             return ('Base', tp), rest
 
     return helper(tps)[0]
+
 
 def splitBy(f, xs):
     def fold(acc, v):
@@ -54,6 +50,7 @@ def splitBy(f, xs):
 
     return (reduce(fold, xs, ([], [])))[0]
 
+
 def handle_one_struct(s):
     def hdl_fld(f):
         fl, tp = f.split(':')
@@ -62,6 +59,7 @@ def handle_one_struct(s):
     name = s[0]
     return (name, map(hdl_fld, s[1:]))
 
+
 def dict_from_list(ls):
     a = {}
     for k, v in ls:
@@ -69,14 +67,18 @@ def dict_from_list(ls):
 
     return a
 
+
 def is_base(x):
     return (x[0] == 'Base')
+
 
 def base_name(x):
     return x[1]
 
 # This assumes that membership is a DAG which is the case in C
 # We could memoize, doesn't seem worth it ...
+
+
 def paths_to_type(mp, f, start):
     def handle_one(fld):
         name, tp = fld
@@ -95,8 +97,9 @@ def paths_to_type(mp, f, start):
     if f(start_tp):
         return [([], start_tp)]
     else:
-        res  = map(handle_one, mp[start])
+        res = map(handle_one, mp[start])
         return (reduce(lambda x, y: x + y, res))
+
 
 def build_types(file):
     in_file = open(file, 'r')
@@ -119,12 +122,13 @@ def print_graph(filename, out_file):
     print('digraph types {', file=out_file)
     for k, flds in six.iteritems(mp):
         for fld, tp in flds:
-            #if is_base(tp):
+            # if is_base(tp):
             print('\t "%s" -> "%s" [label="%s"]' % (k, base_name(tp), fld),
-                   file=out_file)
+                  file=out_file)
     print('}', file=out_file)
 
-## Toplevel
+# Toplevel
+
 
 if __name__ == '__main__':
     print_graph('umm_types.txt', sys.stdout)

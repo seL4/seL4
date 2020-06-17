@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -15,6 +11,7 @@
 #include <model/statedata.h>
 #include <arch/kernel/vspace.h>
 #include <arch/kernel/boot.h>
+#include <arch/kernel/boot_sys.h>
 #include <arch/api/invocation.h>
 #include <benchmark/benchmark_track.h>
 #include <arch/kernel/tlb_bitmap.h>
@@ -27,8 +24,7 @@ gdt_idt_ptr_t gdt_idt_ptr;
 
 /* initialise the Task State Segment (TSS) */
 
-BOOT_CODE void
-init_tss(tss_t* tss)
+BOOT_CODE void init_tss(tss_t *tss)
 {
     *tss = tss_new(
                sizeof(*tss),   /* io_map_base  */
@@ -59,12 +55,12 @@ init_tss(tss_t* tss)
                0,              /* esp0         */
                0               /* prev_task    */
            );
-    memset(&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.io_map[0], 0xff, sizeof(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.io_map));
+    memset(&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.io_map[0], 0xff,
+           sizeof(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.io_map));
 }
 /* initialise Global Descriptor Table (GDT) */
 
-BOOT_CODE void
-init_gdt(gdt_entry_t* gdt, tss_t* tss)
+BOOT_CODE void init_gdt(gdt_entry_t *gdt, tss_t *tss)
 {
     uint32_t tss_addr = (uint32_t)tss;
 
@@ -150,43 +146,40 @@ init_gdt(gdt_entry_t* gdt, tss_t* tss)
                        sizeof(tss_io_t) - 1         /* limit_low 16 bits    */
                    );
 
-    /* pre-init the userland data segment used for TLS */
-    gdt[GDT_TLS] = gdt_entry_gdt_data_new(
-                       0,      /* Base high 8 bits             */
-                       1,      /* Granularity                  */
-                       1,      /* Operation size               */
-                       0,      /* Available                    */
-                       0xf,    /* Segment limit high 4 bits    */
-                       1,      /* Present                      */
-                       3,      /* Descriptor privilege level   */
-                       1,      /* writable                     */
-                       1,      /* accessed                     */
-                       0,      /* Base middle 8 bits           */
-                       0,      /* Base low 16 bits             */
-                       0xffff  /* Segment limit low 16 bits    */
-                   );
+    gdt[GDT_FS] = gdt_entry_gdt_data_new(
+                      0,      /* Base high 8 bits             */
+                      1,      /* Granularity                  */
+                      1,      /* Operation size               */
+                      0,      /* Available                    */
+                      0xf,    /* Segment limit high 4 bits    */
+                      1,      /* Present                      */
+                      3,      /* Descriptor privilege level   */
+                      1,      /* writable                     */
+                      1,      /* accessed                     */
+                      0,      /* Base middle 8 bits           */
+                      0,      /* Base low 16 bits             */
+                      0xffff  /* Segment limit low 16 bits    */
+                  );
 
-    /* pre-init the userland data segment used for the IPC buffer */
-    gdt[GDT_IPCBUF] = gdt_entry_gdt_data_new(
-                          0,      /* Base high 8 bits             */
-                          1,      /* Granularity                  */
-                          1,      /* Operation size               */
-                          0,      /* Available                    */
-                          0xf,    /* Segment limit high 4 bits    */
-                          1,      /* Present                      */
-                          3,      /* Descriptor privilege level   */
-                          1,      /* writable                     */
-                          1,      /* accessed                     */
-                          0,      /* Base middle 8 bits           */
-                          0,      /* Base low 16 bits             */
-                          0xffff  /* Segment limit low 16 bits    */
-                      );
+    gdt[GDT_GS] = gdt_entry_gdt_data_new(
+                      0,      /* Base high 8 bits             */
+                      1,      /* Granularity                  */
+                      1,      /* Operation size               */
+                      0,      /* Available                    */
+                      0xf,    /* Segment limit high 4 bits    */
+                      1,      /* Present                      */
+                      3,      /* Descriptor privilege level   */
+                      1,      /* writable                     */
+                      1,      /* accessed                     */
+                      0,      /* Base middle 8 bits           */
+                      0,      /* Base low 16 bits             */
+                      0xffff  /* Segment limit low 16 bits    */
+                  );
 }
 
 /* initialise the Interrupt Descriptor Table (IDT) */
 
-BOOT_CODE void
-init_idt_entry(idt_entry_t* idt, interrupt_t interrupt, void(*handler)(void))
+BOOT_CODE void init_idt_entry(idt_entry_t *idt, interrupt_t interrupt, void(*handler)(void))
 {
     uint32_t handler_addr = (uint32_t)handler;
     uint32_t dpl = 3;
@@ -205,12 +198,11 @@ init_idt_entry(idt_entry_t* idt, interrupt_t interrupt, void(*handler)(void))
                      );
 }
 
-BOOT_CODE bool_t
-map_kernel_window(
+BOOT_CODE bool_t map_kernel_window(
     uint32_t num_ioapic,
-    paddr_t*   ioapic_paddrs,
+    paddr_t   *ioapic_paddrs,
     uint32_t   num_drhu,
-    paddr_t*   drhu_list
+    paddr_t   *drhu_list
 )
 {
     paddr_t  phys;
@@ -308,9 +300,9 @@ map_kernel_window(
     ia32KSGlobalPT[idx] = pte;
     idx++;
 
-    /* null mappings up to PPTR_KDEV */
+    /* null mappings up to KDEV_BASE */
 
-    while (idx < (PPTR_KDEV & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS) {
+    while (idx < (KDEV_BASE &MASK(LARGE_PAGE_BITS)) >> PAGE_BITS) {
         pte = pte_new(
                   0,      /* page_base_address    */
                   0,      /* avl                  */
@@ -338,10 +330,9 @@ map_kernel_window(
 }
 
 /* Note: this function will invalidate any pointers previously returned from this function */
-BOOT_CODE void*
-map_temp_boot_page(void* entry, uint32_t large_pages)
+BOOT_CODE void *map_temp_boot_page(void *entry, uint32_t large_pages)
 {
-    void* replacement_vaddr;
+    void *replacement_vaddr;
     unsigned int i;
     unsigned int offset_in_page;
 
@@ -349,7 +340,7 @@ map_temp_boot_page(void* entry, uint32_t large_pages)
     unsigned int virt_pd_start = (PPTR_BASE >> LARGE_PAGE_BITS) - large_pages;
     unsigned int virt_pg_start = PPTR_BASE - (large_pages << LARGE_PAGE_BITS);
 
-    for (i = 0; i < large_pages; ++i) {
+    for (i = 0; i < large_pages; i++) {
         unsigned int pg_offset = i << LARGE_PAGE_BITS; // num pages since start * page size
 
         *(get_boot_pd() + virt_pd_start + i) = pde_pde_large_new(
@@ -370,7 +361,7 @@ map_temp_boot_page(void* entry, uint32_t large_pages)
 
     // assign replacement virtual addresses page
     offset_in_page = (unsigned int)(entry) & MASK(LARGE_PAGE_BITS);
-    replacement_vaddr = (void*)(virt_pg_start + offset_in_page);
+    replacement_vaddr = (void *)(virt_pg_start + offset_in_page);
 
     invalidateLocalPageStructureCache();
 
@@ -379,8 +370,7 @@ map_temp_boot_page(void* entry, uint32_t large_pages)
 
 /* initialise CPU's descriptor table registers (GDTR, IDTR, LDTR, TR) */
 
-BOOT_CODE void
-init_dtrs(void)
+BOOT_CODE void init_dtrs(void)
 {
     /* setup the GDT pointer and limit and load into GDTR */
     gdt_idt_ptr.limit = (sizeof(gdt_entry_t) * GDT_ENTRIES) - 1;
@@ -397,15 +387,9 @@ init_dtrs(void)
 
     /* load TSS selector into Task Register (TR) */
     ia32_install_tss(SEL_TSS);
-
-    if (config_set(CONFIG_FSGSBASE_MSR)) {
-        ia32_load_gs(SEL_TLS);
-        ia32_load_fs(SEL_IPCBUF);
-    }
 }
 
-static BOOT_CODE cap_t
-create_it_page_table_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
+static BOOT_CODE cap_t create_it_page_table_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
 {
     cap_t cap;
     cap = cap_page_table_cap_new(
@@ -420,8 +404,7 @@ create_it_page_table_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid
     return cap;
 }
 
-static BOOT_CODE cap_t
-create_it_page_directory_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
+static BOOT_CODE cap_t create_it_page_directory_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
 {
     cap_t cap;
     cap = cap_page_directory_cap_new(
@@ -436,43 +419,37 @@ create_it_page_directory_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t 
     return cap;
 }
 
+BOOT_CODE word_t arch_get_n_paging(v_region_t it_v_reg)
+{
+    word_t n = get_n_paging(it_v_reg, PT_INDEX_BITS + PAGE_BITS);
+#ifdef CONFIG_IOMMU
+    n += vtd_get_n_paging(&boot_state.rmrr_list);
+#endif
+    return n;
+}
+
 /* Create an address space for the initial thread.
  * This includes page directory and page tables */
-BOOT_CODE cap_t
-create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
+BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
 {
     cap_t      vspace_cap;
     vptr_t     vptr;
-    pptr_t     pptr;
     seL4_SlotPos slot_pos_before;
     seL4_SlotPos slot_pos_after;
 
     slot_pos_before = ndks_boot.slot_pos_cur;
-    cap_t pd_cap;
-    pptr_t pd_pptr;
-    /* just create single PD obj and cap */
-    pd_pptr = alloc_region(seL4_PageDirBits);
-    if (!pd_pptr) {
-        return cap_null_cap_new();
-    }
-    memzero(PDE_PTR(pd_pptr), 1 << seL4_PageDirBits);
-    copyGlobalMappings((vspace_root_t*)pd_pptr);
-    pd_cap = create_it_page_directory_cap(cap_null_cap_new(), pd_pptr, 0, IT_ASID);
+    copyGlobalMappings((vspace_root_t *)rootserver.vspace);
+    cap_t pd_cap = create_it_page_directory_cap(cap_null_cap_new(), rootserver.vspace, 0, IT_ASID);
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadVSpace), pd_cap);
     vspace_cap = pd_cap;
 
     /* create all PT objs and caps necessary to cover userland image */
 
     for (vptr = ROUND_DOWN(it_v_reg.start, PT_INDEX_BITS + PAGE_BITS);
-            vptr < it_v_reg.end;
-            vptr += BIT(PT_INDEX_BITS + PAGE_BITS)) {
-        pptr = alloc_region(seL4_PageTableBits);
-        if (!pptr) {
-            return cap_null_cap_new();
-        }
-        memzero(PTE_PTR(pptr), 1 << seL4_PageTableBits);
+         vptr < it_v_reg.end;
+         vptr += BIT(PT_INDEX_BITS + PAGE_BITS)) {
         if (!provide_cap(root_cnode_cap,
-                         create_it_page_table_cap(vspace_cap, pptr, vptr, IT_ASID))
+                         create_it_page_table_cap(vspace_cap, it_alloc_paging(), vptr, IT_ASID))
            ) {
             return cap_null_cap_new();
         }
@@ -486,8 +463,8 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
     return vspace_cap;
 }
 
-static BOOT_CODE cap_t
-create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large, vm_page_map_type_t map_type)
+static BOOT_CODE cap_t create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large,
+                                           vm_page_map_type_t map_type)
 {
     vm_page_size_t frame_size;
 
@@ -510,14 +487,13 @@ create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large, vm_
         );
 }
 
-BOOT_CODE cap_t
-create_unmapped_it_frame_cap(pptr_t pptr, bool_t use_large)
+BOOT_CODE cap_t create_unmapped_it_frame_cap(pptr_t pptr, bool_t use_large)
 {
     return create_it_frame_cap(pptr, 0, asidInvalid, use_large, X86_MappingNone);
 }
 
-BOOT_CODE cap_t
-create_mapped_it_frame_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large, bool_t executable UNUSED)
+BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large,
+                                           bool_t executable UNUSED)
 {
     cap_t cap = create_it_frame_cap(pptr, vptr, asid, use_large, X86_MappingVSpace);
     map_it_frame_cap(vspace_cap, cap);
@@ -609,7 +585,7 @@ pte_t CONST makeUserPTEInvalid(void)
            );
 }
 
-void setVMRoot(tcb_t* tcb)
+void setVMRoot(tcb_t *tcb)
 {
     cap_t               threadRoot;
     vspace_root_t *vspace_root;
@@ -648,15 +624,14 @@ void hwASIDInvalidate(asid_t asid, vspace_root_t *vspace)
     return;
 }
 
-exception_t
-decodeX86ModeMMUInvocation(
+exception_t decodeX86ModeMMUInvocation(
     word_t invLabel,
     word_t length,
     cptr_t cptr,
-    cte_t* cte,
+    cte_t *cte,
     cap_t cap,
     extra_caps_t excaps,
-    word_t* buffer
+    word_t *buffer
 )
 {
     switch (cap_get_capType(cap)) {
@@ -675,7 +650,8 @@ bool_t modeUnmapPage(vm_page_size_t page_size, vspace_root_t *vroot, vptr_t vadd
     return false;
 }
 
-exception_t decodeX86ModeMapRemapPage(word_t invLabel, vm_page_size_t page_size, cte_t *cte, cap_t cap, vspace_root_t *vroot, vptr_t vaddr, paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t vm_attr)
+exception_t decodeX86ModeMapPage(word_t invLabel, vm_page_size_t page_size, cte_t *cte, cap_t cap,
+                                 vspace_root_t *vroot, vptr_t vaddr, paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t vm_attr)
 {
     fail("Invalid Page type");
 }

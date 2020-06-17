@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __PLAT_MACHINE_ACPI_H
-#define __PLAT_MACHINE_ACPI_H
+#pragma once
 
 #include <assert.h>
 #include <config.h>
@@ -61,10 +56,10 @@ bool_t acpi_init(acpi_rsdp_t *rsdp_data);
 BOOT_CODE bool_t acpi_validate_rsdp(acpi_rsdp_t *acpi_rsdp);
 
 uint32_t acpi_madt_scan(
-    acpi_rsdp_t* acpi_rsdp,
-    cpu_id_t*    cpu_list,
-    uint32_t*    num_ioapic,
-    paddr_t*     ioapic_addrs
+    acpi_rsdp_t *acpi_rsdp,
+    cpu_id_t    *cpu_list,
+    uint32_t    *num_ioapic,
+    paddr_t     *ioapic_addrs
 );
 
 typedef struct acpi_rmrr_entry {
@@ -79,15 +74,13 @@ typedef struct acpi_rmrr_list {
 } acpi_rmrr_list_t;
 
 void acpi_dmar_scan(
-    acpi_rsdp_t* acpi_rsdp,
-    paddr_t*     drhu_list,
-    uint32_t*    num_drhu,
+    acpi_rsdp_t *acpi_rsdp,
+    paddr_t     *drhu_list,
+    uint32_t    *num_drhu,
     uint32_t     max_dhru_list_len,
     acpi_rmrr_list_t *rmrr_list
 );
 
 bool_t acpi_fadt_scan(
-    acpi_rsdp_t* acpi_rsdp
+    acpi_rsdp_t *acpi_rsdp
 );
-
-#endif

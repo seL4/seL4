@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -27,7 +23,7 @@ UP_STATE_DEFINE(interrupt_t, x86KSPendingInterrupt);
 x86_arch_global_state_t x86KSGlobalState[CONFIG_MAX_NUM_NODES] ALIGN(L1_CACHE_LINE_SIZE) SKIM_BSS;
 
 /* The top level ASID table */
-asid_pool_t* x86KSASIDTable[BIT(asidHighBits)];
+asid_pool_t *x86KSASIDTable[BIT(asidHighBits)];
 
 /* Current user value of the fs/gs base */
 UP_STATE_DEFINE(word_t, x86KSCurrentFSBase);
@@ -51,7 +47,7 @@ uint32_t x86KSnumDrhu;
 
 #ifdef CONFIG_IOMMU
 /* Intel VT-d Root Entry Table */
-vtd_rte_t* x86KSvtdRootTable;
+vtd_rte_t *x86KSvtdRootTable;
 uint32_t x86KSnumIOPTLevels;
 uint32_t x86KSnumIODomainIDBits;
 uint32_t x86KSFirstValidIODomain;
@@ -73,3 +69,7 @@ uint16_t x86KSdebugPort;
 x86_irq_state_t x86KSIRQState[maxIRQ + 1];
 
 word_t x86KSAllocatedIOPorts[NUM_IO_PORTS / CONFIG_WORD_SIZE];
+#ifdef CONFIG_KERNEL_MCS
+uint32_t x86KStscMhz;
+uint32_t x86KSapicRatio;
+#endif

@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <types.h>
@@ -86,17 +82,15 @@ exception_t decodeSetEPTRoot(cap_t cap, extra_caps_t excaps)
 #endif
 
 #ifdef ENABLE_SMP_SUPPORT
-void
-Arch_migrateTCB(tcb_t *thread)
+void Arch_migrateTCB(tcb_t *thread)
 {
+#ifdef CONFIG_KERNEL_MCS
+    assert(thread->tcbSchedContext != NULL);
+#endif
+
     /* check if thread own its current core FPU */
     if (nativeThreadUsingFPU(thread)) {
         switchFpuOwner(NULL, thread->tcbAffinity);
     }
 }
 #endif /* ENABLE_SMP_SUPPORT */
-
-void
-Arch_setTCBIPCBuffer(tcb_t *thread, word_t bufferAddr)
-{
-}

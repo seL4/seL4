@@ -1,17 +1,10 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MODE_MACHINE_FPU_H
-#define __MODE_MACHINE_FPU_H
+#pragma once
 
 #include <mode/machine/registerset.h>
 
@@ -47,8 +40,8 @@ static inline void saveFpuState(user_fpu_state_t *dest)
         "str     %w0, [%1, #16 * 32]        \n"
         "mrs     %0, fpcr                   \n"
         "str     %w0, [%1, #16 * 32 + 4]    \n"
-        : "=&r" (temp)
-        : "r" (dest)
+        : "=&r"(temp)
+        : "r"(dest)
         : "memory"
     );
 }
@@ -82,8 +75,8 @@ static inline void loadFpuState(user_fpu_state_t *src)
         "msr     fpsr, %0                   \n"
         "ldr     %w0, [%1, #16 * 32 + 4]    \n"
         "msr     fpcr, %0                   \n"
-        : "=&r" (temp)
-        : "r" (src)
+        : "=&r"(temp)
+        : "r"(src)
         : "memory"
     );
 }
@@ -154,4 +147,3 @@ static inline void disableFpu(void)
     isFPUEnabledCached[SMP_TERNARY(getCurrentCPUIndex(), 0)] = false;
 }
 
-#endif /* __MODE_MACHINE_FPU_H */

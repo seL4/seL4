@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_REGISTERSET_H
-#define __ARCH_MACHINE_REGISTERSET_H
+#pragma once
 
 #include <config.h>
 #include <arch/types.h>
@@ -78,8 +73,8 @@ struct user_context {
 };
 typedef struct user_context user_context_t;
 
-void Mode_initContext(user_context_t* context);
-void Arch_initContext(user_context_t* context);
+void Mode_initContext(user_context_t *context);
+void Arch_initContext(user_context_t *context);
 word_t Mode_sanitiseRegister(register_t reg, word_t v);
 
 /* Ensure FPU state is aligned within user context. */
@@ -88,9 +83,9 @@ unverified_compile_assert(fpu_state_alignment_valid,
 
 #if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_ARCH_IA32)
 /* Ensure kernelSP is the first member following the registers. */
-unverified_compile_assert(kernelSP_alignment_valid,
-                          OFFSETOF(user_context_t, kernelSP) -
-                          OFFSETOF(user_context_t, registers) == 0x4C)
+unverified_compile_assert(
+    kernelSP_alignment_valid,
+    OFFSETOF(user_context_t, kernelSP) - OFFSETOF(user_context_t, registers) == sizeof(word_t) * n_contextRegisters
+)
 #endif
 
-#endif

@@ -1,30 +1,27 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __API_TYPES_H
-#define __API_TYPES_H
+#pragma once
 
 #include <config.h>
 #include <stdint.h>
 #include <util.h>
-#include <mode/api/shared_types_gen.h>
+#include <sel4/shared_types_gen.h>
 #include <arch/api/types.h>
 #include <arch/types.h>
-#include <api/macros.h>
-#include <api/constants.h>
-#include <api/shared_types.h>
+#include <sel4/macros.h>
+#include <sel4/constants.h>
+#include <sel4/shared_types.h>
 #include <machine/io.h>
 
 /* seL4_CapRights_t defined in mode/api/shared_types.bf */
 
 typedef word_t prio_t;
+typedef uint64_t ticks_t;
+typedef uint64_t time_t;
 
 enum domainConstants {
     minDom = 0,
@@ -42,8 +39,7 @@ enum ctLimits {
     capTransferDataSize = 3
 };
 
-static inline seL4_CapRights_t CONST
-rightsFromWord(word_t w)
+static inline seL4_CapRights_t CONST rightsFromWord(word_t w)
 {
     seL4_CapRights_t seL4_CapRights;
 
@@ -51,14 +47,12 @@ rightsFromWord(word_t w)
     return seL4_CapRights;
 }
 
-static inline word_t CONST
-wordFromRights(seL4_CapRights_t seL4_CapRights)
+static inline word_t CONST wordFromRights(seL4_CapRights_t seL4_CapRights)
 {
-    return seL4_CapRights.words[0] & MASK(3);
+    return seL4_CapRights.words[0] & MASK(seL4_CapRightsBits);
 }
 
-static inline cap_transfer_t PURE
-capTransferFromWords(word_t *wptr)
+static inline cap_transfer_t PURE capTransferFromWords(word_t *wptr)
 {
     cap_transfer_t transfer;
 
@@ -68,8 +62,7 @@ capTransferFromWords(word_t *wptr)
     return transfer;
 }
 
-static inline seL4_MessageInfo_t CONST
-messageInfoFromWord_raw(word_t w)
+static inline seL4_MessageInfo_t CONST messageInfoFromWord_raw(word_t w)
 {
     seL4_MessageInfo_t mi;
 
@@ -77,8 +70,7 @@ messageInfoFromWord_raw(word_t w)
     return mi;
 }
 
-static inline seL4_MessageInfo_t CONST
-messageInfoFromWord(word_t w)
+static inline seL4_MessageInfo_t CONST messageInfoFromWord(word_t w)
 {
     seL4_MessageInfo_t mi;
     word_t len;
@@ -93,8 +85,7 @@ messageInfoFromWord(word_t w)
     return mi;
 }
 
-static inline word_t CONST
-wordFromMessageInfo(seL4_MessageInfo_t mi)
+static inline word_t CONST wordFromMessageInfo(seL4_MessageInfo_t mi)
 {
     return mi.words[0];
 }
@@ -119,23 +110,31 @@ wordFromMessageInfo(seL4_MessageInfo_t mi)
 #define THREAD_NAME ""
 #endif
 
+#ifdef CONFIG_KERNEL_INVOCATION_REPORT_ERROR_IPC
+extern struct debug_syscall_error current_debug_error;
+
+#define out_error(...) \
+    snprintf((char *)current_debug_error.errorMessage, \
+            DEBUG_MESSAGE_MAXLEN * sizeof(word_t), __VA_ARGS__);
+#else
+#define out_error printf
+#endif
+
 /*
  * Print to serial a message helping userspace programmers to determine why the
  * kernel is not performing their requested operation.
  */
-#define userError(...) \
+#define userError(M, ...) \
     do {                                                                     \
-        printf(ANSI_DARK "<<" ANSI_GREEN "seL4(CPU %lu)" ANSI_DARK           \
-                " [%s/%d T%p \"%s\" @%lx]: ",                                \
+        out_error(ANSI_DARK "<<" ANSI_GREEN "seL4(CPU %lu)" ANSI_DARK        \
+                " [%s/%d T%p \"%s\" @%lx]: " M ">>" ANSI_RESET "\n",         \
                 SMP_TERNARY(getCurrentCPUIndex(), 0lu),                      \
                 __func__, __LINE__, NODE_STATE(ksCurThread),                 \
                 THREAD_NAME,                                                 \
-                (word_t)getRestartPC(NODE_STATE(ksCurThread)));              \
-        printf(__VA_ARGS__);                                                 \
-        printf(">>" ANSI_RESET "\n");                                        \
+                (word_t)getRestartPC(NODE_STATE(ksCurThread)),               \
+                ## __VA_ARGS__);                                             \
     } while (0)
 #else /* !CONFIG_PRINTING */
 #define userError(...)
 #endif
 
-#endif

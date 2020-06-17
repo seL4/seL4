@@ -1,15 +1,19 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
 #include <machine/assembler.h>
+
+/* From <arch/mode/machine/registerset.h> */
+#define Error              9
+#define NextIP             10
+#define CS                 11
+#define FLAGS              12
+#define ESP                13
+#define n_contextRegisters 17
 
 # On kernel entry, ESP points to the end of the thread's registers array.
 # Hardware pushes onto the stack SS, ESP, EFLAGS, CS, NextIP and Error,
@@ -20,12 +24,7 @@
 .type int_##number, %function;               \
 int_##number:                                \
     error_code;                              \
-    subl  $4, %esp; /* skip TLS_BASE */      \
-    pushl 8(%esp); /* FaultIP := NextIP */   \
-    pushl %gs;                               \
-    pushl %fs;                               \
-    pushl %es;                               \
-    pushl %ds;                               \
+    pushl 4(%esp); /* FaultIP := NextIP */   \
     pushl %ebp;                              \
     pushl %edi;                              \
     pushl %esi;                              \
@@ -33,6 +32,7 @@ int_##number:                                \
     pushl %ecx;                              \
     pushl %ebx;                              \
     pushl %eax;                              \
+    pushl $0;                                \
     movl  $0x##number, %ecx;                 \
     jmp   handle_interrupt;                  \
     .size int_##number, .-int_##number;
@@ -48,7 +48,36 @@ int_##number:                                \
     leal kernel_stack_alloc + (1 << CONFIG_KERNEL_STACK_BITS) - 4, %esp
 #endif
 
-#define SET_KERNEL_STACK SET_KERNEL_STACK_FROM(0x4c)
+#define SET_KERNEL_STACK SET_KERNEL_STACK_FROM(4 * n_contextRegisters)
+
+# switch to the user data segments as the rest of our entry/exit code assumes that's
+# what they will be
+
+#define SET_SELECTOR(selector, value, tmp) \
+    movl %selector, %tmp; \
+    cmpl $value, %tmp; \
+    je 1f; \
+    movl $value, %tmp; \
+    movl %tmp, %selector; \
+    1:
+
+/* user-level selectors from </arch/mode/object/structures.h> */
+#define GDT_DS_0    2
+#define GDT_DS_3    4
+#define GDT_FS      6
+#define GDT_GS      7
+
+/* user-level selectors from </arch/object/structures.h> */
+#define SEL_CS_3    ((GDT_CS_3 << 3) | 3)
+#define SEL_DS_3    ((GDT_DS_3 << 3) | 3)
+#define SEL_FS      ((GDT_FS << 3) | 3)
+#define SEL_GS      ((GDT_GS << 3) | 3)
+
+#define RESET_SELECTORS(tmp) \
+    SET_SELECTOR(ds, SEL_DS_3, tmp) \
+    SET_SELECTOR(es, SEL_DS_3, tmp) \
+    SET_SELECTOR(fs, SEL_FS, tmp) \
+    SET_SELECTOR(gs, SEL_GS, tmp)
 
 .section .text
 
@@ -325,13 +354,11 @@ INT_HANDLER_WITHOUT_ERR_CODE(fe)
 INT_HANDLER_WITHOUT_ERR_CODE(ff)
 
 handle_interrupt:
-    # set kernel data segments
-    movl    $0x23, %edx # 0x23 = SEL_DS_3
-    movl    %edx,  %ds
-    movl    %edx,  %es
+    # Reset segment selectors
+    RESET_SELECTORS(edx)
 
     # determine if we have a kernel exception
-    testl   $3, 60(%esp)     # extract CPL (current privilege level)
+    testl   $3, (4 * CS)(%esp)     # extract CPL (current privilege level)
     jz kernel_interrupt
 
 user_interrupt:
@@ -348,19 +375,25 @@ user_interrupt:
 kernel_interrupt:
     cmpl    $0x20, %ecx      # if interrupt vector is below 0x20, we have an exception
     jl kernel_exception
-    # Check the current ESP. If its above the kernel image then we came from
-    # the idle_thread and this is a normal interrupt.
-    cmpl    $(ki_end), %esp
-    jg      user_interrupt
+    # Check the current ESP. If this is within the bounds of __idle_thread_start and
+    # __idle_thread_end then this is the idle thread. Interrupts from the idle thread
+    # are handled like normal interrupts.
+    cmpl $__idle_thread_start, %esp
+    jb not_idle_thread
+    cmpl $__idle_thread_end, %esp
+    jae not_idle_thread
+    jmp user_interrupt
+not_idle_thread:
     # We got an interrupt from the kernel. Call into C to save
     # the IRQ number, then return back to where we were
     pushl %ecx
     call c_nested_interrupt
     addl $4, %esp
     # Disable the interrupt flag so that we do not take any additional interrupts
-    andl $~0x200, 0x40(%esp)
+    andl $~0x200, (4 * Error)(%esp)
     # Return
 kernel_int_return:
+    addl    $4, %esp
     popl    %eax
     popl    %ebx
     popl    %ecx
@@ -368,10 +401,8 @@ kernel_int_return:
     popl    %esi
     popl    %edi
     popl    %ebp
-    /* skip segments */
-    addl $16, %esp
-    /* Skip FaultIP, TLS_BASE and error-code. */
-    addl    $12, %esp
+    /* Skip FaultIP and error-code. */
+    addl    $8, %esp
     iretl
 
 # Handle a kernel exception
@@ -392,7 +423,7 @@ BEGIN_FUNC(kernel_exception)
      * setting EFLAGS.TF before SYSEXIT so that single-stepping resumes in the
      * userspace thread.
      */
-    movl    64(%esp), %eax
+    movl    (4 * FLAGS)(%esp), %eax
     movl    $(1<<8), %ebx
     testl   %ebx, %eax
     je      .not_eflags_tf
@@ -407,12 +438,13 @@ BEGIN_FUNC(kernel_exception)
      * So at this point we want to just unset EFLAGS.TF and IRET immediately.
      */
     andl    $~(1<<8), %eax
-    movl    %eax, 64(%esp)
+    movl    %eax, (4 * FLAGS)(%esp)
 
     /* Begin popping registers to IRET now. We don't need to consider any
      * unexpected side effects because we are just immediately returning after
      * entering.
      */
+    addl    $4, %esp
     popl    %eax
     popl    %ebx
     popl    %ecx
@@ -420,23 +452,18 @@ BEGIN_FUNC(kernel_exception)
     popl    %esi
     popl    %edi
     popl    %ebp
-    popl    %ds
-    popl    %es
-    popl    %fs
-    popl    %gs
-    /* Skip FaultIP, TLS_BASE and error-code. */
-    addl    $12, %esp
+    /* Skip FaultIP and error-code. */
+    addl    $8, %esp
     iretl
 
 .not_eflags_tf:
 #endif /* CONFIG_HARDWARE_DEBUG_API */
 
     # prepare debug info
-    movl    52(%esp), %eax # EAX contains Error Code
-    movl    56(%esp), %ebx # EBX contains EIP of the exception generating instruction
-    movl    64(%esp), %edx # EDX contains EFLAGS
-    movl    %esp,     %edi
-    addl    $68,      %edi # EDI contains ESP when exception happened
+    movl    (4 * Error)(%esp), %eax # EAX contains Error Code
+    movl    (4 * NextIP)(%esp), %ebx # EBX contains EIP of the exception generating instruction
+    movl    (4 * FLAGS)(%esp), %edx # EDX contains EFLAGS
+    leal    (4 * ESP)(%esp), %edi # EDI contains ESP when exception happened
 
     # call handleKernelException(vector, errcode, EIP, ESP, EFLAGS, CR0, CR2, CR3, CR4)
     movl    %cr4, %esi
@@ -455,16 +482,9 @@ BEGIN_FUNC(kernel_exception)
     call    handleKernelException
     addl    $36, %esp
     # Set EIP in the saved register context to the new IP returned from handleKernelException
-    movl    %eax, 56(%esp)
+    movl    %eax, (4 * NextIP)(%esp)
     jmp     kernel_int_return
 END_FUNC(kernel_exception)
-
-#define SET_SEL(sel, offset, val) \
-    cmpl $val, (offset)(%esp); \
-    je 1f; \
-    movl $val, %ecx; \
-    movl %ecx, %sel; \
-    1:
 
 # Handle vmexit
 # ESP points to the end of an array that just holds the general purpose registers
@@ -478,11 +498,8 @@ BEGIN_FUNC(handle_vmexit)
     pushl   %ebx
     pushl   %eax
 
-    # switch to the user data segments as the rest of our entry/exit code assumes that's
-    # what they will be
-    movl $0x23, %ecx
-    movl %ecx, %ds
-    movl %ecx, %es
+    # Reset segment selectors
+    RESET_SELECTORS(ecx)
 
     # switch to kernel stack
     SET_KERNEL_STACK_FROM(7 * 4)
@@ -510,28 +527,26 @@ BEGIN_FUNC(handle_syscall)
     subl    $4, %esp        # skip CS
     pushl   %edx            # NextIP := EDX
     pushl   $-1             # save Error (-1 means we entered via syscall)
-    subl    $4, %esp        # skip TLS_BASE
     pushl   %edx            # save FaultIP (passed in EDX)
-    pushl   %gs             # save GS
-    pushl   %fs             # save FS
-    pushl   %es             # save ES
-    pushl   %ds             # save DS
-    pushl   %ebp            # save EBP (message register)
+    pushl   %ebp            # save EBP (reply register)
     pushl   %edi            # save EDI (message register)
     pushl   %esi            # save ESI (msgInfo register)
     pushl   %edx            # save EDX (contains FaultIP)
     pushl   %ecx            # save ECX (contains ESP)
     pushl   %ebx            # save EBX (cap/badge register)
     pushl   %eax            # save EAX (syscall number)
+    pushl   $0
 
-    # set kernel data segments (ds and es) if necessary (set them to the user value though)
-    SET_SEL(ds, 7  * 4, 0x23)
-    SET_SEL(es, 8  * 4, 0x23)
+    # Reset segment selectors
+    RESET_SELECTORS(ecx)
 
     # switch to kernel stack
     SET_KERNEL_STACK
 
     # Push all the arguments for c_handle_syscall
+#ifdef CONFIG_KERNEL_MCS
+    pushl   %ebp # reply
+#endif
     pushl   %eax # syscall number
     pushl   %esi # msgInfo
     pushl   %ebx # cptr

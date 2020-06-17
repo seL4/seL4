@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -23,7 +19,6 @@
 #include <linker.h>
 #include <plat/machine/hardware.h>
 #include <machine.h>
-#include <plat/machine/timer.h>
 #include <arch/machine/timer.h>
 #include <arch/machine/fpu.h>
 #include <arch/machine/tlb.h>
@@ -40,136 +35,76 @@ extern char ki_end[1];
 BOOT_DATA static volatile int node_boot_lock = 0;
 #endif /* ENABLE_SMP_SUPPORT */
 
-/**
- * Split mem_reg about reserved_reg. If memory exists in the lower
- * segment, insert it. If memory exists in the upper segment, return it.
- */
-BOOT_CODE static region_t
-insert_region_excluded(region_t mem_reg, region_t reserved_reg)
+#define ARCH_RESERVED 3 // kernel + user image + dtb
+#define MAX_RESERVED (ARCH_RESERVED + MODE_RESERVED)
+BOOT_DATA static region_t reserved[MAX_RESERVED];
+
+BOOT_CODE static void arch_init_freemem(p_region_t ui_p_reg, p_region_t dtb_p_reg, v_region_t it_v_reg,
+                                        word_t extra_bi_size_bits)
 {
-    region_t residual_reg = mem_reg;
-    bool_t result UNUSED;
+    reserved[0].start = KERNEL_ELF_BASE;
+    reserved[0].end = (pptr_t)ki_end;
 
-    if (reserved_reg.start < mem_reg.start) {
-        /* Reserved region is below the provided mem_reg. */
-        mem_reg.end = 0;
-        mem_reg.start = 0;
-        /* Fit the residual around the reserved region */
-        if (reserved_reg.end > residual_reg.start) {
-            residual_reg.start = reserved_reg.end;
+    int index = 1;
+    if (dtb_p_reg.start) {
+        /* the dtb region could be empty */
+        reserved[index].start = (pptr_t) paddr_to_pptr(dtb_p_reg.start);
+        reserved[index].end = (pptr_t) paddr_to_pptr(dtb_p_reg.end);
+        index++;
+    }
+
+    if (MODE_RESERVED > 1) {
+        printf("MODE_RESERVED > 1 unsupported!\n");
+        halt();
+    }
+
+    if (ui_p_reg.start < PADDR_TOP) {
+        region_t ui_reg = paddr_to_pptr_reg(ui_p_reg);
+        if (MODE_RESERVED == 1) {
+            if (ui_reg.end > mode_reserved_region[0].start) {
+                reserved[index] = mode_reserved_region[0];
+                index++;
+                reserved[index].start = ui_reg.start;
+                reserved[index].end = ui_reg.end;
+            } else {
+                reserved[index].start = ui_reg.start;
+                reserved[index].end = ui_reg.end;
+                index++;
+                reserved[index] = mode_reserved_region[0];
+            }
+            index++;
+        } else {
+            reserved[index].start = ui_reg.start;
+            reserved[index].end = ui_reg.end;
+            index++;
         }
-    } else if (mem_reg.end > reserved_reg.start) {
-        /* Split mem_reg around reserved_reg */
-        mem_reg.end = reserved_reg.start;
-        residual_reg.start = reserved_reg.end;
-    } else {
-        /* reserved_reg is completely above mem_reg */
-        residual_reg.start = 0;
-        residual_reg.end = 0;
-    }
-    /* Add the lower region if it exists */
-    if (mem_reg.start < mem_reg.end) {
-        result = insert_region(mem_reg);
-        assert(result);
-    }
-    /* Validate the upper region */
-    if (residual_reg.start > residual_reg.end) {
-        residual_reg.start = residual_reg.end;
+    } else if (MODE_RESERVED == 1) {
+        reserved[index] = mode_reserved_region[0];
+        index++;
     }
 
-    return residual_reg;
+    init_freemem(get_num_avail_p_regs(), get_avail_p_regs(), index, reserved, it_v_reg, extra_bi_size_bits);
 }
 
-BOOT_CODE static region_t
-get_reserved_region(int i, pptr_t res_reg_end)
+BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
 {
-    region_t res_reg = mode_reserved_region[i];
+    unsigned i;
 
-    /* Force ordering and exclusivity of reserved regions. */
-    assert(res_reg.start < res_reg.end);
-    assert(res_reg_end <= res_reg.start);
-    return res_reg;
-}
-
-BOOT_CODE static int
-get_num_reserved_region(void)
-{
-    return sizeof(mode_reserved_region) / sizeof(region_t);
-}
-
-BOOT_CODE static void
-init_freemem(region_t ui_reg)
-{
-    word_t i;
-    bool_t result UNUSED;
-    region_t cur_reg;
-    region_t res_reg[] = {
-        {
-            .start = kernelBase,
-            .end   = (pptr_t)ki_end
-        },
-        {
-            .start = ui_reg.start,
-            .end = ui_reg.end
-        },
-    };
-
-    for (i = 0; i < MAX_NUM_FREEMEM_REG; i++) {
-        ndks_boot.freemem[i] = REG_EMPTY;
+    for (i = 0; i <= maxIRQ ; i++) {
+        setIRQState(IRQInactive, CORE_IRQ_TO_IRQT(0, i));
     }
-
-    /* Force ordering and exclusivity of reserved regions. */
-    assert(res_reg[0].start < res_reg[0].end);
-    assert(res_reg[1].start < res_reg[1].end);
-    assert(res_reg[0].end  <= res_reg[1].start);
-    for (i = 0; i < get_num_avail_p_regs(); i++) {
-        cur_reg = paddr_to_pptr_reg(get_avail_p_reg(i));
-        /* Adjust region if it exceeds the kernel window
-         * Note that we compare physical address in case of overflow.
-         */
-        if (pptr_to_paddr((void*)cur_reg.end) > PADDR_TOP) {
-            cur_reg.end = PPTR_TOP;
-        }
-        if (pptr_to_paddr((void*)cur_reg.start) > PADDR_TOP) {
-            cur_reg.start = PPTR_TOP;
-        }
-
-        cur_reg = insert_region_excluded(cur_reg, res_reg[0]);
-        cur_reg = insert_region_excluded(cur_reg, res_reg[1]);
-
-        /* Check any reserved mode specific reagion */
-        region_t mode_res_reg = res_reg[1];
-        for (int m = 0; m < get_num_reserved_region(); m++) {
-            mode_res_reg = get_reserved_region(i, mode_res_reg.end);
-            cur_reg = insert_region_excluded(cur_reg, mode_res_reg);
-        }
-
-        if (cur_reg.start != cur_reg.end) {
-            result = insert_region(cur_reg);
-            assert(result);
-        }
-    }
-}
-
-BOOT_CODE static void
-init_irqs(cap_t root_cnode_cap)
-{
-    irq_t i;
-
-    for (i = 0; i <= maxIRQ; i++) {
-        setIRQState(IRQInactive, i);
-    }
-    setIRQState(IRQTimer, KERNEL_TIMER_IRQ);
+    setIRQState(IRQTimer, CORE_IRQ_TO_IRQT(0, KERNEL_TIMER_IRQ));
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    setIRQState(IRQReserved, INTERRUPT_VGIC_MAINTENANCE);
+    setIRQState(IRQReserved, CORE_IRQ_TO_IRQT(0, INTERRUPT_VGIC_MAINTENANCE));
+    setIRQState(IRQReserved, CORE_IRQ_TO_IRQT(0, INTERRUPT_VTIMER_EVENT));
 #endif
 #ifdef CONFIG_ARM_SMMU
-    setIRQState(IRQReserved, INTERRUPT_SMMU);
+    setIRQState(IRQReserved, CORE_IRQ_TO_IRQT(0, INTERRUPT_SMMU));
 #endif
 
 #ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
 #ifdef KERNEL_PMU_IRQ
-    setIRQState(IRQReserved, KERNEL_PMU_IRQ);
+    setIRQState(IRQReserved, CORE_IRQ_TO_IRQT(0, KERNEL_PMU_IRQ));
 #if (defined CONFIG_PLAT_TX1 && defined ENABLE_SMP_SUPPORT)
 //SELFOUR-1252
 #error "This platform doesn't support tracking CPU utilisation on multicore"
@@ -180,31 +115,22 @@ init_irqs(cap_t root_cnode_cap)
 #endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
 
 #ifdef ENABLE_SMP_SUPPORT
-    setIRQState(IRQIPI, irq_remote_call_ipi);
-    setIRQState(IRQIPI, irq_reschedule_ipi);
-#endif /* ENABLE_SMP_SUPPORT */
+    setIRQState(IRQIPI, CORE_IRQ_TO_IRQT(getCurrentCPUIndex(), irq_remote_call_ipi));
+    setIRQState(IRQIPI, CORE_IRQ_TO_IRQT(getCurrentCPUIndex(), irq_reschedule_ipi));
+#endif
 
     /* provide the IRQ control cap */
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapIRQControl), cap_irq_control_cap_new());
 }
 
-BOOT_CODE static bool_t
-create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg)
+BOOT_CODE static bool_t create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg)
 {
     seL4_SlotPos   slot_pos_before;
     seL4_SlotPos   slot_pos_after;
-    region_t       dev_reg;
-    word_t         i;
 
     slot_pos_before = ndks_boot.slot_pos_cur;
+    create_device_untypeds(root_cnode_cap, slot_pos_before);
     create_kernel_untypeds(root_cnode_cap, boot_mem_reuse_reg, slot_pos_before);
-    for (i = 0; i < get_num_dev_p_regs(); i++) {
-        dev_reg = paddr_to_pptr_reg(get_dev_p_reg(i));
-        if (!create_untypeds_for_region(root_cnode_cap, true,
-                                        dev_reg, slot_pos_before)) {
-            return false;
-        }
-    }
 
     slot_pos_after = ndks_boot.slot_pos_cur;
     ndks_boot.bi_frame->untyped = (seL4_SlotRegion) {
@@ -219,8 +145,7 @@ create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg)
  * It does NOT initialise any kernel state.
  * @return For the verification build, this currently returns true always.
  */
-BOOT_CODE static bool_t
-init_cpu(void)
+BOOT_CODE static bool_t init_cpu(void)
 {
     bool_t haveHWFPU;
 
@@ -283,7 +208,7 @@ init_cpu(void)
     cpu_initLocalIRQController();
 
 #ifdef CONFIG_ENABLE_BENCHMARKS
-    armv_init_ccnt();
+    arm_init_ccnt();
 #endif /* CONFIG_ENABLE_BENCHMARKS */
 
     /* Export selected CPU features for access by PL0 */
@@ -296,26 +221,34 @@ init_cpu(void)
 
 /* This and only this function initialises the platform. It does NOT initialise any kernel state. */
 
-BOOT_CODE static void
-init_plat(void)
+BOOT_CODE static void init_plat(void)
 {
     initIRQController();
     initL2Cache();
 }
 
 #ifdef ENABLE_SMP_SUPPORT
-BOOT_CODE static bool_t
-try_init_kernel_secondary_core(void)
+BOOT_CODE static bool_t try_init_kernel_secondary_core(void)
 {
+    unsigned i;
+
     /* need to first wait until some kernel init has been done */
     while (!node_boot_lock);
 
     /* Perform cpu init */
     init_cpu();
 
+    for (i = 0; i < NUM_PPI; i++) {
+        maskInterrupt(true, CORE_IRQ_TO_IRQT(getCurrentCPUIndex(), i));
+    }
+    setIRQState(IRQIPI, CORE_IRQ_TO_IRQT(getCurrentCPUIndex(), irq_remote_call_ipi));
+    setIRQState(IRQIPI, CORE_IRQ_TO_IRQT(getCurrentCPUIndex(), irq_reschedule_ipi));
     /* Enable per-CPU timer interrupts */
-    maskInterrupt(false, KERNEL_TIMER_IRQ);
-
+    setIRQState(IRQTimer, CORE_IRQ_TO_IRQT(getCurrentCPUIndex(), KERNEL_TIMER_IRQ));
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    setIRQState(IRQReserved, CORE_IRQ_TO_IRQT(getCurrentCPUIndex(), INTERRUPT_VGIC_MAINTENANCE));
+    setIRQState(IRQReserved, CORE_IRQ_TO_IRQT(getCurrentCPUIndex(), INTERRUPT_VTIMER_EVENT));
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
     NODE_LOCK_SYS;
 
     ksNumCPUs++;
@@ -325,8 +258,7 @@ try_init_kernel_secondary_core(void)
     return true;
 }
 
-BOOT_CODE static void
-release_secondary_cpus(void)
+BOOT_CODE static void release_secondary_cpus(void)
 {
 
     /* release the cpus at the same time */
@@ -343,7 +275,7 @@ release_secondary_cpus(void)
      * turns on the cache. Thus, we do not need to clean and invaliate the cache.
      */
     cleanInvalidateL1Caches();
-    plat_cleanInvalidateCache();
+    plat_cleanInvalidateL2Cache();
 #endif
 
     /* Wait until all the secondary cores are done initialising */
@@ -356,25 +288,31 @@ release_secondary_cpus(void)
 
 /* Main kernel initialisation function. */
 
-static BOOT_CODE bool_t
-try_init_kernel(
+static BOOT_CODE bool_t try_init_kernel(
     paddr_t ui_p_reg_start,
     paddr_t ui_p_reg_end,
     sword_t pv_offset,
-    vptr_t  v_entry
+    vptr_t  v_entry,
+    paddr_t dtb_addr_start,
+    paddr_t dtb_addr_end
 )
 {
     cap_t root_cnode_cap;
     cap_t it_ap_cap;
     cap_t it_pd_cap;
     cap_t ipcbuf_cap;
-    region_t ui_reg = paddr_to_pptr_reg((p_region_t) {
+    p_region_t ui_p_reg = (p_region_t) {
         ui_p_reg_start, ui_p_reg_end
-    });
-    pptr_t bi_frame_pptr;
+    };
+    region_t ui_reg = paddr_to_pptr_reg(ui_p_reg);
+    region_t dtb_reg;
+    word_t extra_bi_size;
+    pptr_t extra_bi_offset = 0;
+    vptr_t extra_bi_frame_vptr;
     vptr_t bi_frame_vptr;
     vptr_t ipcbuf_vptr;
     create_frames_of_region_ret_t create_frames_ret;
+    create_frames_of_region_ret_t extra_bi_ret;
 
     /* convert from physical addresses to userland vptrs */
     v_region_t ui_v_reg;
@@ -384,12 +322,28 @@ try_init_kernel(
 
     ipcbuf_vptr = ui_v_reg.end;
     bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
+    extra_bi_frame_vptr = bi_frame_vptr + BIT(PAGE_BITS);
+
+    /* If no DTB was provided, skip allocating extra bootinfo */
+    p_region_t dtb_p_reg = {
+        dtb_addr_start, ROUND_UP(dtb_addr_end, PAGE_BITS)
+    };
+    if (dtb_addr_start == 0) {
+        extra_bi_size = 0;
+        dtb_reg = (region_t) {
+            0, 0
+        };
+    } else {
+        dtb_reg = paddr_to_pptr_reg(dtb_p_reg);
+        extra_bi_size = sizeof(seL4_BootInfoHeader) + (dtb_reg.end - dtb_reg.start);
+    }
+    word_t extra_bi_size_bits = calculate_extra_bi_size_bits(extra_bi_size);
 
     /* The region of the initial thread is the user image + ipcbuf and boot info */
     it_v_reg.start = ui_v_reg.start;
-    it_v_reg.end = bi_frame_vptr + BIT(PAGE_BITS);
+    it_v_reg.end = extra_bi_frame_vptr + BIT(extra_bi_size_bits);
 
-    if (it_v_reg.end > kernelBase) {
+    if (it_v_reg.end >= USER_TOP) {
         printf("Userland image virtual end address too high\n");
         return false;
     }
@@ -408,8 +362,7 @@ try_init_kernel(
     /* initialise the platform */
     init_plat();
 
-    /* make the free memory available to alloc_region() */
-    init_freemem(ui_reg);
+    arch_init_freemem(ui_p_reg, dtb_p_reg, it_v_reg, extra_bi_size_bits);
 
     /* create the root cnode */
     root_cnode_cap = create_root_cnode();
@@ -420,24 +373,34 @@ try_init_kernel(
     /* create the cap for managing thread domains */
     create_domain_cap(root_cnode_cap);
 
-    /* create the IRQ CNode */
-    if (!create_irq_cnode()) {
-        return false;
-    }
-
     /* initialise the IRQ states and provide the IRQ control cap */
     init_irqs(root_cnode_cap);
 
-    /* create the bootinfo frame */
-    bi_frame_pptr = allocate_bi_frame(0, CONFIG_MAX_NUM_NODES, ipcbuf_vptr);
-    if (!bi_frame_pptr) {
-        return false;
+    populate_bi_frame(0, CONFIG_MAX_NUM_NODES, ipcbuf_vptr, extra_bi_size);
+
+    /* put DTB in the bootinfo block, if present. */
+    seL4_BootInfoHeader header;
+    if (dtb_reg.start) {
+        header.id = SEL4_BOOTINFO_HEADER_FDT;
+        header.len = sizeof(header) + dtb_reg.end - dtb_reg.start;
+        *(seL4_BootInfoHeader *)(rootserver.extra_bi + extra_bi_offset) = header;
+        extra_bi_offset += sizeof(header);
+        memcpy((void *)(rootserver.extra_bi + extra_bi_offset), (void *)dtb_reg.start,
+               dtb_reg.end - dtb_reg.start);
+        extra_bi_offset += (dtb_reg.end - dtb_reg.start);
+    }
+
+    if (extra_bi_size > extra_bi_offset) {
+        /* provde a chunk for any leftover padding in the extended boot info */
+        header.id = SEL4_BOOTINFO_HEADER_PADDING;
+        header.len = (extra_bi_size - extra_bi_offset);
+        *(seL4_BootInfoHeader *)(rootserver.extra_bi + extra_bi_offset) = header;
     }
 
     if (config_set(CONFIG_ARM_SMMU)) {
         ndks_boot.bi_frame->ioSpaceCaps = create_iospace_caps(root_cnode_cap);
         if (ndks_boot.bi_frame->ioSpaceCaps.start == 0 &&
-                ndks_boot.bi_frame->ioSpaceCaps.end == 0) {
+            ndks_boot.bi_frame->ioSpaceCaps.end == 0) {
             return false;
         }
     } else {
@@ -455,12 +418,35 @@ try_init_kernel(
     create_bi_frame_cap(
         root_cnode_cap,
         it_pd_cap,
-        bi_frame_pptr,
         bi_frame_vptr
     );
 
+    /* create and map extra bootinfo region */
+    if (extra_bi_size > 0) {
+        region_t extra_bi_region = {
+            .start = rootserver.extra_bi,
+            .end = rootserver.extra_bi + extra_bi_size
+        };
+        extra_bi_ret =
+            create_frames_of_region(
+                root_cnode_cap,
+                it_pd_cap,
+                extra_bi_region,
+                true,
+                pptr_to_paddr((void *)extra_bi_region.start) - extra_bi_frame_vptr
+            );
+        if (!extra_bi_ret.success) {
+            return false;
+        }
+        ndks_boot.bi_frame->extraBIPages = extra_bi_ret.region;
+    }
+
+#ifdef CONFIG_KERNEL_MCS
+    init_sched_control(root_cnode_cap, CONFIG_MAX_NUM_NODES);
+#endif
+
     /* create the initial thread's IPC buffer */
-    ipcbuf_cap = create_ipcbuf_frame(root_cnode_cap, it_pd_cap, ipcbuf_vptr);
+    ipcbuf_cap = create_ipcbuf_frame_cap(root_cnode_cap, it_pd_cap, ipcbuf_vptr);
     if (cap_get_capType(ipcbuf_cap) == cap_null_cap) {
         return false;
     }
@@ -485,6 +471,10 @@ try_init_kernel(
         return false;
     }
     write_it_asid_pool(it_ap_cap, it_pd_cap);
+
+#ifdef CONFIG_KERNEL_MCS
+    NODE_STATE(ksCurTime) = getCurrentTime();
+#endif
 
     /* create the idle thread */
     if (!create_idle_thread()) {
@@ -515,11 +505,11 @@ try_init_kernel(
 
     /* create all of the untypeds. Both devices and kernel window memory */
     if (!create_untypeds(
-                root_cnode_cap,
+            root_cnode_cap,
     (region_t) {
-    kernelBase, (pptr_t)ki_boot_end
+    KERNEL_ELF_BASE, (pptr_t)ki_boot_end
     } /* reusable boot code/data */
-            )) {
+        )) {
         return false;
     }
 
@@ -554,15 +544,21 @@ try_init_kernel(
     return true;
 }
 
-BOOT_CODE VISIBLE void
-init_kernel(
+BOOT_CODE VISIBLE void init_kernel(
     paddr_t ui_p_reg_start,
     paddr_t ui_p_reg_end,
     sword_t pv_offset,
-    vptr_t  v_entry
+    vptr_t  v_entry,
+    paddr_t dtb_addr_p,
+    uint32_t dtb_size
 )
 {
     bool_t result;
+    paddr_t dtb_end_p = 0;
+
+    if (dtb_addr_p) {
+        dtb_end_p = dtb_addr_p + dtb_size;
+    }
 
 #ifdef ENABLE_SMP_SUPPORT
     /* we assume there exists a cpu with id 0 and will use it for bootstrapping */
@@ -570,7 +566,8 @@ init_kernel(
         result = try_init_kernel(ui_p_reg_start,
                                  ui_p_reg_end,
                                  pv_offset,
-                                 v_entry);
+                                 v_entry,
+                                 dtb_addr_p, dtb_end_p);
     } else {
         result = try_init_kernel_secondary_core();
     }
@@ -579,14 +576,19 @@ init_kernel(
     result = try_init_kernel(ui_p_reg_start,
                              ui_p_reg_end,
                              pv_offset,
-                             v_entry);
+                             v_entry,
+                             dtb_addr_p, dtb_end_p);
 
 #endif /* ENABLE_SMP_SUPPORT */
 
     if (!result) {
-        fail ("Kernel init failed for some reason :(");
+        fail("Kernel init failed for some reason :(");
     }
 
+#ifdef CONFIG_KERNEL_MCS
+    NODE_STATE(ksCurTime) = getCurrentTime();
+    NODE_STATE(ksConsumed) = 0;
+#endif
     schedule();
     activateThread();
 }

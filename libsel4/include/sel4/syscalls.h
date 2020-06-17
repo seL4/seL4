@@ -1,241 +1,25 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the BSD 2-Clause license. Note that NO WARRANTY is provided.
- * See "LICENSE_BSD2.txt" for details.
- *
- * @TAG(DATA61_BSD)
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_SYSCALLS_H
-#define __LIBSEL4_SYSCALLS_H
+#pragma once
 #include <autoconf.h>
+
+#include <sel4/functions.h>
 
 /**
  * @defgroup SystemCalls System Calls
  * @{
  *
- * @defgroup GeneralSystemCalls General System Calls
- * @{
  */
 
-/**
- * @xmlonly <manual name="Send" label="sel4_send"/> @endxmlonly
- * @brief Send to a capability
- *
- * @xmlonly
- * <docref>See <autoref label="sec:sys_send"/></docref>
- * @endxmlonly
- *
- * @param[in] dest The capability to be invoked.
- * @param[in] msgInfo The messageinfo structure for the IPC.
- */
-LIBSEL4_INLINE_FUNC void
-seL4_Send(seL4_CPtr dest, seL4_MessageInfo_t msgInfo);
-
-/**
- * @xmlonly <manual name="Recv" label="sel4_recv"/> @endxmlonly
- * @brief Block until a message is received on an endpoint
- *
- * @xmlonly
- * <docref>See <autoref label="sec:sys_recv"/></docref>
- * @endxmlonly
- *
- * @param[in] src The capability to be invoked.
- * @param[out] sender The address to write sender information to.
- *               The sender information is the badge of the
- *               endpoint capability that was invoked by the
- *               sender, or the notification word of the
- *               notification object that was signalled.
- *               This parameter is ignored if `NULL`.
- *
- * @return A `seL4_MessageInfo_t` structure
- * @xmlonly
- * <docref>as described in <autoref label="sec:messageinfo"/></docref>
- * @endxmlonly
- */
-LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
-seL4_Recv(seL4_CPtr src, seL4_Word* sender);
-
-/**
- * @xmlonly <manual name="Call" label="sel4_call"/> @endxmlonly
- * @brief  Call a capability
- *
- * @xmlonly
- * <docref>See <autoref label="sec:sys_call"/></docref>
- * @endxmlonly
- *
- * @param[in] dest The capability to be invoked.
- * @param[in] msgInfo The messageinfo structure for the IPC.
- *
- * @return A `seL4_MessageInfo_t` structure
- * @xmlonly
- * <docref>as described in <autoref label="sec:messageinfo"/></docref>
- * @endxmlonly
- */
-LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
-seL4_Call(seL4_CPtr dest, seL4_MessageInfo_t msgInfo);
-
-/**
- * @xmlonly <manual name="Reply" label="sel4_reply"/> @endxmlonly
- * @brief Perform a send to a one-off reply capability stored when
- *        the thread was last called
- *
- * @xmlonly
- * <docref>See <autoref label="sec:sys_reply"/></docref>
- * @endxmlonly
- *
- * @param[in] msgInfo The messageinfo structure for the IPC.
- */
-LIBSEL4_INLINE_FUNC void
-seL4_Reply(seL4_MessageInfo_t msgInfo);
-
-/**
- * @xmlonly <manual name="Non-Blocking Send" label="sel4_nbsend"/> @endxmlonly
- * @brief Perform a non-blocking send to a capability
- *
- * @xmlonly
- * <docref>See <autoref label="sec:sys_nbsend"/></docref>
- * @endxmlonly
- *
- * @param[in] dest The capability to be invoked.
- * @param[in] msgInfo The messageinfo structure for the IPC.
- */
-LIBSEL4_INLINE_FUNC void
-seL4_NBSend(seL4_CPtr dest, seL4_MessageInfo_t msgInfo);
-
-/**
- * @xmlonly <manual name="Reply Recv" label="sel4_replyrecv"/> @endxmlonly
- * @brief Perform a reply followed by a receive in one system call
- *
- * @xmlonly
- * <docref>See <autoref label="sec:sys_replyrecv"/></docref>
- * @endxmlonly
- *
- * @param[in] dest The capability to be invoked.
- * @param[in] msgInfo The messageinfo structure for the IPC.
- * @param[out] sender The address to write sender information to.
- *               The sender information is the badge of the
- *               endpoint capability that was invoked by the
- *               sender, or the notification word of the
- *               notification object that was signalled.
- *               This parameter is ignored if `NULL`.
- *
- * @return A `seL4_MessageInfo_t` structure
- * @xmlonly
- * <docref>as described in <autoref label="sec:messageinfo"/></docref>
- * @endxmlonly
- */
-LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
-seL4_ReplyRecv(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sender);
-
-/**
- * @xmlonly <manual name="NBRecv" label="sel4_nbrecv"/> @endxmlonly
- * @brief Receive a message from an endpoint but do not block
- *        in the case that no messages are pending
- *
- * @xmlonly
- * <docref>See <autoref label="sec:sys_nbrecv"/></docref>
- * @endxmlonly
- *
- * @param[in] src The capability to be invoked.
- * @param[out] sender The address to write sender information to.
- *                    The sender information is the badge of the
- *                    endpoint capability that was invoked by the
- *                    sender, or the notification word of the
- *                    notification object that was signalled.
- *                    This parameter is ignored if `NULL`.
- *
- * @return A `seL4_MessageInfo_t` structure
- * @xmlonly
- * <docref>as described in <autoref label="sec:messageinfo"/></docref>
- * @endxmlonly
- */
-LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
-seL4_NBRecv(seL4_CPtr src, seL4_Word* sender);
-
-/**
- * @xmlonly <manual name="Yield" label="sel4_yield"/> @endxmlonly
- * @brief Donate the remaining timeslice to a thread of the same priority
- *
- * @xmlonly
- * <docref>See <autoref label="sec:sys_yield"/></docref>
- * @endxmlonly
- */
-LIBSEL4_INLINE_FUNC void
-seL4_Yield(void);
-
-/**
- * @xmlonly <manual name="Signal" label="sel4_signal"/> @endxmlonly
- * @brief Signal a notification
- *
- * This is not a proper system call known by the kernel. Rather, it is a
- * convenience wrapper which calls seL4_Send().
- * It is useful for signalling a notification.
- *
- * @xmlonly
- * <docref>See the description of <nameref name="seL4_Send"/> in <autoref label="sec:sys_send"/>.</docref>
- * @endxmlonly
- *
- * @param[in] dest The capability to be invoked.
- */
-LIBSEL4_INLINE_FUNC void
-seL4_Signal(seL4_CPtr dest);
-
-/**
- * @xmlonly <manual name="Wait" label="sel4_wait"/> @endxmlonly
- * @brief Perform a receive on a notification object
- *
- * This is not a proper system call known by the kernel. Rather, it is a
- * convenience wrapper which calls seL4_Recv().
- *
- * @xmlonly
- * <docref>See the description of <nameref name="seL4_Recv"/> in <autoref label="sec:sys_recv"/>.</docref>
- * @endxmlonly
- *
- * @param[in] src The capability to be invoked.
- * @param[out] sender The address to write sender information to.
- *               The sender information is the badge of the
- *               endpoint capability that was invoked by the
- *               sender, or the notification word of the
- *               notification object that was signalled.
- *               This parameter is ignored if `NULL`.
- */
-LIBSEL4_INLINE_FUNC void
-seL4_Wait(seL4_CPtr src, seL4_Word *sender);
-
-/**
- * @xmlonly <manual name="Poll" label="sel4_poll"/> @endxmlonly
- * @brief Perform a non-blocking recv on a notification object
- *
- * This is not a proper system call known by the kernel. Rather, it is a
- * convenience wrapper which calls seL4_NBRecv().
- * It is useful for doing a non-blocking wait on a notification.
- *
- * @xmlonly
- * <docref>See the description of <nameref name="seL4_NBRecv"/> in <autoref label="sec:sys_nbrecv"/>.</docref>
- * @endxmlonly
- *
- * @param[in] src The capability to be invoked.
- * @param[out] sender The address to write sender information to.
- *               The sender information is the badge of the
- *               endpoint capability that was invoked by the
- *               sender, or the notification word of the
- *               notification object that was signalled.
- *               This parameter is ignored if `NULL`.
- *
- * @return A `seL4_MessageInfo_t` structure
- * @xmlonly
- * <docref>as described in <autoref label="sec:messageinfo"/></docref>
- * @endxmlonly
- */
-LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
-seL4_Poll(seL4_CPtr src, seL4_Word *sender);
-
-/** @} */
+#ifdef CONFIG_KERNEL_MCS
+#include "syscalls_mcs.h"
+#else
+#include "syscalls_master.h"
+#endif
 
 /**
  * @defgroup DebuggingSystemCalls
@@ -334,6 +118,20 @@ seL4_DebugCapIdentify(seL4_CPtr cap);
  */
 LIBSEL4_INLINE_FUNC void
 seL4_DebugNameThread(seL4_CPtr tcb, const char *name);
+#if CONFIG_MAX_NUM_NODES > 1 && defined CONFIG_ARCH_ARM
+/**
+ * @xmlonly <manual name="Send SGI 0-15" label="sel4_debugsendipi"/> @endxmlonly
+ * @brief Sends arbitrary SGI.
+ *
+ * Send an arbitrary SGI (core-specific interrupt 0-15) to the specified target core.
+ *
+ * @param target The target core ID.
+ * @param irq The SGI number (0-15).
+ *
+ */
+LIBSEL4_INLINE_FUNC void
+seL4_DebugSendIPI(seL4_Uint8 target, unsigned irq);
+#endif
 #endif
 
 #ifdef CONFIG_DANGEROUS_CODE_INJECTION
@@ -355,7 +153,7 @@ seL4_DebugNameThread(seL4_CPtr tcb, const char *name);
  *
  */
 LIBSEL4_INLINE_FUNC void
-seL4_DebugRun(void (* userfn) (void *), void* userarg);
+seL4_DebugRun(void (* userfn)(void *), void *userarg);
 #endif
 /** @} */
 
@@ -444,6 +242,20 @@ seL4_BenchmarkNullSyscall(void);
  */
 LIBSEL4_INLINE_FUNC void
 seL4_BenchmarkFlushCaches(void);
+
+#ifdef CONFIG_ARCH_ARM
+/**
+ * @xmlonly <manual name="Flush L1 Caches" label="sel4_benchmarkflushl1caches"/> @endxmlonly
+ * @brief Flush L1 caches.
+ *
+ * Flush L1 caches for this platform (currently only support for ARM). Allow to specify the cache type
+ * to be flushed (i.e. instruction cache only, data cache only and both instruction cache and data cache).
+ *
+ * @param[in] cache_type L1 Cache Type to be flushed
+ */
+LIBSEL4_INLINE_FUNC void
+seL4_BenchmarkFlushL1Caches(seL4_Word cache_type);
+#endif
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 /**
@@ -537,4 +349,21 @@ seL4_VMEnter(seL4_Word *sender);
 
 /** @} */
 
-#endif /* __LIBSEL4_SYSCALLS_H */
+#ifdef CONFIG_TLS_BASE_SELF
+/**
+ * @xmlonly <manual name="SetTLSBase" label="sel4_settlsbase"/> @endxmlonly
+ * @brief Set the TLS base address and register of the currently executing thread.
+ *
+ * This stores the base address of the TLS region in the register
+ * reserved for that purpose on the given platform.
+ *
+ * Each platform has a specific register reserved for tracking the
+ * base address of the TLS region (as sepcified in the ELF standard) in
+ * a manner compatible with the TLS method used with that architecture.
+ *
+ * @param tls_base The new base address to store in the register.
+ */
+LIBSEL4_INLINE_FUNC void
+seL4_SetTLSBase(seL4_Word tls_base);
+#endif
+

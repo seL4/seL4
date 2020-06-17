@@ -1,23 +1,14 @@
 --
--- Copyright 2018, Data61
--- Commonwealth Scientific and Industrial Research Organisation (CSIRO)
--- ABN 41 687 119 230.
---
--- This software may be distributed and modified according to the terms of
--- the GNU General Public License version 2. Note that NO WARRANTY is provided.
--- See "LICENSE_GPLv2.txt" for details.
---
--- @TAG(DATA61_GPL)
---
-
---
--- Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
+-- Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 -- Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+--
+-- SPDX-License-Identifier: GPL-2.0-only
+--
 
 #include <config.h>
 
 ---- Default base size: uint32_t
-base 32(32,1)
+base 32
 
 -- Including the common structures.bf is neccessary because
 -- we need the structures to be visible here when building
@@ -28,11 +19,11 @@ base 32(32,1)
 block frame_cap {
     field       capFMappedASID      9
     field_high  capFBasePtr         20
+    padding                         3
 
-    padding                         5
-
+    padding                         3
     field       capFSize            2
-    field       capFVMRights        3
+    field       capFVMRights        2
     field       capFIsDevice        1
     field_high  capFMappedAddress   20
     field       capType             4
@@ -42,8 +33,9 @@ block frame_cap {
 block page_table_cap {
     field       capPTMappedASID     9
     field_high  capPTBasePtr        20
+    padding                         3
 
-    padding                         10
+    padding                         7
     field       capPTIsMapped       1
     field_high  capPTMappedAddress  20
     field       capType             4
@@ -52,6 +44,7 @@ block page_table_cap {
 -- Cap to the table of 1 ASID pool
 block asid_control_cap {
     padding             32
+
     padding             28
     field   capType     4
 }
@@ -90,6 +83,10 @@ tagged_union cap capType {
     tag irq_handler_cap     0x1e
     tag zombie_cap          0x2e
     tag domain_cap          0x3e
+#ifdef CONFIG_KERNEL_MCS
+    tag sched_context_cap   0x4e
+    tag sched_control_cap   0x5e
+#endif
 }
 
 ---- Arch-independent object types
@@ -100,8 +97,8 @@ block VMFault {
     field     FSR               5
     padding                     7
     field     instructionFault  1
-    padding                     16
-    field     seL4_FaultType    3
+    padding                     15
+    field     seL4_FaultType    4
 }
 
 -- VM attributes
@@ -128,12 +125,10 @@ block pte {
 }
 
 -- RISC-V SATP (priv-1.10) Supervisor Address Translation and Protection
--- This register was originally named sptbr and some toolchains still use
--- sptbr when it refers to satp.
 
 block satp {
     field mode          1
     field asid          9
     field ppn           22
 }
-#include <arch/api/shared_types.bf>
+#include <sel4/arch/shared_types.bf>

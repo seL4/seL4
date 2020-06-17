@@ -1,30 +1,34 @@
 #
-# Copyright 2017, Data61
-# Commonwealth Scientific and Industrial Research Organisation (CSIRO)
-# ABN 41 687 119 230.
+# Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 #
-# This software may be distributed and modified according to the terms of
-# the GNU General Public License version 2. Note that NO WARRANTY is provided.
-# See "LICENSE_GPLv2.txt" for details.
-#
-# @TAG(DATA61_GPL)
+# SPDX-License-Identifier: GPL-2.0-only
 #
 
 cmake_minimum_required(VERSION 3.7.2)
 
+declare_platform(tx1 KernelPlatformTx1 PLAT_TX1 KernelSel4ArchAarch64)
+
 if(KernelPlatformTx1)
+    declare_seL4_arch(aarch64)
     set(KernelArmCortexA57 ON)
     set(KernelArchArmV8a ON)
-    config_set(KernelPlatform PLAT "tx1")
+    config_set(KernelARMPlatform ARM_PLAT tx1)
     config_set(KernelArmMach MACH "nvidia")
-    set(KernelHaveFPU ON)
+    list(APPEND KernelDTSList "tools/dts/tx1.dts")
+    list(APPEND KernelDTSList "src/plat/tx1/overlay-tx1.dts")
+    declare_default_headers(
+        TIMER_FREQUENCY 12000000llu
+        MAX_IRQ 224
+        INTERRUPT_CONTROLLER arch/machine/gic_v2.h
+        NUM_PPI 32
+        TIMER drivers/timer/arm_generic.h
+        CLK_MAGIC 2863311531llu
+        CLK_SHIFT 35u
+        KERNEL_WCET 10u
+    )
 endif()
 
 add_sources(
     DEP "KernelPlatformTx1"
-    CFILES
-        src/plat/tx1/machine/hardware.c
-        src/plat/tx1/machine/io.c
-        src/plat/tx1/machine/l2cache.c
-        src/arch/arm/machine/generic_timer.c
+    CFILES src/arch/arm/machine/gic_v2.c src/arch/arm/machine/l2c_nop.c
 )

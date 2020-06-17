@@ -1,11 +1,7 @@
 --
 -- Copyright 2014, General Dynamics C4 Systems
 --
--- This software may be distributed and modified according to the terms of
--- the GNU General Public License version 2. Note that NO WARRANTY is provided.
--- See "LICENSE_GPLv2.txt" for details.
---
--- @TAG(GD_GPL)
+-- SPDX-License-Identifier: GPL-2.0-only
 --
 
 #include <config.h>
@@ -168,6 +164,10 @@ tagged_union cap capType {
     tag irq_handler_cap     0x1e
     tag zombie_cap          0x2e
     tag domain_cap          0x3e
+#ifdef CONFIG_KERNEL_MCS
+    tag sched_context_cap   0x4e
+    tag sched_control_cap   0x5e
+#endif
 
     -- 8-bit tag arch caps
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
@@ -187,14 +187,14 @@ block VMFault {
     field address 32
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     field FSR 26
-    padding 2
+    padding 1
     field instructionFault 1
 #else
     field FSR 14
     field instructionFault 1
-    padding 14
+    padding 13
 #endif
-    field seL4_FaultType 3
+    field seL4_FaultType 4
 }
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
@@ -202,14 +202,20 @@ block VGICMaintenance {
     field idx        6
     field idxValid   1
     padding         25
-    padding         29
-    field seL4_FaultType  3
+    padding         28
+    field seL4_FaultType  4
 }
 
 block VCPUFault {
     field hsr       32
-    padding         29
-    field seL4_FaultType  3
+    padding         28
+    field seL4_FaultType  4
+}
+
+block VPPIEvent {
+    field irq_w     10
+    padding         50
+    field seL4_FaultType  4
 }
 #endif
 
@@ -580,4 +586,4 @@ block dbg_wcr {
 }
 #endif /* CONFIG_HARDWARE_DEBUG_API */
 
-#include <arch/api/shared_types.bf>
+#include <sel4/arch/shared_types.bf>

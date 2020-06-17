@@ -1,0 +1,45 @@
+/*
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+	/*
+	 * Explicitly specify the boot cpu (the first LITTLE core)
+	 * so we pick the right PMU interrupt.
+	 * Note: "On Exynos5422 booting cluster (big or LITTLE) is chosen by IROM code by reading
+	 * the gpg2-1 GPIO. By default all Exynos5422 based boards choose booting
+	 * from the LITTLE: Cortex-A7."
+	 */
+	chosen {
+		seL4,boot-cpu = <&{/cpus/cpu@100}>;
+		seL4,elfloader-devices =
+		    "serial2";
+		seL4,kernel-devices =
+		    "serial2",
+		    &{/soc/interrupt-controller@10481000},
+		    &{/soc/mct@101c0000},
+		    &{/timer};
+	};
+
+	/* The architecture timer on exynos5 depends on the MCT, but it is there. */
+	timer {
+		compatible = "arm,armv7-timer";
+		interrupts = <0x1 0xd 0xf08>, <0x1 0xe 0xf08>, <0x1 0xb 0xf08>, <0x1 0xa 0xf08>;
+		clock-frequency = <0x16e3600>;
+	};
+
+	/* HACK: 0xe0000000..0xff000000 is the largest contiguous region
+	 * in the kernel window; we clamp to that and discard memory
+	 * after the ASID PD hole (0xff200000..0xfff00000). This is a
+	 * workaround for userspace tools (hardware_gen, elfloader, etc)
+	 * which are not yet aware of the memory hole. */
+	memory@40000000 {
+		reg = <0x60000000 0x1f000000>;
+	};
+
+	vm-memory@40000000 {
+		reg = <0x40000000 0x20000000>;
+	};
+};

@@ -1,27 +1,21 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <arch/machine/hardware.h>
 
 #if defined(CONFIG_ARM_CORTEX_A15) || defined(CONFIG_ARM_CORTEX_A7)
 /* The hardware does not support tlb locking */
-void
-lockTLBEntry(vptr_t vaddr)
+void lockTLBEntry(vptr_t vaddr)
 {
 
 }
 
 #else
 
-void
-lockTLBEntry(vptr_t vaddr)
+void lockTLBEntry(vptr_t vaddr)
 {
     int n = tlbLockCount;
     int x, y;

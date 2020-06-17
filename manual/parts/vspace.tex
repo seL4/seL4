@@ -1,11 +1,7 @@
 %
 % Copyright 2014, General Dynamics C4 Systems
 %
-% This software may be distributed and modified according to the terms of
-% the GNU General Public License version 2. Note that NO WARRANTY is provided.
-% See "LICENSE_GPLv2.txt" for details.
-%
-% @TAG(GD_GPL)
+% SPDX-License-Identifier: GPL-2.0-only
 %
 
 \chapter{\label{ch:vspace}Address Spaces and Virtual Memory}
@@ -167,7 +163,7 @@ sufficient permissions to authorise the given mapping, then
 the mapping permissions are silently downgraded. Specific mapping permissions are dependant on the
 architecture and are documented in the \autoref{sec:api_reference} for each function.
 
-At minimum, each architecture defines \texttt{Map}, \texttt{Unmap},\texttt{Remap} and
+At minimum, each architecture defines \texttt{Map}, \texttt{Unmap} and
 \texttt{GetAddress} methods for pages.
 Methods for page objects for each architecture can be found in the \autoref{sec:api_reference}, and
 are indexed per architecture in the table below.
@@ -233,7 +229,6 @@ respectively.
     \emph{Constant}             & \emph{Size} & \emph{Mapping level} \\ \midrule
     \texttt{seL4\_PageBits}      & 4\,KiB      & 1                   \\
     \texttt{seL4\_LargePageBits} & 4\,MiB      & 0                   \\
-    \texttt{seL4\_HugePageBits}  & 512\,MiB    & 0                   \\
     \bottomrule
 \end{tabularx}
 
@@ -287,7 +282,7 @@ A parameter of type \texttt{seL4\_ARM\_VMAttributes} or
 \texttt{seL4\_x86\_VMAttributes} is used to specify the cache behaviour of the
 page being mapped; possible values for ARM that can be bitwise OR'd together are
 shown in \autoref{tbl:vmattr_arm} \ifxeightsix and an enumeration of valid values
-for IA-32 are shown in \autoref{tbl:vmattr_ia32}\fi.
+for IA-32 are shown in \autoref{tbl:vmattr_ia32}\fi. Mapping attributtes can be updated on existing mappings using the Map invocation with the same virtual address.
 
 \begin{table}[htb]
   \begin{center}

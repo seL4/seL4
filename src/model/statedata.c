@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -29,6 +25,10 @@ UP_STATE_DEFINE(tcb_queue_t, ksReadyQueues[NUM_READY_QUEUES]);
 UP_STATE_DEFINE(word_t, ksReadyQueuesL1Bitmap[CONFIG_NUM_DOMAINS]);
 UP_STATE_DEFINE(word_t, ksReadyQueuesL2Bitmap[CONFIG_NUM_DOMAINS][L2_BITMAP_SIZE]);
 compile_assert(ksReadyQueuesL1BitmapBigEnough, (L2_BITMAP_SIZE - 1) <= wordBits)
+#ifdef CONFIG_KERNEL_MCS
+/* Head of the queue of threads waiting for their budget to be replenished */
+UP_STATE_DEFINE(tcb_t *, ksReleaseHead);
+#endif
 
 /* Current thread TCB pointer */
 UP_STATE_DEFINE(tcb_t *, ksCurThread);
@@ -47,6 +47,16 @@ UP_STATE_DEFINE(user_fpu_state_t *, ksActiveFPUState);
 
 UP_STATE_DEFINE(word_t, ksFPURestoresSinceSwitch);
 #endif /* CONFIG_HAVE_FPU */
+#ifdef CONFIG_KERNEL_MCS
+/* the amount of time passed since the kernel time was last updated */
+UP_STATE_DEFINE(ticks_t, ksConsumed);
+/* whether we need to reprogram the timer before exiting the kernel */
+UP_STATE_DEFINE(bool_t, ksReprogram);
+/* the current kernel time (recorded on kernel entry) */
+UP_STATE_DEFINE(ticks_t, ksCurTime);
+/* current scheduling context pointer */
+UP_STATE_DEFINE(sched_context_t *, ksCurSC);
+#endif
 
 #ifdef CONFIG_DEBUG_BUILD
 UP_STATE_DEFINE(tcb_t *, ksDebugTCBs);
@@ -56,21 +66,35 @@ UP_STATE_DEFINE(tcb_t *, ksDebugTCBs);
  * pending interrupts */
 word_t ksWorkUnitsCompleted;
 
-/* CNode containing interrupt handler endpoints */
-irq_state_t intStateIRQTable[maxIRQ + 1];
-cte_t *intStateIRQNode;
+irq_state_t intStateIRQTable[INT_STATE_ARRAY_SIZE];
+/* CNode containing interrupt handler endpoints - like all seL4 objects, this CNode needs to be
+ * of a size that is a power of 2 and aligned to its size. */
+cte_t intStateIRQNode[BIT(IRQ_CNODE_SLOT_BITS)] ALIGN(BIT(IRQ_CNODE_SLOT_BITS + seL4_SlotBits));
+compile_assert(irqCNodeSize, sizeof(intStateIRQNode) >= ((INT_STATE_ARRAY_SIZE) *sizeof(cte_t)));
 
 /* Currently active domain */
 dom_t ksCurDomain;
 
 /* Domain timeslice remaining */
+#ifdef CONFIG_KERNEL_MCS
+ticks_t ksDomainTime;
+#else
 word_t ksDomainTime;
+#endif
 
 /* An index into ksDomSchedule for active domain and length. */
 word_t ksDomScheduleIdx;
 
 /* Only used by lockTLBEntry */
 word_t tlbLockCount = 0;
+
+/* Idle thread. */
+SECTION("._idle_thread") char ksIdleThreadTCB[CONFIG_MAX_NUM_NODES][BIT(seL4_TCBBits)] ALIGN(BIT(TCB_SIZE_BITS));
+
+#ifdef CONFIG_KERNEL_MCS
+/* Idle thread Schedcontexts */
+char ksIdleThreadSC[CONFIG_MAX_NUM_NODES][BIT(seL4_MinSchedContextBits)] ALIGN(BIT(seL4_MinSchedContextBits));
+#endif
 
 #if (defined CONFIG_DEBUG_BUILD || defined CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
 kernel_entry_t ksKernelEntry;

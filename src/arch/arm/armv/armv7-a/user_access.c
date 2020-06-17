@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <plat/machine/hardware.h>
@@ -26,13 +22,13 @@
 
 
 
-static void
-check_export_pmu(void)
+static void check_export_pmu(void)
 {
-#ifdef CONFIG_EXPORT_PMU_USER
+#if defined CONFIG_EXPORT_PMU_USER || defined CONFIG_ENABLE_BENCHMARKS
     /* Export performance counters */
     uint32_t v;
-    v = PMUSERENR_ENABLE;
+    MRC(PMUSERENR, v);
+    v |= PMUSERENR_ENABLE;
     MCR(PMUSERENR, v);
 
     /* enable user-level pmu event counter if we're in secure mode */
@@ -45,11 +41,9 @@ check_export_pmu(void)
 }
 
 
-static void
-check_export_arch_timer(void)
+static void check_export_arch_timer(void)
 {
-    uint32_t v;
-    MRC(CNTKCTL, v);
+    uint32_t v = 0;
 #ifdef CONFIG_EXPORT_PCNT_USER
     v |= CNTKCTL_PL0PCTEN;
 #endif
@@ -60,8 +54,7 @@ check_export_arch_timer(void)
 }
 
 
-void
-armv_init_user_access(void)
+void armv_init_user_access(void)
 {
     uint32_t v;
     /* Performance Monitoring Unit */

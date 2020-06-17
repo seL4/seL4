@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -13,7 +9,7 @@
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 
 #include <machine/assembler.h>
-#include <mode/api/constants.h>
+#include <sel4/sel4_arch/constants.h>
 
 /*** Hypervisor coprocessor registers ***/
 #define   HVBAR(reg)    p15, 4, reg, c12, c0, 0
@@ -111,8 +107,8 @@ END_FUNC(arm_vector_table)
 
 /* Prepare to enter the kernel */
 .macro PUSH_STACK
-    /* store FaultInstruction */
-    str lr, [sp, #(PT_FaultInstruction - PT_SP)]
+    /* store FaultIP */
+    str lr, [sp, #(PT_FaultIP - PT_SP)]
     /* Stack all user registers */
     push {r0-r12}
     /* Load the kernel's real stack pointer */

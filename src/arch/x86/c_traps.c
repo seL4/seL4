@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -16,13 +12,12 @@
 #include <machine/debug.h>
 #include <arch/object/vcpu.h>
 #include <api/syscall.h>
-#include <arch/api/vmenter.h>
+#include <sel4/arch/vmenter.h>
 
 #include <benchmark/benchmark_track.h>
 #include <benchmark/benchmark_utilisation.h>
 
-void VISIBLE
-c_nested_interrupt(int irq)
+void VISIBLE c_nested_interrupt(int irq)
 {
     /* This is not a real entry point, so we do not grab locks or
      * run c_entry/exit_hooks, since this occurs only if we're already
@@ -31,8 +26,7 @@ c_nested_interrupt(int irq)
     ARCH_NODE_STATE(x86KSPendingInterrupt) = irq;
 }
 
-void VISIBLE NORETURN
-c_handle_interrupt(int irq, int syscall)
+void VISIBLE NORETURN c_handle_interrupt(int irq, int syscall)
 {
     /* need to run this first as the NODE_LOCK code might end up as a function call
      * with a return, and we need to make sure returns are not exploitable yet
@@ -106,14 +100,14 @@ c_handle_interrupt(int irq, int syscall)
     UNREACHABLE();
 }
 
-void NORETURN
-slowpath(syscall_t syscall)
+void NORETURN slowpath(syscall_t syscall)
 {
 
 #ifdef CONFIG_VTX
-    if (syscall == SysVMEnter) {
+    if (syscall == SysVMEnter && NODE_STATE(ksCurThread)->tcbArch.tcbVCPU) {
         vcpu_update_state_sysvmenter(NODE_STATE(ksCurThread)->tcbArch.tcbVCPU);
-        if (NODE_STATE(ksCurThread)->tcbBoundNotification && notification_ptr_get_state(NODE_STATE(ksCurThread)->tcbBoundNotification) == NtfnState_Active) {
+        if (NODE_STATE(ksCurThread)->tcbBoundNotification
+            && notification_ptr_get_state(NODE_STATE(ksCurThread)->tcbBoundNotification) == NtfnState_Active) {
             completeSignal(NODE_STATE(ksCurThread)->tcbBoundNotification, NODE_STATE(ksCurThread));
             setRegister(NODE_STATE(ksCurThread), msgInfoRegister, SEL4_VMENTER_RESULT_NOTIF);
             /* Any guest state that we should return is in the same
@@ -144,8 +138,11 @@ slowpath(syscall_t syscall)
     UNREACHABLE();
 }
 
-void VISIBLE NORETURN
-c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
+#ifdef CONFIG_KERNEL_MCS
+void VISIBLE NORETURN c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall, word_t reply)
+#else
+void VISIBLE NORETURN c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
+#endif
 {
     /* need to run this first as the NODE_LOCK code might end up as a function call
      * with a return, and we need to make sure returns are not exploitable yet */
@@ -175,7 +172,11 @@ c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
         fastpath_call(cptr, msgInfo);
         UNREACHABLE();
     } else if (syscall == (syscall_t)SysReplyRecv) {
+#ifdef CONFIG_KERNEL_MCS
+        fastpath_reply_recv(cptr, msgInfo, reply);
+#else
         fastpath_reply_recv(cptr, msgInfo);
+#endif
         UNREACHABLE();
     }
 #endif /* CONFIG_FASTPATH */
@@ -193,22 +194,26 @@ void VISIBLE NORETURN c_handle_vmexit(void)
     /* We *always* need to flush the rsb as a guest may have been able to train the rsb with kernel addresses */
     x86_flush_rsb();
 
+    /* When we switched out of VMX mode the FS and GS registers were
+     * clobbered and set to potentially undefined values. we need to
+     * make sure we reload the correct values of FS and GS.
+     * Unfortunately our cached values in x86KSCurrent[FG]SBase now
+     * mismatch what is in the hardware. To force a reload to happen we
+     * set the cached value to something that is guaranteed to not be
+     * the target threads value, ensuring both the cache and the
+     * hardware get updated.
+     *
+     * This needs to happen before the entry hook which will try to
+     * restore the registers without having a means to determine whether
+     * they may have been dirtied by a VM exit. */
+    tcb_t *cur_thread = NODE_STATE(ksCurThread);
+    ARCH_NODE_STATE(x86KSCurrentGSBase) = -(word_t)1;
+    ARCH_NODE_STATE(x86KSCurrentFSBase) = -(word_t)1;
+    x86_load_fsgs_base(cur_thread, SMP_TERNARY(getCurrentCPUIndex(), 0));
+
     c_entry_hook();
     /* NODE_LOCK will get called in handleVmexit */
     handleVmexit();
-    /* When we switched out of VMX mode the FS and GS registers were clobbered
-     * and set to potentially undefined values. If we are going to switch back
-     * to VMX mode then this is fine, but if we are switching to user mode we
-     * need to make sure we reload the correct values of FS and GS. Unfortunately
-     * our cached values in x86KSCurrent[FG]SBase now mismatch what is in the
-     * hardware. To force a reload to happen we set the cached value to something
-     * that is guaranteed to not be the target threads value, ensuring both
-     * the cache and the hardware get updated */
-    tcb_t *cur_thread = NODE_STATE(ksCurThread);
-    if (thread_state_ptr_get_tsType(&cur_thread->tcbState) != ThreadState_RunningVM) {
-        ARCH_NODE_STATE(x86KSCurrentGSBase) = -(word_t)1;
-        ARCH_NODE_STATE(x86KSCurrentFSBase) = -(word_t)1;
-    }
     restore_user_context();
     UNREACHABLE();
 }

@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -44,7 +40,8 @@ static int UNUSED parse_opt(const char *cmdline, const char *opt, char *value, i
             break;
         }
 
-        for (optptr = opt; *optptr && *cmdline && (*cmdline != '=') && !is_space(*cmdline) && (*optptr == *cmdline); optptr++, cmdline++);
+        for (optptr = opt; *optptr && *cmdline && (*cmdline != '=') && !is_space(*cmdline)
+             && (*optptr == *cmdline); optptr++, cmdline++);
 
         if (*optptr == '\0' && *cmdline == '=') {
             cmdline++;
@@ -82,9 +79,9 @@ static int parse_bool(const char *cmdline, const char *opt)
     }
 }
 
-static void UNUSED parse_uint16_array(char* str, uint16_t* array, int array_size)
+static void UNUSED parse_uint16_array(char *str, uint16_t *array, int array_size)
 {
-    char* last;
+    char *last;
     int   i = 0;
     int   v;
 
@@ -106,14 +103,14 @@ static void UNUSED parse_uint16_array(char* str, uint16_t* array, int array_size
     }
 }
 
-void cmdline_parse(const char *cmdline, cmdline_opt_t* cmdline_opt)
+void cmdline_parse(const char *cmdline, cmdline_opt_t *cmdline_opt)
 {
 #if defined(CONFIG_PRINTING) || defined(CONFIG_DEBUG_BUILD)
     /* use BIOS data area to read serial configuration. The BDA is not
      * fully standardized and parts are absolete. See http://wiki.osdev.org/Memory_Map_(x86)#BIOS_Data_Area_.28BDA.29
      * for an explanation */
-    const unsigned short * bda_port = (unsigned short *)0x400;
-    const unsigned short * bda_equi = (unsigned short *)0x410;
+    const unsigned short *bda_port = (unsigned short *)0x400;
+    const unsigned short *bda_equi = (unsigned short *)0x410;
     int const bda_ports_count       = (*bda_equi >> 9) & 0x7;
 #endif
 

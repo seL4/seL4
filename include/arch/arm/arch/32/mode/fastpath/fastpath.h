@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_FASTPATH_32_H
-#define __ARCH_FASTPATH_32_H
+#pragma once
 
 #include <config.h>
 #include <util.h>
@@ -38,51 +33,46 @@ clearExMonitor_fp(void)
 {
     word_t temp1 = 0;
     word_t temp2;
-    asm volatile (
+    asm volatile(
         "strex %[output], %[mem], [%[mem]]"
         : [output]"+r"(temp1)
         : [mem]"r"(&temp2)
     );
 }
 
-static inline void FORCE_INLINE
-switchToThread_fp(tcb_t *thread, pde_t *cap_pd, pde_t stored_hw_asid)
+static inline void FORCE_INLINE switchToThread_fp(tcb_t *thread, pde_t *cap_pd, pde_t stored_hw_asid)
 {
     hw_asid_t hw_asid;
 
-    hw_asid = pde_pde_invalid_get_stored_hw_asid(stored_hw_asid);
-    armv_contextSwitch_HWASID(cap_pd, hw_asid);
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         vcpu_switch(thread->tcbArch.tcbVCPU);
     }
+    hw_asid = pde_pde_invalid_get_stored_hw_asid(stored_hw_asid);
+    armv_contextSwitch_HWASID(cap_pd, hw_asid);
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
     benchmark_utilisation_switch(NODE_STATE(ksCurThread), thread);
 #endif
 
-#if defined(CONFIG_IPC_BUF_GLOBALS_FRAME)
-    *armKSGlobalsFrame = thread->tcbIPCBuffer;
-#endif
     NODE_STATE(ksCurThread) = thread;
     clearExMonitor_fp();
 }
 
-static inline void
-mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(
+#ifndef CONFIG_KERNEL_MCS
+static inline void mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(
     mdb_node_t *node_ptr, word_t mdbNext,
     word_t mdbRevocable, word_t mdbFirstBadged)
 {
     node_ptr->words[1] = mdbNext | (mdbRevocable << 1) | mdbFirstBadged;
 }
 
-static inline void
-mdb_node_ptr_set_mdbPrev_np(mdb_node_t *node_ptr, word_t mdbPrev)
+static inline void mdb_node_ptr_set_mdbPrev_np(mdb_node_t *node_ptr, word_t mdbPrev)
 {
     node_ptr->words[0] = mdbPrev;
 }
+#endif
 
-static inline bool_t
-isValidVTableRoot_fp(cap_t pd_cap)
+static inline bool_t isValidVTableRoot_fp(cap_t pd_cap)
 {
     return (pd_cap.words[0] & MASK(5)) ==
            (BIT(4) | cap_page_directory_cap);
@@ -93,7 +83,7 @@ isValidVTableRoot_fp(cap_t pd_cap)
    which appears above it is zero. We are assuming that n_msgRegisters == 4
    for this check to be useful. By masking out the bottom 3 bits, we are
    really checking that n + 3 <= MASK(3), i.e. n + 3 <= 7 or n <= 4. */
-compile_assert (n_msgRegisters_eq_4, n_msgRegisters == 4)
+compile_assert(n_msgRegisters_eq_4, n_msgRegisters == 4)
 static inline int
 fastpath_mi_check(word_t msgInfo)
 {
@@ -101,8 +91,7 @@ fastpath_mi_check(word_t msgInfo)
             + 3) & ~MASK(3);
 }
 
-static inline void
-fastpath_copy_mrs(word_t length, tcb_t *src, tcb_t *dest)
+static inline void fastpath_copy_mrs(word_t length, tcb_t *src, tcb_t *dest)
 {
     word_t i;
     register_t reg;
@@ -115,15 +104,15 @@ fastpath_copy_mrs(word_t length, tcb_t *src, tcb_t *dest)
     }
 }
 
-static inline int
-fastpath_reply_cap_check(cap_t cap)
+#ifndef CONFIG_KERNEL_MCS
+static inline int fastpath_reply_cap_check(cap_t cap)
 {
     return (cap.words[0] & MASK(5)) == cap_reply_cap;
 }
+#endif
 
 /** DONT_TRANSLATE */
-static inline void NORETURN
-fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
+static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 {
     NODE_UNLOCK;
 
@@ -131,11 +120,6 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 
 #ifdef CONFIG_ARM_CP14_SAVE_AND_RESTORE_NATIVE_THREADS
     restore_user_debug_context(NODE_STATE(ksCurThread));
-#endif
-
-#ifndef CONFIG_ARCH_ARM_V6
-    writeTPIDRURW(getRegister(NODE_STATE(ksCurThread), TPIDRURW));
-    writeTPIDRURO(getRegister(NODE_STATE(ksCurThread), TLS_BASE));
 #endif
 
 #ifdef CONFIG_HAVE_FPU
@@ -166,7 +150,7 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
             /* Return to user */
             "eret"
             :
-            : [badge] "r" (badge_reg),
+            : [badge] "r"(badge_reg),
             [msginfo]"r"(msgInfo_reg),
             [cur_thread]"r"(cur_thread_reg)
             : "memory"
@@ -180,11 +164,10 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
                      : [badge]"r"(badge_reg),
                      [msginfo]"r"(msgInfo_reg),
                      [cur_thread]"r"(cur_thread_reg),
-                     [LR_SVC_OFFSET]"i"(LR_svc * sizeof(word_t))
+                     [LR_SVC_OFFSET]"i"(NextIP * sizeof(word_t))
                      : "memory"
                     );
     }
     UNREACHABLE();
 }
 
-#endif /* __ARCH_FASTPATH_32_H */

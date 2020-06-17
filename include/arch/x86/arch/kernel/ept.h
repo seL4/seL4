@@ -1,17 +1,10 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_KERNEL_EPT_H
-#define __ARCH_KERNEL_EPT_H
+#pragma once
 
 #include <config.h>
 #include <object/structures.h>
@@ -51,10 +44,14 @@ EPTPageTableMapped_ret_t EPTPageTableMapped(asid_t asid, vptr_t vaddr, ept_pte_t
 findEPTForASID_ret_t findEPTForASID(asid_t asid);
 
 void deleteEPTASID(asid_t asid, ept_pml4e_t *ept);
-exception_t decodeX86EPTInvocation(word_t invLabel, word_t length, cptr_t cptr, cte_t* cte, cap_t cap, extra_caps_t excaps, word_t* buffer);
-exception_t decodeX86EPTPDInvocation(word_t invLabel, word_t length, cte_t* cte, cap_t cap, extra_caps_t excaps, word_t* buffer);
-exception_t decodeX86EPTPTInvocation(word_t invLabel, word_t length, cte_t* cte, cap_t cap, extra_caps_t excaps, word_t* buffer);
-exception_t decodeX86EPTPageMap(word_t invLabel, word_t length, cte_t* cte, cap_t cap, extra_caps_t excaps, word_t* buffer);
+exception_t decodeX86EPTInvocation(word_t invLabel, word_t length, cptr_t cptr, cte_t *cte, cap_t cap,
+                                   extra_caps_t excaps, word_t *buffer);
+exception_t decodeX86EPTPDInvocation(word_t invLabel, word_t length, cte_t *cte, cap_t cap, extra_caps_t excaps,
+                                     word_t *buffer);
+exception_t decodeX86EPTPTInvocation(word_t invLabel, word_t length, cte_t *cte, cap_t cap, extra_caps_t excaps,
+                                     word_t *buffer);
+exception_t decodeX86EPTPageMap(word_t invLabel, word_t length, cte_t *cte, cap_t cap, extra_caps_t excaps,
+                                word_t *buffer);
 exception_t performX86EPTPageInvocationUnmap(cap_t cap, cte_t *ctSlot);
 void unmapEPTPDPT(asid_t asid, vptr_t vaddr, ept_pdpte_t *pdpt);
 void unmapEPTPageDirectory(asid_t asid, vptr_t vaddr, ept_pde_t *pd);
@@ -63,4 +60,3 @@ void unmapEPTPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr
 
 #endif /* CONFIG_VTX */
 
-#endif /* __ARCH_KERNEL_EPT_H */

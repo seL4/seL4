@@ -1,18 +1,13 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
 
 #ifdef CONFIG_DEBUG_BUILD
-#ifndef __API_DEBUG_H
-#define __API_DEBUG_H
+#pragma once
 
 #include <benchmark/benchmark_track.h>
 #include <arch/api/syscall.h>
@@ -22,8 +17,7 @@
 
 #ifdef CONFIG_PRINTING
 
-static inline void
-debug_printKernelEntryReason(void)
+static inline void debug_printKernelEntryReason(void)
 {
     printf("\nKernel entry via ");
     switch (ksKernelEntry.path) {
@@ -47,8 +41,8 @@ debug_printKernelEntryReason(void)
     case Entry_Syscall:
         printf("Syscall, number: %ld, %s\n", (long) ksKernelEntry.syscall_no, syscall_names[ksKernelEntry.syscall_no]);
         if (ksKernelEntry.syscall_no == -SysSend ||
-                ksKernelEntry.syscall_no == -SysNBSend ||
-                ksKernelEntry.syscall_no == -SysCall) {
+            ksKernelEntry.syscall_no == -SysNBSend ||
+            ksKernelEntry.syscall_no == -SysCall) {
 
             printf("Cap type: %lu, Invocation tag: %lu\n", (unsigned long) ksKernelEntry.cap_type,
                    (unsigned long) ksKernelEntry.invocation_tag);
@@ -72,8 +66,7 @@ debug_printKernelEntryReason(void)
 }
 
 /* Prints the user context and stack trace of the current thread */
-static inline void
-debug_printUserState(void)
+static inline void debug_printUserState(void)
 {
     tcb_t *tptr = NODE_STATE(ksCurThread);
     printf("Current thread: %s\n", tptr->tcbName);
@@ -82,11 +75,10 @@ debug_printUserState(void)
     Arch_userStackTrace(tptr);
 }
 
-static inline void
-debug_printTCB(tcb_t *tcb)
+static inline void debug_printTCB(tcb_t *tcb)
 {
     printf("%40s\t", tcb->tcbName);
-    char* state;
+    char *state;
     switch (thread_state_get_tsType(tcb->tcbState)) {
     case ThreadState_Inactive:
         state = "inactive";
@@ -122,20 +114,23 @@ debug_printTCB(tcb_t *tcb)
     }
 
     word_t core = SMP_TERNARY(tcb->tcbAffinity, 0);
-    printf("%15s\t%p\t%20lu\t%lu\n", state, (void *) getRestartPC(tcb), tcb->tcbPriority, core);
+    printf("%15s\t%p\t%20lu\t%lu", state, (void *) getRestartPC(tcb), tcb->tcbPriority, core);
+#ifdef CONFIG_KERNEL_MCS
+    printf("\t%lu", (word_t) thread_state_get_tcbInReleaseQueue(tcb->tcbState));
+#endif
+    printf("\n");
 }
 
-static inline void
-debug_dumpScheduler(void)
+static inline void debug_dumpScheduler(void)
 {
     printf("Dumping all tcbs!\n");
-    printf("Name                                    \tState          \tIP                  \t Prio \t Core\n");
+    printf("Name                                    \tState          \tIP                  \t Prio \t Core%s\n",
+           config_set(CONFIG_KERNEL_MCS) ?  "\t InReleaseQueue" : "");
     printf("--------------------------------------------------------------------------------------\n");
     for (tcb_t *curr = NODE_STATE(ksDebugTCBs); curr != NULL; curr = curr->tcbDebugNext) {
         debug_printTCB(curr);
     }
 }
 #endif /* CONFIG_PRINTING */
-#endif /* __API_DEBUG_H */
 #endif /* CONFIG_DEBUG_BUILD */
 

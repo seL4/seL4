@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __PLAT_MACHINE_INTERRUPT_H
-#define __PLAT_MACHINE_INTERRUPT_H
+#pragma once
 
 #include <config.h>
 #include <types.h>
@@ -18,14 +13,13 @@
 #include <arch/object/structures.h>
 #include <arch/model/statedata.h>
 #include <arch/kernel/apic.h>
+#include <machine/interrupt.h>
 #include <plat/machine/acpi.h>
 #include <plat/machine/ioapic.h>
 #include <plat/machine/pic.h>
 #include <plat/machine/intel-vtd.h>
 
-/* Handle a platform-reserved IRQ. */
-static inline void
-handleReservedIRQ(irq_t irq)
+static inline void handleReservedIRQ(irq_t irq)
 {
 #ifdef CONFIG_IOMMU
     if (irq == irq_iommu) {
@@ -33,10 +27,13 @@ handleReservedIRQ(irq_t irq)
         return;
     }
 #endif
+
+#ifdef CONFIG_IRQ_REPORTING
+    printf("Received unhandled reserved IRQ: %d\n", (int)irq);
+#endif
 }
 
-static inline void
-receivePendingIRQ(void)
+static inline void receivePendingIRQ(void)
 {
     assert(ARCH_NODE_STATE(x86KSPendingInterrupt) == int_invalid);
     asm volatile("sti\n"
@@ -45,8 +42,7 @@ receivePendingIRQ(void)
                  : "=m"(ARCH_NODE_STATE(x86KSPendingInterrupt)));
 }
 
-static inline interrupt_t
-servicePendingIRQ(void)
+static inline interrupt_t servicePendingIRQ(void)
 {
     assert(ARCH_NODE_STATE(x86KScurInterrupt) == int_invalid);
     assert(ARCH_NODE_STATE(x86KSPendingInterrupt) != int_invalid);
@@ -56,8 +52,7 @@ servicePendingIRQ(void)
 }
 
 /* Get the IRQ number currently working on. */
-static inline irq_t
-getActiveIRQ(void)
+static inline irq_t getActiveIRQ(void)
 {
     if (ARCH_NODE_STATE(x86KScurInterrupt) == int_invalid) {
         /* If we tried to get the active IRQ when we don't have one then
@@ -81,8 +76,7 @@ getActiveIRQ(void)
 }
 
 /* Checks for pending IRQ */
-static inline bool_t
-isIRQPending(void)
+static inline bool_t isIRQPending(void)
 {
     if (apic_is_interrupt_pending()) {
         return true;
@@ -95,8 +89,7 @@ isIRQPending(void)
     return false;
 }
 
-static inline void
-ackInterrupt(irq_t irq)
+static inline void ackInterrupt(irq_t irq)
 {
     if (config_set(CONFIG_IRQ_PIC) && irq <= irq_isa_max) {
         pic_ack_active_irq();
@@ -105,21 +98,18 @@ ackInterrupt(irq_t irq)
     }
 }
 
-static inline void
-handleSpuriousIRQ(void)
+static inline void handleSpuriousIRQ(void)
 {
     /* do nothing */
 }
 
-static void inline
-updateIRQState(irq_t irq, x86_irq_state_t state)
+static void inline updateIRQState(irq_t irq, x86_irq_state_t state)
 {
     assert(irq <= maxIRQ);
     x86KSIRQState[irq] = state;
 }
 
-static inline void
-maskInterrupt(bool_t disable, irq_t irq)
+static inline void maskInterrupt(bool_t disable, irq_t irq)
 {
     if (irq >= irq_isa_min && irq <= irq_isa_max) {
         if (config_set(CONFIG_IRQ_PIC)) {
@@ -154,4 +144,3 @@ maskInterrupt(bool_t disable, irq_t irq)
     }
 }
 
-#endif

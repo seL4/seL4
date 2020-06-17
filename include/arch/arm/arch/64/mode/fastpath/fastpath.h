@@ -1,17 +1,10 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_FASTPATH_64_H
-#define __ARCH_FASTPATH_64_H
+#pragma once
 
 #include <config.h>
 #include <util.h>
@@ -20,6 +13,7 @@
 #include <api/syscall.h>
 #include <armv/context_switch.h>
 #include <mode/model/statedata.h>
+#include <arch/object/vcpu.h>
 #include <machine/fpu.h>
 #include <smp/lock.h>
 
@@ -31,15 +25,18 @@ compile_assert(SysReplyRecv_Minus2, SysReplyRecv == -2)
 
 /* Use macros to not break verification */
 #define endpoint_ptr_get_epQueue_tail_fp(ep_ptr) TCB_PTR(endpoint_ptr_get_epQueue_tail(ep_ptr))
-#define cap_vtable_cap_get_vspace_root_fp(vtable_cap) PGDE_PTR(cap_page_global_directory_cap_get_capPGDBasePtr(vtable_cap))
+#define cap_vtable_cap_get_vspace_root_fp(vtable_cap) cap_vtable_root_get_basePtr(vtable_cap)
 
 static inline void FORCE_INLINE
 switchToThread_fp(tcb_t *thread, vspace_root_t *vroot, pde_t stored_hw_asid)
 {
-    asid_t asid = (asid_t)(stored_hw_asid.words[0] & 0xffff);
+    asid_t asid;
 
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        vcpu_switch(thread->tcbArch.tcbVCPU);
+    }
+    asid = (asid_t)(stored_hw_asid.words[0] & 0xffff);
     armv_contextSwitch(vroot, asid);
-    writeTPIDRURO(thread->tcbIPCBuffer);
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
     benchmark_utilisation_switch(NODE_STATE(ksCurThread), thread);
@@ -48,24 +45,22 @@ switchToThread_fp(tcb_t *thread, vspace_root_t *vroot, pde_t stored_hw_asid)
     NODE_STATE(ksCurThread) = thread;
 }
 
-static inline void
-mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(
+static inline void mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(
     mdb_node_t *node_ptr, word_t mdbNext,
     word_t mdbRevocable, word_t mdbFirstBadged)
 {
     node_ptr->words[1] = mdbNext | (mdbRevocable << 1) | mdbFirstBadged;
 }
 
-static inline void
-mdb_node_ptr_set_mdbPrev_np(mdb_node_t *node_ptr, word_t mdbPrev)
+static inline void mdb_node_ptr_set_mdbPrev_np(mdb_node_t *node_ptr, word_t mdbPrev)
 {
     node_ptr->words[0] = mdbPrev;
 }
 
-static inline bool_t
-isValidVTableRoot_fp(cap_t vspace_root_cap)
+static inline bool_t isValidVTableRoot_fp(cap_t vspace_root_cap)
 {
-    return cap_capType_equals(vspace_root_cap, cap_page_global_directory_cap) && cap_page_global_directory_cap_get_capPGDIsMapped(vspace_root_cap);
+    return cap_capType_equals(vspace_root_cap, cap_vtable_root_cap)
+           && cap_vtable_root_isMapped(vspace_root_cap);
 }
 
 /* This is an accelerated check that msgLength, which appears
@@ -73,15 +68,14 @@ isValidVTableRoot_fp(cap_t vspace_root_cap)
    which appears above it is zero. We are assuming that n_msgRegisters == 4
    for this check to be useful. By masking out the bottom 3 bits, we are
    really checking that n + 3 <= MASK(3), i.e. n + 3 <= 7 or n <= 4. */
-compile_assert (n_msgRegisters_eq_4, n_msgRegisters == 4)
+compile_assert(n_msgRegisters_eq_4, n_msgRegisters == 4)
 static inline int
 fastpath_mi_check(word_t msgInfo)
 {
     return (msgInfo & MASK(seL4_MsgLengthBits + seL4_MsgExtraCapBits)) > 4;
 }
 
-static inline void
-fastpath_copy_mrs(word_t length, tcb_t *src, tcb_t *dest)
+static inline void fastpath_copy_mrs(word_t length, tcb_t *src, tcb_t *dest)
 {
     word_t i;
     register_t reg;
@@ -94,15 +88,15 @@ fastpath_copy_mrs(word_t length, tcb_t *src, tcb_t *dest)
     }
 }
 
-static inline int
-fastpath_reply_cap_check(cap_t cap)
+#ifndef CONFIG_KERNEL_MCS
+static inline int fastpath_reply_cap_check(cap_t cap)
 {
     return cap_capType_equals(cap, cap_reply_cap);
 }
+#endif
 
 /** DONT_TRANSLATE */
-static inline void NORETURN
-fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
+static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 {
     NODE_UNLOCK;
 
@@ -111,8 +105,6 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 #ifdef CONFIG_HAVE_FPU
     lazyFPURestore(NODE_STATE(ksCurThread));
 #endif /* CONFIG_HAVE_FPU */
-
-    writeTPIDRURW(getRegister(NODE_STATE(ksCurThread), TPIDRURW));
 
     register word_t badge_reg asm("x0") = badge;
     register word_t msgInfo_reg asm("x1") = msgInfo;
@@ -151,12 +143,11 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
         "ldr     x30, [sp, %[LR]]           \n"
         "eret                                 "
         :
-        : "r" (badge_reg), "r" (msgInfo_reg), "r" (cur_thread_reg),
-        [SP_EL0] "i" (PT_SP_EL0), [SPSR_EL1] "i" (PT_SPSR_EL1), [LR] "i" (PT_LR)
+        : "r"(badge_reg), "r"(msgInfo_reg), "r"(cur_thread_reg),
+        [SP_EL0] "i"(PT_SP_EL0), [SPSR_EL1] "i"(PT_SPSR_EL1), [LR] "i"(PT_LR)
         : "memory"
     );
 
     UNREACHABLE();
 }
 
-#endif /* __ARCH_FASTPATH_64_H */

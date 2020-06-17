@@ -1,11 +1,7 @@
 --
 -- Copyright 2014, General Dynamics C4 Systems
 --
--- This software may be distributed and modified according to the terms of
--- the GNU General Public License version 2. Note that NO WARRANTY is provided.
--- See "LICENSE_GPLv2.txt" for details.
---
--- @TAG(GD_GPL)
+-- SPDX-License-Identifier: GPL-2.0-only
 --
 
 -- Default base size: uint32_t
@@ -29,10 +25,10 @@ block untyped_cap {
     field capType     4
 }
 
-block endpoint_cap(capEPBadge, capCanGrant, capCanSend, capCanReceive,
-                   capEPPtr, capType) {
+block endpoint_cap(capEPBadge, capCanGrantReply, capCanGrant, capCanSend,
+                   capCanReceive, capEPPtr, capType) {
     field_high capEPPtr 28
-    padding 1
+    field capCanGrantReply 1
     field capCanGrant 1
     field capCanReceive 1
     field capCanSend 1
@@ -51,14 +47,30 @@ block notification_cap {
     field capType 4
 }
 
-block reply_cap(capReplyMaster, capTCBPtr, capType) {
-    padding 32
+#ifdef CONFIG_KERNEL_MCS
+block reply_cap {
+    field capReplyPtr 32
 
-    field_high capTCBPtr 27
-    field capReplyMaster 1
+    padding 27
+    field capReplyCanGrant 1
     field capType 4
 }
 
+block call_stack {
+    field_high callStackPtr 28
+    padding 3
+    field isHead 1
+}
+#else
+block reply_cap(capReplyCanGrant, capReplyMaster, capTCBPtr, capType) {
+    padding 32
+
+    field_high capTCBPtr 26
+    field capReplyCanGrant 1
+    field capReplyMaster 1
+    field capType 4
+}
+#endif
 -- The user-visible format of the data word is defined by cnode_capdata, below.
 block cnode_cap(capCNodeRadix, capCNodeGuardSize, capCNodeGuard,
                 capCNodePtr, capType) {
@@ -87,8 +99,12 @@ block irq_control_cap {
 }
 
 block irq_handler_cap {
-    padding       24
-    field capIRQ   8
+#ifdef ENABLE_SMP_SUPPORT
+    field capIRQ   32
+#else
+    padding 24
+    field capIRQ 8
+#endif
 
     padding       24
     field capType  8
@@ -109,6 +125,23 @@ block domain_cap {
     field capType 8
 }
 
+#ifdef CONFIG_KERNEL_MCS
+block sched_context_cap {
+    field_high capSCPtr 28
+    padding              4
+
+    padding             18
+    field capSCSizeBits  6
+    field capType        8
+}
+
+block sched_control_cap {
+    field core    32
+
+    padding       24
+    field capType 8
+}
+#endif
 ---- Arch-independent object types
 
 -- Endpoint: size = 16 bytes
@@ -123,8 +156,15 @@ block endpoint {
     field state 2
 }
 
--- Notification object: size = 16 bytes
+-- Notification object: size = 16 bytes (32 bytes on mcs)
 block notification {
+#ifdef CONFIG_KERNEL_MCS
+    padding 96
+
+    field_high ntfnSchedContext 28
+    padding 4
+#endif
+
     field_high ntfnBoundTCB 28
     padding 4
 
@@ -157,9 +197,11 @@ block mdb_node {
 -- * Inactive
 -- * BlockedOnReceive
 --   - Endpoint
+--   - CanGrant
 -- * BlockedOnSend
 --   - Endpoint
 --   - CanGrant
+--   - CanGrantReply
 --   - IsCall
 --   - IPCBadge
 --   - Fault
@@ -231,59 +273,79 @@ tagged_union lookup_fault lufType {
 
 -- Fault: size = 8 bytes
 block NullFault {
-    padding 61
-    field seL4_FaultType 3
+    padding 60
+    field seL4_FaultType 4
 }
 
 block CapFault {
     field address 32
     field inReceivePhase 1
-    padding 28
-    field seL4_FaultType 3
+    padding 27
+    field seL4_FaultType 4
 }
 
 block UnknownSyscall {
     field syscallNumber 32
-    padding 29
-    field seL4_FaultType 3
+    padding 28
+    field seL4_FaultType 4
 }
 
 block UserException {
     field number 32
-    field code 29
-    field seL4_FaultType 3
+    field code 28
+    field seL4_FaultType 4
 }
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
 block DebugException {
     field breakpointAddress 32
 
-    padding 21
+    padding 20
     -- X86 has 4 breakpoints (DR0-3).
     -- ARM has between 2 and 16 breakpoints
     --   ( ARM Ref manual, C3.3).
     -- So we just use 4 bits to cater for both.
     field breakpointNumber 4
     field exceptionReason 4
-    field seL4_FaultType 3
+    field seL4_FaultType 4
+}
+#endif
+
+#ifdef CONFIG_KERNEL_MCS
+block Timeout {
+    field badge 32
+    padding 28
+    field seL4_FaultType 4
 }
 #endif
 
 -- Thread state: size = 12 bytes
-block thread_state(blockingIPCBadge, blockingIPCCanGrant, blockingIPCIsCall,
+block thread_state(blockingIPCBadge, blockingIPCCanGrant,
+                   blockingIPCCanGrantReply, blockingIPCIsCall,
                    tcbQueued, blockingObject,
+#ifdef CONFIG_KERNEL_MCS
+                   tcbInReleaseQueue, replyObject,
+#endif
                    tsType) {
     field blockingIPCBadge 28
     field blockingIPCCanGrant 1
+    field blockingIPCCanGrantReply 1
     field blockingIPCIsCall 1
-    padding 2
+    padding 1
 
     -- this is fastpath-specific. it is useful to be able to write
-    -- tsType and without changing tcbQueued
+    -- tsType and without changing tcbQueued or tcbInReleaseQueue
+#ifdef CONFIG_KERNEL_MCS
+    field_high replyObject 28
+    padding 2
+#else
     padding 31
+#endif
     field tcbQueued 1
+#ifdef CONFIG_KERNEL_MCS
+    field tcbInReleaseQueue 1
+#endif
 
     field_high blockingObject 28
     field tsType 4
 }
-

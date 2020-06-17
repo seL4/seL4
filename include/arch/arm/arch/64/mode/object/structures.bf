@@ -1,13 +1,7 @@
 --
--- Copyright 2017, Data61
--- Commonwealth Scientific and Industrial Research Organisation (CSIRO)
--- ABN 41 687 119 230.
+-- Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 --
--- This software may be distributed and modified according to the terms of
--- the GNU General Public License version 2. Note that NO WARRANTY is provided.
--- See "LICENSE_GPLv2.txt" for details.
---
--- @TAG(DATA61_GPL)
+-- SPDX-License-Identifier: GPL-2.0-only
 --
 
 #include <config.h>
@@ -17,6 +11,7 @@ base 64(48,0)
 #else
 base 64(48,1)
 #endif
+#define BF_CANONICAL_RANGE 48
 
 -- Including the common structures_64.bf is neccessary because
 -- we need the structures to be visible here when building
@@ -124,6 +119,10 @@ tagged_union cap capType {
     tag irq_handler_cap             16
     tag zombie_cap                  18
     tag domain_cap                  20
+#ifdef CONFIG_KERNEL_MCS
+    tag sched_context_cap           22
+    tag sched_control_cap           24
+#endif
 
     -- 5-bit tag arch caps
     tag frame_cap                   1
@@ -144,8 +143,8 @@ block VMFault {
     field address                   64
     field FSR                       32
     field instructionFault          1
-    padding                         28
-    field seL4_FaultType            3
+    padding                         27
+    field seL4_FaultType            4
 }
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
@@ -155,15 +154,22 @@ block VGICMaintenance {
     field idx        6
     field idxValid   1
     padding         25
-    padding         29
-    field seL4_FaultType  3
+    padding         28
+    field seL4_FaultType  4
 }
 
 block VCPUFault {
     padding         64
     field hsr       32
-    padding         29
-    field seL4_FaultType  3
+    padding         28
+    field seL4_FaultType  4
+}
+
+block VPPIEvent {
+    field irq_w     64
+    padding         32
+    padding         28
+    field seL4_FaultType  4
 }
 #endif
 
@@ -181,11 +187,31 @@ block vm_attributes {
 -- PGDE, PUDE, PDEs and PTEs, assuming 48-bit physical address
 base 64(48,0)
 
-block pgde {
+-- hw_asids are required in hyp mode
+block pgde_invalid {
+    field stored_hw_asid            8
+    field stored_asid_valid         1
+    padding                         53
+    field pgde_type                 2
+}
+
+block pgde_pud {
     padding                         16
     field_high pud_base_address     36
     padding                         10
-    field reserved                  2 -- must be 0b11
+    field pgde_type                 2 -- must be 0b11
+}
+
+tagged_union pgde pgde_type {
+    tag pgde_invalid                0
+    tag pgde_pud                    3
+}
+
+block pude_invalid {
+    field stored_hw_asid            8
+    field stored_asid_valid         1
+    padding                         53
+    field pude_type                 2
 }
 
 block pude_1g {
@@ -215,6 +241,7 @@ block pude_pd {
 }
 
 tagged_union pude pude_type {
+    tag pude_invalid                0
     tag pude_1g                     1
     tag pude_pd                     3
 }
@@ -311,4 +338,4 @@ tagged_union virq virqType {
 }
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
-#include <arch/api/shared_types.bf>
+#include <sel4/arch/shared_types.bf>

@@ -1,21 +1,24 @@
 %
 % Copyright 2014, General Dynamics C4 Systems
 %
-% This software may be distributed and modified according to the terms of
-% the GNU General Public License version 2. Note that NO WARRANTY is provided.
-% See "LICENSE_GPLv2.txt" for details.
-%
-% @TAG(GD_GPL)
+% SPDX-License-Identifier: GPL-2.0-only
 %
 
 \chapter{\label{ch:bootup}System Bootstrapping}
 
 \section{Initial Thread's Environment}
 
-The seL4 kernel creates a minimal boot environment for the initial thread.
+The seL4 kernel creates a minimal boot environment for the initial thread, which
+ is started at priority \texttt{seL4\_MaxPrio} and maximum control priority \texttt{seL4\_MaxPrio}.
 This environment consists of the initial thread's TCB, CSpace and VSpace,
 consisting of frames that contain the userland image (code/data of the initial
 thread) and the IPC buffer.
+
+On the MCS kernel, the initial thread is configured with a round-robin scheduling context
+with \texttt{CONFIG\_BOOT\_THREAD\_TIME\_SLICE} milliseconds timeslice.
+Without MCS, all threads including the initial thread are scheduled round-robin with
+\texttt{CONFIG\_TIMER\_TICK\_MS} $*$ \texttt{CONFIG\_TIME\_SLICE} timeslices.
+
 The initial thread's CSpace consists of exactly one CNode
 which contains capabilities to the initial
 thread's own resources was well as to all available global resources.
@@ -55,6 +58,7 @@ The first 12 slots contain specific capabilities as listed in
       \texttt{seL4\_CapBootInfoFrame}       & BootInfo frame (see \autoref{ch:bootup:bootinfo}) \\
       \texttt{seL4\_CapInitThreadIPCBuffer} & initial thread's IPC buffer (see \autoref{sec:messageinfo}) \\
       \texttt{seL4\_CapDomain}              & domain cap (see \autoref{sec:domains}) \\
+      \texttt{seL4\_CapInitThreadSC}        & initial thread's scheduling context (MCS only) \\
       \bottomrule
     \end{tabularx}
   \end{center}
@@ -106,6 +110,7 @@ of slots in the initial thread's CNode, starting with CPTR \texttt{start} and wi
       \texttt{seL4\_Uint8}          & \texttt{initThreadCNodeSizeBits} & CNode size ($2^n$ slots) \\
       \texttt{seL4\_Word}           & \texttt{initThreadDomain}        & domain of the initial thread (see \autoref{sec:domains}) \\
       \texttt{seL4\_SlotRegion}     & \texttt{untyped}                 & untyped-memory capabilities \\
+      \texttt{seL4\_SlotRegion}   & \texttt{untyped}                 & seL4\_SchedControl capabilities, one for each node (MCS only). \\
       \bottomrule
     \end{tabularx}
   \end{center}

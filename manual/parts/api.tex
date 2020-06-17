@@ -1,11 +1,7 @@
 %
 % Copyright 2014, General Dynamics C4 Systems
 %
-% This software may be distributed and modified according to the terms of
-% the GNU General Public License version 2. Note that NO WARRANTY is provided.
-% See "LICENSE_GPLv2.txt" for details.
-%
-% @TAG(GD_GPL)
+% SPDX-License-Identifier: GPL-2.0-only
 %
 
 %macros for API documentation
@@ -199,6 +195,19 @@ A capability could not be looked up.
 \end{tabularx}
 \vfill
 
+\subsection{Truncated Message}
+
+Too few message words or capabilities were sent in the message.
+
+\begin{tabularx}{\textwidth}{p{0.25\textwidth}X}
+\toprule
+    Field & Meaning \\
+\midrule
+    \ipcbloc{Label} & \enummem{seL4\_TruncatedMessage} \\
+\bottomrule
+\end{tabularx}
+\vfill
+
 \subsection{Delete First}
 
 A destination slot specified in the syscall arguments is occupied.
@@ -245,7 +254,12 @@ complete the \apifunc{seL4\_Untyped\_Retype}{untyped_retype} request.
 \section{System Calls}
 
 \subsection{General System Calls}
+This section provides the system call API for non-MCS kernel configurations.
 \inputgeneratedapidoc{GeneralSystemCalls}
+\clearpage
+\subsection{General System Calls (MCS) }
+This section provides the system call API for MCS kernel configurations.
+\inputgeneratedapidoc{MCSSystemCalls}
 \clearpage
 
 \subsection{Debugging System Calls}
@@ -279,7 +293,7 @@ complete the \apifunc{seL4\_Untyped\_Retype}{untyped_retype} request.
 \section{x86\_64-Specific Object Methods}
 \inputgeneratedapidoc{ObjectApiX64}
 
-\fi % xeightsix
+\fi
 
 \clearpage
 

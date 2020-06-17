@@ -1,13 +1,7 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -19,11 +13,11 @@
 
 static IpiModeRemoteCall_t remoteCall;   /* the remote call being requested */
 
-static inline void init_ipi_args(IpiModeRemoteCall_t func,
+static inline void init_ipi_args(IpiRemoteCall_t func,
                                  word_t data1, word_t data2, word_t data3,
                                  word_t mask)
 {
-    remoteCall = func;
+    remoteCall = (IpiModeRemoteCall_t)func;
     ipi_args[0] = data1;
     ipi_args[1] = data2;
     ipi_args[2] = data3;
@@ -60,6 +54,19 @@ static void handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0,
         case IpiRemoteCall_InvalidateTranslationAll:
             invalidateTranslationAllLocal();
             break;
+
+        case IpiRemoteCall_MaskPrivateInterrupt:
+            maskInterrupt(arg0, IDX_TO_IRQT(arg1));
+            break;
+
+#if defined CONFIG_ARM_HYPERVISOR_SUPPORT && defined ENABLE_SMP_SUPPORT
+        case IpiRemoteCall_VCPUInjectInterrupt: {
+            virq_t virq;
+            virq.words[0] = arg2;
+            handleVCPUInjectInterruptIPI((vcpu_t *) arg0, arg1, virq);
+            break;
+        }
+#endif
 
         default:
             fail("Invalid remote call");

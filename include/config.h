@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __CONFIG_H
-#define __CONFIG_H
+#pragma once
 
 /* Compile-time configuration parameters. Might be set by the build system. */
 
@@ -23,8 +18,20 @@
 #endif
 
 /* number of timer ticks until a thread is preempted  */
+#ifndef CONFIG_KERNEL_MCS
 #ifndef CONFIG_TIME_SLICE
 #define CONFIG_TIME_SLICE 5
+#endif
+#endif
+
+#ifdef CONFIG_KERNEL_MCS
+#ifndef CONFIG_BOOT_THREAD_TIME_SLICE
+#define CONFIG_BOOT_THREAD_TIME_SLICE 5
+#endif
+
+#ifndef CONFIG_KERNEL_WCET_SCALE
+#define CONFIG_KERNEL_WCET_SCALE 1
+#endif
 #endif
 
 /* the number of scheduler domains */
@@ -64,9 +71,11 @@
 #define CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS 166
 #endif
 
+#ifndef CONFIG_KERNEL_MCS
 /* length of a timer tick in ms  */
 #ifndef CONFIG_TIMER_TICK_MS
 #define CONFIG_TIMER_TICK_MS 2
+#endif
 #endif
 
 /* maximum number of different tracepoints which can be placed in the kernel */
@@ -89,4 +98,9 @@
 #define ENABLE_SMP_SUPPORT
 #endif
 
-#endif /* __CONFIG_H */
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+#ifdef CONFIG_ARM_PA_SIZE_BITS_40
+#define AARCH64_VSPACE_S2_START_L1
+#endif
+#endif
+

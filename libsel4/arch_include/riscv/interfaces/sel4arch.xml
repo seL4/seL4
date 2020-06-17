@@ -1,20 +1,11 @@
 <?xml version="1.0" ?>
 <!--
-  Copyright 2018, Data61
-  Commonwealth Scientific and Industrial Research Organisation (CSIRO)
-  ABN 41 687 119 230.
+     Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+     Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
 
-  This software may be distributed and modified according to the terms of
-  the BSD 2-Clause license. Note that NO WARRANTY is provided.
-  See "LICENSE_BSD2.txt" for details.
+     SPDX-License-Identifier: BSD-2-Clause
+-->
 
-     @TAG(DATA61_BSD)
-  -->
-<!--
-
-  Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
-  Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
-  -->
 <api name="ObjectApiRISCV" label_prefix="riscv_">
 
     <struct name="seL4_UserContext">
@@ -22,12 +13,18 @@
             <member name="ra"/>
             <member name="sp"/>
             <member name="gp"/>
-            <member name="tp"/>
-            <member name="t0"/>
-            <member name="t1"/>
-            <member name="t2"/>
             <member name="s0"/>
             <member name="s1"/>
+            <member name="s2"/>
+            <member name="s3"/>
+            <member name="s4"/>
+            <member name="s5"/>
+            <member name="s6"/>
+            <member name="s7"/>
+            <member name="s8"/>
+            <member name="s9"/>
+            <member name="s10"/>
+            <member name="s11"/>
             <member name="a0"/>
             <member name="a1"/>
             <member name="a2"/>
@@ -35,6 +32,15 @@
             <member name="a4"/>
             <member name="a5"/>
             <member name="a6"/>
+            <member name="a7"/>
+            <member name="t0"/>
+            <member name="t1"/>
+            <member name="t2"/>
+            <member name="t3"/>
+            <member name="t4"/>
+            <member name="t5"/>
+            <member name="t6"/>
+            <member name="tp"/>
     </struct>
     <interface name="seL4_RISCV_PageTable" manual_name="Page Table" cap_description="Capability to the page table to invoke.">
         <method id="RISCVPageTableMap" name="Map" manual_label="pagetable_map">
@@ -74,7 +80,7 @@
             <description>
                 Takes a VSpace, or top-level <texttt text="Page Table"/>,
                 capability as an argument and installs a reference
-                to the given <texttt text="Page"/> in the page table slot corresponding to the given address.
+                to the given <texttt text="Page"/> in the page table slot corresponding to the given address. If a page is already mapped at the same virtual address, update the mapping attributes.
                 If the required paging structures are not present
                 this operation will fail, returning a seL4_FailedLookup error.
             </description>
@@ -94,27 +100,6 @@
                 VM Attributes for the mapping. <docref>Possible values for this type are given
                 in <autoref label="ch:vspace"/>.</docref>
             </description>
-            </param>
-        </method>
-        <method id="RISCVPageRemap" name="Remap">
-            <brief>
-                Remap a page.
-            </brief>
-            <description>
-                Changes the permissions of an existing mapping.
-            </description>
-            <param dir="in" name="vspace" type="seL4_RISCV_PageTable">
-                <description>VSpace to remap the page into.</description>
-            </param>
-            <param dir="in" name="rights" type="seL4_CapRights_t">
-                <description>
-                    Rights for the mapping. <docref>Possible values for this type are given in <autoref label="sec:cap_rights"/>.</docref>
-                </description>
-            </param>
-            <param dir="in" name="attr" type="seL4_RISCV_VMAttributes">
-                <description>
-                    VM Attributes for the mapping. <docref>Possible values for this type are given in <autoref label="ch:vspace"/>.</docref>
-                </description>
             </param>
         </method>
         <method id="RISCVPageUnmap" name="Unmap">
@@ -179,4 +164,24 @@
             </param>
         </method>
     </interface>
+    <interface name="seL4_IRQControl" manual_name="IRQ Control" cap_description="An IRQControl capability. This gives you the authority to make this call.">
+
+       <method id="RISCVIRQIssueIRQHandlerTrigger" name="GetTrigger" manual_name="GetTrigger"
+           manual_label="irq_controlgettrigger">
+            <brief>
+                Create an IRQ handler capability and specify the trigger method (edge or level).
+            </brief>
+            <description>
+                <docref>See <autoref label="sec:interrupts"/>.</docref>
+            </description>
+            <param dir="in" name="irq" type="seL4_Word" description="The IRQ that you want this capability to handle."/>
+
+            <param dir="in" name="trigger" type="seL4_Word" description="Indicates whether this IRQ is edge (1) or level (0) triggered."/>
+            <param dir="in" name="root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
+            <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
+        </method>
+
+    </interface>
+
 </api>

@@ -1,20 +1,13 @@
-#!/usr/bin/env python
-
+#!/usr/bin/env python3
 #
-# Copyright 2017, Data61
-# Commonwealth Scientific and Industrial Research Organisation (CSIRO)
-# ABN 41 687 119 230.
+# Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 #
-# This software may be distributed and modified according to the terms of
-# the BSD 2-Clause license. Note that NO WARRANTY is provided.
-# See "LICENSE_BSD2.txt" for details.
-#
-# @TAG(DATA61_BSD)
+# SPDX-License-Identifier: BSD-2-Clause
 #
 
 ##
-## A tool for generating bifield structures with get/set/new methods
-## including Isabelle/HOL specifications and correctness proofs.
+# A tool for generating bifield structures with get/set/new methods
+# including Isabelle/HOL specifications and correctness proofs.
 ##
 
 from __future__ import print_function, division
@@ -40,7 +33,8 @@ DEBUG = False
 loc_name = 'kernel_all_substitute'
 
 # Isabelle word size suffixes for return value names
-ret_name_suffix_map = {8 : '', 16 : '', 32 : '', 64 : '_longlong'}
+ret_name_suffix_map = {8: '', 16: '', 32: '', 64: '_longlong'}
+
 
 def return_name(base):
     # name of return value for standard word sizes
@@ -49,8 +43,8 @@ def return_name(base):
 
 # Headers to include depending on which environment we are generating code for.
 INCLUDES = {
-    'sel4':['assert.h', 'config.h', 'stdint.h', 'util.h'],
-    'libsel4':['autoconf.h', 'sel4/simple_types.h', 'sel4/debug_assert.h'],
+    'sel4': ['assert.h', 'config.h', 'stdint.h', 'util.h'],
+    'libsel4': ['autoconf.h', 'sel4/simple_types.h', 'sel4/debug_assert.h'],
 }
 
 ASSERTS = {
@@ -79,55 +73,64 @@ TYPES = {
     }
 }
 
-### Parser
+# Parser
 
-reserved = ('BLOCK', 'BASE', 'FIELD', 'FIELD_HIGH', 'MASK', 'PADDING', \
+reserved = ('BLOCK', 'BASE', 'FIELD', 'FIELD_HIGH', 'MASK', 'PADDING',
             'TAGGED_UNION', 'TAG')
 
-tokens = reserved + ('IDENTIFIER', 'INTLIT', 'LBRACE', 'RBRACE', \
+tokens = reserved + ('IDENTIFIER', 'INTLIT', 'LBRACE', 'RBRACE',
                      'LPAREN', 'RPAREN', 'COMMA')
 
 t_LBRACE = r'{'
 t_RBRACE = r'}'
 t_LPAREN = r'\('
 t_RPAREN = r'\)'
-t_COMMA  = r','
+t_COMMA = r','
 
 reserved_map = dict((r.lower(), r) for r in reserved)
+
 
 def t_IDENTIFIER(t):
     r'[A-Za-z_]\w+|[A-Za-z]'
     t.type = reserved_map.get(t.value, 'IDENTIFIER')
     return t
 
+
 def t_INTLIT(t):
     r'([1-9][0-9]*|0[oO]?[0-7]+|0[xX][0-9a-fA-F]+|0[bB][01]+|0)[lL]?'
     t.value = int(t.value, 0)
     return t
 
+
 def t_NEWLINE(t):
     r'\n+'
     t.lexer.lineno += len(t.value)
 
+
 def t_comment(t):
     r'--.*|\#.*'
 
+
 t_ignore = ' \t'
+
 
 def t_error(t):
     print("%s: Unexpected character '%s'" % (sys.argv[0], t.value[0]),
-            file=sys.stderr)
+          file=sys.stderr)
     if DEBUG:
         print('Token: %s' % str(t), file=sys.stderr)
     sys.exit(1)
+
 
 def p_start(t):
     """start : entity_list"""
     t[0] = t[1]
 
+
 def p_entity_list_empty(t):
     """entity_list : """
-    t[0] = (None,{},{})
+    t[0] = (None, {}, {})
+
 
 def p_entity_list_base(t):
     """entity_list : entity_list base"""
@@ -136,11 +139,13 @@ def p_entity_list_base(t):
     union_map.setdefault(t[2], {})
     t[0] = (t[2], block_map, union_map)
 
+
 def p_entity_list_block(t):
     """entity_list : entity_list block"""
     current_base, block_map, union_map = t[1]
     block_map[current_base][t[2].name] = t[2]
     t[0] = (current_base, block_map, union_map)
+
 
 def p_entity_list_union(t):
     """entity_list : entity_list tagged_union"""
@@ -148,92 +153,111 @@ def p_entity_list_union(t):
     union_map[current_base][t[2].name] = t[2]
     t[0] = (current_base, block_map, union_map)
 
+
 def p_base_simple(t):
     """base : BASE INTLIT"""
     t[0] = (t[2], t[2], 0)
+
 
 def p_base_mask(t):
     """base : BASE INTLIT LPAREN INTLIT COMMA INTLIT RPAREN"""
     t[0] = (t[2], t[4], t[6])
 
+
 def p_block(t):
     """block : BLOCK IDENTIFIER opt_visible_order_spec""" \
-           """ LBRACE fields RBRACE"""
+        """ LBRACE fields RBRACE"""
     t[0] = Block(name=t[2], fields=t[5], visible_order=t[3])
+
 
 def p_opt_visible_order_spec_empty(t):
     """opt_visible_order_spec : """
     t[0] = None
 
+
 def p_opt_visible_order_spec(t):
     """opt_visible_order_spec : LPAREN visible_order_spec RPAREN"""
     t[0] = t[2]
+
 
 def p_visible_order_spec_empty(t):
     """visible_order_spec : """
     t[0] = []
 
+
 def p_visible_order_spec_single(t):
     """visible_order_spec : IDENTIFIER"""
     t[0] = [t[1]]
+
 
 def p_visible_order_spec(t):
     """visible_order_spec : visible_order_spec COMMA IDENTIFIER"""
     t[0] = t[1] + [t[3]]
 
+
 def p_fields_empty(t):
     """fields : """
     t[0] = []
+
 
 def p_fields_field(t):
     """fields : fields FIELD IDENTIFIER INTLIT"""
     t[0] = t[1] + [(t[3], t[4], False)]
 
+
 def p_fields_field_high(t):
     """fields : fields FIELD_HIGH IDENTIFIER INTLIT"""
     t[0] = t[1] + [(t[3], t[4], True)]
+
 
 def p_fields_padding(t):
     """fields : fields PADDING INTLIT"""
     t[0] = t[1] + [(None, t[3], False)]
 
+
 def p_tagged_union(t):
     """tagged_union : TAGGED_UNION IDENTIFIER IDENTIFIER""" \
-                  """ LBRACE masks tags RBRACE"""
+        """ LBRACE masks tags RBRACE"""
     t[0] = TaggedUnion(name=t[2], tagname=t[3], classes=t[5], tags=t[6])
+
 
 def p_tags_empty(t):
     """tags :"""
     t[0] = []
 
+
 def p_tags(t):
     """tags : tags TAG IDENTIFIER INTLIT"""
-    t[0] = t[1] + [(t[3],t[4])]
+    t[0] = t[1] + [(t[3], t[4])]
+
 
 def p_masks_empty(t):
     """masks :"""
     t[0] = []
 
+
 def p_masks(t):
     """masks : masks MASK INTLIT INTLIT"""
-    t[0] = t[1] + [(t[3],t[4])]
+    t[0] = t[1] + [(t[3], t[4])]
+
 
 def p_error(t):
     print("Syntax error at token '%s'" % t.value, file=sys.stderr)
     sys.exit(1)
 
-### Templates
+# Templates
 
-## C templates
+# C templates
+
 
 typedef_template = \
-"""struct %(name)s {
+    """struct %(name)s {
     %(type)s words[%(multiple)d];
 };
 typedef struct %(name)s %(name)s_t;"""
 
 generator_template = \
-"""%(inline)s %(block)s_t CONST
+    """%(inline)s %(block)s_t CONST
 %(block)s_new(%(gen_params)s) {
     %(block)s_t %(block)s;
 
@@ -245,7 +269,7 @@ generator_template = \
 }"""
 
 ptr_generator_template = \
-"""%(inline)s void
+    """%(inline)s void
 %(block)s_ptr_new(%(ptr_params)s) {
 %(asserts)s
 
@@ -253,52 +277,52 @@ ptr_generator_template = \
 }"""
 
 reader_template = \
-"""%(inline)s %(type)s CONST
+    """%(inline)s %(type)s CONST
 %(block)s_get_%(field)s(%(block)s_t %(block)s) {
     %(type)s ret;
     ret = (%(block)s.words[%(index)d] & 0x%(mask)x%(suf)s) %(r_shift_op)s %(shift)d;
     /* Possibly sign extend */
-    if (%(sign_extend)d && (ret & (1%(suf)s << (%(extend_bit)d)))) {
+    if (__builtin_expect(!!(%(sign_extend)d && (ret & (1%(suf)s << (%(extend_bit)d)))), %(sign_extend)d)) {
         ret |= 0x%(high_bits)x;
     }
     return ret;
 }"""
 
 ptr_reader_template = \
-"""%(inline)s %(type)s PURE
+    """%(inline)s %(type)s PURE
 %(block)s_ptr_get_%(field)s(%(block)s_t *%(block)s_ptr) {
     %(type)s ret;
     ret = (%(block)s_ptr->words[%(index)d] & 0x%(mask)x%(suf)s) """ \
     """%(r_shift_op)s %(shift)d;
     /* Possibly sign extend */
-    if (%(sign_extend)d && (ret & (1%(suf)s << (%(extend_bit)d)))) {
+    if (__builtin_expect(!!(%(sign_extend)d && (ret & (1%(suf)s << (%(extend_bit)d)))), %(sign_extend)d)) {
         ret |= 0x%(high_bits)x;
     }
     return ret;
 }"""
 
 writer_template = \
-"""%(inline)s %(block)s_t CONST
+    """%(inline)s %(block)s_t CONST
 %(block)s_set_%(field)s(%(block)s_t %(block)s, %(type)s v%(base)d) {
     /* fail if user has passed bits that we will override */
-    %(assert)s((((~0x%(mask)x %(r_shift_op)s %(shift)d ) | 0x%(high_bits)x) & v%(base)d) == ((%(sign_extend)d && (v%(base)d & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
+    %(assert)s((((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d ) | 0x%(high_bits)x) & v%(base)d) == ((%(sign_extend)d && (v%(base)d & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
     %(block)s.words[%(index)d] &= ~0x%(mask)x%(suf)s;
     %(block)s.words[%(index)d] |= (v%(base)d %(w_shift_op)s %(shift)d) & 0x%(mask)x%(suf)s;
     return %(block)s;
 }"""
 
 ptr_writer_template = \
-"""%(inline)s void
+    """%(inline)s void
 %(block)s_ptr_set_%(field)s(%(block)s_t *%(block)s_ptr, %(type)s v%(base)d) {
     /* fail if user has passed bits that we will override */
-    %(assert)s((((~0x%(mask)x %(r_shift_op)s %(shift)d) | 0x%(high_bits)x) & v%(base)d) == ((%(sign_extend)d && (v%(base)d & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
+    %(assert)s((((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) | 0x%(high_bits)x) & v%(base)d) == ((%(sign_extend)d && (v%(base)d & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
     %(block)s_ptr->words[%(index)d] &= ~0x%(mask)x%(suf)s;
     %(block)s_ptr->words[%(index)d] |= (v%(base)d %(w_shift_op)s """ \
     """%(shift)d) & 0x%(mask)x;
 }"""
 
 union_generator_template = \
-"""%(inline)s %(union)s_t CONST
+    """%(inline)s %(union)s_t CONST
 %(union)s_%(block)s_new(%(gen_params)s) {
     %(union)s_t %(union)s;
 
@@ -310,7 +334,7 @@ union_generator_template = \
 }"""
 
 ptr_union_generator_template = \
-"""%(inline)s void
+    """%(inline)s void
 %(union)s_%(block)s_ptr_new(%(ptr_params)s) {
 %(asserts)s
 
@@ -318,7 +342,7 @@ ptr_union_generator_template = \
 }"""
 
 union_reader_template = \
-"""%(inline)s %(type)s CONST
+    """%(inline)s %(type)s CONST
 %(union)s_%(block)s_get_%(field)s(%(union)s_t %(union)s) {
     %(type)s ret;
     %(assert)s(((%(union)s.words[%(tagindex)d] >> %(tagshift)d) & 0x%(tagmask)x) ==
@@ -326,14 +350,14 @@ union_reader_template = \
 
     ret = (%(union)s.words[%(index)d] & 0x%(mask)x%(suf)s) %(r_shift_op)s %(shift)d;
     /* Possibly sign extend */
-    if (%(sign_extend)d && (ret & (1%(suf)s << (%(extend_bit)d)))) {
+    if (__builtin_expect(!!(%(sign_extend)d && (ret & (1%(suf)s << (%(extend_bit)d)))), %(sign_extend)d)) {
         ret |= 0x%(high_bits)x;
     }
     return ret;
 }"""
 
 ptr_union_reader_template = \
-"""%(inline)s %(type)s PURE
+    """%(inline)s %(type)s PURE
 %(union)s_%(block)s_ptr_get_%(field)s(%(union)s_t *%(union)s_ptr) {
     %(type)s ret;
     %(assert)s(((%(union)s_ptr->words[%(tagindex)d] >> """ \
@@ -343,14 +367,14 @@ ptr_union_reader_template = \
     ret = (%(union)s_ptr->words[%(index)d] & 0x%(mask)x%(suf)s) """ \
     """%(r_shift_op)s %(shift)d;
     /* Possibly sign extend */
-    if (%(sign_extend)d && (ret & (1%(suf)s << (%(extend_bit)d)))) {
+    if (__builtin_expect(!!(%(sign_extend)d && (ret & (1%(suf)s << (%(extend_bit)d)))), %(sign_extend)d)) {
         ret |= 0x%(high_bits)x;
     }
     return ret;
 }"""
 
 union_writer_template = \
-"""%(inline)s %(union)s_t CONST
+    """%(inline)s %(union)s_t CONST
 %(union)s_%(block)s_set_%(field)s(%(union)s_t %(union)s, %(type)s v%(base)d) {
     %(assert)s(((%(union)s.words[%(tagindex)d] >> %(tagshift)d) & 0x%(tagmask)x) ==
            %(union)s_%(block)s);
@@ -363,7 +387,7 @@ union_writer_template = \
 }"""
 
 ptr_union_writer_template = \
-"""%(inline)s void
+    """%(inline)s void
 %(union)s_%(block)s_ptr_set_%(field)s(%(union)s_t *%(union)s_ptr,
                                       %(type)s v%(base)d) {
     %(assert)s(((%(union)s_ptr->words[%(tagindex)d] >> """ \
@@ -379,58 +403,58 @@ ptr_union_writer_template = \
 }"""
 
 tag_reader_header_template = \
-"""%(inline)s %(type)s CONST
+    """%(inline)s %(type)s CONST
 %(union)s_get_%(tagname)s(%(union)s_t %(union)s) {
 """
 
 tag_reader_entry_template = \
-"""    if ((%(union)s.words[%(index)d] & 0x%(classmask)x) != 0x%(classmask)x)
+    """    if ((%(union)s.words[%(index)d] & 0x%(classmask)x) != 0x%(classmask)x)
         return (%(union)s.words[%(index)d] >> %(shift)d) & 0x%(mask)x%(suf)s;
 """
 
 tag_reader_final_template = \
-"""    return (%(union)s.words[%(index)d] >> %(shift)d) & 0x%(mask)x%(suf)s;"""
+    """    return (%(union)s.words[%(index)d] >> %(shift)d) & 0x%(mask)x%(suf)s;"""
 
 tag_reader_footer_template = \
-"""
+    """
 }"""
 
 tag_eq_reader_header_template = \
-"""%(inline)s int CONST
+    """%(inline)s int CONST
 %(union)s_%(tagname)s_equals(%(union)s_t %(union)s, %(type)s %(union)s_type_tag) {
 """
 
 tag_eq_reader_entry_template = \
-"""    if ((%(union)s_type_tag & 0x%(classmask)x) != 0x%(classmask)x)
+    """    if ((%(union)s_type_tag & 0x%(classmask)x) != 0x%(classmask)x)
         return ((%(union)s.words[%(index)d] >> %(shift)d) & 0x%(mask)x%(suf)s) == %(union)s_type_tag;
 """
 
 tag_eq_reader_final_template = \
-"""    return ((%(union)s.words[%(index)d] >> %(shift)d) & 0x%(mask)x%(suf)s) == %(union)s_type_tag;"""
+    """    return ((%(union)s.words[%(index)d] >> %(shift)d) & 0x%(mask)x%(suf)s) == %(union)s_type_tag;"""
 
 tag_eq_reader_footer_template = \
-"""
+    """
 }"""
 
 ptr_tag_reader_header_template = \
-"""%(inline)s %(type)s PURE
+    """%(inline)s %(type)s PURE
 %(union)s_ptr_get_%(tagname)s(%(union)s_t *%(union)s_ptr) {
 """
 
 ptr_tag_reader_entry_template = \
-"""    if ((%(union)s_ptr->words[%(index)d] & 0x%(classmask)x) != 0x%(classmask)x)
+    """    if ((%(union)s_ptr->words[%(index)d] & 0x%(classmask)x) != 0x%(classmask)x)
         return (%(union)s_ptr->words[%(index)d] >> %(shift)d) & 0x%(mask)x%(suf)s;
 """
 
 ptr_tag_reader_final_template = \
-"""    return (%(union)s_ptr->words[%(index)d] >> %(shift)d) & 0x%(mask)x%(suf)s;"""
+    """    return (%(union)s_ptr->words[%(index)d] >> %(shift)d) & 0x%(mask)x%(suf)s;"""
 
 ptr_tag_reader_footer_template = \
-"""
+    """
 }"""
 
 tag_writer_template = \
-"""%(inline)s %(union)s_t CONST
+    """%(inline)s %(union)s_t CONST
 %(union)s_set_%(tagname)s(%(union)s_t %(union)s, %(type)s v%(base)d) {
     /* fail if user has passed bits that we will override */
     %(assert)s((((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) | 0x%(high_bits)x) & v%(base)d) == ((%(sign_extend)d && (v%(base)d & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
@@ -441,7 +465,7 @@ tag_writer_template = \
 }"""
 
 ptr_tag_writer_template = \
-"""%(inline)s void
+    """%(inline)s void
 %(union)s_ptr_set_%(tagname)s(%(union)s_t *%(union)s_ptr, %(type)s v%(base)d) {
     /* fail if user has passed bits that we will override */
     %(assert)s((((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) | 0x%(high_bits)x) & v%(base)d) == ((%(sign_extend)d && (v%(base)d & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
@@ -453,66 +477,66 @@ ptr_tag_writer_template = \
 # HOL definition templates
 
 lift_def_template = \
-'''definition
+    '''definition
   %(name)s_lift :: "%(name)s_C \<Rightarrow> %(name)s_CL"
 where
   "%(name)s_lift %(name)s \<equiv> \<lparr>
        %(fields)s \<rparr>"'''
 
 block_lift_def_template = \
-'''definition %(union)s_%(block)s_lift :: ''' \
-'''"%(union)s_C \<Rightarrow> %(union)s_%(block)s_CL"
+    '''definition %(union)s_%(block)s_lift :: ''' \
+    '''"%(union)s_C \<Rightarrow> %(union)s_%(block)s_CL"
 where
   "%(union)s_%(block)s_lift %(union)s \<equiv>
     case (%(union)s_lift %(union)s) of ''' \
     '''Some (%(generator)s rec) \<Rightarrow> rec"'''
 
 block_lift_lemma_template = \
-'''lemma %(union)s_%(block)s_lift:
+    '''lemma %(union)s_%(block)s_lift:
   "(%(union)s_get_tag c = scast %(union)s_%(block)s) = ''' \
  '''(%(union)s_lift c = Some (%(generator)s (%(union)s_%(block)s_lift c)))"
   unfolding %(union)s_lift_def %(union)s_%(block)s_lift_def
   by (clarsimp simp: %(union)s_tag_defs Let_def)'''
 
 union_get_tag_def_header_template = \
-'''definition
+    '''definition
   %(name)s_get_tag :: "%(name)s_C \<Rightarrow> word%(base)d"
 where
   "%(name)s_get_tag %(name)s \<equiv>
      '''
 
 union_get_tag_def_entry_template = \
-'''if ((index (%(name)s_C.words_C %(name)s) %(tag_index)d)''' \
-''' AND 0x%(classmask)x \<noteq> 0x%(classmask)x)
+    '''if ((index (%(name)s_C.words_C %(name)s) %(tag_index)d)''' \
+    ''' AND 0x%(classmask)x \<noteq> 0x%(classmask)x)
       then ((index (%(name)s_C.words_C %(name)s) %(tag_index)d)'''\
 ''' >> %(tag_shift)d) AND mask %(tag_size)d
       else '''
 
 union_get_tag_def_final_template = \
-'''((index (%(name)s_C.words_C %(name)s) %(tag_index)d)'''\
-''' >> %(tag_shift)d) AND mask %(tag_size)d'''
+    '''((index (%(name)s_C.words_C %(name)s) %(tag_index)d)'''\
+    ''' >> %(tag_shift)d) AND mask %(tag_size)d'''
 
 union_get_tag_def_footer_template = '''"'''
 
 union_get_tag_eq_x_def_header_template = \
-'''lemma %(name)s_get_tag_eq_x:
+    '''lemma %(name)s_get_tag_eq_x:
   "(%(name)s_get_tag c = x) = (('''
 
 union_get_tag_eq_x_def_entry_template = \
-'''if ((x << %(tag_shift)d) AND 0x%(classmask)x \<noteq> 0x%(classmask)x)
+    '''if ((x << %(tag_shift)d) AND 0x%(classmask)x \<noteq> 0x%(classmask)x)
       then ((index (%(name)s_C.words_C c) %(tag_index)d)''' \
 ''' >> %(tag_shift)d) AND mask %(tag_size)d
       else '''
 
 union_get_tag_eq_x_def_final_template = \
-'''((index (%(name)s_C.words_C c) %(tag_index)d)''' \
-''' >> %(tag_shift)d) AND mask %(tag_size)d'''
+    '''((index (%(name)s_C.words_C c) %(tag_index)d)''' \
+    ''' >> %(tag_shift)d) AND mask %(tag_size)d'''
 
 union_get_tag_eq_x_def_footer_template = ''') = x)"
   by (auto simp add: %(name)s_get_tag_def mask_def word_bw_assocs)'''
 
 union_tag_mask_helpers_header_template = \
-'''lemma %(name)s_%(block)s_tag_mask_helpers:'''
+    '''lemma %(name)s_%(block)s_tag_mask_helpers:'''
 
 union_tag_mask_helpers_entry_template = '''
   "w && %(full_mask)s = %(full_value)s \<Longrightarrow> w'''\
@@ -520,10 +544,10 @@ union_tag_mask_helpers_entry_template = '''
 '''
 
 union_tag_mask_helpers_footer_template = \
-'''  by (auto elim: word_sub_mask simp: mask_def)'''
+    '''  by (auto elim: word_sub_mask simp: mask_def)'''
 
 union_lift_def_template = \
-'''definition
+    '''definition
   %(name)s_lift :: "%(name)s_C \<Rightarrow> %(name)s_CL option"
 where
   "%(name)s_lift %(name)s \<equiv>
@@ -532,7 +556,7 @@ where
      else None)"'''
 
 union_access_def_template = \
-'''definition
+    '''definition
   %(union)s_%(block)s_access :: "(%(union)s_%(block)s_CL \<Rightarrow> 'a)
                                  \<Rightarrow> %(union)s_CL \<Rightarrow> 'a"
 where
@@ -540,7 +564,7 @@ where
      (case %(union)s of %(generator)s rec \<Rightarrow> f rec)"'''
 
 union_update_def_template = \
-'''definition
+    '''definition
   %(union)s_%(block)s_update :: "(%(union)s_%(block)s_CL \<Rightarrow>''' \
                                 ''' %(union)s_%(block)s_CL) \<Rightarrow>
                                  %(union)s_CL \<Rightarrow> %(union)s_CL"
@@ -551,9 +575,9 @@ where
 
 # HOL proof templates
 
-#FIXME: avoid [simp]
+# FIXME: avoid [simp]
 struct_lemmas_template = \
-'''
+    '''
 lemmas %(name)s_ptr_guards[simp] =
   %(name)s_ptr_words_NULL
   %(name)s_ptr_words_aligned
@@ -572,12 +596,15 @@ lemma word_sub_mask:
 # This makes it easy to replace the proof body with a sorry.
 
 # ptrname should be a function of s
+
+
 def ptr_basic_template(name, ptrname, retval, args, post):
     return ('''lemma (in ''' + loc_name + ''') %(name)s_ptr_''' + name + '''_spec:
            defines "ptrval s \<equiv> cslift s ''' + ptrname + '''"
            shows "\<forall>s. \<Gamma> \<turnstile> \<lbrace>s. s \<Turnstile>\<^sub>c ''' + ptrname + '''\<rbrace>
             ''' + retval + '''PROC %(name)s_ptr_''' + name + '''(\<acute>%(name)s_ptr''' + args + ''')
             ''' + post + ''' " ''')
+
 
 def ptr_union_basic_template(name, ptrname, retval, args, pre, post):
     return ('''lemma (in ''' + loc_name + ''') %(name)s_%(block)s_ptr_''' + name + '''_spec:
@@ -586,26 +613,30 @@ def ptr_union_basic_template(name, ptrname, retval, args, pre, post):
             ''' + retval + '''PROC %(name)s_%(block)s_ptr_''' + name + '''(\<acute>%(name)s_ptr''' + args + ''')
             ''' + post + ''' " ''')
 
+
 direct_ptr_name = '\<^bsup>s\<^esup>%(name)s_ptr'
 path_ptr_name = '(cparent \<^bsup>s\<^esup>%(name)s_ptr [%(path)s] :: %(toptp)s ptr)'
 
+
 def ptr_get_template(ptrname):
     return ptr_basic_template('get_%(field)s', ptrname, '\<acute>%(ret_name)s :== ', '',
-                              '''\<lbrace>\<acute>%(ret_name)s = ''' \
-                              '''%(name)s_CL.%(field)s_CL ''' \
+                              '''\<lbrace>\<acute>%(ret_name)s = '''
+                              '''%(name)s_CL.%(field)s_CL '''
                               '''(%(name)s_lift (%(access_path)s))\<rbrace>''')
+
 
 def ptr_set_template(name, ptrname):
     return ptr_basic_template(name, ptrname, '', ', \<acute>v%(base)d',
                               '''{t. \<exists>%(name)s.
                               %(name)s_lift %(name)s =
-                              %(name)s_lift (%(access_path)s) \<lparr> %(name)s_CL.%(field)s_CL ''' \
+                              %(name)s_lift (%(access_path)s) \<lparr> %(name)s_CL.%(field)s_CL '''
                               ''':= %(sign_extend)s(\<^bsup>s\<^esup>v%(base)d AND %(mask)s) \<rparr> \<and>
                               t_hrs_' (globals t) = hrs_mem_update (heap_update
                                       (''' + ptrname + ''')
                                       %(update_path)s)
                                   (t_hrs_' (globals s))
                               }''')
+
 
 def ptr_new_template(ptrname):
     return ptr_basic_template('new', ptrname, '', ', %(args)s',
@@ -617,6 +648,7 @@ def ptr_new_template(ptrname):
                                   (t_hrs_' (globals s))
                               }''')
 
+
 def ptr_get_tag_template(ptrname):
     return ptr_basic_template('get_%(tagname)s', ptrname, '\<acute>%(ret_name)s :== ', '',
                               '''\<lbrace>\<acute>%(ret_name)s = %(name)s_get_tag (%(access_path)s)\<rbrace>''')
@@ -624,7 +656,7 @@ def ptr_get_tag_template(ptrname):
 
 def ptr_empty_union_new_template(ptrname):
     return ptr_union_basic_template('new', ptrname, '', '', '',
-                                    '''{t. \<exists>%(name)s. ''' \
+                                    '''{t. \<exists>%(name)s. '''
                                     '''%(name)s_get_tag %(name)s = scast %(name)s_%(block)s \<and>
                                     t_hrs_' (globals t) = hrs_mem_update (heap_update
                                             (''' + ptrname + ''')
@@ -632,9 +664,10 @@ def ptr_empty_union_new_template(ptrname):
                                         (t_hrs_' (globals s))
                                     }''')
 
+
 def ptr_union_new_template(ptrname):
     return ptr_union_basic_template('new', ptrname, '', ', %(args)s', '',
-                                    '''{t. \<exists>%(name)s. ''' \
+                                    '''{t. \<exists>%(name)s. '''
                                     '''%(name)s_%(block)s_lift %(name)s = \<lparr>
                                     %(field_eqs)s \<rparr> \<and>
                                     %(name)s_get_tag %(name)s = scast %(name)s_%(block)s \<and>
@@ -644,21 +677,23 @@ def ptr_union_new_template(ptrname):
                                         (t_hrs_' (globals s))
                                     }''')
 
+
 def ptr_union_get_template(ptrname):
     return ptr_union_basic_template('get_%(field)s', ptrname,
                                     '\<acute>%(ret_name)s :== ', '',
                                     '\<and> %(name)s_get_tag %(access_path)s = scast %(name)s_%(block)s',
-                                    '''\<lbrace>\<acute>%(ret_name)s = ''' \
-                                    '''%(name)s_%(block)s_CL.%(field)s_CL ''' \
+                                    '''\<lbrace>\<acute>%(ret_name)s = '''
+                                    '''%(name)s_%(block)s_CL.%(field)s_CL '''
                                     '''(%(name)s_%(block)s_lift %(access_path)s)\<rbrace>''')
+
 
 def ptr_union_set_template(ptrname):
     return ptr_union_basic_template('set_%(field)s', ptrname, '', ', \<acute>v%(base)d',
                                     '\<and> %(name)s_get_tag %(access_path)s = scast %(name)s_%(block)s',
-                                    '''{t. \<exists>%(name)s. ''' \
+                                    '''{t. \<exists>%(name)s. '''
                                     '''%(name)s_%(block)s_lift %(name)s =
-                                    %(name)s_%(block)s_lift %(access_path)s ''' \
-                                    '''\<lparr> %(name)s_%(block)s_CL.%(field)s_CL ''' \
+                                    %(name)s_%(block)s_lift %(access_path)s '''
+                                    '''\<lparr> %(name)s_%(block)s_CL.%(field)s_CL '''
                                     ''':= %(sign_extend)s(\<^bsup>s\<^esup>v%(base)d AND %(mask)s) \<rparr> \<and>
                                     %(name)s_get_tag %(name)s = scast %(name)s_%(block)s \<and>
                                     t_hrs_' (globals t) = hrs_mem_update (heap_update
@@ -667,74 +702,75 @@ def ptr_union_set_template(ptrname):
                                         (t_hrs_' (globals s))
                                     }''')
 
+
 proof_templates = {
 
-'lift_collapse_proof' : [
-'''lemma %(name)s_lift_%(block)s:
+    'lift_collapse_proof': [
+        '''lemma %(name)s_lift_%(block)s:
   "%(name)s_get_tag %(name)s = scast %(name)s_%(block)s \<Longrightarrow>
   %(name)s_lift %(name)s =
   Some (%(value)s)"''',
-''' apply(simp add:%(name)s_lift_def %(name)s_tag_defs)
+        ''' apply(simp add:%(name)s_lift_def %(name)s_tag_defs)
 done'''],
 
-'words_NULL_proof' : [
-'''lemma %(name)s_ptr_words_NULL:
+    'words_NULL_proof': [
+        '''lemma %(name)s_ptr_words_NULL:
   "c_guard (p::%(name)s_C ptr) \<Longrightarrow>
    0 < &(p\<rightarrow>[''words_C''])"''',
-''' apply(fastforce intro:c_guard_NULL_fl simp:typ_uinfo_t_def)
+        ''' apply(fastforce intro:c_guard_NULL_fl simp:typ_uinfo_t_def)
 done'''],
 
-'words_aligned_proof' : [
-'''lemma %(name)s_ptr_words_aligned:
+    'words_aligned_proof': [
+        '''lemma %(name)s_ptr_words_aligned:
   "c_guard (p::%(name)s_C ptr) \<Longrightarrow>
-   ptr_aligned ((Ptr &(p\<rightarrow>[''words_C'']))::''' \
-               '''((word%(base)d[%(words)d]) ptr))"''',
-''' apply(fastforce intro:c_guard_ptr_aligned_fl simp:typ_uinfo_t_def)
+   ptr_aligned ((Ptr &(p\<rightarrow>[''words_C'']))::'''
+        '''((word%(base)d[%(words)d]) ptr))"''',
+        ''' apply(fastforce intro:c_guard_ptr_aligned_fl simp:typ_uinfo_t_def)
 done'''],
 
-'words_ptr_safe_proof' : [
-'''lemma %(name)s_ptr_words_ptr_safe:
+    'words_ptr_safe_proof': [
+        '''lemma %(name)s_ptr_words_ptr_safe:
   "ptr_safe (p::%(name)s_C ptr) d \<Longrightarrow>
-   ptr_safe (Ptr &(p\<rightarrow>[''words_C''])::''' \
-         '''((word%(base)d[%(words)d]) ptr)) d"''',
-''' apply(fastforce intro:ptr_safe_mono simp:typ_uinfo_t_def)
+   ptr_safe (Ptr &(p\<rightarrow>[''words_C''])::'''
+        '''((word%(base)d[%(words)d]) ptr)) d"''',
+        ''' apply(fastforce intro:ptr_safe_mono simp:typ_uinfo_t_def)
 done'''],
 
-'get_tag_fun_spec_proof' : [
-'''lemma (in ''' + loc_name + ''') fun_spec:
+    'get_tag_fun_spec_proof': [
+        '''lemma (in ''' + loc_name + ''') fun_spec:
   "\<Gamma> \<turnstile> {\<sigma>}
-       \<acute>ret__%(rtype)s :== PROC %(name)s_get_%(tag_name)s(''' \
-                                             ''' \<acute>%(name))
-       \<lbrace>\<acute>ret__%(rtype)s = %(name)s_get_tag''' \
-                             '''\<^bsup>\<sigma>\<^esup>\<rbrace>"''',
-''' apply(rule allI, rule conseqPre, vcg)
+       \<acute>ret__%(rtype)s :== PROC %(name)s_get_%(tag_name)s('''
+        ''' \<acute>%(name))
+       \<lbrace>\<acute>ret__%(rtype)s = %(name)s_get_tag'''
+        '''\<^bsup>\<sigma>\<^esup>\<rbrace>"''',
+        ''' apply(rule allI, rule conseqPre, vcg)
  apply(clarsimp)
  apply(simp add:$(name)s_get_tag_def word_sle_def
                 mask_def ucast_def)
 done'''],
 
-'const_modifies_proof' : [
-'''lemma (in ''' + loc_name + ''') %(fun_name)s_modifies:
+    'const_modifies_proof': [
+        '''lemma (in ''' + loc_name + ''') %(fun_name)s_modifies:
   "\<forall> s. \<Gamma> \<turnstile>\<^bsub>/UNIV\<^esub> {s}
        PROC %(fun_name)s(%(args)s)
        {t. t may_not_modify_globals s}"''',
-''' by (vcg spec=modifies strip_guards=true)'''],
+        ''' by (vcg spec=modifies strip_guards=true)'''],
 
-'ptr_set_modifies_proof' : [
-'''lemma (in ''' + loc_name + ''') %(fun_name)s_modifies:
+    'ptr_set_modifies_proof': [
+        '''lemma (in ''' + loc_name + ''') %(fun_name)s_modifies:
   "\<forall>s. \<Gamma> \<turnstile>\<^bsub>/UNIV\<^esub> {s}
        PROC %(fun_name)s(%(args)s)
        {t. t may_only_modify_globals s in [t_hrs]}"''',
-''' by (vcg spec=modifies strip_guards=true)'''],
+        ''' by (vcg spec=modifies strip_guards=true)'''],
 
 
-'new_spec' : [
-'''lemma (in ''' + loc_name + ''') %(name)s_new_spec:
+    'new_spec': [
+        '''lemma (in ''' + loc_name + ''') %(name)s_new_spec:
   "\<forall> s. \<Gamma> \<turnstile> {s}
        \<acute>ret__struct_%(name)s_C :== PROC %(name)s_new(%(args)s)
        \<lbrace> %(name)s_lift \<acute>ret__struct_%(name)s_C = \<lparr>
           %(field_eqs)s \<rparr> \<rbrace>"''',
-'''  apply (rule allI, rule conseqPre, vcg)
+        '''  apply (rule allI, rule conseqPre, vcg)
   apply (clarsimp simp: guard_simps)
   apply (simp add: %(name)s_lift_def)
   apply ((intro conjI sign_extend_eq)?;
@@ -742,40 +778,40 @@ done'''],
                     word_ao_dist word_bw_assocs word_and_max_simps)?)
   done'''],
 
-'ptr_new_spec_direct' : [
-    ptr_new_template(direct_ptr_name),
-'''sorry (* ptr_new_spec_direct *)'''],
+    'ptr_new_spec_direct': [
+        ptr_new_template(direct_ptr_name),
+        '''sorry (* ptr_new_spec_direct *)'''],
 
-'ptr_new_spec_path' : [
-    ptr_new_template(path_ptr_name),
-'''sorry (* ptr_new_spec_path *)'''],
+    'ptr_new_spec_path': [
+        ptr_new_template(path_ptr_name),
+        '''sorry (* ptr_new_spec_path *)'''],
 
 
-'get_spec' : [
-'''lemma (in ''' + loc_name + ''') %(name)s_get_%(field)s_spec:
+    'get_spec': [
+        '''lemma (in ''' + loc_name + ''') %(name)s_get_%(field)s_spec:
   "\<forall>s. \<Gamma> \<turnstile> {s}
-       \<acute>%(ret_name)s :== ''' \
-       '''PROC %(name)s_get_%(field)s(\<acute>%(name)s)
-       \<lbrace>\<acute>%(ret_name)s = ''' \
-       '''%(name)s_CL.%(field)s_CL ''' \
-       '''(%(name)s_lift \<^bsup>s\<^esup>%(name)s)\<rbrace>"''',
-'''  apply (rule allI, rule conseqPre, vcg)
+       \<acute>%(ret_name)s :== '''
+        '''PROC %(name)s_get_%(field)s(\<acute>%(name)s)
+       \<lbrace>\<acute>%(ret_name)s = '''
+        '''%(name)s_CL.%(field)s_CL '''
+        '''(%(name)s_lift \<^bsup>s\<^esup>%(name)s)\<rbrace>"''',
+        '''  apply (rule allI, rule conseqPre, vcg)
   apply clarsimp
   apply (simp add: %(name)s_lift_def mask_shift_simps guard_simps)
   apply (simp add: sign_extend_def' mask_def nth_is_and_neq_0 word_bw_assocs
                    shift_over_ao_dists word_oa_dist word_and_max_simps)?
   done'''],
 
-'set_spec' : [
-'''lemma (in ''' + loc_name + ''') %(name)s_set_%(field)s_spec:
+    'set_spec': [
+        '''lemma (in ''' + loc_name + ''') %(name)s_set_%(field)s_spec:
   "\<forall>s. \<Gamma> \<turnstile> {s}
-       \<acute>ret__struct_%(name)s_C :== ''' \
-       '''PROC %(name)s_set_%(field)s(\<acute>%(name)s, \<acute>v%(base)d)
-       \<lbrace>%(name)s_lift \<acute>ret__struct_%(name)s_C = ''' \
-       '''%(name)s_lift \<^bsup>s\<^esup>%(name)s \<lparr> ''' \
-       '''%(name)s_CL.%(field)s_CL ''' \
-       ''':= %(sign_extend)s (\<^bsup>s\<^esup>v%(base)d AND %(mask)s) \<rparr>\<rbrace>"''',
-'''  apply(rule allI, rule conseqPre, vcg)
+       \<acute>ret__struct_%(name)s_C :== '''
+        '''PROC %(name)s_set_%(field)s(\<acute>%(name)s, \<acute>v%(base)d)
+       \<lbrace>%(name)s_lift \<acute>ret__struct_%(name)s_C = '''
+        '''%(name)s_lift \<^bsup>s\<^esup>%(name)s \<lparr> '''
+        '''%(name)s_CL.%(field)s_CL '''
+        ''':= %(sign_extend)s (\<^bsup>s\<^esup>v%(base)d AND %(mask)s) \<rparr>\<rbrace>"''',
+        '''  apply(rule allI, rule conseqPre, vcg)
   apply(clarsimp simp: guard_simps ucast_id
                        %(name)s_lift_def
                        mask_def shift_over_ao_dists
@@ -786,10 +822,10 @@ done'''],
                    shift_over_ao_dists word_and_max_simps)?
   done'''],
 
-# where the top level type is the bitfield type --- these are split because they have different proofs
-'ptr_get_spec_direct' : [
-    ptr_get_template(direct_ptr_name),
-'''   unfolding ptrval_def
+    # where the top level type is the bitfield type --- these are split because they have different proofs
+    'ptr_get_spec_direct': [
+        ptr_get_template(direct_ptr_name),
+        '''   unfolding ptrval_def
   apply (rule allI, rule conseqPre, vcg)
   apply (clarsimp simp: h_t_valid_clift_Some_iff)
   apply (simp add: %(name)s_lift_def guard_simps mask_def typ_heap_simps ucast_def)
@@ -797,9 +833,9 @@ done'''],
                    shift_over_ao_dists word_oa_dist word_and_max_simps)?
   done'''],
 
-'ptr_get_spec_path' : [
-    ptr_get_template(path_ptr_name),
-'''  unfolding ptrval_def
+    'ptr_get_spec_path': [
+        ptr_get_template(path_ptr_name),
+        '''  unfolding ptrval_def
   apply (rule allI, rule conseqPre, vcg)
   apply (clarsimp simp: guard_simps)
   apply (frule iffD1[OF h_t_valid_clift_Some_iff], rule exE, assumption, simp)
@@ -811,9 +847,9 @@ done'''],
   apply (simp add: mask_shift_simps)?
   done'''],
 
-'ptr_set_spec_direct' : [
-    ptr_set_template('set_%(field)s', direct_ptr_name),
-'''  unfolding ptrval_def
+    'ptr_set_spec_direct': [
+        ptr_set_template('set_%(field)s', direct_ptr_name),
+        '''  unfolding ptrval_def
   apply (rule allI, rule conseqPre, vcg)
   apply (clarsimp simp: guard_simps)
   apply (clarsimp simp add: packed_heap_update_collapse_hrs typ_heap_simps)?
@@ -824,9 +860,9 @@ done'''],
                     word_ao_dist word_bw_assocs word_and_max_simps))?
   done'''],
 
-'ptr_set_spec_path' : [
-    ptr_set_template('set_%(field)s', path_ptr_name),
-'''  (* Invoke vcg *)
+    'ptr_set_spec_path': [
+        ptr_set_template('set_%(field)s', path_ptr_name),
+        '''  (* Invoke vcg *)
   unfolding ptrval_def
   apply (rule allI, rule conseqPre, vcg)
   apply (clarsimp)
@@ -871,36 +907,36 @@ done'''],
   done'''],
 
 
-'get_tag_spec' : [
-'''lemma (in ''' + loc_name + ''') %(name)s_get_%(tagname)s_spec:
+    'get_tag_spec': [
+        '''lemma (in ''' + loc_name + ''') %(name)s_get_%(tagname)s_spec:
   "\<forall>s. \<Gamma> \<turnstile> {s}
        \<acute>%(ret_name)s :== ''' \
     '''PROC %(name)s_get_%(tagname)s(\<acute>%(name)s)
        \<lbrace>\<acute>%(ret_name)s = ''' \
     '''%(name)s_get_tag \<^bsup>s\<^esup>%(name)s\<rbrace>"''',
-''' apply(rule allI, rule conseqPre, vcg)
+        ''' apply(rule allI, rule conseqPre, vcg)
  apply(clarsimp)
  apply(simp add:%(name)s_get_tag_def
                 mask_shift_simps
                 guard_simps)
 done'''],
 
-'get_tag_equals_spec' : [
-'''lemma (in ''' + loc_name + ''') %(name)s_%(tagname)s_equals_spec:
+    'get_tag_equals_spec': [
+        '''lemma (in ''' + loc_name + ''') %(name)s_%(tagname)s_equals_spec:
   "\<forall>s. \<Gamma> \<turnstile> {s}
        \<acute>ret__int :==
        PROC %(name)s_%(tagname)s_equals(\<acute>%(name)s, \<acute>%(name)s_type_tag)
        \<lbrace>\<acute>ret__int = of_bl [%(name)s_get_tag \<^bsup>s\<^esup>%(name)s = \<^bsup>s\<^esup>%(name)s_type_tag]\<rbrace>"''',
-''' apply(rule allI, rule conseqPre, vcg)
+        ''' apply(rule allI, rule conseqPre, vcg)
  apply(clarsimp)
  apply(simp add:%(name)s_get_tag_eq_x
                 mask_shift_simps
                 guard_simps)
 done'''],
 
-'ptr_get_tag_spec_direct' : [
-    ptr_get_tag_template(direct_ptr_name),
-''' unfolding ptrval_def
+    'ptr_get_tag_spec_direct': [
+        ptr_get_tag_template(direct_ptr_name),
+        ''' unfolding ptrval_def
  apply(rule allI, rule conseqPre, vcg)
  apply(clarsimp simp:guard_simps)
  apply(frule h_t_valid_field[where f="[''words_C'']"], simp+)
@@ -910,9 +946,9 @@ done'''],
  apply(simp add:mask_shift_simps)
 done'''],
 
-'ptr_get_tag_spec_path' : [
-    ptr_get_tag_template(path_ptr_name),
-''' unfolding ptrval_def
+    'ptr_get_tag_spec_path': [
+        ptr_get_tag_template(path_ptr_name),
+        ''' unfolding ptrval_def
  apply(rule allI, rule conseqPre, vcg)
  apply(clarsimp)
  apply(frule h_t_valid_c_guard_cparent, simp, simp add: typ_uinfo_t_def)
@@ -922,15 +958,15 @@ done'''],
 done'''],
 
 
-'empty_union_new_spec' : [
-'''lemma (in ''' + loc_name + ''') ''' \
-      '''%(name)s_%(block)s_new_spec:
+    'empty_union_new_spec': [
+        '''lemma (in ''' + loc_name + ''') ''' \
+        '''%(name)s_%(block)s_new_spec:
   "\<forall>s. \<Gamma> \<turnstile> {s}
        \<acute>ret__struct_%(name)s_C :== ''' \
     '''PROC %(name)s_%(block)s_new()
        \<lbrace>%(name)s_get_tag \<acute>ret__struct_%(name)s_C = ''' \
      '''scast %(name)s_%(block)s\<rbrace>"''',
-''' apply(rule allI, rule conseqPre, vcg)
+        ''' apply(rule allI, rule conseqPre, vcg)
  apply(clarsimp simp:guard_simps
                      %(name)s_lift_def
                      Let_def
@@ -940,9 +976,9 @@ done'''],
                      word_of_int_hom_syms)
 done'''],
 
-'union_new_spec' : [
-'''lemma (in ''' + loc_name + ''') ''' \
-      '''%(name)s_%(block)s_new_spec:
+    'union_new_spec': [
+        '''lemma (in ''' + loc_name + ''') ''' \
+        '''%(name)s_%(block)s_new_spec:
   "\<forall>s. \<Gamma> \<turnstile> {s}
        \<acute>ret__struct_%(name)s_C :== ''' \
     '''PROC %(name)s_%(block)s_new(%(args)s)
@@ -951,7 +987,7 @@ done'''],
           %(field_eqs)s \<rparr> \<and>
         %(name)s_get_tag \<acute>ret__struct_%(name)s_C = ''' \
      '''scast %(name)s_%(block)s\<rbrace>"''',
-'''  apply (rule allI, rule conseqPre, vcg)
+        '''  apply (rule allI, rule conseqPre, vcg)
   apply (clarsimp simp: guard_simps o_def mask_def shift_over_ao_dists)
   apply (rule context_conjI[THEN iffD1[OF conj_commute]],
          fastforce simp: %(name)s_get_tag_eq_x %(name)s_%(block)s_def
@@ -963,13 +999,13 @@ done'''],
                     word_ao_dist word_bw_assocs word_and_max_simps))?
   done'''],
 
-'ptr_empty_union_new_spec_direct' : [
-    ptr_empty_union_new_template(direct_ptr_name),
-'''sorry (* ptr_empty_union_new_spec_direct *)'''],
+    'ptr_empty_union_new_spec_direct': [
+        ptr_empty_union_new_template(direct_ptr_name),
+        '''sorry (* ptr_empty_union_new_spec_direct *)'''],
 
-'ptr_empty_union_new_spec_path' : [
-    ptr_empty_union_new_template(path_ptr_name),
-''' unfolding ptrval_def
+    'ptr_empty_union_new_spec_path': [
+        ptr_empty_union_new_template(path_ptr_name),
+        ''' unfolding ptrval_def
  apply(rule allI, rule conseqPre, vcg)
  apply(clarsimp)
  apply(frule h_t_valid_c_guard_cparent, simp, simp add: typ_uinfo_t_def)
@@ -991,13 +1027,13 @@ done'''],
 done
 '''],
 
-'ptr_union_new_spec_direct' : [
-    ptr_union_new_template(direct_ptr_name),
-'''sorry (* ptr_union_new_spec_direct *)'''],
+    'ptr_union_new_spec_direct': [
+        ptr_union_new_template(direct_ptr_name),
+        '''sorry (* ptr_union_new_spec_direct *)'''],
 
-'ptr_union_new_spec_path' : [
-    ptr_union_new_template(path_ptr_name),
-'''  unfolding ptrval_def
+    'ptr_union_new_spec_path': [
+        ptr_union_new_template(path_ptr_name),
+        '''  unfolding ptrval_def
   apply (rule allI, rule conseqPre, vcg)
   apply (clarsimp)
   apply (frule h_t_valid_c_guard_cparent, simp, simp add: typ_uinfo_t_def)
@@ -1016,19 +1052,19 @@ done
   apply (intro conjI sign_extend_eq; simp add: mask_def word_ao_dist word_bw_assocs)?
   done'''],
 
-'union_get_spec' : [
-'''lemma (in ''' + loc_name + ''') ''' \
-'''%(name)s_%(block)s_get_%(field)s_spec:
+    'union_get_spec': [
+        '''lemma (in ''' + loc_name + ''') ''' \
+        '''%(name)s_%(block)s_get_%(field)s_spec:
   "\<forall>s. \<Gamma> \<turnstile> ''' \
 '''\<lbrace>s. %(name)s_get_tag \<acute>%(name)s = ''' \
-            '''scast %(name)s_%(block)s\<rbrace>
+        '''scast %(name)s_%(block)s\<rbrace>
        \<acute>%(ret_name)s :== ''' \
        '''PROC %(name)s_%(block)s_get_%(field)s(\<acute>%(name)s)
        \<lbrace>\<acute>%(ret_name)s = ''' \
        '''%(name)s_%(block)s_CL.%(field)s_CL ''' \
        '''(%(name)s_%(block)s_lift \<^bsup>s\<^esup>%(name)s)''' \
        '''\<rbrace>"''',
-''' apply(rule allI, rule conseqPre, vcg)
+        ''' apply(rule allI, rule conseqPre, vcg)
  apply(clarsimp simp:guard_simps)
  apply(simp add:%(name)s_%(block)s_lift_def)
  apply(subst %(name)s_lift_%(block)s)
@@ -1054,21 +1090,21 @@ done
                 nth_is_and_neq_0)
 done'''],
 
-'union_set_spec' : [
-'''lemma (in ''' + loc_name + ''') ''' \
-       '''%(name)s_%(block)s_set_%(field)s_spec:
+    'union_set_spec': [
+        '''lemma (in ''' + loc_name + ''') ''' \
+        '''%(name)s_%(block)s_set_%(field)s_spec:
   "\<forall>s. \<Gamma> \<turnstile> ''' \
 '''\<lbrace>s. %(name)s_get_tag \<acute>%(name)s = ''' \
-            '''scast %(name)s_%(block)s\<rbrace>
+        '''scast %(name)s_%(block)s\<rbrace>
        \<acute>ret__struct_%(name)s_C :== ''' \
     '''PROC %(name)s_%(block)s_set_%(field)s(\<acute>%(name)s, \<acute>v%(base)d)
        \<lbrace>%(name)s_%(block)s_lift \<acute>ret__struct_%(name)s_C = ''' \
     '''%(name)s_%(block)s_lift \<^bsup>s\<^esup>%(name)s \<lparr> ''' \
-    '''%(name)s_%(block)s_CL.%(field)s_CL ''' \
-    ''':= %(sign_extend)s (\<^bsup>s\<^esup>v%(base)d AND %(mask)s)\<rparr> \<and>
+        '''%(name)s_%(block)s_CL.%(field)s_CL ''' \
+        ''':= %(sign_extend)s (\<^bsup>s\<^esup>v%(base)d AND %(mask)s)\<rparr> \<and>
         %(name)s_get_tag \<acute>ret__struct_%(name)s_C = ''' \
      '''scast %(name)s_%(block)s\<rbrace>"''',
-'''  apply (rule allI, rule conseqPre, vcg)
+        '''  apply (rule allI, rule conseqPre, vcg)
   apply clarsimp
   apply (rule context_conjI[THEN iffD1[OF conj_commute]],
          fastforce simp: %(name)s_get_tag_eq_x %(name)s_lift_def %(name)s_tag_defs
@@ -1080,9 +1116,9 @@ done'''],
                     word_ao_dist word_bw_assocs word_and_max_simps))?
   done'''],
 
-'ptr_union_get_spec_direct' : [
-    ptr_union_get_template(direct_ptr_name),
-''' unfolding ptrval_def
+    'ptr_union_get_spec_direct': [
+        ptr_union_get_template(direct_ptr_name),
+        ''' unfolding ptrval_def
  apply(rule allI, rule conseqPre, vcg)
  apply(clarsimp simp: typ_heap_simps h_t_valid_clift_Some_iff guard_simps
                       mask_shift_simps sign_extend_def' nth_is_and_neq_0
@@ -1090,9 +1126,9 @@ done'''],
 done
 '''],
 
-'ptr_union_get_spec_path' : [
-    ptr_union_get_template(path_ptr_name),
-'''unfolding ptrval_def
+    'ptr_union_get_spec_path': [
+        ptr_union_get_template(path_ptr_name),
+        '''unfolding ptrval_def
   apply(rule allI, rule conseqPre, vcg)
   apply(clarsimp)
   apply(frule h_t_valid_c_guard_cparent, simp, simp add: typ_uinfo_t_def)
@@ -1106,14 +1142,14 @@ done
   done
   (* ptr_union_get_spec_path *)'''],
 
-'ptr_union_set_spec_direct' : [
+    'ptr_union_set_spec_direct': [
         ptr_union_set_template(direct_ptr_name),
-'''sorry (* ptr_union_set_spec_direct *)'''],
+        '''sorry (* ptr_union_set_spec_direct *)'''],
 
 
-'ptr_union_set_spec_path' : [
+    'ptr_union_set_spec_path': [
         ptr_union_set_template(path_ptr_name),
-'''  unfolding ptrval_def
+        '''  unfolding ptrval_def
   apply (rule allI, rule conseqPre, vcg)
   apply (clarsimp)
   apply (frule h_t_valid_c_guard_cparent, simp, simp add: typ_uinfo_t_def)
@@ -1134,6 +1170,7 @@ done
 
 }
 
+
 def make_proof(name, substs, sorry=False):
     result = proof_templates[name][0] % substs + '\n'
 
@@ -1147,24 +1184,28 @@ def make_proof(name, substs, sorry=False):
 
     return result
 
-## AST objects
+# AST objects
+
 
 def emit_named(name, params, string):
     # Emit a named definition/proof, only when the given name is in
     # params.names
 
-     if(name in params.names):
+    if(name in params.names):
         print(string, file=params.output)
         print(file=params.output)
 
 # This calculates substs for each proof, which is probably inefficient.  Meh
+
+
 def emit_named_ptr_proof(fn_name, params, name, type_map, toptps, prf_prefix, substs):
     name_C = name + '_C'
 
     if name_C in type_map:
         toptp, path = type_map[name_C]
 
-        substs['access_path'] = '(' + reduce(lambda x, y: y + ' (' + x + ')', ['the (ptrval s)'] + path) + ')'
+        substs['access_path'] = '(' + reduce(lambda x, y: y +
+                                             ' (' + x + ')', ['the (ptrval s)'] + path) + ')'
 
         if len(path) == 0:
             substs['update_path'] = name
@@ -1178,8 +1219,9 @@ def emit_named_ptr_proof(fn_name, params, name, type_map, toptps, prf_prefix, su
             # The self.name here is the variable name (so not _C)
             path.reverse()
             substs['update_path'] = '(' + reduce(lambda x, y: y + '_update (' + x + ')',
-                                           ['\\<lambda>_. ' + name] + path) + '(the (ptrval s))' + ')'
+                                                 ['\\<lambda>_. ' + name] + path) + '(the (ptrval s))' + ')'
             emit_named(fn_name, params, make_proof(prf_prefix + '_path', substs, params.sorry))
+
 
 def field_mask_proof(base, base_bits, sign_extend, high, size):
     if high:
@@ -1191,11 +1233,20 @@ def field_mask_proof(base, base_bits, sign_extend, high, size):
     else:
         return "mask %d" % size
 
+
 def sign_extend_proof(high, base_bits, base_sign_extend):
     if high and base_sign_extend:
         return "sign_extend %d " % (base_bits - 1)
     else:
         return ""
+
+
+def det_values(*dicts):
+    """Deterministically iterate over the values of each dict in `dicts`."""
+    def values(d):
+        return (d[key] for key in sorted(d.keys()))
+    return itertools.chain(*(values(d) for d in dicts))
+
 
 class TaggedUnion:
     def __init__(self, name, tagname, classes, tags):
@@ -1281,9 +1332,9 @@ class TaggedUnion:
         output = params.output
 
         # Add fixed simp rule for struct
-        print("lemmas %(name)s_C_words_C_fl_simp[simp] = "\
-                        "%(name)s_C_words_C_fl[simplified]" % \
-                        {"name": self.name}, file=output)
+        print("lemmas %(name)s_C_words_C_fl_simp[simp] = "
+              "%(name)s_C_words_C_fl[simplified]" %
+              {"name": self.name}, file=output)
         print(file=output)
 
         # Generate struct field pointer proofs
@@ -1292,20 +1343,20 @@ class TaggedUnion:
                   "base": self.base}
 
         print(make_proof('words_NULL_proof',
-                                   substs, params.sorry), file=output)
+                         substs, params.sorry), file=output)
         print(file=output)
 
         print(make_proof('words_aligned_proof',
-                                   substs, params.sorry), file=output)
+                         substs, params.sorry), file=output)
         print(file=output)
 
         print(make_proof('words_ptr_safe_proof',
-                                   substs, params.sorry), file=output)
+                         substs, params.sorry), file=output)
         print(file=output)
 
         # Generate struct lemmas
         print(struct_lemmas_template % {"name": self.name},
-        file=output)
+              file=output)
         print(file=output)
 
         # Generate get_tag specs
@@ -1315,17 +1366,17 @@ class TaggedUnion:
 
         if not params.skip_modifies:
             emit_named("%(name)s_get_%(tagname)s" % substs, params,
-                make_proof('const_modifies_proof',
-                    {"fun_name": "%(name)s_get_%(tagname)s" % substs, \
-                     "args": ', '.join(["\<acute>ret__unsigned_long", \
-                                        "\<acute>%(name)s" % substs])},
-                    params.sorry))
+                       make_proof('const_modifies_proof',
+                                  {"fun_name": "%(name)s_get_%(tagname)s" % substs,
+                                   "args": ', '.join(["\<acute>ret__unsigned_long",
+                                                      "\<acute>%(name)s" % substs])},
+                                  params.sorry))
             emit_named("%(name)s_ptr_get_%(tagname)s" % substs, params,
-                make_proof('const_modifies_proof',
-                    {"fun_name": "%(name)s_ptr_get_%(tagname)s" % substs, \
-                     "args": ', '.join(["\<acute>ret__unsigned_long", \
-                                        "\<acute>%(name)s_ptr" % substs])},
-                    params.sorry))
+                       make_proof('const_modifies_proof',
+                                  {"fun_name": "%(name)s_ptr_get_%(tagname)s" % substs,
+                                   "args": ', '.join(["\<acute>ret__unsigned_long",
+                                                      "\<acute>%(name)s_ptr" % substs])},
+                                  params.sorry))
 
         emit_named("%s_get_%s" % (self.name, self.tagname), params,
                    make_proof('get_tag_spec', substs, params.sorry))
@@ -1348,34 +1399,34 @@ class TaggedUnion:
             if not params.skip_modifies:
                 emit_named("%s_%s_new" % (self.name, ref.name), params,
                            make_proof('const_modifies_proof',
-                               {"fun_name": "%s_%s_new" % \
-                                            (self.name, ref.name), \
-                                "args": ', '.join([
-                                "\<acute>ret__struct_%(name)s_C" % substs] + \
-                                arg_list)},
-                               params.sorry))
+                                      {"fun_name": "%s_%s_new" %
+                                       (self.name, ref.name),
+                                       "args": ', '.join([
+                                           "\<acute>ret__struct_%(name)s_C" % substs] +
+                                           arg_list)},
+                                      params.sorry))
 
                 emit_named("%s_%s_ptr_new" % (self.name, ref.name), params,
                            make_proof('ptr_set_modifies_proof',
-                               {"fun_name": "%s_%s_ptr_new" % \
-                                            (self.name, ref.name), \
-                                "args": ', '.join([
-                                "\<acute>ret__struct_%(name)s_C" % substs] + \
-                                arg_list)},
-                               params.sorry))
+                                      {"fun_name": "%s_%s_ptr_new" %
+                                       (self.name, ref.name),
+                                       "args": ', '.join([
+                                           "\<acute>ret__struct_%(name)s_C" % substs] +
+                                           arg_list)},
+                                      params.sorry))
 
             if len(arg_list) == 0:
                 # For an empty block:
                 emit_named("%s_%s_new" % (self.name, ref.name), params,
                            make_proof('empty_union_new_spec',
-                               {"name": self.name, \
-                                "block": ref.name},
-                               params.sorry))
+                                      {"name": self.name,
+                                       "block": ref.name},
+                                      params.sorry))
 
                 emit_named_ptr_proof("%s_%s_ptr_new" % (self.name, ref.name), params, self.name,
                                      type_map, params.toplevel_types,
                                      'ptr_empty_union_new_spec',
-                                     {"name": self.name, \
+                                     {"name": self.name,
                                       "block": ref.name})
             else:
                 field_eq_list = []
@@ -1385,33 +1436,34 @@ class TaggedUnion:
                     if field == self.tagname:
                         continue
 
-                    mask = field_mask_proof(self.base, self.base_bits, self.base_sign_extend, high, size)
+                    mask = field_mask_proof(self.base, self.base_bits,
+                                            self.base_sign_extend, high, size)
                     sign_extend = sign_extend_proof(high, self.base_bits, self.base_sign_extend)
                     field_eq_list.append(
-                        "%s_%s_CL.%s_CL = %s(\<^bsup>s\<^esup>%s AND %s)" % \
+                        "%s_%s_CL.%s_CL = %s(\<^bsup>s\<^esup>%s AND %s)" %
                         (self.name, ref.name, field, sign_extend, field, mask))
                 field_eqs = ',\n          '.join(field_eq_list)
 
                 emit_named("%s_%s_new" % (self.name, ref.name), params,
                            make_proof('union_new_spec',
-                               {"name": self.name, \
-                                "block": ref.name, \
-                                "args": ', '.join(arg_list), \
-                                "field_eqs": field_eqs},
-                               params.sorry))
+                                      {"name": self.name,
+                                       "block": ref.name,
+                                       "args": ', '.join(arg_list),
+                                       "field_eqs": field_eqs},
+                                      params.sorry))
 
                 emit_named_ptr_proof("%s_%s_ptr_new" % (self.name, ref.name), params, self.name,
                                      type_map, params.toplevel_types,
                                      'ptr_union_new_spec',
-                                     {"name": self.name, \
-                                      "block": ref.name, \
-                                      "args": ', '.join(arg_list), \
+                                     {"name": self.name,
+                                      "block": ref.name,
+                                      "args": ', '.join(arg_list),
                                       "field_eqs": field_eqs})
 
             _, size, _ = ref.field_map[self.tagname]
             if any([w for w in self.widths if w < size]):
                 tag_mask_helpers = ("%s_%s_tag_mask_helpers"
-                                        % (self.name, ref.name))
+                                    % (self.name, ref.name))
             else:
                 tag_mask_helpers = ""
 
@@ -1420,7 +1472,8 @@ class TaggedUnion:
                 if field == self.tagname:
                     continue
 
-                mask = field_mask_proof(self.base, self.base_bits, self.base_sign_extend, high, size)
+                mask = field_mask_proof(self.base, self.base_bits,
+                                        self.base_sign_extend, high, size)
                 sign_extend = sign_extend_proof(high, self.base_bits, self.base_sign_extend)
 
                 substs = {"name":  self.name,
@@ -1428,31 +1481,31 @@ class TaggedUnion:
                           "field": field,
                           "mask":  mask,
                           "sign_extend": sign_extend,
-                          "tag_mask_helpers" : tag_mask_helpers,
+                          "tag_mask_helpers": tag_mask_helpers,
                           "ret_name": return_name(self.base),
-					      "base" : self.base}
+                          "base": self.base}
 
                 # Get modifies spec
                 if not params.skip_modifies:
                     emit_named("%s_%s_get_%s" % (self.name, ref.name, field),
                                params,
                                make_proof('const_modifies_proof',
-                                   {"fun_name": "%s_%s_get_%s" % \
-                                        (self.name, ref.name, field), \
-                                    "args": ', '.join([
-                                    "\<acute>ret__unsigned_long",
-                                    "\<acute>%s" % self.name] )},
-                                   params.sorry))
+                                          {"fun_name": "%s_%s_get_%s" %
+                                           (self.name, ref.name, field),
+                                              "args": ', '.join([
+                                                  "\<acute>ret__unsigned_long",
+                                                  "\<acute>%s" % self.name])},
+                                          params.sorry))
 
                     emit_named("%s_%s_ptr_get_%s" % (self.name, ref.name, field),
                                params,
                                make_proof('const_modifies_proof',
-                                   {"fun_name": "%s_%s_ptr_get_%s" % \
-                                        (self.name, ref.name, field), \
-                                    "args": ', '.join([
-                                    "\<acute>ret__unsigned_long",
-                                    "\<acute>%s_ptr" % self.name] )},
-                                   params.sorry))
+                                          {"fun_name": "%s_%s_ptr_get_%s" %
+                                           (self.name, ref.name, field),
+                                              "args": ', '.join([
+                                                  "\<acute>ret__unsigned_long",
+                                                  "\<acute>%s_ptr" % self.name])},
+                                          params.sorry))
 
                 # Get spec
                 emit_named("%s_%s_get_%s" % (self.name, ref.name, field),
@@ -1464,23 +1517,23 @@ class TaggedUnion:
                     emit_named("%s_%s_set_%s" % (self.name, ref.name, field),
                                params,
                                make_proof('const_modifies_proof',
-                                   {"fun_name": "%s_%s_set_%s" % \
-                                        (self.name, ref.name, field), \
-                                    "args": ', '.join([
-                                    "\<acute>ret__struct_%s_C" % self.name,
-                                    "\<acute>%s" % self.name,
-                                    "\<acute>v%(base)d"] )},
-                                   params.sorry))
+                                          {"fun_name": "%s_%s_set_%s" %
+                                           (self.name, ref.name, field),
+                                              "args": ', '.join([
+                                                  "\<acute>ret__struct_%s_C" % self.name,
+                                                  "\<acute>%s" % self.name,
+                                                  "\<acute>v%(base)d"])},
+                                          params.sorry))
 
                     emit_named("%s_%s_ptr_set_%s" % (self.name, ref.name, field),
                                params,
                                make_proof('ptr_set_modifies_proof',
-                                   {"fun_name": "%s_%s_ptr_set_%s" % \
-                                        (self.name, ref.name, field), \
-                                    "args": ', '.join([
-                                    "\<acute>%s_ptr" % self.name,
-                                    "\<acute>v%(base)d"] )},
-                                   params.sorry))
+                                          {"fun_name": "%s_%s_ptr_set_%s" %
+                                           (self.name, ref.name, field),
+                                              "args": ', '.join([
+                                                  "\<acute>%s_ptr" % self.name,
+                                                  "\<acute>v%(base)d"])},
+                                          params.sorry))
 
                 # Set spec
                 emit_named("%s_%s_set_%s" % (self.name, ref.name, field),
@@ -1502,7 +1555,7 @@ class TaggedUnion:
 
         empty_blocks = {}
 
-        def gen_name(ref_name, capitalise = False):
+        def gen_name(ref_name, capitalise=False):
             # Create datatype generator/type name for a block
             if capitalise:
                 return "%s_%s" % \
@@ -1512,10 +1565,10 @@ class TaggedUnion:
 
         # Generate block records with tag field removed
         for name, value, ref in self.tags:
-            if ref.generate_hol_defs(params, \
-                                     suppressed_field = self.tagname, \
-                                     prefix="%s_" % self.name, \
-                                     in_union = True):
+            if ref.generate_hol_defs(params,
+                                     suppressed_field=self.tagname,
+                                     prefix="%s_" % self.name,
+                                     in_union=True):
                 empty_blocks[ref] = True
 
         constructor_exprs = []
@@ -1523,47 +1576,47 @@ class TaggedUnion:
             if ref in empty_blocks:
                 constructor_exprs.append(gen_name(name, True))
             else:
-                constructor_exprs.append("%s %s_CL" % \
-                    (gen_name(name, True), gen_name(name)))
+                constructor_exprs.append("%s %s_CL" %
+                                         (gen_name(name, True), gen_name(name)))
 
-        print("datatype %s_CL =\n    %s\n" % \
-                        (self.name, '\n  | '.join(constructor_exprs)),
-                        file=output)
+        print("datatype %s_CL =\n    %s\n" %
+              (self.name, '\n  | '.join(constructor_exprs)),
+              file=output)
 
         # Generate get_tag definition
         subs = {"name":      self.name,
-                "base":      self.base }
+                "base":      self.base}
 
         templates = ([union_get_tag_def_entry_template] * (len(self.widths) - 1)
-                   + [union_get_tag_def_final_template])
+                     + [union_get_tag_def_final_template])
 
         fs = (union_get_tag_def_header_template % subs
-            + "".join([template %
+              + "".join([template %
                          dict(subs,
                               tag_size=width,
                               classmask=self.word_classmask(width),
                               tag_index=self.tag_offset[width] // self.base,
                               tag_shift=self.tag_offset[width] % self.base)
-                       for template, width in zip(templates, self.widths)])
-            + union_get_tag_def_footer_template % subs)
+                         for template, width in zip(templates, self.widths)])
+              + union_get_tag_def_footer_template % subs)
 
         print(fs, file=output)
         print(file=output)
 
         # Generate get_tag_eq_x lemma
         templates = ([union_get_tag_eq_x_def_entry_template]
-                        * (len(self.widths) - 1)
-                   + [union_get_tag_eq_x_def_final_template])
+                     * (len(self.widths) - 1)
+                     + [union_get_tag_eq_x_def_final_template])
 
         fs = (union_get_tag_eq_x_def_header_template % subs
-            + "".join([template %
+              + "".join([template %
                          dict(subs,
                               tag_size=width,
                               classmask=self.word_classmask(width),
                               tag_index=self.tag_offset[width] // self.base,
                               tag_shift=self.tag_offset[width] % self.base)
-                       for template, width in zip(templates, self.widths)])
-            + union_get_tag_eq_x_def_footer_template % subs)
+                         for template, width in zip(templates, self.widths)])
+              + union_get_tag_eq_x_def_footer_template % subs)
 
         print(fs, file=output)
         print(file=output)
@@ -1577,14 +1630,14 @@ class TaggedUnion:
                 subs = {"name":         self.name,
                         "block":        name,
                         "full_mask":    hex(2 ** size - 1),
-                        "full_value":   hex(value) }
+                        "full_value":   hex(value)}
 
                 fs = (union_tag_mask_helpers_header_template % subs
-                    + "".join([union_tag_mask_helpers_entry_template %
-                               dict(subs, part_mask=hex(2 ** pw - 1),
-                                          part_value=hex(value & (2 ** pw - 1)))
-                               for pw in part_widths])
-                    + union_tag_mask_helpers_footer_template)
+                      + "".join([union_tag_mask_helpers_entry_template %
+                                 dict(subs, part_mask=hex(2 ** pw - 1),
+                                      part_value=hex(value & (2 ** pw - 1)))
+                                 for pw in part_widths])
+                      + union_tag_mask_helpers_footer_template)
 
                 print(fs, file=output)
                 print(file=output)
@@ -1598,7 +1651,8 @@ class TaggedUnion:
             for field in ref.visible_order:
                 offset, size, high = ref.field_map[field]
 
-                if field == self.tagname: continue
+                if field == self.tagname:
+                    continue
 
                 index = offset // self.base
                 sign_extend = ""
@@ -1617,11 +1671,12 @@ class TaggedUnion:
 
                 initialiser = \
                     "%s_CL.%s_CL = %s(((index (%s_C.words_C %s) %d) %s %d)" % \
-                    (gen_name(name), field, sign_extend, self.name, self.name, \
+                    (gen_name(name), field, sign_extend, self.name, self.name,
                      index, shift_op, shift)
 
                 if size < self.base:
-                    mask = field_mask_proof(self.base, self.base_bits, self.base_sign_extend, high, size)
+                    mask = field_mask_proof(self.base, self.base_bits,
+                                            self.base_sign_extend, high, size)
                     initialiser += " AND " + mask
 
                 field_inits.append("\n       " + initialiser + ")")
@@ -1632,21 +1687,21 @@ class TaggedUnion:
                 value = "%s \<lparr> %s \<rparr>" % \
                     (gen_name(name, True), ','.join(field_inits))
 
-            tag_cases.append("if tag = scast %s then Some (%s)" % \
+            tag_cases.append("if tag = scast %s then Some (%s)" %
                              (gen_name(name), value))
 
             collapse_proofs += \
                 make_proof("lift_collapse_proof",
-                           {"name": self.name, \
-                            "block": name, \
+                           {"name": self.name,
+                            "block": name,
                             "value": value},
                            params.sorry)
             collapse_proofs += "\n\n"
 
-        print(union_lift_def_template % \
-                        {"name": self.name, \
-                         "tag_cases": '\n     else '.join(tag_cases)},
-                        file=output)
+        print(union_lift_def_template %
+              {"name": self.name,
+               "tag_cases": '\n     else '.join(tag_cases)},
+              file=output)
         print(file=output)
 
         print(collapse_proofs, file=output)
@@ -1655,10 +1710,11 @@ class TaggedUnion:
         # Generate lifted access/update definitions, and abstract lifters
         for name, value, ref in self.tags:
             # Don't generate accessors if the block (minus tag) is empty
-            if ref in empty_blocks: continue
+            if ref in empty_blocks:
+                continue
 
-            substs = {"union": self.name, \
-                      "block": name, \
+            substs = {"union": self.name,
+                      "block": name,
                       "generator": gen_name(name, True)}
 
             for t in [union_access_def_template, union_update_def_template]:
@@ -1680,10 +1736,10 @@ class TaggedUnion:
         output = params.output
 
         # Generate typedef
-        print(typedef_template % \
-                        {"type": TYPES[options.environment][self.base], \
-                         "name": self.name, \
-                         "multiple": self.multiple}, file=output)
+        print(typedef_template %
+              {"type": TYPES[options.environment][self.base],
+               "name": self.name,
+               "multiple": self.multiple}, file=output)
         print(file=output)
 
         # Generate tag enum
@@ -1691,67 +1747,67 @@ class TaggedUnion:
         if len(self.tags) > 0:
             for name, value, ref in self.tags[:-1]:
                 print("    %s_%s = %d," % (self.name, name, value),
-                file=output)
-            name, value, ref = self.tags[-1];
+                      file=output)
+            name, value, ref = self.tags[-1]
             print("    %s_%s = %d" % (self.name, name, value),
-            file=output)
+                  file=output)
         print("};", file=output)
-        print("typedef enum %s_tag %s_tag_t;" % \
-                        (self.name, self.name), file=output)
+        print("typedef enum %s_tag %s_tag_t;" %
+              (self.name, self.name), file=output)
         print(file=output)
 
-        subs = {\
-            'inline': INLINE[options.environment], \
-            'union': self.name, \
-            'type':  TYPES[options.environment][self.union_base], \
-            'tagname': self.tagname, \
-            'suf' : self.constant_suffix}
+        subs = {
+            'inline': INLINE[options.environment],
+            'union': self.name,
+            'type':  TYPES[options.environment][self.union_base],
+            'tagname': self.tagname,
+            'suf': self.constant_suffix}
 
         # Generate tag reader
         templates = ([tag_reader_entry_template] * (len(self.widths) - 1)
-                   + [tag_reader_final_template])
+                     + [tag_reader_final_template])
 
         fs = (tag_reader_header_template % subs
-            + "".join([template %
+              + "".join([template %
                          dict(subs,
                               mask=2 ** width - 1,
                               classmask=self.word_classmask(width),
                               index=self.tag_offset[width] // self.base,
                               shift=self.tag_offset[width] % self.base)
-                       for template, width in zip(templates, self.widths)])
-            + tag_reader_footer_template % subs)
+                         for template, width in zip(templates, self.widths)])
+              + tag_reader_footer_template % subs)
 
         emit_named("%s_get_%s" % (self.name, self.tagname), params, fs)
 
         # Generate tag eq reader
         templates = ([tag_eq_reader_entry_template] * (len(self.widths) - 1)
-                   + [tag_eq_reader_final_template])
+                     + [tag_eq_reader_final_template])
 
         fs = (tag_eq_reader_header_template % subs
-            + "".join([template %
+              + "".join([template %
                          dict(subs,
                               mask=2 ** width - 1,
                               classmask=self.word_classmask(width),
                               index=self.tag_offset[width] // self.base,
                               shift=self.tag_offset[width] % self.base)
-                       for template, width in zip(templates, self.widths)])
-            + tag_eq_reader_footer_template % subs)
+                         for template, width in zip(templates, self.widths)])
+              + tag_eq_reader_footer_template % subs)
 
         emit_named("%s_%s_equals" % (self.name, self.tagname), params, fs)
 
         # Generate pointer lifted tag reader
         templates = ([ptr_tag_reader_entry_template] * (len(self.widths) - 1)
-                   + [ptr_tag_reader_final_template])
+                     + [ptr_tag_reader_final_template])
 
         fs = (ptr_tag_reader_header_template % subs
-            + "".join([template %
+              + "".join([template %
                          dict(subs,
                               mask=2 ** width - 1,
                               classmask=self.word_classmask(width),
                               index=self.tag_offset[width] // self.base,
                               shift=self.tag_offset[width] % self.base)
-                       for template, width in zip(templates, self.widths)])
-            + ptr_tag_reader_footer_template % subs)
+                         for template, width in zip(templates, self.widths)])
+              + ptr_tag_reader_footer_template % subs)
 
         emit_named("%s_ptr_get_%s" % (self.name, self.tagname), params, fs)
 
@@ -1784,7 +1840,8 @@ class TaggedUnion:
                     shift_op = ">>"
                     shift = self.base_bits - size - (offset % self.base)
                     if self.base_sign_extend:
-                        high_bits = ((self.base_sign_extend << (self.base - self.base_bits)) - 1) << self.base_bits
+                        high_bits = ((self.base_sign_extend << (
+                            self.base - self.base_bits)) - 1) << self.base_bits
                     else:
                         high_bits = 0
                     if shift < 0:
@@ -1841,7 +1898,8 @@ class TaggedUnion:
             tagmask = (2 ** tagnamesize) - 1
             for field, offset, size, high in ref.fields:
                 # Don't duplicate tag accessors
-                if field == self.tagname: continue
+                if field == self.tagname:
+                    continue
 
                 index = offset // self.base
                 if high:
@@ -1853,7 +1911,8 @@ class TaggedUnion:
                         write_shift = "<<"
                         read_shift = ">>"
                     if self.base_sign_extend:
-                        high_bits = ((self.base_sign_extend << (self.base - self.base_bits)) - 1) << self.base_bits
+                        high_bits = ((self.base_sign_extend << (
+                            self.base - self.base_bits)) - 1) << self.base_bits
                     else:
                         high_bits = 0
                 else:
@@ -1863,21 +1922,21 @@ class TaggedUnion:
                     high_bits = 0
                 mask = ((1 << size) - 1) << (offset % self.base)
 
-                subs = {\
-                    "inline": INLINE[options.environment], \
-                    "block": ref.name, \
-                    "field": field, \
-                    "type": TYPES[options.environment][ref.base], \
-                    "assert": ASSERTS[options.environment], \
-                    "index": index, \
-                    "shift": shift, \
-                    "r_shift_op": read_shift, \
-                    "w_shift_op": write_shift, \
-                    "mask": mask, \
-                    "tagindex": tagnameoffset // self.base, \
-                    "tagshift": tagnameoffset % self.base, \
-                    "tagmask": tagmask, \
-                    "union": self.name, \
+                subs = {
+                    "inline": INLINE[options.environment],
+                    "block": ref.name,
+                    "field": field,
+                    "type": TYPES[options.environment][ref.base],
+                    "assert": ASSERTS[options.environment],
+                    "index": index,
+                    "shift": shift,
+                    "r_shift_op": read_shift,
+                    "w_shift_op": write_shift,
+                    "mask": mask,
+                    "tagindex": tagnameoffset // self.base,
+                    "tagshift": tagnameoffset % self.base,
+                    "tagmask": tagmask,
+                    "union": self.name,
                     "suf": self.constant_suffix,
                     "high_bits": high_bits,
                     "sign_extend": self.base_sign_extend and high,
@@ -1903,12 +1962,12 @@ class TaggedUnion:
     def make_names(self):
         "Return the set of candidate function names for a union"
 
-        substs = {"union" : self.name, \
+        substs = {"union": self.name,
                   "tagname": self.tagname}
         names = [t % substs for t in [
-        "%(union)s_get_%(tagname)s",
-        "%(union)s_ptr_get_%(tagname)s",
-	"%(union)s_%(tagname)s_equals"]]
+            "%(union)s_get_%(tagname)s",
+            "%(union)s_ptr_get_%(tagname)s",
+            "%(union)s_%(tagname)s_equals"]]
 
         for name, value, ref in self.tags:
             names += ref.make_names(self)
@@ -1919,9 +1978,9 @@ class TaggedUnion:
         max_width = max(self.classes.keys())
 
         tail_str = ("{:0{}b}".format(value, width)
-                        + "_" * (self.tag_offset[width] - self.class_offset))
+                    + "_" * (self.tag_offset[width] - self.class_offset))
         head_str = "_" * ((max_width + self.tag_offset[max_width]
-                            - self.class_offset) - len(tail_str))
+                           - self.class_offset) - len(tail_str))
 
         return head_str + tail_str
 
@@ -1946,13 +2005,13 @@ class TaggedUnion:
 
         offset_field = (2 ** width - 1) << self.tag_offset[width]
         if (ovalue | offset_field) != offset_field:
-                raise ValueError(
-                    "The value for element %s of tagged union %s,\n"
-                    "    %s\nexceeds the field bounds\n"
-                    "    %s."
-                    % (name, self.name,
-                       self.represent_value(value, width),
-                       self.represent_field(width)))
+            raise ValueError(
+                "The value for element %s of tagged union %s,\n"
+                "    %s\nexceeds the field bounds\n"
+                "    %s."
+                % (name, self.name,
+                   self.represent_value(value, width),
+                   self.represent_field(width)))
 
         for w, mask in [(lw, self.classes[lw])
                         for lw in self.widths if lw < width]:
@@ -1967,7 +2026,7 @@ class TaggedUnion:
                        width, w, self.represent_class(w)))
 
         if (self.widths.index(width) + 1 < len(self.widths) and
-            (cvalue & self.classes[width]) == self.classes[width]):
+                (cvalue & self.classes[width]) == self.classes[width]):
             raise ValueError(
                 "The value for element %s of tagged union %s,\n"
                 "    %s (%d/%s)\nis invalid: it must not match the "
@@ -2044,7 +2103,7 @@ class TaggedUnion:
         assert(len(used_widths) > 0)
 
         if not self.classes:
-            self.classes = { used_widths[0] : 0 }
+            self.classes = {used_widths[0]: 0}
 
         # sanity checks on classes
         classes = self.classes
@@ -2055,26 +2114,26 @@ class TaggedUnion:
         for uw in used_widths:
             if uw not in classes:
                 raise ValueError("%s: none defined for a field of %d bits."
-                                    % (context, uw))
+                                 % (context, uw))
 
         for mw in classes.keys():
             if mw not in used_widths:
                 raise ValueError(
                     "%s: there is a mask with %d bits but no corresponding fields."
-                        % (context, mw))
+                    % (context, mw))
 
         for w in widths:
             offset_field = (2 ** w - 1) << self.tag_offset[w]
             if (classes[w] << class_offset) | offset_field != offset_field:
                 raise ValueError(
-                        "{:s}: the mask for {:d} bits:\n  {:s}\n"
-                        "exceeds the field bounds:\n  {:s}."
-                        .format(context, w, self.represent_class(w),
-                                self.represent_field(w)))
+                    "{:s}: the mask for {:d} bits:\n  {:s}\n"
+                    "exceeds the field bounds:\n  {:s}."
+                    .format(context, w, self.represent_class(w),
+                            self.represent_field(w)))
 
         if len(widths) > 1 and classes[widths[0]] == 0:
             raise ValueError("%s: the first (width %d) is zero." % (
-                                context, widths[0]))
+                context, widths[0]))
 
         if any([classes[widths[i-1]] == classes[widths[i]]
                 for i in range(1, len(widths) - 1)]):
@@ -2095,10 +2154,11 @@ class TaggedUnion:
         if params.showclasses:
             print("-----%s.%s" % (self.name, self.tagname), file=sys.stderr)
             for w in widths:
-                print("{:2d} = {:s}".format( w, self.represent_class(w)),
-                        file=sys.stderr)
+                print("{:2d} = {:s}".format(w, self.represent_class(w)),
+                      file=sys.stderr)
 
         self.widths = widths
+
 
 class Block:
     def __init__(self, name, fields, visible_order):
@@ -2121,7 +2181,7 @@ class Block:
         self.name = name
         self.tagged = False
         self.fields = _fields
-        self.field_map = dict((name, (offset, size, high)) \
+        self.field_map = dict((name, (offset, size, high))
                               for name, offset, size, high in _fields)
 
         if not visible_order is None:
@@ -2134,7 +2194,7 @@ class Block:
                 missed_fields.remove(_name)
 
             if len(missed_fields) > 0:
-                raise ValueError("Fields %s missing from visible_order" % \
+                raise ValueError("Fields %s missing from visible_order" %
                                  str([x for x in missed_fields]))
 
             self.visible_order = visible_order
@@ -2145,21 +2205,22 @@ class Block:
         self.base_bits = base_bits
         self.base_sign_extend = base_sign_extend
         if self.size % base != 0:
-            raise ValueError("Size of block %s not a multiple of base" \
+            raise ValueError("Size of block %s not a multiple of base"
                              % self.name)
         self.multiple = self.size // base
         for name, offset, size, high in self.fields:
             if offset // base != (offset+size-1) // base:
-                raise ValueError("Field %s of block %s " \
-                                 "crosses a word boundary" \
+                raise ValueError("Field %s of block %s "
+                                 "crosses a word boundary"
                                  % (name, self.name))
 
-    def generate_hol_defs(self, params, suppressed_field=None, \
-                                prefix="", in_union = False):
+    def generate_hol_defs(self, params, suppressed_field=None,
+                          prefix="", in_union=False):
         output = params.output
 
         # Don't generate raw records for blocks in tagged unions
-        if self.tagged and not in_union: return
+        if self.tagged and not in_union:
+            return
 
         _name = prefix + self.name
 
@@ -2187,10 +2248,10 @@ class Block:
 
             for name in self.visible_order:
                 offset, size, high = self.field_map[name]
-                
+
                 index = offset // self.base
                 sign_extend = ""
-                
+
                 if high:
                     shift_op = "<<"
                     shift = self.base_bits - size - (offset % self.base)
@@ -2202,23 +2263,24 @@ class Block:
                 else:
                     shift_op = ">>"
                     shift = offset % self.base
-                
+
                 initialiser = \
                     "%s_CL.%s_CL = %s(((index (%s_C.words_C %s) %d) %s %d)" % \
-                    (self.name, name, sign_extend, self.name, self.name, \
+                    (self.name, name, sign_extend, self.name, self.name,
                      index, shift_op, shift)
-                
+
                 if size < self.base:
-                    mask = field_mask_proof(self.base, self.base_bits, self.base_sign_extend, high, size)
-                    
+                    mask = field_mask_proof(self.base, self.base_bits,
+                                            self.base_sign_extend, high, size)
+
                     initialiser += " AND " + mask
-                
+
                 field_inits.append(initialiser + ")")
-            
-            print(lift_def_template % \
-                            {"name": self.name, \
-                             "fields": ',\n       '.join(field_inits)},
-                            file=output)
+
+            print(lift_def_template %
+                  {"name": self.name,
+                   "fields": ',\n       '.join(field_inits)},
+                  file=output)
             print(file=output)
 
         return empty
@@ -2226,12 +2288,13 @@ class Block:
     def generate_hol_proofs(self, params, type_map):
         output = params.output
 
-        if self.tagged: return
+        if self.tagged:
+            return
 
         # Add fixed simp rule for struct
-        print("lemmas %(name)s_C_words_C_fl_simp[simp] = "\
-                        "%(name)s_C_words_C_fl[simplified]" % \
-                        {"name": self.name}, file=output)
+        print("lemmas %(name)s_C_words_C_fl_simp[simp] = "
+              "%(name)s_C_words_C_fl[simplified]" %
+              {"name": self.name}, file=output)
         print(file=output)
 
         # Generate struct field pointer proofs
@@ -2240,20 +2303,20 @@ class Block:
                   "base": self.base}
 
         print(make_proof('words_NULL_proof',
-                                   substs, params.sorry), file=output)
+                         substs, params.sorry), file=output)
         print(file=output)
 
         print(make_proof('words_aligned_proof',
-                                   substs, params.sorry), file=output)
+                         substs, params.sorry), file=output)
         print(file=output)
 
         print(make_proof('words_ptr_safe_proof',
-                                   substs, params.sorry), file=output)
+                         substs, params.sorry), file=output)
         print(file=output)
 
         # Generate struct lemmas
         print(struct_lemmas_template % {"name": self.name},
-        file=output)
+              file=output)
         print(file=output)
 
         # Generate struct_new specs
@@ -2263,11 +2326,11 @@ class Block:
         if not params.skip_modifies:
             emit_named("%s_new" % self.name, params,
                        make_proof('const_modifies_proof',
-                           {"fun_name": "%s_new" % self.name, \
-                            "args": ', '.join(["\<acute>ret__struct_%s_C" % \
-                                               self.name] + \
-                                              arg_list)},
-                           params.sorry))
+                                  {"fun_name": "%s_new" % self.name,
+                                   "args": ', '.join(["\<acute>ret__struct_%s_C" %
+                                                      self.name] +
+                                                     arg_list)},
+                                  params.sorry))
             # FIXME: ptr_new (doesn't seem to be used)
 
         field_eq_list = []
@@ -2275,22 +2338,22 @@ class Block:
             mask = field_mask_proof(self.base, self.base_bits, self.base_sign_extend, high, size)
             sign_extend = sign_extend_proof(high, self.base_bits, self.base_sign_extend)
 
-            field_eq_list.append("%s_CL.%s_CL = %s(\<^bsup>s\<^esup>%s AND %s)" % \
+            field_eq_list.append("%s_CL.%s_CL = %s(\<^bsup>s\<^esup>%s AND %s)" %
                                  (self.name, field, sign_extend, field, mask))
         field_eqs = ',\n          '.join(field_eq_list)
 
         emit_named("%s_new" % self.name, params,
                    make_proof('new_spec',
-                       {"name": self.name, \
-                        "args": ', '.join(arg_list), \
-                        "field_eqs": field_eqs},
-                       params.sorry))
+                              {"name": self.name,
+                               "args": ', '.join(arg_list),
+                               "field_eqs": field_eqs},
+                              params.sorry))
 
         emit_named_ptr_proof("%s_ptr_new" % self.name, params, self.name,
                              type_map, params.toplevel_types,
                              'ptr_new_spec',
-                             {"name": self.name, \
-                              "args": ', '.join(arg_list), \
+                             {"name": self.name,
+                              "args": ', '.join(arg_list),
                               "field_eqs": field_eqs})
 
         # Generate get/set specs
@@ -2298,8 +2361,8 @@ class Block:
             mask = field_mask_proof(self.base, self.base_bits, self.base_sign_extend, high, size)
             sign_extend = sign_extend_proof(high, self.base_bits, self.base_sign_extend)
 
-            substs = {"name": self.name, \
-                      "field": field, \
+            substs = {"name": self.name,
+                      "field": field,
                       "mask": mask,
                       "sign_extend": sign_extend,
                       "ret_name": return_name(self.base),
@@ -2309,49 +2372,47 @@ class Block:
                 # Get modifies spec
                 emit_named("%s_get_%s" % (self.name, field), params,
                            make_proof('const_modifies_proof',
-                               {"fun_name": "%s_get_%s" % (self.name, field), \
-                                "args": ', '.join([
-                                "\<acute>ret__unsigned_long",
-                                "\<acute>%s" % self.name] )},
-                               params.sorry))
+                                      {"fun_name": "%s_get_%s" % (self.name, field),
+                                       "args": ', '.join([
+                                           "\<acute>ret__unsigned_long",
+                                           "\<acute>%s" % self.name])},
+                                      params.sorry))
 
                 # Ptr get modifies spec
                 emit_named("%s_ptr_get_%s" % (self.name, field), params,
                            make_proof('const_modifies_proof',
-                               {"fun_name": "%s_ptr_get_%s" % (self.name, field), \
-                                "args": ', '.join([
-                                "\<acute>ret__unsigned_long",
-                                "\<acute>%s_ptr" % self.name] )},
-                               params.sorry))
-
+                                      {"fun_name": "%s_ptr_get_%s" % (self.name, field),
+                                       "args": ', '.join([
+                                           "\<acute>ret__unsigned_long",
+                                           "\<acute>%s_ptr" % self.name])},
+                                      params.sorry))
 
             # Get spec
             emit_named("%s_get_%s" % (self.name, field), params,
-                        make_proof('get_spec', substs, params.sorry))
+                       make_proof('get_spec', substs, params.sorry))
 
             if not params.skip_modifies:
                 # Set modifies spec
                 emit_named("%s_set_%s" % (self.name, field), params,
                            make_proof('const_modifies_proof',
-                               {"fun_name": "%s_set_%s" % (self.name, field), \
-                                "args": ', '.join([
-                                "\<acute>ret__struct_%s_C" % self.name,
-                                "\<acute>%s" % self.name,
-                                "\<acute>v%(base)d"] )},
-                               params.sorry))
+                                      {"fun_name": "%s_set_%s" % (self.name, field),
+                                       "args": ', '.join([
+                                           "\<acute>ret__struct_%s_C" % self.name,
+                                           "\<acute>%s" % self.name,
+                                           "\<acute>v%(base)d"])},
+                                      params.sorry))
 
                 emit_named("%s_ptr_set_%s" % (self.name, field), params,
                            make_proof('ptr_set_modifies_proof',
-                               {"fun_name": "%s_ptr_set_%s" % (self.name, field), \
-                                "args": ', '.join([
-                                "\<acute>%s_ptr" % self.name,
-                                "\<acute>v%(base)d"] )},
-                               params.sorry))
-
+                                      {"fun_name": "%s_ptr_set_%s" % (self.name, field),
+                                       "args": ', '.join([
+                                           "\<acute>%s_ptr" % self.name,
+                                           "\<acute>v%(base)d"])},
+                                      params.sorry))
 
             # Set spec
             emit_named("%s_set_%s" % (self.name, field), params,
-                        make_proof('set_spec', substs, params.sorry))
+                       make_proof('set_spec', substs, params.sorry))
 
             emit_named_ptr_proof("%s_ptr_get_%s" % (self.name, field), params, self.name,
                                  type_map, params.toplevel_types,
@@ -2364,13 +2425,14 @@ class Block:
         output = params.output
 
         # Don't generate raw accessors for blocks in tagged unions
-        if self.tagged: return
+        if self.tagged:
+            return
 
         # Type definition
-        print(typedef_template % \
-                        {"type": TYPES[options.environment][self.base], \
-                         "name": self.name, \
-                         "multiple": self.multiple}, file=output)
+        print(typedef_template %
+              {"type": TYPES[options.environment][self.base],
+               "name": self.name,
+               "multiple": self.multiple}, file=output)
         print(file=output)
 
         # Generator
@@ -2394,7 +2456,8 @@ class Block:
                 shift_op = ">>"
                 shift = self.base_bits - size - (offset % self.base)
                 if self.base_sign_extend:
-                    high_bits = ((self.base_sign_extend << (self.base - self.base_bits)) - 1) << self.base_bits
+                    high_bits = ((self.base_sign_extend << (
+                        self.base - self.base_bits)) - 1) << self.base_bits
                 else:
                     high_bits = 0
                 if shift < 0:
@@ -2457,7 +2520,8 @@ class Block:
                     write_shift = "<<"
                     read_shift = ">>"
                 if self.base_sign_extend:
-                    high_bits = ((self.base_sign_extend << (self.base - self.base_bits)) - 1) << self.base_bits
+                    high_bits = ((self.base_sign_extend << (
+                        self.base - self.base_bits)) - 1) << self.base_bits
                 else:
                     high_bits = 0
             else:
@@ -2467,19 +2531,19 @@ class Block:
                 high_bits = 0
             mask = ((1 << size) - 1) << (offset % self.base)
 
-            subs = {\
-                "inline": INLINE[options.environment], \
-                "block": self.name, \
-                "field": field, \
-                "type": TYPES[options.environment][self.base], \
-                "assert": ASSERTS[options.environment], \
-                "index": index, \
-                "shift": shift, \
-                "r_shift_op": read_shift, \
-                "w_shift_op": write_shift, \
-                "mask": mask, \
-                "suf": self.constant_suffix, \
-                "high_bits": high_bits, \
+            subs = {
+                "inline": INLINE[options.environment],
+                "block": self.name,
+                "field": field,
+                "type": TYPES[options.environment][self.base],
+                "assert": ASSERTS[options.environment],
+                "index": index,
+                "shift": shift,
+                "r_shift_op": read_shift,
+                "w_shift_op": write_shift,
+                "mask": mask,
+                "suf": self.constant_suffix,
+                "high_bits": high_bits,
                 "sign_extend": self.base_sign_extend and high,
                 "extend_bit": self.base_bits - 1,
                 "base": self.base}
@@ -2505,34 +2569,35 @@ class Block:
 
         if union is None:
             # Don't generate raw accessors for blocks in tagged unions
-            if self.tagged: return []
+            if self.tagged:
+                return []
 
-            substs = {"block" : self.name}
+            substs = {"block": self.name}
 
             # A standalone block
             field_templates = [
-            "%(block)s_get_%(field)s",
-            "%(block)s_set_%(field)s",
-            "%(block)s_ptr_get_%(field)s",
-            "%(block)s_ptr_set_%(field)s"]
+                "%(block)s_get_%(field)s",
+                "%(block)s_set_%(field)s",
+                "%(block)s_ptr_get_%(field)s",
+                "%(block)s_ptr_set_%(field)s"]
 
             names = [t % substs for t in [
-            "%(block)s_new",
-            "%(block)s_ptr_new"]]
+                "%(block)s_new",
+                "%(block)s_ptr_new"]]
         else:
-            substs = {"block" : self.name, \
-                      "union" : union.name}
+            substs = {"block": self.name,
+                      "union": union.name}
 
             # A tagged union block
             field_templates = [
-            "%(union)s_%(block)s_get_%(field)s",
-            "%(union)s_%(block)s_set_%(field)s",
-            "%(union)s_%(block)s_ptr_get_%(field)s",
-            "%(union)s_%(block)s_ptr_set_%(field)s"]
+                "%(union)s_%(block)s_get_%(field)s",
+                "%(union)s_%(block)s_set_%(field)s",
+                "%(union)s_%(block)s_ptr_get_%(field)s",
+                "%(union)s_%(block)s_ptr_set_%(field)s"]
 
             names = [t % substs for t in [
-            "%(union)s_%(block)s_new",
-            "%(union)s_%(block)s_ptr_new"]]
+                "%(union)s_%(block)s_new",
+                "%(union)s_%(block)s_ptr_new"]]
 
         for field, offset, size, high in self.fields:
             if not union is None and field == union.tagname:
@@ -2543,7 +2608,10 @@ class Block:
 
         return names
 
+
 temp_output_files = []
+
+
 class OutputFile(object):
     def __init__(self, filename, mode='w', atomic=True):
         """Open an output file for writing, recording its filename.
@@ -2560,8 +2628,10 @@ class OutputFile(object):
             temp_output_files.append(self)
         else:
             self.file = open(filename, mode)
+
     def write(self, *args, **kwargs):
         self.file.write(*args, **kwargs)
+
 
 def finish_output():
     global temp_output_files
@@ -2569,12 +2639,13 @@ def finish_output():
         os.rename(f.file.name, f.filename)
     temp_output_files = []
 
-## Toplevel
+
+# Toplevel
 if __name__ == '__main__':
     # Parse arguments to set mode and grab I/O filenames
     params = {}
     in_filename = None
-    in_file  = sys.stdin
+    in_file = sys.stdin
     out_file = sys.stdout
     mode = 'c_defs'
 
@@ -2587,16 +2658,16 @@ if __name__ == '__main__':
     parser.add_option('--sorry_lemmas', action='store_true',
                       dest='sorry', default=False)
     parser.add_option('--prune', action='append',
-                      dest="prune_files", default = [])
+                      dest="prune_files", default=[])
     parser.add_option('--toplevel', action='append',
-                      dest="toplevel_types", default = [])
+                      dest="toplevel_types", default=[])
     parser.add_option('--umm_types', action='store',
-                      dest="umm_types_file", default = None)
+                      dest="umm_types_file", default=None)
     parser.add_option('--multifile_base', action='store', default=None)
     parser.add_option('--cspec-dir', action='store', default=None,
-            help="Location of the 'cspec' directory containing 'KernelState_C'.")
+                      help="Location of the 'cspec' directory containing 'KernelState_C'.")
     parser.add_option('--thy-output-path', action='store', default=None,
-            help="Path that the output theory files will be located in.")
+                      help="Path that the output theory files will be located in.")
     parser.add_option('--skip_modifies', action='store_true', default=False)
     parser.add_option('--showclasses', action='store_true', default=False)
     parser.add_option('--debug', action='store_true', default=False)
@@ -2625,7 +2696,8 @@ if __name__ == '__main__':
             if options.thy_output_path is None:
                 parser.error("Theory output path was not specified")
             if out_file == sys.stdout:
-                parser.error('Output file name must be given when generating HOL definitions or proofs')
+                parser.error(
+                    'Output file name must be given when generating HOL definitions or proofs')
             out_file.filename = os.path.abspath(options.thy_output_path)
 
     if options.hol_proofs and not options.umm_types_file:
@@ -2646,7 +2718,7 @@ if __name__ == '__main__':
     # and that unsigned long long = 64 bit on 64-bit platforms.
     # Should still work fine if ull = 128 bit, but will not work
     # if unsigned int is less than 32 bit.
-    suffix_map = {8 : 'u', 16 : 'u', 32 : 'u', 64 : 'ull'}
+    suffix_map = {8: 'u', 16: 'u', 32: 'u', 64: 'ull'}
     for base_info, block_list in block_map.items():
         base, base_bits, base_sign_extend = base_info
         for name, b in block_list.items():
@@ -2678,12 +2750,12 @@ if __name__ == '__main__':
 
     # Prune list of names to generate
     name_list = []
-    for e in itertools.chain(blocks.values(), unions.values()):
+    for e in det_values(blocks, unions):
         name_list += e.make_names()
 
     name_list = set(name_list)
     if len(options.prune_files) > 0:
-        search_re = re.compile('[a-zA-Z0-9_]+');
+        search_re = re.compile('[a-zA-Z0-9_]+')
 
         pruned_names = set()
         for filename in options.prune_files:
@@ -2703,15 +2775,15 @@ if __name__ == '__main__':
         if options.multifile_base is None:
             print("theory %s_defs" % module_name, file=out_file)
             print("imports \"%s/KernelState_C\"" % (
-                    os.path.relpath(options.cspec_dir,
-                        os.path.dirname(out_file.filename))), file=out_file)
+                os.path.relpath(options.cspec_dir,
+                                os.path.dirname(out_file.filename))), file=out_file)
             print("begin", file=out_file)
             print(file=out_file)
 
             print(defs_global_lemmas, file=out_file)
             print(file=out_file)
 
-            for e in blocks.values() + unions.values():
+            for e in det_values(blocks, unions):
                 e.generate_hol_defs(options)
 
             print("end", file=out_file)
@@ -2719,26 +2791,26 @@ if __name__ == '__main__':
             print("theory %s_defs" % module_name, file=out_file)
             print("imports", file=out_file)
             print("  \"%s/KernelState_C\"" % (
-                    os.path.relpath(options.cspec_dir,
-                        os.path.dirname(out_file.filename))), file=out_file)
-            for e in blocks.values() + unions.values():
+                os.path.relpath(options.cspec_dir,
+                                os.path.dirname(out_file.filename))), file=out_file)
+            for e in det_values(blocks, unions):
                 print("  %s_%s_defs" % (module_name, e.name),
-                file=out_file)
+                      file=out_file)
             print("begin", file=out_file)
             print("end", file=out_file)
 
-            for e in blocks.values() + unions.values():
+            for e in det_values(blocks, unions):
                 base_filename = \
                     os.path.basename(options.multifile_base).split('.')[0]
                 submodule_name = base_filename + "_" + \
-                                 e.name + "_defs"
+                    e.name + "_defs"
                 out_file = OutputFile(options.multifile_base + "_" +
-                                e.name + "_defs" + ".thy")
+                                      e.name + "_defs" + ".thy")
 
                 print("theory %s imports \"%s/KernelState_C\" begin" % (
-                        submodule_name, os.path.relpath(options.cspec_dir,
-                            os.path.dirname(out_file.filename))),
-                        file=out_file)
+                    submodule_name, os.path.relpath(options.cspec_dir,
+                                                    os.path.dirname(out_file.filename))),
+                      file=out_file)
                 print(file=out_file)
 
                 options.output = out_file
@@ -2747,7 +2819,8 @@ if __name__ == '__main__':
                 print("end", file=out_file)
     elif options.hol_proofs:
         def is_bit_type(tp):
-            return (umm.is_base(tp) & (umm.base_name(tp) in map(lambda e: e.name + '_C', blocks.values() + unions.values())))
+            return umm.is_base(tp) & (umm.base_name(tp) in
+                                      map(lambda e: e.name + '_C', det_values(blocks, unions)))
 
         tps = umm.build_types(options.umm_types_file)
         type_map = {}
@@ -2771,7 +2844,7 @@ if __name__ == '__main__':
             print(file=out_file)
             print(file=out_file)
 
-            for e in blocks.values() + unions.values():
+            for e in det_values(blocks, unions):
                 e.generate_hol_proofs(options, type_map)
 
             print("end", file=out_file)
@@ -2779,24 +2852,24 @@ if __name__ == '__main__':
             # top types are broken here.
             print("theory %s_proofs" % module_name, file=out_file)
             print("imports", file=out_file)
-            for e in blocks.values() + unions.values():
+            for e in det_values(blocks, unions):
                 print("  %s_%s_proofs" % (module_name, e.name),
-                file=out_file)
+                      file=out_file)
             print("begin", file=out_file)
             print("end", file=out_file)
 
-            for e in blocks.values() + unions.values():
+            for e in det_values(blocks, unions):
                 base_filename = \
                     os.path.basename(options.multifile_base).split('.')[0]
                 submodule_name = base_filename + "_" + \
-                                 e.name + "_proofs"
+                    e.name + "_proofs"
                 out_file = OutputFile(options.multifile_base + "_" +
-                                e.name + "_proofs" + ".thy")
+                                      e.name + "_proofs" + ".thy")
 
                 print(("theory %s imports "
-                        + "%s_%s_defs begin") % (
-                            submodule_name, base_filename, e.name),
-                                file=out_file)
+                       + "%s_%s_defs begin") % (
+                    submodule_name, base_filename, e.name),
+                    file=out_file)
                 print(file=out_file)
 
                 options.output = out_file
@@ -2805,11 +2878,11 @@ if __name__ == '__main__':
                 print("end", file=out_file)
     else:
         guard = re.sub(r'[^a-zA-Z0-9_]', '_', out_file.filename.upper())
-        print("#ifndef %(guard)s\n#define %(guard)s\n" % \
-            {'guard':guard}, file=out_file)
+        print("#ifndef %(guard)s\n#define %(guard)s\n" %
+              {'guard': guard}, file=out_file)
         print('\n'.join(map(lambda x: '#include <%s>' % x,
-            INCLUDES[options.environment])), file=out_file)
-        for e in itertools.chain(blocks.values(), unions.values()):
+                            INCLUDES[options.environment])), file=out_file)
+        for e in det_values(blocks, unions):
             e.generate(options)
         print("#endif", file=out_file)
 

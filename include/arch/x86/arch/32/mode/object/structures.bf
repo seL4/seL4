@@ -1,11 +1,7 @@
 --
 -- Copyright 2014, General Dynamics C4 Systems
 --
--- This software may be distributed and modified according to the terms of
--- the GNU General Public License version 2. Note that NO WARRANTY is provided.
--- See "LICENSE_GPLv2.txt" for details.
---
--- @TAG(GD_GPL)
+-- SPDX-License-Identifier: GPL-2.0-only
 --
 
 #include <config.h>
@@ -220,6 +216,10 @@ tagged_union cap capType {
     tag irq_handler_cap     0x1e
     tag zombie_cap          0x2e
     tag domain_cap	        0x3e
+#ifdef CONFIG_KERNEL_MCS
+    tag sched_context_cap   0x4e
+    tag sched_control_cap   0x5e
+#endif
 
     -- 8-bit tag arch caps
 #ifdef CONFIG_IOMMU
@@ -243,8 +243,8 @@ block VMFault {
     field     FSR               5
     padding                     7
     field     instructionFault  1
-    padding                     16
-    field     seL4_FaultType    3
+    padding                     15
+    field     seL4_FaultType    4
 }
 
 -- VM attributes
@@ -567,4 +567,4 @@ block cr3 {
     padding                         12
 }
 
-#include <arch/api/shared_types.bf>
+#include <sel4/arch/shared_types.bf>

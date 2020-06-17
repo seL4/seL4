@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_OBJECT_VCPU_H
-#define __ARCH_OBJECT_VCPU_H
+#pragma once
 
 #include <config.h>
 
@@ -61,17 +56,40 @@ struct gicVCpuIface {
     virq_t lr[GIC_VCPU_MAX_NUM_LR];
 };
 
+#ifdef CONFIG_VTIMER_UPDATE_VOFFSET
+struct vTimer {
+    uint64_t last_pcount;
+};
+#endif
+
+enum VPPIEventIRQ {
+    VPPIEventIRQ_VTimer,
+    n_VPPIEventIRQ,
+    VPPIEventIRQ_invalid = n_VPPIEventIRQ,
+};
+typedef word_t VPPIEventIRQ_t;
+
 struct vcpu {
     /* TCB associated with this VCPU. */
     struct tcb *vcpuTCB;
     struct gicVCpuIface vgic;
     word_t regs[seL4_VCPUReg_Num];
+    bool_t vppi_masked[n_VPPIEventIRQ];
+#ifdef CONFIG_VTIMER_UPDATE_VOFFSET
+    /* vTimer is 8-bytes wide and has same alignment requirement.
+     * To keep the struct packed on 32-bit platforms when accompanied by an
+     * odd number of 32-bit words, we need to add a padding word.
+     * */
+    word_t vcpu_padding;
+    struct vTimer virtTimer;
+#endif
 };
 typedef struct vcpu vcpu_t;
 compile_assert(vcpu_size_correct, sizeof(struct vcpu) <= BIT(VCPU_SIZE_BITS))
 
 void VGICMaintenance(void);
 void handleVCPUFault(word_t hsr);
+void VPPIEvent(irq_t irq);
 
 void vcpu_init(vcpu_t *vcpu);
 
@@ -89,25 +107,93 @@ exception_t decodeARMVCPUInvocation(
     word_t label,
     unsigned int length,
     cptr_t cptr,
-    cte_t* slot,
+    cte_t *slot,
     cap_t cap,
     extra_caps_t extraCaps,
     bool_t call,
-    word_t* buffer
+    word_t *buffer
 );
 
 void vcpu_restore(vcpu_t *cpu);
 void vcpu_switch(vcpu_t *cpu);
+#ifdef ENABLE_SMP_SUPPORT
+void handleVCPUInjectInterruptIPI(vcpu_t *vcpu, unsigned long index, virq_t virq);
+#endif /* ENABLE_SMP_SUPPORT */
 
-exception_t decodeVCPUWriteReg(cap_t cap, unsigned int length, word_t* buffer);
-exception_t decodeVCPUReadReg(cap_t cap, unsigned int length, bool_t call, word_t* buffer);
-exception_t decodeVCPUInjectIRQ(cap_t cap, unsigned int length, word_t* buffer);
+exception_t decodeVCPUWriteReg(cap_t cap, unsigned int length, word_t *buffer);
+exception_t decodeVCPUReadReg(cap_t cap, unsigned int length, bool_t call, word_t *buffer);
+exception_t decodeVCPUInjectIRQ(cap_t cap, unsigned int length, word_t *buffer);
 exception_t decodeVCPUSetTCB(cap_t cap, extra_caps_t extraCaps);
+exception_t decodeVCPUAckVPPI(cap_t cap, unsigned int length, word_t *buffer);
 
 exception_t invokeVCPUWriteReg(vcpu_t *vcpu, word_t field, word_t value);
 exception_t invokeVCPUReadReg(vcpu_t *vcpu, word_t field, bool_t call);
 exception_t invokeVCPUInjectIRQ(vcpu_t *vcpu, unsigned long index, virq_t virq);
 exception_t invokeVCPUSetTCB(vcpu_t *vcpu, tcb_t *tcb);
+exception_t invokeVCPUAckVPPI(vcpu_t *vcpu, VPPIEventIRQ_t vppi);
+static word_t vcpu_hw_read_reg(word_t reg_index);
+static void vcpu_hw_write_reg(word_t reg_index, word_t reg);
+
+static inline void vcpu_save_reg(vcpu_t *vcpu, word_t reg)
+{
+    if (reg >= seL4_VCPUReg_Num || vcpu == NULL) {
+        fail("ARM/HYP: Invalid register index or NULL VCPU");
+        return;
+    }
+    vcpu->regs[reg] = vcpu_hw_read_reg(reg);
+}
+
+static inline void vcpu_save_reg_range(vcpu_t *vcpu, word_t start, word_t end)
+{
+    for (word_t i = start; i <= end; i++) {
+        vcpu_save_reg(vcpu, i);
+    }
+}
+
+static inline void vcpu_restore_reg(vcpu_t *vcpu, word_t reg)
+{
+    if (reg >= seL4_VCPUReg_Num || vcpu == NULL) {
+        fail("ARM/HYP: Invalid register index or NULL VCPU");
+        return;
+    }
+    vcpu_hw_write_reg(reg, vcpu->regs[reg]);
+}
+
+static inline void vcpu_restore_reg_range(vcpu_t *vcpu, word_t start, word_t end)
+{
+    for (word_t i = start; i <= end; i++) {
+        vcpu_restore_reg(vcpu, i);
+    }
+}
+
+static inline word_t vcpu_read_reg(vcpu_t *vcpu, word_t reg)
+{
+    if (reg >= seL4_VCPUReg_Num || vcpu == NULL) {
+        fail("ARM/HYP: Invalid register index or NULL VCPU");
+        return 0;
+    }
+    return vcpu->regs[reg];
+}
+
+static inline void vcpu_write_reg(vcpu_t *vcpu, word_t reg, word_t value)
+{
+    if (reg >= seL4_VCPUReg_Num || vcpu == NULL) {
+        fail("ARM/HYP: Invalid register index or NULL VCPU");
+        return;
+    }
+    vcpu->regs[reg] = value;
+}
+
+static inline VPPIEventIRQ_t irqVPPIEventIndex(irq_t irq)
+{
+    switch (IRQT_TO_IRQ(irq)) {
+    case INTERRUPT_VTIMER_EVENT:
+        return VPPIEventIRQ_VTimer;
+
+    default:
+        return VPPIEventIRQ_invalid;
+    }
+}
 
 #else /* end of CONFIG_ARM_HYPERVISOR_SUPPORT */
 
@@ -118,4 +204,3 @@ static inline void VGICMaintenance(void) {}
 
 #endif /* end of !CONFIG_ARM_HYPERVISOR_SUPPORT */
 
-#endif /* __ARCH_OBJECT_VCPU_H */

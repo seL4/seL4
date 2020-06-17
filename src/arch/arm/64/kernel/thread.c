@@ -1,13 +1,7 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <object.h>
@@ -17,29 +11,29 @@
 #include <arch/kernel/thread.h>
 #include <linker.h>
 
-void
-Arch_switchToThread(tcb_t *tcb)
+void Arch_switchToThread(tcb_t *tcb)
 {
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        vcpu_switch(tcb->tcbArch.tcbVCPU);
+    }
     setVMRoot(tcb);
-    writeTPIDRURO(tcb->tcbIPCBuffer);
 }
 
-BOOT_CODE void
-Arch_configureIdleThread(tcb_t *tcb)
+BOOT_CODE void Arch_configureIdleThread(tcb_t *tcb)
 {
     setRegister(tcb, SPSR_EL1, PSTATE_IDLETHREAD);
     setRegister(tcb, ELR_EL1, (word_t)idleThreadStart);
 }
 
-void
-Arch_switchToIdleThread(void)
+void Arch_switchToIdleThread(void)
 {
-    setCurrentUserVSpaceRoot(ttbr_new(0, pptr_to_paddr(armKSGlobalUserPGD)));
-    writeTPIDRURO(0);
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        vcpu_switch(NULL);
+    }
+    setCurrentUserVSpaceRoot(ttbr_new(0, pptr_to_paddr(armKSGlobalUserVSpace)));
 }
 
-void
-Arch_activateIdleThread(tcb_t *tcb)
+void Arch_activateIdleThread(tcb_t *tcb)
 {
     /* Don't need to do anything */
 }

@@ -1,22 +1,38 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
-
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
 
 #include <benchmark/benchmark.h>
 #include <arch/benchmark.h>
 
+#if CONFIG_MAX_NUM_TRACE_POINTS > 0
 timestamp_t ksEntries[CONFIG_MAX_NUM_TRACE_POINTS];
 bool_t ksStarted[CONFIG_MAX_NUM_TRACE_POINTS];
 timestamp_t ksExit;
 seL4_Word ksLogIndex = 0;
 seL4_Word ksLogIndexFinalized = 0;
-
 #endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
+
+#ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
+uint64_t ccnt_num_overflows;
+#endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
+
+#ifdef CONFIG_ENABLE_BENCHMARKS
+void arm_init_ccnt(void)
+{
+
+    uint32_t val = (BIT(PMCR_ENABLE) | BIT(PMCR_CCNT_RESET) | BIT(PMCR_ECNT_RESET));
+    SYSTEM_WRITE_WORD(PMCR, val);
+
+#ifdef PMCNTENSET
+    /* turn on the cycle counter */
+    SYSTEM_WRITE_WORD(PMCNTENSET, BIT(CCNT_INDEX));
+#endif
+
+#ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
+    armv_enableOverflowIRQ();
+#endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
+}
+#endif

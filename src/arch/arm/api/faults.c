@@ -1,13 +1,7 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -17,8 +11,7 @@
 #include <api/faults.h>
 #include <api/syscall.h>
 
-bool_t
-Arch_handleFaultReply(tcb_t *receiver, tcb_t *sender, word_t faultType)
+bool_t Arch_handleFaultReply(tcb_t *receiver, tcb_t *sender, word_t faultType)
 {
     switch (faultType) {
     case seL4_Fault_VMFault:
@@ -29,14 +22,15 @@ Arch_handleFaultReply(tcb_t *receiver, tcb_t *sender, word_t faultType)
         return true;
     case seL4_Fault_VCPUFault:
         return true;
+    case seL4_Fault_VPPIEvent:
+        return true;
 #endif
     default:
         fail("Invalid fault");
     }
 }
 
-word_t
-Arch_setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer, word_t faultType)
+word_t Arch_setMRs_fault(tcb_t *sender, tcb_t *receiver, word_t *receiveIPCBuffer, word_t faultType)
 {
     switch (faultType) {
     case seL4_Fault_VMFault: {
@@ -66,6 +60,8 @@ Arch_setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer, word
         }
     case seL4_Fault_VCPUFault:
         return setMR(receiver, receiveIPCBuffer, seL4_VCPUFault_HSR, seL4_Fault_VCPUFault_get_hsr(sender->tcbFault));
+    case seL4_Fault_VPPIEvent:
+        return setMR(receiver, receiveIPCBuffer, seL4_VPPIEvent_IRQ, seL4_Fault_VPPIEvent_get_irq_w(sender->tcbFault));
 #endif
 
     default:

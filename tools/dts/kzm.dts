@@ -1,0 +1,383 @@
+/*
+ * Copyright Linux Kernel Team
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * This file is derived from an intermediate build stage of the
+ * Linux kernel. The licenses of all input files to this process
+ * are compatible with GPL-2.0-only.
+ */
+
+/dts-v1/;
+
+/ {
+	#address-cells = < 0x01 >;
+	#size-cells = < 0x01 >;
+	model = "Buglabs i.MX31 Bug 1.x";
+	compatible = "buglabs,imx31-bug\0fsl,imx31";
+
+	chosen {
+	};
+
+	memory {
+		device_type = "memory";
+	};
+
+	aliases {
+		gpio0 = "/soc/aips@53f00000/gpio@53fcc000";
+		gpio1 = "/soc/aips@53f00000/gpio@53fd0000";
+		gpio2 = "/soc/aips@53f00000/gpio@53fa4000";
+		i2c0 = "/soc/aips@43f00000/i2c@43f80000";
+		i2c1 = "/soc/aips@43f00000/i2c@43f98000";
+		i2c2 = "/soc/aips@43f00000/i2c@43f84000";
+		serial0 = "/soc/aips@43f00000/serial@43f90000";
+		serial1 = "/soc/aips@43f00000/serial@43f94000";
+		serial2 = "/soc/spba@50000000/serial@5000c000";
+		serial3 = "/soc/aips@43f00000/serial@43fb0000";
+		serial4 = "/soc/aips@43f00000/serial@43fb4000";
+		spi0 = "/soc/aips@43f00000/spi@43fa4000";
+		spi1 = "/soc/spba@50000000/spi@50010000";
+		spi2 = "/soc/aips@53f00000/spi@53f84000";
+	};
+
+	cpus {
+		#address-cells = < 0x01 >;
+		#size-cells = < 0x00 >;
+
+		cpu@0 {
+			compatible = "arm,arm1136jf-s";
+			device_type = "cpu";
+			reg = < 0x00 >;
+		};
+	};
+
+	interrupt-controller@68000000 {
+		compatible = "fsl,imx31-avic\0fsl,avic";
+		interrupt-controller;
+		#interrupt-cells = < 0x01 >;
+		reg = < 0x68000000 0x100000 >;
+		phandle = < 0x01 >;
+	};
+
+	soc {
+		#address-cells = < 0x01 >;
+		#size-cells = < 0x01 >;
+		compatible = "simple-bus";
+		interrupt-parent = < 0x01 >;
+		ranges;
+
+		iram@1fffc000 {
+			compatible = "mmio-sram";
+			reg = < 0x1fffc000 0x4000 >;
+			#address-cells = < 0x01 >;
+			#size-cells = < 0x01 >;
+			ranges = < 0x00 0x1fffc000 0x4000 >;
+		};
+
+		aips@43f00000 {
+			compatible = "fsl,aips-bus\0simple-bus";
+			#address-cells = < 0x01 >;
+			#size-cells = < 0x01 >;
+			reg = < 0x43f00000 0x100000 >;
+			ranges;
+
+			i2c@43f80000 {
+				compatible = "fsl,imx31-i2c\0fsl,imx21-i2c";
+				reg = < 0x43f80000 0x4000 >;
+				interrupts = < 0x0a >;
+				clocks = < 0x02 0x21 >;
+				#address-cells = < 0x01 >;
+				#size-cells = < 0x00 >;
+				status = "disabled";
+			};
+
+			i2c@43f84000 {
+				compatible = "fsl,imx31-i2c\0fsl,imx21-i2c";
+				reg = < 0x43f84000 0x4000 >;
+				interrupts = < 0x03 >;
+				clocks = < 0x02 0x23 >;
+				#address-cells = < 0x01 >;
+				#size-cells = < 0x00 >;
+				status = "disabled";
+			};
+
+			ata@43f8c000 {
+				compatible = "fsl,imx31-pata\0fsl,imx27-pata";
+				reg = < 0x43f8c000 0x4000 >;
+				interrupts = < 0x0f >;
+				clocks = < 0x02 0x1a >;
+				status = "disabled";
+			};
+
+			serial@43f90000 {
+				compatible = "fsl,imx31-uart\0fsl,imx21-uart";
+				reg = < 0x43f90000 0x4000 >;
+				interrupts = < 0x2d >;
+				clocks = < 0x02 0x0a 0x02 0x1e >;
+				clock-names = "ipg\0per";
+				status = "disabled";
+			};
+
+			serial@43f94000 {
+				compatible = "fsl,imx31-uart\0fsl,imx21-uart";
+				reg = < 0x43f94000 0x4000 >;
+				interrupts = < 0x20 >;
+				clocks = < 0x02 0x0a 0x02 0x1f >;
+				clock-names = "ipg\0per";
+				status = "disabled";
+			};
+
+			i2c@43f98000 {
+				compatible = "fsl,imx31-i2c\0fsl,imx21-i2c";
+				reg = < 0x43f98000 0x4000 >;
+				interrupts = < 0x04 >;
+				clocks = < 0x02 0x22 >;
+				#address-cells = < 0x01 >;
+				#size-cells = < 0x00 >;
+				status = "disabled";
+			};
+
+			spi@43fa4000 {
+				compatible = "fsl,imx31-cspi";
+				reg = < 0x43fa4000 0x4000 >;
+				interrupts = < 0x0e >;
+				clocks = < 0x02 0x0a 0x02 0x35 >;
+				clock-names = "ipg\0per";
+				dmas = < 0x03 0x08 0x08 0x00 0x03 0x09 0x08 0x00 >;
+				dma-names = "rx\0tx";
+				#address-cells = < 0x01 >;
+				#size-cells = < 0x00 >;
+				status = "disabled";
+			};
+
+			kpp@43fa8000 {
+				compatible = "fsl,imx31-kpp\0fsl,imx21-kpp";
+				reg = < 0x43fa8000 0x4000 >;
+				interrupts = < 0x18 >;
+				clocks = < 0x02 0x2e >;
+				status = "disabled";
+			};
+
+			serial@43fb0000 {
+				compatible = "fsl,imx31-uart\0fsl,imx21-uart";
+				reg = < 0x43fb0000 0x4000 >;
+				clocks = < 0x02 0x0a 0x02 0x31 >;
+				clock-names = "ipg\0per";
+				interrupts = < 0x2e >;
+				status = "disabled";
+			};
+
+			serial@43fb4000 {
+				compatible = "fsl,imx31-uart\0fsl,imx21-uart";
+				reg = < 0x43fb4000 0x4000 >;
+				interrupts = < 0x2f >;
+				clocks = < 0x02 0x0a 0x02 0x32 >;
+				clock-names = "ipg\0per";
+				status = "okay";
+				uart-has-rtscts;
+			};
+		};
+
+		spba@50000000 {
+			compatible = "fsl,spba-bus\0simple-bus";
+			#address-cells = < 0x01 >;
+			#size-cells = < 0x01 >;
+			reg = < 0x50000000 0x100000 >;
+			ranges;
+
+			sdhci@50004000 {
+				compatible = "fsl,imx31-mmc";
+				reg = < 0x50004000 0x4000 >;
+				interrupts = < 0x09 >;
+				clocks = < 0x02 0x0a 0x02 0x14 >;
+				clock-names = "ipg\0per";
+				dmas = < 0x03 0x14 0x03 0x00 >;
+				dma-names = "rx-tx";
+				status = "disabled";
+			};
+
+			sdhci@50008000 {
+				compatible = "fsl,imx31-mmc";
+				reg = < 0x50008000 0x4000 >;
+				interrupts = < 0x08 >;
+				clocks = < 0x02 0x0a 0x02 0x15 >;
+				clock-names = "ipg\0per";
+				dmas = < 0x03 0x15 0x03 0x00 >;
+				dma-names = "rx-tx";
+				status = "disabled";
+			};
+
+			serial@5000c000 {
+				compatible = "fsl,imx31-uart\0fsl,imx21-uart";
+				reg = < 0x5000c000 0x4000 >;
+				interrupts = < 0x12 >;
+				clocks = < 0x02 0x0a 0x02 0x30 >;
+				clock-names = "ipg\0per";
+				status = "disabled";
+			};
+
+			spi@50010000 {
+				compatible = "fsl,imx31-cspi";
+				reg = < 0x50010000 0x4000 >;
+				interrupts = < 0x0d >;
+				clocks = < 0x02 0x0a 0x02 0x36 >;
+				clock-names = "ipg\0per";
+				dmas = < 0x03 0x06 0x08 0x00 0x03 0x07 0x08 0x00 >;
+				dma-names = "rx\0tx";
+				#address-cells = < 0x01 >;
+				#size-cells = < 0x00 >;
+				status = "disabled";
+			};
+
+			iim@5001c000 {
+				compatible = "fsl,imx31-iim\0fsl,imx27-iim";
+				reg = < 0x5001c000 0x1000 >;
+				interrupts = < 0x13 >;
+				clocks = < 0x02 0x19 >;
+			};
+		};
+
+		aips@53f00000 {
+			compatible = "fsl,aips-bus\0simple-bus";
+			#address-cells = < 0x01 >;
+			#size-cells = < 0x01 >;
+			reg = < 0x53f00000 0x100000 >;
+			ranges;
+
+			ccm@53f80000 {
+				compatible = "fsl,imx31-ccm";
+				reg = < 0x53f80000 0x4000 >;
+				interrupts = < 0x1f 0x35 >;
+				#clock-cells = < 0x01 >;
+				phandle = < 0x02 >;
+			};
+
+			spi@53f84000 {
+				compatible = "fsl,imx31-cspi";
+				reg = < 0x53f84000 0x4000 >;
+				interrupts = < 0x11 >;
+				clocks = < 0x02 0x0a 0x02 0x1c >;
+				clock-names = "ipg\0per";
+				dmas = < 0x03 0x0a 0x08 0x00 0x03 0x0b 0x08 0x00 >;
+				dma-names = "rx\0tx";
+				#address-cells = < 0x01 >;
+				#size-cells = < 0x00 >;
+				status = "disabled";
+			};
+
+			timer@53f90000 {
+				compatible = "fsl,imx31-gpt";
+				reg = < 0x53f90000 0x4000 >;
+				interrupts = < 0x1d >;
+				clocks = < 0x02 0x0a 0x02 0x16 >;
+				clock-names = "ipg\0per";
+			};
+
+			gpio@53fa4000 {
+				compatible = "fsl,imx31-gpio";
+				reg = < 0x53fa4000 0x4000 >;
+				interrupts = < 0x38 >;
+				gpio-controller;
+				#gpio-cells = < 0x02 >;
+				interrupt-controller;
+				#interrupt-cells = < 0x02 >;
+			};
+
+			rng@53fb0000 {
+				compatible = "fsl,imx31-rnga";
+				reg = < 0x53fb0000 0x4000 >;
+				interrupts = < 0x16 >;
+				clocks = < 0x02 0x1d >;
+			};
+
+			gpio@53fcc000 {
+				compatible = "fsl,imx31-gpio";
+				reg = < 0x53fcc000 0x4000 >;
+				interrupts = < 0x34 >;
+				gpio-controller;
+				#gpio-cells = < 0x02 >;
+				interrupt-controller;
+				#interrupt-cells = < 0x02 >;
+			};
+
+			gpio@53fd0000 {
+				compatible = "fsl,imx31-gpio";
+				reg = < 0x53fd0000 0x4000 >;
+				interrupts = < 0x33 >;
+				gpio-controller;
+				#gpio-cells = < 0x02 >;
+				interrupt-controller;
+				#interrupt-cells = < 0x02 >;
+			};
+
+			sdma@53fd4000 {
+				compatible = "fsl,imx31-sdma";
+				reg = < 0x53fd4000 0x4000 >;
+				interrupts = < 0x22 >;
+				clocks = < 0x02 0x0a 0x02 0x1b >;
+				clock-names = "ipg\0ahb";
+				#dma-cells = < 0x03 >;
+				fsl,sdma-ram-script-name = "imx/sdma/sdma-imx31.bin";
+				phandle = < 0x03 >;
+			};
+
+			rtc@53fd8000 {
+				compatible = "fsl,imx31-rtc\0fsl,imx21-rtc";
+				reg = < 0x53fd8000 0x4000 >;
+				interrupts = < 0x19 >;
+				clocks = < 0x02 0x02 0x02 0x28 >;
+				clock-names = "ref\0ipg";
+			};
+
+			wdog@53fdc000 {
+				compatible = "fsl,imx31-wdt\0fsl,imx21-wdt";
+				reg = < 0x53fdc000 0x4000 >;
+				clocks = < 0x02 0x29 >;
+			};
+
+			pwm@53fe0000 {
+				compatible = "fsl,imx31-pwm\0fsl,imx27-pwm";
+				reg = < 0x53fe0000 0x4000 >;
+				interrupts = < 0x1a >;
+				clocks = < 0x02 0x0a 0x02 0x2a >;
+				clock-names = "ipg\0per";
+				#pwm-cells = < 0x02 >;
+				status = "disabled";
+			};
+		};
+
+		emi@b8000000 {
+			compatible = "simple-bus";
+			reg = < 0xb8000000 0x5000 >;
+			ranges;
+			#address-cells = < 0x01 >;
+			#size-cells = < 0x01 >;
+
+			nand@b8000000 {
+				compatible = "fsl,imx31-nand\0fsl,imx27-nand";
+				reg = < 0xb8000000 0x1000 >;
+				interrupts = < 0x21 >;
+				clocks = < 0x02 0x09 >;
+				dmas = < 0x03 0x1e 0x11 0x00 >;
+				dma-names = "rx-tx";
+				#address-cells = < 0x01 >;
+				#size-cells = < 0x01 >;
+				status = "disabled";
+			};
+
+			weim@b8002000 {
+				compatible = "fsl,imx31-weim\0fsl,imx27-weim";
+				reg = < 0xb8002000 0x1000 >;
+				clocks = < 0x02 0x38 >;
+				#address-cells = < 0x02 >;
+				#size-cells = < 0x01 >;
+				ranges = < 0x00 0x00 0xa0000000 0x8000000 0x01 0x00 0xa8000000 0x8000000 0x02 0x00 0xb0000000 0x2000000 0x03 0x00 0xb2000000 0x2000000 0x04 0x00 0xb4000000 0x2000000 0x05 0x00 0xb6000000 0x2000000 >;
+				status = "disabled";
+			};
+		};
+	};
+
+	memory@80000000 {
+		reg = < 0x80000000 0x8000000 >;
+	};
+};

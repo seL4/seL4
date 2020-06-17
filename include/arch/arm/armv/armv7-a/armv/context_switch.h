@@ -1,14 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
-#ifndef __ARMV_CONTEXT_SWITCH_H__
-#define __ARMV_CONTEXT_SWITCH_H__
+
+#pragma once
 
 #include <config.h>
 #include <arch/object/structures.h>
@@ -50,9 +46,8 @@ static inline void armv_contextSwitch_HWASID(pde_t *cap_pd, hw_asid_t hw_asid)
 #endif
 }
 
-static inline void armv_contextSwitch(pde_t* cap_pd, asid_t asid)
+static inline void armv_contextSwitch(pde_t *cap_pd, asid_t asid)
 {
     armv_contextSwitch_HWASID(cap_pd, getHWASID(asid));
 }
 
-#endif /* __ARMV_CONTEXT_SWITCH_H__ */

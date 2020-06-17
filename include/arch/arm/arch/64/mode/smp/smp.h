@@ -1,17 +1,10 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MODE_SMP_H_
-#define __MODE_SMP_H_
+#pragma once
 
 #include <config.h>
 #include <util.h>
@@ -33,12 +26,11 @@ getCurrentCPUIndex(void)
 {
     cpu_id_t id;
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        asm volatile ("mrs %0, tpidr_el2" : "=r"(id));
+        asm volatile("mrs %0, tpidr_el2" : "=r"(id));
     } else {
-        asm volatile ("mrs %0, tpidr_el1" : "=r"(id));
+        asm volatile("mrs %0, tpidr_el1" : "=r"(id));
     }
     return (id & CPUID_MASK);
 }
 
 #endif /* ENABLE_SMP_SUPPORT */
-#endif /* __MODE_SMP_H_ */

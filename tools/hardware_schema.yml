@@ -1,0 +1,142 @@
+#
+# Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+#
+# SPDX-License-Identifier: GPL-2.0-only
+#
+
+---
+$schema: http://json-schema.org/draft-07/schema#
+description: Schema for seL4 hardware.yml
+type: object
+additionalProperties: false
+properties:
+  devices:
+    type: array
+    uniqueItems: true
+    description: top-level list of devices
+    items:
+      $ref: '#/definitions/device'
+required: [devices]
+definitions:
+  device:
+    type: object
+    additionalProperties: false
+    properties:
+      compatible:
+        description: List of compatible strings to which this rule applies
+        type: array
+        minItems: 1
+        uniqueItems: true
+      regions:
+        description: Memory regions this device has that the kernel might use
+        type: array
+        items:
+          $ref: '#/definitions/region'
+        uniqueItems: true
+      interrupts:
+        description: Interrupts this device has that the kernel might use.
+        type: object
+        additionalProperties: false
+        patternProperties:
+          '^[A-Za-z_][A-Za-z0-9_]*$':
+            $ref: '#/definitions/interrupt'
+    required: [compatible]
+  region:
+    type: object
+    additionalProperties: false
+    properties:
+      index:
+        description: Region index this property should apply to
+        type: integer
+        minimum: 0
+      kernel:
+        description: kernel macro used to access this region. If not present, region will not be mapped.
+        $ref: '#/definitions/macro'
+      kernel_size:
+        description: >
+          Maximum size of the region in the kernel.
+          This will map PAGE_ALIGN_UP(max(kernel_size, region_size)) bytes starting at the
+          device's base address into the kernel.
+        type: integer
+        default: 1 << PAGE_BITS
+      macro:
+        description: only map the region to the kernel if this macro is defined
+        $ref: '#/definitions/macro'
+      user:
+        description: >
+          Whether or not to make a device untyped for userspace for this region.
+          If true, will always expose this region to userspace.
+          If false, region will only be exposed if kernel is not using it.
+        default: false
+        type: boolean
+    required: [index, kernel]
+  interrupt:
+    oneOf:
+      - type: object
+        additionalProperties: false
+        properties:
+          # TODO: remove enable_macro altogether. We don't use it.
+          enable_macro:
+            description: only set interrupt if this macro is defined - this rule will be ignored if the given macro is false.
+            $ref: '#/definitions/macro'
+          index:
+            description: index of interrupt in device's interrupts array
+            $ref: '#/definitions/interrupt_index'
+          sel_macro:
+            description: >
+              if macro is defined, use 'index' as IRQ, otherwise use undef_index.
+              For example if a device had interrupts = [1, 2, 3]
+              and a rule like
+                MY_INTERRUPT:
+                  index: 0
+                  sel_macro: MY_MACRO
+                  undef_index: 2
+              then the C header output would look like
+              #ifdef MY_MACRO
+              #define MY_INTERRUPT 1 /* interrupt 0 of device */
+              #else
+              #define MY_INTERRUPT 3 /* interrupt 2 of device */
+              #endif /* MY_MACRO */
+            $ref: '#/definitions/macro'
+          undef_index:
+            description: index of interrupt in device's array to use when sel_macro is undefined
+            $ref: '#/definitions/interrupt_index'
+          priority:
+            description: if multiple conflicting IRQs are present, the IRQ with the  highest priority will be selected.
+            default: 0
+            type: integer
+        required: [index]
+        dependencies:
+          sel_macro: [undef_index]
+          undef_index: [sel_macro]
+      - $ref: '#/definitions/interrupt_index'
+  interrupt_index:
+    oneOf:
+      - type: integer
+        description: index of interrupt in device's interrupts array
+        minimum: 0
+      - $ref: '#/definitions/boot-cpu'
+  macro:
+    type: string
+    pattern: '^!?[A-Za-z_][A-Za-z0-9_]*$'
+    minLength: 1
+  boot-cpu:
+    type: string  # TODO: why does 'const' not work here?
+    description: >
+      Use interrupt associated with the seL4,boot-cpu set in the chosen node.
+      For instance, a chosen node like
+
+      chosen {
+        seL4,boot-cpu = <&cpu2>;
+      }
+
+      and a device like
+
+      device {
+        interrupts = <0x1 0x2 0x3 0x4>;
+        interrupt-affinity = <&cpu0 &cpu1 &cpu2 &cpu3>;
+      }
+
+      would use interrupt 0x3 if the boot-cpu option was used as the index.
+    pattern: '^boot-cpu$'
+

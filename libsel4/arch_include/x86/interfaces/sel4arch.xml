@@ -1,15 +1,10 @@
 <?xml version="1.0" ?>
 <!--
-  Copyright 2017, Data61
-  Commonwealth Scientific and Industrial Research Organisation (CSIRO)
-  ABN 41 687 119 230.
+     Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 
-  This software may be distributed and modified according to the terms of
-  the BSD 2-Clause license. Note that NO WARRANTY is provided.
-  See "LICENSE_BSD2.txt" for details.
+     SPDX-License-Identifier: BSD-2-Clause
+-->
 
-     @TAG(DATA61_BSD)
-  -->
 <api name="ObjectApiX86" label_prefix="x86_">
     <struct name="seL4_VCPUContext">
         <member name="eax"/>
@@ -125,39 +120,19 @@
     <interface name="seL4_X86_Page" manual_name="Page" cap_description="Capability to the page being operated on.">
         <method id="X86PageMap" name="Map" manual_label='page_map'>
             <brief>
-                Map a page into an address space.
+                Map a page into an address space or update the mapping attributes.
             </brief>
             <description>
-                Takes a <texttt text="Page Directory"/> capability, which refers to the VSpace, as an
+                Takes a VSpace capability, as an
                 argument and installs a reference
                 to the given <texttt text="Page"/> in the lowest-level unmapped paging structure
-                corresponding to the given address. If the required paging structures are not present
+                corresponding to the given address, or updates the mapping attributes if the page is already mapped at this address. If the required paging structures are not present
                 this operation will fail, returning a seL4_FailedLookup error.
             </description>
             <param dir="in" name="vspace" type="seL4_CPtr"
                 description='Capability to the VSpace which will contain the mapping'/>
             <param dir="in" name="vaddr" type="seL4_Word"
                 description='Virtual address to map the page into.'/>
-            <param dir="in" name="rights" type="seL4_CapRights_t">
-                <description>
-                    Rights for the mapping. <docref>Possible values for this type are given in <autoref label='sec:cap_rights'/></docref>
-                </description>
-            </param>
-            <param dir="in" name="attr" type="seL4_X86_VMAttributes">
-                <description>
-                    VM attributes for the mapping. <docref>Possible values for this type are given in <autoref label='ch:vspace'/></docref>
-                </description>
-            </param>
-        </method>
-        <method id="X86PageRemap" name="Remap" manual_label='page_remap'>
-            <brief>
-                Remap a page.
-            </brief>
-            <description>
-                 Changes the permissions of an existing mapping.
-            </description>
-            <param dir="in" name="vspace" type="seL4_CPtr"
-                description='Capability to the VSpace which will contain the mapping'/>
             <param dir="in" name="rights" type="seL4_CapRights_t">
                 <description>
                     Rights for the mapping. <docref>Possible values for this type are given in <autoref label='sec:cap_rights'/></docref>
@@ -394,7 +369,7 @@
             <description>
                 <docref>See <autoref label='sec:virt'/>.</docref>
             </description>
-            <param dir="in" name="eptpml4" type="seL4_CPtr"
+            <param dir="in" name="eptpml4" type="seL4_X86_EPTPML4"
                 description='CPTR to an EPT PML4 object to act as the guest mode vspace root'/>
         </method>
     </interface>
@@ -407,7 +382,7 @@
                 Configures the one-to-one binding of a VCPU and TCB, overwriting any previous binding
                 in both. <docref>See <autoref label='sec:virt'/>.</docref>
             </description>
-            <param dir="in" name="tcb" type="seL4_CNode" description='CPTR of the TCB to bind to'/>
+            <param dir="in" name="tcb" type="seL4_TCB" description='CPTR of the TCB to bind to'/>
         </method>
         <method id="X86VCPUReadVMCS" name="ReadVMCS" condition="defined(CONFIG_VTX)" manual_name="Read VMCS" manual_label="vcpu_readvmcs">
             <brief>
@@ -469,7 +444,7 @@
                 This also establishes a link between the provided I/O port capability and
                 the <texttt text='VCPU'/><docref>, see <autoref label='sec:virt'/> for details.</docref>
             </description>
-            <param dir="in" name="ioPort" type="seL4_CPtr"
+            <param dir="in" name="ioPort" type="seL4_X86_IOPort"
                 description='I/O port capability whose authority is being delegating'/>
             <param dir="in" name="low" type="seL4_Word"
                 description='Start of the I/O port range to enable'/>
@@ -511,7 +486,7 @@
             <description>
                 <docref>See <autoref label="ch:vspace"/></docref>
             </description>
-            <param dir="in" name="pml4" type="seL4_X86_EPTPML4"
+            <param dir="in" name="eptpml4" type="seL4_X86_EPTPML4"
                 description='Capability to the EPT root which will contain the mapping'/>
             <param dir="in" name="gpa" type="seL4_Word"
                 description='Guest physical address to map the page into.'/>
@@ -539,7 +514,7 @@
             <description>
                 <docref>See <autoref label="ch:vspace"/></docref>
             </description>
-            <param dir="in" name="pml4" type="seL4_X86_EPTPML4"
+            <param dir="in" name="eptpml4" type="seL4_X86_EPTPML4"
                 description='Capability to the EPT root which will contain the mapping'/>
             <param dir="in" name="gpa" type="seL4_Word"
                 description='Guest physical address to map the page into.'/>
@@ -567,7 +542,7 @@
             <description>
                 <docref>See <autoref label="ch:vspace"/></docref>
             </description>
-            <param dir="in" name="pml4" type="seL4_X86_EPTPML4"
+            <param dir="in" name="eptpml4" type="seL4_X86_EPTPML4"
                 description='Capability to the EPT root which will contain the mapping'/>
             <param dir="in" name="gpa" type="seL4_Word"
                 description='Guest physical address to map the page into.'/>

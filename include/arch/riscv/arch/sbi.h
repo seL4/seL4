@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: BSD-3-Clause */
+
 /* Copyright (c) 2010-2017, The Regents of the University of California
  * (Regents).  All Rights Reserved.
  *
@@ -28,8 +30,8 @@
  * new spec releases.
  */
 
-#ifndef _ASM_RISCV_SBI_H
-#define _ASM_RISCV_SBI_H
+#pragma once
+
 
 #include <stdint.h>
 
@@ -43,22 +45,27 @@
 #define SBI_REMOTE_SFENCE_VMA_ASID 7
 #define SBI_SHUTDOWN 8
 
-#define SBI_CALL(which, arg0, arg1, arg2) ({ 			\
-	register unsigned long a0 asm ("a0") = (unsigned long)(arg0);	\
-	register unsigned long a1 asm ("a1") = (unsigned long)(arg1);	\
-	register unsigned long a2 asm ("a2") = (unsigned long)(arg2);	\
-	register unsigned long a7 asm ("a7") = (unsigned long)(which);	\
-	asm volatile ("ecall"					\
-		      : "+r" (a0)				\
-		      : "r" (a1), "r" (a2), "r" (a7)		\
-		      : "memory");				\
-	a0;							\
-})
+static inline register_t sbi_call(register_t cmd,
+                                  register_t arg_0,
+                                  register_t arg_1,
+                                  register_t arg_2)
+{
+    register register_t a0 asm("a0") = arg_0;
+    register register_t a1 asm("a1") = arg_1;
+    register register_t a2 asm("a2") = arg_2;
+    register register_t a7 asm("a7") = cmd;
+    register register_t result asm("a0");
+    asm volatile("ecall"
+                 : "=r"(result)
+                 : "r"(a0), "r"(a1), "r"(a2), "r"(a7)
+                 : "memory");
+    return result;
+}
 
 /* Lazy implementations until SBI is finalized */
-#define SBI_CALL_0(which) SBI_CALL(which, 0, 0, 0)
-#define SBI_CALL_1(which, arg0) SBI_CALL(which, arg0, 0, 0)
-#define SBI_CALL_2(which, arg0, arg1) SBI_CALL(which, arg0, arg1, 0)
+#define SBI_CALL_0(which) sbi_call(which, 0, 0, 0)
+#define SBI_CALL_1(which, arg0) sbi_call(which, arg0, 0, 0)
+#define SBI_CALL_2(which, arg0, arg1) sbi_call(which, arg0, arg1, 0)
 
 static inline void sbi_console_putchar(int ch)
 {
@@ -67,7 +74,7 @@ static inline void sbi_console_putchar(int ch)
 
 static inline int sbi_console_getchar(void)
 {
-    return SBI_CALL_0(SBI_CONSOLE_GETCHAR);
+    return (int)(SBI_CALL_0(SBI_CONSOLE_GETCHAR));
 }
 
 static inline void sbi_set_timer(unsigned long long stime_value)
@@ -91,19 +98,19 @@ static inline void sbi_clear_ipi(void)
 
 static inline void sbi_send_ipi(const unsigned long *hart_mask)
 {
-    SBI_CALL_1(SBI_SEND_IPI, hart_mask);
+    SBI_CALL_1(SBI_SEND_IPI, (register_t)hart_mask);
 }
 
 static inline void sbi_remote_fence_i(const unsigned long *hart_mask)
 {
-    SBI_CALL_1(SBI_REMOTE_FENCE_I, hart_mask);
+    SBI_CALL_1(SBI_REMOTE_FENCE_I, (register_t)hart_mask);
 }
 
 static inline void sbi_remote_sfence_vma(const unsigned long *hart_mask,
                                          unsigned long start,
                                          unsigned long size)
 {
-    SBI_CALL_1(SBI_REMOTE_SFENCE_VMA, hart_mask);
+    SBI_CALL_1(SBI_REMOTE_SFENCE_VMA, (register_t)hart_mask);
 }
 
 static inline void sbi_remote_sfence_vma_asid(const unsigned long *hart_mask,
@@ -111,7 +118,6 @@ static inline void sbi_remote_sfence_vma_asid(const unsigned long *hart_mask,
                                               unsigned long size,
                                               unsigned long asid)
 {
-    SBI_CALL_1(SBI_REMOTE_SFENCE_VMA_ASID, hart_mask);
+    SBI_CALL_1(SBI_REMOTE_SFENCE_VMA_ASID, (register_t)hart_mask);
 }
 
-#endif

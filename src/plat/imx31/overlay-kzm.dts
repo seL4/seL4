@@ -1,0 +1,57 @@
+/*
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+	/* Pick serial console */
+	chosen {
+		stdout-path = "serial0";
+		seL4,elfloader-devices =
+		    "serial0";
+		seL4,kernel-devices =
+		    "serial0",
+		    &{/interrupt-controller@68000000},
+		    &{/l2cc@30000000},
+		    &{/soc/aips@53f00000/timer@53f94000};
+	};
+
+	/* Upstream bug: the memory node doesn't have a device_type,
+	 * but there is an empty memory node with a device_type. */
+	/delete-node/ memory;
+	memory@80000000 {
+		device_type = "memory";
+	};
+
+	l2cc@30000000 {
+		compatible = "fsl,imx31-l2cc";
+		reg = <0x30000000 0x1000>;
+	};
+
+	soc {
+		aips@43f00000 {
+			/* Incomplete PMU binding, but enough to generate headers. */
+			evtmon@43f08000 {
+				compatible = "fsl,imx31-evtmon";
+				reg = <0x43f08000 0x4000>;
+				interrupts = <0x17>;
+			};
+		};
+
+		aips@53f00000 {
+			/* Incomplete timer binding, but enough to generate headers. */
+			timer@53f94000 {
+				compatible = "fsl,imx31-epit";
+				reg = <0x53f94000 0x4000>;
+				interrupts = <0x1c>;
+			};
+
+			timer@53f98000 {
+				compatible = "fsl,imx31-epit";
+				reg = <0x53f98000 0x4000>;
+				interrupts = <0x1b>;
+			};
+		};
+	};
+};

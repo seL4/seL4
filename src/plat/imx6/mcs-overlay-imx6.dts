@@ -1,0 +1,26 @@
+/*
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+
+	soc {
+        timer@a00200 {
+            compatible = "arm,cortex-a9-global-timer";
+            reg = < 0xa00200 0x300 >;
+            interrupts = < 0x01 0x0b 0xf01 >;
+            interrupt-parent = < 0x16 >;
+            clocks = < 0x04 0x0f >;
+        };
+    };
+
+    chosen {
+        seL4,kernel-devices =
+            "serial1",
+            &{/soc/interrupt-controller@a01000},
+            &{/soc/l2-cache@a02000},
+            &{/soc/timer@a00200};
+    };
+};

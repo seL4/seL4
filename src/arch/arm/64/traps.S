@@ -1,13 +1,7 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -60,12 +54,12 @@ BEGIN_FUNC(arm_vector_table)
     ventry  cur_el_sync                    // Current EL Synchronous (EL1/2)
     ventry  cur_el_irq                     // IRQ
     ventry  invalid_vector_entry           // FIQ
-    ventry  invalid_vector_entry           // SError
+    ventry  cur_el_serr                    // SError
 
     ventry  lower_el_sync                  // Synchronous 64-bit EL0/EL1
     ventry  lower_el_irq                   // IRQ 64-bit EL0/EL1
     ventry  invalid_vector_entry           // FIQ 64-bit EL0/EL1
-    ventry  invalid_vector_entry           // SError 64-bit EL0/EL1
+    ventry  lower_el_serr                  // SError 64-bit EL0/EL1
 
     ventry  invalid_vector_entry           // Synchronous 32-bit EL0/EL1
     ventry  invalid_vector_entry           // IRQ 32-bit EL0/EL1
@@ -146,6 +140,14 @@ BEGIN_FUNC(cur_el_irq)
     b       c_handle_interrupt
 END_FUNC(cur_el_irq)
 
+BEGIN_FUNC(cur_el_serr)
+#ifdef CONFIG_PLAT_TX2
+    eret
+#else
+    b       invalid_vector_entry
+#endif
+END_FUNC(cur_el_serr)
+
 BEGIN_FUNC(lower_el_sync)
     kernel_enter
 
@@ -162,7 +164,7 @@ BEGIN_FUNC(lower_el_sync)
     cmp     x24, #ESR_EC_LEL_HVC64
     b.eq    lel_syscall
     mrs     x20, ELR
-    str     x20, [sp, #PT_FaultInstruction]
+    str     x20, [sp, #PT_FaultIP]
 
     lsp_i   x19
     /* move the ESR as the input */
@@ -176,14 +178,14 @@ BEGIN_FUNC(lower_el_sync)
 
 lel_da:
     mrs     x20, ELR
-    str     x20, [sp, #PT_FaultInstruction]
+    str     x20, [sp, #PT_FaultIP]
 
     lsp_i   x19
     b       c_handle_data_fault
 
 lel_ia:
     mrs     x20, ELR
-    str     x20, [sp, #PT_FaultInstruction]
+    str     x20, [sp, #PT_FaultIP]
 
     lsp_i   x19
     b       c_handle_instruction_fault
@@ -191,9 +193,20 @@ lel_ia:
 lel_syscall:
     mrs     x20, ELR
     sub     x20, x20, #4
-    str     x20, [sp, #PT_FaultInstruction]
+    str     x20, [sp, #PT_FaultIP]
 
     lsp_i   x19
+
+#ifdef CONFIG_FASTPATH
+    cmp     x7, #SYSCALL_CALL
+    b.eq    c_handle_fastpath_call
+    cmp     x7, #SYSCALL_REPLY_RECV
+#ifdef CONFIG_KERNEL_MCS
+    mov     x2, x6
+#endif
+    b.eq    c_handle_fastpath_reply_recv
+#endif
+
     mov     x2, x7
     b       c_handle_syscall
 
@@ -205,7 +218,7 @@ el0_enfp:
 
 el0_user:
     mrs     x20, ELR
-    str     x20, [sp, #PT_FaultInstruction]
+    str     x20, [sp, #PT_FaultIP]
 
     lsp_i   x19
     b       c_handle_undefined_instruction
@@ -214,8 +227,16 @@ END_FUNC(lower_el_sync)
 BEGIN_FUNC(lower_el_irq)
     kernel_enter
     mrs     x20, ELR
-    str     x20, [sp, #PT_FaultInstruction]
+    str     x20, [sp, #PT_FaultIP]
 
     lsp_i   x19
     b       c_handle_interrupt
 END_FUNC(lower_el_irq)
+
+BEGIN_FUNC(lower_el_serr)
+#ifdef CONFIG_PLAT_TX2
+    eret
+#else
+    b       invalid_vector_entry
+#endif
+END_FUNC(lower_el_serr)

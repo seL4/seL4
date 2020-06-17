@@ -1,17 +1,10 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the BSD 2-Clause license. Note that NO WARRANTY is provided.
- * See "LICENSE_BSD2.txt" for details.
- *
- * @TAG(DATA61_BSD)
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_MACROS_H
-#define __LIBSEL4_MACROS_H
+#pragma once
 
 #include <autoconf.h>
 
@@ -48,9 +41,10 @@
 #define LIBSEL4_INLINE_FUNC static inline
 #endif
 
+#define LIBSEL4_UNUSED __attribute__((unused))
+
 #define SEL4_DEPRECATED(x) __attribute__((deprecated(x)))
 #define SEL4_DEPRECATE_MACRO(x) _Pragma("deprecated") x
 
 #define SEL4_COMPILE_ASSERT(name, expr) typedef int __assert_failed_##name[(expr) ? 1 : -1];
 #define SEL4_SIZE_SANITY(index, entry, size) SEL4_COMPILE_ASSERT(index##entry##size, index + entry == size)
-#endif

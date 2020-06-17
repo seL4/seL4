@@ -1,15 +1,10 @@
 /*
  * Copyright 2016, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __PLAT_SMMU_H
-#define __PLAT_SMMU_H
+#pragma once
 
 #include <config.h>
 
@@ -130,22 +125,19 @@ typedef struct {
 #define SMMU_IOPT_INDEX_MASK    0x3ff000
 #define SMMU_IOPT_INDEX_SHIFT   12
 
-inline static uint32_t
-plat_smmu_iopd_index(word_t io_address)
+inline static uint32_t plat_smmu_iopd_index(word_t io_address)
 {
     uint32_t ret = (io_address & SMMU_IOPD_INDEX_MASK) >> SMMU_IOPD_INDEX_SHIFT;
     return ret;
 }
 
-inline static uint32_t
-plat_smmu_iopt_index(word_t io_address)
+inline static uint32_t plat_smmu_iopt_index(word_t io_address)
 {
     uint32_t ret = (io_address & SMMU_IOPT_INDEX_MASK) >> SMMU_IOPT_INDEX_SHIFT;
     return ret;
 }
 
-inline static uint32_t
-plat_smmu_get_asid_by_module_id(uint32_t mid)
+inline static uint32_t plat_smmu_get_asid_by_module_id(uint32_t mid)
 {
     if (mid < SMMU_FIRST_ASID || mid > SMMU_LAST_ASID) {
         return asidInvalid;
@@ -168,12 +160,10 @@ void plat_smmu_handle_interrupt(void);
 #else /* !CONFIG_ARM_SMMU */
 
 /* dummy functions */
-static inline void
-plat_smmu_handle_interrupt(void)
+static inline void plat_smmu_handle_interrupt(void)
 {
     return;
 }
 
 #endif /* CONFIG_ARM_SMMU */
 
-#endif /* __PLAT_SMMU_H */

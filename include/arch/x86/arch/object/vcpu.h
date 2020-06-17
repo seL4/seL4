@@ -1,17 +1,10 @@
 /*
- * Copyright 2016, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_OBJECT_VCPU_H
-#define __ARCH_OBJECT_VCPU_H
+#pragma once
 
 #include <config.h>
 #include <api/failures.h>
@@ -331,10 +324,10 @@ exception_t decodeX86VCPUInvocation(
     word_t invLabel,
     word_t length,
     cptr_t cptr,
-    cte_t* slot,
+    cte_t *slot,
     cap_t cap,
     extra_caps_t excaps,
-    word_t* buffer
+    word_t *buffer
 );
 
 /* Updates the state of the provided VCPU for a SysVMEnter syscall. The state
@@ -358,11 +351,10 @@ void invept(ept_pml4e_t *ept_pml4);
 /* Removes any IO port mappings that have been cached for the given VPID */
 void clearVPIDIOPortMappings(vpid_t vpid, uint16_t first, uint16_t last);
 
-static inline word_t
-vmread(word_t field)
+static inline word_t vmread(word_t field)
 {
     word_t value;
-    asm volatile (
+    asm volatile(
         "vmread %1, %0"
         : "=r"(value)
         : "r"(field)
@@ -373,10 +365,9 @@ vmread(word_t field)
 
 #include <machine/io.h>
 
-static inline void
-vmwrite(word_t field, word_t value)
+static inline void vmwrite(word_t field, word_t value)
 {
-    asm volatile (
+    asm volatile(
         "vmwrite %0, %1"
         :
         : "r"(value), "r"(field)
@@ -387,5 +378,3 @@ vmwrite(word_t field, word_t value)
 #else /* CONFIG_VTX */
 #define VTX_TERNARY(vtx, nonvtx) nonvtx
 #endif /* CONFIG_VTX */
-
-#endif

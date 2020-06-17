@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -22,16 +18,14 @@
 #include <kernel/thread.h>
 #include <util.h>
 
-static word_t
-alignUp(word_t baseValue, word_t alignment)
+static word_t alignUp(word_t baseValue, word_t alignment)
 {
     return (baseValue + (BIT(alignment) - 1)) & ~MASK(alignment);
 }
 
-exception_t
-decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
-                        cap_t cap, extra_caps_t excaps,
-                        bool_t call, word_t *buffer)
+exception_t decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
+                                    cap_t cap, extra_caps_t excaps,
+                                    bool_t call, word_t *buffer)
 {
     word_t newType, userObjSize, nodeIndex;
     word_t nodeDepth, nodeOffset, nodeWindow;
@@ -107,6 +101,15 @@ decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
         current_syscall_error.invalidArgumentNumber = 1;
         return EXCEPTION_SYSCALL_ERROR;
     }
+
+#ifdef CONFIG_KERNEL_MCS
+    if (newType == seL4_SchedContextObject && userObjSize < seL4_MinSchedContextBits) {
+        userError("Untyped retype: Requested a scheduling context too small.");
+        current_syscall_error.type = seL4_InvalidArgument;
+        current_syscall_error.invalidArgumentNumber = 1;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+#endif
 
     /* Lookup the destination CNode (where our caps will be placed in). */
     if (nodeDepth == 0) {
@@ -214,7 +217,7 @@ decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
 
     deviceMemory = cap_untyped_cap_get_capIsDevice(cap);
     if ((deviceMemory && !Arch_isFrameType(newType))
-            && newType != seL4_UntypedObject) {
+        && newType != seL4_UntypedObject) {
         userError("Untyped Retype: Creating kernel objects with device untyped");
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 1;
@@ -228,12 +231,11 @@ decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
     /* Perform the retype. */
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeUntyped_Retype(slot, reset,
-                                (void*)alignedFreeRef, newType, userObjSize,
+                                (void *)alignedFreeRef, newType, userObjSize,
                                 slots, deviceMemory);
 }
 
-static exception_t
-resetUntypedCap(cte_t *srcSlot)
+static exception_t resetUntypedCap(cte_t *srcSlot)
 {
     cap_t prev_cap = srcSlot->cap;
     word_t block_size = cap_untyped_cap_get_capBlockSize(prev_cap);
@@ -259,7 +261,7 @@ resetUntypedCap(cte_t *srcSlot)
         srcSlot->cap = cap_untyped_cap_set_capFreeIndex(prev_cap, 0);
     } else {
         for (offset = ROUND_DOWN(offset - 1, chunk);
-                offset != - BIT (chunk); offset -= BIT (chunk)) {
+             offset != - BIT(chunk); offset -= BIT(chunk)) {
             clearMemory(GET_OFFSET_FREE_PTR(regionBase, offset), chunk);
             srcSlot->cap = cap_untyped_cap_set_capFreeIndex(prev_cap, OFFSET_TO_FREE_INDEX(offset));
             status = preemptionPoint();
@@ -271,11 +273,10 @@ resetUntypedCap(cte_t *srcSlot)
     return EXCEPTION_NONE;
 }
 
-exception_t
-invokeUntyped_Retype(cte_t *srcSlot,
-                     bool_t reset, void* retypeBase,
-                     object_t newType, word_t userSize,
-                     slot_range_t destSlots, bool_t deviceMemory)
+exception_t invokeUntyped_Retype(cte_t *srcSlot,
+                                 bool_t reset, void *retypeBase,
+                                 object_t newType, word_t userSize,
+                                 slot_range_t destSlots, bool_t deviceMemory)
 {
     word_t freeRef;
     word_t totalObjectSize;
@@ -291,7 +292,11 @@ invokeUntyped_Retype(cte_t *srcSlot,
         }
     }
 
-    /* Update the amount of free space left in this untyped cap. */
+    /* Update the amount of free space left in this untyped cap.
+     *
+     * Note that userSize is not necessarily the true size of the object in
+     * memory. In the case where newType is seL4_CapTableObject, the size is
+     * transformed by getObjectSize. */
     totalObjectSize = destSlots.length << getObjectSize(newType, userSize);
     freeRef = (word_t)retypeBase + totalObjectSize;
     srcSlot->cap = cap_untyped_cap_set_capFreeIndex(srcSlot->cap,

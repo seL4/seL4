@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_KERNEL_VSPACE_H
-#define __ARCH_KERNEL_VSPACE_H
+#pragma once
 
 #include <config.h>
 #include <types.h>
@@ -22,13 +17,13 @@
 
 struct lookupPTSlot_ret {
     exception_t status;
-    pte_t*      ptSlot;
+    pte_t      *ptSlot;
 };
 typedef struct lookupPTSlot_ret lookupPTSlot_ret_t;
 
 struct lookupPDSlot_ret {
     exception_t status;
-    pde_t*      pdSlot;
+    pde_t      *pdSlot;
 };
 typedef struct lookupPDSlot_ret lookupPDSlot_ret_t;
 
@@ -42,25 +37,25 @@ void init_boot_pd(void);
 void enable_paging(void);
 bool_t map_kernel_window(
     uint32_t num_ioapic,
-    paddr_t*   ioapic_paddrs,
+    paddr_t   *ioapic_paddrs,
     uint32_t   num_drhu,
-    paddr_t*   drhu_list
+    paddr_t   *drhu_list
 );
 bool_t map_skim_window(vptr_t skim_start, vptr_t skim_end);
 bool_t map_kernel_window_devices(
     pte_t *pt,
     uint32_t num_ioapic,
-    paddr_t*   ioapic_paddrs,
+    paddr_t   *ioapic_paddrs,
     uint32_t   num_drhu,
-    paddr_t*   drhu_list
+    paddr_t   *drhu_list
 );
 
 void init_tss(tss_t *tss);
 void init_gdt(gdt_entry_t *gdt, tss_t *tss);
-void init_idt_entry(idt_entry_t* idt, interrupt_t interrupt, void(*handler)(void));
+void init_idt_entry(idt_entry_t *idt, interrupt_t interrupt, void(*handler)(void));
 vspace_root_t *getValidNativeRoot(cap_t vspace_cap);
 pde_t *get_boot_pd(void);
-void* map_temp_boot_page(void* entry, uint32_t large_pages);
+void *map_temp_boot_page(void *entry, uint32_t large_pages);
 bool_t init_vm_state(void);
 void init_dtrs(void);
 void map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap);
@@ -82,22 +77,23 @@ asid_map_t findMapForASID(asid_t asid);
 lookupPTSlot_ret_t lookupPTSlot(vspace_root_t *vspace, vptr_t vptr);
 lookupPDSlot_ret_t lookupPDSlot(vspace_root_t *vspace, vptr_t vptr);
 void copyGlobalMappings(vspace_root_t *new_vspace);
-word_t* PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread);
+word_t *PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread);
 exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType);
 void unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd);
-void unmapPageTable(asid_t, vptr_t vaddr, pte_t* pt);
+void unmapPageTable(asid_t, vptr_t vaddr, pte_t *pt);
 
-exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t* poolPtr, cte_t* vspaceCapSlot);
+exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *poolPtr, cte_t *vspaceCapSlot);
 exception_t performASIDControlInvocation(void *frame, cte_t *slot, cte_t *parent, asid_t asid_base);
 void hwASIDInvalidate(asid_t asid, vspace_root_t *vspace);
-void deleteASIDPool(asid_t asid_base, asid_pool_t* pool);
+void deleteASIDPool(asid_t asid_base, asid_pool_t *pool);
 void deleteASID(asid_t asid, vspace_root_t *vspace);
 findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid);
 
 void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr);
 /* returns whether the translation was removed and needs to be flushed from the hardware (i.e. tlb) */
 bool_t modeUnmapPage(vm_page_size_t page_size, vspace_root_t *vroot, vptr_t vptr, void *pptr);
-exception_t decodeX86ModeMapRemapPage(word_t invLabel, vm_page_size_t page_size, cte_t *cte, cap_t cap, vspace_root_t *vroot, vptr_t vptr, paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t vm_attr);
+exception_t decodeX86ModeMapPage(word_t invLabel, vm_page_size_t page_size, cte_t *cte, cap_t cap,
+                                 vspace_root_t *vroot, vptr_t vptr, paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t vm_attr);
 void setVMRoot(tcb_t *tcb);
 bool_t CONST isValidVTableRoot(cap_t cap);
 bool_t CONST isValidNativeRoot(cap_t cap);
@@ -111,10 +107,12 @@ exception_t decodeX86MMUInvocation(word_t invLabel, word_t length, cptr_t cptr, 
 exception_t decodeX86ModeMMUInvocation(word_t invLabel, word_t length, cptr_t cptr, cte_t *cte,
                                        cap_t cap, extra_caps_t excaps, word_t *buffer);
 
-exception_t decodeIA32PageDirectoryInvocation(word_t invLabel, word_t length, cte_t* cte, cap_t cap, extra_caps_t excaps, word_t* buffer);
+exception_t decodeIA32PageDirectoryInvocation(word_t invLabel, word_t length, cte_t *cte, cap_t cap,
+                                              extra_caps_t excaps, word_t *buffer);
 
 /* common functions for x86 */
-exception_t decodeX86FrameInvocation(word_t invLabel, word_t length, cte_t *cte, cap_t cap, extra_caps_t excaps, word_t *buffer);
+exception_t decodeX86FrameInvocation(word_t invLabel, word_t length, cte_t *cte, cap_t cap, extra_caps_t excaps,
+                                     word_t *buffer);
 
 uint32_t CONST WritableFromVMRights(vm_rights_t vm_rights);
 uint32_t CONST SuperUserFromVMRights(vm_rights_t vm_rights);
@@ -134,10 +132,8 @@ pde_t CONST makeUserPDEInvalid(void);
 void Arch_userStackTrace(tcb_t *tptr);
 #endif
 
-static inline bool_t
-checkVPAlignment(vm_page_size_t sz, word_t w)
+static inline bool_t checkVPAlignment(vm_page_size_t sz, word_t w)
 {
     return IS_ALIGNED(w, pageBitsForSize(sz));
 }
 
-#endif

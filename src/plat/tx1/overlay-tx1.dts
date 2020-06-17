@@ -1,0 +1,38 @@
+/*
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+	chosen {
+		seL4,elfloader-devices =
+		    "serial0",
+		    &{/psci};
+
+		seL4,kernel-devices =
+		    "serial0",
+		    &{/interrupt-controller@50041000},
+		    &{/timer};
+	};
+
+	pmu {
+		compatible = "arm,armv8-pmuv3";
+		interrupts = <0x00 0x90 0x04>,
+					 <0x00 0x91 0x04>,
+					 <0x00 0x92 0x04>,
+					 <0x00 0x93 0x04>;
+		interrupt-parent = <&{/interrupt-controller@50041000}>;
+	};
+
+	/*
+	 * The TegraBoot carveout memory regions start from 0xff03f000, so we
+	 * skip the 0xff000000 to 0xffffffff region. The carveout regions may change
+	 * if the TegraBoot version changes, so keep an eye on the booting process
+	 * if something strange happens.
+	 */
+	memory {
+		reg = <0x00 0x80000000 0x00 0x7f000000>,
+				<0x01 0x00000000 0x00 0x80000000>;
+	};
+};

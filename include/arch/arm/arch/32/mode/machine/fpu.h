@@ -1,17 +1,10 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MODE_MACHINE_FPU_H
-#define __MODE_MACHINE_FPU_H
+#pragma once
 
 #include <config.h>
 #include <mode/machine/registerset.h>
@@ -46,9 +39,9 @@ extern bool_t isFPUEnabledCached[CONFIG_MAX_NUM_NODES];
 static void clearEnFPEXC(void)
 {
     word_t fpexc;
-    MRC(FPEXC, fpexc);
+    VMRS(FPEXC, fpexc);
     fpexc &= ~BIT(FPEXC_EN_BIT);
-    MCR(FPEXC, fpexc);
+    VMSR(FPEXC, fpexc);
 }
 
 #if defined(CONFIG_ARM_HYPERVISOR_SUPPORT) && defined(CONFIG_HAVE_FPU)
@@ -59,22 +52,20 @@ static void clearEnFPEXC(void)
 #define HCPTR_MASK      ~(BIT(HCPTR_CP10_BIT) | BIT(HCPTR_CP11_BIT) | BIT(HCPTR_TASE_BIT))
 
 /* enable FPU accesses in Hyp mode */
-static inline void
-enableFpuInstInHyp(void)
+static inline void enableFpuInstInHyp(void)
 {
-    if (!armHSFPUEnabled) {
+    if (!ARCH_NODE_STATE(armHSFPUEnabled)) {
         setHCPTR(getHCPTR() & HCPTR_MASK);
-        armHSFPUEnabled = true;
+        ARCH_NODE_STATE(armHSFPUEnabled) = true;
     }
 }
 
 /* trap PL0/PL1 FPU operations to Hyp mode and disable FPU accesses in Hyp */
-static inline void
-trapFpuInstToHyp(void)
+static inline void trapFpuInstToHyp(void)
 {
-    if (armHSFPUEnabled) {
+    if (ARCH_NODE_STATE(armHSFPUEnabled)) {
         setHCPTR(getHCPTR() | ~HCPTR_MASK);
-        armHSFPUEnabled = false;
+        ARCH_NODE_STATE(armHSFPUEnabled) = false;
     }
 }
 
@@ -92,17 +83,17 @@ extern bool_t isFPUD32SupportedCached;
 static void setEnFPEXC(void)
 {
     word_t fpexc;
-    MRC(FPEXC, fpexc);
+    VMRS(FPEXC, fpexc);
     fpexc |=  BIT(FPEXC_EN_BIT);
-    MCR(FPEXC, fpexc);
+    VMSR(FPEXC, fpexc);
 }
 /* Store state in the FPU registers into memory. */
 static inline void saveFpuState(user_fpu_state_t *dest)
 {
     word_t fpexc;
 
-    /* Store FPEXC */
-    MRC(FPEXC, fpexc);
+    /* Fetch FPEXC. */
+    VMRS(FPEXC, fpexc);
 
 #if defined(CONFIG_ARM_CORTEX_A7) || defined(CONFIG_ARM_CORTEX_A9)
     /*
@@ -111,7 +102,7 @@ static inline void saveFpuState(user_fpu_state_t *dest)
     */
     if (unlikely(fpexc & BIT(FPEXC_DEX_BIT))) {
         fpexc &= ~BIT(FPEXC_DEX_BIT);
-        MCR(FPEXC, fpexc);
+        VMSR(FPEXC, fpexc);
     }
 #endif
 
@@ -123,32 +114,32 @@ static inline void saveFpuState(user_fpu_state_t *dest)
     }
 
     /* We don't support asynchronous exceptions */
-    assert ((dest->fpexc & BIT(FPEXC_EX_BIT)) == 0);
+    assert((dest->fpexc & BIT(FPEXC_EX_BIT)) == 0);
 
     if (isFPUD32SupportedCached) {
         register word_t regs_d16_d31 asm("ip") = (word_t) &dest->fpregs[16];
         asm volatile(
             ".word 0xeccc0b20        \n"    /*  vstmia  ip, {d16-d31} */
             :
-            : "r" (regs_d16_d31)
+            : "r"(regs_d16_d31)
             : "memory"
         );
     }
 
-    register word_t regs_d0_d15 asm("r2") =  (word_t) &dest->fpregs[0];
+    register word_t regs_d0_d15 asm("r2") = (word_t) &dest->fpregs[0];
     asm volatile(
         /* Store d0 - d15 to memory */
         ".word 0xec820b20       \n" /* vstmia  r2, {d0-d15}" */
-        /* Store PFSCR */
-        ".word 0xeef1ea10       \n" /* vmrs   lr, fpscr */
-        "str  lr, [%[tcb_fpscr]]\n"
         :
-        : [tcb_fpscr] "r" (&dest->fpscr), "r" (regs_d0_d15)
-        : "memory", "lr"
+        : "r"(regs_d0_d15)
     );
-    /* restore the FPEXC */
+
+    /* Store FPSCR. */
+    VMRS(FPSCR, dest->fpscr);
+
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        MCR(FPEXC, fpexc);
+        /* Restore the FPEXC. */
+        VMSR(FPEXC, fpexc);
     }
 }
 
@@ -169,7 +160,7 @@ static inline void enableFpu(void)
 {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     enableFpuInstInHyp();
-    if (!armHSVCPUActive) {
+    if (!ARCH_NODE_STATE(armHSVCPUActive)) {
         setEnFPEXC();
     }
 #else
@@ -191,26 +182,26 @@ static inline void loadFpuState(user_fpu_state_t *src)
         /* now we need to enable the EN bit in FPEXC */
         setEnFPEXC();
     }
-    register word_t regs_d16_d31 asm("r2") =  (word_t) &src->fpregs[16];
+    register word_t regs_d16_d31 asm("r2") = (word_t) &src->fpregs[16];
     if (isFPUD32SupportedCached) {
         asm volatile(
             ".word 0xecd20b20       \n" /*   vldmia  r2, {d16-d31} */
-            :: "r" (regs_d16_d31)
+            :: "r"(regs_d16_d31)
         );
     }
 
-    register word_t regs_d0_d15 asm("r0") =  (word_t) &src->fpregs[0];
-    register word_t regs_fpscr asm("r1") = src->fpscr;
+    register word_t regs_d0_d15 asm("r0") = (word_t) &src->fpregs[0];
     asm volatile(
         /* Restore d0 - d15 from memory */
         ".word 0xec900b20         \n"    /*  vldmia  r0, {d0-d15} */
-        /* Load fpscr */
-        ".word 0xeee11a10         \n"    /*  vmsr    fpscr, r1 */
-        :: "r" (regs_d0_d15), "r" (regs_fpscr)
+        :: "r"(regs_d0_d15)
     );
 
-    /* Restore FPEXC */
-    MCR(FPEXC, src->fpexc);
+    /* Load FPSCR. */
+    VMSR(FPSCR, src->fpscr);
+
+    /* Restore FPEXC. */
+    VMSR(FPEXC, src->fpexc);
 }
 
 #endif /* CONFIG_HAVE_FPU */
@@ -235,4 +226,3 @@ static inline void disableFpu(void)
     isFPUEnabledCached[SMP_TERNARY(getCurrentCPUIndex(), 0)] = false;
 }
 
-#endif /* __MODE_MACHINE_FPU_H */

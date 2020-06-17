@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -73,12 +69,18 @@
 
 /*
  * Entry point of the kernel ELF image.
- * R0-R3 contain parameters that are passed to init_kernel().
+ * R0-R3 contain parameters that are passed to init_kernel(),
+ * and we put arguments 5 and 6 (DTB address/size) in r7 and r8.
  */
 
 .code 32
 .section .boot.text, "ax"
 BEGIN_FUNC(_start)
+    /*
+     * Get the dtb and dtb size from the elfloader stack. Do this first because
+     * sp might change when we switch to supervisor mode.
+     */
+    pop {r7, r8}
 
     /* Supervisor/hypervisor mode, interrupts disabled */
     ldr r5, =CPSR_KERNEL
@@ -144,9 +146,9 @@ BEGIN_FUNC(_start)
 #endif /* ENABLE_SMP_SUPPORT */
 
     /* Attempt to workaround any known ARM errata. */
-    push {r0-r3}
+    push {r0-r3,r7-r8}
     blx arm_errata
-    pop {r0-r3}
+    pop {r0-r3,r7-r8}
 
     /* Hyp kernel always run in Hyp mode. */
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
@@ -156,6 +158,8 @@ BEGIN_FUNC(_start)
     cps #PMODE_SUPERVISOR
 #endif
 
+    /* Put the DTB address back on the new stack for init_kernel. */
+    push {r7, r8}
     /* Call bootstrapping implemented in C */
     blx init_kernel
 

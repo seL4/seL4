@@ -1,0 +1,27 @@
+/*
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+	chosen {
+		seL4,elfloader-devices =
+		    "serial0";
+		seL4,kernel-devices =
+		    "serial0",
+		    &{/interrupt-controller@50041000},
+		    &{/memory-controller@70019000}, /* SMMU */
+		    &{/timer};
+	};
+
+	memory@80000000 {
+		/* 1MiB carveout at 0xa7f00000 for the elfloader's monitor mode hooks */
+		reg = <0x0 0x80000000 0x0 0x27f00000>;
+	};
+
+	vm-memory {
+		/* Expose the second gigabyte of RAM as a device untyped. */
+		reg = <0x0 0xb0000000 0x0 0x40000000>;
+	};
+};

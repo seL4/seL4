@@ -1,15 +1,12 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __PLAT_MACHINE_H
-#define __PLAT_MACHINE_H
+#pragma once
+
+#include <machine/interrupt.h>
 
 #define PIC_IRQ_LINES 16
 #define IOAPIC_IRQ_LINES 24
@@ -17,6 +14,7 @@
 /* interrupt vectors (corresponds to IDT entries) */
 
 #define IRQ_INT_OFFSET 0x20
+#define IRQ_CNODE_SLOT_BITS 8
 
 typedef enum _interrupt_t {
     int_invalid                 = -1,
@@ -67,10 +65,7 @@ typedef enum _platform_irq_t {
     irqInvalid                  = 255,
 } platform_irq_t;
 
-typedef uint8_t irq_t;
-
-#define IRQ_CNODE_BITS 13
-
+#define KERNEL_TIMER_IRQ irq_timer
 #define BIOS_PADDR_START 0x0e0000
 #define BIOS_PADDR_END   0x100000
 
@@ -79,4 +74,3 @@ typedef uint8_t irq_t;
 #define BIOS_PADDR_VIDEO_RAM_TEXT_MODE_START 0x000B8000
 #define BIOS_PADDR_IVDEO_RAM_END 0x000C0000
 
-#endif

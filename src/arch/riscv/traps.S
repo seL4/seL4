@@ -1,19 +1,8 @@
 /*
- * Copyright 2018, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
- *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
- */
-
-/*
- *
- * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -35,10 +24,19 @@
 
 trap_entry:
 
+#ifdef ENABLE_SMP_SUPPORT
+/* The sscratch contains the stack for the current core */
+  csrrw sp, sscratch, sp
+/* Now we have a valid kernel stack */
+  STORE t0, (-2*REGBYTES)(sp)
+  LOAD  t0, (-1*REGBYTES)(sp)
+#else
   csrrw t0, sscratch, t0
-
+#endif
   STORE ra, (0*REGBYTES)(t0)
+#ifndef ENABLE_SMP_SUPPORT
   STORE sp, (1*REGBYTES)(t0)
+#endif
   STORE gp, (2*REGBYTES)(t0)
   STORE tp, (3*REGBYTES)(t0)
   STORE t1, (5*REGBYTES)(t0)
@@ -67,9 +65,12 @@ trap_entry:
   STORE t4, (28*REGBYTES)(t0)
   STORE t5, (29*REGBYTES)(t0)
   STORE t6, (30*REGBYTES)(t0)
-
   /* save t0 value */
+#ifdef ENABLE_SMP_SUPPORT
+  LOAD  x1, (-2*REGBYTES)(sp)
+#else
   csrr  x1, sscratch
+#endif
   STORE    x1, (4*REGBYTES)(t0)
 
   csrr x1, sstatus
@@ -78,14 +79,22 @@ trap_entry:
   csrr s0, scause
   STORE s0, (31*REGBYTES)(t0)
 
+  la gp, __global_pointer$
+
+#ifdef ENABLE_SMP_SUPPORT
+  /* save the user sp */
+  csrr  x1, sscratch
+  STORE x1, (1*REGBYTES)(t0)
+  /* restore the sscratch */
+  csrw  sscratch, sp
+#else
+  /* Load kernel's stack address */
+  la sp, (kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS))
+#endif
+
   /* Save exception PC */
   csrr x1,  sepc
   STORE   x1, (33*REGBYTES)(t0)
-
-  la gp, __global_pointer$
-
-  /* Load kernel's stack address */
-  la sp, (kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS))
 
   /* Check if it's an interrupt */
   srli s2, s0, (CONFIG_WORD_SIZE - 1)
@@ -99,18 +108,18 @@ trap_entry:
 syscall:
   /* Set the return address to sepc + 4 in the case of a system/environment call */
   addi x1, x1, 4
-  /* Save NEXTPC */
+  /* Save NextIP */
   STORE   x1, (34*REGBYTES)(t0)
 
   j c_handle_syscall
 
 /* Not an interrupt or a syscall */
 exception:
-  /* Save NEXTPC */
+  /* Save NextIP */
   STORE   x1, (34*REGBYTES)(t0)
   j c_handle_exception
 
 interrupt:
-  /* Save NEXTPC */
+  /* Save NextIP */
   STORE   x1, (34*REGBYTES)(t0)
   j c_handle_interrupt

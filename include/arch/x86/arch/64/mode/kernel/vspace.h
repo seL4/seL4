@@ -1,17 +1,10 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MODE_KERNEL_VSPACE_H
-#define __MODE_KERNEL_VSPACE_H
+#pragma once
 
 #include <arch/kernel/vspace.h>
 
@@ -21,8 +14,7 @@ struct lookupPDPTSlot_ret {
 };
 typedef struct lookupPDPTSlot_ret lookupPDPTSlot_ret_t;
 
-static inline pte_t
-x86_make_device_pte(paddr_t phys)
+static inline pte_t x86_make_device_pte(paddr_t phys)
 {
     return pte_new(
                0,      /* xd */
@@ -39,8 +31,7 @@ x86_make_device_pte(paddr_t phys)
            );
 }
 
-static inline pte_t
-x86_make_empty_pte(void)
+static inline pte_t x86_make_empty_pte(void)
 {
     return pte_new(
                0,      /* xd */
@@ -57,8 +48,7 @@ x86_make_empty_pte(void)
            );
 }
 
-static inline CONST pml4e_t
-x86_make_empty_root_mapping(void)
+static inline CONST pml4e_t x86_make_empty_root_mapping(void)
 {
     return pml4e_new(
                0,                  /* xd               */
@@ -72,4 +62,3 @@ x86_make_empty_root_mapping(void)
            );
 }
 
-#endif /* __MODE_KERNEL_VSPACE_H */

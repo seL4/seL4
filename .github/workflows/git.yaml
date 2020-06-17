@@ -1,0 +1,39 @@
+# Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+#
+# SPDX-License-Identifier: BSD-2-Clause
+
+name: Git
+
+on: [pull_request]
+
+jobs:
+  gitlint:
+    name: Gitlint
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 2
+    - run: |
+        git fetch --depth 1 --no-tags origin +refs/heads/${{ github.base_ref }}:refs/heads/${{ github.base_ref }}
+    - uses: actions/checkout@v2
+      with:
+        repository: seL4/sel4_tools
+        path: sel4_tools
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.7'
+    - name: Install gitlint
+      run: pip install gitlint
+    - name: Run gitlint
+      run: gitlint --commits ${{ github.base_ref }}..${{ github.event.pull_request.head.sha }} --config sel4_tools/misc/.gitlint lint
+
+  whitespace:
+    name: Trailing Whitespace
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - run: |
+        git fetch --depth 1 --no-tags origin +refs/heads/${{ github.base_ref }}:refs/heads/${{ github.base_ref }}
+    - name: Check
+      run: git diff --check ${{ github.base_ref }}

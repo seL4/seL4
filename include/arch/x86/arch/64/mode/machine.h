@@ -1,23 +1,17 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODE_MACHINE_H_
-#define __ARCH_MODE_MACHINE_H_
+#pragma once
 
 #include <config.h>
+#include <hardware.h>
 #include <arch/model/statedata.h>
 #include <arch/machine/cpu_registers.h>
 #include <arch/model/smp.h>
-#include <plat_mode/machine/hardware.h>
+#include <arch/machine.h>
 
 static inline cr3_t makeCR3(paddr_t addr, word_t pcid)
 {
@@ -113,10 +107,10 @@ static inline void setCurrentUserVSpaceRoot(paddr_t addr, word_t pcid)
 }
 
 /* GDT installation */
-void x64_install_gdt(gdt_idt_ptr_t* gdt_idt_ptr);
+void x64_install_gdt(gdt_idt_ptr_t *gdt_idt_ptr);
 
 /* IDT installation */
-void x64_install_idt(gdt_idt_ptr_t* gdt_idt_ptr);
+void x64_install_idt(gdt_idt_ptr_t *gdt_idt_ptr);
 
 /* LDT installation */
 void x64_install_ldt(uint32_t ldt_sel);
@@ -129,7 +123,7 @@ void handle_fastsyscall(void);
 void init_syscall_msrs(void);
 
 /* Get current stack pointer */
-static inline void* get_current_esp(void)
+static inline void *get_current_esp(void)
 {
     word_t stack;
     void *result;
@@ -153,7 +147,7 @@ static inline void invalidateLocalPCID(word_t type, void *vaddr, asid_t asid)
         invpcid_desc_t desc;
         desc.asid = asid & 0xfff;
         desc.addr = (uint64_t)vaddr;
-        asm volatile ("invpcid %1, %0" :: "r"(type), "m"(desc));
+        asm volatile("invpcid %1, %0" :: "r"(type), "m"(desc));
     } else {
         switch (type) {
         case INVPCID_TYPE_ADDR:
@@ -180,17 +174,17 @@ static inline void invalidateLocalTranslationSingle(vptr_t vptr)
     /* As this may be used to invalidate global mappings by the kernel,
      * and as its only used in boot code, we can just invalidate
      * absolutely everything form the tlb */
-    invalidateLocalPCID(INVPCID_TYPE_ALL_GLOBAL, (void*)0, 0);
+    invalidateLocalPCID(INVPCID_TYPE_ALL_GLOBAL, (void *)0, 0);
 }
 
 static inline void invalidateLocalTranslationSingleASID(vptr_t vptr, asid_t asid)
 {
-    invalidateLocalPCID(INVPCID_TYPE_ADDR, (void*)vptr, asid);
+    invalidateLocalPCID(INVPCID_TYPE_ADDR, (void *)vptr, asid);
 }
 
 static inline void invalidateLocalTranslationAll(void)
 {
-    invalidateLocalPCID(INVPCID_TYPE_ALL_GLOBAL, (void*)0, 0);
+    invalidateLocalPCID(INVPCID_TYPE_ALL_GLOBAL, (void *)0, 0);
 }
 
 static inline void invalidateLocalPageStructureCacheASID(paddr_t root, asid_t asid)
@@ -207,8 +201,8 @@ static inline void invalidateLocalPageStructureCacheASID(paddr_t root, asid_t as
             "mov %[new_cr3], %%cr3\n"
             "mov %[old_cr3], %%cr3\n"
             ::
-            [new_cr3] "r" (makeCR3(root, asid).words[0]),
-            [old_cr3] "r" (cr3.words[0] | BIT(63))
+            [new_cr3] "r"(makeCR3(root, asid).words[0]),
+            [old_cr3] "r"(cr3.words[0] | BIT(63))
         );
     } else {
         /* just invalidate the page structure cache as per normal, by
@@ -236,12 +230,12 @@ static inline rdmsr_safe_result_t x86_rdmsr_safe(const uint32_t reg)
          1: \n\
          movq (%[returnto_addr]), %[returnto] \n\
          movq $0, (%[returnto_addr])"
-        : [returnto] "=&r" (returnto),
-        [temp] "=&r" (temp),
-        [high] "=&d" (high),
-        [low] "=&a" (low)
-        : [returnto_addr] "r" (&ARCH_NODE_STATE(x86KSGPExceptReturnTo)),
-        [reg] "c" (reg)
+        : [returnto] "=&r"(returnto),
+        [temp] "=&r"(temp),
+        [high] "=&d"(high),
+        [low] "=&a"(low)
+        : [returnto_addr] "r"(&ARCH_NODE_STATE(x86KSGPExceptReturnTo)),
+        [reg] "c"(reg)
         : "memory"
     );
     result.success = returnto != 0;
@@ -253,28 +247,90 @@ static inline rdmsr_safe_result_t x86_rdmsr_safe(const uint32_t reg)
 
 static inline void x86_write_fs_base_impl(word_t base)
 {
-    asm volatile ("wrfsbase %0"::"r"(base));
-}
-
-static inline void x86_write_gs_base_impl(word_t base)
-{
-    asm volatile ("wrgsbase %0"::"r"(base));
+    asm volatile("wrfsbase %0"::"r"(base));
 }
 
 static inline word_t x86_read_fs_base_impl(void)
 {
     word_t base = 0;
-    asm volatile ("rdfsbase %0":"=r"(base));
+    asm volatile("rdfsbase %0":"=r"(base));
     return base;
+}
+
+static inline void x86_save_fsgs_base(tcb_t *thread, cpu_id_t cpu)
+{
+    /*
+     * Store the FS and GS base registers.
+     *
+     * These should only be accessed inside the kernel, between the
+     * entry and exit calls to swapgs if used.
+     */
+#ifdef CONFIG_VTX
+    if (thread_state_ptr_get_tsType(&thread->tcbState) == ThreadState_RunningVM) {
+        /*
+         * Never save the FS/GS of a thread running in a VM as it will
+         * be garbage values.
+         */
+        return;
+    }
+#endif
+    word_t cur_fs_base = x86_read_fs_base(cpu);
+    setRegister(thread, FS_BASE, cur_fs_base);
+    word_t cur_gs_base = x86_read_gs_base(cpu);
+    setRegister(thread, GS_BASE, cur_gs_base);
+}
+
+#endif
+
+#if defined(ENABLE_SMP_SUPPORT)
+
+/*
+ * Under x86_64 with SMP support, the GS.Base register and the
+ * IA32_KERNEL_GS_BASE MSR are swapped so the actual user-level copy of
+ * GS is stored in IA32_KERNEL_GS_BASE between the call to swapgs in the
+ * kernel entry and the call to swapgs in the user restore.
+ */
+
+static inline void x86_write_gs_base_impl(word_t base)
+{
+    x86_wrmsr(IA32_KERNEL_GS_BASE_MSR, base);
+}
+
+static inline word_t x86_read_gs_base_impl(void)
+{
+    return x86_rdmsr(IA32_KERNEL_GS_BASE_MSR);
+}
+
+#elif defined(CONFIG_FSGSBASE_INST)
+
+static inline void x86_write_gs_base_impl(word_t base)
+{
+    asm volatile("wrgsbase %0"::"r"(base));
 }
 
 static inline word_t x86_read_gs_base_impl(void)
 {
     word_t base = 0;
-    asm volatile ("rdgsbase %0":"=r"(base));
+    asm volatile("rdgsbase %0":"=r"(base));
     return base;
+}
+
+#elif defined(CONFIG_FSGSBASE_MSR)
+
+static inline void x86_write_gs_base_impl(word_t base)
+{
+    x86_wrmsr(IA32_GS_BASE_MSR, base);
+}
+
+static inline word_t x86_read_gs_base_impl(void)
+{
+    return x86_rdmsr(IA32_GS_BASE_MSR);
 }
 
 #endif
 
-#endif /* __ARCH_MODE_MACHINE_H_ */
+static inline void x86_set_tls_segment_base(word_t tls_base)
+{
+    x86_write_fs_base(tls_base, SMP_TERNARY(getCurrentCPUIndex(), 0));
+}
+

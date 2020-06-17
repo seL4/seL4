@@ -1,18 +1,9 @@
 --
--- Copyright 2016, Data61
--- Commonwealth Scientific and Industrial Research Organisation (CSIRO)
--- ABN 41 687 119 230
---
--- This software may be distributed and modified according to the terms of
--- the BSD 2-Clause license. Note that NO WARRANTY is provided.
--- See "LICENSE_BSD2.txt" for details.
---
--- @TAG(DATA61_BSD)
---
-
---
--- Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
+-- Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 -- Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+--
+-- SPDX-License-Identifier: BSD-2-Clause
+--
 
 #include <autoconf.h>
 
@@ -27,8 +18,8 @@ block VMFault {
     field     PrefetchFault     32
     field     FSR               5
     padding                     8
-    padding                     16
-    field     seL4_FaultType    3
+    padding                     15
+    field     seL4_FaultType    4
 }
 
 -- VM attributes
@@ -39,8 +30,8 @@ block vm_attributes {
 
 block NullFault {
    padding 352
-   padding 29
-   field seL4_FaultType 3
+   padding 28
+   field seL4_FaultType 4
 }
 
 block CapFault {
@@ -53,8 +44,8 @@ block CapFault {
    field MR4 32
    field MR5 32
    field MR6 32
-   padding 29
-   field seL4_FaultType 3
+   padding 28
+   field seL4_FaultType 4
 }
 
 block UnknownSyscall {
@@ -69,19 +60,29 @@ block UnknownSyscall {
    field A5 32
    field A6 32
    field Syscall 32
-   padding 29
-   field seL4_FaultType 3
+   padding 28
+   field seL4_FaultType 4
 }
 
 block UserException {
-   padding 192
+   padding 224
    field FaultIP 32
    field SP      32
-   field FLAGS   32
    field Number  32
    field Code    32
-   padding 29
-   field seL4_FaultType 3
+   padding 28
+   field seL4_FaultType 4
 }
+
+#ifdef CONFIG_KERNEL_MCS
+block Timeout {
+    padding 256
+    field data 32
+    field consumed_high 32
+    field consumed_low 32
+    padding 28
+    field seL4_FaultType 4
+}
+#endif
 
 #include <sel4/arch/shared_types.bf>

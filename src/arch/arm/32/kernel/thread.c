@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -16,26 +12,23 @@
 #include <arch/kernel/thread.h>
 #include <linker.h>
 
-void
-Arch_switchToThread(tcb_t *tcb)
+void Arch_switchToThread(tcb_t *tcb)
 {
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        vcpu_switch(tcb->tcbArch.tcbVCPU);
+    }
+
     setVMRoot(tcb);
-#if defined(CONFIG_IPC_BUF_GLOBALS_FRAME)
-    *armKSGlobalsFrame = tcb->tcbIPCBuffer;
-    armKSGlobalsFrame[1] = getRegister(tcb, TLS_BASE);
-#endif
     clearExMonitor();
 }
 
-BOOT_CODE void
-Arch_configureIdleThread(tcb_t *tcb)
+BOOT_CODE void Arch_configureIdleThread(tcb_t *tcb)
 {
     setRegister(tcb, CPSR, CPSR_IDLETHREAD);
-    setRegister(tcb, LR_svc, (word_t)idleThreadStart);
+    setRegister(tcb, NextIP, (word_t)idleThreadStart);
 }
 
-void
-Arch_switchToIdleThread(void)
+void Arch_switchToIdleThread(void)
 {
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         vcpu_switch(NULL);
@@ -43,15 +36,9 @@ Arch_switchToIdleThread(void)
 
     /* Force the idle thread to run on kernel page table */
     setVMRoot(NODE_STATE(ksIdleThread));
-
-#ifdef CONFIG_IPC_BUF_GLOBALS_FRAME
-    *armKSGlobalsFrame = 0;
-    armKSGlobalsFrame[1] = 0;
-#endif /* CONFIG_IPC_BUF_GLOBALS_FRAME */
 }
 
-void
-Arch_activateIdleThread(tcb_t *tcb)
+void Arch_activateIdleThread(tcb_t *tcb)
 {
     /* Don't need to do anything */
 }

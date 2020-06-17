@@ -1,17 +1,10 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MODE_MODEL_SMP_H_
-#define __MODE_MODEL_SMP_H_
+#pragma once
 
 #include <config.h>
 
@@ -32,7 +25,7 @@ typedef struct nodeInfo {
      */
     word_t currentThreadUserContext;
     cpu_id_t index;
-    PAD_TO_NEXT_CACHE_LN(sizeof(void*) + sizeof(void*) + sizeof(word_t) + sizeof(cpu_id_t));
+    PAD_TO_NEXT_CACHE_LN(sizeof(void *) + sizeof(void *) + sizeof(word_t) + sizeof(cpu_id_t));
 } nodeInfo_t;
 compile_assert(nodeInfoIsCacheSized, (sizeof(nodeInfo_t) % L1_CACHE_LINE_SIZE) == 0)
 
@@ -53,9 +46,9 @@ extern char nodeSkimScratchOffset[];
 static inline CONST cpu_id_t getCurrentCPUIndex(void)
 {
     cpu_id_t index;
-    asm ("movq %%gs:%c[offset], %[result]"
-         : [result] "=r" (index)
-         : [offset] "i" (OFFSETOF(nodeInfo_t, index)));
+    asm("movq %%gs:%c[offset], %[result]"
+        : [result] "=r"(index)
+        : [offset] "i"(OFFSETOF(nodeInfo_t, index)));
     return index;
 }
 
@@ -63,5 +56,3 @@ BOOT_CODE void
 mode_init_tls(cpu_id_t cpu_index);
 
 #endif /* ENABLE_SMP_SUPPORT */
-
-#endif /* __MODE_MODEL_SMP_H_ */

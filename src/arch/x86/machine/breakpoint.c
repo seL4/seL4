@@ -1,13 +1,7 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -18,7 +12,7 @@
 #include <mode/machine/debug.h>
 #include <arch/machine.h>
 #include <machine/registerset.h>
-#include <plat/api/constants.h> /* seL4_NumHWBReakpoints */
+#include <sel4/plat/api/constants.h> /* seL4_NumHWBReakpoints */
 
 /* Intel manual Vol3, 17.2.4 */
 #define X86_DEBUG_BP_SIZE_1B                (0x0u)
@@ -56,14 +50,12 @@
 
 static bool_t byte8_bps_supported = false;
 
-bool_t
-byte8BreakpointsSupported(void)
+bool_t byte8BreakpointsSupported(void)
 {
     return byte8_bps_supported;
 }
 
-static inline void
-bitwiseAndDr6Reg(word_t mask)
+static inline void bitwiseAndDr6Reg(word_t mask)
 {
     word_t tmp;
 
@@ -71,26 +63,22 @@ bitwiseAndDr6Reg(word_t mask)
     writeDr6Reg(tmp);
 }
 
-static inline word_t
-readDr7Context(tcb_t *t)
+static inline word_t readDr7Context(tcb_t *t)
 {
     return t->tcbArch.tcbContext.breakpointState.dr[5];
 }
 
-static inline void
-bitwiseOrDr7Context(tcb_t *t, word_t val)
+static inline void bitwiseOrDr7Context(tcb_t *t, word_t val)
 {
     t->tcbArch.tcbContext.breakpointState.dr[5] |= val;
 }
 
-static inline void
-bitwiseAndDr7Context(tcb_t *t, word_t mask)
+static inline void bitwiseAndDr7Context(tcb_t *t, word_t mask)
 {
     t->tcbArch.tcbContext.breakpointState.dr[5] &= mask;
 }
 
-static void
-unsetDr7BitsFor(tcb_t *t, uint16_t bp_num)
+static void unsetDr7BitsFor(tcb_t *t, uint16_t bp_num)
 {
     word_t mask;
 
@@ -121,8 +109,7 @@ unsetDr7BitsFor(tcb_t *t, uint16_t bp_num)
  * @param rw Access trigger condition (read/write).
  * @return Hardware specific register value representing the inputs.
  */
-PURE static inline word_t
-convertTypeAndAccessToArch(uint16_t bp_num, word_t type, word_t rw)
+PURE static inline word_t convertTypeAndAccessToArch(uint16_t bp_num, word_t type, word_t rw)
 {
     switch (type) {
     case seL4_InstructionBreakpoint:
@@ -159,8 +146,7 @@ typedef struct {
     word_t type, rw;
 } convertedTypeAndAccess_t;
 
-PURE static inline convertedTypeAndAccess_t
-convertArchToTypeAndAccess(word_t dr7, uint16_t bp_num)
+PURE static inline convertedTypeAndAccess_t convertArchToTypeAndAccess(word_t dr7, uint16_t bp_num)
 {
     convertedTypeAndAccess_t ret;
 
@@ -207,8 +193,7 @@ convertArchToTypeAndAccess(word_t dr7, uint16_t bp_num)
  * @param size An integer for the operand size of the breakpoint.
  * @return Converted, hardware-specific value.
  */
-PURE static inline word_t
-convertSizeToArch(uint16_t bp_num, word_t type, word_t size)
+PURE static inline word_t convertSizeToArch(uint16_t bp_num, word_t type, word_t size)
 {
     if (type == seL4_InstructionBreakpoint) {
         /* Intel manual vol3 17.2.4:
@@ -252,8 +237,7 @@ convertSizeToArch(uint16_t bp_num, word_t type, word_t size)
  * @param n Breakpoint number.
  * @return Converted size value.
  */
-PURE static inline word_t
-convertArchToSize(word_t dr7, uint16_t bp_num)
+PURE static inline word_t convertArchToSize(word_t dr7, uint16_t bp_num)
 {
     word_t type;
 
@@ -305,8 +289,7 @@ convertArchToSize(word_t dr7, uint16_t bp_num)
 /** Enables a breakpoint.
  * @param bp_num Hardware breakpoint ID. Usually an integer from 0..N.
  */
-static void
-enableBreakpoint(tcb_t *t, uint16_t bp_num)
+static void enableBreakpoint(tcb_t *t, uint16_t bp_num)
 {
     word_t enable_bit;
 
@@ -334,8 +317,7 @@ enableBreakpoint(tcb_t *t, uint16_t bp_num)
 /** Disables a breakpoint without clearing its configuration.
  * @param bp_num Hardware breakpoint ID. Usually an integer from 0..N.
  */
-static void
-disableBreakpoint(tcb_t *t, uint16_t bp_num)
+static void disableBreakpoint(tcb_t *t, uint16_t bp_num)
 {
     word_t disable_mask;
 
@@ -363,8 +345,7 @@ disableBreakpoint(tcb_t *t, uint16_t bp_num)
 /** Returns a boolean for whether or not a breakpoint is enabled.
  * @param bp_num Hardware breakpoint ID. Usually an integer from 0..N.
  */
-static bool_t
-breakpointIsEnabled(tcb_t *t, uint16_t bp_num)
+static bool_t breakpointIsEnabled(tcb_t *t, uint16_t bp_num)
 {
     word_t dr7;
 
@@ -384,8 +365,7 @@ breakpointIsEnabled(tcb_t *t, uint16_t bp_num)
     }
 }
 
-static void
-setBpVaddrContext(tcb_t *t, uint16_t bp_num, word_t vaddr)
+static void setBpVaddrContext(tcb_t *t, uint16_t bp_num, word_t vaddr)
 {
     assert(t != NULL);
     user_breakpoint_state_t *ubs = &t->tcbArch.tcbContext.breakpointState;
@@ -419,9 +399,8 @@ setBpVaddrContext(tcb_t *t, uint16_t bp_num, word_t vaddr)
  *        trigger the breakpoint. 0 is valid for Instruction breakpoints.
  * @param rw Access type that should trigger the BP (read/write).
  */
-void
-setBreakpoint(tcb_t *t,
-              uint16_t bp_num, word_t vaddr, word_t types, word_t size, word_t rw)
+void setBreakpoint(tcb_t *t,
+                   uint16_t bp_num, word_t vaddr, word_t types, word_t size, word_t rw)
 {
     word_t dr7val;
 
@@ -436,8 +415,7 @@ setBreakpoint(tcb_t *t,
     enableBreakpoint(t, bp_num);
 }
 
-static word_t
-getBpVaddrContext(tcb_t *t, uint16_t bp_num)
+static word_t getBpVaddrContext(tcb_t *t, uint16_t bp_num)
 {
     assert(t != NULL);
     user_breakpoint_state_t *ubs = &t->tcbArch.tcbContext.breakpointState;
@@ -464,8 +442,7 @@ getBpVaddrContext(tcb_t *t, uint16_t bp_num)
  * @param bp_num Hardware breakpoint ID of the BP you'd like to query.
  * @return Structure containing information about the status of the breakpoint.
  */
-getBreakpoint_t
-getBreakpoint(tcb_t *t, uint16_t bp_num)
+getBreakpoint_t getBreakpoint(tcb_t *t, uint16_t bp_num)
 {
     word_t dr7val;
     getBreakpoint_t ret;
@@ -487,8 +464,7 @@ getBreakpoint(tcb_t *t, uint16_t bp_num)
  * @param uds Arch TCB register context pointer.
  * @param bp_num The hardware breakpoint ID you'd like to clear.
  */
-void
-unsetBreakpoint(tcb_t *t, uint16_t bp_num)
+void unsetBreakpoint(tcb_t *t, uint16_t bp_num)
 {
     disableBreakpoint(t, bp_num);
     unsetDr7BitsFor(t, bp_num);
@@ -507,8 +483,7 @@ typedef struct {
     word_t instr_vaddr;
 } testAndResetSingleStepException_t;
 
-static testAndResetSingleStepException_t
-testAndResetSingleStepException(tcb_t *t)
+static testAndResetSingleStepException_t testAndResetSingleStepException(tcb_t *t)
 {
     testAndResetSingleStepException_t ret;
     word_t dr6;
@@ -539,9 +514,8 @@ testAndResetSingleStepException(tcb_t *t)
     return ret;
 }
 
-bool_t
-configureSingleStepping(tcb_t *t, uint16_t bp_num, word_t n_instr,
-                        UNUSED bool_t is_reply)
+bool_t configureSingleStepping(tcb_t *t, uint16_t bp_num, word_t n_instr,
+                               UNUSED bool_t is_reply)
 {
     /* On x86 no hardware breakpoints are needed for single stepping. */
     if (n_instr == 0) {
@@ -579,8 +553,7 @@ typedef struct {
     word_t vaddr, reason;
 } getAndResetActiveBreakpoint_t;
 
-static getAndResetActiveBreakpoint_t
-getAndResetActiveBreakpoint(tcb_t *t)
+static getAndResetActiveBreakpoint_t getAndResetActiveBreakpoint(tcb_t *t)
 {
     convertedTypeAndAccess_t tmp;
     getAndResetActiveBreakpoint_t ret;
@@ -608,8 +581,7 @@ getAndResetActiveBreakpoint(tcb_t *t)
     return ret;
 }
 
-exception_t
-handleUserLevelDebugException(int int_vector)
+exception_t handleUserLevelDebugException(int int_vector)
 {
     tcb_t *ct;
     getAndResetActiveBreakpoint_t active_bp;
@@ -666,8 +638,7 @@ handleUserLevelDebugException(int int_vector)
     return EXCEPTION_NONE;
 }
 
-BOOT_CODE bool_t
-Arch_initHardwareBreakpoints(void)
+BOOT_CODE bool_t Arch_initHardwareBreakpoints(void)
 {
     x86_cpu_identity_t *modelinfo;
 
@@ -675,21 +646,20 @@ Arch_initHardwareBreakpoints(void)
     /* Intel manuals, vol3, section 17.2.4, "NOTES". */
     if (modelinfo->family == 15) {
         if (modelinfo->model == 3 || modelinfo->model == 4
-                || modelinfo->model == 6) {
+            || modelinfo->model == 6) {
             byte8_bps_supported = true;
         }
     }
     if (modelinfo->family == 6) {
         if (modelinfo->model == 15 || modelinfo->model == 23
-                || modelinfo->model == 0x1C) {
+            || modelinfo->model == 0x1C) {
             byte8_bps_supported = true;
         }
     }
     return true;
 }
 
-void
-Arch_initBreakpointContext(user_breakpoint_state_t *uds)
+void Arch_initBreakpointContext(user_breakpoint_state_t *uds)
 {
     memset(uds, 0, sizeof(*uds));
 

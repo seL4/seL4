@@ -1,21 +1,15 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
-#ifndef __ARCH_MACHINE_DEBUG_H
-#define __ARCH_MACHINE_DEBUG_H
+
+#pragma once
 
 #include <util.h>
 #include <api/types.h>
 #include <arch/machine/debug_conf.h>
-#include <plat/api/constants.h>
+#include <sel4/plat/api/constants.h>
 #include <armv/debug.h>
 
 #ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
@@ -66,8 +60,7 @@ void Arch_debugDissociateVCPUTCB(tcb_t *t);
  * If we are enabling a vcpu (vcpu_enable) we UNSET HDCR.TDE.
  * If we are disabling a vcpu (vcpu_disable) we SET HDCR.TDE.
  */
-static inline void
-setHDCRTrapDebugExceptionState(bool_t enable_trapping)
+static inline void setHDCRTrapDebugExceptionState(bool_t enable_trapping)
 {
     word_t hdcr;
 #ifdef CONFIG_ARCH_AARCH64
@@ -97,8 +90,7 @@ setHDCRTrapDebugExceptionState(bool_t enable_trapping)
 #endif
 }
 
-static inline void
-initHDCR(void)
+static inline void initHDCR(void)
 {
     /* By default at boot, we SET HDCR.TDE to catch and redirect native threads'
      * PL0 debug exceptions.
@@ -118,8 +110,7 @@ initHDCR(void)
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
 
-static uint16_t
-convertBpNumToArch(uint16_t bp_num)
+static uint16_t convertBpNumToArch(uint16_t bp_num)
 {
     if (bp_num >= seL4_NumExclusiveBreakpoints) {
         bp_num -= seL4_NumExclusiveBreakpoints;
@@ -127,19 +118,17 @@ convertBpNumToArch(uint16_t bp_num)
     return bp_num;
 }
 
-static word_t
-getTypeFromBpNum(uint16_t bp_num)
+static word_t getTypeFromBpNum(uint16_t bp_num)
 {
     return (bp_num >= seL4_NumExclusiveBreakpoints)
            ? seL4_DataBreakpoint
            : seL4_InstructionBreakpoint;
 }
 
-static inline syscall_error_t
-Arch_decodeConfigureSingleStepping(tcb_t *t,
-                                   uint16_t bp_num,
-                                   word_t n_instr,
-                                   bool_t is_reply)
+static inline syscall_error_t Arch_decodeConfigureSingleStepping(tcb_t *t,
+                                                                 uint16_t bp_num,
+                                                                 word_t n_instr,
+                                                                 bool_t is_reply)
 {
     word_t type;
     syscall_error_t ret = {
@@ -189,10 +178,9 @@ Arch_decodeConfigureSingleStepping(tcb_t *t,
 
 bool_t byte8WatchpointsSupported(void);
 
-static inline syscall_error_t
-Arch_decodeSetBreakpoint(tcb_t *t,
-                         uint16_t bp_num, word_t vaddr, word_t type,
-                         word_t size, word_t rw)
+static inline syscall_error_t Arch_decodeSetBreakpoint(tcb_t *t,
+                                                       uint16_t bp_num, word_t vaddr, word_t type,
+                                                       word_t size, word_t rw)
 {
     syscall_error_t ret = {
         .type = seL4_NoError
@@ -234,8 +222,7 @@ Arch_decodeSetBreakpoint(tcb_t *t,
     return ret;
 }
 
-static inline syscall_error_t
-Arch_decodeGetBreakpoint(tcb_t *t, uint16_t bp_num)
+static inline syscall_error_t Arch_decodeGetBreakpoint(tcb_t *t, uint16_t bp_num)
 {
     syscall_error_t ret = {
         .type = seL4_NoError
@@ -249,8 +236,7 @@ Arch_decodeGetBreakpoint(tcb_t *t, uint16_t bp_num)
     return ret;
 }
 
-static inline syscall_error_t
-Arch_decodeUnsetBreakpoint(tcb_t *t, uint16_t bp_num)
+static inline syscall_error_t Arch_decodeUnsetBreakpoint(tcb_t *t, uint16_t bp_num)
 {
     syscall_error_t ret = {
         .type = seL4_NoError
@@ -283,4 +269,3 @@ Arch_decodeUnsetBreakpoint(tcb_t *t, uint16_t bp_num)
 
 #endif /* CONFIG_HARDWARE_DEBUG_API */
 
-#endif /* !__ARCH_MACHINE_DEBUG_H */

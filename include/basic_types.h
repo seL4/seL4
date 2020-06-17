@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __BASIC_TYPES_H
-#define __BASIC_TYPES_H
+#pragma once
 
 #include <stdint.h>
 #include <arch/types.h>
@@ -41,5 +36,3 @@ typedef struct v_region {
 /* equivalent to a word_t except that we tell the compiler that we may alias with
  * any other type (similar to a char pointer) */
 typedef word_t __attribute__((__may_alias__)) word_t_may_alias;
-
-#endif /* __BASIC_TYPES_H */

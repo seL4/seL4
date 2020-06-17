@@ -1,14 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
-# Copyright 2017, Data61
-# Commonwealth Scientific and Industrial Research Organisation (CSIRO)
-# ABN 41 687 119 230.
+# Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 #
-# This software may be distributed and modified according to the terms of
-# the BSD 2-Clause license. Note that NO WARRANTY is provided.
-# See "LICENSE_BSD2.txt" for details.
-#
-# @TAG(DATA61_BSD)
+# SPDX-License-Identifier: BSD-2-Clause
 #
 
 """
@@ -30,6 +24,7 @@ WORD_SIZE = 32
 FN_DECL_PREFIX = "static inline"
 DEFAULT_RETURN_TYPE = "int"
 
+
 def init_all_types():
     """
     Return an array of all c types involved in the sel4 interface
@@ -39,6 +34,7 @@ def init_all_types():
     arch_types = list(itertools.chain(*syscall_stub_gen.init_arch_types(WORD_SIZE).values()))
 
     return data_types + arch_types
+
 
 def generate_prototype(interface_name, method_name, method_id, inputs, outputs, comment):
     """
@@ -55,6 +51,7 @@ def generate_prototype(interface_name, method_name, method_id, inputs, outputs, 
     name = "%s_%s" % (interface_name, method_name)
 
     return "%s\n%s %s %s(%s);" % (comment, prefix, return_type, name, param_list)
+
 
 def gen_invocations(input_files, output_file):
     """
@@ -86,7 +83,8 @@ def gen_invocations(input_files, output_file):
             output_file.write("/** @} */\n")
             for (interface_name, method_name, method_id, inputs, outputs, _, comment) in methods:
                 prototype = "/**\n * @addtogroup %s %s\n * @{\n */\n\n" % (group_id, group_name)
-                prototype += generate_prototype(interface_name, method_name, method_id, inputs, outputs, comment)
+                prototype += generate_prototype(interface_name,
+                                                method_name, method_id, inputs, outputs, comment)
                 prototype += "/** @} */\n"
                 prototypes.append(prototype)
 
@@ -96,9 +94,10 @@ def gen_invocations(input_files, output_file):
 
         for prototype in prototypes:
             output_file.write(prototype)
-            output_file.write("\n\n");
+            output_file.write("\n\n")
 
         output_file.write("/** @} */\n")
+
 
 def process_args():
     usage_str = "%(prog)s [OPTIONS] [FILES]"
@@ -118,6 +117,7 @@ def process_args():
 
     return parser
 
+
 def main():
     parser = process_args()
     args = parser.parse_args()
@@ -136,6 +136,7 @@ def main():
 
     with open(args.output, "w") as output:
         gen_invocations(args.files, output)
+
 
 if __name__ == "__main__":
     sys.exit(main())

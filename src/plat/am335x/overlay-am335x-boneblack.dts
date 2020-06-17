@@ -1,0 +1,12 @@
+/*
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+	/* BeagleBone Black has 512MiB memory */
+	memory@80000000 {
+		reg = < 0x80000000 0x20000000 >;
+	};
+};

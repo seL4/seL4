@@ -1,13 +1,7 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -17,6 +11,10 @@
 #include <kernel/thread.h>
 #include <arch/kernel/thread.h>
 #include <machine/debug.h>
+#ifdef CONFIG_KERNEL_MCS
+#include <mode/api/ipc_buffer.h>
+#include <object/schedcontext.h>
+#endif
 
 /* consistency with libsel4 */
 compile_assert(InvalidRoot, lookup_fault_invalid_root + 1 == seL4_InvalidRoot)
@@ -28,7 +26,7 @@ compile_assert(seL4_UserException_Number, (word_t) n_exceptionMessage == seL4_Us
 compile_assert(seL4_UserException_Code, (word_t) n_exceptionMessage + 1 == seL4_UserException_Code)
 
 static inline unsigned int
-setMRs_lookup_failure(tcb_t *receiver, word_t* receiveIPCBuffer,
+setMRs_lookup_failure(tcb_t *receiver, word_t *receiveIPCBuffer,
                       lookup_fault_t luf, unsigned int offset)
 {
     word_t lufType = lookup_fault_get_lufType(luf);
@@ -73,8 +71,7 @@ setMRs_lookup_failure(tcb_t *receiver, word_t* receiveIPCBuffer,
     }
 }
 
-static inline void
-copyMRsFaultReply(tcb_t *sender, tcb_t *receiver, MessageID_t id, word_t length)
+static inline void copyMRsFaultReply(tcb_t *sender, tcb_t *receiver, MessageID_t id, word_t length)
 {
     word_t i;
     bool_t archInfo;
@@ -99,9 +96,8 @@ copyMRsFaultReply(tcb_t *sender, tcb_t *receiver, MessageID_t id, word_t length)
     }
 }
 
-static inline void
-copyMRsFault(tcb_t *sender, tcb_t *receiver, MessageID_t id,
-             word_t length, word_t *receiveIPCBuffer)
+static inline void copyMRsFault(tcb_t *sender, tcb_t *receiver, MessageID_t id,
+                                word_t length, word_t *receiveIPCBuffer)
 {
     word_t i;
     for (i = 0; i < MIN(length, n_msgRegisters); i++) {
@@ -115,8 +111,7 @@ copyMRsFault(tcb_t *sender, tcb_t *receiver, MessageID_t id,
     }
 }
 
-bool_t
-handleFaultReply(tcb_t *receiver, tcb_t *sender)
+bool_t handleFaultReply(tcb_t *receiver, tcb_t *sender)
 {
     /* These lookups are moved inward from doReplyTransfer */
     seL4_MessageInfo_t tag = messageInfoFromWord(getRegister(sender, msgInfoRegister));
@@ -136,6 +131,11 @@ handleFaultReply(tcb_t *receiver, tcb_t *sender)
         copyMRsFaultReply(sender, receiver, MessageID_Exception, MIN(length, n_exceptionMessage));
         return (label == 0);
 
+#ifdef CONFIG_KERNEL_MCS
+    case seL4_Fault_Timeout:
+        copyMRsFaultReply(sender, receiver, MessageID_TimeoutReply, MIN(length, n_timeoutMessage));
+        return (label == 0);
+#endif
 #ifdef CONFIG_HARDWARE_DEBUG_API
     case seL4_Fault_DebugException: {
         word_t n_instrs;
@@ -188,8 +188,7 @@ handleFaultReply(tcb_t *receiver, tcb_t *sender)
     }
 }
 
-word_t
-setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
+word_t setMRs_fault(tcb_t *sender, tcb_t *receiver, word_t *receiveIPCBuffer)
 {
     switch (seL4_Fault_get_seL4_FaultType(sender->tcbFault)) {
     case seL4_Fault_CapFault:
@@ -218,6 +217,19 @@ setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
                      seL4_Fault_UserException_get_code(sender->tcbFault));
     }
 
+#ifdef CONFIG_KERNEL_MCS
+    case seL4_Fault_Timeout: {
+        word_t len = setMR(receiver, receiveIPCBuffer, seL4_Timeout_Data,
+                           seL4_Fault_Timeout_get_badge(sender->tcbFault));
+        if (sender->tcbSchedContext) {
+            time_t consumed = schedContext_updateConsumed(sender->tcbSchedContext);
+            return mode_setTimeArg(len, consumed,
+                                   receiveIPCBuffer, receiver);
+        } else {
+            return len;
+        }
+    }
+#endif
 #ifdef CONFIG_HARDWARE_DEBUG_API
     case seL4_Fault_DebugException: {
         word_t reason = seL4_Fault_DebugException_get_exceptionReason(sender->tcbFault);

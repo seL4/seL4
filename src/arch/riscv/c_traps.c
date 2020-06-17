@@ -1,19 +1,8 @@
 /*
- * Copyright 2018, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
- *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
- */
-
-/*
- *
- * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -24,6 +13,7 @@
 #include <api/syscall.h>
 #include <util.h>
 #include <arch/machine/hardware.h>
+#include <machine/fpu.h>
 
 #include <benchmark/benchmark_track.h>
 #include <benchmark/benchmark_utilisation.h>
@@ -32,10 +22,21 @@
 void VISIBLE NORETURN restore_user_context(void)
 {
     word_t cur_thread_reg = (word_t) NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers;
-
     c_exit_hook();
-
     NODE_UNLOCK_IF_HELD;
+
+#ifdef ENABLE_SMP_SUPPORT
+    word_t sp;
+    asm volatile("csrr %0, sscratch" : "=r"(sp));
+    sp -= sizeof(word_t);
+    *((word_t *)sp) = cur_thread_reg;
+#endif
+
+
+#ifdef CONFIG_HAVE_FPU
+    lazyFPURestore(NODE_STATE(ksCurThread));
+    set_tcb_fs_state(NODE_STATE(ksCurThread), isFpuEnable());
+#endif
 
     asm volatile(
         "mv t0, %[cur_thread]       \n"
@@ -76,10 +77,10 @@ void VISIBLE NORETURN restore_user_context(void)
         /* get sepc */
         LOAD_S "  t1, (34*%[REGSIZE])(t0)\n"
         "csrw sepc, t1  \n"
-
+#ifndef ENABLE_SMP_SUPPORT
         /* Write back sscratch with cur_thread_reg to get it back on the next trap entry */
         "csrw sscratch, t0         \n"
-
+#endif
         LOAD_S "  t1, (32*%[REGSIZE])(t0) \n"
         "csrw sstatus, t1\n"
 
@@ -87,18 +88,17 @@ void VISIBLE NORETURN restore_user_context(void)
         LOAD_S "  t0, (4*%[REGSIZE])(t0) \n"
         "sret"
         : /* no output */
-        : [REGSIZE] "i" (sizeof(word_t)),
-        [cur_thread] "r" (cur_thread_reg)
+        : [REGSIZE] "i"(sizeof(word_t)),
+        [cur_thread] "r"(cur_thread_reg)
         : "memory"
     );
 
     UNREACHABLE();
 }
 
-void VISIBLE NORETURN
-c_handle_interrupt(void)
+void VISIBLE NORETURN c_handle_interrupt(void)
 {
-    NODE_LOCK_IRQ;
+    NODE_LOCK_IRQ_IF(getActiveIRQ() != irq_remote_call_ipi);
 
     c_entry_hook();
 
@@ -108,21 +108,40 @@ c_handle_interrupt(void)
     UNREACHABLE();
 }
 
-void VISIBLE NORETURN
-c_handle_exception(void)
+void VISIBLE NORETURN c_handle_exception(void)
 {
     NODE_LOCK_SYS;
 
     c_entry_hook();
 
-    handle_exception();
+    word_t scause = read_scause();
+    switch (scause) {
+    case RISCVInstructionAccessFault:
+    case RISCVLoadAccessFault:
+    case RISCVStoreAccessFault:
+    case RISCVLoadPageFault:
+    case RISCVStorePageFault:
+    case RISCVInstructionPageFault:
+        handleVMFaultEvent(scause);
+        break;
+    default:
+#ifdef CONFIG_HAVE_FPU
+        if (!isFpuEnable()) {
+            /* we assume the illegal instruction is caused by FPU first */
+            handleFPUFault();
+            setNextPC(NODE_STATE(ksCurThread), getRestartPC(NODE_STATE(ksCurThread)));
+            break;
+        }
+#endif
+        handleUserLevelFault(scause, 0);
+        break;
+    }
 
     restore_user_context();
     UNREACHABLE();
 }
 
-void NORETURN
-slowpath(syscall_t syscall)
+void NORETURN slowpath(syscall_t syscall)
 {
     /* check for undefined syscall */
     if (unlikely(syscall < SYSCALL_MIN || syscall > SYSCALL_MAX)) {
@@ -135,8 +154,8 @@ slowpath(syscall_t syscall)
     UNREACHABLE();
 }
 
-void VISIBLE NORETURN
-c_handle_syscall(word_t cptr, word_t msgInfo, word_t unused1, word_t unused2, word_t unused3, word_t unused4, word_t unused5, syscall_t syscall)
+void VISIBLE NORETURN c_handle_syscall(word_t cptr, word_t msgInfo, word_t unused1, word_t unused2, word_t unused3,
+                                       word_t unused4, word_t reply, syscall_t syscall)
 {
     NODE_LOCK_SYS;
 
@@ -147,7 +166,11 @@ c_handle_syscall(word_t cptr, word_t msgInfo, word_t unused1, word_t unused2, wo
         fastpath_call(cptr, msgInfo);
         UNREACHABLE();
     } else if (syscall == (syscall_t)SysReplyRecv) {
+#ifdef CONFIG_KERNEL_MCS
+        fastpath_reply_recv(cptr, msgInfo, reply);
+#else
         fastpath_reply_recv(cptr, msgInfo);
+#endif
         UNREACHABLE();
     }
 #endif /* CONFIG_FASTPATH */

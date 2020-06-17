@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <types.h>
@@ -18,16 +14,16 @@
 #include <linker.h>
 
 /* initialises MSRs required to setup sysenter and sysexit */
-BOOT_CODE void
-init_sysenter_msrs(void)
+BOOT_CODE void init_sysenter_msrs(void)
 {
-    x86_wrmsr(IA32_SYSENTER_CS_MSR,  (uint64_t)(word_t)SEL_CS_0);
+    x86_wrmsr(IA32_SYSENTER_CS_MSR, (uint64_t)(word_t)SEL_CS_0);
     x86_wrmsr(IA32_SYSENTER_EIP_MSR, (uint64_t)(word_t)&handle_syscall);
     if (config_set(CONFIG_ARCH_IA32) && !config_set(CONFIG_HARDWARE_DEBUG_API)) {
         /* manually add 4 bytes to x86KStss so that it is valid for both
          * 32-bit and 64-bit, although only ia32 actually requires a valid
          * sysenter esp */
-        x86_wrmsr(IA32_SYSENTER_ESP_MSR, (uint64_t)(word_t)((char *)&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.tss.words[0] + 4));
+        x86_wrmsr(IA32_SYSENTER_ESP_MSR, (uint64_t)(word_t)((char *)&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.tss.words[0]
+                                                            + 4));
     }
 }
 
@@ -42,8 +38,7 @@ void setNextPC(tcb_t *thread, word_t v)
 }
 
 /* Returns the size of CPU's cacheline */
-BOOT_CODE uint32_t CONST
-getCacheLineSizeBits(void)
+BOOT_CODE uint32_t CONST getCacheLineSizeBits(void)
 {
     uint32_t line_size;
     uint32_t n;
@@ -71,7 +66,7 @@ getCacheLineSizeBits(void)
 
 /* Flushes a specific memory range from the CPU cache */
 
-void flushCacheRange(void* vaddr, uint32_t size_bits)
+void flushCacheRange(void *vaddr, uint32_t size_bits)
 {
     word_t v;
 
@@ -81,16 +76,15 @@ void flushCacheRange(void* vaddr, uint32_t size_bits)
     x86_mfence();
 
     for (v = ROUND_DOWN((word_t)vaddr, x86KScacheLineSizeBits);
-            v < (word_t)vaddr + BIT(size_bits);
-            v += BIT(x86KScacheLineSizeBits)) {
-        flushCacheLine((void*)v);
+         v < (word_t)vaddr + BIT(size_bits);
+         v += BIT(x86KScacheLineSizeBits)) {
+        flushCacheLine((void *)v);
     }
     x86_mfence();
 }
 
 /* Disables as many prefetchers as possible */
-BOOT_CODE bool_t
-disablePrefetchers()
+BOOT_CODE bool_t disablePrefetchers(void)
 {
     x86_cpu_identity_t *model_info;
     uint32_t low, high;
@@ -119,7 +113,7 @@ disablePrefetchers()
          * there is no need to also look at the model_ID.
          */
         if (model_info->family == IA32_PREFETCHER_COMPATIBLE_FAMILIES_ID
-                && model_info->model == valid_models[i]) {
+            && model_info->model == valid_models[i]) {
             low = x86_rdmsr_low(IA32_PREFETCHER_MSR);
             high = x86_rdmsr_high(IA32_PREFETCHER_MSR);
 
@@ -139,14 +133,12 @@ disablePrefetchers()
     return false;
 }
 
-BOOT_CODE void
-enablePMCUser(void)
+BOOT_CODE void enablePMCUser(void)
 {
     write_cr4(read_cr4() | CR4_PCE);
 }
 
-BOOT_CODE bool_t
-init_ibrs(void)
+BOOT_CODE bool_t init_ibrs(void)
 {
     cpuid_007h_edx_t edx;
     edx.words[0] = x86_cpuid_edx(0x7, 0);

@@ -1,0 +1,26 @@
+/*
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+	chosen {
+               seL4,elfloader-devices =
+                   "serial1",
+                   &{/soc/aips-bus@2000000/src@20d8000};
+
+		seL4,kernel-devices =
+		    "serial1",
+		    &{/soc/interrupt-controller@a01000},
+		    &{/soc/l2-cache@a02000},
+		    &{/soc/timer@a00600};
+	};
+	/* Upstream bug: the memory node doesn't have a device_type,
+	 * but there is an empty memory node with a device_type. */
+	/delete-node/ memory;
+	memory@10000000 {
+		device_type = "memory";
+		reg = <0x10000000 0x1ff00000>;
+	};
+};

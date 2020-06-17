@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __OBJECT_OBJECTTYPE_H
-#define __OBJECT_OBJECTTYPE_H
+#pragma once
 
 #include <types.h>
 #include <api/failures.h>
@@ -30,27 +25,38 @@ cap_t CONST maskCapRights(seL4_CapRights_t seL4_CapRights, cap_t cap);
 cap_t createObject(object_t t, void *regionBase, word_t, bool_t deviceMemory);
 void createNewObjects(object_t t, cte_t *parent, slot_range_t slots,
                       void *regionBase, word_t userSize, bool_t deviceMemory);
+#ifdef CONFIG_KERNEL_MCS
+exception_t decodeInvocation(word_t invLabel, word_t length,
+                             cptr_t capIndex, cte_t *slot, cap_t cap,
+                             extra_caps_t excaps, bool_t block, bool_t call,
+                             bool_t canDonate, bool_t firstPhase, word_t *buffer);
+exception_t performInvocation_Endpoint(endpoint_t *ep, word_t badge,
+                                       bool_t canGrant, bool_t canGrantReply,
+                                       bool_t block, bool_t call, bool_t canDonate);
+exception_t performInvocation_Notification(notification_t *ntfn,
+                                           word_t badge);
+exception_t performInvocation_Reply(tcb_t *thread, reply_t *reply, bool_t canGrant);
+#else
 exception_t decodeInvocation(word_t invLabel, word_t length,
                              cptr_t capIndex, cte_t *slot, cap_t cap,
                              extra_caps_t excaps, bool_t block, bool_t call,
                              word_t *buffer);
 exception_t performInvocation_Endpoint(endpoint_t *ep, word_t badge,
-                                       bool_t canGrant, bool_t block,
-                                       bool_t call);
+                                       bool_t canGrant, bool_t canGrantReply,
+                                       bool_t block, bool_t call);
 exception_t performInvocation_Notification(notification_t *ntfn,
                                            word_t badge);
-exception_t performInvocation_Reply(tcb_t *thread, cte_t *slot);
+exception_t performInvocation_Reply(tcb_t *thread, cte_t *slot, bool_t canGrant);
+#endif
 word_t getObjectSize(word_t t, word_t userObjSize);
 
-static inline void
-postCapDeletion(cap_t cap)
+static inline void postCapDeletion(cap_t cap)
 {
     if (cap_get_capType(cap) == cap_irq_handler_cap) {
-        irq_t irq = cap_irq_handler_cap_get_capIRQ(cap);
+        irq_t irq = IDX_TO_IRQT(cap_irq_handler_cap_get_capIRQ(cap));
         deletedIRQHandler(irq);
     } else if (isArchCap(cap)) {
         Arch_postCapDeletion(cap);
     }
 }
 
-#endif

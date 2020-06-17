@@ -1,11 +1,7 @@
 /*
  * Copyright 2016, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -37,23 +33,20 @@ typedef struct lookupIOPTSlot_ret {
 #define IOPDE_VALID_MASK    0xe0000000
 #define IOPTE_EMPTY_MASK    0xe0000000
 
-static bool_t
-isIOPDEValid(iopde_t *iopde)
+static bool_t isIOPDEValid(iopde_t *iopde)
 {
     assert(iopde != 0);
     return (iopde->words[0] & IOPDE_VALID_MASK) != 0;
 }
 
-static bool_t
-isIOPTEEmpty(iopte_t *iopte)
+static bool_t isIOPTEEmpty(iopte_t *iopte)
 {
     assert(iopte != 0);
     return (iopte->words[0] & IOPTE_EMPTY_MASK) == 0;
 }
 
 
-static lookupIOPDSlot_ret_t
-lookupIOPDSlot(iopde_t *iopd, word_t io_address)
+static lookupIOPDSlot_ret_t lookupIOPDSlot(iopde_t *iopd, word_t io_address)
 {
     lookupIOPDSlot_ret_t ret;
     uint32_t index = plat_smmu_iopd_index(io_address);
@@ -62,8 +55,7 @@ lookupIOPDSlot(iopde_t *iopd, word_t io_address)
     return ret;
 }
 
-static lookupIOPTSlot_ret_t
-lookupIOPTSlot(iopde_t *iopd, word_t io_address)
+static lookupIOPTSlot_ret_t lookupIOPTSlot(iopde_t *iopd, word_t io_address)
 {
     lookupIOPTSlot_ret_t pt_ret;
     uint32_t index;
@@ -77,7 +69,7 @@ lookupIOPTSlot(iopde_t *iopd, word_t io_address)
     }
 
     if (!isIOPDEValid(pd_ret.iopdSlot) ||
-            iopde_ptr_get_page_size(pd_ret.iopdSlot) != iopde_iopde_pt) {
+        iopde_ptr_get_page_size(pd_ret.iopdSlot) != iopde_iopde_pt) {
         pt_ret.status = EXCEPTION_LOOKUP_FAULT;
         pt_ret.ioptSlot = 0;
         return pt_ret;
@@ -97,8 +89,7 @@ lookupIOPTSlot(iopde_t *iopd, word_t io_address)
     return pt_ret;
 }
 
-BOOT_CODE seL4_SlotRegion
-create_iospace_caps(cap_t root_cnode_cap)
+BOOT_CODE seL4_SlotRegion create_iospace_caps(cap_t root_cnode_cap)
 {
     seL4_SlotPos start = ndks_boot.slot_pos_cur;
     seL4_SlotPos end = 0;
@@ -128,9 +119,8 @@ create_iospace_caps(cap_t root_cnode_cap)
     };
 }
 
-static exception_t
-performARMIOPTInvocationMap(cap_t cap, cte_t *slot, iopde_t *iopdSlot,
-                            iopde_t iopde)
+static exception_t performARMIOPTInvocationMap(cap_t cap, cte_t *slot, iopde_t *iopdSlot,
+                                               iopde_t iopde)
 {
 
 
@@ -148,14 +138,13 @@ performARMIOPTInvocationMap(cap_t cap, cte_t *slot, iopde_t *iopdSlot,
 }
 
 
-exception_t
-decodeARMIOPTInvocation(
+exception_t decodeARMIOPTInvocation(
     word_t       invLabel,
     uint32_t     length,
-    cte_t*       slot,
+    cte_t       *slot,
     cap_t        cap,
     extra_caps_t excaps,
-    word_t*      buffer
+    word_t      *buffer
 )
 {
     cap_t      io_space;
@@ -181,7 +170,7 @@ decodeARMIOPTInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (invLabel != ARMIOPageTableMap ) {
+    if (invLabel != ARMIOPageTableMap) {
         userError("IOPTInvocation: Invalid operation.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
@@ -234,9 +223,8 @@ decodeARMIOPTInvocation(
     return performARMIOPTInvocationMap(cap, slot, lu_ret.iopdSlot, iopde);
 }
 
-static exception_t
-performARMIOMapInvocation(cap_t cap, cte_t *slot, iopte_t *ioptSlot,
-                          iopte_t iopte)
+static exception_t performARMIOMapInvocation(cap_t cap, cte_t *slot, iopte_t *ioptSlot,
+                                             iopte_t iopte)
 {
     *ioptSlot = iopte;
     cleanCacheRange_RAM((word_t)ioptSlot,
@@ -252,14 +240,13 @@ performARMIOMapInvocation(cap_t cap, cte_t *slot, iopte_t *ioptSlot,
     return EXCEPTION_NONE;
 }
 
-exception_t
-decodeARMIOMapInvocation(
+exception_t decodeARMIOMapInvocation(
     word_t       invLabel,
     uint32_t     length,
-    cte_t*       slot,
+    cte_t       *slot,
     cap_t        cap,
     extra_caps_t excaps,
-    word_t*      buffer
+    word_t      *buffer
 )
 {
     cap_t      io_space;
@@ -295,7 +282,7 @@ decodeARMIOMapInvocation(
 
     io_space    = excaps.excaprefs[0]->cap;
     io_address  = getSyscallArg(1, buffer) & ~MASK(PAGE_BITS);
-    paddr       = pptr_to_paddr((void*)cap_small_frame_cap_get_capFBasePtr(cap));
+    paddr       = pptr_to_paddr((void *)cap_small_frame_cap_get_capFBasePtr(cap));
 
     if (cap_get_capType(io_space) != cap_io_space_cap) {
         userError("IOMap: Invalid IOSpace cap.");
@@ -335,7 +322,7 @@ decodeARMIOMapInvocation(
                 );
     } else if (frame_cap_rights == VMReadWrite) {
         if (seL4_CapRights_get_capAllowRead(dma_cap_rights_mask) &&
-                !seL4_CapRights_get_capAllowWrite(dma_cap_rights_mask)) {
+            !seL4_CapRights_get_capAllowWrite(dma_cap_rights_mask)) {
             /* read only */
             iopte = iopte_new(
                         1,      /* read         */
@@ -384,8 +371,7 @@ decodeARMIOMapInvocation(
 }
 
 
-void
-deleteIOPageTable(cap_t io_pt_cap)
+void deleteIOPageTable(cap_t io_pt_cap)
 {
 
     uint32_t asid;
@@ -405,8 +391,9 @@ deleteIOPageTable(cap_t io_pt_cap)
         }
 
         if (isIOPDEValid(lu_ret.iopdSlot) &&
-                iopde_ptr_get_page_size(lu_ret.iopdSlot) == iopde_iopde_pt &&
-                iopde_iopde_pt_ptr_get_address(lu_ret.iopdSlot) != (pptr_to_paddr((void *)cap_io_page_table_cap_get_capIOPTBasePtr(io_pt_cap)))) {
+            iopde_ptr_get_page_size(lu_ret.iopdSlot) == iopde_iopde_pt &&
+            iopde_iopde_pt_ptr_get_address(lu_ret.iopdSlot) != (pptr_to_paddr((void *)cap_io_page_table_cap_get_capIOPTBasePtr(
+                                                                                  io_pt_cap)))) {
             return;
         }
 
@@ -422,8 +409,7 @@ deleteIOPageTable(cap_t io_pt_cap)
     }
 }
 
-void
-unmapIOPage(cap_t cap)
+void unmapIOPage(cap_t cap)
 {
     lookupIOPTSlot_ret_t lu_ret;
     iopde_t *pd;
@@ -470,10 +456,9 @@ void clearIOPageDirectory(cap_t cap)
     return;
 }
 
-exception_t
-performPageInvocationUnmapIO(
+exception_t performPageInvocationUnmapIO(
     cap_t        cap,
-    cte_t*       slot
+    cte_t       *slot
 )
 {
     unmapIOPage(slot->cap);
@@ -484,8 +469,7 @@ performPageInvocationUnmapIO(
     return EXCEPTION_NONE;
 }
 
-exception_t
-decodeARMIOSpaceInvocation(word_t invLabel, cap_t cap)
+exception_t decodeARMIOSpaceInvocation(word_t invLabel, cap_t cap)
 {
     userError("IOSpace capability has no invocations");
     current_syscall_error.type = seL4_IllegalOperation;

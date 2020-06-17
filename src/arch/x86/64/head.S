@@ -1,21 +1,25 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-/* Configuration for MultiBoot, see MultiBoot Specification:
-   www.gnu.org/software/grub/manual/multiboot
-   We use a flags field of 3, indicating that we want modules loaded on page
-   boundaries and access to the memory map information. We do not set bit 16,
-   indicating that the structure of the image should be taken from its ELF
-   headers. */
+/* The kernel expects to be booted by a Multiboot compliant bootloader.
+ * See Multiboot specifications:
+ * www.gnu.org/software/grub/manual/multiboot
+ * www.gnu.org/software/grub/manual/multiboot2
+ *
+ * The multiboot header's flags field is set to 3, indicating that we want
+ * modules loaded on page boundaries, access to memory map information, and
+ * information about the video mode table. Bit 16 of the multiboot header is
+ * not set, indicating that the structure of the image should be taken from its
+ * ELF headers.
+ *
+ * When the bootloader jumps to the entry point it is not in long mode and
+ * 64-bit instructions are not accessible (Multiboot 1 does not have support
+ * for this). While in protected mode, setup including the initialisation of
+ * 64-bit paging structures is done before manually enabling long mode and
+ * continuing. */
 
 #include <config.h>
 #include <machine/assembler.h>
@@ -28,11 +32,6 @@
 
 .code32
 
-/* We need setup code to run in 32bits. Unfortunately it is difficult to
- * persuade other parts of the C kernel to be compiled as 32bit code
- * Therefore, whilst we would rather write this in C, we have to put
- * the PML4 initialization code here in assembly */
-
 BEGIN_FUNC(print_string)
     movw $0x3f8, %dx
 1:
@@ -44,83 +43,35 @@ BEGIN_FUNC(print_string)
     ret
 END_FUNC(print_string)
 
+BEGIN_FUNC(hang)
+1:
+    hlt
+    jmp  1b
+END_FUNC(hang)
+
 #ifdef CONFIG_HUGE_PAGE
 BEGIN_FUNC(huge_page_check)
     movl $0x80000001, %eax
     cpuid
     andl $0x04000000, %edx
-    jnz  2f
+    jz   1f
+    ret
+1:
     movl $huge_page_error_string, %ebx
     movl $huge_page_error_size, %ecx
     call print_string
-1:
-    hlt
-    jmp  1b
-2:
-    ret
+    call hang
 
 huge_page_error_string:
     .string "Huge page not supported by the processor"
     .set huge_page_error_size, . - huge_page_error_string
 END_FUNC(huge_page_check)
+#endif /* CONFIG_HUGE_PAGE */
 
 BEGIN_FUNC(setup_pml4)
+#ifdef CONFIG_HUGE_PAGE
     call huge_page_check
-    /* Zero the boot pml4 */
-    movl %cr0, %eax
-    andl $0x7fffffff, %eax
-    movl %eax, %cr0
-    movl $boot_pml4, %edi
-    movl $0x0, %edx
-    movl $1024, %ecx
-1:
-    movl %edx, (%edi)
-    addl $4, %edi
-    loop 1b
-    /* Zero the boot PDPT */
-    movl $boot_pdpt, %edi
-    movl $1024, %ecx
-1:
-    movl %edx, (%edi)
-    addl $4, %edi
-    loop 1b
-    /* Set the first 4 entries in the PDPT to the first
-     * 4gb of memory */
-    movl $boot_pdpt, %edi
-    movl $0x87, %edx
-    movl $4, %ecx
-    movl $0, %ebx
-1:
-    movl %edx, (%edi)
-    movl %ebx, 4(%edi)
-    addl $0x40000000, %edx
-    jnc 2f
-    /* Carry occurred, need to increase the high part
-     * of the address */
-    incl %ebx
-2:
-    addl $8, %edi
-    loop 1b
-    /* Set the second highest entry in the PDPT to also map to the
-     * first part of memory. This is our actual kernel window */
-    movl $boot_pdpt, %edi
-    movl $0x87, %edx
-    movl %edx, 4080(%edi)
-    /* Put the PDPTs into the PML4 twice
-     * Once to create a 1-to-1 mapping, and once
-     * to create the higher kernel window */
-    movl $boot_pml4, %edi
-    movl $boot_pdpt, %edx
-    orl $0x7, %edx
-    movl %edx, (%edi)
-    movl %edx, 4088(%edi)
-    /* done */
-    ret
-END_FUNC(setup_pml4)
-
-#else
-
-BEGIN_FUNC(setup_pml4)
+#endif /* CONFIG_HUGE_PAGE */
     movl %cr0, %eax
     andl $0x7fffffff, %eax
     movl %eax, %cr0
@@ -159,7 +110,7 @@ BEGIN_FUNC(setup_pml4)
     addl $0x1000, %ecx
     movl %ecx, 24(%edi)
 
-    /* map first 4GiB into the _boot_pd */
+    /* Map first 4GiB into the _boot_pd. */
     movl $_boot_pd, %edi
     movl $2048, %ecx
     movl $0x87, %edx
@@ -171,22 +122,18 @@ BEGIN_FUNC(setup_pml4)
     ret
 END_FUNC(setup_pml4)
 
-#endif
-
 BEGIN_FUNC(pcid_check)
     movl $0x1, %eax
     xorl %ecx, %ecx
     cpuid
     andl $0x800000, %ecx
-    jnz 2f
+    jz   1f
+    ret
+1:
     movl $pcid_error_string, %ebx
     movl $pcid_error_size, %ecx
     call print_string
-1:
-    hlt
-    jmp 1b
-2:
-    ret
+    call hang
 
 pcid_error_string:
     .string "PCIDs not supported by the processor"
@@ -198,15 +145,13 @@ BEGIN_FUNC(invpcid_check)
     xorl %ecx, %ecx
     cpuid
     andl $0x400, %ebx
-    jnz   2f
+    jz   1f
+    ret
+1:
     movl  $invpcid_error_string, %ebx
     movl  $invpcid_error_size, %ecx
     call  print_string
-1:
-    hlt
-    jmp   1b
-2:
-    ret
+    call  hang
 
 invpcid_error_string:
     .string "INVPCID instruction not supported by the processor"
@@ -218,53 +163,46 @@ BEGIN_FUNC(syscall_check)
     xorl %ecx, %ecx
     cpuid
     andl $0x20000000, %edx
-    jnz   2f
+    jz   1f
+    ret
+1:
     movl  $syscall_error_string, %ebx
     movl  $syscall_error_size, %ecx
     call  print_string
-1:
-    hlt
-    jmp   1b
-2:
-    ret
+    call  hang
 
 syscall_error_string:
     .string "SYSCALL/SYSRET instruction not supported by the processor"
     .set syscall_error_size, . - syscall_error_string
 END_FUNC(syscall_check)
 
-/* if fsgsbase instructions are supported, we enable them. */
-BEGIN_FUNC(fsgsbase_enable)
 #ifdef CONFIG_FSGSBASE_INST
+BEGIN_FUNC(fsgsbase_enable)
     movl $0x7, %eax
     xorl %ecx, %ecx
     cpuid
     andl $1, %ebx
-    jnz  2f
-    movl $fsgsbase_error_string, %ebx
-    movl $fsgsbase_error_size, %ecx
-    call print_string
-1:
-    hlt
-    jmp 1b
-2:
+    jz   1f
     movl %cr4, %eax
-    /* enable the bit in CR4 */
+    /* Enable the bit in cr4. */
     orl  $0x10000, %eax
     movl %eax, %cr4
     ret
+1:
+    movl $fsgsbase_error_string, %ebx
+    movl $fsgsbase_error_size, %ecx
+    call print_string
+    call hang
 
 fsgsbase_error_string:
     .string "fsgsbase instructions not supported by the processor"
     .set fsgsbase_error_size, . - fsgsbase_error_string
-#else
-    ret
-#endif
 END_FUNC(fsgsbase_enable)
+#endif /* CONFIG_FSGSBASE_INST */
 
 BEGIN_FUNC(syscall_enable)
     call syscall_check
-    /* Set SCE (bit 0) in the extended feature MSR */
+    /* Set SCE (bit 0) in the extended feature MSR. */
     movl $IA32_EFER_MSR, %ecx
     rdmsr
     orl $0x1, %eax
@@ -277,24 +215,24 @@ BEGIN_FUNC(enable_x64_mode)
     call pcid_check
     call invpcid_check
 #endif
-    /* put base pointer in cr3 */
+    /* Put base pointer in cr3. */
     movl $boot_pml4, %eax
     movl %eax, %cr3
-    /* Set PAE (bit 5), as this is required before switching to long mode */
+    /* Set PAE (bit 5), as this is required before switching to long mode. */
     movl %cr4, %eax
     orl $0x20, %eax
     movl %eax, %cr4
-    /* Set LME (bit 8) in the extended feature MSR */
+    /* Set LME (bit 8) in the extended feature MSR. */
     movl $IA32_EFER_MSR, %ecx
     rdmsr
     orl $0x100, %eax
     wrmsr
-    /* Set PG (bit 31) of cr0 to enable paging */
+    /* Set PG (bit 31) of cr0 to enable paging. */
     movl %cr0, %eax
     orl $0x80000000, %eax
     movl %eax, %cr0
 #ifdef CONFIG_SUPPORT_PCID
-    /* enable PCID (bit 17), must be done in long mode */
+    /* Enable PCID (bit 17), must be done in long mode. */
     movl %cr4, %eax
     orl  $0x20000, %eax
     movl %eax, %cr4
@@ -303,13 +241,16 @@ BEGIN_FUNC(enable_x64_mode)
 END_FUNC(enable_x64_mode)
 
 BEGIN_FUNC(common_init)
-    /* make sure paging (bit 31) is off */
+    /* Disable paging. */
     movl %cr0, %eax
     andl $0x7fffffff, %eax
     movl %eax, %cr0
 
+#ifdef CONFIG_FSGSBASE_INST
     call fsgsbase_enable
-    /* Initialize boot PML4 and switch to long mode */
+#endif /* CONFIG_FSGSBASE_INST */
+
+    /* Initialize boot PML4 and switch to long mode. */
     call setup_pml4
     call enable_x64_mode
     lgdt _gdt64_ptr
@@ -323,20 +264,20 @@ END_FUNC(common_init)
 
 BEGIN_FUNC(_start)
     /* Assume we are MultiBooted, e.g. by GRUB.
-       See MultiBoot Specification: www.gnu.org/software/grub/manual/multiboot
-    */
+     * While not immediately checked, the magic number is checked prior to 
+     * Multiboot dependent operations. */
     movl %eax, %edi /* multiboot_magic    */
     movl %ebx, %esi /* multiboot_info_ptr */
 
-    /* Load kernel boot stack pointer */
+    /* Load kernel boot stack pointer. */
     leal boot_stack_top, %esp
 
-    /* Reset EFLAGS register (also disables interrupts etc.) */
+    /* Reset EFLAGS register (also disables interrupts etc.). */
     pushl $0
     popf
 
     /* Already push parameters for calling boot_sys later. Push
-     * them as 8 byte values so we can easily pop later */
+     * them as 8 byte values so we can easily pop later. */
     pushl $0
     pushl %esi /* 2nd parameter: multiboot_info_ptr */
     pushl $0
@@ -344,14 +285,14 @@ BEGIN_FUNC(_start)
 
     call common_init
 
-    /* reload CS with long bit to enable long mode */
+    /* Reload CS with long bit to enable long mode. */
     ljmp $8, $_start64
 END_FUNC(_start)
 
 .code64
 .align 4096
 BEGIN_FUNC(_start64)
-    /* Leave phys code behind and jump to the high kernel virtual address */
+    /* Leave phys code behind and jump to the high kernel virtual address. */
     movabs $_entry_64, %rax
     jmp *%rax
 END_FUNC(_start64)
@@ -377,26 +318,24 @@ _gdt64:
     .byte   0
     .byte   0
 
-#ifndef CONFIG_HUGE_PAGE
 .section .phys.bss
 .align 4096
 _boot_pd:
     .fill 16384
-#endif
 
 .section .boot.text
 
 BEGIN_FUNC(_entry_64)
-    /* Update our stack pointer */
+    /* Update our stack pointer. */
     movq $0xffffffff80000000, %rax
     addq %rax, %rsp
     addq %rax, %rbp
 
-    /* Pop the multiboot parameters off */
+    /* Pop the multiboot parameters off. */
     pop %rdi
     pop %rsi
 
-    /* Load our real kernel stack */
+    /* Load our real kernel stack. */
     leaq kernel_stack_alloc + (1 << CONFIG_KERNEL_STACK_BITS), %rsp
 
     movabs $restore_user_context, %rax
@@ -410,44 +349,44 @@ END_FUNC(_entry_64)
 
 BEGIN_FUNC(boot_cpu_start)
 .code16
-    /* Set DS equal to CS and load GDTR register with GDT pointer */
+    /* Set DS equal to CS and load GDTR register with GDT pointer. */
     movw %cs, %ax
     movw %ax, %ds
     lgdt _boot_gdt_ptr - boot_cpu_start
 
-    /* Enable Protected Mode */
+    /* Enable protected mode. */
     movl %cr0, %eax
     orl  $1,   %eax
     movl %eax, %cr0
 
-    /* Reload CS with a far jump */
+    /* Reload CS with a far jump. */
     ljmpl $0x08, $1f
 
 .code32
 1:
-    /* Load DS/ES/SS with kernel data segment selector */
+    /* Load DS/ES/SS with kernel data segment selector. */
     movw $0x10, %ax
     movw %ax,   %ds
     movw %ax,   %es
     movw %ax,   %ss
 
-    /* Use temporary kernel boot stack pointer */
+    /* Use temporary kernel boot stack pointer. */
     leal boot_stack_top, %esp
 
-    /* Reset EFLAGS register (also disables interrupts etc.) */
+    /* Reset EFLAGS register (also disables interrupts etc.). */
     pushl $0
     popf
 
     call common_init
 
-    /* reload CS with long bit to enable long mode */
+    /* Reload CS with long bit to enable long mode. */
     ljmp $8, $_start_ap64
     jmp 1b
 END_FUNC(boot_cpu_start)
 
 .code64
 BEGIN_FUNC(_start_ap64)
-    /* Leave phys code behind and jump to the high kernel virtual address */
+    /* Leave phys code behind and jump to the high kernel virtual address. */
     movabs $_entry_ap64, %rax
     jmp *%rax
 END_FUNC(_start_ap64)
@@ -456,7 +395,7 @@ _boot_gdt_ptr:
     .word   (3 * 8) - 1 /* Limit: 3 segments * 8 bytes - 1 byte */
     .long   _boot_gdt   /* Address of boot GDT */
 
-/* GDT for getting us through 32-bit protected mode */
+/* GDT for getting us through 32-bit protected mode. */
     .align 16
 _boot_gdt:
     .quad 0x0000000000000000 /* Null segment */
@@ -469,10 +408,10 @@ boot_cpu_end:
 .section .boot.text
 
 BEGIN_FUNC(_entry_ap64)
-    /* Get the index of this cpu */
+    /* Get the index of this cpu. */
     movq smp_aps_index, %rcx
 
-    /* Switch to a real kernel stack */
+    /* Switch to a real kernel stack. */
     leaq kernel_stack_alloc, %rsp
     inc %rcx
     shlq $CONFIG_KERNEL_STACK_BITS, %rcx
@@ -481,6 +420,6 @@ BEGIN_FUNC(_entry_ap64)
     movabs $restore_user_context, %rax
     push %rax
     jmp boot_node
-END_FUNC(_entry_64)
+END_FUNC(_entry_ap64)
 
 #endif /* ENABLE_SMP_SUPPORT */

@@ -1,13 +1,7 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -19,8 +13,7 @@
 #include <arch/model/statedata.h>
 #include <arch/object/objecttype.h>
 
-bool_t
-Arch_isFrameType(word_t type)
+bool_t Arch_isFrameType(word_t type)
 {
     switch (type) {
     case seL4_ARM_SmallPageObject:
@@ -34,8 +27,7 @@ Arch_isFrameType(word_t type)
     }
 }
 
-deriveCap_ret_t
-Arch_deriveCap(cte_t *slot, cap_t cap)
+deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
 {
     deriveCap_ret_t ret;
 
@@ -112,14 +104,12 @@ Arch_deriveCap(cte_t *slot, cap_t cap)
     }
 }
 
-cap_t CONST
-Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
+cap_t CONST Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
 {
     return cap;
 }
 
-cap_t CONST
-Arch_maskCapRights(seL4_CapRights_t cap_rights_mask, cap_t cap)
+cap_t CONST Arch_maskCapRights(seL4_CapRights_t cap_rights_mask, cap_t cap)
 {
     if (cap_get_capType(cap) == cap_frame_cap) {
         vm_rights_t vm_rights;
@@ -133,8 +123,7 @@ Arch_maskCapRights(seL4_CapRights_t cap_rights_mask, cap_t cap)
     }
 }
 
-finaliseCap_ret_t
-Arch_finaliseCap(cap_t cap, bool_t final)
+finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
 {
     finaliseCap_ret_t fc_ret;
 
@@ -149,16 +138,24 @@ Arch_finaliseCap(cap_t cap, bool_t final)
     case cap_page_global_directory_cap:
         if (final && cap_page_global_directory_cap_get_capPGDIsMapped(cap)) {
             deleteASID(cap_page_global_directory_cap_get_capPGDMappedASID(cap),
-                       PGDE_PTR(cap_page_global_directory_cap_get_capPGDBasePtr(cap)));
+                       VSPACE_PTR(cap_page_global_directory_cap_get_capPGDBasePtr(cap)));
         }
         break;
 
     case cap_page_upper_directory_cap:
+#ifdef AARCH64_VSPACE_S2_START_L1
+        if (final && cap_page_upper_directory_cap_get_capPUDIsMapped(cap)) {
+            deleteASID(cap_page_upper_directory_cap_get_capPUDMappedASID(cap),
+                       PUDE_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(cap)));
+        }
+#else
         if (final && cap_page_upper_directory_cap_get_capPUDIsMapped(cap)) {
             unmapPageUpperDirectory(cap_page_upper_directory_cap_get_capPUDMappedASID(cap),
                                     cap_page_upper_directory_cap_get_capPUDMappedAddress(cap),
                                     PUDE_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(cap)));
         }
+
+#endif
         break;
 
     case cap_page_directory_cap:
@@ -267,8 +264,7 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
     return false;
 }
 
-bool_t CONST
-Arch_sameObjectAs(cap_t cap_a, cap_t cap_b)
+bool_t CONST Arch_sameObjectAs(cap_t cap_a, cap_t cap_b)
 {
     if (cap_get_capType(cap_a) == cap_frame_cap) {
         if (cap_get_capType(cap_b) == cap_frame_cap) {
@@ -283,8 +279,7 @@ Arch_sameObjectAs(cap_t cap_a, cap_t cap_b)
     return Arch_sameRegionAs(cap_a, cap_b);
 }
 
-word_t
-Arch_getObjectSize(word_t t)
+word_t Arch_getObjectSize(word_t t)
 {
     switch (t) {
     case seL4_ARM_SmallPageObject:
@@ -299,8 +294,10 @@ Arch_getObjectSize(word_t t)
         return seL4_PageDirBits;
     case seL4_ARM_PageUpperDirectoryObject:
         return seL4_PUDBits;
+#ifndef AARCH64_VSPACE_S2_START_L1
     case seL4_ARM_PageGlobalDirectoryObject:
         return seL4_PGDBits;
+#endif
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case seL4_ARM_VCPUObject:
         return VCPU_SIZE_BITS;
@@ -311,8 +308,7 @@ Arch_getObjectSize(word_t t)
     }
 }
 
-cap_t
-Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
+cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
 {
     switch (t) {
     case seL4_ARM_SmallPageObject:
@@ -344,14 +340,14 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                    VMReadWrite,           /* capFVMRights */
                    !!deviceMemory         /* capFIsDevice */
                );
-
+#ifndef AARCH64_VSPACE_S2_START_L1
     case seL4_ARM_PageGlobalDirectoryObject:
         return cap_page_global_directory_cap_new(
                    asidInvalid,           /* capPGDMappedASID   */
                    (word_t)regionBase,    /* capPGDBasePtr      */
                    0                      /* capPGDIsMapped     */
                );
-
+#endif
     case seL4_ARM_PageUpperDirectoryObject:
         return cap_page_upper_directory_cap_new(
                    asidInvalid,           /* capPUDMappedASID    */
@@ -389,10 +385,9 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
     }
 }
 
-exception_t
-Arch_decodeInvocation(word_t label, word_t length, cptr_t cptr,
-                      cte_t *slot, cap_t cap, extra_caps_t extraCaps,
-                      bool_t call, word_t *buffer)
+exception_t Arch_decodeInvocation(word_t label, word_t length, cptr_t cptr,
+                                  cte_t *slot, cap_t cap, extra_caps_t extraCaps,
+                                  bool_t call, word_t *buffer)
 {
 
     /* The C parser cannot handle a switch statement with only a default

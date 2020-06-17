@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_REGISTERSET_32_H
-#define __ARCH_MACHINE_REGISTERSET_32_H
+#pragma once
 
 #include <config.h>
 
@@ -40,11 +35,18 @@
 /* Offsets within the user context, these need to match the order in
  * register_t below */
 #define PT_SP               (13  * 4)
-#define PT_LR_svc           (15 * 4)
+#define PT_NextIP           (15 * 4)
 #define PT_ELR_hyp          (15 * 4)
+#define PT_FaultIP          (17 * 4)
 #define PT_TPIDRURW         (18 * 4)
-#define PT_FaultInstruction (17 * 4)
 #define PT_R8               (8  * 4)
+
+#ifdef CONFIG_KERNEL_GLOBALS_FRAME
+/*
+ * Virtualise the TPIDRURW register in the globals frame.
+ */
+#define GLOBALS_TPIDRURW 0
+#endif
 
 #ifndef __ASSEMBLER__ /* C only definitions */
 
@@ -54,7 +56,7 @@
 #include <util.h>
 #include <arch/types.h>
 #include <arch/machine/debug_conf.h>
-#include <plat/api/constants.h>
+#include <sel4/plat/api/constants.h>
 
 /* These are the indices of the registers in the
  * saved thread context.  The values are determined
@@ -73,8 +75,15 @@ enum _register {
     R4 = 4,
     R5 = 5,
     R6 = 6,
+#ifdef CONFIG_KERNEL_MCS
+    replyRegister = 6,
+#endif
     R7 = 7,
     R8 = 8,
+#ifdef CONFIG_KERNEL_MCS
+    nbsendRecvDest = 8,
+#endif
+
     R9 = 9,
     R10 = 10,
     R11 = 11,
@@ -88,45 +97,48 @@ enum _register {
 
     /* End of GP registers, the following are additional kernel-saved state. */
 
-    LR_svc = 15,
+    NextIP = 15, /* LR_svc */
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     ELR_hyp = 15,
 #endif
     CPSR = 16,
 
-    FaultInstruction = 17,
-    TLS_BASE = 18,
-#ifndef CONFIG_ARCH_ARM_V6
+    FaultIP  = 17,
     /* user readable/writable thread ID register.
      * name comes from the ARM manual */
-    TPIDRURW = 19,
+    TPIDRURW = 18,
+    TLS_BASE = TPIDRURW,
+    /* user readonly thread ID register. */
+    TPIDRURO = 19,
     n_contextRegisters = 20,
-#else
-    n_contextRegisters = 19,
-#endif
 };
 
-compile_assert(sp_offset_correct, SP * sizeof(word_t) == PT_SP)
-compile_assert(lr_svc_offset_correct, LR_svc * sizeof(word_t) == PT_LR_svc)
+#define NEXT_PC_REG NextIP
+
+compile_assert(sp_offset_correct, SP *sizeof(word_t) == PT_SP)
+compile_assert(lr_svc_offset_correct, NextIP *sizeof(word_t) == PT_NextIP)
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-compile_assert(elr_hyp_offset_correct, ELR_hyp * sizeof(word_t) == PT_ELR_hyp)
+compile_assert(elr_hyp_offset_correct, ELR_hyp *sizeof(word_t) == PT_ELR_hyp)
 #endif
-compile_assert(faultinstruction_offset_correct, FaultInstruction * sizeof(word_t) == PT_FaultInstruction)
-compile_assert(r8_offset_correct, R8 * sizeof(word_t) == PT_R8)
+compile_assert(faultinstruction_offset_correct, FaultIP *sizeof(word_t) == PT_FaultIP)
+compile_assert(r8_offset_correct, R8 *sizeof(word_t) == PT_R8)
 
 typedef word_t register_t;
 
 enum messageSizes {
     n_msgRegisters = seL4_FastMessageRegisters,
     n_frameRegisters = 10,
-    n_gpRegisters = 7,
+    n_gpRegisters = 9,
     n_exceptionMessage = 3,
     n_syscallMessage = 12,
+#ifdef CONFIG_KERNEL_MCS
+    n_timeoutMessage = 17,
+#endif
 };
 
 #define EXCEPTION_MESSAGE \
  {\
-    [seL4_UserException_FaultIP] = FaultInstruction,\
+    [seL4_UserException_FaultIP] = FaultIP,\
     [seL4_UserException_SP] = SP,\
     [seL4_UserException_CPSR] = CPSR\
  }
@@ -141,10 +153,31 @@ enum messageSizes {
     [seL4_UnknownSyscall_R5] = R5,\
     [seL4_UnknownSyscall_R6] = R6,\
     [seL4_UnknownSyscall_R7] = R7,\
-    [seL4_UnknownSyscall_FaultIP] = FaultInstruction,\
+    [seL4_UnknownSyscall_FaultIP] = FaultIP,\
     [seL4_UnknownSyscall_SP] = SP,\
     [seL4_UnknownSyscall_LR] = LR,\
     [seL4_UnknownSyscall_CPSR] = CPSR\
+}
+
+#define TIMEOUT_REPLY_MESSAGE \
+{\
+    [seL4_TimeoutReply_FaultIP] = FaultIP,\
+    [seL4_TimeoutReply_SP] = SP, \
+    [seL4_TimeoutReply_CPSR] = CPSR,\
+    [seL4_TimeoutReply_R0] = R0,\
+    [seL4_TimeoutReply_R1] = R1,\
+    [seL4_TimeoutReply_R8] = R8,\
+    [seL4_TimeoutReply_R9] = R9,\
+    [seL4_TimeoutReply_R10] = R10,\
+    [seL4_TimeoutReply_R11] = R11,\
+    [seL4_TimeoutReply_R12] = R12,\
+    [seL4_TimeoutReply_R2] = R2,\
+    [seL4_TimeoutReply_R3] = R3,\
+    [seL4_TimeoutReply_R4] = R4,\
+    [seL4_TimeoutReply_R5] = R5,\
+    [seL4_TimeoutReply_R6] = R6,\
+    [seL4_TimeoutReply_R7] = R7,\
+    [seL4_TimeoutReply_R14] = R14,\
 }
 
 extern const register_t msgRegisters[];
@@ -156,10 +189,21 @@ typedef struct debug_register_pair {
     word_t cr, vr;
 } debug_register_pair_t;
 
+/*
+ * This padding ensures that there is reasonable leeway when determining
+ * the size of the untyped needed for a TCB when watchpoint handling is
+ * involved.
+ */
+#define EXLUSIVE_WATCHPOINT_PADING 6
+#define EXLUSIVE_WATCHPOINT_PADDED \
+    (seL4_NumExclusiveWatchpoints > EXLUSIVE_WATCHPOINT_PADING) \
+        ? seL4_NumExclusiveWatchpoints \
+        : EXLUSIVE_WATCHPOINT_PADING
+
 typedef struct user_breakpoint_state {
     /* We don't use context comparisons. */
     debug_register_pair_t breakpoint[seL4_NumExclusiveBreakpoints],
-                          watchpoint[seL4_NumExclusiveWatchpoints];
+                          watchpoint[EXLUSIVE_WATCHPOINT_PADDED];
     uint32_t used_breakpoints_bf;
     word_t n_instructions;
     bool_t single_step_enabled;
@@ -201,7 +245,7 @@ unverified_compile_assert(registers_are_first_member_of_user_context,
 void Arch_initBreakpointContext(user_context_t *context);
 #endif
 
-static inline void Arch_initContext(user_context_t* context)
+static inline void Arch_initContext(user_context_t *context)
 {
     context->registers[CPSR] = CPSR_USER;
 #ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
@@ -211,4 +255,3 @@ static inline void Arch_initContext(user_context_t* context)
 
 #endif /* !__ASSEMBLER__ */
 
-#endif /* !__ARCH_MACHINE_REGISTERSET_32_H */

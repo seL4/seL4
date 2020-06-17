@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <assert.h>
@@ -20,38 +16,70 @@
 
 #include <object/notification.h>
 
-static inline tcb_queue_t PURE
-ntfn_ptr_get_queue(notification_t *ntfnPtr)
+static inline tcb_queue_t PURE ntfn_ptr_get_queue(notification_t *ntfnPtr)
 {
     tcb_queue_t ntfn_queue;
 
-    ntfn_queue.head = (tcb_t*)notification_ptr_get_ntfnQueue_head(ntfnPtr);
-    ntfn_queue.end = (tcb_t*)notification_ptr_get_ntfnQueue_tail(ntfnPtr);
+    ntfn_queue.head = (tcb_t *)notification_ptr_get_ntfnQueue_head(ntfnPtr);
+    ntfn_queue.end = (tcb_t *)notification_ptr_get_ntfnQueue_tail(ntfnPtr);
 
     return ntfn_queue;
 }
 
-static inline void
-ntfn_ptr_set_queue(notification_t *ntfnPtr, tcb_queue_t ntfn_queue)
+static inline void ntfn_ptr_set_queue(notification_t *ntfnPtr, tcb_queue_t ntfn_queue)
 {
     notification_ptr_set_ntfnQueue_head(ntfnPtr, (word_t)ntfn_queue.head);
     notification_ptr_set_ntfnQueue_tail(ntfnPtr, (word_t)ntfn_queue.end);
 }
 
-static inline void
-ntfn_set_active(notification_t *ntfnPtr, word_t badge)
+static inline void ntfn_set_active(notification_t *ntfnPtr, word_t badge)
 {
     notification_ptr_set_state(ntfnPtr, NtfnState_Active);
     notification_ptr_set_ntfnMsgIdentifier(ntfnPtr, badge);
 }
 
+#ifdef CONFIG_KERNEL_MCS
+static inline void maybeDonateSchedContext(tcb_t *tcb, notification_t *ntfnPtr)
+{
+    if (tcb->tcbSchedContext == NULL) {
+        sched_context_t *sc = SC_PTR(notification_ptr_get_ntfnSchedContext(ntfnPtr));
+        if (sc != NULL && sc->scTcb == NULL) {
+            schedContext_donate(sc, tcb);
+            refill_unblock_check(sc);
+            schedContext_resume(sc);
+        }
+    }
+}
 
-void
-sendSignal(notification_t *ntfnPtr, word_t badge)
+static inline void maybeReturnSchedContext(notification_t *ntfnPtr, tcb_t *tcb)
+{
+
+    sched_context_t *sc = SC_PTR(notification_ptr_get_ntfnSchedContext(ntfnPtr));
+    if (sc == tcb->tcbSchedContext) {
+        tcb->tcbSchedContext = NULL;
+        sc->scTcb = NULL;
+    }
+}
+#endif
+
+#ifdef CONFIG_KERNEL_MCS
+#define MCS_DO_IF_SC(tcb, ntfnPtr, _block) \
+    maybeDonateSchedContext(tcb, ntfnPtr); \
+    if (isSchedulable(tcb)) { \
+        _block \
+    }
+#else
+#define MCS_DO_IF_SC(tcb, ntfnPtr, _block) \
+    { \
+        _block \
+    }
+#endif
+
+void sendSignal(notification_t *ntfnPtr, word_t badge)
 {
     switch (notification_ptr_get_state(ntfnPtr)) {
     case NtfnState_Idle: {
-        tcb_t *tcb = (tcb_t*)notification_ptr_get_ntfnBoundTCB(ntfnPtr);
+        tcb_t *tcb = (tcb_t *)notification_ptr_get_ntfnBoundTCB(ntfnPtr);
         /* Check if we are bound and that thread is waiting for a message */
         if (tcb) {
             if (thread_state_ptr_get_tsType(&tcb->tcbState) == ThreadState_BlockedOnReceive) {
@@ -59,7 +87,9 @@ sendSignal(notification_t *ntfnPtr, word_t badge)
                 cancelIPC(tcb);
                 setThreadState(tcb, ThreadState_Running);
                 setRegister(tcb, badgeRegister, badge);
-                possibleSwitchTo(tcb);
+                MCS_DO_IF_SC(tcb, ntfnPtr, {
+                    possibleSwitchTo(tcb);
+                })
 #ifdef CONFIG_VTX
             } else if (thread_state_ptr_get_tsType(&tcb->tcbState) == ThreadState_RunningVM) {
 #ifdef ENABLE_SMP_SUPPORT
@@ -72,10 +102,19 @@ sendSignal(notification_t *ntfnPtr, word_t badge)
                     setThreadState(tcb, ThreadState_Running);
                     setRegister(tcb, badgeRegister, badge);
                     Arch_leaveVMAsyncTransfer(tcb);
-                    possibleSwitchTo(tcb);
+                    MCS_DO_IF_SC(tcb, ntfnPtr, {
+                        possibleSwitchTo(tcb);
+                    })
                 }
 #endif /* CONFIG_VTX */
             } else {
+                /* In particular, this path is taken when a thread
+                 * is waiting on a reply cap since BlockedOnReply
+                 * would also trigger this path. I.e, a thread
+                 * with a bound notification will not be awakened
+                 * by signals on that bound notification if it is
+                 * in the middle of an seL4_Call.
+                 */
                 ntfn_set_active(ntfnPtr, badge);
             }
         } else {
@@ -104,7 +143,9 @@ sendSignal(notification_t *ntfnPtr, word_t badge)
 
         setThreadState(dest, ThreadState_Running);
         setRegister(dest, badgeRegister, badge);
-        possibleSwitchTo(dest);
+        MCS_DO_IF_SC(dest, ntfnPtr, {
+            possibleSwitchTo(dest);
+        })
         break;
     }
 
@@ -120,8 +161,7 @@ sendSignal(notification_t *ntfnPtr, word_t badge)
     }
 }
 
-void
-receiveSignal(tcb_t *thread, cap_t cap, bool_t isBlocking)
+void receiveSignal(tcb_t *thread, cap_t cap, bool_t isBlocking)
 {
     notification_t *ntfnPtr;
 
@@ -138,6 +178,9 @@ receiveSignal(tcb_t *thread, cap_t cap, bool_t isBlocking)
                                         ThreadState_BlockedOnNotification);
             thread_state_ptr_set_blockingObject(&thread->tcbState,
                                                 NTFN_REF(ntfnPtr));
+#ifdef CONFIG_KERNEL_MCS
+            maybeReturnSchedContext(ntfnPtr, thread);
+#endif
             scheduleTCB(thread);
 
             /* Enqueue TCB */
@@ -158,12 +201,14 @@ receiveSignal(tcb_t *thread, cap_t cap, bool_t isBlocking)
             thread, badgeRegister,
             notification_ptr_get_ntfnMsgIdentifier(ntfnPtr));
         notification_ptr_set_state(ntfnPtr, NtfnState_Idle);
+#ifdef CONFIG_KERNEL_MCS
+        maybeDonateSchedContext(thread, ntfnPtr);
+#endif
         break;
     }
 }
 
-void
-cancelAllSignals(notification_t *ntfnPtr)
+void cancelAllSignals(notification_t *ntfnPtr)
 {
     if (notification_ptr_get_state(ntfnPtr) == NtfnState_Waiting) {
         tcb_t *thread = TCB_PTR(notification_ptr_get_ntfnQueue_head(ntfnPtr));
@@ -175,14 +220,17 @@ cancelAllSignals(notification_t *ntfnPtr)
         /* Set all waiting threads to Restart */
         for (; thread; thread = thread->tcbEPNext) {
             setThreadState(thread, ThreadState_Restart);
+#ifdef CONFIG_KERNEL_MCS
+            possibleSwitchTo(thread);
+#else
             SCHED_ENQUEUE(thread);
+#endif
         }
         rescheduleRequired();
     }
 }
 
-void
-cancelSignal(tcb_t *threadPtr, notification_t *ntfnPtr)
+void cancelSignal(tcb_t *threadPtr, notification_t *ntfnPtr)
 {
     tcb_queue_t ntfn_queue;
 
@@ -203,8 +251,7 @@ cancelSignal(tcb_t *threadPtr, notification_t *ntfnPtr)
     setThreadState(threadPtr, ThreadState_Inactive);
 }
 
-void
-completeSignal(notification_t *ntfnPtr, tcb_t *tcb)
+void completeSignal(notification_t *ntfnPtr, tcb_t *tcb)
 {
     word_t badge;
 
@@ -217,26 +264,23 @@ completeSignal(notification_t *ntfnPtr, tcb_t *tcb)
     }
 }
 
-static inline void
-doUnbindNotification(notification_t *ntfnPtr, tcb_t *tcbptr)
+static inline void doUnbindNotification(notification_t *ntfnPtr, tcb_t *tcbptr)
 {
     notification_ptr_set_ntfnBoundTCB(ntfnPtr, (word_t) 0);
     tcbptr->tcbBoundNotification = NULL;
 }
 
-void
-unbindMaybeNotification(notification_t *ntfnPtr)
+void unbindMaybeNotification(notification_t *ntfnPtr)
 {
     tcb_t *boundTCB;
-    boundTCB = (tcb_t*)notification_ptr_get_ntfnBoundTCB(ntfnPtr);
+    boundTCB = (tcb_t *)notification_ptr_get_ntfnBoundTCB(ntfnPtr);
 
     if (boundTCB) {
         doUnbindNotification(ntfnPtr, boundTCB);
     }
 }
 
-void
-unbindNotification(tcb_t *tcb)
+void unbindNotification(tcb_t *tcb)
 {
     notification_t *ntfnPtr;
     ntfnPtr = tcb->tcbBoundNotification;
@@ -246,10 +290,18 @@ unbindNotification(tcb_t *tcb)
     }
 }
 
-void
-bindNotification(tcb_t *tcb, notification_t *ntfnPtr)
+void bindNotification(tcb_t *tcb, notification_t *ntfnPtr)
 {
     notification_ptr_set_ntfnBoundTCB(ntfnPtr, (word_t)tcb);
     tcb->tcbBoundNotification = ntfnPtr;
 }
 
+#ifdef CONFIG_KERNEL_MCS
+void reorderNTFN(notification_t *ntfnPtr, tcb_t *thread)
+{
+    tcb_queue_t queue = ntfn_ptr_get_queue(ntfnPtr);
+    queue = tcbEPDequeue(thread, queue);
+    queue = tcbEPAppend(thread, queue);
+    ntfn_ptr_set_queue(ntfnPtr, queue);
+}
+#endif

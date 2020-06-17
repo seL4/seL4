@@ -1,19 +1,8 @@
 /*
- * Copyright 2018, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
- *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
- */
-
-/*
- *
- * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <types.h>
@@ -24,8 +13,7 @@
 #include <arch/model/statedata.h>
 #include <arch/object/objecttype.h>
 
-deriveCap_ret_t
-Arch_deriveCap(cte_t *slot, cap_t cap)
+deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
 {
     deriveCap_ret_t ret;
 
@@ -62,14 +50,12 @@ Arch_deriveCap(cte_t *slot, cap_t cap)
     }
 }
 
-cap_t CONST
-Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
+cap_t CONST Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
 {
     return cap;
 }
 
-cap_t CONST
-Arch_maskCapRights(seL4_CapRights_t cap_rights_mask, cap_t cap)
+cap_t CONST Arch_maskCapRights(seL4_CapRights_t cap_rights_mask, cap_t cap)
 {
     if (cap_get_capType(cap) == cap_frame_cap) {
         vm_rights_t vm_rights;
@@ -82,8 +68,7 @@ Arch_maskCapRights(seL4_CapRights_t cap_rights_mask, cap_t cap)
     }
 }
 
-finaliseCap_ret_t
-Arch_finaliseCap(cap_t cap, bool_t final)
+finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
 {
     finaliseCap_ret_t fc_ret;
 
@@ -98,16 +83,21 @@ Arch_finaliseCap(cap_t cap, bool_t final)
         }
         break;
     case cap_page_table_cap:
-        if (final) {
+        if (final && cap_page_table_cap_get_capPTIsMapped(cap)) {
+            /*
+             * This PageTable is either mapped as a vspace_root or otherwise exists
+             * as an entry in another PageTable. We check if it is a vspace_root and
+             * if it is delete the entry from the ASID pool otherwise we treat it as
+             * a mapped PageTable and unmap it from whatever page table it is mapped
+             * into.
+             */
             asid_t asid = cap_page_table_cap_get_capPTMappedASID(cap);
-            if (asid != asidInvalid) {
-                findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
-                pte_t *pte = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
-                if (find_ret.status == EXCEPTION_NONE && find_ret.vspace_root == pte) {
-                    deleteASID(cap_page_table_cap_get_capPTMappedASID(cap), pte);
-                } else if (cap_page_table_cap_get_capPTIsMapped(cap)) {
-                    unmapPageTable(asid, cap_page_table_cap_get_capPTMappedAddress(cap), pte);
-                }
+            findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
+            pte_t *pte = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
+            if (find_ret.status == EXCEPTION_NONE && find_ret.vspace_root == pte) {
+                deleteASID(asid, pte);
+            } else {
+                unmapPageTable(asid, cap_page_table_cap_get_capPTMappedAddress(cap), pte);
             }
         }
         break;
@@ -127,8 +117,7 @@ Arch_finaliseCap(cap_t cap, bool_t final)
     return fc_ret;
 }
 
-bool_t CONST
-Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
+bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
 {
     switch (cap_get_capType(cap_a)) {
     case cap_frame_cap:
@@ -136,8 +125,8 @@ Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
             word_t botA, botB, topA, topB;
             botA = cap_frame_cap_get_capFBasePtr(cap_a);
             botB = cap_frame_cap_get_capFBasePtr(cap_b);
-            topA = botA + MASK (pageBitsForSize(cap_frame_cap_get_capFSize(cap_a)));
-            topB = botB + MASK (pageBitsForSize(cap_frame_cap_get_capFSize(cap_b))) ;
+            topA = botA + MASK(pageBitsForSize(cap_frame_cap_get_capFSize(cap_a)));
+            topB = botB + MASK(pageBitsForSize(cap_frame_cap_get_capFSize(cap_b))) ;
             return ((botA <= botB) && (topA >= topB) && (botB <= topB));
         }
         break;
@@ -166,11 +155,10 @@ Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
 }
 
 
-bool_t CONST
-Arch_sameObjectAs(cap_t cap_a, cap_t cap_b)
+bool_t CONST Arch_sameObjectAs(cap_t cap_a, cap_t cap_b)
 {
     if ((cap_get_capType(cap_a) == cap_frame_cap) &&
-            (cap_get_capType(cap_b) == cap_frame_cap)) {
+        (cap_get_capType(cap_b) == cap_frame_cap)) {
         return ((cap_frame_cap_get_capFBasePtr(cap_a) ==
                  cap_frame_cap_get_capFBasePtr(cap_b)) &&
                 (cap_frame_cap_get_capFSize(cap_a) ==
@@ -181,8 +169,7 @@ Arch_sameObjectAs(cap_t cap_a, cap_t cap_b)
     return Arch_sameRegionAs(cap_a, cap_b);
 }
 
-word_t
-Arch_getObjectSize(word_t t)
+word_t Arch_getObjectSize(word_t t)
 {
     switch (t) {
     case seL4_RISCV_4K_Page:
@@ -204,11 +191,24 @@ Arch_getObjectSize(word_t t)
     }
 }
 
-cap_t Arch_createObject(object_t t, void *regionBase, int userSize, bool_t
+cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t
                         deviceMemory)
 {
     switch (t) {
     case seL4_RISCV_4K_Page:
+        if (deviceMemory) {
+            /** AUXUPD: "(True, ptr_retyps 1
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_device_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.RISCVSmallPage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat RISCVPageBits))" */
+        } else {
+            /** AUXUPD: "(True, ptr_retyps 1
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.RISCVSmallPage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat RISCVPageBits))" */
+        }
         return cap_frame_cap_new(
                    asidInvalid,                    /* capFMappedASID       */
                    (word_t) regionBase,            /* capFBasePtr          */
@@ -219,6 +219,19 @@ cap_t Arch_createObject(object_t t, void *regionBase, int userSize, bool_t
                );
 
     case seL4_RISCV_Mega_Page: {
+        if (deviceMemory) {
+            /** AUXUPD: "(True, ptr_retyps (2^9)
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_device_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.RISCVLargePage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat RISCVMegaPageBits))" */
+        } else {
+            /** AUXUPD: "(True, ptr_retyps (2^9)
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.RISCVLargePage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat RISCVMegaPageBits))" */
+        }
         return cap_frame_cap_new(
                    asidInvalid,                    /* capFMappedASID       */
                    (word_t) regionBase,            /* capFBasePtr          */
@@ -231,6 +244,19 @@ cap_t Arch_createObject(object_t t, void *regionBase, int userSize, bool_t
 
 #if CONFIG_PT_LEVELS > 2
     case seL4_RISCV_Giga_Page: {
+        if (deviceMemory) {
+            /** AUXUPD: "(True, ptr_retyps (2^18)
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_device_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.RISCVHugePage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat RISCVGigaPageBits))" */
+        } else {
+            /** AUXUPD: "(True, ptr_retyps (2^18)
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.RISCVHugePage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat RISCVGigaPageBits))" */
+        }
         return cap_frame_cap_new(
                    asidInvalid,                    /* capFMappedASID       */
                    (word_t) regionBase,            /* capFBasePtr          */
@@ -243,6 +269,8 @@ cap_t Arch_createObject(object_t t, void *regionBase, int userSize, bool_t
 #endif
 
     case seL4_RISCV_PageTableObject:
+        /** AUXUPD: "(True, ptr_retyps 1
+              (Ptr (ptr_val \<acute>regionBase) :: (pte_C[512]) ptr))" */
         return cap_page_table_cap_new(
                    asidInvalid,            /* capPTMappedASID    */
                    (word_t)regionBase,     /* capPTBasePtr       */
@@ -260,10 +288,9 @@ cap_t Arch_createObject(object_t t, void *regionBase, int userSize, bool_t
     }
 }
 
-exception_t
-Arch_decodeInvocation(
+exception_t Arch_decodeInvocation(
     word_t label,
-    unsigned int length,
+    word_t length,
     cptr_t cptr,
     cte_t *slot,
     cap_t cap,
@@ -275,16 +302,16 @@ Arch_decodeInvocation(
     return decodeRISCVMMUInvocation(label, length, cptr, slot, cap, extraCaps, buffer);
 }
 
-void
-Arch_prepareThreadDelete(tcb_t *thread)
+void Arch_prepareThreadDelete(tcb_t *thread)
 {
-    /* No action required on RISCV. */
+#ifdef CONFIG_HAVE_FPU
+    fpuThreadDelete(thread);
+#endif
 }
 
-bool_t
-Arch_isFrameType(word_t t)
+bool_t Arch_isFrameType(word_t type)
 {
-    switch (t) {
+    switch (type) {
 #if CONFIG_PT_LEVELS == 4
     case seL4_RISCV_Tera_Page:
 #endif

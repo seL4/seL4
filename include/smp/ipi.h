@@ -1,17 +1,10 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __IPI_H
-#define __IPI_H
+#pragma once
 
 #include <config.h>
 #include <types.h>
@@ -120,20 +113,17 @@ static void inline doRemoteMaskOp0Arg(IpiRemoteCall_t func, word_t mask)
     doRemoteMaskOp(func, 0, 0, 0, mask);
 }
 
-static void inline
-doRemoteMaskOp1Arg(IpiRemoteCall_t func, word_t data1, word_t mask)
+static void inline doRemoteMaskOp1Arg(IpiRemoteCall_t func, word_t data1, word_t mask)
 {
     doRemoteMaskOp(func, data1, 0, 0, mask);
 }
 
-static void inline
-doRemoteMaskOp2Arg(IpiRemoteCall_t func, word_t data1, word_t data2, word_t mask)
+static void inline doRemoteMaskOp2Arg(IpiRemoteCall_t func, word_t data1, word_t data2, word_t mask)
 {
     doRemoteMaskOp(func, data1, data2, 0, mask);
 }
 
-static void inline
-doRemoteMaskOp3Arg(IpiRemoteCall_t func, word_t data1, word_t data2, word_t data3, word_t mask)
+static void inline doRemoteMaskOp3Arg(IpiRemoteCall_t func, word_t data1, word_t data2, word_t data3, word_t mask)
 {
     doRemoteMaskOp(func, data1, data2, data3, mask);
 }
@@ -143,16 +133,19 @@ static void inline doRemoteOp0Arg(IpiRemoteCall_t func, word_t cpu)
     doRemoteOp(func, 0, 0, 0, cpu);
 }
 
-static void inline
-doRemoteOp1Arg(IpiRemoteCall_t func, word_t data1, word_t cpu)
+static void inline doRemoteOp1Arg(IpiRemoteCall_t func, word_t data1, word_t cpu)
 {
     doRemoteOp(func, data1, 0, 0, cpu);
 }
 
-static void inline
-doRemoteOp2Arg(IpiRemoteCall_t func, word_t data1, word_t data2, word_t cpu)
+static void inline doRemoteOp2Arg(IpiRemoteCall_t func, word_t data1, word_t data2, word_t cpu)
 {
     doRemoteOp(func, data1, data2, 0, cpu);
+}
+
+static void inline doRemoteOp3Arg(IpiRemoteCall_t func, word_t data1, word_t data2, word_t data3, word_t cpu)
+{
+    doRemoteOp(func, data1, data2, data3, cpu);
 }
 
 /* This is asynchronous call and could be called outside the lock.
@@ -176,4 +169,4 @@ static void inline doReschedule(word_t cpu)
 }
 
 #endif /* ENABLE_SMP_SUPPORT */
-#endif /* __IPI_H */
+

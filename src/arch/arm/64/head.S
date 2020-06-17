@@ -1,13 +1,7 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -58,7 +52,7 @@
 
 /*
  * Entry point of the kernel ELF image.
- * X0-X3 contain parameters that are passed to init_kernel().
+ * X0-X5 contain parameters that are passed to init_kernel().
  *
  * Note that for SMP kernel, the tpidr_el1 is used to pass
  * the logical core ID.
@@ -72,6 +66,10 @@
 
 .section .boot.text
 BEGIN_FUNC(_start)
+    /* Save x4 and x5 so we don't clobber it */
+    mov     x7, x4
+    mov     x8, x5
+
     /* Make sure interrupts are disable */
     msr daifset, #DAIFSET_MASK
 
@@ -109,7 +107,9 @@ BEGIN_FUNC(_start)
     /* Attempt to workaround any known ARM errata. */
     stp     x0, x1, [sp, #-16]!
     stp     x2, x3, [sp, #-16]!
+    stp     x7, x8, [sp, #-16]!
     bl arm_errata
+    ldp     x4, x5, [sp], #16
     ldp     x2, x3, [sp], #16
     ldp     x0, x1, [sp], #16
 

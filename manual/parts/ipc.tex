@@ -1,11 +1,7 @@
 %
 % Copyright 2014, General Dynamics C4 Systems
 %
-% This software may be distributed and modified according to the terms of
-% the GNU General Public License version 2. Note that NO WARRANTY is provided.
-% See "LICENSE_GPLv2.txt" for details.
-%
-% @TAG(GD_GPL)
+% SPDX-License-Identifier: GPL-2.0-only
 %
 
 \chapter{\label{ch:ipc}Message Passing (IPC)}
@@ -114,6 +110,14 @@ no sender is ready, threads performing the \apifunc{seL4\_Recv}{sel4_recv}
 system call or the second half of \apifunc{seL4\_ReplyRecv}{sel4_replyrecv}
 will wait for the first available sender.
 
+Trying to Send or Call without the Write right will fail and return an error. In
+the case of Send the error is ignored (The kernel isn't allowed to reply). Thus
+there is no way of knowing that a send has failed because of missing right.
+On the other hand calling \apifunc{seL4\_Recv}{sel4_recv} with a endpoint capability that
+does not have the Read right will raise a fault, see \autoref{sec:faults}. This
+because otherwise the error message would be indistinguishable from a normal
+message received from another thread via the endpoint.
+
 \subsection{Endpoint Badges\label{s:ep-badge}}
 \label{sec:ep-badges}
 
@@ -129,13 +133,14 @@ invocations on the \obj{CNode} containing the capability. Endpoint
 capabilities with badges cannot be unbadged, rebadged or used to create
 child capabilities with different badges.
 
-Only the low 28 bits of the badge are available for use. The kernel will
-silently ignore any usage of the high 4 bits.
+On 32-bit platforms, only the low 28 bits of the badge are available for use.
+The kernel will silently ignore any usage of the high 4 bits.
+On 64-bit platforms, 64 bits are available for badges.
 
 \subsection{Capability Transfer}
 \label{sec:cap-transfer}
 
-Messages may contain capabilities, which will be transferred to the
+Messages may contain capabilities, which will be copied to the
 receiver, provided that the endpoint capability
 invoked by the sending thread has Grant rights. An attempt to send
 capabilities using an endpoint capability without the Grant right will
@@ -152,11 +157,6 @@ These fields specify the root CNode, capability address and number of bits to re
 the slot in which to put the capability. Capability
 addressing is described in \autoref{sec:cap_addressing}.
 
-A received capability has the same rights as the original, except if
-the \emph{receiving} endpoint capability lacks the Write right.
-In this case, the rights on the sent capability are \emph{diminished}, by
-stripping the Write right from the received copy of the capability.
-
 Note that receiving threads may specify only one receive slot, whereas a
 sending thread may include multiple capabilities in the message. Messages
 containing more than one capability may be interpreted by kernel objects. They
@@ -170,6 +170,10 @@ position of the receiver's badges array, and the kernel sets the n-th bit (count
 least significant) in the \texttt{capsUnwrapped} field of the message
 tag. The capability itself is not transferred, so the receive slot may be used
 for another capability.
+
+A capability that is not unwrapped is transferred by copying it from the
+sender's CNode slot to the receiver's CNode slot. The sender retains access
+to the sent capability.
 
 If a receiver gets a message whose tag has an \texttt{extraCaps} of 2 and a
 \texttt{capsUnwrapped} of 2, then the first capability in the message was
@@ -220,3 +224,63 @@ buffer is set to the number of capabilities transferred up to failure.
 No error message will be returned to the receiving thread in any of the
 above cases.
 
+\subsection{Calling and Replying}
+\label{sec:ep-cal}
+
+As explained in \autoref{sec:sys_call}, when the user calls
+\apifunc{seL4\_Call}{sel4_call} on an endpoint capability,
+some specific actions are taken. First a call will do exactly the same action as
+a normal \apifunc{seL4\_Send}{sel4_send}. Then after the rendezvous and all the
+normal IPC procedure happened, instead of returning directly to the caller,
+\apifunc{seL4\_Call}{sel4_call} will check if either Grant or GrantReply are
+present on the invoked endpoint capability:
+
+\begin{itemize}
+\item If this is not the case, the caller thread is suspended as if
+  \apifunc{seL4\_TCB\_Suspend}{tcb_suspend} was called on it. The send part of
+  the call would still have been performed as usual.
+\item If this is the case. A reply capability is set in a specific slot of the
+  receiver TCB. The Grant right of that reply capability is set by copying the Grant
+  right of the endpoint capability invoked by the receiver in
+  \apifunc{seL4\_Recv}{sel4_recv}.
+  Then, the caller thread is blocked waiting for the reply.
+  \end{itemize}
+
+A reply capability points directly to the caller thread and once the call has
+been performed is completely unrelated to the original \obj{Endpoint}. Even if
+the latter was destroyed, the reply capability would still exist and point to
+the caller who would still be waiting for a reply.
+
+The generated reply capability can then be either invoked in place (in the
+specific TCB slot) with the \apifunc{seL4\_Reply}{sel4_reply} or saved to an
+addressable slot using \apifunc{seL4\_CNode\_SaveCaller}{cnode_savecaller} to be
+invoked later with \apifunc{seL4\_Send}{sel4_send}. The specific slot cannot be
+directly addressed with any CPtr as it is not part of any CSpace.
+
+A reply capability is invoked in the same way as a normal send on a
+\obj{Endpoint}. A reply capability has implicitly the Write right, so the
+message will always go through. Transferring caps in the reply can only happen
+if the reply capability has the Grant right and is done in exactly the same way
+as in a normal IPC transfer as described in \autoref{sec:cap-transfer}.
+
+The main difference with a normal endpoint transfer is that the kernel guarantees
+that invoking a reply capability cannot block: If you own a reply capability,
+then the thread it points to is waiting for a reply. However a reply capability
+is a non-owning reference, contrary to all the other capabilities. That means that
+if the caller thread is destroyed or modified in any way that would render
+a reply impossible (for example being suspended with
+\apifunc{seL4\_TCB\_Suspend}{tcb_suspend}), the kernel would immediately destroy
+the reply capability.
+
+Once the reply capability has been invoked, the caller receives the message as if
+it has been performing a \apifunc{seL4\_Recv}{sel4_recv} and just received the
+message. In particular, it starts running again.
+
+The \apifunc{seL4\_Call}{sel4_call} operation exists not only for
+efficiency reasons (combining two operations into a single system
+call). It differs from
+\apifunc{seL4\_Send}{sel4_send} immediately followed by
+\apifunc{seL4\_Recv}{sel4_recv} in ways that allow certain system setup to work
+much more efficiently with much less setup that with a traditional setup.
+In particular, it is guaranteed that the reply received by the caller comes from
+the thread that received the call without having to check any kind of badge.

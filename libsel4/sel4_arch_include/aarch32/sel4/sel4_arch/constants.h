@@ -1,28 +1,21 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the BSD 2-Clause license. Note that NO WARRANTY is provided.
- * See "LICENSE_BSD2.txt" for details.
- *
- * @TAG(DATA61_BSD)
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_SEL4_ARCH_CONSTANTS_H
-#define __LIBSEL4_SEL4_ARCH_CONSTANTS_H
+#pragma once
 
 #ifdef HAVE_AUTOCONF
 #include <autoconf.h>
 #endif
 
 #ifndef __ASSEMBLER__
-#ifdef CONFIG_IPC_BUF_GLOBALS_FRAME
+#ifdef CONFIG_KERNEL_GLOBALS_FRAME
 enum {
     seL4_GlobalsFrame = 0xffffc000,
 };
-#endif /* CONFIG_IPC_BUF_GLOBALS_FRAME */
+#endif /* CONFIG_KERNEL_GLOBALS_FRAME */
 
 /* format of an unknown syscall message */
 enum {
@@ -74,6 +67,11 @@ enum {
 } seL4_VGICMaintenance_Msg;
 
 enum {
+    seL4_VPPIEvent_IRQ,
+    SEL4_FORCE_LONG_ENUM(seL4_VPPIEvent_Msg),
+} seL4_VPPIEvent_Msg;
+
+enum {
     seL4_VCPUFault_HSR,
     seL4_VCPUFault_Length,
     SEL4_FORCE_LONG_ENUM(seL4_VCPUFault_Msg),
@@ -97,8 +95,6 @@ enum {
     seL4_VCPUReg_CIDR,
     seL4_VCPUReg_TPIDRPRW,
     seL4_VCPUReg_FPEXC,
-    seL4_VCPUReg_CNTV_TVAL,
-    seL4_VCPUReg_CNTV_CTL,
     seL4_VCPUReg_LRsvc,
     seL4_VCPUReg_SPsvc,
     seL4_VCPUReg_LRabt,
@@ -114,15 +110,55 @@ enum {
     seL4_VCPUReg_R10fiq,
     seL4_VCPUReg_R11fiq,
     seL4_VCPUReg_R12fiq,
+#if  CONFIG_MAX_NUM_NODES > 1
+    seL4_VCPUReg_VMPIDR,
+#endif /* CONFIG_MAX_NUM_NODES > 1 */
     seL4_VCPUReg_SPSRsvc,
     seL4_VCPUReg_SPSRabt,
     seL4_VCPUReg_SPSRund,
     seL4_VCPUReg_SPSRirq,
     seL4_VCPUReg_SPSRfiq,
+    seL4_VCPUReg_CNTV_CTL,
+    seL4_VCPUReg_CNTV_CVALhigh,
+    seL4_VCPUReg_CNTV_CVALlow,
+    seL4_VCPUReg_CNTVOFFhigh,
+    seL4_VCPUReg_CNTVOFFlow,
     seL4_VCPUReg_Num,
 } seL4_VCPUReg;
-
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
+
+#ifdef CONFIG_KERNEL_MCS
+enum {
+    seL4_Timeout_Data,
+    /* consumed is 64 bits */
+    seL4_Timeout_Consumed_HighBits,
+    seL4_Timeout_Consumed_LowBits,
+    seL4_Timeout_Length,
+    SEL4_FORCE_LONG_ENUM(seL4_Timeout_Msg)
+} seL4_TimeoutMsg;
+
+enum {
+    seL4_TimeoutReply_FaultIP,
+    seL4_TimeoutReply_SP,
+    seL4_TimeoutReply_CPSR,
+    seL4_TimeoutReply_R0,
+    seL4_TimeoutReply_R1,
+    seL4_TimeoutReply_R8,
+    seL4_TimeoutReply_R9,
+    seL4_TimeoutReply_R10,
+    seL4_TimeoutReply_R11,
+    seL4_TimeoutReply_R12,
+    seL4_TimeoutReply_R2,
+    seL4_TimeoutReply_R3,
+    seL4_TimeoutReply_R4,
+    seL4_TimeoutReply_R5,
+    seL4_TimeoutReply_R6,
+    seL4_TimeoutReply_R7,
+    seL4_TimeoutReply_R14,
+    seL4_TimeoutReply_Length,
+    SEL4_FORCE_LONG_ENUM(seL4_TimeoutReply_Msg)
+} seL4_TimeoutReply_Msg;
+#endif /* CONFIG_KERNEL_MCS */
 #endif /* !__ASSEMBLER__ */
 
 #define seL4_DataFault 0
@@ -132,17 +168,30 @@ enum {
 #define seL4_LargePageBits 16
 #define seL4_SlotBits 4
 
-#if ((defined(CONFIG_DEBUG_BUILD) || CONFIG_MAX_NUM_NODES > 1) && defined(CONFIG_HAVE_FPU) && defined(CONFIG_HARDWARE_DEBUG_API)) \
-    || (defined(CONFIG_HAVE_FPU) && defined(CONFIG_ARM_HYPERVISOR_SUPPORT))
+#if ( \
+    defined(CONFIG_HAVE_FPU) && ( \
+        (defined(CONFIG_ARM_HYPERVISOR_SUPPORT) && defined(CONFIG_ARM_HYP_ENABLE_VCPU_CP14_SAVE_AND_RESTORE)) || \
+        defined(CONFIG_HARDWARE_DEBUG_API) \
+    ) \
+)
 #define seL4_TCBBits 11
-#elif defined(CONFIG_HAVE_FPU)
+#elif ( \
+    defined(CONFIG_HAVE_FPU) || \
+    (defined(CONFIG_ARM_HYPERVISOR_SUPPORT) && defined(CONFIG_ARM_HYP_ENABLE_VCPU_CP14_SAVE_AND_RESTORE)) || \
+    defined(CONFIG_HARDWARE_DEBUG_API) \
+)
 #define seL4_TCBBits 10
 #else
 #define seL4_TCBBits 9
 #endif
 
 #define seL4_EndpointBits 4
+#ifdef CONFIG_KERNEL_MCS
+#define seL4_NotificationBits 5
+#define seL4_ReplyBits 4
+#else
 #define seL4_NotificationBits 4
+#endif
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 #define seL4_PageTableBits 12
@@ -150,9 +199,6 @@ enum {
 #define seL4_PageTableIndexBits 9
 #define seL4_SectionBits 21
 #define seL4_SuperSectionBits 25
-#define seL4_PGDEntryBits 3
-#define seL4_PGDIndexBits 2
-#define seL4_PGDBits (seL4_PGDIndexBits + seL4_PGDEntryBits)
 #define seL4_PageDirEntryBits 3
 #define seL4_PageDirIndexBits 11
 #define seL4_VCPUBits 12
@@ -167,7 +213,13 @@ enum {
 #endif
 
 #define seL4_PageDirBits 14
+#define seL4_VSpaceBits seL4_PageDirBits
 
+#ifdef CONFIG_ARM_SMMU
+#define seL4_NumASIDPoolsBits 6
+#else
+#define seL4_NumASIDPoolsBits 7
+#endif
 #define seL4_ASIDPoolBits 12
 #define seL4_ASIDPoolIndexBits 10
 #define seL4_ARM_VCPUBits       12
@@ -182,6 +234,9 @@ enum {
 SEL4_SIZE_SANITY(seL4_PageTableEntryBits, seL4_PageTableIndexBits, seL4_PageTableBits);
 SEL4_SIZE_SANITY(seL4_PageDirEntryBits,   seL4_PageDirIndexBits,   seL4_PageDirBits);
 SEL4_SIZE_SANITY(seL4_WordSizeBits, seL4_ASIDPoolIndexBits, seL4_ASIDPoolBits);
+#ifdef seL4_PGDBits
+SEL4_SIZE_SANITY(seL4_PGDEntryBits, seL4_PGDIndexBits, seL4_PGDBits);
+#endif
 #endif
 
 /* Untyped size limits */
@@ -204,4 +259,3 @@ SEL4_SIZE_SANITY(seL4_WordSizeBits, seL4_ASIDPoolIndexBits, seL4_ASIDPoolBits);
 /* IPC buffer is 512 bytes, giving size bits of 9 */
 #define seL4_IPCBufferSizeBits 9
 
-#endif

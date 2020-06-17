@@ -1,11 +1,7 @@
 %
 % Copyright 2014, General Dynamics C4 Systems
 %
-% This software may be distributed and modified according to the terms of
-% the GNU General Public License version 2. Note that NO WARRANTY is provided.
-% See "LICENSE_GPLv2.txt" for details.
-%
-% @TAG(GD_GPL)
+% SPDX-License-Identifier: GPL-2.0-only
 %
 
 \chapter{\label{ch:threads}Threads and Execution}
@@ -13,9 +9,20 @@
 \section{Threads}
 \label{sec:threads}
 
-seL4 provides threads to represent an execution context and manage
-processor time. A thread is represented in seL4 by its thread control block
-object (\obj{TCB}). Each \obj{TCB} has an associated CSpace (see
+
+seL4 provides threads to represent an execution context. On MCS configurations of
+the kernel, scheduling contexts are used to manage processor time. Without MCS, processor
+time is also represented by the thread abstraction.
+A thread is represented in seL4 by its thread control block
+object (\obj{TCB}).
+
+With MCS, a scheduling context is represented by a scheduling context object
+(\obj{SCO}), and threads cannot run unless they are bound to, or receive a
+scheduling context.
+
+\subsection{Thread control blocks}
+
+Each \obj{TCB} has an associated CSpace (see
 \autoref{ch:cspace}) and VSpace (see \autoref{ch:vspace}) which
 may be shared with other threads. A \obj{TCB} may also have an IPC buffer
 (see  \autoref{ch:ipc}), which is used to pass extra arguments during IPC
@@ -39,9 +46,17 @@ or \apifunc{seL4\_TCB\_Configure}{tcb_configure} methods and then calling
 \apifunc{seL4\_TCB\_WriteRegisters}{tcb_writeregisters} with an initial stack pointer and instruction
 pointer. The thread can then be activated either by setting the
 \texttt{resume\_target} parameter in the \apifunc{seL4\_TCB\_WriteRegisters}{tcb_writeregisters} invocation to true
-or by seperately calling the \apifunc{seL4\_TCB\_Resume}{tcb_resume} method. In multicore machines, the thread
-would be running on the same CPU which originally created the \obj{TCB}. However, it could be migrated to other CPUs
-by calling \apifunc{seL4\_TCB\_SetAffinity}{tcb_setaffinity}.
+or by seperately calling the \apifunc{seL4\_TCB\_Resume}{tcb_resume} method. Both of these methods
+place the thread in a runnable state.
+
+On the master kernel, this will result in the thread immediately being added to
+the scheduler. On the MCS kernel, the thread will only begin running if it has a
+scheduling context object.
+
+In a SMP configuration of the kernel, the thread will resume on the core
+corresponding to the affinity of the thread. For master, this is set using
+\apifunc{seL4\_TCB\_SetAffinity}{tcb_setaffinity}, while on the MCS kernel the affinity is
+derived from the scheduling context object.
 
 \subsection{Thread Deactivation}
 \label{sec:thread_deactivation}
@@ -60,43 +75,270 @@ deleted.
 \subsection{Scheduling}
 \label{sec:sched}
 
-seL4 uses a preemptive round-robin scheduler with 256 priority levels.
-All threads have a maximum controlled priority (MCP) and a priority, the latter being the effective
-priority of the thread.
+seL4 uses a preemptive, tickless scheduler with 256 priority levels (0 --- 255).  All threads have
+a maximum controlled priority (MCP) and a priority, the latter being the effective priority of the
+thread.
 When a thread modifies a another threads priority (including itself) it must provide a
 thread capability from which to use the MCP from. Threads can only set priorities and MCPs
 to be less than or equal to the provided thread's MCP.
 The initial task starts with an MCP and priority as the highest priority in the system (\texttt{seL4\_MaxPrio}).
-Thread priority and MCP can be set with \apifunc{seL4\_TCB\_SetPriority}{tcb_setpriority}
-and \apifunc{seL4\_TCB\_SetMCPriority}{tcb_setmcpriority} methods.
+Thread priority and MCP can be
+set with \apifunc{seL4\_TCB\_SetSchedParams}{tcb_setschedparams} and
+\apifunc{seL4\_TCB\_SetPriority}{tcb_setpriority},
+\apifunc{seL4\_TCB\_SetMCPriority}{tcb_setmcpriority} methods.
+
+
+Of threads eligible for scheduling, the highest priority thread in a runnable state is chosen.
+
+Thread priority (structure \texttt{seL4\_PrioProps\_t}) consists of two values as follows:
+
+\begin{description} \item[Priority] the priority a thread will be scheduled with.  \item[Maximum
+controlled priority (MCP)] the highest priority a thread can set itself or another thread to.
+\end{description}
+
+\subsection{MCS Scheduling}
+
+This section only applies to configrations with MCS enabled, where threads must have
+a scheduling context object available in order to be admitted to the scheduler.
+
+\subsection{Scheduling Contexts}
+\label{sec:scheduling_contexts}
+
+Access to CPU execution time is controlled through scheduling context objects.
+Scheduling contexts are configured with a tuple of
+\textit{budget}$(b)$ and \textit{period} $(p)$, both in microseconds, set by
+\apifunc{seL4\_SchedControl\_Configure}{schedcontrol_configure} (see \autoref{sec:sc_creation}).
+The tuple $(b, p)$ forms an upper bound on the thread's execution -- the kernel will not permit a
+thread to run for more than $b$ out of every $p$ microseconds. However, $\frac{b}{p}$ does not
+represent a lower bound on execution, as a thread must have the highest or equal highest priority
+of all runnable threads to be guaranteed to be scheduled at all, and the kernel does not conduct
+an admission test. As a result the set of all parameters is not neccesserily schedulable. If
+multiple threads have available budget concurrently they are scheduled first-in first-out, and
+round-robin scheduling is applied once the budget is expired.
+
+A scheduling context that is eligible to be picked by the scheduler, i.e has budget available, is
+referred to as \emph{active}.  Budget charging and replenishment rules are different for round-robin
+and sporadic threads.  For round-robin threads, the budget is charged each time the current node's
+scheduling context is changed, until it is depleted and then refilled immediately.
+
+Threads where $b == p$ are treated as round robin threads, where $b$ acts as a timeslice.
+Otherwise the kernel uses \emph{sporadic servers} to enforce temporal isolation, which enforce the
+property that $\frac{b}{p}$ cannot be exceeded for all possible $p$.
+In theory, sporadic servers provide temporal isolation -- preventing threads from exceeding their allocated budget -- by using the following algorithm:
+
+\begin{itemize}
+\item When a thread starts executing at current time $T$, record $T_{s}$
+\item When a thread stops executing (blocks or is preempted), schedule a replenishment at $T_{s} + p$ for the
+amount of time consumed ($T - T_{s}$) and subtract that from the current replenishment being used.
+\end{itemize}
+
+seL4 implements this algorithm by maintaining an ordered list of sporadic replenishments --
+\texttt{refills} for brevity -- in each scheduling context. Each replenishment contains a tuple
+of the time it is eligible for use (\emph{rTime}) and the amount that replenishment is for
+(\texttt{rAmount}).
+While a thread is executing, it constantly drains the budget from the \texttt{rAmount} at the head of the
+replenishment list. If the \texttt{rTime} is in the future, the thread bound to that
+scheduling context is placed in a queue of threads waiting for more budget.
+
+Round-robin threads are treated that same as sporadic threads except for one case: how the
+budget is charged. Round-robin threads have two refills only, both of which are always ready to be
+used. When a round-robin thread stops executing, budget is moved from the head to the tail
+replenishment. Once the head budget is consumed, the thread is removed from the scheduling queue
+for its priority and appended at the tail.
+
+Sporadic threads behave differently depending on the amount of replenishments available, which
+must be bounded. Developers have two options to configure the size of the replenishment list:
+
+\begin{itemize}
+\item The maximum number of refills in a single scheduling context is determined by the size
+      of the scheduling context when created by \apifunc{seL4\_Untyped\_Retype}{untyped_retype}.
+\item A per scheduling context parameter, \texttt{extra\_refills} that
+limits the number of refills for that specific scheduling context. This value is added to the base
+value of 2 and is limited by the size of the scheduling context.
+\end{itemize}
+
+Threads that have short exection times (e.g interrupt handlers) and are not frequently preempted
+should have less refills, while longer running threads with long values of $b$ should have a higher
+value. Threads bound to a scheduling context with 0 extra refills will behave periodically -- tasks
+that use their head replenishment, or call yield, will not be scheduled again until the start of
+their next period.
+
+Given the number of replenishments is limited, if a node's SC changes and the outgoing SC does not
+have enough space to store the new replenishment, space is created by removing the current
+replenishment which can result in preemption if the next replenishment is not yet available.
+Scheduling contexts with a higher number of configured refills will consume closer
+to their whole budget, as they can be preempted or switch threads more often without filling their
+replenishment queue. However, the scheduling overhead will be higher as the replenishment list is
+subject to fragmentation.
+
+Whenever a thread is executing it consumes the budget from its current scheduling context.  The
+system call \apifunc{seL4\_Yield}{sel4_yield} can be used to sacrifice any remaining budget and
+block until the next replenishment is ready to be used.
+
+Threads can be bound to scheduling contexts using \apifunc{seL4\_TCB\_Configure}{tcb_configure} or
+\apifunc{seL4\_SchedContext\_Bind}{schedcontext_bind}, both invocations have the same effect
+although \apifunc{seL4\_TCB\_Configure}{tcb_configure} allows more thread fields to be set with only
+one kernel entry.  When a thread is bound to a scheduling context, if it is in a runnable state and
+the scheduling context is active, it will be added to the scheduler.
+
+\subsection{Passive Threads} \label{sec:passive}
+
+Threads can be unbound from a scheduling context with
+\apifunc{seL4\_SchedContext\_UnbindObject}{schedcontext_unbindobject}.  This is distinct from
+suspending a thread, in that threads that are blocked waiting in an endpoint or notification queue
+will remain in the queue and can still recieve messages and signals.  However, the unbound thread
+will not be schedulable again until it receives a scheduling context.  Threads without scheduling
+contexts are referred to as \emph{passive} threads, as they cannot execute without the action of
+another thread.
+
+\subsection{Scheduling Context Creation} \label{sec:sc_creation}
+
+Like other objects, scheduling contexts are created from untyped memory using
+\apifunc{seL4\_UntypedRetype}{untyped_retype}.  On creation, scheduling contexts are empty,
+representing 0\% of CPU execution time.  To populate a scheduling context with parameters, one must
+invoke the appropriate \obj{SchedControl} capability, which provides access to CPU time management
+on a single node.  A scheduling control cap for each node is provided to the initial task at run
+time.  Threads run on the node that their scheduling context is configured for.  Scheduling context
+parameters can then be set and updated using
+\apifunc{seL4\_SchedControl\_Configure}{schedcontrol_configure}, which allows the budget and period
+to be specified.
+
+The kernel does not conduct any schedulability tests, as task admission is left to user-level policy
+and can be conducted online or offline, statically or dynamically or not at all.
+
+\subsection{Scheduling Context Donation}
+
+In addition to explicitly binding and removing scheduling contexts through
+\apifunc{seL4\_SchedContext\_Bind}{schedcontext_bind} and
+\apifunc{seL4\_SchedContext\_UnbindObject}{schedcontext_unbindobject}, scheduling contexts can move
+between threads over IPC.  Scheduling contexts are donated implicitly when the system calls
+\apifunc{seL4\_Call}{sel4_call} and \apifunc{seL4\_NBSendRecv}{sel4_nbsendrecv} are used to
+communicate with a passive thread.  When an active thread invokes an endpoint with
+\apifunc{seL4\_Call}{sel4_call} and rendezvous with a passive thread, the active thread's scheduling
+context is donated to the passive thread. The generated reply cap ensures that the callee is merely
+borrowing the scheduling context: when the reply cap is consumed by a reply message being sent the
+scheduling context will be returned to the caller.  If the reply cap is revoked, and the callee
+holds the scheduling context, the scheduling context will be returned to the caller.  However, if in
+a deep call chain and a reply cap in the middle of the call chain is revoked, such that the callee
+does not possess the scheduling context, the thread will be removed from the call chain and the
+scheduling context will remain where it is.  If the receiver does not provide a reply object to
+track the donation in (i.e uses \apifunc{seL4\_Wait}{sel4_wait} instead of
+\apifunc{seL4\_Recv}{sel4_recv} scheduling context donation will not occur but the message will be
+delivered. The passive receiver will be set to inactive as it does not have a scheduling context.
+
+Consider an example where thread A calls thread B which calls thread C.  If whilst C holds the
+scheduling context, B's reply cap to A is revoked, then the scheduling context will remain with C.
+However, a call chain will remain between A and C, such that if C's reply cap is revoked, or
+invoked, the scheduling context will return to A.
+
+\apifunc{seL4\_NBSendRecv}{sel4_nbsendrecv} can also result in scheduling context donation.
+If the non-blocking send phase of the operation results in message delivery to a passive thread, the
+scheduling context will be donated to that passive thread and the thread making the system call becomes passive on the
+receiving endpoint in the receive phase.  No reply capability generated, so there
+is no guarantee that the scheduling context will return, which increases book keeping complexity but allows
+for data-flow like architectures rather than remote-procedure calls. Note that \apifunc{seL4\_Call}{sel4_call}
+does not guarantee the return of a scheduling context: this is an inherently trusted operation as the
+server could never reply and return the scheduling context.
+
+Scheduling contexts can also be bound to notification objects using
+\apifunc{seL4\_SchedContext\_Bind}{schedcontext_bind} and unbound using
+\apifunc{seL4\_SchedContext\_UnbindObject}{schedcontext_unbindobject}.  If a signal is delivered to
+a notification object with a passive thread blocked waiting on it, the passive thread will receive
+the scheduling context that is bound to the notification object.  The scheduling context is returned
+when the thread blocks on the notification object.  This feature allows for passive servers to use
+notification binding (See \autoref{sec:notification-binding}).
+
+Scheduling contexts can be unbound from all objects (notification objects and TCBs that are bound or
+have received a scheduling context through donation) using
+\apifunc{seL4\_SchedContext\_Unbind}{schedcontext_unbind}.
+
+Passive threads will run on the CPU node that the scheduling context was configured with, and will
+be migrated on IPC.
+
+\subsection{Scheduling algorithm} \label{sec:mcs-sched}
+
+Threads are only eligible for scheduling if they have an active scheduling context.
+Of threads eligible for scheduling, the highest priority thread in a runnable state is chosen.
+
+Threads of sufficient maximum controlled priority and with possession of the
+appropriate scheduling context capability can manipulate the scheduler and
+implement user-level schedulers using IPC.
+
+Scheduling contexts provide access to and an upper bound on exection CPU time,
+however when a thread executes is determined by thread priority.  Consequently,
+access to CPU is a function of thread MCPs, scheduling contexts and the
+\obj{SchedControl} capability.  The kernel will enforce that threads do not
+exceeed the budget in their scheduling context for any given period, and that
+the highest priority thread will always run, however it is up to the system
+designer to make sure the entire system is schedulable.
+
 
 \subsection{Exceptions}
+\label{sec:exceptions}
 
-Each thread has an associated exception-handler endpoint. If the thread
-causes an exception, the kernel creates an IPC message with the relevant
-details and sends this to the endpoint. This
-thread can then take the appropriate action. Fault IPC messages are
-described in \autoref{sec:faults}.
+Each thread has two associated exception-handler endpoints, a \emph{standard}
+exception handler and a \emph{timeout} exception handler, where the latter is MCS
+only. If the thread causes
+an exception, the kernel creates an IPC message with the relevant details and
+sends this to the endpoint. This thread can then take the appropriate action.
+Fault IPC messages are described in \autoref{sec:faults}.  Standard exception-handler
+endpoints can be set with the \apifunc{seL4\_TCB\_SetSpace}{tcb_setspace} or
+\apifunc{seL4\_TCB\_SetSchedParams}{tcb_setschedparams} methods while Timeout exception
+handlers an be set with \apifunc{seL4\_TCB\_SetTimeoutEndpoint}{tcb_settimeoutendpoint} (MCS only).
+With these methods, a
+capability address for the exception handler can be associated with a thread.
+This address is then used to lookup the handler endpoint, and the capability to
+the endpoint is installed into the threads' kernel CNode.  For threads without
+an exception handler, a null capability can be used, however the consequences
+are different per exeception handler type.  Before raising an exception the
+handler capability is validated. The kernel does not perform another lookup,
+but checks that the capability is an endpoint with the correct rights.
 
-In order to enable exception handlers, a capability to the exception-handler
-endpoint must exist in the CSpace of the thread that generates the exception.
-The exception-handler
-endpoint can be set with the \apifunc{seL4\_TCB\_SetSpace}{tcb_setspace} or
-\apifunc{seL4\_TCB\_Configure}{tcb_configure} method.
-With these methods, a capability address for the exception handler can be associated with a thread.
-This address is then used to lookup the handler endpoint when an exception is generated.
-Note, however, that these methods make no attempt to check whether an endpoint capability exists at the specified
-address in the CSpace of the thread. The capability is only looked up
-when an exception actually happens and if the lookup fails then no
-exception message is delivered and the thread is suspended indefinitely.
+The exception endpoint must have Write and either Grant or GrantReply rights.
+Replying to the exception message restarts the thread. For certain exception
+types, the contents of the reply message may be used to set the values in the
+registers of the thread being restarted.  See \autoref{sec:faults} for details.
 
-The exception endpoint must have send and grant rights. Replying to the
-exception message restarts the thread. For certain exception types, the contents of
-the reply message may be used to set the values in the registers of the
-thread being restarted.
-See \autoref{sec:faults} for details.
+\subsubsection{Standard Exceptions}
 
+The standard exception handler is used when a fault is triggered by a thread
+which cannot be recovered without action by another thread.  For example, if a
+thread raises a fault due to an unmapped virtual memory page, the thread cannot
+make any more progress until the page is mapped.  If a thread experiences a
+fault that would trigger the standard exception handler while it is set to a
+null capability, the kernel will pause the thread and it will not run again.
+This is because without action by another thread, standard exceptions cannot be
+recovered from.  Consequently threads without standard exception handlers
+should be trusted not to fault at all.
 
+Standard exception handlers can be passive, in which case they will run on the
+scheduling context of the faulting thread.
+
+\subsubsection{Timeout Exceptions (MCS Only)} \label{sec:timeout-exceptions}
+
+Timeout faults are raised when a thread attempts to run but has no available
+budget, and if that thread has a valid timeout exception handler capability.
+The handling of timeout faults is not compulsory: if a thread does not have a
+timeout fault handler, a fault will not be raised and the thread will continue
+running when it's budget is replenished.  This allows temporally sensitive
+threads to handle budget overruns while other threads may ignore them.
+
+Timeout faults are registered per thread, which means that while clients may
+not have a timeout fault handler, servers may, allowing single-threaded,
+time-sensitive, passive servers to use a timeout exception handler to recover
+from malicious or untrusted clients whose budget expires while the server is
+completing the request.  Timeout fault handlers can access server reply objects
+and reply with an error to the client, then reset the server to handle the next
+client request.
+
+If a reply message is sent to a nested server and a scheduling context without
+available budget returned, another timeout fault will be generated if the
+nested server also has a timeout fault handler.
+
+Additionally, if the system criticality is changed while a thread with higher
+criticality than the system criticality is running on a scheduling context that
+is bound to a thread with criticality lower than the system criticality, a
+timeout exception will be raised.
 
 \subsection{Message Layout of the Read-/Write-Registers Methods}
 \label{sec:read_write_registers}
@@ -114,12 +356,16 @@ The register contents are transferred via the IPC buffer.
 A thread's actions may result in a fault. Faults are delivered to the
 thread's exception handler so that it can take the appropriate action.
 The fault type is specified in the message label and is one of:
-seL4\_Fault\_CapFault, seL4\_Fault\_VMFault, seL4\_Fault\_UnknownSyscall, seL4\_Fault\_UserException, seL4\_Fault\_DebugException,
-or seL4\_Fault\_NullFault (indicating no fault occurred and this is a normal IPC message).
+\texttt{seL4\_Fault\_CapFault}, \texttt{seL4\_Fault\_VMFault},
+\texttt{seL4\_Fault\_UnknownSyscall}, \texttt{seL4\_Fault\_UserException},
+\texttt{seL4\_Fault\_DebugException},
+\texttt{seL4\_Fault\_TimeoutFault}, or \texttt{seL4\_Fault\_NullFault}
+(indicating no fault occurred and this is a normal IPC message).
 
-Fault are delivered in such a way as to imitate a Call from the faulting
+Faults are delivered in such a way as to imitate a Call from the faulting
 thread. This means that to send a fault message the fault endpoint
-must have both write and grant permissions.
+must have Write and either Grant or GrantReply permissions. If this is not the
+case, a double fault happens (generally the thread is simply suspended).
 
 \subsection{Capability Faults}
 
@@ -310,6 +556,29 @@ the fault-reply to a single-step debug fault.
 \caption{\label{tbl:single_step_exception_result}Single-step fault message layout.}
 \end{table}
 
+\subsection{Timeout Fault (MCS only)}
+\label{sec:timeout-fault}
+
+Timeout faults are raised when a thread consumes all of its budget and has a
+timeout fault handler that is not a null capability.  They allow a timeout
+exception handler to take some action to restore the thread, and deliver a
+message containing the scheduling context data word, as well as the amount of
+time consumed since the last timeout fault occured on this scheduling context,
+or since \apifunc{seL4\_SchedContext\_YieldTo}{schedcontext_yieldto} or
+\apifunc{seL4\_SchedContext\_Consumed}{schedcontext_consumed} was last called.
+Timeout exception handlers can reply to a temporal fault with the registers set
+in the same format as outlined in \autoref{sec:read_write_registers}.
+
+\begin{table}[htb] \noindent\begin{tabularx}{\textwidth}{XX} \toprule
+    \textbf{Meaning} & \textbf{IPC buffer location} \\ \midrule Data word from
+    the scheduling context object that the thread was running on when the fault
+    occured. & \ipcbloc{seL4\_TimeoutFault\_Data} \\ Upper 32-bits of
+    microseconds consumed since last reset &
+    \ipcbloc{seL4\_TimeoutFault\_Consumed} \\ Lower 32-bits of microseconds
+    consumed since last reset & \ipcbloc{seL4\_TimeoutFault\_Consumed\_LowBits}
+    \\ \bottomrule \end{tabularx}\\ \\ \caption{\label{tbl:tf_message_32}
+    Timeout fault outcome on 32-bit architectures.} \end{table}
+
 \subsection{VM Fault}
 \label{sec:vm-fault}
 
@@ -386,7 +655,7 @@ A \obj{TCB} with a bound \obj{VCPU} has two execution modes; one is the original
 if there was no bound \obj{VCPU}, and the other is the guest mode execution using the
 \obj{VCPU}. Switching from regular execution mode into the guest execution mode is
 done by using the \apifunc{seL4\_VMEnter}{sel4_vmenter} syscall. Executing this syscall causes the thread, whenever
-it is scheduled thereafter, to execute using the higher privlidged mode controlled by the \obj{VCPU}.
+it is scheduled thereafter, to execute using the higher privileged mode controlled by the \obj{VCPU}.
 Should the guest execution mode generate any kind of fault, or if a message arrives
 on the \obj{TCB}s bound notification, the \obj{TCB} will be switched back to regular mode
 and the \apifunc{seL4\_VMEnter}{sel4_vmenter} syscall will return with a message indicating the reason for return.
@@ -407,7 +676,7 @@ which serves as the vspace root when executing in guest mode, with the vspace ro
 with \apifunc{seL4\_TCB\_SetSPace}{tcb_setspace} or \apifunc{seL4\_TCB\_Configure}{tcb_configure}
 continuing to provide translation when the TCB is executing in its normal mode.
 
-Direct access to I/O ports can be given to the privlidged execution mode through the
+Direct access to I/O ports can be given to the privileged execution mode through the
 \apifunc{seL4\_X86\_VCPU\_EnableIOPort}{x86_vcpu_enableioport} invocation and allows the provided I/O port capability to be
 linked to the VCPU, and a subset of its I/O port range to be made accessible to the \obj{VCPU}.
 Linking means that an I/O port capability can only be used in a single \apifunc{seL4\_X86\_VCPU\_EnableIOPort}{x86_vcpu_enableioport}

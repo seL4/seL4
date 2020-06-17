@@ -1,23 +1,19 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __OBJECT_STRUCTURES_H
-#define __OBJECT_STRUCTURES_H
+#pragma once
 
 #include <config.h>
 #include <api/types.h>
 #include <stdint.h>
 #include <arch/object/structures_gen.h>
 #include <mode/types.h>
-#include <api/macros.h>
-#include <arch/api/constants.h>
+#include <sel4/macros.h>
+#include <sel4/arch/constants.h>
+#include <sel4/sel4_arch/constants.h>
 #include <benchmark/benchmark_utilisation_.h>
 
 enum irq_state {
@@ -35,6 +31,11 @@ typedef struct dschedule {
     dom_t domain;
     word_t length;
 } dschedule_t;
+
+enum asidSizeConstants {
+    asidHighBits = seL4_NumASIDPoolsBits,
+    asidLowBits = seL4_ASIDPoolIndexBits
+};
 
 /* Arch-independent object types */
 enum endpoint_state {
@@ -83,14 +84,19 @@ typedef word_t notification_state_t;
 #define TCB_PTR_CTE_PTR(p,i) \
     (((cte_t *)((word_t)(p)&~MASK(seL4_TCBBits)))+(i))
 
+#define SC_REF(p) ((word_t) (p))
+#define SC_PTR(r) ((sched_context_t *) (r))
+
+#define REPLY_REF(p) ((word_t) (p))
+#define REPLY_PTR(r) ((reply_t *) (r))
+
 #define WORD_PTR(r) ((word_t *)(r))
 #define WORD_REF(p) ((word_t)(p))
 
 #define ZombieType_ZombieTCB        BIT(wordRadix)
 #define ZombieType_ZombieCNode(n)   ((n) & MASK(wordRadix))
 
-static inline cap_t CONST
-Zombie_new(word_t number, word_t type, word_t ptr)
+static inline cap_t CONST Zombie_new(word_t number, word_t type, word_t ptr)
 {
     word_t mask;
 
@@ -103,8 +109,7 @@ Zombie_new(word_t number, word_t type, word_t ptr)
     return cap_zombie_cap_new((ptr & ~mask) | (number & mask), type);
 }
 
-static inline word_t CONST
-cap_zombie_cap_get_capZombieBits(cap_t cap)
+static inline word_t CONST cap_zombie_cap_get_capZombieBits(cap_t cap)
 {
     word_t type = cap_zombie_cap_get_capZombieType(cap);
     if (type == ZombieType_ZombieTCB) {
@@ -113,22 +118,19 @@ cap_zombie_cap_get_capZombieBits(cap_t cap)
     return ZombieType_ZombieCNode(type); /* cnode radix */
 }
 
-static inline word_t CONST
-cap_zombie_cap_get_capZombieNumber(cap_t cap)
+static inline word_t CONST cap_zombie_cap_get_capZombieNumber(cap_t cap)
 {
     word_t radix = cap_zombie_cap_get_capZombieBits(cap);
     return cap_zombie_cap_get_capZombieID(cap) & MASK(radix + 1);
 }
 
-static inline word_t CONST
-cap_zombie_cap_get_capZombiePtr(cap_t cap)
+static inline word_t CONST cap_zombie_cap_get_capZombiePtr(cap_t cap)
 {
     word_t radix = cap_zombie_cap_get_capZombieBits(cap);
     return cap_zombie_cap_get_capZombieID(cap) & ~MASK(radix + 1);
 }
 
-static inline cap_t CONST
-cap_zombie_cap_set_capZombieNumber(cap_t cap, word_t n)
+static inline cap_t CONST cap_zombie_cap_set_capZombieNumber(cap_t cap, word_t n)
 {
     word_t radix = cap_zombie_cap_get_capZombieBits(cap);
     word_t ptr = cap_zombie_cap_get_capZombieID(cap) & ~MASK(radix + 1);
@@ -169,6 +171,16 @@ enum tcb_cnode_index {
     /* VSpace root */
     tcbVTable = 1,
 
+#ifdef CONFIG_KERNEL_MCS
+    /* IPC buffer cap slot */
+    tcbBuffer = 2,
+
+    /* Fault endpoint slot */
+    tcbFaultHandler = 3,
+
+    /* Timeout endpoint slot */
+    tcbTimeoutHandler = 4,
+#else
     /* Reply cap slot */
     tcbReply = 2,
 
@@ -177,27 +189,34 @@ enum tcb_cnode_index {
 
     /* IPC buffer cap slot */
     tcbBuffer = 4,
-
+#endif
     tcbCNodeEntries
 };
 typedef word_t tcb_cnode_index_t;
 
 #include <arch/object/structures.h>
 
-static inline word_t CONST
-wordFromVMRights(vm_rights_t vm_rights)
+struct user_data {
+    word_t words[BIT(seL4_PageBits) / sizeof(word_t)];
+};
+typedef struct user_data user_data_t;
+
+struct user_data_device {
+    word_t words[BIT(seL4_PageBits) / sizeof(word_t)];
+};
+typedef struct user_data_device user_data_device_t;
+
+static inline word_t CONST wordFromVMRights(vm_rights_t vm_rights)
 {
     return (word_t)vm_rights;
 }
 
-static inline vm_rights_t CONST
-vmRightsFromWord(word_t w)
+static inline vm_rights_t CONST vmRightsFromWord(word_t w)
 {
     return (vm_rights_t)w;
 }
 
-static inline vm_attributes_t CONST
-vmAttributesFromWord(word_t w)
+static inline vm_attributes_t CONST vmAttributesFromWord(word_t w)
 {
     vm_attributes_t attr;
 
@@ -205,62 +224,81 @@ vmAttributesFromWord(word_t w)
     return attr;
 }
 
-/* TCB: size 64 bytes + sizeof(arch_tcb_t) (aligned to nearest power of 2) */
+#ifdef CONFIG_KERNEL_MCS
+typedef struct sched_context sched_context_t;
+typedef struct reply reply_t;
+#endif
+
+/* TCB: size >= 18 words + sizeof(arch_tcb_t) + 1 word on MCS (aligned to nearest power of 2) */
 struct tcb {
     /* arch specific tcb state (including context)*/
     arch_tcb_t tcbArch;
 
-    /* Thread state, 12 bytes */
+    /* Thread state, 3 words */
     thread_state_t tcbState;
 
     /* Notification that this TCB is bound to. If this is set, when this TCB waits on
      * any sync endpoint, it may receive a signal from a Notification object.
-     * 4 bytes*/
+     * 1 word*/
     notification_t *tcbBoundNotification;
 
-    /* Current fault, 8 bytes */
+    /* Current fault, 2 words */
     seL4_Fault_t tcbFault;
 
-    /* Current lookup failure, 8 bytes */
+    /* Current lookup failure, 2 words */
     lookup_fault_t tcbLookupFailure;
 
-    /* Domain, 1 byte (packed to 4) */
+    /* Domain, 1 byte (padded to 1 word) */
     dom_t tcbDomain;
 
-    /*  maximum controlled priority, 1 byte (packed to 4) */
+    /*  maximum controlled priority, 1 byte (padded to 1 word) */
     prio_t tcbMCP;
 
-    /* Priority, 1 byte (packed to 4) */
+    /* Priority, 1 byte (padded to 1 word) */
     prio_t tcbPriority;
 
-    /* Timeslice remaining, 4 bytes */
+#ifdef CONFIG_KERNEL_MCS
+    /* scheduling context that this tcb is running on, if it is NULL the tcb cannot
+     * be in the scheduler queues, 1 word */
+    sched_context_t *tcbSchedContext;
+
+    /* scheduling context that this tcb yielded to */
+    sched_context_t *tcbYieldTo;
+#else
+    /* Timeslice remaining, 1 word */
     word_t tcbTimeSlice;
 
-    /* Capability pointer to thread fault handler, 4 bytes */
+    /* Capability pointer to thread fault handler, 1 word */
     cptr_t tcbFaultHandler;
+#endif
 
-    /* userland virtual address of thread IPC buffer, 4 bytes */
+    /* userland virtual address of thread IPC buffer, 1 word */
     word_t tcbIPCBuffer;
 
 #ifdef ENABLE_SMP_SUPPORT
-    /* cpu ID this thread is running on */
+    /* cpu ID this thread is running on, 1 word */
     word_t tcbAffinity;
 #endif /* ENABLE_SMP_SUPPORT */
 
-    /* Previous and next pointers for scheduler queues , 8 bytes */
-    struct tcb* tcbSchedNext;
-    struct tcb* tcbSchedPrev;
-    /* Preivous and next pointers for endpoint and notification queues, 8 bytes */
-    struct tcb* tcbEPNext;
-    struct tcb* tcbEPPrev;
+    /* Previous and next pointers for scheduler queues , 2 words */
+    struct tcb *tcbSchedNext;
+    struct tcb *tcbSchedPrev;
+    /* Preivous and next pointers for endpoint and notification queues, 2 words */
+    struct tcb *tcbEPNext;
+    struct tcb *tcbEPPrev;
 
+#ifdef CONFIG_KERNEL_MCS
+    /* if tcb is in a call, pointer to the reply object, 1 word */
+    reply_t *tcbReply;
+#endif
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+    /* 16 bytes (12 bytes aarch32) */
     benchmark_util_t benchmark;
 #endif
 
 #ifdef CONFIG_DEBUG_BUILD
     /* Pointers for list of all tcbs that is maintained
-     * when CONFIG_DEBUG_BUILD is enabled */
+     * when CONFIG_DEBUG_BUILD is enabled, 2 words */
     struct tcb *tcbDebugNext;
     struct tcb *tcbDebugPrev;
     /* Use any remaining space for a thread name */
@@ -268,6 +306,73 @@ struct tcb {
 #endif /* CONFIG_DEBUG_BUILD */
 };
 typedef struct tcb tcb_t;
+
+#ifdef CONFIG_KERNEL_MCS
+typedef struct refill {
+    /* Absolute timestamp from when this refill can be used */
+    ticks_t rTime;
+    /* Amount of ticks that can be used from this refill */
+    ticks_t rAmount;
+} refill_t;
+
+#define MIN_REFILLS 2u
+
+struct sched_context {
+    /* period for this sc -- controls rate at which budget is replenished */
+    ticks_t scPeriod;
+
+    /* amount of ticks this sc has been scheduled for since seL4_SchedContext_Consumed
+     * was last called or a timeout exception fired */
+    ticks_t scConsumed;
+
+    /* core this scheduling context provides time for - 0 if uniprocessor */
+    word_t scCore;
+
+    /* thread that this scheduling context is bound to */
+    tcb_t *scTcb;
+
+    /* if this is not NULL, it points to the last reply object that was generated
+     * when the scheduling context was passed over a Call */
+    reply_t *scReply;
+
+    /* notification this scheduling context is bound to
+     * (scTcb and scNotification cannot be set at the same time) */
+    notification_t *scNotification;
+
+    /* data word that is sent with timeout faults that occur on this scheduling context */
+    word_t scBadge;
+
+    /* thread that yielded to this scheduling context */
+    tcb_t *scYieldFrom;
+
+    /* Amount of refills this sc tracks */
+    word_t scRefillMax;
+    /* Index of the head of the refill circular buffer */
+    word_t scRefillHead;
+    /* Index of the tail of the refill circular buffer */
+    word_t scRefillTail;
+};
+
+struct reply {
+    /* TCB pointed to by this reply object. This pointer reflects two possible relations, depending
+     * on the thread state.
+     *
+     * ThreadState_BlockedOnReply: this tcb is the caller that is blocked on this reply object,
+     * ThreadState_BlockedOnRecv: this tcb is the callee blocked on an endpoint with this reply object.
+     *
+     * The back pointer for this TCB is stored in the thread state.*/
+    tcb_t *replyTCB;
+
+    /* 0 if this is the start of the call chain, or points to the
+     * previous reply object in a call chain */
+    call_stack_t replyPrev;
+
+    /* Either a scheduling context if this reply object is the head of the call chain
+     * (the last caller before the server) or another reply object. 0 if no scheduling
+     * context was passed along the call chain */
+    call_stack_t replyNext;
+};
+#endif
 
 /* Ensure object sizes are sane */
 compile_assert(cte_size_sane, sizeof(cte_t) <= BIT(seL4_SlotBits))
@@ -281,6 +386,12 @@ compile_assert(notification_size_sane, sizeof(notification_t) <= BIT(seL4_Notifi
 
 /* Check the IPC buffer is the right size */
 compile_assert(ipc_buf_size_sane, sizeof(seL4_IPCBuffer) == BIT(seL4_IPCBufferSizeBits))
+#ifdef CONFIG_KERNEL_MCS
+compile_assert(sc_core_size_sane, (sizeof(sched_context_t) + MIN_REFILLS *sizeof(refill_t) <=
+                                   seL4_CoreSchedContextBytes))
+compile_assert(reply_size_sane, sizeof(reply_t) <= BIT(seL4_ReplyBits))
+compile_assert(refill_size_sane, (sizeof(refill_t) == seL4_RefillSizeBytes))
+#endif
 
 /* helper functions */
 
@@ -290,8 +401,7 @@ isArchCap(cap_t cap)
     return (cap_get_capType(cap) % 2);
 }
 
-static inline word_t CONST
-cap_get_capSizeBits(cap_t cap)
+static inline word_t CONST cap_get_capSizeBits(cap_t cap)
 {
 
     cap_tag_t ctag;
@@ -329,13 +439,25 @@ cap_get_capSizeBits(cap_t cap)
         return 0;
 
     case cap_reply_cap:
+#ifdef CONFIG_KERNEL_MCS
+        return seL4_ReplyBits;
+#else
         return 0;
+#endif
 
     case cap_irq_control_cap:
+#ifdef CONFIG_KERNEL_MCS
+    case cap_sched_control_cap:
+#endif
         return 0;
 
     case cap_irq_handler_cap:
         return 0;
+
+#ifdef CONFIG_KERNEL_MCS
+    case cap_sched_context_cap:
+        return cap_sched_context_cap_get_capSCSizeBits(cap);
+#endif
 
     default:
         return cap_get_archCapSizeBits(cap);
@@ -346,8 +468,7 @@ cap_get_capSizeBits(cap_t cap)
 /* Returns whether or not this capability has memory associated
  * with it or not. Referring to this as 'being physical' is to
  * match up with the Haskell and abstract specifications */
-static inline bool_t CONST
-cap_get_capIsPhysical(cap_t cap)
+static inline bool_t CONST cap_get_capIsPhysical(cap_t cap)
 {
     cap_tag_t ctag;
 
@@ -367,6 +488,9 @@ cap_get_capIsPhysical(cap_t cap)
         return true;
 
     case cap_thread_cap:
+#ifdef CONFIG_KERNEL_MCS
+    case cap_sched_context_cap:
+#endif
         return true;
 
     case cap_zombie_cap:
@@ -376,9 +500,16 @@ cap_get_capIsPhysical(cap_t cap)
         return false;
 
     case cap_reply_cap:
+#ifdef CONFIG_KERNEL_MCS
+        return true;
+#else
         return false;
+#endif
 
     case cap_irq_control_cap:
+#ifdef CONFIG_KERNEL_MCS
+    case cap_sched_control_cap:
+#endif
         return false;
 
     case cap_irq_handler_cap:
@@ -389,8 +520,7 @@ cap_get_capIsPhysical(cap_t cap)
     }
 }
 
-static inline void * CONST
-cap_get_capPtr(cap_t cap)
+static inline void *CONST cap_get_capPtr(cap_t cap)
 {
     cap_tag_t ctag;
 
@@ -419,21 +549,33 @@ cap_get_capPtr(cap_t cap)
         return NULL;
 
     case cap_reply_cap:
+#ifdef CONFIG_KERNEL_MCS
+        return REPLY_PTR(cap_reply_cap_get_capReplyPtr(cap));
+#else
         return NULL;
+#endif
 
     case cap_irq_control_cap:
+#ifdef CONFIG_KERNEL_MCS
+    case cap_sched_control_cap:
+#endif
         return NULL;
 
     case cap_irq_handler_cap:
         return NULL;
+
+#ifdef CONFIG_KERNEL_MCS
+    case cap_sched_context_cap:
+        return SC_PTR(cap_sched_context_cap_get_capSCPtr(cap));
+#endif
+
     default:
         return cap_get_archCapPtr(cap);
 
     }
 }
 
-static inline bool_t CONST
-isCapRevocable(cap_t derivedCap, cap_t srcCap)
+static inline bool_t CONST isCapRevocable(cap_t derivedCap, cap_t srcCap)
 {
     if (isArchCap(derivedCap)) {
         return Arch_isCapRevocable(derivedCap, srcCap);
@@ -459,4 +601,3 @@ isCapRevocable(cap_t derivedCap, cap_t srcCap)
     }
 }
 
-#endif

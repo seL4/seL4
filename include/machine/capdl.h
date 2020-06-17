@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MACHINE_CAPDL_H
-#define __MACHINE_CAPDL_H
+#pragma once
 
 #define ESCAPE               0xaa
 #define START                0xff
@@ -23,6 +18,7 @@
 #define RQ_COMMAND           0xf1
 #define EP_COMMAND           0xf2
 #define CN_COMMAND           0xf3
+#define TCB_COMMAND          0xfb
 #define IRQ_COMMAND          0xf4
 #define PT_COMMAND           0xf5
 #define ASID_POOL_COMMAND    0xf6
@@ -33,4 +29,3 @@
 
 #define CAPDL_VERSION        0
 
-#endif

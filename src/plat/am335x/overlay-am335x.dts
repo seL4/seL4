@@ -1,0 +1,20 @@
+/*
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+	chosen {
+		seL4,elfloader-devices =
+		    "serial0";
+		seL4,kernel-devices =
+		    "serial0",
+		    &{/ocp/interrupt-controller@48200000},
+		    /* The following devices are used to support the timer used by the kernel */
+		    /* dmtimer4, OMAP Dual-Mode timer */
+		    &{/ocp/timer@48044000},
+		    &{/ocp/l4_wkup@44c00000/prcm@200000}, /* Power reset and clock manager */
+		    &{/ocp/wdt@44e35000}; /* Watchdog timer */
+	};
+};

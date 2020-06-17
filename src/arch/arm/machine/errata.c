@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -28,8 +24,7 @@ void arm_errata(void);
  * interrupts to *not* be enabled, but hit-under-miss to be disabled. We
  * only need to do this for a particular revision of the ARM1136.
  */
-BOOT_CODE static void
-errata_arm1136(void)
+BOOT_CODE static void errata_arm1136(void)
 {
     /* See if we are affected by the errata. */
     if ((getProcessorID() & ~0xf) == ARM1136_R0PX) {

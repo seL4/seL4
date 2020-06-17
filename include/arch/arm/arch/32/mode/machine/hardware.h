@@ -1,47 +1,17 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_HARDWARE_32_H
-#define __ARCH_MACHINE_HARDWARE_32_H
+#pragma once
 
 #include <config.h>
-#include <mode/api/constants.h>
+#include <sel4/sel4_arch/constants.h>
 
 #define PAGE_BITS seL4_PageBits
 
 #define PPTR_VECTOR_TABLE 0xffff0000
-
-#if defined(CONFIG_ARM1136JF_S)
-#define L1_CACHE_LINE_SIZE_BITS  5 /* 32 bytes */
-
-#elif defined(CONFIG_ARM_CORTEX_A8)
-#define L1_CACHE_LINE_SIZE_BITS  6 /* 64 bytes */
-
-#elif defined(CONFIG_ARM_CORTEX_A9)
-#define L1_CACHE_LINE_SIZE_BITS  5 /* 32 bytes */
-
-#elif defined(CONFIG_ARM_CORTEX_A7)
-#define L1_CACHE_LINE_SIZE_BITS  6 /* 64 bytes */
-
-#elif defined(CONFIG_ARM_CORTEX_A15)
-#define L1_CACHE_LINE_SIZE_BITS  6 /* 64 bytes */
-
-#elif defined(CONFIG_ARM_CORTEX_A53)
-#define L1_CACHE_LINE_SIZE_BITS  6 /* 64 bytes */
-#endif
-
-#ifndef L1_CACHE_LINE_SIZE_BITS
-#error Unable to determine L1 cache line size
-#endif
-
-#define L1_CACHE_LINE_SIZE BIT(L1_CACHE_LINE_SIZE_BITS)
 
 /* Processor ID used to check if errata work arounds need to be performed */
 #define ARM1136_R0PX 0x4107b360
@@ -142,8 +112,7 @@ enum frameSizeConstants {
     ARMSuperSectionBits = seL4_SuperSectionBits
 };
 
-static inline word_t CONST
-pageBitsForSize(vm_page_size_t pagesize)
+static inline word_t CONST pageBitsForSize(vm_page_size_t pagesize)
 {
     switch (pagesize) {
     case ARMSmallPage:
@@ -165,4 +134,3 @@ pageBitsForSize(vm_page_size_t pagesize)
 
 #endif /* __ASSEMBLER__ */
 
-#endif /* !__ARCH_MACHINE_HARDWARE_32_H */

@@ -1,21 +1,10 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <arch/machine/hardware.h>
-
-static inline void invalidateByWSL(word_t wsl)
-{
-    asm volatile("dc isw, %0" : : "r"(wsl));
-}
 
 static inline void cleanByWSL(word_t wsl)
 {
@@ -63,26 +52,20 @@ static inline word_t readCacheSize(int level, bool_t instruction)
 #define ASSOC(s)        ((((s) >> 3) & MASK(10)) + 1)
 #define NSETS(s)        ((((s) >> 13) & MASK(15)) + 1)
 
-void
-clean_D_PoU(void)
+void clean_D_PoU(void)
 {
     int clid = readCLID();
     int lou = LOUU(clid);
-    int l;
 
-    for (l = 0; l < lou; l++) {
+    for (int l = 0; l < lou; l++) {
         if (CTYPE(clid, l) > ARMCacheI) {
-            word_t s = readCacheSize(l, 0);
-            int lbits = LINEBITS(s);
-            int assoc = ASSOC(s);
+            word_t lsize = readCacheSize(l, 0);
+            int lbits = LINEBITS(lsize);
+            int assoc = ASSOC(lsize);
             int assoc_bits = wordBits - clzl(assoc - 1);
-            int nsets = NSETS(s);
-            int w;
-
-            for (w = 0; w < assoc; w++) {
-                int s;
-
-                for (s = 0; s < nsets; s++) {
+            int nsets = NSETS(lsize);
+            for (int w = 0; w < assoc; w++) {
+                for (int s = 0; s < nsets; s++) {
                     cleanByWSL((w << (32 - assoc_bits)) |
                                (s << lbits) | (l << 1));
                 }
@@ -91,30 +74,35 @@ clean_D_PoU(void)
     }
 }
 
-void
-cleanInvalidate_D_PoC(void)
+static inline void cleanInvalidate_D_by_level(int l)
+{
+    word_t lsize = readCacheSize(l, 0);
+    int lbits = LINEBITS(lsize);
+    int assoc = ASSOC(lsize);
+    int assoc_bits = wordBits - clzl(assoc - 1);
+    int nsets = NSETS(lsize);
+
+    for (int w = 0; w < assoc; w++) {
+        for (int s = 0; s < nsets; s++) {
+            cleanInvalidateByWSL((w << (32 - assoc_bits)) |
+                                 (s << lbits) | (l << 1));
+        }
+    }
+}
+
+void cleanInvalidate_D_PoC(void)
 {
     int clid = readCLID();
     int loc = LOC(clid);
-    int l;
 
-    for (l = 0; l < loc; l++) {
+    for (int l = 0; l < loc; l++) {
         if (CTYPE(clid, l) > ARMCacheI) {
-            word_t s = readCacheSize(l, 0);
-            int lbits = LINEBITS(s);
-            int assoc = ASSOC(s);
-            int assoc_bits = wordBits - clzl(assoc - 1);
-            int nsets = NSETS(s);
-            int w;
-
-            for (w = 0; w < assoc; w++) {
-                int s;
-
-                for (s = 0; s < nsets; s++) {
-                    cleanInvalidateByWSL((w << (32 - assoc_bits)) |
-                                         (s << lbits) | (l << 1));
-                }
-            }
+            cleanInvalidate_D_by_level(l);
         }
     }
+}
+
+void cleanInvalidate_L1D(void)
+{
+    cleanInvalidate_D_by_level(0);
 }

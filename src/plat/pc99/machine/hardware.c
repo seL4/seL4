@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -24,8 +20,8 @@ BOOT_CODE bool_t platAddDevices(void)
     /* remove the MSI region as poking at this is undefined and may allow for
      * the user to generate arbitrary MSI interrupts. Only need to consider
      * this if it would actually be in the user device region */
-    if (PADDR_USER_DEVICE_TOP > 0xFFFFFFF8) {
-        if (!add_allocated_p_region( (p_region_t) {
+    if (CONFIG_PADDR_USER_DEVICE_TOP > 0xFFFFFFF8) {
+        if (!reserve_region((p_region_t) {
         (word_t)0xFFFFFFF8, (word_t)0xFFFFFFF8 + 8
         })) {
             return false;
@@ -38,8 +34,7 @@ BOOT_CODE bool_t platAddDevices(void)
 
 #define TSC_FREQ_RETRIES 10
 
-BOOT_CODE static inline uint32_t
-measure_tsc_khz(void)
+BOOT_CODE static inline uint32_t measure_tsc_khz(void)
 {
     /* The frequency is repeatedly measured until the number of TSC
      * ticks in the pit wraparound interval (~50ms) fits in 32 bits.
@@ -78,8 +73,7 @@ measure_tsc_khz(void)
     return 0;
 }
 
-BOOT_CODE uint32_t
-tsc_init(void)
+BOOT_CODE uint32_t tsc_init(void)
 {
 
     x86_cpu_identity_t *model_info = x86_cpuid_get_model_info();
@@ -109,8 +103,8 @@ tsc_init(void)
                     if (ratio != 0) {
                         /* Convert to MHz */
                         if (model_info->model == NEHALEM_1_MODEL_ID ||
-                                model_info->model == NEHALEM_2_MODEL_ID ||
-                                model_info->model == NEHALEM_3_MODEL_ID) {
+                            model_info->model == NEHALEM_2_MODEL_ID ||
+                            model_info->model == NEHALEM_3_MODEL_ID) {
                             return ratio * 13333u / 100u;
                         } else {
                             return ratio * 100u;

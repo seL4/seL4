@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ASSERT_H
-#define __ASSERT_H
+#pragma once
 
 #include <config.h>
 #include <util.h>
@@ -17,19 +12,19 @@
 #ifdef CONFIG_DEBUG_BUILD
 
 void _fail(
-    const char*  str,
-    const char*  file,
+    const char  *str,
+    const char  *file,
     unsigned int line,
-    const char*  function
+    const char  *function
 ) NORETURN;
 
 #define fail(s) _fail(s, __FILE__, __LINE__, __func__)
 
 void _assert_fail(
-    const char*  assertion,
-    const char*  file,
+    const char  *assertion,
+    const char  *file,
     unsigned int line,
-    const char*  function
+    const char  *function
 ) NORETURN;
 
 #define assert(expr) \
@@ -55,4 +50,3 @@ void _assert_fail(
 #define unverified_compile_assert compile_assert
 #endif
 
-#endif

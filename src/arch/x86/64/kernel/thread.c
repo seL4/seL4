@@ -1,13 +1,7 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <object.h>
@@ -17,16 +11,15 @@
 #include <arch/kernel/thread.h>
 #include <linker.h>
 
-void
-Arch_switchToThread(tcb_t* tcb)
+void Arch_switchToThread(tcb_t *tcb)
 {
     /* set PD */
     setVMRoot(tcb);
 #ifdef ENABLE_SMP_SUPPORT
     asm volatile("movq %[value], %%gs:%c[offset]"
                  :
-                 : [value] "r" (&tcb->tcbArch.tcbContext.registers[Error + 1]),
-                 [offset] "i" (OFFSETOF(nodeInfo_t, currentThreadUserContext)));
+                 : [value] "r"(&tcb->tcbArch.tcbContext.registers[Error + 1]),
+                 [offset] "i"(OFFSETOF(nodeInfo_t, currentThreadUserContext)));
 #endif
     if (config_set(CONFIG_KERNEL_X86_IBPB_ON_CONTEXT_SWITCH)) {
         x86_ibpb();
@@ -37,8 +30,7 @@ Arch_switchToThread(tcb_t* tcb)
     }
 }
 
-BOOT_CODE void
-Arch_configureIdleThread(tcb_t* tcb)
+BOOT_CODE void Arch_configureIdleThread(tcb_t *tcb)
 {
     setRegister(tcb, FLAGS, FLAGS_USER_DEFAULT);
     setRegister(tcb, NextIP, (uint64_t)idleThreadStart);
@@ -52,8 +44,7 @@ Arch_configureIdleThread(tcb_t* tcb)
     setRegister(tcb, RSP, 0);
 }
 
-void
-Arch_switchToIdleThread(void)
+void Arch_switchToIdleThread(void)
 {
     tcb_t *tcb = NODE_STATE(ksIdleThread);
     /* Force the idle thread to run on kernel page table */
@@ -62,18 +53,16 @@ Arch_switchToIdleThread(void)
     asm volatile("movq %[value], %%gs:%c[offset]"
                  :
                  : [value] "r"(&tcb->tcbArch.tcbContext.registers[Error + 1]),
-                 [offset] "i" (OFFSETOF(nodeInfo_t, currentThreadUserContext)));
+                 [offset] "i"(OFFSETOF(nodeInfo_t, currentThreadUserContext)));
 #endif
 }
 
-void
-Arch_activateIdleThread(tcb_t* tcb)
+void Arch_activateIdleThread(tcb_t *tcb)
 {
     /* Don't need to do anything */
 }
 
-void
-Mode_postModifyRegisters(tcb_t *tptr)
+void Mode_postModifyRegisters(tcb_t *tptr)
 {
     /* Setting Error to 0 will force a return by the interrupt path, which
      * does a full restore. Unless we're the current thread, in which case

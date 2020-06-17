@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -18,11 +14,11 @@
 #include <linker.h>
 #include <plat/machine/hardware.h>
 
-#ifdef CONFIG_IPC_BUF_GLOBALS_FRAME
+#ifdef CONFIG_KERNEL_GLOBALS_FRAME
 /* The global frame, mapped in all address spaces */
 word_t armKSGlobalsFrame[BIT(ARMSmallPageBits) / sizeof(word_t)]
 ALIGN_BSS(BIT(ARMSmallPageBits));
-#endif /* CONFIG_IPC_BUF_GLOBALS_FRAME */
+#endif /* CONFIG_KERNEL_GLOBALS_FRAME */
 
 /* The top level asid mapping table */
 asid_pool_t *armKSASIDTable[BIT(asidHighBits)];
@@ -51,18 +47,18 @@ pdeS1_t  armHSGlobalPD[BIT(PT_INDEX_BITS)]   ALIGN_BSS(BIT(seL4_PageTableBits));
 pteS1_t  armHSGlobalPT[BIT(PT_INDEX_BITS)]   ALIGN_BSS(BIT(seL4_PageTableBits));
 /* Global user space mappings, which are empty as there is no hared kernel region */
 pde_t armUSGlobalPD[BIT(PD_INDEX_BITS)] ALIGN_BSS(BIT(seL4_PageDirBits));;
-#ifdef CONFIG_IPC_BUF_GLOBALS_FRAME
+#ifdef CONFIG_KERNEL_GLOBALS_FRAME
 /* User space global mappings */
 pte_t  armUSGlobalPT[BIT(PT_INDEX_BITS)]   ALIGN_BSS(BIT(seL4_PageTableBits));
-#endif /* CONFIG_IPC_BUF_GLOBALS_FRAME */
+#endif /* CONFIG_KERNEL_GLOBALS_FRAME */
 /* Current VCPU */
-vcpu_t *armHSCurVCPU;
+UP_STATE_DEFINE(vcpu_t, *armHSCurVCPU);
 /* Whether the current loaded VCPU is enabled in the hardware or not */
-bool_t armHSVCPUActive;
+UP_STATE_DEFINE(bool_t, armHSVCPUActive);
 
 #ifdef CONFIG_HAVE_FPU
 /* Whether the hyper-mode kernel is allowed to execute FPU instructions */
-bool_t armHSFPUEnabled;
+UP_STATE_DEFINE(bool_t, armHSFPUEnabled);
 #endif
 
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */

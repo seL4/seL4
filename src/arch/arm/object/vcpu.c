@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -14,256 +10,26 @@
 
 #include <arch/object/vcpu.h>
 #include <armv/vcpu.h>
-#include <plat/machine/devices.h>
 #include <arch/machine/debug.h> /* Arch_debug[A/Di]ssociateVCPUTCB() */
 #include <arch/machine/debug_conf.h>
-#include <arch/machine/gic_pl390.h>
+#include <arch/machine/gic_v2.h>
+#include <drivers/timer/arm_generic.h>
 
-
-static inline void
-vcpu_save_reg(vcpu_t *vcpu, word_t reg)
+BOOT_CODE void vcpu_boot_init(void)
 {
-    if (reg >= seL4_VCPUReg_Num || vcpu == NULL) {
-        fail("ARM/HYP: Invalid register index or NULL VCPU");
-        return;
-    }
-    vcpu->regs[reg] = vcpu_hw_read_reg(reg);
-}
-
-static inline void
-vcpu_save_reg_range(vcpu_t *vcpu, word_t start, word_t end)
-{
-    for (word_t i = start; i <= end; i++) {
-        vcpu_save_reg(vcpu, i);
-    }
-}
-
-static inline void
-vcpu_restore_reg(vcpu_t *vcpu, word_t reg)
-{
-    if (reg >= seL4_VCPUReg_Num || vcpu == NULL) {
-        fail("ARM/HYP: Invalid register index or NULL VCPU");
-        return;
-    }
-    vcpu_hw_write_reg(reg, vcpu->regs[reg]);
-}
-
-static inline void
-vcpu_restore_reg_range(vcpu_t *vcpu, word_t start, word_t end)
-{
-    for (word_t i = start; i <= end; i++) {
-        vcpu_restore_reg(vcpu, i);
-    }
-}
-
-static inline word_t
-vcpu_read_reg(vcpu_t *vcpu, word_t reg)
-{
-    if (reg >= seL4_VCPUReg_Num || vcpu == NULL) {
-        fail("ARM/HYP: Invalid register index or NULL VCPU");
-        return 0;
-    }
-    return vcpu->regs[reg];
-}
-
-static inline void
-vcpu_write_reg(vcpu_t *vcpu, word_t reg, word_t value)
-{
-    if (reg >= seL4_VCPUReg_Num || vcpu == NULL) {
-        fail("ARM/HYP: Invalid register index or NULL VCPU");
-        return;
-    }
-    vcpu->regs[reg] = value;
-}
-
-#ifdef CONFIG_HAVE_FPU
-static inline void
-access_fpexc(vcpu_t *vcpu, bool_t write)
-{
-    /* save a copy of the current status since
-     * the enableFpuHyp modifies the armHSFPUEnabled
-     */
-    bool_t flag = armHSFPUEnabled;
-    if (!flag) {
-        enableFpuInstInHyp();
-    }
-    if (write) {
-        MCR(FPEXC, vcpu_read_reg(vcpu, seL4_VCPUReg_FPEXC));
-    } else {
-        word_t fpexc;
-        MRC(FPEXC, fpexc);
-        vcpu_write_reg(vcpu, seL4_VCPUReg_FPEXC, fpexc);
-    }
-    /* restore the status */
-    if (!flag) {
-        trapFpuInstToHyp();
-    }
-}
-#endif
-
-static void
-vcpu_enable(vcpu_t *vcpu)
-{
-#ifdef CONFIG_ARCH_AARCH64
-    armv_vcpu_enable(vcpu);
-#else
-    vcpu_restore_reg(vcpu, seL4_VCPUReg_SCTLR);
-    setHCR(HCR_VCPU);
-    isb();
-
-    /* Turn on the VGIC */
-    set_gic_vcpu_ctrl_hcr(vcpu->vgic.hcr);
-
-#if !defined(ARM_CP14_SAVE_AND_RESTORE_NATIVE_THREADS) && defined(ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS)
-    /* This is guarded by an #ifNdef (negation) ARM_CP14_SAVE_AND_RESTORE_NATIVE_THREADS
-     * because if it wasn't, we'd be calling restore_user_debug_context twice
-     * on a debug-API build; recall that restore_user_debug_context is called
-     * in restore_user_context.
-     *
-     * We call restore_user_debug_context here, because vcpu_restore calls this
-     * function (vcpu_enable). It's better to embed the
-     * restore_user_debug_context call in here than to call it in the outer
-     * level caller (vcpu_switch), because if the structure of this VCPU code
-     * changes later on, it will be less likely that the person who changes
-     * the code will be able to omit the debug register context restore, if
-     * it's done here.
-     */
-    restore_user_debug_context(vcpu->vcpuTCB);
-#endif
-#if defined(ARM_HYP_TRAP_CP14_IN_NATIVE_USER_THREADS)
-    /* Disable debug exception trapping and let the PL1 Guest VM handle all
-     * of its own debug faults.
-     */
-    setHDCRTrapDebugExceptionState(false);
-#endif
-#ifdef CONFIG_HAVE_FPU
-    /* We need to restore the FPEXC value early for the following reason:
-     *
-     * 1: When an application inside a VM is trying to execute an FPU
-     * instruction and the EN bit of FPEXC is disabled, an undefined
-     * instruction exception is sent to the guest Linux kernel instead of
-     * the seL4. Until the Linux kernel examines the EN bit of the FPEXC
-     * to determine if the exception FPU related, a VCPU trap is sent to
-     * the seL4 kernel. However, it can be too late to restore the value
-     * of saved FPEXC in the VCPU trap handler: if the EN bit of the saved
-     * FPEXC is enabled, the Linux kernel thinks the FPU is enabled and
-     * thus refuses to handle the exception. The result is the application
-     * is killed with the cause of illegal instruction.
-     *
-     * Note that we restore the FPEXC here, but the current FPU owner
-     * can be a different thread. Thus, it seems that we are modifying
-     * another thread's FPEXC. However, the modification is OK.
-     *
-     * 1: If the other thread is a native thread, even if the EN bit of
-     * the FPEXC is enabled, a trap th HYP mode will be triggered when
-     * the thread tries to use the FPU.
-     *
-     * 2: If the other thread has a VCPU, the FPEXC is already saved
-     * in the VCPU's vcpu->fpexc when the VCPU is saved or disabled.
-     *
-     * We also overwrite the fpuState.fpexc with the value saved in
-     * vcpu->fpexc. Since the following scenario can happen:
-     *
-     * VM0 (the FPU owner) -> VM1 (update the FPEXC in vcpu_enable) ->
-     * switchLocalFpuOwner (save VM0 with modified FPEXC) ->
-     * VM1 (the new FPU owner)
-     *
-     * In the case above, the fpuState.fpexc of VM0 saves the value written
-     * by the VM1, but the vcpu->fpexc of VM0 still contains the correct
-     * value when VM0 is disabed (vcpu_disable) or saved (vcpu_save).
-     *
-     *
-     */
-
-    vcpu->vcpuTCB->tcbArch.tcbContext.fpuState.fpexc = vcpu_read_reg(vcpu, seL4_VCPUReg_FPEXC);
-    access_fpexc(vcpu, true);
-#endif
-#endif
-}
-
-static void
-vcpu_disable(vcpu_t *vcpu)
-{
-#ifdef CONFIG_ARCH_AARCH64
-    armv_vcpu_disable(vcpu);
-#else
-    uint32_t hcr;
-    dsb();
-    if (likely(vcpu)) {
-        hcr = get_gic_vcpu_ctrl_hcr();
-        vcpu->vgic.hcr = hcr;
-        vcpu_save_reg(vcpu, seL4_VCPUReg_SCTLR);
-        isb();
-#ifdef CONFIG_HAVE_FPU
-        if (nativeThreadUsingFPU(vcpu->vcpuTCB)) {
-            access_fpexc(vcpu, false);
-        }
-#endif
-    }
-    /* Turn off the VGIC */
-    set_gic_vcpu_ctrl_hcr(0);
-    isb();
-
-    /* Stage 1 MMU off */
-    setSCTLR(SCTLR_DEFAULT);
-    setHCR(HCR_NATIVE);
-
-#if defined(ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS)
-    /* Disable all breakpoint registers from triggering their
-     * respective events, so that when we switch from a guest VM
-     * to a native thread, the native thread won't trigger events
-     * that were caused by things the guest VM did.
-     */
-    loadAllDisabledBreakpointState();
-#endif
-#if defined(ARM_HYP_TRAP_CP14_IN_NATIVE_USER_THREADS)
-    /* Enable debug exception trapping and let seL4 trap all PL0 (user) native
-     * seL4 threads' debug exceptions, so it can deliver them as fault messages.
-     */
-    setHDCRTrapDebugExceptionState(true);
-#endif
-    isb();
-#endif
-}
-
-BOOT_CODE void
-vcpu_boot_init(void)
-{
-#ifdef CONFIG_ARCH_AARCH64
     armv_vcpu_boot_init();
-#endif
     gic_vcpu_num_list_regs = VGIC_VTR_NLISTREGS(get_gic_vcpu_ctrl_vtr());
     if (gic_vcpu_num_list_regs > GIC_VCPU_MAX_NUM_LR) {
         printf("Warning: VGIC is reporting more list registers than we support. Truncating\n");
         gic_vcpu_num_list_regs = GIC_VCPU_MAX_NUM_LR;
     }
     vcpu_disable(NULL);
-    armHSCurVCPU = NULL;
-    armHSVCPUActive = false;
+    ARCH_NODE_STATE(armHSCurVCPU) = NULL;
+    ARCH_NODE_STATE(armHSVCPUActive) = false;
 
-#if defined(ARM_HYP_TRAP_CP14_IN_VCPU_THREADS) || defined(ARM_HYP_TRAP_CP14_IN_NATIVE_USER_THREADS)
-    /* On the verified build, we have implemented a workaround that ensures
-     * that we don't need to save and restore the debug coprocessor's state
-     * (and therefore don't have to expose the CP14 registers to verification).
-     *
-     * This workaround is simple: we just trap and intercept all Guest VM
-     * accesses to the debug coprocessor, and deliver them as VMFault
-     * messages to the VM Monitor. To that end, the VM Monitor can then
-     * choose to either kill the Guest VM, or it can also choose to silently
-     * step over the Guest VM's accesses to the debug coprocessor, thereby
-     * silently eliminating the communication channel between the Guest VMs
-     * (because the debug coprocessor acted as a communication channel
-     * unless we saved/restored its state between VM switches).
-     *
-     * This workaround delegates the communication channel responsibility
-     * from the kernel to the VM Monitor, essentially.
-     */
-    initHDCR();
-#endif
 }
 
-static void
-vcpu_save(vcpu_t *vcpu, bool_t active)
+static void vcpu_save(vcpu_t *vcpu, bool_t active)
 {
     word_t i;
     unsigned int lr_num;
@@ -275,6 +41,7 @@ vcpu_save(vcpu_t *vcpu, bool_t active)
     if (active) {
         vcpu_save_reg(vcpu, seL4_VCPUReg_SCTLR);
         vcpu->vgic.hcr = get_gic_vcpu_ctrl_hcr();
+        save_virt_timer(vcpu);
     }
 
     /* Store GIC VCPU control state */
@@ -284,42 +51,18 @@ vcpu_save(vcpu_t *vcpu, bool_t active)
     for (i = 0; i < lr_num; i++) {
         vcpu->vgic.lr[i] = get_gic_vcpu_ctrl_lr(i);
     }
-
-#ifdef CONFIG_ARCH_AARCH64
-    vcpu_save_reg_range(vcpu, seL4_VCPUReg_TTBR0, seL4_VCPUReg_SPSR_EL1);
-#else
-    /* save registers */
-    vcpu_save_reg_range(vcpu, seL4_VCPUReg_ACTLR, seL4_VCPUReg_SPSRfiq);
-
-#ifdef ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS
-    /* This is done when we are asked to save and restore the CP14 debug context
-     * of VCPU threads; the register context is saved into the underlying TCB.
-     */
-    saveAllBreakpointState(vcpu->vcpuTCB);
-#endif
-    isb();
-#ifdef CONFIG_HAVE_FPU
-    /* Other FPU registers are still lazily saved and restored when
-     * handleFPUFault is called. See the comments in vcpu_enable
-     * for more information.
-     */
-    if (active && nativeThreadUsingFPU(vcpu->vcpuTCB)) {
-        access_fpexc(vcpu, false);
-    }
-#endif
-#endif
+    armv_vcpu_save(vcpu, active);
 }
 
 
-static word_t
-readVCPUReg(vcpu_t *vcpu, word_t field)
+static word_t readVCPUReg(vcpu_t *vcpu, word_t field)
 {
-    if (likely(armHSCurVCPU == vcpu)) {
+    if (likely(ARCH_NODE_STATE(armHSCurVCPU) == vcpu)) {
         switch (field) {
         case seL4_VCPUReg_SCTLR:
             /* The SCTLR value is switched to/from hardware when we enable/disable
              * the vcpu, not when we switch vcpus */
-            if (armHSVCPUActive) {
+            if (ARCH_NODE_STATE(armHSVCPUActive)) {
                 return getSCTLR();
             } else {
                 return vcpu_read_reg(vcpu, field);
@@ -332,13 +75,12 @@ readVCPUReg(vcpu_t *vcpu, word_t field)
     }
 }
 
-static void
-writeVCPUReg(vcpu_t *vcpu, word_t field, word_t value)
+static void writeVCPUReg(vcpu_t *vcpu, word_t field, word_t value)
 {
-    if (likely(armHSCurVCPU == vcpu)) {
+    if (likely(ARCH_NODE_STATE(armHSCurVCPU) == vcpu)) {
         switch (field) {
         case seL4_VCPUReg_SCTLR:
-            if (armHSVCPUActive) {
+            if (ARCH_NODE_STATE(armHSVCPUActive)) {
                 setSCTLR(value);
             } else {
                 vcpu_write_reg(vcpu, field, value);
@@ -352,8 +94,7 @@ writeVCPUReg(vcpu_t *vcpu, word_t field, word_t value)
     }
 }
 
-void
-vcpu_restore(vcpu_t *vcpu)
+void vcpu_restore(vcpu_t *vcpu)
 {
     assert(vcpu);
     word_t i;
@@ -379,18 +120,36 @@ vcpu_restore(vcpu_t *vcpu)
     vcpu_enable(vcpu);
 }
 
-void
-VGICMaintenance(void)
+void VPPIEvent(irq_t irq)
+{
+    if (ARCH_NODE_STATE(armHSVCPUActive)) {
+        maskInterrupt(true, irq);
+        assert(irqVPPIEventIndex(irq) != VPPIEventIRQ_invalid);
+        ARCH_NODE_STATE(armHSCurVCPU)->vppi_masked[irqVPPIEventIndex(irq)] = true;
+        current_fault = seL4_Fault_VPPIEvent_new(IRQT_TO_IRQ(irq));
+        /* Current VCPU being active should indicate that the current thread
+         * is runnable. At present, verification cannot establish this so we
+         * perform an extra check. */
+        assert(isRunnable(NODE_STATE(ksCurThread)));
+        if (isRunnable(NODE_STATE(ksCurThread))) {
+            handleFault(NODE_STATE(ksCurThread));
+        }
+    }
+}
+
+void VGICMaintenance(void)
 {
     uint32_t eisr0, eisr1;
     uint32_t flags;
 
-    /* The current thread must be runnable at this point as we can only get
-     * a VGIC maintenance whilst we are actively running a thread with an
-     * associated VCPU. For the moment for the proof we leave a redundant
-     * check in here that this is indeed not happening */
-    if (!isRunnable(NODE_STATE(ksCurThread))) {
-        printf("Received VGIC maintenance on non-runnable thread!\n");
+    /* We shouldn't get a VGICMaintenance interrupt while a VCPU isn't active,
+     * but if one becomes pending before the VGIC is disabled we might get one
+     * when returning to userlevel after disabling the current VCPU. In this
+     * case we simply return and rely on the interrupt being raised again when
+     * the VCPU is reenabled.
+     */
+    if (!ARCH_NODE_STATE(armHSVCPUActive)) {
+        printf("Received VGIC maintenance without active VCPU!\n");
         return;
     }
 
@@ -428,9 +187,9 @@ VGICMaintenance(void)
             set_gic_vcpu_ctrl_lr(irq_idx, virq);
             /* decodeVCPUInjectIRQ below checks the vgic.lr register,
              * so we should also sync the shadow data structure as well */
-            assert(armHSCurVCPU != NULL && armHSVCPUActive);
-            if (armHSCurVCPU != NULL && armHSVCPUActive) {
-                armHSCurVCPU->vgic.lr[irq_idx] = virq;
+            assert(ARCH_NODE_STATE(armHSCurVCPU) != NULL && ARCH_NODE_STATE(armHSVCPUActive));
+            if (ARCH_NODE_STATE(armHSCurVCPU) != NULL && ARCH_NODE_STATE(armHSVCPUActive)) {
+                ARCH_NODE_STATE(armHSCurVCPU)->vgic.lr[irq_idx] = virq;
             } else {
                 /* FIXME This should not happen */
             }
@@ -442,68 +201,68 @@ VGICMaintenance(void)
         current_fault = seL4_Fault_VGICMaintenance_new(0, 0);
     }
 
-    handleFault(NODE_STATE(ksCurThread));
+    /* Current VCPU being active should indicate that the current thread
+     * is runnable. At present, verification cannot establish this so we
+     * perform an extra check. */
+    assert(isRunnable(NODE_STATE(ksCurThread)));
+    if (isRunnable(NODE_STATE(ksCurThread))) {
+        handleFault(NODE_STATE(ksCurThread));
+    }
 }
 
-void
-vcpu_init(vcpu_t *vcpu)
+void vcpu_init(vcpu_t *vcpu)
 {
-#ifdef CONFIG_ARCH_AARCH64
     armv_vcpu_init(vcpu);
-#else
-    vcpu_write_reg(vcpu, seL4_VCPUReg_SCTLR, SCTLR_DEFAULT);
-    vcpu_write_reg(vcpu, seL4_VCPUReg_ACTLR, ACTLR_DEFAULT);
-#endif
     /* GICH VCPU interface control */
     vcpu->vgic.hcr = VGIC_HCR_EN;
+#ifdef CONFIG_VTIMER_UPDATE_VOFFSET
+    /* Virtual Timer interface */
+    vcpu->virtTimer.last_pcount = 0;
+#endif
 }
 
-void
-vcpu_switch(vcpu_t *new)
+void vcpu_switch(vcpu_t *new)
 {
-    if (likely(armHSCurVCPU != new)) {
+    if (likely(ARCH_NODE_STATE(armHSCurVCPU) != new)) {
         if (unlikely(new != NULL)) {
-            if (unlikely(armHSCurVCPU != NULL)) {
-                vcpu_save(armHSCurVCPU, armHSVCPUActive);
+            if (unlikely(ARCH_NODE_STATE(armHSCurVCPU) != NULL)) {
+                vcpu_save(ARCH_NODE_STATE(armHSCurVCPU), ARCH_NODE_STATE(armHSVCPUActive));
             }
             vcpu_restore(new);
-            armHSCurVCPU = new;
-            armHSVCPUActive = true;
-        } else if (unlikely(armHSVCPUActive)) {
+            ARCH_NODE_STATE(armHSCurVCPU) = new;
+            ARCH_NODE_STATE(armHSVCPUActive) = true;
+        } else if (unlikely(ARCH_NODE_STATE(armHSVCPUActive))) {
             /* leave the current VCPU state loaded, but disable vgic and mmu */
 #ifdef ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS
-            saveAllBreakpointState(armHSCurVCPU->vcpuTCB);
+            saveAllBreakpointState(ARCH_NODE_STATE(armHSCurVCPU)->vcpuTCB);
 #endif
-            vcpu_disable(armHSCurVCPU);
-            armHSVCPUActive = false;
+            vcpu_disable(ARCH_NODE_STATE(armHSCurVCPU));
+            ARCH_NODE_STATE(armHSVCPUActive) = false;
         }
-    } else if (likely(!armHSVCPUActive && new != NULL)) {
+    } else if (likely(!ARCH_NODE_STATE(armHSVCPUActive) && new != NULL)) {
         isb();
         vcpu_enable(new);
-        armHSVCPUActive = true;
+        ARCH_NODE_STATE(armHSVCPUActive) = true;
     }
 }
 
-static void
-vcpu_invalidate_active(void)
+static void vcpu_invalidate_active(void)
 {
-    if (armHSVCPUActive) {
+    if (ARCH_NODE_STATE(armHSVCPUActive)) {
         vcpu_disable(NULL);
-        armHSVCPUActive = false;
+        ARCH_NODE_STATE(armHSVCPUActive) = false;
     }
-    armHSCurVCPU = NULL;
+    ARCH_NODE_STATE(armHSCurVCPU) = NULL;
 }
 
-void
-vcpu_finalise(vcpu_t *vcpu)
+void vcpu_finalise(vcpu_t *vcpu)
 {
     if (vcpu->vcpuTCB) {
         dissociateVCPUTCB(vcpu, vcpu->vcpuTCB);
     }
 }
 
-void
-associateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
+void associateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
 {
     if (tcb->tcbArch.tcbVCPU) {
         dissociateVCPUTCB(tcb->tcbArch.tcbVCPU, tcb);
@@ -515,13 +274,12 @@ associateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
     vcpu->vcpuTCB = tcb;
 }
 
-void
-dissociateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
+void dissociateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
 {
     if (tcb->tcbArch.tcbVCPU != vcpu || vcpu->vcpuTCB != tcb) {
         fail("TCB and VCPU not associated.");
     }
-    if (vcpu == armHSCurVCPU) {
+    if (vcpu == ARCH_NODE_STATE(armHSCurVCPU)) {
         vcpu_invalidate_active();
     }
     tcb->tcbArch.tcbVCPU = NULL;
@@ -538,15 +296,13 @@ dissociateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
 #endif
 }
 
-exception_t
-invokeVCPUWriteReg(vcpu_t *vcpu, word_t field, word_t value)
+exception_t invokeVCPUWriteReg(vcpu_t *vcpu, word_t field, word_t value)
 {
     writeVCPUReg(vcpu, field, value);
     return EXCEPTION_NONE;
 }
 
-exception_t
-decodeVCPUWriteReg(cap_t cap, unsigned int length, word_t* buffer)
+exception_t decodeVCPUWriteReg(cap_t cap, unsigned int length, word_t *buffer)
 {
     word_t field;
     word_t value;
@@ -567,8 +323,7 @@ decodeVCPUWriteReg(cap_t cap, unsigned int length, word_t* buffer)
     return invokeVCPUWriteReg(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)), field, value);
 }
 
-exception_t
-invokeVCPUReadReg(vcpu_t *vcpu, word_t field, bool_t call)
+exception_t invokeVCPUReadReg(vcpu_t *vcpu, word_t field, bool_t call)
 {
     tcb_t *thread;
     thread = NODE_STATE(ksCurThread);
@@ -584,8 +339,7 @@ invokeVCPUReadReg(vcpu_t *vcpu, word_t field, bool_t call)
     return EXCEPTION_NONE;
 }
 
-exception_t
-decodeVCPUReadReg(cap_t cap, unsigned int length, bool_t call, word_t* buffer)
+exception_t decodeVCPUReadReg(cap_t cap, unsigned int length, bool_t call, word_t *buffer)
 {
     word_t field;
     if (length < 1) {
@@ -607,11 +361,14 @@ decodeVCPUReadReg(cap_t cap, unsigned int length, bool_t call, word_t* buffer)
     return invokeVCPUReadReg(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)), field, call);
 }
 
-exception_t
-invokeVCPUInjectIRQ(vcpu_t* vcpu, unsigned long index, virq_t virq)
+exception_t invokeVCPUInjectIRQ(vcpu_t *vcpu, unsigned long index, virq_t virq)
 {
-    if (likely(armHSCurVCPU == vcpu)) {
+    if (likely(ARCH_NODE_STATE(armHSCurVCPU) == vcpu)) {
         set_gic_vcpu_ctrl_lr(index, virq);
+#ifdef ENABLE_SMP_SUPPORT
+    } else if (vcpu->vcpuTCB->tcbAffinity != getCurrentCPUIndex()) {
+        doRemoteOp3Arg(IpiRemoteCall_VCPUInjectInterrupt, (word_t)vcpu, index, virq.words[0],      vcpu->vcpuTCB->tcbAffinity);
+#endif /* CONFIG_ENABLE_SMP */
     } else {
         vcpu->vgic.lr[index] = virq;
     }
@@ -619,8 +376,7 @@ invokeVCPUInjectIRQ(vcpu_t* vcpu, unsigned long index, virq_t virq)
     return EXCEPTION_NONE;
 }
 
-exception_t
-decodeVCPUInjectIRQ(cap_t cap, unsigned int length, word_t* buffer)
+exception_t decodeVCPUInjectIRQ(cap_t cap, unsigned int length, word_t *buffer)
 {
     word_t vid, priority, group, index;
     vcpu_t *vcpu;
@@ -707,11 +463,11 @@ exception_t decodeARMVCPUInvocation(
     word_t label,
     unsigned int length,
     cptr_t cptr,
-    cte_t* slot,
+    cte_t *slot,
     cap_t cap,
     extra_caps_t extraCaps,
     bool_t call,
-    word_t* buffer
+    word_t *buffer
 )
 {
     switch (label) {
@@ -723,6 +479,8 @@ exception_t decodeARMVCPUInvocation(
         return decodeVCPUWriteReg(cap, length, buffer);
     case ARMVCPUInjectIRQ:
         return decodeVCPUInjectIRQ(cap, length, buffer);
+    case ARMVCPUAckVPPI:
+        return decodeVCPUAckVPPI(cap, length, buffer);
     default:
         userError("VCPU: Illegal operation.");
         current_syscall_error.type = seL4_IllegalOperation;
@@ -730,11 +488,44 @@ exception_t decodeARMVCPUInvocation(
     }
 }
 
-exception_t
-decodeVCPUSetTCB(cap_t cap, extra_caps_t extraCaps)
+exception_t decodeVCPUAckVPPI(cap_t cap, unsigned int length, word_t *buffer)
+{
+    vcpu_t *vcpu = VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap));
+
+    if (length < 1) {
+        current_syscall_error.type = seL4_TruncatedMessage;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    word_t irq_w = getSyscallArg(0, buffer);
+    irq_t irq = (irq_t) CORE_IRQ_TO_IRQT(CURRENT_CPU_INDEX(), irq_w);
+    exception_t status = Arch_checkIRQ(irq_w);
+    if (status != EXCEPTION_NONE) {
+        return status;
+    }
+
+    VPPIEventIRQ_t vppi = irqVPPIEventIndex(irq);
+    if (vppi == VPPIEventIRQ_invalid) {
+        userError("VCPUAckVPPI: Invalid irq number.");
+        current_syscall_error.type = seL4_InvalidArgument;
+        current_syscall_error.invalidArgumentNumber = 0;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+    return invokeVCPUAckVPPI(vcpu, vppi);
+}
+
+exception_t invokeVCPUAckVPPI(vcpu_t *vcpu, VPPIEventIRQ_t vppi)
+{
+    vcpu->vppi_masked[vppi] = false;
+    return EXCEPTION_NONE;
+}
+
+exception_t decodeVCPUSetTCB(cap_t cap, extra_caps_t extraCaps)
 {
     cap_t tcbCap;
-    if ( extraCaps.excaprefs[0] == NULL) {
+    if (extraCaps.excaprefs[0] == NULL) {
         userError("VCPU SetTCB: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -751,37 +542,37 @@ decodeVCPUSetTCB(cap_t cap, extra_caps_t extraCaps)
     return invokeVCPUSetTCB(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)), TCB_PTR(cap_thread_cap_get_capTCBPtr(tcbCap)));
 }
 
-exception_t
-invokeVCPUSetTCB(vcpu_t *vcpu, tcb_t *tcb)
+exception_t invokeVCPUSetTCB(vcpu_t *vcpu, tcb_t *tcb)
 {
     associateVCPUTCB(vcpu, tcb);
 
     return EXCEPTION_NONE;
 }
 
-#define HSR_FPU_FAULT   (0x1fe0000a)
-#define HSR_TASE_FAULT  (0x1fe00020)
 
-void
-handleVCPUFault(word_t hsr)
+void handleVCPUFault(word_t hsr)
 {
-#ifdef CONFIG_ARCH_AARCH64
-    if (armv_handleVCPUFault(hsr)) {
-        return;
-    }
-#endif
-#ifdef CONFIG_HAVE_FPU
-    if (hsr == HSR_FPU_FAULT || hsr == HSR_TASE_FAULT) {
-        assert(!isFpuEnable());
-        handleFPUFault();
-        setNextPC(NODE_STATE(ksCurThread), getRestartPC(NODE_STATE(ksCurThread)));
-        return;
-    }
-#endif
-    current_fault = seL4_Fault_VCPUFault_new(hsr);
-    handleFault(NODE_STATE(ksCurThread));
+    MCS_DO_IF_BUDGET({
+        if (armv_handleVCPUFault(hsr))
+        {
+            return;
+        }
+        current_fault = seL4_Fault_VCPUFault_new(hsr);
+        handleFault(NODE_STATE(ksCurThread));
+    })
     schedule();
     activateThread();
 }
+
+#ifdef ENABLE_SMP_SUPPORT
+void handleVCPUInjectInterruptIPI(vcpu_t *vcpu, unsigned long index, virq_t virq)
+{
+    if (likely(ARCH_NODE_STATE(armHSCurVCPU) == vcpu)) {
+        set_gic_vcpu_ctrl_lr(index, virq);
+    } else {
+        vcpu->vgic.lr[index] = virq;
+    }
+}
+#endif /* ENABLE_SMP_SUPPORT */
 
 #endif

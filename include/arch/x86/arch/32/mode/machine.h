@@ -1,19 +1,15 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MODE_MACHINE_H
-#define __MODE_MACHINE_H
+#pragma once
 
 #include <model/statedata.h>
 #include <arch/machine/cpu_registers.h>
 #include <arch/model/smp.h>
+#include <arch/machine.h>
 
 /* Address space control */
 static inline paddr_t getCurrentPD(void)
@@ -94,11 +90,11 @@ static inline rdmsr_safe_result_t x86_rdmsr_safe(const uint32_t reg)
          1: \n\
          movl (%[returnto_addr]), %[returnto] \n\
          movl $0, (%[returnto_addr])"
-        : [returnto] "=&r" (returnto),
-        [high] "=&d" (high),
-        [low] "=&a" (low)
-        : [returnto_addr] "r" (&ARCH_NODE_STATE(x86KSGPExceptReturnTo)),
-        [reg] "c" (reg)
+        : [returnto] "=&r"(returnto),
+        [high] "=&d"(high),
+        [low] "=&a"(low)
+        : [returnto_addr] "r"(&ARCH_NODE_STATE(x86KSGPExceptReturnTo)),
+        [reg] "c"(reg)
         : "memory"
     );
     result.success = returnto != 0;
@@ -107,10 +103,10 @@ static inline rdmsr_safe_result_t x86_rdmsr_safe(const uint32_t reg)
 }
 
 /* GDT installation */
-void ia32_install_gdt(gdt_idt_ptr_t* gdt_idt_ptr);
+void ia32_install_gdt(gdt_idt_ptr_t *gdt_idt_ptr);
 
 /* IDT installation */
-void ia32_install_idt(gdt_idt_ptr_t* gdt_idt_ptr);
+void ia32_install_idt(gdt_idt_ptr_t *gdt_idt_ptr);
 
 /* LDT installation */
 void ia32_install_ldt(uint32_t ldt_sel);
@@ -118,30 +114,78 @@ void ia32_install_ldt(uint32_t ldt_sel);
 /* TSS installation */
 void ia32_install_tss(uint32_t tss_sel);
 
+void ia32_load_fs(word_t selector);
+void ia32_load_gs(word_t selector);
+
 #if defined(CONFIG_FSGSBASE_GDT) || !defined(CONFIG_FSGSBASE_MSR)
 
 static inline void FORCE_INLINE x86_write_fs_base_impl(word_t base)
 {
-    gdt_entry_gdt_data_ptr_set_base_low(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt + GDT_IPCBUF, base);
-    gdt_entry_gdt_data_ptr_set_base_mid(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt + GDT_IPCBUF,  (base >> 16) & 0xFF);
-    gdt_entry_gdt_data_ptr_set_base_high(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt + GDT_IPCBUF, (base >> 24) & 0xFF);
+    gdt_entry_gdt_data_ptr_set_base_low(&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt[GDT_FS], base & 0xFFFF);
+    gdt_entry_gdt_data_ptr_set_base_mid(&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt[GDT_FS], (base >> 16) & 0xFF);
+    gdt_entry_gdt_data_ptr_set_base_high(&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt[GDT_FS], (base >> 24) & 0xFF);
+    asm volatile(
+        "movw %0, %%ax\n"
+        "movw %%ax, %%fs\n"
+        :
+        : "i"(SEL_FS)
+        : "ax"
+    );
 }
 
 static inline void FORCE_INLINE x86_write_gs_base_impl(word_t base)
 {
-    gdt_entry_gdt_data_ptr_set_base_low(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt + GDT_TLS, base);
-    gdt_entry_gdt_data_ptr_set_base_mid(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt + GDT_TLS,  (base >> 16) & 0xFF);
-    gdt_entry_gdt_data_ptr_set_base_high(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt + GDT_TLS, (base >> 24) & 0xFF);
+    gdt_entry_gdt_data_ptr_set_base_low(&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt[GDT_GS], base & 0xFFFF);
+    gdt_entry_gdt_data_ptr_set_base_mid(&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt[GDT_GS], (base >> 16) & 0xFF);
+    gdt_entry_gdt_data_ptr_set_base_high(&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt[GDT_GS], (base >> 24) & 0xFF);
+    asm volatile(
+        "movw %0, %%ax\n"
+        "movw %%ax, %%gs\n"
+        :
+        : "i"(SEL_GS)
+        : "ax"
+    );
+}
+
+static inline word_t FORCE_INLINE x86_read_fs_base_impl(void)
+{
+    word_t base = 0;
+    base &= gdt_entry_gdt_data_ptr_get_base_low(&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt[GDT_FS]) & 0xFFFF;
+    base &= (gdt_entry_gdt_data_ptr_get_base_mid(&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt[GDT_FS]) & 0xFF) << 16;
+    base &= (gdt_entry_gdt_data_ptr_get_base_high(&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt[GDT_FS]) & 0xFF) << 24;
+    return base;
+}
+
+static inline word_t FORCE_INLINE x86_read_gs_base_impl(void)
+{
+    word_t base = 0;
+    base &= gdt_entry_gdt_data_ptr_get_base_low(&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt[GDT_GS]) & 0xFFFF;
+    base &= (gdt_entry_gdt_data_ptr_get_base_mid(&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt[GDT_GS]) & 0xFF) << 16;
+    base &= (gdt_entry_gdt_data_ptr_get_base_high(&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt[GDT_GS]) & 0xFF) << 24;
+    return base;
+}
+
+#elif defined(CONFIG_FSGSBASE_MSR)
+
+static inline void x86_write_gs_base_impl(word_t base)
+{
+    x86_wrmsr(IA32_GS_BASE_MSR, base);
+}
+
+static inline word_t x86_read_gs_base_impl(void)
+{
+    return x86_rdmsr(IA32_GS_BASE_MSR);
 }
 
 #endif
 
-void ia32_load_fs(word_t selector);
-void ia32_load_gs(word_t selector);
+static inline void x86_set_tls_segment_base(word_t tls_base)
+{
+    x86_write_gs_base(tls_base, SMP_TERNARY(getCurrentCPUIndex(), 0));
+}
 
 static inline void init_syscall_msrs(void)
 {
     fail("syscall not supported on ia32");
 }
 
-#endif

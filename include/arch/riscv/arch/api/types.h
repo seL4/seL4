@@ -1,26 +1,19 @@
 /*
- * Copyright 2018, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 /*
  *
  */
 
-#ifndef __ARCH_API_TYPES
-#define __ARCH_API_TYPES
+#pragma once
 
 #include <config.h>
-#include <api/objecttype.h>
-#include <mode/api/objecttype.h>
-#include <arch/api/objecttype.h>
+#include <sel4/objecttype.h>
+#include <sel4/sel4_arch/objecttype.h>
+#include <sel4/arch/objecttype.h>
 
 
 #define pageType PageObject4K
@@ -33,4 +26,4 @@ enum asidConstants {
 
 typedef word_t asid_t;
 
-#endif
+

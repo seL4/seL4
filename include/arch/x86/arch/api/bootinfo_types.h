@@ -1,1 +1,0 @@
-../../../../../libsel4/arch_include/x86/sel4/arch/bootinfo_types.h

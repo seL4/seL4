@@ -1,13 +1,7 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -26,8 +20,7 @@
 #include <plat/machine/intel-vtd.h>
 
 
-bool_t
-Arch_isFrameType(word_t type)
+bool_t Arch_isFrameType(word_t type)
 {
     switch (type) {
     case seL4_X86_4K:
@@ -41,8 +34,7 @@ Arch_isFrameType(word_t type)
     }
 }
 
-deriveCap_ret_t
-Mode_deriveCap(cte_t* slot, cap_t cap)
+deriveCap_ret_t Mode_deriveCap(cte_t *slot, cap_t cap)
 {
     deriveCap_ret_t ret;
 
@@ -170,8 +162,7 @@ bool_t CONST Mode_sameRegionAs(cap_t cap_a, cap_t cap_b)
     }
 }
 
-word_t
-Mode_getObjectSize(word_t t)
+word_t Mode_getObjectSize(word_t t)
 {
     switch (t) {
     case seL4_X64_PML4Object:
@@ -186,8 +177,7 @@ Mode_getObjectSize(word_t t)
     }
 }
 
-cap_t
-Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
+cap_t Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
 {
     switch (t) {
 
@@ -324,15 +314,14 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
     }
 }
 
-exception_t
-Mode_decodeInvocation(
+exception_t Mode_decodeInvocation(
     word_t label,
     word_t length,
     cptr_t cptr,
-    cte_t* slot,
+    cte_t *slot,
     cap_t cap,
     extra_caps_t extraCaps,
-    word_t* buffer
+    word_t *buffer
 )
 {
     switch (cap_get_capType(cap)) {

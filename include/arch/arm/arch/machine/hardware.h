@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_HARDWARE_H
-#define __ARCH_MACHINE_HARDWARE_H
+#pragma once
 
 #include <config.h>
 #include <mode/machine/hardware.h>
@@ -31,4 +26,7 @@ typedef word_t vm_fault_type_t;
   } while (0)
 
 #endif /* __ASSEMBLER__ */
-#endif /* !__ARCH_MACHINE_HARDWARE_H */
+
+#define L1_CACHE_LINE_SIZE_BITS CONFIG_L1_CACHE_LINE_SIZE_BITS
+#define L1_CACHE_LINE_SIZE BIT(L1_CACHE_LINE_SIZE_BITS)
+

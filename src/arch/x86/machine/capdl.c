@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -104,7 +100,7 @@ static void sendWord(unsigned long word)
 {
     unsigned long i;
     for (i = 0; i < sizeof(unsigned long); i++) {
-        putEncodedChar( (word >> (i * 8)) & 0xff);
+        putEncodedChar((word >> (i * 8)) & 0xff);
     }
 }
 
@@ -193,14 +189,14 @@ static void sendIOSpace(uint32_t pci_request_id)
 {
     uint32_t   vtd_root_index;
     uint32_t   vtd_context_index;
-    vtd_rte_t* vtd_root_slot;
-    vtd_cte_t* vtd_context;
-    vtd_cte_t* vtd_context_slot;
+    vtd_rte_t *vtd_root_slot;
+    vtd_cte_t *vtd_context;
+    vtd_cte_t *vtd_context_slot;
 
     vtd_root_index = get_pci_bus(pci_request_id);
     vtd_root_slot = x86KSvtdRootTable + vtd_root_index;
 
-    vtd_context = (vtd_cte_t*)paddr_to_pptr(vtd_rte_ptr_get_ctp(vtd_root_slot));
+    vtd_context = (vtd_cte_t *)paddr_to_pptr(vtd_rte_ptr_get_ctp(vtd_root_slot));
     vtd_context_index = (get_pci_dev(pci_request_id) << 3) | get_pci_fun(pci_request_id);
     vtd_context_slot = &vtd_context[vtd_context_index];
 
