@@ -5,18 +5,18 @@
 #
 
 # generated python bytecode
-**.pyc
+*.pyc
 
 # latex generated files
-**.aux
-**.log
-**.out
-**.lof
-**.lot
-**.bbl
-**.blg
-**.toc
-**.mpx
+*.aux
+*.log
+*.out
+*.lof
+*.lot
+*.bbl
+*.blg
+*.toc
+*.mpx
 
 tools/parsetab.py
 manual/env.tex
