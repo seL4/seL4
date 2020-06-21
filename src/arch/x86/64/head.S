@@ -126,7 +126,7 @@ BEGIN_FUNC(pcid_check)
     movl $0x1, %eax
     xorl %ecx, %ecx
     cpuid
-    andl $0x800000, %ecx
+    andl $0x20000, %ecx
     jz   1f
     ret
 1:
