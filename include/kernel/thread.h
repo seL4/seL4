@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __KERNEL_THREAD_H
-#define __KERNEL_THREAD_H
+#pragma once
 
 #include <types.h>
 #include <util.h>
@@ -83,6 +78,35 @@ static inline bool_t isHighestPrio(word_t dom, prio_t prio)
 {
     return NODE_STATE(ksReadyQueuesL1Bitmap)[dom] == 0 ||
            prio >= getHighestPrio(dom);
+}
+
+static inline bool_t PURE isBlocked(const tcb_t *thread)
+{
+    switch (thread_state_get_tsType(thread->tcbState)) {
+    case ThreadState_BlockedOnReceive:
+    case ThreadState_BlockedOnSend:
+    case ThreadState_BlockedOnNotification:
+    case ThreadState_BlockedOnReply:
+        return true;
+
+    default:
+        return false;
+    }
+}
+
+static inline bool_t PURE isStopped(const tcb_t *thread)
+{
+    switch (thread_state_get_tsType(thread->tcbState)) {
+    case ThreadState_Inactive:
+    case ThreadState_BlockedOnReceive:
+    case ThreadState_BlockedOnSend:
+    case ThreadState_BlockedOnNotification:
+    case ThreadState_BlockedOnReply:
+        return true;
+
+    default:
+        return false;
+    }
 }
 
 #ifdef CONFIG_KERNEL_MCS
@@ -269,4 +293,3 @@ void awaken(void);
 void postpone(sched_context_t *sc);
 #endif
 
-#endif

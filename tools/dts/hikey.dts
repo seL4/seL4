@@ -1,12 +1,11 @@
 /*
- * The code contained herein is licensed under the GNU General Public
- * License. You may obtain a copy of the GNU General Public License
- * Version 2 or later at the following locations:
+ * Copyright Linux Kernel Team
  *
- * http://www.opensource.org/licenses/gpl-license.html
- * http://www.gnu.org/copyleft/gpl.html
+ * SPDX-License-Identifier: GPL-2.0-only
  *
- * @TAG(OTHER_GPL)
+ * This file is derived from an intermediate build stage of the
+ * Linux kernel. The licenses of all input files to this process
+ * are compatible with GPL-2.0-only.
  */
 
 /dts-v1/;

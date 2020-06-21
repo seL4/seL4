@@ -1,11 +1,7 @@
 %
 % Copyright 2014, General Dynamics C4 Systems
 %
-% This software may be distributed and modified according to the terms of
-% the GNU General Public License version 2. Note that NO WARRANTY is provided.
-% See "LICENSE_GPLv2.txt" for details.
-%
-% @TAG(GD_GPL)
+% SPDX-License-Identifier: GPL-2.0-only
 %
 
 \chapter{\label{ch:threads}Threads and Execution}
@@ -298,10 +294,10 @@ are different per exeception handler type.  Before raising an exception the
 handler capability is validated. The kernel does not perform another lookup,
 but checks that the capability is an endpoint with the correct rights.
 
-The exception endpoint must have send and grant rights. Replying to the
-exception message restarts the thread. For certain exception types, the
-contents of the reply message may be used to set the values in the registers of
-the thread being restarted.  See \autoref{sec:faults} for details.
+The exception endpoint must have Write and either Grant or GrantReply rights.
+Replying to the exception message restarts the thread. For certain exception
+types, the contents of the reply message may be used to set the values in the
+registers of the thread being restarted.  See \autoref{sec:faults} for details.
 
 \subsubsection{Standard Exceptions}
 

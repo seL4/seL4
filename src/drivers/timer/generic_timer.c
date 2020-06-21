@@ -1,13 +1,7 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <drivers/timer/arm_generic.h>
@@ -72,6 +66,8 @@ static void save_virt_timer(vcpu_t *vcpu)
 #ifdef CONFIG_ARCH_AARCH64
     vcpu_save_reg(vcpu, seL4_VCPUReg_CNTV_CVAL);
     vcpu_save_reg(vcpu, seL4_VCPUReg_CNTVOFF);
+    vcpu_save_reg(vcpu, seL4_VCPUReg_CNTKCTL_EL1);
+    check_export_arch_timer();
 #else
     uint64_t cval = get_cntv_cval_64();
     uint64_t cntvoff = get_cntv_off_64();
@@ -91,6 +87,7 @@ static void restore_virt_timer(vcpu_t *vcpu)
     /* Restore virtual timer state */
 #ifdef CONFIG_ARCH_AARCH64
     vcpu_restore_reg(vcpu, seL4_VCPUReg_CNTV_CVAL);
+    vcpu_restore_reg(vcpu, seL4_VCPUReg_CNTKCTL_EL1);
 #else
     uint32_t cval_high = vcpu_read_reg(vcpu, seL4_VCPUReg_CNTV_CVALhigh);
     uint32_t cval_low = vcpu_read_reg(vcpu, seL4_VCPUReg_CNTV_CVALlow);

@@ -1,13 +1,7 @@
 #
-# Copyright 2017, Data61
-# Commonwealth Scientific and Industrial Research Organisation (CSIRO)
-# ABN 41 687 119 230.
+# Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 #
-# This software may be distributed and modified according to the terms of
-# the GNU General Public License version 2. Note that NO WARRANTY is provided.
-# See "LICENSE_GPLv2.txt" for details.
-#
-# @TAG(DATA61_GPL)
+# SPDX-License-Identifier: GPL-2.0-only
 #
 
 cmake_minimum_required(VERSION 3.7.2)
@@ -39,6 +33,14 @@ config_option(
     IPC buffer for marshalling and unmarshalling arguments. Without this option set, \
     arguments will be passed in registers where possible for better performance."
     DEFAULT OFF
+)
+
+config_string(
+    LibSel4PrintInvocationErrors LIB_SEL4_PRINT_INVOCATION_ERRORS
+    "Generated stubs on error will print the message contained in the IPC buffer"
+    DEFAULT 1
+    DEPENDS "KernelInvocationReportErrorIPC" DEFAULT_DISABLED 0
+    UNQUOTE
 )
 
 if(LibSel4StubsUseIPCBufferOnly)

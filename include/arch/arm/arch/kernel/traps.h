@@ -1,15 +1,10 @@
 /*
  * Copyright 2016, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __KERNEL_ARM_TRAPS_H
-#define __KERNEL_ARM_TRAPS_H
+#pragma once
 
 #include <config.h>
 #include <machine.h>
@@ -27,12 +22,20 @@ static inline void arch_c_exit_hook(void)
 
 void VISIBLE NORETURN restore_user_context(void);
 
-#ifdef CONFIG_KERNEL_MCS
-void c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall, word_t reply)
-#else
 void c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
+VISIBLE SECTION(".vectors.text");
+
+#ifdef CONFIG_FASTPATH
+void c_handle_fastpath_call(word_t cptr, word_t msgInfo)
+VISIBLE SECTION(".vectors.text");
+
+#ifdef CONFIG_KERNEL_MCS
+void c_handle_fastpath_reply_recv(word_t cptr, word_t msgInfo, word_t reply)
+#else
+void c_handle_fastpath_reply_recv(word_t cptr, word_t msgInfo)
 #endif
 VISIBLE SECTION(".vectors.text");
+#endif
 
 void c_handle_interrupt(void)
 VISIBLE SECTION(".vectors.text");
@@ -56,4 +59,3 @@ void c_handle_enfp(void)
 VISIBLE SECTION(".vectors.text");
 #endif /* CONFIG_HAVE_FPU */
 
-#endif /* __KERNEL_ARM_TRAPS_H */

@@ -1,16 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_KERNEL_MULTIBOOT_H
-#define __ARCH_KERNEL_MULTIBOOT_H
-
+#pragma once
 /* Adapted from the MultiBoot Specification:  */
 /* www.gnu.org/software/grub/manual/multiboot */
 
@@ -76,4 +70,3 @@ typedef struct multiboot_info {
 #define MULTIBOOT_MMAP_ACPI_NVS_TYPE    4
 #define MULTIBOOT_MMAP_BAD_TYPE         5
 
-#endif

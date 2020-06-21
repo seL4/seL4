@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MACHINE_REGISTERSET_H
-#define __MACHINE_REGISTERSET_H
+#pragma once
 
 #include <util.h>
 #include <arch/types.h>
@@ -45,4 +40,3 @@ static inline word_t PURE getRegister(tcb_t *thread, register_t reg)
 word_t getNBSendRecvDest(void);
 #endif
 
-#endif

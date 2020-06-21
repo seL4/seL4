@@ -1,27 +1,29 @@
 /*
- * Copyright 2018, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
- *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
- */
-
-/*
- *
- * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_HARDWARE_H
-#define __ARCH_MACHINE_HARDWARE_H
+#pragma once
 
 #include <util.h>
 
 #include <mode/hardware.h>
+
+/* Privileged CSR definitions */
+#define SSTATUS_SPIE  0x00000020
+#define SSTATUS_SPP   0x00000100
+#define SSTATUS_FS    0x00006000
+
+#define SSTATUS_FS_CLEAN    0x00004000
+#define SSTATUS_FS_INITIAL  0x00002000
+#define SSTATUS_FS_DIRTY    0x00006000
+
+#define SATP_MODE_OFF  0
+#define SATP_MODE_SV32 1
+#define SATP_MODE_SV39 8
+#define SATP_MODE_SV48 9
 
 #ifndef __ASSEMBLER__
 
@@ -34,23 +36,6 @@
 /* The size is for HiFive Unleashed */
 #define L1_CACHE_LINE_SIZE_BITS     6
 #define L1_CACHE_LINE_SIZE          BIT(L1_CACHE_LINE_SIZE_BITS)
-
-/* The highest valid physical address that can be indexed in the kernel window */
-#define PADDR_TOP (KERNEL_BASE - PPTR_BASE + PADDR_BASE)
-/* A contiguous region of physical address space at PADDR_LOAD is mapped
- * to KERNEL_ELF_BASE, and the size of this region is KDEV_BASE-KERNEL_ELF_BASE.
- * PADDR_HIGH_TOP is the end of this physical address region. */
-#define PADDR_HIGH_TOP (KDEV_BASE - KERNEL_ELF_BASE + PADDR_LOAD)
-
-/* Translates from a physical address and a value in the kernel image */
-#define KERNEL_BASE_OFFSET (KERNEL_ELF_BASE - PADDR_LOAD)
-
-/* Convert our values into general values expected by the common code */
-#define kernelBase KERNEL_BASE
-/* This is the top of the kernel window, not including the kernel image */
-#define PPTR_TOP KERNEL_BASE
-#define PPTR_USER_TOP seL4_UserTop
-#define BASE_OFFSET (PPTR_BASE - PADDR_BASE)
 
 #define PAGE_BITS seL4_PageBits
 
@@ -86,7 +71,7 @@ enum vm_fault_type {
     RISCVStorePageFault = 15
                           /* >= 16 reserved */
 };
-typedef uint32_t vm_fault_type_t;
+typedef word_t vm_fault_type_t;
 
 enum frameSizeConstants {
     RISCVPageBits        = seL4_PageBits,
@@ -105,9 +90,9 @@ enum vm_page_size {
     RISCV_Giga_Page,
     RISCV_Tera_Page
 };
-typedef uint32_t vm_page_size_t;
+typedef word_t vm_page_size_t;
 
-static inline unsigned int CONST pageBitsForSize(vm_page_size_t pagesize)
+static inline word_t CONST pageBitsForSize(vm_page_size_t pagesize)
 {
     switch (pagesize) {
     case RISCV_4K_Page:
@@ -130,6 +115,11 @@ static inline unsigned int CONST pageBitsForSize(vm_page_size_t pagesize)
         fail("Invalid page size");
     }
 }
+
+static inline void arch_clean_invalidate_caches(void)
+{
+    /* RISC-V doesn't have an architecture defined way of flushing caches */
+}
 #endif /* __ASSEMBLER__ */
 
 #define LOAD_S STRINGIFY(LOAD)
@@ -140,4 +130,3 @@ static inline unsigned int CONST pageBitsForSize(vm_page_size_t pagesize)
         asm volatile("fence rw,rw" ::: "memory"); \
     } while (0)
 
-#endif /* !__ARCH_MACHINE_HARDWARE_H */

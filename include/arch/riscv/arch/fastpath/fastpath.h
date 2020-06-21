@@ -1,23 +1,11 @@
 /*
- * Copyright 2018, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
- *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
- */
-
-/*
- *
- * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_FASTPATH_H
-#define __ARCH_FASTPATH_H
+#pragma once
 
 #include <config.h>
 #include <util.h>
@@ -27,6 +15,7 @@
 #include <api/types.h>
 #include <smp/lock.h>
 #include <arch/machine/hardware.h>
+#include <machine/fpu.h>
 
 void slowpath(syscall_t syscall)
 NORETURN;
@@ -116,6 +105,11 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
 
     c_exit_hook();
 
+#ifdef CONFIG_HAVE_FPU
+    lazyFPURestore(NODE_STATE(ksCurThread));
+    set_tcb_fs_state(NODE_STATE(ksCurThread), isFpuEnable());
+#endif
+
     register word_t badge_reg asm("a0") = badge;
     register word_t msgInfo_reg asm("a1") = msgInfo;
     register word_t cur_thread_reg asm("t0") = TCB_REF(cur_thread);
@@ -176,4 +170,4 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
 
     UNREACHABLE();
 }
-#endif
+

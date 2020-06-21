@@ -1,39 +1,60 @@
 /*
- * Copyright 2018, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
+
+#pragma once
+
+#include <util.h>
 
 /*
- *
- * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
+ *         2^32 +-------------------+
+ *              |  Kernel Devices   |
+ *  2^32 - 2^22 +-------------------+ KDEV_BASE
+ *              |    Kernel ELF     |
+ *  2^32 - 2^23 +-------------------+ PPTR_TOP / KERNEL_ELF_BASE
+ *              |                   |
+ *              |  Physical Memory  |
+ *              |       Window      |
+ *              |                   |
+ *              +-------------------+ USER_TOP / PPTR_BASE
+ *              |                   |
+ *              |       User        |
+ *              |                   |
+ *          0x0 +-------------------+
  */
 
-#ifndef __ARCH_MODE_HARDWARE_H
-#define __ARCH_MODE_HARDWARE_H
+/* last accessible virtual address in user space */
+#define USER_TOP seL4_UserTop
+
+/* The first physical address to map into the kernel's physical memory
+ * window */
+#define PADDR_BASE physBase
+
+/* The base address in virtual memory to use for the 1:1 physical memory
+ * mapping */
+#define PPTR_BASE seL4_UserTop
+
+/* Top of the physical memory window */
+#define PPTR_TOP UL_CONST(0xFF800000)
+
+/* The physical memory address to use for mapping the kernel ELF
+ *
+ * This represents the physical address that the kernel image will be linked to. This needs to
+ * be on a 1gb boundary as we currently require being able to creating a mapping to this address
+ * as the largest frame size */
+#define KERNEL_ELF_PADDR_BASE UL_CONST(0x84000000)
+
+/* The base address in virtual memory to use for the kernel ELF mapping */
+#define KERNEL_ELF_BASE PPTR_TOP
+
+/* The base address in virtual memory to use for the kernel device
+ * mapping region. These are mapped in the kernel page table. */
+#define KDEV_BASE UL_CONST(0xFFC00000)
 
 #define LOAD  lw
 #define STORE sw
-
-/* Contain the typical location of memory */
-#define PADDR_BASE physBase
-/* This represents the physical address that the kernel image will be linked to. This needs to
- * be on a 1gb boundary as we currently require being able to creating a mapping to this address
- * as the largest frame size */
-#define PADDR_LOAD UL_CONST(0x84000000)
-/* This is the base of the kernel window, which is directly mapped to PADDR_BASE */
-#define PPTR_BASE  seL4_UserTop
-/* This is the mapping of the kernel (mapped above the kernel window currently) */
-#define KERNEL_BASE UL_CONST(0xFF800000)
-#define KERNEL_ELF_BASE KERNEL_BASE
-/* Start of kernel device mapping region in highest 4MiB of memory. */
-#define KDEV_BASE UL_CONST(0xFFC00000)
 
 #ifndef __ASSEMBLER__
 
@@ -60,4 +81,3 @@ static inline uint64_t riscv_read_time(void)
 
 #endif /* __ASSEMBLER__ */
 
-#endif /* __ARCH_MODE_HARDWARE_H */

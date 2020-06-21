@@ -1,17 +1,13 @@
 /*
- * Copyright 2019, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __DRIVER_IRQ_HIFIVE_H
-#define __DRIVER_IRQ_HIFIVE_H
+#pragma once
+/* tell the kernel we have the set trigger feature */
+#define HAVE_SET_TRIGGER 1
+
 
 #include <plat/machine/devices_gen.h>
 #include <arch/model/smp.h>
@@ -69,16 +65,14 @@ static inline word_t read_sie(void)
     return temp;
 }
 
-static inline uint32_t readl(const volatile uint64_t addr)
+static inline uint32_t readl(uint64_t addr)
 {
-    uint32_t val;
-    asm volatile("lw %0, 0(%1)" : "=r"(val) : "r"(addr));
-    return val;
+    return *((volatile uint32_t *)(addr));
 }
 
-static inline void writel(uint32_t val, volatile uint64_t addr)
+static inline void writel(uint32_t val, uint64_t addr)
 {
-    asm volatile("sw %0, 0(%1)" : : "r"(val), "r"(addr));
+    *((volatile uint32_t *)(addr)) = val;
 }
 
 static inline word_t plic_enable_offset(word_t hart_id, word_t context_id)
@@ -185,4 +179,11 @@ static inline void plic_init_controller(void)
 
 }
 
-#endif /* __DRIVER_IRQ_HIFIVE_H */
+
+/*
+ * Provide a dummy definition of set trigger as the Hifive platform currently
+ * has all global interrupt positive-level triggered.
+ */
+static inline void plic_irq_set_trigger(irq_t irq, bool_t edge_triggered)
+{
+}

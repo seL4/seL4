@@ -1,17 +1,10 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the BSD 2-Clause license. Note that NO WARRANTY is provided.
- * See "LICENSE_BSD2.txt" for details.
- *
- * @TAG(DATA61_BSD)
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_SEL4_ARCH_SYSCALLS_H
-#define __LIBSEL4_SEL4_ARCH_SYSCALLS_H
+#pragma once
 
 #include <autoconf.h>
 #include <sel4/functions.h>
@@ -822,6 +815,15 @@ LIBSEL4_INLINE_FUNC void seL4_DebugPutChar(char c)
     x86_sys_send_recv(seL4_SysDebugPutChar, c, &unused0, 0, &unused1, &unused2, MCS_COND(0, &unused3));
 }
 
+LIBSEL4_INLINE_FUNC void seL4_DebugPutString(char *str)
+{
+    for (char *s = str; *s; s++) {
+        seL4_DebugPutChar(*s);
+    }
+    return;
+}
+
+
 LIBSEL4_INLINE_FUNC void seL4_DebugDumpScheduler(void)
 {
     seL4_Word unused0 = 0;
@@ -989,5 +991,3 @@ LIBSEL4_INLINE_FUNC void seL4_SetTLSBase(seL4_Word tls_base)
     asm volatile("" ::: "memory");
 }
 #endif /* CONFIG_SET_TLS_BASE_SELF */
-
-#endif

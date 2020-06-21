@@ -1,18 +1,9 @@
 --
--- Copyright 2018, Data61
--- Commonwealth Scientific and Industrial Research Organisation (CSIRO)
--- ABN 41 687 119 230.
---
--- This software may be distributed and modified according to the terms of
--- the GNU General Public License version 2. Note that NO WARRANTY is provided.
--- See "LICENSE_GPLv2.txt" for details.
---
--- @TAG(DATA61_GPL)
---
-
---
--- Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
+-- Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 -- Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+--
+-- SPDX-License-Identifier: GPL-2.0-only
+--
 
 #include <config.h>
 
@@ -30,9 +21,9 @@ block frame_cap {
     field_high  capFBasePtr         20
     padding                         3
 
-    padding                         2
+    padding                         3
     field       capFSize            2
-    field       capFVMRights        3
+    field       capFVMRights        2
     field       capFIsDevice        1
     field_high  capFMappedAddress   20
     field       capType             4
@@ -134,8 +125,6 @@ block pte {
 }
 
 -- RISC-V SATP (priv-1.10) Supervisor Address Translation and Protection
--- This register was originally named sptbr and some toolchains still use
--- sptbr when it refers to satp.
 
 block satp {
     field mode          1

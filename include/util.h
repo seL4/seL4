@@ -1,20 +1,15 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __UTIL_H
-#define __UTIL_H
+#pragma once
 
-#define MASK(n) (BIT(n)-1ul)
+#define MASK(n) (BIT(n)-UL_CONST(1))
 #define IS_ALIGNED(n, b) (!((n) & MASK(b)))
 #define ROUND_DOWN(n, b) (((n) >> (b)) << (b))
-#define ROUND_UP(n, b) (((((n) - 1ul) >> (b)) + 1ul) << (b))
+#define ROUND_UP(n, b) (((((n) - UL_CONST(1)) >> (b)) + UL_CONST(1)) << (b))
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
@@ -185,4 +180,4 @@ CONST popcountl(unsigned long mask)
 #define UL_CONST(x) x
 
 #endif /* !__ASSEMBLER__ */
-#endif /* __UTIL_H */
+

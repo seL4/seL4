@@ -1,13 +1,7 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -202,10 +196,18 @@ lel_syscall:
     str     x20, [sp, #PT_FaultIP]
 
     lsp_i   x19
-    mov     x2, x7
+
+#ifdef CONFIG_FASTPATH
+    cmp     x7, #SYSCALL_CALL
+    b.eq    c_handle_fastpath_call
+    cmp     x7, #SYSCALL_REPLY_RECV
 #ifdef CONFIG_KERNEL_MCS
-    mov     x3, x6
+    mov     x2, x6
 #endif
+    b.eq    c_handle_fastpath_reply_recv
+#endif
+
+    mov     x2, x7
     b       c_handle_syscall
 
 el0_enfp:

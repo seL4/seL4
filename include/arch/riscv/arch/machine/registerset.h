@@ -1,26 +1,13 @@
 /*
- * Copyright 2018, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
- *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
- */
-
-/*
- *
- * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_REGISTERSET_H
-#define __ARCH_MACHINE_REGISTERSET_H
+#pragma once
 
 #include "hardware.h"
-#include <arch/encoding.h>
 
 #ifndef __ASSEMBLER__
 
@@ -91,7 +78,7 @@ enum messageSizes {
     n_msgRegisters = 4,
     n_frameRegisters = 16,
     n_gpRegisters = 16,
-    n_exceptionMessage = 3,
+    n_exceptionMessage = 2,
     n_syscallMessage = 10,
 #ifdef CONFIG_KERNEL_MCS
     n_timeoutMessage = 32,
@@ -102,8 +89,30 @@ extern const register_t msgRegisters[] VISIBLE;
 extern const register_t frameRegisters[] VISIBLE;
 extern const register_t gpRegisters[] VISIBLE;
 
+#ifdef CONFIG_HAVE_FPU
+
+#define RISCV_NUM_FP_REGS   32
+
+#if defined(CONFIG_RISCV_EXT_D)
+typedef uint64_t fp_reg_t;
+#elif defined(CONFIG_RISCV_EXT_F)
+typedef uint32_t fp_reg_t;
+#else
+#error Unknown RISCV FPU extension
+#endif
+
+typedef struct user_fpu_state {
+    fp_reg_t regs[RISCV_NUM_FP_REGS];
+    uint32_t fcsr;
+} user_fpu_state_t;
+
+#endif
+
 struct user_context {
     word_t registers[n_contextRegisters];
+#ifdef CONFIG_HAVE_FPU
+    user_fpu_state_t fpuState;
+#endif
 };
 typedef struct user_context user_context_t;
 
@@ -123,7 +132,6 @@ static inline word_t CONST sanitiseRegister(register_t reg, word_t v, bool_t arc
  {\
     [seL4_UserException_FaultIP] = FaultIP,\
     [seL4_UserException_SP] = SP,\
-    [seL4_UserException_Number] = a7,\
  }
 
 #define SYSCALL_MESSAGE \
@@ -178,4 +186,3 @@ static inline word_t CONST sanitiseRegister(register_t reg, word_t v, bool_t arc
 
 #endif /* __ASSEMBLER__ */
 
-#endif /* !__ARCH_MACHINE_REGISTERSET_H */

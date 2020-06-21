@@ -1,15 +1,12 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
 #include <util.h>
+#include <hardware.h>
 #include <machine/io.h>
 #include <arch/machine.h>
 #include <arch/kernel/apic.h>
@@ -111,7 +108,7 @@ BOOT_CODE static paddr_t load_boot_module(word_t boot_module_start, paddr_t load
         printf("Userland image virtual start address must be 4KB-aligned\n");
         return 0;
     }
-    if (v_reg.end + 2 * BIT(PAGE_BITS) > PPTR_USER_TOP) {
+    if (v_reg.end + 2 * BIT(PAGE_BITS) > USER_TOP) {
         /* for IPC buffer frame and bootinfo frame, need 2*4K of additional userland virtual memory */
         printf("Userland image virtual end address too high\n");
         return 0;
@@ -170,8 +167,8 @@ static BOOT_CODE bool_t try_boot_sys_node(cpu_id_t cpu_id)
 #endif
 
     /* reuse boot code/data memory */
-    boot_mem_reuse_p_reg.start = PADDR_LOAD;
-    boot_mem_reuse_p_reg.end = (paddr_t)ki_boot_end - KERNEL_BASE_OFFSET;
+    boot_mem_reuse_p_reg.start = KERNEL_ELF_PADDR_BASE;
+    boot_mem_reuse_p_reg.end = kpptr_to_paddr(ki_boot_end);
 
     /* initialise the CPU */
     if (!init_cpu(config_set(CONFIG_IRQ_IOAPIC) ? 1 : 0)) {
@@ -345,7 +342,7 @@ static BOOT_CODE bool_t try_boot_sys(void)
     p_region_t ui_p_regs;
     paddr_t load_paddr;
 
-    boot_state.ki_p_reg.start = PADDR_LOAD;
+    boot_state.ki_p_reg.start = KERNEL_ELF_PADDR_BASE;
     boot_state.ki_p_reg.end = kpptr_to_paddr(ki_end);
 
     if (!x86_cpuid_initialize()) {

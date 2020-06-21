@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __OBJECT_ENDPOINT_H
-#define __OBJECT_ENDPOINT_H
+#pragma once
 
 #include <types.h>
 #include <object/structures.h>
@@ -42,4 +37,3 @@ void cancelBadgedSends(endpoint_t *epptr, word_t badge);
 void replyFromKernel_error(tcb_t *thread);
 void replyFromKernel_success_empty(tcb_t *thread);
 
-#endif

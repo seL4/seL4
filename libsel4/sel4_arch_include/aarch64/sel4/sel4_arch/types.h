@@ -1,17 +1,10 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the BSD 2-Clause license. Note that NO WARRANTY is provided.
- * See "LICENSE_BSD2.txt" for details.
- *
- * @TAG(DATA61_BSD)
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_SEL4_SEL4_ARCH_TYPES_H_
-#define __LIBSEL4_SEL4_SEL4_ARCH_TYPES_H_
+#pragma once
 
 #include <sel4/simple_types.h>
 
@@ -35,5 +28,3 @@ typedef struct seL4_UserContext_ {
     /* Thread ID registers */
     seL4_Word tpidr_el0, tpidrro_el0;
 } seL4_UserContext;
-
-#endif /* __LIBSEL4_SEL4_SEL4_ARCH_TYPES_H_ */

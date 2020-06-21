@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_32_H
-#define __ARCH_MACHINE_32_H
+#pragma once
 
 #include <config.h>
 #include <stdint.h>
@@ -217,6 +212,19 @@ static inline word_t readTPIDRURW(void)
 #endif
 }
 
+static inline void writeTPIDRURO(word_t reg)
+{
+    asm volatile("mcr p15, 0, %0, c13, c0, 3" :: "r"(reg));
+}
+
+static inline word_t readTPIDRURO(void)
+{
+    word_t reg;
+    asm volatile("mrc p15, 0, %0, c13, c0, 3" : "=r"(reg));
+    return reg;
+}
+
+
 static inline void writeTPIDRPRW(word_t reg)
 {
     asm volatile("mcr p15, 0, %0, c13, c0, 4" :: "r"(reg));
@@ -234,12 +242,17 @@ static void arm_save_thread_id(tcb_t *thread)
 #ifndef CONFIG_KERNEL_GLOBALS_FRAME
     /* TPIDRURW is writeable from EL0 but not with globals frame. */
     setRegister(thread, TPIDRURW, readTPIDRURW());
+    /* This register is read only from userlevel, but could still be updated
+     * if the thread is running in a higher priveleged level with a VCPU attached.
+     */
+    setRegister(thread, TPIDRURO, readTPIDRURO());
 #endif /* CONFIG_KERNEL_GLOBALS_FRAME */
 }
 
 static void arm_load_thread_id(tcb_t *thread)
 {
     writeTPIDRURW(getRegister(thread, TPIDRURW));
+    writeTPIDRURO(getRegister(thread, TPIDRURO));
 }
 
 static inline word_t readMPIDR(void)
@@ -576,5 +589,3 @@ static inline void setACTLR(word_t actlr)
 
 void arch_clean_invalidate_caches(void);
 void arch_clean_invalidate_L1_caches(word_t type);
-
-#endif /* __ARCH_MACHINE_32_H */

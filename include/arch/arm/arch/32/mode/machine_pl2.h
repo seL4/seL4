@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_PL2_32_H
-#define __ARCH_MACHINE_PL2_32_H
+#pragma once
 
 #include <config.h>
 #include <arch/object/vcpu.h>
@@ -173,18 +168,6 @@ static inline void setSCTLR(word_t sctlr)
     asm volatile("mcr p15, 0, %0, c1, c0, 0" :: "r"(sctlr));
 }
 
-static inline void writeTPIDRURO(word_t reg)
-{
-    asm volatile("mcr p15, 0, %0, c13, c0, 3" :: "r"(reg));
-}
-
-static inline word_t readTPIDRURO(void)
-{
-    word_t reg;
-    asm volatile("mrc p15, 0, %0, c13, c0, 3" : "=r"(reg));
-    return reg;
-}
-
 static inline void writeHTPIDR(word_t reg)
 {
     asm volatile("mcr p15, 4, %0, c13, c0, 2" :: "r"(reg));
@@ -215,4 +198,3 @@ static inline paddr_t addressTranslateS1CPR(vptr_t vaddr)
 }
 
 #endif /* !CONFIG_ARM_HYPERVISOR_SUPPORT */
-#endif /* __ARCH_MACHINE_PL2_32_H */

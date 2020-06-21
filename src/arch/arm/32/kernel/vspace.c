@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -204,10 +200,11 @@ BOOT_CODE void map_kernel_window(void)
     word_t idx;
     pde_t    pde;
 
-    /* mapping of kernelBase (virtual address) to kernel's physBase  */
+    /* mapping of KERNEL_ELF_BASE (virtual address) to kernel's
+     * KERNEL_ELF_PHYS_BASE  */
     /* up to end of virtual address space minus 16M using 16M frames */
     phys = physBase;
-    idx = kernelBase >> pageBitsForSize(ARMSection);
+    idx = PPTR_BASE >> pageBitsForSize(ARMSection);
 
     while (idx < BIT(PD_INDEX_BITS) - SECTIONS_PER_SUPER_SECTION) {
         word_t idx2;
@@ -329,12 +326,12 @@ BOOT_CODE void map_kernel_window(void)
     armHSGlobalPGD[3] = pde;
 
     /* Initialise PMD */
-    /* Invalidate up until kernelBase */
-    for (idx = 0; idx < (kernelBase - 0xC0000000) >> (PT_INDEX_BITS + PAGE_BITS); idx++) {
+    /* Invalidate up until USER_TOP */
+    for (idx = 0; idx < (USER_TOP - 0xC0000000) >> (PT_INDEX_BITS + PAGE_BITS); idx++) {
         pde = pdeS1_pdeS1_invalid_new();
         armHSGlobalPD[idx] = pde;
     }
-    /* mapping of kernelBase (virtual address) to kernel's physBase  */
+    /* mapping of PPTR_BASE (virtual address) to kernel's physBase  */
     /* up to end of virtual address space minus 2M using 2M frames */
     phys = physBase;
     for (; idx < BIT(PT_INDEX_BITS) - 1; idx++) {
@@ -594,7 +591,7 @@ BOOT_CODE void activate_global_pd(void)
     cleanInvalidateL1Caches();
     setCurrentPD(addrFromPPtr(armKSGlobalPD));
     invalidateLocalTLB();
-    lockTLBEntry(kernelBase);
+    lockTLBEntry(PPTR_BASE);
     lockTLBEntry(PPTR_VECTOR_TABLE);
 }
 
@@ -612,7 +609,7 @@ BOOT_CODE void activate_global_pd(void)
     setCurrentHypPD(addrFromPPtr(armHSGlobalPGD));
     invalidateHypTLB();
 #if 0 /* Can't lock entries on A15 */
-    lockTLBEntry(kernelBase);
+    lockTLBEntry(PPTR_BASE);
     lockTLBEntry(PPTR_VECTOR_TABLE);
 #endif
     /* TODO find a better place to init the VMMU */
@@ -1241,7 +1238,7 @@ void copyGlobalMappings(pde_t *newPD)
     word_t i;
     pde_t *global_pd = armKSGlobalPD;
 
-    for (i = kernelBase >> ARMSectionBits; i < BIT(PD_INDEX_BITS); i++) {
+    for (i = PPTR_BASE >> ARMSectionBits; i < BIT(PD_INDEX_BITS); i++) {
         if (i != PD_ASID_SLOT) {
             newPD[i] = global_pd[i];
         }
@@ -2078,7 +2075,7 @@ static exception_t decodeARMPageDirectoryInvocation(word_t invLabel, word_t leng
         }
 
         /* Don't let applications flush kernel regions. */
-        if (start >= kernelBase || end > kernelBase) {
+        if (start >= USER_TOP || end > USER_TOP) {
             userError("PD Flush: Overlaps kernel region.");
             current_syscall_error.type = seL4_IllegalOperation;
             return EXCEPTION_SYSCALL_ERROR;
@@ -2218,9 +2215,9 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, word_t length,
     pd = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(pdCap));
     asid = cap_page_directory_cap_get_capPDMappedASID(pdCap);
 
-    if (unlikely(vaddr >= kernelBase)) {
-        userError("ARMPageTableMap: Virtual address cannot be in kernel window. vaddr: 0x%08lx, kernelBase: 0x%08x", vaddr,
-                  kernelBase);
+    if (unlikely(vaddr >= USER_TOP)) {
+        userError("ARMPageTableMap: Virtual address cannot be in kernel window. vaddr: 0x%08lx, USER_TOP: 0x%08x", vaddr,
+                  USER_TOP);
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 0;
 
@@ -2340,8 +2337,8 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
         } else {
             vtop = vaddr + BIT(pageBitsForSize(frameSize)) - 1;
 
-            if (unlikely(vtop >= kernelBase)) {
-                userError("ARMPageMap: Cannot map frame over kernel window. vaddr: 0x%08lx, kernelBase: 0x%08x", vaddr, kernelBase);
+            if (unlikely(vtop >= USER_TOP)) {
+                userError("ARMPageMap: Cannot map frame over kernel window. vaddr: 0x%08lx, USER_TOP: 0x%08x", vaddr, USER_TOP);
                 current_syscall_error.type =
                     seL4_InvalidArgument;
                 current_syscall_error.invalidArgumentNumber = 0;

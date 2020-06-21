@@ -1,15 +1,10 @@
 #!/usr/bin/env python3
 #
-# Copyright 2017, Data61
-# Commonwealth Scientific and Industrial Research Organisation (CSIRO)
-# ABN 41 687 119 230.
+# Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 #
-# This software may be distributed and modified according to the terms of
-# the BSD 2-Clause license. Note that NO WARRANTY is provided.
-# See "LICENSE_BSD2.txt" for details.
+# SPDX-License-Identifier: BSD-2-Clause
 #
-# @TAG(DATA61_BSD)
-#
+
 """
 Script for reporting circular #includes in pre-processed sel4 source.
 Exits with a status of 0 if no circular dependencies are found, otherwise

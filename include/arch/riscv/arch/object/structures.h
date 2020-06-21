@@ -1,23 +1,11 @@
 /*
- * Copyright 2018, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
- *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
- */
-
-/*
- *
- * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_OBJECT_STRUCTURES_H
-#define __ARCH_OBJECT_STRUCTURES_H
+#pragma once
 
 #ifndef __ASSEMBLER__
 #include <config.h>
@@ -50,12 +38,11 @@ typedef struct arch_tcb {
 } arch_tcb_t;
 
 enum vm_rights {
-    VMKernelOnly = 0,
-    VMReadOnly = 1,
-    VMWriteOnly = 2,
+    VMKernelOnly = 1,
+    VMReadOnly = 2,
     VMReadWrite = 3
 };
-typedef uint32_t vm_rights_t;
+typedef word_t vm_rights_t;
 
 typedef pte_t vspace_root_t;
 
@@ -65,7 +52,7 @@ typedef pte_t vspace_root_t;
 typedef pte_t pde_t;
 
 #define PTE_PTR(r) ((pte_t *)(r))
-#define PTE_REF(p) ((unsigned int)(p))
+#define PTE_REF(p) ((word_t)(p))
 
 #define PT_SIZE_BITS 12
 #define PT_PTR(r) ((pte_t *)(r))
@@ -98,11 +85,12 @@ static inline bool_t CONST cap_get_archCapIsPhysical(cap_t cap)
         return true;
 
     default:
-        fail("Invalid arch cap type");
+        /* unreachable */
+        return false;
     }
 }
 
-static inline unsigned int CONST cap_get_archCapSizeBits(cap_t cap)
+static inline word_t CONST cap_get_archCapSizeBits(cap_t cap)
 {
     cap_tag_t ctag;
 
@@ -161,4 +149,4 @@ static inline bool_t CONST Arch_isCapRevocable(cap_t derivedCap, cap_t srcCap)
 }
 
 #endif /* !__ASSEMBLER__  */
-#endif
+

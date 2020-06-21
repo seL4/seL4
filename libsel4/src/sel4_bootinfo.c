@@ -1,16 +1,14 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the BSD 2-Clause license. Note that NO WARRANTY is provided.
- * See "LICENSE_BSD2.txt" for details.
- *
- * @TAG(DATA61_BSD)
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
 #include <sel4/sel4.h>
+
+#ifdef CONFIG_KERNEL_INVOCATION_REPORT_ERROR_IPC
+__thread char __sel4_print_error = CONFIG_LIB_SEL4_PRINT_INVOCATION_ERRORS;
+#endif
 
 /** Userland per-thread IPC buffer address **/
 __thread seL4_IPCBuffer *__sel4_ipc_buffer;

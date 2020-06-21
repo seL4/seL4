@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_REGISTERSET_32_H
-#define __ARCH_MACHINE_REGISTERSET_32_H
+#pragma once
 
 #include <config.h>
 
@@ -113,7 +108,9 @@ enum _register {
      * name comes from the ARM manual */
     TPIDRURW = 18,
     TLS_BASE = TPIDRURW,
-    n_contextRegisters = 19,
+    /* user readonly thread ID register. */
+    TPIDRURO = 19,
+    n_contextRegisters = 20,
 };
 
 #define NEXT_PC_REG NextIP
@@ -131,7 +128,7 @@ typedef word_t register_t;
 enum messageSizes {
     n_msgRegisters = seL4_FastMessageRegisters,
     n_frameRegisters = 10,
-    n_gpRegisters = 8,
+    n_gpRegisters = 9,
     n_exceptionMessage = 3,
     n_syscallMessage = 12,
 #ifdef CONFIG_KERNEL_MCS
@@ -258,4 +255,3 @@ static inline void Arch_initContext(user_context_t *context)
 
 #endif /* !__ASSEMBLER__ */
 
-#endif /* !__ARCH_MACHINE_REGISTERSET_32_H */

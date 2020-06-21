@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -64,7 +60,7 @@ BOOT_CODE bool_t apic_init(bool_t mask_legacy_irqs)
     if (!(cpuid & BIT(CPUID_TSC_DEADLINE_BIT))) {
         apic_khz = apic_measure_freq();
         x86KSapicRatio = div64((uint64_t)x86KStscMhz * 1000llu, apic_khz);
-        printf("Apic Khz %lu, TSC Mhz %lu, ratio %lu\n", (long) x86KStscMhz, (long) apic_khz, (long) x86KSapicRatio);
+        printf("Apic Khz %lu, TSC Mhz %lu, ratio %lu\n", (long) apic_khz, (long) x86KStscMhz, (long) x86KSapicRatio);
     } else {
         // use tsc deadline mode
         x86KSapicRatio = 0;

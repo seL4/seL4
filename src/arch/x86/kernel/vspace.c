@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -997,8 +993,8 @@ exception_t decodeX86FrameInvocation(
         } else {
             vtop = vaddr + BIT(pageBitsForSize(frameSize));
 
-            /* check vaddr and vtop against PPTR_USER_TOP to catch case where vaddr + frame_size wrapped around */
-            if (vaddr > PPTR_USER_TOP || vtop > PPTR_USER_TOP) {
+            /* check vaddr and vtop against USER_TOP to catch case where vaddr + frame_size wrapped around */
+            if (vaddr > USER_TOP || vtop > USER_TOP) {
                 userError("X86Frame: Mapping address too high.");
                 current_syscall_error.type = seL4_InvalidArgument;
                 current_syscall_error.invalidArgumentNumber = 0;
@@ -1195,7 +1191,7 @@ static exception_t decodeX86PageTableInvocation(
     vspace = (vspace_root_t *)pptr_of_cap(vspaceCap);
     asid = cap_get_capMappedASID(vspaceCap);
 
-    if (vaddr > PPTR_USER_TOP) {
+    if (vaddr > USER_TOP) {
         userError("X86PageTable: Mapping address too high.");
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 0;

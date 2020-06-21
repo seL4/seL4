@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <assert.h>
@@ -18,7 +14,7 @@
 #include <arch/kernel/boot.h>
 #include <arch/kernel/vspace.h>
 #include <linker.h>
-#include <plat/machine/hardware.h>
+#include <hardware.h>
 #include <util.h>
 
 /* (node-local) state accessed only during bootstrapping */
@@ -394,10 +390,10 @@ BOOT_CODE cap_t create_it_asid_pool(cap_t root_cnode_cap)
 }
 
 #ifdef CONFIG_KERNEL_MCS
-BOOT_CODE static bool_t configure_sched_context(tcb_t *tcb, sched_context_t *sc_pptr, ticks_t timeslice)
+BOOT_CODE static bool_t configure_sched_context(tcb_t *tcb, sched_context_t *sc_pptr, ticks_t timeslice, word_t core)
 {
     tcb->tcbSchedContext = sc_pptr;
-    refill_new(tcb->tcbSchedContext, MIN_REFILLS, timeslice, 0);
+    REFILL_NEW(tcb->tcbSchedContext, MIN_REFILLS, timeslice, 0, core);
 
     tcb->tcbSchedContext->scTcb = tcb;
     return true;
@@ -441,9 +437,8 @@ BOOT_CODE bool_t create_idle_thread(void)
 #endif
         SMP_COND_STATEMENT(NODE_STATE_ON_CORE(ksIdleThread, i)->tcbAffinity = i);
 #ifdef CONFIG_KERNEL_MCS
-        bool_t result = configure_sched_context(NODE_STATE_ON_CORE(ksIdleThread, i),
-                                                SC_PTR(&ksIdleThreadSC[SMP_TERNARY(i, 0)]),
-                                                usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_IN_MS));
+        bool_t result = configure_sched_context(NODE_STATE_ON_CORE(ksIdleThread, i), SC_PTR(&ksIdleThreadSC[SMP_TERNARY(i, 0)]),
+                                                usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_IN_MS), SMP_TERNARY(i, 0));
         SMP_COND_STATEMENT(NODE_STATE_ON_CORE(ksIdleThread, i)->tcbSchedContext->scCore = i;)
         if (!result) {
             printf("Kernel init failed: Unable to allocate sc for idle thread\n");
@@ -496,7 +491,7 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
 
     /* initialise TCB */
 #ifdef CONFIG_KERNEL_MCS
-    if (!configure_sched_context(tcb, SC_PTR(rootserver.sc), usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_IN_MS))) {
+    if (!configure_sched_context(tcb, SC_PTR(rootserver.sc), usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_IN_MS), 0)) {
         return NULL;
     }
 #endif

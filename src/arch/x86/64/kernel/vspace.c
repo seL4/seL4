@@ -1,13 +1,7 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -62,10 +56,10 @@ BOOT_CODE bool_t map_kernel_window(
     assert(GET_PML4_INDEX(PPTR_BASE) == BIT(PML4_INDEX_BITS) - 1);
     /* verify that the kernel_base is located in the last entry of the PML4,
      * the second last entry of the PDPT, is 1gb aligned and 1gb in size */
-    assert(GET_PML4_INDEX(KERNEL_BASE) == BIT(PML4_INDEX_BITS) - 1);
-    assert(GET_PDPT_INDEX(KERNEL_BASE) == BIT(PML4_INDEX_BITS) - 2);
+    assert(GET_PML4_INDEX(KERNEL_ELF_BASE) == BIT(PML4_INDEX_BITS) - 1);
+    assert(GET_PDPT_INDEX(KERNEL_ELF_BASE) == BIT(PML4_INDEX_BITS) - 2);
     assert(GET_PDPT_INDEX(KDEV_BASE) == BIT(PML4_INDEX_BITS) - 1);
-    assert(IS_ALIGNED(KERNEL_BASE, seL4_HugePageBits));
+    assert(IS_ALIGNED(KERNEL_ELF_BASE - KERNEL_ELF_PADDR_BASE, seL4_HugePageBits));
     assert(IS_ALIGNED(KDEV_BASE, seL4_HugePageBits));
     /* place the PDPT into the PML4 */
     x64KSKernelPML4[GET_PML4_INDEX(PPTR_BASE)] = pml4e_new(
@@ -79,19 +73,19 @@ BOOT_CODE bool_t map_kernel_window(
                                                      1  /* present */
                                                  );
     /* put the 1GB kernel_base mapping into the PDPT */
-    x64KSKernelPDPT[GET_PDPT_INDEX(KERNEL_BASE)] = pdpte_pdpte_1g_new(
-                                                       0, /* xd */
-                                                       PADDR_BASE,
-                                                       0, /* PAT */
-                                                       KERNEL_IS_GLOBAL(), /* global */
-                                                       0, /* dirty */
-                                                       0, /* accessed */
-                                                       0, /* cache_disabled */
-                                                       0, /* write_through */
-                                                       0, /* super_user */
-                                                       1, /* read_write */
-                                                       1  /* present */
-                                                   );
+    x64KSKernelPDPT[GET_PDPT_INDEX(KERNEL_ELF_BASE)] = pdpte_pdpte_1g_new(
+                                                           0, /* xd */
+                                                           PADDR_BASE,
+                                                           0, /* PAT */
+                                                           KERNEL_IS_GLOBAL(), /* global */
+                                                           0, /* dirty */
+                                                           0, /* accessed */
+                                                           0, /* cache_disabled */
+                                                           0, /* write_through */
+                                                           0, /* super_user */
+                                                           1, /* read_write */
+                                                           1  /* present */
+                                                       );
     /* also map the physical memory into the big kernel window */
     paddr = 0;
     vaddr = PPTR_BASE;
@@ -146,10 +140,10 @@ BOOT_CODE bool_t map_kernel_window(
     assert(GET_PML4_INDEX(PPTR_BASE) == BIT(PML4_INDEX_BITS) - 1);
     /* verify that the kernel_base is located in the last entry of the PML4,
      * the second last entry of the PDPT, is 1gb aligned and 1gb in size */
-    assert(GET_PML4_INDEX(KERNEL_BASE) == BIT(PML4_INDEX_BITS) - 1);
-    assert(GET_PDPT_INDEX(KERNEL_BASE) == BIT(PML4_INDEX_BITS) - 2);
+    assert(GET_PML4_INDEX(KERNEL_ELF_BASE) == BIT(PML4_INDEX_BITS) - 1);
+    assert(GET_PDPT_INDEX(KERNEL_ELF_BASE) == BIT(PML4_INDEX_BITS) - 2);
     assert(GET_PDPT_INDEX(KDEV_BASE) == BIT(PML4_INDEX_BITS) - 1);
-    assert(IS_ALIGNED(KERNEL_BASE, seL4_HugePageBits));
+    assert(IS_ALIGNED(KERNEL_ELF_BASE - KERNEL_ELF_PADDR_BASE, seL4_HugePageBits));
     assert(IS_ALIGNED(KDEV_BASE, seL4_HugePageBits));
 
     /* place the PDPT into the PML4 */
@@ -178,16 +172,16 @@ BOOT_CODE bool_t map_kernel_window(
                                                                 );
     }
 
-    x64KSKernelPDPT[GET_PDPT_INDEX(KERNEL_BASE)] = pdpte_pdpte_pd_new(
-                                                       0, /* xd */
-                                                       kpptr_to_paddr(&x64KSKernelPDs[0][0]),
-                                                       0, /* accessed */
-                                                       0, /* cache disable */
-                                                       1, /* write through */
-                                                       0, /* super user */
-                                                       1, /* read write */
-                                                       1  /* present */
-                                                   );
+    x64KSKernelPDPT[GET_PDPT_INDEX(KERNEL_ELF_BASE)] = pdpte_pdpte_pd_new(
+                                                           0, /* xd */
+                                                           kpptr_to_paddr(&x64KSKernelPDs[0][0]),
+                                                           0, /* accessed */
+                                                           0, /* cache disable */
+                                                           1, /* write through */
+                                                           0, /* super user */
+                                                           1, /* read write */
+                                                           1  /* present */
+                                                       );
 
     paddr = 0;
     vaddr = PPTR_BASE;
@@ -277,16 +271,16 @@ BOOT_CODE bool_t map_skim_window(vptr_t skim_start, vptr_t skim_end)
                                                    1  /* present */
                                                );
     /* place the PD into the kernel_base slot of the PDPT */
-    x64KSSKIMPDPT[GET_PDPT_INDEX(KERNEL_BASE)] = pdpte_pdpte_pd_new(
-                                                     0, /* xd */
-                                                     kpptr_to_paddr(x64KSSKIMPD),
-                                                     0, /* accessed */
-                                                     0, /* cache_disabled */
-                                                     0, /* write_through */
-                                                     0, /* super_user */
-                                                     1, /* read_write */
-                                                     1  /* present */
-                                                 );
+    x64KSSKIMPDPT[GET_PDPT_INDEX(KERNEL_ELF_BASE)] = pdpte_pdpte_pd_new(
+                                                         0, /* xd */
+                                                         kpptr_to_paddr(x64KSSKIMPD),
+                                                         0, /* accessed */
+                                                         0, /* cache_disabled */
+                                                         0, /* write_through */
+                                                         0, /* super_user */
+                                                         1, /* read_write */
+                                                         1  /* present */
+                                                     );
     /* map the skim portion into the PD. we expect it to be 2M aligned */
     assert((skim_start % BIT(seL4_LargePageBits)) == 0);
     assert((skim_end % BIT(seL4_LargePageBits)) == 0);
@@ -1200,7 +1194,7 @@ static exception_t decodeX64PageDirectoryInvocation(
     vspace = (vspace_root_t *)pptr_of_cap(vspaceCap);
     asid = cap_get_capMappedASID(vspaceCap);
 
-    if (vaddr > PPTR_USER_TOP) {
+    if (vaddr > USER_TOP) {
         userError("X64PageDirectory: Mapping address too high.");
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 0;
@@ -1365,7 +1359,7 @@ static exception_t decodeX64PDPTInvocation(
     vspace = (vspace_root_t *)pptr_of_cap(vspaceCap);
     asid = cap_get_capMappedASID(vspaceCap);
 
-    if (vaddr > PPTR_USER_TOP) {
+    if (vaddr > USER_TOP) {
         userError("X64PDPT: Mapping address too high.");
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 0;

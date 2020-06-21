@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -86,12 +82,20 @@ BEGIN_FUNC(arm_swi_syscall)
 
     /* Load system call number as a c_handle_syscall argument. r0 and r1 are passed
      * unmodified (cptr and msgInfo) respectively.  On MCS configurations we also
-     * pass the reply cptr in r3.
+     * pass the reply cptr in r2 for fastpath_reply_recv.
      */
-    mov r2, r7
+
+#ifdef CONFIG_FASTPATH
+    cmp r7, #SYSCALL_CALL
+    beq c_handle_fastpath_call
+    cmp r7, #SYSCALL_REPLY_RECV
 #ifdef CONFIG_KERNEL_MCS
-    mov r3, r6
+    moveq r2, r6
 #endif
+    beq c_handle_fastpath_reply_recv
+#endif
+
+    mov r2, r7
     b c_handle_syscall
 
 END_FUNC(arm_swi_syscall)

@@ -1,13 +1,7 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -129,37 +123,60 @@ void NORETURN slowpath(syscall_t syscall)
     UNREACHABLE();
 }
 
-#ifdef CONFIG_KERNEL_MCS
-void VISIBLE c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall, word_t reply)
-#else
 void VISIBLE c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
-#endif
 {
     NODE_LOCK_SYS;
 
     c_entry_hook();
 #ifdef TRACK_KERNEL_ENTRIES
     benchmark_debug_syscall_start(cptr, msgInfo, syscall);
-    ksKernelEntry.is_fastpath = 1;
+    ksKernelEntry.is_fastpath = 0;
 #endif /* DEBUG */
-
-#ifdef CONFIG_FASTPATH
-    if (syscall == SysCall) {
-        fastpath_call(cptr, msgInfo);
-        UNREACHABLE();
-    } else if (syscall == SysReplyRecv) {
-#ifdef CONFIG_KERNEL_MCS
-        fastpath_reply_recv(cptr, msgInfo, reply);
-#else
-        fastpath_reply_recv(cptr, msgInfo);
-#endif
-        UNREACHABLE();
-    }
-#endif /* CONFIG_FASTPATH */
 
     slowpath(syscall);
     UNREACHABLE();
 }
+
+#ifdef CONFIG_FASTPATH
+ALIGN(L1_CACHE_LINE_SIZE)
+void VISIBLE c_handle_fastpath_call(word_t cptr, word_t msgInfo)
+{
+    NODE_LOCK_SYS;
+
+    c_entry_hook();
+#ifdef TRACK_KERNEL_ENTRIES
+    benchmark_debug_syscall_start(cptr, msgInfo, SysCall);
+    ksKernelEntry.is_fastpath = 1;
+#endif /* DEBUG */
+
+    fastpath_call(cptr, msgInfo);
+    UNREACHABLE();
+}
+
+ALIGN(L1_CACHE_LINE_SIZE)
+#ifdef CONFIG_KERNEL_MCS
+void VISIBLE c_handle_fastpath_reply_recv(word_t cptr, word_t msgInfo, word_t reply)
+#else
+void VISIBLE c_handle_fastpath_reply_recv(word_t cptr, word_t msgInfo)
+#endif
+{
+    NODE_LOCK_SYS;
+
+    c_entry_hook();
+#ifdef TRACK_KERNEL_ENTRIES
+    benchmark_debug_syscall_start(cptr, msgInfo, SysReplyRecv);
+    ksKernelEntry.is_fastpath = 1;
+#endif /* DEBUG */
+
+#ifdef CONFIG_KERNEL_MCS
+    fastpath_reply_recv(cptr, msgInfo, reply);
+#else
+    fastpath_reply_recv(cptr, msgInfo);
+#endif
+    UNREACHABLE();
+}
+
+#endif
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 VISIBLE NORETURN void c_handle_vcpu_fault(word_t hsr)

@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __FASTPATH_H
-#define __FASTPATH_H
+#pragma once
 
 /* Fastpath cap lookup.  Returns a null_cap on failure. */
 static inline cap_t FORCE_INLINE lookup_fp(cap_t cap, cptr_t cptr)
@@ -121,4 +116,3 @@ static inline reply_t *thread_state_get_replyObject_np(thread_state_t ts)
 
 #include <arch/fastpath/fastpath.h>
 
-#endif

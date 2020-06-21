@@ -1,17 +1,10 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the BSD 2-Clause license. Note that NO WARRANTY is provided.
- * See "LICENSE_BSD2.txt" for details.
- *
- * @TAG(DATA61_BSD)
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_SEL4_ARCH_CONSTANTS_H
-#define __LIBSEL4_SEL4_ARCH_CONSTANTS_H
+#pragma once
 
 #ifdef HAVE_AUTOCONF
 #include <autoconf.h>
@@ -101,7 +94,6 @@ enum {
     seL4_VCPUReg_NMRR,
     seL4_VCPUReg_CIDR,
     seL4_VCPUReg_TPIDRPRW,
-    seL4_VCPUReg_TPIDRURO,
     seL4_VCPUReg_FPEXC,
     seL4_VCPUReg_LRsvc,
     seL4_VCPUReg_SPsvc,
@@ -267,4 +259,3 @@ SEL4_SIZE_SANITY(seL4_PGDEntryBits, seL4_PGDIndexBits, seL4_PGDBits);
 /* IPC buffer is 512 bytes, giving size bits of 9 */
 #define seL4_IPCBufferSizeBits 9
 
-#endif

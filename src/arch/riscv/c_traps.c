@@ -1,19 +1,8 @@
 /*
- * Copyright 2018, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
- *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
- */
-
-/*
- *
- * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -24,6 +13,7 @@
 #include <api/syscall.h>
 #include <util.h>
 #include <arch/machine/hardware.h>
+#include <machine/fpu.h>
 
 #include <benchmark/benchmark_track.h>
 #include <benchmark/benchmark_utilisation.h>
@@ -40,6 +30,12 @@ void VISIBLE NORETURN restore_user_context(void)
     asm volatile("csrr %0, sscratch" : "=r"(sp));
     sp -= sizeof(word_t);
     *((word_t *)sp) = cur_thread_reg;
+#endif
+
+
+#ifdef CONFIG_HAVE_FPU
+    lazyFPURestore(NODE_STATE(ksCurThread));
+    set_tcb_fs_state(NODE_STATE(ksCurThread), isFpuEnable());
 #endif
 
     asm volatile(
@@ -129,6 +125,14 @@ void VISIBLE NORETURN c_handle_exception(void)
         handleVMFaultEvent(scause);
         break;
     default:
+#ifdef CONFIG_HAVE_FPU
+        if (!isFpuEnable()) {
+            /* we assume the illegal instruction is caused by FPU first */
+            handleFPUFault();
+            setNextPC(NODE_STATE(ksCurThread), getRestartPC(NODE_STATE(ksCurThread)));
+            break;
+        }
+#endif
         handleUserLevelFault(scause, 0);
         break;
     }

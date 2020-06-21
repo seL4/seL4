@@ -1,13 +1,7 @@
 #
-# Copyright 2018, Data61
-# Commonwealth Scientific and Industrial Research Organisation (CSIRO)
-# ABN 41 687 119 230.
+# Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 #
-# This software may be distributed and modified according to the terms of
-# the GNU General Public License version 2. Note that NO WARRANTY is provided.
-# See "LICENSE_GPLv2.txt" for details.
-#
-# @TAG(DATA61_GPL)
+# SPDX-License-Identifier: GPL-2.0-only
 #
 
 cmake_minimum_required(VERSION 3.7.2)
@@ -18,6 +12,18 @@ config_string(
     2, 3 and 4 levels on Sv32, Sv39, Sv48 RISC-V paging modes respectively."
     DEFAULT 3 UNDEF_DISABLED
     UNQUOTE
+    DEPENDS "KernelArchRiscV"
+)
+
+config_option(
+    KernelRiscvExtF RISCV_EXT_F "RISCV extension for single-preciison floating-point"
+    DEFAULT OFF
+    DEPENDS "KernelArchRiscV"
+)
+
+config_option(
+    KernelRiscvExtD RISCV_EXT_D "RISCV extension for double-precision floating-point"
+    DEFAULT OFF
     DEPENDS "KernelArchRiscV"
 )
 
@@ -40,6 +46,15 @@ elseif(KernelPTLevels EQUAL 4)
     math(EXPR KernelPaddrUserTop "(1 << 56) - 1")
 endif()
 
+if(KernelRiscvExtD)
+    set(KernelRiscvExtF ON)
+    set(KernelHaveFPU ON)
+endif()
+
+if(KernelRiscvExtF)
+    set(KernelHaveFPU ON)
+endif()
+
 # This is not supported on RISC-V
 set(KernelHardwareDebugAPIUnsupported ON CACHE INTERNAL "")
 
@@ -58,6 +73,7 @@ add_sources(
         machine/hardware.c
         machine/registerset.c
         machine/io.c
+        machine/fpu.c
         model/statedata.c
         object/interrupt.c
         object/objecttype.c

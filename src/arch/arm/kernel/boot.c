@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -347,7 +343,7 @@ static BOOT_CODE bool_t try_init_kernel(
     it_v_reg.start = ui_v_reg.start;
     it_v_reg.end = extra_bi_frame_vptr + BIT(extra_bi_size_bits);
 
-    if (it_v_reg.end > kernelBase) {
+    if (it_v_reg.end >= USER_TOP) {
         printf("Userland image virtual end address too high\n");
         return false;
     }

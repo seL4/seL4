@@ -1,13 +1,7 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -253,25 +247,25 @@ BOOT_CODE void map_kernel_window(void)
     word_t idx;
 
     /* verify that the kernel window as at the last entry of the PGD */
-    assert(GET_PGD_INDEX(kernelBase) == BIT(PGD_INDEX_BITS) - 1);
-    assert(IS_ALIGNED(kernelBase, seL4_LargePageBits));
+    assert(GET_PGD_INDEX(PPTR_BASE) == BIT(PGD_INDEX_BITS) - 1);
+    assert(IS_ALIGNED(PPTR_BASE, seL4_LargePageBits));
     /* verify that the kernel device window is 1gb aligned and 1gb in size */
     assert(GET_PUD_INDEX(PPTR_TOP) == BIT(PUD_INDEX_BITS) - 1);
     assert(IS_ALIGNED(PPTR_TOP, seL4_HugePageBits));
 
     /* place the PUD into the PGD */
-    armKSGlobalKernelPGD[GET_PGD_INDEX(kernelBase)] = pgde_pgde_pud_new(
-                                                          pptr_to_paddr(armKSGlobalKernelPUD));
+    armKSGlobalKernelPGD[GET_PGD_INDEX(PPTR_BASE)] = pgde_pgde_pud_new(
+                                                         pptr_to_paddr(armKSGlobalKernelPUD));
 
     /* place all PDs except the last one in PUD */
-    for (idx = GET_PUD_INDEX(kernelBase); idx < GET_PUD_INDEX(PPTR_TOP); idx++) {
+    for (idx = GET_PUD_INDEX(PPTR_BASE); idx < GET_PUD_INDEX(PPTR_TOP); idx++) {
         armKSGlobalKernelPUD[idx] = pude_pude_pd_new(
                                         pptr_to_paddr(&armKSGlobalKernelPDs[idx][0])
                                     );
     }
 
     /* map the kernel window using large pages */
-    vaddr = kernelBase;
+    vaddr = PPTR_BASE;
     for (paddr = PADDR_BASE; paddr < PADDR_TOP; paddr += BIT(seL4_LargePageBits)) {
         armKSGlobalKernelPDs[GET_PUD_INDEX(vaddr)][GET_PD_INDEX(vaddr)] = pde_pde_large_new(
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT

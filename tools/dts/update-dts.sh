@@ -1,14 +1,8 @@
 #!/bin/sh
 #
-# Copyright 2019, Data61
-# Commonwealth Scientific and Industrial Research Organisation (CSIRO)
-# ABN 41 687 119 230.
+# Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 #
-# This software may be distributed and modified according to the terms of
-# the GNU General Public License version 2. Note that NO WARRANTY is provided.
-# See "LICENSE_GPLv2.txt" for details.
-#
-# @TAG(DATA61_GPL)
+# SPDX-License-Identifier: GPL-2.0-only
 #
 
 if [ -z "$1" ]; then
@@ -31,14 +25,13 @@ make ARCH=arm64 defconfig
 make ARCH=arm64 -j4 dtbs
 
 LICENSE="/*
- * The code contained herein is licensed under the GNU General Public
- * License. You may obtain a copy of the GNU General Public License
- * Version 2 or later at the following locations:
+ * Copyright Linux Kernel Team
  *
- * http://www.opensource.org/licenses/gpl-license.html
- * http://www.gnu.org/copyleft/gpl.html
+ * SPDX-License-Identifier: GPL-2.0-only
  *
- * @TAG(OTHER_GPL)
+ * This file is derived from an intermediate build stage of the
+ * Linux kernel. The licenses of all input files to this process
+ * are compatible with GPL-2.0-only.
  */
 "
 

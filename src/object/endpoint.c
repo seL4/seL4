@@ -1,14 +1,12 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <types.h>
+#include <string.h>
+#include <sel4/constants.h>
 #include <kernel/thread.h>
 #include <kernel/vspace.h>
 #include <machine/registerset.h>
@@ -263,6 +261,15 @@ void replyFromKernel_error(tcb_t *thread)
     ipcBuffer = lookupIPCBuffer(true, thread);
     setRegister(thread, badgeRegister, 0);
     len = setMRs_syscall_error(thread, ipcBuffer);
+
+#ifdef CONFIG_KERNEL_INVOCATION_REPORT_ERROR_IPC
+    char *debugBuffer = (char *)(ipcBuffer + DEBUG_MESSAGE_START + 1);
+    word_t add = strlcpy(debugBuffer, (char *)current_debug_error.errorMessage,
+                         DEBUG_MESSAGE_MAXLEN * sizeof(word_t));
+
+    len += (add / sizeof(word_t)) + 1;
+#endif
+
     setRegister(thread, msgInfoRegister, wordFromMessageInfo(
                     seL4_MessageInfo_new(current_syscall_error.type, 0, 0, len)));
 }

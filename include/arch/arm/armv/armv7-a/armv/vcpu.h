@@ -1,17 +1,10 @@
 /*
- * Copyright 2018, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_ARMV_VCPU_H_
-#define __ARCH_ARMV_VCPU_H_
+#pragma once
 
 #include <config.h>
 
@@ -441,8 +434,6 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
         return getCIDR();
     case seL4_VCPUReg_TPIDRPRW:
         return readTPIDRPRW();
-    case seL4_VCPUReg_TPIDRURO:
-        return readTPIDRURO();
     case seL4_VCPUReg_FPEXC:
         return reg;
     case seL4_VCPUReg_LRsvc:
@@ -554,9 +545,6 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
         break;
     case seL4_VCPUReg_TPIDRPRW:
         writeTPIDRPRW(reg);
-        break;
-    case seL4_VCPUReg_TPIDRURO:
-        writeTPIDRURO(reg);
         break;
     case seL4_VCPUReg_FPEXC:
         break;
@@ -718,7 +706,6 @@ static inline void armv_vcpu_save(vcpu_t *vcpu, bool_t active)
 static inline void vcpu_enable(vcpu_t *vcpu)
 {
     vcpu_restore_reg(vcpu, seL4_VCPUReg_SCTLR);
-    vcpu_restore_reg(vcpu, seL4_VCPUReg_TPIDRURO);
     setHCR(HCR_VCPU);
     isb();
 
@@ -799,8 +786,6 @@ static inline void vcpu_disable(vcpu_t *vcpu)
     uint32_t hcr;
     dsb();
     if (likely(vcpu)) {
-        vcpu_save_reg(vcpu, seL4_VCPUReg_TPIDRURO);
-        vcpu_hw_write_reg(seL4_VCPUReg_TPIDRURO, 0);
         hcr = get_gic_vcpu_ctrl_hcr();
         vcpu->vgic.hcr = hcr;
         vcpu_save_reg(vcpu, seL4_VCPUReg_SCTLR);
@@ -868,6 +853,4 @@ static inline bool_t armv_handleVCPUFault(word_t hsr)
 
 #endif /* End of CONFIG_ARM_HYPERVISOR_SUPPORT */
 
-
-#endif
 

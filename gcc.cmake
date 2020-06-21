@@ -1,13 +1,7 @@
 #
-# Copyright 2017, Data61
-# Commonwealth Scientific and Industrial Research Organisation (CSIRO)
-# ABN 41 687 119 230.
+# Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 #
-# This software may be distributed and modified according to the terms of
-# the GNU General Public License version 2. Note that NO WARRANTY is provided.
-# See "LICENSE_GPLv2.txt" for details.
-#
-# @TAG(DATA61_GPL)
+# SPDX-License-Identifier: GPL-2.0-only
 #
 
 cmake_minimum_required(VERSION 3.7.2)
@@ -25,6 +19,18 @@ set(CMAKE_STAGING_PREFIX "${CMAKE_BINARY_DIR}/staging")
 set(sel4_arch @KernelSel4Arch@)
 set(arch @KernelArch@)
 set(mode @KernelWordSize@)
+set(cross_prefix @CROSS_COMPILER_PREFIX@)
+
+# If this file is used without templating, then cross_prefix will
+# have an invalid value and should only be assigned to CROSS_COMPILER_PREFIX
+# if it has been set to something different.
+# We need to build the test string dynamically otherwise the templating would
+# overwrite it.
+set(cross_prefix_test @CROSS_COMPILER_PREFIX)
+string(APPEND cross_prefix_test @)
+if(NOT "${cross_prefix}" STREQUAL "${cross_prefix_test}")
+    set(CROSS_COMPILER_PREFIX ${cross_prefix})
+endif()
 
 # This function hunts for an extant `gcc` with one of the candidate prefixes
 # specified in `ARGN`, allowing us to try different target triple prefixes for
@@ -52,9 +58,11 @@ if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
         if(${sel4_arch} STREQUAL "aarch32" OR ${sel4_arch} STREQUAL "arm_hyp")
             FindPrefixedGCC(CROSS_COMPILER_PREFIX "arm-linux-gnueabi-" "arm-linux-gnu-")
         elseif(${sel4_arch} STREQUAL "aarch64")
-            set(CROSS_COMPILER_PREFIX "aarch64-linux-gnu-" CACHE INTERNAL "")
+            set(CROSS_COMPILER_PREFIX "aarch64-linux-gnu-")
         elseif(${arch} STREQUAL "riscv")
-            set(CROSS_COMPILER_PREFIX "riscv64-unknown-linux-gnu-" CACHE INTERNAL "")
+            FindPrefixedGCC(
+                CROSS_COMPILER_PREFIX "riscv64-unknown-linux-gnu-" "riscv64-unknown-elf-"
+            )
         endif()
     else()
         # For backwards compatibility reasons we allow this file to work without templating.
@@ -66,9 +74,11 @@ if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
                 message("ARM flag is deprecated, please use AARCH32")
             endif()
         elseif(AARCH64)
-            set(CROSS_COMPILER_PREFIX "aarch64-linux-gnu-" CACHE INTERNAL "")
+            set(CROSS_COMPILER_PREFIX "aarch64-linux-gnu-")
         elseif(RISCV32 OR RISCV64)
-            set(CROSS_COMPILER_PREFIX "riscv64-unknown-linux-gnu-" CACHE INTERNAL "")
+            FindPrefixedGCC(
+                CROSS_COMPILER_PREFIX "riscv64-unknown-linux-gnu-" "riscv64-unknown-elf-"
+            )
         endif()
     endif()
     if(AARCH32HF)
@@ -83,7 +93,7 @@ if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
         # If we haven't set a target above we assume x86_64/ia32 target
         if(APPLE)
             # APPLE is a CMake variable that evaluates to True on a Mac OSX system
-            set(CROSS_COMPILER_PREFIX "x86_64-unknown-linux-gnu-" CACHE INTERNAL "")
+            set(CROSS_COMPILER_PREFIX "x86_64-unknown-linux-gnu-")
         endif()
     endif()
 endif()

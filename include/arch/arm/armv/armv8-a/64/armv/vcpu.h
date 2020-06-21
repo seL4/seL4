@@ -1,17 +1,10 @@
 /*
- * Copyright 2018, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_ARMV_VCPU_H_
-#define __ARCH_ARMV_VCPU_H_
+#pragma once
 
 #include <config.h>
 
@@ -120,6 +113,7 @@
 #define REG_CNTV_CTL_EL0    "cntv_ctl_el0"
 #define REG_CNTV_CVAL_EL0   "cntv_cval_el0"
 #define REG_CNTVOFF_EL2     "cntvoff_el2"
+#define REG_CNTKCTL_EL1     "cntkctl_el1"
 #define REG_HCR_EL2         "hcr_el2"
 #define REG_VTCR_EL2        "vtcr_el2"
 #define REG_VMPIDR_EL2      "vmpidr_el2"
@@ -384,6 +378,18 @@ static inline void writeCNTVOFF_EL2(word_t reg)
     MSR(REG_CNTVOFF_EL2, reg);
 }
 
+static inline word_t readCNTKCTL_EL1(void)
+{
+    word_t reg;
+    MRS(REG_CNTKCTL_EL1, reg);
+    return reg;
+}
+
+static inline void writeCNTKCTL_EL1(word_t reg)
+{
+    MSR(REG_CNTKCTL_EL1, reg);
+}
+
 static inline word_t readVMPIDR_EL2(void)
 {
     word_t reg;
@@ -444,6 +450,8 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
         return readCNTV_CVAL_EL0();
     case seL4_VCPUReg_CNTVOFF:
         return readCNTVOFF_EL2();
+    case seL4_VCPUReg_CNTKCTL_EL1:
+        return readCNTKCTL_EL1();
 #ifdef ENABLE_SMP_SUPPORT
     case seL4_VCPUReg_VMPIDR_EL2:
         return readVMPIDR_EL2();
@@ -503,6 +511,8 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
         return writeCNTV_CVAL_EL0(reg);
     case seL4_VCPUReg_CNTVOFF:
         return writeCNTVOFF_EL2(reg);
+    case seL4_VCPUReg_CNTKCTL_EL1:
+        return writeCNTKCTL_EL1(reg);
 #ifdef ENABLE_SMP_SUPPORT
     case seL4_VCPUReg_VMPIDR_EL2:
         return writeVMPIDR_EL2(reg);
@@ -652,5 +662,4 @@ static inline bool_t armv_handleVCPUFault(word_t hsr)
 
 #endif /* End of CONFIG_ARM_HYPERVISOR_SUPPORT */
 
-#endif
 

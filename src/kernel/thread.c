@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -29,21 +25,6 @@ static seL4_MessageInfo_t
 transferCaps(seL4_MessageInfo_t info, extra_caps_t caps,
              endpoint_t *endpoint, tcb_t *receiver,
              word_t *receiveBuffer);
-
-static inline bool_t PURE isBlocked(const tcb_t *thread)
-{
-    switch (thread_state_get_tsType(thread->tcbState)) {
-    case ThreadState_Inactive:
-    case ThreadState_BlockedOnReceive:
-    case ThreadState_BlockedOnSend:
-    case ThreadState_BlockedOnNotification:
-    case ThreadState_BlockedOnReply:
-        return true;
-
-    default:
-        return false;
-    }
-}
 
 BOOT_CODE void configureIdleThread(tcb_t *tcb)
 {
@@ -106,7 +87,7 @@ void suspend(tcb_t *target)
 
 void restart(tcb_t *target)
 {
-    if (isBlocked(target)) {
+    if (isStopped(target)) {
         cancelIPC(target);
 #ifdef CONFIG_KERNEL_MCS
         setThreadState(target, ThreadState_Restart);

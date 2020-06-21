@@ -1,13 +1,7 @@
 #
-# Copyright 2017, Data61
-# Commonwealth Scientific and Industrial Research Organisation (CSIRO)
-# ABN 41 687 119 230.
+# Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 #
-# This software may be distributed and modified according to the terms of
-# the GNU General Public License version 2. Note that NO WARRANTY is provided.
-# See "LICENSE_GPLv2.txt" for details.
-#
-# @TAG(DATA61_GPL)
+# SPDX-License-Identifier: GPL-2.0-only
 #
 
 cmake_minimum_required(VERSION 3.7.2)
@@ -336,6 +330,15 @@ config_option(
     DEPENDS "NOT KernelVerificationBuild"
     DEFAULT_DISABLED OFF
 )
+
+config_option(
+    KernelInvocationReportErrorIPC KERNEL_INVOCATION_REPORT_ERROR_IPC
+    "Allows the kernel to write the userError to the IPC buffer"
+    DEFAULT OFF
+    DEPENDS "KernelPrinting"
+    DEFAULT_DISABLED OFF
+)
+
 config_choice(
     KernelBenchmarks
     KERNEL_BENCHMARK

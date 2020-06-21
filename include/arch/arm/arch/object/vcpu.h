@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_OBJECT_VCPU_H
-#define __ARCH_OBJECT_VCPU_H
+#pragma once
 
 #include <config.h>
 
@@ -81,6 +76,11 @@ struct vcpu {
     word_t regs[seL4_VCPUReg_Num];
     bool_t vppi_masked[n_VPPIEventIRQ];
 #ifdef CONFIG_VTIMER_UPDATE_VOFFSET
+    /* vTimer is 8-bytes wide and has same alignment requirement.
+     * To keep the struct packed on 32-bit platforms when accompanied by an
+     * odd number of 32-bit words, we need to add a padding word.
+     * */
+    word_t vcpu_padding;
     struct vTimer virtTimer;
 #endif
 };
@@ -204,4 +204,3 @@ static inline void VGICMaintenance(void) {}
 
 #endif /* end of !CONFIG_ARM_HYPERVISOR_SUPPORT */
 
-#endif /* __ARCH_OBJECT_VCPU_H */

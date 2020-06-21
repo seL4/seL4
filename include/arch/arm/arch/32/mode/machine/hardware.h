@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_HARDWARE_32_H
-#define __ARCH_MACHINE_HARDWARE_32_H
+#pragma once
 
 #include <config.h>
 #include <sel4/sel4_arch/constants.h>
@@ -139,4 +134,3 @@ static inline word_t CONST pageBitsForSize(vm_page_size_t pagesize)
 
 #endif /* __ASSEMBLER__ */
 
-#endif /* !__ARCH_MACHINE_HARDWARE_32_H */

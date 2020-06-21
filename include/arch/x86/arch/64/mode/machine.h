@@ -1,24 +1,17 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODE_MACHINE_H_
-#define __ARCH_MODE_MACHINE_H_
+#pragma once
 
 #include <config.h>
+#include <hardware.h>
 #include <arch/model/statedata.h>
 #include <arch/machine/cpu_registers.h>
 #include <arch/model/smp.h>
 #include <arch/machine.h>
-#include <plat_mode/machine/hardware.h>
 
 static inline cr3_t makeCR3(paddr_t addr, word_t pcid)
 {
@@ -341,4 +334,3 @@ static inline void x86_set_tls_segment_base(word_t tls_base)
     x86_write_fs_base(tls_base, SMP_TERNARY(getCurrentCPUIndex(), 0));
 }
 
-#endif /* __ARCH_MODE_MACHINE_H_ */

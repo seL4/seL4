@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_HARDWARE_H
-#define __ARCH_MACHINE_HARDWARE_H
+#pragma once
 
 #include <basic_types.h>
 #include <config.h>
@@ -126,5 +121,3 @@ static inline void arch_clean_invalidate_caches(void)
 
 /* Initialize Indirect Branch Restricted Speculation into the mode specified by the build configuration */
 bool_t init_ibrs(void);
-
-#endif

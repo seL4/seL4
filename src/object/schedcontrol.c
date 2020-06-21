@@ -1,13 +1,7 @@
 /*
- * Copyright 2019, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <machine/timer.h>
@@ -66,7 +60,7 @@ static exception_t invokeSchedControl_Configure(sched_context_t *target, word_t 
     } else {
         /* the scheduling context isn't active - it's budget is not being used, so
          * we can just populate the parameters from now */
-        refill_new(target, max_refills, budget, period);
+        REFILL_NEW(target, max_refills, budget, period, core);
     }
 
 #ifdef ENABLE_SMP_SUPPORT

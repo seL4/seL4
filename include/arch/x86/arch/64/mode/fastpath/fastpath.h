@@ -1,17 +1,10 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODE_FASTPATH_FASTPATH_H_
-#define __ARCH_MODE_FASTPATH_FASTPATH_H_
+#pragma once
 
 #include <util.h>
 #include <linker.h>
@@ -268,4 +261,3 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
     UNREACHABLE();
 }
 
-#endif /* __ARCH_MODE_FASTPATH_FASTPATH_H_ */

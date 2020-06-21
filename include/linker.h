@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __LINKER_H
-#define __LINKER_H
+#pragma once
 
 #include <util.h>
 #include <arch/linker.h>
@@ -36,4 +31,4 @@
 /* bss data that is permitted to be used in the restricted SKIM address space */
 #define SKIM_BSS SECTION(".skim.bss")
 
-#endif /* __LINKER_H */
+

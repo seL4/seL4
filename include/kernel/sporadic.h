@@ -1,16 +1,10 @@
 /*
- * Copyright 2019, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
-#ifndef __KERNEL_SPORADIC_H
-#define __KERNEL_SPORADIC_H
+
+#pragma once
 /* This header presents the interface for sporadic servers,
  * implemented according to Stankcovich et. al in
  * "Defects of the POSIX Spoardic Server and How to correct them",
@@ -108,11 +102,17 @@ static inline bool_t refill_sufficient(sched_context_t *sc, ticks_t usage)
  */
 static inline bool_t refill_ready(sched_context_t *sc)
 {
-    return REFILL_HEAD(sc).rTime <= (NODE_STATE(ksCurTime) + getKernelWcetTicks());
+    return REFILL_HEAD(sc).rTime <= (NODE_STATE_ON_CORE(ksCurTime, sc->scCore) + getKernelWcetTicks());
 }
 
 /* Create a new refill in a non-active sc */
+#ifdef ENABLE_SMP_SUPPORT
+void refill_new(sched_context_t *sc, word_t max_refills, ticks_t budget, ticks_t period, word_t core);
+#define REFILL_NEW(sc, max_refills, budget, period, core) refill_new(sc, max_refills, budget, period, core)
+#else
 void refill_new(sched_context_t *sc, word_t max_refills, ticks_t budget, ticks_t period);
+#define REFILL_NEW(sc, max_refills, budget, period, core) refill_new(sc, max_refills, budget, period)
+#endif
 
 /* Update refills in an active sc without violating bandwidth constraints */
 void refill_update(sched_context_t *sc, ticks_t new_period, ticks_t new_budget, word_t new_max_refills);
@@ -143,4 +143,3 @@ void refill_split_check(ticks_t used);
  */
 void refill_unblock_check(sched_context_t *sc);
 
-#endif

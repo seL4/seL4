@@ -1,16 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __KERNEL_BOOT_H
-#define __KERNEL_BOOT_H
-
+#pragma once
 #include <bootinfo.h>
 #include <arch/bootinfo.h>
 
@@ -157,4 +151,3 @@ word_t arch_get_n_paging(v_region_t it_veg);
 /* Create pptrs for all root server objects, starting at pptr, to cover the
  * virtual memory region v_reg, and any extra boot info. */
 void create_rootserver_objects(pptr_t start, v_region_t v_reg, word_t extra_bi_size_bits);
-#endif

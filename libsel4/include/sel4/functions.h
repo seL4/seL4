@@ -1,29 +1,37 @@
 /*
- * Copyright 2018, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
- *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
- */
-
-/*
- *
- * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __LIBSEL4_ARCH_FUNCTIONS_H
-#define __LIBSEL4_ARCH_FUNCTIONS_H
+#pragma once
 
 #include <sel4/types.h>
 #include <sel4/syscalls.h>
 
 extern __thread seL4_IPCBuffer *__sel4_ipc_buffer;
 __thread __attribute__((weak)) seL4_IPCBuffer *__sel4_ipc_buffer;
+
+#ifdef CONFIG_KERNEL_INVOCATION_REPORT_ERROR_IPC
+extern __thread char __sel4_print_error;
+
+LIBSEL4_INLINE_FUNC char *seL4_GetDebugError(void)
+{
+    return (char *)(__sel4_ipc_buffer->msg + DEBUG_MESSAGE_START);
+}
+
+LIBSEL4_INLINE_FUNC void seL4_SetPrintError(char print_error)
+{
+    __sel4_print_error = print_error;
+    return;
+}
+
+LIBSEL4_INLINE_FUNC char seL4_CanPrintError(void)
+{
+    return __sel4_print_error;
+}
+#endif
 
 LIBSEL4_INLINE_FUNC void seL4_SetIPCBuffer(seL4_IPCBuffer *ipc_buffer)
 {
@@ -95,4 +103,4 @@ LIBSEL4_INLINE_FUNC void seL4_SetCapReceivePath(seL4_CPtr receiveCNode, seL4_CPt
     ipcbuffer->receiveIndex = receiveIndex;
     ipcbuffer->receiveDepth = receiveDepth;
 }
-#endif
+

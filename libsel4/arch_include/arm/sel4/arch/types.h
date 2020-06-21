@@ -1,17 +1,10 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the BSD 2-Clause license. Note that NO WARRANTY is provided.
- * See "LICENSE_BSD2.txt" for details.
- *
- * @TAG(DATA61_BSD)
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_ARCH_TYPES_H
-#define __LIBSEL4_ARCH_TYPES_H
+#pragma once
 
 #include <sel4/simple_types.h>
 #include <sel4/sel4_arch/types.h>
@@ -41,4 +34,3 @@ typedef enum {
     SEL4_FORCE_LONG_ENUM(seL4_ARM_CacheType),
 } seL4_ARM_CacheType;
 
-#endif /* __ARCH_SEL4TYPES_H__ */

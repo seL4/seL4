@@ -1,15 +1,9 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
-
-#ifndef __MODE_MACHINE_REGISTERSET_H
-#define __MODE_MACHINE_REGISTERSET_H
+#pragma once
 
 /* These are the indices of the registers in the
  * saved thread context. The values are determined
@@ -119,5 +113,3 @@ enum messageSizes {
 extern const register_t msgRegisters[];
 extern const register_t frameRegisters[];
 extern const register_t gpRegisters[];
-
-#endif

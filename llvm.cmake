@@ -1,13 +1,7 @@
 #
-# Copyright 2019, Data61
-# Commonwealth Scientific and Industrial Research Organisation (CSIRO)
-# ABN 41 687 119 230.
+# Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 #
-# This software may be distributed and modified according to the terms of
-# the GNU General Public License version 2. Note that NO WARRANTY is provided.
-# See "LICENSE_GPLv2.txt" for details.
-#
-# @TAG(DATA61_GPL)
+# SPDX-License-Identifier: GPL-2.0-only
 #
 
 cmake_minimum_required(VERSION 3.7.2)
@@ -17,7 +11,7 @@ set(CMAKE_SYSTEM_NAME Generic)
 # obvious if someone accidentally uses it
 set(CMAKE_SYSTEM_PROCESSOR seL4CPU)
 
-if (KernelArchRiscV)
+if(KernelArchRiscV)
     message(FATAL_ERROR "Riscv is not yet supported when compiling with clang")
 endif()
 set(LLVM_TOOLCHAIN ON)
@@ -58,5 +52,3 @@ if(NOT ("${CCACHE}" STREQUAL CCACHE-NOTFOUND))
     set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ${CCACHE})
 endif()
 mark_as_advanced(CCACHE)
-
-

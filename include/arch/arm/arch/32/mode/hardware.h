@@ -1,19 +1,13 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_HARDWARE_32_H
-#define __ARCH_HARDWARE_32_H
+#pragma once
 
 #include <config.h>
+#include <util.h>
 #ifndef __ASSEMBLER__
 #include <arch/machine/hardware.h>
 #include <sel4/plat/api/constants.h>
@@ -24,23 +18,71 @@
  * 0xfff00000 devices      (plat/machine/devices.h)
  * 0xffff0000 vectors      (arch/machine/hardware.h)
  * 0xffffc000 global page  (arch/machine/hardware.h)
+ *
+ *
+ * 2^32 +-------------------+
+ *      | Kernel Page Table | --+
+ *      +-------------------+   |
+ *      |    Log Buffer     |   |
+ *      +-------------------+ PPTR_TOP
+ *      |                   |   |
+ *      |  Physical Memory  |   |
+ *      |       Window      |   |
+ *      |                   |   |
+ *      +-------------------+   |
+ *      |    Kernel ELF     |   |
+ *      +-------------------+ USER_TOP / PPTR_BASE / KERNEL_ELF_BASE
+ *      |                   |   |
+ *      |       User        |   |
+ *      |                   |   |
+ *  0x0 +-------------------+   |
+ *                              |
+ *                        +-----+
+ *                        |
+ *                        v
+ *         2^32 +-------------------+
+ *              |    Global Page    |
+ *              +-------------------+
+ *              |      Vectors      |
+ *              +-------------------+
+ *              |  Kernel Devices   |
+ *  2^32 - 2^20 +-------------------+ KDEV_BASE
  */
-#define kernelBase seL4_UserTop
-#define BASE_OFFSET (kernelBase - physBase)
+
+/* last accessible virtual address in user space */
+#define USER_TOP seL4_UserTop
+
+/* The first physical address to map into the kernel's physical memory
+ * window */
+#define PADDR_BASE physBase
+
+/* The base address in virtual memory to use for the 1:1 physical memory
+ * mapping */
+#define PPTR_BASE seL4_UserTop
+
+/* Calculate virtual address space reserved for dynamic log buffer mapping */
 #ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
-#define PPTR_TOP 0xffe00000
+#define PPTR_TOP UL_CONST(0xffe00000)
 #define KS_LOG_PPTR PPTR_TOP
 #else
-#define PPTR_TOP 0xfff00000
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
-#define KDEV_BASE 0xfff00000
-#define PADDR_TOP (PPTR_TOP - BASE_OFFSET)
+#define PPTR_TOP UL_CONST(0xfff00000)
+#endif
 
-#define KERNEL_ELF_BASE kernelBase
-#define PADDR_LOAD      physBase
+/* The physical memory address to use for mapping the kernel ELF */
+#define KERNEL_ELF_PADDR_BASE PADDR_BASE
+
+/* The base address in virtual memory to use for the kernel ELF mapping */
+#define KERNEL_ELF_BASE (USER_TOP + (KERNEL_ELF_PADDR_BASE & MASK(22)))
+
+/* This is a page table mapping at the end of the virtual address space
+ * to map objects with 4KiB pages rather than 4MiB large pages. */
+#define KERNEL_PT_BASE UL_CONST(0xfff00000)
+
+/* The base address in virtual memory to use for the kernel device
+ * mapping region. These are mapped in the kernel page table. */
+#define KDEV_BASE KERNEL_PT_BASE
 
 #ifndef __ASSEMBLER__
 #include <plat/machine/hardware.h>
 #endif
 
-#endif /* __ARCH_HARDWARE_32_H */

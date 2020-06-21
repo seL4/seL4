@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: BSD-3-Clause */
+
 /* Copyright (c) 2010-2017, The Regents of the University of California
  * (Regents).  All Rights Reserved.
  *
@@ -28,8 +30,8 @@
  * new spec releases.
  */
 
-#ifndef _ASM_RISCV_SBI_H
-#define _ASM_RISCV_SBI_H
+#pragma once
+
 
 #include <stdint.h>
 
@@ -119,4 +121,3 @@ static inline void sbi_remote_sfence_vma_asid(const unsigned long *hart_mask,
     SBI_CALL_1(SBI_REMOTE_SFENCE_VMA_ASID, (register_t)hart_mask);
 }
 
-#endif

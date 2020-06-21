@@ -1,6 +1,5 @@
-#
-# @TAG(OTHER_BSD)
-#
+# SPDX-License-Identifier: BSD-3-Clause
+
 # -----------------------------------------------------------------------------
 # ply: lex.py
 #

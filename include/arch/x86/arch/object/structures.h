@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_OBJECT_STRUCTURES_H
-#define __ARCH_OBJECT_STRUCTURES_H
+#pragma once
 
 #include <assert.h>
 #include <config.h>
@@ -311,5 +306,3 @@ static inline bool_t CONST Arch_isCapRevocable(cap_t derivedCap, cap_t srcCap)
         return false;
     }
 }
-
-#endif /* __ARCH_OBJECT_STRUCTURES_H */

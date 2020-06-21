@@ -1,17 +1,10 @@
 /*
- * Copyright 2016, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_OBJECT_VCPU_H
-#define __ARCH_OBJECT_VCPU_H
+#pragma once
 
 #include <config.h>
 #include <api/failures.h>
@@ -385,5 +378,3 @@ static inline void vmwrite(word_t field, word_t value)
 #else /* CONFIG_VTX */
 #define VTX_TERNARY(vtx, nonvtx) nonvtx
 #endif /* CONFIG_VTX */
-
-#endif

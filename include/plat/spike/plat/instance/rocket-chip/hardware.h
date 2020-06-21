@@ -1,17 +1,10 @@
 /*
- * Copyright 2019, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __PLAT_INSTANCE_HARDWARE_H
-#define __PLAT_INSTANCE_HARDWARE_H
+#pragma once
 
 #define PLIC_MAX_NUM_INT   0
 #define IRQ_CNODE_SLOT_BITS 1
@@ -44,4 +37,3 @@ static p_region_t BOOT_DATA avail_p_regs[] = {
 static const paddr_t BOOT_RODATA *kernel_devices = NULL;
 
 static const p_region_t BOOT_RODATA *dev_p_regs = NULL;
-#endif

@@ -1,22 +1,17 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #define __ASSEMBLER__
 #include <config.h>
-#include <plat_mode/machine/hardware.h>
+#include <hardware.h>
 
 ENTRY(_start)
 
-CHIPSET_BASE_PADDR = PADDR_BASE;
-KLOAD_PADDR = PADDR_LOAD;
-KLOAD_VADDR  = kernelBase;
+KLOAD_PADDR = KERNEL_ELF_PADDR_BASE;
+KLOAD_VADDR = KERNEL_ELF_BASE;
 
 /* WARNING: constants also defined in plat/machine/hardware.h */
 #if defined(CONFIG_ARCH_IA32)
@@ -24,14 +19,13 @@ KLOAD_VADDR  = kernelBase;
 OUTPUT_ARCH(i386)
 OUTPUT_FORMAT(elf32-i386)
 #elif defined(CONFIG_ARCH_X86_64)
-KLOAD_VADDR = 0xffffffff80000000;
 OUTPUT_FORMAT(elf64-x86-64)
 #if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
 nodeSkimScratchOffset = nodeSkimScratch - node_info;
 #endif
 #endif
 
-KERNEL_OFFSET = KLOAD_VADDR - CHIPSET_BASE_PADDR;
+KERNEL_OFFSET = KLOAD_VADDR - KLOAD_PADDR;
 
 SECTIONS
 {

@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __OBJECT_TCB_H
-#define __OBJECT_TCB_H
+#pragma once
 
 #include <types.h>
 #include <api/failures.h>
@@ -157,6 +152,22 @@ exception_t decodeUnbindNotification(cap_t cap);
 exception_t decodeSetTimeoutEndpoint(cap_t cap, cte_t *slot, extra_caps_t excaps);
 #endif
 
+
+#ifdef CONFIG_KERNEL_MCS
+enum thread_control_caps_flag {
+    thread_control_caps_update_ipc_buffer = 0x1,
+    thread_control_caps_update_space = 0x2,
+    thread_control_caps_update_fault = 0x4,
+    thread_control_caps_update_timeout = 0x8,
+};
+
+enum thread_control_sched_flag {
+    thread_control_sched_update_priority = 0x1,
+    thread_control_sched_update_mcp = 0x2,
+    thread_control_sched_update_sc = 0x4,
+    thread_control_sched_update_fault = 0x8,
+};
+#else
 enum thread_control_flag {
     thread_control_update_priority = 0x1,
     thread_control_update_ipc_buffer = 0x2,
@@ -168,21 +179,26 @@ enum thread_control_flag {
     thread_control_update_timeout = 0x40,
 #endif
 };
+#endif
 
 typedef word_t thread_control_flag_t;
 
 exception_t invokeTCB_Suspend(tcb_t *thread);
 exception_t invokeTCB_Resume(tcb_t *thread);
 #ifdef CONFIG_KERNEL_MCS
-exception_t invokeTCB_ThreadControl(tcb_t *target, cte_t *slot,
-                                    cap_t fh_newCap, cte_t *fh_srcSlot,
-                                    cap_t th_newCap, cte_t *th_srcSlot,
-                                    prio_t mcp, prio_t priority, cap_t cRoot_newCap,
-                                    cte_t *cRoot_srcSlot, cap_t vRoot_newCap,
-                                    cte_t *vRoot_srcSlot, word_t bufferAddr,
-                                    cap_t bufferCap, cte_t *bufferSrcSlot,
-                                    sched_context_t *sched_context,
-                                    thread_control_flag_t updateFlags);
+exception_t invokeTCB_ThreadControlCaps(tcb_t *target, cte_t *slot,
+                                        cap_t fh_newCap, cte_t *fh_srcSlot,
+                                        cap_t th_newCap, cte_t *th_srcSlot,
+                                        cap_t cRoot_newCap, cte_t *cRoot_srcSlot,
+                                        cap_t vRoot_newCap, cte_t *vRoot_srcSlot,
+                                        word_t bufferAddr, cap_t bufferCap,
+                                        cte_t *bufferSrcSlot,
+                                        thread_control_flag_t updateFlags);
+exception_t invokeTCB_ThreadControlSched(tcb_t *target, cte_t *slot,
+                                         cap_t fh_newCap, cte_t *fh_srcSlot,
+                                         prio_t mcp, prio_t priority,
+                                         sched_context_t *sc,
+                                         thread_control_flag_t updateFlags);
 #else
 exception_t invokeTCB_ThreadControl(tcb_t *target, cte_t *slot, cptr_t faultep,
                                     prio_t mcp, prio_t priority, cap_t cRoot_newCap,
@@ -218,4 +234,3 @@ void Arch_migrateTCB(tcb_t *thread);
 void setThreadName(tcb_t *thread, const char *name);
 #endif /* CONFIG_DEBUG_BUILD */
 
-#endif
