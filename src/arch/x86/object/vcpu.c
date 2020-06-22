@@ -483,7 +483,7 @@ void vcpu_finalise(vcpu_t *vcpu)
     }
     if (ARCH_NODE_STATE_ON_CORE(x86KSCurrentVCPU, vcpu->last_cpu) == vcpu) {
 #ifdef ENABLE_SMP_SUPPORT
-        if (vcpu->last_cpu == getCurrentCPUIndex()) {
+        if (vcpu->last_cpu != getCurrentCPUIndex()) {
             doRemoteClearCurrentVCPU(vcpu->last_cpu);
         } else
 #endif /* ENABLE_SMP_SUPPORT */
