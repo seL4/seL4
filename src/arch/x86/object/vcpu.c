@@ -595,7 +595,7 @@ static exception_t decodeDisableIOPort(cap_t cap, word_t length, word_t *buffer)
     uint16_t low, high;
 
     if (length < 2) {
-        userError("VCPU EnableIOPort: Truncated message.");
+        userError("VCPU DisableIOPort: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
