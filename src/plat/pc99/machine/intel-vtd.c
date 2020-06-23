@@ -344,7 +344,7 @@ BOOT_CODE static void vtd_map_reserved_page(vtd_cte_t *vtd_context_table, int co
         uint32_t iopt_index;
         /* If we are still looking up bits beyond the 32bit of physical
          * that we support then we select entry 0 in the current PT */
-        if (VTD_PT_INDEX_BITS * i >= 32) {
+        if (VTD_PT_INDEX_BITS * i + seL4_PageBits >= 32) {
             iopt_index = 0;
         } else {
             iopt_index = ((addr >> seL4_PageBits) >> (VTD_PT_INDEX_BITS * i)) & MASK(VTD_PT_INDEX_BITS);
