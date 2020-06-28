@@ -346,19 +346,19 @@ BOOT_CODE void cpu_initLocalIRQController(void)
 
 void ipi_send_target(irq_t irq, word_t cpuTargetList)
 {
-    uint64_t sgi1r = ((word_t) IRQT_TO_IRQ(irq)) << ICC_SGI1R_INTID_SHIFT;
-    if (MPIDR_MT(mpidr_map[getCurrentCPUIndex()])) {
-        for (word_t i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
-            if (cpuTargetList & BIT(i)) {
-                sgi1r = (IRQT_TO_IRQ(irq) << ICC_SGI1R_INTID_SHIFT) |
-                        (i << ICC_SGI1R_AFF1_SHIFT) | 1;
+    uint64_t sgi1r_base = ((word_t) IRQT_TO_IRQ(irq)) << ICC_SGI1R_INTID_SHIFT;
+    uint64_t sgi1r = 0;
 
-                SYSTEM_WRITE_64(ICC_SGI1R_EL1, sgi1r);
+    for (word_t i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
+        if (cpuTargetList & BIT(i)) {
+            if (MPIDR_MT(mpidr_map[getCurrentCPUIndex()])) {
+                sgi1r = sgi1r_base | (i << ICC_SGI1R_AFF1_SHIFT) | 1;
+            } else {
+                word_t mpidr = mpidr_map[i];
+                sgi1r = sgi1r_base | (MPIDR_AFF1(mpidr) << ICC_SGI1R_AFF1_SHIFT) | (1 << MPIDR_AFF0(mpidr));
             }
+            SYSTEM_WRITE_64(ICC_SGI1R_EL1, sgi1r);
         }
-    } else {
-        sgi1r |= cpuTargetList;
-        SYSTEM_WRITE_64(ICC_SGI1R_EL1, sgi1r);
     }
     isb();
 }
