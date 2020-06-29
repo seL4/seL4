@@ -351,12 +351,8 @@ void ipi_send_target(irq_t irq, word_t cpuTargetList)
 
     for (word_t i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
         if (cpuTargetList & BIT(i)) {
-            if (MPIDR_MT(mpidr_map[getCurrentCPUIndex()])) {
-                sgi1r = sgi1r_base | (i << ICC_SGI1R_AFF1_SHIFT) | 1;
-            } else {
-                word_t mpidr = mpidr_map[i];
-                sgi1r = sgi1r_base | (MPIDR_AFF1(mpidr) << ICC_SGI1R_AFF1_SHIFT) | (1 << MPIDR_AFF0(mpidr));
-            }
+            word_t mpidr = mpidr_map[i];
+            sgi1r = sgi1r_base | (MPIDR_AFF1(mpidr) << ICC_SGI1R_AFF1_SHIFT) | (1 << MPIDR_AFF0(mpidr));
             SYSTEM_WRITE_64(ICC_SGI1R_EL1, sgi1r);
         }
     }
