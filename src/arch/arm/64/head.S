@@ -38,17 +38,17 @@
     #define CR_L1_DCACHE_CLEAR BIT(CONTROL_C)
 #endif
 
-#define CR_BITS_SET    (CR_ALIGN_SET | \
-                        CR_L1_ICACHE_SET | \
-                        CR_L1_DCACHE_SET | \
+#define CR_BITS_SET    (CR_ALIGN_SET        | \
+                        CR_L1_ICACHE_SET    | \
+                        CR_L1_DCACHE_SET    | \
                         BIT(CONTROL_M))
 
-#define CR_BITS_CLEAR  (CR_ALIGN_CLEAR | \
-                        CR_L1_ICACHE_CLEAR | \
-                        CR_L1_DCACHE_CLEAR | \
-                        BIT(CONTROL_SA0) | \
-                        BIT(CONTROL_EE) | \
-                        BIT(CONTROL_E0E) | \
+#define CR_BITS_CLEAR  (CR_ALIGN_CLEAR      | \
+                        CR_L1_ICACHE_CLEAR  | \
+                        CR_L1_DCACHE_CLEAR  | \
+                        BIT(CONTROL_SA0)    | \
+                        BIT(CONTROL_EE)     | \
+                        BIT(CONTROL_E0E)    | \
                         BIT(CONTROL_UCI))
 
 /*
