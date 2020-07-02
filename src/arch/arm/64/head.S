@@ -48,7 +48,8 @@
                         CR_L1_DCACHE_CLEAR | \
                         BIT(CONTROL_SA0) | \
                         BIT(CONTROL_EE) | \
-                        BIT(CONTROL_E0E))
+                        BIT(CONTROL_E0E) | \
+                        BIT(CONTROL_UCI))
 
 /*
  * Entry point of the kernel ELF image.
