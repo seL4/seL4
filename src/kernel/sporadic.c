@@ -136,16 +136,6 @@ static inline void refill_add_tail(sched_context_t *sc, refill_t refill)
     REFILL_TAIL(sc) = refill;
 }
 
-static inline void maybe_add_empty_tail(sched_context_t *sc)
-{
-    if (isRoundRobin(sc)) {
-        /* add an empty refill - we track the used up time here */
-        refill_t empty_tail = { .rTime = NODE_STATE(ksCurTime)};
-        refill_add_tail(sc, empty_tail);
-        assert(refill_size(sc) == MIN_REFILLS);
-    }
-}
-
 #ifdef ENABLE_SMP_SUPPORT
 void refill_new(sched_context_t *sc, word_t max_refills, ticks_t budget, ticks_t period, word_t core)
 #else
@@ -161,7 +151,6 @@ void refill_new(sched_context_t *sc, word_t max_refills, ticks_t budget, ticks_t
     REFILL_HEAD(sc).rAmount = budget;
     /* budget can be used from now */
     REFILL_HEAD(sc).rTime = NODE_STATE_ON_CORE(ksCurTime, core);
-    maybe_add_empty_tail(sc);
     REFILL_SANITY_CHECK(sc, budget);
 }
 
@@ -175,7 +164,14 @@ static inline void schedule_used(sched_context_t *sc, refill_t new)
         assert(new.rTime >= REFILL_TAIL(sc).rTime + REFILL_TAIL(sc).rAmount);
 
         /* schedule the used amount */
-        if (new.rAmount < MIN_BUDGET || refill_full(sc)) {
+        if (new.rAmount < MIN_BUDGET && !refill_full(sc) && REFILL_TAIL(sc).rAmount + new.rAmount >= 2 * MIN_BUDGET) {
+            /* Split tail into two parts of at least MIN_BUDGET */
+            ticks_t remainder = MIN_BUDGET - new.rAmount;
+            new.rAmount += remainder;
+            new.rTime -= remainder;
+            REFILL_TAIL(sc).rAmount -= remainder;
+            refill_add_tail(sc, new);
+        } else if (new.rAmount < MIN_BUDGET || refill_full(sc)) {
             /* Merge with existing tail */
             REFILL_TAIL(sc).rTime = new.rTime - REFILL_TAIL(sc).rAmount;
             REFILL_TAIL(sc).rAmount += new.rAmount;
@@ -215,7 +211,6 @@ void refill_update(sched_context_t *sc, ticks_t new_period, ticks_t new_budget, 
     if (REFILL_HEAD(sc).rAmount >= new_budget) {
         /* if the heads budget exceeds the new budget just trim it */
         REFILL_HEAD(sc).rAmount = new_budget;
-        maybe_add_empty_tail(sc);
     } else {
         /* otherwise schedule the rest for the next period */
         refill_t new = { .rAmount = (new_budget - REFILL_HEAD(sc).rAmount),
@@ -225,6 +220,51 @@ void refill_update(sched_context_t *sc, ticks_t new_period, ticks_t new_budget, 
     }
 
     REFILL_SANITY_CHECK(sc, new_budget);
+}
+
+void refill_budget_check_round_robin(ticks_t usage)
+{
+    sched_context_t *sc = NODE_STATE(ksCurSC);
+    assert(isRoundRobin(sc));
+    REFILL_SANITY_START(sc);
+
+    if (usage < MIN_BUDGET && refill_single(sc)) {
+        /* If a new refill is created it will be at least MIN_BUDGET. */
+        usage = MIN_BUDGET;
+    }
+
+    /* If the following check is false then it has already been
+     * determined that this thread will be placed at the back of its
+     * ready queue by the time the kernel returns.
+     *
+     * Whenever a round-robin thread is moved to the back of its ready
+     * queue it should have a single refill with its entire budget.
+     */
+    if (REFILL_HEAD(sc).rAmount >= usage + MIN_BUDGET) {
+        /* The amount left in the head must be at least MIN_BUDGET. */
+        REFILL_HEAD(sc).rAmount -= usage;
+        /* Consume only a portion of the head refill */
+        if (refill_single(sc)) {
+            refill_t new = {
+                .rTime = REFILL_HEAD(sc).rTime + REFILL_HEAD(sc).rAmount,
+                .rAmount = usage,
+            };
+            refill_add_tail(sc, new);
+            assert(refill_ordered(sc));
+        } else {
+            assert(sc->scRefillCount == 2);
+            REFILL_TAIL(sc).rTime -= usage;
+            REFILL_TAIL(sc).rAmount += usage;
+        }
+    } else if (!refill_single(sc)) {
+        /* Reset to a single refill */
+        REFILL_HEAD(sc).rAmount += REFILL_TAIL(sc).rAmount;
+        sc->scRefillCount = 1;
+    }
+
+    assert(REFILL_HEAD(sc).rTime == NODE_STATE(ksCurTime));
+    REFILL_SANITY_END(sc);
+    return;
 }
 
 void refill_budget_check(ticks_t usage)
@@ -251,15 +291,6 @@ void refill_budget_check(ticks_t usage)
         refill_split_check(usage);
     }
 
-    /* ensure the refill head is sufficient, such that when we wake in awaken,
-     * there is enough budget to run */
-    while (REFILL_HEAD(sc).rAmount < MIN_BUDGET || refill_full(sc)) {
-        refill_t refill = refill_pop_head(sc);
-        REFILL_HEAD(sc).rAmount += refill.rAmount;
-        /* this loop is guaranteed to terminate as the sum of
-         * rAmount in a refill must be >= MIN_BUDGET */
-    }
-
     REFILL_SANITY_END(sc);
 }
 
@@ -276,34 +307,32 @@ void refill_split_check(ticks_t usage)
 
     REFILL_SANITY_START(sc);
 
-    /* first deal with the remaining budget of the current replenishment */
-    ticks_t remnant = REFILL_HEAD(sc).rAmount - usage;
-
     /* set up a new replenishment structure */
     refill_t new = (refill_t) {
         .rAmount = usage, .rTime = REFILL_HEAD(sc).rTime + sc->scPeriod
     };
 
-    if (refill_size(sc) == sc->scRefillMax || remnant < MIN_BUDGET) {
-        /* merge remnant with next replenishment - either it's too small
-         * or we're out of space */
-        if (refill_single(sc)) {
-            /* update inplace */
-            new.rAmount += remnant;
-            REFILL_HEAD(sc) = new;
-        } else {
-            refill_pop_head(sc);
-            REFILL_HEAD(sc).rAmount += remnant;
-            schedule_used(sc, new);
-        }
-        assert(refill_ordered(sc));
+    if (REFILL_HEAD(sc).rAmount >= MIN_BUDGET + usage) {
+        /* Split the head to keep the remaining time in a refill*/
+        REFILL_HEAD(sc).rTime += usage;
+        REFILL_HEAD(sc).rAmount -= usage;
     } else {
-        /* leave remnant as reduced replenishment */
-        assert(remnant >= MIN_BUDGET);
-        /* split the head refill  */
-        REFILL_HEAD(sc).rAmount = remnant;
-        schedule_used(sc, new);
+        assert(REFILL_HEAD(sc).rAmount >= usage);
+        /* merge the remaining time into the following refill */
+        refill_t head = refill_pop_head(sc);
+        ticks_t remnant = head.rAmount - usage;
+        if (!refill_empty(sc)) {
+            REFILL_HEAD(sc).rTime -= remnant;
+            REFILL_HEAD(sc).rAmount += remnant;
+        } else {
+            /* used is the subsequent refill */
+            new.rTime -= remnant;
+            new.rAmount += remnant;
+        }
     }
+
+    /* Schedule all of the used time as a single refill. */
+    schedule_used(sc, new);
 
     REFILL_SANITY_END(sc);
 }
