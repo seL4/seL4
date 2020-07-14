@@ -219,8 +219,10 @@ void refill_update(sched_context_t *sc, ticks_t new_period, ticks_t new_budget, 
         REFILL_HEAD(sc).rAmount = new_budget;
     } else {
         /* otherwise schedule the rest for the next period */
-        refill_t new = { .rAmount = (new_budget - REFILL_HEAD(sc).rAmount),
-                         .rTime = REFILL_HEAD(sc).rTime + new_period
+        ticks_t unused = new_budget - REFILL_HEAD(sc).rAmount;
+        ticks_t true_period = MAX(new_period, new_budget);
+        refill_t new = { .rAmount = unused,
+                         .rTime = REFILL_HEAD(sc).rTime + true_period - unused,
                        };
         schedule_used(sc, new);
     }
