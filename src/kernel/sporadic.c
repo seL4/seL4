@@ -165,6 +165,28 @@ void refill_new(sched_context_t *sc, word_t max_refills, ticks_t budget, ticks_t
     REFILL_SANITY_CHECK(sc, budget);
 }
 
+static inline void schedule_used(sched_context_t *sc, refill_t new)
+{
+    if (refill_empty(sc)) {
+        assert(new.rAmount >= MIN_BUDGET);
+        refill_add_tail(sc, new);
+    } else {
+        /* We should never try to append overlapping refills to the tail */
+        assert(new.rTime >= REFILL_TAIL(sc).rTime + REFILL_TAIL(sc).rAmount);
+
+        /* schedule the used amount */
+        if (new.rAmount < MIN_BUDGET || refill_full(sc)) {
+            /* Merge with existing tail */
+            REFILL_TAIL(sc).rTime = new.rTime - REFILL_TAIL(sc).rAmount;
+            REFILL_TAIL(sc).rAmount += new.rAmount;
+        } else {
+            refill_add_tail(sc, new);
+        }
+    }
+
+    assert(!refill_empty(sc));
+}
+
 void refill_update(sched_context_t *sc, ticks_t new_period, ticks_t new_budget, word_t new_max_refills)
 {
 
@@ -199,32 +221,10 @@ void refill_update(sched_context_t *sc, ticks_t new_period, ticks_t new_budget, 
         refill_t new = { .rAmount = (new_budget - REFILL_HEAD(sc).rAmount),
                          .rTime = REFILL_HEAD(sc).rTime + new_period
                        };
-        refill_add_tail(sc, new);
+        schedule_used(sc, new);
     }
 
     REFILL_SANITY_CHECK(sc, new_budget);
-}
-
-static inline void schedule_used(sched_context_t *sc, refill_t new)
-{
-    if (refill_empty(sc)) {
-        assert(new.rAmount >= MIN_BUDGET);
-        refill_add_tail(sc, new);
-    } else {
-        /* We should never try to append overlapping refills to the tail */
-        assert(new.rTime >= REFILL_TAIL(sc).rTime + REFILL_TAIL(sc).rAmount);
-
-        /* schedule the used amount */
-        if (new.rAmount < MIN_BUDGET || refill_full(sc)) {
-            /* Merge with existing tail */
-            REFILL_TAIL(sc).rTime = new.rTime - REFILL_TAIL(sc).rAmount;
-            REFILL_TAIL(sc).rAmount += new.rAmount;
-        } else {
-            refill_add_tail(sc, new);
-        }
-    }
-
-    assert(!refill_empty(sc));
 }
 
 void refill_budget_check(ticks_t usage)
