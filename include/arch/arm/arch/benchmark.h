@@ -32,14 +32,12 @@ static inline timestamp_t timestamp(void)
 }
 
 #ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
-extern bool_t benchmark_log_utilisation_enabled;
-extern uint64_t ccnt_num_overflows;
 static inline void handleOverflowIRQ(void)
 {
-    if (likely(benchmark_log_utilisation_enabled)) {
+    if (likely(NODE_STATE(benchmark_log_utilisation_enabled))) {
         NODE_STATE(ksCurThread)->benchmark.utilisation += UINT32_MAX - NODE_STATE(ksCurThread)->benchmark.schedule_start_time;
         NODE_STATE(ksCurThread)->benchmark.schedule_start_time = 0;
-        ccnt_num_overflows++;
+        NODE_STATE(ccnt_num_overflows)++;
     }
     armv_handleOverflowIRQ();
 }
@@ -48,7 +46,7 @@ static inline void handleOverflowIRQ(void)
 static inline void benchmark_arch_utilisation_reset(void)
 {
 #ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
-    ccnt_num_overflows = 0;
+    NODE_STATE(ccnt_num_overflows) = 0;
 #endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
 }
 #endif /* CONFIG_ENABLE_BENCHMARKS */

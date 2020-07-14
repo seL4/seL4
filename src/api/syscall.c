@@ -208,10 +208,10 @@ exception_t handleUnknownSyscall(word_t w)
         ksLogIndex = 0;
 #endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
-        benchmark_log_utilisation_enabled = true;
+        NODE_STATE(benchmark_log_utilisation_enabled) = true;
         NODE_STATE(ksIdleThread)->benchmark.utilisation = 0;
         NODE_STATE(ksCurThread)->benchmark.schedule_start_time = ksEnter;
-        benchmark_start_time = ksEnter;
+        NODE_STATE(benchmark_start_time) = ksEnter;
         benchmark_arch_utilisation_reset();
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
         setRegister(NODE_STATE(ksCurThread), capRegister, seL4_NoError);
