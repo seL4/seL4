@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
+#include <util.h>
 #include <types.h>
 #include <api/failures.h>
 #include <object/structures.h>
@@ -283,18 +284,12 @@ void refill_budget_check(ticks_t usage)
     assert(sc->scPeriod > 0);
     REFILL_SANITY_START(sc);
 
-    while (unlikely(REFILL_HEAD(sc).rAmount <= usage)) {
-        /* exhaust and schedule replenishment */
-        usage -= REFILL_HEAD(sc).rAmount;
-        if (refill_single(sc)) {
-            /* update in place */
-            REFILL_HEAD(sc).rTime += sc->scPeriod;
-        } else {
-            refill_t old_head = refill_pop_head(sc);
-            old_head.rTime = old_head.rTime + sc->scPeriod;
-            schedule_used(sc, old_head);
-        }
-    }
+    /* This implementation is simply the most simple operation that
+     * guarantees the post-condition. This is used as a stop-gap as the
+     * proof for integer overflow in the correct solution is difficult
+     * to prove. */
+
+    usage = MIN(usage, REFILL_HEAD(sc).rAmount);
 
     if (usage > 0) {
         refill_split_check(usage);
