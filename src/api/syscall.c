@@ -266,6 +266,38 @@ exception_t handleUnknownSyscall(word_t w)
         benchmark_track_reset_utilisation(tcb);
         return EXCEPTION_NONE;
     }
+#ifdef CONFIG_DEBUG_BUILD
+    else if (w == SysBenchmarkDumpAllThreadsUtilisation) {
+        printf("{\n");
+        printf("  \"BENCHMARK_TOTAL_UTILISATION\":%lu,\n",
+               (word_t)(NODE_STATE(benchmark_end_time) - NODE_STATE(benchmark_start_time)));
+        printf("  \"BENCHMARK_TOTAL_KERNEL_UTILISATION\":%lu,\n", (word_t) NODE_STATE(benchmark_kernel_time));
+        printf("  \"BENCHMARK_TOTAL_NUMBER_KERNEL_ENTRIES\":%lu,\n", (word_t) NODE_STATE(benchmark_kernel_number_entries));
+        printf("  \"BENCHMARK_TOTAL_NUMBER_SCHEDULES\":%lu,\n", (word_t) NODE_STATE(benchmark_kernel_number_schedules));
+        printf("  \"BENCHMARK_TCB_\": [\n");
+        for (tcb_t *curr = NODE_STATE(ksDebugTCBs); curr != NULL; curr = curr->tcbDebugNext) {
+            printf("    {\n");
+            printf("      \"NAME\":\"%s\",\n", curr->tcbName);
+            printf("      \"UTILISATION\":%lu,\n", (word_t) curr->benchmark.utilisation);
+            printf("      \"NUMBER_SCHEDULES\":%lu,\n", (word_t) curr->benchmark.number_schedules);
+            printf("      \"KERNEL_UTILISATION\":%lu,\n", (word_t) curr->benchmark.kernel_utilisation);
+            printf("      \"NUMBER_KERNEL_ENTRIES\":%lu\n", (word_t) curr->benchmark.number_kernel_entries);
+            printf("    }");
+            if (curr->tcbDebugNext != NULL) {
+                printf(",\n");
+            } else {
+                printf("\n");
+            }
+        }
+        printf("  ]\n}\n");
+        return EXCEPTION_NONE;
+    } else if (w == SysBenchmarkResetAllThreadsUtilisation) {
+        for (tcb_t *curr = NODE_STATE(ksDebugTCBs); curr != NULL; curr = curr->tcbDebugNext) {
+            benchmark_track_reset_utilisation(curr);
+        }
+        return EXCEPTION_NONE;
+    }
+#endif /* CONFIG_DEBUG_BUILD */
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 
     else if (w == SysBenchmarkNullSyscall) {

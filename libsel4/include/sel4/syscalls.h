@@ -282,6 +282,29 @@ seL4_BenchmarkGetThreadUtilisation(seL4_Word tcb_cptr);
  */
 LIBSEL4_INLINE_FUNC void
 seL4_BenchmarkResetThreadUtilisation(seL4_Word tcb_cptr);
+
+#ifdef CONFIG_DEBUG_BUILD
+/**
+ * @xmlonly <manual name="Dump All Threads Utilisation" label="sel4_benchmarkdumpallthreadsutilisation"/> @endxmlonly
+ * @brief Print the current accumulated cycle count for every thread on the current node.
+ *
+ *  Uses kernel's printf to print number of cycles on each line in the following format: thread_name,thread_cycles
+ *
+ */
+LIBSEL4_INLINE_FUNC void
+seL4_BenchmarkDumpAllThreadsUtilisation(void);
+
+/**
+ * @xmlonly <manual name="Reset All Threads Utilisation" label="sel4_benchmarkresetallthreadsutilisation"/> @endxmlonly
+ * @brief Reset the accumulated cycle count for every thread on the current node.
+ *
+ *  Reset the cycle count for each thread to 0.
+ *
+ */
+LIBSEL4_INLINE_FUNC void
+seL4_BenchmarkResetAllThreadsUtilisation(void);
+
+#endif
 #endif
 #endif
 /** @} */
