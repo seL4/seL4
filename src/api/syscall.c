@@ -211,7 +211,12 @@ exception_t handleUnknownSyscall(word_t w)
         NODE_STATE(benchmark_log_utilisation_enabled) = true;
         benchmark_track_reset_utilisation(NODE_STATE(ksIdleThread));
         NODE_STATE(ksCurThread)->benchmark.schedule_start_time = ksEnter;
+        NODE_STATE(ksCurThread)->benchmark.number_schedules++;
+
         NODE_STATE(benchmark_start_time) = ksEnter;
+        NODE_STATE(benchmark_kernel_time) = 0;
+        NODE_STATE(benchmark_kernel_number_entries) = 0;
+        NODE_STATE(benchmark_kernel_number_schedules) = 1;
         benchmark_arch_utilisation_reset();
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
         setRegister(NODE_STATE(ksCurThread), capRegister, seL4_NoError);

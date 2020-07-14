@@ -40,6 +40,8 @@ static inline void benchmark_utilisation_switch(tcb_t *heir, tcb_t *next)
 
         /* Reset next thread utilisation */
         next->benchmark.schedule_start_time = ksEnter;
+        next->benchmark.number_schedules++;
+        NODE_STATE(benchmark_kernel_number_schedules)++;
 
     }
 }

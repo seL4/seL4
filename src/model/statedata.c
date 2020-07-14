@@ -65,6 +65,9 @@ UP_STATE_DEFINE(tcb_t *, ksDebugTCBs);
 UP_STATE_DEFINE(bool_t, benchmark_log_utilisation_enabled);
 UP_STATE_DEFINE(timestamp_t, benchmark_start_time);
 UP_STATE_DEFINE(timestamp_t, benchmark_end_time);
+UP_STATE_DEFINE(timestamp_t, benchmark_kernel_time);
+UP_STATE_DEFINE(timestamp_t, benchmark_kernel_number_entries);
+UP_STATE_DEFINE(timestamp_t, benchmark_kernel_number_schedules);
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 
 /* Units of work we have completed since the last time we checked for

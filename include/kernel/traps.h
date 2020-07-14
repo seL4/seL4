@@ -31,6 +31,16 @@ static inline void c_exit_hook(void)
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
     benchmark_track_exit();
 #endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+    if (likely(NODE_STATE(benchmark_log_utilisation_enabled))) {
+        timestamp_t exit = timestamp();
+        NODE_STATE(ksCurThread)->benchmark.number_kernel_entries++;
+        NODE_STATE(ksCurThread)->benchmark.kernel_utilisation += exit - ksEnter;
+        NODE_STATE(benchmark_kernel_number_entries)++;
+        NODE_STATE(benchmark_kernel_time) += exit - ksEnter;
+    }
+#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
+
     arch_c_exit_hook();
 }
 
