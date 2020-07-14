@@ -115,18 +115,18 @@ static exception_t decodeSchedControl_Configure(word_t length, cap_t cap, extra_
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (budget_us > getMaxUsToTicks() || budget < MIN_BUDGET) {
+    if (budget_us > getMaxUsToTicks() || budget < MIN_SC_BUDGET) {
         userError("SchedControl_Configure: budget out of range.");
         current_syscall_error.type = seL4_RangeError;
-        current_syscall_error.rangeErrorMin = MIN_BUDGET_US;
+        current_syscall_error.rangeErrorMin = MIN_SC_BUDGET_US;
         current_syscall_error.rangeErrorMax = getMaxUsToTicks();
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (period_us > getMaxUsToTicks() || period < MIN_BUDGET) {
+    if (period_us > getMaxUsToTicks() || period < MIN_SC_BUDGET) {
         userError("SchedControl_Configure: period out of range.");
         current_syscall_error.type = seL4_RangeError;
-        current_syscall_error.rangeErrorMin = MIN_BUDGET_US;
+        current_syscall_error.rangeErrorMin = MIN_SC_BUDGET_US;
         current_syscall_error.rangeErrorMax = getMaxUsToTicks();
         return EXCEPTION_SYSCALL_ERROR;
     }

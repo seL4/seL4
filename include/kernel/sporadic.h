@@ -34,6 +34,13 @@
 #define MIN_BUDGET_US (2u * getKernelWcetUs() * CONFIG_KERNEL_WCET_SCALE)
 #define MIN_BUDGET    (2u * getKernelWcetTicks() * CONFIG_KERNEL_WCET_SCALE)
 
+/* By ensuring that the total budget of a scheduling context is at least
+ * twice MIN_BUDGET, we can ensure that all refills are at least
+ * MIN_BUDGET and that it is always possible to fragment into at least 2
+ * refills. */
+#define MIN_SC_BUDGET_US (2 * MIN_BUDGET_US)
+#define MIN_SC_BUDGET (2 * MIN_BUDGET)
+
 /* Short hand for accessing refill queue items */
 #define REFILL_INDEX(sc, index) (((refill_t *) (SC_REF(sc) + sizeof(sched_context_t)))[index])
 #define REFILL_HEAD(sc) REFILL_INDEX((sc), (sc)->scRefillHead)
@@ -145,6 +152,12 @@ void refill_update(sched_context_t *sc, ticks_t new_period, ticks_t new_budget, 
  * @param usage the amount of time to charge.
  */
 void refill_budget_check(ticks_t used);
+
+/* Charge `usage` to the current scheduling context (round-robin).
+ *
+ * @param usage the amount of time to charge.
+ */
+void refill_budget_check_round_robin(ticks_t usage);
 
 /*
  * Charge a the current scheduling context `used` amount from its
