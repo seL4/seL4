@@ -17,7 +17,7 @@ extern timestamp_t ksEnter;
 
 void benchmark_track_utilisation_dump(void);
 
-void benchmark_track_reset_utilisation(void);
+void benchmark_track_reset_utilisation(tcb_t *tcb);
 /* Calculate and add the utilisation time from when the heir started to run i.e. scheduled
  * and until it's being kicked off
  */

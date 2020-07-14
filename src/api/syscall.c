@@ -209,7 +209,7 @@ exception_t handleUnknownSyscall(word_t w)
 #endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
         NODE_STATE(benchmark_log_utilisation_enabled) = true;
-        NODE_STATE(ksIdleThread)->benchmark.utilisation = 0;
+        benchmark_track_reset_utilisation(NODE_STATE(ksIdleThread));
         NODE_STATE(ksCurThread)->benchmark.schedule_start_time = ksEnter;
         NODE_STATE(benchmark_start_time) = ksEnter;
         benchmark_arch_utilisation_reset();
@@ -244,7 +244,21 @@ exception_t handleUnknownSyscall(word_t w)
         benchmark_track_utilisation_dump();
         return EXCEPTION_NONE;
     } else if (w == SysBenchmarkResetThreadUtilisation) {
-        benchmark_track_reset_utilisation();
+        word_t tcb_cptr = getRegister(NODE_STATE(ksCurThread), capRegister);
+        lookupCap_ret_t lu_ret;
+        word_t cap_type;
+
+        lu_ret = lookupCap(NODE_STATE(ksCurThread), tcb_cptr);
+        /* ensure we got a TCB cap */
+        cap_type = cap_get_capType(lu_ret.cap);
+        if (cap_type != cap_thread_cap) {
+            userError("SysBenchmarkResetThreadUtilisation: cap is not a TCB, halting");
+            return EXCEPTION_NONE;
+        }
+
+        tcb_t *tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(lu_ret.cap));
+
+        benchmark_track_reset_utilisation(tcb);
         return EXCEPTION_NONE;
     }
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */

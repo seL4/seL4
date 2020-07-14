@@ -48,23 +48,8 @@ void benchmark_track_utilisation_dump(void)
 
 }
 
-void benchmark_track_reset_utilisation(void)
+void benchmark_track_reset_utilisation(tcb_t *tcb)
 {
-    tcb_t *tcb = NULL;
-    word_t tcb_cptr = getRegister(NODE_STATE(ksCurThread), capRegister);
-    lookupCap_ret_t lu_ret;
-    word_t cap_type;
-
-    lu_ret = lookupCap(NODE_STATE(ksCurThread), tcb_cptr);
-    /* ensure we got a TCB cap */
-    cap_type = cap_get_capType(lu_ret.cap);
-    if (cap_type != cap_thread_cap) {
-        userError("SysBenchmarkResetThreadUtilisation: cap is not a TCB, halting");
-        return;
-    }
-
-    tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(lu_ret.cap));
-
     tcb->benchmark.utilisation = 0;
     tcb->benchmark.schedule_start_time = 0;
 }
