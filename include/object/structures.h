@@ -295,17 +295,26 @@ struct tcb {
     /* 16 bytes (12 bytes aarch32) */
     benchmark_util_t benchmark;
 #endif
+};
+typedef struct tcb tcb_t;
 
 #ifdef CONFIG_DEBUG_BUILD
+/* This debug_tcb object is inserted into the 'unused' region of a TCB object
+   for debug build configurations. */
+struct debug_tcb {
+
     /* Pointers for list of all tcbs that is maintained
      * when CONFIG_DEBUG_BUILD is enabled, 2 words */
     struct tcb *tcbDebugNext;
     struct tcb *tcbDebugPrev;
     /* Use any remaining space for a thread name */
     char tcbName[];
-#endif /* CONFIG_DEBUG_BUILD */
+
 };
-typedef struct tcb tcb_t;
+typedef struct debug_tcb debug_tcb_t;
+
+#define TCB_PTR_DEBUG_PTR(p) ((debug_tcb_t *)TCB_PTR_CTE_PTR(p,tcbCNodeEntries))
+#endif /* CONFIG_DEBUG_BUILD */
 
 #ifdef CONFIG_KERNEL_MCS
 typedef struct refill {

@@ -190,7 +190,7 @@ static void sendASIDPool(unsigned int address)
 static void sendRunqueues(void)
 {
     for (uint32_t i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
-        for (tcb_t *curr = NODE_STATE_ON_CORE(ksDebugTCBs, i); curr != NULL; curr = curr->tcbDebugNext) {
+        for (tcb_t *curr = NODE_STATE_ON_CORE(ksDebugTCBs, i); curr != NULL; curr = TCB_PTR_DEBUG_PTR(curr)->tcbDebugNext) {
             thread_state_t *state = &curr->tcbState;
             if (thread_state_ptr_get_tsType(state) != ThreadState_IdleThreadState &&
                 thread_state_ptr_get_tsType(state) != ThreadState_Inactive) {

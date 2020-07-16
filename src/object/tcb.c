@@ -186,13 +186,14 @@ void tcbSchedDequeue(tcb_t *tcb)
 #ifdef CONFIG_DEBUG_BUILD
 void tcbDebugAppend(tcb_t *tcb)
 {
+    debug_tcb_t *debug_tcb = TCB_PTR_DEBUG_PTR(tcb);
     /* prepend to the list */
-    tcb->tcbDebugPrev = NULL;
+    debug_tcb->tcbDebugPrev = NULL;
 
-    tcb->tcbDebugNext = NODE_STATE_ON_CORE(ksDebugTCBs, tcb->tcbAffinity);
+    debug_tcb->tcbDebugNext = NODE_STATE_ON_CORE(ksDebugTCBs, tcb->tcbAffinity);
 
     if (NODE_STATE_ON_CORE(ksDebugTCBs, tcb->tcbAffinity)) {
-        NODE_STATE_ON_CORE(ksDebugTCBs, tcb->tcbAffinity)->tcbDebugPrev = tcb;
+        TCB_PTR_DEBUG_PTR(NODE_STATE_ON_CORE(ksDebugTCBs, tcb->tcbAffinity))->tcbDebugPrev = tcb;
     }
 
     NODE_STATE_ON_CORE(ksDebugTCBs, tcb->tcbAffinity) = tcb;
@@ -200,20 +201,23 @@ void tcbDebugAppend(tcb_t *tcb)
 
 void tcbDebugRemove(tcb_t *tcb)
 {
+    debug_tcb_t *debug_tcb = TCB_PTR_DEBUG_PTR(tcb);
+
     assert(NODE_STATE_ON_CORE(ksDebugTCBs, tcb->tcbAffinity) != NULL);
     if (tcb == NODE_STATE_ON_CORE(ksDebugTCBs, tcb->tcbAffinity)) {
-        NODE_STATE_ON_CORE(ksDebugTCBs, tcb->tcbAffinity) = NODE_STATE_ON_CORE(ksDebugTCBs, tcb->tcbAffinity)->tcbDebugNext;
+        NODE_STATE_ON_CORE(ksDebugTCBs, tcb->tcbAffinity) = TCB_PTR_DEBUG_PTR(NODE_STATE_ON_CORE(ksDebugTCBs,
+                                                                                                 tcb->tcbAffinity))->tcbDebugNext;
     } else {
-        assert(tcb->tcbDebugPrev);
-        tcb->tcbDebugPrev->tcbDebugNext = tcb->tcbDebugNext;
+        assert(TCB_PTR_DEBUG_PTR(tcb)->tcbDebugPrev);
+        TCB_PTR_DEBUG_PTR(debug_tcb->tcbDebugPrev)->tcbDebugNext = debug_tcb->tcbDebugNext;
     }
 
-    if (tcb->tcbDebugNext) {
-        tcb->tcbDebugNext->tcbDebugPrev = tcb->tcbDebugPrev;
+    if (debug_tcb->tcbDebugNext) {
+        TCB_PTR_DEBUG_PTR(debug_tcb->tcbDebugNext)->tcbDebugPrev = debug_tcb->tcbDebugPrev;
     }
 
-    tcb->tcbDebugPrev = NULL;
-    tcb->tcbDebugNext = NULL;
+    debug_tcb->tcbDebugPrev = NULL;
+    debug_tcb->tcbDebugNext = NULL;
 }
 #endif /* CONFIG_DEBUG_BUILD */
 
@@ -2034,7 +2038,7 @@ exception_t invokeTCB_NotificationControl(tcb_t *tcb, notification_t *ntfnPtr)
 #ifdef CONFIG_DEBUG_BUILD
 void setThreadName(tcb_t *tcb, const char *name)
 {
-    strlcpy(tcb->tcbName, name, TCB_NAME_LENGTH);
+    strlcpy(TCB_PTR_DEBUG_PTR(tcb)->tcbName, name, TCB_NAME_LENGTH);
 }
 #endif
 

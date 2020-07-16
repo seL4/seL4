@@ -105,7 +105,7 @@ static inline word_t CONST wordFromMessageInfo(seL4_MessageInfo_t mi)
  * thread name is only available if the kernel is built in debug mode.
  */
 #ifdef CONFIG_DEBUG_BUILD
-#define THREAD_NAME NODE_STATE(ksCurThread)->tcbName
+#define THREAD_NAME TCB_PTR_DEBUG_PTR(NODE_STATE(ksCurThread))->tcbName
 #else
 #define THREAD_NAME ""
 #endif

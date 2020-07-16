@@ -82,12 +82,12 @@ exception_t handleUnknownSyscall(word_t w)
 #ifdef CONFIG_DEBUG_BUILD
     if (w == SysDebugHalt) {
         tcb_t *UNUSED tptr = NODE_STATE(ksCurThread);
-        printf("Debug halt syscall from user thread %p \"%s\"\n", tptr, tptr->tcbName);
+        printf("Debug halt syscall from user thread %p \"%s\"\n", tptr, TCB_PTR_DEBUG_PTR(tptr)->tcbName);
         halt();
     }
     if (w == SysDebugSnapshot) {
         tcb_t *UNUSED tptr = NODE_STATE(ksCurThread);
-        printf("Debug snapshot syscall from user thread %p \"%s\"\n", tptr, tptr->tcbName);
+        printf("Debug snapshot syscall from user thread %p \"%s\"\n", tptr, TCB_PTR_DEBUG_PTR(tptr)->tcbName);
         capDL();
         return EXCEPTION_NONE;
     }
@@ -275,15 +275,15 @@ exception_t handleUnknownSyscall(word_t w)
         printf("  \"BENCHMARK_TOTAL_NUMBER_KERNEL_ENTRIES\":%lu,\n", (word_t) NODE_STATE(benchmark_kernel_number_entries));
         printf("  \"BENCHMARK_TOTAL_NUMBER_SCHEDULES\":%lu,\n", (word_t) NODE_STATE(benchmark_kernel_number_schedules));
         printf("  \"BENCHMARK_TCB_\": [\n");
-        for (tcb_t *curr = NODE_STATE(ksDebugTCBs); curr != NULL; curr = curr->tcbDebugNext) {
+        for (tcb_t *curr = NODE_STATE(ksDebugTCBs); curr != NULL; curr = TCB_PTR_DEBUG_PTR(curr)->tcbDebugNext) {
             printf("    {\n");
-            printf("      \"NAME\":\"%s\",\n", curr->tcbName);
+            printf("      \"NAME\":\"%s\",\n", TCB_PTR_DEBUG_PTR(curr)->tcbName);
             printf("      \"UTILISATION\":%lu,\n", (word_t) curr->benchmark.utilisation);
             printf("      \"NUMBER_SCHEDULES\":%lu,\n", (word_t) curr->benchmark.number_schedules);
             printf("      \"KERNEL_UTILISATION\":%lu,\n", (word_t) curr->benchmark.kernel_utilisation);
             printf("      \"NUMBER_KERNEL_ENTRIES\":%lu\n", (word_t) curr->benchmark.number_kernel_entries);
             printf("    }");
-            if (curr->tcbDebugNext != NULL) {
+            if (TCB_PTR_DEBUG_PTR(curr)->tcbDebugNext != NULL) {
                 printf(",\n");
             } else {
                 printf("\n");
@@ -292,7 +292,7 @@ exception_t handleUnknownSyscall(word_t w)
         printf("  ]\n}\n");
         return EXCEPTION_NONE;
     } else if (w == SysBenchmarkResetAllThreadsUtilisation) {
-        for (tcb_t *curr = NODE_STATE(ksDebugTCBs); curr != NULL; curr = curr->tcbDebugNext) {
+        for (tcb_t *curr = NODE_STATE(ksDebugTCBs); curr != NULL; curr = TCB_PTR_DEBUG_PTR(curr)->tcbDebugNext) {
             benchmark_track_reset_utilisation(curr);
         }
         return EXCEPTION_NONE;
