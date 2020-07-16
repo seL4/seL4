@@ -717,6 +717,14 @@ exception_t decodeInvocation(word_t invLabel, word_t length,
                                    slot, excaps, call, buffer);
 
     case cap_domain_cap:
+#ifdef CONFIG_KERNEL_MCS
+        if (unlikely(firstPhase)) {
+            userError("Cannot invoke domain capabilities in the first phase of an invocation");
+            current_syscall_error.type = seL4_InvalidCapability;
+            current_syscall_error.invalidCapNumber = 0;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+#endif
         return decodeDomainInvocation(invLabel, length, excaps, buffer);
 
     case cap_cnode_cap:
