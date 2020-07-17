@@ -116,6 +116,7 @@ enum {
 
 #ifdef CONFIG_KERNEL_MCS
 enum {
+    seL4_Timeout_Reason,
     seL4_Timeout_Data,
     seL4_Timeout_Consumed,
     seL4_Timeout_Length,

@@ -109,6 +109,7 @@ enum {
 
 #ifdef CONFIG_KERNEL_MCS
 enum {
+    seL4_Timeout_Reason,
     seL4_Timeout_Data,
     /* consumed is 64 bits */
     seL4_Timeout_Consumed_HighBits,

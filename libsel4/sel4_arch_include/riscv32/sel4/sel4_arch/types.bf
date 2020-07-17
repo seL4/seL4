@@ -76,7 +76,8 @@ block UserException {
 
 #ifdef CONFIG_KERNEL_MCS
 block Timeout {
-    padding 256
+    padding 224
+    field reason 32
     field data 32
     field consumed_high 32
     field consumed_low 32

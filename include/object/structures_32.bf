@@ -314,7 +314,8 @@ block DebugException {
 #ifdef CONFIG_KERNEL_MCS
 block Timeout {
     field badge 32
-    padding 28
+    field reason 2
+    padding 26
     field seL4_FaultType 4
 }
 #endif

@@ -113,6 +113,7 @@ enum {
 } seL4_TimeoutReply_Msg;
 
 enum {
+    seL4_Timeout_Reason,
     seL4_Timeout_Data,
     seL4_Timeout_Consumed_HighBits,
     seL4_Timeout_Consumed_LowBits,
