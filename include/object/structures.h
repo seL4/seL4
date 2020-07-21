@@ -69,6 +69,19 @@ typedef word_t notification_state_t;
 // to be as large as possible, but it still needs to be aligned. As the TCB object contains
 // two sub objects the largest we can make either sub object whilst preserving size alignment
 // is half the total size. To halve an object size defined in bits we just subtract 1
+//
+// A diagram of a TCB kernel object that is created from untyped:
+//  _______________________________________
+// |     |             |                   |
+// |     |             |                   |
+// |cte_t|   unused    |       tcb_t       |
+// |     |(debug_tcb_t)|                   |
+// |_____|_____________|___________________|
+// 0     a             b                   c
+// a = tcbCNodeEntries * sizeof(cte_t)
+// b = BIT(TCB_SIZE_BITS)
+// c = BIT(seL4_TCBBits)
+//
 #define TCB_SIZE_BITS (seL4_TCBBits - 1)
 
 #define TCB_CNODE_SIZE_BITS (TCB_CNODE_RADIX + seL4_SlotBits)
