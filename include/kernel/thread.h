@@ -161,8 +161,12 @@ static inline bool_t PURE isSchedulable(const tcb_t *thread)
            thread->tcbSchedContext->scRefillMax > 0 &&
            !thread_state_get_tcbInReleaseQueue(thread->tcbState);
 }
+
+#define MCS_DO_IF_SCHEDULABLE(_tcb, _expr) \
+    if (ensureSchedulable(_tcb)) _expr
 #else
 #define isSchedulable isRunnable
+#define MCS_DO_IF_SCHEDULABLE(_tcb, _expr) _expr
 #endif
 
 void configureIdleThread(tcb_t *tcb);
@@ -291,5 +295,41 @@ void awaken(void);
 /* Place the thread bound to this scheduling context in the release queue
  * of periodic threads waiting for budget recharge */
 void postpone(sched_context_t *sc);
+
+/* If the thread has a valid timeout fault handler, deliver a fault with
+ * the given badge and reason. */
+void maybeTimeoutFault(tcb_t *thread, word_t badge, word_t reason);
+
+/* Ensure that a thread can be placed in the scheduler with
+ * possibleSwitchTo, SCHED_ENQUEUE, or SCHED_APPEND. Faults the thread
+ * with a timeout fault or SC unbound fault if its SC would prevent it
+ * from being scheduled.
+ *
+ * If this returns true then the thread that was passed in is not
+ * modified and satisfies the preconditions of possibleSwitchTo.
+ */
+static inline bool_t ensureSchedulable(tcb_t *thread)
+{
+    assert(isRunnable(thread));
+    assert(!thread_state_get_tcbInReleaseQueue(thread->tcbState));
+
+    sched_context_t *sc = thread->tcbSchedContext;
+    if (unlikely(sc == NULL)) {
+        /* No associated scheduling context */
+        maybeTimeoutFault(thread, 0, seL4_Timeout_NoSC);
+        return false;
+    } else if (unlikely(sc->scRefillMax == 0)) {
+        /* Not configured */
+        maybeTimeoutFault(thread, sc->scBadge, seL4_Timeout_Unconfigured);
+        return false;
+    } else if (unlikely(!isRoundRobin(sc) && !refill_ready(sc))) {
+        /* Out of time */
+        maybeTimeoutFault(thread, sc->scBadge, seL4_Timeout_Exhausted);
+        return false;
+    } else {
+        return true;
+    }
+
+}
 #endif
 

@@ -616,6 +616,19 @@ void endTimeslice(bool_t can_timeout_fault)
         postpone(NODE_STATE(ksCurSC));
     }
 }
+
+void maybeTimeoutFault(tcb_t *thread, word_t badge, word_t reason)
+{
+    if (validTimeoutHandler(thread)) {
+        current_fault = seL4_Fault_Timeout_new(badge, reason);
+        handleTimeout(thread);
+    } else if (reason == seL4_Timeout_Exhausted) {
+        /* The thread can still run but must wait for a refill */
+        assert(thread->tcbSchedContext != NULL);
+        assert(thread->tcbSchedContext->scRefillMax > 0);
+        postpone(thread->tcbSchedContext);
+    }
+}
 #else
 
 void timerTick(void)
