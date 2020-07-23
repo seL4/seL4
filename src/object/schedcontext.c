@@ -164,12 +164,6 @@ static exception_t invokeSchedContext_YieldTo(sched_context_t *sc, word_t *buffe
         assert(sc->scYieldFrom == NULL);
     }
 
-    /* if the tcb is in the scheduler, it's ready and sufficient.
-     * Otherwise, check that it is ready and sufficient and if not,
-     * place the thread in the release queue. This way, from this point,
-     * if the thread isSchedulable, it is ready and sufficient.*/
-    schedContext_resume(sc);
-
     bool_t return_now = true;
     if (isSchedulable(sc->scTcb)) {
         refill_unblock_check(sc);
@@ -257,17 +251,6 @@ exception_t decodeSchedContextInvocation(word_t label, cap_t cap, extra_caps_t e
     }
 }
 
-void schedContext_resume(sched_context_t *sc)
-{
-    assert(!sc || sc->scTcb != NULL);
-    if (likely(sc) && isSchedulable(sc->scTcb)) {
-        if (!(refill_ready(sc) && refill_sufficient(sc, 0))) {
-            assert(!thread_state_get_tcbQueued(sc->scTcb->tcbState));
-            postpone(sc);
-        }
-    }
-}
-
 void schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb)
 {
     assert(sc->scTcb == NULL);
@@ -278,8 +261,7 @@ void schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb)
 
     SMP_COND_STATEMENT(migrateTCB(tcb, sc->scCore));
 
-    schedContext_resume(sc);
-    if (isSchedulable(tcb)) {
+    if (isRunnable(tcb) && ensureSchedulable(tcb)) {
         SCHED_ENQUEUE(tcb);
         rescheduleRequired();
         // TODO -- at some stage we should take this call out of any TCB invocations that

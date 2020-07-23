@@ -244,8 +244,7 @@ void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
                 }
             } else {
                 setThreadState(sender, ThreadState_Running);
-                possibleSwitchTo(sender);
-                assert(sender->tcbSchedContext == NULL || refill_sufficient(sender->tcbSchedContext, 0));
+                MCS_DO_IF_SCHEDULABLE(sender, possibleSwitchTo(sender));
             }
 #else
             if (do_call) {
@@ -385,7 +384,7 @@ void cancelAllIPC(endpoint_t *epptr)
             }
             if (seL4_Fault_get_seL4_FaultType(thread->tcbFault) == seL4_Fault_NullFault) {
                 setThreadState(thread, ThreadState_Restart);
-                possibleSwitchTo(thread);
+                MCS_DO_IF_SCHEDULABLE(thread, possibleSwitchTo(thread));
             } else {
                 setThreadState(thread, ThreadState_Inactive);
             }
@@ -430,7 +429,7 @@ void cancelBadgedSends(endpoint_t *epptr, word_t badge)
                 if (seL4_Fault_get_seL4_FaultType(thread->tcbFault) ==
                     seL4_Fault_NullFault) {
                     setThreadState(thread, ThreadState_Restart);
-                    possibleSwitchTo(thread);
+                    MCS_DO_IF_SCHEDULABLE(thread, possibleSwitchTo(thread));
                 } else {
                     setThreadState(thread, ThreadState_Inactive);
                 }

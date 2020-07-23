@@ -12,6 +12,7 @@
 #include <kernel/cspace.h>
 #include <kernel/thread.h>
 #include <kernel/vspace.h>
+#include <kernel/faulthandler.h>
 #ifdef CONFIG_KERNEL_MCS
 #include <object/schedcontext.h>
 #endif
@@ -91,8 +92,7 @@ void restart(tcb_t *target)
         cancelIPC(target);
 #ifdef CONFIG_KERNEL_MCS
         setThreadState(target, ThreadState_Restart);
-        schedContext_resume(target->tcbSchedContext);
-        if (isSchedulable(target)) {
+        if (ensureSchedulable(target)) {
             possibleSwitchTo(target);
         }
 #else
@@ -171,17 +171,8 @@ void doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, bool_t grant)
     }
 
 #ifdef CONFIG_KERNEL_MCS
-    if (receiver->tcbSchedContext && isRunnable(receiver)) {
-        if ((refill_ready(receiver->tcbSchedContext) && refill_sufficient(receiver->tcbSchedContext, 0))) {
-            possibleSwitchTo(receiver);
-        } else {
-            if (validTimeoutHandler(receiver) && fault_type != seL4_Fault_Timeout) {
-                current_fault = seL4_Fault_Timeout_new(receiver->tcbSchedContext->scBadge);
-                handleTimeout(receiver);
-            } else {
-                postpone(receiver->tcbSchedContext);
-            }
-        }
+    if (isRunnable(receiver) && ensureSchedulable(receiver)) {
+        possibleSwitchTo(receiver);
     }
 #endif
 }
