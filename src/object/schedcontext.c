@@ -284,6 +284,14 @@ void schedContext_unbindTCB(sched_context_t *sc, tcb_t *tcb)
     tcbSchedDequeue(sc->scTcb);
     tcbReleaseRemove(sc->scTcb);
 
+    /* If the unbound TCB has a timeout handler, it is triggered to
+     * indicate that the SC has been removed. If a donated SC is
+     * forcibly removed from a passive server, that server's timeout
+     * handler is then able to handle the forcible removal of the SC. */
+    if (isRunnable(sc->scTcb)) {
+        maybeTimeoutFault(sc->scTcb, 0, seL4_Timeout_NoSC);
+    }
+
     sc->scTcb->tcbSchedContext = NULL;
     sc->scTcb = NULL;
 }
