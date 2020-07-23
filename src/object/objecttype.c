@@ -779,7 +779,11 @@ exception_t performInvocation_Endpoint(endpoint_t *ep, word_t badge,
                                        bool_t canGrant, bool_t canGrantReply,
                                        bool_t block, bool_t call, bool_t canDonate)
 {
-    sendIPC(block, call, badge, canGrant, canGrantReply, canDonate, NODE_STATE(ksCurThread), ep);
+    tcb_t *unblocked = sendIPC(block, call, badge, canGrant, canGrantReply, canDonate, NODE_STATE(ksCurThread), ep);
+
+    if (unblocked != NULL && ensureSchedulable(unblocked)) {
+        possibleSwitchTo(unblocked);
+    }
 
     return EXCEPTION_NONE;
 }
