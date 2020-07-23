@@ -69,14 +69,20 @@ static exception_t invokeSchedControl_Configure(sched_context_t *target, word_t 
     }
 #endif /* ENABLE_SMP_SUPPORT */
 
-    if (target->scTcb && target->scRefillMax > 0) {
-        schedContext_resume(target);
-        if (SMP_TERNARY(core == CURRENT_CPU_INDEX(), true)) {
-            if (isRunnable(target->scTcb) && target->scTcb != NODE_STATE(ksCurThread)) {
-                possibleSwitchTo(target->scTcb);
+    assert(target->scRefillMax > 0);
+    assert(refill_sufficient(target, 0));
+    if (target->scTcb) {
+        if (isRunnable(target->scTcb)) {
+            assert(isSchedulable(target->scTcb));
+            if (!refill_ready(target)) {
+                postpone(target);
+            } else if (SMP_TERNARY(core == CURRENT_CPU_INDEX(), true)) {
+                if (target->scTcb != NODE_STATE(ksCurThread)) {
+                    possibleSwitchTo(target->scTcb);
+                }
+            } else {
+                SCHED_ENQUEUE(target->scTcb);
             }
-        } else if (isRunnable(target->scTcb)) {
-            SCHED_ENQUEUE(target->scTcb);
         }
         if (target->scTcb == NODE_STATE(ksCurThread)) {
             rescheduleRequired();
