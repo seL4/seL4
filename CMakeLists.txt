@@ -164,7 +164,7 @@ if(KernelArchARM)
     endif()
 endif()
 if(KernelArchRiscV)
-    KernelCommonFlags(-mcmodel=medany)
+    KernelCommonFlags(-mcmodel=medany -msmall-data-limit=64 -fno-common)
 endif()
 KernelCommonFlags(-fno-pic -fno-pie)
 add_compile_options(

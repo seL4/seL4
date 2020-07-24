@@ -43,12 +43,11 @@ SECTIONS
 
     /* Start of data section */
     _sdata = .;
-    .sdata : {
-        __global_pointer$ = . + 0x800;
-        *(.sdata*)
-    }
-    .srodata : {
+    .small : {
         *(.srodata*)
+        __global_pointer$ = .;
+        *(.sdata*)
+        *(.sbss)
     }
 
     .rodata . : AT(ADDR(.rodata) - KERNEL_OFFSET)
@@ -65,7 +64,6 @@ SECTIONS
     .bss . : AT(ADDR(.bss) - KERNEL_OFFSET)
     {
         *(.bss)
-        *(.sbss)
 
         /* 4k breakpoint stack */
         _breakpoint_stack_bottom = .;
