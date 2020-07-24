@@ -603,7 +603,7 @@ void chargeBudget(ticks_t consumed, bool_t canTimeoutFault, word_t core, bool_t 
 
 void endTimeslice(bool_t can_timeout_fault)
 {
-    if (can_timeout_fault && validTimeoutHandler(NODE_STATE(ksCurThread))) {
+    if (can_timeout_fault && !isRoundRobin(NODE_STATE(ksCurSC)) && validTimeoutHandler(NODE_STATE(ksCurThread))) {
         current_fault = seL4_Fault_Timeout_new(NODE_STATE(ksCurSC)->scBadge);
         handleTimeout(NODE_STATE(ksCurThread));
     } else if (refill_ready(NODE_STATE(ksCurSC)) && refill_sufficient(NODE_STATE(ksCurSC), 0)) {
