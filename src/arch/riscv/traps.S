@@ -79,7 +79,10 @@ trap_entry:
   csrr s0, scause
   STORE s0, (31*REGBYTES)(t0)
 
+.option push
+.option norelax
   la gp, __global_pointer$
+.option pop
 
 #ifdef ENABLE_SMP_SUPPORT
   /* save the user sp */
