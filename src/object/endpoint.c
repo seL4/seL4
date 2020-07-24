@@ -153,6 +153,16 @@ void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
     if (ntfnPtr && notification_ptr_get_state(ntfnPtr) == NtfnState_Active) {
         completeSignal(ntfnPtr, thread);
     } else {
+#ifdef CONFIG_KERNEL_MCS
+        /* If this is a blocking recv and we didn't have a pending notification,
+         * then if we are running on an SC from a bound notification, then we
+         * need to return it so that we can passively wait on the EP for potentially
+         * SC donations from client threads.
+         */
+        if (ntfnPtr && isBlocking) {
+            maybeReturnSchedContext(ntfnPtr, thread);
+        }
+#endif
         switch (endpoint_ptr_get_state(epptr)) {
         case EPState_Idle:
         case EPState_Recv: {

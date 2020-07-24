@@ -19,6 +19,16 @@ void unbindNotification(tcb_t *tcb);
 void bindNotification(tcb_t *tcb, notification_t *ntfnPtr);
 #ifdef CONFIG_KERNEL_MCS
 void reorderNTFN(notification_t *notification, tcb_t *thread);
+
+static inline void maybeReturnSchedContext(notification_t *ntfnPtr, tcb_t *tcb)
+{
+
+    sched_context_t *sc = SC_PTR(notification_ptr_get_ntfnSchedContext(ntfnPtr));
+    if (sc == tcb->tcbSchedContext) {
+        tcb->tcbSchedContext = NULL;
+        sc->scTcb = NULL;
+    }
+}
 #endif
 
 
