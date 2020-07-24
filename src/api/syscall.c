@@ -603,8 +603,9 @@ static void handleYield(void)
 {
 #ifdef CONFIG_KERNEL_MCS
     /* Yield the current remaining budget */
-    ticks_t consumed = NODE_STATE(ksCurSC)->scConsumed;
+    ticks_t consumed = NODE_STATE(ksCurSC)->scConsumed + NODE_STATE(ksConsumed);
     chargeBudget(REFILL_HEAD(NODE_STATE(ksCurSC)).rAmount, false, CURRENT_CPU_INDEX(), true);
+    /* Manually updated the scConsumed so that the full timeslice isn't added, just what was consumed */
     NODE_STATE(ksCurSC)->scConsumed = consumed;
 #else
     tcbSchedDequeue(NODE_STATE(ksCurThread));
