@@ -761,6 +761,12 @@ exception_t decodeInvocation(word_t invLabel, word_t length,
         return decodeSchedControlInvocation(invLabel, cap, length, excaps, buffer);
 
     case cap_sched_context_cap:
+        if (unlikely(firstPhase)) {
+            userError("Cannot invoke sched context capabilities in the first phase of an invocation");
+            current_syscall_error.type = seL4_InvalidCapability;
+            current_syscall_error.invalidCapNumber = 0;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
         return decodeSchedContextInvocation(invLabel, cap, excaps, buffer);
 #endif
     default:
