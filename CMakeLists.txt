@@ -164,7 +164,15 @@ if(KernelArchARM)
     endif()
 endif()
 if(KernelArchRiscV)
-    KernelCommonFlags(-mcmodel=medany)
+    # Group "small" data objects together in a small-data section so they can
+    # be referenced using gp-relative addressing.  The exact value of
+    # small-data-limit is not crucial but it should be lowered if .small
+    # exceeds 4KiB.
+    #
+    # Without -fno-common uninitialized variables are generated as *COM*
+    # symbols with no section information.  -fno-common is the default on
+    # gcc 10+ (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=85678).
+    KernelCommonFlags(-mcmodel=medany -fno-common -msmall-data-limit=1024)
 endif()
 KernelCommonFlags(-fno-pic -fno-pie)
 add_compile_options(
