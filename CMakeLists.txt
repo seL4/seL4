@@ -286,7 +286,12 @@ elseif(KernelArchARM)
     endif()
 
 elseif(KernelArchRiscV)
-    KernelCommonFlags(-mcmodel=medany)
+    # Group "small" data objects together in a small-data section so they can
+    # be referenced using gp-relative addressing.  The exact value of
+    # small-data-limit is not crucial but it should be lowered if .small
+    # exceeds 4KiB.
+    #
+    KernelCommonFlags(-mcmodel=medany -msmall-data-limit=1024)
 
 else()
     message(FATAL_ERROR "unknown KernelArch '${KernelArch}'")

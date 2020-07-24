@@ -48,12 +48,13 @@ SECTIONS
 
     /* Start of data section */
     _sdata = .;
-    .sdata : {
+    .small : {
+        /* Small data that should be accessed relative to gp.  ld has trouble
+           with the relaxation if they are not in a single section. */
         __global_pointer$ = . + 0x800;
-        *(.sdata*)
-    }
-    .srodata : {
         *(.srodata*)
+        *(.sdata*)
+        *(.sbss)
     }
 
     .rodata . : AT(ADDR(.rodata) - KERNEL_OFFSET)
@@ -71,7 +72,6 @@ SECTIONS
     {
         *(.bss)
         *(COMMON) /* fallback in case '-fno-common' is not used */
-        *(.sbss)
 
         /* 4k breakpoint stack */
         _breakpoint_stack_bottom = .;
