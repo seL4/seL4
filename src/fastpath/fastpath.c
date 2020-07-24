@@ -298,7 +298,7 @@ void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo)
     reply_t *reply_ptr = REPLY_PTR(cap_reply_cap_get_capReplyPtr(reply_cap));
     /* check that its valid and at the head of the call chain */
     if (unlikely(reply_ptr->replyTCB == NULL ||
-                 reply_ptr->replyNext.words[0] == 0)) {
+                 call_stack_get_isHead(reply_ptr->replyNext) == 0)) {
         slowpath(SysReplyRecv);
     }
 
