@@ -296,9 +296,11 @@ void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo)
 #ifdef CONFIG_KERNEL_MCS
     /* Get the reply address */
     reply_t *reply_ptr = REPLY_PTR(cap_reply_cap_get_capReplyPtr(reply_cap));
-    /* check that its valid and at the head of the call chain */
+    /* check that its valid and at the head of the call chain
+       and that the current thread's SC is going to be donated. */
     if (unlikely(reply_ptr->replyTCB == NULL ||
-                 call_stack_get_isHead(reply_ptr->replyNext) == 0)) {
+                 call_stack_get_isHead(reply_ptr->replyNext) == 0 ||
+                 SC_PTR(call_stack_get_callStackPtr(reply_ptr->replyNext)) != NODE_STATE(ksCurThread)->tcbSchedContext)) {
         slowpath(SysReplyRecv);
     }
 
