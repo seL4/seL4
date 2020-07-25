@@ -29,7 +29,7 @@ SECTIONS
     {
         *(.boot.data)
     }
-    . = ALIGN(64K);
+    . = ALIGN(4K);
 
     ki_boot_end = .;
 
