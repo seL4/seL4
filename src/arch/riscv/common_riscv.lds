@@ -20,14 +20,16 @@ SECTIONS
 {
     . = KERNEL_ELF_BASE;
 
-    .boot . : AT(ADDR(.boot) - KERNEL_OFFSET)
+    .boot.text . : AT(ADDR(.boot.text) - KERNEL_OFFSET)
     {
         *(.boot.text)
         *(.boot.rodata)
-        *(.boot.data)
-        . = ALIGN(64K);
     }
-
+    .boot.data . : AT(ADDR(.boot.data) - KERNEL_OFFSET)
+    {
+        *(.boot.data)
+    }
+    . = ALIGN(64K);
 
     ki_boot_end = .;
 
