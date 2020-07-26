@@ -21,28 +21,30 @@ base 64(39,1)
 #include <object/structures_64.bf>
 
 -- frames
-block frame_cap {
-    field       capFMappedASID      16
-    field_high  capFBasePtr         39
+block frame_cap(capFMappedASID, capFBasePtr, capFSize, capFVMRights,
+                capFIsDevice, capFMappedAddress, capType) {
     padding                         9
+    field_high  capFBasePtr         39 widen
+    field       capFMappedASID      16
 
+    padding                         25
+    field_high  capFMappedAddress   29 widen
     field       capFSize            2
     field       capFVMRights        2
     field       capFIsDevice        1
-    padding                         15
-    field_high  capFMappedAddress   39
     field       capType             5
 }
 
 -- N-level page table
-block page_table_cap {
-    field       capPTMappedASID     16
-    field_high  capPTBasePtr        39
+block page_table_cap(capPTMappedASID, capPTBasePtr, capPTIsMapped,
+                     capPTMappedAddress, capType) {
     padding                         9
+    field_high  capPTBasePtr        39 widen
+    field       capPTMappedASID     16
 
-    padding                         19
+    padding                         25
+    field_high  capPTMappedAddress  33 widen
     field       capPTIsMapped       1
-    field_high  capPTMappedAddress  39
     field       capType             5
 }
 
@@ -55,12 +57,12 @@ block asid_control_cap {
 }
 
 -- Cap to a pool of 2^10 ASIDs
-block asid_pool_cap {
-    padding 64
+block asid_pool_cap(capASIDBase, capASIDPool, capType) {
+    padding 48
+    field       capASIDBase     16 widen
 
-    field       capASIDBase     16
-    padding                     6
     field_high  capASIDPool     37
+    padding                     22
     field       capType         5
 }
 
