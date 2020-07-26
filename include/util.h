@@ -30,6 +30,30 @@
 #define BIT(n) (1ul << (n))
 #define UL_CONST(x) PASTE(x, ul)
 
+/* Sign extension helper for bitfields, one per base type.  size is the
+ * allocated size of the bitfield, not including grain; grain is the number
+ * of unstored low zero bits (for field_high).  The inner if is recognized
+ * as a single arithmetic shift by gcc and clang. */
+#define SEL4_BITFIELD_HELPER(f_name, bits, s_type, u_type) \
+static inline u_type f_name(int size, int grain, int issigned, u_type value) \
+{ \
+    value = (value >> grain) << (bits - size); \
+    if (issigned) { \
+        if (value >> (bits - 1)) { \
+            value = ~(u_type)((s_type)~value >> (bits - grain - size)); \
+        } else { \
+            value = (u_type)((s_type)value >> (bits - grain - size)); \
+        } \
+    } else { \
+        value = value >> (bits - grain - size); \
+    } \
+    return value; \
+}
+SEL4_BITFIELD_HELPER(seL4_extend_bitfield_8, 8, int8_t, uint8_t)
+SEL4_BITFIELD_HELPER(seL4_extend_bitfield_16, 16, int16_t, uint16_t)
+SEL4_BITFIELD_HELPER(seL4_extend_bitfield_32, 32, int32_t, uint32_t)
+SEL4_BITFIELD_HELPER(seL4_extend_bitfield_64, 64, int64_t, uint64_t)
+
 #define PACKED       __attribute__((packed))
 #define NORETURN     __attribute__((__noreturn__))
 #define CONST        __attribute__((__const__))
