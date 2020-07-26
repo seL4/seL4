@@ -1836,9 +1836,10 @@ class TaggedUnion:
                         "assert": ASSERTS[options.environment],
                         "size": size})
 
+                if high and size + (offset % self.base) < self.base and self.base_sign_extend:
+                    mask = (1 << self.base_bits) - 1
                     field_updates[index].append(
                         "(%s & 0x%x%s) %s %d" % (f_value, mask, suf, shift_op, shift))
-
                 else:
                     field_updates[index].append("%s %s %d" % (f_value, shift_op, shift))
 
@@ -2447,11 +2448,12 @@ class Block:
                     "assert": ASSERTS[options.environment],
                     "size": size})
 
+            if high and size + (offset % self.base) < self.base and self.base_sign_extend:
+                mask = (1 << self.base_bits) - 1
                 field_updates[index].append(
                     "(%s & 0x%x%s) %s %d" % (field, mask, suf, shift_op, shift))
-
             else:
-                field_updates[index].append("%s %s %d;" % (field, shift_op, shift))
+                field_updates[index].append("%s %s %d" % (field, shift_op, shift))
 
         word_inits = [
             ("words[%d] = 0" % index) + ''.join(["\n        | %s" % up for up in ups]) + ';'
