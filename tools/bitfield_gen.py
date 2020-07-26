@@ -272,7 +272,7 @@ generator_template = \
 %(block)s_new(%(gen_params)s) {
     %(block)s_t %(block)s;
 
-%(asserts)s
+    %(asserts)s
 
 %(gen_inits)s
 
@@ -282,7 +282,7 @@ generator_template = \
 ptr_generator_template = \
     """%(inline)s void
 %(block)s_ptr_new(%(ptr_params)s) {
-%(asserts)s
+    %(asserts)s
 
 %(ptr_inits)s
 }"""
@@ -337,7 +337,7 @@ union_generator_template = \
 %(union)s_%(block)s_new(%(gen_params)s) {
     %(union)s_t %(union)s;
 
-%(asserts)s
+    %(asserts)s
 
 %(gen_inits)s
 
@@ -347,7 +347,7 @@ union_generator_template = \
 ptr_union_generator_template = \
     """%(inline)s void
 %(union)s_%(block)s_ptr_new(%(ptr_params)s) {
-%(asserts)s
+    %(asserts)s
 
 %(ptr_inits)s
 }"""
@@ -1813,7 +1813,7 @@ class TaggedUnion:
             ptr_params = ', '.join(["%s_t *%s_ptr" % (self.name, self.name)] + param_list)
 
             field_updates = {word: [] for word in range(self.multiple)}
-            field_asserts = ["    /* fail if user has passed bits that we will override */"]
+            field_asserts = ["/* fail if user has passed bits that we will override */"]
 
             for field in ref.visible_order:
                 offset, size, high = ref.field_map[field]
@@ -1872,7 +1872,7 @@ class TaggedUnion:
                 "ptr_params": ptr_params,
                 "gen_inits":  mk_inits("%s." % self.name),
                 "ptr_inits":  mk_inits("%s_ptr->" % self.name),
-                "asserts": '  \n'.join(field_asserts)
+                "asserts": '\n    '.join(field_asserts)
             }
 
             generator = union_generator_template % print_params
@@ -2436,7 +2436,7 @@ class Block:
         ptr_params = ', '.join(["%s_t *%s_ptr" % (self.name, self.name)] + param_list)
 
         field_updates = {word: [] for word in range(self.multiple)}
-        field_asserts = ["    /* fail if user has passed bits that we will override */"]
+        field_asserts = ["/* fail if user has passed bits that we will override */"]
 
         for field, offset, size, high in self.fields:
             index = offset // self.base
@@ -2487,7 +2487,7 @@ class Block:
             "ptr_params": ptr_params,
             "gen_inits": mk_inits("%s." % self.name),
             "ptr_inits": mk_inits("%s_ptr->" % self.name),
-            "asserts": '  \n'.join(field_asserts)
+            "asserts": '\n    '.join(field_asserts)
         }
 
         generator = generator_template % print_params
