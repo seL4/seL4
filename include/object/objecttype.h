@@ -60,3 +60,7 @@ static inline void postCapDeletion(cap_t cap)
     }
 }
 
+word_t CONST cap_get_capSizeBits(cap_t cap);
+bool_t CONST cap_get_capIsPhysical(cap_t cap);
+void *CONST cap_get_capPtr(cap_t cap);
+bool_t CONST isCapRevocable(cap_t derivedCap, cap_t srcCap);
