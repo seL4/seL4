@@ -206,10 +206,10 @@ block endpoint {
 
 #if BF_CANONICAL_RANGE == 48
     padding 16
-    field_high epQueue_tail 46
+    field_high epQueue_tail 46 widen
 #elif BF_CANONICAL_RANGE == 39
     padding 25
-    field_high epQueue_tail 37
+    field_high epQueue_tail 37 widen
 #else
 #error "Unspecified canonical address range"
 #endif
@@ -221,17 +221,17 @@ block notification {
 #if BF_CANONICAL_RANGE == 48
 #ifdef CONFIG_KERNEL_MCS
     padding 16
-    field_high ntfnSchedContext 48
+    field_high ntfnSchedContext 48 widen
 #endif
     padding 16
-    field_high ntfnBoundTCB 48
+    field_high ntfnBoundTCB 48 widen
 #elif BF_CANONICAL_RANGE == 39
 #ifdef CONFIG_KERNEL_MCS
     padding 25
-    field_high ntfnSchedContext 39
+    field_high ntfnSchedContext 39 widen
 #endif
     padding 25
-    field_high ntfnBoundTCB 39
+    field_high ntfnBoundTCB 39 widen
 #else
 #error "Unspecified canonical address range"
 #endif
@@ -240,10 +240,10 @@ block notification {
 
 #if BF_CANONICAL_RANGE == 48
     padding 16
-    field_high ntfnQueue_head 48
+    field_high ntfnQueue_head 48 widen
 #elif BF_CANONICAL_RANGE == 39
     padding 25
-    field_high ntfnQueue_head 39
+    field_high ntfnQueue_head 39 widen
 #else
 #error "Unspecified canonical address range"
 #endif
@@ -264,10 +264,10 @@ block notification {
 block mdb_node {
 #if BF_CANONICAL_RANGE == 48
     padding 16
-    field_high mdbNext 46
+    field_high mdbNext 46 widen
 #elif BF_CANONICAL_RANGE == 39
     padding 25
-    field_high mdbNext 37
+    field_high mdbNext 37 widen
 #else
 #error "Unspecified canonical address range"
 #endif
@@ -337,7 +337,7 @@ block missing_capability {
     padding 64
 
     padding 55
-    field bitsLeft 7
+    field bitsLeft 7 widen
     field lufType 2
 }
 
@@ -345,7 +345,7 @@ block depth_mismatch {
     padding 64
 
     padding 48
-    field bitsFound 7
+    field bitsFound 7 widen
     field bitsLeft 7
     field lufType 2
 }
@@ -354,7 +354,7 @@ block guard_mismatch {
     field guardFound 64
 
     padding 48
-    field bitsLeft 7
+    field bitsLeft 7 widen
     field bitsFound 7
     field lufType 2
 }
@@ -435,10 +435,10 @@ block thread_state(blockingIPCBadge, blockingIPCCanGrant,
 #ifdef CONFIG_KERNEL_MCS
 #if BF_CANONICAL_RANGE == 48
     padding 15
-    field_high replyObject 44
+    field_high replyObject 44 widen
 #elif BF_CANONICAL_RANGE == 39
     padding 24
-    field_high replyObject 35
+    field_high replyObject 35 widen
 #else
 #error "Unspecified canonical address range"
 #endif
@@ -455,10 +455,10 @@ block thread_state(blockingIPCBadge, blockingIPCCanGrant,
 
 #if BF_CANONICAL_RANGE == 48
     padding 16
-    field_high blockingObject 44
+    field_high blockingObject 44 widen
 #elif BF_CANONICAL_RANGE == 39
     padding 25
-    field_high blockingObject 35
+    field_high blockingObject 35 widen
 #else
 #error "Unspecified canonical address range"
 #endif
