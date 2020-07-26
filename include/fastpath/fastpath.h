@@ -64,6 +64,7 @@ static inline void thread_state_ptr_mset_blockingObject_tsType(thread_state_t *t
     ts_ptr->words[0] = ep_ref | tsType;
 }
 
+/*
 #ifndef CONFIG_KERNEL_MCS
 static inline void cap_reply_cap_ptr_new_np(cap_t *cap_ptr, word_t capReplyCanGrant,
                                             word_t capReplyMaster, word_t capTCBPtr)
@@ -78,6 +79,7 @@ static inline void cap_reply_cap_ptr_new_np(cap_t *cap_ptr, word_t capReplyCanGr
 #endif
 }
 #endif
+*/
 
 static inline void endpoint_ptr_mset_epQueue_tail_state(endpoint_t *ep_ptr, word_t epQueue_tail,
                                                         word_t state)

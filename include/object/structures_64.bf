@@ -7,8 +7,8 @@
 block null_cap {
     padding 64
 
-    field capType 5
     padding 59
+    field capType 5
 }
 
 block untyped_cap {
@@ -24,7 +24,6 @@ block untyped_cap {
     field capIsDevice 1
     field capBlockSize 6
 
-    field capType 5
 #if BF_CANONICAL_RANGE == 48
     padding 11
     field_high capPtr 48
@@ -34,13 +33,13 @@ block untyped_cap {
 #else
 #error "Unspecified canonical address range"
 #endif
+    field capType 5
 }
 
 block endpoint_cap(capEPBadge, capCanGrantReply, capCanGrant, capCanSend,
                    capCanReceive, capEPPtr, capType) {
     field capEPBadge 64
 
-    field capType 5
     field capCanGrantReply 1
     field capCanGrant 1
     field capCanReceive 1
@@ -54,13 +53,12 @@ block endpoint_cap(capEPBadge, capCanGrantReply, capCanGrant, capCanSend,
 #else
 #error "Unspecified canonical address range"
 #endif
-
+    field capType 5
 }
 
 block notification_cap {
     field capNtfnBadge 64
 
-    field capType 5
     field capNtfnCanReceive 1
     field capNtfnCanSend 1
 #if BF_CANONICAL_RANGE == 48
@@ -72,15 +70,16 @@ block notification_cap {
 #else
 #error "Unspecified canonical address range"
 #endif
+    field capType 5
 }
 
 #ifdef CONFIG_KERNEL_MCS
 block reply_cap {
     field capReplyPtr 64
 
-    field capType 5
     field capReplyCanGrant 1
     padding 58
+    field capType 5
 }
 
 block call_stack(callStackPtr, isHead) {
@@ -99,10 +98,10 @@ block call_stack(callStackPtr, isHead) {
 block reply_cap(capReplyCanGrant, capReplyMaster, capTCBPtr, capType) {
     field capTCBPtr 64
 
-    field capType 5
     padding 57
     field capReplyCanGrant 1
     field capReplyMaster 1
+    field capType 5
 }
 #endif
 
@@ -111,7 +110,6 @@ block cnode_cap(capCNodeRadix, capCNodeGuardSize, capCNodeGuard,
                 capCNodePtr, capType) {
     field capCNodeGuard 64
 
-    field capType 5
     field capCNodeGuardSize 6
     field capCNodeRadix 6
 #if BF_CANONICAL_RANGE == 48
@@ -122,12 +120,12 @@ block cnode_cap(capCNodeRadix, capCNodeGuardSize, capCNodeGuard,
 #else
 #error "Unspecified canonical address range"
 #endif
+    field capType 5
 }
 
 block thread_cap {
     padding 64
 
-    field capType 5
 #if BF_CANONICAL_RANGE == 48
     padding 11
     field_high capTCBPtr 48
@@ -137,13 +135,14 @@ block thread_cap {
 #else
 #error "Unspecified canonical address range"
 #endif
+    field capType 5
 }
 
 block irq_control_cap {
     padding 64
 
-    field capType  5
     padding 59
+    field capType  5
 }
 
 block irq_handler_cap {
@@ -154,23 +153,23 @@ block irq_handler_cap {
     field capIRQ 12
 #endif
 
-    field capType  5
     padding 59
+    field capType  5
 }
 
 block zombie_cap {
     field capZombieID     64
 
-    field capType         5
     padding               52
     field capZombieType   7
+    field capType         5
 }
 
 block domain_cap {
     padding 64
 
-    field capType 5
     padding 59
+    field capType 5
 }
 
 #ifdef CONFIG_KERNEL_MCS
@@ -186,15 +185,15 @@ block sched_context_cap {
     field capSCSizeBits 6
     padding 10
 
-    field capType 5
     padding       59
+    field capType 5
 }
 
 block sched_control_cap {
     field core    64
 
-    field capType 5
     padding       59
+    field capType 5
 }
 #endif
 

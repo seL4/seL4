@@ -24,12 +24,12 @@ block frame_cap {
     field capFMappedASID             16
     field_high capFBasePtr           48
 
-    field capType                    5
     field capFSize                   2
     field_high capFMappedAddress     48
     field capFVMRights               2
     field capFIsDevice               1
     padding                          6
+    field capType                    5
 }
 
 -- Forth-level page table
@@ -37,11 +37,11 @@ block page_table_cap {
     field capPTMappedASID            16
     field_high capPTBasePtr          48
 
-    field capType                    5
     padding                          10
     field capPTIsMapped              1
     field_high capPTMappedAddress    28
     padding                          20
+    field capType                    5
 }
 
 -- Third-level page table (page directory)
@@ -49,11 +49,11 @@ block page_directory_cap {
     field capPDMappedASID            16
     field_high capPDBasePtr          48
 
-    field capType                    5
     padding                          10
     field capPDIsMapped              1
     field_high capPDMappedAddress    19
     padding                          29
+    field capType                    5
 }
 
 -- Second-level page table (page upper directory)
@@ -61,10 +61,10 @@ block page_upper_directory_cap {
     field capPUDMappedASID           16
     field_high capPUDBasePtr         48
 
-    field capType                    5
     field capPUDIsMapped             1
     field_high capPUDMappedAddress   10
     padding                          48
+    field capType                    5
 }
 
 -- First-level page table (page global directory)
@@ -72,36 +72,36 @@ block page_global_directory_cap {
     field capPGDMappedASID           16
     field_high capPGDBasePtr         48
 
-    field capType                    5
     field capPGDIsMapped             1
     padding                          58
+    field capType                    5
 }
 
 -- Cap to the table of 2^7 ASID pools
 block asid_control_cap {
     padding                          64
 
-    field capType                    5
     padding                          59
+    field capType                    5
 }
 
 -- Cap to a pool of 2^9 ASIDs
 block asid_pool_cap {
     padding                         64
 
-    field capType                   5
     field capASIDBase               16
     padding                         6
     field_high capASIDPool          37
+    field capType                   5
 }
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 block vcpu_cap {
     padding                         64
 
-    field      capType              5
     field_high capVCPUPtr           48
     padding                         11
+    field      capType              5
 }
 #endif
 

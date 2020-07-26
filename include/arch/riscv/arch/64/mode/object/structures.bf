@@ -26,12 +26,12 @@ block frame_cap {
     field_high  capFBasePtr         39
     padding                         9
 
-    field       capType             5
     field       capFSize            2
     field       capFVMRights        2
     field       capFIsDevice        1
     padding                         15
     field_high  capFMappedAddress   39
+    field       capType             5
 }
 
 -- N-level page table
@@ -40,28 +40,28 @@ block page_table_cap {
     field_high  capPTBasePtr        39
     padding                         9
 
-    field       capType             5
     padding                         19
     field       capPTIsMapped       1
     field_high  capPTMappedAddress  39
+    field       capType             5
 }
 
 -- Cap to the table of 2^6 ASID pools
 block asid_control_cap {
     padding 64
 
-    field   capType     5
     padding             59
+    field   capType     5
 }
 
 -- Cap to a pool of 2^10 ASIDs
 block asid_pool_cap {
     padding 64
 
-    field       capType         5
     field       capASIDBase     16
     padding                     6
     field_high  capASIDPool     37
+    field       capType         5
 }
 
 -- NB: odd numbers are arch caps (see isArchCap())
