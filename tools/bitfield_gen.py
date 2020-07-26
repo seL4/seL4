@@ -464,27 +464,6 @@ ptr_tag_reader_footer_template = \
     """
 }"""
 
-tag_writer_template = \
-    """%(inline)s %(union)s_t CONST
-%(union)s_set_%(tagname)s(%(union)s_t %(union)s, %(type)s v%(base)d) {
-    /* fail if user has passed bits that we will override */
-    %(assert)s((((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) | 0x%(high_bits)x) & v%(base)d) == ((%(sign_extend)d && (v%(base)d & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
-
-    %(union)s.words[%(index)d] &= ~0x%(mask)x%(suf)s;
-    %(union)s.words[%(index)d] |= (v%(base)d << %(shift)d) & 0x%(mask)x%(suf)s;
-    return %(union)s;
-}"""
-
-ptr_tag_writer_template = \
-    """%(inline)s void
-%(union)s_ptr_set_%(tagname)s(%(union)s_t *%(union)s_ptr, %(type)s v%(base)d) {
-    /* fail if user has passed bits that we will override */
-    %(assert)s((((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) | 0x%(high_bits)x) & v%(base)d) == ((%(sign_extend)d && (v%(base)d & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
-
-    %(union)s_ptr->words[%(index)d] &= ~0x%(mask)x%(suf)s;
-    %(union)s_ptr->words[%(index)d] |= (v%(base)d << %(shift)d) & 0x%(mask)x%(suf)s;
-}"""
-
 # HOL definition templates
 
 lift_def_template = \
