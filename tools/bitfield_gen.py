@@ -292,10 +292,7 @@ reader_template = \
 %(block)s_get_%(field)s(%(block)s_t %(block)s) {
     %(type)s ret;
     ret = (%(block)s.words[%(index)d] & 0x%(mask)x%(suf)s) %(r_shift_op)s %(shift)d;
-    /* Possibly sign extend */
-    if (__builtin_expect(!!(%(sign_extend)d && (ret & (1%(suf)s << (%(extend_bit)d)))), %(sign_extend)d)) {
-        ret |= 0x%(high_bits)x;
-    }
+    ret = seL4_extend_bitfield_%(base)d(%(size)d, %(align)d, %(sign_extend)d, ret);
     return ret;
 }"""
 
@@ -303,12 +300,8 @@ ptr_reader_template = \
     """%(inline)s %(type)s PURE
 %(block)s_ptr_get_%(field)s(%(block)s_t *%(block)s_ptr) {
     %(type)s ret;
-    ret = (%(block)s_ptr->words[%(index)d] & 0x%(mask)x%(suf)s) """ \
-    """%(r_shift_op)s %(shift)d;
-    /* Possibly sign extend */
-    if (__builtin_expect(!!(%(sign_extend)d && (ret & (1%(suf)s << (%(extend_bit)d)))), %(sign_extend)d)) {
-        ret |= 0x%(high_bits)x;
-    }
+    ret = (%(block)s_ptr->words[%(index)d] & 0x%(mask)x%(suf)s) %(r_shift_op)s %(shift)d;
+    ret = seL4_extend_bitfield_%(base)d(%(size)d, %(align)d, %(sign_extend)d, ret);
     return ret;
 }"""
 
@@ -316,7 +309,7 @@ writer_template = \
     """%(inline)s %(block)s_t CONST
 %(block)s_set_%(field)s(%(block)s_t %(block)s, %(type)s v%(base)d) {
     /* fail if user has passed bits that we will override */
-    %(assert)s((((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d ) | 0x%(high_bits)x) & v%(base)d) == ((%(sign_extend)d && (v%(base)d & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
+    %(assert)s(seL4_extend_bitfield_%(base)d(%(size)d, %(align)d, %(sign_extend)d, v%(base)d) == v%(base)d);
     %(block)s.words[%(index)d] &= ~0x%(mask)x%(suf)s;
     %(block)s.words[%(index)d] |= (v%(base)d %(w_shift_op)s %(shift)d) & 0x%(mask)x%(suf)s;
     return %(block)s;
@@ -326,7 +319,7 @@ ptr_writer_template = \
     """%(inline)s void
 %(block)s_ptr_set_%(field)s(%(block)s_t *%(block)s_ptr, %(type)s v%(base)d) {
     /* fail if user has passed bits that we will override */
-    %(assert)s((((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) | 0x%(high_bits)x) & v%(base)d) == ((%(sign_extend)d && (v%(base)d & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
+    %(assert)s(seL4_extend_bitfield_%(base)d(%(size)d, %(align)d, %(sign_extend)d, v%(base)d) == v%(base)d);
     %(block)s_ptr->words[%(index)d] &= ~0x%(mask)x%(suf)s;
     %(block)s_ptr->words[%(index)d] |= (v%(base)d %(w_shift_op)s """ \
     """%(shift)d) & 0x%(mask)x;
@@ -360,10 +353,7 @@ union_reader_template = \
            %(union)s_%(block)s);
 
     ret = (%(union)s.words[%(index)d] & 0x%(mask)x%(suf)s) %(r_shift_op)s %(shift)d;
-    /* Possibly sign extend */
-    if (__builtin_expect(!!(%(sign_extend)d && (ret & (1%(suf)s << (%(extend_bit)d)))), %(sign_extend)d)) {
-        ret |= 0x%(high_bits)x;
-    }
+    ret = seL4_extend_bitfield_%(base)d(%(size)d, %(align)d, %(sign_extend)d, ret);
     return ret;
 }"""
 
@@ -375,12 +365,8 @@ ptr_union_reader_template = \
     """%(tagshift)d) & 0x%(tagmask)x) ==
            %(union)s_%(block)s);
 
-    ret = (%(union)s_ptr->words[%(index)d] & 0x%(mask)x%(suf)s) """ \
-    """%(r_shift_op)s %(shift)d;
-    /* Possibly sign extend */
-    if (__builtin_expect(!!(%(sign_extend)d && (ret & (1%(suf)s << (%(extend_bit)d)))), %(sign_extend)d)) {
-        ret |= 0x%(high_bits)x;
-    }
+    ret = (%(union)s_ptr->words[%(index)d] & 0x%(mask)x%(suf)s) %(r_shift_op)s %(shift)d;
+    ret = seL4_extend_bitfield_%(base)d(%(size)d, %(align)d, %(sign_extend)d, ret);
     return ret;
 }"""
 
@@ -390,7 +376,7 @@ union_writer_template = \
     %(assert)s(((%(union)s.words[%(tagindex)d] >> %(tagshift)d) & 0x%(tagmask)x) ==
            %(union)s_%(block)s);
     /* fail if user has passed bits that we will override */
-    %(assert)s((((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d ) | 0x%(high_bits)x) & v%(base)d) == ((%(sign_extend)d && (v%(base)d & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
+    %(assert)s(seL4_extend_bitfield_%(base)d(%(size)d, %(align)d, %(sign_extend)d, v%(base)d) == v%(base)d);
 
     %(union)s.words[%(index)d] &= ~0x%(mask)x%(suf)s;
     %(union)s.words[%(index)d] |= (v%(base)d %(w_shift_op)s %(shift)d) & 0x%(mask)x%(suf)s;
@@ -406,7 +392,7 @@ ptr_union_writer_template = \
            %(union)s_%(block)s);
 
     /* fail if user has passed bits that we will override */
-    %(assert)s((((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) | 0x%(high_bits)x) & v%(base)d) == ((%(sign_extend)d && (v%(base)d & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
+    %(assert)s(seL4_extend_bitfield_%(base)d(%(size)d, %(align)d, %(sign_extend)d, v%(base)d) == v%(base)d);
 
     %(union)s_ptr->words[%(index)d] &= ~0x%(mask)x%(suf)s;
     %(union)s_ptr->words[%(index)d] |= """ \
@@ -1827,29 +1813,28 @@ class TaggedUnion:
                 if high:
                     shift_op = ">>"
                     shift = self.base_bits - size - (offset % self.base)
-                    if self.base_sign_extend:
-                        high_bits = ((self.base_sign_extend << (
-                            self.base - self.base_bits)) - 1) << self.base_bits
-                    else:
-                        high_bits = 0
                     if shift < 0:
                         shift = -shift
                         shift_op = "<<"
                 else:
                     shift_op = "<<"
                     shift = offset % self.base
-                    high_bits = 0
                 if size < self.base:
+                    align = 0
                     if high:
                         mask = ((1 << size) - 1) << (self.base_bits - size)
+                        align = self.base_bits - size
                     else:
                         mask = (1 << size) - 1
                     suf = self.constant_suffix
 
-                    field_asserts.append(
-                        "    %s((%s & ~0x%x%s) == ((%d && (%s & (1%s << %d))) ? 0x%x : 0));"
-                        % (ASSERTS[options.environment], f_value, mask, suf, self.base_sign_extend,
-                           f_value, suf, self.base_bits - 1, high_bits))
+                    field_asserts.append("%(assert)s(seL4_extend_bitfield_%(base)d(%(size)d, %(align)d, %(sign_extend)d, %(f_value)s) == %(f_value)s);" % {
+                        "f_value": f_value,
+                        "align": align,
+                        "base": self.base,
+                        "sign_extend": self.base_sign_extend and high,
+                        "assert": ASSERTS[options.environment],
+                        "size": size})
 
                     field_updates[index].append(
                         "(%s & 0x%x%s) %s %d" % (f_value, mask, suf, shift_op, shift))
@@ -1890,24 +1875,20 @@ class TaggedUnion:
                     continue
 
                 index = offset // self.base
+                align = 0
                 if high:
                     write_shift = ">>"
                     read_shift = "<<"
                     shift = self.base_bits - size - (offset % self.base)
+                    align = self.base_bits - size
                     if shift < 0:
                         shift = -shift
                         write_shift = "<<"
                         read_shift = ">>"
-                    if self.base_sign_extend:
-                        high_bits = ((self.base_sign_extend << (
-                            self.base - self.base_bits)) - 1) << self.base_bits
-                    else:
-                        high_bits = 0
                 else:
                     write_shift = "<<"
                     read_shift = ">>"
                     shift = offset % self.base
-                    high_bits = 0
                 mask = ((1 << size) - 1) << (offset % self.base)
 
                 subs = {
@@ -1926,9 +1907,9 @@ class TaggedUnion:
                     "tagmask": tagmask,
                     "union": self.name,
                     "suf": self.constant_suffix,
-                    "high_bits": high_bits,
                     "sign_extend": self.base_sign_extend and high,
-                    "extend_bit": self.base_bits - 1,
+                    "align": align,
+                    "size": size,
                     "base": self.base}
 
                 # Reader
@@ -2443,29 +2424,28 @@ class Block:
             if high:
                 shift_op = ">>"
                 shift = self.base_bits - size - (offset % self.base)
-                if self.base_sign_extend:
-                    high_bits = ((self.base_sign_extend << (
-                        self.base - self.base_bits)) - 1) << self.base_bits
-                else:
-                    high_bits = 0
                 if shift < 0:
                     shift = -shift
                     shift_op = "<<"
             else:
                 shift_op = "<<"
                 shift = offset % self.base
-                high_bits = 0
             if size < self.base:
+                align = 0
                 if high:
+                    align = self.base_bits - size
                     mask = ((1 << size) - 1) << (self.base_bits - size)
                 else:
                     mask = (1 << size) - 1
                 suf = self.constant_suffix
 
-                field_asserts.append(
-                    "    %s((%s & ~0x%x%s) == ((%d && (%s & (1%s << %d))) ? 0x%x : 0));"
-                    % (ASSERTS[options.environment], field, mask, suf, self.base_sign_extend,
-                       field, suf, self.base_bits - 1, high_bits))
+                field_asserts.append("%(assert)s(seL4_extend_bitfield_%(base)d(%(size)d, %(align)d, %(sign_extend)d, %(field)s) == %(field)s);" % {
+                    "field": field,
+                    "align": align,
+                    "base": self.base,
+                    "sign_extend": self.base_sign_extend and high,
+                    "assert": ASSERTS[options.environment],
+                    "size": size})
 
                 field_updates[index].append(
                     "(%s & 0x%x%s) %s %d" % (field, mask, suf, shift_op, shift))
@@ -2499,24 +2479,20 @@ class Block:
         # Accessors
         for field, offset, size, high in self.fields:
             index = offset // self.base
+            align = 0
             if high:
                 write_shift = ">>"
                 read_shift = "<<"
                 shift = self.base_bits - size - (offset % self.base)
+                align = self.base_bits - size
                 if shift < 0:
                     shift = -shift
                     write_shift = "<<"
                     read_shift = ">>"
-                if self.base_sign_extend:
-                    high_bits = ((self.base_sign_extend << (
-                        self.base - self.base_bits)) - 1) << self.base_bits
-                else:
-                    high_bits = 0
             else:
                 write_shift = "<<"
                 read_shift = ">>"
                 shift = offset % self.base
-                high_bits = 0
             mask = ((1 << size) - 1) << (offset % self.base)
 
             subs = {
@@ -2529,11 +2505,11 @@ class Block:
                 "shift": shift,
                 "r_shift_op": read_shift,
                 "w_shift_op": write_shift,
+                "align": align,
                 "mask": mask,
                 "suf": self.constant_suffix,
-                "high_bits": high_bits,
                 "sign_extend": self.base_sign_extend and high,
-                "extend_bit": self.base_bits - 1,
+                "size": size,
                 "base": self.base}
 
             # Reader
