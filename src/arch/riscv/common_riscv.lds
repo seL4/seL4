@@ -23,6 +23,9 @@ SECTIONS
     .boot.text . : AT(ADDR(.boot.text) - KERNEL_OFFSET)
     {
         *(.boot.text)
+    }
+    .boot.rodata . : AT(ADDR(.boot.rodata) - KERNEL_OFFSET)
+    {
         *(.boot.rodata)
     }
     .boot.data . : AT(ADDR(.boot.data) - KERNEL_OFFSET)
