@@ -2269,7 +2269,7 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, word_t length,
 
     cap = cap_page_table_cap_set_capPTIsMapped(cap, 1);
     cap = cap_page_table_cap_set_capPTMappedASID(cap, asid);
-    cap = cap_page_table_cap_set_capPTMappedAddress(cap, vaddr);
+    cap = cap_page_table_cap_set_capPTMappedAddress(cap, vaddr & ~MASK(PAGE_BITS + PT_INDEX_BITS));
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return performPageTableInvocationMap(cap, cte, pde, pdSlot);

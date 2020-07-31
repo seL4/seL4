@@ -23,13 +23,13 @@ block frame_cap {
     field       capFMappedASID      16
     field_high  capFBasePtr         48
 
-    field       capType             5
     field       capFSize            2
     field       capFMapType         2
     field_high  capFMappedAddress   48
     field       capFVMRights        2
     field       capFIsDevice        1
     padding                         4
+    field       capType             5
 }
 
 -- Second-level page table
@@ -38,12 +38,12 @@ block page_table_cap {
     field       capPTMappedASID     12
     field_high  capPTBasePtr        48
 
-    field       capType             5
     padding                         9
     field       capPTIsMapped       1
     field_high  capPTMappedAddress  28
 
     padding                         21
+    field       capType             5
 }
 
 -- First-level page table (page directory)
@@ -52,12 +52,12 @@ block page_directory_cap {
     field       capPDMappedASID     12
     field_high  capPDBasePtr        48
 
-    field       capType             5
     padding                         9
     field       capPDIsMapped       1
     field_high  capPDMappedAddress  19
 
     padding                         30
+    field       capType             5
 }
 
 block pdpt_cap {
@@ -65,51 +65,50 @@ block pdpt_cap {
     field       capPDPTMappedASID    12
     field_high  capPDPTBasePtr       48
 
-    field       capType              5
     field       capPDPTIsMapped      1
     field_high  capPDPTMappedAddress 10
     padding                          48
+    field       capType              5
 }
 
 block pml4_cap(capPML4MappedASID, capPML4BasePtr, capType, capPML4IsMapped) {
     field       capPML4BasePtr      64
 
-    field       capType             5
     field       capPML4IsMapped     1
     padding                         46
     field       capPML4MappedASID   12
+    field       capType             5
 }
 
 -- Cap to the table of 2^6 ASID pools
 block asid_control_cap {
     padding 64
 
-    field   capType     5
     padding             59
+    field   capType     5
 }
 
 -- Cap to a pool of 2^9 ASIDs
 block asid_pool_cap {
     padding 64
 
-    field       capType         5
     field       capASIDBase     12
     padding                     10
     field_high  capASIDPool     37
+    field       capType         5
 }
 
 -- IO Port Control Cap
 block io_port_control_cap {
     padding 64
 
-    field   capType             5
     padding 59
+    field   capType             5
 }
 
 -- IO Port Cap
 block io_port_cap {
     padding 64
-    field   capType            5
     padding 3
     field   capIOPortFirstPort 16
     field   capIOPortLastPort  16
@@ -120,6 +119,7 @@ block io_port_cap {
 #else
     padding                    16
 #endif
+    field   capType            5
 }
 
 #ifdef CONFIG_IOMMU
@@ -127,11 +127,11 @@ block io_port_cap {
 -- IO Space Cap
 block io_space_cap {
     padding 64
-    field       capType         5
     field       capDomainID     16
     field       capPCIDevice    16
 
     padding                     27
+    field       capType         5
 }
 
 block io_space_capdata {
@@ -146,11 +146,11 @@ block io_page_table_cap (capType, capIOPTIsMapped, capIOPTLevel, capIOPTMappedAd
     field       capIOPTIOASID           16
     field_high capIOPTBasePtr 48
 
-    field       capType                 5
     padding                             6
     field       capIOPTIsMapped         1
     field       capIOPTLevel            4
     field_high  capIOPTMappedAddress    48
+    field       capType                 5
 }
 
 #endif
@@ -160,55 +160,55 @@ block io_page_table_cap (capType, capIOPTIsMapped, capIOPTLevel, capIOPTMappedAd
 block vcpu_cap {
     field capVCPUPtr                64
 
-    field capType                   5
     padding                         59
+    field capType                   5
 }
 
 -- Fourth-level EPT page table
 block ept_pt_cap (capType, capPTMappedAddress, capPTIsMapped, capPTMappedASID, capPTBasePtr) {
     field       capPTBasePtr        64
 
-    field       capType             5
     field       capPTIsMapped       1
     padding                         9
     field_high  capPTMappedAddress  28
     field       capPTMappedASID     16
     padding                         5
+    field       capType             5
 }
 
 -- third-level EPT page table (page directory)
 block ept_pd_cap (capType, capPDMappedAddress, capPDIsMapped, capPDMappedASID, capPDBasePtr) {
     field       capPDBasePtr        64
 
-    field       capType             5
     field       capPDIsMapped       1
     padding                         9
     field_high  capPDMappedAddress  20
     field       capPDMappedASID     16
     padding                         13
+    field       capType             5
 }
 
 -- Second-level EPT page table (page directory pointer table)
 block ept_pdpt_cap (capType, capPDPTMappedAddress, capPDPTIsMapped, capPDPTMappedASID, capPDPTBasePtr) {
     field       capPDPTBasePtr      64
 
-    field       capType             5
     field       capPDPTIsMapped     1
     padding                         9
     field_high  capPDPTMappedAddress 18
     field       capPDPTMappedASID   16
     padding                         15
+    field       capType             5
 }
 
 -- First-level EPT pml4
 block ept_pml4_cap (capType, capPML4IsMapped, capPML4MappedASID, capPML4BasePtr) {
     field       capPML4BasePtr      64
 
-    field       capType             5
     field       capPML4IsMapped     1
     padding                         42
 
     field       capPML4MappedASID   16
+    field       capType             5
 }
 
 #endif

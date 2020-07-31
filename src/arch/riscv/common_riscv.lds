@@ -20,14 +20,19 @@ SECTIONS
 {
     . = KERNEL_ELF_BASE;
 
-    .boot . : AT(ADDR(.boot) - KERNEL_OFFSET)
+    .boot.text . : AT(ADDR(.boot.text) - KERNEL_OFFSET)
     {
         *(.boot.text)
-        *(.boot.rodata)
-        *(.boot.data)
-        . = ALIGN(64K);
     }
-
+    .boot.rodata . : AT(ADDR(.boot.rodata) - KERNEL_OFFSET)
+    {
+        *(.boot.rodata)
+    }
+    .boot.data . : AT(ADDR(.boot.data) - KERNEL_OFFSET)
+    {
+        *(.boot.data)
+    }
+    . = ALIGN(4K);
 
     ki_boot_end = .;
 
@@ -43,12 +48,11 @@ SECTIONS
 
     /* Start of data section */
     _sdata = .;
-    .sdata : {
-        __global_pointer$ = . + 0x800;
-        *(.sdata*)
-    }
-    .srodata : {
+    .small : {
         *(.srodata*)
+        __global_pointer$ = .;
+        *(.sdata*)
+        *(.sbss)
     }
 
     .rodata . : AT(ADDR(.rodata) - KERNEL_OFFSET)
@@ -65,7 +69,6 @@ SECTIONS
     .bss . : AT(ADDR(.bss) - KERNEL_OFFSET)
     {
         *(.bss)
-        *(.sbss)
 
         /* 4k breakpoint stack */
         _breakpoint_stack_bottom = .;

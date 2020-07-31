@@ -202,8 +202,8 @@ void NORETURN fastpath_call(word_t cptr, word_t msgInfo)
 
     /* Insert reply cap */
     word_t replyCanGrant = thread_state_ptr_get_blockingIPCCanGrant(&dest->tcbState);;
-    cap_reply_cap_ptr_new_np(&callerSlot->cap, replyCanGrant, 0,
-                             TCB_REF(NODE_STATE(ksCurThread)));
+    cap_reply_cap_ptr_new(&callerSlot->cap, replyCanGrant, 0,
+                          TCB_REF(NODE_STATE(ksCurThread)));
     mdb_node_ptr_set_mdbPrev_np(&callerSlot->cteMDBNode, CTE_REF(replySlot));
     mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(
         &replySlot->cteMDBNode, CTE_REF(callerSlot), 1, 1);
