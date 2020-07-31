@@ -87,7 +87,7 @@ TYPES = {
 # Parser
 
 reserved = ('BLOCK', 'BASE', 'FIELD', 'FIELD_HIGH', 'MASK', 'PADDING',
-            'TAGGED_UNION', 'TAG')
+            'TAGGED_UNION', 'TAG', 'WIDEN')
 
 tokens = reserved + ('IDENTIFIER', 'INTLIT', 'LBRACE', 'RBRACE',
                      'LPAREN', 'RPAREN', 'COMMA')
@@ -213,18 +213,22 @@ def p_fields_empty(t):
 
 def p_fields_field(t):
     """fields : fields FIELD IDENTIFIER INTLIT"""
-    t[0] = t[1] + [(t[3], t[4], False)]
+    t[0] = t[1] + [[t[3], t[4], False, False]]
 
 
 def p_fields_field_high(t):
     """fields : fields FIELD_HIGH IDENTIFIER INTLIT"""
-    t[0] = t[1] + [(t[3], t[4], True)]
+    t[0] = t[1] + [[t[3], t[4], True, False]]
 
 
 def p_fields_padding(t):
     """fields : fields PADDING INTLIT"""
-    t[0] = t[1] + [(None, t[3], False)]
+    t[0] = t[1] + [[None, t[3], False, False]]
 
+def p_fields_widen(t):
+    """fields : fields WIDEN"""
+    t[0] = t[1]
+    t[0][len(t[0])-1][3] = True
 
 def p_tagged_union(t):
     """tagged_union : TAGGED_UNION IDENTIFIER IDENTIFIER""" \
@@ -291,8 +295,8 @@ reader_template = \
     """%(inline)s %(type)s CONST
 %(block)s_get_%(field)s(%(block)s_t %(block)s) {
     %(type)s ret;
-    ret = (%(block)s.words[%(index)d] & 0x%(mask)x%(suf)s) %(r_shift_op)s %(shift)d;
-    ret = seL4_extend_bitfield_%(base)d(%(size)d, %(align)d, %(sign_extend)d, ret);
+    ret = %(block)s.words[%(index)d] %(r_shift_op)s %(shift)d;
+    ret = seL4_extend_bitfield_%(base)d(%(alloc_size)d, %(align)d, %(sign_extend)d, ret);
     return ret;
 }"""
 
@@ -300,8 +304,8 @@ ptr_reader_template = \
     """%(inline)s %(type)s PURE
 %(block)s_ptr_get_%(field)s(%(block)s_t *%(block)s_ptr) {
     %(type)s ret;
-    ret = (%(block)s_ptr->words[%(index)d] & 0x%(mask)x%(suf)s) %(r_shift_op)s %(shift)d;
-    ret = seL4_extend_bitfield_%(base)d(%(size)d, %(align)d, %(sign_extend)d, ret);
+    ret = %(block)s_ptr->words[%(index)d] %(r_shift_op)s %(shift)d;
+    ret = seL4_extend_bitfield_%(base)d(%(alloc_size)d, %(align)d, %(sign_extend)d, ret);
     return ret;
 }"""
 
@@ -352,8 +356,8 @@ union_reader_template = \
     %(assert)s(((%(union)s.words[%(tagindex)d] >> %(tagshift)d) & 0x%(tagmask)x) ==
            %(union)s_%(block)s);
 
-    ret = (%(union)s.words[%(index)d] & 0x%(mask)x%(suf)s) %(r_shift_op)s %(shift)d;
-    ret = seL4_extend_bitfield_%(base)d(%(size)d, %(align)d, %(sign_extend)d, ret);
+    ret = %(union)s.words[%(index)d] %(r_shift_op)s %(shift)d;
+    ret = seL4_extend_bitfield_%(base)d(%(alloc_size)d, %(align)d, %(sign_extend)d, ret);
     return ret;
 }"""
 
@@ -365,8 +369,8 @@ ptr_union_reader_template = \
     """%(tagshift)d) & 0x%(tagmask)x) ==
            %(union)s_%(block)s);
 
-    ret = (%(union)s_ptr->words[%(index)d] & 0x%(mask)x%(suf)s) %(r_shift_op)s %(shift)d;
-    ret = seL4_extend_bitfield_%(base)d(%(size)d, %(align)d, %(sign_extend)d, ret);
+    ret = %(union)s_ptr->words[%(index)d] %(r_shift_op)s %(shift)d;
+    ret = seL4_extend_bitfield_%(base)d(%(alloc_size)d, %(align)d, %(sign_extend)d, ret);
     return ret;
 }"""
 
@@ -1251,7 +1255,7 @@ class TaggedUnion:
         union_base = None
         union_size = None
         for name, value, ref in self.tags:
-            _tag_offset, _tag_size, _tag_high = ref.field_map[self.tagname]
+            _tag_offset, _tag_size, _tag_alloc_size, _tag_high = ref.field_map[self.tagname]
 
             if union_base is None:
                 union_base = ref.base
@@ -1274,6 +1278,9 @@ class TaggedUnion:
             if _tag_high:
                 raise ValueError("Tag field is high-aligned for element %s"
                                  " of tagged union %s" % (name, self.name))
+            if _tag_alloc_size != _tag_size:
+                raise ValueError("Tag field is widened for element %s of"
+                                 " tagged union %s" % (name, self.name))
 
             # Flag block as belonging to a tagged union
             ref.tagged = True
@@ -1404,9 +1411,9 @@ class TaggedUnion:
             else:
                 field_eq_list = []
                 for field in ref.visible_order:
-                    offset, size, high = ref.field_map[field]
+                    offset, size, _, high = ref.field_map[field]
 
-                    if field == self.tagname:
+                    if field == self.ntagname:
                         continue
 
                     mask = field_mask_proof(self.base, self.base_bits,
@@ -1434,7 +1441,7 @@ class TaggedUnion:
                                       "args": ', '.join(arg_list),
                                       "field_eqs": field_eqs})
 
-            _, size, _ = ref.field_map[self.tagname]
+            _, size, _, _ = ref.field_map[self.tagname]
             if any([w for w in self.widths if w < size]):
                 tag_mask_helpers = ("%s_%s_tag_mask_helpers"
                                     % (self.name, ref.name))
@@ -1442,7 +1449,7 @@ class TaggedUnion:
                 tag_mask_helpers = ""
 
             # Generate get/set specs
-            for (field, offset, size, high) in ref.fields:
+            for (field, offset, size, _, high) in ref.fields:
                 if field == self.tagname:
                     continue
 
@@ -1598,7 +1605,7 @@ class TaggedUnion:
         # Generate mask helper lemmas
 
         for name, value, ref in self.tags:
-            offset, size, _ = ref.field_map[self.tagname]
+            offset, size, _, _ = ref.field_map[self.tagname]
             part_widths = [w for w in self.widths if w < size]
             if part_widths:
                 subs = {"name":         self.name,
@@ -1623,7 +1630,7 @@ class TaggedUnion:
             field_inits = []
 
             for field in ref.visible_order:
-                offset, size, high = ref.field_map[field]
+                offset, size, _, high = ref.field_map[field]
 
                 if field == self.tagname:
                     continue
@@ -1802,7 +1809,7 @@ class TaggedUnion:
             field_asserts = ["/* fail if user has passed bits that we will override */"]
 
             for field in ref.visible_order:
-                offset, size, high = ref.field_map[field]
+                offset, size, alloc_size, high = ref.field_map[field]
 
                 if field == self.tagname:
                     f_value = "(%s)%s_%s" % (TYPES[options.environment][self.base], self.name, name)
@@ -1836,8 +1843,8 @@ class TaggedUnion:
                         "assert": ASSERTS[options.environment],
                         "size": size})
 
-                if high and size + (offset % self.base) < self.base and self.base_sign_extend:
-                    mask = (1 << self.base_bits) - 1
+                if high and alloc_size + (offset % self.base) < self.base and self.base_sign_extend:
+                    mask = (1 << (self.base_bits + alloc_size - size)) - 1
                     field_updates[index].append(
                         "(%s & 0x%x%s) %s %d" % (f_value, mask, suf, shift_op, shift))
                 else:
@@ -1868,9 +1875,9 @@ class TaggedUnion:
             emit_named("%s_%s_ptr_new" % (self.name, name), params, ptr_generator)
 
             # Generate field readers/writers
-            tagnameoffset, tagnamesize, _ = ref.field_map[self.tagname]
+            tagnameoffset, tagnamesize, _, _ = ref.field_map[self.tagname]
             tagmask = (2 ** tagnamesize) - 1
-            for field, offset, size, high in ref.fields:
+            for field, offset, size, alloc_size, high in ref.fields:
                 # Don't duplicate tag accessors
                 if field == self.tagname:
                     continue
@@ -1890,7 +1897,7 @@ class TaggedUnion:
                     write_shift = "<<"
                     read_shift = ">>"
                     shift = offset % self.base
-                mask = ((1 << size) - 1) << (offset % self.base)
+                mask = ((1 << alloc_size) - 1) << (offset % self.base)
 
                 subs = {
                     "inline": INLINE[options.environment],
@@ -1910,6 +1917,7 @@ class TaggedUnion:
                     "suf": self.constant_suffix,
                     "sign_extend": self.base_sign_extend and high,
                     "align": align,
+                    "alloc_size": alloc_size,
                     "size": size,
                     "base": self.base}
 
@@ -2058,7 +2066,7 @@ class TaggedUnion:
         used = set()
         self.tag_offset = {}
         for name, _, ref in self.tags:
-            offset, size, _ = ref.field_map[self.tagname]
+            offset, size, _, _ = ref.field_map[self.tagname]
             used.add(size)
             self.tag_offset[size] = offset
 
@@ -2134,25 +2142,29 @@ class Block:
     def __init__(self, name, fields, visible_order):
         offset = 0
         _fields = []
-        self.size = sum(size for _name, size, _high in fields)
+        self.size = sum(size for _name, size, _high, _widen in fields)
         offset = self.size
         self.constant_suffix = ''
 
         if visible_order is None:
             self.visible_order = []
 
-        for _name, _size, _high in fields:
+        padding = 0
+        for _name, _size, _high, _widen in fields:
             offset -= _size
-            if not _name is None:
+            if _name is None:
+                padding = _size
+            else:
                 if visible_order is None:
                     self.visible_order.append(_name)
-                _fields.append((_name, offset, _size, _high))
+                _fields.append((_name, offset, _size, _size + (_widen and padding or 0), _high))
+                padding = 0
 
         self.name = name
         self.tagged = False
         self.fields = _fields
-        self.field_map = dict((name, (offset, size, high))
-                              for name, offset, size, high in _fields)
+        self.field_map = dict((name, (offset, size, alloc_size, high))
+                              for name, offset, size, alloc_size, high in _fields)
 
         if not visible_order is None:
             missed_fields = set(self.field_map.keys())
@@ -2178,8 +2190,8 @@ class Block:
             raise ValueError("Size of block %s not a multiple of base"
                              % self.name)
         self.multiple = self.size // base
-        for name, offset, size, high in self.fields:
-            if offset // base != (offset+size-1) // base:
+        for name, offset, size, alloc_size, high in self.fields:
+            if offset // base != (offset+alloc_size-1) // base:
                 raise ValueError("Field %s of block %s "
                                  "crosses a word boundary"
                                  % (name, self.name))
@@ -2217,7 +2229,7 @@ class Block:
             field_inits = []
 
             for name in self.visible_order:
-                offset, size, high = self.field_map[name]
+                offset, size, _, high = self.field_map[name]
 
                 index = offset // self.base
                 sign_extend = ""
@@ -2291,7 +2303,7 @@ class Block:
 
         # Generate struct_new specs
         arg_list = ["\<acute>" + field for
-                    (field, offset, size, high) in self.fields]
+                    (field, offset, size, _, high) in self.fields]
 
         if not params.skip_modifies:
             emit_named("%s_new" % self.name, params,
@@ -2304,7 +2316,7 @@ class Block:
             # FIXME: ptr_new (doesn't seem to be used)
 
         field_eq_list = []
-        for (field, offset, size, high) in self.fields:
+        for (field, offset, size, _, high) in self.fields:
             mask = field_mask_proof(self.base, self.base_bits, self.base_sign_extend, high, size)
             sign_extend = sign_extend_proof(high, self.base_bits, self.base_sign_extend)
 
@@ -2327,7 +2339,7 @@ class Block:
                               "field_eqs": field_eqs})
 
         # Generate get/set specs
-        for (field, offset, size, high) in self.fields:
+        for (field, offset, size, _, high) in self.fields:
             mask = field_mask_proof(self.base, self.base_bits, self.base_sign_extend, high, size)
             sign_extend = sign_extend_proof(high, self.base_bits, self.base_sign_extend)
 
@@ -2420,7 +2432,7 @@ class Block:
         field_updates = {word: [] for word in range(self.multiple)}
         field_asserts = ["/* fail if user has passed bits that we will override */"]
 
-        for field, offset, size, high in self.fields:
+        for field, offset, size, alloc_size, high in self.fields:
             index = offset // self.base
             if high:
                 shift_op = ">>"
@@ -2448,8 +2460,8 @@ class Block:
                     "assert": ASSERTS[options.environment],
                     "size": size})
 
-            if high and size + (offset % self.base) < self.base and self.base_sign_extend:
-                mask = (1 << self.base_bits) - 1
+            if high and alloc_size + (offset % self.base) < self.base and self.base_sign_extend:
+                mask = (1 << (self.base_bits + alloc_size - size)) - 1
                 field_updates[index].append(
                     "(%s & 0x%x%s) %s %d" % (field, mask, suf, shift_op, shift))
             else:
@@ -2479,7 +2491,7 @@ class Block:
         emit_named("%s_ptr_new" % self.name, params, ptr_generator)
 
         # Accessors
-        for field, offset, size, high in self.fields:
+        for field, offset, size, alloc_size, high in self.fields:
             index = offset // self.base
             align = 0
             if high:
@@ -2495,7 +2507,7 @@ class Block:
                 write_shift = "<<"
                 read_shift = ">>"
                 shift = offset % self.base
-            mask = ((1 << size) - 1) << (offset % self.base)
+            mask = ((1 << alloc_size) - 1) << (offset % self.base)
 
             subs = {
                 "inline": INLINE[options.environment],
@@ -2512,6 +2524,7 @@ class Block:
                 "suf": self.constant_suffix,
                 "sign_extend": self.base_sign_extend and high,
                 "size": size,
+                "alloc_size": size,
                 "base": self.base}
 
             # Reader
@@ -2565,7 +2578,7 @@ class Block:
                 "%(union)s_%(block)s_new",
                 "%(union)s_%(block)s_ptr_new"]]
 
-        for field, offset, size, high in self.fields:
+        for field, offset, alloc_size, size, high in self.fields:
             if not union is None and field == union.tagname:
                 continue
 
