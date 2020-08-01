@@ -71,7 +71,7 @@ SEL4_SIZE_SANITY(seL4_PDPTEntryBits, seL4_PDPTIndexBits, seL4_PDPTBits);
 SEL4_SIZE_SANITY(seL4_PML4EntryBits, seL4_PML4IndexBits, seL4_PML4Bits);
 SEL4_SIZE_SANITY(seL4_WordSizeBits, seL4_ASIDPoolIndexBits, seL4_ASIDPoolBits);
 
-enum {
+typedef enum {
     seL4_VMFault_IP,
     seL4_VMFault_Addr,
     seL4_VMFault_PrefetchFault,
@@ -80,7 +80,7 @@ enum {
     SEL4_FORCE_LONG_ENUM(seL4_VMFault_Msg),
 } seL4_VMFault_Msg;
 
-enum {
+typedef enum {
     seL4_UnknownSyscall_RAX,
     seL4_UnknownSyscall_RBX,
     seL4_UnknownSyscall_RCX,
@@ -104,7 +104,7 @@ enum {
     SEL4_FORCE_LONG_ENUM(seL4_UnknownSyscall_Msg)
 } seL4_UnknownSyscall_Msg;
 
-enum {
+typedef enum {
     seL4_UserException_FaultIP,
     seL4_UserException_SP,
     seL4_UserException_FLAGS,
@@ -115,14 +115,14 @@ enum {
 } seL4_UserException_Msg;
 
 #ifdef CONFIG_KERNEL_MCS
-enum {
+typedef enum {
     seL4_Timeout_Data,
     seL4_Timeout_Consumed,
     seL4_Timeout_Length,
     SEL4_FORCE_LONG_ENUM(seL4_Timeout_Msg)
 } seL4_TimeoutMsg;
 
-enum {
+typedef enum {
     seL4_TimeoutReply_FaultIP,
     seL4_TimeoutReply_RSP,
     seL4_TimeoutReply_FLAGS,

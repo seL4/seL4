@@ -72,7 +72,7 @@ SEL4_SIZE_SANITY(seL4_WordSizeBits, seL4_ASIDPoolIndexBits, seL4_ASIDPoolBits);
 
 #ifndef __ASSEMBLER__
 /* format of a vm fault message */
-enum {
+typedef enum {
     seL4_VMFault_IP,
     seL4_VMFault_Addr,
     seL4_VMFault_PrefetchFault,
@@ -81,7 +81,7 @@ enum {
     SEL4_FORCE_LONG_ENUM(seL4_VMFault_Msg),
 } seL4_VMFault_Msg;
 
-enum {
+typedef enum {
     seL4_UnknownSyscall_EAX,
     seL4_UnknownSyscall_EBX,
     seL4_UnknownSyscall_ECX,
@@ -97,7 +97,7 @@ enum {
     SEL4_FORCE_LONG_ENUM(seL4_UnknownSyscall_Msg),
 } seL4_UnknownSyscall_Msg;
 
-enum {
+typedef enum {
     seL4_UserException_FaultIP,
     seL4_UserException_SP,
     seL4_UserException_FLAGS,
@@ -108,7 +108,7 @@ enum {
 } seL4_UserException_Msg;
 
 #ifdef CONFIG_KERNEL_MCS
-enum {
+typedef enum {
     seL4_Timeout_Data,
     /* consumed is 64 bits */
     seL4_Timeout_Consumed_HighBits,
@@ -117,7 +117,7 @@ enum {
     SEL4_FORCE_LONG_ENUM(seL4_Timeout_Msg),
 } seL4_Timeout_Msg;
 
-enum {
+typedef enum {
     seL4_TimeoutReply_FaultIP,
     seL4_TimeoutReply_SP,
     seL4_TimeoutReply_FLAGS,

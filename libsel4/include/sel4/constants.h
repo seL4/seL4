@@ -33,7 +33,7 @@ typedef enum {
 } seL4_BreakpointAccess;
 
 /* Format of a debug-exception message. */
-enum {
+typedef enum {
     seL4_DebugException_FaultIP,
     seL4_DebugException_ExceptionReason,
     seL4_DebugException_TriggerAddress,
