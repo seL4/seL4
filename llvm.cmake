@@ -36,6 +36,9 @@ set(CMAKE_CXX_COMPILER_TARGET ${TRIPLE})
 string(APPEND c_common_flags " -Qunused-arguments")
 string(APPEND c_common_flags " -Wno-constant-logical-operand")
 string(APPEND c_common_flags " -fno-integrated-as")
+# clang 11 has a regression in GlobalISel (only used at -O0) affecting the syscall
+# stubs in libsel4runtime; see https://reviews.llvm.org/D83384#2189132
+string(APPEND c_common_flags " -fno-experimental-isel")
 
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
