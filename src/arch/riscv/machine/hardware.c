@@ -232,12 +232,6 @@ static inline void ackInterrupt(irq_t irq)
 #endif
 }
 
-static inline int read_current_timer(unsigned long *timer_val)
-{
-    *timer_val = riscv_read_time();
-    return 0;
-}
-
 #ifndef CONFIG_KERNEL_MCS
 void resetTimer(void)
 {
