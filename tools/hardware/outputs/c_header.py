@@ -93,7 +93,7 @@ static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
     {% endfor %}
 };
 {% else %}
-static const kernel_frame_t BOOT_RODATA *kernel_devices = NULL;
+static const kernel_frame_t BOOT_RODATA *const kernel_devices = NULL;
 {% endif %}
 
 /* PHYSICAL MEMORY */
