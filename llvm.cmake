@@ -33,6 +33,7 @@ set(CMAKE_CXX_COMPILER "clang++")
 set(CMAKE_CXX_COMPILER_ID Clang)
 set(CMAKE_CXX_COMPILER_TARGET ${TRIPLE})
 
+string(APPEND c_common_flags " -Wno-sizeof-pointer-div")
 string(APPEND c_common_flags " -Qunused-arguments")
 string(APPEND c_common_flags " -Wno-constant-logical-operand")
 if(NOT ("${TRIPLE}" MATCHES "^riscv"))
