@@ -462,4 +462,46 @@ config_string(
     DEPENDS "KernelIsMCS" UNDEF_DISABLED
 )
 
+config_option(
+    KernelClzlImpl CLZL_IMPL
+    "Define a __clzdi2 function to count leading zeros for unsigned long arguments. \
+     Only needed on platforms which lack a builtin instruction."
+    DEFAULT OFF
+)
+
+config_option(
+    KernelClzllImpl CLZLL_IMPL
+    "Define a __clzti2 function to count leading zeros for unsigned long long arguments. \
+     Only needed on platforms which lack a builtin instruction."
+    DEFAULT OFF
+)
+
+config_option(
+    KernelCtzlImpl CTZL_IMPL
+    "Define a __ctzdi2 function to count trailing zeros for unsigned long arguments. \
+     Only needed on platforms which lack a builtin instruction."
+    DEFAULT OFF
+)
+
+config_option(
+    KernelCtzllImpl CTZLL_IMPL
+    "Define a __ctzti2 function to count trailing zeros for unsigned long long arguments. \
+     Only needed on platforms which lack a builtin instruction."
+    DEFAULT OFF
+)
+
+config_option(
+    KernelClzNoBuiltin CLZ_NO_BUILTIN
+    "Expose implementations of clzl and clzll to verification by avoiding the use \
+     of __builtin_clzl and __builtin_clzll."
+    DEFAULT OFF
+)
+
+config_option(
+    KernelCtzNoBuiltin CTZ_NO_BUILTIN
+    "Expose implementations of ctzl and ctzll to verification by avoiding the use \
+     of __builtin_ctzl and __builtin_ctzll."
+    DEFAULT OFF
+)
+
 add_config_library(kernel "${configure_string}")

@@ -27,6 +27,16 @@ config_option(
     DEPENDS "KernelArchRiscV"
 )
 
+# Until RISC-V has instructions to count leading/trailing zeros, we provide
+# library implementations.
+# In the verified configurations, we additionally define KernelClzNoBuiltin and
+# KernelCtzNoBuiltin to expose the library implementations to verification.
+# However, since the NoBuiltin options force the use of the library functions
+# even when the platform has sutiable inline assembly, we do not make these the
+# default.
+set(KernelClzlImpl ON CACHE BOOL "")
+set(KernelCtzlImpl ON CACHE BOOL "")
+
 if(KernelSel4ArchRiscV32)
     set(KernelPTLevels 2 CACHE STRING "" FORCE)
 endif()
