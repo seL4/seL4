@@ -285,9 +285,9 @@
 #define CBn_FSR_TF                           BIT(1)
 
 #define CBn_FSR_CLEAR_ALL                    (CBn_FSR_MULTI | CBn_FSR_SS | \
-											 CBn_FSR_UUT | CBn_FSR_ASF | CBn_FSR_TLBLKF | \
-											 CBn_FSR_TLBLMCF | CBn_FSR_EF | CBn_FSR_PF | \
-											 CBn_FSR_AFF | CBn_FSR_TF)
+                                             CBn_FSR_UUT | CBn_FSR_ASF | CBn_FSR_TLBLKF | \
+                                             CBn_FSR_TLBLMCF | CBn_FSR_EF | CBn_FSR_PF | \
+                                             CBn_FSR_AFF | CBn_FSR_TF)
 
 /*SMMU_CBn_ACTLR defined in SMMU500*/
 #define CBn_ACTLR_CPRE                       BIT(1)
@@ -344,7 +344,7 @@
 #define CBn_TCR_TG_64K                     1
 #define CBn_TCR_TG_16K                     2
 
-#define CBn_TCR_SH_NONE                    0 
+#define CBn_TCR_SH_NONE                    0
 #define CBn_TCR_SH_OUTER                   2
 #define CBn_TCR_SH_INNER                   3
 
@@ -404,7 +404,7 @@ this is the same as the MAIR in core*/
 /*8 bit per attribute*/
 #define CBn_MAIRm_ATTR_SHIFT(n)              ((n) << 3)
 
-/*SMMU_CBn_SCTLR*/ 
+/*SMMU_CBn_SCTLR*/
 #define CBn_SCTLR_CFIE                         (1 << 6)
 #define CBn_SCTLR_CFRE                         (1 << 5)
 #define CBn_SCTLR_AFE                          (1 << 2)
@@ -423,14 +423,14 @@ this is the same as the MAIR in core*/
 /*SMMU_CBn_TLBIIPAS2*/
 #define CBn_TLBIIPAS2_SET(vaddr)               ((vaddr) >> 12 & 0xfffffffff)
 
-void smmu_cb_assign_vspace(word_t cb, vspace_root_t *vspace, asid_t asid); 
+void smmu_cb_assign_vspace(word_t cb, vspace_root_t *vspace, asid_t asid);
 void smmu_sid_bind_cb(word_t sid, word_t cb);
 void plat_smmu_init(void);
 void smmu_tlb_invalidate_all(void);
 void smmu_tlb_invalidate_cb(int cb, asid_t asid);
 void smmu_tlb_invalidate_cb_va(int cb, asid_t asid, vptr_t vaddr);
 void smmu_cb_disable(word_t cb, asid_t asid);
-void smmu_sid_unbind(word_t sid); 
+void smmu_sid_unbind(word_t sid);
 void smmu_read_fault_state(uint32_t *status, uint32_t *syndrome_0, uint32_t *syndrome_1);
 void smmu_clear_fault_state(void);
 void smmu_cb_read_fault_state(int cb, uint32_t *status, word_t *address);

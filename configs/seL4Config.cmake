@@ -125,8 +125,10 @@ unset(CONFIGURE_CLK_SHIFT CACHE)
 unset(CONFIGURE_CLK_MAGIC CACHE)
 unset(CONFIGURE_KERNEL_WCET CACHE)
 unset(CONFIGURE_TIMER_PRECISION CACHE)
+# CONFIGURE_MAX_CB and CONFIGURE_MAX_SID are related to the kernel SMMU on Arm.
 unset(CONFIGURE_MAX_SID CACHE)
 unset(CONFIGURE_MAX_CB CACHE)
+
 # CLK_SHIFT and CLK_MAGIC are generated from tools/reciprocal.py
 # based on the TIMER_CLK_HZ to simulate division.
 # This could be moved to a cmake function

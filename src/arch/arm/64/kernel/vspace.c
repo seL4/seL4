@@ -1218,8 +1218,9 @@ static inline void invalidateTLBByASID(asid_t asid)
 {
 #ifdef CONFIG_ARM_SMMU
     vspace_root_t bind_cb = getASIDBindCB(asid);
-    if (unlikely(vtable_invalid_get_bind_cb(bind_cb)))
+    if (unlikely(vtable_invalid_get_bind_cb(bind_cb))) {
         invalidateSMMUTLBByASID(asid, vtable_invalid_get_bind_cb(bind_cb));
+    }
 #endif
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     vspace_root_t stored_hw_asid;
@@ -1238,8 +1239,9 @@ static inline void invalidateTLBByASIDVA(asid_t asid, vptr_t vaddr)
 {
 #ifdef CONFIG_ARM_SMMU
     vspace_root_t bind_cb = getASIDBindCB(asid);
-    if (unlikely(vtable_invalid_get_bind_cb(bind_cb)))
+    if (unlikely(vtable_invalid_get_bind_cb(bind_cb))) {
         invalidateSMMUTLBByASIDVA(asid, vaddr, vtable_invalid_get_bind_cb(bind_cb));
+    }
 #endif
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     vspace_root_t stored_hw_asid;

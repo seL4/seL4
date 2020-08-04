@@ -216,10 +216,10 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
 #ifdef CONFIG_ARM_SMMU
     case cap_cb_cap:
         if (cap_cb_cap_get_capBindSID(cap) != SID_INVALID) {
-            smmu_sid_unbind(cap_cb_cap_get_capBindSID(cap)); 
+            smmu_sid_unbind(cap_cb_cap_get_capBindSID(cap));
         }
         if (final) {
-            smmu_delete_cb(cap); 
+            smmu_delete_cb(cap);
         }
         break;
     case cap_sid_cap:
@@ -227,7 +227,7 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
             smmu_delete_sid(cap);
         }
         break;
-#endif 
+#endif
     }
 
     fc_ret.remainder = cap_null_cap_new();
@@ -309,17 +309,17 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
             cap_get_capType(cap_b) == cap_cb_cap) {
             return true;
         }
-     case cap_sid_cap: 
+    case cap_sid_cap:
         if (cap_get_capType(cap_b) == cap_sid_cap) {
             return cap_sid_cap_get_capSID(cap_a) ==
                    cap_sid_cap_get_capSID(cap_b);
-        } 
+        }
     case cap_cb_cap:
         if (cap_get_capType(cap_b) == cap_cb_cap) {
             return cap_cb_cap_get_capCB(cap_a) ==
                    cap_cb_cap_get_capCB(cap_b);
         }
-#endif 
+#endif
     }
     return false;
 }
@@ -412,22 +412,22 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
                );
 #ifndef AARCH64_VSPACE_S2_START_L1
     case seL4_ARM_PageGlobalDirectoryObject:
-    #ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_ARM_SMMU
 
-    return cap_page_global_directory_cap_new(
+        return cap_page_global_directory_cap_new(
                    asidInvalid,           /* capPGDMappedASID   */
                    (word_t)regionBase,    /* capPGDBasePtr      */
                    0,                     /* capPGDIsMapped     */
                    CB_INVALID             /* capPGDMappedCB     */
-     );
-    #else 
+               );
+#else
 
-    return cap_page_global_directory_cap_new(
+        return cap_page_global_directory_cap_new(
                    asidInvalid,           /* capPGDMappedASID   */
                    (word_t)regionBase,    /* capPGDBasePtr      */
                    0                      /* capPGDIsMapped     */
-     );
-    #endif /*!CONFIG_ARM_SMMU*/ 
+               );
+#endif /*!CONFIG_ARM_SMMU*/
 #endif /*!AARCH64_VSPACE_S2_START_L1*/
     case seL4_ARM_PageUpperDirectoryObject:
         return cap_page_upper_directory_cap_new(
@@ -482,13 +482,13 @@ exception_t Arch_decodeInvocation(word_t label, word_t length, cptr_t cptr,
 #endif /* end of CONFIG_ARM_HYPERVISOR_SUPPORT */
 #ifdef CONFIG_ARM_SMMU
     case cap_sid_control_cap:
-       return decodeARMSIDControlInvocation(label, length, cptr, slot, cap, extraCaps, call, buffer);
+        return decodeARMSIDControlInvocation(label, length, cptr, slot, cap, extraCaps, call, buffer);
     case cap_sid_cap:
-         return decodeARMSIDInvocation(label, length, cptr, slot, cap, extraCaps, call, buffer);
+        return decodeARMSIDInvocation(label, length, cptr, slot, cap, extraCaps, call, buffer);
     case cap_cb_control_cap:
-    return decodeARMCBControlInvocation(label, length, cptr, slot, cap, extraCaps, call, buffer);
+        return decodeARMCBControlInvocation(label, length, cptr, slot, cap, extraCaps, call, buffer);
     case cap_cb_cap:
-     return decodeARMCBInvocation(label, length, cptr, slot, cap, extraCaps, call, buffer);
+        return decodeARMCBInvocation(label, length, cptr, slot, cap, extraCaps, call, buffer);
 #endif /*CONFIG_ARM_SMMU*/
     default:
 #else
