@@ -1028,7 +1028,7 @@ done'''],
  apply(simp add: parent_update_child[OF c_guard_clift]
                  typ_heap_simps c_guard_clift)
 
- apply(simp add: o_def, rule exI, rule conjI[OF _ refl])
+ apply((simp add: o_def)?, rule exI, rule conjI[OF _ refl])
 
  apply(simp add: %(name)s_get_tag_def %(name)s_tag_defs
                  guard_simps mask_shift_simps)
