@@ -556,6 +556,26 @@ the fault-reply to a single-step debug fault.
 \caption{\label{tbl:single_step_exception_result}Single-step fault message layout.}
 \end{table}
 
+\subsection{VM Fault}
+\label{sec:vm-fault}
+
+The thread caused a page fault. Replying to the fault IPC will restart
+the thread. The contents of the IPC message are given below.\\
+
+\begin{table}[htb]
+\begin{tabularx}{\textwidth}{XXX}
+\toprule
+\textbf{Meaning} & \textbf{IPC buffer location} \\
+\midrule
+    Program counter to restart execution at. & \ipcbloc{seL4\_VMFault\_IP} \\
+Address that caused the fault. & \ipcbloc{seL4\_VMFault\_SP} \\
+    Instruction fault (1 if the fault was caused by an instruction fetch). & \ipcbloc{seL4\_VMFault\_PrefetchFault}  \\
+Fault status register (FSR). Contains information about the cause of the fault. Architecture dependent. & \ipcbloc{seL4\_VMFault\_FSR} \\
+\bottomrule
+\end{tabularx}
+\caption{\label{tbl:vm_fault_result_arm} VM Fault outcome on all architectures.}
+\end{table}
+
 \subsection{Timeout Fault (MCS only)}
 \label{sec:timeout-fault}
 
@@ -595,26 +615,6 @@ in the same format as outlined in \autoref{sec:read_write_registers}.
     consumed since last reset & \ipcbloc{seL4\_TimeoutFault\_Consumed\_LowBits}
     \\ \bottomrule \end{tabularx}\\ \\ \caption{\label{tbl:tf_message_32}
     Timeout fault outcome on 32-bit architectures.} \end{table}
-
-\subsection{VM Fault}
-\label{sec:vm-fault}
-
-The thread caused a page fault. Replying to the fault IPC will restart
-the thread. The contents of the IPC message are given below.\\
-
-\begin{table}[htb]
-\begin{tabularx}{\textwidth}{XXX}
-\toprule
-\textbf{Meaning} & \textbf{IPC buffer location} \\
-\midrule
-    Program counter to restart execution at. & \ipcbloc{seL4\_VMFault\_IP} \\
-Address that caused the fault. & \ipcbloc{seL4\_VMFault\_SP} \\
-    Instruction fault (1 if the fault was caused by an instruction fetch). & \ipcbloc{seL4\_VMFault\_PrefetchFault}  \\
-Fault status register (FSR). Contains information about the cause of the fault. Architecture dependent. & \ipcbloc{seL4\_VMFault\_FSR} \\
-\bottomrule
-\end{tabularx}
-\caption{\label{tbl:vm_fault_result_arm} VM Fault outcome on all architectures.}
-\end{table}
 
 \section{Domains}
 \label{sec:domains}
