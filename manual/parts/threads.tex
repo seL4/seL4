@@ -559,19 +559,36 @@ the fault-reply to a single-step debug fault.
 \subsection{Timeout Fault (MCS only)}
 \label{sec:timeout-fault}
 
-Timeout faults are raised when a thread consumes all of its budget and has a
-timeout fault handler that is not a null capability.  They allow a timeout
-exception handler to take some action to restore the thread, and deliver a
-message containing the scheduling context data word, as well as the amount of
-time consumed since the last timeout fault occured on this scheduling context,
-or since \apifunc{seL4\_SchedContext\_YieldTo}{schedcontext_yieldto} or
+Timeout faults are raised when a thread loses access to time with which
+it can execute on a particular core. The most common case of this is
+when all of the immediately available budget in an SC has been consumed
+(such that the thread would need to wait before more time is available).
+A thread may lose access to a SC entirely, such as if a donated SC is
+manually unbound before it is returned. A passive thread can also be
+resumed after an IPC operation without an SC, such as when replying to a
+thread blocked thread without causing a donated SC to be returned, when
+non-donating system call is used to IPC to a passive thread, or when the
+SC of a client is removed while it is blocked on an endpoint.
+
+The only cases where a timeout fault will not be raised when a thread
+loses access to execution time is when this occurs as the result of the
+deletion of a kernel object, such as the SC providing time or the IPC
+object upon which the thread was blocked.
+
+Timeout faults allow a timeout exception handler to take some action to restore
+the thread, and deliver a message containing a reason for the fault, the
+scheduling context data word, and the amount of time consumed since the last
+timeout fault occured on this scheduling context, or since
+\apifunc{seL4\_SchedContext\_YieldTo}{schedcontext_yieldto} or
 \apifunc{seL4\_SchedContext\_Consumed}{schedcontext_consumed} was last called.
 Timeout exception handlers can reply to a temporal fault with the registers set
 in the same format as outlined in \autoref{sec:read_write_registers}.
 
 \begin{table}[htb] \noindent\begin{tabularx}{\textwidth}{XX} \toprule
-    \textbf{Meaning} & \textbf{IPC buffer location} \\ \midrule Data word from
-    the scheduling context object that the thread was running on when the fault
+    \textbf{Meaning} & \textbf{IPC buffer location} \\
+	\midrule Reason the thread no longer has access to time. &
+	\ipcbloc{seL4\_TimeoutFault\_Reason} \\  Data word from the
+	scheduling context object that the thread was running on when the fault
     occured. & \ipcbloc{seL4\_TimeoutFault\_Data} \\ Upper 32-bits of
     microseconds consumed since last reset &
     \ipcbloc{seL4\_TimeoutFault\_Consumed} \\ Lower 32-bits of microseconds
