@@ -384,9 +384,9 @@ void cancelAllIPC(endpoint_t *epptr)
             if (reply != NULL) {
                 reply_unlink(reply);
             }
-            if (seL4_Fault_get_seL4_FaultType(thread->tcbFault) == seL4_Fault_NullFault) {
+            if (isSchedulable(thread) && seL4_Fault_get_seL4_FaultType(thread->tcbFault) == seL4_Fault_NullFault) {
                 setThreadState(thread, ThreadState_Restart);
-                MCS_DO_IF_SCHEDULABLE(thread, possibleSwitchTo(thread));
+                possibleSwitchTo(thread);
             } else {
                 setThreadState(thread, ThreadState_Inactive);
             }

@@ -218,7 +218,11 @@ void cancelAllSignals(notification_t *ntfnPtr)
         for (; thread; thread = thread->tcbEPNext) {
             setThreadState(thread, ThreadState_Restart);
 #ifdef CONFIG_KERNEL_MCS
-            MCS_DO_IF_SCHEDULABLE(thread, possibleSwitchTo(thread));
+            if (isSchedulable(thread)) {
+                possibleSwitchTo(thread);
+            } else {
+                setThreadState(thread, ThreadState_Inactive);
+            }
 #else
             SCHED_ENQUEUE(thread);
 #endif

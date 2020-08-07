@@ -11,7 +11,7 @@ static exception_t invokeSchedContext_UnbindObject(sched_context_t *sc, cap_t ca
 {
     switch (cap_get_capType(cap)) {
     case cap_thread_cap:
-        schedContext_unbindTCB(sc, sc->scTcb);
+        schedContext_unbindTCB(sc, sc->scTcb, true);
         break;
     case cap_notification_cap:
         schedContext_unbindNtfn(sc);
@@ -126,7 +126,7 @@ static exception_t decodeSchedContext_Bind(sched_context_t *sc, extra_caps_t ext
 
 static exception_t invokeSchedContext_Unbind(sched_context_t *sc)
 {
-    schedContext_unbindAllTCBs(sc);
+    schedContext_unbindAllTCBs(sc, true);
     schedContext_unbindNtfn(sc);
     if (sc->scReply) {
         sc->scReply->replyNext = call_stack_new(0, false);
@@ -272,7 +272,7 @@ void schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb)
     }
 }
 
-void schedContext_unbindTCB(sched_context_t *sc, tcb_t *tcb)
+void schedContext_unbindTCB(sched_context_t *sc, tcb_t *tcb, bool_t canFault)
 {
     assert(sc->scTcb == tcb);
 
@@ -288,7 +288,7 @@ void schedContext_unbindTCB(sched_context_t *sc, tcb_t *tcb)
      * indicate that the SC has been removed. If a donated SC is
      * forcibly removed from a passive server, that server's timeout
      * handler is then able to handle the forcible removal of the SC. */
-    if (isRunnable(sc->scTcb)) {
+    if (canFault && isRunnable(sc->scTcb)) {
         maybeTimeoutFault(sc->scTcb, 0, seL4_Timeout_NoSC);
     }
 
@@ -296,11 +296,11 @@ void schedContext_unbindTCB(sched_context_t *sc, tcb_t *tcb)
     sc->scTcb = NULL;
 }
 
-void schedContext_unbindAllTCBs(sched_context_t *sc)
+void schedContext_unbindAllTCBs(sched_context_t *sc, bool_t canFault)
 {
     if (sc->scTcb) {
         SMP_COND_STATEMENT(remoteTCBStall(sc->scTcb));
-        schedContext_unbindTCB(sc, sc->scTcb);
+        schedContext_unbindTCB(sc, sc->scTcb, canFault);
     }
 }
 
