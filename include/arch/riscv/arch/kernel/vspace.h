@@ -68,5 +68,3 @@ void Arch_userStackTrace(tcb_t *tptr);
 #ifdef CONFIG_RISCV_HE
 uint32_t fetch_faulting_instruction(vm_fault_type_t type);
 #endif
-
-#endif
