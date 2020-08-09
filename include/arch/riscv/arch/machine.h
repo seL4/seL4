@@ -254,6 +254,23 @@ static inline void write_fcsr(uint32_t value)
 #define HIDELEG     0x603
 #define HGATP       0x680
 
+#elif CONFIG_RISCV_HE_VER == 6
+
+#define HSTATUS     0x600
+#define HEDELEG     0x602
+#define HIDELEGE    0x603
+#define HIE         0x604
+#define HCOUNTEREN  0x606
+#define HGEIE       0x607
+#define HTVAL       0x643
+#define HVIP        0x645
+#define HIP         0x644
+#define HTINST      0x64A
+#define HGEIP       0xE12
+#define HGATP       0x680
+#define HTIMEDELTA  0x605
+#define HTIMEDELTAH 0x615
+
 #else
 #error Unspecified RISCV HE version
 #endif
