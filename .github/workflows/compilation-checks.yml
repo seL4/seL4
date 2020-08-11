@@ -6,7 +6,11 @@
 
 name: Compilation checks
 
-on: [pull_request]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
 
 jobs:
   standalone_kernel:
