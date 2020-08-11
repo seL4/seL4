@@ -44,3 +44,17 @@ jobs:
     - uses: seL4/ci-actions/preprocess@master
       with:
         L4V_ARCH: ${{ matrix.arch }}
+
+  standalone_kernel:
+    name: Stand-alone Kernel Compile
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ARM, ARM_HYP, RISCV64, X64]
+        compiler: [gcc, llvm]
+    steps:
+    - uses: LukeMondy/ci-actions/standalone-kernel@master
+      with:
+        ARCH: ${{ matrix.arch }}
+        COMPILER: ${{ matrix.compiler }}
