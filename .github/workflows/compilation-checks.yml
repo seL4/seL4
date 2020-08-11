@@ -4,7 +4,7 @@
 
 # Compilation actions to run on pull requests
 
-name: Compilation checks
+name: Kernel
 
 on:
   push:
