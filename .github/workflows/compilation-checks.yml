@@ -14,7 +14,7 @@ on:
 
 jobs:
   standalone_kernel:
-    name: Compile kernel
+    name: compile
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
