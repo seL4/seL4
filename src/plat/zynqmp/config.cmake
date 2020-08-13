@@ -16,6 +16,7 @@ if(KernelPlatformUltra96)
 endif()
 
 if(KernelPlatformZynqmp)
+    set(KernelHardwareDebugAPIUnsupported ON CACHE INTERNAL "")
     if("${KernelSel4Arch}" STREQUAL aarch32)
         declare_seL4_arch(aarch32)
     elseif("${KernelSel4Arch}" STREQUAL aarch64)
