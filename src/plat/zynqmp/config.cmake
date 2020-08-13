@@ -21,6 +21,8 @@ if(KernelPlatformZynqmp)
         declare_seL4_arch(aarch32)
     elseif("${KernelSel4Arch}" STREQUAL aarch64)
         declare_seL4_arch(aarch64)
+    elseif("${KernelSel4Arch}" STREQUAL arm_hyp)
+        declare_seL4_arch(arm_hyp)
     else()
         fallback_declare_seL4_arch_default(aarch64)
     endif()
@@ -35,7 +37,12 @@ if(KernelPlatformZynqmp)
     if(NOT KernelPlatformUltra96)
         list(APPEND KernelDTSList "tools/dts/zynqmp.dts")
     endif()
-    list(APPEND KernelDTSList "src/plat/zynqmp/overlay-zynqmp.dts")
+
+    if(KernelSel4ArchAarch32)
+        list(APPEND KernelDTSList "src/plat/zynqmp/overlay-zynqmp32.dts")
+    else()
+        list(APPEND KernelDTSList "src/plat/zynqmp/overlay-zynqmp.dts")
+    endif()
 
     declare_default_headers(
         TIMER_FREQUENCY 100000000llu

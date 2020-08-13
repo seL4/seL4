@@ -1,0 +1,22 @@
+/*
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+    chosen {
+		seL4,elfloader-devices =
+		    "serial0",
+		    &{/psci};
+		seL4,kernel-devices =
+		    "serial0",
+		    &{/amba_apu@0/interrupt-controller@f9010000},
+		    &{/timer};
+    };
+
+	memory@0 {
+		device_type = "memory";
+		reg = < 0x00 0x00 0x00 0x80000000 >;
+	};
+};
