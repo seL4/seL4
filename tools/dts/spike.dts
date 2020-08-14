@@ -61,4 +61,16 @@
   htif {
     compatible = "ucb,htif0";
   };
+
+  interrupt-controller@c000000 {
+    #interrupt-cells = <0x00000001>;
+    compatible = "riscv,plic0";
+    interrupt-controller;
+    reg = <0x00000000 0x0c000000 0x00000000 0x04000000>;
+    reg-names = "control";
+    riscv,max-priority = <0x00000007>;
+    riscv,ndev = <0x00000035>;
+    linux,phandle = <0x0000000b>;
+    phandle = <0x0000000b>;
+  };
 };
