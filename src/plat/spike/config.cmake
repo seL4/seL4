@@ -25,6 +25,7 @@ if(KernelPlatformSpike)
         list(APPEND KernelDTSList "tools/dts/spike32.dts")
     else()
         list(APPEND KernelDTSList "tools/dts/spike.dts")
+        list(APPEND KernelDTSList "src/plat/spike/overlay-spike.dts")
     endif()
     declare_default_headers(
         TIMER_FREQUENCY 10000000 PLIC_MAX_NUM_INT 128
