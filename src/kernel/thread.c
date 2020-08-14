@@ -134,7 +134,7 @@ void doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, bool_t grant)
     }
 
     tcb_t *receiver = reply->replyTCB;
-    reply_remove(reply);
+    reply_remove(reply, receiver);
     assert(thread_state_get_replyObject(receiver->tcbState) == REPLY_REF(0));
     assert(reply->replyTCB == NULL);
 #else

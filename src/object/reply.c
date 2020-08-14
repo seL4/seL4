@@ -51,14 +51,15 @@ void reply_push(tcb_t *tcb_caller, tcb_t *tcb_callee, reply_t *reply, bool_t can
 }
 
 /* Pop the head reply from the call stack */
-void reply_pop(reply_t *reply)
+void reply_pop(reply_t *reply, tcb_t *tcb)
 {
     assert(reply != NULL);
-    assert(reply->replyTCB != NULL);
     assert(thread_state_get_tsType(reply->replyTCB->tcbState) == ThreadState_BlockedOnReply);
+    assert(thread_state_get_replyObject(tcb->tcbState) == REPLY_REF(reply));
+    assert(reply->replyTCB == tcb);
+
     /* unlink tcb and reply */
-    tcb_t *tcb = reply->replyTCB;
-    reply_unlink(reply);
+    reply_unlink(reply, tcb);
 
     word_t next_ptr = call_stack_get_callStackPtr(reply->replyNext);
     word_t prev_ptr = call_stack_get_callStackPtr(reply->replyPrev);
@@ -87,9 +88,11 @@ void reply_pop(reply_t *reply)
 }
 
 /* Remove a reply from the middle of the call stack */
-void reply_remove(reply_t *reply)
+void reply_remove(reply_t *reply, tcb_t *tcb)
 {
-    assert(thread_state_get_tsType(reply->replyTCB->tcbState) == ThreadState_BlockedOnReply);
+    assert(reply->replyTCB == tcb);
+    assert(thread_state_get_tsType(tcb->tcbState) == ThreadState_BlockedOnReply);
+    assert(thread_state_get_replyObject(tcb->tcbState) == REPLY_REF(reply));
 
     word_t next_ptr = call_stack_get_callStackPtr(reply->replyNext);
     word_t prev_ptr = call_stack_get_callStackPtr(reply->replyPrev);
@@ -97,15 +100,15 @@ void reply_remove(reply_t *reply)
     if (likely(next_ptr)) {
         if (likely(call_stack_get_isHead(reply->replyNext))) {
             /* head of the call stack -> just pop */
-            reply_pop(reply);
+            reply_pop(reply, tcb);
             return;
         }
         /* not the head, remove from middle - break the chain */
         REPLY_PTR(next_ptr)->replyPrev = call_stack_new(0, false);
-        reply_unlink(REPLY_PTR(reply));
-    } else if (reply->replyTCB) {
+        reply_unlink(REPLY_PTR(reply), tcb);
+    } else {
         /* removing start of call chain */
-        reply_unlink(reply);
+        reply_unlink(reply, tcb);
     }
 
     if (prev_ptr) {
@@ -137,5 +140,5 @@ void reply_remove_tcb(tcb_t *tcb)
 
     reply->replyPrev = call_stack_new(0, false);
     reply->replyNext = call_stack_new(0, false);
-    reply_unlink(reply);
+    reply_unlink(reply, tcb);
 }

@@ -139,10 +139,10 @@ finaliseCap_ret_t finaliseCap(cap_t cap, bool_t final, bool_t exposed)
             if (reply && reply->replyTCB) {
                 switch (thread_state_get_tsType(reply->replyTCB->tcbState)) {
                 case ThreadState_BlockedOnReply:
-                    reply_remove(reply);
+                    reply_remove(reply, reply->replyTCB);
                     break;
                 case ThreadState_BlockedOnReceive:
-                    reply_unlink(reply);
+                    reply_unlink(reply, reply->replyTCB);
                     break;
                 default:
                     fail("Invalid tcb state");
