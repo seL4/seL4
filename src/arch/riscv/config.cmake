@@ -56,14 +56,6 @@ config_option(
 )
 
 config_string(
-    KernelRiscVHVersion RISCV_HE_VER
-    "Support for RISCV HE draft versions"
-    DEFAULT 3
-    DEPENDS "KernelRiscVHypervisorSupport"
-    UNQUOTE
-)
-
-config_string(
     KernelRiscVNumVTimers RISCV_NUM_VTIMERS
     "The number of virtual timers multiplexing the machine-mode timer"
     DEFAULT 0
