@@ -155,7 +155,7 @@ typedef enum {
 
 #ifdef CONFIG_RISCV_HE
 
-enum {
+typedef enum {
     seL4_VCPUReg_SSTATUS = 0,
     seL4_VCPUReg_SIE,
     seL4_VCPUReg_STVEC,
