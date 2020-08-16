@@ -242,30 +242,12 @@ static inline void write_fcsr(uint32_t value)
 }
 #endif
 
-/* Hypervisor extension register
- * 0xaxx are v0.3 values
- * 0x6xx are v0.4 values
- * The Bregs are renamed as Vregs in v0.4.
- */
-#if CONFIG_RISCV_HE_VER == 3
 
-#define HSTATUS     0xa00
-#define HEDELEG     0xa02
-#define HIDELEG     0xa03
-#define HGATP       0xa80
-
-#elif CONFIG_RISCV_HE_VER == 4
+#ifdef CONFIG_RISCV_HE
 
 #define HSTATUS     0x600
 #define HEDELEG     0x602
 #define HIDELEG     0x603
-#define HGATP       0x680
-
-#elif CONFIG_RISCV_HE_VER == 6
-
-#define HSTATUS     0x600
-#define HEDELEG     0x602
-#define HIDELEGE    0x603
 #define HIE         0x604
 #define HCOUNTEREN  0x606
 #define HGEIE       0x607
@@ -277,10 +259,6 @@ static inline void write_fcsr(uint32_t value)
 #define HGATP       0x680
 #define HTIMEDELTA  0x605
 #define HTIMEDELTAH 0x615
-
-#else
-#error Unspecified RISCV HE version
-#endif
 
 #define BSSTATUS    0x200
 #define BSIE        0x204
@@ -493,18 +471,11 @@ static inline void write_bsatp(word_t v)
 
 static inline void hfence(void)
 {
-    /* asm volatile("hfence.vma" ::: "memory");
-     * not supported by GCC yet.
-     */
-#if CONFIG_RISCV_HE_VER == 3
-      asm volatile(".word 0xa2000073" ::: "memory");
-#elif CONFIG_RISCV_HE_VER == 4
     /* v0.4 hfence.gvma instruction */
     asm volatile(".word 0x62000073" ::: "memory");
-#else
-#error Unspecified RISCV HE version
-#endif
 }
+
+#endif
 
 #if CONFIG_PT_LEVELS == 2
 #define SATP_MODE SATP_MODE_SV32
