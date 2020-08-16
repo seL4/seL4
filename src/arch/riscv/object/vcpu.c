@@ -47,31 +47,31 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
     word_t reg = 0;
     switch (reg_index) {
         case seL4_VCPUReg_SSTATUS:
-            reg = read_bsstatus();
+            reg = read_vsstatus();
             break;
         case seL4_VCPUReg_SIE:
-            reg = read_bsie();
+            reg = read_vsie();
             break;
         case seL4_VCPUReg_STVEC:
-            reg = read_bstvec();
+            reg = read_vstvec();
             break;
         case seL4_VCPUReg_SSCRATCH:
-            reg = read_bsscratch();
+            reg = read_vsscratch();
             break;
         case seL4_VCPUReg_SEPC:
-            reg = read_bsepc();
+            reg = read_vsepc();
             break;
         case seL4_VCPUReg_SCAUSE:
-            reg = read_bscause();
+            reg = read_vscause();
             break;
         case seL4_VCPUReg_STVAL:
-            reg = read_bstval();
+            reg = read_vstval();
             break;
         case seL4_VCPUReg_SIP:
-            reg = read_bsip();
+            reg = read_vsip();
             break;
         case seL4_VCPUReg_SATP:
-            reg = read_bsatp();
+            reg = read_vsatp();
             break;
         default:
             fail("RISCV/HE: Invalid register index");
@@ -83,31 +83,31 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
 {
     switch (reg_index) {
         case seL4_VCPUReg_SSTATUS:
-            write_bsstatus(reg);
+            write_vsstatus(reg);
             break;
         case seL4_VCPUReg_SIE:
-            write_bsie(reg);
+            write_vsie(reg);
             break;
         case seL4_VCPUReg_STVEC:
-            write_bstvec(reg);
+            write_vstvec(reg);
             break;
         case seL4_VCPUReg_SSCRATCH:
-            write_bsscratch(reg);
+            write_vsscratch(reg);
             break;
         case seL4_VCPUReg_SEPC:
-            write_bsepc(reg);
+            write_vsepc(reg);
             break;
         case seL4_VCPUReg_SCAUSE:
-            write_bscause(reg);
+            write_vscause(reg);
             break;
         case seL4_VCPUReg_STVAL:
-            write_bstval(reg);
+            write_vstval(reg);
             break;
         case seL4_VCPUReg_SIP:
-            write_bsip(reg);
+            write_vsip(reg);
             break;
         case seL4_VCPUReg_SATP:
-            write_bsatp(reg);
+            write_vsatp(reg);
             break;
         default:
             fail("RISCV/HE: Invalid register index");
@@ -174,17 +174,17 @@ static inline void vcpu_native(void)
     // disable interrupt delegate
     write_hideleg(0);
 
-    write_bsstatus(0);
-    write_bsip(0);
-    write_bsie(0);
-    write_bstvec(0);
-    write_bsscratch(0);
-    write_bsepc(0);
-    write_bscause(0);
-    write_bstval(0);
+    write_vsstatus(0);
+    write_vsip(0);
+    write_vsie(0);
+    write_vstvec(0);
+    write_vsscratch(0);
+    write_vsepc(0);
+    write_vscause(0);
+    write_vstval(0);
 
     /* this disables stage-1 translation */
-    write_bsatp(0);
+    write_vsatp(0);
 }
 
 static void vcpu_enable(vcpu_t *vcpu)
