@@ -217,15 +217,15 @@ static inline void write_fcsr(uint32_t value)
 #define HTIMEDELTA  0x605
 #define HTIMEDELTAH 0x615
 
-#define BSSTATUS    0x200
-#define BSIE        0x204
-#define BSTVEC      0x205
-#define BSSCRATCH   0x240
-#define BSEPC       0x241
-#define BSCAUSE     0x242
-#define BSTVAL      0x243
-#define BSIP        0x244
-#define BSATP       0x280
+#define VSSTATUS    0x200
+#define VSIE        0x204
+#define VSTVEC      0x205
+#define VSSCRATCH   0x240
+#define VSEPC       0x241
+#define VSCAUSE     0x242
+#define VSTVAL      0x243
+#define VSIP        0x244
+#define VSATP       0x280
 
 /* The SPRV bit modifieds the privilege with which loads and stores execute
  * when not in M-mode. When SPRV=0, translation and protection behave as normal.
@@ -318,112 +318,112 @@ static inline void write_hgatp(word_t v)
     asm volatile("csrw "STRINGIFY(HGATP)", %0" :: "r"(v));
 }
 
-static inline word_t read_bsstatus(void)
+static inline word_t read_vsstatus(void)
 {
     word_t r;
-    asm volatile("csrr %0, "STRINGIFY(BSSTATUS) : "=r"(r));
+    asm volatile("csrr %0, "STRINGIFY(VSSTATUS) : "=r"(r));
     return r;
 }
 
-static inline void write_bsstatus(word_t v)
+static inline void write_vsstatus(word_t v)
 {
-    asm volatile("csrw "STRINGIFY(BSSTATUS)", %0" :: "r"(v));
+    asm volatile("csrw "STRINGIFY(VSSTATUS)", %0" :: "r"(v));
 }
 
-static inline word_t read_bsie(void)
+static inline word_t read_vsie(void)
 {
     word_t r;
-    asm volatile("csrr %0, "STRINGIFY(BSIE) : "=r"(r));
+    asm volatile("csrr %0, "STRINGIFY(VSIE) : "=r"(r));
     return r;
 }
 
-static inline void write_bsie(word_t v)
+static inline void write_vsie(word_t v)
 {
-    asm volatile("csrw "STRINGIFY(BSIE)", %0" :: "r"(v));
+    asm volatile("csrw "STRINGIFY(VSIE)", %0" :: "r"(v));
 }
 
-static inline word_t read_bstvec(void)
+static inline word_t read_vstvec(void)
 {
     word_t r;
-    asm volatile("csrr %0, "STRINGIFY(BSTVEC) : "=r"(r));
+    asm volatile("csrr %0, "STRINGIFY(VSTVEC) : "=r"(r));
     return r;
 }
 
-static inline void write_bstvec(word_t v)
+static inline void write_vstvec(word_t v)
 {
-    asm volatile("csrw "STRINGIFY(BSTVEC)", %0" :: "r"(v));
+    asm volatile("csrw "STRINGIFY(VSTVEC)", %0" :: "r"(v));
 }
 
-static inline word_t read_bsscratch(void)
+static inline word_t read_vsscratch(void)
 {
     word_t r;
-    asm volatile("csrr %0, "STRINGIFY(BSSCRATCH) : "=r"(r));
+    asm volatile("csrr %0, "STRINGIFY(VSSCRATCH) : "=r"(r));
     return r;
 }
 
-static inline void write_bsscratch(word_t v)
+static inline void write_vsscratch(word_t v)
 {
-    asm volatile("csrw "STRINGIFY(BSSCRATCH)", %0" :: "r"(v));
+    asm volatile("csrw "STRINGIFY(VSSCRATCH)", %0" :: "r"(v));
 }
 
-static inline word_t read_bsepc(void)
+static inline word_t read_vsepc(void)
 {
     word_t r;
-    asm volatile("csrr %0, "STRINGIFY(BSEPC) : "=r"(r));
+    asm volatile("csrr %0, "STRINGIFY(VSEPC) : "=r"(r));
     return r;
 }
 
-static inline void write_bsepc(word_t v)
+static inline void write_vsepc(word_t v)
 {
-    asm volatile("csrw "STRINGIFY(BSEPC)", %0" :: "r"(v));
+    asm volatile("csrw "STRINGIFY(VSEPC)", %0" :: "r"(v));
 }
 
-static inline word_t read_bscause(void)
+static inline word_t read_vscause(void)
 {
     word_t r;
-    asm volatile("csrr %0, "STRINGIFY(BSCAUSE) : "=r"(r));
+    asm volatile("csrr %0, "STRINGIFY(VSCAUSE) : "=r"(r));
     return r;
 }
 
-static inline void write_bscause(word_t v)
+static inline void write_vscause(word_t v)
 {
-    asm volatile("csrw "STRINGIFY(BSCAUSE)", %0" :: "r"(v));
+    asm volatile("csrw "STRINGIFY(VSCAUSE)", %0" :: "r"(v));
 }
 
-static inline word_t read_bstval(void)
+static inline word_t read_vstval(void)
 {
     word_t r;
-    asm volatile("csrr %0, "STRINGIFY(BSTVAL) : "=r"(r));
+    asm volatile("csrr %0, "STRINGIFY(VSTVAL) : "=r"(r));
     return r;
 }
 
-static inline void write_bstval(word_t v)
+static inline void write_vstval(word_t v)
 {
-    asm volatile("csrw "STRINGIFY(BSTVAL)", %0" :: "r"(v));
+    asm volatile("csrw "STRINGIFY(VSTVAL)", %0" :: "r"(v));
 }
 
-static inline word_t read_bsip(void)
+static inline word_t read_vsip(void)
 {
     word_t r;
-    asm volatile("csrr %0, "STRINGIFY(BSIP) : "=r"(r));
+    asm volatile("csrr %0, "STRINGIFY(VSIP) : "=r"(r));
     return r;
 }
 
-static inline void write_bsip(word_t v)
+static inline void write_vsip(word_t v)
 {
-    asm volatile("csrw "STRINGIFY(BSIP)", %0" :: "r"(v));
+    asm volatile("csrw "STRINGIFY(VSIP)", %0" :: "r"(v));
 }
 
-static inline word_t read_bsatp(void)
+static inline word_t read_vsatp(void)
 {
     word_t r;
-    asm volatile("csrr %0, "STRINGIFY(BSATP) : "=r"(r));
+    asm volatile("csrr %0, "STRINGIFY(VSATP) : "=r"(r));
     return r;
 }
 
-static inline void write_bsatp(word_t v)
+static inline void write_vsatp(word_t v)
 {
-    asm volatile("csrw "STRINGIFY(BSATP)", %0" :: "r"(v));
+    asm volatile("csrw "STRINGIFY(VSATP)", %0" :: "r"(v));
 }
 
 static inline void hfence(void)
