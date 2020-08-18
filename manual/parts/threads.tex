@@ -335,11 +335,6 @@ If a reply message is sent to a nested server and a scheduling context without
 available budget returned, another timeout fault will be generated if the
 nested server also has a timeout fault handler.
 
-Additionally, if the system criticality is changed while a thread with higher
-criticality than the system criticality is running on a scheduling context that
-is bound to a thread with criticality lower than the system criticality, a
-timeout exception will be raised.
-
 \subsection{Message Layout of the Read-/Write-Registers Methods}
 \label{sec:read_write_registers}
 
