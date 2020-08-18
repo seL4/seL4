@@ -12,6 +12,7 @@
 #include <kernel/cspace.h>
 #include <kernel/thread.h>
 #include <kernel/vspace.h>
+#include <kernel/faulthandler.h>
 #ifdef CONFIG_KERNEL_MCS
 #include <object/schedcontext.h>
 #endif
@@ -91,8 +92,7 @@ void restart(tcb_t *target)
         cancelIPC(target);
 #ifdef CONFIG_KERNEL_MCS
         setThreadState(target, ThreadState_Restart);
-        schedContext_resume(target->tcbSchedContext);
-        if (isSchedulable(target)) {
+        if (ensureSchedulable(target)) {
             possibleSwitchTo(target);
         }
 #else
@@ -171,17 +171,8 @@ void doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, bool_t grant)
     }
 
 #ifdef CONFIG_KERNEL_MCS
-    if (receiver->tcbSchedContext && isRunnable(receiver)) {
-        if ((refill_ready(receiver->tcbSchedContext) && refill_sufficient(receiver->tcbSchedContext, 0))) {
-            possibleSwitchTo(receiver);
-        } else {
-            if (validTimeoutHandler(receiver) && fault_type != seL4_Fault_Timeout) {
-                current_fault = seL4_Fault_Timeout_new(receiver->tcbSchedContext->scBadge);
-                handleTimeout(receiver);
-            } else {
-                postpone(receiver->tcbSchedContext);
-            }
-        }
+    if (isRunnable(receiver) && ensureSchedulable(receiver)) {
+        possibleSwitchTo(receiver);
     }
 #endif
 }
@@ -604,7 +595,7 @@ void chargeBudget(ticks_t consumed, bool_t canTimeoutFault, word_t core, bool_t 
 void endTimeslice(bool_t can_timeout_fault)
 {
     if (can_timeout_fault && !isRoundRobin(NODE_STATE(ksCurSC)) && validTimeoutHandler(NODE_STATE(ksCurThread))) {
-        current_fault = seL4_Fault_Timeout_new(NODE_STATE(ksCurSC)->scBadge);
+        current_fault = seL4_Fault_Timeout_new(NODE_STATE(ksCurSC)->scBadge, seL4_Timeout_Exhausted);
         handleTimeout(NODE_STATE(ksCurThread));
     } else if (refill_ready(NODE_STATE(ksCurSC)) && refill_sufficient(NODE_STATE(ksCurSC), 0)) {
         /* apply round robin */
@@ -614,6 +605,19 @@ void endTimeslice(bool_t can_timeout_fault)
     } else {
         /* postpone until ready */
         postpone(NODE_STATE(ksCurSC));
+    }
+}
+
+void maybeTimeoutFault(tcb_t *thread, word_t badge, word_t reason)
+{
+    if (validTimeoutHandler(thread)) {
+        current_fault = seL4_Fault_Timeout_new(badge, reason);
+        handleTimeout(thread);
+    } else if (reason == seL4_Timeout_Exhausted) {
+        /* The thread can still run but must wait for a refill */
+        assert(thread->tcbSchedContext != NULL);
+        assert(thread->tcbSchedContext->scRefillMax > 0);
+        postpone(thread->tcbSchedContext);
     }
 }
 #else

@@ -105,7 +105,8 @@ block DebugException {
 
 #ifdef CONFIG_KERNEL_MCS
 block Timeout {
-    padding 320
+    padding 288
+    field reason 32
     field data 32
     field consumed_high 32
     field consumed_low 32

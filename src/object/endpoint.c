@@ -23,8 +23,8 @@ static inline void ep_ptr_set_queue(endpoint_t *epptr, tcb_queue_t queue)
 }
 
 #ifdef CONFIG_KERNEL_MCS
-void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
-             bool_t canGrant, bool_t canGrantReply, bool_t canDonate, tcb_t *thread, endpoint_t *epptr)
+tcb_t *sendIPC(bool_t blocking, bool_t do_call, word_t badge,
+               bool_t canGrant, bool_t canGrantReply, bool_t canDonate, tcb_t *thread, endpoint_t *epptr)
 #else
 void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
              bool_t canGrant, bool_t canGrantReply, tcb_t *thread, endpoint_t *epptr)
@@ -100,10 +100,10 @@ void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
         }
 
         /* blocked threads should have enough budget to get out of the kernel */
-        assert(dest->tcbSchedContext == NULL || refill_sufficient(dest->tcbSchedContext, 0));
-        assert(dest->tcbSchedContext == NULL || refill_ready(dest->tcbSchedContext));
         setThreadState(dest, ThreadState_Running);
-        possibleSwitchTo(dest);
+
+        /* We only let the destination time-out if it has not been sent a timeout fault. */
+        return dest;
 #else
         bool_t replyCanGrant = thread_state_ptr_get_blockingIPCCanGrant(&dest->tcbState);;
 
@@ -121,6 +121,9 @@ void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
         break;
     }
     }
+#ifdef CONFIG_KERNEL_MCS
+    return NULL;
+#endif
 }
 
 #ifdef CONFIG_KERNEL_MCS
@@ -233,8 +236,7 @@ void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
             do_call = thread_state_ptr_get_blockingIPCIsCall(&sender->tcbState);
 
 #ifdef CONFIG_KERNEL_MCS
-            if (do_call ||
-                seL4_Fault_get_seL4_FaultType(sender->tcbFault) != seL4_Fault_NullFault) {
+            if (do_call || seL4_Fault_get_seL4_FaultType(sender->tcbFault) != seL4_Fault_NullFault) {
                 if ((canGrant || canGrantReply) && replyPtr != NULL) {
                     bool_t canDonate = sender->tcbSchedContext != NULL
                                        && seL4_Fault_get_seL4_FaultType(sender->tcbFault) != seL4_Fault_Timeout;
@@ -244,8 +246,7 @@ void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
                 }
             } else {
                 setThreadState(sender, ThreadState_Running);
-                possibleSwitchTo(sender);
-                assert(sender->tcbSchedContext == NULL || refill_sufficient(sender->tcbSchedContext, 0));
+                MCS_DO_IF_SCHEDULABLE(sender, possibleSwitchTo(sender));
             }
 #else
             if (do_call) {
@@ -383,7 +384,7 @@ void cancelAllIPC(endpoint_t *epptr)
             if (reply != NULL) {
                 reply_unlink(reply);
             }
-            if (seL4_Fault_get_seL4_FaultType(thread->tcbFault) == seL4_Fault_NullFault) {
+            if (isSchedulable(thread) && seL4_Fault_get_seL4_FaultType(thread->tcbFault) == seL4_Fault_NullFault) {
                 setThreadState(thread, ThreadState_Restart);
                 possibleSwitchTo(thread);
             } else {
@@ -430,7 +431,7 @@ void cancelBadgedSends(endpoint_t *epptr, word_t badge)
                 if (seL4_Fault_get_seL4_FaultType(thread->tcbFault) ==
                     seL4_Fault_NullFault) {
                     setThreadState(thread, ThreadState_Restart);
-                    possibleSwitchTo(thread);
+                    MCS_DO_IF_SCHEDULABLE(thread, possibleSwitchTo(thread));
                 } else {
                     setThreadState(thread, ThreadState_Inactive);
                 }

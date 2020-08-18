@@ -33,7 +33,7 @@ void schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb);
  *        (sc->scTcb == tcb && tcb->tcbSchedContext == sc);
  * @post  (tcb->tcbSchedContext == NULL && sc->scTcb == NULL)
  */
-void schedContext_unbindTCB(sched_context_t *sc, tcb_t *tcb);
+void schedContext_unbindTCB(sched_context_t *sc, tcb_t *tcb, bool_t canFault);
 
 /*
  * Unbind any tcb from a scheduling context. If the tcb bound to the scheduling
@@ -42,16 +42,7 @@ void schedContext_unbindTCB(sched_context_t *sc, tcb_t *tcb);
  * @param sc the scheduling context to unbind
  * @post  (sc->scTcb == NULL)
  */
-void schedContext_unbindAllTCBs(sched_context_t *sc);
-
-/*
- * Resume a scheduling context. This will check if a the tcb bound to the scheduling context
- * is runnable, if so, it will then check if the budget is due to be recharged and do so.
- * If the scheduling context has insufficient budget the bound tcb is placed in the release queue.
- *
- * @pre (sc != NULL)
- */
-void schedContext_resume(sched_context_t *sc);
+void schedContext_unbindAllTCBs(sched_context_t *sc, bool_t canFault);
 
 /*
  * Donate sc to tcb.

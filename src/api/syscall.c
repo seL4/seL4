@@ -570,6 +570,13 @@ static void handleRecv(bool_t isBlocking)
         handleFault(NODE_STATE(ksCurThread));
         break;
     }
+
+#ifdef CONFIG_KERNEL_MCS
+    if (isRunnable(NODE_STATE(ksCurThread)) && !ensureSchedulable(NODE_STATE(ksCurThread))) {
+        /* The current thread may no longer be able to run. */
+        rescheduleRequired();
+    }
+#endif
 }
 
 #ifdef CONFIG_KERNEL_MCS

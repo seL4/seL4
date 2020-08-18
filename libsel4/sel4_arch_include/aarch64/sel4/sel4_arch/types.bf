@@ -105,7 +105,8 @@ block DebugException {
 
 #ifdef CONFIG_KERNEL_MCS
 block Timeout {
-    padding 704
+    padding 640
+    field reason 64
     field data 64
     field consumed 64
     padding 60

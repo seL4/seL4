@@ -35,12 +35,16 @@ bool_t sendFaultIPC(tcb_t *tptr, cap_t handlerCap, bool_t can_donate)
                cap_endpoint_cap_get_capCanGrantReply(handlerCap));
 
         tptr->tcbFault = current_fault;
-        sendIPC(true, false,
-                cap_endpoint_cap_get_capEPBadge(handlerCap),
-                cap_endpoint_cap_get_capCanGrant(handlerCap),
-                cap_endpoint_cap_get_capCanGrantReply(handlerCap),
-                can_donate, tptr,
-                EP_PTR(cap_endpoint_cap_get_capEPPtr(handlerCap)));
+        tcb_t *unblocked = sendIPC(true, false,
+                                   cap_endpoint_cap_get_capEPBadge(handlerCap),
+                                   cap_endpoint_cap_get_capCanGrant(handlerCap),
+                                   cap_endpoint_cap_get_capCanGrantReply(handlerCap),
+                                   can_donate, tptr,
+                                   EP_PTR(cap_endpoint_cap_get_capEPPtr(handlerCap)));
+
+        if (unblocked != NULL && isSchedulable(unblocked)) {
+            possibleSwitchTo(unblocked);
+        }
 
         return true;
     } else {

@@ -11,7 +11,7 @@ static exception_t invokeSchedContext_UnbindObject(sched_context_t *sc, cap_t ca
 {
     switch (cap_get_capType(cap)) {
     case cap_thread_cap:
-        schedContext_unbindTCB(sc, sc->scTcb);
+        schedContext_unbindTCB(sc, sc->scTcb, true);
         break;
     case cap_notification_cap:
         schedContext_unbindNtfn(sc);
@@ -126,7 +126,7 @@ static exception_t decodeSchedContext_Bind(sched_context_t *sc, extra_caps_t ext
 
 static exception_t invokeSchedContext_Unbind(sched_context_t *sc)
 {
-    schedContext_unbindAllTCBs(sc);
+    schedContext_unbindAllTCBs(sc, true);
     schedContext_unbindNtfn(sc);
     if (sc->scReply) {
         sc->scReply->replyNext = call_stack_new(0, false);
@@ -163,12 +163,6 @@ static exception_t invokeSchedContext_YieldTo(sched_context_t *sc, word_t *buffe
         schedContext_completeYieldTo(sc->scYieldFrom);
         assert(sc->scYieldFrom == NULL);
     }
-
-    /* if the tcb is in the scheduler, it's ready and sufficient.
-     * Otherwise, check that it is ready and sufficient and if not,
-     * place the thread in the release queue. This way, from this point,
-     * if the thread isSchedulable, it is ready and sufficient.*/
-    schedContext_resume(sc);
 
     bool_t return_now = true;
     if (isSchedulable(sc->scTcb)) {
@@ -257,17 +251,6 @@ exception_t decodeSchedContextInvocation(word_t label, cap_t cap, extra_caps_t e
     }
 }
 
-void schedContext_resume(sched_context_t *sc)
-{
-    assert(!sc || sc->scTcb != NULL);
-    if (likely(sc) && isSchedulable(sc->scTcb)) {
-        if (!(refill_ready(sc) && refill_sufficient(sc, 0))) {
-            assert(!thread_state_get_tcbQueued(sc->scTcb->tcbState));
-            postpone(sc);
-        }
-    }
-}
-
 void schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb)
 {
     assert(sc->scTcb == NULL);
@@ -278,8 +261,7 @@ void schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb)
 
     SMP_COND_STATEMENT(migrateTCB(tcb, sc->scCore));
 
-    schedContext_resume(sc);
-    if (isSchedulable(tcb)) {
+    if (isRunnable(tcb) && ensureSchedulable(tcb)) {
         SCHED_ENQUEUE(tcb);
         rescheduleRequired();
         // TODO -- at some stage we should take this call out of any TCB invocations that
@@ -290,7 +272,7 @@ void schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb)
     }
 }
 
-void schedContext_unbindTCB(sched_context_t *sc, tcb_t *tcb)
+void schedContext_unbindTCB(sched_context_t *sc, tcb_t *tcb, bool_t canFault)
 {
     assert(sc->scTcb == tcb);
 
@@ -302,15 +284,23 @@ void schedContext_unbindTCB(sched_context_t *sc, tcb_t *tcb)
     tcbSchedDequeue(sc->scTcb);
     tcbReleaseRemove(sc->scTcb);
 
+    /* If the unbound TCB has a timeout handler, it is triggered to
+     * indicate that the SC has been removed. If a donated SC is
+     * forcibly removed from a passive server, that server's timeout
+     * handler is then able to handle the forcible removal of the SC. */
+    if (canFault && isRunnable(sc->scTcb)) {
+        maybeTimeoutFault(sc->scTcb, 0, seL4_Timeout_NoSC);
+    }
+
     sc->scTcb->tcbSchedContext = NULL;
     sc->scTcb = NULL;
 }
 
-void schedContext_unbindAllTCBs(sched_context_t *sc)
+void schedContext_unbindAllTCBs(sched_context_t *sc, bool_t canFault)
 {
     if (sc->scTcb) {
         SMP_COND_STATEMENT(remoteTCBStall(sc->scTcb));
-        schedContext_unbindTCB(sc, sc->scTcb);
+        schedContext_unbindTCB(sc, sc->scTcb, canFault);
     }
 }
 

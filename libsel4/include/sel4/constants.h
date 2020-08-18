@@ -83,6 +83,16 @@ typedef enum {
 /* the size of a single extra refill */
 #define seL4_RefillSizeBytes (2 * 8)
 
+/* Reasons for why a timeout fault occurred */
+enum {
+    /* The thread was scheduled without an SC */
+    seL4_Timeout_NoSC,
+    /* The thread was scheduled with an unconfigured SC */
+    seL4_Timeout_Unconfigured,
+    /* The thread was scheduled with a SC with no available time. */
+    seL4_Timeout_Exhausted,
+};
+
 /*
  * @brief Calculate the max extra refills a scheduling context can contain for a specific size.
  *

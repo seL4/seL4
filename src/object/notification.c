@@ -53,7 +53,6 @@ static inline void maybeDonateSchedContext(tcb_t *tcb, notification_t *ntfnPtr)
                  * that became preempted. */
                 refill_unblock_check(sc);
             }
-            schedContext_resume(sc);
         }
     }
 }
@@ -63,7 +62,7 @@ static inline void maybeDonateSchedContext(tcb_t *tcb, notification_t *ntfnPtr)
 #ifdef CONFIG_KERNEL_MCS
 #define MCS_DO_IF_SC(tcb, ntfnPtr, _block) \
     maybeDonateSchedContext(tcb, ntfnPtr); \
-    if (isSchedulable(tcb)) { \
+    if (isRunnable(tcb) && ensureSchedulable(tcb)) { \
         _block \
     }
 #else
@@ -219,7 +218,11 @@ void cancelAllSignals(notification_t *ntfnPtr)
         for (; thread; thread = thread->tcbEPNext) {
             setThreadState(thread, ThreadState_Restart);
 #ifdef CONFIG_KERNEL_MCS
-            possibleSwitchTo(thread);
+            if (isSchedulable(thread)) {
+                possibleSwitchTo(thread);
+            } else {
+                setThreadState(thread, ThreadState_Inactive);
+            }
 #else
             SCHED_ENQUEUE(thread);
 #endif

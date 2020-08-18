@@ -191,7 +191,7 @@ finaliseCap_ret_t finaliseCap(cap_t cap, bool_t final, bool_t exposed)
 #ifdef CONFIG_KERNEL_MCS
             if (tcb->tcbSchedContext) {
                 schedContext_completeYieldTo(tcb->tcbSchedContext->scYieldFrom);
-                schedContext_unbindTCB(tcb->tcbSchedContext, tcb);
+                schedContext_unbindTCB(tcb->tcbSchedContext, tcb, false);
             }
 #endif
             suspend(tcb);
@@ -215,7 +215,7 @@ finaliseCap_ret_t finaliseCap(cap_t cap, bool_t final, bool_t exposed)
     case cap_sched_context_cap:
         if (final) {
             sched_context_t *sc = SC_PTR(cap_sched_context_cap_get_capSCPtr(cap));
-            schedContext_unbindAllTCBs(sc);
+            schedContext_unbindAllTCBs(sc, false);
             schedContext_unbindNtfn(sc);
             if (sc->scReply) {
                 assert(call_stack_get_isHead(sc->scReply->replyNext));
@@ -779,7 +779,11 @@ exception_t performInvocation_Endpoint(endpoint_t *ep, word_t badge,
                                        bool_t canGrant, bool_t canGrantReply,
                                        bool_t block, bool_t call, bool_t canDonate)
 {
-    sendIPC(block, call, badge, canGrant, canGrantReply, canDonate, NODE_STATE(ksCurThread), ep);
+    tcb_t *unblocked = sendIPC(block, call, badge, canGrant, canGrantReply, canDonate, NODE_STATE(ksCurThread), ep);
+
+    if (unblocked != NULL && ensureSchedulable(unblocked)) {
+        possibleSwitchTo(unblocked);
+    }
 
     return EXCEPTION_NONE;
 }
