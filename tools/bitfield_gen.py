@@ -1028,7 +1028,7 @@ done'''],
  apply(simp add: parent_update_child[OF c_guard_clift]
                  typ_heap_simps c_guard_clift)
 
- apply(simp add: o_def, rule exI, rule conjI[OF _ refl])
+ apply((simp add: o_def)?, rule exI, rule conjI[OF _ refl])
 
  apply(simp add: %(name)s_get_tag_def %(name)s_tag_defs
                  guard_simps mask_shift_simps)
@@ -2329,8 +2329,7 @@ class Block:
         print(file=output)
 
         # Generate struct_new specs
-        arg_list = ["\<acute>" + field for
-                    (field, offset, size, high) in self.fields]
+        arg_list = ["\<acute>" + field for field in self.visible_order]
 
         if not params.skip_modifies:
             emit_named("%s_new" % self.name, params,
@@ -2343,7 +2342,8 @@ class Block:
             # FIXME: ptr_new (doesn't seem to be used)
 
         field_eq_list = []
-        for (field, offset, size, high) in self.fields:
+        for field in self.visible_order:
+            offset, size, high = self.field_map[field]
             mask = field_mask_proof(self.base, self.base_bits, self.base_sign_extend, high, size)
             sign_extend = sign_extend_proof(high, self.base_bits, self.base_sign_extend)
 

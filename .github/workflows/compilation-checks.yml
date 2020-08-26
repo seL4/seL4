@@ -1,0 +1,35 @@
+# Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+#
+# SPDX-License-Identifier: BSD-2-Clause
+
+# Compilation actions to run on pull requests
+
+name: Kernel
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  standalone_kernel:
+    name: compile
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ARM, ARM_HYP, RISCV64, X64]
+        compiler: [gcc, llvm]
+        python: [py2, py3]
+        exclude:
+          # llvm RISCV64 compilation is not currently supported
+          - arch: RISCV64
+            compiler: llvm
+    steps:
+    - uses: actions/checkout@v2
+    - uses: seL4/ci-actions/standalone-kernel@master
+      with:
+        ARCH: ${{ matrix.arch }}
+        COMPILER: ${{ matrix.compiler }}
+        PYTHON: ${{ matrix.python }}
