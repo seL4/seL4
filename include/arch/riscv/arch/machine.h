@@ -125,10 +125,10 @@ static inline void write_stvec(word_t value)
     asm volatile("csrw stvec, %0" :: "rK"(value));
 }
 
-static inline word_t read_sbadaddr(void)
+static inline word_t read_stval(void)
 {
     word_t temp;
-    asm volatile("csrr %0, sbadaddr" : "=r"(temp));
+    asm volatile("csrr %0, stval" : "=r"(temp));
     return temp;
 }
 

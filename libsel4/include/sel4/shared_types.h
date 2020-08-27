@@ -18,7 +18,7 @@ typedef struct seL4_IPCBuffer_ {
     seL4_Word receiveDepth;
 } seL4_IPCBuffer __attribute__((__aligned__(sizeof(struct seL4_IPCBuffer_))));
 
-enum {
+typedef enum {
     seL4_CapFault_IP,
     seL4_CapFault_Addr,
     seL4_CapFault_InRecvPhase,

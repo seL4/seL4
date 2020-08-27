@@ -27,6 +27,11 @@ static inline void maybeReturnSchedContext(notification_t *ntfnPtr, tcb_t *tcb)
     if (sc == tcb->tcbSchedContext) {
         tcb->tcbSchedContext = NULL;
         sc->scTcb = NULL;
+        /* If the current thread returns its sched context then it should not
+           by default continue running. */
+        if (tcb == NODE_STATE(ksCurThread)) {
+            rescheduleRequired();
+        }
     }
 }
 #endif

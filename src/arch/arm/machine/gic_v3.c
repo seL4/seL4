@@ -346,19 +346,29 @@ BOOT_CODE void cpu_initLocalIRQController(void)
 
 void ipi_send_target(irq_t irq, word_t cpuTargetList)
 {
-    uint64_t sgi1r = ((word_t) IRQT_TO_IRQ(irq)) << ICC_SGI1R_INTID_SHIFT;
-    if (MPIDR_MT(mpidr_map[getCurrentCPUIndex()])) {
-        for (word_t i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
-            if (cpuTargetList & BIT(i)) {
-                sgi1r = (IRQT_TO_IRQ(irq) << ICC_SGI1R_INTID_SHIFT) |
-                        (i << ICC_SGI1R_AFF1_SHIFT) | 1;
+    uint64_t sgi1r_base = ((word_t) IRQT_TO_IRQ(irq)) << ICC_SGI1R_INTID_SHIFT;
+    word_t sgi1r[CONFIG_MAX_NUM_NODES];
+    word_t last_aff1 = 0;
 
-                SYSTEM_WRITE_64(ICC_SGI1R_EL1, sgi1r);
+    for (word_t i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
+        sgi1r[i] = 0;
+        if (cpuTargetList & BIT(i)) {
+            word_t mpidr = mpidr_map[i];
+            word_t aff1 = MPIDR_AFF1(mpidr);
+            word_t aff0 = MPIDR_AFF0(mpidr);
+            // AFF1 is assumed to be contiguous and less than CONFIG_MAX_NUM_NODES.
+            // The targets are grouped by AFF1.
+            assert(aff1 >= 0 && aff1 < CONFIG_MAX_NUM_NODES);
+            sgi1r[aff1] |= sgi1r_base | (aff1 << ICC_SGI1R_AFF1_SHIFT) | (1 << aff0);
+            if (aff1 > last_aff1) {
+                last_aff1 = aff1;
             }
         }
-    } else {
-        sgi1r |= cpuTargetList;
-        SYSTEM_WRITE_64(ICC_SGI1R_EL1, sgi1r);
+    }
+    for (word_t i = 0; i <= last_aff1; i++) {
+        if (sgi1r[i] != 0) {
+            SYSTEM_WRITE_64(ICC_SGI1R_EL1, sgi1r[i]);
+        }
     }
     isb();
 }
