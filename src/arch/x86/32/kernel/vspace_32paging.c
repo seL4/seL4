@@ -229,6 +229,14 @@ static exception_t performIA32PageDirectoryGetStatusBits(lookupPTSlot_ret_t ptSl
 
         setMR(NODE_STATE(ksCurThread), buffer, 0, pde_pde_large_ptr_get_accessed(pdSlot.pdSlot));
         setMR(NODE_STATE(ksCurThread), buffer, 1, pde_pde_large_ptr_get_dirty(pdSlot.pdSlot));
+        setRegister(NODE_STATE(ksCurThread), msgInfoRegister,
+                    wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, 2)));
+
+        // Prevent handleInvocation from attempting to complete the 'call' with an empty
+        // message (via replyFromKernel_success_empty) by forcing the thread state to
+        // be running. This prevents our stored message we just created from being
+        // overwritten.
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
         return EXCEPTION_NONE;
     }
 
@@ -236,7 +244,14 @@ static exception_t performIA32PageDirectoryGetStatusBits(lookupPTSlot_ret_t ptSl
 
     setMR(NODE_STATE(ksCurThread), buffer, 0, pte_ptr_get_accessed(ptSlot.ptSlot));
     setMR(NODE_STATE(ksCurThread), buffer, 1, pte_ptr_get_dirty(ptSlot.ptSlot));
+    setRegister(NODE_STATE(ksCurThread), msgInfoRegister,
+                wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, 2)));
 
+    // Prevent handleInvocation from attempting to complete the 'call' with an empty
+    // message (via replyFromKernel_success_empty) by forcing the thread state to
+    // be running. This prevents our stored message we just created from being
+    // overwritten.
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
     return EXCEPTION_NONE;
 }
 

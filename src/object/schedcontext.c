@@ -169,6 +169,13 @@ static inline void setConsumed(sched_context_t *sc, word_t *buffer)
 static exception_t invokeSchedContext_Consumed(sched_context_t *sc, word_t *buffer)
 {
     setConsumed(sc, buffer);
+
+    // Prevent handleInvocation from attempting to complete the 'call' with an empty
+    // message (via replyFromKernel_success_empty) by forcing the thread state to
+    // be running. This prevents our stored message we just created from being
+    // overwritten.
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
+
     return EXCEPTION_NONE;
 }
 
@@ -208,6 +215,12 @@ static exception_t invokeSchedContext_YieldTo(sched_context_t *sc, word_t *buffe
 
     if (return_now) {
         setConsumed(sc, buffer);
+
+        // Prevent handleInvocation from attempting to complete the 'call' with an empty
+        // message (via replyFromKernel_success_empty) by forcing the thread state to
+        // be running. This prevents our stored message we just created from being
+        // overwritten.
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
     }
 
     return EXCEPTION_NONE;

@@ -36,7 +36,12 @@ exception_t decodeARMSIDControlInvocation(word_t label, unsigned int length, cpt
         setRegister(NODE_STATE(ksCurThread), msgRegisters[2], faultSyndrome_1);
         setRegister(NODE_STATE(ksCurThread), msgInfoRegister,
                     wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, 3)));
-        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+
+        // Prevent handleInvocation from attempting to complete the 'call' with an empty
+        // message (via replyFromKernel_success_empty) by forcing the thread state to
+        // be running. This prevents our stored message we just created from being
+        // overwritten.
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
         return EXCEPTION_NONE;
     }
 
@@ -327,7 +332,12 @@ exception_t decodeARMCBInvocation(word_t label, unsigned int length, cptr_t cptr
         setRegister(NODE_STATE(ksCurThread), msgRegisters[1], faultAddress);
         setRegister(NODE_STATE(ksCurThread), msgInfoRegister,
                     wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, 2)));
-        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+
+        // Prevent handleInvocation from attempting to complete the 'call' with an empty
+        // message (via replyFromKernel_success_empty) by forcing the thread state to
+        // be running. This prevents our stored message we just created from being
+        // overwritten.
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
         return EXCEPTION_NONE;
 
     case ARMCBClearFault:

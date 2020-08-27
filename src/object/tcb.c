@@ -532,6 +532,14 @@ static exception_t invokeConfigureSingleStepping(word_t *buffer, tcb_t *t,
         setBreakpointUsedFlag(t, bp_num);
         setMR(NODE_STATE(ksCurThread), buffer, 0, bp_was_consumed);
     }
+    setRegister(NODE_STATE(ksCurThread), msgInfoRegister,
+                wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, 1)));
+
+    // Prevent handleInvocation from attempting to complete the 'call' with an empty
+    // message (via replyFromKernel_success_empty) by forcing the thread state to
+    // be running. This prevents our stored message we just created from being
+    // overwritten.
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
     return EXCEPTION_NONE;
 }
 
@@ -693,6 +701,14 @@ static exception_t invokeGetBreakpoint(word_t *buffer, tcb_t *tcb, uint16_t bp_n
     setMR(NODE_STATE(ksCurThread), buffer, 2, res.size);
     setMR(NODE_STATE(ksCurThread), buffer, 3, res.rw);
     setMR(NODE_STATE(ksCurThread), buffer, 4, res.is_enabled);
+    setRegister(NODE_STATE(ksCurThread), msgInfoRegister,
+                wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, 5)));
+
+    // Prevent handleInvocation from attempting to complete the 'call' with an empty
+    // message (via replyFromKernel_success_empty) by forcing the thread state to
+    // be running. This prevents our stored message we just created from being
+    // overwritten.
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
     return EXCEPTION_NONE;
 }
 
