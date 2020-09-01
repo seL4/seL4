@@ -41,8 +41,14 @@
 
 /* Short hand for accessing refill queue items */
 #define REFILL_INDEX(sc, index) (((refill_t *) (SC_REF(sc) + sizeof(sched_context_t)))[index])
-#define REFILL_HEAD(sc) REFILL_INDEX((sc), (sc)->scRefillHead)
-#define REFILL_TAIL(sc) REFILL_INDEX((sc), (sc)->scRefillTail)
+static inline refill_t refill_head(sched_context_t *sc)
+{
+    return REFILL_INDEX(sc, sc->scRefillHead);
+}
+static inline refill_t refill_tail(sched_context_t *sc)
+{
+    return REFILL_INDEX(sc, sc->scRefillTail);
+}
 
 
 /* Scheduling context objects consist of a sched_context_t at the start, followed by a
@@ -83,11 +89,11 @@ static inline bool_t refill_single(sched_context_t *sc)
  * has available if usage is charged to it. */
 static inline ticks_t refill_capacity(sched_context_t *sc, ticks_t usage)
 {
-    if (unlikely(usage > REFILL_HEAD(sc).rAmount)) {
+    if (unlikely(usage > refill_head(sc).rAmount)) {
         return 0;
     }
 
-    return REFILL_HEAD(sc).rAmount - usage;
+    return refill_head(sc).rAmount - usage;
 }
 
 /*
@@ -107,7 +113,7 @@ static inline bool_t refill_sufficient(sched_context_t *sc, ticks_t usage)
  */
 static inline bool_t refill_ready(sched_context_t *sc)
 {
-    return REFILL_HEAD(sc).rTime <= (NODE_STATE_ON_CORE(ksCurTime, sc->scCore) + getKernelWcetTicks());
+    return refill_head(sc).rTime <= (NODE_STATE_ON_CORE(ksCurTime, sc->scCore) + getKernelWcetTicks());
 }
 
 /* Create a new refill in a non-active sc */
