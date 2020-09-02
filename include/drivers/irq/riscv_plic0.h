@@ -38,7 +38,8 @@
 
 #define PLIC_NUM_INTERRUPTS PLIC_MAX_IRQ
 
-#ifdef CONFIG_PLAT_HIFIVE
+#if defined(CONFIG_PLAT_HIFIVE) || defined(CONFIG_PLAT_POLARFIRE)
+
 /* SiFive U54-MC has 5 cores, and the first core does not
  * have supervisor mode. Therefore, we need to compensate
  * for the addresses.

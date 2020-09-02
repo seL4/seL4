@@ -1,0 +1,12 @@
+ /*
+ * Copyright 2020, DornerWorks
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+	chosen {
+		seL4,kernel-devices =
+		    &{/soc/interrupt-controller@c000000};
+	};
+};
