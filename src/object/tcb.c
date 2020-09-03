@@ -288,7 +288,7 @@ void tcbReleaseEnqueue(tcb_t *tcb)
 
     /* find our place in the ordered queue */
     while (after != NULL &&
-           refill_head(tcb->tcbSchedContext).rTime >= refill_head(after->tcbSchedContext).rTime) {
+           refill_head(tcb->tcbSchedContext)->rTime >= refill_head(after->tcbSchedContext)->rTime) {
         before = after;
         after = after->tcbSchedNext;
     }
