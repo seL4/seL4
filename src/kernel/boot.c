@@ -498,6 +498,7 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
 
     tcb->tcbPriority = seL4_MaxPrio;
     tcb->tcbMCP = seL4_MaxPrio;
+    tcb->tcbDomain = ksDomSchedule[ksDomScheduleIdx].domain;
 #ifndef CONFIG_KERNEL_MCS
     setupReplyMaster(tcb);
 #endif
