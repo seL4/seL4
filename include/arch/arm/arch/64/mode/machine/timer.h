@@ -24,7 +24,7 @@ static inline CONST ticks_t getMaxTicksToUs(void)
 static inline CONST time_t ticksToUs(ticks_t ticks)
 {
 #if USE_KHZ
-    return (ticks * TIMER_CLOCK_KHZ) / TIMER_CLOCK_MHZ;
+    return (ticks * KHZ_IN_MHZ) / TIMER_CLOCK_KHZ;
 #else
     return ticks / TIMER_CLOCK_MHZ;
 #endif
