@@ -121,5 +121,14 @@ static inline uint64_t riscv_read_time(void)
     return n;
 }
 
+static inline uint64_t riscv_read_cycle(void)
+{
+    uint64_t n;
+    asm volatile(
+        "rdcycle %0"
+        : "=r"(n));
+    return n;
+}
+
 #endif /* __ASSEMBLER__ */
 
