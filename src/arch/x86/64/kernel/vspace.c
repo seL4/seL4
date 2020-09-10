@@ -16,6 +16,7 @@
 #include <mode/kernel/tlb.h>
 #include <arch/kernel/tlb_bitmap.h>
 #include <object/structures.h>
+#include <log.h>
 
 /* When using the SKIM window to isolate the kernel from the user we also need to
  * not use global mappings as having global mappings and entries in the TLB is
@@ -1679,6 +1680,10 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
     x64KSKernelPDs[BIT(PDPT_INDEX_BITS) - 1][1] = pde;
 #endif
     invalidateTranslationAll(MASK(CONFIG_MAX_NUM_NODES));
+
+#ifdef CONFIG_KERNEL_DEBUG_LOG_BUFFER
+    logBuffer_init((seL4_Word *)KS_LOG_PPTR, BIT(pageBitsForSize(frameSize) - seL4_WordSizeBits));
+#endif /* !CONFIG_KERNEL_DEBUG_LOG_BUFFER */
 
     return EXCEPTION_NONE;
 }

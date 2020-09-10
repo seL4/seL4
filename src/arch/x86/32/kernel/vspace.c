@@ -16,6 +16,7 @@
 #include <benchmark/benchmark_track.h>
 #include <arch/kernel/tlb_bitmap.h>
 #include <mode/kernel/tlb.h>
+#include <log.h>
 
 /* 'gdt_idt_ptr' is declared globally because of a C-subset restriction.
  * It is only used in init_drts(), which therefore is non-reentrant.
@@ -714,6 +715,10 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
         ia32KSGlobalLogPT[idx] = pte;
         invalidateTLBEntry(KS_LOG_PPTR + (idx << seL4_PageBits), MASK(ksNumCPUs));
     }
+
+#ifdef CONFIG_KERNEL_DEBUG_LOG_BUFFER
+    logBuffer_init((seL4_Word *)KS_LOG_PPTR, BIT(pageBitsForSize(frameSize) - seL4_WordSizeBits));
+#endif /* !CONFIG_KERNEL_DEBUG_LOG_BUFFER */
 
     return EXCEPTION_NONE;
 }

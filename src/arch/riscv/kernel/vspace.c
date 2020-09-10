@@ -1229,6 +1229,10 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
 
     sfence();
 
+#ifdef CONFIG_KERNEL_DEBUG_LOG_BUFFER
+    logBuffer_init((seL4_Word *)KS_LOG_PPTR, BIT(pageBitsForSize(frameSize) - seL4_WordSizeBits));
+#endif /* !CONFIG_KERNEL_DEBUG_LOG_BUFFER */
+
     return EXCEPTION_NONE;
 }
 #endif /* CONFIG_KERNEL_LOG_BUFFER */

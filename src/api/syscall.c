@@ -24,6 +24,7 @@
 #include <string.h>
 #include <kernel/traps.h>
 #include <arch/machine.h>
+#include <log.h>
 
 #ifdef CONFIG_DEBUG_BUILD
 #include <arch/machine/capdl.h>
@@ -197,8 +198,12 @@ exception_t handleUnknownSyscall(word_t w)
             setRegister(NODE_STATE(ksCurThread), capRegister, seL4_IllegalOperation);
             return EXCEPTION_SYSCALL_ERROR;
         }
-
+#ifdef CONFIG_KERNEL_DEBUG_LOG_BUFFER
+        logBuffer_reset();
+#else
         ksLogIndex = 0;
+#endif /* CONFIG_KERNEL_DEBUG_LOG_BUFFER */
+
 #endif /* CONFIG_KERNEL_LOG_BUFFER */
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
         NODE_STATE(benchmark_log_utilisation_enabled) = true;
@@ -216,8 +221,12 @@ exception_t handleUnknownSyscall(word_t w)
         return EXCEPTION_NONE;
     } else if (w == SysBenchmarkFinalizeLog) {
 #ifdef CONFIG_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_DEBUG_LOG_BUFFER
+        setRegister(NODE_STATE(ksCurThread), capRegister, logBuffer_finalize());
+#else /* CONFIG_KERNEL_DEBUG_LOG_BUFFER */
         ksLogIndexFinalized = ksLogIndex;
         setRegister(NODE_STATE(ksCurThread), capRegister, ksLogIndexFinalized);
+#endif /* !CONFIG_KERNEL_DEBUG_LOG_BUFFER */
 #endif /* CONFIG_KERNEL_LOG_BUFFER */
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
         benchmark_utilisation_finalise();

@@ -65,7 +65,9 @@ SEL4_SIZE_SANITY(seL4_WordSizeBits, seL4_ASIDPoolIndexBits, seL4_ASIDPoolBits);
 #define seL4_MinUntypedBits 4
 #define seL4_MaxUntypedBits 29
 
-#ifdef CONFIG_ENABLE_BENCHMARKS
+#if defined(CONFIG_ENABLE_BENCHMARKS) || defined(CONFIG_KERNEL_DEBUG_LOG_BUFFER)
+/* Size of log buffer frame in bits */
+#define seL4_LogBufferBits seL4_LargePageBits
 /* size of kernel log buffer in bytes */
 #define seL4_LogBufferSize (LIBSEL4_BIT(20))
 #endif /* CONFIG_ENABLE_BENCHMARKS */

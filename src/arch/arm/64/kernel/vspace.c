@@ -26,6 +26,7 @@
 #include <arch/object/iospace.h>
 #include <arch/object/vcpu.h>
 #include <arch/machine/tlb.h>
+#include <log.h>
 #define RESERVED 3
 
 /*
@@ -2578,6 +2579,11 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
 
     cleanByVA_PoU((vptr_t)armKSGlobalLogPDE, pptr_to_paddr(armKSGlobalLogPDE));
     invalidateTranslationSingle(KS_LOG_PPTR);
+
+#ifdef CONFIG_KERNEL_DEBUG_LOG_BUFFER
+    logBuffer_init((seL4_Word *)KS_LOG_PPTR, BIT(pageBitsForSize(frameSize) - seL4_WordSizeBits));
+#endif /* !CONFIG_KERNEL_DEBUG_LOG_BUFFER */
+
     return EXCEPTION_NONE;
 }
 #endif /* CONFIG_KERNEL_LOG_BUFFER */
