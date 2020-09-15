@@ -36,18 +36,18 @@
 #define PLIC_THRES_PER_CONTEXT  0x1000
 #define PLIC_THRES_CLAIM        0x4
 
+#define PLIC_NUM_INTERRUPTS PLIC_MAX_IRQ
+
 #ifdef CONFIG_PLAT_HIFIVE
 /* SiFive U54-MC has 5 cores, and the first core does not
  * have supervisor mode. Therefore, we need to compensate
  * for the addresses.
  */
-#define PLIC_NUM_INTERRUPTS 53
 #define PLAT_PLIC_THRES_ADJUST(x) ((x) - PLIC_THRES_PER_CONTEXT)
 #define PLAT_PLIC_EN_ADJUST(x)    ((x) - PLIC_EN_PER_CONTEXT)
 
 #else
 
-#define PLIC_NUM_INTERRUPTS 511
 #define PLAT_PLIC_THRES_ADJUST(x)   (x)
 #define PLAT_PLIC_EN_ADJUST(x)      (x)
 
