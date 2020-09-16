@@ -21,7 +21,7 @@ Without MCS, all threads including the initial thread are scheduled round-robin 
 
 The initial thread's CSpace consists of exactly one CNode
 which contains capabilities to the initial
-thread's own resources was well as to all available global resources.
+thread's own resources as well as to all available global resources.
 The CNode size can be configured at compile time (default is $2^{12}$
 slots), but the guard is always chosen so that the CNode resolves exactly
 the number of bits in the architecture (32 bits or 64 bits). This means, the
