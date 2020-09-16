@@ -86,9 +86,13 @@ exception_t handleUnknownSyscall(word_t w)
         halt();
     }
     if (w == SysDebugSnapshot) {
+#if defined CONFIG_ARCH_ARM || defined CONFIG_ARCH_X86_64 || defined CONFIG_ARCH_RISCV32
         tcb_t *UNUSED tptr = NODE_STATE(ksCurThread);
         printf("Debug snapshot syscall from user thread %p \"%s\"\n", tptr, TCB_PTR_DEBUG_PTR(tptr)->tcbName);
         capDL();
+#else
+        printf("Debug snapshot syscall not supported for the current arch\n");
+#endif
         return EXCEPTION_NONE;
     }
     if (w == SysDebugCapIdentify) {
