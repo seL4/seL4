@@ -24,8 +24,8 @@ which contains capabilities to the initial
 thread's own resources was well as to all available global resources.
 The CNode size can be configured at compile time (default is $2^{12}$
 slots), but the guard is always chosen so that the CNode resolves exactly
-32 bits. This means, the first slot of the CNode has CPTR 0x0, the
-second slot has CPTR 0x1 etc.
+the number of bits in the architecture (32 bits or 64 bits). This means, the
+first slot of the CNode has CPTR 0x0, the second slot has CPTR 0x1 etc.
 
 The first 12 slots contain specific capabilities as listed in
 \autoref{tab:cnode_content}.
