@@ -46,3 +46,8 @@ add_sources(
         src/object/schedcontrol.c
         src/kernel/sporadic.c
 )
+
+add_sources(
+    DEP "KernelDebugBuild;KernelArchARM OR KernelSel4ArchX86_64 OR KernelSel4ArchRiscV32"
+    CFILES src/machine/capdl.c
+)
