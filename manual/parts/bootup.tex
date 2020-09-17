@@ -187,10 +187,9 @@ memory being available.
       Field Type & Field Name & Description \\
       \midrule
       \texttt{seL4\_Word}  & \texttt{paddr}    & physical base address of the untyped object \\
-      \texttt{seL4\_Uint8} & \texttt{padding1} & manual padding so final struct is a multiple of the word size \\
-      \texttt{seL4\_Uint8} & \texttt{padding2} & manual padding so final struct is a multiple of the word size \\
       \texttt{seL4\_Uint8} & \texttt{sizeBits} & size ($2^n$ bytes) of the untyped object \\
       \texttt{seL4\_Uint8} & \texttt{isDevice} & is this untyped a device or not (see \autoref{sec:kernmemalloc}) \\
+      \texttt{seL4\_Uint8[]} & \texttt{padding} & manual padding so final struct is a multiple of the word size \\
       \bottomrule
     \end{tabular}
   \end{center}
