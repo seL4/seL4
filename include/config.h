@@ -104,3 +104,8 @@
 #endif
 #endif
 
+/* Configurations requring the kernel log buffer */
+#if defined CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES || \
+    defined CONFIG_BENCHMARK_TRACEPOINTS
+#define CONFIG_KERNEL_LOG_BUFFER
+#endif

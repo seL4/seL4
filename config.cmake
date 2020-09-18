@@ -372,13 +372,6 @@ config_string(
     DEPENDS "NOT KernelVerificationBuild;KernelBenchmarksTracepoints" DEFAULT_DISABLED 0
     UNQUOTE
 )
-# TODO: this config has no business being in the build system, and should
-# be moved to C headers, but for now must be emulated here for compatibility
-if(KernelBenchmarksTrackKernelEntries OR KernelBenchmarksTracepoints)
-    config_set(KernelBenchmarkUseKernelLogBuffer BENCHMARK_USE_KERNEL_LOG_BUFFER ON)
-else()
-    config_set(KernelBenchmarkUseKernelLogBuffer BENCHMARK_USE_KERNEL_LOG_BUFFER OFF)
-endif()
 
 config_option(
     KernelIRQReporting IRQ_REPORTING

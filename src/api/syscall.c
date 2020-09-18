@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
+#include <config.h>
 #include <types.h>
 #include <benchmark/benchmark.h>
 #include <arch/benchmark.h>
@@ -201,7 +202,7 @@ exception_t handleUnknownSyscall(word_t w)
 #endif
         return EXCEPTION_NONE;
     } else if (w == SysBenchmarkResetLog) {
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_LOG_BUFFER
         if (ksUserLogBuffer == 0) {
             userError("A user-level buffer has to be set before resetting benchmark.\
                     Use seL4_BenchmarkSetLogBuffer\n");
@@ -210,7 +211,7 @@ exception_t handleUnknownSyscall(word_t w)
         }
 
         ksLogIndex = 0;
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_KERNEL_LOG_BUFFER */
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
         NODE_STATE(benchmark_log_utilisation_enabled) = true;
         benchmark_track_reset_utilisation(NODE_STATE(ksIdleThread));
@@ -226,16 +227,16 @@ exception_t handleUnknownSyscall(word_t w)
         setRegister(NODE_STATE(ksCurThread), capRegister, seL4_NoError);
         return EXCEPTION_NONE;
     } else if (w == SysBenchmarkFinalizeLog) {
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_LOG_BUFFER
         ksLogIndexFinalized = ksLogIndex;
         setRegister(NODE_STATE(ksCurThread), capRegister, ksLogIndexFinalized);
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_KERNEL_LOG_BUFFER */
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
         benchmark_utilisation_finalise();
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
         return EXCEPTION_NONE;
     } else if (w == SysBenchmarkSetLogBuffer) {
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_LOG_BUFFER
         word_t cptr_userFrame = getRegister(NODE_STATE(ksCurThread), capRegister);
 
         if (benchmark_arch_map_logBuffer(cptr_userFrame) != EXCEPTION_NONE) {
@@ -245,7 +246,7 @@ exception_t handleUnknownSyscall(word_t w)
 
         setRegister(NODE_STATE(ksCurThread), capRegister, seL4_NoError);
         return EXCEPTION_NONE;
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_KERNEL_LOG_BUFFER */
     }
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION

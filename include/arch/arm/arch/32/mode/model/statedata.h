@@ -23,9 +23,9 @@ extern hw_asid_t armKSNextASID VISIBLE;
 extern pde_t armKSGlobalPD[BIT(PD_INDEX_BITS)] VISIBLE;
 extern pte_t armKSGlobalPT[BIT(PT_INDEX_BITS)] VISIBLE;
 
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_LOG_BUFFER
 extern pte_t armKSGlobalLogPT[BIT(PT_INDEX_BITS)] VISIBLE;
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_KERNEL_LOG_BUFFER */
 
 #else
 extern pdeS1_t armHSGlobalPGD[BIT(PGD_INDEX_BITS)] VISIBLE;
