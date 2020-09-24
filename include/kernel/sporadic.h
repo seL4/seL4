@@ -166,14 +166,6 @@ void refill_update(sched_context_t *sc, ticks_t new_period, ticks_t new_budget, 
 void refill_budget_check(ticks_t used);
 
 /*
- * Charge a the current scheduling context `used` amount from its
- * current refill. This will split the refill, leaving whatever is
- * left over at the head of the refill. This is only called when charging
- * `used` will not deplete the head refill.
- */
-void refill_split_check(ticks_t used);
-
-/*
  * This is called when a thread is eligible to start running: it
  * iterates through the refills queue and merges any
  * refills that overlap.
