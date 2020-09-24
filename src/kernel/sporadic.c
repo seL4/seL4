@@ -64,11 +64,15 @@ UNUSED static inline void refill_print(sched_context_t *sc)
 /* check a refill queue is ordered correctly */
 static UNUSED bool_t refill_ordered(sched_context_t *sc)
 {
+    if (isRoundRobin(sc)) {
+        return true;
+    }
+
     word_t current = sc->scRefillHead;
     word_t next = refill_next(sc, sc->scRefillHead);
 
     while (current != sc->scRefillTail) {
-        if (!(refill_index(sc, current)->rTime <= refill_index(sc, next)->rTime)) {
+        if (!(refill_index(sc, current)->rTime + refill_index(sc, current)->rAmount <= refill_index(sc, next)->rTime)) {
             refill_print(sc);
             return false;
         }
