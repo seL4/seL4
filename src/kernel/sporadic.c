@@ -210,15 +210,16 @@ void refill_update(sched_context_t *sc, ticks_t new_period, ticks_t new_budget, 
 
 static inline void schedule_used(sched_context_t *sc, refill_t new)
 {
-    /* schedule the used amount */
-    if (new.rAmount < MIN_BUDGET && !refill_single(sc)) {
-        /* used amount is to small - merge with last and delay */
+    if (unlikely(refill_tail(sc)->rTime + refill_tail(sc)->rAmount >= new.rTime)) {
+        /* Merge overlapping refill */
         refill_tail(sc)->rAmount += new.rAmount;
-        refill_tail(sc)->rTime = MAX(new.rTime, refill_tail(sc)->rTime);
-    } else if (new.rTime <= refill_tail(sc)->rTime) {
-        refill_tail(sc)->rAmount += new.rAmount;
-    } else {
+    } else if (likely(!refill_full(sc))) {
+        /* Add tail normally */
         refill_add_tail(sc, new);
+    } else {
+        /* Delay existing tail to merge */
+        refill_tail(sc)->rTime = new.rTime - refill_tail(sc)->rAmount;
+        refill_tail(sc)->rAmount += new.rAmount;
     }
 }
 
