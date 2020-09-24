@@ -47,12 +47,9 @@ static exception_t invokeSchedControl_Configure(sched_context_t *target, word_t 
          * period to 0, which means that the budget will always be ready to be refilled
          * and avoids some special casing.
          */
-        period = 0;
-        max_refills = MIN_REFILLS;
-    }
-
-    if (SMP_COND_STATEMENT(core == target->scCore &&) target->scRefillMax > 0 && target->scTcb
-        && isRunnable(target->scTcb)) {
+        REFILL_NEW(target, MIN_REFILLS, budget, 0, core);
+    } else if (SMP_COND_STATEMENT(core == target->scCore &&) target->scRefillMax > 0 && target->scTcb
+               && isRunnable(target->scTcb)) {
         /* the scheduling context is active - it can be used, so
          * we need to preserve the bandwidth */
         refill_update(target, period, budget, max_refills);
