@@ -235,6 +235,17 @@ static inline void ensure_sufficient_head(sched_context_t *sc)
     }
 }
 
+static bool_t refill_head_overlapping(sched_context_t *sc)
+{
+    if (!refill_single(sc)) {
+        ticks_t amount = refill_head(sc)->rAmount;
+        ticks_t tail = refill_head(sc)->rTime + amount;
+        return refill_index(sc, refill_next(sc, sc->scRefillHead))->rTime <= tail;
+    } else {
+        return false;
+    }
+}
+
 void refill_budget_check(ticks_t usage)
 {
     sched_context_t *sc = NODE_STATE(ksCurSC);
@@ -332,14 +343,6 @@ void refill_split_check(ticks_t usage)
 }
 
 
-static bool_t refill_unblock_check_mergable(sched_context_t *sc)
-{
-    ticks_t amount = refill_head(sc)->rAmount;
-    ticks_t tail = NODE_STATE_ON_CORE(ksCurTime, sc->scCore) + amount;
-    bool_t enough_time = refill_index(sc, refill_next(sc, sc->scRefillHead))->rTime <= tail;
-    return !refill_single(sc) && enough_time;
-}
-
 void refill_unblock_check(sched_context_t *sc)
 {
 
@@ -355,7 +358,7 @@ void refill_unblock_check(sched_context_t *sc)
         NODE_STATE(ksReprogram) = true;
 
         /* merge available replenishments */
-        while (refill_unblock_check_mergable(sc)) {
+        while (refill_head_overlapping(sc)) {
             ticks_t amount = refill_head(sc)->rAmount;
             refill_pop_head(sc);
             refill_head(sc)->rAmount += amount;
