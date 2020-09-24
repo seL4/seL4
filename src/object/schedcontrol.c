@@ -66,7 +66,8 @@ static exception_t invokeSchedControl_Configure(sched_context_t *target, word_t 
     }
 #endif /* ENABLE_SMP_SUPPORT */
 
-    if (target->scTcb && target->scRefillMax > 0) {
+    assert(target->scRefillMax > 0);
+    if (target->scTcb) {
         schedContext_resume(target);
         if (SMP_TERNARY(core == CURRENT_CPU_INDEX(), true)) {
             if (isRunnable(target->scTcb) && target->scTcb != NODE_STATE(ksCurThread)) {
