@@ -79,10 +79,10 @@ static UNUSED bool_t refill_ordered(sched_context_t *sc)
     return true;
 }
 
-#define REFILL_SANITY_START(sc) ticks_t _sum = refill_sum(sc); assert(refill_ordered(sc));
+#define REFILL_SANITY_START(sc) ticks_t _sum = refill_sum(sc); assert(isRoundRobin(sc) || refill_ordered(sc));
 #define REFILL_SANITY_CHECK(sc, budget) \
     do { \
-        assert(refill_sum(sc) == budget); assert(refill_ordered(sc)); \
+        assert(refill_sum(sc) == budget); assert(isRoundRobin(sc) || refill_ordered(sc)); \
     } while (0)
 
 #define REFILL_SANITY_END(sc) \
@@ -143,7 +143,7 @@ static inline void maybe_add_empty_tail(sched_context_t *sc)
 {
     if (isRoundRobin(sc)) {
         /* add an empty refill - we track the used up time here */
-        refill_t empty_tail = { .rTime = NODE_STATE(ksCurTime)};
+        refill_t empty_tail = { .rTime = refill_head(sc)->rTime };
         refill_add_tail(sc, empty_tail);
         assert(refill_size(sc) == MIN_REFILLS);
     }
@@ -329,7 +329,7 @@ void refill_split_check(ticks_t usage)
             schedule_used(sc, new);
             ensure_sufficient_head(sc);
         }
-        assert(refill_ordered(sc));
+        assert(isRoundRobin(sc) || refill_ordered(sc));
     } else {
         /* leave remnant as reduced replenishment */
         assert(remnant >= MIN_BUDGET);
