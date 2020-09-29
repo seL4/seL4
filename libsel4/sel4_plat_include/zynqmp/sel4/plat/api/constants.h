@@ -8,6 +8,10 @@
 
 #include <autoconf.h>
 
+#if !defined(CONFIG_PLAT_ZYNQMP) && !defined(PLAT_ZYNQMP_ZCU102)
+#error "unknown platform"
+#endif
+
 /* Cortex A57 manual, section 10.6.1 */
 #define seL4_NumHWBreakpoints (10)
 #define seL4_NumExclusiveBreakpoints (6)
