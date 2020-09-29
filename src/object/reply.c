@@ -97,26 +97,21 @@ void reply_remove(reply_t *reply, tcb_t *tcb)
     word_t next_ptr = call_stack_get_callStackPtr(reply->replyNext);
     word_t prev_ptr = call_stack_get_callStackPtr(reply->replyPrev);
 
-    if (likely(next_ptr)) {
-        if (likely(call_stack_get_isHead(reply->replyNext))) {
-            /* head of the call stack -> just pop */
-            reply_pop(reply, tcb);
-            return;
-        }
-        /* not the head, remove from middle - break the chain */
-        REPLY_PTR(next_ptr)->replyPrev = call_stack_new(0, false);
-        reply_unlink(REPLY_PTR(reply), tcb);
+    if (likely(next_ptr && call_stack_get_isHead(reply->replyNext))) {
+        /* head of the call stack -> just pop */
+        reply_pop(reply, tcb);
     } else {
-        /* removing start of call chain */
+        if (next_ptr) {
+            /* not the head, remove from middle - break the chain */
+            REPLY_PTR(next_ptr)->replyPrev = call_stack_new(0, false);
+        }
+        if (prev_ptr) {
+            REPLY_PTR(prev_ptr)->replyNext = call_stack_new(0, false);
+        }
+        reply->replyPrev = call_stack_new(0, false);
+        reply->replyNext = call_stack_new(0, false);
         reply_unlink(reply, tcb);
     }
-
-    if (prev_ptr) {
-        REPLY_PTR(prev_ptr)->replyNext = call_stack_new(0, false);
-    }
-
-    reply->replyPrev = call_stack_new(0, false);
-    reply->replyNext = call_stack_new(0, false);
 }
 
 void reply_remove_tcb(tcb_t *tcb)
