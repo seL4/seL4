@@ -189,9 +189,10 @@ finaliseCap_ret_t finaliseCap(cap_t cap, bool_t final, bool_t exposed)
             cte_ptr = TCB_PTR_CTE_PTR(tcb, tcbCTable);
             unbindNotification(tcb);
 #ifdef CONFIG_KERNEL_MCS
-            if (tcb->tcbSchedContext) {
-                schedContext_completeYieldTo(tcb->tcbSchedContext->scYieldFrom);
-                schedContext_unbindTCB(tcb->tcbSchedContext, tcb);
+            sched_context_t *sc = SC_PTR(tcb->tcbSchedContext);
+            if (sc) {
+                schedContext_unbindTCB(sc, tcb);
+                schedContext_completeYieldTo(sc->scYieldFrom);
             }
 #endif
             suspend(tcb);
