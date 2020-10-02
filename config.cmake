@@ -374,6 +374,13 @@ config_string(
 )
 
 config_option(
+    KernelDebugLogBuffer KERNEL_DEBUG_LOG_BUFFER "Enable debug logging of kernel events"
+    DEFAULT OFF
+    DEPENDS "KernelBenchmarksNone;NOT KernelVerificationBuild"
+    DEFAULT_DISABLED OFF
+)
+
+config_option(
     KernelIRQReporting IRQ_REPORTING
     "seL4 does not properly check for and handle spurious interrupts. This can result \
     in unnecessary output from the kernel during debug builds. If you are CERTAIN these \
