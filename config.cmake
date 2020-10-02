@@ -386,9 +386,16 @@ else()
     config_set(KernelEnableBenchmarks ENABLE_BENCHMARKS OFF)
 endif()
 
+config_option(
+    KernelEventTracing KERNEL_EVENT_TRACING "Enable debug logging of kernel events"
+    DEFAULT OFF
+    DEPENDS "KernelBenchmarksNone;NOT KernelVerificationBuild"
+    DEFAULT_DISABLED OFF
+)
+
 # CONFIG_ENABLE_KERNEL_LOG_BUFFER is set automatically if a feature is used that
 # needs the kernel log buffer.
-if(KernelBenchmarksTrackKernelEntries OR KernelBenchmarksTracepoints)
+if(KernelBenchmarksTrackKernelEntries OR KernelBenchmarksTracepoints OR KernelEventTracing)
     config_set(KernelLogBuffer ENABLE_KERNEL_LOG_BUFFER ON)
 else()
     config_set(KernelLogBuffer ENABLE_KERNEL_LOG_BUFFER OFF)
