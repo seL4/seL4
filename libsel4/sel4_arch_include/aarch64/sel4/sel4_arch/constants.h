@@ -260,6 +260,8 @@ SEL4_SIZE_SANITY(seL4_PUDEntryBits, seL4_PUDIndexBits, seL4_PUDBits);
 #define seL4_IPCBufferSizeBits 10
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+/* 1 slot at the end of the vspace is used to hold the VMID assigned to the vspace */
+#define seL4_VSpaceReservedSlots 1
 /* The userspace occupies the range 0x0 to 0xfffffffffff.
  * The stage-1 translation is disabled, and the stage-2
  * translation input addree size is constrained by the
@@ -271,7 +273,10 @@ SEL4_SIZE_SANITY(seL4_PUDEntryBits, seL4_PUDIndexBits, seL4_PUDBits);
 #if defined(CONFIG_ARM_PA_SIZE_BITS_44)
 #define seL4_UserTop 0x00000fffffffffff
 #elif defined(CONFIG_ARM_PA_SIZE_BITS_40)
-#define seL4_UserTop 0x000000ffffffffff
+/* Currently other definitions of seL4_UserTop already have free slots at the end and don't need to subtract for seL4_VSpaceReservedSlots.
+ * Each slot used requires subtracting 1GiB from the top address.
+ */
+#define seL4_UserTop (0x000000ffffffffff - seL4_VSpaceReservedSlots * 0x40000000)
 #else
 #error "Unknown physical address width"
 #endif

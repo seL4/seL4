@@ -28,6 +28,10 @@ Upcoming release: BREAKING
 
 * aarch32: Moved TPIDRURO (PL0 Read-Only Thread ID register) to TCB register context from VCPU registers. This means
   changes to this register from user level have to go via seL4_TCB_Write Registers instead of seL4_ARM_VCPU_WriteRegs.
+* aarch64,cortex-a53,hyp: Reduce seL4_UserTop when on a cortex-a53 platform and KernelArmHypervisorSupport is set.
+  This is because the kernel uses the last slot in the top level VSpace object for storing the assigned VMID and so
+  any addresses that are addressed by the final slot are not accessible.
+  This would apply to any CPU that have 40bit stage 2 translation input address.
 
 ## Upgrade Notes
 ---
