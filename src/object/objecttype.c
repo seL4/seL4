@@ -142,7 +142,7 @@ finaliseCap_ret_t finaliseCap(cap_t cap, bool_t final, bool_t exposed)
                     reply_remove(reply, reply->replyTCB);
                     break;
                 case ThreadState_BlockedOnReceive:
-                    reply_unlink(reply, reply->replyTCB);
+                    cancelIPC(reply->replyTCB);
                     break;
                 default:
                     fail("Invalid tcb state");
