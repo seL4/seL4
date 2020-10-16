@@ -54,12 +54,9 @@ void reply_push(tcb_t *tcb_caller, tcb_t *tcb_callee, reply_t *reply, bool_t can
 void reply_pop(reply_t *reply, tcb_t *tcb)
 {
     assert(reply != NULL);
-    assert(thread_state_get_tsType(reply->replyTCB->tcbState) == ThreadState_BlockedOnReply);
-    assert(thread_state_get_replyObject(tcb->tcbState) == REPLY_REF(reply));
     assert(reply->replyTCB == tcb);
-
-    /* unlink tcb and reply */
-    reply_unlink(reply, tcb);
+    assert(thread_state_get_tsType(tcb->tcbState) == ThreadState_BlockedOnReply);
+    assert(thread_state_get_replyObject(tcb->tcbState) == REPLY_REF(reply));
 
     word_t next_ptr = call_stack_get_callStackPtr(reply->replyNext);
     word_t prev_ptr = call_stack_get_callStackPtr(reply->replyPrev);
@@ -81,10 +78,11 @@ void reply_pop(reply_t *reply, tcb_t *tcb)
             REPLY_PTR(prev_ptr)->replyNext = reply->replyNext;
             assert(call_stack_get_isHead(REPLY_PTR(prev_ptr)->replyNext));
         }
-
-        reply->replyPrev = call_stack_new(0, false);
-        reply->replyNext = call_stack_new(0, false);
     }
+
+    reply->replyPrev = call_stack_new(0, false);
+    reply->replyNext = call_stack_new(0, false);
+    reply_unlink(reply, tcb);
 }
 
 /* Remove a reply from the middle of the call stack */
