@@ -78,7 +78,7 @@ if(DEFINED CONFIGURE_MAX_IRQ)
         math(EXPR BITS "${BITS} + 1")
     endif()
     set(CONFIGURE_IRQ_SLOT_BITS "${BITS}" CACHE INTERNAL "")
-    if(NOT DEFINED ${CONFIGURE_TIMER_PRECISION})
+    if(NOT DEFINED CONFIGURE_TIMER_PRECISION)
         set(CONFIGURE_TIMER_PRECISION "0")
     endif()
     configure_file(
