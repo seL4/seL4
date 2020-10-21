@@ -22,16 +22,148 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 Further information about [seL4 releases](https://docs.sel4.systems/sel4_release/) is available.
 
 ---
-Upcoming release: BREAKING
+Upcoming release: BINARY COMPATIBLE
 
 ## Changes
 
-* aarch32: Moved TPIDRURO (PL0 Read-Only Thread ID register) to TCB register context from VCPU registers. This means
-  changes to this register from user level have to go via seL4_TCB_Write Registers instead of seL4_ARM_VCPU_WriteRegs.
+## Upgrade Notes
+---
+12.0.0 2020-10-21: BREAKING
+
+## Changes
+
+* Arm SMMU v2 kernel API.
+* Add support for polarfire soc.
+* RISC-V: Rename PLIC driver file `hifive.h` to `riscv_plic0.h`.
+* aarch32: Moved TPIDRURO (PL0 Read-Only Thread ID register) to TCB register context from VCPU registers. This means changes to this register from user level have to go via `seL4_TCB_WriteRegisters` instead of `seL4_ARM_VCPU_WriteRegs`.
 * aarch64,cortex-a53,hyp: Reduce seL4_UserTop when on a cortex-a53 platform and KernelArmHypervisorSupport is set.
-  This is because the kernel uses the last slot in the top level VSpace object for storing the assigned VMID and so
-  any addresses that are addressed by the final slot are not accessible.
-  This would apply to any CPU that have 40bit stage 2 translation input address.
+    - This is because the kernel uses the last slot in the top level VSpace object for storing the assigned VMID and so any addresses that are addressed by the final slot are not accessible. This would apply to any CPU that have 40bit stage 2 translation input address.
+* mcs: add tcb argument to `reply_unlink`.
+* Build aarch32 kernel for ZCU102.
+* Improve seL4 manual.
+    - Add SchedContext to object size discussion.
+    - Fix initial thread's CNode guard size.
+    - Update BootInfo struct table.
+    - Update padding field in UntypedDesc.
+    - Remove metion of system criticality.
+    - Document schedcontext size_bits meaning.
+    - Mention grantreply rights in the exceptions section.
+    - Rework introduction of system calls.
+* Rockpro64: enable mcs.
+* Capdl: add kernel debugging tool for capdl.
+* RISC-V: clear reservation state on slowpath exit.
+* RISC-V: copy dtb as extra bootinfo.
+* mcs: return pointer from `refill_head` and others.
+* mcs: change `refill_head`, `refill_tail` to functions.
+* Fix `tcb_ptr_debug_ptr` debug macro.
+* RISC-V: clang support.
+* Clang 11 build fixes.
+* Updates for risc-v mcs cspec generation.
+    - Add config for MCS verification.
+    - bitfield_gen: emit fields in visible order.
+    - bitfield_gen: update proofs to support RISC-V MCS.
+* Gicv3: include cluster id when sending ipis.
+* RISC-V: use full width of scause.
+* CMake: kernel.elf LINK_DEPENDS linker script.
+* Bitfield_gen: fixups for mcs.
+* MCS System changes:
+    - Stops scheduling contexts from being bound to tcb's that already have scheduling contexts.
+* X86: `c_nested_interrupt` fix interrupt flag reset upon nested interrupt resume.
+* Create `debug_tcb_t` struct. This moves the debug fields inside a tcb into it's own separate struct.
+* Extend Kernel thread utilization benchmarking functions.
+* X64: The PCID feature is the 17th bit in ECX when CPUID is called with EAX=1. The constant for testing the feature should be 0x20000.
+* Fix x86 interrupt 21 macro definition
+* Repair barriers in `clh_lock_acquire`.
+* Repair barriers in `sel4_atomic_exchange`.
+
+* X86: fix printf typo in `apic_init`.
+* Aarch64: add vcpu cases to `structures.h`.
+VVVVV TODO
+* Consolidate kernel mapping constants:
+    - Use a single set of constants to describe the kernel virtual address space across all architectures.
+* Add Kernel printf implementation.
+* Riscv64 fpu:
+    -The removed while loop in `ipi_send_target` can cause a deadlock, if
+the target of an IPI remote call enters handleIPI through the
+`clh_is_ipi_pending` path in smp/lock.h.
+    - Switch the FPU owner when migrating a TCB to another core.
+    - Reset FPU owner when deleting a thread.
+    - Handle illegal instructions if FPU is off.
+    - Add FPU lazy switching code to kernel exits.
+    - Add FPU state storage in TCB and increase TCB size bits when FPU
+is enabled.
+* Add `isBlocked` and rename `isBlocked` to `isStopped`.
+* mcs: All scheduling contexts compare their time with time in assigned core.
+* RISC-V: add return in `decodeRISCVFrameInvocation`.
+* Split the `invokeTCB_ThreadControl` into `invokeTCB_ThreadControlCaps` and `invokeTCB_ThreadControlSched`.
+* RISC-V: fix page map bug.
+* Hifive: expose `sel4_irqcontrol_gettrigger` api.
+* RISC-V: Fixup `EXCEPTION_MESSAGE` definition and remove `seL4_UserException_FLAGS`
+* RISC-V: change `vm_fault_type_t` to `word_t`.
+* Kernel fixes for qemu-arm-virt platform:
+    - arm,check_export_arch_timer: zero unexported bits.
+    - aarch64,vcpu: Add CNTKCTL_EL1 register to `vcpu_t`.
+    - Use reserved-memory node for VM memory.
+* RISC-V: unify vm_rights for caps.
+* Add search for additonal gcc riscv toolchains if the first one cannot be found.
+* New config flag to enable userError format strings to be written to the IPC buffer.
+* RISC-V: add cache function prototype `arch_clean_invalidate_caches`.
+* Allow `Arch_checkIRQ` to use full range.
+* RISC-V: rename sptbr and remove `encoding.h`.
+* Replace ifdef guards by pragma once in kernel.
+* mcs: allow `replyGrant` for fault handlers.
+* gcc.cmake: 
+    - Don't use cache when setting variables.
+    - Detect if toolchain file is templated.
+    - Add option for coloured gcc output.
+    - Set CROSS_COMPILER_PREFIX in template.
+    - Add support for Arm cross-compilers on Red Hat distros.
+* Fix python warning in syscall stub generator.
+* Fastpath: fix for armv6 with gcc8.
+* Change license tags to SPDX.
+* Qemu-arm-virt: fix incorrect timer frequency.
+* Fastpath optimisation:
+    - Reorganise the code layout on Arm.
+    - bitfield_gen: explicit branch predictions.
+    - Optimize instruction cache access for fastpath.
+* Zynq7000: fix a timer accuracy issue.
+* Arm VCPU SMP:
+    - Added define for `VMPIDR` and `VMPIDR_EL2`.
+    - Remote IPI call support for VIRQS.
+    - Extend VPPI and GIC maintenance IRQs.
+    - Tranform irqs in `handleReservedIRQ`.
+    - qemu-arm-virt: Generate dtb based on SMP config.
+* Clang support:
+    - Use clang compatible inline assembly.
+    - Set the cross compiler prefix to the triple.
+    - Specify the compiler in a variable for user level.
+    - Specify shifts as unsigned in bitfield generation.
+* mcs-smp: tcb affinity modification bug.
+* RISC-V: bugfix, use the correct config macro.
+* Arm: Add support to flush L1 caches.
+* Create shared IRQ prototype definitions.
+* Fix up timers and clock frequencies
+    - imx6: fix clock frequency.
+    - imx31: add missing dts entry for the epit2 timer.
+    - Fix MCS timer for KZM.
+    - Fix TX1 clock timer.
+    - Remove beaglebone kernel timer prescaling.
+    - Fix x86 `KERNEL_TIMER_IRQ` definition.
+* Move `vcpu_switch` into `Arch_switchToThread`.
+* aarch64: fixes
+    - Fixes a bug where writeFAR was only writing to the low 32 bits of the 64-bit `FAR_EL1` register.
+    - Fixes a bug where writeELR_EL1 was reading from ELR_EL1 instead of
+writing to it.
+* Expand and fix Arm architecture-specific object method documentation in `sel4arch.xml`.
+* Hardware_gen: Add cpus described in dts to elfloader output header.
+* Fix bug with boot failing when user image pushed against page directory boundary.
+    - Fix `calculate_extra_bi_size_bits` implementation.
+    - boot: Use `extra_bi_size_bits` for vreg size calculation.
+* Use autoconf definition for `RetypeMaxObjects`.
+* Improve introduction to CHANGES section.
+* RISC-V: add support for rocketchip soc.
+* RISC-V: update page table level numberings from 1,2,.. to 0,1,..
+* Rename `kdev_pptr/pptr_kdev` to `kdev_base`.
 
 ## Upgrade Notes
 ---
