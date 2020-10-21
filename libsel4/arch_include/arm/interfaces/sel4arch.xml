@@ -314,6 +314,9 @@
             <brief>
                 Create a SID capability.
             </brief>
+            <description>
+                <docref>See <autoref label="sec:smmuv2-creating-sel4-arm-sid-capabilities"/>.</docref>
+            </description>
             <param dir="in" name="sid" type="seL4_Word" description="The SID that you want this capability to manage."/>
             <param dir="in" name="root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
@@ -324,6 +327,9 @@
             <brief>
                 Get the fault status of the SMMU.
             </brief>
+            <description>
+                <docref>See <autoref label="sec:smmuv2-fault-handling"/>.</docref>
+            </description>
             <return>
                 A <texttt text='seL4_ARM_SMMU_GetFault_t'/> struct that contains a
                 <texttt text='seL4_Word status'/>, which holds the global fault status of the SMMU,
@@ -341,6 +347,9 @@
             <brief>
                 Clear the fault status of the SMMU.
             </brief>
+            <description>
+                <docref>See <autoref label="sec:smmuv2-fault-handling"/>.</docref>
+            </description>
         </method>
     </interface>
     <interface name="seL4_ARM_SID" manual_name="SID" cap_description="A SID capability. This gives you the authority to make this call.">
@@ -349,6 +358,9 @@
             <brief>
                 Binding a context bank to a stream ID.
             </brief>
+            <description>
+                <docref>See <autoref label="sec:smmuv2-configuring-streams-transactions"/>.</docref>
+            </description>
            <param dir="in" name="cb" type="seL4_CPtr"
             description="The CB that is being binded to a stream ID. Must already has an assigned vspace."/>
         </method>
@@ -357,6 +369,9 @@
             <brief>
                 Unbinding a context bank from a stream ID.
             </brief>
+            <description>
+                <docref>See <autoref label="sec:smmuv2-configuring-streams-transactions"/>.</docref>
+            </description>
         </method>
     </interface>
     <interface name="seL4_ARM_CBControl" manual_name="CB Control" cap_description="A CBControl capability. This gives you the authority to make this call.">
@@ -365,6 +380,9 @@
             <brief>
                 Create a CB capability.
             </brief>
+            <description>
+                <docref>See <autoref label="sec:smmuv2-creating-sel4-arm-cb-capabilities"/>.</docref>
+            </description>
             <param dir="in" name="cb" type="seL4_Word" description="The CB that you want this capability to manage."/>
             <param dir="in" name="root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
@@ -375,6 +393,9 @@
             <brief>
                 Invalidate all TLB entries.
             </brief>
+            <description>
+                <docref>See <autoref label="sec:smmuv2-tlb-invalidation"/>.</docref>
+            </description>
         </method>
     </interface>
     <interface name="seL4_ARM_CB" manual_name="CB" cap_description="A CB capability. This gives you the authority to make this call.">
@@ -383,6 +404,9 @@
             <brief>
                 Assigning a vspace to a context bank.
             </brief>
+            <description>
+                <docref>See <autoref label="sec:smmuv2-configuring-context-banks"/>.</docref>
+            </description>
            <param dir="in" name="vspace" type="seL4_CPtr"
             description="The VSpace that is being assigned to a context bank. Must already has an assigned ASID."/>
         </method>
@@ -391,18 +415,27 @@
             <brief>
                 Unassigning a vspace to a context bank.
             </brief>
+            <description>
+                <docref>See <autoref label="sec:smmuv2-configuring-context-banks"/>.</docref>
+            </description>
         </method>
         <method id="ARMCBTLBInvalidate" name="TLBInvalidate" manual_name="TLBInvalidate"
            manual_label="cb_tlbinvalidate">
             <brief>
                 Invalidating TLB entries used by the current ASID in this context bank.
             </brief>
+            <description>
+                <docref>See <autoref label="sec:smmuv2-tlb-invalidation"/>.</docref>
+            </description>
         </method>
         <method id="ARMCBGetFault" name="CBGetFault" manual_name="CBGetFault"
            manual_label="cb_getfault">
             <brief>
                 Get the fault status of the context bank.
             </brief>
+            <description>
+                <docref>See <autoref label="sec:smmuv2-fault-handling"/>.</docref>
+            </description>
             <return>
                 A <texttt text='seL4_ARM_SMMU_CB_GetFault_t'/> struct that contains a
                 <texttt text='seL4_Word status'/>, which holds the fault status of the context bank,
@@ -418,6 +451,9 @@
             <brief>
                  Clear the fault status of the context bank.
             </brief>
+            <description>
+                <docref>See <autoref label="sec:smmuv2-fault-handling"/>.</docref>
+            </description>
         </method>
     </interface>
 </api>
