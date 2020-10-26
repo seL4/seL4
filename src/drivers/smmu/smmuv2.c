@@ -102,7 +102,6 @@ static inline uint32_t smmu_obs_size_to_bits(uint32_t size)
         return 42;
     case 4:
         return 44;
-    case 5:
     default:
         return 48;
     }
@@ -124,7 +123,6 @@ static inline uint32_t smmu_ubs_size_to_bits(uint32_t size)
         return 44;
     case 5:
         return 49;
-    case 0xf:
     default:
         return 64;
     }
@@ -442,7 +440,6 @@ static void smmu_config_stage1(struct smmu_table_config *cfg,
     case 44:
         reg |= CBn_TCR2_PASize_SET(CBn_TCR2_PASize_44);
         break;
-    case 48:
     default:
         reg |= CBn_TCR2_PASize_SET(CBn_TCR2_PASize_48);
         break;

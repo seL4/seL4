@@ -297,6 +297,7 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
             return cap_vcpu_cap_get_capVCPUPtr(cap_a) ==
                    cap_vcpu_cap_get_capVCPUPtr(cap_b);
         }
+        break;
 #endif
 #ifdef CONFIG_ARM_SMMU
     case cap_sid_control_cap:
@@ -304,21 +305,25 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
             cap_get_capType(cap_b) == cap_sid_cap) {
             return true;
         }
+        break;
     case cap_cb_control_cap:
         if (cap_get_capType(cap_b) == cap_cb_control_cap ||
             cap_get_capType(cap_b) == cap_cb_cap) {
             return true;
         }
+        break;
     case cap_sid_cap:
         if (cap_get_capType(cap_b) == cap_sid_cap) {
             return cap_sid_cap_get_capSID(cap_a) ==
                    cap_sid_cap_get_capSID(cap_b);
         }
+        break;
     case cap_cb_cap:
         if (cap_get_capType(cap_b) == cap_cb_cap) {
             return cap_cb_cap_get_capCB(cap_a) ==
                    cap_cb_cap_get_capCB(cap_b);
         }
+        break;
 #endif
     }
     return false;

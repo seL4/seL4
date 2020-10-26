@@ -310,7 +310,7 @@
     </interface>
     <interface name="seL4_ARM_SIDControl" manual_name="SID Control" cap_description="A SIDControl capability. This gives you the authority to make this call.">
        <method id="ARMSIDIssueSIDManager" name="GetSID" manual_name="GetSID"
-           manual_label="sid_controlgetsid">
+           manual_label="sid_controlgetsid" condition="defined(CONFIG_ARM_SMMU)">
             <brief>
                 Create a SID capability.
             </brief>
@@ -323,7 +323,7 @@
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
         </method>
        <method id="ARMSIDGetFault" name="GetFault" manual_name="GetFault"
-           manual_label="sid_controlgetfault">
+           manual_label="sid_controlgetfault" condition="defined(CONFIG_ARM_SMMU)">
             <brief>
                 Get the fault status of the SMMU.
             </brief>
@@ -343,7 +343,7 @@
             <param dir="out" name="syndrome_1" type="seL4_Word"/>
         </method>
         <method id="ARMSIDClearFault" name="ClearFault" manual_name="ClearFault"
-           manual_label="sid_controlclearfault">
+           manual_label="sid_controlclearfault" condition="defined(CONFIG_ARM_SMMU)">
             <brief>
                 Clear the fault status of the SMMU.
             </brief>
@@ -354,7 +354,7 @@
     </interface>
     <interface name="seL4_ARM_SID" manual_name="SID" cap_description="A SID capability. This gives you the authority to make this call.">
        <method id="ARMSIDBindCB" name="BindCB" manual_name="BindCB"
-           manual_label="sid_bindcb">
+           manual_label="sid_bindcb" condition="defined(CONFIG_ARM_SMMU)">
             <brief>
                 Binding a context bank to a stream ID.
             </brief>
@@ -365,7 +365,7 @@
             description="The CB that is being binded to a stream ID. Must already has an assigned vspace."/>
         </method>
        <method id="ARMSIDUnbindCB" name="UnbindCB" manual_name="UnbindCB"
-           manual_label="sid_unbindcb">
+           manual_label="sid_unbindcb" condition="defined(CONFIG_ARM_SMMU)">
             <brief>
                 Unbinding a context bank from a stream ID.
             </brief>
@@ -376,7 +376,7 @@
     </interface>
     <interface name="seL4_ARM_CBControl" manual_name="CB Control" cap_description="A CBControl capability. This gives you the authority to make this call.">
        <method id="ARMCBIssueCBManager" name="GetCB" manual_name="GetCB"
-           manual_label="cb_controlgetcb">
+           manual_label="cb_controlgetcb" condition="defined(CONFIG_ARM_SMMU)">
             <brief>
                 Create a CB capability.
             </brief>
@@ -389,7 +389,7 @@
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
         </method>
         <method id="ARMCBTLBInvalidateAll" name="TLBInvalidateAll" manual_name="TLBInvalidateAll"
-           manual_label="cb_controltlbinvalidate">
+           manual_label="cb_controltlbinvalidate" condition="defined(CONFIG_ARM_SMMU)">
             <brief>
                 Invalidate all TLB entries.
             </brief>
@@ -400,7 +400,7 @@
     </interface>
     <interface name="seL4_ARM_CB" manual_name="CB" cap_description="A CB capability. This gives you the authority to make this call.">
        <method id="ARMCBAssignVspace" name="AssignVspace" manual_name="AssignVspace"
-           manual_label="cb_assignvspace">
+           manual_label="cb_assignvspace" condition="defined(CONFIG_ARM_SMMU)">
             <brief>
                 Assigning a vspace to a context bank.
             </brief>
@@ -411,7 +411,7 @@
             description="The VSpace that is being assigned to a context bank. Must already has an assigned ASID."/>
         </method>
         <method id="ARMCBUnassignVspace" name="UnassignVspace" manual_name="UnassignVspace"
-           manual_label="cb_unassignvspace">
+           manual_label="cb_unassignvspace" condition="defined(CONFIG_ARM_SMMU)">
             <brief>
                 Unassigning a vspace to a context bank.
             </brief>
@@ -420,7 +420,7 @@
             </description>
         </method>
         <method id="ARMCBTLBInvalidate" name="TLBInvalidate" manual_name="TLBInvalidate"
-           manual_label="cb_tlbinvalidate">
+           manual_label="cb_tlbinvalidate" condition="defined(CONFIG_ARM_SMMU)">
             <brief>
                 Invalidating TLB entries used by the current ASID in this context bank.
             </brief>
@@ -429,7 +429,7 @@
             </description>
         </method>
         <method id="ARMCBGetFault" name="CBGetFault" manual_name="CBGetFault"
-           manual_label="cb_getfault">
+           manual_label="cb_getfault" condition="defined(CONFIG_ARM_SMMU)">
             <brief>
                 Get the fault status of the context bank.
             </brief>
@@ -447,7 +447,7 @@
             <param dir="out" name="address" type="seL4_Word"/>
         </method>
         <method id="ARMCBClearFault" name="CBClearFault" manual_name="CBClearFault"
-           manual_label="cb_clearfault">
+           manual_label="cb_clearfault" condition="defined(CONFIG_ARM_SMMU)">
             <brief>
                  Clear the fault status of the context bank.
             </brief>

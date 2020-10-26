@@ -175,6 +175,7 @@ foreach(
     KernelArchArmV7a
     KernelArchArmV7ve
     KernelArchArmV8a
+    KernelArmSMMU
 )
     unset(${var} CACHE)
     set(${var} OFF)
