@@ -371,7 +371,7 @@ void print_cap_arch(cap_t cap)
 #endif
 
         /* ARM specific caps */
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
     case cap_io_space_cap: {
         printf("%p_io_space\n", (void *)cap_io_space_cap_get_capModuleID(cap));
         break;
@@ -408,7 +408,7 @@ void print_object_arch(cap_t cap)
     }
 #endif
         /* ARM specific objects */
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
     case cap_io_space_cap: {
         printf("%p_io_space = io_space ", (void *)cap_io_space_cap_get_capModuleID(cap));
         arm_obj_iospace_print_attrs(cap);

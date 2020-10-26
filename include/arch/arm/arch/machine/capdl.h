@@ -8,7 +8,7 @@
 
 #include <machine/capdl.h>
 
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
 static inline void arm_obj_iospace_print_attrs(cap_t iospace_cap)
 {
     printf("(armiospace: %lu)\n", (long unsigned int)cap_io_space_cap_get_capModuleID(iospace_cap));
