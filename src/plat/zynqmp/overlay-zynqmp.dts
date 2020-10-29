@@ -33,6 +33,7 @@
 		seL4,kernel-devices =
 		    "serial0",
 		    &{/amba_apu@0/interrupt-controller@f9010000},
-		    &{/timer};
+		    &{/timer},
+		    &{/amba/smmu@fd800000};
     };
 };
