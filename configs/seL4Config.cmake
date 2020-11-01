@@ -62,9 +62,13 @@ macro(declare_seL4_arch sel4_arch)
 
     # Set kernel mode options
     if(KernelSel4ArchAarch32 OR KernelSel4ArchArmHyp OR KernelSel4ArchRiscV32 OR KernelSel4ArchIA32)
-        set_kernel_32()
+        config_set(KernelWordSize WORD_SIZE 32)
+        set(Kernel64 OFF CACHE INTERNAL "")
+        set(Kernel32 ON CACHE INTERNAL "")
     elseif(KernelSel4ArchAarch64 OR KernelSel4ArchRiscV64 OR KernelSel4ArchX86_64)
-        set_kernel_64()
+        config_set(KernelWordSize WORD_SIZE 64)
+        set(Kernel64 ON CACHE INTERNAL "")
+        set(Kernel32 OFF CACHE INTERNAL "")
     endif()
 
 endmacro()
