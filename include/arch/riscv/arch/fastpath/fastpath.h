@@ -120,6 +120,9 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
         LOAD_S "  gp, (2*%[REGSIZE])(t0)  \n"
         /* skip tp */
         /* skip x5/t0 */
+        /* no-op store conditional to clear monitor state */
+        /* this may succeed in implementations with very large reservations, but the saved ra is dead */
+        "sc.w zero, zero, (t0)\n"
         LOAD_S "  t2, (6*%[REGSIZE])(t0)  \n"
         LOAD_S "  s0, (7*%[REGSIZE])(t0)  \n"
         LOAD_S "  s1, (8*%[REGSIZE])(t0)  \n"
