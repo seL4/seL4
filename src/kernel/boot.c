@@ -18,10 +18,10 @@
 #include <util.h>
 
 /* (node-local) state accessed only during bootstrapping */
-ndks_boot_t ndks_boot BOOT_DATA;
+ndks_boot_t ndks_boot BOOT_BSS;
 
-rootserver_mem_t rootserver BOOT_DATA;
-static region_t rootserver_mem BOOT_DATA;
+rootserver_mem_t rootserver BOOT_BSS;
+static region_t rootserver_mem BOOT_BSS;
 
 BOOT_CODE static void merge_regions(void)
 {
