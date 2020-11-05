@@ -33,7 +33,7 @@ exception_t preemptionPoint(void)
 #ifdef CONFIG_KERNEL_MCS
         } else {
             updateTimestamp();
-            if (!(sc_active(NODE_STATE(ksCurSC)) && checkBudget())) {
+            if (!(sc_active(NODE_STATE(ksCurSC)) && isSufficientAndSplittable()) || isCurDomainExpired()) {
                 return EXCEPTION_PREEMPTED;
             }
 #endif
