@@ -91,7 +91,7 @@ void restart(tcb_t *target)
         cancelIPC(target);
 #ifdef CONFIG_KERNEL_MCS
         setThreadState(target, ThreadState_Restart);
-        if (target->tcbSchedContext != NULL) {
+        if (target->tcbSchedContext != NULL && sc_active(target->tcbSchedContext)) {
             assert(target->tcbSchedContext != NODE_STATE(ksCurSC));
             refill_unblock_check(target->tcbSchedContext);
         }
@@ -142,7 +142,8 @@ void doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, bool_t grant)
     assert(thread_state_get_replyObject(receiver->tcbState) == REPLY_REF(0));
     assert(reply->replyTCB == NULL);
 
-    if (receiver->tcbSchedContext && receiver->tcbSchedContext != NODE_STATE(ksCurSC)) {
+    if (receiver->tcbSchedContext && sc_active(receiver->tcbSchedContext)
+        && receiver->tcbSchedContext != NODE_STATE(ksCurSC)) {
         refill_unblock_check(receiver->tcbSchedContext);
     }
 #else

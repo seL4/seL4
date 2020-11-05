@@ -286,7 +286,9 @@ void schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb)
 
     SMP_COND_STATEMENT(migrateTCB(tcb, sc->scCore));
 
-    refill_unblock_check(sc);
+    if (sc_active(sc)) {
+        refill_unblock_check(sc);
+    }
     schedContext_resume(sc);
     if (isSchedulable(tcb)) {
         SCHED_ENQUEUE(tcb);
