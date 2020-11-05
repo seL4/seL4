@@ -45,7 +45,7 @@ static inline void maybeDonateSchedContext(tcb_t *tcb, notification_t *ntfnPtr)
         sched_context_t *sc = SC_PTR(notification_ptr_get_ntfnSchedContext(ntfnPtr));
         if (sc != NULL && sc->scTcb == NULL) {
             schedContext_donate(sc, tcb);
-            if (sc != NODE_STATE(ksCurSC)) {
+            if (sc != NODE_STATE(ksCurSC) && sc_active(sc)) {
                 /* refill_unblock_check should not be called on the
                  * current SC as it is already running. The current SC
                  * may have been bound to a notificaiton object if the
