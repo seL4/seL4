@@ -24,6 +24,11 @@ enum IRQConstants {
 #include <@CONFIGURE_TIMER@>
 
 #cmakedefine CONFIGURE_SMMU <@CONFIGURE_SMMU@>
+#if (defined(CONFIGURE_SMMU) && defined(CONFIG_TK1_SMMU))
+#include CONFIGURE_SMMU
+#endif
+
+#cmakedefine CONFIGURE_SMMU <@CONFIGURE_SMMU@>
 #if (defined(CONFIGURE_SMMU) && defined(CONFIG_ARM_SMMU))
 #include CONFIGURE_SMMU
 
