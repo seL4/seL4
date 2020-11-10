@@ -392,6 +392,8 @@ static inline void cleanByVA_PoU(vptr_t vaddr, paddr_t paddr)
     asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
 #elif defined(CONFIG_PLAT_TK1)
     asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
+#elif defined(CONFIG_PLAT_RK3288)
+    asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
 #elif defined(CONFIG_ARM_CORTEX_A53)
     asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
 #else

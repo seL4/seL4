@@ -49,6 +49,7 @@ imx6q-wandboard-revd1=wandq
 imx7d-sdb=imx7sabre
 omap3-beagle=omap3
 qcom-apq8064-ifc6410=apq8064
+rk3288-ntablet=rk3288-ntablet-870a-5648
 sun7i-a20-cubietruck=allwinnera20
 tegra124-jetson-tk1=tk1
 zynq-zc706=zynq7000

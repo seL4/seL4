@@ -1,0 +1,24 @@
+/*
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+	chosen {
+		seL4,elfloader-devices =
+		    "serial2";
+		seL4,kernel-devices =
+		    "serial2",
+		    &{/interrupt-controller@ffc01000},
+		    &{/timer};
+	};
+
+	// Trustzone carves out some RAM for its secure zone.
+	// Ideally we'd use the memory node passed in from U-Boot,
+	// but for now we need this at compile time.
+	memory {
+		 reg = <0x0 0x0 0x0 0x08400000 0x0 0x09200000 0x0 0x76e00000>;
+	};
+
+};
