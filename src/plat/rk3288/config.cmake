@@ -11,8 +11,7 @@ cmake_minimum_required(VERSION 3.7.2)
 # want to keep that on one line so the `griddle` tool (or humans) can
 # easily `grep` a list of supported platforms.
 # For now we don't support HYP... but include it for later.
-#set(AArch32OrArchArmHyp "KernelSel4ArchAarch32 OR KernelSel4ArchArmHyp")
-set(AArch32OrArchArmHyp "KernelSel4ArchAarch32")
+set(AArch32OrArchArmHyp "KernelSel4ArchAarch32 OR KernelSel4ArchArmHyp")
 declare_platform(rk3288 KernelPlatformRK3288 PLAT_RK3288 ${AArch32OrArchArmHyp})
 unset(${AArch32OrArchArmHyp} CACHE)
 
