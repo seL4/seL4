@@ -9,7 +9,7 @@ cmake_minimum_required(VERSION 3.7.2)
 # We introduce a variable to hold this long expression to prevent the
 # code styler from line-wrapping the declare_platform() statement.  We
 # want to keep that on one line so the `griddle` tool (or humans) can
-# easily `grep` a list of supported platforms. 
+# easily `grep` a list of supported platforms.
 # For now we don't support HYP... but include it for later.
 #set(AArch32OrArchArmHyp "KernelSel4ArchAarch32 OR KernelSel4ArchArmHyp")
 set(AArch32OrArchArmHyp "KernelSel4ArchAarch32")
@@ -24,13 +24,13 @@ foreach(config IN LISTS cmake_configs)
 endforeach()
 
 if(KernelPlatformRK3288)
-#    if("${KernelSel4Arch}" STREQUAL aarch32)
-     declare_seL4_arch(aarch32)
-#    elseif("${KernelSel4Arch}" STREQUAL arm_hyp)
-#        declare_seL4_arch(arm_hyp)
-#    else()
-#        fallback_declare_seL4_arch_default(aarch32)
-#    endif()
+    #("${KernelSel4Arch}" STREQUAL aarch32)
+    declare_seL4_arch(aarch32)
+    #("${KernelSel4Arch}" STREQUAL arm_hyp)
+    #    declare_seL4_arch(arm_hyp)
+    #else()
+    #    fallback_declare_seL4_arch_default(aarch32)
+    #endif()
     set(KernelArmCortexA15 ON) #almost the same as A17
     set(KernelArchArmV7ve ON)
     # v7ve is a superset of v7a, so we enable that as well
@@ -64,7 +64,7 @@ endif()
 add_sources(
     DEP "KernelPlatformRK3288"
     CFILES
-        src/arch/arm/machine/gic_v2.c
-        src/arch/arm/machine/l2c_nop.c
-        src/plat/rk3288/machine/timer.c
+        # I consider the next line to be too long,
+        # but the github style checker insists on having it all on one line.
+        src/arch/arm/machine/gic_v2.c src/arch/arm/machine/l2c_nop.c src/plat/rk3288/machine/timer.c
 )
