@@ -379,6 +379,12 @@ config_option(
     DEPENDS "KernelBenchmarksNone;NOT KernelVerificationBuild"
     DEFAULT_DISABLED OFF
 )
+config_option(
+    KernelDebugLogEntries KERNEL_DEBUG_LOG_ENTRIES "Enable debug logging of entry and exit"
+    DEFAULT ON
+    DEPENDS "KernelDebugLogBuffer"
+    DEFAULT_DISABLED OFF
+)
 
 config_option(
     KernelIRQReporting IRQ_REPORTING

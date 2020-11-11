@@ -11,6 +11,9 @@
 #ifdef CONFIG_KERNEL_DEBUG_LOG_BUFFER
 #include <sel4/log.h>
 #include <basic_types.h>
+#include <arch/benchmark.h>
+#include <model/statedata.h>
+#include <arch/model/smp.h>
 
 /* The global logbuffer reference used by the kernel */
 extern seL4_LogBuffer ksLogBuffer;
@@ -103,6 +106,30 @@ static inline seL4_LogEvent *logBuffer_reserveGeneric(seL4_Word type)
 static inline void debugLog_Function(None)(void)
 {
     logBuffer_reserve(None);
+}
+
+/* Log a kernel entry */
+static inline void debugLog_Function(Entry)(void)
+{
+#ifdef CONFIG_KERNEL_DEBUG_LOG_ENTRIES
+    seL4_Log_Type(Entry) *event = logBuffer_reserve(Entry);
+    if (event != NULL) {
+        event->header.data = CURRENT_CPU_INDEX();
+        event->timestamp = timestamp();
+    }
+#endif
+}
+
+/* Log a kernel exit */
+static inline void debugLog_Function(Exit)(void)
+{
+#ifdef CONFIG_KERNEL_DEBUG_LOG_ENTRIES
+    seL4_Log_Type(Exit) *event = logBuffer_reserve(Exit);
+    if (event != NULL) {
+        event->header.data = CURRENT_CPU_INDEX();
+        event->timestamp = timestamp();
+    }
+#endif
 }
 
 #else /* CONFIG_KERNEL_DEBUG_LOG_BUFFER */

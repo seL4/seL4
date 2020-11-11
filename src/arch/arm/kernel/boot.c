@@ -222,7 +222,7 @@ BOOT_CODE static bool_t init_cpu(void)
 
     cpu_initLocalIRQController();
 
-#ifdef CONFIG_ENABLE_BENCHMARKS
+#if defined(CONFIG_ENABLE_BENCHMARKS) || defined(CONFIG_KERNEL_DEBUG_LOG_ENTRIES)
     arm_init_ccnt();
 #endif /* CONFIG_ENABLE_BENCHMARKS */
 

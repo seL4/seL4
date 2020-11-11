@@ -71,6 +71,8 @@ typedef struct {
 /* Event type identifiers */
 enum {
     seL4_Log_TypeId(None),
+    seL4_Log_TypeId(Entry),
+    seL4_Log_TypeId(Exit),
     seL4_NumLogTypeIds,
 };
 
@@ -78,6 +80,22 @@ enum {
 typedef struct {
     seL4_LogEvent header;
 } seL4_Log_Type(None);
+
+/* Entry into kernel */
+typedef struct {
+    /* Header data contains core ID */
+    seL4_LogEvent header;
+    /* Timestamp from cycle counter */
+    seL4_Uint64 timestamp;
+} seL4_Log_Type(Entry);
+
+/* Exit from kernel */
+typedef struct {
+    /* Header data contains core ID */
+    seL4_LogEvent header;
+    /* Timestamp from cycle counter */
+    seL4_Uint64 timestamp;
+} seL4_Log_Type(Exit);
 
 /*
  * Reading information from log events
@@ -92,6 +110,8 @@ static inline seL4_Word seL4_LogType_length(seL4_Word type)
 {
     static seL4_Word type_lengths[seL4_NumLogTypeIds] = {
         [seL4_Log_TypeId(None)] = seL4_Log_Length(None),
+        [seL4_Log_TypeId(Entry)] = seL4_Log_Length(Entry),
+        [seL4_Log_TypeId(Exit)] = seL4_Log_Length(Exit),
     };
 
     if (type >= seL4_NumLogTypeIds) {

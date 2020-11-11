@@ -7,7 +7,7 @@
 #pragma once
 
 #include <config.h>
-#ifdef CONFIG_ENABLE_BENCHMARKS
+#if defined(CONFIG_ENABLE_BENCHMARKS) || defined(CONFIG_KERNEL_DEBUG_LOG_ENTRIES)
 
 static inline uint64_t timestamp(void)
 {
