@@ -544,7 +544,7 @@ endmacro(get_generated_files)
 # This rule tries to emulate an 'autoconf' header. autoconf generated headers
 # were previously used as configuration, so this rule provides a way for previous
 # applications and libraries to build without modification. The config_list
-# is a list of 'prefix' values that have been pssed to add_config_library
+# is a list of 'prefix' values that have been passed to add_config_library
 # This generates a library with ${targetname} that when linked against
 # will allow code to simply #include <autoconf.h>
 function(generate_autoconf targetname config_list)
