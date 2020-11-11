@@ -550,24 +550,16 @@ endmacro(get_generated_files)
 function(generate_autoconf targetname config_list)
     set(link_list "")
     set(gen_list "")
-    set(include_list "#ifndef AUTOCONF_${targetname}_H" "#define AUTOCONF_${targetname}_H")
+    set(config_header_contents "\n#pragma once\n\n#define AUTOCONF_INCLUDED\n\n")
     foreach(config IN LISTS config_list)
         list(APPEND link_list "${config}_Config")
         get_generated_files(gens ${config}_Gen)
         list(APPEND gen_list ${gens})
-        list(APPEND include_list "#include <${config}/gen_config.h>")
+        string(APPEND config_header_contents "#include <${config}/gen_config.h>\n")
     endforeach()
-    list(APPEND include_list "#endif")
     set(config_dir "${CMAKE_CURRENT_BINARY_DIR}/autoconf")
     set(config_file "${config_dir}/autoconf.h")
 
-    string(
-        REPLACE
-            ";"
-            "\n"
-            config_header_contents
-            "#define AUTOCONF_INCLUDED;${include_list}"
-    )
     file(GENERATE OUTPUT "${config_file}" CONTENT "${config_header_contents}")
     add_custom_target(${targetname}_Gen DEPENDS "${config_file}")
     add_library(${targetname} INTERFACE)
