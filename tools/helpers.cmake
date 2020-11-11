@@ -525,7 +525,7 @@ function(add_config_library prefix configure_template)
             config_header_contents
             "${config_header_contents}"
     )
-    file(GENERATE OUTPUT "${config_file}" CONTENT "${config_header_contents}")
+    file(GENERATE OUTPUT "${config_file}" CONTENT "\n#pragma once\n\n${config_header_contents}")
     add_custom_target(${prefix}_Gen DEPENDS "${config_file}")
     add_library(${prefix}_Config INTERFACE)
     target_include_directories(${prefix}_Config INTERFACE "${config_dir}")
