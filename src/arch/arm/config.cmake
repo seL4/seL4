@@ -185,7 +185,7 @@ config_option(
         operations in a multithreading environment, instead of relying on \
         software emulation of FPU/VFP from the C library (e.g. mfloat-abi=soft)."
     DEFAULT ON
-    DEPENDS "KernelSel4ArchAarch32;NOT KernelVerificationBuild"
+    DEPENDS "KernelSel4ArchAarch32"
     DEFAULT_DISABLED OFF
 )
 
