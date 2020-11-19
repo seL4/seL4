@@ -85,9 +85,22 @@ static pte_t pte_next(word_t phys_addr, bool_t is_leaf)
 
 BOOT_CODE void map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights)
 {
+#if __riscv_xlen == 32
     paddr = ROUND_DOWN(paddr, RISCV_GET_LVL_PGSIZE_BITS(0));
     assert((paddr % RISCV_GET_LVL_PGSIZE(0)) == 0);
     kernel_root_pageTable[RISCV_GET_PT_INDEX(vaddr, 0)] = pte_next(paddr, true);
+#else
+    if (vaddr >= KDEV_BASE) {
+        /* Map devices in 2nd-level page table */
+        paddr = ROUND_DOWN(paddr, RISCV_GET_LVL_PGSIZE_BITS(1));
+        assert((paddr % RISCV_GET_LVL_PGSIZE(1)) == 0);
+        kernel_image_level2_dev_pt[RISCV_GET_PT_INDEX(vaddr, 1)] = pte_next(paddr, true);
+    } else {
+        paddr = ROUND_DOWN(paddr, RISCV_GET_LVL_PGSIZE_BITS(0));
+        assert((paddr % RISCV_GET_LVL_PGSIZE(0)) == 0);
+        kernel_root_pageTable[RISCV_GET_PT_INDEX(vaddr, 0)] = pte_next(paddr, true);
+    }
+#endif
 }
 
 BOOT_CODE VISIBLE void map_kernel_window(void)
@@ -133,6 +146,10 @@ BOOT_CODE VISIBLE void map_kernel_window(void)
         pptr += RISCV_GET_LVL_PGSIZE(1);
         paddr += RISCV_GET_LVL_PGSIZE(1);
     }
+
+    /* Map kernel device page table */
+    kernel_root_pageTable[RISCV_GET_PT_INDEX(KDEV_BASE, 0)] =
+        pte_next(kpptr_to_paddr(kernel_image_level2_dev_pt), false);
 #endif
 
     /* There should be 1GiB free where we put device mapping */

@@ -55,12 +55,12 @@ BOOT_CODE void map_kernel_devices(void)
     }
 
     for (int i = 0; i < (sizeof(kernel_devices) / sizeof(kernel_frame_t)); i++) {
-        map_kernel_frame(kernel_devices[i].paddr, KDEV_BASE,
+        map_kernel_frame(kernel_devices[i].paddr, kernel_devices[i].pptr,
                          VMKernelOnly);
         if (!kernel_devices[i].userAvailable) {
             p_region_t reg = {
                 .start = kernel_devices[i].paddr,
-                .end = kernel_devices[i].paddr + (1 << PAGE_BITS),
+                .end = kernel_devices[i].paddr + (1 << seL4_LargePageBits),
             };
             reserve_region(reg);
         }

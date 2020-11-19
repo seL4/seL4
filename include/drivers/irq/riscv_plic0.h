@@ -16,7 +16,7 @@
  * https://static.dev.sifive.com/U54-MC-RVCoreIP.pdf
  */
 
-#define PLIC_PPTR_BASE      (PLIC_PPTR + 0x0C000000)
+#define PLIC_PPTR_BASE          PLIC_PPTR
 
 
 #define PLIC_HART_ID (CONFIG_FIRST_HART_ID)

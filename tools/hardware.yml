@@ -245,6 +245,7 @@ devices:
     regions:
       - index: 0
         kernel: PLIC_PPTR
+        kernel_size: 0x04000000
 
   # elfloader rules
   - compatible:
