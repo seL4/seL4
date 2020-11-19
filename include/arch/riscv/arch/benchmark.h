@@ -11,7 +11,7 @@
 #include <arch/object/structures.h>
 #include <mode/hardware.h>
 
-#ifdef CONFIG_ENABLE_BENCHMARK
+#ifdef CONFIG_ENABLE_BENCHMARKS
 static inline timestamp_t timestamp(void)
 {
     return riscv_read_cycle();

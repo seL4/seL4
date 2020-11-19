@@ -7,6 +7,7 @@
 #pragma once
 
 #include <util.h>
+#include <sel4/config.h>
 
 /*
  *         2^32 +-------------------+
@@ -37,7 +38,13 @@
 #define PPTR_BASE seL4_UserTop
 
 /* Top of the physical memory window */
+#ifdef CONFIG_KERNEL_LOG_BUFFER
+#define PPTR_TOP UL_CONST(0xFF400000)
+/* Place the kernel log buffer after the PPTR region */
+#define KS_LOG_PPTR PPTR_TOP
+#else
 #define PPTR_TOP UL_CONST(0xFF800000)
+#endif
 
 /* The physical memory address to use for mapping the kernel ELF
  *
@@ -47,7 +54,7 @@
 #define KERNEL_ELF_PADDR_BASE UL_CONST(0x84000000)
 
 /* The base address in virtual memory to use for the kernel ELF mapping */
-#define KERNEL_ELF_BASE PPTR_TOP
+#define KERNEL_ELF_BASE UL_CONST(0xFF800000)
 
 /* The base address in virtual memory to use for the kernel device
  * mapping region. These are mapped in the kernel page table. */
