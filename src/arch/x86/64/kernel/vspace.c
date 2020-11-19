@@ -1658,11 +1658,9 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
 
     ksUserLogBuffer = pptr_to_paddr((void *) frame_pptr);
 
-    paddr_t physical_address = ksUserLogBuffer + (idx << seL4_PageBits);
-
     pde_t pde = pde_pde_large_new(
                     0,                 /* xd                   */
-                    physical_address,  /* page_base_address    */
+                    ksUserLogBuffer,   /* page_base_address    */
                     VMKernelOnly,      /* pat                  */
                     1,                 /* global               */
                     0,                 /* dirty                */
@@ -1675,8 +1673,12 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
                 );
 
     /* Stored in the PD slot after the device page table */
+#ifdef CONFIG_HUGE_PAGE
+    x64KSKernelPD[1] = pde;
+#else
     x64KSKernelPDs[BIT(PDPT_INDEX_BITS) - 1][1] = pde;
-    invalidateTLBEntry(KS_LOG_PPTR, MASK(ksNumCPUs));
+#endif
+    invalidateTranslationAll(MASK(CONFIG_MAX_NUM_NODES));
 
     return EXCEPTION_NONE;
 }
