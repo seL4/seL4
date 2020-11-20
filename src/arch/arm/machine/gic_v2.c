@@ -36,27 +36,13 @@ volatile struct gic_cpu_iface_map *const gic_cpuiface =
 
 word_t active_irq[CONFIG_MAX_NUM_NODES] = {IRQ_NONE};
 
-/* Get the target id for this processor. We rely on the constraint that the registers
- * for PPI are read only and return only the current processor as the target.
- * If this doesn't lead to a valid ID, we emit a warning and default to core 0.
+/* The GIC v2 specification tells that the GICD_TYPER register's (gic_dist->ic_type)
+ * bits [5:7] have the cpu gic id saved. This can be read on the book 
+ * 'ARM Generic Interrupt Controller Architecture Specification V2' on page 88 of the PDF.
  */
 BOOT_CODE static uint8_t infer_cpu_gic_id(int nirqs)
 {
-    word_t i;
-    uint32_t target = 0;
-    for (i = 0; i < nirqs; i += 4) {
-        target = gic_dist->targets[i >> 2];
-        target |= target >> 16;
-        target |= target >> 8;
-        if (target) {
-            break;
-        }
-    }
-    if (!target) {
-        printf("Warning: Could not infer GIC interrupt target ID, assuming 0.\n");
-        target = BIT(0);
-    }
-    return target & 0xff;
+    return (uint8_t)((gic_dist->ic_type >> 4) & 0x7);
 }
 
 BOOT_CODE static void dist_init(void)
