@@ -37,7 +37,7 @@ volatile struct gic_cpu_iface_map *const gic_cpuiface =
 word_t active_irq[CONFIG_MAX_NUM_NODES] = {IRQ_NONE};
 
 /* The GIC v2 specification tells that the GICD_TYPER register's (gic_dist->ic_type)
- * bits [5:7] have the cpu gic id saved. This can be read on the book 
+ * bits [5:7] have the cpu gic id saved. This can be read on the book
  * 'ARM Generic Interrupt Controller Architecture Specification V2' on page 88 of the PDF.
  */
 BOOT_CODE static uint8_t infer_cpu_gic_id(int nirqs)
