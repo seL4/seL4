@@ -50,8 +50,8 @@ Community
 ---------
 
 - Mailing lists
-  - [seL4 Announce](https://sel4.systems/lists/listinfo/announce)
-  - [seL4 Devel](https://sel4.systems/lists/listinfo/devel)
+  - [seL4 Announce](https://lists.sel4.systems/postorius/lists/announce.sel4.systems)
+  - [seL4 Devel](https://lists.sel4.systems/postorius/lists/devel.sel4.systems)
 - [Suggested projects](https://docs.sel4.systems/SuggestedProjects)
 - [CommunityProjects](https://docs.sel4.systems/CommunityProjects)
 
