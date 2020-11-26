@@ -91,8 +91,8 @@ void restart(tcb_t *target)
         cancelIPC(target);
 #ifdef CONFIG_KERNEL_MCS
         setThreadState(target, ThreadState_Restart);
-        if (target->tcbSchedContext != NULL && sc_active(target->tcbSchedContext)) {
-            assert(target->tcbSchedContext != NODE_STATE(ksCurSC));
+        if (target->tcbSchedContext != NULL && sc_active(target->tcbSchedContext)
+            && target->tcbSchedContext != NODE_STATE(ksCurSC)) {
             refill_unblock_check(target->tcbSchedContext);
         }
         schedContext_resume(target->tcbSchedContext);
