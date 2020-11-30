@@ -237,8 +237,16 @@ void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
 
 #ifdef CONFIG_KERNEL_MCS
             if (sc_sporadic(sender->tcbSchedContext)) {
+                /* We know that the sender can't have the current SC as
+                 * its own SC as this point as it should still be
+                 * associated with the current thread, no thread, or a
+                 * thread that isn't blocked. This check is added here
+                 * to reduce the cost of proving this to be true as a
+                 * short-term stop-gap. */
                 assert(sender->tcbSchedContext != NODE_STATE(ksCurSC));
-                refill_unblock_check(sender->tcbSchedContext);
+                if (sender->tcbSchedContext != NODE_STATE(ksCurSC)) {
+                    refill_unblock_check(sender->tcbSchedContext);
+                }
             }
 
             if (do_call ||
@@ -394,8 +402,15 @@ void cancelAllIPC(endpoint_t *epptr)
             if (seL4_Fault_get_seL4_FaultType(thread->tcbFault) == seL4_Fault_NullFault) {
                 setThreadState(thread, ThreadState_Restart);
                 if (sc_sporadic(thread->tcbSchedContext)) {
+                    /* We know that the thread can't have the current SC
+                     * as its own SC as this point as it should still be
+                     * associated with the current thread, or no thread.
+                     * This check is added here to reduce the cost of
+                     * proving this to be true as a short-term stop-gap. */
                     assert(thread->tcbSchedContext != NODE_STATE(ksCurSC));
-                    refill_unblock_check(thread->tcbSchedContext);
+                    if (thread->tcbSchedContext != NODE_STATE(ksCurSC)) {
+                        refill_unblock_check(thread->tcbSchedContext);
+                    }
                 }
                 possibleSwitchTo(thread);
             } else {
@@ -443,8 +458,15 @@ void cancelBadgedSends(endpoint_t *epptr, word_t badge)
                     seL4_Fault_NullFault) {
                     setThreadState(thread, ThreadState_Restart);
                     if (sc_sporadic(thread->tcbSchedContext)) {
+                        /* We know that the thread can't have the current SC
+                         * as its own SC as this point as it should still be
+                         * associated with the current thread, or no thread.
+                         * This check is added here to reduce the cost of
+                         * proving this to be true as a short-term stop-gap. */
                         assert(thread->tcbSchedContext != NODE_STATE(ksCurSC));
-                        refill_unblock_check(thread->tcbSchedContext);
+                        if (thread->tcbSchedContext != NODE_STATE(ksCurSC)) {
+                            refill_unblock_check(thread->tcbSchedContext);
+                        }
                     }
                     possibleSwitchTo(thread);
                 } else {
