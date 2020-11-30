@@ -215,7 +215,18 @@ void refill_update(sched_context_t *sc, ticks_t new_period, ticks_t new_budget, 
 static inline void schedule_used(sched_context_t *sc, refill_t new)
 {
     if (unlikely(refill_tail(sc)->rTime + refill_tail(sc)->rAmount >= new.rTime)) {
-        /* Merge overlapping refill */
+        /* Merge overlapping or adjacent refill.
+         *
+         * refill_update can produce a tail refill that will overlap
+         * with new refills when time is charged to the head refill.
+         *
+         * Preemption will cause the head refill to be partially
+         * charged. When the head refill is again later charged the
+         * additionally charged amount will be added where the new
+         * refill ended such that they are merged here. This ensures
+         * that (beyond a refill being split as it is charged
+         * incrementally) a refill split is only caused by a thread
+         * blocking. */
         refill_tail(sc)->rAmount += new.rAmount;
     } else if (likely(!refill_full(sc))) {
         /* Add tail normally */
@@ -268,7 +279,15 @@ void refill_budget_check(ticks_t usage)
 
         refill_head(sc)->rAmount -= usage;
         /* We need to keep the head refill no more than a period before
-         * the start of the tail refill. */
+         * the start of the tail refill. This ensures that new refills
+         * are never added before the tail refill (breaking the ordered
+         * invariant). This code actually keeps the head refill no more
+         * than a period before the end of the tail refill (which is
+         * stronger than necessary) but is what is used in the current
+         * proofs. In combination with the merging behaviour of
+         * schedule_used, the following will still ensure that
+         * incremental charging of a refill across preemptions only
+         * produces a single new refill one period in the future. */
         refill_head(sc)->rTime += usage;
         schedule_used(sc, used);
     }
