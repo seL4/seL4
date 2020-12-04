@@ -67,6 +67,14 @@ static word_t readVCPUReg(vcpu_t *vcpu, word_t field)
             } else {
                 return vcpu_read_reg(vcpu, field);
             }
+#ifdef CONFIG_HAVE_FPU
+        case seL4_VCPUReg_CPACR:
+            if (ARCH_NODE_STATE(armHSVCPUActive)) {
+                return vcpu_hw_read_reg(field);
+            } else {
+                return vcpu_read_reg(vcpu, field);
+            }
+#endif
         default:
             return vcpu_hw_read_reg(field);
         }
@@ -86,6 +94,15 @@ static void writeVCPUReg(vcpu_t *vcpu, word_t field, word_t value)
                 vcpu_write_reg(vcpu, field, value);
             }
             break;
+#ifdef CONFIG_HAVE_FPU
+        case seL4_VCPUReg_CPACR:
+            if (ARCH_NODE_STATE(armHSVCPUActive)) {
+                vcpu_hw_write_reg(field, value);
+            } else {
+                vcpu_write_reg(vcpu, field, value);
+            }
+            break;
+#endif
         default:
             vcpu_hw_write_reg(field, value);
         }
