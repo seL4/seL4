@@ -12,7 +12,7 @@
 
 #ifndef __ASSEMBLER__
 /* format of an unknown syscall message */
-enum {
+typedef enum {
     seL4_UnknownSyscall_X0,
     seL4_UnknownSyscall_X1,
     seL4_UnknownSyscall_X2,
@@ -32,7 +32,7 @@ enum {
 } seL4_UnknownSyscall_Msg;
 
 /* format of a user exception message */
-enum {
+typedef enum {
     seL4_UserException_FaultIP,
     seL4_UserException_SP,
     seL4_UserException_SPSR,
@@ -44,7 +44,7 @@ enum {
 } seL4_UserException_Msg;
 
 /* format of a vm fault message */
-enum {
+typedef enum {
     seL4_VMFault_IP,
     seL4_VMFault_Addr,
     seL4_VMFault_PrefetchFault,
@@ -55,25 +55,25 @@ enum {
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 
-enum {
+typedef enum {
     seL4_VGICMaintenance_IDX,
     seL4_VGICMaintenance_Length,
     SEL4_FORCE_LONG_ENUM(seL4_VGICMaintenance_Msg),
 } seL4_VGICMaintenance_Msg;
 
-enum {
+typedef enum {
     seL4_VPPIEvent_IRQ,
     SEL4_FORCE_LONG_ENUM(seL4_VPPIEvent_Msg),
 } seL4_VPPIEvent_Msg;
 
 
-enum {
+typedef enum {
     seL4_VCPUFault_HSR,
     seL4_VCPUFault_Length,
     SEL4_FORCE_LONG_ENUM(seL4_VCPUFault_Msg),
 } seL4_VCPUFault_Msg;
 
-enum {
+typedef enum {
     /* VM control registers EL1 */
     seL4_VCPUReg_SCTLR = 0,
     seL4_VCPUReg_TTBR0,
@@ -120,7 +120,7 @@ enum {
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 #ifdef CONFIG_KERNEL_MCS
-enum {
+typedef enum {
     seL4_TimeoutReply_FaultIP,
     seL4_TimeoutReply_SP,
     seL4_TimeoutReply_SPSR_EL1,
@@ -159,7 +159,7 @@ enum {
     SEL4_FORCE_LONG_ENUM(seL4_TimeoutReply_Msg)
 } seL4_TimeoutReply_Msg;
 
-enum {
+typedef enum {
     seL4_Timeout_Data,
     seL4_Timeout_Consumed,
     seL4_Timeout_Length,
@@ -260,6 +260,15 @@ SEL4_SIZE_SANITY(seL4_PUDEntryBits, seL4_PUDIndexBits, seL4_PUDBits);
 #define seL4_IPCBufferSizeBits 10
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+#ifndef CONFIG_ARM_SMMU
+/* 1 slot at the end of the vspace is used to hold the VMID assigned to the vspace */
+#define seL4_VSpaceReservedSlots 1
+#else /*CONFIG_ARM_SMMU*/
+/* 1 slot at the end of the vspace is used to hold the VMID assigned to the vspace */
+/* 1 slot at the end of the vspace is used to hold the number of SMMU CBs assigned to the vspace */
+#define seL4_VSpaceReservedSlots 2
+#endif /*CONFIG_ARM_SMMU*/
+
 /* The userspace occupies the range 0x0 to 0xfffffffffff.
  * The stage-1 translation is disabled, and the stage-2
  * translation input addree size is constrained by the
@@ -271,7 +280,10 @@ SEL4_SIZE_SANITY(seL4_PUDEntryBits, seL4_PUDIndexBits, seL4_PUDBits);
 #if defined(CONFIG_ARM_PA_SIZE_BITS_44)
 #define seL4_UserTop 0x00000fffffffffff
 #elif defined(CONFIG_ARM_PA_SIZE_BITS_40)
-#define seL4_UserTop 0x000000ffffffffff
+/* Currently other definitions of seL4_UserTop already have free slots at the end and don't need to subtract for seL4_VSpaceReservedSlots.
+ * Each slot used requires subtracting 1GiB from the top address.
+ */
+#define seL4_UserTop (0x000000ffffffffff - seL4_VSpaceReservedSlots * 0x40000000)
 #else
 #error "Unknown physical address width"
 #endif

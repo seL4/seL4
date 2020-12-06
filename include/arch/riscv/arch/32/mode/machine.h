@@ -8,3 +8,4 @@
 
 /* Place holder for 32-bit machine header */
 
+#include <arch/model/smp.h>

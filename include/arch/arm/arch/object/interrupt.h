@@ -39,7 +39,7 @@ static inline void handleReservedIRQ(irq_t irq)
     }
 #endif
 
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
     if (IRQT_TO_IRQ(irq) == INTERRUPT_SMMU) {
         plat_smmu_handle_interrupt();
         return;

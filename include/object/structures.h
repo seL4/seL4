@@ -326,7 +326,7 @@ struct debug_tcb {
 };
 typedef struct debug_tcb debug_tcb_t;
 
-#define TCB_PTR_DEBUG_PTR(p) ((debug_tcb_t *)TCB_PTR_CTE_PTR(p,tcbCNodeEntries))
+#define TCB_PTR_DEBUG_PTR(p) ((debug_tcb_t *)TCB_PTR_CTE_PTR(p,tcbArchCNodeEntries))
 #endif /* CONFIG_DEBUG_BUILD */
 
 #ifdef CONFIG_KERNEL_MCS

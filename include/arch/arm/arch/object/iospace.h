@@ -10,7 +10,7 @@
 #include <api/failures.h>
 #include <object/structures.h>
 
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
 
 seL4_SlotRegion create_iospace_caps(cap_t root_cnode_cap);
 exception_t decodeARMIOPTInvocation(word_t invLabel, uint32_t length, cte_t *slot, cap_t cap, extra_caps_t excaps,
@@ -65,6 +65,6 @@ static inline void clearIOPageDirectory(cap_t cap)
 {
 }
 
-#endif /* end of !CONFIG_ARM_SMMU */
+#endif /* end of !CONFIG_TK1_SMMU */
 
 

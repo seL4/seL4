@@ -85,7 +85,7 @@ void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
 #ifdef CONFIG_KERNEL_MCS
         reply_t *reply = REPLY_PTR(thread_state_get_replyObject(dest->tcbState));
         if (reply) {
-            reply_unlink(reply);
+            reply_unlink(reply, dest);
         }
 
         if (do_call ||
@@ -326,7 +326,7 @@ void cancelIPC(tcb_t *tptr)
 #ifdef CONFIG_KERNEL_MCS
         reply_t *reply = REPLY_PTR(thread_state_get_replyObject(tptr->tcbState));
         if (reply != NULL) {
-            reply_unlink(reply);
+            reply_unlink(reply, tptr);
         }
 #endif
         setThreadState(tptr, ThreadState_Inactive);
@@ -381,7 +381,7 @@ void cancelAllIPC(endpoint_t *epptr)
 #ifdef CONFIG_KERNEL_MCS
             reply_t *reply = REPLY_PTR(thread_state_get_replyObject(thread->tcbState));
             if (reply != NULL) {
-                reply_unlink(reply);
+                reply_unlink(reply, thread);
             }
             if (seL4_Fault_get_seL4_FaultType(thread->tcbFault) == seL4_Fault_NullFault) {
                 setThreadState(thread, ThreadState_Restart);

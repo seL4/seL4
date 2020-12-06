@@ -283,8 +283,6 @@ exception_t invokeUntyped_Retype(cte_t *srcSlot,
     void *regionBase = WORD_PTR(cap_untyped_cap_get_capPtr(srcSlot->cap));
     exception_t status;
 
-    freeRef = GET_FREE_REF(regionBase, cap_untyped_cap_get_capFreeIndex(srcSlot->cap));
-
     if (reset) {
         status = resetUntypedCap(srcSlot);
         if (status != EXCEPTION_NONE) {

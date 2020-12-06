@@ -18,10 +18,10 @@
 #include <util.h>
 
 /* (node-local) state accessed only during bootstrapping */
-ndks_boot_t ndks_boot BOOT_DATA;
+ndks_boot_t ndks_boot BOOT_BSS;
 
-rootserver_mem_t rootserver BOOT_DATA;
-static region_t rootserver_mem BOOT_DATA;
+rootserver_mem_t rootserver BOOT_BSS;
+static region_t rootserver_mem BOOT_BSS;
 
 BOOT_CODE static void merge_regions(void)
 {
@@ -498,6 +498,7 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
 
     tcb->tcbPriority = seL4_MaxPrio;
     tcb->tcbMCP = seL4_MaxPrio;
+    tcb->tcbDomain = ksDomSchedule[ksDomScheduleIdx].domain;
 #ifndef CONFIG_KERNEL_MCS
     setupReplyMaster(tcb);
 #endif

@@ -21,11 +21,11 @@ Without MCS, all threads including the initial thread are scheduled round-robin 
 
 The initial thread's CSpace consists of exactly one CNode
 which contains capabilities to the initial
-thread's own resources was well as to all available global resources.
+thread's own resources as well as to all available global resources.
 The CNode size can be configured at compile time (default is $2^{12}$
 slots), but the guard is always chosen so that the CNode resolves exactly
-32 bits. This means, the first slot of the CNode has CPTR 0x0, the
-second slot has CPTR 0x1 etc.
+the number of bits in the architecture (32 bits or 64 bits). This means, the
+first slot of the CNode has CPTR 0x0, the second slot has CPTR 0x1 etc.
 
 The first 12 slots contain specific capabilities as listed in
 \autoref{tab:cnode_content}.
@@ -96,7 +96,7 @@ of slots in the initial thread's CNode, starting with CPTR \texttt{start} and wi
       Field Type & Field Name & Description \\
       \midrule
       \texttt{seL4\_Word}           & \texttt{extraLen}                & length of additional bootinfo information in bytes \\
-      \texttt{seL4\_Word}           & \texttt{nodeID}                  & node ID \\
+      \texttt{seL4\_NodeId}         & \texttt{nodeID}                  & node ID \\
       \texttt{seL4\_Word}           & \texttt{numNodes}                & number of nodes \\
       \texttt{seL4\_Word}           & \texttt{numIOPTLevels}           & number of I/O page-table levels (-1 if CONFIG\_IOMMU unset) \\
       \texttt{seL4\_IPCBuffer*}     & \texttt{ipcBuffer}               & pointer to the initial thread's IPC buffer \\
@@ -106,11 +106,11 @@ of slots in the initial thread's CNode, starting with CPTR \texttt{start} and wi
       \texttt{seL4\_SlotRegion}     & \texttt{userImagePaging}         & userland-image paging structure caps \\
       \texttt{seL4\_SlotRegion}     & \texttt{ioSpaceCaps}             & I/O space capabilities for ARM SMMU \\
       \texttt{seL4\_SlotRegion}     & \texttt{extraBIPages}            & frames backing additional bootinfo information \\
-      \texttt{seL4\_UntypedDesc[]}  & \texttt{untypedList}             & array of information about each untyped \\
       \texttt{seL4\_Uint8}          & \texttt{initThreadCNodeSizeBits} & CNode size ($2^n$ slots) \\
       \texttt{seL4\_Word}           & \texttt{initThreadDomain}        & domain of the initial thread (see \autoref{sec:domains}) \\
+      \texttt{seL4\_SlotRegion}     & \texttt{schedcontrol}            & seL4\_SchedControl capabilities, one for each node (MCS only). \\
       \texttt{seL4\_SlotRegion}     & \texttt{untyped}                 & untyped-memory capabilities \\
-      \texttt{seL4\_SlotRegion}   & \texttt{untyped}                 & seL4\_SchedControl capabilities, one for each node (MCS only). \\
+      \texttt{seL4\_UntypedDesc[]}  & \texttt{untypedList}             & array of information about each untyped \\
       \bottomrule
     \end{tabularx}
   \end{center}
@@ -187,10 +187,9 @@ memory being available.
       Field Type & Field Name & Description \\
       \midrule
       \texttt{seL4\_Word}  & \texttt{paddr}    & physical base address of the untyped object \\
-      \texttt{seL4\_Uint8} & \texttt{padding1} & manual padding so final struct is a multiple of the word size \\
-      \texttt{seL4\_Uint8} & \texttt{padding2} & manual padding so final struct is a multiple of the word size \\
       \texttt{seL4\_Uint8} & \texttt{sizeBits} & size ($2^n$ bytes) of the untyped object \\
       \texttt{seL4\_Uint8} & \texttt{isDevice} & is this untyped a device or not (see \autoref{sec:kernmemalloc}) \\
+      \texttt{seL4\_Uint8[]} & \texttt{padding} & manual padding so final struct is a multiple of the word size \\
       \bottomrule
     \end{tabular}
   \end{center}

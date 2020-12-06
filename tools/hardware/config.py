@@ -25,6 +25,10 @@ class Config:
         ''' Get page size in bits for this arch '''
         return 12  # 4096-byte pages
 
+    def get_device_page_bits(self) -> int:
+        ''' Get page size in bits for mapping devices for this arch '''
+        return self.get_page_bits()
+
 
 class ARMConfig(Config):
     ''' Config class for ARM '''
@@ -45,6 +49,15 @@ class RISCVConfig(Config):
         ''' on RISC-V the BBL is loaded at the start
         of physical memory. Mark it as unavailable. '''
         return self.MEGA_PAGE_SIZE
+
+    def get_device_page_bits(self) -> int:
+        ''' Get page size in bits for mapping devices for this arch '''
+        if self.addrspace_max > (1 << 32):
+            # rv39 and rv48 use 2MiB device pages
+            return 21
+        else:
+            # rv32 uses 4MiB device pages
+            return 22
 
 
 def get_arch_config(arch: str, addrspace_max: int) -> Config:

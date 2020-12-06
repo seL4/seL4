@@ -7,7 +7,7 @@
 #include <types.h>
 #include <config.h>
 
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
 
 #include <plat/machine/smmu.h>
 #include <linker.h>

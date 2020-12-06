@@ -372,7 +372,7 @@ seL4_VMEnter(seL4_Word *sender);
 
 /** @} */
 
-#ifdef CONFIG_TLS_BASE_SELF
+#ifdef CONFIG_SET_TLS_BASE_SELF
 /**
  * @xmlonly <manual name="SetTLSBase" label="sel4_settlsbase"/> @endxmlonly
  * @brief Set the TLS base address and register of the currently executing thread.

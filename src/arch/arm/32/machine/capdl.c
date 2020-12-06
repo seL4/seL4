@@ -4,355 +4,514 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-
 #include <config.h>
-#include <object/structures.h>
-#include <object/tcb.h>
-#include <model/statedata.h>
-#include <machine/capdl.h>
 #include <arch/machine/capdl.h>
-#include <machine/io.h>
-#include <plat/machine/hardware.h>
+#include <string.h>
+#include <kernel/cspace.h>
 
 #ifdef CONFIG_DEBUG_BUILD
 
-#define ARCH 0xe0
+#define MAX_UL          0xffffffff
+#define PT_INDEX(vptr)  ((vptr >> PAGE_BITS) & MASK(PT_INDEX_BITS))
+#define PD_INDEX(vptr)  (vptr >> (PAGE_BITS + PT_INDEX_BITS))
 
-#define PD_READ_SIZE         BIT(PD_INDEX_BITS)
-#define PT_READ_SIZE         BIT(PT_INDEX_BITS)
-#define ASID_POOL_READ_SIZE  BIT(ASID_POOL_INDEX_BITS)
+static void obj_frame_print_attrs(resolve_ret_t ret);
+static void cap_frame_print_attrs_pt(pte_t *pte);
+static void cap_frame_print_attrs_pd(pde_t *pde);
+static void cap_frame_print_attrs_impl(word_t AP, word_t XN, word_t TEX);
+static void arm32_obj_pt_print_slots(pte_t *pt);
+static void arm32_cap_pt_print_slots(pte_t *pt);
 
-static int getDecodedChar(unsigned char *result)
+/*
+ * Caps
+ */
+word_t get_tcb_sp(tcb_t *tcb)
 {
-    unsigned char c;
-    c = getDebugChar();
-    if (c == START) {
-        return 1;
-    }
-    if (c == ESCAPE) {
-        c = getDebugChar();
-        if (c == START) {
-            return 1;
-        }
-        switch (c) {
-        case ESCAPE_ESCAPE:
-            *result = ESCAPE;
-            break;
-        case START_ESCAPE:
-            *result = START;
-            break;
-        case END_ESCAPE:
-            *result = END;
-            break;
-        default:
-            if (c >= 20 && c < 40) {
-                *result = c - 20;
-            }
-        }
-        return 0;
-    } else {
-        *result = c;
-        return 0;
-    }
+    return tcb->tcbArch.tcbContext.registers[SP];
 }
 
-static void putEncodedChar(unsigned char c)
+/*
+ * AP   S   R   Privileged permissions  User permissions
+ * 00   0   0   No access               No access
+ * 00   1   0   Read-only               No access
+ * 00   0   1   Read-only               Read-only
+ * 00   1   1   Unpredictable           Unpredictable
+ * 01   x   x   Read/write              No access
+ * 10   x   x   Read/write              Read-only
+ * 11   x   x   Read/write              Read/write
+ */
+/* use when only have access to pte of frames */
+static void cap_frame_print_attrs_pt(pte_t *pte)
 {
-    switch (c) {
-    case ESCAPE:
-        putDebugChar(ESCAPE);
-        putDebugChar(ESCAPE_ESCAPE);
+    word_t AP, XN, TEX;
+    switch (pte_ptr_get_pteType(pte)) {
+    case pte_pte_small:
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+        AP = pte_pte_small_ptr_get_HAP(pte);
+        TEX = pte_pte_small_ptr_get_MemAttr(pte);
+#else
+        AP = pte_pte_small_ptr_get_AP(pte);
+        TEX = pte_pte_small_ptr_get_TEX(pte);
+#endif
+        XN = pte_pte_small_ptr_get_XN(pte);
         break;
-    case START:
-        putDebugChar(ESCAPE);
-        putDebugChar(START_ESCAPE);
+
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
+    case pte_pte_large:
+        AP = pte_pte_large_ptr_get_AP(pte);
+        TEX = pte_pte_large_ptr_get_TEX(pte);
+        XN = pte_pte_large_ptr_get_XN(pte);
         break;
-    case END:
-        putDebugChar(ESCAPE);
-        putDebugChar(END_ESCAPE);
-        break;
+#endif
     default:
-        if (c < 20) {
-            putDebugChar(ESCAPE);
-            putDebugChar(c + 20);
-        } else {
-            putDebugChar(c);
-        }
+        assert(!"should not happend");
     }
+    cap_frame_print_attrs_impl(AP, XN, TEX);
 }
 
-static int getArg32(unsigned int *res)
+static void cap_frame_print_attrs_pd(pde_t *pde)
 {
-    unsigned char b1 = 0;
-    unsigned char b2 = 0;
-    unsigned char b3 = 0;
-    unsigned char b4 = 0;
-    if (getDecodedChar(&b1)) {
-        return 1;
-    }
-    if (getDecodedChar(&b2)) {
-        return 1;
-    }
-    if (getDecodedChar(&b3)) {
-        return 1;
-    }
-    if (getDecodedChar(&b4)) {
-        return 1;
-    }
-    *res = (b1 << 24) | (b2 << 16) | (b3 << 8) | b4;
-    return 0;
-}
-
-static void sendWord(unsigned int word)
-{
-    putEncodedChar(word & 0xff);
-    putEncodedChar((word >> 8) & 0xff);
-    putEncodedChar((word >> 16) & 0xff);
-    putEncodedChar((word >> 24) & 0xff);
-}
-
-static cte_t *getMDBParent(cte_t *slot)
-{
-    cte_t *oldSlot = CTE_PTR(mdb_node_get_mdbPrev(slot->cteMDBNode));
-
-    while (oldSlot != 0 && !isMDBParentOf(oldSlot, slot)) {
-        oldSlot = CTE_PTR(mdb_node_get_mdbPrev(oldSlot->cteMDBNode));
-    }
-
-    return oldSlot;
-}
-
-static void sendPD(unsigned int address)
-{
-    word_t i, exists;
-    pde_t *start = (pde_t *)address;
-    for (i = 0; i < PD_READ_SIZE; i++) {
-        pde_t pde = start[i];
-        exists = 0;
-        if (pde_get_pdeType(pde) == pde_pde_coarse && pde_pde_coarse_get_address(pde) != 0) {
-            exists = 1;
-        } else if (pde_get_pdeType(pde) == pde_pde_section && (pde_pde_section_get_address(pde) != 0 ||
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-                                                               pde_pde_section_get_HAP(pde))) {
+    cap_frame_print_attrs_impl(pde_pde_section_ptr_get_HAP(pde),
+                               pde_pde_section_ptr_get_XN(pde),
+                               pde_pde_section_ptr_get_MemAttr(pde));
 #else
-                                                               pde_pde_section_get_AP(pde))) {
+    cap_frame_print_attrs_impl(pde_pde_section_ptr_get_AP(pde),
+                               pde_pde_section_ptr_get_XN(pde),
+                               pde_pde_section_ptr_get_TEX(pde));
 #endif
-            exists = 1;
-        }
-        if (exists != 0 && i < USER_TOP >> pageBitsForSize(ARMSection)) {
-            sendWord(i);
-            sendWord(pde.words[0]);
-        }
-    }
 }
 
-static void sendPT(unsigned int address)
+static void cap_frame_print_attrs_impl(word_t AP, word_t XN, word_t TEX)
 {
-    word_t i, exists;
-    pte_t *start = (pte_t *)address;
-    for (i = 0; i < PT_READ_SIZE; i++) {
-        pte_t pte = start[i];
-        exists = 0;
+    printf("(");
+
+    /* rights */
+    switch (AP) {
+    case 0b00:
+    case 0b01:
+        break;
+    case 0b10:
+        printf("R");
+        break;
+    case 0b11:
+        printf("RW");
+    default:
+        break;
+    }
+
+    if (!XN) {
+        printf("X");
+    }
+
+    if (!TEX) {
+        printf(", uncached");
+    }
+
+    printf(")\n");
+}
+
+static void arm32_cap_pt_print_slots(pte_t *pt)
+{
+    vm_page_size_t page_size;
+    word_t i = 0;
+    while (i < BIT(PT_INDEX_BITS + PAGE_BITS)) {
+        pte_t *pte = lookupPTSlot_nofail(pt, i);
+        switch (pte_ptr_get_pteType(pte)) {
+        case pte_pte_small: {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-        if (pte_get_pteType(pte) == pte_pte_small && (pte_pte_small_get_address(pte) != 0 ||
-                                                      pte_pte_small_get_HAP(pte))) {
-            exists = 1;
-        }
+            if (pte_pte_small_ptr_get_contiguous_hint(pte)) {
+                page_size = ARMLargePage;
+            } else {
+                page_size = ARMSmallPage;
+            }
 #else
-        if (pte_get_pteType(pte) == pte_pte_large && (pte_pte_large_get_address(pte) != 0 ||
-                                                      pte_pte_large_get_AP(pte))) {
-            exists = 1;
-        } else if (pte_get_pteType(pte) == pte_pte_small && (pte_pte_small_get_address(pte) != 0 ||
-                                                             pte_pte_small_get_AP(pte))) {
-            exists = 1;
+            page_size = ARMSmallPage;
+#endif
+            printf("0x%lx: frame_%p_%04lu ", PT_INDEX(i), pte, PT_INDEX(i));
+            cap_frame_print_attrs_pt(pte);
+            break;
+        }
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
+        case pte_pte_large: {
+            page_size = ARMLargePage;
+            printf("0x%lx: frame_%p_%04lu ", PT_INDEX(i), pte, PT_INDEX(i));
+            cap_frame_print_attrs_pt(pte);
+            break;
         }
 #endif
-        if (exists != 0) {
-            sendWord(i);
-            sendWord(pte.words[0]);
+        default:
+            page_size = ARMSmallPage;
         }
+        i += (1 << pageBitsForSize(page_size));
     }
 }
 
-static void sendASIDPool(unsigned int address)
+void obj_vtable_print_slots(tcb_t *tcb)
 {
-    word_t i;
-    pde_t **start = (pde_t **)address;
-    for (i = 0; i < ASID_POOL_READ_SIZE; i++) {
-        pde_t *pde = start[i];
-        if (pde != 0) {
-            sendWord(i);
-            sendWord((unsigned int)pde);
-        }
-    }
-}
+    if (isValidVTableRoot(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap) && !seen(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap)) {
+        add_to_seen(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap);
+        pde_t *pd = (pde_t *)pptr_of_cap(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap);
+        vm_page_size_t page_size;
+        printf("%p_pd {\n", pd);
 
-static void sendRunqueues(void)
-{
-    for (uint32_t i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
-        for (tcb_t *curr = NODE_STATE_ON_CORE(ksDebugTCBs, i); curr != NULL; curr = TCB_PTR_DEBUG_PTR(curr)->tcbDebugNext) {
-            thread_state_t *state = &curr->tcbState;
-            if (thread_state_ptr_get_tsType(state) != ThreadState_IdleThreadState &&
-                thread_state_ptr_get_tsType(state) != ThreadState_Inactive) {
-                sendWord((unsigned int)curr);
+        /* PD_INDEX_BITS + ARMSectionBits = 32, can't use left shift here */
+        word_t i = 0;
+        while (i < MAX_UL) {
+            pde_t *pde = lookupPDSlot(pd, i);
+            switch (pde_ptr_get_pdeType(pde)) {
+            case pde_pde_section: {
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
+                if (pde_pde_section_ptr_get_size(pde)) {
+                    page_size = ARMSuperSection;
+                } else {
+                    page_size = ARMSection;
+                }
+#else
+                if (pde_pde_section_ptr_get_contiguous_hint(pde)) {
+                    page_size = ARMSuperSection;
+                } else {
+                    page_size = ARMSection;
+                }
+#endif
+                printf("0x%lx: frame_%p_%04lu ", PD_INDEX(i), pde, PD_INDEX(i));
+                cap_frame_print_attrs_pd(pde);
+                break;
+            }
+
+            case pde_pde_coarse: {
+                printf("0x%lx: pt_%p_%04lu\n", PD_INDEX(i), pde, PD_INDEX(i));
+                page_size = ARMSection;
+                break;
+            }
+            default:
+                page_size = ARMSection;
+                break;
+            }
+            i += (1 << pageBitsForSize(page_size));
+            if (i < (1 << pageBitsForSize(page_size))) {
+                break; /* overflowed */
+            }
+        }
+        printf("}\n"); /* pd */
+
+        i = 0;
+        /* PD_INDEX_BITS + ARMSectionBits = 32, can't use left shift here */
+        while (i < MAX_UL) {
+            pde_t *pde = lookupPDSlot(pd, i);
+            if (pde_ptr_get_pdeType(pde) == pde_pde_coarse) {
+                pte_t *pt = ptrFromPAddr(pde_pde_coarse_ptr_get_address(pde));
+                printf("pt_%p_%04lu {\n", pde, PD_INDEX(i));
+                arm32_cap_pt_print_slots(pt);
+                printf("}\n"); /* pt */
+            }
+            i += (1 << pageBitsForSize(ARMSection));
+            if (i < (1 << pageBitsForSize(ARMSection))) {
+                break; /* overflowed */
             }
         }
     }
 }
 
-static void sendEPQueue(unsigned int epptr)
+/* use when only have access to vptr of frames */
+static void cap_frame_print_attrs_vptr(word_t vptr, pde_t *pd)
 {
-    tcb_t *current = (tcb_t *)endpoint_ptr_get_epQueue_head((endpoint_t *)epptr);
-    for (; current != NULL; current = current->tcbEPNext) {
-        sendWord((unsigned int)current);
+    pde_t *pde = lookupPDSlot(pd, vptr);
+
+    switch (pde_ptr_get_pdeType(pde)) {
+    case pde_pde_section: {
+        printf("frame_%p_%04lu ", pde, PD_INDEX(vptr));
+        cap_frame_print_attrs_pd(pde);
+        break;
+    }
+    case pde_pde_coarse: {
+        pte_t *pt = ptrFromPAddr(pde_pde_coarse_ptr_get_address(pde));
+        pte_t *pte = lookupPTSlot_nofail(pt, vptr);
+        switch (pte_ptr_get_pteType(pte)) {
+        case pte_pte_small: {
+            printf("frame_%p_%04lu ", pte, PT_INDEX(vptr));
+            cap_frame_print_attrs_pt(pte);
+            break;
+        }
+
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
+        case pte_pte_large: {
+            printf("frame_%p_%04lu ", pte, PT_INDEX(vptr));
+            cap_frame_print_attrs_pt(pte);
+            break;
+        }
+#endif
+        default:
+            assert(0);
+        }
+        break;
+    }
+    default:
+        assert(0);
     }
 }
 
-static void sendCNode(unsigned int address, unsigned int sizebits)
+void print_ipc_buffer_slot(tcb_t *tcb)
 {
-    word_t i;
-    cte_t *start = (cte_t *)address;
-    for (i = 0; i < (1 << sizebits); i++) {
-        cap_t cap = start[i].cap;
-        if (cap_get_capType(cap) != cap_null_cap) {
-            cte_t *parent = getMDBParent(&start[i]);
-            sendWord(i);
-            sendWord(cap.words[0]);
-            sendWord(cap.words[1]);
-            sendWord((unsigned int)parent);
+    word_t vptr = tcb->tcbIPCBuffer;
+    asid_t asid = cap_page_directory_cap_get_capPDMappedASID(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap);
+    findPDForASID_ret_t find_ret = findPDForASID(asid);
+    printf("ipc_buffer_slot: ");
+    cap_frame_print_attrs_vptr(vptr, find_ret.pd);
+}
+
+void print_cap_arch(cap_t cap)
+{
+    switch (cap_get_capType(cap)) {
+    case cap_page_table_cap: {
+        asid_t asid = cap_page_table_cap_get_capPTMappedASID(cap);
+        findPDForASID_ret_t find_ret = findPDForASID(asid);
+        vptr_t vptr = cap_page_table_cap_get_capPTMappedAddress(cap);
+        if (asid) {
+            printf("pt_%p_%04lu (asid: %lu)\n",
+                   lookupPDSlot(find_ret.pd, vptr), PD_INDEX(vptr), (long unsigned int)asid);
+        } else {
+            printf("pt_%p_%04lu\n", lookupPDSlot(find_ret.pd, vptr), PD_INDEX(vptr));
+        }
+        break;
+    }
+    case cap_page_directory_cap: {
+        asid_t asid = cap_page_directory_cap_get_capPDMappedASID(cap);
+        findPDForASID_ret_t find_ret = findPDForASID(asid);
+        if (asid) {
+            printf("%p_pd (asid: %lu)\n",
+                   find_ret.pd, (long unsigned int)asid);
+        } else {
+            printf("%p_pd\n", find_ret.pd);
+        }
+        break;
+    }
+    case cap_asid_control_cap: {
+        /* only one in the system */
+        printf("asid_control\n");
+        break;
+    }
+    case cap_small_frame_cap: {
+        vptr_t vptr = cap_small_frame_cap_get_capFMappedAddress(cap);
+        findPDForASID_ret_t find_ret = findPDForASID(cap_small_frame_cap_get_capFMappedASID(cap));
+        assert(find_ret.status == EXCEPTION_NONE);
+        cap_frame_print_attrs_vptr(vptr, find_ret.pd);
+        break;
+    }
+    case cap_frame_cap: {
+        vptr_t vptr = cap_frame_cap_get_capFMappedAddress(cap);
+        findPDForASID_ret_t find_ret = findPDForASID(cap_frame_cap_get_capFMappedASID(cap));
+        assert(find_ret.status == EXCEPTION_NONE);
+        cap_frame_print_attrs_vptr(vptr, find_ret.pd);
+        break;
+    }
+    case cap_asid_pool_cap: {
+        printf("%p_asid_pool\n", (void *)cap_asid_pool_cap_get_capASIDPool(cap));
+        break;
+    }
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    case cap_vcpu_cap: {
+        printf("%p_vcpu\n", (void *)cap_vcpu_cap_get_capVCPUPtr(cap));
+        break;
+    }
+#endif
+
+        /* ARM specific caps */
+#ifdef CONFIG_TK1_SMMU
+    case cap_io_space_cap: {
+        printf("%p_io_space\n", (void *)cap_io_space_cap_get_capModuleID(cap));
+        break;
+    }
+#endif
+    default: {
+        printf("[unknown cap %u]\n", cap_get_capType(cap));
+        break;
+    }
+    }
+}
+
+void print_object_arch(cap_t cap)
+{
+
+    switch (cap_get_capType(cap)) {
+    case cap_frame_cap:
+    case cap_small_frame_cap:
+    case cap_page_table_cap:
+    case cap_page_directory_cap:
+        /* don't need to deal with these objects since they get handled from vtable */
+        break;
+
+    case cap_asid_pool_cap: {
+        printf("%p_asid_pool = asid_pool ",
+               (void *)cap_asid_pool_cap_get_capASIDPool(cap));
+        obj_asidpool_print_attrs(cap);
+        break;
+    }
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    case cap_vcpu_cap: {
+        printf("%p_vcpu = vcpu\n", (void *)cap_vcpu_cap_get_capVCPUPtr(cap));
+        break;
+    }
+#endif
+        /* ARM specific objects */
+#ifdef CONFIG_TK1_SMMU
+    case cap_io_space_cap: {
+        printf("%p_io_space = io_space ", (void *)cap_io_space_cap_get_capModuleID(cap));
+        arm_obj_iospace_print_attrs(cap);
+        break;
+    }
+#endif
+    default: {
+        printf("[unknown object %u]\n", cap_get_capType(cap));
+        break;
+    }
+    }
+}
+
+static void obj_frame_print_attrs(resolve_ret_t ret)
+{
+    printf("(");
+
+    /* VM size */
+    switch (ret.frameSize) {
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    case ARMSection:
+        printf("2M");
+        break;
+    case ARMSuperSection:
+        printf("32M");
+        break;
+#else
+    case ARMSection:
+        printf("1M");
+        break;
+    case ARMSuperSection:
+        printf("16M");
+        break;
+#endif
+    case ARMLargePage:
+        printf("64k");
+        break;
+    case ARMSmallPage:
+        printf("4k");
+        break;
+    }
+
+    printf(", paddr: %p)\n", (void *)ret.frameBase);
+}
+
+static void arm32_obj_pt_print_slots(pte_t *pt)
+{
+    resolve_ret_t ret;
+    word_t i = 0;
+    while (i < BIT(PT_INDEX_BITS + PAGE_BITS)) {
+        pte_t *pte = lookupPTSlot_nofail(pt, i);
+        switch (pte_ptr_get_pteType(pte)) {
+        case pte_pte_small: {
+            ret.frameBase = pte_pte_small_ptr_get_address(pte);
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+            if (pte_pte_small_ptr_get_contiguous_hint(pte)) {
+                /* Entries are represented as 16 contiguous small frames. We need to mask
+                   to get the large frame base */
+                ret.frameBase &= ~MASK(pageBitsForSize(ARMLargePage));
+                ret.frameSize = ARMLargePage;
+            } else {
+                ret.frameSize = ARMSmallPage;
+            }
+#else
+            ret.frameSize = ARMSmallPage;
+#endif
+            printf("frame_%p_%04lu = frame ", pte, PT_INDEX(i));
+            obj_frame_print_attrs(ret);
+            break;
+        }
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
+        case pte_pte_large: {
+            ret.frameBase = pte_pte_large_ptr_get_address(pte);
+            ret.frameSize = ARMLargePage;
+            printf("frame_%p_%04lu = frame ", pte, PT_INDEX(i));
+            obj_frame_print_attrs(ret);
+            break;
+        }
+#endif
+        default:
+            ret.frameSize = ARMSmallPage;
+        }
+        i += (1 << pageBitsForSize(ret.frameSize));
+    }
+}
+
+void obj_tcb_print_vtable(tcb_t *tcb)
+{
+    if (isValidVTableRoot(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap) && !seen(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap)) {
+        add_to_seen(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap);
+        pde_t *pd = (pde_t *)pptr_of_cap(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap);
+        resolve_ret_t ret = {};
+        printf("%p_pd = pd\n", pd);
+
+        /* PD_INDEX_BITS + ARMSectionBits = 32, can't use left shift here */
+        word_t i = 0;
+        while (i < MAX_UL) {
+            pde_t *pde = lookupPDSlot(pd, i);
+            switch (pde_ptr_get_pdeType(pde)) {
+            case pde_pde_section: {
+                ret.frameBase = pde_pde_section_ptr_get_address(pde);
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
+                if (pde_pde_section_ptr_get_size(pde)) {
+                    ret.frameSize = ARMSuperSection;
+                } else {
+                    ret.frameSize = ARMSection;
+                }
+#else
+                if (pde_pde_section_ptr_get_contiguous_hint(pde)) {
+                    /* Entires are represented as 16 contiguous sections. We need to mask
+                    to get the super section frame base */
+                    ret.frameBase &= ~MASK(pageBitsForSize(ARMSuperSection));
+                    ret.frameSize = ARMSuperSection;
+                } else {
+                    ret.frameSize = ARMSection;
+                }
+#endif
+                printf("frame_%p_%04lu = frame ", pde, PD_INDEX(i));
+                obj_frame_print_attrs(ret);
+                break;
+            }
+
+            case pde_pde_coarse: {
+                pte_t *pt = ptrFromPAddr(pde_pde_coarse_ptr_get_address(pde));
+                printf("pt_%p_%04lu = pt\n", pde, PD_INDEX(i));
+                arm32_obj_pt_print_slots(pt);
+                ret.frameSize = ARMSection;
+                break;
+            }
+            default:
+                ret.frameSize = ARMSection;
+                break;
+            }
+            i += (1 << pageBitsForSize(ret.frameSize));
+            if (i < (1 << pageBitsForSize(ret.frameSize))) {
+                break; /* overflowed */
+            }
         }
     }
-}
-
-static void sendIRQNode(void)
-{
-    sendCNode((unsigned int)intStateIRQNode, 8);
-}
-
-static void sendVersion(void)
-{
-    sendWord(ARCH);
-    sendWord(CAPDL_VERSION);
 }
 
 void capDL(void)
 {
-    int result;
-    int done = 0;
-    while (done == 0) {
-        unsigned char c;
-        do {
-            c = getDebugChar();
-        } while (c != START);
-        do {
-            result = getDecodedChar(&c);
-            if (result) {
-                continue;
-            }
-            switch (c) {
-            case PD_COMMAND: {
-                /*pgdir */
-                unsigned int arg;
-                result = getArg32(&arg);
-                if (result) {
-                    continue;
-                }
-                sendPD(arg);
-                putDebugChar(END);
-            }
-            break;
-            case PT_COMMAND: {
-                /*pg table */
-                unsigned int arg;
-                result = getArg32(&arg);
-                if (result) {
-                    continue;
-                }
-                sendPT(arg);
-                putDebugChar(END);
-            }
-            break;
-            case ASID_POOL_COMMAND: {
-                /*asid pool */
-                unsigned int arg;
-                result = getArg32(&arg);
-                if (result) {
-                    continue;
-                }
-                sendASIDPool(arg);
-                putDebugChar(END);
-            }
-            break;
-            case RQ_COMMAND: {
-                /*runqueues */
-                sendRunqueues();
-                putDebugChar(END);
-                result = 0;
-            }
-            break;
-            case EP_COMMAND: {
-                /*endpoint waiters */
-                unsigned int arg;
-                result = getArg32(&arg);
-                if (result) {
-                    continue;
-                }
-                sendEPQueue(arg);
-                putDebugChar(END);
-            }
-            break;
-            case CN_COMMAND: {
-                /*cnode */
-                unsigned int address, sizebits;
-                result = getArg32(&address);
-                if (result) {
-                    continue;
-                }
-                result = getArg32(&sizebits);
-                if (result) {
-                    continue;
-                }
+    printf("arch aarch32\n");
+    printf("objects {\n");
+    print_objects();
+    printf("}\n");
 
-                sendCNode(address, sizebits);
-                putDebugChar(END);
-            }
-            case TCB_COMMAND: {
-                /*cnode */
-                unsigned int address, sizebits;
-                result = getArg32(&address);
-                if (result) {
-                    continue;
-                }
-                result = getArg32(&sizebits);
-                if (result) {
-                    continue;
-                }
+    printf("caps {\n");
 
-                sendCNode((unsigned int)TCB_PTR_CTE_PTR(address, 0), sizebits);
-                putDebugChar(END);
-            }
-            break;
-            case IRQ_COMMAND: {
-                sendIRQNode();
-                putDebugChar(END);
-                result = 0;
-            }
-            break;
-            case VERSION_COMMAND: {
-                sendVersion();
-                putDebugChar(END);
-            }
-            break;
-            case DONE: {
-                done = 1;
-                putDebugChar(END);
-            }
-            default:
-                result = 0;
-                break;
-            }
-        } while (result);
-    }
+    /* reset the seen list */
+    reset_seen_list();
+
+    print_caps();
+    printf("}\n");
+
+    obj_irq_print_maps();
 }
 
-#endif
+#endif /* CONFIG_DEBUG_BUILD */

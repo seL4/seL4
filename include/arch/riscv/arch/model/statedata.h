@@ -31,5 +31,8 @@ extern pte_t kernel_root_pageTable[BIT(PT_INDEX_BITS)] VISIBLE;
  * page entry to avoid PMP exception. */
 #if __riscv_xlen != 32
 extern pte_t kernel_image_level2_pt[BIT(PT_INDEX_BITS)];
+extern pte_t kernel_image_level2_dev_pt[BIT(PT_INDEX_BITS)];
+#elif defined(CONFIG_KERNEL_LOG_BUFFER)
+extern pte_t kernel_image_level2_log_buffer_pt[BIT(PT_INDEX_BITS)];
 #endif
 

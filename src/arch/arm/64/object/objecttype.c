@@ -97,6 +97,18 @@ deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
         ret.status = EXCEPTION_NONE;
         return ret;
 #endif
+#ifdef CONFIG_ARM_SMMU
+    case cap_sid_control_cap:
+    case cap_cb_control_cap:
+        ret.cap = cap_null_cap_new();
+        ret.status = EXCEPTION_NONE;
+        return ret;
+    case cap_sid_cap:
+    case cap_cb_cap:
+        ret.cap = cap;
+        ret.status = EXCEPTION_NONE;
+        return ret;
+#endif
     default:
         /* This assert has no equivalent in haskell,
          * as the options are restricted by type */
@@ -136,6 +148,12 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
         break;
 
     case cap_page_global_directory_cap:
+#ifdef CONFIG_ARM_SMMU
+        if (cap_page_global_directory_cap_get_capPGDMappedCB(cap) != CB_INVALID) {
+            smmu_cb_delete_vspace(cap_page_global_directory_cap_get_capPGDMappedCB(cap),
+                                  cap_page_global_directory_cap_get_capPGDMappedASID(cap));
+        }
+#endif
         if (final && cap_page_global_directory_cap_get_capPGDIsMapped(cap)) {
             deleteASID(cap_page_global_directory_cap_get_capPGDMappedASID(cap),
                        VSPACE_PTR(cap_page_global_directory_cap_get_capPGDBasePtr(cap)));
@@ -144,6 +162,12 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
 
     case cap_page_upper_directory_cap:
 #ifdef AARCH64_VSPACE_S2_START_L1
+#ifdef CONFIG_ARM_SMMU
+        if (cap_page_upper_directory_cap_get_capPGDMappedCB(cap) != CB_INVALID) {
+            smmu_cb_delete_vspace(cap_page_upper_directory_cap_get_capPUDMappedCB(cap),
+                                  cap_page_upper_directory_cap_get_capPUDMappedASID(cap));
+        }
+#endif
         if (final && cap_page_upper_directory_cap_get_capPUDIsMapped(cap)) {
             deleteASID(cap_page_upper_directory_cap_get_capPUDMappedASID(cap),
                        PUDE_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(cap)));
@@ -186,6 +210,21 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
     case cap_vcpu_cap:
         if (final) {
             vcpu_finalise(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)));
+        }
+        break;
+#endif
+#ifdef CONFIG_ARM_SMMU
+    case cap_cb_cap:
+        if (cap_cb_cap_get_capBindSID(cap) != SID_INVALID) {
+            smmu_sid_unbind(cap_cb_cap_get_capBindSID(cap));
+        }
+        if (final) {
+            smmu_delete_cb(cap);
+        }
+        break;
+    case cap_sid_cap:
+        if (final) {
+            smmu_delete_sid(cap);
         }
         break;
 #endif
@@ -258,9 +297,35 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
             return cap_vcpu_cap_get_capVCPUPtr(cap_a) ==
                    cap_vcpu_cap_get_capVCPUPtr(cap_b);
         }
+        break;
+#endif
+#ifdef CONFIG_ARM_SMMU
+    case cap_sid_control_cap:
+        if (cap_get_capType(cap_b) == cap_sid_control_cap ||
+            cap_get_capType(cap_b) == cap_sid_cap) {
+            return true;
+        }
+        break;
+    case cap_cb_control_cap:
+        if (cap_get_capType(cap_b) == cap_cb_control_cap ||
+            cap_get_capType(cap_b) == cap_cb_cap) {
+            return true;
+        }
+        break;
+    case cap_sid_cap:
+        if (cap_get_capType(cap_b) == cap_sid_cap) {
+            return cap_sid_cap_get_capSID(cap_a) ==
+                   cap_sid_cap_get_capSID(cap_b);
+        }
+        break;
+    case cap_cb_cap:
+        if (cap_get_capType(cap_b) == cap_cb_cap) {
+            return cap_cb_cap_get_capCB(cap_a) ==
+                   cap_cb_cap_get_capCB(cap_b);
+        }
+        break;
 #endif
     }
-
     return false;
 }
 
@@ -276,6 +341,16 @@ bool_t CONST Arch_sameObjectAs(cap_t cap_a, cap_t cap_b)
                      (cap_frame_cap_get_capFIsDevice(cap_b) == 0)));
         }
     }
+#ifdef CONFIG_ARM_SMMU
+    if (cap_get_capType(cap_a) == cap_sid_control_cap &&
+        cap_get_capType(cap_b) == cap_sid_cap) {
+        return false;
+    }
+    if (cap_get_capType(cap_a) == cap_cb_control_cap &&
+        cap_get_capType(cap_b) == cap_cb_cap) {
+        return false;
+    }
+#endif
     return Arch_sameRegionAs(cap_a, cap_b);
 }
 
@@ -342,12 +417,23 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
                );
 #ifndef AARCH64_VSPACE_S2_START_L1
     case seL4_ARM_PageGlobalDirectoryObject:
+#ifdef CONFIG_ARM_SMMU
+
+        return cap_page_global_directory_cap_new(
+                   asidInvalid,           /* capPGDMappedASID   */
+                   (word_t)regionBase,    /* capPGDBasePtr      */
+                   0,                     /* capPGDIsMapped     */
+                   CB_INVALID             /* capPGDMappedCB     */
+               );
+#else
+
         return cap_page_global_directory_cap_new(
                    asidInvalid,           /* capPGDMappedASID   */
                    (word_t)regionBase,    /* capPGDBasePtr      */
                    0                      /* capPGDIsMapped     */
                );
-#endif
+#endif /*!CONFIG_ARM_SMMU*/
+#endif /*!AARCH64_VSPACE_S2_START_L1*/
     case seL4_ARM_PageUpperDirectoryObject:
         return cap_page_upper_directory_cap_new(
                    asidInvalid,           /* capPUDMappedASID    */
@@ -393,12 +479,22 @@ exception_t Arch_decodeInvocation(word_t label, word_t length, cptr_t cptr,
     /* The C parser cannot handle a switch statement with only a default
      * case. So we need to do some gymnastics to remove the switch if
      * there are no other cases */
-#if defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
+#if defined(CONFIG_ARM_HYPERVISOR_SUPPORT) || defined(CONFIG_ARM_SMMU)
     switch (cap_get_capType(cap)) {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case cap_vcpu_cap:
         return decodeARMVCPUInvocation(label, length, cptr, slot, cap, extraCaps, call, buffer);
 #endif /* end of CONFIG_ARM_HYPERVISOR_SUPPORT */
+#ifdef CONFIG_ARM_SMMU
+    case cap_sid_control_cap:
+        return decodeARMSIDControlInvocation(label, length, cptr, slot, cap, extraCaps, call, buffer);
+    case cap_sid_cap:
+        return decodeARMSIDInvocation(label, length, cptr, slot, cap, extraCaps, call, buffer);
+    case cap_cb_control_cap:
+        return decodeARMCBControlInvocation(label, length, cptr, slot, cap, extraCaps, call, buffer);
+    case cap_cb_cap:
+        return decodeARMCBInvocation(label, length, cptr, slot, cap, extraCaps, call, buffer);
+#endif /*CONFIG_ARM_SMMU*/
     default:
 #else
 {
@@ -409,6 +505,10 @@ exception_t Arch_decodeInvocation(word_t label, word_t length, cptr_t cptr,
 
 void
 Arch_prepareThreadDelete(tcb_t * thread) {
+#ifdef CONFIG_HAVE_FPU
+    fpuThreadDelete(thread);
+#endif
+
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     if (thread->tcbArch.tcbVCPU) {
         dissociateVCPUTCB(thread->tcbArch.tcbVCPU, thread);

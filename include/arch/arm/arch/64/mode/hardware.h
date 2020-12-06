@@ -203,4 +203,6 @@
  * mapping region. These are mapped in the kernel page table. */
 #define KDEV_BASE KERNEL_PT_BASE
 
+/* The log buffer is placed before the device region */
+#define KS_LOG_PPTR (KDEV_BASE - UL_CONST(0x200000))
 

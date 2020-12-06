@@ -97,12 +97,9 @@ trap_entry:
   STORE   x1, (33*REGBYTES)(t0)
 
   /* Check if it's an interrupt */
-  srli s2, s0, (CONFIG_WORD_SIZE - 1)
-  li   s1, 0x1
-  beq  s2, s1, interrupt
+  bltz s0, interrupt
 
-  andi s0, s0, 0xf /* priv 1.10 defines up to 15 exceptions/interrupts */
-  li   s4, 8       /* priv 1.10 has value 8 for ecall exception */
+  li   s4, 8       /* ratified priv has value 8 for ecall exception */
   bne  s0, s4, exception
 
 syscall:

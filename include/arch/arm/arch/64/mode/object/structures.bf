@@ -64,7 +64,12 @@ block page_upper_directory_cap {
     field capType                    5
     field capPUDIsMapped             1
     field_high capPUDMappedAddress   10
+#if defined (CONFIG_ARM_SMMU)  && defined (AARCH64_VSPACE_S2_START_L1)
+    field capPUDMappedCB             12
+    padding                          36
+#else 
     padding                          48
+#endif 
 }
 
 -- First-level page table (page global directory)
@@ -74,7 +79,12 @@ block page_global_directory_cap {
 
     field capType                    5
     field capPGDIsMapped             1
+#ifdef CONFIG_ARM_SMMU 
+    field capPGDMappedCB             12
+    padding                          46
+#else 
     padding                          58
+#endif 
 }
 
 -- Cap to the table of 2^7 ASID pools
@@ -103,6 +113,45 @@ block vcpu_cap {
     field_high capVCPUPtr           48
     padding                         11
 }
+#endif
+
+#ifdef CONFIG_ARM_SMMU
+
+block sid_control_cap {
+    padding        64
+
+    field capType  5
+    padding        59
+}
+
+block sid_cap {
+
+    padding              52
+    field capSID         12
+
+    field capType        5
+    padding 59
+}
+
+block cb_control_cap {
+    padding              64
+
+    field capType        5
+    padding              59
+}
+
+
+block cb_cap {
+
+    padding               40
+    field capBindSID      12
+    field capCB           12
+
+
+    field capType         5
+    padding               59
+}
+
 #endif
 
 -- NB: odd numbers are arch caps (see isArchCap())
@@ -134,6 +183,12 @@ tagged_union cap capType {
     tag asid_pool_cap               13
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     tag vcpu_cap                    15
+#endif
+#ifdef CONFIG_ARM_SMMU
+    tag sid_control_cap             17
+    tag sid_cap                     19
+    tag cb_control_cap              21
+    tag cb_cap                      23
 #endif
 }
 
@@ -191,7 +246,12 @@ base 64(48,0)
 block pgde_invalid {
     field stored_hw_asid            8
     field stored_asid_valid         1
+#ifdef CONFIG_ARM_SMMU
+    field bind_cb                   12
+    padding                         41
+#else
     padding                         53
+#endif
     field pgde_type                 2
 }
 
@@ -210,7 +270,12 @@ tagged_union pgde pgde_type {
 block pude_invalid {
     field stored_hw_asid            8
     field stored_asid_valid         1
+ #ifdef CONFIG_ARM_SMMU
+    field bind_cb                   12
+    padding                         41
+#else
     padding                         53
+#endif
     field pude_type                 2
 }
 

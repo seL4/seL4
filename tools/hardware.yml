@@ -116,11 +116,19 @@ devices:
       KERNEL_PMU_IRQ: 0
   # Tegra SMMU (memory-controllers/nvidia,tegra30-mc.txt)
   - compatible:
-      - nvidia,tegra124-mc
+      - arm,mmu-500
     regions:
       - index: 0
         kernel: SMMU_PPTR
         macro: CONFIG_ARM_SMMU
+    interrupts:
+      INTERRUPT_SMMU: 0
+  - compatible:
+      - nvidia,tegra124-mc
+    regions:
+      - index: 0
+        kernel: SMMU_PPTR
+        macro: CONFIG_TK1_SMMU
     interrupts:
       INTERRUPT_SMMU: 0
   # ARM architected timer (timer/arm,arch_timer.txt)
@@ -224,6 +232,7 @@ devices:
       - snps,dw-apb-uart
       - ti,omap3-uart
       - xlnx,xuartps
+      - ns16550a
     regions:
       - index: 0
         kernel: UART_PPTR
@@ -236,6 +245,7 @@ devices:
     regions:
       - index: 0
         kernel: PLIC_PPTR
+        kernel_size: 0x04000000
 
   # elfloader rules
   - compatible:

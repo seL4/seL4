@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
+#include <config.h>
 #include <types.h>
 #include <benchmark/benchmark.h>
 #include <arch/benchmark.h>
@@ -86,9 +87,13 @@ exception_t handleUnknownSyscall(word_t w)
         halt();
     }
     if (w == SysDebugSnapshot) {
+#if defined CONFIG_ARCH_ARM || defined CONFIG_ARCH_X86_64 || defined CONFIG_ARCH_RISCV32
         tcb_t *UNUSED tptr = NODE_STATE(ksCurThread);
         printf("Debug snapshot syscall from user thread %p \"%s\"\n", tptr, TCB_PTR_DEBUG_PTR(tptr)->tcbName);
         capDL();
+#else
+        printf("Debug snapshot syscall not supported for the current arch\n");
+#endif
         return EXCEPTION_NONE;
     }
     if (w == SysDebugCapIdentify) {
@@ -197,7 +202,7 @@ exception_t handleUnknownSyscall(word_t w)
 #endif
         return EXCEPTION_NONE;
     } else if (w == SysBenchmarkResetLog) {
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_LOG_BUFFER
         if (ksUserLogBuffer == 0) {
             userError("A user-level buffer has to be set before resetting benchmark.\
                     Use seL4_BenchmarkSetLogBuffer\n");
@@ -206,7 +211,7 @@ exception_t handleUnknownSyscall(word_t w)
         }
 
         ksLogIndex = 0;
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_KERNEL_LOG_BUFFER */
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
         NODE_STATE(benchmark_log_utilisation_enabled) = true;
         benchmark_track_reset_utilisation(NODE_STATE(ksIdleThread));
@@ -222,16 +227,16 @@ exception_t handleUnknownSyscall(word_t w)
         setRegister(NODE_STATE(ksCurThread), capRegister, seL4_NoError);
         return EXCEPTION_NONE;
     } else if (w == SysBenchmarkFinalizeLog) {
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_LOG_BUFFER
         ksLogIndexFinalized = ksLogIndex;
         setRegister(NODE_STATE(ksCurThread), capRegister, ksLogIndexFinalized);
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_KERNEL_LOG_BUFFER */
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
         benchmark_utilisation_finalise();
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
         return EXCEPTION_NONE;
     } else if (w == SysBenchmarkSetLogBuffer) {
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_LOG_BUFFER
         word_t cptr_userFrame = getRegister(NODE_STATE(ksCurThread), capRegister);
 
         if (benchmark_arch_map_logBuffer(cptr_userFrame) != EXCEPTION_NONE) {
@@ -241,7 +246,7 @@ exception_t handleUnknownSyscall(word_t w)
 
         setRegister(NODE_STATE(ksCurThread), capRegister, seL4_NoError);
         return EXCEPTION_NONE;
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_KERNEL_LOG_BUFFER */
     }
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
@@ -604,7 +609,7 @@ static void handleYield(void)
 #ifdef CONFIG_KERNEL_MCS
     /* Yield the current remaining budget */
     ticks_t consumed = NODE_STATE(ksCurSC)->scConsumed + NODE_STATE(ksConsumed);
-    chargeBudget(REFILL_HEAD(NODE_STATE(ksCurSC)).rAmount, false, CURRENT_CPU_INDEX(), true);
+    chargeBudget(refill_head(NODE_STATE(ksCurSC))->rAmount, false, CURRENT_CPU_INDEX(), true);
     /* Manually updated the scConsumed so that the full timeslice isn't added, just what was consumed */
     NODE_STATE(ksCurSC)->scConsumed = consumed;
 #else

@@ -298,7 +298,7 @@ static inline word_t CONST cap_get_archCapSizeBits(cap_t cap)
     case cap_vcpu_cap:
         return VCPU_SIZE_BITS;
 #endif
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
     case cap_io_page_table_cap:
         return seL4_IOPageTableBits;
 #endif
@@ -340,7 +340,7 @@ static inline bool_t CONST cap_get_archCapIsPhysical(cap_t cap)
         return true;
 #endif
 
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
     case cap_io_page_table_cap:
         return true;
 #endif
@@ -380,7 +380,7 @@ static inline void *CONST cap_get_archCapPtr(cap_t cap)
         return VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap));
 #endif
 
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
     case cap_io_page_table_cap:
         return (void *)(cap_io_page_table_cap_get_capIOPTBasePtr(cap));
 #endif

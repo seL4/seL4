@@ -17,7 +17,7 @@ if(KernelPlatformHifive)
     list(APPEND KernelDTSList "src/plat/hifive/overlay-hifive.dts")
     declare_default_headers(
         TIMER_FREQUENCY 1000000llu PLIC_MAX_NUM_INT 53
-        INTERRUPT_CONTROLLER drivers/irq/hifive.h
+        INTERRUPT_CONTROLLER drivers/irq/riscv_plic0.h
     )
 else()
     unset(KernelPlatformFirstHartID CACHE)

@@ -18,7 +18,7 @@ enum {
 #endif /* CONFIG_KERNEL_GLOBALS_FRAME */
 
 /* format of an unknown syscall message */
-enum {
+typedef enum {
     seL4_UnknownSyscall_R0,
     seL4_UnknownSyscall_R1,
     seL4_UnknownSyscall_R2,
@@ -38,7 +38,7 @@ enum {
 } seL4_UnknownSyscall_Msg;
 
 /* format of a user exception message */
-enum {
+typedef enum {
     seL4_UserException_FaultIP,
     seL4_UserException_SP,
     seL4_UserException_CPSR,
@@ -50,7 +50,7 @@ enum {
 } seL4_UserException_Msg;
 
 /* format of a vm fault message */
-enum {
+typedef enum {
     seL4_VMFault_IP,
     seL4_VMFault_Addr,
     seL4_VMFault_PrefetchFault,
@@ -60,24 +60,24 @@ enum {
 } seL4_VMFault_Msg;
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-enum {
+typedef enum {
     seL4_VGICMaintenance_IDX,
     seL4_VGICMaintenance_Length,
     SEL4_FORCE_LONG_ENUM(seL4_VGICMaintenance_Msg),
 } seL4_VGICMaintenance_Msg;
 
-enum {
+typedef enum {
     seL4_VPPIEvent_IRQ,
     SEL4_FORCE_LONG_ENUM(seL4_VPPIEvent_Msg),
 } seL4_VPPIEvent_Msg;
 
-enum {
+typedef enum {
     seL4_VCPUFault_HSR,
     seL4_VCPUFault_Length,
     SEL4_FORCE_LONG_ENUM(seL4_VCPUFault_Msg),
 } seL4_VCPUFault_Msg;
 
-enum {
+typedef enum {
     seL4_VCPUReg_SCTLR = 0,
     seL4_VCPUReg_ACTLR,
     seL4_VCPUReg_TTBCR,
@@ -128,7 +128,7 @@ enum {
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 #ifdef CONFIG_KERNEL_MCS
-enum {
+typedef enum {
     seL4_Timeout_Data,
     /* consumed is 64 bits */
     seL4_Timeout_Consumed_HighBits,
@@ -137,7 +137,7 @@ enum {
     SEL4_FORCE_LONG_ENUM(seL4_Timeout_Msg)
 } seL4_TimeoutMsg;
 
-enum {
+typedef enum {
     seL4_TimeoutReply_FaultIP,
     seL4_TimeoutReply_SP,
     seL4_TimeoutReply_CPSR,
@@ -215,7 +215,7 @@ enum {
 #define seL4_PageDirBits 14
 #define seL4_VSpaceBits seL4_PageDirBits
 
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
 #define seL4_NumASIDPoolsBits 6
 #else
 #define seL4_NumASIDPoolsBits 7

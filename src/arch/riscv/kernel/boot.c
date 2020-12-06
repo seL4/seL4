@@ -28,7 +28,8 @@ extern char ki_end[1];
 BOOT_DATA static volatile word_t node_boot_lock = 0;
 #endif
 
-#define MAX_RESERVED 2
+/* kernel image + [extra bootinfo] + user image */
+#define MAX_RESERVED 3
 BOOT_DATA static region_t res_reg[MAX_RESERVED];
 
 BOOT_CODE static bool_t create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg)
@@ -73,16 +74,28 @@ BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vpt
     return cap;
 }
 
-BOOT_CODE static void arch_init_freemem(region_t ui_reg, v_region_t ui_v_reg)
+BOOT_CODE static void arch_init_freemem(region_t ui_reg, v_region_t ui_v_reg,
+                                        region_t dtb_reg, word_t extra_bi_size_bits)
 {
     // This looks a bit awkward as our symbols are a reference in the kernel image window, but
     // we want to do all allocations in terms of the main kernel window, so we do some translation
     res_reg[0].start = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void *)KERNEL_ELF_BASE));
     res_reg[0].end = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void *)ki_end));
-    res_reg[1].start = ui_reg.start;
-    res_reg[1].end = ui_reg.end;
 
-    init_freemem(get_num_avail_p_regs(), get_avail_p_regs(), MAX_RESERVED, res_reg, ui_v_reg, 0);
+    int index = 1;
+    if (dtb_reg.start) {
+        /* optionally reserve the dtb region, as it could be empty */
+        res_reg[index].start = dtb_reg.start;
+        res_reg[index].end = dtb_reg.end;
+        index += 1;
+    }
+
+    res_reg[index].start = ui_reg.start;
+    res_reg[index].end = ui_reg.end;
+    index += 1;
+
+    init_freemem(get_num_avail_p_regs(), get_avail_p_regs(), index, res_reg, ui_v_reg,
+                 extra_bi_size_bits);
 }
 
 BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
@@ -178,7 +191,9 @@ static BOOT_CODE bool_t try_init_kernel(
     paddr_t ui_p_reg_start,
     paddr_t ui_p_reg_end,
     uint32_t pv_offset,
-    vptr_t  v_entry
+    vptr_t  v_entry,
+    paddr_t dtb_addr_start,
+    paddr_t dtb_addr_end
 )
 {
     cap_t root_cnode_cap;
@@ -192,9 +207,14 @@ static BOOT_CODE bool_t try_init_kernel(
     region_t ui_reg = paddr_to_pptr_reg((p_region_t) {
         ui_p_reg_start, ui_p_reg_end
     });
+    region_t dtb_reg;
+    word_t extra_bi_size;
+    pptr_t extra_bi_offset = 0;
+    vptr_t extra_bi_frame_vptr;
     vptr_t bi_frame_vptr;
     vptr_t ipcbuf_vptr;
     create_frames_of_region_ret_t create_frames_ret;
+    create_frames_of_region_ret_t extra_bi_ret;
 
     /* convert from physical addresses to userland vptrs */
     v_region_t ui_v_reg;
@@ -204,10 +224,27 @@ static BOOT_CODE bool_t try_init_kernel(
 
     ipcbuf_vptr = ui_v_reg.end;
     bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
+    extra_bi_frame_vptr = bi_frame_vptr + BIT(PAGE_BITS);
 
-    /* The region of the initial thread is the user image + ipcbuf and boot info */
+    /* If no DTB was provided, skip allocating extra bootinfo */
+    p_region_t dtb_p_reg = {
+        dtb_addr_start, ROUND_UP(dtb_addr_end, PAGE_BITS)
+    };
+    if (dtb_addr_start == 0) {
+        extra_bi_size = 0;
+        dtb_reg = (region_t) {
+            0, 0
+        };
+    } else {
+        /* convert physical address to addressable pointer */
+        dtb_reg = paddr_to_pptr_reg(dtb_p_reg);
+        extra_bi_size = sizeof(seL4_BootInfoHeader) + (dtb_reg.end - dtb_reg.start);
+    }
+    word_t extra_bi_size_bits = calculate_extra_bi_size_bits(extra_bi_size);
+
+    /* The region of the initial thread is the user image + ipcbuf + boot info + extra */
     it_v_reg.start = ui_v_reg.start;
-    it_v_reg.end = bi_frame_vptr + BIT(PAGE_BITS);
+    it_v_reg.end = extra_bi_frame_vptr + BIT(extra_bi_size_bits);
 
     map_kernel_window();
 
@@ -218,7 +255,7 @@ static BOOT_CODE bool_t try_init_kernel(
     init_plat();
 
     /* make the free memory available to alloc_region() */
-    arch_init_freemem(ui_reg, it_v_reg);
+    arch_init_freemem(ui_reg, it_v_reg, dtb_reg, extra_bi_size_bits);
 
     /* create the root cnode */
     root_cnode_cap = create_root_cnode();
@@ -233,7 +270,26 @@ static BOOT_CODE bool_t try_init_kernel(
     init_irqs(root_cnode_cap);
 
     /* create the bootinfo frame */
-    populate_bi_frame(0, CONFIG_MAX_NUM_NODES, ipcbuf_vptr, 0);
+    populate_bi_frame(0, CONFIG_MAX_NUM_NODES, ipcbuf_vptr, extra_bi_size);
+
+    /* put DTB in the bootinfo block, if present. */
+    seL4_BootInfoHeader header;
+    if (dtb_reg.start) {
+        header.id = SEL4_BOOTINFO_HEADER_FDT;
+        header.len = extra_bi_size;
+        *(seL4_BootInfoHeader *)(rootserver.extra_bi + extra_bi_offset) = header;
+        extra_bi_offset += sizeof(header);
+        memcpy((void *)(rootserver.extra_bi + extra_bi_offset), (void *)dtb_reg.start,
+               dtb_reg.end - dtb_reg.start);
+        extra_bi_offset += (dtb_reg.end - dtb_reg.start);
+    }
+
+    if (extra_bi_size > extra_bi_offset) {
+        /* provide a chunk for any leftover padding in the extended boot info */
+        header.id = SEL4_BOOTINFO_HEADER_PADDING;
+        header.len = (extra_bi_size - extra_bi_offset);
+        *(seL4_BootInfoHeader *)(rootserver.extra_bi + extra_bi_offset) = header;
+    }
 
     /* Construct an initial address space with enough virtual addresses
      * to cover the user image + ipc buffer and bootinfo frames */
@@ -248,6 +304,26 @@ static BOOT_CODE bool_t try_init_kernel(
         it_pd_cap,
         bi_frame_vptr
     );
+
+    /* create and map extra bootinfo region */
+    if (extra_bi_size > 0) {
+        region_t extra_bi_region = {
+            .start = rootserver.extra_bi,
+            .end = rootserver.extra_bi + extra_bi_size
+        };
+        extra_bi_ret =
+            create_frames_of_region(
+                root_cnode_cap,
+                it_pd_cap,
+                extra_bi_region,
+                true,
+                pptr_to_paddr((void *)extra_bi_region.start) - extra_bi_frame_vptr
+            );
+        if (!extra_bi_ret.success) {
+            return false;
+        }
+        ndks_boot.bi_frame->extraBIPages = extra_bi_ret.region;
+    }
 
 #ifdef CONFIG_KERNEL_MCS
     init_sched_control(root_cnode_cap, CONFIG_MAX_NUM_NODES);
@@ -332,7 +408,9 @@ BOOT_CODE VISIBLE void init_kernel(
     paddr_t ui_p_reg_start,
     paddr_t ui_p_reg_end,
     sword_t pv_offset,
-    vptr_t  v_entry
+    vptr_t  v_entry,
+    paddr_t dtb_addr_p,
+    uint32_t dtb_size
 #ifdef ENABLE_SMP_SUPPORT
     ,
     word_t hart_id,
@@ -340,23 +418,32 @@ BOOT_CODE VISIBLE void init_kernel(
 #endif
 )
 {
-#ifdef ENABLE_SMP_SUPPORT
     bool_t result;
+    paddr_t dtb_end_p = 0;
 
+    if (dtb_addr_p) {
+        dtb_end_p = dtb_addr_p + dtb_size;
+    }
+
+#ifdef ENABLE_SMP_SUPPORT
     add_hart_to_core_map(hart_id, core_id);
     if (core_id == 0) {
         result = try_init_kernel(ui_p_reg_start,
                                  ui_p_reg_end,
                                  pv_offset,
-                                 v_entry);
+                                 v_entry,
+                                 dtb_addr_p,
+                                 dtb_end_p);
     } else {
         result = try_init_kernel_secondary_core(hart_id, core_id);
     }
 #else
-    bool_t result = try_init_kernel(ui_p_reg_start,
-                                    ui_p_reg_end,
-                                    pv_offset,
-                                    v_entry);
+    result = try_init_kernel(ui_p_reg_start,
+                             ui_p_reg_end,
+                             pv_offset,
+                             v_entry,
+                             dtb_addr_p,
+                             dtb_end_p);
 #endif
     if (!result) {
         fail("Kernel init failed for some reason :(");

@@ -26,12 +26,6 @@
 #include <arch/object/iospace.h>
 #include <arch/object/vcpu.h>
 #include <arch/machine/tlb.h>
-/* VSpace root slot is reserved for storing the VSpace root's allocated hardware VMID.
- * This is only necessary when running EL2 and when we only have
- * 8-bit VMID. Note that this assumes that the IPA size for S2
- * translation does not use full 48-bit.
- */
-#define VTABLE_VMID_SLOT   MASK(seL4_VSpaceIndexBits)
 #define RESERVED 3
 
 /*
@@ -554,6 +548,10 @@ BOOT_CODE void write_it_asid_pool(cap_t it_ap_cap, cap_t it_vspace_cap)
     asid_pool_t *ap = ASID_POOL_PTR(pptr_of_cap(it_ap_cap));
     ap->array[IT_ASID] = (void *)(pptr_of_cap(it_vspace_cap));
     armKSASIDTable[IT_ASID >> asidLowBits] = ap;
+#ifdef CONFIG_ARM_SMMU
+    vspace_root_t *vtable = ap->array[IT_ASID];
+    vtable[VTABLE_SMMU_SLOT] = vtable_invalid_smmu_new(0);
+#endif
 }
 
 /* ==================== BOOT CODE FINISHES HERE ==================== */
@@ -1171,8 +1169,59 @@ static void invalidateASIDEntry(asid_t asid)
 
 #endif
 
+#ifdef CONFIG_ARM_SMMU
+static vspace_root_t getASIDBindCB(asid_t asid)
+{
+    asid_pool_t *asidPool;
+
+    asidPool = armKSASIDTable[asid >> asidLowBits];
+    assert(asidPool);
+
+    vspace_root_t *vtable = asidPool->array[asid & MASK(asidLowBits)];
+    assert(vtable);
+
+    return vtable[VTABLE_SMMU_SLOT];
+}
+
+void increaseASIDBindCB(asid_t asid)
+{
+    asid_pool_t *asidPool;
+    vspace_root_t stored_info;
+
+    asidPool = armKSASIDTable[asid >> asidLowBits];
+    assert(asidPool);
+
+    vspace_root_t *vtable = asidPool->array[asid & MASK(asidLowBits)];
+    assert(vtable);
+
+    stored_info = vtable[VTABLE_SMMU_SLOT];
+    vtable[VTABLE_SMMU_SLOT] = vtable_invalid_smmu_new(vtable_invalid_get_bind_cb(stored_info) + 1);
+}
+
+void decreaseASIDBindCB(asid_t asid)
+{
+    asid_pool_t *asidPool;
+    vspace_root_t stored_info;
+
+    asidPool = armKSASIDTable[asid >> asidLowBits];
+    assert(asidPool);
+
+    vspace_root_t *vtable = asidPool->array[asid & MASK(asidLowBits)];
+    assert(vtable);
+
+    stored_info = vtable[VTABLE_SMMU_SLOT];
+    vtable[VTABLE_SMMU_SLOT] = vtable_invalid_smmu_new(vtable_invalid_get_bind_cb(stored_info) - 1);
+}
+#endif
+
 static inline void invalidateTLBByASID(asid_t asid)
 {
+#ifdef CONFIG_ARM_SMMU
+    vspace_root_t bind_cb = getASIDBindCB(asid);
+    if (unlikely(vtable_invalid_get_bind_cb(bind_cb))) {
+        invalidateSMMUTLBByASID(asid, vtable_invalid_get_bind_cb(bind_cb));
+    }
+#endif
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     vspace_root_t stored_hw_asid;
 
@@ -1188,6 +1237,12 @@ static inline void invalidateTLBByASID(asid_t asid)
 
 static inline void invalidateTLBByASIDVA(asid_t asid, vptr_t vaddr)
 {
+#ifdef CONFIG_ARM_SMMU
+    vspace_root_t bind_cb = getASIDBindCB(asid);
+    if (unlikely(vtable_invalid_get_bind_cb(bind_cb))) {
+        invalidateSMMUTLBByASIDVA(asid, vaddr, vtable_invalid_get_bind_cb(bind_cb));
+    }
+#endif
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     vspace_root_t stored_hw_asid;
 
@@ -1231,8 +1286,11 @@ void unmapPageUpperDirectory(asid_t asid, vptr_t vaddr, pude_t *pud)
 
     pgdSlot = pageUpperDirectoryMapped(asid, vaddr, pud);
     if (likely(pgdSlot != NULL)) {
+#ifdef CONFIG_ARM_SMMU
+        *pgdSlot = pgde_pgde_invalid_new(0, false, 0);
+#else
         *pgdSlot = pgde_pgde_invalid_new(0, false);
-
+#endif
         cleanByVA_PoU((vptr_t)pgdSlot, pptr_to_paddr(pgdSlot));
         invalidateTLBByASID(asid);
     }
@@ -1556,6 +1614,7 @@ static exception_t performSmallPageInvocationMap(asid_t asid, cap_t cap, cte_t *
 static exception_t performPageInvocationUnmap(cap_t cap, cte_t *ctSlot)
 {
     if (cap_frame_cap_get_capFMappedASID(cap) != 0) {
+
         unmapPage(cap_frame_cap_get_capFSize(cap),
                   cap_frame_cap_get_capFMappedASID(cap),
                   cap_frame_cap_get_capFMappedAddress(cap),
@@ -2467,7 +2526,7 @@ void Arch_userStackTrace(tcb_t *tptr)
 }
 #endif
 
-#if defined(CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER)
+#if defined(CONFIG_KERNEL_LOG_BUFFER)
 exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
 {
     lookupCapAndSlot_ret_t lu_ret;
@@ -2521,5 +2580,5 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
     invalidateTranslationSingle(KS_LOG_PPTR);
     return EXCEPTION_NONE;
 }
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_KERNEL_LOG_BUFFER */
 

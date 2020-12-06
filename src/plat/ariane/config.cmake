@@ -13,9 +13,10 @@ if(KernelPlatformAriane)
     config_set(KernelRiscVPlatform RISCV_PLAT "ariane")
     config_set(KernelPlatformFirstHartID FIRST_HART_ID 0)
     list(APPEND KernelDTSList "tools/dts/ariane.dts")
+    list(APPEND KernelDTSList "src/plat/ariane/overlay-ariane.dts")
     declare_default_headers(
-        TIMER_FREQUENCY 10000000llu PLIC_MAX_NUM_INT 0
-        INTERRUPT_CONTROLLER arch/machine/plic.h
+        TIMER_FREQUENCY 25000000llu PLIC_MAX_NUM_INT 30
+        INTERRUPT_CONTROLLER drivers/irq/riscv_plic0.h
     )
 else()
     unset(KernelPlatformFirstHartID CACHE)

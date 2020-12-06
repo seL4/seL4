@@ -87,7 +87,7 @@ deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
         return ret;
 #endif
 
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
     case cap_io_space_cap:
         ret.cap = cap;
         ret.status = EXCEPTION_NONE;
@@ -170,7 +170,7 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
 
     case cap_small_frame_cap:
         if (cap_small_frame_cap_get_capFMappedASID(cap)) {
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
             if (isIOSpaceFrameCap(cap)) {
                 unmapIOPage(cap);
                 break;
@@ -186,7 +186,7 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
 
     case cap_frame_cap:
         if (cap_frame_cap_get_capFMappedASID(cap)) {
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_LOG_BUFFER
             /* If the last cap to the user-level log buffer frame is being revoked,
              * reset the ksLog so that the kernel doesn't log anymore
              */
@@ -225,7 +225,7 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
         break;
 #endif
 
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
     case cap_io_space_cap:
         if (final) {
             clearIOPageDirectory(cap);
@@ -300,7 +300,7 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
         break;
 #endif
 
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
     case cap_io_space_cap:
         if (cap_get_capType(cap_b) == cap_io_space_cap) {
             return cap_io_space_cap_get_capModuleID(cap_a) ==
@@ -362,7 +362,7 @@ word_t Arch_getObjectSize(word_t t)
         return PTE_SIZE_BITS + PT_INDEX_BITS;
     case seL4_ARM_PageDirectoryObject:
         return PDE_SIZE_BITS + PD_INDEX_BITS;
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
     case seL4_ARM_IOPageTableObject:
         return seL4_IOPageTableBits;
 #endif
@@ -396,7 +396,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
         return cap_small_frame_cap_new(
                    ASID_LOW(asidInvalid), VMReadWrite,
                    0, !!deviceMemory,
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
                    0,
 #endif
                    ASID_HIGH(asidInvalid),
@@ -514,7 +514,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
         return cap_vcpu_cap_new(VCPU_REF(regionBase));
 #endif
 
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
     case seL4_ARM_IOPageTableObject:
         /* When the untyped was zeroed it was cleaned to the PoU, but the SMMUs
          * typically pull directly from RAM, so we do a futher clean to RAM here */
@@ -540,9 +540,9 @@ exception_t Arch_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr,
     /* The C parser cannot handle a switch statement with only a default
      * case. So we need to do some gymnastics to remove the switch if
      * there are no other cases */
-#if defined(CONFIG_ARM_SMMU) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
+#if defined(CONFIG_TK1_SMMU) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
     switch (cap_get_capType(cap)) {
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
     case cap_io_space_cap:
         return decodeARMIOSpaceInvocation(invLabel, cap);
     case cap_io_page_table_cap:
@@ -562,12 +562,14 @@ exception_t Arch_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr,
 
 void
 Arch_prepareThreadDelete(tcb_t * thread) {
+#ifdef CONFIG_HAVE_FPU
+    fpuThreadDelete(thread);
+#endif
+
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     if (thread->tcbArch.tcbVCPU) {
         dissociateVCPUTCB(thread->tcbArch.tcbVCPU, thread);
     }
-#else  /* CONFIG_ARM_HYPERVISOR_SUPPORT */
-    /* No action required on ARM. */
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 }
 

@@ -60,7 +60,7 @@
 #define TLBBITMAP_PD_RESERVED (TLBBITMAP_ROOT_ENTRIES * BIT(seL4_LargePageBits))
 
 /* Calculate virtual address space reserved for dynamic log buffer mapping */
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_LOG_BUFFER
 #define LOGBUFFER_PD_RESERVED BIT(seL4_LargePageBits)
 #else
 #define LOGBUFFER_PD_RESERVED UL_CONST(0)
