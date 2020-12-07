@@ -168,6 +168,7 @@ foreach(
     KernelArmCortexA8
     KernelArmCortexA9
     KernelArmCortexA15
+    KernelArmCortexA35
     KernelArmCortexA53
     KernelArmCortexA57
     KernelArm1136JF_S
@@ -203,6 +204,7 @@ config_set(KernelArmCortexA7 ARM_CORTEX_A7 "${KernelArmCortexA7}")
 config_set(KernelArmCortexA8 ARM_CORTEX_A8 "${KernelArmCortexA8}")
 config_set(KernelArmCortexA9 ARM_CORTEX_A9 "${KernelArmCortexA9}")
 config_set(KernelArmCortexA15 ARM_CORTEX_A15 "${KernelArmCortexA15}")
+config_set(KernelArmCortexA35 ARM_CORTEX_A35 "${KernelArmCortexA35}")
 config_set(KernelArmCortexA53 ARM_CORTEX_A53 "${KernelArmCortexA53}")
 config_set(KernelArmCortexA57 ARM_CORTEX_A57 "${KernelArmCortexA57}")
 config_set(KernelArm1136JF_S ARM1136JF_S "${KernelArm1136JF_S}")
@@ -233,6 +235,8 @@ elseif(KernelArmCortexA9)
     set(KernelArmCPU "cortex-a9" CACHE INTERNAL "")
 elseif(KernelArmCortexA15)
     set(KernelArmCPU "cortex-a15" CACHE INTERNAL "")
+elseif(KernelArmCortexA35)
+    set(KernelArmCPU "cortex-a35" CACHE INTERNAL "")
 elseif(KernelArmCortexA53)
     set(KernelArmCPU "cortex-a53" CACHE INTERNAL "")
 elseif(KernelArmCortexA57)
