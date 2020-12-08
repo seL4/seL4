@@ -333,6 +333,7 @@ void schedContext_donate(sched_context_t *sc, tcb_t *to)
     if (from) {
         SMP_COND_STATEMENT(remoteTCBStall(from));
         tcbSchedDequeue(from);
+        tcbReleaseRemove(from);
         from->tcbSchedContext = NULL;
         if (from == NODE_STATE(ksCurThread) || from == NODE_STATE(ksSchedulerAction)) {
             rescheduleRequired();
