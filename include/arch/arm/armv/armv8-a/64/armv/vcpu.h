@@ -660,6 +660,19 @@ static inline bool_t armv_handleVCPUFault(word_t hsr)
     return false;
 }
 
+static inline bool_t vcpu_reg_saved_when_disabled(word_t field)
+{
+    switch (field) {
+    case seL4_VCPUReg_SCTLR:
+#ifdef CONFIG_HAVE_FPU
+    case seL4_VCPUReg_CPACR:
+#endif
+        return true;
+    default:
+        return false;
+    }
+}
+
 #endif /* End of CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 

@@ -58,24 +58,9 @@ static void vcpu_save(vcpu_t *vcpu, bool_t active)
 static word_t readVCPUReg(vcpu_t *vcpu, word_t field)
 {
     if (likely(ARCH_NODE_STATE(armHSCurVCPU) == vcpu)) {
-        switch (field) {
-        case seL4_VCPUReg_SCTLR:
-            /* The SCTLR value is switched to/from hardware when we enable/disable
-             * the vcpu, not when we switch vcpus */
-            if (ARCH_NODE_STATE(armHSVCPUActive)) {
-                return getSCTLR();
-            } else {
-                return vcpu_read_reg(vcpu, field);
-            }
-#ifdef CONFIG_HAVE_FPU
-        case seL4_VCPUReg_CPACR:
-            if (ARCH_NODE_STATE(armHSVCPUActive)) {
-                return vcpu_hw_read_reg(field);
-            } else {
-                return vcpu_read_reg(vcpu, field);
-            }
-#endif
-        default:
+        if (vcpu_reg_saved_when_disabled(field) && !ARCH_NODE_STATE(armHSVCPUActive)) {
+            return vcpu_read_reg(vcpu, field);
+        } else {
             return vcpu_hw_read_reg(field);
         }
     } else {
@@ -86,24 +71,9 @@ static word_t readVCPUReg(vcpu_t *vcpu, word_t field)
 static void writeVCPUReg(vcpu_t *vcpu, word_t field, word_t value)
 {
     if (likely(ARCH_NODE_STATE(armHSCurVCPU) == vcpu)) {
-        switch (field) {
-        case seL4_VCPUReg_SCTLR:
-            if (ARCH_NODE_STATE(armHSVCPUActive)) {
-                setSCTLR(value);
-            } else {
-                vcpu_write_reg(vcpu, field, value);
-            }
-            break;
-#ifdef CONFIG_HAVE_FPU
-        case seL4_VCPUReg_CPACR:
-            if (ARCH_NODE_STATE(armHSVCPUActive)) {
-                vcpu_hw_write_reg(field, value);
-            } else {
-                vcpu_write_reg(vcpu, field, value);
-            }
-            break;
-#endif
-        default:
+        if (vcpu_reg_saved_when_disabled(field) && !ARCH_NODE_STATE(armHSVCPUActive)) {
+            vcpu_write_reg(vcpu, field, value);
+        } else {
             vcpu_hw_write_reg(field, value);
         }
     } else {
