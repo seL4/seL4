@@ -232,6 +232,12 @@ typedef struct user_fpu_state {
  */
 struct user_context {
     word_t registers[n_contextRegisters];
+    /* user_fpu_state_t is 64-bit aligned, and we have an odd number of
+     * registers in the user context. This results in a verified configuration
+     * with padding. Verification requires packed structures without implicit
+     * padding, so we pad manually.
+     */
+    word_t odd_n_contextRegisters_padding;
 #ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
     user_breakpoint_state_t breakpointState;
 #endif /* CONFIG_HARDWARE_DEBUG_API */
