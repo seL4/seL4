@@ -208,7 +208,7 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
                     userError("Log buffer frame is invalidated, kernel can't benchmark anymore");
                 }
             }
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_BENCHMARK_KERNEL_LOG_BUFFER */
 
             unmapPage(cap_frame_cap_get_capFSize(cap),
                       cap_frame_cap_get_capFMappedASID(cap),
