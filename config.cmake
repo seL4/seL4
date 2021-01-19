@@ -135,14 +135,22 @@ if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
         execute_process(
             COMMAND
                 ${DTC_TOOL} -q -I dts -O dtb -o ${KernelDTBPath} ${KernelDTSIntermediate}
+            RESULT_VARIABLE error
         )
+        if(error)
+            message(FATAL_ERROR "Failed to compile DTS to DTB: ${KernelDTBPath}")
+        endif()
         # Track the size of the DTB for downstream tools
         execute_process(
             COMMAND
                 ${STAT_TOOL} -c '%s' ${KernelDTBPath}
             OUTPUT_VARIABLE KernelDTBSize
             OUTPUT_STRIP_TRAILING_WHITESPACE
+            RESULT_VARIABLE error
         )
+        if(error)
+            message(FATAL_ERROR "Failed to determine KernelDTBSize: ${KernelDTBPath}")
+        endif()
         string(
             REPLACE
                 "\'"
