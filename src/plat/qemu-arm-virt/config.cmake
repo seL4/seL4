@@ -34,7 +34,14 @@ if(KernelPlatformQEMUArmVirt)
         set(KernelArmCortexA53 ON)
         set(KernelArchArmV8a ON)
     endif()
-    execute_process(COMMAND qemu-system-${QEMU_ARCH} -version OUTPUT_VARIABLE QEMU_VERSION_STR)
+    execute_process(
+        COMMAND qemu-system-${QEMU_ARCH} -version
+        OUTPUT_VARIABLE QEMU_VERSION_STR
+        RESULT_VARIABLE error
+    )
+    if(error)
+        message(FATAL_ERROR "Failed to determine qemu version (qemu-system-${QEMU_ARCH})")
+    endif()
     string(
         REGEX
             MATCH
@@ -69,14 +76,22 @@ if(KernelPlatformQEMUArmVirt)
             ${QEMU_BINARY} -machine virt,dumpdtb=${DTBPath},${QEMU_VIRT_OPTION} -m ${QEMU_MEMORY}
             -cpu ${ARM_CPU} -smp ${QEMU_SMP_OPTION} -nographic
         ERROR_VARIABLE QEMU_OUTPUT_MESSAGE
+        RESULT_VARIABLE error
     )
     string(STRIP ${QEMU_OUTPUT_MESSAGE} QEMU_OUTPUT_MESSAGE)
     message(STATUS ${QEMU_OUTPUT_MESSAGE})
+    if(error)
+        message(FATAL_ERROR "Failed to dump DTB using ${QEMU_BINARY})")
+    endif()
     execute_process(
         COMMAND
             dtc -q -I dtb -O dts ${DTBPath}
         OUTPUT_FILE ${DTSPath}
+        RESULT_VARIABLE error
     )
+    if(error)
+        message(FATAL_ERROR "Failed to convert DTB to DTS (${DTBPath})")
+    endif()
     list(APPEND KernelDTSList "${DTSPath}")
     list(APPEND KernelDTSList "src/plat/qemu-arm-virt/overlay-qemu-arm-virt.dts")
     if(KernelArmHypervisorSupport)
