@@ -210,9 +210,6 @@ void receiveSignal(tcb_t *thread, cap_t cap, bool_t isBlocking)
                                         ThreadState_BlockedOnNotification);
             thread_state_ptr_set_blockingObject(&thread->tcbState,
                                                 NTFN_REF(ntfnPtr));
-#ifdef CONFIG_KERNEL_MCS
-            maybeReturnSchedContext(ntfnPtr, thread);
-#endif
             scheduleTCB(thread);
 
             /* Enqueue TCB */
@@ -221,6 +218,10 @@ void receiveSignal(tcb_t *thread, cap_t cap, bool_t isBlocking)
 
             notification_ptr_set_state(ntfnPtr, NtfnState_Waiting);
             ntfn_ptr_set_queue(ntfnPtr, ntfn_queue);
+
+#ifdef CONFIG_KERNEL_MCS
+            maybeReturnSchedContext(ntfnPtr, thread);
+#endif
         } else {
             doNBRecvFailedTransfer(thread);
         }
