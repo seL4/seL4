@@ -62,6 +62,7 @@ NODE_STATE_DECLARE(word_t, ksReadyQueuesL2Bitmap[CONFIG_NUM_DOMAINS][L2_BITMAP_S
 NODE_STATE_DECLARE(tcb_t, *ksCurThread);
 NODE_STATE_DECLARE(tcb_t, *ksIdleThread);
 NODE_STATE_DECLARE(tcb_t, *ksSchedulerAction);
+NODE_STATE_DECLARE(word_t, ksDomScheduleIdx);
 
 #ifdef CONFIG_KERNEL_MCS
 NODE_STATE_DECLARE(tcb_t, *ksReleaseHead);
@@ -104,7 +105,6 @@ extern cte_t intStateIRQNode[];
 
 extern const dschedule_t ksDomSchedule[];
 extern const word_t ksDomScheduleLength;
-extern word_t ksDomScheduleIdx;
 extern dom_t ksCurDomain;
 #ifdef CONFIG_KERNEL_MCS
 extern ticks_t ksDomainTime;

@@ -301,19 +301,19 @@ void doNBRecvFailedTransfer(tcb_t *thread)
 
 static void nextDomain(void)
 {
-    ksDomScheduleIdx++;
-    if (ksDomScheduleIdx >= ksDomScheduleLength) {
-        ksDomScheduleIdx = 0;
+    NODE_STATE(ksDomScheduleIdx)++;
+    if (NODE_STATE(ksDomScheduleIdx) >= ksDomScheduleLength) {
+        NODE_STATE(ksDomScheduleIdx) = 0;
     }
 #ifdef CONFIG_KERNEL_MCS
     NODE_STATE(ksReprogram) = true;
 #endif
     ksWorkUnitsCompleted = 0;
-    ksCurDomain = ksDomSchedule[ksDomScheduleIdx].domain;
+    ksCurDomain = ksDomSchedule[NODE_STATE(ksDomScheduleIdx)].domain;
 #ifdef CONFIG_KERNEL_MCS
-    ksDomainTime = usToTicks(ksDomSchedule[ksDomScheduleIdx].length * US_IN_MS);
+    ksDomainTime = usToTicks(ksDomSchedule[NODE_STATE(ksDomScheduleIdx)].length * US_IN_MS);
 #else
-    ksDomainTime = ksDomSchedule[ksDomScheduleIdx].length;
+    ksDomainTime = ksDomSchedule[NODE_STATE(ksDomScheduleIdx)].length;
 #endif
 }
 

@@ -114,7 +114,7 @@ static inline void debug_printTCB(tcb_t *tcb)
     }
 
     word_t core = SMP_TERNARY(tcb->tcbAffinity, 0);
-    printf("%20s\t%p\t0x%lx\t%3lu", state, (void *) getRestartPC(tcb), tcb->tcbPriority, core);
+    printf("%20s\t%p\t0x%lx\t%3lu\tD:%lu", state, (void *) getRestartPC(tcb), tcb->tcbPriority, core, tcb->tcbDomain);
 #ifdef CONFIG_KERNEL_MCS
     printf("\t%lu", (word_t) thread_state_get_tcbInReleaseQueue(tcb->tcbState));
 #endif
@@ -126,8 +126,8 @@ static inline void debug_dumpScheduler(void)
     /* Loop through each core and print out scheduler! */
     for (int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
         printf(ANSI_BOLD_GREEN "\n" "Dumping all tcbs on Core %d!\n", i);
-        printf("Name                                              State               IP                  Prio \tCore\n");
-        printf("-----------------------------------------------------------------------------------------------------"
+        printf("Name                                              State               IP                  Prio \tCore\tDomain\n");
+        printf("---------------------------------------------------------------------------------------------------------------"
                ANSI_BOLD_WHITE "\n");
 
         for (tcb_t *curr = NODE_STATE_ON_CORE(ksDebugTCBs, i); curr != NULL; curr = TCB_PTR_DEBUG_PTR(curr)->tcbDebugNext) {
