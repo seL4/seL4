@@ -607,24 +607,6 @@ macro(list_append_if list dep)
     set(${list} ${list_append_local_list} PARENT_SCOPE)
 endmacro(list_append_if)
 
-macro(kernel_platforms_list target)
-    list(APPEND ${target} ${KernelRiscVPlatform_all_strings})
-    list(APPEND ${target} ${KernelX86Sel4Arch_all_strings})
-    list(APPEND ${target} ${KernelARMPlatform_all_strings})
-endmacro(kernel_platforms_list)
-
-macro(kernel_platforms_string target)
-    set(plat_names "")
-    kernel_platforms_list(plat_names)
-    string(
-        REPLACE
-            ";"
-            "\n  "
-            ${target}
-            "${plat_names}"
-    )
-endmacro(kernel_platforms_string)
-
 # Checks if a file is older than its dependencies
 # Will set `stale` to TRUE if outfile doesn't exist,
 # or if outfile is older than any file in `deps_list`.
