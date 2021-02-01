@@ -210,14 +210,14 @@ static exception_t invokeSchedContext_YieldTo(sched_context_t *sc, word_t *buffe
 
 static exception_t decodeSchedContext_YieldTo(sched_context_t *sc, word_t *buffer)
 {
-    if (sc->scTcb == NODE_STATE(ksCurThread)) {
-        userError("SchedContext_YieldTo: cannot seL4_SchedContext_YieldTo on self");
+    if (sc->scTcb == NULL) {
+        userError("SchedContext_YieldTo: cannot yield to an inactive sched context");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (sc->scTcb == NULL) {
-        userError("SchedContext_YieldTo: cannot yield to an inactive sched context");
+    if (sc->scTcb == NODE_STATE(ksCurThread)) {
+        userError("SchedContext_YieldTo: cannot seL4_SchedContext_YieldTo on self");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
