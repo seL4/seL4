@@ -454,7 +454,7 @@ config_string(
 )
 
 config_string(
-    KernelStaticMaxBudgetUs KERNEL_STATIC_MAX_BUDGET_US
+    KernelStaticMaxPeriodUs KERNEL_STATIC_MAX_PERIOD_US
     "Specifies a static maximum to which scheduling context can have \
     either its period or budget configured."
     DEFAULT 0
