@@ -26,9 +26,7 @@ if(KernelPlatformZynqmp)
     else()
         fallback_declare_seL4_arch_default(aarch64)
     endif()
-    # MCS is not supported on zynqmp.
-    # It requires a timer driver that implements the tickless programming requirements.
-    set(KernelPlatformSupportsMCS OFF)
+
     set(KernelArmCortexA53 ON)
     set(KernelArchArmV8a ON)
     config_set(KernelARMPlatform ARM_PLAT zynqmp)
