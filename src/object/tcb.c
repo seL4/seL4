@@ -1668,11 +1668,11 @@ exception_t invokeTCB_Resume(tcb_t *thread)
 }
 
 #ifdef CONFIG_KERNEL_MCS
-static inline exception_t installTCBCap(tcb_t *target, cap_t tCap, cte_t *slot,
+static NO_INLINE exception_t installTCBCap(tcb_t *target, cap_t tCap, cte_t *slot,
                                         tcb_cnode_index_t index, cap_t newCap, cte_t *srcSlot)
 {
     cte_t *rootSlot = TCB_PTR_CTE_PTR(target, index);
-    UNUSED exception_t e = cteDelete(rootSlot, true);
+    exception_t e = cteDelete(rootSlot, true);
     if (e != EXCEPTION_NONE) {
         return e;
     }
