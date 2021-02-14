@@ -9,7 +9,7 @@
 #ifdef CONFIG_KERNEL_MCS
 
 #include <types.h>
-#include <mode/util.h>
+#include <mode/mode-util.h>
 #include <arch/sbi.h>
 #include <arch/machine/hardware.h>
 

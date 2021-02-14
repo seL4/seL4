@@ -15,7 +15,7 @@
 #ifdef CONFIG_KERNEL_MCS
 #include <types.h>
 #include <util.h>
-#include <mode/util.h>
+#include <mode/mode-util.h>
 
 #define USE_KHZ (TIMER_CLOCK_HZ % HZ_IN_MHZ > 0)
 #define TIMER_CLOCK_KHZ (TIMER_CLOCK_HZ / HZ_IN_KHZ)
