@@ -76,6 +76,10 @@ BOOT_CODE static inline uint32_t measure_tsc_khz(void)
 BOOT_CODE uint32_t tsc_init(void)
 {
 
+#if CONFIG_PC99_TSC_FREQUENCY > 0
+    return CONFIG_PC99_TSC_FREQUENCY / 1000000;
+#endif
+
     x86_cpu_identity_t *model_info = x86_cpuid_get_model_info();
     uint32_t valid_models[] = {
         NEHALEM_1_MODEL_ID, NEHALEM_2_MODEL_ID, NEHALEM_3_MODEL_ID,
