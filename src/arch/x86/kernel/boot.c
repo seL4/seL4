@@ -24,7 +24,7 @@
 #include <plat/machine/intel-vtd.h>
 
 #define MAX_RESERVED 1
-BOOT_DATA static region_t reserved[MAX_RESERVED];
+BOOT_BSS static region_t reserved[MAX_RESERVED];
 
 /* functions exactly corresponding to abstract specification */
 
