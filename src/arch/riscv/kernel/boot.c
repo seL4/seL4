@@ -25,12 +25,12 @@ extern char ki_boot_end[1];
 extern char ki_end[1];
 
 #ifdef ENABLE_SMP_SUPPORT
-BOOT_DATA static volatile word_t node_boot_lock = 0;
+BOOT_BSS static volatile word_t node_boot_lock;
 #endif
 
 /* kernel image + [extra bootinfo] + user image */
 #define MAX_RESERVED 3
-BOOT_DATA static region_t res_reg[MAX_RESERVED];
+BOOT_BSS static region_t res_reg[MAX_RESERVED];
 
 BOOT_CODE static bool_t create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg)
 {

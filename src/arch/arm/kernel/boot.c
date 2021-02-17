@@ -35,12 +35,12 @@ extern char ki_end[1];
 #ifdef ENABLE_SMP_SUPPORT
 /* sync variable to prevent other nodes from booting
  * until kernel data structures initialized */
-BOOT_DATA static volatile int node_boot_lock = 0;
+BOOT_BSS static volatile int node_boot_lock;
 #endif /* ENABLE_SMP_SUPPORT */
 
 #define ARCH_RESERVED 3 // kernel + user image + dtb
 #define MAX_RESERVED (ARCH_RESERVED + MODE_RESERVED)
-BOOT_DATA static region_t reserved[MAX_RESERVED];
+BOOT_BSS static region_t reserved[MAX_RESERVED];
 
 BOOT_CODE static void arch_init_freemem(p_region_t ui_p_reg, p_region_t dtb_p_reg, v_region_t it_v_reg,
                                         word_t extra_bi_size_bits)
