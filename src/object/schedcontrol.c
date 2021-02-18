@@ -23,23 +23,6 @@ static exception_t invokeSchedControl_Configure(sched_context_t *target, word_t 
         /* remove from scheduler */
         tcbReleaseRemove(target->scTcb);
         tcbSchedDequeue(target->scTcb);
-        /* bill the current consumed amount before adjusting the params */
-        if (NODE_STATE_ON_CORE(ksCurSC, target->scCore) == target) {
-#ifdef ENABLE_SMP_SUPPORT
-            if (target->scCore == getCurrentCPUIndex()) {
-#endif /* ENABLE_SMP_SUPPORT */
-                /* This could potentially mutate state but if it returns
-                 * true no state was modified, thus removing it should
-                 * be the same. */
-                assert(checkBudget());
-                commitTime();
-#ifdef ENABLE_SMP_SUPPORT
-            } else {
-                chargeBudget(NODE_STATE_ON_CORE(ksConsumed, target->scCore), false, target->scCore, false);
-                doReschedule(target->scCore);
-            }
-#endif /* ENABLE_SMP_SUPPORT */
-        }
     }
 
     if (budget == period) {
@@ -78,9 +61,6 @@ static exception_t invokeSchedControl_Configure(sched_context_t *target, word_t 
         } else if (isRunnable(target->scTcb)) {
             SCHED_ENQUEUE(target->scTcb);
         }
-        if (target->scTcb == NODE_STATE(ksCurThread)) {
-            rescheduleRequired();
-        }
     }
 
     return EXCEPTION_NONE;
@@ -110,6 +90,13 @@ static exception_t decodeSchedControl_Configure(word_t length, cap_t cap, extra_
         userError("SchedControl_Configure: target cap not a scheduling context cap");
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    sched_context_t *target = SC_PTR(cap_sched_context_cap_get_capSCPtr(targetCap));
+    if (unlikely(NODE_STATE_ON_CORE(ksCurSC, target->scCore) == target)) {
+        userError("SchedControl_Configure: target cap is to the current scheduling context");
+        current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
@@ -148,7 +135,7 @@ static exception_t decodeSchedControl_Configure(word_t length, cap_t cap, extra_
     }
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    return invokeSchedControl_Configure(SC_PTR(cap_sched_context_cap_get_capSCPtr(targetCap)),
+    return invokeSchedControl_Configure(target,
                                         cap_sched_control_cap_get_core(cap),
                                         usToTicks(budget_us),
                                         usToTicks(period_us),
