@@ -147,7 +147,6 @@ static inline void commitTime(void)
     }
     if (CONFIG_NUM_DOMAINS > 1) {
         assert(ksDomainTime > NODE_STATE(ksConsumed));
-        assert(ksDomainTime - NODE_STATE(ksConsumed) >= MIN_BUDGET);
         if (NODE_STATE(ksConsumed) < ksDomainTime) {
             ksDomainTime -= NODE_STATE(ksConsumed);
         } else {
