@@ -121,7 +121,7 @@ static inline bool_t isCurDomainExpired(void)
            ksDomainTime < (NODE_STATE(ksConsumed) + MIN_BUDGET);
 }
 
-static inline void commitTime(void)
+static inline void commitTime(bool_t switchedDomain)
 {
     if (NODE_STATE(ksCurSC)->scRefillMax) {
         if (likely(NODE_STATE(ksConsumed) > 0)) {
@@ -145,7 +145,10 @@ static inline void commitTime(void)
         }
         NODE_STATE(ksCurSC)->scConsumed += NODE_STATE(ksConsumed);
     }
-    if (CONFIG_NUM_DOMAINS > 1) {
+    /* If we have switched domains, ksDomainTime has already been reset and is accounted for the
+     * old domain. If we have not switched domains, we still need to account for the time that
+     * has passed. */
+    if (CONFIG_NUM_DOMAINS > 1 && !switchedDomain) {
         assert(ksDomainTime > NODE_STATE(ksConsumed));
         if (NODE_STATE(ksConsumed) < ksDomainTime) {
             ksDomainTime -= NODE_STATE(ksConsumed);

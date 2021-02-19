@@ -312,7 +312,7 @@ static void nextDomain(void)
 }
 
 #ifdef CONFIG_KERNEL_MCS
-static void switchSchedContext(void)
+static void switchSchedContext(bool_t switchedDomain)
 {
     if (unlikely(NODE_STATE(ksCurSC) != NODE_STATE(ksCurThread)->tcbSchedContext) && NODE_STATE(ksCurSC)->scRefillMax) {
         NODE_STATE(ksReprogram) = true;
@@ -325,19 +325,22 @@ static void switchSchedContext(void)
     if (NODE_STATE(ksReprogram)) {
         /* if we are reprogamming, we have acted on the new kernel time and cannot
          * rollback -> charge the current thread */
-        commitTime();
+        commitTime(switchedDomain);
     }
 
     NODE_STATE(ksCurSC) = NODE_STATE(ksCurThread)->tcbSchedContext;
 }
 #endif
 
-static void scheduleChooseNewThread(void)
+static bool_t scheduleChooseNewThread(void)
 {
+    bool_t switchedDomain = false;
     if (ksDomainTime == 0) {
         nextDomain();
+        switchedDomain = true;
     }
     chooseThread();
+    return switchedDomain;
 }
 
 void schedule(void)
@@ -346,6 +349,11 @@ void schedule(void)
     awaken();
 #endif
 
+#ifdef CONFIG_KERNEL_MCS
+    bool_t switchedDomain = false;
+#else
+    bool_t switchedDomain __attribute__((unused));
+#endif
     if (NODE_STATE(ksSchedulerAction) != SchedulerAction_ResumeCurrentThread) {
         bool_t was_runnable;
         if (isSchedulable(NODE_STATE(ksCurThread))) {
@@ -356,7 +364,7 @@ void schedule(void)
         }
 
         if (NODE_STATE(ksSchedulerAction) == SchedulerAction_ChooseNewThread) {
-            scheduleChooseNewThread();
+            switchedDomain = scheduleChooseNewThread();
         } else {
             tcb_t *candidate = NODE_STATE(ksSchedulerAction);
             assert(isSchedulable(candidate));
@@ -372,14 +380,14 @@ void schedule(void)
                 SCHED_ENQUEUE(candidate);
                 /* we can't, need to reschedule */
                 NODE_STATE(ksSchedulerAction) = SchedulerAction_ChooseNewThread;
-                scheduleChooseNewThread();
+                switchedDomain = scheduleChooseNewThread();
             } else if (was_runnable && candidate->tcbPriority == NODE_STATE(ksCurThread)->tcbPriority) {
                 /* We append the candidate at the end of the scheduling queue, that way the
                  * current thread, that was enqueued at the start of the scheduling queue
                  * will get picked during chooseNewThread */
                 SCHED_APPEND(candidate);
                 NODE_STATE(ksSchedulerAction) = SchedulerAction_ChooseNewThread;
-                scheduleChooseNewThread();
+                switchedDomain = scheduleChooseNewThread();
             } else {
                 assert(candidate != NODE_STATE(ksCurThread));
                 switchToThread(candidate);
@@ -393,7 +401,7 @@ void schedule(void)
 #endif /* ENABLE_SMP_SUPPORT */
 
 #ifdef CONFIG_KERNEL_MCS
-    switchSchedContext();
+    switchSchedContext(switchedDomain);
 
     if (NODE_STATE(ksReprogram)) {
         setNextInterrupt();
