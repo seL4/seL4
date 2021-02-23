@@ -144,6 +144,25 @@ static inline bool_t sc_released(sched_context_t *sc)
     }
 }
 
+/*
+ * Return true if a SC's available refills should be delayed at the
+ * point the associated thread becomes runnable (sporadic server).
+ */
+static inline bool_t sc_sporadic(sched_context_t *sc)
+{
+    return sc != NULL && !sc->scConstantBandwidth;
+}
+
+/*
+ * Return true if a SC's available refills should be delayed at the
+ * point the associated thread becomes the current thread (constant
+ * bandwidth).
+ */
+static inline bool_t sc_constant_bandwidth(sched_context_t *sc)
+{
+    return sc->scConstantBandwidth;
+}
+
 /* Create a new refill in a non-active sc */
 #ifdef ENABLE_SMP_SUPPORT
 void refill_new(sched_context_t *sc, word_t max_refills, ticks_t budget, ticks_t period, word_t core);

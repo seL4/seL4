@@ -373,6 +373,10 @@ struct sched_context {
     word_t scRefillHead;
     /* Index of the tail of the refill circular buffer */
     word_t scRefillTail;
+
+    /* Whether to apply constant-bandwidth/sliding-window constraint
+     * rather than only sporadic server constraints */
+    bool_t scConstantBandwidth;
 };
 
 struct reply {

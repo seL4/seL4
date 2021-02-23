@@ -662,6 +662,8 @@
                 description="Number of extra sporadic replenishments this scheduling context should use. Ignored for round-robin threads."/>
             <param dir="in" name="badge" type="seL4_Word"
                 description="Identifier for this scheduling context. Delivered to timeout exception handler. Can be used to determine which scheduling context triggered the timeout." />
+            <param dir="in" name="constant_bandwidth" type="seL4_Bool"
+                description="Whether the scheduling context should have bandwidth restricted continuously rather than only as a sporadic task." />
         </method>
 
     </interface>

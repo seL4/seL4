@@ -81,7 +81,7 @@ void sendSignal(notification_t *ntfnPtr, word_t badge)
                     possibleSwitchTo(tcb);
                 })
 #ifdef CONFIG_KERNEL_MCS
-                if (tcb->tcbSchedContext != NULL && sc_active(tcb->tcbSchedContext)) {
+                if (sc_sporadic(tcb->tcbSchedContext) && sc_active(tcb->tcbSchedContext)) {
                     assert(tcb->tcbSchedContext != NODE_STATE(ksCurSC));
                     refill_unblock_check(tcb->tcbSchedContext);
                 }
@@ -154,7 +154,7 @@ void sendSignal(notification_t *ntfnPtr, word_t badge)
         })
 
 #ifdef CONFIG_KERNEL_MCS
-        if (dest->tcbSchedContext != NULL && sc_active(dest->tcbSchedContext)) {
+        if (sc_sporadic(dest->tcbSchedContext) && sc_active(dest->tcbSchedContext)) {
             assert(dest->tcbSchedContext != NODE_STATE(ksCurSC));
             refill_unblock_check(dest->tcbSchedContext);
         }
@@ -234,7 +234,7 @@ void cancelAllSignals(notification_t *ntfnPtr)
         for (; thread; thread = thread->tcbEPNext) {
             setThreadState(thread, ThreadState_Restart);
 #ifdef CONFIG_KERNEL_MCS
-            if (thread->tcbSchedContext != NULL) {
+            if (sc_sporadic(thread->tcbSchedContext)) {
                 assert(thread->tcbSchedContext != NODE_STATE(ksCurSC));
                 refill_unblock_check(thread->tcbSchedContext);
             }
