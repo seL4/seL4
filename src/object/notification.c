@@ -154,7 +154,7 @@ void sendSignal(notification_t *ntfnPtr, word_t badge)
         })
 
 #ifdef CONFIG_KERNEL_MCS
-        if (dest->tcbSchedContext != NULL && is_active(dest->tcbSchedContext)) {
+        if (dest->tcbSchedContext != NULL && sc_active(dest->tcbSchedContext)) {
             assert(dest->tcbSchedContext != NODE_STATE(ksCurSC));
             refill_unblock_check(dest->tcbSchedContext);
         }
