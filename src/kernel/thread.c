@@ -91,7 +91,7 @@ void restart(tcb_t *target)
         cancelIPC(target);
 #ifdef CONFIG_KERNEL_MCS
         setThreadState(target, ThreadState_Restart);
-        if (target->tcbSchedContext != NULL && sc_active(target->tcbSchedContext)
+        if (sc_sporadic(target->tcbSchedContext) && sc_active(target->tcbSchedContext)
             && target->tcbSchedContext != NODE_STATE(ksCurSC)) {
             refill_unblock_check(target->tcbSchedContext);
         }
@@ -142,7 +142,7 @@ void doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, bool_t grant)
     assert(thread_state_get_replyObject(receiver->tcbState) == REPLY_REF(0));
     assert(reply->replyTCB == NULL);
 
-    if (receiver->tcbSchedContext && sc_active(receiver->tcbSchedContext)
+    if (sc_sporadic(receiver->tcbSchedContext) && sc_active(receiver->tcbSchedContext)
         && receiver->tcbSchedContext != NODE_STATE(ksCurSC)) {
         refill_unblock_check(receiver->tcbSchedContext);
     }
@@ -327,6 +327,9 @@ static void switchSchedContext(void)
         NODE_STATE(ksReprogram) = true;
         assert(refill_ready(NODE_STATE(ksCurThread->tcbSchedContext)));
         assert(refill_sufficient(NODE_STATE(ksCurThread->tcbSchedContext), 0));
+        if (sc_constant_bandwidth(NODE_STATE(ksCurThread)->tcbSchedContext)) {
+            refill_unblock_check(NODE_STATE(ksCurThread)->tcbSchedContext);
+        }
     }
 
     if (NODE_STATE(ksReprogram)) {

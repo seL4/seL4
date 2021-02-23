@@ -103,7 +103,7 @@ void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
         assert(dest->tcbSchedContext == NULL || refill_sufficient(dest->tcbSchedContext, 0));
         assert(dest->tcbSchedContext == NULL || refill_ready(dest->tcbSchedContext));
         setThreadState(dest, ThreadState_Running);
-        if (dest->tcbSchedContext != NULL && dest->tcbSchedContext != NODE_STATE(ksCurSC)) {
+        if (sc_sporadic(dest->tcbSchedContext) && dest->tcbSchedContext != NODE_STATE(ksCurSC)) {
             refill_unblock_check(dest->tcbSchedContext);
         }
         possibleSwitchTo(dest);
@@ -236,7 +236,7 @@ void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
             do_call = thread_state_ptr_get_blockingIPCIsCall(&sender->tcbState);
 
 #ifdef CONFIG_KERNEL_MCS
-            if (sender->tcbSchedContext != NULL) {
+            if (sc_sporadic(sender->tcbSchedContext)) {
                 assert(sender->tcbSchedContext != NODE_STATE(ksCurSC));
                 refill_unblock_check(sender->tcbSchedContext);
             }
@@ -393,7 +393,7 @@ void cancelAllIPC(endpoint_t *epptr)
             }
             if (seL4_Fault_get_seL4_FaultType(thread->tcbFault) == seL4_Fault_NullFault) {
                 setThreadState(thread, ThreadState_Restart);
-                if (thread->tcbSchedContext != NULL) {
+                if (sc_sporadic(thread->tcbSchedContext)) {
                     assert(thread->tcbSchedContext != NODE_STATE(ksCurSC));
                     refill_unblock_check(thread->tcbSchedContext);
                 }
@@ -442,7 +442,7 @@ void cancelBadgedSends(endpoint_t *epptr, word_t badge)
                 if (seL4_Fault_get_seL4_FaultType(thread->tcbFault) ==
                     seL4_Fault_NullFault) {
                     setThreadState(thread, ThreadState_Restart);
-                    if (thread->tcbSchedContext != NULL) {
+                    if (sc_sporadic(thread->tcbSchedContext)) {
                         assert(thread->tcbSchedContext != NODE_STATE(ksCurSC));
                         refill_unblock_check(thread->tcbSchedContext);
                     }

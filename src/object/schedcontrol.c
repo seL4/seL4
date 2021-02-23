@@ -11,7 +11,7 @@
 #include <kernel/sporadic.h>
 
 static exception_t invokeSchedControl_Configure(sched_context_t *target, word_t core, ticks_t budget,
-                                                ticks_t period, word_t max_refills, word_t badge)
+                                                ticks_t period, word_t max_refills, word_t badge, bool_t constant_bandwidth)
 {
 
     target->scBadge = badge;
@@ -41,6 +41,8 @@ static exception_t invokeSchedControl_Configure(sched_context_t *target, word_t 
 #endif /* ENABLE_SMP_SUPPORT */
         }
     }
+
+    target->scConstantBandwidth = constant_bandwidth;
 
     if (budget == period) {
         /* this is a cool hack: for round robin, we set the
@@ -104,6 +106,7 @@ static exception_t decodeSchedControl_Configure(word_t length, cap_t cap, extra_
     ticks_t period_ticks = usToTicks(period_us);
     word_t extra_refills = getSyscallArg(TIME_ARG_SIZE * 2, buffer);
     word_t badge = getSyscallArg(TIME_ARG_SIZE * 2 + 1, buffer);
+    bool_t constant_bandwidth = getSyscallArg(TIME_ARG_SIZE * 2 + 2, buffer);
 
     cap_t targetCap = extraCaps.excaprefs[0]->cap;
     if (unlikely(cap_get_capType(targetCap) != cap_sched_context_cap)) {
@@ -153,7 +156,8 @@ static exception_t decodeSchedControl_Configure(word_t length, cap_t cap, extra_
                                         budget_ticks,
                                         period_ticks,
                                         extra_refills + MIN_REFILLS,
-                                        badge);
+                                        badge,
+                                        constant_bandwidth);
 }
 
 exception_t decodeSchedControlInvocation(word_t label, cap_t cap, word_t length, extra_caps_t extraCaps,
