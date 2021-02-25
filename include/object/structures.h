@@ -376,7 +376,7 @@ struct sched_context {
 
     /* Whether to apply constant-bandwidth/sliding-window constraint
      * rather than only sporadic server constraints */
-    bool_t scConstantBandwidth;
+    bool_t scSporadic;
 };
 
 struct reply {

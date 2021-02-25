@@ -95,6 +95,14 @@ static inline seL4_Word seL4_MaxExtraRefills(seL4_Word size)
     return (LIBSEL4_BIT(size) -  seL4_CoreSchedContextBytes) / seL4_RefillSizeBytes;
 }
 #endif /* !__ASSEMBLER__ */
+
+/* Flags to be used with seL4_SchedControl_ConfigureFlags */
+typedef enum {
+    seL4_SchedContext_NoFlag = 0x0,
+    seL4_SchedContext_Sporadic = 0x1,
+    SEL4_FORCE_LONG_ENUM(seL4_SchedContextFlag),
+} seL4_SchedContextFlag;
+
 #endif /* CONFIG_KERNEL_MCS */
 
 #ifdef CONFIG_KERNEL_INVOCATION_REPORT_ERROR_IPC

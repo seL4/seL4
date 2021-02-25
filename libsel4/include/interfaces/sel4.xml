@@ -644,7 +644,7 @@
 
     <interface name="seL4_SchedControl">
 
-        <method id="SchedControlConfigureFull" name="ConfigureFull" manual_name="ConfigureFull" manual_label="schedcontrol_configurefull" condition="defined(CONFIG_KERNEL_MCS)">
+        <method id="SchedControlConfigureFlags" name="ConfigureFlags" manual_name="ConfigureFlags" manual_label="schedcontrol_configureflags" condition="defined(CONFIG_KERNEL_MCS)">
             <brief>
                 Set the parameters of a scheduling context by invoking the scheduling control capability. If the scheduling context is bound to a currently running thread, the parameters will take effect immediately: that is the current budget will be increased or reduced by the difference between the new and previous budget and the replenishment time will be updated according to any difference in the period. This can result in active threads being post-poned or released depending on the nature of the parameter change and the state of the thread. Additionally, if the scheduling context was previously empty (no budget) but bound to a runnable thread, this can result in a thread running for the first time since it now has access to CPU time. This call will return seL4 Invalid Argument if the parameters are too small (smaller than the kernel WCET for this platform) or too large (will overflow the timer).
             </brief>
@@ -662,8 +662,8 @@
                 description="Number of extra sporadic replenishments this scheduling context should use. Ignored for round-robin threads."/>
             <param dir="in" name="badge" type="seL4_Word"
                 description="Identifier for this scheduling context. Delivered to timeout exception handler. Can be used to determine which scheduling context triggered the timeout." />
-            <param dir="in" name="constant_bandwidth" type="seL4_Bool"
-                description="Whether the scheduling context should have bandwidth restricted continuously rather than only as a sporadic task." />
+            <param dir="in" name="flags" type="seL4_Word"
+                description="Bitwise OR'd set of seL4_SchedContextFlag." />
         </method>
 
     </interface>
