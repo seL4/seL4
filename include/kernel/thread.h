@@ -109,17 +109,22 @@ static inline bool_t PURE isStopped(const tcb_t *thread)
     }
 }
 
+static inline bool_t isCurDomainExpired(void)
+{
+#ifdef CONFIG_KERNEL_MCS
+    return CONFIG_NUM_DOMAINS > 1 && ksDomainTime < NODE_STATE(ksConsumed) + getKernelWcetTicks();
+#else
+    return ksDomainTime == 0;
+#endif
+}
+
+
 #ifdef CONFIG_KERNEL_MCS
 static inline bool_t PURE isRoundRobin(sched_context_t *sc)
 {
     return sc->scPeriod == 0;
 }
 
-static inline bool_t isCurDomainExpired(void)
-{
-    return CONFIG_NUM_DOMAINS > 1 &&
-           ksDomainTime < (NODE_STATE(ksConsumed) + MIN_BUDGET);
-}
 
 static inline void commitTime(bool_t switchedDomain)
 {

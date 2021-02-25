@@ -335,7 +335,7 @@ static void switchSchedContext(bool_t switchedDomain)
 static bool_t scheduleChooseNewThread(void)
 {
     bool_t switchedDomain = false;
-    if (ksDomainTime == 0) {
+    if (isCurDomainExpired()) {
         nextDomain();
         switchedDomain = true;
     }
