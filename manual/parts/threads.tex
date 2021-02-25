@@ -200,8 +200,15 @@ invoke the appropriate \obj{SchedControl} capability, which provides access to C
 on a single node.  A scheduling control cap for each node is provided to the initial task at run
 time.  Threads run on the node that their scheduling context is configured for.  Scheduling context
 parameters can then be set and updated using
-\apifunc{seL4\_SchedControl\_Configure}{schedcontrol_configure}, which allows the budget and period
-to be specified.
+\apifunc{seL4\_SchedControl\_ConfigureFlags}{schedcontrol_configureflags}, which allows the budget and period
+to be specified along with a bitwise OR'd set of the following flags.
+
+\begin{description}
+
+\item[seL4_SchedContext_Sporadic]: constrain the execution time only according to the
+sporadic server algorithm rather than to a continuous constant bandwidth.
+
+\end{description}
 
 The kernel does not conduct any schedulability tests, as task admission is left to user-level policy
 and can be conducted online or offline, statically or dynamically or not at all.

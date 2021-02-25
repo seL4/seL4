@@ -150,7 +150,7 @@ static inline bool_t sc_released(sched_context_t *sc)
  */
 static inline bool_t sc_sporadic(sched_context_t *sc)
 {
-    return sc != NULL && !sc->scConstantBandwidth;
+    return sc != NULL && sc->scSporadic;
 }
 
 /*
@@ -160,7 +160,7 @@ static inline bool_t sc_sporadic(sched_context_t *sc)
  */
 static inline bool_t sc_constant_bandwidth(sched_context_t *sc)
 {
-    return sc->scConstantBandwidth;
+    return !sc->scSporadic;
 }
 
 /* Create a new refill in a non-active sc */
