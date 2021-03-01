@@ -22,4 +22,3 @@ typedef struct seL4_UserContext_ {
     /* gpRegisters */
     seL4_Word fs_base, gs_base;
 } seL4_UserContext;
-

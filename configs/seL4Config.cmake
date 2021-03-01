@@ -14,8 +14,9 @@ set(bf_declarations "")
 
 include(${CMAKE_CURRENT_LIST_DIR}/../tools/internal.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/../tools/helpers.cmake)
-# Create and set all of the Kernel config options that can
-# be derived from the seL4 arch which is one of the following:
+
+# Create and set all of the Kernel config options that can be derived from the
+# seL4 arch which is one of the following:
 # aarch32, aarch64, arm_hyp, riscv32, riscv64, x86_64, ia32
 # This macro is intended to be called from within a platform config.
 macro(declare_seL4_arch sel4_arch)
