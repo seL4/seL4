@@ -93,7 +93,7 @@ endmacro()
 
 # helper macro that prints a message that no sub platform is specified and
 # the default sub platform will be used
-# Usage example: fallback_declare_seL4_arch_default(aarch32)
+# Usage example: check_platform_and_fallback_to_default(KernelARMPlatform "sabre")
 macro(check_platform_and_fallback_to_default var_cmake_kernel_plat default_sub_plat)
     if("${${var_cmake_kernel_plat}}" STREQUAL "")
         print_message_multiple_options_helper("sub platforms" ${default_sub_plat})
