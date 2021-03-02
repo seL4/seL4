@@ -133,6 +133,14 @@ void VISIBLE c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
     ksKernelEntry.is_fastpath = 0;
 #endif /* DEBUG */
 
+    /* TODO: Add checks from fastpath (e.g. valid VTable, etc.) */
+    cap_t cap = lookupCap(NODE_STATE(ksCurThread), cptr).cap;
+    if (syscall == (syscall_t)SysSend && cap_get_capType(cap) == cap_notification_cap) {
+        /* signalling a notification */
+        fastpath_signal(cap);
+        UNREACHABLE();
+    }
+
     slowpath(syscall);
     UNREACHABLE();
 }

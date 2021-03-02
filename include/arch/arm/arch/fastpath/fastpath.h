@@ -15,6 +15,10 @@ void slowpath(syscall_t syscall)
 NORETURN;
 
 static inline
+void fastpath_signal(cap_t cap)
+NORETURN;
+
+static inline
 void fastpath_call(word_t cptr, word_t r_msgInfo)
 NORETURN;
 
