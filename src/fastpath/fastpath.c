@@ -15,6 +15,131 @@
 #endif
 #include <benchmark/benchmark_utilisation.h>
 
+/* TODO: Add some checks from fastpath_call (e.g. valid VTable) */
+#ifdef CONFIG_ARCH_ARM
+static inline
+#ifndef CONFIG_ARCH_ARM_V6
+FORCE_INLINE
+#endif
+#endif
+void NORETURN fastpath_signal(cap_t cap)
+{
+    notification_t *ntfnPtr = NTFN_PTR(cap_notification_cap_get_capNtfnPtr(cap));
+    uint32_t ntfnState = notification_ptr_get_state(ntfnPtr);
+    word_t badge = cap_notification_cap_get_capNtfnBadge(cap);
+    switch (ntfnState) {
+        case NtfnState_Active: {
+            word_t badge2 = notification_ptr_get_ntfnMsgIdentifier(ntfnPtr);
+            badge2 |= badge;
+            notification_ptr_set_ntfnMsgIdentifier(ntfnPtr, badge2);
+            restore_user_context();
+        }
+        case NtfnState_Idle: {
+            /* TODO: If bound thread is higher prio, switch to it directly (via switchToThread, rather than schedule). */
+            tcb_t *tcb = (tcb_t *)notification_ptr_get_ntfnBoundTCB(ntfnPtr);
+            /* Check if we are bound and that thread is waiting for a message */
+            if (tcb) {
+                if (thread_state_ptr_get_tsType(&tcb->tcbState) == ThreadState_BlockedOnReceive) {
+                    /* Send and start thread running */
+                    cancelIPC(tcb);
+                    setThreadState(tcb, ThreadState_Running);
+                    setRegister(tcb, badgeRegister, badge);
+                    if (tcb->tcbSchedContext == NULL) {
+                        sched_context_t *sc = SC_PTR(notification_ptr_get_ntfnSchedContext(ntfnPtr));
+                        if (sc != NULL && sc->scTcb == NULL) {
+                            schedContext_donate(sc, tcb);
+                            if (sc != NODE_STATE(ksCurSC)) {
+                                /* refill_unblock_check should not be called on the
+                                 * current SC as it is already running. The current SC
+                                 * may have been bound to a notificaiton object if the
+                                 * current thread was deleted in a long-running deletion
+                                 * that became preempted. */
+                                refill_unblock_check(sc);
+                            }
+                            schedContext_resume(sc);
+                        }
+                    }
+
+                    if (isSchedulable(tcb)) {
+                        possibleSwitchTo(tcb);
+                    }
+
+                    schedule();
+                    activateThread();
+                    restore_user_context();
+
+                } else {
+                    /* In particular, this path is taken when a thread
+                     * is waiting on a reply cap since BlockedOnReply
+                     * would also trigger this path. I.e, a thread
+                     * with a bound notification will not be awakened
+                     * by signals on that bound notification if it is
+                     * in the middle of an seL4_Call.
+                     */
+                    notification_ptr_set_state(ntfnPtr, NtfnState_Active);
+                    notification_ptr_set_ntfnMsgIdentifier(ntfnPtr, badge);
+                    restore_user_context();
+                }
+            } else {
+                notification_ptr_set_state(ntfnPtr, NtfnState_Active);
+                notification_ptr_set_ntfnMsgIdentifier(ntfnPtr, badge);
+                restore_user_context();
+            }
+        }
+        case NtfnState_Waiting: {
+            /* TODO: If unblocked thread is higher prio, switch to it directly (via switchToThread, rather than schedule). */
+            tcb_queue_t ntfn_queue;
+            tcb_t *dest;
+
+            ntfn_queue.head = (tcb_t *)notification_ptr_get_ntfnQueue_head(ntfnPtr);
+            ntfn_queue.end = (tcb_t *)notification_ptr_get_ntfnQueue_tail(ntfnPtr);
+
+            dest = ntfn_queue.head;
+
+            /* Haskell error "WaitingNtfn Notification must have non-empty queue" */
+            assert(dest);
+
+            /* Dequeue TCB */
+            ntfn_queue = tcbEPDequeue(dest, ntfn_queue);
+            notification_ptr_set_ntfnQueue_head(ntfnPtr, (word_t)ntfn_queue.head);
+            notification_ptr_set_ntfnQueue_tail(ntfnPtr, (word_t)ntfn_queue.end);
+
+            /* set the thread state to idle if the queue is empty */
+            if (!ntfn_queue.head) {
+                notification_ptr_set_state(ntfnPtr, NtfnState_Idle);
+            }
+
+            setThreadState(dest, ThreadState_Running);
+            setRegister(dest, badgeRegister, badge);
+
+            if (dest->tcbSchedContext == NULL) {
+                sched_context_t *sc = SC_PTR(notification_ptr_get_ntfnSchedContext(ntfnPtr));
+                if (sc != NULL && sc->scTcb == NULL) {
+                    schedContext_donate(sc, dest);
+                    if (sc != NODE_STATE(ksCurSC)) {
+                        /* refill_unblock_check should not be called on the
+                         * current SC as it is already running. The current SC
+                         * may have been bound to a notificaiton object if the
+                         * current thread was deleted in a long-running deletion
+                         * that became preempted. */
+                        refill_unblock_check(sc);
+                    }
+                    schedContext_resume(sc);
+                }
+            }
+
+            if (isSchedulable(dest)) {
+                possibleSwitchTo(dest);
+            }
+
+            schedule();
+            activateThread();
+            restore_user_context();
+        }
+    }
+    UNREACHABLE();
+}
+
 #ifdef CONFIG_ARCH_ARM
 static inline
 #ifndef CONFIG_ARCH_ARM_V6
