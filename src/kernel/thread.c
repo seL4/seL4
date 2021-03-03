@@ -349,8 +349,11 @@ void schedule(void)
     awaken();
 #endif
 
-    /* This flag is only used in the MCS kernel, in which case the attribute is ignored. */
-    UNUSED bool_t switchedDomain = false;
+#ifdef CONFIG_KERNEL_MCS
+    bool_t switchedDomain = false;
+#else
+    UNUSED bool_t switchedDomain;
+#endif
     if (NODE_STATE(ksSchedulerAction) != SchedulerAction_ResumeCurrentThread) {
         bool_t was_runnable;
         if (isSchedulable(NODE_STATE(ksCurThread))) {
