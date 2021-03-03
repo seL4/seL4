@@ -208,7 +208,7 @@ void refill_update(sched_context_t *sc, ticks_t new_period, ticks_t new_budget, 
     REFILL_SANITY_CHECK(sc, new_budget);
 }
 
-static inline void schedule_used(sched_context_t *sc, refill_t new)
+static NO_INLINE void schedule_used(sched_context_t *sc, refill_t new)
 {
     /* schedule the used amount */
     if (new.rAmount < MIN_BUDGET && !refill_single(sc)) {
@@ -222,7 +222,7 @@ static inline void schedule_used(sched_context_t *sc, refill_t new)
     }
 }
 
-static inline void ensure_sufficient_head(sched_context_t *sc)
+static NO_INLINE void ensure_sufficient_head(sched_context_t *sc)
 {
     /* ensure the refill head is sufficient, such that when we wake in awaken,
      * there is enough budget to run */
@@ -245,6 +245,22 @@ static bool_t refill_head_overlapping(sched_context_t *sc)
     }
 }
 
+static NO_INLINE ticks_t refill_budget_check_loop(sched_context_t *sc, ticks_t usage) {
+    while (refill_head(sc)->rAmount <= usage) {
+        /* exhaust and schedule replenishment */
+        usage -= refill_head(sc)->rAmount;
+        if (refill_single(sc)) {
+            /* update in place */
+            refill_head(sc)->rTime += sc->scPeriod;
+        } else {
+            refill_t old_head = refill_pop_head(sc);
+            old_head.rTime = old_head.rTime + sc->scPeriod;
+            schedule_used(sc, old_head);
+        }
+    }
+    return usage;
+}
+
 void refill_budget_check(ticks_t usage)
 {
     sched_context_t *sc = NODE_STATE(ksCurSC);
@@ -255,18 +271,7 @@ void refill_budget_check(ticks_t usage)
     REFILL_SANITY_START(sc);
 
     if (capacity == 0) {
-        while (refill_head(sc)->rAmount <= usage) {
-            /* exhaust and schedule replenishment */
-            usage -= refill_head(sc)->rAmount;
-            if (refill_single(sc)) {
-                /* update in place */
-                refill_head(sc)->rTime += sc->scPeriod;
-            } else {
-                refill_t old_head = refill_pop_head(sc);
-                old_head.rTime = old_head.rTime + sc->scPeriod;
-                schedule_used(sc, old_head);
-            }
-        }
+        usage = refill_budget_check_loop(sc, usage);
 
         /* budget overrun */
         if (usage > 0) {
