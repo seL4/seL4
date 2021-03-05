@@ -133,14 +133,6 @@ void VISIBLE c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
     ksKernelEntry.is_fastpath = 0;
 #endif /* DEBUG */
 
-    /* TODO: Add checks from fastpath (e.g. valid VTable, etc.) */
-    cap_t cap = lookupCap(NODE_STATE(ksCurThread), cptr).cap;
-    if (syscall == (syscall_t)SysSend && cap_get_capType(cap) == cap_notification_cap) {
-        /* signalling a notification */
-        fastpath_signal(cap);
-        UNREACHABLE();
-    }
-
     slowpath(syscall);
     UNREACHABLE();
 }
@@ -158,6 +150,29 @@ void VISIBLE c_handle_fastpath_call(word_t cptr, word_t msgInfo)
 #endif /* DEBUG */
 
     fastpath_call(cptr, msgInfo);
+    UNREACHABLE();
+}
+
+ALIGN(L1_CACHE_LINE_SIZE)
+void VISIBLE c_handle_fastpath_signal(word_t cptr, word_t msgInfo, syscall_t syscall)
+{
+    NODE_LOCK_SYS;
+
+    c_entry_hook();
+#ifdef TRACK_KERNEL_ENTRIES
+    benchmark_debug_syscall_start(cptr, msgInfo, SysCall);
+    ksKernelEntry.is_fastpath = 1;
+#endif /* DEBUG */
+
+    /* We land up in here on every SYSCALL_SEND, so we need to check that we are
+     * actually signalling a notification */
+    cap_t cap = lookupCap(NODE_STATE(ksCurThread), cptr).cap;
+    if (cap_get_capType(cap) != cap_notification_cap) {
+        slowpath(syscall);
+        UNREACHABLE();
+    }
+
+    fastpath_signal(cap);
     UNREACHABLE();
 }
 

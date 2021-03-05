@@ -96,6 +96,8 @@ BEGIN_FUNC(arm_swi_syscall)
 #endif
 
     mov r2, r7
+    cmp r7, #SYSCALL_SEND
+    beq c_handle_fastpath_signal
     b c_handle_syscall
 
 END_FUNC(arm_swi_syscall)
