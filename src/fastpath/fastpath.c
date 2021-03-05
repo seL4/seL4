@@ -27,6 +27,7 @@ void NORETURN fastpath_signal(cap_t cap)
     notification_t *ntfnPtr = NTFN_PTR(cap_notification_cap_get_capNtfnPtr(cap));
     uint32_t ntfnState = notification_ptr_get_state(ntfnPtr);
     word_t badge = cap_notification_cap_get_capNtfnBadge(cap);
+
     switch (ntfnState) {
         case NtfnState_Active: {
             word_t badge2 = notification_ptr_get_ntfnMsgIdentifier(ntfnPtr);
