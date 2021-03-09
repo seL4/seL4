@@ -197,24 +197,30 @@ list(SORT c_sources)
 list(APPEND c_sources "${KernelDomainSchedule}")
 
 # Add static header includes
-include_directories("include")
-include_directories("include/${KernelWordSize}")
-include_directories("include/arch/${KernelArch}")
-include_directories("include/arch/${KernelArch}/arch/${KernelWordSize}/")
-include_directories("include/plat/${KernelPlatform}/")
-include_directories("include/plat/${KernelPlatform}/plat/${KernelWordSize}/")
+include_directories(
+    "include"
+    "include/${KernelWordSize}"
+    "include/arch/${KernelArch}"
+    "include/arch/${KernelArch}/arch/${KernelWordSize}"
+    "include/plat/${KernelPlatform}"
+    "include/plat/${KernelPlatform}/plat/${KernelWordSize}"
+)
 
 if(KernelArchARM)
-    include_directories("include/arch/arm/armv/${KernelArmArmV}/")
-    include_directories("include/arch/arm/armv/${KernelArmArmV}/${KernelWordSize}")
+    include_directories(
+        "include/arch/arm/armv/${KernelArmArmV}"
+        "include/arch/arm/armv/${KernelArmArmV}/${KernelWordSize}"
+    )
 endif()
 
 if(KernelArmMach STREQUAL "exynos")
     include_directories("include/plat/exynos_common/")
 endif()
 if(KernelArchRiscV)
-    include_directories("include/arch/${KernelArch}/arch/${KernelWordSize}")
-    include_directories("include/plat/${KernelPlatform}/plat/${KernelWordSize}")
+    include_directories(
+        "include/arch/${KernelArch}/arch/${KernelWordSize}"
+        "include/plat/${KernelPlatform}/plat/${KernelWordSize}"
+    )
 endif()
 
 # Add libsel4 include directories. These are explicitly added instead of calling
