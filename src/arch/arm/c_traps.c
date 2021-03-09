@@ -164,7 +164,7 @@ void VISIBLE c_handle_fastpath_signal(word_t cptr, word_t msgInfo)
     ksKernelEntry.is_fastpath = 1;
 #endif /* DEBUG */
 
-    fastpath_signal(cptr);
+    fastpath_signal(cptr, msgInfo);
     UNREACHABLE();
 }
 
