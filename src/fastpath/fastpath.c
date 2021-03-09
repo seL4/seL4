@@ -22,8 +22,25 @@ static inline
 FORCE_INLINE
 #endif
 #endif
-void NORETURN fastpath_signal(word_t cptr)
+void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
 {
+    cap_t newVTable;
+    vspace_root_t *cap_pd;
+    pde_t stored_hw_asid;
+    word_t fault_type;
+    dom_t dom;
+
+    /* Get fault type. */
+    fault_type = seL4_Fault_get_seL4_FaultType(NODE_STATE(ksCurThread)->tcbFault);
+
+    /* Check there's no extra caps, the length is ok and there's no
+     * saved fault. */
+    /* TODO: Probably only need to check for no fault here */
+    if (unlikely(fastpath_mi_check(msgInfo) ||
+                 fault_type != seL4_Fault_NullFault)) {
+        slowpath(SysSend);
+    }
+
     /* We land up in here on every SYSCALL_SEND, so we need to check that we are
      * actually signalling a notification */
 
@@ -35,8 +52,13 @@ void NORETURN fastpath_signal(word_t cptr)
         slowpath(SysSend);
     }
 
+    /* Get the notification address */
     notification_t *ntfnPtr = NTFN_PTR(cap_notification_cap_get_capNtfnPtr(cap));
+
+    /* Get the notification state */
     uint32_t ntfnState = notification_ptr_get_state(ntfnPtr);
+
+    /* Get the notification badge */
     word_t badge = cap_notification_cap_get_capNtfnBadge(cap);
 
     switch (ntfnState) {
@@ -143,6 +165,68 @@ void NORETURN fastpath_signal(word_t cptr)
                 }
             }
 
+            /* Get destination thread.*/
+            newVTable = TCB_PTR_CTE_PTR(dest, tcbVTable)->cap;
+
+            /* Get vspace root. */
+            cap_pd = cap_vtable_cap_get_vspace_root_fp(newVTable);
+
+            /* Ensure that the destination has a valid VTable. */
+            if (unlikely(! isValidVTableRoot_fp(newVTable))) {
+                slowpath(SysSend);
+            }
+
+#ifdef CONFIG_ARCH_AARCH32
+            /* Get HW ASID */
+            stored_hw_asid = cap_pd[PD_ASID_SLOT];
+#endif
+
+            /* let gcc optimise this out for 1 domain */
+            dom = maxDom ? ksCurDomain : 0;
+            /* ensure only the idle thread or lower prio threads are present in the scheduler */
+            if (unlikely(dest->tcbPriority < NODE_STATE(ksCurThread->tcbPriority) &&
+                         !isHighestPrio(dom, dest->tcbPriority))) {
+                slowpath(SysSend);
+            }
+
+#ifdef CONFIG_ARCH_AARCH32
+            if (unlikely(!pde_pde_invalid_get_stored_asid_valid(stored_hw_asid))) {
+                slowpath(SysSend);
+            }
+#endif
+
+            /* Ensure the destination thread is in the current domain and can be scheduled directly. */
+            if (unlikely(dest->tcbDomain != ksCurDomain && maxDom)) {
+                slowpath(SysSend);
+            }
+
+#ifdef ENABLE_SMP_SUPPORT
+            /* Ensure both threads have the same affinity */
+            if (unlikely(NODE_STATE(ksCurThread)->tcbAffinity != dest->tcbAffinity)) {
+                slowpath(SysSend);
+            }
+#endif /* ENABLE_SMP_SUPPORT */
+
+            /*
+             * --- POINT OF NO RETURN ---
+             */
+
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
+            ksKernelEntry.is_fastpath = true;
+#endif
+            /* TODO: Figure out why this hangs during scheduler benchmarks
+
+            // Dest thread is set Running, but not queued
+            thread_state_ptr_set_tsType_np(&dest->tcbState,
+                                           ThreadState_Running);
+            setRegister(dest, badgeRegister, badge);
+            switchToThread_fp(dest, cap_pd, stored_hw_asid);
+
+            msgInfo = wordFromMessageInfo(seL4_MessageInfo_set_capsUnwrapped(info, 0));
+
+            fastpath_restore(badge, msgInfo, NODE_STATE(ksCurThread));
+            */
+
             /* It looks like this path is taken by the scheduler benchmarks */
             if (isSchedulable(dest)) {
                 possibleSwitchTo(dest);
@@ -153,6 +237,7 @@ void NORETURN fastpath_signal(word_t cptr)
             restore_user_context();
         }
     }
+    /* TODO: Why does fastpath_call not need this as well? */
     UNREACHABLE();
 }
 
