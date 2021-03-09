@@ -24,13 +24,18 @@ FORCE_INLINE
 #endif
 void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
 {
+    seL4_MessageInfo_t info;
+    word_t length;
     cap_t newVTable;
     vspace_root_t *cap_pd;
     pde_t stored_hw_asid;
     word_t fault_type;
     dom_t dom;
 
-    /* Get fault type. */
+
+    /* Get message info, length, and fault type. */
+    info = messageInfoFromWord_raw(msgInfo);
+    length = seL4_MessageInfo_get_length(info);
     fault_type = seL4_Fault_get_seL4_FaultType(NODE_STATE(ksCurThread)->tcbFault);
 
     /* Check there's no extra caps, the length is ok and there's no
@@ -214,7 +219,11 @@ void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
             ksKernelEntry.is_fastpath = true;
 #endif
-            /* TODO: Figure out why this hangs during scheduler benchmarks
+
+            /* TODO: Probably not necessary */
+            fastpath_copy_mrs(length, NODE_STATE(ksCurThread), dest);
+
+            /* TODO: Figure out why this hangs during scheduler benchmarks */
 
             // Dest thread is set Running, but not queued
             thread_state_ptr_set_tsType_np(&dest->tcbState,
@@ -225,16 +234,15 @@ void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
             msgInfo = wordFromMessageInfo(seL4_MessageInfo_set_capsUnwrapped(info, 0));
 
             fastpath_restore(badge, msgInfo, NODE_STATE(ksCurThread));
-            */
 
             /* It looks like this path is taken by the scheduler benchmarks */
-            if (isSchedulable(dest)) {
-                possibleSwitchTo(dest);
-            }
+            //if (isSchedulable(dest)) {
+            //    possibleSwitchTo(dest);
+            //}
 
-            schedule();
-            activateThread();
-            restore_user_context();
+            //schedule();
+            //activateThread();
+            //restore_user_context();
         }
     }
     /* TODO: Why does fastpath_call not need this as well? */
