@@ -216,12 +216,6 @@ endif()
 if(KernelArmMach STREQUAL "exynos")
     include_directories("include/plat/exynos_common/")
 endif()
-if(KernelArchRiscV)
-    include_directories(
-        "include/arch/${KernelArch}/arch/${KernelWordSize}"
-        "include/plat/${KernelPlatform}/plat/${KernelWordSize}"
-    )
-endif()
 
 # Add libsel4 include directories. These are explicitly added instead of calling
 # target_link_libraries(${target} sel4) because we don't want to inherit any
