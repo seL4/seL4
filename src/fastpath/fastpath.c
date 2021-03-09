@@ -22,8 +22,19 @@ static inline
 FORCE_INLINE
 #endif
 #endif
-void NORETURN fastpath_signal(cap_t cap)
+void NORETURN fastpath_signal(word_t cptr)
 {
+    /* We land up in here on every SYSCALL_SEND, so we need to check that we are
+     * actually signalling a notification */
+
+    /* Lookup the cap */
+    cap_t cap = lookup_fp(TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbCTable)->cap, cptr);
+
+    /* Check it's a notification */
+    if (!cap_capType_equals(cap, cap_notification_cap)) {
+        slowpath(SysSend);
+    }
+
     notification_t *ntfnPtr = NTFN_PTR(cap_notification_cap_get_capNtfnPtr(cap));
     uint32_t ntfnState = notification_ptr_get_state(ntfnPtr);
     word_t badge = cap_notification_cap_get_capNtfnBadge(cap);
@@ -39,6 +50,7 @@ void NORETURN fastpath_signal(cap_t cap)
             /* TODO: If bound thread is higher prio, switch to it directly (via switchToThread, rather than schedule). */
             tcb_t *tcb = (tcb_t *)notification_ptr_get_ntfnBoundTCB(ntfnPtr);
             /* Check if we are bound and that thread is waiting for a message */
+            /* Note that the benchmarks currently do not measure signalling a bound thread, so this path isn't taken in sel4bench */
             if (tcb) {
                 if (thread_state_ptr_get_tsType(&tcb->tcbState) == ThreadState_BlockedOnReceive) {
                     /* Send and start thread running */
@@ -113,6 +125,8 @@ void NORETURN fastpath_signal(cap_t cap)
             setThreadState(dest, ThreadState_Running);
             setRegister(dest, badgeRegister, badge);
 
+            /* It looks like the threads in sel4bench do have scheduling contexts,
+               so this path isn't taken in sel4bench */
             if (dest->tcbSchedContext == NULL) {
                 sched_context_t *sc = SC_PTR(notification_ptr_get_ntfnSchedContext(ntfnPtr));
                 if (sc != NULL && sc->scTcb == NULL) {
@@ -129,6 +143,7 @@ void NORETURN fastpath_signal(cap_t cap)
                 }
             }
 
+            /* It looks like this path is taken by the scheduler benchmarks */
             if (isSchedulable(dest)) {
                 possibleSwitchTo(dest);
             }

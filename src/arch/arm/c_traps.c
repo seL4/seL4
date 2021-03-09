@@ -154,7 +154,7 @@ void VISIBLE c_handle_fastpath_call(word_t cptr, word_t msgInfo)
 }
 
 ALIGN(L1_CACHE_LINE_SIZE)
-void VISIBLE c_handle_fastpath_signal(word_t cptr, word_t msgInfo, syscall_t syscall)
+void VISIBLE c_handle_fastpath_signal(word_t cptr, word_t msgInfo)
 {
     NODE_LOCK_SYS;
 
@@ -164,15 +164,7 @@ void VISIBLE c_handle_fastpath_signal(word_t cptr, word_t msgInfo, syscall_t sys
     ksKernelEntry.is_fastpath = 1;
 #endif /* DEBUG */
 
-    /* We land up in here on every SYSCALL_SEND, so we need to check that we are
-     * actually signalling a notification */
-    cap_t cap = lookupCap(NODE_STATE(ksCurThread), cptr).cap;
-    if (cap_get_capType(cap) != cap_notification_cap) {
-        slowpath(syscall);
-        UNREACHABLE();
-    }
-
-    fastpath_signal(cap);
+    fastpath_signal(cptr);
     UNREACHABLE();
 }
 
