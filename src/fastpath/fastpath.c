@@ -149,8 +149,9 @@ void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
                 notification_ptr_set_state(ntfnPtr, NtfnState_Idle);
             }
 
-            setThreadState(dest, ThreadState_Running);
-            setRegister(dest, badgeRegister, badge);
+            /* Using thread_state_ptr_set_tsType_np instead */
+            // setThreadState(dest, ThreadState_Running);
+            // setRegister(dest, badgeRegister, badge);
 
             /* It looks like the threads in sel4bench do have scheduling contexts,
                so this path isn't taken in sel4bench */
