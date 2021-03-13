@@ -119,6 +119,8 @@ typedef seL4_Uint64 seL4_Word;
 #error missing definition for SEL4_WORD type
 #endif
 
+typedef seL4_Word seL4_CPtr;
+
 /* sanity check that the seL4_Word matches the definitions of the constants */
 #include <sel4/sel4_arch/constants.h>
 

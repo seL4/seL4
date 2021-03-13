@@ -9,12 +9,6 @@
 #include <autoconf.h>
 #include <sel4/simple_types.h>
 
-typedef seL4_Word seL4_NodeId;
-typedef seL4_Word seL4_PAddr;
-typedef seL4_Word seL4_Domain;
-
-typedef seL4_Word seL4_CPtr;
-
 typedef seL4_CPtr seL4_X64_PML4;
 
 /* User context as used by seL4_TCB_ReadRegisters / seL4_TCB_WriteRegisters */

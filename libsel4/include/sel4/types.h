@@ -28,6 +28,10 @@
 #  define seL4_UntypedRetypeMaxObjects 256
 #endif
 
+typedef seL4_Word seL4_NodeId;
+typedef seL4_Word seL4_PAddr;
+typedef seL4_Word seL4_Domain;
+
 typedef seL4_CPtr seL4_CNode;
 typedef seL4_CPtr seL4_IRQHandler;
 typedef seL4_CPtr seL4_IRQControl;
