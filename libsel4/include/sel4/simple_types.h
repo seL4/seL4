@@ -72,8 +72,10 @@ seL4_integer_size_assert(seL4_Uint32, 4)
  */
 #if defined(SEL4_INT64_IS_LONG)
 #define _seL4_int64_type    long int
+#define _seL4_int64_fmt     l  // printf() formatting, integer suffix
 #elif defined(SEL4_INT64_IS_LONG_LONG)
 #define _seL4_int64_type    long long int
+#define _seL4_int64_fmt     ll  // printf() formatting, integer suffix
 #else
 #error missing definition for 64-bit types
 #endif
@@ -81,9 +83,18 @@ seL4_integer_size_assert(seL4_Uint32, 4)
 typedef signed _seL4_int64_type     seL4_Int64;
 typedef unsigned _seL4_int64_type   seL4_Uint64;
 
-seL4_integer_size_assert(seL4_Int64, 8)
-seL4_integer_size_assert(seL4_Uint64, 8)
+/* Define printf() format specifiers for seL4_Int64 and seL4_Uint64. The helper
+ * macros ensure these format strings are atoms. The macros passed are evaluated
+ * before the concatenation and stringizing happens.
+ */
+#define _macro_str_concat_helper2(x)    #x
+#define _macro_str_concat_helper1(x,y)  _macro_str_concat_helper2(x ## y)
+#define _macro_str_concat(x,y)          _macro_str_concat_helper1(x,y)
 
+#define SEL4_PRId64     _macro_str_concat(_seL4_int64_fmt, d)
+#define SEL4_PRIi64     _macro_str_concat(_seL4_int64_fmt, i)
+#define SEL4_PRIu64     _macro_str_concat(_seL4_int64_fmt, u)
+#define SEL4_PRIx64     _macro_str_concat(_seL4_int64_fmt, x)
 
 /* Define boolean type and true/false */
 #define seL4_True   1
@@ -100,8 +111,10 @@ typedef seL4_Int8   seL4_Bool;
 /* Define seL4_Word */
 #if defined(SEL4_WORD_IS_UINT32)
 typedef seL4_Uint32 seL4_Word;
+#define SEL4_PRI_word   "u" // seL4_Word printf format specifier
 #elif defined(SEL4_WORD_IS_UINT64)
 typedef seL4_Uint64 seL4_Word;
+#define SEL4_PRI_word   SEL4_PRIu64 // seL4_Word printf format specifier
 #else
 #error missing definition for SEL4_WORD type
 #endif
