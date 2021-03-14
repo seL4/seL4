@@ -248,13 +248,11 @@ create_root_cnode(void)
     /* write the number of root CNode slots to global state */
     ndks_boot.slot_pos_max = BIT(CONFIG_ROOT_CNODE_SIZE_BITS);
 
-    cap_t cap =
-        cap_cnode_cap_new(
-            CONFIG_ROOT_CNODE_SIZE_BITS,      /* radix      */
-            wordBits - CONFIG_ROOT_CNODE_SIZE_BITS, /* guard size */
-            0,                                /* guard      */
-            rootserver.cnode              /* pptr       */
-        );
+    cap_t cap = cap_cnode_cap_new(
+                    CONFIG_ROOT_CNODE_SIZE_BITS, /* radix */
+                    wordBits - CONFIG_ROOT_CNODE_SIZE_BITS, /* guard size */
+                    0, /* guard */
+                    rootserver.cnode); /* pptr */
 
     /* write the root CNode cap into the root CNode */
     write_slot(SLOT_PTR(rootserver.cnode, seL4_CapInitThreadCNode), cap);
@@ -308,7 +306,9 @@ BOOT_CODE word_t calculate_extra_bi_size_bits(word_t extra_size)
 
     word_t clzl_ret = clzl(ROUND_UP(extra_size, seL4_PageBits));
     word_t msb = seL4_WordBits - 1 - clzl_ret;
-    /* If region is bigger than a page, make sure we overallocate rather than underallocate */
+    /* If region is bigger than a page, make sure we overallocate rather than
+     * underallocate
+     */
     if (extra_size > BIT(msb)) {
         msb++;
     }
