@@ -95,9 +95,9 @@ static inline bool_t isdigit(char c)
            c <= '9';
 }
 
-/* Convenient bit representation for modifier flags, which all fall
- * within 31 codepoints of the space character. */
-
+/* Convenient bit representation for modifier flags, which all fall within 31
+ * codepoints of the space character.
+ */
 #define MASK_TYPE(a) (1U<<( a -' '))
 
 #define ALT_FORM     (1U<<('#'-' '))
@@ -115,7 +115,8 @@ static inline bool_t isdigit(char c)
 #define ULONG_MAX ((unsigned long)(-1))
 
 /* State machine to accept length modifiers + conversion specifiers.
- * Result is 0 on failure, or an argument type to pop on success. */
+ * Result is 0 on failure, or an argument type to pop on success.
+ */
 
 enum {
     BARE, LPRE, LLPRE, HPRE, HHPRE, BIGLPRE,
@@ -275,9 +276,9 @@ static char *fmt_u(word_t x, char *s)
     return s;
 }
 
-// Maximum buffer size taken to ensure correct adaptation
-// However, it could be reduced/removed if we could measure
-// the buf length under all code paths
+/* Maximum buffer size taken to ensure correct adaptation. However, it could be
+ * reduced/removed if we could measure the buf length under all code paths
+ */
 #define LDBL_MANT_DIG 113
 
 #define NL_ARGMAX 9
@@ -312,7 +313,8 @@ static int printf_core(out_wrap_t *f, const char *fmt, va_list *ap, union arg *n
     for (;;) {
         /* This error is only specified for snprintf, but since it's
          * unspecified for other forms, do the same. Stop immediately
-         * on overflow; otherwise %n could produce wrong results. */
+         * on overflow; otherwise %n could produce wrong results.
+         */
         if (l > INT_MAX - cnt) {
             goto overflow;
         }
@@ -564,7 +566,7 @@ static int printf_core(out_wrap_t *f, const char *fmt, va_list *ap, union arg *n
     }
     return 1;
 
-// goto for potential debug error support
+    /* goto for potential debug error support */
 inval:
 overflow:
     return -1;
@@ -577,7 +579,7 @@ static int vprintf(out_wrap_t *out, const char *fmt, va_list ap)
     union arg nl_arg[NL_ARGMAX + 1];
     int ret;
 
-    // validate format string
+    /* validate format string */
     va_copy(ap2, ap);
     if (printf_core(NULL, fmt, &ap2, nl_arg, nl_type) < 0) {
         va_end(ap2);

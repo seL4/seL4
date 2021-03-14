@@ -17,4 +17,3 @@
 
 /* adjust constants in config.h if this assert fails */
 compile_assert(bi_size, sizeof(seL4_BootInfo) <= BIT(BI_FRAME_SIZE_BITS))
-

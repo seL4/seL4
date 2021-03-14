@@ -547,7 +547,6 @@ static BOOT_CODE bool_t try_init_kernel(
         invalidateHypTLB();
     }
 
-
     ksNumCPUs = 1;
 
     /* initialize BKL before booting up other cores */
@@ -612,4 +611,3 @@ BOOT_CODE VISIBLE void init_kernel(
     schedule();
     activateThread();
 }
-
