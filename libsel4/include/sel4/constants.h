@@ -10,7 +10,6 @@
 #include <sel4/macros.h>
 
 #ifndef __ASSEMBLER__
-#define LIBSEL4_BIT(n) (1ul<<(n))
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
 /* API arg values for breakpoint API, "type" arguments. */
