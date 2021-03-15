@@ -7,6 +7,7 @@
 #pragma once
 
 #include <autoconf.h>
+#include <sel4/macros.h>
 
 #ifndef __ASSEMBLER__
 #ifdef CONFIG_KERNEL_GLOBALS_FRAME
