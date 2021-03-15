@@ -45,4 +45,3 @@ enum benchmark_track_util_ipc_index {
 };
 
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
-

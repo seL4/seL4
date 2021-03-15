@@ -18,5 +18,3 @@
 #define seL4_FirstWatchpoint (6)
 #define seL4_NumDualFunctionMonitors (0)
 #endif
-
-

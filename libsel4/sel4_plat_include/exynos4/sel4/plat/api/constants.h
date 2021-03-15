@@ -21,5 +21,3 @@
 
 /* First address in the virtual address space that is not accessible to user level */
 #define seL4_UserTop 0xe0000000
-
-

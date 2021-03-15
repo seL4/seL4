@@ -22,4 +22,3 @@
 #define seL4_FirstDualFunctionMonitor (0)
 #define seL4_NumDualFunctionMonitors (4)
 #endif
-

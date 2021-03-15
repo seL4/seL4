@@ -13,4 +13,3 @@
 typedef enum _mode_object {
     seL4_ModeObjectTypeCount = seL4_NonArchObjectTypeCount
 } seL4_ModeObjectType;
-
