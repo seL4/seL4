@@ -40,4 +40,3 @@ typedef seL4_Word object_t;
 #define seL4_X86_EPTPDObject 0xfffffb
 #define seL4_X86_EPTPTObject 0xfffffa
 #endif
-

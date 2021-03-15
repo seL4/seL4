@@ -22,4 +22,3 @@ typedef enum _mode_object {
 #if CONFIG_PT_LEVELS <= 3
 #define seL4_RISCV_Tera_Page 0xffffffff
 #endif
-

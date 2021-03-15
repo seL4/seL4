@@ -22,4 +22,3 @@ LIBSEL4_INLINE_FUNC seL4_Word seL4_MappingFailedLookupLevel(void)
 {
     return seL4_GetMR(SEL4_MAPPING_LOOKUP_LEVEL);
 }
-

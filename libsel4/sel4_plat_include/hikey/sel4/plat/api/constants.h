@@ -25,4 +25,3 @@
 #else
 /* otherwise this is defined at the arch level */
 #endif
-

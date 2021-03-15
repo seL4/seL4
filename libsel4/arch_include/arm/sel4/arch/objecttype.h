@@ -37,5 +37,3 @@ typedef seL4_Word object_t;
 #ifndef CONFIG_TK1_SMMU
 #define seL4_ARM_IOPageTableObject 0xffff
 #endif
-
-

@@ -258,4 +258,3 @@ SEL4_SIZE_SANITY(seL4_PGDEntryBits, seL4_PGDIndexBits, seL4_PGDBits);
 
 /* IPC buffer is 512 bytes, giving size bits of 9 */
 #define seL4_IPCBufferSizeBits 9
-

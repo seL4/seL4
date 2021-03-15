@@ -16,4 +16,3 @@ typedef struct benchmark_tracepoint_log_entry {
     seL4_Word  duration;
 } benchmark_tracepoint_log_entry_t;
 #endif /* CONFIG_BENCHMARK_TRACEPOINTS */
-

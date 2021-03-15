@@ -8,5 +8,3 @@
 #ifdef HAVE_AUTOCONF
 #include <autoconf.h>
 #endif
-
-

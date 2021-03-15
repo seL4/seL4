@@ -25,4 +25,3 @@ typedef enum _mode_object {
 #ifndef CONFIG_HUGE_PAGE
 #define seL4_X64_HugePageObject 0xfffffffe
 #endif
-

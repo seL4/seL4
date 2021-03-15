@@ -11,7 +11,6 @@
 #endif
 
 /* caps with fixed slot positions in the root CNode */
-
 enum {
     seL4_CapNull                =  0, /* null cap */
     seL4_CapInitThreadTCB       =  1, /* initial thread's TCB cap */
@@ -97,4 +96,3 @@ typedef struct seL4_BootInfoHeader {
 #define SEL4_BOOTINFO_HEADER_X86_TSC_FREQ 5 // frequency is in mhz
 #define SEL4_BOOTINFO_HEADER_FDT 6
 #define SEL4_BOOTINFO_HEADER_NUM SEL4_BOOTINFO_HEADER_FDT + 1
-

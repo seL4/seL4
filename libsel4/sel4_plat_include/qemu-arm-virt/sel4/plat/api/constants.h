@@ -6,7 +6,6 @@
 
 #pragma once
 
-
 #ifdef HAVE_AUTOCONF
 #include <autoconf.h>
 #endif
@@ -26,4 +25,3 @@
 
 #define seL4_UserTop 0xa0000000
 #endif
-
