@@ -7,9 +7,7 @@
 
 #pragma once
 
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif
 
 #define seL4_WordBits           32
 /* log 2 bits in a word */

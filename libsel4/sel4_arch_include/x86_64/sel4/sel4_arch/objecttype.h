@@ -6,9 +6,7 @@
 
 #pragma once
 
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif /* HAVE_AUTOCONF */
 
 typedef enum _mode_object {
     seL4_X86_PDPTObject = seL4_NonArchObjectTypeCount,

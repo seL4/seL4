@@ -6,9 +6,7 @@
 
 #pragma once
 
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif
 
 /* ARM1136-JF-S manual, table 13-3 */
 #define seL4_NumHWBreakpoints (8)

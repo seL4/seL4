@@ -6,9 +6,7 @@
 
 #pragma once
 
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif
 
 #define TLS_GDT_ENTRY 6
 #define TLS_GDT_SELECTOR ((TLS_GDT_ENTRY << 3) | 3)

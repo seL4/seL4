@@ -6,9 +6,7 @@
 
 #pragma once
 
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif
 
 #ifndef __ASSEMBLER__
 /* format of an unknown syscall message */

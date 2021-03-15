@@ -7,9 +7,7 @@
 
 #pragma once
 
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif /* HAVE_AUTOCONF */
 
 typedef enum _object {
     seL4_RISCV_4K_Page = seL4_ModeObjectTypeCount,

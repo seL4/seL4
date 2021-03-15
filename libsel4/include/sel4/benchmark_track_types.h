@@ -6,11 +6,8 @@
 
 #pragma once
 
-#include <stdint.h>
-
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif
+#include <stdint.h>
 
 #if (defined CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES || defined CONFIG_DEBUG_BUILD)
 

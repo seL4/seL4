@@ -6,9 +6,7 @@
 
 #pragma once
 
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif
 
 #ifndef __ASSEMBLER__
 #ifdef CONFIG_KERNEL_GLOBALS_FRAME

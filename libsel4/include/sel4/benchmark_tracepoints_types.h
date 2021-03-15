@@ -6,9 +6,7 @@
 
 #pragma once
 
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif
 
 #ifdef CONFIG_BENCHMARK_TRACEPOINTS
 typedef struct benchmark_tracepoint_log_entry {
