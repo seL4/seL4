@@ -8,6 +8,7 @@
 #pragma once
 
 #include <autoconf.h>
+#include <sel4/macros.h>
 #include <sel4/simple_types.h>
 #include <sel4/sel4_arch/types.h>
 
