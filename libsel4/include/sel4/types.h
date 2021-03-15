@@ -6,9 +6,7 @@
 
 #pragma once
 
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif
 #include <sel4/simple_types.h>
 #include <sel4/macros.h>
 #include <sel4/arch/types.h>

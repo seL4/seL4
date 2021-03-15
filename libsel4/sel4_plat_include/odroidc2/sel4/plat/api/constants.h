@@ -6,9 +6,7 @@
 
 #pragma once
 
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif
 
 /* Cortex A53 manual, section 11.6.1 */
 #define seL4_NumHWBreakpoints (10)

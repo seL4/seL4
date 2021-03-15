@@ -6,9 +6,7 @@
 
 #pragma once
 
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif
 
 /* Defined for each architecture: the number of hardware breakpoints
  * available.

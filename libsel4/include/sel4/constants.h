@@ -6,9 +6,7 @@
 
 #pragma once
 
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif
 
 #ifndef __ASSEMBLER__
 #define LIBSEL4_BIT(n) (1ul<<(n))
