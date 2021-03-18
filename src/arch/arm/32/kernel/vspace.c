@@ -2214,6 +2214,7 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, word_t length,
     pd = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(pdCap));
     asid = cap_page_directory_cap_get_capPDMappedASID(pdCap);
 
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     if (unlikely(vaddr >= USER_TOP)) {
         userError("ARMPageTableMap: Virtual address cannot be in kernel window. vaddr: 0x%08lx, USER_TOP: 0x%08x", vaddr,
                   USER_TOP);
@@ -2222,6 +2223,7 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, word_t length,
 
         return EXCEPTION_SYSCALL_ERROR;
     }
+#endif
 
     {
         findPDForASID_ret_t find_ret;
@@ -2279,7 +2281,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
 {
     switch (invLabel) {
     case ARMPageMap: {
-        word_t vaddr, vtop, w_rightsMask;
+        word_t vaddr, w_rightsMask;
         paddr_t capFBasePtr;
         cap_t pdCap;
         pde_t *pd;
@@ -2333,6 +2335,8 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
                 return EXCEPTION_SYSCALL_ERROR;
             }
         } else {
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
+            word_t vtop;
             vtop = vaddr + BIT(pageBitsForSize(frameSize)) - 1;
 
             if (unlikely(vtop >= USER_TOP)) {
@@ -2343,6 +2347,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
 
                 return EXCEPTION_SYSCALL_ERROR;
             }
+#endif
         }
 
         {
