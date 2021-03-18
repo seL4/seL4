@@ -25,17 +25,16 @@ FORCE_INLINE
 void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
 {
     seL4_MessageInfo_t info;
-    word_t length;
+    //word_t length;
     cap_t newVTable;
     vspace_root_t *cap_pd;
     pde_t stored_hw_asid;
     word_t fault_type;
     dom_t dom;
 
-
     /* Get message info, length, and fault type. */
     info = messageInfoFromWord_raw(msgInfo);
-    length = seL4_MessageInfo_get_length(info);
+    //length = seL4_MessageInfo_get_length(info);
     fault_type = seL4_Fault_get_seL4_FaultType(NODE_STATE(ksCurThread)->tcbFault);
 
     /* Check there's no extra caps, the length is ok and there's no
@@ -195,6 +194,11 @@ void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
                 slowpath(SysSend);
             }
 
+            /* Check that we are allowed to signal this notification */
+            if (!unlikely(cap_notification_cap_get_capNtfnCanSend(cap))) {
+                slowpath(SysSend);
+            }
+
 #ifdef CONFIG_ARCH_AARCH32
             if (unlikely(!pde_pde_invalid_get_stored_asid_valid(stored_hw_asid))) {
                 slowpath(SysSend);
@@ -222,7 +226,7 @@ void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
 #endif
 
             /* TODO: Probably not necessary */
-            fastpath_copy_mrs(length, NODE_STATE(ksCurThread), dest);
+            //fastpath_copy_mrs(length, NODE_STATE(ksCurThread), dest);
 
             /* TODO: Figure out why this hangs during scheduler benchmarks */
 
@@ -246,7 +250,6 @@ void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
             //restore_user_context();
         }
     }
-    /* TODO: Why does fastpath_call not need this as well? */
     UNREACHABLE();
 }
 
