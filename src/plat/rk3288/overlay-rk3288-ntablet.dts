@@ -18,7 +18,7 @@
 	// Ideally we'd use the memory node passed in from U-Boot,
 	// but for now we need this at compile time.
 	memory {
-		 reg = <0x0 0x0 0x0 0x08400000 0x0 0x09200000 0x0 0x76e00000>;
+		 reg = <0x0 0x200000 0x0 0x7fe00000>;
 	};
 
 };
