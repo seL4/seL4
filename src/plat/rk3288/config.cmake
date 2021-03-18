@@ -6,23 +6,16 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-# We introduce a variable to hold this long expression to prevent the
-# code styler from line-wrapping the declare_platform() statement.  We
-# want to keep that on one line so the `griddle` tool (or humans) can
-# easily `grep` a list of supported platforms.
-# For now we don't support HYP... but include it for later.
-set(AArch32OrArchArmHyp "KernelSel4ArchAarch32 OR KernelSel4ArchArmHyp")
-declare_platform(rk3288 KernelPlatRK3288 PLAT_RK3288 ${AArch32OrArchArmHyp})
-unset(${AArch32OrArchArmHyp} CACHE)
+declare_platform(rk3288 KernelPlatRK3288 PLAT_RK3288 "KernelSel4ArchAarch32 OR KernelSel4ArchArmHyp")
 
 if(KernelPlatRK3288)
-    #if("${KernelSel4Arch}" STREQUAL aarch32)
-    declare_seL4_arch(aarch32)
-    #elif("${KernelSel4Arch}" STREQUAL arm_hyp)
-    #    declare_seL4_arch(arm_hyp)
-    #else()
-    #    fallback_declare_seL4_arch_default(aarch32)
-    #endif()
+    if("${KernelSel4Arch}" STREQUAL aarch32)
+        declare_seL4_arch(aarch32)
+	elseif("${KernelSel4Arch}" STREQUAL arm_hyp)
+        declare_seL4_arch(arm_hyp)
+    else()
+        fallback_declare_seL4_arch_default(aarch32)
+    endif()
     set(KernelArmCortexA15 ON) #almost the same as A17
     set(KernelArchArmV7ve ON)
     # v7ve is a superset of v7a, so we enable that as well
@@ -35,7 +28,7 @@ if(KernelPlatRK3288)
 
     declare_default_headers(
         TIMER_FREQUENCY 24000000llu
-        MAX_IRQ 186
+        MAX_IRQ 187
         NUM_PPI 32
         TIMER drivers/timer/arm_generic.h
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h
