@@ -5,15 +5,23 @@
  */
 
 #include <config.h>
+
+#ifdef CONFIG_DEBUG_BUILD
+
 #include <arch/machine/capdl.h>
 #include <string.h>
 #include <kernel/cspace.h>
 
-#ifdef CONFIG_DEBUG_BUILD
-
 #define MAX_UL          0xffffffff
 #define PT_INDEX(vptr)  ((vptr >> PAGE_BITS) & MASK(PT_INDEX_BITS))
 #define PD_INDEX(vptr)  (vptr >> (PAGE_BITS + PT_INDEX_BITS))
+
+word_t get_tcb_sp(tcb_t *tcb)
+{
+    return tcb->tcbArch.tcbContext.registers[SP];
+}
+
+#ifdef CONFIG_PRINTING
 
 static void obj_frame_print_attrs(resolve_ret_t ret);
 static void cap_frame_print_attrs_pt(pte_t *pte);
@@ -25,10 +33,6 @@ static void arm32_cap_pt_print_slots(pte_t *pt);
 /*
  * Caps
  */
-word_t get_tcb_sp(tcb_t *tcb)
-{
-    return tcb->tcbArch.tcbContext.registers[SP];
-}
 
 /*
  * AP   S   R   Privileged permissions  User permissions
@@ -496,7 +500,9 @@ void obj_tcb_print_vtable(tcb_t *tcb)
     }
 }
 
-void capDL(void)
+#endif /* CONFIG_PRINTING */
+
+void debug_capDL(void)
 {
     printf("arch aarch32\n");
     printf("objects {\n");
@@ -508,10 +514,13 @@ void capDL(void)
     /* reset the seen list */
     reset_seen_list();
 
+#ifdef CONFIG_PRINTING
     print_caps();
     printf("}\n");
 
     obj_irq_print_maps();
+#endif /* CONFIG_PRINTING */
 }
+
 
 #endif /* CONFIG_DEBUG_BUILD */

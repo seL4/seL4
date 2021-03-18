@@ -4,17 +4,18 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
+#include <config.h>
+
+#ifdef CONFIG_DEBUG_BUILD
+
 #include <machine/capdl.h>
 #include <machine/registerset.h>
 #include <machine/timer.h>
-#include <config.h>
 #include <string.h>
 #include <kernel/cspace.h>
 #ifdef CONFIG_KERNEL_MCS
 #include <kernel/sporadic.h>
 #endif
-
-#ifdef CONFIG_DEBUG_BUILD
 
 #define SEEN_SZ 256
 
@@ -75,6 +76,8 @@ bool_t root_or_idle_tcb(tcb_t *tcb)
 /*
  * Print objects
  */
+
+#ifdef CONFIG_PRINTING
 
 void obj_tcb_print_attrs(tcb_t *tcb)
 {
@@ -512,4 +515,6 @@ void print_object(cap_t cap)
     }
 }
 
-#endif
+#endif /* CONFIG_PRINTING */
+
+#endif /* CONFIG_DEBUG_BUILD */
