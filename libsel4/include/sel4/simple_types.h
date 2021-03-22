@@ -105,3 +105,14 @@ typedef seL4_Uint64 seL4_Word;
 #else
 #error missing definition for SEL4_WORD type
 #endif
+
+/* sanity check that the seL4_Word matches the definitions of the constants */
+#include <sel4/sel4_arch/constants.h>
+
+SEL4_COMPILE_ASSERT(
+    seL4_WordSizeBits_matches,
+    sizeof(seL4_Word) == (1u << seL4_WordSizeBits))
+
+SEL4_COMPILE_ASSERT(
+    seL4_WordBits_matches,
+    8 * sizeof(seL4_Word) == seL4_WordBits)
