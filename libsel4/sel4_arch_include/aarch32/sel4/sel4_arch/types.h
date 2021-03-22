@@ -22,4 +22,3 @@ typedef struct seL4_UserContext_ {
     /* Thread ID registers */
     seL4_Word tpidrurw, tpidruro;
 } seL4_UserContext;
-

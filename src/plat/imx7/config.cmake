@@ -9,6 +9,7 @@ cmake_minimum_required(VERSION 3.7.2)
 declare_platform(imx7 KernelPlatImx7 PLAT_IMX7_SABRE KernelSel4ArchAarch32)
 
 if(KernelPlatImx7)
+    config_set(KernelPlatImx7 PLAT_IMX7 ON)
     declare_seL4_arch(aarch32)
     set(KernelArmCortexA7 ON)
     set(KernelArchArmV7a ON)

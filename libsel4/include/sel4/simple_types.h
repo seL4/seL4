@@ -21,4 +21,3 @@ typedef seL4_Int8 seL4_Bool;
 #else
 #define seL4_Null ((void*)0)
 #endif // __cplusplus
-

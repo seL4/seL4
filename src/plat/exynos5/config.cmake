@@ -59,7 +59,7 @@ if(KernelPlatExynos5)
     list(APPEND KernelDTSList "src/plat/exynos5/overlay-${KernelARMPlatform}.dts")
     declare_default_headers(
         TIMER_FREQUENCY 24000000llu
-        MAX_IRQ 232
+        MAX_IRQ 254
         NUM_PPI 32
         TIMER drivers/timer/arm_generic.h
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h

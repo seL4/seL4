@@ -14,8 +14,9 @@ set(bf_declarations "")
 
 include(${CMAKE_CURRENT_LIST_DIR}/../tools/internal.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/../tools/helpers.cmake)
-# Create and set all of the Kernel config options that can
-# be derived from the seL4 arch which is one of the following:
+
+# Create and set all of the Kernel config options that can be derived from the
+# seL4 arch which is one of the following:
 # aarch32, aarch64, arm_hyp, riscv32, riscv64, x86_64, ia32
 # This macro is intended to be called from within a platform config.
 macro(declare_seL4_arch sel4_arch)
@@ -92,7 +93,7 @@ endmacro()
 
 # helper macro that prints a message that no sub platform is specified and
 # the default sub platform will be used
-# Usage example: fallback_declare_seL4_arch_default(aarch32)
+# Usage example: check_platform_and_fallback_to_default(KernelARMPlatform "sabre")
 macro(check_platform_and_fallback_to_default var_cmake_kernel_plat default_sub_plat)
     if("${${var_cmake_kernel_plat}}" STREQUAL "")
         print_message_multiple_options_helper("sub platforms" ${default_sub_plat})
