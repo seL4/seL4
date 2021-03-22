@@ -4,3 +4,6 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
+#pragma once
+
+#include <sel4/sel4_arch/simple_types.h>

@@ -6,6 +6,5 @@
 
 #pragma once
 
-typedef signed long seL4_Int64;
-
-typedef unsigned long seL4_Uint64;
+#define SEL4_WORD_IS_UINT64
+#define SEL4_INT64_IS_LONG
