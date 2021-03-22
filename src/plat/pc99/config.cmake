@@ -6,23 +6,21 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-declare_platform(pc99 KernelPlatPC99 PLAT_PC99 KernelArchX86)
-
-if(KernelPlatPC99)
-    declare_seL4_arch("x86_64;ia32")
-endif()
-
-add_sources(
-    DEP "KernelPlatPC99"
-    PREFIX src/plat/pc99/machine
-    CFILES
-        acpi.c
-        hardware.c
-        pic.c
-        ioapic.c
-        pit.c
-        io.c
-        intel-vtd.c
+declare_platform(
+    "pc99"
+    "x86_64;ia32" # default is first (x86_64)
+    NO_DEFAULT_DTS # there is no DTS on x86
+    CAMKE_VAR
+    "KernelPlatPC99"
+    # C_DEFINE defaults to CONFIG_PLAT_PC99
+    SOURCES
+    "src/plat/pc99/machine/acpi.c"
+    "src/plat/pc99/machine/hardware.c"
+    "src/plat/pc99/machine/pic.c"
+    "src/plat/pc99/machine/ioapic.c"
+    "src/plat/pc99/machine/pit.c"
+    "src/plat/pc99/machine/io.c"
+    "src/plat/pc99/machine/intel-vtd.c"
 )
 
 add_bf_source_old(

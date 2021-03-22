@@ -7,57 +7,54 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-declare_platform(imx6 KernelPlatImx6 PLAT_IMX6 KernelSel4ArchAarch32)
-
-# disable platform specific settings by default in cache, will be enabled below
-# if active
-foreach(
-    var
-    IN
-    ITEMS
-    KernelPlatformSabre
-    KernelPlatformWandQ
-    KernelPlatformNitrogen6SX
-    KernelPlatImx6dq
-    KernelPlatImx6sx
+declare_platform(
+    "imx6"
+    "aarch32"
+    MACH "imx"
+    # use default DTS at tools/dts/<board-name>.dts
+    # we need a custom CAMKE_VAR, because it is used in these files:
+    #   seL4/elfloader-tool/CMakeLists.txt
+    #   libplatsupport/CMakeLists.txt
+    CAMKE_VAR
+    "KernelPlatImx6"
+    PLAT_CAMKE_VARS # all disabled by default, must be enabled explicitly
+    "KernelPlatImx6dq"
+    "KernelPlatImx6sx"
+    SOURCES
+    "src/arch/arm/machine/l2c_310.c"
+    "src/arch/arm/machine/gic_v2.c"
+    BOARDS # first is default
+    "sabre,KernelPlatformSabre" # creates PLAT_SABRE
+    "wandq,KernelPlatformWandQ" # creates PLAT_WANDQ
+    "nitrogen6sx,KernelPlatformNitrogen6SX" # creates PLAT_NITROGEN6SX"
 )
-    unset(${var} CACHE)
-    set(${var} OFF)
-endforeach()
+
 
 if(KernelPlatImx6)
 
-    check_platform_and_fallback_to_default(KernelARMPlatform "sabre")
-
-    if(KernelARMPlatform STREQUAL "sabre")
-        config_set(KernelPlatformSabre PLAT_SABRE ON)
+    if(KernelPlatformSabre)
         config_set(KernelPlatImx6dq PLAT_IMX6DQ ON)
 
-    elseif(KernelARMPlatform STREQUAL "wandq")
-        config_set(KernelPlatformWandQ PLAT_WANDQ ON)
+    elseif(KernelPlatformWandQ)
         config_set(KernelPlatImx6dq PLAT_IMX6DQ ON)
 
-    elseif(KernelARMPlatform STREQUAL "nitrogen6sx")
-        config_set(KernelPlatformNitrogen6SX PLAT_NITROGEN6SX ON)
+    elseif(KernelPlatformNitrogen6SX)
         config_set(KernelPlatImx6sx PLAT_IMX6SX ON)
 
     else()
-        message(FATAL_ERROR "Which imx6 platform not specified")
+        message(FATAL_ERROR "invalid i.MX6 board")
     endif()
 
-    config_set(KernelARMPlatform ARM_PLAT ${KernelARMPlatform})
-    declare_seL4_arch("aarch32")
     set(KernelArmCortexA9 ON)
     set(KernelArchArmV7a ON)
-    set(KernelArmMach "imx" CACHE INTERNAL "")
-    list(APPEND KernelDTSList "tools/dts/${KernelARMPlatform}.dts")
-    list(APPEND KernelDTSList "src/plat/imx6/overlay-${KernelARMPlatform}.dts")
+
+    list(APPEND KernelDTSList "${CMAKE_CURRENT_LIST_DIR}/overlay-${KernelARMPlatform}.dts")
 
     if(KernelIsMCS)
         if(KernelARMPlatform STREQUAL "nitrogen6sx")
-            list(APPEND KernelDTSList "src/plat/imx6/mcs-overlay-nitrogen6sx.dts")
+            list(APPEND KernelDTSList "${CMAKE_CURRENT_LIST_DIR}/mcs-overlay-nitrogen6sx.dts")
         else()
-            list(APPEND KernelDTSList "src/plat/imx6/mcs-overlay-imx6.dts")
+            list(APPEND KernelDTSList "${CMAKE_CURRENT_LIST_DIR}/mcs-overlay-imx6.dts")
         endif()
         set(timer_file drivers/timer/arm_global.h)
     else()
@@ -75,9 +72,5 @@ if(KernelPlatImx6)
         KERNEL_WCET 10llu
         TIMER_PRECISION 2u
     )
-endif()
 
-add_sources(
-    DEP "KernelPlatImx6"
-    CFILES src/arch/arm/machine/l2c_310.c src/arch/arm/machine/gic_v2.c
-)
+endif()

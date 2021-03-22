@@ -84,35 +84,280 @@ macro(declare_seL4_arch arch_list)
     endif()
 endmacro()
 
+# helper function that replaces all '-' by '_' and capitalizes all chars
+function(sanitize_str_for_var out_var str)
+    string(REPLACE "-" "_" str "${str}")
+    string(TOUPPER "${str}" str)
+    set(${out_var} "${str}" PARENT_SCOPE)
+endfunction()
+
+
+function(add_kernel_dts dts)
+    list(APPEND KernelDTSList "${ARGN}")
+    set(KernelDTSList "${KernelDTSList}" PARENT_SCOPE)
+endfunction()
+
 # Register a platform's config options to be set if it is selected.
 # Additionally, the kernel_platforms variable can be used as a record of all
 # platforms that can be built once the platform configuration files have been
 # processed.
-# name: name of the platform, KernelPlatform will be set to this.
-# config1: the CMake configuration name. Such as KernelPlatImx7.
-# config2: the C header file config name without CONFIG_. Such as PLAT_IMX7_SABRE.
-# enable_test: A CMake boolean formula that allows the option to be selected.
-#     e.g. "KernelSel4ArchAarch32", or "KernelSel4ArchX86_64 OR KernelSel4ArchIA32"
-macro(declare_platform name config1 config2 enable_test)
-    list(APPEND kernel_platforms "${name}\;${config1}\;${config2}\;${enable_test}")
-    if("${KernelPlatform}" STREQUAL ${name})
-        set(${config1} ON CACHE INTERNAL "" FORCE)
-        # Write KernelPlatform into the cache in case it is only a local variable
-        set(KernelPlatform ${KernelPlatform} CACHE STRING "")
-    else()
-        set(${config1} OFF CACHE INTERNAL "" FORCE)
-    endif()
-endmacro()
+#
+# Parameters:
+#
+#   <name>
+#     name of the platform, KernelPlatform will be set to this.
+#
+#   <arch_list>
+#     list of architectures, default is first item in list
+#
+#   MACH <mach>
+#     optional, use common SOC architecture
 
-# helper macro that prints a message that no sub platform is specified and
-# the default sub platform will be used
-# Usage example: check_platform_and_fallback_to_default(KernelARMPlatform "sabre")
-macro(check_platform_and_fallback_to_default var_cmake_kernel_plat default_sub_plat)
-    if("${${var_cmake_kernel_plat}}" STREQUAL "")
-        print_message_multiple_options_helper("sub platforms" ${default_sub_plat})
-        set(${var_cmake_kernel_plat} ${default_sub_plat})
+#   CAMKE_VAR <var>
+#     optional, customize name of CMake variable for platform, the default name
+#     is KernelPlatform_${name} with '-' replaced by '_'
+#
+#   C_DEFINE <PLAT_xxx>
+#     optional, customize name of C code fine for platform, teh default name is
+#     PLAT_NAME (name capitalize, '-' replaced by '_'). The C define will be
+#     prefixed with "CONFIG_" eventually
+#
+#   NO_DEFAULT_DTS
+#     optional, do not use default DTS. This is "tools/dts/${name}.dts" unless
+#     BOARDS is specified, then it is "tools/dts/${board-name}.dts"
+#
+#   FLAGS <flag> <flag> ...
+#     files to add to the build
+#
+#   SOURCES <file1> <file2> ...
+#     files to add to the build
+#
+#   BOARDS <tupel_list, element=<name>[,<cmake_var>[,<c-define>]]>
+#     optional, list of boards, default to first item
+function(declare_platform name arch_list)
+
+    cmake_parse_arguments(
+        PARSE_ARGV
+        1
+        PARAM
+        "NO_DEFAULT_DTS" # options
+        "CAMKE_VAR;PLAT;C_DEFINE;MACH" # one-value keywords
+        "PLAT_CAMKE_VARS;FLAGS;SOURCES;BOARDS" # multi-value keywords
+    )
+
+    # Generating a CMake variable from the name requires replacing every "-" by
+    # "_". That's all what is needed for the platform names currently in use,
+    # new names may require additional sanitizing. We also capitalize all
+    # letters to have the C define and the CMake variable aligned closely.
+    sanitize_str_for_var(name_as_var "${name}")
+
+    if(NOT DEFINED PARAM_CAMKE_VAR)
+        set(PARAM_CAMKE_VAR "KernelPlatform_${name_as_var}")
     endif()
-endmacro()
+
+    if(NOT DEFINED PARAM_C_DEFINE)
+        set(PARAM_C_DEFINE "PLAT_${name_as_var}")
+    endif()
+
+    # disable any CMake variables by default
+    set(${PARAM_CAMKE_VAR} OFF CACHE INTERNAL "" FORCE)
+    foreach(plat_cmake_var IN LISTS PLAT_CAMKE_VARS PARAM_CAMKE_VAR)
+        unset(${plat_cmake_var} CACHE)
+        set(${plat_cmake_var} OFF)
+    endforeach()
+
+    # Check that <arch_list> contains only valid seL4 architectures. The map
+    # below specifies the relation between values the variable KernelSel4Arch
+    # can have and the corresponding variable KernelSel4Archxxx.
+    set(
+        arch_mapping
+        "ia32:KernelSel4ArchIA32"
+        "x86_64:KernelSel4ArchX86_64"
+        "aarch32:KernelSel4ArchAarch32"
+        "arm_hyp:KernelSel4ArchArmHyp" # legacy hack, removed one day
+        "aarch64:KernelSel4ArchAarch64"
+        "riscv32:KernelSel4ArchRiscV32"
+        "riscv64:KernelSel4ArchRiscV64"
+    )
+
+    set(filter "")
+    foreach(a IN LISTS arch_list)
+        if(NOT ";${arch_mapping};" MATCHES ";${a}:([^;]*);")
+            message(FATAL_ERROR "KernelPlatform '${name}': unsupported architecture '${a}'")
+        endif()
+        list(APPEND filter "${CMAKE_MATCH_1}")
+    endforeach()
+    string(REPLACE ";" " OR " enable_test "${filter}")
+
+    # now we have the basic platform parameters that the build system needs
+    set(
+        kernel_platforms
+        "${kernel_platforms}"
+        "${name},${PARAM_CAMKE_VAR},${PARAM_C_DEFINE},${enable_test}"
+        PARENT_SCOPE)
+
+    set(board_names "")
+    if(DEFINED PARAM_BOARDS)
+
+        foreach(board IN LISTS PARAM_BOARDS)
+
+            string(REPLACE "," ";" board_descr "${board}")
+            list(LENGTH board_descr cnt)
+            list(GET board_descr 0 board_name)
+            list(APPEND board_names "${board_name}")
+            sanitize_str_for_var(board_name_as_var "${board_name}")
+            set(board_cmake_var "KernelPlatform_${board_name_as_var}")
+            set(board_c_define "PLAT_${board_name_as_var}")
+
+            if(cnt GREATER 1)
+                list(GET board_descr 1 board_cmake_var)
+                if(cnt GREATER 2)
+                    list(GET board_descr 2 board_c_define)
+                endif()
+            endif()
+
+            # disable any CMake variables by default
+            unset(${board_cmake_var} CACHE)
+            set(${board_cmake_var} OFF)
+
+        endforeach()
+
+        if(name IN_LIST board_names)
+            message(FATAL_ERROR "Platform name '${name}' can't be in list of board names")
+        endif()
+
+    endif()
+
+    set(arch_plat "${name}")
+    if(KernelPlatform IN_LIST board_names)
+        set(arch_plat "${KernelPlatform}")
+        set(KernelPlatform "${name}")
+    elseif(NOT KernelPlatform STREQUAL "${name}")
+        # We are done here if this is not the currently selected platform.
+        return()
+    elseif(board_names)
+        # first board is the default if nothing else is set
+        list(GET board_names 0 defaut_board)
+        set(arch_plat "${defaut_board}")
+    endif()
+
+    # this is the currently selected platform, setup defaults
+
+    if(NOT KernelSel4Arch)
+        message(STATUS "KernelPlatform '${KernelPlatform}': architectures not specified")
+        message(STATUS "  options: ${arch_list}")
+        list(GET arch_list 0 KernelSel4Arch)
+        message(STATUS "  defaulting to '${KernelSel4Arch}'")
+    elseif(NOT KernelSel4Arch IN_LIST arch_list)
+        message(FATAL_ERROR "KernelPlatform '${KernelPlatform}': unsupported KernelSel4Arch '${KernelSel4Arch}'")
+    endif()
+
+    # ToDo: don't we have this anywhere already?
+    set(list_arch_x86 "ia32;x86_64")
+    set(list_arch_arm "aarch64;aarch32;arm_hyp")
+    set(list_arch_riscv "riscv64;riscv32")
+
+    set(KernelPlatform "${KernelPlatform}" CACHE STRING "")
+    set(${PARAM_CAMKE_VAR} ON CACHE INTERNAL "" FORCE)
+    declare_seL4_arch("${KernelSel4Arch}")
+
+    if(DEFINED PARAM_MACH)
+        if(KernelSel4Arch IN_LIST list_arch_arm)
+            config_set(KernelArmMach MACH "${PARAM_MACH}")
+        else()
+            message(FATAL_ERROR "MACH not supported in this architecture")
+        endif()
+    endif()
+
+    if(KernelSel4Arch IN_LIST list_arch_arm)
+
+        if(KernelARMPlatform)
+
+            # check that KernelARMPlatform is a valid board
+            if((DEFINED PARAM_BOARDS) AND (NOT KernelARMPlatform IN_LIST board_names))
+                message(FATAL_ERROR "unknown board '${KernelARMPlatform}'")
+            endif()
+
+            if(NOT "${KernelARMPlatform}" STREQUAL "${arch_plat}")
+                message(STATUS "   change KernelARMPlatform: '${arch_plat}' -> '${KernelARMPlatform}'")
+            else()
+                message(STATUS "   KernelARMPlatform is already '${KernelARMPlatform}'")
+            endif()
+
+            set(arch_plat "${KernelARMPlatform}")
+
+        endif()
+
+        if(DEFINED PARAM_BOARDS)
+            # if ${arch_plat} is ${name} then use first ${board_name}
+
+            # we know here that PARAM_BOARDS contains ${arch_plat}
+            foreach(board IN LISTS PARAM_BOARDS)
+                string(REPLACE "," ";" board_descr "${board}")
+                list(GET board_descr 0 board_name)
+                if("${board_name}" STREQUAL "${arch_plat}")
+                    sanitize_str_for_var(board_name_as_var "${board_name}")
+                    set(board_cmake_var "KernelPlatform_${board_name_as_var}")
+                    set(board_c_define "PLAT_${board_name_as_var}")
+                    list(LENGTH board_descr cnt)
+                    if(cnt GREATER 1)
+                        list(GET board_descr 1 board_cmake_var)
+                        if(cnt GREATER 2)
+                            list(GET board_descr 2 board_c_define)
+                        endif()
+                    endif()
+
+                    message(STATUS "   set board: '${board_cmake_var}', '${board_c_define}'")
+                    config_set("${board_cmake_var}" "${board_c_define}" ON)
+                    break()
+                endif()
+            endforeach()
+        endif()
+
+        config_set(KernelARMPlatform ARM_PLAT "${arch_plat}")
+    endif()
+
+    if(DEFINED PARAM_SOURCES)
+        add_sources(CFILES "${PARAM_SOURCES}")
+        set(c_sources "${c_sources}" PARENT_SCOPE)
+        set(asm_sources "${asm_sources}" PARENT_SCOPE)
+    endif()
+
+    if(DEFINED PARAM_FLAGS)
+        foreach(f IN LISTS PARAM_FLAGS)
+            set(${f} ON PARENT_SCOPE)
+        endforeach()
+    endif()
+
+
+    if(NOT PARAM_NO_DEFAULT_DTS)
+        set(main_dts "tools/dts/${arch_plat}.dts")
+        if(NOT EXISTS "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../${main_dts}")
+            message(FATAL_ERROR "missing DTS: ${main_dts}")
+        endif()
+        add_kernel_dts("${main_dts}")
+        set(KernelDTSList "${KernelDTSList}" PARENT_SCOPE)
+    endif()
+
+    # ensure the parent sees all the changes that e.g. config_set() made
+    set(configure_string "${configure_string}" PARENT_SCOPE)
+endfunction()
+
+
+unset(CONFIGURE_PLIC_MAX_NUM_INT CACHE)
+unset(CONFIGURE_TIMER_FREQUENCY CACHE)
+unset(CONFIGURE_MAX_IRQ CACHE)
+unset(CONFIGURE_NUM_PPI CACHE)
+unset(CONFIGURE_INTERRUPT_CONTROLLER CACHE)
+unset(CONFIGURE_TIMER CACHE)
+unset(CONFIGURE_SMMU CACHE)
+unset(CONFIGURE_CLK_SHIFT CACHE)
+unset(CONFIGURE_CLK_MAGIC CACHE)
+unset(CONFIGURE_KERNEL_WCET CACHE)
+unset(CONFIGURE_TIMER_PRECISION CACHE)
+# CONFIGURE_MAX_CB and CONFIGURE_MAX_SID are related to the kernel SMMU on Arm.
+unset(CONFIGURE_MAX_SID CACHE)
+unset(CONFIGURE_MAX_CB CACHE)
 
 # CLK_SHIFT and CLK_MAGIC are generated from tools/reciprocal.py
 # based on the TIMER_CLK_HZ to simulate division.

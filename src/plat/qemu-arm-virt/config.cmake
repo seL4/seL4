@@ -6,7 +6,17 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-declare_platform(qemu-arm-virt KernelPlatformQEMUArmVirt PLAT_QEMU_ARM_VIRT KernelArchARM)
+declare_platform(
+    "qemu-arm-virt"
+    "aarch64;aarch32;arm_hyp"
+    NO_DEFAULT_DTS # there is no tools/dts/qemu-arm-virt.dts
+    CAMKE_VAR
+    "KernelPlatformQEMUArmVirt"
+    # C_DEFINE defaults to CONFIG_PLAT_QEMU_ARM_VIRT
+    SOURCES
+    "src/arch/arm/machine/gic_v2.c"
+    "src/arch/arm/machine/l2c_nop.c"
+)
 
 set(MIN_QEMU_VERSION "3.1.0")
 
@@ -104,9 +114,9 @@ if(KernelPlatformQEMUArmVirt)
         message(FATAL_ERROR "Failed to convert DTB to DTS (${DTBPath})")
     endif()
     list(APPEND KernelDTSList "${DTSPath}")
-    list(APPEND KernelDTSList "src/plat/qemu-arm-virt/overlay-qemu-arm-virt.dts")
+    list(APPEND KernelDTSList "${CMAKE_CURRENT_LIST_DIR}/overlay-qemu-arm-virt.dts")
     if(KernelArmHypervisorSupport OR KernelSel4ArchArmHyp)
-        list(APPEND KernelDTSList "src/plat/qemu-arm-virt/overlay-reserve-vm-memory.dts")
+        list(APPEND KernelDTSList "${CMAKE_CURRENT_LIST_DIR}/overlay-reserve-vm-memory.dts")
     endif()
     declare_default_headers(
         TIMER_FREQUENCY 62500000
@@ -119,11 +129,6 @@ if(KernelPlatformQEMUArmVirt)
         KERNEL_WCET 10u
     )
 endif()
-
-add_sources(
-    DEP "KernelPlatformQEMUArmVirt"
-    CFILES src/arch/arm/machine/gic_v2.c src/arch/arm/machine/l2c_nop.c
-)
 
 config_string(
     KernelUserTop USER_TOP "Set seL4_UserTop constant"

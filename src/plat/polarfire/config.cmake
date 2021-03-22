@@ -6,19 +6,30 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-declare_platform(polarfire KernelPlatformPolarfire PLAT_POLARFIRE KernelSel4ArchRiscV64)
+declare_platform(
+    "polarfire"
+    "riscv64"
+    NO_DEFAULT_DTS # there is no "tools/dts/<board-name>.dts"
+    CAMKE_VAR
+    "KernelPlatformPolarfire"
+    # C_DEFINE defaults to CONFIG_PLAT_POLARFIRE
+)
 
 if(KernelPlatformPolarfire)
-    declare_seL4_arch("riscv64")
-    config_set(KernelRiscVPlatform RISCV_PLAT "polarfire")
     config_set(KernelOpenSBIPlatform OPENSBI_PLATFORM "generic")
     config_set(KernelPlatformFirstHartID FIRST_HART_ID 1)
-    list(APPEND KernelDTSList "tools/dts/mpfs_icicle.dts")
-    list(APPEND KernelDTSList "src/plat/polarfire/overlay-polarfire.dts")
+
+    list(
+        APPEND
+        KernelDTSList
+        "tools/dts/mpfs_icicle.dts"
+        "${CMAKE_CURRENT_LIST_DIR}/overlay-polarfire.dts"
+    )
+
     declare_default_headers(
-        TIMER_FREQUENCY 10000000 PLIC_MAX_NUM_INT 186
+        TIMER_FREQUENCY 10000000
+        PLIC_MAX_NUM_INT 186
         INTERRUPT_CONTROLLER drivers/irq/riscv_plic0.h
     )
-else()
-    unset(KernelPlatformFirstHartID CACHE)
+
 endif()

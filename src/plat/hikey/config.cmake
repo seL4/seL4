@@ -6,16 +6,26 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-declare_platform(hikey KernelPlatformHikey PLAT_HIKEY KernelArchARM)
+declare_platform(
+    "hikey"
+    "aarch32;aarch64" # default is first (aarch32)
+    # use default DTS at tools/dts/<board-name>.dts
+    CAMKE_VAR
+    "KernelPlatformHikey"
+    # C_DEFINE defaults to CONFIG_PLAT_HIKEY
+    SOURCES
+    "src/arch/arm/machine/gic_v2.c"
+    "src/arch/arm/machine/l2c_nop.c"
+)
 
 if(KernelPlatformHikey)
-    declare_seL4_arch("aarch32;aarch64")
+
     set(KernelArmCortexA53 ON)
     set(KernelArchArmV8a ON)
-    config_set(KernelARMPlatform ARM_PLAT hikey)
     set(KernelArmMachFeatureModifiers "+crc" CACHE INTERNAL "")
-    list(APPEND KernelDTSList "tools/dts/hikey.dts")
-    list(APPEND KernelDTSList "src/plat/hikey/overlay-hikey.dts")
+
+    list(APPEND KernelDTSList "${CMAKE_CURRENT_LIST_DIR}/overlay-hikey.dts")
+
     declare_default_headers(
         TIMER_FREQUENCY 1200000
         MAX_IRQ 159
@@ -25,7 +35,9 @@ if(KernelPlatformHikey)
         CLK_SHIFT 39u
         KERNEL_WCET 10u
     )
+
 endif()
+
 
 config_string(
     KernelArmHikeyOutstandingPrefetchers ARM_HIKEY_OUTSTANDING_PREFETCHERS
@@ -77,9 +89,4 @@ config_option(
     ReadUnique is the reset value"
     DEFAULT OFF
     DEPENDS "KernelPlatformHikey;NOT KernelDebugDisablePrefetchers"
-)
-
-add_sources(
-    DEP "KernelPlatformHikey"
-    CFILES src/arch/arm/machine/gic_v2.c src/arch/arm/machine/l2c_nop.c
 )

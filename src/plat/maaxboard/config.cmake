@@ -7,20 +7,34 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-declare_platform(maaxboard KernelPlatformMaaxboard PLAT_MAAXBOARD KernelArchARM)
+declare_platform(
+    "maaxboard"
+    "aarch64;aarch32" # default is first (aarch64)
+    MACH
+    "imx"
+    # use default DTS at tools/dts/<board-name>.dts
+    CAMKE_VAR
+    "KernelPlatformMaaxboard" # default would be KernelPlatform_{name}
+    # C_DEFINE defaults to CONFIG_PLAT_MAAXBOARD
+    PLAT_CAMKE_VARS # all disabled by default, must be enabled explicitly
+    "KernelPlatImx8mq"
+    FLAGS
+    "KernelArmCortexA53"
+    "KernelArchArmV8a"
+    "KernelArmGicV3"
+    SOURCES
+    "src/arch/arm/machine/gic_v3.c"
+    "src/arch/arm/machine/l2c_nop.c"
+)
+
 
 if(KernelPlatformMaaxboard)
-    declare_seL4_arch("aarch64;aarch32") # default to aarch64
+
     config_set(KernelPlatImx8mq PLAT_IMX8MQ ON)
-    set(KernelArmCortexA53 ON)
-    set(KernelArchArmV8a ON)
-    set(KernelArmGicV3 ON)
-    config_set(KernelARMPlatform ARM_PLAT ${KernelPlatform})
-    set(KernelArmMach "imx" CACHE INTERNAL "")
-    list(APPEND KernelDTSList "tools/dts/${KernelPlatform}.dts")
-    list(APPEND KernelDTSList "src/plat/maaxboard/overlay-${KernelPlatform}.dts")
+
+    add_kernel_dts("{CMAKE_CURRENT_LIST_DIR}/overlay-${KernelPlatform}.dts")
     if(KernelSel4ArchAarch32)
-        list(APPEND KernelDTSList "src/plat/maaxboard/overlay-${KernelPlatform}-32bit.dts")
+        add_kernel_dt("{CMAKE_CURRENT_LIST_DIR}/overlay-${KernelPlatform}-32bit.dts")
     endif()
     declare_default_headers(
         TIMER_FREQUENCY 8000000
@@ -32,6 +46,7 @@ if(KernelPlatformMaaxboard)
         CLK_SHIFT 3u
         KERNEL_WCET 10u
     )
+
 endif()
 
 add_sources(
