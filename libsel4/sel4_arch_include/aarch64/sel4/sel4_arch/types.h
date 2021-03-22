@@ -8,7 +8,6 @@
 
 #include <sel4/simple_types.h>
 
-typedef seL4_Uint64 seL4_Word;
 typedef seL4_Word seL4_CPtr;
 typedef seL4_Word seL4_NodeId;
 typedef seL4_Word seL4_PAddr;

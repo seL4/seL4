@@ -7,8 +7,8 @@
 #pragma once
 
 #include <autoconf.h>
+#include <sel4/simple_types.h>
 
-typedef seL4_Uint32 seL4_Word;
 typedef seL4_Word seL4_NodeId;
 typedef seL4_Word seL4_PAddr;
 typedef seL4_Word seL4_Domain;
