@@ -439,7 +439,7 @@ function(config_choice optionname configname doc)
     # valid default
     set(found_current OFF)
     foreach(i RANGE 3 ${limit})
-        set(option "${ARGV${i}}")
+        string(REPLACE "," ";" option "${ARGV${i}}")
         # Extract the constant parts of the choice information and just leave any
         # conditional information
         list(GET option 0 option_value)

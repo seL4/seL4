@@ -7,23 +7,25 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-declare_platform(bcm2711 KernelPlatformRpi4 PLAT_BCM2711 KernelArchARM)
+declare_platform(
+    "bcm2711"
+    "aarch64;aarch32" # default is first (aarch64)
+    # use default board specific DTS at tools/dts/<board-name>.dts
+    # CAMKE_VAR defaults to KernelPlatform_BCM2711
+    # C_DEFINE defaults to CONFIG_PLAT_BCM2711
+    SOURCES
+    "src/arch/arm/machine/gic_v2.c"
+    "src/arch/arm/machine/l2c_nop.c"
+    BOARDS
+    "rpi4,KernelPlatformRpi4" # creates PLAT_BCM2711
+)
 
 if(KernelPlatformRpi4)
-    if("${KernelSel4Arch}" STREQUAL aarch32)
-        declare_seL4_arch(aarch32)
-    elseif("${KernelSel4Arch}" STREQUAL aarch64)
-        declare_seL4_arch(aarch64)
-    else()
-        # set aarch64 as default for RPi4
-        fallback_declare_seL4_arch_default(aarch64)
-    endif()
     set(KernelArmCortexA72 ON)
     set(KernelArchArmV8a ON)
-    config_set(KernelARMPlatform ARM_PLAT rpi4)
     set(KernelArmMachFeatureModifiers "+crc" CACHE INTERNAL "")
-    list(APPEND KernelDTSList "tools/dts/rpi4.dts")
-    list(APPEND KernelDTSList "src/plat/bcm2711/overlay-rpi4.dts")
+
+    list(APPEND KernelDTSList "${CMAKE_CURRENT_LIST_DIR}/overlay-rpi4.dts")
 
     # - The clock frequency is 54 MHz as can be seen in bcm2711.dtsi in the
     # Linux Kernel under clk_osc, thus TIMER_FREQUENCY = 54000000.
@@ -43,9 +45,6 @@ if(KernelPlatformRpi4)
         CLK_MAGIC 5337599559llu
         CLK_SHIFT 58u
     )
+elseif(KernelPlatform_BCM2711)
+    message(FATAL_ERROR "cannot build target 'bcm2711', use 'rpi4'")
 endif()
-
-add_sources(
-    DEP "KernelPlatformRpi4"
-    CFILES src/arch/arm/machine/gic_v2.c src/arch/arm/machine/l2c_nop.c
-)

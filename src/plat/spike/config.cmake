@@ -7,28 +7,32 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-declare_platform(spike KernelPlatformSpike PLAT_SPIKE KernelArchRiscV)
+declare_platform(
+    "spike"
+    "riscv64;riscv32" # default is first (riscv64)
+    NO_DEFAULT_DTS # can't use tools/dts/spike.dts in RV32 mode
+    CAMKE_VAR
+    "KernelPlatformSpike"
+    # C_DEFINE defaults to CONFIG_PLAT_SPIKE
+)
 
 if(KernelPlatformSpike)
-    if("${KernelSel4Arch}" STREQUAL riscv32)
-        declare_seL4_arch(riscv32)
-    elseif("${KernelSel4Arch}" STREQUAL riscv64)
-        declare_seL4_arch(riscv64)
-    else()
-        fallback_declare_seL4_arch_default(riscv64)
-    endif()
-    config_set(KernelRiscVPlatform RISCV_PLAT "spike")
+
     config_set(KernelPlatformFirstHartID FIRST_HART_ID 0)
     config_set(KernelOpenSBIPlatform OPENSBI_PLATFORM "generic")
-    if(KernelSel4ArchRiscV32)
+
+    if(KernelSel4ArchRiscV64)
+        list(APPEND KernelDTSList "tools/dts/spike.dts")
+    elseif(KernelSel4ArchRiscV32)
         list(APPEND KernelDTSList "tools/dts/spike32.dts")
     else()
-        list(APPEND KernelDTSList "tools/dts/spike.dts")
+        message(FATAL_ERROR "invalid architecture")
     endif()
+
     declare_default_headers(
-        TIMER_FREQUENCY 10000000llu PLIC_MAX_NUM_INT 0
+        TIMER_FREQUENCY 10000000llu
+        PLIC_MAX_NUM_INT 0
         INTERRUPT_CONTROLLER arch/machine/plic.h
     )
-else()
-    unset(KernelPlatformFirstHartID CACHE)
+
 endif()
