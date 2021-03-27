@@ -349,6 +349,18 @@ static inline void write_hideleg(word_t v)
     asm volatile("csrw "STRINGIFY(HIDELEG)", %0" :: "r"(v));
 }
 
+static inline void write_hcounteren(word_t v)
+{
+    asm volatile("csrw "STRINGIFY(HCOUNTEREN)", %0" :: "r"(v));
+}
+
+static inline word_t read_hcounteren(void)
+{
+    word_t r;
+    asm volatile("csrr %0, "STRINGIFY(HCOUNTEREN) : "=r"(r));
+    return r;
+}
+
 static inline word_t read_hgatp(void)
 {
     word_t r;
@@ -360,11 +372,95 @@ static inline void write_hgatp(word_t v)
 {
     asm volatile("csrw "STRINGIFY(HGATP)", %0" :: "r"(v));
 }
+/*
+ * HTINST may contain the following values:
+ *   zero;
+ *   a transformation of trapping instruction;
+ *   a custome value; or
+ *   a special pesudoinstruction.
+ *
+ * For interrupts, the value is always zero.
+ * For a synchronous exception, if a nonzero value is written, one
+ * of the following shall be true:
+ *   Bit 0 is 1, and replacing bit 1 with 1 makes the value into a valid
+ *   encoding of a standard instruction.
+ *
+ *   Bit 0 is 1, and replacing bit 1 with 1 makes the value into an
+ *   instruction encoding that is explicitly available for a custom
+ *   instruction.
+ *
+ *   The value is one of the special pseudoinstructions defined later, all
+ *   of which have bits 1:0 equal to 00.
+ *
+ */
+static inline word_t read_htinst(void)
+{
+    word_t r;
+    asm volatile("csrr %0, "STRINGIFY(HTINST) : "=r"(r));
+    return r;
+}
+
+static inline void write_htinst(word_t v)
+{
+    asm volatile("csrw "STRINGIFY(HTINST)", %0" :: "r"(v));
+}
+
+/*
+ * HTVAL contains 0 or the guest physical address that faulted,
+ * shifted right by 2 bits for guest-page faults.
+ */
+static inline word_t read_htval(void)
+{
+    word_t r;
+    asm volatile("csrr %0, "STRINGIFY(HTVAL) : "=r"(r));
+    return r;
+}
+
+static inline void write_htval(word_t v)
+{
+    asm volatile("csrw "STRINGIFY(HTVAL)", %0" :: "r"(v));
+}
 
 static inline word_t read_vsstatus(void)
 {
     word_t r;
     asm volatile("csrr %0, "STRINGIFY(VSSTATUS) : "=r"(r));
+    return r;
+}
+
+static inline void write_hvip(word_t v)
+{
+    asm volatile("csrw "STRINGIFY(HVIP)", %0" :: "r"(v));
+}
+
+static inline word_t read_hvip(void)
+{
+    word_t r;
+    asm volatile ("csrr %0, "STRINGIFY(HVIP) : "=r"(r));
+    return r;
+}
+
+static inline void write_hip(word_t v)
+{
+    asm volatile("csrw "STRINGIFY(HIP)", %0" :: "r"(v));
+}
+
+static inline word_t read_hip(void)
+{
+    word_t r;
+    asm volatile ("csrr %0, "STRINGIFY(HIP) : "=r"(r));
+    return r;
+}
+
+static inline void write_hie(word_t v)
+{
+    asm volatile("csrw "STRINGIFY(HIE)", %0" :: "r"(v));
+}
+
+static inline word_t read_hie(void)
+{
+    word_t r;
+    asm volatile ("csrr %0, "STRINGIFY(HIE) : "=r"(r));
     return r;
 }
 
