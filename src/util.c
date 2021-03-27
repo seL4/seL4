@@ -162,11 +162,11 @@ long PURE str_to_long(const char *str)
 // implementation. In any case, the compiler might convert this to a branching
 // binary.
 
-// Check some assumptions made by the CLZ and CTZ library functions:
+// Check some assumptions made by the clzl, clzll, ctzl functions:
 compile_assert(clz_ulong_32_or_64, sizeof(unsigned long) == 4 || sizeof(unsigned long) == 8);
 compile_assert(clz_ullong_64, sizeof(unsigned long long) == 8);
+compile_assert(clz_word_size, sizeof(unsigned long) * 8 == CONFIG_WORD_SIZE);
 
-#ifdef CONFIG_CLZL_IMPL
 // Count leading zeros.
 // This implementation contains no branches. If the architecture provides an
 // instruction to set a register to a boolean value on a comparison, then the
@@ -174,7 +174,11 @@ compile_assert(clz_ullong_64, sizeof(unsigned long long) == 8);
 // preferable on architectures with deep pipelines, or when the maximum
 // priority of runnable threads frequently varies. However, note that the
 // compiler may choose to convert this to a branching implementation.
-static CONST inline unsigned clz32(uint32_t x)
+//
+// These functions are potentially `UNUSED` because we want to always expose
+// them to verification without necessarily linking them into the kernel
+// binary.
+static UNUSED CONST inline unsigned clz32(uint32_t x)
 {
     // Compiler builtins typically return int, but we use unsigned internally
     // to reduce the number of guards we see in the proofs.
@@ -238,10 +242,8 @@ static CONST inline unsigned clz32(uint32_t x)
     // count gives a result from [0, 1, 2, ..., 31].
     return count - x;
 }
-#endif
 
-#if defined(CONFIG_CLZL_IMPL) || defined (CONFIG_CLZLL_IMPL)
-static CONST inline unsigned clz64(uint64_t x)
+static UNUSED CONST inline unsigned clz64(uint64_t x)
 {
     unsigned count = 64;
     uint64_t mask = UINT64_MAX;
@@ -295,26 +297,10 @@ static CONST inline unsigned clz64(uint64_t x)
 
     return count - x;
 }
-#endif
 
-#ifdef CONFIG_CLZL_IMPL
-int __clzdi2(unsigned long x)
-{
-    return sizeof(unsigned long) == 4 ? clz32(x) : clz64(x);
-}
-#endif
-
-#ifdef CONFIG_CLZLL_IMPL
-int __clzti2(unsigned long long x)
-{
-    return clz64(x);
-}
-#endif
-
-#ifdef CONFIG_CTZL_IMPL
 // Count trailing zeros.
 // See comments on clz32.
-static CONST inline unsigned ctz32(uint32_t x)
+static UNUSED CONST inline unsigned ctz32(uint32_t x)
 {
     unsigned count = (x == 0);
     uint32_t mask = UINT32_MAX;
@@ -375,10 +361,8 @@ static CONST inline unsigned ctz32(uint32_t x)
 
     return count;
 }
-#endif
 
-#if defined(CONFIG_CTZL_IMPL) || defined (CONFIG_CTZLL_IMPL)
-static CONST inline unsigned ctz64(uint64_t x)
+static UNUSED CONST inline unsigned ctz64(uint64_t x)
 {
     unsigned count = (x == 0);
     uint64_t mask = UINT64_MAX;
@@ -428,17 +412,35 @@ static CONST inline unsigned ctz64(uint64_t x)
 
     return count;
 }
-#endif
 
-#ifdef CONFIG_CTZL_IMPL
-int __ctzdi2(unsigned long x)
+// GCC's builtins will emit calls to these functions when the platform does
+// not provide suitable inline assembly.
+// These are only provided when the relevant config items are set.
+// We define these separately from `ctz32` etc. so that we can verify all of
+// `ctz32` etc. without necessarily linking them into the kernel binary.
+#ifdef CONFIG_CLZ_32
+CONST int __clzsi2(uint32_t x)
 {
-    return sizeof(unsigned long) == 4 ? ctz32(x) : ctz64(x);
+    return clz32(x);
 }
 #endif
 
-#ifdef CONFIG_CTZLL_IMPL
-int __ctzti2(unsigned long long x)
+#ifdef CONFIG_CLZ_64
+CONST int __clzdi2(uint64_t x)
+{
+    return clz64(x);
+}
+#endif
+
+#ifdef CONFIG_CTZ_32
+CONST int __ctzsi2(uint32_t x)
+{
+    return ctz32(x);
+}
+#endif
+
+#ifdef CONFIG_CTZ_64
+CONST int __ctzdi2(uint64_t x)
 {
     return ctz64(x);
 }

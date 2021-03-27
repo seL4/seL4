@@ -28,14 +28,25 @@ config_option(
 )
 
 # Until RISC-V has instructions to count leading/trailing zeros, we provide
-# library implementations.
+# library implementations. Platforms that implement the bit manipulation
+# extension can override these settings to remove the library functions from
+# the image.
 # In the verified configurations, we additionally define KernelClzNoBuiltin and
 # KernelCtzNoBuiltin to expose the library implementations to verification.
 # However, since the NoBuiltin options force the use of the library functions
 # even when the platform has sutiable inline assembly, we do not make these the
 # default.
-set(KernelClzlImpl ON CACHE BOOL "")
-set(KernelCtzlImpl ON CACHE BOOL "")
+if(KernelWordSize EQUAL 32)
+    set(KernelClz32 ON CACHE BOOL "")
+    set(KernelCtz32 ON CACHE BOOL "")
+    if(KernelIsMCS)
+        # Used for long division in timer calculations.
+        set(KernelClz64 ON CACHE BOOL "")
+    endif()
+elseif(KernelWordSize EQUAL 64)
+    set(KernelClz64 ON CACHE BOOL "")
+    set(KernelCtz64 ON CACHE BOOL "")
+endif()
 
 if(KernelSel4ArchRiscV32)
     set(KernelPTLevels 2 CACHE STRING "" FORCE)
