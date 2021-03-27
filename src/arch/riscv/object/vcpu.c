@@ -8,14 +8,16 @@
 
 #define HIDELEG_USR_SOFT_INT       BIT(0)
 #define HIDELEG_SVC_SOFT_INT       BIT(1)
-#define HIDELEG_RESERVED           BIT(2)
+#define HIDELEG_VS_SOFT_INT        BIT(2)
 #define HIDELEG_USR_TIMER_INT      BIT(4)
 #define HIDELEG_SVC_TIMER_INT      BIT(5)
+#define HIDELEG_VS_TIMER_INT       BIT(6)
 #define HIDELEG_USR_EXTERNAL_INT   BIT(8)
 #define HIDELEG_SVC_EXTERNAL_INT   BIT(9)
+#define HIDELEG_VS_EXTERNAL_INT    BIT(10)
 
-#define HIDELEG_VM  (HIDELEG_USR_SOFT_INT | HIDELEG_SVC_SOFT_INT | HIDELEG_USR_TIMER_INT | \
-                     HIDELEG_SVC_TIMER_INT | HIDELEG_USR_EXTERNAL_INT | HIDELEG_SVC_EXTERNAL_INT)
+#define HIDELEG_VM  (HIDELEG_USR_SOFT_INT | HIDELEG_VS_SOFT_INT | HIDELEG_USR_TIMER_INT | \
+                     HIDELEG_VS_TIMER_INT | HIDELEG_USR_EXTERNAL_INT | HIDELEG_VS_EXTERNAL_INT)
 
 #define HEDELEG_INST_ADDR_MISALIGNED    BIT(0)
 #define HEDELEG_INST_ACCESS_FAULT       BIT(1)
@@ -50,7 +52,8 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
             reg = read_vsstatus();
             break;
         case seL4_VCPUReg_SIE:
-            reg = read_vsie();
+            reg = read_hie();
+            reg >>= 1;
             break;
         case seL4_VCPUReg_STVEC:
             reg = read_vstvec();
@@ -68,7 +71,8 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
             reg = read_vstval();
             break;
         case seL4_VCPUReg_SIP:
-            reg = read_vsip();
+            reg = read_hvip();
+            reg >>= 1;
             break;
         case seL4_VCPUReg_SATP:
             reg = read_vsatp();
@@ -86,7 +90,7 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
             write_vsstatus(reg);
             break;
         case seL4_VCPUReg_SIE:
-            write_vsie(reg);
+            write_hie(reg << 1);
             break;
         case seL4_VCPUReg_STVEC:
             write_vstvec(reg);
@@ -104,7 +108,7 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
             write_vstval(reg);
             break;
         case seL4_VCPUReg_SIP:
-            write_vsip(reg);
+            write_hvip(reg << 1);
             break;
         case seL4_VCPUReg_SATP:
             write_vsatp(reg);
@@ -173,10 +177,9 @@ static inline void vcpu_native(void)
 
     // disable interrupt delegate
     write_hideleg(0);
+    write_hvip(0);
 
     write_vsstatus(0);
-    write_vsip(0);
-    write_vsie(0);
     write_vstvec(0);
     write_vsscratch(0);
     write_vsepc(0);
