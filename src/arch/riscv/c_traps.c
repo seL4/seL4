@@ -134,6 +134,11 @@ void VISIBLE NORETURN c_handle_exception(void)
     case RISCVInstructionIllegal:
         handleUserLevelFault(scause, fetch_faulting_instruction(scause));
         break;
+    case RISCVInstructionGuestPageFault:
+    case RISCVLoadGuestPageFault:
+    case RISCVStoreGuestPageFault:
+        handleVMFaultEvent(scause);
+        break;
 #endif
     default:
 #ifdef CONFIG_HAVE_FPU
