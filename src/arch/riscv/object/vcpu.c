@@ -456,6 +456,8 @@ BOOT_CODE void vcpu_boot_init(void)
     vcpu_native();
     ARCH_NODE_STATE(riscvHSCurVCPU) = NULL;
     ARCH_NODE_STATE(riscvHSVCPUActive) = false;
+    /* enable access to cycle and time counters */
+    write_hcounteren(1 | 2 | 4);
 }
 
 void handleVCPUFault(word_t cause)
