@@ -245,7 +245,9 @@ static void writeVCPUReg(vcpu_t *vcpu, word_t field, word_t value)
     assert(vcpu);
     if (field == seL4_VCPUReg_TIMER) {
         setVTimer(1, value);
+        return;
     }
+
     return vcpu_write_reg(vcpu, field, value);
 }
 
