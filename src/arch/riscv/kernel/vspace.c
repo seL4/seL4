@@ -424,10 +424,13 @@ uint32_t fetch_faulting_instruction(vm_fault_type_t type)
 {
     word_t hstatus = read_hstatus();
 
-    if (((hstatus & HSTATUS_STL) && (type == RISCVLoadPageFault || type == RISCVStorePageFault)) ||
+    if (((hstatus & HSTATUS_STL) && (type == RISCVLoadGuestPageFault || type == RISCVStoreGuestPageFault)) ||
         (hstatus & HSTATUS_SPV && type == RISCVInstructionIllegal)) {
+        word_t inst = 0;
+        inst = read_htinst();
+#if 0
         word_t pc = getRestartPC(NODE_STATE(ksCurThread));
-        uint32_t inst = 0;
+        printf("type %d pc %lx %lx htval %lx\n", (int)type, pc, inst, read_htval());
         asm volatile(
                 "li a5, 1\n\t"
                 "csrrs a4, "STRINGIFY(HSTATUS)", a5\n\t"
@@ -437,6 +440,7 @@ uint32_t fetch_faulting_instruction(vm_fault_type_t type)
                 : "r"(pc)
                 : "a4", "a5", "memory"
                 );
+#endif
         return inst;
     }
 
@@ -457,30 +461,42 @@ exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
     switch (vm_faultType) {
     case RISCVLoadPageFault:
     case RISCVLoadAccessFault:
-#ifdef CONFIG_RISCV_HE
-        instruction = fetch_faulting_instruction(vm_faultType);
         current_fault = seL4_Fault_VMFault_new(addr, instruction, RISCVLoadAccessFault, false);
-#else
-        current_fault = seL4_Fault_VMFault_new(addr, RISCVLoadAccessFault, fsr);
-#endif
         return EXCEPTION_FAULT;
+
     case RISCVStorePageFault:
     case RISCVStoreAccessFault:
-#ifdef CONFIG_RISCV_HE
-        instruction = fetch_faulting_instruction(vm_faultType);
-        current_fault = seL4_Fault_VMFault_new(addr, instruction, RISCVStoreAccessFault, false);
-#else
-        current_fault = seL4_Fault_VMFault_new(addr, RISCVStoreAccessFault, fsr);
-#endif
+        current_fault = seL4_Fault_VMFault_new(addr, instruction, RISCVStoreAccessFault,false);
         return EXCEPTION_FAULT;
+
     case RISCVInstructionPageFault:
     case RISCVInstructionAccessFault:
-#ifdef CONFIG_RISCV_HE
-        current_fault = seL4_Fault_VMFault_new(addr, 0, RISCVInstructionAccessFault, true);
-#else
-        current_fault = seL4_Fault_VMFault_new(addr, RISCVInstructionAccessFault, true);
-#endif
+        current_fault = seL4_Fault_VMFault_new(addr, instruction, RISCVInstructionAccessFault, true);
         return EXCEPTION_FAULT;
+
+#ifdef CONFIG_RISCV_HE
+    /* For guest page fault, guest physical address faulted is used. */
+
+    case RISCVLoadGuestPageFault:
+        addr = read_htval();
+        addr <<= 2;
+        instruction = fetch_faulting_instruction(vm_faultType);
+        current_fault = seL4_Fault_VMFault_new(addr, instruction, RISCVLoadGuestPageFault, false);
+        return EXCEPTION_FAULT;
+
+    case RISCVStoreGuestPageFault:
+        addr = read_htval();
+        addr <<= 2;
+        instruction = fetch_faulting_instruction(vm_faultType);
+        current_fault = seL4_Fault_VMFault_new(addr, instruction, RISCVStoreGuestPageFault, false);
+        return EXCEPTION_FAULT;
+
+    case RISCVInstructionGuestPageFault:
+        addr = read_htval();
+        addr <<= 2;
+        current_fault = seL4_Fault_VMFault_new(addr, instruction, RISCVInstructionGuestPageFault, true);
+        return EXCEPTION_FAULT;
+#endif
 
     default:
         fail("Invalid VM fault type");
