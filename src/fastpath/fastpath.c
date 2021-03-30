@@ -77,8 +77,6 @@ void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
                 if (thread_state_ptr_get_tsType(&tcb->tcbState) == ThreadState_BlockedOnReceive) {
                     /* Send and start thread running */
                     cancelIPC(tcb);
-                    setThreadState(tcb, ThreadState_Running);
-                    setRegister(tcb, badgeRegister, badge);
                     maybeDonateSchedContext(tcb, ntfnPtr);
 
                     /* Get destination thread VTable */
