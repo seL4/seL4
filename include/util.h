@@ -102,10 +102,10 @@ long PURE str_to_long(const char *str);
 // GCC's builtins will emit calls to these functions when the platform
 // does not provide suitable inline assembly.
 // We only emit function definitions if CONFIG_CLZL_IMPL etc are set.
-NO_INLINE CONST int __clzdi2(unsigned long x);
-NO_INLINE CONST int __clzti2(unsigned long long x);
-NO_INLINE CONST int __ctzdi2(unsigned long x);
-NO_INLINE CONST int __ctzti2(unsigned long long x);
+CONST int __clzsi2(uint32_t x);
+CONST int __clzdi2(uint64_t x);
+CONST int __ctzsi2(uint32_t x);
+CONST int __ctzdi2(uint64_t x);
 
 // Used for compile-time constants, so should always use the builtin.
 #define CTZL(x) __builtin_ctzl(x)
@@ -133,7 +133,11 @@ static inline long
 CONST clzl(unsigned long x)
 {
 #ifdef CONFIG_CLZ_NO_BUILTIN
+#if CONFIG_WORD_SIZE == 32
+    return __clzsi2(x);
+#else
     return __clzdi2(x);
+#endif
 #else
     return __builtin_clzl(x);
 #endif
@@ -154,7 +158,7 @@ static inline long long
 CONST clzll(unsigned long long x)
 {
 #ifdef CONFIG_CLZ_NO_BUILTIN
-    return __clzti2(x);
+    return __clzdi2(x);
 #else
     return __builtin_clzll(x);
 #endif
@@ -181,7 +185,11 @@ CONST ctzl(unsigned long x)
 // This is typically the fastest way to calculate ctzl on such platforms.
 #ifdef CONFIG_CLZ_NO_BUILTIN
     // Here, there are no builtins we can use, so call the library function.
+#if CONFIG_WORD_SIZE == 32
+    return __ctzsi2(x);
+#else
     return __ctzdi2(x);
+#endif
 #else
     // Here, we have __builtin_clzl, but no __builtin_ctzl.
     if (unlikely(x == 0)) {
@@ -214,7 +222,7 @@ CONST ctzll(unsigned long long x)
 #ifdef CONFIG_CTZ_NO_BUILTIN
 // See comments on ctzl.
 #ifdef CONFIG_CLZ_NO_BUILTIN
-    return __ctzti2(x);
+    return __ctzdi2(x);
 #else
     if (unlikely(x == 0)) {
         return 8 * sizeof(unsigned long long);

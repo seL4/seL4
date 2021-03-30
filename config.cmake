@@ -463,30 +463,26 @@ config_string(
 )
 
 config_option(
-    KernelClzlImpl CLZL_IMPL
-    "Define a __clzdi2 function to count leading zeros for unsigned long arguments. \
-     Only needed on platforms which lack a builtin instruction."
+    KernelClz32 CLZ_32 "Define a __clzsi2 function to count leading zeros for uint32_t arguments. \
+                        Only needed on platforms which lack a builtin instruction."
     DEFAULT OFF
 )
 
 config_option(
-    KernelClzllImpl CLZLL_IMPL
-    "Define a __clzti2 function to count leading zeros for unsigned long long arguments. \
-     Only needed on platforms which lack a builtin instruction."
+    KernelClz64 CLZ_64 "Define a __clzdi2 function to count leading zeros for uint64_t arguments. \
+                        Only needed on platforms which lack a builtin instruction."
     DEFAULT OFF
 )
 
 config_option(
-    KernelCtzlImpl CTZL_IMPL
-    "Define a __ctzdi2 function to count trailing zeros for unsigned long arguments. \
-     Only needed on platforms which lack a builtin instruction."
+    KernelCtz32 CTZ_32 "Define a __ctzsi2 function to count trailing zeros for uint32_t arguments. \
+                        Only needed on platforms which lack a builtin instruction."
     DEFAULT OFF
 )
 
 config_option(
-    KernelCtzllImpl CTZLL_IMPL
-    "Define a __ctzti2 function to count trailing zeros for unsigned long long arguments. \
-     Only needed on platforms which lack a builtin instruction."
+    KernelCtz64 CTZ_64 "Define a __ctzdi2 function to count trailing zeros for uint64_t arguments. \
+                        Only needed on platforms which lack a builtin instruction."
     DEFAULT OFF
 )
 
