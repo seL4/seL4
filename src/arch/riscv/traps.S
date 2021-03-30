@@ -18,6 +18,8 @@
 
 .global trap_entry
 .extern c_handle_syscall
+.extern c_handle_fastpath_reply_recv
+.extern c_handle_fastpath_call
 .extern c_handle_interrupt
 .extern c_handle_exception
 .extern restore_user_context
@@ -96,6 +98,12 @@ trap_entry:
   csrr x1,  sepc
   STORE   x1, (33*REGBYTES)(t0)
 
+  li t3, SYSCALL_REPLY_RECV
+  beq a7, t3, fp_reply_recv
+
+  li t3, SYSCALL_CALL
+  beq a7, t3, fp_call
+
   /* Check if it's an interrupt */
   bltz s0, interrupt
 
@@ -108,7 +116,29 @@ syscall:
   /* Save NextIP */
   STORE   x1, (34*REGBYTES)(t0)
 
+  mv a2, a7
+
   j c_handle_syscall
+
+fp_reply_recv:
+
+  addi x1, x1, 4
+  /* Save NextIP */
+  STORE   x1, (34*REGBYTES)(t0)
+
+#ifdef CONFIG_KERNEL_MCS
+  mv a2, a6
+#endif
+
+  j c_handle_fastpath_reply_recv
+
+fp_call:
+
+  addi x1, x1, 4
+  /* Save NextIP */
+  STORE   x1, (34*REGBYTES)(t0)
+
+  j c_handle_fastpath_call
 
 /* Not an interrupt or a syscall */
 exception:
