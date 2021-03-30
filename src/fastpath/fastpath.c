@@ -68,7 +68,7 @@ void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
             word_t badge2 = notification_ptr_get_ntfnMsgIdentifier(ntfnPtr);
             badge2 |= badge;
             notification_ptr_set_ntfnMsgIdentifier(ntfnPtr, badge2);
-            restore_user_context();
+            fastpath_restore(badge, msgInfo, NODE_STATE(ksCurThread));
         }
         case NtfnState_Idle: {
             tcb_t *tcb = (tcb_t *)notification_ptr_get_ntfnBoundTCB(ntfnPtr);
@@ -148,20 +148,15 @@ void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
                      * by signals on that bound notification if it is
                      * in the middle of an seL4_Call.
                      */
-                    notification_ptr_set_state(ntfnPtr, NtfnState_Active);
-                    notification_ptr_set_ntfnMsgIdentifier(ntfnPtr, badge);
-                    restore_user_context();
+                    ntfn_set_active(ntfnPtr, badge);
+                    fastpath_restore(badge, msgInfo, NODE_STATE(ksCurThread));
                 }
             } else {
-                notification_ptr_set_state(ntfnPtr, NtfnState_Active);
-                notification_ptr_set_ntfnMsgIdentifier(ntfnPtr, badge);
-                restore_user_context();
+                ntfn_set_active(ntfnPtr, badge);
+                fastpath_restore(badge, msgInfo, NODE_STATE(ksCurThread));
             }
         }
         case NtfnState_Waiting: {
-            /* TODO: If unblocked thread is higher prio, we should switch to it
-             * directly via switchToThread_fp; fastpath_restore; We shouldn't
-             * need to invoke the scheduler. */
             tcb_queue_t ntfn_queue;
             tcb_t *dest;
 
@@ -183,25 +178,7 @@ void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
                 notification_ptr_set_state(ntfnPtr, NtfnState_Idle);
             }
 
-            setThreadState(dest, ThreadState_Running);
-            setRegister(dest, badgeRegister, badge);
-
-            /* Possibly donate scheduling context */
-            if (dest->tcbSchedContext == NULL) {
-                sched_context_t *sc = SC_PTR(notification_ptr_get_ntfnSchedContext(ntfnPtr));
-                if (sc != NULL && sc->scTcb == NULL) {
-                    schedContext_donate(sc, dest);
-                    if (sc != NODE_STATE(ksCurSC)) {
-                        /* refill_unblock_check should not be called on the
-                         * current SC as it is already running. The current SC
-                         * may have been bound to a notificaiton object if the
-                         * current thread was deleted in a long-running deletion
-                         * that became preempted. */
-                        refill_unblock_check(sc);
-                    }
-                    schedContext_resume(sc);
-                }
-            }
+            maybeDonateSchedContext(dest, ntfnPtr);
 
             /* Get destination thread VTable */
             newVTable = TCB_PTR_CTE_PTR(dest, tcbVTable)->cap;
