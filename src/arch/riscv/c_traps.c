@@ -157,26 +157,45 @@ void NORETURN slowpath(syscall_t syscall)
     UNREACHABLE();
 }
 
-void VISIBLE NORETURN c_handle_syscall(word_t cptr, word_t msgInfo, word_t unused1, word_t unused2, word_t unused3,
-                                       word_t unused4, word_t reply, syscall_t syscall)
+ALIGN(L1_CACHE_LINE_SIZE)
+#ifdef CONFIG_KERNEL_MCS
+void VISIBLE c_handle_fastpath_reply_recv(word_t cptr, word_t msgInfo, word_t reply)
+#else
+void VISIBLE c_handle_fastpath_reply_recv(word_t cptr, word_t msgInfo)
+#endif
 {
     NODE_LOCK_SYS;
 
     c_entry_hook();
 
-#ifdef CONFIG_FASTPATH
-    if (syscall == (syscall_t)SysCall) {
-        fastpath_call(cptr, msgInfo);
-        UNREACHABLE();
-    } else if (syscall == (syscall_t)SysReplyRecv) {
 #ifdef CONFIG_KERNEL_MCS
-        fastpath_reply_recv(cptr, msgInfo, reply);
+    fastpath_reply_recv(cptr, msgInfo, reply);
 #else
-        fastpath_reply_recv(cptr, msgInfo);
+    fastpath_reply_recv(cptr, msgInfo);
 #endif
-        UNREACHABLE();
-    }
-#endif /* CONFIG_FASTPATH */
+    UNREACHABLE();
+}
+
+ALIGN(L1_CACHE_LINE_SIZE)
+void VISIBLE c_handle_fastpath_call(word_t cptr, word_t msgInfo)
+{
+    NODE_LOCK_SYS;
+
+    c_entry_hook();
+
+    fastpath_call(cptr, msgInfo);
+
+    UNREACHABLE();
+}
+
+void VISIBLE NORETURN c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
+{
+    NODE_LOCK_SYS;
+
+    /* Todo: add benchmarking call here */
+    c_entry_hook();
+
     slowpath(syscall);
+
     UNREACHABLE();
 }
