@@ -8,6 +8,7 @@
 #include <fastpath/fastpath.h>
 #ifdef CONFIG_KERNEL_MCS
 #include <object/reply.h>
+#include <object/notification.h>
 #endif
 
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
@@ -70,9 +71,6 @@ void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
             restore_user_context();
         }
         case NtfnState_Idle: {
-            /* TODO: If bound thread is higher prio, we should switch to it
-             * directly via switchToThread_fp; fastpath_restore; We shouldn't
-             * need to invoke the scheduler. */
             tcb_t *tcb = (tcb_t *)notification_ptr_get_ntfnBoundTCB(ntfnPtr);
             /* Check if we are bound and that thread is waiting for a message */
             if (tcb) {
@@ -81,22 +79,7 @@ void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
                     cancelIPC(tcb);
                     setThreadState(tcb, ThreadState_Running);
                     setRegister(tcb, badgeRegister, badge);
-                    /* Possibly donate scheduling context */
-                    if (tcb->tcbSchedContext == NULL) {
-                        sched_context_t *sc = SC_PTR(notification_ptr_get_ntfnSchedContext(ntfnPtr));
-                        if (sc != NULL && sc->scTcb == NULL) {
-                            schedContext_donate(sc, tcb);
-                            if (sc != NODE_STATE(ksCurSC)) {
-                                /* refill_unblock_check should not be called on the
-                                 * current SC as it is already running. The current SC
-                                 * may have been bound to a notificaiton object if the
-                                 * current thread was deleted in a long-running deletion
-                                 * that became preempted. */
-                                refill_unblock_check(sc);
-                            }
-                            schedContext_resume(sc);
-                        }
-                    }
+                    maybeDonateSchedContext(tcb, ntfnPtr);
 
                     /* Get destination thread VTable */
                     newVTable = TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap;
@@ -144,16 +127,19 @@ void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
             ksKernelEntry.is_fastpath = true;
 #endif
 
-                    /* TODO: If tcb has higher prio than signaller, switch directly
-                     * via switchToThread_fp; fastpath_restore; Don't invoke scheduler */
-                    if (isSchedulable(tcb)) {
-                        possibleSwitchTo(tcb);
+                    thread_state_ptr_set_tsType_np(&tcb->tcbState, ThreadState_Running);
+                    setRegister(tcb, badgeRegister, badge);
+                    if (ksCurThread->tcbPriority < tcb->tcbPriority) {
+                        /* switch to waiter immediately */
+                        SCHED_ENQUEUE_CURRENT_TCB;
+                        switchToThread_fp(tcb, cap_pd, stored_hw_asid);
+                        NODE_STATE(ksCurSC) = NODE_STATE(ksCurThread)->tcbSchedContext;
+                    } else {
+                        /* continue executing signaller */
+                        SCHED_APPEND(tcb);
                     }
-
-                    schedule();
-                    activateThread();
-                    restore_user_context();
-
+                    fastpath_restore(badge, msgInfo, NODE_STATE(ksCurThread));
+                    UNREACHABLE();
                 } else {
                     /* In particular, this path is taken when a thread
                      * is waiting on a reply cap since BlockedOnReply
@@ -263,15 +249,19 @@ void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
             ksKernelEntry.is_fastpath = true;
 #endif
 
-            /* TODO: If dest has higher prio than signaller, switch directly
-             * via switchToThread_fp; fastpath_restore; Don't invoke scheduler */
-            if (isSchedulable(dest)) {
-                possibleSwitchTo(dest);
-            }
-
-            schedule();
-            activateThread();
-            restore_user_context();
+        thread_state_ptr_set_tsType_np(&dest->tcbState, ThreadState_Running);
+        setRegister(dest, badgeRegister, badge);
+        if (ksCurThread->tcbPriority < dest->tcbPriority) {
+            /* switch to waiter immediately */
+            SCHED_ENQUEUE_CURRENT_TCB;
+            switchToThread_fp(dest, cap_pd, stored_hw_asid);
+            NODE_STATE(ksCurSC) = NODE_STATE(ksCurThread)->tcbSchedContext;
+        } else {
+            /* continue executing signaller */
+            SCHED_APPEND(dest);
+        }
+        fastpath_restore(badge, msgInfo, NODE_STATE(ksCurThread));
+        UNREACHABLE();
         }
     }
     UNREACHABLE();
