@@ -525,7 +525,7 @@ function(add_config_library prefix configure_template)
             config_header_contents
             "${config_header_contents}"
     )
-    file(GENERATE OUTPUT "${config_file}" CONTENT "${config_header_contents}")
+    file(GENERATE OUTPUT "${config_file}" CONTENT "\n#pragma once\n\n${config_header_contents}")
     add_custom_target(${prefix}_Gen DEPENDS "${config_file}")
     add_library(${prefix}_Config INTERFACE)
     target_include_directories(${prefix}_Config INTERFACE "${config_dir}")
@@ -544,30 +544,22 @@ endmacro(get_generated_files)
 # This rule tries to emulate an 'autoconf' header. autoconf generated headers
 # were previously used as configuration, so this rule provides a way for previous
 # applications and libraries to build without modification. The config_list
-# is a list of 'prefix' values that have been pssed to add_config_library
+# is a list of 'prefix' values that have been passed to add_config_library
 # This generates a library with ${targetname} that when linked against
 # will allow code to simply #include <autoconf.h>
 function(generate_autoconf targetname config_list)
     set(link_list "")
     set(gen_list "")
-    set(include_list "#ifndef AUTOCONF_${targetname}_H" "#define AUTOCONF_${targetname}_H")
+    set(config_header_contents "\n#pragma once\n\n#define AUTOCONF_INCLUDED\n\n")
     foreach(config IN LISTS config_list)
         list(APPEND link_list "${config}_Config")
         get_generated_files(gens ${config}_Gen)
         list(APPEND gen_list ${gens})
-        list(APPEND include_list "#include <${config}/gen_config.h>")
+        string(APPEND config_header_contents "#include <${config}/gen_config.h>\n")
     endforeach()
-    list(APPEND include_list "#endif")
     set(config_dir "${CMAKE_CURRENT_BINARY_DIR}/autoconf")
     set(config_file "${config_dir}/autoconf.h")
 
-    string(
-        REPLACE
-            ";"
-            "\n"
-            config_header_contents
-            "#define AUTOCONF_INCLUDED;${include_list}"
-    )
     file(GENERATE OUTPUT "${config_file}" CONTENT "${config_header_contents}")
     add_custom_target(${targetname}_Gen DEPENDS "${config_file}")
     add_library(${targetname} INTERFACE)
@@ -606,24 +598,6 @@ macro(list_append_if list dep)
     endif()
     set(${list} ${list_append_local_list} PARENT_SCOPE)
 endmacro(list_append_if)
-
-macro(kernel_platforms_list target)
-    list(APPEND ${target} ${KernelRiscVPlatform_all_strings})
-    list(APPEND ${target} ${KernelX86Sel4Arch_all_strings})
-    list(APPEND ${target} ${KernelARMPlatform_all_strings})
-endmacro(kernel_platforms_list)
-
-macro(kernel_platforms_string target)
-    set(plat_names "")
-    kernel_platforms_list(plat_names)
-    string(
-        REPLACE
-            ";"
-            "\n  "
-            ${target}
-            "${plat_names}"
-    )
-endmacro(kernel_platforms_string)
 
 # Checks if a file is older than its dependencies
 # Will set `stale` to TRUE if outfile doesn't exist,

@@ -45,16 +45,16 @@
 #define SBI_REMOTE_SFENCE_VMA_ASID 7
 #define SBI_SHUTDOWN 8
 
-static inline register_t sbi_call(register_t cmd,
-                                  register_t arg_0,
-                                  register_t arg_1,
-                                  register_t arg_2)
+static inline word_t sbi_call(word_t cmd,
+                              word_t arg_0,
+                              word_t arg_1,
+                              word_t arg_2)
 {
-    register register_t a0 asm("a0") = arg_0;
-    register register_t a1 asm("a1") = arg_1;
-    register register_t a2 asm("a2") = arg_2;
-    register register_t a7 asm("a7") = cmd;
-    register register_t result asm("a0");
+    register word_t a0 asm("a0") = arg_0;
+    register word_t a1 asm("a1") = arg_1;
+    register word_t a2 asm("a2") = arg_2;
+    register word_t a7 asm("a7") = cmd;
+    register word_t result asm("a0");
     asm volatile("ecall"
                  : "=r"(result)
                  : "r"(a0), "r"(a1), "r"(a2), "r"(a7)
@@ -98,19 +98,19 @@ static inline void sbi_clear_ipi(void)
 
 static inline void sbi_send_ipi(const unsigned long *hart_mask)
 {
-    SBI_CALL_1(SBI_SEND_IPI, (register_t)hart_mask);
+    SBI_CALL_1(SBI_SEND_IPI, (word_t)hart_mask);
 }
 
 static inline void sbi_remote_fence_i(const unsigned long *hart_mask)
 {
-    SBI_CALL_1(SBI_REMOTE_FENCE_I, (register_t)hart_mask);
+    SBI_CALL_1(SBI_REMOTE_FENCE_I, (word_t)hart_mask);
 }
 
 static inline void sbi_remote_sfence_vma(const unsigned long *hart_mask,
                                          unsigned long start,
                                          unsigned long size)
 {
-    SBI_CALL_1(SBI_REMOTE_SFENCE_VMA, (register_t)hart_mask);
+    SBI_CALL_1(SBI_REMOTE_SFENCE_VMA, (word_t)hart_mask);
 }
 
 static inline void sbi_remote_sfence_vma_asid(const unsigned long *hart_mask,
@@ -118,6 +118,6 @@ static inline void sbi_remote_sfence_vma_asid(const unsigned long *hart_mask,
                                               unsigned long size,
                                               unsigned long asid)
 {
-    SBI_CALL_1(SBI_REMOTE_SFENCE_VMA_ASID, (register_t)hart_mask);
+    SBI_CALL_1(SBI_REMOTE_SFENCE_VMA_ASID, (word_t)hart_mask);
 }
 

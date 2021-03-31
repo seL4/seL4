@@ -29,9 +29,8 @@
 
 exception_t decodeUntypedInvocation(word_t invLabel, word_t length,
                                     cte_t *slot, cap_t cap,
-                                    extra_caps_t excaps, bool_t call,
-                                    word_t *buffer);
+                                    bool_t call, word_t *buffer);
 exception_t invokeUntyped_Retype(cte_t *srcSlot, bool_t reset,
-                                 void *retypeBase, object_t newType,
-                                 word_t userSize, slot_range_t destSlots,
+                                 void *retypeBase, object_t newType, word_t userSize,
+                                 cte_t *destCNode, word_t destOffset, word_t destLength,
                                  bool_t deviceMemory);

@@ -11,4 +11,3 @@
 
 #define seL4_WordBits        64
 typedef seL4_Uint64 seL4_Word;
-

@@ -8,5 +8,3 @@
 
 typedef signed long seL4_Int64;
 typedef unsigned long seL4_Uint64;
-
-

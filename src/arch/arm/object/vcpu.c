@@ -58,16 +58,9 @@ static void vcpu_save(vcpu_t *vcpu, bool_t active)
 static word_t readVCPUReg(vcpu_t *vcpu, word_t field)
 {
     if (likely(ARCH_NODE_STATE(armHSCurVCPU) == vcpu)) {
-        switch (field) {
-        case seL4_VCPUReg_SCTLR:
-            /* The SCTLR value is switched to/from hardware when we enable/disable
-             * the vcpu, not when we switch vcpus */
-            if (ARCH_NODE_STATE(armHSVCPUActive)) {
-                return getSCTLR();
-            } else {
-                return vcpu_read_reg(vcpu, field);
-            }
-        default:
+        if (vcpu_reg_saved_when_disabled(field) && !ARCH_NODE_STATE(armHSVCPUActive)) {
+            return vcpu_read_reg(vcpu, field);
+        } else {
             return vcpu_hw_read_reg(field);
         }
     } else {
@@ -78,15 +71,9 @@ static word_t readVCPUReg(vcpu_t *vcpu, word_t field)
 static void writeVCPUReg(vcpu_t *vcpu, word_t field, word_t value)
 {
     if (likely(ARCH_NODE_STATE(armHSCurVCPU) == vcpu)) {
-        switch (field) {
-        case seL4_VCPUReg_SCTLR:
-            if (ARCH_NODE_STATE(armHSVCPUActive)) {
-                setSCTLR(value);
-            } else {
-                vcpu_write_reg(vcpu, field, value);
-            }
-            break;
-        default:
+        if (vcpu_reg_saved_when_disabled(field) && !ARCH_NODE_STATE(armHSVCPUActive)) {
+            vcpu_write_reg(vcpu, field, value);
+        } else {
             vcpu_hw_write_reg(field, value);
         }
     } else {
@@ -465,14 +452,13 @@ exception_t decodeARMVCPUInvocation(
     cptr_t cptr,
     cte_t *slot,
     cap_t cap,
-    extra_caps_t extraCaps,
     bool_t call,
     word_t *buffer
 )
 {
     switch (label) {
     case ARMVCPUSetTCB:
-        return decodeVCPUSetTCB(cap, extraCaps);
+        return decodeVCPUSetTCB(cap);
     case ARMVCPUReadReg:
         return decodeVCPUReadReg(cap, length, call, buffer);
     case ARMVCPUWriteReg:
@@ -522,15 +508,15 @@ exception_t invokeVCPUAckVPPI(vcpu_t *vcpu, VPPIEventIRQ_t vppi)
     return EXCEPTION_NONE;
 }
 
-exception_t decodeVCPUSetTCB(cap_t cap, extra_caps_t extraCaps)
+exception_t decodeVCPUSetTCB(cap_t cap)
 {
     cap_t tcbCap;
-    if (extraCaps.excaprefs[0] == NULL) {
+    if (current_extra_caps.excaprefs[0] == NULL) {
         userError("VCPU SetTCB: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
-    tcbCap  = extraCaps.excaprefs[0]->cap;
+    tcbCap  = current_extra_caps.excaprefs[0]->cap;
 
     if (cap_get_capType(tcbCap) != cap_thread_cap) {
         userError("TCB cap is not a TCB cap.");

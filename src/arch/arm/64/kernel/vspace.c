@@ -1687,8 +1687,7 @@ static exception_t performASIDControlInvocation(void *frame, cte_t *slot,
 }
 
 static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, unsigned int length,
-                                                 cte_t *cte, cap_t cap, extra_caps_t extraCaps,
-                                                 word_t *buffer)
+                                                 cte_t *cte, cap_t cap, word_t *buffer)
 {
     vptr_t start, end;
     paddr_t pstart;
@@ -1786,8 +1785,7 @@ static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, unsigned int l
 
 #ifndef AARCH64_VSPACE_S2_START_L1
 static exception_t decodeARMPageUpperDirectoryInvocation(word_t invLabel, unsigned int length,
-                                                         cte_t *cte, cap_t cap, extra_caps_t extraCaps,
-                                                         word_t *buffer)
+                                                         cte_t *cte, cap_t cap, word_t *buffer)
 {
     cap_t pgdCap;
     vspace_root_t *pgd;
@@ -1812,7 +1810,7 @@ static exception_t decodeARMPageUpperDirectoryInvocation(word_t invLabel, unsign
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (unlikely(length < 2 || extraCaps.excaprefs[0] == NULL)) {
+    if (unlikely(length < 2 || current_extra_caps.excaprefs[0] == NULL)) {
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -1824,7 +1822,7 @@ static exception_t decodeARMPageUpperDirectoryInvocation(word_t invLabel, unsign
     }
 
     vaddr = getSyscallArg(0, buffer) & (~MASK(PGD_INDEX_OFFSET));
-    pgdCap = extraCaps.excaprefs[0]->cap;
+    pgdCap = current_extra_caps.excaprefs[0]->cap;
 
     if (unlikely(!isValidNativeRoot(pgdCap))) {
         current_syscall_error.type = seL4_InvalidCapability;
@@ -1874,8 +1872,7 @@ static exception_t decodeARMPageUpperDirectoryInvocation(word_t invLabel, unsign
 #endif
 
 static exception_t decodeARMPageDirectoryInvocation(word_t invLabel, unsigned int length,
-                                                    cte_t *cte, cap_t cap, extra_caps_t extraCaps,
-                                                    word_t *buffer)
+                                                    cte_t *cte, cap_t cap, word_t *buffer)
 {
     cap_t vspaceRootCap;
     vspace_root_t *vspaceRoot;
@@ -1900,7 +1897,7 @@ static exception_t decodeARMPageDirectoryInvocation(word_t invLabel, unsigned in
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (unlikely(length < 2 || extraCaps.excaprefs[0] == NULL)) {
+    if (unlikely(length < 2 || current_extra_caps.excaprefs[0] == NULL)) {
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -1912,7 +1909,7 @@ static exception_t decodeARMPageDirectoryInvocation(word_t invLabel, unsigned in
     }
 
     vaddr = getSyscallArg(0, buffer) & (~MASK(PUD_INDEX_OFFSET));
-    vspaceRootCap = extraCaps.excaprefs[0]->cap;
+    vspaceRootCap = current_extra_caps.excaprefs[0]->cap;
 
     if (unlikely(!isValidNativeRoot(vspaceRootCap))) {
         current_syscall_error.type = seL4_InvalidCapability;
@@ -1967,8 +1964,7 @@ static exception_t decodeARMPageDirectoryInvocation(word_t invLabel, unsigned in
 }
 
 static exception_t decodeARMPageTableInvocation(word_t invLabel, unsigned int length,
-                                                cte_t *cte, cap_t cap, extra_caps_t extraCaps,
-                                                word_t *buffer)
+                                                cte_t *cte, cap_t cap, word_t *buffer)
 {
     cap_t vspaceRootCap;
     vspace_root_t *vspaceRoot;
@@ -1993,7 +1989,7 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, unsigned int le
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (unlikely(length < 2 || extraCaps.excaprefs[0] == NULL)) {
+    if (unlikely(length < 2 || current_extra_caps.excaprefs[0] == NULL)) {
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -2005,7 +2001,7 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, unsigned int le
     }
 
     vaddr = getSyscallArg(0, buffer) & (~MASK(PD_INDEX_OFFSET));
-    vspaceRootCap = extraCaps.excaprefs[0]->cap;
+    vspaceRootCap = current_extra_caps.excaprefs[0]->cap;
 
     if (unlikely(!isValidNativeRoot(vspaceRootCap))) {
         current_syscall_error.type = seL4_InvalidCapability;
@@ -2060,8 +2056,7 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, unsigned int le
 }
 
 static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length,
-                                            cte_t *cte, cap_t cap, extra_caps_t extraCaps,
-                                            word_t *buffer)
+                                            cte_t *cte, cap_t cap, word_t *buffer)
 {
     switch (invLabel) {
     case ARMPageMap: {
@@ -2075,14 +2070,14 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
         vm_attributes_t attributes;
         findVSpaceForASID_ret_t find_ret;
 
-        if (unlikely(length < 3 || extraCaps.excaprefs[0] == NULL)) {
+        if (unlikely(length < 3 || current_extra_caps.excaprefs[0] == NULL)) {
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
         }
 
         vaddr = getSyscallArg(0, buffer);
         attributes = vmAttributesFromWord(getSyscallArg(2, buffer));
-        vspaceRootCap = extraCaps.excaprefs[0]->cap;
+        vspaceRootCap = current_extra_caps.excaprefs[0]->cap;
 
         frameSize = cap_frame_cap_get_capFSize(cap);
         vmRights = maskVMRights(cap_frame_cap_get_capFVMRights(cap),
@@ -2268,28 +2263,23 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
 }
 
 exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
-                                   cte_t *cte, cap_t cap, extra_caps_t extraCaps,
-                                   word_t *buffer)
+                                   cte_t *cte, cap_t cap, word_t *buffer)
 {
     switch (cap_get_capType(cap)) {
     case cap_vtable_root_cap:
-        return decodeARMVSpaceRootInvocation(invLabel, length, cte, cap, extraCaps, buffer);
+        return decodeARMVSpaceRootInvocation(invLabel, length, cte, cap, buffer);
 #ifndef AARCH64_VSPACE_S2_START_L1
     case cap_page_upper_directory_cap:
-        return decodeARMPageUpperDirectoryInvocation(invLabel, length, cte,
-                                                     cap, extraCaps, buffer);
+        return decodeARMPageUpperDirectoryInvocation(invLabel, length, cte, cap, buffer);
 #endif
     case cap_page_directory_cap:
-        return decodeARMPageDirectoryInvocation(invLabel, length, cte,
-                                                cap, extraCaps, buffer);
+        return decodeARMPageDirectoryInvocation(invLabel, length, cte, cap, buffer);
 
     case cap_page_table_cap:
-        return decodeARMPageTableInvocation(invLabel, length, cte,
-                                            cap, extraCaps, buffer);
+        return decodeARMPageTableInvocation(invLabel, length, cte, cap, buffer);
 
     case cap_frame_cap:
-        return decodeARMFrameInvocation(invLabel, length, cte,
-                                        cap, extraCaps, buffer);
+        return decodeARMFrameInvocation(invLabel, length, cte, cap, buffer);
 
     case cap_asid_control_cap: {
         unsigned int i;
@@ -2308,8 +2298,8 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
         }
 
         if (unlikely(length < 2 ||
-                     extraCaps.excaprefs[0] == NULL ||
-                     extraCaps.excaprefs[1] == NULL)) {
+                     current_extra_caps.excaprefs[0] == NULL ||
+                     current_extra_caps.excaprefs[1] == NULL)) {
             current_syscall_error.type = seL4_TruncatedMessage;
 
             return EXCEPTION_SYSCALL_ERROR;
@@ -2317,9 +2307,9 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
 
         index = getSyscallArg(0, buffer);
         depth = getSyscallArg(1, buffer);
-        parentSlot = extraCaps.excaprefs[0];
+        parentSlot = current_extra_caps.excaprefs[0];
         untyped = parentSlot->cap;
-        root = extraCaps.excaprefs[1]->cap;
+        root = current_extra_caps.excaprefs[1]->cap;
 
         /* Find first free pool */
         for (i = 0; i < nASIDPools && armKSASIDTable[i]; i++);
@@ -2376,13 +2366,13 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        if (unlikely(extraCaps.excaprefs[0] == NULL)) {
+        if (unlikely(current_extra_caps.excaprefs[0] == NULL)) {
             current_syscall_error.type = seL4_TruncatedMessage;
 
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        vspaceCapSlot = extraCaps.excaprefs[0];
+        vspaceCapSlot = current_extra_caps.excaprefs[0];
         vspaceCap = vspaceCapSlot->cap;
 
         if (unlikely(!isVTableRoot(vspaceCap) || cap_vtable_root_isMapped(vspaceCap))) {

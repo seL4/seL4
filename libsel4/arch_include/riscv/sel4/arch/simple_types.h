@@ -13,4 +13,3 @@ typedef signed int seL4_Int32;
 typedef unsigned char seL4_Uint8;
 typedef unsigned short seL4_Uint16;
 typedef unsigned int seL4_Uint32;
-

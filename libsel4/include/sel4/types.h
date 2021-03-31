@@ -38,9 +38,9 @@ typedef seL4_CPtr seL4_Untyped;
 typedef seL4_CPtr seL4_DomainSet;
 typedef seL4_CPtr seL4_SchedContext;
 typedef seL4_CPtr seL4_SchedControl;
+
 typedef seL4_Uint64 seL4_Time;
 
 #define seL4_NilData 0
 
 #include <sel4/arch/constants.h>
-

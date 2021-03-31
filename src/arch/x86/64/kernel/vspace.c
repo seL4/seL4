@@ -1136,7 +1136,6 @@ static exception_t decodeX64PageDirectoryInvocation(
     word_t length,
     cte_t *cte,
     cap_t cap,
-    extra_caps_t extraCaps,
     word_t *buffer
 )
 {
@@ -1166,7 +1165,7 @@ static exception_t decodeX64PageDirectoryInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (length < 2 || extraCaps.excaprefs[0] == NULL) {
+    if (length < 2 || current_extra_caps.excaprefs[0] == NULL) {
         userError("X64PageDirectory: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -1182,7 +1181,7 @@ static exception_t decodeX64PageDirectoryInvocation(
 
     vaddr = getSyscallArg(0, buffer) & (~MASK(PDPT_INDEX_OFFSET));
     vm_attr = vmAttributesFromWord(getSyscallArg(1, buffer));
-    vspaceCap = extraCaps.excaprefs[0]->cap;
+    vspaceCap = current_extra_caps.excaprefs[0]->cap;
 
     if (!isValidNativeRoot(vspaceCap)) {
         current_syscall_error.type = seL4_InvalidCapability;
@@ -1301,7 +1300,6 @@ static exception_t decodeX64PDPTInvocation(
     word_t length,
     cte_t   *cte,
     cap_t   cap,
-    extra_caps_t extraCaps,
     word_t  *buffer)
 {
     word_t                  vaddr;
@@ -1331,7 +1329,7 @@ static exception_t decodeX64PDPTInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (length < 2 || extraCaps.excaprefs[0] == NULL) {
+    if (length < 2 || current_extra_caps.excaprefs[0] == NULL) {
         userError("X64PDPT: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -1347,7 +1345,7 @@ static exception_t decodeX64PDPTInvocation(
 
     vaddr = getSyscallArg(0, buffer) & (~MASK(PML4_INDEX_OFFSET));
     attr = vmAttributesFromWord(getSyscallArg(1, buffer));
-    vspaceCap = extraCaps.excaprefs[0]->cap;
+    vspaceCap = current_extra_caps.excaprefs[0]->cap;
 
     if (!isValidNativeRoot(vspaceCap)) {
         current_syscall_error.type = seL4_InvalidCapability;
@@ -1409,7 +1407,6 @@ exception_t decodeX86ModeMMUInvocation(
     cptr_t cptr,
     cte_t *cte,
     cap_t cap,
-    extra_caps_t extraCaps,
     word_t *buffer
 )
 {
@@ -1420,10 +1417,10 @@ exception_t decodeX86ModeMMUInvocation(
         return EXCEPTION_SYSCALL_ERROR;
 
     case cap_pdpt_cap:
-        return decodeX64PDPTInvocation(label, length, cte, cap, extraCaps, buffer);
+        return decodeX64PDPTInvocation(label, length, cte, cap, buffer);
 
     case cap_page_directory_cap:
-        return decodeX64PageDirectoryInvocation(label, length, cte, cap, extraCaps, buffer);
+        return decodeX64PageDirectoryInvocation(label, length, cte, cap, buffer);
 
     default:
         fail("Invalid arch cap type");
@@ -1658,11 +1655,9 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
 
     ksUserLogBuffer = pptr_to_paddr((void *) frame_pptr);
 
-    paddr_t physical_address = ksUserLogBuffer + (idx << seL4_PageBits);
-
     pde_t pde = pde_pde_large_new(
                     0,                 /* xd                   */
-                    physical_address,  /* page_base_address    */
+                    ksUserLogBuffer,   /* page_base_address    */
                     VMKernelOnly,      /* pat                  */
                     1,                 /* global               */
                     0,                 /* dirty                */
@@ -1675,8 +1670,12 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
                 );
 
     /* Stored in the PD slot after the device page table */
+#ifdef CONFIG_HUGE_PAGE
+    x64KSKernelPD[1] = pde;
+#else
     x64KSKernelPDs[BIT(PDPT_INDEX_BITS) - 1][1] = pde;
-    invalidateTLBEntry(KS_LOG_PPTR, MASK(ksNumCPUs));
+#endif
+    invalidateTranslationAll(MASK(CONFIG_MAX_NUM_NODES));
 
     return EXCEPTION_NONE;
 }

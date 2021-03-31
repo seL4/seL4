@@ -250,6 +250,8 @@ static inline irq_t getActiveIRQ(void)
  * seL4 expects two states: active->inactive.
  * We ignore the active state in GIC to conform
  */
+/** MODIFIES: phantom_machine_state */
+/** DONT_TRANSLATE */
 static inline bool_t isIRQPending(void)
 {
     uint32_t val = 0;

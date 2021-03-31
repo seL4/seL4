@@ -397,10 +397,12 @@ and addressing a range of capability slots.
 
 Recall that the translation algorithm described above will traverse
 \obj{CNode} capabilities while there are address bits remaining to be
-translated. Therefore, in order to address a \obj{CNode} capability,
-the user must supply not only a capability address but also specify
-the maximum number of bits of the capability address that are to be
-translated, called the \emph{depth limit}.
+translated. Therefore, in order to address a capability which may be
+a \obj{CNode} capability, the user must supply not only a capability
+address but also specify the maximum number of bits of the capability
+address that are to be translated, called the \emph{depth limit}.
+When a CPointer is paired with depth limit \textit{depth}, only its
+\textit{depth} least significant bits are used in translation.
 
 Certain methods, such as
 \apifunc{seL4\_Untyped\_Retype}{untyped_retype}, require the user to
@@ -425,11 +427,13 @@ in this CSpace.
 
 \begin{description}
 \item[Cap A.] The first CNode has a 4-bit guard set to 0x0, and an
-  8-bit radix. Cap A resides in slot 0x60 so it may be referred to by
-  any address of the form 0x060xxxxx (where xxxxx is any number,
-  because the translation process terminates after translating the
-  first 12 bits of the address). For simplicity, we usually adopt the
-  address 0x06000000.
+  8-bit radix. Cap A resides in slot 0x60 so, provided that it is not
+  a \obj{CNode} capability, it may be referred to by any address of
+  the form 0x060\textit{nnnnn} (where \textit{nnnnn} is any sequence
+  of 5 hexadecimal digits, because the translation process terminates
+  after translating the first 12 bits of the address). For simplicity,
+  we usually set unused address bits to 0, which in this case yields
+  the address 0x06000000.
 
 \item[Cap B.] Again, the first CNode has a 4-bit guard set to 0x0, and
   an 8-bit radix. The second CNode is reached via the L2 CNode Cap.
@@ -451,15 +455,15 @@ in this CSpace.
   the user must supply not only a capability address but also specify
   the depth limit, which is the maximum number of bits to be
   translated.  L2 CNode Cap resides at offset 0x0F of the first CNode,
-  which has a 4-bit guard of 0x0.  Hence, its address is 0x00F00000,
-  with a depth limit of 12 bits.
+  which has a 4-bit guard of 0x0.  Hence, it may be referred to by any
+  address of the form 0x\textit{nnnnn}00F with a depth limit of 12
+  bits, where \textit{nnnnn} is any sequence of 5 hexadecimal digits.
 
 \item[L3 CNode Cap.] This capability resides at index 0x00 of the
   second CNode, which is reached by the L2 CNode Cap. The second CNode
-  has a 4-bit guard of 0x0. Hence, the capability's address is
-  0x00F00000 with a depth limit of 24 bits. Note that the addresses of
-  the L2 and L3 CNode Caps are the same, but that their depth limits
-  are different.
+  has a 4-bit guard of 0x0. Hence, the capability may be referred to
+  by any address of the form 0x\textit{nn}00F000 with a depth limit of
+  24 bits, where \textit{nn} is any sequence of 2 hexadecimal digits.
 \end{description}
 
 In summary, to refer to any capability (or slot) in a CSpace, the user

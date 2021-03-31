@@ -308,9 +308,9 @@ void setIRQTrigger(irq_t irq, bool_t trigger)
     }
 
     if (trigger) {
-        icfgr |= (0b10 << bit);
+        icfgr |= (2 << bit);
     } else {
-        icfgr &= ~(0b11 << bit);
+        icfgr &= ~(3 << bit);
     }
 
     if (HW_IRQ_IS_PPI(hw_irq)) {

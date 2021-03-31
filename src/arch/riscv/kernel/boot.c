@@ -251,6 +251,8 @@ static BOOT_CODE bool_t try_init_kernel(
     /* initialise the CPU */
     init_cpu();
 
+    printf("Bootstrapping kernel\n");
+
     /* initialize the platform */
     init_plat();
 

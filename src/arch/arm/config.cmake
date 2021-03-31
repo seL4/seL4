@@ -12,15 +12,26 @@ endif()
 
 set(KernelArmPASizeBits40 OFF)
 set(KernelArmPASizeBits44 OFF)
-if(KernelArmCortexA53)
+if(KernelArmCortexA35)
+    set(KernelArmICacheVIPT ON)
+    set(KernelArmPASizeBits40 ON)
+    math(EXPR KernelPaddrUserTop "(1 << 40) - 1")
+elseif(KernelArmCortexA53)
+    set(KernelArmICacheVIPT ON)
     set(KernelArmPASizeBits40 ON)
     math(EXPR KernelPaddrUserTop "(1 << 40) - 1")
 elseif(KernelArmCortexA57)
     set(KernelArmPASizeBits44 ON)
     math(EXPR KernelPaddrUserTop "(1 << 44) - 1")
+elseif(KernelArmCortexA72)
+    # For Cortex-A72 in AArch64 state, the physical address range is 44 bits
+    # (https://developer.arm.com/documentation/100095/0001/memory-management-unit/about-the-mmu)
+    set(KernelArmPASizeBits44 ON)
+    math(EXPR KernelPaddrUserTop "(1 << 44) - 1")
 endif()
 config_set(KernelArmPASizeBits40 ARM_PA_SIZE_BITS_40 "${KernelArmPASizeBits40}")
 config_set(KernelArmPASizeBits44 ARM_PA_SIZE_BITS_44 "${KernelArmPASizeBits44}")
+config_set(KernelArmICacheVIPT ARM_ICACHE_VIPT "${KernelArmICacheVIPT}")
 
 if(KernelSel4ArchAarch32)
     # 64-bit targets may be building in 32-bit mode,
@@ -77,7 +88,8 @@ config_option(
     KernelArmHypervisorSupport ARM_HYPERVISOR_SUPPORT
     "Build as Hypervisor. Utilise ARM virtualisation extensions to build the kernel as a hypervisor"
     DEFAULT ${default_hyp_support}
-    DEPENDS "KernelArmCortexA15 OR KernelArmCortexA57 OR KernelArmCortexA53"
+    DEPENDS
+        "KernelArmCortexA15 OR KernelArmCortexA35 OR KernelArmCortexA57 OR KernelArmCortexA53 OR KernelArmCortexA72"
 )
 
 config_option(
@@ -179,9 +191,14 @@ if(
     KernelArmCortexA7
     OR KernelArmCortexA8
     OR KernelArmCortexA15
+    OR KernelArmCortexA35
     OR KernelArmCortexA53
     OR KernelArmCortexA57
+    OR KernelArmCortexA72
 )
+    # According to https://developer.arm.com/documentation/100095/0001/functional-description/about-the-cortex-a72-processor-functions/components-of-the-processor
+    # the L1 instruction on the Cortex-A72 cache has a 64-byte cache line.
+    # Thus, 6 bits are needed.
     config_set(KernelArmCacheLineSizeBits L1_CACHE_LINE_SIZE_BITS "6")
 elseif(KernelArmCortexA9 OR KernelArm1136JF_S)
     config_set(KernelArmCacheLineSizeBits L1_CACHE_LINE_SIZE_BITS "5")

@@ -153,8 +153,6 @@ static inline word_t read_sstatus(void)
     return temp;
 }
 
-/** MODIFIES: */
-/** DONT_TRANSLATE */
 static inline word_t read_sip(void)
 {
     word_t temp;

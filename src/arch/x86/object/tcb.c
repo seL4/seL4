@@ -44,13 +44,13 @@ static exception_t performSetEPTRoot(tcb_t *tcb, cap_t cap, cte_t *slot)
     return EXCEPTION_NONE;
 }
 
-exception_t decodeSetEPTRoot(cap_t cap, extra_caps_t excaps)
+exception_t decodeSetEPTRoot(cap_t cap)
 {
     cap_t rootCap;
     cte_t *rootSlot;
     deriveCap_ret_t dc_ret;
 
-    rootSlot = excaps.excaprefs[0];
+    rootSlot = current_extra_caps.excaprefs[0];
 
     if (rootSlot == NULL) {
         userError("TCB SetEPTRoot: Truncated message.");

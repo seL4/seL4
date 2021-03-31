@@ -23,12 +23,13 @@ bool_t CONST sameObjectAs(cap_t cap_a, cap_t cap_b);
 cap_t CONST updateCapData(bool_t preserve, word_t newData, cap_t cap);
 cap_t CONST maskCapRights(seL4_CapRights_t seL4_CapRights, cap_t cap);
 cap_t createObject(object_t t, void *regionBase, word_t, bool_t deviceMemory);
-void createNewObjects(object_t t, cte_t *parent, slot_range_t slots,
+void createNewObjects(object_t t, cte_t *parent,
+                      cte_t *destCNode, word_t destOffset, word_t destLength,
                       void *regionBase, word_t userSize, bool_t deviceMemory);
 #ifdef CONFIG_KERNEL_MCS
 exception_t decodeInvocation(word_t invLabel, word_t length,
                              cptr_t capIndex, cte_t *slot, cap_t cap,
-                             extra_caps_t excaps, bool_t block, bool_t call,
+                             bool_t block, bool_t call,
                              bool_t canDonate, bool_t firstPhase, word_t *buffer);
 exception_t performInvocation_Endpoint(endpoint_t *ep, word_t badge,
                                        bool_t canGrant, bool_t canGrantReply,
@@ -39,8 +40,7 @@ exception_t performInvocation_Reply(tcb_t *thread, reply_t *reply, bool_t canGra
 #else
 exception_t decodeInvocation(word_t invLabel, word_t length,
                              cptr_t capIndex, cte_t *slot, cap_t cap,
-                             extra_caps_t excaps, bool_t block, bool_t call,
-                             word_t *buffer);
+                             bool_t block, bool_t call, word_t *buffer);
 exception_t performInvocation_Endpoint(endpoint_t *ep, word_t badge,
                                        bool_t canGrant, bool_t canGrantReply,
                                        bool_t block, bool_t call);
@@ -60,3 +60,7 @@ static inline void postCapDeletion(cap_t cap)
     }
 }
 
+word_t CONST cap_get_capSizeBits(cap_t cap);
+bool_t CONST cap_get_capIsPhysical(cap_t cap);
+void *CONST cap_get_capPtr(cap_t cap);
+bool_t CONST isCapRevocable(cap_t derivedCap, cap_t srcCap);

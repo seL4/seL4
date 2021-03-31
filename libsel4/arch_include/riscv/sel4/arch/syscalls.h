@@ -861,6 +861,125 @@ LIBSEL4_INLINE_FUNC void seL4_DebugRun(void (* userfn)(void *), void *userarg)
 }
 #endif
 
+#ifdef CONFIG_ENABLE_BENCHMARKS
+/* set the log index back to 0 */
+LIBSEL4_INLINE_FUNC seL4_Error seL4_BenchmarkResetLog(void)
+{
+    seL4_Word unused0 = 0;
+    seL4_Word unused1 = 0;
+    seL4_Word unused2 = 0;
+    seL4_Word unused3 = 0;
+    seL4_Word unused4 = 0;
+
+    seL4_Word ret;
+    riscv_sys_send_recv(seL4_SysBenchmarkResetLog, 0, &ret, 0, &unused0, &unused1, &unused2, &unused3, &unused4, 0);
+
+    return (seL4_Error) ret;
+}
+
+LIBSEL4_INLINE_FUNC seL4_Word seL4_BenchmarkFinalizeLog(void)
+{
+    seL4_Word unused0 = 0;
+    seL4_Word unused1 = 0;
+    seL4_Word unused2 = 0;
+    seL4_Word unused3 = 0;
+    seL4_Word unused4 = 0;
+
+    seL4_Word index_ret;
+    riscv_sys_send_recv(seL4_SysBenchmarkFinalizeLog, 0, &index_ret, 0, &unused0, &unused1, &unused2, &unused3, &unused4,
+                        0);
+
+    return (seL4_Word) index_ret;
+}
+
+LIBSEL4_INLINE_FUNC seL4_Error seL4_BenchmarkSetLogBuffer(seL4_Word frame_cptr)
+{
+    seL4_Word unused0 = 0;
+    seL4_Word unused1 = 0;
+    seL4_Word unused2 = 0;
+    seL4_Word unused3 = 0;
+    seL4_Word unused4 = 0;
+
+    riscv_sys_send_recv(seL4_SysBenchmarkSetLogBuffer, frame_cptr, &frame_cptr, 0, &unused0, &unused1, &unused2, &unused3,
+                        &unused4, 0);
+
+    return (seL4_Error) frame_cptr;
+}
+
+LIBSEL4_INLINE_FUNC void seL4_BenchmarkNullSyscall(void)
+{
+    riscv_sys_null(seL4_SysBenchmarkNullSyscall);
+    asm volatile("" ::: "memory");
+}
+
+LIBSEL4_INLINE_FUNC void seL4_BenchmarkFlushCaches(void)
+{
+    riscv_sys_send_null(seL4_SysBenchmarkFlushCaches, 0, 0);
+    asm volatile("" ::: "memory");
+}
+
+LIBSEL4_INLINE_FUNC void seL4_BenchmarkFlushL1Caches(seL4_Word cache_type)
+{
+    riscv_sys_send_null(seL4_SysBenchmarkFlushCaches, 1, cache_type);
+    asm volatile("" ::: "memory");
+}
+
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+LIBSEL4_INLINE_FUNC void seL4_BenchmarkGetThreadUtilisation(seL4_Word tcb_cptr)
+{
+    seL4_Word unused0 = 0;
+    seL4_Word unused1 = 0;
+    seL4_Word unused2 = 0;
+    seL4_Word unused3 = 0;
+    seL4_Word unused4 = 0;
+    seL4_Word unused5 = 0;
+
+    riscv_sys_send_recv(seL4_SysBenchmarkGetThreadUtilisation, tcb_cptr, &unused0, 0, &unused1, &unused2, &unused3,
+                        &unused4, &unused5, 0);
+}
+
+LIBSEL4_INLINE_FUNC void seL4_BenchmarkResetThreadUtilisation(seL4_Word tcb_cptr)
+{
+    seL4_Word unused0 = 0;
+    seL4_Word unused1 = 0;
+    seL4_Word unused2 = 0;
+    seL4_Word unused3 = 0;
+    seL4_Word unused4 = 0;
+    seL4_Word unused5 = 0;
+
+    riscv_sys_send_recv(seL4_SysBenchmarkResetThreadUtilisation, tcb_cptr, &unused0, 0, &unused1, &unused2, &unused3,
+                        &unused4, &unused5, 0);
+}
+#ifdef CONFIG_DEBUG_BUILD
+LIBSEL4_INLINE_FUNC void seL4_BenchmarkDumpAllThreadsUtilisation(void)
+{
+    seL4_Word unused0 = 0;
+    seL4_Word unused1 = 0;
+    seL4_Word unused2 = 0;
+    seL4_Word unused3 = 0;
+    seL4_Word unused4 = 0;
+    seL4_Word unused5 = 0;
+
+    riscv_sys_send_recv(seL4_SysBenchmarkDumpAllThreadsUtilisation, 0, &unused0, 0, &unused1, &unused2, &unused3, &unused4,
+                        &unused5, 0);
+}
+
+LIBSEL4_INLINE_FUNC void seL4_BenchmarkResetAllThreadsUtilisation(void)
+{
+    seL4_Word unused0 = 0;
+    seL4_Word unused1 = 0;
+    seL4_Word unused2 = 0;
+    seL4_Word unused3 = 0;
+    seL4_Word unused4 = 0;
+    seL4_Word unused5 = 0;
+
+    riscv_sys_send_recv(seL4_SysBenchmarkResetAllThreadsUtilisation, 0, &unused0, 0, &unused1, &unused2, &unused3, &unused4,
+                        &unused5, 0);
+}
+#endif
+#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
+#endif /* CONFIG_ENABLE_BENCHMARKS */
+
 #ifdef CONFIG_SET_TLS_BASE_SELF
 LIBSEL4_INLINE_FUNC void seL4_SetTLSBase(seL4_Word tls_base)
 {

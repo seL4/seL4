@@ -1,5 +1,6 @@
 #
 # Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+# Copyright 2020, HENSOLDT Cyber GmbH
 #
 # SPDX-License-Identifier: GPL-2.0-only
 #
@@ -18,7 +19,7 @@ register_driver(
     CFILES "tegra_omap3_dwapb.c"
 )
 register_driver(
-    compatibility_strings "fsl,imx31-uart;fsl,imx6q-uart"
+    compatibility_strings "fsl,imx31-uart;fsl,imx6q-uart;fsl,imx6sx-uart"
     PREFIX src/drivers/serial
     CFILES "imx.c"
 )

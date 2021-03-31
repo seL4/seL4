@@ -14,8 +14,9 @@ set(bf_declarations "")
 
 include(${CMAKE_CURRENT_LIST_DIR}/../tools/internal.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/../tools/helpers.cmake)
-# Create and set all of the Kernel config options that can
-# be derived from the seL4 arch which is one of the following:
+
+# Create and set all of the Kernel config options that can be derived from the
+# seL4 arch which is one of the following:
 # aarch32, aarch64, arm_hyp, riscv32, riscv64, x86_64, ia32
 # This macro is intended to be called from within a platform config.
 macro(declare_seL4_arch sel4_arch)
@@ -42,16 +43,6 @@ macro(declare_seL4_arch sel4_arch)
         "x86;KernelArchX86;ARCH_X86;KernelSel4ArchX86_64 OR KernelSel4ArchIA32"
     )
 
-    # The following config options are legacy and can be removed if they
-    # aren't used anywhere anymore.
-    if(KernelArchARM)
-        config_set(KernelArmSel4Arch ARM_SEL4_ARCH "${KernelSel4Arch}")
-    elseif(KernelArchRiscV)
-        config_set(KernelRiscVSel4Arch RISCV_SEL4_ARCH "${KernelSel4Arch}")
-    elseif(KernelArchX86)
-        config_set(KernelX86Sel4Arch X86_SEL4_ARCH "${KernelSel4Arch}")
-    endif()
-
     # arm-hyp masquerades as an aarch32 build
     if(KernelSel4ArchArmHyp)
         config_set(KernelSel4ArmHypAarch32 ARCH_AARCH32 ON)
@@ -62,9 +53,13 @@ macro(declare_seL4_arch sel4_arch)
 
     # Set kernel mode options
     if(KernelSel4ArchAarch32 OR KernelSel4ArchArmHyp OR KernelSel4ArchRiscV32 OR KernelSel4ArchIA32)
-        set_kernel_32()
+        config_set(KernelWordSize WORD_SIZE 32)
+        set(Kernel64 OFF CACHE INTERNAL "")
+        set(Kernel32 ON CACHE INTERNAL "")
     elseif(KernelSel4ArchAarch64 OR KernelSel4ArchRiscV64 OR KernelSel4ArchX86_64)
-        set_kernel_64()
+        config_set(KernelWordSize WORD_SIZE 64)
+        set(Kernel64 ON CACHE INTERNAL "")
+        set(Kernel32 OFF CACHE INTERNAL "")
     endif()
 
 endmacro()
@@ -98,7 +93,7 @@ endmacro()
 
 # helper macro that prints a message that no sub platform is specified and
 # the default sub platform will be used
-# Usage example: fallback_declare_seL4_arch_default(aarch32)
+# Usage example: check_platform_and_fallback_to_default(KernelARMPlatform "sabre")
 macro(check_platform_and_fallback_to_default var_cmake_kernel_plat default_sub_plat)
     if("${${var_cmake_kernel_plat}}" STREQUAL "")
         print_message_multiple_options_helper("sub platforms" ${default_sub_plat})
@@ -168,8 +163,10 @@ foreach(
     KernelArmCortexA8
     KernelArmCortexA9
     KernelArmCortexA15
+    KernelArmCortexA35
     KernelArmCortexA53
     KernelArmCortexA57
+    KernelArmCortexA72
     KernelArm1136JF_S
     KernelArchArmV6
     KernelArchArmV7a
@@ -203,8 +200,10 @@ config_set(KernelArmCortexA7 ARM_CORTEX_A7 "${KernelArmCortexA7}")
 config_set(KernelArmCortexA8 ARM_CORTEX_A8 "${KernelArmCortexA8}")
 config_set(KernelArmCortexA9 ARM_CORTEX_A9 "${KernelArmCortexA9}")
 config_set(KernelArmCortexA15 ARM_CORTEX_A15 "${KernelArmCortexA15}")
+config_set(KernelArmCortexA35 ARM_CORTEX_A35 "${KernelArmCortexA35}")
 config_set(KernelArmCortexA53 ARM_CORTEX_A53 "${KernelArmCortexA53}")
 config_set(KernelArmCortexA57 ARM_CORTEX_A57 "${KernelArmCortexA57}")
+config_set(KernelArmCortexA72 ARM_CORTEX_A72 "${KernelArmCortexA72}")
 config_set(KernelArm1136JF_S ARM1136JF_S "${KernelArm1136JF_S}")
 config_set(KernelArchArmV6 ARCH_ARM_V6 "${KernelArchArmV6}")
 config_set(KernelArchArmV7a ARCH_ARM_V7A "${KernelArchArmV7a}")
@@ -233,10 +232,14 @@ elseif(KernelArmCortexA9)
     set(KernelArmCPU "cortex-a9" CACHE INTERNAL "")
 elseif(KernelArmCortexA15)
     set(KernelArmCPU "cortex-a15" CACHE INTERNAL "")
+elseif(KernelArmCortexA35)
+    set(KernelArmCPU "cortex-a35" CACHE INTERNAL "")
 elseif(KernelArmCortexA53)
     set(KernelArmCPU "cortex-a53" CACHE INTERNAL "")
 elseif(KernelArmCortexA57)
     set(KernelArmCPU "cortex-a57" CACHE INTERNAL "")
+elseif(KernelArmCortexA72)
+    set(KernelArmCPU "cortex-a72" CACHE INTERNAL "")
 elseif(KernelArm1136JF_S)
     set(KernelArmCPU "arm1136jf-s" CACHE INTERNAL "")
 endif()

@@ -30,7 +30,7 @@ static inline void plic_init_controller(void)
 /* Available physical memory regions on platform (RAM minus kernel image). */
 /* NOTE: Regions are not allowed to be adjacent! */
 static p_region_t BOOT_DATA avail_p_regs[] = {
-    /* The first 2MB are reserved for the SBI in the BBL */
+    /* The first 2MB are reserved for OpenSBI */
     { /*.start = */ 0x0, /* .end = */ 0x10000000}
 };
 

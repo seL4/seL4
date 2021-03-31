@@ -583,7 +583,8 @@ cap_t createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceM
     }
 }
 
-void createNewObjects(object_t t, cte_t *parent, slot_range_t slots,
+void createNewObjects(object_t t, cte_t *parent,
+                      cte_t *destCNode, word_t destOffset, word_t destLength,
                       void *regionBase, word_t userSize, bool_t deviceMemory)
 {
     word_t objectSize;
@@ -593,19 +594,19 @@ void createNewObjects(object_t t, cte_t *parent, slot_range_t slots,
 
     /* ghost check that we're visiting less bytes than the max object size */
     objectSize = getObjectSize(t, userSize);
-    totalObjectSize = slots.length << objectSize;
+    totalObjectSize = destLength << objectSize;
     /** GHOSTUPD: "(gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state = 0
         \<or> \<acute>totalObjectSize <= gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state, id)" */
 
     /* Create the objects. */
     nextFreeArea = regionBase;
-    for (i = 0; i < slots.length; i++) {
+    for (i = 0; i < destLength; i++) {
         /* Create the object. */
         /** AUXUPD: "(True, typ_region_bytes (ptr_val \<acute> nextFreeArea + ((\<acute> i) << unat (\<acute> objectSize))) (unat (\<acute> objectSize)))" */
         cap_t cap = createObject(t, (void *)((word_t)nextFreeArea + (i << objectSize)), userSize, deviceMemory);
 
         /* Insert the cap into the user's cspace. */
-        insertNewCap(parent, &slots.cnode[slots.offset + i], cap);
+        insertNewCap(parent, &destCNode[destOffset + i], cap);
 
         /* Move along to the next region of memory. been merged into a formula of i */
     }
@@ -614,18 +615,18 @@ void createNewObjects(object_t t, cte_t *parent, slot_range_t slots,
 #ifdef CONFIG_KERNEL_MCS
 exception_t decodeInvocation(word_t invLabel, word_t length,
                              cptr_t capIndex, cte_t *slot, cap_t cap,
-                             extra_caps_t excaps, bool_t block, bool_t call,
+                             bool_t block, bool_t call,
                              bool_t canDonate, bool_t firstPhase, word_t *buffer)
 #else
 exception_t decodeInvocation(word_t invLabel, word_t length,
                              cptr_t capIndex, cte_t *slot, cap_t cap,
-                             extra_caps_t excaps, bool_t block, bool_t call,
+                             bool_t block, bool_t call,
                              word_t *buffer)
 #endif
 {
     if (isArchCap(cap)) {
         return Arch_decodeInvocation(invLabel, length, capIndex,
-                                     slot, cap, excaps, call, buffer);
+                                     slot, cap, call, buffer);
     }
 
     switch (cap_get_capType(cap)) {
@@ -713,8 +714,7 @@ exception_t decodeInvocation(word_t invLabel, word_t length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 #endif
-        return decodeTCBInvocation(invLabel, length, cap,
-                                   slot, excaps, call, buffer);
+        return decodeTCBInvocation(invLabel, length, cap, slot, call, buffer);
 
     case cap_domain_cap:
 #ifdef CONFIG_KERNEL_MCS
@@ -725,7 +725,7 @@ exception_t decodeInvocation(word_t invLabel, word_t length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 #endif
-        return decodeDomainInvocation(invLabel, length, excaps, buffer);
+        return decodeDomainInvocation(invLabel, length, buffer);
 
     case cap_cnode_cap:
 #ifdef CONFIG_KERNEL_MCS
@@ -736,19 +736,17 @@ exception_t decodeInvocation(word_t invLabel, word_t length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 #endif
-        return decodeCNodeInvocation(invLabel, length, cap, excaps, buffer);
+        return decodeCNodeInvocation(invLabel, length, cap, buffer);
 
     case cap_untyped_cap:
-        return decodeUntypedInvocation(invLabel, length, slot, cap, excaps,
-                                       call, buffer);
+        return decodeUntypedInvocation(invLabel, length, slot, cap, call, buffer);
 
     case cap_irq_control_cap:
-        return decodeIRQControlInvocation(invLabel, length, slot,
-                                          excaps, buffer);
+        return decodeIRQControlInvocation(invLabel, length, slot, buffer);
 
     case cap_irq_handler_cap:
         return decodeIRQHandlerInvocation(invLabel,
-                                          IDX_TO_IRQT(cap_irq_handler_cap_get_capIRQ(cap)), excaps);
+                                          IDX_TO_IRQT(cap_irq_handler_cap_get_capIRQ(cap)));
 
 #ifdef CONFIG_KERNEL_MCS
     case cap_sched_control_cap:
@@ -758,7 +756,7 @@ exception_t decodeInvocation(word_t invLabel, word_t length,
             current_syscall_error.invalidCapNumber = 0;
             return EXCEPTION_SYSCALL_ERROR;
         }
-        return decodeSchedControlInvocation(invLabel, cap, length, excaps, buffer);
+        return decodeSchedControlInvocation(invLabel, cap, length, buffer);
 
     case cap_sched_context_cap:
         if (unlikely(firstPhase)) {
@@ -767,7 +765,7 @@ exception_t decodeInvocation(word_t invLabel, word_t length,
             current_syscall_error.invalidCapNumber = 0;
             return EXCEPTION_SYSCALL_ERROR;
         }
-        return decodeSchedContextInvocation(invLabel, cap, excaps, buffer);
+        return decodeSchedContextInvocation(invLabel, cap, buffer);
 #endif
     default:
         fail("Invalid cap type");
@@ -814,3 +812,203 @@ exception_t performInvocation_Reply(tcb_t *thread, cte_t *slot, bool_t canGrant)
     return EXCEPTION_NONE;
 }
 #endif
+
+word_t CONST cap_get_capSizeBits(cap_t cap)
+{
+
+    cap_tag_t ctag;
+
+    ctag = cap_get_capType(cap);
+
+    switch (ctag) {
+    case cap_untyped_cap:
+        return cap_untyped_cap_get_capBlockSize(cap);
+
+    case cap_endpoint_cap:
+        return seL4_EndpointBits;
+
+    case cap_notification_cap:
+        return seL4_NotificationBits;
+
+    case cap_cnode_cap:
+        return cap_cnode_cap_get_capCNodeRadix(cap) + seL4_SlotBits;
+
+    case cap_thread_cap:
+        return seL4_TCBBits;
+
+    case cap_zombie_cap: {
+        word_t type = cap_zombie_cap_get_capZombieType(cap);
+        if (type == ZombieType_ZombieTCB) {
+            return seL4_TCBBits;
+        }
+        return ZombieType_ZombieCNode(type) + seL4_SlotBits;
+    }
+
+    case cap_null_cap:
+        return 0;
+
+    case cap_domain_cap:
+        return 0;
+
+    case cap_reply_cap:
+#ifdef CONFIG_KERNEL_MCS
+        return seL4_ReplyBits;
+#else
+        return 0;
+#endif
+
+    case cap_irq_control_cap:
+#ifdef CONFIG_KERNEL_MCS
+    case cap_sched_control_cap:
+#endif
+        return 0;
+
+    case cap_irq_handler_cap:
+        return 0;
+
+#ifdef CONFIG_KERNEL_MCS
+    case cap_sched_context_cap:
+        return cap_sched_context_cap_get_capSCSizeBits(cap);
+#endif
+
+    default:
+        return cap_get_archCapSizeBits(cap);
+    }
+
+}
+
+/* Returns whether or not this capability has memory associated
+ * with it or not. Referring to this as 'being physical' is to
+ * match up with the Haskell and abstract specifications */
+bool_t CONST cap_get_capIsPhysical(cap_t cap)
+{
+    cap_tag_t ctag;
+
+    ctag = cap_get_capType(cap);
+
+    switch (ctag) {
+    case cap_untyped_cap:
+        return true;
+
+    case cap_endpoint_cap:
+        return true;
+
+    case cap_notification_cap:
+        return true;
+
+    case cap_cnode_cap:
+        return true;
+
+    case cap_thread_cap:
+#ifdef CONFIG_KERNEL_MCS
+    case cap_sched_context_cap:
+#endif
+        return true;
+
+    case cap_zombie_cap:
+        return true;
+
+    case cap_domain_cap:
+        return false;
+
+    case cap_reply_cap:
+#ifdef CONFIG_KERNEL_MCS
+        return true;
+#else
+        return false;
+#endif
+
+    case cap_irq_control_cap:
+#ifdef CONFIG_KERNEL_MCS
+    case cap_sched_control_cap:
+#endif
+        return false;
+
+    case cap_irq_handler_cap:
+        return false;
+
+    default:
+        return cap_get_archCapIsPhysical(cap);
+    }
+}
+
+void *CONST cap_get_capPtr(cap_t cap)
+{
+    cap_tag_t ctag;
+
+    ctag = cap_get_capType(cap);
+
+    switch (ctag) {
+    case cap_untyped_cap:
+        return WORD_PTR(cap_untyped_cap_get_capPtr(cap));
+
+    case cap_endpoint_cap:
+        return EP_PTR(cap_endpoint_cap_get_capEPPtr(cap));
+
+    case cap_notification_cap:
+        return NTFN_PTR(cap_notification_cap_get_capNtfnPtr(cap));
+
+    case cap_cnode_cap:
+        return CTE_PTR(cap_cnode_cap_get_capCNodePtr(cap));
+
+    case cap_thread_cap:
+        return TCB_PTR_CTE_PTR(cap_thread_cap_get_capTCBPtr(cap), 0);
+
+    case cap_zombie_cap:
+        return CTE_PTR(cap_zombie_cap_get_capZombiePtr(cap));
+
+    case cap_domain_cap:
+        return NULL;
+
+    case cap_reply_cap:
+#ifdef CONFIG_KERNEL_MCS
+        return REPLY_PTR(cap_reply_cap_get_capReplyPtr(cap));
+#else
+        return NULL;
+#endif
+
+    case cap_irq_control_cap:
+#ifdef CONFIG_KERNEL_MCS
+    case cap_sched_control_cap:
+#endif
+        return NULL;
+
+    case cap_irq_handler_cap:
+        return NULL;
+
+#ifdef CONFIG_KERNEL_MCS
+    case cap_sched_context_cap:
+        return SC_PTR(cap_sched_context_cap_get_capSCPtr(cap));
+#endif
+
+    default:
+        return cap_get_archCapPtr(cap);
+
+    }
+}
+
+bool_t CONST isCapRevocable(cap_t derivedCap, cap_t srcCap)
+{
+    if (isArchCap(derivedCap)) {
+        return Arch_isCapRevocable(derivedCap, srcCap);
+    }
+    switch (cap_get_capType(derivedCap)) {
+    case cap_endpoint_cap:
+        return (cap_endpoint_cap_get_capEPBadge(derivedCap) !=
+                cap_endpoint_cap_get_capEPBadge(srcCap));
+
+    case cap_notification_cap:
+        return (cap_notification_cap_get_capNtfnBadge(derivedCap) !=
+                cap_notification_cap_get_capNtfnBadge(srcCap));
+
+    case cap_irq_handler_cap:
+        return (cap_get_capType(srcCap) ==
+                cap_irq_control_cap);
+
+    case cap_untyped_cap:
+        return true;
+
+    default:
+        return false;
+    }
+}

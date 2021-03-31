@@ -27,9 +27,12 @@ extern asid_pool_t *riscvKSASIDTable[BIT(asidHighBits)];
 /* Kernel Page Tables */
 extern pte_t kernel_root_pageTable[BIT(PT_INDEX_BITS)] VISIBLE;
 
-/* We need to introduce a level2 pagetable in order to map the BBL to a separate
+/* We need to introduce a level2 pagetable in order to map OpenSBI to a separate
  * page entry to avoid PMP exception. */
 #if __riscv_xlen != 32
 extern pte_t kernel_image_level2_pt[BIT(PT_INDEX_BITS)];
+extern pte_t kernel_image_level2_dev_pt[BIT(PT_INDEX_BITS)];
+#elif defined(CONFIG_KERNEL_LOG_BUFFER)
+extern pte_t kernel_image_level2_log_buffer_pt[BIT(PT_INDEX_BITS)];
 #endif
 

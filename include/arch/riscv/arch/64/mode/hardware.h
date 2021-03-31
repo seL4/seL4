@@ -101,6 +101,9 @@
  * mapping region. These are mapped in the kernel page table. */
 #define KDEV_BASE UL_CONST(0xFFFFFFFFC0000000)
 
+/* Place the kernel log buffer at the end of the kernel device page table */
+#define KS_LOG_PPTR UL_CONST(0XFFFFFFFFFFE00000)
+
 #else
 #error Only PT_LEVELS == 3 is supported
 #endif

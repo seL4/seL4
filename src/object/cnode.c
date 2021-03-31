@@ -40,7 +40,7 @@ static exception_t reduceZombie(cte_t *slot, bool_t exposed);
 #endif
 
 exception_t decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
-                                  extra_caps_t excaps, word_t *buffer)
+                                  word_t *buffer)
 {
     lookupSlot_ret_t lu_ret;
     cte_t *destSlot;
@@ -80,7 +80,7 @@ exception_t decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
         deriveCap_ret_t dc_ret;
         cap_t srcCap;
 
-        if (length < 4 || excaps.excaprefs[0] == NULL) {
+        if (length < 4 || current_extra_caps.excaprefs[0] == NULL) {
             userError("CNode Copy/Mint/Move/Mutate: Truncated message.");
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
@@ -88,7 +88,7 @@ exception_t decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
         srcIndex = getSyscallArg(2, buffer);
         srcDepth = getSyscallArg(3, buffer);
 
-        srcRoot = excaps.excaprefs[0]->cap;
+        srcRoot = current_extra_caps.excaprefs[0]->cap;
 
         status = ensureEmptySlot(destSlot);
         if (status != EXCEPTION_NONE) {
@@ -235,8 +235,8 @@ exception_t decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
         cte_t *pivotSlot, *srcSlot;
         cap_t pivotRoot, srcRoot, newSrcCap, newPivotCap;
 
-        if (length < 8 || excaps.excaprefs[0] == NULL
-            || excaps.excaprefs[1] == NULL) {
+        if (length < 8 || current_extra_caps.excaprefs[0] == NULL
+            || current_extra_caps.excaprefs[1] == NULL) {
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
         }
@@ -247,8 +247,8 @@ exception_t decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
         srcIndex     = getSyscallArg(6, buffer);
         srcDepth     = getSyscallArg(7, buffer);
 
-        pivotRoot = excaps.excaprefs[0]->cap;
-        srcRoot   = excaps.excaprefs[1]->cap;
+        pivotRoot = current_extra_caps.excaprefs[0]->cap;
+        srcRoot   = current_extra_caps.excaprefs[1]->cap;
 
         lu_ret = lookupSourceSlot(srcRoot, srcIndex, srcDepth);
         if (lu_ret.status != EXCEPTION_NONE) {

@@ -208,7 +208,7 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
                     userError("Log buffer frame is invalidated, kernel can't benchmark anymore");
                 }
             }
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_BENCHMARK_KERNEL_LOG_BUFFER */
 
             unmapPage(cap_frame_cap_get_capFSize(cap),
                       cap_frame_cap_get_capFMappedASID(cap),
@@ -534,7 +534,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
 }
 
 exception_t Arch_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr,
-                                  cte_t *slot, cap_t cap, extra_caps_t excaps,
+                                  cte_t *slot, cap_t cap,
                                   bool_t call, word_t *buffer)
 {
     /* The C parser cannot handle a switch statement with only a default
@@ -546,28 +546,30 @@ exception_t Arch_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr,
     case cap_io_space_cap:
         return decodeARMIOSpaceInvocation(invLabel, cap);
     case cap_io_page_table_cap:
-        return decodeARMIOPTInvocation(invLabel, length, slot, cap, excaps, buffer);
+        return decodeARMIOPTInvocation(invLabel, length, slot, cap, buffer);
 #endif
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case cap_vcpu_cap:
-        return decodeARMVCPUInvocation(invLabel, length, cptr, slot, cap, excaps, call, buffer);
+        return decodeARMVCPUInvocation(invLabel, length, cptr, slot, cap, call, buffer);
 #endif /* end of CONFIG_ARM_HYPERVISOR_SUPPORT */
     default:
 #else
 {
 #endif
-    return decodeARMMMUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
+    return decodeARMMMUInvocation(invLabel, length, cptr, slot, cap, buffer);
 }
 }
 
 void
 Arch_prepareThreadDelete(tcb_t * thread) {
+#ifdef CONFIG_HAVE_FPU
+    fpuThreadDelete(thread);
+#endif
+
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     if (thread->tcbArch.tcbVCPU) {
         dissociateVCPUTCB(thread->tcbArch.tcbVCPU, thread);
     }
-#else  /* CONFIG_ARM_HYPERVISOR_SUPPORT */
-    /* No action required on ARM. */
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 }
 

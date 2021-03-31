@@ -171,7 +171,6 @@ exception_t decodeX86IOPTInvocation(
     word_t       length,
     cte_t       *slot,
     cap_t        cap,
-    extra_caps_t excaps,
     word_t      *buffer
 )
 {
@@ -195,13 +194,13 @@ exception_t decodeX86IOPTInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (excaps.excaprefs[0] == NULL || length < 1) {
+    if (current_extra_caps.excaprefs[0] == NULL || length < 1) {
         userError("X86IOPageTableMap: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    io_space     = excaps.excaprefs[0]->cap;
+    io_space     = current_extra_caps.excaprefs[0]->cap;
     io_address   = getSyscallArg(0, buffer) & ~MASK(VTD_PT_INDEX_BITS + seL4_PageBits);
 
     if (cap_io_page_table_cap_get_capIOPTIsMapped(cap)) {
@@ -298,7 +297,6 @@ exception_t decodeX86IOMapInvocation(
     word_t       length,
     cte_t       *slot,
     cap_t        cap,
-    extra_caps_t excaps,
     word_t      *buffer
 )
 {
@@ -313,7 +311,7 @@ exception_t decodeX86IOMapInvocation(
     vm_rights_t frame_cap_rights;
     seL4_CapRights_t dma_cap_rights_mask;
 
-    if (excaps.excaprefs[0] == NULL || length < 2) {
+    if (current_extra_caps.excaprefs[0] == NULL || length < 2) {
         userError("X86PageMapIO: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -333,7 +331,7 @@ exception_t decodeX86IOMapInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    io_space    = excaps.excaprefs[0]->cap;
+    io_space    = current_extra_caps.excaprefs[0]->cap;
     io_address  = getSyscallArg(1, buffer) & ~MASK(PAGE_BITS);
     paddr       = pptr_to_paddr((void *)cap_frame_cap_get_capFBasePtr(cap));
 
