@@ -27,7 +27,7 @@ slots), but the guard is always chosen so that the CNode resolves exactly
 the number of bits in the architecture (32 bits or 64 bits). This means, the
 first slot of the CNode has CPTR 0x0, the second slot has CPTR 0x1 etc.
 
-The first 12 slots contain specific capabilities as listed in
+The first 15 slots (or 14 slots if not MCS) contain specific capabilities as listed in
 \autoref{tab:cnode_content}.
 
 \begin{table}[htb]
@@ -58,6 +58,8 @@ The first 12 slots contain specific capabilities as listed in
       \texttt{seL4\_CapBootInfoFrame}       & BootInfo frame (see \autoref{ch:bootup:bootinfo}) \\
       \texttt{seL4\_CapInitThreadIPCBuffer} & initial thread's IPC buffer (see \autoref{sec:messageinfo}) \\
       \texttt{seL4\_CapDomain}              & domain cap (see \autoref{sec:domains}) \\
+      \texttt{seL4\_CapSMMUSIDControl}      & global ARM SMMU SID controller, null cap if unsupported (see \autoref{sec:smmuv2}) \\
+      \texttt{seL4\_CapSMMUCBControl}       & global ARM SMMU CB controller, null cap if unsupported (see \autoref{sec:smmuv2}) \\
       \texttt{seL4\_CapInitThreadSC}        & initial thread's scheduling context (MCS only) \\
       \bottomrule
     \end{tabularx}
