@@ -144,12 +144,17 @@ void VISIBLE NORETURN c_handle_exception(void)
     UNREACHABLE();
 }
 
-void NORETURN slowpath(syscall_t syscall)
+void VISIBLE NORETURN slowpath(syscall_t syscall)
 {
-    /* check for undefined syscall */
     if (unlikely(syscall < SYSCALL_MIN || syscall > SYSCALL_MAX)) {
+#ifdef TRACK_KERNEL_ENTRIES
+        ksKernelEntry.path = Entry_UnknownSyscall;
+#endif /* TRACK_KERNEL_ENTRIES */
         handleUnknownSyscall(syscall);
     } else {
+#ifdef TRACK_KERNEL_ENTRIES
+        ksKernelEntry.is_fastpath = 0;
+#endif /* TRACK KERNEL ENTRIES */
         handleSyscall(syscall);
     }
 
@@ -167,7 +172,10 @@ void VISIBLE c_handle_fastpath_reply_recv(word_t cptr, word_t msgInfo)
     NODE_LOCK_SYS;
 
     c_entry_hook();
-
+#ifdef TRACK_KERNEL_ENTRIES
+    benchmark_debug_syscall_start(cptr, msgInfo, SysReplyRecv);
+    ksKernelEntry.is_fastpath = 1;
+#endif /* DEBUG */
 #ifdef CONFIG_KERNEL_MCS
     fastpath_reply_recv(cptr, msgInfo, reply);
 #else
@@ -182,6 +190,10 @@ void VISIBLE c_handle_fastpath_call(word_t cptr, word_t msgInfo)
     NODE_LOCK_SYS;
 
     c_entry_hook();
+#ifdef TRACK_KERNEL_ENTRIES
+    benchmark_debug_syscall_start(cptr, msgInfo, SysCall);
+    ksKernelEntry.is_fastpath = 1;
+#endif /* DEBUG */
 
     fastpath_call(cptr, msgInfo);
 
@@ -192,9 +204,11 @@ void VISIBLE NORETURN c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t sy
 {
     NODE_LOCK_SYS;
 
-    /* Todo: add benchmarking call here */
     c_entry_hook();
-
+#ifdef TRACK_KERNEL_ENTRIES
+    benchmark_debug_syscall_start(cptr, msgInfo, syscall);
+    ksKernelEntry.is_fastpath = 0;
+#endif /* DEBUG */
     slowpath(syscall);
 
     UNREACHABLE();
