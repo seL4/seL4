@@ -40,7 +40,10 @@ typedef struct {
  */
 static void putchar_wrap(out_wrap_t *out, char c)
 {
-    if (out->maxlen < 0 || out->idx < out->maxlen) {
+    /* There might be no output wrapper, e.g. when printf_core() is just used to
+     * validate the format string.
+     */
+    if ((out) && ((out->maxlen < 0) || (out->idx < out->maxlen))) {
         out->putchar(c, out->buf, out->idx);
         out->idx++;
     }
@@ -302,9 +305,7 @@ static int printf_core(out_wrap_t *f, const char *fmt, va_list *ap, union arg *n
             goto overflow;
         }
         l = z - a;
-        if (f) {
-            out(f, a, l);
-        }
+        out(f, a, l);
         if (l) {
             continue;
         }
@@ -574,7 +575,7 @@ static int vprintf(out_wrap_t *out, const char *fmt, va_list ap)
 
     // validate format string
     va_copy(ap2, ap);
-    if (printf_core(0, fmt, &ap2, nl_arg, nl_type) < 0) {
+    if (printf_core(NULL, fmt, &ap2, nl_arg, nl_type) < 0) {
         va_end(ap2);
         return -1;
     }
