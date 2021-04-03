@@ -595,24 +595,7 @@ static int vprintf(out_wrap_t *out, const char *fmt, va_list ap)
  *------------------------------------------------------------------------------
  */
 
-void putchar(char c)
-{
-    if (c == '\n') {
-        putDebugChar('\r');
-    }
-    putDebugChar(c);
-}
-
-word_t puts(const char *s)
-{
-    for (; *s; s++) {
-        putchar(*s);
-    }
-    putchar('\n');
-    return 0;
-}
-
-word_t kprintf(const char *format, ...)
+int impl_kvprintf(const char *format, va_list ap)
 {
     out_wrap_t out_wrap =  {
         .write  = do_output_to_putchar,
@@ -621,14 +604,10 @@ word_t kprintf(const char *format, ...)
         .used   = 0
     };
 
-    va_list args;
-    va_start(args, format);
-    int ret = vprintf(&out_wrap, format, args);
-    va_end(args);
-    return ret;
+    return vprintf(&out_wrap, format, ap);
 }
 
-word_t ksnprintf(char *str, word_t size, const char *format, ...)
+int impl_ksnvprintf(char *str, word_t size, const char *format, va_list ap)
 {
     if (!str) {
         size = 0;
@@ -641,10 +620,7 @@ word_t ksnprintf(char *str, word_t size, const char *format, ...)
         .used   = 0
     };
 
-    va_list args;
-    va_start(args, format);
-    int ret = vprintf(&out_wrap, format, args);
-    va_end(args);
+    int ret = vprintf(&out_wrap, format, ap);
 
     /* We return the number of characters written into the buffer, excluding the
      * terminating null char. However, we do never write more than 'size' bytes,

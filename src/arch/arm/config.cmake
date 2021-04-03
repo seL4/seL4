@@ -231,6 +231,7 @@ add_sources(
         machine/errata.c
         machine/debug.c
         machine/hardware.c
+        machine/io.c
         object/interrupt.c
         object/tcb.c
         object/iospace.c
