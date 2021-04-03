@@ -600,21 +600,30 @@ word_t kprintf(const char *format, ...)
 word_t ksnprintf(char *str, word_t size, const char *format, ...)
 {
     va_list args;
-    word_t i;
+
+    if (!str) {
+        size = 0;
+    }
 
     out_wrap_t out = { buf_out_fn, str, 0, size };
 
     va_start(args, format);
-    i = vprintf(&out, format, args);
+    int ret = vprintf(&out, format, args);
     va_end(args);
 
-    // make sure there is space for a 0 byte
-    if (i >= size) {
-        i = size - 1;
+    /* We return the number of characters written into the buffer, excluding the
+     * terminating null char. However, we do never write more than 'size' bytes,
+     * that includes the terminating null char. If the output was truncated due
+     * to this limit, then the return value is the number of chars excluding the
+     * terminating null byte, which would have been written to the buffer, if
+     * enough space had been available. Thus, a return value of 'size' or more
+     * means that the output was truncated.
+     */
+    if ((ret > 0) && (size > 0)) {
+        str[(ret < size) ? ret : size - 1] = '\0';
     }
-    str[i] = 0;
 
-    return i;
+    return ret;
 }
 
 #endif /* CONFIG_PRINTING */
