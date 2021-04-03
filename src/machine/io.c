@@ -23,34 +23,63 @@
  * printf() core output channel management
  *------------------------------------------------------------------------------
  */
-/*
- * a handle defining how to output a character
- */
-typedef void (*out_fn)(char character, char *buf, word_t idx);
 
-/*
- * structure to allow a generic vprintf
- * a out_fn handle and a buf to work on
- */
-typedef struct {
-    out_fn putchar;
-    char *buf;
-    word_t idx;
-    word_t maxlen;
-} out_wrap_t;
+typedef struct _out_wrap_t  out_wrap_t;
 
-/*
- * putchar would then just call the handle with its buf
- * and current idx and then increment idx
+/* handler defining how/where to actually output a buffer */
+typedef void (*out_write_fn)(out_wrap_t *out, const char *buf, word_t len);
+
+struct _out_wrap_t {
+    const out_write_fn write;
+    char *const buf;
+    const word_t maxlen;
+    word_t used;
+};
+
+/* printf_core() and its helpers call this to actually output something. The
+ * parameter 'out_wrap' cam be NULL, e.g. when printf_core() is just caller to
+ * validate the format string. In this case we do nothing.
  */
-static void putchar_wrap(out_wrap_t *out, char c)
+static void out(out_wrap_t *out_wrap, const char *buf, word_t len)
 {
-    /* There might be no output wrapper, e.g. when printf_core() is just used to
-     * validate the format string.
-     */
-    if ((out) && ((out->maxlen < 0) || (out->idx < out->maxlen))) {
-        out->putchar(c, out->buf, out->idx);
-        out->idx++;
+    if (out_wrap) {
+        out_wrap->write(out_wrap, buf, len);
+    }
+}
+
+/* An out_write_fn implementation to print the characters via putchar(). It is
+ * guaranteed here that 'out' is not NULL. The current implementation also never
+ * passes NULL for 'buf'. */
+static void do_output_to_putchar(
+    UNUSED out_wrap_t *out,
+    const char *buf,
+    word_t len)
+{
+    if (buf) {
+        while (len-- > 0) {
+            putchar(*buf++);
+        }
+    }
+}
+
+/* An out_write_fn implementation to copy the buffer into the out buffer. It is
+ * guaranteed here that 'out' is not NULL. The current implementation also never
+ * passes NULL for 'buf'. */
+static void do_output_to_buffer(
+    out_wrap_t *out,
+    const char *buf,
+    word_t len)
+{
+    /* It's guaranteed here that 'out' is not NULL. The current implementation
+     * also never passes NULL for 'buf'. */
+    if (buf && (out->used < out->maxlen)) {
+        /* there is still space in the buffer*/
+        word_t free = out->maxlen - out->used;
+        if (len > free) {
+            len = free;
+        }
+        memcpy(&out->buf[out->used], buf, len);
+        out->used += len;
     }
 }
 
@@ -199,12 +228,6 @@ static void pop_arg(union arg *arg, int type, va_list *ap)
     }
 }
 
-static void out(out_wrap_t *f, const char *s, word_t l)
-{
-    for (word_t i = 0; i < l; i++) {
-        putchar_wrap(f, s[i]);
-    }
-}
 
 static void pad(out_wrap_t *f, char c, int w, int l, int fl)
 {
@@ -547,18 +570,6 @@ overflow:
     return -1;
 }
 
-// sprintf fills its buf with the given character
-static void buf_out_fn(char c, char *buf, word_t idx)
-{
-    buf[idx] = c;
-}
-
-// printf only needs to call kernel_putchar
-static void kernel_out_fn(char c, char *buf, word_t idx)
-{
-    kernel_putchar(c);
-}
-
 static int vprintf(out_wrap_t *out, const char *fmt, va_list ap)
 {
     va_list ap2;
@@ -595,37 +606,44 @@ void putchar(char c)
 word_t puts(const char *s)
 {
     for (; *s; s++) {
-        kernel_putchar(*s);
+        putchar(*s);
     }
-    kernel_putchar('\n');
+    putchar('\n');
     return 0;
 }
 
 word_t kprintf(const char *format, ...)
 {
+    out_wrap_t out_wrap =  {
+        .write  = do_output_to_putchar,
+        .buf    = NULL,
+        .maxlen = 0,
+        .used   = 0
+    };
+
     va_list args;
-    word_t ret;
-
-    out_wrap_t out = { kernel_out_fn, NULL, 0, -1 };
-
     va_start(args, format);
-    ret = vprintf(&out, format, args);
+    int ret = vprintf(&out_wrap, format, args);
     va_end(args);
     return ret;
 }
 
 word_t ksnprintf(char *str, word_t size, const char *format, ...)
 {
-    va_list args;
-
     if (!str) {
         size = 0;
     }
 
-    out_wrap_t out = { buf_out_fn, str, 0, size };
+    out_wrap_t out_wrap =  {
+        .write  = do_output_to_buffer,
+        .buf    = str,
+        .maxlen = size,
+        .used   = 0
+    };
 
+    va_list args;
     va_start(args, format);
-    int ret = vprintf(&out, format, args);
+    int ret = vprintf(&out_wrap, format, args);
     va_end(args);
 
     /* We return the number of characters written into the buffer, excluding the
