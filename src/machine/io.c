@@ -203,7 +203,7 @@ static void out(out_wrap_t *f, const char *s, word_t l)
 
 static void pad(out_wrap_t *f, char c, int w, int l, int fl)
 {
-    char pad[256];
+    char pad[32]; /* good enough for what the kernel prints */
     if (fl & (LEFT_ADJ | ZERO_PAD) || l >= w) {
         return;
     }
