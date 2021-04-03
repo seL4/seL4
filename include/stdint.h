@@ -23,3 +23,7 @@ typedef signed long long int64_t;
 #define INT64_MAX  (0x7FFFFFFFFFFFFFFF)
 #define INT32_MAX  (0x7FFFFFFF)
 
+#define PRId64     "lld"
+#define PRIi64     "lli"
+#define PRIu64     "llu"
+#define PRIx64     "llx"
