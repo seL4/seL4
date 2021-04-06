@@ -129,7 +129,7 @@ void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
                         NODE_STATE(ksCurSC) = NODE_STATE(ksCurThread)->tcbSchedContext;
                     } else {
                         /* continue executing signaller */
-                        SCHED_APPEND(tcb);
+                        SCHED_ENQUEUE(tcb);
                     }
                     fastpath_restore(badge, msgInfo, NODE_STATE(ksCurThread));
                     UNREACHABLE();
@@ -228,7 +228,7 @@ void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
             NODE_STATE(ksCurSC) = NODE_STATE(ksCurThread)->tcbSchedContext;
         } else {
             /* continue executing signaller */
-            SCHED_APPEND(dest);
+            SCHED_ENQUEUE(dest);
         }
         fastpath_restore(badge, msgInfo, NODE_STATE(ksCurThread));
         UNREACHABLE();
