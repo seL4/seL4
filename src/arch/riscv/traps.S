@@ -98,11 +98,13 @@ trap_entry:
   csrr x1,  sepc
   STORE   x1, (33*REGBYTES)(t0)
 
+#ifdef CONFIG_FASTPATH
   li t3, SYSCALL_REPLY_RECV
   beq a7, t3, fp_reply_recv
 
   li t3, SYSCALL_CALL
   beq a7, t3, fp_call
+#endif
 
   /* Check if it's an interrupt */
   bltz s0, interrupt

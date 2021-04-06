@@ -162,6 +162,7 @@ void VISIBLE NORETURN slowpath(syscall_t syscall)
     UNREACHABLE();
 }
 
+#ifdef CONFIG_FASTPATH
 ALIGN(L1_CACHE_LINE_SIZE)
 #ifdef CONFIG_KERNEL_MCS
 void VISIBLE c_handle_fastpath_reply_recv(word_t cptr, word_t msgInfo, word_t reply)
@@ -199,6 +200,7 @@ void VISIBLE c_handle_fastpath_call(word_t cptr, word_t msgInfo)
 
     UNREACHABLE();
 }
+#endif
 
 void VISIBLE NORETURN c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 {
