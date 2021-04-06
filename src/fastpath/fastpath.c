@@ -33,16 +33,16 @@ void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
     /* Get fault type. */
     fault_type = seL4_Fault_get_seL4_FaultType(NODE_STATE(ksCurThread)->tcbFault);
 
-    /* Check there's no saved fault */
-    if (unlikely(fault_type != seL4_Fault_NullFault)) {
-        slowpath(SysSend);
-    }
-
     /* We land up in here on every SYSCALL_SEND, so we need to check that we are
      * actually signalling a notification */
 
     /* Lookup the cap */
     cap_t cap = lookup_fp(TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbCTable)->cap, cptr);
+
+    /* Check there's no saved fault */
+    if (unlikely(fault_type != seL4_Fault_NullFault)) {
+        slowpath(SysSend);
+    }
 
     /* Check it's a notification */
     if (!cap_capType_equals(cap, cap_notification_cap)) {
