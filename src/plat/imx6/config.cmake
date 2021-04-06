@@ -38,7 +38,7 @@ if(KernelPlatImx6)
         config_set(KernelPlatImx6dq PLAT_IMX6DQ ON)
 
     elseif(KernelARMPlatform STREQUAL "nitrogen6sx")
-        config_set(KernelPlatformNitrogen6SX PLAT_NITROGENSX ON)
+        config_set(KernelPlatformNitrogen6SX PLAT_NITROGEN6SX ON)
         config_set(KernelPlatImx6sx PLAT_IMX6SX ON)
 
     else()
