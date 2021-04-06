@@ -39,18 +39,13 @@ void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
     /* Lookup the cap */
     cap_t cap = lookup_fp(TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbCTable)->cap, cptr);
 
-    /* Check there's no saved fault */
-    if (unlikely(fault_type != seL4_Fault_NullFault)) {
-        slowpath(SysSend);
-    }
-
     /* Check it's a notification */
     if (!cap_capType_equals(cap, cap_notification_cap)) {
         slowpath(SysSend);
     }
 
-    /* Check that we are allowed to signal this notification */
-    if (!unlikely(cap_notification_cap_get_capNtfnCanSend(cap))) {
+    /* Check there's no saved fault, and that we're allowed to signal this notification */
+    if (unlikely(fault_type != seL4_Fault_NullFault || !cap_notification_cap_get_capNtfnCanSend(cap))) {
         slowpath(SysSend);
     }
 
