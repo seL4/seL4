@@ -255,23 +255,34 @@ void refill_budget_check(ticks_t usage)
     assert(!isRoundRobin(sc));
     REFILL_SANITY_START(sc);
 
-    /* We assume that the estimates on worst-case kernel overheads are
-     * an upper bound and that overrun cannot occur. */
-#ifdef CONFIG_DEBUG_BUILD
-    if (usage > refill_head(sc)->rAmount) {
-        ticks_t overrun = usage - refill_head(sc)->rAmount;
-        userError(
-            "SC (%p) overran budget by %lluus (%llu ticks)",
-            sc,
-            ticksToUs(overrun),
-            overrun
-        );
-    }
-#endif
-    usage = MIN(usage, refill_head(sc)->rAmount);
+    /*
+     * We charge entire refills in a loop until we end up with a partial
+     * refill or at a point where we can't place refills into the future
+     * without integer overflow.
+     *
+     * Verification actually requires that the current time is at least
+     * 3 * MAX_PERIOD from the INT64_MAX value, so to ease relation to
+     * that assertion we ensure that we never delate a refill past this
+     * point in the future.
+     */
+    while (refill_head(sc)->rAmount <= usage && refill_head(sc)->rTime < MAX_RELEASE_TIME) {
+        usage -= refill_head(sc)->rAmount;
 
-    /* Charge the usage to the head refill */
-    if (usage > 0) {
+        if (refill_single(sc)) {
+            refill_head(sc)->rTime += sc->scPeriod;
+        } else {
+            refill_t old_head = refill_pop_head(sc);
+            old_head.rTime += sc->scPeriod;
+            schedule_used(sc, old_head);
+        }
+    }
+
+    /*
+     * If the head time is still sufficiently far from the point of
+     * integer overflow then the usage must be smaller than the head.
+     */
+    if (usage > 0 && refill_head(sc)->rTime < MAX_RELEASE_TIME) {
+        assert(refill_head(sc)->rAmount > usage);
         refill_t used = (refill_t) {
             .rAmount = usage,
             .rTime = refill_head(sc)->rTime + sc->scPeriod,
