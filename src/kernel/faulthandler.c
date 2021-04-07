@@ -24,7 +24,7 @@ void handleFault(tcb_t *tptr)
 void handleTimeout(tcb_t *tptr)
 {
     assert(validTimeoutHandler(tptr));
-    sendFaultIPC(tptr, TCB_PTR_CTE_PTR(tptr, tcbTimeoutHandler)->cap, false);
+    sendFaultIPC(tptr, TCB_PTR_CTE_PTR(tptr, tcbTimeoutHandler)->cap, true);
 }
 
 bool_t sendFaultIPC(tcb_t *tptr, cap_t handlerCap, bool_t can_donate)
