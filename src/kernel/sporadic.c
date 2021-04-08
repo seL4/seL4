@@ -319,13 +319,6 @@ void refill_budget_check(ticks_t usage)
         refill_head(sc)->rTime -= head.rAmount;
     }
 
-    /* Ensure that the refills are now not disjoint */
-    while (unlikely(refill_head_overlapping(sc))) {
-        refill_t head = refill_pop_head(sc);
-        refill_head(sc)->rAmount += head.rAmount;
-        refill_head(sc)->rTime = head.rTime;
-    }
-
     REFILL_SANITY_END(sc);
 }
 
