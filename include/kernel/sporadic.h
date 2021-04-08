@@ -36,7 +36,15 @@
 #if (CONFIG_KERNEL_STATIC_MAX_BUDGET_US) != 0
 #define MAX_BUDGET_US (CONFIG_KERNEL_STATIC_MAX_BUDGET_US)
 #else
-#define MAX_BUDGET_US getMaxUsToTicks()
+/* The maximum period determines the point at which the scheduling logic
+ * will no longer function correctly (UINT64_MAX - 3 * MAX_PERIOD), so
+ * we keep the maximum period relatively small to ensure that the system
+ * can function for a reasonably long time.
+ *
+ * Anything below getMaxUsToTicks() / 8 would ensure that time up to
+ * 2^63 would still be be valid as 3 * (getMaxUsToTicks()) must be less
+ * than 2^63. */
+#define MAX_BUDGET_US (getMaxUsToTicks() / 8)
 #endif /* CONFIG_KERNEL_STATIC_MAX_BUDGET_US != 0 */
 
 /* Short hand for accessing refill queue items */
