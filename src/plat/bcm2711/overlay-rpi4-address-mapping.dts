@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2021, Hensoldt Cyber GmbH
+ * Copyright 2022, Technology Innovation Institute
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -17,9 +18,6 @@
 	 * addresses in this overlay file.
 	 */
 	soc {
-		gpio@7e200000 {
-			reg = <0xfe200000 0xb4>;
-		};
 
 		serial@7e201400 {
 			reg = <0xfe201400 0x200>;

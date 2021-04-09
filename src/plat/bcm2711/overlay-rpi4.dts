@@ -18,15 +18,60 @@
 		    &{/timer};
 	};
 
+	/*
+	 * See BCM2711 TRM section 1.2 and
+	 * https://github.com/raspberrypi/firmware/issues/1374 for
+	 * reference.
+	 *
+	 * RPi4B seems to be in "low peripheral" mode by default.
+	 * These values were observed from running
+	 * Raspbian instance from /proc/iomem and /sys/firmware/devicetree/base
+	 *
+	 * By default, the RPi 4B has 76MB reserved for the VideoCore/GPU.
+	 * So, we have following memory ranges available:
+	 *
+	 * VC GPU RAM 76MB -> 0x40000000-0x04C00000 = 0x3b400000
+	 *
+	 * 0x00 0x00000000 0x3b400000  948MB
+	 * 0x00 0x40000000 0xbc000000  3008MB
+	 * 0x01 0x00000000 0x80000000  2048MB
+	 * 0x01 0x80000000 0x80000000  2048MB
+	 *
+	 * Disjunct memory areas seem to work only
+	 * when declared in different memory DT nodes.
+	 *
+	 * If all of the declarations below are in the
+	 * same node, the kernel build system seems
+	 * to only understand the second 3008MB area
+	 * and ignores the rest.
+	 */
+
+	/delete-node/ memory;
+
 	memory@0 {
-		/* This is configurable in the Pi's config.txt, but we use 128MiB of RAM by default. */
-		reg = <0x00 0x00000000 0x08000000>;
+		device_type = "memory";
+		reg = < 0x00000000 0x00000000 0x3b400000 >;
 	};
 
+	memory@40000000 {
+		device_type = "memory";
+		reg = < 0x00000000 0x40000000 0xbc000000 >;
+	};
+
+	memory@100000000 {
+		device_type = "memory";
+		reg = < 0x00000001 0x00000000 0x80000000
+			0x00000001 0x80000000 0x80000000 >;
+	};
+
+	/* TODO: add DMA dedicated ranges
+	 * here also?
+	 */
 	reserved-memory {
-		#address-cells = <0x01>;
+		#address-cells = <0x02>;
 		#size-cells = <0x01>;
 		ranges;
+
 		/* Keep the first page of physical memory is reserved for the initial
 		 * bootloader (e.g. armstub). It has parked the secondary cores there,
 		 * they spin until they get released. When SMP is enabled, the kernel
@@ -39,7 +84,16 @@
 		 * See also https://leiradel.github.io/2019/01/20/Raspberry-Pi-Stubs.html#armstub8s
 		 */
 		reserved-memory@0{
-			reg = <0x0 0x1000>;
+			reg = < 0x00000000 0x00000000 0x00001000 >;
+			no-map;
+		};
+
+		/* Enforce that nothing tries to
+		 * use the VideoCore memory area
+		 * by declaring it as reserved memory.
+		 */
+		reserved-memory@3b400000 {
+			reg = < 0x00000000 0x3b400000 0x04C00000 >;
 			no-map;
 		};
 	};
