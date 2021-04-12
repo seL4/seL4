@@ -8,12 +8,234 @@
 #include <fastpath/fastpath.h>
 #ifdef CONFIG_KERNEL_MCS
 #include <object/reply.h>
+#include <object/notification.h>
 #endif
 
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
 #include <benchmark/benchmark_track.h>
 #endif
 #include <benchmark/benchmark_utilisation.h>
+
+#ifdef CONFIG_ARCH_ARM
+static inline
+#ifndef CONFIG_ARCH_ARM_V6
+FORCE_INLINE
+#endif
+#endif
+void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
+{
+    cap_t newVTable;
+    vspace_root_t *cap_pd;
+    pde_t stored_hw_asid;
+    word_t fault_type;
+    dom_t dom;
+
+    /* Get fault type. */
+    fault_type = seL4_Fault_get_seL4_FaultType(NODE_STATE(ksCurThread)->tcbFault);
+
+    /* We land up in here on every SYSCALL_SEND, so we need to check that we are
+     * actually signalling a notification */
+
+    /* Lookup the cap */
+    cap_t cap = lookup_fp(TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbCTable)->cap, cptr);
+
+    /* Check it's a notification */
+    if (!cap_capType_equals(cap, cap_notification_cap)) {
+        slowpath(SysSend);
+    }
+
+    /* Check there's no saved fault, and that we're allowed to signal this notification */
+    if (unlikely(fault_type != seL4_Fault_NullFault || !cap_notification_cap_get_capNtfnCanSend(cap))) {
+        slowpath(SysSend);
+    }
+
+    /* Get the notification address */
+    notification_t *ntfnPtr = NTFN_PTR(cap_notification_cap_get_capNtfnPtr(cap));
+
+    /* Get the notification state */
+    uint32_t ntfnState = notification_ptr_get_state(ntfnPtr);
+
+    /* Get the notification badge */
+    word_t badge = cap_notification_cap_get_capNtfnBadge(cap);
+
+    switch (ntfnState) {
+        case NtfnState_Active: {
+            word_t badge2 = notification_ptr_get_ntfnMsgIdentifier(ntfnPtr);
+            badge2 |= badge;
+            notification_ptr_set_ntfnMsgIdentifier(ntfnPtr, badge2);
+            fastpath_restore(badge, msgInfo, NODE_STATE(ksCurThread));
+        }
+        case NtfnState_Idle: {
+            tcb_t *tcb = (tcb_t *)notification_ptr_get_ntfnBoundTCB(ntfnPtr);
+            /* Check if we are bound and that thread is waiting for a message */
+            if (tcb) {
+                if (thread_state_ptr_get_tsType(&tcb->tcbState) == ThreadState_BlockedOnReceive) {
+                    /* Send and start thread running */
+                    cancelIPC(tcb);
+                    maybeDonateSchedContext(tcb, ntfnPtr);
+
+                    /* Get destination thread VTable */
+                    newVTable = TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap;
+
+                    /* Ensure that the destination has a valid VTable. */
+                    if (unlikely(!isValidVTableRoot_fp(newVTable))) {
+                        slowpath(SysSend);
+                    }
+
+                    /* Get vspace root. */
+                    cap_pd = cap_vtable_cap_get_vspace_root_fp(newVTable);
+
+#ifdef CONFIG_ARCH_AARCH32
+                    /* Get HW ASID */
+                    stored_hw_asid = cap_pd[PD_ASID_SLOT];
+#endif
+
+                    /* Let gcc optimise this out for 1 domain */
+                    dom = maxDom ? ksCurDomain : 0;
+                    /* Ensure only the idle thread or lower prio threads are present in the scheduler */
+                    if (unlikely(tcb->tcbPriority < NODE_STATE(ksCurThread->tcbPriority) &&
+                                 !isHighestPrio(dom, tcb->tcbPriority))) {
+                        slowpath(SysSend);
+                    }
+
+#ifdef CONFIG_ARCH_AARCH32
+                    if (unlikely(!pde_pde_invalid_get_stored_asid_valid(stored_hw_asid))) {
+                        slowpath(SysSend);
+                    }
+#endif
+
+                    /* Ensure the destination thread is in the current domain and can be scheduled directly. */
+                    if (unlikely(tcb->tcbDomain != ksCurDomain && maxDom)) {
+                        slowpath(SysSend);
+                    }
+
+#ifdef ENABLE_SMP_SUPPORT
+                    /* Ensure both threads have the same affinity */
+                    if (unlikely(NODE_STATE(ksCurThread)->tcbAffinity != tcb->tcbAffinity)) {
+                        slowpath(SysSend);
+                    }
+#endif /* ENABLE_SMP_SUPPORT */
+
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
+            ksKernelEntry.is_fastpath = true;
+#endif
+
+                    thread_state_ptr_set_tsType_np(&tcb->tcbState, ThreadState_Running);
+                    setRegister(tcb, badgeRegister, badge);
+                    if (ksCurThread->tcbPriority < tcb->tcbPriority) {
+                        /* switch to waiter immediately */
+                        SCHED_ENQUEUE_CURRENT_TCB;
+                        switchToThread_fp(tcb, cap_pd, stored_hw_asid);
+                        NODE_STATE(ksCurSC) = NODE_STATE(ksCurThread)->tcbSchedContext;
+                    } else {
+                        /* continue executing signaller */
+                        SCHED_ENQUEUE(tcb);
+                    }
+                    fastpath_restore(badge, msgInfo, NODE_STATE(ksCurThread));
+                    UNREACHABLE();
+                } else {
+                    /* In particular, this path is taken when a thread
+                     * is waiting on a reply cap since BlockedOnReply
+                     * would also trigger this path. I.e, a thread
+                     * with a bound notification will not be awakened
+                     * by signals on that bound notification if it is
+                     * in the middle of an seL4_Call.
+                     */
+                    ntfn_set_active(ntfnPtr, badge);
+                    fastpath_restore(badge, msgInfo, NODE_STATE(ksCurThread));
+                }
+            } else {
+                ntfn_set_active(ntfnPtr, badge);
+                fastpath_restore(badge, msgInfo, NODE_STATE(ksCurThread));
+            }
+        }
+        case NtfnState_Waiting: {
+            tcb_queue_t ntfn_queue;
+            tcb_t *dest;
+
+            ntfn_queue.head = (tcb_t *)notification_ptr_get_ntfnQueue_head(ntfnPtr);
+            ntfn_queue.end = (tcb_t *)notification_ptr_get_ntfnQueue_tail(ntfnPtr);
+
+            dest = ntfn_queue.head;
+
+            /* Haskell error "WaitingNtfn Notification must have non-empty queue" */
+            assert(dest);
+
+            /* Dequeue TCB */
+            ntfn_queue = tcbEPDequeue(dest, ntfn_queue);
+            notification_ptr_set_ntfnQueue_head(ntfnPtr, (word_t)ntfn_queue.head);
+            notification_ptr_set_ntfnQueue_tail(ntfnPtr, (word_t)ntfn_queue.end);
+
+            /* set the thread state to idle if the queue is empty */
+            if (!ntfn_queue.head) {
+                notification_ptr_set_state(ntfnPtr, NtfnState_Idle);
+            }
+
+            maybeDonateSchedContext(dest, ntfnPtr);
+
+            /* Get destination thread VTable */
+            newVTable = TCB_PTR_CTE_PTR(dest, tcbVTable)->cap;
+
+            /* Ensure that the destination has a valid VTable. */
+            if (unlikely(! isValidVTableRoot_fp(newVTable))) {
+                slowpath(SysSend);
+            }
+
+            /* Get vspace root. */
+            cap_pd = cap_vtable_cap_get_vspace_root_fp(newVTable);
+
+#ifdef CONFIG_ARCH_AARCH32
+            /* Get HW ASID */
+            stored_hw_asid = cap_pd[PD_ASID_SLOT];
+#endif
+
+            /* Let gcc optimise this out for 1 domain */
+            dom = maxDom ? ksCurDomain : 0;
+            /* Ensure only the idle thread or lower prio threads are present in the scheduler */
+            if (unlikely(dest->tcbPriority < NODE_STATE(ksCurThread->tcbPriority) &&
+                         !isHighestPrio(dom, dest->tcbPriority))) {
+                slowpath(SysSend);
+            }
+
+#ifdef CONFIG_ARCH_AARCH32
+            if (unlikely(!pde_pde_invalid_get_stored_asid_valid(stored_hw_asid))) {
+                slowpath(SysSend);
+            }
+#endif
+
+            /* Ensure the destination thread is in the current domain and can be scheduled directly. */
+            if (unlikely(dest->tcbDomain != ksCurDomain && maxDom)) {
+                slowpath(SysSend);
+            }
+
+#ifdef ENABLE_SMP_SUPPORT
+            /* Ensure both threads have the same affinity */
+            if (unlikely(NODE_STATE(ksCurThread)->tcbAffinity != dest->tcbAffinity)) {
+                slowpath(SysSend);
+            }
+#endif /* ENABLE_SMP_SUPPORT */
+
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
+            ksKernelEntry.is_fastpath = true;
+#endif
+
+        thread_state_ptr_set_tsType_np(&dest->tcbState, ThreadState_Running);
+        setRegister(dest, badgeRegister, badge);
+        if (ksCurThread->tcbPriority < dest->tcbPriority) {
+            /* switch to waiter immediately */
+            SCHED_ENQUEUE_CURRENT_TCB;
+            switchToThread_fp(dest, cap_pd, stored_hw_asid);
+            NODE_STATE(ksCurSC) = NODE_STATE(ksCurThread)->tcbSchedContext;
+        } else {
+            /* continue executing signaller */
+            SCHED_ENQUEUE(dest);
+        }
+        fastpath_restore(badge, msgInfo, NODE_STATE(ksCurThread));
+        UNREACHABLE();
+        }
+    }
+    UNREACHABLE();
+}
 
 #ifdef CONFIG_ARCH_ARM
 static inline

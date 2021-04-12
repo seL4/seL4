@@ -88,6 +88,8 @@ BEGIN_FUNC(arm_swi_syscall)
 #ifdef CONFIG_FASTPATH
     cmp r7, #SYSCALL_CALL
     beq c_handle_fastpath_call
+    cmp r7, #SYSCALL_SEND
+    beq c_handle_fastpath_signal
     cmp r7, #SYSCALL_REPLY_RECV
 #ifdef CONFIG_KERNEL_MCS
     moveq r2, r6
