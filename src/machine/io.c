@@ -19,6 +19,11 @@
 #include <stdint.h>
 
 /*
+ *------------------------------------------------------------------------------
+ * printf() core output channel management
+ *------------------------------------------------------------------------------
+ */
+/*
  * a handle defining how to output a character
  */
 typedef void (*out_fn)(char character, char *buf, word_t idx);
@@ -49,14 +54,11 @@ static void putchar_wrap(out_wrap_t *out, char c)
     }
 }
 
-
-void putchar(char c)
-{
-    if (c == '\n') {
-        putDebugChar('\r');
-    }
-    putDebugChar(c);
-}
+/*
+ *------------------------------------------------------------------------------
+ * printf() core implementation
+ *------------------------------------------------------------------------------
+ */
 
 static inline bool_t isdigit(char c)
 {
@@ -557,15 +559,6 @@ static void kernel_out_fn(char c, char *buf, word_t idx)
     kernel_putchar(c);
 }
 
-word_t puts(const char *s)
-{
-    for (; *s; s++) {
-        kernel_putchar(*s);
-    }
-    kernel_putchar('\n');
-    return 0;
-}
-
 static int vprintf(out_wrap_t *out, const char *fmt, va_list ap)
 {
     va_list ap2;
@@ -583,6 +576,29 @@ static int vprintf(out_wrap_t *out, const char *fmt, va_list ap)
     ret = printf_core(out, fmt, &ap2, nl_arg, nl_type);
     va_end(ap2);
     return ret;
+}
+
+/*
+ *------------------------------------------------------------------------------
+ * Kernel printing API
+ *------------------------------------------------------------------------------
+ */
+
+void putchar(char c)
+{
+    if (c == '\n') {
+        putDebugChar('\r');
+    }
+    putDebugChar(c);
+}
+
+word_t puts(const char *s)
+{
+    for (; *s; s++) {
+        kernel_putchar(*s);
+    }
+    kernel_putchar('\n');
+    return 0;
 }
 
 word_t kprintf(const char *format, ...)
