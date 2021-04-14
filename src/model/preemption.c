@@ -30,7 +30,8 @@ exception_t preemptionPoint(void)
         ksWorkUnitsCompleted = 0;
 #ifdef CONFIG_KERNEL_MCS
         updateTimestamp();
-        if (!(sc_active(NODE_STATE(ksCurSC)) && isSufficientAndSplittable()) || isCurDomainExpired() || isIRQPending()) {
+        if (!(sc_active(NODE_STATE(ksCurSC)) && refill_sufficient(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed)))
+            || isCurDomainExpired() || isIRQPending()) {
 #else
         if (isIRQPending()) {
 #endif
