@@ -49,7 +49,6 @@ static void NORETURN restore_vmx(void)
             "movq %[guest_msr], %%r9\n"
             "movq %[reg], %%r10\n"
 
-#ifdef ENABLE_SMP_SUPPORT
             // Save host's GS, Shadow GS, and FS
             "mov $0xC0000101, %%ecx\n"
             "rdmsr\n"
@@ -70,7 +69,7 @@ static void NORETURN restore_vmx(void)
             "pushq %%r13\n"
             "pushq %%r12\n"
             "pushq %%r11\n"
-#endif
+
             // Restore guest's GS and Shadow GS
             "mov $0xC0000101, %%ecx\n"
             "swapgs\n"
@@ -113,7 +112,7 @@ static void NORETURN restore_vmx(void)
             "movzx %%al, %%rdi\n"
             "movzx %%bl, %%rsi\n"
             // if we get here we failed
-#ifdef ENABLE_SMP_SUPPORT
+
             // Restore host's GS, Shadow GS, and FS
             "sub $0xA8, %%rsp\n" // 15 * 8 (regs) + 3 * 8 (guest_msr) + 3 * 8 (host_msr)
             "mov $0xC0000101, %%ecx\n"
@@ -131,14 +130,12 @@ static void NORETURN restore_vmx(void)
             "movq %%rax, %%rdx\n"
             "shr $0x20, %%rdx\n"
             "wrmsr\n" // FS
-#else
-            "leaq kernel_stack_alloc + %c[stack_size], %%rsp\n"
-#endif
+
             "movq %[failed], %%rax\n"
             "jmp *%%rax\n"
             :
             : [reg]"r"(&cur_thread->tcbArch.tcbVCPU->gp_registers[VCPU_EAX]),
-            [failed]"m"(vmlaunch_failed),
+            [failed]"r"(vmlaunch_failed),
             [stack_size]"i"(BIT(CONFIG_KERNEL_STACK_BITS)),
             [guest_msr]"r"(&cur_thread->tcbArch.tcbVCPU->guest_msr_registers[VCPU_GS]),
             [host_msr]"r"(&cur_thread->tcbArch.tcbVCPU->host_msr_registers[n_vcpu_msr_register])
@@ -155,7 +152,6 @@ static void NORETURN restore_vmx(void)
             "movq %[guest_msr], %%r9\n"
             "movq %[reg], %%r10\n"
 
-#ifdef ENABLE_SMP_SUPPORT
             // Save host's GS, Shadow GS, and FS
             "mov $0xC0000101, %%ecx\n"
             "rdmsr\n"
@@ -176,7 +172,7 @@ static void NORETURN restore_vmx(void)
             "pushq %%r13\n"
             "pushq %%r12\n"
             "pushq %%r11\n"
-#endif
+
             // Restore guest's GS and Shadow GS
             "mov $0xC0000101, %%ecx\n"
             "swapgs\n"
@@ -219,7 +215,7 @@ static void NORETURN restore_vmx(void)
             "sete %%bl\n"
             "movzx %%al, %%rdi\n"
             "movzx %%bl, %%rsi\n"
-#ifdef ENABLE_SMP_SUPPORT
+
             // Restore host's GS, Shadow GS, and FS
             "sub $0xA8, %%rsp\n" // 15 * 8 (regs) + 3 * 8 (guest_msr) + 3 * 8 (host_msr)
             "mov $0xC0000101, %%ecx\n"
@@ -237,14 +233,12 @@ static void NORETURN restore_vmx(void)
             "movq %%rax, %%rdx\n"
             "shr $0x20, %%rdx\n"
             "wrmsr\n" // FS
-#else
-            "leaq kernel_stack_alloc + %c[stack_size], %%rsp\n"
-#endif
+
             "movq %[failed], %%rax\n"
             "jmp *%%rax\n"
             :
             : [reg]"r"(&cur_thread->tcbArch.tcbVCPU->gp_registers[VCPU_EAX]),
-            [failed]"m"(vmlaunch_failed),
+            [failed]"r"(vmlaunch_failed),
             [stack_size]"i"(BIT(CONFIG_KERNEL_STACK_BITS)),
             [guest_msr]"r"(&cur_thread->tcbArch.tcbVCPU->guest_msr_registers[VCPU_GS]),
             [host_msr]"r"(&cur_thread->tcbArch.tcbVCPU->host_msr_registers[n_vcpu_msr_register])
