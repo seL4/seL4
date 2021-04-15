@@ -706,8 +706,6 @@ BEGIN_FUNC(handle_vmexit)
     or %rdx, %rax
     pushq %rax # Save GS
 
-#ifdef ENABLE_SMP_SUPPORT
-
     # RSP now at host_gs registers
     sub $0x18, %rsp
 
@@ -727,7 +725,6 @@ BEGIN_FUNC(handle_vmexit)
     movq %rax, %rdx
     shr $0x20, %rdx
     wrmsr # FS
-#endif
 
     # switch to kernel stack
     LOAD_KERNEL_STACK
