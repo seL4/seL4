@@ -197,8 +197,13 @@ void refill_update(sched_context_t *sc, ticks_t new_period, ticks_t new_budget, 
         refill_head(sc)->rTime = NODE_STATE_ON_CORE(ksCurTime, sc->scCore);
     }
 
-    if (refill_head(sc)->rAmount >= new_budget) {
-        /* if the heads budget exceeds the new budget just trim it */
+    if (
+        refill_head(sc)->rAmount >= new_budget ||
+        INT64_MAX - refill_head(sc)->rTime < 4 * usToTicks(MAX_BUDGET_US)
+    ) {
+        /* if the heads budget exceeds the new budget just trim it
+         * and if the refill would end up past the point where we can
+         * correctly schedule it, just schedule it where it is */
         refill_head(sc)->rAmount = new_budget;
         maybe_add_empty_tail(sc);
     } else {
@@ -267,7 +272,7 @@ void refill_budget_check(ticks_t usage)
      */
     while (
         refill_head(sc)->rAmount <= usage &&
-        INT64_MAX - refill_head(sc)->rTime >= 3 * usToTicks(MAX_BUDGET_US)
+        INT64_MAX - refill_head(sc)->rTime >= 4 * usToTicks(MAX_BUDGET_US)
     ) {
         usage -= refill_head(sc)->rAmount;
 
@@ -283,13 +288,9 @@ void refill_budget_check(ticks_t usage)
     /*
      * If the usage is still greater than the head, we must be at a
      * point where we cannot charge time to this SC without overflowing
+     * otherwise charge the usage to the head refill
      */
-    if (refill_head(sc)->rAmount <= usage) {
-        return;
-    }
-
-    /* Charge the usage to the head refill */
-    if (usage > 0) {
+    if (usage > 0 && refill_head(sc)->rAmount <= usage) {
         refill_t used = (refill_t) {
             .rAmount = usage,
             .rTime = refill_head(sc)->rTime + sc->scPeriod,
