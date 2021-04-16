@@ -26,6 +26,38 @@ def get_memory_regions(tree: FdtParser):
     return regions
 
 
+def merge_memory_regions(regions: Set[Region]) -> Set[Region]:
+    ''' Check all region and merge adjacent ones '''
+    all_regions = []
+    idx = 0
+    for region in regions:
+        all_regions.append(dict(idx=idx, region=region, right_adj=None, left_adj=None))
+        idx += 1
+
+    # Find all right contiguous regions
+    for dreg in all_regions:
+        for dnreg in all_regions[dreg['idx']+1:]:
+            if dreg['region'].owner == dnreg['region'].owner:
+                if dnreg['region'].base == dreg['region'].base + dreg['region'].size:
+                    dreg['right_adj'] = dnreg
+                    dnreg['left_adj'] = dreg
+                elif dreg['region'].base == dnreg['region'].base + dnreg['region'].size:
+                    dnreg['right_adj'] = dreg
+                    dreg['left_adj'] = dnreg
+
+    # Find all the left-most contiguous regions
+    contiguous_regions = set()
+    for reg in all_regions:
+        if reg['left_adj'] is None:
+            size = reg['region'].size
+            r_adj = reg['right_adj']
+            while r_adj is not None:
+                size += r_adj['region'].size
+                r_adj = r_adj['right_adj']
+            contiguous_regions.add(Region(reg['region'].base, size, reg['region'].owner))
+    return contiguous_regions
+
+
 def parse_reserved_regions(node: WrappedNode) -> Set[Region]:
     ''' Parse a reserved-memory node, looking for regions that are
         unusable by OS (e.g. reserved for firmware/bootloader) '''
@@ -88,6 +120,7 @@ def align_memory(regions: Set[Region], config: Config) -> List[Region]:
 def get_physical_memory(tree: FdtParser, config: Config) -> List[Region]:
     ''' returns a list of regions representing physical memory as used by the kernel '''
     regions = get_memory_regions(tree)
+    regions = merge_memory_regions(regions)
     reserved = parse_reserved_regions(tree.get_path('/reserved-memory'))
     regions = reserve_regions(regions, reserved)
     regions, extra_reserved, physBase = align_memory(regions, config)
