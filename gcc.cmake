@@ -61,7 +61,10 @@ if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
             set(CROSS_COMPILER_PREFIX "aarch64-linux-gnu-")
         elseif(${arch} STREQUAL "riscv")
             FindPrefixedGCC(
-                CROSS_COMPILER_PREFIX "riscv64-unknown-linux-gnu-" "riscv64-unknown-elf-"
+                CROSS_COMPILER_PREFIX
+                "riscv64-unknown-linux-gnu-"
+                "riscv64-unknown-elf-"
+                "riscv64-elf-"
             )
         endif()
     else()
@@ -77,7 +80,10 @@ if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
             set(CROSS_COMPILER_PREFIX "aarch64-linux-gnu-")
         elseif(RISCV32 OR RISCV64)
             FindPrefixedGCC(
-                CROSS_COMPILER_PREFIX "riscv64-unknown-linux-gnu-" "riscv64-unknown-elf-"
+                CROSS_COMPILER_PREFIX
+                "riscv64-unknown-linux-gnu-"
+                "riscv64-unknown-elf-"
+                "riscv64-elf-"
             )
         endif()
     endif()
