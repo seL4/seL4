@@ -109,6 +109,20 @@ void vcpu_restore(vcpu_t *vcpu)
 
 void VPPIEvent(irq_t irq)
 {
+#ifdef CONFIG_KERNEL_MCS
+    /* If the current task is currently enqueued it will not be able to
+     * correctly receive a fault IPC message. This may occur due to the
+     * budget check that happens early in the handleInterruptEntry.
+     *
+     * If the current thread does *not* have budget this interrupt is
+     * ignored for now. As it is a level-triggered interrupt it shall
+     * be re-raised (and not lost).
+     */
+    if (thread_state_get_tcbQueued(NODE_STATE(ksCurThread)->tcbState)) {
+        return;
+    }
+#endif
+
     if (ARCH_NODE_STATE(armHSVCPUActive)) {
         maskInterrupt(true, irq);
         assert(irqVPPIEventIndex(irq) != VPPIEventIRQ_invalid);
@@ -128,6 +142,13 @@ void VGICMaintenance(void)
 {
     uint32_t eisr0, eisr1;
     uint32_t flags;
+
+#ifdef CONFIG_KERNEL_MCS
+    /* See VPPIEvent for details on this check. */
+    if (thread_state_get_tcbQueued(NODE_STATE(ksCurThread)->tcbState)) {
+        return;
+    }
+#endif
 
     /* We shouldn't get a VGICMaintenance interrupt while a VCPU isn't active,
      * but if one becomes pending before the VGIC is disabled we might get one

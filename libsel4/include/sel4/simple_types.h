@@ -111,13 +111,19 @@ typedef seL4_Int8   seL4_Bool;
 /* Define seL4_Word */
 #if defined(SEL4_WORD_IS_UINT32)
 typedef seL4_Uint32 seL4_Word;
-#define SEL4_PRI_word   "u" // seL4_Word printf format specifier
+#define _seL4_word_fmt /* empty */
 #elif defined(SEL4_WORD_IS_UINT64)
 typedef seL4_Uint64 seL4_Word;
-#define SEL4_PRI_word   SEL4_PRIu64 // seL4_Word printf format specifier
+#define _seL4_word_fmt _seL4_int64_fmt
 #else
 #error missing definition for SEL4_WORD type
 #endif
+/* printf() format specifiers for seL4_Word */
+#define SEL4_PRId_word  _macro_str_concat(_seL4_word_fmt, d)
+#define SEL4_PRIi_word  _macro_str_concat(_seL4_word_fmt, i)
+#define SEL4_PRIu_word  _macro_str_concat(_seL4_word_fmt, u)
+#define SEL4_PRIx_word  _macro_str_concat(_seL4_word_fmt, x)
+#define SEL4_PRI_word   SEL4_PRIu_word
 
 typedef seL4_Word seL4_CPtr;
 
