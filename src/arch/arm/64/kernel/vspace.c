@@ -2440,7 +2440,7 @@ void kernelDataAbort(word_t pc)
            getFAR(), getDFSR());
     halt();
 }
-#endif
+#endif /* CONFIG_DEBUG_BUILD */
 
 #ifdef CONFIG_PRINTING
 typedef struct readWordFromVSpace_ret {
