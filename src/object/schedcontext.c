@@ -231,7 +231,7 @@ static exception_t decodeSchedContext_YieldTo(sched_context_t *sc, word_t *buffe
     // This should not be possible as the currently running thread
     // should never have a non-null yieldTo, however verifying this
     // invariant is being left to future work.
-    assert(NODE_STATE(ksCurThread)->tcbYieldTo != NULL);
+    assert(NODE_STATE(ksCurThread)->tcbYieldTo == NULL);
     if (NODE_STATE(ksCurThread)->tcbYieldTo != NULL) {
         userError("SchedContext_YieldTo: cannot seL4_SchedContext_YieldTo to more than on SC at a time");
         current_syscall_error.type = seL4_IllegalOperation;
