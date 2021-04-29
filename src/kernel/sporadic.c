@@ -332,10 +332,9 @@ void refill_unblock_check(sched_context_t *sc)
 
         /* merge available replenishments */
         while (refill_head_overlapping(sc)) {
-            ticks_t amount = refill_head(sc)->rAmount;
-            refill_pop_head(sc);
-            refill_head(sc)->rAmount += amount;
-            refill_head(sc)->rTime = NODE_STATE_ON_CORE(ksCurTime, sc->scCore);
+            refill_t old_head = refill_pop_head(sc);
+            refill_head(sc)->rTime = old_head.rTime;
+            refill_head(sc)->rAmount += old_head.rAmount;
         }
 
         assert(refill_sufficient(sc, 0));
