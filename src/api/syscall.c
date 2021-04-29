@@ -588,8 +588,13 @@ static inline void mcsPreemptionPoint(irq_t irq)
     } else if (NODE_STATE(ksCurSC)->scRefillMax) {
         /* otherwise, if the thread is not schedulable, the SC could be valid - charge it if so */
         chargeBudget(NODE_STATE(ksConsumed), false, CURRENT_CPU_INDEX(), true);
+    } else {
+        /* If the current SC is no longer configured the time can no
+         * longer be charged to it. Simply dropping the consumed time
+         * here is equivalent to having charged the consumed time and
+         * then having cleared the SC. */
+        NODE_STATE(ksConsumed) = 0;
     }
-
 }
 #else
 #define handleRecv(isBlocking, canReply) handleRecv(isBlocking)
