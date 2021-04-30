@@ -64,6 +64,12 @@ void reply_pop(reply_t *reply, tcb_t *tcb)
     if (likely(next_ptr != 0)) {
         assert(call_stack_get_isHead(reply->replyNext));
 
+        SC_PTR(next_ptr)->scReply = REPLY_PTR(prev_ptr);
+        if (prev_ptr != 0) {
+            REPLY_PTR(prev_ptr)->replyNext = reply->replyNext;
+            assert(call_stack_get_isHead(REPLY_PTR(prev_ptr)->replyNext));
+        }
+
         /* give it back */
         if (tcb->tcbSchedContext == NULL) {
             /* only give the SC back if our SC is NULL. This prevents
@@ -71,12 +77,6 @@ void reply_pop(reply_t *reply, tcb_t *tcb)
              * in the BlockedOnReply state. The semantics in this case are that the
              * SC cannot go back to the caller if the caller has received another one */
             schedContext_donate(SC_PTR(next_ptr), tcb);
-        }
-
-        SC_PTR(next_ptr)->scReply = REPLY_PTR(prev_ptr);
-        if (prev_ptr != 0) {
-            REPLY_PTR(prev_ptr)->replyNext = reply->replyNext;
-            assert(call_stack_get_isHead(REPLY_PTR(prev_ptr)->replyNext));
         }
     }
 
