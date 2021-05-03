@@ -176,6 +176,12 @@ void VISIBLE NORETURN c_handle_syscall(word_t cptr, word_t msgInfo, word_t unuse
 #endif
         UNREACHABLE();
     }
+#ifdef CONFIG_KERNEL_MCS
+    else if (syscall == (syscall_t)SysSend) {
+        fastpath_signal(cptr, msgInfo);
+        UNREACHABLE();
+    }
+#endif /* CONFIG_KERNEL_MCS */
 #endif /* CONFIG_FASTPATH */
     slowpath(syscall);
     UNREACHABLE();
