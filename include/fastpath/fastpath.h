@@ -6,6 +6,11 @@
 
 #pragma once
 
+#ifdef CONFIG_KERNEL_MCS
+#include <object/reply.h>
+#include <object/notification.h>
+#endif
+
 /* Fastpath cap lookup.  Returns a null_cap on failure. */
 static inline cap_t FORCE_INLINE lookup_fp(cap_t cap, cptr_t cptr)
 {
@@ -113,6 +118,97 @@ static inline reply_t *thread_state_get_replyObject_np(thread_state_t ts)
 #endif
 }
 #endif
+
+static inline void cancelSignal_fp(tcb_t *tptr, notification_t *ntfnPtr)
+{
+    tcb_queue_t ntfn_queue;
+
+    /* Haskell error "cancelSignal: notification object must be in a waiting" state */
+    assert(notification_ptr_get_state(ntfnPtr) == NtfnState_Waiting);
+
+    ntfn_queue.head = (tcb_t *)notification_ptr_get_ntfnQueue_head(ntfnPtr);
+    ntfn_queue.end = (tcb_t *)notification_ptr_get_ntfnQueue_tail(ntfnPtr);
+
+    /* Dequeue TCB */
+    ntfn_queue = tcbEPDequeue(tptr, ntfn_queue);
+    notification_ptr_set_ntfnQueue_head(ntfnPtr, (word_t)ntfn_queue.head);
+    notification_ptr_set_ntfnQueue_tail(ntfnPtr, (word_t)ntfn_queue.end);
+
+    /* set the thread state to idle if the queue is empty */
+    if (!ntfn_queue.head) {
+        notification_ptr_set_state(ntfnPtr, NtfnState_Idle);
+    }
+
+    /* Make thread inactive */
+    thread_state_ptr_set_tsType_np(&tptr->tcbState, ThreadState_Inactive);
+}
+
+static inline void cancelIPC_fp(tcb_t *tptr)
+{
+    thread_state_t *state = &tptr->tcbState;
+
+#ifdef CONFIG_KERNEL_MCS
+    /* cancel ipc cancels all faults */
+    seL4_Fault_NullFault_ptr_new(&tptr->tcbFault);
+#endif
+
+    switch (thread_state_ptr_get_tsType(state)) {
+    case ThreadState_BlockedOnSend:
+    case ThreadState_BlockedOnReceive: {
+        /* blockedIPCCancel state */
+        endpoint_t *epptr;
+
+        epptr = EP_PTR(thread_state_ptr_get_blockingObject(state));
+
+        /* Haskell error "blockedIPCCancel: endpoint must not be idle" */
+        assert(endpoint_ptr_get_state(epptr) != EPState_Idle);
+
+        /* Dequeue TCB */
+        endpoint_ptr_set_epQueue_head_np(epptr, TCB_REF(tptr->tcbEPNext));
+        if (unlikely(tptr->tcbEPNext)) {
+            tptr->tcbEPNext->tcbEPPrev = NULL;
+        } else {
+            endpoint_ptr_mset_epQueue_tail_state(epptr, 0, EPState_Idle);
+        }
+
+#ifdef CONFIG_KERNEL_MCS
+        reply_t *reply = REPLY_PTR(thread_state_get_replyObject(tptr->tcbState));
+        if (reply != NULL) {
+            reply_unlink(reply, tptr);
+        }
+#endif
+        thread_state_ptr_set_tsType_np(&tptr->tcbState, ThreadState_Inactive);
+        break;
+    }
+
+    case ThreadState_BlockedOnNotification:
+        cancelSignal_fp(tptr,
+                     NTFN_PTR(thread_state_ptr_get_blockingObject(state)));
+        break;
+
+    case ThreadState_BlockedOnReply: {
+#ifdef CONFIG_KERNEL_MCS
+        reply_remove_tcb(tptr);
+#else
+        cte_t *slot, *callerCap;
+
+        tptr->tcbFault = seL4_Fault_NullFault_new();
+
+        /* Get the reply cap slot */
+        slot = TCB_PTR_CTE_PTR(tptr, tcbReply);
+
+        callerCap = CTE_PTR(mdb_node_get_mdbNext(slot->cteMDBNode));
+        if (callerCap) {
+            /** GHOSTUPD: "(True,
+                gs_set_assn cteDeleteOne_'proc (ucast cap_reply_cap))" */
+            cteDeleteOne(callerCap);
+        }
+#endif
+
+        break;
+    }
+    }
+}
 
 #include <arch/fastpath/fastpath.h>
 

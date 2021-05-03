@@ -6,10 +6,6 @@
 
 #include <config.h>
 #include <fastpath/fastpath.h>
-#ifdef CONFIG_KERNEL_MCS
-#include <object/reply.h>
-#include <object/notification.h>
-#endif
 
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
 #include <benchmark/benchmark_track.h>
@@ -71,7 +67,7 @@ void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
             if (tcb) {
                 if (thread_state_ptr_get_tsType(&tcb->tcbState) == ThreadState_BlockedOnReceive) {
                     /* Send and start thread running */
-                    cancelIPC(tcb);
+                    cancelIPC_fp(tcb);
                     maybeDonateSchedContext(tcb, ntfnPtr);
 
                     /* Get destination thread VTable */
