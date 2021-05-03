@@ -153,6 +153,8 @@ void VISIBLE c_handle_fastpath_call(word_t cptr, word_t msgInfo)
     UNREACHABLE();
 }
 
+#ifdef CONFIG_KERNEL_MCS
+#ifdef CONFIG_SIGNAL_FASTPATH
 ALIGN(L1_CACHE_LINE_SIZE)
 void VISIBLE c_handle_fastpath_signal(word_t cptr, word_t msgInfo)
 {
@@ -167,6 +169,8 @@ void VISIBLE c_handle_fastpath_signal(word_t cptr, word_t msgInfo)
     fastpath_signal(cptr, msgInfo);
     UNREACHABLE();
 }
+#endif /* CONFIG_SIGNAL_FASTPATH */
+#endif /* CONFIG_KERNEL_MCS */
 
 ALIGN(L1_CACHE_LINE_SIZE)
 #ifdef CONFIG_KERNEL_MCS

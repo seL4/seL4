@@ -248,6 +248,7 @@ config_string(
     UNQUOTE
 )
 config_option(KernelFastpath FASTPATH "Enable IPC fastpath" DEFAULT ON)
+config_option(KernelSignalFastpath SIGNAL_FASTPATH "Enable notification signal fastpath" DEFAULT OFF)
 
 config_string(
     KernelNumDomains NUM_DOMAINS "The number of scheduler domains in the system"
