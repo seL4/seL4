@@ -40,7 +40,14 @@ jobs:
       fail-fast: false
       matrix:
         arch: [ARM, ARM_HYP, RISCV64, X64]
+        feature: ["", MCS]
+        exclude:
+          - arch: ARM_HYP
+            feature: MCS
+          - arch: X64
+            feature: MCS
     steps:
     - uses: seL4/ci-actions/preprocess@master
       with:
         L4V_ARCH: ${{ matrix.arch }}
+        L4V_FEATURES: ${{ matrix.feature }}
