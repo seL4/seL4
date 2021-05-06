@@ -533,7 +533,7 @@ void setPriority(tcb_t *tptr, prio_t prio)
 void possibleSwitchTo(tcb_t *target)
 {
 #ifdef CONFIG_KERNEL_MCS
-    if (target->tcbSchedContext != NULL && !thread_state_get_tcbInReleaseQueue(target->tcbState)) {
+    if (target->tcbSchedContext != NULL && !thread_state_get_tcbInReleaseQueue(target->tcbState) && isRunnable(target)) {
 #endif
         if (ksCurDomain != target->tcbDomain
             SMP_COND_STATEMENT( || target->tcbAffinity != getCurrentCPUIndex())) {
