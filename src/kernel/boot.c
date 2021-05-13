@@ -685,7 +685,7 @@ BOOT_CODE void bi_finalise(void)
     };
 }
 
-static inline pptr_t ceiling_kernel_window(pptr_t p)
+BOOT_CODE static inline pptr_t ceiling_kernel_window(pptr_t p)
 {
     /* Adjust address if it exceeds the kernel window
      * Note that we compare physical address in case of overflow.
