@@ -6,9 +6,7 @@
 
 #pragma once
 
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif
 
 #ifdef CONFIG_BENCHMARK_TRACEPOINTS
 typedef struct benchmark_tracepoint_log_entry {
@@ -16,4 +14,3 @@ typedef struct benchmark_tracepoint_log_entry {
     seL4_Word  duration;
 } benchmark_tracepoint_log_entry_t;
 #endif /* CONFIG_BENCHMARK_TRACEPOINTS */
-

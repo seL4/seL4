@@ -6,14 +6,14 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-declare_platform(ultra96 KernelPlatformUltra96 PLAT_ZYNQMP_ULTRA96 KernelArchARM)
 declare_platform(zynqmp KernelPlatformZynqmp PLAT_ZYNQMP KernelArchARM)
 
-if(KernelPlatformUltra96)
-    # Ultra96 is is basically Zynqmp
-    list(APPEND KernelDTSList "tools/dts/ultra96.dts")
-    config_set(KernelPlatformZynqmp PLAT_ZYNQMP ON)
-endif()
+set(c_configs PLAT_ZYNQMP_ZCU102 PLAT_ZYNQMP_ULTRA96)
+set(cmake_configs KernelPlatformZynqmpZcu102 KernelPlatformZynqmpUltra96)
+set(plat_lists zcu102 ultra96)
+foreach(config IN LISTS cmake_configs)
+    unset(${config} CACHE)
+endforeach()
 
 if(KernelPlatformZynqmp)
     set(KernelHardwareDebugAPIUnsupported ON CACHE INTERNAL "")
@@ -27,13 +27,28 @@ if(KernelPlatformZynqmp)
         fallback_declare_seL4_arch_default(aarch64)
     endif()
 
+    check_platform_and_fallback_to_default(KernelARMPlatform "zcu102")
+
+    list(FIND plat_lists ${KernelARMPlatform} index)
+    if("${index}" STREQUAL "-1")
+        message(FATAL_ERROR "Which zynqmp platform not specified")
+    endif()
+    list(GET c_configs ${index} c_config)
+    list(GET cmake_configs ${index} cmake_config)
+    config_set(KernelARMPlatform ARM_PLAT ${KernelARMPlatform})
+    config_set(${cmake_config} ${c_config} ON)
+
     set(KernelArmCortexA53 ON)
     set(KernelArchArmV8a ON)
-    config_set(KernelARMPlatform ARM_PLAT zynqmp)
+
     config_set(KernelArmMach MACH "zynq")
 
-    if(NOT KernelPlatformUltra96)
+    if(KernelPlatformZynqmpUltra96)
+        list(APPEND KernelDTSList "tools/dts/ultra96.dts")
+    elseif(KernelPlatformZynqmpZcu102)
         list(APPEND KernelDTSList "tools/dts/zynqmp.dts")
+    else()
+        message(FATAL_ERROR "unknown platform")
     endif()
 
     if(KernelSel4ArchAarch32)

@@ -5,6 +5,27 @@
  */
 
 / {
+	amba {
+		/* These blocks remove the duplicate interrupt which causes issues
+		 * in the low-level drivers
+		 */
+		ethernet@ff0b0000 {
+			interrupts = < 0x00 0x39 0x04 >;
+		};
+
+		ethernet@ff0c0000 {
+			interrupts = < 0x00 0x3b 0x04 >;
+		};
+
+		ethernet@ff0d0000 {
+			interrupts = < 0x00 0x3d 0x04 >;
+		};
+
+		ethernet@ff0e0000 {
+			interrupts = < 0x00 0x3f 0x04 >;
+		};
+	};
+
     chosen {
 		seL4,elfloader-devices =
 		    "serial0",

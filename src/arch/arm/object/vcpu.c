@@ -109,6 +109,20 @@ void vcpu_restore(vcpu_t *vcpu)
 
 void VPPIEvent(irq_t irq)
 {
+#ifdef CONFIG_KERNEL_MCS
+    /* If the current task is currently enqueued it will not be able to
+     * correctly receive a fault IPC message. This may occur due to the
+     * budget check that happens early in the handleInterruptEntry.
+     *
+     * If the current thread does *not* have budget this interrupt is
+     * ignored for now. As it is a level-triggered interrupt it shall
+     * be re-raised (and not lost).
+     */
+    if (thread_state_get_tcbQueued(NODE_STATE(ksCurThread)->tcbState)) {
+        return;
+    }
+#endif
+
     if (ARCH_NODE_STATE(armHSVCPUActive)) {
         maskInterrupt(true, irq);
         assert(irqVPPIEventIndex(irq) != VPPIEventIRQ_invalid);
@@ -128,6 +142,13 @@ void VGICMaintenance(void)
 {
     uint32_t eisr0, eisr1;
     uint32_t flags;
+
+#ifdef CONFIG_KERNEL_MCS
+    /* See VPPIEvent for details on this check. */
+    if (thread_state_get_tcbQueued(NODE_STATE(ksCurThread)->tcbState)) {
+        return;
+    }
+#endif
 
     /* We shouldn't get a VGICMaintenance interrupt while a VCPU isn't active,
      * but if one becomes pending before the VGIC is disabled we might get one
@@ -452,14 +473,13 @@ exception_t decodeARMVCPUInvocation(
     cptr_t cptr,
     cte_t *slot,
     cap_t cap,
-    extra_caps_t extraCaps,
     bool_t call,
     word_t *buffer
 )
 {
     switch (label) {
     case ARMVCPUSetTCB:
-        return decodeVCPUSetTCB(cap, extraCaps);
+        return decodeVCPUSetTCB(cap);
     case ARMVCPUReadReg:
         return decodeVCPUReadReg(cap, length, call, buffer);
     case ARMVCPUWriteReg:
@@ -509,15 +529,15 @@ exception_t invokeVCPUAckVPPI(vcpu_t *vcpu, VPPIEventIRQ_t vppi)
     return EXCEPTION_NONE;
 }
 
-exception_t decodeVCPUSetTCB(cap_t cap, extra_caps_t extraCaps)
+exception_t decodeVCPUSetTCB(cap_t cap)
 {
     cap_t tcbCap;
-    if (extraCaps.excaprefs[0] == NULL) {
+    if (current_extra_caps.excaprefs[0] == NULL) {
         userError("VCPU SetTCB: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
-    tcbCap  = extraCaps.excaprefs[0]->cap;
+    tcbCap  = current_extra_caps.excaprefs[0]->cap;
 
     if (cap_get_capType(tcbCap) != cap_thread_cap) {
         userError("TCB cap is not a TCB cap.");

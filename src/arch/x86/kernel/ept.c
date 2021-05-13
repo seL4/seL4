@@ -264,7 +264,6 @@ static exception_t decodeX86EPTPDPTInvocation(
     word_t length,
     cte_t *cte,
     cap_t cap,
-    extra_caps_t excaps,
     word_t *buffer
 )
 {
@@ -292,7 +291,7 @@ static exception_t decodeX86EPTPDPTInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (length < 2 || excaps.excaprefs[0] == NULL) {
+    if (length < 2 || current_extra_caps.excaprefs[0] == NULL) {
         userError("X86EPTPDPTMap: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -311,7 +310,7 @@ static exception_t decodeX86EPTPDPTInvocation(
      * this results in an error shifting by greater than 31 bits, so we manually
      * force a 64-bit variable to do the shifting with */
     vaddr = vaddr & ~(((uint64_t)1 << EPT_PML4_INDEX_OFFSET) - 1);
-    pml4Cap = excaps.excaprefs[0]->cap;
+    pml4Cap = current_extra_caps.excaprefs[0]->cap;
 
     if (cap_get_capType(pml4Cap) != cap_ept_pml4_cap) {
         userError("X86EPTPDPTMap: Not a valid EPT PML4.");
@@ -369,17 +368,16 @@ exception_t decodeX86EPTInvocation(
     cptr_t cptr,
     cte_t *cte,
     cap_t cap,
-    extra_caps_t excaps,
     word_t *buffer
 )
 {
     switch (cap_get_capType(cap)) {
     case cap_ept_pdpt_cap:
-        return decodeX86EPTPDPTInvocation(invLabel, length, cte, cap, excaps, buffer);
+        return decodeX86EPTPDPTInvocation(invLabel, length, cte, cap, buffer);
     case cap_ept_pd_cap:
-        return decodeX86EPTPDInvocation(invLabel, length, cte, cap, excaps, buffer);
+        return decodeX86EPTPDInvocation(invLabel, length, cte, cap, buffer);
     case cap_ept_pt_cap:
-        return decodeX86EPTPTInvocation(invLabel, length, cte, cap, excaps, buffer);
+        return decodeX86EPTPTInvocation(invLabel, length, cte, cap, buffer);
     default:
         fail("Invalid cap type");
     }
@@ -469,7 +467,6 @@ exception_t decodeX86EPTPDInvocation(
     word_t length,
     cte_t *cte,
     cap_t cap,
-    extra_caps_t excaps,
     word_t *buffer
 )
 {
@@ -497,7 +494,7 @@ exception_t decodeX86EPTPDInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (length < 2 || excaps.excaprefs[0] == NULL) {
+    if (length < 2 || current_extra_caps.excaprefs[0] == NULL) {
         userError("X86EPTPDMap: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -514,7 +511,7 @@ exception_t decodeX86EPTPDInvocation(
 
     vaddr = getSyscallArg(0, buffer);
     vaddr = vaddr & ~MASK(EPT_PDPT_INDEX_OFFSET);
-    pml4Cap = excaps.excaprefs[0]->cap;
+    pml4Cap = current_extra_caps.excaprefs[0]->cap;
 
     if (cap_get_capType(pml4Cap) != cap_ept_pml4_cap) {
         userError("X86EPTPDMap: Not a valid EPT pml4.");
@@ -657,7 +654,6 @@ exception_t decodeX86EPTPTInvocation(
     word_t length,
     cte_t *cte,
     cap_t cap,
-    extra_caps_t excaps,
     word_t *buffer
 )
 {
@@ -685,7 +681,7 @@ exception_t decodeX86EPTPTInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (length < 2 || excaps.excaprefs[0] == NULL) {
+    if (length < 2 || current_extra_caps.excaprefs[0] == NULL) {
         userError("X86EPTPT: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -702,7 +698,7 @@ exception_t decodeX86EPTPTInvocation(
 
     vaddr = getSyscallArg(0, buffer);
     vaddr = vaddr & ~MASK(EPT_PD_INDEX_OFFSET);
-    pml4Cap = excaps.excaprefs[0]->cap;
+    pml4Cap = current_extra_caps.excaprefs[0]->cap;
 
     if (cap_get_capType(pml4Cap) != cap_ept_pml4_cap ||
         !cap_ept_pml4_cap_get_capPML4IsMapped(pml4Cap)) {
@@ -792,7 +788,6 @@ exception_t decodeX86EPTPageMap(
     word_t length,
     cte_t *cte,
     cap_t cap,
-    extra_caps_t excaps,
     word_t *buffer)
 {
     word_t          vaddr;
@@ -811,7 +806,7 @@ exception_t decodeX86EPTPageMap(
     vaddr = vaddr & ~MASK(EPT_PT_INDEX_OFFSET);
     w_rightsMask = getSyscallArg(1, buffer);
     vmAttr = vmAttributesFromWord(getSyscallArg(2, buffer));
-    pml4Cap = excaps.excaprefs[0]->cap;
+    pml4Cap = current_extra_caps.excaprefs[0]->cap;
 
     capVMRights = cap_frame_cap_get_capFVMRights(cap);
 

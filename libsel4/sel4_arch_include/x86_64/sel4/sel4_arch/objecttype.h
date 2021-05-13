@@ -6,9 +6,7 @@
 
 #pragma once
 
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif /* HAVE_AUTOCONF */
 
 typedef enum _mode_object {
     seL4_X86_PDPTObject = seL4_NonArchObjectTypeCount,
@@ -25,4 +23,3 @@ typedef enum _mode_object {
 #ifndef CONFIG_HUGE_PAGE
 #define seL4_X64_HugePageObject 0xfffffffe
 #endif
-

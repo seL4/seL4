@@ -2043,7 +2043,7 @@ static exception_t performASIDControlInvocation(void *frame, cte_t *slot,
 
 static exception_t decodeARMPageDirectoryInvocation(word_t invLabel, word_t length,
                                                     cptr_t cptr, cte_t *cte, cap_t cap,
-                                                    extra_caps_t excaps, word_t *buffer)
+                                                    word_t *buffer)
 {
     switch (invLabel) {
     case ARMPDClean_Data:
@@ -2152,8 +2152,7 @@ static exception_t decodeARMPageDirectoryInvocation(word_t invLabel, word_t leng
 }
 
 static exception_t decodeARMPageTableInvocation(word_t invLabel, word_t length,
-                                                cte_t *cte, cap_t cap, extra_caps_t excaps,
-                                                word_t *buffer)
+                                                cte_t *cte, cap_t cap, word_t *buffer)
 {
     word_t vaddr, pdIndex;
 
@@ -2182,7 +2181,7 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, word_t length,
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (unlikely(length < 2 || excaps.excaprefs[0] == NULL)) {
+    if (unlikely(length < 2 || current_extra_caps.excaprefs[0] == NULL)) {
         userError("ARMPageTableMap: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -2201,7 +2200,7 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, word_t length,
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     attr = vmAttributesFromWord(getSyscallArg(1, buffer));
 #endif
-    pdCap = excaps.excaprefs[0]->cap;
+    pdCap = current_extra_caps.excaprefs[0]->cap;
 
     if (unlikely(cap_get_capType(pdCap) != cap_page_directory_cap ||
                  !cap_page_directory_cap_get_capPDIsMapped(pdCap))) {
@@ -2276,8 +2275,7 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, word_t length,
 }
 
 static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
-                                            cte_t *cte, cap_t cap, extra_caps_t excaps,
-                                            word_t *buffer)
+                                            cte_t *cte, cap_t cap, word_t *buffer)
 {
     switch (invLabel) {
     case ARMPageMap: {
@@ -2290,7 +2288,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
         vm_page_size_t frameSize;
         vm_attributes_t attr;
 
-        if (unlikely(length < 3 || excaps.excaprefs[0] == NULL)) {
+        if (unlikely(length < 3 || current_extra_caps.excaprefs[0] == NULL)) {
             userError("ARMPageMap: Truncated message.");
             current_syscall_error.type =
                 seL4_TruncatedMessage;
@@ -2301,7 +2299,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
         vaddr = getSyscallArg(0, buffer);
         w_rightsMask = getSyscallArg(1, buffer);
         attr = vmAttributesFromWord(getSyscallArg(2, buffer));
-        pdCap = excaps.excaprefs[0]->cap;
+        pdCap = current_extra_caps.excaprefs[0]->cap;
 
         frameSize = generic_frame_cap_get_capFSize(cap);
         capVMRights = generic_frame_cap_get_capFVMRights(cap);
@@ -2441,7 +2439,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
 
 #ifdef CONFIG_TK1_SMMU
     case ARMPageMapIO: {
-        return decodeARMIOMapInvocation(invLabel, length, cte, cap, excaps, buffer);
+        return decodeARMIOMapInvocation(invLabel, length, cte, cap, buffer);
     }
 #endif
 
@@ -2546,22 +2544,19 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
 }
 
 exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
-                                   cte_t *cte, cap_t cap, extra_caps_t excaps,
-                                   word_t *buffer)
+                                   cte_t *cte, cap_t cap, word_t *buffer)
 {
     switch (cap_get_capType(cap)) {
     case cap_page_directory_cap:
         return decodeARMPageDirectoryInvocation(invLabel, length, cptr, cte,
-                                                cap, excaps, buffer);
+                                                cap, buffer);
 
     case cap_page_table_cap:
-        return decodeARMPageTableInvocation(invLabel, length, cte,
-                                            cap, excaps, buffer);
+        return decodeARMPageTableInvocation(invLabel, length, cte, cap, buffer);
 
     case cap_small_frame_cap:
     case cap_frame_cap:
-        return decodeARMFrameInvocation(invLabel, length, cte,
-                                        cap, excaps, buffer);
+        return decodeARMFrameInvocation(invLabel, length, cte, cap, buffer);
 
     case cap_asid_control_cap: {
         word_t i;
@@ -2580,8 +2575,8 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        if (unlikely(length < 2 || excaps.excaprefs[0] == NULL
-                     || excaps.excaprefs[1] == NULL)) {
+        if (unlikely(length < 2 || current_extra_caps.excaprefs[0] == NULL
+                     || current_extra_caps.excaprefs[1] == NULL)) {
             userError("ASIDControlMakePool: Truncated message.");
             current_syscall_error.type = seL4_TruncatedMessage;
 
@@ -2590,9 +2585,9 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
 
         index = getSyscallArg(0, buffer);
         depth = getSyscallArg(1, buffer);
-        parentSlot = excaps.excaprefs[0];
+        parentSlot = current_extra_caps.excaprefs[0];
         untyped = parentSlot->cap;
-        root = excaps.excaprefs[1]->cap;
+        root = current_extra_caps.excaprefs[1]->cap;
 
         /* Find first free pool */
         for (i = 0; i < nASIDPools && armKSASIDTable[i]; i++);
@@ -2656,14 +2651,14 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        if (unlikely(excaps.excaprefs[0] == NULL)) {
+        if (unlikely(current_extra_caps.excaprefs[0] == NULL)) {
             userError("ASIDPoolAssign: Truncated message.");
             current_syscall_error.type = seL4_TruncatedMessage;
 
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        pdCapSlot = excaps.excaprefs[0];
+        pdCapSlot = current_extra_caps.excaprefs[0];
         pdCap = pdCapSlot->cap;
 
         if (unlikely(

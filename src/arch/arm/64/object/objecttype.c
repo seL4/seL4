@@ -472,7 +472,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
 }
 
 exception_t Arch_decodeInvocation(word_t label, word_t length, cptr_t cptr,
-                                  cte_t *slot, cap_t cap, extra_caps_t extraCaps,
+                                  cte_t *slot, cap_t cap,
                                   bool_t call, word_t *buffer)
 {
 
@@ -483,23 +483,23 @@ exception_t Arch_decodeInvocation(word_t label, word_t length, cptr_t cptr,
     switch (cap_get_capType(cap)) {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case cap_vcpu_cap:
-        return decodeARMVCPUInvocation(label, length, cptr, slot, cap, extraCaps, call, buffer);
+        return decodeARMVCPUInvocation(label, length, cptr, slot, cap, call, buffer);
 #endif /* end of CONFIG_ARM_HYPERVISOR_SUPPORT */
 #ifdef CONFIG_ARM_SMMU
     case cap_sid_control_cap:
-        return decodeARMSIDControlInvocation(label, length, cptr, slot, cap, extraCaps, call, buffer);
+        return decodeARMSIDControlInvocation(label, length, cptr, slot, cap, call, buffer);
     case cap_sid_cap:
-        return decodeARMSIDInvocation(label, length, cptr, slot, cap, extraCaps, call, buffer);
+        return decodeARMSIDInvocation(label, length, cptr, slot, cap, call, buffer);
     case cap_cb_control_cap:
-        return decodeARMCBControlInvocation(label, length, cptr, slot, cap, extraCaps, call, buffer);
+        return decodeARMCBControlInvocation(label, length, cptr, slot, cap, call, buffer);
     case cap_cb_cap:
-        return decodeARMCBInvocation(label, length, cptr, slot, cap, extraCaps, call, buffer);
+        return decodeARMCBInvocation(label, length, cptr, slot, cap, call, buffer);
 #endif /*CONFIG_ARM_SMMU*/
     default:
 #else
 {
 #endif
-    return decodeARMMMUInvocation(label, length, cptr, slot, cap, extraCaps, buffer);
+    return decodeARMMMUInvocation(label, length, cptr, slot, cap, buffer);
 }
 }
 

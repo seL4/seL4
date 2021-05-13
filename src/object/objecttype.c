@@ -142,7 +142,7 @@ finaliseCap_ret_t finaliseCap(cap_t cap, bool_t final, bool_t exposed)
                     reply_remove(reply, reply->replyTCB);
                     break;
                 case ThreadState_BlockedOnReceive:
-                    reply_unlink(reply, reply->replyTCB);
+                    cancelIPC(reply->replyTCB);
                     break;
                 default:
                     fail("Invalid tcb state");
@@ -189,9 +189,12 @@ finaliseCap_ret_t finaliseCap(cap_t cap, bool_t final, bool_t exposed)
             cte_ptr = TCB_PTR_CTE_PTR(tcb, tcbCTable);
             unbindNotification(tcb);
 #ifdef CONFIG_KERNEL_MCS
-            if (tcb->tcbSchedContext) {
-                schedContext_completeYieldTo(tcb->tcbSchedContext->scYieldFrom);
-                schedContext_unbindTCB(tcb->tcbSchedContext, tcb);
+            sched_context_t *sc = SC_PTR(tcb->tcbSchedContext);
+            if (sc) {
+                schedContext_unbindTCB(sc, tcb);
+                if (sc->scYieldFrom) {
+                    schedContext_completeYieldTo(sc->scYieldFrom);
+                }
             }
 #endif
             suspend(tcb);
@@ -583,7 +586,8 @@ cap_t createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceM
     }
 }
 
-void createNewObjects(object_t t, cte_t *parent, slot_range_t slots,
+void createNewObjects(object_t t, cte_t *parent,
+                      cte_t *destCNode, word_t destOffset, word_t destLength,
                       void *regionBase, word_t userSize, bool_t deviceMemory)
 {
     word_t objectSize;
@@ -593,19 +597,19 @@ void createNewObjects(object_t t, cte_t *parent, slot_range_t slots,
 
     /* ghost check that we're visiting less bytes than the max object size */
     objectSize = getObjectSize(t, userSize);
-    totalObjectSize = slots.length << objectSize;
+    totalObjectSize = destLength << objectSize;
     /** GHOSTUPD: "(gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state = 0
         \<or> \<acute>totalObjectSize <= gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state, id)" */
 
     /* Create the objects. */
     nextFreeArea = regionBase;
-    for (i = 0; i < slots.length; i++) {
+    for (i = 0; i < destLength; i++) {
         /* Create the object. */
         /** AUXUPD: "(True, typ_region_bytes (ptr_val \<acute> nextFreeArea + ((\<acute> i) << unat (\<acute> objectSize))) (unat (\<acute> objectSize)))" */
         cap_t cap = createObject(t, (void *)((word_t)nextFreeArea + (i << objectSize)), userSize, deviceMemory);
 
         /* Insert the cap into the user's cspace. */
-        insertNewCap(parent, &slots.cnode[slots.offset + i], cap);
+        insertNewCap(parent, &destCNode[destOffset + i], cap);
 
         /* Move along to the next region of memory. been merged into a formula of i */
     }
@@ -614,18 +618,18 @@ void createNewObjects(object_t t, cte_t *parent, slot_range_t slots,
 #ifdef CONFIG_KERNEL_MCS
 exception_t decodeInvocation(word_t invLabel, word_t length,
                              cptr_t capIndex, cte_t *slot, cap_t cap,
-                             extra_caps_t excaps, bool_t block, bool_t call,
+                             bool_t block, bool_t call,
                              bool_t canDonate, bool_t firstPhase, word_t *buffer)
 #else
 exception_t decodeInvocation(word_t invLabel, word_t length,
                              cptr_t capIndex, cte_t *slot, cap_t cap,
-                             extra_caps_t excaps, bool_t block, bool_t call,
+                             bool_t block, bool_t call,
                              word_t *buffer)
 #endif
 {
     if (isArchCap(cap)) {
         return Arch_decodeInvocation(invLabel, length, capIndex,
-                                     slot, cap, excaps, call, buffer);
+                                     slot, cap, call, buffer);
     }
 
     switch (cap_get_capType(cap)) {
@@ -713,8 +717,7 @@ exception_t decodeInvocation(word_t invLabel, word_t length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 #endif
-        return decodeTCBInvocation(invLabel, length, cap,
-                                   slot, excaps, call, buffer);
+        return decodeTCBInvocation(invLabel, length, cap, slot, call, buffer);
 
     case cap_domain_cap:
 #ifdef CONFIG_KERNEL_MCS
@@ -725,7 +728,7 @@ exception_t decodeInvocation(word_t invLabel, word_t length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 #endif
-        return decodeDomainInvocation(invLabel, length, excaps, buffer);
+        return decodeDomainInvocation(invLabel, length, buffer);
 
     case cap_cnode_cap:
 #ifdef CONFIG_KERNEL_MCS
@@ -736,19 +739,17 @@ exception_t decodeInvocation(word_t invLabel, word_t length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 #endif
-        return decodeCNodeInvocation(invLabel, length, cap, excaps, buffer);
+        return decodeCNodeInvocation(invLabel, length, cap, buffer);
 
     case cap_untyped_cap:
-        return decodeUntypedInvocation(invLabel, length, slot, cap, excaps,
-                                       call, buffer);
+        return decodeUntypedInvocation(invLabel, length, slot, cap, call, buffer);
 
     case cap_irq_control_cap:
-        return decodeIRQControlInvocation(invLabel, length, slot,
-                                          excaps, buffer);
+        return decodeIRQControlInvocation(invLabel, length, slot, buffer);
 
     case cap_irq_handler_cap:
         return decodeIRQHandlerInvocation(invLabel,
-                                          IDX_TO_IRQT(cap_irq_handler_cap_get_capIRQ(cap)), excaps);
+                                          IDX_TO_IRQT(cap_irq_handler_cap_get_capIRQ(cap)));
 
 #ifdef CONFIG_KERNEL_MCS
     case cap_sched_control_cap:
@@ -758,7 +759,7 @@ exception_t decodeInvocation(word_t invLabel, word_t length,
             current_syscall_error.invalidCapNumber = 0;
             return EXCEPTION_SYSCALL_ERROR;
         }
-        return decodeSchedControlInvocation(invLabel, cap, length, excaps, buffer);
+        return decodeSchedControlInvocation(invLabel, cap, length, buffer);
 
     case cap_sched_context_cap:
         if (unlikely(firstPhase)) {
@@ -767,7 +768,7 @@ exception_t decodeInvocation(word_t invLabel, word_t length,
             current_syscall_error.invalidCapNumber = 0;
             return EXCEPTION_SYSCALL_ERROR;
         }
-        return decodeSchedContextInvocation(invLabel, cap, excaps, buffer);
+        return decodeSchedContextInvocation(invLabel, cap, buffer);
 #endif
     default:
         fail("Invalid cap type");

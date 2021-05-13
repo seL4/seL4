@@ -6,8 +6,10 @@
 
 #pragma once
 
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
+
+#if !defined(CONFIG_PLAT_ZYNQMP) && !defined(PLAT_ZYNQMP_ZCU102)
+#error "unknown platform"
 #endif
 
 /* Cortex A57 manual, section 10.6.1 */

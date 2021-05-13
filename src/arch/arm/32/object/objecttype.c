@@ -534,7 +534,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
 }
 
 exception_t Arch_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr,
-                                  cte_t *slot, cap_t cap, extra_caps_t excaps,
+                                  cte_t *slot, cap_t cap,
                                   bool_t call, word_t *buffer)
 {
     /* The C parser cannot handle a switch statement with only a default
@@ -546,17 +546,17 @@ exception_t Arch_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr,
     case cap_io_space_cap:
         return decodeARMIOSpaceInvocation(invLabel, cap);
     case cap_io_page_table_cap:
-        return decodeARMIOPTInvocation(invLabel, length, slot, cap, excaps, buffer);
+        return decodeARMIOPTInvocation(invLabel, length, slot, cap, buffer);
 #endif
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case cap_vcpu_cap:
-        return decodeARMVCPUInvocation(invLabel, length, cptr, slot, cap, excaps, call, buffer);
+        return decodeARMVCPUInvocation(invLabel, length, cptr, slot, cap, call, buffer);
 #endif /* end of CONFIG_ARM_HYPERVISOR_SUPPORT */
     default:
 #else
 {
 #endif
-    return decodeARMMMUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
+    return decodeARMMMUInvocation(invLabel, length, cptr, slot, cap, buffer);
 }
 }
 

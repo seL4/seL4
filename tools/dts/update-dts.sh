@@ -63,6 +63,7 @@ xilinx/zynqmp-zcu102-rev1.0=zynqmp
 freescale/fsl-imx8mq-evk=imx8mq-evk
 freescale/fsl-imx8mm-evk=imx8mm-evk
 rockchip/rk3399-rockpro64=rockpro64
+broadcom/bcm2711-rpi-4-b=rpi4
 "
 
 extract_dts() {

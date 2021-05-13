@@ -14,6 +14,7 @@
 
 #include <sel4/invocation.h>
 #include <interfaces/sel4_client.h>
+#include <sel4/virtual_client.h>
 
 #include <sel4/bootinfo.h>
 #include <sel4/faults.h>

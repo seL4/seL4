@@ -6,9 +6,7 @@
 
 #pragma once
 
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif
 
 #define SEL4_MAPPING_LOOKUP_LEVEL 2
 
@@ -22,4 +20,3 @@ LIBSEL4_INLINE_FUNC seL4_Word seL4_MappingFailedLookupLevel(void)
 {
     return seL4_GetMR(SEL4_MAPPING_LOOKUP_LEVEL);
 }
-

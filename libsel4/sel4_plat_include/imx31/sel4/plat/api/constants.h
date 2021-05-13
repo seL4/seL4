@@ -6,9 +6,7 @@
 
 #pragma once
 
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif
 
 /* ARM1136-JF-S manual, table 13-3 */
 #define seL4_NumHWBreakpoints (8)
@@ -21,5 +19,3 @@
 
 /* First address in the virtual address space that is not accessible to user level */
 #define seL4_UserTop 0xf0000000
-
-

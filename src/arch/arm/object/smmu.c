@@ -19,8 +19,7 @@ static exception_t checkARMCBVspace(cap_t cap)
 }
 
 exception_t decodeARMSIDControlInvocation(word_t label, unsigned int length, cptr_t cptr,
-                                          cte_t *srcSlot, cap_t cap, extra_caps_t extraCaps,
-                                          bool_t call, word_t *buffer)
+                                          cte_t *srcSlot, cap_t cap, bool_t call, word_t *buffer)
 {
 
     word_t index, depth, sid;
@@ -52,7 +51,7 @@ exception_t decodeARMSIDControlInvocation(word_t label, unsigned int length, cpt
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
-    if (length < 3 || extraCaps.excaprefs[0] == NULL) {
+    if (length < 3 || current_extra_caps.excaprefs[0] == NULL) {
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -60,7 +59,7 @@ exception_t decodeARMSIDControlInvocation(word_t label, unsigned int length, cpt
     sid = getSyscallArg(0, buffer);
     index = getSyscallArg(1, buffer);
     depth = getSyscallArg(2, buffer);
-    cnodeCap = extraCaps.excaprefs[0]->cap;
+    cnodeCap = current_extra_caps.excaprefs[0]->cap;
 
     if (sid >= SMMU_MAX_SID) {
         current_syscall_error.type = seL4_RangeError;
@@ -95,8 +94,7 @@ exception_t decodeARMSIDControlInvocation(word_t label, unsigned int length, cpt
 }
 
 exception_t decodeARMSIDInvocation(word_t label, unsigned int length, cptr_t cptr,
-                                   cte_t *srcSlot, cap_t cap, extra_caps_t extraCaps,
-                                   bool_t call, word_t *buffer)
+                                   cte_t *srcSlot, cap_t cap, bool_t call, word_t *buffer)
 {
     cap_t cbCap;
     cte_t *cbCapSlot;
@@ -106,12 +104,12 @@ exception_t decodeARMSIDInvocation(word_t label, unsigned int length, cptr_t cpt
 
     switch (label) {
     case ARMSIDBindCB:
-        if (unlikely(extraCaps.excaprefs[0] == NULL)) {
+        if (unlikely(current_extra_caps.excaprefs[0] == NULL)) {
             userError("ARMSIDBindCB: Invalid CB cap.");
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
         }
-        cbCapSlot = extraCaps.excaprefs[0];
+        cbCapSlot = current_extra_caps.excaprefs[0];
         cbCap = cbCapSlot->cap;
         if (unlikely(cap_get_capType(cbCap) != cap_cb_cap)) {
             userError("ARMSIDBindCB: Invalid CB cap.");
@@ -182,8 +180,7 @@ exception_t smmu_delete_sid(cap_t cap)
 }
 
 exception_t decodeARMCBControlInvocation(word_t label, unsigned int length, cptr_t cptr,
-                                         cte_t *srcSlot, cap_t cap, extra_caps_t extraCaps,
-                                         bool_t call, word_t *buffer)
+                                         cte_t *srcSlot, cap_t cap, bool_t call, word_t *buffer)
 {
 
     word_t index, depth, cb;
@@ -203,7 +200,7 @@ exception_t decodeARMCBControlInvocation(word_t label, unsigned int length, cptr
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
-    if (length < 3 || extraCaps.excaprefs[0] == NULL) {
+    if (length < 3 || current_extra_caps.excaprefs[0] == NULL) {
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -211,7 +208,7 @@ exception_t decodeARMCBControlInvocation(word_t label, unsigned int length, cptr
     cb = getSyscallArg(0, buffer);
     index = getSyscallArg(1, buffer);
     depth = getSyscallArg(2, buffer);
-    cnodeCap = extraCaps.excaprefs[0]->cap;
+    cnodeCap = current_extra_caps.excaprefs[0]->cap;
 
     if (cb >= SMMU_MAX_CB) {
         current_syscall_error.type = seL4_RangeError;
@@ -247,8 +244,7 @@ exception_t decodeARMCBControlInvocation(word_t label, unsigned int length, cptr
 }
 
 exception_t decodeARMCBInvocation(word_t label, unsigned int length, cptr_t cptr,
-                                  cte_t *srcSlot, cap_t cap, extra_caps_t extraCaps,
-                                  bool_t call, word_t *buffer)
+                                  cte_t *srcSlot, cap_t cap, bool_t call, word_t *buffer)
 {
 
     cap_t vspaceCap;
@@ -273,12 +269,12 @@ exception_t decodeARMCBInvocation(word_t label, unsigned int length, cptr_t cptr
         return EXCEPTION_NONE;
 
     case ARMCBAssignVspace:
-        if (unlikely(extraCaps.excaprefs[0] == NULL)) {
+        if (unlikely(current_extra_caps.excaprefs[0] == NULL)) {
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        vspaceCapSlot = extraCaps.excaprefs[0];
+        vspaceCapSlot = current_extra_caps.excaprefs[0];
         vspaceCap = vspaceCapSlot->cap;
 
         if (unlikely(!isVTableRoot(vspaceCap) || !cap_vtable_root_isMapped(vspaceCap))) {

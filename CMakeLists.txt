@@ -197,27 +197,29 @@ list(SORT c_sources)
 list(APPEND c_sources "${KernelDomainSchedule}")
 
 # Add static header includes
-include_directories("include")
-include_directories("include/${KernelWordSize}")
-include_directories("include/arch/${KernelArch}")
-include_directories("include/arch/${KernelArch}/arch/${KernelWordSize}/")
-include_directories("include/plat/${KernelPlatform}/")
-include_directories("include/plat/${KernelPlatform}/plat/${KernelWordSize}/")
+include_directories(
+    "include"
+    "include/${KernelWordSize}"
+    "include/arch/${KernelArch}"
+    "include/arch/${KernelArch}/arch/${KernelWordSize}"
+    "include/plat/${KernelPlatform}"
+    "include/plat/${KernelPlatform}/plat/${KernelWordSize}"
+)
+
 if(KernelArchARM)
-    include_directories("include/arch/arm/armv/${KernelArmArmV}/")
-    include_directories("include/arch/arm/armv/${KernelArmArmV}/${KernelWordSize}")
+    include_directories(
+        "include/arch/arm/armv/${KernelArmArmV}"
+        "include/arch/arm/armv/${KernelArmArmV}/${KernelWordSize}"
+    )
 endif()
+
 if(KernelArmMach STREQUAL "exynos")
     include_directories("include/plat/exynos_common/")
 endif()
-if(KernelArchRiscV)
-    include_directories("include/arch/${KernelArch}/arch/${KernelWordSize}")
-    include_directories("include/plat/${KernelPlatform}/plat/${KernelWordSize}")
-endif()
 
-# Add libsel4 include directories.
-# These are explicitly added instead of calling target_link_libraries(${target} sel4)
-# because we don't want to inherit any other build options from libsel4.
+# Add libsel4 include directories. These are explicitly added instead of calling
+# target_link_libraries(${target} sel4) because we don't want to inherit any
+# other build options from libsel4.
 include_directories(
     "libsel4/include"
     "libsel4/arch_include/${KernelArch}"
@@ -231,8 +233,8 @@ include_directories(
 #
 
 include_directories($<TARGET_PROPERTY:kernel_Config,INTERFACE_INCLUDE_DIRECTORIES>)
-# The kernel expects to be able to include an 'autoconf.h' file at the moment. So lets
-# generate one for it to use
+# The kernel expects to be able to include an 'autoconf.h' file at the moment.
+# So lets generate one for it to use
 # TODO: use the kernel_Config directly
 generate_autoconf(kernel_autoconf "kernel")
 include_directories($<TARGET_PROPERTY:kernel_autoconf,INTERFACE_INCLUDE_DIRECTORIES>)

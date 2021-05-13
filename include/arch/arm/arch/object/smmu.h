@@ -15,20 +15,18 @@
 
 
 exception_t decodeARMSIDControlInvocation(word_t label, unsigned int length, cptr_t cptr,
-                                          cte_t *srcSlot, cap_t cap, extra_caps_t extraCaps,
+                                          cte_t *srcSlot, cap_t cap,
                                           bool_t call, word_t *buffer);
 
 exception_t decodeARMSIDInvocation(word_t label, unsigned int length, cptr_t cptr,
-                                   cte_t *srcSlot, cap_t cap, extra_caps_t extraCaps,
-                                   bool_t call, word_t *buffer);
+                                   cte_t *srcSlot, cap_t cap, bool_t call, word_t *buffer);
 
 exception_t decodeARMCBControlInvocation(word_t label, unsigned int length, cptr_t cptr,
-                                         cte_t *srcSlot, cap_t cap, extra_caps_t extraCaps,
+                                         cte_t *srcSlot, cap_t cap,
                                          bool_t call, word_t *buffer);
 
 exception_t decodeARMCBInvocation(word_t label, unsigned int length, cptr_t cptr,
-                                  cte_t *srcSlot, cap_t cap, extra_caps_t extraCaps,
-                                  bool_t call, word_t *buffer);
+                                  cte_t *srcSlot, cap_t cap, bool_t call, word_t *buffer);
 exception_t smmu_delete_cb(cap_t cap);
 exception_t smmu_delete_sid(cap_t cap);
 void smmu_cb_delete_vspace(word_t cb, asid_t asid);

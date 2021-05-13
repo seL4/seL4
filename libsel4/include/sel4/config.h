@@ -8,9 +8,7 @@
 
 /* Compile-time configuration parameters. Might be set by the build system. */
 
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif
 
 /* size of the initial thread's root CNode (2^x slots, x >= 4) */
 #ifndef CONFIG_ROOT_CNODE_SIZE_BITS

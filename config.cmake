@@ -78,7 +78,7 @@ if(DEFINED CONFIGURE_MAX_IRQ)
         math(EXPR BITS "${BITS} + 1")
     endif()
     set(CONFIGURE_IRQ_SLOT_BITS "${BITS}" CACHE INTERNAL "")
-    if(NOT DEFINED ${CONFIGURE_TIMER_PRECISION})
+    if(NOT DEFINED CONFIGURE_TIMER_PRECISION)
         set(CONFIGURE_TIMER_PRECISION "0")
     endif()
     configure_file(
@@ -454,12 +454,50 @@ config_string(
 )
 
 config_string(
-    KernelStaticMaxBudgetUs KERNEL_STATIC_MAX_BUDGET_US
+    KernelStaticMaxPeriodUs KERNEL_STATIC_MAX_PERIOD_US
     "Specifies a static maximum to which scheduling context can have \
     either its period or budget configured."
     DEFAULT 0
     UNQUOTE
     DEPENDS "KernelIsMCS" UNDEF_DISABLED
+)
+
+config_option(
+    KernelClz32 CLZ_32 "Define a __clzsi2 function to count leading zeros for uint32_t arguments. \
+                        Only needed on platforms which lack a builtin instruction."
+    DEFAULT OFF
+)
+
+config_option(
+    KernelClz64 CLZ_64 "Define a __clzdi2 function to count leading zeros for uint64_t arguments. \
+                        Only needed on platforms which lack a builtin instruction."
+    DEFAULT OFF
+)
+
+config_option(
+    KernelCtz32 CTZ_32 "Define a __ctzsi2 function to count trailing zeros for uint32_t arguments. \
+                        Only needed on platforms which lack a builtin instruction."
+    DEFAULT OFF
+)
+
+config_option(
+    KernelCtz64 CTZ_64 "Define a __ctzdi2 function to count trailing zeros for uint64_t arguments. \
+                        Only needed on platforms which lack a builtin instruction."
+    DEFAULT OFF
+)
+
+config_option(
+    KernelClzNoBuiltin CLZ_NO_BUILTIN
+    "Expose implementations of clzl and clzll to verification by avoiding the use \
+     of __builtin_clzl and __builtin_clzll."
+    DEFAULT OFF
+)
+
+config_option(
+    KernelCtzNoBuiltin CTZ_NO_BUILTIN
+    "Expose implementations of ctzl and ctzll to verification by avoiding the use \
+     of __builtin_ctzl and __builtin_ctzll."
+    DEFAULT OFF
 )
 
 add_config_library(kernel "${configure_string}")

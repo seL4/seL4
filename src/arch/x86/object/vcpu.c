@@ -540,7 +540,7 @@ static exception_t invokeEnableIOPort(vcpu_t *vcpu, cte_t *slot, cap_t cap, uint
     return EXCEPTION_NONE;
 }
 
-static exception_t decodeEnableIOPort(cap_t cap, word_t length, word_t *buffer, extra_caps_t excaps)
+static exception_t decodeEnableIOPort(cap_t cap, word_t length, word_t *buffer)
 {
     vcpu_t *vcpu;
     cap_t ioCap;
@@ -552,13 +552,13 @@ static exception_t decodeEnableIOPort(cap_t cap, word_t length, word_t *buffer, 
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
-    if (excaps.excaprefs[0] == NULL) {
+    if (current_extra_caps.excaprefs[0] == NULL) {
         userError("VCPU EnableIOPort: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
-    ioSlot = excaps.excaprefs[0];
-    ioCap  = excaps.excaprefs[0]->cap;
+    ioSlot = current_extra_caps.excaprefs[0];
+    ioCap  = current_extra_caps.excaprefs[0]->cap;
 
     if (cap_get_capType(ioCap) != cap_io_port_cap) {
         userError("VCPU EnableIOPort: IOPort cap is not a IOPort cap.");
@@ -877,15 +877,15 @@ static exception_t invokeSetTCB(vcpu_t *vcpu, tcb_t *tcb)
     return EXCEPTION_NONE;
 }
 
-static exception_t decodeSetTCB(cap_t cap, word_t length, word_t *buffer, extra_caps_t excaps)
+static exception_t decodeSetTCB(cap_t cap, word_t length, word_t *buffer)
 {
     cap_t tcbCap;
-    if (excaps.excaprefs[0] == NULL) {
+    if (current_extra_caps.excaprefs[0] == NULL) {
         userError("VCPU SetTCB: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
-    tcbCap  = excaps.excaprefs[0]->cap;
+    tcbCap  = current_extra_caps.excaprefs[0]->cap;
 
     if (cap_get_capType(tcbCap) != cap_thread_cap) {
         userError("TCB cap is not a TCB cap.");
@@ -940,19 +940,18 @@ exception_t decodeX86VCPUInvocation(
     cptr_t cptr,
     cte_t *slot,
     cap_t cap,
-    extra_caps_t excaps,
     word_t *buffer
 )
 {
     switch (invLabel) {
     case X86VCPUSetTCB:
-        return decodeSetTCB(cap, length, buffer, excaps);
+        return decodeSetTCB(cap, length, buffer);
     case X86VCPUReadVMCS:
         return decodeReadVMCS(cap, length, buffer);
     case X86VCPUWriteVMCS:
         return decodeWriteVMCS(cap, length, buffer);
     case X86VCPUEnableIOPort:
-        return decodeEnableIOPort(cap, length, buffer, excaps);
+        return decodeEnableIOPort(cap, length, buffer);
     case X86VCPUDisableIOPort:
         return decodeDisableIOPort(cap, length, buffer);
     case X86VCPUWriteRegisters:

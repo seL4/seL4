@@ -19,11 +19,10 @@ static exception_t Arch_invokeIRQControl(irq_t irq, cte_t *handlerSlot, cte_t *c
 }
 
 exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
-                                            cte_t *srcSlot, extra_caps_t excaps,
-                                            word_t *buffer)
+                                            cte_t *srcSlot, word_t *buffer)
 {
     if (invLabel == ARMIRQIssueIRQHandlerTrigger) {
-        if (length < 4 || excaps.excaprefs[0] == NULL) {
+        if (length < 4 || current_extra_caps.excaprefs[0] == NULL) {
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
         }
@@ -40,7 +39,7 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
         word_t index = getSyscallArg(2, buffer);
         word_t depth = getSyscallArg(3, buffer);
 
-        cap_t cnodeCap = excaps.excaprefs[0]->cap;
+        cap_t cnodeCap = current_extra_caps.excaprefs[0]->cap;
 
         exception_t status = Arch_checkIRQ(irq_w);
         if (status != EXCEPTION_NONE) {
@@ -84,7 +83,7 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
         word_t index = getSyscallArg(2, buffer);
         word_t depth = getSyscallArg(3, buffer) & 0xfful;
         seL4_Word target = getSyscallArg(4, buffer);
-        cap_t cnodeCap = excaps.excaprefs[0]->cap;
+        cap_t cnodeCap = current_extra_caps.excaprefs[0]->cap;
         exception_t status = Arch_checkIRQ(irq_w);
         irq_t irq = CORE_IRQ_TO_IRQT(target, irq_w);
 

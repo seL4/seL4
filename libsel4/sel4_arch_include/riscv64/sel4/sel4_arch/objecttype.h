@@ -7,9 +7,7 @@
 
 #pragma once
 
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif /* HAVE_AUTOCONF */
 
 typedef enum _mode_object {
     seL4_RISCV_Giga_Page = seL4_NonArchObjectTypeCount,
@@ -22,4 +20,3 @@ typedef enum _mode_object {
 #if CONFIG_PT_LEVELS <= 3
 #define seL4_RISCV_Tera_Page 0xffffffff
 #endif
-

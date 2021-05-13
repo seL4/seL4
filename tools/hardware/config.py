@@ -46,7 +46,7 @@ class RISCVConfig(Config):
     arch = 'riscv'
 
     def get_bootloader_reserve(self) -> int:
-        ''' on RISC-V the BBL is loaded at the start
+        ''' on RISC-V OpenSBI is loaded at the start
         of physical memory. Mark it as unavailable. '''
         return self.MEGA_PAGE_SIZE
 

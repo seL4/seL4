@@ -6,9 +6,7 @@
 
 #pragma once
 
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif /* HAVE_AUTOCONF */
 
 typedef enum _object {
     seL4_ARM_SmallPageObject = seL4_ModeObjectTypeCount,
@@ -37,5 +35,3 @@ typedef seL4_Word object_t;
 #ifndef CONFIG_TK1_SMMU
 #define seL4_ARM_IOPageTableObject 0xffff
 #endif
-
-

@@ -79,10 +79,10 @@ static UNUSED bool_t refill_ordered(sched_context_t *sc)
     return true;
 }
 
-#define REFILL_SANITY_START(sc) ticks_t _sum = refill_sum(sc); assert(refill_ordered(sc));
+#define REFILL_SANITY_START(sc) ticks_t _sum = refill_sum(sc); assert(isRoundRobin(sc) || refill_ordered(sc));
 #define REFILL_SANITY_CHECK(sc, budget) \
     do { \
-        assert(refill_sum(sc) == budget); assert(refill_ordered(sc)); \
+        assert(refill_sum(sc) == budget); assert(isRoundRobin(sc) || refill_ordered(sc)); \
     } while (0)
 
 #define REFILL_SANITY_END(sc) \
@@ -143,7 +143,7 @@ static inline void maybe_add_empty_tail(sched_context_t *sc)
 {
     if (isRoundRobin(sc)) {
         /* add an empty refill - we track the used up time here */
-        refill_t empty_tail = { .rTime = NODE_STATE(ksCurTime)};
+        refill_t empty_tail = { .rTime = refill_head(sc)->rTime };
         refill_add_tail(sc, empty_tail);
         assert(refill_size(sc) == MIN_REFILLS);
     }
@@ -234,6 +234,17 @@ static inline void ensure_sufficient_head(sched_context_t *sc)
     }
 }
 
+static bool_t refill_head_overlapping(sched_context_t *sc)
+{
+    if (!refill_single(sc)) {
+        ticks_t amount = refill_head(sc)->rAmount;
+        ticks_t tail = refill_head(sc)->rTime + amount;
+        return refill_index(sc, refill_next(sc, sc->scRefillHead))->rTime <= tail;
+    } else {
+        return false;
+    }
+}
+
 void refill_budget_check(ticks_t usage)
 {
     sched_context_t *sc = NODE_STATE(ksCurSC);
@@ -318,7 +329,7 @@ void refill_split_check(ticks_t usage)
             schedule_used(sc, new);
             ensure_sufficient_head(sc);
         }
-        assert(refill_ordered(sc));
+        assert(isRoundRobin(sc) || refill_ordered(sc));
     } else {
         /* leave remnant as reduced replenishment */
         assert(remnant >= MIN_BUDGET);
@@ -330,14 +341,6 @@ void refill_split_check(ticks_t usage)
     REFILL_SANITY_END(sc);
 }
 
-
-static bool_t refill_unblock_check_mergable(sched_context_t *sc)
-{
-    ticks_t amount = refill_head(sc)->rAmount;
-    ticks_t tail = NODE_STATE_ON_CORE(ksCurTime, sc->scCore) + amount;
-    bool_t enough_time = refill_index(sc, refill_next(sc, sc->scRefillHead))->rTime <= tail;
-    return !refill_single(sc) && enough_time;
-}
 
 void refill_unblock_check(sched_context_t *sc)
 {
@@ -354,7 +357,7 @@ void refill_unblock_check(sched_context_t *sc)
         NODE_STATE(ksReprogram) = true;
 
         /* merge available replenishments */
-        while (refill_unblock_check_mergable(sc)) {
+        while (refill_head_overlapping(sc)) {
             ticks_t amount = refill_head(sc)->rAmount;
             refill_pop_head(sc);
             refill_head(sc)->rAmount += amount;

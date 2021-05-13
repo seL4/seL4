@@ -6,11 +6,8 @@
 
 #pragma once
 
-#include <stdint.h>
-
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif
+#include <stdint.h>
 
 #if (defined CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES || defined CONFIG_DEBUG_BUILD)
 
@@ -65,4 +62,3 @@ typedef struct benchmark_syscall_log_entry {
 } benchmark_track_kernel_entry_t;
 
 #endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES || CONFIG_DEBUG_BUILD */
-

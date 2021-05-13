@@ -25,6 +25,7 @@ if(KernelPlatformOdroidc2)
         CLK_MAGIC 375299969u
         CLK_SHIFT 53u
         KERNEL_WCET 10u
+        TIMER_PRECISION 1u
     )
 endif()
 

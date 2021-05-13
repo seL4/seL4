@@ -33,11 +33,11 @@
  * at least this much budget - see comment on refill_sufficient */
 #define MIN_BUDGET_US (2u * getKernelWcetUs() * CONFIG_KERNEL_WCET_SCALE)
 #define MIN_BUDGET    (2u * getKernelWcetTicks() * CONFIG_KERNEL_WCET_SCALE)
-#if (CONFIG_KERNEL_STATIC_MAX_BUDGET_US) != 0
-#define MAX_BUDGET_US (CONFIG_KERNEL_STATIC_MAX_BUDGET_US)
+#if (CONFIG_KERNEL_STATIC_MAX_PERIOD_US) != 0
+#define MAX_PERIOD_US (CONFIG_KERNEL_STATIC_MAX_PERIOD_US)
 #else
-#define MAX_BUDGET_US getMaxUsToTicks()
-#endif /* CONFIG_KERNEL_STATIC_MAX_BUDGET_US != 0 */
+#define MAX_PERIOD_US getMaxUsToTicks()
+#endif /* CONFIG_KERNEL_STATIC_MAX_PERIOD_US != 0 */
 
 /* Short hand for accessing refill queue items */
 static inline refill_t *refill_index(sched_context_t *sc, word_t index)
@@ -117,6 +117,50 @@ static inline bool_t refill_sufficient(sched_context_t *sc, ticks_t usage)
 static inline bool_t refill_ready(sched_context_t *sc)
 {
     return refill_head(sc)->rTime <= (NODE_STATE_ON_CORE(ksCurTime, sc->scCore) + getKernelWcetTicks());
+}
+
+/*
+ * Return true if an SC has been successfully configured with parameters
+ * that allow for a thread to run.
+ */
+static inline bool_t sc_active(sched_context_t *sc)
+{
+    return sc->scRefillMax > 0;
+}
+
+/*
+ * Return true if a SC has been 'released', if its head refill is
+ * sufficient and is in the past.
+ */
+static inline bool_t sc_released(sched_context_t *sc)
+{
+    if (sc_active(sc)) {
+        /* All refills must all be greater than MIN_BUDGET so this
+         * should be true for all active SCs */
+        assert(refill_sufficient(sc, 0));
+        return refill_ready(sc);
+    } else {
+        return false;
+    }
+}
+
+/*
+ * Return true if a SC's available refills should be delayed at the
+ * point the associated thread becomes runnable (sporadic server).
+ */
+static inline bool_t sc_sporadic(sched_context_t *sc)
+{
+    return sc != NULL && sc->scSporadic;
+}
+
+/*
+ * Return true if a SC's available refills should be delayed at the
+ * point the associated thread becomes the current thread (constant
+ * bandwidth).
+ */
+static inline bool_t sc_constant_bandwidth(sched_context_t *sc)
+{
+    return !sc->scSporadic;
 }
 
 /* Create a new refill in a non-active sc */
