@@ -18,10 +18,10 @@
 #include <util.h>
 
 /* (node-local) state accessed only during bootstrapping */
-ndks_boot_t ndks_boot BOOT_BSS;
+BOOT_BSS ndks_boot_t ndks_boot;
 
-rootserver_mem_t rootserver BOOT_BSS;
-static region_t rootserver_mem BOOT_BSS;
+BOOT_BSS rootserver_mem_t rootserver;
+BOOT_BSS static region_t rootserver_mem;
 
 BOOT_CODE static void merge_regions(void)
 {
@@ -698,7 +698,7 @@ static inline pptr_t ceiling_kernel_window(pptr_t p)
 
 /* we can't declare arrays on the stack, so this is space for
  * the function below to use. */
-static BOOT_BSS region_t avail_reg[MAX_NUM_FREEMEM_REG];
+BOOT_BSS static region_t avail_reg[MAX_NUM_FREEMEM_REG];
 /**
  * Dynamically initialise the available memory on the platform.
  * A region represents an area of memory.
