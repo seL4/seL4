@@ -696,8 +696,8 @@ static inline pptr_t ceiling_kernel_window(pptr_t p)
     return p;
 }
 
-/* we can't delcare arrays on the stack, so this is space for
- * the below function to use. */
+/* we can't declare arrays on the stack, so this is space for
+ * the function below to use. */
 static BOOT_BSS region_t avail_reg[MAX_NUM_FREEMEM_REG];
 /**
  * Dynamically initialise the available memory on the platform.
