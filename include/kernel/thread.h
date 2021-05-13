@@ -225,6 +225,7 @@ static inline void updateTimestamp(void)
 {
     time_t prev = NODE_STATE(ksCurTime);
     NODE_STATE(ksCurTime) = getCurrentTime();
+    assert(NODE_STATE(ksCurTime) < MAX_RELEASE_TIME);
     time_t consumed = (NODE_STATE(ksCurTime) - prev);
     NODE_STATE(ksConsumed) += consumed;
     if (CONFIG_NUM_DOMAINS > 1) {
