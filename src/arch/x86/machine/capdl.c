@@ -5,6 +5,9 @@
  */
 
 #include <config.h>
+
+#if defined(CONFIG_DEBUG_BUILD) && defined(CONFIG_PRINTING)
+
 #include <arch/machine/capdl.h>
 #include <string.h>
 #include <kernel/cspace.h>
@@ -33,3 +36,5 @@ void x86_obj_iopt_print_attrs(cap_t iopt_cap)
     printf("(level: %lu)\n", (long unsigned int)cap_io_page_table_cap_get_capIOPTLevel(iopt_cap));
 }
 #endif
+
+#endif /* defind(CONFIG_DEBUG_BUILD) && defined(CONFIG_PRINTING) */

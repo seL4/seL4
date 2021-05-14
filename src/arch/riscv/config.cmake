@@ -90,6 +90,7 @@ add_sources(
         kernel/boot.c
         kernel/thread.c
         kernel/vspace.c
+        machine/capdl.c
         machine/hardware.c
         machine/registerset.c
         machine/io.c
@@ -101,7 +102,5 @@ add_sources(
         smp/ipi.c
     ASMFILES halt.S head.S traps.S
 )
-
-add_sources(DEP "KernelDebugBuild;KernelSel4ArchRiscV32" CFILES src/arch/riscv/machine/capdl.c)
 
 add_bf_source_old("KernelArchRiscV" "structures.bf" "include/arch/riscv" "arch/object")
