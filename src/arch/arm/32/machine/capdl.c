@@ -269,8 +269,8 @@ void print_cap_arch(cap_t cap)
     switch (cap_get_capType(cap)) {
     case cap_page_table_cap: {
         asid_t asid = cap_page_table_cap_get_capPTMappedASID(cap);
-        findPDForASID_ret_t find_ret = findPDForASID(asid);
-        vptr_t vptr = cap_page_table_cap_get_capPTMappedAddress(cap);
+        UNUSED findPDForASID_ret_t find_ret = findPDForASID(asid);
+        UNUSED vptr_t vptr = cap_page_table_cap_get_capPTMappedAddress(cap);
         if (asid) {
             printf("pt_%p_%04lu (asid: %lu)\n",
                    lookupPDSlot(find_ret.pd, vptr), PD_INDEX(vptr), (long unsigned int)asid);
@@ -281,7 +281,7 @@ void print_cap_arch(cap_t cap)
     }
     case cap_page_directory_cap: {
         asid_t asid = cap_page_directory_cap_get_capPDMappedASID(cap);
-        findPDForASID_ret_t find_ret = findPDForASID(asid);
+        UNUSED findPDForASID_ret_t find_ret = findPDForASID(asid);
         if (asid) {
             printf("%p_pd (asid: %lu)\n",
                    find_ret.pd, (long unsigned int)asid);

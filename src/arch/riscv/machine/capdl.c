@@ -26,7 +26,7 @@ static void cap_frame_print_attrs_pt(pte_t *ptSlot);
 
 static void obj_asidpool_print_attrs(cap_t asid_cap)
 {
-    asid_t asid = cap_asid_pool_cap_get_capASIDBase(asid_cap);
+    UNUSED asid_t asid = cap_asid_pool_cap_get_capASIDBase(asid_cap);
     printf("(asid_high: 0x%lx)\n", ASID_HIGH(asid));
 }
 
@@ -115,7 +115,7 @@ static void cap_frame_print_attrs_vptr(word_t vptr, pte_t *lvl1pt)
 {
     lookupPTSlot_ret_t lu_ret = lookupPTSlot(lvl1pt, vptr);
     assert(lu_ret.ptBitsLeft == seL4_PageBits);
-    word_t slot = ((vptr >> lu_ret.ptBitsLeft) & MASK(PT_INDEX_BITS));
+    UNUSED word_t slot = ((vptr >> lu_ret.ptBitsLeft) & MASK(PT_INDEX_BITS));
 
     printf("frame_%p_%04lu ", lu_ret.ptSlot, slot);
     cap_frame_print_attrs_pt(lu_ret.ptSlot);
@@ -126,11 +126,11 @@ void print_cap_arch(cap_t cap)
     switch (cap_get_capType(cap)) {
     case cap_page_table_cap: {
         asid_t asid = cap_page_table_cap_get_capPTMappedASID(cap);
-        findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
+        UNUSED findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
         vptr_t vptr = cap_page_table_cap_get_capPTMappedAddress(cap);
 
         word_t ptBitsLeft = PT_INDEX_BITS * CONFIG_PT_LEVELS + seL4_PageBits;
-        word_t slot = ((vptr >> ptBitsLeft) & MASK(PT_INDEX_BITS));
+        UNUSED word_t slot = ((vptr >> ptBitsLeft) & MASK(PT_INDEX_BITS));
         if (asid) {
             printf("pt_%p_%04lu (asid: %lu)\n",
                    lookupPTSlot(find_ret.vspace_root, vptr).ptSlot, slot, (long unsigned int)asid);

@@ -36,4 +36,5 @@ word_t puts(const char *s) VISIBLE;
 #define kernel_putchar(c) ((void)(0))
 #define printf(args...) ((void)(0))
 #define puts(s) ((void)(0))
+#define putchar(s) ((void)(0))
 #endif /* CONFIG_PRINTING */

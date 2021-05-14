@@ -136,7 +136,7 @@ void cmdline_parse(const char *cmdline, cmdline_opt_t *cmdline_opt)
     }
 #endif
 
-#ifdef CONFIG_DEBUG_BUILD
+#if defined(CONFIG_PRINTING) || defined(CONFIG_DEBUG_BUILD)
     /* initialise to default or use BDA if available */
     cmdline_opt->debug_port = bda_ports_count && *bda_port ? *bda_port : 0x3f8;
     if (parse_opt(cmdline, "debug_port", cmdline_val, MAX_CMDLINE_VAL_LEN) != -1) {

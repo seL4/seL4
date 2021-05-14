@@ -2426,7 +2426,7 @@ void kernelDataAbort(word_t pc) VISIBLE;
 
 void kernelPrefetchAbort(word_t pc)
 {
-    word_t ifsr = getIFSR();
+    UNUSED word_t ifsr = getIFSR();
 
     printf("\n\nKERNEL PREFETCH ABORT!\n");
     printf("Faulting instruction: 0x%x\n", (unsigned int)pc);
@@ -2437,8 +2437,8 @@ void kernelPrefetchAbort(word_t pc)
 
 void kernelDataAbort(word_t pc)
 {
-    word_t dfsr = getDFSR();
-    word_t far = getFAR();
+    UNUSED word_t dfsr = getDFSR();
+    UNUSED word_t far = getFAR();
 
     printf("\n\nKERNEL DATA ABORT!\n");
     printf("Faulting instruction: 0x%lx\n", (unsigned long)pc);

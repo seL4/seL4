@@ -281,7 +281,7 @@ void obj_tcb_print_slots(tcb_t *tcb)
 
     /* TCB of most recent IPC sender */
     if (cap_get_capType(TCB_PTR_CTE_PTR(tcb, tcbCaller)->cap) != cap_null_cap) {
-        tcb_t *caller = TCB_PTR(cap_thread_cap_get_capTCBPtr(TCB_PTR_CTE_PTR(tcb, tcbCaller)->cap));
+        UNUSED tcb_t *caller = TCB_PTR(cap_thread_cap_get_capTCBPtr(TCB_PTR_CTE_PTR(tcb, tcbCaller)->cap));
         printf("caller_slot: %p_tcb\n", caller);
     }
 #endif /* CONFIG_KERNEL_MCS */

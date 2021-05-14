@@ -294,8 +294,8 @@ void print_cap_arch(cap_t cap)
     switch (cap_get_capType(cap)) {
     case cap_page_table_cap: {
         asid_t asid = cap_page_table_cap_get_capPTMappedASID(cap);
-        findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
-        vptr_t vptr = cap_page_table_cap_get_capPTMappedAddress(cap);
+        UNUSED findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
+        UNUSED vptr_t vptr = cap_page_table_cap_get_capPTMappedAddress(cap);
         if (asid) {
             printf("pt_%p_%04lu (asid: %lu)\n",
                    lookupPDSlot(find_ret.vspace_root, vptr).pdSlot, GET_PD_INDEX(vptr), (long unsigned int)asid);
@@ -306,8 +306,8 @@ void print_cap_arch(cap_t cap)
     }
     case cap_page_directory_cap: {
         asid_t asid = cap_page_directory_cap_get_capPDMappedASID(cap);
-        findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
-        vptr_t vptr = cap_page_directory_cap_get_capPDMappedAddress(cap);
+        UNUSED findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
+        UNUSED vptr_t vptr = cap_page_directory_cap_get_capPDMappedAddress(cap);
         if (asid) {
             printf("pd_%p_%04lu (asid: %lu)\n",
                    lookupPUDSlot(find_ret.vspace_root, vptr).pudSlot, GET_PUD_INDEX(vptr), (long unsigned int)asid);
@@ -319,8 +319,8 @@ void print_cap_arch(cap_t cap)
     }
     case cap_page_upper_directory_cap: {
         asid_t asid = cap_page_upper_directory_cap_get_capPUDMappedASID(cap);
-        findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
-        vptr_t vptr = cap_page_upper_directory_cap_get_capPUDMappedAddress(cap);
+        UNUSED findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
+        UNUSED vptr_t vptr = cap_page_upper_directory_cap_get_capPUDMappedAddress(cap);
 
 #ifdef AARCH64_VSPACE_S2_START_L1
         if (asid) {
@@ -341,7 +341,7 @@ void print_cap_arch(cap_t cap)
     }
     case cap_page_global_directory_cap: {
         asid_t asid = cap_page_global_directory_cap_get_capPGDMappedASID(cap);
-        findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
+        UNUSED findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
         if (asid) {
             printf("%p_pd (asid: %lu)\n",
                    find_ret.vspace_root, (long unsigned int)asid);
