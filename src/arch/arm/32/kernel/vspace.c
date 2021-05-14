@@ -2783,35 +2783,26 @@ void kernelUndefinedInstruction(word_t pc) VISIBLE;
 
 void kernelPrefetchAbort(word_t pc)
 {
-    word_t UNUSED sr = getHSR();
-
     printf("\n\nKERNEL PREFETCH ABORT!\n");
-    printf("Faulting instruction: 0x%x\n", (unsigned int)pc);
-    printf("HSR: 0x%x\n", (unsigned int)sr);
-
+    printf("Faulting instruction: 0x"SEL4_PRIx_word"\n", pc);
+    printf("HSR: 0x%"SEL4_PRIx_word"\n", getHSR(););
     halt();
 }
 
 void kernelDataAbort(word_t pc)
 {
-    word_t UNUSED far = getHDFAR();
-    word_t UNUSED sr = getHSR();
-
     printf("\n\nKERNEL DATA ABORT!\n");
-    printf("Faulting instruction: 0x%x\n", (unsigned int)pc);
-    printf("HDFAR: 0x%x HSR: 0x%x\n", (unsigned int)far, (unsigned int)sr);
-
+    printf("Faulting instruction: 0x%"SEL4_PRIx_word"\n", pc);
+    printf("HDFAR: 0x%"SEL4_PRIx_word" HSR: 0x%"SEL4_PRIx_word"\n",
+           getHDFAR(), getHSR());
     halt();
 }
 
 void kernelUndefinedInstruction(word_t pc)
 {
-    word_t UNUSED sr = getHSR();
-
     printf("\n\nKERNEL UNDEFINED INSTRUCTION!\n");
-    printf("Faulting instruction: 0x%x\n", (unsigned int)pc);
-    printf("HSR: 0x%x\n", (unsigned int)sr);
-
+    printf("Faulting instruction: 0x%"SEL4_PRIx_word"\n", pc);
+    printf("HSR: 0x%"SEL4_PRIx_word"\n", getHSR());
     halt();
 }
 
@@ -2819,24 +2810,18 @@ void kernelUndefinedInstruction(word_t pc)
 
 void kernelPrefetchAbort(word_t pc)
 {
-    word_t UNUSED ifsr = getIFSR();
-
     printf("\n\nKERNEL PREFETCH ABORT!\n");
-    printf("Faulting instruction: 0x%x\n", (unsigned int)pc);
-    printf("IFSR: 0x%x\n", (unsigned int)ifsr);
-
+    printf("Faulting instruction: 0x%"SEL4_PRIx_word"\n", pc);
+    printf("IFSR: 0x%"SEL4_PRIx_word"\n", getIFSR());
     halt();
 }
 
 void kernelDataAbort(word_t pc)
 {
-    word_t UNUSED dfsr = getDFSR();
-    word_t UNUSED far = getFAR();
-
     printf("\n\nKERNEL DATA ABORT!\n");
-    printf("Faulting instruction: 0x%x\n", (unsigned int)pc);
-    printf("FAR: 0x%x DFSR: 0x%x\n", (unsigned int)far, (unsigned int)dfsr);
-
+    printf("Faulting instruction: 0x%"SEL4_PRIx_word"\n", pc);
+    printf("FAR: 0x%"SEL4_PRIx_word" DFSR: 0x%"SEL4_PRIx_word"\n",
+           getFAR(), getDFSR());
     halt();
 }
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */

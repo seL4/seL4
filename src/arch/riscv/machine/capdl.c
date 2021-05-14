@@ -11,6 +11,13 @@
 #include <machine/capdl.h>
 #include <arch/machine/capdl.h>
 
+word_t get_tcb_sp(tcb_t *tcb)
+{
+    return tcb->tcbArch.tcbContext.registers[SP];
+}
+
+#ifdef CONFIG_PRINTING
+
 static void obj_asidpool_print_attrs(cap_t asid_cap);
 static void obj_frame_print_attrs(paddr_t paddr);
 static void riscv_obj_pt_print_slots(pte_t *lvl1pt, pte_t *pt, int level);
@@ -80,11 +87,6 @@ void obj_vtable_print_slots(tcb_t *tcb)
         add_to_seen(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap);
         riscv_cap_pt_print_slots(lvl1pt, 0, CONFIG_PT_LEVELS);
     }
-}
-
-word_t get_tcb_sp(tcb_t *tcb)
-{
-    return tcb->tcbArch.tcbContext.registers[SP];
 }
 
 static void cap_frame_print_attrs_pt(pte_t *ptSlot)
@@ -221,9 +223,11 @@ void obj_tcb_print_vtable(tcb_t *tcb)
     }
 }
 
-void capDL(void)
+#endif /* CONFIG_PRINTING */
+
+void debug_capDL(void)
 {
-    printf("arch riscv32\n");
+    printf("arch riscv\n");
     printf("objects {\n");
     print_objects();
     printf("}\n");
@@ -233,10 +237,12 @@ void capDL(void)
     /* reset the seen list */
     reset_seen_list();
 
+#ifdef CONFIG_PRINTING
     print_caps();
     printf("}\n");
 
     obj_irq_print_maps();
+#endif /* CONFIG_PRINTING */
 }
 
 #endif /* CONFIG_DEBUG_BUILD */

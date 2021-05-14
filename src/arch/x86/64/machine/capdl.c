@@ -5,11 +5,19 @@
  */
 
 #include <config.h>
+
+#ifdef CONFIG_DEBUG_BUILD
+
 #include <arch/machine/capdl.h>
 #include <string.h>
 #include <kernel/cspace.h>
 
-#ifdef CONFIG_DEBUG_BUILD
+word_t get_tcb_sp(tcb_t *tcb)
+{
+    return tcb->tcbArch.tcbContext.registers[RSP];
+}
+
+#ifdef CONFIG_PRINTING
 
 static void obj_frame_print_attrs(paddr_t paddr, word_t page_size);
 static void _cap_frame_print_attrs_vptr(word_t vptr, vspace_root_t *vspace);
@@ -19,11 +27,6 @@ static void cap_frame_print_attrs_pdpt(pdpte_t *pdptSlot);
 static void cap_frame_print_attrs_pd(pde_t *pdSlot);
 static void cap_frame_print_attrs_pt(pte_t *ptSlot);
 static void cap_frame_print_attrs_impl(word_t super_user, word_t read_write, word_t cache_disabled, word_t xd);
-
-word_t get_tcb_sp(tcb_t *tcb)
-{
-    return tcb->tcbArch.tcbContext.registers[RSP];
-}
 
 /* use when only have access to pte of frames */
 static void cap_frame_print_attrs_pdpt(pdpte_t *pdptSlot)
@@ -474,7 +477,9 @@ void obj_vtable_print_slots(tcb_t *tcb)
     }
 }
 
-void capDL(void)
+#endif /* CONFIG_PRINTING */
+
+void debug_capDL(void)
 {
     printf("arch x86_64\n");
     printf("objects {\n");
@@ -486,10 +491,12 @@ void capDL(void)
     /* reset the seen list */
     reset_seen_list();
 
+#ifdef CONFIG_PRINTING
     print_caps();
     printf("}\n");
 
     obj_irq_print_maps();
+#endif
 }
 
 #endif /* CONFIG_DEBUG_BUILD */

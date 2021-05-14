@@ -9,6 +9,20 @@
 #include <stdint.h>
 #include <arch/types.h>
 
+/* arch/types.h is supposed to define word_t and _seL4_word_fmt */
+#ifndef _seL4_word_fmt
+#error "missing _seL4_word_fmt"
+#endif
+
+#define _macro_str_concat_helper2(x)    #x
+#define _macro_str_concat_helper1(x,y)  _macro_str_concat_helper2(x ## y)
+#define _macro_str_concat(x,y)          _macro_str_concat_helper1(x,y)
+
+#define SEL4_PRIu_word  _macro_str_concat(_seL4_word_fmt, u)
+#define SEL4_PRIx_word  _macro_str_concat(_seL4_word_fmt, x)
+#define SEL4_PRI_word   SEL4_PRIu_word
+
+
 enum _bool {
     false = 0,
     true  = 1

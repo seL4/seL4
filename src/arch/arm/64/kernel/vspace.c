@@ -2426,27 +2426,21 @@ void kernelDataAbort(word_t pc) VISIBLE;
 
 void kernelPrefetchAbort(word_t pc)
 {
-    word_t ifsr = getIFSR();
-
     printf("\n\nKERNEL PREFETCH ABORT!\n");
-    printf("Faulting instruction: 0x%x\n", (unsigned int)pc);
-    printf("ESR (IFSR): 0x%x\n", (unsigned int)ifsr);
-
+    printf("Faulting instruction: 0x%"SEL4_PRIx_word"\n", pc);
+    printf("ESR (IFSR): 0x%"SEL4_PRIx_word"\n", getIFSR());
     halt();
 }
 
 void kernelDataAbort(word_t pc)
 {
-    word_t dfsr = getDFSR();
-    word_t far = getFAR();
-
     printf("\n\nKERNEL DATA ABORT!\n");
-    printf("Faulting instruction: 0x%lx\n", (unsigned long)pc);
-    printf("FAR: 0x%lx ESR (DFSR): 0x%x\n", (unsigned long)far, (unsigned int)dfsr);
-
+    printf("Faulting instruction: 0x%"SEL4_PRIx_word"\n", pc);
+    printf("FAR: 0x%"SEL4_PRIx_word" ESR (DFSR): 0x%"SEL4_PRIx_word"\n",
+           getFAR(), getDFSR());
     halt();
 }
-#endif
+#endif /* CONFIG_DEBUG_BUILD */
 
 #ifdef CONFIG_PRINTING
 typedef struct readWordFromVSpace_ret {
@@ -2483,7 +2477,6 @@ void Arch_userStackTrace(tcb_t *tptr)
     cap_t threadRoot;
     vspace_root_t *vspaceRoot;
     word_t sp;
-    int i;
 
     threadRoot = TCB_PTR_CTE_PTR(tptr, tcbVTable)->cap;
 
@@ -2503,18 +2496,19 @@ void Arch_userStackTrace(tcb_t *tptr)
         return;
     }
 
-    for (i = 0; i < CONFIG_USER_STACK_TRACE_LENGTH; i++) {
+    for (unsigned int i = 0; i < CONFIG_USER_STACK_TRACE_LENGTH; i++) {
         word_t address = sp + (i * sizeof(word_t));
-        readWordFromVSpace_ret_t result;
-        result = readWordFromVSpace(vspaceRoot, address);
+        readWordFromVSpace_ret_t result = readWordFromVSpace(vspaceRoot,
+                                                             address);
         if (result.status == EXCEPTION_NONE) {
-            printf("0x%lx: 0x%lx\n", (unsigned long)address, (unsigned long)result.value);
+            printf("0x%"SEL4_PRIx_word": 0x%"SEL4_PRIx_word"\n",
+                   address, result.value);
         } else {
-            printf("0x%lx: INVALID\n", (unsigned long)address);
+            printf("0x%"SEL4_PRIx_word": INVALID\n", address);
         }
     }
 }
-#endif
+#endif /* CONFIG_PRINTING */
 
 #if defined(CONFIG_KERNEL_LOG_BUFFER)
 exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)

@@ -378,6 +378,7 @@ add_sources(
         kernel/ept.c
         kernel/thread.c
         model/statedata.c
+        machine/capdl.c
         machine/hardware.c
         machine/fpu.c
         machine/cpu_identification.c
@@ -387,8 +388,6 @@ add_sources(
         smp/ipi.c
     ASMFILES multiboot.S
 )
-
-add_sources(DEP "KernelArchX86;KernelDebugBuild" CFILES src/arch/x86/machine/capdl.c)
 
 add_bf_source_old("KernelArchX86" "structures.bf" "include/arch/x86" "arch/object")
 
