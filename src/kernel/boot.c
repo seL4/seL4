@@ -708,16 +708,25 @@ BOOT_CODE void init_freemem(word_t n_available, const p_region_t *available,
                             v_region_t it_v_reg, word_t extra_bi_size_bits)
 {
     /* Force ordering and exclusivity of reserved regions */
-    for (word_t i = 0; n_reserved > 0 && i < n_reserved - 1; i++) {
-        assert(reserved[i].start <= reserved[i].end);
-        assert(reserved[i].end <= reserved[i + 1].start);
+    for (word_t i = 0; i < n_reserved; i++) {
+        UNUSED region_t *r = &reserved[i];
+        /* Reserved regions must be sane, the size is allowed to be zero */
+        assert(r->start <= r->end);
+        if (i > 0) {
+            /* regions must be ordered and must not overlap */
+            assert(r->start >= reserved[i - 1].end);
+        }
     }
 
     /* Force ordering and exclusivity of available regions */
-    assert(n_available > 0);
-    for (word_t i = 0; i < n_available - 1; i++) {
-        assert(available[i].start < available[i].end);
-        assert(available[i].end <= available[i + 1].start);
+    for (word_t i = 0; i < n_available; i++) {
+        UNUSED const p_region_t *r = &available[i];
+        /* Available regions must be sane and have a size greater zero */
+        assert(r->start < r->end);
+        if (i > 0) {
+            /* regions must be ordered and must not overlap */
+            assert(r->start >= available[i - 1].end);
+        }
     }
 
     for (word_t i = 0; i < MAX_NUM_FREEMEM_REG; i++) {
