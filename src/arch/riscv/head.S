@@ -17,8 +17,8 @@
 .extern trap_entry
 
 /*
- * When SMP is enabled, the elfloader passes the hart ID in a4
- * and logical core ID in a5.
+ * When SMP is enabled, the elfloader passes the hart ID in a6
+ * and logical core ID in a7.
  */
 _start:
   fence.i
@@ -32,7 +32,7 @@ _start:
 
 #if CONFIG_MAX_NUM_NODES > 1
 /* setup the per-core stack */
-  mv t0, a5
+  mv t0, a7
   slli t0, t0, CONFIG_KERNEL_STACK_BITS
   add  sp, sp, t0
   /* put the stack in sscratch */
