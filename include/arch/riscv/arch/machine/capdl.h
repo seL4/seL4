@@ -6,5 +6,4 @@
 
 #pragma once
 
-void capDL(void);
-
+#include <machine/capdl.h>
