@@ -36,18 +36,18 @@
 
 #define UART_REG(x) ((volatile uint32_t *)(UART_PPTR + (x)))
 
-#if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
-void putDebugChar(unsigned char c)
+#ifdef CONFIG_PRINTING
+void uart_drv_putchar(unsigned char c)
 {
     while (!(*UART_REG(MU_LSR) & MU_LSR_TXIDLE));
     *UART_REG(MU_IO) = (c & 0xff);
 }
-#endif
+#endif /* CONFIG_PRINTING */
 
 #ifdef CONFIG_DEBUG_BUILD
-unsigned char getDebugChar(void)
+unsigned char uart_drv_getchar(void)
 {
     while (!(*UART_REG(MU_LSR) & MU_LSR_DATAREADY));
     return *UART_REG(MU_IO);
 }
-#endif //CONFIG_DEBUG_BUILD
+#endif /* CONFIG_DEBUG_BUILD */

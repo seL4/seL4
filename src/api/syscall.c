@@ -87,13 +87,10 @@ exception_t handleUnknownSyscall(word_t w)
         halt();
     }
     if (w == SysDebugSnapshot) {
-#if defined CONFIG_ARCH_ARM || defined CONFIG_ARCH_X86_64 || defined CONFIG_ARCH_RISCV32
         tcb_t *UNUSED tptr = NODE_STATE(ksCurThread);
-        printf("Debug snapshot syscall from user thread %p \"%s\"\n", tptr, TCB_PTR_DEBUG_PTR(tptr)->tcbName);
-        capDL();
-#else
-        printf("Debug snapshot syscall not supported for the current arch\n");
-#endif
+        printf("Debug snapshot syscall from user thread %p \"%s\"\n",
+               tptr, TCB_PTR_DEBUG_PTR(tptr)->tcbName);
+        debug_capDL();
         return EXCEPTION_NONE;
     }
     if (w == SysDebugCapIdentify) {
@@ -577,14 +574,8 @@ static void handleRecv(bool_t isBlocking)
 }
 
 #ifdef CONFIG_KERNEL_MCS
-static inline void mcsIRQ(irq_t irq)
+static inline void mcsPreemptionPoint(irq_t irq)
 {
-    if (IRQT_TO_IRQ(irq) == KERNEL_TIMER_IRQ) {
-        /* if this is a timer irq we must update the time as we need to reprogram the timer, and we
-         * can't lose the time that has just been used by the kernel. */
-        updateTimestamp();
-    }
-
     /* at this point we could be handling a timer interrupt which actually ends the current
      * threads timeslice. However, preemption is possible on revoke, which could have deleted
      * the current thread and/or the current scheduling context, rendering them invalid. */
@@ -594,12 +585,17 @@ static inline void mcsIRQ(irq_t irq)
     } else if (NODE_STATE(ksCurSC)->scRefillMax) {
         /* otherwise, if the thread is not schedulable, the SC could be valid - charge it if so */
         chargeBudget(NODE_STATE(ksConsumed), false, CURRENT_CPU_INDEX(), true);
+    } else {
+        /* If the current SC is no longer configured the time can no
+         * longer be charged to it. Simply dropping the consumed time
+         * here is equivalent to having charged the consumed time and
+         * then having cleared the SC. */
+        NODE_STATE(ksConsumed) = 0;
     }
-
 }
 #else
 #define handleRecv(isBlocking, canReply) handleRecv(isBlocking)
-#define mcsIRQ(irq)
+#define mcsPreemptionPoint(irq)
 #define handleInvocation(isCall, isBlocking, canDonate, firstPhase, cptr) handleInvocation(isCall, isBlocking)
 #endif
 
@@ -629,8 +625,8 @@ exception_t handleSyscall(syscall_t syscall)
             ret = handleInvocation(false, true, false, false, getRegister(NODE_STATE(ksCurThread), capRegister));
             if (unlikely(ret != EXCEPTION_NONE)) {
                 irq = getActiveIRQ();
+                mcsPreemptionPoint(irq);
                 if (IRQT_TO_IRQ(irq) != IRQT_TO_IRQ(irqInvalid)) {
-                    mcsIRQ(irq);
                     handleInterrupt(irq);
                     Arch_finaliseInterrupt();
                 }
@@ -642,8 +638,8 @@ exception_t handleSyscall(syscall_t syscall)
             ret = handleInvocation(false, false, false, false, getRegister(NODE_STATE(ksCurThread), capRegister));
             if (unlikely(ret != EXCEPTION_NONE)) {
                 irq = getActiveIRQ();
+                mcsPreemptionPoint(irq);
                 if (IRQT_TO_IRQ(irq) != IRQT_TO_IRQ(irqInvalid)) {
-                    mcsIRQ(irq);
                     handleInterrupt(irq);
                     Arch_finaliseInterrupt();
                 }
@@ -654,8 +650,8 @@ exception_t handleSyscall(syscall_t syscall)
             ret = handleInvocation(true, true, true, false, getRegister(NODE_STATE(ksCurThread), capRegister));
             if (unlikely(ret != EXCEPTION_NONE)) {
                 irq = getActiveIRQ();
+                mcsPreemptionPoint(irq);
                 if (IRQT_TO_IRQ(irq) != IRQT_TO_IRQ(irqInvalid)) {
-                    mcsIRQ(irq);
                     handleInterrupt(irq);
                     Arch_finaliseInterrupt();
                 }
@@ -697,8 +693,8 @@ exception_t handleSyscall(syscall_t syscall)
             ret = handleInvocation(false, false, true, true, dest);
             if (unlikely(ret != EXCEPTION_NONE)) {
                 irq = getActiveIRQ();
+                mcsPreemptionPoint(irq);
                 if (IRQT_TO_IRQ(irq) != IRQT_TO_IRQ(irqInvalid)) {
-                    mcsIRQ(irq);
                     handleInterrupt(irq);
                     Arch_finaliseInterrupt();
                 }
@@ -712,8 +708,8 @@ exception_t handleSyscall(syscall_t syscall)
             ret = handleInvocation(false, false, true, true, getRegister(NODE_STATE(ksCurThread), replyRegister));
             if (unlikely(ret != EXCEPTION_NONE)) {
                 irq = getActiveIRQ();
+                mcsPreemptionPoint(irq);
                 if (IRQT_TO_IRQ(irq) != IRQT_TO_IRQ(irqInvalid)) {
-                    mcsIRQ(irq);
                     handleInterrupt(irq);
                     Arch_finaliseInterrupt();
                 }

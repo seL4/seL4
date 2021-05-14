@@ -14,8 +14,15 @@ void reset_seen_list(void);
 bool_t seen(cap_t c);
 bool_t same_cap(cap_t a, cap_t b);
 bool_t root_or_idle_tcb(tcb_t *tcb);
+word_t get_tcb_sp(tcb_t *tcb);
 
 /* common */
+void debug_capDL(void);
+
+#endif /* CONFIG_DEBUG_BUILD */
+
+#if defined(CONFIG_DEBUG_BUILD) && defined(CONFIG_PRINTING)
+
 void obj_tcb_print_cnodes(cap_t cnode, tcb_t *tcb);
 void print_caps(void);
 void print_objects(void);
@@ -42,9 +49,9 @@ void print_ipc_buffer_slot(tcb_t *tcb);
  * However, frames can be mapped into multiple locations but sould only be declared once.
  */
 void obj_vtable_print_slots(tcb_t *tcb);
-word_t get_tcb_sp(tcb_t *tcb);
+
 void print_cap_arch(cap_t cap);
 void print_object_arch(cap_t cap);
 void obj_tcb_print_vtable(tcb_t *tcb);
 
-#endif
+#endif /* defined(CONFIG_DEBUG_BUILD) && defined(CONFIG_PRINTING) */

@@ -31,6 +31,7 @@ add_sources(
         src/model/statedata.c
         src/model/smp.c
         src/machine/io.c
+        src/machine/capdl.c
         src/machine/registerset.c
         src/machine/fpu.c
         src/benchmark/benchmark_track.c
@@ -45,9 +46,4 @@ add_sources(
         src/object/schedcontext.c
         src/object/schedcontrol.c
         src/kernel/sporadic.c
-)
-
-add_sources(
-    DEP "KernelDebugBuild;KernelArchARM OR KernelSel4ArchX86_64 OR KernelSel4ArchRiscV32"
-    CFILES src/machine/capdl.c
 )

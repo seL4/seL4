@@ -24,7 +24,7 @@ static inline void maybeReturnSchedContext(notification_t *ntfnPtr, tcb_t *tcb)
 {
 
     sched_context_t *sc = SC_PTR(notification_ptr_get_ntfnSchedContext(ntfnPtr));
-    if (sc == tcb->tcbSchedContext) {
+    if (sc != NULL && sc == tcb->tcbSchedContext) {
         tcb->tcbSchedContext = NULL;
         sc->scTcb = NULL;
         /* If the current thread returns its sched context then it should not

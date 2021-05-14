@@ -30,6 +30,7 @@ Upcoming release: BREAKING
   - Constant bandwidth observes a continuous constant bandwidth of budget/period
   - Sporadic server behaves as described by Sprunt et. al.
   - In an overcommitted system, sporadic preserves accumulated time
+* MCS kernel configuration option KernelStaticMaxBudgetUs renamed to KernelStaticMaxPeriodUs
 
 
 ## Upgrade Notes
