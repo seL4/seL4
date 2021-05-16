@@ -96,13 +96,11 @@ BOOT_CODE bool_t reserve_region(p_region_t reg)
 
 BOOT_CODE bool_t insert_region(region_t reg)
 {
-    word_t i;
-
     assert(reg.start <= reg.end);
     if (is_reg_empty(reg)) {
         return true;
     }
-    for (i = 0; i < MAX_NUM_FREEMEM_REG; i++) {
+    for (word_t i = 0; i < MAX_NUM_FREEMEM_REG; i++) {
         if (is_reg_empty(ndks_boot.freemem[i])) {
             reserve_region(pptr_to_paddr_reg(reg));
             ndks_boot.freemem[i] = reg;
@@ -656,7 +654,6 @@ BOOT_CODE bool_t create_device_untypeds(cap_t root_cnode_cap, seL4_SlotPos slot_
 BOOT_CODE bool_t create_kernel_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg,
                                         seL4_SlotPos first_untyped_slot)
 {
-    word_t     i;
     region_t   reg;
 
     /* if boot_mem_reuse_reg is not empty, we can create UT objs from boot code/data frames */
@@ -665,7 +662,7 @@ BOOT_CODE bool_t create_kernel_untypeds(cap_t root_cnode_cap, region_t boot_mem_
     }
 
     /* convert remaining freemem into UT objects and provide the caps */
-    for (i = 0; i < MAX_NUM_FREEMEM_REG; i++) {
+    for (word_t i = 0; i < MAX_NUM_FREEMEM_REG; i++) {
         reg = ndks_boot.freemem[i];
         ndks_boot.freemem[i] = REG_EMPTY;
         if (!create_untypeds_for_region(root_cnode_cap, false, reg, first_untyped_slot)) {
