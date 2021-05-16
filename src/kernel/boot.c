@@ -399,15 +399,14 @@ BOOT_CODE static bool_t configure_sched_context(tcb_t *tcb, sched_context_t *sc_
 
 BOOT_CODE bool_t init_sched_control(cap_t root_cnode_cap, word_t num_nodes)
 {
-    bool_t ret = true;
     seL4_SlotPos slot_pos_before = ndks_boot.slot_pos_cur;
-    /* create a sched control cap for each core */
-    for (unsigned int i = 0; i < num_nodes && ret; i++) {
-        ret = provide_cap(root_cnode_cap, cap_sched_control_cap_new(i));
-    }
 
-    if (!ret) {
-        return false;
+    /* create a sched control cap for each core */
+    for (unsigned int i = 0; i < num_nodes; i++) {
+        if (!provide_cap(root_cnode_cap, cap_sched_control_cap_new(i))) {
+            printf("can't init sched_control for node %u, provide_cap() failed\n", i);
+            return false;
+        }
     }
 
     /* update boot info with slot region for sched control caps */
