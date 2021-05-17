@@ -11,11 +11,11 @@
 #include <sel4/types.h>
 
 #ifdef CONFIG_KERNEL_MCS
-#define MCS_PARAM_DECL(r)    register seL4_Word reply_reg asm(r) = reply;
-#define MCS_PARAM    , "r"(reply_reg)
+#define MCS_REPLY_DECL register seL4_Word reply_reg asm("r12") = reply;
+#define MCS_REPLY ,"r"(reply_reg)
 #else
-#define MCS_PARAM_DECL(r)
-#define MCS_PARAM
+#define MCS_REPLY_DECL
+#define MCS_REPLY
 #endif
 
 
@@ -92,7 +92,7 @@ static inline void x64_sys_recv(seL4_Word sys, seL4_Word src, seL4_Word *out_bad
     register seL4_Word mr1 asm("r8");
     register seL4_Word mr2 asm("r9");
     register seL4_Word mr3 asm("r15");
-    MCS_PARAM_DECL("r12");
+    MCS_REPLY_DECL;
 
     asm volatile(
         "movq   %%rsp, %%rcx    \n"
@@ -106,8 +106,8 @@ static inline void x64_sys_recv(seL4_Word sys, seL4_Word src, seL4_Word *out_bad
         "=r"(mr2),
         "=r"(mr3)
         : "a"(sys),
-        "D"(src),
-        MCS_PARAM
+        "D"(src)
+        MCS_REPLY
         : "%rcx", "%rdx", "memory"
     );
 
@@ -125,7 +125,7 @@ static inline void x64_sys_send_recv(seL4_Word sys, seL4_Word dest, seL4_Word *o
     register seL4_Word mr1 asm("r8") = *in_out_mr1;
     register seL4_Word mr2 asm("r9") = *in_out_mr2;
     register seL4_Word mr3 asm("r15") = *in_out_mr3;
-    MCS_PARAM_DECL("r12");
+    MCS_REPLY_DECL;
 
     asm volatile(
         "movq   %%rsp, %%rcx    \n"
@@ -144,8 +144,8 @@ static inline void x64_sys_send_recv(seL4_Word sys, seL4_Word dest, seL4_Word *o
         "r"(mr0),
         "r"(mr1),
         "r"(mr2),
-        "r"(mr3),
-        MCS_PARAM
+        "r"(mr3)
+        MCS_REPLY
         : "%rcx", "%rdx", "memory"
     );
 
@@ -175,12 +175,16 @@ static inline void x64_sys_nbsend_recv(seL4_Word sys, seL4_Word dest, seL4_Word 
         : "=S"(*out_info),
         "=r"(mr0),
         "=r"(mr1),
+        "=r"(mr2),
+        "=r"(mr3),
         "=D"(*out_dest)
         : "a"(sys),
         "D"(src),
         "S"(info),
         "r"(mr0),
         "r"(mr1),
+        "r"(mr2),
+        "r"(mr3),
         "r"(reply_reg),
         "r"(dest_reg)
         : "%rcx", "%rdx", "memory"
