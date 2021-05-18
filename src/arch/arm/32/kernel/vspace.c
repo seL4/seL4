@@ -2784,8 +2784,8 @@ void kernelUndefinedInstruction(word_t pc) VISIBLE;
 void kernelPrefetchAbort(word_t pc)
 {
     printf("\n\nKERNEL PREFETCH ABORT!\n");
-    printf("Faulting instruction: 0x"SEL4_PRIx_word"\n", pc);
-    printf("HSR: 0x%"SEL4_PRIx_word"\n", getHSR(););
+    printf("Faulting instruction: 0x%"SEL4_PRIx_word"\n", pc);
+    printf("HSR: 0x%"SEL4_PRIx_word"\n", getHSR());
     halt();
 }
 
