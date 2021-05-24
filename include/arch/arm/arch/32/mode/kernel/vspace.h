@@ -12,7 +12,7 @@
 #include <object/structures.h>
 
 /* PD slot reserved for storing the PD's allocated hardware ASID */
-#define PD_ASID_SLOT (0xff000000 >> (PT_INDEX_BITS + PAGE_BITS))
+#define PD_ASID_SLOT (0xfe000000 >> (PT_INDEX_BITS + PAGE_BITS))
 
 enum pde_pte_tag {
     ME_PDE,
