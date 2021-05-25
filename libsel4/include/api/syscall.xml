@@ -55,10 +55,12 @@
         </config>
         <config condition="defined CONFIG_ENABLE_BENCHMARKS">
             <syscall name="BenchmarkFlushCaches" />
+            <syscall name="BenchmarkNullSyscall"  />
+        </config>
+        <config condition="defined CONFIG_ENABLE_BENCHMARKS || defined CONFIG_KERNEL_DEBUG_LOG_BUFFER">
             <syscall name="BenchmarkResetLog" />
             <syscall name="BenchmarkFinalizeLog"  />
             <syscall name="BenchmarkSetLogBuffer"  />
-            <syscall name="BenchmarkNullSyscall"  />
         </config>
         <config condition="defined CONFIG_BENCHMARK_TRACK_UTILISATION">
             <syscall name="BenchmarkGetThreadUtilisation"  />

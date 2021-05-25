@@ -173,7 +173,7 @@ seL4_DebugRun(void (* userfn)(void *), void *userarg);
  *
  * @{
  */
-#ifdef CONFIG_ENABLE_BENCHMARKS
+#if defined(CONFIG_ENABLE_BENCHMARKS) || defined(CONFIG_KERNEL_DEBUG_LOG_BUFFER)
 /*
   */
 
@@ -223,7 +223,9 @@ seL4_BenchmarkFinalizeLog(void);
  */
 LIBSEL4_INLINE_FUNC seL4_Error
 seL4_BenchmarkSetLogBuffer(seL4_Word frame_cptr);
+#endif
 
+#ifdef CONFIG_ENABLE_BENCHMARKS
 /**
  * @xmlonly <manual name="Null Syscall" label="sel4_benchmarknullsyscall"/> @endxmlonly
  * @brief Null system call that enters and exits the kernel immediately, for timing kernel traps in microbenchmarks.

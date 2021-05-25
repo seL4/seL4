@@ -24,6 +24,7 @@
 #include <string.h>
 #include <kernel/traps.h>
 #include <arch/machine.h>
+#include <log.h>
 
 #ifdef CONFIG_DEBUG_BUILD
 #include <arch/machine/capdl.h>
@@ -185,20 +186,8 @@ exception_t handleUnknownSyscall(word_t w)
     }
 #endif
 
-#ifdef CONFIG_ENABLE_BENCHMARKS
-    if (w == SysBenchmarkFlushCaches) {
-#ifdef CONFIG_ARCH_ARM
-        tcb_t *thread = NODE_STATE(ksCurThread);
-        if (getRegister(thread, capRegister)) {
-            arch_clean_invalidate_L1_caches(getRegister(thread, msgInfoRegister));
-        } else {
-            arch_clean_invalidate_caches();
-        }
-#else
-        arch_clean_invalidate_caches();
-#endif
-        return EXCEPTION_NONE;
-    } else if (w == SysBenchmarkResetLog) {
+#if defined(CONFIG_ENABLE_BENCHMARKS) || defined(CONFIG_KERNEL_LOG_BUFFER)
+    if (w == SysBenchmarkResetLog) {
 #ifdef CONFIG_KERNEL_LOG_BUFFER
         if (ksUserLogBuffer == 0) {
             userError("A user-level buffer has to be set before resetting benchmark.\
@@ -206,8 +195,12 @@ exception_t handleUnknownSyscall(word_t w)
             setRegister(NODE_STATE(ksCurThread), capRegister, seL4_IllegalOperation);
             return EXCEPTION_SYSCALL_ERROR;
         }
-
+#ifdef CONFIG_KERNEL_DEBUG_LOG_BUFFER
+        logBuffer_reset();
+#else
         ksLogIndex = 0;
+#endif /* CONFIG_KERNEL_DEBUG_LOG_BUFFER */
+
 #endif /* CONFIG_KERNEL_LOG_BUFFER */
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
         NODE_STATE(benchmark_log_utilisation_enabled) = true;
@@ -225,8 +218,12 @@ exception_t handleUnknownSyscall(word_t w)
         return EXCEPTION_NONE;
     } else if (w == SysBenchmarkFinalizeLog) {
 #ifdef CONFIG_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_DEBUG_LOG_BUFFER
+        setRegister(NODE_STATE(ksCurThread), capRegister, logBuffer_finalize());
+#else /* CONFIG_KERNEL_DEBUG_LOG_BUFFER */
         ksLogIndexFinalized = ksLogIndex;
         setRegister(NODE_STATE(ksCurThread), capRegister, ksLogIndexFinalized);
+#endif /* !CONFIG_KERNEL_DEBUG_LOG_BUFFER */
 #endif /* CONFIG_KERNEL_LOG_BUFFER */
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
         benchmark_utilisation_finalise();
@@ -245,7 +242,22 @@ exception_t handleUnknownSyscall(word_t w)
         return EXCEPTION_NONE;
 #endif /* CONFIG_KERNEL_LOG_BUFFER */
     }
+#endif /* defined(CONFIG_ENABLE_BENCHMARKS) || defined(CONFIG_KERNEL_LOG_BUFFER) */
 
+#ifdef CONFIG_ENABLE_BENCHMARKS
+    if (w == SysBenchmarkFlushCaches) {
+#ifdef CONFIG_ARCH_ARM
+        tcb_t *thread = NODE_STATE(ksCurThread);
+        if (getRegister(thread, capRegister)) {
+            arch_clean_invalidate_L1_caches(getRegister(thread, msgInfoRegister));
+        } else {
+            arch_clean_invalidate_caches();
+        }
+#else
+        arch_clean_invalidate_caches();
+#endif
+        return EXCEPTION_NONE;
+    }
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
     else if (w == SysBenchmarkGetThreadUtilisation) {
         benchmark_track_utilisation_dump();

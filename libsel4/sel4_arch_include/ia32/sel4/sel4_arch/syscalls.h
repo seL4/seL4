@@ -910,7 +910,7 @@ LIBSEL4_INLINE_FUNC seL4_Uint64 seL4_X86DangerousRDMSR(seL4_Word msr)
 }
 #endif
 
-#ifdef CONFIG_ENABLE_BENCHMARKS
+#if defined(CONFIG_ENABLE_BENCHMARKS) || defined(CONFIG_KERNEL_DEBUG_LOG_BUFFER)
 LIBSEL4_INLINE_FUNC seL4_Error seL4_BenchmarkResetLog(void)
 {
     seL4_Word unused0 = 0;
@@ -945,8 +945,9 @@ LIBSEL4_INLINE_FUNC seL4_Error seL4_BenchmarkSetLogBuffer(seL4_Word frame_cptr)
 
     return (seL4_Error) frame_cptr;
 }
+#endif
 
-
+#ifdef CONFIG_ENABLE_BENCHMARKS
 LIBSEL4_INLINE_FUNC void seL4_BenchmarkNullSyscall(void)
 {
     x86_sys_null(seL4_SysBenchmarkNullSyscall);

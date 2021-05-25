@@ -660,7 +660,7 @@ LIBSEL4_INLINE_FUNC void seL4_DebugRun(void (* userfn)(void *), void *userarg)
 }
 #endif
 
-#ifdef CONFIG_ENABLE_BENCHMARKS
+#if defined(CONFIG_ENABLE_BENCHMARKS) || defined(CONFIG_KERNEL_DEBUG_LOG_BUFFER)
 /* set the log index back to 0 */
 LIBSEL4_INLINE_FUNC seL4_Error seL4_BenchmarkResetLog(void)
 {
@@ -703,7 +703,9 @@ LIBSEL4_INLINE_FUNC seL4_Error seL4_BenchmarkSetLogBuffer(seL4_Word frame_cptr)
 
     return (seL4_Error) frame_cptr;
 }
+#endif
 
+#ifdef CONFIG_ENABLE_BENCHMARKS
 LIBSEL4_INLINE_FUNC void seL4_BenchmarkNullSyscall(void)
 {
     arm_sys_null(seL4_SysBenchmarkNullSyscall);
