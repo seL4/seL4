@@ -28,7 +28,6 @@ nodeSkimScratchOffset = nodeSkimScratch - node_info;
 KERNEL_OFFSET = KLOAD_VADDR - KLOAD_PADDR;
 
 PHDRS {
-    headers PT_PHDR PHDRS ;
     phys PT_LOAD FILEHDR PHDRS ;
     boot PT_LOAD ;
     virt PT_LOAD ;
