@@ -31,6 +31,9 @@ Upcoming release: BREAKING
   - Sporadic server behaves as described by Sprunt et. al.
   - In an overcommitted system, sporadic preserves accumulated time
 * MCS kernel configuration option KernelStaticMaxBudgetUs renamed to KernelStaticMaxPeriodUs
+* AUTOCONF_INCLUDED is no longer defined. The seL4 build system has stopped
+  using autoconf a long time ago and this define has been kept for compatibility
+  since then. It is no longer used anywhere by now, so it can be removed.
 
 
 ## Upgrade Notes
@@ -297,7 +300,7 @@ Upcoming release: BREAKING
   - Support for i.MX8M Mini evk AArch64 EL2 and EL1, AArch32 smode only is accessible via the imx8mm-evk platform.
 * Add FVP platform with fixed configuration. This currently assumes A57 configuration described in tools/dts/fvp.dts.
 * Arm SMP invocation IRQControl_GetTriggerCore added
-  - Used to route a specify which core an IRQ should be delivered on. 
+  - Used to route a specify which core an IRQ should be delivered on.
 * Kernel log buffer: Specify on which core an IRQ was delivered.
 * Add new seL4_DebugSendIPI syscall to send arbitrary SGIs on ARM when SMP and DEBUG_BUILD are activated.
 * Support for aarch64-hyp configurations with 40-bit physical addresses (PA) added.
@@ -341,7 +344,7 @@ Upcoming release: BREAKING
 * Usages of ARCH_Page_Remap can be replaced with ARCH_Page_Map and require the original mapping address to be provided.
 * Device untypeds are provided to user level in different sizes which may require more initial processing to break them
   down for each device they refer to.
- 
+
 ---
 10.1.1 2018-11-12: BINARY COMPATIBLE
 
