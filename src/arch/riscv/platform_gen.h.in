@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __RISCV_PLAT_H
-#define __RISCV_PLAT_H
+#pragma once
 
 #include <config.h>
 #define TIMER_CLOCK_HZ @CONFIGURE_TIMER_FREQUENCY@
@@ -44,5 +43,3 @@ enum irqNumbers {
 #define IRQ_CNODE_SLOT_BITS (@CONFIGURE_IRQ_SLOT_BITS@)
 
 #include <@CONFIGURE_INTERRUPT_CONTROLLER@>
-
-#endif /* !__RISCV_PLAT_H */
