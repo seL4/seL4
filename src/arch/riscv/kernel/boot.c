@@ -194,71 +194,57 @@ static BOOT_CODE bool_t try_init_kernel(
     paddr_t dtb_addr_end
 )
 {
-    cap_t root_cnode_cap;
-    cap_t it_pd_cap;
-    cap_t it_ap_cap;
-    cap_t ipcbuf_cap;
-    p_region_t boot_mem_reuse_p_reg = ((p_region_t) {
-        kpptr_to_paddr((void *)KERNEL_ELF_BASE), kpptr_to_paddr(ki_boot_end)
-    });
-    region_t boot_mem_reuse_reg = paddr_to_pptr_reg(boot_mem_reuse_p_reg);
-    region_t ui_reg = paddr_to_pptr_reg((p_region_t) {
-        ui_p_reg_start, ui_p_reg_end
-    });
-    region_t dtb_reg;
-    word_t extra_bi_size;
+    map_kernel_window();
+    /* initialise the CPU */
+    init_cpu();
+    printf("Bootstrapping kernel\n");
+    /* initialize the platform */
+    init_plat();
+
+    word_t extra_bi_size = 0;
     pptr_t extra_bi_offset = 0;
-    vptr_t extra_bi_frame_vptr;
-    vptr_t bi_frame_vptr;
-    vptr_t ipcbuf_vptr;
-    create_frames_of_region_ret_t create_frames_ret;
-    create_frames_of_region_ret_t extra_bi_ret;
 
     /* convert from physical addresses to userland vptrs */
-    v_region_t ui_v_reg;
-    v_region_t it_v_reg;
-    ui_v_reg.start = (word_t)(ui_p_reg_start - pv_offset);
-    ui_v_reg.end   = (word_t)(ui_p_reg_end   - pv_offset);
+    v_region_t ui_v_reg = (v_region_t) {
+        .start = (word_t)(ui_p_reg_start - pv_offset),
+        .end   = (word_t)(ui_p_reg_end   - pv_offset)
+    };
 
-    ipcbuf_vptr = ui_v_reg.end;
-    bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
-    extra_bi_frame_vptr = bi_frame_vptr + BIT(PAGE_BITS);
+    vptr_t ipcbuf_vptr = ui_v_reg.end;
+    vptr_t  bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
+    vptr_t extra_bi_frame_vptr = bi_frame_vptr + BIT(PAGE_BITS);
 
     /* If no DTB was provided, skip allocating extra bootinfo */
     p_region_t dtb_p_reg = {
         dtb_addr_start, ROUND_UP(dtb_addr_end, PAGE_BITS)
     };
+
+    region_t dtb_reg = { .start = 0, .end = 0 };
     if (dtb_addr_start == 0) {
-        extra_bi_size = 0;
-        dtb_reg = (region_t) {
-            0, 0
-        };
-    } else {
         /* convert physical address to addressable pointer */
         dtb_reg = paddr_to_pptr_reg(dtb_p_reg);
         extra_bi_size = sizeof(seL4_BootInfoHeader) + (dtb_reg.end - dtb_reg.start);
     }
-    word_t extra_bi_size_bits = calculate_extra_bi_size_bits(extra_bi_size);
-
-    /* The region of the initial thread is the user image + ipcbuf + boot info + extra */
-    it_v_reg.start = ui_v_reg.start;
-    it_v_reg.end = extra_bi_frame_vptr + BIT(extra_bi_size_bits);
-
-    map_kernel_window();
-
-    /* initialise the CPU */
-    init_cpu();
-
-    printf("Bootstrapping kernel\n");
-
-    /* initialize the platform */
-    init_plat();
 
     /* make the free memory available to alloc_region() */
+    region_t ui_reg = paddr_to_pptr_reg((p_region_t) {
+        .start = ui_p_reg_start,
+        .end   = ui_p_reg_end
+    });
+
+    /* The region of the initial thread is:
+     *     user image + ipcbuf + boot info + extra
+     */
+    word_t extra_bi_size_bits = calculate_extra_bi_size_bits(extra_bi_size);;
+    v_region_t it_v_reg = (v_region_t) {
+        .start = ui_v_reg.start,
+        .end = extra_bi_frame_vptr + BIT(extra_bi_size_bits)
+    };
+
     arch_init_freemem(ui_reg, it_v_reg, dtb_reg, extra_bi_size_bits);
 
     /* create the root cnode */
-    root_cnode_cap = create_root_cnode();
+    cap_t root_cnode_cap = create_root_cnode();
     if (cap_get_capType(root_cnode_cap) == cap_null_cap) {
         printf("ERROR: root c-node creation failed\n");
         return false;
@@ -294,7 +280,7 @@ static BOOT_CODE bool_t try_init_kernel(
 
     /* Construct an initial address space with enough virtual addresses
      * to cover the user image + ipc buffer and bootinfo frames */
-    it_pd_cap = create_it_address_space(root_cnode_cap, it_v_reg);
+    cap_t it_pd_cap = create_it_address_space(root_cnode_cap, it_v_reg);
     if (cap_get_capType(it_pd_cap) == cap_null_cap) {
         printf("ERROR: initial thread PD c-node creation failed\n");
         return false;
@@ -313,7 +299,7 @@ static BOOT_CODE bool_t try_init_kernel(
             .start = rootserver.extra_bi,
             .end = rootserver.extra_bi + extra_bi_size
         };
-        extra_bi_ret =
+        create_frames_of_region_ret_t extra_bi_ret =
             create_frames_of_region(
                 root_cnode_cap,
                 it_pd_cap,
@@ -333,14 +319,14 @@ static BOOT_CODE bool_t try_init_kernel(
 #endif
 
     /* create the initial thread's IPC buffer */
-    ipcbuf_cap = create_ipcbuf_frame_cap(root_cnode_cap, it_pd_cap, ipcbuf_vptr);
+    cap_t ipcbuf_cap = create_ipcbuf_frame_cap(root_cnode_cap, it_pd_cap, ipcbuf_vptr);
     if (cap_get_capType(ipcbuf_cap) == cap_null_cap) {
         printf("ERROR: could not create IPC buffer for initial thread\n");
         return false;
     }
 
     /* create all userland image frames */
-    create_frames_ret =
+    create_frames_of_region_ret_t create_frames_ret =
         create_frames_of_region(
             root_cnode_cap,
             it_pd_cap,
@@ -355,7 +341,7 @@ static BOOT_CODE bool_t try_init_kernel(
     ndks_boot.bi_frame->userImageFrames = create_frames_ret.region;
 
     /* create the initial thread's ASID pool */
-    it_ap_cap = create_it_asid_pool(root_cnode_cap);
+    cap_t it_ap_cap = create_it_asid_pool(root_cnode_cap);
     if (cap_get_capType(it_ap_cap) == cap_null_cap) {
         printf("ERROR: could not create ASID pool for initial thread\n");
         return false;
@@ -390,6 +376,11 @@ static BOOT_CODE bool_t try_init_kernel(
     init_core_state(initial);
 
     /* convert the remaining free memory into UT objects and provide the caps */
+    region_t boot_mem_reuse_reg = paddr_to_pptr_reg( (p_region_t) {
+        .start = kpptr_to_paddr((void *)KERNEL_ELF_BASE),
+        .end   = kpptr_to_paddr(ki_boot_end)
+    });
+
     if (!create_untypeds(
             root_cnode_cap,
             boot_mem_reuse_reg)) {
