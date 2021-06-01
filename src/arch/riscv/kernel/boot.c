@@ -365,7 +365,6 @@ static BOOT_CODE bool_t try_init_kernel(
         return false;
     }
 
-
     /* create the initial thread */
     tcb_t *initial = create_initial_thread(
                          root_cnode_cap,
