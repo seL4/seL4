@@ -24,6 +24,11 @@ register_driver(
     CFILES "imx.c"
 )
 register_driver(
+    compatibility_strings "fsl,imx8qxp-lpuart"
+    PREFIX src/drivers/serial
+    CFILES "imx-lpuart.c"
+)
+register_driver(
     compatibility_strings "samsung,exynos4210-uart"
     PREFIX src/drivers/serial
     CFILES "exynos4210-uart.c"
