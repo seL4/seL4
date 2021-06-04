@@ -704,12 +704,12 @@ BOOT_BSS static region_t avail_reg[MAX_NUM_FREEMEM_REG];
  * A region represents an area of memory.
  */
 BOOT_CODE void init_freemem(word_t n_available, const p_region_t *available,
-                            word_t n_reserved, region_t *reserved,
+                            word_t n_reserved, const region_t *reserved,
                             v_region_t it_v_reg, word_t extra_bi_size_bits)
 {
     /* Force ordering and exclusivity of reserved regions */
     for (word_t i = 0; i < n_reserved; i++) {
-        UNUSED region_t *r = &reserved[i];
+        UNUSED const region_t *r = &reserved[i];
         /* Reserved regions must be sane, the size is allowed to be zero */
         assert(r->start <= r->end);
         if (i > 0) {

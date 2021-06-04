@@ -48,7 +48,7 @@ static inline bool_t is_reg_empty(region_t reg)
 }
 
 void init_freemem(word_t n_available, const p_region_t *available,
-                  word_t n_reserved, region_t *reserved,
+                  word_t n_reserved, const region_t *reserved,
                   v_region_t it_v_reg, word_t extra_bi_size_bits);
 bool_t reserve_region(p_region_t reg);
 bool_t insert_region(region_t reg);
