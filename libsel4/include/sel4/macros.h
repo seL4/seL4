@@ -49,7 +49,7 @@
 #define SEL4_COMPILE_ASSERT(name, expr)   _Static_assert(expr, #name);
 #else
 #define SEL4_COMPILE_ASSERT(name, expr) \
-    typedef int __assert_failed_##name[(expr) ? 1 : -1];
+    typedef int __assert_failed_##name[(expr) ? 1 : -1] LIBSEL4_UNUSED;
 #endif
 
 
