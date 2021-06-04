@@ -40,7 +40,7 @@ void _assert_fail(
 
 /* Create an assert that will trigger a compile error if it fails. */
 #define compile_assert(name, expr) \
-        typedef int __assert_failed_##name[(expr) ? 1 : -1];
+        typedef int __assert_failed_##name[(expr) ? 1 : -1] UNUSED;
 
 /* Sometimes compile asserts contain expressions that the C parser cannot
  * handle. For such expressions unverified_compile_assert should be used. */
