@@ -49,8 +49,8 @@ static inline p_region_t CONST pptr_to_paddr_reg(region_t reg)
     };
 }
 
-#define paddr_to_pptr ptrFromPAddr
-#define pptr_to_paddr addrFromPPtr
-#define kpptr_to_paddr addrFromKPPtr
+#define paddr_to_pptr(x)   ptrFromPAddr(x)
+#define pptr_to_paddr(x)   addrFromPPtr(x)
+#define kpptr_to_paddr(x)  addrFromKPPtr(x)
 
 #include <mode/machine.h>
