@@ -46,7 +46,6 @@
 #define SECTION(sec) __attribute__((__section__(sec)))
 #define UNUSED       __attribute__((unused))
 #define USED         __attribute__((used))
-#define FASTCALL     __attribute__((fastcall))
 #ifdef __clang__
 #define FORCE_O2     /* nothing */
 #else
