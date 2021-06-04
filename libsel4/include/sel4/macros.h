@@ -43,7 +43,8 @@
 
 #endif
 
-
+/* _Static_assert() is a c11 feature. Since the kernel is currently compiled
+ * with c99, we have to emulate it. */
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
 #define SEL4_COMPILE_ASSERT(name, expr)   _Static_assert(expr, #name);
 #else
@@ -53,7 +54,7 @@
 
 
 #define SEL4_SIZE_SANITY(index, entry, size) \
-    SEL4_COMPILE_ASSERT(index##entry##size, index + entry == size)
+    SEL4_COMPILE_ASSERT(index##_##entry##_##size, (index) + (entry) == size)
 
 
 /*
