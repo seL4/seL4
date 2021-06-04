@@ -26,9 +26,12 @@ extern char ki_boot_end[];
 BOOT_BSS static volatile word_t node_boot_lock;
 #endif
 
-/* kernel image + [extra bootinfo] + user image */
-#define MAX_RESERVED 3
-BOOT_BSS static region_t res_reg[MAX_RESERVED];
+/* There are up to 3 reserved regions:
+ *   - the kernel image
+ *   - optional extra bootinfo, currently a DTB passed by a previous bootloader
+ *   - the user image
+ */
+BOOT_BSS static region_t res_reg[3];
 
 BOOT_CODE static bool_t create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg)
 {
@@ -75,6 +78,8 @@ BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vpt
 BOOT_CODE static void arch_init_freemem(region_t ui_reg, v_region_t ui_v_reg,
                                         region_t dtb_reg, word_t extra_bi_size_bits)
 {
+    SEL4_COMPILE_ASSERT(min_3_reserved_regions, ARRAY_SIZE(res_reg) >= 3);
+
     // This looks a bit awkward as our symbols are a reference in the kernel image window, but
     // we want to do all allocations in terms of the main kernel window, so we do some translation
     res_reg[0].start = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void *)KERNEL_ELF_BASE));
