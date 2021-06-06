@@ -202,7 +202,6 @@ static BOOT_CODE bool_t try_init_kernel(
     init_plat();
 
     word_t extra_bi_size = 0;
-    pptr_t extra_bi_offset = 0;
 
     /* convert from physical addresses to userland vptrs */
     v_region_t ui_v_reg = (v_region_t) {
@@ -215,15 +214,15 @@ static BOOT_CODE bool_t try_init_kernel(
     vptr_t extra_bi_frame_vptr = bi_frame_vptr + BIT(PAGE_BITS);
 
     /* If no DTB was provided, skip allocating extra bootinfo */
-    p_region_t dtb_p_reg = {
-        dtb_addr_start, ROUND_UP(dtb_addr_end, PAGE_BITS)
-    };
-
     region_t dtb_reg = { .start = 0, .end = 0 };
     if (dtb_addr_start == 0) {
         /* convert physical address to addressable pointer */
-        dtb_reg = paddr_to_pptr_reg(dtb_p_reg);
-        extra_bi_size = sizeof(seL4_BootInfoHeader) + (dtb_reg.end - dtb_reg.start);
+        dtb_reg = paddr_to_pptr_reg( (p_region_t) {
+            .start = dtb_addr_start,
+            .end = ROUND_UP(dtb_addr_end, PAGE_BITS)
+        });
+        /* calculate the size the DTB boot info block needs */
+        extra_bi_size += write_bootinfo_dtb(NULL, &dtb_reg);
     }
 
     /* make the free memory available to alloc_region() */
@@ -258,24 +257,19 @@ static BOOT_CODE bool_t try_init_kernel(
 
     /* create the bootinfo frame */
     populate_bi_frame(0, CONFIG_MAX_NUM_NODES, ipcbuf_vptr, extra_bi_size);
-
+    pptr_t extra_bi_offset = 0;
     /* put DTB in the bootinfo block, if present. */
-    seL4_BootInfoHeader header;
     if (dtb_reg.start) {
-        header.id = SEL4_BOOTINFO_HEADER_FDT;
-        header.len = extra_bi_size;
-        *(seL4_BootInfoHeader *)(rootserver.extra_bi + extra_bi_offset) = header;
-        extra_bi_offset += sizeof(header);
-        memcpy((void *)(rootserver.extra_bi + extra_bi_offset), (void *)dtb_reg.start,
-               dtb_reg.end - dtb_reg.start);
-        extra_bi_offset += (dtb_reg.end - dtb_reg.start);
+        extra_bi_offset += write_bootinfo_dtb(
+                            (void *)(rootserver.extra_bi + extra_bi_offset),
+                            &dtb_reg);
     }
 
+    /* provide a chunk for any leftover padding in the extended boot info */
     if (extra_bi_size > extra_bi_offset) {
-        /* provide a chunk for any leftover padding in the extended boot info */
-        header.id = SEL4_BOOTINFO_HEADER_PADDING;
-        header.len = (extra_bi_size - extra_bi_offset);
-        *(seL4_BootInfoHeader *)(rootserver.extra_bi + extra_bi_offset) = header;
+        extra_bi_offset += write_bootinfo_padding(
+                            (void *)(rootserver.extra_bi + extra_bi_offset),
+                            extra_bi_size - extra_bi_offset);
     }
 
     /* Construct an initial address space with enough virtual addresses

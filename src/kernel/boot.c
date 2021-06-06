@@ -23,6 +23,91 @@ BOOT_BSS ndks_boot_t ndks_boot;
 BOOT_BSS rootserver_mem_t rootserver;
 BOOT_BSS static region_t rootserver_mem;
 
+/*
+ * Create a boot info record
+ *
+ * If bi_ptr is NULL, this just returns the amount of byte that would have been
+ * written for the boot info record. If data is NULL, then the boot info record
+ * payload is filled with zeros.
+ */
+BOOT_CODE seL4_Word write_bootinfo(
+    void *bi_ptr,
+    seL4_Word bi_block_id,
+    void const *data,
+    seL4_Word data_len)
+{
+    seL4_Word len = 0;
+    seL4_BootInfoHeader header = {0};
+
+    if (bi_ptr) {
+        /* The target location could be unaligned, thus we populate the header
+         * on our aligned structure and then copy it to the target location.
+         */
+        header.id = bi_block_id;
+        header.len = sizeof(header) + data_len;
+        memcpy(bi_ptr, &header, sizeof(header));
+    }
+    len += sizeof(header);
+
+    /* put data after header */
+    if (bi_ptr && (data_len > 0))
+    {
+        void *addr = (void *)((seL4_Word)bi_ptr + len);
+        if (data) {
+            memcpy(addr, data, data_len);
+        } else {
+            memset(addr, 0, data_len);
+        }
+    }
+    len += data_len;
+
+    return len;
+}
+
+/*
+ * Create a boot info record with a DTB
+ *
+ * If bi_ptr is NULL, this just returns the amount of byte that would have been
+ * written for the boot info record.
+ */
+BOOT_CODE seL4_Word write_bootinfo_dtb(
+    void *bi_ptr,
+    region_t const *dtb_reg)
+{
+    assert(dtb_reg);
+    return write_bootinfo(
+                bi_ptr,
+                SEL4_BOOTINFO_HEADER_FDT,
+                (void *)dtb_reg->start,
+                dtb_reg->end - dtb_reg->start);
+}
+
+/*
+ * Create a boot info record as padding for the given space. If there is not
+ * enough space for a boot info header then just zero the space.
+ *
+ * If bi_ptr is NULL, this just returns the amount of byte that would have been
+ * written for the boot info record.
+ */
+BOOT_CODE seL4_Word write_bootinfo_padding(
+    void *bi_ptr,
+    seL4_Word len)
+{
+    if (len < sizeof(seL4_BootInfoHeader)) {
+        printf("WARNUNG: not enough space to even write boot info padding header");
+        if (bi_ptr)
+        {
+            memset(bi_ptr, 0, len);
+        }
+        return len;
+    }
+    return write_bootinfo(
+                bi_ptr,
+                SEL4_BOOTINFO_HEADER_PADDING,
+                NULL,
+                len - sizeof(seL4_BootInfoHeader));
+}
+
 BOOT_CODE static void merge_regions(void)
 {
     /* Walk through reserved regions and see if any can be merged */

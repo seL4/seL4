@@ -47,6 +47,10 @@ static inline bool_t is_reg_empty(region_t reg)
     return reg.start == reg.end;
 }
 
+seL4_Word write_bootinfo(void *bi_ptr, seL4_Word bi_block_id,
+                         void const *data, seL4_Word data_len);
+seL4_Word write_bootinfo_dtb(void *bi_ptr, region_t const *dtb_reg);
+seL4_Word write_bootinfo_padding(void *bi_ptr, seL4_Word len);
 void init_freemem(word_t n_available, const p_region_t *available,
                   word_t n_reserved, region_t *reserved,
                   v_region_t it_v_reg, word_t extra_bi_size_bits);
