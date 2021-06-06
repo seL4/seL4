@@ -75,32 +75,6 @@ BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vpt
     return cap;
 }
 
-BOOT_CODE static void arch_init_freemem(region_t ui_reg, v_region_t ui_v_reg,
-                                        region_t dtb_reg, word_t extra_bi_size_bits)
-{
-    SEL4_COMPILE_ASSERT(min_3_reserved_regions, ARRAY_SIZE(res_reg) >= 3);
-
-    // This looks a bit awkward as our symbols are a reference in the kernel image window, but
-    // we want to do all allocations in terms of the main kernel window, so we do some translation
-    res_reg[0].start = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void *)KERNEL_ELF_BASE));
-    res_reg[0].end = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void *)ki_end));
-
-    int index = 1;
-    if (dtb_reg.start) {
-        /* optionally reserve the dtb region, as it could be empty */
-        res_reg[index].start = dtb_reg.start;
-        res_reg[index].end = dtb_reg.end;
-        index += 1;
-    }
-
-    res_reg[index].start = ui_reg.start;
-    res_reg[index].end = ui_reg.end;
-    index += 1;
-
-    init_freemem(get_num_avail_p_regs(), get_avail_p_regs(), index, res_reg, ui_v_reg,
-                 extra_bi_size_bits);
-}
-
 BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
 {
     irq_t i;
@@ -208,46 +182,59 @@ static BOOT_CODE bool_t try_init_kernel(
 
     word_t extra_bi_size = 0;
 
-    /* convert from physical addresses to userland vptrs */
-    v_region_t ui_v_reg = (v_region_t) {
-        .start = (word_t)(ui_p_reg_start - pv_offset),
-        .end   = (word_t)(ui_p_reg_end   - pv_offset)
-    };
+    /* We will create up to 3 regions here, ensure there is space */
+    SEL4_COMPILE_ASSERT(enough_reserved_regions, ARRAY_SIZE(res_reg) >= 3);
+    unsigned int res_reg_cnt = 0;
 
-    vptr_t ipcbuf_vptr = ui_v_reg.end;
-    vptr_t  bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
-    vptr_t extra_bi_frame_vptr = bi_frame_vptr + BIT(PAGE_BITS);
+    /* Add the kernel image to the reserved regions. This may look a bit awkward
+     * as our symbols are a reference in the kernel image window, but we want to
+     * do all allocations in terms of the main kernel window, so we do some
+     * translation.
+     */
+    res_reg[res_reg_cnt++] = paddr_to_pptr_reg( (p_region_t) {
+        .start = kpptr_to_paddr((void *)KERNEL_ELF_BASE),
+        .end   = kpptr_to_paddr((void *)ki_end)
+    });
 
     /* If no DTB was provided or the DTB size is zero, skip allocating extra
      * bootinfo. Otherwise mark the DTB region as reserved.
      */
-    region_t dtb_reg = { .start = 0, .end = 0 };
+    region_t *dtb_reg = NULL;
     if ((0 != dtb_addr_start) && (dtb_addr_start < dtb_addr_end)) {
+        dtb_reg = &res_reg[res_reg_cnt++];
         /* convert physical address to addressable pointer */
-        dtb_reg = paddr_to_pptr_reg( (p_region_t) {
+        *dtb_reg = paddr_to_pptr_reg( (p_region_t) {
             .start = dtb_addr_start,
             .end = ROUND_UP(dtb_addr_end, PAGE_BITS)
         });
         /* calculate the size the DTB boot info block needs */
-        extra_bi_size += write_bootinfo_dtb(NULL, &dtb_reg);
+        extra_bi_size += write_bootinfo_dtb(NULL, dtb_reg);
     }
 
-    /* make the free memory available to alloc_region() */
-    region_t ui_reg = paddr_to_pptr_reg((p_region_t) {
+    /* Add the user image region to the reserved area. */
+    region_t *ui_reg = &res_reg[res_reg_cnt++];
+
+    *ui_reg = paddr_to_pptr_reg( (p_region_t) {
         .start = ui_p_reg_start,
         .end   = ui_p_reg_end
     });
 
     /* The region of the initial thread is:
-     *     user image + ipcbuf + boot info + extra
+     *   user image + ipcbuf + boot info + extra
+     * convert from physical addresses to userland vptrs
      */
-    word_t extra_bi_size_bits = calculate_extra_bi_size_bits(extra_bi_size);;
-    v_region_t it_v_reg = (v_region_t) {
-        .start = ui_v_reg.start,
-        .end = extra_bi_frame_vptr + BIT(extra_bi_size_bits)
+    vptr_t ipcbuf_vptr = (word_t)(ui_p_reg_end - pv_offset);
+    vptr_t bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
+    vptr_t extra_bi_frame_vptr = bi_frame_vptr + BIT(PAGE_BITS);
+    word_t extra_bi_size_bits = calculate_extra_bi_size_bits(extra_bi_size);
+    v_region_t it_v_reg = {
+        .start = (word_t)(ui_p_reg_start - pv_offset),
+        .end   = extra_bi_frame_vptr + BIT(extra_bi_size_bits)
     };
 
-    arch_init_freemem(ui_reg, it_v_reg, dtb_reg, extra_bi_size_bits);
+    /* now that we have all regions, initialize the free memory */
+    init_freemem(get_num_avail_p_regs(), get_avail_p_regs(),
+                 res_reg_cnt, res_reg, it_v_reg, extra_bi_size_bits);
 
     /* create the root cnode */
     cap_t root_cnode_cap = create_root_cnode();
@@ -266,10 +253,10 @@ static BOOT_CODE bool_t try_init_kernel(
     populate_bi_frame(0, CONFIG_MAX_NUM_NODES, ipcbuf_vptr, extra_bi_size);
     pptr_t extra_bi_offset = 0;
     /* put DTB in the bootinfo block, if present. */
-    if (dtb_reg.start) {
+    if (dtb_reg) {
         extra_bi_offset += write_bootinfo_dtb(
                             (void *)(rootserver.extra_bi + extra_bi_offset),
-                            &dtb_reg);
+                            dtb_reg);
     }
 
     /* provide a chunk for any leftover padding in the extended boot info */
@@ -331,7 +318,7 @@ static BOOT_CODE bool_t try_init_kernel(
         create_frames_of_region(
             root_cnode_cap,
             it_pd_cap,
-            ui_reg,
+            *ui_reg,
             true,
             pv_offset
         );
