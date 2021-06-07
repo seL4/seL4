@@ -253,21 +253,6 @@ BOOT_CODE void initTimer(void)
 }
 #endif /* !CONFIG_KERNEL_MCS */
 
-void plat_cleanL2Range(paddr_t start, paddr_t end)
-{
-}
-void plat_invalidateL2Range(paddr_t start, paddr_t end)
-{
-}
-
-void plat_cleanInvalidateL2Range(paddr_t start, paddr_t end)
-{
-}
-
-BOOT_CODE void initL2Cache(void)
-{
-}
-
 BOOT_CODE void initLocalIRQController(void)
 {
     printf("Init local IRQ\n");
