@@ -54,17 +54,7 @@
 
 #endif
 
-static inline void write_sie(word_t value)
-{
-    asm volatile("csrw sie,  %0" :: "r"(value));
-}
 
-static inline word_t read_sie(void)
-{
-    word_t temp;
-    asm volatile("csrr %0, sie" : "=r"(temp));
-    return temp;
-}
 
 static inline uint32_t readl(uint64_t addr)
 {

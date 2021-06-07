@@ -1,6 +1,7 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ * Copyright 2021, HENSOLDT Cyber
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -11,16 +12,6 @@
 #include <machine/timer.h>
 #include <arch/machine.h>
 #include <arch/smp/ipi.h>
-
-
-#define SIPI_IP   1
-#define SIPI_IE   1
-#define STIMER_IP 5
-#define STIMER_IE 5
-#define STIMER_CAUSE 5
-#define SEXTERNAL_IP 9
-#define SEXTERNAL_IE 9
-#define SEXTERNAL_CAUSE 9
 
 #ifndef CONFIG_KERNEL_MCS
 #define RESET_CYCLES ((TIMER_CLOCK_HZ / MS_IN_S) * CONFIG_TIMER_TICK_MS)
@@ -89,14 +80,14 @@ static irq_t getNewActiveIRQ(void)
 
     uint64_t sip = read_sip();
     /* Interrupt priority (high to low ): external -> software -> timer */
-    if (sip & BIT(SEXTERNAL_IP)) {
+    if (sip & BIT(SIP_SEIP)) {
         return plic_get_claim();
 #ifdef ENABLE_SMP_SUPPORT
-    } else if (sip & BIT(SIPI_IP)) {
+    } else if (sip & BIT(SIP_SEIP)) {
         sbi_clear_ipi();
         return ipi_get_irq();
 #endif
-    } else if (sip & BIT(STIMER_IP)) {
+    } else if (sip & BIT(SIP_STIP)) {
         return KERNEL_TIMER_IRQ;
     }
 
@@ -164,7 +155,7 @@ void setIRQTrigger(irq_t irq, bool_t edge_triggered)
 static inline bool_t isIRQPending(void)
 {
     word_t sip = read_sip();
-    return (sip & (BIT(STIMER_IP) | BIT(SEXTERNAL_IP)));
+    return (sip & (BIT(SIP_STIP) | BIT(SIP_SEIP)));
 }
 
 /**
@@ -182,9 +173,9 @@ static inline void maskInterrupt(bool_t disable, irq_t irq)
     assert(IS_IRQ_VALID(irq));
     if (irq == KERNEL_TIMER_IRQ) {
         if (disable) {
-            clear_sie_mask(BIT(STIMER_IE));
+            clear_sie_mask(BIT(SIE_STIE));
         } else {
-            set_sie_mask(BIT(STIMER_IE));
+            set_sie_mask(BIT(SIE_STIE));
         }
 #ifdef ENABLE_SMP_SUPPORT
     } else if (irq == irq_reschedule_ipi || irq == irq_remote_call_ipi) {
@@ -251,16 +242,9 @@ BOOT_CODE void initLocalIRQController(void)
     plic_init_hart();
 #endif
 
-    word_t sie = 0;
-    sie |= BIT(SEXTERNAL_IE);
-    sie |= BIT(STIMER_IE);
-
-#ifdef ENABLE_SMP_SUPPORT
-    /* enable the software-generated interrupts */
-    sie |= BIT(SIPI_IE);
-#endif
-
-    set_sie_mask(sie);
+    /* Enable timer and external interrupt. If SMP is enabled, then enable the
+     * software interrupt also, it is usec as IPI between cores. */
+    set_sie_mask(BIT(SIE_SEIE) | BIT(SIE_STIE) | SMP_TERNARY(BIT(SIE_SSIE), 0));
 }
 
 BOOT_CODE void initIRQController(void)
