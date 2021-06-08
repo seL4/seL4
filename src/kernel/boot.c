@@ -578,7 +578,7 @@ BOOT_CODE static bool_t provide_untyped_cap(
     return ret;
 }
 
-BOOT_CODE bool_t create_untypeds_for_region(
+BOOT_CODE static bool_t create_untypeds_for_region(
     cap_t      root_cnode_cap,
     bool_t     device_memory,
     region_t   reg,
