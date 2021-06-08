@@ -402,7 +402,7 @@ BOOT_CODE bool_t init_sched_control(cap_t root_cnode_cap, word_t num_nodes)
     bool_t ret = true;
     seL4_SlotPos slot_pos_before = ndks_boot.slot_pos_cur;
     /* create a sched control cap for each core */
-    for (int i = 0; i < num_nodes && ret; i++) {
+    for (unsigned int i = 0; i < num_nodes && ret; i++) {
         ret = provide_cap(root_cnode_cap, cap_sched_control_cap_new(i));
     }
 
@@ -425,7 +425,7 @@ BOOT_CODE bool_t create_idle_thread(void)
     pptr_t pptr;
 
 #ifdef ENABLE_SMP_SUPPORT
-    for (int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
+    for (unsigned int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
 #endif /* ENABLE_SMP_SUPPORT */
         pptr = (pptr_t) &ksIdleThreadTCB[SMP_TERNARY(i, 0)];
         NODE_STATE_ON_CORE(ksIdleThread, i) = TCB_PTR(pptr + TCB_OFFSET);
