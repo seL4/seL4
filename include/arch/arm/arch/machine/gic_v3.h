@@ -111,10 +111,13 @@ struct gic_dist_map {
     uint32_t res8[3];               /* [0xF04, 0xF10) */
     uint32_t cpendsgirn[4];         /* [0xF10, 0xF20) */
     uint32_t spendsgirn[4];         /* [0xF20, 0xF30) */
-    uint32_t res9[5235];            /* [0x0F30, 0x6100) */
+    uint32_t res9[5236];            /* [0x0F30, 0x6100) */
 
     uint64_t iroutern[960];         /* [0x6100, 0x7F00) */
 };
+
+_Static_assert(0x6100 == SEL4_OFFSETOF(struct gic_dist_map, iroutern),
+               "Error in struct gic_dist_map");
 
 /* Memory map for GIC Redistributor Registers for control and physical LPI's */
 struct gic_rdist_map {          /* Starting */
