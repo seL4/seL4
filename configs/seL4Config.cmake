@@ -154,8 +154,11 @@ function(declare_default_headers)
     set(CONFIGURE_MAX_CB "${CONFIGURE_MAX_CB}" CACHE INTERNAL "")
 endfunction()
 
-# For all of the common variables we set a default value here if they haven't
-# been set by a platform.
+#-------------------------------------------------------------------------------
+# Setup configuration defaults. For all of the common variables we set a default
+# value here if they haven't been set by a platform.
+#-------------------------------------------------------------------------------
+
 foreach(
     var
     IN
@@ -185,20 +188,36 @@ unset(KernelArmMachFeatureModifiers CACHE)
 unset(KernelArmCPU CACHE)
 unset(KernelArmArmV CACHE)
 
-# Blacklist platforms without MCS support
+# MCS support is enabled by default, platform must turn it off.
 unset(KernelPlatformSupportsMCS CACHE)
 set(KernelPlatformSupportsMCS ON)
 
-file(GLOB result ${CMAKE_CURRENT_LIST_DIR}/../src/plat/*/config.cmake)
-list(SORT result)
+#-------------------------------------------------------------------------------
+# Collect the available kernel platforms
+#-------------------------------------------------------------------------------
 
-foreach(file ${result})
-    include("${file}")
+file(
+    GLOB
+        cmake_plat_file_list CONFIGURE_DEPENDS
+        "${CMAKE_CURRENT_LIST_DIR}/../src/plat/*/config.cmake"
+)
+
+list(SORT cmake_plat_file_list)
+
+foreach(plat_cmake IN LISTS cmake_plat_file_list)
+    # this will add platform to ${kernel_platforms}
+    include("${plat_cmake}")
 endforeach()
 
 config_choice(KernelPlatform PLAT "Select the platform" ${kernel_platforms})
 
-# Now enshrine all the common variables in the config
+#-------------------------------------------------------------------------------
+# Process platform and architecture specific configuration. Enshrine all the
+# common variables in the config.
+#-------------------------------------------------------------------------------
+
+set(KernelPlatformSupportsMCS "${KernelPlatformSupportsMCS}" CACHE INTERNAL "" FORCE)
+
 config_set(KernelArmCortexA7 ARM_CORTEX_A7 "${KernelArmCortexA7}")
 config_set(KernelArmCortexA8 ARM_CORTEX_A8 "${KernelArmCortexA8}")
 config_set(KernelArmCortexA9 ARM_CORTEX_A9 "${KernelArmCortexA9}")
@@ -215,7 +234,6 @@ config_set(KernelArchArmV7ve ARCH_ARM_V7VE "${KernelArchArmV7ve}")
 config_set(KernelArchArmV8a ARCH_ARM_V8A "${KernelArchArmV8a}")
 config_set(KernelArmSMMU ARM_SMMU "${KernelArmSMMU}")
 config_set(KernelAArch64SErrorIgnore AARCH64_SERROR_IGNORE "${KernelAArch64SErrorIgnore}")
-set(KernelPlatformSupportsMCS "${KernelPlatformSupportsMCS}" CACHE INTERNAL "" FORCE)
 
 # Check for v7ve before v7a as v7ve is a superset and we want to set the
 # actual armv to that, but leave armv7a config enabled for anything that
