@@ -213,9 +213,11 @@ static BOOT_CODE bool_t try_init_kernel(
     vptr_t  bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
     vptr_t extra_bi_frame_vptr = bi_frame_vptr + BIT(PAGE_BITS);
 
-    /* If no DTB was provided, skip allocating extra bootinfo */
+    /* If no DTB was provided or the DTB size is zero, skip allocating extra
+     * bootinfo. Otherwise mark the DTB region as reserved.
+     */
     region_t dtb_reg = { .start = 0, .end = 0 };
-    if (dtb_addr_start == 0) {
+    if ((0 != dtb_addr_start) && (dtb_addr_start < dtb_addr_end)) {
         /* convert physical address to addressable pointer */
         dtb_reg = paddr_to_pptr_reg( (p_region_t) {
             .start = dtb_addr_start,
