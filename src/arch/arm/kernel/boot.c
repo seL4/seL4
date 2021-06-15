@@ -42,17 +42,17 @@ BOOT_BSS static volatile int node_boot_lock;
 #define MAX_RESERVED (ARCH_RESERVED + MODE_RESERVED)
 BOOT_BSS static region_t reserved[MAX_RESERVED];
 
-BOOT_CODE static void arch_init_freemem(p_region_t ui_p_reg, p_region_t dtb_p_reg, v_region_t it_v_reg,
+BOOT_CODE static void arch_init_freemem(p_region_t ui_p_reg, region_t dtb_reg, v_region_t it_v_reg,
                                         word_t extra_bi_size_bits)
 {
     reserved[0].start = KERNEL_ELF_BASE;
     reserved[0].end = (pptr_t)ki_end;
 
     int index = 1;
-    if (dtb_p_reg.start) {
+    if (dtb_reg.start) {
         /* the dtb region could be empty */
-        reserved[index].start = (pptr_t) paddr_to_pptr(dtb_p_reg.start);
-        reserved[index].end = (pptr_t) paddr_to_pptr(dtb_p_reg.end);
+        reserved[index].start = dtb_reg.start;
+        reserved[index].end = dtb_reg.end;
         index++;
     }
 
@@ -323,8 +323,7 @@ static BOOT_CODE bool_t try_init_kernel(
         ui_p_reg_start, ui_p_reg_end
     };
     region_t ui_reg = paddr_to_pptr_reg(ui_p_reg);
-    region_t dtb_reg;
-    word_t extra_bi_size;
+    word_t extra_bi_size = 0;
     pptr_t extra_bi_offset = 0;
     vptr_t extra_bi_frame_vptr;
     vptr_t bi_frame_vptr;
@@ -343,17 +342,13 @@ static BOOT_CODE bool_t try_init_kernel(
     extra_bi_frame_vptr = bi_frame_vptr + BIT(PAGE_BITS);
 
     /* If no DTB was provided, skip allocating extra bootinfo */
-    p_region_t dtb_p_reg = {
-        dtb_addr_start, ROUND_UP(dtb_addr_end, PAGE_BITS)
-    };
-    if (dtb_addr_start == 0) {
-        extra_bi_size = 0;
-        dtb_reg = (region_t) {
-            0, 0
-        };
-    } else {
-        dtb_reg = paddr_to_pptr_reg(dtb_p_reg);
-        extra_bi_size = sizeof(seL4_BootInfoHeader) + (dtb_reg.end - dtb_reg.start);
+    region_t dtb_reg = { .start = 0, .end = 0 };
+    if (0 != dtb_addr_start) {
+        dtb_reg = paddr_to_pptr_reg( (p_region_t) {
+            .start = dtb_addr_start,
+            .end   = ROUND_UP(dtb_addr_end, PAGE_BITS)
+        });
+        extra_bi_size += sizeof(seL4_BootInfoHeader) + (dtb_reg.end - dtb_reg.start);
     }
     word_t extra_bi_size_bits = calculate_extra_bi_size_bits(extra_bi_size);
 
@@ -380,7 +375,7 @@ static BOOT_CODE bool_t try_init_kernel(
     /* initialise the platform */
     init_plat();
 
-    arch_init_freemem(ui_p_reg, dtb_p_reg, it_v_reg, extra_bi_size_bits);
+    arch_init_freemem(ui_p_reg, dtb_reg, it_v_reg, extra_bi_size_bits);
 
     /* create the root cnode */
     root_cnode_cap = create_root_cnode();
