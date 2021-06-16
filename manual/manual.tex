@@ -34,7 +34,7 @@
 \chead{}
 \rhead[\fancyplain{}{\sl\leftmark}]{\fancyplain{}{\sl\thepage}}
 \lfoot[\fancyplain{\sl\thepage}{}]{}
-\cfoot{\ifDraft\textsf{Data61 Confidential}\fi}
+\cfoot{}
 \rfoot[]{\fancyplain{\sl\thepage}{}}
 
 \usepackage[T1]{fontenc}
@@ -92,8 +92,8 @@
 
   \title{seL4 Reference Manual\\Version \version}
 
-  \author{Trustworthy~Systems~Team, Data61}
-  \AuthorEmail{https://sel4.systems/contact/}
+  \author{seL4 Foundation}
+  \AuthorEmail{https://sel4.systems}
   \date{\commitdate}
 
   \maketitle
@@ -103,9 +103,20 @@
 
   \vfill
 
-  \copyright~{\commityear} General Dynamics C4 Systems.\\
+  \copyright\ the seL4 authors and contributors.\\
 
-  \textsc{All rights reserved}.
+  \textsc{All rights reserved}.\\
+  \\
+  % SPDX statement on its own line silences license checker warnings
+  \texttt{
+    SPDX-License-Identifier: GPL-2.0-only
+  }\\
+  You may use this manual and its sources under the terms of the GPL license,
+  version 2.\\
+
+  seL4\textregistered\ is a trademark of LF Projects, LLC.\\
+  Arm\textregistered\ is a registered trademark of Arm Limited.\\
+  RISC-V\textregistered\ is a registered trademark of RISC-V International.\\
 
   % Acknowledgements
   \thispagestyle{empty}
@@ -114,12 +125,31 @@
   \begin{abstract}
 % This list of contributors is based on the hg log. If you make commits please
 % add your name in alphabetical order.
-The primary authors of this document are Matthew Grosvenor and Adam Walker,
-with contributions from Adrian Danis, Andrew Boyton, Anna Lyons, David Greenaway, Etienne
-Le Sueur, Gernot Heiser, Gerwin Klein, Godfrey van der Linden, Kevin
-Elphinstone, Matthew Fernandez, Matthias Daum, Michael von Tessin, Peter Chubb,
-Simon Winwood, Thomas Sewell, Timothy Bourke and Toby Murray. All authors 
-and contributors can be contacted at firstname.lastname@data61.csiro.au.
+The primary authors of this document are Matthew~Grosvenor and Adam~Walker,
+with contributions from
+Adrian~Danis,
+Andrew~Boyton,
+Anna~Lyons,
+Axel~Heider,
+David~Greenaway,
+Etienne~Le~Sueur,
+Gernot~Heiser,
+Gerwin~Klein,
+Godfrey~van~der~Linden,
+Kevin~Elphinstone,
+Matthew~Fernandez,
+Matthias~Daum,
+Michael~von~Tessin,
+Peter~Chubb,
+Simon~Winwood,
+Thomas~Sewell,
+Timothy~Bourke and
+Toby~Murray.
+\\
+\\
+All authors and contributors can be contacted via the seL4 Developer Mailing
+List or the seL4 Discourse Forums. See \url{https://sel4.systems/contact.html}
+for details.
   \end{abstract}
   \thispagestyle{empty}
 
