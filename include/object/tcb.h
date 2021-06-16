@@ -217,7 +217,7 @@ exception_t invokeTCB_NotificationControl(tcb_t *tcb, notification_t *ntfnPtr);
 cptr_t PURE getExtraCPtr(word_t *bufferPtr, word_t i);
 void setExtraBadge(word_t *bufferPtr, word_t badge, word_t i);
 
-exception_t lookupExtraCaps(tcb_t *thread, word_t *bufferPtr, seL4_MessageInfo_t info);
+exception_t lookupExtraCaps(tcb_t *thread, word_t *bufferPtr, word_t length);
 word_t setMRs_syscall_error(tcb_t *thread, word_t *receiveIPCBuffer);
 word_t CONST Arch_decodeTransfer(word_t flags);
 exception_t CONST Arch_performTransfer(word_t arch, tcb_t *tcb_src,
