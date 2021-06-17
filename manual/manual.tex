@@ -4,18 +4,18 @@
 % SPDX-License-Identifier: GPL-2.0-only
 %
 
-\documentclass[a4paper,11pt,twoside]{report}
-\usepackage[colour,nictaonly]{disy}
-
 % Setting this to true turns on the `draft' watermark
 \newif \ifDraft \Draftfalse
 %\Drafttrue
 
+\documentclass[english,a4paper,11pt,twoside\ifDraft,draft\fi]{report}
+\usepackage{sel4}
+\usepackage[authoryear]{natbib}
+\def\cite{\citep}
+
 \newif \ifxeightsix   \xeightsixtrue
 
-\usepackage[margin=33mm]{geometry}
-\usepackage{graphicx}
-\usepackage{cite,url,fancyhdr}
+\usepackage{url}
 
 % Draft support
 \ifDraft
@@ -29,16 +29,14 @@
   \date{}
 \fi
 
-\pagestyle{fancyplain}
-\lhead[\fancyplain{}{\sl\thepage}]{\fancyplain{}{\sl\rightmark}}
-\chead{}
-\rhead[\fancyplain{}{\sl\leftmark}]{\fancyplain{}{\sl\thepage}}
-\lfoot[\fancyplain{\sl\thepage}{}]{}
-\cfoot{}
-\rfoot[]{\fancyplain{\sl\thepage}{}}
+ \pagestyle{fancyplain}
+ \lhead[\fancyplain{}{\thepage}]{\fancyplain{}{\rightmark}}
+ \chead{}
+ \rhead[\fancyplain{}{\leftmark}]{\fancyplain{}{\thepage}}
+ \lfoot[\fancyplain{\thepage}{}]{}
+ \cfoot{}
+ \rfoot[]{\fancyplain{\thepage}{}}
 
-\usepackage[T1]{fontenc}
-\usepackage{lmodern}
 \usepackage{listings}
 \usepackage{multirow}
 \usepackage{setspace}
@@ -49,12 +47,6 @@
 \usepackage[htt]{hyphenat}
 \renewcommand{\captionfont}{\small}
 
-% Hyperlinks and Colors
-\usepackage{color}
-%\definecolor{linkcolor}{rgb}{.000,.348,.508}
-\definecolor{linkcolor}{rgb}{0, 0, 0}
-\usepackage[colorlinks=true,linkcolor=linkcolor,citecolor=linkcolor,
-            filecolor=linkcolor,pagecolor=linkcolor,urlcolor=linkcolor]{hyperref}
 \renewcommand{\chapterautorefname}{Chapter}
 \renewcommand{\sectionautorefname}{Section}
 \renewcommand{\subsectionautorefname}{Section}
@@ -82,18 +74,18 @@
 
 \newcommand{\version}{\input{VERSION}}
 
+\newcommand{\rtm}{\textsuperscript{\textregistered}}
+
 % Read information about the repository.
 \input{env}
 
-% Don't indent paragraphs; instead, just leave some vertical space.
-\parindent 0pt\parskip 6pt
-
 \begin{document}
 
-  \title{seL4 Reference Manual\\Version \version}
+  \title{seL4\\ Reference Manual}
+  \subtitle{Version \version}
 
   \author{seL4 Foundation}
-  \AuthorEmail{https://sel4.systems}
+  \email{https://sel4.systems}
   \date{\commitdate}
 
   \maketitle
@@ -103,20 +95,23 @@
 
   \vfill
 
+  % Don't indent paragraphs; instead, just leave some vertical space.
+  \parindent 0pt\parskip 6pt
+
   \copyright\ the seL4 authors and contributors.\\
+  \textsc{All rights reserved}.
 
-  \textsc{All rights reserved}.\\
-  \\
+  \vspace{2ex}
   % SPDX statement on its own line silences license checker warnings
-  \texttt{
-    SPDX-License-Identifier: GPL-2.0-only
+  \texttt{%
+  SPDX-License-Identifier: GPL-2.0-only
   }\\
-  You may use this manual and its sources under the terms of the GPL license,
-  version 2.\\
+  You may use this manual and its sources under the terms of the GPL license, version 2.
 
-  seL4\textregistered\ is a trademark of LF Projects, LLC.\\
-  Arm\textregistered\ is a registered trademark of Arm Limited.\\
-  RISC-V\textregistered\ is a registered trademark of RISC-V International.\\
+  \vspace{2ex}
+  seL4\rtm\ is a trademark of LF Projects, LLC.\\
+  Arm\rtm\ is a registered trademark of Arm Limited.\\
+  RISC-V\rtm\ is a registered trademark of RISC-V International.
 
   % Acknowledgements
   \thispagestyle{empty}
@@ -125,32 +120,31 @@
   \begin{abstract}
 % This list of contributors is based on the hg log. If you make commits please
 % add your name in alphabetical order.
-The primary authors of this document are Matthew~Grosvenor and Adam~Walker,
+The primary authors of this document are Matthew Grosvenor and Adam Walker,
 with contributions from
-Adrian~Danis,
-Andrew~Boyton,
-Anna~Lyons,
-Axel~Heider,
-Branden~Robinson,
-David~Greenaway,
-Etienne~Le~Sueur,
-Gernot~Heiser,
-Gerwin~Klein,
-Godfrey~van~der~Linden,
-Jimmy~Brush,
-Kevin~Elphinstone,
-Matthew~Fernandez,
-Matthias~Daum,
-Michael~von~Tessin,
-Nick~Spinale,
-Peter~Chubb,
-Simon~Winwood,
-Thomas~Sewell,
-Timothy~Bourke and
-Toby~Murray.
-\\
-\\
-All authors and contributors can be contacted via the seL4 Developer Mailing
+Adrian Danis,
+Andrew Boyton,
+Anna Lyons,
+Axel Heider,
+Branden Robinson,
+David Greenaway,
+Etienne Le~Sueur,
+Gernot Heiser,
+Gerwin Klein,
+Godfrey van der Linden,
+Jimmy Brush,
+Kevin Elphinstone,
+Matthew Fernandez,
+Matthias Daum,
+Michael von Tessin,
+Nick Spinale,
+Peter Chubb,
+Simon Winwood,
+Thomas Sewell,
+Timothy Bourke, and
+Toby Murray.
+
+The authors and contributors can be contacted via the seL4 Developer Mailing
 List or the seL4 Discourse Forums. See \url{https://sel4.systems/contact.html}
 for details.
   \end{abstract}
@@ -186,7 +180,7 @@ for details.
 
   % Bibliography
   \cleardoublepage
-  \bibliographystyle{alpha}
+  \bibliographystyle{plainnat}
   \bibliography{references}
 
 \end{document}
