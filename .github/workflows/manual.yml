@@ -1,0 +1,23 @@
+# Copyright 2021, Proofcraft Pty Ltd
+#
+# SPDX-License-Identifier: BSD-2-Clause
+
+# Build a PDF of the seL4 reference manual
+name: RefMan
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  manual:
+    name: Build PDF
+    runs-on: ubuntu-latest
+    steps:
+    - uses: seL4/ci-actions/seL4-manual@master
+    - uses: actions/upload-artifact@v2
+      with:
+        name: PDF
+        path: manual/manual.pdf
