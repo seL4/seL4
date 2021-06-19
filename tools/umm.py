@@ -76,9 +76,15 @@ def base_name(x):
     return x[1]
 
 # This assumes that membership is a DAG which is the case in C
-# We could memoize, doesn't seem worth it ...
+def memoize(func):
+    memo = {}
+    def helper(x):
+        if x not in memo:
+            memo[x] = func(x)
+        return memo[x]
+    return helper
 
-
+@memoize
 def paths_to_type(mp, f, start):
     def handle_one(fld):
         name, tp = fld
