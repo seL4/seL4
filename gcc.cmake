@@ -19,16 +19,16 @@ set(CMAKE_STAGING_PREFIX "${CMAKE_BINARY_DIR}/staging")
 set(sel4_arch @KernelSel4Arch@)
 set(arch @KernelArch@)
 set(mode @KernelWordSize@)
-set(cross_prefix @CROSS_COMPILER_PREFIX@)
+set(cross_prefix @cross_prefix@)
 
 # If this file is used without templating, then cross_prefix will
 # have an invalid value and should only be assigned to CROSS_COMPILER_PREFIX
 # if it has been set to something different.
 # We need to build the test string dynamically otherwise the templating would
 # overwrite it.
-set(cross_prefix_test @CROSS_COMPILER_PREFIX)
+set(cross_prefix_test @cross_prefix)
 string(APPEND cross_prefix_test @)
-if(NOT "${cross_prefix}" STREQUAL "${cross_prefix_test}")
+if((NOT "${cross_prefix}" STREQUAL "${cross_prefix_test}") AND (NOT "${cross_prefix}" STREQUAL ""))
     set(CROSS_COMPILER_PREFIX ${cross_prefix})
 endif()
 
