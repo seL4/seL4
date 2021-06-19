@@ -766,7 +766,13 @@ static exception_t invokeReadVMCS(vcpu_t *vcpu, word_t field, word_t *buffer)
     setMR(thread, buffer, 0, readVMCSField(vcpu, field));
     setRegister(thread, msgInfoRegister, wordFromMessageInfo(
                     seL4_MessageInfo_new(0, 0, 0, 1)));
-    setThreadState(thread, ThreadState_Restart);
+
+    // Prevent handleInvocation from attempting to complete the 'call' with an empty        
+    // message (via replyFromKernel_success_empty) by forcing the thread state to        
+    // be running. This prevents our stored message we just created from being
+    // overwritten.
+    setThreadState(thread, ThreadState_Running);
+
     return EXCEPTION_NONE;
 }
 
