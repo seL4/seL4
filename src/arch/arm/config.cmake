@@ -79,15 +79,19 @@ config_option(
     DEFAULT OFF
     DEPENDS "KernelArchARM"
 )
-if(KernelSel4ArchArmHyp)
-    set(default_hyp_support ON)
-else()
-    set(default_hyp_support OFF)
+
+if(NOT DEFINED KernelSel4ArchArmHyp)
+    # the current CMake scripts ensure that KernelSel4ArchArmHyp is always set
+    # to either ON or OFF. If it is not set, something is either broken or the
+    # CMake files are used wrongly. Or support for KernelSel4ArchArmHyp has
+    # finally been removed - and then this check here should be removed and the
+    # KernelArmHypervisorSupport below can be OFF by default.
+    message(FATAL_ERROR "KernelSel4ArchArmHyp must be ON or OFF")
 endif()
 config_option(
     KernelArmHypervisorSupport ARM_HYPERVISOR_SUPPORT
     "Build as Hypervisor. Utilise ARM virtualisation extensions to build the kernel as a hypervisor"
-    DEFAULT ${default_hyp_support}
+    DEFAULT ${KernelSel4ArchArmHyp}
     DEPENDS
         "KernelArmCortexA15 OR KernelArmCortexA35 OR KernelArmCortexA57 OR KernelArmCortexA53 OR KernelArmCortexA72"
 )
@@ -100,7 +104,7 @@ config_option(
     and trap them instead, and have the VCPUs' accesses to CP14 \
     intercepted and delivered to the VM Monitor as fault messages"
     DEFAULT ON
-    DEPENDS "KernelSel4ArmHypAarch32;NOT KernelVerificationBuild"
+    DEPENDS "KernelSel4ArchArmHyp;NOT KernelVerificationBuild"
     DEFAULT_DISABLED OFF
 )
 
@@ -178,6 +182,16 @@ config_option(
     DEPENDS "KernelSel4ArchAarch32;NOT KernelArchArmV6;NOT KernelVerificationBuild"
     DEFAULT_DISABLED OFF
 )
+
+config_option(
+    KernelAArch64SErrorIgnore AARCH64_SERROR_IGNORE
+    "By default any SError interrupt will halt the kernel. SErrors may \
+    be caused by e.g. writes to read-only device registers or ECC errors. \
+    When this option is enabled SErrors will be ignored."
+    DEFAULT OFF
+    DEPENDS "KernelSel4ArchAarch64;NOT KernelVerificationBuild"
+)
+mark_as_advanced(KernelAArch64SErrorIgnore)
 
 if(KernelAArch32FPUEnableContextSwitch OR KernelSel4ArchAarch64)
     set(KernelHaveFPU ON)

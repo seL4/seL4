@@ -34,25 +34,24 @@ macro(declare_seL4_arch sel4_arch)
         "ia32;KernelSel4ArchIA32;ARCH_IA32"
     )
 
+    if(KernelSel4ArchArmHyp)
+        # arm-hyp is basically aarch32. This should be cleaned up and aligned
+        # with other architectures, where hypervisor support is an additional
+        # flag. The main blocker here is updating the verification flow.
+        config_set(KernelSel4ArchAarch32 ARCH_AARCH32 ON)
+    endif()
+
     config_choice(
         KernelArch
         ARCH
         "Architecture to use when building the kernel"
-        "arm;KernelArchARM;ARCH_ARM;KernelSel4ArchAarch32 OR KernelSel4ArchAarch64 OR KernelSel4ArchArmHyp"
+        "arm;KernelArchARM;ARCH_ARM;KernelSel4ArchAarch32 OR KernelSel4ArchAarch64"
         "riscv;KernelArchRiscV;ARCH_RISCV;KernelSel4ArchRiscV32 OR KernelSel4ArchRiscV64"
         "x86;KernelArchX86;ARCH_X86;KernelSel4ArchX86_64 OR KernelSel4ArchIA32"
     )
 
-    # arm-hyp masquerades as an aarch32 build
-    if(KernelSel4ArchArmHyp)
-        config_set(KernelSel4ArmHypAarch32 ARCH_AARCH32 ON)
-        set(KernelSel4ArchAarch32 ON CACHE INTERNAL "" FORCE)
-    else()
-        config_set(KernelSel4ArmHypAarch32 ARCH_AARCH32 OFF)
-    endif()
-
     # Set kernel mode options
-    if(KernelSel4ArchAarch32 OR KernelSel4ArchArmHyp OR KernelSel4ArchRiscV32 OR KernelSel4ArchIA32)
+    if(KernelSel4ArchAarch32 OR KernelSel4ArchRiscV32 OR KernelSel4ArchIA32)
         config_set(KernelWordSize WORD_SIZE 32)
         set(Kernel64 OFF CACHE INTERNAL "")
         set(Kernel32 ON CACHE INTERNAL "")
@@ -175,6 +174,7 @@ foreach(
     KernelArchArmV7ve
     KernelArchArmV8a
     KernelArmSMMU
+    KernelAArch64SErrorIgnore
 )
     unset(${var} CACHE)
     set(${var} OFF)
@@ -212,6 +212,7 @@ config_set(KernelArchArmV7a ARCH_ARM_V7A "${KernelArchArmV7a}")
 config_set(KernelArchArmV7ve ARCH_ARM_V7VE "${KernelArchArmV7ve}")
 config_set(KernelArchArmV8a ARCH_ARM_V8A "${KernelArchArmV8a}")
 config_set(KernelArmSMMU ARM_SMMU "${KernelArmSMMU}")
+config_set(KernelAArch64SErrorIgnore AARCH64_SERROR_IGNORE "${KernelAArch64SErrorIgnore}")
 set(KernelPlatformSupportsMCS "${KernelPlatformSupportsMCS}" CACHE INTERNAL "" FORCE)
 
 # Check for v7ve before v7a as v7ve is a superset and we want to set the
