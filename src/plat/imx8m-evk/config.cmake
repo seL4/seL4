@@ -7,9 +7,10 @@
 cmake_minimum_required(VERSION 3.7.2)
 
 declare_platform(imx8mq-evk KernelPlatformImx8mq-evk PLAT_IMX8MQ_EVK KernelArchARM)
+declare_platform(imx8mp-evk KernelPlatformImx8mp-evk PLAT_IMX8MP_EVK KernelArchARM)
 declare_platform(imx8mm-evk KernelPlatformImx8mm-evk PLAT_IMX8MM_EVK KernelArchARM)
 
-if(KernelPlatformImx8mq-evk OR KernelPlatformImx8mm-evk)
+if(KernelPlatformImx8mq-evk OR KernelPlatformImx8mp-evk OR KernelPlatformImx8mm-evk)
     if("${KernelSel4Arch}" STREQUAL aarch32)
         declare_seL4_arch(aarch32)
     elseif("${KernelSel4Arch}" STREQUAL aarch64)
@@ -40,6 +41,6 @@ if(KernelPlatformImx8mq-evk OR KernelPlatformImx8mm-evk)
 endif()
 
 add_sources(
-    DEP "KernelPlatformImx8mq-evk OR KernelPlatformImx8mm-evk"
+    DEP "KernelPlatformImx8mq-evk OR KernelPlatformImx8mp-evk OR KernelPlatformImx8mm-evk"
     CFILES src/arch/arm/machine/gic_v3.c src/arch/arm/machine/l2c_nop.c
 )

@@ -61,6 +61,7 @@ nvidia/tegra210-p2371-2180=tx1
 xilinx/avnet-ultra96-rev1=ultra96
 xilinx/zynqmp-zcu102-rev1.0=zynqmp
 freescale/fsl-imx8mq-evk=imx8mq-evk
+freescale/fsl-imx8mp-evk=imx8mp-evk
 freescale/fsl-imx8mm-evk=imx8mm-evk
 rockchip/rk3399-rockpro64=rockpro64
 broadcom/bcm2711-rpi-4-b=rpi4
