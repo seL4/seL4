@@ -55,6 +55,7 @@ def get_physical_memory(tree: FdtParser, config: Config) -> List[Region]:
                 if reserved_reg:
                     reserved_regions.update(reserved_reg)
                     for r in reserved_reg:
+                        print('reg reserved: {}'.format(r))
                         regions = carve_out_region(regions, r)
 
     # ensure the regions are properly ordered
@@ -67,6 +68,9 @@ def get_physical_memory(tree: FdtParser, config: Config) -> List[Region]:
         reg_new = reg0.align_base(kernel_phys_align)
         reserved_regions.add(Region(reg0.base, reg_new.base - reg0.base, None))
         regions[0] = reg_new
+
+    print('region: {}'.format(regions))
+    print('reserved_regions: {}'.format(reserved_regions))
 
     return regions, reserved_regions
 
