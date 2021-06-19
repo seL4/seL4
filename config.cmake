@@ -159,7 +159,7 @@ if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
     check_outfile_stale(regen ${device_dest} deps ${CMAKE_CURRENT_BINARY_DIR}/gen_header.cmd)
     if(regen)
         # Generate devices_gen header based on DTB
-        message(STATUS "${device_dest} is out of date. Regenerating...")
+        message(STATUS "${device_dest} is out of date. Regenerating from DTB...")
         file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/")
         execute_process(
             COMMAND
@@ -168,13 +168,10 @@ if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
                 "${device_dest}" --hardware-config "${config_file}" --hardware-schema
                 "${config_schema}" --yaml --yaml-out "${platform_yaml}" --arch "${KernelArch}"
                 --addrspace-max "${KernelPaddrUserTop}"
-            INPUT_FILE /dev/stdin
-            OUTPUT_FILE /dev/stdout
-            ERROR_FILE /dev/stderr
             RESULT_VARIABLE error
         )
         if(error)
-            message(FATAL_ERROR "Failed to generate: ${device_dest}")
+            message(FATAL_ERROR "Failed to generate from DTB: ${device_dest}")
         endif()
     endif()
     file(READ "${compatibility_outfile}" compatibility_strings)
