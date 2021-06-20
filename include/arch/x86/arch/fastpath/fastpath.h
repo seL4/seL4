@@ -18,6 +18,9 @@ static inline int fastpath_reply_cap_check(cap_t cap)
 void slowpath(syscall_t syscall)
 NORETURN;
 
+void fastpath_signal(word_t cptr, word_t r_msgInfo)
+NORETURN;
+
 void fastpath_call(word_t cptr, word_t r_msgInfo)
 NORETURN;
 

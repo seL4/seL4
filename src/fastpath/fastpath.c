@@ -86,6 +86,24 @@ void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
                     stored_hw_asid = cap_pd[PD_ASID_SLOT];
 #endif
 
+#ifdef CONFIG_ARCH_X86_64
+                    /* borrow the stored_hw_asid for PCID */
+                    stored_hw_asid.words[0] = cap_pml4_cap_get_capPML4MappedASID_fp(newVTable);
+#endif
+
+#ifdef CONFIG_ARCH_IA32
+                    /* stored_hw_asid is unused on ia32 fastpath, but gets passed into a function below. */
+                    stored_hw_asid.words[0] = 0;
+#endif
+#ifdef CONFIG_ARCH_AARCH64
+                    stored_hw_asid.words[0] = cap_vtable_root_get_mappedASID(newVTable);
+#endif
+
+#ifdef CONFIG_ARCH_RISCV
+                    /* Get HW ASID */
+                    stored_hw_asid.words[0] = cap_page_table_cap_get_capPTMappedASID(newVTable);
+#endif
+
                     /* Let gcc optimise this out for 1 domain */
                     dom = maxDom ? ksCurDomain : 0;
                     /* Ensure only the idle thread or lower prio threads are present in the scheduler */
@@ -183,6 +201,24 @@ void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
 #ifdef CONFIG_ARCH_AARCH32
             /* Get HW ASID */
             stored_hw_asid = cap_pd[PD_ASID_SLOT];
+#endif
+
+#ifdef CONFIG_ARCH_X86_64
+                    /* borrow the stored_hw_asid for PCID */
+                    stored_hw_asid.words[0] = cap_pml4_cap_get_capPML4MappedASID_fp(newVTable);
+#endif
+
+#ifdef CONFIG_ARCH_IA32
+                    /* stored_hw_asid is unused on ia32 fastpath, but gets passed into a function below. */
+                    stored_hw_asid.words[0] = 0;
+#endif
+#ifdef CONFIG_ARCH_AARCH64
+                    stored_hw_asid.words[0] = cap_vtable_root_get_mappedASID(newVTable);
+#endif
+
+#ifdef CONFIG_ARCH_RISCV
+                    /* Get HW ASID */
+                    stored_hw_asid.words[0] = cap_page_table_cap_get_capPTMappedASID(newVTable);
 #endif
 
             /* Let gcc optimise this out for 1 domain */
