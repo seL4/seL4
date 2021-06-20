@@ -279,7 +279,6 @@ if(KernelArchARM)
     endforeach()
 
     config_set(KernelArmMach ARM_MACH "${KernelArmMach}")
-    config_set(KernelArmSMMU ARM_SMMU "${KernelArmSMMU}")
     config_set(KernelAArch64SErrorIgnore AARCH64_SERROR_IGNORE "${KernelAArch64SErrorIgnore}")
 
 endif() # KernelArchARM
