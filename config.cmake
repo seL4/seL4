@@ -248,12 +248,20 @@ config_string(
     UNQUOTE
 )
 config_option(KernelFastpath FASTPATH "Enable IPC fastpath" DEFAULT ON)
-config_option(KernelSignalFastpath SIGNAL_FASTPATH "Enable notification signal fastpath" DEFAULT OFF)
 
 config_string(
     KernelNumDomains NUM_DOMAINS "The number of scheduler domains in the system"
     DEFAULT 1
     UNQUOTE
+)
+
+
+config_string(
+    KernelSignalFastpath SIGNAL_FASTPATH
+    "Enable notification signal fastpath"
+    DEFAULT OFF
+    DEPENDS "KernelIsMCS" UNDEF_DISABLED
+    DEPENDS "${KernelNumDomains} EQUAL 1"
 )
 
 find_file(
