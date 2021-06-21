@@ -136,7 +136,7 @@ void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
 
                     thread_state_ptr_set_tsType_np(&tcb->tcbState, ThreadState_Running);
                     setRegister(tcb, badgeRegister, badge);
-                    if (ksCurThread->tcbPriority < tcb->tcbPriority) {
+                    if (NODE_STATE(ksCurThread)->tcbPriority < tcb->tcbPriority) {
                         /* switch to waiter immediately */
                         SCHED_ENQUEUE_CURRENT_TCB;
                         switchToThread_fp(tcb, cap_pd, stored_hw_asid);
@@ -253,7 +253,7 @@ void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
 
         thread_state_ptr_set_tsType_np(&dest->tcbState, ThreadState_Running);
         setRegister(dest, badgeRegister, badge);
-        if (ksCurThread->tcbPriority < dest->tcbPriority) {
+        if (NODE_STATE(ksCurThread)->tcbPriority < dest->tcbPriority) {
             /* switch to waiter immediately */
             SCHED_ENQUEUE_CURRENT_TCB;
             switchToThread_fp(dest, cap_pd, stored_hw_asid);
