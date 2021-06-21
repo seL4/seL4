@@ -583,3 +583,49 @@ target_link_libraries(kernel.elf PRIVATE kernel_Config kernel_autoconf)
 set_property(TARGET kernel.elf APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-T ${linker_lds_path} ")
 set_target_properties(kernel.elf PROPERTIES LINK_DEPENDS "${linker_lds_path}")
 add_dependencies(kernel.elf circular_includes)
+
+# The following commands setup the install target for copying generated files and
+# compilation outputs to an install location: CMAKE_INSTALL_PREFIX.
+# CMAKE_INSTALL_PREFIX can be set on the cmake command line.
+#
+# The current installation outputs are:
+# - ${CMAKE_INSTALL_PREFIX}/bin/kernel.elf: Location of kernel.elf binary
+# - ${CMAKE_INSTALL_PREFIX}/libsel4/include: The include root for libsel4
+# - ${CMAKE_INSTALL_PREFIX}/libsel4/src: The c source files for the libsel4 library
+#
+# The install target is only created if this is the top level project.
+# We don't currently support creating install targets if the kernel is
+# imported in another project.
+if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
+
+    # Import libsel4 to get access to generation targets
+    add_subdirectory(libsel4)
+    # Add a default target that builds kernel.elf and generates all libsel4 headers
+    add_custom_target(single-project ALL DEPENDS sel4_generated kernel.elf)
+    # Disable the libsel4.a target as we don't intend to build the libsel4 sources
+    set_target_properties(sel4 PROPERTIES EXCLUDE_FROM_ALL ON)
+    # Install kernel.elf to bin/kernel.elf
+    install(TARGETS kernel.elf RUNTIME DESTINATION bin)
+    # Install all libsel4 headers to libsel4/include
+    install(
+        DIRECTORY
+            "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/include/"
+            "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/arch_include/${KernelArch}/"
+            "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/sel4_arch_include/${KernelSel4Arch}/"
+            "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/sel4_plat_include/${KernelPlatform}/"
+            "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/mode_include/${KernelWordSize}/"
+            "${CMAKE_CURRENT_BINARY_DIR}/libsel4/include/"
+            "${CMAKE_CURRENT_BINARY_DIR}/libsel4/arch_include/${KernelArch}/"
+            "${CMAKE_CURRENT_BINARY_DIR}/libsel4/sel4_arch_include/${KernelSel4Arch}/"
+            # The following directories install the autoconf headers
+            "${CMAKE_CURRENT_BINARY_DIR}/gen_config/"
+            "${CMAKE_CURRENT_BINARY_DIR}/libsel4/gen_config/"
+            "${CMAKE_CURRENT_BINARY_DIR}/libsel4/autoconf/"
+        DESTINATION libsel4/include
+        FILES_MATCHING
+        PATTERN "*.h"
+    )
+    # Install libsel4 sources to libsel4/src
+    install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/src/" DESTINATION libsel4/src)
+
+endif()
