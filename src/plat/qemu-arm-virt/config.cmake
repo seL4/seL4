@@ -27,7 +27,7 @@ if(KernelPlatformQEMUArmVirt)
         set(KernelArmCortexA57 ON)
         set(KernelArchArmV8a ON)
     else()
-        message("Warning: no cpu specified for virt board, fallback on cortex-a53")
+        message(STATUS "Default cpu specified for virt board: cortex-a53")
         declare_seL4_arch(aarch64)
         set(ARM_CPU "cortex-a53")
         set(QEMU_ARCH "aarch64")
@@ -49,7 +49,7 @@ if(KernelPlatformQEMUArmVirt)
     if("${QEMU_MEMORY}" STREQUAL "")
         set(QEMU_MEMORY "1024")
     endif()
-    message("QEMU MEMORY is: ${QEMU_MEMORY}")
+    message(STATUS "QEMU MEMORY is: ${QEMU_MEMORY}")
     config_set(KernelARMPlatform ARM_PLAT qemu-arm-virt)
     set(DTBPath "${CMAKE_BINARY_DIR}/virt.dtb")
     set(DTSPath "${CMAKE_BINARY_DIR}/virt.dts")
@@ -68,7 +68,10 @@ if(KernelPlatformQEMUArmVirt)
         COMMAND
             ${QEMU_BINARY} -machine virt,dumpdtb=${DTBPath},${QEMU_VIRT_OPTION} -m ${QEMU_MEMORY}
             -cpu ${ARM_CPU} -smp ${QEMU_SMP_OPTION} -nographic
+        ERROR_VARIABLE QEMU_OUTPUT_MESSAGE
     )
+    string(STRIP ${QEMU_OUTPUT_MESSAGE} QEMU_OUTPUT_MESSAGE)
+    message(STATUS ${QEMU_OUTPUT_MESSAGE})
     execute_process(
         COMMAND
             dtc -q -I dtb -O dts ${DTBPath}
