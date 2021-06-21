@@ -255,13 +255,11 @@ config_string(
     UNQUOTE
 )
 
-
 config_string(
     KernelSignalFastpath SIGNAL_FASTPATH
     "Enable notification signal fastpath"
     DEFAULT OFF
     DEPENDS "KernelIsMCS" UNDEF_DISABLED
-    DEPENDS "${KernelNumDomains} EQUAL 1"
 )
 
 find_file(
