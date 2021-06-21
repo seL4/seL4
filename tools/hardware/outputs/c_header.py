@@ -142,8 +142,8 @@ def get_interrupts(tree: fdt.FdtParser, rules: rule.HardwareYaml):
     irqs = []
     for dev in kernel_devices:
         dev_rule = rules.get_rule(dev)
-        print(f"interrupts for device {dev.path}")
-        irqs += dev_rule.get_interrupts(tree, dev)
+        if len(dev_rule.interrupts.items()) > 0:
+            irqs += dev_rule.get_interrupts(tree, dev)
 
     ret = {}
     for irq in irqs:
