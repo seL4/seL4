@@ -5,6 +5,7 @@ VERSION
 configs/*/autoconf.h
 manual/figs/*
 manual/references.bib
+manual/logos/*
 .licenseignore
 *.pyc
 .git/*
