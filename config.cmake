@@ -6,8 +6,6 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-set(configure_string "${config_configure_string}")
-
 config_option(
     KernelIsMCS KERNEL_MCS "Use the MCS kernel configuration, which is not verified."
     DEFAULT OFF
@@ -49,7 +47,7 @@ set_property(
 )
 
 # These options are now set in seL4Config.cmake
-if(DEFINED CONFIGURE_MAX_IRQ)
+if(DEFINED CALLED_declare_default_headers)
     # calculate the irq cnode size based on MAX_IRQ
     if("${KernelArch}" STREQUAL "riscv")
         set(MAX_IRQ "${CONFIGURE_PLIC_MAX_NUM_INT}")
