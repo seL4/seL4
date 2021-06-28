@@ -26,11 +26,6 @@
 #ifdef CONFIG_ARM_SMMU
 #include <drivers/smmu/smmuv2.h>
 #endif
-/* pointer to the end of boot code/data in kernel image */
-/* need a fake array to get the pointer from the linker script */
-extern char ki_boot_end[1];
-/* pointer to end of kernel image */
-extern char ki_end[1];
 
 #ifdef ENABLE_SMP_SUPPORT
 /* sync variable to prevent other nodes from booting
