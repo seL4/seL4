@@ -1,6 +1,7 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ * Copyright 2021, HENSOLDT Cyber
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -13,7 +14,6 @@
 .extern init_kernel
 .extern kernel_stack_alloc
 .extern __global_pointer$
-.extern restore_user_context
 
 /*
  * When SMP is enabled, the elfloader passes the hart ID in a6
@@ -38,7 +38,14 @@ _start:
   csrw sscratch, sp
 #endif
 
-  jal init_kernel
-
-  la ra, restore_user_context
-  jr ra
+  /* jump to init_kernel() with parameters:
+   *    a0/x10: user image physical start address
+   *    a1/x11: user image physical end address
+   *    a2/x12: physical/virtual offset
+   *    a3/x13: user image virtual entry address
+   *    a4/x14: DTB physical address (0 if there is none)
+   *    a5/x15: DTB size (0 if there is none)
+   *    a6/x16: hart ID (SMP only)
+   *    a7/x17: core ID (SMP only)
+   */
+  j init_kernel

@@ -1,6 +1,7 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ * Copyright 2021, HENSOLDT Cyber
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -412,7 +413,7 @@ static BOOT_CODE bool_t try_init_kernel(
     return true;
 }
 
-BOOT_CODE VISIBLE void init_kernel(
+BOOT_CODE VISIBLE NORETURN void init_kernel(
     paddr_t ui_p_reg_start,
     paddr_t ui_p_reg_end,
     sword_t pv_offset,
@@ -465,4 +466,6 @@ BOOT_CODE VISIBLE void init_kernel(
 
     schedule();
     activateThread();
+    restore_user_context();
+    UNREACHABLE();
 }
