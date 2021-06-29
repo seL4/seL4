@@ -22,7 +22,6 @@
 .extern c_handle_fastpath_call
 .extern c_handle_interrupt
 .extern c_handle_exception
-.extern restore_user_context
 
 trap_entry:
 
