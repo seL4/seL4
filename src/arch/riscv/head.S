@@ -14,7 +14,6 @@
 .extern kernel_stack_alloc
 .extern __global_pointer$
 .extern restore_user_context
-.extern trap_entry
 
 /*
  * When SMP is enabled, the elfloader passes the hart ID in a6
