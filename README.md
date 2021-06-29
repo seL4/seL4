@@ -56,6 +56,15 @@ Community
 - [CommunityProjects](https://docs.sel4.systems/CommunityProjects)
 
 
+Reporting security vulnerabilities
+----------------------------------
+
+If you believe you have found a security vulnerability in seL4 or related
+software, we ask you to follow our [vulnerability disclosure policy][VDP].
+
+[VDP]: https://github.com/seL4/seL4/blob/master/SECURITY.md
+
+
 Manual
 ------
 
