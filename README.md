@@ -7,6 +7,8 @@
 The seL4 microkernel
 ====================
 
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5003/badge)](https://bestpractices.coreinfrastructure.org/projects/5003)
+
 This project contains the source code of seL4 microkernel.
 
 For details about the seL4 microkernel, including details about its formal
