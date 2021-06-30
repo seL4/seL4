@@ -61,27 +61,15 @@ def align_memory(regions: Set[Region], config: Config) -> List[Region]:
     ret = sorted(regions)
     extra_reserved = set()
 
-    if config.arch == 'riscv':
-        # RISC-V is special: it expects physBase to be
-        # the address that the bootloader is loaded at.
-        physBase = ret[0].base
-
-    if config.get_bootloader_reserve() > 0:
-        resv = Region(ret[0].base, config.get_bootloader_reserve(), None)
-        extra_reserved.add(resv)
-        ret[0].base += config.get_bootloader_reserve()
-        ret[0].size -= config.get_bootloader_reserve()
-
     if config.get_kernel_phys_align() != 0:
         new = ret[0].align_base(config.get_kernel_phys_align())
         resv = Region(ret[0].base, new.base - ret[0].base, None)
         extra_reserved.add(resv)
         ret[0] = new
 
-    if config.arch != 'riscv':
-        # ARM (and presumably other architectures)
-        # want physBase to be the physical load address of the kernel.
-        physBase = ret[0].base
+    # physBase is the physical load address of the kernel.
+    physBase = ret[0].base
+
     return ret, extra_reserved, physBase
 
 

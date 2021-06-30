@@ -16,11 +16,6 @@ class Config:
         ''' Used to align the base of physical memory. Returns alignment size in bits. '''
         return 0
 
-    def get_bootloader_reserve(self) -> int:
-        ''' Used to reserve a fixed amount of memory for the bootloader. Offsets
-            the kernel load address by the amount returned in bytes. '''
-        return 0
-
     def get_page_bits(self) -> int:
         ''' Get page size in bits for this arch '''
         return 12  # 4096-byte pages
@@ -44,11 +39,6 @@ class RISCVConfig(Config):
     ''' Config class for RISCV '''
     MEGA_PAGE_SIZE = 0x200000
     arch = 'riscv'
-
-    def get_bootloader_reserve(self) -> int:
-        ''' on RISC-V OpenSBI is loaded at the start
-        of physical memory. Mark it as unavailable. '''
-        return self.MEGA_PAGE_SIZE
 
     def get_device_page_bits(self) -> int:
         ''' Get page size in bits for mapping devices for this arch '''
