@@ -55,11 +55,16 @@ seL4 Basics
 Community
 ---------
 
-- Mailing lists
+- Forums:
+  - [Discourse](https://sel4.discourse.group/)
   - [seL4 Announce](https://lists.sel4.systems/postorius/lists/announce.sel4.systems)
   - [seL4 Devel](https://lists.sel4.systems/postorius/lists/devel.sel4.systems)
 - [Suggested projects](https://docs.sel4.systems/SuggestedProjects)
-- [CommunityProjects](https://docs.sel4.systems/CommunityProjects)
+- [Community projects](https://docs.sel4.systems/CommunityProjects)
+
+See the [contact] links on the seL4 website for the full list.
+
+[contact]: https://sel4.systems/contact.html
 
 Reporting security vulnerabilities
 ----------------------------------
