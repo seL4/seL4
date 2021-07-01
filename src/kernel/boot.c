@@ -616,15 +616,18 @@ BOOT_CODE static bool_t create_untypeds_for_region(
     return true;
 }
 
-BOOT_CODE bool_t create_device_untypeds(cap_t root_cnode_cap, seL4_SlotPos slot_pos_before)
+BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap,
+                                 region_t boot_mem_reuse_reg)
 {
+    seL4_SlotPos first_untyped_slot = ndks_boot.slot_pos_cur;
+
     paddr_t start = 0;
     for (word_t i = 0; i < ndks_boot.resv_count; i++) {
         if (start < ndks_boot.reserved[i].start) {
             region_t reg = paddr_to_pptr_reg((p_region_t) {
                 start, ndks_boot.reserved[i].start
             });
-            if (!create_untypeds_for_region(root_cnode_cap, true, reg, slot_pos_before)) {
+            if (!create_untypeds_for_region(root_cnode_cap, true, reg, first_untyped_slot)) {
                 return false;
             }
         }
@@ -643,17 +646,10 @@ BOOT_CODE bool_t create_device_untypeds(cap_t root_cnode_cap, seL4_SlotPos slot_
         if (reg.end > PPTR_TOP) {
             reg.end = PPTR_TOP;
         }
-        if (!create_untypeds_for_region(root_cnode_cap, true, reg, slot_pos_before)) {
+        if (!create_untypeds_for_region(root_cnode_cap, true, reg, first_untyped_slot)) {
             return false;
         }
     }
-    return true;
-}
-
-BOOT_CODE bool_t create_kernel_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg,
-                                        seL4_SlotPos first_untyped_slot)
-{
-    region_t   reg;
 
     /* if boot_mem_reuse_reg is not empty, we can create UT objs from boot code/data frames */
     if (!create_untypeds_for_region(root_cnode_cap, false, boot_mem_reuse_reg, first_untyped_slot)) {
@@ -662,12 +658,17 @@ BOOT_CODE bool_t create_kernel_untypeds(cap_t root_cnode_cap, region_t boot_mem_
 
     /* convert remaining freemem into UT objects and provide the caps */
     for (word_t i = 0; i < MAX_NUM_FREEMEM_REG; i++) {
-        reg = ndks_boot.freemem[i];
+        region_t reg = ndks_boot.freemem[i];
         ndks_boot.freemem[i] = REG_EMPTY;
         if (!create_untypeds_for_region(root_cnode_cap, false, reg, first_untyped_slot)) {
             return false;
         }
     }
+
+    ndks_boot.bi_frame->untyped = (seL4_SlotRegion) {
+        .start = first_untyped_slot,
+        .end   = ndks_boot.slot_pos_cur
+    };
 
     return true;
 }
