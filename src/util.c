@@ -445,3 +445,9 @@ CONST int __ctzdi2(uint64_t x)
     return ctz64(x);
 }
 #endif
+
+int foo(int x);
+int foo(int x)
+{
+    return x;
+}
