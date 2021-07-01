@@ -26,11 +26,6 @@
 #ifdef CONFIG_ARM_SMMU
 #include <drivers/smmu/smmuv2.h>
 #endif
-/* pointer to the end of boot code/data in kernel image */
-/* need a fake array to get the pointer from the linker script */
-extern char ki_boot_end[1];
-/* pointer to end of kernel image */
-extern char ki_end[1];
 
 #ifdef ENABLE_SMP_SUPPORT
 /* sync variable to prevent other nodes from booting
@@ -42,8 +37,10 @@ BOOT_BSS static volatile int node_boot_lock;
 #define MAX_RESERVED (ARCH_RESERVED + MODE_RESERVED)
 BOOT_BSS static region_t reserved[MAX_RESERVED];
 
-BOOT_CODE static void arch_init_freemem(p_region_t ui_p_reg, p_region_t dtb_p_reg, v_region_t it_v_reg,
-                                        word_t extra_bi_size_bits)
+BOOT_CODE static bool_t arch_init_freemem(p_region_t ui_p_reg,
+                                          p_region_t dtb_p_reg,
+                                          v_region_t it_v_reg,
+                                          word_t extra_bi_size_bits)
 {
     reserved[0].start = KERNEL_ELF_BASE;
     reserved[0].end = (pptr_t)ki_end;
@@ -57,8 +54,8 @@ BOOT_CODE static void arch_init_freemem(p_region_t ui_p_reg, p_region_t dtb_p_re
     }
 
     if (MODE_RESERVED > 1) {
-        printf("MODE_RESERVED > 1 unsupported!\n");
-        halt();
+        printf("ERROR: MODE_RESERVED > 1 unsupported!\n");
+        return false;
     }
 
     if (ui_p_reg.start < PADDR_TOP) {
@@ -86,7 +83,8 @@ BOOT_CODE static void arch_init_freemem(p_region_t ui_p_reg, p_region_t dtb_p_re
         index++;
     }
 
-    init_freemem(get_num_avail_p_regs(), get_avail_p_regs(), index, reserved, it_v_reg, extra_bi_size_bits);
+    return init_freemem(get_num_avail_p_regs(), get_avail_p_regs(), index,
+                        reserved, it_v_reg, extra_bi_size_bits);
 }
 
 
@@ -380,7 +378,10 @@ static BOOT_CODE bool_t try_init_kernel(
     /* initialise the platform */
     init_plat();
 
-    arch_init_freemem(ui_p_reg, dtb_p_reg, it_v_reg, extra_bi_size_bits);
+    if (!arch_init_freemem(ui_p_reg, dtb_p_reg, it_v_reg, extra_bi_size_bits)) {
+        printf("ERROR: free memory management initialization failed\n");
+        return false;
+    }
 
     /* create the root cnode */
     root_cnode_cap = create_root_cnode();
