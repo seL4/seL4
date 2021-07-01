@@ -7,7 +7,9 @@
 #pragma once
 
 #include <config.h>
+
 #define TIMER_CLOCK_HZ @CONFIGURE_TIMER_FREQUENCY@
+
 #include <machine/interrupt.h>
 
 /*
