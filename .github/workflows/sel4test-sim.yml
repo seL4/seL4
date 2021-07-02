@@ -1,0 +1,33 @@
+# Copyright 2021, Proofcraft Pty Ltd
+#
+# SPDX-License-Identifier: BSD-2-Clause
+
+# sel4test simulation runs
+#
+# See sel4test-sim/builds.yml in the repo seL4/ci-actions for configs.
+
+name: seL4Test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  cparser:
+    name: Simulation
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        march: [armv6a, armv7a, armv8a, nehalem, rv32imac, rv64imac]
+        compiler: [gcc, clang]
+        exclude:
+          - march: rv32imac
+            compiler: clang
+          - march: rv64imac
+            compiler: clang
+    steps:
+    - uses: seL4/ci-actions/sel4test-sim@master
+      with:
+        march: ${{ matrix.march }}
+        compiler: ${{ matrix.compiler }}
