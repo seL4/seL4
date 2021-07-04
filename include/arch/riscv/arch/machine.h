@@ -256,5 +256,3 @@ static inline void Arch_setTLSRegister(word_t tls_base)
 }
 
 #endif // __ASSEMBLER__
-
-

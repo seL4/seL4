@@ -48,7 +48,6 @@ BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vpt
     return cap;
 }
 
-
 BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
 {
     irq_t i;

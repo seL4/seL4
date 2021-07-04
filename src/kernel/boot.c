@@ -492,7 +492,6 @@ BOOT_CODE static void create_domain_cap(cap_t root_cnode_cap)
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapDomain), cap);
 }
 
-
 BOOT_CODE cap_t create_ipcbuf_frame_cap(cap_t root_cnode_cap, cap_t pd_cap, vptr_t vptr)
 {
     clearMemory((void *)rootserver.ipc_buf, PAGE_BITS);
