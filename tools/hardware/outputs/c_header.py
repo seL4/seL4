@@ -115,6 +115,16 @@ static const p_region_t BOOT_RODATA avail_p_regs[] = {
     {% endfor %}
 };
 
+/* DEVICE MEMORY */
+static const p_region_t BOOT_RODATA device_p_regs[] = {
+    {% for reg in device_memory %}
+    {
+        .start = {{ "0x{:x}".format(reg.base) }},
+        .end   = {{ "0x{:x}".format(reg.base + reg.size) }}
+    },
+    {% endfor %}
+};
+
 #endif /* !__ASSEMBLER__ */
 
 '''
@@ -180,6 +190,10 @@ def run(tree: fdt.FdtParser, hardware: rule.HardwareYaml, config: config.Config,
 
     physical_memory, reserved, physBase = memory.get_physical_memory(tree, config)
     kernel_regions, kernel_macros = get_kernel_devices(tree, hardware)
+
+    all_memory = list(reserved) + physical_memory + kernel_regions
+    device_memory = memory.get_addrspace_exclude(all_memory, config)
+
     kernel_irqs = get_interrupts(tree, hardware)
     template = Environment(loader=BaseLoader, trim_blocks=True,
                            lstrip_blocks=True).from_string(HEADER_TEMPLATE)
@@ -191,6 +205,7 @@ def run(tree: fdt.FdtParser, hardware: rule.HardwareYaml, config: config.Config,
         'kernel_regions': kernel_regions,
         'physBase': physBase,
         'physical_memory': physical_memory,
+        'device_memory': device_memory,
     })
 
     data = template.render(template_args)
