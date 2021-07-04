@@ -5,6 +5,7 @@
  */
 
 #pragma once
+
 #define MAX_NUM_FREEMEM_REG 16
 
 /* The maximum number of reserved regions is:
