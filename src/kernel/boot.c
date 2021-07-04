@@ -717,9 +717,12 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
         return false;
     }
 
+    printf("reserved virt address space regions: %"SEL4_PRIu_word"\n",
+           n_reserved);
     /* Force ordering and exclusivity of reserved regions */
     for (word_t i = 0; i < n_reserved; i++) {
         const region_t *r = &reserved[i];
+        printf("  [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]\n", r->start, r->end);
 
         /* Reserved regions must be sane, the size is allowed to be zero */
         if (r->start > r->end) {
@@ -734,9 +737,11 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
         }
     }
 
+    printf("available phys memory regions: %"SEL4_PRIu_word"\n", n_available);
     /* Force ordering and exclusivity of available regions */
     for (word_t i = 0; i < n_available; i++) {
         const p_region_t *r = &available[i];
+        printf("  [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]\n", r->start, r->end);
 
         /* Available regions must be sane */
         if (r->start > r->end) {
@@ -752,7 +757,7 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
 
         /* regions must be ordered and must not overlap */
         if ((i > 0) && (r->start < available[i - 1].end)) {
-            printf("ERROR: memory region %"SEL4_PRIu_word" in wrong order\n", i);
+            printf("ERROR: memory region %d in wrong order\n", (int)i);
             return false;
         }
     }
