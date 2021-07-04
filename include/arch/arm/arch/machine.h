@@ -15,8 +15,6 @@
 
 int get_num_avail_p_regs(void);
 const p_region_t *get_avail_p_regs(void);
-int get_num_dev_p_regs(void);
-p_region_t get_dev_p_reg(word_t i);
 void map_kernel_devices(void);
 
 void initL2Cache(void);
