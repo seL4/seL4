@@ -254,8 +254,7 @@ static BOOT_CODE bool_t try_init_kernel(
     /* Make the free memory available to alloc_region(), create the rootserver
      * objects and the root c-node.
      */
-    cap_t root_cnode_cap = init_freemem(get_num_avail_p_regs(),
-                                        get_avail_p_regs(),
+    cap_t root_cnode_cap = init_freemem(ARRAY_SIZE(avail_p_regs), avail_p_regs,
                                         it_v_reg, extra_bi_size_bits));
     if (cap_get_capType(root_cnode_cap) == cap_null_cap) {
         printf("ERROR: memory management initialization failed\n");

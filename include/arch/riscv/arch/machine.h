@@ -216,8 +216,6 @@ static inline void Arch_finaliseInterrupt(void)
     /* nothing here */
 }
 
-int get_num_avail_p_regs(void);
-p_region_t *get_avail_p_regs(void);
 void map_kernel_devices(void);
 
 static inline void setInterruptMode(irq_t irq, bool_t levelTrigger,
