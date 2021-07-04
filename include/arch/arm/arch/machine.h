@@ -83,4 +83,3 @@ static inline exception_t Arch_setTLSRegister(word_t tls_base)
 }
 
 #endif /* __ASSEMBLER__ */
-
