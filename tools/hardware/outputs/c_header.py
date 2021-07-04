@@ -117,6 +117,16 @@ static const p_region_t BOOT_RODATA avail_p_regs[] = {
     {% endfor %}
 };
 
+/* DEVICE MEMORY */
+static const p_region_t BOOT_RODATA device_p_regs[] = {
+    {% for reg in device_memory %}
+    {
+        .start = {{ "0x{:x}".format(reg.base) }},
+        .end   = {{ "0x{:x}".format(reg.base + reg.size) }}
+    },
+    {% endfor %}
+};
+
 #endif /* !__ASSEMBLER__ */
 
 '''
@@ -203,17 +213,25 @@ def run(tree: FdtParser, hw_yaml: HardwareYaml, config: Config, args: argparse.N
     if not args.header_out:
         raise ValueError('You need to specify a header-out to use c header output')
 
-    physical_memory, reserved, physBase = hardware.utils.memory.get_physical_memory(tree, config)
-    kernel_regions, kernel_macros = get_kernel_devices(tree, hw_yaml)
+    physical_memory, reserved, physBase = memory.get_physical_memory(tree, config)
+    kernel_regions, kernel_macros = get_kernel_devices(tree, hardware)
 
-    create_c_header_file(
-        config,
-        get_interrupts(tree, hw_yaml),
-        kernel_macros,
-        kernel_regions,
-        physBase,
-        physical_memory,
-        args.header_out)
+    all_memory = list(reserved) + physical_memory + kernel_regions
+    device_memory = memory.get_addrspace_exclude(all_memory, config)
+
+    kernel_irqs = get_interrupts(tree, hardware)
+    template = Environment(loader=BaseLoader, trim_blocks=True,
+                           lstrip_blocks=True).from_string(HEADER_TEMPLATE)
+
+    template_args = dict(builtins.__dict__, **{
+        'args': args,
+        'kernel_irqs': kernel_irqs,
+        'kernel_macros': kernel_macros,
+        'kernel_regions': kernel_regions,
+        'physBase': physBase,
+        'physical_memory': physical_memory,
+        'device_memory': device_memory,
+    })
 
 
 def add_args(parser):
