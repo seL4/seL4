@@ -70,6 +70,7 @@ static inline void arch_pause(void)
 
 static inline void Arch_finaliseInterrupt(void)
 {
+    /* nothing here */
 }
 
 /* Update the value of the actual regsiter to hold the expected value */

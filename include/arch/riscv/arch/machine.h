@@ -213,6 +213,7 @@ static inline void setVSpaceRoot(paddr_t addr, asid_t asid)
 
 static inline void Arch_finaliseInterrupt(void)
 {
+    /* nothing here */
 }
 
 int get_num_avail_p_regs(void);
@@ -221,7 +222,12 @@ int get_num_dev_p_regs(void);
 p_region_t get_dev_p_reg(word_t i);
 void map_kernel_devices(void);
 
-static inline void setInterruptMode(irq_t irq, bool_t levelTrigger, bool_t polarityLow) { }
+static inline void setInterruptMode(irq_t irq, bool_t levelTrigger,
+                                    bool_t polarityLow)
+{
+    /* nothing here */
+}
+
 /** MODIFIES: [*] */
 void initTimer(void);
 /* L2 cache control */
