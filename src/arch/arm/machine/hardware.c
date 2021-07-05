@@ -34,7 +34,7 @@ BOOT_CODE void map_kernel_devices(void)
         if (!kernel_devices[i].userAvailable) {
             p_region_t reg = {
                 .start = kernel_devices[i].paddr,
-                .end = kernel_devices[i].paddr + (1 << PAGE_BITS),
+                .end = kernel_devices[i].paddr + BIT(PAGE_BITS),
             };
             reserve_region(reg);
         }
