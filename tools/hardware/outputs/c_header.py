@@ -69,22 +69,18 @@ static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
     /* {{ group.get_desc() }} */
     {% for reg in group.regions %}
     {
+        .paddr = {{ "0x{:x}".format(reg.base) }},
         {% set map_addr = group.get_map_offset(reg) %}
-        {{ "0x{:x}".format(reg.base) }},
         {% if map_addr in kernel_macros %}
-        {{ kernel_macros[map_addr] }},
+        .pptr = {{ kernel_macros[map_addr] }},
         {% else %}
         /* contains {{ ', '.join(group.labels.keys()) }} */
-        KDEV_BASE + {{ "0x{:x}".format(map_addr) }},
+        .pptr = KDEV_BASE + {{ "0x{:x}".format(map_addr) }},
         {% endif %}
         {% if args.arch == 'arm' %}
-        true, /* armExecuteNever */
+        .armExecuteNever = true,
         {% endif %}
-        {% if group.user_ok %}
-        true, /* userAvailable */
-        {% else %}
-        false, /* userAvailable */
-        {% endif %}
+        .userAvailable = {{ str(group.user_ok).lower() }}
     },
     {% endfor %}
     {% if group.has_macro() %}
@@ -99,7 +95,12 @@ static const kernel_frame_t BOOT_RODATA *const kernel_devices = NULL;
 /* PHYSICAL MEMORY */
 static const p_region_t BOOT_RODATA avail_p_regs[] = {
     {% for reg in physical_memory %}
-    { {{ "0x{:x}".format(reg.base) }}, {{ "0x{:x}".format(reg.base + reg.size) }} }, /* {{reg.owner.path}} */
+    {
+        /* {{ reg.owner.path }} */
+        .start = {{ "0x{:x}".format(reg.base) }},
+        .end   = {{ "0x{:x}".format(reg.base + reg.size) }}
+    },
+
     {% endfor %}
 };
 
