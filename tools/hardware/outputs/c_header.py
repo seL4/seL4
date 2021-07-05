@@ -61,7 +61,7 @@ HEADER_TEMPLATE = '''/*
 
 #ifndef __ASSEMBLER__
 {% if len(kernel_regions) > 0 %}
-static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
+static const kernel_frame_t BOOT_RODATA kernel_device_frames[] = {
     {% for group in kernel_regions %}
     {% if group.has_macro() %}
     {{ group.get_macro() }}
@@ -88,19 +88,30 @@ static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
     {% endif %}
     {% endfor %}
 };
+/* Elements in kernel_device_frames may be enabled in specific configurations
+ * only, but the ARRAY_SIZE() macro will automatically take care of this.
+ * However, one corner case remains unsolved where all elements are disabled
+ * and this becomes an empty array effectively. Then the C parser used in the
+ * formal verification process will fail, because it follows the strict C rules
+ * which do not allow empty arrays. Luckily, we have not met this case yet...
+ */
+#define NUM_KERNEL_DEVICE_FRAMES ARRAY_SIZE(kernel_device_frames)
 {% else %}
-static const kernel_frame_t BOOT_RODATA *const kernel_devices = NULL;
+/* The C parser used for formal verification process follows strict C rules,
+ * which do not allow empty arrays. Thus this is defined as NULL.
+ */
+static const kernel_frame_t BOOT_RODATA *const kernel_device_frames = NULL;
+#define NUM_KERNEL_DEVICE_FRAMES 0
 {% endif %}
 
 /* PHYSICAL MEMORY */
 static const p_region_t BOOT_RODATA avail_p_regs[] = {
     {% for reg in physical_memory %}
+    /* {{ reg.owner.path }} */
     {
-        /* {{ reg.owner.path }} */
         .start = {{ "0x{:x}".format(reg.base) }},
         .end   = {{ "0x{:x}".format(reg.base + reg.size) }}
     },
-
     {% endfor %}
 };
 
