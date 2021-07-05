@@ -32,19 +32,18 @@ BOOT_CODE const p_region_t *get_avail_p_regs(void)
 BOOT_CODE void map_kernel_devices(void)
 {
     for (int i = 0; i < ARRAY_SIZE(kernel_devices); i++) {
+        const kernel_frame_t *frame = &kernel_devices[i];
         /* all frames are supposed to describe device memory, so they should
          * never be marked as executable.
          */
-        assert(kernel_devices[i]->armExecuteNever);
-        map_kernel_frame(kernel_devices[i].paddr,
-                         kernel_devices[i].pptr,
-                         VMKernelOnly,
-                         vm_attributes_new(kernel_devices[i].armExecuteNever,
-                                           false, false));
-        if (!kernel_devices[i].userAvailable) {
+        assert(frame->armExecuteNever);
+        map_kernel_frame(frame->paddr, frame->pptr, VMKernelOnly,
+                         vm_attributes_new(frame->armExecuteNever, false,
+                                           false));
+        if (!frame->userAvailable) {
             p_region_t reg = {
-                .start = kernel_devices[i].paddr,
-                .end = kernel_devices[i].paddr + BIT(PAGE_BITS),
+                .start = frame->paddr,
+                .end   = frame->paddr + BIT(PAGE_BITS)
             };
             reserve_region(reg);
         }
