@@ -19,5 +19,3 @@
  * - 1 each for kernel, dtb, and user image. (3)
  */
 #define MAX_NUM_RESV_REG (MAX_NUM_FREEMEM_REG + ARRAY_SIZE(kernel_devices) + MODE_RESERVED + 3)
-
-
