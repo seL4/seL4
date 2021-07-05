@@ -20,4 +20,3 @@
 /* spike has no devices, and ARRAY_SIZE(NULL) is invalid. */
 #define MAX_NUM_RESV_REG (MAX_NUM_FREEMEM_REG + MODE_RESERVED + 3)
 #endif
-
