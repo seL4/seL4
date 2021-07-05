@@ -553,9 +553,10 @@ static BOOT_CODE bool_t try_init_kernel(
     /* finalise the bootinfo frame */
     bi_finalise();
 
-    /* make everything written by the kernel visible to userland. Cleaning to PoC is not
-     * strictly neccessary, but performance is not critical here so clean and invalidate
-     * everything to PoC */
+    /* make everything written by the kernel visible to userland. Cleaning to
+     * PoC is not strictly neccessary, but performance is not critical here so
+     * clean and invalidate everything to PoC
+     */
     cleanInvalidateL1Caches();
     invalidateLocalTLB();
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
