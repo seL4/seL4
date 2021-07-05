@@ -60,7 +60,7 @@ BOOT_CODE void map_kernel_devices(void)
         if (!kernel_devices[i].userAvailable) {
             p_region_t reg = {
                 .start = kernel_devices[i].paddr,
-                .end = kernel_devices[i].paddr + (1 << seL4_LargePageBits),
+                .end = kernel_devices[i].paddr + BIT(seL4_LargePageBits),
             };
             reserve_region(reg);
         }
