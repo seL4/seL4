@@ -31,8 +31,12 @@ BOOT_CODE const p_region_t *get_avail_p_regs(void)
 
 BOOT_CODE void map_kernel_devices(void)
 {
-    for (int i = 0; i < ARRAY_SIZE(kernel_devices); i++) {
-        const kernel_frame_t *frame = &kernel_devices[i];
+    /* If there are no kernel device frames at all, then kernel_device_frames is
+     * NULL. Thus we can't use ARRAY_SIZE(kernel_device_frames) here directly,
+     * but have to use NUM_KERNEL_DEVICE_FRAMES that is defined accordingly.
+     */
+    for (int i = 0; i < NUM_KERNEL_DEVICE_FRAMES; i++) {
+        const kernel_frame_t *frame = &kernel_device_frames[i];
         /* all frames are supposed to describe device memory, so they should
          * never be marked as executable.
          */
