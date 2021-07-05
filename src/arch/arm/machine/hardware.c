@@ -22,6 +22,10 @@ void setNextPC(tcb_t *thread, word_t v)
 BOOT_CODE void map_kernel_devices(void)
 {
     for (int i = 0; i < ARRAY_SIZE(kernel_devices); i++) {
+        /* all frames are supposed to describe device memory, so they should
+         * never be marked as executable.
+         */
+        assert(kernel_devices[i]->armExecuteNever);
         map_kernel_frame(kernel_devices[i].paddr,
                          kernel_devices[i].pptr,
                          VMKernelOnly,
