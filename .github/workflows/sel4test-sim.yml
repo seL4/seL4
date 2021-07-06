@@ -10,10 +10,18 @@ name: seL4Test
 
 on:
   push:
-    branches: [master]
+#    branches: [master]
   pull_request:
 
 jobs:
+  dump:
+    runs-on: ubuntu-latest
+    env:
+      CONTEXT: ${{ toJSON(github.event) }}
+    steps:
+    - run: |
+        echo "$CONTEXT"
+
   cparser:
     name: Simulation
     runs-on: ubuntu-latest
