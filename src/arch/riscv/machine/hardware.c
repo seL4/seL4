@@ -48,11 +48,10 @@ BOOT_CODE void map_kernel_devices(void)
         const kernel_frame_t *frame = &kernel_devices[i];
         map_kernel_frame(frame->paddr, frame->pptr, VMKernelOnly);
         if (!frame->userAvailable) {
-            p_region_t reg = {
+            reserve_region((p_region_t) {
                 .start = frame->paddr,
                 .end   = frame->paddr + BIT(seL4_LargePageBits)
-            };
-            reserve_region(reg);
+            });
         }
     }
 }

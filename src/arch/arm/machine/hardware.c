@@ -31,11 +31,10 @@ BOOT_CODE void map_kernel_devices(void)
                          vm_attributes_new(frame->armExecuteNever, false,
                                            false));
         if (!frame->userAvailable) {
-            p_region_t reg = {
+            reserve_region((p_region_t) {
                 .start = frame->paddr,
                 .end   = frame->paddr + BIT(PAGE_BITS)
-            };
-            reserve_region(reg);
+            });
         }
     }
 }
