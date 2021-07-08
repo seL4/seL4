@@ -109,10 +109,15 @@ static const p_region_t BOOT_RODATA avail_p_regs[] = {
 
 
 def get_kernel_devices(tree: fdt.FdtParser, rules: rule.HardwareYaml):
-    ''' Given a device tree and a set of rules, returns a tuple (groups, offsets).
+    '''
+    Given a device tree and a set of rules, returns a tuple (groups, offsets).
 
-        Groups is a list of 'KernelRegionGroups', each of which represents a single contiguous region of memory that is associated with a device.
-        Offsets is a dict of offset -> label, where label is the name given to the kernel for that address (e.g. SERIAL_PPTR) and offset is the offset from KDEV_BASE at which it's mapped.'''
+    Groups is a list of 'KernelRegionGroups', each of which represents a single
+    contiguous region of memory that is associated with a device.
+    Offsets is a dict of offset -> label, where label is the name given to the
+    kernel for that address (e.g. SERIAL_PPTR) and offset is the offset from
+    KDEV_BASE at which it's mapped.
+    '''
     kernel_devices = tree.get_kernel_devices()
 
     kernel_offset = 0
