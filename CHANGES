@@ -26,6 +26,7 @@ Upcoming release: BINARY COMPATIBLE
 
 ## Changes
 
+ * Added support for the ARM Cortex A55
 
 ## Upgrade Notes
 ---
