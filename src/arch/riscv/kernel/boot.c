@@ -56,8 +56,10 @@ BOOT_CODE static bool_t arch_init_freemem(region_t ui_reg, v_region_t it_v_reg,
                                           region_t dtb_reg,
                                           word_t extra_bi_size_bits)
 {
-    // This looks a bit awkward as our symbols are a reference in the kernel image window, but
-    // we want to do all allocations in terms of the main kernel window, so we do some translation
+    /* This looks a bit awkward as our symbols are a reference in the kernel
+     * image window, but we want to do all allocations in terms of the main
+     * kernel window, so we do some translation.
+     */
     res_reg[0].start = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void *)KERNEL_ELF_BASE));
     res_reg[0].end = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void *)ki_end));
 
