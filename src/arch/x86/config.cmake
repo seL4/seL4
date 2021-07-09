@@ -62,7 +62,7 @@ config_choice(
 )
 
 config_option(
-    KernelUseLogcalIDs USE_LOGCAL_IDS
+    KernelUseLogicalIDs USE_LOGICAL_IDS
     "Use logical IDs to broadcast IPI between cores. Not all machines support logical \
     IDs. In xAPIC mode only 8 cores can be addressed using logical IDs."
     DEFAULT OFF

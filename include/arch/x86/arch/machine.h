@@ -25,6 +25,7 @@
 #define IA32_GS_BASE_MSR        0xC0000101
 #define IA32_LSTAR_MSR          0xC0000082
 #define IA32_STAR_MSR           0xC0000081
+#define IA32_CSTAR_MSR          0xC0000083
 #define IA32_FMASK_MSR          0xC0000084
 #define IA32_EFER_MSR 0xC0000080
 #define IA32_PLATFORM_INFO_MSR  0xCE
