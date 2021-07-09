@@ -102,6 +102,12 @@ config_option(
 
 config_option(KernelArmGicV3 ARM_GIC_V3_SUPPORT "Build support for GICv3" DEFAULT OFF)
 
+if(KernelArmPASizeBits40 AND ARM_HYPERVISOR_SUPPORT)
+    config_set(KernelAarch64VspaceS2StartL1 AARCH64_VSPACE_S2_START_L1 "ON")
+else()
+    config_set(KernelAarch64VspaceS2StartL1 AARCH64_VSPACE_S2_START_L1 "OFF")
+endif()
+
 config_option(
     KernelArmHypEnableVCPUCP14SaveAndRestore ARM_HYP_ENABLE_VCPU_CP14_SAVE_AND_RESTORE
     "Trap, but don't save/restore VCPUs' CP14 accesses \
