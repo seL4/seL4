@@ -26,6 +26,7 @@ Upcoming release: BINARY COMPATIBLE
 
 ## Changes
 
+* Rename libsel4 config option ENABLE_SMP_SUPPORT to CONFIG_ENABLE_SMP_SUPPORT to be namespace compliant.
 
 ## Upgrade Notes
 ---
