@@ -68,7 +68,7 @@ BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vpt
     return cap;
 }
 
-BOOT_CODE static bool_t arch_init_freemem(region_t ui_reg, v_region_t ui_v_reg,
+BOOT_CODE static bool_t arch_init_freemem(region_t ui_reg, v_region_t it_v_reg,
                                           region_t dtb_reg,
                                           word_t extra_bi_size_bits)
 {
@@ -90,7 +90,7 @@ BOOT_CODE static bool_t arch_init_freemem(region_t ui_reg, v_region_t ui_v_reg,
     index += 1;
 
     return init_freemem(get_num_avail_p_regs(), get_avail_p_regs(), index,
-                        res_reg, ui_v_reg, extra_bi_size_bits);
+                        res_reg, it_v_reg, extra_bi_size_bits);
 }
 
 BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
