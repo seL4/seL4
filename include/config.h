@@ -7,3 +7,8 @@
 #pragma once
 
 #include <sel4/config.h>
+
+/* Set ENABLE_SMP_SUPPORT for kernel source files */
+#ifdef CONFIG_ENABLE_SMP_SUPPORT
+#define ENABLE_SMP_SUPPORT
+#endif
