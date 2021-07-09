@@ -365,6 +365,14 @@ if(NOT (KernelBenchmarks STREQUAL "none"))
 else()
     config_set(KernelEnableBenchmarks ENABLE_BENCHMARKS OFF)
 endif()
+
+# Reflect the existance of kernel Log buffer
+if(KernelBenchmarksTrackKernelEntries OR KernelBenchmarksTracepoints)
+    config_set(KernelLogBuffer KERNEL_LOG_BUFFER ON)
+else()
+    config_set(KernelLogBuffer KERNEL_LOG_BUFFER OFF)
+endif()
+
 config_string(
     KernelMaxNumTracePoints MAX_NUM_TRACE_POINTS
     "Use TRACE_POINT_START(k) and TRACE_POINT_STOP(k) macros for recording data, \
