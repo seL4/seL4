@@ -274,6 +274,13 @@ config_string(
     UNQUOTE
 )
 
+# Set CONFIG_ENABLE_SMP_SUPPORT as an alias of CONFIG_MAX_NUM_NODES > 1
+if(KernelMaxNumNodes GREATER 1)
+    config_set(KernelEnableSMPSupport ENABLE_SMP_SUPPORT ON)
+else()
+    config_set(KernelEnableSMPSupport ENABLE_SMP_SUPPORT OFF)
+endif()
+
 config_string(
     KernelStackBits KERNEL_STACK_BITS
     "This describes the log2 size of the kernel stack. Great care should be taken as\
