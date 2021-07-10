@@ -8,16 +8,6 @@
 #include <bootinfo.h>
 #include <arch/bootinfo.h>
 
-#ifndef CONFIG_ARCH_ARM
-#define MAX_NUM_FREEMEM_REG 16
-#else
-/* Modifiers:
- *  + 1: allow the kernel to release its own boot data region
- *  + 1: possible gap between ELF images and rootserver objects;
- *       see arm/arch_init_freemem */
-#define MAX_NUM_FREEMEM_REG (ARRAY_SIZE(avail_p_regs) + MODE_RESERVED + 1 + 1)
-#endif
-
 /*
  * Resolve naming differences between the abstract specifications
  * of the bootstrapping phase and the runtime phase of the kernel.
