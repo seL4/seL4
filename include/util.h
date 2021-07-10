@@ -264,4 +264,3 @@ CONST popcountl(unsigned long mask)
 #define UL_CONST(x) x
 
 #endif /* !__ASSEMBLER__ */
-
