@@ -156,7 +156,6 @@ static BOOT_CODE bool_t try_init_kernel(
     region_t boot_mem_reuse_reg = paddr_to_pptr_reg(boot_mem_reuse_p_reg);
     word_t extra_bi_size = 0;
     pptr_t extra_bi_offset = 0;
-    create_frames_of_region_ret_t create_frames_ret;
     create_frames_of_region_ret_t extra_bi_ret;
 
     map_kernel_window();
@@ -336,7 +335,7 @@ static BOOT_CODE bool_t try_init_kernel(
     }
 
     /* create all userland image frames */
-    create_frames_ret =
+    create_frames_of_region_ret_t create_frames_ret =
         create_frames_of_region(
             root_cnode_cap,
             it_pd_cap,
