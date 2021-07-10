@@ -6,6 +6,33 @@
 
 #pragma once
 
+#define PASTE(a, b) a ## b
+#define _STRINGIFY(a) #a
+#define STRINGIFY(a) _STRINGIFY(a)
+
+#ifdef __ASSEMBLER__
+
+/* Provide a helper macro to define integer constants that are not of the
+ * default type 'ìnt', but 'unsigned long'. When such constants are shared
+ * between assembly and C code, some assemblers will fail because don't support
+ * C-style integer suffixes like 'ul'. Using a macro works around this, as the
+ * suffix is only applies when the C compiler is used and dropped when the
+ * assembler runs.
+ */
+#define UL_CONST(x) x
+
+#else /* not __ASSEMBLER__ */
+
+/* There is no difference between using 'ul' or 'lu' as suffix for numbers to
+ * enforce a specific type besides the default 'int'. Just when it comes to the
+ * printf() format specifiers, '%lu' is the only form that is supported. Thus
+ * 'ul' is the preferred suffix to avoid confusion.
+ */
+#define UL_CONST(x) PASTE(x, ul)
+
+#endif /* [not] __ASSEMBLER__ */
+
+#define BIT(n) (UL_CONST(1) << (n))
 #define MASK(n) (BIT(n) - UL_CONST(1))
 #define IS_ALIGNED(n, b) (!((n) & MASK(b)))
 #define ROUND_DOWN(n, b) (((n) >> (b)) << (b))
@@ -13,9 +40,6 @@
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
-#define PASTE(a, b) a ## b
-#define _STRINGIFY(a) #a
-#define STRINGIFY(a) _STRINGIFY(a)
 
 /* time constants */
 #define MS_IN_S     1000llu
@@ -27,8 +51,6 @@
 #ifndef __ASSEMBLER__
 
 #define NULL ((void *)0)
-#define BIT(n) (1ul << (n))
-#define UL_CONST(x) PASTE(x, ul)
 
 #define PACKED       __attribute__((packed))
 #define NORETURN     __attribute__((__noreturn__))
@@ -256,11 +278,5 @@ CONST popcountl(unsigned long mask)
 
 /* Can be used to insert padding to the next L1 cache line boundary */
 #define PAD_TO_NEXT_CACHE_LN(used) char padding[L1_CACHE_LINE_SIZE - ((used) % L1_CACHE_LINE_SIZE)]
-
-#else /* __ASSEMBLER__ */
-
-/* Some assemblers don't recognise ul (unsigned long) suffix */
-#define BIT(n) (1 << (n))
-#define UL_CONST(x) x
 
 #endif /* !__ASSEMBLER__ */
