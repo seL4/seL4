@@ -327,7 +327,7 @@ void refill_unblock_check(sched_context_t *sc)
     /* advance earliest activation time to now */
     REFILL_SANITY_START(sc);
     if (refill_ready(sc)) {
-        refill_head(sc)->rTime = NODE_STATE_ON_CORE(ksCurTime, sc->scCore);
+        refill_head(sc)->rTime = MIN(MAX_RELEASE_TIME, NODE_STATE_ON_CORE(ksCurTime, core));
         NODE_STATE(ksReprogram) = true;
 
         /* merge available replenishments */
