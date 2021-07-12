@@ -154,8 +154,11 @@ function(declare_default_headers)
     set(CONFIGURE_MAX_CB "${CONFIGURE_MAX_CB}" CACHE INTERNAL "")
 endfunction()
 
-# For all of the common variables we set a default value here if they haven't
-# been set by a platform.
+#-------------------------------------------------------------------------------
+# Setup configuration defaults. For all of the common variables we set a default
+# value here if they haven't been set by a platform.
+#-------------------------------------------------------------------------------
+
 foreach(
     var
     IN
@@ -185,74 +188,100 @@ unset(KernelArmMachFeatureModifiers CACHE)
 unset(KernelArmCPU CACHE)
 unset(KernelArmArmV CACHE)
 
-# Blacklist platforms without MCS support
+# MCS support is enabled by default, platform must turn it off.
 unset(KernelPlatformSupportsMCS CACHE)
 set(KernelPlatformSupportsMCS ON)
 
-file(GLOB result ${CMAKE_CURRENT_LIST_DIR}/../src/plat/*/config.cmake)
-list(SORT result)
+#-------------------------------------------------------------------------------
+# Collect the available kernel platforms
+#-------------------------------------------------------------------------------
 
-foreach(file ${result})
-    include("${file}")
+file(
+    GLOB
+        cmake_plat_file_list CONFIGURE_DEPENDS
+        "${CMAKE_CURRENT_LIST_DIR}/../src/plat/*/config.cmake"
+)
+
+list(SORT cmake_plat_file_list)
+
+foreach(plat_cmake IN LISTS cmake_plat_file_list)
+    # this will add platform to ${kernel_platforms}
+    include("${plat_cmake}")
 endforeach()
 
 config_choice(KernelPlatform PLAT "Select the platform" ${kernel_platforms})
 
-# Now enshrine all the common variables in the config
-config_set(KernelArmCortexA7 ARM_CORTEX_A7 "${KernelArmCortexA7}")
-config_set(KernelArmCortexA8 ARM_CORTEX_A8 "${KernelArmCortexA8}")
-config_set(KernelArmCortexA9 ARM_CORTEX_A9 "${KernelArmCortexA9}")
-config_set(KernelArmCortexA15 ARM_CORTEX_A15 "${KernelArmCortexA15}")
-config_set(KernelArmCortexA35 ARM_CORTEX_A35 "${KernelArmCortexA35}")
-config_set(KernelArmCortexA53 ARM_CORTEX_A53 "${KernelArmCortexA53}")
-config_set(KernelArmCortexA55 ARM_CORTEX_A55 "${KernelArmCortexA55}")
-config_set(KernelArmCortexA57 ARM_CORTEX_A57 "${KernelArmCortexA57}")
-config_set(KernelArmCortexA72 ARM_CORTEX_A72 "${KernelArmCortexA72}")
-config_set(KernelArm1136JF_S ARM1136JF_S "${KernelArm1136JF_S}")
-config_set(KernelArchArmV6 ARCH_ARM_V6 "${KernelArchArmV6}")
-config_set(KernelArchArmV7a ARCH_ARM_V7A "${KernelArchArmV7a}")
-config_set(KernelArchArmV7ve ARCH_ARM_V7VE "${KernelArchArmV7ve}")
-config_set(KernelArchArmV8a ARCH_ARM_V8A "${KernelArchArmV8a}")
-config_set(KernelArmSMMU ARM_SMMU "${KernelArmSMMU}")
-config_set(KernelAArch64SErrorIgnore AARCH64_SERROR_IGNORE "${KernelAArch64SErrorIgnore}")
+#-------------------------------------------------------------------------------
+# Process platform and architecture specific configuration. Enshrine all the
+# common variables in the config.
+#-------------------------------------------------------------------------------
+
 set(KernelPlatformSupportsMCS "${KernelPlatformSupportsMCS}" CACHE INTERNAL "" FORCE)
 
-# Check for v7ve before v7a as v7ve is a superset and we want to set the
-# actual armv to that, but leave armv7a config enabled for anything that
-# checks directly against it
-if(KernelArchArmV7ve)
-    set(KernelArmArmV "armv7ve" CACHE INTERNAL "")
-elseif(KernelArchArmV7a)
-    set(KernelArmArmV "armv7-a" CACHE INTERNAL "")
-elseif(KernelArchArmV8a)
-    set(KernelArmArmV "armv8-a" CACHE INTERNAL "")
-elseif(KernelArchArmV6)
-    set(KernelArmArmV "armv6" CACHE INTERNAL "")
-endif()
-if(KernelArmCortexA7)
-    set(KernelArmCPU "cortex-a7" CACHE INTERNAL "")
-elseif(KernelArmCortexA8)
-    set(KernelArmCPU "cortex-a8" CACHE INTERNAL "")
-elseif(KernelArmCortexA9)
-    set(KernelArmCPU "cortex-a9" CACHE INTERNAL "")
-elseif(KernelArmCortexA15)
-    set(KernelArmCPU "cortex-a15" CACHE INTERNAL "")
-elseif(KernelArmCortexA35)
-    set(KernelArmCPU "cortex-a35" CACHE INTERNAL "")
-elseif(KernelArmCortexA53)
-    set(KernelArmCPU "cortex-a53" CACHE INTERNAL "")
-elseif(KernelArmCortexA55)
-    set(KernelArmCPU "cortex-a55" CACHE INTERNAL "")
-elseif(KernelArmCortexA57)
-    set(KernelArmCPU "cortex-a57" CACHE INTERNAL "")
-elseif(KernelArmCortexA72)
-    set(KernelArmCPU "cortex-a72" CACHE INTERNAL "")
-elseif(KernelArm1136JF_S)
-    set(KernelArmCPU "arm1136jf-s" CACHE INTERNAL "")
-endif()
 if(KernelArchARM)
+
+    config_set(KernelArm1136JF_S ARM1136JF_S "${KernelArm1136JF_S}")
+    if(KernelArm1136JF_S)
+        set(KernelArmCPU "arm1136jf-s" CACHE INTERNAL "")
+        set(first_match "${KernelArmCPU}")
+    endif()
+
+    # Check ARM Cortex family core setup. With big-LITTLE or DynamIQ, different
+    # Cortex-A versions can be enabled, but 'KernelArmCPU' can only be set to
+    # one version. Thus we take the first one from the list. The list ordering
+    # is simply ascending without any deeper meaning. If the ordering changes
+    # due to specific needs, thing must be documented here.
+    set(first_match "")
+    foreach(n IN ITEMS "7" "8" "9" "15" "35" "53" "55" "57" "72")
+        set(cmake_var "KernelArmCortexA${n}")
+        config_set(${cmake_var} "ARM_CORTEX_A${n}" "${${cmake_var}}")
+        if(${cmake_var})
+            if(NOT "${first_match}" STREQUAL "")
+                message(
+                    STATUS
+                        "${cmake_var} also enabled,"
+                        " wont overwrite KernelArmCPU='${KernelArmCPU}'"
+                )
+            else()
+                set(KernelArmCPU "cortex-a${n}" CACHE INTERNAL "")
+                set(first_match "${KernelArmCPU}")
+            endif()
+        endif()
+    endforeach()
+
+    # Check ARM architecture setup. Unfortunately, the variable naming is a bit
+    # inconsistent, so we need a list of pairs to build all names. The 2nd pair
+    # item can be omitted, then the first one is used. Furthermore, we check
+    # 'v7ve' before 'v7a', as 'v7ve' is a superset and we want to set the actual
+    # 'armv' to that, but leave 'v7a' config enabled for anything that checks
+    # directly against it.
+    set(first_match "")
+    foreach(pair IN ITEMS "6" "7ve" "7a;7-a" "8a;8-a")
+        list(GET pair 0 a)
+        set(cmake_var "KernelArchArmV${a}")
+        set(value "${${cmake_var}}")
+        string(TOUPPER "ARCH_ARM_V${a}" c_define)
+        config_set(${cmake_var} "${c_define}" "${value}")
+        if("${value}")
+            if(NOT "${first_match}" STREQUAL "")
+                message(
+                    STATUS
+                        "${cmake_var} also enabled,"
+                        " wont overwrite KernelArmArmV='${KernelArmArmV}'"
+                )
+            else()
+                list(APPEND pair "${a}") # ensure a 2nd item always exists
+                list(GET pair 1 v) # either "real" 2nd item or copy of 1st item
+                set(KernelArmArmV "armv${v}" CACHE INTERNAL "")
+                set(first_match "${KernelArmArmV}")
+            endif()
+        endif()
+    endforeach()
+
     config_set(KernelArmMach ARM_MACH "${KernelArmMach}")
-endif()
+    config_set(KernelAArch64SErrorIgnore AARCH64_SERROR_IGNORE "${KernelAArch64SErrorIgnore}")
+
+endif() # KernelArchARM
 
 set(config_configure_string ${configure_string} CACHE INTERNAL "")
 set(config_c_sources "")
