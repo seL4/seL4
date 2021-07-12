@@ -185,26 +185,10 @@ static BOOT_CODE bool_t try_init_kernel(
         kpptr_to_paddr((void *)KERNEL_ELF_BASE), kpptr_to_paddr(ki_boot_end)
     });
     region_t boot_mem_reuse_reg = paddr_to_pptr_reg(boot_mem_reuse_p_reg);
-    region_t ui_reg = paddr_to_pptr_reg((p_region_t) {
-        ui_p_reg_start, ui_p_reg_end
-    });
     word_t extra_bi_size = 0;
     pptr_t extra_bi_offset = 0;
-    vptr_t extra_bi_frame_vptr;
-    vptr_t bi_frame_vptr;
-    vptr_t ipcbuf_vptr;
     create_frames_of_region_ret_t create_frames_ret;
     create_frames_of_region_ret_t extra_bi_ret;
-
-    /* convert from physical addresses to userland vptrs */
-    v_region_t ui_v_reg;
-    v_region_t it_v_reg;
-    ui_v_reg.start = (word_t)(ui_p_reg_start - pv_offset);
-    ui_v_reg.end   = (word_t)(ui_p_reg_end   - pv_offset);
-
-    ipcbuf_vptr = ui_v_reg.end;
-    bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
-    extra_bi_frame_vptr = bi_frame_vptr + BIT(PAGE_BITS);
 
     map_kernel_window();
 
@@ -244,15 +228,46 @@ static BOOT_CODE bool_t try_init_kernel(
         };
         extra_bi_size += sizeof(seL4_BootInfoHeader) + dtb_size;
     }
+
+    /* Setup the memory of the initial thread. It covers:
+     *  - the user image location (passed from bootloader)
+     *  - the IPC buffer
+     *  - the boot info data
+     *  - additional boot info data (DTB)
+     *
+     * All vptrs are only valid in the virtual address space of the initial
+     * thread, the cannot be used by the kernel directly.
+     */
+    p_region_t ui_p_reg = (p_region_t) {
+        .start = ui_p_reg_start,
+        .end   = ui_p_reg_end
+    };
+
+    v_region_t ui_v_reg = {
+        .start = ui_p_reg.start - pv_offset,
+        .end   = ui_p_reg.end   - pv_offset,
+    };
+
+    vptr_t ipcbuf_vptr = ui_v_reg.end;
+    vptr_t bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
+    vptr_t extra_bi_frame_vptr = bi_frame_vptr + BIT(PAGE_BITS);
     word_t extra_bi_size_bits = calculate_extra_bi_size_bits(extra_bi_size);
 
-    /* The region of the initial thread is the user image + ipcbuf + boot info + extra */
-    it_v_reg.start = ui_v_reg.start;
-    it_v_reg.end = extra_bi_frame_vptr + BIT(extra_bi_size_bits);
+    v_region_t it_v_reg = {
+        .start = ui_v_reg.start,
+        .end   = extra_bi_frame_vptr + BIT(extra_bi_size_bits)
+    };
+
+    if (it_v_reg.end >= USER_TOP) {
+        printf("ERROR: user image VA [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] "
+               "exceeds USER_TOP (%"SEL4_PRIx_word")\n",
+                it_v_reg.start, it_v_reg.end, (word_t)USER_TOP);
+        return false;
+    }
 
     /* make the free memory available to alloc_region() */
-    if (!arch_init_freemem(ui_reg, it_v_reg, paddr_to_pptr_reg(dtb_p_reg),
-                           extra_bi_size_bits)) {
+    if (!arch_init_freemem(paddr_to_pptr_reg(ui_p_reg), it_v_reg,
+                           paddr_to_pptr_reg(dtb_p_reg), extra_bi_size_bits)) {
         printf("ERROR: free memory management initialization failed\n");
         return false;
     }
@@ -345,7 +360,7 @@ static BOOT_CODE bool_t try_init_kernel(
         create_frames_of_region(
             root_cnode_cap,
             it_pd_cap,
-            ui_reg,
+            paddr_to_pptr_reg(ui_p_reg),
             true,
             pv_offset
         );
