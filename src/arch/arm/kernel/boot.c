@@ -34,9 +34,7 @@
 BOOT_BSS static volatile int node_boot_lock;
 #endif /* ENABLE_SMP_SUPPORT */
 
-#define ARCH_RESERVED 3 // kernel + user image + dtb
-#define MAX_RESERVED (ARCH_RESERVED + MODE_RESERVED)
-BOOT_BSS static region_t reserved[MAX_RESERVED];
+BOOT_BSS static region_t reserved[NUM_RESERVED_REGIONS];
 
 BOOT_CODE static bool_t arch_init_freemem(p_region_t ui_p_reg,
                                           p_region_t dtb_p_reg,
@@ -49,40 +47,43 @@ BOOT_CODE static bool_t arch_init_freemem(p_region_t ui_p_reg,
     int index = 1;
     if (dtb_p_reg.start) {
         /* the dtb region could be empty */
+        assert(index < NUM_RESERVED_REGIONS);
         reserved[index].start = (pptr_t) paddr_to_pptr(dtb_p_reg.start);
         reserved[index].end = (pptr_t) paddr_to_pptr(dtb_p_reg.end);
         index++;
     }
 
-    if (MODE_RESERVED > 1) {
-        printf("ERROR: MODE_RESERVED > 1 unsupported!\n");
-        return false;
-    }
+#ifdef CONFIG_ARCH_AARCH32
 
-    if (ui_p_reg.start < PADDR_TOP) {
+    /* hw_asid_region is one additional region to reserve */
+    if (ui_p_reg.start >= PADDR_TOP) {
+        assert(index < NUM_RESERVED_REGIONS);
+        reserved[index] = hw_asid_region;
+        index++;
+    } else {
+        assert(index + 1 < NUM_RESERVED_REGIONS);
         region_t ui_reg = paddr_to_pptr_reg(ui_p_reg);
-        if (MODE_RESERVED == 1) {
-            if (ui_reg.end > mode_reserved_region[0].start) {
-                reserved[index] = mode_reserved_region[0];
-                index++;
-                reserved[index].start = ui_reg.start;
-                reserved[index].end = ui_reg.end;
-            } else {
-                reserved[index].start = ui_reg.start;
-                reserved[index].end = ui_reg.end;
-                index++;
-                reserved[index] = mode_reserved_region[0];
-            }
+        if (ui_reg.end > hw_asid_region.start) {
+            reserved[index] = hw_asid_region;
             index++;
+            reserved[index].start = ui_reg.start;
+            reserved[index].end = ui_reg.end;
         } else {
             reserved[index].start = ui_reg.start;
             reserved[index].end = ui_reg.end;
             index++;
+            reserved[index] = hw_asid_region;
         }
-    } else if (MODE_RESERVED == 1) {
-        reserved[index] = mode_reserved_region[0];
         index++;
     }
+
+#else /* all other ARM architectures (AARCH64) */
+
+    assert(index < NUM_RESERVED_REGIONS);
+    reserved[index] = paddr_to_pptr_reg(ui_p_reg);
+    index++;
+
+#endif
 
     return init_freemem(get_num_avail_p_regs(), get_avail_p_regs(), index,
                         reserved, it_v_reg, extra_bi_size_bits);
