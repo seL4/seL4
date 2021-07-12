@@ -26,6 +26,8 @@ Upcoming release: BINARY COMPATIBLE
 
 ## Changes
 
+ * Added support for the ARM Cortex A55
+ * Added support for the ODroid C4
 
 ## Upgrade Notes
 ---
