@@ -94,7 +94,6 @@ BOOT_CODE bool_t init_sys_state(
 
     /* convert from physical addresses to kernel pptrs */
     region_t ui_reg             = paddr_to_pptr_reg(ui_info.p_reg);
-    region_t boot_mem_reuse_reg = paddr_to_pptr_reg(boot_mem_reuse_p_reg);
 
     /* convert from physical addresses to userland vptrs */
     v_region_t ui_v_reg;
@@ -321,8 +320,10 @@ BOOT_CODE bool_t init_sys_state(
     ndks_boot.bi_frame->numIOPTLevels = -1;
 #endif
 
-    /* create all of the untypeds. Both devices and kernel window memory */
-    if (!create_untypeds(root_cnode_cap, boot_mem_reuse_reg)) {
+    /* create all of the untypeds, both devices and kernel window memory */
+    region_t boot_mem_reuse_reg = paddr_to_pptr_reg(boot_mem_reuse_p_reg);
+    if (!create_untypeds(root_cnode_cap, boot_mem_reuse_reg) {
+        printf("ERROR: could not create untyped caps\n");
         return false;
     }
 

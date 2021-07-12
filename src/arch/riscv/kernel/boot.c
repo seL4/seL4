@@ -149,10 +149,8 @@ static BOOT_CODE bool_t try_init_kernel(
     cap_t it_pd_cap;
     cap_t it_ap_cap;
     cap_t ipcbuf_cap;
-    p_region_t boot_mem_reuse_p_reg = ((p_region_t) {
-        kpptr_to_paddr((void *)KERNEL_ELF_BASE), kpptr_to_paddr(ki_boot_end)
-    });
-    region_t boot_mem_reuse_reg = paddr_to_pptr_reg(boot_mem_reuse_p_reg);
+
+    ;
     word_t extra_bi_size = 0;
     pptr_t extra_bi_offset = 0;
 
@@ -381,10 +379,13 @@ static BOOT_CODE bool_t try_init_kernel(
 
     init_core_state(initial);
 
-    /* convert the remaining free memory into UT objects and provide the caps */
-    if (!create_untypeds(
-            root_cnode_cap,
-            boot_mem_reuse_reg)) {
+    /* create all of the untypeds, both devices and kernel window memory */
+    assert(KERNEL_ELF_BASE <= (word_t)ki_boot_end);
+    region_t boot_mem_reuse_reg = paddr_to_pptr_reg((p_region_t) {
+        .start = kpptr_to_paddr((void *)KERNEL_ELF_BASE),
+        .end   = kpptr_to_paddr(ki_boot_end)
+    });
+    if (!create_untypeds(root_cnode_cap, boot_mem_reuse_reg)) {
         printf("ERROR: could not create untypteds for kernel image boot memory\n");
         return false;
     }
