@@ -23,10 +23,6 @@
 BOOT_BSS static volatile word_t node_boot_lock;
 #endif
 
-/* kernel image + [extra bootinfo] + user image */
-#define MAX_RESERVED 3
-BOOT_BSS static region_t res_reg[MAX_RESERVED];
-
 BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, asid_t asid, bool_t
                                            use_large, bool_t executable)
 {
@@ -52,31 +48,35 @@ BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vpt
     return cap;
 }
 
-BOOT_CODE static bool_t arch_init_freemem(region_t ui_reg, v_region_t it_v_reg,
-                                          region_t dtb_reg,
+BOOT_CODE static bool_t arch_init_freemem(p_region_t ui_p_reg,
+                                          p_region_t dtb_p_reg,
+                                          v_region_t it_v_reg,
                                           word_t extra_bi_size_bits)
 {
-    /* This looks a bit awkward as our symbols are a reference in the kernel
-     * image window, but we want to do all allocations in terms of the main
-     * kernel window, so we do some translation.
-     */
-    res_reg[0].start = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void *)KERNEL_ELF_BASE));
-    res_reg[0].end = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void *)ki_end));
-
-    int index = 1;
-    if (dtb_reg.start) {
-        /* optionally reserve the dtb region, as it could be empty */
-        res_reg[index].start = dtb_reg.start;
-        res_reg[index].end = dtb_reg.end;
-        index += 1;
+    /* Reserve the kernel image region */
+    if (!reserve_region((p_region_t) {
+        .start = kpptr_to_paddr((void *)KERNEL_ELF_BASE),
+        .end   = kpptr_to_paddr((void *)ki_end)
+    })) {
+        printf("ERROR: can't add reserved region for kernel image\n");
+        return false;
     }
 
-    res_reg[index].start = ui_reg.start;
-    res_reg[index].end = ui_reg.end;
-    index += 1;
+    /* Reserve the user image region */
+    if (!reserve_region(ui_p_reg)) {
+        printf("ERROR: can't add reserved region for user image\n");
+        return false;
+    }
 
-    return init_freemem(get_num_avail_p_regs(), get_avail_p_regs(), index,
-                        res_reg, it_v_reg, extra_bi_size_bits);
+    /* Reserve the DTB region, it's ignore if it is empty. */
+    if (!reserve_region(dtb_p_reg)) {
+        printf("ERROR: can't add reserved region for DTB\n");
+        return false;
+    }
+
+
+    return init_freemem(get_num_avail_p_regs(), get_avail_p_regs(), it_v_reg,
+                        extra_bi_size_bits);
 }
 
 BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
@@ -266,8 +266,7 @@ static BOOT_CODE bool_t try_init_kernel(
     }
 
     /* make the free memory available to alloc_region() */
-    if (!arch_init_freemem(paddr_to_pptr_reg(ui_p_reg), it_v_reg,
-                           paddr_to_pptr_reg(dtb_p_reg), extra_bi_size_bits)) {
+    if (!arch_init_freemem(ui_p_reg, dtb_p_reg, it_v_reg, extra_bi_size_bits)) {
         printf("ERROR: free memory management initialization failed\n");
         return false;
     }
