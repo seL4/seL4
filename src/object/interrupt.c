@@ -25,6 +25,9 @@ exception_t decodeIRQControlInvocation(word_t invLabel, word_t length,
 {
     if (invLabel == IRQIssueIRQHandler) {
         word_t index, depth, irq_w;
+#if defined BANKED_IRQ_TO_IRQ
+        seL4_BankedIRQ_t banked_irq;
+#endif
         irq_t irq;
         cte_t *destSlot;
         cap_t cnodeCap;
@@ -36,6 +39,10 @@ exception_t decodeIRQControlInvocation(word_t invLabel, word_t length,
             return EXCEPTION_SYSCALL_ERROR;
         }
         irq_w = getSyscallArg(0, buffer);
+#if defined BANKED_IRQ_TO_IRQ
+        banked_irq = bankedIrqFromWord(irq_w);
+        irq_w = BANKED_IRQ_TO_IRQ(banked_irq);
+#endif
         irq = CORE_IRQ_TO_IRQT(0, irq_w);
         index = getSyscallArg(1, buffer);
         depth = getSyscallArg(2, buffer);

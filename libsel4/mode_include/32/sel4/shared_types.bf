@@ -8,6 +8,12 @@
 
 base 32
 
+block seL4_BankedIRQ {
+    field interrupt_controller 20
+    field bank 3
+    field irq 9
+}
+
 block seL4_MessageInfo {
     field label 20
     field capsUnwrapped 3
