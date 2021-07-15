@@ -102,7 +102,7 @@ BOOT_CODE static bool_t insert_region(region_t reg)
     if (is_reg_empty(reg)) {
         return true;
     }
-    for (word_t i = 0; i < MAX_NUM_FREEMEM_REG; i++) {
+    for (word_t i = 0; i < ARRAY_SIZE(ndks_boot.freemem); i++) {
         if (is_reg_empty(ndks_boot.freemem[i])) {
             reserve_region(pptr_to_paddr_reg(reg));
             ndks_boot.freemem[i] = reg;
@@ -665,7 +665,7 @@ BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap,
     }
 
     /* convert remaining freemem into UT objects and provide the caps */
-    for (word_t i = 0; i < MAX_NUM_FREEMEM_REG; i++) {
+    for (word_t i = 0; i < ARRAY_SIZE(ndks_boot.freemem); i++) {
         region_t reg = ndks_boot.freemem[i];
         ndks_boot.freemem[i] = REG_EMPTY;
         if (!create_untypeds_for_region(root_cnode_cap, false, reg, first_untyped_slot)) {
@@ -763,7 +763,7 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
         }
     }
 
-    for (word_t i = 0; i < MAX_NUM_FREEMEM_REG; i++) {
+    for (word_t i = 0; i < ARRAY_SIZE(ndks_boot.freemem); i++) {
         ndks_boot.freemem[i] = REG_EMPTY;
     }
 
@@ -832,7 +832,7 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
     }
 
     /* now try to fit the root server objects into a region */
-    word_t i = MAX_NUM_FREEMEM_REG - 1;
+    word_t i = ARRAY_SIZE(ndks_boot.freemem) - 1;
     if (!is_reg_empty(ndks_boot.freemem[i])) {
         printf("Insufficient MAX_NUM_FREEMEM_REG\n");
         return false;
@@ -849,13 +849,13 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
         pptr_t start = ROUND_DOWN(ndks_boot.freemem[i].end - size, max);
         if (start >= ndks_boot.freemem[i].start) {
             create_rootserver_objects(start, it_v_reg, extra_bi_size_bits);
-            if (i < MAX_NUM_FREEMEM_REG) {
+            if (i < ARRAY_SIZE(ndks_boot.freemem)) {
                 ndks_boot.freemem[next].end = ndks_boot.freemem[i].end;
                 ndks_boot.freemem[next].start = start + size;
             }
             ndks_boot.freemem[i].end = start;
             break;
-        } else if (i < MAX_NUM_FREEMEM_REG) {
+        } else if (i < ARRAY_SIZE(ndks_boot.freemem)) {
             ndks_boot.freemem[next] = ndks_boot.freemem[i];
         }
     }
