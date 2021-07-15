@@ -763,6 +763,12 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
         }
     }
 
+    /* Clear the free memory list. This is needed semantically, but practically
+     * it does nothing. The bss was zeroed and REG_EMPTY just contains zeros.
+     * Actually, we should initialize ndks_boot.reserved with P_REG_EMPTY also
+     * somewhere to stick to the semantics. Unfortunately, the platform boot
+     * code populates it before any generic code runs, so here it's too late.
+     */
     for (word_t i = 0; i < ARRAY_SIZE(ndks_boot.freemem); i++) {
         ndks_boot.freemem[i] = REG_EMPTY;
     }
