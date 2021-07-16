@@ -16,14 +16,22 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch: [ARM, ARM_HYP, RISCV64, X64]
+        include:
+          - arch: ARM
+            session: CRefine SimplExportAndRefine
+          - arch: ARM_HYP
+            session: CRefine
+          - arch: RISCV64
+            session: CRefine SimplExportAndRefine
+          - arch: X64
+            session: CRefine
     steps:
     - name: Proofs
       uses: seL4/ci-actions/aws-proofs@master
       with:
         L4V_ARCH: ${{ matrix.arch }}
         isa_branch: ts-2020
-        session: CRefine SimplExportAndRefine
+        session: ${{ matrix.session }}
         manifest: default.xml
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
