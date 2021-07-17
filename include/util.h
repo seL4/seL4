@@ -21,6 +21,7 @@
  */
 #define UL_CONST(x) x
 #define ULL_CONST(x) x
+#define NULL 0
 
 #else /* not __ASSEMBLER__ */
 
@@ -31,6 +32,7 @@
  */
 #define UL_CONST(x) PASTE(x, ul)
 #define ULL_CONST(x) PASTE(x, llu)
+#define NULL ((void *)0)
 
 #endif /* [not] __ASSEMBLER__ */
 
@@ -66,8 +68,6 @@
 #define HZ_IN_MHZ   ULL_CONST(1000000)
 
 #ifndef __ASSEMBLER__
-
-#define NULL ((void *)0)
 
 #define PACKED       __attribute__((packed))
 #define NORETURN     __attribute__((__noreturn__))
