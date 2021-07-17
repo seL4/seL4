@@ -6,7 +6,7 @@
 
 #pragma once
 
-#define MASK(n) (BIT(n)-UL_CONST(1))
+#define MASK(n) (BIT(n) - UL_CONST(1))
 #define IS_ALIGNED(n, b) (!((n) & MASK(b)))
 #define ROUND_DOWN(n, b) (((n) >> (b)) << (b))
 #define ROUND_UP(n, b) (((((n) - UL_CONST(1)) >> (b)) + UL_CONST(1)) << (b))
