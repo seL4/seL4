@@ -20,6 +20,7 @@
  * assembler runs.
  */
 #define UL_CONST(x) x
+#define ULL_CONST(x) x
 
 #else /* not __ASSEMBLER__ */
 
@@ -29,6 +30,7 @@
  * 'ul' is the preferred suffix to avoid confusion.
  */
 #define UL_CONST(x) PASTE(x, ul)
+#define ULL_CONST(x) PASTE(x, llu)
 
 #endif /* [not] __ASSEMBLER__ */
 
@@ -41,12 +43,27 @@
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
-/* time constants */
-#define MS_IN_S     1000llu
-#define US_IN_MS    1000llu
-#define HZ_IN_KHZ   1000llu
-#define KHZ_IN_MHZ  1000llu
-#define HZ_IN_MHZ   1000000llu
+/* Time constants are define to use the 'unsigned long long'. Rationale is, that
+ * the C rules define the calculation result is determined by largest type
+ * involved. Enforcing the larges possible type C provides avoids pitfalls with
+ * 32-bit overflows when values are getting quite large. Keep in mind that even
+ * 2^32 milli-seconds roll over within 50 days, which is an uptime that embedded
+ * systems will reach easily and it resembles not even two months in a calendar
+ * calculation. In addition, using the largest integer type C currently defines
+ * enforces that all calculations results need a cast back to a 32-bit type
+ * explicitly. This might feel annoying, but practically it makes code more
+ * robust and enforces thinking about potential overflows.
+ * Note that at this stage of the includes, we do not have defined the type
+ * uint64_t yet, so we can't use any definitions around it, but have to stick to
+ * plain C types. Neither moving the time constant definitions behind the
+ * uint64_t type definitions nor including the header with the uint64_t
+ * definitions here is currently a feasible option.
+ */
+#define MS_IN_S     ULL_CONST(1000)
+#define US_IN_MS    ULL_CONST(1000)
+#define HZ_IN_KHZ   ULL_CONST(1000)
+#define KHZ_IN_MHZ  ULL_CONST(1000)
+#define HZ_IN_MHZ   ULL_CONST(1000000)
 
 #ifndef __ASSEMBLER__
 
