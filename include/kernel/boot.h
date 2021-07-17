@@ -20,12 +20,11 @@ typedef cte_t *slot_ptr_t;
 /* (node-local) state accessed only during bootstrapping */
 
 typedef struct ndks_boot {
-    p_region_t reserved[MAX_NUM_RESV_REG];
-    word_t resv_count;
-    region_t   freemem[MAX_NUM_FREEMEM_REG];
-    seL4_BootInfo      *bi_frame;
-    seL4_SlotPos slot_pos_cur;
-    seL4_SlotPos slot_pos_max;
+    p_region_t      reserved[MAX_NUM_RESV_REG];
+    p_region_t      freemem[MAX_NUM_FREEMEM_REG];
+    seL4_BootInfo   *bi_frame;
+    seL4_SlotPos    slot_pos_cur;
+    seL4_SlotPos    slot_pos_max;
 } ndks_boot_t;
 
 extern ndks_boot_t ndks_boot;
