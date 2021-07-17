@@ -454,8 +454,7 @@ compile_assert(root_cnode_size_valid,
                BIT(CONFIG_ROOT_CNODE_SIZE_BITS) >= seL4_NumInitialCaps &&
                BIT(CONFIG_ROOT_CNODE_SIZE_BITS) >= (seL4_PageBits - seL4_SlotBits))
 
-BOOT_CODE cap_t
-create_root_cnode(void)
+BOOT_CODE cap_t static create_root_cnode(void)
 {
     /* write the number of root CNode slots to global state */
     ndks_boot.slot_pos_max = BIT(CONFIG_ROOT_CNODE_SIZE_BITS);
@@ -480,8 +479,7 @@ compile_assert(num_domains_valid,
 compile_assert(num_priorities_valid,
                CONFIG_NUM_PRIORITIES >= 1 && CONFIG_NUM_PRIORITIES <= 256)
 
-BOOT_CODE void
-create_domain_cap(cap_t root_cnode_cap)
+BOOT_CODE static void create_domain_cap(cap_t root_cnode_cap)
 {
     /* Check domain scheduler assumptions. */
     assert(ksDomScheduleLength > 0);
@@ -910,7 +908,7 @@ BOOT_CODE void bi_finalise(void)
  * Dynamically initialise the available memory on the platform.
  * A region represents an area of memory.
  */
-BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
+BOOT_CODE cap_t init_freemem(word_t n_available, const p_region_t *available,
                               v_region_t it_v_reg, word_t extra_bi_size_bits)
 {
     print_active = 1;
@@ -927,7 +925,7 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
     /* The system configuration is broken if no region is available */
     if (0 == n_available) {
         printf("ERROR: no memory regions available\n");
-        return false;
+        return cap_null_cap_new();
     }
 
     /* Force ordering and exclusivity of available regions */
@@ -941,19 +939,19 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
         /* Available regions must be sane */
         if (r->start > r->end) {
             printf("ERROR: memory region %"SEL4_PRIu_word" has start > end\n", i);
-            return false;
+            return cap_null_cap_new();
         }
 
         /* Available regions can't be empty */
         if (r->start == r->end) {
             printf("ERROR: memory region %"SEL4_PRIu_word" empty\n", i);
-            return false;
+            return cap_null_cap_new();
         }
 
         /* regions must be ordered and must not overlap */
         if ((i > 0) && (r->start < available[i - 1].end)) {
             printf("ERROR: memory region %d in wrong order\n", (int)i);
-            return false;
+            return cap_null_cap_new();
         }
     }
 
@@ -1054,7 +1052,7 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
                  * catch all possible conditions. If we are here, the algorithm must
                  * be broken. */
                 assert(0);
-                return false;
+                return cap_null_cap_new();
             }
         }
 
@@ -1081,7 +1079,7 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
             printf("ERROR: can't reserve free memory region "
                    "[%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]\n",
                    insert.start, insert.end - 1);
-            return false;
+            return cap_null_cap_new();
         }
 
         /* Reserving a region could modify the reserved regions list, so idx_r
@@ -1176,7 +1174,7 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
      * server. */
     if (0 == idx_f) {
         printf("ERROR: no free memory\n");
-        return false;
+        return cap_null_cap_new();
     }
 
     /* Now ndks_boot.freemem is set up, so we can use it. First thing is
@@ -1185,8 +1183,21 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
     printf("Setting up rootserver objects...\n");
     if (!create_rootserver_objects(it_v_reg, extra_bi_size_bits)) {
         printf("ERROR: could not create rootserver objects\n");
-        return false;
+        return cap_null_cap_new();
     }
 
-    return true;
+    /* Create the root c-node */
+    cap_t root_cnode_cap = create_root_cnode();
+    if (cap_get_capType(root_cnode_cap) == cap_null_cap) {
+        printf("ERROR: root c-node creation failed\n");
+        return cap_null_cap_new();
+    }
+
+    /* create the cap for managing thread domains */
+    create_domain_cap(root_cnode_cap);
+
+    /* initialise the IRQ states and provide the IRQ control cap */
+    init_irqs(root_cnode_cap);
+
+    return root_cnode_cap;
 }
