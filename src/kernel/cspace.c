@@ -171,7 +171,7 @@ resolveAddressBits_ret_t resolveAddressBits(cap_t nodeCap, cptr_t capptr, word_t
         offset = (capptr >> (n_bits - levelBits)) & MASK(radixBits);
         slot = CTE_PTR(cap_cnode_cap_get_capCNodePtr(nodeCap)) + offset;
 
-        if (likely(n_bits <= levelBits)) {
+        if (likely(n_bits == levelBits)) {
             ret.status = EXCEPTION_NONE;
             ret.slot = slot;
             ret.bitsRemaining = 0;
