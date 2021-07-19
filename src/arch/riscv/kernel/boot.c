@@ -411,7 +411,7 @@ static BOOT_CODE bool_t try_init_kernel(
     return true;
 }
 
-BOOT_CODE VISIBLE void init_kernel(
+BOOT_CODE VISIBLE NORETURN void init_kernel(
     paddr_t ui_p_reg_start,
     paddr_t ui_p_reg_end,
     sword_t pv_offset,
@@ -459,4 +459,6 @@ BOOT_CODE VISIBLE void init_kernel(
 
     schedule();
     activateThread();
+    restore_user_context();
+    UNREACHABLE();
 }
