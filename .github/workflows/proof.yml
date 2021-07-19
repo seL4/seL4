@@ -12,7 +12,11 @@ jobs:
   cproof:
     name: C Proofs
     runs-on: ubuntu-latest
-    if: contains(github.event.pull_request.labels.*.name, 'proof-test')
+    # run on any normal trigger when the label exists, and run when the label is added
+    # don't run again when other labels are added
+    if: ${{ github.event.action != 'labeled' &&
+              contains(github.event.pull_request.labels.*.name, 'proof-test') ||
+            github.event.action == 'labeled' && github.event.label == 'proof-test' }}
     strategy:
       fail-fast: false
       matrix:
