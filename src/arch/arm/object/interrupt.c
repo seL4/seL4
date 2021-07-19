@@ -34,6 +34,10 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
         }
 
         word_t irq_w = getSyscallArg(0, buffer);
+#if defined BANKED_IRQ_TO_IRQ
+        seL4_BankedIRQ_t banked_irq = bankedIrqFromWord(irq_w);
+        irq_w = BANKED_IRQ_TO_IRQ(banked_irq);
+#endif
         irq_t irq = (irq_t) CORE_IRQ_TO_IRQT(0, irq_w);
         bool_t trigger = !!getSyscallArg(1, buffer);
         word_t index = getSyscallArg(2, buffer);
@@ -85,6 +89,10 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
         seL4_Word target = getSyscallArg(4, buffer);
         cap_t cnodeCap = current_extra_caps.excaprefs[0]->cap;
         exception_t status = Arch_checkIRQ(irq_w);
+#if defined BANKED_IRQ_TO_IRQ
+        seL4_BankedIRQ_t banked_irq = bankedIrqFromWord(irq_w);
+        irq_w = BANKED_IRQ_TO_IRQ(banked_irq);
+#endif
         irq_t irq = CORE_IRQ_TO_IRQT(target, irq_w);
 
         if (status != EXCEPTION_NONE) {

@@ -90,6 +90,19 @@ static inline word_t CONST wordFromMessageInfo(seL4_MessageInfo_t mi)
     return mi.words[0];
 }
 
+static inline seL4_BankedIRQ_t CONST bankedIrqFromWord(word_t w)
+{
+    seL4_BankedIRQ_t irq;
+
+    irq.words[0] = w;
+    return irq;
+}
+
+static inline word_t CONST wordFromBankedIrq(seL4_BankedIRQ_t irq)
+{
+    return irq.words[0];
+}
+
 #ifdef CONFIG_PRINTING
 #ifdef CONFIG_COLOUR_PRINTING
 #define ANSI_RESET "\033[0m"
