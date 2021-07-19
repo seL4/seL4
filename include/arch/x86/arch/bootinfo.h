@@ -18,4 +18,3 @@
  *      - the reserved MSI region (1)
  */
 #define MAX_NUM_RESV_REG (MAX_NUM_FREEMEM_REG + CONFIG_MAX_NUM_IOAPIC + MAX_NUM_DRHU + 2)
-

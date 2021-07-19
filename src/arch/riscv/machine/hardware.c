@@ -50,19 +50,18 @@ BOOT_CODE p_region_t *get_avail_p_regs(void)
 
 BOOT_CODE void map_kernel_devices(void)
 {
-    if (kernel_devices == NULL) {
-        return;
-    }
-
-    for (int i = 0; i < (sizeof(kernel_devices) / sizeof(kernel_frame_t)); i++) {
-        map_kernel_frame(kernel_devices[i].paddr, kernel_devices[i].pptr,
-                         VMKernelOnly);
-        if (!kernel_devices[i].userAvailable) {
-            p_region_t reg = {
-                .start = kernel_devices[i].paddr,
-                .end = kernel_devices[i].paddr + (1 << seL4_LargePageBits),
-            };
-            reserve_region(reg);
+    /* If there are no kernel device frames at all, then kernel_device_frames is
+     * NULL. Thus we can't use ARRAY_SIZE(kernel_device_frames) here directly,
+     * but have to use NUM_KERNEL_DEVICE_FRAMES that is defined accordingly.
+     */
+    for (int i = 0; i < NUM_KERNEL_DEVICE_FRAMES; i++) {
+        const kernel_frame_t *frame = &kernel_device_frames[i];
+        map_kernel_frame(frame->paddr, frame->pptr, VMKernelOnly);
+        if (!frame->userAvailable) {
+            reserve_region((p_region_t) {
+                .start = frame->paddr,
+                .end   = frame->paddr + BIT(seL4_LargePageBits)
+            });
         }
     }
 }
