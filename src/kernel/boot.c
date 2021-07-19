@@ -142,7 +142,7 @@ BOOT_CODE static word_t rootserver_max_size_bits(word_t extra_bi_size_bits)
     return MAX(max, extra_bi_size_bits);
 }
 
-BOOT_CODE static word_t calculate_rootserver_size(v_region_t v_reg, word_t extra_bi_size_bits)
+BOOT_CODE static word_t calculate_rootserver_size(v_region_t it_v_reg, word_t extra_bi_size_bits)
 {
     /* work out how much memory we need for root server objects */
     word_t size = BIT(CONFIG_ROOT_CNODE_SIZE_BITS + seL4_SlotBits);
@@ -155,7 +155,7 @@ BOOT_CODE static word_t calculate_rootserver_size(v_region_t v_reg, word_t extra
     size += BIT(seL4_MinSchedContextBits); // root sched context
 #endif
     /* for all archs, seL4_PageTable Bits is the size of all non top-level paging structures */
-    return size + arch_get_n_paging(v_reg) * BIT(seL4_PageTableBits);
+    return size + arch_get_n_paging(it_v_reg) * BIT(seL4_PageTableBits);
 }
 
 BOOT_CODE static void maybe_alloc_extra_bi(word_t cmp_size_bits, word_t extra_bi_size_bits)
@@ -165,13 +165,13 @@ BOOT_CODE static void maybe_alloc_extra_bi(word_t cmp_size_bits, word_t extra_bi
     }
 }
 
-BOOT_CODE void create_rootserver_objects(pptr_t start, v_region_t v_reg, word_t extra_bi_size_bits)
+BOOT_CODE void create_rootserver_objects(pptr_t start, v_region_t it_v_reg, word_t extra_bi_size_bits)
 {
     /* the largest object the PD, the root cnode, or the extra boot info */
     word_t cnode_size_bits = CONFIG_ROOT_CNODE_SIZE_BITS + seL4_SlotBits;
     word_t max = rootserver_max_size_bits(extra_bi_size_bits);
 
-    word_t size = calculate_rootserver_size(v_reg, extra_bi_size_bits);
+    word_t size = calculate_rootserver_size(it_v_reg, extra_bi_size_bits);
     rootserver_mem.start = start;
     rootserver_mem.end = start + size;
 
@@ -201,7 +201,7 @@ BOOT_CODE void create_rootserver_objects(pptr_t start, v_region_t v_reg, word_t 
 #endif
 
     /* paging structures are 4k on every arch except aarch32 (1k) */
-    word_t n = arch_get_n_paging(v_reg);
+    word_t n = arch_get_n_paging(it_v_reg);
     rootserver.paging.start = alloc_rootserver_obj(seL4_PageTableBits, n);
     rootserver.paging.end = rootserver.paging.start + n * BIT(seL4_PageTableBits);
 
