@@ -159,7 +159,6 @@ BOOT_CODE bool_t init_sys_state(
     pptr_t        extra_bi_offset = 0;
     uint32_t      tsc_freq = 0;
     create_frames_of_region_ret_t create_frames_ret;
-    create_frames_of_region_ret_t extra_bi_ret;
 
     /* convert from physical addresses to kernel pptrs */
     region_t ui_reg             = paddr_to_pptr_reg(ui_info.p_reg);
@@ -238,18 +237,24 @@ BOOT_CODE bool_t init_sys_state(
     );
 
     /* create and map extra bootinfo region */
-    extra_bi_ret =
-        create_frames_of_region(
-            root_cnode_cap,
-            it_vspace_cap,
-            extra_bi_region,
-            true,
-            pptr_to_paddr((void *)(extra_bi_region.start - extra_bi_frame_vptr))
+    if (extra_bi_size > 0) {
+        region_t extra_bi_region = {
+            .start = rootserver.extra_bi,
+            .end = rootserver.extra_bi + BIT(extra_bi_size_bits)
+        };
+        create_frames_of_region_ret_t extra_bi_ret =
+            create_frames_of_region(
+                root_cnode_cap,
+                it_vspace_cap,
+                extra_bi_region
+                true,
+                pptr_to_paddr((void *)(rootserver.extra_bi - extra_bi_frame_vptr))
         );
-    if (!extra_bi_ret.success) {
-        return false;
+        if (!extra_bi_ret.success) {
+            return false;
+        }
+        ndks_boot.bi_frame->extraBIPages = extra_bi_ret.region;
     }
-    ndks_boot.bi_frame->extraBIPages = extra_bi_ret.region;
 
     /* create the initial thread's IPC buffer */
     ipcbuf_cap = create_ipcbuf_frame_cap(root_cnode_cap, it_vspace_cap, ipcbuf_vptr);
