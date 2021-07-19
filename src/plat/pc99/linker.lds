@@ -131,7 +131,7 @@ SECTIONS
     .bss . (NOLOAD) : AT(ADDR(.bss) - KERNEL_OFFSET)
     {
         *(.bss)
-        *(COMMON)
+        *(COMMON) /* fallback in case '-fno-common' is not used */
     } :virt
 
     . = ALIGN(4K);
