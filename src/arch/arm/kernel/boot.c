@@ -136,23 +136,6 @@ BOOT_CODE static void init_smmu(cap_t root_cnode_cap)
 
 #endif
 
-BOOT_CODE static bool_t create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg)
-{
-    seL4_SlotPos   slot_pos_before;
-    seL4_SlotPos   slot_pos_after;
-
-    slot_pos_before = ndks_boot.slot_pos_cur;
-    create_device_untypeds(root_cnode_cap, slot_pos_before);
-    create_kernel_untypeds(root_cnode_cap, boot_mem_reuse_reg, slot_pos_before);
-
-    slot_pos_after = ndks_boot.slot_pos_cur;
-    ndks_boot.bi_frame->untyped = (seL4_SlotRegion) {
-        slot_pos_before, slot_pos_after
-    };
-    return true;
-
-}
-
 /** This and only this function initialises the CPU.
  *
  * It does NOT initialise any kernel state.
