@@ -20,6 +20,8 @@
 #define CONTROL_I         12 /* Instruction access Cacheability control */
 #define CONTROL_E0E       24 /* Endianness of data accesses at EL0 */
 #define CONTROL_EE        25 /* Endianness of data accesses at EL1 */
+#define CONTROL_UCI       26 /* Trap EL0 execution of cache maintenance
+                                instructions to EL1 (aarch64 only) */
 
 #ifndef __ASSEMBLER__
 
