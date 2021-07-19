@@ -1,5 +1,6 @@
 #
 # Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+# Copyright 2021, HENSOLDT Cyber
 #
 # SPDX-License-Identifier: GPL-2.0-only
 #
@@ -13,7 +14,12 @@ if(KernelPlatformRocketchip)
     config_set(KernelRiscVPlatform RISCV_PLAT "rocketchip")
     config_set(KernelPlatformFirstHartID FIRST_HART_ID 0)
     config_set(KernelOpenSBIPlatform OPENSBI_PLATFORM "generic")
-    list(APPEND KernelDTSList "tools/dts/rocketchip.dts")
+    list(
+        APPEND
+        KernelDTSList
+        "tools/dts/rocketchip.dts"
+        "src/plat/rocketchip/overlay-rocketchip.dts"
+    )
     declare_default_headers(
         TIMER_FREQUENCY 10000000llu PLIC_MAX_NUM_INT 0
         INTERRUPT_CONTROLLER arch/machine/plic.h

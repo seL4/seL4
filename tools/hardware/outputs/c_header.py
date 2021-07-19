@@ -161,7 +161,7 @@ def run(tree: fdt.FdtParser, hardware: rule.HardwareYaml, config: config.Config,
     if not args.header_out:
         raise ValueError('You need to specify a header-out to use c header output')
 
-    physical_memory, reserved, physBase = memory.get_physical_memory(tree, config)
+    physical_memory, reserved = memory.get_physical_memory(tree, config)
     kernel_regions, kernel_macros = get_kernel_devices(tree, hardware)
     kernel_irqs = get_interrupts(tree, hardware)
     template = Environment(loader=BaseLoader, trim_blocks=True,
@@ -172,7 +172,7 @@ def run(tree: fdt.FdtParser, hardware: rule.HardwareYaml, config: config.Config,
         'kernel_irqs': kernel_irqs,
         'kernel_macros': kernel_macros,
         'kernel_regions': kernel_regions,
-        'physBase': physBase,
+        'physBase': physical_memory[0].base,
         'physical_memory': physical_memory,
     })
 

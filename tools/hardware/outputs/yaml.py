@@ -28,7 +28,7 @@ def run(tree: fdt.FdtParser, hardware: rule.HardwareYaml, config: config.Config,
         args: argparse.Namespace):
     if not args.yaml_out:
         raise ValueError('you need to provide a yaml-out to use the yaml output method')
-    phys_mem, reserved, _ = memory.get_physical_memory(tree, config)
+    phys_mem, reserved = memory.get_physical_memory(tree, config)
     kernel_devs = get_kernel_devices(tree, hardware)
     dev_mem = memory.get_addrspace_exclude(list(reserved) + phys_mem + kernel_devs, config)
 
