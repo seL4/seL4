@@ -14,10 +14,9 @@
 
 /* The maximum number of reserved regions is:
  * - 1 for each physical memory region (MAX_NUM_FREEMEM_REG)
- * - 1 for each kernel device (ARRAY_SIZE(kernel_devices))
+ * - 1 for each kernel frame (NUM_KERNEL_DEVICE_FRAMES, there might be none)
  * - 1 for each mode-reserved region. (MODE_RESERVED)
  * - 1 each for kernel, dtb, and user image. (3)
  */
-#define MAX_NUM_RESV_REG (MAX_NUM_FREEMEM_REG + ARRAY_SIZE(kernel_devices) + MODE_RESERVED + 3)
-
-
+#define MAX_NUM_RESV_REG (MAX_NUM_FREEMEM_REG + NUM_KERNEL_DEVICE_FRAMES + \
+                          MODE_RESERVED + 3)
