@@ -20,4 +20,21 @@
 		/* This is configurable in the Pi's config.txt, but we use 128MiB of RAM by default. */
 		reg = <0x00 0x08000000>;
 	};
+
+	reserved-memory {
+		#address-cells = < 0x01 >;
+		#size-cells = < 0x01 >;
+		ranges = < >;
+/*
+ * Memory page holding irq vector as well as the bootloader armstub and secondary core parking spinloops.
+ * Secondary cores will be parked in a spinloop here until released by SMP startup code
+ * (or indefinitely if SMP is not enabled).
+ * Kernel image must not be loaded here as it will overwrite secondary core spinloop code, releasing
+ * secondary cores early, causing undefined behavior.
+ */
+		memreserve@0 {
+			reg = <0x0 0x1000>;
+			no-map;
+		};
+	};
 };
