@@ -552,15 +552,15 @@ static BOOT_CODE bool_t try_init_kernel(
     /* finalise the bootinfo frame */
     bi_finalise();
 
-    /* make everything written by the kernel visible to userland. Cleaning to PoC is not
-     * strictly neccessary, but performance is not critical here so clean and invalidate
-     * everything to PoC */
+    /* make everything written by the kernel visible to userland. Cleaning to
+     * PoC is not strictly neccessary, but performance is not critical here so
+     * clean and invalidate everything to PoC
+     */
     cleanInvalidateL1Caches();
     invalidateLocalTLB();
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         invalidateHypTLB();
     }
-
 
     ksNumCPUs = 1;
 
@@ -568,7 +568,11 @@ static BOOT_CODE bool_t try_init_kernel(
     SMP_COND_STATEMENT(clh_lock_init());
     SMP_COND_STATEMENT(release_secondary_cpus());
 
-    /* grab BKL before leaving the kernel */
+    /* All cores are up now, so there can be concurrency. The kernel booting is
+     * supposed to be finished before the secondary cores are released, all the
+     * primary has to do now is schedule the initial thread. Currently there is
+     * nothing that touches any global data structures, nevertheless we grab the
+     * BKL here to play safe. It is released when the kernel is left. */
     NODE_LOCK_SYS;
 
     printf("Booting all finished, dropped to user space\n");
