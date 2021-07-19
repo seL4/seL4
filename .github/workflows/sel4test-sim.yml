@@ -13,6 +13,10 @@ on:
     branches: [master]
   pull_request:
     types: [opened, reopened, synchronize, labeled]
+    paths-ignore:
+      - 'manual/**'
+      - 'LICENSES/**'
+      - '*.md'
 
 jobs:
   sim:
