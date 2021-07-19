@@ -6,56 +6,52 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-declare_platform(zynqmp KernelPlatformZynqmp PLAT_ZYNQMP KernelArchARM)
 
-set(c_configs PLAT_ZYNQMP_ZCU102 PLAT_ZYNQMP_ULTRA96)
-set(cmake_configs KernelPlatformZynqmpZcu102 KernelPlatformZynqmpUltra96)
-set(plat_lists zcu102 ultra96)
-foreach(config IN LISTS cmake_configs)
-    unset(${config} CACHE)
-endforeach()
+declare_platform(
+    "zynqmp"
+    "aarch64;aarch32;arm_hyp" # default is first (aarch64)
+    MACH
+    "zynqmp"
+    NO_DEFAULT_DTS # DTS is selected below
+    CAMKE_VAR
+    "KernelPlatformZynqmp"
+    # C_DEFINE defaults to CONFIG_PLAT_ZYNQMP
+    SOURCES
+    "src/arch/arm/machine/gic_v2.c"
+    "src/arch/arm/machine/l2c_nop.c"
+    BOARDS # first is default
+    "zcu102,KernelPlatformZynqmpZcu102,PLAT_ZYNQMP_ZCU102"
+    "ultra96,KernelPlatformZynqmpUltra96,PLAT_ZYNQMP_ULTRA96"
+)
 
 if(KernelPlatformZynqmp)
-    set(KernelHardwareDebugAPIUnsupported ON CACHE INTERNAL "")
-    if("${KernelSel4Arch}" STREQUAL aarch32)
-        declare_seL4_arch(aarch32)
-    elseif("${KernelSel4Arch}" STREQUAL aarch64)
-        declare_seL4_arch(aarch64)
-    elseif("${KernelSel4Arch}" STREQUAL arm_hyp)
-        declare_seL4_arch(arm_hyp)
+
+    if(KernelPlatformZynqmpZcu102)
+        set(zynqmp_plat_dts "zynqmp")
+    elseif(KernelPlatformZynqmpUltra96)
+        set(zynqmp_plat_dts "ultra96")
     else()
-        fallback_declare_seL4_arch_default(aarch64)
-    endif()
-
-    check_platform_and_fallback_to_default(KernelARMPlatform "zcu102")
-
-    list(FIND plat_lists ${KernelARMPlatform} index)
-    if("${index}" STREQUAL "-1")
-        message(FATAL_ERROR "Which zynqmp platform not specified")
-    endif()
-    list(GET c_configs ${index} c_config)
-    list(GET cmake_configs ${index} cmake_config)
-    config_set(KernelARMPlatform ARM_PLAT ${KernelARMPlatform})
-    config_set(${cmake_config} ${c_config} ON)
-
-    set(KernelArmCortexA53 ON)
-    set(KernelArchArmV8a ON)
-
-    config_set(KernelArmMach MACH "zynq")
-
-    if(KernelPlatformZynqmpUltra96)
-        list(APPEND KernelDTSList "tools/dts/ultra96.dts")
-    elseif(KernelPlatformZynqmpZcu102)
-        list(APPEND KernelDTSList "tools/dts/zynqmp.dts")
-    else()
-        message(FATAL_ERROR "unknown platform")
+        message(FATAL_ERROR "unsupported zynqmp platform")
     endif()
 
     if(KernelSel4ArchAarch32)
-        list(APPEND KernelDTSList "src/plat/zynqmp/overlay-zynqmp32.dts")
+        set(zynqmp_overlay_dts "zynqmp32")
+    else(KernelSel4ArchAarch64)
+        set(zynqmp_overlay_dts "zynqmp")
     else()
-        list(APPEND KernelDTSList "src/plat/zynqmp/overlay-zynqmp.dts")
+        message(FATAL_ERROR "unsupported KernelSel4Arch")
     endif()
+
+    set(KernelHardwareDebugAPIUnsupported ON CACHE INTERNAL "")
+    set(KernelArmCortexA53 ON)
+    set(KernelArchArmV8a ON)
+
+    list(
+        APPEND
+        KernelDTSList
+        "src/plat/zynqmp/overlay-${zynqmp_plat_dts}.dts"
+        "${CMAKE_CURRENT_LIST_DIR}/overlay-${zynqmp_overlay_dts}.dts"
+    )
 
     declare_default_headers(
         TIMER_FREQUENCY 100000000llu
@@ -67,9 +63,5 @@ if(KernelPlatformZynqmp)
         CLK_SHIFT 37u
         KERNEL_WCET 10u
     )
-endif()
 
-add_sources(
-    DEP "KernelPlatformZynqmp"
-    CFILES src/arch/arm/machine/gic_v2.c src/arch/arm/machine/l2c_nop.c
-)
+endif()

@@ -439,7 +439,7 @@ function(config_choice optionname configname doc)
     # valid default
     set(found_current OFF)
     foreach(i RANGE 3 ${limit})
-        set(option "${ARGV${i}}")
+        string(REPLACE "," ";" option "${ARGV${i}}")
         # Extract the constant parts of the choice information and just leave any
         # conditional information
         list(GET option 0 option_value)
@@ -529,6 +529,7 @@ function(config_choice optionname configname doc)
     # Save all possible options to an internal value.  This is to allow enumerating the options elsewhere.
     # We create a new variable because cmake doesn't support arbitrary properties on cache variables.
     set(${optionname}_all_strings ${all_strings} CACHE INTERNAL "" FORCE)
+    #message("config_choice: ${local_config_string}")
     set(configure_string "${local_config_string}" PARENT_SCOPE)
 endfunction(config_choice)
 

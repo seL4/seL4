@@ -6,16 +6,23 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-declare_platform(odroidc2 KernelPlatformOdroidc2 PLAT_ODROIDC2 KernelSel4ArchAarch64)
+declare_platform(
+    "odroidc2"
+    "aarch64"
+    # use default DTS at tools/dts/odroidc2.dts
+    CAMKE_VAR
+    "KernelPlatformOdroidc2"
+    # C_DEFINE defaults to CONFIG_PLAT_ODROIDC2
+    SOURCES
+    "src/arch/arm/machine/gic_v2.c"
+    "src/arch/arm/machine/l2c_nop.c"
+)
 
 if(KernelPlatformOdroidc2)
-    declare_seL4_arch(aarch64)
     set(KernelArmCortexA53 ON)
     set(KernelArchArmV8a ON)
-    config_set(KernelARMPlatform ARM_PLAT odroidc2)
     set(KernelArmMachFeatureModifiers "+crc" CACHE INTERNAL "")
-    list(APPEND KernelDTSList "tools/dts/odroidc2.dts")
-    list(APPEND KernelDTSList "src/plat/odroidc2/overlay-odroidc2.dts")
+    list(APPEND KernelDTSList "${CMAKE_CURRENT_LIST_DIR}/overlay-odroidc2.dts")
     declare_default_headers(
         TIMER_FREQUENCY 24000000llu
         MAX_IRQ 250
@@ -28,8 +35,3 @@ if(KernelPlatformOdroidc2)
         TIMER_PRECISION 1u
     )
 endif()
-
-add_sources(
-    DEP "KernelPlatformOdroidc2"
-    CFILES src/arch/arm/machine/gic_v2.c src/arch/arm/machine/l2c_nop.c
-)
