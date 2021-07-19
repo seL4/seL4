@@ -182,6 +182,15 @@ add_compile_options(
     -Wpointer-arith
     -Wno-nonnull
     -ffreestanding
+    # GCC < 10 and clang < 11 put uninitialized global variables into a 'COMMON'
+    # section unless '-fno-common' is specified. The linker will put anything
+    # from 'COMMON' as the end of the '.bss' it nothing else is specified in the
+    # linker script. Besides making the variable placement look odd, this also
+    # tends to waste a page because we puts large aligned block at the end.
+    # Eventually, GCC 10 and clang 11 made '-fno-common' the default, see
+    # - https://gcc.gnu.org/gcc-10/changes.html
+    # - https://releases.llvm.org/11.0.0/tools/clang/docs/ReleaseNotes.html
+    -fno-common
 )
 
 # Add all the common flags to the linker args
