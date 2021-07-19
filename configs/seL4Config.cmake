@@ -144,23 +144,23 @@ function(declare_platform name arch_list)
     # "_". That's all what is needed for the platform names currently in use,
     # new names may require additional sanitizing. We also capitalize all
     # letters to have the C define and the CMake variable aligned closely.
-    message(STATUS "${name}    (KernelPlatform='${KernelPlatform}')")
+    #message(STATUS "${name}    (KernelPlatform='${KernelPlatform}')")
     sanitize_str_for_var(name_as_var "${name}")
 
     if(DEFINED PARAM_CAMKE_VAR)
-        message(STATUS "   CAMKE_VAR: KernelPlatform_${name_as_var} -> ${PARAM_CAMKE_VAR}")
+        #message(STATUS "   CAMKE_VAR: KernelPlatform_${name_as_var} -> ${PARAM_CAMKE_VAR}")
     else()
         set(PARAM_CAMKE_VAR "KernelPlatform_${name_as_var}")
     endif()
 
     if(DEFINED PARAM_C_DEFINE)
-        message(STATUS "   C_DEFINE: PLAT_${name_as_var} -> ${PARAM_C_DEFINE}")
+        #message(STATUS "   C_DEFINE: PLAT_${name_as_var} -> ${PARAM_C_DEFINE}")
     else()
         set(PARAM_C_DEFINE "PLAT_${name_as_var}")
     endif()
 
     if(PARAM_NO_DEFAULT_DTS)
-        message(STATUS "   DTS: (none by default)")
+        #message(STATUS "   DTS: (none by default)")
     endif()
 
     # disable any CMake variables by default
@@ -209,7 +209,7 @@ function(declare_platform name arch_list)
             list(LENGTH board_descr cnt)
             list(GET board_descr 0 board_name)
 
-            message(STATUS "   board: ${board_name}")
+            #message(STATUS "   board: ${board_name}")
 
             list(APPEND board_names "${board_name}")
             sanitize_str_for_var(board_name_as_var "${board_name}")
@@ -218,10 +218,10 @@ function(declare_platform name arch_list)
 
             if(cnt GREATER 1)
                 list(GET board_descr 1 board_cmake_var)
-                message(STATUS "   CAMKE_VAR: KernelPlatform_${board_name_as_var} -> ${board_cmake_var}")
+                #message(STATUS "   CAMKE_VAR: KernelPlatform_${board_name_as_var} -> ${board_cmake_var}")
                 if(cnt GREATER 2)
                     list(GET board_descr 2 board_c_define)
-                    message(STATUS "   C_DEFINE: PLAT_${board_name_as_var} -> ${board_c_define}")
+                    #message(STATUS "   C_DEFINE: PLAT_${board_name_as_var} -> ${board_c_define}")
                 endif()
             endif()
 
@@ -244,7 +244,7 @@ function(declare_platform name arch_list)
         set(arch_plat "${KernelPlatform}")
         set(KernelPlatform "${name}")
     elseif(NOT KernelPlatform STREQUAL "${name}")
-        message(STATUS "   OFF")
+        #message(STATUS "   OFF")
         return()
     elseif(board_names)
         # first board is the default if nothing else is set
@@ -352,7 +352,7 @@ function(declare_platform name arch_list)
     # ensure the parent sees all the changes that e.g. config_set() made
     set(configure_string "${configure_string}" PARENT_SCOPE)
 
-    message(STATUS "   ON")
+    #message(STATUS "   ON")
 
 endfunction()
 
