@@ -113,9 +113,13 @@ BEGIN_FUNC(_start)
     ldp     x2, x3, [sp], #16
     ldp     x0, x1, [sp], #16
 
-    /* Call bootstrapping implemented in C */
-    bl      init_kernel
-
-    /* Restore the initial thread */
-    b restore_user_context
+    /* jump to init_kernel() with parameters:
+     * x0: user image physical start addres
+     * x1: user image physical end address
+     * x2: physical/virtual offset
+     * x3: user image virtual entry address
+     * x4: DTB physical address (0 if there is none)
+     * x5: DTB size (0 if there is none)
+     */
+    b      init_kernel
 END_FUNC(_start)

@@ -1,6 +1,7 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ * Copyright 2021, HENSOLDT Cyber
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -25,23 +26,6 @@ BOOT_BSS static volatile word_t node_boot_lock;
 /* kernel image + [extra bootinfo] + user image */
 #define MAX_RESERVED 3
 BOOT_BSS static region_t res_reg[MAX_RESERVED];
-
-BOOT_CODE static bool_t create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg)
-{
-    seL4_SlotPos   slot_pos_before;
-    seL4_SlotPos   slot_pos_after;
-
-    slot_pos_before = ndks_boot.slot_pos_cur;
-    create_device_untypeds(root_cnode_cap, slot_pos_before);
-    bool_t res = create_kernel_untypeds(root_cnode_cap, boot_mem_reuse_reg, slot_pos_before);
-
-    slot_pos_after = ndks_boot.slot_pos_cur;
-    ndks_boot.bi_frame->untyped = (seL4_SlotRegion) {
-        slot_pos_before, slot_pos_after
-    };
-    return res;
-
-}
 
 BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, asid_t asid, bool_t
                                            use_large, bool_t executable)
@@ -68,7 +52,7 @@ BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vpt
     return cap;
 }
 
-BOOT_CODE static bool_t arch_init_freemem(region_t ui_reg, v_region_t ui_v_reg,
+BOOT_CODE static bool_t arch_init_freemem(region_t ui_reg, v_region_t it_v_reg,
                                           region_t dtb_reg,
                                           word_t extra_bi_size_bits)
 {
@@ -90,7 +74,7 @@ BOOT_CODE static bool_t arch_init_freemem(region_t ui_reg, v_region_t ui_v_reg,
     index += 1;
 
     return init_freemem(get_num_avail_p_regs(), get_avail_p_regs(), index,
-                        res_reg, ui_v_reg, extra_bi_size_bits);
+                        res_reg, it_v_reg, extra_bi_size_bits);
 }
 
 BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
@@ -187,8 +171,8 @@ static BOOT_CODE bool_t try_init_kernel(
     paddr_t ui_p_reg_end,
     uint32_t pv_offset,
     vptr_t  v_entry,
-    paddr_t dtb_addr_start,
-    paddr_t dtb_addr_end
+    paddr_t dtb_p_start,
+    uint32_t dtb_size
 )
 {
     cap_t root_cnode_cap;
@@ -202,8 +186,7 @@ static BOOT_CODE bool_t try_init_kernel(
     region_t ui_reg = paddr_to_pptr_reg((p_region_t) {
         ui_p_reg_start, ui_p_reg_end
     });
-    region_t dtb_reg;
-    word_t extra_bi_size;
+    word_t extra_bi_size = 0;
     pptr_t extra_bi_offset = 0;
     vptr_t extra_bi_frame_vptr;
     vptr_t bi_frame_vptr;
@@ -221,26 +204,6 @@ static BOOT_CODE bool_t try_init_kernel(
     bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
     extra_bi_frame_vptr = bi_frame_vptr + BIT(PAGE_BITS);
 
-    /* If no DTB was provided, skip allocating extra bootinfo */
-    p_region_t dtb_p_reg = {
-        dtb_addr_start, ROUND_UP(dtb_addr_end, PAGE_BITS)
-    };
-    if (dtb_addr_start == 0) {
-        extra_bi_size = 0;
-        dtb_reg = (region_t) {
-            0, 0
-        };
-    } else {
-        /* convert physical address to addressable pointer */
-        dtb_reg = paddr_to_pptr_reg(dtb_p_reg);
-        extra_bi_size = sizeof(seL4_BootInfoHeader) + (dtb_reg.end - dtb_reg.start);
-    }
-    word_t extra_bi_size_bits = calculate_extra_bi_size_bits(extra_bi_size);
-
-    /* The region of the initial thread is the user image + ipcbuf + boot info + extra */
-    it_v_reg.start = ui_v_reg.start;
-    it_v_reg.end = extra_bi_frame_vptr + BIT(extra_bi_size_bits);
-
     map_kernel_window();
 
     /* initialise the CPU */
@@ -251,8 +214,43 @@ static BOOT_CODE bool_t try_init_kernel(
     /* initialize the platform */
     init_plat();
 
+    /* If a DTB was provided, pass the data on as extra bootinfo */
+    p_region_t dtb_p_reg = P_REG_EMPTY;
+    if (dtb_size > 0) {
+        paddr_t dtb_p_end = ROUND_UP(dtb_p_start + dtb_size, PAGE_BITS);
+        /* An integer overflow happened in DTB end address calculation, the
+         * location or size passed seems invalid.
+         */
+        if (dtb_p_end < dtb_p_start) {
+            printf("ERROR: DTB location at %"SEL4_PRIx_word" len %d invalid\n",
+                   dtb_p_start, dtb_size);
+            return false;
+        }
+        /* If the DTB is located in physical memory that is not mapped in the
+         * kernel window we cannot access it.
+         */
+        if ((dtb_p_start >= PADDR_TOP) || (dtb_p_end >= PADDR_TOP))  {
+            printf("ERROR: DTB at [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] "
+                   "exceeds PADDR_TOP (%"SEL4_PRIx_word")\n",
+                   dtb_p_start, dtb_p_end, PADDR_TOP);
+            return false;
+        }
+        /* DTB seems valid and accessible. */
+        dtb_p_reg = (p_region_t) {
+            .start = dtb_p_start,
+            .end   = dtb_p_end
+        };
+        extra_bi_size += sizeof(seL4_BootInfoHeader) + dtb_size;
+    }
+    word_t extra_bi_size_bits = calculate_extra_bi_size_bits(extra_bi_size);
+
+    /* The region of the initial thread is the user image + ipcbuf + boot info + extra */
+    it_v_reg.start = ui_v_reg.start;
+    it_v_reg.end = extra_bi_frame_vptr + BIT(extra_bi_size_bits);
+
     /* make the free memory available to alloc_region() */
-    if (!arch_init_freemem(ui_reg, it_v_reg, dtb_reg, extra_bi_size_bits)) {
+    if (!arch_init_freemem(ui_reg, it_v_reg, paddr_to_pptr_reg(dtb_p_reg),
+                           extra_bi_size_bits)) {
         printf("ERROR: free memory management initialization failed\n");
         return false;
     }
@@ -275,14 +273,15 @@ static BOOT_CODE bool_t try_init_kernel(
 
     /* put DTB in the bootinfo block, if present. */
     seL4_BootInfoHeader header;
-    if (dtb_reg.start) {
+    if (dtb_size > 0) {
         header.id = SEL4_BOOTINFO_HEADER_FDT;
-        header.len = extra_bi_size;
+        header.len = sizeof(header) + dtb_size;
         *(seL4_BootInfoHeader *)(rootserver.extra_bi + extra_bi_offset) = header;
         extra_bi_offset += sizeof(header);
-        memcpy((void *)(rootserver.extra_bi + extra_bi_offset), (void *)dtb_reg.start,
-               dtb_reg.end - dtb_reg.start);
-        extra_bi_offset += (dtb_reg.end - dtb_reg.start);
+        memcpy((void *)(rootserver.extra_bi + extra_bi_offset),
+               paddr_to_pptr(dtb_p_reg.start),
+               dtb_size);
+        extra_bi_offset += dtb_size;
     }
 
     if (extra_bi_size > extra_bi_offset) {
@@ -408,11 +407,18 @@ static BOOT_CODE bool_t try_init_kernel(
     SMP_COND_STATEMENT(clh_lock_init());
     SMP_COND_STATEMENT(release_secondary_cores());
 
+    /* All cores are up now, so there can be concurrency. The kernel booting is
+     * supposed to be finished before the secondary cores are released, all the
+     * primary has to do now is schedule the initial thread. Currently there is
+     * nothing that touches any global data structures, nevertheless we grab the
+     * BKL here to play safe. It is released when the kernel is left. */
+    NODE_LOCK_SYS;
+
     printf("Booting all finished, dropped to user space\n");
     return true;
 }
 
-BOOT_CODE VISIBLE void init_kernel(
+BOOT_CODE VISIBLE NORETURN void init_kernel(
     paddr_t ui_p_reg_start,
     paddr_t ui_p_reg_end,
     sword_t pv_offset,
@@ -427,11 +433,6 @@ BOOT_CODE VISIBLE void init_kernel(
 )
 {
     bool_t result;
-    paddr_t dtb_end_p = 0;
-
-    if (dtb_addr_p) {
-        dtb_end_p = dtb_addr_p + dtb_size;
-    }
 
 #ifdef ENABLE_SMP_SUPPORT
     add_hart_to_core_map(hart_id, core_id);
@@ -441,7 +442,7 @@ BOOT_CODE VISIBLE void init_kernel(
                                  pv_offset,
                                  v_entry,
                                  dtb_addr_p,
-                                 dtb_end_p);
+                                 dtb_size);
     } else {
         result = try_init_kernel_secondary_core(hart_id, core_id);
     }
@@ -451,7 +452,7 @@ BOOT_CODE VISIBLE void init_kernel(
                              pv_offset,
                              v_entry,
                              dtb_addr_p,
-                             dtb_end_p);
+                             dtb_size);
 #endif
     if (!result) {
         fail("ERROR: kernel init failed");
@@ -465,4 +466,6 @@ BOOT_CODE VISIBLE void init_kernel(
 
     schedule();
     activateThread();
+    restore_user_context();
+    UNREACHABLE();
 }

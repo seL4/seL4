@@ -92,7 +92,7 @@ BOOT_CODE static bool_t arch_init_freemem(p_region_t ui_p_reg, v_region_t v_reg,
     ui_p_reg.start = 0;
     reserved[0] = paddr_to_pptr_reg(ui_p_reg);
     return init_freemem(mem_p_regs->count, mem_p_regs->list, MAX_RESERVED,
-                        reserved, v_reg, extra_bi_size_bits);
+                        reserved, it_v_reg, extra_bi_size_bits);
 }
 
 /* This function initialises a node's kernel state. It does NOT initialise the CPU. */

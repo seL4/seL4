@@ -160,10 +160,15 @@ BEGIN_FUNC(_start)
 
     /* Put the DTB address back on the new stack for init_kernel. */
     push {r7, r8}
-    /* Call bootstrapping implemented in C */
-    blx init_kernel
 
-    /* Restore the initial thread */
-    b restore_user_context
+    /* jump to init_kernel() with parameters:
+     * r0: user image physical start addres
+     * r1: user image physical end address
+     * r2: physical/virtual offset
+     * r3: user image virtual entry address
+     * sp[0]: DTB physical address (0 if there is none)
+     * sp[1]: DTB size (0 if there is none)
+     */
+    b init_kernel
 
 END_FUNC(_start)
