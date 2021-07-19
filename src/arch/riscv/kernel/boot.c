@@ -156,7 +156,6 @@ static BOOT_CODE bool_t try_init_kernel(
     region_t boot_mem_reuse_reg = paddr_to_pptr_reg(boot_mem_reuse_p_reg);
     word_t extra_bi_size = 0;
     pptr_t extra_bi_offset = 0;
-    create_frames_of_region_ret_t extra_bi_ret;
 
     map_kernel_window();
 
@@ -308,13 +307,13 @@ static BOOT_CODE bool_t try_init_kernel(
             .start = rootserver.extra_bi,
             .end = rootserver.extra_bi + extra_bi_size
         };
-        extra_bi_ret =
+        create_frames_of_region_ret_t extra_bi_ret =
             create_frames_of_region(
                 root_cnode_cap,
                 it_pd_cap,
                 extra_bi_region,
                 true,
-                pptr_to_paddr((void *)extra_bi_region.start) - extra_bi_frame_vptr
+                pptr_to_paddr((void *)rootserver.extra_bi) - extra_bi_frame_vptr
             );
         if (!extra_bi_ret.success) {
             printf("ERROR: mapping extra boot info to initial thread failed\n");
