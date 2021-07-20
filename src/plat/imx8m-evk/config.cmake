@@ -20,6 +20,7 @@ if(KernelPlatformImx8mq-evk OR KernelPlatformImx8mm-evk)
 
     set(KernelArmCortexA53 ON)
     set(KernelArchArmV8a ON)
+    set(KernelArmGicV3 ON)
     config_set(KernelARMPlatform ARM_PLAT ${KernelPlatform})
     set(KernelArmMach "imx" CACHE INTERNAL "")
     list(APPEND KernelDTSList "tools/dts/${KernelPlatform}.dts")
