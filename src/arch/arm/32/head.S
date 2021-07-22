@@ -1,5 +1,6 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2021, HENSOLDT Cyber
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -160,10 +161,25 @@ BEGIN_FUNC(_start)
 
     /* Put the DTB address back on the new stack for init_kernel. */
     push {r7, r8}
-    /* Call bootstrapping implemented in C */
+
+    /* Call bootstrapping implemented in C with parameters:
+     *   r0: user image physical start address
+     *   r1: user image physical end address
+     *   r2: physical/virtual offset
+     *   r3: user image virtual entry address
+     *   sp[0]: DTB physical address (0 if there is none)
+     *   sp[1]: DTB size (0 if there is none)
+     */
     blx init_kernel
 
-    /* Restore the initial thread */
+    /* Restore the initial thread. Note that the function restore_user_context()
+     * could technically also be called at the end of init_kernel() directly,
+     * there is no need to return to the assembly code here at all. However, for
+     * verification things are a lot easier when init_kernel() is a normal C
+     * function that returns. The function restore_user_context() is not a
+     * normal C function and thus handled specially in verification, it does
+     * highly architecture specific things to exit to user mode.
+     */
     b restore_user_context
 
 END_FUNC(_start)
