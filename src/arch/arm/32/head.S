@@ -160,10 +160,25 @@ BEGIN_FUNC(_start)
 
     /* Put the DTB address back on the new stack for init_kernel. */
     push {r7, r8}
-    /* Call bootstrapping implemented in C */
+
+    /* Call bootstrapping implemented in C with parameters:
+     *   r0: user image physical start addres
+     *   r1: user image physical end address
+     *   r2: physical/virtual offset
+     *   r3: user image virtual entry address
+     *   sp[0]: DTB physical address (0 if there is none)
+     *   sp[1]: DTB size (0 if there is none)
+     */
     blx init_kernel
 
-    /* Restore the initial thread */
+    /* Restore the initial thread. Note that the function restore_user_context()
+     * could technically also be called at the end of init_kernel() directly,
+     * there is no need to return to the assembly code here at all. However, for
+     * verification things are a lot easier when init_kernel() is a normal C
+     * function that returns. The function restore_user_context() is not a
+     * normal C function and handes specially in verification, as it does very
+     * machine specific things.
+     */
     b restore_user_context
 
 END_FUNC(_start)

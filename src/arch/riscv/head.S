@@ -14,7 +14,6 @@
 .extern kernel_stack_alloc
 .extern __global_pointer$
 .extern restore_user_context
-.extern trap_entry
 
 /*
  * When SMP is enabled, the elfloader passes the hart ID in a6
@@ -39,7 +38,25 @@ _start:
   csrw sscratch, sp
 #endif
 
+  /* Call bootstrapping implemented in C with parameters:
+   *    a0/x10: user image physical start address
+   *    a1/x11: user image physical end address
+   *    a2/x12: physical/virtual offset
+   *    a3/x13: user image virtual entry address
+   *    a4/x14: DTB physical address (0 if there is none)
+   *    a5/x15: DTB size (0 if there is none)
+   *    a6/x16: hart ID (SMP only)
+   *    a7/x17: core ID (SMP only)
+   */
   jal init_kernel
 
+  /* Restore the initial thread. Note that the function restore_user_context()
+   * could technically also be called at the end of init_kernel() directly,
+   * there is no need to return to the assembly code here at all. However, for
+   * verification things are a lot easier when init_kernel() is a normal C
+   * function that returns. The function restore_user_context() is not a
+   * normal C function and handes specially in verification, as it does very
+   * machine specific things.
+   */
   la ra, restore_user_context
   jr ra
