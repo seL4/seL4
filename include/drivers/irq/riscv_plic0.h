@@ -106,26 +106,28 @@ static inline bool_t plic_pending_interrupt(word_t interrupt)
     }
 }
 
-static inline word_t get_hart_id(void)
+/* The PLIC has separate register sets for each hart and the hart's context.
+ * This returns the hart ID used by the PLIC for the hart this code is currently
+ * executing on.
+ */
+static inline word_t plic_get_current_hart_id(void)
 {
-#ifdef ENABLE_SMP_SUPPORT
-    return cpuIndexToID(getCurrentCPUIndex());
-#else
-    return CONFIG_FIRST_HART_ID;
-#endif
+    return SMP_TERNARY(
+               cpuIndexToID(getCurrentCPUIndex()),
+               CONFIG_FIRST_HART_ID);
 }
 
 static inline irq_t plic_get_claim(void)
 {
     /* Read the claim register for our HART interrupt context */
-    word_t hart_id = get_hart_id();
+    word_t hart_id = plic_get_current_hart_id();
     return readl(PLIC_PPTR_BASE + plic_claim_offset(hart_id, PLIC_SVC_CONTEXT));
 }
 
 static inline void plic_complete_claim(irq_t irq)
 {
     /* Complete the IRQ claim by writing back to the claim register. */
-    word_t hart_id = get_hart_id();
+    word_t hart_id = plic_get_current_hart_id();
     writel(irq, PLIC_PPTR_BASE + plic_claim_offset(hart_id, PLIC_SVC_CONTEXT));
 }
 
@@ -135,7 +137,7 @@ static inline void plic_mask_irq(bool_t disable, irq_t irq)
     uint32_t val = 0;
     uint32_t bit = 0;
 
-    word_t hart_id = get_hart_id();
+    word_t hart_id = plic_get_current_hart_id();
     addr = PLIC_PPTR_BASE + plic_enable_offset(hart_id, PLIC_SVC_CONTEXT) + (irq / 32) * 4;
     bit = irq % 32;
 
@@ -151,7 +153,7 @@ static inline void plic_mask_irq(bool_t disable, irq_t irq)
 static inline void plic_init_hart(void)
 {
 
-    word_t hart_id = get_hart_id();
+    word_t hart_id = plic_get_current_hart_id();
 
     for (int i = 1; i <= PLIC_NUM_INTERRUPTS; i++) {
         /* Disable interrupts */
