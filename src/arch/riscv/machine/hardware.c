@@ -276,7 +276,7 @@ BOOT_CODE void initLocalIRQController(void)
 
 BOOT_CODE void initIRQController(void)
 {
-    printf("Initialing PLIC...\n");
+    printf("Initializing PLIC...\n");
 
     plic_init_controller();
 }
