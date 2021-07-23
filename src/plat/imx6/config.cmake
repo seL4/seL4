@@ -61,7 +61,7 @@ if(KernelPlatImx6)
     endif()
 
     declare_default_headers(
-        TIMER_FREQUENCY 498000000llu
+        TIMER_FREQUENCY 498000000
         MAX_IRQ 159
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h
         NUM_PPI 32

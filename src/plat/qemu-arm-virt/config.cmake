@@ -83,7 +83,7 @@ if(KernelPlatformQEMUArmVirt)
         list(APPEND KernelDTSList "src/plat/qemu-arm-virt/overlay-reserve-vm-memory.dts")
     endif()
     declare_default_headers(
-        TIMER_FREQUENCY 62500000llu
+        TIMER_FREQUENCY 62500000
         MAX_IRQ 159
         NUM_PPI 32
         TIMER drivers/timer/arm_generic.h

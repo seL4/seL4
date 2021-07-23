@@ -25,7 +25,7 @@ if(KernelPlatformZynq7000)
     declare_default_headers(
         # This is the timer frequency that can pass tests (in particular
         # SCHED0011), but may not be the correct number.
-        TIMER_FREQUENCY 320000000llu
+        TIMER_FREQUENCY 320000000
         MAX_IRQ 92
         NUM_PPI 32
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h

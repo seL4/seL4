@@ -18,7 +18,7 @@ if(KernelPlatImx7)
     list(APPEND KernelDTSList "tools/dts/imx7sabre.dts")
     list(APPEND KernelDTSList "src/plat/imx7/overlay-imx7sabre.dts")
     declare_default_headers(
-        TIMER_FREQUENCY 8000000llu
+        TIMER_FREQUENCY 8000000
         MAX_IRQ 159
         NUM_PPI 32
         TIMER drivers/timer/arm_generic.h

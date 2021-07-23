@@ -23,7 +23,7 @@ if(KernelPlatformAPQ8064)
     list(APPEND KernelDTSList "src/plat/apq8064/overlay-apq8064.dts")
 
     declare_default_headers(
-        TIMER_FREQUENCY 7000000llu
+        TIMER_FREQUENCY 7000000
         MAX_IRQ 283
         NUM_PPI 32
         TIMER drivers/timer/arm_generic.h

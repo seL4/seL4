@@ -16,7 +16,7 @@ if(KernelPlatformFVP)
     list(APPEND KernelDTSList "tools/dts/fvp.dts")
     list(APPEND KernelDTSList "src/plat/fvp/overlay-fvp.dts")
     declare_default_headers(
-        TIMER_FREQUENCY 100000000llu
+        TIMER_FREQUENCY 100000000
         MAX_IRQ 207
         INTERRUPT_CONTROLLER arch/machine/gic_v3.h
         TIMER drivers/timer/arm_generic.h
