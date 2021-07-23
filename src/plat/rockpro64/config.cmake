@@ -18,7 +18,7 @@ if(KernelPlatformRockpro64)
     list(APPEND KernelDTSList "tools/dts/rockpro64.dts")
     list(APPEND KernelDTSList "src/plat/rockpro64/overlay-rockpro64.dts")
     declare_default_headers(
-        TIMER_FREQUENCY 24000000llu
+        TIMER_FREQUENCY 24000000
         MAX_IRQ 181
         NUM_PPI 32
         KERNEL_WCET 10u

@@ -24,7 +24,7 @@ if(KernelPlatformRpi3)
     list(APPEND KernelDTSList "src/plat/bcm2837/overlay-rpi3.dts")
 
     declare_default_headers(
-        TIMER_FREQUENCY 19200000llu
+        TIMER_FREQUENCY 19200000
         MAX_IRQ 127
         NUM_PPI 32
         TIMER drivers/timer/arm_generic.h

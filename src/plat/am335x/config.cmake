@@ -44,7 +44,7 @@ if(KernelPlatformAM335X)
             drivers/irq/am335x.h
             #  DMTIMER 2-7 have programmable CLKSRC.
             #  Currently Kernel timer is DMTIMER4 using CLK_M_OSC.
-        TIMER_FREQUENCY 24000000llu
+        TIMER_FREQUENCY 24000000
         CLK_MAGIC 2863311531llu
         CLK_SHIFT 36u
         KERNEL_WCET 10u
