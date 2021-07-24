@@ -249,7 +249,7 @@ devices:
         user: true
         kernel_size: 0x1000
 
-  # RISC-V PLIC
+  # SiFive U54/U74 PLIC (HiFive, Polarfire)
   - compatible:
       - riscv,plic0
     regions:

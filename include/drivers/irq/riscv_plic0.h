@@ -3,9 +3,17 @@
  * Copyright 2021, HENSOLDT Cyber
  *
  * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * SiFive U54/U74 PLIC handling (HiFive Unleashed/Unmatched, Polarfire)
  */
 
 #pragma once
+
+/* This is a check that prevents using this driver blindly. Extend the list if
+ * this driver is confirmed to be working on other platforms. */
+#if !defined(CONFIG_PLAT_HIFIVE) && !defined(CONFIG_PLAT_POLARFIRE)
+#error "This code supports the SiFive U54/U74 PLIC only."
+#endif
 
 /* tell the kernel we have the set trigger feature */
 #define HAVE_SET_TRIGGER 1
