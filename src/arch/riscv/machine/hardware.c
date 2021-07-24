@@ -237,10 +237,8 @@ BOOT_CODE void initLocalIRQController(void)
 {
     printf("Init local IRQ\n");
 
-#ifdef CONFIG_PLAT_HIFIVE
     /* Init per-hart PLIC */
     plic_init_hart();
-#endif
 
     /* Enable timer and external interrupt. If SMP is enabled, then enable the
      * software interrupt also, it is usec as IPI between cores. */
