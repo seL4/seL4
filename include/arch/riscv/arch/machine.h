@@ -221,7 +221,6 @@ int get_num_dev_p_regs(void);
 p_region_t get_dev_p_reg(word_t i);
 void map_kernel_devices(void);
 
-static inline void setInterruptMode(irq_t irq, bool_t levelTrigger, bool_t polarityLow) { }
 /** MODIFIES: [*] */
 void initTimer(void);
 /* L2 cache control */
