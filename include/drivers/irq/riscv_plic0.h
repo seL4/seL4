@@ -1,16 +1,18 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright 2021, HENSOLDT Cyber
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #pragma once
+
 /* tell the kernel we have the set trigger feature */
 #define HAVE_SET_TRIGGER 1
 
-
 #include <plat/machine/devices_gen.h>
 #include <arch/model/smp.h>
+#include <arch/machine/plic.h>
 
 /* The memory map is based on the PLIC section in
  * https://static.dev.sifive.com/U54-MC-RVCoreIP.pdf
