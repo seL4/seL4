@@ -33,15 +33,14 @@ enum IRQConstants {
     INTERRUPT_IPI_0,
     INTERRUPT_IPI_1,
 #endif
-    INTERRUPT_CORE_TIMER,
-    maxIRQ = INTERRUPT_CORE_TIMER,
+    KERNEL_TIMER_IRQ,
+    maxIRQ = KERNEL_TIMER_IRQ,
 } platform_interrupt_t;
 
 enum irqNumbers {
     irqInvalid = 0
 };
 
-#define KERNEL_TIMER_IRQ INTERRUPT_CORE_TIMER
 #define IRQ_CNODE_SLOT_BITS (@CONFIGURE_IRQ_SLOT_BITS@)
 
 #include <@CONFIGURE_INTERRUPT_CONTROLLER@>
