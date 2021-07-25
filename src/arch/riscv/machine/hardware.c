@@ -97,7 +97,7 @@ static irq_t getNewActiveIRQ(void)
         return ipi_get_irq();
 #endif
     } else if (sip & BIT(STIMER_IP)) {
-        return INTERRUPT_CORE_TIMER;
+        return KERNEL_TIMER_IRQ;
     }
 
     return irqInvalid;
@@ -180,7 +180,7 @@ static inline bool_t isIRQPending(void)
 static inline void maskInterrupt(bool_t disable, irq_t irq)
 {
     assert(IS_IRQ_VALID(irq));
-    if (irq == INTERRUPT_CORE_TIMER) {
+    if (irq == KERNEL_TIMER_IRQ) {
         if (disable) {
             clear_sie_mask(BIT(STIMER_IE));
         } else {
@@ -210,7 +210,7 @@ static inline void ackInterrupt(irq_t irq)
     assert(IS_IRQ_VALID(irq));
     active_irq[CURRENT_CPU_INDEX()] = irqInvalid;
 
-    if (irq == INTERRUPT_CORE_TIMER) {
+    if (irq == KERNEL_TIMER_IRQ) {
         /* Reprogramming the timer has cleared the interrupt. */
         return;
     }
