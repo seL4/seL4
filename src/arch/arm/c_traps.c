@@ -95,9 +95,7 @@ void VISIBLE NORETURN c_handle_interrupt(void)
 #ifdef TRACK_KERNEL_ENTRIES
     ksKernelEntry.path = Entry_Interrupt;
     ksKernelEntry.word = IRQT_TO_IRQ(getActiveIRQ());
-#ifdef ENABLE_SMP_SUPPORT
-    ksKernelEntry.core = getCurrentCPUIndex();
-#endif
+    ksKernelEntry.core = CURRENT_CPU_INDEX();
 #endif
 
     handleInterruptEntry();
