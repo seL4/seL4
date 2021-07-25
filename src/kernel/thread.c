@@ -320,7 +320,7 @@ static void nextDomain(void)
 #ifdef CONFIG_KERNEL_MCS
 static void switchSchedContext(void)
 {
-    if (unlikely(NODE_STATE(ksCurSC) != NODE_STATE(ksCurThread)->tcbSchedContext) && NODE_STATE(ksCurSC)->scRefillMax) {
+    if (unlikely(NODE_STATE(ksCurSC) != NODE_STATE(ksCurThread)->tcbSchedContext)) {
         NODE_STATE(ksReprogram) = true;
         if (sc_constant_bandwidth(NODE_STATE(ksCurThread)->tcbSchedContext)) {
             refill_unblock_check(NODE_STATE(ksCurThread)->tcbSchedContext);
