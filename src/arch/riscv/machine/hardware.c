@@ -103,7 +103,7 @@ static irq_t getNewActiveIRQ(void)
     return irqInvalid;
 }
 
-static uint32_t active_irq[CONFIG_MAX_NUM_NODES] = { irqInvalid };
+static irq_t active_irq[CONFIG_MAX_NUM_NODES];
 
 
 /**
@@ -266,6 +266,15 @@ BOOT_CODE void initLocalIRQController(void)
 BOOT_CODE void initIRQController(void)
 {
     printf("Initializing PLIC...\n");
+
+    /* Initialize active_irq[] properly to stick to the semantics and play safe.
+     * Effectively this is not needed if irqInvalid is zero (which is currently
+     * the case) and the array is in the BSS, that is filled with zeros (which
+     * the a kernel loader is supposed to do and which the ELF-Loader does).
+     */
+    for (word_t i = 0; i < ARRAY_SIZE(active_irq); i++) {
+        active_irq[i] = irqInvalid;
+    }
 
     plic_init_controller();
 }
