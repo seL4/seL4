@@ -26,7 +26,7 @@
 #define RESET_CYCLES ((TIMER_CLOCK_HZ / MS_IN_S) * CONFIG_TIMER_TICK_MS)
 #endif /* !CONFIG_KERNEL_MCS */
 
-#define IS_IRQ_VALID(X) (((X)) <= maxIRQ && (X)!= irqInvalid)
+#define IS_IRQ_VALID(X) (((X)) <= maxIRQ && (X) != irqInvalid)
 
 word_t PURE getRestartPC(tcb_t *thread)
 {
