@@ -13,7 +13,7 @@ static inline void arch_c_entry_hook(void)
 {
 #ifdef CONFIG_FSGSBASE_INST
     tcb_t *tcb = NODE_STATE(ksCurThread);
-    x86_save_fsgs_base(tcb, SMP_TERNARY(getCurrentCPUIndex(), 0));
+    x86_save_fsgs_base(tcb, CURRENT_CPU_INDEX());
 #endif
 }
 
@@ -21,7 +21,7 @@ static inline void arch_c_exit_hook(void)
 {
     /* Restore the values ofthe FS and GS base. */
     tcb_t *tcb = NODE_STATE(ksCurThread);
-    x86_load_fsgs_base(tcb,  SMP_TERNARY(getCurrentCPUIndex(), 0));
+    x86_load_fsgs_base(tcb,  CURRENT_CPU_INDEX());
 }
 
 #ifdef CONFIG_KERNEL_MCS
