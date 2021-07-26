@@ -326,8 +326,8 @@ static void switchSchedContext(void)
             refill_unblock_check(NODE_STATE(ksCurThread)->tcbSchedContext);
         }
 
-        assert(refill_ready(NODE_STATE(ksCurThread->tcbSchedContext)));
-        assert(refill_sufficient(NODE_STATE(ksCurThread->tcbSchedContext), 0));
+        assert(refill_ready(NODE_STATE(ksCurThread)->tcbSchedContext));
+        assert(refill_sufficient(NODE_STATE(ksCurThread)->tcbSchedContext, 0));
     }
 
     if (NODE_STATE(ksReprogram)) {
