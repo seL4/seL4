@@ -16,7 +16,7 @@ jobs:
     # don't run again when other labels are added
     if: ${{ github.event.action != 'labeled' &&
               contains(github.event.pull_request.labels.*.name, 'proof-test') ||
-            github.event.action == 'labeled' && github.event.label == 'proof-test' }}
+            github.event.action == 'labeled' && github.event.label.name == 'proof-test' }}
     strategy:
       fail-fast: false
       matrix:

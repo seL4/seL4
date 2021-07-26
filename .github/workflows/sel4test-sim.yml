@@ -48,7 +48,7 @@ jobs:
               contains(github.event.pull_request.labels.*.name, 'hw-build') ||
             github.event_name == 'pull_request' &&
               github.event.action == 'labeled' &&
-              github.event.label == 'hw-build' }}
+              github.event.label.name == 'hw-build' }}
     strategy:
       fail-fast: false
       matrix:
