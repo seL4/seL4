@@ -1,0 +1,21 @@
+# Copyright 2021, Proofcraft Pty Ltd
+#
+# SPDX-License-Identifier: BSD-2-Clause
+
+# Run the verification C parser on the main kernel configurations
+#
+# See cparser-run/builds.yml in the repo seL4/ci-actions for configs.
+
+name: C Parser
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  cparser:
+    name: C Parser
+    runs-on: ubuntu-latest
+    steps:
+    - uses: seL4/ci-actions/cparser-run@master

@@ -18,12 +18,6 @@
 #include <plat/machine/hardware.h>
 #include <machine.h>
 
-/* pointer to the end of boot code/data in kernel image */
-/* need a fake array to get the pointer from the linker script */
-extern char ki_boot_end[1];
-/* pointer to end of kernel image */
-extern char ki_end[1];
-
 #ifdef ENABLE_SMP_SUPPORT
 BOOT_BSS static volatile word_t node_boot_lock;
 #endif
@@ -74,8 +68,9 @@ BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vpt
     return cap;
 }
 
-BOOT_CODE static void arch_init_freemem(region_t ui_reg, v_region_t ui_v_reg,
-                                        region_t dtb_reg, word_t extra_bi_size_bits)
+BOOT_CODE static bool_t arch_init_freemem(region_t ui_reg, v_region_t ui_v_reg,
+                                          region_t dtb_reg,
+                                          word_t extra_bi_size_bits)
 {
     // This looks a bit awkward as our symbols are a reference in the kernel image window, but
     // we want to do all allocations in terms of the main kernel window, so we do some translation
@@ -94,8 +89,8 @@ BOOT_CODE static void arch_init_freemem(region_t ui_reg, v_region_t ui_v_reg,
     res_reg[index].end = ui_reg.end;
     index += 1;
 
-    init_freemem(get_num_avail_p_regs(), get_avail_p_regs(), index, res_reg, ui_v_reg,
-                 extra_bi_size_bits);
+    return init_freemem(get_num_avail_p_regs(), get_avail_p_regs(), index,
+                        res_reg, ui_v_reg, extra_bi_size_bits);
 }
 
 BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
@@ -257,11 +252,15 @@ static BOOT_CODE bool_t try_init_kernel(
     init_plat();
 
     /* make the free memory available to alloc_region() */
-    arch_init_freemem(ui_reg, it_v_reg, dtb_reg, extra_bi_size_bits);
+    if (!arch_init_freemem(ui_reg, it_v_reg, dtb_reg, extra_bi_size_bits)) {
+        printf("ERROR: free memory management initialization failed\n");
+        return false;
+    }
 
     /* create the root cnode */
     root_cnode_cap = create_root_cnode();
     if (cap_get_capType(root_cnode_cap) == cap_null_cap) {
+        printf("ERROR: root c-node creation failed\n");
         return false;
     }
 
@@ -297,6 +296,7 @@ static BOOT_CODE bool_t try_init_kernel(
      * to cover the user image + ipc buffer and bootinfo frames */
     it_pd_cap = create_it_address_space(root_cnode_cap, it_v_reg);
     if (cap_get_capType(it_pd_cap) == cap_null_cap) {
+        printf("ERROR: address space creation for initial thread failed\n");
         return false;
     }
 
@@ -322,6 +322,7 @@ static BOOT_CODE bool_t try_init_kernel(
                 pptr_to_paddr((void *)extra_bi_region.start) - extra_bi_frame_vptr
             );
         if (!extra_bi_ret.success) {
+            printf("ERROR: mapping extra boot info to initial thread failed\n");
             return false;
         }
         ndks_boot.bi_frame->extraBIPages = extra_bi_ret.region;
@@ -334,6 +335,7 @@ static BOOT_CODE bool_t try_init_kernel(
     /* create the initial thread's IPC buffer */
     ipcbuf_cap = create_ipcbuf_frame_cap(root_cnode_cap, it_pd_cap, ipcbuf_vptr);
     if (cap_get_capType(ipcbuf_cap) == cap_null_cap) {
+        printf("ERROR: could not create IPC buffer for initial thread\n");
         return false;
     }
 
@@ -347,6 +349,7 @@ static BOOT_CODE bool_t try_init_kernel(
             pv_offset
         );
     if (!create_frames_ret.success) {
+        printf("ERROR: could not create all userland image frames\n");
         return false;
     }
     ndks_boot.bi_frame->userImageFrames = create_frames_ret.region;
@@ -354,6 +357,7 @@ static BOOT_CODE bool_t try_init_kernel(
     /* create the initial thread's ASID pool */
     it_ap_cap = create_it_asid_pool(root_cnode_cap);
     if (cap_get_capType(it_ap_cap) == cap_null_cap) {
+        printf("ERROR: could not create ASID pool for initial thread\n");
         return false;
     }
     write_it_asid_pool(it_ap_cap, it_pd_cap);
@@ -364,9 +368,9 @@ static BOOT_CODE bool_t try_init_kernel(
 
     /* create the idle thread */
     if (!create_idle_thread()) {
+        printf("ERROR: could not create idle thread\n");
         return false;
     }
-
 
     /* create the initial thread */
     tcb_t *initial = create_initial_thread(
@@ -379,6 +383,7 @@ static BOOT_CODE bool_t try_init_kernel(
                      );
 
     if (initial == NULL) {
+        printf("ERROR: could not create initial thread\n");
         return false;
     }
 
@@ -388,10 +393,11 @@ static BOOT_CODE bool_t try_init_kernel(
     if (!create_untypeds(
             root_cnode_cap,
             boot_mem_reuse_reg)) {
+        printf("ERROR: could not create untypteds for kernel image boot memory\n");
         return false;
     }
 
-    /* no shared-frame caps (RISCV has no multikernel support) */
+    /* no shared-frame caps (RISC-V has no multikernel support) */
     ndks_boot.bi_frame->sharedFrames = S_REG_EMPTY;
 
     /* finalise the bootinfo frame */
@@ -448,7 +454,8 @@ BOOT_CODE VISIBLE void init_kernel(
                              dtb_end_p);
 #endif
     if (!result) {
-        fail("Kernel init failed for some reason :(");
+        fail("ERROR: kernel init failed");
+        UNREACHABLE();
     }
 
 #ifdef CONFIG_KERNEL_MCS

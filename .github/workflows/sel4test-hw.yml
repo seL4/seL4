@@ -1,0 +1,50 @@
+# Copyright 2021, Proofcraft Pty Ltd
+#
+# SPDX-License-Identifier: BSD-2-Clause
+
+# sel4test hardware builds
+#
+# See sel4test-hw/builds.yml in the repo seL4/ci-actions for configs.
+
+name: seL4Test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    types: [opened, reopened, synchronize, labeled]
+    paths-ignore:
+      - 'manual/**'
+      - 'LICENSES/**'
+      - '*.md'
+
+jobs:
+  hw-build:
+    name: HW Build
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' ||
+            github.event_name == 'pull_request' &&
+              github.event.action != 'labeled' &&
+              contains(github.event.pull_request.labels.*.name, 'hw-build') ||
+            github.event_name == 'pull_request' &&
+              github.event.action == 'labeled' &&
+              github.event.label.name == 'hw-build' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        march: [armv6a, armv7a, armv8a, nehalem]
+        compiler: [gcc, clang]
+        include:
+          - march: rv64imac
+            compiler: gcc
+    steps:
+    - name: Build
+      uses: seL4/ci-actions/sel4test-hw@master
+      with:
+        march: ${{ matrix.march }}
+        compiler: ${{ matrix.compiler }}
+    - name: Upload images
+      uses: actions/upload-artifact@v2
+      with:
+        name: images-${{ matrix.march }}-${{ matrix.compiler }}
+        path: '*-images.tar.gz'
