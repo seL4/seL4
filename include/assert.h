@@ -28,7 +28,11 @@ void _assert_fail(
 ) NORETURN;
 
 #define assert(expr) \
-    if(!(expr)) _assert_fail(#expr, __FILE__, __LINE__, __FUNCTION__)
+    do { \
+        if (!(expr)) { \
+            _assert_fail(#expr, __FILE__, __LINE__, __FUNCTION__); \
+        } \
+    } while(0)
 
 #else /* !DEBUG */
 
