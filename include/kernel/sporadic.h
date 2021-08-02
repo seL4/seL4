@@ -159,7 +159,10 @@ static inline bool_t sc_released(sched_context_t *sc)
  */
 static inline bool_t sc_sporadic(sched_context_t *sc)
 {
-    return sc != NULL && sc->scSporadic;
+    /* We do expect sc_active to be always true if sc is not NULL when
+       sc_sporadic is called, but we have not proved it yet. */
+    assert(sc == NULL || sc_active(sc));
+    return sc != NULL && sc_active(sc) && sc->scSporadic;
 }
 
 /*
