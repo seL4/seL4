@@ -22,8 +22,8 @@
  * https://static.dev.sifive.com/U54-MC-RVCoreIP.pdf
  */
 
-#define PLIC_PPTR_BASE      (PLIC_PPTR + 0x0C000000)
-#define PLIC_NUM_INTERRUPTS 511
+//#define PLIC_PPTR_BASE      (PLIC_PPTR + 0x0C000000)
+//#define PLIC_NUM_INTERRUPTS 511
 
 /* We care about supervisor context */
 #define PLIC_SVC_CONTEXT    1
