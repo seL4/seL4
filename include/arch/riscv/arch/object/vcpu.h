@@ -30,7 +30,6 @@ exception_t decodeRISCVVCPUInvocation(
     cptr_t cptr,
     cte_t *slot,
     cap_t cap,
-    extra_caps_t extraCaps,
     bool_t call,
     word_t *buffer
 );
