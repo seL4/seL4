@@ -404,14 +404,13 @@ exception_t decodeRISCVVCPUInvocation(
     cptr_t cptr,
     cte_t *slot,
     cap_t cap,
-    extra_caps_t extraCaps,
     bool_t call,
     word_t *buffer
 )
 {
     switch (label) {
     case RISCVVCPUSetTCB:
-        return decodeVCPUSetTCB(cap, extraCaps);
+        return decodeVCPUSetTCB(cap, current_extra_caps);
     case RISCVVCPUReadReg:
         return decodeVCPUReadReg(cap, length, call, buffer);
     case RISCVVCPUWriteReg:

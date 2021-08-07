@@ -333,7 +333,7 @@ exception_t Arch_decodeInvocation(
 #ifdef CONFIG_RISCV_HE
     switch (cap_get_capType(cap)) {
         case cap_vcpu_cap:
-            return decodeRISCVVCPUInvocation(label, length, cptr, slot, cap, extraCaps, call, buffer);
+            return decodeRISCVVCPUInvocation(label, length, cptr, slot, cap, call, buffer);
         default:
             break;
     }
