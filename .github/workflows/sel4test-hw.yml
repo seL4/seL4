@@ -10,7 +10,7 @@ name: seL4Test
 
 on:
   push:
-    branches: [master]
+    branches: [master, hw-test]
   # needs PR target for secrets access; guard by requiring label
   pull_request_target:
     types: [opened, reopened, synchronize, labeled]
