@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause
 
-# sel4test hardware builds
+# sel4test hardware builds and runs
 #
 # See sel4test-hw/builds.yml in the repo seL4/ci-actions for configs.
 
@@ -11,12 +11,13 @@ name: seL4Test
 on:
   push:
     branches: [master]
-  pull_request:
+  # needs PR target for secrets access; guard by requiring label
+  pull_request_target:
     types: [opened, reopened, synchronize, labeled]
-    paths-ignore:
-      - 'manual/**'
-      - 'LICENSES/**'
-      - '*.md'
+
+# downgrade permissions to read-only as you would have in a standard PR action
+permissions:
+  contents: read
 
 jobs:
   hw-build:
@@ -25,10 +26,12 @@ jobs:
     if: ${{ github.event_name == 'push' ||
             github.event_name == 'pull_request' &&
               github.event.action != 'labeled' &&
-              contains(github.event.pull_request.labels.*.name, 'hw-build') ||
+              (contains(github.event.pull_request.labels.*.name, 'hw-build') ||
+               contains(github.event.pull_request.labels.*.name, 'hw-test')) ||
             github.event_name == 'pull_request' &&
               github.event.action == 'labeled' &&
-              github.event.label.name == 'hw-build' }}
+              (github.event.label.name == 'hw-build' ||
+               github.event.label.name == 'hw-test') }}
     strategy:
       fail-fast: false
       matrix:
@@ -43,8 +46,64 @@ jobs:
       with:
         march: ${{ matrix.march }}
         compiler: ${{ matrix.compiler }}
+        sha: ${{ github.event.pull_request.head.sha }}
     - name: Upload images
       uses: actions/upload-artifact@v2
       with:
         name: images-${{ matrix.march }}-${{ matrix.compiler }}
         path: '*-images.tar.gz'
+
+  hw-run:
+    name: HW Run
+    runs-on: ubuntu-latest
+    needs: hw-build
+    if: ${{ github.event_name == 'push' ||
+            github.event_name == 'pull_request' &&
+              github.event.action != 'labeled' &&
+              contains(github.event.pull_request.labels.*.name, 'hw-test') ||
+            github.event_name == 'pull_request' &&
+              github.event.action == 'labeled' &&
+              github.event.label.name == 'hw-test' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # commented-out platforms hopefully available soon
+        platform:
+          - sabre
+          - pc99
+          # - hikey
+          # - imx8mm_evk
+          - odroid_c2
+          # - odroid_xu4
+          - am335x_boneblack
+          - rpi3
+          # - zynqmp
+        compiler: [gcc, clang]
+        # include:
+        #    - platform: hifive
+        #      compiler: gcc
+    steps:
+      - name: Get machine queue
+        uses: actions/checkout@v2
+        with:
+          repository: seL4/machine_queue
+          ref: refs/heads/cancel
+          path: machine_queue
+          token: ${{ secrets.PRIV_REPO_TOKEN }}
+      - name: Get march
+        id: plat
+        uses: seL4/ci-actions/march-of-platform@master
+        with:
+          platform: ${{ matrix.platform }}
+      - name: Download image
+        uses: actions/download-artifact@v2
+        with:
+          name: images-${{ steps.plat.outputs.march }}-${{ matrix.compiler }}
+      - name: Run
+        uses: seL4/ci-actions/sel4test-hw-run@master
+        with:
+          platform: ${{ matrix.platform }}
+          compiler: ${{ matrix.compiler }}
+          index: $${{ strategy.job-index }}
+        env:
+          HW_SSH: ${{ secrets.HW_SSH }}
