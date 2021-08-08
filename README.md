@@ -65,7 +65,7 @@ Community
 
 See the [contact] links on the seL4 website for the full list.
 
-[contact]: https://sel4.systems/contact.html
+[contact]: https://sel4.systems/contact
 
 Reporting security vulnerabilities
 ----------------------------------
