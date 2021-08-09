@@ -70,7 +70,6 @@ jobs:
         # commented-out platforms hopefully available soon
         platform:
           - sabre
-          - pc99
           # - hikey
           # - imx8mm_evk
           - odroid_c2
@@ -79,6 +78,19 @@ jobs:
           - rpi3
           # - zynqmp
         compiler: [gcc, clang]
+        include:
+           - platform: pc99
+             compiler: gcc
+             mode: 32
+           - platform: pc99
+             compiler: gcc
+             mode: 64
+           - platform: pc99
+             compiler: clang
+             mode: 32
+           - platform: pc99
+             compiler: clang
+             mode: 64
         # include:
         #    - platform: hifive
         #      compiler: gcc
@@ -87,7 +99,6 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: seL4/machine_queue
-          ref: refs/heads/cancel
           path: machine_queue
           token: ${{ secrets.PRIV_REPO_TOKEN }}
       - name: Get march
@@ -104,6 +115,7 @@ jobs:
         with:
           platform: ${{ matrix.platform }}
           compiler: ${{ matrix.compiler }}
+          mode: ${{ matrix.mode }}
           index: $${{ strategy.job-index }}
         env:
           HW_SSH: ${{ secrets.HW_SSH }}
