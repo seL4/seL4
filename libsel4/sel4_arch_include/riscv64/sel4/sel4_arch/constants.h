@@ -83,6 +83,7 @@ typedef enum {
 #ifdef CONFIG_RISCV_HE
 typedef enum {
     seL4_VCPUFault_Cause,
+    seL4_VCPUFault_Data,
     seL4_VCPUFault_Length,
 } seL4_VCPUFault_Msg;
 #endif

@@ -129,6 +129,7 @@ void VISIBLE NORETURN c_handle_exception(void)
         break;
 #ifdef CONFIG_RISCV_HE
     case RISCVEnvHypCall:
+    case RISCVVirtualInstruction:
         handleVCPUFault(scause);
         break;
     case RISCVInstructionIllegal:

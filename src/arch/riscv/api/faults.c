@@ -49,7 +49,8 @@ word_t Arch_setMRs_fault(tcb_t *sender, tcb_t *receiver, word_t *receiveIPCBuffe
     }
 #ifdef CONFIG_RISCV_HE
     case seL4_Fault_VCPUFault:
-        return setMR(receiver, receiveIPCBuffer, seL4_VCPUFault_Cause, seL4_Fault_VCPUFault_get_cause(sender->tcbFault));
+        setMR(receiver, receiveIPCBuffer, seL4_VCPUFault_Cause, seL4_Fault_VCPUFault_get_cause(sender->tcbFault));
+        return setMR(receiver, receiveIPCBuffer, seL4_VCPUFault_Data, seL4_Fault_VCPUFault_get_data(sender->tcbFault));
 #endif
     default:
         fail("Invalid fault");
