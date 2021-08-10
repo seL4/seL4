@@ -278,13 +278,14 @@ static inline void write_fcsr(uint32_t value)
  * V=0, or bsstatus.SPP when V=1).
  */
 #define HSTATUS_SPRV    BIT(0)
-/* STL (supervisor translation level) indicates which address-translation
- * level caused an access-fault or page-fault exception. It is also written
- * by implementation when whenever a trap is taken into HS-mode. On an access
- * or page fault due to guest physical address translation, STL is set to 1.
- * For any other trap into HS-mode STL is set to 0.
+
+/* GVA (guest virtual address) is written by the implementation whenever a trap
+ * is taken into HS-mode. For any trap (breakpoint, address misaligned, access
+ * fault, page fault, or guest page fault) that writes a guest virtual address
+ * to stval, GVA is ste to 1. For any other trap to HS-mode, GVA is set to 0.
  */
-#define HSTATUS_STL     BIT(6)
+#define HSTATUS_GVA     BIT(6)
+
 /* SPV (supervisor previous virtualization mode) is written by the implementation
  * whenever a trap is taken into HS-mode. Just as the SPP bit in sstatus is set to
  * the privilege mode at the time of the trap, the SPV bit in hstatus is set to
@@ -292,15 +293,38 @@ static inline void write_fcsr(uint32_t value)
  * instruction is executed, when V=0, V is set to SPV.
  */
 #define HSTATUS_SPV     BIT(7)
-/* When a trap is taken into HS-mode, bits SP2V and SP2P are set to the values
- * that SPV and the HS-level SPP had before the trap. (Before the trap, the
- * HS-level SPP is sstatus.SPP if V=0, or bsstatus.SPP is V=1.) When an SRET
- * instruction is executed when V=0, the reverse assignments occur: after
- * SPV and sstatus.SPP have supplied the new virtualization and privilege modes,
- * they are written with SP2V and SP2P, respectively.
+
+/* SPVP (supervisor previous virtual privilege). When V=1 and a trap is taken
+ * into HS-mode, bit SPVP is set to the nominal privilege mode at the time
+ * of the trap, the same as sstatus.SPP. But if V=0 before a trap, SPVP is
+ * left unchanged on trap entry. SPVP controls the effective privilege of
+ * explicit memory access made by the virtual-machine load/store instructions,
+ * HLV, HLVX, and HSV.
  */
-#define HSTATUS_SP2P    BIT(8)
-#define HSTATUS_SP2V    BIT(9)
+#define HSTATUS_SPVP    BIT(8)
+
+/* HU (hypervisor user mode) controls whether the virtual-machine load/store
+ * instructions, HLV, HLVX, and HSV, can be used also in U-mode. When HU=1,
+ * these instructions can be executed in U-mode the same as in HS-mode. When
+ * HU=0, all hypervisor instructions cause an illegal instruction trap n U-mode
+ */
+#define HSTATUS_HU      BIT(9)
+
+/* When VTVM=1, an attempt in VS-mode to execute SFENCE.VMA or to access CSR
+ * satp raises a virtual instruction exception.
+ */
+#define HSTATUS_VTVM    BIT(20)
+
+/* When VTW=1 and VS-mode tries to execute WFI, a virtual instruction exception
+ * is raised if the WFI does not complete within an implementtion-specific
+ * bounded time limit
+ */
+#define HSTATUS_VTW     BIT(21)
+
+/* When VTSR=1, an attempt in VS-mode to execute SRET raises a virtual insruction
+ * exception.
+ */
+#define HSTATUS_VTSR    BIT(22)
 
 
 static inline word_t read_hstatus(void)
