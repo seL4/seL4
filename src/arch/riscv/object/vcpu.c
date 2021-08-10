@@ -461,7 +461,11 @@ BOOT_CODE void vcpu_boot_init(void)
 
 void handleVCPUFault(word_t cause)
 {
-    current_fault = seL4_Fault_VCPUFault_new(cause);
+    uint32_t inst = 0;
+    if (cause == RISCVVirtualInstruction) {
+        inst = hlvw(getRestartPC(ksCurThread));
+    }
+    current_fault = seL4_Fault_VCPUFault_new(cause, inst);
     handleFault(NODE_STATE(ksCurThread));
     schedule();
     activateThread();
