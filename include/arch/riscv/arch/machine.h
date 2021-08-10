@@ -552,6 +552,30 @@ static inline void hfence(void)
     asm volatile(".word 0x62000073" ::: "memory");
 }
 
+static inline uint32_t hlvw(word_t addr)
+{
+    uint32_t v = 0;
+    asm volatile("mv t0, %1\n\t"
+                // binary hlv.w t1, t0
+                ".word 0x6802c373\n\t"
+                 "mv %0, t1\n" : "=r"(v) : "r"(addr) : "t0", "t1");
+    return v;
+}
+
+/*
+ * This instruction on qemu returns incorrect instruciton.
+ * Do not use it for now.
+ */
+static inline uint32_t hlvxwu(word_t addr)
+{
+    uint32_t v = 0;
+    asm volatile("mv t0, %1\n\t"
+                // binary hlvx.wu t1, t0
+                ".word 0x6832c373\n\t"
+                 "mv %0, t1\n" : "=r"(v) : "r"(addr) : "t0", "t1");
+    return v;
+}
+
 #endif
 
 #if CONFIG_PT_LEVELS == 2
