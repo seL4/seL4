@@ -424,7 +424,7 @@ uint32_t fetch_faulting_instruction(vm_fault_type_t type)
 {
     word_t hstatus = read_hstatus();
 
-    if (((hstatus & HSTATUS_STL) && (type == RISCVLoadGuestPageFault || type == RISCVStoreGuestPageFault)) ||
+    if (((hstatus & HSTATUS_GVA) && (type == RISCVLoadGuestPageFault || type == RISCVStoreGuestPageFault)) ||
         (hstatus & HSTATUS_SPV && type == RISCVInstructionIllegal)) {
         word_t inst = 0;
         inst = read_htinst();
