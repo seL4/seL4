@@ -12,9 +12,13 @@ on:
   push:
     branches: [master]
   pull_request:
+    paths-ignore:
+      - 'manual/**'
+      - 'LICENSES/**'
+      - '*.md'
 
 jobs:
-  cparser:
+  sim:
     name: Simulation
     runs-on: ubuntu-latest
     strategy:

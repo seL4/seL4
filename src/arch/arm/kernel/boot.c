@@ -136,23 +136,6 @@ BOOT_CODE static void init_smmu(cap_t root_cnode_cap)
 
 #endif
 
-BOOT_CODE static bool_t create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg)
-{
-    seL4_SlotPos   slot_pos_before;
-    seL4_SlotPos   slot_pos_after;
-
-    slot_pos_before = ndks_boot.slot_pos_cur;
-    create_device_untypeds(root_cnode_cap, slot_pos_before);
-    create_kernel_untypeds(root_cnode_cap, boot_mem_reuse_reg, slot_pos_before);
-
-    slot_pos_after = ndks_boot.slot_pos_cur;
-    ndks_boot.bi_frame->untyped = (seL4_SlotRegion) {
-        slot_pos_before, slot_pos_after
-    };
-    return true;
-
-}
-
 /** This and only this function initialises the CPU.
  *
  * It does NOT initialise any kernel state.
@@ -360,7 +343,7 @@ static BOOT_CODE bool_t try_init_kernel(
     it_v_reg.end = extra_bi_frame_vptr + BIT(extra_bi_size_bits);
 
     if (it_v_reg.end >= USER_TOP) {
-        printf("Userland image virtual end address too high\n");
+        printf("ERROR: userland image virtual end address too high\n");
         return false;
     }
 
@@ -369,6 +352,7 @@ static BOOT_CODE bool_t try_init_kernel(
 
     /* initialise the CPU */
     if (!init_cpu()) {
+        printf("ERROR: CPU init failed\n");
         return false;
     }
 
@@ -386,6 +370,7 @@ static BOOT_CODE bool_t try_init_kernel(
     /* create the root cnode */
     root_cnode_cap = create_root_cnode();
     if (cap_get_capType(root_cnode_cap) == cap_null_cap) {
+        printf("ERROR: root c-node creation failed\n");
         return false;
     }
 
@@ -424,6 +409,7 @@ static BOOT_CODE bool_t try_init_kernel(
         ndks_boot.bi_frame->ioSpaceCaps = create_iospace_caps(root_cnode_cap);
         if (ndks_boot.bi_frame->ioSpaceCaps.start == 0 &&
             ndks_boot.bi_frame->ioSpaceCaps.end == 0) {
+            printf("ERROR: SMMU I/O space creation failed\n");
             return false;
         }
     } else {
@@ -434,6 +420,7 @@ static BOOT_CODE bool_t try_init_kernel(
      * to cover the user image + ipc buffer and bootinfo frames */
     it_pd_cap = create_it_address_space(root_cnode_cap, it_v_reg);
     if (cap_get_capType(it_pd_cap) == cap_null_cap) {
+        printf("ERROR: address space creation for initial thread failed\n");
         return false;
     }
 
@@ -459,6 +446,7 @@ static BOOT_CODE bool_t try_init_kernel(
                 pptr_to_paddr((void *)extra_bi_region.start) - extra_bi_frame_vptr
             );
         if (!extra_bi_ret.success) {
+            printf("ERROR: mapping extra boot info to initial thread failed\n");
             return false;
         }
         ndks_boot.bi_frame->extraBIPages = extra_bi_ret.region;
@@ -471,6 +459,7 @@ static BOOT_CODE bool_t try_init_kernel(
     /* create the initial thread's IPC buffer */
     ipcbuf_cap = create_ipcbuf_frame_cap(root_cnode_cap, it_pd_cap, ipcbuf_vptr);
     if (cap_get_capType(ipcbuf_cap) == cap_null_cap) {
+        printf("ERROR: could not create IPC buffer for initial thread\n");
         return false;
     }
 
@@ -484,6 +473,7 @@ static BOOT_CODE bool_t try_init_kernel(
             pv_offset
         );
     if (!create_frames_ret.success) {
+        printf("ERROR: could not create all userland image frames\n");
         return false;
     }
     ndks_boot.bi_frame->userImageFrames = create_frames_ret.region;
@@ -491,6 +481,7 @@ static BOOT_CODE bool_t try_init_kernel(
     /* create/initialise the initial thread's ASID pool */
     it_ap_cap = create_it_asid_pool(root_cnode_cap);
     if (cap_get_capType(it_ap_cap) == cap_null_cap) {
+        printf("ERROR: could not create ASID pool for initial thread\n");
         return false;
     }
     write_it_asid_pool(it_ap_cap, it_pd_cap);
@@ -501,6 +492,7 @@ static BOOT_CODE bool_t try_init_kernel(
 
     /* create the idle thread */
     if (!create_idle_thread()) {
+        printf("ERROR: could not create idle thread\n");
         return false;
     }
 
@@ -521,6 +513,7 @@ static BOOT_CODE bool_t try_init_kernel(
                      );
 
     if (initial == NULL) {
+        printf("ERROR: could not create initial thread\n");
         return false;
     }
 
@@ -533,6 +526,7 @@ static BOOT_CODE bool_t try_init_kernel(
     KERNEL_ELF_BASE, (pptr_t)ki_boot_end
     } /* reusable boot code/data */
         )) {
+        printf("ERROR: could not create untypteds for kernel image boot memory\n");
         return false;
     }
 
@@ -605,7 +599,8 @@ BOOT_CODE VISIBLE void init_kernel(
 #endif /* ENABLE_SMP_SUPPORT */
 
     if (!result) {
-        fail("Kernel init failed for some reason :(");
+        fail("ERROR: kernel init failed");
+        UNREACHABLE();
     }
 
 #ifdef CONFIG_KERNEL_MCS

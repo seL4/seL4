@@ -8,16 +8,6 @@
 #include <bootinfo.h>
 #include <arch/bootinfo.h>
 
-#ifndef CONFIG_ARCH_ARM
-#define MAX_NUM_FREEMEM_REG 16
-#else
-/* Modifiers:
- *  + 1: allow the kernel to release its own boot data region
- *  + 1: possible gap between ELF images and rootserver objects;
- *       see arm/arch_init_freemem */
-#define MAX_NUM_FREEMEM_REG (ARRAY_SIZE(avail_p_regs) + MODE_RESERVED + 1 + 1)
-#endif
-
 /*
  * Resolve naming differences between the abstract specifications
  * of the bootstrapping phase and the runtime phase of the kernel.
@@ -58,8 +48,7 @@ bool_t provide_cap(cap_t root_cnode_cap, cap_t cap);
 cap_t create_it_asid_pool(cap_t root_cnode_cap);
 void write_it_pd_pts(cap_t root_cnode_cap, cap_t it_pd_cap);
 bool_t create_idle_thread(void);
-bool_t create_device_untypeds(cap_t root_cnode_cap, seL4_SlotPos slot_pos_before);
-bool_t create_kernel_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg, seL4_SlotPos first_untyped_slot);
+bool_t create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg);
 void bi_finalise(void);
 void create_domain_cap(cap_t root_cnode_cap);
 

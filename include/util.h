@@ -6,29 +6,68 @@
 
 #pragma once
 
-#define MASK(n) (BIT(n)-UL_CONST(1))
+#define PASTE(a, b) a ## b
+#define _STRINGIFY(a) #a
+#define STRINGIFY(a) _STRINGIFY(a)
+
+#ifdef __ASSEMBLER__
+
+/* Provide a helper macro to define integer constants that are not of the
+ * default type 'ìnt', but 'unsigned long'. When such constants are shared
+ * between assembly and C code, some assemblers will fail because don't support
+ * C-style integer suffixes like 'ul'. Using a macro works around this, as the
+ * suffix is only applies when the C compiler is used and dropped when the
+ * assembler runs.
+ */
+#define UL_CONST(x) x
+#define ULL_CONST(x) x
+#define NULL 0
+
+#else /* not __ASSEMBLER__ */
+
+/* There is no difference between using 'ul' or 'lu' as suffix for numbers to
+ * enforce a specific type besides the default 'int'. Just when it comes to the
+ * printf() format specifiers, '%lu' is the only form that is supported. Thus
+ * 'ul' is the preferred suffix to avoid confusion.
+ */
+#define UL_CONST(x) PASTE(x, ul)
+#define ULL_CONST(x) PASTE(x, llu)
+#define NULL ((void *)0)
+
+#endif /* [not] __ASSEMBLER__ */
+
+#define BIT(n) (UL_CONST(1) << (n))
+#define MASK(n) (BIT(n) - UL_CONST(1))
 #define IS_ALIGNED(n, b) (!((n) & MASK(b)))
 #define ROUND_DOWN(n, b) (((n) >> (b)) << (b))
 #define ROUND_UP(n, b) (((((n) - UL_CONST(1)) >> (b)) + UL_CONST(1)) << (b))
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
-#define PASTE(a, b) a ## b
-#define _STRINGIFY(a) #a
-#define STRINGIFY(a) _STRINGIFY(a)
 
-/* time constants */
-#define MS_IN_S     1000llu
-#define US_IN_MS    1000llu
-#define HZ_IN_KHZ   1000llu
-#define KHZ_IN_MHZ  1000llu
-#define HZ_IN_MHZ   1000000llu
+/* Time constants are define to use the 'unsigned long long'. Rationale is, that
+ * the C rules define the calculation result is determined by largest type
+ * involved. Enforcing the larges possible type C provides avoids pitfalls with
+ * 32-bit overflows when values are getting quite large. Keep in mind that even
+ * 2^32 milli-seconds roll over within 50 days, which is an uptime that embedded
+ * systems will reach easily and it resembles not even two months in a calendar
+ * calculation. In addition, using the largest integer type C currently defines
+ * enforces that all calculations results need a cast back to a 32-bit type
+ * explicitly. This might feel annoying, but practically it makes code more
+ * robust and enforces thinking about potential overflows.
+ * Note that at this stage of the includes, we do not have defined the type
+ * uint64_t yet, so we can't use any definitions around it, but have to stick to
+ * plain C types. Neither moving the time constant definitions behind the
+ * uint64_t type definitions nor including the header with the uint64_t
+ * definitions here is currently a feasible option.
+ */
+#define MS_IN_S     ULL_CONST(1000)
+#define US_IN_MS    ULL_CONST(1000)
+#define HZ_IN_KHZ   ULL_CONST(1000)
+#define KHZ_IN_MHZ  ULL_CONST(1000)
+#define HZ_IN_MHZ   ULL_CONST(1000000)
 
 #ifndef __ASSEMBLER__
-
-#define NULL ((void *)0)
-#define BIT(n) (1ul << (n))
-#define UL_CONST(x) PASTE(x, ul)
 
 #define PACKED       __attribute__((packed))
 #define NORETURN     __attribute__((__noreturn__))
@@ -257,11 +296,4 @@ CONST popcountl(unsigned long mask)
 /* Can be used to insert padding to the next L1 cache line boundary */
 #define PAD_TO_NEXT_CACHE_LN(used) char padding[L1_CACHE_LINE_SIZE - ((used) % L1_CACHE_LINE_SIZE)]
 
-#else /* __ASSEMBLER__ */
-
-/* Some assemblers don't recognise ul (unsigned long) suffix */
-#define BIT(n) (1 << (n))
-#define UL_CONST(x) x
-
 #endif /* !__ASSEMBLER__ */
-

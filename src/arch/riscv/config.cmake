@@ -57,14 +57,14 @@ if(KernelPTLevels EQUAL 2)
         # so limit the maximum paddr to 32-bits.
         math(EXPR KernelPaddrUserTop "(1 << 32) - 1")
     else()
-        math(EXPR KernelPaddrUserTop "(1 << 34) - 1")
+        math(EXPR KernelPaddrUserTop "1 << 34")
     endif()
 elseif(KernelPTLevels EQUAL 3)
     # RISC-V technically supports 56-bit paddrs,
     # but structures.bf limits us to using 39 of those bits.
-    math(EXPR KernelPaddrUserTop "(1 << 39) - 1")
+    math(EXPR KernelPaddrUserTop "1 << 39")
 elseif(KernelPTLevels EQUAL 4)
-    math(EXPR KernelPaddrUserTop "(1 << 56) - 1")
+    math(EXPR KernelPaddrUserTop "1 << 56")
 endif()
 
 if(KernelRiscvExtD)
