@@ -29,8 +29,8 @@ block VCPUFault {
     padding 128
 
     field cause 64
-
-    padding 60
+    field data  32
+    padding     28
     field seL4_FaultType 4
 }
 #endif
