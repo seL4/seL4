@@ -40,6 +40,7 @@ exception_t handleInterruptEntry(void)
 #ifdef CONFIG_KERNEL_MCS
     if (SMP_TERNARY(clh_is_self_in_queue(), 1)) {
         updateTimestamp();
+        checkDomainTime();
         checkBudget();
     }
 #endif
@@ -624,6 +625,7 @@ exception_t handleSyscall(syscall_t syscall)
         case SysSend:
             ret = handleInvocation(false, true, false, false, getRegister(NODE_STATE(ksCurThread), capRegister));
             if (unlikely(ret != EXCEPTION_NONE)) {
+                checkDomainTime();
                 irq = getActiveIRQ();
                 mcsPreemptionPoint(irq);
                 if (IRQT_TO_IRQ(irq) != IRQT_TO_IRQ(irqInvalid)) {
@@ -637,6 +639,7 @@ exception_t handleSyscall(syscall_t syscall)
         case SysNBSend:
             ret = handleInvocation(false, false, false, false, getRegister(NODE_STATE(ksCurThread), capRegister));
             if (unlikely(ret != EXCEPTION_NONE)) {
+                checkDomainTime();
                 irq = getActiveIRQ();
                 mcsPreemptionPoint(irq);
                 if (IRQT_TO_IRQ(irq) != IRQT_TO_IRQ(irqInvalid)) {
@@ -649,6 +652,7 @@ exception_t handleSyscall(syscall_t syscall)
         case SysCall:
             ret = handleInvocation(true, true, true, false, getRegister(NODE_STATE(ksCurThread), capRegister));
             if (unlikely(ret != EXCEPTION_NONE)) {
+                checkDomainTime();
                 irq = getActiveIRQ();
                 mcsPreemptionPoint(irq);
                 if (IRQT_TO_IRQ(irq) != IRQT_TO_IRQ(irqInvalid)) {
@@ -692,6 +696,7 @@ exception_t handleSyscall(syscall_t syscall)
             cptr_t dest = getNBSendRecvDest();
             ret = handleInvocation(false, false, true, true, dest);
             if (unlikely(ret != EXCEPTION_NONE)) {
+                checkDomainTime();
                 irq = getActiveIRQ();
                 mcsPreemptionPoint(irq);
                 if (IRQT_TO_IRQ(irq) != IRQT_TO_IRQ(irqInvalid)) {
@@ -707,6 +712,7 @@ exception_t handleSyscall(syscall_t syscall)
         case SysNBSendWait:
             ret = handleInvocation(false, false, true, true, getRegister(NODE_STATE(ksCurThread), replyRegister));
             if (unlikely(ret != EXCEPTION_NONE)) {
+                checkDomainTime();
                 irq = getActiveIRQ();
                 mcsPreemptionPoint(irq);
                 if (IRQT_TO_IRQ(irq) != IRQT_TO_IRQ(irqInvalid)) {
