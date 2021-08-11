@@ -238,10 +238,11 @@ static inline void arch_pause(void)
 #endif
 
 /* Update the value of the actual register to hold the expected value */
-static inline void Arch_setTLSRegister(word_t tls_base)
+static inline exception_t Arch_setTLSRegister(word_t tls_base)
 {
     /* The register is always reloaded upon return from kernel. */
     setRegister(NODE_STATE(ksCurThread), TLS_BASE, tls_base);
+    return EXCEPTION_NONE;
 }
 
 #endif // __ASSEMBLER__
