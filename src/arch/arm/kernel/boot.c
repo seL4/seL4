@@ -346,6 +346,25 @@ static BOOT_CODE bool_t try_init_kernel(
     bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
     extra_bi_frame_vptr = bi_frame_vptr + BIT(BI_FRAME_SIZE_BITS);
 
+    /* If no DTB was provided, skip allocating extra bootinfo */
+    p_region_t dtb_p_reg = {
+        dtb_addr_start, ROUND_UP(dtb_addr_end, PAGE_BITS)
+    };
+    if (dtb_addr_start == 0) {
+        extra_bi_size = 0;
+        dtb_reg = (region_t) {
+            0, 0
+        };
+    } else {
+        dtb_reg = paddr_to_pptr_reg(dtb_p_reg);
+        extra_bi_size = sizeof(seL4_BootInfoHeader) + (dtb_reg.end - dtb_reg.start);
+    }
+    word_t extra_bi_size_bits = calculate_extra_bi_size_bits(extra_bi_size);
+
+    /* The region of the initial thread is the user image + ipcbuf and boot info */
+    it_v_reg.start = ui_v_reg.start;
+    it_v_reg.end = extra_bi_frame_vptr + BIT(extra_bi_size_bits);
+
     /* setup virtual memory for the kernel */
     map_kernel_window();
 
@@ -361,51 +380,9 @@ static BOOT_CODE bool_t try_init_kernel(
     /* initialise the platform */
     init_plat();
 
-    /* If a DTB was provided, pass the data on as extra bootinfo */
-    p_region_t dtb_p_reg = P_REG_EMPTY;
-    if (dtb_size > 0) {
-        paddr_t dtb_phys_end = dtb_phys_addr + dtb_size;
-        if (dtb_phys_end < dtb_phys_addr) {
-            /* An integer overflow happened in DTB end address calculation, the
-             * location or size passed seems invalid.
-             */
-            printf("ERROR: DTB location at %"SEL4_PRIx_word
-                   " len %"SEL4_PRIu_word" invalid\n",
-                   dtb_phys_addr, dtb_size);
-            return false;
-        }
-        /* If the DTB is located in physical memory that is not mapped in the
-         * kernel window we cannot access it.
-         */
-        if (dtb_phys_end >= PADDR_TOP) {
-            printf("ERROR: DTB at [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] "
-                   "exceeds PADDR_TOP (%"SEL4_PRIx_word")\n",
-                   dtb_phys_addr, dtb_phys_end, PADDR_TOP);
-            return false;
-        }
-        /* DTB seems valid and accessible, pass it on in bootinfo. */
-        extra_bi_size += sizeof(seL4_BootInfoHeader) + dtb_size;
-        /* Remember the memory region it uses. */
-        dtb_p_reg = (p_region_t) {
-            .start = dtb_phys_addr,
-            .end   = dtb_phys_end
-        };
-    }
-
-    /* The region of the initial thread is the user image + ipcbuf and boot info */
-    word_t extra_bi_size_bits = calculate_extra_bi_size_bits(extra_bi_size);
-    v_region_t it_v_reg = {
-        .start = ui_v_reg.start,
-        .end   = extra_bi_frame_vptr + BIT(extra_bi_size_bits)
-    };
     if (it_v_reg.end >= USER_TOP) {
-        /* Variable arguments for printf() require well defined integer types to
-         * work properly. Unfortunately, the definition of USER_TOP differs
-         * between platforms (int, long), so we have to cast here to play safe.
-         */
-        printf("ERROR: userland image virt [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]"
-               "exceeds USER_TOP (%"SEL4_PRIx_word")\n",
-               it_v_reg.start, it_v_reg.end, (word_t)USER_TOP);
+        printf("ERROR: userland image virt [%p..%p] exceeds USER_TOP (%p)\n",
+               (void *)it_v_reg.start, (void *)it_v_reg.end, (void *)USER_TOP);
         return false;
     }
 
