@@ -204,6 +204,32 @@ function(GenProofsBFTarget target_name target_file pbf_path pbf_target prunes de
     )
 endfunction(GenProofsBFTarget)
 
+macro(cfg_str_add_disabled cfg_str name)
+    # include in liner files can't use double slash comments
+    list(APPEND ${cfg_str} "/* disabled: CONFIG_${name} */")
+endmacro()
+
+macro(cfg_str_add_define cfg_str name value comment)
+    set(cfg_define_str "#define CONFIG_${name}  ${value}")
+    if(NOT "${comment}" STREQUAL "")
+        # include in liner files can't use double slash comments
+        string(APPEND cfg_define_str "  /* ${comment} */")
+    endif()
+    list(APPEND ${cfg_str} ${cfg_define_str})
+endmacro()
+
+macro(cfg_str_add cfg_str name value)
+    if("${value}" STREQUAL "")
+        cfg_str_add_define(${cfg_str} ${name} "" "empty")
+    else()
+        cfg_str_add_define(${cfg_str} ${name} "${value}" "")
+    endif()
+endmacro()
+
+macro(cfg_str_add_as_1 cfg_str name var)
+    cfg_str_add_define(${cfg_str} ${name} "1" "${var}=${${var}}")
+endmacro()
+
 # config_option(cmake_option_name c_config_name doc DEFAULT default [DEPENDS deps] [DEFAULT_DISABLE default_disabled])
 # Defines a toggleable configuration option that will be present in the cache and the
 # cmake-gui
@@ -264,7 +290,9 @@ function(config_option optionname configname doc)
     endif()
     set(local_config_string "${configure_string}")
     if(${optionname})
-        list(APPEND local_config_string "#define CONFIG_${configname} 1")
+        cfg_str_add_as_1(local_config_string ${configname} ${optionname})
+    else()
+        cfg_str_add_disabled(local_config_string ${configname})
     endif()
     set(configure_string "${local_config_string}" PARENT_SCOPE)
 endfunction(config_option)
@@ -272,15 +300,18 @@ endfunction(config_option)
 # Set a configuration option to a particular value. This value will not appear in
 # the cmake-gui, but will produce an internal cmake cache variable and generated
 # configuration headers.
-# If the option is not OFF it adds to the global configure_string variable (see add_config_library)
 macro(config_set optionname configname value)
     set(${optionname} "${value}" CACHE INTERNAL "" FORCE)
-    if("${value}" STREQUAL "ON")
-        list(APPEND configure_string "#define CONFIG_${configname} 1")
-    elseif("${value}" STREQUAL "OFF")
-
+    set(c_define "CONFIG_${configname}")
+    if("${value}" STREQUAL "OFF")
+        cfg_str_add_disabled(configure_string ${configname})
     else()
-        list(APPEND configure_string "#define CONFIG_${configname} ${value}")
+        if("${value}" STREQUAL "ON")
+            cfg_str_add_as_1(configure_string ${configname} ${optionname})
+        else()
+            # we have to quote ${value} here because it could be empty
+            cfg_str_add(configure_string ${configname} "${value}")
+        endif()
     endif()
 endmacro(config_set)
 
@@ -331,11 +362,7 @@ function(config_string optionname configname doc)
             endif()
         endforeach()
     endif()
-    if(CONFIG_UNQUOTE)
-        set(quote "")
-    else()
-        set(quote "\"")
-    endif()
+    set(cfg_tag_option "")
     if(valid)
         # See if we transitioned from disabled to enabled. We do this by having an
         # _UNAVAILABLE variable. We want to ensure that if the option previously had
@@ -348,10 +375,7 @@ function(config_string optionname configname doc)
             unset(${optionname}_UNAVAILABLE CACHE)
         endif()
         set(${optionname} "${CONFIG_DEFAULT}" CACHE STRING "${doc}" ${force})
-        list(
-            APPEND
-                local_config_string "#define CONFIG_${configname} ${quote}@${optionname}@${quote}"
-        )
+        set(cfg_tag_option ${optionname})
         # This is a directory scope setting used to allow or prevent config options
         # from appearing in the cmake config GUI
         if(SEL4_CONFIG_DEFAULT_ADVANCED)
@@ -363,14 +387,18 @@ function(config_string optionname configname doc)
         else()
             # Forcively change the value to its disabled_value
             set(${optionname} "${CONFIG_DEFAULT_DISABLED}" CACHE INTERNAL "" FORCE)
-            list(
-                APPEND
-                    local_config_string
-                    "#define CONFIG_${configname} ${quote}@${optionname}@${quote}"
-            )
+            set(cfg_tag_option ${optionname})
         endif()
         # Sset _UNAVAILABLE so we can detect when the option because enabled again
         set(${optionname}_UNAVAILABLE ON CACHE INTERNAL "" FORCE)
+    endif()
+    if(cfg_tag_option)
+        if(CONFIG_UNQUOTE)
+            set(quote "")
+        else()
+            set(quote "\"")
+        endif()
+        cfg_str_add(local_config_string ${configname} "${quote}@${cfg_tag_option}@${quote}")
     endif()
     set(configure_string "${local_config_string}" PARENT_SCOPE)
 endfunction(config_string)
@@ -462,10 +490,11 @@ function(config_choice optionname configname doc)
             # Check if this option is the one that is currently set
             if("${${optionname}}" STREQUAL "${option_value}")
                 set(${option_cache} ON CACHE INTERNAL "" FORCE)
-                list(APPEND local_config_string "#define CONFIG_${option_config} 1")
+                cfg_str_add_as_1(local_config_string ${option_config} ${option_cache})
                 set(found_current ON)
             else()
                 set(${option_cache} OFF CACHE INTERNAL "" FORCE)
+                cfg_str_add_disabled(local_config_string ${option_config})
             endif()
         else()
             # Remove this config as it's not valid
@@ -480,7 +509,7 @@ function(config_choice optionname configname doc)
         # None of the choices were valid. Remove this option so its not visible
         unset(${optionname} CACHE)
     else()
-        list(APPEND local_config_string "#define CONFIG_${configname} @${optionname}@")
+        cfg_str_add(local_config_string ${configname} "@${optionname}@")
         set(configure_string "${local_config_string}" PARENT_SCOPE)
         set(${optionname} "${default}" CACHE STRING "${doc}" ${force_default})
         # This is a directory scope setting used to allow or prevent config options
@@ -494,7 +523,7 @@ function(config_choice optionname configname doc)
             # choice earlier, since we didn't know we were going to revert to
             # the default. So add the option setting here
             set(${first_cache} ON CACHE INTERNAL "" FORCE)
-            list(APPEND local_config_string "#define CONFIG_${first_config} 1")
+            cfg_str_add_as_1(local_config_string ${first_config} ${first_cache})
         endif()
     endif()
     # Save all possible options to an internal value.  This is to allow enumerating the options elsewhere.

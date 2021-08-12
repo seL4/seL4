@@ -67,30 +67,15 @@ BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapIRQControl), cap_irq_control_cap_new());
 }
 
-BOOT_CODE static bool_t create_untypeds(
-    cap_t root_cnode_cap,
-    region_t boot_mem_reuse_reg)
-{
-    seL4_SlotPos     slot_pos_before;
-    seL4_SlotPos     slot_pos_after;
-
-    slot_pos_before = ndks_boot.slot_pos_cur;
-    create_device_untypeds(root_cnode_cap, slot_pos_before);
-    create_kernel_untypeds(root_cnode_cap, boot_mem_reuse_reg, slot_pos_before);
-
-    slot_pos_after = ndks_boot.slot_pos_cur;
-    ndks_boot.bi_frame->untyped = (seL4_SlotRegion) {
-        slot_pos_before, slot_pos_after
-    };
-    return true;
-}
-
-BOOT_CODE static void arch_init_freemem(p_region_t ui_p_reg, v_region_t v_reg,
-                                        mem_p_regs_t *mem_p_regs, word_t extra_bi_size_bits)
+BOOT_CODE static bool_t arch_init_freemem(p_region_t ui_p_reg,
+                                          v_region_t it_v_reg,
+                                          mem_p_regs_t *mem_p_regs,
+                                          word_t extra_bi_size_bits)
 {
     ui_p_reg.start = 0;
     reserved[0] = paddr_to_pptr_reg(ui_p_reg);
-    init_freemem(mem_p_regs->count, mem_p_regs->list, MAX_RESERVED, reserved, v_reg, extra_bi_size_bits);
+    return init_freemem(mem_p_regs->count, mem_p_regs->list, MAX_RESERVED,
+                        reserved, it_v_reg, extra_bi_size_bits);
 }
 
 /* This function initialises a node's kernel state. It does NOT initialise the CPU. */
@@ -164,7 +149,10 @@ BOOT_CODE bool_t init_sys_state(
     }
 #endif /* CONFIG_IOMMU */
 
-    arch_init_freemem(ui_info.p_reg, it_v_reg, mem_p_regs, extra_bi_size_bits);
+    if (!arch_init_freemem(ui_info.p_reg, it_v_reg, mem_p_regs, extra_bi_size_bits)) {
+        printf("ERROR: free memory management initialization failed\n");
+        return false;
+    }
 
     /* create the root cnode */
     root_cnode_cap = create_root_cnode();

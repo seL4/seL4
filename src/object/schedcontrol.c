@@ -94,7 +94,7 @@ static exception_t decodeSchedControl_ConfigureFlags(word_t length, cap_t cap, w
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (length < (TIME_ARG_SIZE * 2) + 2) {
+    if (length < (TIME_ARG_SIZE * 2) + 3) {
         userError("SchedControl_configureFlags: truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;

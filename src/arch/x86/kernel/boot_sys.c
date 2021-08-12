@@ -36,8 +36,6 @@ extern char boot_stack_bottom[1];
 extern char boot_stack_top[1];
 
 /* locations in kernel image */
-extern char ki_boot_end[1];
-extern char ki_end[1];
 extern char ki_skim_start[1];
 extern char ki_skim_end[1];
 

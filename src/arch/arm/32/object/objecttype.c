@@ -199,7 +199,7 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
 
                     cleanCacheRange_PoU((pptr_t) &armKSGlobalLogPT[0],
                                         (pptr_t) &armKSGlobalLogPT[0] + BIT(seL4_PageTableBits),
-                                        addrFromPPtr((void *)&armKSGlobalLogPT[0]));
+                                        addrFromKPPtr((void *)&armKSGlobalLogPT[0]));
 
                     for (int idx = 0; idx < BIT(PT_INDEX_BITS); idx++) {
                         invalidateTranslationSingle(KS_LOG_PPTR + (idx << seL4_PageBits));
