@@ -38,6 +38,10 @@ Upcoming release: BINARY COMPATIBLE
   constant seL4_GlobalsFrame from libsel4.
 * Implement KernelArmExportPTMRUser and KernelArmExportVTMRUser options for Arm generic timer use access on aarch32.
 * Removed obsolete define `HAVE_AUTOCONF`
+* Changed kernel boot parameters to become architecture agnostic with using word_t instead of uint32. Stop using
+  sword_t due to C rule violations, use word_t instead and explicitly allow overflows and underflows in the
+  unsigned integer calculations. These changes could break the boot process on 64-bit platforms, as the upper 32 bit
+  must be set correctly now also. The elfloader has been updated, custom bootloaders might need to be updated also.
 
 ## Upgrade Notes
 ---
