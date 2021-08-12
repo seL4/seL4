@@ -1,5 +1,6 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2021, HENSOLDT Cyber
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -22,6 +23,72 @@ BOOT_BSS ndks_boot_t ndks_boot;
 
 BOOT_BSS rootserver_mem_t rootserver;
 BOOT_BSS static region_t rootserver_mem;
+
+/*
+ * Create a boot info record
+ *
+ * If bi is NULL, this just returns the amount of byte that would have been
+ * written for the boot info record. If bi is not NULL and data is NULL, then
+ * the boot info record payload is filled with zeros.
+ */
+BOOT_CODE seL4_Word add_extra_bootinfo(
+    void *bi,
+    seL4_Word bi_block_id,
+    void const *data,
+    seL4_Word data_len)
+{
+    if (bi) {
+        /* The target location could be unaligned, thus we populate the header
+         * on our aligned structure and then copy it to the target location.
+         */
+        seL4_BootInfoHeader header = {
+            .id = bi_block_id,
+            .len = sizeof(header) + data_len
+        };
+
+        memcpy(bi , &header, sizeof(header));
+
+        void *addr = (void *)((word_t)bi + sizeof(header));
+        if (data_len > 0)
+        {
+            if (data) {
+                memcpy(addr, data, data_len);
+            } else {
+                memset(addr, 0, data_len);
+            }
+        }
+    }
+
+    return sizeof(seL4_BootInfoHeader) + data_len;
+}
+
+
+/*
+ * Create a boot info record as padding for the given space. If there is not
+ * enough space for a boot info header then just zero the space.
+ *
+ * If bi is NULL, this just returns the amount of byte that would have been
+ * written for the boot info record.
+ */
+BOOT_CODE void add_extra_bootinfo_padding(
+    void *bi,
+    seL4_Word len)
+{
+    if (len < sizeof(seL4_BootInfoHeader)) {
+        /* fill space with zeros if there is not even enough space to put a
+         * header there
+         */
+        printf("WARNUNG: not enough left-over space to even write a boot info padding header");
+        if (bi)
+        {
+            memset(bi, 0, len);
+        }
+    } else {
+        /* ignore the return value */
+        (void)add_extra_bootinfo(bi, SEL4_BOOTINFO_HEADER_PADDING, NULL,
+                                 len - sizeof(seL4_BootInfoHeader));
+    }
+}
 
 BOOT_CODE static void merge_regions(void)
 {

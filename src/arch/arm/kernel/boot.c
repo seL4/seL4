@@ -162,6 +162,39 @@ BOOT_CODE static void init_smmu(cap_t root_cnode_cap)
 
 #endif
 
+/* This function has two purposes:
+ * - Just calculate the size of the extra boot. This will be done it the
+ *   parameter extra_bi_size is set to 0, the function will return the required
+ *   size then.
+ * - Populate the extra boot info in rootserver.extra_bi. Pass the reserved size
+ *   in the parameter extra_bi_size, this is likely the value that has been
+ *   calculated before.
+ */
+BOOT_CODE static word_t extra_bi_helper(word_t extra_bi_size,
+                                        paddr_t dtb_phys_addr,
+                                        word_t dtb_size)
+{
+    /* if extra_bi_size is 0, then we just calculate the required length */
+    word_t bi = (0 == extra_bi_size) ? 0 : rootserver.extra_bi;
+    pptr_t offset = 0;
+
+    /* if there is a DTB, put it in the extra bootinfo block */
+    if ((NULL != dtb_phys_addr) && (0 != dtb_size)) {
+
+        offset += add_extra_bootinfo(bi ? (void *)(bi + offset) : NULL,
+                                     SEL4_BOOTINFO_HEADER_FDT,
+                                     paddr_to_pptr(dtb_phys_addr), dtb_size);
+    }
+
+    /* provide a chunk for any leftover padding */
+    if (extra_bi_size > offset) {
+        add_extra_bootinfo_padding(bi ? (void *)(bi + offset) : NULL,
+                                   extra_bi_size - offset);
+    }
+
+    return offset;
+}
+
 /** This and only this function initialises the CPU.
  *
  * It does NOT initialise any kernel state.
@@ -328,7 +361,6 @@ static BOOT_CODE bool_t try_init_kernel(
         ui_p_reg_start, ui_p_reg_end
     };
     region_t ui_reg = paddr_to_pptr_reg(ui_p_reg);
-    word_t extra_bi_size = 0;
     pptr_t extra_bi_offset = 0;
     vptr_t extra_bi_frame_vptr;
     vptr_t bi_frame_vptr;
@@ -383,8 +415,6 @@ static BOOT_CODE bool_t try_init_kernel(
                    dtb_phys_addr, dtb_p_end, PADDR_TOP);
             return false;
         }
-        /* DTB seems valid and accessible, pass it on in bootinfo. */
-        extra_bi_size += sizeof(seL4_BootInfoHeader) + dtb_size;
         /* Remember the page aligned memory region it uses. */
         dtb_p_reg = (p_region_t) {
             .start = ROUND_DOWN(dtb_phys_addr, PAGE_BITS),
@@ -393,6 +423,7 @@ static BOOT_CODE bool_t try_init_kernel(
     }
 
     /* The region of the initial thread is the user image + ipcbuf and boot info */
+    word_t extra_bi_size = extra_bi_helper(0, dtb_phys_addr, dtb_size);
     word_t extra_bi_size_bits = calculate_extra_bi_size_bits(extra_bi_size);
     it_v_reg.start = ui_v_reg.start;
     it_v_reg.end = extra_bi_frame_vptr + BIT(extra_bi_size_bits);
@@ -425,27 +456,10 @@ static BOOT_CODE bool_t try_init_kernel(
     /* initialise the SMMU and provide the SMMU control caps*/
     init_smmu(root_cnode_cap);
 #endif
+
+    /* create the bootinfo frame */
     populate_bi_frame(0, CONFIG_MAX_NUM_NODES, ipcbuf_vptr, extra_bi_size);
-
-    /* put DTB in the bootinfo block, if present. */
-    seL4_BootInfoHeader header;
-    if (dtb_size > 0) {
-        header.id = SEL4_BOOTINFO_HEADER_FDT;
-        header.len = sizeof(header) + dtb_size;
-        *(seL4_BootInfoHeader *)(rootserver.extra_bi + extra_bi_offset) = header;
-        extra_bi_offset += sizeof(header);
-        memcpy((void *)(rootserver.extra_bi + extra_bi_offset),
-               paddr_to_pptr(dtb_phys_addr),
-               dtb_size);
-        extra_bi_offset += dtb_size;
-    }
-
-    if (extra_bi_size > extra_bi_offset) {
-        /* provide a chunk for any leftover padding in the extended boot info */
-        header.id = SEL4_BOOTINFO_HEADER_PADDING;
-        header.len = (extra_bi_size - extra_bi_offset);
-        *(seL4_BootInfoHeader *)(rootserver.extra_bi + extra_bi_offset) = header;
-    }
+    (void)extra_bi_helper(extra_bi_size, dtb_phys_addr, dtb_size);
 
     if (config_set(CONFIG_TK1_SMMU)) {
         ndks_boot.bi_frame->ioSpaceCaps = create_iospace_caps(root_cnode_cap);

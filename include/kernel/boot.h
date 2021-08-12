@@ -1,5 +1,6 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2021, HENSOLDT Cyber
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -58,6 +59,10 @@ word_t calculate_extra_bi_size_bits(word_t extra_size);
 void populate_bi_frame(node_id_t node_id, word_t num_nodes, vptr_t ipcbuf_vptr,
                        word_t extra_bi_size_bits);
 void create_bi_frame_cap(cap_t root_cnode_cap, cap_t pd_cap, vptr_t vptr);
+
+seL4_Word add_extra_bootinfo(void *bi, seL4_Word bi_block_id,
+                             void const *data, seL4_Word data_len);
+void add_extra_bootinfo_padding(void *bi, seL4_Word len);
 
 #ifdef CONFIG_KERNEL_MCS
 bool_t init_sched_control(cap_t root_cnode_cap, word_t num_nodes);
