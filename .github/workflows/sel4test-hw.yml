@@ -75,6 +75,7 @@ jobs:
           - odroid_c2
           # - odroid_xu4
           - am335x_boneblack
+          - tx2
           # - rpi3
           # - zynqmp
         compiler: [gcc, clang]
