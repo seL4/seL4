@@ -1508,7 +1508,7 @@ static exception_t performUpperPageDirectoryInvocationUnmap(cap_t cap, cte_t *ct
         pude_t *pud = PUD_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(cap));
         unmapPageUpperDirectory(cap_page_upper_directory_cap_get_capPUDMappedASID(cap),
                                 cap_page_upper_directory_cap_get_capPUDMappedAddress(cap), pud);
-        clearMemory((void *)pud, cap_get_capSizeBits(cap));
+        clearMemory_PT((void *)pud, cap_get_capSizeBits(cap));
     }
 
     cap_page_upper_directory_cap_ptr_set_capPUDIsMapped(&(ctSlot->cap), 0);
@@ -1531,7 +1531,7 @@ static exception_t performPageDirectoryInvocationUnmap(cap_t cap, cte_t *ctSlot)
         pde_t *pd = PD_PTR(cap_page_directory_cap_get_capPDBasePtr(cap));
         unmapPageDirectory(cap_page_directory_cap_get_capPDMappedASID(cap),
                            cap_page_directory_cap_get_capPDMappedAddress(cap), pd);
-        clearMemory((void *)pd, cap_get_capSizeBits(cap));
+        clearMemory_PT((void *)pd, cap_get_capSizeBits(cap));
     }
 
     cap_page_directory_cap_ptr_set_capPDIsMapped(&(ctSlot->cap), 0);
@@ -1553,7 +1553,7 @@ static exception_t performPageTableInvocationUnmap(cap_t cap, cte_t *ctSlot)
         pte_t *pt = PT_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
         unmapPageTable(cap_page_table_cap_get_capPTMappedASID(cap),
                        cap_page_table_cap_get_capPTMappedAddress(cap), pt);
-        clearMemory((void *)pt, cap_get_capSizeBits(cap));
+        clearMemory_PT((void *)pt, cap_get_capSizeBits(cap));
     }
 
     cap_page_table_cap_ptr_set_capPTIsMapped(&(ctSlot->cap), 0);
