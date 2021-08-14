@@ -463,7 +463,7 @@ void handleVCPUFault(word_t cause)
 {
     uint32_t inst = 0;
     if (cause == RISCVVirtualInstruction) {
-        inst = hlvw(getRestartPC(ksCurThread));
+        inst = hlvw(getRestartPC(NODE_STATE(ksCurThread)));
     }
     current_fault = seL4_Fault_VCPUFault_new(cause, inst);
     handleFault(NODE_STATE(ksCurThread));
