@@ -199,29 +199,25 @@ static irq_t handleVTimer(void)
  *
  * @return     The new active irq.
  */
+
+
 static irq_t getNewActiveIRQ(void)
 {
 
     uint64_t sip = read_sip();
-    /* Interrupt priority (high to low ): external -> software -> timer */
-    if (sip & BIT(SEXTERNAL_IP)) {
-        irq_t irq = plic_get_claim();
-        if (irq != irqInvalid) {
-            plic_complete_claim(irq);
-        }
-        return irq;
-#ifdef ENABLE_SMP_SUPPORT
-    } else if (sip & BIT(SIPI_IP)) {
-        sbi_clear_ipi();
-        return ipi_get_irq();
-#endif
-    } else if (sip & BIT(STIMER_IP)) {
+    if (sip & BIT(STIMER_IP)) {
 #if CONFIG_RISCV_NUM_VTIMERS > 0
         return handleVTimer();
 #else
-        // Supervisor timer interrupt
         return INTERRUPT_CORE_TIMER;
 #endif
+    } else if (sip & BIT(SIPI_IP)) {
+        return ipi_get_irq();
+    } else if (sip & BIT(SEXTERNAL_IP)) {
+        irq_t irq = plic_get_claim();
+        // unmatched writes to claim are ignored by hardware
+        plic_complete_claim(irq);
+        return irq;
     }
 
     return irqInvalid;
@@ -288,7 +284,7 @@ void setIRQTrigger(irq_t irq, bool_t edge_triggered)
 static inline bool_t isIRQPending(void)
 {
     word_t sip = read_sip();
-    return (sip & (BIT(STIMER_IP) | BIT(SEXTERNAL_IP)));
+    return (sip & (BIT(SIPI_IP) | BIT(STIMER_IP) | BIT(SEXTERNAL_IP)));
 }
 
 /**
@@ -304,6 +300,10 @@ static inline bool_t isIRQPending(void)
 static inline void maskInterrupt(bool_t disable, irq_t irq)
 {
     assert(IS_IRQ_VALID(irq));
+#if CONFIG_RISCV_NUM_VTIMERS > 0
+    if (irq >= INTERRUPT_VTIMER_START && irq <= INTERRUPT_VTIMER_END) return;
+#endif
+
     if (irq == INTERRUPT_CORE_TIMER) {
         if (disable) {
             clear_sie_mask(BIT(STIMER_IE));
@@ -341,6 +341,7 @@ static inline void ackInterrupt(irq_t irq)
 #ifdef ENABLE_SMP_SUPPORT
     if (irq == irq_reschedule_ipi || irq == irq_remote_call_ipi) {
         ipi_clear_irq(irq);
+        sbi_clear_ipi();
     }
 #endif
 }
