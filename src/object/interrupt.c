@@ -133,6 +133,10 @@ exception_t decodeIRQHandlerInvocation(word_t invLabel, irq_t irq)
 
 void invokeIRQHandler_AckIRQ(irq_t irq)
 {
+#ifdef CONFIG_ARCH_RISCV
+    return;
+#endif
+
 #if defined ENABLE_SMP_SUPPORT && defined CONFIG_ARCH_ARM
     if (IRQ_IS_PPI(irq) && IRQT_TO_CORE(irq) != getCurrentCPUIndex()) {
         doRemoteMaskPrivateInterrupt(IRQT_TO_CORE(irq), false, IRQT_TO_IDX(irq));
@@ -206,7 +210,9 @@ void handleInterrupt(irq_t irq)
             printf("Undelivered IRQ: %d\n", (int)IRQT_TO_IRQ(irq));
 #endif
         }
+#ifndef CONFIG_ARCH_RISCV
         maskInterrupt(true, irq);
+#endif
         break;
     }
 

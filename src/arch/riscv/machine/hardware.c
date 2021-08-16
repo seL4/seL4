@@ -194,32 +194,25 @@ static inline irq_t getActiveIRQ(void)
         return irq;
     }
 
-    /* No interrupt currently active, find a new one from the sources. The
-     * priorities are: external -> software -> timer.
-     */
+    /* No interrupt currently active, find a new one from the sources. */
     word_t sip = read_sip();
-    if (sip & BIT(SIP_SEIP)) {
+    if (sip & BIT(SIP_STIP)) {
+#if CONFIG_RISCV_NUM_VTIMERS > 0
+        irq = handleVTimer();
+#else
+        irq = KERNEL_TIMER_IRQ;
+#endif
+    } else if (sip & BIT(SIP_SSIP)) {
+        irq = ipi_get_irq();
+    } else if (sip & BIT(SIP_SEIP)) {
         /* Even if we say an external interrupt is pending, the PLIC may not
          * return any pending interrupt here in some corner cases. A level
          * triggered interrupt might have been deasserted again or another hard
          * has claimed it in a multicore system.
          */
         irq = plic_get_claim();
-        if (irq != irqInvalid) {
-            plic_complete_claim(irq);
-        }
-#ifdef ENABLE_SMP_SUPPORT
-    } else if (sip & BIT(SIP_SSIP)) {
-        sbi_clear_ipi();
-        irq = ipi_get_irq();
-#endif
-    } else if (sip & BIT(SIP_STIP)) {
-#if CONFIG_RISCV_NUM_VTIMERS > 0
-        irq = handleVTimer();
-#else
-        // Supervisor timer interrupt
-        irq = KERNEL_TIMER_IRQ;
-#endif
+        // unmatched writes to claim are ignored by hardware
+        plic_complete_claim(irq);
     } else {
         /* Seems none of the known sources has a pending interrupt. This can
          * happen if e.g. if another hart context has claimed the interrupt
@@ -269,7 +262,7 @@ void setIRQTrigger(irq_t irq, bool_t edge_triggered)
 static inline bool_t isIRQPending(void)
 {
     word_t sip = read_sip();
-    return (sip & (BIT(SIP_STIP) | BIT(SIP_SEIP)));
+    return (sip & (BIT(SIP_SSIP) | BIT(SIP_STIP) | BIT(SIP_SEIP)));
 }
 
 /**
@@ -285,6 +278,10 @@ static inline bool_t isIRQPending(void)
 static inline void maskInterrupt(bool_t disable, irq_t irq)
 {
     assert(IS_IRQ_VALID(irq));
+#if CONFIG_RISCV_NUM_VTIMERS > 0
+    if (irq >= INTERRUPT_VTIMER_START && irq <= INTERRUPT_VTIMER_END) return;
+#endif
+
     if (irq == KERNEL_TIMER_IRQ) {
         if (disable) {
             clear_sie_mask(BIT(SIE_STIE));
@@ -322,6 +319,7 @@ static inline void ackInterrupt(irq_t irq)
 #ifdef ENABLE_SMP_SUPPORT
     if (irq == irq_reschedule_ipi || irq == irq_remote_call_ipi) {
         ipi_clear_irq(irq);
+        sbi_clear_ipi();
     }
 #endif
 }
