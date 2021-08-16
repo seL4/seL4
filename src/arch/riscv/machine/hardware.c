@@ -70,6 +70,26 @@ BOOT_CODE void map_kernel_devices(void)
     }
 }
 
+static inline uint64_t get_cycles(void)
+#if __riscv_xlen == 32
+{
+    uint32_t nH, nL;
+    asm volatile(
+        "rdtimeh %0\n"
+        "rdtime  %1\n"
+        : "=r"(nH), "=r"(nL));
+    return ((uint64_t)((uint64_t) nH << 32)) | (nL);
+}
+#else
+{
+    uint64_t n;
+    asm volatile(
+        "rdtime %0"
+        : "=r"(n));
+    return n;
+}
+#endif
+
 #if CONFIG_RISCV_NUM_VTIMERS > 0
 #define VTIMER_MAX_CYCLES   0xffffffffffffffff
 #define NUM_VTIMERS     ((CONFIG_RISCV_NUM_VTIMERS + 1))
@@ -103,7 +123,14 @@ void setVTimer(word_t vtimer, uint64_t cycles)
         vtimers[core_id].next_cycles = cycles;
     }
 
-    sbi_set_timer(vtimers[core_id].next_cycles);
+    uint64_t target = vtimers[core_id].next_cycles;
+    if (vtimers[core_id].next_cycles != VTIMER_MAX_CYCLES) {
+        while (get_cycles() > target) {
+            target += 500;
+        }
+    }
+    sbi_set_timer(target);
+
     return;
 }
 
@@ -131,7 +158,14 @@ static irq_t handleVTimer(void)
         /* no next timer */
         vtimers[core_id].next = NUM_VTIMERS;
     }
-    sbi_set_timer(vtimers[core_id].next_cycles);
+
+    uint64_t target = vtimers[core_id].next_cycles;
+    if (vtimers[core_id].next_cycles != VTIMER_MAX_CYCLES) {
+        while (get_cycles() > target) {
+            target += 500;
+        }
+    }
+    sbi_set_timer(target);
     return irq;
 }
 
@@ -311,26 +345,6 @@ static inline void ackInterrupt(irq_t irq)
 #endif
 }
 
-static inline uint64_t get_cycles(void)
-#if __riscv_xlen == 32
-{
-    uint32_t nH, nL;
-    asm volatile(
-        "rdtimeh %0\n"
-        "rdtime  %1\n"
-        : "=r"(nH), "=r"(nL));
-    return ((uint64_t)((uint64_t) nH << 32)) | (nL);
-}
-#else
-{
-    uint64_t n;
-    asm volatile(
-        "rdtime %0"
-        : "=r"(n));
-    return n;
-}
-#endif
-
 static inline int read_current_timer(unsigned long *timer_val)
 {
     *timer_val = riscv_read_time();
@@ -340,18 +354,17 @@ static inline int read_current_timer(unsigned long *timer_val)
 #ifndef CONFIG_KERNEL_MCS
 void resetTimer(void)
 {
-
-    uint64_t target;
+    uint64_t target = get_cycles() + RESET_CYCLES;
     // repeatedly try and set the timer in a loop as otherwise there is a race and we
     // may set a timeout in the past, resulting in it never getting triggered
-    do {
-        target = get_cycles() + RESET_CYCLES;
 #if CONFIG_RISCV_NUM_VTIMERS > 0
         setVTimer(KERNEL_PREEMPT_VTIMER, target);
 #else
+    do {
+        target = get_cycles() + RESET_CYCLES;
         sbi_set_timer(target);
-#endif
     } while (get_cycles() > target);
+#endif
 }
 
 /**
