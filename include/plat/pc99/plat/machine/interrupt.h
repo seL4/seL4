@@ -96,6 +96,8 @@ static inline void ackInterrupt(irq_t irq)
     } else {
         apic_ack_active_interrupt();
     }
+
+    ARCH_NODE_STATE(x86KScurInterrupt) = int_invalid;
 }
 
 static inline void handleSpuriousIRQ(void)
