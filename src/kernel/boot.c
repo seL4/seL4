@@ -94,7 +94,7 @@ BOOT_CODE bool_t reserve_region(p_region_t reg)
     return true;
 }
 
-BOOT_CODE bool_t insert_region(region_t reg)
+BOOT_CODE static bool_t insert_region(region_t reg)
 {
     assert(reg.start <= reg.end);
     if (is_reg_empty(reg)) {
@@ -165,7 +165,11 @@ BOOT_CODE static void maybe_alloc_extra_bi(word_t cmp_size_bits, word_t extra_bi
     }
 }
 
-BOOT_CODE void create_rootserver_objects(pptr_t start, v_region_t it_v_reg, word_t extra_bi_size_bits)
+/* Create pptrs for all root server objects, starting at a give start address,
+ * to cover the virtual memory region v_reg, and any extra boot info.
+ */
+BOOT_CODE static void create_rootserver_objects(pptr_t start, v_region_t it_v_reg,
+                                                word_t extra_bi_size_bits)
 {
     /* the largest object the PD, the root cnode, or the extra boot info */
     word_t cnode_size_bits = CONFIG_ROOT_CNODE_SIZE_BITS + seL4_SlotBits;
