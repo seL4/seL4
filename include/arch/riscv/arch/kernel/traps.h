@@ -12,10 +12,12 @@
 
 static inline void arch_c_entry_hook(void)
 {
+    /* Nothing architecture specific to be done. */
 }
 
 static inline void arch_c_exit_hook(void)
 {
+    /* Nothing architecture specific to be done. */
 }
 
 #ifdef CONFIG_KERNEL_MCS
