@@ -1,6 +1,7 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ * Copyright 2021, HENSOLDT Cyber
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -19,7 +20,7 @@ void init_kernel(
     paddr_t ui_p_reg_end,
     sword_t pv_offset,
     vptr_t  v_entry,
-    paddr_t dtb_addr_p,
+    paddr_t dtb_phys_addr,
     uint32_t dtb_size
 #ifdef ENABLE_SMP_SUPPORT
     ,

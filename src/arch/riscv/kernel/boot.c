@@ -64,13 +64,8 @@ BOOT_CODE static bool_t arch_init_freemem(region_t ui_reg,
     res_reg[0].end = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void *)ki_end));
 
     int index = 1;
-
-    /* add the dtb region, if it is not empty */
     if (dtb_p_reg.start) {
-        if (index >= ARRAY_SIZE(res_reg)) {
-            printf("ERROR: no slot to add DTB to reserved regions\n");
-            return false;
-        }
+        /* optionally reserve the dtb region, as it could be empty */
         res_reg[index] = paddr_to_pptr_reg(dtb_p_reg);
         index += 1;
     }
@@ -225,6 +220,42 @@ static BOOT_CODE bool_t try_init_kernel(
 
     /* initialize the platform */
     init_plat();
+
+    /* If a DTB was provided, pass the data on as extra bootinfo */
+    p_region_t dtb_p_reg = P_REG_EMPTY;
+    if (dtb_size > 0) {
+        paddr_t dtb_p_end = ROUND_UP(dtb_phys_addr + dtb_size, PAGE_BITS);
+        /* An integer overflow happened in DTB end address calculation, the
+         * location or size passed seems invalid.
+         */
+        if (dtb_p_end < dtb_phys_addr) {
+            printf("ERROR: DTB location at %"SEL4_PRIx_word
+                   " len %"SEL4_PRIu_word" invalid\n",
+                   dtb_phys_addr, dtb_size);
+            return false;
+        }
+        /* If the DTB is located in physical memory that is not mapped in the
+         * kernel window we cannot access it.
+         */
+        if (dtb_p_end >= PADDR_TOP) {
+            printf("ERROR: DTB at [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] "
+                   "exceeds PADDR_TOP (%"SEL4_PRIx_word")\n",
+                   dtb_phys_addr, dtb_p_end, PADDR_TOP);
+            return false;
+        }
+        /* DTB seems valid and accessible, pass it on in bootinfo. */
+        extra_bi_size += sizeof(seL4_BootInfoHeader) + dtb_size;
+        /* Remember the page aligned memory region it uses. */
+        dtb_p_reg = (p_region_t) {
+            .start = ROUND_DOWN(dtb_phys_addr, PAGE_BITS),
+            .end   = dtb_p_end
+        };
+    }
+
+    /* The region of the initial thread is the user image + ipcbuf + boot info + extra */
+    word_t extra_bi_size_bits = calculate_extra_bi_size_bits(extra_bi_size);
+    it_v_reg.start = ui_v_reg.start;
+    it_v_reg.end = extra_bi_frame_vptr + BIT(extra_bi_size_bits);
 
     if (it_v_reg.end >= USER_TOP) {
         printf("ERROR: userland image virt [%p..%p] exceeds USER_TOP (%p)\n",
@@ -405,7 +436,7 @@ BOOT_CODE VISIBLE void init_kernel(
     paddr_t ui_p_reg_end,
     sword_t pv_offset,
     vptr_t  v_entry,
-    paddr_t dtb_addr_p,
+    paddr_t dtb_phys_addr,
     uint32_t dtb_size
 #ifdef ENABLE_SMP_SUPPORT
     ,
@@ -423,7 +454,7 @@ BOOT_CODE VISIBLE void init_kernel(
                                  ui_p_reg_end,
                                  pv_offset,
                                  v_entry,
-                                 dtb_addr_p,
+                                 dtb_phys_addr,
                                  dtb_size);
     } else {
         result = try_init_kernel_secondary_core(hart_id, core_id);
@@ -433,7 +464,7 @@ BOOT_CODE VISIBLE void init_kernel(
                              ui_p_reg_end,
                              pv_offset,
                              v_entry,
-                             dtb_addr_p,
+                             dtb_phys_addr,
                              dtb_size);
 #endif
     if (!result) {
