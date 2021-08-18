@@ -71,12 +71,13 @@ jobs:
         platform:
           - sabre
           # - hikey
-          # - imx8mm_evk
+          - imx8mm_evk
           - odroid_c2
           # - odroid_xu4
           - am335x_boneblack
+          - tx2
           # - rpi3
-          # - zynqmp
+          - zynqmp
         compiler: [gcc, clang]
         include:
            - platform: pc99

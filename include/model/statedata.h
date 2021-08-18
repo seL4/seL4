@@ -48,7 +48,7 @@
 #define ARCH_NODE_STATE_ON_CORE(_state, _core) _state
 #define NODE_STATE_ON_CORE(_state, _core)      _state
 
-#define CURRENT_CPU_INDEX() 0
+#define CURRENT_CPU_INDEX() SEL4_WORD_CONST(0)
 
 #endif /* ENABLE_SMP_SUPPORT */
 

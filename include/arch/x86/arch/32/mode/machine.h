@@ -181,7 +181,7 @@ static inline word_t x86_read_gs_base_impl(void)
 
 static inline void x86_set_tls_segment_base(word_t tls_base)
 {
-    x86_write_gs_base(tls_base, SMP_TERNARY(getCurrentCPUIndex(), 0));
+    x86_write_gs_base(tls_base, CURRENT_CPU_INDEX());
 }
 
 static inline void init_syscall_msrs(void)

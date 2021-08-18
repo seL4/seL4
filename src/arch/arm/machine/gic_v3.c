@@ -180,7 +180,7 @@ BOOT_CODE static void dist_init(void)
 BOOT_CODE static void gicr_locate_interface(void)
 {
     word_t offset;
-    int core_id = SMP_TERNARY(getCurrentCPUIndex(), 0);
+    int core_id = CURRENT_CPU_INDEX();
     word_t mpidr = get_current_mpidr();
     uint32_t val;
 
