@@ -68,7 +68,8 @@ BOOT_CODE bool_t reserve_region(p_region_t reg)
         if (ndks_boot.reserved[i].start > reg.end) {
             /* move regions down, making sure there's enough room */
             if (ndks_boot.resv_count + 1 >= MAX_NUM_RESV_REG) {
-                printf("Can't mark region 0x%lx-0x%lx as reserved, try increasing MAX_NUM_RESV_REG (currently %d)\n",
+                printf("Can't mark region 0x%"SEL4_PRIx_word"-0x%"SEL4_PRIx_word
+                       " as reserved, try increasing MAX_NUM_RESV_REG (currently %d)\n",
                        reg.start, reg.end, (int)MAX_NUM_RESV_REG);
                 return false;
             }
@@ -83,7 +84,8 @@ BOOT_CODE bool_t reserve_region(p_region_t reg)
     }
 
     if (i + 1 == MAX_NUM_RESV_REG) {
-        printf("Can't mark region 0x%lx-0x%lx as reserved, try increasing MAX_NUM_RESV_REG (currently %d)\n",
+        printf("Can't mark region 0x%"SEL4_PRIx_word"-0x%"SEL4_PRIx_word
+               " as reserved, try increasing MAX_NUM_RESV_REG (currently %d)\n",
                reg.start, reg.end, (int)MAX_NUM_RESV_REG);
         return false;
     }
@@ -113,11 +115,13 @@ BOOT_CODE static bool_t insert_region(region_t reg)
      * Note that the capDL allocation toolchain does not know about
      * MAX_NUM_FREEMEM_REG, so throwing away regions may prevent
      * capDL applications from being loaded! */
-    printf("Can't fit memory region 0x%lx-0x%lx, try increasing MAX_NUM_FREEMEM_REG (currently %d)\n",
+    printf("Can't fit memory region 0x%"SEL4_PRIx_word"-0x%"SEL4_PRIx_word
+           ", try increasing MAX_NUM_FREEMEM_REG (currently %d)\n",
            reg.start, reg.end, (int)MAX_NUM_FREEMEM_REG);
     assert(!"Ran out of freemem slots");
 #else
-    printf("Dropping memory region 0x%lx-0x%lx, try increasing MAX_NUM_FREEMEM_REG (currently %d)\n",
+    printf("Dropping memory region 0x%"SEL4_PRIx_word"-0x%"SEL4_PRIx_word
+           ", try increasing MAX_NUM_FREEMEM_REG (currently %d)\n",
            reg.start, reg.end, (int)MAX_NUM_FREEMEM_REG);
 #endif
     return false;
@@ -277,7 +281,6 @@ create_domain_cap(cap_t root_cnode_cap)
     cap_t cap = cap_domain_cap_new();
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapDomain), cap);
 }
-
 
 BOOT_CODE cap_t create_ipcbuf_frame_cap(cap_t root_cnode_cap, cap_t pd_cap, vptr_t vptr)
 {
