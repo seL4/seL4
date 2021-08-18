@@ -77,7 +77,7 @@ jobs:
           - am335x_boneblack
           - tx2
           # - rpi3
-          # - zynqmp
+          - zynqmp
         compiler: [gcc, clang]
         include:
            - platform: pc99
