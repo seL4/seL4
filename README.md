@@ -12,6 +12,7 @@ The seL4 microkernel
 [![Simulation](https://github.com/seL4/seL4/actions/workflows/sel4test-sim.yml/badge.svg)](https://github.com/seL4/seL4/actions/workflows/sel4test-sim.yml)
 [![C Parser](https://github.com/seL4/seL4/actions/workflows/cparser.yml/badge.svg)](https://github.com/seL4/seL4/actions/workflows/cparser.yml)
 [![Kernel](https://github.com/seL4/seL4/actions/workflows/compilation-checks.yml/badge.svg)](https://github.com/seL4/seL4/actions/workflows/compilation-checks.yml)
+[![Proof Sync](https://github.com/seL4/seL4/actions/workflows/preprocess-deploy.yml/badge.svg)](https://github.com/seL4/seL4/actions/workflows/preprocess-deploy.yml)
 [![RefMan](https://github.com/seL4/seL4/actions/workflows/manual.yml/badge.svg)](https://github.com/seL4/seL4/actions/workflows/manual.yml)
 [![XML](https://github.com/seL4/seL4/actions/workflows/xml_lint.yml/badge.svg)](https://github.com/seL4/seL4/actions/workflows/xml_lint.yml)
 
