@@ -2,36 +2,61 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause
 
-# sel4test hardware builds and runs
-#
-# See sel4test-hw/builds.yml in the repo seL4/ci-actions for configs.
+# Deploy default.xml to sel4test-manifest after successful runs.
 
-name: seL4Test HW
+name: seL4Test
 
 on:
-  # needs PR target for secrets access; guard by requiring label
-  pull_request_target:
-    types: [opened, reopened, synchronize, labeled]
+  push:
+    branches: [master]
+    paths-ignore:
+      - '**.md'
 
-# downgrade permissions to read-only as you would have in a standard PR action
-permissions:
-  contents: read
+  # allow manual trigger
+  workflow_dispatch:
+
+  # allow explict trigger from other repos when dependencies have changed
+  repository_dispatch:
+    types: [deps-update]
 
 jobs:
+  code:
+    name: Freeze Code
+    runs-on: ubuntu-latest
+    outputs:
+      xml: ${{ steps.repo.outputs.xml }}
+    steps:
+    - id: repo
+      uses: seL4/ci-actions/repo-checkout@master
+      with:
+        manifest_repo: sel4test-manifest
+        manifest: master.xml
+
+  sim:
+    name: Simulation
+    needs: code
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        march: [armv6a, armv7a, armv8a, nehalem, rv32imac, rv64imac]
+        compiler: [gcc, clang]
+        exclude:
+          - march: rv32imac
+            compiler: clang
+          - march: rv64imac
+            compiler: clang
+    steps:
+    - uses: seL4/ci-actions/sel4test-sim@master
+      with:
+        xml: ${{ needs.code.outputs.xml }}
+        march: ${{ matrix.march }}
+        compiler: ${{ matrix.compiler }}
+
   hw-build:
     name: HW Build
+    needs: code
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' ||
-            github.event_name == 'pull_request_target' &&
-              github.event.action != 'labeled' &&
-              (contains(github.event.pull_request.labels.*.name, 'hw-build') ||
-               contains(github.event.pull_request.labels.*.name, 'hw-test')) ||
-            github.event_name == 'pull_request_target' &&
-              github.event.action == 'labeled' &&
-              (github.event.label.name == 'hw-build' ||
-               github.event.label.name == 'hw-test') }}
     strategy:
-      fail-fast: false
       matrix:
         march: [armv6a, armv7a, armv8a, nehalem]
         compiler: [gcc, clang]
@@ -42,9 +67,9 @@ jobs:
     - name: Build
       uses: seL4/ci-actions/sel4test-hw@master
       with:
+        xml: ${{ needs.code.outputs.xml }}
         march: ${{ matrix.march }}
         compiler: ${{ matrix.compiler }}
-        sha: ${{ github.event.pull_request.head.sha }}
     - name: Upload images
       uses: actions/upload-artifact@v2
       with:
@@ -54,16 +79,10 @@ jobs:
   hw-run:
     name: HW Run
     runs-on: ubuntu-latest
-    needs: hw-build
-    if: ${{ github.event_name == 'push' ||
-            github.event_name == 'pull_request_target' &&
-              github.event.action != 'labeled' &&
-              contains(github.event.pull_request.labels.*.name, 'hw-test') ||
-            github.event_name == 'pull_request_target' &&
-              github.event.action == 'labeled' &&
-              github.event.label.name == 'hw-test' }}
+    needs: [sim, hw-build]
+    # run only one of these jobs concurrently:
+    concurrency: hw-run
     strategy:
-      fail-fast: false
       matrix:
         # commented-out platforms hopefully available soon
         platform:
@@ -118,3 +137,16 @@ jobs:
           index: $${{ strategy.job-index }}
         env:
           HW_SSH: ${{ secrets.HW_SSH }}
+
+  deploy:
+    name: Deploy manifest
+    runs-on: ubuntu-latest
+    needs: [code, hw-run]
+    steps:
+    - name: Deploy
+      uses: seL4/ci-actions/manifest-deploy@master
+      with:
+        xml: ${{ needs.code.outputs.xml }}
+        manifest_repo: sel4test-manifest
+      env:
+        GH_SSH: ${{ secrets.CI_SSH }}
