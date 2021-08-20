@@ -366,7 +366,7 @@ static inline void Arch_finaliseInterrupt(void)
 
 static inline void x86_set_tls_segment_base(word_t tls_base);
 
-/* Update the value of the actual regsiter to hold the expected value */
+/* Update the value of the actual register to hold the expected value */
 static inline exception_t Arch_setTLSRegister(word_t tls_base)
 {
     word_t sanitised = Mode_sanitiseRegister(TLS_BASE, tls_base);
@@ -378,7 +378,7 @@ static inline exception_t Arch_setTLSRegister(word_t tls_base)
 #ifndef CONFIG_FSGSBASE_INST
     /*
      * The context is only updated from the register on a context switch
-     * if the FSGS instructions are enabled. When they aren't it msut be
+     * if the FSGS instructions are enabled. When they aren't it must be
      * manually stored here.
      */
     setRegister(NODE_STATE(ksCurThread), TLS_BASE, tls_base);
