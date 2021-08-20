@@ -80,8 +80,6 @@ jobs:
     name: HW Run
     runs-on: ubuntu-latest
     needs: [sim, hw-build]
-    # run only one of these jobs concurrently:
-    concurrency: hw-run
     strategy:
       matrix:
         # commented-out platforms hopefully available soon
@@ -112,6 +110,8 @@ jobs:
         # include:
         #    - platform: hifive
         #      compiler: gcc
+    # do not run concurrently with other workflows, but do run concurrently in the build matrix
+    concurrency: hw-run-${{ strategy.job-index }}
     steps:
       - name: Get machine queue
         uses: actions/checkout@v2
