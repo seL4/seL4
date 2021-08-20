@@ -188,7 +188,8 @@ void handleInterrupt(irq_t irq)
          * driver reported this interrupt. Maybe the value maxIRQ is just wrong
          * or set to a lower value because the interrupts are unused.
          */
-        printf("Received IRQ %d, which is above the platforms maxIRQ of %d\n", (int)IRQT_TO_IRQ(irq), (int)maxIRQ);
+        printf("Received IRQ %d, which is above the platforms maxIRQ of %d\n",
+               (int)IRQT_TO_IRQ(irq), (int)maxIRQ);
         maskInterrupt(true, irq);
         ackInterrupt(irq);
         return;
@@ -196,11 +197,7 @@ void handleInterrupt(irq_t irq)
 
     switch (intStateIRQTable[IRQT_TO_IDX(irq)]) {
     case IRQSignal: {
-        /* Merging the variable declaration and initialization into one line
-         * requires an update in the proofs first. Might be a c89 legacy.
-         */
-        cap_t cap;
-        cap = intStateIRQNode[IRQT_TO_IDX(irq)].cap;
+        cap_t cap = intStateIRQNode[IRQT_TO_IDX(irq)].cap;
         if (cap_get_capType(cap) == cap_notification_cap &&
             cap_notification_cap_get_capNtfnCanSend(cap)) {
             sendSignal(NTFN_PTR(cap_notification_cap_get_capNtfnPtr(cap)),
