@@ -68,7 +68,8 @@ BOOT_CODE bool_t reserve_region(p_region_t reg)
         if (ndks_boot.reserved[i].start > reg.end) {
             /* move regions down, making sure there's enough room */
             if (ndks_boot.resv_count + 1 >= MAX_NUM_RESV_REG) {
-                printf("Can't mark region 0x%lx-0x%lx as reserved, try increasing MAX_NUM_RESV_REG (currently %d)\n",
+                printf("Can't mark region 0x%"SEL4_PRIx_word"-0x%"SEL4_PRIx_word
+                       " as reserved, try increasing MAX_NUM_RESV_REG (currently %d)\n",
                        reg.start, reg.end, (int)MAX_NUM_RESV_REG);
                 return false;
             }
@@ -83,7 +84,8 @@ BOOT_CODE bool_t reserve_region(p_region_t reg)
     }
 
     if (i + 1 == MAX_NUM_RESV_REG) {
-        printf("Can't mark region 0x%lx-0x%lx as reserved, try increasing MAX_NUM_RESV_REG (currently %d)\n",
+        printf("Can't mark region 0x%"SEL4_PRIx_word"-0x%"SEL4_PRIx_word
+               " as reserved, try increasing MAX_NUM_RESV_REG (currently %d)\n",
                reg.start, reg.end, (int)MAX_NUM_RESV_REG);
         return false;
     }
@@ -94,7 +96,7 @@ BOOT_CODE bool_t reserve_region(p_region_t reg)
     return true;
 }
 
-BOOT_CODE bool_t insert_region(region_t reg)
+BOOT_CODE static bool_t insert_region(region_t reg)
 {
     assert(reg.start <= reg.end);
     if (is_reg_empty(reg)) {
@@ -113,11 +115,13 @@ BOOT_CODE bool_t insert_region(region_t reg)
      * Note that the capDL allocation toolchain does not know about
      * MAX_NUM_FREEMEM_REG, so throwing away regions may prevent
      * capDL applications from being loaded! */
-    printf("Can't fit memory region 0x%lx-0x%lx, try increasing MAX_NUM_FREEMEM_REG (currently %d)\n",
+    printf("Can't fit memory region 0x%"SEL4_PRIx_word"-0x%"SEL4_PRIx_word
+           ", try increasing MAX_NUM_FREEMEM_REG (currently %d)\n",
            reg.start, reg.end, (int)MAX_NUM_FREEMEM_REG);
     assert(!"Ran out of freemem slots");
 #else
-    printf("Dropping memory region 0x%lx-0x%lx, try increasing MAX_NUM_FREEMEM_REG (currently %d)\n",
+    printf("Dropping memory region 0x%"SEL4_PRIx_word"-0x%"SEL4_PRIx_word
+           ", try increasing MAX_NUM_FREEMEM_REG (currently %d)\n",
            reg.start, reg.end, (int)MAX_NUM_FREEMEM_REG);
 #endif
     return false;
@@ -165,7 +169,11 @@ BOOT_CODE static void maybe_alloc_extra_bi(word_t cmp_size_bits, word_t extra_bi
     }
 }
 
-BOOT_CODE void create_rootserver_objects(pptr_t start, v_region_t it_v_reg, word_t extra_bi_size_bits)
+/* Create pptrs for all root server objects, starting at a give start address,
+ * to cover the virtual memory region v_reg, and any extra boot info.
+ */
+BOOT_CODE static void create_rootserver_objects(pptr_t start, v_region_t it_v_reg,
+                                                word_t extra_bi_size_bits)
 {
     /* the largest object the PD, the root cnode, or the extra boot info */
     word_t cnode_size_bits = CONFIG_ROOT_CNODE_SIZE_BITS + seL4_SlotBits;
@@ -273,7 +281,6 @@ create_domain_cap(cap_t root_cnode_cap)
     cap_t cap = cap_domain_cap_new();
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapDomain), cap);
 }
-
 
 BOOT_CODE cap_t create_ipcbuf_frame_cap(cap_t root_cnode_cap, cap_t pd_cap, vptr_t vptr)
 {

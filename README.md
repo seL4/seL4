@@ -9,9 +9,10 @@ The seL4 microkernel
 
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5003/badge)](https://bestpractices.coreinfrastructure.org/projects/5003)
 [![CI](https://github.com/seL4/seL4/actions/workflows/push.yml/badge.svg)](https://github.com/seL4/seL4/actions/workflows/push.yml)
-[![Simulation](https://github.com/seL4/seL4/actions/workflows/sel4test-sim.yml/badge.svg)](https://github.com/seL4/seL4/actions/workflows/sel4test-sim.yml)
+[![seL4Test](https://github.com/seL4/seL4/actions/workflows/sel4test-deploy.yml/badge.svg)](https://github.com/seL4/seL4/actions/workflows/sel4test-deploy.yml)
 [![C Parser](https://github.com/seL4/seL4/actions/workflows/cparser.yml/badge.svg)](https://github.com/seL4/seL4/actions/workflows/cparser.yml)
-[![Kernel](https://github.com/seL4/seL4/actions/workflows/compilation-checks.yml/badge.svg)](https://github.com/seL4/seL4/actions/workflows/compilation-checks.yml)
+[![Compile](https://github.com/seL4/seL4/actions/workflows/compilation-checks.yml/badge.svg)](https://github.com/seL4/seL4/actions/workflows/compilation-checks.yml)
+[![Proof Sync](https://github.com/seL4/seL4/actions/workflows/preprocess-deploy.yml/badge.svg)](https://github.com/seL4/seL4/actions/workflows/preprocess-deploy.yml)
 [![RefMan](https://github.com/seL4/seL4/actions/workflows/manual.yml/badge.svg)](https://github.com/seL4/seL4/actions/workflows/manual.yml)
 [![XML](https://github.com/seL4/seL4/actions/workflows/xml_lint.yml/badge.svg)](https://github.com/seL4/seL4/actions/workflows/xml_lint.yml)
 

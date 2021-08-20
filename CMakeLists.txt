@@ -6,6 +6,8 @@
 
 cmake_minimum_required(VERSION 3.8.2)
 include(CheckCCompilerFlag)
+
+include(${CMAKE_CURRENT_LIST_DIR}/configs/seL4Config.cmake)
 project(seL4 C ASM)
 
 # First find our helpers
@@ -35,20 +37,6 @@ RequireTool(HARDWARE_GEN_PATH hardware_gen.py)
 RequireTool(INVOCATION_ID_GEN_PATH invocation_header_gen.py)
 RequireTool(SYSCALL_ID_GEN_PATH syscall_header_gen.py)
 RequireTool(XMLLINT_PATH xmllint.sh)
-
-set(c_sources "")
-set(asm_sources "")
-set(bf_declarations "")
-foreach(file IN LISTS config_c_sources)
-    list(APPEND c_sources "${CMAKE_CURRENT_SOURCE_DIR}/${file}")
-endforeach()
-foreach(file IN LISTS config_asm_sources)
-    list(APPEND asm_sources "${CMAKE_CURRENT_SOURCE_DIR}/${file}")
-endforeach()
-foreach(file IN LISTS config_bf_declarations)
-    list(APPEND bf_declarations "${CMAKE_CURRENT_SOURCE_DIR}/${file}")
-endforeach()
-set(KernelDTSList "${config_KernelDTSList}")
 
 # Process the configuration scripts
 include(config.cmake)
@@ -182,6 +170,15 @@ add_compile_options(
     -Wpointer-arith
     -Wno-nonnull
     -ffreestanding
+    # GCC < 10 and clang < 11 put uninitialized global variables into a 'COMMON'
+    # section unless '-fno-common' is specified. The linker will put anything
+    # from 'COMMON' as the end of the '.bss' it nothing else is specified in the
+    # linker script. Besides making the variable placement look odd, this also
+    # tends to waste a page because we puts large aligned block at the end.
+    # Eventually, GCC 10 and clang 11 made '-fno-common' the default, see
+    # - https://gcc.gnu.org/gcc-10/changes.html
+    # - https://releases.llvm.org/11.0.0/tools/clang/docs/ReleaseNotes.html
+    -fno-common
 )
 
 # Add all the common flags to the linker args
