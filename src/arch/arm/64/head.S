@@ -1,5 +1,6 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright 2021, HENSOLDT Cyber
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -113,9 +114,24 @@ BEGIN_FUNC(_start)
     ldp     x2, x3, [sp], #16
     ldp     x0, x1, [sp], #16
 
-    /* Call bootstrapping implemented in C */
+    /* Call bootstrapping implemented in C with parameters:
+     *  x0: user image physical start address
+     *  x1: user image physical end address
+     *  x2: physical/virtual offset
+     *  x3: user image virtual entry address
+     *  x4: DTB physical address (0 if there is none)
+     *  x5: DTB size (0 if there is none)
+     */
     bl      init_kernel
 
-    /* Restore the initial thread */
+    /* Restore the initial thread. Note that the function restore_user_context()
+     * could technically also be called at the end of init_kernel() directly,
+     * there is no need to return to the assembly code here at all. However, for
+     * verification things are a lot easier when init_kernel() is a normal C
+     * function that returns. The function restore_user_context() is not a
+     * normal C function and thus handled specially in verification, it does
+     * highly architecture specific things to exit to user mode.
+     */
     b restore_user_context
+
 END_FUNC(_start)

@@ -62,6 +62,7 @@ SECTIONS
     .bss . : AT(ADDR(.bss) - KERNEL_OFFSET)
     {
         *(.bss)
+        *(COMMON) /* fallback in case '-fno-common' is not used */
 
         /* 4k breakpoint stack */
         _breakpoint_stack_bottom = .;

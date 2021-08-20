@@ -56,8 +56,6 @@ static inline CONST ticks_t getTimerPrecision(void)
 #include <mode/machine/timer.h>
 #include <plat/machine/hardware.h>
 
-#define HZ_IN_KHZ 1000llu
-
 /* but multiply by timer tick ms */
 #define TIMER_RELOAD    (TICKS_PER_MS * CONFIG_TIMER_TICK_MS)
 

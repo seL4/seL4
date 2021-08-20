@@ -125,14 +125,14 @@ extern struct debug_syscall_error current_debug_error;
  * kernel is not performing their requested operation.
  */
 #define userError(M, ...) \
-    do {                                                                     \
-        out_error(ANSI_DARK "<<" ANSI_GREEN "seL4(CPU %lu)" ANSI_DARK        \
-                " [%s/%d T%p \"%s\" @%lx]: " M ">>" ANSI_RESET "\n",         \
-                SMP_TERNARY(getCurrentCPUIndex(), 0lu),                      \
-                __func__, __LINE__, NODE_STATE(ksCurThread),                 \
-                THREAD_NAME,                                                 \
-                (word_t)getRestartPC(NODE_STATE(ksCurThread)),               \
-                ## __VA_ARGS__);                                             \
+    do {                                                                       \
+        out_error(ANSI_DARK "<<" ANSI_GREEN "seL4(CPU %" SEL4_PRIu_word ")"    \
+                ANSI_DARK " [%s/%d T%p \"%s\" @%lx]: " M ">>" ANSI_RESET "\n", \
+                CURRENT_CPU_INDEX(),                                           \
+                __func__, __LINE__, NODE_STATE(ksCurThread),                   \
+                THREAD_NAME,                                                   \
+                (word_t)getRestartPC(NODE_STATE(ksCurThread)),                 \
+                ## __VA_ARGS__);                                               \
     } while (0)
 #else /* !CONFIG_PRINTING */
 #define userError(...)

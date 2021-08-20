@@ -21,13 +21,16 @@ devices:
       # distributor
       - index: 0
         kernel: GIC_V2_DISTRIBUTOR_PPTR
+        kernel_size: 0x1000
       # controller
       - index: 1
         kernel: GIC_V2_CONTROLLER_PPTR
+        kernel_size: 0x1000
       # GICV
       - index: 2
         kernel: GIC_V2_VCPUCTRL_PPTR
         macro: CONFIG_ARM_HYPERVISOR_SUPPORT
+        kernel_size: 0x1000
     interrupts:
       INTERRUPT_VGIC_MAINTENANCE: 0
   # ARM GICv3
@@ -75,6 +78,7 @@ devices:
     regions:
       - index: 0
         kernel: AVIC_PPTR
+        kernel_size: 0x1000
   # ARM PL310 L2 cache controller (arm/l2c2x0.txt)
   - compatible:
       - arm,pl310-cache
@@ -178,6 +182,7 @@ devices:
     regions:
       - index: 0
         kernel: EPIT_PPTR
+        kernel_size: 0x1000
     interrupts:
       KERNEL_TIMER_IRQ: 0
   # i.MX GPT
@@ -212,6 +217,7 @@ devices:
       - index: 0
         kernel: CMPER_PPTR
         user: true
+        kernel_size: 0x1000
   # TI watchdog
   - compatible:
       - ti,omap3-wdt
@@ -241,6 +247,7 @@ devices:
         kernel: UART_PPTR
         macro: CONFIG_PRINTING
         user: true
+        kernel_size: 0x1000
 
   # RISC-V PLIC
   - compatible:

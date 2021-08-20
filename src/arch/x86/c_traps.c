@@ -209,7 +209,7 @@ void VISIBLE NORETURN c_handle_vmexit(void)
     tcb_t *cur_thread = NODE_STATE(ksCurThread);
     ARCH_NODE_STATE(x86KSCurrentGSBase) = -(word_t)1;
     ARCH_NODE_STATE(x86KSCurrentFSBase) = -(word_t)1;
-    x86_load_fsgs_base(cur_thread, SMP_TERNARY(getCurrentCPUIndex(), 0));
+    x86_load_fsgs_base(cur_thread, CURRENT_CPU_INDEX());
 
     c_entry_hook();
     /* NODE_LOCK will get called in handleVmexit */

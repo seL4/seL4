@@ -127,12 +127,12 @@ static inline void enableFpu(void)
     } else {
         enableFpuEL01();
     }
-    isFPUEnabledCached[SMP_TERNARY(getCurrentCPUIndex(), 0)] = true;
+    isFPUEnabledCached[CURRENT_CPU_INDEX()] = true;
 }
 
 static inline bool_t isFpuEnable(void)
 {
-    return isFPUEnabledCached[SMP_TERNARY(getCurrentCPUIndex(), 0)];
+    return isFPUEnabledCached[CURRENT_CPU_INDEX()];
 }
 #endif /* CONFIG_HAVE_FPU */
 
@@ -144,6 +144,6 @@ static inline void disableFpu(void)
     } else {
         disableFpuEL0();
     }
-    isFPUEnabledCached[SMP_TERNARY(getCurrentCPUIndex(), 0)] = false;
+    isFPUEnabledCached[CURRENT_CPU_INDEX()] = false;
 }
 

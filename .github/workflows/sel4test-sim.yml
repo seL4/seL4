@@ -6,15 +6,17 @@
 #
 # See sel4test-sim/builds.yml in the repo seL4/ci-actions for configs.
 
-name: seL4Test
+name: seL4Test Sim
 
 on:
-  push:
-    branches: [master]
   pull_request:
+    paths-ignore:
+      - 'manual/**'
+      - 'LICENSES/**'
+      - '*.md'
 
 jobs:
-  cparser:
+  sim:
     name: Simulation
     runs-on: ubuntu-latest
     strategy:
