@@ -8,7 +8,7 @@
 
 #include <config.h>
 
-#define TIMER_CLOCK_HZ @CONFIGURE_TIMER_FREQUENCY@
+#define TIMER_CLOCK_HZ ULL_CONST(@CONFIGURE_TIMER_FREQUENCY@)
 
 #include <machine/interrupt.h>
 

@@ -17,7 +17,7 @@ if(KernelPlatformExynos4)
     list(APPEND KernelDTSList "tools/dts/exynos4.dts")
     list(APPEND KernelDTSList "src/plat/exynos4/overlay-exynos4.dts")
     declare_default_headers(
-        TIMER_FREQUENCY 24000000llu
+        TIMER_FREQUENCY 24000000
         MAX_IRQ 159
         NUM_PPI 32
         TIMER drivers/timer/exynos4412-mct.h
