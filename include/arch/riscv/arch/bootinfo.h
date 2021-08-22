@@ -23,9 +23,8 @@
 #define NUM_RESERVED_REGIONS 3
 
 /* The maximum number of reserved regions is:
- * +1 for each free memory region (MAX_NUM_FREEMEM_REG)
- * +1 for each kernel frame (NUM_KERNEL_DEVICE_FRAMES, there might be none)
- * +1 for each region reserved by the boot code (NUM_RESERVED_REGIONS)
+ * - 1 for each physical memory region (MAX_NUM_FREEMEM_REG)
+ * - 1 for each kernel region (NUM_KERNEL_DEVICE_FRAMES, there might be none)
+ * - 1 each for kernel, dtb, and user image. (3)
  */
-#define MAX_NUM_RESV_REG (MAX_NUM_FREEMEM_REG + NUM_KERNEL_DEVICE_FRAMES + \
-                          NUM_RESERVED_REGIONS)
+#define MAX_NUM_RESV_REG (MAX_NUM_FREEMEM_REG + NUM_KERNEL_DEVICE_FRAMES + 3)

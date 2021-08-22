@@ -12,7 +12,6 @@
 #include <object/structures.h>
 
 #define activate_global_pd activate_kernel_vspace
-#define MODE_RESERVED 0
 
 /* ==================== BOOT CODE FINISHES HERE ==================== */
 
@@ -34,12 +33,6 @@ hw_asid_t getHWASID(asid_t asid);
 #endif
 
 asid_map_t findMapForASID(asid_t asid);
-
-#ifdef __clang__
-static const region_t BOOT_RODATA mode_reserved_region[] = {};
-#else
-static const region_t BOOT_RODATA *mode_reserved_region = NULL;
-#endif
 
 #ifdef AARCH64_VSPACE_S2_START_L1
 
