@@ -19,16 +19,6 @@ void setNextPC(tcb_t *thread, word_t v)
     setRegister(thread, NEXT_PC_REG, v);
 }
 
-BOOT_CODE int get_num_avail_p_regs(void)
-{
-    return sizeof(avail_p_regs) / sizeof(p_region_t);
-}
-
-BOOT_CODE const p_region_t *get_avail_p_regs(void)
-{
-    return (const p_region_t *) avail_p_regs;
-}
-
 BOOT_CODE void map_kernel_devices(void)
 {
     for (int i = 0; i < ARRAY_SIZE(kernel_devices); i++) {

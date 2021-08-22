@@ -215,8 +215,6 @@ static inline void Arch_finaliseInterrupt(void)
 {
 }
 
-int get_num_avail_p_regs(void);
-p_region_t *get_avail_p_regs(void);
 void map_kernel_devices(void);
 
 /** MODIFIES: [*] */

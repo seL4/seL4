@@ -72,8 +72,10 @@ BOOT_CODE static bool_t arch_init_freemem(region_t ui_reg, v_region_t it_v_reg,
     res_reg[index].end = ui_reg.end;
     index += 1;
 
-    return init_freemem(get_num_avail_p_regs(), get_avail_p_regs(), index,
-                        res_reg, it_v_reg, extra_bi_size_bits);
+    /* avail_p_regs comes from the auto-generated code */
+    return init_freemem(ARRAY_SIZE(avail_p_regs), avail_p_regs,
+                        index, res_reg,
+                        it_v_reg, extra_bi_size_bits);
 }
 
 BOOT_CODE static void init_irqs(cap_t root_cnode_cap)

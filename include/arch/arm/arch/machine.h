@@ -13,8 +13,6 @@
 
 #ifndef __ASSEMBLER__
 
-int get_num_avail_p_regs(void);
-const p_region_t *get_avail_p_regs(void);
 void map_kernel_devices(void);
 
 void initL2Cache(void);
