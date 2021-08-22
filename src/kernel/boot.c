@@ -102,6 +102,7 @@ BOOT_CODE static bool_t insert_region(region_t reg)
     if (is_reg_empty(reg)) {
         return true;
     }
+
     for (word_t i = 0; i < ARRAY_SIZE(ndks_boot.freemem); i++) {
         if (is_reg_empty(ndks_boot.freemem[i])) {
             reserve_region(pptr_to_paddr_reg(reg));
@@ -109,21 +110,25 @@ BOOT_CODE static bool_t insert_region(region_t reg)
             return true;
         }
     }
-#ifdef CONFIG_ARCH_ARM
-    /* boot.h should have calculated MAX_NUM_FREEMEM_REG correctly.
-     * If we've run out, then something is wrong.
-     * Note that the capDL allocation toolchain does not know about
-     * MAX_NUM_FREEMEM_REG, so throwing away regions may prevent
-     * capDL applications from being loaded! */
-    printf("Can't fit memory region 0x%"SEL4_PRIx_word"-0x%"SEL4_PRIx_word
-           ", try increasing MAX_NUM_FREEMEM_REG (currently %d)\n",
-           reg.start, reg.end, (int)MAX_NUM_FREEMEM_REG);
-    assert(!"Ran out of freemem slots");
-#else
-    printf("Dropping memory region 0x%"SEL4_PRIx_word"-0x%"SEL4_PRIx_word
-           ", try increasing MAX_NUM_FREEMEM_REG (currently %d)\n",
-           reg.start, reg.end, (int)MAX_NUM_FREEMEM_REG);
-#endif
+
+    /* We don't know if a platform or architecture picked MAX_NUM_FREEMEM_REG
+     * arbitrarily or carefully calculated it to be big enough. Running out of
+     * slots here is not really fatal, eventually memory allocation may fail
+     * if there is not enough free memory. However, allocations should never
+     * blindly assume to work, some error handling must always be in place even
+     * if the environment has been crafted carefully to support them. Thus, we
+     * don't stop the boot process here, but return an error. The caller should
+     * decide how bad this is.
+     */
+    printf("no free memory slot left for [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"],"
+           " consider increasing MAX_NUM_FREEMEM_REG (%u)\n",
+           reg.start, reg.end, (unsigned int)MAX_NUM_FREEMEM_REG);
+
+    /* For debug builds we consider this a fatal error. Rationale is, that the
+     * caller does not check the error code at the moment, but just ignores any
+     * failures silently. */
+    assert(0);
+
     return false;
 }
 
