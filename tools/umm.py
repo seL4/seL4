@@ -75,11 +75,10 @@ def is_base(x):
 def base_name(x):
     return x[1]
 
-# This assumes that membership is a DAG which is the case in C
-# We could memoize, doesn't seem worth it ...
-
 
 def paths_to_type(mp, f, start):
+    # This assumes that membership is a DAG which is the case in C
+
     def handle_one(fld):
         name, tp = fld
         if f(tp):
