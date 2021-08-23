@@ -352,6 +352,7 @@ void schedule(void)
 {
 #ifdef CONFIG_KERNEL_MCS
     awaken();
+    checkDomainTime();
 #endif
 
     if (NODE_STATE(ksSchedulerAction) != SchedulerAction_ResumeCurrentThread) {

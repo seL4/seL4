@@ -229,18 +229,24 @@ static inline void updateTimestamp(void)
     time_t consumed = (NODE_STATE(ksCurTime) - prev);
     NODE_STATE(ksConsumed) += consumed;
     if (CONFIG_NUM_DOMAINS > 1) {
-
         if ((consumed + MIN_BUDGET) >= ksDomainTime) {
             ksDomainTime = 0;
         } else {
             ksDomainTime -= consumed;
         }
-        if (unlikely(isCurDomainExpired())) {
-            NODE_STATE(ksReprogram) = true;
-            rescheduleRequired();
-        }
     }
 
+}
+
+/*
+ * Check if domain time has expired
+ */
+static inline void checkDomainTime(void)
+{
+    if (unlikely(isCurDomainExpired())) {
+        NODE_STATE(ksReprogram) = true;
+        rescheduleRequired();
+    }
 }
 
 /* Check if the current thread/domain budget has expired.
