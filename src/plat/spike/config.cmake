@@ -26,7 +26,7 @@ if(KernelPlatformSpike)
         list(APPEND KernelDTSList "tools/dts/spike.dts")
     endif()
     declare_default_headers(
-        TIMER_FREQUENCY 10000000llu PLIC_MAX_NUM_INT 0
+        TIMER_FREQUENCY 10000000 PLIC_MAX_NUM_INT 0
         INTERRUPT_CONTROLLER arch/machine/plic.h
     )
 else()

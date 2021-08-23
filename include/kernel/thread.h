@@ -138,7 +138,7 @@ static inline void commitTime(void)
                 refill_head(NODE_STATE(ksCurSC))->rAmount -= NODE_STATE(ksConsumed);
                 refill_tail(NODE_STATE(ksCurSC))->rAmount += NODE_STATE(ksConsumed);
             } else {
-                refill_split_check(NODE_STATE(ksConsumed));
+                refill_budget_check(NODE_STATE(ksConsumed));
             }
             assert(refill_sufficient(NODE_STATE(ksCurSC), 0));
             assert(refill_ready(NODE_STATE(ksCurSC)));
@@ -225,6 +225,7 @@ static inline void updateTimestamp(void)
 {
     time_t prev = NODE_STATE(ksCurTime);
     NODE_STATE(ksCurTime) = getCurrentTime();
+    assert(NODE_STATE(ksCurTime) < MAX_RELEASE_TIME);
     time_t consumed = (NODE_STATE(ksCurTime) - prev);
     NODE_STATE(ksConsumed) += consumed;
     if (CONFIG_NUM_DOMAINS > 1) {
@@ -242,16 +243,6 @@ static inline void updateTimestamp(void)
 
 }
 
-/* if the budget isn't enough, the timeslice for this SC is over. For
- * round robin threads this is sufficient, however for periodic threads
- * we also need to check there is space to schedule the replenishment - if the refill
- * is full then the timeslice is also over as the rest of the budget is forfeit. */
-static inline bool_t isSufficientAndSplittable(void)
-{
-    return refill_sufficient(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed)) && (isRoundRobin(NODE_STATE(ksCurSC))
-                                                                              || !refill_full(NODE_STATE(ksCurSC)));
-}
-
 /* Check if the current thread/domain budget has expired.
  * if it has, bill the thread, add it to the scheduler and
  * set up a reschedule.
@@ -264,7 +255,8 @@ static inline bool_t checkBudget(void)
     /* currently running thread must have available capacity */
     assert(refill_ready(NODE_STATE(ksCurSC)));
 
-    if (likely(isSufficientAndSplittable())) {
+    /* if the budget isn't enough, the timeslice for this SC is over. */
+    if (likely(refill_sufficient(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed)))) {
         if (unlikely(isCurDomainExpired())) {
             return false;
         }

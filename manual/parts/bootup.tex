@@ -58,8 +58,8 @@ The first 15 slots (or 14 slots if not MCS) contain specific capabilities as lis
       \texttt{seL4\_CapBootInfoFrame}       & BootInfo frame (see \autoref{ch:bootup:bootinfo}) \\
       \texttt{seL4\_CapInitThreadIPCBuffer} & initial thread's IPC buffer (see \autoref{sec:messageinfo}) \\
       \texttt{seL4\_CapDomain}              & domain cap (see \autoref{sec:domains}) \\
-      \texttt{seL4\_CapSMMUSIDControl}      & global ARM SMMU SID controller, null cap if unsupported (see \autoref{sec:smmuv2}) \\
-      \texttt{seL4\_CapSMMUCBControl}       & global ARM SMMU CB controller, null cap if unsupported (see \autoref{sec:smmuv2}) \\
+      \texttt{seL4\_CapSMMUSIDControl}      & global Arm SMMU SID controller, null cap if unsupported (see \autoref{sec:smmuv2}) \\
+      \texttt{seL4\_CapSMMUCBControl}       & global Arm SMMU CB controller, null cap if unsupported (see \autoref{sec:smmuv2}) \\
       \texttt{seL4\_CapInitThreadSC}        & initial thread's scheduling context (MCS only) \\
       \bottomrule
     \end{tabularx}
@@ -106,7 +106,7 @@ of slots in the initial thread's CNode, starting with CPTR \texttt{start} and wi
       \texttt{seL4\_SlotRegion}     & \texttt{sharedFrames}            & reserved \\
       \texttt{seL4\_SlotRegion}     & \texttt{userImageFrames}         & frames containing the userland image \\
       \texttt{seL4\_SlotRegion}     & \texttt{userImagePaging}         & userland-image paging structure caps \\
-      \texttt{seL4\_SlotRegion}     & \texttt{ioSpaceCaps}             & I/O space capabilities for ARM SMMU \\
+      \texttt{seL4\_SlotRegion}     & \texttt{ioSpaceCaps}             & I/O space capabilities for Arm SMMU \\
       \texttt{seL4\_SlotRegion}     & \texttt{extraBIPages}            & frames backing additional bootinfo information \\
       \texttt{seL4\_Uint8}          & \texttt{initThreadCNodeSizeBits} & CNode size ($2^n$ slots) \\
       \texttt{seL4\_Word}           & \texttt{initThreadDomain}        & domain of the initial thread (see \autoref{sec:domains}) \\
@@ -202,7 +202,7 @@ the number of IOMMU-page-table levels. This information is needed by userland
 when constructing an IOMMU address space (IOSpace). If there is no IOMMU
 support, \texttt{numIOPTLevels} is \texttt{0}.
 
-On ARM if the platform has any available SMMU units the capabilities for them
+On Arm if the platform has any available SMMU units the capabilities for them
 will be described by the \texttt{ioSpaceCaps} slot region. The mapping of a
 capability from this region to a specific SMMU is platform specific.
 

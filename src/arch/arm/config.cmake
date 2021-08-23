@@ -15,19 +15,23 @@ set(KernelArmPASizeBits44 OFF)
 if(KernelArmCortexA35)
     set(KernelArmICacheVIPT ON)
     set(KernelArmPASizeBits40 ON)
-    math(EXPR KernelPaddrUserTop "(1 << 40) - 1")
+    math(EXPR KernelPaddrUserTop "(1 << 40)")
 elseif(KernelArmCortexA53)
     set(KernelArmICacheVIPT ON)
     set(KernelArmPASizeBits40 ON)
-    math(EXPR KernelPaddrUserTop "(1 << 40) - 1")
+    math(EXPR KernelPaddrUserTop "(1 << 40)")
+elseif(KernelArmCortexA55)
+    set(KernelArmICacheVIPT ON)
+    set(KernelArmPASizeBits40 ON)
+    math(EXPR KernelPaddrUserTop "(1 << 40)")
 elseif(KernelArmCortexA57)
     set(KernelArmPASizeBits44 ON)
-    math(EXPR KernelPaddrUserTop "(1 << 44) - 1")
+    math(EXPR KernelPaddrUserTop "(1 << 44)")
 elseif(KernelArmCortexA72)
     # For Cortex-A72 in AArch64 state, the physical address range is 44 bits
     # (https://developer.arm.com/documentation/100095/0001/memory-management-unit/about-the-mmu)
     set(KernelArmPASizeBits44 ON)
-    math(EXPR KernelPaddrUserTop "(1 << 44) - 1")
+    math(EXPR KernelPaddrUserTop "(1 << 44)")
 endif()
 config_set(KernelArmPASizeBits40 ARM_PA_SIZE_BITS_40 "${KernelArmPASizeBits40}")
 config_set(KernelArmPASizeBits44 ARM_PA_SIZE_BITS_44 "${KernelArmPASizeBits44}")
@@ -79,17 +83,21 @@ config_option(
     DEFAULT OFF
     DEPENDS "KernelArchARM"
 )
-if(KernelSel4ArchArmHyp)
-    set(default_hyp_support ON)
-else()
-    set(default_hyp_support OFF)
+
+if(NOT DEFINED KernelSel4ArchArmHyp)
+    # the current CMake scripts ensure that KernelSel4ArchArmHyp is always set
+    # to either ON or OFF. If it is not set, something is either broken or the
+    # CMake files are used wrongly. Or support for KernelSel4ArchArmHyp has
+    # finally been removed - and then this check here should be removed and the
+    # KernelArmHypervisorSupport below can be OFF by default.
+    message(FATAL_ERROR "KernelSel4ArchArmHyp must be ON or OFF")
 endif()
 config_option(
     KernelArmHypervisorSupport ARM_HYPERVISOR_SUPPORT
     "Build as Hypervisor. Utilise ARM virtualisation extensions to build the kernel as a hypervisor"
-    DEFAULT ${default_hyp_support}
+    DEFAULT ${KernelSel4ArchArmHyp}
     DEPENDS
-        "KernelArmCortexA15 OR KernelArmCortexA35 OR KernelArmCortexA57 OR KernelArmCortexA53 OR KernelArmCortexA72"
+        "KernelArmCortexA15 OR KernelArmCortexA35 OR KernelArmCortexA57 OR KernelArmCortexA53 OR KernelArmCortexA55 OR KernelArmCortexA72"
 )
 
 config_option(
@@ -100,7 +108,7 @@ config_option(
     and trap them instead, and have the VCPUs' accesses to CP14 \
     intercepted and delivered to the VM Monitor as fault messages"
     DEFAULT ON
-    DEPENDS "KernelSel4ArmHypAarch32;NOT KernelVerificationBuild"
+    DEPENDS "KernelSel4ArchArmHyp;NOT KernelVerificationBuild"
     DEFAULT_DISABLED OFF
 )
 
@@ -179,6 +187,16 @@ config_option(
     DEFAULT_DISABLED OFF
 )
 
+config_option(
+    KernelAArch64SErrorIgnore AARCH64_SERROR_IGNORE
+    "By default any SError interrupt will halt the kernel. SErrors may \
+    be caused by e.g. writes to read-only device registers or ECC errors. \
+    When this option is enabled SErrors will be ignored."
+    DEFAULT OFF
+    DEPENDS "KernelSel4ArchAarch64;NOT KernelVerificationBuild"
+)
+mark_as_advanced(KernelAArch64SErrorIgnore)
+
 if(KernelAArch32FPUEnableContextSwitch OR KernelSel4ArchAarch64)
     set(KernelHaveFPU ON)
 endif()
@@ -193,6 +211,7 @@ if(
     OR KernelArmCortexA15
     OR KernelArmCortexA35
     OR KernelArmCortexA53
+    OR KernelArmCortexA55
     OR KernelArmCortexA57
     OR KernelArmCortexA72
 )
@@ -231,6 +250,7 @@ add_sources(
         machine/errata.c
         machine/debug.c
         machine/hardware.c
+        machine/io.c
         object/interrupt.c
         object/tcb.c
         object/iospace.c

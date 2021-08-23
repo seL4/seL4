@@ -50,14 +50,15 @@ void cleanInvalidateL1Caches(void);
 static inline void clearMemory(word_t *ptr, word_t bits)
 {
     memzero(ptr, BIT(bits));
-    cleanCacheRange_PoU((word_t)ptr, (word_t)ptr + BIT(bits) - 1,
+    cleanCacheRange_RAM((word_t)ptr, (word_t)ptr + BIT(bits) - 1,
                         addrFromPPtr(ptr));
 }
 
-static inline void clearMemoryRAM(word_t *ptr, word_t bits)
+/* Cleaning memory before page table walker access */
+static inline void clearMemory_PT(word_t *ptr, word_t bits)
 {
     memzero(ptr, BIT(bits));
-    cleanCacheRange_RAM((word_t)ptr, (word_t)ptr + BIT(bits) - 1,
+    cleanCacheRange_PoU((word_t)ptr, (word_t)ptr + BIT(bits) - 1,
                         addrFromPPtr(ptr));
 }
 
@@ -82,4 +83,3 @@ static inline exception_t Arch_setTLSRegister(word_t tls_base)
 }
 
 #endif /* __ASSEMBLER__ */
-

@@ -19,41 +19,75 @@
 #include <stdint.h>
 
 /*
- * a handle defining how to output a character
+ *------------------------------------------------------------------------------
+ * printf() core output channel management
+ *------------------------------------------------------------------------------
  */
-typedef void (*out_fn)(char character, char *buf, word_t idx);
 
-/*
- * structure to allow a generic vprintf
- * a out_fn handle and a buf to work on
- */
-typedef struct {
-    out_fn putchar;
-    char *buf;
-    word_t idx;
-    word_t maxlen;
-} out_wrap_t;
+typedef struct _out_wrap_t  out_wrap_t;
 
-/*
- * putchar would then just call the handle with its buf
- * and current idx and then increment idx
+/* handler defining how/where to actually output a buffer */
+typedef void (*out_write_fn)(out_wrap_t *out, const char *buf, word_t len);
+
+struct _out_wrap_t {
+    const out_write_fn write;
+    char *const buf;
+    const word_t maxlen;
+    word_t used;
+};
+
+/* printf_core() and its helpers call this to actually output something. The
+ * parameter 'out_wrap' cam be NULL, e.g. when printf_core() is just caller to
+ * validate the format string. In this case we do nothing.
  */
-static void putchar_wrap(out_wrap_t *out, char c)
+static void out(out_wrap_t *out_wrap, const char *buf, word_t len)
 {
-    if (out->maxlen < 0 || out->idx < out->maxlen) {
-        out->putchar(c, out->buf, out->idx);
-        out->idx++;
+    if (out_wrap) {
+        out_wrap->write(out_wrap, buf, len);
     }
 }
 
-
-void putchar(char c)
+/* An out_write_fn implementation to print the characters via putchar(). It is
+ * guaranteed here that 'out' is not NULL. The current implementation also never
+ * passes NULL for 'buf'. */
+static void do_output_to_putchar(
+    UNUSED out_wrap_t *out,
+    const char *buf,
+    word_t len)
 {
-    if (c == '\n') {
-        putDebugChar('\r');
+    if (buf) {
+        while (len-- > 0) {
+            putchar(*buf++);
+        }
     }
-    putDebugChar(c);
 }
+
+/* An out_write_fn implementation to copy the buffer into the out buffer. It is
+ * guaranteed here that 'out' is not NULL. The current implementation also never
+ * passes NULL for 'buf'. */
+static void do_output_to_buffer(
+    out_wrap_t *out,
+    const char *buf,
+    word_t len)
+{
+    /* It's guaranteed here that 'out' is not NULL. The current implementation
+     * also never passes NULL for 'buf'. */
+    if (buf && (out->used < out->maxlen)) {
+        /* there is still space in the buffer*/
+        word_t free = out->maxlen - out->used;
+        if (len > free) {
+            len = free;
+        }
+        memcpy(&out->buf[out->used], buf, len);
+        out->used += len;
+    }
+}
+
+/*
+ *------------------------------------------------------------------------------
+ * printf() core implementation
+ *------------------------------------------------------------------------------
+ */
 
 static inline bool_t isdigit(char c)
 {
@@ -194,23 +228,17 @@ static void pop_arg(union arg *arg, int type, va_list *ap)
     }
 }
 
-static void out(out_wrap_t *f, const char *s, word_t l)
-{
-    for (word_t i = 0; i < l; i++) {
-        putchar_wrap(f, s[i]);
-    }
-}
 
 static void pad(out_wrap_t *f, char c, int w, int l, int fl)
 {
-    char pad[256];
+    char pad[32]; /* good enough for what the kernel prints */
     if (fl & (LEFT_ADJ | ZERO_PAD) || l >= w) {
         return;
     }
     l = w - l;
-    memset(pad, c, l > sizeof pad ? sizeof pad : l);
-    for (; l >= sizeof pad; l -= sizeof pad) {
-        out(f, pad, sizeof pad);
+    memset(pad, c, l > sizeof(pad) ? sizeof(pad) : l);
+    for (; l >= sizeof(pad); l -= sizeof(pad)) {
+        out(f, pad, sizeof(pad));
     }
     out(f, pad, l);
 }
@@ -302,9 +330,7 @@ static int printf_core(out_wrap_t *f, const char *fmt, va_list *ap, union arg *n
             goto overflow;
         }
         l = z - a;
-        if (f) {
-            out(f, a, l);
-        }
+        out(f, a, l);
         if (l) {
             continue;
         }
@@ -544,27 +570,6 @@ overflow:
     return -1;
 }
 
-// sprintf fills its buf with the given character
-static void buf_out_fn(char c, char *buf, word_t idx)
-{
-    buf[idx] = c;
-}
-
-// printf only needs to call kernel_putchar
-static void kernel_out_fn(char c, char *buf, word_t idx)
-{
-    kernel_putchar(c);
-}
-
-word_t puts(const char *s)
-{
-    for (; *s; s++) {
-        kernel_putchar(*s);
-    }
-    kernel_putchar('\n');
-    return 0;
-}
-
 static int vprintf(out_wrap_t *out, const char *fmt, va_list ap)
 {
     va_list ap2;
@@ -574,7 +579,7 @@ static int vprintf(out_wrap_t *out, const char *fmt, va_list ap)
 
     // validate format string
     va_copy(ap2, ap);
-    if (printf_core(0, fmt, &ap2, nl_arg, nl_type) < 0) {
+    if (printf_core(NULL, fmt, &ap2, nl_arg, nl_type) < 0) {
         va_end(ap2);
         return -1;
     }
@@ -584,37 +589,52 @@ static int vprintf(out_wrap_t *out, const char *fmt, va_list ap)
     return ret;
 }
 
-word_t kprintf(const char *format, ...)
+/*
+ *------------------------------------------------------------------------------
+ * Kernel printing API
+ *------------------------------------------------------------------------------
+ */
+
+int impl_kvprintf(const char *format, va_list ap)
 {
-    va_list args;
-    word_t ret;
+    out_wrap_t out_wrap =  {
+        .write  = do_output_to_putchar,
+        .buf    = NULL,
+        .maxlen = 0,
+        .used   = 0
+    };
 
-    out_wrap_t out = { kernel_out_fn, NULL, 0, -1 };
-
-    va_start(args, format);
-    ret = vprintf(&out, format, args);
-    va_end(args);
-    return ret;
+    return vprintf(&out_wrap, format, ap);
 }
 
-word_t ksnprintf(char *str, word_t size, const char *format, ...)
+int impl_ksnvprintf(char *str, word_t size, const char *format, va_list ap)
 {
-    va_list args;
-    word_t i;
-
-    out_wrap_t out = { buf_out_fn, str, 0, size };
-
-    va_start(args, format);
-    i = vprintf(&out, format, args);
-    va_end(args);
-
-    // make sure there is space for a 0 byte
-    if (i >= size) {
-        i = size - 1;
+    if (!str) {
+        size = 0;
     }
-    str[i] = 0;
 
-    return i;
+    out_wrap_t out_wrap =  {
+        .write  = do_output_to_buffer,
+        .buf    = str,
+        .maxlen = size,
+        .used   = 0
+    };
+
+    int ret = vprintf(&out_wrap, format, ap);
+
+    /* We return the number of characters written into the buffer, excluding the
+     * terminating null char. However, we do never write more than 'size' bytes,
+     * that includes the terminating null char. If the output was truncated due
+     * to this limit, then the return value is the number of chars excluding the
+     * terminating null byte, which would have been written to the buffer, if
+     * enough space had been available. Thus, a return value of 'size' or more
+     * means that the output was truncated.
+     */
+    if ((ret > 0) && (size > 0)) {
+        str[(ret < size) ? ret : size - 1] = '\0';
+    }
+
+    return ret;
 }
 
 #endif /* CONFIG_PRINTING */

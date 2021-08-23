@@ -16,13 +16,13 @@ config_string(
 )
 
 config_option(
-    KernelRiscvExtF RISCV_EXT_F "RISCV extension for single-preciison floating-point"
+    KernelRiscvExtF RISCV_EXT_F "RISC-V extension for single-precision floating-point"
     DEFAULT OFF
     DEPENDS "KernelArchRiscV"
 )
 
 config_option(
-    KernelRiscvExtD RISCV_EXT_D "RISCV extension for double-precision floating-point"
+    KernelRiscvExtD RISCV_EXT_D "RISC-V extension for double-precision floating-point"
     DEFAULT OFF
     DEPENDS "KernelArchRiscV"
 )
@@ -57,14 +57,14 @@ if(KernelPTLevels EQUAL 2)
         # so limit the maximum paddr to 32-bits.
         math(EXPR KernelPaddrUserTop "(1 << 32) - 1")
     else()
-        math(EXPR KernelPaddrUserTop "(1 << 34) - 1")
+        math(EXPR KernelPaddrUserTop "1 << 34")
     endif()
 elseif(KernelPTLevels EQUAL 3)
     # RISC-V technically supports 56-bit paddrs,
     # but structures.bf limits us to using 39 of those bits.
-    math(EXPR KernelPaddrUserTop "(1 << 39) - 1")
+    math(EXPR KernelPaddrUserTop "1 << 39")
 elseif(KernelPTLevels EQUAL 4)
-    math(EXPR KernelPaddrUserTop "(1 << 56) - 1")
+    math(EXPR KernelPaddrUserTop "1 << 56")
 endif()
 
 if(KernelRiscvExtD)
@@ -90,6 +90,7 @@ add_sources(
         kernel/boot.c
         kernel/thread.c
         kernel/vspace.c
+        machine/capdl.c
         machine/hardware.c
         machine/registerset.c
         machine/io.c
@@ -101,7 +102,5 @@ add_sources(
         smp/ipi.c
     ASMFILES halt.S head.S traps.S
 )
-
-add_sources(DEP "KernelDebugBuild;KernelSel4ArchRiscV32" CFILES src/arch/riscv/machine/capdl.c)
 
 add_bf_source_old("KernelArchRiscV" "structures.bf" "include/arch/riscv" "arch/object")

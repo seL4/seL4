@@ -15,12 +15,13 @@ if(KernelPlatformTx2)
     set(KernelArmCortexA57 ON)
     set(KernelArchArmV8a ON)
     set(KernelArmSMMU ON)
+    set(KernelAArch64SErrorIgnore ON)
     config_set(KernelARMPlatform ARM_PLAT tx2)
     config_set(KernelArmMach MACH "nvidia")
     list(APPEND KernelDTSList "tools/dts/tx2.dts")
     list(APPEND KernelDTSList "src/plat/tx2/overlay-tx2.dts")
     declare_default_headers(
-        TIMER_FREQUENCY 31250000llu
+        TIMER_FREQUENCY 31250000
         MAX_IRQ 383
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h
         NUM_PPI 32

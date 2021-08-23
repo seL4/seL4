@@ -22,18 +22,142 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 Further information about [seL4 releases](https://docs.sel4.systems/sel4_release/) is available.
 
 ---
-Upcoming release: BREAKING
+Upcoming release: BINARY COMPATIBLE
 
 ## Changes
 
-* Scheduling contexts can be configured as constant-bandwidth or sporadic server
-  - Constant bandwidth observes a continuous constant bandwidth of budget/period
-  - Sporadic server behaves as described by Sprunt et. al.
-  - In an overcommitted system, sporadic preserves accumulated time
-* MCS kernel configuration option KernelStaticMaxBudgetUs renamed to KernelStaticMaxPeriodUs
-
+ * Added support for the ARM Cortex A55
+ * Added support for the ODroid C4
 
 ## Upgrade Notes
+---
+12.1.0 2021-06-10: SOURCE COMPATIBLE
+
+## Changes
+
+* Moved kernel configuration header to libsel4.
+* Improved benchmarking:
+  - Made the kernel log buffer to be derived from cmake config.
+  - Added x86_64 kernel log buffer.
+  - Implemented RISC-V benchmark timestamping.
+  - Implemented benchmark log buffer for RISC-V.
+* Moved cap functions out of inline to make changing cap bitfields less noisy.
+* Removed weak definition of the __sel4_ipc_buffer variable which was causing large thread local storages to be
+  required.
+* Prepared the bitfield generator for Isabelle 2021.
+* Made a number of improvements to the CMake build scripts.
+* Added pre-processor 'include guards' for auto-generated files.
+* Added missing CONFIG_PLAT_IMX7 pre-processor '#define's.
+* Added `#pragma once` to the autoconf headers.
+* Removed `HAVE_AUTOCONF` guards in `sel4/config.h`.
+* Improved the manual:
+  - Corrected descriptions of CNode addressing.
+  - Documented initial thread's SMMU caps.
+* Improved libsel4:
+  - Removed redundant `HAVE_AUTOCONF` header guards in libsel4.
+  - Added missing `macros.h` #include in libsel4.
+  - Cleaned-up `macros.h` in libsel4.
+  - Added checks to use `_Static_assert()` in libsel4 if it is available.
+  - Unified definitions in `simple_types.h` in libsel4.
+  - Added `printf` format specifier `PRI_sel4_word` for printing word types.
+  - Unified seL4 type definitions.
+* Added specific `printf` formatting for seL4_Word.
+* Changed some variables to use `BOOT_BSS` instead of `BOOT_DATA` to save space in the ELF file.
+* Replaced the `capDL()` function with a generic `debug_capDL` function that is intended to be implemented by all
+  architectures.
+* Reduced `printf`s stack usage.
+* Fixed `ksnprintf()` corner case handling.
+* Fixed NULL `printf` output wrapper handling.
+* Cleaned up the printing API implementation.
+* Changed code to pass buffer to `printf` output channel.
+* Refactored the kernel console handling.
+* Added support for `PRIu64` and `SEL4_PRIu_word` in the kernel.
+* Changed various `printf` conversion specifiers to use `SEL4_PRIx_word` specifiers.
+
+### MCS
+
+* Fixed a physical counter access issue on MCS on EL2.
+* Added MCS support for the ZynqMP.
+* Changed invokeSchedControl_Configure to always produce a scheduling context that is active and has configured
+  refills.
+* Prevented the binding of scheduling contexts to blocked TCBs.
+* Fixed conversions of ticks to microseconds on aarch64.
+* Added an additional sporadic flag to `seL4_SchedControl_Configure` which allows the option to create a sporadic
+  scheduling context.
+* Added explicit checks to not unblock the current scheduling context.
+* Fixed MCS and aarch64 VCPU interrupt interaction.
+* Renamed MCS kernel configuration option `KernelStaticMaxBudgetUs` to `KernelStaticMaxPeriodUs`.
+* Added check to make sure that the current thread will not yield to multiple threads.
+* Added check to account for an inactive scheduling context at preemption.
+* Deferred charging time budget in a preempted invocation.
+* Added code to update `ksDomainTime` in `updateTimestamp`.
+* Added call to `updateTimestamp` in a preemption point.
+* Added code to clear ksConsume when charging time to a revoked scheduling context.
+* Added code to cancel IPC when finalising reply caps.
+* Fixed a dereference of a scheduling context after it's removed from the associated TCB.
+* Added MCS to the preprocess check.
+
+### x86
+
+* Removed a redundant de-reference for `seL4_X86DangerousRDMSR` in ia32.
+* Added a config option to set the frequency of the TSC.
+* Optimized the boot image size for x86_64.
+* Removed the PT_PHDR segment from the linker script to work around an issue in a variant of syslinux that treats a
+  PT_PHDR segment as distinct from a PT_LOAD segment.
+
+### Arm
+
+* FPU ownership is now also given away on thread deletion instead of only on FPU exception.
+* Added basic build support for A35 core.
+* Fixed read/write of the VCPU CPACR register.
+* Fixed invalidation of the VIPI I-cache in hypervisor mode.
+* Removed duplicate interrupts for the zynqmp in its DTS.
+* Updated device definitions for the exynos5.
+* Added Raspberry Pi 4 support.
+* Updated Ethernet interrupts in the ZynqMP.
+* Added i.MX6 Nitrogen6_SoloX support.
+* Fixed CMake configurations for the ZynqMP and the Ultra96.
+* Fixed the platform `#define` for the i.MX6 Nitrogen6_SoloX.
+* Fixed I-cache invalidation on aarch64 SMP.
+* Fixed the usage of KernelPaddrUserTop on Arm platforms.
+* Added support for the i.MX low-power UART.
+* Added an option to ignore SErrors which is enabled on default for the TX2.
+
+### RISC-V
+
+* Added PLIC driver and updated the DTS for the Ariane.
+* Merged the PLIC drivers for the Ariane and the Hifive.
+* Updated default timer frequency for the Ariane.
+* Map devices with large pages on 32 and 64-bit kernel.
+* Replaced mentions of BBL with OpenSBI.
+* Added definitions of the KernelOpenSBIPlatform variable for RISC-V platforms.
+* Removed instances of passing `extra_caps_t` by value for binary verification purposes.
+* Removed `slot_range_t` for binary verification purposes.
+* Removed `DONT_TRANSLATE` tag on 'read_sip' for binary verification purposes.
+* Added more efficient clz and ctz implementations to substitute the lack of machine instructions to count leading and
+  trailing zeroes.
+* Updated kernel bootstrap message to be the same as the one on Arm.
+* Added some fastpath improvements for RISC-V.
+* Added extra snippets of code to track kernel entries for RISC-V.
+* Added a configuration guard for fastpath on RISC-V.
+* Reorganised `traps.S` so that syscalls and fastpath checks were done after interrupts and exceptions checks to avoid
+  exceptions being interpreted as null-syscalls.
+* Added support for `riscv64-elf-` toolchain.
+* Fixed a register bug in the assembly entry point for SMP with regards to the elfloader passing HART and core IDs.
+
+## Upgrade Notes
+
+* Scheduling contexts can now be configured as constant-bandwidth or sporadic server.
+  - Constant bandwidth observes a continuous constant bandwidth of budget/period.
+  - Sporadic server behaves as described by Sprunt et. al.
+  - In an overcommitted system, sporadic preserves accumulated time.
+* There are new `PRIx` and `SEL4_PRIx` `printf` conversion specifiers that can now be used inside the kernel.
+* x86_64 kernel binaries are now smaller and may be structured differently compared to previous kernel binaries.
+* Kernel entry benchmarking can now be done on RISC-V.
+* AUTOCONF_INCLUDED is no longer defined. The seL4 build system has stopped
+  using autoconf a long time ago and this define has been kept for compatibility
+  since then. It is no longer used anywhere by now, so it can be removed.
+
 ---
 12.0.0 2020-10-30: BREAKING
 ## Changes
@@ -297,7 +421,7 @@ Upcoming release: BREAKING
   - Support for i.MX8M Mini evk AArch64 EL2 and EL1, AArch32 smode only is accessible via the imx8mm-evk platform.
 * Add FVP platform with fixed configuration. This currently assumes A57 configuration described in tools/dts/fvp.dts.
 * Arm SMP invocation IRQControl_GetTriggerCore added
-  - Used to route a specify which core an IRQ should be delivered on. 
+  - Used to route a specify which core an IRQ should be delivered on.
 * Kernel log buffer: Specify on which core an IRQ was delivered.
 * Add new seL4_DebugSendIPI syscall to send arbitrary SGIs on ARM when SMP and DEBUG_BUILD are activated.
 * Support for aarch64-hyp configurations with 40-bit physical addresses (PA) added.
@@ -341,7 +465,7 @@ Upcoming release: BREAKING
 * Usages of ARCH_Page_Remap can be replaced with ARCH_Page_Map and require the original mapping address to be provided.
 * Device untypeds are provided to user level in different sizes which may require more initial processing to break them
   down for each device they refer to.
- 
+
 ---
 10.1.1 2018-11-12: BINARY COMPATIBLE
 

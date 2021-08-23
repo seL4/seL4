@@ -11,6 +11,7 @@ set(configure_string "")
 set(c_sources "")
 set(asm_sources "")
 set(bf_declarations "")
+set(KernelDTSList "")
 
 include(${CMAKE_CURRENT_LIST_DIR}/../tools/internal.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/../tools/helpers.cmake)
@@ -34,25 +35,24 @@ macro(declare_seL4_arch sel4_arch)
         "ia32;KernelSel4ArchIA32;ARCH_IA32"
     )
 
+    if(KernelSel4ArchArmHyp)
+        # arm-hyp is basically aarch32. This should be cleaned up and aligned
+        # with other architectures, where hypervisor support is an additional
+        # flag. The main blocker here is updating the verification flow.
+        config_set(KernelSel4ArchAarch32 ARCH_AARCH32 ON)
+    endif()
+
     config_choice(
         KernelArch
         ARCH
         "Architecture to use when building the kernel"
-        "arm;KernelArchARM;ARCH_ARM;KernelSel4ArchAarch32 OR KernelSel4ArchAarch64 OR KernelSel4ArchArmHyp"
+        "arm;KernelArchARM;ARCH_ARM;KernelSel4ArchAarch32 OR KernelSel4ArchAarch64"
         "riscv;KernelArchRiscV;ARCH_RISCV;KernelSel4ArchRiscV32 OR KernelSel4ArchRiscV64"
         "x86;KernelArchX86;ARCH_X86;KernelSel4ArchX86_64 OR KernelSel4ArchIA32"
     )
 
-    # arm-hyp masquerades as an aarch32 build
-    if(KernelSel4ArchArmHyp)
-        config_set(KernelSel4ArmHypAarch32 ARCH_AARCH32 ON)
-        set(KernelSel4ArchAarch32 ON CACHE INTERNAL "" FORCE)
-    else()
-        config_set(KernelSel4ArmHypAarch32 ARCH_AARCH32 OFF)
-    endif()
-
     # Set kernel mode options
-    if(KernelSel4ArchAarch32 OR KernelSel4ArchArmHyp OR KernelSel4ArchRiscV32 OR KernelSel4ArchIA32)
+    if(KernelSel4ArchAarch32 OR KernelSel4ArchRiscV32 OR KernelSel4ArchIA32)
         config_set(KernelWordSize WORD_SIZE 32)
         set(Kernel64 OFF CACHE INTERNAL "")
         set(Kernel32 ON CACHE INTERNAL "")
@@ -109,51 +109,21 @@ macro(fallback_declare_seL4_arch_default default_arch)
     declare_seL4_arch(${default_arch})
 endmacro()
 
-unset(CONFIGURE_PLIC_MAX_NUM_INT CACHE)
-unset(CONFIGURE_TIMER_FREQUENCY CACHE)
-unset(CONFIGURE_MAX_IRQ CACHE)
-unset(CONFIGURE_NUM_PPI CACHE)
-unset(CONFIGURE_INTERRUPT_CONTROLLER CACHE)
-unset(CONFIGURE_TIMER CACHE)
-unset(CONFIGURE_SMMU CACHE)
-unset(CONFIGURE_CLK_SHIFT CACHE)
-unset(CONFIGURE_CLK_MAGIC CACHE)
-unset(CONFIGURE_KERNEL_WCET CACHE)
-unset(CONFIGURE_TIMER_PRECISION CACHE)
-# CONFIGURE_MAX_CB and CONFIGURE_MAX_SID are related to the kernel SMMU on Arm.
-unset(CONFIGURE_MAX_SID CACHE)
-unset(CONFIGURE_MAX_CB CACHE)
-
 # CLK_SHIFT and CLK_MAGIC are generated from tools/reciprocal.py
 # based on the TIMER_CLK_HZ to simulate division.
 # This could be moved to a cmake function
 # in future to build the values on the first build. Note the calculation
 # can take a long time though.
-function(declare_default_headers)
+macro(declare_default_headers)
     cmake_parse_arguments(
-        PARSE_ARGV
-        0
         CONFIGURE
         ""
         "TIMER_FREQUENCY;MAX_IRQ;NUM_PPI;PLIC_MAX_NUM_INT;INTERRUPT_CONTROLLER;TIMER;SMMU;CLK_SHIFT;CLK_MAGIC;KERNEL_WCET;TIMER_PRECISION;MAX_SID;MAX_CB"
         ""
+        ${ARGN}
     )
-    set(CONFIGURE_TIMER_FREQUENCY "${CONFIGURE_TIMER_FREQUENCY}" CACHE INTERNAL "")
-    set(CONFIGURE_MAX_IRQ "${CONFIGURE_MAX_IRQ}" CACHE INTERNAL "")
-    set(CONFIGURE_NUM_PPI "${CONFIGURE_NUM_PPI}" CACHE INTERNAL "")
-    set(CONFIGURE_PLIC_MAX_NUM_INT "${CONFIGURE_PLIC_MAX_NUM_INT}" CACHE INTERNAL "")
-    set(CONFIGURE_INTERRUPT_CONTROLLER "${CONFIGURE_INTERRUPT_CONTROLLER}" CACHE INTERNAL "")
-    set(CONFIGURE_TIMER "${CONFIGURE_TIMER}" CACHE INTERNAL "")
-    set(CONFIGURE_SMMU "${CONFIGURE_SMMU}" CACHE INTERNAL "")
-    set(CONFIGURE_CLK_SHIFT "${CONFIGURE_CLK_SHIFT}" CACHE INTERNAL "")
-    set(CONFIGURE_CLK_MAGIC "${CONFIGURE_CLK_MAGIC}" CACHE INTERNAL "")
-    set(CONFIGURE_KERNEL_WCET "${CONFIGURE_KERNEL_WCET}" CACHE INTERNAL "")
-    if(DEFINED CONFIGURE_TIMER_PRECISION)
-        set(CONFIGURE_TIMER_PRECISION "${CONFIGURE_TIMER_PRECISION}" CACHE INTERNAL "")
-    endif()
-    set(CONFIGURE_MAX_SID "${CONFIGURE_MAX_SID}" CACHE INTERNAL "")
-    set(CONFIGURE_MAX_CB "${CONFIGURE_MAX_CB}" CACHE INTERNAL "")
-endfunction()
+    set(CALLED_declare_default_headers 1)
+endmacro()
 
 # For all of the common variables we set a default value here if they haven't
 # been set by a platform.
@@ -167,6 +137,7 @@ foreach(
     KernelArmCortexA15
     KernelArmCortexA35
     KernelArmCortexA53
+    KernelArmCortexA55
     KernelArmCortexA57
     KernelArmCortexA72
     KernelArm1136JF_S
@@ -175,6 +146,7 @@ foreach(
     KernelArchArmV7ve
     KernelArchArmV8a
     KernelArmSMMU
+    KernelAArch64SErrorIgnore
 )
     unset(${var} CACHE)
     set(${var} OFF)
@@ -185,7 +157,6 @@ unset(KernelArmCPU CACHE)
 unset(KernelArmArmV CACHE)
 
 # Blacklist platforms without MCS support
-unset(KernelPlatformSupportsMCS CACHE)
 set(KernelPlatformSupportsMCS ON)
 
 file(GLOB result ${CMAKE_CURRENT_LIST_DIR}/../src/plat/*/config.cmake)
@@ -204,6 +175,7 @@ config_set(KernelArmCortexA9 ARM_CORTEX_A9 "${KernelArmCortexA9}")
 config_set(KernelArmCortexA15 ARM_CORTEX_A15 "${KernelArmCortexA15}")
 config_set(KernelArmCortexA35 ARM_CORTEX_A35 "${KernelArmCortexA35}")
 config_set(KernelArmCortexA53 ARM_CORTEX_A53 "${KernelArmCortexA53}")
+config_set(KernelArmCortexA55 ARM_CORTEX_A55 "${KernelArmCortexA55}")
 config_set(KernelArmCortexA57 ARM_CORTEX_A57 "${KernelArmCortexA57}")
 config_set(KernelArmCortexA72 ARM_CORTEX_A72 "${KernelArmCortexA72}")
 config_set(KernelArm1136JF_S ARM1136JF_S "${KernelArm1136JF_S}")
@@ -212,7 +184,7 @@ config_set(KernelArchArmV7a ARCH_ARM_V7A "${KernelArchArmV7a}")
 config_set(KernelArchArmV7ve ARCH_ARM_V7VE "${KernelArchArmV7ve}")
 config_set(KernelArchArmV8a ARCH_ARM_V8A "${KernelArchArmV8a}")
 config_set(KernelArmSMMU ARM_SMMU "${KernelArmSMMU}")
-set(KernelPlatformSupportsMCS "${KernelPlatformSupportsMCS}" CACHE INTERNAL "" FORCE)
+config_set(KernelAArch64SErrorIgnore AARCH64_SERROR_IGNORE "${KernelAArch64SErrorIgnore}")
 
 # Check for v7ve before v7a as v7ve is a superset and we want to set the
 # actual armv to that, but leave armv7a config enabled for anything that
@@ -238,6 +210,8 @@ elseif(KernelArmCortexA35)
     set(KernelArmCPU "cortex-a35" CACHE INTERNAL "")
 elseif(KernelArmCortexA53)
     set(KernelArmCPU "cortex-a53" CACHE INTERNAL "")
+elseif(KernelArmCortexA55)
+    set(KernelArmCPU "cortex-a55" CACHE INTERNAL "")
 elseif(KernelArmCortexA57)
     set(KernelArmCPU "cortex-a57" CACHE INTERNAL "")
 elseif(KernelArmCortexA72)
@@ -249,46 +223,6 @@ if(KernelArchARM)
     config_set(KernelArmMach ARM_MACH "${KernelArmMach}")
 endif()
 
-set(config_configure_string ${configure_string} CACHE INTERNAL "")
-set(config_c_sources "")
-set(config_asm_sources "")
-set(config_bf_declarations "")
-foreach(file IN LISTS c_sources)
-    string(
-        REPLACE
-            "${CMAKE_CURRENT_SOURCE_DIR}/"
-            ""
-            file
-            "${file}"
-    )
-    list(APPEND config_c_sources "${file}")
-endforeach()
-foreach(file IN LISTS asm_sources)
-    string(
-        REPLACE
-            "${CMAKE_CURRENT_SOURCE_DIR}/"
-            ""
-            file
-            "${file}"
-    )
-    list(APPEND config_asm_sources "${file}")
-endforeach()
-foreach(file IN LISTS bf_declarations)
-    string(
-        REPLACE
-            "${CMAKE_CURRENT_SOURCE_DIR}/"
-            ""
-            file
-            "${file}"
-    )
-    list(APPEND config_bf_declarations "${file}")
-endforeach()
-
-set(config_c_sources ${config_c_sources} CACHE INTERNAL "")
-set(config_asm_sources ${config_asm_sources} CACHE INTERNAL "")
-set(config_bf_declarations ${config_bf_declarations} CACHE INTERNAL "")
-set(config_KernelDTSList ${KernelDTSList} CACHE INTERNAL "")
-
 if("${TRIPLE}" STREQUAL "")
     set(toolchain_file gcc.cmake)
 else()
@@ -299,6 +233,10 @@ if(
     ("${CMAKE_TOOLCHAIN_FILE}" STREQUAL "")
     OR ("${CMAKE_TOOLCHAIN_FILE}" STREQUAL "${toolchain_outputfile}")
 )
+    if(DEFINED CACHE{CROSS_COMPILER_PREFIX})
+        set(cross_prefix $CACHE{CROSS_COMPILER_PREFIX})
+    endif()
+
     configure_file(
         "${CMAKE_CURRENT_LIST_DIR}/../${toolchain_file}" "${toolchain_outputfile}.temp" @ONLY
     )

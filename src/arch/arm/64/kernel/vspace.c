@@ -249,12 +249,12 @@ BOOT_CODE void map_kernel_window(void)
 
     /* place the PUD into the PGD */
     armKSGlobalKernelPGD[GET_PGD_INDEX(PPTR_BASE)] = pgde_pgde_pud_new(
-                                                         pptr_to_paddr(armKSGlobalKernelPUD));
+                                                         addrFromKPPtr(armKSGlobalKernelPUD));
 
     /* place all PDs except the last one in PUD */
     for (idx = GET_PUD_INDEX(PPTR_BASE); idx < GET_PUD_INDEX(PPTR_TOP); idx++) {
         armKSGlobalKernelPUD[idx] = pude_pude_pd_new(
-                                        pptr_to_paddr(&armKSGlobalKernelPDs[idx][0])
+                                        addrFromKPPtr(&armKSGlobalKernelPDs[idx][0])
                                     );
     }
 
@@ -279,12 +279,12 @@ BOOT_CODE void map_kernel_window(void)
 
     /* put the PD into the PUD for device window */
     armKSGlobalKernelPUD[GET_PUD_INDEX(PPTR_TOP)] = pude_pude_pd_new(
-                                                        pptr_to_paddr(&armKSGlobalKernelPDs[BIT(PUD_INDEX_BITS) - 1][0])
+                                                        addrFromKPPtr(&armKSGlobalKernelPDs[BIT(PUD_INDEX_BITS) - 1][0])
                                                     );
 
     /* put the PT into the PD for device window */
     armKSGlobalKernelPDs[BIT(PUD_INDEX_BITS) - 1][BIT(PD_INDEX_BITS) - 1] = pde_pde_small_new(
-                                                                                pptr_to_paddr(armKSGlobalKernelPT)
+                                                                                addrFromKPPtr(armKSGlobalKernelPT)
                                                                             );
 
     map_kernel_devices();
@@ -534,10 +534,10 @@ BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vpt
 BOOT_CODE void activate_kernel_vspace(void)
 {
     cleanInvalidateL1Caches();
-    setCurrentKernelVSpaceRoot(ttbr_new(0, pptr_to_paddr(armKSGlobalKernelPGD)));
+    setCurrentKernelVSpaceRoot(ttbr_new(0, addrFromKPPtr(armKSGlobalKernelPGD)));
 
     /* Prevent elf-loader address translation to fill up TLB */
-    setCurrentUserVSpaceRoot(ttbr_new(0, pptr_to_paddr(armKSGlobalUserVSpace)));
+    setCurrentUserVSpaceRoot(ttbr_new(0, addrFromKPPtr(armKSGlobalUserVSpace)));
 
     invalidateLocalTLB();
     lockTLBEntry(KERNEL_ELF_BASE);
@@ -991,7 +991,7 @@ void setVMRoot(tcb_t *tcb)
     threadRoot = TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap;
 
     if (!isValidNativeRoot(threadRoot)) {
-        setCurrentUserVSpaceRoot(ttbr_new(0, pptr_to_paddr(armKSGlobalUserVSpace)));
+        setCurrentUserVSpaceRoot(ttbr_new(0, addrFromKPPtr(armKSGlobalUserVSpace)));
         return;
     }
 
@@ -999,7 +999,7 @@ void setVMRoot(tcb_t *tcb)
     asid = cap_vtable_root_get_mappedASID(threadRoot);
     find_ret = findVSpaceForASID(asid);
     if (unlikely(find_ret.status != EXCEPTION_NONE || find_ret.vspace_root != vspaceRoot)) {
-        setCurrentUserVSpaceRoot(ttbr_new(0, pptr_to_paddr(armKSGlobalUserVSpace)));
+        setCurrentUserVSpaceRoot(ttbr_new(0, addrFromKPPtr(armKSGlobalUserVSpace)));
         return;
     }
 
@@ -1508,7 +1508,7 @@ static exception_t performUpperPageDirectoryInvocationUnmap(cap_t cap, cte_t *ct
         pude_t *pud = PUD_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(cap));
         unmapPageUpperDirectory(cap_page_upper_directory_cap_get_capPUDMappedASID(cap),
                                 cap_page_upper_directory_cap_get_capPUDMappedAddress(cap), pud);
-        clearMemory((void *)pud, cap_get_capSizeBits(cap));
+        clearMemory_PT((void *)pud, cap_get_capSizeBits(cap));
     }
 
     cap_page_upper_directory_cap_ptr_set_capPUDIsMapped(&(ctSlot->cap), 0);
@@ -1531,7 +1531,7 @@ static exception_t performPageDirectoryInvocationUnmap(cap_t cap, cte_t *ctSlot)
         pde_t *pd = PD_PTR(cap_page_directory_cap_get_capPDBasePtr(cap));
         unmapPageDirectory(cap_page_directory_cap_get_capPDMappedASID(cap),
                            cap_page_directory_cap_get_capPDMappedAddress(cap), pd);
-        clearMemory((void *)pd, cap_get_capSizeBits(cap));
+        clearMemory_PT((void *)pd, cap_get_capSizeBits(cap));
     }
 
     cap_page_directory_cap_ptr_set_capPDIsMapped(&(ctSlot->cap), 0);
@@ -1553,7 +1553,7 @@ static exception_t performPageTableInvocationUnmap(cap_t cap, cte_t *ctSlot)
         pte_t *pt = PT_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
         unmapPageTable(cap_page_table_cap_get_capPTMappedASID(cap),
                        cap_page_table_cap_get_capPTMappedAddress(cap), pt);
-        clearMemory((void *)pt, cap_get_capSizeBits(cap));
+        clearMemory_PT((void *)pt, cap_get_capSizeBits(cap));
     }
 
     cap_page_table_cap_ptr_set_capPTIsMapped(&(ctSlot->cap), 0);
@@ -2323,8 +2323,8 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
         asid_base = i << asidLowBits;
 
         if (unlikely(cap_get_capType(untyped) != cap_untyped_cap ||
-                     cap_untyped_cap_get_capBlockSize(untyped) != seL4_ASIDPoolBits) ||
-            cap_untyped_cap_get_capIsDevice(untyped)) {
+                     cap_untyped_cap_get_capBlockSize(untyped) != seL4_ASIDPoolBits ||
+                     cap_untyped_cap_get_capIsDevice(untyped))) {
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
 
@@ -2426,27 +2426,21 @@ void kernelDataAbort(word_t pc) VISIBLE;
 
 void kernelPrefetchAbort(word_t pc)
 {
-    word_t ifsr = getIFSR();
-
     printf("\n\nKERNEL PREFETCH ABORT!\n");
-    printf("Faulting instruction: 0x%x\n", (unsigned int)pc);
-    printf("ESR (IFSR): 0x%x\n", (unsigned int)ifsr);
-
+    printf("Faulting instruction: 0x%"SEL4_PRIx_word"\n", pc);
+    printf("ESR (IFSR): 0x%"SEL4_PRIx_word"\n", getIFSR());
     halt();
 }
 
 void kernelDataAbort(word_t pc)
 {
-    word_t dfsr = getDFSR();
-    word_t far = getFAR();
-
     printf("\n\nKERNEL DATA ABORT!\n");
-    printf("Faulting instruction: 0x%lx\n", (unsigned long)pc);
-    printf("FAR: 0x%lx ESR (DFSR): 0x%x\n", (unsigned long)far, (unsigned int)dfsr);
-
+    printf("Faulting instruction: 0x%"SEL4_PRIx_word"\n", pc);
+    printf("FAR: 0x%"SEL4_PRIx_word" ESR (DFSR): 0x%"SEL4_PRIx_word"\n",
+           getFAR(), getDFSR());
     halt();
 }
-#endif
+#endif /* CONFIG_DEBUG_BUILD */
 
 #ifdef CONFIG_PRINTING
 typedef struct readWordFromVSpace_ret {
@@ -2483,7 +2477,6 @@ void Arch_userStackTrace(tcb_t *tptr)
     cap_t threadRoot;
     vspace_root_t *vspaceRoot;
     word_t sp;
-    int i;
 
     threadRoot = TCB_PTR_CTE_PTR(tptr, tcbVTable)->cap;
 
@@ -2503,18 +2496,19 @@ void Arch_userStackTrace(tcb_t *tptr)
         return;
     }
 
-    for (i = 0; i < CONFIG_USER_STACK_TRACE_LENGTH; i++) {
+    for (unsigned int i = 0; i < CONFIG_USER_STACK_TRACE_LENGTH; i++) {
         word_t address = sp + (i * sizeof(word_t));
-        readWordFromVSpace_ret_t result;
-        result = readWordFromVSpace(vspaceRoot, address);
+        readWordFromVSpace_ret_t result = readWordFromVSpace(vspaceRoot,
+                                                             address);
         if (result.status == EXCEPTION_NONE) {
-            printf("0x%lx: 0x%lx\n", (unsigned long)address, (unsigned long)result.value);
+            printf("0x%"SEL4_PRIx_word": 0x%"SEL4_PRIx_word"\n",
+                   address, result.value);
         } else {
-            printf("0x%lx: INVALID\n", (unsigned long)address);
+            printf("0x%"SEL4_PRIx_word": INVALID\n", address);
         }
     }
 }
-#endif
+#endif /* CONFIG_PRINTING */
 
 #if defined(CONFIG_KERNEL_LOG_BUFFER)
 exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
@@ -2566,7 +2560,7 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
                              0,                         /* VMKernelOnly */
                              NORMAL);
 
-    cleanByVA_PoU((vptr_t)armKSGlobalLogPDE, pptr_to_paddr(armKSGlobalLogPDE));
+    cleanByVA_PoU((vptr_t)armKSGlobalLogPDE, addrFromKPPtr(armKSGlobalLogPDE));
     invalidateTranslationSingle(KS_LOG_PPTR);
     return EXCEPTION_NONE;
 }

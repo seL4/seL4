@@ -15,6 +15,7 @@ static exception_t invokeSchedControl_ConfigureFlags(sched_context_t *target, wo
 {
 
     target->scBadge = badge;
+    target->scSporadic = (flags & seL4_SchedContext_Sporadic) != 0;
 
     /* don't modify parameters of tcb while it is in a sorted queue */
     if (target->scTcb) {
@@ -41,8 +42,6 @@ static exception_t invokeSchedControl_ConfigureFlags(sched_context_t *target, wo
 #endif /* ENABLE_SMP_SUPPORT */
         }
     }
-
-    target->scSporadic = (flags & seL4_SchedContext_Sporadic) != 0;
 
     if (budget == period) {
         /* this is a cool hack: for round robin, we set the
@@ -94,7 +93,7 @@ static exception_t decodeSchedControl_ConfigureFlags(word_t length, cap_t cap, w
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (length < (TIME_ARG_SIZE * 2) + 2) {
+    if (length < (TIME_ARG_SIZE * 2) + 3) {
         userError("SchedControl_configureFlags: truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;

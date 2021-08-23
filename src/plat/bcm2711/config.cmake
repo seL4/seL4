@@ -34,7 +34,7 @@ if(KernelPlatformRpi4)
     # - CLK_MAGIC and CLK_SHIFT can be calculated with:
     #       tools/reciprocal.py --divisor 54000000
     declare_default_headers(
-        TIMER_FREQUENCY 54000000llu
+        TIMER_FREQUENCY 54000000
         MAX_IRQ 216
         NUM_PPI 32
         TIMER drivers/timer/arm_generic.h

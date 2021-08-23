@@ -221,11 +221,8 @@ int get_num_dev_p_regs(void);
 p_region_t get_dev_p_reg(word_t i);
 void map_kernel_devices(void);
 
-static inline void setInterruptMode(irq_t irq, bool_t levelTrigger, bool_t polarityLow) { }
 /** MODIFIES: [*] */
 void initTimer(void);
-/* L2 cache control */
-void initL2Cache(void);
 void initLocalIRQController(void);
 void initIRQController(void);
 void setIRQTrigger(irq_t irq, bool_t trigger);
@@ -242,26 +239,8 @@ static inline void arch_pause(void)
 }
 
 #endif
-void plat_cleanL2Range(paddr_t start, paddr_t end);
 
-void plat_invalidateL2Range(paddr_t start, paddr_t end);
-
-void plat_cleanInvalidateL2Range(paddr_t start, paddr_t end);
-
-static inline void *CONST paddr_to_kpptr(paddr_t paddr)
-{
-    assert(paddr < KERNEL_ELF_PADDR_TOP);
-    assert(paddr >= KERNEL_ELF_PADDR_BASE);
-    return (void *)(paddr + KERNEL_ELF_BASE_OFFSET);
-}
-
-static inline paddr_t CONST kpptr_to_paddr(void *pptr)
-{
-    assert((word_t)pptr >= KERNEL_ELF_BASE);
-    return (paddr_t)pptr - KERNEL_ELF_BASE_OFFSET;
-}
-
-/* Update the value of the actual regsiter to hold the expected value */
+/* Update the value of the actual register to hold the expected value */
 static inline void Arch_setTLSRegister(word_t tls_base)
 {
     /* The register is always reloaded upon return from kernel. */
@@ -269,5 +248,3 @@ static inline void Arch_setTLSRegister(word_t tls_base)
 }
 
 #endif // __ASSEMBLER__
-
-

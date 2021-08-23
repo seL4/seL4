@@ -15,7 +15,7 @@ if(KernelPlatformRocketchip)
     config_set(KernelOpenSBIPlatform OPENSBI_PLATFORM "generic")
     list(APPEND KernelDTSList "tools/dts/rocketchip.dts")
     declare_default_headers(
-        TIMER_FREQUENCY 10000000llu PLIC_MAX_NUM_INT 0
+        TIMER_FREQUENCY 10000000 PLIC_MAX_NUM_INT 0
         INTERRUPT_CONTROLLER arch/machine/plic.h
     )
 else()

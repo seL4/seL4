@@ -64,11 +64,15 @@ UNUSED static inline void refill_print(sched_context_t *sc)
 /* check a refill queue is ordered correctly */
 static UNUSED bool_t refill_ordered(sched_context_t *sc)
 {
+    if (isRoundRobin(sc)) {
+        return true;
+    }
+
     word_t current = sc->scRefillHead;
     word_t next = refill_next(sc, sc->scRefillHead);
 
     while (current != sc->scRefillTail) {
-        if (!(refill_index(sc, current)->rTime <= refill_index(sc, next)->rTime)) {
+        if (!(refill_index(sc, current)->rTime + refill_index(sc, current)->rAmount <= refill_index(sc, next)->rTime)) {
             refill_print(sc);
             return false;
         }
@@ -210,27 +214,27 @@ void refill_update(sched_context_t *sc, ticks_t new_period, ticks_t new_budget, 
 
 static inline void schedule_used(sched_context_t *sc, refill_t new)
 {
-    /* schedule the used amount */
-    if (new.rAmount < MIN_BUDGET && !refill_single(sc)) {
-        /* used amount is to small - merge with last and delay */
+    if (unlikely(refill_tail(sc)->rTime + refill_tail(sc)->rAmount >= new.rTime)) {
+        /* Merge overlapping or adjacent refill.
+         *
+         * refill_update can produce a tail refill that will overlap
+         * with new refills when time is charged to the head refill.
+         *
+         * Preemption will cause the head refill to be partially
+         * charged. When the head refill is again later charged the
+         * additionally charged amount will be added where the new
+         * refill ended such that they are merged here. This ensures
+         * that (beyond a refill being split as it is charged
+         * incrementally) a refill split is only caused by a thread
+         * blocking. */
         refill_tail(sc)->rAmount += new.rAmount;
-        refill_tail(sc)->rTime = MAX(new.rTime, refill_tail(sc)->rTime);
-    } else if (new.rTime <= refill_tail(sc)->rTime) {
-        refill_tail(sc)->rAmount += new.rAmount;
-    } else {
+    } else if (likely(!refill_full(sc))) {
+        /* Add tail normally */
         refill_add_tail(sc, new);
-    }
-}
-
-static inline void ensure_sufficient_head(sched_context_t *sc)
-{
-    /* ensure the refill head is sufficient, such that when we wake in awaken,
-     * there is enough budget to run */
-    while (refill_head(sc)->rAmount < MIN_BUDGET || refill_full(sc)) {
-        refill_t refill = refill_pop_head(sc);
-        refill_head(sc)->rAmount += refill.rAmount;
-        /* this loop is guaranteed to terminate as the sum of
-         * rAmount in a refill must be >= MIN_BUDGET */
+    } else {
+        /* Delay existing tail to merge */
+        refill_tail(sc)->rTime = new.rTime - refill_tail(sc)->rAmount;
+        refill_tail(sc)->rAmount += new.rAmount;
     }
 }
 
@@ -248,94 +252,64 @@ static bool_t refill_head_overlapping(sched_context_t *sc)
 void refill_budget_check(ticks_t usage)
 {
     sched_context_t *sc = NODE_STATE(ksCurSC);
-    /* this function should only be called when the sc is out of budget */
-    ticks_t capacity = refill_capacity(NODE_STATE(ksCurSC), usage);
-    assert(capacity < MIN_BUDGET || refill_full(sc));
-    assert(sc->scPeriod > 0);
+    assert(!isRoundRobin(sc));
     REFILL_SANITY_START(sc);
 
-    if (capacity == 0) {
-        while (refill_head(sc)->rAmount <= usage) {
-            /* exhaust and schedule replenishment */
-            usage -= refill_head(sc)->rAmount;
-            if (refill_single(sc)) {
-                /* update in place */
-                refill_head(sc)->rTime += sc->scPeriod;
-            } else {
-                refill_t old_head = refill_pop_head(sc);
-                old_head.rTime = old_head.rTime + sc->scPeriod;
-                schedule_used(sc, old_head);
-            }
-        }
+    /*
+     * We charge entire refills in a loop until we end up with a partial
+     * refill or at a point where we can't place refills into the future
+     * without integer overflow.
+     *
+     * Verification actually requires that the current time is at least
+     * 3 * MAX_PERIOD from the INT64_MAX value, so to ease relation to
+     * that assertion we ensure that we never delate a refill past this
+     * point in the future.
+     */
+    while (refill_head(sc)->rAmount <= usage && refill_head(sc)->rTime < MAX_RELEASE_TIME) {
+        usage -= refill_head(sc)->rAmount;
 
-        /* budget overrun */
-        if (usage > 0) {
-            /* budget reduced when calculating capacity */
-            /* due to overrun delay next replenishment */
-            refill_head(sc)->rTime += usage;
-            /* merge front two replenishments if times overlap */
-            if (!refill_single(sc) &&
-                refill_head(sc)->rTime + refill_head(sc)->rAmount >=
-                refill_index(sc, refill_next(sc, sc->scRefillHead))->rTime) {
-
-                refill_t refill = refill_pop_head(sc);
-                refill_head(sc)->rAmount += refill.rAmount;
-                refill_head(sc)->rTime = refill.rTime;
-            }
-        }
-    }
-
-    capacity = refill_capacity(sc, usage);
-    if (capacity > 0 && refill_ready(sc)) {
-        refill_split_check(usage);
-    }
-
-    ensure_sufficient_head(sc);
-
-    REFILL_SANITY_END(sc);
-}
-
-void refill_split_check(ticks_t usage)
-{
-    sched_context_t *sc = NODE_STATE(ksCurSC);
-    /* invalid to call this on a NULL sc */
-    assert(sc != NULL);
-    /* something is seriously wrong if this is called and no
-     * time has been used */
-    assert(usage > 0);
-    assert(usage <= refill_head(sc)->rAmount);
-    assert(sc->scPeriod > 0);
-
-    REFILL_SANITY_START(sc);
-
-    /* first deal with the remaining budget of the current replenishment */
-    ticks_t remnant = refill_head(sc)->rAmount - usage;
-
-    /* set up a new replenishment structure */
-    refill_t new = (refill_t) {
-        .rAmount = usage, .rTime = refill_head(sc)->rTime + sc->scPeriod
-    };
-
-    if (refill_size(sc) == sc->scRefillMax || remnant < MIN_BUDGET) {
-        /* merge remnant with next replenishment - either it's too small
-         * or we're out of space */
         if (refill_single(sc)) {
-            /* update inplace */
-            new.rAmount += remnant;
-            *refill_head(sc) = new;
+            refill_head(sc)->rTime += sc->scPeriod;
         } else {
-            refill_pop_head(sc);
-            refill_head(sc)->rAmount += remnant;
-            schedule_used(sc, new);
-            ensure_sufficient_head(sc);
+            refill_t old_head = refill_pop_head(sc);
+            old_head.rTime += sc->scPeriod;
+            schedule_used(sc, old_head);
         }
-        assert(isRoundRobin(sc) || refill_ordered(sc));
-    } else {
-        /* leave remnant as reduced replenishment */
-        assert(remnant >= MIN_BUDGET);
-        /* split the head refill  */
-        refill_head(sc)->rAmount = remnant;
-        schedule_used(sc, new);
+    }
+
+    /*
+     * If the head time is still sufficiently far from the point of
+     * integer overflow then the usage must be smaller than the head.
+     */
+    if (usage > 0 && refill_head(sc)->rTime < MAX_RELEASE_TIME) {
+        assert(refill_head(sc)->rAmount > usage);
+        refill_t used = (refill_t) {
+            .rAmount = usage,
+            .rTime = refill_head(sc)->rTime + sc->scPeriod,
+        };
+
+        refill_head(sc)->rAmount -= usage;
+        /* We need to keep the head refill no more than a period before
+         * the start of the tail refill. This ensures that new refills
+         * are never added before the tail refill (breaking the ordered
+         * invariant). This code actually keeps the head refill no more
+         * than a period before the end of the tail refill (which is
+         * stronger than necessary) but is what is used in the current
+         * proofs. In combination with the merging behaviour of
+         * schedule_used, the following will still ensure that
+         * incremental charging of a refill across preemptions only
+         * produces a single new refill one period in the future. */
+        refill_head(sc)->rTime += usage;
+        schedule_used(sc, used);
+    }
+
+    /* Ensure the head refill has the minimum budget */
+    while (refill_head(sc)->rAmount < MIN_BUDGET) {
+        refill_t head = refill_pop_head(sc);
+        refill_head(sc)->rAmount += head.rAmount;
+        /* Delay head to ensure the subsequent refill doesn't end any
+         * later (rather than simply combining refills). */
+        refill_head(sc)->rTime -= head.rAmount;
     }
 
     REFILL_SANITY_END(sc);
@@ -358,10 +332,9 @@ void refill_unblock_check(sched_context_t *sc)
 
         /* merge available replenishments */
         while (refill_head_overlapping(sc)) {
-            ticks_t amount = refill_head(sc)->rAmount;
-            refill_pop_head(sc);
-            refill_head(sc)->rAmount += amount;
-            refill_head(sc)->rTime = NODE_STATE_ON_CORE(ksCurTime, sc->scCore);
+            refill_t old_head = refill_pop_head(sc);
+            refill_head(sc)->rTime = old_head.rTime;
+            refill_head(sc)->rAmount += old_head.rAmount;
         }
 
         assert(refill_sufficient(sc, 0));

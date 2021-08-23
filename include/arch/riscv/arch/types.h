@@ -15,6 +15,9 @@
 
 typedef unsigned long word_t;
 typedef signed long sword_t;
+/* for printf() formatting */
+#define _seL4_word_fmt  l
+
 typedef word_t vptr_t;
 typedef word_t paddr_t;
 typedef word_t pptr_t;

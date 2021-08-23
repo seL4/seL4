@@ -9,6 +9,7 @@
 #include <arch/model/statedata.h>
 #include <machine/io.h>
 #include <plat/machine/io.h>
+#include <drivers/uart.h>
 
 #if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
 void serial_init(uint16_t port)
@@ -26,17 +27,30 @@ void serial_init(uint16_t port)
     in8(port + 5); /* clear line status port */
     in8(port + 6); /* clear modem status port */
 }
+#endif /* defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING) */
 
-void putDebugChar(unsigned char a)
+#ifdef CONFIG_PRINTING
+
+/* there is no UART driver at drivers/serial/... for the pc99 platform, but we
+ * implement parts of the API here, so we can reuse the generic code.
+ */
+void uart_drv_putchar(
+    unsigned char c)
 {
     while (x86KSdebugPort && (in8(x86KSdebugPort + 5) & 0x20) == 0);
-    out8(x86KSdebugPort, a);
+    out8(x86KSdebugPort, c);
 }
 
-#endif /* CONFIG_PRINTING || CONFIG_DEBUG_BUILD */
+void kernel_putDebugChar(unsigned char c)
+{
+    /* this will take care of CR/LF handling and call uart_drv_putchar() */
+    uart_console_putchar(c);
+}
+
+#endif /* CONFIG_PRINTING */
 
 #ifdef CONFIG_DEBUG_BUILD
-unsigned char getDebugChar(void)
+unsigned char kernel_getDebugChar(void)
 {
     while ((in8(x86KSdebugPort + 5) & 1) == 0);
     return in8(x86KSdebugPort);

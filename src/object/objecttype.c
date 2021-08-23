@@ -192,7 +192,7 @@ finaliseCap_ret_t finaliseCap(cap_t cap, bool_t final, bool_t exposed)
             sched_context_t *sc = SC_PTR(tcb->tcbSchedContext);
             if (sc) {
                 schedContext_unbindTCB(sc, tcb);
-                if (tcb->tcbSchedContext->scYieldFrom) {
+                if (sc->scYieldFrom) {
                     schedContext_completeYieldTo(sc->scYieldFrom);
                 }
             }
