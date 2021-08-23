@@ -54,43 +54,12 @@ def reserve_regions(regions: Set[Region], reserved: Set[Region]) -> Set[Region]:
     return ret
 
 
-def align_memory(regions: Set[Region], config: Config) -> List[Region]:
-    ''' Given a set of regions, sort them and align the first so that the ELF loader will be able to load the kernel into it. Will return the aligned
-        memory region list, a set of any regions of memory that were aligned out
-        and the physBase value that the kernel will use. '''
-    ret = sorted(regions)
-    extra_reserved = set()
-
-    if config.arch == 'riscv':
-        # RISC-V is special: it expects physBase to be
-        # the address that the bootloader is loaded at.
-        physBase = ret[0].base
-
-    if config.get_bootloader_reserve() > 0:
-        resv = Region(ret[0].base, config.get_bootloader_reserve(), None)
-        extra_reserved.add(resv)
-        ret[0].base += config.get_bootloader_reserve()
-        ret[0].size -= config.get_bootloader_reserve()
-
-    if config.get_kernel_phys_align() != 0:
-        new = ret[0].align_base(config.get_kernel_phys_align())
-        resv = Region(ret[0].base, new.base - ret[0].base, None)
-        extra_reserved.add(resv)
-        ret[0] = new
-
-    if config.arch != 'riscv':
-        # ARM (and presumably other architectures)
-        # want physBase to be the physical load address of the kernel.
-        physBase = ret[0].base
-    return ret, extra_reserved, physBase
-
-
 def get_physical_memory(tree: FdtParser, config: Config) -> List[Region]:
     ''' returns a list of regions representing physical memory as used by the kernel '''
     regions = get_memory_regions(tree)
     reserved = parse_reserved_regions(tree.get_path('/reserved-memory'))
     regions = reserve_regions(regions, reserved)
-    regions, extra_reserved, physBase = align_memory(regions, config)
+    regions, extra_reserved, physBase = config.align_memory(regions)
 
     return regions, reserved.union(extra_reserved), physBase
 
