@@ -26,7 +26,7 @@
 #define RESET_CYCLES ((TIMER_CLOCK_HZ / MS_IN_S) * CONFIG_TIMER_TICK_MS)
 #endif /* !CONFIG_KERNEL_MCS */
 
-#define IS_IRQ_VALID(X) (((X)) <= maxIRQ && (X)!= irqInvalid)
+#define IS_IRQ_VALID(X) (((X)) <= maxIRQ && (X) != irqInvalid)
 
 word_t PURE getRestartPC(tcb_t *thread)
 {
@@ -69,12 +69,12 @@ BOOT_CODE void map_kernel_devices(void)
 
 /*
  * The following assumes familiarity with RISC-V interrupt delivery and the PLIC.
- * See the RISC-V privileged specifivation v1.10 and the comment in
+ * See the RISC-V privileged specification v1.10 and the comment in
  * include/plat/spike/plat/machine.h for more information.
  * RISC-V IRQ handling on seL4 works as follows:
  *
  * On other architectures the kernel masks interrupts between delivering them to
- * userlevel and receiving the acknowledgement invocation. This strategy doesn't
+ * userlevel and receiving the acknowledgment invocation. This strategy doesn't
  * work on RISC-V as an IRQ is implicitly masked when it is claimed, until the
  * claim is acknowledged. If we mask and unmask the interrupt at the PLIC while
  * a claim is in progress we sometimes experience IRQ sources not being masked
@@ -276,7 +276,7 @@ BOOT_CODE void initLocalIRQController(void)
 
 BOOT_CODE void initIRQController(void)
 {
-    printf("Initialing PLIC...\n");
+    printf("Initializing PLIC...\n");
 
     plic_init_controller();
 }
