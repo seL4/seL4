@@ -154,7 +154,7 @@ class Generator(object):
             params[str(n.text)] = {"type": param_type}
             param_order.append(str(n.text))
 
-        param_items = parent.find_all("parameteritem")
+        param_items = parent.find_all(lambda e: e.name == "parameteritem" and e.parent["kind"] == "param")
         for param_item in param_items:
             param_name_node = param_item.find("parametername")
             param_desc_node = param_item.find("parameterdescription")

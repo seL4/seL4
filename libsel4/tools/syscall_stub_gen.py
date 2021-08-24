@@ -930,6 +930,17 @@ def parse_xml_file(input_file, valid_types):
                 else:
                     comment_lines.append("@return @xmlonly <errorenumdesc/> @endxmlonly")
 
+            for error in method.getElementsByTagName("error"):
+                error_name = error.getAttribute("name")
+                error_description = error.getAttribute("description")
+                if not error_description:
+                    error_description_element = error.getElementsByTagName("description")
+                    if error_description_element:
+                        error_description_text = get_xml_element_content_with_xmlonly(
+                            error_description_element[0])
+                        error_description = normalise_text(error_description_text)
+                comment_lines.append("@retval %s %s " % (error_name, error_description))
+
             # split each line on newlines
             comment_lines = reduce(operator.add, [l.split("\n") for l in comment_lines], [])
 
