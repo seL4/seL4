@@ -19,7 +19,7 @@
 <!ATTLIST interface manual_name CDATA #IMPLIED>
 <!ATTLIST interface cap_description CDATA #IMPLIED>
 
-<!ELEMENT method (brief?,description?,return?,cap_param?,param*)>
+<!ELEMENT method (brief?,description?,return?,cap_param?,param*,error*)>
 <!ATTLIST method name CDATA #REQUIRED>
 <!ATTLIST method id CDATA #REQUIRED>
 <!ATTLIST method condition CDATA #IMPLIED>
@@ -31,6 +31,10 @@
 <!ATTLIST param name CDATA #REQUIRED>
 <!ATTLIST param dir CDATA #REQUIRED>
 <!ATTLIST param description CDATA #IMPLIED>
+
+<!ELEMENT error ANY>
+<!ATTLIST error name CDATA #REQUIRED>
+<!ATTLIST error description CDATA #IMPLIED>
 
 <!ELEMENT brief ANY>
 
