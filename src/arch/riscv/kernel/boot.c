@@ -442,10 +442,10 @@ static BOOT_CODE bool_t try_init_kernel(
 }
 
 BOOT_CODE VISIBLE void init_kernel(
-    paddr_t ui_p_reg_start,
-    paddr_t ui_p_reg_end,
-    sword_t pv_offset,
-    vptr_t  v_entry,
+    paddr_t ui_phys_start,
+    paddr_t ui_phys_end,
+    sword_t ui_pv_offset,
+    vptr_t  ui_virt_entry,
     paddr_t dtb_phys_addr,
     uint32_t dtb_size
 #ifdef ENABLE_SMP_SUPPORT
@@ -460,20 +460,20 @@ BOOT_CODE VISIBLE void init_kernel(
 #ifdef ENABLE_SMP_SUPPORT
     add_hart_to_core_map(hart_id, core_id);
     if (core_id == 0) {
-        result = try_init_kernel(ui_p_reg_start,
-                                 ui_p_reg_end,
-                                 pv_offset,
-                                 v_entry,
+        result = try_init_kernel(ui_phys_start,
+                                 ui_phys_end,
+                                 ui_pv_offset,
+                                 ui_virt_entry,
                                  dtb_phys_addr,
                                  dtb_size);
     } else {
         result = try_init_kernel_secondary_core(hart_id, core_id);
     }
 #else
-    result = try_init_kernel(ui_p_reg_start,
-                             ui_p_reg_end,
-                             pv_offset,
-                             v_entry,
+    result = try_init_kernel(ui_phys_start,
+                             ui_phys_end,
+                             ui_pv_offset,
+                             ui_virt_entry,
                              dtb_phys_addr,
                              dtb_size);
 #endif
