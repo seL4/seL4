@@ -207,6 +207,7 @@ BOOT_CODE static bool_t init_cpu(void)
 #ifdef CONFIG_ARCH_AARCH64
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         if (!checkTCR_EL2()) {
+            printf("ERROR: TCR_EL2 check failed\n");
             return false;
         }
     }
@@ -286,15 +287,16 @@ BOOT_CODE static void init_plat(void)
 #ifdef ENABLE_SMP_SUPPORT
 BOOT_CODE static bool_t try_init_kernel_secondary_core(void)
 {
-    unsigned i;
-
     /* need to first wait until some kernel init has been done */
     while (!node_boot_lock);
 
     /* Perform cpu init */
-    init_cpu();
+    if (!init_cpu()) {
+        printf("ERROR: CPU init failed\n");
+        return false;
+    }
 
-    for (i = 0; i < NUM_PPI; i++) {
+    for (unsigned int i = 0; i < NUM_PPI; i++) {
         maskInterrupt(true, CORE_IRQ_TO_IRQT(getCurrentCPUIndex(), i));
     }
     setIRQState(IRQIPI, CORE_IRQ_TO_IRQT(getCurrentCPUIndex(), irq_remote_call_ipi));
@@ -344,31 +346,55 @@ BOOT_CODE static void release_secondary_cpus(void)
 
 /* Main kernel initialisation function. */
 static BOOT_CODE bool_t try_init_kernel(
-    paddr_t ui_p_reg_start,
-    paddr_t ui_p_reg_end,
-    word_t  pv_offset,
-    vptr_t  v_entry,
-    paddr_t dtb_phys_addr,
-    word_t  dtb_size
+    word_t ui_phys_start,
+    word_t ui_phys_end,
+    word_t ui_pv_offset,
+    word_t ui_virt_entry,
+    word_t dtb_phys_start,
+    word_t dtb_size
 )
 {
     cap_t root_cnode_cap;
     cap_t it_ap_cap;
     cap_t it_pd_cap;
     cap_t ipcbuf_cap;
-    p_region_t ui_p_reg = (p_region_t) {
-        ui_p_reg_start, ui_p_reg_end
-    };
-    region_t ui_reg = paddr_to_pptr_reg(ui_p_reg);
     pptr_t extra_bi_offset = 0;
-    vptr_t extra_bi_frame_vptr;
-    vptr_t bi_frame_vptr;
-    vptr_t ipcbuf_vptr;
     create_frames_of_region_ret_t create_frames_ret;
     create_frames_of_region_ret_t extra_bi_ret;
 
-    /* Convert from physical addresses to userland vptrs with the parameter
-     * pv_offset, which is defined as:
+    /* setup virtual memory for the kernel */
+    map_kernel_window();
+
+    /* initialise the CPU */
+    if (!init_cpu()) {
+        printf("ERROR: CPU init failed\n");
+        return false;
+    }
+
+    /* debug output via serial port is only available from here */
+    printf("Bootstrapping kernel\n");
+
+    /* initialise the platform */
+    init_plat();
+
+    /* process the user image */
+    if (ui_phys_end <= ui_phys_start) {
+        fail("ERROR: invalid user image");
+        UNREACHABLE();
+    }
+    p_region_t ui_p_reg = {
+        .start = ui_phys_start,
+        .end   = ui_phys_end
+    };
+
+    /* The region of the initial thread is:
+     * - physical user image
+     * - IPC buffer
+     * - boot information
+     * - extra boot information
+     *
+     * Convert from physical addresses to userland vptrs with the parameter
+     * pv_offset, which is define as:
      *     virt_address + pv_offset = phys_address
      * The offset is usually a positive value, because the virtual address of
      * the user image is a low value and the actually physical address is much
@@ -388,29 +414,12 @@ static BOOT_CODE bool_t try_init_kernel(
      * If 0x40000000 is a signed integer, the result is likely the same, but the
      * whole operation is completely undefined by C rules.
      */
-    v_region_t ui_v_reg = {
-        .start = ui_p_reg_start - pv_offset,
-        .end   = ui_p_reg_end   - pv_offset
-    };
-
-    ipcbuf_vptr = ui_v_reg.end;
-    bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
-    extra_bi_frame_vptr = bi_frame_vptr + BIT(BI_FRAME_SIZE_BITS);
-
-    /* setup virtual memory for the kernel */
-    map_kernel_window();
-
-    /* initialise the CPU */
-    if (!init_cpu()) {
-        printf("ERROR: CPU init failed\n");
-        return false;
-    }
-
-    /* debug output via serial port is only available from here */
-    printf("Bootstrapping kernel\n");
-
-    /* initialise the platform */
-    init_plat();
+    vptr_t ui_virt_start = ui_phys_start - pv_offset
+    word_t ui_phys_size = ui_phys_end - ui_phys_start;
+    vptr_t ipcbuf_vptr = ui_virt_start + ui_phys_size;
+    vptr_t bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
+    vptr_t extra_bi_frame_vptr = bi_frame_vptr + BIT(PAGE_BITS);
+    word_t extra_bi_size = 0;
 
     /* If a DTB was provided, pass the data on as extra bootinfo */
     p_region_t dtb_p_reg = P_REG_EMPTY;
@@ -441,17 +450,23 @@ static BOOT_CODE bool_t try_init_kernel(
         };
     }
 
-    /* The region of the initial thread is the user image + ipcbuf and boot info */
-    word_t extra_bi_size = extra_bi_helper(0, dtb_phys_addr, dtb_size);
     word_t extra_bi_size_bits = calculate_extra_bi_size_bits(extra_bi_size);
-    it_v_reg.start = ui_v_reg.start;
-    it_v_reg.end = extra_bi_frame_vptr + BIT(extra_bi_size_bits);
-
-    if (it_v_reg.end >= USER_TOP) {
-        printf("ERROR: userland image virt [%p..%p] exceeds USER_TOP (%p)\n",
-               (void *)it_v_reg.start, (void *)it_v_reg.end, (void *)USER_TOP);
+    vptr_t ui_virt_end  = extra_bi_frame_vptr + BIT(extra_bi_size_bits);
+    if (ui_virt_end <= ui_virt_start) {
+        printf("ERROR: userland image virt [%p..%p] is invalid\n"
+               (void *)ui_virt_start, (void *)ui_virt_end);
         return false;
     }
+    if (ui_virt_end >= USER_TOP) {
+        printf("ERROR: userland image virt [%p..%p] exceeds USER_TOP (%p)\n",
+               (void *)ui_virt_start, (void *)ui_virt_end, (void *)USER_TOP);
+        return false;
+    }
+
+    v_region_t it_v_reg = {
+        .start = ui_virt_start;
+        .end   = ui_virt_end;
+    };
 
     if (!arch_init_freemem(ui_p_reg, dtb_p_reg, it_v_reg, extra_bi_size_bits)) {
         printf("ERROR: free memory management initialization failed\n");
@@ -543,7 +558,7 @@ static BOOT_CODE bool_t try_init_kernel(
         create_frames_of_region(
             root_cnode_cap,
             it_pd_cap,
-            ui_reg,
+            paddr_to_pptr_reg(ui_p_reg),
             true,
             pv_offset
         );
@@ -654,35 +669,29 @@ BOOT_CODE VISIBLE void init_kernel(
     word_t dtb_size
 )
 {
-    bool_t result;
-
 #ifdef ENABLE_SMP_SUPPORT
-    /* we assume there exists a cpu with id 0 and will use it for bootstrapping */
+    /* The core with the ID 0 will do the bootstrapping, all other cores will
+     * just do a lightweight initialization afterwards.
+     */
     if (getCurrentCPUIndex() == 0) {
-        result = try_init_kernel(ui_phys_start,
-                                 ui_phys_end,
-                                 ui_pv_offset,
-                                 ui_virt_entry,
-                                 dtb_phys_addr,
-                                 dtb_size);
-    } else {
-        result = try_init_kernel_secondary_core();
-    }
-
-#else
-    result = try_init_kernel(ui_phys_start,
+#endif /* ENABLE_SMP_SUPPORT */
+        if (!try_init_kernel(ui_phys_start,
                              ui_phys_end,
                              ui_pv_offset,
                              ui_virt_entry,
                              dtb_phys_addr,
-                             dtb_size);
-
-#endif /* ENABLE_SMP_SUPPORT */
-
-    if (!result) {
-        fail("ERROR: kernel init failed");
-        UNREACHABLE();
+                             dtb_size)) {
+            fail("ERROR: kernel init failed");
+            UNREACHABLE();
+        }
+#ifdef ENABLE_SMP_SUPPORT
+    } else {
+        if (!try_init_kernel_secondary_core()) {
+            fail("ERROR: kernel init on secondary core failed");
+            UNREACHABLE();
+        }
     }
+#endif /* ENABLE_SMP_SUPPORT */
 
 #ifdef CONFIG_KERNEL_MCS
     NODE_STATE(ksCurTime) = getCurrentTime();
