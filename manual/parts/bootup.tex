@@ -1,30 +1,33 @@
 %
 % Copyright 2014, General Dynamics C4 Systems
 %
-% This software may be distributed and modified according to the terms of
-% the GNU General Public License version 2. Note that NO WARRANTY is provided.
-% See "LICENSE_GPLv2.txt" for details.
-%
-% @TAG(GD_GPL)
+% SPDX-License-Identifier: GPL-2.0-only
 %
 
 \chapter{\label{ch:bootup}System Bootstrapping}
 
 \section{Initial Thread's Environment}
 
-The seL4 kernel creates a minimal boot environment for the initial thread.
+The seL4 kernel creates a minimal boot environment for the initial thread, which
+ is started at priority \texttt{seL4\_MaxPrio} and maximum control priority \texttt{seL4\_MaxPrio}.
 This environment consists of the initial thread's TCB, CSpace and VSpace,
 consisting of frames that contain the userland image (code/data of the initial
 thread) and the IPC buffer.
+
+On the MCS kernel, the initial thread is configured with a round-robin scheduling context
+with \texttt{CONFIG\_BOOT\_THREAD\_TIME\_SLICE} milliseconds timeslice.
+Without MCS, all threads including the initial thread are scheduled round-robin with
+\texttt{CONFIG\_TIMER\_TICK\_MS} $*$ \texttt{CONFIG\_TIME\_SLICE} timeslices.
+
 The initial thread's CSpace consists of exactly one CNode
 which contains capabilities to the initial
-thread's own resources was well as to all available global resources.
+thread's own resources as well as to all available global resources.
 The CNode size can be configured at compile time (default is $2^{12}$
 slots), but the guard is always chosen so that the CNode resolves exactly
-32 bits. This means, the first slot of the CNode has CPTR 0x0, the
-second slot has CPTR 0x1 etc.
+the number of bits in the architecture (32 bits or 64 bits). This means, the
+first slot of the CNode has CPTR 0x0, the second slot has CPTR 0x1 etc.
 
-The first 12 slots contain specific capabilities as listed in
+The first 15 slots (or 14 slots if not MCS) contain specific capabilities as listed in
 \autoref{tab:cnode_content}.
 
 \begin{table}[htb]
@@ -55,6 +58,9 @@ The first 12 slots contain specific capabilities as listed in
       \texttt{seL4\_CapBootInfoFrame}       & BootInfo frame (see \autoref{ch:bootup:bootinfo}) \\
       \texttt{seL4\_CapInitThreadIPCBuffer} & initial thread's IPC buffer (see \autoref{sec:messageinfo}) \\
       \texttt{seL4\_CapDomain}              & domain cap (see \autoref{sec:domains}) \\
+      \texttt{seL4\_CapSMMUSIDControl}      & global Arm SMMU SID controller, null cap if unsupported (see \autoref{sec:smmuv2}) \\
+      \texttt{seL4\_CapSMMUCBControl}       & global Arm SMMU CB controller, null cap if unsupported (see \autoref{sec:smmuv2}) \\
+      \texttt{seL4\_CapInitThreadSC}        & initial thread's scheduling context (MCS only) \\
       \bottomrule
     \end{tabularx}
   \end{center}
@@ -92,7 +98,7 @@ of slots in the initial thread's CNode, starting with CPTR \texttt{start} and wi
       Field Type & Field Name & Description \\
       \midrule
       \texttt{seL4\_Word}           & \texttt{extraLen}                & length of additional bootinfo information in bytes \\
-      \texttt{seL4\_Word}           & \texttt{nodeID}                  & node ID \\
+      \texttt{seL4\_NodeId}         & \texttt{nodeID}                  & node ID \\
       \texttt{seL4\_Word}           & \texttt{numNodes}                & number of nodes \\
       \texttt{seL4\_Word}           & \texttt{numIOPTLevels}           & number of I/O page-table levels (-1 if CONFIG\_IOMMU unset) \\
       \texttt{seL4\_IPCBuffer*}     & \texttt{ipcBuffer}               & pointer to the initial thread's IPC buffer \\
@@ -100,12 +106,13 @@ of slots in the initial thread's CNode, starting with CPTR \texttt{start} and wi
       \texttt{seL4\_SlotRegion}     & \texttt{sharedFrames}            & reserved \\
       \texttt{seL4\_SlotRegion}     & \texttt{userImageFrames}         & frames containing the userland image \\
       \texttt{seL4\_SlotRegion}     & \texttt{userImagePaging}         & userland-image paging structure caps \\
-      \texttt{seL4\_SlotRegion}     & \texttt{ioSpaceCaps}             & I/O space capabilities for ARM SMMU \\
+      \texttt{seL4\_SlotRegion}     & \texttt{ioSpaceCaps}             & I/O space capabilities for Arm SMMU \\
       \texttt{seL4\_SlotRegion}     & \texttt{extraBIPages}            & frames backing additional bootinfo information \\
-      \texttt{seL4\_UntypedDesc[]}  & \texttt{untypedList}             & array of information about each untyped \\
       \texttt{seL4\_Uint8}          & \texttt{initThreadCNodeSizeBits} & CNode size ($2^n$ slots) \\
       \texttt{seL4\_Word}           & \texttt{initThreadDomain}        & domain of the initial thread (see \autoref{sec:domains}) \\
+      \texttt{seL4\_SlotRegion}     & \texttt{schedcontrol}            & seL4\_SchedControl capabilities, one for each node (MCS only). \\
       \texttt{seL4\_SlotRegion}     & \texttt{untyped}                 & untyped-memory capabilities \\
+      \texttt{seL4\_UntypedDesc[]}  & \texttt{untypedList}             & array of information about each untyped \\
       \bottomrule
     \end{tabularx}
   \end{center}
@@ -182,10 +189,9 @@ memory being available.
       Field Type & Field Name & Description \\
       \midrule
       \texttt{seL4\_Word}  & \texttt{paddr}    & physical base address of the untyped object \\
-      \texttt{seL4\_Uint8} & \texttt{padding1} & manual padding so final struct is a multiple of the word size \\
-      \texttt{seL4\_Uint8} & \texttt{padding2} & manual padding so final struct is a multiple of the word size \\
       \texttt{seL4\_Uint8} & \texttt{sizeBits} & size ($2^n$ bytes) of the untyped object \\
       \texttt{seL4\_Uint8} & \texttt{isDevice} & is this untyped a device or not (see \autoref{sec:kernmemalloc}) \\
+      \texttt{seL4\_Uint8[]} & \texttt{padding} & manual padding so final struct is a multiple of the word size \\
       \bottomrule
     \end{tabular}
   \end{center}
@@ -196,7 +202,7 @@ the number of IOMMU-page-table levels. This information is needed by userland
 when constructing an IOMMU address space (IOSpace). If there is no IOMMU
 support, \texttt{numIOPTLevels} is \texttt{0}.
 
-On ARM if the platform has any available SMMU units the capabilities for them
+On Arm if the platform has any available SMMU units the capabilities for them
 will be described by the \texttt{ioSpaceCaps} slot region. The mapping of a
 capability from this region to a specific SMMU is platform specific.
 

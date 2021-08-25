@@ -1,16 +1,21 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_CAPDL_H
-#define __ARCH_MACHINE_CAPDL_H
+#pragma once
 
-void capDL(void);
+#include <config.h>
+#include <machine/capdl.h>
 
+#ifdef CONFIG_PRINTING
+
+void x86_obj_ioports_print_attrs(cap_t ioports_cap);
+
+#ifdef CONFIG_IOMMU
+void x86_obj_iospace_print_attrs(cap_t iospace_cap);
+void x86_obj_iopt_print_attrs(cap_t iopt_cap);
 #endif
+
+#endif /* CONFIG_PRINTING */

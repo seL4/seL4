@@ -1,11 +1,8 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2021, HENSOLDT Cyber
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -73,12 +70,18 @@
 
 /*
  * Entry point of the kernel ELF image.
- * R0-R3 contain parameters that are passed to init_kernel().
+ * R0-R3 contain parameters that are passed to init_kernel(),
+ * and we put arguments 5 and 6 (DTB address/size) in r7 and r8.
  */
 
 .code 32
 .section .boot.text, "ax"
 BEGIN_FUNC(_start)
+    /*
+     * Get the dtb and dtb size from the elfloader stack. Do this first because
+     * sp might change when we switch to supervisor mode.
+     */
+    pop {r7, r8}
 
     /* Supervisor/hypervisor mode, interrupts disabled */
     ldr r5, =CPSR_KERNEL
@@ -144,9 +147,9 @@ BEGIN_FUNC(_start)
 #endif /* ENABLE_SMP_SUPPORT */
 
     /* Attempt to workaround any known ARM errata. */
-    push {r0-r3}
+    push {r0-r3,r7-r8}
     blx arm_errata
-    pop {r0-r3}
+    pop {r0-r3,r7-r8}
 
     /* Hyp kernel always run in Hyp mode. */
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
@@ -156,10 +159,27 @@ BEGIN_FUNC(_start)
     cps #PMODE_SUPERVISOR
 #endif
 
-    /* Call bootstrapping implemented in C */
+    /* Put the DTB address back on the new stack for init_kernel. */
+    push {r7, r8}
+
+    /* Call bootstrapping implemented in C with parameters:
+     *   r0: user image physical start address
+     *   r1: user image physical end address
+     *   r2: physical/virtual offset
+     *   r3: user image virtual entry address
+     *   sp[0]: DTB physical address (0 if there is none)
+     *   sp[1]: DTB size (0 if there is none)
+     */
     blx init_kernel
 
-    /* Restore the initial thread */
+    /* Restore the initial thread. Note that the function restore_user_context()
+     * could technically also be called at the end of init_kernel() directly,
+     * there is no need to return to the assembly code here at all. However, for
+     * verification things are a lot easier when init_kernel() is a normal C
+     * function that returns. The function restore_user_context() is not a
+     * normal C function and thus handled specially in verification, it does
+     * highly architecture specific things to exit to user mode.
+     */
     b restore_user_context
 
 END_FUNC(_start)

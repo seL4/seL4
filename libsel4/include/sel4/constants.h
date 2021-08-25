@@ -1,23 +1,15 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the BSD 2-Clause license. Note that NO WARRANTY is provided.
- * See "LICENSE_BSD2.txt" for details.
- *
- * @TAG(DATA61_BSD)
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __API_CONSTANTS_H
-#define __API_CONSTANTS_H
+#pragma once
 
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif
+#include <sel4/macros.h>
 
-#define LIBSEL4_BIT(n) (1ul<<(n))
+#ifndef __ASSEMBLER__
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
 /* API arg values for breakpoint API, "type" arguments. */
@@ -39,7 +31,7 @@ typedef enum {
 } seL4_BreakpointAccess;
 
 /* Format of a debug-exception message. */
-enum {
+typedef enum {
     seL4_DebugException_FaultIP,
     seL4_DebugException_ExceptionReason,
     seL4_DebugException_TriggerAddress,
@@ -78,5 +70,40 @@ typedef enum {
     seL4_GuardMismatch,
     SEL4_FORCE_LONG_ENUM(seL4_LookupFailureType),
 } seL4_LookupFailureType;
+#endif /* !__ASSEMBLER__ */
 
-#endif /* __API_CONSTANTS_H */
+#ifdef CONFIG_KERNEL_MCS
+/* Minimum size of a scheduling context (2^{n} bytes) */
+#define seL4_MinSchedContextBits 8
+#ifndef __ASSEMBLER__
+/* the size of a scheduling context, excluding extra refills */
+#define seL4_CoreSchedContextBytes (10 * sizeof(seL4_Word) + (6 * 8))
+/* the size of a single extra refill */
+#define seL4_RefillSizeBytes (2 * 8)
+
+/*
+ * @brief Calculate the max extra refills a scheduling context can contain for a specific size.
+ *
+ * @param  size of the schedulding context. Must be >= seL4_MinSchedContextBits
+ * @return the max number of extra refills that can be passed to seL4_SchedControl_Configure for
+ *         this scheduling context
+ */
+static inline seL4_Word seL4_MaxExtraRefills(seL4_Word size)
+{
+    return (LIBSEL4_BIT(size) -  seL4_CoreSchedContextBytes) / seL4_RefillSizeBytes;
+}
+
+/* Flags to be used with seL4_SchedControl_ConfigureFlags */
+typedef enum {
+    seL4_SchedContext_NoFlag = 0x0,
+    seL4_SchedContext_Sporadic = 0x1,
+    SEL4_FORCE_LONG_ENUM(seL4_SchedContextFlag),
+} seL4_SchedContextFlag;
+
+#endif /* !__ASSEMBLER__ */
+#endif /* CONFIG_KERNEL_MCS */
+
+#ifdef CONFIG_KERNEL_INVOCATION_REPORT_ERROR_IPC
+#define DEBUG_MESSAGE_START 6
+#define DEBUG_MESSAGE_MAXLEN 50
+#endif

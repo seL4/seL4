@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_FPU_H
-#define __ARCH_MACHINE_FPU_H
+#pragma once
 
 #include <config.h>
 #include <types.h>
@@ -105,7 +100,7 @@ static inline void finit(void)
  */
 static inline void enableFpu(void)
 {
-    asm volatile("clts" :: "m" (control_reg_order));
+    asm volatile("clts" :: "m"(control_reg_order));
 }
 
 /*
@@ -122,4 +117,4 @@ static inline bool_t vcpuThreadUsingFPU(tcb_t *thread)
     return thread->tcbArch.tcbVCPU && &thread->tcbArch.tcbVCPU->fpuState == NODE_STATE(ksActiveFPUState);
 }
 #endif /* CONFIG_VTX */
-#endif /* __ARCH_MACHINE_FPU_H */
+

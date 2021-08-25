@@ -1,0 +1,56 @@
+#
+# Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+#
+# SPDX-License-Identifier: GPL-2.0-only
+#
+
+additional_commands:
+  add_sources:
+    kwargs:
+      ASMFILES: '*'
+      CFILES: '*'
+      DEP: '*'
+      PREFIX: '*'
+  config_option:
+    flags:
+    - UNQUOTE
+    kwargs:
+      DEFAULT: '*'
+      DEFAULT_DISABLED: '*'
+      DEPENDS: '*'
+  config_string:
+    flags:
+    - UNQUOTE
+    kwargs:
+      DEFAULT: '*'
+      DEPENDS: '*'
+  cpp_file:
+    kwargs:
+      EXACT_NAME: '*'
+      EXTRA_DEPS: '*'
+      EXTRA_FLAGS: '*'
+  gen_invocation_header:
+    flags:
+    - ARCH
+    - SEL4ARCH
+    - LIBSEL4
+    kwargs:
+      OUTPUT: '*'
+      XML: '*'
+  register_driver:
+    kwargs:
+      CFILES: '*'
+      PREFIX: '*'
+  declare_default_headers:
+    kwargs:
+        TIMER_FREQUENCY: '*'
+        MAX_IRQ: '*'
+        NUM_PPI: '*'
+        INTERRUPT_CONTROLLER: '*'
+        TIMER: '*'
+        KERNEL_WCET: '*'
+        CLK_MAGIC: '*'
+        CLK_SHIFT: '*'
+        TIMER_PRECISION: '*'
+        MAX_SID: '*'
+        MAX_CB: '*'

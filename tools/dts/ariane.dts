@@ -1,0 +1,155 @@
+/* SPDX-License-Identifier: SHL-0.51 */
+
+/* Copyright 2018 ETH Zurich and University of Bologna.
+ * Copyright and related rights are licensed under the Solderpad Hardware
+ * License, Version 0.51 (the "License"); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ * http://solderpad.org/licenses/SHL-0.51. Unless required by applicable law
+ * or agreed to in writing, software, hardware and materials distributed under
+ * this License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
+/dts-v1/;
+
+/ {
+  #address-cells = <2>;
+  #size-cells = <2>;
+  compatible = "eth,ariane-bare-dev";
+  model = "eth,ariane-bare";
+  chosen {
+  };
+  cpus {
+    #address-cells = <1>;
+    #size-cells = <0>;
+    timebase-frequency = <15000000>; // 15 MHz
+    CPU0: cpu@0 {
+      clock-frequency = <50000000>; // 50 MHz
+      device_type = "cpu";
+      reg = <0>;
+      status = "okay";
+      compatible = "eth, ariane", "riscv";
+      riscv,isa = "rv64imafdc";
+      mmu-type = "riscv,sv39";
+      tlb-split;
+      // HLIC - hart local interrupt controller
+      CPU0_intc: interrupt-controller {
+        #interrupt-cells = <1>;
+        interrupt-controller;
+        compatible = "riscv,cpu-intc";
+      };
+    };
+  };
+  memory@80000000 {
+    device_type = "memory";
+    reg = <0x0 0x80000000 0x0 0x40000000>;
+  };
+  leds {
+    compatible = "gpio-leds";
+    heartbeat-led {
+      gpios = <&xlnx_gpio 1 0>;
+      linux,default-trigger = "heartbeat";
+      retain-state-suspended;
+    };
+  };
+  L26: soc {
+    #address-cells = <2>;
+    #size-cells = <2>;
+    compatible = "eth,ariane-bare-soc", "simple-bus";
+    ranges;
+    clint@2000000 {
+      compatible = "riscv,clint0";
+      interrupts-extended = <&CPU0_intc 3 &CPU0_intc 7>;
+      reg = <0x0 0x2000000 0x0 0xc0000>;
+      reg-names = "control";
+    };
+    PLIC0: interrupt-controller@c000000 {
+      #address-cells = <0>;
+      #interrupt-cells = <1>;
+      compatible = "riscv,plic0";
+      interrupt-controller;
+      interrupts-extended = <&CPU0_intc 11 &CPU0_intc 9>;
+      reg = <0x0 0xc000000 0x0 0x4000000>;
+      riscv,max-priority = <7>;
+      riscv,ndev = <30>;
+    };
+    debug-controller@0 {
+      compatible = "riscv,debug-013";
+      interrupts-extended = <&CPU0_intc 65535>;
+      reg = <0x0 0x0 0x0 0x1000>;
+      reg-names = "control";
+    };
+    uart@10000000 {
+      compatible = "ns16750";
+      reg = <0x0 0x10000000 0x0 0x1000>;
+      clock-frequency = <50000000>;
+      current-speed = <115200>;
+      interrupt-parent = <&PLIC0>;
+      interrupts = <1>;
+      reg-shift = <2>; // regs are spaced on 32 bit boundary
+      reg-io-width = <4>; // only 32-bit access are supported
+    };
+    timer@18000000 {
+      compatible = "pulp,apb_timer";
+      interrupts = <0x00000004 0x00000005 0x00000006 0x00000007>;
+      reg = <0x00000000 0x18000000 0x00000000 0x00001000>;
+      interrupt-parent = <&PLIC0>;
+      reg-names = "control";
+    };
+    xps-spi@20000000 {
+      compatible = "xlnx,xps-spi-2.00.b", "xlnx,xps-spi-2.00.a";
+      #address-cells = <1>;
+      #size-cells = <0>;
+      interrupt-parent = <&PLIC0>;
+      interrupts = < 2 2 >;
+      reg = < 0x0 0x20000000 0x0 0x1000 >;
+      xlnx,family = "kintex7";
+      xlnx,fifo-exist = <0x1>;
+      xlnx,num-ss-bits = <0x1>;
+      xlnx,num-transfer-bits = <0x8>;
+      xlnx,sck-ratio = <0x4>;
+
+      mmc@0 {
+        compatible = "mmc-spi-slot";
+        reg = <0>;
+        spi-max-frequency = <12500000>;
+        voltage-ranges = <3300 3300>;
+        disable-wp;
+      };
+
+      // mmc-slot@0 {
+      //   compatible = "fsl,mpc8323rdb-mmc-slot", "mmc-spi-slot";
+      //   reg = <0>;  //Chip select 0
+      //   spi-max-frequency = <12500000>;
+      //   voltage-ranges = <3300 3300>;
+      //   //interrupts = < 2 2 >;
+      //   //interrupt-parent = <&PLIC0>;
+      // };
+    };
+    eth: lowrisc-eth@30000000 {
+      compatible = "lowrisc-eth";
+      device_type = "network";
+      interrupt-parent = <&PLIC0>;
+      interrupts = <3 0>;
+      local-mac-address = [00 18 3e 02 e3 7f]; // This needs to change if more than one GenesysII on a VLAN
+      reg = <0x0 0x30000000 0x0 0x8000>;
+    };
+    xlnx_gpio: gpio@40000000 {
+      #gpio-cells = <2>;
+      compatible = "xlnx,xps-gpio-1.00.a";
+      gpio-controller ;
+      reg = <0x0 0x40000000 0x0 0x10000 >;
+      xlnx,all-inputs = <0x0>;
+      xlnx,all-inputs-2 = <0x0>;
+      xlnx,dout-default = <0x0>;
+      xlnx,dout-default-2 = <0x0>;
+      xlnx,gpio-width = <0x8>;
+      xlnx,gpio2-width = <0x8>;
+      xlnx,interrupt-present = <0x0>;
+      xlnx,is-dual = <0x1>;
+      xlnx,tri-default = <0xffffffff>;
+      xlnx,tri-default-2 = <0xffffffff>;
+    };
+  };
+};

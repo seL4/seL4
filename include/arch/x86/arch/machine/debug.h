@@ -1,17 +1,10 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_DEBUG_H_
-#define __ARCH_MACHINE_DEBUG_H_
+#pragma once
 
 #include <config.h>
 #ifdef CONFIG_HARDWARE_DEBUG_API
@@ -57,16 +50,14 @@ exception_t handleUserLevelDebugException(int int_vector);
  * thread's TCB. These two functions here set and unset the bits in that
  * bitfield.
  */
-static inline void
-setBreakpointUsedFlag(tcb_t *t, uint16_t bp_num)
+static inline void setBreakpointUsedFlag(tcb_t *t, uint16_t bp_num)
 {
     if (t != NULL) {
         t->tcbArch.tcbContext.breakpointState.used_breakpoints_bf |= BIT(bp_num);
     }
 }
 
-static inline void
-unsetBreakpointUsedFlag(tcb_t *t, uint16_t bp_num)
+static inline void unsetBreakpointUsedFlag(tcb_t *t, uint16_t bp_num)
 {
     if (t != NULL) {
         t->tcbArch.tcbContext.breakpointState.used_breakpoints_bf &= ~BIT(bp_num);
@@ -81,8 +72,7 @@ unsetBreakpointUsedFlag(tcb_t *t, uint16_t bp_num)
  * @param at arch_tcb_t from which the reserved bits will be loaded before
  *           setting the disable bits.
  */
-static void
-loadAllDisabledBreakpointState(tcb_t *t)
+static void loadAllDisabledBreakpointState(tcb_t *t)
 {
     word_t disable_value;
 
@@ -93,8 +83,7 @@ loadAllDisabledBreakpointState(tcb_t *t)
     writeDr7Reg(disable_value);
 }
 
-static inline void
-restore_user_debug_context(tcb_t *target_thread)
+static inline void restore_user_debug_context(tcb_t *target_thread)
 {
     arch_tcb_t *uds = &target_thread->tcbArch;
     if (uds->tcbContext.breakpointState.used_breakpoints_bf != 0) {
@@ -125,11 +114,10 @@ restore_user_debug_context(tcb_t *target_thread)
     }
 }
 
-static inline syscall_error_t
-Arch_decodeConfigureSingleStepping(tcb_t *t,
-                                   uint16_t bp_num,
-                                   word_t n_instr,
-                                   bool_t is_reply)
+static inline syscall_error_t Arch_decodeConfigureSingleStepping(tcb_t *t,
+                                                                 uint16_t bp_num,
+                                                                 word_t n_instr,
+                                                                 bool_t is_reply)
 {
     syscall_error_t ret;
 
@@ -139,10 +127,9 @@ Arch_decodeConfigureSingleStepping(tcb_t *t,
 
 bool_t byte8BreakpointsSupported(void);
 
-static inline syscall_error_t
-Arch_decodeSetBreakpoint(tcb_t *t,
-                         uint16_t bp_num, word_t vaddr, word_t types,
-                         word_t size, word_t rw)
+static inline syscall_error_t Arch_decodeSetBreakpoint(tcb_t *t,
+                                                       uint16_t bp_num, word_t vaddr, word_t types,
+                                                       word_t size, word_t rw)
 {
     syscall_error_t ret = {
         .type = seL4_NoError
@@ -164,8 +151,7 @@ Arch_decodeSetBreakpoint(tcb_t *t,
     return ret;
 }
 
-static inline syscall_error_t
-Arch_decodeGetBreakpoint(tcb_t *t, uint16_t bp_num)
+static inline syscall_error_t Arch_decodeGetBreakpoint(tcb_t *t, uint16_t bp_num)
 {
     syscall_error_t ret = {
         .type = seL4_NoError
@@ -180,8 +166,7 @@ Arch_decodeGetBreakpoint(tcb_t *t, uint16_t bp_num)
     return ret;
 }
 
-static inline syscall_error_t
-Arch_decodeUnsetBreakpoint(tcb_t *t, uint16_t bp_num)
+static inline syscall_error_t Arch_decodeUnsetBreakpoint(tcb_t *t, uint16_t bp_num)
 {
     syscall_error_t ret = {
         .type = seL4_NoError
@@ -197,5 +182,3 @@ Arch_decodeUnsetBreakpoint(tcb_t *t, uint16_t bp_num)
 }
 
 #endif /* CONFIG_HARDWARE_DEBUG_API */
-
-#endif /* __ARCH_MACHINE_DEBUG_H_ */

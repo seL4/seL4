@@ -1,24 +1,16 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the BSD 2-Clause license. Note that NO WARRANTY is provided.
- * See "LICENSE_BSD2.txt" for details.
- *
- * @TAG(DATA61_BSD)
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_SEL4_ARCH_FAULTS_H
-#define __LIBSEL4_SEL4_ARCH_FAULTS_H
+#pragma once
 
 #include <autoconf.h>
 #include <sel4/faults.h>
 #include <sel4/sel4_arch/constants.h>
 
-LIBSEL4_INLINE_FUNC seL4_Fault_t
-seL4_getArchFault(seL4_MessageInfo_t tag)
+LIBSEL4_INLINE_FUNC seL4_Fault_t seL4_getArchFault(seL4_MessageInfo_t tag)
 {
     switch (seL4_MessageInfo_get_label(tag)) {
     case seL4_Fault_UnknownSyscall:
@@ -53,10 +45,13 @@ seL4_getArchFault(seL4_MessageInfo_t tag)
                                       seL4_GetMR(seL4_VMFault_Addr),
                                       seL4_GetMR(seL4_VMFault_PrefetchFault),
                                       seL4_GetMR(seL4_VMFault_FSR));
+#ifdef CONFIG_KERNEL_MCS
+    case seL4_Fault_Timeout:
+        return seL4_Fault_Timeout_new(seL4_GetMR(seL4_Timeout_Data),
+                                      seL4_GetMR(seL4_Timeout_Consumed));
+#endif /* CONFIG_KERNEL_MCS */
     default:
         return seL4_Fault_NullFault_new();
     }
 }
 
-
-#endif

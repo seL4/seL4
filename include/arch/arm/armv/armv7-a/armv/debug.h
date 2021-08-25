@@ -1,33 +1,28 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_ARMV_DEBUG_H_
-#define __ARCH_ARMV_DEBUG_H_
+#pragma once
 
 #include <config.h>
 
-#if defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_EXPORT_PMU_USER)
+#if defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_EXPORT_PMU_USER) || defined(CONFIG_ENABLE_BENCHMARKS)
 
 #include <mode/machine/debug.h>
 #include <mode/machine.h> /* MRC/MCR */
 
 /** Read DBGDSCR from CP14.
  */
-static inline word_t
-readDscrCp(void)
+static inline word_t readDscrCp(void)
 {
     word_t v;
-
+#ifdef CONFIG_ARM_CORTEX_A8
+    MRC(DBGDSCR_int, v);
+#else
     MRC(DBGDSCR_ext, v);
+#endif
     return v;
 }
 
@@ -35,8 +30,7 @@ readDscrCp(void)
  * On ARMv7, the external view of the CP14 DBGDSCR register is preferred since
  * the internal view is fully read-only.
  */
-static inline void
-writeDscrCp(word_t val)
+static inline void writeDscrCp(word_t val)
 {
     MCR(DBGDSCR_ext, val);
 }
@@ -69,8 +63,7 @@ enum v7_breakpoint_type {
  *
  * Checks to see if the 8-byte byte-address-select high bits ignore writes.
  */
-static inline bool_t
-watchpoint8bSupported(void)
+static inline bool_t watchpoint8bSupported(void)
 {
     word_t wcrtmp;
 
@@ -105,8 +98,7 @@ watchpoint8bSupported(void)
  * Unfortunately, it's also gated behind a hardware pin signal, #DBGEN. If
  * #DBGEN is held low, monitor mode is unavailable.
  */
-BOOT_CODE static bool_t
-enableMonitorMode(void)
+BOOT_CODE static bool_t enableMonitorMode(void)
 {
     dbg_dscr_t dscr;
 
@@ -144,8 +136,7 @@ enableMonitorMode(void)
     return true;
 }
 
-static inline dbg_bcr_t
-Arch_setupBcr(dbg_bcr_t in_val, bool_t is_match)
+static inline dbg_bcr_t Arch_setupBcr(dbg_bcr_t in_val, bool_t is_match)
 {
     dbg_bcr_t bcr;
 
@@ -160,8 +151,7 @@ Arch_setupBcr(dbg_bcr_t in_val, bool_t is_match)
     return bcr;
 }
 
-static inline dbg_wcr_t
-Arch_setupWcr(dbg_wcr_t in_val)
+static inline dbg_wcr_t Arch_setupWcr(dbg_wcr_t in_val)
 {
     dbg_wcr_t wcr;
 
@@ -171,8 +161,7 @@ Arch_setupWcr(dbg_wcr_t in_val)
     return wcr;
 }
 
-static inline bool_t
-Arch_breakpointIsMismatch(dbg_bcr_t in_val)
+static inline bool_t Arch_breakpointIsMismatch(dbg_bcr_t in_val)
 {
     /* Detect if the register is set up for mismatch (single-step). */
     if (dbg_bcr_get_breakpointType(in_val) == DBGBCR_TYPE_UNLINKED_INSTRUCTION_MISMATCH) {
@@ -182,4 +171,4 @@ Arch_breakpointIsMismatch(dbg_bcr_t in_val)
 }
 
 #endif /* CONFIG_HARDWARE_DEBUG_API */
-#endif /* __ARCH_ARMV_DEBUG_H_ */
+

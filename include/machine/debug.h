@@ -1,17 +1,10 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MACHINE_DEBUG_H_
-#define __MACHINE_DEBUG_H_
+#pragma once
 
 #include <config.h>
 
@@ -78,8 +71,7 @@ bool_t configureSingleStepping(tcb_t *t,
                                word_t n_instr,
                                bool_t is_reply);
 
-static inline bool_t
-singleStepFaultCounterReady(tcb_t *t)
+static inline bool_t singleStepFaultCounterReady(tcb_t *t)
 {
     /* For a single-step exception, the user may have specified a certain
      * number of instructions to skip over before the next stop-point, so
@@ -96,4 +88,3 @@ singleStepFaultCounterReady(tcb_t *t)
 
 #endif /* CONFIG_HARDWARE_DEBUG_API */
 
-#endif /* __MACHINE_DEBUG_H_ */

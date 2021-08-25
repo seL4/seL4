@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_PL2_32_H
-#define __ARCH_MACHINE_PL2_32_H
+#pragma once
 
 #include <config.h>
 #include <arch/object/vcpu.h>
@@ -126,9 +121,9 @@ static inline void invalidateHypTLB(void)
 static inline paddr_t PURE addressTranslateS1CPR(vptr_t vaddr)
 {
     uint32_t ipa0, ipa1;
-    asm volatile ("mcr  p15, 0, %0, c7, c8, 0" :: "r"(vaddr));
+    asm volatile("mcr  p15, 0, %0, c7, c8, 0" :: "r"(vaddr));
     isb();
-    asm volatile ("mrrc p15, 0, %0, %1, c7"   : "=r"(ipa0), "=r"(ipa1));
+    asm volatile("mrrc p15, 0, %0, %1, c7"   : "=r"(ipa0), "=r"(ipa1));
 
     return ipa0;
 }
@@ -164,25 +159,25 @@ static inline word_t PURE getHPFAR(void)
 static inline word_t getSCTLR(void)
 {
     word_t SCTLR;
-    asm volatile ("mrc p15, 0, %0, c1, c0, 0" : "=r"(SCTLR));
+    asm volatile("mrc p15, 0, %0, c1, c0, 0" : "=r"(SCTLR));
     return SCTLR;
 }
 
 static inline void setSCTLR(word_t sctlr)
 {
-    asm volatile ("mcr p15, 0, %0, c1, c0, 0" :: "r"(sctlr));
+    asm volatile("mcr p15, 0, %0, c1, c0, 0" :: "r"(sctlr));
 }
 
-static inline void setHTPIDR(word_t htpidr)
+static inline void writeHTPIDR(word_t reg)
 {
-    asm volatile("mcr p15, 4, %0, c13, c0, 2" :: "r"(htpidr));
+    asm volatile("mcr p15, 4, %0, c13, c0, 2" :: "r"(reg));
 }
 
-static inline word_t getHTPIDR(void)
+static inline word_t readHTPIDR(void)
 {
-    word_t HTPIDR;
-    asm volatile("mrc p15, 4, %0, c13, c0, 2" : "=r"(HTPIDR));
-    return HTPIDR;
+    word_t reg;
+    asm volatile("mrc p15, 4, %0, c13, c0, 2" : "=r"(reg));
+    return reg;
 }
 
 #else
@@ -192,8 +187,8 @@ static inline void setCurrentPDPL2(paddr_t pa) {}
 static inline void invalidateHypTLB(void) {}
 static inline void writeContextIDPL2(word_t pd_val) {}
 static inline void writeContextIDAndPD(word_t id, word_t pd_val) {}
-static inline void setHTPIDR(word_t htpidr) {}
-static inline word_t getHTPIDR(void)
+static inline void writeHTPIDR(word_t htpidr) {}
+static inline word_t readHTPIDR(void)
 {
     return 0;
 }
@@ -203,4 +198,3 @@ static inline paddr_t addressTranslateS1CPR(vptr_t vaddr)
 }
 
 #endif /* !CONFIG_ARM_HYPERVISOR_SUPPORT */
-#endif /* __ARCH_MACHINE_PL2_32_H */

@@ -1,13 +1,7 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -73,11 +67,11 @@ static void NORETURN restore_vmx(void)
 #else
             "leaq kernel_stack_alloc + %c[stack_size], %%rsp\n"
 #endif
-            "leaq %[failed], %%rax\n"
+            "movq %[failed], %%rax\n"
             "jmp *%%rax\n"
             :
             : [reg]"r"(&cur_thread->tcbArch.tcbVCPU->gp_registers[VCPU_EAX]),
-            [failed]"m"(vmlaunch_failed),
+            [failed]"i"(&vmlaunch_failed),
             [stack_size]"i"(BIT(CONFIG_KERNEL_STACK_BITS))
 #ifdef ENABLE_SMP_SUPPORT
             , [stack_offset]"i"(OFFSETOF(nodeInfo_t, stackTop))
@@ -114,11 +108,11 @@ static void NORETURN restore_vmx(void)
 #else
             "leaq kernel_stack_alloc + %c[stack_size], %%rsp\n"
 #endif
-            "leaq %[failed], %%rax\n"
+            "movq %[failed], %%rax\n"
             "jmp *%%rax\n"
             :
             : [reg]"r"(&cur_thread->tcbArch.tcbVCPU->gp_registers[VCPU_EAX]),
-            [failed]"m"(vmlaunch_failed),
+            [failed]"i"(&vmlaunch_failed),
             [stack_size]"i"(BIT(CONFIG_KERNEL_STACK_BITS))
 #ifdef ENABLE_SMP_SUPPORT
             , [stack_offset]"i"(OFFSETOF(nodeInfo_t, stackTop))
@@ -169,22 +163,11 @@ void VISIBLE NORETURN restore_user_context(void)
 #endif
 
 #ifdef ENABLE_SMP_SUPPORT
-    cpu_id_t cpu = getCurrentCPUIndex();
 #ifdef CONFIG_KERNEL_SKIM_WINDOW
     word_t user_cr3 = MODE_NODE_STATE(x64KSCurrentUserCR3);
 #endif /* CONFIG_KERNEL_SKIM_WINDOW */
     swapgs();
 #endif /* ENABLE_SMP_SUPPORT */
-
-    /* Now that we have swapped back to the user gs we can safely
-     * update the GS base. We must *not* use any kernel functions
-     * that rely on having a kernel GS though. Most notably uses
-     * of NODE_STATE etc cannot be used beyond this point */
-    word_t base = getRegister(cur_thread, TLS_BASE);
-    x86_write_fs_base(base, SMP_TERNARY(cpu, 0));
-
-    base = cur_thread->tcbIPCBuffer;
-    x86_write_gs_base(base, SMP_TERNARY(cpu, 0));
 
     if (config_set(CONFIG_KERNEL_X86_IBRS_BASIC)) {
         x86_disable_ibrs();
@@ -194,7 +177,8 @@ void VISIBLE NORETURN restore_user_context(void)
     // There is a special case where if we would be returning from a sysenter,
     // but are current singlestepping, do a full return like an interrupt
     if (likely(cur_thread->tcbArch.tcbContext.registers[Error] == -1) &&
-            (!config_set(CONFIG_SYSENTER) || !config_set(CONFIG_HARDWARE_DEBUG_API) || ((cur_thread->tcbArch.tcbContext.registers[FLAGS] & FLAGS_TF) == 0))) {
+        (!config_set(CONFIG_SYSENTER) || !config_set(CONFIG_HARDWARE_DEBUG_API)
+         || ((cur_thread->tcbArch.tcbContext.registers[FLAGS] & FLAGS_TF) == 0))) {
         if (config_set(CONFIG_KERNEL_SKIM_WINDOW)) {
             /* if we are using the SKIM window then we are trying to hide kernel state from
              * the user in the case of Meltdown where the kernel region is effectively readable
@@ -243,8 +227,8 @@ void VISIBLE NORETURN restore_user_context(void)
                 "addq $8, %%rsp\n"
                 // Restore RSP
                 "popq %%rcx\n"
-                // Skip TLS_BASE, FaultIP
-                "addq $16, %%rsp\n"
+                // Skip FaultIP
+                "addq $8, %%rsp\n"
 #if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
                 "popq %%rsp\n"
                 "movq %%r11, %%cr3\n"
@@ -259,17 +243,18 @@ void VISIBLE NORETURN restore_user_context(void)
                 // More register but we can ignore and are done restoring
                 // enable interrupt disabled by sysenter
                 "sti\n"
-                /* return to user
-                 * sysexit with rex.w user code = cs + 32, user data = cs + 40.
-                 * without rex.w user code = cs + 16, user data = cs + 24
+                /* Return to user.
+                 *
+                 * SYSEXIT  0F 35     ; Return to compatibility mode from fast system call.
+                 * SYSEXITQ 48 0F 35  ; Return to 64-bit mode from fast system call.
                  * */
-                "rex.w sysexit\n"
+                "sysexitq\n"
                 :
                 : "r"(&cur_thread->tcbArch.tcbContext.registers[RDI]),
 #if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
                 "r"(user_cr3_r11),
 #endif
-                [IF] "i" (FLAGS_IF)
+                [IF] "i"(FLAGS_IF)
                 // Clobber memory so the compiler is forced to complete all stores
                 // before running this assembler
                 : "memory"
@@ -309,11 +294,11 @@ void VISIBLE NORETURN restore_user_context(void)
                 "xor %%rsp, %%rsp\n"
                 // More register but we can ignore and are done restoring
                 // enable interrupt disabled by sysenter
-                "rex.w sysret\n"
+                "sysretq\n"
                 :
                 : "r"(&cur_thread->tcbArch.tcbContext.registers[RDI])
 #if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
-                , "c" (user_cr3)
+                , "c"(user_cr3)
 #endif
                 // Clobber memory so the compiler is forced to complete all stores
                 // before running this assembler
@@ -347,8 +332,8 @@ void VISIBLE NORETURN restore_user_context(void)
             "popq %%r8\n"
             "popq %%r9\n"
             "popq %%r15\n"
-            /* skip RFLAGS, Error NextIP RSP, TLS_BASE, FaultIP */
-            "addq $48, %%rsp\n"
+            /* skip RFLAGS, Error, NextIP, RSP, and FaultIP */
+            "addq $40, %%rsp\n"
             "popq %%r11\n"
 
 #if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
@@ -389,8 +374,8 @@ void VISIBLE NORETURN restore_user_context(void)
             :
             : "r"(&cur_thread->tcbArch.tcbContext.registers[RDI])
 #if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
-            , "c" (user_cr3)
-            , [scratch_offset] "i" (nodeSkimScratchOffset)
+            , "c"(user_cr3)
+            , [scratch_offset] "i"(nodeSkimScratchOffset)
 #endif
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler

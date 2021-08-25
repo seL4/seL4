@@ -1,15 +1,10 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
+#include <assert.h>
 #include <arch/machine/registerset.h>
 #include <machine/fpu.h>
 #include <arch/object/structures.h>
@@ -17,17 +12,29 @@
 const register_t msgRegisters[] = {
     R10, R8, R9, R15
 };
+compile_assert(
+    consistent_message_registers,
+    sizeof(msgRegisters) / sizeof(msgRegisters[0]) == n_msgRegisters
+);
 
 const register_t frameRegisters[] = {
     FaultIP, RSP, FLAGS, RAX, RBX, RCX, RDX, RSI, RDI, RBP,
     R8, R9, R10, R11, R12, R13, R14, R15
 };
+compile_assert(
+    consistent_frame_registers,
+    sizeof(frameRegisters) / sizeof(frameRegisters[0]) == n_frameRegisters
+);
 
 const register_t gpRegisters[] = {
-    TLS_BASE
+    FS_BASE, GS_BASE
 };
+compile_assert(
+    consistent_gp_registers,
+    sizeof(gpRegisters) / sizeof(gpRegisters[0]) == n_gpRegisters
+);
 
-void Mode_initContext(user_context_t* context)
+void Mode_initContext(user_context_t *context)
 {
     context->registers[RAX] = 0;
     context->registers[RBX] = 0;
@@ -49,7 +56,7 @@ void Mode_initContext(user_context_t* context)
 
 word_t Mode_sanitiseRegister(register_t reg, word_t v)
 {
-    if (reg == FaultIP || reg == NextIP) {
+    if (reg == FaultIP || reg == NextIP || reg == FS_BASE || reg == GS_BASE) {
         /* ensure instruction address is canonical */
         if (v > 0x00007fffffffffff && v < 0xffff800000000000) {
             /* no way to guess what the user wanted so give them zero */
@@ -58,3 +65,10 @@ word_t Mode_sanitiseRegister(register_t reg, word_t v)
     }
     return v;
 }
+
+#ifdef CONFIG_KERNEL_MCS
+word_t getNBSendRecvDest(void)
+{
+    return getRegister(NODE_STATE(ksCurThread), nbsendRecvDest);
+}
+#endif

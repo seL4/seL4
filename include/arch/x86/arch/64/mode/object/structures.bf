@@ -1,19 +1,14 @@
 --
--- Copyright 2017, Data61
--- Commonwealth Scientific and Industrial Research Organisation (CSIRO)
--- ABN 41 687 119 230.
+-- Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 --
--- This software may be distributed and modified according to the terms of
--- the GNU General Public License version 2. Note that NO WARRANTY is provided.
--- See "LICENSE_GPLv2.txt" for details.
---
--- @TAG(DATA61_GPL)
+-- SPDX-License-Identifier: GPL-2.0-only
 --
 
 #include <config.h>
 
 ---- Default base size: uint64_t
 base 64(48,1)
+#define BF_CANONICAL_RANGE 48
 
 -- Including the common structures.bf is neccessary because
 -- we need the structures to be visible here when building
@@ -232,6 +227,10 @@ tagged_union cap capType {
     tag irq_handler_cap     16
     tag zombie_cap          18
     tag domain_cap	        20
+#ifdef CONFIG_KERNEL_MCS
+    tag sched_context_cap   22
+    tag sched_control_cap   24
+#endif
 
     -- 5-bit tag arch caps
     tag frame_cap           1
@@ -265,8 +264,8 @@ block VMFault {
     field     FSR               5
     padding                     7
     field     instructionFault  1
-    padding                     16
-    field     seL4_FaultType         3
+    padding                     15
+    field     seL4_FaultType         4
 }
 
 -- VM attributes
@@ -655,4 +654,4 @@ block cr3 {
 }
 
 
-#include <arch/api/shared_types.bf>
+#include <sel4/arch/shared_types.bf>

@@ -1,15 +1,11 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MODE_MACHINE_CPU_REGISTERS_H
-#define __MODE_MACHINE_CPU_REGISTERS_H
+#pragma once
+
 
 static inline unsigned long read_cr3(void)
 {
@@ -54,4 +50,3 @@ static inline void write_cr4(unsigned long value)
     asm volatile("movl %0, %%cr4" :: "r"(value), "m"(control_reg_order));
 }
 
-#endif

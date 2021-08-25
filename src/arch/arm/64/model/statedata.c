@@ -1,13 +1,7 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -18,6 +12,11 @@
 #include <arch/object/structures.h>
 #include <linker.h>
 #include <plat/machine/hardware.h>
+
+#ifdef CONFIG_ARM_SMMU
+#include <arch/object/smmu.h>
+#endif
+
 
 asid_pool_t *armKSASIDTable[BIT(asidHighBits)];
 
@@ -38,9 +37,6 @@ asid_pool_t *armKSASIDTable[BIT(asidHighBits)];
  * own separate virtual address space.
  *
  * Common Aarch64 address space layout:
- *
- * Each AArch64 platform may vary slightly and for example, the TX1 and TX2 only
- * use 510 GiB.
  *
  * The reason why 512 GiB was chosen is because assuming a 48-bit virtual
  * address space using a 4KiB Translation Granule (and therefore, 4 levels of
@@ -86,14 +82,14 @@ asid_pool_t *armKSASIDTable[BIT(asidHighBits)];
  * applies.
  */
 
-pgde_t armKSGlobalUserPGD[BIT(PGD_INDEX_BITS)] ALIGN_BSS(BIT(seL4_PGDBits));
-pgde_t armKSGlobalKernelPGD[BIT(PGD_INDEX_BITS)] ALIGN_BSS(BIT(seL4_PGDBits));
+vspace_root_t armKSGlobalUserVSpace[BIT(seL4_VSpaceIndexBits)] ALIGN_BSS(BIT(seL4_VSpaceBits));
+pgde_t armKSGlobalKernelPGD[BIT(PGD_INDEX_BITS)] ALIGN_BSS(BIT(PGD_SIZE_BITS));
 
 pude_t armKSGlobalKernelPUD[BIT(PUD_INDEX_BITS)] ALIGN_BSS(BIT(seL4_PUDBits));
 pde_t armKSGlobalKernelPDs[BIT(PUD_INDEX_BITS)][BIT(PD_INDEX_BITS)] ALIGN_BSS(BIT(seL4_PageDirBits));
 pte_t armKSGlobalKernelPT[BIT(PT_INDEX_BITS)] ALIGN_BSS(BIT(seL4_PageTableBits));
 
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_LOG_BUFFER
 pde_t *armKSGlobalLogPDE = &armKSGlobalKernelPDs[BIT(PUD_INDEX_BITS) - 1][BIT(PD_INDEX_BITS) - 2];
 compile_assert(log_pude_is_correct_preallocated_pude,
                GET_PUD_INDEX(KS_LOG_PPTR) == BIT(PUD_INDEX_BITS) - 1);
@@ -102,8 +98,8 @@ compile_assert(log_pde_is_correct_preallocated_pde,
 #endif
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-vcpu_t *armHSCurVCPU;
-bool_t armHSVCPUActive;
+UP_STATE_DEFINE(vcpu_t, *armHSCurVCPU);
+UP_STATE_DEFINE(bool_t, armHSVCPUActive);
 
 /* The hardware VMID to virtual ASID mapping table.
  * The ARMv8 supports 8-bit VMID which is used as logical ASID
@@ -111,4 +107,20 @@ bool_t armHSVCPUActive;
  */
 asid_t armKSHWASIDTable[BIT(hwASIDBits)];
 hw_asid_t armKSNextASID;
+#endif
+
+#ifdef CONFIG_ARM_SMMU
+/*recording the state of created SID caps*/
+bool_t smmuStateSIDTable[SMMU_MAX_SID];
+/* CNode containing the cb_cap that is assigned to sids*/
+cte_t smmuStateSIDNode[BIT(SMMU_SID_CNODE_SLOT_BITS)] ALIGN(BIT(SMMU_SID_CNODE_SLOT_BITS + seL4_SlotBits));
+compile_assert(smmuStateSIDCNodeSize, sizeof(smmuStateSIDNode) >= ((SMMU_MAX_SID) * sizeof(cte_t)));
+
+/*recording the state of the created cb caps*/
+bool_t smmuStateCBTable[SMMU_MAX_CB];
+/* CNode containing the vcapce root cap that is assigned to sids*/
+cte_t smmuStateCBNode[BIT(SMMU_CB_CNODE_SLOT_BITS)] ALIGN(BIT(SMMU_CB_CNODE_SLOT_BITS + seL4_SlotBits));
+compile_assert(smmuStateCBCNodeSize, sizeof(smmuStateCBNode) >= ((SMMU_MAX_CB) * sizeof(cte_t)));
+/*recording the context bank to ASID relationship*/
+asid_t smmuStateCBAsidTable[SMMU_MAX_CB];
 #endif

@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -21,8 +17,7 @@
 #include <arch/object/vcpu.h>
 #endif
 
-bool_t
-Arch_isFrameType(word_t type)
+bool_t Arch_isFrameType(word_t type)
 {
     switch (type) {
     case seL4_ARM_SmallPageObject:
@@ -38,8 +33,7 @@ Arch_isFrameType(word_t type)
     }
 }
 
-deriveCap_ret_t
-Arch_deriveCap(cte_t *slot, cap_t cap)
+deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
 {
     deriveCap_ret_t ret;
 
@@ -93,7 +87,7 @@ Arch_deriveCap(cte_t *slot, cap_t cap)
         return ret;
 #endif
 
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
     case cap_io_space_cap:
         ret.cap = cap;
         ret.status = EXCEPTION_NONE;
@@ -118,14 +112,12 @@ Arch_deriveCap(cte_t *slot, cap_t cap)
     }
 }
 
-cap_t CONST
-Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
+cap_t CONST Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
 {
     return cap;
 }
 
-cap_t CONST
-Arch_maskCapRights(seL4_CapRights_t cap_rights_mask, cap_t cap)
+cap_t CONST Arch_maskCapRights(seL4_CapRights_t cap_rights_mask, cap_t cap)
 {
     if (cap_get_capType(cap) == cap_small_frame_cap) {
         vm_rights_t vm_rights;
@@ -148,8 +140,7 @@ Arch_maskCapRights(seL4_CapRights_t cap_rights_mask, cap_t cap)
     }
 }
 
-finaliseCap_ret_t
-Arch_finaliseCap(cap_t cap, bool_t final)
+finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
 {
     finaliseCap_ret_t fc_ret;
 
@@ -179,7 +170,7 @@ Arch_finaliseCap(cap_t cap, bool_t final)
 
     case cap_small_frame_cap:
         if (cap_small_frame_cap_get_capFMappedASID(cap)) {
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
             if (isIOSpaceFrameCap(cap)) {
                 unmapIOPage(cap);
                 break;
@@ -195,7 +186,7 @@ Arch_finaliseCap(cap_t cap, bool_t final)
 
     case cap_frame_cap:
         if (cap_frame_cap_get_capFMappedASID(cap)) {
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_LOG_BUFFER
             /* If the last cap to the user-level log buffer frame is being revoked,
              * reset the ksLog so that the kernel doesn't log anymore
              */
@@ -208,7 +199,7 @@ Arch_finaliseCap(cap_t cap, bool_t final)
 
                     cleanCacheRange_PoU((pptr_t) &armKSGlobalLogPT[0],
                                         (pptr_t) &armKSGlobalLogPT[0] + BIT(seL4_PageTableBits),
-                                        addrFromPPtr((void *)&armKSGlobalLogPT[0]));
+                                        addrFromKPPtr((void *)&armKSGlobalLogPT[0]));
 
                     for (int idx = 0; idx < BIT(PT_INDEX_BITS); idx++) {
                         invalidateTranslationSingle(KS_LOG_PPTR + (idx << seL4_PageBits));
@@ -217,7 +208,7 @@ Arch_finaliseCap(cap_t cap, bool_t final)
                     userError("Log buffer frame is invalidated, kernel can't benchmark anymore");
                 }
             }
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_BENCHMARK_KERNEL_LOG_BUFFER */
 
             unmapPage(cap_frame_cap_get_capFSize(cap),
                       cap_frame_cap_get_capFMappedASID(cap),
@@ -234,7 +225,7 @@ Arch_finaliseCap(cap_t cap, bool_t final)
         break;
 #endif
 
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
     case cap_io_space_cap:
         if (final) {
             clearIOPageDirectory(cap);
@@ -257,19 +248,18 @@ Arch_finaliseCap(cap_t cap, bool_t final)
     return fc_ret;
 }
 
-bool_t CONST
-Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
+bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
 {
     switch (cap_get_capType(cap_a)) {
     case cap_small_frame_cap:
     case cap_frame_cap:
         if (cap_get_capType(cap_b) == cap_small_frame_cap ||
-                cap_get_capType(cap_b) == cap_frame_cap) {
+            cap_get_capType(cap_b) == cap_frame_cap) {
             word_t botA, botB, topA, topB;
             botA = generic_frame_cap_get_capFBasePtr(cap_a);
             botB = generic_frame_cap_get_capFBasePtr(cap_b);
-            topA = botA + MASK (pageBitsForSize(generic_frame_cap_get_capFSize(cap_a)));
-            topB = botB + MASK (pageBitsForSize(generic_frame_cap_get_capFSize(cap_b))) ;
+            topA = botA + MASK(pageBitsForSize(generic_frame_cap_get_capFSize(cap_a)));
+            topB = botB + MASK(pageBitsForSize(generic_frame_cap_get_capFSize(cap_b))) ;
             return ((botA <= botB) && (topA >= topB) && (botB <= topB));
         }
         break;
@@ -310,7 +300,7 @@ Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
         break;
 #endif
 
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
     case cap_io_space_cap:
         if (cap_get_capType(cap_b) == cap_io_space_cap) {
             return cap_io_space_cap_get_capModuleID(cap_a) ==
@@ -330,8 +320,7 @@ Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
     return false;
 }
 
-bool_t CONST
-Arch_sameObjectAs(cap_t cap_a, cap_t cap_b)
+bool_t CONST Arch_sameObjectAs(cap_t cap_a, cap_t cap_b)
 {
     if (cap_get_capType(cap_a) == cap_small_frame_cap) {
         if (cap_get_capType(cap_b) == cap_small_frame_cap) {
@@ -358,8 +347,7 @@ Arch_sameObjectAs(cap_t cap_a, cap_t cap_b)
     return Arch_sameRegionAs(cap_a, cap_b);
 }
 
-word_t
-Arch_getObjectSize(word_t t)
+word_t Arch_getObjectSize(word_t t)
 {
     switch (t) {
     case seL4_ARM_SmallPageObject:
@@ -374,7 +362,7 @@ Arch_getObjectSize(word_t t)
         return PTE_SIZE_BITS + PT_INDEX_BITS;
     case seL4_ARM_PageDirectoryObject:
         return PDE_SIZE_BITS + PD_INDEX_BITS;
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
     case seL4_ARM_IOPageTableObject:
         return seL4_IOPageTableBits;
 #endif
@@ -388,8 +376,7 @@ Arch_getObjectSize(word_t t)
     }
 }
 
-cap_t
-Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
+cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
 {
     switch (t) {
     case seL4_ARM_SmallPageObject:
@@ -409,7 +396,7 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
         return cap_small_frame_cap_new(
                    ASID_LOW(asidInvalid), VMReadWrite,
                    0, !!deviceMemory,
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
                    0,
 #endif
                    ASID_HIGH(asidInvalid),
@@ -527,7 +514,7 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
         return cap_vcpu_cap_new(VCPU_REF(regionBase));
 #endif
 
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
     case seL4_ARM_IOPageTableObject:
         /* When the untyped was zeroed it was cleaned to the PoU, but the SMMUs
          * typically pull directly from RAM, so we do a futher clean to RAM here */
@@ -546,42 +533,43 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
     }
 }
 
-exception_t
-Arch_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr,
-                      cte_t *slot, cap_t cap, extra_caps_t excaps,
-                      bool_t call, word_t *buffer)
+exception_t Arch_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr,
+                                  cte_t *slot, cap_t cap,
+                                  bool_t call, word_t *buffer)
 {
     /* The C parser cannot handle a switch statement with only a default
      * case. So we need to do some gymnastics to remove the switch if
      * there are no other cases */
-#if defined(CONFIG_ARM_SMMU) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
+#if defined(CONFIG_TK1_SMMU) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
     switch (cap_get_capType(cap)) {
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
     case cap_io_space_cap:
         return decodeARMIOSpaceInvocation(invLabel, cap);
     case cap_io_page_table_cap:
-        return decodeARMIOPTInvocation(invLabel, length, slot, cap, excaps, buffer);
+        return decodeARMIOPTInvocation(invLabel, length, slot, cap, buffer);
 #endif
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case cap_vcpu_cap:
-        return decodeARMVCPUInvocation(invLabel, length, cptr, slot, cap, excaps, call, buffer);
+        return decodeARMVCPUInvocation(invLabel, length, cptr, slot, cap, call, buffer);
 #endif /* end of CONFIG_ARM_HYPERVISOR_SUPPORT */
     default:
 #else
 {
 #endif
-    return decodeARMMMUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
+    return decodeARMMMUInvocation(invLabel, length, cptr, slot, cap, buffer);
 }
 }
 
 void
 Arch_prepareThreadDelete(tcb_t * thread) {
+#ifdef CONFIG_HAVE_FPU
+    fpuThreadDelete(thread);
+#endif
+
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     if (thread->tcbArch.tcbVCPU) {
         dissociateVCPUTCB(thread->tcbArch.tcbVCPU, thread);
     }
-#else  /* CONFIG_ARM_HYPERVISOR_SUPPORT */
-    /* No action required on ARM. */
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 }
 

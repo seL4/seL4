@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODEL_STATEDATA_H
-#define __ARCH_MODEL_STATEDATA_H
+#pragma once
 
 #include <config.h>
 #include <types.h>
@@ -65,19 +60,19 @@ typedef struct x86_arch_global_state {
     gdt_entry_t x86KSgdt[GDT_ENTRIES];
     /* Interrupt Descriptor Table (IDT) */
     idt_entry_t x86KSidt[IDT_ENTRIES];
-    PAD_TO_NEXT_CACHE_LN(sizeof(tss_io_t) + GDT_ENTRIES * sizeof(gdt_entry_t) + IDT_ENTRIES * sizeof(idt_entry_t));
+    PAD_TO_NEXT_CACHE_LN(sizeof(tss_io_t) + GDT_ENTRIES *sizeof(gdt_entry_t) + IDT_ENTRIES *sizeof(idt_entry_t));
 } x86_arch_global_state_t;
 compile_assert(x86_arch_global_state_padded, (sizeof(x86_arch_global_state_t) % L1_CACHE_LINE_SIZE) == 0)
 
 extern x86_arch_global_state_t x86KSGlobalState[CONFIG_MAX_NUM_NODES] ALIGN(L1_CACHE_LINE_SIZE) SKIM_BSS;
 
-extern asid_pool_t* x86KSASIDTable[];
+extern asid_pool_t *x86KSASIDTable[];
 extern uint32_t x86KScacheLineSizeBits;
 extern user_fpu_state_t x86KSnullFpuState ALIGN(MIN_FPU_ALIGNMENT);
 
 #ifdef CONFIG_IOMMU
 extern uint32_t x86KSnumDrhu;
-extern vtd_rte_t* x86KSvtdRootTable;
+extern vtd_rte_t *x86KSvtdRootTable;
 extern uint32_t x86KSnumIOPTLevels;
 extern uint32_t x86KSnumIODomainIDBits;
 extern uint32_t x86KSFirstValidIODomain;
@@ -93,5 +88,8 @@ extern uint16_t x86KSdebugPort;
 extern x86_irq_state_t x86KSIRQState[];
 
 extern word_t x86KSAllocatedIOPorts[NUM_IO_PORTS / CONFIG_WORD_SIZE];
-
+#ifdef CONFIG_KERNEL_MCS
+extern uint32_t x86KStscMhz;
+extern uint32_t x86KSapicRatio;
 #endif
+

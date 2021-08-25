@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -24,8 +20,7 @@
 #include <plat/machine/intel-vtd.h>
 
 
-bool_t
-Arch_isFrameType(word_t type)
+bool_t Arch_isFrameType(word_t type)
 {
     switch (type) {
     case seL4_X86_4K:
@@ -37,8 +32,7 @@ Arch_isFrameType(word_t type)
     }
 }
 
-deriveCap_ret_t
-Mode_deriveCap(cte_t* slot, cap_t cap)
+deriveCap_ret_t Mode_deriveCap(cte_t *slot, cap_t cap)
 {
     deriveCap_ret_t ret;
 
@@ -77,7 +71,7 @@ finaliseCap_ret_t Mode_finaliseCap(cap_t cap, bool_t final)
 #endif
             case X86_MappingVSpace:
 
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_LOG_BUFFER
                 /* If the last cap to the user-level log buffer frame is being revoked,
                  * reset the ksLog so that the kernel doesn't log anymore
                  */
@@ -95,7 +89,7 @@ finaliseCap_ret_t Mode_finaliseCap(cap_t cap, bool_t final)
                         userError("Log buffer frame is invalidated, kernel can't benchmark anymore\n");
                     }
                 }
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_KERNEL_LOG_BUFFER */
 
                 unmapPage(
                     cap_frame_cap_get_capFSize(cap),
@@ -130,15 +124,13 @@ bool_t CONST Mode_sameRegionAs(cap_t cap_a, cap_t cap_b)
     return false;
 }
 
-word_t
-Mode_getObjectSize(word_t t)
+word_t Mode_getObjectSize(word_t t)
 {
     fail("Invalid object type");
     return 0;
 }
 
-cap_t
-Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
+cap_t Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
 {
     switch (t) {
     case seL4_X86_4K:
@@ -198,22 +190,20 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
     }
 }
 
-exception_t
-Mode_decodeInvocation(
+exception_t Mode_decodeInvocation(
     word_t invLabel,
     word_t length,
     cptr_t cptr,
-    cte_t* slot,
+    cte_t *slot,
     cap_t cap,
-    extra_caps_t excaps,
-    word_t* buffer
+    word_t *buffer
 )
 {
     switch (cap_get_capType(cap)) {
     case cap_page_directory_cap:
     case cap_page_table_cap:
     case cap_frame_cap:
-        return decodeX86MMUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
+        return decodeX86MMUInvocation(invLabel, length, cptr, slot, cap, buffer);
     default:
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 0;

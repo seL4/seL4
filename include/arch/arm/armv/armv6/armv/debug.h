@@ -1,17 +1,10 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_ARMV_DEBUG_H_
-#define __ARCH_ARMV_DEBUG_H_
+#pragma once
 
 #include <config.h>
 #ifdef CONFIG_HARDWARE_DEBUG_API
@@ -29,8 +22,7 @@ enum v6_breakpoint_meaning /* BCR[22:21] */ {
  * DBGDSCR_ext (external view) is not exposed on debug v6. Accessing it on
  * v6 triggers an #UNDEFINED abort.
  */
-static word_t
-readDscrCp(void)
+static word_t readDscrCp(void)
 {
     word_t v;
 
@@ -46,16 +38,14 @@ readDscrCp(void)
  *
  * Even so, the KZM still ignores our writes anyway *shrug*.
  */
-static void
-writeDscrCp(word_t val)
+static void writeDscrCp(word_t val)
 {
     MCR(DBGDSCR_int, val);
 }
 
 /** Determines whether or not 8-byte watchpoints are supported.
  */
-static inline bool_t
-watchpoint8bSupported(void)
+static inline bool_t watchpoint8bSupported(void)
 {
     /* V6 doesn't support 8B watchpoints. */
     return false;
@@ -76,8 +66,7 @@ watchpoint8bSupported(void)
  * Unfortunately, it's also gated behind a hardware pin signal, #DBGEN. If
  * #DBGEN is held low, monitor mode is unavailable.
  */
-BOOT_CODE static bool_t
-enableMonitorMode(void)
+BOOT_CODE static bool_t enableMonitorMode(void)
 {
     dbg_dscr_t dscr;
 
@@ -119,8 +108,7 @@ enableMonitorMode(void)
     return true;
 }
 
-static inline dbg_bcr_t
-Arch_setupBcr(dbg_bcr_t in_val, bool_t is_match)
+static inline dbg_bcr_t Arch_setupBcr(dbg_bcr_t in_val, bool_t is_match)
 {
     dbg_bcr_t bcr;
 
@@ -133,17 +121,14 @@ Arch_setupBcr(dbg_bcr_t in_val, bool_t is_match)
     return bcr;
 }
 
-static inline dbg_wcr_t
-Arch_setupWcr(dbg_wcr_t in_val)
+static inline dbg_wcr_t Arch_setupWcr(dbg_wcr_t in_val)
 {
     return in_val;
 }
 
-static inline bool_t
-Arch_breakpointIsMismatch(dbg_bcr_t in_val)
+static inline bool_t Arch_breakpointIsMismatch(dbg_bcr_t in_val)
 {
     return dbg_bcr_get_meaning(in_val) == DBGBCR_V6MEANING_INSTRUCTION_VADDR_MISMATCH;
 }
 
 #endif /* CONFIG_HARDWARE_DEBUG_API */
-#endif /* __ARCH_ARMV_DEBUG_H_ */

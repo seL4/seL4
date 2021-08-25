@@ -1,41 +1,42 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
+#define __ASSEMBLER__
 #include <config.h>
+#include <hardware.h>
 
 ENTRY(_start)
+
+KLOAD_PADDR = KERNEL_ELF_PADDR_BASE;
+KLOAD_VADDR = KERNEL_ELF_BASE;
 
 /* WARNING: constants also defined in plat/machine/hardware.h */
 #if defined(CONFIG_ARCH_IA32)
 #undef i386
-PADDR_BASE = 0x00000000;
-PADDR_LOAD = 0x00100000;
-KERNEL_BASE  = 0xe0000000;
 OUTPUT_ARCH(i386)
 OUTPUT_FORMAT(elf32-i386)
 #elif defined(CONFIG_ARCH_X86_64)
-PADDR_BASE = 0x00000000;
-PADDR_LOAD = 0x00100000;
-KERNEL_BASE = 0xffffffff80000000;
 OUTPUT_FORMAT(elf64-x86-64)
 #if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
 nodeSkimScratchOffset = nodeSkimScratch - node_info;
 #endif
 #endif
 
-KERNEL_OFFSET = KERNEL_BASE - PADDR_BASE;
+KERNEL_OFFSET = KLOAD_VADDR - KLOAD_PADDR;
+
+PHDRS {
+    phys PT_LOAD FILEHDR PHDRS ;
+    boot PT_LOAD ;
+    virt PT_LOAD ;
+}
 
 SECTIONS
 {
     /* load kernel to 1M to avoid the famous IA-32 memory holes below */
-    . = PADDR_LOAD;
+    . = KLOAD_PADDR + SIZEOF_HEADERS;
 
     /* code/data only needed during bootstrapping, linked to physical addresses */
 
@@ -44,31 +45,30 @@ SECTIONS
         *(.mbh)
         *(.phys.text)
         *(.phys.data)
-        . = ALIGN(4K);
-    }
+        . = . + 1;
+    } :phys
 
-    .phys.bss ADDR(.phys) + SIZEOF(.phys) (NOLOAD) :
+    .phys.bss ADDR(.phys) + SIZEOF(.phys) + 4K (NOLOAD) :
     {
+        . = ALIGN(16);
         boot_stack_bottom = .;
         . = . + 2K;
-        . = ALIGN(4K);
         boot_stack_top = .;
         *(.phys.bss)
-    }
+    } :phys
 
-    . = . + KERNEL_OFFSET;
-
+    . = ALIGN(4K) + KERNEL_OFFSET;
+    . = . + ((ADDR(.phys) + SIZEOF(.phys)) & (4K - 1));
     .boot . : AT(ADDR(.boot) - KERNEL_OFFSET)
     {
         *(.boot.text)
         *(.boot.data)
-    }
+    } :boot
 
     .boot.bss . (NOLOAD) : AT(ADDR(.boot.bss) - KERNEL_OFFSET)
     {
         *(.boot.bss)
-        . = ALIGN(4K);
-    }
+    } :boot
 #ifdef CONFIG_KERNEL_SKIM_WINDOW
     /* Align up so that the SKIM portion of the kernel is by itself
        on large pages */
@@ -77,33 +77,40 @@ SECTIONS
 #else
     . = ALIGN(2M);
 #endif
+#else
+    . = ALIGN(8K);
 #endif
 
     ki_boot_end = .;
     ki_skim_start = .;
 
+    . = . + ((ADDR(.boot) + SIZEOF(.boot)) & (8K - 1));
+
+
+
     .text . : AT(ADDR(.text) - KERNEL_OFFSET)
     {
         *(.text)
-    }
+    } :virt
 
     .rodata . : AT(ADDR(.rodata) - KERNEL_OFFSET)
     {
         *(.rodata)
         *(.rodata.*)
-    }
+    } :virt
 
     .skim_data . : AT(ADDR(.skim_data) - KERNEL_OFFSET)
     {
         *(.skim.data)
         *(.skim.data.*)
-    }
+    } :virt
 
-    .skim_bss . : AT(ADDR(.skim_bss) - KERNEL_OFFSET)
+
+    .skim_bss . (NOLOAD) : AT(ADDR(.skim_bss) - KERNEL_OFFSET)
     {
         *(.skim.bss)
         *(.skim.bss.*)
-    }
+    } :virt
 
 #ifdef CONFIG_KERNEL_SKIM_WINDOW
     /* Align up so that the SKIM portion of the kernel is by itself
@@ -119,26 +126,29 @@ SECTIONS
     .data . : AT(ADDR(.data) - KERNEL_OFFSET)
     {
         *(.data)
-    }
+    } :virt
 
-    .bss . : AT(ADDR(.bss) - KERNEL_OFFSET)
+    .bss . (NOLOAD) : AT(ADDR(.bss) - KERNEL_OFFSET)
     {
         *(.bss)
-        *(COMMON)
-    }
+        *(COMMON) /* fallback in case '-fno-common' is not used */
+    } :virt
 
-    .ehframe : AT(ADDR(.ehframe) - KERNEL_OFFSET)
+    . = ALIGN(4K);
+
+    ._idle_thread . (NOLOAD): AT(ADDR(._idle_thread) - KERNEL_OFFSET)
     {
-        _ehframe = .;
-        *(.eh_frame)
-        . = ALIGN(4K);
-    }
+	__idle_thread_start = .;
+        *(._idle_thread)
+	__idle_thread_end = .;
+    } :virt
 
     . = ALIGN(4K);
     ki_end = .;
 
     /DISCARD/ :
     {
+        *(.eh_frame)
         *(.note.gnu.build-id)
         *(.comment)
     }

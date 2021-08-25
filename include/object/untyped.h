@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __OBJECT_UNTYPED_H
-#define __OBJECT_UNTYPED_H
+#pragma once
 
 #include <config.h>
 #include <types.h>
@@ -34,10 +29,8 @@
 
 exception_t decodeUntypedInvocation(word_t invLabel, word_t length,
                                     cte_t *slot, cap_t cap,
-                                    extra_caps_t excaps, bool_t call,
-                                    word_t *buffer);
+                                    bool_t call, word_t *buffer);
 exception_t invokeUntyped_Retype(cte_t *srcSlot, bool_t reset,
-                                 void* retypeBase, object_t newType,
-                                 word_t userSize, slot_range_t destSlots,
+                                 void *retypeBase, object_t newType, word_t userSize,
+                                 cte_t *destCNode, word_t destOffset, word_t destLength,
                                  bool_t deviceMemory);
-#endif

@@ -1,13 +1,7 @@
 --
--- Copyright 2017, Data61
--- Commonwealth Scientific and Industrial Research Organisation (CSIRO)
--- ABN 41 687 119 230.
+-- Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 --
--- This software may be distributed and modified according to the terms of
--- the BSD 2-Clause license. Note that NO WARRANTY is provided.
--- See "LICENSE_BSD2.txt" for details.
---
--- @TAG(DATA61_BSD)
+-- SPDX-License-Identifier: BSD-2-Clause
 --
 
 #include <autoconf.h>
@@ -20,14 +14,14 @@ block VMFault {
    field Addr 64
    field PrefetchFault 64
    field FSR 64
-   padding 61
-   field seL4_FaultType 3
+   padding 60
+   field seL4_FaultType 4
 }
 
 block NullFault {
    padding 1216
-   padding 61
-   field seL4_FaultType 3
+   padding 60
+   field seL4_FaultType 4
 }
 
 block CapFault {
@@ -40,8 +34,8 @@ block CapFault {
    field MR4 64
    field MR5 64
    field MR6 64
-   padding 61
-   field seL4_FaultType 3
+   padding 60
+   field seL4_FaultType 4
 }
 
 block UnknownSyscall {
@@ -64,8 +58,8 @@ block UnknownSyscall {
    field RSP 64
    field FLAGS 64
    field Syscall 64
-   padding 61
-   field seL4_FaultType 3
+   padding 60
+   field seL4_FaultType 4
 }
 
 block UserException {
@@ -75,8 +69,8 @@ block UserException {
    field FLAGS  64
    field Number  64
    field Code    64
-   padding 61
-   field seL4_FaultType 3
+   padding 60
+   field seL4_FaultType 4
 }
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
@@ -86,8 +80,18 @@ block DebugException {
     field ExceptionReason 64
     field TriggerAddress 64
     field BreakpointNumber 64
-    padding 61
-    field seL4_FaultType 3
+    padding 60
+    field seL4_FaultType 4
+}
+#endif
+
+#ifdef CONFIG_KERNEL_MCS
+block Timeout {
+    padding 1088
+    field data 64
+    field consumed 64
+    padding 60
+    field seL4_FaultType 4
 }
 #endif
 

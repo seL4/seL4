@@ -1,22 +1,15 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODE_OBJECT_STRUCTURES_H_
-#define __ARCH_MODE_OBJECT_STRUCTURES_H_
+#pragma once
 
-#include <api/macros.h>
+#include <sel4/macros.h>
 /* x86-64 specific object types */
-/* sysexit with rex.w prefix (64-bit) user code = cs + 32, user data = cs + 40.
- * without rex.w user code = cs + 16, user data = cs + 24, so we need to arrange
+/* sysexitq (64-bit) user code = cs + 32, user data = cs + 40.
+ * sysexit user code = cs + 16, user data = cs + 24, so we need to arrange
  * user CS and DS as 5 and 6.
  * */
 #define GDT_NULL    0
@@ -25,8 +18,8 @@
 #define GDT_TSS     3 //TSS is two slots in x86-64
 #define GDT_CS_3    5
 #define GDT_DS_3    6
-#define GDT_TLS     7
-#define GDT_IPCBUF  8
+#define GDT_FS      7
+#define GDT_GS      8
 #define GDT_ENTRIES 9
 
 compile_assert(gdt_idt_ptr_packed,
@@ -103,11 +96,6 @@ typedef pml4e_t vspace_root_t;
  * it contains 512 vroots.
  */
 
-enum asidSizeConstants {
-    asidHighBits = 3,
-    asidLowBits = seL4_ASIDPoolIndexBits
-};
-
 struct asid_pool {
     asid_map_t array[BIT(asidLowBits)];
 };
@@ -123,8 +111,7 @@ typedef struct asid_pool asid_pool_t;
 #define ASID_LOW(a)         (a & MASK(asidLowBits))
 #define ASID_HIGH(a)        ((a >> asidLowBits) & MASK(asidHighBits))
 
-static inline asid_t PURE
-cap_get_capMappedASID(cap_t cap)
+static inline asid_t PURE cap_get_capMappedASID(cap_t cap)
 {
     cap_tag_t ctag;
 
@@ -151,8 +138,7 @@ cap_get_capMappedASID(cap_t cap)
     }
 }
 
-static inline word_t CONST
-cap_get_modeCapSizeBits(cap_t cap)
+static inline word_t CONST cap_get_modeCapSizeBits(cap_t cap)
 {
     cap_tag_t ctag;
 
@@ -170,8 +156,7 @@ cap_get_modeCapSizeBits(cap_t cap)
     }
 }
 
-static inline bool_t CONST
-cap_get_modeCapIsPhysical(cap_t cap)
+static inline bool_t CONST cap_get_modeCapIsPhysical(cap_t cap)
 {
     cap_tag_t ctag;
 
@@ -190,8 +175,7 @@ cap_get_modeCapIsPhysical(cap_t cap)
     }
 }
 
-static inline void * CONST
-cap_get_modeCapPtr(cap_t cap)
+static inline void *CONST cap_get_modeCapPtr(cap_t cap)
 {
     cap_tag_t ctag;
 
@@ -209,4 +193,3 @@ cap_get_modeCapPtr(cap_t cap)
     }
 }
 
-#endif /* __ARCH_MODE_OBJECT_STRUCTURES_H_ */

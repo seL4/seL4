@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <api/failures.h>
@@ -17,8 +13,7 @@
 /*
  * Possibly preempt the current thread to allow an interrupt to be handled.
  */
-exception_t
-preemptionPoint(void)
+exception_t preemptionPoint(void)
 {
     /* Record that we have performed some work. */
     ksWorkUnitsCompleted++;
@@ -33,7 +28,13 @@ preemptionPoint(void)
      */
     if (ksWorkUnitsCompleted >= CONFIG_MAX_NUM_WORK_UNITS_PER_PREEMPTION) {
         ksWorkUnitsCompleted = 0;
+#ifdef CONFIG_KERNEL_MCS
+        updateTimestamp();
+        if (!(sc_active(NODE_STATE(ksCurSC)) && refill_sufficient(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed)))
+            || isCurDomainExpired() || isIRQPending()) {
+#else
         if (isIRQPending()) {
+#endif
             return EXCEPTION_PREEMPTED;
         }
     }

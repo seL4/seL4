@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_ARMV6_MACHINE_H
-#define __ARCH_ARMV6_MACHINE_H
+#pragma once
 
 static inline void wfi(void)
 {
@@ -42,4 +37,21 @@ static inline void isb(void)
     asm volatile("mcr p15, 0, %0, c7, c5, 4" : : "r"(0) : "memory");
 }
 
-#endif
+#define MRC(cpreg, v)  asm volatile("mrc  " cpreg :  "=r"(v))
+#define MRRC(cpreg, v) asm volatile("mrrc " cpreg :  "=r"(v))
+#define MCR(cpreg, v)                               \
+    do {                                            \
+        word_t _v = v;                            \
+        asm volatile("mcr  " cpreg :: "r" (_v));    \
+    }while(0)
+#define MCRR(cpreg, v)                              \
+    do {                                            \
+        uint64_t _v = v;                            \
+        asm volatile("mcrr " cpreg :: "r" (_v));    \
+    }while(0)
+
+#define SYSTEM_WRITE_WORD(reg, v) MCR(reg, v)
+#define SYSTEM_READ_WORD(reg, v)  MRC(reg, v)
+#define SYSTEM_WRITE_64(reg, v)  MCRR(reg, v)
+#define SYSTEM_READ_64(reg, v)   MRRC(reg, v)
+

@@ -1,36 +1,79 @@
 #
-# Copyright 2017, Data61
-# Commonwealth Scientific and Industrial Research Organisation (CSIRO)
-# ABN 41 687 119 230.
+# Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+# Copyright 2020, HENSOLDT Cyber GmbH
 #
-# This software may be distributed and modified according to the terms of
-# the GNU General Public License version 2. Note that NO WARRANTY is provided.
-# See "LICENSE_GPLv2.txt" for details.
-#
-# @TAG(DATA61_GPL)
+# SPDX-License-Identifier: GPL-2.0-only
 #
 
 cmake_minimum_required(VERSION 3.7.2)
 
-if(KernelPlatformWandQ OR KernelPlatformSabre)
+declare_platform(imx6 KernelPlatImx6 PLAT_IMX6 KernelSel4ArchAarch32)
+
+# disable platform specific settings by default in cache, will be enabled below
+# if active
+foreach(
+    var
+    IN
+    ITEMS
+    KernelPlatformSabre
+    KernelPlatformWandQ
+    KernelPlatformNitrogen6SX
+    KernelPlatImx6dq
+    KernelPlatImx6sx
+)
+    unset(${var} CACHE)
+    set(${var} OFF)
+endforeach()
+
+if(KernelPlatImx6)
+
+    check_platform_and_fallback_to_default(KernelARMPlatform "sabre")
+
+    if(KernelARMPlatform STREQUAL "sabre")
+        config_set(KernelPlatformSabre PLAT_SABRE ON)
+        config_set(KernelPlatImx6dq PLAT_IMX6DQ ON)
+
+    elseif(KernelARMPlatform STREQUAL "wandq")
+        config_set(KernelPlatformWandQ PLAT_WANDQ ON)
+        config_set(KernelPlatImx6dq PLAT_IMX6DQ ON)
+
+    elseif(KernelARMPlatform STREQUAL "nitrogen6sx")
+        config_set(KernelPlatformNitrogen6SX PLAT_NITROGEN6SX ON)
+        config_set(KernelPlatImx6sx PLAT_IMX6SX ON)
+
+    else()
+        message(FATAL_ERROR "Which imx6 platform not specified")
+    endif()
+
+    config_set(KernelARMPlatform ARM_PLAT ${KernelARMPlatform})
+    declare_seL4_arch(aarch32)
     set(KernelArmCortexA9 ON)
     set(KernelArchArmV7a ON)
-    config_set(KernelPlatImx6 PLAT_IMX6 ON)
-    config_set(KernelPlatform PLAT "imx6")
     set(KernelArmMach "imx" CACHE INTERNAL "")
+    list(APPEND KernelDTSList "tools/dts/${KernelARMPlatform}.dts")
+    list(APPEND KernelDTSList "src/plat/imx6/overlay-${KernelARMPlatform}.dts")
 
-    if(KernelPlatformWandQ)
-        list(APPEND KernelDTSList "tools/dts/wandq.dts")
-        list(APPEND KernelDTSList "src/plat/imx6/overlay-wandq.dts")
+    if(KernelIsMCS)
+        list(APPEND KernelDTSList "src/plat/imx6/mcs-overlay-imx6.dts")
+        set(timer_file drivers/timer/arm_global.h)
     else()
-        list(APPEND KernelDTSList "tools/dts/sabre.dts")
-        list(APPEND KernelDTSList "src/plat/imx6/overlay-sabre.dts")
+        set(timer_file drivers/timer/arm_priv.h)
     endif()
-else()
-    config_set(KernelPlatImx6 PLAT_IMX6 OFF)
+
+    declare_default_headers(
+        TIMER_FREQUENCY 498000000
+        MAX_IRQ 159
+        INTERRUPT_CONTROLLER arch/machine/gic_v2.h
+        NUM_PPI 32
+        TIMER ${timer_file}
+        CLK_SHIFT 41llu
+        CLK_MAGIC 4415709349llu
+        KERNEL_WCET 10llu
+        TIMER_PRECISION 2u
+    )
 endif()
 
 add_sources(
     DEP "KernelPlatImx6"
-    CFILES src/plat/imx6/machine/io.c
+    CFILES src/arch/arm/machine/l2c_310.c src/arch/arm/machine/gic_v2.c
 )

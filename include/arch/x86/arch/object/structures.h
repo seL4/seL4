@@ -1,26 +1,21 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_OBJECT_STRUCTURES_H
-#define __ARCH_OBJECT_STRUCTURES_H
+#pragma once
 
 #include <assert.h>
 #include <config.h>
 #include <util.h>
 #include <api/types.h>
-#include <api/macros.h>
+#include <sel4/macros.h>
 #include <arch/types.h>
 #include <arch/object/structures_gen.h>
 #include <arch/machine/hardware.h>
 #include <arch/machine/registerset.h>
-#include <arch/api/constants.h>
+#include <sel4/arch/constants.h>
 
 enum tcb_arch_cnode_index {
 #ifdef CONFIG_VTX
@@ -47,16 +42,16 @@ typedef struct arch_tcb {
 #define SEL_CS_3    ((GDT_CS_3 << 3) | 3)
 #define SEL_DS_3    ((GDT_DS_3 << 3) | 3)
 #define SEL_TSS     (GDT_TSS << 3)
-#define SEL_TLS     ((GDT_TLS << 3) | 3)
-#define SEL_IPCBUF  ((GDT_IPCBUF << 3) | 3)
+#define SEL_FS      ((GDT_FS << 3) | 3)
+#define SEL_GS      ((GDT_GS << 3) | 3)
 
 #define IDT_ENTRIES 256
 
 #define VTD_RT_SIZE_BITS  12
 
-#define VTD_CTE_SIZE_BITS 3
+#define VTD_CTE_SIZE_BITS 4
 #define VTD_CTE_PTR(r)    ((vtd_cte_t*)(r))
-#define VTD_CT_BITS       9
+#define VTD_CT_BITS       8
 #define VTD_CT_SIZE_BITS  (VTD_CT_BITS + VTD_CTE_SIZE_BITS)
 
 #define VTD_PTE_SIZE_BITS 3
@@ -144,8 +139,7 @@ typedef word_t vm_rights_t;
 
 #include <mode/object/structures.h>
 
-static inline word_t CONST
-cap_get_archCapSizeBits(cap_t cap)
+static inline word_t CONST cap_get_archCapSizeBits(cap_t cap)
 {
     cap_tag_t ctag;
 
@@ -196,8 +190,7 @@ cap_get_archCapSizeBits(cap_t cap)
     }
 }
 
-static inline bool_t CONST
-cap_get_archCapIsPhysical(cap_t cap)
+static inline bool_t CONST cap_get_archCapIsPhysical(cap_t cap)
 {
     cap_tag_t ctag;
 
@@ -250,8 +243,7 @@ cap_get_archCapIsPhysical(cap_t cap)
     }
 }
 
-static inline void * CONST
-cap_get_archCapPtr(cap_t cap)
+static inline void *CONST cap_get_archCapPtr(cap_t cap)
 {
     cap_tag_t ctag;
 
@@ -263,10 +255,10 @@ cap_get_archCapPtr(cap_t cap)
         return (void *)(cap_frame_cap_get_capFBasePtr(cap));
 
     case cap_page_table_cap:
-        return PD_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
+        return PT_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
 
     case cap_page_directory_cap:
-        return PT_PTR(cap_page_directory_cap_get_capPDBasePtr(cap));
+        return PD_PTR(cap_page_directory_cap_get_capPDBasePtr(cap));
 
     case cap_io_port_cap:
         return NULL;
@@ -304,8 +296,7 @@ cap_get_archCapPtr(cap_t cap)
     }
 }
 
-static inline bool_t CONST
-Arch_isCapRevocable(cap_t derivedCap, cap_t srcCap)
+static inline bool_t CONST Arch_isCapRevocable(cap_t derivedCap, cap_t srcCap)
 {
     switch (cap_get_capType(derivedCap)) {
     case cap_io_port_cap:
@@ -315,5 +306,3 @@ Arch_isCapRevocable(cap_t derivedCap, cap_t srcCap)
         return false;
     }
 }
-
-#endif /* __ARCH_OBJECT_STRUCTURES_H */

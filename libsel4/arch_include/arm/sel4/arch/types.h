@@ -1,18 +1,12 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the BSD 2-Clause license. Note that NO WARRANTY is provided.
- * See "LICENSE_BSD2.txt" for details.
- *
- * @TAG(DATA61_BSD)
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#ifndef __LIBSEL4_ARCH_TYPES_H
-#define __LIBSEL4_ARCH_TYPES_H
+#pragma once
 
+#include <sel4/macros.h>
 #include <sel4/simple_types.h>
 #include <sel4/sel4_arch/types.h>
 
@@ -24,6 +18,10 @@ typedef seL4_CPtr seL4_ARM_ASIDPool;
 typedef seL4_CPtr seL4_ARM_VCPU;
 typedef seL4_CPtr seL4_ARM_IOSpace;
 typedef seL4_CPtr seL4_ARM_IOPageTable;
+typedef seL4_CPtr seL4_ARM_SIDControl;
+typedef seL4_CPtr seL4_ARM_SID;
+typedef seL4_CPtr seL4_ARM_CBControl;
+typedef seL4_CPtr seL4_ARM_CB;
 
 typedef enum {
     seL4_ARM_PageCacheable = 0x01,
@@ -34,4 +32,10 @@ typedef enum {
     SEL4_FORCE_LONG_ENUM(seL4_ARM_VMAttributes),
 } seL4_ARM_VMAttributes;
 
-#endif /* __ARCH_SEL4TYPES_H__ */
+typedef enum {
+    seL4_ARM_CacheI   = 1,
+    seL4_ARM_CacheD   = 2,
+    seL4_ARM_CacheID  = 3,
+    SEL4_FORCE_LONG_ENUM(seL4_ARM_CacheType),
+} seL4_ARM_CacheType;
+

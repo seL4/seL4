@@ -1,13 +1,7 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -50,8 +44,7 @@ void switchFpuOwner(user_fpu_state_t *new_owner, word_t cpu)
  * This CPU exception is thrown when userspace attempts to use the FPU while
  * it is disabled. We need to save the current state of the FPU, and hand
  * it over. */
-exception_t
-handleFPUFault(void)
+exception_t handleFPUFault(void)
 {
     /* If we have already given the FPU to the user, we should not reach here.
      * This should only be able to occur on CPUs without an FPU at all, which

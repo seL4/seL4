@@ -1,15 +1,10 @@
 <?xml version="1.0" ?>
 <!--
-  Copyright 2017, Data61
-  Commonwealth Scientific and Industrial Research Organisation (CSIRO)
-  ABN 41 687 119 230.
+     Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 
-  This software may be distributed and modified according to the terms of
-  the BSD 2-Clause license. Note that NO WARRANTY is provided.
-  See "LICENSE_BSD2.txt" for details.
+     SPDX-License-Identifier: BSD-2-Clause
+-->
 
-     @TAG(DATA61_BSD)
-  -->
 <api name="ObjectApiArm" label_prefix="arm_">
     <interface name="seL4_ARM_PageTable" manual_name="Page Table"
         cap_description="Capability to the page table being operated on.">
@@ -21,9 +16,15 @@
                 Takes a VSpace capability as an argument,
                 and installs a reference to the invoked
                 <texttt text='PageTable'/> in the VSpace according to the provided virtual address.
+                If higher-level paging structures do not exist for the virtual address
+                this operation will fail, returning a seL4_FailedLookup error. If the page table
+                is already mapped this operation will fail, returning a seL4_InvalidCapability error. If
+                another object is already mapped at this level for the virtual address
+                this operation will fail, returning a seL4_DeleteFirst error.
             </description>
             <param dir="in" name="vspace" type="seL4_CPtr"
-            description="Capability to the VSpace which will contain the mapping."/>
+            description="Capability to the VSpace which will contain the mapping.
+                Must be assigned to an ASID pool."/>
             <param dir="in" name="vaddr" type="seL4_Word"
             description="Virtual address to map the page into."/>
             <param dir="in" name="attr" type="seL4_ARM_VMAttributes">
@@ -42,29 +43,34 @@
             </description>
         </method>
     </interface>
-    <interface name="seL4_ARM_IOPageTable" manual_name="I/O Page Table">
-        <method id="ARMIOPageTableMap" name="Map" condition="defined(CONFIG_ARM_SMMU)">
+    <interface name="seL4_ARM_IOPageTable" manual_name="I/O Page Table"
+        cap_description="Capability to the I/O page table being operated on.">
+        <method id="ARMIOPageTableMap" name="Map" condition="defined(CONFIG_TK1_SMMU)">
             <param dir="in" name="iospace" type="seL4_ARM_IOSpace"/>
             <param dir="in" name="ioaddr" type="seL4_Word"/>
         </method>
-        <method id="ARMIOPageTableUnmap" name="Unmap" condition="defined(CONFIG_ARM_SMMU)">
+        <method id="ARMIOPageTableUnmap" name="Unmap" condition="defined(CONFIG_TK1_SMMU)">
         </method>
     </interface>
     <interface name="seL4_ARM_Page" manual_name="Page"
         cap_description="Capability to the page being operated on.">
         <method id="ARMPageMap" name="Map">
             <brief>
-                Map a page into an address space.
+                Map a page into an address space or update the mapping attributes.
             </brief>
             <description>
                 Takes a VSpace capability, as an
                 argument and installs a reference
                 to the given <texttt text="Page"/> in the lowest-level unmapped paging structure
-                corresponding to the given address. If the required paging structures are not present
-                this operation will fail, returning a seL4_FailedLookup error.
+		corresponding to the given address, or updates the mapping attributes if the page is
+		already mapped at this address. If the required paging structures are not present
+                this operation will fail, returning a seL4_FailedLookup error. The page must not
+		already be mapped through this capability in a different VSpace or at a different
+		address; the page may be mapped in multiple VSpaces by copying the capability.
             </description>
             <param dir="in" name="vspace" type="seL4_CPtr"
-            description="Capability to the VSpace which will contain the mapping."/>
+            description="Capability to the VSpace which will contain the mapping.
+                Must be assigned to an ASID pool."/>
             <param dir="in" name="vaddr" type="seL4_Word"
             description="Virtual address to map the page into."/>
             <param dir="in" name="rights" type="seL4_CapRights_t">
@@ -78,26 +84,6 @@
                 </description>
             </param>
         </method>
-        <method id="ARMPageRemap" name="Remap">
-            <brief>
-                Remap a page.
-            </brief>
-            <description>
-                Changes the permissions of an existing mapping.
-            </description>
-            <param dir="in" name="vspace" type="seL4_CPtr"
-            description="Capability to the VSpace which will contain the mapping."/>
-            <param dir="in" name="rights" type="seL4_CapRights_t">
-                <description>
-                    Rights for the mapping.<docref>Possible values for this type are given in <autoref label="sec:cap_rights"/>  .</docref>
-                </description>
-            </param>
-            <param dir="in" name="attr" type="seL4_ARM_VMAttributes">
-                <description>
-                    VM Attributes for the mapping.<docref>Possible values for this type are given in <autoref label="ch:vspace"/>  .</docref>
-                </description>
-            </param>        
-        </method>
         <method id="ARMPageUnmap" name="Unmap">
             <brief>
                 Unmap a page.
@@ -106,7 +92,7 @@
                 Removes an existing mapping.
             </description>
         </method>
-        <method id="ARMPageMapIO" name="MapIO" condition="defined(CONFIG_ARM_SMMU)" manual_name="Map I/O">
+        <method id="ARMPageMapIO" name="MapIO" condition="defined(CONFIG_TK1_SMMU)" manual_name="Map I/O">
             <brief>
                 
             </brief>
@@ -224,7 +210,8 @@
             description="The VSpace that is being assigned to an ASID pool. Must not already be assigned to an ASID pool."/>
         </method>
     </interface>
-    <interface name="seL4_ARM_VCPU" manual_name="VCPU">
+    <interface name="seL4_ARM_VCPU" manual_name="VCPU"
+        cap_description="Capability to the VCPU being operated on.">
         <method id="ARMVCPUSetTCB" name="SetTCB" condition="defined(CONFIG_ARM_HYPERVISOR_SUPPORT)"
             manual_name="Set TCB">
                 <brief>
@@ -272,6 +259,19 @@
             <param dir="in" name="value" type="seL4_Word"
             description="Value to be written to the VCPU register"/>
         </method>
+        <method id="ARMVCPUAckVPPI" name="AckVPPI" condition="defined(CONFIG_ARM_HYPERVISOR_SUPPORT)"
+            manual_name="Acknowledge Virtual PPI IRQ">
+                <brief>
+                    Acknowledge a PPI IRQ previously forwarded from a VPPIEvent fault
+                </brief>
+            <description>
+                Acknowledge and unmask the PPI interrupt so that further interrupts can be forwarded
+                through VPPIEvent faults.
+            </description>
+            <param dir="in" name="irq" type="seL4_Word"
+            description="irq to ack."/>
+
+        </method>
     </interface>
    <interface name="seL4_IRQControl" manual_name="IRQ Control" cap_description="An IRQControl capability. This gives you the authority to make this call.">
 
@@ -291,5 +291,169 @@
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
         </method>
 
+       <method id="ARMIRQIssueIRQHandlerTriggerCore" name="GetTriggerCore" manual_name="GetTriggerCore"
+           manual_label="irq_controlgettriggercore" condition="CONFIG_MAX_NUM_NODES > 1">
+            <brief>
+                Create an IRQ handler capability and specify the trigger method (edge or level) and the target core.
+            </brief>
+            <description>
+                <docref>See <autoref label="sec:interrupts"/>.</docref>
+            </description>
+            <param dir="in" name="irq" type="seL4_Word" description="The IRQ that you want this capability to handle."/>
+
+            <param dir="in" name="trigger" type="seL4_Word" description="Indicates whether this IRQ is edge (1) or level (0) triggered."/>
+            <param dir="in" name="root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
+            <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
+            <param dir="in" name="target" type="seL4_Word" description="Indicates the target core ID to which this irq will be sent."/>
+        </method>
+    </interface>
+    <interface name="seL4_ARM_SIDControl" manual_name="SID Control" cap_description="A SIDControl capability. This gives you the authority to make this call.">
+       <method id="ARMSIDIssueSIDManager" name="GetSID" manual_name="GetSID"
+           manual_label="sid_controlgetsid" condition="defined(CONFIG_ARM_SMMU)">
+            <brief>
+                Create a SID capability.
+            </brief>
+            <description>
+                <docref>See <autoref label="sec:smmuv2-creating-sel4-arm-sid-capabilities"/>.</docref>
+            </description>
+            <param dir="in" name="sid" type="seL4_Word" description="The SID that you want this capability to manage."/>
+            <param dir="in" name="root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
+            <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
+        </method>
+       <method id="ARMSIDGetFault" name="GetFault" manual_name="GetFault"
+           manual_label="sid_controlgetfault" condition="defined(CONFIG_ARM_SMMU)">
+            <brief>
+                Get the fault status of the SMMU.
+            </brief>
+            <description>
+                <docref>See <autoref label="sec:smmuv2-fault-handling"/>.</docref>
+            </description>
+            <return>
+                A <texttt text='seL4_ARM_SMMU_GetFault_t'/> struct that contains a
+                <texttt text='seL4_Word status'/>, which holds the global fault status of the SMMU,
+                <texttt text='seL4_Word syndrome_0'/>, which holds the global fault syndrome 0 of the SMMU,
+                <texttt text='seL4_Word syndrome_1'/>, which holds the global fault syndrome 1 of the SMMU,
+                and <texttt text='int error'/>.<docref> See <autoref label='sec:errors'/> for a description
+                of the message register and tag contents upon error.</docref>
+            </return>
+            <param dir="out" name="status" type="seL4_Word"/>
+            <param dir="out" name="syndrome_0" type="seL4_Word"/>
+            <param dir="out" name="syndrome_1" type="seL4_Word"/>
+        </method>
+        <method id="ARMSIDClearFault" name="ClearFault" manual_name="ClearFault"
+           manual_label="sid_controlclearfault" condition="defined(CONFIG_ARM_SMMU)">
+            <brief>
+                Clear the fault status of the SMMU.
+            </brief>
+            <description>
+                <docref>See <autoref label="sec:smmuv2-fault-handling"/>.</docref>
+            </description>
+        </method>
+    </interface>
+    <interface name="seL4_ARM_SID" manual_name="SID" cap_description="A SID capability. This gives you the authority to make this call.">
+       <method id="ARMSIDBindCB" name="BindCB" manual_name="BindCB"
+           manual_label="sid_bindcb" condition="defined(CONFIG_ARM_SMMU)">
+            <brief>
+                Binding a context bank to a stream ID.
+            </brief>
+            <description>
+                <docref>See <autoref label="sec:smmuv2-configuring-streams-transactions"/>.</docref>
+            </description>
+           <param dir="in" name="cb" type="seL4_CPtr"
+            description="The CB that is being binded to a stream ID. Must already has an assigned vspace."/>
+        </method>
+       <method id="ARMSIDUnbindCB" name="UnbindCB" manual_name="UnbindCB"
+           manual_label="sid_unbindcb" condition="defined(CONFIG_ARM_SMMU)">
+            <brief>
+                Unbinding a context bank from a stream ID.
+            </brief>
+            <description>
+                <docref>See <autoref label="sec:smmuv2-configuring-streams-transactions"/>.</docref>
+            </description>
+        </method>
+    </interface>
+    <interface name="seL4_ARM_CBControl" manual_name="CB Control" cap_description="A CBControl capability. This gives you the authority to make this call.">
+       <method id="ARMCBIssueCBManager" name="GetCB" manual_name="GetCB"
+           manual_label="cb_controlgetcb" condition="defined(CONFIG_ARM_SMMU)">
+            <brief>
+                Create a CB capability.
+            </brief>
+            <description>
+                <docref>See <autoref label="sec:smmuv2-creating-sel4-arm-cb-capabilities"/>.</docref>
+            </description>
+            <param dir="in" name="cb" type="seL4_Word" description="The CB that you want this capability to manage."/>
+            <param dir="in" name="root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
+            <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
+        </method>
+        <method id="ARMCBTLBInvalidateAll" name="TLBInvalidateAll" manual_name="TLBInvalidateAll"
+           manual_label="cb_controltlbinvalidate" condition="defined(CONFIG_ARM_SMMU)">
+            <brief>
+                Invalidate all TLB entries.
+            </brief>
+            <description>
+                <docref>See <autoref label="sec:smmuv2-tlb-invalidation"/>.</docref>
+            </description>
+        </method>
+    </interface>
+    <interface name="seL4_ARM_CB" manual_name="CB" cap_description="A CB capability. This gives you the authority to make this call.">
+       <method id="ARMCBAssignVspace" name="AssignVspace" manual_name="AssignVspace"
+           manual_label="cb_assignvspace" condition="defined(CONFIG_ARM_SMMU)">
+            <brief>
+                Assigning a vspace to a context bank.
+            </brief>
+            <description>
+                <docref>See <autoref label="sec:smmuv2-configuring-context-banks"/>.</docref>
+            </description>
+           <param dir="in" name="vspace" type="seL4_CPtr"
+            description="The VSpace that is being assigned to a context bank. Must already has an assigned ASID."/>
+        </method>
+        <method id="ARMCBUnassignVspace" name="UnassignVspace" manual_name="UnassignVspace"
+           manual_label="cb_unassignvspace" condition="defined(CONFIG_ARM_SMMU)">
+            <brief>
+                Unassigning a vspace to a context bank.
+            </brief>
+            <description>
+                <docref>See <autoref label="sec:smmuv2-configuring-context-banks"/>.</docref>
+            </description>
+        </method>
+        <method id="ARMCBTLBInvalidate" name="TLBInvalidate" manual_name="TLBInvalidate"
+           manual_label="cb_tlbinvalidate" condition="defined(CONFIG_ARM_SMMU)">
+            <brief>
+                Invalidating TLB entries used by the current ASID in this context bank.
+            </brief>
+            <description>
+                <docref>See <autoref label="sec:smmuv2-tlb-invalidation"/>.</docref>
+            </description>
+        </method>
+        <method id="ARMCBGetFault" name="CBGetFault" manual_name="CBGetFault"
+           manual_label="cb_getfault" condition="defined(CONFIG_ARM_SMMU)">
+            <brief>
+                Get the fault status of the context bank.
+            </brief>
+            <description>
+                <docref>See <autoref label="sec:smmuv2-fault-handling"/>.</docref>
+            </description>
+            <return>
+                A <texttt text='seL4_ARM_SMMU_CB_GetFault_t'/> struct that contains a
+                <texttt text='seL4_Word status'/>, which holds the fault status of the context bank,
+                <texttt text='seL4_Word address'/>, which holds the faulty address,
+                and <texttt text='int error'/>.<docref> See <autoref label='sec:errors'/> for a description
+                of the message register and tag contents upon error.</docref>
+            </return>
+            <param dir="out" name="status" type="seL4_Word"/>
+            <param dir="out" name="address" type="seL4_Word"/>
+        </method>
+        <method id="ARMCBClearFault" name="CBClearFault" manual_name="CBClearFault"
+           manual_label="cb_clearfault" condition="defined(CONFIG_ARM_SMMU)">
+            <brief>
+                 Clear the fault status of the context bank.
+            </brief>
+            <description>
+                <docref>See <autoref label="sec:smmuv2-fault-handling"/>.</docref>
+            </description>
+        </method>
     </interface>
 </api>

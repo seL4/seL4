@@ -1,17 +1,10 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODE_KERNEL_ELF_H_
-#define __ARCH_MODE_KERNEL_ELF_H_
+#pragma once
 
 #include <types.h>
 
@@ -44,4 +37,3 @@ typedef struct Elf64_Phdr {
     uint64_t            p_align;
 } Elf64_Phdr_t, Elf_Phdr_t;
 
-#endif /* __ARCH_MODE_KERNEL_ELF_H_ */

@@ -1,17 +1,10 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_KERNEL_X2APIC_H_
-#define __ARCH_KERNEL_X2APIC_H_
+#pragma once
 
 #include <config.h>
 #include <arch/machine.h>
@@ -46,32 +39,27 @@ typedef enum _apic_reg_t {
 #define X2APIC_LDR_CLUSTER_SHIFT   16
 #define X2APIC_LDR_ID_MASK         16
 
-static inline uint32_t
-apic_read_reg(apic_reg_t reg)
+static inline uint32_t apic_read_reg(apic_reg_t reg)
 {
     return x86_rdmsr_low(reg);
 }
 
-static inline void
-apic_write_reg(apic_reg_t reg, uint32_t val)
+static inline void apic_write_reg(apic_reg_t reg, uint32_t val)
 {
     x86_wrmsr(reg, val);
 }
 
-static inline logical_id_t
-apic_get_logical_id(void)
+static inline logical_id_t apic_get_logical_id(void)
 {
     return apic_read_reg(APIC_LOGICAL_DEST);
 }
 
-static inline word_t
-apic_get_cluster(logical_id_t logical_id)
+static inline word_t apic_get_cluster(logical_id_t logical_id)
 {
     return logical_id >> X2APIC_LDR_CLUSTER_SHIFT;
 }
 
-static inline void
-apic_write_icr(word_t high, word_t low)
+static inline void apic_write_icr(word_t high, word_t low)
 {
     uint64_t icr = ((uint64_t)high << 32) | low;
     x86_wrmsr(APIC_ICR, icr);
@@ -80,4 +68,3 @@ apic_write_icr(word_t high, word_t low)
 #define IPI_ICR_BARRIER  asm volatile("mfence" ::: "memory")
 #define IPI_MEM_BARRIER  IPI_ICR_BARRIER
 #endif /* CONFIG_X2APIC */
-#endif /* __ARCH_KERNEL_X2APIC_H_ */

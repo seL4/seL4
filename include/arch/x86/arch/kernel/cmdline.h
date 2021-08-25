@@ -1,16 +1,9 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
-
-#ifndef __ARCH_KERNEL_CMDLINE_H
-#define __ARCH_KERNEL_CMDLINE_H
-
+#pragma once
 #include <config.h>
 
 typedef struct cmdline_opt {
@@ -23,6 +16,5 @@ typedef struct cmdline_opt {
     bool_t   disable_iommu;
 } cmdline_opt_t;
 
-void cmdline_parse(const char *cmdline, cmdline_opt_t* cmdline_opt);
+void cmdline_parse(const char *cmdline, cmdline_opt_t *cmdline_opt);
 
-#endif

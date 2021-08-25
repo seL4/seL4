@@ -1,17 +1,10 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODE_STACK_H_
-#define __ARCH_MODE_STACK_H_
+#pragma once
 
 #include <config.h>
 #include <mode/model/smp.h>
@@ -24,8 +17,7 @@
  * can push to it on entry.
  * @param target_thread The thread we're about to switch to.
  */
-static inline void
-setKernelEntryStackPointer(tcb_t *target_thread)
+static inline void setKernelEntryStackPointer(tcb_t *target_thread)
 {
     word_t register_context_top;
     SMP_COND_STATEMENT(word_t kernel_stack_top);
@@ -39,16 +31,22 @@ setKernelEntryStackPointer(tcb_t *target_thread)
      * current CPU, because we use per-CPU stacks.
      */
     /* save kernel stack pointer for next exception */
-    SMP_COND_STATEMENT(kernel_stack_top = ((word_t)kernel_stack_alloc[getCurrentCPUIndex()]) + BIT(CONFIG_KERNEL_STACK_BITS) - 4);
+    SMP_COND_STATEMENT(kernel_stack_top = ((word_t)kernel_stack_alloc[getCurrentCPUIndex()]) + BIT(
+                                              CONFIG_KERNEL_STACK_BITS) - 4);
     SMP_COND_STATEMENT(NODE_STATE(ksCurThread)->tcbArch.tcbContext.kernelSP = kernel_stack_top);
 
-    register_context_top = (word_t)&target_thread->tcbArch.tcbContext.registers[n_contextRegisters];
+    /* The first item to be pushed onto the stack should always be SS */
+    register_context_top = (word_t)&target_thread->tcbArch.tcbContext.registers[SS + 1];
 
-    tss_ptr_set_esp0(&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.tss, register_context_top);
+    /*
+     * Work around -Waddress-of-packed-member. TSS is the first thing
+     * in the struct and so it's safe to take its address.
+     */
+    void *tss = &x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.tss;
+    tss_ptr_set_esp0(tss, register_context_top);
 
     if (config_set(CONFIG_HARDWARE_DEBUG_API)) {
         x86_wrmsr(IA32_SYSENTER_ESP_MSR, register_context_top);
     }
 }
 
-#endif /* __ARCH_MODE_STACK_H_ */

@@ -1,11 +1,7 @@
 %
 % Copyright 2014, General Dynamics C4 Systems
 %
-% This software may be distributed and modified according to the terms of
-% the GNU General Public License version 2. Note that NO WARRANTY is provided.
-% See "LICENSE_GPLv2.txt" for details.
-%
-% @TAG(GD_GPL)
+% SPDX-License-Identifier: GPL-2.0-only
 %
 
 \chapter{\label{ch:ipc}Message Passing (IPC)}
@@ -137,13 +133,14 @@ invocations on the \obj{CNode} containing the capability. Endpoint
 capabilities with badges cannot be unbadged, rebadged or used to create
 child capabilities with different badges.
 
-Only the low 28 bits of the badge are available for use. The kernel will
-silently ignore any usage of the high 4 bits.
+On 32-bit platforms, only the low 28 bits of the badge are available for use.
+The kernel will silently ignore any usage of the high 4 bits.
+On 64-bit platforms, 64 bits are available for badges.
 
 \subsection{Capability Transfer}
 \label{sec:cap-transfer}
 
-Messages may contain capabilities, which will be transferred to the
+Messages may contain capabilities, which will be copied to the
 receiver, provided that the endpoint capability
 invoked by the sending thread has Grant rights. An attempt to send
 capabilities using an endpoint capability without the Grant right will
@@ -173,6 +170,10 @@ position of the receiver's badges array, and the kernel sets the n-th bit (count
 least significant) in the \texttt{capsUnwrapped} field of the message
 tag. The capability itself is not transferred, so the receive slot may be used
 for another capability.
+
+A capability that is not unwrapped is transferred by copying it from the
+sender's CNode slot to the receiver's CNode slot. The sender retains access
+to the sent capability.
 
 If a receiver gets a message whose tag has an \texttt{extraCaps} of 2 and a
 \texttt{capsUnwrapped} of 2, then the first capability in the message was

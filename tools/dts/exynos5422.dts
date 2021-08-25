@@ -1,12 +1,11 @@
 /*
- * The code contained herein is licensed under the GNU General Public
- * License. You may obtain a copy of the GNU General Public License
- * Version 2 or later at the following locations:
+ * Copyright Linux Kernel Team
  *
- * http://www.opensource.org/licenses/gpl-license.html
- * http://www.gnu.org/copyleft/gpl.html
+ * SPDX-License-Identifier: GPL-2.0-only
  *
- * @TAG(OTHER_GPL)
+ * This file is derived from an intermediate build stage of the
+ * Linux kernel. The licenses of all input files to this process
+ * are compatible with GPL-2.0-only.
  */
 
 /dts-v1/;
@@ -3482,6 +3481,26 @@
 					type = "critical";
 				};
 			};
+		};
+	};
+
+	mali@11800000 {
+		compatible = "samsung,exynos5422-mali\0arm,malit628\0arm,malit62x\0arm,malit6xx\0arm,mali-midgard";
+		reg = <0x11800000 0x5000>;
+		interrupts = <0x00 0xdb 0x00 0x00 0x4a 0x00 0x00 0x75 0x00>;
+		interrupt-names = "JOB\0MMU\0GPU";
+		clocks = <0x02 0x09 0x02 0x312 0x02 0x1f5>;
+		clock-names = "fout_vpll\0dout_aclk_g3d\0clk_mali";
+		operating-points-v2 = <0x200>;
+		status = "okay";
+		mali-supply = <0x201>;
+
+		power_model@0 {
+			compatible = "arm,mali-simple-power-model";
+			static-coefficient = <0x250b66>;
+			dynamic-coefficient = <0x124f>;
+			ts = <0x4e20 0x7d0 0xffffffec 0x02>;
+			thermal-zone = "gpu-thermal";
 		};
 	};
 

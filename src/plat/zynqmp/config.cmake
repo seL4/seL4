@@ -1,42 +1,75 @@
 #
-# Copyright 2018, Data61
-# Commonwealth Scientific and Industrial Research Organisation (CSIRO)
-# ABN 41 687 119 230.
+# Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 #
-# This software may be distributed and modified according to the terms of
-# the GNU General Public License version 2. Note that NO WARRANTY is provided.
-# See "LICENSE_GPLv2.txt" for details.
-#
-# @TAG(DATA61_GPL)
+# SPDX-License-Identifier: GPL-2.0-only
 #
 
 cmake_minimum_required(VERSION 3.7.2)
 
-if(KernelPlatformUltra96)
-    # Ultra96 is is basically Zynqmp
-    list(APPEND KernelDTSList "tools/dts/ultra96.dts")
-    config_set(KernelPlatformZynqmp PLAT_ZYNQMP ON)
-    config_set(KernelPlatformZynqmpUltra96 PLAT_ZYNQMP_ULTRA96 ON)
-endif()
+declare_platform(zynqmp KernelPlatformZynqmp PLAT_ZYNQMP KernelArchARM)
+
+set(c_configs PLAT_ZYNQMP_ZCU102 PLAT_ZYNQMP_ULTRA96)
+set(cmake_configs KernelPlatformZynqmpZcu102 KernelPlatformZynqmpUltra96)
+set(plat_lists zcu102 ultra96)
+foreach(config IN LISTS cmake_configs)
+    unset(${config} CACHE)
+endforeach()
 
 if(KernelPlatformZynqmp)
-    set(KernelArmCortexA53 ON)
-    set(KernelArchArmV8a ON)
-    config_set(KernelPlatform PLAT "zynqmp")
-    config_set(KernelArmMach MACH "zynq")
-    if(KernelSel4ArchAarch64)
-        set(KernelHaveFPU ON)
+    set(KernelHardwareDebugAPIUnsupported ON CACHE INTERNAL "")
+    if("${KernelSel4Arch}" STREQUAL aarch32)
+        declare_seL4_arch(aarch32)
+    elseif("${KernelSel4Arch}" STREQUAL aarch64)
+        declare_seL4_arch(aarch64)
+    elseif("${KernelSel4Arch}" STREQUAL arm_hyp)
+        declare_seL4_arch(arm_hyp)
+    else()
+        fallback_declare_seL4_arch_default(aarch64)
     endif()
 
-    if (NOT KernelPlatformUltra96)
-        list(APPEND KernelDTSList "tools/dts/zynqmp.dts")
+    check_platform_and_fallback_to_default(KernelARMPlatform "zcu102")
+
+    list(FIND plat_lists ${KernelARMPlatform} index)
+    if("${index}" STREQUAL "-1")
+        message(FATAL_ERROR "Which zynqmp platform not specified")
     endif()
+    list(GET c_configs ${index} c_config)
+    list(GET cmake_configs ${index} cmake_config)
+    config_set(KernelARMPlatform ARM_PLAT ${KernelARMPlatform})
+    config_set(${cmake_config} ${c_config} ON)
+
+    set(KernelArmCortexA53 ON)
+    set(KernelArchArmV8a ON)
+
+    config_set(KernelArmMach MACH "zynq")
+
+    if(KernelPlatformZynqmpUltra96)
+        list(APPEND KernelDTSList "tools/dts/ultra96.dts")
+    elseif(KernelPlatformZynqmpZcu102)
+        list(APPEND KernelDTSList "tools/dts/zynqmp.dts")
+    else()
+        message(FATAL_ERROR "unknown platform")
+    endif()
+
+    if(KernelSel4ArchAarch32)
+        list(APPEND KernelDTSList "src/plat/zynqmp/overlay-zynqmp32.dts")
+    else()
+        list(APPEND KernelDTSList "src/plat/zynqmp/overlay-zynqmp.dts")
+    endif()
+
+    declare_default_headers(
+        TIMER_FREQUENCY 100000000
+        MAX_IRQ 187
+        NUM_PPI 32
+        TIMER drivers/timer/arm_generic.h
+        INTERRUPT_CONTROLLER arch/machine/gic_v2.h
+        CLK_MAGIC 1374389535llu
+        CLK_SHIFT 37u
+        KERNEL_WCET 10u
+    )
 endif()
 
 add_sources(
     DEP "KernelPlatformZynqmp"
-    CFILES
-        src/plat/zynqmp/machine/hardware.c
-        src/plat/zynqmp/machine/io.c
-        src/arch/arm/machine/generic_timer.c
+    CFILES src/arch/arm/machine/gic_v2.c src/arch/arm/machine/l2c_nop.c
 )

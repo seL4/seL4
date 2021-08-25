@@ -1,21 +1,23 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2021, Axel Heider <axelheider@gmx.de>
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-or-later
  */
+
 #include <config.h>
 #include <machine/io.h>
+#include <drivers/uart.h>
 
 #ifdef CONFIG_PRINTING
-void
-putConsoleChar(unsigned char c)
+void kernel_putDebugChar(unsigned char c)
 {
-    putDebugChar(c);
+    uart_console_putchar(c);
 }
-#endif
+#endif /* CONFIG_PRINTING */
+
+#ifdef CONFIG_DEBUG_BUILD
+unsigned char kernel_getDebugChar(void)
+{
+    return uart_drv_getchar();
+}
+#endif /* CONFIG_DEBUG_BUILD */

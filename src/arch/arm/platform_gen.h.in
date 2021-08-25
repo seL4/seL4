@@ -1,0 +1,44 @@
+/*
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+#pragma once
+
+#include <config.h>
+
+#define TIMER_CLOCK_HZ ULL_CONST(@CONFIGURE_TIMER_FREQUENCY@)
+#define CLK_MAGIC @CONFIGURE_CLK_MAGIC@
+#define CLK_SHIFT @CONFIGURE_CLK_SHIFT@
+#define TIMER_PRECISION @CONFIGURE_TIMER_PRECISION@
+
+enum IRQConstants {
+    maxIRQ                      = @CONFIGURE_MAX_IRQ@
+} platform_interrupt_t;
+
+#define IRQ_CNODE_SLOT_BITS (@CONFIGURE_IRQ_SLOT_BITS@)
+
+#include <@CONFIGURE_INTERRUPT_CONTROLLER@>
+#include <@CONFIGURE_TIMER@>
+
+#cmakedefine CONFIGURE_SMMU <@CONFIGURE_SMMU@>
+#if (defined(CONFIGURE_SMMU) && defined(CONFIG_TK1_SMMU))
+#include CONFIGURE_SMMU
+#endif
+
+#cmakedefine CONFIGURE_SMMU <@CONFIGURE_SMMU@>
+#if (defined(CONFIGURE_SMMU) && defined(CONFIG_ARM_SMMU))
+#include CONFIGURE_SMMU
+
+#define SMMU_MAX_SID  @CONFIGURE_MAX_SID@
+#define SMMU_MAX_CB  @CONFIGURE_MAX_CB@
+
+#endif
+
+#ifdef CONFIG_KERNEL_MCS
+static inline CONST time_t getKernelWcetUs(void)
+{
+    return @CONFIGURE_KERNEL_WCET@;
+}
+#endif

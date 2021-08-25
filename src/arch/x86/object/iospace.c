@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -28,8 +24,7 @@ typedef struct lookupVTDContextSlot_ret {
 } lookupVTDContextSlot_ret_t;
 
 
-BOOT_CODE cap_t
-master_iospace_cap(void)
+BOOT_CODE cap_t master_iospace_cap(void)
 {
     if (x86KSnumDrhu == 0) {
         return cap_null_cap_new();
@@ -42,15 +37,14 @@ master_iospace_cap(void)
         );
 }
 
-static vtd_cte_t*
-lookup_vtd_context_slot(cap_t cap)
+static vtd_cte_t *lookup_vtd_context_slot(cap_t cap)
 {
     uint32_t   vtd_root_index;
     uint32_t   vtd_context_index;
     uint32_t   pci_request_id;
-    vtd_rte_t* vtd_root_slot;
-    vtd_cte_t* vtd_context;
-    vtd_cte_t* vtd_context_slot;
+    vtd_rte_t *vtd_root_slot;
+    vtd_cte_t *vtd_context;
+    vtd_cte_t *vtd_context_slot;
 
     switch (cap_get_capType(cap)) {
     case cap_io_space_cap:
@@ -72,16 +66,15 @@ lookup_vtd_context_slot(cap_t cap)
     vtd_root_index = get_pci_bus(pci_request_id);
     vtd_root_slot = x86KSvtdRootTable + vtd_root_index;
 
-    vtd_context = (vtd_cte_t*)paddr_to_pptr(vtd_rte_ptr_get_ctp(vtd_root_slot));
+    vtd_context = (vtd_cte_t *)paddr_to_pptr(vtd_rte_ptr_get_ctp(vtd_root_slot));
     vtd_context_index = (get_pci_dev(pci_request_id) << 3) | get_pci_fun(pci_request_id);
     vtd_context_slot = &vtd_context[vtd_context_index];
 
     return vtd_context_slot;
 }
 
-static lookupIOPTSlot_ret_t
-lookupIOPTSlot_resolve_levels(vtd_pte_t *iopt, word_t translation,
-                              word_t levels_to_resolve, word_t levels_remaining)
+static lookupIOPTSlot_ret_t lookupIOPTSlot_resolve_levels(vtd_pte_t *iopt, word_t translation,
+                                                          word_t levels_to_resolve, word_t levels_remaining)
 {
     lookupIOPTSlot_ret_t ret;
 
@@ -96,7 +89,8 @@ lookupIOPTSlot_resolve_levels(vtd_pte_t *iopt, word_t translation,
         return ret;
     }
 
-    iopt_index = (translation  >> (VTD_PT_INDEX_BITS * (x86KSnumIOPTLevels - 1 - (levels_to_resolve - levels_remaining)))) & MASK(VTD_PT_INDEX_BITS);
+    iopt_index = (translation  >> (VTD_PT_INDEX_BITS * (x86KSnumIOPTLevels - 1 - (levels_to_resolve - levels_remaining)))) &
+                 MASK(VTD_PT_INDEX_BITS);
     iopt_slot = iopt + iopt_index;
 
     if (!vtd_pte_ptr_get_write(iopt_slot) || levels_remaining == 0) {
@@ -110,8 +104,7 @@ lookupIOPTSlot_resolve_levels(vtd_pte_t *iopt, word_t translation,
 }
 
 
-static inline lookupIOPTSlot_ret_t
-lookupIOPTSlot(vtd_pte_t* iopt, word_t io_address)
+static inline lookupIOPTSlot_ret_t lookupIOPTSlot(vtd_pte_t *iopt, word_t io_address)
 {
     lookupIOPTSlot_ret_t ret;
 
@@ -126,8 +119,7 @@ lookupIOPTSlot(vtd_pte_t* iopt, word_t io_address)
     }
 }
 
-void
-unmapVTDContextEntry(cap_t cap)
+void unmapVTDContextEntry(cap_t cap)
 {
     vtd_cte_t *cte = lookup_vtd_context_slot(cap);
     assert(cte != 0);
@@ -146,8 +138,7 @@ unmapVTDContextEntry(cap_t cap)
     return;
 }
 
-static exception_t
-performX86IOPTInvocationUnmap(cap_t cap, cte_t *ctSlot)
+static exception_t performX86IOPTInvocationUnmap(cap_t cap, cte_t *ctSlot)
 {
     deleteIOPageTable(cap);
     cap = cap_io_page_table_cap_set_capIOPTIsMapped(cap, 0);
@@ -156,8 +147,8 @@ performX86IOPTInvocationUnmap(cap_t cap, cte_t *ctSlot)
     return EXCEPTION_NONE;
 }
 
-static exception_t
-performX86IOPTInvocationMapContextRoot(cap_t cap, cte_t *ctSlot, vtd_cte_t vtd_cte, vtd_cte_t *vtd_context_slot)
+static exception_t performX86IOPTInvocationMapContextRoot(cap_t cap, cte_t *ctSlot, vtd_cte_t vtd_cte,
+                                                          vtd_cte_t *vtd_context_slot)
 {
     *vtd_context_slot = vtd_cte;
     flushCacheRange(vtd_context_slot, VTD_CTE_SIZE_BITS);
@@ -166,8 +157,7 @@ performX86IOPTInvocationMapContextRoot(cap_t cap, cte_t *ctSlot, vtd_cte_t vtd_c
     return EXCEPTION_NONE;
 }
 
-static exception_t
-performX86IOPTInvocationMapPT(cap_t cap, cte_t *ctSlot, vtd_pte_t iopte, vtd_pte_t *ioptSlot)
+static exception_t performX86IOPTInvocationMapPT(cap_t cap, cte_t *ctSlot, vtd_pte_t iopte, vtd_pte_t *ioptSlot)
 {
     *ioptSlot = iopte;
     flushCacheRange(ioptSlot, VTD_PTE_SIZE_BITS);
@@ -176,14 +166,12 @@ performX86IOPTInvocationMapPT(cap_t cap, cte_t *ctSlot, vtd_pte_t iopte, vtd_pte
     return EXCEPTION_NONE;
 }
 
-exception_t
-decodeX86IOPTInvocation(
+exception_t decodeX86IOPTInvocation(
     word_t       invLabel,
     word_t       length,
-    cte_t*       slot,
+    cte_t       *slot,
     cap_t        cap,
-    extra_caps_t excaps,
-    word_t*      buffer
+    word_t      *buffer
 )
 {
     cap_t      io_space;
@@ -191,8 +179,8 @@ decodeX86IOPTInvocation(
     uint32_t   pci_request_id;
     word_t   io_address;
     uint16_t   domain_id;
-    vtd_cte_t* vtd_context_slot;
-    vtd_pte_t* vtd_pte;
+    vtd_cte_t *vtd_context_slot;
+    vtd_pte_t *vtd_pte;
 
     if (invLabel == X86IOPageTableUnmap) {
 
@@ -200,19 +188,19 @@ decodeX86IOPTInvocation(
         return performX86IOPTInvocationUnmap(cap, slot);
     }
 
-    if (invLabel != X86IOPageTableMap ) {
+    if (invLabel != X86IOPageTableMap) {
         userError("X86IOPageTable: Illegal operation.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (excaps.excaprefs[0] == NULL || length < 1) {
+    if (current_extra_caps.excaprefs[0] == NULL || length < 1) {
         userError("X86IOPageTableMap: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    io_space     = excaps.excaprefs[0]->cap;
+    io_space     = current_extra_caps.excaprefs[0]->cap;
     io_address   = getSyscallArg(0, buffer) & ~MASK(VTD_PT_INDEX_BITS + seL4_PageBits);
 
     if (cap_io_page_table_cap_get_capIOPTIsMapped(cap)) {
@@ -295,8 +283,7 @@ decodeX86IOPTInvocation(
     }
 }
 
-static exception_t
-performX86IOInvocationMap(cap_t cap, cte_t *ctSlot, vtd_pte_t iopte, vtd_pte_t *ioptSlot)
+static exception_t performX86IOInvocationMap(cap_t cap, cte_t *ctSlot, vtd_pte_t iopte, vtd_pte_t *ioptSlot)
 {
     ctSlot->cap = cap;
     *ioptSlot = iopte;
@@ -306,27 +293,25 @@ performX86IOInvocationMap(cap_t cap, cte_t *ctSlot, vtd_pte_t iopte, vtd_pte_t *
 }
 
 
-exception_t
-decodeX86IOMapInvocation(
+exception_t decodeX86IOMapInvocation(
     word_t       length,
-    cte_t*       slot,
+    cte_t       *slot,
     cap_t        cap,
-    extra_caps_t excaps,
-    word_t*      buffer
+    word_t      *buffer
 )
 {
     cap_t      io_space;
     word_t     io_address;
     uint32_t   pci_request_id;
-    vtd_cte_t* vtd_context_slot;
-    vtd_pte_t* vtd_pte;
+    vtd_cte_t *vtd_context_slot;
+    vtd_pte_t *vtd_pte;
     vtd_pte_t  iopte;
     paddr_t    paddr;
     lookupIOPTSlot_ret_t lu_ret;
     vm_rights_t frame_cap_rights;
     seL4_CapRights_t dma_cap_rights_mask;
 
-    if (excaps.excaprefs[0] == NULL || length < 2) {
+    if (current_extra_caps.excaprefs[0] == NULL || length < 2) {
         userError("X86PageMapIO: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -346,9 +331,9 @@ decodeX86IOMapInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    io_space    = excaps.excaprefs[0]->cap;
+    io_space    = current_extra_caps.excaprefs[0]->cap;
     io_address  = getSyscallArg(1, buffer) & ~MASK(PAGE_BITS);
-    paddr       = pptr_to_paddr((void*)cap_frame_cap_get_capFBasePtr(cap));
+    paddr       = pptr_to_paddr((void *)cap_frame_cap_get_capFBasePtr(cap));
 
     if (cap_get_capType(io_space) != cap_io_space_cap) {
         userError("X86PageMapIO: Invalid IO space capability.");
@@ -375,7 +360,7 @@ decodeX86IOMapInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    vtd_pte = (vtd_pte_t*)paddr_to_pptr(vtd_cte_ptr_get_asr(vtd_context_slot));
+    vtd_pte = (vtd_pte_t *)paddr_to_pptr(vtd_cte_ptr_get_asr(vtd_context_slot));
     lu_ret  = lookupIOPTSlot(vtd_pte, io_address);
     if (lu_ret.status != EXCEPTION_NONE || lu_ret.level != 0) {
         current_syscall_error.type = seL4_FailedLookup;
@@ -414,8 +399,8 @@ void deleteIOPageTable(cap_t io_pt_cap)
     lookupIOPTSlot_ret_t lu_ret;
     uint32_t             level;
     word_t               io_address;
-    vtd_cte_t*           vtd_context_slot;
-    vtd_pte_t*           vtd_pte;
+    vtd_cte_t           *vtd_context_slot;
+    vtd_pte_t           *vtd_pte;
 
     if (cap_io_page_table_cap_get_capIOPTIsMapped(io_pt_cap)) {
         io_pt_cap = cap_io_page_table_cap_set_capIOPTIsMapped(io_pt_cap, 0);
@@ -426,7 +411,7 @@ void deleteIOPageTable(cap_t io_pt_cap)
             return;
         }
 
-        vtd_pte = (vtd_pte_t*)paddr_to_pptr(vtd_cte_ptr_get_asr(vtd_context_slot));
+        vtd_pte = (vtd_pte_t *)paddr_to_pptr(vtd_cte_ptr_get_asr(vtd_context_slot));
 
         if (level == 0) {
             /* if we have been overmapped or something */
@@ -444,13 +429,14 @@ void deleteIOPageTable(cap_t io_pt_cap)
             flushCacheRange(vtd_context_slot, VTD_CTE_SIZE_BITS);
         } else {
             io_address = cap_io_page_table_cap_get_capIOPTMappedAddress(io_pt_cap);
-            lu_ret = lookupIOPTSlot_resolve_levels(vtd_pte, io_address >> PAGE_BITS, level - 1, level - 1 );
+            lu_ret = lookupIOPTSlot_resolve_levels(vtd_pte, io_address >> PAGE_BITS, level - 1, level - 1);
 
             /* if we have been overmapped or something */
             if (lu_ret.status != EXCEPTION_NONE || lu_ret.level != 0) {
                 return;
             }
-            if (vtd_pte_ptr_get_addr(lu_ret.ioptSlot) != pptr_to_paddr((void *)cap_io_page_table_cap_get_capIOPTBasePtr(io_pt_cap))) {
+            if (vtd_pte_ptr_get_addr(lu_ret.ioptSlot) != pptr_to_paddr((void *)cap_io_page_table_cap_get_capIOPTBasePtr(
+                                                                           io_pt_cap))) {
                 return;
             }
             *lu_ret.ioptSlot = vtd_pte_new(
@@ -468,8 +454,8 @@ void unmapIOPage(cap_t cap)
 {
     lookupIOPTSlot_ret_t lu_ret;
     word_t               io_address;
-    vtd_cte_t*           vtd_context_slot;
-    vtd_pte_t*           vtd_pte;
+    vtd_cte_t           *vtd_context_slot;
+    vtd_pte_t           *vtd_pte;
 
     io_address  = cap_frame_cap_get_capFMappedAddress(cap);
     vtd_context_slot = lookup_vtd_context_slot(cap);
@@ -479,7 +465,7 @@ void unmapIOPage(cap_t cap)
         return;
     }
 
-    vtd_pte = (vtd_pte_t*)paddr_to_pptr(vtd_cte_ptr_get_asr(vtd_context_slot));
+    vtd_pte = (vtd_pte_t *)paddr_to_pptr(vtd_cte_ptr_get_asr(vtd_context_slot));
 
     lu_ret  = lookupIOPTSlot(vtd_pte, io_address);
     if (lu_ret.status != EXCEPTION_NONE || lu_ret.level != 0) {
@@ -500,8 +486,7 @@ void unmapIOPage(cap_t cap)
     invalidate_iotlb();
 }
 
-exception_t
-performX86IOUnMapInvocation(cap_t cap, cte_t *ctSlot)
+exception_t performX86IOUnMapInvocation(cap_t cap, cte_t *ctSlot)
 {
     unmapIOPage(ctSlot->cap);
 

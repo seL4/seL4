@@ -1,13 +1,8 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright 2021, HENSOLDT Cyber
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -58,7 +53,7 @@
 
 /*
  * Entry point of the kernel ELF image.
- * X0-X3 contain parameters that are passed to init_kernel().
+ * X0-X5 contain parameters that are passed to init_kernel().
  *
  * Note that for SMP kernel, the tpidr_el1 is used to pass
  * the logical core ID.
@@ -72,6 +67,10 @@
 
 .section .boot.text
 BEGIN_FUNC(_start)
+    /* Save x4 and x5 so we don't clobber it */
+    mov     x7, x4
+    mov     x8, x5
+
     /* Make sure interrupts are disable */
     msr daifset, #DAIFSET_MASK
 
@@ -109,13 +108,30 @@ BEGIN_FUNC(_start)
     /* Attempt to workaround any known ARM errata. */
     stp     x0, x1, [sp, #-16]!
     stp     x2, x3, [sp, #-16]!
+    stp     x7, x8, [sp, #-16]!
     bl arm_errata
+    ldp     x4, x5, [sp], #16
     ldp     x2, x3, [sp], #16
     ldp     x0, x1, [sp], #16
 
-    /* Call bootstrapping implemented in C */
+    /* Call bootstrapping implemented in C with parameters:
+     *  x0: user image physical start address
+     *  x1: user image physical end address
+     *  x2: physical/virtual offset
+     *  x3: user image virtual entry address
+     *  x4: DTB physical address (0 if there is none)
+     *  x5: DTB size (0 if there is none)
+     */
     bl      init_kernel
 
-    /* Restore the initial thread */
+    /* Restore the initial thread. Note that the function restore_user_context()
+     * could technically also be called at the end of init_kernel() directly,
+     * there is no need to return to the assembly code here at all. However, for
+     * verification things are a lot easier when init_kernel() is a normal C
+     * function that returns. The function restore_user_context() is not a
+     * normal C function and thus handled specially in verification, it does
+     * highly architecture specific things to exit to user mode.
+     */
     b restore_user_context
+
 END_FUNC(_start)

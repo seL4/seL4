@@ -1,27 +1,29 @@
 /*
- * Copyright 2018, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
- *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
- */
-
-/*
- *
- * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MACHINE_HARDWARE_H
-#define __ARCH_MACHINE_HARDWARE_H
+#pragma once
 
 #include <util.h>
 
 #include <mode/hardware.h>
+
+/* Privileged CSR definitions */
+#define SSTATUS_SPIE  0x00000020
+#define SSTATUS_SPP   0x00000100
+#define SSTATUS_FS    0x00006000
+
+#define SSTATUS_FS_CLEAN    0x00004000
+#define SSTATUS_FS_INITIAL  0x00002000
+#define SSTATUS_FS_DIRTY    0x00006000
+
+#define SATP_MODE_OFF  0
+#define SATP_MODE_SV32 1
+#define SATP_MODE_SV39 8
+#define SATP_MODE_SV48 9
 
 #ifndef __ASSEMBLER__
 
@@ -29,9 +31,15 @@
 #include <linker.h>
 
 #include <arch/types.h>
-#include <mode/api/constants.h>
+#include <sel4/sel4_arch/constants.h>
+
+/* The size is for HiFive Unleashed */
+#define L1_CACHE_LINE_SIZE_BITS     6
+#define L1_CACHE_LINE_SIZE          BIT(L1_CACHE_LINE_SIZE_BITS)
 
 #define PAGE_BITS seL4_PageBits
+
+#define MODE_RESERVED 0
 
 /* MMU RISC-V related definitions. See RISC-V manual priv-1.10 */
 
@@ -39,8 +47,8 @@
  * configured RISC-V system with CONFIG_PT_LEVEL (which can be 2 on Sv32,
  * 3 on Sv38, or 4 on Sv48)
  */
-#define RISCV_GET_PT_INDEX(addr, n)  (((addr) >> (((PT_INDEX_BITS) * ((CONFIG_PT_LEVELS) - (n))) + seL4_PageBits)) & MASK(PT_INDEX_BITS))
-#define RISCV_GET_LVL_PGSIZE_BITS(n) (((PT_INDEX_BITS) * (CONFIG_PT_LEVELS - (n))) + seL4_PageBits)
+#define RISCV_GET_PT_INDEX(addr, n)  (((addr) >> (((PT_INDEX_BITS) * (((CONFIG_PT_LEVELS) - 1) - (n))) + seL4_PageBits)) & MASK(PT_INDEX_BITS))
+#define RISCV_GET_LVL_PGSIZE_BITS(n) (((PT_INDEX_BITS) * (((CONFIG_PT_LEVELS) - 1) - (n))) + seL4_PageBits)
 #define RISCV_GET_LVL_PGSIZE(n)      BIT(RISCV_GET_LVL_PGSIZE_BITS((n)))
 /*
  * These values are defined in RISC-V priv-1.10 manual, they represent the
@@ -51,21 +59,27 @@ enum vm_fault_type {
     RISCVInstructionAccessFault = 1,
     RISCVInstructionIllegal = 2,
     RISCVBreakpoint = 3,
+    /* reserved */
     RISCVLoadAccessFault = 5,
     RISCVAddressMisaligned = 6,
     RISCVStoreAccessFault = 7,
     RISCVEnvCall = 8,
+    /* 9-11 reserved */
     RISCVInstructionPageFault = 12,
     RISCVLoadPageFault = 13,
+    /* 14 - reserved */
     RISCVStorePageFault = 15
+                          /* >= 16 reserved */
 };
-typedef uint32_t vm_fault_type_t;
+typedef word_t vm_fault_type_t;
 
 enum frameSizeConstants {
     RISCVPageBits        = seL4_PageBits,
     RISCVMegaPageBits    = seL4_LargePageBits,
+#if CONFIG_PT_LEVELS > 2
     RISCVGigaPageBits    = seL4_HugePageBits,
-#if CONFIG_PT_LEVELS == 4
+#endif
+#if CONFIG_PT_LEVELS > 3
     RISCVTeraPageBits    = seL4_TeraPageBits
 #endif
 };
@@ -76,10 +90,9 @@ enum vm_page_size {
     RISCV_Giga_Page,
     RISCV_Tera_Page
 };
-typedef uint32_t vm_page_size_t;
+typedef word_t vm_page_size_t;
 
-static inline unsigned int CONST
-pageBitsForSize(vm_page_size_t pagesize)
+static inline word_t CONST pageBitsForSize(vm_page_size_t pagesize)
 {
     switch (pagesize) {
     case RISCV_4K_Page:
@@ -93,7 +106,7 @@ pageBitsForSize(vm_page_size_t pagesize)
         return RISCVGigaPageBits;
 #endif
 
-#if CONFIG_PT_LEVELS == 4
+#if CONFIG_PT_LEVELS > 3
     case RISCV_Tera_Page:
         return RISCVTeraPageBits;
 #endif
@@ -102,9 +115,18 @@ pageBitsForSize(vm_page_size_t pagesize)
         fail("Invalid page size");
     }
 }
+
+static inline void arch_clean_invalidate_caches(void)
+{
+    /* RISC-V doesn't have an architecture defined way of flushing caches */
+}
 #endif /* __ASSEMBLER__ */
 
 #define LOAD_S STRINGIFY(LOAD)
 #define STORE_S STRINGIFY(STORE)
 
-#endif /* !__ARCH_MACHINE_HARDWARE_H */
+#define IPI_MEM_BARRIER \
+    do { \
+        asm volatile("fence rw,rw" ::: "memory"); \
+    } while (0)
+

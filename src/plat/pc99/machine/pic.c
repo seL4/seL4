@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <linker.h>
@@ -18,8 +14,7 @@
 #define PIC2_BASE 0xa0
 
 /* Program PIC (i8259) to remap IRQs 0-15 to interrupt vectors starting at 'interrupt' */
-BOOT_CODE void
-pic_remap_irqs(interrupt_t interrupt)
+BOOT_CODE void pic_remap_irqs(interrupt_t interrupt)
 {
     out8(PIC1_BASE, 0x11);
     out8(PIC2_BASE, 0x11);

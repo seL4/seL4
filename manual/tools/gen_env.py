@@ -1,14 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
-# Copyright 2017, Data61
-# Commonwealth Scientific and Industrial Research Organisation (CSIRO)
-# ABN 41 687 119 230.
+# Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 #
-# This software may be distributed and modified according to the terms of
-# the BSD 2-Clause license. Note that NO WARRANTY is provided.
-# See "LICENSE_BSD2.txt" for details.
-#
-# @TAG(DATA61_BSD)
+# SPDX-License-Identifier: BSD-2-Clause
 #
 
 import subprocess
@@ -25,7 +19,7 @@ output_filename = sys.argv[1]
 
 # Fetch details about the current repo revision.
 p = subprocess.Popen(["git", "log", "-r", "HEAD", "-n", "1", "--pretty=format:%ci"],
-        stdout=subprocess.PIPE)
+                     stdout=subprocess.PIPE)
 commit_date_string = p.communicate()[0]
 
 # in python3, this is a bytes, so convert it to a str
@@ -54,4 +48,3 @@ if new_data != old_data:
 
 # Done!
 sys.exit(0)
-

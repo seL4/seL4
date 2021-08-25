@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_TYPES_H
-#define __ARCH_TYPES_H
+#pragma once
 
 #include <config.h>
 #include <assert.h>
@@ -23,6 +18,9 @@ compile_assert(long_is_64bits, sizeof(unsigned long) == 8)
 
 typedef unsigned long word_t;
 typedef signed long sword_t;
+/* for printf() formatting */
+#define _seL4_word_fmt  l
+
 typedef word_t vptr_t;
 typedef word_t paddr_t;
 typedef word_t pptr_t;
@@ -44,4 +42,4 @@ typedef paddr_t seL4_PAddr;
 typedef dom_t seL4_Domain;
 
 typedef uint64_t timestamp_t;
-#endif
+

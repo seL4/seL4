@@ -1,17 +1,10 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARCH_MODE_MACHINE_DEBUG_H_
-#define __ARCH_MODE_MACHINE_DEBUG_H_
+#pragma once
 
 #include <config.h>
 
@@ -76,8 +69,7 @@ void uncatch_vector(vector_t vector) VISIBLE;
 #define DIDR_REVISION_SIZE           4
 
 #ifndef __ASSEMBLER__
-static inline uint32_t
-getDIDR(void)
+static inline uint32_t getDIDR(void)
 {
     uint32_t x;
 
@@ -91,8 +83,7 @@ getDIDR(void)
 #define DEBUG_REPLY_N_REQUIRED_REGISTERS        (1)
 
 /* Get Watchpoint Fault Address register value (for async watchpoints). */
-static inline word_t
-getWFAR(void)
+static inline word_t getWFAR(void)
 {
     word_t ret;
 
@@ -128,8 +119,7 @@ getWFAR(void)
 #define VCR_RESET    0
 
 #ifndef __ASSEMBLER__
-static inline uint32_t
-getVCR(void)
+static inline uint32_t getVCR(void)
 {
     uint32_t x;
 
@@ -138,8 +128,7 @@ getVCR(void)
     return x;
 }
 
-static inline void
-setVCR(uint32_t x)
+static inline void setVCR(uint32_t x)
 {
     asm volatile("mcr p14, 0, %0, c0, c7, 0" : : "r"(x));
 }
@@ -184,16 +173,14 @@ seL4_Fault_t handleUserLevelDebugException(word_t fault_vaddr);
  * thread's TCB. These two functions here set and unset the bits in that
  * bitfield.
  */
-static inline void
-setBreakpointUsedFlag(tcb_t *t, uint16_t bp_num)
+static inline void setBreakpointUsedFlag(tcb_t *t, uint16_t bp_num)
 {
     if (t != NULL) {
         t->tcbArch.tcbContext.breakpointState.used_breakpoints_bf |= BIT(bp_num);
     }
 }
 
-static inline void
-unsetBreakpointUsedFlag(tcb_t *t, uint16_t bp_num)
+static inline void unsetBreakpointUsedFlag(tcb_t *t, uint16_t bp_num)
 {
     if (t != NULL) {
         t->tcbArch.tcbContext.breakpointState.used_breakpoints_bf &= ~BIT(bp_num);
@@ -205,4 +192,3 @@ unsetBreakpointUsedFlag(tcb_t *t, uint16_t bp_num)
 #endif /* !__ASSEMBLER__ */
 
 #endif /* defined(CONFIG_DEBUG_BUILD) || defined (CONFIG_HARDWARE_DEBUG_API) */
-#endif /* __ARCH_MODE_MACHINE_DEBUG_H_ */

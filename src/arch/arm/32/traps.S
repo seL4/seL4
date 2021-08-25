@@ -1,11 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <config.h>
@@ -37,7 +33,7 @@ END_FUNC(arm_vector_table)
 #include <arch/machine/hardware.h>
 
 #include <arch/machine/registerset.h>
-#include <mode/api/constants.h>
+#include <sel4/sel4_arch/constants.h>
 
 BEGIN_FUNC(arm_undefined_inst_exception)
     /* Full save/restore, documented in arm_swi_syscall */
@@ -51,7 +47,7 @@ BEGIN_FUNC(arm_undefined_inst_exception)
     stmdb sp, {r0-lr}^
     ldr r8, [sp]
     sub r8, r8, #4
-    str r8, [sp, #(PT_FaultInstruction - PT_LR_svc)]
+    str r8, [sp, #(PT_FaultIP - PT_NextIP)]
 #ifdef CONFIG_ARCH_ARM_V6
     ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
 #else
@@ -62,17 +58,17 @@ BEGIN_FUNC(arm_undefined_inst_exception)
 END_FUNC(arm_undefined_inst_exception)
 
 BEGIN_FUNC(arm_swi_syscall)
-    /* Store CPSR and LR_svc on supervisor stack, which currently points
+    /* Store CPSR and NextIP on supervisor stack, which currently points
        at the end of the current thread's user context */
     srsia #PMODE_SUPERVISOR
 
-    /* Set the FaultInstruction address, which in ARM mode is the LR_svc - 4.
+    /* Set the FaultIP address, which in ARM mode is the NextIP - 4.
      * NOTE: This is completely wrong and broken in thumb mode.
      */
     sub lr, lr, #4
 
-    /* Store FaultInstruction */
-    str lr, [sp, #(PT_FaultInstruction - PT_LR_svc)]
+    /* Store FaultIP */
+    str lr, [sp, #(PT_FaultIP - PT_NextIP)]
 
     /* Stack all user registers */
     stmdb sp, {r0-lr}^
@@ -85,8 +81,20 @@ BEGIN_FUNC(arm_swi_syscall)
 #endif /* CONFIG_ARCH_ARM_V6 */
 
     /* Load system call number as a c_handle_syscall argument. r0 and r1 are passed
-     * unmodified (cptr and msgInfo) respectively.
+     * unmodified (cptr and msgInfo) respectively.  On MCS configurations we also
+     * pass the reply cptr in r2 for fastpath_reply_recv.
      */
+
+#ifdef CONFIG_FASTPATH
+    cmp r7, #SYSCALL_CALL
+    beq c_handle_fastpath_call
+    cmp r7, #SYSCALL_REPLY_RECV
+#ifdef CONFIG_KERNEL_MCS
+    moveq r2, r6
+#endif
+    beq c_handle_fastpath_reply_recv
+#endif
+
     mov r2, r7
     b c_handle_syscall
 
@@ -111,7 +119,7 @@ BEGIN_FUNC(arm_prefetch_abort_exception)
     bne     kernel_prefetch_fault
 
     /* Store faulting address in TCB and call handleVMFaultEvent. */
-    str r8, [sp, #(PT_FaultInstruction - PT_LR_svc)]
+    str r8, [sp, #(PT_FaultIP - PT_NextIP)]
 
 #ifdef CONFIG_ARCH_ARM_V6
     ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
@@ -163,7 +171,7 @@ BEGIN_FUNC(arm_data_abort_exception)
     bne     kernel_data_fault
 
     /* Store faulting address in TCB and call handleVMFaultEvent. */
-    str r8, [sp, #(PT_FaultInstruction - PT_LR_svc)]
+    str r8, [sp, #(PT_FaultIP - PT_NextIP)]
 #ifdef CONFIG_ARCH_ARM_V6
     ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
 #else
@@ -203,7 +211,7 @@ BEGIN_FUNC(arm_irq_exception)
     ldr r8, [sp]
     sub r8, r8, #4
     str r8, [sp]
-    str r8, [sp, #(PT_FaultInstruction - PT_LR_svc)]
+    str r8, [sp, #(PT_FaultIP - PT_NextIP)]
 #ifdef CONFIG_ARCH_ARM_V6
     ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
 #else

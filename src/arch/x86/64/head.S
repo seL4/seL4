@@ -1,13 +1,7 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 /* The kernel expects to be booted by a Multiboot compliant bootloader.
@@ -128,11 +122,12 @@ BEGIN_FUNC(setup_pml4)
     ret
 END_FUNC(setup_pml4)
 
+#ifdef CONFIG_SUPPORT_PCID
 BEGIN_FUNC(pcid_check)
     movl $0x1, %eax
     xorl %ecx, %ecx
     cpuid
-    andl $0x800000, %ecx
+    andl $0x20000, %ecx
     jz   1f
     ret
 1:
@@ -163,6 +158,7 @@ invpcid_error_string:
     .string "INVPCID instruction not supported by the processor"
     .set invpcid_error_size, . - invpcid_error_string
 END_FUNC(invpcid_check)
+#endif /* CONFIG_SUPPORT_PCID */
 
 BEGIN_FUNC(syscall_check)
     movl $0x80000001, %eax
@@ -206,6 +202,7 @@ fsgsbase_error_string:
 END_FUNC(fsgsbase_enable)
 #endif /* CONFIG_FSGSBASE_INST */
 
+#ifdef CONFIG_SYSCALL
 BEGIN_FUNC(syscall_enable)
     call syscall_check
     /* Set SCE (bit 0) in the extended feature MSR. */
@@ -215,6 +212,7 @@ BEGIN_FUNC(syscall_enable)
     wrmsr
     ret
 END_FUNC(syscall_enable)
+#endif /* CONFIG_SYSCALL */
 
 BEGIN_FUNC(enable_x64_mode)
 #ifdef CONFIG_SUPPORT_PCID
@@ -296,18 +294,14 @@ BEGIN_FUNC(_start)
 END_FUNC(_start)
 
 .code64
-.align 4096
 BEGIN_FUNC(_start64)
     /* Leave phys code behind and jump to the high kernel virtual address. */
     movabs $_entry_64, %rax
     jmp *%rax
 END_FUNC(_start64)
 
-.section .phys.data
-_gdt64_ptr:
-    .word (3 * 8) - 1
-    .long _gdt64
 
+.section .phys.data
 .align 16
 _gdt64:
     .quad 0x0000000000000000
@@ -323,6 +317,11 @@ _gdt64:
     .byte   0x90
     .byte   0
     .byte   0
+
+
+_gdt64_ptr:
+    .word (3 * 8) - 1
+    .long _gdt64
 
 .section .phys.bss
 .align 4096

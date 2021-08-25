@@ -1,17 +1,10 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __SMP_LOCK_H_
-#define __SMP_LOCK_H_
+#pragma once
 
 #include <config.h>
 #include <types.h>
@@ -59,41 +52,50 @@ typedef struct clh_lock {
 extern clh_lock_t big_kernel_lock;
 BOOT_CODE void clh_lock_init(void);
 
-static inline bool_t FORCE_INLINE
-clh_is_ipi_pending(word_t cpu)
+static inline bool_t FORCE_INLINE clh_is_ipi_pending(word_t cpu)
 {
     return big_kernel_lock.node_owners[cpu].ipi == 1;
 }
 
-static inline void *
-sel4_atomic_exchange(void* ptr, bool_t
-                     irqPath, word_t cpu, int memorder)
+static inline void *sel4_atomic_exchange(void *ptr, bool_t
+                                         irqPath, word_t cpu, int memorder)
 {
     clh_qnode_t *prev;
 
-    while (!try_arch_atomic_exchange(&big_kernel_lock.head,
-                                     (void *) big_kernel_lock.node_owners[cpu].node, (void **) &prev,
-                                     memorder, __ATOMIC_ACQUIRE)) {
+    if (memorder == __ATOMIC_RELEASE || memorder == __ATOMIC_ACQ_REL) {
+        __atomic_thread_fence(__ATOMIC_RELEASE);
+    } else if (memorder == __ATOMIC_SEQ_CST) {
+        __atomic_thread_fence(__ATOMIC_SEQ_CST);
+    }
+
+    while (!try_arch_atomic_exchange_rlx(&big_kernel_lock.head,
+                                         (void *) big_kernel_lock.node_owners[cpu].node,
+                                         (void **) &prev)) {
         if (clh_is_ipi_pending(cpu)) {
             /* we only handle irq_remote_call_ipi here as other type of IPIs
              * are async and could be delayed. 'handleIPI' may not return
              * based on value of the 'irqPath'. */
-            handleIPI(irq_remote_call_ipi, irqPath);
+            handleIPI(CORE_IRQ_TO_IRQT(cpu, irq_remote_call_ipi), irqPath);
         }
 
         arch_pause();
     }
 
+    if (memorder == __ATOMIC_ACQUIRE || memorder == __ATOMIC_ACQ_REL) {
+        __atomic_thread_fence(__ATOMIC_ACQUIRE);
+    } else if (memorder == __ATOMIC_SEQ_CST) {
+        __atomic_thread_fence(__ATOMIC_SEQ_CST);
+    }
+
     return prev;
 }
 
-static inline void FORCE_INLINE
-clh_lock_acquire(word_t cpu, bool_t irqPath)
+static inline void FORCE_INLINE clh_lock_acquire(word_t cpu, bool_t irqPath)
 {
     clh_qnode_t *prev;
     big_kernel_lock.node_owners[cpu].node->value = CLHState_Pending;
 
-    prev = sel4_atomic_exchange(&big_kernel_lock.head, irqPath, cpu, __ATOMIC_ACQUIRE);
+    prev = sel4_atomic_exchange(&big_kernel_lock.head, irqPath, cpu, __ATOMIC_ACQ_REL);
 
     big_kernel_lock.node_owners[cpu].next = prev;
 
@@ -107,7 +109,7 @@ clh_lock_acquire(word_t cpu, bool_t irqPath)
             /* we only handle irq_remote_call_ipi here as other type of IPIs
              * are async and could be delayed. 'handleIPI' may not return
              * based on value of the 'irqPath'. */
-            handleIPI(irq_remote_call_ipi, irqPath);
+            handleIPI(CORE_IRQ_TO_IRQT(cpu, irq_remote_call_ipi), irqPath);
             /* We do not need to perform a memory release here as we would have only modified
              * local state that we do not need to make visible */
         }
@@ -118,8 +120,7 @@ clh_lock_acquire(word_t cpu, bool_t irqPath)
     __atomic_thread_fence(__ATOMIC_ACQUIRE);
 }
 
-static inline void FORCE_INLINE
-clh_lock_release(word_t cpu)
+static inline void FORCE_INLINE clh_lock_release(word_t cpu)
 {
     /* make sure no resource access passes from this point */
     __atomic_thread_fence(__ATOMIC_RELEASE);
@@ -129,8 +130,7 @@ clh_lock_release(word_t cpu)
         big_kernel_lock.node_owners[cpu].next;
 }
 
-static inline bool_t FORCE_INLINE
-clh_is_self_in_queue(void)
+static inline bool_t FORCE_INLINE clh_is_self_in_queue(void)
 {
     return big_kernel_lock.node_owners[getCurrentCPUIndex()].node->value == CLHState_Pending;
 }
@@ -166,4 +166,4 @@ clh_is_self_in_queue(void)
 #define NODE_LOCK_IRQ NODE_LOCK(true)
 #define NODE_LOCK_SYS_IF(_cond) NODE_LOCK_IF(_cond, false)
 #define NODE_LOCK_IRQ_IF(_cond) NODE_LOCK_IF(_cond, true)
-#endif /* __SMP_LOCK_H_ */
+

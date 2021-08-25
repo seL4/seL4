@@ -1,15 +1,10 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __OBJECT_NOTIFICATION_H
-#define __OBJECT_NOTIFICATION_H
+#pragma once
 
 #include <types.h>
 #include <object/structures.h>
@@ -22,5 +17,23 @@ void completeSignal(notification_t *ntfnPtr, tcb_t *tcb);
 void unbindMaybeNotification(notification_t *ntfnPtr);
 void unbindNotification(tcb_t *tcb);
 void bindNotification(tcb_t *tcb, notification_t *ntfnPtr);
+#ifdef CONFIG_KERNEL_MCS
+void reorderNTFN(notification_t *notification, tcb_t *thread);
 
+static inline void maybeReturnSchedContext(notification_t *ntfnPtr, tcb_t *tcb)
+{
+
+    sched_context_t *sc = SC_PTR(notification_ptr_get_ntfnSchedContext(ntfnPtr));
+    if (sc != NULL && sc == tcb->tcbSchedContext) {
+        tcb->tcbSchedContext = NULL;
+        sc->scTcb = NULL;
+        /* If the current thread returns its sched context then it should not
+           by default continue running. */
+        if (tcb == NODE_STATE(ksCurThread)) {
+            rescheduleRequired();
+        }
+    }
+}
 #endif
+
+

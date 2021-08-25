@@ -1,17 +1,13 @@
-CONTRIBUTORS.md
-LICENSE_BSD2.txt
-LICENSE_GPLv2.txt
+# Copyright 2020 Data61, CSIRO (ABN 41 687 119 230)
+# SPDX-License-Identifier: BSD-2-Clause
+
 VERSION
 configs/*/autoconf.h
 manual/figs/*
+manual/references.bib
 .licenseignore
-.gitignore
 *.pyc
 .git/*
 *parsetab.py
-manual/*
 CHANGES
-src/plat/spike/machine/fdt.c
-include/plat/spike/plat/machine/fdt.h
-include/arch/riscv/arch/sbi.h
-include/arch/riscv/arch/encoding.h
+.reuse/dep5

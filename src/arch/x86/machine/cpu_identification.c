@@ -1,12 +1,9 @@
 /*
  * Copyright 2016, General Dynamics C4 Systems
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(GD_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
+
 #include <string.h>
 #include <util.h>
 #include <arch/machine.h>
@@ -37,8 +34,7 @@ BOOT_CODE x86_cpu_identity_t *x86_cpuid_get_model_info(void)
  * Will be one of "GenuineIntel", "AMDisbetter!", "AuthenticAMD", "CentaurHauls"
  * etc. We don't support x86 CPUs from vendors other than AMD and Intel.
  */
-BOOT_CODE static void
-x86_cpuid_fill_vendor_string(cpu_identity_t *ci)
+BOOT_CODE static void x86_cpuid_fill_vendor_string(cpu_identity_t *ci)
 {
     MAY_ALIAS uint32_t *vendor_string32 = (uint32_t *)ci->vendor_string;
 
@@ -57,9 +53,8 @@ struct family_model {
     uint8_t family, model;
 };
 
-BOOT_CODE static void
-x86_cpuid_intel_identity_initialize(cpu_identity_t *ci,
-                                    struct family_model original)
+BOOT_CODE static void x86_cpuid_intel_identity_initialize(cpu_identity_t *ci,
+                                                          struct family_model original)
 {
     /* Next, there are some values which require additional adjustment, and
      * require you to take into account an additional extended family and model
@@ -99,9 +94,8 @@ x86_cpuid_intel_identity_initialize(cpu_identity_t *ci,
     }
 }
 
-BOOT_CODE static void
-x86_cpuid_amd_identity_initialize(cpu_identity_t *ci,
-                                  struct family_model original)
+BOOT_CODE static void x86_cpuid_amd_identity_initialize(cpu_identity_t *ci,
+                                                        struct family_model original)
 {
     /* Intel and AMD's specifications give slightly different ways to compose
      * the family and model IDs (AMD CPUID manual, section 2.)
@@ -119,8 +113,7 @@ x86_cpuid_amd_identity_initialize(cpu_identity_t *ci,
     }
 }
 
-bool_t
-x86_cpuid_initialize(void)
+bool_t x86_cpuid_initialize(void)
 {
     cpu_identity_t *ci = x86_cpuid_get_identity();
     struct family_model original;

@@ -1,19 +1,20 @@
 /*
- * Copyright 2018, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 / {
 	/* pick the right boot CPU */
 	chosen {
 		seL4,boot-cpu = <&{/cpus/cpu@0}>;
+		seL4,elfloader-devices =
+		    "serial2";
+		seL4,kernel-devices =
+		    "serial2",
+		    &{/soc/interrupt-controller@10481000},
+		    &{/soc/mct@101c0000},
+		    &{/timer};
 	};
 	/* The architecture timer on exynos5 depends on the MCT, but it is there. */
 	timer {
@@ -38,8 +39,13 @@
 		reg = <0x12d40000 0x100>;
 	};
 
+	/* HACK: 0xe0000000..0xff000000 is the largest contiguous region
+	 * in the kernel window; we clamp to that and discard memory
+	 * after the ASID PD hole (0xff200000..0xfff00000). This is a
+	 * workaround for userspace tools (hardware_gen, elfloader, etc)
+	 * which are not yet aware of the memory hole. */
 	memory@40000000 {
-		reg = <0x60000000 0x5ea00000>;
+		reg = <0x60000000 0x1f000000>;
 	};
 
 	vm-memory@40000000 {

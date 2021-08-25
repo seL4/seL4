@@ -1,17 +1,10 @@
 /*
- * Copyright 2017, Data61
- * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
- * ABN 41 687 119 230.
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  *
- * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
- *
- * @TAG(DATA61_GPL)
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __MODEL_STATEDATA_H_
-#define __MODEL_STATEDATA_H_
+#pragma once
 
 #include <config.h>
 #include <types.h>
@@ -55,7 +48,7 @@
 #define ARCH_NODE_STATE_ON_CORE(_state, _core) _state
 #define NODE_STATE_ON_CORE(_state, _core)      _state
 
-#define CURRENT_CPU_INDEX() 0
+#define CURRENT_CPU_INDEX() SEL4_WORD_CONST(0)
 
 #endif /* ENABLE_SMP_SUPPORT */
 
@@ -70,6 +63,14 @@ NODE_STATE_DECLARE(tcb_t, *ksCurThread);
 NODE_STATE_DECLARE(tcb_t, *ksIdleThread);
 NODE_STATE_DECLARE(tcb_t, *ksSchedulerAction);
 
+#ifdef CONFIG_KERNEL_MCS
+NODE_STATE_DECLARE(tcb_t, *ksReleaseHead);
+NODE_STATE_DECLARE(time_t, ksConsumed);
+NODE_STATE_DECLARE(time_t, ksCurTime);
+NODE_STATE_DECLARE(bool_t, ksReprogram);
+NODE_STATE_DECLARE(sched_context_t, *ksCurSC);
+#endif
+
 #ifdef CONFIG_HAVE_FPU
 /* Current state installed in the FPU, or NULL if the FPU is currently invalid */
 NODE_STATE_DECLARE(user_fpu_state_t *, ksActiveFPUState);
@@ -79,24 +80,48 @@ NODE_STATE_DECLARE(word_t, ksFPURestoresSinceSwitch);
 #ifdef CONFIG_DEBUG_BUILD
 NODE_STATE_DECLARE(tcb_t *, ksDebugTCBs);
 #endif /* CONFIG_DEBUG_BUILD */
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+NODE_STATE_DECLARE(bool_t, benchmark_log_utilisation_enabled);
+NODE_STATE_DECLARE(timestamp_t, benchmark_start_time);
+NODE_STATE_DECLARE(timestamp_t, benchmark_end_time);
+NODE_STATE_DECLARE(timestamp_t, benchmark_kernel_time);
+NODE_STATE_DECLARE(timestamp_t, benchmark_kernel_number_entries);
+NODE_STATE_DECLARE(timestamp_t, benchmark_kernel_number_schedules);
+#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 
 NODE_STATE_END(nodeState);
 
 extern word_t ksNumCPUs;
 
+#if defined ENABLE_SMP_SUPPORT && defined CONFIG_ARCH_ARM
+#define INT_STATE_ARRAY_SIZE ((CONFIG_MAX_NUM_NODES - 1) * NUM_PPI + maxIRQ + 1)
+#else
+#define INT_STATE_ARRAY_SIZE (maxIRQ + 1)
+#endif
 extern word_t ksWorkUnitsCompleted;
 extern irq_state_t intStateIRQTable[];
-extern cte_t *intStateIRQNode;
+extern cte_t intStateIRQNode[];
+
 extern const dschedule_t ksDomSchedule[];
 extern const word_t ksDomScheduleLength;
 extern word_t ksDomScheduleIdx;
 extern dom_t ksCurDomain;
+#ifdef CONFIG_KERNEL_MCS
+extern ticks_t ksDomainTime;
+#else
 extern word_t ksDomainTime;
+#endif
 extern word_t tlbLockCount VISIBLE;
 
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+extern char ksIdleThreadTCB[CONFIG_MAX_NUM_NODES][BIT(seL4_TCBBits)];
+
+#ifdef CONFIG_KERNEL_MCS
+extern char ksIdleThreadSC[CONFIG_MAX_NUM_NODES][BIT(seL4_MinSchedContextBits)];
+#endif
+
+#ifdef CONFIG_KERNEL_LOG_BUFFER
 extern paddr_t ksUserLogBuffer;
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_KERNEL_LOG_BUFFER */
 
 #define SchedulerAction_ResumeCurrentThread ((tcb_t*)0)
 #define SchedulerAction_ChooseNewThread ((tcb_t*) 1)
@@ -105,4 +130,3 @@ extern paddr_t ksUserLogBuffer;
 #define ARCH_NODE_STATE(_state)    ARCH_NODE_STATE_ON_CORE(_state, getCurrentCPUIndex())
 #define NODE_STATE(_state)         NODE_STATE_ON_CORE(_state, getCurrentCPUIndex())
 
-#endif /* __MODEL_STATEDATA_H_ */

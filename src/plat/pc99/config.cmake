@@ -1,30 +1,23 @@
 #
-# Copyright 2017, Data61
-# Commonwealth Scientific and Industrial Research Organisation (CSIRO)
-# ABN 41 687 119 230.
+# Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 #
-# This software may be distributed and modified according to the terms of
-# the GNU General Public License version 2. Note that NO WARRANTY is provided.
-# See "LICENSE_GPLv2.txt" for details.
-#
-# @TAG(DATA61_GPL)
+# SPDX-License-Identifier: GPL-2.0-only
 #
 
 cmake_minimum_required(VERSION 3.7.2)
 
-config_option(KernelIOMMU IOMMU
-    "IOMMU support for VT-d enabled chipset"
-    DEFAULT ON
-    DEPENDS "KernelPlatPC99; NOT KernelVerificationBuild" DEFAULT_DISABLED OFF
-)
+declare_platform(pc99 KernelPlatPC99 PLAT_PC99 KernelArchX86)
 
-config_string(KernelMaxRMRREntries MAX_RMRR_ENTRIES
-    "Setsthe maximum number of Reserved Memory Region Reporting structures we support \
-    recording from the ACPI tables"
-    DEFAULT 32
-    DEPENDS "KernelIOMMU" DEFAULT_DISABLED 1
-    UNQUOTE
-)
+if(KernelPlatPC99)
+    if("${KernelSel4Arch}" STREQUAL ia32)
+        declare_seL4_arch(ia32)
+    elseif("${KernelSel4Arch}" STREQUAL x86_64)
+        declare_seL4_arch(x86_64)
+    else()
+        fallback_declare_seL4_arch_default(x86_64)
+    endif()
+
+endif()
 
 add_sources(
     DEP "KernelPlatPC99"
@@ -39,5 +32,25 @@ add_sources(
         intel-vtd.c
 )
 
-add_bf_source_old("KernelSel4ArchX86_64" "hardware.bf" "include/plat/pc99/plat/64" "plat_mode/machine")
-add_bf_source_old("KernelSel4ArchIA32" "hardware.bf" "include/plat/pc99/plat/32" "plat_mode/machine")
+add_bf_source_old(
+    "KernelSel4ArchX86_64"
+    "hardware.bf"
+    "include/plat/pc99/plat/64"
+    "plat_mode/machine"
+)
+add_bf_source_old(
+    "KernelSel4ArchIA32"
+    "hardware.bf"
+    "include/plat/pc99/plat/32"
+    "plat_mode/machine"
+)
+
+config_string(
+    KernelPC99TSCFrequency PC99_TSC_FREQUENCY
+    "Provide a static definition of the TSC frequency (in Hz). \
+    If this isn't set then the boot code will try and read the frequency from a MSR. \
+    If it can't calculate the frequency from a MSR then it will estimate it from running the PIT for about 200ms."
+    DEFAULT 0
+    DEPENDS "KernelPlatPC99"
+    UNQUOTE UNDEF_DISABLED
+)

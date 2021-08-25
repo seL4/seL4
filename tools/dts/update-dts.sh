@@ -1,14 +1,8 @@
-#!/bin/sh
+#!/usr/bin/env sh
 #
-# Copyright 2018, Data61
-# Commonwealth Scientific and Industrial Research Organisation (CSIRO)
-# ABN 41 687 119 230.
+# Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 #
-# This software may be distributed and modified according to the terms of
-# the GNU General Public License version 2. Note that NO WARRANTY is provided.
-# See "LICENSE_GPLv2.txt" for details.
-#
-# @TAG(DATA61_GPL)
+# SPDX-License-Identifier: GPL-2.0-only
 #
 
 if [ -z "$1" ]; then
@@ -31,19 +25,19 @@ make ARCH=arm64 defconfig
 make ARCH=arm64 -j4 dtbs
 
 LICENSE="/*
- * The code contained herein is licensed under the GNU General Public
- * License. You may obtain a copy of the GNU General Public License
- * Version 2 or later at the following locations:
+ * Copyright Linux Kernel Team
  *
- * http://www.opensource.org/licenses/gpl-license.html
- * http://www.gnu.org/copyleft/gpl.html
+ * SPDX-License-Identifier: GPL-2.0-only
  *
- * @TAG(OTHER_GPL)
+ * This file is derived from an intermediate build stage of the
+ * Linux kernel. The licenses of all input files to this process
+ * are compatible with GPL-2.0-only.
  */
 "
 
 ARM_DTBS="
-am335x-bone=am335x
+am335x-boneblack=am335x-boneblack
+am335x-boneblue=am335x-boneblue
 bcm2837-rpi-3-b=rpi3
 exynos4412-odroidx=exynos4
 exynos5250-arndale=exynos5250
@@ -61,11 +55,16 @@ zynq-zc706=zynq7000
 "
 
 ARM64_DTBS="
+amlogic/meson-sm1-odroid-c4=odroidc4
 amlogic/meson-gxbb-odroidc2=odroidc2
 hisilicon/hi6220-hikey=hikey
 nvidia/tegra210-p2371-2180=tx1
 xilinx/avnet-ultra96-rev1=ultra96
 xilinx/zynqmp-zcu102-rev1.0=zynqmp
+freescale/fsl-imx8mq-evk=imx8mq-evk
+freescale/fsl-imx8mm-evk=imx8mm-evk
+rockchip/rk3399-rockpro64=rockpro64
+broadcom/bcm2711-rpi-4-b=rpi4
 "
 
 extract_dts() {

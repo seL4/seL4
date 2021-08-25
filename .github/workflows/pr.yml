@@ -1,0 +1,53 @@
+# Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+#
+# SPDX-License-Identifier: BSD-2-Clause
+
+# Actions to run on pull requests
+
+name: PR
+
+on: [pull_request]
+
+jobs:
+  gitlint:
+    name: Gitlint
+    runs-on: ubuntu-latest
+    steps:
+    - uses: seL4/ci-actions/gitlint@master
+
+  whitespace:
+    name: 'Trailing Whitespace'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: seL4/ci-actions/git-diff-check@master
+
+  shell:
+    name: 'Portable Shell'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: seL4/ci-actions/bashisms@master
+
+  style:
+    name: Style
+    runs-on: ubuntu-latest
+    steps:
+    - uses: seL4/ci-actions/style@master
+
+  preprocess:
+    name: Preprocess
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ARM, ARM_HYP, RISCV64, X64]
+        feature: ["", MCS]
+        exclude:
+          - arch: ARM_HYP
+            feature: MCS
+          - arch: X64
+            feature: MCS
+    steps:
+    - uses: seL4/ci-actions/preprocess@master
+      with:
+        L4V_ARCH: ${{ matrix.arch }}
+        L4V_FEATURES: ${{ matrix.feature }}
