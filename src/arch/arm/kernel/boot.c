@@ -62,6 +62,11 @@ BOOT_CODE static bool_t arch_init_freemem(p_region_t ui_p_reg,
 
 #ifdef CONFIG_ARCH_AARCH32
 
+    p_region_t p_reg_hw_asid = pptr_to_paddr_reg(hw_asid_region);
+    printf("HW ASID region: VA [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"], "
+           "PA [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]\n",
+           hw_asid_region.start, hw_asid_region.end,
+           p_reg_hw_asid.start, p_reg_hw_asid.end);
     /* Reserve the HW ASID region*/
     if (!reserve_region(pptr_to_paddr_reg(hw_asid_region))) {
         printf("ERROR: can't add reserved region for HW ASIDs\n");
