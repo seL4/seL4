@@ -339,6 +339,7 @@ static BOOT_CODE bool_t try_init_kernel(
     }
 
     /* debug output via serial port is only available from here */
+    hack_enable_prints();
     printf("Bootstrapping kernel\n");
 
     /* initialise the platform */

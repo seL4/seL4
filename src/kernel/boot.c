@@ -27,6 +27,10 @@ BOOT_BSS static p_region_t reg_freemem[MAX_NUM_FREEMEM_REG];
 BOOT_BSS static p_region_t reg_reserved[MAX_NUM_FREEMEM_REG +
                                         NUM_RESERVED_REGIONS];
 
+BOOT_BSS static word_t flag_print_active = 0;
+BOOT_CODE static bool_t is_print_active(void) { return (0 != flag_print_active); }
+BOOT_CODE void hack_enable_prints(void) { flag_print_active = 1; }
+
 /*
  * Create a boot info record
  *
@@ -766,15 +770,19 @@ BOOT_CODE void bi_finalise(void)
 
 BOOT_CODE bool_t reserve_region(p_region_t reg)
 {
-    printf("reserve region [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]\n",
-           reg.start, reg.end - 1);
+    if (is_print_active()) {
+        printf("reserve region [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]\n",
+               reg.start, reg.end - 1);
+    }
 
     /* Saity check: region must be sane. */
     assert(reg.start <= reg.end);
 
     /* if it is empty there is nothing to do. */
     if (is_p_reg_empty(reg)) {
-        printf("  nothing to do for empty regions\n");
+        if (is_print_active()) {
+            printf("  nothing to do for empty regions\n");
+        }
         return true;
     }
 
@@ -788,8 +796,10 @@ BOOT_CODE bool_t reserve_region(p_region_t reg)
     for (i = 0; is_reserved_slot_used(i); i++) {
         p_region_t *cur_reg = &reg_reserved[i];
 
-        printf("  %d  [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]\n",
-               (int)i, cur_reg->start, cur_reg->end - 1);
+        if (is_print_active()) {
+            printf("  %d  [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]\n",
+                   (int)i, cur_reg->start, cur_reg->end - 1);
+        }
 
         if (reg.start > cur_reg->end) {
             /* Non-Overlapping case: ...|--cur_reg--|...|--reg--|...
@@ -797,7 +807,9 @@ BOOT_CODE bool_t reserve_region(p_region_t reg)
              * region if new region is after it. Continue the loop with the next
              * reserved region.
              */
-            printf("    skip\n");
+            if (is_print_active()) {
+                printf("    skip\n");
+            }
             continue;
         }
 
@@ -806,7 +818,9 @@ BOOT_CODE bool_t reserve_region(p_region_t reg)
              * The list or properly ordered, if the new element is before the
              * current element then we have to make space and insert it.
              */
-            printf("    insert before\n");
+            if (is_print_active()) {
+                printf("    insert before\n");
+            }
             word_t max = ARRAY_SIZE(reg_reserved);
             if (i == max - 1) {
                 printf("ERROR: array is full with %d entries, can't insert "
@@ -822,8 +836,10 @@ BOOT_CODE bool_t reserve_region(p_region_t reg)
                 if (is_p_reg_empty(tmp_reg)) {
                     break;
                 }
-                printf("    move %d -> %d [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]\n",
-                       (int)i, (int)(i + 1), tmp_reg.start, tmp_reg.end - 1);
+                if (is_print_active()) {
+                    printf("    move %d -> %d [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]\n",
+                           (int)i, (int)(i + 1), tmp_reg.start, tmp_reg.end - 1);
+                }
                 saved_reg = tmp_reg;
             }
 
@@ -845,8 +861,9 @@ BOOT_CODE bool_t reserve_region(p_region_t reg)
          * Case 3b requires no work ):    |--reg--|
          *                              |--cur_reg--|
          */
-
-        printf("    merge\n");
+        if (is_print_active()) {
+            printf("    merge\n");
+        }
 
         if (reg.start < cur_reg->start) {
             /* Case 1a-c: Adjust the region start. */
@@ -867,8 +884,10 @@ BOOT_CODE bool_t reserve_region(p_region_t reg)
                 if (cur_reg->end < next_reg->start) {
                     break;
                 }
-                printf("    merge %d  [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]\n",
-                       (int)j, next_reg->start, next_reg->end - 1);
+                if (is_print_active()) {
+                    printf("    merge %d  [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]\n",
+                           (int)j, next_reg->start, next_reg->end - 1);
+                }
                 /* new region reached into next region, merge them. */
                 if (next_reg->end > reg.end)
                 {
@@ -879,14 +898,18 @@ BOOT_CODE bool_t reserve_region(p_region_t reg)
             if (j > i) {
                 /* Move regions to close the gap. */
                 for ( /*nothing */; is_reserved_slot_used(j); i++, j++) {
-                    printf("    move %d -> %d  "
-                           "[%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]\n",
-                           (int)j, (int)i, cur_reg->start, cur_reg->end  - 1);
+                    if (is_print_active()) {
+                        printf("    move %d -> %d  "
+                               "[%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]\n",
+                               (int)j, (int)i, cur_reg->start, cur_reg->end  - 1);
+                    }
                     reg_reserved[i] = reg_reserved[j];
                 }
                 /* Mark remaining regions as empty. */
                 for ( /*nothing */; is_reserved_slot_used(i); i++) {
-                    printf("    clear %d\n", (int)i);
+                    if (is_print_active()) {
+                        printf("    clear %d\n", (int)i);
+                    }
                     reg_reserved[i] = P_REG_EMPTY;
                 }
             }
@@ -904,7 +927,9 @@ BOOT_CODE bool_t reserve_region(p_region_t reg)
                reg.start, reg.end - 1, (int)MAX_NUM_RESV_REG);
         return false;
     }
-    printf("    put at %d\n", (int)i);
+    if (is_print_active()) {
+        printf("    put at %d\n", (int)i);
+    }
     /* Sanity check: the slot must be empty. */
     assert(is_p_reg_empty(reg_reserved[i]));
     reg_reserved[i] = reg;
@@ -918,6 +943,8 @@ BOOT_CODE bool_t reserve_region(p_region_t reg)
 BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
                               v_region_t it_v_reg, word_t extra_bi_size_bits)
 {
+    hack_enable_prints();
+
     printf("Kernel memory layout\n");
     printf("  phys KERNEL_ELF_PADDR_BASE = %"SEL4_PRIx_word"\n", (word_t)KERNEL_ELF_PADDR_BASE);
     printf("  phys PADDR_USER_DEVICE_TOP = %"SEL4_PRIx_word"\n", (word_t)CONFIG_PADDR_USER_DEVICE_TOP);
