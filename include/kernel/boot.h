@@ -24,9 +24,6 @@ typedef cte_t *slot_ptr_t;
 /* (node-local) state accessed only during bootstrapping */
 
 typedef struct ndks_boot {
-    p_region_t reserved[MAX_NUM_RESV_REG];
-    word_t resv_count;
-    region_t   freemem[MAX_NUM_FREEMEM_REG];
     seL4_BootInfo      *bi_frame;
     seL4_SlotPos slot_pos_cur;
 } ndks_boot_t;
@@ -41,7 +38,6 @@ static inline bool_t is_reg_empty(region_t reg)
 }
 
 bool_t init_freemem(word_t n_available, const p_region_t *available,
-                    word_t n_reserved, const region_t *reserved,
                     v_region_t it_v_reg, word_t extra_bi_size_bits);
 bool_t reserve_region(p_region_t reg);
 void write_slot(slot_ptr_t slot_ptr, cap_t cap);

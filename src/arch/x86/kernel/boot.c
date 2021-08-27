@@ -24,9 +24,6 @@
 
 #include <plat/machine/intel-vtd.h>
 
-#define MAX_RESERVED 1
-BOOT_BSS static region_t reserved[MAX_RESERVED];
-
 /* functions exactly corresponding to abstract specification */
 
 BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
@@ -136,18 +133,21 @@ BOOT_CODE static word_t extra_bi_helper(word_t extra_bi_size,
     return offset;
 }
 
-BOOT_CODE static bool_t arch_init_freemem(p_region_t ui_p_reg,
+BOOT_CODE static bool_t arch_init_freemem(paddr_t ui_p_end,
                                           v_region_t it_v_reg,
                                           mem_p_regs_t *mem_p_regs,
                                           word_t extra_bi_size_bits)
 {
-    // Extend the reserved region down to include the base of the kernel image.
-    // KERNEL_ELF_PADDR_BASE is the lowest physical load address used
-    // in the x86 linker script.
-    ui_p_reg.start = KERNEL_ELF_PADDR_BASE;
-    reserved[0] = paddr_to_pptr_reg(ui_p_reg);
-    return init_freemem(mem_p_regs->count, mem_p_regs->list, MAX_RESERVED,
-                        reserved, it_v_reg, extra_bi_size_bits);
+    if (!reserve_region((p_region_t) {
+        .start = 0,
+        .end   = ui_p_end
+    })) {
+        printf("ERROR: can't add reserved region for user image\n");
+        return false;
+    }
+
+    return init_freemem(mem_p_regs->count, mem_p_regs->list, it_v_reg,
+                        extra_bi_size_bits);
 }
 
 /* This function initialises a node's kernel state. It does NOT initialise the CPU. */
@@ -207,7 +207,8 @@ BOOT_CODE bool_t init_sys_state(
     }
 #endif /* CONFIG_IOMMU */
 
-    if (!arch_init_freemem(ui_info.p_reg, it_v_reg, mem_p_regs, extra_bi_size_bits)) {
+    if (!arch_init_freemem(ui_info.p_reg.end, it_v_reg, mem_p_regs,
+                           extra_bi_size_bits)) {
         printf("ERROR: free memory management initialization failed\n");
         return false;
     }

@@ -6,25 +6,16 @@
 
 #pragma once
 
-#include <config.h>
-#include <plat/machine/devices_gen.h>
-
-/* The value for the max number of free memory region is basically an arbitrary
- * choice. We could calculate the exact number, but just picking 16 will also
- * do for now. Increase this value if the boot fails.
+/* This value is basically an arbitrary choice. We could calculate the exact
+ * number, but just picking 16 will also do fine. This is part of the memory
+ * is used during kernel boot only, it can be made available later.
  */
 #define MAX_NUM_FREEMEM_REG 16
 
-/* The regions reserved by the boot code are:
- * +1 for kernel
- * +1 for device tree binary
- * +1 for user image.
+/* The number of reserved regions is:
+ * +1 for each kernel region (NUM_KERNEL_DEVICE_FRAMES, there might be none)
+ * +1 for the kernel image
+ * +1 for the usage image
+ * +1 for the DTB from bootloader
  */
-#define NUM_RESERVED_REGIONS 3
-
-/* The maximum number of reserved regions is:
- * - 1 for each physical memory region (MAX_NUM_FREEMEM_REG)
- * - 1 for each kernel region (NUM_KERNEL_DEVICE_FRAMES, there might be none)
- * - 1 each for kernel, dtb, and user image. (3)
- */
-#define MAX_NUM_RESV_REG (MAX_NUM_FREEMEM_REG + NUM_KERNEL_DEVICE_FRAMES + 3)
+#define NUM_RESERVED_REGIONS (NUM_KERNEL_DEVICE_FRAMES + 1 + 1 + 1)

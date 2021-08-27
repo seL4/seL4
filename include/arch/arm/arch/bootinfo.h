@@ -8,27 +8,38 @@
 
 #ifdef CONFIG_ARCH_AARCH32
 
-/* Modifiers:
- *  + 1: for each element in avail_p_regs
- *  + 1: for the ASID area
- *  + 1: allow the kernel to release its own boot data region
- *  + 1: possible gap between ELF images and rootserver objects;
- *       see arm/arch_init_freemem */
+/* The number of required free memory regions is:
+ * +1 for each available free physical memory region (entries in avail_p_regs)
+ * +1: for the ASID area
+ * +1 to allow the kernel to release its own boot data region
+ * +1 for a possible gap between ELF images and rootserver objects
+ */
 #define MAX_NUM_FREEMEM_REG (ARRAY_SIZE(avail_p_regs) + 1 + 1 + 1)
+
+/* The number of reserved regions is:
+ * +1 for each kernel frame (NUM_KERNEL_DEVICE_FRAMES, there might be none)
+ * +1 for the ASID area
+ * +1 for the kernel image
+ * +1 for the usage image
+ * +1 for the DTB from bootloader
+ */
+#define NUM_RESERVED_REGIONS (NUM_KERNEL_DEVICE_FRAMES + 1 + 1 + 1 + 1)
 
 #else /* all other ARM architectures (AARCH64)  */
 
 /* This value is basically an arbitrary choice. We could calculate the exact
- * number, but just picking 16 will also do.
+ * number, but just picking 16 will also do fine. This is part of the memory
+ * is used during kernel boot only, it can be made available later.
  */
 #define MAX_NUM_FREEMEM_REG 16
 
-#endif
-
-
-/* The maximum number of reserved regions is:
- * - 1 for each physical memory region (MAX_NUM_FREEMEM_REG)
- * - 1 for each kernel frame (NUM_KERNEL_DEVICE_FRAMES, there might be none)
- * - 1 each kernel image, usage image, DTB from bootloader (3)
+/* The number of reserved regions is:
+ * +1 for each kernel frame (NUM_KERNEL_DEVICE_FRAMES, there might be none)
+ * +1 for the kernel image
+ * +1 for the usage image
+ * +1 for the DTB from bootloader
  */
-#define MAX_NUM_RESV_REG (MAX_NUM_FREEMEM_REG + NUM_KERNEL_DEVICE_FRAMES + 3)
+#define NUM_RESERVED_REGIONS (NUM_KERNEL_DEVICE_FRAMES + 1 + 1 + 1)
+
+
+#endif
