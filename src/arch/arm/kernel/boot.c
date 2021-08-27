@@ -34,53 +34,6 @@
 BOOT_BSS static volatile int node_boot_lock;
 #endif /* ENABLE_SMP_SUPPORT */
 
-BOOT_CODE static bool_t arch_init_freemem(p_region_t ui_p_reg,
-                                          p_region_t dtb_p_reg,
-                                          v_region_t it_v_reg,
-                                          word_t extra_bi_size_bits)
-{
-    /* Reserve the kernel image region. */
-    if (!reserve_region((p_region_t) {
-        .start = kpptr_to_paddr((void *)KERNEL_ELF_BASE),
-        .end   = kpptr_to_paddr((void *)ki_end)
-    })) {
-        printf("ERROR: can't add reserved region for kernel image\n");
-        return false;
-    }
-
-    /* Reserve the user image region. */
-    if (!reserve_region(ui_p_reg)) {
-        printf("ERROR: can't add reserved region for user image\n");
-        return false;
-    }
-
-    /* Reserve the DTB region, it's ignored if the size is zero. */
-    if (!reserve_region(dtb_p_reg)) {
-        printf("ERROR: can't add reserved region for DTB\n");
-        return false;
-    }
-
-#ifdef CONFIG_ARCH_AARCH32
-
-    p_region_t p_reg_hw_asid = pptr_to_paddr_reg(hw_asid_region);
-    printf("HW ASID region: VA [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"], "
-           "PA [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]\n",
-           hw_asid_region.start, hw_asid_region.end,
-           p_reg_hw_asid.start, p_reg_hw_asid.end);
-    /* Reserve the HW ASID region*/
-    if (!reserve_region(pptr_to_paddr_reg(hw_asid_region))) {
-        printf("ERROR: can't add reserved region for HW ASIDs\n");
-        return false;
-    }
-
-#endif
-
-    /* avail_p_regs comes from the auto-generated code */
-    return init_freemem(ARRAY_SIZE(avail_p_regs), avail_p_regs,
-                        it_v_reg, extra_bi_size_bits);
-}
-
-
 BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
 {
     unsigned i;
@@ -321,7 +274,6 @@ static BOOT_CODE bool_t try_init_kernel(
     word_t dtb_size
 )
 {
-    cap_t root_cnode_cap;
     cap_t it_ap_cap;
     cap_t it_pd_cap;
     cap_t ipcbuf_cap;
@@ -345,49 +297,40 @@ static BOOT_CODE bool_t try_init_kernel(
     /* initialise the platform */
     init_plat();
 
-    /* process the user image */
-    if (ui_phys_end <= ui_phys_start) {
-        fail("ERROR: invalid user image");
-        UNREACHABLE();
+    /* Reserve the kernel image region */
+    if (!reserve_region((p_region_t) {
+        .start = kpptr_to_paddr((void *)KERNEL_ELF_BASE),
+        .end   = kpptr_to_paddr((void *)ki_end)
+    })) {
+        printf("ERROR: can't add reserved region for kernel image\n");
+        return false;
     }
-    p_region_t ui_p_reg = {
-        .start = ui_phys_start,
-        .end   = ui_phys_end
-    };
 
-    /* The region of the initial thread is:
-     * - physical user image
-     * - IPC buffer
-     * - boot information
-     * - extra boot information
-     *
-     * Convert from physical addresses to userland vptrs with the parameter
-     * pv_offset, which is define as:
-     *     virt_address + pv_offset = phys_address
-     * The offset is usually a positive value, because the virtual address of
-     * the user image is a low value and the actually physical address is much
-     * greater. However, there is no restrictions on the physical and virtual
-     * image location in general. Defining pv_offset as a signed value might
-     * seem the intuitive choice how to handle this, but there is are two
-     * catches here that break the C rules. We can't cover the full integer
-     * range then, and overflows/underflows are well defined for unsigned values
-     * only. They are undefined for signed values, even if such operations
-     * practically work in many cases due to how compiler and machine implement
-     * negative integers using the two's-complement.
-     * Assume a 32-bit system with virt_address=0xc0000000 and phys_address=0,
-     * then pv_offset would have to be -0xc0000000. This value is not in the
-     * 32-bit signed integer range. Calculating '0 - 0xc0000000' using unsigned
-     * integers, the result is 0x40000000 after an underflow, the reverse
-     * calculation '0xc0000000 + 0x40000000' results in 0 again after overflow.
-     * If 0x40000000 is a signed integer, the result is likely the same, but the
-     * whole operation is completely undefined by C rules.
-     */
-    vptr_t ui_virt_start = ui_phys_start - pv_offset
-    word_t ui_phys_size = ui_phys_end - ui_phys_start;
-    vptr_t ipcbuf_vptr = ui_virt_start + ui_phys_size;
-    vptr_t bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
-    vptr_t extra_bi_frame_vptr = bi_frame_vptr + BIT(PAGE_BITS);
-    word_t extra_bi_size = 0;
+    /* Reserve the user image region. */
+    p_region_t ui_p_reg = (p_region_t) {
+        .start = ui_p_reg_start,
+        .end   = ui_p_reg_end
+    };
+    if (!reserve_region(ui_p_reg)) {
+        printf("ERROR: can't add reserved region for user image\n");
+        return false;
+    }
+
+#ifdef CONFIG_ARCH_AARCH32
+
+    /* Reserve the HW ASID region. */
+    p_region_t p_reg_hw_asid = pptr_to_paddr_reg(hw_asid_region);
+    printf("HW ASID region: VA [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"], "
+           "PA [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]\n",
+           hw_asid_region.start, hw_asid_region.end,
+           p_reg_hw_asid.start, p_reg_hw_asid.end);
+
+    if (!reserve_region(p_reg_hw_asid)) {
+        printf("ERROR: can't add reserved region for HW ASIDs\n");
+        return false;
+    }
+
+#endif
 
     /* If a DTB was provided, pass the data on as extra bootinfo */
     p_region_t dtb_p_reg = P_REG_EMPTY;
@@ -416,6 +359,11 @@ static BOOT_CODE bool_t try_init_kernel(
             .start = ROUND_DOWN(dtb_phys_addr, PAGE_BITS),
             .end   = dtb_p_end
         };
+        /* Reserve the DTB region */
+        if (!reserve_region(dtb_p_reg)) {
+            printf("ERROR: can't add reserved region for DTB\n");
+            return false;
+        }
     }
 
     word_t extra_bi_size_bits = calculate_extra_bi_size_bits(extra_bi_size);
@@ -436,23 +384,16 @@ static BOOT_CODE bool_t try_init_kernel(
         .end   = ui_virt_end;
     };
 
-    if (!arch_init_freemem(ui_p_reg, dtb_p_reg, it_v_reg, extra_bi_size_bits)) {
-        printf("ERROR: free memory management initialization failed\n");
-        return false;
-    }
-
-    /* create the root cnode */
-    root_cnode_cap = create_root_cnode();
+    /* Make the free memory available to alloc_region(), create the rootserver
+     * objects and the root c-node.
+     */
+    cap_t root_cnode_cap = init_freemem(get_num_avail_p_regs(),
+                                        get_avail_p_regs(),
+                                        it_v_reg, extra_bi_size_bits);
     if (cap_get_capType(root_cnode_cap) == cap_null_cap) {
-        printf("ERROR: root c-node creation failed\n");
+        printf("ERROR: memory management initialization failed\n");
         return false;
     }
-
-    /* create the cap for managing thread domains */
-    create_domain_cap(root_cnode_cap);
-
-    /* initialise the IRQ states and provide the IRQ control cap */
-    init_irqs(root_cnode_cap);
 
 #ifdef CONFIG_ARM_SMMU
     /* initialise the SMMU and provide the SMMU control caps*/

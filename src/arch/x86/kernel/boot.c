@@ -133,23 +133,6 @@ BOOT_CODE static word_t extra_bi_helper(word_t extra_bi_size,
     return offset;
 }
 
-BOOT_CODE static bool_t arch_init_freemem(paddr_t ui_p_end,
-                                          v_region_t it_v_reg,
-                                          mem_p_regs_t *mem_p_regs,
-                                          word_t extra_bi_size_bits)
-{
-    if (!reserve_region((p_region_t) {
-        .start = 0,
-        .end   = ui_p_end
-    })) {
-        printf("ERROR: can't add reserved region for user image\n");
-        return false;
-    }
-
-    return init_freemem(mem_p_regs->count, mem_p_regs->list, it_v_reg,
-                        extra_bi_size_bits);
-}
-
 /* This function initialises a node's kernel state. It does NOT initialise the CPU. */
 
 BOOT_CODE bool_t init_sys_state(
@@ -167,7 +150,6 @@ BOOT_CODE bool_t init_sys_state(
     seL4_X86_BootInfo_fb_t *fb_info
 )
 {
-    cap_t         root_cnode_cap;
     vptr_t        extra_bi_frame_vptr;
     vptr_t        bi_frame_vptr;
     vptr_t        ipcbuf_vptr;
@@ -206,26 +188,29 @@ BOOT_CODE bool_t init_sys_state(
     }
 #endif /* CONFIG_IOMMU */
 
-    if (!arch_init_freemem(ui_info.p_reg.end, it_v_reg, mem_p_regs,
-                           extra_bi_size_bits)) {
-        printf("ERROR: free memory management initialization failed\n");
+    if (!reserve_region((p_region_t) {
+        .start = 0,
+        .end   = ui_p_end
+    })) {
+        printf("ERROR: can't add reserved region for user image\n");
         return false;
     }
 
-    /* create the root cnode */
-    root_cnode_cap = create_root_cnode();
+    /* Make the free memory available to alloc_region(), create the rootserver
+     * objects and the root c-node.
+     */
+     cap_t root_cnode_cap = init_freemem(mem_p_regs->count, mem_p_regs->list,
+                                         it_v_reg, extra_bi_size_bits);
+    if (cap_get_capType(root_cnode_cap) == cap_null_cap) {
+        printf("ERROR: memory management initialization failed\n");
+        return false;
+    }
 
     /* create the IO port cap */
     write_slot(
         SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapIOPortControl),
         cap_io_port_control_cap_new()
     );
-
-    /* create the cap for managing thread domains */
-    create_domain_cap(root_cnode_cap);
-
-    /* initialise the IRQ states and provide the IRQ control cap */
-    init_irqs(root_cnode_cap);
 
     tsc_freq = tsc_init();
 

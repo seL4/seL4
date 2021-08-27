@@ -38,11 +38,10 @@ static inline bool_t is_reg_empty(region_t reg)
 }
 
 void hack_enable_prints(void);
-bool_t init_freemem(word_t n_available, const p_region_t *available,
-                    v_region_t it_v_reg, word_t extra_bi_size_bits);
+cap_t init_freemem(word_t n_available, const p_region_t *available,
+                   v_region_t it_v_reg, word_t extra_bi_size_bits);
 bool_t reserve_region(p_region_t reg);
 void write_slot(slot_ptr_t slot_ptr, cap_t cap);
-cap_t create_root_cnode(void);
 bool_t provide_cap(cap_t root_cnode_cap, cap_t cap);
 cap_t create_it_asid_pool(cap_t root_cnode_cap);
 void write_it_pd_pts(cap_t root_cnode_cap, cap_t it_pd_cap);
@@ -51,7 +50,6 @@ bool_t create_untypeds(cap_t root_cnode_cap,
                        paddr_t boot_mem_reuse_phys_start,
                        word_t boot_mem_reuse_len);
 void bi_finalise(void);
-void create_domain_cap(cap_t root_cnode_cap);
 
 cap_t create_ipcbuf_frame_cap(cap_t root_cnode_cap, cap_t pd_cap, vptr_t vptr);
 word_t calculate_extra_bi_size_bits(word_t extra_size);
