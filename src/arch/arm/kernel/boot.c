@@ -571,13 +571,11 @@ static BOOT_CODE bool_t try_init_kernel(
 
     init_core_state(initial);
 
-    /* create all of the untypeds. Both devices and kernel window memory */
-    if (!create_untypeds(
-            root_cnode_cap,
-    (region_t) {
-    KERNEL_ELF_BASE, (pptr_t)ki_boot_end
-    } /* reusable boot code/data */
-        )) {
+    /* create all of the untypeds, both devices and kernel window memory */
+    assert(KERNEL_ELF_BASE <= (word_t)ki_boot_end);
+    if (!create_untypeds(root_cnode_cap,
+                         kpptr_to_paddr((void *)KERNEL_ELF_BASE),
+                         (word_t)ki_boot_end - KERNEL_ELF_BASE)) {
         printf("ERROR: could not create untypteds for kernel image boot memory\n");
         return false;
     }

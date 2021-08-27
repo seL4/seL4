@@ -560,46 +560,33 @@ BOOT_CODE void init_core_state(tcb_t *scheduler_action)
 #endif
 }
 
-BOOT_CODE static bool_t provide_untyped_cap(
-    cap_t      root_cnode_cap,
-    bool_t     device_memory,
-    pptr_t     pptr,
-    word_t     size_bits,
-    seL4_SlotPos first_untyped_slot
+BOOT_CODE static bool_t create_untyped_caps_for_phys_area(
+    cap_t root_cnode_cap,
+    seL4_SlotPos first_untyped_slot,
+    bool_t is_device_memory,
+    paddr_t start,
+    word_t len
 )
 {
-    bool_t ret;
-    cap_t ut_cap;
-    word_t i = ndks_boot.slot_pos_cur - first_untyped_slot;
-    if (i < CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS) {
-        ndks_boot.bi_frame->untypedList[i] = (seL4_UntypedDesc) {
-            .paddr    = pptr_to_paddr((void *)pptr),
-            .sizeBits = size_bits,
-            .isDevice = device_memory,
-            .padding  = {0}
-        };
-        ut_cap = cap_untyped_cap_new(MAX_FREE_INDEX(size_bits),
-                                     device_memory, size_bits, pptr);
-        ret = provide_cap(root_cnode_cap, ut_cap);
-    } else {
-        printf("Kernel init: Too many untyped regions for boot info\n");
-        ret = true;
-    }
-    return ret;
-}
+    /* Due to integer limits, 'start + len' can overflow to 0 if the area
+     * reaches to the end of the address space and this is also the end of the
+     * integer range. This is handled in the the algorithm. Note that just
+     * overflow to 0 is allowed, anything beyond that indicates something went
+     * wrong with the configuration.
+     */
+    assert((start < (start + len)) || (0 == (start + len)));
 
-BOOT_CODE static bool_t create_untypeds_for_region(
-    cap_t      root_cnode_cap,
-    bool_t     device_memory,
-    region_t   reg,
-    seL4_SlotPos first_untyped_slot
-)
-{
-    while (!is_reg_empty(reg)) {
+    while (len > 0) {
 
-        /* Calculate the bit size of the region. */
-        unsigned int size_bits = seL4_WordBits - 1 - clzl(reg.end - reg.start);
-        /* The size can't exceed the largest possible untyped size. */
+        /* Determine maximum size 2^n block size within the region. Reduce to
+         * region alignment if needed.
+         */
+        word_t align_bits = ctzl(start);
+        word_t size_bits = seL4_WordBits - 1 - clzl(len);
+        if (size_bits > align_bits) {
+            size_bits = align_bits;
+        }
+
         if (size_bits > seL4_MaxUntypedBits) {
             size_bits = seL4_MaxUntypedBits;
         }
@@ -617,70 +604,125 @@ BOOT_CODE static bool_t create_untypeds_for_region(
          * be used anyway.
          */
         if (size_bits >= seL4_MinUntypedBits) {
-            if (!provide_untyped_cap(root_cnode_cap, device_memory, reg.start, size_bits, first_untyped_slot)) {
+
+            word_t i = ndks_boot.slot_pos_cur - first_untyped_slot;
+            if (i >= ARRAY_SIZE(ndks_boot.bi_frame->untypedList)) {
+                printf("WARNING: ran out of available untyped cap slots\n");
+                /* Do not consider this as a failure, some slots got populated
+                 * and can be used by the system. */
+                return true;
+            }
+
+            ndks_boot.bi_frame->untypedList[i] = (seL4_UntypedDesc) {
+                .paddr    = start,
+                .sizeBits = size_bits,
+                .isDevice = is_device_memory,
+                .padding  = {0}
+            };
+
+            /* Create a cap for the virtual address. */
+            cap_t cap = cap_untyped_cap_new(MAX_FREE_INDEX(size_bits),
+                                            is_device_memory,
+                                            size_bits,
+                                            WORD_REF(paddr_to_pptr(start)));
+            if (!provide_cap(root_cnode_cap, cap)) {
+                printf("ERROR: cloud not provide untyped cap for region\n");
                 return false;
             }
+
+            /* The cap way provided successfully and ndks_boot.slot_pos_cur was
+             * updated.
+             */
         }
-        reg.start += BIT(size_bits);
+
+        word_t chunk_len = BIT(size_bits);
+        assert(chunk_len <= len); /* sanity check to catch coding errors */
+        len -= chunk_len;
+        /* An integer overflow for start can happen if we have reached the
+         * end, this is fine if we will exit the loop anyway. */
+        assert( ((start + chunk_len) > start) || (0 == len) );
+        start += chunk_len;
     }
+
     return true;
 }
 
 BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap,
-                                 region_t boot_mem_reuse_reg)
+                                 paddr_t boot_mem_reuse_start,
+                                 word_t boot_mem_reuse_len)
 {
     seL4_SlotPos first_untyped_slot = ndks_boot.slot_pos_cur;
 
     paddr_t start = 0;
     for (word_t i = 0; is_reserved_slot_used(i); i++) {
-        if (start < reg_reserved[i].start) {
-            region_t reg = paddr_to_pptr_reg((p_region_t) {
-                start, reg_reserved[i].start
-            });
-            if (!create_untypeds_for_region(root_cnode_cap, true, reg, first_untyped_slot)) {
-                printf("ERROR: creation of untypeds for device region #%u at"
-                       " [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] failed\n",
-                       (unsigned int)i, reg.start, reg.end);
+        p_region_t *reg = &reg_reserved[i];
+        if (start < reg->start) {
+            if (!create_untyped_caps_for_phys_area(root_cnode_cap,
+                                                   first_untyped_slot, true,
+                                                   start, reg->start - start)) {
                 return false;
             }
         }
-
-        start = reg_reserved[i].end;
+        start = reg->end;
     }
 
     if (start < CONFIG_PADDR_USER_DEVICE_TOP) {
-        region_t reg = paddr_to_pptr_reg((p_region_t) {
-            start, CONFIG_PADDR_USER_DEVICE_TOP
-        });
-
-        if (!create_untypeds_for_region(root_cnode_cap, true, reg, first_untyped_slot)) {
-            printf("ERROR: creation of untypeds for top device region"
-                   " [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] failed\n",
-                   reg.start, reg.end);
+        word_t len = CONFIG_PADDR_USER_DEVICE_TOP - start;
+        /* CONFIG_PADDR_USER_DEVICE_TOP could be at the end of the address space
+         * and this might also be at the end of the integer range. Then the
+         * inclusive form xxxff..ff' is used and we have to adapt the length.
+         */
+        if (CONFIG_PADDR_USER_DEVICE_TOP & 1) {
+            len++;
+        }
+        if (!create_untyped_caps_for_phys_area(root_cnode_cap,
+                                               first_untyped_slot, true, start,
+                                               len)) {
             return false;
         }
     }
 
-    /* if boot_mem_reuse_reg is not empty, we can create UT objs from boot code/data frames */
-    if (!create_untypeds_for_region(root_cnode_cap, false, boot_mem_reuse_reg, first_untyped_slot)) {
-        printf("ERROR: creation of untypeds for recycled boot memory"
-               " [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] failed\n",
-               boot_mem_reuse_reg.start, boot_mem_reuse_reg.end);
+    /* One of the reserved regions is supposed to contain the kernel image.
+     * Assuming that it is located in RAM, recycling the boot code and data area
+     * into untyped memory caps is possible. It is up to the architecture
+     * specific boot code to pass an area here for recycling or not, if
+     * 'boot_mem_reuse_len' is 0, this will pass an do nothing.
+     */
+    if (!create_untyped_caps_for_phys_area(root_cnode_cap,
+                                           first_untyped_slot, false,
+                                           boot_mem_reuse_start,
+                                           boot_mem_reuse_len)) {
+       printf("ERROR: could not recycle boot memory "
+              "[%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]\n",
+               boot_mem_reuse_start,
+               boot_mem_reuse_start + boot_mem_reuse_len);
         return false;
     }
 
-    /* convert remaining freemem into UT objects and provide the caps */
+    /* Convert the free memory regions into untyped memory caps. */
     for (word_t i = 0; i < ARRAY_SIZE(reg_freemem); i++) {
-        region_t reg = paddr_to_pptr_reg(reg_freemem[i]);
-        /* zero the region to play safe */
-        reg_freemem[i] = P_REG_EMPTY;
-        if (!create_untypeds_for_region(root_cnode_cap, false, reg, first_untyped_slot)) {
-            printf("ERROR: creation of untypeds for free memory region #%u at"
-                   " [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] failed\n",
-                   (unsigned int)i, reg.start, reg.end);
-            return false;
+        p_region_t *reg = &reg_freemem[i];
+        /* Sanity check: region must be sane, it can be empty. */
+        assert(reg->start <= reg->end);
+        word_t len = reg->end - reg->start;
+        if (len > 0) {
+            /* fix length if end addresses uses inclusive form 'xxxff..ff' */
+            if (reg->end & 1) {
+                printf("WARNING: fix length\n");
+                len++;
+            }
+            if (!create_untyped_caps_for_phys_area(root_cnode_cap,
+                                                   first_untyped_slot, false,
+                                                   reg->start, len)) {
+                printf("ERROR: could not create untyped caps for free memory"
+                       " at [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]\n",
+                       reg->start, reg->start - 1 + len);
+                return false;
+            }
         }
-    }
+        /* Mark slot as empty. */
+        *reg = P_REG_EMPTY;
+    } // end loop over reg_freemem
 
     ndks_boot.bi_frame->untyped = (seL4_SlotRegion) {
         .start = first_untyped_slot,
