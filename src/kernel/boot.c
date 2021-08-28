@@ -245,9 +245,6 @@ compile_assert(root_cnode_size_valid,
 BOOT_CODE cap_t
 create_root_cnode(void)
 {
-    /* write the number of root CNode slots to global state */
-    ndks_boot.slot_pos_max = BIT(CONFIG_ROOT_CNODE_SIZE_BITS);
-
     cap_t cap = cap_cnode_cap_new(
                     CONFIG_ROOT_CNODE_SIZE_BITS, /* radix */
                     wordBits - CONFIG_ROOT_CNODE_SIZE_BITS, /* guard size */
@@ -337,8 +334,10 @@ BOOT_CODE void populate_bi_frame(node_id_t node_id, word_t num_nodes, vptr_t ipc
 
 BOOT_CODE bool_t provide_cap(cap_t root_cnode_cap, cap_t cap)
 {
-    if (ndks_boot.slot_pos_cur >= ndks_boot.slot_pos_max) {
-        printf("Kernel init failed: ran out of cap slots\n");
+    if (ndks_boot.slot_pos_cur >= BIT(CONFIG_ROOT_CNODE_SIZE_BITS)) {
+        printf("ERROR: can't add another cap, all %"SEL4_PRIu_word
+               " (=2^CONFIG_ROOT_CNODE_SIZE_BITS) slots used\n",
+               BIT(CONFIG_ROOT_CNODE_SIZE_BITS));
         return false;
     }
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), ndks_boot.slot_pos_cur), cap);
@@ -682,10 +681,9 @@ BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap,
 
 BOOT_CODE void bi_finalise(void)
 {
-    seL4_SlotPos slot_pos_start = ndks_boot.slot_pos_cur;
-    seL4_SlotPos slot_pos_end = ndks_boot.slot_pos_max;
     ndks_boot.bi_frame->empty = (seL4_SlotRegion) {
-        slot_pos_start, slot_pos_end
+        .start = ndks_boot.slot_pos_cur,
+        .end   = BIT(CONFIG_ROOT_CNODE_SIZE_BITS)
     };
 }
 
