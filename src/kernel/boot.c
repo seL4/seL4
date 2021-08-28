@@ -313,12 +313,14 @@ BOOT_CODE word_t calculate_extra_bi_size_bits(word_t extra_size)
     return msb;
 }
 
-BOOT_CODE void populate_bi_frame(node_id_t node_id, word_t num_nodes, vptr_t ipcbuf_vptr,
-                                 word_t extra_bi_size)
+BOOT_CODE void populate_bi_frame(node_id_t node_id, word_t num_nodes,
+                                 vptr_t ipcbuf_vptr, word_t extra_bi_size)
 {
-    clearMemory((void *) rootserver.boot_info, BI_FRAME_SIZE_BITS);
+    /* clear boot info memory */
+    clearMemory((void *)rootserver.boot_info, BI_FRAME_SIZE_BITS);
     if (extra_bi_size) {
-        clearMemory((void *) rootserver.extra_bi, calculate_extra_bi_size_bits(extra_bi_size));
+        clearMemory((void *)rootserver.extra_bi,
+                    calculate_extra_bi_size_bits(extra_bi_size));
     }
 
     /* initialise bootinfo-related global state */
