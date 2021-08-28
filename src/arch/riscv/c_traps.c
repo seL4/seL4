@@ -150,6 +150,9 @@ void VISIBLE NORETURN slowpath(syscall_t syscall)
 #ifdef TRACK_KERNEL_ENTRIES
         ksKernelEntry.path = Entry_UnknownSyscall;
 #endif /* TRACK_KERNEL_ENTRIES */
+        /* Contrary to the name, this handles all non-standard syscalls used in
+         * debug builds also.
+         */
         handleUnknownSyscall(syscall);
     } else {
 #ifdef TRACK_KERNEL_ENTRIES
