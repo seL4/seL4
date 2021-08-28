@@ -126,6 +126,9 @@ void NORETURN slowpath(syscall_t syscall)
         ksKernelEntry.path = Entry_UnknownSyscall;
         /* ksKernelEntry.word word is already set to syscall */
 #endif /* TRACK_KERNEL_ENTRIES */
+        /* Contrary to the name, this handles all non-standard syscalls used in
+         * debug builds also.
+         */
         handleUnknownSyscall(syscall);
     } else {
 #ifdef TRACK_KERNEL_ENTRIES
