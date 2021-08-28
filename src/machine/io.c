@@ -311,12 +311,13 @@ static int printf_core(out_wrap_t *f, const char *fmt, va_list *ap, union arg *n
     int t, pl;
 
     for (;;) {
-        /* This error is only specified for snprintf, but since it's
-         * unspecified for other forms, do the same. Stop immediately
-         * on overflow; otherwise %n could produce wrong results.
-         */
         if (l > INT_MAX - cnt) {
-            goto overflow;
+            /* This error is only specified for snprintf, for other function
+             * from the printf() family the behavior is unspecified. Stopping
+             * immediately here also seems sane, otherwise %n could produce
+             * wrong results.
+             */
+            return -1; /* overflow */
         }
 
         /* Update output count, end loop when fmt is exhausted */
@@ -329,7 +330,7 @@ static int printf_core(out_wrap_t *f, const char *fmt, va_list *ap, union arg *n
         for (a = s; *s && *s != '%'; s++);
         for (z = s; s[0] == '%' && s[1] == '%'; z++, s += 2);
         if (z - a > INT_MAX - cnt) {
-            goto overflow;
+            return -1; /* overflow */
         }
         l = z - a;
         out(f, a, l);
@@ -362,14 +363,14 @@ static int printf_core(out_wrap_t *f, const char *fmt, va_list *ap, union arg *n
                 w = f ? va_arg(*ap, int) : 0;
                 s++;
             } else {
-                goto inval;
+                return -1; /* invalid */
             }
             if (w < 0) {
                 fl |= LEFT_ADJ;
                 w = -w;
             }
         } else if ((w = getint(&s)) < 0) {
-            goto overflow;
+            return -1; /* overflow */
         }
 
         /* Read precision */
@@ -382,7 +383,7 @@ static int printf_core(out_wrap_t *f, const char *fmt, va_list *ap, union arg *n
                 p = f ? va_arg(*ap, int) : 0;
                 s += 2;
             } else {
-                goto inval;
+                return -1;/* invalid */
             }
             xp = (p >= 0);
         } else if (*s == '.') {
@@ -398,19 +399,19 @@ static int printf_core(out_wrap_t *f, const char *fmt, va_list *ap, union arg *n
         st = 0;
         do {
             if (OOB(*s)) {
-                goto inval;
+                return -1; /* invalid */
             }
             ps = st;
             st = states[st]S(*s++);
         } while (st - 1 < STOP);
         if (!st) {
-            goto inval;
+            return -1; /* invalid */
         }
 
         /* Check validity of argument type (nl/normal) */
         if (st == NOARG) {
             if (argpos >= 0) {
-                goto inval;
+                return -1; /* invalid */
             }
         } else {
             if (argpos >= 0) {
@@ -474,7 +475,7 @@ static int printf_core(out_wrap_t *f, const char *fmt, va_list *ap, union arg *n
             a = arg.p ? arg.p : "(null)";
             z = a + strnlen(a, p < 0 ? INT_MAX : p);
             if (p < 0 && *z) {
-                goto overflow;
+                return -1; /* overflow */
             }
             p = z - a;
             fl &= ~ZERO_PAD;
@@ -515,7 +516,7 @@ static int printf_core(out_wrap_t *f, const char *fmt, va_list *ap, union arg *n
                 break;
             }
             if (xp && p < 0) {
-                goto overflow;
+                return -1; /* overflow */
             }
             if (xp) {
                 fl &= ~ZERO_PAD;
@@ -531,13 +532,13 @@ static int printf_core(out_wrap_t *f, const char *fmt, va_list *ap, union arg *n
             p = z - a;
         }
         if (p > INT_MAX - pl) {
-            goto overflow;
+            return -1; /* overflow */
         }
         if (w < pl + p) {
             w = pl + p;
         }
         if (w > INT_MAX - cnt) {
-            goto overflow;
+            return -1; /* overflow */
         }
 
         pad(f, ' ', w, pl + p, fl);
@@ -562,14 +563,10 @@ static int printf_core(out_wrap_t *f, const char *fmt, va_list *ap, union arg *n
     }
     for (; i <= NL_ARGMAX && !nl_type[i]; i++);
     if (i <= NL_ARGMAX) {
-        goto inval;
+        return -1; /* invalid */
     }
-    return 1;
 
-    /* goto for potential debug error support */
-inval:
-overflow:
-    return -1;
+    return 1;
 }
 
 static int vprintf(out_wrap_t *out, const char *fmt, va_list ap)
