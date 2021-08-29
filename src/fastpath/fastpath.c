@@ -131,7 +131,7 @@ void NORETURN fastpath_call(word_t cptr, word_t msgInfo)
 #endif
 
     /* Ensure the original caller is in the current domain and can be scheduled directly. */
-    if (unlikely(dest->tcbDomain != ksCurDomain && maxDom)) {
+    if (unlikely(dest->tcbDomain != ksCurDomain && 0 < maxDom)) {
         slowpath(SysCall);
     }
 
@@ -377,7 +377,7 @@ void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo)
 #endif
 
     /* Ensure the original caller is in the current domain and can be scheduled directly. */
-    if (unlikely(caller->tcbDomain != ksCurDomain && maxDom)) {
+    if (unlikely(caller->tcbDomain != ksCurDomain && 0 < maxDom)) {
         slowpath(SysReplyRecv);
     }
 
