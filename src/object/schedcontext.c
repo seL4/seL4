@@ -94,14 +94,14 @@ static exception_t decodeSchedContext_Bind(sched_context_t *sc)
 
     cap_t cap = current_extra_caps.excaprefs[0]->cap;
 
-    if (sc->scTcb != NULL || sc->scNotification != NULL) {
-        userError("SchedContext_Bind: sched context already bound.");
-        current_syscall_error.type = seL4_IllegalOperation;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
     switch (cap_get_capType(cap)) {
     case cap_thread_cap:
+        if (sc->scTcb != NULL) {
+            userError("SchedContext_Bind: sched context already bound.");
+            current_syscall_error.type = seL4_IllegalOperation;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
         if (TCB_PTR(cap_thread_cap_get_capTCBPtr(cap))->tcbSchedContext != NULL) {
             userError("SchedContext_Bind: tcb already bound.");
             current_syscall_error.type = seL4_IllegalOperation;
@@ -116,6 +116,12 @@ static exception_t decodeSchedContext_Bind(sched_context_t *sc)
 
         break;
     case cap_notification_cap:
+        if (sc->scNotification != NULL) {
+            userError("SchedContext_Bind: sched context already bound.");
+            current_syscall_error.type = seL4_IllegalOperation;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
         if (notification_ptr_get_ntfnSchedContext(NTFN_PTR(cap_notification_cap_get_capNtfnPtr(cap)))) {
             userError("SchedContext_Bind: notification already bound");
             current_syscall_error.type = seL4_IllegalOperation;
