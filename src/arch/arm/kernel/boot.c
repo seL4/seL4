@@ -538,9 +538,12 @@ static BOOT_CODE bool_t try_init_kernel(
     /* finalise the bootinfo frame */
     bi_finalise();
 
-    /* make everything written by the kernel visible to userland. Cleaning to PoC is not
-     * strictly neccessary, but performance is not critical here so clean and invalidate
-     * everything to PoC */
+    /* Flushing the L1 cache and invalidating the TLB is good enough here to
+     * make sure everything written by the kernel is visible to userland. There
+     * are no uncached userland frames at this stage that require enforcing
+     * flushing to RAM. Any retyping operation will clean the memory down to RAM
+     * anyway.
+     */
     cleanInvalidateL1Caches();
     invalidateLocalTLB();
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
