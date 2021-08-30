@@ -34,6 +34,7 @@
 
 #define IRQ_MASK MASK(16u)
 #define GIC_MAX_PRIO 256
+#define GIC_VCPU_MAX_NUM_LR 16
 
 /* Register bits */
 #define GICD_CTL_ENABLE 0x1

@@ -22,6 +22,7 @@
 
 #define IRQ_MASK MASK(10u)
 #define GIC_MAX_PRIO 31
+#define GIC_VCPU_MAX_NUM_LR 64
 
 /* Helpers for VGIC */
 #define VGIC_HCR_EOI_INVALID_COUNT(hcr) (((hcr) >> 27) & 0x1f)
