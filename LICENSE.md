@@ -15,13 +15,17 @@ directory `LICENSES` contains the text for all licenses that are
 mentioned by files in this repository.
 
 
-### GPL syscall note
+## GPL syscall note
+
 Note that, as in the [Linux syscall note for the GPL][2], the seL4
 kernel GPL license does *not* cover user-level code that uses kernel
 services by normal system calls - this is merely considered normal use
 of the kernel, and does *not* fall under the heading of "derived work".
 Syscall headers are provided under BSD.
 
+For a longer explanation of how the seL4 license does or does not affect
+your own code see also [this blog post][3].
 
 [1]: https://spdx.org
 [2]: https://spdx.org/licenses/Linux-syscall-note.html
+[3]: https://microkerneldude.wordpress.com/2019/12/09/what-does-sel4s-license-imply/

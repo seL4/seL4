@@ -108,3 +108,8 @@ A list of releases and current project status can be found under [seL4 releases]
 - [Userland Components and
       Drivers](https://docs.sel4.systems/projects/available-user-components.html): available device
       drivers and userland components
+
+License
+-------
+
+See the file [LICENSE.md](./LICENSE.md).
