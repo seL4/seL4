@@ -17,7 +17,7 @@
 #define seL4_NumDualFunctionMonitors (0)
 #endif
 
-#if CONFIG_ARCH_AARCH32
+#ifdef CONFIG_ARCH_AARCH32
 /* Platform support for tqma8xqp1gb is provided for AARCH64 only, even if the
  * Cortex-A35 supports AARCH32 also. Keep this as a build blocker as long as
  * AARCH32 remains untested.
