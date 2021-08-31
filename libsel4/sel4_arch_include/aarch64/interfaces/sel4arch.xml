@@ -58,6 +58,28 @@
             description="Start address"/>
             <param dir="in" name="end" type="seL4_Word"
             description="End address"/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="end"/> is in the kernel virtual address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="start"/> is greater than or equal to <texttt text="end"/>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The specified range crosses a page boundary.
+                </description>
+            </error>
         </method>
         <method id="ARMVSpaceInvalidate_Data" name="Invalidate_Data"
             manual_name="Invalidate Data" manual_label="vspace_invalidate">
@@ -71,6 +93,28 @@
             description="Start address"/>
             <param dir="in" name="end" type="seL4_Word"
             description="End address"/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="end"/> is in the kernel virtual address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="start"/> is greater than or equal to <texttt text="end"/>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The specified range crosses a page boundary.
+                </description>
+            </error>
         </method>
         <method id="ARMVSpaceCleanInvalidate_Data" name="CleanInvalidate_Data"
             manual_name="Clean and Invalidate Data" manual_label="vspace_clean_invalidate">
@@ -84,6 +128,28 @@
             description="Start address"/>
             <param dir="in" name="end" type="seL4_Word"
             description="End address"/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="end"/> is in the kernel virtual address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="start"/> is greater than or equal to <texttt text="end"/>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The specified range crosses a page boundary.
+                </description>
+            </error>
         </method>
         <method id="ARMVSpaceUnify_Instruction" name="Unify_Instruction"
             manual_name="Unify Instruction" manual_label="vspace_unify_instruction">
@@ -97,6 +163,28 @@
              description="Start address"/>
              <param dir="in" name="end" type="seL4_Word"
 	     description="End address"/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="end"/> is in the kernel virtual address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="start"/> is greater than or equal to <texttt text="end"/>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The specified range crosses a page boundary.
+                </description>
+            </error>
         </method>
     </interface>
     <interface name="seL4_ARM_PageUpperDirectory" manual_name="Page Upper Directory"
@@ -107,10 +195,6 @@
                 </brief>
                 <description>
                     Map an upper page directory (level 1) to a top level translation table (level 0).
-                    If the upper page directory is already mapped this operation will fail,
-                    returning a seL4_InvalidCapability error. If another object is already mapped at this
-                    level for the virtual address this operation will fail,
-                    returning a seL4_DeleteFirst error.
                 </description>
             <param dir="in" name="vspace" type="seL4_CPtr"
             description="Top level translation table. Must be assigned to an ASID pool."/>
@@ -121,9 +205,49 @@
                     VM Attributes for the mapping.<docref>Possible values for this type are given in <autoref label="ch:vspace"/>  .</docref>
                 </description>
             </param>
+            <error name="seL4_DeleteFirst">
+                <description>
+                    A mapping already exists for this level in <texttt text="vspace"/> at <texttt text="vaddr."/>
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="vaddr"/> is in the kernel virtual address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="vspace"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="vspace"/> is not assigned to an ASID pool.
+                    Or, <texttt text="_service"/> is already mapped in a VSpace.
+                </description>
+            </error>
         </method>
         <method id="ARMPageUpperDirectoryUnmap" name="Unmap"
             condition="!(defined CONFIG_ARM_HYPERVISOR_SUPPORT &amp;&amp; defined CONFIG_ARM_PA_SIZE_BITS_40)">
+            <description>
+                TODO
+            </description>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RevokeFirst">
+                <description>
+                    A copy of the <texttt text="_service"/> capability exists.
+                </description>
+            </error>
         </method>
     </interface>
     <interface name="seL4_ARM_PageDirectory" manual_name="Page Directory"
@@ -134,12 +258,6 @@
                 </brief>
                 <description>
                     Map a page directory (level 2) to an upper page directory (level 1).
-                    If an upper page directory does not exist for the virtual address this
-                    operation will fail, returning a seL4_FailedLookup error. If the page
-                    directory is already mapped this operation will fail,
-                    returning a seL4_InvalidCapability error. If another object is already mapped
-                    at this level for the virtual address this operation will
-                    fail, returning a seL4_DeleteFirst error.
                 </description>
             <param dir="in" name="vspace" type="seL4_CPtr"
             description="Top level translation table. Must be assigned to an ASID pool."/>
@@ -150,6 +268,33 @@
                     VM Attributes for the mapping.<docref>Possible values for this type are given in <autoref label="ch:vspace"/>  .</docref>
                 </description>
             </param>
+            <error name="seL4_DeleteFirst">
+                <description>
+                    A mapping already exists for this level in <texttt text="vspace"/> at <texttt text="vaddr."/>
+                </description>
+            </error>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="vspace"/> does not have a Page Upper Directory mapped at <texttt text="vaddr."/>
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="vaddr"/> is in the kernel virtual address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="vspace"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="vspace"/> is not assigned to an ASID pool.
+                    Or, <texttt text="_service"/> is already mapped in a VSpace.
+                </description>
+            </error>
         </method>
         <method id="ARMPageDirectoryUnmap" name="Unmap">
                 <brief>
@@ -158,6 +303,21 @@
                 <description>
                     Unmap a page directory (level 2) from an upper page directory (level 1)
                 </description>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RevokeFirst">
+                <description>
+                    A copy of the <texttt text="_service"/> capability exists.
+                </description>
+            </error>
         </method>
     </interface>
 </api>
