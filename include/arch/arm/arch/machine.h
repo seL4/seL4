@@ -67,6 +67,7 @@ static inline void arch_pause(void)
 
 static inline void Arch_finaliseInterrupt(void)
 {
+    /* Nothing architecture specific to be done. */
 }
 
 /* Update the value of the actual regsiter to hold the expected value */

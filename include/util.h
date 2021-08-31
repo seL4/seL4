@@ -95,8 +95,7 @@ void __builtin_unreachable(void);
 #define UNREACHABLE()  __builtin_unreachable()
 #define MAY_ALIAS    __attribute__((may_alias))
 
-#define OFFSETOF(type, member) \
-    __builtin_offsetof(type, member)
+#define OFFSETOF(type, member)   __builtin_offsetof(type, member)
 
 #ifdef __GNUC__
 /* Borrowed from linux/include/linux/compiler.h */
