@@ -16,11 +16,17 @@
  */
 #define MAX_NUM_FREEMEM_REG 16
 
+/* The regions reserved by the boot code are:
+ * +1 for kernel
+ * +1 for device tree binary
+ * +1 for user image.
+ */
+#define NUM_RESERVED_REGIONS (3 + MODE_RESERVED)
+
 /* The maximum number of reserved regions is:
  * +1 for each free memory region (MAX_NUM_FREEMEM_REG)
  * +1 for each kernel frame (NUM_KERNEL_DEVICE_FRAMES, there might be none)
- * +1 for each mode-reserved region (MODE_RESERVED)
- * +1 for each region reserved by the boot code (3: kernel, dtb, user image)
+ * +1 for each region reserved by the boot code (NUM_RESERVED_REGIONS)
  */
 #define MAX_NUM_RESV_REG (MAX_NUM_FREEMEM_REG + NUM_KERNEL_DEVICE_FRAMES + \
-                          MODE_RESERVED + 3)
+                          NUM_RESERVED_REGIONS)
