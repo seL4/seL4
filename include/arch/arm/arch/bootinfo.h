@@ -6,6 +6,10 @@
 
 #pragma once
 
+#include <config.h>
+#include <plat/machine/devices_gen.h>
+#include <kernel/vspace.h>
+
 /* The max number of free memory regions is:
  * +1 for each available physical memory region (elements in avail_p_regs)
  * +1 for each MODE_RESERVED region, there might be none

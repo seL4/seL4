@@ -6,6 +6,10 @@
 
 #pragma once
 
+#include <config.h>
+#include <plat/machine/devices_gen.h>
+#include <arch/machine/hardware.h>
+
 /* The value for the max number of free memory region is basically an arbitrary
  * choice. We could calculate the exact number, but just picking 16 will also
  * do for now. Increase this value if the boot fails.
