@@ -182,9 +182,9 @@ static ept_cache_options_t eptCacheFromVmAttr(vm_attributes_t vmAttr)
     /* PAT cache options are 1-1 with ept_cache_options. But need to
        verify user has specified a sensible option */
     ept_cache_options_t option = vmAttr.words[0];
-    if (option != EPTUncacheable ||
-        option != EPTWriteCombining ||
-        option != EPTWriteThrough ||
+    if (option != EPTUncacheable &&
+        option != EPTWriteCombining &&
+        option != EPTWriteThrough &&
         option != EPTWriteBack) {
         /* No failure mode is supported here, vmAttr settings should be verified earlier */
         option = EPTWriteBack;
