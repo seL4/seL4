@@ -8,7 +8,6 @@
 
 #include <config.h>
 #include <plat/machine/devices_gen.h>
-#include <arch/machine/hardware.h>
 
 /* The value for the max number of free memory region is basically an arbitrary
  * choice. We could calculate the exact number, but just picking 16 will also
@@ -21,7 +20,7 @@
  * +1 for device tree binary
  * +1 for user image.
  */
-#define NUM_RESERVED_REGIONS (3 + MODE_RESERVED)
+#define NUM_RESERVED_REGIONS 3
 
 /* The maximum number of reserved regions is:
  * +1 for each free memory region (MAX_NUM_FREEMEM_REG)
