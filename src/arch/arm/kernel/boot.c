@@ -43,22 +43,27 @@ BOOT_CODE static bool_t arch_init_freemem(p_region_t ui_p_reg,
                                           v_region_t it_v_reg,
                                           word_t extra_bi_size_bits)
 {
+    /* reserve the kernel image region */
     reserved[0].start = KERNEL_ELF_BASE;
     reserved[0].end = (pptr_t)ki_end;
 
     int index = 1;
+
+    /* add the dtb region, if it is not empty */
     if (dtb_p_reg.start) {
-        /* the dtb region could be empty */
         reserved[index].start = (pptr_t) paddr_to_pptr(dtb_p_reg.start);
         reserved[index].end = (pptr_t) paddr_to_pptr(dtb_p_reg.end);
         index++;
     }
 
+    /* Reserve the user image region and the mode-reserved regions. For now,
+     * only one mode-reserved region is supported, because this is all that is
+     * needed.
+     */
     if (MODE_RESERVED > 1) {
         printf("ERROR: MODE_RESERVED > 1 unsupported!\n");
         return false;
     }
-
     if (ui_p_reg.start < PADDR_TOP) {
         region_t ui_reg = paddr_to_pptr_reg(ui_p_reg);
         if (MODE_RESERVED == 1) {
