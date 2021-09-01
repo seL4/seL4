@@ -34,7 +34,7 @@
 
 /* Cache what we believe is in the low word of the IOREDTBL. This
  * has all the state of trigger modes etc etc */
-static uint32_t ioredtbl_state[IOAPIC_IRQ_LINES * CONFIG_MAX_NUM_IOAPIC];
+static uint32_t ioredtbl_state[IOAPIC_IRQ_LINES * MAX(1, CONFIG_MAX_NUM_IOAPIC)];
 
 /* Number of IOAPICs in the system */
 static uint32_t num_ioapics = 0;
