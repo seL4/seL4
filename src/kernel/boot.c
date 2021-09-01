@@ -151,7 +151,8 @@ BOOT_CODE static word_t calculate_rootserver_size(v_region_t it_v_reg, word_t ex
     /* work out how much memory we need for root server objects */
     word_t size = BIT(CONFIG_ROOT_CNODE_SIZE_BITS + seL4_SlotBits);
     size += BIT(seL4_TCBBits); // root thread tcb
-    size += 2 * BIT(seL4_PageBits); // boot info + ipc buf
+    size += BIT(seL4_PageBits); // ipc buf
+    size += BIT(BI_FRAME_SIZE_BITS); // boot info
     size += BIT(seL4_ASIDPoolBits);
     size += extra_bi_size_bits > 0 ? BIT(extra_bi_size_bits) : 0;
     size += BIT(seL4_VSpaceBits); // root vspace
@@ -201,7 +202,7 @@ BOOT_CODE static void create_rootserver_objects(pptr_t start, v_region_t it_v_re
     maybe_alloc_extra_bi(seL4_PageBits, extra_bi_size_bits);
     rootserver.asid_pool = alloc_rootserver_obj(seL4_ASIDPoolBits, 1);
     rootserver.ipc_buf = alloc_rootserver_obj(seL4_PageBits, 1);
-    rootserver.boot_info = alloc_rootserver_obj(seL4_PageBits, 1);
+    rootserver.boot_info = alloc_rootserver_obj(BI_FRAME_SIZE_BITS, 1);
 
     /* TCBs on aarch32 can be larger than page tables in certain configs */
 #if seL4_TCBBits >= seL4_PageTableBits
