@@ -23,9 +23,7 @@
 BOOT_BSS static volatile word_t node_boot_lock;
 #endif
 
-/* kernel image + [extra bootinfo] + user image */
-#define MAX_RESERVED 3
-BOOT_BSS static region_t res_reg[MAX_RESERVED];
+BOOT_BSS static region_t res_reg[NUM_RESERVED_REGIONS];
 
 BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, asid_t asid, bool_t
                                            use_large, bool_t executable)
@@ -67,12 +65,20 @@ BOOT_CODE static bool_t arch_init_freemem(region_t ui_reg, v_region_t it_v_reg,
 
     /* add the dtb region, if it is not empty */
     if (dtb_reg.start) {
+        if (index >= ARRAY_SIZE(res_reg)) {
+            printf("ERROR: no slot to add DTB to reserved regions\n");
+            return false;
+        }
         res_reg[index].start = dtb_reg.start;
         res_reg[index].end = dtb_reg.end;
         index += 1;
     }
 
     /* reserve the user image region */
+    if (index >= ARRAY_SIZE(res_reg)) {
+        printf("ERROR: no slot to add user image to reserved regions\n");
+        return false;
+    }
     res_reg[index].start = ui_reg.start;
     res_reg[index].end = ui_reg.end;
     index += 1;
