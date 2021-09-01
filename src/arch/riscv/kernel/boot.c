@@ -56,19 +56,23 @@ BOOT_CODE static bool_t arch_init_freemem(region_t ui_reg, v_region_t it_v_reg,
                                           region_t dtb_reg,
                                           word_t extra_bi_size_bits)
 {
-    // This looks a bit awkward as our symbols are a reference in the kernel image window, but
-    // we want to do all allocations in terms of the main kernel window, so we do some translation
+    /* Reserve the kernel image region. This may look a bit awkward, as the
+     * symbols are a reference in the kernel image window, but all allocations
+     * are done in terms of the main kernel window, so we do some translation.
+     */
     res_reg[0].start = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void *)KERNEL_ELF_BASE));
     res_reg[0].end = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void *)ki_end));
 
     int index = 1;
+
+    /* add the dtb region, if it is not empty */
     if (dtb_reg.start) {
-        /* optionally reserve the dtb region, as it could be empty */
         res_reg[index].start = dtb_reg.start;
         res_reg[index].end = dtb_reg.end;
         index += 1;
     }
 
+    /* reserve the user image region */
     res_reg[index].start = ui_reg.start;
     res_reg[index].end = ui_reg.end;
     index += 1;
