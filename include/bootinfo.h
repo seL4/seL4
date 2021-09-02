@@ -10,8 +10,10 @@
 #include <types.h>
 #include <sel4/bootinfo_types.h>
 
+/* declare object-specific macros to hide the casting */
 #define BI_PTR(r) ((seL4_BootInfo*)(r))
 #define BI_REF(p) ((word_t)(p))
+
 #define S_REG_EMPTY (seL4_SlotRegion){ .start = 0, .end = 0 }
 
 /* The boot info frame takes at least one page, it must be big enough to hold
