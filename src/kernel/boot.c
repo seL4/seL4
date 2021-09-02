@@ -324,15 +324,17 @@ BOOT_CODE void populate_bi_frame(node_id_t node_id, word_t num_nodes,
     }
 
     /* initialise bootinfo-related global state */
-    ndks_boot.bi_frame = BI_PTR(rootserver.boot_info);
+    seL4_BootInfo *bi = BI_PTR(rootserver.boot_info);
+    bi->nodeID = node_id;
+    bi->numNodes = num_nodes;
+    bi->numIOPTLevels = 0;
+    bi->ipcBuffer = (seL4_IPCBuffer *)ipcbuf_vptr;
+    bi->initThreadCNodeSizeBits = CONFIG_ROOT_CNODE_SIZE_BITS;
+    bi->initThreadDomain = ksDomSchedule[ksDomScheduleIdx].domain;
+    bi->extraLen = extra_bi_size;
+
+    ndks_boot.bi_frame = bi;
     ndks_boot.slot_pos_cur = seL4_NumInitialCaps;
-    BI_PTR(rootserver.boot_info)->nodeID = node_id;
-    BI_PTR(rootserver.boot_info)->numNodes = num_nodes;
-    BI_PTR(rootserver.boot_info)->numIOPTLevels = 0;
-    BI_PTR(rootserver.boot_info)->ipcBuffer = (seL4_IPCBuffer *) ipcbuf_vptr;
-    BI_PTR(rootserver.boot_info)->initThreadCNodeSizeBits = CONFIG_ROOT_CNODE_SIZE_BITS;
-    BI_PTR(rootserver.boot_info)->initThreadDomain = ksDomSchedule[ksDomScheduleIdx].domain;
-    BI_PTR(rootserver.boot_info)->extraLen = extra_bi_size;
 }
 
 BOOT_CODE bool_t provide_cap(cap_t root_cnode_cap, cap_t cap)
