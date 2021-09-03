@@ -37,6 +37,17 @@ typedef enum {
     SEL4_FORCE_LONG_ENUM(seL4_X86_VMAttributes),
 } seL4_X86_VMAttributes;
 
+typedef enum {
+    seL4_X86_EPT_Uncached_VMAttributes = 6,
+    seL4_X86_EPT_Uncacheable = 0,
+    seL4_X86_EPT_WriteCombining = 1,
+    seL4_X86_EPT_WriteThrough = 4,
+    seL4_X86_EPT_WriteProtected = 5,
+    seL4_X86_EPT_WriteBack = 6,
+    seL4_X86_EPT_Default_VMAttributes = 6,
+    SEL4_FORCE_LONG_ENUM(seL4_X86_EPT_VMAttributes),
+} seL4_X86_EPT_VMAttributes;
+
 typedef struct seL4_VCPUContext_ {
     seL4_Word eax, ebx, ecx, edx, esi, edi, ebp;
 } seL4_VCPUContext;
