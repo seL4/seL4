@@ -45,6 +45,14 @@ void init_serial(void)
     *(UART_REG(UART_MISC)) = 1;
 }
 
+void wdog_reset(void)
+{
+    printf("\nResetting Odroid-C2\n");
+    volatile uint32_t *wdog = (volatile uint32_t *)(WDOG_PPTR);
+    *wdog = (WDOG_EN | WDOG_SYS_RESET_EN | WDOG_CLK_EN |
+             WDOG_CLK_DIV_EN | WDOG_SYS_RESET_NOW);
+}
+
 void handleUartIRQ(void)
 {
     /* while there are chars to process */
@@ -60,10 +68,7 @@ void handleUartIRQ(void)
         }
         if (index == strnlen(reset, 5)) {
             /* do the reset */
-            printf("\nResetting Odroid-C2\n");
-            volatile uint32_t *wdog = (volatile uint32_t *) (WDOG_PPTR);
-            *wdog = (WDOG_EN | WDOG_SYS_RESET_EN | WDOG_CLK_EN |
-                     WDOG_CLK_DIV_EN | WDOG_SYS_RESET_NOW);
+            wdog_reset();
         }
     }
 }
