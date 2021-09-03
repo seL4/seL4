@@ -366,6 +366,46 @@ block ttbr {
 }
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+#ifdef CONFIG_ARM_GIC_V3_SUPPORT
+block virq_invalid {
+    field virqType      2
+    padding             1
+    field virqGroup     1
+    padding             4
+    field virqPriority  8
+    padding             3
+    padding             3
+    field virqEOIIRQEN  1
+    padding             9
+    field virqIRQ       32
+}
+
+block virq_active {
+    field virqType      2
+    padding             1
+    field virqGroup     1
+    padding             4
+    field virqPriority  8
+    padding             3
+    padding             3
+    field virqEOIIRQEN  1
+    padding             9
+    field virqIRQ       32
+}
+
+block virq_pending {
+    field virqType      2
+    padding             1
+    field virqGroup     1
+    padding             4
+    field virqPriority  8
+    padding             3
+    padding             3
+    field virqEOIIRQEN  1
+    padding             9
+    field virqIRQ       32
+}
+#else
 block virq_invalid {
     padding             32
     padding             2
@@ -395,6 +435,7 @@ block virq_pending {
     padding             9
     field virqIRQ       10
 }
+#endif
 
 tagged_union virq virqType {
     tag virq_invalid    0
