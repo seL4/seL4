@@ -96,15 +96,15 @@ BOOT_CODE bool_t reserve_region(p_region_t reg)
     return true;
 }
 
-BOOT_CODE static bool_t insert_region(region_t reg)
+BOOT_CODE static bool_t insert_region(p_region_t reg)
 {
     assert(reg.start <= reg.end);
-    if (is_reg_empty(reg)) {
+    if (is_p_reg_empty(reg)) {
         return true;
     }
     for (word_t i = 0; i < ARRAY_SIZE(ndks_boot.freemem); i++) {
-        if (is_reg_empty(ndks_boot.freemem[i])) {
-            reserve_region(pptr_to_paddr_reg(reg));
+        if (is_p_reg_empty(ndks_boot.freemem[i])) {
+            reserve_region(reg);
             ndks_boot.freemem[i] = reg;
             return true;
         }
@@ -562,7 +562,7 @@ BOOT_CODE void init_core_state(tcb_t *scheduler_action)
 BOOT_CODE static bool_t provide_untyped_cap(
     cap_t      root_cnode_cap,
     bool_t     device_memory,
-    pptr_t     pptr,
+    paddr_t    paddr,
     word_t     size_bits,
     seL4_SlotPos first_untyped_slot
 )
@@ -572,10 +572,10 @@ BOOT_CODE static bool_t provide_untyped_cap(
     word_t i = ndks_boot.slot_pos_cur - first_untyped_slot;
     if (i < CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS) {
         ndks_boot.bi_frame->untypedList[i] = (seL4_UntypedDesc) {
-            pptr_to_paddr((void *)pptr), size_bits, device_memory, {0}
+            paddr, size_bits, device_memory, {0}
         };
         ut_cap = cap_untyped_cap_new(MAX_FREE_INDEX(size_bits),
-                                     device_memory, size_bits, pptr);
+                                     device_memory, size_bits, (word_t) paddr_to_pptr(paddr));
         ret = provide_cap(root_cnode_cap, ut_cap);
     } else {
         printf("Kernel init: Too many untyped regions for boot info\n");
@@ -587,14 +587,14 @@ BOOT_CODE static bool_t provide_untyped_cap(
 BOOT_CODE static bool_t create_untypeds_for_region(
     cap_t      root_cnode_cap,
     bool_t     device_memory,
-    region_t   reg,
+    p_region_t   reg,
     seL4_SlotPos first_untyped_slot
 )
 {
     word_t align_bits;
     word_t size_bits;
 
-    while (!is_reg_empty(reg)) {
+    while (!is_p_reg_empty(reg)) {
         /* Determine the maximum size of the region */
         size_bits = seL4_WordBits - 1 - clzl(reg.end - reg.start);
 
@@ -623,16 +623,14 @@ BOOT_CODE static bool_t create_untypeds_for_region(
 }
 
 BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap,
-                                 region_t boot_mem_reuse_reg)
+                                 p_region_t boot_mem_reuse_reg)
 {
     seL4_SlotPos first_untyped_slot = ndks_boot.slot_pos_cur;
 
     paddr_t start = 0;
     for (word_t i = 0; i < ndks_boot.resv_count; i++) {
         if (start < ndks_boot.reserved[i].start) {
-            region_t reg = paddr_to_pptr_reg((p_region_t) {
-                start, ndks_boot.reserved[i].start
-            });
+            p_region_t reg = {.start = start, .end = ndks_boot.reserved[i].start};
             if (!create_untypeds_for_region(root_cnode_cap, true, reg, first_untyped_slot)) {
                 return false;
             }
@@ -642,9 +640,7 @@ BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap,
     }
 
     if (start < CONFIG_PADDR_USER_DEVICE_TOP) {
-        region_t reg = paddr_to_pptr_reg((p_region_t) {
-            start, CONFIG_PADDR_USER_DEVICE_TOP
-        });
+        p_region_t reg = {.start = start, .end = CONFIG_PADDR_USER_DEVICE_TOP};
         /*
          * The auto-generated bitfield code will get upset if the
          * end pptr is larger than the maximum pointer size for this architecture.
@@ -664,8 +660,8 @@ BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap,
 
     /* convert remaining freemem into UT objects and provide the caps */
     for (word_t i = 0; i < ARRAY_SIZE(ndks_boot.freemem); i++) {
-        region_t reg = ndks_boot.freemem[i];
-        ndks_boot.freemem[i] = REG_EMPTY;
+        p_region_t reg = ndks_boot.freemem[i];
+        ndks_boot.freemem[i] = P_REG_EMPTY;
         if (!create_untypeds_for_region(root_cnode_cap, false, reg, first_untyped_slot)) {
             return false;
         }
@@ -700,7 +696,7 @@ BOOT_CODE static inline pptr_t ceiling_kernel_window(pptr_t p)
 
 /* we can't declare arrays on the stack, so this is space for
  * the function below to use. */
-BOOT_BSS static region_t avail_reg[MAX_NUM_FREEMEM_REG];
+BOOT_BSS static p_region_t avail_reg[MAX_NUM_FREEMEM_REG];
 /**
  * Dynamically initialise the available memory on the platform.
  * A region represents an area of memory.
@@ -761,12 +757,12 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
     }
 
     for (word_t i = 0; i < ARRAY_SIZE(ndks_boot.freemem); i++) {
-        ndks_boot.freemem[i] = REG_EMPTY;
+        ndks_boot.freemem[i] = P_REG_EMPTY;
     }
 
     /* convert the available regions to pptrs */
     for (word_t i = 0; i < n_available; i++) {
-        avail_reg[i] = paddr_to_pptr_reg(available[i]);
+        avail_reg[i] = available[i];
         avail_reg[i].end = ceiling_kernel_window(avail_reg[i].end);
         avail_reg[i].start = ceiling_kernel_window(avail_reg[i].start);
     }
@@ -801,7 +797,7 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
                 assert(reserved[r].start < avail_reg[a].end);
                 /* take the first chunk of the available region and move
                  * the start to the end of the reserved region */
-                region_t m = avail_reg[a];
+                p_region_t m = avail_reg[a];
                 m.end = reserved[r].start;
                 insert_region(m);
                 if (avail_reg[a].end > reserved[r].end) {
@@ -830,12 +826,12 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
 
     /* now try to fit the root server objects into a region */
     word_t i = ARRAY_SIZE(ndks_boot.freemem) - 1;
-    if (!is_reg_empty(ndks_boot.freemem[i])) {
+    if (!is_p_reg_empty(ndks_boot.freemem[i])) {
         printf("Insufficient MAX_NUM_FREEMEM_REG\n");
         return false;
     }
     /* skip any empty regions */
-    for (; is_reg_empty(ndks_boot.freemem[i]) && i >= 0; i--);
+    for (; is_p_reg_empty(ndks_boot.freemem[i]) && i >= 0; i--);
 
     /* try to grab the last available p region to create the root server objects
      * from. If possible, retain any left over memory as an extra p region */

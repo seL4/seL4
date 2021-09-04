@@ -22,7 +22,7 @@ typedef cte_t *slot_ptr_t;
 typedef struct ndks_boot {
     p_region_t reserved[MAX_NUM_RESV_REG];
     word_t resv_count;
-    region_t   freemem[MAX_NUM_FREEMEM_REG];
+    p_region_t   freemem[MAX_NUM_FREEMEM_REG];
     seL4_BootInfo      *bi_frame;
     seL4_SlotPos slot_pos_cur;
 } ndks_boot_t;
@@ -31,7 +31,7 @@ extern ndks_boot_t ndks_boot;
 
 /* function prototypes */
 
-static inline bool_t is_reg_empty(region_t reg)
+static inline bool_t is_p_reg_empty(p_region_t reg)
 {
     return reg.start == reg.end;
 }
@@ -46,7 +46,7 @@ bool_t provide_cap(cap_t root_cnode_cap, cap_t cap);
 cap_t create_it_asid_pool(cap_t root_cnode_cap);
 void write_it_pd_pts(cap_t root_cnode_cap, cap_t it_pd_cap);
 bool_t create_idle_thread(void);
-bool_t create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg);
+bool_t create_untypeds(cap_t root_cnode_cap, p_region_t boot_mem_reuse_reg);
 void bi_finalise(void);
 void create_domain_cap(cap_t root_cnode_cap);
 
