@@ -63,6 +63,7 @@
                 <description>
                     The <texttt text="size_bits"/> is too big or too small for the requested object type.
                     Or, <texttt text="type"/> cannot be created from a device untyped <docref>(see <autoref label="sec:kernmemalloc"/>).</docref>
+                    Or, the requested object <texttt text="type"/> does not exist.
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
@@ -75,6 +76,7 @@
                 <description>
                     The <texttt text="num_objects"/> do not fit in the destination CNode at <texttt text="node_offset."/>
                     Or, <texttt text="num_objects"/> is greater than <texttt text="CONFIG_RETYPE_FAN_OUT_LIMIT."/>
+                    Or, <texttt text="size_bits"/> is too large.
                 </description>
             </error>
         </method>
@@ -237,12 +239,16 @@
                 description="Location of the thread's IPC buffer. Must be 512-byte aligned. The IPC buffer may not cross a page boundary."/>
             <param dir="in" name="bufferFrame" type="seL4_CPtr"
                 description="Capability to a page containing the thread's IPC buffer."/>
+            <error name="seL4_AlignmentError">
+                <description>
+                    The <texttt text="buffer"/> is not aligned.
+                </description>
+            </error>
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service,"/> <texttt text="bufferFrame,"/> <texttt text="cspace_root,"/> or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="vspace_root"/> is not assigned to an ASID pool.
                     Or, <texttt text="cspace_root_data"/> is invalid.
-                    Or, <texttt text="buffer"/> is not aligned.
                     Or, <texttt text="bufferFrame"/> is retyped from a device untyped <docref>(see <autoref label="sec:kernmemalloc"/>).</docref>
                 </description>
             </error>
@@ -416,10 +422,14 @@
                 description="Location of the thread's IPC buffer. Must be 512-byte aligned. The IPC buffer may not cross a page boundary."/>
             <param dir="in" name="bufferFrame" type="seL4_CPtr"
                 description="Capability to a page containing the thread's IPC buffer."/>
+            <error name="seL4_AlignmentError">
+                <description>
+                    The <texttt text="buffer"/> is not aligned.
+                </description>
+            </error>
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> or <texttt text="bufferFrame"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="buffer"/> is not aligned.
                     Or, <texttt text="bufferFrame"/> is retyped from a device untyped <docref>(see <autoref label="sec:kernmemalloc"/>).</docref>
                 </description>
             </error>
@@ -630,6 +640,11 @@
                 description="A positive integer indicating the trigger-span of the watchpoint. Must be zero when 'type' is seL4_InstructionBreakpoint."/>
             <param dir="in" name="rw" type="seL4_Word"
                 description="One of seL4_BreakOnRead, meaning the breakpoint will only be triggered on read-access; seL4_BreakOnWrite meaning the breakpoint will only be triggered on write-access, and seL4_BreakOnReadWrite meaning the breakpoint will be triggered on any access."/>
+            <error name="seL4_AlignmentError">
+                <description>
+                    The <texttt text="vaddr"/> is not aligned to <texttt text="size"/> bytes.
+                </description>
+            </error>
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
@@ -639,7 +654,6 @@
                 <description>
                     The <texttt text="bp_num,"/> <texttt text="size,"/> or <texttt text="rw"/> is not valid for the given <texttt text="type."/>
                     Or, argument values are inappropriate for the target architecture.
-                    Or, <texttt text="vaddr"/> is not aligned to <texttt text="size"/> bytes.
                     Or, <texttt text="vaddr"/> is in the kernel virtual address range.
                 </description>
             </error>
@@ -978,8 +992,8 @@
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, the source capability cannot be derived <docref>(see <autoref label="sec:cap_derivation"/>).
-                    Or, the badge or guard value is invalid.</docref>
+                    Or, the source capability cannot be derived <docref>(see <autoref label="sec:cap_derivation"/>).</docref>
+                    Or, the badge or guard value is invalid.
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
