@@ -9,8 +9,10 @@
 /* Modifiers:
  *  + 1: allow the kernel to release its own boot data region
  *  + 1: possible gap between ELF images and rootserver objects;
- *       see arm/arch_init_freemem */
-#define MAX_NUM_FREEMEM_REG (ARRAY_SIZE(avail_p_regs) + MODE_RESERVED + 1 + 1)
+ *       see arm/arch_init_freemem
+ *   +1: loader specified extra memory
+ */
+#define MAX_NUM_FREEMEM_REG (ARRAY_SIZE(avail_p_regs) + MODE_RESERVED + 1 + 1 + 1)
 
 /* The maximum number of reserved regions is:
  * - 1 for each physical memory region (MAX_NUM_FREEMEM_REG)

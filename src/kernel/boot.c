@@ -589,7 +589,7 @@ BOOT_CODE static bool_t provide_untyped_cap(
     return ret;
 }
 
-BOOT_CODE static bool_t create_untypeds_for_region(
+BOOT_CODE bool_t create_untypeds_for_region(
     cap_t      root_cnode_cap,
     bool_t     device_memory,
     region_t   reg,
@@ -628,10 +628,10 @@ BOOT_CODE static bool_t create_untypeds_for_region(
 }
 
 BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap,
-                                 region_t boot_mem_reuse_reg)
+                                 region_t boot_mem_reuse_reg,
+                                 seL4_SlotPos first_untyped_slot
+                                 )
 {
-    seL4_SlotPos first_untyped_slot = ndks_boot.slot_pos_cur;
-
     paddr_t start = 0;
     for (word_t i = 0; i < ndks_boot.resv_count; i++) {
         if (start < ndks_boot.reserved[i].start) {

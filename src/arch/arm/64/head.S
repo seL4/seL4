@@ -67,9 +67,11 @@
 
 .section .boot.text
 BEGIN_FUNC(_start)
-    /* Save x4 and x5 so we don't clobber it */
-    mov     x7, x4
-    mov     x8, x5
+    /* Save x4, x5, x6, x7 so we don't clobber it */
+    mov     x14, x4
+    mov     x15, x5
+    mov     x16, x6
+    mov     x17, x7
 
     /* Make sure interrupts are disable */
     msr daifset, #DAIFSET_MASK
@@ -108,8 +110,10 @@ BEGIN_FUNC(_start)
     /* Attempt to workaround any known ARM errata. */
     stp     x0, x1, [sp, #-16]!
     stp     x2, x3, [sp, #-16]!
-    stp     x7, x8, [sp, #-16]!
+    stp     x14, x15, [sp, #-16]!
+    stp     x16, x17, [sp, #-16]!
     bl arm_errata
+    ldp     x6, x7, [sp], #16
     ldp     x4, x5, [sp], #16
     ldp     x2, x3, [sp], #16
     ldp     x0, x1, [sp], #16
@@ -121,6 +125,8 @@ BEGIN_FUNC(_start)
      *  x3: user image virtual entry address
      *  x4: DTB physical address (0 if there is none)
      *  x5: DTB size (0 if there is none)
+     *  x6: extra device memory region (0 if there is none)
+     *  x7: extra device size (0 if there is none)
      */
     bl      init_kernel
 

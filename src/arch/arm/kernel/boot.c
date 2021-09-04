@@ -33,12 +33,13 @@
 BOOT_BSS static volatile int node_boot_lock;
 #endif /* ENABLE_SMP_SUPPORT */
 
-#define ARCH_RESERVED 3 // kernel + user image + dtb
+#define ARCH_RESERVED 4 // kernel + user image + dtb + extra_device
 #define MAX_RESERVED (ARCH_RESERVED + MODE_RESERVED)
 BOOT_BSS static region_t reserved[MAX_RESERVED];
 
 BOOT_CODE static bool_t arch_init_freemem(p_region_t ui_p_reg,
                                           p_region_t dtb_p_reg,
+                                          p_region_t extra_device_p_reg,
                                           v_region_t it_v_reg,
                                           word_t extra_bi_size_bits)
 {
@@ -50,6 +51,13 @@ BOOT_CODE static bool_t arch_init_freemem(p_region_t ui_p_reg,
         /* the dtb region could be empty */
         reserved[index].start = (pptr_t) paddr_to_pptr(dtb_p_reg.start);
         reserved[index].end = (pptr_t) paddr_to_pptr(dtb_p_reg.end);
+        index++;
+    }
+
+    if (extra_device_p_reg.start) {
+        /* the dtb region could be empty */
+        reserved[index].start = (pptr_t) paddr_to_pptr(extra_device_p_reg.start);
+        reserved[index].end = (pptr_t) paddr_to_pptr(extra_device_p_reg.end);
         index++;
     }
 
@@ -295,7 +303,9 @@ static BOOT_CODE bool_t try_init_kernel(
     sword_t pv_offset,
     vptr_t  v_entry,
     paddr_t dtb_addr_start,
-    paddr_t dtb_addr_end
+    paddr_t dtb_addr_end,
+    paddr_t extra_device_addr_start,
+    paddr_t extra_device_addr_end
 )
 {
     cap_t root_cnode_cap;
@@ -304,6 +314,9 @@ static BOOT_CODE bool_t try_init_kernel(
     cap_t ipcbuf_cap;
     p_region_t ui_p_reg = (p_region_t) {
         ui_p_reg_start, ui_p_reg_end
+    };
+    p_region_t extra_device_p_reg = (p_region_t) {
+        extra_device_addr_start, extra_device_addr_end
     };
     region_t ui_reg = paddr_to_pptr_reg(ui_p_reg);
     region_t dtb_reg;
@@ -314,6 +327,7 @@ static BOOT_CODE bool_t try_init_kernel(
     vptr_t ipcbuf_vptr;
     create_frames_of_region_ret_t create_frames_ret;
     create_frames_of_region_ret_t extra_bi_ret;
+    seL4_SlotPos first_untyped_slot;
 
     /* convert from physical addresses to userland vptrs */
     v_region_t ui_v_reg;
@@ -364,7 +378,7 @@ static BOOT_CODE bool_t try_init_kernel(
     /* initialise the platform */
     init_plat();
 
-    if (!arch_init_freemem(ui_p_reg, dtb_p_reg, it_v_reg, extra_bi_size_bits)) {
+    if (!arch_init_freemem(ui_p_reg, dtb_p_reg, extra_device_p_reg, it_v_reg, extra_bi_size_bits)) {
         printf("ERROR: free memory management initialization failed\n");
         return false;
     }
@@ -521,13 +535,18 @@ static BOOT_CODE bool_t try_init_kernel(
 
     init_core_state(initial);
 
+    first_untyped_slot = ndks_boot.slot_pos_cur;
+    if (extra_device_addr_start) {
+        create_untypeds_for_region(root_cnode_cap, true, paddr_to_pptr_reg(extra_device_p_reg), first_untyped_slot);
+    }
+
     /* create all of the untypeds. Both devices and kernel window memory */
     if (!create_untypeds(
             root_cnode_cap,
     (region_t) {
     KERNEL_ELF_BASE, (pptr_t)ki_boot_end
-    } /* reusable boot code/data */
-        )) {
+    }, /* reusable boot code/data */
+        first_untyped_slot)) {
         printf("ERROR: could not create untypteds for kernel image boot memory\n");
         return false;
     }
@@ -571,14 +590,20 @@ BOOT_CODE VISIBLE void init_kernel(
     sword_t pv_offset,
     vptr_t  v_entry,
     paddr_t dtb_addr_p,
-    uint32_t dtb_size
+    uint64_t dtb_size,
+    paddr_t extra_device_addr_p,
+    uint64_t extra_device_size
 )
 {
     bool_t result;
     paddr_t dtb_end_p = 0;
+    paddr_t extra_device_end_p = extra_device_size;
 
     if (dtb_addr_p) {
         dtb_end_p = dtb_addr_p + dtb_size;
+    }
+    if (extra_device_addr_p) {
+        extra_device_end_p = extra_device_addr_p + extra_device_size;
     }
 
 #ifdef ENABLE_SMP_SUPPORT
@@ -588,7 +613,9 @@ BOOT_CODE VISIBLE void init_kernel(
                                  ui_p_reg_end,
                                  pv_offset,
                                  v_entry,
-                                 dtb_addr_p, dtb_end_p);
+                                 dtb_addr_p, dtb_end_p,
+                                 extra_device_addr_p, extra_device_end_p
+                                 );
     } else {
         result = try_init_kernel_secondary_core();
     }
@@ -598,7 +625,9 @@ BOOT_CODE VISIBLE void init_kernel(
                              ui_p_reg_end,
                              pv_offset,
                              v_entry,
-                             dtb_addr_p, dtb_end_p);
+                             dtb_addr_p, dtb_end_p,
+                             extra_device_addr_p, extra_device_end_p
+                             );
 
 #endif /* ENABLE_SMP_SUPPORT */
 
