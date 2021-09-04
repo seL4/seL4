@@ -40,6 +40,11 @@
             description="Start address"/>
             <param dir="in" name="end" type="seL4_Word"
             description="End address"/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
@@ -74,6 +79,11 @@
             description="Start address"/>
             <param dir="in" name="end" type="seL4_Word"
             description="End address"/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
@@ -109,6 +119,11 @@
             description="Start address"/>
             <param dir="in" name="end" type="seL4_Word"
             description="End address"/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
@@ -143,6 +158,11 @@
             description="Start address"/>
             <param dir="in" name="end" type="seL4_Word"
             description="End address"/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.

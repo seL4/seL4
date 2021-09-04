@@ -41,6 +41,7 @@
             <error name="seL4_FailedLookup">
                 <description>
                     The <texttt text="vspace"/> does not have a PDPT mapped at <texttt text="vaddr."/>
+                    Or, <texttt text="vspace"/> is not assigned to an ASID pool.
                 </description>
             </error>
             <error name="seL4_IllegalOperation">
@@ -145,6 +146,7 @@
             <error name="seL4_FailedLookup">
                 <description>
                     The <texttt text="vspace"/> does not have a Page Directory mapped at <texttt text="vaddr."/>
+                    Or, <texttt text="vspace"/> is not assigned to an ASID pool.
                 </description>
             </error>
             <error name="seL4_IllegalOperation">
@@ -283,6 +285,7 @@
             <error name="seL4_FailedLookup">
                 <description>
                     The <texttt text="vspace"/> does not have a paging structure at the required level mapped at <texttt text="vaddr."/>
+                    Or, <texttt text="vspace"/> is not assigned to an ASID pool.
                 </description>
             </error>
             <error name="seL4_IllegalOperation">
@@ -416,6 +419,7 @@
             <error name="seL4_FailedLookup">
                 <description>
                     The <texttt text="vspace"/> does not have a paging structure at the required level mapped at <texttt text="vaddr."/>
+                    Or, <texttt text="vspace"/> is not assigned to an ASID pool.
                 </description>
             </error>
             <error name="seL4_IllegalOperation">
@@ -1053,6 +1057,7 @@
                 <description>
                     The <texttt text="_service"/> or <texttt text="eptpml4"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="_service"/> is already mapped in a VSpace.
+                    Or, <texttt text="eptpml4"/> is not assigned to an ASID pool.
                 </description>
             </error>
         </method>
@@ -1118,6 +1123,7 @@
                 <description>
                     The <texttt text="_service"/> or <texttt text="eptpml4"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="_service"/> is already mapped in a VSpace.
+                    Or, <texttt text="eptpml4"/> is not assigned to an ASID pool.
                 </description>
             </error>
         </method>
@@ -1183,6 +1189,7 @@
                 <description>
                     The <texttt text="_service"/> or <texttt text="eptpml4"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="_service"/> is already mapped in a VSpace.
+                    Or, <texttt text="eptpml4"/> is not assigned to an ASID pool.
                 </description>
             </error>
         </method>
