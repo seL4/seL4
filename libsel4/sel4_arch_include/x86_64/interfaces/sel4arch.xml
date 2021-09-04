@@ -42,6 +42,11 @@
                     A mapping already exists for this level in <texttt text="vspace"/> at <texttt text="vaddr."/>
                 </description>
             </error>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="pml4"/> is not assigned to an ASID pool.
+                </description>
+            </error>
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.

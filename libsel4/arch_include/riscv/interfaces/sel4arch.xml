@@ -68,6 +68,11 @@
                     Or, all required page tables are already mapped in <texttt text="vspace"/> at <texttt text="vaddr."/>
                 </description>
             </error>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="vspace"/> is not assigned to an ASID pool.
+                </description>
+            </error>
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
@@ -153,6 +158,7 @@
             <error name="seL4_FailedLookup">
                 <description>
                     The <texttt text="vspace"/> does not have a paging structure at the required level mapped at <texttt text="vaddr."/>
+                    Or, <texttt text="vspace"/> is not assigned to an ASID pool.
                 </description>
             </error>
             <error name="seL4_IllegalOperation">
