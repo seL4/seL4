@@ -6,8 +6,6 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-set(configure_string "${config_configure_string}")
-
 config_option(
     KernelIsMCS KERNEL_MCS "Use the MCS kernel configuration, which is not verified."
     DEFAULT OFF
@@ -49,7 +47,7 @@ set_property(
 )
 
 # These options are now set in seL4Config.cmake
-if(DEFINED CONFIGURE_MAX_IRQ)
+if(DEFINED CALLED_declare_default_headers)
     # calculate the irq cnode size based on MAX_IRQ
     if("${KernelArch}" STREQUAL "riscv")
         set(MAX_IRQ "${CONFIGURE_PLIC_MAX_NUM_INT}")
@@ -78,7 +76,7 @@ if(DEFINED CONFIGURE_MAX_IRQ)
         math(EXPR BITS "${BITS} + 1")
     endif()
     set(CONFIGURE_IRQ_SLOT_BITS "${BITS}" CACHE INTERNAL "")
-    if(NOT DEFINED ${CONFIGURE_TIMER_PRECISION})
+    if(NOT DEFINED CONFIGURE_TIMER_PRECISION)
         set(CONFIGURE_TIMER_PRECISION "0")
     endif()
     configure_file(
@@ -159,7 +157,7 @@ if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
     check_outfile_stale(regen ${device_dest} deps ${CMAKE_CURRENT_BINARY_DIR}/gen_header.cmd)
     if(regen)
         # Generate devices_gen header based on DTB
-        message(STATUS "${device_dest} is out of date. Regenerating...")
+        message(STATUS "${device_dest} is out of date. Regenerating from DTB...")
         file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/")
         execute_process(
             COMMAND
@@ -168,13 +166,10 @@ if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
                 "${device_dest}" --hardware-config "${config_file}" --hardware-schema
                 "${config_schema}" --yaml --yaml-out "${platform_yaml}" --arch "${KernelArch}"
                 --addrspace-max "${KernelPaddrUserTop}"
-            INPUT_FILE /dev/stdin
-            OUTPUT_FILE /dev/stdout
-            ERROR_FILE /dev/stderr
             RESULT_VARIABLE error
         )
         if(error)
-            message(FATAL_ERROR "Failed to generate: ${device_dest}")
+            message(FATAL_ERROR "Failed to generate from DTB: ${device_dest}")
         endif()
     endif()
     file(READ "${compatibility_outfile}" compatibility_strings)
@@ -279,6 +274,13 @@ config_string(
     UNQUOTE
 )
 
+# Set CONFIG_ENABLE_SMP_SUPPORT as an alias of CONFIG_MAX_NUM_NODES > 1
+if(KernelMaxNumNodes GREATER 1)
+    config_set(KernelEnableSMPSupport ENABLE_SMP_SUPPORT ON)
+else()
+    config_set(KernelEnableSMPSupport ENABLE_SMP_SUPPORT OFF)
+endif()
+
 config_string(
     KernelStackBits KERNEL_STACK_BITS
     "This describes the log2 size of the kernel stack. Great care should be taken as\
@@ -363,6 +365,14 @@ if(NOT (KernelBenchmarks STREQUAL "none"))
 else()
     config_set(KernelEnableBenchmarks ENABLE_BENCHMARKS OFF)
 endif()
+
+# Reflect the existance of kernel Log buffer
+if(KernelBenchmarksTrackKernelEntries OR KernelBenchmarksTracepoints)
+    config_set(KernelLogBuffer KERNEL_LOG_BUFFER ON)
+else()
+    config_set(KernelLogBuffer KERNEL_LOG_BUFFER OFF)
+endif()
+
 config_string(
     KernelMaxNumTracePoints MAX_NUM_TRACE_POINTS
     "Use TRACE_POINT_START(k) and TRACE_POINT_STOP(k) macros for recording data, \
@@ -372,13 +382,6 @@ config_string(
     DEPENDS "NOT KernelVerificationBuild;KernelBenchmarksTracepoints" DEFAULT_DISABLED 0
     UNQUOTE
 )
-# TODO: this config has no business being in the build system, and should
-# be moved to C headers, but for now must be emulated here for compatibility
-if(KernelBenchmarksTrackKernelEntries OR KernelBenchmarksTracepoints)
-    config_set(KernelBenchmarkUseKernelLogBuffer BENCHMARK_USE_KERNEL_LOG_BUFFER ON)
-else()
-    config_set(KernelBenchmarkUseKernelLogBuffer BENCHMARK_USE_KERNEL_LOG_BUFFER OFF)
-endif()
 
 config_option(
     KernelIRQReporting IRQ_REPORTING
@@ -461,12 +464,50 @@ config_string(
 )
 
 config_string(
-    KernelStaticMaxBudgetUs KERNEL_STATIC_MAX_BUDGET_US
+    KernelStaticMaxPeriodUs KERNEL_STATIC_MAX_PERIOD_US
     "Specifies a static maximum to which scheduling context can have \
     either its period or budget configured."
     DEFAULT 0
     UNQUOTE
     DEPENDS "KernelIsMCS" UNDEF_DISABLED
+)
+
+config_option(
+    KernelClz32 CLZ_32 "Define a __clzsi2 function to count leading zeros for uint32_t arguments. \
+                        Only needed on platforms which lack a builtin instruction."
+    DEFAULT OFF
+)
+
+config_option(
+    KernelClz64 CLZ_64 "Define a __clzdi2 function to count leading zeros for uint64_t arguments. \
+                        Only needed on platforms which lack a builtin instruction."
+    DEFAULT OFF
+)
+
+config_option(
+    KernelCtz32 CTZ_32 "Define a __ctzsi2 function to count trailing zeros for uint32_t arguments. \
+                        Only needed on platforms which lack a builtin instruction."
+    DEFAULT OFF
+)
+
+config_option(
+    KernelCtz64 CTZ_64 "Define a __ctzdi2 function to count trailing zeros for uint64_t arguments. \
+                        Only needed on platforms which lack a builtin instruction."
+    DEFAULT OFF
+)
+
+config_option(
+    KernelClzNoBuiltin CLZ_NO_BUILTIN
+    "Expose implementations of clzl and clzll to verification by avoiding the use \
+     of __builtin_clzl and __builtin_clzll."
+    DEFAULT OFF
+)
+
+config_option(
+    KernelCtzNoBuiltin CTZ_NO_BUILTIN
+    "Expose implementations of ctzl and ctzll to verification by avoiding the use \
+     of __builtin_ctzl and __builtin_ctzll."
+    DEFAULT OFF
 )
 
 add_config_library(kernel "${configure_string}")

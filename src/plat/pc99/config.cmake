@@ -44,3 +44,13 @@ add_bf_source_old(
     "include/plat/pc99/plat/32"
     "plat_mode/machine"
 )
+
+config_string(
+    KernelPC99TSCFrequency PC99_TSC_FREQUENCY
+    "Provide a static definition of the TSC frequency (in Hz). \
+    If this isn't set then the boot code will try and read the frequency from a MSR. \
+    If it can't calculate the frequency from a MSR then it will estimate it from running the PIT for about 200ms."
+    DEFAULT 0
+    DEPENDS "KernelPlatPC99"
+    UNQUOTE UNDEF_DISABLED
+)

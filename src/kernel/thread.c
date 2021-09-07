@@ -22,7 +22,7 @@
 #include <linker.h>
 
 static seL4_MessageInfo_t
-transferCaps(seL4_MessageInfo_t info, extra_caps_t caps,
+transferCaps(seL4_MessageInfo_t info,
              endpoint_t *endpoint, tcb_t *receiver,
              word_t *receiveBuffer);
 
@@ -91,6 +91,10 @@ void restart(tcb_t *target)
         cancelIPC(target);
 #ifdef CONFIG_KERNEL_MCS
         setThreadState(target, ThreadState_Restart);
+        if (sc_sporadic(target->tcbSchedContext) && sc_active(target->tcbSchedContext)
+            && target->tcbSchedContext != NODE_STATE(ksCurSC)) {
+            refill_unblock_check(target->tcbSchedContext);
+        }
         schedContext_resume(target->tcbSchedContext);
         if (isSchedulable(target)) {
             possibleSwitchTo(target);
@@ -134,9 +138,14 @@ void doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, bool_t grant)
     }
 
     tcb_t *receiver = reply->replyTCB;
-    reply_remove(reply);
+    reply_remove(reply, receiver);
     assert(thread_state_get_replyObject(receiver->tcbState) == REPLY_REF(0));
     assert(reply->replyTCB == NULL);
+
+    if (sc_sporadic(receiver->tcbSchedContext) && sc_active(receiver->tcbSchedContext)
+        && receiver->tcbSchedContext != NODE_STATE_ON_CORE(ksCurSC, receiver->tcbSchedContext->scCore)) {
+        refill_unblock_check(receiver->tcbSchedContext);
+    }
 #else
     assert(thread_state_get_tsType(receiver->tcbState) ==
            ThreadState_BlockedOnReply);
@@ -193,25 +202,22 @@ void doNormalTransfer(tcb_t *sender, word_t *sendBuffer, endpoint_t *endpoint,
     word_t msgTransferred;
     seL4_MessageInfo_t tag;
     exception_t status;
-    extra_caps_t caps;
 
     tag = messageInfoFromWord(getRegister(sender, msgInfoRegister));
 
     if (canGrant) {
         status = lookupExtraCaps(sender, sendBuffer, tag);
-        caps = current_extra_caps;
         if (unlikely(status != EXCEPTION_NONE)) {
-            caps.excaprefs[0] = NULL;
+            current_extra_caps.excaprefs[0] = NULL;
         }
     } else {
-        caps = current_extra_caps;
-        caps.excaprefs[0] = NULL;
+        current_extra_caps.excaprefs[0] = NULL;
     }
 
     msgTransferred = copyMRs(sender, sendBuffer, receiver, receiveBuffer,
                              seL4_MessageInfo_get_length(tag));
 
-    tag = transferCaps(tag, caps, endpoint, receiver, receiveBuffer);
+    tag = transferCaps(tag, endpoint, receiver, receiveBuffer);
 
     tag = seL4_MessageInfo_set_length(tag, msgTransferred);
     setRegister(receiver, msgInfoRegister, wordFromMessageInfo(tag));
@@ -232,7 +238,7 @@ void doFaultTransfer(word_t badge, tcb_t *sender, tcb_t *receiver,
 }
 
 /* Like getReceiveSlots, this is specialised for single-cap transfer. */
-static seL4_MessageInfo_t transferCaps(seL4_MessageInfo_t info, extra_caps_t caps,
+static seL4_MessageInfo_t transferCaps(seL4_MessageInfo_t info,
                                        endpoint_t *endpoint, tcb_t *receiver,
                                        word_t *receiveBuffer)
 {
@@ -242,14 +248,14 @@ static seL4_MessageInfo_t transferCaps(seL4_MessageInfo_t info, extra_caps_t cap
     info = seL4_MessageInfo_set_extraCaps(info, 0);
     info = seL4_MessageInfo_set_capsUnwrapped(info, 0);
 
-    if (likely(!caps.excaprefs[0] || !receiveBuffer)) {
+    if (likely(!current_extra_caps.excaprefs[0] || !receiveBuffer)) {
         return info;
     }
 
     destSlot = getReceiveSlots(receiver, receiveBuffer);
 
-    for (i = 0; i < seL4_MsgMaxExtraCaps && caps.excaprefs[i] != NULL; i++) {
-        cte_t *slot = caps.excaprefs[i];
+    for (i = 0; i < seL4_MsgMaxExtraCaps && current_extra_caps.excaprefs[i] != NULL; i++) {
+        cte_t *slot = current_extra_caps.excaprefs[i];
         cap_t cap = slot->cap;
 
         if (cap_get_capType(cap) == cap_endpoint_cap &&
@@ -314,12 +320,14 @@ static void nextDomain(void)
 #ifdef CONFIG_KERNEL_MCS
 static void switchSchedContext(void)
 {
-    if (unlikely(NODE_STATE(ksCurSC) != NODE_STATE(ksCurThread)->tcbSchedContext) && NODE_STATE(ksCurSC)->scRefillMax) {
+    if (unlikely(NODE_STATE(ksCurSC) != NODE_STATE(ksCurThread)->tcbSchedContext)) {
         NODE_STATE(ksReprogram) = true;
-        refill_unblock_check(NODE_STATE(ksCurThread->tcbSchedContext));
+        if (sc_constant_bandwidth(NODE_STATE(ksCurThread)->tcbSchedContext)) {
+            refill_unblock_check(NODE_STATE(ksCurThread)->tcbSchedContext);
+        }
 
-        assert(refill_ready(NODE_STATE(ksCurThread->tcbSchedContext)));
-        assert(refill_sufficient(NODE_STATE(ksCurThread->tcbSchedContext), 0));
+        assert(refill_ready(NODE_STATE(ksCurThread)->tcbSchedContext));
+        assert(refill_sufficient(NODE_STATE(ksCurThread)->tcbSchedContext, 0));
     }
 
     if (NODE_STATE(ksReprogram)) {
@@ -344,6 +352,7 @@ void schedule(void)
 {
 #ifdef CONFIG_KERNEL_MCS
     awaken();
+    checkDomainTime();
 #endif
 
     if (NODE_STATE(ksSchedulerAction) != SchedulerAction_ResumeCurrentThread) {
@@ -566,14 +575,14 @@ void postpone(sched_context_t *sc)
 void setNextInterrupt(void)
 {
     time_t next_interrupt = NODE_STATE(ksCurTime) +
-                            REFILL_HEAD(NODE_STATE(ksCurThread)->tcbSchedContext).rAmount;
+                            refill_head(NODE_STATE(ksCurThread)->tcbSchedContext)->rAmount;
 
     if (CONFIG_NUM_DOMAINS > 1) {
         next_interrupt = MIN(next_interrupt, NODE_STATE(ksCurTime) + ksDomainTime);
     }
 
     if (NODE_STATE(ksReleaseHead) != NULL) {
-        next_interrupt = MIN(REFILL_HEAD(NODE_STATE(ksReleaseHead)->tcbSchedContext).rTime, next_interrupt);
+        next_interrupt = MIN(refill_head(NODE_STATE(ksReleaseHead)->tcbSchedContext)->rTime, next_interrupt);
     }
 
     setDeadline(next_interrupt - getTimerPrecision());
@@ -584,13 +593,13 @@ void chargeBudget(ticks_t consumed, bool_t canTimeoutFault, word_t core, bool_t 
 
     if (isRoundRobin(NODE_STATE_ON_CORE(ksCurSC, core))) {
         assert(refill_size(NODE_STATE_ON_CORE(ksCurSC, core)) == MIN_REFILLS);
-        REFILL_HEAD(NODE_STATE_ON_CORE(ksCurSC, core)).rAmount += REFILL_TAIL(NODE_STATE_ON_CORE(ksCurSC, core)).rAmount;
-        REFILL_TAIL(NODE_STATE_ON_CORE(ksCurSC, core)).rAmount = 0;
+        refill_head(NODE_STATE_ON_CORE(ksCurSC, core))->rAmount += refill_tail(NODE_STATE_ON_CORE(ksCurSC, core))->rAmount;
+        refill_tail(NODE_STATE_ON_CORE(ksCurSC, core))->rAmount = 0;
     } else {
         refill_budget_check(consumed);
     }
 
-    assert(REFILL_HEAD(NODE_STATE_ON_CORE(ksCurSC, core)).rAmount >= MIN_BUDGET);
+    assert(refill_head(NODE_STATE_ON_CORE(ksCurSC, core))->rAmount >= MIN_BUDGET);
     NODE_STATE_ON_CORE(ksCurSC, core)->scConsumed += consumed;
     NODE_STATE_ON_CORE(ksConsumed, core) = 0;
     if (isCurCPU && likely(isSchedulable(NODE_STATE_ON_CORE(ksCurThread, core)))) {

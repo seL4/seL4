@@ -4,12 +4,11 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#ifndef __ARM_PLAT_H
-#define __ARM_PLAT_H
+#pragma once
 
-#include <autoconf.h>
+#include <config.h>
 
-#define TIMER_CLOCK_HZ @CONFIGURE_TIMER_FREQUENCY@
+#define TIMER_CLOCK_HZ ULL_CONST(@CONFIGURE_TIMER_FREQUENCY@)
 #define CLK_MAGIC @CONFIGURE_CLK_MAGIC@
 #define CLK_SHIFT @CONFIGURE_CLK_SHIFT@
 #define TIMER_PRECISION @CONFIGURE_TIMER_PRECISION@
@@ -24,8 +23,17 @@ enum IRQConstants {
 #include <@CONFIGURE_TIMER@>
 
 #cmakedefine CONFIGURE_SMMU <@CONFIGURE_SMMU@>
+#if (defined(CONFIGURE_SMMU) && defined(CONFIG_TK1_SMMU))
+#include CONFIGURE_SMMU
+#endif
+
+#cmakedefine CONFIGURE_SMMU <@CONFIGURE_SMMU@>
 #if (defined(CONFIGURE_SMMU) && defined(CONFIG_ARM_SMMU))
 #include CONFIGURE_SMMU
+
+#define SMMU_MAX_SID  @CONFIGURE_MAX_SID@
+#define SMMU_MAX_CB  @CONFIGURE_MAX_CB@
+
 #endif
 
 #ifdef CONFIG_KERNEL_MCS
@@ -34,5 +42,3 @@ static inline CONST time_t getKernelWcetUs(void)
     return @CONFIGURE_KERNEL_WCET@;
 }
 #endif
-
-#endif /* !__ARM_PLAT_H */

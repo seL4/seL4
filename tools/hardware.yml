@@ -1,5 +1,6 @@
 #
 # Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+# Copyright 2020, HENSOLDT Cyber GmbH
 #
 # SPDX-License-Identifier: GPL-2.0-only
 #
@@ -20,13 +21,16 @@ devices:
       # distributor
       - index: 0
         kernel: GIC_V2_DISTRIBUTOR_PPTR
+        kernel_size: 0x1000
       # controller
       - index: 1
         kernel: GIC_V2_CONTROLLER_PPTR
+        kernel_size: 0x1000
       # GICV
       - index: 2
         kernel: GIC_V2_VCPUCTRL_PPTR
         macro: CONFIG_ARM_HYPERVISOR_SUPPORT
+        kernel_size: 0x1000
     interrupts:
       INTERRUPT_VGIC_MAINTENANCE: 0
   # ARM GICv3
@@ -74,6 +78,7 @@ devices:
     regions:
       - index: 0
         kernel: AVIC_PPTR
+        kernel_size: 0x1000
   # ARM PL310 L2 cache controller (arm/l2c2x0.txt)
   - compatible:
       - arm,pl310-cache
@@ -116,11 +121,19 @@ devices:
       KERNEL_PMU_IRQ: 0
   # Tegra SMMU (memory-controllers/nvidia,tegra30-mc.txt)
   - compatible:
-      - nvidia,tegra124-mc
+      - arm,mmu-500
     regions:
       - index: 0
         kernel: SMMU_PPTR
         macro: CONFIG_ARM_SMMU
+    interrupts:
+      INTERRUPT_SMMU: 0
+  - compatible:
+      - nvidia,tegra124-mc
+    regions:
+      - index: 0
+        kernel: SMMU_PPTR
+        macro: CONFIG_TK1_SMMU
     interrupts:
       INTERRUPT_SMMU: 0
   # ARM architected timer (timer/arm,arch_timer.txt)
@@ -169,6 +182,7 @@ devices:
     regions:
       - index: 0
         kernel: EPIT_PPTR
+        kernel_size: 0x1000
     interrupts:
       KERNEL_TIMER_IRQ: 0
   # i.MX GPT
@@ -203,6 +217,7 @@ devices:
       - index: 0
         kernel: CMPER_PPTR
         user: true
+        kernel_size: 0x1000
   # TI watchdog
   - compatible:
       - ti,omap3-wdt
@@ -217,6 +232,8 @@ devices:
       - brcm,bcm2835-aux-uart
       - fsl,imx31-uart
       - fsl,imx6q-uart
+      - fsl,imx8qxp-lpuart
+      - fsl,imx6sx-uart
       - nvidia,tegra124-hsuart
       - nvidia,tegra20-uart
       - qcom,msm-uartdm
@@ -224,11 +241,13 @@ devices:
       - snps,dw-apb-uart
       - ti,omap3-uart
       - xlnx,xuartps
+      - ns16550a
     regions:
       - index: 0
         kernel: UART_PPTR
         macro: CONFIG_PRINTING
         user: true
+        kernel_size: 0x1000
 
   # RISC-V PLIC
   - compatible:
@@ -236,6 +255,7 @@ devices:
     regions:
       - index: 0
         kernel: PLIC_PPTR
+        kernel_size: 0x04000000
 
   # elfloader rules
   - compatible:
@@ -243,5 +263,6 @@ devices:
       - arm,psci-1.0
   - compatible:
       - fsl,imx6q-src
+      - fsl,imx6sx-src
   - compatible:
       - xlnx,zynq-reset

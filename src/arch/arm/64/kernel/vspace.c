@@ -26,12 +26,6 @@
 #include <arch/object/iospace.h>
 #include <arch/object/vcpu.h>
 #include <arch/machine/tlb.h>
-/* VSpace root slot is reserved for storing the VSpace root's allocated hardware VMID.
- * This is only necessary when running EL2 and when we only have
- * 8-bit VMID. Note that this assumes that the IPA size for S2
- * translation does not use full 48-bit.
- */
-#define VTABLE_VMID_SLOT   MASK(seL4_VSpaceIndexBits)
 #define RESERVED 3
 
 /*
@@ -255,12 +249,12 @@ BOOT_CODE void map_kernel_window(void)
 
     /* place the PUD into the PGD */
     armKSGlobalKernelPGD[GET_PGD_INDEX(PPTR_BASE)] = pgde_pgde_pud_new(
-                                                         pptr_to_paddr(armKSGlobalKernelPUD));
+                                                         addrFromKPPtr(armKSGlobalKernelPUD));
 
     /* place all PDs except the last one in PUD */
     for (idx = GET_PUD_INDEX(PPTR_BASE); idx < GET_PUD_INDEX(PPTR_TOP); idx++) {
         armKSGlobalKernelPUD[idx] = pude_pude_pd_new(
-                                        pptr_to_paddr(&armKSGlobalKernelPDs[idx][0])
+                                        addrFromKPPtr(&armKSGlobalKernelPDs[idx][0])
                                     );
     }
 
@@ -285,12 +279,12 @@ BOOT_CODE void map_kernel_window(void)
 
     /* put the PD into the PUD for device window */
     armKSGlobalKernelPUD[GET_PUD_INDEX(PPTR_TOP)] = pude_pude_pd_new(
-                                                        pptr_to_paddr(&armKSGlobalKernelPDs[BIT(PUD_INDEX_BITS) - 1][0])
+                                                        addrFromKPPtr(&armKSGlobalKernelPDs[BIT(PUD_INDEX_BITS) - 1][0])
                                                     );
 
     /* put the PT into the PD for device window */
     armKSGlobalKernelPDs[BIT(PUD_INDEX_BITS) - 1][BIT(PD_INDEX_BITS) - 1] = pde_pde_small_new(
-                                                                                pptr_to_paddr(armKSGlobalKernelPT)
+                                                                                addrFromKPPtr(armKSGlobalKernelPT)
                                                                             );
 
     map_kernel_devices();
@@ -540,10 +534,10 @@ BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vpt
 BOOT_CODE void activate_kernel_vspace(void)
 {
     cleanInvalidateL1Caches();
-    setCurrentKernelVSpaceRoot(ttbr_new(0, pptr_to_paddr(armKSGlobalKernelPGD)));
+    setCurrentKernelVSpaceRoot(ttbr_new(0, addrFromKPPtr(armKSGlobalKernelPGD)));
 
     /* Prevent elf-loader address translation to fill up TLB */
-    setCurrentUserVSpaceRoot(ttbr_new(0, pptr_to_paddr(armKSGlobalUserVSpace)));
+    setCurrentUserVSpaceRoot(ttbr_new(0, addrFromKPPtr(armKSGlobalUserVSpace)));
 
     invalidateLocalTLB();
     lockTLBEntry(KERNEL_ELF_BASE);
@@ -554,6 +548,10 @@ BOOT_CODE void write_it_asid_pool(cap_t it_ap_cap, cap_t it_vspace_cap)
     asid_pool_t *ap = ASID_POOL_PTR(pptr_of_cap(it_ap_cap));
     ap->array[IT_ASID] = (void *)(pptr_of_cap(it_vspace_cap));
     armKSASIDTable[IT_ASID >> asidLowBits] = ap;
+#ifdef CONFIG_ARM_SMMU
+    vspace_root_t *vtable = ap->array[IT_ASID];
+    vtable[VTABLE_SMMU_SLOT] = vtable_invalid_smmu_new(0);
+#endif
 }
 
 /* ==================== BOOT CODE FINISHES HERE ==================== */
@@ -993,7 +991,7 @@ void setVMRoot(tcb_t *tcb)
     threadRoot = TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap;
 
     if (!isValidNativeRoot(threadRoot)) {
-        setCurrentUserVSpaceRoot(ttbr_new(0, pptr_to_paddr(armKSGlobalUserVSpace)));
+        setCurrentUserVSpaceRoot(ttbr_new(0, addrFromKPPtr(armKSGlobalUserVSpace)));
         return;
     }
 
@@ -1001,7 +999,7 @@ void setVMRoot(tcb_t *tcb)
     asid = cap_vtable_root_get_mappedASID(threadRoot);
     find_ret = findVSpaceForASID(asid);
     if (unlikely(find_ret.status != EXCEPTION_NONE || find_ret.vspace_root != vspaceRoot)) {
-        setCurrentUserVSpaceRoot(ttbr_new(0, pptr_to_paddr(armKSGlobalUserVSpace)));
+        setCurrentUserVSpaceRoot(ttbr_new(0, addrFromKPPtr(armKSGlobalUserVSpace)));
         return;
     }
 
@@ -1171,8 +1169,59 @@ static void invalidateASIDEntry(asid_t asid)
 
 #endif
 
+#ifdef CONFIG_ARM_SMMU
+static vspace_root_t getASIDBindCB(asid_t asid)
+{
+    asid_pool_t *asidPool;
+
+    asidPool = armKSASIDTable[asid >> asidLowBits];
+    assert(asidPool);
+
+    vspace_root_t *vtable = asidPool->array[asid & MASK(asidLowBits)];
+    assert(vtable);
+
+    return vtable[VTABLE_SMMU_SLOT];
+}
+
+void increaseASIDBindCB(asid_t asid)
+{
+    asid_pool_t *asidPool;
+    vspace_root_t stored_info;
+
+    asidPool = armKSASIDTable[asid >> asidLowBits];
+    assert(asidPool);
+
+    vspace_root_t *vtable = asidPool->array[asid & MASK(asidLowBits)];
+    assert(vtable);
+
+    stored_info = vtable[VTABLE_SMMU_SLOT];
+    vtable[VTABLE_SMMU_SLOT] = vtable_invalid_smmu_new(vtable_invalid_get_bind_cb(stored_info) + 1);
+}
+
+void decreaseASIDBindCB(asid_t asid)
+{
+    asid_pool_t *asidPool;
+    vspace_root_t stored_info;
+
+    asidPool = armKSASIDTable[asid >> asidLowBits];
+    assert(asidPool);
+
+    vspace_root_t *vtable = asidPool->array[asid & MASK(asidLowBits)];
+    assert(vtable);
+
+    stored_info = vtable[VTABLE_SMMU_SLOT];
+    vtable[VTABLE_SMMU_SLOT] = vtable_invalid_smmu_new(vtable_invalid_get_bind_cb(stored_info) - 1);
+}
+#endif
+
 static inline void invalidateTLBByASID(asid_t asid)
 {
+#ifdef CONFIG_ARM_SMMU
+    vspace_root_t bind_cb = getASIDBindCB(asid);
+    if (unlikely(vtable_invalid_get_bind_cb(bind_cb))) {
+        invalidateSMMUTLBByASID(asid, vtable_invalid_get_bind_cb(bind_cb));
+    }
+#endif
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     vspace_root_t stored_hw_asid;
 
@@ -1188,6 +1237,12 @@ static inline void invalidateTLBByASID(asid_t asid)
 
 static inline void invalidateTLBByASIDVA(asid_t asid, vptr_t vaddr)
 {
+#ifdef CONFIG_ARM_SMMU
+    vspace_root_t bind_cb = getASIDBindCB(asid);
+    if (unlikely(vtable_invalid_get_bind_cb(bind_cb))) {
+        invalidateSMMUTLBByASIDVA(asid, vaddr, vtable_invalid_get_bind_cb(bind_cb));
+    }
+#endif
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     vspace_root_t stored_hw_asid;
 
@@ -1231,8 +1286,11 @@ void unmapPageUpperDirectory(asid_t asid, vptr_t vaddr, pude_t *pud)
 
     pgdSlot = pageUpperDirectoryMapped(asid, vaddr, pud);
     if (likely(pgdSlot != NULL)) {
+#ifdef CONFIG_ARM_SMMU
+        *pgdSlot = pgde_pgde_invalid_new(0, false, 0);
+#else
         *pgdSlot = pgde_pgde_invalid_new(0, false);
-
+#endif
         cleanByVA_PoU((vptr_t)pgdSlot, pptr_to_paddr(pgdSlot));
         invalidateTLBByASID(asid);
     }
@@ -1450,7 +1508,7 @@ static exception_t performUpperPageDirectoryInvocationUnmap(cap_t cap, cte_t *ct
         pude_t *pud = PUD_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(cap));
         unmapPageUpperDirectory(cap_page_upper_directory_cap_get_capPUDMappedASID(cap),
                                 cap_page_upper_directory_cap_get_capPUDMappedAddress(cap), pud);
-        clearMemory((void *)pud, cap_get_capSizeBits(cap));
+        clearMemory_PT((void *)pud, cap_get_capSizeBits(cap));
     }
 
     cap_page_upper_directory_cap_ptr_set_capPUDIsMapped(&(ctSlot->cap), 0);
@@ -1473,7 +1531,7 @@ static exception_t performPageDirectoryInvocationUnmap(cap_t cap, cte_t *ctSlot)
         pde_t *pd = PD_PTR(cap_page_directory_cap_get_capPDBasePtr(cap));
         unmapPageDirectory(cap_page_directory_cap_get_capPDMappedASID(cap),
                            cap_page_directory_cap_get_capPDMappedAddress(cap), pd);
-        clearMemory((void *)pd, cap_get_capSizeBits(cap));
+        clearMemory_PT((void *)pd, cap_get_capSizeBits(cap));
     }
 
     cap_page_directory_cap_ptr_set_capPDIsMapped(&(ctSlot->cap), 0);
@@ -1495,7 +1553,7 @@ static exception_t performPageTableInvocationUnmap(cap_t cap, cte_t *ctSlot)
         pte_t *pt = PT_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
         unmapPageTable(cap_page_table_cap_get_capPTMappedASID(cap),
                        cap_page_table_cap_get_capPTMappedAddress(cap), pt);
-        clearMemory((void *)pt, cap_get_capSizeBits(cap));
+        clearMemory_PT((void *)pt, cap_get_capSizeBits(cap));
     }
 
     cap_page_table_cap_ptr_set_capPTIsMapped(&(ctSlot->cap), 0);
@@ -1556,6 +1614,7 @@ static exception_t performSmallPageInvocationMap(asid_t asid, cap_t cap, cte_t *
 static exception_t performPageInvocationUnmap(cap_t cap, cte_t *ctSlot)
 {
     if (cap_frame_cap_get_capFMappedASID(cap) != 0) {
+
         unmapPage(cap_frame_cap_get_capFSize(cap),
                   cap_frame_cap_get_capFMappedASID(cap),
                   cap_frame_cap_get_capFMappedAddress(cap),
@@ -1628,8 +1687,7 @@ static exception_t performASIDControlInvocation(void *frame, cte_t *slot,
 }
 
 static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, unsigned int length,
-                                                 cte_t *cte, cap_t cap, extra_caps_t extraCaps,
-                                                 word_t *buffer)
+                                                 cte_t *cte, cap_t cap, word_t *buffer)
 {
     vptr_t start, end;
     paddr_t pstart;
@@ -1727,8 +1785,7 @@ static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, unsigned int l
 
 #ifndef AARCH64_VSPACE_S2_START_L1
 static exception_t decodeARMPageUpperDirectoryInvocation(word_t invLabel, unsigned int length,
-                                                         cte_t *cte, cap_t cap, extra_caps_t extraCaps,
-                                                         word_t *buffer)
+                                                         cte_t *cte, cap_t cap, word_t *buffer)
 {
     cap_t pgdCap;
     vspace_root_t *pgd;
@@ -1753,7 +1810,7 @@ static exception_t decodeARMPageUpperDirectoryInvocation(word_t invLabel, unsign
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (unlikely(length < 2 || extraCaps.excaprefs[0] == NULL)) {
+    if (unlikely(length < 2 || current_extra_caps.excaprefs[0] == NULL)) {
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -1765,7 +1822,7 @@ static exception_t decodeARMPageUpperDirectoryInvocation(word_t invLabel, unsign
     }
 
     vaddr = getSyscallArg(0, buffer) & (~MASK(PGD_INDEX_OFFSET));
-    pgdCap = extraCaps.excaprefs[0]->cap;
+    pgdCap = current_extra_caps.excaprefs[0]->cap;
 
     if (unlikely(!isValidNativeRoot(pgdCap))) {
         current_syscall_error.type = seL4_InvalidCapability;
@@ -1815,8 +1872,7 @@ static exception_t decodeARMPageUpperDirectoryInvocation(word_t invLabel, unsign
 #endif
 
 static exception_t decodeARMPageDirectoryInvocation(word_t invLabel, unsigned int length,
-                                                    cte_t *cte, cap_t cap, extra_caps_t extraCaps,
-                                                    word_t *buffer)
+                                                    cte_t *cte, cap_t cap, word_t *buffer)
 {
     cap_t vspaceRootCap;
     vspace_root_t *vspaceRoot;
@@ -1841,7 +1897,7 @@ static exception_t decodeARMPageDirectoryInvocation(word_t invLabel, unsigned in
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (unlikely(length < 2 || extraCaps.excaprefs[0] == NULL)) {
+    if (unlikely(length < 2 || current_extra_caps.excaprefs[0] == NULL)) {
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -1853,7 +1909,7 @@ static exception_t decodeARMPageDirectoryInvocation(word_t invLabel, unsigned in
     }
 
     vaddr = getSyscallArg(0, buffer) & (~MASK(PUD_INDEX_OFFSET));
-    vspaceRootCap = extraCaps.excaprefs[0]->cap;
+    vspaceRootCap = current_extra_caps.excaprefs[0]->cap;
 
     if (unlikely(!isValidNativeRoot(vspaceRootCap))) {
         current_syscall_error.type = seL4_InvalidCapability;
@@ -1908,8 +1964,7 @@ static exception_t decodeARMPageDirectoryInvocation(word_t invLabel, unsigned in
 }
 
 static exception_t decodeARMPageTableInvocation(word_t invLabel, unsigned int length,
-                                                cte_t *cte, cap_t cap, extra_caps_t extraCaps,
-                                                word_t *buffer)
+                                                cte_t *cte, cap_t cap, word_t *buffer)
 {
     cap_t vspaceRootCap;
     vspace_root_t *vspaceRoot;
@@ -1934,7 +1989,7 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, unsigned int le
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (unlikely(length < 2 || extraCaps.excaprefs[0] == NULL)) {
+    if (unlikely(length < 2 || current_extra_caps.excaprefs[0] == NULL)) {
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -1946,7 +2001,7 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, unsigned int le
     }
 
     vaddr = getSyscallArg(0, buffer) & (~MASK(PD_INDEX_OFFSET));
-    vspaceRootCap = extraCaps.excaprefs[0]->cap;
+    vspaceRootCap = current_extra_caps.excaprefs[0]->cap;
 
     if (unlikely(!isValidNativeRoot(vspaceRootCap))) {
         current_syscall_error.type = seL4_InvalidCapability;
@@ -2001,8 +2056,7 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, unsigned int le
 }
 
 static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length,
-                                            cte_t *cte, cap_t cap, extra_caps_t extraCaps,
-                                            word_t *buffer)
+                                            cte_t *cte, cap_t cap, word_t *buffer)
 {
     switch (invLabel) {
     case ARMPageMap: {
@@ -2016,14 +2070,14 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
         vm_attributes_t attributes;
         findVSpaceForASID_ret_t find_ret;
 
-        if (unlikely(length < 3 || extraCaps.excaprefs[0] == NULL)) {
+        if (unlikely(length < 3 || current_extra_caps.excaprefs[0] == NULL)) {
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
         }
 
         vaddr = getSyscallArg(0, buffer);
         attributes = vmAttributesFromWord(getSyscallArg(2, buffer));
-        vspaceRootCap = extraCaps.excaprefs[0]->cap;
+        vspaceRootCap = current_extra_caps.excaprefs[0]->cap;
 
         frameSize = cap_frame_cap_get_capFSize(cap);
         vmRights = maskVMRights(cap_frame_cap_get_capFVMRights(cap),
@@ -2209,28 +2263,23 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
 }
 
 exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
-                                   cte_t *cte, cap_t cap, extra_caps_t extraCaps,
-                                   word_t *buffer)
+                                   cte_t *cte, cap_t cap, word_t *buffer)
 {
     switch (cap_get_capType(cap)) {
     case cap_vtable_root_cap:
-        return decodeARMVSpaceRootInvocation(invLabel, length, cte, cap, extraCaps, buffer);
+        return decodeARMVSpaceRootInvocation(invLabel, length, cte, cap, buffer);
 #ifndef AARCH64_VSPACE_S2_START_L1
     case cap_page_upper_directory_cap:
-        return decodeARMPageUpperDirectoryInvocation(invLabel, length, cte,
-                                                     cap, extraCaps, buffer);
+        return decodeARMPageUpperDirectoryInvocation(invLabel, length, cte, cap, buffer);
 #endif
     case cap_page_directory_cap:
-        return decodeARMPageDirectoryInvocation(invLabel, length, cte,
-                                                cap, extraCaps, buffer);
+        return decodeARMPageDirectoryInvocation(invLabel, length, cte, cap, buffer);
 
     case cap_page_table_cap:
-        return decodeARMPageTableInvocation(invLabel, length, cte,
-                                            cap, extraCaps, buffer);
+        return decodeARMPageTableInvocation(invLabel, length, cte, cap, buffer);
 
     case cap_frame_cap:
-        return decodeARMFrameInvocation(invLabel, length, cte,
-                                        cap, extraCaps, buffer);
+        return decodeARMFrameInvocation(invLabel, length, cte, cap, buffer);
 
     case cap_asid_control_cap: {
         unsigned int i;
@@ -2249,8 +2298,8 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
         }
 
         if (unlikely(length < 2 ||
-                     extraCaps.excaprefs[0] == NULL ||
-                     extraCaps.excaprefs[1] == NULL)) {
+                     current_extra_caps.excaprefs[0] == NULL ||
+                     current_extra_caps.excaprefs[1] == NULL)) {
             current_syscall_error.type = seL4_TruncatedMessage;
 
             return EXCEPTION_SYSCALL_ERROR;
@@ -2258,9 +2307,9 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
 
         index = getSyscallArg(0, buffer);
         depth = getSyscallArg(1, buffer);
-        parentSlot = extraCaps.excaprefs[0];
+        parentSlot = current_extra_caps.excaprefs[0];
         untyped = parentSlot->cap;
-        root = extraCaps.excaprefs[1]->cap;
+        root = current_extra_caps.excaprefs[1]->cap;
 
         /* Find first free pool */
         for (i = 0; i < nASIDPools && armKSASIDTable[i]; i++);
@@ -2274,8 +2323,8 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
         asid_base = i << asidLowBits;
 
         if (unlikely(cap_get_capType(untyped) != cap_untyped_cap ||
-                     cap_untyped_cap_get_capBlockSize(untyped) != seL4_ASIDPoolBits) ||
-            cap_untyped_cap_get_capIsDevice(untyped)) {
+                     cap_untyped_cap_get_capBlockSize(untyped) != seL4_ASIDPoolBits ||
+                     cap_untyped_cap_get_capIsDevice(untyped))) {
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
 
@@ -2317,13 +2366,13 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        if (unlikely(extraCaps.excaprefs[0] == NULL)) {
+        if (unlikely(current_extra_caps.excaprefs[0] == NULL)) {
             current_syscall_error.type = seL4_TruncatedMessage;
 
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        vspaceCapSlot = extraCaps.excaprefs[0];
+        vspaceCapSlot = current_extra_caps.excaprefs[0];
         vspaceCap = vspaceCapSlot->cap;
 
         if (unlikely(!isVTableRoot(vspaceCap) || cap_vtable_root_isMapped(vspaceCap))) {
@@ -2377,27 +2426,21 @@ void kernelDataAbort(word_t pc) VISIBLE;
 
 void kernelPrefetchAbort(word_t pc)
 {
-    word_t ifsr = getIFSR();
-
     printf("\n\nKERNEL PREFETCH ABORT!\n");
-    printf("Faulting instruction: 0x%x\n", (unsigned int)pc);
-    printf("ESR (IFSR): 0x%x\n", (unsigned int)ifsr);
-
+    printf("Faulting instruction: 0x%"SEL4_PRIx_word"\n", pc);
+    printf("ESR (IFSR): 0x%"SEL4_PRIx_word"\n", getIFSR());
     halt();
 }
 
 void kernelDataAbort(word_t pc)
 {
-    word_t dfsr = getDFSR();
-    word_t far = getFAR();
-
     printf("\n\nKERNEL DATA ABORT!\n");
-    printf("Faulting instruction: 0x%lx\n", (unsigned long)pc);
-    printf("FAR: 0x%lx ESR (DFSR): 0x%x\n", (unsigned long)far, (unsigned int)dfsr);
-
+    printf("Faulting instruction: 0x%"SEL4_PRIx_word"\n", pc);
+    printf("FAR: 0x%"SEL4_PRIx_word" ESR (DFSR): 0x%"SEL4_PRIx_word"\n",
+           getFAR(), getDFSR());
     halt();
 }
-#endif
+#endif /* CONFIG_DEBUG_BUILD */
 
 #ifdef CONFIG_PRINTING
 typedef struct readWordFromVSpace_ret {
@@ -2434,7 +2477,6 @@ void Arch_userStackTrace(tcb_t *tptr)
     cap_t threadRoot;
     vspace_root_t *vspaceRoot;
     word_t sp;
-    int i;
 
     threadRoot = TCB_PTR_CTE_PTR(tptr, tcbVTable)->cap;
 
@@ -2454,20 +2496,21 @@ void Arch_userStackTrace(tcb_t *tptr)
         return;
     }
 
-    for (i = 0; i < CONFIG_USER_STACK_TRACE_LENGTH; i++) {
+    for (unsigned int i = 0; i < CONFIG_USER_STACK_TRACE_LENGTH; i++) {
         word_t address = sp + (i * sizeof(word_t));
-        readWordFromVSpace_ret_t result;
-        result = readWordFromVSpace(vspaceRoot, address);
+        readWordFromVSpace_ret_t result = readWordFromVSpace(vspaceRoot,
+                                                             address);
         if (result.status == EXCEPTION_NONE) {
-            printf("0x%lx: 0x%lx\n", (unsigned long)address, (unsigned long)result.value);
+            printf("0x%"SEL4_PRIx_word": 0x%"SEL4_PRIx_word"\n",
+                   address, result.value);
         } else {
-            printf("0x%lx: INVALID\n", (unsigned long)address);
+            printf("0x%"SEL4_PRIx_word": INVALID\n", address);
         }
     }
 }
-#endif
+#endif /* CONFIG_PRINTING */
 
-#if defined(CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER)
+#if defined(CONFIG_KERNEL_LOG_BUFFER)
 exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
 {
     lookupCapAndSlot_ret_t lu_ret;
@@ -2517,9 +2560,9 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
                              0,                         /* VMKernelOnly */
                              NORMAL);
 
-    cleanByVA_PoU((vptr_t)armKSGlobalLogPDE, pptr_to_paddr(armKSGlobalLogPDE));
+    cleanByVA_PoU((vptr_t)armKSGlobalLogPDE, addrFromKPPtr(armKSGlobalLogPDE));
     invalidateTranslationSingle(KS_LOG_PPTR);
     return EXCEPTION_NONE;
 }
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_KERNEL_LOG_BUFFER */
 

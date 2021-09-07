@@ -200,8 +200,15 @@ invoke the appropriate \obj{SchedControl} capability, which provides access to C
 on a single node.  A scheduling control cap for each node is provided to the initial task at run
 time.  Threads run on the node that their scheduling context is configured for.  Scheduling context
 parameters can then be set and updated using
-\apifunc{seL4\_SchedControl\_Configure}{schedcontrol_configure}, which allows the budget and period
-to be specified.
+\apifunc{seL4\_SchedControl\_ConfigureFlags}{schedcontrol_configureflags}, which allows the budget and period
+to be specified along with a bitwise OR'd set of the following flags.
+
+\begin{description}
+
+\item[seL4\_SchedContext\_Sporadic]: constrain the execution time only according to the
+sporadic server algorithm rather than to a continuous constant bandwidth.
+
+\end{description}
 
 The kernel does not conduct any schedulability tests, as task admission is left to user-level policy
 and can be conducted online or offline, statically or dynamically or not at all.
@@ -451,8 +458,8 @@ Information on the available hardware debugging resources is presented in the fo
 
 \begin{description}
 \item[seL4\_NumHWBreakpoints]: Defines the total number of hardware break
-registers available, of all types available on the hardware platform. On the ARM
-Cortex A7 for example, there are 6 exclusive instruction breakpoint registers,
+registers available, of all types available on the hardware platform. On the Arm
+Cortex~A7 for example, there are 6 exclusive instruction breakpoint registers,
 and 4 exclusive data watchpoint registers, for a total of 10 monitor registers.
 On this platform therefore, \texttt{seL4\_NumHWBreakpoints} is defined as 10.
 The instruction breakpoint registers will always be assigned the lower API-IDs,
@@ -465,14 +472,14 @@ hardware breakpoints/watchpoints of a certain type.
 
 \item[seL4\_NumExclusiveBreakpoints]: Defines the number of hardware registers
 capable of generating a fault \textbf{only} on instruction execution. Currently this will be
-set only on ARM platforms. The API-ID of the first exclusive breakpoint is given
+set only on Arm platforms. The API-ID of the first exclusive breakpoint is given
 in \texttt{seL4\_FirstBreakpoint}. If there are no instruction-break exclusive
 registers, \texttt{seL4\_NumExclusiveBreakpoints} will be set to \texttt{0} and
 \texttt{seL4\_FirstBreakpoint} will be set to -1.
 
 \item[seL4\_NumExclusiveWatchpoints]: Defines the number of hardware registers
 capable of generating a fault \textbf{only} on data access. Currently this will be set only
-on ARM platforms. The API-ID of the first exclusive watchpoint is given
+on Arm platforms. The API-ID of the first exclusive watchpoint is given
 in \texttt{seL4\_FirstWatchpoint}. If there are no data-break exclusive
 registers, \texttt{seL4\_NumExclusiveWatchpoints} will be set to \texttt{0} and
 \texttt{seL4\_FirstWatchpoint} will be set to -1.
@@ -625,7 +632,7 @@ additional machine registers and other pieces of state a \obj{VCPU} object is in
 as storage for this state. For simplicity we refer to this virtualised higher privileged level as
 'guest mode'. \obj{VCPU}s are bound in a one-to-one relationship with a \obj{TCB} in order
 to provide a thread with this ability to run in higher privilege mode. See the section on
-ARM or x86 for more precise details.
+Arm or x86 for more precise details.
 
 \obj{VCPU} objects also have additional, architecture specific, invocations for manipulating
 the additional state or other virtualisation controls provided by the hardware. Binding of
@@ -636,7 +643,7 @@ the underlying hardware primitives and operations. As a result an in depth famil
 the underlying architecture specific harwdare mechanisms is required to use these objects, and
 such familiarity is therefore assumed in description.
 
-\subsection{ARM}
+\subsection{Arm}
 
 When a \obj{TCB} has a bound \obj{VCPU} it is allowed to have the mode portion of the
 \texttt{cpsr} register set to values other than \texttt{user}. Specifically it may have any value other than

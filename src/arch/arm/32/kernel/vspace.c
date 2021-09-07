@@ -253,11 +253,11 @@ BOOT_CODE void map_kernel_window(void)
     /* crosscheck whether we have mapped correctly so far */
     assert(phys == PADDR_TOP);
 
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_LOG_BUFFER
     /* map log buffer page table. PTEs to be filled by user later by calling seL4_BenchmarkSetLogBuffer() */
     armKSGlobalPD[idx] =
         pde_pde_coarse_new(
-            addrFromPPtr(armKSGlobalLogPT), /* address */
+            addrFromKPPtr(armKSGlobalLogPT), /* address */
             true,                           /* P       */
             0                               /* Domain  */
         );
@@ -266,12 +266,12 @@ BOOT_CODE void map_kernel_window(void)
 
     phys += BIT(pageBitsForSize(ARMSection));
     idx++;
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_KERNEL_LOG_BUFFER */
 
     /* map page table covering last 1M of virtual address space to page directory */
     armKSGlobalPD[idx] =
         pde_pde_coarse_new(
-            addrFromPPtr(armKSGlobalPT), /* address */
+            addrFromKPPtr(armKSGlobalPT), /* address */
             true,                        /* P       */
             0                            /* Domain  */
         );
@@ -281,7 +281,7 @@ BOOT_CODE void map_kernel_window(void)
 
     /* map vector table */
     map_kernel_frame(
-        addrFromPPtr(arm_vector_table),
+        addrFromKPPtr(arm_vector_table),
         PPTR_VECTOR_TABLE,
         VMKernelOnly,
         vm_attributes_new(
@@ -294,7 +294,7 @@ BOOT_CODE void map_kernel_window(void)
 #ifdef CONFIG_KERNEL_GLOBALS_FRAME
     /* map globals frame */
     map_kernel_frame(
-        addrFromPPtr(armKSGlobalsFrame),
+        addrFromKPPtr(armKSGlobalsFrame),
         seL4_GlobalsFrame,
         VMReadOnly,
         vm_attributes_new(
@@ -322,7 +322,7 @@ BOOT_CODE void map_kernel_window(void)
         pde = pdeS1_pdeS1_invalid_new();
         armHSGlobalPGD[idx] = pde;
     }
-    pde = pdeS1_pdeS1_coarse_new(0, 0, 0, 0, addrFromPPtr(armHSGlobalPD));
+    pde = pdeS1_pdeS1_coarse_new(0, 0, 0, 0, addrFromKPPtr(armHSGlobalPD));
     armHSGlobalPGD[3] = pde;
 
     /* Initialise PMD */
@@ -351,7 +351,7 @@ BOOT_CODE void map_kernel_window(void)
         phys += BIT(PT_INDEX_BITS + PAGE_BITS);
     }
     /* map page table covering last 2M of virtual address space */
-    pde = pdeS1_pdeS1_coarse_new(0, 0, 0, 0, addrFromPPtr(armHSGlobalPT));
+    pde = pdeS1_pdeS1_coarse_new(0, 0, 0, 0, addrFromKPPtr(armHSGlobalPT));
     armHSGlobalPD[idx] = pde;
 
     /* now start initialising the page table */
@@ -375,7 +375,7 @@ BOOT_CODE void map_kernel_window(void)
     }
     /* map vector table */
     map_kernel_frame(
-        addrFromPPtr(arm_vector_table),
+        addrFromKPPtr(arm_vector_table),
         PPTR_VECTOR_TABLE,
         VMKernelOnly,
         vm_attributes_new(
@@ -388,7 +388,7 @@ BOOT_CODE void map_kernel_window(void)
 #ifdef CONFIG_KERNEL_GLOBALS_FRAME
     /* map globals frame */
     map_kernel_frame(
-        addrFromPPtr(armKSGlobalsFrame),
+        addrFromKPPtr(armKSGlobalsFrame),
         seL4_GlobalsFrame,
         VMReadOnly,
         vm_attributes_new(
@@ -401,7 +401,7 @@ BOOT_CODE void map_kernel_window(void)
     pteS2 = pte_pte_small_new(
                 1, /* Not Executeable */
                 0, /* Not contiguous */
-                addrFromPPtr(armKSGlobalsFrame),
+                addrFromKPPtr(armKSGlobalsFrame),
                 1, /* AF -- always set */
                 0, /* Not shared */
                 HAPFromVMRights(VMReadOnly),
@@ -478,7 +478,7 @@ static BOOT_CODE cap_t create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid
                 wordFromVMRights(VMReadWrite), /* capFVMRights       */
                 vptr,                          /* capFMappedAddress  */
                 false,                         /* capFIsDevice       */
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
                 0,                             /* IOSpace            */
 #endif
                 ASID_HIGH(asid),               /* capFMappedASIDHigh */
@@ -589,7 +589,7 @@ BOOT_CODE void activate_global_pd(void)
        that everything we've written (particularly the kernel page tables)
        is committed. */
     cleanInvalidateL1Caches();
-    setCurrentPD(addrFromPPtr(armKSGlobalPD));
+    setCurrentPD(addrFromKPPtr(armKSGlobalPD));
     invalidateLocalTLB();
     lockTLBEntry(PPTR_BASE);
     lockTLBEntry(PPTR_VECTOR_TABLE);
@@ -606,7 +606,7 @@ BOOT_CODE void activate_global_pd(void)
     cleanInvalidateL1Caches();
     /* Setup the memory attributes: We use 2 indicies (cachable/non-cachable) */
     setHMAIR((ATTRINDX_NONCACHEABLE << 0) | (ATTRINDX_CACHEABLE << 8), 0);
-    setCurrentHypPD(addrFromPPtr(armHSGlobalPGD));
+    setCurrentHypPD(addrFromKPPtr(armHSGlobalPGD));
     invalidateHypTLB();
 #if 0 /* Can't lock entries on A15 */
     lockTLBEntry(PPTR_BASE);
@@ -1031,7 +1031,7 @@ bool_t CONST isValidVTableRoot(cap_t cap)
 
 bool_t CONST isIOSpaceFrameCap(cap_t cap)
 {
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
     return cap_get_capType(cap) == cap_small_frame_cap && cap_small_frame_cap_get_capFIsIOSpace(cap);
 #else
     return false;
@@ -1050,9 +1050,9 @@ void setVMRoot(tcb_t *tcb)
     if (cap_get_capType(threadRoot) != cap_page_directory_cap ||
         !cap_page_directory_cap_get_capPDIsMapped(threadRoot)) {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-        setCurrentPD(addrFromPPtr(armUSGlobalPD));
+        setCurrentPD(addrFromKPPtr(armUSGlobalPD));
 #else
-        setCurrentPD(addrFromPPtr(armKSGlobalPD));
+        setCurrentPD(addrFromKPPtr(armKSGlobalPD));
 #endif
         return;
     }
@@ -1062,9 +1062,9 @@ void setVMRoot(tcb_t *tcb)
     find_ret = findPDForASID(asid);
     if (unlikely(find_ret.status != EXCEPTION_NONE || find_ret.pd != pd)) {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-        setCurrentPD(addrFromPPtr(armUSGlobalPD));
+        setCurrentPD(addrFromKPPtr(armUSGlobalPD));
 #else
-        setCurrentPD(addrFromPPtr(armKSGlobalPD));
+        setCurrentPD(addrFromKPPtr(armKSGlobalPD));
 #endif
         return;
     }
@@ -1248,7 +1248,7 @@ void copyGlobalMappings(pde_t *newPD)
     /* Kernel and user MMUs are completely independent, however,
      * we still need to share the globals page. */
     pde_t pde;
-    pde = pde_pde_coarse_new(addrFromPPtr(armUSGlobalPT));
+    pde = pde_pde_coarse_new(addrFromKPPtr(armUSGlobalPT));
     newPD[BIT(PD_INDEX_BITS) - 1] = pde;
 #endif /* CONFIG_KERNEL_GLOBALS_FRAME */
 #endif
@@ -1886,7 +1886,7 @@ static exception_t performPageTableInvocationUnmap(cap_t cap, cte_t *ctSlot)
             cap_page_table_cap_get_capPTMappedASID(cap),
             cap_page_table_cap_get_capPTMappedAddress(cap),
             pt);
-        clearMemory((void *)pt, cap_get_capSizeBits(cap));
+        clearMemory_PT((void *)pt, cap_get_capSizeBits(cap));
     }
     cap_page_table_cap_ptr_set_capPTIsMapped(&(ctSlot->cap), 0);
 
@@ -2043,7 +2043,7 @@ static exception_t performASIDControlInvocation(void *frame, cte_t *slot,
 
 static exception_t decodeARMPageDirectoryInvocation(word_t invLabel, word_t length,
                                                     cptr_t cptr, cte_t *cte, cap_t cap,
-                                                    extra_caps_t excaps, word_t *buffer)
+                                                    word_t *buffer)
 {
     switch (invLabel) {
     case ARMPDClean_Data:
@@ -2152,8 +2152,7 @@ static exception_t decodeARMPageDirectoryInvocation(word_t invLabel, word_t leng
 }
 
 static exception_t decodeARMPageTableInvocation(word_t invLabel, word_t length,
-                                                cte_t *cte, cap_t cap, extra_caps_t excaps,
-                                                word_t *buffer)
+                                                cte_t *cte, cap_t cap, word_t *buffer)
 {
     word_t vaddr, pdIndex;
 
@@ -2182,7 +2181,7 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, word_t length,
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (unlikely(length < 2 || excaps.excaprefs[0] == NULL)) {
+    if (unlikely(length < 2 || current_extra_caps.excaprefs[0] == NULL)) {
         userError("ARMPageTableMap: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -2201,7 +2200,7 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, word_t length,
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     attr = vmAttributesFromWord(getSyscallArg(1, buffer));
 #endif
-    pdCap = excaps.excaprefs[0]->cap;
+    pdCap = current_extra_caps.excaprefs[0]->cap;
 
     if (unlikely(cap_get_capType(pdCap) != cap_page_directory_cap ||
                  !cap_page_directory_cap_get_capPDIsMapped(pdCap))) {
@@ -2276,8 +2275,7 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, word_t length,
 }
 
 static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
-                                            cte_t *cte, cap_t cap, extra_caps_t excaps,
-                                            word_t *buffer)
+                                            cte_t *cte, cap_t cap, word_t *buffer)
 {
     switch (invLabel) {
     case ARMPageMap: {
@@ -2290,7 +2288,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
         vm_page_size_t frameSize;
         vm_attributes_t attr;
 
-        if (unlikely(length < 3 || excaps.excaprefs[0] == NULL)) {
+        if (unlikely(length < 3 || current_extra_caps.excaprefs[0] == NULL)) {
             userError("ARMPageMap: Truncated message.");
             current_syscall_error.type =
                 seL4_TruncatedMessage;
@@ -2301,7 +2299,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
         vaddr = getSyscallArg(0, buffer);
         w_rightsMask = getSyscallArg(1, buffer);
         attr = vmAttributesFromWord(getSyscallArg(2, buffer));
-        pdCap = excaps.excaprefs[0]->cap;
+        pdCap = current_extra_caps.excaprefs[0]->cap;
 
         frameSize = generic_frame_cap_get_capFSize(cap);
         capVMRights = generic_frame_cap_get_capFVMRights(cap);
@@ -2427,7 +2425,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
     }
 
     case ARMPageUnmap: {
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
         if (isIOSpaceFrameCap(cap)) {
             setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
             return performPageInvocationUnmapIO(cap, cte);
@@ -2439,9 +2437,9 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
         }
     }
 
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
     case ARMPageMapIO: {
-        return decodeARMIOMapInvocation(invLabel, length, cte, cap, excaps, buffer);
+        return decodeARMIOMapInvocation(invLabel, length, cte, cap, buffer);
     }
 #endif
 
@@ -2546,22 +2544,19 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
 }
 
 exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
-                                   cte_t *cte, cap_t cap, extra_caps_t excaps,
-                                   word_t *buffer)
+                                   cte_t *cte, cap_t cap, word_t *buffer)
 {
     switch (cap_get_capType(cap)) {
     case cap_page_directory_cap:
         return decodeARMPageDirectoryInvocation(invLabel, length, cptr, cte,
-                                                cap, excaps, buffer);
+                                                cap, buffer);
 
     case cap_page_table_cap:
-        return decodeARMPageTableInvocation(invLabel, length, cte,
-                                            cap, excaps, buffer);
+        return decodeARMPageTableInvocation(invLabel, length, cte, cap, buffer);
 
     case cap_small_frame_cap:
     case cap_frame_cap:
-        return decodeARMFrameInvocation(invLabel, length, cte,
-                                        cap, excaps, buffer);
+        return decodeARMFrameInvocation(invLabel, length, cte, cap, buffer);
 
     case cap_asid_control_cap: {
         word_t i;
@@ -2580,8 +2575,8 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        if (unlikely(length < 2 || excaps.excaprefs[0] == NULL
-                     || excaps.excaprefs[1] == NULL)) {
+        if (unlikely(length < 2 || current_extra_caps.excaprefs[0] == NULL
+                     || current_extra_caps.excaprefs[1] == NULL)) {
             userError("ASIDControlMakePool: Truncated message.");
             current_syscall_error.type = seL4_TruncatedMessage;
 
@@ -2590,9 +2585,9 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
 
         index = getSyscallArg(0, buffer);
         depth = getSyscallArg(1, buffer);
-        parentSlot = excaps.excaprefs[0];
+        parentSlot = current_extra_caps.excaprefs[0];
         untyped = parentSlot->cap;
-        root = excaps.excaprefs[1]->cap;
+        root = current_extra_caps.excaprefs[1]->cap;
 
         /* Find first free pool */
         for (i = 0; i < nASIDPools && armKSASIDTable[i]; i++);
@@ -2608,7 +2603,7 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
 
         if (unlikely(cap_get_capType(untyped) != cap_untyped_cap ||
                      cap_untyped_cap_get_capBlockSize(untyped) !=
-                     seL4_ASIDPoolBits) || cap_untyped_cap_get_capIsDevice(untyped)) {
+                     seL4_ASIDPoolBits || cap_untyped_cap_get_capIsDevice(untyped))) {
             userError("ASIDControlMakePool: Invalid untyped cap.");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
@@ -2656,14 +2651,14 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        if (unlikely(excaps.excaprefs[0] == NULL)) {
+        if (unlikely(current_extra_caps.excaprefs[0] == NULL)) {
             userError("ASIDPoolAssign: Truncated message.");
             current_syscall_error.type = seL4_TruncatedMessage;
 
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        pdCapSlot = excaps.excaprefs[0];
+        pdCapSlot = current_extra_caps.excaprefs[0];
         pdCap = pdCapSlot->cap;
 
         if (unlikely(
@@ -2717,7 +2712,7 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
     }
 }
 
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_LOG_BUFFER
 exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
 {
     lookupCapAndSlot_ret_t lu_ret;
@@ -2770,13 +2765,13 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
                 0  /* executable */
             );
 
-        cleanByVA_PoU((vptr_t)&armKSGlobalLogPT[idx], pptr_to_paddr(&armKSGlobalLogPT[idx]));
+        cleanByVA_PoU((vptr_t)&armKSGlobalLogPT[idx], addrFromKPPtr(&armKSGlobalLogPT[idx]));
         invalidateTranslationSingle(KS_LOG_PPTR + (idx * BIT(seL4_PageBits)));
     }
 
     return EXCEPTION_NONE;
 }
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_KERNEL_LOG_BUFFER */
 
 #ifdef CONFIG_DEBUG_BUILD
 void kernelPrefetchAbort(word_t pc) VISIBLE;
@@ -2788,35 +2783,26 @@ void kernelUndefinedInstruction(word_t pc) VISIBLE;
 
 void kernelPrefetchAbort(word_t pc)
 {
-    word_t UNUSED sr = getHSR();
-
     printf("\n\nKERNEL PREFETCH ABORT!\n");
-    printf("Faulting instruction: 0x%x\n", (unsigned int)pc);
-    printf("HSR: 0x%x\n", (unsigned int)sr);
-
+    printf("Faulting instruction: 0x%"SEL4_PRIx_word"\n", pc);
+    printf("HSR: 0x%"SEL4_PRIx_word"\n", getHSR());
     halt();
 }
 
 void kernelDataAbort(word_t pc)
 {
-    word_t UNUSED far = getHDFAR();
-    word_t UNUSED sr = getHSR();
-
     printf("\n\nKERNEL DATA ABORT!\n");
-    printf("Faulting instruction: 0x%x\n", (unsigned int)pc);
-    printf("HDFAR: 0x%x HSR: 0x%x\n", (unsigned int)far, (unsigned int)sr);
-
+    printf("Faulting instruction: 0x%"SEL4_PRIx_word"\n", pc);
+    printf("HDFAR: 0x%"SEL4_PRIx_word" HSR: 0x%"SEL4_PRIx_word"\n",
+           getHDFAR(), getHSR());
     halt();
 }
 
 void kernelUndefinedInstruction(word_t pc)
 {
-    word_t UNUSED sr = getHSR();
-
     printf("\n\nKERNEL UNDEFINED INSTRUCTION!\n");
-    printf("Faulting instruction: 0x%x\n", (unsigned int)pc);
-    printf("HSR: 0x%x\n", (unsigned int)sr);
-
+    printf("Faulting instruction: 0x%"SEL4_PRIx_word"\n", pc);
+    printf("HSR: 0x%"SEL4_PRIx_word"\n", getHSR());
     halt();
 }
 
@@ -2824,24 +2810,18 @@ void kernelUndefinedInstruction(word_t pc)
 
 void kernelPrefetchAbort(word_t pc)
 {
-    word_t UNUSED ifsr = getIFSR();
-
     printf("\n\nKERNEL PREFETCH ABORT!\n");
-    printf("Faulting instruction: 0x%x\n", (unsigned int)pc);
-    printf("IFSR: 0x%x\n", (unsigned int)ifsr);
-
+    printf("Faulting instruction: 0x%"SEL4_PRIx_word"\n", pc);
+    printf("IFSR: 0x%"SEL4_PRIx_word"\n", getIFSR());
     halt();
 }
 
 void kernelDataAbort(word_t pc)
 {
-    word_t UNUSED dfsr = getDFSR();
-    word_t UNUSED far = getFAR();
-
     printf("\n\nKERNEL DATA ABORT!\n");
-    printf("Faulting instruction: 0x%x\n", (unsigned int)pc);
-    printf("FAR: 0x%x DFSR: 0x%x\n", (unsigned int)far, (unsigned int)dfsr);
-
+    printf("Faulting instruction: 0x%"SEL4_PRIx_word"\n", pc);
+    printf("FAR: 0x%"SEL4_PRIx_word" DFSR: 0x%"SEL4_PRIx_word"\n",
+           getFAR(), getDFSR());
     halt();
 }
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */

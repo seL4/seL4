@@ -13,6 +13,11 @@
 #include <linker.h>
 #include <plat/machine/hardware.h>
 
+#ifdef CONFIG_ARM_SMMU
+#include <arch/object/smmu.h>
+#endif
+
+
 asid_pool_t *armKSASIDTable[BIT(asidHighBits)];
 
 /* AArch64 Memory map explanation:
@@ -84,7 +89,7 @@ pude_t armKSGlobalKernelPUD[BIT(PUD_INDEX_BITS)] ALIGN_BSS(BIT(seL4_PUDBits));
 pde_t armKSGlobalKernelPDs[BIT(PUD_INDEX_BITS)][BIT(PD_INDEX_BITS)] ALIGN_BSS(BIT(seL4_PageDirBits));
 pte_t armKSGlobalKernelPT[BIT(PT_INDEX_BITS)] ALIGN_BSS(BIT(seL4_PageTableBits));
 
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_LOG_BUFFER
 pde_t *armKSGlobalLogPDE = &armKSGlobalKernelPDs[BIT(PUD_INDEX_BITS) - 1][BIT(PD_INDEX_BITS) - 2];
 compile_assert(log_pude_is_correct_preallocated_pude,
                GET_PUD_INDEX(KS_LOG_PPTR) == BIT(PUD_INDEX_BITS) - 1);
@@ -102,4 +107,20 @@ UP_STATE_DEFINE(bool_t, armHSVCPUActive);
  */
 asid_t armKSHWASIDTable[BIT(hwASIDBits)];
 hw_asid_t armKSNextASID;
+#endif
+
+#ifdef CONFIG_ARM_SMMU
+/*recording the state of created SID caps*/
+bool_t smmuStateSIDTable[SMMU_MAX_SID];
+/* CNode containing the cb_cap that is assigned to sids*/
+cte_t smmuStateSIDNode[BIT(SMMU_SID_CNODE_SLOT_BITS)] ALIGN(BIT(SMMU_SID_CNODE_SLOT_BITS + seL4_SlotBits));
+compile_assert(smmuStateSIDCNodeSize, sizeof(smmuStateSIDNode) >= ((SMMU_MAX_SID) * sizeof(cte_t)));
+
+/*recording the state of the created cb caps*/
+bool_t smmuStateCBTable[SMMU_MAX_CB];
+/* CNode containing the vcapce root cap that is assigned to sids*/
+cte_t smmuStateCBNode[BIT(SMMU_CB_CNODE_SLOT_BITS)] ALIGN(BIT(SMMU_CB_CNODE_SLOT_BITS + seL4_SlotBits));
+compile_assert(smmuStateCBCNodeSize, sizeof(smmuStateCBNode) >= ((SMMU_MAX_CB) * sizeof(cte_t)));
+/*recording the context bank to ASID relationship*/
+asid_t smmuStateCBAsidTable[SMMU_MAX_CB];
 #endif

@@ -4,7 +4,7 @@
 
 # Compilation actions to run on pull requests
 
-name: Kernel
+name: Compile
 
 on:
   push:
@@ -14,7 +14,7 @@ on:
 
 jobs:
   standalone_kernel:
-    name: compile
+    name: kernel
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

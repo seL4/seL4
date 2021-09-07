@@ -19,7 +19,6 @@
   compatible = "eth,ariane-bare-dev";
   model = "eth,ariane-bare";
   chosen {
-    stdout-path = "/soc/uart@10000000:115200";
   };
   cpus {
     #address-cells = <1>;
@@ -73,7 +72,7 @@
       interrupts-extended = <&CPU0_intc 11 &CPU0_intc 9>;
       reg = <0x0 0xc000000 0x0 0x4000000>;
       riscv,max-priority = <7>;
-      riscv,ndev = <3>;
+      riscv,ndev = <30>;
     };
     debug-controller@0 {
       compatible = "riscv,debug-013";
@@ -90,6 +89,13 @@
       interrupts = <1>;
       reg-shift = <2>; // regs are spaced on 32 bit boundary
       reg-io-width = <4>; // only 32-bit access are supported
+    };
+    timer@18000000 {
+      compatible = "pulp,apb_timer";
+      interrupts = <0x00000004 0x00000005 0x00000006 0x00000007>;
+      reg = <0x00000000 0x18000000 0x00000000 0x00001000>;
+      interrupt-parent = <&PLIC0>;
+      reg-names = "control";
     };
     xps-spi@20000000 {
       compatible = "xlnx,xps-spi-2.00.b", "xlnx,xps-spi-2.00.a";

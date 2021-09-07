@@ -71,7 +71,7 @@ finaliseCap_ret_t Mode_finaliseCap(cap_t cap, bool_t final)
 #endif
             case X86_MappingVSpace:
 
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_LOG_BUFFER
                 /* If the last cap to the user-level log buffer frame is being revoked,
                  * reset the ksLog so that the kernel doesn't log anymore
                  */
@@ -89,7 +89,7 @@ finaliseCap_ret_t Mode_finaliseCap(cap_t cap, bool_t final)
                         userError("Log buffer frame is invalidated, kernel can't benchmark anymore\n");
                     }
                 }
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_KERNEL_LOG_BUFFER */
 
                 unmapPage(
                     cap_frame_cap_get_capFSize(cap),
@@ -196,7 +196,6 @@ exception_t Mode_decodeInvocation(
     cptr_t cptr,
     cte_t *slot,
     cap_t cap,
-    extra_caps_t excaps,
     word_t *buffer
 )
 {
@@ -204,7 +203,7 @@ exception_t Mode_decodeInvocation(
     case cap_page_directory_cap:
     case cap_page_table_cap:
     case cap_frame_cap:
-        return decodeX86MMUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
+        return decodeX86MMUInvocation(invLabel, length, cptr, slot, cap, buffer);
     default:
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 0;

@@ -141,7 +141,7 @@ BEGIN_FUNC(cur_el_irq)
 END_FUNC(cur_el_irq)
 
 BEGIN_FUNC(cur_el_serr)
-#ifdef CONFIG_PLAT_TX2
+#ifdef CONFIG_AARCH64_SERROR_IGNORE
     eret
 #else
     b       invalid_vector_entry
@@ -234,7 +234,7 @@ BEGIN_FUNC(lower_el_irq)
 END_FUNC(lower_el_irq)
 
 BEGIN_FUNC(lower_el_serr)
-#ifdef CONFIG_PLAT_TX2
+#ifdef CONFIG_AARCH64_SERROR_IGNORE
     eret
 #else
     b       invalid_vector_entry

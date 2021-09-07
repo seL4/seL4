@@ -1,0 +1,30 @@
+# Copyright 2021, Proofcraft Pty Ltd
+#
+# SPDX-License-Identifier: BSD-2-Clause
+
+# xmllint for seL4 IDL files
+
+name: XML
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'libsel4/**/sel4*.xml'
+  pull_request:
+    paths:
+      - 'libsel4/**/sel4*.xml'
+
+jobs:
+  xmllint:
+    name: XML Lint
+    runs-on: ubuntu-latest
+    steps:
+    - name: install xmllint
+      run: sudo apt-get install libxml2-utils
+    - uses: actions/checkout@v2
+    - name: run xmllint
+      run: |
+        find libsel4 -name "sel4*.xml" | \
+        xargs xmllint --dtdvalid libsel4/tools/sel4_idl.dtd --noout

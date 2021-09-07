@@ -6,6 +6,8 @@
 
 cmake_minimum_required(VERSION 3.8.2)
 include(CheckCCompilerFlag)
+
+include(${CMAKE_CURRENT_LIST_DIR}/configs/seL4Config.cmake)
 project(seL4 C ASM)
 
 # First find our helpers
@@ -35,20 +37,6 @@ RequireTool(HARDWARE_GEN_PATH hardware_gen.py)
 RequireTool(INVOCATION_ID_GEN_PATH invocation_header_gen.py)
 RequireTool(SYSCALL_ID_GEN_PATH syscall_header_gen.py)
 RequireTool(XMLLINT_PATH xmllint.sh)
-
-set(c_sources "")
-set(asm_sources "")
-set(bf_declarations "")
-foreach(file IN LISTS config_c_sources)
-    list(APPEND c_sources "${CMAKE_CURRENT_SOURCE_DIR}/${file}")
-endforeach()
-foreach(file IN LISTS config_asm_sources)
-    list(APPEND asm_sources "${CMAKE_CURRENT_SOURCE_DIR}/${file}")
-endforeach()
-foreach(file IN LISTS config_bf_declarations)
-    list(APPEND bf_declarations "${CMAKE_CURRENT_SOURCE_DIR}/${file}")
-endforeach()
-set(KernelDTSList "${config_KernelDTSList}")
 
 # Process the configuration scripts
 include(config.cmake)
@@ -160,6 +148,12 @@ endif()
 if(KernelArchARM)
     if(KernelSel4ArchAarch64)
         KernelCommonFlags(-mgeneral-regs-only)
+        if(
+            (CMAKE_C_COMPILER_ID STREQUAL "GNU")
+            AND (CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL "10.0.0")
+        )
+            add_compile_options(-mno-outline-atomics)
+        endif()
     else()
         KernelCommonFlags(-mfloat-abi=soft)
     endif()
@@ -182,6 +176,15 @@ add_compile_options(
     -Wpointer-arith
     -Wno-nonnull
     -ffreestanding
+    # GCC < 10 and clang < 11 put uninitialized global variables into a 'COMMON'
+    # section unless '-fno-common' is specified. The linker will put anything
+    # from 'COMMON' as the end of the '.bss' it nothing else is specified in the
+    # linker script. Besides making the variable placement look odd, this also
+    # tends to waste a page because we puts large aligned block at the end.
+    # Eventually, GCC 10 and clang 11 made '-fno-common' the default, see
+    # - https://gcc.gnu.org/gcc-10/changes.html
+    # - https://releases.llvm.org/11.0.0/tools/clang/docs/ReleaseNotes.html
+    -fno-common
 )
 
 # Add all the common flags to the linker args
@@ -197,27 +200,29 @@ list(SORT c_sources)
 list(APPEND c_sources "${KernelDomainSchedule}")
 
 # Add static header includes
-include_directories("include")
-include_directories("include/${KernelWordSize}")
-include_directories("include/arch/${KernelArch}")
-include_directories("include/arch/${KernelArch}/arch/${KernelWordSize}/")
-include_directories("include/plat/${KernelPlatform}/")
-include_directories("include/plat/${KernelPlatform}/plat/${KernelWordSize}/")
+include_directories(
+    "include"
+    "include/${KernelWordSize}"
+    "include/arch/${KernelArch}"
+    "include/arch/${KernelArch}/arch/${KernelWordSize}"
+    "include/plat/${KernelPlatform}"
+    "include/plat/${KernelPlatform}/plat/${KernelWordSize}"
+)
+
 if(KernelArchARM)
-    include_directories("include/arch/arm/armv/${KernelArmArmV}/")
-    include_directories("include/arch/arm/armv/${KernelArmArmV}/${KernelWordSize}")
+    include_directories(
+        "include/arch/arm/armv/${KernelArmArmV}"
+        "include/arch/arm/armv/${KernelArmArmV}/${KernelWordSize}"
+    )
 endif()
+
 if(KernelArmMach STREQUAL "exynos")
     include_directories("include/plat/exynos_common/")
 endif()
-if(KernelArchRiscV)
-    include_directories("include/arch/${KernelArch}/arch/${KernelWordSize}")
-    include_directories("include/plat/${KernelPlatform}/plat/${KernelWordSize}")
-endif()
 
-# Add libsel4 include directories.
-# These are explicitly added instead of calling target_link_libraries(${target} sel4)
-# because we don't want to inherit any other build options from libsel4.
+# Add libsel4 include directories. These are explicitly added instead of calling
+# target_link_libraries(${target} sel4) because we don't want to inherit any
+# other build options from libsel4.
 include_directories(
     "libsel4/include"
     "libsel4/arch_include/${KernelArch}"
@@ -231,8 +236,8 @@ include_directories(
 #
 
 include_directories($<TARGET_PROPERTY:kernel_Config,INTERFACE_INCLUDE_DIRECTORIES>)
-# The kernel expects to be able to include an 'autoconf.h' file at the moment. So lets
-# generate one for it to use
+# The kernel expects to be able to include an 'autoconf.h' file at the moment.
+# So lets generate one for it to use
 # TODO: use the kernel_Config directly
 generate_autoconf(kernel_autoconf "kernel")
 include_directories($<TARGET_PROPERTY:kernel_autoconf,INTERFACE_INCLUDE_DIRECTORIES>)
@@ -578,3 +583,49 @@ target_link_libraries(kernel.elf PRIVATE kernel_Config kernel_autoconf)
 set_property(TARGET kernel.elf APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-T ${linker_lds_path} ")
 set_target_properties(kernel.elf PROPERTIES LINK_DEPENDS "${linker_lds_path}")
 add_dependencies(kernel.elf circular_includes)
+
+# The following commands setup the install target for copying generated files and
+# compilation outputs to an install location: CMAKE_INSTALL_PREFIX.
+# CMAKE_INSTALL_PREFIX can be set on the cmake command line.
+#
+# The current installation outputs are:
+# - ${CMAKE_INSTALL_PREFIX}/bin/kernel.elf: Location of kernel.elf binary
+# - ${CMAKE_INSTALL_PREFIX}/libsel4/include: The include root for libsel4
+# - ${CMAKE_INSTALL_PREFIX}/libsel4/src: The c source files for the libsel4 library
+#
+# The install target is only created if this is the top level project.
+# We don't currently support creating install targets if the kernel is
+# imported in another project.
+if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
+
+    # Import libsel4 to get access to generation targets
+    add_subdirectory(libsel4)
+    # Add a default target that builds kernel.elf and generates all libsel4 headers
+    add_custom_target(single-project ALL DEPENDS sel4_generated kernel.elf)
+    # Disable the libsel4.a target as we don't intend to build the libsel4 sources
+    set_target_properties(sel4 PROPERTIES EXCLUDE_FROM_ALL ON)
+    # Install kernel.elf to bin/kernel.elf
+    install(TARGETS kernel.elf RUNTIME DESTINATION bin)
+    # Install all libsel4 headers to libsel4/include
+    install(
+        DIRECTORY
+            "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/include/"
+            "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/arch_include/${KernelArch}/"
+            "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/sel4_arch_include/${KernelSel4Arch}/"
+            "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/sel4_plat_include/${KernelPlatform}/"
+            "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/mode_include/${KernelWordSize}/"
+            "${CMAKE_CURRENT_BINARY_DIR}/libsel4/include/"
+            "${CMAKE_CURRENT_BINARY_DIR}/libsel4/arch_include/${KernelArch}/"
+            "${CMAKE_CURRENT_BINARY_DIR}/libsel4/sel4_arch_include/${KernelSel4Arch}/"
+            # The following directories install the autoconf headers
+            "${CMAKE_CURRENT_BINARY_DIR}/gen_config/"
+            "${CMAKE_CURRENT_BINARY_DIR}/libsel4/gen_config/"
+            "${CMAKE_CURRENT_BINARY_DIR}/libsel4/autoconf/"
+        DESTINATION libsel4/include
+        FILES_MATCHING
+        PATTERN "*.h"
+    )
+    # Install libsel4 sources to libsel4/src
+    install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/src/" DESTINATION libsel4/src)
+
+endif()

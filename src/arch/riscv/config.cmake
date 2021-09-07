@@ -16,16 +16,37 @@ config_string(
 )
 
 config_option(
-    KernelRiscvExtF RISCV_EXT_F "RISCV extension for single-preciison floating-point"
+    KernelRiscvExtF RISCV_EXT_F "RISC-V extension for single-precision floating-point"
     DEFAULT OFF
     DEPENDS "KernelArchRiscV"
 )
 
 config_option(
-    KernelRiscvExtD RISCV_EXT_D "RISCV extension for double-precision floating-point"
+    KernelRiscvExtD RISCV_EXT_D "RISC-V extension for double-precision floating-point"
     DEFAULT OFF
     DEPENDS "KernelArchRiscV"
 )
+
+# Until RISC-V has instructions to count leading/trailing zeros, we provide
+# library implementations. Platforms that implement the bit manipulation
+# extension can override these settings to remove the library functions from
+# the image.
+# In the verified configurations, we additionally define KernelClzNoBuiltin and
+# KernelCtzNoBuiltin to expose the library implementations to verification.
+# However, since the NoBuiltin options force the use of the library functions
+# even when the platform has sutiable inline assembly, we do not make these the
+# default.
+if(KernelWordSize EQUAL 32)
+    set(KernelClz32 ON CACHE BOOL "")
+    set(KernelCtz32 ON CACHE BOOL "")
+    if(KernelIsMCS)
+        # Used for long division in timer calculations.
+        set(KernelClz64 ON CACHE BOOL "")
+    endif()
+elseif(KernelWordSize EQUAL 64)
+    set(KernelClz64 ON CACHE BOOL "")
+    set(KernelCtz64 ON CACHE BOOL "")
+endif()
 
 if(KernelSel4ArchRiscV32)
     set(KernelPTLevels 2 CACHE STRING "" FORCE)
@@ -36,14 +57,14 @@ if(KernelPTLevels EQUAL 2)
         # so limit the maximum paddr to 32-bits.
         math(EXPR KernelPaddrUserTop "(1 << 32) - 1")
     else()
-        math(EXPR KernelPaddrUserTop "(1 << 34) - 1")
+        math(EXPR KernelPaddrUserTop "1 << 34")
     endif()
 elseif(KernelPTLevels EQUAL 3)
     # RISC-V technically supports 56-bit paddrs,
     # but structures.bf limits us to using 39 of those bits.
-    math(EXPR KernelPaddrUserTop "(1 << 39) - 1")
+    math(EXPR KernelPaddrUserTop "1 << 39")
 elseif(KernelPTLevels EQUAL 4)
-    math(EXPR KernelPaddrUserTop "(1 << 56) - 1")
+    math(EXPR KernelPaddrUserTop "1 << 56")
 endif()
 
 if(KernelRiscvExtD)

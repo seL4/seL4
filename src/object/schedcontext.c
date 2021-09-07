@@ -5,6 +5,9 @@
  */
 
 #include <machine/timer.h>
+#include <kernel/sporadic.h>
+#include <kernel/thread.h>
+#include <object/structures.h>
 #include <object/schedcontext.h>
 
 static exception_t invokeSchedContext_UnbindObject(sched_context_t *sc, cap_t cap)
@@ -23,15 +26,15 @@ static exception_t invokeSchedContext_UnbindObject(sched_context_t *sc, cap_t ca
     return EXCEPTION_NONE;
 }
 
-static exception_t decodeSchedContext_UnbindObject(sched_context_t *sc, extra_caps_t extraCaps)
+static exception_t decodeSchedContext_UnbindObject(sched_context_t *sc)
 {
-    if (extraCaps.excaprefs[0] == NULL) {
+    if (current_extra_caps.excaprefs[0] == NULL) {
         userError("SchedContext_Unbind: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    cap_t cap = extraCaps.excaprefs[0]->cap;
+    cap_t cap = current_extra_caps.excaprefs[0]->cap;
     switch (cap_get_capType(cap)) {
     case cap_thread_cap:
         if (sc->scTcb != TCB_PTR(cap_thread_cap_get_capTCBPtr(cap))) {
@@ -81,15 +84,15 @@ static exception_t invokeSchedContext_Bind(sched_context_t *sc, cap_t cap)
     return EXCEPTION_NONE;
 }
 
-static exception_t decodeSchedContext_Bind(sched_context_t *sc, extra_caps_t extraCaps)
+static exception_t decodeSchedContext_Bind(sched_context_t *sc)
 {
-    if (extraCaps.excaprefs[0] == NULL) {
+    if (current_extra_caps.excaprefs[0] == NULL) {
         userError("SchedContext_Bind: Truncated Message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    cap_t cap = extraCaps.excaprefs[0]->cap;
+    cap_t cap = current_extra_caps.excaprefs[0]->cap;
 
     if (sc->scTcb != NULL || sc->scNotification != NULL) {
         userError("SchedContext_Bind: sched context already bound.");
@@ -101,6 +104,12 @@ static exception_t decodeSchedContext_Bind(sched_context_t *sc, extra_caps_t ext
     case cap_thread_cap:
         if (TCB_PTR(cap_thread_cap_get_capTCBPtr(cap))->tcbSchedContext != NULL) {
             userError("SchedContext_Bind: tcb already bound.");
+            current_syscall_error.type = seL4_IllegalOperation;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        if (isBlocked(TCB_PTR(cap_thread_cap_get_capTCBPtr(cap))) && !sc_released(sc)) {
+            userError("SchedContext_Bind: tcb blocked and scheduling context not schedulable.");
             current_syscall_error.type = seL4_IllegalOperation;
             return EXCEPTION_SYSCALL_ERROR;
         }
@@ -172,7 +181,6 @@ static exception_t invokeSchedContext_YieldTo(sched_context_t *sc, word_t *buffe
 
     bool_t return_now = true;
     if (isSchedulable(sc->scTcb)) {
-        refill_unblock_check(sc);
         if (SMP_COND_STATEMENT(sc->scCore != getCurrentCPUIndex() ||)
             sc->scTcb->tcbPriority < NODE_STATE(ksCurThread)->tcbPriority) {
             tcbSchedDequeue(sc->scTcb);
@@ -201,14 +209,14 @@ static exception_t invokeSchedContext_YieldTo(sched_context_t *sc, word_t *buffe
 
 static exception_t decodeSchedContext_YieldTo(sched_context_t *sc, word_t *buffer)
 {
-    if (sc->scTcb == NODE_STATE(ksCurThread)) {
-        userError("SchedContext_YieldTo: cannot seL4_SchedContext_YieldTo on self");
+    if (sc->scTcb == NULL) {
+        userError("SchedContext_YieldTo: cannot yield to an inactive sched context");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (sc->scTcb == NULL) {
-        userError("SchedContext_YieldTo: cannot yield to an inactive sched context");
+    if (sc->scTcb == NODE_STATE(ksCurThread)) {
+        userError("SchedContext_YieldTo: cannot seL4_SchedContext_YieldTo on self");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -220,11 +228,21 @@ static exception_t decodeSchedContext_YieldTo(sched_context_t *sc, word_t *buffe
         return EXCEPTION_SYSCALL_ERROR;
     }
 
+    // This should not be possible as the currently running thread
+    // should never have a non-null yieldTo, however verifying this
+    // invariant is being left to future work.
+    assert(NODE_STATE(ksCurThread)->tcbYieldTo == NULL);
+    if (NODE_STATE(ksCurThread)->tcbYieldTo != NULL) {
+        userError("SchedContext_YieldTo: cannot seL4_SchedContext_YieldTo to more than on SC at a time");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeSchedContext_YieldTo(sc, buffer);
 }
 
-exception_t decodeSchedContextInvocation(word_t label, cap_t cap, extra_caps_t extraCaps, word_t *buffer)
+exception_t decodeSchedContextInvocation(word_t label, cap_t cap, word_t *buffer)
 {
     sched_context_t *sc = SC_PTR(cap_sched_context_cap_get_capSCPtr(cap));
 
@@ -236,9 +254,9 @@ exception_t decodeSchedContextInvocation(word_t label, cap_t cap, extra_caps_t e
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return invokeSchedContext_Consumed(sc, buffer);
     case SchedContextBind:
-        return decodeSchedContext_Bind(sc, extraCaps);
+        return decodeSchedContext_Bind(sc);
     case SchedContextUnbindObject:
-        return decodeSchedContext_UnbindObject(sc, extraCaps);
+        return decodeSchedContext_UnbindObject(sc);
     case SchedContextUnbind:
         /* no decode */
         if (sc->scTcb == NODE_STATE(ksCurThread)) {
@@ -278,6 +296,9 @@ void schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb)
 
     SMP_COND_STATEMENT(migrateTCB(tcb, sc->scCore));
 
+    if (sc_sporadic(sc) && sc_active(sc) && sc != NODE_STATE(ksCurSC)) {
+        refill_unblock_check(sc);
+    }
     schedContext_resume(sc);
     if (isSchedulable(tcb)) {
         SCHED_ENQUEUE(tcb);
@@ -324,6 +345,7 @@ void schedContext_donate(sched_context_t *sc, tcb_t *to)
     if (from) {
         SMP_COND_STATEMENT(remoteTCBStall(from));
         tcbSchedDequeue(from);
+        tcbReleaseRemove(from);
         from->tcbSchedContext = NULL;
         if (from == NODE_STATE(ksCurThread) || from == NODE_STATE(ksSchedulerAction)) {
             rescheduleRequired();
@@ -354,7 +376,7 @@ time_t schedContext_updateConsumed(sched_context_t *sc)
     ticks_t consumed = sc->scConsumed;
     if (consumed >= getMaxTicksToUs()) {
         sc->scConsumed -= getMaxTicksToUs();
-        return getMaxTicksToUs();
+        return ticksToUs(getMaxTicksToUs());
     } else {
         sc->scConsumed = 0;
         return ticksToUs(consumed);

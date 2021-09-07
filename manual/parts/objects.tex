@@ -448,8 +448,9 @@ retyped and reused.
 When retyping untyped memory it is useful to know how much memory the
 object will require. Object sizes are defined in libsel4.
 
-Note that \obj{CNode}s and \obj{Untyped Object}s have variables sizes.
-When retyping untyped memory into \obj{CNode}s or breaking an
+Note that \obj{CNode}s, \obj{SchedContext}s (MCS only), and \obj{Untyped Object}s
+have variables sizes. When retyping untyped memory into \obj{CNode}s
+or \obj{SchedContext}s, or breaking an
 \obj{Untyped Object} into smaller \obj{Untyped Object}s, the
 \texttt{size\_bits} argument to
 \apifunc{seL4\_Untyped\_Retype}{untyped_retype} is used to specify

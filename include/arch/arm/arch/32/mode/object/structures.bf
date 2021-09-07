@@ -23,7 +23,7 @@ block small_frame_cap {
     field_high capFMappedAddress 20
 
     field capFIsDevice       1
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
     field capFIsIOSpace      1
     field capFMappedASIDHigh 6
 #else
@@ -102,7 +102,7 @@ block vcpu_cap {
 }
 #endif
 
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
 -- IO space caps
 -- each module has an engine that can be enabled
 -- the clients use the same module can be separately enabled
@@ -175,7 +175,7 @@ tagged_union cap capType {
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
     -- we use the same names as for x86 IOMMU caps
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
     tag io_space_cap            0x1f
     tag io_page_table_cap       0x2f
 #endif

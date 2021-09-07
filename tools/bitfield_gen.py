@@ -851,7 +851,7 @@ done'''],
   apply (clarsimp simp: guard_simps)
   apply (frule iffD1[OF h_t_valid_clift_Some_iff], rule exE, assumption, simp)
   apply (frule clift_subtype, simp, simp, simp)
-  apply (simp add: h_val_field_clift' typ_heap_simps)
+  apply (simp add: typ_heap_simps)
   apply (simp add: thread_state_lift_def)
   apply (simp add: sign_extend_def' mask_def nth_is_and_neq_0 word_bw_assocs
                    shift_over_ao_dists word_oa_dist word_and_max_simps)?
@@ -954,7 +954,7 @@ done'''],
  apply(frule iffD1[OF h_t_valid_clift_Some_iff], rule exE, assumption, simp)
  apply(simp add:h_val_clift' clift_field)
  apply(simp add:%(name)s_get_tag_def)
- apply(simp add:mask_shift_simps)
+ apply(simp add:mask_shift_simps)?
 done'''],
 
     'ptr_get_tag_spec_path': [

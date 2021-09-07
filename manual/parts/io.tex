@@ -175,3 +175,316 @@ call,
 
 More information about seL4's IOMMU abstractions can be found in \cite{Palande:M}.
 \fi
+
+\section{Arm-Specific I/O}
+
+\subsection{Arm SMMU version 2.0}
+\label{sec:smmuv2}
+
+
+seL4 provides an API for programming the Arm System MMU (SMMU) version 2.0,
+which allows system software to manage access rights and address translation for
+devices that can initiate direct memory accesses (DMA).
+
+An Arm SMMU v2.0 implementation allows device memory transactions to be associated
+with an identifier (StreamID) that is used to direct the transaction through a
+SMMU translation context bank (CB). A translation context bank can perform
+address translation, memory protection and memory attribute transformation.
+The standard specifies different types of address translations that correspond
+to stages in the ArmV8 virtual memory system architecture such as either 
+non-secure  EL0, EL1 first and second stage translations, Hyp mode translations
+or secure mode translations. It is possible to associate different StreamIDs
+with the same context bank and it is possible to share address translation
+tables between a context bank and software MMU address space if the stage and type
+of translation is the same.
+
+Faults that occur when a memory transaction conflicts with a StreamID or CB
+configuration happen asynchronously with respect to a processor element's
+execution. When this occurs an interrupt is used to allow a PE to handle the
+SMMU fault. Faults are reported through registers in the SMMU that can be
+queried in an interrupt handler.
+
+TLB maintenance operations are required to keep SMMU translation caches
+consistent when there are changes to any valid page table mapping entries.
+
+An SMMU implementation usually has a maximum number of StreamIDs that it supports.
+The specificiation allows StreamIDs to be up to 16bits wide. There are also a
+fixed number of context banks, up to a maximum of 128. Context banks can
+be generic or support only a single address translation stage. This information
+is reported by ID registers in each implementation.
+
+The seL4 API allows system software to manage an SMMU by assigning StreamIDs to
+context banks, bind context banks to page translation structures, implement
+SMMU fault handling and also perform explicit TLB maintenance.
+This allows system software to ensure that a device is only able to access and
+modify memory contents that it has been explicitly given access to and allow
+devices to be presented with a virtualized address space for performing DMA.
+
+All the StreamIDs and context banks are accessible via capabilities. Control
+capabilities are used to create capabilities referring to each StreamID and
+context bank in a system. The kernel tracks the allocation of StreamIDs and
+context banks with two static CNodes, one for each resource type. These CNodes
+track which VSpace a context bank has bound to it, and which context bank a
+StreamID is bound to.
+
+The capabilities allow access control policies to be implemented by a user thread.
+When StreamID, context bank capabilities are revoked, the kernel will disable
+the context banks or StreamID mappings.
+
+TLB maintenance is handled by the kernel via tracking which context banks are
+associated with a particular VSpace. Any TLB maintenance operations that the
+kernel performs on VSpace invocations are also applied to associated context
+banks.
+
+SMMU fault handling is delegated to user level via invocations that allow fault
+statuses to be queried and cleared for each context bank and for the SMMU globally.
+SMMU fault interrupts can be handled the same as other platform level interrupts.
+
+The kernel implementation only uses translation stages matching what translation
+the kernel is performing for VSpace objects. When seL4 is operating in EL1,
+the SMMU only uses stage 1 translation (ASID), that is "stage 1 with stage 2
+bypass" in the context bank attribute configuration. When hypervisor mode is
+enabled, and seL4 is operating in EL2, the SMMU only does stage 2 translations.
+
+Four capabilities types provide access to SMMU resources:
+\begin{description}
+    \item[\obj{seL4\_ARM\_SID}] A capability granting access to a single 
+        transaction stream, which can be used to bind and unbind a stream to a
+        single context bank.
+    \item[\obj{seL4\_ARM\_CB}] A capbility representing a single specific context
+        bank. It can be used to bind and unbind a VSpace to assign what page
+        tables the context bank should use for translation, assign StreamIDs and
+        process context bank faults.
+    \item[\obj{seL4\_ARM\_SIDControl}] A control capability which can be used to
+        create \obj{seL4\_ARM\_SID} capabilities to specific transaction streams.
+        The \obj{seL4\_ARM\_SIDControl} cap is used for managing rights on
+        StreamID configurations. This capability is provided in the initial
+        thread's CSpace.
+    \item[\obj{seL4\_ARM\_CBControl}] A control capability that can be used to
+        derive \obj{seL4\_ARM\_CB} capabilities. The \obj{seL4\_ARM\_CBControl}
+        cap is used for managing rights on context bank configurations.
+        This capability is provided in the initial thread's CSpace.
+\end{description}
+
+
+\subsubsection{Creating \obj{seL4\_ARM\_SID} capabilities}
+\label{sec:smmuv2-creating-sel4-arm-sid-capabilities}
+
+The Arm SMMU 2.0 specification doesn't specify how StreamIDs need to correspond
+to different devices. Each platform can define its own policy for how StreamIDs
+are allocated. A \obj{seL4\_ARM\_SIDControl} capability can be used to create
+a capability to any valid StreamID for the SMMU and delegate access to other
+tasks in the system.
+
+\begin{description}
+\item[\apifunc{seL4\_ARM\_SIDControl\_GetSID}{arm_sid_controlgetsid}] uses the
+    \obj{seL4\_ARM\_SIDControl} capability to create a new \obj{seL4\_ARM\_SID}
+    capability that represents a single StreamID.  This new capbility is placed
+    in the provided slot.  It is expected that whatever thread controls an 
+    \obj{seL4\_ARM\_SIDControl} capability knows about how StreamIDs are
+    allocated in a system.
+\end{description}
+
+The Arm SMMU 2.0 specification descibes many ways of associating StreamIDs with
+context banks. Currently only direct mapping of a StreamID to a context bank is
+supported.
+
+\subsubsection{Creating \obj{seL4\_ARM\_CB} capabilities}
+\label{sec:smmuv2-creating-sel4-arm-cb-capabilities}
+
+Each context bank allows the SMMU to maintain an active translation context with
+it's own registers for holding context specific information. An SMMU has a fixed
+number of context banks available for use and these are allocated using the
+\obj{seL4\_ARM\_CBControl} capability.
+
+\begin{description}
+
+\item[\apifunc{seL4\_ARM\_CBControl\_GetCB}{arm_cb_controlgetcb}] uses the
+    \obj{seL4\_ARM\_CBControl} capability to create a new \obj{seL4\_ARM\_CB}
+    capability that represents a single context bank.  This new capability is
+    placed in the provided slot.  It is expected that whatever thread controls a
+    \obj{seL4\_ARM\_CBControl} capability has knowledge of the properties of each
+    context bank that each index refers to.
+\end{description}
+
+
+\subsubsection{Configuring context banks}
+\label{sec:smmuv2-configuring-context-banks}
+
+By providing a \obj{seL4\_ARM\_CB} cap, a user-level thread can configure the
+VSpace used by the bank with the following API:
+
+\begin{description}
+    \item[\apifunc{seL4\_ARM\_CB\_AssignVspace}{arm_cb_assignvspace}] configures
+        the context bank to use the provided VSapce root for translations.
+    \item[\apifunc{seL4\_ARM\_CB\_UnassignVspace}{arm_cb_unassignvspace}] removes
+        the configured VSpace and conducting a TLB invalidation.
+\end{description}
+
+The SMMU-v2 uses the same paging structure as the MMU (AArch\_64 and AArch\_32
+formats). Therefore, there is no need to provide a new set of page structure caps
+nor a separate set of map and unmap functions. To manage the assignment, the
+kernel has an internal CNode, called smmuStateCBNode, that stores copies of the
+\obj{VSpace\_cap} created by executing the above API. The copy of the
+\obj{VSpace\_cap} contains its assigned ContextBank number. Therefore the kernel
+can conduct context bank invalidation if the \obj{VSpace\_cap} is revoked.
+
+
+\subsubsection{Configuring streams (transactions)}
+\label{sec:smmuv2-configuring-streams-transactions}
+
+A user-level thread can bind a context bank with an \obj{seL4\_ARM\_SID}
+capability with:
+\begin{description}
+    \item[\apifunc{seL4\_ARM\_SID\_BindCB}{arm_sid_bindcb}] configures the stream
+        to use given context bank for translation. To simplify the process, the
+        binding also enables the stream ID.  \obj{seL4\_ARM\_SID\_BindCB}
+        generates a copy of the \obj{seL4\_ARM\_CB} cap in kernel's internal
+        CNode. This allows the stream ID to be disabled if the
+        \obj{seL4\_ARM\_CB} cap is revoked.
+    \item[\apifunc{seL4\_ARM\_SID\_UnbindCB}{arm_sid_unbindcb}] removes the
+        \obj{seL4\_ARM\_CB} cap from the kernel's internal CNode and disables
+        the stream ID. The kernel provides this API for the conveniences of
+        sharing a stream ID among multiple VSpaces.
+\end{description}
+
+If there are any exceptions after the stream ID is enabled, the user-level
+software should use the fault handling mechanisms to resolve them.
+
+
+
+\subsubsection{Copying and Deleting caps}
+\label{sec:smmuv2-copying-and-deleting-caps}
+The kernel allows copying both \obj{ARM\_SID} cap and \obj{seL4\_ARM\_CB} cap.
+This allows capabilites to be delegated to different threads.
+The kernel does not allow copying neither the \obj{seL4\_ARM\_SIDControl} nor
+the \obj{seL4\_ARM\_CBControl} capabilities.
+
+Deleting a \obj{seL4\_ARM\_CB} cap that contains a valid capBindSID field will:
+\begin{itemize}
+    \item invalidate the streamID to ContextBank assignment in hardware.
+\end{itemize}
+
+Deleting the last \obj{seL4\_ARM\_CB} cap will:
+\begin{itemize}
+    \item perform an \apifunc{seL4\_ARM\_CB\_UnassignVspace}{arm_cb_unassignvspace},
+    removing any configured VSpace,
+    \item conduct a TLB invalidation.
+\end{itemize}
+
+Similarly, deleting a VSpace\_cap that contains assigned context bank number will:
+\begin{itemize}
+    \item invalidate the context bank
+    \item conduct a TLB invalidation
+\end{itemize}
+
+Deleting the last ARM\_SID cap will:
+\begin{itemize}
+    \item Perform an \apifunc{seL4\_ARM\_SID\_UnbindCB}{arm_sid_unbindcb}, 
+        (deleting the copy of the assigned \obj{seL4\_ARM\_CB} cap)
+    \item Disable the stream ID.
+\end{itemize}
+
+\subsubsection{TLB invalidation}
+\label{sec:smmuv2-tlb-invalidation}
+The kernel is expected to perform all required SMMU TLB maintenance operations
+as part of the API implementation.  In addition, the kernel provides two system
+calls for explicitly performing invalidations:
+\begin{description}
+    \item[\apifunc{seL4\_ARM\_CBControl\_TLBInvalidateAll}{arm_cb_controltlbinvalidate}]
+        invalidates all TLB entries in all
+    context banks.
+    \item[\apifunc{seL4\_ARM\_CB\_TLBInvalidate}{arm_cb_tlbinvalidate}]
+        invalidates all TLB entries in a context bank.
+\end{description}
+
+The kernel does not impose any restrictions on how a VSpace is used by user-level
+applications, hence a VSpace can be shared by normal threads and drivers. Sharing
+a VSpace between threads and drivers also means sharing all mappings in that
+VSpace between MMUs in CPU cores and SMMU used by device transactions. Moreover,
+multiple context banks in SMMU can share a VSpace. Therefore, maintaining the
+coherency between the TLB in MMU and the TLB in SMMU's context banks is important.
+
+The kernel keeps a record of Vspace's usage in context banks in SMMU by
+maintaining: the number of context banks using a given ASID, and the ASID that a
+given context bank is using. There are a few reasons behind this design.
+\begin{itemize}
+\item First, the ASID is efficient for representing a VSpace. In seL4, each VSpace has
+an ASID which is assigned before the VSpace is ready to be used and will never
+change until the VSpace is deleted. Recording how many context banks are using a
+VSpace's ASID is equivalent to recording the VSpace's usage in context banks.
+\item Second, all TLB invalidation operation requires knowledge of the ASID. There are
+two types of TLB invalidation operations: invalidating a page table entry using
+its ASID (triggered by updating a page table entry, e.g. unmapping a page), and
+invalidating all mappings of an ASID (triggered by deleting a VSpace).
+\item Third, the kernel can easily find a context banks' ASID on all occasions, which is
+useful to either conduct TLB invalidation requests or unassign VSpace from a
+context bank.
+\end{itemize}
+
+By knowing how many context banks are using an ASID, the kernel can easily check
+in every TLB invalidation operation and invoke TLB invalidation in SMMU if the
+value is not zero. In SMMU's TLB invalidation operation, the kernel searches the
+context banks using the ASID, and conducts TLB invalidation in those context banks.
+
+Ideally, the SMMU shares the same ASID or VMID name space with the rest of the
+system. This allows the SMMU to maintain TLB coherency by listening for TLB
+broadcasting messages. This means the context banks should be configured with
+the correct ASID or VMID when the StreamID is enabled. This is not a problem for
+stage 1 translation, as there are a large number of ASID bits and an ASID can be
+assigned to a vspace root with existing APIs. However, the VMID used in stage 2
+only has 8 bits, and the kernel allocates them on demand and can reclaim a
+VSpace's hardware ASID to reuse if there are more VSpaces than available ASIDS.
+While it is possible to do this when the VSpace is only used in an MMU, it is
+not possible with multiple active context banks.
+Due to this, the context bank in SMMU cannot be configured with the correct VMID.
+Currently, the SMMU driver uses private VMID space, and uses the context bank
+number as the corresponding VMID number.
+
+
+
+\subsubsection{Fault handling}
+\label{sec:smmuv2-fault-handling}
+The number of IRQs used for reporting transaction faults is hardware dependent.
+There are two kinds of faults: global faults ( general configuration and
+transaction faults), or context bank faults. For transaction faults, the SMMU
+reports faulty stream IDs. The global faults reports:
+\begin{itemize}
+    \item Invalid context fault.
+    \item Unidentified stream fault.
+    \item Stream match conflict fault.
+    \item Unimplemented context bank fault.
+    \item Unimplemented context interrupt fault.
+    \item Configuration access fault.
+    \item External fault.
+\end{itemize}
+Each context bank contains registers to report faults on address translation, for
+example, faulty addresses, or permission errors. The SMMU driver identifies the
+cause of a fault by first reading the global fault registers (one state register
+and three fault syndrome registers), then by reading corresponding context bank
+fault registers. Note, the SMMU reports the faulty transaction (stream) ID,
+which can be used to identify its context bank ID.
+
+\begin{itemize}
+\item System assumption: Both the SMMU's IRQ handler and the owner of the
+    \obj{seL4\_ARM\_SIDControl} cap (controlling stream ID distributions) are trusted.
+\item SMMU interrupts are handled as same as other IRQs, i,e, the kernel does not
+    treat the SMMU IRQs special, reporting the interrupt via IRQ notifications.
+\item The kernel provides a API for reading the global fault registers: 
+    \apifunc{seL4\_ARM\_SIDControl\_GetFault}{arm_sid_controlgetfault}. Because
+    the IRQ notification can only deliver information via the badge, the owner
+    of the StreamControl\_cap can retrieve more information via this API.
+\item If the fault is related to a transaction, the owner of the
+    \obj{seL4\_ARM\_SIDControl} cap will notify the holder of the corresponding
+    stream ID cap, which should also have a copy of the context bank cap bound to
+    this transaction.
+\item The kernel provides an API for reading the context bank fault registers:
+    \apifunc{seL4\_ARM\_CB\_CBGetFault}{arm_cb_getfault}, used by a context bank
+    cap holder (the \obj{seL4\_ARM\_CB} cap holder).
+\item Once the fault handling is done, the server can call
+    \apifunc{seL4\_ARM\_CB\_CBClearFault}{arm_cb_clearfault} to clear the fault
+    status on a context bank, and 
+    \apifunc{seL4\_ARM\_SIDControl\_ClearFault}{arm_sid_controlclearfault}
+    to clear the fault status on SMMU.
+\end{itemize}
+

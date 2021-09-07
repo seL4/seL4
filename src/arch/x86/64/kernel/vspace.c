@@ -1136,7 +1136,6 @@ static exception_t decodeX64PageDirectoryInvocation(
     word_t length,
     cte_t *cte,
     cap_t cap,
-    extra_caps_t extraCaps,
     word_t *buffer
 )
 {
@@ -1166,7 +1165,7 @@ static exception_t decodeX64PageDirectoryInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (length < 2 || extraCaps.excaprefs[0] == NULL) {
+    if (length < 2 || current_extra_caps.excaprefs[0] == NULL) {
         userError("X64PageDirectory: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -1182,7 +1181,7 @@ static exception_t decodeX64PageDirectoryInvocation(
 
     vaddr = getSyscallArg(0, buffer) & (~MASK(PDPT_INDEX_OFFSET));
     vm_attr = vmAttributesFromWord(getSyscallArg(1, buffer));
-    vspaceCap = extraCaps.excaprefs[0]->cap;
+    vspaceCap = current_extra_caps.excaprefs[0]->cap;
 
     if (!isValidNativeRoot(vspaceCap)) {
         current_syscall_error.type = seL4_InvalidCapability;
@@ -1301,7 +1300,6 @@ static exception_t decodeX64PDPTInvocation(
     word_t length,
     cte_t   *cte,
     cap_t   cap,
-    extra_caps_t extraCaps,
     word_t  *buffer)
 {
     word_t                  vaddr;
@@ -1331,7 +1329,7 @@ static exception_t decodeX64PDPTInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (length < 2 || extraCaps.excaprefs[0] == NULL) {
+    if (length < 2 || current_extra_caps.excaprefs[0] == NULL) {
         userError("X64PDPT: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -1347,7 +1345,7 @@ static exception_t decodeX64PDPTInvocation(
 
     vaddr = getSyscallArg(0, buffer) & (~MASK(PML4_INDEX_OFFSET));
     attr = vmAttributesFromWord(getSyscallArg(1, buffer));
-    vspaceCap = extraCaps.excaprefs[0]->cap;
+    vspaceCap = current_extra_caps.excaprefs[0]->cap;
 
     if (!isValidNativeRoot(vspaceCap)) {
         current_syscall_error.type = seL4_InvalidCapability;
@@ -1409,7 +1407,6 @@ exception_t decodeX86ModeMMUInvocation(
     cptr_t cptr,
     cte_t *cte,
     cap_t cap,
-    extra_caps_t extraCaps,
     word_t *buffer
 )
 {
@@ -1420,10 +1417,10 @@ exception_t decodeX86ModeMMUInvocation(
         return EXCEPTION_SYSCALL_ERROR;
 
     case cap_pdpt_cap:
-        return decodeX64PDPTInvocation(label, length, cte, cap, extraCaps, buffer);
+        return decodeX64PDPTInvocation(label, length, cte, cap, buffer);
 
     case cap_page_directory_cap:
-        return decodeX64PageDirectoryInvocation(label, length, cte, cap, extraCaps, buffer);
+        return decodeX64PageDirectoryInvocation(label, length, cte, cap, buffer);
 
     default:
         fail("Invalid arch cap type");
@@ -1620,3 +1617,66 @@ void Arch_userStackTrace(tcb_t *tptr)
     }
 }
 #endif /* CONFIG_PRINTING */
+
+#ifdef CONFIG_KERNEL_LOG_BUFFER
+exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
+{
+    lookupCapAndSlot_ret_t lu_ret;
+    vm_page_size_t frameSize;
+    pptr_t frame_pptr;
+
+    /* faulting section */
+    lu_ret = lookupCapAndSlot(NODE_STATE(ksCurThread), frame_cptr);
+
+    if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
+        userError("Invalid cap #%lu.", frame_cptr);
+        current_fault = seL4_Fault_CapFault_new(frame_cptr, false);
+
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if (cap_get_capType(lu_ret.cap) != cap_frame_cap) {
+        userError("Invalid cap. Log buffer should be of a frame cap");
+        current_fault = seL4_Fault_CapFault_new(frame_cptr, false);
+
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    frameSize = cap_frame_cap_get_capFSize(lu_ret.cap);
+
+    if (frameSize != X86_LargePage) {
+        userError("Invalid size for log Buffer. The kernel expects at least 1M log buffer");
+        current_fault = seL4_Fault_CapFault_new(frame_cptr, false);
+
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    frame_pptr = cap_frame_cap_get_capFBasePtr(lu_ret.cap);
+
+    ksUserLogBuffer = pptr_to_paddr((void *) frame_pptr);
+
+    pde_t pde = pde_pde_large_new(
+                    0,                 /* xd                   */
+                    ksUserLogBuffer,   /* page_base_address    */
+                    VMKernelOnly,      /* pat                  */
+                    1,                 /* global               */
+                    0,                 /* dirty                */
+                    0,                 /* accessed             */
+                    0,                 /* cache_disabled       */
+                    1,                 /* write_through        */
+                    1,                 /* super_user           */
+                    1,                 /* read_write           */
+                    1                  /* present              */
+                );
+
+    /* Stored in the PD slot after the device page table */
+#ifdef CONFIG_HUGE_PAGE
+    x64KSKernelPD[1] = pde;
+#else
+    x64KSKernelPDs[BIT(PDPT_INDEX_BITS) - 1][1] = pde;
+#endif
+    invalidateTranslationAll(MASK(CONFIG_MAX_NUM_NODES));
+
+    return EXCEPTION_NONE;
+}
+#endif /* CONFIG_KERNEL_LOG_BUFFER */

@@ -926,7 +926,6 @@ exception_t decodeX86FrameInvocation(
     word_t length,
     cte_t *cte,
     cap_t cap,
-    extra_caps_t excaps,
     word_t *buffer
 )
 {
@@ -944,7 +943,7 @@ exception_t decodeX86FrameInvocation(
         vm_page_size_t  frameSize;
         asid_t          asid;
 
-        if (length < 3 || excaps.excaprefs[0] == NULL) {
+        if (length < 3 || current_extra_caps.excaprefs[0] == NULL) {
             current_syscall_error.type = seL4_TruncatedMessage;
 
             return EXCEPTION_SYSCALL_ERROR;
@@ -954,7 +953,7 @@ exception_t decodeX86FrameInvocation(
         vaddr = getSyscallArg(0, buffer);
         w_rightsMask = getSyscallArg(1, buffer);
         vmAttr = vmAttributesFromWord(getSyscallArg(2, buffer));
-        vspaceCap = excaps.excaprefs[0]->cap;
+        vspaceCap = current_extra_caps.excaprefs[0]->cap;
 
         capVMRights = cap_frame_cap_get_capFVMRights(cap);
 
@@ -1078,13 +1077,13 @@ exception_t decodeX86FrameInvocation(
 
 #ifdef CONFIG_IOMMU
     case X86PageMapIO: { /* MapIO */
-        return decodeX86IOMapInvocation(length, cte, cap, excaps, buffer);
+        return decodeX86IOMapInvocation(length, cte, cap, buffer);
     }
 #endif
 
 #ifdef CONFIG_VTX
     case X86PageMapEPT:
-        return decodeX86EPTPageMap(invLabel, length, cte, cap, excaps, buffer);
+        return decodeX86EPTPageMap(invLabel, length, cte, cap, buffer);
 #endif
 
     case X86PageGetAddress: {
@@ -1133,7 +1132,6 @@ static exception_t decodeX86PageTableInvocation(
     word_t invLabel,
     word_t length,
     cte_t *cte, cap_t cap,
-    extra_caps_t excaps,
     word_t *buffer
 )
 {
@@ -1162,7 +1160,7 @@ static exception_t decodeX86PageTableInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (length < 2 || excaps.excaprefs[0] == NULL) {
+    if (length < 2 || current_extra_caps.excaprefs[0] == NULL) {
         userError("X86PageTable: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -1179,7 +1177,7 @@ static exception_t decodeX86PageTableInvocation(
 
     vaddr = getSyscallArg(0, buffer) & (~MASK(PT_INDEX_BITS + PAGE_BITS));
     attr = vmAttributesFromWord(getSyscallArg(1, buffer));
-    vspaceCap = excaps.excaprefs[0]->cap;
+    vspaceCap = current_extra_caps.excaprefs[0]->cap;
 
     if (!isValidNativeRoot(vspaceCap)) {
         current_syscall_error.type = seL4_InvalidCapability;
@@ -1250,17 +1248,16 @@ exception_t decodeX86MMUInvocation(
     cptr_t cptr,
     cte_t *cte,
     cap_t cap,
-    extra_caps_t excaps,
     word_t *buffer
 )
 {
     switch (cap_get_capType(cap)) {
 
     case cap_frame_cap:
-        return decodeX86FrameInvocation(invLabel, length, cte, cap, excaps, buffer);
+        return decodeX86FrameInvocation(invLabel, length, cte, cap, buffer);
 
     case cap_page_table_cap:
-        return decodeX86PageTableInvocation(invLabel, length, cte, cap, excaps, buffer);
+        return decodeX86PageTableInvocation(invLabel, length, cte, cap, buffer);
 
     case cap_asid_control_cap: {
         word_t     i;
@@ -1281,17 +1278,17 @@ exception_t decodeX86MMUInvocation(
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        if (length < 2 || excaps.excaprefs[0] == NULL
-            || excaps.excaprefs[1] == NULL) {
+        if (length < 2 || current_extra_caps.excaprefs[0] == NULL
+            || current_extra_caps.excaprefs[1] == NULL) {
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
         }
 
         index = getSyscallArg(0, buffer);
         depth = getSyscallArg(1, buffer);
-        parentSlot = excaps.excaprefs[0];
+        parentSlot = current_extra_caps.excaprefs[0];
         untyped = parentSlot->cap;
-        root = excaps.excaprefs[1]->cap;
+        root = current_extra_caps.excaprefs[1]->cap;
 
         /* Find first free pool */
         for (i = 0; i < nASIDPools && x86KSASIDTable[i]; i++);
@@ -1349,13 +1346,13 @@ exception_t decodeX86MMUInvocation(
 
             return EXCEPTION_SYSCALL_ERROR;
         }
-        if (excaps.excaprefs[0] == NULL) {
+        if (current_extra_caps.excaprefs[0] == NULL) {
             current_syscall_error.type = seL4_TruncatedMessage;
 
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        vspaceCapSlot = excaps.excaprefs[0];
+        vspaceCapSlot = current_extra_caps.excaprefs[0];
         vspaceCap = vspaceCapSlot->cap;
 
         if (!(isVTableRoot(vspaceCap) || VTX_TERNARY(cap_get_capType(vspaceCap) == cap_ept_pml4_cap, 0))
@@ -1399,6 +1396,6 @@ exception_t decodeX86MMUInvocation(
     }
 
     default:
-        return decodeX86ModeMMUInvocation(invLabel, length, cptr, cte, cap, excaps, buffer);
+        return decodeX86ModeMMUInvocation(invLabel, length, cptr, cte, cap, buffer);
     }
 }

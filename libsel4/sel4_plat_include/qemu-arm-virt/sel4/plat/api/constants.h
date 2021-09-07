@@ -6,10 +6,7 @@
 
 #pragma once
 
-
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif
 
 /* Cortex A7 manual, table 10-2 */
 #define seL4_NumHWBreakpoints (10)
@@ -26,4 +23,3 @@
 
 #define seL4_UserTop 0xa0000000
 #endif
-

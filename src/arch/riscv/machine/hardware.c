@@ -26,7 +26,7 @@
 #define RESET_CYCLES ((TIMER_CLOCK_HZ / MS_IN_S) * CONFIG_TIMER_TICK_MS)
 #endif /* !CONFIG_KERNEL_MCS */
 
-#define IS_IRQ_VALID(X) (((X)) <= maxIRQ && (X)!= irqInvalid)
+#define IS_IRQ_VALID(X) (((X)) <= maxIRQ && (X) != irqInvalid)
 
 word_t PURE getRestartPC(tcb_t *thread)
 {
@@ -38,43 +38,32 @@ void setNextPC(tcb_t *thread, word_t v)
     setRegister(thread, NextIP, v);
 }
 
-BOOT_CODE int get_num_avail_p_regs(void)
-{
-    return sizeof(avail_p_regs) / sizeof(p_region_t);
-}
-
-BOOT_CODE p_region_t *get_avail_p_regs(void)
-{
-    return (p_region_t *) avail_p_regs;
-}
-
 BOOT_CODE void map_kernel_devices(void)
 {
-    if (kernel_devices == NULL) {
-        return;
-    }
-
-    for (int i = 0; i < (sizeof(kernel_devices) / sizeof(kernel_frame_t)); i++) {
-        map_kernel_frame(kernel_devices[i].paddr, KDEV_BASE,
-                         VMKernelOnly);
-        if (!kernel_devices[i].userAvailable) {
-            p_region_t reg = {
-                .start = kernel_devices[i].paddr,
-                .end = kernel_devices[i].paddr + (1 << PAGE_BITS),
-            };
-            reserve_region(reg);
+    /* If there are no kernel device frames at all, then kernel_device_frames is
+     * NULL. Thus we can't use ARRAY_SIZE(kernel_device_frames) here directly,
+     * but have to use NUM_KERNEL_DEVICE_FRAMES that is defined accordingly.
+     */
+    for (int i = 0; i < NUM_KERNEL_DEVICE_FRAMES; i++) {
+        const kernel_frame_t *frame = &kernel_device_frames[i];
+        map_kernel_frame(frame->paddr, frame->pptr, VMKernelOnly);
+        if (!frame->userAvailable) {
+            reserve_region((p_region_t) {
+                .start = frame->paddr,
+                .end   = frame->paddr + BIT(seL4_LargePageBits)
+            });
         }
     }
 }
 
 /*
  * The following assumes familiarity with RISC-V interrupt delivery and the PLIC.
- * See the RISC-V privileged specifivation v1.10 and the comment in
+ * See the RISC-V privileged specification v1.10 and the comment in
  * include/plat/spike/plat/machine.h for more information.
  * RISC-V IRQ handling on seL4 works as follows:
  *
  * On other architectures the kernel masks interrupts between delivering them to
- * userlevel and receiving the acknowledgement invocation. This strategy doesn't
+ * userlevel and receiving the acknowledgment invocation. This strategy doesn't
  * work on RISC-V as an IRQ is implicitly masked when it is claimed, until the
  * claim is acknowledged. If we mask and unmask the interrupt at the PLIC while
  * a claim is in progress we sometimes experience IRQ sources not being masked
@@ -253,21 +242,6 @@ BOOT_CODE void initTimer(void)
 }
 #endif /* !CONFIG_KERNEL_MCS */
 
-void plat_cleanL2Range(paddr_t start, paddr_t end)
-{
-}
-void plat_invalidateL2Range(paddr_t start, paddr_t end)
-{
-}
-
-void plat_cleanInvalidateL2Range(paddr_t start, paddr_t end)
-{
-}
-
-BOOT_CODE void initL2Cache(void)
-{
-}
-
 BOOT_CODE void initLocalIRQController(void)
 {
     printf("Init local IRQ\n");
@@ -291,7 +265,7 @@ BOOT_CODE void initLocalIRQController(void)
 
 BOOT_CODE void initIRQController(void)
 {
-    printf("Initialing PLIC...\n");
+    printf("Initializing PLIC...\n");
 
     plic_init_controller();
 }

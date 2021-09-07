@@ -26,13 +26,14 @@
 #define CNT_TVAL "cnthp_tval_el2"
 #define CNT_CVAL "cnthp_cval_el2"
 #define CNT_CTL  "cnthp_ctl_el2"
+#define CNT_CT   "cntpct_el0"
 #else
 #define CNT_TVAL "cntv_tval_el0"
 #define CNT_CVAL "cntv_cval_el0"
 #define CNT_CTL  CNTV_CTL
+#define CNT_CT   "cntvct_el0"
 #endif
 #define CNTFRQ   "cntfrq_el0"
-#define CNT_CT   "cntvct_el0"
 
 #ifdef ENABLE_SMP_SUPPORT
 /* Use the first two SGI (Software Generated Interrupt) IDs
@@ -303,7 +304,11 @@ static inline void invalidateByVA_I(vptr_t vaddr, paddr_t paddr)
 
 static inline void invalidate_I_PoU(void)
 {
+#if CONFIG_MAX_NUM_NODES > 1
+    asm volatile("ic ialluis");
+#else
     asm volatile("ic iallu");
+#endif
     isb();
 }
 

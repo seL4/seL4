@@ -6,12 +6,10 @@
 
 #pragma once
 
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif
+#include <sel4/macros.h>
 
 #ifndef __ASSEMBLER__
-#define LIBSEL4_BIT(n) (1ul<<(n))
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
 /* API arg values for breakpoint API, "type" arguments. */
@@ -94,6 +92,14 @@ static inline seL4_Word seL4_MaxExtraRefills(seL4_Word size)
 {
     return (LIBSEL4_BIT(size) -  seL4_CoreSchedContextBytes) / seL4_RefillSizeBytes;
 }
+
+/* Flags to be used with seL4_SchedControl_ConfigureFlags */
+typedef enum {
+    seL4_SchedContext_NoFlag = 0x0,
+    seL4_SchedContext_Sporadic = 0x1,
+    SEL4_FORCE_LONG_ENUM(seL4_SchedContextFlag),
+} seL4_SchedContextFlag;
+
 #endif /* !__ASSEMBLER__ */
 #endif /* CONFIG_KERNEL_MCS */
 

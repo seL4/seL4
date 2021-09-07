@@ -6,9 +6,7 @@
 
 #pragma once
 
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 enum benchmark_track_util_ipc_index {
@@ -45,4 +43,3 @@ enum benchmark_track_util_ipc_index {
 };
 
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
-

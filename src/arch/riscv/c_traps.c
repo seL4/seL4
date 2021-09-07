@@ -45,6 +45,9 @@ void VISIBLE NORETURN restore_user_context(void)
         LOAD_S "  gp, (2*%[REGSIZE])(t0)  \n"
         /* skip tp */
         /* skip x5/t0 */
+        /* no-op store conditional to clear monitor state */
+        /* this may succeed in implementations with very large reservations, but the saved ra is dead */
+        "sc.w zero, zero, (t0)\n"
         LOAD_S "  t2, (6*%[REGSIZE])(t0)  \n"
         LOAD_S "  s0, (7*%[REGSIZE])(t0)  \n"
         LOAD_S "  s1, (8*%[REGSIZE])(t0)  \n"
@@ -141,12 +144,20 @@ void VISIBLE NORETURN c_handle_exception(void)
     UNREACHABLE();
 }
 
-void NORETURN slowpath(syscall_t syscall)
+void VISIBLE NORETURN slowpath(syscall_t syscall)
 {
-    /* check for undefined syscall */
     if (unlikely(syscall < SYSCALL_MIN || syscall > SYSCALL_MAX)) {
+#ifdef TRACK_KERNEL_ENTRIES
+        ksKernelEntry.path = Entry_UnknownSyscall;
+#endif /* TRACK_KERNEL_ENTRIES */
+        /* Contrary to the name, this handles all non-standard syscalls used in
+         * debug builds also.
+         */
         handleUnknownSyscall(syscall);
     } else {
+#ifdef TRACK_KERNEL_ENTRIES
+        ksKernelEntry.is_fastpath = 0;
+#endif /* TRACK KERNEL ENTRIES */
         handleSyscall(syscall);
     }
 
@@ -154,26 +165,56 @@ void NORETURN slowpath(syscall_t syscall)
     UNREACHABLE();
 }
 
-void VISIBLE NORETURN c_handle_syscall(word_t cptr, word_t msgInfo, word_t unused1, word_t unused2, word_t unused3,
-                                       word_t unused4, word_t reply, syscall_t syscall)
+#ifdef CONFIG_FASTPATH
+ALIGN(L1_CACHE_LINE_SIZE)
+#ifdef CONFIG_KERNEL_MCS
+void VISIBLE c_handle_fastpath_reply_recv(word_t cptr, word_t msgInfo, word_t reply)
+#else
+void VISIBLE c_handle_fastpath_reply_recv(word_t cptr, word_t msgInfo)
+#endif
 {
     NODE_LOCK_SYS;
 
     c_entry_hook();
-
-#ifdef CONFIG_FASTPATH
-    if (syscall == (syscall_t)SysCall) {
-        fastpath_call(cptr, msgInfo);
-        UNREACHABLE();
-    } else if (syscall == (syscall_t)SysReplyRecv) {
+#ifdef TRACK_KERNEL_ENTRIES
+    benchmark_debug_syscall_start(cptr, msgInfo, SysReplyRecv);
+    ksKernelEntry.is_fastpath = 1;
+#endif /* DEBUG */
 #ifdef CONFIG_KERNEL_MCS
-        fastpath_reply_recv(cptr, msgInfo, reply);
+    fastpath_reply_recv(cptr, msgInfo, reply);
 #else
-        fastpath_reply_recv(cptr, msgInfo);
+    fastpath_reply_recv(cptr, msgInfo);
 #endif
-        UNREACHABLE();
-    }
-#endif /* CONFIG_FASTPATH */
+    UNREACHABLE();
+}
+
+ALIGN(L1_CACHE_LINE_SIZE)
+void VISIBLE c_handle_fastpath_call(word_t cptr, word_t msgInfo)
+{
+    NODE_LOCK_SYS;
+
+    c_entry_hook();
+#ifdef TRACK_KERNEL_ENTRIES
+    benchmark_debug_syscall_start(cptr, msgInfo, SysCall);
+    ksKernelEntry.is_fastpath = 1;
+#endif /* DEBUG */
+
+    fastpath_call(cptr, msgInfo);
+
+    UNREACHABLE();
+}
+#endif
+
+void VISIBLE NORETURN c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
+{
+    NODE_LOCK_SYS;
+
+    c_entry_hook();
+#ifdef TRACK_KERNEL_ENTRIES
+    benchmark_debug_syscall_start(cptr, msgInfo, syscall);
+    ksKernelEntry.is_fastpath = 0;
+#endif /* DEBUG */
     slowpath(syscall);
+
     UNREACHABLE();
 }

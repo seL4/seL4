@@ -85,9 +85,22 @@ static pte_t pte_next(word_t phys_addr, bool_t is_leaf)
 
 BOOT_CODE void map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights)
 {
+#if __riscv_xlen == 32
     paddr = ROUND_DOWN(paddr, RISCV_GET_LVL_PGSIZE_BITS(0));
     assert((paddr % RISCV_GET_LVL_PGSIZE(0)) == 0);
     kernel_root_pageTable[RISCV_GET_PT_INDEX(vaddr, 0)] = pte_next(paddr, true);
+#else
+    if (vaddr >= KDEV_BASE) {
+        /* Map devices in 2nd-level page table */
+        paddr = ROUND_DOWN(paddr, RISCV_GET_LVL_PGSIZE_BITS(1));
+        assert((paddr % RISCV_GET_LVL_PGSIZE(1)) == 0);
+        kernel_image_level2_dev_pt[RISCV_GET_PT_INDEX(vaddr, 1)] = pte_next(paddr, true);
+    } else {
+        paddr = ROUND_DOWN(paddr, RISCV_GET_LVL_PGSIZE_BITS(0));
+        assert((paddr % RISCV_GET_LVL_PGSIZE(0)) == 0);
+        kernel_root_pageTable[RISCV_GET_PT_INDEX(vaddr, 0)] = pte_next(paddr, true);
+    }
+#endif
 }
 
 BOOT_CODE VISIBLE void map_kernel_window(void)
@@ -112,12 +125,17 @@ BOOT_CODE VISIBLE void map_kernel_window(void)
     }
     /* now we should be mapping the 1GiB kernel base */
     assert(pptr == PPTR_TOP);
+    pptr = ROUND_DOWN(KERNEL_ELF_BASE, RISCV_GET_LVL_PGSIZE_BITS(0));
     paddr = ROUND_DOWN(KERNEL_ELF_PADDR_BASE, RISCV_GET_LVL_PGSIZE_BITS(0));
 
 #if __riscv_xlen == 32
     kernel_root_pageTable[RISCV_GET_PT_INDEX(pptr, 0)] = pte_next(paddr, true);
     pptr += RISCV_GET_LVL_PGSIZE(0);
     paddr += RISCV_GET_LVL_PGSIZE(0);
+#ifdef CONFIG_KERNEL_LOG_BUFFER
+    kernel_root_pageTable[RISCV_GET_PT_INDEX(KS_LOG_PPTR, 0)] =
+        pte_next(kpptr_to_paddr(kernel_image_level2_log_buffer_pt), false);
+#endif
 #else
     word_t index = 0;
     /* The kernel image are mapped twice, locating the two indexes in the
@@ -133,6 +151,10 @@ BOOT_CODE VISIBLE void map_kernel_window(void)
         pptr += RISCV_GET_LVL_PGSIZE(1);
         paddr += RISCV_GET_LVL_PGSIZE(1);
     }
+
+    /* Map kernel device page table */
+    kernel_root_pageTable[RISCV_GET_PT_INDEX(KDEV_BASE, 0)] =
+        pte_next(kpptr_to_paddr(kernel_image_level2_dev_pt), false);
 #endif
 
     /* There should be 1GiB free where we put device mapping */
@@ -652,8 +674,7 @@ static inline bool_t CONST checkVPAlignment(vm_page_size_t sz, word_t w)
 }
 
 static exception_t decodeRISCVPageTableInvocation(word_t label, word_t length,
-                                                  cte_t *cte, cap_t cap, extra_caps_t extraCaps,
-                                                  word_t *buffer)
+                                                  cte_t *cte, cap_t cap, word_t *buffer)
 {
     if (label == RISCVPageTableUnmap) {
         if (unlikely(!isFinalCapability(cte))) {
@@ -684,7 +705,7 @@ static exception_t decodeRISCVPageTableInvocation(word_t label, word_t length,
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (unlikely(length < 2 || extraCaps.excaprefs[0] == NULL)) {
+    if (unlikely(length < 2 || current_extra_caps.excaprefs[0] == NULL)) {
         userError("RISCVPageTable: truncated message");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -697,7 +718,7 @@ static exception_t decodeRISCVPageTableInvocation(word_t label, word_t length,
     }
 
     word_t vaddr = getSyscallArg(0, buffer);
-    cap_t lvl1ptCap = extraCaps.excaprefs[0]->cap;
+    cap_t lvl1ptCap = current_extra_caps.excaprefs[0]->cap;
 
     if (unlikely(cap_get_capType(lvl1ptCap) != cap_page_table_cap ||
                  cap_page_table_cap_get_capPTIsMapped(lvl1ptCap) == asidInvalid)) {
@@ -771,12 +792,11 @@ static exception_t decodeRISCVPageTableInvocation(word_t label, word_t length,
 }
 
 static exception_t decodeRISCVFrameInvocation(word_t label, word_t length,
-                                              cte_t *cte, cap_t cap, extra_caps_t extraCaps,
-                                              word_t *buffer)
+                                              cte_t *cte, cap_t cap, word_t *buffer)
 {
     switch (label) {
     case RISCVPageMap: {
-        if (unlikely(length < 3 || extraCaps.excaprefs[0] == NULL)) {
+        if (unlikely(length < 3 || current_extra_caps.excaprefs[0] == NULL)) {
             userError("RISCVPageMap: Truncated message.");
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
@@ -785,7 +805,7 @@ static exception_t decodeRISCVFrameInvocation(word_t label, word_t length,
         word_t vaddr = getSyscallArg(0, buffer);
         word_t w_rightsMask = getSyscallArg(1, buffer);
         vm_attributes_t attr = vmAttributesFromWord(getSyscallArg(2, buffer));
-        cap_t lvl1ptCap = extraCaps.excaprefs[0]->cap;
+        cap_t lvl1ptCap = current_extra_caps.excaprefs[0]->cap;
 
         vm_page_size_t frameSize = cap_frame_cap_get_capFSize(cap);
         vm_rights_t capVMRights = cap_frame_cap_get_capFVMRights(cap);
@@ -904,16 +924,15 @@ static exception_t decodeRISCVFrameInvocation(word_t label, word_t length,
 }
 
 exception_t decodeRISCVMMUInvocation(word_t label, word_t length, cptr_t cptr,
-                                     cte_t *cte, cap_t cap, extra_caps_t extraCaps,
-                                     word_t *buffer)
+                                     cte_t *cte, cap_t cap, word_t *buffer)
 {
     switch (cap_get_capType(cap)) {
 
     case cap_page_table_cap:
-        return decodeRISCVPageTableInvocation(label, length, cte, cap, extraCaps, buffer);
+        return decodeRISCVPageTableInvocation(label, length, cte, cap, buffer);
 
     case cap_frame_cap:
-        return decodeRISCVFrameInvocation(label, length, cte, cap, extraCaps, buffer);
+        return decodeRISCVFrameInvocation(label, length, cte, cap, buffer);
 
     case cap_asid_control_cap: {
         word_t     i;
@@ -934,17 +953,17 @@ exception_t decodeRISCVMMUInvocation(word_t label, word_t length, cptr_t cptr,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        if (length < 2 || extraCaps.excaprefs[0] == NULL
-            || extraCaps.excaprefs[1] == NULL) {
+        if (length < 2 || current_extra_caps.excaprefs[0] == NULL
+            || current_extra_caps.excaprefs[1] == NULL) {
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
         }
 
         index = getSyscallArg(0, buffer);
         depth = getSyscallArg(1, buffer);
-        parentSlot = extraCaps.excaprefs[0];
+        parentSlot = current_extra_caps.excaprefs[0];
         untyped = parentSlot->cap;
-        root = extraCaps.excaprefs[1]->cap;
+        root = current_extra_caps.excaprefs[1]->cap;
 
         /* Find first free pool */
         for (i = 0; i < nASIDPools && riscvKSASIDTable[i]; i++);
@@ -1001,13 +1020,13 @@ exception_t decodeRISCVMMUInvocation(word_t label, word_t length, cptr_t cptr,
 
             return EXCEPTION_SYSCALL_ERROR;
         }
-        if (extraCaps.excaprefs[0] == NULL) {
+        if (current_extra_caps.excaprefs[0] == NULL) {
             current_syscall_error.type = seL4_TruncatedMessage;
 
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        vspaceCapSlot = extraCaps.excaprefs[0];
+        vspaceCapSlot = current_extra_caps.excaprefs[0];
         vspaceCap = vspaceCapSlot->cap;
 
         if (unlikely(
@@ -1156,3 +1175,57 @@ void Arch_userStackTrace(tcb_t *tptr)
     }
 }
 #endif
+
+#ifdef CONFIG_KERNEL_LOG_BUFFER
+exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
+{
+    lookupCapAndSlot_ret_t lu_ret;
+    vm_page_size_t frameSize;
+    pptr_t  frame_pptr;
+
+    /* faulting section */
+    lu_ret = lookupCapAndSlot(NODE_STATE(ksCurThread), frame_cptr);
+
+    if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
+        userError("Invalid cap #%lu.", frame_cptr);
+        current_fault = seL4_Fault_CapFault_new(frame_cptr, false);
+
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if (cap_get_capType(lu_ret.cap) != cap_frame_cap) {
+        userError("Invalid cap. Log buffer should be of a frame cap");
+        current_fault = seL4_Fault_CapFault_new(frame_cptr, false);
+
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    frameSize = cap_frame_cap_get_capFSize(lu_ret.cap);
+
+    if (frameSize != RISCV_Mega_Page) {
+        userError("Invalid frame size. The kernel expects large page log buffer");
+        current_fault = seL4_Fault_CapFault_new(frame_cptr, false);
+
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    frame_pptr = cap_frame_cap_get_capFBasePtr(lu_ret.cap);
+
+    ksUserLogBuffer = pptr_to_paddr((void *) frame_pptr);
+
+#if __riscv_xlen == 32
+    paddr_t physical_address = ksUserLogBuffer;
+    for (word_t i = 0; i < BIT(PT_INDEX_BITS); i += 1) {
+        kernel_image_level2_log_buffer_pt[i] = pte_next(physical_address, true);
+        physical_address += BIT(PAGE_BITS);
+    }
+    assert(physical_address - ksUserLogBuffer == BIT(seL4_LargePageBits));
+#else
+    kernel_image_level2_dev_pt[RISCV_GET_PT_INDEX(KS_LOG_PPTR, 1)] = pte_next(ksUserLogBuffer, true);
+#endif
+
+    sfence();
+
+    return EXCEPTION_NONE;
+}
+#endif /* CONFIG_KERNEL_LOG_BUFFER */

@@ -9,7 +9,7 @@
 #include <api/failures.h>
 #include <object/structures.h>
 
-exception_t decodeSchedContextInvocation(word_t label, cap_t cap, extra_caps_t extraCaps, word_t *buffer);
+exception_t decodeSchedContextInvocation(word_t label, cap_t cap, word_t *buffer);
 
 /* Bind a tcb and a scheduling context. This allows a tcb to enter the scheduler.
  * If the tcb is runnable, insert into scheduler

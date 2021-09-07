@@ -903,7 +903,7 @@ LIBSEL4_INLINE_FUNC seL4_Uint64 seL4_X86DangerousRDMSR(seL4_Word msr)
     x86_sys_recv(seL4_SysX86DangerousRDMSR, msr, &unused0, &unused1, &low, MCS_COND(0, &high));
 #ifdef CONFIG_KERNEL_MCS
     /* MR1 doesn't get passed through MRs on CONFIG_KERNEL_MCS */
-    *high = seL4_GetMR(1);
+    high = seL4_GetMR(1);
 #endif
 
     return ((seL4_Uint64)low) | ((seL4_Uint64)high << 32);

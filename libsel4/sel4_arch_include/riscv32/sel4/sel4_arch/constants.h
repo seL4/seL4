@@ -2,14 +2,12 @@
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
  *
- * SPDX-License-Identifier: GPL-2.0-only
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
 #pragma once
 
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif
 
 #define seL4_WordBits           32
 /* log 2 bits in a word */
@@ -123,3 +121,8 @@ typedef enum {
 
 /* First address in the virtual address space that is not accessible to user level */
 #define seL4_UserTop 0x80000000lu
+
+#ifdef CONFIG_ENABLE_BENCHMARKS
+/* size of kernel log buffer in bytes */
+#define seL4_LogBufferSize (LIBSEL4_BIT(20))
+#endif /* CONFIG_ENABLE_BENCHMARKS */

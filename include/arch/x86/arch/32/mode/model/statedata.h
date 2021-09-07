@@ -15,9 +15,9 @@
 extern pde_t ia32KSGlobalPD[BIT(PD_INDEX_BITS)];
 extern pte_t ia32KSGlobalPT[BIT(PT_INDEX_BITS)];
 
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_LOG_BUFFER
 extern pte_t ia32KSGlobalLogPT[BIT(PT_INDEX_BITS)];
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_KERNEL_LOG_BUFFER */
 
 NODE_STATE_BEGIN(modeNodeState)
 /* Current active page directory. This is really just a shadow of CR3 */

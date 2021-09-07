@@ -217,7 +217,7 @@ BOOT_CODE bool_t map_kernel_window(
     phys = PADDR_BASE;
     idx = PPTR_BASE >> LARGE_PAGE_BITS;
 
-    /* PPTR_TOP differs whether CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+    /* PPTR_TOP differs whether CONFIG_KERNEL_LOG_BUFFER
      * is enabled or not.
      */
     while (idx < (PPTR_TOP >> LARGE_PAGE_BITS)) {
@@ -242,10 +242,10 @@ BOOT_CODE bool_t map_kernel_window(
     /* crosscheck whether we have mapped correctly so far */
     assert(phys == PADDR_TOP);
 
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_LOG_BUFFER
     /* Map global page table for the log buffer */
     pde = pde_pde_pt_new(
-              pptr_to_paddr(ia32KSGlobalLogPT), /* pt_base_address  */
+              kpptr_to_paddr(ia32KSGlobalLogPT), /* pt_base_address  */
               0,                 /* avl              */
               0,                 /* accessed         */
               0,                 /* cache_disabled   */
@@ -259,7 +259,7 @@ BOOT_CODE bool_t map_kernel_window(
     phys += BIT(LARGE_PAGE_BITS);
     assert(idx == (KS_LOG_PPTR >> LARGE_PAGE_BITS));
     idx++;
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_KERNEL_LOG_BUFFER */
 
 #ifdef ENABLE_SMP_SUPPORT
     /* initialize the TLB bitmap */
@@ -271,7 +271,7 @@ BOOT_CODE bool_t map_kernel_window(
 
     /* map page table of last 4M of virtual address space to page directory */
     pde = pde_pde_pt_new(
-              pptr_to_paddr(ia32KSGlobalPT), /* pt_base_address  */
+              kpptr_to_paddr(ia32KSGlobalPT), /* pt_base_address  */
               0,                 /* avl              */
               0,                 /* accessed         */
               0,                 /* cache_disabled   */
@@ -597,7 +597,7 @@ void setVMRoot(tcb_t *tcb)
     vspace_root = getValidNativeRoot(threadRoot);
     if (!vspace_root) {
         SMP_COND_STATEMENT(tlb_bitmap_unset(paddr_to_pptr(getCurrentPD()), getCurrentCPUIndex());)
-        setCurrentPD(pptr_to_paddr(ia32KSGlobalPD));
+        setCurrentPD(kpptr_to_paddr(ia32KSGlobalPD));
         return;
     }
 
@@ -605,7 +605,7 @@ void setVMRoot(tcb_t *tcb)
     find_ret = findVSpaceForASID(asid);
     if (find_ret.status != EXCEPTION_NONE || find_ret.vspace_root != vspace_root) {
         SMP_COND_STATEMENT(tlb_bitmap_unset(paddr_to_pptr(getCurrentPD()), getCurrentCPUIndex());)
-        setCurrentPD(pptr_to_paddr(ia32KSGlobalPD));
+        setCurrentPD(kpptr_to_paddr(ia32KSGlobalPD));
         return;
     }
 
@@ -630,13 +630,12 @@ exception_t decodeX86ModeMMUInvocation(
     cptr_t cptr,
     cte_t *cte,
     cap_t cap,
-    extra_caps_t excaps,
     word_t *buffer
 )
 {
     switch (cap_get_capType(cap)) {
     case cap_page_directory_cap:
-        return decodeIA32PageDirectoryInvocation(invLabel, length, cte, cap, excaps, buffer);
+        return decodeIA32PageDirectoryInvocation(invLabel, length, cte, cap, buffer);
 
     default:
         fail("Invalid arch cap type");
@@ -656,7 +655,7 @@ exception_t decodeX86ModeMapPage(word_t invLabel, vm_page_size_t page_size, cte_
     fail("Invalid Page type");
 }
 
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_LOG_BUFFER
 exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
 {
     lookupCapAndSlot_ret_t lu_ret;
@@ -717,4 +716,4 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
 
     return EXCEPTION_NONE;
 }
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_KERNEL_LOG_BUFFER */

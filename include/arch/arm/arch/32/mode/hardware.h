@@ -61,7 +61,7 @@
 #define PPTR_BASE seL4_UserTop
 
 /* Calculate virtual address space reserved for dynamic log buffer mapping */
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_LOG_BUFFER
 #define PPTR_TOP UL_CONST(0xffe00000)
 #define KS_LOG_PPTR PPTR_TOP
 #else

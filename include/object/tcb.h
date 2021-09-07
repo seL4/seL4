@@ -124,32 +124,29 @@ void deleteCallerCap(tcb_t *receiver);
 word_t copyMRs(tcb_t *sender, word_t *sendBuf, tcb_t *receiver,
                word_t *recvBuf, word_t n);
 exception_t decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
-                                cte_t *slot, extra_caps_t excaps, bool_t call,
-                                word_t *buffer);
-exception_t decodeCopyRegisters(cap_t cap, word_t length,
-                                extra_caps_t excaps, word_t *buffer);
+                                cte_t *slot, bool_t call, word_t *buffer);
+exception_t decodeCopyRegisters(cap_t cap, word_t length, word_t *buffer);
 exception_t decodeReadRegisters(cap_t cap, word_t length, bool_t call,
                                 word_t *buffer);
 exception_t decodeWriteRegisters(cap_t cap, word_t length, word_t *buffer);
 exception_t decodeTCBConfigure(cap_t cap, word_t length,
-                               cte_t *slot, extra_caps_t rootCaps, word_t *buffer);
-exception_t decodeSetPriority(cap_t cap, word_t length, extra_caps_t excaps, word_t *buffer);
-exception_t decodeSetMCPriority(cap_t cap, word_t length, extra_caps_t excaps, word_t *buffer);
+                               cte_t *slot, word_t *buffer);
+exception_t decodeSetPriority(cap_t cap, word_t length, word_t *buffer);
+exception_t decodeSetMCPriority(cap_t cap, word_t length, word_t *buffer);
 #ifdef CONFIG_KERNEL_MCS
-exception_t decodeSetSchedParams(cap_t cap, word_t length, cte_t *slot, extra_caps_t excaps, word_t *buffer);
+exception_t decodeSetSchedParams(cap_t cap, word_t length, cte_t *slot, word_t *buffer);
 #else
-exception_t decodeSetSchedParams(cap_t cap, word_t length, extra_caps_t excaps, word_t *buffer);
+exception_t decodeSetSchedParams(cap_t cap, word_t length, word_t *buffer);
 #endif
 exception_t decodeSetIPCBuffer(cap_t cap, word_t length,
-                               cte_t *slot, extra_caps_t excaps, word_t *buffer);
+                               cte_t *slot, word_t *buffer);
 exception_t decodeSetSpace(cap_t cap, word_t length,
-                           cte_t *slot, extra_caps_t excaps, word_t *buffer);
-exception_t decodeDomainInvocation(word_t invLabel, word_t length,
-                                   extra_caps_t excaps, word_t *buffer);
-exception_t decodeBindNotification(cap_t cap, extra_caps_t excaps);
+                           cte_t *slot, word_t *buffer);
+exception_t decodeDomainInvocation(word_t invLabel, word_t length, word_t *buffer);
+exception_t decodeBindNotification(cap_t cap);
 exception_t decodeUnbindNotification(cap_t cap);
 #ifdef CONFIG_KERNEL_MCS
-exception_t decodeSetTimeoutEndpoint(cap_t cap, cte_t *slot, extra_caps_t excaps);
+exception_t decodeSetTimeoutEndpoint(cap_t cap, cte_t *slot);
 #endif
 
 

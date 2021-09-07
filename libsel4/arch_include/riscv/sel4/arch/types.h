@@ -2,25 +2,21 @@
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
  *
- * SPDX-License-Identifier: GPL-2.0-only
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
 #pragma once
 
 #include <autoconf.h>
+#include <sel4/macros.h>
 #include <sel4/simple_types.h>
 #include <sel4/sel4_arch/types.h>
-
-typedef seL4_Word seL4_CPtr;
 
 typedef seL4_CPtr seL4_RISCV_Page;
 typedef seL4_CPtr seL4_RISCV_PageTable;
 typedef seL4_CPtr seL4_RISCV_ASIDControl;
 typedef seL4_CPtr seL4_RISCV_ASIDPool;
 
-typedef seL4_Word seL4_NodeId;
-typedef seL4_Word seL4_PAddr;
-typedef seL4_Word seL4_Domain;
 
 #define seL4_EndpointBits     4
 /* User context as used by seL4_TCB_ReadRegisters / seL4_TCB_WriteRegisters */

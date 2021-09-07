@@ -5,9 +5,7 @@
  */
 #pragma once
 
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif
 
 /* Cortex a15 manual, section 10.2.2 */
 #define seL4_NumHWBreakpoints (10)

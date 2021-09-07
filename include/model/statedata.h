@@ -48,7 +48,7 @@
 #define ARCH_NODE_STATE_ON_CORE(_state, _core) _state
 #define NODE_STATE_ON_CORE(_state, _core)      _state
 
-#define CURRENT_CPU_INDEX() 0
+#define CURRENT_CPU_INDEX() SEL4_WORD_CONST(0)
 
 #endif /* ENABLE_SMP_SUPPORT */
 
@@ -119,9 +119,9 @@ extern char ksIdleThreadTCB[CONFIG_MAX_NUM_NODES][BIT(seL4_TCBBits)];
 extern char ksIdleThreadSC[CONFIG_MAX_NUM_NODES][BIT(seL4_MinSchedContextBits)];
 #endif
 
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_LOG_BUFFER
 extern paddr_t ksUserLogBuffer;
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_KERNEL_LOG_BUFFER */
 
 #define SchedulerAction_ResumeCurrentThread ((tcb_t*)0)
 #define SchedulerAction_ChooseNewThread ((tcb_t*) 1)

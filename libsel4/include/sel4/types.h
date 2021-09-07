@@ -6,9 +6,7 @@
 
 #pragma once
 
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif
 #include <sel4/simple_types.h>
 #include <sel4/macros.h>
 #include <sel4/arch/types.h>
@@ -30,6 +28,10 @@
 #  define seL4_UntypedRetypeMaxObjects 256
 #endif
 
+typedef seL4_Word seL4_NodeId;
+typedef seL4_Word seL4_PAddr;
+typedef seL4_Word seL4_Domain;
+
 typedef seL4_CPtr seL4_CNode;
 typedef seL4_CPtr seL4_IRQHandler;
 typedef seL4_CPtr seL4_IRQControl;
@@ -38,9 +40,9 @@ typedef seL4_CPtr seL4_Untyped;
 typedef seL4_CPtr seL4_DomainSet;
 typedef seL4_CPtr seL4_SchedContext;
 typedef seL4_CPtr seL4_SchedControl;
+
 typedef seL4_Uint64 seL4_Time;
 
 #define seL4_NilData 0
 
 #include <sel4/arch/constants.h>
-
