@@ -64,8 +64,8 @@
             </param>
             <error name="seL4_DeleteFirst">
                 <description>
-                    A page is mapped in <texttt text="vspace"/> at <texttt text="vaddr."/>
-                    Or, all required page tables are already mapped in <texttt text="vspace"/> at <texttt text="vaddr."/>
+                    A page is mapped in <texttt text="vspace"/> at <texttt text="vaddr"/>.
+                    Or, all required page tables are already mapped in <texttt text="vspace"/> at <texttt text="vaddr"/>.
                 </description>
             </error>
             <error name="seL4_FailedLookup">
@@ -147,17 +147,17 @@
             </param>
             <error name="seL4_AlignmentError">
                 <description>
-                    The <texttt text="vaddr"/> is not aligned to the page size of <texttt text="_service."/>
+                    The <texttt text="vaddr"/> is not aligned to the page size of <texttt text="_service"/>.
                 </description>
             </error>
             <error name="seL4_DeleteFirst">
                 <description>
-                    A mapping already exists in <texttt text="vspace"/> at <texttt text="vaddr."/>
+                    A mapping already exists in <texttt text="vspace"/> at <texttt text="vaddr"/>.
                 </description>
             </error>
             <error name="seL4_FailedLookup">
                 <description>
-                    The <texttt text="vspace"/> does not have a paging structure at the required level mapped at <texttt text="vaddr."/>
+                    The <texttt text="vspace"/> does not have a paging structure at the required level mapped at <texttt text="vaddr"/>.
                     Or, <texttt text="vspace"/> is not assigned to an ASID pool.
                 </description>
             </error>
@@ -298,7 +298,7 @@
             </param>
             <error name="seL4_DeleteFirst">
                 <description>
-                    There are no more ASIDs available in <texttt text="_service."/>
+                    There are no more ASIDs available in <texttt text="_service"/>.
                 </description>
             </error>
             <error name="seL4_IllegalOperation">

@@ -33,7 +33,7 @@
             </error>
             <error name="seL4_FailedLookup">
                 <description>
-                    On aarch64, <texttt text="vspace"/> does not have a Page Directory mapped at <texttt text="vaddr."/>
+                    On aarch64, <texttt text="vspace"/> does not have a Page Directory mapped at <texttt text="vaddr"/>.
                     Or, <texttt text="vspace"/> is not assigned to an ASID pool.
                 </description>
             </error>
@@ -91,7 +91,7 @@
             <param dir="in" name="ioaddr" type="seL4_Word"/>
             <error name="seL4_DeleteFirst">
                 <description>
-                    All required page tables are already mapped in <texttt text="iospace"/> at <texttt text="ioaddr."/>
+                    All required page tables are already mapped in <texttt text="iospace"/> at <texttt text="ioaddr"/>.
                 </description>
             </error>
             <error name="seL4_IllegalOperation">
@@ -153,17 +153,17 @@
             </param>
             <error name="seL4_AlignmentError">
                 <description>
-                    The <texttt text="vaddr"/> is not aligned to the page size of <texttt text="_service."/>
+                    The <texttt text="vaddr"/> is not aligned to the page size of <texttt text="_service"/>.
                 </description>
             </error>
             <error name="seL4_DeleteFirst">
                 <description>
-                    A mapping already exists in <texttt text="vspace"/> at <texttt text="vaddr."/>
+                    A mapping already exists in <texttt text="vspace"/> at <texttt text="vaddr"/>.
                 </description>
             </error>
             <error name="seL4_FailedLookup">
                 <description>
-                    The <texttt text="vspace"/> does not have a paging structure at the required level mapped at <texttt text="vaddr."/>
+                    The <texttt text="vspace"/> does not have a paging structure at the required level mapped at <texttt text="vaddr"/>.
                     Or, <texttt text="vspace"/> is not assigned to an ASID pool.
                 </description>
             </error>
@@ -216,12 +216,12 @@
             <param dir="in" name="ioaddr" type="seL4_Word"/>
             <error name="seL4_DeleteFirst">
                 <description>
-                    A mapping already exists in <texttt text="iospace"/> at <texttt text="ioaddr."/>
+                    A mapping already exists in <texttt text="iospace"/> at <texttt text="ioaddr"/>.
                 </description>
             </error>
             <error name="seL4_FailedLookup">
                 <description>
-                    The <texttt text="iospace"/> does not have a sufficient number of IO Page Tables mapped at <texttt text="ioaddr."/>
+                    The <texttt text="iospace"/> does not have a sufficient number of IO Page Tables mapped at <texttt text="ioaddr"/>.
                 </description>
             </error>
             <error name="seL4_IllegalOperation">
@@ -231,7 +231,7 @@
             </error>
             <error name="seL4_InvalidArgument">
                 <description>
-                    No rights were specified in <texttt text="rights."/>
+                    No rights were specified in <texttt text="rights"/>.
                     Or, the rights in the <texttt text="_service"/> capability do not include <texttt text="rights"/>.
                 </description>
             </error>
@@ -467,7 +467,7 @@
             description="The VSpace that is being assigned to an ASID pool. Must not already be assigned to an ASID pool."/>
             <error name="seL4_DeleteFirst">
                 <description>
-                    There are no more ASIDs available in <texttt text="_service."/>
+                    There are no more ASIDs available in <texttt text="_service"/>.
                 </description>
             </error>
             <error name="seL4_IllegalOperation">
@@ -541,7 +541,7 @@
             </error>
             <error name="seL4_RangeError">
                 <description>
-                    The <texttt text="virq,"/> <texttt text="priority,"/> <texttt text="group,"/> or <texttt text="index"/> is invalid.
+                    The <texttt text="virq"/>, <texttt text="priority"/>, <texttt text="group"/>, or <texttt text="index"/> is invalid.
                 </description>
             </error>
         </method>

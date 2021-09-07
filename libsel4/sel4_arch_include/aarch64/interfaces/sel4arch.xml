@@ -227,7 +227,7 @@
             </param>
             <error name="seL4_DeleteFirst">
                 <description>
-                    A mapping already exists for this level in <texttt text="vspace"/> at <texttt text="vaddr."/>
+                    A mapping already exists for this level in <texttt text="vspace"/> at <texttt text="vaddr"/>.
                 </description>
             </error>
             <error name="seL4_FailedLookup">
@@ -295,12 +295,12 @@
             </param>
             <error name="seL4_DeleteFirst">
                 <description>
-                    A mapping already exists for this level in <texttt text="vspace"/> at <texttt text="vaddr."/>
+                    A mapping already exists for this level in <texttt text="vspace"/> at <texttt text="vaddr"/>.
                 </description>
             </error>
             <error name="seL4_FailedLookup">
                 <description>
-                    The <texttt text="vspace"/> does not have a Page Upper Directory mapped at <texttt text="vaddr."/>
+                    The <texttt text="vspace"/> does not have a Page Upper Directory mapped at <texttt text="vaddr"/>.
                     Or, <texttt text="vspace"/> is not assigned to an ASID pool.
                 </description>
             </error>
