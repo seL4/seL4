@@ -72,6 +72,23 @@ class Generator(object):
             string = soup.get_text()
 
         if string is not None:
+            # HACK: Due to the extra spacing that gets inserted by our scripts between XML
+            # elements to ensure doxygen can read xmlonly tags, we can no longer tell here
+            # if the text after an xml tag should have been flush against the result
+            # of the xml tag or not.
+            #
+            # For example, the following in an IDL file:
+            #    Testing <texttt text="1"/>, 2, 3
+            # Generates these C comments:
+            #    Testing  @xmlonly <texttt text="1"/> @endxmlonly , 2, 3
+            # Which generates this doxygen output:
+            #    Testing <texttt text="1"/>  , 2, 3
+            #
+            # To deal with this, just pick out punctuation that looks like it should have been
+            # flush against the xml and remove the leading spaces.
+            if string.startswith("  ,") or string.startswith("  ."):
+                string = string[2:]
+
             if escape:
                 return self.text_escape(string)
             else:
