@@ -35,12 +35,12 @@
             </param>
             <error name="seL4_DeleteFirst">
                 <description>
-                    A mapping already exists for this level in <texttt text="vspace"/> at <texttt text="vaddr."/>
+                    A mapping already exists for this level in <texttt text="vspace"/> at <texttt text="vaddr"/>.
                 </description>
             </error>
             <error name="seL4_FailedLookup">
                 <description>
-                    The <texttt text="vspace"/> does not have a PDPT mapped at <texttt text="vaddr."/>
+                    The <texttt text="vspace"/> does not have a PDPT mapped at <texttt text="vaddr"/>.
                     Or, <texttt text="vspace"/> is not assigned to an ASID pool.
                 </description>
             </error>
@@ -106,7 +106,7 @@
             </error>
             <error name="seL4_InvalidArgument">
                 <description>
-                    The <texttt text="_service"/> does not have a mapping at <texttt text="vaddr."/>
+                    The <texttt text="_service"/> does not have a mapping at <texttt text="vaddr"/>.
                     Or, <texttt text="vaddr"/> is in the kernel virtual address range.
                 </description>
             </error>
@@ -140,12 +140,12 @@
             </param>
             <error name="seL4_DeleteFirst">
                 <description>
-                    A mapping already exists for this level in <texttt text="vspace"/> at <texttt text="vaddr."/>
+                    A mapping already exists for this level in <texttt text="vspace"/> at <texttt text="vaddr"/>.
                 </description>
             </error>
             <error name="seL4_FailedLookup">
                 <description>
-                    The <texttt text="vspace"/> does not have a Page Directory mapped at <texttt text="vaddr."/>
+                    The <texttt text="vspace"/> does not have a Page Directory mapped at <texttt text="vaddr"/>.
                     Or, <texttt text="vspace"/> is not assigned to an ASID pool.
                 </description>
             </error>
@@ -209,7 +209,7 @@
                 description='The address to map the page table at.'/>
             <error name="seL4_DeleteFirst">
                 <description>
-                    All required page tables are already mapped in <texttt text="iospace"/> at <texttt text="ioaddr."/>
+                    All required page tables are already mapped in <texttt text="iospace"/> at <texttt text="ioaddr"/>.
                 </description>
             </error>
             <error name="seL4_IllegalOperation">
@@ -274,17 +274,17 @@
             </param>
             <error name="seL4_AlignmentError">
                 <description>
-                    The <texttt text="vaddr"/> is not aligned to the page size of <texttt text="_service."/>
+                    The <texttt text="vaddr"/> is not aligned to the page size of <texttt text="_service"/>.
                 </description>
             </error>
             <error name="seL4_DeleteFirst">
                 <description>
-                    A mapping already exists in <texttt text="vspace"/> at <texttt text="vaddr."/>
+                    A mapping already exists in <texttt text="vspace"/> at <texttt text="vaddr"/>.
                 </description>
             </error>
             <error name="seL4_FailedLookup">
                 <description>
-                    The <texttt text="vspace"/> does not have a paging structure at the required level mapped at <texttt text="vaddr."/>
+                    The <texttt text="vspace"/> does not have a paging structure at the required level mapped at <texttt text="vaddr"/>.
                     Or, <texttt text="vspace"/> is not assigned to an ASID pool.
                 </description>
             </error>
@@ -344,12 +344,12 @@
                 description='The address that the frame is being mapped at.'/>
             <error name="seL4_DeleteFirst">
                 <description>
-                    A mapping already exists in <texttt text="iospace"/> at <texttt text="ioaddr."/>
+                    A mapping already exists in <texttt text="iospace"/> at <texttt text="ioaddr"/>.
                 </description>
             </error>
             <error name="seL4_FailedLookup">
                 <description>
-                    The <texttt text="iospace"/> does not have a sufficient number of IO Page Tables mapped at <texttt text="ioaddr."/>
+                    The <texttt text="iospace"/> does not have a sufficient number of IO Page Tables mapped at <texttt text="ioaddr"/>.
                 </description>
             </error>
             <error name="seL4_IllegalOperation">
@@ -359,7 +359,7 @@
             </error>
             <error name="seL4_InvalidArgument">
                 <description>
-                    No rights were specified in <texttt text="rights."/>
+                    No rights were specified in <texttt text="rights"/>.
                     Or, the rights in the <texttt text="_service"/> capability do not include <texttt text="rights"/>.
                 </description>
             </error>
@@ -408,17 +408,17 @@
             <param dir="in" name="attr" type="seL4_X86_VMAttributes"/>
             <error name="seL4_AlignmentError">
                 <description>
-                    The <texttt text="vaddr"/> is not aligned to the page size of <texttt text="_service."/>
+                    The <texttt text="vaddr"/> is not aligned to the page size of <texttt text="_service"/>.
                 </description>
             </error>
             <error name="seL4_DeleteFirst">
                 <description>
-                    A mapping already exists in <texttt text="vspace"/> at <texttt text="vaddr."/>
+                    A mapping already exists in <texttt text="vspace"/> at <texttt text="vaddr"/>.
                 </description>
             </error>
             <error name="seL4_FailedLookup">
                 <description>
-                    The <texttt text="vspace"/> does not have a paging structure at the required level mapped at <texttt text="vaddr."/>
+                    The <texttt text="vspace"/> does not have a paging structure at the required level mapped at <texttt text="vaddr"/>.
                     Or, <texttt text="vspace"/> is not assigned to an ASID pool.
                 </description>
             </error>
@@ -508,7 +508,7 @@
             <param dir="in" name="vspace" type="seL4_CPtr" description='The page directory that is being assigned to an ASID pool. Must not already be assigned to an ASID pool.'/>
             <error name="seL4_DeleteFirst">
                 <description>
-                    There are no more ASIDs available in <texttt text="_service."/>
+                    There are no more ASIDs available in <texttt text="_service"/>.
                 </description>
             </error>
             <error name="seL4_IllegalOperation">
@@ -556,7 +556,7 @@
             </error>
             <error name="seL4_InvalidArgument">
                 <description>
-                    The <texttt text="last_port"/> is less than <texttt text="first_port."/>
+                    The <texttt text="last_port"/> is less than <texttt text="first_port"/>.
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
@@ -762,7 +762,7 @@
             </error>
             <error name="seL4_RangeError">
                 <description>
-                    The <texttt text="vector,"/> <texttt text="ioapic,"/> or <texttt text="pin"/> is invalid.
+                    The <texttt text="vector"/>, <texttt text="ioapic"/>, or <texttt text="pin"/> is invalid.
                     Or, <texttt text="level"/> or <texttt text="polarity"/> is not 0 or 1.
                     Or, <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
                 </description>
@@ -815,7 +815,7 @@
             </error>
             <error name="seL4_RangeError">
                 <description>
-                    The <texttt text="vector,"/> <texttt text="pic_bus,"/> <texttt text="pci_dev,"/> or <texttt text="pci_func"/> is invalid.
+                    The <texttt text="vector"/>, <texttt text="pic_bus"/>, <texttt text="pci_dev"/>, or <texttt text="pci_func"/> is invalid.
                     Or, the <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
                 </description>
             </error>
@@ -965,7 +965,7 @@
             </error>
             <error name="seL4_InvalidArgument">
                 <description>
-                    The <texttt text="low"/> or <texttt text="high"/> IO port exceeds the range authorized by <texttt text="ioPort."/>
+                    The <texttt text="low"/> or <texttt text="high"/> IO port exceeds the range authorized by <texttt text="ioPort"/>.
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
@@ -1040,7 +1040,7 @@
             </param>
             <error name="seL4_DeleteFirst">
                 <description>
-                    A mapping already exists for this level in <texttt text="eptpml4"/> at <texttt text="gpa."/>
+                    A mapping already exists for this level in <texttt text="eptpml4"/> at <texttt text="gpa"/>.
                 </description>
             </error>
             <error name="seL4_FailedLookup">
@@ -1105,13 +1105,13 @@
             </param>
             <error name="seL4_DeleteFirst">
                 <description>
-                    A mapping already exists for this level in <texttt text="eptpml4"/> at <texttt text="gpa."/>
+                    A mapping already exists for this level in <texttt text="eptpml4"/> at <texttt text="gpa"/>.
                 </description>
             </error>
             <error name="seL4_FailedLookup">
                 <description>
                     The <texttt text="eptpml4"/> is not assigned to an ASID pool.
-                    Or, <texttt text="eptpml4"/> does not have an EPTPDPT mapped at <texttt text="gpa."/>
+                    Or, <texttt text="eptpml4"/> does not have an EPTPDPT mapped at <texttt text="gpa"/>.
                 </description>
             </error>
             <error name="seL4_IllegalOperation">
@@ -1171,13 +1171,13 @@
             </param>
             <error name="seL4_DeleteFirst">
                 <description>
-                    A mapping already exists for this level in <texttt text="eptpml4"/> at <texttt text="gpa."/>
+                    A mapping already exists for this level in <texttt text="eptpml4"/> at <texttt text="gpa"/>.
                 </description>
             </error>
             <error name="seL4_FailedLookup">
                 <description>
                     The <texttt text="eptpml4"/> is not assigned to an ASID pool.
-                    Or, <texttt text="eptpml4"/> does not have an EPTPD mapped at <texttt text="gpa."/>
+                    Or, <texttt text="eptpml4"/> does not have an EPTPD mapped at <texttt text="gpa"/>.
                 </description>
             </error>
             <error name="seL4_IllegalOperation">

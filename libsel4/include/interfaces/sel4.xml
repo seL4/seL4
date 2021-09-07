@@ -51,7 +51,7 @@
             <error name="seL4_DeleteFirst" description="A capability exists in the destination window of the CNode."/>
             <error name="seL4_FailedLookup">
                 <description>
-                    The <texttt text="root,"/> <texttt text="node_index,"/> or <texttt text="node_depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    The <texttt text="root"/>, <texttt text="node_index"/>, or <texttt text="node_depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
                 </description>
             </error>
             <error name="seL4_IllegalOperation">
@@ -74,8 +74,8 @@
             <error name="seL4_NotEnoughMemory" description="The total size of the new objects exceeds the space available."/>
             <error name="seL4_RangeError">
                 <description>
-                    The <texttt text="num_objects"/> do not fit in the destination CNode at <texttt text="node_offset."/>
-                    Or, <texttt text="num_objects"/> is greater than <texttt text="CONFIG_RETYPE_FAN_OUT_LIMIT."/>
+                    The <texttt text="num_objects"/> do not fit in the destination CNode at <texttt text="node_offset"/>.
+                    Or, <texttt text="num_objects"/> is greater than <texttt text="CONFIG_RETYPE_FAN_OUT_LIMIT"/>.
                     Or, <texttt text="size_bits"/> is too large.
                 </description>
             </error>
@@ -202,7 +202,7 @@
                 description="Capability to a page containing the thread's IPC buffer."/>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service,"/> <texttt text="bufferFrame,"/> <texttt text="cspace_root,"/> or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="_service"/>, <texttt text="bufferFrame"/>, <texttt text="cspace_root"/>, or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="vspace_root"/> is not assigned to an ASID pool.
                     Or, <texttt text="cspace_root_data"/> is invalid.
                     Or, <texttt text="buffer"/> is not aligned.
@@ -216,7 +216,7 @@
             </error>
             <error name="seL4_RevokeFirst">
                 <description>
-                    The <texttt text="bufferFrame,"/> <texttt text="cspace_root,"/> or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="bufferFrame"/>, <texttt text="cspace_root"/>, or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
                 </description>
             </error>
         </method>
@@ -246,7 +246,7 @@
             </error>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service,"/> <texttt text="bufferFrame,"/> <texttt text="cspace_root,"/> or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="_service"/>, <texttt text="bufferFrame"/>, <texttt text="cspace_root"/>, or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="vspace_root"/> is not assigned to an ASID pool.
                     Or, <texttt text="cspace_root_data"/> is invalid.
                     Or, <texttt text="bufferFrame"/> is retyped from a device untyped <docref>(see <autoref label="sec:kernmemalloc"/>).</docref>
@@ -259,7 +259,7 @@
             </error>
             <error name="seL4_RevokeFirst">
                 <description>
-                    The <texttt text="bufferFrame,"/> <texttt text="cspace_root,"/> or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="bufferFrame"/>, <texttt text="cspace_root"/>, or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
                 </description>
             </error>
         </method>
@@ -378,7 +378,7 @@
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service,"/> <texttt text="authority,"/> <texttt text="sched_context,"/> or <texttt text="fault_ep"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="_service"/>, <texttt text="authority"/>, <texttt text="sched_context"/>, or <texttt text="fault_ep"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="fault_ep"/> does not have both Write rights and either Grant or GrantReply rights to the Endpoint <docref>(see <autoref label="sec:cap_rights"/>).</docref>
                 </description>
             </error>
@@ -464,7 +464,7 @@
                 description="Has no effect on x86 or ARM processors."/>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service,"/> <texttt text="cspace_root,"/> or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="_service"/>, <texttt text="cspace_root"/>, or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="vspace_root"/> is not assigned to an ASID pool.
                     Or, <texttt text="cspace_root_data"/> is invalid.
                 </description>
@@ -500,7 +500,7 @@
                 description="Has no effect on x86 or ARM processors."/>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service,"/> <texttt text="cspace_root,"/> or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="_service"/>, <texttt text="cspace_root"/>, or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="vspace_root"/> is not assigned to an ASID pool.
                     Or, <texttt text="cspace_root_data"/> is invalid.
                 </description>
@@ -652,7 +652,7 @@
             </error>
             <error name="seL4_InvalidArgument">
                 <description>
-                    The <texttt text="bp_num,"/> <texttt text="size,"/> or <texttt text="rw"/> is not valid for the given <texttt text="type."/>
+                    The <texttt text="bp_num"/>, <texttt text="size"/>, or <texttt text="rw"/> is not valid for the given <texttt text="type"/>.
                     Or, argument values are inappropriate for the target architecture.
                     Or, <texttt text="vaddr"/> is in the kernel virtual address range.
                 </description>
@@ -1132,7 +1132,7 @@
             </error>
             <error name="seL4_RangeError">
                 <description>
-                    The <texttt text="dest_depth,"/> <texttt text="src_depth,"/> or <texttt text="pivot_depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    The <texttt text="dest_depth"/>, <texttt text="src_depth"/>, or <texttt text="pivot_depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
                 </description>
             </error>
         </method>
@@ -1188,7 +1188,7 @@
             <error name="seL4_DeleteFirst" description="The destination slot contains a capability."/>
             <error name="seL4_FailedLookup">
                 <description>
-                    The <texttt text="root,"/> <texttt text="index,"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    The <texttt text="root"/>, <texttt text="index"/>, or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
                 </description>
             </error>
             <error name="seL4_IllegalOperation">
@@ -1300,7 +1300,7 @@
             </error>
             <error name="seL4_InvalidArgument">
                 <description>
-                    The <texttt text="domain"/> is greater than <texttt text="CONFIG_NUM_DOMAINS."/>
+                    The <texttt text="domain"/> is greater than <texttt text="CONFIG_NUM_DOMAINS"/>.
                     Or, <texttt text="thread"/> is a CPtr to a capability of the wrong type.
                 </description>
             </error>
@@ -1347,7 +1347,7 @@
             <error name="seL4_RangeError">
                 <description>
                     The <texttt text="budget"/> or <texttt text="period"/> or <texttt text="extra_refills"/> is too big or too small.
-                    Or, <texttt text="budget"/> is greater than <texttt text="period."/>
+                    Or, <texttt text="budget"/> is greater than <texttt text="period"/>.
                 </description>
             </error>
         </method>
@@ -1405,7 +1405,7 @@
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, the current thread's TCB is bound to <texttt text="_service."/>
+                    Or, the current thread's TCB is bound to <texttt text="_service"/>.
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
@@ -1437,7 +1437,7 @@
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="cap"/> is not bound to <texttt text="_service."/>
+                    Or, <texttt text="cap"/> is not bound to <texttt text="_service"/>.
                     Or, <texttt text="cap"/> is the current thread's TCB.
                 </description>
             </error>
