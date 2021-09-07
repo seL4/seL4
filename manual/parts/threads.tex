@@ -253,7 +253,10 @@ Scheduling contexts can also be bound to notification objects using
 a notification object with a passive thread blocked waiting on it, the passive thread will receive
 the scheduling context that is bound to the notification object.  The scheduling context is returned
 when the thread blocks on the notification object.  This feature allows for passive servers to use
-notification binding (See \autoref{sec:notification-binding}).
+notification binding (See \autoref{sec:notification-binding}).  If a scheduling context is bound to
+both a notification object and a thread, the behaviour will be the same as for a passive server:
+The scheduling context will be unbound from the thread when it blocks on the bound notification object.
+This is useful when launching passive servers or handling timeout exceptions.
 
 Scheduling contexts can be unbound from all objects (notification objects and TCBs that are bound or
 have received a scheduling context through donation) using
