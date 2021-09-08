@@ -21,7 +21,6 @@ jobs:
       matrix:
         arch: [ARM, ARM_HYP, RISCV64, X64]
         compiler: [gcc, llvm]
-        python: [py2, py3]
         exclude:
           # llvm RISCV64 compilation is not currently supported
           - arch: RISCV64
@@ -32,4 +31,3 @@ jobs:
       with:
         ARCH: ${{ matrix.arch }}
         COMPILER: ${{ matrix.compiler }}
-        PYTHON: ${{ matrix.python }}
