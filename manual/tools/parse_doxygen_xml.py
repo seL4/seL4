@@ -378,8 +378,8 @@ class LatexGenerator(Generator):
 {%(prototype)s}
 {%(params)s}
 {%(ret)s}
-{%(errors)s}
 {%(details)s}
+{%(errors)s}
         """ % {
             "level": self.level_to_header(level),
             "label": manual_node["label"],
