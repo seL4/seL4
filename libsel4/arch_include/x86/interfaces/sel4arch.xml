@@ -466,7 +466,7 @@
             </error>
             <error name="seL4_FailedLookup">
                 <description>
-                    The <texttt text="index"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    The <texttt text="index"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
                     Or, <texttt text="root"/> is a CPtr to a capability of the wrong type.
                 </description>
             </error>
@@ -479,12 +479,12 @@
                 <description>
                     The <texttt text="_service"/> or <texttt text="untyped"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="untyped"/> is not the exact size of an ASID pool object.
-                    Or, <texttt text="untyped"/> is a device untyped <docref>(see <autoref label="sec:kernmemalloc"/>).</docref>
+                    Or, <texttt text="untyped"/> is a device untyped <docref>(see <autoref label="sec:kernmemalloc"/>)</docref>.
                 </description>
             </error>
             <error name="seL4_RangeError">
                 <description>
-                    The <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    The <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
                 </description>
             </error>
             <error name="seL4_RevokeFirst">
@@ -545,7 +545,7 @@
             </error>
             <error name="seL4_FailedLookup">
                 <description>
-                    The <texttt text="index"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    The <texttt text="index"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
                     Or, <texttt text="root"/> is a CPtr to a capability of the wrong type.
                 </description>
             </error>
@@ -566,7 +566,7 @@
             </error>
             <error name="seL4_RangeError">
                 <description>
-                    The <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    The <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
                 </description>
             </error>
             <error name="seL4_RevokeFirst">
@@ -745,7 +745,7 @@
             </error>
             <error name="seL4_FailedLookup">
                 <description>
-                    The <texttt text="index"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    The <texttt text="index"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
                     Or, <texttt text="root"/> is a CPtr to a capability of the wrong type.
                 </description>
             </error>
@@ -764,7 +764,7 @@
                 <description>
                     The <texttt text="vector"/>, <texttt text="ioapic"/>, or <texttt text="pin"/> is invalid.
                     Or, <texttt text="level"/> or <texttt text="polarity"/> is not 0 or 1.
-                    Or, <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    Or, <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
                 </description>
             </error>
             <error name="seL4_RevokeFirst">
@@ -798,7 +798,7 @@
             </error>
             <error name="seL4_FailedLookup">
                 <description>
-                    The <texttt text="index"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    The <texttt text="index"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
                     Or, <texttt text="root"/> is a CPtr to a capability of the wrong type.
                 </description>
             </error>
@@ -816,7 +816,7 @@
             <error name="seL4_RangeError">
                 <description>
                     The <texttt text="vector"/>, <texttt text="pic_bus"/>, <texttt text="pci_dev"/>, or <texttt text="pci_func"/> is invalid.
-                    Or, the <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    Or, the <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
                 </description>
             </error>
             <error name="seL4_RevokeFirst">
