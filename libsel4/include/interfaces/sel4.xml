@@ -51,7 +51,7 @@
             <error name="seL4_DeleteFirst" description="A capability exists in the destination window of the CNode."/>
             <error name="seL4_FailedLookup">
                 <description>
-                    The <texttt text="root"/>, <texttt text="node_index"/>, or <texttt text="node_depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    The <texttt text="root"/>, <texttt text="node_index"/>, or <texttt text="node_depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
                 </description>
             </error>
             <error name="seL4_IllegalOperation">
@@ -62,7 +62,7 @@
             <error name="seL4_InvalidArgument">
                 <description>
                     The <texttt text="size_bits"/> is too big or too small for the requested object type.
-                    Or, <texttt text="type"/> cannot be created from a device untyped <docref>(see <autoref label="sec:kernmemalloc"/>).</docref>
+                    Or, <texttt text="type"/> cannot be created from a device untyped <docref>(see <autoref label="sec:kernmemalloc"/>)</docref>.
                     Or, the requested object <texttt text="type"/> does not exist.
                 </description>
             </error>
@@ -206,7 +206,7 @@
                     Or, <texttt text="vspace_root"/> is not assigned to an ASID pool.
                     Or, <texttt text="cspace_root_data"/> is invalid.
                     Or, <texttt text="buffer"/> is not aligned.
-                    Or, <texttt text="bufferFrame"/> is retyped from a device untyped <docref>(see <autoref label="sec:kernmemalloc"/>).</docref>
+                    Or, <texttt text="bufferFrame"/> is retyped from a device untyped <docref>(see <autoref label="sec:kernmemalloc"/>)</docref>.
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
@@ -249,7 +249,7 @@
                     The <texttt text="_service"/>, <texttt text="bufferFrame"/>, <texttt text="cspace_root"/>, or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="vspace_root"/> is not assigned to an ASID pool.
                     Or, <texttt text="cspace_root_data"/> is invalid.
-                    Or, <texttt text="bufferFrame"/> is retyped from a device untyped <docref>(see <autoref label="sec:kernmemalloc"/>).</docref>
+                    Or, <texttt text="bufferFrame"/> is retyped from a device untyped <docref>(see <autoref label="sec:kernmemalloc"/>)</docref>.
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
@@ -379,7 +379,7 @@
             <error name="seL4_InvalidCapability">
                 <description>
                     The <texttt text="_service"/>, <texttt text="authority"/>, <texttt text="sched_context"/>, or <texttt text="fault_ep"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="fault_ep"/> does not have both Write rights and either Grant or GrantReply rights to the Endpoint <docref>(see <autoref label="sec:cap_rights"/>).</docref>
+                    Or, <texttt text="fault_ep"/> does not have both Write rights and either Grant or GrantReply rights to the Endpoint <docref>(see <autoref label="sec:cap_rights"/>)</docref>.
                 </description>
             </error>
             <error name="seL4_RangeError">
@@ -407,7 +407,7 @@
             <error name="seL4_InvalidCapability">
                 <description>
                     The <texttt text="_service"/> or <texttt text="timeout_fault_ep"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="timeout_fault_ep"/> does not have both Write rights and either Grant or GrantReply rights to the Endpoint <docref>(see <autoref label="sec:cap_rights"/>).</docref>
+                    Or, <texttt text="timeout_fault_ep"/> does not have both Write rights and either Grant or GrantReply rights to the Endpoint <docref>(see <autoref label="sec:cap_rights"/>)</docref>.
                 </description>
             </error>
         </method>
@@ -430,7 +430,7 @@
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> or <texttt text="bufferFrame"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="bufferFrame"/> is retyped from a device untyped <docref>(see <autoref label="sec:kernmemalloc"/>).</docref>
+                    Or, <texttt text="bufferFrame"/> is retyped from a device untyped <docref>(see <autoref label="sec:kernmemalloc"/>)</docref>.
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
@@ -508,7 +508,7 @@
             <error name="seL4_InvalidCapability">
                 <description>
                     The <texttt text="_service"/> or <texttt text="fault_ep"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="fault_ep"/> does not have both Write rights and either Grant or GrantReply rights to the Endpoint <docref>(see <autoref label="sec:cap_rights"/>).</docref>
+                    Or, <texttt text="fault_ep"/> does not have both Write rights and either Grant or GrantReply rights to the Endpoint <docref>(see <autoref label="sec:cap_rights"/>)</docref>.
                 </description>
             </error>
             <error name="seL4_RevokeFirst">
@@ -568,7 +568,7 @@
                 <description>
                     The <texttt text="_service"/> or <texttt text="notification"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="_service"/> or <texttt text="notification"/> is already bound.
-                    Or, <texttt text="notification"/> does not have Read rights to the Notification <docref>(see <autoref label="sec:cap_rights"/>).</docref>
+                    Or, <texttt text="notification"/> does not have Read rights to the Notification <docref>(see <autoref label="sec:cap_rights"/>)</docref>.
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
@@ -825,7 +825,7 @@
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of index to resolve to find the capability being operated on."/>
             <error name="seL4_FailedLookup">
                 <description>
-                    The <texttt text="index"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    The <texttt text="index"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
                 </description>
             </error>
             <error name="seL4_IllegalOperation">
@@ -840,7 +840,7 @@
             </error>
             <error name="seL4_RangeError">
                 <description>
-                    The <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    The <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
                 </description>
             </error>
         </method>
@@ -857,7 +857,7 @@
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of index to resolve to find the capability being operated on."/>
             <error name="seL4_FailedLookup">
                 <description>
-                    The <texttt text="index"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    The <texttt text="index"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
                 </description>
             </error>
             <error name="seL4_IllegalOperation">
@@ -872,7 +872,7 @@
             </error>
             <error name="seL4_RangeError">
                 <description>
-                    The <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    The <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
                 </description>
             </error>
         </method>
@@ -892,13 +892,13 @@
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of index to resolve to find the capability being operated on."/>
             <error name="seL4_FailedLookup">
                 <description>
-                    The <texttt text="index"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    The <texttt text="index"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
                 </description>
             </error>
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, the capability does not have full rights to the Endpoint <docref>(see <autoref label="sec:cap_rights"/>).</docref>
+                    Or, the capability does not have full rights to the Endpoint <docref>(see <autoref label="sec:cap_rights"/>)</docref>.
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
@@ -908,7 +908,7 @@
             </error>
             <error name="seL4_RangeError">
                 <description>
-                    The <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    The <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
                 </description>
             </error>
         </method>
@@ -934,7 +934,7 @@
             <error name="seL4_DeleteFirst" description="The destination slot contains a capability."/>
             <error name="seL4_FailedLookup">
                 <description>
-                    The index or depth of the source or destination is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    The index or depth of the source or destination is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
                     Or, <texttt text="src_root"/> is a CPtr to a capability of the wrong type.
                     Or, the source slot is empty.
                 </description>
@@ -942,7 +942,7 @@
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, the source capability cannot be derived <docref>(see <autoref label="sec:cap_derivation"/>).</docref>
+                    Or, the source capability cannot be derived <docref>(see <autoref label="sec:cap_derivation"/>)</docref>.
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
@@ -952,12 +952,12 @@
             </error>
             <error name="seL4_RangeError">
                 <description>
-                    The <texttt text="dest_depth"/> or <texttt text="src_depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    The <texttt text="dest_depth"/> or <texttt text="src_depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
                 </description>
             </error>
             <error name="seL4_RevokeFirst">
                 <description>
-                    The source capability cannot be derived <docref>(see <autoref label="sec:cap_derivation"/>).</docref>
+                    The source capability cannot be derived <docref>(see <autoref label="sec:cap_derivation"/>)</docref>.
                 </description>
             </error>
         </method>
@@ -984,7 +984,7 @@
             <error name="seL4_DeleteFirst" description="The destination slot contains a capability."/>
             <error name="seL4_FailedLookup">
                 <description>
-                    The index or depth of the source or destination is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    The index or depth of the source or destination is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
                     Or, <texttt text="src_root"/> is a CPtr to a capability of the wrong type.
                     Or, the source slot is empty.
                 </description>
@@ -992,7 +992,7 @@
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, the source capability cannot be derived <docref>(see <autoref label="sec:cap_derivation"/>).</docref>
+                    Or, the source capability cannot be derived <docref>(see <autoref label="sec:cap_derivation"/>)</docref>.
                     Or, the badge or guard value is invalid.
                 </description>
             </error>
@@ -1003,12 +1003,12 @@
             </error>
             <error name="seL4_RangeError">
                 <description>
-                    The <texttt text="dest_depth"/> or <texttt text="src_depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    The <texttt text="dest_depth"/> or <texttt text="src_depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
                 </description>
             </error>
             <error name="seL4_RevokeFirst">
                 <description>
-                    The source capability cannot be derived <docref>(see <autoref label="sec:cap_derivation"/>).</docref>
+                    The source capability cannot be derived <docref>(see <autoref label="sec:cap_derivation"/>)</docref>.
                 </description>
             </error>
         </method>
@@ -1029,7 +1029,7 @@
             <error name="seL4_DeleteFirst" description="The destination slot contains a capability."/>
             <error name="seL4_FailedLookup">
                 <description>
-                    The index or depth of the source or destination is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    The index or depth of the source or destination is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
                     Or, <texttt text="src_root"/> is a CPtr to a capability of the wrong type.
                     Or, the source slot is empty.
                 </description>
@@ -1046,7 +1046,7 @@
             </error>
             <error name="seL4_RangeError">
                 <description>
-                    The <texttt text="dest_depth"/> or <texttt text="src_depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    The <texttt text="dest_depth"/> or <texttt text="src_depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
                 </description>
             </error>
         </method>
@@ -1068,7 +1068,7 @@
             <error name="seL4_DeleteFirst" description="The destination slot contains a capability."/>
             <error name="seL4_FailedLookup">
                 <description>
-                    The index or depth of the source or destination is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    The index or depth of the source or destination is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
                     Or, <texttt text="src_root"/> is a CPtr to a capability of the wrong type.
                     Or, the source slot is empty.
                 </description>
@@ -1086,7 +1086,7 @@
             </error>
             <error name="seL4_RangeError">
                 <description>
-                    The <texttt text="dest_depth"/> or <texttt text="src_depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    The <texttt text="dest_depth"/> or <texttt text="src_depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
                 </description>
             </error>
         </method>
@@ -1113,7 +1113,7 @@
             <error name="seL4_DeleteFirst" description="If the destination is not the same slot as the source and the destination slot contains a capability."/>
             <error name="seL4_FailedLookup">
                 <description>
-                    The index or depth of the source, destination, or pivot is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    The index or depth of the source, destination, or pivot is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
                     Or, <texttt text="src_root"/> or <texttt text="pivot_root"/> is a CPtr to a capability of the wrong type.
                     Or, the source or pivot slot is empty.
                 </description>
@@ -1132,7 +1132,7 @@
             </error>
             <error name="seL4_RangeError">
                 <description>
-                    The <texttt text="dest_depth"/>, <texttt text="src_depth"/>, or <texttt text="pivot_depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    The <texttt text="dest_depth"/>, <texttt text="src_depth"/>, or <texttt text="pivot_depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
                 </description>
             </error>
         </method>
@@ -1150,7 +1150,7 @@
             <error name="seL4_DeleteFirst" description="The destination slot contains a capability."/>
             <error name="seL4_FailedLookup">
                 <description>
-                    The <texttt text="index"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    The <texttt text="index"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
                 </description>
             </error>
             <error name="seL4_IllegalOperation">
@@ -1165,7 +1165,7 @@
             </error>
             <error name="seL4_RangeError">
                 <description>
-                    The <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    The <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
                 </description>
             </error>
         </method>
@@ -1188,7 +1188,7 @@
             <error name="seL4_DeleteFirst" description="The destination slot contains a capability."/>
             <error name="seL4_FailedLookup">
                 <description>
-                    The <texttt text="root"/>, <texttt text="index"/>, or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    The <texttt text="root"/>, <texttt text="index"/>, or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
                 </description>
             </error>
             <error name="seL4_IllegalOperation">
@@ -1206,7 +1206,7 @@
                 <description>
                     The <texttt text="irq"/> is invalid for the target architecture.
                     Or, on x86, <texttt text="irq"/> is not in the ISA IRQ range.
-                    Or, <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>).</docref>
+                    Or, <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
                 </description>
             </error>
             <error name="seL4_RevokeFirst">
@@ -1256,7 +1256,7 @@
             <error name="seL4_InvalidCapability">
                 <description>
                     The <texttt text="_service"/> or <texttt text="notification"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="notification"/> does not have the Write right <docref>(see <autoref label="sec:cap_rights"/>).</docref>
+                    Or, <texttt text="notification"/> does not have the Write right <docref>(see <autoref label="sec:cap_rights"/>)</docref>.
                 </description>
             </error>
         </method>
@@ -1485,7 +1485,7 @@
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="_service"/> is not bound to a TCB or is bound to the current thread's TCB.
-                    Or, the target thread's priority is greater than the current thread's maximum controlled priority <docref>(see <autoref label="sec:sched"/>).</docref>
+                    Or, the target thread's priority is greater than the current thread's maximum controlled priority <docref>(see <autoref label="sec:sched"/>)</docref>.
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
