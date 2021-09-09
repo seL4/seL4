@@ -25,7 +25,6 @@ typedef struct ndks_boot {
     region_t   freemem[MAX_NUM_FREEMEM_REG];
     seL4_BootInfo      *bi_frame;
     seL4_SlotPos slot_pos_cur;
-    seL4_SlotPos slot_pos_max;
 } ndks_boot_t;
 
 extern ndks_boot_t ndks_boot;

@@ -274,6 +274,13 @@ config_string(
     UNQUOTE
 )
 
+# Set CONFIG_ENABLE_SMP_SUPPORT as an alias of CONFIG_MAX_NUM_NODES > 1
+if(KernelMaxNumNodes GREATER 1)
+    config_set(KernelEnableSMPSupport ENABLE_SMP_SUPPORT ON)
+else()
+    config_set(KernelEnableSMPSupport ENABLE_SMP_SUPPORT OFF)
+endif()
+
 config_string(
     KernelStackBits KERNEL_STACK_BITS
     "This describes the log2 size of the kernel stack. Great care should be taken as\
@@ -358,6 +365,14 @@ if(NOT (KernelBenchmarks STREQUAL "none"))
 else()
     config_set(KernelEnableBenchmarks ENABLE_BENCHMARKS OFF)
 endif()
+
+# Reflect the existance of kernel Log buffer
+if(KernelBenchmarksTrackKernelEntries OR KernelBenchmarksTracepoints)
+    config_set(KernelLogBuffer KERNEL_LOG_BUFFER ON)
+else()
+    config_set(KernelLogBuffer KERNEL_LOG_BUFFER OFF)
+endif()
+
 config_string(
     KernelMaxNumTracePoints MAX_NUM_TRACE_POINTS
     "Use TRACE_POINT_START(k) and TRACE_POINT_STOP(k) macros for recording data, \

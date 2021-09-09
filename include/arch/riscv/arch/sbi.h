@@ -35,6 +35,10 @@
 
 #include <stdint.h>
 
+/* See https://github.com/riscv/riscv-sbi-doc/blob/master/riscv-sbi.adoc for
+ * details about these command codes, they are the "legacy extensions"
+ * introduced by BBL and supported by OpenSBI.
+ */
 #define SBI_SET_TIMER 0
 #define SBI_CONSOLE_PUTCHAR 1
 #define SBI_CONSOLE_GETCHAR 2
@@ -44,6 +48,7 @@
 #define SBI_REMOTE_SFENCE_VMA 6
 #define SBI_REMOTE_SFENCE_VMA_ASID 7
 #define SBI_SHUTDOWN 8
+/* The values 9 - 15 are reserved. */
 
 static inline word_t sbi_call(word_t cmd,
                               word_t arg_0,

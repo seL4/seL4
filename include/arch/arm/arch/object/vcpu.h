@@ -47,7 +47,6 @@
 #define HCR_SWIO     BIT( 1)     /* set/way invalidate override    */
 #define HCR_VM       BIT( 0)     /* Virtualization MMU enable      */
 
-#define GIC_VCPU_MAX_NUM_LR 64
 
 struct gicVCpuIface {
     uint32_t hcr;

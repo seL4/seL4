@@ -1,5 +1,6 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2021, HENSOLDT Cyber
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -344,11 +345,6 @@ static BOOT_CODE bool_t try_init_kernel(
     it_v_reg.start = ui_v_reg.start;
     it_v_reg.end = extra_bi_frame_vptr + BIT(extra_bi_size_bits);
 
-    if (it_v_reg.end >= USER_TOP) {
-        printf("ERROR: userland image virtual end address too high\n");
-        return false;
-    }
-
     /* setup virtual memory for the kernel */
     map_kernel_window();
 
@@ -363,6 +359,17 @@ static BOOT_CODE bool_t try_init_kernel(
 
     /* initialise the platform */
     init_plat();
+
+    if (it_v_reg.end >= USER_TOP) {
+        /* Variable arguments for printf() require well defined integer types to
+         * work properly. Unfortunately, the definition of USER_TOP differs
+         * between platforms (int, long), so we have to cast here to play safe.
+         */
+        printf("ERROR: userland image virt [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]"
+               "exceeds USER_TOP (%"SEL4_PRIx_word")\n",
+               it_v_reg.start, it_v_reg.end, (word_t)USER_TOP);
+        return false;
+    }
 
     if (!arch_init_freemem(ui_p_reg, dtb_p_reg, it_v_reg, extra_bi_size_bits)) {
         printf("ERROR: free memory management initialization failed\n");

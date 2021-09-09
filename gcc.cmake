@@ -12,7 +12,6 @@ set(CMAKE_SYSTEM_NAME Generic)
 set(CMAKE_SYSTEM_PROCESSOR seL4CPU)
 
 set(CMAKE_SYSROOT "${CMAKE_BINARY_DIR}")
-set(CMAKE_STAGING_PREFIX "${CMAKE_BINARY_DIR}/staging")
 
 # When this file is passed to configure_file in cmake, these variables get set to
 # the kernel platform configuration.

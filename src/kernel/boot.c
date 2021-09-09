@@ -102,6 +102,7 @@ BOOT_CODE static bool_t insert_region(region_t reg)
     if (is_reg_empty(reg)) {
         return true;
     }
+
     for (word_t i = 0; i < ARRAY_SIZE(ndks_boot.freemem); i++) {
         if (is_reg_empty(ndks_boot.freemem[i])) {
             reserve_region(pptr_to_paddr_reg(reg));
@@ -109,21 +110,25 @@ BOOT_CODE static bool_t insert_region(region_t reg)
             return true;
         }
     }
-#ifdef CONFIG_ARCH_ARM
-    /* boot.h should have calculated MAX_NUM_FREEMEM_REG correctly.
-     * If we've run out, then something is wrong.
-     * Note that the capDL allocation toolchain does not know about
-     * MAX_NUM_FREEMEM_REG, so throwing away regions may prevent
-     * capDL applications from being loaded! */
-    printf("Can't fit memory region 0x%"SEL4_PRIx_word"-0x%"SEL4_PRIx_word
-           ", try increasing MAX_NUM_FREEMEM_REG (currently %d)\n",
-           reg.start, reg.end, (int)MAX_NUM_FREEMEM_REG);
-    assert(!"Ran out of freemem slots");
-#else
-    printf("Dropping memory region 0x%"SEL4_PRIx_word"-0x%"SEL4_PRIx_word
-           ", try increasing MAX_NUM_FREEMEM_REG (currently %d)\n",
-           reg.start, reg.end, (int)MAX_NUM_FREEMEM_REG);
-#endif
+
+    /* We don't know if a platform or architecture picked MAX_NUM_FREEMEM_REG
+     * arbitrarily or carefully calculated it to be big enough. Running out of
+     * slots here is not really fatal, eventually memory allocation may fail
+     * if there is not enough free memory. However, allocations should never
+     * blindly assume to work, some error handling must always be in place even
+     * if the environment has been crafted carefully to support them. Thus, we
+     * don't stop the boot process here, but return an error. The caller should
+     * decide how bad this is.
+     */
+    printf("no free memory slot left for [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"],"
+           " consider increasing MAX_NUM_FREEMEM_REG (%u)\n",
+           reg.start, reg.end, (unsigned int)MAX_NUM_FREEMEM_REG);
+
+    /* For debug builds we consider this a fatal error. Rationale is, that the
+     * caller does not check the error code at the moment, but just ignores any
+     * failures silently. */
+    assert(0);
+
     return false;
 }
 
@@ -151,7 +156,8 @@ BOOT_CODE static word_t calculate_rootserver_size(v_region_t it_v_reg, word_t ex
     /* work out how much memory we need for root server objects */
     word_t size = BIT(CONFIG_ROOT_CNODE_SIZE_BITS + seL4_SlotBits);
     size += BIT(seL4_TCBBits); // root thread tcb
-    size += 2 * BIT(seL4_PageBits); // boot info + ipc buf
+    size += BIT(seL4_PageBits); // ipc buf
+    size += BIT(BI_FRAME_SIZE_BITS); // boot info
     size += BIT(seL4_ASIDPoolBits);
     size += extra_bi_size_bits > 0 ? BIT(extra_bi_size_bits) : 0;
     size += BIT(seL4_VSpaceBits); // root vspace
@@ -201,7 +207,7 @@ BOOT_CODE static void create_rootserver_objects(pptr_t start, v_region_t it_v_re
     maybe_alloc_extra_bi(seL4_PageBits, extra_bi_size_bits);
     rootserver.asid_pool = alloc_rootserver_obj(seL4_ASIDPoolBits, 1);
     rootserver.ipc_buf = alloc_rootserver_obj(seL4_PageBits, 1);
-    rootserver.boot_info = alloc_rootserver_obj(seL4_PageBits, 1);
+    rootserver.boot_info = alloc_rootserver_obj(BI_FRAME_SIZE_BITS, 1);
 
     /* TCBs on aarch32 can be larger than page tables in certain configs */
 #if seL4_TCBBits >= seL4_PageTableBits
@@ -245,9 +251,6 @@ compile_assert(root_cnode_size_valid,
 BOOT_CODE cap_t
 create_root_cnode(void)
 {
-    /* write the number of root CNode slots to global state */
-    ndks_boot.slot_pos_max = BIT(CONFIG_ROOT_CNODE_SIZE_BITS);
-
     cap_t cap = cap_cnode_cap_new(
                     CONFIG_ROOT_CNODE_SIZE_BITS, /* radix */
                     wordBits - CONFIG_ROOT_CNODE_SIZE_BITS, /* guard size */
@@ -315,30 +318,36 @@ BOOT_CODE word_t calculate_extra_bi_size_bits(word_t extra_size)
     return msb;
 }
 
-BOOT_CODE void populate_bi_frame(node_id_t node_id, word_t num_nodes, vptr_t ipcbuf_vptr,
-                                 word_t extra_bi_size)
+BOOT_CODE void populate_bi_frame(node_id_t node_id, word_t num_nodes,
+                                 vptr_t ipcbuf_vptr, word_t extra_bi_size)
 {
-    clearMemory((void *) rootserver.boot_info, BI_FRAME_SIZE_BITS);
+    /* clear boot info memory */
+    clearMemory((void *)rootserver.boot_info, BI_FRAME_SIZE_BITS);
     if (extra_bi_size) {
-        clearMemory((void *) rootserver.extra_bi, calculate_extra_bi_size_bits(extra_bi_size));
+        clearMemory((void *)rootserver.extra_bi,
+                    calculate_extra_bi_size_bits(extra_bi_size));
     }
 
     /* initialise bootinfo-related global state */
-    ndks_boot.bi_frame = BI_PTR(rootserver.boot_info);
+    seL4_BootInfo *bi = BI_PTR(rootserver.boot_info);
+    bi->nodeID = node_id;
+    bi->numNodes = num_nodes;
+    bi->numIOPTLevels = 0;
+    bi->ipcBuffer = (seL4_IPCBuffer *)ipcbuf_vptr;
+    bi->initThreadCNodeSizeBits = CONFIG_ROOT_CNODE_SIZE_BITS;
+    bi->initThreadDomain = ksDomSchedule[ksDomScheduleIdx].domain;
+    bi->extraLen = extra_bi_size;
+
+    ndks_boot.bi_frame = bi;
     ndks_boot.slot_pos_cur = seL4_NumInitialCaps;
-    BI_PTR(rootserver.boot_info)->nodeID = node_id;
-    BI_PTR(rootserver.boot_info)->numNodes = num_nodes;
-    BI_PTR(rootserver.boot_info)->numIOPTLevels = 0;
-    BI_PTR(rootserver.boot_info)->ipcBuffer = (seL4_IPCBuffer *) ipcbuf_vptr;
-    BI_PTR(rootserver.boot_info)->initThreadCNodeSizeBits = CONFIG_ROOT_CNODE_SIZE_BITS;
-    BI_PTR(rootserver.boot_info)->initThreadDomain = ksDomSchedule[ksDomScheduleIdx].domain;
-    BI_PTR(rootserver.boot_info)->extraLen = extra_bi_size;
 }
 
 BOOT_CODE bool_t provide_cap(cap_t root_cnode_cap, cap_t cap)
 {
-    if (ndks_boot.slot_pos_cur >= ndks_boot.slot_pos_max) {
-        printf("Kernel init failed: ran out of cap slots\n");
+    if (ndks_boot.slot_pos_cur >= BIT(CONFIG_ROOT_CNODE_SIZE_BITS)) {
+        printf("ERROR: can't add another cap, all %"SEL4_PRIu_word
+               " (=2^CONFIG_ROOT_CNODE_SIZE_BITS) slots used\n",
+               BIT(CONFIG_ROOT_CNODE_SIZE_BITS));
         return false;
     }
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), ndks_boot.slot_pos_cur), cap);
@@ -682,10 +691,9 @@ BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap,
 
 BOOT_CODE void bi_finalise(void)
 {
-    seL4_SlotPos slot_pos_start = ndks_boot.slot_pos_cur;
-    seL4_SlotPos slot_pos_end = ndks_boot.slot_pos_max;
     ndks_boot.bi_frame->empty = (seL4_SlotRegion) {
-        slot_pos_start, slot_pos_end
+        .start = ndks_boot.slot_pos_cur,
+        .end   = BIT(CONFIG_ROOT_CNODE_SIZE_BITS)
     };
 }
 
