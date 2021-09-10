@@ -357,8 +357,7 @@ struct sched_context {
      * when the scheduling context was passed over a Call */
     reply_t *scReply;
 
-    /* notification this scheduling context is bound to
-     * (scTcb and scNotification cannot be set at the same time) */
+    /* notification this scheduling context is bound to */
     notification_t *scNotification;
 
     /* data word that is sent with timeout faults that occur on this scheduling context */
