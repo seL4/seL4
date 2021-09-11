@@ -24,7 +24,16 @@ class Region:
         return ret
 
     def __repr__(self):
+        ''' Returns a string representation that is a valid Python expression
+        that eval() can parse. '''
         return 'Region(base=0x{:x},size=0x{:x})'.format(self.base, self.size)
+
+    def __str__(self):
+        ''' Returns a string representation. '''
+        return 'Region [0x{:x}..0x{:x}] ({:d} bytes)'.format(
+            self.base,
+            self.base + self.size - (1 if self.size > 0 else 0),
+            self.size)
 
     def __eq__(self, other):
         return self.base == other.base and self.size == other.size
