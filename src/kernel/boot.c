@@ -708,6 +708,70 @@ BOOT_CODE static inline pptr_t ceiling_kernel_window(pptr_t p)
     return p;
 }
 
+BOOT_CODE static bool_t check_available_memory(word_t n_available,
+                                               const p_region_t *available)
+{
+    /* The system configuration is broken if no region is available. */
+    if (0 == n_available) {
+        printf("ERROR: no memory regions available\n");
+        return false;
+    }
+
+    printf("available phys memory regions: %"SEL4_PRIu_word"\n", n_available);
+    /* Force ordering and exclusivity of available regions. */
+    for (word_t i = 0; i < n_available; i++) {
+        const p_region_t *r = &available[i];
+        printf("  [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]\n", r->start, r->end);
+
+        /* Available regions must be sane */
+        if (r->start > r->end) {
+            printf("ERROR: memory region %"SEL4_PRIu_word" has start > end\n", i);
+            return false;
+        }
+
+        /* Available regions can't be empty. */
+        if (r->start == r->end) {
+            printf("ERROR: memory region %"SEL4_PRIu_word" empty\n", i);
+            return false;
+        }
+
+        /* Regions must be ordered and must not overlap. */
+        if ((i > 0) && (r->start < available[i - 1].end)) {
+            printf("ERROR: memory region %d in wrong order\n", (int)i);
+            return false;
+        }
+    }
+
+    return true;
+}
+
+
+BOOT_CODE static bool_t check_reserved_memory(word_t n_reserved,
+                                              const region_t *reserved)
+{
+    printf("reserved virt address space regions: %"SEL4_PRIu_word"\n",
+           n_reserved);
+    /* Force ordering and exclusivity of reserved regions. */
+    for (word_t i = 0; i < n_reserved; i++) {
+        const region_t *r = &reserved[i];
+        printf("  [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]\n", r->start, r->end);
+
+        /* Reserved regions must be sane, the size is allowed to be zero. */
+        if (r->start > r->end) {
+            printf("ERROR: reserved region %"SEL4_PRIu_word" has start > end\n", i);
+            return false;
+        }
+
+        /* Regions must be ordered and must not overlap. */
+        if ((i > 0) && (r->start < reserved[i - 1].end)) {
+            printf("ERROR: reserved region %"SEL4_PRIu_word" in wrong order\n", i);
+            return false;
+        }
+    }
+
+    return true;
+}
+
 /* we can't declare arrays on the stack, so this is space for
  * the function below to use. */
 BOOT_BSS static region_t avail_reg[MAX_NUM_FREEMEM_REG];
@@ -719,55 +783,13 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
                               word_t n_reserved, const region_t *reserved,
                               v_region_t it_v_reg, word_t extra_bi_size_bits)
 {
-    /* The system configuration is broken if no region is available */
-    if (0 == n_available) {
-        printf("ERROR: no memory regions available\n");
+
+    if (!check_available_memory(n_available, available)) {
         return false;
     }
 
-    printf("reserved virt address space regions: %"SEL4_PRIu_word"\n",
-           n_reserved);
-    /* Force ordering and exclusivity of reserved regions */
-    for (word_t i = 0; i < n_reserved; i++) {
-        const region_t *r = &reserved[i];
-        printf("  [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]\n", r->start, r->end);
-
-        /* Reserved regions must be sane, the size is allowed to be zero */
-        if (r->start > r->end) {
-            printf("ERROR: reserved region %"SEL4_PRIu_word" has start > end\n", i);
-            return false;
-        }
-
-        /* regions must be ordered and must not overlap */
-        if ((i > 0) && (r->start < reserved[i - 1].end)) {
-            printf("ERROR: reserved region %"SEL4_PRIu_word" in wrong order\n", i);
-            return false;
-        }
-    }
-
-    printf("available phys memory regions: %"SEL4_PRIu_word"\n", n_available);
-    /* Force ordering and exclusivity of available regions */
-    for (word_t i = 0; i < n_available; i++) {
-        const p_region_t *r = &available[i];
-        printf("  [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]\n", r->start, r->end);
-
-        /* Available regions must be sane */
-        if (r->start > r->end) {
-            printf("ERROR: memory region %"SEL4_PRIu_word" has start > end\n", i);
-            return false;
-        }
-
-        /* Available regions can't be empty */
-        if (r->start == r->end) {
-            printf("ERROR: memory region %"SEL4_PRIu_word" empty\n", i);
-            return false;
-        }
-
-        /* regions must be ordered and must not overlap */
-        if ((i > 0) && (r->start < available[i - 1].end)) {
-            printf("ERROR: memory region %d in wrong order\n", (int)i);
-            return false;
-        }
+    if (!check_reserved_memory(n_reserved, reserved)) {
+        return false;
     }
 
     for (word_t i = 0; i < ARRAY_SIZE(ndks_boot.freemem); i++) {
