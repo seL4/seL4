@@ -69,7 +69,7 @@ static inline void debug_printKernelEntryReason(void)
 static inline void debug_printUserState(void)
 {
     tcb_t *tptr = NODE_STATE(ksCurThread);
-    printf("Current thread: %s\n", tptr->tcbName);
+    printf("Current thread: %s\n", TCB_PTR_DEBUG_PTR(tptr)->tcbName);
     printf("Next instruction adress: %lx\n", getRestartPC(tptr));
     printf("Stack:\n");
     Arch_userStackTrace(tptr);
@@ -77,7 +77,7 @@ static inline void debug_printUserState(void)
 
 static inline void debug_printTCB(tcb_t *tcb)
 {
-    printf("%40s\t", tcb->tcbName);
+    printf("%40s\t", TCB_PTR_DEBUG_PTR(tcb)->tcbName);
     char *state;
     switch (thread_state_get_tsType(tcb->tcbState)) {
     case ThreadState_Inactive:
@@ -127,7 +127,7 @@ static inline void debug_dumpScheduler(void)
     printf("Name                                    \tState          \tIP                  \t Prio \t Core%s\n",
            config_set(CONFIG_KERNEL_MCS) ?  "\t InReleaseQueue" : "");
     printf("--------------------------------------------------------------------------------------\n");
-    for (tcb_t *curr = NODE_STATE(ksDebugTCBs); curr != NULL; curr = curr->tcbDebugNext) {
+    for (tcb_t *curr = NODE_STATE(ksDebugTCBs); curr != NULL; curr = TCB_PTR_DEBUG_PTR(curr)->tcbDebugNext) {
         debug_printTCB(curr);
     }
 }

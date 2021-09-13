@@ -5,9 +5,8 @@
  */
 
 #pragma once
-#ifdef HAVE_AUTOCONF
+
 #include <autoconf.h>
-#endif
 
 /* Cortex a15 manual, section 10.2.2 */
 #define seL4_NumHWBreakpoints (10)
@@ -20,4 +19,3 @@
 
 /* First address in the virtual address space that is not accessible to user level */
 #define seL4_UserTop 0xe0000000
-

@@ -8,3 +8,4 @@
 
 /* Place holder for 64-bit machine header */
 
+#include <arch/model/smp.h>

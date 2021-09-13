@@ -16,7 +16,7 @@
  * https://static.dev.sifive.com/U54-MC-RVCoreIP.pdf
  */
 
-#define PLIC_PPTR_BASE      (PLIC_PPTR + 0x0C000000)
+#define PLIC_PPTR_BASE          PLIC_PPTR
 
 
 #define PLIC_HART_ID (CONFIG_FIRST_HART_ID)
@@ -36,18 +36,19 @@
 #define PLIC_THRES_PER_CONTEXT  0x1000
 #define PLIC_THRES_CLAIM        0x4
 
-#ifdef CONFIG_PLAT_HIFIVE
+#define PLIC_NUM_INTERRUPTS PLIC_MAX_IRQ
+
+#if defined(CONFIG_PLAT_HIFIVE) || defined(CONFIG_PLAT_POLARFIRE)
+
 /* SiFive U54-MC has 5 cores, and the first core does not
  * have supervisor mode. Therefore, we need to compensate
  * for the addresses.
  */
-#define PLIC_NUM_INTERRUPTS 53
 #define PLAT_PLIC_THRES_ADJUST(x) ((x) - PLIC_THRES_PER_CONTEXT)
 #define PLAT_PLIC_EN_ADJUST(x)    ((x) - PLIC_EN_PER_CONTEXT)
 
 #else
 
-#define PLIC_NUM_INTERRUPTS 511
 #define PLAT_PLIC_THRES_ADJUST(x)   (x)
 #define PLAT_PLIC_EN_ADJUST(x)      (x)
 

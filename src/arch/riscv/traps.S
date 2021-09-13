@@ -18,9 +18,10 @@
 
 .global trap_entry
 .extern c_handle_syscall
+.extern c_handle_fastpath_reply_recv
+.extern c_handle_fastpath_call
 .extern c_handle_interrupt
 .extern c_handle_exception
-.extern restore_user_context
 
 trap_entry:
 
@@ -97,19 +98,32 @@ trap_entry:
   STORE   x1, (33*REGBYTES)(t0)
 
   /* Check if it's an interrupt */
-  srli s2, s0, (CONFIG_WORD_SIZE - 1)
-  li   s1, 0x1
-  beq  s2, s1, interrupt
+  bltz s0, interrupt
 
-  andi s0, s0, 0xf /* priv 1.10 defines up to 15 exceptions/interrupts */
-  li   s4, 8       /* priv 1.10 has value 8 for ecall exception */
+  /* ratified priv has value 8 for ecall from U-mode exception */
+  li   s4, 8
   bne  s0, s4, exception
 
-syscall:
+handle_syscall:
   /* Set the return address to sepc + 4 in the case of a system/environment call */
   addi x1, x1, 4
   /* Save NextIP */
   STORE   x1, (34*REGBYTES)(t0)
+
+#ifdef CONFIG_FASTPATH
+  li t3, SYSCALL_CALL
+  beq a7, t3, c_handle_fastpath_call
+
+  li t3, SYSCALL_REPLY_RECV
+#ifdef CONFIG_KERNEL_MCS
+  /* move reply to 3rd argument */
+  mv a2, a6
+#endif
+  beq a7, t3, c_handle_fastpath_reply_recv
+#endif
+
+  /* move syscall number to 3rd argument */
+  mv a2, a7
 
   j c_handle_syscall
 

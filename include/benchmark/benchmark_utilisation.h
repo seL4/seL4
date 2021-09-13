@@ -13,21 +13,18 @@
 #include <model/statedata.h>
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
-extern bool_t benchmark_log_utilisation_enabled;
 extern timestamp_t ksEnter;
-extern timestamp_t benchmark_start_time;
-extern timestamp_t benchmark_end_time;
 
 void benchmark_track_utilisation_dump(void);
 
-void benchmark_track_reset_utilisation(void);
+void benchmark_track_reset_utilisation(tcb_t *tcb);
 /* Calculate and add the utilisation time from when the heir started to run i.e. scheduled
  * and until it's being kicked off
  */
 static inline void benchmark_utilisation_switch(tcb_t *heir, tcb_t *next)
 {
     /* Add heir thread utilisation */
-    if (likely(benchmark_log_utilisation_enabled)) {
+    if (likely(NODE_STATE(benchmark_log_utilisation_enabled))) {
 
         /* Check if an overflow occurred while we have been in the kernel */
         if (likely(ksEnter > heir->benchmark.schedule_start_time)) {
@@ -43,6 +40,8 @@ static inline void benchmark_utilisation_switch(tcb_t *heir, tcb_t *next)
 
         /* Reset next thread utilisation */
         next->benchmark.schedule_start_time = ksEnter;
+        next->benchmark.number_schedules++;
+        NODE_STATE(benchmark_kernel_number_schedules)++;
 
     }
 }
@@ -55,8 +54,8 @@ static inline void benchmark_utilisation_finalise(void)
     /* Add the time between when NODE_STATE(ksCurThread), and benchmark finalise */
     benchmark_utilisation_switch(NODE_STATE(ksCurThread), NODE_STATE(ksIdleThread));
 
-    benchmark_end_time = ksEnter;
-    benchmark_log_utilisation_enabled = false;
+    NODE_STATE(benchmark_end_time) = ksEnter;
+    NODE_STATE(benchmark_log_utilisation_enabled) = false;
 }
 
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */

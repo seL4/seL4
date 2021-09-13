@@ -32,13 +32,24 @@ DEBUG = False
 # name of locale the bitfield proofs should be in
 loc_name = 'kernel_all_substitute'
 
-# Isabelle word size suffixes for return value names
-ret_name_suffix_map = {8: '', 16: '', 32: '', 64: '_longlong'}
+# The C parser emits variables with a suffix to indicate their types; this lets
+# the C parser distinguish `char x` from `int x`.
+#
+# The suffix map should match the C parser types for `uint{8,16,32,64}_t` in
+# `include/stdint.h`.
+var_size_suffix_map = {k: 'unsigned' + v for (k, v) in
+                       {8: '_char', 16: '_short', 32: '',
+                        64: '_longlong'}.items()}
 
 
 def return_name(base):
     # name of return value for standard word sizes
-    return 'ret__unsigned' + ret_name_suffix_map[base]
+    return 'ret__' + var_size_suffix_map[base]
+
+
+def var_name(name, base):
+    # converts C variable name to Isabelle variable name via type mangling.
+    return name + '___' + var_size_suffix_map[base]
 
 
 # Headers to include depending on which environment we are generating code for.
@@ -840,7 +851,7 @@ done'''],
   apply (clarsimp simp: guard_simps)
   apply (frule iffD1[OF h_t_valid_clift_Some_iff], rule exE, assumption, simp)
   apply (frule clift_subtype, simp, simp, simp)
-  apply (simp add: h_val_field_clift' typ_heap_simps)
+  apply (simp add: typ_heap_simps)
   apply (simp add: thread_state_lift_def)
   apply (simp add: sign_extend_def' mask_def nth_is_and_neq_0 word_bw_assocs
                    shift_over_ao_dists word_oa_dist word_and_max_simps)?
@@ -943,7 +954,7 @@ done'''],
  apply(frule iffD1[OF h_t_valid_clift_Some_iff], rule exE, assumption, simp)
  apply(simp add:h_val_clift' clift_field)
  apply(simp add:%(name)s_get_tag_def)
- apply(simp add:mask_shift_simps)
+ apply(simp add:mask_shift_simps)?
 done'''],
 
     'ptr_get_tag_spec_path': [
@@ -1014,13 +1025,10 @@ done'''],
  apply(clarsimp simp: typ_heap_simps c_guard_clift
                       packed_heap_update_collapse_hrs)
 
- apply(simp add: guard_simps mask_shift_simps
-                 %(name)s_tag_defs[THEN tag_eq_to_tag_masked_eq])
-
  apply(simp add: parent_update_child[OF c_guard_clift]
                  typ_heap_simps c_guard_clift)
 
- apply(simp add: o_def, rule exI, rule conjI[OF _ refl])
+ apply((simp add: o_def)?, rule exI, rule conjI[OF _ refl])
 
  apply(simp add: %(name)s_get_tag_def %(name)s_tag_defs
                  guard_simps mask_shift_simps)
@@ -1441,7 +1449,8 @@ class TaggedUnion:
                     sign_extend = sign_extend_proof(high, self.base_bits, self.base_sign_extend)
                     field_eq_list.append(
                         "%s_%s_CL.%s_CL = %s(\<^bsup>s\<^esup>%s AND %s)" %
-                        (self.name, ref.name, field, sign_extend, field, mask))
+                        (self.name, ref.name, field, sign_extend,
+                            var_name(field, self.base), mask))
                 field_eqs = ',\n          '.join(field_eq_list)
 
                 emit_named("%s_%s_new" % (self.name, ref.name), params,
@@ -2320,8 +2329,7 @@ class Block:
         print(file=output)
 
         # Generate struct_new specs
-        arg_list = ["\<acute>" + field for
-                    (field, offset, size, high) in self.fields]
+        arg_list = ["\<acute>" + field for field in self.visible_order]
 
         if not params.skip_modifies:
             emit_named("%s_new" % self.name, params,
@@ -2334,7 +2342,8 @@ class Block:
             # FIXME: ptr_new (doesn't seem to be used)
 
         field_eq_list = []
-        for (field, offset, size, high) in self.fields:
+        for field in self.visible_order:
+            offset, size, high = self.field_map[field]
             mask = field_mask_proof(self.base, self.base_bits, self.base_sign_extend, high, size)
             sign_extend = sign_extend_proof(high, self.base_bits, self.base_sign_extend)
 

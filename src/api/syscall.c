@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
+#include <config.h>
 #include <types.h>
 #include <benchmark/benchmark.h>
 #include <arch/benchmark.h>
@@ -82,13 +83,14 @@ exception_t handleUnknownSyscall(word_t w)
 #ifdef CONFIG_DEBUG_BUILD
     if (w == SysDebugHalt) {
         tcb_t *UNUSED tptr = NODE_STATE(ksCurThread);
-        printf("Debug halt syscall from user thread %p \"%s\"\n", tptr, tptr->tcbName);
+        printf("Debug halt syscall from user thread %p \"%s\"\n", tptr, TCB_PTR_DEBUG_PTR(tptr)->tcbName);
         halt();
     }
     if (w == SysDebugSnapshot) {
         tcb_t *UNUSED tptr = NODE_STATE(ksCurThread);
-        printf("Debug snapshot syscall from user thread %p \"%s\"\n", tptr, tptr->tcbName);
-        capDL();
+        printf("Debug snapshot syscall from user thread %p \"%s\"\n",
+               tptr, TCB_PTR_DEBUG_PTR(tptr)->tcbName);
+        debug_capDL();
         return EXCEPTION_NONE;
     }
     if (w == SysDebugCapIdentify) {
@@ -197,7 +199,7 @@ exception_t handleUnknownSyscall(word_t w)
 #endif
         return EXCEPTION_NONE;
     } else if (w == SysBenchmarkResetLog) {
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_LOG_BUFFER
         if (ksUserLogBuffer == 0) {
             userError("A user-level buffer has to be set before resetting benchmark.\
                     Use seL4_BenchmarkSetLogBuffer\n");
@@ -206,27 +208,32 @@ exception_t handleUnknownSyscall(word_t w)
         }
 
         ksLogIndex = 0;
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_KERNEL_LOG_BUFFER */
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
-        benchmark_log_utilisation_enabled = true;
-        NODE_STATE(ksIdleThread)->benchmark.utilisation = 0;
+        NODE_STATE(benchmark_log_utilisation_enabled) = true;
+        benchmark_track_reset_utilisation(NODE_STATE(ksIdleThread));
         NODE_STATE(ksCurThread)->benchmark.schedule_start_time = ksEnter;
-        benchmark_start_time = ksEnter;
+        NODE_STATE(ksCurThread)->benchmark.number_schedules++;
+
+        NODE_STATE(benchmark_start_time) = ksEnter;
+        NODE_STATE(benchmark_kernel_time) = 0;
+        NODE_STATE(benchmark_kernel_number_entries) = 0;
+        NODE_STATE(benchmark_kernel_number_schedules) = 1;
         benchmark_arch_utilisation_reset();
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
         setRegister(NODE_STATE(ksCurThread), capRegister, seL4_NoError);
         return EXCEPTION_NONE;
     } else if (w == SysBenchmarkFinalizeLog) {
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_LOG_BUFFER
         ksLogIndexFinalized = ksLogIndex;
         setRegister(NODE_STATE(ksCurThread), capRegister, ksLogIndexFinalized);
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_KERNEL_LOG_BUFFER */
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
         benchmark_utilisation_finalise();
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
         return EXCEPTION_NONE;
     } else if (w == SysBenchmarkSetLogBuffer) {
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_LOG_BUFFER
         word_t cptr_userFrame = getRegister(NODE_STATE(ksCurThread), capRegister);
 
         if (benchmark_arch_map_logBuffer(cptr_userFrame) != EXCEPTION_NONE) {
@@ -236,7 +243,7 @@ exception_t handleUnknownSyscall(word_t w)
 
         setRegister(NODE_STATE(ksCurThread), capRegister, seL4_NoError);
         return EXCEPTION_NONE;
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_KERNEL_LOG_BUFFER */
     }
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
@@ -244,9 +251,55 @@ exception_t handleUnknownSyscall(word_t w)
         benchmark_track_utilisation_dump();
         return EXCEPTION_NONE;
     } else if (w == SysBenchmarkResetThreadUtilisation) {
-        benchmark_track_reset_utilisation();
+        word_t tcb_cptr = getRegister(NODE_STATE(ksCurThread), capRegister);
+        lookupCap_ret_t lu_ret;
+        word_t cap_type;
+
+        lu_ret = lookupCap(NODE_STATE(ksCurThread), tcb_cptr);
+        /* ensure we got a TCB cap */
+        cap_type = cap_get_capType(lu_ret.cap);
+        if (cap_type != cap_thread_cap) {
+            userError("SysBenchmarkResetThreadUtilisation: cap is not a TCB, halting");
+            return EXCEPTION_NONE;
+        }
+
+        tcb_t *tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(lu_ret.cap));
+
+        benchmark_track_reset_utilisation(tcb);
         return EXCEPTION_NONE;
     }
+#ifdef CONFIG_DEBUG_BUILD
+    else if (w == SysBenchmarkDumpAllThreadsUtilisation) {
+        printf("{\n");
+        printf("  \"BENCHMARK_TOTAL_UTILISATION\":%lu,\n",
+               (word_t)(NODE_STATE(benchmark_end_time) - NODE_STATE(benchmark_start_time)));
+        printf("  \"BENCHMARK_TOTAL_KERNEL_UTILISATION\":%lu,\n", (word_t) NODE_STATE(benchmark_kernel_time));
+        printf("  \"BENCHMARK_TOTAL_NUMBER_KERNEL_ENTRIES\":%lu,\n", (word_t) NODE_STATE(benchmark_kernel_number_entries));
+        printf("  \"BENCHMARK_TOTAL_NUMBER_SCHEDULES\":%lu,\n", (word_t) NODE_STATE(benchmark_kernel_number_schedules));
+        printf("  \"BENCHMARK_TCB_\": [\n");
+        for (tcb_t *curr = NODE_STATE(ksDebugTCBs); curr != NULL; curr = TCB_PTR_DEBUG_PTR(curr)->tcbDebugNext) {
+            printf("    {\n");
+            printf("      \"NAME\":\"%s\",\n", TCB_PTR_DEBUG_PTR(curr)->tcbName);
+            printf("      \"UTILISATION\":%lu,\n", (word_t) curr->benchmark.utilisation);
+            printf("      \"NUMBER_SCHEDULES\":%lu,\n", (word_t) curr->benchmark.number_schedules);
+            printf("      \"KERNEL_UTILISATION\":%lu,\n", (word_t) curr->benchmark.kernel_utilisation);
+            printf("      \"NUMBER_KERNEL_ENTRIES\":%lu\n", (word_t) curr->benchmark.number_kernel_entries);
+            printf("    }");
+            if (TCB_PTR_DEBUG_PTR(curr)->tcbDebugNext != NULL) {
+                printf(",\n");
+            } else {
+                printf("\n");
+            }
+        }
+        printf("  ]\n}\n");
+        return EXCEPTION_NONE;
+    } else if (w == SysBenchmarkResetAllThreadsUtilisation) {
+        for (tcb_t *curr = NODE_STATE(ksDebugTCBs); curr != NULL; curr = TCB_PTR_DEBUG_PTR(curr)->tcbDebugNext) {
+            benchmark_track_reset_utilisation(curr);
+        }
+        return EXCEPTION_NONE;
+    }
+#endif /* CONFIG_DEBUG_BUILD */
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 
     else if (w == SysBenchmarkNullSyscall) {
@@ -360,13 +413,12 @@ static exception_t handleInvocation(bool_t isCall, bool_t isBlocking)
 #ifdef CONFIG_KERNEL_MCS
     status = decodeInvocation(seL4_MessageInfo_get_label(info), length,
                               cptr, lu_ret.slot, lu_ret.cap,
-                              current_extra_caps, isBlocking, isCall,
+                              isBlocking, isCall,
                               canDonate, firstPhase, buffer);
 #else
     status = decodeInvocation(seL4_MessageInfo_get_label(info), length,
                               cptr, lu_ret.slot, lu_ret.cap,
-                              current_extra_caps, isBlocking, isCall,
-                              buffer);
+                              isBlocking, isCall, buffer);
 #endif
 
     if (unlikely(status == EXCEPTION_PREEMPTED)) {
@@ -522,14 +574,8 @@ static void handleRecv(bool_t isBlocking)
 }
 
 #ifdef CONFIG_KERNEL_MCS
-static inline void mcsIRQ(irq_t irq)
+static inline void mcsPreemptionPoint(irq_t irq)
 {
-    if (IRQT_TO_IRQ(irq) == KERNEL_TIMER_IRQ) {
-        /* if this is a timer irq we must update the time as we need to reprogram the timer, and we
-         * can't lose the time that has just been used by the kernel. */
-        updateTimestamp();
-    }
-
     /* at this point we could be handling a timer interrupt which actually ends the current
      * threads timeslice. However, preemption is possible on revoke, which could have deleted
      * the current thread and/or the current scheduling context, rendering them invalid. */
@@ -538,14 +584,18 @@ static inline void mcsIRQ(irq_t irq)
         checkBudget();
     } else if (NODE_STATE(ksCurSC)->scRefillMax) {
         /* otherwise, if the thread is not schedulable, the SC could be valid - charge it if so */
-        ticks_t capacity = refill_capacity(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed));
-        chargeBudget(capacity, NODE_STATE(ksConsumed), false, CURRENT_CPU_INDEX(), true);
+        chargeBudget(NODE_STATE(ksConsumed), false, CURRENT_CPU_INDEX(), true);
+    } else {
+        /* If the current SC is no longer configured the time can no
+         * longer be charged to it. Simply dropping the consumed time
+         * here is equivalent to having charged the consumed time and
+         * then having cleared the SC. */
+        NODE_STATE(ksConsumed) = 0;
     }
-
 }
 #else
 #define handleRecv(isBlocking, canReply) handleRecv(isBlocking)
-#define mcsIRQ(irq)
+#define mcsPreemptionPoint(irq)
 #define handleInvocation(isCall, isBlocking, canDonate, firstPhase, cptr) handleInvocation(isCall, isBlocking)
 #endif
 
@@ -553,8 +603,9 @@ static void handleYield(void)
 {
 #ifdef CONFIG_KERNEL_MCS
     /* Yield the current remaining budget */
-    ticks_t consumed = NODE_STATE(ksCurSC)->scConsumed;
-    chargeBudget(0, REFILL_HEAD(NODE_STATE(ksCurSC)).rAmount, false, CURRENT_CPU_INDEX(), true);
+    ticks_t consumed = NODE_STATE(ksCurSC)->scConsumed + NODE_STATE(ksConsumed);
+    chargeBudget(refill_head(NODE_STATE(ksCurSC))->rAmount, false, CURRENT_CPU_INDEX(), true);
+    /* Manually updated the scConsumed so that the full timeslice isn't added, just what was consumed */
     NODE_STATE(ksCurSC)->scConsumed = consumed;
 #else
     tcbSchedDequeue(NODE_STATE(ksCurThread));
@@ -574,8 +625,8 @@ exception_t handleSyscall(syscall_t syscall)
             ret = handleInvocation(false, true, false, false, getRegister(NODE_STATE(ksCurThread), capRegister));
             if (unlikely(ret != EXCEPTION_NONE)) {
                 irq = getActiveIRQ();
+                mcsPreemptionPoint(irq);
                 if (IRQT_TO_IRQ(irq) != IRQT_TO_IRQ(irqInvalid)) {
-                    mcsIRQ(irq);
                     handleInterrupt(irq);
                     Arch_finaliseInterrupt();
                 }
@@ -587,8 +638,8 @@ exception_t handleSyscall(syscall_t syscall)
             ret = handleInvocation(false, false, false, false, getRegister(NODE_STATE(ksCurThread), capRegister));
             if (unlikely(ret != EXCEPTION_NONE)) {
                 irq = getActiveIRQ();
+                mcsPreemptionPoint(irq);
                 if (IRQT_TO_IRQ(irq) != IRQT_TO_IRQ(irqInvalid)) {
-                    mcsIRQ(irq);
                     handleInterrupt(irq);
                     Arch_finaliseInterrupt();
                 }
@@ -599,8 +650,8 @@ exception_t handleSyscall(syscall_t syscall)
             ret = handleInvocation(true, true, true, false, getRegister(NODE_STATE(ksCurThread), capRegister));
             if (unlikely(ret != EXCEPTION_NONE)) {
                 irq = getActiveIRQ();
+                mcsPreemptionPoint(irq);
                 if (IRQT_TO_IRQ(irq) != IRQT_TO_IRQ(irqInvalid)) {
-                    mcsIRQ(irq);
                     handleInterrupt(irq);
                     Arch_finaliseInterrupt();
                 }
@@ -642,8 +693,8 @@ exception_t handleSyscall(syscall_t syscall)
             ret = handleInvocation(false, false, true, true, dest);
             if (unlikely(ret != EXCEPTION_NONE)) {
                 irq = getActiveIRQ();
+                mcsPreemptionPoint(irq);
                 if (IRQT_TO_IRQ(irq) != IRQT_TO_IRQ(irqInvalid)) {
-                    mcsIRQ(irq);
                     handleInterrupt(irq);
                     Arch_finaliseInterrupt();
                 }
@@ -657,8 +708,8 @@ exception_t handleSyscall(syscall_t syscall)
             ret = handleInvocation(false, false, true, true, getRegister(NODE_STATE(ksCurThread), replyRegister));
             if (unlikely(ret != EXCEPTION_NONE)) {
                 irq = getActiveIRQ();
+                mcsPreemptionPoint(irq);
                 if (IRQT_TO_IRQ(irq) != IRQT_TO_IRQ(irqInvalid)) {
-                    mcsIRQ(irq);
                     handleInterrupt(irq);
                     Arch_finaliseInterrupt();
                 }

@@ -1,5 +1,6 @@
 #
 # Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+# Copyright 2020, HENSOLDT Cyber GmbH
 #
 # SPDX-License-Identifier: GPL-2.0-only
 #
@@ -178,11 +179,14 @@ CONTROLLERS = {
     'brcm,bcm2836-l1-intc': RawIrqController,
     'fsl,avic': RawIrqController,
     'fsl,imx6q-gpc': PassthroughIrqController,
+    'fsl,imx6sx-gpc': PassthroughIrqController,
     'fsl,imx7d-gpc': PassthroughIrqController,
     'nvidia,tegra124-ictlr': PassthroughIrqController,
     'qcom,msm-qgic2': ArmGic,
     'ti,am33xx-intc': RawIrqController,
     'ti,omap3-intc': RawIrqController,
+    'riscv,cpu-intc': RawIrqController,
+    'riscv,plic0': RawIrqController,
 }
 
 

@@ -2,14 +2,12 @@
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
  *
- * SPDX-License-Identifier: GPL-2.0-only
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
 #pragma once
 
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif
 
 #define seL4_WordBits           32
 /* log 2 bits in a word */
@@ -44,7 +42,7 @@
 #define seL4_ASIDPoolBits       12
 #ifndef __ASSEMBLER__
 
-enum {
+typedef enum {
     seL4_VMFault_IP,
     seL4_VMFault_Addr,
     seL4_VMFault_PrefetchFault,
@@ -52,7 +50,7 @@ enum {
     seL4_VMFault_Length,
 } seL4_VMFault_Msg;
 
-enum {
+typedef enum {
     seL4_UnknownSyscall_FaultIP,
     seL4_UnknownSyscall_SP,
     seL4_UnknownSyscall_RA,
@@ -67,7 +65,7 @@ enum {
     seL4_UnknownSyscall_Length,
 } seL4_UnknownSyscall_Msg;
 
-enum {
+typedef enum {
     seL4_UserException_FaultIP,
     seL4_UserException_SP,
     seL4_UserException_Number,
@@ -76,7 +74,7 @@ enum {
 } seL4_UserException_Msg;
 
 #ifdef CONFIG_KERNEL_MCS
-enum {
+typedef enum {
     seL4_TimeoutReply_FaultIP,
     seL4_TimeoutReply_LR,
     seL4_TimeoutReply_SP,
@@ -112,7 +110,7 @@ enum {
     seL4_TimeoutReply_Length,
 } seL4_TimeoutReply_Msg;
 
-enum {
+typedef enum {
     seL4_Timeout_Data,
     seL4_Timeout_Consumed_HighBits,
     seL4_Timeout_Consumed_LowBits,
@@ -123,3 +121,8 @@ enum {
 
 /* First address in the virtual address space that is not accessible to user level */
 #define seL4_UserTop 0x80000000lu
+
+#ifdef CONFIG_ENABLE_BENCHMARKS
+/* size of kernel log buffer in bytes */
+#define seL4_LogBufferSize (LIBSEL4_BIT(20))
+#endif /* CONFIG_ENABLE_BENCHMARKS */

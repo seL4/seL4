@@ -82,17 +82,3 @@ function(add_bf_source_old dep file prefix path)
         bf_declarations "${dep}" "${CMAKE_CURRENT_SOURCE_DIR}/${prefix}/${path}/${file}:${path}"
     )
 endfunction(add_bf_source_old)
-
-# Macro for allowing different archs etc to set the kernel type to 32-bit
-macro(set_kernel_32)
-    config_set(KernelWordSize WORD_SIZE 32)
-    set(Kernel64 OFF CACHE INTERNAL "")
-    set(Kernel32 ON CACHE INTERNAL "")
-endmacro(set_kernel_32)
-
-# Macro for allowing different archs etc to set the kernel type to 64-bit
-macro(set_kernel_64)
-    config_set(KernelWordSize WORD_SIZE 64)
-    set(Kernel64 ON CACHE INTERNAL "")
-    set(Kernel32 OFF CACHE INTERNAL "")
-endmacro(set_kernel_64)

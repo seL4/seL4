@@ -13,6 +13,10 @@
 typedef struct {
     timestamp_t schedule_start_time;
     uint64_t    utilisation;
+    uint64_t    number_schedules;
+    uint64_t    kernel_utilisation;
+    uint64_t    number_kernel_entries;
+
 } benchmark_util_t;
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 

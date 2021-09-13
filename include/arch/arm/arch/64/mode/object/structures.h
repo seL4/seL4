@@ -113,7 +113,7 @@ typedef struct asid_pool asid_pool_t;
 
 #define ASID_POOL_INDEX_BITS seL4_ASIDPoolIndexBits
 #define ASID_BITS (asidHighBits+asidLowBits)
-
+#define nASIDs     BIT(ASID_BITS)
 #define nASIDPools BIT(asidHighBits)
 
 #define ASID_LOW(a) (a & MASK(asidLowBits))

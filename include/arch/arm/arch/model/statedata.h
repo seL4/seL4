@@ -23,6 +23,9 @@ NODE_STATE_DECLARE(bool_t, armHSVCPUActive);
 NODE_STATE_DECLARE(bool_t, armHSFPUEnabled);
 #endif
 #endif
+#if defined(CONFIG_BENCHMARK_TRACK_UTILISATION) && defined(KERNEL_PMU_IRQ)
+NODE_STATE_DECLARE(uint64_t, ccnt_num_overflows);
+#endif /* defined(CONFIG_BENCHMARK_TRACK_UTILISATION) && defined(KERNEL_PMU_IRQ) */
 NODE_STATE_END(archNodeState);
 
 #ifdef ARM_BASE_CP14_SAVE_AND_RESTORE

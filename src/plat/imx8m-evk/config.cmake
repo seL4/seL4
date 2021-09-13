@@ -20,6 +20,7 @@ if(KernelPlatformImx8mq-evk OR KernelPlatformImx8mm-evk)
 
     set(KernelArmCortexA53 ON)
     set(KernelArchArmV8a ON)
+    set(KernelArmGicV3 ON)
     config_set(KernelARMPlatform ARM_PLAT ${KernelPlatform})
     set(KernelArmMach "imx" CACHE INTERNAL "")
     list(APPEND KernelDTSList "tools/dts/${KernelPlatform}.dts")
@@ -28,7 +29,7 @@ if(KernelPlatformImx8mq-evk OR KernelPlatformImx8mm-evk)
         list(APPEND KernelDTSList "src/plat/imx8m-evk/overlay-imx8m-32bit.dts")
     endif()
     declare_default_headers(
-        TIMER_FREQUENCY 8000000llu
+        TIMER_FREQUENCY 8000000
         MAX_IRQ 160
         TIMER drivers/timer/arm_generic.h
         INTERRUPT_CONTROLLER arch/machine/gic_v3.h

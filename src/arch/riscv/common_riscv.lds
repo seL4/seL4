@@ -1,6 +1,7 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ * Copyright 2021, HENSOLDT Cyber
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -20,14 +21,19 @@ SECTIONS
 {
     . = KERNEL_ELF_BASE;
 
-    .boot . : AT(ADDR(.boot) - KERNEL_OFFSET)
+    .boot.text . : AT(ADDR(.boot.text) - KERNEL_OFFSET)
     {
         *(.boot.text)
-        *(.boot.rodata)
-        *(.boot.data)
-        . = ALIGN(64K);
     }
-
+    .boot.rodata . : AT(ADDR(.boot.rodata) - KERNEL_OFFSET)
+    {
+        *(.boot.rodata)
+    }
+    .boot.data . : AT(ADDR(.boot.data) - KERNEL_OFFSET)
+    {
+        *(.boot.data)
+    }
+    . = ALIGN(4K);
 
     ki_boot_end = .;
 
@@ -65,6 +71,7 @@ SECTIONS
     .bss . : AT(ADDR(.bss) - KERNEL_OFFSET)
     {
         *(.bss)
+        *(COMMON) /* fallback in case '-fno-common' is not used */
         *(.sbss)
 
         /* 4k breakpoint stack */
@@ -74,7 +81,6 @@ SECTIONS
 
         /* large data such as the globals frame and global PD */
         *(.bss.aligned)
-        . = . + 8;
     }
 
     . = ALIGN(4K);

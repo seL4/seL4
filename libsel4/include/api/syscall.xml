@@ -64,6 +64,10 @@
             <syscall name="BenchmarkGetThreadUtilisation"  />
             <syscall name="BenchmarkResetThreadUtilisation"  />
         </config>
+        <config condition="defined CONFIG_DEBUG_BUILD &amp;&amp; defined CONFIG_BENCHMARK_TRACK_UTILISATION">
+            <syscall name="BenchmarkDumpAllThreadsUtilisation"  />
+            <syscall name="BenchmarkResetAllThreadsUtilisation"  />
+        </config>
         <config condition="defined CONFIG_KERNEL_X86_DANGEROUS_MSR">
             <syscall name="X86DangerousWRMSR"/>
             <syscall name="X86DangerousRDMSR"/>

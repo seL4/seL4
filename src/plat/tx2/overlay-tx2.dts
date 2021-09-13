@@ -14,6 +14,7 @@
 		seL4,kernel-devices =
 		    "serial0",
 		    &{/interrupt-controller@3881000},
+		    &{/iommu@12000000},
 		    &{/timer};
 	};
 

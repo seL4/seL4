@@ -166,13 +166,13 @@ static inline void enableFpu(void)
 #else
     setEnFPEXC();
 #endif
-    isFPUEnabledCached[SMP_TERNARY(getCurrentCPUIndex(), 0)] = true;
+    isFPUEnabledCached[CURRENT_CPU_INDEX()] = true;
 }
 
 /* Check if FPU is enable */
 static inline bool_t isFpuEnable(void)
 {
-    return isFPUEnabledCached[SMP_TERNARY(getCurrentCPUIndex(), 0)];
+    return isFPUEnabledCached[CURRENT_CPU_INDEX()];
 }
 
 /* Load FPU state from memory into the FPU registers. */
@@ -223,6 +223,6 @@ static inline void disableFpu(void)
     } else {
         clearEnFPEXC();
     }
-    isFPUEnabledCached[SMP_TERNARY(getCurrentCPUIndex(), 0)] = false;
+    isFPUEnabledCached[CURRENT_CPU_INDEX()] = false;
 }
 

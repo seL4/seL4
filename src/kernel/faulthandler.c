@@ -159,7 +159,7 @@ void handleDoubleFault(tcb_t *tptr, seL4_Fault_t ex1)
     print_fault(ex1);
 #endif
 #ifdef CONFIG_DEBUG_BUILD
-    printf("\nin thread %p \"%s\" ", tptr, tptr->tcbName);
+    printf("\nin thread %p \"%s\" ", tptr, TCB_PTR_DEBUG_PTR(tptr)->tcbName);
 #endif /* CONFIG_DEBUG_BUILD */
 
     printf("at address %p\n", (void *)getRestartPC(tptr));

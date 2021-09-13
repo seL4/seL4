@@ -46,7 +46,7 @@ or \apifunc{seL4\_TCB\_Configure}{tcb_configure} methods and then calling
 \apifunc{seL4\_TCB\_WriteRegisters}{tcb_writeregisters} with an initial stack pointer and instruction
 pointer. The thread can then be activated either by setting the
 \texttt{resume\_target} parameter in the \apifunc{seL4\_TCB\_WriteRegisters}{tcb_writeregisters} invocation to true
-or by seperately calling the \apifunc{seL4\_TCB\_Resume}{tcb_resume} method. Both of these methods
+or by separately calling the \apifunc{seL4\_TCB\_Resume}{tcb_resume} method. Both of these methods
 place the thread in a runnable state.
 
 On the master kernel, this will result in the thread immediately being added to
@@ -98,7 +98,7 @@ controlled priority (MCP)] the highest priority a thread can set itself or anoth
 
 \subsection{MCS Scheduling}
 
-This section only applies to configrations with MCS enabled, where threads must have
+This section only applies to configurations with MCS enabled, where threads must have
 a scheduling context object available in order to be admitted to the scheduler.
 
 \subsection{Scheduling Contexts}
@@ -112,7 +112,7 @@ The tuple $(b, p)$ forms an upper bound on the thread's execution -- the kernel 
 thread to run for more than $b$ out of every $p$ microseconds. However, $\frac{b}{p}$ does not
 represent a lower bound on execution, as a thread must have the highest or equal highest priority
 of all runnable threads to be guaranteed to be scheduled at all, and the kernel does not conduct
-an admission test. As a result the set of all parameters is not neccesserily schedulable. If
+an admission test. As a result the set of all parameters is not necessarily schedulable. If
 multiple threads have available budget concurrently they are scheduled first-in first-out, and
 round-robin scheduling is applied once the budget is expired.
 
@@ -157,7 +157,7 @@ limits the number of refills for that specific scheduling context. This value is
 value of 2 and is limited by the size of the scheduling context.
 \end{itemize}
 
-Threads that have short exection times (e.g interrupt handlers) and are not frequently preempted
+Threads that have short execution times (e.g interrupt handlers) and are not frequently preempted
 should have less refills, while longer running threads with long values of $b$ should have a higher
 value. Threads bound to a scheduling context with 0 extra refills will behave periodically -- tasks
 that use their head replenishment, or call yield, will not be scheduled again until the start of
@@ -186,7 +186,7 @@ the scheduling context is active, it will be added to the scheduler.
 Threads can be unbound from a scheduling context with
 \apifunc{seL4\_SchedContext\_UnbindObject}{schedcontext_unbindobject}.  This is distinct from
 suspending a thread, in that threads that are blocked waiting in an endpoint or notification queue
-will remain in the queue and can still recieve messages and signals.  However, the unbound thread
+will remain in the queue and can still receive messages and signals.  However, the unbound thread
 will not be schedulable again until it receives a scheduling context.  Threads without scheduling
 contexts are referred to as \emph{passive} threads, as they cannot execute without the action of
 another thread.
@@ -200,8 +200,15 @@ invoke the appropriate \obj{SchedControl} capability, which provides access to C
 on a single node.  A scheduling control cap for each node is provided to the initial task at run
 time.  Threads run on the node that their scheduling context is configured for.  Scheduling context
 parameters can then be set and updated using
-\apifunc{seL4\_SchedControl\_Configure}{schedcontrol_configure}, which allows the budget and period
-to be specified.
+\apifunc{seL4\_SchedControl\_ConfigureFlags}{schedcontrol_configureflags}, which allows the budget and period
+to be specified along with a bitwise OR'd set of the following flags.
+
+\begin{description}
+
+\item[seL4\_SchedContext\_Sporadic]: constrain the execution time only according to the
+sporadic server algorithm rather than to a continuous constant bandwidth.
+
+\end{description}
 
 The kernel does not conduct any schedulability tests, as task admission is left to user-level policy
 and can be conducted online or offline, statically or dynamically or not at all.
@@ -246,7 +253,10 @@ Scheduling contexts can also be bound to notification objects using
 a notification object with a passive thread blocked waiting on it, the passive thread will receive
 the scheduling context that is bound to the notification object.  The scheduling context is returned
 when the thread blocks on the notification object.  This feature allows for passive servers to use
-notification binding (See \autoref{sec:notification-binding}).
+notification binding (See \autoref{sec:notification-binding}).  If a scheduling context is bound to
+both a notification object and a thread, the behaviour will be the same as for a passive server:
+The scheduling context will be unbound from the thread when it blocks on the bound notification object.
+This is useful when launching passive servers or handling timeout exceptions.
 
 Scheduling contexts can be unbound from all objects (notification objects and TCBs that are bound or
 have received a scheduling context through donation) using
@@ -264,11 +274,11 @@ Threads of sufficient maximum controlled priority and with possession of the
 appropriate scheduling context capability can manipulate the scheduler and
 implement user-level schedulers using IPC.
 
-Scheduling contexts provide access to and an upper bound on exection CPU time,
+Scheduling contexts provide access to and an upper bound on execution CPU time,
 however when a thread executes is determined by thread priority.  Consequently,
 access to CPU is a function of thread MCPs, scheduling contexts and the
 \obj{SchedControl} capability.  The kernel will enforce that threads do not
-exceeed the budget in their scheduling context for any given period, and that
+exceed the budget in their scheduling context for any given period, and that
 the highest priority thread will always run, however it is up to the system
 designer to make sure the entire system is schedulable.
 
@@ -290,7 +300,7 @@ capability address for the exception handler can be associated with a thread.
 This address is then used to lookup the handler endpoint, and the capability to
 the endpoint is installed into the threads' kernel CNode.  For threads without
 an exception handler, a null capability can be used, however the consequences
-are different per exeception handler type.  Before raising an exception the
+are different per exception handler type.  Before raising an exception the
 handler capability is validated. The kernel does not perform another lookup,
 but checks that the capability is an endpoint with the correct rights.
 
@@ -334,11 +344,6 @@ client request.
 If a reply message is sent to a nested server and a scheduling context without
 available budget returned, another timeout fault will be generated if the
 nested server also has a timeout fault handler.
-
-Additionally, if the system criticality is changed while a thread with higher
-criticality than the system criticality is running on a scheduling context that
-is bound to a thread with criticality lower than the system criticality, a
-timeout exception will be raised.
 
 \subsection{Message Layout of the Read-/Write-Registers Methods}
 \label{sec:read_write_registers}
@@ -456,8 +461,8 @@ Information on the available hardware debugging resources is presented in the fo
 
 \begin{description}
 \item[seL4\_NumHWBreakpoints]: Defines the total number of hardware break
-registers available, of all types available on the hardware platform. On the ARM
-Cortex A7 for example, there are 6 exclusive instruction breakpoint registers,
+registers available, of all types available on the hardware platform. On the Arm
+Cortex~A7 for example, there are 6 exclusive instruction breakpoint registers,
 and 4 exclusive data watchpoint registers, for a total of 10 monitor registers.
 On this platform therefore, \texttt{seL4\_NumHWBreakpoints} is defined as 10.
 The instruction breakpoint registers will always be assigned the lower API-IDs,
@@ -470,14 +475,14 @@ hardware breakpoints/watchpoints of a certain type.
 
 \item[seL4\_NumExclusiveBreakpoints]: Defines the number of hardware registers
 capable of generating a fault \textbf{only} on instruction execution. Currently this will be
-set only on ARM platforms. The API-ID of the first exclusive breakpoint is given
+set only on Arm platforms. The API-ID of the first exclusive breakpoint is given
 in \texttt{seL4\_FirstBreakpoint}. If there are no instruction-break exclusive
 registers, \texttt{seL4\_NumExclusiveBreakpoints} will be set to \texttt{0} and
 \texttt{seL4\_FirstBreakpoint} will be set to -1.
 
 \item[seL4\_NumExclusiveWatchpoints]: Defines the number of hardware registers
 capable of generating a fault \textbf{only} on data access. Currently this will be set only
-on ARM platforms. The API-ID of the first exclusive watchpoint is given
+on Arm platforms. The API-ID of the first exclusive watchpoint is given
 in \texttt{seL4\_FirstWatchpoint}. If there are no data-break exclusive
 registers, \texttt{seL4\_NumExclusiveWatchpoints} will be set to \texttt{0} and
 \texttt{seL4\_FirstWatchpoint} will be set to -1.
@@ -563,7 +568,7 @@ Timeout faults are raised when a thread consumes all of its budget and has a
 timeout fault handler that is not a null capability.  They allow a timeout
 exception handler to take some action to restore the thread, and deliver a
 message containing the scheduling context data word, as well as the amount of
-time consumed since the last timeout fault occured on this scheduling context,
+time consumed since the last timeout fault occurred on this scheduling context,
 or since \apifunc{seL4\_SchedContext\_YieldTo}{schedcontext_yieldto} or
 \apifunc{seL4\_SchedContext\_Consumed}{schedcontext_consumed} was last called.
 Timeout exception handlers can reply to a temporal fault with the registers set
@@ -572,7 +577,7 @@ in the same format as outlined in \autoref{sec:read_write_registers}.
 \begin{table}[htb] \noindent\begin{tabularx}{\textwidth}{XX} \toprule
     \textbf{Meaning} & \textbf{IPC buffer location} \\ \midrule Data word from
     the scheduling context object that the thread was running on when the fault
-    occured. & \ipcbloc{seL4\_TimeoutFault\_Data} \\ Upper 32-bits of
+    occurred. & \ipcbloc{seL4\_TimeoutFault\_Data} \\ Upper 32-bits of
     microseconds consumed since last reset &
     \ipcbloc{seL4\_TimeoutFault\_Consumed} \\ Lower 32-bits of microseconds
     consumed since last reset & \ipcbloc{seL4\_TimeoutFault\_Consumed\_LowBits}
@@ -630,7 +635,7 @@ additional machine registers and other pieces of state a \obj{VCPU} object is in
 as storage for this state. For simplicity we refer to this virtualised higher privileged level as
 'guest mode'. \obj{VCPU}s are bound in a one-to-one relationship with a \obj{TCB} in order
 to provide a thread with this ability to run in higher privilege mode. See the section on
-ARM or x86 for more precise details.
+Arm or x86 for more precise details.
 
 \obj{VCPU} objects also have additional, architecture specific, invocations for manipulating
 the additional state or other virtualisation controls provided by the hardware. Binding of
@@ -638,10 +643,10 @@ a \obj{VCPU} to a \obj{TCB} is done by an invocation on the \obj{VCPU} only, and
 
 The provided objects and invocations are, generally speaking, the thinnest possible shim over
 the underlying hardware primitives and operations. As a result an in depth familiarity with
-the underlying architecture specific harwdare mechanisms is required to use these objects, and
+the underlying architecture specific hardware mechanisms is required to use these objects, and
 such familiarity is therefore assumed in description.
 
-\subsection{ARM}
+\subsection{Arm}
 
 When a \obj{TCB} has a bound \obj{VCPU} it is allowed to have the mode portion of the
 \texttt{cpsr} register set to values other than \texttt{user}. Specifically it may have any value other than

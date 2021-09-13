@@ -72,7 +72,7 @@ enum _register {
     n_contextRegisters
 };
 
-typedef word_t register_t;
+typedef uint8_t register_t;
 
 enum messageSizes {
     n_msgRegisters = 4,

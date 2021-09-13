@@ -903,7 +903,7 @@ LIBSEL4_INLINE_FUNC seL4_Uint64 seL4_X86DangerousRDMSR(seL4_Word msr)
     x86_sys_recv(seL4_SysX86DangerousRDMSR, msr, &unused0, &unused1, &low, MCS_COND(0, &high));
 #ifdef CONFIG_KERNEL_MCS
     /* MR1 doesn't get passed through MRs on CONFIG_KERNEL_MCS */
-    *high = seL4_GetMR(1);
+    high = seL4_GetMR(1);
 #endif
 
     return ((seL4_Uint64)low) | ((seL4_Uint64)high << 32);
@@ -981,6 +981,31 @@ LIBSEL4_INLINE_FUNC void seL4_BenchmarkResetThreadUtilisation(seL4_Word tcb_cptr
     x86_sys_send_recv(seL4_SysBenchmarkResetThreadUtilisation, tcb_cptr, &unused0, 0, &unused1, &unused2, MCS_COND(0,
                                                                                                                    &unused3));
 }
+
+#ifdef CONFIG_DEBUG_BUILD
+LIBSEL4_INLINE_FUNC void seL4_BenchmarkDumpAllThreadsUtilisation(void)
+{
+    seL4_Word unused0 = 0;
+    seL4_Word unused1 = 0;
+    seL4_Word unused2 = 0;
+    LIBSEL4_UNUSED seL4_Word unused3 = 0;
+
+    x86_sys_send_recv(seL4_SysBenchmarkDumpAllThreadsUtilisation, 0, &unused0, 0, &unused1, &unused2, MCS_COND(0,
+                                                                                                               &unused3));
+}
+
+LIBSEL4_INLINE_FUNC seL4_Word seL4_BenchmarkResetAllThreadsUtilisation(void)
+{
+    seL4_Word unused0 = 0;
+    seL4_Word unused1 = 0;
+    seL4_Word unused2 = 0;
+    LIBSEL4_UNUSED seL4_Word unused3 = 0;
+
+    x86_sys_send_recv(seL4_SysBenchmarkResetAllThreadsUtilisation, 0, &unused0, 0, &unused1, &unused2, MCS_COND(0,
+                                                                                                                &unused3));
+}
+
+#endif /* CONFIG_DEBUG_BUILD */
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 #endif /* CONFIG_ENABLE_BENCHMARKS */
 

@@ -8,12 +8,6 @@
 
 #include <sel4/simple_types.h>
 
-typedef seL4_Uint32 seL4_Word;
-typedef seL4_Word seL4_CPtr;
-typedef seL4_Word seL4_NodeId;
-typedef seL4_Word seL4_PAddr;
-typedef seL4_Word seL4_Domain;
-
 typedef struct seL4_UserContext_ {
     /* frame registers */
     seL4_Word pc, sp, cpsr, r0, r1, r8, r9, r10, r11, r12;
@@ -22,4 +16,3 @@ typedef struct seL4_UserContext_ {
     /* Thread ID registers */
     seL4_Word tpidrurw, tpidruro;
 } seL4_UserContext;
-

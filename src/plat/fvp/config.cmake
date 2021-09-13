@@ -12,11 +12,12 @@ if(KernelPlatformFVP)
     declare_seL4_arch(aarch64)
     set(KernelArmCortexA57 ON)
     set(KernelArchArmV8a ON)
+    set(KernelArmGicV3 ON)
     config_set(KernelARMPlatform ARM_PLAT "fvp")
     list(APPEND KernelDTSList "tools/dts/fvp.dts")
     list(APPEND KernelDTSList "src/plat/fvp/overlay-fvp.dts")
     declare_default_headers(
-        TIMER_FREQUENCY 100000000llu
+        TIMER_FREQUENCY 100000000
         MAX_IRQ 207
         INTERRUPT_CONTROLLER arch/machine/gic_v3.h
         TIMER drivers/timer/arm_generic.h

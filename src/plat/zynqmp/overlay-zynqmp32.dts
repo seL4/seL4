@@ -1,0 +1,43 @@
+/*
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+	amba {
+		/* These blocks remove the duplicate interrupt which causes issues
+		 * in the low-level drivers
+		 */
+		ethernet@ff0b0000 {
+			interrupts = < 0x00 0x39 0x04 >;
+		};
+
+		ethernet@ff0c0000 {
+			interrupts = < 0x00 0x3b 0x04 >;
+		};
+
+		ethernet@ff0d0000 {
+			interrupts = < 0x00 0x3d 0x04 >;
+		};
+
+		ethernet@ff0e0000 {
+			interrupts = < 0x00 0x3f 0x04 >;
+		};
+	};
+
+    chosen {
+		seL4,elfloader-devices =
+		    "serial0",
+		    &{/psci};
+		seL4,kernel-devices =
+		    "serial0",
+		    &{/amba_apu@0/interrupt-controller@f9010000},
+		    &{/timer};
+    };
+
+	memory@0 {
+		device_type = "memory";
+		reg = < 0x00 0x00 0x00 0x80000000 >;
+	};
+};

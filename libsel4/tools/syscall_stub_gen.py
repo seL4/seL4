@@ -260,6 +260,12 @@ def init_data_types(wordsize):
 
 
 def init_arch_types(wordsize):
+    arm_smmu = [
+        CapType("seL4_ARM_SIDControl", wordsize),
+        CapType("seL4_ARM_SID", wordsize),
+        CapType("seL4_ARM_CBControl", wordsize),
+        CapType("seL4_ARM_CB", wordsize),
+    ]
     arch_types = {
         "aarch32": [
             Type("seL4_ARM_VMAttributes", wordsize, wordsize),
@@ -272,7 +278,7 @@ def init_arch_types(wordsize):
             CapType("seL4_ARM_IOSpace", wordsize),
             CapType("seL4_ARM_IOPageTable", wordsize),
             StructType("seL4_UserContext", wordsize * 19, wordsize),
-        ],
+        ] + arm_smmu,
 
         "aarch64": [
             Type("seL4_ARM_VMAttributes", wordsize, wordsize),
@@ -288,7 +294,7 @@ def init_arch_types(wordsize):
             CapType("seL4_ARM_IOSpace", wordsize),
             CapType("seL4_ARM_IOPageTable", wordsize),
             StructType("seL4_UserContext", wordsize * 36, wordsize),
-        ],
+        ] + arm_smmu,
 
         "arm_hyp": [
             Type("seL4_ARM_VMAttributes", wordsize, wordsize),
@@ -301,7 +307,7 @@ def init_arch_types(wordsize):
             CapType("seL4_ARM_IOSpace", wordsize),
             CapType("seL4_ARM_IOPageTable", wordsize),
             StructType("seL4_UserContext", wordsize * 19, wordsize),
-        ],
+        ] + arm_smmu,
 
         "ia32": [
             Type("seL4_X86_VMAttributes", wordsize, wordsize),

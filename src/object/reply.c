@@ -51,20 +51,24 @@ void reply_push(tcb_t *tcb_caller, tcb_t *tcb_callee, reply_t *reply, bool_t can
 }
 
 /* Pop the head reply from the call stack */
-void reply_pop(reply_t *reply)
+void reply_pop(reply_t *reply, tcb_t *tcb)
 {
     assert(reply != NULL);
-    assert(reply->replyTCB != NULL);
-    assert(thread_state_get_tsType(reply->replyTCB->tcbState) == ThreadState_BlockedOnReply);
-    /* unlink tcb and reply */
-    tcb_t *tcb = reply->replyTCB;
-    reply_unlink(reply);
+    assert(reply->replyTCB == tcb);
+    assert(thread_state_get_tsType(tcb->tcbState) == ThreadState_BlockedOnReply);
+    assert(thread_state_get_replyObject(tcb->tcbState) == REPLY_REF(reply));
 
     word_t next_ptr = call_stack_get_callStackPtr(reply->replyNext);
     word_t prev_ptr = call_stack_get_callStackPtr(reply->replyPrev);
 
     if (likely(next_ptr != 0)) {
         assert(call_stack_get_isHead(reply->replyNext));
+
+        SC_PTR(next_ptr)->scReply = REPLY_PTR(prev_ptr);
+        if (prev_ptr != 0) {
+            REPLY_PTR(prev_ptr)->replyNext = reply->replyNext;
+            assert(call_stack_get_isHead(REPLY_PTR(prev_ptr)->replyNext));
+        }
 
         /* give it back */
         if (tcb->tcbSchedContext == NULL) {
@@ -74,46 +78,38 @@ void reply_pop(reply_t *reply)
              * SC cannot go back to the caller if the caller has received another one */
             schedContext_donate(SC_PTR(next_ptr), tcb);
         }
-
-        SC_PTR(next_ptr)->scReply = REPLY_PTR(prev_ptr);
-        if (prev_ptr != 0) {
-            REPLY_PTR(prev_ptr)->replyNext = reply->replyNext;
-            assert(call_stack_get_isHead(REPLY_PTR(prev_ptr)->replyNext));
-        }
-
-        reply->replyPrev = call_stack_new(0, false);
-        reply->replyNext = call_stack_new(0, false);
-    }
-}
-
-/* Remove a reply from the middle of the call stack */
-void reply_remove(reply_t *reply)
-{
-    assert(thread_state_get_tsType(reply->replyTCB->tcbState) == ThreadState_BlockedOnReply);
-
-    word_t next_ptr = call_stack_get_callStackPtr(reply->replyNext);
-    word_t prev_ptr = call_stack_get_callStackPtr(reply->replyPrev);
-
-    if (likely(next_ptr)) {
-        if (likely(call_stack_get_isHead(reply->replyNext))) {
-            /* head of the call stack -> just pop */
-            reply_pop(reply);
-            return;
-        }
-        /* not the head, remove from middle - break the chain */
-        REPLY_PTR(next_ptr)->replyPrev = call_stack_new(0, false);
-        reply_unlink(REPLY_PTR(reply));
-    } else if (reply->replyTCB) {
-        /* removing start of call chain */
-        reply_unlink(reply);
-    }
-
-    if (prev_ptr) {
-        REPLY_PTR(prev_ptr)->replyNext = call_stack_new(0, false);
     }
 
     reply->replyPrev = call_stack_new(0, false);
     reply->replyNext = call_stack_new(0, false);
+    reply_unlink(reply, tcb);
+}
+
+/* Remove a reply from the middle of the call stack */
+void reply_remove(reply_t *reply, tcb_t *tcb)
+{
+    assert(reply->replyTCB == tcb);
+    assert(thread_state_get_tsType(tcb->tcbState) == ThreadState_BlockedOnReply);
+    assert(thread_state_get_replyObject(tcb->tcbState) == REPLY_REF(reply));
+
+    word_t next_ptr = call_stack_get_callStackPtr(reply->replyNext);
+    word_t prev_ptr = call_stack_get_callStackPtr(reply->replyPrev);
+
+    if (likely(next_ptr && call_stack_get_isHead(reply->replyNext))) {
+        /* head of the call stack -> just pop */
+        reply_pop(reply, tcb);
+    } else {
+        if (next_ptr) {
+            /* not the head, remove from middle - break the chain */
+            REPLY_PTR(next_ptr)->replyPrev = call_stack_new(0, false);
+        }
+        if (prev_ptr) {
+            REPLY_PTR(prev_ptr)->replyNext = call_stack_new(0, false);
+        }
+        reply->replyPrev = call_stack_new(0, false);
+        reply->replyNext = call_stack_new(0, false);
+        reply_unlink(reply, tcb);
+    }
 }
 
 void reply_remove_tcb(tcb_t *tcb)
@@ -137,5 +133,5 @@ void reply_remove_tcb(tcb_t *tcb)
 
     reply->replyPrev = call_stack_new(0, false);
     reply->replyNext = call_stack_new(0, false);
-    reply_unlink(reply);
+    reply_unlink(reply, tcb);
 }

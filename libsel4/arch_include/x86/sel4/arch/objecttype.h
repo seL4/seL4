@@ -6,9 +6,7 @@
 
 #pragma once
 
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif /* HAVE_AUTOCONF */
 
 typedef enum _object {
     seL4_X86_4K = seL4_ModeObjectTypeCount,
@@ -40,4 +38,3 @@ typedef seL4_Word object_t;
 #define seL4_X86_EPTPDObject 0xfffffb
 #define seL4_X86_EPTPTObject 0xfffffa
 #endif
-

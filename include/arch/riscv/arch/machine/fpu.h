@@ -150,17 +150,17 @@ static inline void loadFpuState(user_fpu_state_t *src)
 
 static inline void enableFpu(void)
 {
-    isFPUEnabledCached[SMP_TERNARY(getCurrentCPUIndex(), 0)] = true;
+    isFPUEnabledCached[CURRENT_CPU_INDEX()] = true;
 }
 
 static inline void disableFpu(void)
 {
-    isFPUEnabledCached[SMP_TERNARY(getCurrentCPUIndex(), 0)] = false;
+    isFPUEnabledCached[CURRENT_CPU_INDEX()] = false;
 }
 
 static inline bool_t isFpuEnable(void)
 {
-    return isFPUEnabledCached[SMP_TERNARY(getCurrentCPUIndex(), 0)];
+    return isFPUEnabledCached[CURRENT_CPU_INDEX()];
 }
 
 static inline void set_tcb_fs_state(tcb_t *tcb, bool_t enabled)

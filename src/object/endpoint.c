@@ -85,7 +85,7 @@ void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
 #ifdef CONFIG_KERNEL_MCS
         reply_t *reply = REPLY_PTR(thread_state_get_replyObject(dest->tcbState));
         if (reply) {
-            reply_unlink(reply);
+            reply_unlink(reply, dest);
         }
 
         if (do_call ||
@@ -103,6 +103,9 @@ void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
         assert(dest->tcbSchedContext == NULL || refill_sufficient(dest->tcbSchedContext, 0));
         assert(dest->tcbSchedContext == NULL || refill_ready(dest->tcbSchedContext));
         setThreadState(dest, ThreadState_Running);
+        if (sc_sporadic(dest->tcbSchedContext) && dest->tcbSchedContext != NODE_STATE(ksCurSC)) {
+            refill_unblock_check(dest->tcbSchedContext);
+        }
         possibleSwitchTo(dest);
 #else
         bool_t replyCanGrant = thread_state_ptr_get_blockingIPCCanGrant(&dest->tcbState);;
@@ -153,6 +156,16 @@ void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
     if (ntfnPtr && notification_ptr_get_state(ntfnPtr) == NtfnState_Active) {
         completeSignal(ntfnPtr, thread);
     } else {
+#ifdef CONFIG_KERNEL_MCS
+        /* If this is a blocking recv and we didn't have a pending notification,
+         * then if we are running on an SC from a bound notification, then we
+         * need to return it so that we can passively wait on the EP for potentially
+         * SC donations from client threads.
+         */
+        if (ntfnPtr && isBlocking) {
+            maybeReturnSchedContext(ntfnPtr, thread);
+        }
+#endif
         switch (endpoint_ptr_get_state(epptr)) {
         case EPState_Idle:
         case EPState_Recv: {
@@ -223,10 +236,25 @@ void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
             do_call = thread_state_ptr_get_blockingIPCIsCall(&sender->tcbState);
 
 #ifdef CONFIG_KERNEL_MCS
+            if (sc_sporadic(sender->tcbSchedContext)) {
+                /* We know that the sender can't have the current SC as
+                 * its own SC as this point as it should still be
+                 * associated with the current thread, no thread, or a
+                 * thread that isn't blocked. This check is added here
+                 * to reduce the cost of proving this to be true as a
+                 * short-term stop-gap. */
+                assert(sender->tcbSchedContext != NODE_STATE(ksCurSC));
+                if (sender->tcbSchedContext != NODE_STATE(ksCurSC)) {
+                    refill_unblock_check(sender->tcbSchedContext);
+                }
+            }
+
             if (do_call ||
                 seL4_Fault_get_seL4_FaultType(sender->tcbFault) != seL4_Fault_NullFault) {
                 if ((canGrant || canGrantReply) && replyPtr != NULL) {
-                    reply_push(sender, thread, replyPtr, sender->tcbSchedContext != NULL);
+                    bool_t canDonate = sender->tcbSchedContext != NULL
+                                       && seL4_Fault_get_seL4_FaultType(sender->tcbFault) != seL4_Fault_Timeout;
+                    reply_push(sender, thread, replyPtr, canDonate);
                 } else {
                     setThreadState(sender, ThreadState_Inactive);
                 }
@@ -314,7 +342,7 @@ void cancelIPC(tcb_t *tptr)
 #ifdef CONFIG_KERNEL_MCS
         reply_t *reply = REPLY_PTR(thread_state_get_replyObject(tptr->tcbState));
         if (reply != NULL) {
-            reply_unlink(reply);
+            reply_unlink(reply, tptr);
         }
 #endif
         setThreadState(tptr, ThreadState_Inactive);
@@ -369,10 +397,21 @@ void cancelAllIPC(endpoint_t *epptr)
 #ifdef CONFIG_KERNEL_MCS
             reply_t *reply = REPLY_PTR(thread_state_get_replyObject(thread->tcbState));
             if (reply != NULL) {
-                reply_unlink(reply);
+                reply_unlink(reply, thread);
             }
             if (seL4_Fault_get_seL4_FaultType(thread->tcbFault) == seL4_Fault_NullFault) {
                 setThreadState(thread, ThreadState_Restart);
+                if (sc_sporadic(thread->tcbSchedContext)) {
+                    /* We know that the thread can't have the current SC
+                     * as its own SC as this point as it should still be
+                     * associated with the current thread, or no thread.
+                     * This check is added here to reduce the cost of
+                     * proving this to be true as a short-term stop-gap. */
+                    assert(thread->tcbSchedContext != NODE_STATE(ksCurSC));
+                    if (thread->tcbSchedContext != NODE_STATE(ksCurSC)) {
+                        refill_unblock_check(thread->tcbSchedContext);
+                    }
+                }
                 possibleSwitchTo(thread);
             } else {
                 setThreadState(thread, ThreadState_Inactive);
@@ -418,6 +457,17 @@ void cancelBadgedSends(endpoint_t *epptr, word_t badge)
                 if (seL4_Fault_get_seL4_FaultType(thread->tcbFault) ==
                     seL4_Fault_NullFault) {
                     setThreadState(thread, ThreadState_Restart);
+                    if (sc_sporadic(thread->tcbSchedContext)) {
+                        /* We know that the thread can't have the current SC
+                         * as its own SC as this point as it should still be
+                         * associated with the current thread, or no thread.
+                         * This check is added here to reduce the cost of
+                         * proving this to be true as a short-term stop-gap. */
+                        assert(thread->tcbSchedContext != NODE_STATE(ksCurSC));
+                        if (thread->tcbSchedContext != NODE_STATE(ksCurSC)) {
+                            refill_unblock_check(thread->tcbSchedContext);
+                        }
+                    }
                     possibleSwitchTo(thread);
                 } else {
                     setThreadState(thread, ThreadState_Inactive);

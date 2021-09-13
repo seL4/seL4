@@ -101,6 +101,9 @@
  * mapping region. These are mapped in the kernel page table. */
 #define KDEV_BASE UL_CONST(0xFFFFFFFFC0000000)
 
+/* Place the kernel log buffer at the end of the kernel device page table */
+#define KS_LOG_PPTR UL_CONST(0XFFFFFFFFFFE00000)
+
 #else
 #error Only PT_LEVELS == 3 is supported
 #endif
@@ -117,6 +120,15 @@ static inline uint64_t riscv_read_time(void)
     uint64_t n;
     asm volatile(
         "rdtime %0"
+        : "=r"(n));
+    return n;
+}
+
+static inline uint64_t riscv_read_cycle(void)
+{
+    uint64_t n;
+    asm volatile(
+        "rdcycle %0"
         : "=r"(n));
     return n;
 }

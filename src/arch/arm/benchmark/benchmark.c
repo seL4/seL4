@@ -16,7 +16,7 @@ seL4_Word ksLogIndexFinalized = 0;
 #endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
 
 #ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
-uint64_t ccnt_num_overflows;
+UP_STATE_DEFINE(uint64_t, ccnt_num_overflows);
 #endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
 
 #ifdef CONFIG_ENABLE_BENCHMARKS

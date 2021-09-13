@@ -31,6 +31,7 @@ add_sources(
         src/model/statedata.c
         src/model/smp.c
         src/machine/io.c
+        src/machine/capdl.c
         src/machine/registerset.c
         src/machine/fpu.c
         src/benchmark/benchmark_track.c

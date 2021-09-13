@@ -1,0 +1,313 @@
+% Copyright seL4 Project a Series of LF Projects, LLC
+% SPDX-License-Identifier: CC-BY-SA-4.0
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{sel4}[2020/09/24 v1.0 seL4 Foundation letterhead and title page]
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Letterhead and title page for the seL4 Foundation
+%
+% Written 2020-03-23 by Gernot Heiser <gernot@sel4.systems>
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% OPTIONS:
+%   noBanner:	no black banner underneath the logo
+%   makeTitle:	generate the title header even if there is no \maketitle command
+%   copyright:	generate the copyright footer with the present year
+%
+%
+%   COMMANDS:
+%     - INPUTS:
+%        \title			Document title in header, default: none
+%        \subtitle		Document subtitle title in header, ignored if title is empty
+%        \author			Document author, ignored if title is empty
+%        \authortitle           Title of author, ignored if author is empty
+%        \email                   Contact email, ignored if author is empty
+%        \docversion          Document version
+%        \date			Date of document, default \today, ignored if title is empty
+%        \header			Organisation/originator to go in TRHS of header, multiple lines
+%					default: "The seL4 Foundation"
+%        \theurl			Org URL, default: seL4 Foundation URL
+%        \copyYear		Year of copyright (default: this year)
+%     - OUTPUTS:
+%        \doCopyright	Produces the copyright notice, must be placed
+%                                      right after \maketitle
+%					The `copyright' option is equivalent to \doCopyright immediately after \maketitle
+%        \thedocversion      Document version string
+%        \thedate                Date string
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newif\ifb@nner\b@nnertrue
+\newif\ifm@aketitle\m@aketitlefalse
+\newif\ifc@pyright\c@pyrightfalse
+
+%% options section
+\DeclareOption{noBanner}{\b@nnerfalse}
+\DeclareOption{makeTitle}{\m@aketitletrue}
+\DeclareOption{copyright}{\c@pyrighttrue}
+
+\ProcessOptions\relax
+
+%% package section
+\RequirePackage[margin=25mm]{geometry}
+\RequirePackage{fancyhdr}
+\RequirePackage{enumitem}
+\RequirePackage{parskip}
+\RequirePackage{sfmath}
+\RequirePackage{graphicx}
+\usepackage[T1]{fontenc}
+\usepackage[sfdefault]{roboto}
+\RequirePackage{xcolor}
+\RequirePackage[iso]{isodate}
+\RequirePackage{hyperref}
+% Coloured quoted text:
+% \RequirePackage[breakable]{tcolorbox}
+\usepackage[breakable]{tcolorbox}
+
+\if@titlepage
+\typeout{sel4 style with titlepage}
+\else
+\typeout{sel4 style without titlepage}
+\fi
+
+%% Foundation colour scheme:
+\definecolor{greenLight}{HTML}{C0DF9A}
+\definecolor{greenLogo}{HTML}{96CA50}
+\definecolor{greenDark}{HTML}{668B37}
+\definecolor{accentLight}{HTML}{D5AEAA}
+\definecolor{accent}{HTML}{AC5D55}
+\definecolor{accentDark}{HTML}{820C00}
+\definecolor{emphasisLight}{HTML}{FFE0A2}
+\definecolor{emphasis}{HTML}{FFCA5F}
+\definecolor{emphasisDark}{HTML}{B78B41}
+% white (already defined)
+\definecolor{neutralLighter}{HTML}{D6DBE4}
+\definecolor{neutralLight}{HTML}{8897AE}
+\definecolor{neutral}{HTML}{385378}
+\definecolor{neutralDark}{HTML}{263852}
+% black (already defined)
+
+\colorlet{logoGreen}{greenLogo}
+\colorlet{seL4Green}{greenLogo}
+
+% hyperref
+\hypersetup{colorlinks, allcolors=neutral, anchorcolor=black,
+            citecolor=greenDark, linkcolor=greenDark}
+% tcolorbox
+\newtcolorbox{cquote}{colback=neutralLighter,boxrule=0pt,boxsep=0pt,breakable}
+\renewenvironment{quote}
+{\list{}{\rightmargin=2ex \leftmargin=4ex}%
+ \item\relax\cquote}
+{\endcquote\endlist}
+
+%% definitions
+\renewcommand{\familydefault}{\sfdefault}
+\def\h@eader{The seL4\textsuperscript\textregistered\ Foundation\\\\}
+\def\u@rl{https://sel4.systems/Foundation}
+\def\@title{}
+\def\@subtitle{}
+\def\@author{}
+\def\@authortitle{}
+\def\@email{}
+\def\@docversion{}
+\def\@date{\today}
+\def\header#1{\def\h@eader{#1}}
+\def\theurl#1{\def\u@rl{#1}}
+\def\title#1{\def\@title{#1}}
+\def\subtitle#1{\def\@subtitle{#1}}
+\def\author#1{\def\@author{#1}}
+\def\authortitle#1{\def\@authortitle{#1}}
+\def\email#1{\def\@email{#1}}
+\def\docversion#1{\def\@docversion{#1}}
+\def\thedocversion{\@docversion}
+\def\date#1{\def\@date{#1}}
+\def\thedate{\value\@date}
+\def\thanks{\undefined}
+\newcommand{\Logo@FileName}{logos/seL4-Foundation-logo.pdf}
+\newcommand{\Triang@FileName}{logos/blacktriangle.pdf}
+\newcommand{\L@ogo}{\includegraphics[keepaspectratio=true,height=23mm]{\Logo@FileName}}
+
+%%% Produces copyright notice as a pseudo footnote without a footnote mark
+% Use it right at the top, or just after \maketitle. The optional argument is the year of the
+% copyright, it defaults to the current year.
+\newif\ifc@pyrightdone\c@pyrightdonefalse
+\newcommand{\doCopyright}[1][\the\year]{%
+  \ifc@pyrightdone\else%
+  \let\s@makefnmark=\@makefnmark%
+  \let\@makefnmark\relax%
+  \footnote{%
+    \hspace*{-1.8em}%    Magic number from article.cls/report.cls
+    Copyright \copyright~#1 seL4 Project a Series of LF Projects, LLC.\\
+    Distributed under the
+    \href{https://creativecommons.org/licenses/by-sa/4.0/legalcode}{Creative
+      Commons Attribution-ShareAlike 4.0 International (CC~BY-SA~4.0) License.}\\
+    seL4 is a trademark of LF Projects, LLC.
+  }
+  \let\@makefnmark=\s@makefnmark%
+  \c@pyrightdonetrue%
+}
+
+
+%% the part of the headers that's common with or without titlepage
+\def\m@akeheader{%
+  \begin{minipage}[b]{\paperwidth}%
+    \hspace*{16mm}%
+    \raisebox{2.5mm}[38mm][0mm]{\L@ogo}%
+    \hfill
+    \raisebox{4mm}{%
+      \footnotesize%
+      \textcolor{greenLogo}{
+        \begin{tabular}[b]{r}\bf
+          \raisebox{0pt}[0pt][10mm]{\rule{0pt}{8mm}}%
+          \begin{tabular}[t]{r@{}}
+            \h@eader
+          \end{tabular}\\
+          % force URL colour to be green or black, irrespective of hyperref setup
+          \bf\href{\u@rl}{\textcolor{greenLogo}\u@rl}
+        \end{tabular}
+      }%
+    }\hspace*{5mm}
+  \end{minipage}%
+}%
+
+%% the main thing: \maketitle produces the letterhead
+\if@titlepage
+\renewcommand\maketitle{%
+  \noindent%
+  \begin{titlepage}%
+    \urlstyle{sf}
+    % to suppress Overfull \hbox warnings
+    \newlength{\saveHfuzz}
+    \setlength{\saveHfuzz}{\hfuzz}
+    \setlength{\hfuzz}{\paperwidth}
+    %
+    \let\footnotesize\small
+    \let\footnoterule\relax
+    \let \footnote \thanks
+    % laying out the background
+    \newlength{\img@raise}%
+    \newlength{\img@shift}%
+    % the black triangle
+    \setlength{\img@raise}{-\paperheight}%
+    \addtolength{\img@raise}{\Gm@tmargin}%
+    \addtolength{\img@raise}{4.2mm}% don't ask me why!
+    \setlength{\img@shift}{-\Gm@lmargin}%
+    % make black triangle extend 0.1mm beyond margins to prevent a white line
+    \newlength{\img@width}\setlength{\img@width}{1.001\paperwidth}%
+    \newlength{\img@height}\setlength{\img@height}{1.001\paperheight}%
+    \addtolength{\img@shift}{-0.0005\paperwidth}\addtolength{\img@raise}{-0.0005\paperheight}%
+%    \typeout{paperheight=\the\paperheight,
+%      paperwidth=\the\paperwidth,
+%      Gm@lmargin=\Gm@lmargin,
+%      Gm@tmargin=\Gm@tmargin,
+%      img@raise=\the\img@raise,
+%      hfuzz=\the\hfuzz}
+    \raisebox{\img@raise}[0pt][0pt]{\hspace*{\img@shift}%
+      \makebox[0pt][l]{%
+        \includegraphics[keepaspectratio=false,width=\img@width,height=\img@height]{\Triang@FileName}%
+      }%
+    }
+    % header
+    \raisebox{4mm}[0pt][0pt]{\hspace*{-\Gm@tmargin}%
+      \m@akeheader
+    }%
+    %
+    \null%\vfil
+    \raggedright% to prevent stuff shifting
+    \vskip 50mm%
+    ~\hfill%
+    \makebox[0pt][r]{
+      \raisebox{0pt}[0pt][0pt]{
+        \begin{minipage}{150mm}
+          \raggedleft
+          \fontsize{36}{42}\selectfont \textcolor{greenLogo}{\@title}\\%
+          \if\@subtitle\empty
+          ~
+          \else
+          \fontsize{36}{42}\selectfont \textcolor{emphasis}{\@subtitle}
+          \fi%
+        \end{minipage}
+        \hspace*{-10mm}
+      }
+    }
+    \vskip 70mm
+    \makebox[0pt][l]{
+      \hspace*{-13mm}
+      \raisebox{0pt}[0pt][0pt]{
+        \begin{minipage}{70mm}%
+          \raggedright%
+          \color{neutral}
+          \fontsize{20}{26}\selectfont%
+          \@author\par
+          \fontsize{14}{22}\selectfont%
+          \ifx\@authortitle\empty\else\@authortitle\par\fi
+          \ifx\@email\empty\else\@email\par\fi
+          \ifx\@docversion\empty\else\@docversion\par\fi
+          \ifx\@date\empty\else\@date\par\fi
+        \end{minipage}
+      }
+    }
+  \setcounter{page}{0}
+  \end{titlepage}%
+  \thispagestyle{fancyplain}
+  \setlength{\hfuzz}{\saveHfuzz}%
+  \setcounter{footnote}{0}%
+  \global\let\thanks\relax
+  \global\let\maketitle\relax
+  \global\let\@thanks\@empty
+  \global\let\@author\@empty
+  \global\let\@date\@empty
+  \global\let\@title\@empty
+  \global\let\title\relax
+  \global\let\author\relax
+  \global\let\date\relax
+  \global\let\and\relax
+  \setcounter{page}{0}
+  \m@aketitlefalse
+}
+\else% no titlepage
+\def\maketitle{\urlstyle{sf}
+  % to suppress overfull bars in ``draft'' mode:
+  \newlength{\saveOverfullRule}
+  \setlength{\saveOverfullRule}{\overfullrule}
+  \setlength\overfullrule{0pt}
+  %
+  \noindent%
+  \raisebox{0mm}[0pt][0pt]{\hspace*{-25mm}%
+    \ifb@nner\makebox[0pt][l]{\rule{\paperwidth}{40mm}}\fi% black banner
+    \m@akeheader
+  }%
+  % reset overfull rule
+  \setlength{\overfullrule}{\saveOverfullRule}%
+  \vspace*{12mm}%
+  \ifx\@title\empty \else%
+    \begin{center}
+      {\LARGE\bf\@title\\[1ex]}
+      \ifx\@subtitle\empty \else{\Large\@subtitle} \\[1ex]\fi%
+      \ifx\@author\empty \else
+        {\Large\@author
+          \ifx\@authortitle\empty\else{\large\\\@authortitle}\fi
+          \ifx\@email\empty\else{\normalsize\\\@email}\fi
+          \\[1ex]}%
+      \fi%
+      \ifx\@docversion\empty\else\@docversion\\\fi
+      \ifx\@date\empty \else\@date \\\fi%
+      \vspace{5ex}%
+    \end{center}%
+  \fi%
+  \m@aketitlefalse
+}%\maketitle
+\fi% no titlepage
+
+\AtBeginDocument{%
+  \ifm@aketitle%
+     \maketitle%
+     \let\maketitle\relax%
+     \m@aketitlefalse%
+   \fi%
+   \ifc@pyright%
+     \doCopyright%
+   \fi%
+}

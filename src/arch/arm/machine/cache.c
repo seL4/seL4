@@ -134,6 +134,18 @@ void invalidateCacheRange_RAM(vptr_t start, vptr_t end, paddr_t pstart)
 
 void invalidateCacheRange_I(vptr_t start, vptr_t end, paddr_t pstart)
 {
+#if defined(CONFIG_ARM_ICACHE_VIPT) && defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
+    /* In cases where the hypervisor is supported, the virtual address passed
+     * to this function are kernel aliases for the underlying physical memory
+     * rather than the virtual address in the actual vspace. This works fine
+     * when the cache is PIPT, as the cache-line is indexed by physical address,
+     * and the alias maps to the same physical address. On VIPT this is not the
+     * case, and it is not possible to correctly index using an aliased address.
+     * As the only possible fallback the entire cache is invalidated in this
+     * case
+     */
+    invalidate_I_PoU();
+#else
     vptr_t line;
     word_t index;
 
@@ -141,6 +153,7 @@ void invalidateCacheRange_I(vptr_t start, vptr_t end, paddr_t pstart)
         line = index << L1_CACHE_LINE_SIZE_BITS;
         invalidateByVA_I(line, pstart + (line - start));
     }
+#endif
 }
 
 void branchFlushRange(vptr_t start, vptr_t end, paddr_t pstart)

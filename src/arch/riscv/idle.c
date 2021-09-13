@@ -16,7 +16,7 @@ void idle_thread(void)
 }
 
 /** DONT_TRANSLATE */
-void VISIBLE halt(void)
+void VISIBLE NO_INLINE halt(void)
 {
 #ifdef CONFIG_PRINTING
     printf("halting...");

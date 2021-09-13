@@ -45,21 +45,11 @@ static inline void maybeDonateSchedContext(tcb_t *tcb, notification_t *ntfnPtr)
         sched_context_t *sc = SC_PTR(notification_ptr_get_ntfnSchedContext(ntfnPtr));
         if (sc != NULL && sc->scTcb == NULL) {
             schedContext_donate(sc, tcb);
-            refill_unblock_check(sc);
             schedContext_resume(sc);
         }
     }
 }
 
-static inline void maybeReturnSchedContext(notification_t *ntfnPtr, tcb_t *tcb)
-{
-
-    sched_context_t *sc = SC_PTR(notification_ptr_get_ntfnSchedContext(ntfnPtr));
-    if (sc == tcb->tcbSchedContext) {
-        tcb->tcbSchedContext = NULL;
-        sc->scTcb = NULL;
-    }
-}
 #endif
 
 #ifdef CONFIG_KERNEL_MCS
@@ -90,6 +80,19 @@ void sendSignal(notification_t *ntfnPtr, word_t badge)
                 MCS_DO_IF_SC(tcb, ntfnPtr, {
                     possibleSwitchTo(tcb);
                 })
+#ifdef CONFIG_KERNEL_MCS
+                if (sc_sporadic(tcb->tcbSchedContext) && sc_active(tcb->tcbSchedContext)) {
+                    /* We know that the tcb can't have the current SC
+                     * as its own SC as this point as it should still be
+                     * associated with the current thread, or no thread.
+                     * This check is added here to reduce the cost of
+                     * proving this to be true as a short-term stop-gap. */
+                    assert(tcb->tcbSchedContext != NODE_STATE(ksCurSC));
+                    if (tcb->tcbSchedContext != NODE_STATE(ksCurSC)) {
+                        refill_unblock_check(tcb->tcbSchedContext);
+                    }
+                }
+#endif
 #ifdef CONFIG_VTX
             } else if (thread_state_ptr_get_tsType(&tcb->tcbState) == ThreadState_RunningVM) {
 #ifdef ENABLE_SMP_SUPPORT
@@ -105,6 +108,21 @@ void sendSignal(notification_t *ntfnPtr, word_t badge)
                     MCS_DO_IF_SC(tcb, ntfnPtr, {
                         possibleSwitchTo(tcb);
                     })
+#ifdef CONFIG_KERNEL_MCS
+                    if (tcb->tcbSchedContext != NULL && sc_active(tcb->tcbSchedContext)) {
+                        sched_context_t *sc = SC_PTR(notification_ptr_get_ntfnSchedContext(ntfnPtr));
+                        if (tcb->tcbSchedContext == sc && sc_sporadic(sc) && tcb->tcbSchedContext != NODE_STATE(ksCurSC)) {
+                            /* We know that the tcb can't have the current SC
+                             * as its own SC as this point as it should still be
+                             * associated with the current thread, or no thread.
+                             * This check is added here to reduce the cost of
+                             * proving this to be true as a short-term stop-gap. */
+                            /* Only unblock if the SC was donated from the
+                             * notification */
+                            refill_unblock_check(tcb->tcbSchedContext);
+                        }
+                    }
+#endif
                 }
 #endif /* CONFIG_VTX */
             } else {
@@ -146,6 +164,20 @@ void sendSignal(notification_t *ntfnPtr, word_t badge)
         MCS_DO_IF_SC(dest, ntfnPtr, {
             possibleSwitchTo(dest);
         })
+
+#ifdef CONFIG_KERNEL_MCS
+        if (sc_sporadic(dest->tcbSchedContext) && sc_active(dest->tcbSchedContext)) {
+            /* We know that the receiver can't have the current SC
+             * as its own SC as this point as it should still be
+             * associated with the current thread.
+             * This check is added here to reduce the cost of
+             * proving this to be true as a short-term stop-gap. */
+            assert(dest->tcbSchedContext != NODE_STATE(ksCurSC));
+            if (dest->tcbSchedContext != NODE_STATE(ksCurSC)) {
+                refill_unblock_check(dest->tcbSchedContext);
+            }
+        }
+#endif
         break;
     }
 
@@ -178,9 +210,6 @@ void receiveSignal(tcb_t *thread, cap_t cap, bool_t isBlocking)
                                         ThreadState_BlockedOnNotification);
             thread_state_ptr_set_blockingObject(&thread->tcbState,
                                                 NTFN_REF(ntfnPtr));
-#ifdef CONFIG_KERNEL_MCS
-            maybeReturnSchedContext(ntfnPtr, thread);
-#endif
             scheduleTCB(thread);
 
             /* Enqueue TCB */
@@ -189,6 +218,10 @@ void receiveSignal(tcb_t *thread, cap_t cap, bool_t isBlocking)
 
             notification_ptr_set_state(ntfnPtr, NtfnState_Waiting);
             ntfn_ptr_set_queue(ntfnPtr, ntfn_queue);
+
+#ifdef CONFIG_KERNEL_MCS
+            maybeReturnSchedContext(ntfnPtr, thread);
+#endif
         } else {
             doNBRecvFailedTransfer(thread);
         }
@@ -203,6 +236,11 @@ void receiveSignal(tcb_t *thread, cap_t cap, bool_t isBlocking)
         notification_ptr_set_state(ntfnPtr, NtfnState_Idle);
 #ifdef CONFIG_KERNEL_MCS
         maybeDonateSchedContext(thread, ntfnPtr);
+        // If the SC has been donated to the current thread (in a reply_recv, send_recv scenario) then
+        // we may need to perform refill_unblock_check if the SC is becoming activated.
+        if (thread->tcbSchedContext != NODE_STATE(ksCurSC) && sc_sporadic(thread->tcbSchedContext)) {
+            refill_unblock_check(thread->tcbSchedContext);
+        }
 #endif
         break;
     }
@@ -221,6 +259,17 @@ void cancelAllSignals(notification_t *ntfnPtr)
         for (; thread; thread = thread->tcbEPNext) {
             setThreadState(thread, ThreadState_Restart);
 #ifdef CONFIG_KERNEL_MCS
+            if (sc_sporadic(thread->tcbSchedContext)) {
+                /* We know that the thread can't have the current SC
+                 * as its own SC as this point as it should still be
+                 * associated with the current thread, or no thread.
+                 * This check is added here to reduce the cost of
+                 * proving this to be true as a short-term stop-gap. */
+                assert(thread->tcbSchedContext != NODE_STATE(ksCurSC));
+                if (thread->tcbSchedContext != NODE_STATE(ksCurSC)) {
+                    refill_unblock_check(thread->tcbSchedContext);
+                }
+            }
             possibleSwitchTo(thread);
 #else
             SCHED_ENQUEUE(thread);
@@ -259,6 +308,22 @@ void completeSignal(notification_t *ntfnPtr, tcb_t *tcb)
         badge = notification_ptr_get_ntfnMsgIdentifier(ntfnPtr);
         setRegister(tcb, badgeRegister, badge);
         notification_ptr_set_state(ntfnPtr, NtfnState_Idle);
+#ifdef CONFIG_KERNEL_MCS
+        maybeDonateSchedContext(tcb, ntfnPtr);
+        if (sc_sporadic(tcb->tcbSchedContext) && sc_active(tcb->tcbSchedContext)) {
+            sched_context_t *sc = SC_PTR(notification_ptr_get_ntfnSchedContext(ntfnPtr));
+            if (tcb->tcbSchedContext == sc && tcb->tcbSchedContext != NODE_STATE(ksCurSC)) {
+                /* We know that the tcb can't have the current SC
+                 * as its own SC as this point as it should still be
+                 * associated with the current thread, or no thread.
+                 * This check is added here to reduce the cost of
+                 * proving this to be true as a short-term stop-gap. */
+                /* Only unblock if the SC was donated from the
+                 * notification */
+                refill_unblock_check(tcb->tcbSchedContext);
+            }
+        }
+#endif
     } else {
         fail("tried to complete signal with inactive notification object");
     }

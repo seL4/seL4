@@ -61,6 +61,14 @@ UP_STATE_DEFINE(sched_context_t *, ksCurSC);
 #ifdef CONFIG_DEBUG_BUILD
 UP_STATE_DEFINE(tcb_t *, ksDebugTCBs);
 #endif /* CONFIG_DEBUG_BUILD */
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+UP_STATE_DEFINE(bool_t, benchmark_log_utilisation_enabled);
+UP_STATE_DEFINE(timestamp_t, benchmark_start_time);
+UP_STATE_DEFINE(timestamp_t, benchmark_end_time);
+UP_STATE_DEFINE(timestamp_t, benchmark_kernel_time);
+UP_STATE_DEFINE(timestamp_t, benchmark_kernel_number_entries);
+UP_STATE_DEFINE(timestamp_t, benchmark_kernel_number_schedules);
+#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 
 /* Units of work we have completed since the last time we checked for
  * pending interrupts */
@@ -100,6 +108,6 @@ char ksIdleThreadSC[CONFIG_MAX_NUM_NODES][BIT(seL4_MinSchedContextBits)] ALIGN(B
 kernel_entry_t ksKernelEntry;
 #endif /* DEBUG */
 
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_LOG_BUFFER
 paddr_t ksUserLogBuffer;
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_KERNEL_LOG_BUFFER */

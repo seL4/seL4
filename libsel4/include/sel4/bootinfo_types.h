@@ -6,12 +6,9 @@
 
 #pragma once
 
-#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
-#endif
 
 /* caps with fixed slot positions in the root CNode */
-
 enum {
     seL4_CapNull                =  0, /* null cap */
     seL4_CapInitThreadTCB       =  1, /* initial thread's TCB cap */
@@ -25,11 +22,13 @@ enum {
     seL4_CapBootInfoFrame       =  9, /* bootinfo frame cap */
     seL4_CapInitThreadIPCBuffer = 10, /* initial thread's IPC buffer frame cap */
     seL4_CapDomain              = 11, /* global domain controller cap */
+    seL4_CapSMMUSIDControl      = 12,  /*global SMMU SID controller cap, null cap if not supported*/
+    seL4_CapSMMUCBControl       = 13,  /*global SMMU CB controller cap, null cap if not supported*/
 #ifdef CONFIG_KERNEL_MCS
-    seL4_CapInitThreadSC        = 12, /* initial thread's scheduling context cap */
-    seL4_NumInitialCaps         = 13
-#else /* CONFIG_KERNEL_MCS */
-    seL4_NumInitialCaps         = 12
+    seL4_CapInitThreadSC        = 14, /* initial thread's scheduling context cap */
+    seL4_NumInitialCaps         = 15
+#else
+    seL4_NumInitialCaps         = 14
 #endif /* !CONFIG_KERNEL_MCS */
 };
 
@@ -95,4 +94,3 @@ typedef struct seL4_BootInfoHeader {
 #define SEL4_BOOTINFO_HEADER_X86_TSC_FREQ 5 // frequency is in mhz
 #define SEL4_BOOTINFO_HEADER_FDT 6
 #define SEL4_BOOTINFO_HEADER_NUM SEL4_BOOTINFO_HEADER_FDT + 1
-

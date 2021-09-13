@@ -12,15 +12,30 @@ endif()
 
 set(KernelArmPASizeBits40 OFF)
 set(KernelArmPASizeBits44 OFF)
-if(KernelArmCortexA53)
+if(KernelArmCortexA35)
+    set(KernelArmICacheVIPT ON)
     set(KernelArmPASizeBits40 ON)
-    math(EXPR KernelPaddrUserTop "(1 << 40) - 1")
+    math(EXPR KernelPaddrUserTop "(1 << 40)")
+elseif(KernelArmCortexA53)
+    set(KernelArmICacheVIPT ON)
+    set(KernelArmPASizeBits40 ON)
+    math(EXPR KernelPaddrUserTop "(1 << 40)")
+elseif(KernelArmCortexA55)
+    set(KernelArmICacheVIPT ON)
+    set(KernelArmPASizeBits40 ON)
+    math(EXPR KernelPaddrUserTop "(1 << 40)")
 elseif(KernelArmCortexA57)
     set(KernelArmPASizeBits44 ON)
-    math(EXPR KernelPaddrUserTop "(1 << 44) - 1")
+    math(EXPR KernelPaddrUserTop "(1 << 44)")
+elseif(KernelArmCortexA72)
+    # For Cortex-A72 in AArch64 state, the physical address range is 44 bits
+    # (https://developer.arm.com/documentation/100095/0001/memory-management-unit/about-the-mmu)
+    set(KernelArmPASizeBits44 ON)
+    math(EXPR KernelPaddrUserTop "(1 << 44)")
 endif()
 config_set(KernelArmPASizeBits40 ARM_PA_SIZE_BITS_40 "${KernelArmPASizeBits40}")
 config_set(KernelArmPASizeBits44 ARM_PA_SIZE_BITS_44 "${KernelArmPASizeBits44}")
+config_set(KernelArmICacheVIPT ARM_ICACHE_VIPT "${KernelArmICacheVIPT}")
 
 if(KernelSel4ArchAarch32)
     # 64-bit targets may be building in 32-bit mode,
@@ -68,17 +83,30 @@ config_option(
     DEFAULT OFF
     DEPENDS "KernelArchARM"
 )
-if(KernelSel4ArchArmHyp)
-    set(default_hyp_support ON)
-else()
-    set(default_hyp_support OFF)
+
+if(NOT DEFINED KernelSel4ArchArmHyp)
+    # the current CMake scripts ensure that KernelSel4ArchArmHyp is always set
+    # to either ON or OFF. If it is not set, something is either broken or the
+    # CMake files are used wrongly. Or support for KernelSel4ArchArmHyp has
+    # finally been removed - and then this check here should be removed and the
+    # KernelArmHypervisorSupport below can be OFF by default.
+    message(FATAL_ERROR "KernelSel4ArchArmHyp must be ON or OFF")
 endif()
 config_option(
     KernelArmHypervisorSupport ARM_HYPERVISOR_SUPPORT
     "Build as Hypervisor. Utilise ARM virtualisation extensions to build the kernel as a hypervisor"
-    DEFAULT ${default_hyp_support}
-    DEPENDS "KernelArmCortexA15 OR KernelArmCortexA57 OR KernelArmCortexA53"
+    DEFAULT ${KernelSel4ArchArmHyp}
+    DEPENDS
+        "KernelArmCortexA15 OR KernelArmCortexA35 OR KernelArmCortexA57 OR KernelArmCortexA53 OR KernelArmCortexA55 OR KernelArmCortexA72"
 )
+
+config_option(KernelArmGicV3 ARM_GIC_V3_SUPPORT "Build support for GICv3" DEFAULT OFF)
+
+if(KernelArmPASizeBits40 AND ARM_HYPERVISOR_SUPPORT)
+    config_set(KernelAarch64VspaceS2StartL1 AARCH64_VSPACE_S2_START_L1 "ON")
+else()
+    config_set(KernelAarch64VspaceS2StartL1 AARCH64_VSPACE_S2_START_L1 "OFF")
+endif()
 
 config_option(
     KernelArmHypEnableVCPUCP14SaveAndRestore ARM_HYP_ENABLE_VCPU_CP14_SAVE_AND_RESTORE
@@ -88,7 +116,7 @@ config_option(
     and trap them instead, and have the VCPUs' accesses to CP14 \
     intercepted and delivered to the VM Monitor as fault messages"
     DEFAULT ON
-    DEPENDS "KernelSel4ArmHypAarch32;NOT KernelVerificationBuild"
+    DEPENDS "KernelSel4ArchArmHyp;NOT KernelVerificationBuild"
     DEFAULT_DISABLED OFF
 )
 
@@ -113,8 +141,10 @@ config_option(
     DEFAULT_DISABLED OFF
 )
 
+config_option(KernelArmSMMU ARM_SMMU "Enable SystemMMU" DEFAULT OFF DEPENDS "KernelPlatformTx2")
+
 config_option(
-    KernelArmSMMU ARM_SMMU "Enable SystemMMU for the Tegra TK1 SoC"
+    KernelTk1SMMU TK1_SMMU "Enable SystemMMU for the Tegra TK1 SoC"
     DEFAULT OFF
     DEPENDS "KernelPlatformTK1"
 )
@@ -145,13 +175,13 @@ config_option(
     DEFAULT OFF
     DEPENDS "KernelArchArmV7a OR KernelArchArmV8a;KernelArmHypervisorSupport"
 )
-config_option(KernelARMSMMUInterruptEnable SMMU_INTERRUPT_ENABLE "Enable SMMU interrupts. \
+config_option(KernelTk1SMMUInterruptEnable SMMU_INTERRUPT_ENABLE "Enable SMMU interrupts. \
     SMMU interrupts currently only serve a debug purpose as \
     they are not forwarded to user level. Enabling this will \
     cause some fault types to print out a message in the kernel. \
     WARNING: Printing fault information is slow and rapid faults \
     can result in all time spent in the kernel printing fault \
-    messages" DEFAULT "${KernelDebugBuild}" DEPENDS "KernelArmSMMU" DEFAULT_DISABLED OFF)
+    messages" DEFAULT "${KernelDebugBuild}" DEPENDS "KernelTk1SMMU" DEFAULT_DISABLED OFF)
 
 config_option(
     KernelAArch32FPUEnableContextSwitch AARCH32_FPU_ENABLE_CONTEXT_SWITCH
@@ -165,6 +195,16 @@ config_option(
     DEFAULT_DISABLED OFF
 )
 
+config_option(
+    KernelAArch64SErrorIgnore AARCH64_SERROR_IGNORE
+    "By default any SError interrupt will halt the kernel. SErrors may \
+    be caused by e.g. writes to read-only device registers or ECC errors. \
+    When this option is enabled SErrors will be ignored."
+    DEFAULT OFF
+    DEPENDS "KernelSel4ArchAarch64;NOT KernelVerificationBuild"
+)
+mark_as_advanced(KernelAArch64SErrorIgnore)
+
 if(KernelAArch32FPUEnableContextSwitch OR KernelSel4ArchAarch64)
     set(KernelHaveFPU ON)
 endif()
@@ -177,9 +217,15 @@ if(
     KernelArmCortexA7
     OR KernelArmCortexA8
     OR KernelArmCortexA15
+    OR KernelArmCortexA35
     OR KernelArmCortexA53
+    OR KernelArmCortexA55
     OR KernelArmCortexA57
+    OR KernelArmCortexA72
 )
+    # According to https://developer.arm.com/documentation/100095/0001/functional-description/about-the-cortex-a72-processor-functions/components-of-the-processor
+    # the L1 instruction on the Cortex-A72 cache has a 64-byte cache line.
+    # Thus, 6 bits are needed.
     config_set(KernelArmCacheLineSizeBits L1_CACHE_LINE_SIZE_BITS "6")
 elseif(KernelArmCortexA9 OR KernelArm1136JF_S)
     config_set(KernelArmCacheLineSizeBits L1_CACHE_LINE_SIZE_BITS "5")
@@ -192,14 +238,6 @@ if(KernelArchArmV6)
     #
     # See SELFOUR-2253
     set(KernelSetTLSBaseSelf ON)
-endif()
-
-# TODO: this config has no business being in the build system, and should
-# be moved to C headers, but for now must be emulated here for compatibility
-if(KernelBenchmarksTrackUtilisation AND KernelArchARM)
-    config_set(KernelArmEnablePMUOverflowInterrupt ARM_ENABLE_PMU_OVERFLOW_INTERRUPT ON)
-else()
-    config_set(KernelArmEnablePMUOverflowInterrupt ARM_ENABLE_PMU_OVERFLOW_INTERRUPT OFF)
 endif()
 
 # Provides a 4K region of read-only memory mapped into every vspace to
@@ -220,10 +258,12 @@ add_sources(
         machine/errata.c
         machine/debug.c
         machine/hardware.c
+        machine/io.c
         object/interrupt.c
         object/tcb.c
         object/iospace.c
         object/vcpu.c
+        object/smmu.c
         smp/ipi.c
 )
 

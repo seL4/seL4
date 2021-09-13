@@ -1,0 +1,24 @@
+/*
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright (C) 2021, Hensoldt Cyber GmbH
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+	chosen {
+		seL4,elfloader-devices =
+		    "serial1";
+
+		seL4,kernel-devices =
+		    "serial1",
+		    &{/soc/interrupt-controller@40041000},
+		    &{/soc/local_intc@40000000},
+		    &{/timer};
+	};
+
+	memory@0 {
+		/* This is configurable in the Pi's config.txt, but we use 128MiB of RAM by default. */
+		reg = <0x00 0x00000000 0x08000000>;
+	};
+};

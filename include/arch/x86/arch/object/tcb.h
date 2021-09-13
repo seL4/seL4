@@ -11,6 +11,6 @@
 #include <object/structures.h>
 
 #ifdef CONFIG_VTX
-exception_t decodeSetEPTRoot(cap_t cap, extra_caps_t extraCaps);
+exception_t decodeSetEPTRoot(cap_t cap);
 void Arch_leaveVMAsyncTransfer(tcb_t *tcb);
 #endif

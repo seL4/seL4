@@ -17,6 +17,7 @@ add_sources(
         kernel/elf.c
         model/statedata.c
         model/smp.c
+        machine/capdl.c
         machine/registerset.c
         smp/ipi.c
     ASMFILES machine_asm.S traps.S head.S

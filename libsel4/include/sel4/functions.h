@@ -2,7 +2,7 @@
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
  *
- * SPDX-License-Identifier: GPL-2.0-only
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
 #pragma once
@@ -11,7 +11,6 @@
 #include <sel4/syscalls.h>
 
 extern __thread seL4_IPCBuffer *__sel4_ipc_buffer;
-__thread __attribute__((weak)) seL4_IPCBuffer *__sel4_ipc_buffer;
 
 #ifdef CONFIG_KERNEL_INVOCATION_REPORT_ERROR_IPC
 extern __thread char __sel4_print_error;

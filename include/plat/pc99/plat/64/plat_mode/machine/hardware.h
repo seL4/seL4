@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <config.h>
 #include <util.h>
 
 /*
@@ -32,9 +33,11 @@
  *                         v
  *          2^64 +-------------------+
  *               |                   |
- *               |                   |     +------+     +------+
- *               |  Kernel Devices   | --> |  PD  | --> |  PT  |
- *               |                   |     +------+     +------+
+ *               |                   |     +------+      +------+
+ *               |                   | --> |  PD  | -+-> |  PT  |
+ *               |  Kernel Devices   |     +------+  |   +------+
+ *               |                   |               |
+ *               |                   |               +-> Log Buffer
  *               |                   |
  *   2^64 - 2^30 +-------------------+ KDEV_BASE
  *               |                   |
@@ -94,9 +97,15 @@
  * region. This is 2^48 - 2^30 */
 #define KDEV_BASE UL_CONST(0xffffffffc0000000)
 
+/* The kernel log buffer is a large page mapped into the second index
+ * of the page directory that is only otherwise used for the kernel
+ * device page table. */
+#ifdef CONFIG_KERNEL_LOG_BUFFER
+#define KS_LOG_PPTR (KDEV_BASE + BIT(seL4_LargePageBits))
+#endif
+
 #ifndef __ASSEMBLER__
 
-#include <config.h>
 #include <basic_types.h>
 #include <plat/machine.h>
 #include <plat_mode/machine/hardware_gen.h>
@@ -106,24 +115,6 @@
 #ifdef ENABLE_SMP_SUPPORT
 compile_assert(user_top_tlbbitmap_no_overlap, GET_PML4_INDEX(USER_TOP) != GET_PML4_INDEX(TLBBITMAP_PPTR))
 #endif
-
-/* since we have two kernel VM windows, we have two pptr to paddr
- * conversion functions.
- * paddr_to_kpptr converts physical address to the second small kernel
- * window which locates at the top 2GiB.
- */
-static inline void *CONST
-paddr_to_kpptr(paddr_t paddr)
-{
-    assert(paddr < KERNEL_ELF_PADDR_TOP);
-    return (void *)(paddr + KERNEL_ELF_BASE_OFFSET);
-}
-
-static inline paddr_t CONST kpptr_to_paddr(void *pptr)
-{
-    assert((word_t)pptr >= KERNEL_ELF_BASE);
-    return (paddr_t)pptr - KERNEL_ELF_BASE_OFFSET;
-}
 
 #endif /* __ASSEMBLER__ */
 

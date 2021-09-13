@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 #
 # Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 #
@@ -55,6 +55,7 @@ zynq-zc706=zynq7000
 "
 
 ARM64_DTBS="
+amlogic/meson-sm1-odroid-c4=odroidc4
 amlogic/meson-gxbb-odroidc2=odroidc2
 hisilicon/hi6220-hikey=hikey
 nvidia/tegra210-p2371-2180=tx1
@@ -63,6 +64,7 @@ xilinx/zynqmp-zcu102-rev1.0=zynqmp
 freescale/fsl-imx8mq-evk=imx8mq-evk
 freescale/fsl-imx8mm-evk=imx8mm-evk
 rockchip/rk3399-rockpro64=rockpro64
+broadcom/bcm2711-rpi-4-b=rpi4
 "
 
 extract_dts() {

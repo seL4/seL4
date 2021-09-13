@@ -69,6 +69,19 @@ typedef word_t notification_state_t;
 // to be as large as possible, but it still needs to be aligned. As the TCB object contains
 // two sub objects the largest we can make either sub object whilst preserving size alignment
 // is half the total size. To halve an object size defined in bits we just subtract 1
+//
+// A diagram of a TCB kernel object that is created from untyped:
+//  _______________________________________
+// |     |             |                   |
+// |     |             |                   |
+// |cte_t|   unused    |       tcb_t       |
+// |     |(debug_tcb_t)|                   |
+// |_____|_____________|___________________|
+// 0     a             b                   c
+// a = tcbCNodeEntries * sizeof(cte_t)
+// b = BIT(TCB_SIZE_BITS)
+// c = BIT(seL4_TCBBits)
+//
 #define TCB_SIZE_BITS (seL4_TCBBits - 1)
 
 #define TCB_CNODE_SIZE_BITS (TCB_CNODE_RADIX + seL4_SlotBits)
@@ -295,17 +308,26 @@ struct tcb {
     /* 16 bytes (12 bytes aarch32) */
     benchmark_util_t benchmark;
 #endif
+};
+typedef struct tcb tcb_t;
 
 #ifdef CONFIG_DEBUG_BUILD
+/* This debug_tcb object is inserted into the 'unused' region of a TCB object
+   for debug build configurations. */
+struct debug_tcb {
+
     /* Pointers for list of all tcbs that is maintained
      * when CONFIG_DEBUG_BUILD is enabled, 2 words */
     struct tcb *tcbDebugNext;
     struct tcb *tcbDebugPrev;
     /* Use any remaining space for a thread name */
     char tcbName[];
-#endif /* CONFIG_DEBUG_BUILD */
+
 };
-typedef struct tcb tcb_t;
+typedef struct debug_tcb debug_tcb_t;
+
+#define TCB_PTR_DEBUG_PTR(p) ((debug_tcb_t *)TCB_PTR_CTE_PTR(p,tcbArchCNodeEntries))
+#endif /* CONFIG_DEBUG_BUILD */
 
 #ifdef CONFIG_KERNEL_MCS
 typedef struct refill {
@@ -335,8 +357,7 @@ struct sched_context {
      * when the scheduling context was passed over a Call */
     reply_t *scReply;
 
-    /* notification this scheduling context is bound to
-     * (scTcb and scNotification cannot be set at the same time) */
+    /* notification this scheduling context is bound to */
     notification_t *scNotification;
 
     /* data word that is sent with timeout faults that occur on this scheduling context */
@@ -351,6 +372,10 @@ struct sched_context {
     word_t scRefillHead;
     /* Index of the tail of the refill circular buffer */
     word_t scRefillTail;
+
+    /* Whether to apply constant-bandwidth/sliding-window constraint
+     * rather than only sporadic server constraints */
+    bool_t scSporadic;
 };
 
 struct reply {
@@ -399,205 +424,5 @@ static inline word_t CONST
 isArchCap(cap_t cap)
 {
     return (cap_get_capType(cap) % 2);
-}
-
-static inline word_t CONST cap_get_capSizeBits(cap_t cap)
-{
-
-    cap_tag_t ctag;
-
-    ctag = cap_get_capType(cap);
-
-    switch (ctag) {
-    case cap_untyped_cap:
-        return cap_untyped_cap_get_capBlockSize(cap);
-
-    case cap_endpoint_cap:
-        return seL4_EndpointBits;
-
-    case cap_notification_cap:
-        return seL4_NotificationBits;
-
-    case cap_cnode_cap:
-        return cap_cnode_cap_get_capCNodeRadix(cap) + seL4_SlotBits;
-
-    case cap_thread_cap:
-        return seL4_TCBBits;
-
-    case cap_zombie_cap: {
-        word_t type = cap_zombie_cap_get_capZombieType(cap);
-        if (type == ZombieType_ZombieTCB) {
-            return seL4_TCBBits;
-        }
-        return ZombieType_ZombieCNode(type) + seL4_SlotBits;
-    }
-
-    case cap_null_cap:
-        return 0;
-
-    case cap_domain_cap:
-        return 0;
-
-    case cap_reply_cap:
-#ifdef CONFIG_KERNEL_MCS
-        return seL4_ReplyBits;
-#else
-        return 0;
-#endif
-
-    case cap_irq_control_cap:
-#ifdef CONFIG_KERNEL_MCS
-    case cap_sched_control_cap:
-#endif
-        return 0;
-
-    case cap_irq_handler_cap:
-        return 0;
-
-#ifdef CONFIG_KERNEL_MCS
-    case cap_sched_context_cap:
-        return cap_sched_context_cap_get_capSCSizeBits(cap);
-#endif
-
-    default:
-        return cap_get_archCapSizeBits(cap);
-    }
-
-}
-
-/* Returns whether or not this capability has memory associated
- * with it or not. Referring to this as 'being physical' is to
- * match up with the Haskell and abstract specifications */
-static inline bool_t CONST cap_get_capIsPhysical(cap_t cap)
-{
-    cap_tag_t ctag;
-
-    ctag = cap_get_capType(cap);
-
-    switch (ctag) {
-    case cap_untyped_cap:
-        return true;
-
-    case cap_endpoint_cap:
-        return true;
-
-    case cap_notification_cap:
-        return true;
-
-    case cap_cnode_cap:
-        return true;
-
-    case cap_thread_cap:
-#ifdef CONFIG_KERNEL_MCS
-    case cap_sched_context_cap:
-#endif
-        return true;
-
-    case cap_zombie_cap:
-        return true;
-
-    case cap_domain_cap:
-        return false;
-
-    case cap_reply_cap:
-#ifdef CONFIG_KERNEL_MCS
-        return true;
-#else
-        return false;
-#endif
-
-    case cap_irq_control_cap:
-#ifdef CONFIG_KERNEL_MCS
-    case cap_sched_control_cap:
-#endif
-        return false;
-
-    case cap_irq_handler_cap:
-        return false;
-
-    default:
-        return cap_get_archCapIsPhysical(cap);
-    }
-}
-
-static inline void *CONST cap_get_capPtr(cap_t cap)
-{
-    cap_tag_t ctag;
-
-    ctag = cap_get_capType(cap);
-
-    switch (ctag) {
-    case cap_untyped_cap:
-        return WORD_PTR(cap_untyped_cap_get_capPtr(cap));
-
-    case cap_endpoint_cap:
-        return EP_PTR(cap_endpoint_cap_get_capEPPtr(cap));
-
-    case cap_notification_cap:
-        return NTFN_PTR(cap_notification_cap_get_capNtfnPtr(cap));
-
-    case cap_cnode_cap:
-        return CTE_PTR(cap_cnode_cap_get_capCNodePtr(cap));
-
-    case cap_thread_cap:
-        return TCB_PTR_CTE_PTR(cap_thread_cap_get_capTCBPtr(cap), 0);
-
-    case cap_zombie_cap:
-        return CTE_PTR(cap_zombie_cap_get_capZombiePtr(cap));
-
-    case cap_domain_cap:
-        return NULL;
-
-    case cap_reply_cap:
-#ifdef CONFIG_KERNEL_MCS
-        return REPLY_PTR(cap_reply_cap_get_capReplyPtr(cap));
-#else
-        return NULL;
-#endif
-
-    case cap_irq_control_cap:
-#ifdef CONFIG_KERNEL_MCS
-    case cap_sched_control_cap:
-#endif
-        return NULL;
-
-    case cap_irq_handler_cap:
-        return NULL;
-
-#ifdef CONFIG_KERNEL_MCS
-    case cap_sched_context_cap:
-        return SC_PTR(cap_sched_context_cap_get_capSCPtr(cap));
-#endif
-
-    default:
-        return cap_get_archCapPtr(cap);
-
-    }
-}
-
-static inline bool_t CONST isCapRevocable(cap_t derivedCap, cap_t srcCap)
-{
-    if (isArchCap(derivedCap)) {
-        return Arch_isCapRevocable(derivedCap, srcCap);
-    }
-    switch (cap_get_capType(derivedCap)) {
-    case cap_endpoint_cap:
-        return (cap_endpoint_cap_get_capEPBadge(derivedCap) !=
-                cap_endpoint_cap_get_capEPBadge(srcCap));
-
-    case cap_notification_cap:
-        return (cap_notification_cap_get_capNtfnBadge(derivedCap) !=
-                cap_notification_cap_get_capNtfnBadge(srcCap));
-
-    case cap_irq_handler_cap:
-        return (cap_get_capType(srcCap) ==
-                cap_irq_control_cap);
-
-    case cap_untyped_cap:
-        return true;
-
-    default:
-        return false;
-    }
 }
 

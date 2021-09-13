@@ -19,10 +19,10 @@ if(KernelPlatformKZM)
     list(APPEND KernelDTSList "src/plat/imx31/overlay-kzm.dts")
     if(KernelIsMCS)
         list(APPEND KernelDTSList "src/plat/imx31/mcs-overlay-kzm.dts")
-        set(TimerFrequency 35000000llu) # 35MHz -- calculated by trial and error, roughly precise
+        set(TimerFrequency 35000000) # 35MHz -- calculated by trial and error, roughly precise
         set(TimerDriver drivers/timer/imx31-gpt.h)
     else()
-        set(TimerFrequency 32768llu)
+        set(TimerFrequency 32768)
         set(TimerDriver drivers/timer/imx31-epit.h)
         add_bf_source_old("KernelPlatformKZM" "imx31-epit.bf" "include" "drivers/timer")
     endif()

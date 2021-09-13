@@ -390,7 +390,7 @@ not_idle_thread:
     call c_nested_interrupt
     addl $4, %esp
     # Disable the interrupt flag so that we do not take any additional interrupts
-    andl $~0x200, (4 * Error)(%esp)
+    andl $~0x200, (4 * FLAGS)(%esp)
     # Return
 kernel_int_return:
     addl    $4, %esp

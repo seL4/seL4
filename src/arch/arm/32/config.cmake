@@ -11,6 +11,7 @@ add_sources(
     PREFIX src/arch/arm/32
     CFILES
         object/objecttype.c
+        machine/capdl.c
         machine/registerset.c
         machine/fpu.c
         model/statedata.c
@@ -20,5 +21,3 @@ add_sources(
         kernel/vspace.c
     ASMFILES head.S traps.S hyp_traps.S
 )
-
-add_sources(DEP "KernelSel4ArchAarch32;KernelDebugBuild" CFILES src/arch/arm/32/machine/capdl.c)
