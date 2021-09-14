@@ -42,6 +42,9 @@ class Region:
     @staticmethod
     def from_range(start, end, owner):
         ''' create a region from a start/end rather than start/size '''
+        if start > end:
+            raise ValueError(
+                'invalid rage start (0x{:x}) > end (0x{:x})'.format(start > end))
         ret = Region(start, end - start, owner)
         return ret
 
@@ -82,9 +85,13 @@ class Region:
         ''' align this region up to a given number of bits '''
         new_base = utils.align_up(self.base, align_bits)
         diff = new_base - self.base
-        new_size = self.size - diff
-        new = Region(new_base, new_size, self.owner)
-        return new
+        if self.size < diff:
+            raise ValueError(
+                'can''t align region base to {} bits, {} too small'.format(
+                    align_bits, self))
+        # This could become an empty region now. We don't care, the caller has
+        # to check if this region still fits its needs.
+        return Region(new_base, self.size - diff, self.owner)
 
     def align_size(self, align_bits):
         ''' align this region's size to a given number of bits.
