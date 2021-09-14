@@ -8,4 +8,3 @@
 
 #define wordRadix 5
 #define wordBits (1 << wordRadix)
-

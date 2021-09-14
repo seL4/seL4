@@ -42,4 +42,3 @@ typedef paddr_t seL4_PAddr;
 typedef dom_t seL4_Domain;
 
 typedef uint64_t timestamp_t;
-

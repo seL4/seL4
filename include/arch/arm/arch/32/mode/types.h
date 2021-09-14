@@ -10,4 +10,3 @@
 #define wordBits (1 << wordRadix)
 
 typedef uint32_t timestamp_t;
-
