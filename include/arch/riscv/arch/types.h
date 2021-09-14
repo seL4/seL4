@@ -7,7 +7,6 @@
 
 #pragma once
 
-
 #include <config.h>
 #include <assert.h>
 #include <stdint.h>
@@ -45,4 +44,3 @@ typedef struct kernel_frame {
     pptr_t pptr;
     int userAvailable;
 } kernel_frame_t;
-
