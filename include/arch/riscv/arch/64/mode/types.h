@@ -13,5 +13,3 @@
 compile_assert(long_is_64bits, sizeof(unsigned long) == 8)
 
 #define wordRadix 6
-
-
