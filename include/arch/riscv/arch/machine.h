@@ -254,11 +254,6 @@ static inline void setVSpaceRoot(paddr_t addr, asid_t asid)
 #endif
 }
 
-static inline void Arch_finaliseInterrupt(void)
-{
-    /* Nothing architecture specific to be done. */
-}
-
 void map_kernel_devices(void);
 
 /** MODIFIES: [*] */

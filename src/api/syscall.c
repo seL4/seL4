@@ -46,7 +46,6 @@ exception_t handleInterruptEntry(void)
 
     if (IRQT_TO_IRQ(irq) != IRQT_TO_IRQ(irqInvalid)) {
         handleInterrupt(irq);
-        Arch_finaliseInterrupt();
     } else {
 #ifdef CONFIG_IRQ_REPORTING
         userError("Spurious interrupt!");
@@ -628,7 +627,6 @@ exception_t handleSyscall(syscall_t syscall)
                 mcsPreemptionPoint(irq);
                 if (IRQT_TO_IRQ(irq) != IRQT_TO_IRQ(irqInvalid)) {
                     handleInterrupt(irq);
-                    Arch_finaliseInterrupt();
                 }
             }
 
@@ -641,7 +639,6 @@ exception_t handleSyscall(syscall_t syscall)
                 mcsPreemptionPoint(irq);
                 if (IRQT_TO_IRQ(irq) != IRQT_TO_IRQ(irqInvalid)) {
                     handleInterrupt(irq);
-                    Arch_finaliseInterrupt();
                 }
             }
             break;
@@ -653,7 +650,6 @@ exception_t handleSyscall(syscall_t syscall)
                 mcsPreemptionPoint(irq);
                 if (IRQT_TO_IRQ(irq) != IRQT_TO_IRQ(irqInvalid)) {
                     handleInterrupt(irq);
-                    Arch_finaliseInterrupt();
                 }
             }
             break;
@@ -696,7 +692,6 @@ exception_t handleSyscall(syscall_t syscall)
                 mcsPreemptionPoint(irq);
                 if (IRQT_TO_IRQ(irq) != IRQT_TO_IRQ(irqInvalid)) {
                     handleInterrupt(irq);
-                    Arch_finaliseInterrupt();
                 }
                 break;
             }
@@ -711,7 +706,6 @@ exception_t handleSyscall(syscall_t syscall)
                 mcsPreemptionPoint(irq);
                 if (IRQT_TO_IRQ(irq) != IRQT_TO_IRQ(irqInvalid)) {
                     handleInterrupt(irq);
-                    Arch_finaliseInterrupt();
                 }
                 break;
             }
