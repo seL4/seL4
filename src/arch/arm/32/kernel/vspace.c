@@ -850,7 +850,7 @@ static pte_t CONST makeUserPTE(vm_page_size_t page_size, paddr_t paddr,
                                     0, /* APX = 0, privileged full access */
                                     5, /* TEX = 0b101, outer write-back, write-allocate */
                                     ap,
-                                    0, 1, /* Inner write-back, write-allocate (except on ARM11) */
+                                    0, 1, /* Inner write-back, write-allocate */
                                     nonexecutable);
         } else {
             pte = pte_pte_small_new(paddr,
@@ -874,7 +874,7 @@ static pte_t CONST makeUserPTE(vm_page_size_t page_size, paddr_t paddr,
                                     SMP_TERNARY(1, 0), /* shareable if SMP enabled, otherwise unshared */
                                     0, /* APX = 0, privileged full access */
                                     ap,
-                                    0, 1, /* Inner write-back, write-allocate (except on ARM11) */
+                                    0, 1, /* Inner write-back, write-allocate */
                                     1 /* reserved */);
         } else {
             pte = pte_pte_large_new(paddr,
@@ -990,7 +990,7 @@ static pde_t CONST makeUserPDE(vm_page_size_t page_size, paddr_t paddr, bool_t p
                                    0, /* APX = 0, privileged full access */
                                    5, /* TEX = 0b101, outer write-back, write-allocate */
                                    ap, parity, domain, nonexecutable,
-                                   0, 1 /* Inner write-back, write-allocate (except on ARM11) */);
+                                   0, 1 /* Inner write-back, write-allocate */);
     } else {
         return pde_pde_section_new(paddr, size2,
                                    1, /* not global */
