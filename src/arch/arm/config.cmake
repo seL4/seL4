@@ -227,7 +227,7 @@ if(
     # the L1 instruction on the Cortex-A72 cache has a 64-byte cache line.
     # Thus, 6 bits are needed.
     config_set(KernelArmCacheLineSizeBits L1_CACHE_LINE_SIZE_BITS "6")
-elseif(KernelArmCortexA9 OR KernelArm1136JF_S)
+elseif(KernelArmCortexA9)
     config_set(KernelArmCacheLineSizeBits L1_CACHE_LINE_SIZE_BITS "5")
 endif()
 

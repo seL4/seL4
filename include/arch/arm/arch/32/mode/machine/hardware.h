@@ -13,9 +13,6 @@
 
 #define PPTR_VECTOR_TABLE 0xffff0000
 
-/* Processor ID used to check if errata work arounds need to be performed */
-#define ARM1136_R0PX 0x4107b360
-
 /* Control register fields */
 #define CONTROL_M   0  /* MMU enable */
 #define CONTROL_A   1  /* Alignment fault enable */
