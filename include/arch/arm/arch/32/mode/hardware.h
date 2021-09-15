@@ -17,7 +17,7 @@
  * 0xffe00000 asid id slot (arm/arch/kernel/vspace.h)
  * 0xfff00000 devices      (plat/machine/devices.h)
  * 0xffff0000 vectors      (arch/machine/hardware.h)
- * 0xffffc000 global page  (arch/machine/hardware.h)
+ * 0xffffc000 unused       (Used to be armv6 globals frame)
  *
  *
  * 2^32 +-------------------+
@@ -41,7 +41,7 @@
  *                        |
  *                        v
  *         2^32 +-------------------+
- *              |    Global Page    |
+ *              |      Unused       |
  *              +-------------------+
  *              |      Vectors      |
  *              +-------------------+
