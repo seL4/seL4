@@ -43,7 +43,6 @@ if(KernelSel4ArchAarch32)
     math(EXPR KernelPaddrUserTop "(1 << 32) - 1")
 endif()
 
-include(src/arch/arm/armv/armv6/config.cmake)
 include(src/arch/arm/armv/armv7-a/config.cmake)
 include(src/arch/arm/armv/armv8-a/config.cmake)
 
@@ -191,7 +190,7 @@ config_option(
         operations in a multithreading environment, instead of relying on \
         software emulation of FPU/VFP from the C library (e.g. mfloat-abi=soft)."
     DEFAULT ON
-    DEPENDS "KernelSel4ArchAarch32;NOT KernelArchArmV6;NOT KernelVerificationBuild"
+    DEPENDS "KernelSel4ArchAarch32;NOT KernelVerificationBuild"
     DEFAULT_DISABLED OFF
 )
 
@@ -230,20 +229,6 @@ if(
 elseif(KernelArmCortexA9)
     config_set(KernelArmCacheLineSizeBits L1_CACHE_LINE_SIZE_BITS "5")
 endif()
-
-if(KernelArchArmV6)
-    # This is currently needed in ARMv6 to provide thread IDs via the
-    # globals frame. The globals frame should be removed along with this
-    # in favour of reserving r9 as a thread ID register.
-    #
-    # See SELFOUR-2253
-    set(KernelSetTLSBaseSelf ON)
-endif()
-
-# Provides a 4K region of read-only memory mapped into every vspace to
-# provide a virtual thread-id register not otherwise provided by the
-# platform.
-config_set(KernelGlobalsFrame KERNEL_GLOBALS_FRAME ${KernelArchArmV6})
 
 add_sources(
     DEP "KernelArchARM"

@@ -289,7 +289,6 @@ static inline void setCurrentPD(paddr_t addr)
 
 static inline void setKernelStack(word_t stack_address)
 {
-#ifndef CONFIG_ARCH_ARM_V6
     /* Setup kernel stack pointer.
      * Load the (per-core) kernel stack pointer to TPIDRPRW for faster reloads on traps.
      */
@@ -298,20 +297,15 @@ static inline void setKernelStack(word_t stack_address)
     } else {
         writeTPIDRPRW(stack_address);
     }
-#endif /* CONFIG_ARCH_ARM_V6 */
 }
 
 static inline word_t getKernelStack(void)
 {
-#ifndef CONFIG_ARCH_ARM_V6
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         return readHTPIDR();
     } else {
         return readTPIDRPRW();
     }
-#else
-    return ((word_t) kernel_stack_alloc[0]) + BIT(CONFIG_KERNEL_STACK_BITS);
-#endif /* CONFIG_ARCH_ARM_V6 */
 }
 
 #ifdef ENABLE_SMP_SUPPORT
@@ -382,9 +376,6 @@ static inline void cleanByVA_PoU(vptr_t vaddr, paddr_t paddr)
     /* Erratum 586324 -- perform a dummy cached load before flushing. */
     asm volatile("ldr r0, [sp]" : : : "r0");
     asm volatile("mcr p15, 0, %0, c7, c11, 1" : : "r"(vaddr));
-#elif defined(CONFIG_ARCH_ARM_V6)
-    /* V6 doesn't distinguish PoU and PoC, so use the basic flush. */
-    asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
 #elif defined(CONFIG_PLAT_EXYNOS5)
     /* Flush to coherency for table walks... Why? */
     asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
