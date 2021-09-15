@@ -41,13 +41,6 @@
 #define PT_TPIDRURW         (18 * 4)
 #define PT_R8               (8  * 4)
 
-#ifdef CONFIG_KERNEL_GLOBALS_FRAME
-/*
- * Virtualise the TPIDRURW register in the globals frame.
- */
-#define GLOBALS_TPIDRURW 0
-#endif
-
 #ifndef __ASSEMBLER__ /* C only definitions */
 
 #include <config.h>

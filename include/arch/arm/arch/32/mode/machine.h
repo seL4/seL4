@@ -194,22 +194,14 @@ static inline void writeTTBCR(word_t val)
 
 static inline void writeTPIDRURW(word_t reg)
 {
-#ifdef CONFIG_KERNEL_GLOBALS_FRAME
-    armKSGlobalsFrame[GLOBALS_TPIDRURW] = reg;
-#else
     asm volatile("mcr p15, 0, %0, c13, c0, 2" :: "r"(reg));
-#endif
 }
 
 static inline word_t readTPIDRURW(void)
 {
-#ifdef CONFIG_KERNEL_GLOBALS_FRAME
-    return armKSGlobalsFrame[GLOBALS_TPIDRURW];
-#else
     word_t reg;
     asm volatile("mrc p15, 0, %0, c13, c0, 2" : "=r"(reg));
     return reg;
-#endif
 }
 
 static inline void writeTPIDRURO(word_t reg)
@@ -239,14 +231,12 @@ static inline word_t readTPIDRPRW(void)
 
 static void arm_save_thread_id(tcb_t *thread)
 {
-#ifndef CONFIG_KERNEL_GLOBALS_FRAME
     /* TPIDRURW is writeable from EL0 but not with globals frame. */
     setRegister(thread, TPIDRURW, readTPIDRURW());
     /* This register is read only from userlevel, but could still be updated
      * if the thread is running in a higher priveleged level with a VCPU attached.
      */
     setRegister(thread, TPIDRURO, readTPIDRURO());
-#endif /* CONFIG_KERNEL_GLOBALS_FRAME */
 }
 
 static void arm_load_thread_id(tcb_t *thread)

@@ -47,16 +47,6 @@ include(src/arch/arm/armv/armv7-a/config.cmake)
 include(src/arch/arm/armv/armv8-a/config.cmake)
 
 config_option(
-    KernelDangerousCodeInjectionOnUndefInstr DANGEROUS_CODE_INJECTION_ON_UNDEF_INSTR
-    "Replaces the undefined instruction handler with a call to a function pointer in r8. \
-    This is an alternative mechanism to the code injection syscall. On ARMv6 the syscall \
-    interferes with the caches and branch predictor in such a way that it is unsuitable \
-    for benchmarking. This option has no effect on non-ARMv6 platforms."
-    DEFAULT OFF
-    DEPENDS "KernelArchArmV6;NOT KernelVerificationBuild"
-)
-
-config_option(
     KernelDebugDisableL2Cache DEBUG_DISABLE_L2_CACHE
     "Do not enable the L2 cache on startup for debugging purposes."
     DEFAULT OFF

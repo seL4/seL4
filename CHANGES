@@ -34,6 +34,8 @@ Upcoming release: BINARY COMPATIBLE
 * Remove imx31/kzm platform support. This platform is being removed as it is sufficiently old and unused.
 * Remove ARM1136JF_S and ARMv6 support. This architecture version is being removed as it is sufficiently old and
   unused. See https://sel4.atlassian.net/browse/RFC-8.
+* Remove ARMv6 specific configs: KernelGlobalsFrame and KernelDangerousCodeInjectionOnUndefInstr. This removes the
+  constant seL4_GlobalsFrame from libsel4.
 
 ## Upgrade Notes
 ---
