@@ -33,7 +33,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        march: [armv6a, armv7a, armv8a, nehalem]
+        march: [armv7a, armv8a, nehalem]
         compiler: [gcc, clang]
         include:
           - march: rv64imac
