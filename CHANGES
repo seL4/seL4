@@ -31,6 +31,7 @@ Upcoming release: BINARY COMPATIBLE
  * Rename libsel4 config option ENABLE_SMP_SUPPORT to CONFIG_ENABLE_SMP_SUPPORT to be namespace compliant.
  * Rename libsel4 config option AARCH64_VSPACE_S2_START_L1 to CONFIG_AARCH64_VSPACE_S2_START_L1 to be namespace
    compliant.
+* Remove imx31/kzm platform support. This platform is being removed as it is sufficiently old and unused.
 
 ## Upgrade Notes
 ---
