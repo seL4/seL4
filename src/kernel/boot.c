@@ -886,13 +886,11 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
         pptr_t start = ROUND_DOWN(ndks_boot.freemem[i].end - size, max);
         if (start >= ndks_boot.freemem[i].start) {
             create_rootserver_objects(start, it_v_reg, extra_bi_size_bits);
-            if (i < ARRAY_SIZE(ndks_boot.freemem)) {
-                ndks_boot.freemem[next].end = ndks_boot.freemem[i].end;
-                ndks_boot.freemem[next].start = start + size;
-            }
+            ndks_boot.freemem[next].end = ndks_boot.freemem[i].end;
+            ndks_boot.freemem[next].start = start + size;
             ndks_boot.freemem[i].end = start;
             break;
-        } else if (i < ARRAY_SIZE(ndks_boot.freemem)) {
+        } else {
             ndks_boot.freemem[next] = ndks_boot.freemem[i];
         }
     }
