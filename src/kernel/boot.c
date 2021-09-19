@@ -860,7 +860,14 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
         }
     }
 
-    /* now try to fit the root server objects into a region */
+    /* The free memory regions are set up, try to fit the root server objects
+     * into a region. There will be free space before and after the root server
+     * objects, which is to be turned into free memory. Thus we need one unused
+     * free memory slot. Not having a free slot is considered fatal for now, as
+     * the number of slots is just an arbitrary constant that can be updated
+     * easily. Also, one additional slot costs almost nothing in terms of memory
+     * usage.
+     */
     word_t i = ARRAY_SIZE(ndks_boot.freemem) - 1;
     if (!is_reg_empty(ndks_boot.freemem[i])) {
         printf("ERROR: insufficient MAX_NUM_FREEMEM_REG (%u)\n",
