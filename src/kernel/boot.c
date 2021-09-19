@@ -863,7 +863,8 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
     /* now try to fit the root server objects into a region */
     word_t i = ARRAY_SIZE(ndks_boot.freemem) - 1;
     if (!is_reg_empty(ndks_boot.freemem[i])) {
-        printf("Insufficient MAX_NUM_FREEMEM_REG\n");
+        printf("ERROR: insufficient MAX_NUM_FREEMEM_REG (%u)\n",
+               (unsigned int)MAX_NUM_FREEMEM_REG);
         return false;
     }
     /* skip any empty regions */
