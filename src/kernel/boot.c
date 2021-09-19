@@ -868,7 +868,7 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
      * easily. Also, one additional slot costs almost nothing in terms of memory
      * usage.
      */
-    word_t i = ARRAY_SIZE(ndks_boot.freemem) - 1;
+    int i = ARRAY_SIZE(ndks_boot.freemem) - 1;
     if (!is_reg_empty(ndks_boot.freemem[i])) {
         printf("ERROR: insufficient MAX_NUM_FREEMEM_REG (%u)\n",
                (unsigned int)MAX_NUM_FREEMEM_REG);
@@ -881,19 +881,60 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
      * from. If possible, retain any left over memory as an extra p region */
     word_t size = calculate_rootserver_size(it_v_reg, extra_bi_size_bits);
     word_t max = rootserver_max_size_bits(extra_bi_size_bits);
+    pptr_t start;
     for (; i >= 0; i--) {
-        word_t next = i + 1;
-        pptr_t start = ROUND_DOWN(ndks_boot.freemem[i].end - size, max);
-        if (start >= ndks_boot.freemem[i].start) {
-            create_rootserver_objects(start, it_v_reg, extra_bi_size_bits);
-            ndks_boot.freemem[next].end = ndks_boot.freemem[i].end;
-            ndks_boot.freemem[next].start = start + size;
-            ndks_boot.freemem[i].end = start;
-            break;
-        } else {
-            ndks_boot.freemem[next] = ndks_boot.freemem[i];
+        region_t *reg = &ndks_boot.freemem[i];
+        /* Check if the region is big enough. If so, align the start address
+         * down to ensure the required alignment and then check that the start
+         * address is still within the region.
+         */
+        if (reg->end - reg->start >= size) {
+            start = ROUND_DOWN(reg->end - size, max);
+            if (start >= reg->start) {
+                break;
+            }
         }
+        /* The region is too small. Since we loop though the list from the end,
+         * and we know there is an empty region at the end, we can be sure that
+         * if we arrive here, there is an empty region in the next higher slot.
+         * Swap the slots and try the next lower region:
+         *
+         *                region too small
+         *                v
+         * Free: [a] [b] [c] [empty] [...]  ->  [a] [b] [empty] [c] [...]
+         *            ^
+         *            region to check next
+         */
+        region_t *next = &ndks_boot.freemem[i + 1];
+        assert(is_reg_empty(*next));
+        *next = *reg;
+        *reg = REG_EMPTY;
     }
 
+    if (i < 0) {
+        printf("ERROR: no free memory region is big enough for root server "
+               "objects, need size/alignment of 2^%"SEL4_PRIu_word"\n", max);
+        /* Fatal error, can't create root server objects. */
+        return false;
+    }
+
+    /* Carve out the memory for the region of the rootserver objects from the
+     * free memory list and put the regions before and after it in instead:
+     *
+     * Free: [a] [b] [c] [empty] [...] -> [a] [b] [pre] [post] [...]
+     *                ^
+     *                region for rootserver objects
+     */
+    region_t *reg_pre = &ndks_boot.freemem[i];
+    region_t *reg_post = &ndks_boot.freemem[i + 1];
+    assert(is_reg_empty(*reg_post));
+    *reg_post = (region_t) { /* use empty slot */
+        .start = start + size,
+        .end = reg_pre->end
+    };
+    reg_pre->end = start; /* shrink */
+
+    /* The free memory list has been updated, create the root server objects */
+    create_rootserver_objects(start, it_v_reg, extra_bi_size_bits);
     return true;
 }
