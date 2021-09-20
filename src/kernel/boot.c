@@ -601,27 +601,27 @@ BOOT_CODE static bool_t create_untypeds_for_region(
     seL4_SlotPos first_untyped_slot
 )
 {
-    word_t align_bits;
-    word_t size_bits;
-
     while (!is_reg_empty(reg)) {
-        /* Determine the maximum size of the region */
-        size_bits = seL4_WordBits - 1 - clzl(reg.end - reg.start);
 
-        /* Determine the alignment of the region */
-        if (reg.start != 0) {
-            align_bits = ctzl(reg.start);
-        } else {
-            align_bits = size_bits;
-        }
-        /* Reduce size bits to align if needed */
-        if (align_bits < size_bits) {
-            size_bits = align_bits;
-        }
+        /* Calculate the bit size of the region. */
+        unsigned int size_bits = seL4_WordBits - 1 - clzl(reg.end - reg.start);
+        /* The size can't exceed the largest possible untyped size. */
         if (size_bits > seL4_MaxUntypedBits) {
             size_bits = seL4_MaxUntypedBits;
         }
-
+        /* The start address 0 satisfies any alignment needs, otherwise ensure
+         * the region's bit size does not exceed the alignment of the region.
+         */
+        if (0 != reg.start) {
+            unsigned int align_bits = ctzl(reg.start);
+            if (size_bits > align_bits) {
+                size_bits = align_bits;
+            }
+        }
+        /* Provide an untyped capability for the region only if it is large
+         * enough to be retyped into objects later. Otherwise the region can't
+         * be used anyway.
+         */
         if (size_bits >= seL4_MinUntypedBits) {
             if (!provide_untyped_cap(root_cnode_cap, device_memory, reg.start, size_bits, first_untyped_slot)) {
                 return false;
