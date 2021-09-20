@@ -644,6 +644,9 @@ BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap,
                 start, ndks_boot.reserved[i].start
             });
             if (!create_untypeds_for_region(root_cnode_cap, true, reg, first_untyped_slot)) {
+                printf("ERROR: creation of untypeds for device region #%u at"
+                       " [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] failed\n",
+                       (unsigned int)i, reg.start, reg.end);
                 return false;
             }
         }
@@ -657,12 +660,18 @@ BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap,
         });
 
         if (!create_untypeds_for_region(root_cnode_cap, true, reg, first_untyped_slot)) {
+            printf("ERROR: creation of untypeds for top device region"
+                   " [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] failed\n",
+                   reg.start, reg.end);
             return false;
         }
     }
 
     /* if boot_mem_reuse_reg is not empty, we can create UT objs from boot code/data frames */
     if (!create_untypeds_for_region(root_cnode_cap, false, boot_mem_reuse_reg, first_untyped_slot)) {
+        printf("ERROR: creation of untypeds for recycled boot memory"
+               " [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] failed\n",
+               boot_mem_reuse_reg.start, boot_mem_reuse_reg.end);
         return false;
     }
 
@@ -671,6 +680,9 @@ BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap,
         region_t reg = ndks_boot.freemem[i];
         ndks_boot.freemem[i] = REG_EMPTY;
         if (!create_untypeds_for_region(root_cnode_cap, false, reg, first_untyped_slot)) {
+            printf("ERROR: creation of untypeds for free memory region #%u at"
+                   " [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] failed\n",
+                   (unsigned int)i, reg.start, reg.end);
             return false;
         }
     }
