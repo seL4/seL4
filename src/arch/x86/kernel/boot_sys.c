@@ -213,7 +213,7 @@ static BOOT_CODE bool_t add_mem_p_regs(p_region_t reg)
     printf("Adding physical memory region 0x%lx-0x%lx\n", reg.start, reg.end);
     boot_state.mem_p_regs.list[boot_state.mem_p_regs.count] = reg;
     boot_state.mem_p_regs.count++;
-    return reserve_region(reg);
+    return true;
 }
 
 /*
