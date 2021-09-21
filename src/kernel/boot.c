@@ -655,13 +655,7 @@ BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap,
         region_t reg = paddr_to_pptr_reg((p_region_t) {
             start, CONFIG_PADDR_USER_DEVICE_TOP
         });
-        /*
-         * The auto-generated bitfield code will get upset if the
-         * end pptr is larger than the maximum pointer size for this architecture.
-         */
-        if (reg.end > PPTR_TOP) {
-            reg.end = PPTR_TOP;
-        }
+
         if (!create_untypeds_for_region(root_cnode_cap, true, reg, first_untyped_slot)) {
             return false;
         }
