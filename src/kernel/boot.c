@@ -883,6 +883,10 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
     word_t max = rootserver_max_size_bits(extra_bi_size_bits);
     pptr_t start;
     for (; i >= 0; i--) {
+        // SimplExportAnRefine has poor handling of array indices that are sums
+        // of variables and small constants. The `next_i` variable exists to
+        // work around the deficiency.
+        word_t next_i = i + 1;
         region_t *reg = &ndks_boot.freemem[i];
         /* Check if the region is big enough. If so, align the start address
          * down to ensure the required alignment and then check that the start
@@ -905,7 +909,7 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
          *            ^
          *            region to check next
          */
-        region_t *next = &ndks_boot.freemem[i + 1];
+        region_t *next = &ndks_boot.freemem[next_i];
         assert(is_reg_empty(*next));
         *next = *reg;
         *reg = REG_EMPTY;
@@ -926,7 +930,7 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
      *                region for rootserver objects
      */
     region_t *reg_pre = &ndks_boot.freemem[i];
-    region_t *reg_post = &ndks_boot.freemem[i + 1];
+    region_t *reg_post = reg_pre + 1;
     assert(is_reg_empty(*reg_post));
     *reg_post = (region_t) { /* use empty slot */
         .start = start + size,
