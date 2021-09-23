@@ -50,7 +50,7 @@ if(KernelPlatformQEMUArmVirt)
             ${QEMU_VERSION_STR}
     )
     if("${QEMU_VERSION}" VERSION_LESS "${MIN_QEMU_VERSION}")
-        message(WARNING "Warning: qemu version should be at least ${MIN_QEMU_VERSION}")
+        message(FATAL_ERROR "Error: qemu version must be at least ${MIN_QEMU_VERSION}")
     endif()
 
     if("${QEMU_MEMORY}" STREQUAL "")
