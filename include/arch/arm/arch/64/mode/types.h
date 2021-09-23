@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 #define wordRadix 6
 #define wordBits (1 << wordRadix)
 

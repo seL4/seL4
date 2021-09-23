@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <arch/types.h>
 #include <stdint.h>
 
 word_t strnlen(const char *s, word_t maxlen);

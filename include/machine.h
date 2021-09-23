@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <basic_types.h>
 #include <plat/machine.h>
 #include <machine/registerset.h>
 #include <hardware.h>
