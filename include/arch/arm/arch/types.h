@@ -6,7 +6,8 @@
 
 #pragma once
 
-#include <config.h>
+#include <config.h> /* included by convention, regardless of dependency */
+#include <mode/types.h> /* included by convention, regardless of dependency */
 #include <assert.h>
 #include <stdint.h>
 

@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <config.h>
+#include <config.h> /* included by convention, regardless of dependency */
 #include <util.h>
 
 #ifdef CONFIG_DEBUG_BUILD

@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <config.h> /* included by convention, regardless of dependency */
 #include <basic_types.h>
 #include <plat/machine.h>
 #include <machine/registerset.h>

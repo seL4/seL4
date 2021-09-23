@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <config.h> /* included by convention, regardless of dependency */
 #include <object/structures.h>
 #include <object/objecttype.h>
 #include <object/notification.h>

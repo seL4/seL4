@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <config.h> /* included by convention, regardless of dependency */
+
 #define PASTE(a, b) a ## b
 #define _STRINGIFY(a) #a
 #define STRINGIFY(a) _STRINGIFY(a)

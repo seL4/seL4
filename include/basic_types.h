@@ -6,8 +6,9 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <arch/types.h>
+#include <config.h> /* included by convention, regardless of dependency */
+#include <arch/types.h> /* included by convention, regardless of dependency */
+// #include <stdint.h> /* included by convention, regardless of dependency */
 
 /* arch/types.h is supposed to define word_t and _seL4_word_fmt */
 #ifndef _seL4_word_fmt

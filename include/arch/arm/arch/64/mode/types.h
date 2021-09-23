@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <config.h> /* included by convention, regardless of dependency */
 #include <stdint.h>
 
 #define wordRadix 6

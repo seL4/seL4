@@ -6,5 +6,7 @@
 
 #pragma once
 
+#include <config.h> /* included by convention, regardless of dependency */
+
 #define wordRadix 6
 #define wordBits (1 << wordRadix)

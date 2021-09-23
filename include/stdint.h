@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <config.h> /* included by convention, regardless of dependency */
 #include <mode/stdint.h>
 
 typedef unsigned char uint8_t;
