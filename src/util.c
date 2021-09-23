@@ -418,30 +418,33 @@ static UNUSED CONST inline unsigned ctz64(uint64_t x)
 // These are only provided when the relevant config items are set.
 // We define these separately from `ctz32` etc. so that we can verify all of
 // `ctz32` etc. without necessarily linking them into the kernel binary.
+compile_assert(int_is_max_64_bit, sizeof(unsigned int) <= 8);
+compile_assert(long_is_max_64_bit, sizeof(unsigned long) <= 8);
+
 #ifdef CONFIG_CLZ_32
-CONST int __clzsi2(uint32_t x)
+CONST int __clzsi2(unsigned int x)
 {
-    return clz32(x);
+    return (4 == sizeof(int)) ? clz32((uint32_t)x) : clz64((uint64_t)x);
 }
 #endif
 
 #ifdef CONFIG_CLZ_64
-CONST int __clzdi2(uint64_t x)
+CONST int __clzdi2(unsigned long x)
 {
-    return clz64(x);
+    return (4 == sizeof(long)) ? clz32((uint32_t)x) : clz64((uint64_t)x);
 }
 #endif
 
 #ifdef CONFIG_CTZ_32
-CONST int __ctzsi2(uint32_t x)
+CONST int __ctzsi2(unsigned int x)
 {
-    return ctz32(x);
+    return (4 == sizeof(int)) ? ctz32((uint32_t)x) : ctz64((uint64_t)x);
 }
 #endif
 
 #ifdef CONFIG_CTZ_64
-CONST int __ctzdi2(uint64_t x)
+CONST int __ctzdi2(unsigned long x)
 {
-    return ctz64(x);
+    return (4 == sizeof(long)) ? ctz32((uint32_t)x) : ctz64((uint64_t)x);
 }
 #endif

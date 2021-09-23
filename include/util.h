@@ -138,11 +138,11 @@ long PURE str_to_long(const char *str);
 // Library functions for counting leading/trailing zeros.
 // GCC's builtins will emit calls to these functions when the platform
 // does not provide suitable inline assembly.
-// We only emit function definitions if CONFIG_CLZL_IMPL etc are set.
-CONST int __clzsi2(uint32_t x);
-CONST int __clzdi2(uint64_t x);
-CONST int __ctzsi2(uint32_t x);
-CONST int __ctzdi2(uint64_t x);
+// We only emit function definitions if CONFIG_CLZ_32 etc are set.
+CONST int __clzsi2(unsigned int x);
+CONST int __clzdi2(unsigned long x);
+CONST int __ctzsi2(unsigned int x);
+CONST int __ctzdi2(unsigned long x);
 
 // Used for compile-time constants, so should always use the builtin.
 #define CTZL(x) __builtin_ctzl(x)
