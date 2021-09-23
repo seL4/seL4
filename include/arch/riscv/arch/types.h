@@ -10,7 +10,6 @@
 #include <config.h> /* included by convention, regardless of dependency */
 #include <mode/types.h> /* included by convention, regardless of dependency */
 #include <util.h>
-#include <assert.h>
 #include <stdint.h>
 
 typedef unsigned long word_t;
