@@ -244,7 +244,7 @@ BOOT_CODE void initLocalIRQController(void)
     plic_init_hart();
 
     /* Enable timer and external interrupt. If SMP is enabled, then enable the
-     * software interrupt also, it is usec as IPI between cores. */
+     * software interrupt also, it is used as IPI between cores. */
     set_sie_mask(BIT(SIE_SEIE) | BIT(SIE_STIE) | SMP_TERNARY(BIT(SIE_SSIE), 0));
 }
 
