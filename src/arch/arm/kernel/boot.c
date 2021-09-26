@@ -77,11 +77,9 @@ BOOT_CODE static bool_t arch_init_freemem(p_region_t ui_p_reg,
             if (ui_reg.end > mode_reserved_region[0].start) {
                 reserved[index] = mode_reserved_region[0];
                 index++;
-                reserved[index].start = ui_reg.start;
-                reserved[index].end = ui_reg.end;
+                reserved[index] = ui_reg;
             } else {
-                reserved[index].start = ui_reg.start;
-                reserved[index].end = ui_reg.end;
+                reserved[index] = ui_reg;
                 index++;
                 reserved[index] = mode_reserved_region[0];
             }
@@ -92,8 +90,7 @@ BOOT_CODE static bool_t arch_init_freemem(p_region_t ui_p_reg,
                        "regions\n");
                 return false;
             }
-            reserved[index].start = ui_reg.start;
-            reserved[index].end = ui_reg.end;
+            reserved[index] = ui_reg;
             index++;
         }
     } else if (MODE_RESERVED == 1) {
@@ -338,10 +335,10 @@ static BOOT_CODE bool_t try_init_kernel(
     create_frames_of_region_ret_t extra_bi_ret;
 
     /* convert from physical addresses to userland vptrs */
-    v_region_t ui_v_reg;
-    v_region_t it_v_reg;
-    ui_v_reg.start = ui_p_reg_start - pv_offset;
-    ui_v_reg.end   = ui_p_reg_end   - pv_offset;
+    v_region_t ui_v_reg = {
+        .start = ui_p_reg_start - pv_offset,
+        .end   = ui_p_reg_end   - pv_offset
+    };
 
     ipcbuf_vptr = ui_v_reg.end;
     bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
@@ -363,8 +360,10 @@ static BOOT_CODE bool_t try_init_kernel(
     word_t extra_bi_size_bits = calculate_extra_bi_size_bits(extra_bi_size);
 
     /* The region of the initial thread is the user image + ipcbuf and boot info */
-    it_v_reg.start = ui_v_reg.start;
-    it_v_reg.end = extra_bi_frame_vptr + BIT(extra_bi_size_bits);
+    v_region_t it_v_reg = {
+        .start = ui_v_reg.start,
+        .end = extra_bi_frame_vptr + BIT(extra_bi_size_bits)
+    };
 
     /* setup virtual memory for the kernel */
     map_kernel_window();

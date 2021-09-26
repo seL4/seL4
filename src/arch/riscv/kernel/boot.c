@@ -69,8 +69,7 @@ BOOT_CODE static bool_t arch_init_freemem(region_t ui_reg, v_region_t it_v_reg,
             printf("ERROR: no slot to add DTB to reserved regions\n");
             return false;
         }
-        res_reg[index].start = dtb_reg.start;
-        res_reg[index].end = dtb_reg.end;
+        res_reg[index] = dtb_reg;
         index += 1;
     }
 
@@ -79,8 +78,7 @@ BOOT_CODE static bool_t arch_init_freemem(region_t ui_reg, v_region_t it_v_reg,
         printf("ERROR: no slot to add user image to reserved regions\n");
         return false;
     }
-    res_reg[index].start = ui_reg.start;
-    res_reg[index].end = ui_reg.end;
+    res_reg[index] = ui_reg;
     index += 1;
 
     /* avail_p_regs comes from the auto-generated code */
@@ -208,10 +206,10 @@ static BOOT_CODE bool_t try_init_kernel(
     create_frames_of_region_ret_t extra_bi_ret;
 
     /* convert from physical addresses to userland vptrs */
-    v_region_t ui_v_reg;
-    v_region_t it_v_reg;
-    ui_v_reg.start = (word_t)(ui_p_reg_start - pv_offset);
-    ui_v_reg.end   = (word_t)(ui_p_reg_end   - pv_offset);
+    v_region_t ui_v_reg = {
+        .start = (word_t)(ui_p_reg_start - pv_offset),
+        .end   = (word_t)(ui_p_reg_end   - pv_offset)
+    };
 
     ipcbuf_vptr = ui_v_reg.end;
     bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
@@ -234,8 +232,10 @@ static BOOT_CODE bool_t try_init_kernel(
     word_t extra_bi_size_bits = calculate_extra_bi_size_bits(extra_bi_size);
 
     /* The region of the initial thread is the user image + ipcbuf + boot info + extra */
-    it_v_reg.start = ui_v_reg.start;
-    it_v_reg.end = extra_bi_frame_vptr + BIT(extra_bi_size_bits);
+    v_region_t it_v_reg = {
+        .start = ui_v_reg.start,
+        .end   = extra_bi_frame_vptr + BIT(extra_bi_size_bits)
+    };
 
     map_kernel_window();
 
