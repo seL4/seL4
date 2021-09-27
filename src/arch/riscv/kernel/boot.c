@@ -207,8 +207,8 @@ static BOOT_CODE bool_t try_init_kernel(
 
     /* convert from physical addresses to userland vptrs */
     v_region_t ui_v_reg = {
-        .start = (word_t)(ui_p_reg_start - pv_offset),
-        .end   = (word_t)(ui_p_reg_end   - pv_offset)
+        .start = ui_p_reg_start - pv_offset,
+        .end   = ui_p_reg_end   - pv_offset
     };
 
     ipcbuf_vptr = ui_v_reg.end;
