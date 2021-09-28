@@ -8,6 +8,13 @@ cmake_minimum_required(VERSION 3.7.2)
 
 declare_platform(allwinnerA20 KernelPlatformAllwinnerA20 PLAT_ALLWINNERA20 KernelSel4ArchAarch32)
 
+config_option(
+    KernelPlatformAllwinnerA20ArchTimer ARM_ALLWINNER_A20_ARCH_TIMER
+    "Use the ARM generic timer for kernel"
+    DEFAULT OFF
+    DEPENDS "KernelPlatformAllwinnerA20"
+)
+
 if(KernelPlatformAllwinnerA20)
     declare_seL4_arch(aarch32)
     set(KernelArmCortexA7 ON)
@@ -19,15 +26,27 @@ if(KernelPlatformAllwinnerA20)
     set(KernelPlatformSupportsMCS OFF)
 
     list(APPEND KernelDTSList "tools/dts/allwinnerA20.dts")
-    list(APPEND KernelDTSList "src/plat/allwinnerA20/overlay-allwinnerA20.dts")
+    if(KernelPlatformAllwinnerA20ArchTimer)
+        list(APPEND KernelDTSList "src/plat/allwinnerA20/overlay-allwinnerA20-generic-timer.dts")
 
-    declare_default_headers(
-        TIMER_FREQUENCY 24000000
-        MAX_IRQ 122
-        NUM_PPI 32
-        TIMER drivers/timer/allwinner.h
-        INTERRUPT_CONTROLLER arch/machine/gic_v2.h
-    )
+        declare_default_headers(
+            TIMER_FREQUENCY 24000000
+            MAX_IRQ 122
+            NUM_PPI 32
+            TIMER drivers/timer/arm_generic.h
+            INTERRUPT_CONTROLLER arch/machine/gic_v2.h
+        )
+    else()
+        list(APPEND KernelDTSList "src/plat/allwinnerA20/overlay-allwinnerA20.dts")
+
+        declare_default_headers(
+            TIMER_FREQUENCY 24000000
+            MAX_IRQ 122
+            NUM_PPI 32
+            TIMER drivers/timer/allwinner.h
+            INTERRUPT_CONTROLLER arch/machine/gic_v2.h
+        )
+    endif()
 endif()
 
 add_sources(
