@@ -18,9 +18,12 @@ typedef signed short int16_t;
 typedef signed int int32_t;
 typedef signed long long int64_t;
 
-#define UINT64_MAX (0xFFFFFFFFFFFFFFFF)
+#define UINT64_C(x)  (x ## llu)
+#define INT64_C(x)   (x ## ll)
+
+#define UINT64_MAX UINT64_C(0xFFFFFFFFFFFFFFFF)
 #define UINT32_MAX (0xFFFFFFFF)
-#define INT64_MAX  (0x7FFFFFFFFFFFFFFF)
+#define INT64_MAX  INT64_C(0x7FFFFFFFFFFFFFFF)
 #define INT32_MAX  (0x7FFFFFFF)
 
 #define PRId64     "lld"
