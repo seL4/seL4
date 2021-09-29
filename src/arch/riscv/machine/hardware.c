@@ -1,6 +1,7 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ * Copyright 2021, HENSOLDT Cyber
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -11,16 +12,6 @@
 #include <machine/timer.h>
 #include <arch/machine.h>
 #include <arch/smp/ipi.h>
-
-
-#define SIPI_IP   1
-#define SIPI_IE   1
-#define STIMER_IP 5
-#define STIMER_IE 5
-#define STIMER_CAUSE 5
-#define SEXTERNAL_IP 9
-#define SEXTERNAL_IE 9
-#define SEXTERNAL_CAUSE 9
 
 #ifndef CONFIG_KERNEL_MCS
 #define RESET_CYCLES ((TIMER_CLOCK_HZ / MS_IN_S) * CONFIG_TIMER_TICK_MS)
@@ -71,67 +62,70 @@ BOOT_CODE void map_kernel_devices(void)
  * are for user level, and also call plic_complete_claim for seL4_IRQHandler_Ack.
  */
 
-/**
- * Gets the new active irq from the PLIC or STIP.
- *
- * getNewActiveIRQ is only called by getActiveIRQ and checks for a pending IRQ.
- * We read sip and if the SEIP bit is set we claim an
- * IRQ from the PLIC. If STIP is set then it is a kernel timer interrupt.
- * Otherwise we return IRQ invalid. It is possible to reveive irqInvalid from
- * the PLIC if another HART context has claimed the IRQ before us. This function
- * is not idempotent as plic_get_claim is called which accepts an IRQ message
- * from the PLIC and will claim different IRQs if called subsequent times.
- *
- * @return     The new active irq.
- */
-static irq_t getNewActiveIRQ(void)
-{
-
-    uint64_t sip = read_sip();
-    /* Interrupt priority (high to low ): external -> software -> timer */
-    if (sip & BIT(SEXTERNAL_IP)) {
-        return plic_get_claim();
-#ifdef ENABLE_SMP_SUPPORT
-    } else if (sip & BIT(SIPI_IP)) {
-        sbi_clear_ipi();
-        return ipi_get_irq();
-#endif
-    } else if (sip & BIT(STIMER_IP)) {
-        return INTERRUPT_CORE_TIMER;
-    }
-
-    return irqInvalid;
-}
-
-static uint32_t active_irq[CONFIG_MAX_NUM_NODES] = { irqInvalid };
+static irq_t active_irq[CONFIG_MAX_NUM_NODES];
 
 
 /**
  * Gets the active irq. Returns the same irq if called again before ackInterrupt.
  *
- * getActiveIRQ is used to return a currently pending IRQ. This function can be
- * called multiple times and needs to return the same IRQ until ackInterrupt is
- * called. getActiveIRQ returns irqInvalid if no interrupt is pending. It is
- * assumed that if isIRQPending is true, then getActiveIRQ will not return
- * irqInvalid. getActiveIRQ will call getNewActiveIRQ and cache its result until
- * ackInterrupt is called.
+ * This function is called by the kernel to get the interrupt that is currently
+ * active. It not interrupt is currently active, it will try to find one and
+ * put it in the active state. If no interrupt is found, irqInvalid is returned.
+ * It can't be assumed that if isIRQPending() returned true, there will always
+ * be an active interrupt then this is called. It may hold in mayn cases, but
+ * there are corner cases with level-triggered interrupts or on multicore
+ * systems.
+ * This function can be called multiple times during one kernel entry. It must
+ * guarantee that once one interrupt is reported as active, this interrupt is
+ * always returned until ackInterrupt() is called eventually.
  *
- * @return     The active irq.
+ * @return     The active irq or irqInvalid.
  */
 static inline irq_t getActiveIRQ(void)
 {
+    irq_t *active_irq_slot = &active_irq[CURRENT_CPU_INDEX()];
 
-    uint32_t irq;
-    if (!IS_IRQ_VALID(active_irq[CURRENT_CPU_INDEX()])) {
-        active_irq[CURRENT_CPU_INDEX()] = getNewActiveIRQ();
+    /* If an interrupt is currently active, then return it. */
+    irq_t irq = *active_irq_slot;
+    if (IS_IRQ_VALID(irq)) {
+        return irq;
     }
 
-    if (IS_IRQ_VALID(active_irq[CURRENT_CPU_INDEX()])) {
-        irq = active_irq[CURRENT_CPU_INDEX()];
+    /* No interrupt currently active, find a new one from the sources. The
+     * priorities are: external -> software -> timer.
+     */
+    word_t sip = read_sip();
+    if (sip & BIT(SIP_SEIP)) {
+        /* Even if we say an external interrupt is pending, the PLIC may not
+         * return any pending interrupt here in some corner cases. A level
+         * triggered interrupt might have been deasserted again or another hard
+         * has claimed it in a multicore system.
+         */
+        irq = plic_get_claim();
+#ifdef ENABLE_SMP_SUPPORT
+    } else if (sip & BIT(SIP_SSIP)) {
+        sbi_clear_ipi();
+        irq = ipi_get_irq();
+#endif
+    } else if (sip & BIT(SIP_STIP)) {
+        irq = KERNEL_TIMER_IRQ;
     } else {
+        /* Seems none of the known sources has a pending interrupt. This can
+         * happen if e.g. if another hart context has claimed the interrupt
+         * already.
+         */
         irq = irqInvalid;
     }
 
+    /* There is no guarantee that there is a new interrupt. */
+    if (!IS_IRQ_VALID(irq)) {
+        /* Sanity check: the slot can't hold an interrupt either. */
+        assert(!IS_IRQ_VALID(*active_irq_slot));
+        return irqInvalid;
+    }
+
+    /* A new interrupt is active, remember it. */
+    *active_irq_slot = irq;
     return irq;
 }
 
@@ -164,7 +158,7 @@ void setIRQTrigger(irq_t irq, bool_t edge_triggered)
 static inline bool_t isIRQPending(void)
 {
     word_t sip = read_sip();
-    return (sip & (BIT(STIMER_IP) | BIT(SEXTERNAL_IP)));
+    return (sip & (BIT(SIP_STIP) | BIT(SIP_SEIP)));
 }
 
 /**
@@ -180,11 +174,11 @@ static inline bool_t isIRQPending(void)
 static inline void maskInterrupt(bool_t disable, irq_t irq)
 {
     assert(IS_IRQ_VALID(irq));
-    if (irq == INTERRUPT_CORE_TIMER) {
+    if (irq == KERNEL_TIMER_IRQ) {
         if (disable) {
-            clear_sie_mask(BIT(STIMER_IE));
+            clear_sie_mask(BIT(SIE_STIE));
         } else {
-            set_sie_mask(BIT(STIMER_IE));
+            set_sie_mask(BIT(SIE_STIE));
         }
 #ifdef ENABLE_SMP_SUPPORT
     } else if (irq == irq_reschedule_ipi || irq == irq_remote_call_ipi) {
@@ -210,7 +204,7 @@ static inline void ackInterrupt(irq_t irq)
     assert(IS_IRQ_VALID(irq));
     active_irq[CURRENT_CPU_INDEX()] = irqInvalid;
 
-    if (irq == INTERRUPT_CORE_TIMER) {
+    if (irq == KERNEL_TIMER_IRQ) {
         /* Reprogramming the timer has cleared the interrupt. */
         return;
     }
@@ -246,26 +240,26 @@ BOOT_CODE void initLocalIRQController(void)
 {
     printf("Init local IRQ\n");
 
-#ifdef CONFIG_PLAT_HIFIVE
     /* Init per-hart PLIC */
     plic_init_hart();
-#endif
 
-    word_t sie = 0;
-    sie |= BIT(SEXTERNAL_IE);
-    sie |= BIT(STIMER_IE);
-
-#ifdef ENABLE_SMP_SUPPORT
-    /* enable the software-generated interrupts */
-    sie |= BIT(SIPI_IE);
-#endif
-
-    set_sie_mask(sie);
+    /* Enable timer and external interrupt. If SMP is enabled, then enable the
+     * software interrupt also, it is used as IPI between cores. */
+    set_sie_mask(BIT(SIE_SEIE) | BIT(SIE_STIE) | SMP_TERNARY(BIT(SIE_SSIE), 0));
 }
 
 BOOT_CODE void initIRQController(void)
 {
     printf("Initializing PLIC...\n");
+
+    /* Initialize active_irq[] properly to stick to the semantics and play safe.
+     * Effectively this is not needed if irqInvalid is zero (which is currently
+     * the case) and the array is in the BSS, that is filled with zeros (which
+     * the a kernel loader is supposed to do and which the ELF-Loader does).
+     */
+    for (word_t i = 0; i < ARRAY_SIZE(active_irq); i++) {
+        active_irq[i] = irqInvalid;
+    }
 
     plic_init_controller();
 }

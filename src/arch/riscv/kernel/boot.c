@@ -23,9 +23,7 @@
 BOOT_BSS static volatile word_t node_boot_lock;
 #endif
 
-/* kernel image + [extra bootinfo] + user image */
-#define MAX_RESERVED 3
-BOOT_BSS static region_t res_reg[MAX_RESERVED];
+BOOT_BSS static region_t res_reg[NUM_RESERVED_REGIONS];
 
 BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, asid_t asid, bool_t
                                            use_large, bool_t executable)
@@ -56,21 +54,31 @@ BOOT_CODE static bool_t arch_init_freemem(region_t ui_reg, v_region_t it_v_reg,
                                           region_t dtb_reg,
                                           word_t extra_bi_size_bits)
 {
-    // This looks a bit awkward as our symbols are a reference in the kernel image window, but
-    // we want to do all allocations in terms of the main kernel window, so we do some translation
+    /* Reserve the kernel image region. This may look a bit awkward, as the
+     * symbols are a reference in the kernel image window, but all allocations
+     * are done in terms of the main kernel window, so we do some translation.
+     */
     res_reg[0].start = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void *)KERNEL_ELF_BASE));
     res_reg[0].end = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void *)ki_end));
 
     int index = 1;
+
+    /* add the dtb region, if it is not empty */
     if (dtb_reg.start) {
-        /* optionally reserve the dtb region, as it could be empty */
-        res_reg[index].start = dtb_reg.start;
-        res_reg[index].end = dtb_reg.end;
+        if (index >= ARRAY_SIZE(res_reg)) {
+            printf("ERROR: no slot to add DTB to reserved regions\n");
+            return false;
+        }
+        res_reg[index] = dtb_reg;
         index += 1;
     }
 
-    res_reg[index].start = ui_reg.start;
-    res_reg[index].end = ui_reg.end;
+    /* reserve the user image region */
+    if (index >= ARRAY_SIZE(res_reg)) {
+        printf("ERROR: no slot to add user image to reserved regions\n");
+        return false;
+    }
+    res_reg[index] = ui_reg;
     index += 1;
 
     /* avail_p_regs comes from the auto-generated code */
@@ -198,10 +206,10 @@ static BOOT_CODE bool_t try_init_kernel(
     create_frames_of_region_ret_t extra_bi_ret;
 
     /* convert from physical addresses to userland vptrs */
-    v_region_t ui_v_reg;
-    v_region_t it_v_reg;
-    ui_v_reg.start = (word_t)(ui_p_reg_start - pv_offset);
-    ui_v_reg.end   = (word_t)(ui_p_reg_end   - pv_offset);
+    v_region_t ui_v_reg = {
+        .start = ui_p_reg_start - pv_offset,
+        .end   = ui_p_reg_end   - pv_offset
+    };
 
     ipcbuf_vptr = ui_v_reg.end;
     bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
@@ -224,8 +232,10 @@ static BOOT_CODE bool_t try_init_kernel(
     word_t extra_bi_size_bits = calculate_extra_bi_size_bits(extra_bi_size);
 
     /* The region of the initial thread is the user image + ipcbuf + boot info + extra */
-    it_v_reg.start = ui_v_reg.start;
-    it_v_reg.end = extra_bi_frame_vptr + BIT(extra_bi_size_bits);
+    v_region_t it_v_reg = {
+        .start = ui_v_reg.start,
+        .end   = extra_bi_frame_vptr + BIT(extra_bi_size_bits)
+    };
 
     map_kernel_window();
 

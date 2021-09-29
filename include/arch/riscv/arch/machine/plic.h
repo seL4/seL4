@@ -1,60 +1,111 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright 2021, HENSOLDT Cyber
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #pragma once
 
+#include <config.h>
+#include <types.h>
+
 /*
- * RISC-V defines a Platform-level interrupt controller (PLIC) (priv-1.10).
- * It is responsible for managing global interrupts in a RISC-V system.
+ * The "RISC-V Instruction Set Manual Volume II: Privileged Architecture" V1.10
+ * defines a platform-level interrupt controller (PLIC), that manages global
+ * interrupt on a RISC-V platform. A PLIC takes multiple interrupt sources,
+ * usually the platform peripherals, and delivers them to different hart
+ * contexts depending on the interrupt routing configuration. A hart is a
+ * logical CPU core, a hart context is a privilege level on a given hart,
+ * usually M-Mode or S-Mode.
  *
- * A PLIC takes multiple interrupt sources from external devices and delivers
- * them to different HART contexts depending on per IRQ configuration registers.
- * A HART context is a given privilege level on a given HART. If an IRQ is pending
- * for a particular HART context, the PLIC will raise an interrupt on that HART context's
- * External interrupt pending(EIP) pin and trigger an interrupt. The HART can then claim
- * the IRQ message by communicating with the PLIC where it will receive the highest
- * priority pending interrupt. The PLIC will deassert the EIP pin when there are
- * no more pending interrupts for that HART. When the HART has finished processing
- * the IRQ it completes the claim by notifying the PLIC. Until an IRQ claim has
- * completed, the PLIC won't generate futher interrupts for that IRQ.  In multicore
- * systems, if an IRQ is routed to multiple HARTs, the first HART to claim the IRQ
- * gets to process the IRQ and subsequent HARTs won't receive a claim for the same IRQ.
+ * If an interrupt is pending for a particular hart context, the PLIC will
+ * assert the hart context's external interrupt line. The hart can then issue
+ * an interrupt claim to the PLIC, in response it will receive the pending
+ * interrupt with the highest priority. In multicore systems, if an interrupt is
+ * routed to multiple harts, the first hart to claim it gets to process it and
+ * subsequent harts won't see it. Upon claiming, the PLIC will de-assert a hart
+ * context's external interrupt line, even if there are more pending interrupt.
+ * When a  hart has finished processing a claimed interrupt, it notifies the
+ * PLIC about the completion. The PLIC will assert the hart context's external
+ * interrupt line if there are more pending interrupts.
  *
- * We require each platform to provide the following functions:
- *   irq_t plic_get_claim(void): If called when an IRQ is pending, returns
- *     the pending priority and starts a claim process.  Will return irqInvalid
- *     if no IRQs are pending.
- *   void plic_complete_claim(irq_t irq): Complete a claim process for an
- *     interrupt.
- *   void plic_mask_irq(bool_t disable, irq_t irq): Disables or enables an
- *     IRQ at the PLIC.
- *   void plic_irq_set_trigger(irq_t irq, bool_t edge_triggered): Configure
- *     an IRQ source on the PLIC to be edge or level triggered. This function does
- *     not need to be implemented if the PLIC doesn't support configuring this.
- *   void plic_init_controller(void): Perform PLIC initialisation during boot.
+ * The RISC-V specification is not clear how interrupt priorities affect
+ * asserting a hart context's external interrupt line. The PLIC is supposed to
+ * deassert the line upon interrupt claiming. but could asserted it again if an
+ * interrupt of a higher priority arrives, even if the current claim has no been
+ * completed. This allows interrupt nesting. However, seL4 does not support this
+ * and cannot be interrupted when running in kernel mode. To achieve this, it
+ * keeps the S-Mode hart context's external interrupts masked until leaving to
+ * user space. However, great care must be taken if interrupt priorities are not
+ * implemented in the PLIC and the interrupt claim completion does not happen
+ * within the kernel's interrupt trap handling. If completion is done when the
+ * user mode ISR ack's the interrupt, the user mode driver that implements the
+ * ISR can simply block all other platform interrupts by not doing the ack.
+ * Luckily, this will not affect the timer used for the preemptive scheduler,
+ * because RISC-V has a dedicated timer interrupt that is separate from the
+ * external interrupt.
+ *
+ *
+ * This file defines the seL4 kernel's internal API for PLIC access that must be
+ * implemented by platform specific PLIC drivers.
+ * The implementation here are
+ * used on the 'spike' platform, which is just a RISC-V ISA reference
+ * implementation that does not have a PLIC to trigger external interrupts.
  */
 
-static inline irq_t plic_get_claim(void)
-{
-    return irqInvalid;
-}
 
-static inline void plic_complete_claim(irq_t irq)
-{
-}
+/*
+ * This function is called when an interrupt is pending. It claims an interrupt
+ * from the PLIC and returns it. If no interrupt could be claimed 'irqInvalid'
+ * is returned.
+ *
+ * @return     interrupt number or irqInvalid.
+ */
+static inline irq_t plic_get_claim(void);
 
-static inline void plic_mask_irq(bool_t disable, irq_t irq)
-{
-}
+/*
+ * This function is called to complete a claim process for an interrupt.
+ *
+ * @param[in]  irq  interrupt to complete.
+ */
+static inline void plic_complete_claim(irq_t irq);
+
+/*
+* This function is called to mask (disable) or unmasks (enable) an interrupt in
+* the PLIC.
+ *
+ * @param[in]  disable  True to mask/disable, False to unmask/enable.
+ * @param[in]  irq      interrupt to mask/unmask.
+ */
+static inline void plic_mask_irq(bool_t disable, irq_t irq);
+
 
 #ifdef HAVE_SET_TRIGGER
+/*
+ * If HAVE_SET_TRIGGER is defined, this function is called to configure an
+ * interrupt source on the PLIC as edge or level triggered. By default all
+ * interrupts should be configures to be edge triggered.
+ *
+ * @param[in]  irq             interrupt to set trigger mode for.
+ * @param[in]  edge_triggered  True for edge triggered, False for level
+ *                             triggered.
+ */
 static inline void plic_irq_set_trigger(irq_t irq, bool_t edge_triggered);
-#endif
+#endif /* HAVE_SET_TRIGGER */
 
-static inline void plic_init_controller(void)
-{
-}
+/*
+ * This function is called during the boot process to perform hart specific
+ * PLIC initialisation. It is called as part of the core local initialisation
+ * process and runs before plic_init_controller() is called.
+ */
+static inline void plic_init_hart(void);
 
+/*
+ * This function is called during the boot process to perform platform specific
+ * PLIC initialisation. It is called as part of the platform specific
+ * initialisation pprocess and runs after the core specific plic_init_hart() was
+ * called. In SMP configurations this is called before the secondary cores are
+ * released to start their boot process.
+ */
+static inline void plic_init_controller(void);

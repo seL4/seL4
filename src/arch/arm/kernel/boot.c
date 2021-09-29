@@ -34,52 +34,70 @@
 BOOT_BSS static volatile int node_boot_lock;
 #endif /* ENABLE_SMP_SUPPORT */
 
-#define ARCH_RESERVED 3 // kernel + user image + dtb
-#define MAX_RESERVED (ARCH_RESERVED + MODE_RESERVED)
-BOOT_BSS static region_t reserved[MAX_RESERVED];
+BOOT_BSS static region_t reserved[NUM_RESERVED_REGIONS];
 
 BOOT_CODE static bool_t arch_init_freemem(p_region_t ui_p_reg,
                                           p_region_t dtb_p_reg,
                                           v_region_t it_v_reg,
                                           word_t extra_bi_size_bits)
 {
+    /* reserve the kernel image region */
     reserved[0].start = KERNEL_ELF_BASE;
     reserved[0].end = (pptr_t)ki_end;
 
     int index = 1;
+
+    /* add the dtb region, if it is not empty */
     if (dtb_p_reg.start) {
-        /* the dtb region could be empty */
+        if (index >= ARRAY_SIZE(reserved)) {
+            printf("ERROR: no slot to add DTB to reserved regions\n");
+            return false;
+        }
         reserved[index].start = (pptr_t) paddr_to_pptr(dtb_p_reg.start);
         reserved[index].end = (pptr_t) paddr_to_pptr(dtb_p_reg.end);
         index++;
     }
 
+    /* Reserve the user image region and the mode-reserved regions. For now,
+     * only one mode-reserved region is supported, because this is all that is
+     * needed.
+     */
     if (MODE_RESERVED > 1) {
         printf("ERROR: MODE_RESERVED > 1 unsupported!\n");
         return false;
     }
-
     if (ui_p_reg.start < PADDR_TOP) {
         region_t ui_reg = paddr_to_pptr_reg(ui_p_reg);
         if (MODE_RESERVED == 1) {
+            if (index + 1 >= ARRAY_SIZE(reserved)) {
+                printf("ERROR: no slot to add the user image and the "
+                       "mode-reserved region to the reserved regions\n");
+                return false;
+            }
             if (ui_reg.end > mode_reserved_region[0].start) {
                 reserved[index] = mode_reserved_region[0];
                 index++;
-                reserved[index].start = ui_reg.start;
-                reserved[index].end = ui_reg.end;
+                reserved[index] = ui_reg;
             } else {
-                reserved[index].start = ui_reg.start;
-                reserved[index].end = ui_reg.end;
+                reserved[index] = ui_reg;
                 index++;
                 reserved[index] = mode_reserved_region[0];
             }
             index++;
         } else {
-            reserved[index].start = ui_reg.start;
-            reserved[index].end = ui_reg.end;
+            if (index >= ARRAY_SIZE(reserved)) {
+                printf("ERROR: no slot to add the user image to the reserved"
+                       "regions\n");
+                return false;
+            }
+            reserved[index] = ui_reg;
             index++;
         }
     } else if (MODE_RESERVED == 1) {
+        if (index >= ARRAY_SIZE(reserved)) {
+            printf("ERROR: no slot to add the mode-reserved region\n");
+            return false;
+        }
         reserved[index] = mode_reserved_region[0];
         index++;
     }
@@ -317,10 +335,10 @@ static BOOT_CODE bool_t try_init_kernel(
     create_frames_of_region_ret_t extra_bi_ret;
 
     /* convert from physical addresses to userland vptrs */
-    v_region_t ui_v_reg;
-    v_region_t it_v_reg;
-    ui_v_reg.start = ui_p_reg_start - pv_offset;
-    ui_v_reg.end   = ui_p_reg_end   - pv_offset;
+    v_region_t ui_v_reg = {
+        .start = ui_p_reg_start - pv_offset,
+        .end   = ui_p_reg_end   - pv_offset
+    };
 
     ipcbuf_vptr = ui_v_reg.end;
     bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
@@ -342,8 +360,10 @@ static BOOT_CODE bool_t try_init_kernel(
     word_t extra_bi_size_bits = calculate_extra_bi_size_bits(extra_bi_size);
 
     /* The region of the initial thread is the user image + ipcbuf and boot info */
-    it_v_reg.start = ui_v_reg.start;
-    it_v_reg.end = extra_bi_frame_vptr + BIT(extra_bi_size_bits);
+    v_region_t it_v_reg = {
+        .start = ui_v_reg.start,
+        .end = extra_bi_frame_vptr + BIT(extra_bi_size_bits)
+    };
 
     /* setup virtual memory for the kernel */
     map_kernel_window();
