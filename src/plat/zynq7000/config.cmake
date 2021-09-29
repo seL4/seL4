@@ -32,7 +32,7 @@ if(KernelPlatformZynq7000)
         TIMER ${timer_file}
         CLK_SHIFT 40llu
         CLK_MAGIC 3435973837llu
-        KERNEL_WCET 10llu
+        KERNEL_WCET 10
     )
 endif()
 

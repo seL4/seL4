@@ -36,7 +36,7 @@ if(KernelPlatformImx8mq-evk OR KernelPlatformImx8mm-evk)
         NUM_PPI 32
         CLK_MAGIC 1llu
         CLK_SHIFT 3u
-        KERNEL_WCET 10u
+        KERNEL_WCET 10
     )
 endif()
 

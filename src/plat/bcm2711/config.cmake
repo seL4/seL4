@@ -39,7 +39,7 @@ if(KernelPlatformRpi4)
         NUM_PPI 32
         TIMER drivers/timer/arm_generic.h
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h
-        KERNEL_WCET 10u
+        KERNEL_WCET 10
         CLK_MAGIC 5337599559llu
         CLK_SHIFT 58u
     )

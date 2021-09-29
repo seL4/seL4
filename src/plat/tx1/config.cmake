@@ -24,7 +24,7 @@ if(KernelPlatformTx1)
         TIMER drivers/timer/arm_generic.h
         CLK_MAGIC 2863311531llu
         CLK_SHIFT 35u
-        KERNEL_WCET 10u
+        KERNEL_WCET 10
     )
 endif()
 

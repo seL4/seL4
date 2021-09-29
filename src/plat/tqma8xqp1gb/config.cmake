@@ -26,7 +26,7 @@ if(KernelPlatformTqma8xqp1gb)
         NUM_PPI 32
         CLK_MAGIC 1llu
         CLK_SHIFT 3u
-        KERNEL_WCET 10u
+        KERNEL_WCET 10
     )
 endif()
 

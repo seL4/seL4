@@ -22,7 +22,7 @@ if(KernelPlatformExynos4)
         NUM_PPI 32
         TIMER drivers/timer/exynos4412-mct.h
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h
-        KERNEL_WCET 10u
+        KERNEL_WCET 10
         CLK_MAGIC 2863311531llu
         CLK_SHIFT 36u
         TIMER_PRECISION 0u

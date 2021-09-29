@@ -25,7 +25,7 @@ if(KernelPlatImx7)
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h
         CLK_MAGIC 1llu
         CLK_SHIFT 8u
-        KERNEL_WCET 10u
+        KERNEL_WCET 10
     )
 else()
     config_set(KernelPlatImx7 PLAT_IMX7 OFF)

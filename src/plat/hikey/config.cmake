@@ -29,7 +29,7 @@ if(KernelPlatformHikey)
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h
         CLK_MAGIC 458129845llu
         CLK_SHIFT 39u
-        KERNEL_WCET 10u
+        KERNEL_WCET 10
     )
 endif()
 

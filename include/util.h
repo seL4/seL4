@@ -13,12 +13,13 @@
 #ifdef __ASSEMBLER__
 
 /* Provide a helper macro to define integer constants that are not of the
- * default type 'ìnt', but 'unsigned long'. When such constants are shared
- * between assembly and C code, some assemblers will fail because don't support
- * C-style integer suffixes like 'ul'. Using a macro works around this, as the
- * suffix is only applies when the C compiler is used and dropped when the
- * assembler runs.
+ * default type 'ìnt', but 'unsigned [long [long]]'. When such constants are
+ * shared between assembly and C code, some assemblers will fail because don't
+ * support C-style integer suffixes like 'ul'. Using a macro works around this,
+ * as the suffix is only applies when the C compiler is used and dropped when
+ * the assembler runs.
  */
+#define U_CONST(x) x
 #define UL_CONST(x) x
 #define ULL_CONST(x) x
 #define NULL 0
@@ -30,6 +31,7 @@
  * printf() format specifiers, '%lu' is the only form that is supported. Thus
  * 'ul' is the preferred suffix to avoid confusion.
  */
+#define U_CONST(x) PASTE(x, u)
 #define UL_CONST(x) PASTE(x, ul)
 #define ULL_CONST(x) PASTE(x, llu)
 #define NULL ((void *)0)

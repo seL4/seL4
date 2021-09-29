@@ -23,7 +23,7 @@ if(KernelPlatformOdroidc4)
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h
         CLK_MAGIC 375299969u
         CLK_SHIFT 53u
-        KERNEL_WCET 10u
+        KERNEL_WCET 10
         TIMER_PRECISION 1u
     )
 endif()

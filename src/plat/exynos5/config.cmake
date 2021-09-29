@@ -65,7 +65,7 @@ if(KernelPlatExynos5)
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h
         CLK_MAGIC 2863311531llu
         CLK_SHIFT 36u
-        KERNEL_WCET 10u
+        KERNEL_WCET 10
     )
 endif()
 

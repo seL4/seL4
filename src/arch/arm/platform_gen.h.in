@@ -39,6 +39,7 @@ enum IRQConstants {
 #ifdef CONFIG_KERNEL_MCS
 static inline CONST time_t getKernelWcetUs(void)
 {
-    return @CONFIGURE_KERNEL_WCET@;
+    /* Making this an explicit unsigned type simplifies verification. */
+    return U_CONST(@CONFIGURE_KERNEL_WCET@);
 }
 #endif

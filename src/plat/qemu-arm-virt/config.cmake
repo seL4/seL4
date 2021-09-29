@@ -109,7 +109,7 @@ if(KernelPlatformQEMUArmVirt)
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h
         CLK_MAGIC 4611686019llu
         CLK_SHIFT 58u
-        KERNEL_WCET 10u
+        KERNEL_WCET 10
     )
 endif()
 

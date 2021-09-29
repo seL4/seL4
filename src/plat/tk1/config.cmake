@@ -31,7 +31,7 @@ if(KernelPlatformTK1)
         TIMER drivers/timer/arm_generic.h SMMU plat/machine/smmu.h
         CLK_MAGIC 2863311531llu
         CLK_SHIFT 35u
-        KERNEL_WCET 100u
+        KERNEL_WCET 100
     )
 endif()
 

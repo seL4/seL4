@@ -52,7 +52,7 @@ if(KernelPlatformAM335X)
         TIMER_FREQUENCY 24000000
         CLK_MAGIC 2863311531llu
         CLK_SHIFT 36u
-        KERNEL_WCET 10u
+        KERNEL_WCET 10
     )
 endif()
 
