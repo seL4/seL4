@@ -17,10 +17,6 @@ echo Using DTS from Linux $(make -s kernelversion)
 make ARCH=arm multi_v7_defconfig
 make ARCH=arm -j4 dtbs
 
-# for kzm
-make ARCH=arm imx_v6_v7_defconfig
-make ARCH=arm -j4 dtbs
-
 make ARCH=arm64 defconfig
 make ARCH=arm64 -j4 dtbs
 
@@ -43,7 +39,6 @@ exynos4412-odroidx=exynos4
 exynos5250-arndale=exynos5250
 exynos5410-odroidxu=exynos5410
 exynos5422-odroidxu4=exynos5422
-imx31-bug=kzm
 imx6q-sabrelite=sabre
 imx6q-wandboard-revd1=wandq
 imx7d-sdb=imx7sabre

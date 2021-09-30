@@ -10,11 +10,6 @@
 #include <sel4/macros.h>
 
 #ifndef __ASSEMBLER__
-#ifdef CONFIG_KERNEL_GLOBALS_FRAME
-enum {
-    seL4_GlobalsFrame = 0xffffc000,
-};
-#endif /* CONFIG_KERNEL_GLOBALS_FRAME */
 
 /* format of an unknown syscall message */
 typedef enum {

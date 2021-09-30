@@ -27,12 +27,6 @@ register_driver(
     CFILES "exynos4412-mct.c"
 )
 register_driver(
-    compatibility_strings "fsl,imx31-epit"
-    PREFIX src/drivers/timer
-    CFILES "imx31-epit.c"
-)
-register_driver(compatibility_strings "fsl,imx31-gpt" PREFIX src/drivers/timer CFILES "imx31-gpt.c")
-register_driver(
     compatibility_strings "ti,omap3430-timer"
     PREFIX src/drivers/timer
     CFILES "omap3430-timer.c"

@@ -140,8 +140,6 @@ foreach(
     KernelArmCortexA55
     KernelArmCortexA57
     KernelArmCortexA72
-    KernelArm1136JF_S
-    KernelArchArmV6
     KernelArchArmV7a
     KernelArchArmV7ve
     KernelArchArmV8a
@@ -190,8 +188,6 @@ config_set(KernelArmCortexA53 ARM_CORTEX_A53 "${KernelArmCortexA53}")
 config_set(KernelArmCortexA55 ARM_CORTEX_A55 "${KernelArmCortexA55}")
 config_set(KernelArmCortexA57 ARM_CORTEX_A57 "${KernelArmCortexA57}")
 config_set(KernelArmCortexA72 ARM_CORTEX_A72 "${KernelArmCortexA72}")
-config_set(KernelArm1136JF_S ARM1136JF_S "${KernelArm1136JF_S}")
-config_set(KernelArchArmV6 ARCH_ARM_V6 "${KernelArchArmV6}")
 config_set(KernelArchArmV7a ARCH_ARM_V7A "${KernelArchArmV7a}")
 config_set(KernelArchArmV7ve ARCH_ARM_V7VE "${KernelArchArmV7ve}")
 config_set(KernelArchArmV8a ARCH_ARM_V8A "${KernelArchArmV8a}")
@@ -207,8 +203,6 @@ elseif(KernelArchArmV7a)
     set(KernelArmArmV "armv7-a" CACHE INTERNAL "")
 elseif(KernelArchArmV8a)
     set(KernelArmArmV "armv8-a" CACHE INTERNAL "")
-elseif(KernelArchArmV6)
-    set(KernelArmArmV "armv6" CACHE INTERNAL "")
 endif()
 if(KernelArmCortexA7)
     set(KernelArmCPU "cortex-a7" CACHE INTERNAL "")
@@ -228,8 +222,6 @@ elseif(KernelArmCortexA57)
     set(KernelArmCPU "cortex-a57" CACHE INTERNAL "")
 elseif(KernelArmCortexA72)
     set(KernelArmCPU "cortex-a72" CACHE INTERNAL "")
-elseif(KernelArm1136JF_S)
-    set(KernelArmCPU "arm1136jf-s" CACHE INTERNAL "")
 endif()
 if(KernelArchARM)
     config_set(KernelArmMach ARM_MACH "${KernelArmMach}")
