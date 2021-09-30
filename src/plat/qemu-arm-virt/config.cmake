@@ -117,3 +117,10 @@ add_sources(
     DEP "KernelPlatformQEMUArmVirt"
     CFILES src/arch/arm/machine/gic_v2.c src/arch/arm/machine/l2c_nop.c
 )
+
+config_string(
+    KernelUserTop USER_TOP "Set seL4_UserTop constant"
+    DEFAULT 0xa0000000
+    UNQUOTE
+    DEPENDS "KernelPlatformQEMUArmVirt;KernelSel4ArchAarch32"
+)
