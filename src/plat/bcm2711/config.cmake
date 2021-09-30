@@ -24,6 +24,7 @@ if(KernelPlatformRpi4)
     set(KernelArmMachFeatureModifiers "+crc" CACHE INTERNAL "")
     list(APPEND KernelDTSList "tools/dts/rpi4.dts")
     list(APPEND KernelDTSList "src/plat/bcm2711/overlay-rpi4.dts")
+    list(APPEND KernelDTSList "src/plat/bcm2711/overlay-rpi4-address-mapping.dts")
 
     # - The clock frequency is 54 MHz as can be seen in bcm2711.dtsi in the
     # Linux Kernel under clk_osc, thus TIMER_FREQUENCY = 54000000.
