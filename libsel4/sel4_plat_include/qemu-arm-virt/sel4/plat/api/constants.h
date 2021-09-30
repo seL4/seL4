@@ -21,5 +21,5 @@
 
 #if CONFIG_WORD_SIZE == 32
 
-#define seL4_UserTop 0xa0000000
+#define seL4_UserTop CONFIG_USER_TOP
 #endif
