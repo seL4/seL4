@@ -36,6 +36,7 @@ Upcoming release: BINARY COMPATIBLE
   unused. See https://sel4.atlassian.net/browse/RFC-8.
 * Remove ARMv6 specific configs: KernelGlobalsFrame and KernelDangerousCodeInjectionOnUndefInstr. This removes the
   constant seL4_GlobalsFrame from libsel4.
+* Implement KernelArmExportPTMRUser and KernelArmExportVTMRUser options for Arm generic timer use access on aarch32.
 
 ## Upgrade Notes
 ---
