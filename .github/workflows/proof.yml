@@ -34,7 +34,7 @@ jobs:
       uses: seL4/ci-actions/aws-proofs@master
       with:
         L4V_ARCH: ${{ matrix.arch }}
-        isa_branch: ts-2020
+        isa_branch: ts-2021
         session: ${{ matrix.session }}
         manifest: default.xml
       env:
