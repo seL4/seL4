@@ -19,7 +19,7 @@ register_driver(
     CFILES "tegra_omap3_dwapb.c"
 )
 register_driver(
-    compatibility_strings "fsl,imx31-uart;fsl,imx6q-uart;fsl,imx6sx-uart"
+    compatibility_strings "fsl,imx6q-uart;fsl,imx6sx-uart"
     PREFIX src/drivers/serial
     CFILES "imx.c"
 )
