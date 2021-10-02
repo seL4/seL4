@@ -51,11 +51,6 @@ register_driver(
     PREFIX src/drivers/timer
     CFILES "generic_timer.c"
 )
-register_driver(
-    compatibility_strings "allwinner,sun4i-a10-timer"
-    PREFIX src/drivers/timer
-    CFILES "allwinner-timer.c"
-)
 
 set(KernelArmHaveGenericTimer OFF)
 
