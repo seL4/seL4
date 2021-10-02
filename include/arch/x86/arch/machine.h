@@ -359,11 +359,6 @@ static inline unsigned long getFaultAddr(void)
     return read_cr2();
 }
 
-static inline void Arch_finaliseInterrupt(void)
-{
-    ARCH_NODE_STATE(x86KScurInterrupt) = int_invalid;
-}
-
 static inline void x86_set_tls_segment_base(word_t tls_base);
 
 /* Update the value of the actual register to hold the expected value */
