@@ -128,19 +128,6 @@ devices:
         index: 3
         undef_index: 2
       INTERRUPT_VTIMER_EVENT: 2
-  # Allwinner A10 Timer (timer/allwinner,sun4i-timer.txt)
-  - compatible:
-      - allwinner,sun4i-a10-timer
-    regions:
-      - index: 0
-        kernel: TIMER0_PPTR
-    interrupts:
-      # A20 also has the ARM architected timer,
-      # but we want to use the allwinner timer
-      # for now at least.
-      KERNEL_TIMER_IRQ:
-        index: 0
-        priority: 1
   # ARM per-core timer-watchdog (timer/arm,twd.txt)
   - compatible:
       - arm,cortex-a9-twd-timer
