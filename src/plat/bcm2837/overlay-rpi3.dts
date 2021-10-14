@@ -39,6 +39,6 @@
 		reserved-memory@0{
 			reg = <0x0 0x1000>;
 			no-map;
-		}
+		};
 	};
 };
