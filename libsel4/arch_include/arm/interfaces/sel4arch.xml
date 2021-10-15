@@ -254,6 +254,11 @@
             description="The offset, relative to the start of the page inclusive."/>
             <param dir="in" name="end_offset" type="seL4_Word"
             description="The offset, relative to the start of the page exclusive."/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The VSpace of <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
@@ -287,6 +292,11 @@
             description="The offset, relative to the start of the page inclusive."/>
             <param dir="in" name="end_offset" type="seL4_Word"
             description="The offset, relative to the start of the page exclusive."/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The VSpace of <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
@@ -319,6 +329,11 @@
             description="The offset, relative to the start of the page inclusive."/>
             <param dir="in" name="end_offset" type="seL4_Word"
             description="The offset, relative to the start of the page exclusive."/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The VSpace of <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
@@ -352,6 +367,11 @@
             description="The offset, relative to the start of the page inclusive."/>
             <param dir="in" name="end_offset" type="seL4_Word"
             description="The offset, relative to the start of the page exclusive."/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The VSpace of <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
@@ -468,6 +488,11 @@
             <error name="seL4_DeleteFirst">
                 <description>
                     There are no more ASIDs available in <texttt text="_service"/>.
+                </description>
+            </error>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The ASID pool of <texttt text="_service"/> is no longer assigned.
                 </description>
             </error>
             <error name="seL4_IllegalOperation">
