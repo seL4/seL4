@@ -212,6 +212,11 @@
                     All required page tables are already mapped in <texttt text="iospace"/> at <texttt text="ioaddr"/>.
                 </description>
             </error>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="iospace"/> does not have a paging structure at the required level mapped at <texttt text="ioaddr"/>.
+                </description>
+            </error>
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
