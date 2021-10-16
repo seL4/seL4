@@ -39,22 +39,12 @@ BEGIN_FUNC(arm_undefined_inst_exception)
     /* Full save/restore, documented in arm_swi_syscall */
     srsia #PMODE_SUPERVISOR
     cps #PMODE_SUPERVISOR
-#if defined(CONFIG_ARCH_ARM_V6) && defined(CONFIG_DANGEROUS_CODE_INJECTION_ON_UNDEF_INSTR)
-    /* Call whatever's in r8. See Kconfig for the purpose of this. */
-    blx r8
-    rfeia sp
-#else
     stmdb sp, {r0-lr}^
     ldr r8, [sp]
     sub r8, r8, #4
     str r8, [sp, #(PT_FaultIP - PT_NextIP)]
-#ifdef CONFIG_ARCH_ARM_V6
-    ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
-#else
     mrc p15, 0, sp, c13, c0, 4
-#endif /* CONFIG_ARCH_ARM_V6 */
     b c_handle_undefined_instruction
-#endif
 END_FUNC(arm_undefined_inst_exception)
 
 BEGIN_FUNC(arm_swi_syscall)
@@ -74,11 +64,7 @@ BEGIN_FUNC(arm_swi_syscall)
     stmdb sp, {r0-lr}^
 
     /* Load the kernel's real stack pointer */
-#ifdef CONFIG_ARCH_ARM_V6
-    ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
-#else
     mrc p15, 0, sp, c13, c0, 4
-#endif /* CONFIG_ARCH_ARM_V6 */
 
     /* Load system call number as a c_handle_syscall argument. r0 and r1 are passed
      * unmodified (cptr and msgInfo) respectively.  On MCS configurations we also
@@ -121,22 +107,14 @@ BEGIN_FUNC(arm_prefetch_abort_exception)
     /* Store faulting address in TCB and call handleVMFaultEvent. */
     str r8, [sp, #(PT_FaultIP - PT_NextIP)]
 
-#ifdef CONFIG_ARCH_ARM_V6
-    ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
-#else
     mrc p15, 0, sp, c13, c0, 4
-#endif /* CONFIG_ARCH_ARM_V6 */
 
     b c_handle_instruction_fault
 
 kernel_prefetch_fault:
 #ifdef CONFIG_DEBUG_BUILD
     mov r0, r8
-#ifdef CONFIG_ARCH_ARM_V6
-    ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
-#else
     mrc p15, 0, sp, c13, c0, 4
-#endif /* CONFIG_ARCH_ARM_V6 */
     blx kernelPrefetchAbort
     /* Fallthrough to infinite loop should we foolishly return. */
 #endif
@@ -172,11 +150,7 @@ BEGIN_FUNC(arm_data_abort_exception)
 
     /* Store faulting address in TCB and call handleVMFaultEvent. */
     str r8, [sp, #(PT_FaultIP - PT_NextIP)]
-#ifdef CONFIG_ARCH_ARM_V6
-    ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
-#else
     mrc p15, 0, sp, c13, c0, 4
-#endif /* CONFIG_ARCH_ARM_V6 */
 
     b c_handle_data_fault
 
@@ -184,11 +158,7 @@ BEGIN_FUNC(arm_data_abort_exception)
 kernel_data_fault:
 #ifdef CONFIG_DEBUG_BUILD
     mov r0, r8
-#ifdef CONFIG_ARCH_ARM_V6
-    ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
-#else
     mrc p15, 0, sp, c13, c0, 4
-#endif /* CONFIG_ARCH_ARM_V6 */
     blx kernelDataAbort
     /* Fallthrough to infinite loop should we foolishly return. */
 #endif
@@ -212,11 +182,7 @@ BEGIN_FUNC(arm_irq_exception)
     sub r8, r8, #4
     str r8, [sp]
     str r8, [sp, #(PT_FaultIP - PT_NextIP)]
-#ifdef CONFIG_ARCH_ARM_V6
-    ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
-#else
     mrc p15, 0, sp, c13, c0, 4
-#endif /* CONFIG_ARCH_ARM_V6 */
     b c_handle_interrupt
 END_FUNC(arm_irq_exception)
 

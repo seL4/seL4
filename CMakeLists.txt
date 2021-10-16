@@ -28,7 +28,6 @@ endif()
 include(tools/internal.cmake)
 
 # Define tools used by the kernel
-set(PYTHON "python2" CACHE INTERNAL "")
 set(PYTHON3 "python3" CACHE INTERNAL "")
 RequireTool(CPP_GEN_PATH cpp_gen.sh)
 RequireTool(CIRCULAR_INCLUDES circular_includes.py)

@@ -7,14 +7,8 @@
 #pragma once
 
 #include <config.h>
-#include <assert.h>
+#include <mode/types.h>
 #include <stdint.h>
-
-#if defined(CONFIG_ARCH_AARCH32)
-compile_assert(long_is_32bits, sizeof(unsigned long) == 4)
-#elif defined(CONFIG_ARCH_AARCH64)
-compile_assert(long_is_64bits, sizeof(unsigned long) == 8)
-#endif
 
 typedef unsigned long word_t;
 typedef signed long sword_t;
@@ -52,4 +46,3 @@ typedef struct kernel_frame {
     int armExecuteNever;
     int userAvailable;
 } kernel_frame_t;
-

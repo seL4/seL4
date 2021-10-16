@@ -1,6 +1,7 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ * Copyright 2021, HENSOLDT Cyber
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -14,6 +15,36 @@
 #include <arch/model/statedata.h>
 #include <arch/sbi.h>
 #include <mode/machine.h>
+
+/* Bit flags in CSR MIP/SIP (interrupt pending). */
+/* Bit 0 was SIP_USIP, but the N extension will be dropped in v1.12 */
+#define SIP_SSIP   1 /* S-Mode software interrupt pending. */
+/* Bit 2 was SIP_HSIP in v1.9, but the H extension was reworked afterwards. */
+#define SIP_MSIP   3 /* M-Mode software interrupt pending (MIP only). */
+/* Bit 4 was SIP_UTIP, but the N extension will be dropped in v1.12 */
+#define SIP_STIP   5 /* S-Mode timer interrupt pending. */
+/* Bit 6 was SIP_HTIP in v1.9, but the H extension was reworked afterwards. */
+#define SIP_MTIP   7 /* M-Mode timer interrupt pending (MIP only). */
+/* Bit 8 was SIP_UEIP, but the N extension will be dropped in v1.12 */
+#define SIP_SEIP   9 /* S-Mode external interrupt pending. */
+/* Bit 10 was SIP_HEIP in v1.9, but the H extension was reworked afterwards. */
+#define SIP_MEIP  11 /* M-Mode external interrupt pending (MIP only). */
+/* Bit 12 and above are reserved. */
+
+/* Bit flags in CSR MIE/SIE (interrupt enable). */
+/* Bit 0 was SIE_USIE, but the N extension will be dropped in v1.12 */
+#define SIE_SSIE   1 /* S-Mode software interrupt enable. */
+/* Bit 2 was SIE_HSIE in v1.9, but the H extension was reworked afterwards. */
+#define SIE_MSIE   3 /* M-Mode software interrupt enable (MIP only). */
+/* Bit 4 was SIE_UTIE, but the N extension will be dropped in v1.12 */
+#define SIE_STIE   5 /* S-Mode timer interrupt enable. */
+/* Bit 6 was SIE_HTIE in v1.9, but the H extension was reworked afterwards. */
+#define SIE_MTIE   7 /* M-Mode timer interrupt enable (MIP only). */
+/* Bit 8 was SIE_UEIE, but the N extension will be dropped in v1.12 */
+#define SIE_SEIE   9 /* S-Mode external interrupt enable. */
+/* Bit 10 was SIE_HEIE in v1.9, but the H extension was reworked afterwards. */
+#define SIE_MEIE  11 /* M-Mode external interrupt enable (MIP only). */
+/* Bit 12 and above are reserved. */
 
 #ifdef ENABLE_SMP_SUPPORT
 
@@ -160,6 +191,18 @@ static inline word_t read_sip(void)
     return temp;
 }
 
+static inline void write_sie(word_t value)
+{
+    asm volatile("csrw sie,  %0" :: "r"(value));
+}
+
+static inline word_t read_sie(void)
+{
+    word_t temp;
+    asm volatile("csrr %0, sie" : "=r"(temp));
+    return temp;
+}
+
 static inline void set_sie_mask(word_t mask_high)
 {
     word_t temp;
@@ -209,11 +252,6 @@ static inline void setVSpaceRoot(paddr_t addr, asid_t asid)
 #else
     sfence();
 #endif
-}
-
-static inline void Arch_finaliseInterrupt(void)
-{
-    /* Nothing architecture specific to be done. */
 }
 
 void map_kernel_devices(void);

@@ -30,8 +30,8 @@ static inline paddr_t CONST addrFromPPtr(const void *pptr)
  * the kernel ELF mapping, this function must be used. */
 static inline paddr_t CONST addrFromKPPtr(const void *pptr)
 {
-    assert((paddr_t)(pptr) >= KERNEL_ELF_BASE);
-    assert((paddr_t)(pptr) <= KERNEL_ELF_TOP);
+    assert((paddr_t)pptr >= KERNEL_ELF_BASE);
+    assert((paddr_t)pptr <= KERNEL_ELF_TOP);
     return (paddr_t)pptr - KERNEL_ELF_BASE_OFFSET;
 }
 

@@ -548,13 +548,7 @@ block dbg_dscr {
 block dbg_bcr {
     padding 3
     field addressMask 5
-#ifdef CONFIG_ARCH_ARM_V6
-    padding 1
-    field meaning 2
-    field enableLinking 1
-#else
     field breakpointType 4
-#endif
     field linkedBrp 4
     field secureStateControl 2
     field hypeModeControl 1
@@ -572,14 +566,9 @@ block dbg_wcr {
     padding 3
     field enableLinking 1
     field linkedBrp 4
-#ifndef CONFIG_ARCH_ARM_V6
     field secureStateControl 2
     field hypeModeControl 1
     field byteAddressSelect 8
-#else
-    padding 7
-    field byteAddressSelect 4
-#endif
     field loadStore 2
     field supervisorAccess 2
     field enabled 1

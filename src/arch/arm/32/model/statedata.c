@@ -14,12 +14,6 @@
 #include <linker.h>
 #include <plat/machine/hardware.h>
 
-#ifdef CONFIG_KERNEL_GLOBALS_FRAME
-/* The global frame, mapped in all address spaces */
-word_t armKSGlobalsFrame[BIT(ARMSmallPageBits) / sizeof(word_t)]
-ALIGN_BSS(BIT(ARMSmallPageBits));
-#endif /* CONFIG_KERNEL_GLOBALS_FRAME */
-
 /* The top level asid mapping table */
 asid_pool_t *armKSASIDTable[BIT(asidHighBits)];
 
@@ -47,10 +41,6 @@ pdeS1_t  armHSGlobalPD[BIT(PT_INDEX_BITS)]   ALIGN_BSS(BIT(seL4_PageTableBits));
 pteS1_t  armHSGlobalPT[BIT(PT_INDEX_BITS)]   ALIGN_BSS(BIT(seL4_PageTableBits));
 /* Global user space mappings, which are empty as there is no hared kernel region */
 pde_t armUSGlobalPD[BIT(PD_INDEX_BITS)] ALIGN_BSS(BIT(seL4_PageDirBits));;
-#ifdef CONFIG_KERNEL_GLOBALS_FRAME
-/* User space global mappings */
-pte_t  armUSGlobalPT[BIT(PT_INDEX_BITS)]   ALIGN_BSS(BIT(seL4_PageTableBits));
-#endif /* CONFIG_KERNEL_GLOBALS_FRAME */
 /* Current VCPU */
 UP_STATE_DEFINE(vcpu_t, *armHSCurVCPU);
 /* Whether the current loaded VCPU is enabled in the hardware or not */

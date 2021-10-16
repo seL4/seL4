@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        march: [armv6a, armv7a, armv8a, nehalem, rv32imac, rv64imac]
+        march: [armv7a, armv8a, nehalem, rv32imac, rv64imac]
         compiler: [gcc, clang]
         exclude:
           - march: rv32imac
@@ -58,7 +58,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        march: [armv6a, armv7a, armv8a, nehalem]
+        march: [armv7a, armv8a, nehalem]
         compiler: [gcc, clang]
         include:
           - march: rv64imac

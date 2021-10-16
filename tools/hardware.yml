@@ -72,25 +72,12 @@ devices:
     regions:
       - index: 0
         kernel: ARM_LOCAL_PPTR
-  # i.MX AVIC (no Linux docs, used in arch/arm/mach-imx/avic.c)
-  - compatible:
-      - fsl,imx31-avic
-    regions:
-      - index: 0
-        kernel: AVIC_PPTR
-        kernel_size: 0x1000
   # ARM PL310 L2 cache controller (arm/l2c2x0.txt)
   - compatible:
       - arm,pl310-cache
     regions:
       - index: 0
         kernel: L2CC_L2C310_PPTR
-  # i.MX31 L2CC (seL4 only)
-  - compatible:
-      - fsl,imx31-l2cc
-    regions:
-      - index: 0
-        kernel: L2CC_PPTR
   # Exynos multi core timer (timer/samsung,exynos4210-mct.txt)
   # Exynos4412 MCT is separate as we use it for the timer IRQ.
   # Other Exynos platforms use the ARM architecture timer.
@@ -114,11 +101,6 @@ devices:
       - arm,cortex-a9-pmu
     interrupts:
       KERNEL_PMU_IRQ: boot-cpu
-  # i.MX evtmon (no Linux binding, this one is seL4-specific.)
-  - compatible:
-      - fsl,imx31-evtmon
-    interrupts:
-      KERNEL_PMU_IRQ: 0
   # Tegra SMMU (memory-controllers/nvidia,tegra30-mc.txt)
   - compatible:
       - arm,mmu-500
@@ -176,23 +158,6 @@ devices:
     interrupts:
       # IMX6 also has the imx31-gpt.
       KERNEL_TIMER_IRQ: 0
-  # i.MX EPIT (no Linux binding, this is seL4-specific.)
-  - compatible:
-      - fsl,imx31-epit
-    regions:
-      - index: 0
-        kernel: EPIT_PPTR
-        kernel_size: 0x1000
-    interrupts:
-      KERNEL_TIMER_IRQ: 0
-  # i.MX GPT
-  - compatible:
-      - fsl,imx31-gpt
-    regions:
-      - index: 0
-        kernel: TIMER_PPTR
-    interrupts:
-      KERNEL_TIMER_IRQ: 0
   # QCOM Krait timer (timer/qcom,msm-timer.txt)
   - compatible:
       - qcom,kpss-timer
@@ -230,7 +195,6 @@ devices:
       - amlogic,meson-gx-uart
       - arm,pl011
       - brcm,bcm2835-aux-uart
-      - fsl,imx31-uart
       - fsl,imx6q-uart
       - fsl,imx8qxp-lpuart
       - fsl,imx6sx-uart
@@ -249,7 +213,7 @@ devices:
         user: true
         kernel_size: 0x1000
 
-  # RISC-V PLIC
+  # SiFive U54/U74 PLIC (HiFive, Polarfire)
   - compatible:
       - riscv,plic0
     regions:

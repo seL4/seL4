@@ -173,14 +173,14 @@
 /* The base address in virtual memory to use for the 1:1 physical memory
  * mapping */
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-#define PPTR_BASE UL_CONST(0x0000ff8000000000)
+#define PPTR_BASE UL_CONST(0x0000008000000000)
 #else
 #define PPTR_BASE UL_CONST(0xffffff8000000000)
 #endif
 
 /* Top of the physical memory window */
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-#define PPTR_TOP UL_CONST(0x0000ffffc0000000)
+#define PPTR_TOP UL_CONST(0x000000ffc0000000)
 #else
 #define PPTR_TOP UL_CONST(0xffffffffc0000000)
 #endif
@@ -194,7 +194,7 @@
 /* This is a page table mapping at the end of the virtual address space
  * to map objects with 4KiB pages rather than 4MiB large pages. */
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-#define KERNEL_PT_BASE UL_CONST(0x0000ffffffe00000)
+#define KERNEL_PT_BASE UL_CONST(0x000000ffffe00000)
 #else
 #define KERNEL_PT_BASE UL_CONST(0xffffffffffe00000)
 #endif
@@ -206,3 +206,17 @@
 /* The log buffer is placed before the device region */
 #define KS_LOG_PPTR (KDEV_BASE - UL_CONST(0x200000))
 
+/* All PPTR addresses must be canonical to be able to be stored in caps or objects.
+   Check that all UTs that are created will have valid address in the PPTR space.
+   For non-hyp, PPTR_BASE is in the top part of the address space and device untyped
+   addresses are allowed to be large enough to overflow and be in the bottom half of
+   the address space.  However, when the kernel is in EL2 it is not possible to safely
+   overflow without going into address ranges that are non-canonical.  These static
+   asserts check that the kernel config won't lead to UTs being created that aren't
+   representable. */
+#ifndef __ASSEMBLER__
+compile_assert(ut_max_less_than_cannonical, CONFIG_PADDR_USER_DEVICE_TOP <= BIT(47));
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+compile_assert(ut_max_is_cannonical, (PPTR_BASE + CONFIG_PADDR_USER_DEVICE_TOP) <= BIT(48));
+#endif
+#endif

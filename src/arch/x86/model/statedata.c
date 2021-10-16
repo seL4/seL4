@@ -60,7 +60,7 @@ UP_STATE_DEFINE(vcpu_t *, x86KSCurrentVCPU);
 #ifdef CONFIG_PRINTING
 uint16_t x86KSconsolePort;
 #endif
-#ifdef CONFIG_DEBUG_BUILD
+#if defined(CONFIG_PRINTING) || defined(CONFIG_DEBUG_BUILD)
 uint16_t x86KSdebugPort;
 #endif
 

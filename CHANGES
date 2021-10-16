@@ -31,6 +31,12 @@ Upcoming release: BINARY COMPATIBLE
  * Rename libsel4 config option ENABLE_SMP_SUPPORT to CONFIG_ENABLE_SMP_SUPPORT to be namespace compliant.
  * Rename libsel4 config option AARCH64_VSPACE_S2_START_L1 to CONFIG_AARCH64_VSPACE_S2_START_L1 to be namespace
    compliant.
+* Remove imx31/kzm platform support. This platform is being removed as it is sufficiently old and unused.
+* Remove ARM1136JF_S and ARMv6 support. This architecture version is being removed as it is sufficiently old and
+  unused. See https://sel4.atlassian.net/browse/RFC-8.
+* Remove ARMv6 specific configs: KernelGlobalsFrame and KernelDangerousCodeInjectionOnUndefInstr. This removes the
+  constant seL4_GlobalsFrame from libsel4.
+* Implement KernelArmExportPTMRUser and KernelArmExportVTMRUser options for Arm generic timer use access on aarch32.
 
 ## Upgrade Notes
 ---
