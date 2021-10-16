@@ -58,7 +58,7 @@ def main(parse_args):
                 file_stack.append(header)
         else:
             # popped back up to an earlier header
-            while file_stack[-1] != header:
+            while (len(file_stack) > 0) and (file_stack[-1] != header):
                 file_stack.pop()
 
     return 0
