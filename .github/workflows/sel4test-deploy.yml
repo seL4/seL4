@@ -78,6 +78,7 @@ jobs:
 
   hw-run:
     name: HW Run
+    if: ${{ github.repository_owner == 'seL4' }}
     runs-on: ubuntu-latest
     needs: [sim, hw-build]
     strategy:
@@ -140,6 +141,7 @@ jobs:
 
   deploy:
     name: Deploy manifest
+    if: ${{ github.repository_owner == 'seL4' }}
     runs-on: ubuntu-latest
     needs: [code, hw-run]
     steps:

@@ -12,6 +12,7 @@ on:
 jobs:
   trigger:
     name: Repository Dispatch
+    if: ${{ github.repository_owner == 'seL4' }}
     runs-on: ubuntu-latest
     steps:
     - uses: seL4/ci-actions/trigger@master
