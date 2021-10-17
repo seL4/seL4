@@ -1369,8 +1369,9 @@
                 a signal arrives, the passive thread will receive the scheduling context and possess it
                 until it waits on the notification object again.
 
-                This operation will fail if the scheduling context is already bound to a thread or
-                notification object.
+                This operation will fail for notification objects if the scheduling context is already
+                bound to a notification object, and for thread objects if the the scheduling context is
+                already bound to a thread.
             </brief>
             <description>
                 See <autoref label="sec:threads"/>
@@ -1381,7 +1382,7 @@
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="_service"/> or <texttt text="cap"/> is already bound.
+                    Or, <texttt text="_service"/> or <texttt text="cap"/> is already bound to the same type of object.
                     Or, <texttt text="cap"/> is a TCB in the blocked state and <texttt text="_service"/> is not schedulable.
                 </description>
             </error>
