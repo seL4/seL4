@@ -17,12 +17,11 @@ A \obj{Notification} object contains a single data word, called the
 \apifunc{seL4\_Wait}{sel4_wait}.
 
 \obj{Notification} capabilities can be badged, using
-\apifunc{seL4\_CNode\_Mutate}{cnode_mutate} or
 \apifunc{seL4\_CNode\_Mint}{cnode_mint}, just like \obj{Endpoint}
 capabilities (see \autoref{sec:ep-badges}). As with \obj{Endpoint}
 capabilities, badged \obj{Notification} capabilities cannot be
-  unbadged, rebadged or used to create child capabilities with
-  different badges. \label{s:notif-badge}
+unbadged, rebadged or used to create child capabilities with
+different badges. \label{s:notif-badge}
 
 \section{Signalling, Polling and Waiting}
 

@@ -1053,7 +1053,11 @@
 
         <method id="CNodeMutate" name="Mutate" manual_name="Mutate" manual_label="cnode_mutate">
             <brief>
-                Move a capability, setting its badge in the process
+                Move a capability, setting its guard in the process. This
+                operation is mostly useful for setting the guard of a CNode
+                capability without losing revokability of that CNode capability.
+                All other uses can be replaced by a combination of Mint and
+                Delete.
             </brief>
             <description>
                 <docref>See <autoref label="sec:cnode-ops"/>.</docref>
@@ -1064,7 +1068,7 @@
             <param dir="in" name="src_root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the source CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="src_index" type="seL4_Word" description="CPTR to the source slot. Resolved from the root of the source CSpace."/>
             <param dir="in" name="src_depth" type="seL4_Uint8" description="Number of bits of src_index to resolve to find the source slot."/>
-            <param dir="in" name="badge" type="seL4_Word" description="Badge or guard to be applied to the new capability. For badges on 32-bit platforms, the high 4 bits are ignored."/>
+            <param dir="in" name="badge" type="seL4_Word" description="Guard to be applied to the new capability."/>
             <error name="seL4_DeleteFirst" description="The destination slot contains a capability."/>
             <error name="seL4_FailedLookup">
                 <description>
