@@ -419,28 +419,31 @@ creates new kernel objects by retyping untyped memory, the newly created
 capabilities would be inserted into the CDT as children of the untyped
 memory capability.
 
-For each \obj{Untyped Memory} region, the kernel keeps
-a \emph{watermark} recording how much of the region has previously been
-allocated. Whenever a user requests the kernel to create new objects in
-an untyped memory region, the kernel will carry out one of two actions:
-if there are already existing objects allocated in the region, the
+For each \obj{Untyped} capability pointing to an \obj{Untyped Memory} region,
+the kernel keeps a \emph{watermark} recording how much of the region has
+previously been allocated. Whenever a user requests the kernel to create new
+objects in an untyped memory region, the kernel will carry out one of two
+actions: if there are already existing objects allocated in the region, the
 kernel will allocate the new objects at the current watermark level, and
-increase the watermark. If all objects previously allocated in the
-region have been deleted, the kernel will reset the watermark and start
+increase the watermark. If all capabilities to objects previously allocated in
+the region have been deleted, the kernel will reset the watermark and start
 allocating new objects from the beginning of the region again.
 
-Finally, the \apifunc{seL4\_CNode\_Revoke}{cnode_revoke} method provided by \obj{CNode} objects
-destroys all capabilities derived from the argument capability. Revoking
-the last capability to a kernel object triggers the \emph{destroy}
-operation on the now unreferenced object. This simply cleans up any in-kernel dependencies between
-it, other objects and the kernel.
+Finally, the \apifunc{seL4\_CNode\_Revoke}{cnode_revoke} method provided by
+the \obj{CNode} objects deletes all capabilities derived from the argument
+capability. Revoking the last capability to a kernel object triggers the
+\emph{destroy} operation on the now unreferenced object. This cleans up any
+in-kernel dependencies between it, other objects and the kernel. It does not
+necessarily zero all memory state associated with the object yet. Memory zeroing
+will happen for the entire region when an untyped capability is \emph{reset} as
+part of the first retype operation after all child capabilities have been
+revoked.
 
-By calling \apifunc{seL4\_CNode\_Revoke}{cnode_revoke} on the original capability to an untyped memory
-object, the user removes all of the untyped memory object's
-children---that is, all capabilities pointing to objects in the untyped
-memory region.  Thus, after this invocation there are no valid references
-to any object within the untyped region, and the region may be safely
-retyped and reused.
+To reuse a region of memory, user code can call
+\apifunc{seL4\_CNode\_Revoke}{cnode_revoke} on the original untyped capability
+for that region, thereby removing all children of that capability. After this
+invocation, no references remain to any object within the untyped region, and
+the region may be safely retyped again.
 
 \subsection{Summary of Object Sizes}
 \label{sec:object_sizes}
