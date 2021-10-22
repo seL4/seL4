@@ -21,3 +21,7 @@ add_sources(
         kernel/vspace.c
     ASMFILES head.S traps.S
 )
+
+if(CMAKE_C_COMPILER_VERSION VERSION_GREATER 10.1)
+    add_compile_options(-mno-outline-atomics)
+endif()
