@@ -26,4 +26,9 @@
         interrupts = < 0x00 0x50 0x04 >;
         status = "disabled";
     };
+    reserved-memory {
+        /* The following normal memory regions are Linux specific. */
+        /delete-node/ dsp@92400000;
+        /delete-node/ linux,cma;
+    };
 };
