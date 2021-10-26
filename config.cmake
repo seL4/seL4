@@ -108,6 +108,18 @@ if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
     )
     set(config_file "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware.yml")
     set(config_schema "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware_schema.yml")
+    set(
+        KernelCustomDTSOverlay ""
+        CACHE FILEPATH "Provide an additional overlay to append to the selected KernelPlatform's \
+        device tree during build time"
+    )
+    if(NOT "${KernelCustomDTSOverlay}" STREQUAL "")
+        if(NOT EXISTS ${KernelCustomDTSOverlay})
+            message(FATAL_ERROR "Can't open external overlay file '${KernelCustomDTSOverlay}'!")
+        endif()
+        list(APPEND KernelDTSList "${KernelCustomDTSOverlay}")
+        message(STATUS "Using ${KernelCustomDTSOverlay} overlay")
+    endif()
 
     find_program(DTC_TOOL dtc)
     if("${DTC_TOOL}" STREQUAL "DTC_TOOL-NOTFOUND")
