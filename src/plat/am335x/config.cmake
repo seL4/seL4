@@ -8,7 +8,12 @@ cmake_minimum_required(VERSION 3.7.2)
 
 declare_platform(am335x KernelPlatformAM335X PLAT_AM335X KernelSel4ArchAarch32)
 set(c_configs PLAT_AM335X_BONEBLACK PLAT_AM335X_BONEBLUE PLAT_AM335X_BONE)
-set(cmake_configs KernelPlatformAM335XBoneBlack KernelPlatformAM335XBoneBlue KernelPlatformAM335XBone)
+set(
+    cmake_configs
+    KernelPlatformAM335XBoneBlack
+    KernelPlatformAM335XBoneBlue
+    KernelPlatformAM335XBone
+)
 set(plat_lists am335x-boneblack am335x-boneblue am335x-bone)
 foreach(config IN LISTS cmake_configs)
     unset(${config} CACHE)
