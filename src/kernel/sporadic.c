@@ -163,7 +163,7 @@ void refill_new(sched_context_t *sc, word_t max_refills, ticks_t budget, ticks_t
     sc->scRefillHead = 0;
     sc->scRefillTail = 0;
     sc->scRefillMax = max_refills;
-    assert(budget > MIN_BUDGET);
+    assert(budget >= MIN_BUDGET);
     /* full budget available */
     refill_head(sc)->rAmount = budget;
     /* budget can be used from now */

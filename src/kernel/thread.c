@@ -682,7 +682,7 @@ void awaken(void)
         assert(!isRoundRobin(awakened->tcbSchedContext));
         /* threads should wake up on the correct core */
         SMP_COND_STATEMENT(assert(awakened->tcbAffinity == getCurrentCPUIndex()));
-        /* threads HEAD refill should always be > MIN_BUDGET */
+        /* threads HEAD refill should always be >= MIN_BUDGET */
         assert(refill_sufficient(awakened->tcbSchedContext, 0));
         possibleSwitchTo(awakened);
         /* changed head of release queue -> need to reprogram */
