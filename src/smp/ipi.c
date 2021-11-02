@@ -32,6 +32,10 @@ void ipiStallCoreCallback(bool_t irqPath)
 
         SCHED_ENQUEUE_CURRENT_TCB;
         switchToIdleThread();
+#ifdef CONFIG_KERNEL_MCS
+        commitTime();
+        NODE_STATE(ksCurSC) = NODE_STATE(ksIdleThread)->tcbSchedContext;
+#endif
         NODE_STATE(ksSchedulerAction) = SchedulerAction_ResumeCurrentThread;
 
         /* Let the cpu requesting this IPI to continue while we waiting on lock */
@@ -65,7 +69,10 @@ void ipiStallCoreCallback(bool_t irqPath)
          * handle the pending interrupt. Its valid as interrups are async events! */
         SCHED_ENQUEUE_CURRENT_TCB;
         switchToIdleThread();
-
+#ifdef CONFIG_KERNEL_MCS
+        commitTime();
+        NODE_STATE(ksCurSC) = NODE_STATE(ksIdleThread)->tcbSchedContext;
+#endif
         NODE_STATE(ksSchedulerAction) = SchedulerAction_ResumeCurrentThread;
     }
 }
