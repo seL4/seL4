@@ -588,21 +588,21 @@ void setNextInterrupt(void)
     setDeadline(next_interrupt - getTimerPrecision());
 }
 
-void chargeBudget(ticks_t consumed, bool_t canTimeoutFault, word_t core, bool_t isCurCPU)
+void chargeBudget(ticks_t consumed, bool_t canTimeoutFault)
 {
 
-    if (isRoundRobin(NODE_STATE_ON_CORE(ksCurSC, core))) {
-        assert(refill_size(NODE_STATE_ON_CORE(ksCurSC, core)) == MIN_REFILLS);
-        refill_head(NODE_STATE_ON_CORE(ksCurSC, core))->rAmount += refill_tail(NODE_STATE_ON_CORE(ksCurSC, core))->rAmount;
-        refill_tail(NODE_STATE_ON_CORE(ksCurSC, core))->rAmount = 0;
+    if (isRoundRobin(NODE_STATE(ksCurSC))) {
+        assert(refill_size(NODE_STATE(ksCurSC)) == MIN_REFILLS);
+        refill_head(NODE_STATE(ksCurSC))->rAmount += refill_tail(NODE_STATE(ksCurSC))->rAmount;
+        refill_tail(NODE_STATE(ksCurSC))->rAmount = 0;
     } else {
         refill_budget_check(consumed);
     }
 
-    assert(refill_head(NODE_STATE_ON_CORE(ksCurSC, core))->rAmount >= MIN_BUDGET);
-    NODE_STATE_ON_CORE(ksCurSC, core)->scConsumed += consumed;
-    NODE_STATE_ON_CORE(ksConsumed, core) = 0;
-    if (isCurCPU && likely(isSchedulable(NODE_STATE_ON_CORE(ksCurThread, core)))) {
+    assert(refill_head(NODE_STATE(ksCurSC))->rAmount >= MIN_BUDGET);
+    NODE_STATE(ksCurSC)->scConsumed += consumed;
+    NODE_STATE(ksConsumed) = 0;
+    if (likely(isSchedulable(NODE_STATE(ksCurThread)))) {
         assert(NODE_STATE(ksCurThread)->tcbSchedContext == NODE_STATE(ksCurSC));
         endTimeslice(canTimeoutFault);
         rescheduleRequired();

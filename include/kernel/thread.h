@@ -212,7 +212,7 @@ static inline void updateRestartPC(tcb_t *tcb)
 void endTimeslice(bool_t can_timeout_fault);
 
 /* called when a thread has used up its head refill */
-void chargeBudget(ticks_t consumed, bool_t canTimeoutFault, word_t core, bool_t isCurCPU);
+void chargeBudget(ticks_t consumed, bool_t canTimeoutFault);
 
 /* Update the kernels timestamp and stores in ksCurTime.
  * The difference between the previous kernel timestamp and the one just read
@@ -269,7 +269,7 @@ static inline bool_t checkBudget(void)
         return true;
     }
 
-    chargeBudget(NODE_STATE(ksConsumed), true, CURRENT_CPU_INDEX(), true);
+    chargeBudget(NODE_STATE(ksConsumed), true);
     return false;
 }
 
