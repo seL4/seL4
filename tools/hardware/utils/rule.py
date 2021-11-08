@@ -78,7 +78,7 @@ class KernelRegionGroup:
         self.kernel_offset = offset
         return offset + self.size
 
-    def get_labelled_addresses(self):
+    def get_labelled_addresses(self) -> Dict:
         ''' Get a dict of address -> label for the kernel '''
         ret = {}
         for (k, v) in self.labels.items():

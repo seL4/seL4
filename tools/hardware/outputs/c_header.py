@@ -7,7 +7,7 @@
 ''' generate a c header file from the device tree '''
 import argparse
 import builtins
-
+from typing import Dict, List
 from jinja2 import Environment, BaseLoader
 
 from hardware import config, fdt
@@ -120,7 +120,7 @@ static const p_region_t BOOT_RODATA avail_p_regs[] = {
 '''
 
 
-def get_kernel_devices(tree: fdt.FdtParser, rules: rule.HardwareYaml):
+def get_kernel_devices(tree: fdt.FdtParser, rules: rule.HardwareYaml) -> (List, Dict):
     '''
     Given a device tree and a set of rules, returns a tuple (groups, offsets).
 
@@ -151,7 +151,7 @@ def get_kernel_devices(tree: fdt.FdtParser, rules: rule.HardwareYaml):
     return (groups, offsets)
 
 
-def get_interrupts(tree: fdt.FdtParser, rules: rule.HardwareYaml):
+def get_interrupts(tree: fdt.FdtParser, rules: rule.HardwareYaml) -> List:
     ''' Get dict of interrupts, {label: KernelInterrupt} from the DT and hardware rules. '''
     kernel_devices = tree.get_kernel_devices()
 
