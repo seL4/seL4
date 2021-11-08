@@ -6,7 +6,6 @@
 
 from __future__ import annotations
 import hardware
-from hardware.config import Config
 from hardware.device import WrappedNode
 from hardware.fdt import FdtParser
 from hardware.memory import Region
@@ -61,7 +60,7 @@ def carve_out_region(regions: Set[Region], reserved_reg: Region) -> Set[Region]:
     return ret_regions
 
 
-def get_phys_mem_regions(tree: FdtParser, config: Config, hw_yaml: HardwareYaml) \
+def get_phys_mem_regions(tree: FdtParser, hw_yaml: HardwareYaml) \
         -> (List[Region], List[Region], int):
     '''
     Returns a list of regions representing physical memory as used by the kernel
@@ -103,7 +102,7 @@ def get_phys_mem_regions(tree: FdtParser, config: Config, hw_yaml: HardwareYaml)
     # after we have removed the reserved region from the device tree, because we
     # also get 'kernel_phys_base' here. And once we have that, the memory
     # regions can't the modified any longer.
-    kernel_phys_align = config.get_kernel_phys_align()
+    kernel_phys_align = hw_yaml.config.get_kernel_phys_align()
     if kernel_phys_align != 0:
         # Align the first so that the ELF loader will be able to load the kernel
         # into it. Will return the aligned memory region list, a set of any
@@ -130,8 +129,8 @@ def get_phys_mem_regions(tree: FdtParser, config: Config, hw_yaml: HardwareYaml)
         Region(
             0,
             hardware.utils.align_down(
-                config.addrspace_max,
-                config.get_smallest_kernel_object_alignment()))
+                hw_yaml.config.addrspace_max,
+                hw_yaml.config.get_smallest_kernel_object_alignment()))
     }
 
     for reg in mem_region_list + reserved_region_list:

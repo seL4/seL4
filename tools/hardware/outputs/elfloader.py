@@ -143,7 +143,7 @@ def get_elfloader_cpus(tree: fdt.FdtParser, devices: List[device.WrappedNode]) -
     return sorted(cpu_info, key=lambda a: a['cpuid'])
 
 
-def run(tree: fdt.FdtParser, hardware: rule.HardwareYaml, config: config.Config, args: argparse.Namespace):
+def run(tree: fdt.FdtParser, hardware: rule.HardwareYaml, args: argparse.Namespace):
     devices = tree.get_elfloader_devices()
     cpu_info = get_elfloader_cpus(tree, devices)
 

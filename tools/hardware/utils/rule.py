@@ -216,10 +216,11 @@ class DeviceRule:
 
 
 class HardwareYaml:
-    ''' Represents the hardware configuration file '''
+    ''' Represents the hardware configuration '''
 
     def __init__(self, yaml: dict, config: Config):
         self.rules = {}
+        self.config = config
         for dev in yaml['devices']:
             rule = DeviceRule(dev, config)
             for compat in dev['compatible']:
