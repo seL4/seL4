@@ -20,8 +20,7 @@ class Region:
 
     @staticmethod
     def clone(other):
-        ret = Region(other.base, other.size)
-        return ret
+        return Region(other.base, other.size)
 
     def __repr__(self):
         ''' Returns a string representation that is a valid Python expression
@@ -54,18 +53,14 @@ class Region:
         if start > end:
             raise ValueError(
                 'invalid rage start (0x{:x}) > end (0x{:x})'.format(start > end))
-        ret = Region(start, end - start, owner)
-        return ret
+        return Region(start, end - start, owner)
 
     def overlaps(self, other):
         ''' returns True if this region overlaps the given region '''
-        # either our base is first, and to overlap our end must be > other.base
-        if self.base <= other.base and (self.base + self.size) > other.base:
-            return True
+        # Either our base is first, and to overlap our end must be > other.base
         # or other.base is first, and to overlap other's end must be > self.base
-        elif other.base <= self.base and (other.base + other.size) > self.base:
-            return True
-        return False
+        return (self.base <= other.base and (self.base + self.size) > other.base) \
+            or (other.base <= self.base and (other.base + other.size) > self.base)
 
     def reserve(self, excluded):
         ''' returns an array of regions that represent this region
@@ -108,8 +103,7 @@ class Region:
          up '''
         new_base = utils.align_down(self.base, align_bits)
         new_size = utils.align_up(self.size, align_bits)
-        new = Region(new_base, new_size, self.owner)
-        return new
+        return Region(new_base, new_size, self.owner)
 
     def make_chunks(self, chunksz):
         base = self.base
