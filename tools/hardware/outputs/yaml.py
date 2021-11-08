@@ -10,7 +10,6 @@ import argparse
 import yaml
 from typing import List, Dict
 import hardware
-from hardware.config import Config
 from hardware.fdt import FdtParser
 from hardware.memory import Region
 from hardware.utils.rule import HardwareYaml, KernelInterrupt
@@ -41,7 +40,7 @@ def create_yaml_file(regions_dict: Dict[str, List[Region]], outputStream):
             outputStream)
 
 
-def run(tree: FdtParser, hw_yaml: HardwareYaml, config: Config, args: argparse.Namespace):
+def run(tree: FdtParser, hw_yaml: HardwareYaml, args: argparse.Namespace):
 
     if not args.yaml_out:
         raise ValueError('you need to provide a yaml-out to use the yaml output method')
@@ -49,7 +48,6 @@ def run(tree: FdtParser, hw_yaml: HardwareYaml, config: Config, args: argparse.N
     # Get the physical memory and device regions, we don't care about the kernel
     # phy_base address here.
     phys_mem, dev_mem, _ = hardware.utils.memory.get_phys_mem_regions(tree,
-                                                                      config,
                                                                       hw_yaml)
 
     create_yaml_file(

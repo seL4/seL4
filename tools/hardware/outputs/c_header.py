@@ -10,7 +10,6 @@ import builtins
 import jinja2
 from typing import Dict, List
 import hardware
-from hardware.config import Config
 from hardware.fdt import FdtParser
 from hardware.memory import Region
 from hardware.utils.rule import HardwareYaml, KernelInterrupt
@@ -119,7 +118,8 @@ static const p_region_t BOOT_RODATA avail_p_regs[] = {
 '''
 
 
-def create_c_header_file(config, kernel_irqs: List[KernelInterrupt],
+def create_c_header_file(hw_yaml: HardwareYaml,
+                         kernel_irqs: List[KernelInterrupt],
                          kernel_dev_addr_macros: Dict[str, int],
                          kernel_regions: List[Region], physBase: int,
                          physical_memory: List[Region], outputStream):
@@ -130,7 +130,7 @@ def create_c_header_file(config, kernel_irqs: List[KernelInterrupt],
     template_args = dict(
         builtins.__dict__,
         **{
-            'config': config,
+            'config': hw_yaml.config,
             'kernel_irqs': kernel_irqs,
             'kernel_dev_addr_macros': kernel_dev_addr_macros,
             'kernel_regions': kernel_regions,
@@ -142,14 +142,13 @@ def create_c_header_file(config, kernel_irqs: List[KernelInterrupt],
         outputStream.write(data)
 
 
-def run(tree: FdtParser, hw_yaml: HardwareYaml, config: Config, args: argparse.Namespace):
+def run(tree: FdtParser, hw_yaml: HardwareYaml, args: argparse.Namespace):
     if not args.header_out:
         raise ValueError('You need to specify a header-out to use c header output')
 
     # We only care about the available physical memory and the kernel's phys
     # base. The device memory regions are not relevant here.
     physical_memory, _, physBase = hardware.utils.memory.get_phys_mem_regions(tree,
-                                                                              config,
                                                                               hw_yaml)
 
     # Collect the interrupts and kernel regions for the devices.
@@ -188,7 +187,7 @@ def run(tree: FdtParser, hw_yaml: HardwareYaml, config: Config, args: argparse.N
             kernel_dev_addr_macros[label] = offset
 
     create_c_header_file(
-        config,
+        hw_yaml,
         sorted(kernel_irq_dict.values(), key=lambda irq: irq.label),
         sorted(kernel_dev_addr_macros.items(), key=lambda tupel: tupel[1]),
         kernel_regions,

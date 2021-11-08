@@ -7,7 +7,6 @@
 from typing import List, Set
 
 import hardware
-from hardware.config import Config
 from hardware.device import WrappedNode
 from hardware.fdt import FdtParser
 from hardware.memory import Region
@@ -58,7 +57,7 @@ def carve_out_region(regions: List[Region], reserved_reg: Region) -> Set[Region]
     return ret_regions
 
 
-def get_phys_mem_regions(tree: FdtParser, config: Config, hw_yaml: HardwareYaml) \
+def get_phys_mem_regions(tree: FdtParser, hw_yaml: HardwareYaml) \
         -> (List[Region], List[Region], int):
     '''
     Returns a list of regions representing physical memory as used by the kernel
@@ -93,7 +92,7 @@ def get_phys_mem_regions(tree: FdtParser, config: Config, hw_yaml: HardwareYaml)
     # after we have removed the reserved region from the device tree, because we
     # also get 'kernel_phys_base' here. And once we have that, the memory
     # regions can't the modified any longer.
-    cfg_reserved_regs, kernel_phys_base = config.align_memory(mem_regions)
+    cfg_reserved_regs, kernel_phys_base = hw_yaml.config.align_memory(mem_regions)
     for r in cfg_reserved_regs:
         mem_regions = carve_out_region(mem_regions, r)
     reserved_regions.update(cfg_reserved_regs)
@@ -113,8 +112,8 @@ def get_phys_mem_regions(tree: FdtParser, config: Config, hw_yaml: HardwareYaml)
         Region(
             0,
             hardware.utils.align_down(
-                config.addrspace_max,
-                config.get_smallest_kernel_object_alignment()))
+                hw_yaml.config.addrspace_max,
+                hw_yaml.config.get_smallest_kernel_object_alignment()))
     }
 
     for reg in mem_region_list + reserved_region_list:

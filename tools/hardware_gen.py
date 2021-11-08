@@ -59,7 +59,7 @@ def main(args: argparse.Namespace):
     arg_dict = vars(args)
     for t in sorted(OUTPUTS.keys()):
         if arg_dict[t]:
-            OUTPUTS[t].run(parsed_dt, hw_yaml, cfg, args)
+            OUTPUTS[t].run(parsed_dt, hw_yaml, args)
 
 
 if __name__ == '__main__':
