@@ -7,9 +7,8 @@
 ''' generate a c header file from the device tree '''
 import argparse
 import builtins
+import jinja2
 from typing import Dict, List
-from jinja2 import Environment, BaseLoader
-
 from hardware import config, fdt
 from hardware.utils import memory, rule
 
@@ -174,28 +173,44 @@ def get_interrupts(tree: fdt.FdtParser, hw_yaml: rule.HardwareYaml) -> List:
     return ret
 
 
+def create_c_header_file(args, kernel_irqs: List, kernel_macros: Dict,
+                         kernel_regions: List, physBase: int, physical_memory,
+                         outputStream):
+
+    jinja_env = jinja2.Environment(loader=jinja2.BaseLoader, trim_blocks=True,
+                                   lstrip_blocks=True)
+
+    template = jinja_env.from_string(HEADER_TEMPLATE)
+    template_args = dict(
+        builtins.__dict__,
+        **{
+            'args': args,
+            'kernel_irqs': kernel_irqs,
+            'kernel_macros': kernel_macros,
+            'kernel_regions': kernel_regions,
+            'physBase': physBase,
+            'physical_memory': physical_memory})
+    data = template.render(template_args)
+
+    with outputStream:
+        outputStream.write(data)
+
+
 def run(tree: fdt.FdtParser, hw_yaml: rule.HardwareYaml, config: config.Config, args: argparse.Namespace):
     if not args.header_out:
         raise ValueError('You need to specify a header-out to use c header output')
 
     physical_memory, reserved, physBase = memory.get_physical_memory(tree, config)
     kernel_regions, kernel_macros = get_kernel_devices(tree, hw_yaml)
-    kernel_irqs = get_interrupts(tree, hw_yaml)
-    template = Environment(loader=BaseLoader, trim_blocks=True,
-                           lstrip_blocks=True).from_string(HEADER_TEMPLATE)
 
-    template_args = dict(builtins.__dict__, **{
-        'args': args,
-        'kernel_irqs': kernel_irqs,
-        'kernel_macros': kernel_macros,
-        'kernel_regions': kernel_regions,
-        'physBase': physBase,
-        'physical_memory': physical_memory,
-    })
-
-    data = template.render(template_args)
-    args.header_out.write(data)
-    args.header_out.close()
+    create_c_header_file(
+        args,
+        get_interrupts(tree, hw_yaml),
+        kernel_macros,
+        kernel_regions,
+        physBase,
+        physical_memory,
+        args.header_out)
 
 
 def add_args(parser):
