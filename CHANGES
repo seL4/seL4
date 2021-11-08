@@ -65,6 +65,8 @@ Upcoming release: BREAKING
   `KernelRiscvUseClintMtime` configuration option which is enabled by default for all current RISC-V
   platforms. With future RISC-V platforms, enabling this configuration option may not actually be an
   optimization.
+* Added SMC Capability (smc_cap) and SMC forwarding for aarch64 platforms. See
+  [RFC-9](https://sel4.atlassian.net/browse/RFC-9).
 
 ## Upgrade Notes
 
