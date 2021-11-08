@@ -9,8 +9,11 @@ import argparse
 import builtins
 import jinja2
 from typing import Dict, List
-from hardware import config, fdt
-from hardware.utils import memory, rule
+import hardware
+from hardware.config import Config
+from hardware.fdt import FdtParser
+from hardware.utils.rule import HardwareYaml
+
 
 HEADER_TEMPLATE = '''/*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
@@ -119,7 +122,7 @@ static const p_region_t BOOT_RODATA avail_p_regs[] = {
 '''
 
 
-def get_kernel_devices(tree: fdt.FdtParser, hw_yaml: rule.HardwareYaml) -> (List, Dict):
+def get_kernel_devices(tree: FdtParser, hw_yaml: HardwareYaml) -> (List, Dict):
     '''
     Given a device tree and a set of rules, returns a tuple (groups, offsets).
 
@@ -150,7 +153,7 @@ def get_kernel_devices(tree: fdt.FdtParser, hw_yaml: rule.HardwareYaml) -> (List
     return (groups, offsets)
 
 
-def get_interrupts(tree: fdt.FdtParser, hw_yaml: rule.HardwareYaml) -> List:
+def get_interrupts(tree: FdtParser, hw_yaml: HardwareYaml) -> List:
     ''' Get dict of interrupts, {label: KernelInterrupt} from the DT and hardware rules. '''
     kernel_devices = tree.get_kernel_devices()
 
@@ -196,11 +199,11 @@ def create_c_header_file(args, kernel_irqs: List, kernel_macros: Dict,
         outputStream.write(data)
 
 
-def run(tree: fdt.FdtParser, hw_yaml: rule.HardwareYaml, config: config.Config, args: argparse.Namespace):
+def run(tree: FdtParser, hw_yaml: HardwareYaml, config: Config, args: argparse.Namespace):
     if not args.header_out:
         raise ValueError('You need to specify a header-out to use c header output')
 
-    physical_memory, reserved, physBase = memory.get_physical_memory(tree, config)
+    physical_memory, reserved, physBase = hardware.utils.memory.get_physical_memory(tree, config)
     kernel_regions, kernel_macros = get_kernel_devices(tree, hw_yaml)
 
     create_c_header_file(

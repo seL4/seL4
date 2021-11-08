@@ -10,9 +10,12 @@ import argparse
 import logging
 import yaml
 
-from hardware import config, fdt
+import hardware
+from hardware.config import Config
+from hardware.fdt import FdtParser
 from hardware.outputs import c_header, compat_strings, yaml as yaml_out, elfloader
 from hardware.utils.rule import HardwareYaml
+
 
 OUTPUTS = {
     'c_header': c_header,
@@ -46,8 +49,8 @@ def add_task_args(outputs: dict, parser: argparse.ArgumentParser):
 def main(args: argparse.Namespace):
     ''' Parse the DT and hardware config YAML and run each
     selected output method. '''
-    cfg = config.get_arch_config(args.arch, args.addrspace_max)
-    parsed_dt = fdt.FdtParser(args.dtb)
+    cfg = hardware.config.get_arch_config(args.arch, args.addrspace_max)
+    parsed_dt = FdtParser(args.dtb)
     rules = yaml.load(args.hardware_config, Loader=yaml.FullLoader)
     schema = yaml.load(args.hardware_schema, Loader=yaml.FullLoader)
     validate_rules(rules, schema)
