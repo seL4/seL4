@@ -51,12 +51,12 @@ def main(args: argparse.Namespace):
     rules = yaml.load(args.hardware_config, Loader=yaml.FullLoader)
     schema = yaml.load(args.hardware_schema, Loader=yaml.FullLoader)
     validate_rules(rules, schema)
-    hardware = HardwareYaml(rules, cfg)
+    hw_yaml = HardwareYaml(rules, cfg)
 
     arg_dict = vars(args)
     for t in sorted(OUTPUTS.keys()):
         if arg_dict[t]:
-            OUTPUTS[t].run(parsed_dt, hardware, cfg, args)
+            OUTPUTS[t].run(parsed_dt, hw_yaml, cfg, args)
 
 
 if __name__ == '__main__':
