@@ -16,6 +16,10 @@
 #include <arch/object/smmu.h>
 #endif
 
+#ifdef CONFIG_ALLOW_SMC_CALLS
+#include <arch/object/smc.h>
+#endif
+
 /* The top level asid mapping table */
 extern asid_pool_t *armKSASIDTable[BIT(asidHighBits)] VISIBLE;
 

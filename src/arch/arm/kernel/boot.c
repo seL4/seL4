@@ -161,6 +161,14 @@ BOOT_CODE static void init_smmu(cap_t root_cnode_cap)
 
 #endif
 
+#ifdef CONFIG_ALLOW_SMC_CALLS
+BOOT_CODE static void init_smc(cap_t root_cnode_cap)
+{
+    /* Provide the SMC cap*/
+    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapSMC), cap_smc_cap_new());
+}
+#endif
+
 /** This and only this function initialises the CPU.
  *
  * It does NOT initialise any kernel state.
@@ -436,6 +444,10 @@ static BOOT_CODE bool_t try_init_kernel(
     /* initialise the SMMU and provide the SMMU control caps*/
     init_smmu(root_cnode_cap);
 #endif
+#ifdef CONFIG_ALLOW_SMC_CALLS
+    init_smc(root_cnode_cap);
+#endif
+
     populate_bi_frame(0, CONFIG_MAX_NUM_NODES, ipcbuf_vptr, extra_bi_size);
 
     /* put DTB in the bootinfo block, if present. */

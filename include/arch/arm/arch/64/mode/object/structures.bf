@@ -126,6 +126,15 @@ block cb_cap {
 
 #endif
 
+#ifdef CONFIG_ALLOW_SMC_CALLS
+block smc_cap {
+    padding        64
+
+    field capType  5
+    padding        59
+}
+#endif
+
 -- NB: odd numbers are arch caps (see isArchCap())
 tagged_union cap capType {
     -- 5-bit tag caps
@@ -159,6 +168,9 @@ tagged_union cap capType {
     tag sid_cap                     19
     tag cb_control_cap              21
     tag cb_cap                      23
+#endif
+#ifdef CONFIG_ALLOW_SMC_CALLS
+    tag smc_cap                     25
 #endif
 }
 

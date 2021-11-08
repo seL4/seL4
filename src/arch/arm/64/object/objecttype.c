@@ -85,6 +85,12 @@ deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
         ret.status = EXCEPTION_NONE;
         return ret;
 #endif
+#ifdef CONFIG_ALLOW_SMC_CALLS
+    case cap_smc_cap:
+        ret.cap = cap;
+        ret.status = EXCEPTION_NONE;
+        return ret;
+#endif
     default:
         /* This assert has no equivalent in haskell,
          * as the options are restricted by type */
@@ -403,6 +409,10 @@ exception_t Arch_decodeInvocation(word_t label, word_t length, cptr_t cptr,
     case cap_cb_cap:
         return decodeARMCBInvocation(label, length, cptr, slot, cap, call, buffer);
 #endif /*CONFIG_ARM_SMMU*/
+#ifdef CONFIG_ALLOW_SMC_CALLS
+    case cap_smc_cap:
+        return decodeARMSMCInvocation(label, length, cptr, slot, cap, call, buffer);
+#endif
     default:
 #else
 {
