@@ -9,9 +9,10 @@
 import argparse
 import yaml
 from typing import List
-from hardware import config, fdt
-from hardware.utils import memory, rule
-from hardware.memory import Region
+import hardware
+from hardware.config import Config
+from hardware.fdt import FdtParser
+from hardware.utils.rule import HardwareYaml
 
 
 def make_yaml_list_of_regions(regions) -> List:
@@ -39,7 +40,7 @@ def create_yaml_file(dev_mem, phys_mem, outputStream):
         yaml.dump(yaml_obj, outputStream)
 
 
-def get_kernel_devices(tree: fdt.FdtParser, hw_yaml: rule.HardwareYaml):
+def get_kernel_devices(tree: FdtParser, hw_yaml: HardwareYaml):
     kernel_devices = tree.get_kernel_devices()
 
     groups = []
@@ -50,14 +51,15 @@ def get_kernel_devices(tree: fdt.FdtParser, hw_yaml: rule.HardwareYaml):
     return groups
 
 
-def run(tree: fdt.FdtParser, hw_yaml: rule.HardwareYaml, config: config.Config,
+def run(tree: FdtParser, hw_yaml: HardwareYaml, config: Config,
         args: argparse.Namespace):
     if not args.yaml_out:
         raise ValueError('you need to provide a yaml-out to use the yaml output method')
 
-    phys_mem, reserved, _ = memory.get_physical_memory(tree, config)
+    phys_mem, reserved, _ = hardware.utils.memory.get_physical_memory(tree, config)
     kernel_devs = get_kernel_devices(tree, hw_yaml)
-    dev_mem = memory.get_addrspace_exclude(list(reserved) + phys_mem + kernel_devs, config)
+    dev_mem = hardware.utils.memory.get_addrspace_exclude(
+        list(reserved) + phys_mem + kernel_devs, config)
 
     create_yaml_file(dev_mem, phys_mem, args.yaml_out)
 
