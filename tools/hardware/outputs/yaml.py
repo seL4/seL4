@@ -13,23 +13,23 @@ from hardware import config, fdt
 from hardware.utils import memory, rule
 
 
-def get_kernel_devices(tree: fdt.FdtParser, rules: rule.HardwareYaml):
+def get_kernel_devices(tree: fdt.FdtParser, hw_yaml: rule.HardwareYaml):
     kernel_devices = tree.get_kernel_devices()
 
     groups = []
     for dev in kernel_devices:
-        rule = rules.get_rule(dev)
+        rule = hw_yaml.get_rule(dev)
         groups += rule.get_regions(dev)
 
     return groups
 
 
-def run(tree: fdt.FdtParser, hardware: rule.HardwareYaml, config: config.Config,
+def run(tree: fdt.FdtParser, hw_yaml: rule.HardwareYaml, config: config.Config,
         args: argparse.Namespace):
     if not args.yaml_out:
         raise ValueError('you need to provide a yaml-out to use the yaml output method')
     phys_mem, reserved, _ = memory.get_physical_memory(tree, config)
-    kernel_devs = get_kernel_devices(tree, hardware)
+    kernel_devs = get_kernel_devices(tree, hw_yaml)
     dev_mem = memory.get_addrspace_exclude(list(reserved) + phys_mem + kernel_devs, config)
 
     yaml.add_representer(int, lambda dumper, data: yaml.ScalarNode(

@@ -120,7 +120,7 @@ static const p_region_t BOOT_RODATA avail_p_regs[] = {
 '''
 
 
-def get_kernel_devices(tree: fdt.FdtParser, rules: rule.HardwareYaml) -> (List, Dict):
+def get_kernel_devices(tree: fdt.FdtParser, hw_yaml: rule.HardwareYaml) -> (List, Dict):
     '''
     Given a device tree and a set of rules, returns a tuple (groups, offsets).
 
@@ -135,7 +135,7 @@ def get_kernel_devices(tree: fdt.FdtParser, rules: rule.HardwareYaml) -> (List, 
     kernel_offset = 0
     groups = []
     for dev in kernel_devices:
-        dev_rule = rules.get_rule(dev)
+        dev_rule = hw_yaml.get_rule(dev)
         new_regions = dev_rule.get_regions(dev)
         for reg in new_regions:
             if reg in groups:
@@ -151,13 +151,13 @@ def get_kernel_devices(tree: fdt.FdtParser, rules: rule.HardwareYaml) -> (List, 
     return (groups, offsets)
 
 
-def get_interrupts(tree: fdt.FdtParser, rules: rule.HardwareYaml) -> List:
+def get_interrupts(tree: fdt.FdtParser, hw_yaml: rule.HardwareYaml) -> List:
     ''' Get dict of interrupts, {label: KernelInterrupt} from the DT and hardware rules. '''
     kernel_devices = tree.get_kernel_devices()
 
     irqs = []
     for dev in kernel_devices:
-        dev_rule = rules.get_rule(dev)
+        dev_rule = hw_yaml.get_rule(dev)
         if len(dev_rule.interrupts.items()) > 0:
             irqs += dev_rule.get_interrupts(tree, dev)
 
@@ -174,13 +174,13 @@ def get_interrupts(tree: fdt.FdtParser, rules: rule.HardwareYaml) -> List:
     return ret
 
 
-def run(tree: fdt.FdtParser, hardware: rule.HardwareYaml, config: config.Config, args: argparse.Namespace):
+def run(tree: fdt.FdtParser, hw_yaml: rule.HardwareYaml, config: config.Config, args: argparse.Namespace):
     if not args.header_out:
         raise ValueError('You need to specify a header-out to use c header output')
 
     physical_memory, reserved, physBase = memory.get_physical_memory(tree, config)
-    kernel_regions, kernel_macros = get_kernel_devices(tree, hardware)
-    kernel_irqs = get_interrupts(tree, hardware)
+    kernel_regions, kernel_macros = get_kernel_devices(tree, hw_yaml)
+    kernel_irqs = get_interrupts(tree, hw_yaml)
     template = Environment(loader=BaseLoader, trim_blocks=True,
                            lstrip_blocks=True).from_string(HEADER_TEMPLATE)
 
