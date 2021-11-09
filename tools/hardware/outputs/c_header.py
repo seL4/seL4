@@ -52,7 +52,6 @@ HEADER_TEMPLATE = '''/*
 {% if irq.has_enable() %}
 {{ irq.get_enable_endif() }}
 {% endif %}
-
 {% endfor -%}
 
 /* KERNEL DEVICES */
@@ -88,6 +87,7 @@ static const kernel_frame_t BOOT_RODATA kernel_device_frames[] = {
     {% endif %}
     {% endfor %}
 };
+
 /* Elements in kernel_device_frames may be enabled in specific configurations
  * only, but the ARRAY_SIZE() macro will automatically take care of this.
  * However, one corner case remains unsolved where all elements are disabled
