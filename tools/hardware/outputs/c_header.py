@@ -25,13 +25,14 @@ HEADER_TEMPLATE = '''/*
 
 #pragma once
 
-#include <linker.h>
-
-#ifndef KDEV_BASE
-#include <mode/hardware.h>
-#endif
-
 #define physBase {{ "0x{:x}".format(physBase) }}
+
+#ifndef __ASSEMBLER__
+
+#include <config.h>
+#include <mode/hardware.h>  /* for KDEV_BASE */
+#include <linker.h>         /* for BOOT_RODATA */
+#include <basic_types.h>    /* for p_region_t, kernel_frame_t (arch/types.h) */
 
 /* INTERRUPTS */
 {% for irq in kernel_irqs %}
@@ -59,7 +60,6 @@ HEADER_TEMPLATE = '''/*
 #define {{ macro }} (KDEV_BASE + {{ "0x{:x}".format(addr) }})
 {% endfor %}
 
-#ifndef __ASSEMBLER__
 {% if len(kernel_regions) > 0 %}
 static const kernel_frame_t BOOT_RODATA kernel_device_frames[] = {
     {% for group in kernel_regions %}
