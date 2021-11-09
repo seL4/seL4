@@ -82,7 +82,9 @@ if(KernelPlatformQEMUArmVirt)
         ERROR_VARIABLE QEMU_OUTPUT_MESSAGE
         RESULT_VARIABLE error
     )
-    string(STRIP ${QEMU_OUTPUT_MESSAGE} QEMU_OUTPUT_MESSAGE)
+    if(${QEMU_OUTPUT_MESSAGE})
+        string(STRIP ${QEMU_OUTPUT_MESSAGE} QEMU_OUTPUT_MESSAGE)
+    endif()
     message(STATUS ${QEMU_OUTPUT_MESSAGE})
     if(error)
         message(FATAL_ERROR "Failed to dump DTB using ${QEMU_BINARY})")
