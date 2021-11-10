@@ -24,7 +24,7 @@ static inline uint64_t riscv_read_time(void)
         asm volatile("rdtime  %0\n" : "=r"(nL));
         nH1 = nH2;
     }
-    return ((uint64_t)((uint64_t) nH1 << 32)) | (nL);
+    return ((uint64_t)nH1 << 32) | nL;
 }
 
 
@@ -42,5 +42,5 @@ static inline uint64_t riscv_read_cycle(void)
         asm volatile("rdcycle  %0\n" : "=r"(nL));
         nH1 = nH2;
     }
-    return ((uint64_t)((uint64_t) nH1 << 32)) | (nL);
+    return ((uint64_t) nH1 << 32) | nL;
 }
