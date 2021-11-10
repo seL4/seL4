@@ -18,7 +18,7 @@ static inline uint64_t riscv_read_time(void)
         "rdtime  %1\n"
         "rdtimeh %2\n"
         : "=r"(nH1), "=r"(nL), "=r"(nH2));
-    if (nH1 < nH2) {
+    if (nH1 != nH2) {
         /* Ensure that the time is correct if there is a rollover in the
          * high bits between reading the low and high bits. */
         asm volatile("rdtime  %0\n" : "=r"(nL));
