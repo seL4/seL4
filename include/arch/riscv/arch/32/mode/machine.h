@@ -22,9 +22,8 @@ static inline uint64_t riscv_read_time(void)
         /* Ensure that the time is correct if there is a rollover in the
          * high bits between reading the low and high bits. */
         asm volatile("rdtime  %0\n" : "=r"(nL));
-        nH1 = nH2;
     }
-    return ((uint64_t)nH1 << 32) | nL;
+    return (((uint64_t)nH2) << 32) | nL;
 }
 
 
@@ -40,7 +39,6 @@ static inline uint64_t riscv_read_cycle(void)
         /* Ensure that the cycles are correct if there is a rollover in the
          * high bits between reading the low and high bits. */
         asm volatile("rdcycle  %0\n" : "=r"(nL));
-        nH1 = nH2;
     }
-    return ((uint64_t) nH1 << 32) | nL;
+    return (((uint64_t)nH2) << 32) | nL;
 }
