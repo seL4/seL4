@@ -17,16 +17,50 @@
 
 BOOT_CODE bool_t platAddDevices(void)
 {
-    /* remove the MSI region as poking at this is undefined and may allow for
-     * the user to generate arbitrary MSI interrupts. Only need to consider
-     * this if it would actually be in the user device region */
-    if (CONFIG_PADDR_USER_DEVICE_TOP > 0xFFFFFFF8) {
-        if (!reserve_region((p_region_t) {
-        (word_t)0xFFFFFFF8, (word_t)0xFFFFFFF8 + 8
-        })) {
+
+    /* The last 64 KiByte page of the physical address space is not allowed to
+     * be used to to prevent userland from exploiting a corner case. If e.g. a
+     * syscall is placed at the very last instruction, the hardware generates a
+     * return address of that address +2, which is non-canonical. The kernel
+     * loads that invalid address into sysret and this may cause undefined
+     * behavior eventually.
+     * See also https://sel4.atlassian.net/browse/SELFOUR-1179.
+     */
+    p_region_t p_reg_reserved = {
+        .start = ROUND_DOWN(CONFIG_PHYS_ADDR_TOP, 16),
+        .end   = CONFIG_PHYS_ADDR_TOP
+    };
+
+    if (!reserve_region(p_reg_reserved)) {
+        printf("ERROR: could not reserve last 64k of phys memory "
+               "[0x%"SEL4_PRIx_word": 0x%08"SEL4_PRIx_word"\n",
+               p_reg_reserved.start, p_reg_reserved.end);
+        return false;
+    }
+
+#ifndef CONFIG_ARCH_IA32
+
+    /* remove the 8 byte MSI region [0xfffffff8 - ffffffff] at the end of the
+     * 32-bit address range, as poking at this area is undefined and may allow
+     * for the user to generate arbitrary MSI interrupts. Only need to consider
+     * this if it would actually be in the user device region.
+     */
+    p_region_t p_reg_msi = {
+        .start = SEL4_WORD_CONST(0xfffffff8),
+        .end   = SEL4_WORD_CONST(0xffffffff)
+    };
+
+    if (CONFIG_PHYS_ADDR_TOP > p_reg_msi.start) {
+        if (!reserve_region(p_reg_msi)) {
+            printf("ERROR: could not reserve MSI region "
+                   "[0x%"SEL4_PRIx_word": 0x%08"SEL4_PRIx_word"\n",
+                   p_reg_msi.start, p_reg_msi.end);
             return false;
         }
     }
+
+#endif /* not CONFIG_ARCH_IA32 */
+
     return true;
 }
 

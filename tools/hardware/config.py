@@ -11,9 +11,9 @@ class Config:
     ''' Abstract config class '''
     arch = 'unknown'
 
-    def __init__(self, sel4arch, addrspace_max):
+    def __init__(self, sel4arch, phys_addr_space_bits):
         self.sel4arch = sel4arch
-        self.addrspace_max = addrspace_max
+        self.phys_addr_space_bits = phys_addr_space_bits
 
     def get_page_bits(self) -> int:
         ''' Get page size in bits for this arch '''
@@ -25,6 +25,10 @@ class Config:
     def get_device_page_bits(self) -> int:
         ''' Get page size in bits for mapping devices for this arch '''
         return self.get_page_bits()
+
+    def get_phys_addr_space_bits(self) -> int:
+        ''' Return the physical address space in 2^n bits. '''
+        return self.phys_addr_space_bits
 
     def align_memory(self, regions: Set[Region]) -> (List[Region], int):
         '''
@@ -100,11 +104,11 @@ class RISCVConfig(Config):
         raise ValueError('Unsupported sel4arch "{}" specified.'.format(self.sel4arch))
 
 
-def get_arch_config(sel4arch: str, addrspace_max: int) -> Config:
+def get_arch_config(sel4arch: str, phys_addr_space_bits: int) -> Config:
     ''' Return an appropriate Config object for the given architecture '''
     if sel4arch in ['aarch32', 'aarch64', 'arm_hyp']:
-        return ARMConfig(sel4arch, addrspace_max)
+        return ARMConfig(sel4arch, phys_addr_space_bits)
     elif sel4arch in ['riscv32', 'riscv64']:
-        return RISCVConfig(sel4arch, addrspace_max)
+        return RISCVConfig(sel4arch, phys_addr_space_bits)
     else:
         raise ValueError('Unsupported sel4arch "{}" specified.'.format(sel4arch))

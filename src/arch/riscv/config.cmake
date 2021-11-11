@@ -50,21 +50,25 @@ endif()
 
 if(KernelSel4ArchRiscV32)
     set(KernelPTLevels 2 CACHE STRING "" FORCE)
-endif()
-if(KernelPTLevels EQUAL 2)
-    if(KernelSel4ArchRiscV32)
-        # seL4 on RISCV32 uses 32-bit ints for addresses,
-        # so limit the maximum paddr to 32-bits.
-        math(EXPR KernelPaddrUserTop "(1 << 32) - 1")
+    # Actually, RV32 with Sv32 supports a 34-bit (16 GiByte) physical address
+    # space. However, we only support a 32-bit address space at the moment when
+    # targeting 32-bit architectures.
+    set(KernelPhysAddressSpaceBits 32)
+elseif(KernelSel4ArchRiscV64)
+    # The RISC-V privileged spec v1.12 defines that RV64 always uses a 56-bit
+    # physical address space.
+    if(KernelPTLevels EQUAL 3)
+        # structures.bf limits us to a 39-bit physical address space in Sv39
+        # mode with a 39-bit VA space and 3 page table levels
+        set(KernelPhysAddressSpaceBits 39)
     else()
-        math(EXPR KernelPaddrUserTop "1 << 34")
+        # Sv48: 48-bit VA space with 4 page table levels (unsupported)
+        # Sv57: 57-bit VA space with 5 page table levels (unsupported)
+        # Sv64: details still unclear
+        message(FATAL_ERROR "KernelPTLevels=${KernelPTLevels} is unsupported")
     endif()
-elseif(KernelPTLevels EQUAL 3)
-    # RISC-V technically supports 56-bit paddrs,
-    # but structures.bf limits us to using 39 of those bits.
-    math(EXPR KernelPaddrUserTop "1 << 39")
-elseif(KernelPTLevels EQUAL 4)
-    math(EXPR KernelPaddrUserTop "1 << 56")
+else()
+    message(FATAL_ERROR "unsuppored RISC-V architecture")
 endif()
 
 if(KernelRiscvExtD)

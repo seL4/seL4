@@ -346,9 +346,9 @@ config_option(
 
 if(KernelSel4ArchIA32)
     set(KernelSetTLSBaseSelf ON)
-    math(EXPR KernelPaddrUserTop "0xffff0000")
+    set(KernelPhysAddressSpaceBits 32)
 else()
-    math(EXPR KernelPaddrUserTop "1 << 47")
+    set(KernelPhysAddressSpaceBits 47)
 endif()
 if(KernelSel4ArchX86_64 AND NOT KernelFSGSBaseInst)
     set(KernelSetTLSBaseSelf ON)

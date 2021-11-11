@@ -215,8 +215,8 @@
    asserts check that the kernel config won't lead to UTs being created that aren't
    representable. */
 #ifndef __ASSEMBLER__
-compile_assert(ut_max_less_than_cannonical, CONFIG_PADDR_USER_DEVICE_TOP <= BIT(47));
+compile_assert(ut_max_less_than_cannonical, CONFIG_PHYS_ADDR_SPACE_BITS <= 47);
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-compile_assert(ut_max_is_cannonical, (PPTR_BASE + CONFIG_PADDR_USER_DEVICE_TOP) <= BIT(48));
+compile_assert(ut_max_is_cannonical, PPTR_BASE + CONFIG_PHYS_ADDR_TOP <= BIT(48));
 #endif
 #endif

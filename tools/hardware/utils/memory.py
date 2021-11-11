@@ -112,7 +112,7 @@ def get_phys_mem_regions(tree: FdtParser, hw_yaml: HardwareYaml) \
         Region(
             0,
             hardware.utils.align_down(
-                hw_yaml.config.addrspace_max,
+                2**hw_yaml.config.get_phys_addr_space_bits(),
                 hw_yaml.config.get_smallest_kernel_object_alignment()))
     }
 

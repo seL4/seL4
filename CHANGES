@@ -38,6 +38,8 @@ Upcoming release: BINARY COMPATIBLE
   constant seL4_GlobalsFrame from libsel4.
 * Implement KernelArmExportPTMRUser and KernelArmExportVTMRUser options for Arm generic timer use access on aarch32.
 * Removed obsolete define `HAVE_AUTOCONF`
+* Added CONFIG_PHYS_ADDR_SPACE_BITS (KernelPhysAddressSpaceBits), from this CONFIG_PHYS_ADDR_TOP (KernelPhysAddrTop)
+  gets derived in the generic CMake files. PADDR_USER_DEVICE_TOP (KernelPaddrUserTop) is kept as an alias.
 
 ## Upgrade Notes
 ---
