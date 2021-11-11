@@ -75,7 +75,8 @@ jobs:
           # - odroid_xu4
           - am335x_boneblack
           - tx2
-          # - rpi3
+          - rpi3
+          - rpi4
           - zynqmp
         compiler: [gcc, clang]
         include:
@@ -91,9 +92,8 @@ jobs:
            - platform: pc99
              compiler: clang
              mode: 64
-        # include:
-        #    - platform: hifive
-        #      compiler: gcc
+           - platform: hifive
+             compiler: gcc
     steps:
       - name: Get machine queue
         uses: actions/checkout@v2

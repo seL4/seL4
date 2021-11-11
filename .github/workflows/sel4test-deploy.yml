@@ -92,7 +92,8 @@ jobs:
           # - odroid_xu4
           - am335x_boneblack
           - tx2
-          # - rpi3
+          - rpi3
+          - rpi4
           - zynqmp
         compiler: [gcc, clang]
         include:
@@ -108,9 +109,8 @@ jobs:
            - platform: pc99
              compiler: clang
              mode: 64
-        # include:
-        #    - platform: hifive
-        #      compiler: gcc
+           - platform: hifive
+             compiler: gcc
     # do not run concurrently with other workflows, but do run concurrently in the build matrix
     concurrency: hw-run-${{ strategy.job-index }}
     steps:
