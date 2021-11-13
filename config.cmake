@@ -184,8 +184,8 @@ if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
                 ${PYTHON3} "${HARDWARE_GEN_PATH}" --dtb "${KernelDTBPath}" --compat-strings
                 --compat-strings-out "${compatibility_outfile}" --c-header --header-out
                 "${device_dest}" --hardware-config "${config_file}" --hardware-schema
-                "${config_schema}" --yaml --yaml-out "${platform_yaml}" --arch "${KernelArch}"
-                --addrspace-max "${KernelPaddrUserTop}"
+                "${config_schema}" --yaml --yaml-out "${platform_yaml}" --sel4arch
+                "${KernelSel4Arch}" --addrspace-max "${KernelPaddrUserTop}"
             RESULT_VARIABLE error
         )
         if(error)

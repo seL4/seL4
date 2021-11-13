@@ -11,7 +11,8 @@ class Config:
     ''' Abstract config class '''
     arch = 'unknown'
 
-    def __init__(self, addrspace_max):
+    def __init__(self, sel4arch, addrspace_max):
+        self.sel4arch = sel4arch
         self.addrspace_max = addrspace_max
 
     def get_kernel_phys_align(self) -> int:
@@ -46,8 +47,8 @@ class Config:
 
 class ARMConfig(Config):
     ''' Config class for ARM '''
-    SUPERSECTION_BITS = 24
     arch = 'arm'
+    SUPERSECTION_BITS = 24  # 2^24 = 16 MiByte
 
     def get_kernel_phys_align(self) -> int:
         ''' on ARM the ELF loader expects to be able to map a supersection page to load the kernel. '''
@@ -70,13 +71,17 @@ class ARMConfig(Config):
 
 class RISCVConfig(Config):
     ''' Config class for RISCV '''
-    MEGA_PAGE_SIZE = 0x200000
     arch = 'riscv'
+    MEGAPAGE_BITS_RV32 = 22  # 2^22 = 4 MiByte
+    MEGAPAGE_BITS_RV64 = 21  # 2^21 = 2 MiByte
+    MEGA_PAGE_SIZE_RV64 = 2**MEGAPAGE_BITS_RV64
 
     def get_bootloader_reserve(self) -> int:
-        ''' on RISC-V OpenSBI is loaded at the start
-        of physical memory. Mark it as unavailable. '''
-        return self.MEGA_PAGE_SIZE
+        ''' OpenSBI reserved the first 2 MiByte of physical memory on rv64,
+        which is exactly a megapage. For rv32 we use the same value for now, as
+        this seems to work nicely - even if this is just half of the 4 MiByte
+        magepages that exist there. '''
+        return self.MEGA_PAGE_SIZE_RV64
 
     def align_memory(self, regions: Set[Region]) -> List[Region]:
         ''' Currently the RISC-V port expects physBase to be the address that the
@@ -95,18 +100,20 @@ class RISCVConfig(Config):
 
     def get_device_page_bits(self) -> int:
         ''' Get page size in bits for mapping devices for this arch '''
-        if self.addrspace_max > (1 << 32):
-            # rv39 and rv48 use 2MiB device pages
-            return 21
-        else:
-            # rv32 uses 4MiB device pages
-            return 22
+        if (self.sel4arch == 'riscv32'):
+            # 4MiB device pages
+            return self.MEGAPAGE_BITS_RV32
+        elif (self.sel4arch == 'riscv64'):
+            # 2MiB device pages for sv39 and sv48
+            return self.MEGAPAGE_BITS_RV64
+        raise ValueError('Unsupported sel4arch "{}" specified.'.format(self.sel4arch))
 
 
-def get_arch_config(arch: str, addrspace_max: int) -> Config:
+def get_arch_config(sel4arch: str, addrspace_max: int) -> Config:
     ''' Return an appropriate Config object for the given architecture '''
-    if arch == 'arm':
-        return ARMConfig(addrspace_max)
-    elif arch == 'riscv':
-        return RISCVConfig(addrspace_max)
-    raise ValueError('Unsupported arch specified.')
+    if sel4arch in ['aarch32', 'aarch64', 'arm_hyp']:
+        return ARMConfig(sel4arch, addrspace_max)
+    elif sel4arch in ['riscv32', 'riscv64']:
+        return RISCVConfig(sel4arch, addrspace_max)
+    else:
+        raise ValueError('Unsupported sel4arch "{}" specified.'.format(sel4arch))

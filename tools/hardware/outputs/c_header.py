@@ -78,7 +78,7 @@ static const kernel_frame_t BOOT_RODATA kernel_device_frames[] = {
         /* contains {{ ', '.join(group.labels.keys()) }} */
         .pptr = KDEV_BASE + {{ "0x{:x}".format(map_addr) }},
         {% endif %}
-        {% if args.arch == 'arm' %}
+        {% if config.arch == 'arm' %}
         .armExecuteNever = true,
         {% endif %}
         .userAvailable = {{ str(group.user_ok).lower() }}
@@ -176,7 +176,7 @@ def get_interrupts(tree: FdtParser, hw_yaml: HardwareYaml) -> List:
     return ret
 
 
-def create_c_header_file(args, kernel_irqs: List, kernel_macros: Dict,
+def create_c_header_file(config, kernel_irqs: List, kernel_macros: Dict,
                          kernel_regions: List, physBase: int, physical_memory,
                          outputStream):
 
@@ -187,7 +187,7 @@ def create_c_header_file(args, kernel_irqs: List, kernel_macros: Dict,
     template_args = dict(
         builtins.__dict__,
         **{
-            'args': args,
+            'config': config,
             'kernel_irqs': kernel_irqs,
             'kernel_macros': kernel_macros,
             'kernel_regions': kernel_regions,
@@ -207,7 +207,7 @@ def run(tree: FdtParser, hw_yaml: HardwareYaml, config: Config, args: argparse.N
     kernel_regions, kernel_macros = get_kernel_devices(tree, hw_yaml)
 
     create_c_header_file(
-        args,
+        config,
         get_interrupts(tree, hw_yaml),
         kernel_macros,
         kernel_regions,
