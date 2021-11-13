@@ -49,7 +49,7 @@ def add_task_args(outputs: dict, parser: argparse.ArgumentParser):
 def main(args: argparse.Namespace):
     ''' Parse the DT and hardware config YAML and run each
     selected output method. '''
-    cfg = hardware.config.get_arch_config(args.arch, args.addrspace_max)
+    cfg = hardware.config.get_arch_config(args.sel4arch, args.addrspace_max)
     parsed_dt = FdtParser(args.dtb)
     rules = yaml.load(args.hardware_config, Loader=yaml.FullLoader)
     schema = yaml.load(args.hardware_schema, Loader=yaml.FullLoader)
@@ -73,7 +73,8 @@ if __name__ == '__main__':
                         required=True, type=argparse.FileType('r'))
     parser.add_argument('--hardware-schema', help='YAML file containing schema for hardware config',
                         required=True, type=argparse.FileType('r'))
-    parser.add_argument('--arch', help='architecture to generate for', default='arm')
+    parser.add_argument('--sel4arch', help='seL4 architecture to generate for',
+                        required=True)
     parser.add_argument('--addrspace-max',
                         help='maximum address that is available as device untyped', type=int, default=32)
 
