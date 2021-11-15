@@ -67,3 +67,13 @@ typedef struct v_region {
 /* equivalent to a word_t except that we tell the compiler that we may alias with
  * any other type (similar to a char pointer) */
 typedef word_t __attribute__((__may_alias__)) word_t_may_alias;
+
+/* for libsel4 headers that the kernel shares */
+typedef uint8_t seL4_Uint8;
+typedef uint16_t seL4_Uint16;
+typedef uint32_t seL4_Uint32;
+typedef word_t seL4_Word;
+typedef cptr_t seL4_CPtr;
+typedef node_id_t seL4_NodeId;
+typedef paddr_t seL4_PAddr;
+typedef dom_t seL4_Domain;
