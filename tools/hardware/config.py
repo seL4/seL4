@@ -59,7 +59,7 @@ class ARMConfig(Config):
         extra_reserved = set()
 
         new = ret[0].align_base(self.get_kernel_phys_align())
-        resv = Region(ret[0].base, new.base - ret[0].base, None)
+        resv = Region(ret[0].base, new.base - ret[0].base)
         extra_reserved.add(resv)
         ret[0] = new
 
@@ -86,7 +86,7 @@ class RISCVConfig(Config):
 
         physBase = ret[0].base
 
-        resv = Region(ret[0].base, self.get_bootloader_reserve(), None)
+        resv = Region(ret[0].base, self.get_bootloader_reserve())
         extra_reserved.add(resv)
         ret[0].base += self.get_bootloader_reserve()
         ret[0].size -= self.get_bootloader_reserve()
