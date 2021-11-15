@@ -26,15 +26,6 @@ typedef word_t cpu_id_t;
 typedef word_t node_id_t;
 typedef word_t dom_t;
 
-/* for libsel4 headers that the kernel shares */
-typedef word_t seL4_Word;
-typedef cptr_t seL4_CPtr;
-typedef uint32_t seL4_Uint32;
-typedef uint8_t seL4_Uint8;
-typedef node_id_t seL4_NodeId;
-typedef paddr_t seL4_PAddr;
-typedef dom_t seL4_Domain;
-
 typedef uint64_t timestamp_t;
 
 #define wordBits BIT(wordRadix)
