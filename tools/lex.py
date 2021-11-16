@@ -36,35 +36,16 @@
 __version__ = "3.2"
 __tabversion__ = "3.2"       # Version of table file used
 
-from past.builtins import cmp
 import re
 import sys
 import types
 import copy
 import os
 
-# Python3 doesn't have a build-in cmp function.
-# We need to import it here, even though it isn't called in this file
-# when interpreted by python3, to prevent pylint from treating it as
-# an error.
+StringTypes = (str, bytes)
 
-# This tuple contains known string types
-try:
-    # Python 2.6
-    StringTypes = (types.StringType, types.UnicodeType)
-except AttributeError:
-    # Python 3.0
-    StringTypes = (str, bytes)
-
-# Extract the code attribute of a function. Different implementations
-# are for Python 2/3 compatibility.
-
-if sys.version_info[0] < 3:
-    def func_code(f):
-        return f.func_code
-else:
-    def func_code(f):
-        return f.__code__
+def func_code(f):
+    return f.__code__
 
 # This regular expression is used to match valid token names
 _is_identifier = re.compile(r'^[a-zA-Z0-9_]+$')
