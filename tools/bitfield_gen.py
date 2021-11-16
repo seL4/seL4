@@ -13,7 +13,6 @@
 # See bitfield_gen.md for syntax, examples, and more information.
 ##
 
-from __future__ import print_function, division
 import sys
 import os.path
 import optparse
@@ -21,7 +20,6 @@ import re
 import itertools
 import tempfile
 
-from six.moves import range
 from functools import reduce
 
 import lex
