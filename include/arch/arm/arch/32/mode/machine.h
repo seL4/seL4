@@ -366,14 +366,12 @@ static inline void cleanByVA_PoU(vptr_t vaddr, paddr_t paddr)
     /* Erratum 586324 -- perform a dummy cached load before flushing. */
     asm volatile("ldr r0, [sp]" : : : "r0");
     asm volatile("mcr p15, 0, %0, c7, c11, 1" : : "r"(vaddr));
-#elif defined(CONFIG_PLAT_EXYNOS5)
+#elif defined(CONFIG_ARCH_ARM_V6)
+    /* V6 doesn't distinguish PoU and PoC, so use the basic flush. */
+    asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
+#elif defined(CONFIG_ARM_CORTEX_A7) || defined(CONFIG_ARM_CORTEX_A15) || \
+    defined(CONFIG_ARM_CORTEX_A53)
     /* Flush to coherency for table walks... Why? */
-    asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
-#elif defined(CONFIG_PLAT_IMX7)
-    asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
-#elif defined(CONFIG_PLAT_TK1)
-    asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
-#elif defined(CONFIG_ARM_CORTEX_A53)
     asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
 #else
     asm volatile("mcr p15, 0, %0, c7, c11, 1" : : "r"(vaddr));
