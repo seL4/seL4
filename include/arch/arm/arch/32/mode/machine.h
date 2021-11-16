@@ -351,10 +351,8 @@ static inline void cleanByVA(vptr_t vaddr, paddr_t paddr)
     asm volatile("ldr r0, [sp]" : : : "r0");
     /* Erratum 586320 -- clean twice with interrupts disabled. */
     asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
-    asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
-#else
-    asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
 #endif
+    asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
     /* Erratum 586323 - end with DMB to ensure the write goes out. */
     dmb();
 }
@@ -386,10 +384,8 @@ static inline void invalidateByVA(vptr_t vaddr, paddr_t paddr)
 #ifdef CONFIG_ARM_CORTEX_A8
     /* Erratum 586324 -- perform a dummy cached load before flushing. */
     asm volatile("ldr r0, [sp]" : : : "r0");
-    asm volatile("mcr p15, 0, %0, c7, c6, 1" : : "r"(vaddr));
-#else
-    asm volatile("mcr p15, 0, %0, c7, c6, 1" : : "r"(vaddr));
 #endif
+    asm volatile("mcr p15, 0, %0, c7, c6, 1" : : "r"(vaddr));
     dmb();
 }
 
@@ -424,10 +420,8 @@ static inline void cleanInvalByVA(vptr_t vaddr, paddr_t paddr)
     asm volatile("ldr r0, [sp]" : : : "r0");
     /* Erratum 586320 -- clean twice with interrupts disabled. */
     asm volatile("mcr p15, 0, %0, c7, c14, 1" : : "r"(vaddr));
-    asm volatile("mcr p15, 0, %0, c7, c14, 1" : : "r"(vaddr));
-#else
-    asm volatile("mcr p15, 0, %0, c7, c14, 1" : : "r"(vaddr));
 #endif
+    asm volatile("mcr p15, 0, %0, c7, c14, 1" : : "r"(vaddr));
     dsb();
 }
 
