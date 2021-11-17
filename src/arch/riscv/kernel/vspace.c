@@ -138,7 +138,7 @@ BOOT_CODE VISIBLE void map_kernel_window(void)
 #endif
 #else
     word_t index = 0;
-    /* The kernel image are mapped twice, locating the two indexes in the
+    /* The kernel image is mapped twice, locating the two indexes in the
      * root page table, pointing them to the same second level page table.
      */
     kernel_root_pageTable[RISCV_GET_PT_INDEX(KERNEL_ELF_PADDR_BASE + PPTR_BASE_OFFSET, 0)] =
