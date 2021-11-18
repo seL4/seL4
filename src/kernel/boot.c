@@ -654,9 +654,17 @@ BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap,
         start = ndks_boot.reserved[i].end;
     }
 
-    if (start < CONFIG_PADDR_USER_DEVICE_TOP) {
+    if (start < PADDR_TOP) {
+        /* Provide untyped device capabilities for the remaining physical
+         * address space that can be accessed via the kernel window. This could
+         * be less than the physical address space implemented by the platform
+         * or defined by the architecture (CONFIG_PADDR_USER_DEVICE_TOP). Due to
+         * the kernel design, only the part of the physical address space is
+         * accessible that fits into the kernel window.
+         */
         region_t reg = paddr_to_pptr_reg((p_region_t) {
-            start, CONFIG_PADDR_USER_DEVICE_TOP
+            .start = start,
+            .end   = PADDR_TOP
         });
 
         if (!create_untypeds_for_region(root_cnode_cap, true, reg, first_untyped_slot)) {

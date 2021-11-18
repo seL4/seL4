@@ -102,9 +102,6 @@ BOOT_CODE static bool_t arch_init_freemem(p_region_t ui_p_reg,
             reserved[index] = mode_reserved_region[0];
             index++;
         }
-
-        /* Reserve the ui_p_reg region still so it doesn't get turned into device UT. */
-        reserve_region(ui_p_reg);
     }
 
     /* avail_p_regs comes from the auto-generated code */
