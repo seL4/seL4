@@ -645,7 +645,7 @@ BOOT_CODE static bool_t pptr_in_kernel_window(pptr_t pptr)
  */
 BOOT_CODE static bool_t provide_untyped_cap(
     cap_t      root_cnode_cap,
-    bool_t     device_memory,
+    bool_t     is_device_memory,
     pptr_t     pptr,
     word_t     size_bits,
     seL4_SlotPos first_untyped_slot
@@ -670,7 +670,7 @@ BOOT_CODE static bool_t provide_untyped_cap(
     }
 
     /* All cap ptrs apart from device untypeds must be in the kernel window. */
-    if (!device_memory && !pptr_in_kernel_window(pptr)) {
+    if (!is_device_memory && !pptr_in_kernel_window(pptr)) {
         printf("Kernel init: Non-device untyped pptr %p outside kernel window\n",
                (void *)pptr);
         return false;
@@ -679,7 +679,7 @@ BOOT_CODE static bool_t provide_untyped_cap(
     /* Check that the end of the region is also in the kernel window, so we don't
        need to assume that the kernel window is aligned up to potentially
        seL4_MaxUntypedBits. */
-    if (!device_memory && !pptr_in_kernel_window(pptr + MASK(size_bits))) {
+    if (!is_device_memory && !pptr_in_kernel_window(pptr + MASK(size_bits))) {
         printf("Kernel init: End of non-device untyped at %p outside kernel window (size %"SEL4_PRIu_word")\n",
                (void *)pptr, size_bits);
         return false;
@@ -690,11 +690,11 @@ BOOT_CODE static bool_t provide_untyped_cap(
         ndks_boot.bi_frame->untypedList[i] = (seL4_UntypedDesc) {
             .paddr    = pptr_to_paddr((void *)pptr),
             .sizeBits = size_bits,
-            .isDevice = device_memory,
+            .isDevice = is_device_memory,
             .padding  = {0}
         };
         ut_cap = cap_untyped_cap_new(MAX_FREE_INDEX(size_bits),
-                                     device_memory, size_bits, pptr);
+                                     is_device_memory, size_bits, pptr);
         ret = provide_cap(root_cnode_cap, ut_cap);
     } else {
         printf("Kernel init: Too many untyped regions for boot info\n");
@@ -720,7 +720,7 @@ BOOT_CODE static bool_t provide_untyped_cap(
  */
 BOOT_CODE static bool_t create_untypeds_for_region(
     cap_t      root_cnode_cap,
-    bool_t     device_memory,
+    bool_t     is_device_memory,
     region_t   reg,
     seL4_SlotPos first_untyped_slot
 )
@@ -755,7 +755,7 @@ BOOT_CODE static bool_t create_untypeds_for_region(
          * be used anyway.
          */
         if (size_bits >= seL4_MinUntypedBits) {
-            if (!provide_untyped_cap(root_cnode_cap, device_memory, reg.start, size_bits, first_untyped_slot)) {
+            if (!provide_untyped_cap(root_cnode_cap, is_device_memory, reg.start, size_bits, first_untyped_slot)) {
                 return false;
             }
         }
