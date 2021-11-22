@@ -48,7 +48,7 @@ static inline void setDeadline(ticks_t deadline)
 }
 
 /** DONT_TRANSLATE */
-static inline ticks_t getCurrentTime(void)
+static inline ticks_t driver_getSystemTime(void)
 {
     bool_t overflow = !!(timer->tisr & TISR_OVF_FLAG);
     return (((uint64_t) high_bits + overflow) << 32llu) + timer->tcrr;

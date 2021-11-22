@@ -13,9 +13,40 @@
 #include <types.h>
 #include <arch/linker.h>
 
-/* Read the current time from the timer. */
+/* This function must be implemented by a timer driver to provide the raw system
+ * time. The value returned for each call is supposed to be greater or equal
+ * than the value returned by previous call and to never roll over practically.
+ */
 /** MODIFIES: [*] */
-static inline ticks_t getCurrentTime(void);
+static inline ticks_t driver_getSystemTime(void);
+
+/* Get the current time. */
+static inline ticks_t getCurrentTime(void)
+{
+    time_t prev = NODE_STATE(ksPrevTime);
+    /* Get current time from the timer driver. */
+    uint64_t now = driver_getCurrentTime();
+    /* Time must increment monotonically and never roll over, which is something
+     * the timer driver and timer hardware should already guarantee. The sanity
+     * check here is to catch broken configurations or implementations, but also
+     * an actual roll over.
+     */
+    if (unlikely(now < prev)) {
+        /* There are a few option here. Take the last timestamp and produce an
+         * artificial time stamp from this. That would keep the system running
+         * somehow even if the time is broken. But it's more likely that this
+         * is a fatal situation, in the end a 64-bit timer is used because it is
+         * simply big enough to practically never roll over.
+         */
+        printf("FATAL ERROR: timer roll over from %"PRIu64" to %"PRIu64"\n",
+               prev, now);
+        halt();
+    }
+
+    NODE_STATE(ksPrevTime) = now;
+    return now;
+}
+
 /* set the next deadline irq - deadline is absolute */
 /** MODIFIES: [*] */
 static inline void setDeadline(ticks_t deadline);

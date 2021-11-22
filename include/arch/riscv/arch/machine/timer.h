@@ -48,7 +48,7 @@ static inline CONST time_t getMaxUsToTicks(void)
 }
 
 /* Read the current time from the timer. */
-static inline ticks_t getCurrentTime(void)
+static inline ticks_t driver_getSystemTime(void)
 {
     return riscv_read_time();
 }

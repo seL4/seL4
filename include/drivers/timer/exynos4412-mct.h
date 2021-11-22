@@ -15,7 +15,7 @@ static inline void resetTimer(void)
 
 #ifdef CONFIG_KERNEL_MCS
 /** DONT_TRANSLATE **/
-static inline ticks_t getCurrentTime(void)
+static inline ticks_t driver_getSystemTime(void)
 {
     uint32_t hi, hi2, lo;
     hi2 = mct->global.cnth;

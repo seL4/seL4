@@ -13,6 +13,7 @@
 #ifdef CONFIG_KERNEL_MCS
 #include <mode/util.h>
 #include <arch/kernel/xapic.h>
+#include <machine/timer.h>
 
 static inline CONST time_t getKernelWcetUs(void)
 {
@@ -39,7 +40,7 @@ static inline void ackDeadlineIRQ(void)
 {
 }
 
-static inline ticks_t getCurrentTime(void)
+static inline ticks_t driver_getSystemTime(void)
 {
     return x86_rdtsc();
 }
@@ -60,8 +61,12 @@ static inline void setDeadline(ticks_t deadline)
     if (likely(x86KSapicRatio == 0)) {
         x86_wrmsr(IA32_TSC_DEADLINE_MSR, deadline);
     } else {
-        /* convert deadline from tscKhz to apic khz */
-        deadline -= getCurrentTime();
+        /* Convert deadline from tscKhz to apic khz and program it. Obtaining a
+         * fresh timestamp is needed, because ksCurTime could be too old here.
+         */
+        ticks_t now = getCurrentTime();
+        assert(now >= deadline);
+        deadline -= now;
         apic_write_reg(APIC_TIMER_COUNT, div64(deadline, x86KSapicRatio));
     }
 }

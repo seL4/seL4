@@ -54,6 +54,8 @@ UP_STATE_DEFINE(ticks_t, ksConsumed);
 UP_STATE_DEFINE(bool_t, ksReprogram);
 /* the current kernel time (recorded on kernel entry) */
 UP_STATE_DEFINE(ticks_t, ksCurTime);
+/* the last timestamp taken (used to ensure time never goes backwards) */
+UP_STATE_DEFINE(ticks_t, ksPrevTime);
 /* current scheduling context pointer */
 UP_STATE_DEFINE(sched_context_t *, ksCurSC);
 UP_STATE_DEFINE(sched_context_t *, ksIdleSC);

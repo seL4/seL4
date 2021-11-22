@@ -9,6 +9,7 @@
 #include <util.h>
 #include <config.h>
 #include <model/statedata.h>
+#include <machine/timer.h>
 
 #ifndef CONFIG_KERNEL_MCS
 #error "This driver should only be selected for MCS kernel"
@@ -42,7 +43,7 @@ enum control {
 };
 
 /** DONT_TRANSLATE */
-static inline ticks_t getCurrentTime(void)
+static inline ticks_t driver_getSystemTime(void)
 {
     uint32_t upper, upper2, lower;
 
