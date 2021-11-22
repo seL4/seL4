@@ -20,7 +20,6 @@ enum IRQConstants {
 #define IRQ_CNODE_SLOT_BITS (@CONFIGURE_IRQ_SLOT_BITS@)
 
 #include <@CONFIGURE_INTERRUPT_CONTROLLER@>
-#include <@CONFIGURE_TIMER@>
 
 #cmakedefine CONFIGURE_SMMU <@CONFIGURE_SMMU@>
 #if (defined(CONFIGURE_SMMU) && defined(CONFIG_TK1_SMMU))
@@ -37,8 +36,11 @@ enum IRQConstants {
 #endif
 
 #ifdef CONFIG_KERNEL_MCS
+#include <types.h>
 static inline CONST time_t getKernelWcetUs(void)
 {
     return @CONFIGURE_KERNEL_WCET@;
 }
-#endif
+#endif /* CONFIG_KERNEL_MCS */
+
+#include <@CONFIGURE_TIMER@>
