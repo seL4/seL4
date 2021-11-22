@@ -9,6 +9,7 @@
 #include <kernel/thread.h>
 #include <machine/io.h>
 #include <machine/registerset.h>
+#include <machine/timer.h>
 #include <model/statedata.h>
 #include <arch/machine.h>
 #include <arch/kernel/boot.h>
@@ -563,11 +564,10 @@ BOOT_CODE void init_core_state(tcb_t *scheduler_action)
     NODE_STATE(ksCurThread) = NODE_STATE(ksIdleThread);
 #ifdef CONFIG_KERNEL_MCS
     NODE_STATE(ksCurSC) = NODE_STATE(ksCurThread->tcbSchedContext);
-    NODE_STATE(ksConsumed) = 0;
     NODE_STATE(ksReprogram) = true;
     NODE_STATE(ksReleaseHead) = NULL;
-    NODE_STATE(ksCurTime) = getCurrentTime();
 #endif
+    initNodeTime();
 }
 
 BOOT_CODE static bool_t provide_untyped_cap(

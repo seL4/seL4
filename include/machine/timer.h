@@ -32,3 +32,19 @@ static PURE inline ticks_t getKernelWcetTicks(void)
 static inline void resetTimer(void);
 #endif /* !CONFIG_KERNEL_MCS */
 
+/* Update time on a processing node (usually a core). */
+static inline void updateNodeTime(void)
+{
+#ifdef CONFIG_KERNEL_MCS
+    NODE_STATE(ksCurTime) = getCurrentTime();
+#endif
+}
+
+/* Initialize time on a processing node (usually a core). */
+static inline void initNodeTime(void)
+{
+#ifdef CONFIG_KERNEL_MCS
+    updateNodeTime();
+    NODE_STATE(ksConsumed) = 0;
+#endif
+}

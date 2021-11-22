@@ -224,9 +224,11 @@ void chargeBudget(ticks_t consumed, bool_t canTimeoutFault);
 static inline void updateTimestamp(void)
 {
     time_t prev = NODE_STATE(ksCurTime);
-    NODE_STATE(ksCurTime) = getCurrentTime();
-    assert(NODE_STATE(ksCurTime) < MAX_RELEASE_TIME);
-    time_t consumed = (NODE_STATE(ksCurTime) - prev);
+    updateNodeTime(); /* updates ksCurTime */
+    time_t now = NODE_STATE(ksCurTime);
+    assert(now < MAX_RELEASE_TIME);
+    assert(now >= prev); /* time can't go backwards or roll over */
+    time_t consumed = now - prev;
     NODE_STATE(ksConsumed) += consumed;
     if (numDomains > 1) {
         if ((consumed + MIN_BUDGET) >= ksDomainTime) {
@@ -235,7 +237,6 @@ static inline void updateTimestamp(void)
             ksDomainTime -= consumed;
         }
     }
-
 }
 
 /*

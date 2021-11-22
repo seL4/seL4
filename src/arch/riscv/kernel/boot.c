@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <kernel/boot.h>
 #include <machine/io.h>
+#include <machine/timer.h>
 #include <model/statedata.h>
 #include <object/interrupt.h>
 #include <arch/machine.h>
@@ -386,9 +387,7 @@ static BOOT_CODE bool_t try_init_kernel(
     }
     write_it_asid_pool(it_ap_cap, it_pd_cap);
 
-#ifdef CONFIG_KERNEL_MCS
-    NODE_STATE(ksCurTime) = getCurrentTime();
-#endif
+    updateNodeTime();
 
     /* create the idle thread */
     if (!create_idle_thread()) {
@@ -484,11 +483,7 @@ BOOT_CODE VISIBLE void init_kernel(
         UNREACHABLE();
     }
 
-#ifdef CONFIG_KERNEL_MCS
-    NODE_STATE(ksCurTime) = getCurrentTime();
-    NODE_STATE(ksConsumed) = 0;
-#endif
-
+    initNodeTime();
     schedule();
     activateThread();
 }

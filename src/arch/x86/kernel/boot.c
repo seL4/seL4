@@ -7,6 +7,7 @@
 #include <config.h>
 #include <kernel/boot.h>
 #include <machine/io.h>
+#include <machine/timer.h>
 #include <model/statedata.h>
 #include <object/interrupt.h>
 #include <arch/object/interrupt.h>
@@ -294,9 +295,7 @@ BOOT_CODE bool_t init_sys_state(
     }
     write_it_asid_pool(it_ap_cap, it_vspace_cap);
 
-#ifdef CONFIG_KERNEL_MCS
-    NODE_STATE(ksCurTime) = getCurrentTime();
-#endif
+    updateNodeTime();
 
     /* create the idle thread */
     if (!create_idle_thread()) {
