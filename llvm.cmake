@@ -19,9 +19,6 @@ set(CMAKE_ASM_COMPILER "clang")
 set(CMAKE_ASM_COMPILER_ID Clang)
 set(CMAKE_ASM_COMPILER_TARGET ${TRIPLE})
 
-string(APPEND asm_common_flags " -Wno-unused-command-line-argument")
-string(APPEND asm_common_flags " -fno-integrated-as")
-
 set(CMAKE_C_COMPILER "clang")
 set(CMAKE_C_COMPILER_ID Clang)
 set(CMAKE_C_COMPILER_TARGET ${TRIPLE})
@@ -29,16 +26,6 @@ set(CMAKE_C_COMPILER_TARGET ${TRIPLE})
 set(CMAKE_CXX_COMPILER "clang++")
 set(CMAKE_CXX_COMPILER_ID Clang)
 set(CMAKE_CXX_COMPILER_TARGET ${TRIPLE})
-
-string(APPEND c_common_flags " -Wno-sizeof-pointer-div")
-string(APPEND c_common_flags " -Qunused-arguments")
-string(APPEND c_common_flags " -Wno-constant-logical-operand")
-if(NOT ("${TRIPLE}" MATCHES "^riscv"))
-    string(APPEND c_common_flags " -fno-integrated-as")
-endif()
-# clang 11 has a regression in GlobalISel (only used at -O0) affecting the syscall
-# stubs in libsel4runtime; see https://reviews.llvm.org/D83384#2189132
-string(APPEND c_common_flags " -fno-experimental-isel")
 
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
