@@ -128,7 +128,7 @@ macro(KernelCommonFlags)
         string(APPEND CMAKE_EXE_LINKER_FLAGS " ${common_flag} ")
     endforeach()
 endmacro(KernelCommonFlags)
-KernelCommonFlags(-nostdinc -nostdlib ${KernelOptimisation} -DHAVE_AUTOCONF)
+KernelCommonFlags(-nostdlib ${KernelOptimisation} -DHAVE_AUTOCONF)
 if(KernelFWholeProgram)
     KernelCommonFlags(-fwhole-program)
 endif()
@@ -162,6 +162,7 @@ if(KernelArchRiscV)
 endif()
 KernelCommonFlags(-fno-pic -fno-pie)
 add_compile_options(
+    -nostdinc
     -fno-stack-protector
     -fno-asynchronous-unwind-tables
     -std=c99
