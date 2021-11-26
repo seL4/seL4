@@ -100,7 +100,7 @@
 /* The kernel log buffer is a large page mapped into the second index
  * of the page directory that is only otherwise used for the kernel
  * device page table. */
-#ifdef CONFIG_KERNEL_LOG_BUFFER
+#ifdef CONFIG_ENABLE_KERNEL_LOG_BUFFER
 #define KS_LOG_PPTR (KDEV_BASE + BIT(seL4_LargePageBits))
 #endif
 

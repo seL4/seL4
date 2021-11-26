@@ -386,11 +386,12 @@ else()
     config_set(KernelEnableBenchmarks ENABLE_BENCHMARKS OFF)
 endif()
 
-# Reflect the existence of kernel Log buffer
+# CONFIG_ENABLE_KERNEL_LOG_BUFFER is set automatically if a feature is used that
+# needs the kernel log buffer.
 if(KernelBenchmarksTrackKernelEntries OR KernelBenchmarksTracepoints)
-    config_set(KernelLogBuffer KERNEL_LOG_BUFFER ON)
+    config_set(KernelLogBuffer ENABLE_KERNEL_LOG_BUFFER ON)
 else()
-    config_set(KernelLogBuffer KERNEL_LOG_BUFFER OFF)
+    config_set(KernelLogBuffer ENABLE_KERNEL_LOG_BUFFER OFF)
 endif()
 
 config_string(

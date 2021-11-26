@@ -132,7 +132,7 @@ BOOT_CODE VISIBLE void map_kernel_window(void)
     kernel_root_pageTable[RISCV_GET_PT_INDEX(pptr, 0)] = pte_next(paddr, true);
     pptr += RISCV_GET_LVL_PGSIZE(0);
     paddr += RISCV_GET_LVL_PGSIZE(0);
-#ifdef CONFIG_KERNEL_LOG_BUFFER
+#ifdef CONFIG_ENABLE_KERNEL_LOG_BUFFER
     kernel_root_pageTable[RISCV_GET_PT_INDEX(KS_LOG_PPTR, 0)] =
         pte_next(kpptr_to_paddr(kernel_image_level2_log_buffer_pt), false);
 #endif
@@ -1176,7 +1176,7 @@ void Arch_userStackTrace(tcb_t *tptr)
 }
 #endif
 
-#ifdef CONFIG_KERNEL_LOG_BUFFER
+#ifdef CONFIG_ENABLE_KERNEL_LOG_BUFFER
 exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
 {
     lookupCapAndSlot_ret_t lu_ret;
@@ -1228,4 +1228,4 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
 
     return EXCEPTION_NONE;
 }
-#endif /* CONFIG_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_ENABLE_KERNEL_LOG_BUFFER */

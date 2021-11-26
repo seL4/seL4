@@ -38,7 +38,7 @@
 #define PPTR_BASE seL4_UserTop
 
 /* Top of the physical memory window */
-#ifdef CONFIG_KERNEL_LOG_BUFFER
+#ifdef CONFIG_ENABLE_KERNEL_LOG_BUFFER
 #define PPTR_TOP UL_CONST(0xFF400000)
 /* Place the kernel log buffer after the PPTR region */
 #define KS_LOG_PPTR PPTR_TOP
