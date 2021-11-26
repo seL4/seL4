@@ -364,7 +364,7 @@ config_option(
 config_choice(
     KernelBenchmarks
     KERNEL_BENCHMARK
-    "Enable benchamrks including logging and tracing info. \
+    "Enable benchmarks including logging and tracing info. \
     Setting this value > 1 enables a 1MB log buffer and functions for extracting data from it \
     at user level. NOTE this is only tested on the sabre and will not work on platforms with < 512mb memory. \
     This is not fully implemented for x86. \
@@ -386,7 +386,7 @@ else()
     config_set(KernelEnableBenchmarks ENABLE_BENCHMARKS OFF)
 endif()
 
-# Reflect the existance of kernel Log buffer
+# Reflect the existence of kernel Log buffer
 if(KernelBenchmarksTrackKernelEntries OR KernelBenchmarksTracepoints)
     config_set(KernelLogBuffer KERNEL_LOG_BUFFER ON)
 else()

@@ -820,7 +820,7 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
             /* skip the entire region - it's empty now after trimming */
             a++;
         } else if (reserved[r].end <= avail_reg[a].start) {
-            /* the reserved region is below the available region - skip it*/
+            /* the reserved region is below the available region - skip it */
             reserve_region(pptr_to_paddr_reg(reserved[r]));
             r++;
         } else if (reserved[r].start >= avail_reg[a].end) {
