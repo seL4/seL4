@@ -393,6 +393,13 @@ config_option(
     DEFAULT_DISABLED OFF
 )
 
+config_option(
+    KernelDebugLogEntries KERNEL_DEBUG_LOG_ENTRIES "Enable debug logging of entry and exit"
+    DEFAULT ON
+    DEPENDS "KernelEventTracing"
+    DEFAULT_DISABLED OFF
+)
+
 # CONFIG_ENABLE_KERNEL_LOG_BUFFER is set automatically if a feature is used that
 # needs the kernel log buffer.
 if(KernelBenchmarksTrackKernelEntries OR KernelBenchmarksTracepoints OR KernelEventTracing)

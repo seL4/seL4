@@ -19,7 +19,7 @@ seL4_Word ksLogIndexFinalized = 0;
 UP_STATE_DEFINE(uint64_t, ccnt_num_overflows);
 #endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
 
-#ifdef CONFIG_ENABLE_BENCHMARKS
+#if defined(CONFIG_ENABLE_BENCHMARKS) || defined(CONFIG_KERNEL_DEBUG_LOG_ENTRIES)
 void arm_init_ccnt(void)
 {
 
@@ -35,4 +35,4 @@ void arm_init_ccnt(void)
     armv_enableOverflowIRQ();
 #endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
 }
-#endif
+#endif /* CONFIG_ENABLE_BENCHMARKS || CONFIG_KERNEL_DEBUG_LOG_ENTRIES */
