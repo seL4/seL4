@@ -13,11 +13,11 @@
 #ifdef __ASSEMBLER__
 
 /* Provide a helper macro to define integer constants that are not of the
- * default type 'ìnt', but 'unsigned long'. When such constants are shared
- * between assembly and C code, some assemblers will fail because don't support
- * C-style integer suffixes like 'ul'. Using a macro works around this, as the
- * suffix is only applies when the C compiler is used and dropped when the
- * assembler runs.
+ * default type 'ìnt', but 'unsigned long [long]'. When such constants are
+ * shared between assembly and C code, some assemblers will fail because they
+ * don't support C-style integer suffixes like 'ul'. Using a macro works around
+ * this, as the suffix is only applied when the C compiler is used and dropped
+ * when the assembler runs.
  */
 #define UL_CONST(x) x
 #define ULL_CONST(x) x
@@ -45,9 +45,9 @@
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
-/* Time constants are define to use the 'unsigned long long'. Rationale is, that
- * the C rules define the calculation result is determined by largest type
- * involved. Enforcing the larges possible type C provides avoids pitfalls with
+/* Time constants are defined to use the 'unsigned long long'. Rationale is,
+ * that the C rules define the calculation result is determined by largest type
+ * involved. Enforcing the largest possible type C provides avoids pitfalls with
  * 32-bit overflows when values are getting quite large. Keep in mind that even
  * 2^32 milli-seconds roll over within 50 days, which is an uptime that embedded
  * systems will reach easily and it resembles not even two months in a calendar

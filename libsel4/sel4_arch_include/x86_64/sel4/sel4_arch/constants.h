@@ -64,6 +64,13 @@
 #define seL4_MinUntypedBits 4
 #define seL4_MaxUntypedBits 47
 
+#if defined(CONFIG_ENABLE_BENCHMARKS) || defined(CONFIG_KERNEL_EVENT_TRACING)
+/* Size of log buffer frame in bits */
+#define seL4_LogBufferBits seL4_LargePageBits
+/* size of kernel log buffer in bytes */
+#define seL4_LogBufferSize (LIBSEL4_BIT(20))
+#endif /* CONFIG_ENABLE_BENCHMARKS || CONFIG_KERNEL_EVENT_TRACING */
+
 #ifndef __ASSEMBLER__
 
 SEL4_SIZE_SANITY(seL4_PageTableEntryBits, seL4_PageTableIndexBits, seL4_PageTableBits);

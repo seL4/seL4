@@ -18,7 +18,7 @@
 #if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
 #define TRACK_KERNEL_ENTRIES 1
 extern kernel_entry_t ksKernelEntry;
-#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
+#if defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES) || defined(CONFIG_KERNEL_DEBUG_LOG_ENTRIES)
 /**
  *  Calculate the maximum number of kernel entries that can be tracked,
  *  limited by the log buffer size. This is also the number of ksLog entries.
@@ -45,7 +45,7 @@ static inline void benchmark_track_start(void)
 {
     ksEnter = timestamp();
 }
-#endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
+#endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES || CONFIG_KERNEL_DEBUG_LOG_ENTRIES */
 
 static inline void benchmark_debug_syscall_start(word_t cptr, word_t msgInfo, word_t syscall)
 {

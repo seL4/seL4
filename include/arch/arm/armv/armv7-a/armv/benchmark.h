@@ -6,7 +6,7 @@
 
 #pragma once
 
-#ifdef CONFIG_ENABLE_BENCHMARKS
+#if defined(CONFIG_ENABLE_BENCHMARKS) || defined(CONFIG_KERNEL_DEBUG_LOG_ENTRIES)
 #include <config.h>
 
 #define PMCR "p15, 0, %0, c9, c12, 0"
@@ -29,5 +29,5 @@ static inline void armv_handleOverflowIRQ(void)
     word_t val = BIT(CCNT_INDEX);
     MCR(PMOVSR, val);
 }
-#endif /* CONFIG_ENABLE_BENCHMARKS */
+#endif /* CONFIG_ENABLE_BENCHMARKS || CONFIG_KERNEL_DEBUG_LOG_ENTRIES */
 

@@ -26,6 +26,7 @@
 #include <arch/object/iospace.h>
 #include <arch/object/vcpu.h>
 #include <arch/machine/tlb.h>
+#include <log.h>
 #define RESERVED 3
 
 /*
@@ -2515,7 +2516,7 @@ void Arch_userStackTrace(tcb_t *tptr)
 }
 #endif /* CONFIG_PRINTING */
 
-#if defined(CONFIG_KERNEL_LOG_BUFFER)
+#if defined(CONFIG_ENABLE_KERNEL_LOG_BUFFER)
 exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
 {
     lookupCapAndSlot_ret_t lu_ret;
@@ -2567,7 +2568,12 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
 
     cleanByVA_PoU((vptr_t)armKSGlobalLogPDE, addrFromKPPtr(armKSGlobalLogPDE));
     invalidateTranslationSingle(KS_LOG_PPTR);
+
+#ifdef CONFIG_KERNEL_EVENT_TRACING
+    logBuffer_init((seL4_Word *)KS_LOG_PPTR, BIT(pageBitsForSize(frameSize) - seL4_WordSizeBits));
+#endif /* !CONFIG_KERNEL_EVENT_TRACING */
+
     return EXCEPTION_NONE;
 }
-#endif /* CONFIG_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_ENABLE_KERNEL_LOG_BUFFER */
 

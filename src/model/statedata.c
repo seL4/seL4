@@ -13,6 +13,7 @@
 #include <object/structures.h>
 #include <object/tcb.h>
 #include <benchmark/benchmark_track.h>
+#include <log.h>
 
 /* Collective cpu states, including both pre core architecture dependant and independent data */
 SMP_STATE_DEFINE(smpStatedata_t, ksSMP[CONFIG_MAX_NUM_NODES] ALIGN(L1_CACHE_LINE_SIZE));
@@ -108,6 +109,10 @@ char ksIdleThreadSC[CONFIG_MAX_NUM_NODES][BIT(seL4_MinSchedContextBits)] ALIGN(B
 kernel_entry_t ksKernelEntry;
 #endif /* DEBUG */
 
-#ifdef CONFIG_KERNEL_LOG_BUFFER
+#ifdef CONFIG_ENABLE_KERNEL_LOG_BUFFER
 paddr_t ksUserLogBuffer;
-#endif /* CONFIG_KERNEL_LOG_BUFFER */
+#ifdef CONFIG_KERNEL_EVENT_TRACING
+seL4_LogBuffer ksLogBuffer;
+bool_t ksLogEnabled;
+#endif /* CONFIG_KERNEL_EVENT_TRACING */
+#endif /* CONFIG_ENABLE_KERNEL_LOG_BUFFER */

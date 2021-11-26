@@ -16,6 +16,7 @@
 #include <benchmark/benchmark_track.h>
 #include <arch/kernel/tlb_bitmap.h>
 #include <mode/kernel/tlb.h>
+#include <log.h>
 
 /* 'gdt_idt_ptr' is declared globally because of a C-subset restriction.
  * It is only used in init_drts(), which therefore is non-reentrant.
@@ -217,7 +218,7 @@ BOOT_CODE bool_t map_kernel_window(
     phys = PADDR_BASE;
     idx = PPTR_BASE >> LARGE_PAGE_BITS;
 
-    /* PPTR_TOP differs whether CONFIG_KERNEL_LOG_BUFFER
+    /* PPTR_TOP differs whether CONFIG_ENABLE_KERNEL_LOG_BUFFER
      * is enabled or not.
      */
     while (idx < (PPTR_TOP >> LARGE_PAGE_BITS)) {
@@ -242,7 +243,7 @@ BOOT_CODE bool_t map_kernel_window(
     /* crosscheck whether we have mapped correctly so far */
     assert(phys == PADDR_TOP);
 
-#ifdef CONFIG_KERNEL_LOG_BUFFER
+#ifdef CONFIG_ENABLE_KERNEL_LOG_BUFFER
     /* Map global page table for the log buffer */
     pde = pde_pde_pt_new(
               kpptr_to_paddr(ia32KSGlobalLogPT), /* pt_base_address  */
@@ -259,7 +260,7 @@ BOOT_CODE bool_t map_kernel_window(
     phys += BIT(LARGE_PAGE_BITS);
     assert(idx == (KS_LOG_PPTR >> LARGE_PAGE_BITS));
     idx++;
-#endif /* CONFIG_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_ENABLE_KERNEL_LOG_BUFFER */
 
 #ifdef ENABLE_SMP_SUPPORT
     /* initialize the TLB bitmap */
@@ -655,7 +656,7 @@ exception_t decodeX86ModeMapPage(word_t invLabel, vm_page_size_t page_size, cte_
     fail("Invalid Page type");
 }
 
-#ifdef CONFIG_KERNEL_LOG_BUFFER
+#ifdef CONFIG_ENABLE_KERNEL_LOG_BUFFER
 exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
 {
     lookupCapAndSlot_ret_t lu_ret;
@@ -714,6 +715,10 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
         invalidateTLBEntry(KS_LOG_PPTR + (idx << seL4_PageBits), MASK(ksNumCPUs));
     }
 
+#ifdef CONFIG_KERNEL_EVENT_TRACING
+    logBuffer_init((seL4_Word *)KS_LOG_PPTR, BIT(pageBitsForSize(frameSize) - seL4_WordSizeBits));
+#endif /* !CONFIG_KERNEL_EVENT_TRACING */
+
     return EXCEPTION_NONE;
 }
-#endif /* CONFIG_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_ENABLE_KERNEL_LOG_BUFFER */

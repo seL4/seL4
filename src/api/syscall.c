@@ -24,6 +24,7 @@
 #include <string.h>
 #include <kernel/traps.h>
 #include <arch/machine.h>
+#include <log.h>
 
 #ifdef CONFIG_DEBUG_BUILD
 #include <arch/machine/capdl.h>
@@ -197,17 +198,23 @@ exception_t handleUnknownSyscall(word_t w)
         arch_clean_invalidate_caches();
 #endif
         return EXCEPTION_NONE;
-    } else if (w == SysBenchmarkResetLog) {
-#ifdef CONFIG_KERNEL_LOG_BUFFER
+    }
+#endif /* CONFIG_ENABLE_BENCHMARKS */
+#if defined(CONFIG_ENABLE_BENCHMARKS) || defined(CONFIG_ENABLE_KERNEL_LOG_BUFFER)
+    else if (w == SysBenchmarkResetLog) {
+#ifdef CONFIG_ENABLE_KERNEL_LOG_BUFFER
         if (ksUserLogBuffer == 0) {
             userError("A user-level buffer has to be set before resetting benchmark.\
                     Use seL4_BenchmarkSetLogBuffer\n");
             setRegister(NODE_STATE(ksCurThread), capRegister, seL4_IllegalOperation);
             return EXCEPTION_SYSCALL_ERROR;
         }
-
+#ifdef CONFIG_KERNEL_EVENT_TRACING
+        logBuffer_reset();
+#else
         ksLogIndex = 0;
-#endif /* CONFIG_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_KERNEL_EVENT_TRACING */
+#endif /* CONFIG_ENABLE_KERNEL_LOG_BUFFER */
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
         NODE_STATE(benchmark_log_utilisation_enabled) = true;
         benchmark_track_reset_utilisation(NODE_STATE(ksIdleThread));
@@ -222,17 +229,24 @@ exception_t handleUnknownSyscall(word_t w)
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
         setRegister(NODE_STATE(ksCurThread), capRegister, seL4_NoError);
         return EXCEPTION_NONE;
-    } else if (w == SysBenchmarkFinalizeLog) {
-#ifdef CONFIG_KERNEL_LOG_BUFFER
+    }
+#endif /* CONFIG_ENABLE_BENCHMARKS || CONFIG_ENABLE_KERNEL_LOG_BUFFER */
+#ifdef CONFIG_ENABLE_BENCHMARKS
+    else if (w == SysBenchmarkFinalizeLog) {
+#ifdef CONFIG_ENABLE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_EVENT_TRACING
+        setRegister(NODE_STATE(ksCurThread), capRegister, logBuffer_finalize());
+#else /* not CONFIG_KERNEL_EVENT_TRACING */
         ksLogIndexFinalized = ksLogIndex;
         setRegister(NODE_STATE(ksCurThread), capRegister, ksLogIndexFinalized);
-#endif /* CONFIG_KERNEL_LOG_BUFFER */
+#endif /* [not] CONFIG_KERNEL_EVENT_TRACING */
+#endif /* CONFIG_ENABLE_KERNEL_LOG_BUFFER */
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
         benchmark_utilisation_finalise();
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
         return EXCEPTION_NONE;
     } else if (w == SysBenchmarkSetLogBuffer) {
-#ifdef CONFIG_KERNEL_LOG_BUFFER
+#ifdef CONFIG_ENABLE_KERNEL_LOG_BUFFER
         word_t cptr_userFrame = getRegister(NODE_STATE(ksCurThread), capRegister);
 
         if (benchmark_arch_map_logBuffer(cptr_userFrame) != EXCEPTION_NONE) {
@@ -242,7 +256,7 @@ exception_t handleUnknownSyscall(word_t w)
 
         setRegister(NODE_STATE(ksCurThread), capRegister, seL4_NoError);
         return EXCEPTION_NONE;
-#endif /* CONFIG_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_ENABLE_KERNEL_LOG_BUFFER */
     }
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION

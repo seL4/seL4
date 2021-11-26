@@ -38,7 +38,7 @@
 #define PPTR_BASE seL4_UserTop
 
 /* Top of the physical memory window */
-#ifdef CONFIG_KERNEL_LOG_BUFFER
+#ifdef CONFIG_ENABLE_KERNEL_LOG_BUFFER
 #define PPTR_TOP UL_CONST(0xFF400000)
 /* Place the kernel log buffer after the PPTR region */
 #define KS_LOG_PPTR PPTR_TOP
@@ -95,7 +95,7 @@ static inline uint64_t riscv_read_cycle(void)
         "rdcycleh %2\n"
         : "=r"(nH1), "=r"(nL), "=r"(nH2));
     if (nH1 != nH2) {
-        /* Ensure that the time is correct if there is a rollover in the
+        /* Ensure that the cycles are correct if there is a rollover in the
          * high bits between reading the low and high bits. */
         asm volatile(
             "rdcycle  %0\n"

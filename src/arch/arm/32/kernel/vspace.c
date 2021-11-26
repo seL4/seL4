@@ -26,6 +26,7 @@
 #include <arch/object/iospace.h>
 #include <arch/object/vcpu.h>
 #include <arch/machine/tlb.h>
+#include <log.h>
 
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
 #include <benchmark/benchmark_track.h>
@@ -253,7 +254,7 @@ BOOT_CODE void map_kernel_window(void)
     /* crosscheck whether we have mapped correctly so far */
     assert(phys == PADDR_TOP);
 
-#ifdef CONFIG_KERNEL_LOG_BUFFER
+#ifdef CONFIG_ENABLE_KERNEL_LOG_BUFFER
     /* map log buffer page table. PTEs to be filled by user later by calling seL4_BenchmarkSetLogBuffer() */
     armKSGlobalPD[idx] =
         pde_pde_coarse_new(
@@ -266,7 +267,7 @@ BOOT_CODE void map_kernel_window(void)
 
     phys += BIT(pageBitsForSize(ARMSection));
     idx++;
-#endif /* CONFIG_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_ENABLE_KERNEL_LOG_BUFFER */
 
     /* map page table covering last 1M of virtual address space to page directory */
     armKSGlobalPD[idx] =
@@ -2663,7 +2664,7 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
     }
 }
 
-#ifdef CONFIG_KERNEL_LOG_BUFFER
+#ifdef CONFIG_ENABLE_KERNEL_LOG_BUFFER
 exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
 {
     lookupCapAndSlot_ret_t lu_ret;
@@ -2720,9 +2721,13 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
         invalidateTranslationSingle(KS_LOG_PPTR + (idx * BIT(seL4_PageBits)));
     }
 
+#ifdef CONFIG_KERNEL_EVENT_TRACING
+    logBuffer_init((seL4_Word *)KS_LOG_PPTR, BIT(pageBitsForSize(frameSize) - seL4_WordSizeBits));
+#endif /* !CONFIG_KERNEL_EVENT_TRACING */
+
     return EXCEPTION_NONE;
 }
-#endif /* CONFIG_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_ENABLE_KERNEL_LOG_BUFFER */
 
 #ifdef CONFIG_DEBUG_BUILD
 void kernelPrefetchAbort(word_t pc) VISIBLE;
