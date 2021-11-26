@@ -26,6 +26,7 @@
 #include <arch/object/iospace.h>
 #include <arch/object/vcpu.h>
 #include <arch/machine/tlb.h>
+#include <log.h>
 
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
 #include <benchmark/benchmark_track.h>
@@ -2719,6 +2720,10 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
         cleanByVA_PoU((vptr_t)&armKSGlobalLogPT[idx], addrFromKPPtr(&armKSGlobalLogPT[idx]));
         invalidateTranslationSingle(KS_LOG_PPTR + (idx * BIT(seL4_PageBits)));
     }
+
+#ifdef CONFIG_KERNEL_EVENT_TRACING
+    logBuffer_init((seL4_Word *)KS_LOG_PPTR, BIT(pageBitsForSize(frameSize) - seL4_WordSizeBits));
+#endif /* !CONFIG_KERNEL_EVENT_TRACING */
 
     return EXCEPTION_NONE;
 }

@@ -24,6 +24,7 @@
 #include <string.h>
 #include <kernel/traps.h>
 #include <arch/machine.h>
+#include <log.h>
 
 #ifdef CONFIG_DEBUG_BUILD
 #include <arch/machine/capdl.h>
@@ -233,8 +234,12 @@ exception_t handleUnknownSyscall(word_t w)
 #ifdef CONFIG_ENABLE_BENCHMARKS
     else if (w == SysBenchmarkFinalizeLog) {
 #ifdef CONFIG_ENABLE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_EVENT_TRACING
+        setRegister(NODE_STATE(ksCurThread), capRegister, logBuffer_finalize());
+#else /* not CONFIG_KERNEL_EVENT_TRACING */
         ksLogIndexFinalized = ksLogIndex;
         setRegister(NODE_STATE(ksCurThread), capRegister, ksLogIndexFinalized);
+#endif /* [not] CONFIG_KERNEL_EVENT_TRACING */
 #endif /* CONFIG_ENABLE_KERNEL_LOG_BUFFER */
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
         benchmark_utilisation_finalise();

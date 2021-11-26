@@ -242,10 +242,12 @@ SEL4_SIZE_SANITY(seL4_PGDEntryBits, seL4_PGDIndexBits, seL4_PGDBits);
 SEL4_SIZE_SANITY(seL4_PUDEntryBits, seL4_PUDIndexBits, seL4_PUDBits);
 #endif
 
-#ifdef CONFIG_ENABLE_BENCHMARKS
+#if defined(CONFIG_ENABLE_BENCHMARKS) || defined(CONFIG_KERNEL_EVENT_TRACING)
+/* Size of log buffer frame in bits */
+#define seL4_LogBufferBits seL4_LargePageBits
 /* size of kernel log buffer in bytes */
 #define seL4_LogBufferSize (LIBSEL4_BIT(20))
-#endif /* CONFIG_ENABLE_BENCHMARKS */
+#endif /* CONFIG_ENABLE_BENCHMARKS || CONFIG_KERNEL_EVENT_TRACING */
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
 #define seL4_FirstBreakpoint (0)
