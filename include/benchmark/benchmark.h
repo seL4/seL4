@@ -6,12 +6,28 @@
 
 #pragma once
 
+#include <config.h>
 #include <arch/benchmark.h>
 #include <machine/io.h>
 #include <sel4/arch/constants.h>
 #include <arch/machine/hardware.h>
 #include <sel4/benchmark_tracepoints_types.h>
 #include <mode/hardware.h>
+
+#ifdef CONFIG_ENABLE_BENCHMARKS
+exception_t handle_SysBenchmarkFlushCaches(void);
+exception_t handle_SysBenchmarkResetLog(void);
+exception_t handle_SysBenchmarkFinalizeLog(void);
+exception_t handle_SysBenchmarkSetLogBuffer(void);
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+exception_t handle_SysBenchmarkGetThreadUtilisation(void);
+exception_t handle_SysBenchmarkResetThreadUtilisation(void);
+#ifdef CONFIG_DEBUG_BUILD
+exception_t handle_SysBenchmarkDumpAllThreadsUtilisation(void);
+exception_t handle_SysBenchmarkResetAllThreadsUtilisation(void);
+#endif /* CONFIG_DEBUG_BUILD */
+#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
+#endif /* CONFIG_ENABLE_BENCHMARKS */
 
 #if CONFIG_MAX_NUM_TRACE_POINTS > 0
 #define TRACE_POINT_START(x) trace_point_start(x)
