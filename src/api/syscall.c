@@ -239,10 +239,9 @@ exception_t handleUnknownSyscall(word_t w)
             setRegister(NODE_STATE(ksCurThread), capRegister, seL4_IllegalOperation);
             return EXCEPTION_SYSCALL_ERROR;
         }
-
+#endif /* CONFIG_KERNEL_LOG_BUFFER */
         setRegister(NODE_STATE(ksCurThread), capRegister, seL4_NoError);
         return EXCEPTION_NONE;
-#endif /* CONFIG_KERNEL_LOG_BUFFER */
     }
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
