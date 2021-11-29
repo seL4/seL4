@@ -47,7 +47,7 @@
             <syscall name="DebugSnapshot" />
             <syscall name="DebugNameThread"/>
         </config>
-        <config condition="defined CONFIG_DEBUG_BUILD &amp;&amp; CONFIG_MAX_NUM_NODES > 1">
+        <config condition="defined CONFIG_DEBUG_BUILD &amp;&amp; defined CONFIG_ENABLE_SMP_SUPPORT">
             <syscall name="DebugSendIPI"/>
         </config>
         <config condition="defined CONFIG_DANGEROUS_CODE_INJECTION">
