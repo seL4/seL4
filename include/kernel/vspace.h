@@ -8,7 +8,7 @@
 #include <config.h>
 #include <arch/kernel/vspace.h>
 
-#ifdef CONFIG_KERNEL_LOG_BUFFER
+#ifdef CONFIG_ENABLE_KERNEL_LOG_BUFFER
 exception_t benchmark_arch_map_logBuffer(word_t frame_cptr);
-#endif /* CONFIG_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_ENABLE_KERNEL_LOG_BUFFER */
 
