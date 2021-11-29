@@ -82,13 +82,13 @@ static inline void ifence(void)
 {
     ifence_local();
 
-    unsigned long mask = 0;
+    word_t mask = 0;
     for (int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
         if (i != getCurrentCPUIndex()) {
             mask |= BIT(cpuIndexToID(i));
         }
     }
-    sbi_remote_fence_i(&mask);
+    sbi_remote_fence_i(mask);
 }
 
 static inline void sfence(void)
@@ -96,13 +96,13 @@ static inline void sfence(void)
     fence_w_rw();
     sfence_local();
 
-    unsigned long mask = 0;
+    word_t mask = 0;
     for (int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
         if (i != getCurrentCPUIndex()) {
             mask |= BIT(cpuIndexToID(i));
         }
     }
-    sbi_remote_sfence_vma(&mask, 0, 0);
+    sbi_remote_sfence_vma(mask, 0, 0);
 }
 
 static inline void hwASIDFlushLocal(asid_t asid)
@@ -114,13 +114,13 @@ static inline void hwASIDFlush(asid_t asid)
 {
     hwASIDFlushLocal(asid);
 
-    unsigned long mask = 0;
+    word_t mask = 0;
     for (int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
         if (i != getCurrentCPUIndex()) {
             mask |= BIT(cpuIndexToID(i));
         }
     }
-    sbi_remote_sfence_vma_asid(&mask, 0, 0, asid);
+    sbi_remote_sfence_vma_asid(mask, 0, 0, asid);
 }
 
 #else
