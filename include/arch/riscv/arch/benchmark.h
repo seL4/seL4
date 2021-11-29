@@ -8,19 +8,23 @@
 #pragma once
 
 #include <config.h>
+
+#ifdef CONFIG_ENABLE_BENCHMARKS
+
+#include <types.h>
 #include <arch/object/structures.h>
 #include <mode/hardware.h>
 
-#ifdef CONFIG_ENABLE_BENCHMARKS
 static inline timestamp_t timestamp(void)
 {
     return riscv_read_cycle();
 }
 
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 static inline void benchmark_arch_utilisation_reset(void)
 {
     /* nothing here */
 }
+#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 
 #endif /* CONFIG_ENABLE_BENCHMARK */
-

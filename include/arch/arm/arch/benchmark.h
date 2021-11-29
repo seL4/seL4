@@ -7,8 +7,10 @@
 #pragma once
 
 #include <config.h>
+
 #ifdef CONFIG_ENABLE_BENCHMARKS
 
+#include <types.h>
 #include <armv/benchmark.h>
 #include <mode/machine.h>
 #include <model/statedata.h>
@@ -43,11 +45,13 @@ static inline void handleOverflowIRQ(void)
 }
 #endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
 
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 static inline void benchmark_arch_utilisation_reset(void)
 {
 #ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
     NODE_STATE(ccnt_num_overflows) = 0;
 #endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
 }
-#endif /* CONFIG_ENABLE_BENCHMARKS */
+#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 
+#endif /* CONFIG_ENABLE_BENCHMARKS */

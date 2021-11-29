@@ -7,7 +7,10 @@
 #pragma once
 
 #include <config.h>
+
 #ifdef CONFIG_ENABLE_BENCHMARKS
+
+#include <types.h>
 
 static inline uint64_t timestamp(void)
 {
@@ -31,9 +34,11 @@ static inline uint64_t timestamp(void)
     return ((uint64_t) high) << 32llu | (uint64_t) low;
 }
 
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 static inline void benchmark_arch_utilisation_reset(void)
 {
+    /* nothing here */
 }
+#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 
 #endif /* CONFIG_ENABLE_BENCHMARKS */
-

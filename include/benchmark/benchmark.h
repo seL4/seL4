@@ -6,6 +6,10 @@
 
 #pragma once
 
+#include <config.h>
+
+#ifdef CONFIG_ENABLE_BENCHMARKS
+
 #include <arch/benchmark.h>
 #include <machine/io.h>
 #include <sel4/arch/constants.h>
@@ -13,18 +17,21 @@
 #include <sel4/benchmark_tracepoints_types.h>
 #include <mode/hardware.h>
 
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
-#define TRACE_POINT_START(x) trace_point_start(x)
-#define TRACE_POINT_STOP(x)   trace_point_stop(x)
+#ifdef CONFIG_KERNEL_LOG_BUFFER
+extern word_t ksLogIndex = 0;
+extern word_t ksLogIndexFinalized = 0;
+#endif /* CONFIG_KERNEL_LOG_BUFFER */
 
-#define MAX_LOG_SIZE (seL4_LogBufferSize / sizeof(benchmark_tracepoint_log_entry_t))
+#if CONFIG_MAX_NUM_TRACE_POINTS > 0
 
 extern timestamp_t ksEntries[CONFIG_MAX_NUM_TRACE_POINTS];
 extern bool_t ksStarted[CONFIG_MAX_NUM_TRACE_POINTS];
 extern timestamp_t ksExit;
-extern seL4_Word ksLogIndex;
-extern seL4_Word ksLogIndexFinalized;
-extern paddr_t ksUserLogBuffer;
+
+#define TRACE_POINT_START(x) trace_point_start(x)
+#define TRACE_POINT_STOP(x)   trace_point_stop(x)
+
+#define MAX_LOG_SIZE (seL4_LogBufferSize / sizeof(benchmark_tracepoint_log_entry_t))
 
 static inline void trace_point_start(word_t id)
 {
@@ -61,3 +68,4 @@ static inline void trace_point_stop(word_t id)
 
 #endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
 
+#endif /* CONFIG_ENABLE_BENCHMARKS */
