@@ -24,7 +24,9 @@
 #include <string.h>
 #include <kernel/traps.h>
 #include <arch/machine.h>
-
+#ifdef ENABLE_SMP_SUPPORT
+#include <smp/ipi.h>
+#endif
 #ifdef CONFIG_DEBUG_BUILD
 #include <arch/machine/capdl.h>
 #endif
@@ -128,24 +130,11 @@ exception_t handleUnknownSyscall(word_t w)
         setThreadName(TCB_PTR(cap_thread_cap_get_capTCBPtr(lu_ret.cap)), name);
         return EXCEPTION_NONE;
     }
-#if defined ENABLE_SMP_SUPPORT && defined CONFIG_ARCH_ARM
+#ifdef ENABLE_SMP_SUPPORT
     if (w == SysDebugSendIPI) {
-        seL4_Word target = getRegister(NODE_STATE(ksCurThread), capRegister);
-        seL4_Word irq = getRegister(NODE_STATE(ksCurThread), msgInfoRegister);
-
-        if (target > CONFIG_MAX_NUM_NODES) {
-            userError("SysDebugSendIPI: Invalid target, halting");
-            halt();
-        }
-        if (irq > 15) {
-            userError("SysDebugSendIPI: Invalid IRQ, not a SGI, halting");
-            halt();
-        }
-
-        ipi_send_target(CORE_IRQ_TO_IRQT(0, irq), BIT(target));
-        return EXCEPTION_NONE;
+        return handle_SysDebugSendIPI();
     }
-#endif /* ENABLE_SMP_SUPPORT && CONFIG_ARCH_ARM */
+#endif /* ENABLE_SMP_SUPPORT */
 #endif /* CONFIG_DEBUG_BUILD */
 
 #ifdef CONFIG_DANGEROUS_CODE_INJECTION
