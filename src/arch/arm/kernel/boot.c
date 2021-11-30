@@ -165,7 +165,7 @@ BOOT_CODE static void init_smmu(cap_t root_cnode_cap)
 BOOT_CODE static void init_smc(cap_t root_cnode_cap)
 {
     /* Provide the SMC cap*/
-    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapSMC), cap_smc_cap_new());
+    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapSMC), cap_smc_cap_new(0));
 }
 #endif
 
