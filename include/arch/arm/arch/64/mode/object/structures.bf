@@ -128,7 +128,7 @@ block cb_cap {
 
 #ifdef CONFIG_ALLOW_SMC_CALLS
 block smc_cap {
-    padding        64
+    field capSMCBadge 64
 
     field capType  5
     padding        59
