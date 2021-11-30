@@ -490,7 +490,7 @@ static void handleReply(void)
     }
 
     case cap_null_cap:
-        userError("Attempted reply operation when no reply cap present.");
+        /* Do nothing when no caller is pending */
         return;
 
     default:

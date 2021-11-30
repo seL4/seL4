@@ -72,7 +72,9 @@ seL4_Call(seL4_CPtr dest, seL4_MessageInfo_t msgInfo);
 /**
  * @xmlonly <manual name="Reply" label="sel4_reply"/> @endxmlonly
  * @brief Perform a send to a one-off reply capability stored when
- *        the thread was last called
+ *        the thread was last called. Does nothing if there is no
+ *        reply capability which can happen if the blocked thread
+ *        was unblocked via an operation such as destroying it.
  *
  * @xmlonly
  * <docref>See <autoref label="sec:sys_reply"/></docref>
