@@ -86,7 +86,6 @@ add_sources(
         c_traps.c
         idle.c
         api/faults.c
-        api/benchmark.c
         kernel/boot.c
         kernel/thread.c
         kernel/vspace.c
