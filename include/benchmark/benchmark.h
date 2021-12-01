@@ -35,6 +35,7 @@ extern timestamp_t ksExit;
 
 static inline void trace_point_start(word_t id)
 {
+    assert(id < CONFIG_MAX_NUM_TRACE_POINTS);
     ksEntries[id] = timestamp();
     ksStarted[id] = true;
 }
