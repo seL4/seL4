@@ -86,7 +86,7 @@ void ipi_send_target(irq_t irq, word_t hart_id)
            (ipiIrq[core_id] == irq_remote_call_ipi && big_kernel_lock.node_owners[core_id].ipi == 0));
 
     ipiIrq[core_id] = irq;
-    asm volatile("fence rw,rw");
+    fence_rw_rw();
     sbi_send_ipi(&hart_mask);
 }
 
