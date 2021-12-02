@@ -26,17 +26,6 @@ static inline cpu_id_t cpuIndexToID(word_t index)
     return coreMap.map[index];
 }
 
-static inline word_t hartIDToCoreID(word_t hart_id)
-{
-    word_t i = 0;
-    for (i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
-        if (coreMap.map[i] == hart_id) {
-            break;
-        }
-    }
-    return i;
-}
-
 static inline void add_hart_to_core_map(word_t hart_id, word_t core_id)
 {
     assert(core_id < CONFIG_MAX_NUM_NODES);

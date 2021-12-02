@@ -345,30 +345,36 @@ BOOT_CODE void cpu_initLocalIRQController(void)
 #ifdef ENABLE_SMP_SUPPORT
 #define MPIDR_MT(x)   (x & BIT(24))
 
-void ipi_send_target(irq_t irq, word_t cpuTargetList)
+void ipi_send_target(irq_t irq, word_t targetList)
 {
-    uint64_t sgi1r_base = ((word_t) IRQT_TO_IRQ(irq)) << ICC_SGI1R_INTID_SHIFT;
-    word_t sgi1r[CONFIG_MAX_NUM_NODES];
-    word_t last_aff1 = 0;
+    /* intid is stored in bits 24-27 of ICC_SGI1R_EL1 */
+    word_t sgi1r_intid = IRQT_TO_IRQ(irq) << ICC_SGI1R_INTID_SHIFT;
 
-    for (word_t i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
-        sgi1r[i] = 0;
-        if (cpuTargetList & BIT(i)) {
-            word_t mpidr = mpidr_map[i];
-            word_t aff1 = MPIDR_AFF1(mpidr);
-            word_t aff0 = MPIDR_AFF0(mpidr);
-            // AFF1 is assumed to be contiguous and less than CONFIG_MAX_NUM_NODES.
-            // The targets are grouped by AFF1.
-            assert(aff1 >= 0 && aff1 < CONFIG_MAX_NUM_NODES);
-            sgi1r[aff1] |= sgi1r_base | (aff1 << ICC_SGI1R_AFF1_SHIFT) | (1 << aff0);
-            if (aff1 > last_aff1) {
-                last_aff1 = aff1;
-            }
-        }
+    /* ICC_SGI1R_EL1 writes are grouped by cluster (aff0), thus the respective
+     * target mask covers the lower 24 bits. They holds the cluster (Aff1, bit
+     * 16-23) and target cores (TargetList, bit 0-15). In the worst case each
+     * physical core might be in a different cluster, thus the array has
+     * CONFIG_MAX_NUM_NODES entries. Common systems have 2 or 3 clusters.
+     */
+    word_t sgi1r_target[CONFIG_MAX_NUM_NODES] = {0};
+
+    while (targetList > 0) {
+        unsigned int core_id = wordBits - 1 - clzl(targetList);
+        targetList &= ~BIT(core_id);
+
+        cpu_id_t phys_core_index = cpuIndexToID(core_id);
+        assert(phys_core_index < ARRAY_SIZE(mpidr_map));
+        word_t mpidr = mpidr_map[phys_core_index];
+        word_t aff1 = MPIDR_AFF1(mpidr); /* cluster in system */
+        word_t aff0 = MPIDR_AFF0(mpidr); /* core in cluster */
+        assert(aff1 < ARRAY_SIZE(sgi1r_target));
+        assert(aff0 < ICC_SGI1R_AFF1_SHIFT);
+        sgi1r_target[aff1] |= (aff1 << ICC_SGI1R_AFF1_SHIFT) | BIT(aff0);
     }
-    for (word_t i = 0; i <= last_aff1; i++) {
-        if (sgi1r[i] != 0) {
-            SYSTEM_WRITE_64(ICC_SGI1R_EL1, sgi1r[i]);
+
+    for (word_t i = 0; i <= ARRAY_SIZE(sgi1r_target); i++) {
+        if (sgi1r_target[i] != 0) {
+            SYSTEM_WRITE_64(ICC_SGI1R_EL1, sgi1r_intid | sgi1r_target[i]);
         }
     }
     isb();

@@ -54,8 +54,13 @@ void generic_ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking);
  */
 void ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking);
 
-/* Hardware implementation for sending IPIs */
-void ipi_send_target(irq_t irq, word_t cpuTargetList);
+/* Architecture specific implementation for sending IPIs. The target list is a
+ * bitmap of logical core IDs, which is the common view of the system use in the
+ * kernel and userland. Each logical ID This is translated to the actual
+ * hardware IDs of each core, but this is well hidden inside the architecture
+ * specific code.
+ */
+void ipi_send_target(irq_t irq, word_t targetList);
 
 /* This function switches the core it is called on to the idle thread,
  * in order to avoid IPI storms. If the core is waiting on the lock, the actual

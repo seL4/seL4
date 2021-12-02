@@ -121,29 +121,15 @@ void doMaskReschedule(word_t mask)
 
 void generic_ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
 {
-    word_t nr_target_cores = 0;
-    uint16_t target_cores[CONFIG_MAX_NUM_NODES];
-
-    while (mask) {
-        int index = wordBits - 1 - clzl(mask);
-        if (isBlocking) {
+    if (isBlocking) {
+        while (mask) {
+            unsigned int index = wordBits - 1 - clzl(mask);
+            mask &= ~BIT(index);
             big_kernel_lock.node_owners[index].ipi = 1;
-            target_cores[nr_target_cores] = index;
-            nr_target_cores++;
-        } else {
-            IPI_MEM_BARRIER;
-            ipi_send_target(ipi, cpuIndexToID(index));
         }
-        mask &= ~BIT(index);
+        IPI_MEM_BARRIER; /* ensure big_kernel_lock update is visible */
     }
-
-    if (nr_target_cores > 0) {
-        /* sending IPIs... */
-        IPI_MEM_BARRIER;
-        for (int i = 0; i < nr_target_cores; i++) {
-            ipi_send_target(ipi, cpuIndexToID(target_cores[i]));
-        }
-    }
+    ipi_send_target(ipi, mask);
 }
 
 #ifdef CONFIG_DEBUG_BUILD

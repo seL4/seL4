@@ -127,4 +127,15 @@ void ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
     generic_ipi_send_mask(interrupt_ipi, mask, isBlocking);
 #endif /* CONFIG_USE_LOGICAL_IDS */
 }
+
+void ipi_send_target(irq_t irq, word_t targetList)
+{
+    while (targetList > 0) {
+        unsigned int core_id = wordBits - 1 - clzl(targetList);
+        targetList &= ~BIT(core_id);
+        apic_send_ipi_core(irq, cpuIndexToID(core_id));
+    }
+}
+
+
 #endif /* ENABLE_SMP_SUPPORT */

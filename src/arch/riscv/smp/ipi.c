@@ -58,7 +58,6 @@ static void handleRemoteCall(IpiRemoteCall_t call, word_t arg0,
 
 void ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
 {
-
     generic_ipi_send_mask(ipi, mask, isBlocking);
 }
 
@@ -74,19 +73,28 @@ void ipi_clear_irq(irq_t irq)
     return;
 }
 
-/* this function is called with a single hart id. */
-void ipi_send_target(irq_t irq, word_t hart_id)
+void ipi_send_target(irq_t irq, word_t targetList)
 {
-    word_t hart_mask = BIT(hart_id);
-    word_t core_id = hartIDToCoreID(hart_id);
-    assert(core_id < CONFIG_MAX_NUM_NODES);
+    /* The targetList is a bitmap of logical core IDs, translate each ID to the
+     * corresponding hart ID.
+     */
+    word_t hart_mask = 0;
+    while (targetList > 0) {
+        unsigned int core_id = wordBits - 1 - clzl(targetList);
+        targetList &= ~BIT(core_id);
+        hart_mask |= BIT(cpuIndexToID(core_id));
 
-    assert((ipiIrq[core_id] == irqInvalid) || (ipiIrq[core_id] == irq_reschedule_ipi) ||
-           (ipiIrq[core_id] == irq_remote_call_ipi && big_kernel_lock.node_owners[core_id].ipi == 0));
+        assert((ipiIrq[core_id] == irqInvalid) ||
+               (ipiIrq[core_id] == irq_reschedule_ipi) ||
+               ((ipiIrq[core_id] == irq_remote_call_ipi) &&
+                (big_kernel_lock.node_owners[core_id].ipi == 0)));
+        ipiIrq[core_id] = irq;
+    }
 
-    ipiIrq[core_id] = irq;
-    fence_rw_rw();
-    sbi_send_ipi(hart_mask);
+    if (hart_mask > 0) {
+        fence_rw_rw(); /* ensure update of ipiIrq is visible everywhere */
+        sbi_send_ipi(hart_mask);
+    }
 }
 
 #endif
