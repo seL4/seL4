@@ -78,16 +78,21 @@ static inline void sfence_local(void)
     asm volatile("sfence.vma" ::: "memory");
 }
 
-static inline void ifence(void)
+static inline word_t get_sbi_mask_for_all_remote_harts(void)
 {
-    ifence_local();
-
     word_t mask = 0;
     for (int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
         if (i != getCurrentCPUIndex()) {
             mask |= BIT(cpuIndexToID(i));
         }
     }
+    return mask;
+}
+
+static inline void ifence(void)
+{
+    ifence_local();
+    word_t mask = get_sbi_mask_for_all_remote_harts();
     sbi_remote_fence_i(mask);
 }
 
@@ -95,13 +100,7 @@ static inline void sfence(void)
 {
     fence_w_rw();
     sfence_local();
-
-    word_t mask = 0;
-    for (int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
-        if (i != getCurrentCPUIndex()) {
-            mask |= BIT(cpuIndexToID(i));
-        }
-    }
+    word_tmask = get_sbi_mask_for_all_remote_harts();
     sbi_remote_sfence_vma(mask, 0, 0);
 }
 
@@ -113,13 +112,7 @@ static inline void hwASIDFlushLocal(asid_t asid)
 static inline void hwASIDFlush(asid_t asid)
 {
     hwASIDFlushLocal(asid);
-
-    word_t mask = 0;
-    for (int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
-        if (i != getCurrentCPUIndex()) {
-            mask |= BIT(cpuIndexToID(i));
-        }
-    }
+    word_t mask = get_sbi_mask_for_all_remote_harts();
     sbi_remote_sfence_vma_asid(mask, 0, 0, asid);
 }
 
