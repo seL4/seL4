@@ -10,6 +10,7 @@
 #include <util.h>
 #include <arch/kernel/traps.h>
 #include <smp/lock.h>
+#include <benchmark/benchmark.h>
 
 /* This C function should be the first thing called from C after entry from
  * assembly. It provides a single place to do any entry work that is not
@@ -17,9 +18,7 @@
 static inline void c_entry_hook(void)
 {
     arch_c_entry_hook();
-#if defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES) || defined(CONFIG_BENCHMARK_TRACK_UTILISATION)
-    ksEnter = timestamp();
-#endif
+    benchmark_track_start();
 }
 
 /* This C function should be the last thing called from C before exiting

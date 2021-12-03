@@ -35,7 +35,6 @@ add_sources(
         src/machine/registerset.c
         src/machine/fpu.c
         src/benchmark/benchmark.c
-        src/benchmark/benchmark_track.c
         src/benchmark/benchmark_utilisation.c
         src/smp/lock.c
         src/smp/ipi.c

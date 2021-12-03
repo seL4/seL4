@@ -10,64 +10,30 @@
 
 #ifdef CONFIG_ENABLE_BENCHMARKS
 
-#include <arch/benchmark.h>
-#include <machine/io.h>
-#include <sel4/arch/constants.h>
-#include <arch/machine/hardware.h>
-#include <sel4/benchmark_tracepoints_types.h>
-#include <mode/hardware.h>
+#include <types.h>
 
-#ifdef CONFIG_KERNEL_LOG_BUFFER
-extern paddr_t ksUserLogBuffer;
-extern word_t ksLogIndex = 0;
-extern word_t ksLogIndexFinalized = 0;
-#endif /* CONFIG_KERNEL_LOG_BUFFER */
+#if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
+#define TRACK_KERNEL_ENTRIES 1
+extern kernel_entry_t ksKernelEntry;
+void benchmark_debug_syscall_start(word_t cptr, word_t msgInfo, word_t syscall);
+#endif /* CONFIG_DEBUG_BUILD || CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
+
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
+void benchmark_track_start(void);
+void benchmark_track_exit(void);
+#else /* not CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
+#define benchmark_track_start(void) do {} while(0)
+#define benchmark_track_exit(void) do {} while(0)
+#endif /* [not] CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
 
 #if CONFIG_MAX_NUM_TRACE_POINTS > 0
-
-extern timestamp_t ksEntries[CONFIG_MAX_NUM_TRACE_POINTS];
-extern bool_t ksStarted[CONFIG_MAX_NUM_TRACE_POINTS];
-extern timestamp_t ksExit;
-
-#define TRACE_POINT_START(x) trace_point_start(x)
+void trace_point_start(word_t id);
+#define TRACE_POINT_START(x)  trace_point_start(x)
+void trace_point_stop(word_t id);
 #define TRACE_POINT_STOP(x)   trace_point_stop(x)
+#else /* not CONFIG_MAX_NUM_TRACE_POINTS > 0 */
+#define TRACE_POINT_START(x)    do {} while(0)
+#define TRACE_POINT_STOP(x)     do {} while(0)
+#endif /* [not] CONFIG_MAX_NUM_TRACE_POINTS > 0 */
 
-#define MAX_LOG_SIZE (seL4_LogBufferSize / sizeof(benchmark_tracepoint_log_entry_t))
-
-static inline void trace_point_start(word_t id)
-{
-    assert(id < CONFIG_MAX_NUM_TRACE_POINTS);
-    ksEntries[id] = timestamp();
-    ksStarted[id] = true;
-}
-
-static inline void trace_point_stop(word_t id)
-{
-    benchmark_tracepoint_log_entry_t *ksLog = (benchmark_tracepoint_log_entry_t *) KS_LOG_PPTR;
-    ksExit = timestamp();
-
-    if (likely(ksUserLogBuffer != 0)) {
-        if (likely(ksStarted[id])) {
-            ksStarted[id] = false;
-            if (likely(ksLogIndex < MAX_LOG_SIZE)) {
-                ksLog[ksLogIndex] = (benchmark_tracepoint_log_entry_t) {
-                    id, ksExit - ksEntries[id]
-                };
-            }
-            /* increment the log index even if we have exceeded the log size
-             * this is so we can tell if we need a bigger log */
-            ksLogIndex++;
-        }
-        /* If this fails integer overflow has occurred. */
-        assert(ksLogIndex > 0);
-    }
-}
-
-#else
-
-#define TRACE_POINT_START(x)
-#define TRACE_POINT_STOP(x)
-
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
-
-#endif /* CONFIG_ENABLE_BENCHMARKS */
+#enidf /* CONFIG_ENABLE_BENCHMARKS */
