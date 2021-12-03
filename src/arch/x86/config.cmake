@@ -384,7 +384,6 @@ add_sources(
         machine/cpu_identification.c
         machine/breakpoint.c
         machine/registerset.c
-        benchmark/benchmark.c
         smp/ipi.c
     ASMFILES multiboot.S
 )
