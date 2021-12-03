@@ -4,8 +4,13 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
+#include <config.h>
+
+#ifdef CONFIG_ENABLE_BENCHMARKS
+
+#include <types.h>
 #include <benchmark/benchmark.h>
-#include <arch/benchmark.h>
+#include <arch/benchmark.h> /* sets CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
 
 #if CONFIG_MAX_NUM_TRACE_POINTS > 0
 timestamp_t ksEntries[CONFIG_MAX_NUM_TRACE_POINTS];
@@ -19,7 +24,6 @@ seL4_Word ksLogIndexFinalized = 0;
 UP_STATE_DEFINE(uint64_t, ccnt_num_overflows);
 #endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
 
-#ifdef CONFIG_ENABLE_BENCHMARKS
 void arm_init_ccnt(void)
 {
 
