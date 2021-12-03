@@ -107,7 +107,3 @@ char ksIdleThreadSC[CONFIG_MAX_NUM_NODES][BIT(seL4_MinSchedContextBits)] ALIGN(B
 #if (defined CONFIG_DEBUG_BUILD || defined CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
 kernel_entry_t ksKernelEntry;
 #endif /* DEBUG */
-
-#ifdef CONFIG_ENABLE_KERNEL_LOG_BUFFER
-paddr_t ksUserLogBuffer;
-#endif /* CONFIG_ENABLE_KERNEL_LOG_BUFFER */

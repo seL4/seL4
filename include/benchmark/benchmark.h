@@ -18,6 +18,7 @@
 #include <mode/hardware.h>
 
 #ifdef CONFIG_KERNEL_LOG_BUFFER
+extern paddr_t ksUserLogBuffer;
 extern word_t ksLogIndex = 0;
 extern word_t ksLogIndexFinalized = 0;
 #endif /* CONFIG_KERNEL_LOG_BUFFER */
