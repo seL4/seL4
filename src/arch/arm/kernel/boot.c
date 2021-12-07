@@ -447,7 +447,7 @@ static BOOT_CODE bool_t try_init_kernel(
     }
 
     if (extra_bi_size > extra_bi_offset) {
-        /* provde a chunk for any leftover padding in the extended boot info */
+        /* provide a chunk for any leftover padding in the extended boot info */
         header.id = SEL4_BOOTINFO_HEADER_PADDING;
         header.len = (extra_bi_size - extra_bi_offset);
         *(seL4_BootInfoHeader *)(rootserver.extra_bi + extra_bi_offset) = header;
