@@ -590,17 +590,18 @@ void setNextInterrupt(void)
 
 void chargeBudget(ticks_t consumed, bool_t canTimeoutFault)
 {
+    if (likely(NODE_STATE(ksCurSC) != NODE_STATE(ksIdleSC))) {
+        if (isRoundRobin(NODE_STATE(ksCurSC))) {
+            assert(refill_size(NODE_STATE(ksCurSC)) == MIN_REFILLS);
+            refill_head(NODE_STATE(ksCurSC))->rAmount += refill_tail(NODE_STATE(ksCurSC))->rAmount;
+            refill_tail(NODE_STATE(ksCurSC))->rAmount = 0;
+        } else {
+            refill_budget_check(consumed);
+        }
 
-    if (isRoundRobin(NODE_STATE(ksCurSC))) {
-        assert(refill_size(NODE_STATE(ksCurSC)) == MIN_REFILLS);
-        refill_head(NODE_STATE(ksCurSC))->rAmount += refill_tail(NODE_STATE(ksCurSC))->rAmount;
-        refill_tail(NODE_STATE(ksCurSC))->rAmount = 0;
-    } else {
-        refill_budget_check(consumed);
+        assert(refill_head(NODE_STATE(ksCurSC))->rAmount >= MIN_BUDGET);
+        NODE_STATE(ksCurSC)->scConsumed += consumed;
     }
-
-    assert(refill_head(NODE_STATE(ksCurSC))->rAmount >= MIN_BUDGET);
-    NODE_STATE(ksCurSC)->scConsumed += consumed;
     NODE_STATE(ksConsumed) = 0;
     if (likely(isSchedulable(NODE_STATE(ksCurThread)))) {
         assert(NODE_STATE(ksCurThread)->tcbSchedContext == NODE_STATE(ksCurSC));
