@@ -12,7 +12,7 @@
 
 static inline uint64_t riscv_read_time(void)
 {
-    uint32_t nH1, nL, nH2;
+    word_t nH1, nL, nH2;
     asm volatile(
         "rdtimeh %0\n"
         "rdtime  %1\n"
@@ -30,7 +30,7 @@ static inline uint64_t riscv_read_time(void)
 
 static inline uint64_t riscv_read_cycle(void)
 {
-    uint32_t nH1, nL, nH2;
+    word_t nH1, nL, nH2;
     asm volatile(
         "rdcycleh %0\n"
         "rdcycle  %1\n"
