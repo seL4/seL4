@@ -289,13 +289,13 @@ BOOT_CODE static void release_secondary_cpus(void)
 
 #ifndef CONFIG_ARCH_AARCH64
     /* At this point in time the other CPUs do *not* have the seL4 global pd set.
-     * However, they still have a PD from the elfloader (which is mapping mmemory
+     * However, they still have a PD from the elfloader (which is mapping memory
      * as strongly ordered uncached, as a result we need to explicitly clean
      * the cache for it to see the update of node_boot_lock
      *
      * For ARMv8, the elfloader sets the page table entries as inner shareable
      * (so is the attribute of the seL4 global PD) when SMP is enabled, and
-     * turns on the cache. Thus, we do not need to clean and invaliate the cache.
+     * turns on the cache. Thus, we do not need to clean and invalidate the cache.
      */
     cleanInvalidateL1Caches();
     plat_cleanInvalidateL2Cache();
