@@ -46,25 +46,25 @@ include(config.cmake)
 string(APPEND common_flags " -D__KERNEL_${KernelWordSize}__")
 
 if(KernelArchX86)
-    if(${KernelX86MicroArch} STREQUAL generic)
-        set(build_arch "-mtune=generic")
+    if(${KernelX86MicroArch} STREQUAL "generic")
+        string(APPEND common_flags " -mtune=generic")
     else()
-        set(build_arch "-march=${KernelX86MicroArch}")
+        string(APPEND common_flags " -march=${KernelX86MicroArch}")
     endif()
     if(KernelSel4ArchX86_64)
-        if(NOT LLVM_TOOLCHAIN)
-            string(APPEND asm_common_flags " -Wa,--64")
-        endif()
-        string(APPEND c_common_flags " -m64")
+        string(APPEND common_exe_flags " -Wl,-m,elf_x86_64")
     elseif(KernelSel4ArchIA32)
-        if(NOT LLVM_TOOLCHAIN)
-            string(APPEND asm_common_flags " -Wa,--32")
-        else()
-            string(APPEND asm_common_flags " -m32")
-        endif()
-        string(APPEND c_common_flags " -m32")
+        string(APPEND common_exe_flags " -Wl,-m,elf_i386")
     else()
         message(FATAL_ERROR "unknown x86 KernelSel4Arch '${KernelSel4Arch}'")
+    endif()
+    string(APPEND c_common_flags " -m${KernelWordSize}")
+    if(LLVM_TOOLCHAIN)
+        if(KernelSel4ArchIA32)
+            string(APPEND asm_common_flags " -m32")
+        endif()
+    else() # default is GCC toolchain
+        string(APPEND asm_common_flags " -Wa,--${KernelWordSize}")
     endif()
 
 elseif(KernelArchARM)
@@ -97,8 +97,6 @@ else()
     message(FATAL_ERROR "unknown KernelArch '${KernelArch}'")
 endif()
 
-string(APPEND common_flags " ${build_arch}")
-
 set(
     BASE_ASM_FLAGS "${asm_common_flags} ${common_flags}"
     CACHE INTERNAL "Default ASM flags for compilation \
@@ -113,13 +111,6 @@ set(
     BASE_CXX_FLAGS "${cxx_common_flags} ${c_common_flags} ${common_flags}"
     CACHE INTERNAL "Default CXX flags for compilation"
 )
-if(KernelArchX86)
-    if(Kernel64)
-        string(APPEND common_exe_flags " -Wl,-m -Wl,elf_x86_64")
-    else()
-        string(APPEND common_exe_flags " -Wl,-m -Wl,elf_i386")
-    endif()
-endif()
 set(
     BASE_EXE_LINKER_FLAGS "${common_flags} ${common_exe_flags} "
     CACHE INTERNAL "Default flags for linker an elf binary application"
@@ -156,6 +147,7 @@ if(KernelArchX86)
     else()
         message(FATAL_ERROR "unknown x86 KernelSel4Arch '${KernelSel4Arch}'")
     endif()
+    add_compile_options(-mno-mmx -mno-sse -mno-sse2 -mno-3dnow)
 
 elseif(KernelArchARM)
     if(KernelSel4ArchAarch64)
@@ -209,9 +201,7 @@ add_compile_options(
 # Add all the common flags to the linker args
 string(APPEND CMAKE_EXE_LINKER_FLAGS " -ffreestanding -Wl,--build-id=none -static -Wl,-n ")
 
-if(KernelArchX86)
-    add_compile_options(-mno-mmx -mno-sse -mno-sse2 -mno-3dnow)
-endif()
+
 
 # Sort the C sources to ensure a stable layout of the final C file
 list(SORT c_sources)
