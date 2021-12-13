@@ -42,6 +42,9 @@ include(config.cmake)
 
 # Define default global flag information so that users can compile with the same basic architecture
 # flags as the kernel
+
+string(APPEND common_flags " -D__KERNEL_${KernelWordSize}__")
+
 if(KernelArchX86)
     if(${KernelX86MicroArch} STREQUAL generic)
         set(build_arch "-mtune=generic")
@@ -87,11 +90,6 @@ if(KernelArchRiscV)
     endif()
 endif()
 string(APPEND common_flags " ${build_arch}")
-if(Kernel64)
-    string(APPEND common_flags " -D__KERNEL_64__")
-else()
-    string(APPEND common_flags " -D__KERNEL_32__")
-endif()
 
 set(
     BASE_ASM_FLAGS "${asm_common_flags} ${common_flags}"
