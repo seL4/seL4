@@ -181,7 +181,7 @@ BOOT_CODE static void release_secondary_cores(void)
 static BOOT_CODE bool_t try_init_kernel(
     paddr_t ui_p_reg_start,
     paddr_t ui_p_reg_end,
-    uint32_t pv_offset,
+    sword_t pv_offset,
     vptr_t  v_entry,
     paddr_t dtb_phys_addr,
     word_t  dtb_size
