@@ -40,8 +40,8 @@ RequireTool(XMLLINT_PATH xmllint.sh)
 # Process the configuration scripts
 include(config.cmake)
 
-# Define default global flag information so that users can compile with the same basic architecture
-# flags as the kernel
+# Define default global flag information so that users can compile with the same
+# basic architecture flags as the kernel
 
 string(APPEND common_flags " -D__KERNEL_${KernelWordSize}__")
 
@@ -51,6 +51,7 @@ if(KernelArchX86)
     else()
         string(APPEND common_flags " -march=${KernelX86MicroArch}")
     endif()
+
     if(KernelSel4ArchX86_64)
         string(APPEND common_exe_flags " -Wl,-m,elf_x86_64")
     elseif(KernelSel4ArchIA32)
@@ -58,7 +59,9 @@ if(KernelArchX86)
     else()
         message(FATAL_ERROR "unknown x86 KernelSel4Arch '${KernelSel4Arch}'")
     endif()
+
     string(APPEND c_common_flags " -m${KernelWordSize}")
+
     if(LLVM_TOOLCHAIN)
         if(KernelSel4ArchIA32)
             string(APPEND asm_common_flags " -m32")
@@ -71,6 +74,7 @@ elseif(KernelArchARM)
     set(arm_march "${KernelArmArmV}${KernelArmMachFeatureModifiers}")
     string(APPEND c_common_flags " -march=${arm_march}")
     string(APPEND asm_common_flags " -march=${arm_march}")
+
     if(KernelSel4ArchAarch64)
         # nothing special
     elseif(KernelSel4ArchAarch32)
@@ -102,33 +106,89 @@ set(
     CACHE INTERNAL "Default ASM flags for compilation \
     (subset of flags used by the kernel build)"
 )
+
 set(
     BASE_C_FLAGS "${c_common_flags} ${common_flags}"
     CACHE INTERNAL "Default C flags for compilation \
     (subset of flags used by the kernel)"
 )
+
 set(
     BASE_CXX_FLAGS "${cxx_common_flags} ${c_common_flags} ${common_flags}"
     CACHE INTERNAL "Default CXX flags for compilation"
 )
+
 set(
     BASE_EXE_LINKER_FLAGS "${common_flags} ${common_exe_flags} "
     CACHE INTERNAL "Default flags for linker an elf binary application"
 )
-# Initializing the kernel build flags starting from the same base flags that the users will use
+
+# Setup kernel specific flags. Initialize them from the same base flags that the
+# users will use.
 include(${KERNEL_FLAGS_PATH})
 
-# Setup kernel specific flags
+add_compile_options(
+    -std=c99
+    -nostdinc
+    # configure warnings
+    -Wall
+    -Werror
+    -Wstrict-prototypes
+    -Wmissing-prototypes
+    -Wnested-externs
+    -Wmissing-declarations
+    -Wundef
+    -Wpointer-arith
+    -Wno-nonnull
+    # configure compiler settings
+    -fno-stack-protector -fno-asynchronous-unwind-tables
+    -ffreestanding # implies -fno-builtin
+    # GCC < 10 and clang < 11 put uninitialized global variables into a 'COMMON'
+    # section unless '-fno-common' is specified. The linker will put anything
+    # from 'COMMON' as the end of the '.bss' it nothing else is specified in the
+    # linker script. Besides making the variable placement look odd, this also
+    # tends to waste a page because we puts large aligned block at the end.
+    # Eventually, GCC 10 and clang 11 made '-fno-common' the default, see
+    # - https://gcc.gnu.org/gcc-10/changes.html
+    # - https://releases.llvm.org/11.0.0/tools/clang/docs/ReleaseNotes.html
+    -fno-common
+)
+
+# Linker parameters
+string(
+    APPEND
+    CMAKE_EXE_LINKER_FLAGS
+    " -static" # overrides -pie to become -no-pie.
+    " -Wl,-nostdlib" # linker counterpart for -ffreestanding
+    #" -Wl,-no-pie"  Seems option does not exist, despite ld 2.37 docs say so
+    " -Wl,--build-id=none -Wl,-n"
+)
+
+# Setup kernel specific flags used for both the compilation and linking step
 macro(KernelCommonFlags)
     foreach(common_flag IN ITEMS ${ARGV})
         add_compile_options(${common_flag})
         string(APPEND CMAKE_EXE_LINKER_FLAGS " ${common_flag} ")
     endforeach()
 endmacro(KernelCommonFlags)
-KernelCommonFlags(-nostdlib ${KernelOptimisation})
+
+KernelCommonFlags(
+    ${KernelOptimisation}
+    # The following options are gcc options, it is unclear if ld options are
+    # generated automatically when gcc wraps the linking step and invokes ld.
+    -nostdlib
+    -fno-pic
+    -fno-pie
+)
+
 if(KernelFWholeProgram)
+    # KernelFWholeProgram is still an experimental feature and disabled by
+    # default. Clarify if the linker step via GCC actually cares about this
+    # parameter. There are also the options -flto and -fuse-linker-plugin that
+    # might be a more modern approach.
     KernelCommonFlags(-fwhole-program)
 endif()
+
 if(KernelDebugBuild)
     KernelCommonFlags(-DDEBUG -g -ggdb)
     # Pretend to CMake that we're a release build with debug info. This is because
@@ -170,37 +230,6 @@ elseif(KernelArchRiscV)
 else()
     message(FATAL_ERROR "unknown KernelArch '${KernelArch}'")
 endif()
-
-KernelCommonFlags(-fno-pic -fno-pie)
-add_compile_options(
-    -nostdinc
-    -fno-stack-protector
-    -fno-asynchronous-unwind-tables
-    -std=c99
-    -Wall
-    -Werror
-    -Wstrict-prototypes
-    -Wmissing-prototypes
-    -Wnested-externs
-    -Wmissing-declarations
-    -Wundef
-    -Wpointer-arith
-    -Wno-nonnull
-    -ffreestanding
-    # GCC < 10 and clang < 11 put uninitialized global variables into a 'COMMON'
-    # section unless '-fno-common' is specified. The linker will put anything
-    # from 'COMMON' as the end of the '.bss' it nothing else is specified in the
-    # linker script. Besides making the variable placement look odd, this also
-    # tends to waste a page because we puts large aligned block at the end.
-    # Eventually, GCC 10 and clang 11 made '-fno-common' the default, see
-    # - https://gcc.gnu.org/gcc-10/changes.html
-    # - https://releases.llvm.org/11.0.0/tools/clang/docs/ReleaseNotes.html
-    -fno-common
-)
-
-# Add all the common flags to the linker args
-string(APPEND CMAKE_EXE_LINKER_FLAGS " -ffreestanding -Wl,--build-id=none -static -Wl,-n ")
-
 
 
 # Sort the C sources to ensure a stable layout of the final C file
