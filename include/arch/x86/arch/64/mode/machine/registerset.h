@@ -72,6 +72,14 @@ enum _register {
     n_contextRegisters      = 24    /* 0xc0 */
 };
 
+#if defined(CONFIG_PRINTING) && defined(CONFIG_DEBUG_BUILD)
+static UNUSED const char *register_names[] = {
+    "rdi", "rsi", "rax", "rbx", "rbp", "r12", "r13", "r14", "rdx", "r10", "r8",
+    "r9", "r15", "FLAGS", "NextIP", "Error", "rsp", "FaultIP", "r11", "rcx",
+    "cs", "ss", "fs/tls base", "gs base",
+};
+#endif /* defined(CONFIG_PRINTING) && defined(CONFIG_DEBUG_BUILD) */
+
 typedef uint32_t register_t;
 
 enum messageSizes {

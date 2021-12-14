@@ -60,6 +60,14 @@ enum _register {
     /* 0x44 */  n_contextRegisters = 17
 };
 
+#if defined(CONFIG_PRINTING) && defined(CONFIG_DEBUG_BUILD)
+static UNUSED const char *register_names[] = {
+    "(none)", /* enum _register starts with 1 */
+    "eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "FaultIP", "Error",
+    "NextIP", "cs", "flags", "esp", "ss", "fs base", "gs/tls base",
+};
+#endif /* defined(CONFIG_PRINTING) && defined(CONFIG_DEBUG_BUILD) */
+
 typedef word_t register_t;
 
 enum messageSizes {

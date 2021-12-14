@@ -15,6 +15,15 @@
 #include <machine/io.h>
 #include <kernel/thread.h>
 
+#if CONFIG_WORD_SIZE == 32
+#define PRI_reg "%08"SEL4_PRIx_word
+#define PRI_reg_param(r)    (r)
+#elif CONFIG_WORD_SIZE == 64
+#define PRI_reg "%08"PRIx32"'%08"PRIx32
+#define PRI_reg_param(r)    (uint32_t)((r) >> 32), (uint32_t)(r)
+#else
+#error "unsupported CONFIG_WORD_SIZE"
+#endif
 
 /* This function is also available in release builds when printing is enabled,
  * in this case it will not print any register content to avoid leaking
@@ -26,13 +35,12 @@ void print_thread_fault(tcb_t *tptr)
                                       TCB_PTR_DEBUG_PTR(tptr)->tcbName,
                                       null);
 
-    printf("FAULT at address %p in thread %p%s%s%s\n"
-           "      ",
-           (void *)getRestartPC(tptr),
-           tptr,
-           name ? " (" : "",
-           name,
-           name ? ")" : "");
+    printf("\n\n"
+           "## ==============================================================\n"
+           "##   FAULT at PC=%p in thread %p%s%s%s\n"
+           "##   Cause: ", /* message follows here */
+           (void *)getRestartPC(tptr), tptr,
+           name ? " (" : "", name, name ? ")" : "");
 
     seL4_Fault_t fault = tptr->tcbFault;
     word_t fault_type = seL4_Fault_get_seL4_FaultType(fault);
@@ -73,8 +81,32 @@ void print_thread_fault(tcb_t *tptr)
         break;
     }
 
-    printf("\nStack dump:\n");
+    printf("\n##   Thread suspended, no userland fault handler\n");
+    /* Thread registers are printed in debug builds only. */
+#ifdef CONFIG_DEBUG_BUILD
+    printf("State:\n");
+    user_context_t *user_ctx = &(tptr->tcbArch.tcbContext);
+    /* Dynamically adapt spaces to max register name len per column. */
+    unsigned int max_reg_name_len[2] = {0};
+    for (unsigned int i = 0; i < ARRAY_SIZE(user_ctx->registers); i++) {
+        int col = i & 1;
+        unsigned int l = strnlen(register_names[i], 20);
+        if (max_reg_name_len[col] < l) {
+            max_reg_name_len[col] = l;
+        }
+    }
+    const unsigned int num_regs = ARRAY_SIZE(user_ctx->registers);
+    for (unsigned int i = 0; i < num_regs; i++) {
+        int col = i & 1;
+        bool_t is_last = (num_regs == i + 1);
+        word_t reg = user_ctx->registers[i];
+        printf("%*s: 0x"PRI_reg"%s",
+               max_reg_name_len[col] + 2, register_names[i], PRI_reg_param(reg),
+               (col || is_last) ? "\n" : "");
+    }
+    printf("\nStack:\n");
     Arch_userStackTrace(tptr);
+#endif /* CONFIG_DEBUG_BUILD */
 }
 
 #ifdef CONFIG_DEBUG_BUILD

@@ -106,6 +106,14 @@ enum _register {
     n_contextRegisters = 20,
 };
 
+#if defined(CONFIG_PRINTING) && defined(CONFIG_DEBUG_BUILD)
+static UNUSED const char *register_names[] = {
+    "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11",
+    "r12", "r13/sp", "r14/lr", "NextIP", "cpsr", "FaultIP", "tpidrurw/tls",
+    "tpidruro",
+};
+#endif /* defined(CONFIG_PRINTING) && defined(CONFIG_DEBUG_BUILD) */
+
 #define NEXT_PC_REG NextIP
 
 compile_assert(sp_offset_correct, SP *sizeof(word_t) == PT_SP)
