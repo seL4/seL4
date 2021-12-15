@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
+#include <config.h>
 #include <assert.h>
 #include <kernel/boot.h>
 #include <machine/io.h>
