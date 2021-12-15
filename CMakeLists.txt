@@ -557,7 +557,7 @@ cppfile(
 
 add_custom_command(
     OUTPUT circular_includes_valid
-    COMMAND ${CIRCULAR_INCLUDES} --ignore kernel_all_copy.c < kernel_all.i
+    COMMAND ${PYTHON3} ${CIRCULAR_INCLUDES} --ignore kernel_all_copy.c < kernel_all.i
     COMMAND touch circular_includes_valid
     DEPENDS kernel_i_wrapper kernel_all.i
 )
