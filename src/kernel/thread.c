@@ -417,7 +417,7 @@ void chooseThread(void)
     word_t dom;
     tcb_t *thread;
 
-    if (CONFIG_NUM_DOMAINS > 1) {
+    if (numDomains > 1) {
         dom = ksCurDomain;
     } else {
         dom = 0;
@@ -577,7 +577,7 @@ void setNextInterrupt(void)
     time_t next_interrupt = NODE_STATE(ksCurTime) +
                             refill_head(NODE_STATE(ksCurThread)->tcbSchedContext)->rAmount;
 
-    if (CONFIG_NUM_DOMAINS > 1) {
+    if (numDomains > 1) {
         next_interrupt = MIN(next_interrupt, NODE_STATE(ksCurTime) + ksDomainTime);
     }
 
@@ -645,7 +645,7 @@ void timerTick(void)
         }
     }
 
-    if (CONFIG_NUM_DOMAINS > 1) {
+    if (numDomains > 1) {
         ksDomainTime--;
         if (ksDomainTime == 0) {
             rescheduleRequired();

@@ -18,7 +18,7 @@
 
 static inline CONST word_t ready_queues_index(word_t dom, word_t prio)
 {
-    if (CONFIG_NUM_DOMAINS > 1) {
+    if (numDomains > 1) {
         return dom * CONFIG_NUM_PRIORITIES + prio;
     } else {
         assert(dom == 0);
@@ -117,7 +117,7 @@ static inline bool_t PURE isRoundRobin(sched_context_t *sc)
 
 static inline bool_t isCurDomainExpired(void)
 {
-    return CONFIG_NUM_DOMAINS > 1 &&
+    return numDomains > 1 &&
            ksDomainTime == 0;
 }
 
@@ -228,7 +228,7 @@ static inline void updateTimestamp(void)
     assert(NODE_STATE(ksCurTime) < MAX_RELEASE_TIME);
     time_t consumed = (NODE_STATE(ksCurTime) - prev);
     NODE_STATE(ksConsumed) += consumed;
-    if (CONFIG_NUM_DOMAINS > 1) {
+    if (numDomains > 1) {
         if ((consumed + MIN_BUDGET) >= ksDomainTime) {
             ksDomainTime = 0;
         } else {

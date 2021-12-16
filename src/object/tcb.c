@@ -1561,9 +1561,9 @@ exception_t decodeDomainInvocation(word_t invLabel, word_t length, word_t *buffe
         return EXCEPTION_SYSCALL_ERROR;
     } else {
         domain = getSyscallArg(0, buffer);
-        if (domain >= CONFIG_NUM_DOMAINS) {
+        if (domain >= numDomains) {
             userError("Domain Configure: invalid domain (%lu >= %u).",
-                      domain, CONFIG_NUM_DOMAINS);
+                      domain, numDomains);
             current_syscall_error.type = seL4_InvalidArgument;
             current_syscall_error.invalidArgumentNumber = 0;
             return EXCEPTION_SYSCALL_ERROR;

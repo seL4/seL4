@@ -25,7 +25,11 @@ typedef uint64_t time_t;
 
 enum domainConstants {
     minDom = 0,
-    maxDom = CONFIG_NUM_DOMAINS - 1
+    maxDom = CONFIG_NUM_DOMAINS - 1,
+    /* To analyse branches of control flow decisions based on the number of
+     * domains without knowing their exact number, verification needs a C name
+     * to relate to higher-level specs. */
+    numDomains = CONFIG_NUM_DOMAINS
 };
 
 struct cap_transfer {
