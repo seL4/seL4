@@ -268,8 +268,11 @@ void setIRQTrigger(irq_t irq, bool_t trigger);
 
 static inline void arch_pause(void)
 {
-    // use a memory fence to delay a bit.
-    // other alternatives?
+    /* Currently, a memory fence seems the best option to delay execution at
+     * least a bit. The ZiHintPause extension defines PAUSE, it's encoded as
+     * FENCE instruction with fm=0, pred=W, succ=0, rd=x0, rs1=x0. Once it is
+     * supported we could use 'asm volatile("pause")' as an improvement.
+     */
     fence_rw_rw();
 }
 
