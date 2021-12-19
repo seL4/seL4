@@ -874,7 +874,7 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
         return false;
     }
     /* skip any empty regions */
-    for (; is_reg_empty(ndks_boot.freemem[i]) && i >= 0; i--);
+    for (; i >= 0 && is_reg_empty(ndks_boot.freemem[i]); i--);
 
     /* try to grab the last available p region to create the root server objects
      * from. If possible, retain any left over memory as an extra p region */
