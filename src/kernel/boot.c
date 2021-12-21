@@ -785,38 +785,120 @@ BOOT_CODE static bool_t create_untypeds_for_region(
     return true;
 }
 
-BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap)
+BOOT_CODE static bool_t create_device_untypeds(
+    cap_t        root_cnode_cap,
+    seL4_SlotPos first_untyped_slot
+)
 {
-    seL4_SlotPos first_untyped_slot = ndks_boot.slot_pos_cur;
-
+    /* Device memory cap are created for all physical memory from 0 to
+     * CONFIG_PADDR_USER_DEVICE_TOP that is not marked as reserved. Such
+     * reserved regions include for example:
+     *   - kernel devices
+     *   - images (kernel, user, device tree)
+     *   - free memory to be used by the userspace
+     * This approach simplifies platform specific address space management from
+     * the kernel's point of view, because there is no need to explicitly define
+     * device memory regions for a platform. The root task receives device
+     * memory caps for all physical memory has to know where the actual platform
+     * devices are that can be accesses. The downside is, that accessing invalid
+     * device memory can lead to undefined behavior. In the best case the write
+     * access is simply ignored and a read access return arbitrary data. If the
+     * access causes a synchronous trap, it can be handled by userland. However,
+     * for asynchronous trap that leads to a system halt - and the root cause
+     * can be difficult to debug due to the asynchronous and delayed arrival. In
+     * the worst case accesses leads to undefined behavior, so there is nothing
+     * that can be done here.
+     *
+     * Device memory caps are created based on the (PPTR) kernel window memory
+     * view and not the physical memory view. Contrary to free memory, device
+     * caps are not limited to the physical address space that is accessible via
+     * the kernel window (PADDR_BASE to PADDR_TOP), they can have PPTRs outside
+     * of it, which means outside of PPTR_BASE to PPTR_TOP. Since the PPTR
+     * view is basically a shifted view of the physical address space,
+     * translating a physical region to a PPTR region can make it wrap around
+     * the end of the integer range. The PPTR region's end address is lower than
+     * the start address in this case. This is allowed to happen and is handles
+     * properly - it can look slightly odd when debugging the memory setup,
+     * though.
+     */
+    printf("device regions:\n");
     paddr_t start = 0;
-    for (word_t i = 0; i < ndks_boot.resv_count; i++) {
-        if (start < ndks_boot.reserved[i].start) {
-            region_t reg = paddr_to_pptr_reg((p_region_t) {
-                start, ndks_boot.reserved[i].start
-            });
-            if (!create_untypeds_for_region(root_cnode_cap, true, reg, first_untyped_slot)) {
-                printf("ERROR: creation of untypeds for device region #%u at"
-                       " [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] failed\n",
-                       (unsigned int)i, reg.start, reg.end);
-                return false;
+    int i = 0;
+    while (start < CONFIG_PADDR_USER_DEVICE_TOP) {
+        /* Assume the device region uses the remaining address space. If there
+         * are reserved region left, we will adjust this accordingly and keep
+         * looping.
+         */
+        p_region_t reg_device = {
+            .start = start,
+            .end   = CONFIG_PADDR_USER_DEVICE_TOP
+        };
+        start = reg_device.end;
+
+        if (i < ndks_boot.resv_count) {
+
+            p_region_t *reg_reserved = &ndks_boot.reserved[i];
+            /* Sanity checks: The reserved region must be sane and not have a
+             * zero size. The whole list must contain pairly disjunct regions
+             * in ascending order. Regions must not be adjacent, these must get
+             * merged already when the list is created or updated.
+             */
+            assert(reg_reserved->start < reg_reserved->end);
+            if (i > 0) {
+                assert(reg_reserved->start > ndks_boot.reserved[i - 1].end);
             }
+
+            i++;
+
+            /* Create device untypeds up to the start of the reserved region and
+             * skip the reserved region.
+             */
+            start = reg_reserved->end;
+            if (reg_device.start == reg_reserved->start) {
+                continue; /* Don't create caps for a zero sized region. */
+            }
+            reg_device.end = reg_reserved->start;
         }
 
-        start = ndks_boot.reserved[i].end;
-    }
-
-    if (start < CONFIG_PADDR_USER_DEVICE_TOP) {
-        region_t reg = paddr_to_pptr_reg((p_region_t) {
-            start, CONFIG_PADDR_USER_DEVICE_TOP
-        });
-
+        /* Create the device region */
+        printf("  [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]\n",
+               reg_device.start, reg_device.end);
+        /* Translate physical region to PPTR region for cap creation. The PPTR
+         * region can wrap around the integer range - this is ok, even if it
+         * looks a bit odd.
+         */
+        region_t reg = paddr_to_pptr_reg(reg_device);
+        if (reg.start > reg.end) {
+            printf("    kernel window pptr view of region leads to"
+                   " wrap-around\n"
+                   "    [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]"
+                   " -> pptr [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]\n"
+                   "    [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]"
+                   " -> pptr [0..%"SEL4_PRIx_word"]\n",
+                   reg_device.start, reg_device.end - reg.end - 1,
+                   reg.start, reg.end - reg.end - 1,
+                   reg_device.end - reg.end, reg_device.end,
+                   reg.end);
+        }
         if (!create_untypeds_for_region(root_cnode_cap, true, reg, first_untyped_slot)) {
-            printf("ERROR: creation of untypeds for top device region"
+            printf("ERROR: creation of untypeds for device region"
                    " [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] failed\n",
-                   reg.start, reg.end);
+                   reg_device.start, reg_device.end);
             return false;
         }
+    }
+
+    return true;
+}
+
+BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap)
+{
+     seL4_SlotPos first_untyped_slot = ndks_boot.slot_pos_cur;
+
+    /* Create the device untypeds. */
+    if (!create_device_untypeds(root_cnode_cap, first_untyped_slot)) {
+        printf("ERROR: creation of device untypeds failed\n");
+        return false;
     }
 
     /* There is a part of the kernel (code/data) that is only needed for the
