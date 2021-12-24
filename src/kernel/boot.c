@@ -376,10 +376,11 @@ BOOT_CODE create_frames_of_region_ret_t create_frames_of_region(
         } else {
             frame_cap = create_unmapped_it_frame_cap(f, false);
         }
-        if (!provide_cap(root_cnode_cap, frame_cap))
+        if (!provide_cap(root_cnode_cap, frame_cap)) {
             return (create_frames_of_region_ret_t) {
-            S_REG_EMPTY, false
-        };
+                S_REG_EMPTY, false
+            };
+        }
     }
 
     slot_pos_after = ndks_boot.slot_pos_cur;
