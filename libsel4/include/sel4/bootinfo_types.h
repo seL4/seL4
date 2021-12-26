@@ -7,6 +7,7 @@
 #pragma once
 
 #include <autoconf.h>
+#include <sel4/macros.h>
 
 /* caps with fixed slot positions in the root CNode */
 enum {
@@ -74,20 +75,12 @@ typedef struct seL4_BootInfo {
      * to make this struct easier to represent in other languages */
 } seL4_BootInfo;
 
-/* If extraLen > 0 then 4K after the start of bootinfo is a region of extraLen additional
- * bootinfo structures. Bootinfo structures are arch/platform specific and may or may not
- * exist in any given execution. */
-typedef struct seL4_BootInfoHeader {
-    /* Identifier of the following chunk. IDs are arch/platform specific and defined in
-     * the enum seL4_BootInfoID below.
-     */
-    seL4_Word id;
-    /* length of the chunk, including this header */
-    seL4_Word len;
-} seL4_BootInfoHeader;
-
-/* Bootinfo identifiers share a global namespace, even if they are arch or platform specific
- * and are enumerated here */
+/* If extraLen > 0, then 4K after the start of bootinfo there is a region of the
+ * size extraLen that contains additional boot info data chunks. They are
+ * arch/platform specific and may or may not exist in any given execution. Each
+ * chunk has a header that contains an ID to describe the chunk. All IDs share a
+ * global namespace to ensure uniqueness.
+ */
 typedef enum {
     SEL4_BOOTINFO_HEADER_PADDING            = 0,
     SEL4_BOOTINFO_HEADER_X86_VBE            = 1,
@@ -96,6 +89,17 @@ typedef enum {
     SEL4_BOOTINFO_HEADER_X86_FRAMEBUFFER    = 4,
     SEL4_BOOTINFO_HEADER_X86_TSC_FREQ       = 5, /* frequency is in MHz */
     SEL4_BOOTINFO_HEADER_FDT                = 6, /* device tree */
-    /* add more IDs here */
-    SEL4_BOOTINFO_HEADER_NUM
+    /* Add more IDs here, the two elements below must always be at the end. */
+    SEL4_BOOTINFO_HEADER_NUM,
+    SEL4_FORCE_LONG_ENUM(seL4_BootInfoID)
 } seL4_BootInfoID;
+
+/* Common header for all additional bootinfo chunks to describe the chunk. */
+typedef struct seL4_BootInfoHeader {
+    seL4_BootInfoID  id;  /* identifier of the following blob */
+    seL4_Word        len; /* length of the chunk, including this header */
+} seL4_BootInfoHeader;
+
+SEL4_COMPILE_ASSERT(
+    invalid_seL4_BootInfoHeader,
+    sizeof(seL4_BootInfoHeader) == 2 * sizeof(seL4_Word));
