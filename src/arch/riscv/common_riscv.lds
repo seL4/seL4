@@ -39,7 +39,6 @@ SECTIONS
 
     .text . : AT(ADDR(.text) - KERNEL_OFFSET)
     {
-        /* Sit inside a large frame */
         . = ALIGN(4K);
 
 
