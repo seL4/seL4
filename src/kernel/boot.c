@@ -19,7 +19,7 @@
 
 /* (node-local) state accessed only during bootstrapping */
 BOOT_BSS ndks_boot_t ndks_boot;
-
+BOOT_BSS static region_t avail_reg[MAX_NUM_FREEMEM_REG];
 BOOT_BSS rootserver_mem_t rootserver;
 BOOT_BSS static region_t rootserver_mem;
 
@@ -837,26 +837,21 @@ BOOT_CODE void bi_finalise(void)
     };
 }
 
-BOOT_CODE static inline pptr_t ceiling_kernel_window(pptr_t p)
-{
-    /* Adjust address if it exceeds the kernel window
-     * Note that we compare physical address in case of overflow.
-     */
-    if (pptr_to_paddr((void *)p) > PADDR_TOP) {
-        p = PPTR_TOP;
-    }
-    return p;
-}
-
-BOOT_CODE static bool_t check_available_memory(word_t n_available,
+BOOT_CODE static word_t check_available_memory(word_t n_available,
                                                const p_region_t *available)
 {
+    /* Ensure avail_reg is properly initialized. */
+    for (word_t i = 0; i < ARRAY_SIZE(avail_reg); i++) {
+        avail_reg[i] = REG_EMPTY;
+    }
+
     /* The system configuration is broken if no region is available. */
     if (0 == n_available) {
         printf("ERROR: no memory regions available\n");
-        return false;
+        return 0;
     }
 
+    word_t cnt = 0;
     printf("available phys memory regions: %"SEL4_PRIu_word"\n", n_available);
     /* Force ordering and exclusivity of available regions. */
     for (word_t i = 0; i < n_available; i++) {
@@ -866,24 +861,72 @@ BOOT_CODE static bool_t check_available_memory(word_t n_available,
         /* Available regions must be sane */
         if (r->start > r->end) {
             printf("ERROR: memory region %"SEL4_PRIu_word" has start > end\n", i);
-            return false;
+            return 0;
         }
 
         /* Available regions can't be empty. */
         if (r->start == r->end) {
             printf("ERROR: memory region %"SEL4_PRIu_word" empty\n", i);
-            return false;
+            return 0;
         }
 
         /* Regions must be ordered and must not overlap. Regions are [start..end),
-           so the == case is fine. Directly adjacent regions are allowed. */
+         * so the '==' case is fine. Directly adjacent regions are allowed.
+         */
         if ((i > 0) && (r->start < available[i - 1].end)) {
             printf("ERROR: memory region %d in wrong order\n", (int)i);
-            return false;
+            return 0;
         }
+
+        /* Sanitize the available memory region: only memory in the kernel
+         * window can be used for kernel objects. On 32-bit architectures it is
+         * not uncommon for provided regions to be only partially in the kernel
+         * window, because the available address space is small. Memory outside
+         * of the kernel window is made available as device untyped memory.
+         */
+        if ((r->start > PADDR_TOP) || (r->end <= PADDR_BASE)) {
+            printf("    region outside of kernel window, available as device untypeds.\n");
+            continue;
+        }
+
+        p_region_t usable_reg = {
+            .start = MAX(r->start, PADDR_BASE),
+            .end   = MIN(r->end, PADDR_TOP)
+        };
+
+        if ((usable_reg.start != r->start) || (usable_reg.end != r->end)) {
+            /* Region is partial addressable only, this is also not uncommon on
+             * 32-bit architectures due to the limited virtual address space.
+             */
+            if (usable_reg.start != r->start) {
+                printf("    [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] device untyped memory\n",
+                       r->start, usable_reg.end);
+            }
+            printf("    [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] kernel window addressable\n",
+                   usable_reg.start, usable_reg.end);
+            if (usable_reg.end != r->end) {
+                printf("    [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] device untyped memory\n",
+                       usable_reg.end, r->end);
+            }
+        }
+
+        if (cnt >= ARRAY_SIZE(avail_reg)) {
+            /* No space left in the array, seems MAX_NUM_FREEMEM_REG should be
+             * increased. Debug builds raise an assert here because this is
+             * likely a porting issue that should be looked into. Release builds
+             * will continue booting, but can't use this memory region. This
+             * might still be sufficient to run.
+             */
+            printf("    WARNING: can't use region, avail_reg[] is full\n");
+            assert(0);
+            continue;
+        }
+
+        avail_reg[cnt] = paddr_to_pptr_reg(usable_reg);
+        cnt++;
     }
 
-    return true;
+    return cnt;
 }
 
 
@@ -914,9 +957,6 @@ BOOT_CODE static bool_t check_reserved_memory(word_t n_reserved,
     return true;
 }
 
-/* we can't declare arrays on the stack, so this is space for
- * the function below to use. */
-BOOT_BSS static region_t avail_reg[MAX_NUM_FREEMEM_REG];
 /**
  * Dynamically initialise the available memory on the platform.
  * A region represents an area of memory.
@@ -925,8 +965,11 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
                               word_t n_reserved, const region_t *reserved,
                               v_region_t it_v_reg, word_t extra_bi_size_bits)
 {
-
-    if (!check_available_memory(n_available, available)) {
+    /* Check the available memory region and initialize avail_reg to hold the
+     * sanitized available regions that can be accessed via the kernel window.
+     */
+    n_available = check_available_memory(n_available, available);
+    if (0 == n_available) {
         return false;
     }
 
@@ -936,13 +979,6 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
 
     for (word_t i = 0; i < ARRAY_SIZE(ndks_boot.freemem); i++) {
         ndks_boot.freemem[i] = REG_EMPTY;
-    }
-
-    /* convert the available regions to pptrs */
-    for (word_t i = 0; i < n_available; i++) {
-        avail_reg[i] = paddr_to_pptr_reg(available[i]);
-        avail_reg[i].end = ceiling_kernel_window(avail_reg[i].end);
-        avail_reg[i].start = ceiling_kernel_window(avail_reg[i].start);
     }
 
     word_t a = 0;
