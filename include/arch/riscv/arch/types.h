@@ -28,8 +28,6 @@ typedef word_t dom_t;
 
 typedef uint64_t timestamp_t;
 
-#define wordBits BIT(wordRadix)
-
 typedef struct kernel_frame {
     paddr_t paddr;
     pptr_t pptr;
