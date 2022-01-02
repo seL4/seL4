@@ -23,8 +23,8 @@ enum {
     seL4_CapBootInfoFrame       =  9, /* bootinfo frame cap */
     seL4_CapInitThreadIPCBuffer = 10, /* initial thread's IPC buffer frame cap */
     seL4_CapDomain              = 11, /* global domain controller cap */
-    seL4_CapSMMUSIDControl      = 12,  /*global SMMU SID controller cap, null cap if not supported*/
-    seL4_CapSMMUCBControl       = 13,  /*global SMMU CB controller cap, null cap if not supported*/
+    seL4_CapSMMUSIDControl      = 12, /* global SMMU SID controller cap, null cap if not supported */
+    seL4_CapSMMUCBControl       = 13, /* global SMMU CB controller cap, null cap if not supported */
 #ifdef CONFIG_KERNEL_MCS
     seL4_CapInitThreadSC        = 14, /* initial thread's scheduling context cap */
     seL4_NumInitialCaps         = 15
@@ -46,9 +46,9 @@ typedef struct seL4_SlotRegion {
 } seL4_SlotRegion;
 
 typedef struct seL4_UntypedDesc {
-    seL4_Word  paddr;   /* physical address of untyped cap  */
-    seL4_Uint8 sizeBits;/* size (2^n) bytes of each untyped */
-    seL4_Uint8 isDevice;/* whether the untyped is a device  */
+    seL4_Word  paddr;    /* physical address of untyped cap  */
+    seL4_Uint8 sizeBits; /* size (2^n) bytes of each untyped */
+    seL4_Uint8 isDevice; /* whether the untyped is a device  */
     seL4_Uint8 padding[sizeof(seL4_Word) - 2 * sizeof(seL4_Uint8)];
 } seL4_UntypedDesc;
 
@@ -67,7 +67,7 @@ typedef struct seL4_BootInfo {
     seL4_Word         initThreadCNodeSizeBits; /* initial thread's root CNode size (2^n slots) */
     seL4_Domain       initThreadDomain; /* Initial thread's domain ID */
 #ifdef CONFIG_KERNEL_MCS
-    seL4_SlotRegion   schedcontrol; /* Caps to sched_control for each node */
+    seL4_SlotRegion   schedcontrol;    /* Caps to sched_control for each node */
 #endif
     seL4_SlotRegion   untyped;         /* untyped-object caps (untyped caps) */
     seL4_UntypedDesc  untypedList[CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS]; /* information about each untyped */
