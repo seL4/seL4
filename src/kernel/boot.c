@@ -205,8 +205,10 @@ BOOT_CODE static void create_rootserver_objects(pptr_t start, v_region_t it_v_re
     /* at this point we are up to creating 4k objects - which is the min size of
      * extra_bi so this is the last chance to allocate it */
     maybe_alloc_extra_bi(seL4_PageBits, extra_bi_size_bits);
+    compile_assert(invalid_seL4_ASIDPoolBits, seL4_ASIDPoolBits == seL4_PageBits);
     rootserver.asid_pool = alloc_rootserver_obj(seL4_ASIDPoolBits, 1);
     rootserver.ipc_buf = alloc_rootserver_obj(seL4_PageBits, 1);
+    compile_assert(invalid_BI_FRAME_SIZE_BITS, BI_FRAME_SIZE_BITS == seL4_PageBits);
     rootserver.boot_info = alloc_rootserver_obj(BI_FRAME_SIZE_BITS, 1);
 
     /* TCBs on aarch32 can be larger than page tables in certain configs */
