@@ -6,9 +6,26 @@
 
 #pragma once
 
-#define PASTE(a, b) a ## b
-#define _STRINGIFY(a) #a
-#define STRINGIFY(a) _STRINGIFY(a)
+/* Using multiple macro layers may look strange, but this is required to make
+ * the preprocessor fully evaluate all macro parameters first and then pass the
+ * result as parameter to the next macro layer. This allows passing macros as
+ * parameters also, and not just plain strings. The final concatenation or
+ * stringification will always be from the strings behind all macros then - and
+ * not the macro names that are passed as parameters.
+ */
+
+#define _macro_stringify(a)             #a
+#define STRINGIFY(a)                    _macro_stringify(a)
+
+#define _macro_paste(a, b)              a ## b
+#define _macro_concat(a, b)             _macro_paste(a, b)
+
+#define _macro_paste3(a, b, c)          a ## b ## c
+#define _macro_concat3(a, b, c)         _macro_paste3(a, b, c)
+
+#define _macro_str_concat_helper(a, b)  _macro_stringify(a ## b)
+#define _macro_str_concat(a, b)         _macro_str_concat_helper(a, b)
+
 
 #ifdef __ASSEMBLER__
 
@@ -30,8 +47,8 @@
  * printf() format specifiers, '%lu' is the only form that is supported. Thus
  * 'ul' is the preferred suffix to avoid confusion.
  */
-#define UL_CONST(x) PASTE(x, ul)
-#define ULL_CONST(x) PASTE(x, llu)
+#define UL_CONST(x) _macro_concat(x, ul)
+#define ULL_CONST(x) _macro_concat(x, llu)
 #define NULL ((void *)0)
 
 #endif /* [not] __ASSEMBLER__ */
