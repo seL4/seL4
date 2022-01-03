@@ -598,7 +598,7 @@
             </error>
         </method>
 
-        <method id="TCBSetAffinity" name="SetAffinity" condition="(!defined CONFIG_KERNEL_MCS) &amp;&amp; CONFIG_MAX_NUM_NODES > 1" manual_name="Set CPU Affinity" manual_label="tcb_setaffinity">
+        <method id="TCBSetAffinity" name="SetAffinity" condition="!defined(CONFIG_KERNEL_MCS) &amp;&amp; CONFIG_MAX_NUM_NODES > 1" manual_name="Set CPU Affinity" manual_label="tcb_setaffinity">
             <brief>
                 Change a thread's current CPU in multicore machine
             </brief>
