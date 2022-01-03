@@ -47,7 +47,7 @@ KERNEL_HEADER_TEMPLATE = """/*
     {%- endfor  %}
 {%- endfor  %}
 
-#endif
+#endif /* __ASSEMBLER__ */
 
 #define SYSCALL_MAX (-1)
 #define SYSCALL_MIN ({{ns.syscall_number+ 1}})
@@ -83,7 +83,7 @@ static char *syscall_names[] UNUSED = {
 {%- endfor %}
 };
 #endif /* CONFIG_DEBUG_BUILD */
-#endif
+#endif /* !__ASSEMBLER__ */
 
 """
 
