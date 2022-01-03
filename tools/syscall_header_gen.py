@@ -34,8 +34,7 @@ KERNEL_HEADER_TEMPLATE = """/*
  */
 
 """ + COMMON_HEADER + """
-#ifndef __ARCH_API_SYSCALL_H
-#define __ARCH_API_SYSCALL_H
+#pragma once
 
 #ifdef __ASSEMBLER__
 
@@ -86,8 +85,6 @@ static char *syscall_names[] UNUSED = {
 #endif /* CONFIG_DEBUG_BUILD */
 #endif
 
-#endif /* __ARCH_API_SYSCALL_H */
-
 """
 
 LIBSEL4_HEADER_TEMPLATE = """/*
@@ -97,8 +94,7 @@ LIBSEL4_HEADER_TEMPLATE = """/*
  */
 
 """ + COMMON_HEADER + """
-#ifndef __LIBSEL4_SYSCALL_H
-#define __LIBSEL4_SYSCALL_H
+#pragma once
 
 #include <autoconf.h>
 
@@ -118,8 +114,6 @@ typedef enum {
 {%- endfor %}
     SEL4_FORCE_LONG_ENUM(seL4_Syscall_ID)
 } seL4_Syscall_ID;
-
-#endif /* __ARCH_API_SYSCALL_H */
 
 """
 
