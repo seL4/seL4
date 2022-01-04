@@ -81,6 +81,101 @@ BOOT_CODE static bool_t arch_init_freemem(p_region_t ui_p_reg,
                         reserved, it_v_reg, extra_bi_size_bits);
 }
 
+BOOT_CODE static void populate_boot_info(region_t reg_extra_bi,
+                                         vptr_t ipcbuf_vptr,
+                                         seL4_X86_BootInfo_VBE *vbe,
+                                         acpi_rsdp_t *acpi_rsdp,
+                                         seL4_X86_BootInfo_fb_t *fb_info,
+                                         seL4_X86_BootInfo_mmap_t *mb_mmap,
+                                         uint32_t tsc_freq)
+{
+    /* Initialize the boot info frame and set the extraLen to the size that was
+     * allocated. It will be set to the actual size later when all extra data
+     * was written.
+     */
+    assert(reg_extra_bi.start <= reg_extra_bi.end);
+    populate_bi_frame(0, ksNumCPUs, ipcbuf_vptr,
+                      reg_extra_bi.end - reg_extra_bi.start);
+
+    pptr_t extra_bi = reg_extra_bi.start;
+
+    /* Populate VBE info block. */
+    if (vbe->vbeMode != -1) {
+        vbe->header.id = SEL4_BOOTINFO_HEADER_X86_VBE;
+        vbe->header.len = sizeof(seL4_X86_BootInfo_VBE);
+        assert(vbe->header.len <= reg_extra_bi.end - extra_bi);
+        memcpy((void *)extra_bi, vbe, vbe->header.len);
+        extra_bi += vbe->header.len;
+    }
+
+    /* Populate ACPI RSDP block. */
+    if (acpi_rsdp) {
+        seL4_BootInfoHeader header = {
+            .id = SEL4_BOOTINFO_HEADER_X86_ACPI_RSDP,
+            .len = sizeof(header) + sizeof(*acpi_rsdp)
+        };
+        assert(header.len <= reg_extra_bi.end - extra_bi);
+        *(seL4_BootInfoHeader *)extra_bi = header;
+        extra_bi += sizeof(header);
+        memcpy((void *)extra_bi, acpi_rsdp, sizeof(*acpi_rsdp));
+        extra_bi += sizeof(*acpi_rsdp);
+    }
+
+    /* Populate framebuffer information block. */
+    if (fb_info && fb_info->addr) {
+        seL4_BootInfoHeader header = {
+            .id = SEL4_BOOTINFO_HEADER_X86_FRAMEBUFFER,
+            .len = sizeof(header) + sizeof(*fb_info)
+        };
+        assert(header.len <= reg_extra_bi.end - extra_bi);
+        *(seL4_BootInfoHeader *)extra_bi = header;
+        extra_bi += sizeof(header);
+        memcpy((void *)extra_bi, fb_info, sizeof(*fb_info));
+        extra_bi += sizeof(*fb_info);
+    }
+
+    /* Populate multiboot mmap block. */
+    if (mb_mmap) {
+        mb_mmap->header.id = SEL4_BOOTINFO_HEADER_X86_MBMMAP;
+        mb_mmap->header.len = sizeof(seL4_X86_BootInfo_mmap_t);
+        assert(mb_mmap->header.len <= reg_extra_bi.end - extra_bi);
+        memcpy((void *)extra_bi, mb_mmap, mb_mmap->header.len);
+        extra_bi += mb_mmap->header.len;
+    }
+
+    /* Populate TSC frequency block */
+    {
+        word_t datalen = sizeof(uint32_t);
+        seL4_BootInfoHeader header = {
+            .id = SEL4_BOOTINFO_HEADER_X86_TSC_FREQ,
+            .len = sizeof(header) + datalen
+        };
+        assert(header.len <= reg_extra_bi.end - extra_bi);
+        *(seL4_BootInfoHeader *)extra_bi = header;
+        extra_bi += sizeof(header);
+        *(uint32_t *)extra_bi = tsc_freq;
+        extra_bi += datalen;
+    }
+
+    /* Update boot info frame with the actual amount of extra data. */
+    BI_PTR(rootserver.boot_info)->extraLen = extra_bi - reg_extra_bi.start;
+
+    /* If there is unused space left in the extra boot info region, on x86 a
+     * padding chunk is put there. Maybe that happens for very old legacy
+     * reasons, this is not done one ARM and RISC-V.
+     */
+    if (reg_extra_bi.end > extra_bi) {
+        seL4_BootInfoHeader header = {
+            .id = SEL4_BOOTINFO_HEADER_PADDING,
+            .len = reg_extra_bi.end - extra_bi
+        };
+        /* Write the header only of there is really enough space. */
+        if (header.len >= sizeof(header)) {
+            *(seL4_BootInfoHeader *)extra_bi = header;
+        }
+    }
+}
+
 /* This function initialises a node's kernel state. It does NOT initialise the CPU. */
 
 BOOT_CODE bool_t init_sys_state(
@@ -105,8 +200,7 @@ BOOT_CODE bool_t init_sys_state(
     cap_t         it_vspace_cap;
     cap_t         it_ap_cap;
     cap_t         ipcbuf_cap;
-    word_t        extra_bi_size = sizeof(seL4_BootInfoHeader);
-    pptr_t        extra_bi_offset = 0;
+    word_t        extra_bi_size = 0;
     uint32_t      tsc_freq;
     create_frames_of_region_ret_t create_frames_ret;
     create_frames_of_region_ret_t extra_bi_ret;
@@ -134,12 +228,12 @@ BOOT_CODE bool_t init_sys_state(
     if (fb_info && fb_info->addr) {
         extra_bi_size += sizeof(seL4_BootInfoHeader) + sizeof(*fb_info);
     }
+    extra_bi_size += sizeof(seL4_X86_BootInfo_mmap_t);
+    /* tsc frequency */
+    extra_bi_size += sizeof(seL4_BootInfoHeader) + sizeof(uint32_t);
+    /* padding header */
+    extra_bi_size += sizeof(seL4_BootInfoHeader);
 
-    word_t mb_mmap_size = sizeof(seL4_X86_BootInfo_mmap_t);
-    extra_bi_size += mb_mmap_size;
-
-    // room for tsc frequency
-    extra_bi_size += sizeof(seL4_BootInfoHeader) + 4;
     word_t extra_bi_size_bits = calculate_extra_bi_size_bits(extra_bi_size);
 
     /* The region of the initial thread is the user image + ipcbuf and boot info */
@@ -174,65 +268,14 @@ BOOT_CODE bool_t init_sys_state(
 
     tsc_freq = tsc_init();
 
-    /* populate the bootinfo frame */
-    populate_bi_frame(0, ksNumCPUs, ipcbuf_vptr, extra_bi_size);
+    /* populate the bootinfo frame(s) */
     region_t extra_bi_region = {
         .start = rootserver.extra_bi,
-        .end = rootserver.extra_bi + BIT(extra_bi_size_bits)
+        .end   = rootserver.extra_bi + BIT(extra_bi_size_bits)
     };
+    populate_boot_info(extra_bi_region, ipcbuf_vptr, vbe, acpi_rsdp, fb_info,
+                       mb_mmap, tsc_freq);
 
-    /* populate vbe info block */
-    if (vbe->vbeMode != -1) {
-        vbe->header.id = SEL4_BOOTINFO_HEADER_X86_VBE;
-        vbe->header.len = sizeof(seL4_X86_BootInfo_VBE);
-        memcpy((void *)(rootserver.extra_bi + extra_bi_offset), vbe, sizeof(seL4_X86_BootInfo_VBE));
-        extra_bi_offset += sizeof(seL4_X86_BootInfo_VBE);
-    }
-
-    /* populate acpi rsdp block */
-    if (acpi_rsdp) {
-        seL4_BootInfoHeader header;
-        header.id = SEL4_BOOTINFO_HEADER_X86_ACPI_RSDP;
-        header.len = sizeof(header) + sizeof(*acpi_rsdp);
-        *(seL4_BootInfoHeader *)(rootserver.extra_bi + extra_bi_offset) = header;
-        extra_bi_offset += sizeof(header);
-        memcpy((void *)(rootserver.extra_bi + extra_bi_offset), acpi_rsdp, sizeof(*acpi_rsdp));
-        extra_bi_offset += sizeof(*acpi_rsdp);
-    }
-
-    /* populate framebuffer information block */
-    if (fb_info && fb_info->addr) {
-        seL4_BootInfoHeader header;
-        header.id = SEL4_BOOTINFO_HEADER_X86_FRAMEBUFFER;
-        header.len = sizeof(header) + sizeof(*fb_info);
-        *(seL4_BootInfoHeader *)(rootserver.extra_bi + extra_bi_offset) = header;
-        extra_bi_offset += sizeof(header);
-        memcpy((void *)(rootserver.extra_bi + extra_bi_offset), fb_info, sizeof(*fb_info));
-        extra_bi_offset += sizeof(*fb_info);
-    }
-
-    /* populate multiboot mmap block */
-    mb_mmap->header.id = SEL4_BOOTINFO_HEADER_X86_MBMMAP;
-    mb_mmap->header.len = mb_mmap_size;
-    memcpy((void *)(rootserver.extra_bi + extra_bi_offset), mb_mmap, mb_mmap_size);
-    extra_bi_offset += mb_mmap_size;
-
-    /* populate tsc frequency block */
-    {
-        seL4_BootInfoHeader header;
-        header.id = SEL4_BOOTINFO_HEADER_X86_TSC_FREQ;
-        header.len = sizeof(header) + 4;
-        *(seL4_BootInfoHeader *)(extra_bi_region.start + extra_bi_offset) = header;
-        extra_bi_offset += sizeof(header);
-        *(uint32_t *)(extra_bi_region.start + extra_bi_offset) = tsc_freq;
-        extra_bi_offset += 4;
-    }
-
-    /* provde a chunk for any leftover padding in the extended boot info */
-    seL4_BootInfoHeader padding_header;
-    padding_header.id = SEL4_BOOTINFO_HEADER_PADDING;
-    padding_header.len = (extra_bi_region.end - extra_bi_region.start) - extra_bi_offset;
-    *(seL4_BootInfoHeader *)(extra_bi_region.start + extra_bi_offset) = padding_header;
 
 #ifdef CONFIG_KERNEL_MCS
     /* set up sched control for each core */

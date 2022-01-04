@@ -89,6 +89,44 @@ BOOT_CODE static bool_t arch_init_freemem(region_t ui_reg,
                         it_v_reg, extra_bi_size_bits);
 }
 
+BOOT_CODE static void populate_boot_info(region_t extra_bi_reg,
+                                         vptr_t ipcbuf_vptr,
+                                         paddr_t dtb_phys_addr,
+                                         word_t dtb_size)
+{
+    /* Initialize the boot info frame and set the extraLen to the size that was
+     * allocated. It will be set to the actual size later when all extra data
+     * was written.
+     */
+    assert(extra_bi_reg.start <= extra_bi_reg.end);
+    populate_bi_frame(0, CONFIG_MAX_NUM_NODES, ipcbuf_vptr,
+                      extra_bi_reg.end - extra_bi_reg.start);
+
+    pptr_t extra_bi = extra_bi_reg.start;
+
+    /* put DTB in the extra bootinfo block, if present. */
+    if (dtb_size > 0) {
+        seL4_BootInfoHeader header = {
+            .id = SEL4_BOOTINFO_HEADER_FDT,
+            .len = sizeof(header) + dtb_size
+        };
+        assert(header.len <= extra_bi_reg.end - extra_bi);
+        *(seL4_BootInfoHeader *)extra_bi = header;
+        extra_bi += sizeof(header);
+        memcpy((void *)extra_bi, paddr_to_pptr(dtb_phys_addr), dtb_size);
+        extra_bi += dtb_size;
+    }
+
+    /* Update boot info frame with the actual amount of extra data. There could
+     * be unused space left in the extra boot info region. On x86 a padding
+     * chunk is put there, but the reason is unclear, because the amount of
+     * extra data size is given in the boot info frame. On RISC-V and ARM there
+     * was also code to put a padding chunk there, but the calculation was
+     * broken and no padding chunk was ever really written.
+     */
+    BI_PTR(rootserver.boot_info)->extraLen = extra_bi - extra_bi_reg.start;
+}
+
 BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
 {
     irq_t i;
@@ -203,7 +241,6 @@ static BOOT_CODE bool_t try_init_kernel(
         ui_p_reg_start, ui_p_reg_end
     });
     word_t extra_bi_size = 0;
-    pptr_t extra_bi_offset = 0;
     vptr_t extra_bi_frame_vptr;
     vptr_t bi_frame_vptr;
     vptr_t ipcbuf_vptr;
@@ -304,28 +341,12 @@ static BOOT_CODE bool_t try_init_kernel(
     /* initialise the IRQ states and provide the IRQ control cap */
     init_irqs(root_cnode_cap);
 
-    /* create the bootinfo frame */
-    populate_bi_frame(0, CONFIG_MAX_NUM_NODES, ipcbuf_vptr, extra_bi_size);
-
-    /* put DTB in the bootinfo block, if present. */
-    seL4_BootInfoHeader header;
-    if (dtb_size > 0) {
-        header.id = SEL4_BOOTINFO_HEADER_FDT;
-        header.len = sizeof(header) + dtb_size;
-        *(seL4_BootInfoHeader *)(rootserver.extra_bi + extra_bi_offset) = header;
-        extra_bi_offset += sizeof(header);
-        memcpy((void *)(rootserver.extra_bi + extra_bi_offset),
-               paddr_to_pptr(dtb_phys_addr),
-               dtb_size);
-        extra_bi_offset += dtb_size;
-    }
-
-    if (extra_bi_size > extra_bi_offset) {
-        /* provide a chunk for any leftover padding in the extended boot info */
-        header.id = SEL4_BOOTINFO_HEADER_PADDING;
-        header.len = (extra_bi_size - extra_bi_offset);
-        *(seL4_BootInfoHeader *)(rootserver.extra_bi + extra_bi_offset) = header;
-    }
+    /* populate the bootinfo frame(s) */
+    region_t extra_bi_region = {
+        .start = rootserver.extra_bi,
+        .end   = rootserver.extra_bi + BIT(extra_bi_size_bits)
+    };
+    populate_boot_info(extra_bi_region, ipcbuf_vptr, dtb_phys_addr, dtb_size);
 
     /* Construct an initial address space with enough virtual addresses
      * to cover the user image + ipc buffer and bootinfo frames */
@@ -344,10 +365,6 @@ static BOOT_CODE bool_t try_init_kernel(
 
     /* create and map extra bootinfo region */
     if (extra_bi_size > 0) {
-        region_t extra_bi_region = {
-            .start = rootserver.extra_bi,
-            .end = rootserver.extra_bi + extra_bi_size
-        };
         extra_bi_ret =
             create_frames_of_region(
                 root_cnode_cap,
