@@ -256,12 +256,6 @@ config_string(
     DEFAULT 8
     UNQUOTE
 )
-config_string(
-    KernelMaxNumBootinfoUntypedCaps MAX_NUM_BOOTINFO_UNTYPED_CAPS
-    "Max number of bootinfo untyped caps"
-    DEFAULT 230
-    UNQUOTE
-)
 config_option(KernelFastpath FASTPATH "Enable IPC fastpath" DEFAULT ON)
 
 config_string(

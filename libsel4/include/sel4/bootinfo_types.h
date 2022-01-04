@@ -74,9 +74,8 @@ typedef struct seL4_BootInfo {
     seL4_SlotRegion   schedcontrol;    /* Caps to sched_control for each node */
 #endif
     seL4_SlotRegion   untyped;         /* untyped-object caps (untyped caps) */
-    seL4_UntypedDesc  untypedList[CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS]; /* information about each untyped */
-    /* the untypedList should be the last entry in this struct, in order
-     * to make this struct easier to represent in other languages */
+    seL4_UntypedDesc  untypedList[];   /* information about each untyped */
+    /* the untypedList[] must be the last entry */
 } seL4_BootInfo;
 
 /* The boot info frame size is usually exactly one page. As she page size is
@@ -93,6 +92,23 @@ typedef struct seL4_BootInfo {
 SEL4_COMPILE_ASSERT(
     invalid_SEL4_BI_FRAME_SIZE,
     sizeof(seL4_BootInfo) <= SEL4_BI_FRAME_SIZE)
+
+/* The number of elements in untypedList[] is limited by the by the remaining
+ * space in the boot info frame. Currently, all remaining space is used. The
+ * calculation below is safe, because the size of the open array untypedList[]
+ * counts as zero for sizeof(seL4_BootInfo), but this still takes into account
+ * padding after the field 'untyped' to ensure a proper alignment of the array.
+ */
+#define MAX_NUM_BOOTINFO_UNTYPED_CAPS \
+    ((SEL4_BI_FRAME_SIZE - sizeof(seL4_BootInfo)) / sizeof(seL4_UntypedDesc))
+
+/* The constant CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS was a CMake configuration
+ * parameter that allowed defining the size of the array untypedList[]. However,
+ * since the boot info frame always take full pages the array uses the remaining
+ * space. Thus, the configuration option has been dropped and the define is
+ * provided here for legacy compatibility.
+ */
+#define CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS  MAX_NUM_BOOTINFO_UNTYPED_CAPS
 
 /* If extraLen > 0, then at the offset SEL4_BI_FRAME_SIZE after the start of
  * bootinfo there is a region of the size extraLen that contains additional boot

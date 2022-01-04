@@ -596,7 +596,7 @@ BOOT_CODE static bool_t provide_untyped_cap(
     bool_t ret;
     cap_t ut_cap;
     word_t i = ndks_boot.slot_pos_cur - first_untyped_slot;
-    if (i < CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS) {
+    if (i < MAX_NUM_BOOTINFO_UNTYPED_CAPS) {
         ndks_boot.bi_frame->untypedList[i] = (seL4_UntypedDesc) {
             pptr_to_paddr((void *)pptr), size_bits, device_memory, {0}
         };
@@ -604,6 +604,13 @@ BOOT_CODE static bool_t provide_untyped_cap(
                                      device_memory, size_bits, pptr);
         ret = provide_cap(root_cnode_cap, ut_cap);
     } else {
+        /* If we ever end up here, then BI_FRAME_PAGES needs to be increased.
+         * This is doable, but it could break some helper libraries. By default,
+         * the boot info is one page and userland code out there that does not
+         * use BI_FRAME_SIZE might have the hard coded assumption that the boot
+         * info page is 4 KiByte. Since the extra boot info starts afterwards,
+         * such code will read garbage then.
+         */
         printf("Kernel init: Too many untyped regions for boot info\n");
         ret = true;
     }
