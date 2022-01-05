@@ -80,13 +80,16 @@ typedef struct seL4_BootInfo {
      * to make this struct easier to represent in other languages */
 } seL4_BootInfo;
 
-/* The fixed boot info frame size is one page. As the page size is 4 KiByte on
- * x86, ARM and RISC-V, lots of userland code has a hard coded assumption that
- * the boot info frame size is 4 KiByte, but it should use SEL4_BI_FRAME_SIZE
- * actually.
+/* The boot info frame size is usually exactly one page. As the page size is
+ * 4 KiByte on x86, ARM and RISC-V, some userland code seems to have a hard
+ * coded assumption that the boot info frame size is 4 KiByte. New code should
+ * avoid this and use SEL4_BI_FRAME_SIZE instead. This allows the boot info page
+ * to become larger in case CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS needs to be
+ * increased. Keep in mind that a larger boot info frame might break older
+ * userland code and libs then.
  */
-#define BI_FRAME_SIZE_BITS  seL4_PageBits
-#define SEL4_BI_FRAME_SIZE  LIBSEL4_BIT(BI_FRAME_SIZE_BITS)
+#define SEL4_BI_FRAME_PAGES  1
+#define SEL4_BI_FRAME_SIZE   (SEL4_BI_FRAME_PAGES * LIBSEL4_BIT(seL4_PageBits))
 
 SEL4_COMPILE_ASSERT(
     invalid_SEL4_BI_FRAME_SIZE,
