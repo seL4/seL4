@@ -1,6 +1,7 @@
 #!/usr/bin/env sh
 #
 # Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+# Copyright 2022, Capgemini Engineering
 #
 # SPDX-License-Identifier: GPL-2.0-only
 #
@@ -61,6 +62,7 @@ freescale/fsl-imx8mq-evk=imx8mq-evk
 freescale/fsl-imx8mm-evk=imx8mm-evk
 rockchip/rk3399-rockpro64=rockpro64
 broadcom/bcm2711-rpi-4-b=rpi4
+avnet/maaxboard=maaxboard
 "
 
 extract_dts() {
