@@ -16,6 +16,6 @@
 	};
 
 	/* These devices extend out of the 32-bit memory range.*/
-	/delete-node/gpu@38000000;
+	/delete-node/soc@0/gpu@38000000;
 	/delete-node/gpu3d@38000000;
 };

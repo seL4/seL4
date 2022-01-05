@@ -13,7 +13,7 @@
 
 		seL4,kernel-devices =
 			"serial0",
-			&{/interrupt-controller@38800000},
+			&{/soc@0/interrupt-controller@38800000},
 			&{/timer};
 	};
 
