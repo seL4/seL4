@@ -31,19 +31,19 @@ def make_yaml_list_of_regions(regions: List[Region]) -> List:
     ]
 
 
-def create_yaml_file(dev_mem: List[Region], phys_mem: List[Region], outputStream):
+def create_yaml_file(regions_dict: Dict[str, List[Region]], outputStream):
 
     yaml.add_representer(
         int,
         lambda dumper, data: yaml.ScalarNode('tag:yaml.org,2002:int', hex(data)))
 
-    yaml_obj = {
-        'devices': make_yaml_list_of_regions(dev_mem),
-        'memory':  make_yaml_list_of_regions(phys_mem)
-    }
-
     with outputStream:
-        yaml.dump(yaml_obj, outputStream)
+        yaml.dump(
+            {
+                key: make_yaml_list_of_regions(val)
+                for key, val in regions_dict.items()
+            },
+            outputStream)
 
 
 def get_kernel_devices(tree: FdtParser, hw_yaml: HardwareYaml):
@@ -67,7 +67,12 @@ def run(tree: FdtParser, hw_yaml: HardwareYaml, config: Config,
     dev_mem = hardware.utils.memory.get_addrspace_exclude(
         list(reserved) + phys_mem + kernel_devs, config)
 
-    create_yaml_file(dev_mem, phys_mem, args.yaml_out)
+    create_yaml_file(
+        {
+            'devices':  dev_mem,
+            'memory':   phys_mem
+        },
+        args.yaml_out)
 
 
 def add_args(parser: argparse.ArgumentParser):
