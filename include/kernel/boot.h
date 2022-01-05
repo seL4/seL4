@@ -41,7 +41,7 @@ static inline bool_t is_reg_empty(region_t reg)
 
 bool_t init_freemem(word_t n_available, const p_region_t *available,
                     word_t n_reserved, const region_t *reserved,
-                    v_region_t it_v_reg, word_t extra_bi_size_bits);
+                    v_region_t it_v_reg, word_t num_bi_pages);
 bool_t reserve_region(p_region_t reg);
 void write_slot(slot_ptr_t slot_ptr, cap_t cap);
 cap_t create_root_cnode(void);
@@ -54,10 +54,10 @@ void bi_finalise(void);
 void create_domain_cap(cap_t root_cnode_cap);
 
 cap_t create_ipcbuf_frame_cap(cap_t root_cnode_cap, cap_t pd_cap, vptr_t vptr);
-word_t calculate_extra_bi_size_bits(word_t extra_size);
 void populate_bi_frame(node_id_t node_id, word_t num_nodes, vptr_t ipcbuf_vptr,
-                       word_t extra_bi_size_bits);
-void create_bi_frame_cap(cap_t root_cnode_cap, cap_t pd_cap, vptr_t vptr);
+                       word_t num_bi_pages, word_t extra_bi_size);
+bool_t create_bi_frame_caps(cap_t root_cnode_cap, cap_t pd_cap, vptr_t vptr,
+                            word_t bi_size);
 
 #ifdef CONFIG_KERNEL_MCS
 bool_t init_sched_control(cap_t root_cnode_cap, word_t num_nodes);
@@ -104,7 +104,6 @@ typedef struct {
     pptr_t asid_pool;
     pptr_t ipc_buf;
     pptr_t boot_info;
-    pptr_t extra_bi;
     pptr_t tcb;
 #ifdef CONFIG_KERNEL_MCS
     pptr_t sc;
