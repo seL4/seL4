@@ -1,5 +1,6 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright 2022, Capgemini Engineering
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -45,26 +46,31 @@
 		status = "disabled";
 	};
 
-	gpt@302f0000 {
+	gpt@30700000 {
 		compatible = "fsl,imx8mq-gpt\0fsl,imx7d-gpt";
 		reg = < 0x00 0x302e0000 0x00 0x10000 >;
-		interrupts = < 0x00 0x35 0x04 >;
+		interrupts = < 0x00 0x34 0x04 >;
 		clocks = < 0x04 0xc5 0x04 0xc5 0x04 0xf9 >;
 		clock-names = "ipg\0per\0osc_per";
 		status = "disabled";
 	};
 
+	gpt@306f0000 {
+		compatible = "fsl,imx8mq-gpt\0fsl,imx7d-gpt";
+		reg = < 0x00 0x302e0000 0x00 0x10000 >;
+		interrupts = < 0x00 0x33 0x04 >;
+		clocks = < 0x04 0xc5 0x04 0xc5 0x04 0xf9 >;
+		clock-names = "ipg\0per\0osc_per";
+		status = "disabled";
+	};
 
-
-   
-         IRQ
-   gpt1  55   302D_0000
-   gpt2  54   302E_0000
-   gpt3  53   302F_0000
-   gpt4  52   3070_0000
-   gpt5  51   306F_0000
-   gpt6  46   306E_0000
-   
-   
+	gpt@306e0000 {
+		compatible = "fsl,imx8mq-gpt\0fsl,imx7d-gpt";
+		reg = < 0x00 0x302e0000 0x00 0x10000 >;
+		interrupts = < 0x00 0x2e 0x04 >;
+		clocks = < 0x04 0xc5 0x04 0xc5 0x04 0xf9 >;
+		clock-names = "ipg\0per\0osc_per";
+		status = "disabled";
+	};
 
 };
