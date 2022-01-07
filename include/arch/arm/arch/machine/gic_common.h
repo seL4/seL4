@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <autoconf.h>
+#include <config.h>
 #include <stdint.h>
 #include <machine/interrupt.h>
 
