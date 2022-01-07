@@ -96,8 +96,8 @@ typedef enum {
 
 /* Common header for all additional bootinfo chunks to describe the chunk. */
 typedef struct seL4_BootInfoHeader {
-    seL4_BootInfoID  id;  /* identifier of the following blob */
-    seL4_Word        len; /* length of the chunk, including this header */
+    seL4_Word id;  /* identifier of the following blob */
+    seL4_Word len; /* length of the chunk, including this header */
 } seL4_BootInfoHeader;
 
 SEL4_COMPILE_ASSERT(
