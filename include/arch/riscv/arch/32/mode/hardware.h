@@ -6,8 +6,8 @@
 
 #pragma once
 
+#include <config.h>
 #include <util.h>
-#include <sel4/config.h>
 
 /*
  *         2^32 +-------------------+
