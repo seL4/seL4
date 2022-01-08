@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <autoconf.h>
+#include <sel4/config.h>
 
 #define SEL4_MAPPING_LOOKUP_LEVEL 2
 
