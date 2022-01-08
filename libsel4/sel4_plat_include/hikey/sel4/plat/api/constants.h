@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <autoconf.h>
+#include <sel4/config.h>
 /* HiKey uses a HiSilicon Kirin620 SoC with 2 clusters of 4 Cortex-A53 each. */
 #include <sel4/arch/constants_cortex_a53.h>
 
