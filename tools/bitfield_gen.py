@@ -3057,13 +3057,10 @@ if __name__ == '__main__':
 
                 print("end", file=out_file)
     else:
-        guard = re.sub(r'[^a-zA-Z0-9_]', '_', out_file.filename.upper())
-        print("#ifndef %(guard)s\n#define %(guard)s\n" %
-              {'guard': guard}, file=out_file)
+        print("#pragma once\n", file=out_file)
         print('\n'.join(map(lambda x: '#include <%s>' % x,
                             INCLUDES[options.environment])), file=out_file)
         for e in det_values(blocks, unions):
             e.generate(options)
-        print("#endif", file=out_file)
 
     finish_output()

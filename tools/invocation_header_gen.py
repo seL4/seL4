@@ -42,8 +42,7 @@ COMMON_HEADER = """
  */"""
 
 INVOCATION_TEMPLATE = COMMON_HEADER + """
-#ifndef __{{header_title}}_INVOCATION_H
-#define __{{header_title}}_INVOCATION_H
+#pragma once
 
 enum invocation_label {
     InvalidInvocation,
@@ -63,14 +62,10 @@ enum invocation_label {
 #include <sel4/sel4_arch/invocation.h>
 #include <sel4/arch/invocation.h>
 {%- endif %}
-
-#endif /* __{{header_title}}_INVOCATION_H */
-
 """
 
 SEL4_ARCH_INVOCATION_TEMPLATE = COMMON_HEADER + """
-#ifndef __{{header_title}}_SEL4_ARCH_INVOCATION_H
-#define __{{header_title}}_SEL4_ARCH_INVOCATION_H
+#pragma once
 
 {%- if not libsel4 %}
 #include <api/invocation.h>
@@ -99,14 +94,10 @@ enum sel4_arch_invocation_label {
     nSeL4ArchInvocationLabels
     {%- endif %}
 };
-
-#endif /* __{{header_title}}_SEL4_ARCH_INVOCATION_H */
-
 """
 
 ARCH_INVOCATION_TEMPLATE = COMMON_HEADER + """
-#ifndef __{{header_title}}_ARCH_INVOCATION_H
-#define __{{header_title}}_ARCH_INVOCATION_H
+#pragma once
 
 {%- if not libsel4 %}
 #include <arch/api/sel4_invocation.h>
@@ -135,9 +126,6 @@ enum arch_invocation_label {
     nArchInvocationLabels
     {%- endif %}
 };
-
-#endif /* __{{header_title}}_ARCH_INVOCATION_H */
-
 """
 
 
