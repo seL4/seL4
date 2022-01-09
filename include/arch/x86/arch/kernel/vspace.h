@@ -124,12 +124,7 @@ pde_t CONST makeUserPDEPageTable(paddr_t paddr, vm_attributes_t vm_attr);
 pde_t CONST makeUserPDEInvalid(void);
 
 
-#ifdef CONFIG_PRINTING
-void Arch_userStackTrace(tcb_t *tptr);
-#endif
-
 static inline bool_t checkVPAlignment(vm_page_size_t sz, word_t w)
 {
     return IS_ALIGNED(w, pageBitsForSize(sz));
 }
-

@@ -12,3 +12,6 @@
 exception_t benchmark_arch_map_logBuffer(word_t frame_cptr);
 #endif /* CONFIG_KERNEL_LOG_BUFFER */
 
+#ifdef CONFIG_PRINTING
+void Arch_userStackTrace(tcb_t *tptr);
+#endif /* CONFIG_PRINTING */
