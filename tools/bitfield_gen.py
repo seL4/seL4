@@ -56,7 +56,7 @@ def var_name(name, base):
 # Headers to include depending on which environment we are generating code for.
 INCLUDES = {
     'sel4': ['assert.h', 'config.h', 'stdint.h', 'util.h'],
-    'libsel4': ['autoconf.h', 'sel4/simple_types.h', 'sel4/debug_assert.h'],
+    'libsel4': ['sel4/config.h', 'sel4/simple_types.h', 'sel4/debug_assert.h'],
 }
 
 ASSERTS = {
