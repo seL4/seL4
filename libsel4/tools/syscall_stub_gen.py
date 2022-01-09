@@ -981,8 +981,7 @@ def generate_stub_file(arch, wordsize, input_files, output_file, use_only_ipc_bu
  * Automatically generated system call stubs.
  */
 
-#ifndef __LIBSEL4_SEL4_CLIENT_H
-#define __LIBSEL4_SEL4_CLIENT_H
+#pragma once
 """)
 
     # Emit the includes
@@ -1035,10 +1034,6 @@ def generate_stub_file(arch, wordsize, input_files, output_file, use_only_ipc_bu
                                     method_id, inputs, outputs, structs, use_only_ipc_buffer, comment, mcs))
         if condition != "":
             result.append("#endif")
-
-    # Print footer.
-    result.append("#endif /* __LIBSEL4_SEL4_CLIENT_H */")
-    result.append("")
 
     # Write the output
     output = open(output_file, "w")
