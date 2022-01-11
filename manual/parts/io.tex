@@ -316,9 +316,9 @@ VSpace used by the bank with the following API:
 
 \begin{description}
     \item[\apifunc{seL4\_ARM\_CB\_AssignVspace}{arm_cb_assignvspace}] configures
-        the context bank to use the provided VSapce root for translations.
+        the context bank to use the provided VSpace root for translations.
     \item[\apifunc{seL4\_ARM\_CB\_UnassignVspace}{arm_cb_unassignvspace}] removes
-        the configured VSpace and conducting a TLB invalidation.
+        the configured VSpace and invalidates the TLB.
 \end{description}
 
 The SMMU-v2 uses the same paging structure as the MMU (AArch\_64 and AArch\_32
