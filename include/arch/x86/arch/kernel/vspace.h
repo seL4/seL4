@@ -67,9 +67,6 @@ cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg);
 
 /* ==================== BOOT CODE FINISHES HERE ==================== */
 
-void idle_thread(void);
-#define idleThreadStart (&idle_thread)
-
 bool_t isVTableRoot(cap_t cap);
 
 asid_map_t findMapForASID(asid_t asid);

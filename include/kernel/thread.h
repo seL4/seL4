@@ -165,6 +165,8 @@ void Arch_switchToIdleThread(void);
 void Arch_configureIdleThread(tcb_t *tcb);
 void Arch_activateIdleThread(tcb_t *tcb);
 
+void idle_thread(void);
+
 void configureIdleThread(tcb_t *tcb);
 void activateThread(void);
 void suspend(tcb_t *target);

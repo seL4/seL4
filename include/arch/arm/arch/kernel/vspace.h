@@ -26,9 +26,6 @@ void write_it_asid_pool(cap_t it_ap_cap, cap_t it_pd_cap);
 
 /* ==================== BOOT CODE FINISHES HERE ==================== */
 
-void idle_thread(void);
-#define idleThreadStart (&idle_thread)
-
 /* need a fake array to get the pointer from the linker script */
 extern char arm_vector_table[1];
 
