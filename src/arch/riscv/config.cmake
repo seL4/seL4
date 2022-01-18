@@ -100,7 +100,7 @@ add_sources(
         object/objecttype.c
         object/tcb.c
         smp/ipi.c
-    ASMFILES halt.S head.S traps.S
+    ASMFILES head.S traps.S
 )
 
 add_bf_source_old("KernelArchRiscV" "structures.bf" "include/arch/riscv" "arch/object")

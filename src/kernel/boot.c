@@ -376,16 +376,22 @@ BOOT_CODE create_frames_of_region_ret_t create_frames_of_region(
         } else {
             frame_cap = create_unmapped_it_frame_cap(f, false);
         }
-        if (!provide_cap(root_cnode_cap, frame_cap))
+        if (!provide_cap(root_cnode_cap, frame_cap)) {
             return (create_frames_of_region_ret_t) {
-            S_REG_EMPTY, false
-        };
+                .region  = S_REG_EMPTY,
+                .success = false
+            };
+        }
     }
 
     slot_pos_after = ndks_boot.slot_pos_cur;
 
     return (create_frames_of_region_ret_t) {
-        (seL4_SlotRegion) { slot_pos_before, slot_pos_after }, true
+        .region = (seL4_SlotRegion) {
+            .start = slot_pos_before,
+            .end   = slot_pos_after
+        },
+        .success = true
     };
 }
 
@@ -453,6 +459,7 @@ BOOT_CODE bool_t create_idle_thread(void)
         bool_t result = configure_sched_context(NODE_STATE_ON_CORE(ksIdleThread, i), SC_PTR(&ksIdleThreadSC[SMP_TERNARY(i, 0)]),
                                                 usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_IN_MS), SMP_TERNARY(i, 0));
         SMP_COND_STATEMENT(NODE_STATE_ON_CORE(ksIdleThread, i)->tcbSchedContext->scCore = i;)
+        NODE_STATE_ON_CORE(ksIdleSC, i) = SC_PTR(&ksIdleThreadSC[SMP_TERNARY(i, 0)]);
         if (!result) {
             printf("Kernel init failed: Unable to allocate sc for idle thread\n");
             return false;
@@ -582,7 +589,10 @@ BOOT_CODE static bool_t provide_untyped_cap(
     word_t i = ndks_boot.slot_pos_cur - first_untyped_slot;
     if (i < CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS) {
         ndks_boot.bi_frame->untypedList[i] = (seL4_UntypedDesc) {
-            pptr_to_paddr((void *)pptr), size_bits, device_memory, {0}
+            .paddr    = pptr_to_paddr((void *)pptr),
+            .sizeBits = size_bits,
+            .isDevice = device_memory,
+            .padding  = {0}
         };
         ut_cap = cap_untyped_cap_new(MAX_FREE_INDEX(size_bits),
                                      device_memory, size_bits, pptr);

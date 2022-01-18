@@ -30,6 +30,8 @@ jobs:
             session: CRefine SimplExportAndRefine
           - arch: X64
             session: CRefine
+    # test only most recent push to PR:
+    concurrency: seL4-PR-C-proofs-${{ github.ref }}-${{ strategy.job-index }}
     steps:
     - name: Proofs
       uses: seL4/ci-actions/aws-proofs@master

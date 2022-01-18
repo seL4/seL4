@@ -5,6 +5,9 @@
  */
 
 #pragma once
+
+#include <config.h>
+#include <types.h>
 #include <bootinfo.h>
 #include <arch/bootinfo.h>
 

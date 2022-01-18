@@ -5,11 +5,13 @@
  */
 
 #include <config.h>
+
+#ifdef ENABLE_SMP_SUPPORT
+
 #include <mode/smp/ipi.h>
 #include <smp/ipi.h>
 #include <smp/lock.h>
 
-#ifdef ENABLE_SMP_SUPPORT
 /* This function switches the core it is called on to the idle thread,
  * in order to avoid IPI storms. If the core is waiting on the lock, the actual
  * switch will not occur until the core attempts to obtain the lock, at which
@@ -142,4 +144,28 @@ void generic_ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
         }
     }
 }
+
+#ifdef CONFIG_DEBUG_BUILD
+exception_t handle_SysDebugSendIPI(void)
+{
+#ifdef CONFIG_ARCH_ARM
+    word_t target = getRegister(NODE_STATE(ksCurThread), capRegister);
+    word_t irq = getRegister(NODE_STATE(ksCurThread), msgInfoRegister);
+    if (target > CONFIG_MAX_NUM_NODES) {
+        userError("SysDebugSendIPI: Invalid target, halting");
+        halt();
+    }
+    if (irq > 15) {
+        userError("SysDebugSendIPI: Invalid IRQ, not a SGI, halting");
+        halt();
+    }
+    ipi_send_target(CORE_IRQ_TO_IRQT(0, irq), BIT(target));
+    return EXCEPTION_NONE;
+#else /* not CONFIG_ARCH_ARM */
+    userError("SysDebugSendIPI: not supported on this architecture");
+    halt();
+#endif  /* [not] CONFIG_ARCH_ARM */
+}
+#endif /* CONFIG_DEBUG_BUILD */
+
 #endif /* ENABLE_SMP_SUPPORT */
