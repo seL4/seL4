@@ -14,7 +14,7 @@
 #include <kernel/sporadic.h>
 #include <machine/timer.h>
 #include <mode/machine.h>
-#endif
+#endif /* CONFIG_KERNEL_MCS */
 
 static inline CONST word_t ready_queues_index(word_t dom, word_t prio)
 {
@@ -156,9 +156,9 @@ static inline bool_t PURE isSchedulable(const tcb_t *thread)
            thread->tcbSchedContext->scRefillMax > 0 &&
            !thread_state_get_tcbInReleaseQueue(thread->tcbState);
 }
-#else
+#else /* not CONFIG_KERNEL_MCS */
 #define isSchedulable isRunnable
-#endif
+#endif /* [not] CONFIG_KERNEL_MCS */
 
 void Arch_switchToThread(tcb_t *tcb);
 void Arch_switchToIdleThread(void);
@@ -175,10 +175,10 @@ void doIPCTransfer(tcb_t *sender, endpoint_t *endpoint,
                    word_t badge, bool_t grant, tcb_t *receiver);
 #ifdef CONFIG_KERNEL_MCS
 void doReplyTransfer(tcb_t *sender, reply_t *reply, bool_t grant);
-#else
+#else /* not CONFIG_KERNEL_MCS */
 void doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, bool_t grant);
 void timerTick(void);
-#endif
+#endif /* [not] CONFIG_KERNEL_MCS */
 void doNormalTransfer(tcb_t *sender, word_t *sendBuffer, endpoint_t *endpoint,
                       word_t badge, bool_t canGrant, tcb_t *receiver,
                       word_t *receiveBuffer);
@@ -307,5 +307,5 @@ void awaken(void);
 /* Place the thread bound to this scheduling context in the release queue
  * of periodic threads waiting for budget recharge */
 void postpone(sched_context_t *sc);
-#endif
+#endif /* CONFIG_KERNEL_MCS */
 
