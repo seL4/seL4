@@ -280,20 +280,31 @@ static inline bool_t checkBudget(void)
     return false;
 }
 
-/* Everything checkBudget does, but also set the thread
- * state to ThreadState_Restart. To be called from kernel entries
- * where the operation should be restarted once the current thread
- * has budget again.
- */
 
-static inline bool_t checkBudgetRestart(void)
+/* This is called from kernel entries where operation are done only if the
+ * thread still has budget. Otherwise it needs to be restarted first.
+ */
+static inline bool_t checkBudgetWithRestart(void)
 {
+    /* The assumption here is, that an operation was started by the current
+     * thread, thus this thread must be runnable. Otherwise something is wrong
+     * or the assumption does not hold and the function was called in a wrong
+     * context. It's not fatal if this assert is removed in release builds,
+     * because the current thread's state is check before it is set to
+     * ThreadState_Restart.
+     */
     assert(isRunnable(NODE_STATE(ksCurThread)));
-    bool_t result = checkBudget();
-    if (!result && isRunnable(NODE_STATE(ksCurThread))) {
+
+    /* Update the time and check if there is budget left. If not then the thread
+     * needs to be restarted (if it was runnable).
+     */
+    updateTimestamp();
+    bool_t has_budget = checkBudget();
+    if (!has_budget && isRunnable(NODE_STATE(ksCurThread))) {
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     }
-    return result;
+
+    return has_budget;
 }
 
 

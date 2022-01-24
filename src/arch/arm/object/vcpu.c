@@ -559,13 +559,13 @@ exception_t invokeVCPUSetTCB(vcpu_t *vcpu, tcb_t *tcb)
 
 void handleVCPUFault(word_t hsr)
 {
-    MCS_DO_IF_BUDGET({
+    if (likely(MCS_TERNARY(checkBudgetWithRestart(), true))) {
         if (armv_handleVCPUFault(hsr)) {
             return;
         }
         current_fault = seL4_Fault_VCPUFault_new(hsr);
         handleFault(NODE_STATE(ksCurThread));
-    })
+    }
     schedule();
     activateThread();
 }
