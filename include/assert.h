@@ -49,9 +49,9 @@ void _assert_fail(
  *     the user interface headers.
  * - The kernel user API headers aims to be compiler agnostic and stick to the
  *     standard(s). As _Static_assert() is a c11 feature, the c99 used for
- *     kernel compilation would use a helper macros. While this works, it
- *     creates strange error messages then the condition fails.. Since kernel
- *     compilation supports just gcc and clang, and both are know to provide
+ *     kernel compilation would use a helper macro. While this works, it
+ *     creates strange error messages when the condition fails. Since kernel
+ *     compilation supports just gcc and clang, and both are known to provide
  *     _Static_assert() even in c99, we can just use this.
  *
  * Unfortunately, the C parser does not understand _Static_assert(), so there is
