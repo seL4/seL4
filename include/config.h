@@ -19,6 +19,15 @@
 #define UP_COND_STATEMENT(_st)      SMP_TERNARY(,_st)
 
 
+#ifdef CONFIG_KERNEL_MCS
+#define MCS_TERNARY(_mcs, _non_mcs) _mcs
+#else /* not CONFIG_KERNEL_MCS */
+#define MCS_TERNARY(_mcs, _non_mcs) _non_mcs
+#endif /* [not] CONFIG_KERNEL_MCS */
+
+#define MSC_COND_STATEMENT(_st)     MCS_TERNARY(_st,)
+
+
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 #ifdef CONFIG_ARM_PA_SIZE_BITS_40
 #define AARCH64_VSPACE_S2_START_L1

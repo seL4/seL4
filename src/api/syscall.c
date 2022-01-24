@@ -55,14 +55,10 @@ exception_t handleInterruptEntry(void)
         handleSpuriousIRQ();
     }
 
-#ifdef CONFIG_KERNEL_MCS
-    if (SMP_TERNARY(clh_is_self_in_queue(), 1)) {
-#endif
+    if (MCS_TERNARY(SMP_TERNARY(clh_is_self_in_queue(), 1), 1)) {
         schedule();
         activateThread();
-#ifdef CONFIG_KERNEL_MCS
     }
-#endif
 
     return EXCEPTION_NONE;
 }
