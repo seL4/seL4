@@ -21,9 +21,6 @@
 #define SMP_STATE_DEFINE(_type, _state)         _type _state
 #define UP_STATE_DEFINE(_type, _state)
 
-#define SMP_COND_STATEMENT(_st)                 _st
-#define SMP_TERNARY(_smp, _up)                  _smp
-
 #define MODE_NODE_STATE_ON_CORE(_state, _core)  ksSMP[(_core)].cpu.mode._state
 #define ARCH_NODE_STATE_ON_CORE(_state, _core)  ksSMP[(_core)].cpu._state
 #define NODE_STATE_ON_CORE(_state, _core)       ksSMP[(_core)].system._state
@@ -40,9 +37,6 @@
 
 #define SMP_STATE_DEFINE(_name, _state)
 #define UP_STATE_DEFINE(_type, _state)          _type _state
-
-#define SMP_COND_STATEMENT(_st)
-#define SMP_TERNARY(_smp, _up)                  _up
 
 #define MODE_NODE_STATE_ON_CORE(_state, _core) _state
 #define ARCH_NODE_STATE_ON_CORE(_state, _core) _state

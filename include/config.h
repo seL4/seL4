@@ -8,10 +8,16 @@
 
 #include <sel4/config.h>
 
-/* Set ENABLE_SMP_SUPPORT for kernel source files */
 #ifdef CONFIG_ENABLE_SMP_SUPPORT
-#define ENABLE_SMP_SUPPORT
-#endif
+#define ENABLE_SMP_SUPPORT /* Set ENABLE_SMP_SUPPORT for kernel source files */
+#define SMP_TERNARY(_smp, _up)      _smp
+#else /* not CONFIG_ENABLE_SMP_SUPPORT */
+#define SMP_TERNARY(_smp, _up)      _up
+#endif /* [not] CONFIG_ENABLE_SMP_SUPPORT */
+
+#define SMP_COND_STATEMENT(_st)     SMP_TERNARY(_st,)
+#define UP_COND_STATEMENT(_st)      SMP_TERNARY(,_st)
+
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 #ifdef CONFIG_ARM_PA_SIZE_BITS_40
