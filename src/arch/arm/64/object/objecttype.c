@@ -194,7 +194,7 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
 #ifdef CONFIG_ARM_SMMU
     case cap_cb_cap:
         if (cap_cb_cap_get_capBindSID(cap) != SID_INVALID) {
-            smmu_sid_unbind(cap_cb_cap_get_capBindSID(cap));
+            smmu_cb_unbind_sid(cap);
         }
         if (final) {
             smmu_delete_cb(cap);

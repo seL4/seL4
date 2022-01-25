@@ -155,7 +155,20 @@ exception_t decodeARMSIDInvocation(word_t label, word_t length, cptr_t cptr,
             userError("ARMSIDBindCB: The SID is already bound with a context bank.");
             return status;
         }
+#ifdef CONFIG_PLAT_ZYNQMP
+        /* The stream mapping registers are indexed by CB, so binding a
+         * second SID to the same CB would overwrite the first binding.
+         * Do not allow a CB to bound to multiple SIDs. */
+        if (smmu_bitmap_get(smmuStateCBBindTable, cap_cb_cap_get_capCB(cbCap))) {
+            userError("ARMSIDBindCB: The context bank is already bound with a SID.");
+            current_syscall_error.type = seL4_DeleteFirst;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+#endif
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+#ifdef CONFIG_PLAT_ZYNQMP
+        smmu_bitmap_set(smmuStateCBBindTable, cap_cb_cap_get_capCB(cbCap));
+#endif
         /*binding the sid to cb in SMMU*/
         smmu_sid_bind_cb(sid, cap_cb_cap_get_capCB(cbCap));
         /* Building the connection between SID and CB caps by placing a
@@ -388,6 +401,15 @@ exception_t smmu_delete_cb(cap_t cap)
     }
     smmu_bitmap_clear(smmuStateCBTable, cb);
     return status;
+}
+
+void smmu_cb_unbind_sid(cap_t cap)
+{
+    word_t cb = cap_cb_cap_get_capCB(cap);
+#ifdef CONFIG_PLAT_ZYNQMP
+    smmu_bitmap_clear(smmuStateCBBindTable, cb);
+#endif
+    smmu_sid_unbind(cap_cb_cap_get_capBindSID(cap), cb);
 }
 
 void smmu_cb_delete_vspace(word_t cb, asid_t asid)
