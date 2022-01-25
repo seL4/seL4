@@ -7,8 +7,13 @@
 #pragma once
 
 
+#if defined(CONFIG_PLAT_ZYNQMP)
+#define SMMU_SID_CNODE_SLOT_BITS    15
+#define SMMU_CB_CNODE_SLOT_BITS     4
+#elif defined(CONFIG_PLAT_TX2)
 #define SMMU_SID_CNODE_SLOT_BITS    8
 #define SMMU_CB_CNODE_SLOT_BITS     6
+#endif
 #define SID_INVALID      SMMU_MAX_SID
 #define CB_INVALID       SMMU_MAX_CB
 #define ASID_INVALID     nASIDs
