@@ -204,8 +204,7 @@ exception_t handleUnknownSyscall(word_t w)
 
     MCS_DO_IF_BUDGET({
 #ifdef CONFIG_SET_TLS_BASE_SELF
-        if (w == SysSetTLSBase)
-        {
+        if (w == SysSetTLSBase) {
             word_t tls_base = getRegister(NODE_STATE(ksCurThread), capRegister);
             /*
              * This updates the real register as opposed to the thread state
@@ -242,8 +241,7 @@ exception_t handleVMFaultEvent(vm_fault_type_t vm_faultType)
     MCS_DO_IF_BUDGET({
 
         exception_t status = handleVMFault(NODE_STATE(ksCurThread), vm_faultType);
-        if (status != EXCEPTION_NONE)
-        {
+        if (status != EXCEPTION_NONE) {
             handleFault(NODE_STATE(ksCurThread));
         }
     })
@@ -514,8 +512,7 @@ exception_t handleSyscall(syscall_t syscall)
     exception_t ret;
     irq_t irq;
     MCS_DO_IF_BUDGET({
-        switch (syscall)
-        {
+        switch (syscall) {
         case SysSend:
             ret = handleInvocation(false, true, false, false, getRegister(NODE_STATE(ksCurThread), capRegister));
             if (unlikely(ret != EXCEPTION_NONE)) {

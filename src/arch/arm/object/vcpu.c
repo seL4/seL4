@@ -560,8 +560,7 @@ exception_t invokeVCPUSetTCB(vcpu_t *vcpu, tcb_t *tcb)
 void handleVCPUFault(word_t hsr)
 {
     MCS_DO_IF_BUDGET({
-        if (armv_handleVCPUFault(hsr))
-        {
+        if (armv_handleVCPUFault(hsr)) {
             return;
         }
         current_fault = seL4_Fault_VCPUFault_new(hsr);
