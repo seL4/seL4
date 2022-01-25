@@ -107,10 +107,14 @@ block sid_control_cap {
     padding        59
 }
 
+-- SMMUv2 StreamIDs are at most 16 bits wide per the system
+-- documentation (ARM IHI0062). 16-bit streamIDs exists if
+-- SMMU_IDR0.EXIDS==1 AND SMMU_IDR0.NUMSIDB==15 and are enabled
+-- by setting SMMU_sCR0.EXIDENABLE==1.
 block sid_cap {
 
-    padding              52
-    field capSID         12
+    padding              48
+    field capSID         16
 
     field capType        5
     padding 59
@@ -123,11 +127,12 @@ block cb_control_cap {
     padding              59
 }
 
-
+--- SID_INVALID=SMMU_MAX_SID fits in 16 bits since
+-- MAX_SID=32767 in config.cmake
 block cb_cap {
 
-    padding               44
-    field capBindSID      12
+    padding               40
+    field capBindSID      16
     field capCB           8
 
 
