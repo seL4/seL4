@@ -152,10 +152,15 @@ if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
         if(error)
             message(FATAL_ERROR "Failed to compile DTS to DTB: ${KernelDTBPath}")
         endif()
+        # CMAKE_HOST_APPLE is a built-in CMake variable
+        if(CMAKE_HOST_APPLE)
+            set(STAT_ARGS "-f%z")
+        else()
+            set(STAT_ARGS "-c '%s'")
+        endif()
         # Track the size of the DTB for downstream tools
         execute_process(
-            COMMAND
-                ${STAT_TOOL} -c '%s' ${KernelDTBPath}
+            COMMAND ${STAT_TOOL} ${STAT_ARGS} ${KernelDTBPath}
             OUTPUT_VARIABLE KernelDTBSize
             OUTPUT_STRIP_TRAILING_WHITESPACE
             RESULT_VARIABLE error
