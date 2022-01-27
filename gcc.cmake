@@ -106,13 +106,9 @@ if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
 
     if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
         # If we haven't set a target above we assume x86_64/ia32 target
-        if(APPLE)
-            # APPLE is a CMake variable that evaluates to True on a Mac OSX system
-            FindPrefixedGCC(
-                CROSS_COMPILER_PREFIX
-                "x86_64-linux-gnu-"
-                "x86_64-unknown-linux-gnu-"
-            )
+        if(CMAKE_HOST_APPLE)
+            # CMAKE_HOST_APPLE is a CMake variable that evaluates to True on a Mac OSX system
+            FindPrefixedGCC(CROSS_COMPILER_PREFIX "x86_64-linux-gnu-" "x86_64-unknown-linux-gnu-")
         endif()
     endif()
 endif()
