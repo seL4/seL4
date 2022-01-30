@@ -72,24 +72,19 @@ exception_t handle_SysBenchmarkFinalizeLog(void)
     return EXCEPTION_NONE;
 }
 
+#ifdef CONFIG_ENABLE_KERNEL_LOG_BUFFER
 exception_t handle_SysBenchmarkSetLogBuffer(void)
 {
-#ifdef CONFIG_ENABLE_KERNEL_LOG_BUFFER
     word_t cptr_userFrame = getRegister(NODE_STATE(ksCurThread), capRegister);
     if (benchmark_arch_map_logBuffer(cptr_userFrame) != EXCEPTION_NONE) {
         setRegister(NODE_STATE(ksCurThread), capRegister, seL4_IllegalOperation);
         return EXCEPTION_SYSCALL_ERROR;
     }
-#endif /* CONFIG_ENABLE_KERNEL_LOG_BUFFER */
 
-    /* ToDo: If CONFIG_ENABLE_KERNEL_LOG_BUFFER is not set it might be better to
-     *       fail the syscall or even call halt(), because the system setup or
-     *       the configuration seems broken. Silently ignoring this pretending
-     *       the log buffer got set up might be confusing.
-     */
     setRegister(NODE_STATE(ksCurThread), capRegister, seL4_NoError);
     return EXCEPTION_NONE;
 }
+#endif /* CONFIG_ENABLE_KERNEL_LOG_BUFFER */
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 
