@@ -92,6 +92,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [sim, the_matrix]
     strategy:
+      fail-fast: false
       matrix: ${{ fromJson(needs.the_matrix.outputs.matrix) }}
     # do not run concurrently with other workflows, but do run concurrently in the build matrix
     concurrency: hw-run-${{ strategy.job-index }}
