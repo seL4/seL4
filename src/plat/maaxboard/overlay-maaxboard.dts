@@ -16,7 +16,7 @@
 			&{/timer};
 	};
 
-	/* These general purpose timers exist in the SOC documentation, but not in the DTS from Avnet */
+	/* These general purpose timers exist in the SoC documentation, but not in the DTS from Avnet */
    
 	gpt@302d0000 {
 		compatible = "fsl,imx8mq-gpt\0fsl,imx7d-gpt";
