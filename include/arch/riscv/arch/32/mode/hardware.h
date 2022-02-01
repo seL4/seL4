@@ -31,7 +31,7 @@
 
 /* The first physical address to map into the kernel's physical memory
  * window */
-#define PADDR_BASE physBase
+#define PADDR_BASE ROUND_DOWN(physBase,22)
 
 /* The base address in virtual memory to use for the 1:1 physical memory
  * mapping */
@@ -48,13 +48,14 @@
 
 /* The physical memory address to use for mapping the kernel ELF
  *
- * This represents the physical address that the kernel image will be linked to. This needs to
- * be on a 1gb boundary as we currently require being able to creating a mapping to this address
- * as the largest frame size */
-#define KERNEL_ELF_PADDR_BASE UL_CONST(0x84000000)
+ * This represents the physical address that the kernel image will be linked to.
+ * physBase can be any value, but needs to be low enough within a single large page
+ * so that the kernel image doesn't cross a 2^22 mapping boundary.
+ */
+#define KERNEL_ELF_PADDR_BASE physBase
 
 /* The base address in virtual memory to use for the kernel ELF mapping */
-#define KERNEL_ELF_BASE UL_CONST(0xFF800000)
+#define KERNEL_ELF_BASE (UL_CONST(0xFF800000) + (KERNEL_ELF_PADDR_BASE & MASK(22)))
 
 /* The base address in virtual memory to use for the kernel device
  * mapping region. These are mapped in the kernel page table. */
