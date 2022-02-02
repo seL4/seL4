@@ -16,8 +16,29 @@
 #include <arch/machine/hardware.h>
 #include <arch/machine/registerset.h>
 
+typedef struct fpu {
+    uint64_t vregs[62];
+    uint32_t fpsr;
+    uint32_t fpcr;
+
+    /* Backlink from fpu to TCB */
+    struct tcb *fpuBoundTCB;
+} fpu_t;
+
+compile_assert(fpu_object_size_correct, sizeof(fpu_t) == BIT(seL4_FPUBits));
+
+typedef struct tcb_fpu {
+    /* Object created from retyping an untyped */
+    fpu_t *tcbBoundFpu;
+
+    uint64_t vregs[2];
+} tcb_fpu_t;
+
 typedef struct arch_tcb {
     user_context_t tcbContext;
+
+    tcb_fpu_t tcbFpu;
+
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     struct vcpu *tcbVCPU;
 #endif

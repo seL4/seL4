@@ -12,22 +12,21 @@
 
 #ifdef CONFIG_HAVE_FPU
 /* Switch the owner of the FPU to the given thread on local core. */
-void switchLocalFpuOwner(user_fpu_state_t *new_owner)
+void switchLocalFpuOwner(tcb_fpu_t *new_owner)
 {
     enableFpu();
-    if (NODE_STATE(ksActiveFPUState)) {
-        saveFpuState(NODE_STATE(ksActiveFPUState));
+    if (NODE_STATE(ksActiveFPU)) {
+        saveFpuState(NODE_STATE(ksActiveFPU));
     }
-    if (new_owner) {
-        NODE_STATE(ksFPURestoresSinceSwitch) = 0;
+    if (new_owner && new_owner->tcbBoundFpu) {
         loadFpuState(new_owner);
     } else {
         disableFpu();
     }
-    NODE_STATE(ksActiveFPUState) = new_owner;
+    NODE_STATE(ksActiveFPU) = new_owner;
 }
 
-void switchFpuOwner(user_fpu_state_t *new_owner, word_t cpu)
+void switchFpuOwner(tcb_fpu_t *new_owner, word_t cpu)
 {
 #ifdef ENABLE_SMP_SUPPORT
     if (cpu != getCurrentCPUIndex()) {
@@ -46,14 +45,8 @@ void switchFpuOwner(user_fpu_state_t *new_owner, word_t cpu)
  * it over. */
 exception_t handleFPUFault(void)
 {
-    /* If we have already given the FPU to the user, we should not reach here.
-     * This should only be able to occur on CPUs without an FPU at all, which
-     * we presumably are happy to assume will not be running seL4. */
-    assert(!nativeThreadUsingFPU(NODE_STATE(ksCurThread)));
-
-    /* Otherwise, lazily switch over the FPU. */
-    switchLocalFpuOwner(&NODE_STATE(ksCurThread)->tcbArch.tcbContext.fpuState);
-
+    fail("Unimplemented!\n");
+    UNREACHABLE();
     return EXCEPTION_NONE;
 }
 

@@ -114,7 +114,7 @@ static inline void disableFpu(void)
 #ifdef CONFIG_VTX
 static inline bool_t vcpuThreadUsingFPU(tcb_t *thread)
 {
-    return thread->tcbArch.tcbVCPU && &thread->tcbArch.tcbVCPU->fpuState == NODE_STATE(ksActiveFPUState);
+    return thread->tcbArch.tcbVCPU && &thread->tcbArch.tcbVCPU->fpuState == NODE_STATE(ksActiveFPU);
 }
 #endif /* CONFIG_VTX */
 

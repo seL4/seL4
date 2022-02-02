@@ -457,6 +457,9 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
                    0,                     /* capPTIsMapped      */
                    0                      /* capPTMappedAddress */
                );
+    
+    case seL4_ARM_FPUObject:
+        return cap_fpu_cap_new((word_t) regionBase);
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case seL4_ARM_VCPUObject:

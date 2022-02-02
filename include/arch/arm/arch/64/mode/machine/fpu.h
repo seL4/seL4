@@ -12,7 +12,7 @@ extern bool_t isFPUEnabledCached[CONFIG_MAX_NUM_NODES];
 
 #ifdef CONFIG_HAVE_FPU
 /* Store state in the FPU registers into memory. */
-static inline void saveFpuState(user_fpu_state_t *dest)
+static inline void saveFpuState(tcb_fpu_t *dest)
 {
     word_t temp;
 
@@ -47,7 +47,7 @@ static inline void saveFpuState(user_fpu_state_t *dest)
 }
 
 /* Load FPU state from memory into the FPU registers. */
-static inline void loadFpuState(user_fpu_state_t *src)
+static inline void loadFpuState(tcb_fpu_t *src)
 {
     word_t temp;
 

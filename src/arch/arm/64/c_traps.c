@@ -23,7 +23,7 @@ void VISIBLE NORETURN restore_user_context(void)
     c_exit_hook();
 
 #ifdef CONFIG_HAVE_FPU
-    lazyFPURestore(NODE_STATE(ksCurThread));
+    eagerFPURestore(NODE_STATE(ksCurThread));
 #endif /* CONFIG_HAVE_FPU */
 
     asm volatile(

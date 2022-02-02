@@ -556,7 +556,7 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
 BOOT_CODE void init_core_state(tcb_t *scheduler_action)
 {
 #ifdef CONFIG_HAVE_FPU
-    NODE_STATE(ksActiveFPUState) = NULL;
+    NODE_STATE(ksActiveFPU) = NULL;
 #endif
 #ifdef CONFIG_DEBUG_BUILD
     /* add initial threads to the debug queue */

@@ -232,14 +232,6 @@ extern const register_t msgRegisters[];
 extern const register_t frameRegisters[];
 extern const register_t gpRegisters[];
 
-#ifdef CONFIG_HAVE_FPU
-typedef struct user_fpu_state {
-    uint64_t vregs[64];
-    uint32_t fpsr;
-    uint32_t fpcr;
-} user_fpu_state_t;
-#endif /* CONFIG_HAVE_FPU */
-
 /* ARM user-code context: size = 72 bytes
  * Or with hardware debug support built in:
  *      72 + sizeof(word_t) * (NUM_BPS + NUM_WPS) * 2
@@ -250,9 +242,6 @@ typedef struct user_fpu_state {
  */
 struct user_context {
     word_t registers[n_contextRegisters];
-#ifdef CONFIG_HAVE_FPU
-    user_fpu_state_t fpuState;
-#endif /* CONFIG_HAVE_FPU */
 };
 typedef struct user_context user_context_t;
 
