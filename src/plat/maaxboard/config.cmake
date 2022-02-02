@@ -17,10 +17,11 @@ if(KernelPlatformMaaxboard)
         fallback_declare_seL4_arch_default(aarch64)
     endif()
 
+    config_set(KernelPlatImx8mq PLAT_IMX8MQ ON)
+
     set(KernelArmCortexA53 ON)
     set(KernelArchArmV8a ON)
     set(KernelArmGicV3 ON)
-    config_set(KernelARMPlatform ARM_PLAT ${KernelPlatform})
     set(KernelArmMach "imx" CACHE INTERNAL "")
     list(APPEND KernelDTSList "tools/dts/${KernelPlatform}.dts")
     list(APPEND KernelDTSList "src/plat/maaxboard/overlay-${KernelPlatform}.dts")
