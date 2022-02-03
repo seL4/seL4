@@ -31,7 +31,7 @@ typedef struct tcb_fpu {
     /* Object created from retyping an untyped */
     fpu_t *tcbBoundFpu;
 
-    uint64_t vregs[2];
+    uint64_t last_vregs[2];
 } tcb_fpu_t;
 
 typedef struct arch_tcb {

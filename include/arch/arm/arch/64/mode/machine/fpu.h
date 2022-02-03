@@ -15,7 +15,6 @@ extern bool_t isFPUEnabledCached[CONFIG_MAX_NUM_NODES];
 static inline void saveFpuState(tcb_fpu_t *dest)
 {
     word_t temp;
-
     asm volatile(
         /* SIMD and floating-point register file */
         "stp     q0, q1, [%1, #16 * 0]      \n"
@@ -33,15 +32,18 @@ static inline void saveFpuState(tcb_fpu_t *dest)
         "stp     q24, q25, [%1, #16 * 24]   \n"
         "stp     q26, q27, [%1, #16 * 26]   \n"
         "stp     q28, q29, [%1, #16 * 28]   \n"
-        "stp     q30, q31, [%1, #16 * 30]   \n"
 
-        /* FP control and status registers */
+        /* Use the vregs stored in the tcb_fpu_t object */
+        "stp     q30, q31, [%2, #0]   \n"
+
+        /* Status and control registers */
         "mrs     %0, fpsr                   \n"
-        "str     %w0, [%1, #16 * 32]        \n"
+        "str     %w0, [%1, #16 * 30]        \n"
         "mrs     %0, fpcr                   \n"
-        "str     %w0, [%1, #16 * 32 + 4]    \n"
+        "str     %w0, [%1, #16 * 30 + 4]    \n"
+
         : "=&r"(temp)
-        : "r"(dest)
+        : "r"(dest->tcbBoundFPU), "r"(dest->last_vregs)
         : "memory"
     );
 }
@@ -50,7 +52,6 @@ static inline void saveFpuState(tcb_fpu_t *dest)
 static inline void loadFpuState(tcb_fpu_t *src)
 {
     word_t temp;
-
     asm volatile(
         /* SIMD and floating-point register file */
         "ldp     q0, q1, [%1, #16 * 0]      \n"
@@ -68,15 +69,17 @@ static inline void loadFpuState(tcb_fpu_t *src)
         "ldp     q24, q25, [%1, #16 * 24]   \n"
         "ldp     q26, q27, [%1, #16 * 26]   \n"
         "ldp     q28, q29, [%1, #16 * 28]   \n"
-        "ldp     q30, q31, [%1, #16 * 30]  \n"
+
+        /* Use the vregs stored in the tcb_fpu_t object */
+        "ldp     q30, q31, [%2, #0]  \n"
 
         /* FP control and status registers */
-        "ldr     %w0, [%1, #16 * 32]        \n"
+        "ldr     %w0, [%1, #16 * 30]        \n"
         "msr     fpsr, %0                   \n"
-        "ldr     %w0, [%1, #16 * 32 + 4]    \n"
+        "ldr     %w0, [%1, #16 * 30 + 4]    \n"
         "msr     fpcr, %0                   \n"
         : "=&r"(temp)
-        : "r"(src)
+        : "r"(src->tcbBoundFPU), "r"(src->last_vregs)
         : "memory"
     );
 }
