@@ -34,16 +34,17 @@ static inline void saveFpuState(tcb_fpu_t *dest)
         "stp     q28, q29, [%1, #16 * 28]   \n"
 
         /* Use the vregs stored in the tcb_fpu_t object */
-        "stp     q30, q31, [%2, #0]   \n"
+        "str     q30, [%1, #16 * 30]        \n"
+        "str     q31, [%2]                  \n"
 
         /* Status and control registers */
         "mrs     %0, fpsr                   \n"
-        "str     %w0, [%1, #16 * 30]        \n"
+        "str     %w0, [%1, #16 * 31]        \n"
         "mrs     %0, fpcr                   \n"
-        "str     %w0, [%1, #16 * 30 + 4]    \n"
+        "str     %w0, [%1, #16 * 31 + 4]    \n"
 
         : "=&r"(temp)
-        : "r"(dest->tcbBoundFPU), "r"(dest->last_vregs)
+        : "r"(dest->tcbBoundFpu), "r"(dest->q31)
         : "memory"
     );
 }
@@ -71,15 +72,16 @@ static inline void loadFpuState(tcb_fpu_t *src)
         "ldp     q28, q29, [%1, #16 * 28]   \n"
 
         /* Use the vregs stored in the tcb_fpu_t object */
-        "ldp     q30, q31, [%2, #0]  \n"
+        "ldr     q30, [%1, #16 * 30]        \n"
+        "ldr     q31, [%2]                  \n"
 
         /* FP control and status registers */
-        "ldr     %w0, [%1, #16 * 30]        \n"
+        "ldr     %w0, [%1, #16 * 31]        \n"
         "msr     fpsr, %0                   \n"
-        "ldr     %w0, [%1, #16 * 30 + 4]    \n"
+        "ldr     %w0, [%1, #16 * 31 + 4]    \n"
         "msr     fpcr, %0                   \n"
         : "=&r"(temp)
-        : "r"(src->tcbBoundFPU), "r"(src->last_vregs)
+        : "r"(src->tcbBoundFpu), "r"(src->q31)
         : "memory"
     );
 }
