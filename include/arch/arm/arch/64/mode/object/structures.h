@@ -16,6 +16,7 @@
 #include <arch/machine/hardware.h>
 #include <arch/machine/registerset.h>
 
+#ifdef CONFIG_HAVE_FPU
 typedef struct fpu {
     uint64_t vregs[62];
     uint32_t fpsr;
@@ -34,12 +35,14 @@ typedef struct tcb_fpu {
     /* Last quad-word register in the fpu */
     uint64_t q31[2];
 } tcb_fpu_t;
+#endif
 
 typedef struct arch_tcb {
     user_context_t tcbContext;
 
+#ifdef CONFIG_HAVE_FPU
     tcb_fpu_t tcbFpu;
-
+#endif
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     struct vcpu *tcbVCPU;
 #endif

@@ -1662,6 +1662,7 @@ exception_t decodeUnbindNotification(cap_t cap)
     return invokeTCB_NotificationControl(tcb, NULL);
 }
 
+#ifdef CONFIG_HAVE_FPU
 exception_t decodeBindFpu(cap_t cap)
 {
     fpu_t *fpuPtr;
@@ -1713,6 +1714,7 @@ exception_t decodeUnbindFpu(cap_t cap)
     unbindFpu(tcb);
     return EXCEPTION_NONE;
 }
+#endif
 
 /* The following functions sit in the preemption monad and implement the
  * preemptible, non-faulting bottom end of a TCB invocation. */
