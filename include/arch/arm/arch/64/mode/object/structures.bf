@@ -105,6 +105,7 @@ block asid_pool_cap {
     field_high capASIDPool          37
 }
 
+#ifdef CONFIG_HAVE_FPU
 block fpu_cap {
     padding                         16
     field_high capFpuPtr            48
@@ -112,6 +113,7 @@ block fpu_cap {
     field capType                   5
     padding                         59
 }
+#endif
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 block vcpu_cap {
@@ -189,7 +191,9 @@ tagged_union cap capType {
     tag page_global_directory_cap   9
     tag asid_control_cap            11
     tag asid_pool_cap               13
+#ifdef CONFIG_HAVE_FPU
     tag fpu_cap                     15
+#endif
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     tag vcpu_cap                    17
 #endif
