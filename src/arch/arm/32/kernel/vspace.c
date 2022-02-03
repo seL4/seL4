@@ -1213,7 +1213,7 @@ exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
         addr = getHDFAR();
-        addr = (addressTranslateS1CPR(addr) & ~MASK(PAGE_BITS)) | (addr & MASK(PAGE_BITS));
+        addr = (addressTranslateS1(addr) & ~MASK(PAGE_BITS)) | (addr & MASK(PAGE_BITS));
         /* MSBs tell us that this was a DataAbort */
         fault = getHSR() & 0x3ffffff;
 #else
@@ -1244,7 +1244,7 @@ exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
         pc = getRestartPC(thread);
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-        pc = (addressTranslateS1CPR(pc) & ~MASK(PAGE_BITS)) | (pc & MASK(PAGE_BITS));
+        pc = (addressTranslateS1(pc) & ~MASK(PAGE_BITS)) | (pc & MASK(PAGE_BITS));
         /* MSBs tell us that this was a PrefetchAbort */
         fault = getHSR() & 0x3ffffff;
 #else
