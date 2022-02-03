@@ -402,6 +402,11 @@ static inline void writeVMPIDR_EL2(word_t reg)
     MSR(REG_VMPIDR_EL2, reg);
 }
 
+static inline void setHCR(word_t reg)
+{
+    MSR(REG_HCR_EL2, reg);
+}
+
 static word_t vcpu_hw_read_reg(word_t reg_index)
 {
     word_t reg = 0;
@@ -585,9 +590,8 @@ static inline void armv_vcpu_save(vcpu_t *vcpu, UNUSED bool_t active)
 
 static inline void vcpu_enable(vcpu_t *vcpu)
 {
-    MSR(REG_HCR_EL2, HCR_VCPU);
-    isb();
     vcpu_restore_reg(vcpu, seL4_VCPUReg_SCTLR);
+    setHCR(HCR_VCPU);
     isb();
 
     set_gic_vcpu_ctrl_hcr(vcpu->vgic.hcr);
@@ -619,7 +623,7 @@ static inline void vcpu_disable(vcpu_t *vcpu)
     /* Stage 1 MMU off */
     setSCTLR(SCTLR_DEFAULT);
     isb();
-    MSR(REG_HCR_EL2, HCR_NATIVE);
+    setHCR(HCR_NATIVE);
     isb();
 
 #ifdef CONFIG_HAVE_FPU
