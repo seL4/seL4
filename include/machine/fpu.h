@@ -47,5 +47,33 @@ static inline void FORCE_INLINE eagerFPURestore(tcb_t *thread)
     }
 }
 
+static inline void doUnbindFpu(fpu_t *fpuPtr, tcb_t *tcb)
+{
+    fpuPtr->fpuBoundTCB = NULL;
+    tcb->tcbArch.tcbFpu.tcbBoundFpu = NULL;
+}
+
+static void UNUSED unbindMaybeFpu(fpu_t *fpuPtr)
+{
+    tcb_t *tcb = fpuPtr->fpuBoundTCB;
+    if (tcb) {
+        doUnbindFpu(fpuPtr, tcb);
+    }
+}
+
+static void unbindFpu(tcb_t *tcb)
+{
+    fpu_t *fpuPtr = tcb->tcbArch.tcbFpu.tcbBoundFpu;
+    if (fpuPtr) {
+        doUnbindFpu(fpuPtr, tcb);
+    }
+}
+
+static void bindFpu(tcb_t *tcb, fpu_t *fpuPtr)
+{
+    fpuPtr->fpuBoundTCB = tcb;
+    tcb->tcbArch.tcbFpu.tcbBoundFpu = fpuPtr;
+}
+
 #endif /* CONFIG_HAVE_FPU */
 

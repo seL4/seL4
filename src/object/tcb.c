@@ -26,6 +26,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <arch/smp/ipi_inline.h>
+#include <machine/fpu.h>
 
 #define NULL_PRIO 0
 
@@ -830,6 +831,14 @@ exception_t decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
 
     case TCBUnbindNotification:
         return decodeUnbindNotification(cap);
+
+#ifdef CONFIG_HAVE_FPU
+    case TCBBindFPU:
+        return decodeBindFpu(cap);
+
+    case TCBUnbindFPU:
+        return decodeUnbindFpu(cap);
+#endif
 
 #ifdef CONFIG_KERNEL_MCS
     case TCBSetTimeoutEndpoint:
@@ -1651,6 +1660,58 @@ exception_t decodeUnbindNotification(cap_t cap)
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeTCB_NotificationControl(tcb, NULL);
+}
+
+exception_t decodeBindFpu(cap_t cap)
+{
+    fpu_t *fpuPtr;
+    tcb_t *tcb;
+    cap_t fpu_cap;
+
+    if (current_extra_caps.excaprefs[0] == NULL) {
+        userError("TCB BindFpu: Truncated message.");
+        current_syscall_error.type = seL4_TruncatedMessage;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
+
+    if (tcb->tcbArch.tcbFpu.tcbBoundFpu) {
+        userError("TCB BindFPU: TCB already has a bound FPU.");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    fpu_cap = current_extra_caps.excaprefs[0]->cap;
+
+    if (cap_get_capType(fpu_cap) == cap_fpu_cap) {
+        fpuPtr = FPU_PTR(cap_fpu_cap_get_capFpuPtr(fpu_cap));
+    } else {
+        userError("TCB BindFPU: Notification is invalid.");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+    bindFpu(tcb, fpuPtr);
+    return EXCEPTION_NONE;
+}
+
+exception_t decodeUnbindFpu(cap_t cap)
+{
+    tcb_t *tcb;
+
+    tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
+
+    if (!tcb->tcbArch.tcbFpu.tcbBoundFpu) {
+        userError("TCB UnbindFPU: TCB already has no bound FPU.");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+    unbindFpu(tcb);
+    return EXCEPTION_NONE;
 }
 
 /* The following functions sit in the preemption monad and implement the

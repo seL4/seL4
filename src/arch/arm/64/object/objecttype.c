@@ -369,6 +369,8 @@ word_t Arch_getObjectSize(word_t t)
         return seL4_PageDirBits;
     case seL4_ARM_PageUpperDirectoryObject:
         return seL4_PUDBits;
+    case seL4_ARM_FPUObject:
+        return seL4_FPUBits;
 #ifndef AARCH64_VSPACE_S2_START_L1
     case seL4_ARM_PageGlobalDirectoryObject:
         return seL4_PGDBits;

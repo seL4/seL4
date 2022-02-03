@@ -31,7 +31,8 @@ typedef struct tcb_fpu {
     /* Object created from retyping an untyped */
     fpu_t *tcbBoundFpu;
 
-    uint64_t last_vregs[2];
+    /* Last quad-word register in the fpu */
+    uint64_t q31[2];
 } tcb_fpu_t;
 
 typedef struct arch_tcb {
@@ -118,6 +119,9 @@ typedef pgde_t vspace_root_t;
 
 #define PT_PTR(r)           ((pte_t *)(r))
 #define PT_REF(p)           ((word_t)(p))
+
+#define FPU_PTR(r)          ((fpu_t *)(r))
+#define FPU_REF(p)          ((word_t)(p))
 
 /* Generate a vcpu_t pointer from a vcpu block reference */
 #define VCPU_PTR(r)       ((struct vcpu *)(r))
