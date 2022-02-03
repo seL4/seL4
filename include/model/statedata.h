@@ -75,8 +75,6 @@ NODE_STATE_DECLARE(sched_context_t, *ksIdleSC);
 #ifdef CONFIG_HAVE_FPU
 /* Current state installed in the FPU, or NULL if the FPU is currently invalid */
 NODE_STATE_DECLARE(tcb_fpu_t *, ksActiveFPU);
-/* Number of times we have restored a user context with an active FPU without switching it */
-NODE_STATE_DECLARE(word_t, ksFPURestoresSinceSwitch);
 #endif /* CONFIG_HAVE_FPU */
 #ifdef CONFIG_DEBUG_BUILD
 NODE_STATE_DECLARE(tcb_t *, ksDebugTCBs);
