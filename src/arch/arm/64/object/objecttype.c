@@ -91,6 +91,12 @@ deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
         ret.status = EXCEPTION_NONE;
         return ret;
 
+#ifdef CONFIG_HAVE_FPU
+    case cap_fpu_cap:
+        ret.status = EXCEPTION_NONE;
+        ret.cap = cap_null_cap_new();
+        break;
+#endif
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case cap_vcpu_cap:
         ret.cap = cap;
@@ -228,6 +234,15 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
         }
         break;
 #endif
+#ifdef CONFIG_HAVE_FPU
+    case cap_fpu_cap:
+        if (final) {
+            fpu_t *fpu = FPU_PTR(cap_fpu_cap_get_capFPUPtr(cap));
+            unbindMaybeFPU(fpu);
+        }
+        break;
+    }
+#endif
     }
 
     fc_ret.remainder = cap_null_cap_new();
@@ -322,6 +337,14 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
         if (cap_get_capType(cap_b) == cap_cb_cap) {
             return cap_cb_cap_get_capCB(cap_a) ==
                    cap_cb_cap_get_capCB(cap_b);
+        }
+        break;
+#endif
+#ifdef CONFIG_HAVE_FPU 
+    case cap_fpu_cap:
+        if (cap_get_capType(cap_b) == cap_fpu_cap) {
+            return cap_fpu_cap_get_capFPUPtr(cap_a) ==
+                   cap_fpu_cap_get_capFPUPtr(cap_b);
         }
         break;
 #endif
