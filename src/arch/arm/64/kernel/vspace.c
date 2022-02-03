@@ -955,7 +955,7 @@ exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
         /* use the IPA */
         if (ARCH_NODE_STATE(armHSVCPUActive)) {
-            addr = GET_PAR_ADDR(ats1e1r(addr)) | (addr & MASK(PAGE_BITS));
+            addr = GET_PAR_ADDR(addressTranslateS1(addr)) | (addr & MASK(PAGE_BITS));
         }
 #endif
         current_fault = seL4_Fault_VMFault_new(addr, fault, false);
@@ -970,7 +970,7 @@ exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
         if (ARCH_NODE_STATE(armHSVCPUActive)) {
-            pc = GET_PAR_ADDR(ats1e1r(pc)) | (pc & MASK(PAGE_BITS));
+            pc = GET_PAR_ADDR(addressTranslateS1(pc)) | (pc & MASK(PAGE_BITS));
         }
 #endif
         current_fault = seL4_Fault_VMFault_new(pc, fault, true);
