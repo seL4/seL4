@@ -26,23 +26,23 @@
 <!ATTLIST method manual_name CDATA #IMPLIED>
 <!ATTLIST method manual_label CDATA #IMPLIED>
 
-<!ELEMENT param ANY>
+<!ELEMENT param (#PCDATA|description|error)*>
 <!ATTLIST param type CDATA #REQUIRED>
 <!ATTLIST param name CDATA #REQUIRED>
 <!ATTLIST param dir CDATA #REQUIRED>
 <!ATTLIST param description CDATA #IMPLIED>
 
-<!ELEMENT error ANY>
+<!ELEMENT error (#PCDATA|description)*>
 <!ATTLIST error name CDATA #REQUIRED>
 <!ATTLIST error description CDATA #IMPLIED>
 
-<!ELEMENT brief ANY>
+<!ELEMENT brief (#PCDATA|texttt|docref|shortref|autoref|obj)*>
 
-<!ELEMENT description ANY>
+<!ELEMENT description (#PCDATA|texttt|docref|shortref|autoref|obj)*>
 
-<!ELEMENT return ANY>
+<!ELEMENT return (#PCDATA|texttt|docref|shortref|autoref|obj|errorenumdesc)*>
 
-<!ELEMENT docref ANY>
+<!ELEMENT docref (#PCDATA|texttt|shortref|autoref|obj)*>
 
 <!ELEMENT texttt EMPTY>
 <!ATTLIST texttt text CDATA #REQUIRED>
