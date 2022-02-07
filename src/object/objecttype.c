@@ -197,6 +197,7 @@ finaliseCap_ret_t finaliseCap(cap_t cap, bool_t final, bool_t exposed)
                 }
             }
 #endif
+            Arch_prepareThreadDelete(tcb);
 #ifdef CONFIG_HAVE_FPU
             unbindFpu(tcb);
 #endif
@@ -204,7 +205,6 @@ finaliseCap_ret_t finaliseCap(cap_t cap, bool_t final, bool_t exposed)
 #ifdef CONFIG_DEBUG_BUILD
             tcbDebugRemove(tcb);
 #endif
-            Arch_prepareThreadDelete(tcb);
             fc_ret.remainder =
                 Zombie_new(
                     tcbArchCNodeEntries,

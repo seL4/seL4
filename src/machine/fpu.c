@@ -15,7 +15,7 @@
 void switchLocalFpuOwner(tcb_fpu_t *new_owner)
 {
     enableFpu();
-    if (NODE_STATE(ksActiveFPU)) {
+    if (NODE_STATE(ksActiveFPU) && NODE_STATE(ksActiveFPU)->tcbBoundFpu) {
         saveFpuState(NODE_STATE(ksActiveFPU));
     }
     if (new_owner && new_owner->tcbBoundFpu) {
