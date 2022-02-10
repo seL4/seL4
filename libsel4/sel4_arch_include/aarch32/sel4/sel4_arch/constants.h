@@ -168,15 +168,19 @@ typedef enum {
         defined(CONFIG_HARDWARE_DEBUG_API) \
     ) \
 )
-#define seL4_TCBBits 11
+#define seL4_TCBBits 10
 #elif ( \
     defined(CONFIG_HAVE_FPU) || \
     (defined(CONFIG_ARM_HYPERVISOR_SUPPORT) && defined(CONFIG_ARM_HYP_ENABLE_VCPU_CP14_SAVE_AND_RESTORE)) || \
     defined(CONFIG_HARDWARE_DEBUG_API) \
 )
-#define seL4_TCBBits 10
+#define seL4_TCBBits 9
 #else
 #define seL4_TCBBits 9
+#endif
+
+#ifdef CONFIG_HAVE_FPU
+#define seL4_FPUBits 8
 #endif
 
 #define seL4_EndpointBits 4

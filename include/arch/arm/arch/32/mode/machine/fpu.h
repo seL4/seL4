@@ -88,9 +88,10 @@ static void setEnFPEXC(void)
     VMSR(FPEXC, fpexc);
 }
 /* Store state in the FPU registers into memory. */
-static inline void saveFpuState(user_fpu_state_t *dest)
+static inline void saveFpuState(tcb_fpu_t *dest)
 {
     word_t fpexc;
+    fpu_t *fpu = dest->tcbBoundFpu;
 
     /* Fetch FPEXC. */
     VMRS(FPEXC, fpexc);
@@ -106,7 +107,7 @@ static inline void saveFpuState(user_fpu_state_t *dest)
     }
 #endif
 
-    dest->fpexc = fpexc;
+    fpu->fpexc = fpexc;
 
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         /* before touching the regsiters, we need to set the EN bit */
@@ -114,10 +115,10 @@ static inline void saveFpuState(user_fpu_state_t *dest)
     }
 
     /* We don't support asynchronous exceptions */
-    assert((dest->fpexc & BIT(FPEXC_EX_BIT)) == 0);
+    assert((fpu->fpexc & BIT(FPEXC_EX_BIT)) == 0);
 
     if (isFPUD32SupportedCached) {
-        register word_t regs_d16_d31 asm("ip") = (word_t) &dest->fpregs[16];
+        register word_t regs_d16_d31 asm("ip") = (word_t) &fpu->regs_d16_d31[0];
         asm volatile(
             ".word 0xeccc0b20        \n"    /*  vstmia  ip, {d16-d31} */
             :
@@ -126,12 +127,14 @@ static inline void saveFpuState(user_fpu_state_t *dest)
         );
     }
 
-    register word_t regs_d0_d15 asm("r2") = (word_t) &dest->fpregs[0];
+    register word_t regs_d0_d14 asm("r2") = (word_t) &fpu->regs_d0_d14[0];
     asm volatile(
-        /* Store d0 - d15 to memory */
-        ".word 0xec820b20       \n" /* vstmia  r2, {d0-d15}" */
-        :
-        : "r"(regs_d0_d15)
+        /* Store d0 - d14 to memory */
+        ".word 0xec820b1e       \n" /* vstmia  r2, {d0-d14}" */
+
+        /* Store d15 to memory */
+        "vstr d15, [%1]         \n"
+        :: "r"(regs_d0_d14), "r"(&dest->d15)
     );
 
     /* Store FPSCR. */
@@ -176,13 +179,16 @@ static inline bool_t isFpuEnable(void)
 }
 
 /* Load FPU state from memory into the FPU registers. */
-static inline void loadFpuState(user_fpu_state_t *src)
+static inline void loadFpuState(tcb_fpu_t *src)
 {
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         /* now we need to enable the EN bit in FPEXC */
         setEnFPEXC();
     }
-    register word_t regs_d16_d31 asm("r2") = (word_t) &src->fpregs[16];
+
+    fpu_t *fpu = src->tcbBoundFpu;
+
+    register word_t regs_d16_d31 asm("r2") = (word_t) &fpu->regs_d16_d31[0];
     if (isFPUD32SupportedCached) {
         asm volatile(
             ".word 0xecd20b20       \n" /*   vldmia  r2, {d16-d31} */
@@ -190,18 +196,21 @@ static inline void loadFpuState(user_fpu_state_t *src)
         );
     }
 
-    register word_t regs_d0_d15 asm("r0") = (word_t) &src->fpregs[0];
+    register word_t regs_d0_d14 asm("r0") = (word_t) &fpu->regs_d0_d14[0];
     asm volatile(
-        /* Restore d0 - d15 from memory */
-        ".word 0xec900b20         \n"    /*  vldmia  r0, {d0-d15} */
-        :: "r"(regs_d0_d15)
+        /* Restore d0 - d14 from memory */
+        ".word 0xec920b1e         \n"    /*  vldmia  r0, {d0-d14} */
+
+        /* Restore d15 */
+        "vldr d15, [%1]           \n"
+        :: "r"(regs_d0_d14), "r"(&src->d15)
     );
 
     /* Load FPSCR. */
     VMSR(FPSCR, src->fpscr);
 
     /* Restore FPEXC. */
-    VMSR(FPEXC, src->fpexc);
+    VMSR(FPEXC, fpu->fpexc);
 }
 
 #endif /* CONFIG_HAVE_FPU */

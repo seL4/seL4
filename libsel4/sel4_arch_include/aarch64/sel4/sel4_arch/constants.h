@@ -176,7 +176,9 @@ typedef enum {
 #define seL4_SlotBits 5
 #define seL4_TCBBits 10
 #define seL4_EndpointBits 4
+#ifdef CONFIG_HAVE_FPU
 #define seL4_FPUBits 9
+#endif
 #ifdef CONFIG_KERNEL_MCS
 #define seL4_NotificationBits 6
 #define seL4_ReplyBits           5

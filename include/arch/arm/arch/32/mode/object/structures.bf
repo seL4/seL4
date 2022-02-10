@@ -93,6 +93,15 @@ block asid_pool_cap {
     field capType          4
 }
 
+#ifdef CONFIG_HAVE_FPU
+block fpu_cap {
+    padding                         32
+
+    field_high capFpuPtr            28
+    field capType                   4
+}
+#endif
+
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 block vcpu_cap {
     padding               32
@@ -156,6 +165,9 @@ tagged_union cap capType {
     tag page_table_cap       7
     tag page_directory_cap   9
     tag asid_control_cap    11
+#ifdef CONFIG_HAVE_FPU
+    tag fpu_cap             13
+#endif
     -- Do not extend odd 4-bit caps types beyond 13, as we use
     -- 15 (0xf) to determine which caps are 8-bit.
 
