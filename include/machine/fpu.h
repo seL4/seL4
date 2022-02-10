@@ -49,8 +49,8 @@ static inline void FORCE_INLINE eagerFPURestore(tcb_t *thread)
 
 static inline void doUnbindFpu(fpu_t *fpuPtr, tcb_t *tcb)
 {
-    fpuPtr->fpuBoundTCB = NULL;
-    tcb->tcbArch.tcbFpu.tcbBoundFpu = NULL;
+    memzero(fpuPtr, sizeof(fpu_t));
+    memzero(&tcb->tcbArch.tcbFpu, sizeof(tcb_fpu_t));
 }
 
 static void UNUSED unbindMaybeFpu(fpu_t *fpuPtr)

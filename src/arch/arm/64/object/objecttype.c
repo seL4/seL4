@@ -391,8 +391,10 @@ word_t Arch_getObjectSize(word_t t)
         return seL4_PageDirBits;
     case seL4_ARM_PageUpperDirectoryObject:
         return seL4_PUDBits;
+#ifdef CONFIG_HAVE_FPU
     case seL4_ARM_FPUObject:
         return seL4_FPUBits;
+#endif
 #ifndef AARCH64_VSPACE_S2_START_L1
     case seL4_ARM_PageGlobalDirectoryObject:
         return seL4_PGDBits;
@@ -481,9 +483,12 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
                    0,                     /* capPTIsMapped      */
                    0                      /* capPTMappedAddress */
                );
-    
+
+#ifdef CONFIG_HAVE_FPU    
     case seL4_ARM_FPUObject:
+        memzero(regionBase, BIT(seL4_FPUBits));
         return cap_fpu_cap_new((word_t) regionBase);
+#endif
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case seL4_ARM_VCPUObject:
