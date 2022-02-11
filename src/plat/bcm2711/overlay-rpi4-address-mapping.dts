@@ -18,6 +18,13 @@
 	 * addresses in this overlay file.
 	 */
 	soc {
+		timer@7e003000 {
+			reg = <0xfe003000 0x1000>;
+			/* Channels 0 and 2 used by VC, so just expose 1 and
+			 * 3. Otherwise we're spammed with spurious
+			 * interrupts. */
+			interrupts = <0x00 0x41 0x04 0x00 0x43 0x04>;
+		};
 
 		serial@7e201400 {
 			reg = <0xfe201400 0x200>;
