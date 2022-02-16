@@ -37,38 +37,38 @@
     </api-mcs>
     <!-- Syscalls on the unknown syscall path. These definitions will be wrapped in #if condition -->
     <debug>
-        <config condition="defined CONFIG_PRINTING">
+        <config condition="defined(CONFIG_PRINTING)">
             <syscall name="DebugPutChar"  />
             <syscall name="DebugDumpScheduler" />
         </config>
-        <config condition="defined CONFIG_DEBUG_BUILD">
+        <config condition="defined(CONFIG_DEBUG_BUILD)">
             <syscall name="DebugHalt"     />
             <syscall name="DebugCapIdentify"   />
             <syscall name="DebugSnapshot" />
             <syscall name="DebugNameThread"/>
         </config>
-        <config condition="defined CONFIG_DEBUG_BUILD &amp;&amp; defined CONFIG_ENABLE_SMP_SUPPORT">
+        <config condition="defined(CONFIG_DEBUG_BUILD) &amp;&amp; defined(CONFIG_ENABLE_SMP_SUPPORT)">
             <syscall name="DebugSendIPI"/>
         </config>
-        <config condition="defined CONFIG_DANGEROUS_CODE_INJECTION">
+        <config condition="defined(CONFIG_DANGEROUS_CODE_INJECTION)">
             <syscall name="DebugRun"/>
         </config>
-        <config condition="defined CONFIG_ENABLE_BENCHMARKS">
+        <config condition="defined(CONFIG_ENABLE_BENCHMARKS)">
             <syscall name="BenchmarkFlushCaches" />
             <syscall name="BenchmarkResetLog" />
             <syscall name="BenchmarkFinalizeLog"  />
             <syscall name="BenchmarkSetLogBuffer"  />
             <syscall name="BenchmarkNullSyscall"  />
         </config>
-        <config condition="defined CONFIG_BENCHMARK_TRACK_UTILISATION">
+        <config condition="defined(CONFIG_BENCHMARK_TRACK_UTILISATION)">
             <syscall name="BenchmarkGetThreadUtilisation"  />
             <syscall name="BenchmarkResetThreadUtilisation"  />
         </config>
-        <config condition="defined CONFIG_DEBUG_BUILD &amp;&amp; defined CONFIG_BENCHMARK_TRACK_UTILISATION">
+        <config condition="defined(CONFIG_DEBUG_BUILD) &amp;&amp; defined(CONFIG_BENCHMARK_TRACK_UTILISATION)">
             <syscall name="BenchmarkDumpAllThreadsUtilisation"  />
             <syscall name="BenchmarkResetAllThreadsUtilisation"  />
         </config>
-        <config condition="defined CONFIG_KERNEL_X86_DANGEROUS_MSR">
+        <config condition="defined(CONFIG_KERNEL_X86_DANGEROUS_MSR)">
             <syscall name="X86DangerousWRMSR"/>
             <syscall name="X86DangerousRDMSR"/>
         </config>
@@ -76,10 +76,10 @@
              so that the check of 'is this a valid syscall' can remain a simple range check.
              Therefore we'll put this here and the arch code will handle it before
              passing to handleUnknownSyscall -->
-        <config condition="defined CONFIG_VTX">
+        <config condition="defined(CONFIG_VTX)">
             <syscall name="VMEnter"/>
         </config>
-        <config condition="defined CONFIG_SET_TLS_BASE_SELF">
+        <config condition="defined(CONFIG_SET_TLS_BASE_SELF)">
             <syscall name="SetTLSBase"/>
         </config>
     </debug>

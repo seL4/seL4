@@ -144,7 +144,7 @@ static inline void x86_sys_send_recv(seL4_Word sys, seL4_Word dest, seL4_Word *o
         :
         "=S"(*out_info),
         "=D"(*in_out_mr1),
-        "=d"(*out_badge)
+        "=d"(*out_badge),
         MCS_COND("+c"(reply), "=c"(*in_out_mr2))
         : "a"(sys),
         "S"(info),

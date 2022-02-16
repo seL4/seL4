@@ -23,7 +23,7 @@
             <param dir="in" name="vaddr" type="seL4_Word"
             description="Virtual address to map the page into."/>
             <param dir="in" name="attr" type="seL4_ARM_VMAttributes">
-                <description> 
+                <description>
                     VM Attributes for the mapping. <docref>Possible values for this type are given in <autoref label="ch:vspace"/>  .</docref>
                 </description>
             <error name="seL4_DeleteFirst">
@@ -280,9 +280,9 @@
         </method>
         <method id="ARMPageInvalidate_Data" name="Invalidate_Data" manual_name="Invalidate Data">
             <brief>
-                Invalidates the cache range within the given page. The start and end are relative to the page being serviced 
-                and should be aligned to a cache line boundary where possible. 
-                An additional clean is performed on the outer cache lines if the start and end are 
+                Invalidates the cache range within the given page. The start and end are relative to the page being serviced
+                and should be aligned to a cache line boundary where possible.
+                An additional clean is performed on the outer cache lines if the start and end are
                 not aligned, to clean out the bytes between the requested and the cache line boundary.
             </brief>
             <description>
@@ -319,7 +319,7 @@
         <method id="ARMPageCleanInvalidate_Data" name="CleanInvalidate_Data"
             manual_name="Clean and Invalidate Data">
             <brief>
-                Clean and invalidates the cache range within the given page. The range will be flushed out to RAM. 
+                Clean and invalidates the cache range within the given page. The range will be flushed out to RAM.
                 The start and end are relative to the page being serviced.
             </brief>
             <description>
@@ -355,7 +355,7 @@
         </method>
         <method id="ARMPageUnify_Instruction" name="Unify_Instruction" manual_name="Unify Instruction">
             <brief>
-                Unify Instruction Cache. Cleans data lines to point of unification, invalidate 
+                Unify Instruction Cache. Cleans data lines to point of unification, invalidate
                 corresponding instruction lines to point of unification, then invalidates branch
                 predictors. The start and end are relative to the page being
                 serviced.

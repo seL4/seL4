@@ -344,7 +344,7 @@ static BOOT_CODE bool_t try_init_kernel(
 
     ipcbuf_vptr = ui_v_reg.end;
     bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
-    extra_bi_frame_vptr = bi_frame_vptr + BIT(PAGE_BITS);
+    extra_bi_frame_vptr = bi_frame_vptr + BIT(BI_FRAME_SIZE_BITS);
 
     /* setup virtual memory for the kernel */
     map_kernel_window();
@@ -364,7 +364,7 @@ static BOOT_CODE bool_t try_init_kernel(
     /* If a DTB was provided, pass the data on as extra bootinfo */
     p_region_t dtb_p_reg = P_REG_EMPTY;
     if (dtb_size > 0) {
-        paddr_t dtb_phys_end = ROUND_UP(dtb_phys_addr + dtb_size, PAGE_BITS);
+        paddr_t dtb_phys_end = dtb_phys_addr + dtb_size;
         if (dtb_phys_end < dtb_phys_addr) {
             /* An integer overflow happened in DTB end address calculation, the
              * location or size passed seems invalid.
@@ -385,7 +385,7 @@ static BOOT_CODE bool_t try_init_kernel(
         }
         /* DTB seems valid and accessible, pass it on in bootinfo. */
         extra_bi_size += sizeof(seL4_BootInfoHeader) + dtb_size;
-        /* Remember the page aligned memory region it uses. */
+        /* Remember the memory region it uses. */
         dtb_p_reg = (p_region_t) {
             .start = dtb_phys_addr,
             .end   = dtb_phys_end

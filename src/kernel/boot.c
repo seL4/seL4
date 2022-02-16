@@ -205,8 +205,10 @@ BOOT_CODE static void create_rootserver_objects(pptr_t start, v_region_t it_v_re
     /* at this point we are up to creating 4k objects - which is the min size of
      * extra_bi so this is the last chance to allocate it */
     maybe_alloc_extra_bi(seL4_PageBits, extra_bi_size_bits);
+    compile_assert(invalid_seL4_ASIDPoolBits, seL4_ASIDPoolBits == seL4_PageBits);
     rootserver.asid_pool = alloc_rootserver_obj(seL4_ASIDPoolBits, 1);
     rootserver.ipc_buf = alloc_rootserver_obj(seL4_PageBits, 1);
+    compile_assert(invalid_BI_FRAME_SIZE_BITS, BI_FRAME_SIZE_BITS == seL4_PageBits);
     rootserver.boot_info = alloc_rootserver_obj(BI_FRAME_SIZE_BITS, 1);
 
     /* TCBs on aarch32 can be larger than page tables in certain configs */
@@ -376,16 +378,22 @@ BOOT_CODE create_frames_of_region_ret_t create_frames_of_region(
         } else {
             frame_cap = create_unmapped_it_frame_cap(f, false);
         }
-        if (!provide_cap(root_cnode_cap, frame_cap))
+        if (!provide_cap(root_cnode_cap, frame_cap)) {
             return (create_frames_of_region_ret_t) {
-            S_REG_EMPTY, false
-        };
+                .region  = S_REG_EMPTY,
+                .success = false
+            };
+        }
     }
 
     slot_pos_after = ndks_boot.slot_pos_cur;
 
     return (create_frames_of_region_ret_t) {
-        (seL4_SlotRegion) { slot_pos_before, slot_pos_after }, true
+        .region = (seL4_SlotRegion) {
+            .start = slot_pos_before,
+            .end   = slot_pos_after
+        },
+        .success = true
     };
 }
 
@@ -583,7 +591,10 @@ BOOT_CODE static bool_t provide_untyped_cap(
     word_t i = ndks_boot.slot_pos_cur - first_untyped_slot;
     if (i < CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS) {
         ndks_boot.bi_frame->untypedList[i] = (seL4_UntypedDesc) {
-            pptr_to_paddr((void *)pptr), size_bits, device_memory, {0}
+            .paddr    = pptr_to_paddr((void *)pptr),
+            .sizeBits = size_bits,
+            .isDevice = device_memory,
+            .padding  = {0}
         };
         ut_cap = cap_untyped_cap_new(MAX_FREE_INDEX(size_bits),
                                      device_memory, size_bits, pptr);
