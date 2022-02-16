@@ -11,12 +11,16 @@
 from __future__ import print_function
 from jinja2 import Environment, BaseLoader
 import argparse
+import itertools
 import re
 import sys
 import xml.dom.minidom
 import pkg_resources
-# We require jinja2 to be at least version 2.10 as we use the 'namespace' feature from
-# that version
+# We require jinja2 to be at least version 2.10,
+# In the past we used the 'namespace' feature from that version.
+# other versions of jinja, particularly `minijinja`, don't support namespaces.
+# However in case `namespace` is needed in the future require a
+# version which supports it.
 pkg_resources.require("jinja2>=2.10")
 
 
@@ -39,30 +43,26 @@ KERNEL_HEADER_TEMPLATE = """/*
 #ifdef __ASSEMBLER__
 
 /* System Calls */
-{%- set ns = namespace(syscall_number=-1) -%}
 {%- for condition, list in assembler  -%}
-    {%- for syscall in list %}
-#define SYSCALL_{{upper(syscall)}} ({{ns.syscall_number}})
-    {%- set ns.syscall_number = ns.syscall_number -1 -%}
+    {%- for syscall, syscall_number in list %}
+#define SYSCALL_{{upper(syscall)}} ({{syscall_number}})
     {%- endfor  %}
 {%- endfor  %}
 
 #endif /* __ASSEMBLER__ */
 
 #define SYSCALL_MAX (-1)
-#define SYSCALL_MIN ({{ns.syscall_number+ 1}})
+#define SYSCALL_MIN ({{syscall_min}})
 
 #ifndef __ASSEMBLER__
 
 enum syscall {
-{%- set ns.syscall_number = -1 -%}
-{% for condition, list in enum %}
+{%- for condition, list in enum %}
    {%- if condition | length > 0 %}
 #if {{condition}}
    {%- endif %}
-   {%- for syscall in list %}
-    Sys{{syscall}} = {{ns.syscall_number}},
-    {%- set ns.syscall_number = ns.syscall_number -1 -%}
+   {%- for syscall, syscall_number in list %}
+    Sys{{syscall}} = {{syscall_number}},
    {%- endfor %}
    {%- if condition | length > 0 %}
 #endif /* {{condition}} */
@@ -74,12 +74,10 @@ typedef word_t syscall_t;
 /* System call names */
 #ifdef CONFIG_DEBUG_BUILD
 static char *syscall_names[] UNUSED = {
-{%- set ns.syscall_number = 1 -%}
-{%- for condition, list in assembler %}
-   {%- for syscall in list %}
-         [{{ns.syscall_number}}] = "{{syscall}}",
-        {%- set ns.syscall_number = ns.syscall_number +1 -%}
-   {%- endfor %}
+{%- for condition, list in assembler  -%}
+    {%- for syscall, syscall_number in list %}
+         [{{syscall_number * -1}}] = "{{syscall}}",
+    {%- endfor %}
 {%- endfor %}
 };
 #endif /* CONFIG_DEBUG_BUILD */
@@ -99,14 +97,12 @@ LIBSEL4_HEADER_TEMPLATE = """/*
 #include <autoconf.h>
 
 typedef enum {
-{%- set ns = namespace(syscall_number=-1) -%}
 {%- for condition, list in enum %}
    {%- if condition | length > 0 %}
 #if {{condition}}
    {%- endif %}
-   {%- for syscall in list %}
-    seL4_Sys{{syscall}} = {{ns.syscall_number}},
-    {%- set ns.syscall_number = ns.syscall_number - 1 -%}
+   {%- for syscall, syscall_number in list %}
+       seL4_Sys{{syscall}} = {{syscall_number}},
    {%- endfor %}
    {%- if condition | length > 0 %}
 #endif /* {{condition}} */
@@ -201,18 +197,30 @@ def convert_to_assembler_format(s):
     return '_'.join(words).upper()
 
 
+def map_syscalls_neg(syscalls):
+    # This function will map a list of (condition, syscall_list) tuples
+    # From: [(cond1, ["SyscallOne", "SysCallTwo"]),
+    #        (cond2, ["SyscallThree", ...])]
+    # Into: [(cond1, [("SyscallOne", -1), ("SyscallTwo", -2)]),
+    #        (cond2, [(SyscallThree", -3), ...])]
+    r = itertools.count(start=-1, step=-1)
+    return [(cond, [(s, next(r)) for s in lst]) for (cond, lst) in syscalls]
+
+
 def generate_kernel_file(kernel_header, api, debug):
     template = Environment(loader=BaseLoader, trim_blocks=False,
                            lstrip_blocks=False).from_string(KERNEL_HEADER_TEMPLATE)
-    data = template.render({'assembler': api, 'enum': api + debug,
-                            'upper': convert_to_assembler_format})
+    data = template.render({'assembler': map_syscalls_neg(api),
+                            'enum': map_syscalls_neg(api + debug),
+                            'upper': convert_to_assembler_format,
+                            'syscall_min': -sum([len(lst) for (cond, lst) in api])})
     kernel_header.write(data)
 
 
 def generate_libsel4_file(libsel4_header, syscalls):
     template = Environment(loader=BaseLoader, trim_blocks=False,
                            lstrip_blocks=False).from_string(LIBSEL4_HEADER_TEMPLATE)
-    data = template.render({'enum': syscalls})
+    data = template.render({'enum': map_syscalls_neg(syscalls)})
     libsel4_header.write(data)
 
 
