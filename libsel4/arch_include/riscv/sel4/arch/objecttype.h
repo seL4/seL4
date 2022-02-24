@@ -13,6 +13,9 @@ typedef enum _object {
     seL4_RISCV_4K_Page = seL4_ModeObjectTypeCount,
     seL4_RISCV_Mega_Page,
     seL4_RISCV_PageTableObject,
+#ifdef CONFIG_HAVE_FPU
+    seL4_RISCV_FPUObject,
+#endif
     seL4_ObjectTypeCount
 } seL4_ArchObjectType;
 

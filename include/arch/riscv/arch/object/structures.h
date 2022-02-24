@@ -33,8 +33,59 @@ typedef struct asid_pool asid_pool_t;
 #define ASID_LOW(a)         (a & MASK(asidLowBits))
 #define ASID_HIGH(a)        ((a >> asidLowBits) & MASK(asidHighBits))
 
+#ifdef CONFIG_HAVE_FPU
+
+#define RISCV_NUM_FP_REGS   32
+
+#if defined(CONFIG_RISCV_EXT_D)
+typedef uint64_t fp_reg_t;
+#elif defined(CONFIG_RISCV_EXT_F)
+typedef uint32_t fp_reg_t;
+#else
+#error Unknown RISCV FPU extension
+#endif
+
+typedef struct fpu {
+    /* 
+     * For EXT_D and EXT_Q we can remove a single register,
+     * but for EXT_F we'll need to either remove 1 (RISCV32) or 2 (RISCV64).
+     * 
+     * There is space for optimization here but it's skipped for cleanness.
+     */
+#if defined(CONFIG_RISCV_EXT_F) && defined(CONFIG_ARCH_RISCV64)
+    fp_reg_t regs[RISCV_NUM_FP_REGS-2];
+#else
+    fp_reg_t regs[RISCV_NUM_FP_REGS-1];
+#endif
+
+    /* Backlink from fpu to TCB */
+    struct tcb *fpuBoundTCB;
+} fpu_t;
+
+compile_assert(fpu_object_size_correct, sizeof(fpu_t) == BIT(seL4_FPUBits));
+
+typedef struct tcb_fpu {
+    /* Object created from retyping an untyped */
+    fpu_t *tcbBoundFpu;
+    
+    /* Control status register */
+    uint32_t fcsr;
+
+    /* Last fp register(s) in the fpu */
+#if defined(CONFIG_RISCV_EXT_F) && defined(CONFIG_ARCH_RISCV64)
+    fp_reg_t regs[2];
+#else
+    fp_reg_t regs[1];
+#endif
+} tcb_fpu_t;
+#endif
+
 typedef struct arch_tcb {
     user_context_t tcbContext;
+
+#ifdef CONFIG_HAVE_FPU
+    tcb_fpu_t tcbFpu;
+#endif
 } arch_tcb_t;
 
 enum vm_rights {
@@ -63,6 +114,9 @@ typedef pte_t pde_t;
 
 #define WORD_BITS   (8 * sizeof(word_t))
 #define WORD_PTR(r) ((word_t *)(r))
+
+#define FPU_PTR(r)  ((fpu_t *)(r))
+#define FPU_REF(p)  ((word_t)(p))
 
 static inline bool_t CONST cap_get_archCapIsPhysical(cap_t cap)
 {
@@ -149,4 +203,3 @@ static inline bool_t CONST Arch_isCapRevocable(cap_t derivedCap, cap_t srcCap)
 }
 
 #endif /* !__ASSEMBLER__  */
-
