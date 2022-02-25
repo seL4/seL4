@@ -58,6 +58,15 @@ block asid_pool_cap {
     field       capType         4
 }
 
+#ifdef CONFIG_HAVE_FPU
+block fpu_cap {
+    field_high capFpuPtr        32
+
+    padding                     28
+    field capType               4
+}
+#endif
+
 -- NB: odd numbers are arch caps (see isArchCap())
 tagged_union cap capType {
     mask 4 0xe
@@ -75,6 +84,9 @@ tagged_union cap capType {
     -- 4-bit tag arch caps
     tag frame_cap           1
     tag page_table_cap      3
+#ifdef CONFIG_HAVE_FPU
+    tag fpu_cap             5
+#endif
     tag asid_control_cap    11
     tag asid_pool_cap       13
 
