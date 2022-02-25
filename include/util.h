@@ -13,7 +13,7 @@
 #ifdef __ASSEMBLER__
 
 /* Provide a helper macro to define integer constants that are not of the
- * default type 'ìnt', but 'unsigned long [long]'. When such constants are
+ * default type 'int', but 'unsigned long [long]'. When such constants are
  * shared between assembly and C code, some assemblers will fail because they
  * don't support C-style integer suffixes like 'ul'. Using a macro works around
  * this, as the suffix is only applied when the C compiler is used and dropped
