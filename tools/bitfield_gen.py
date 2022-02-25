@@ -2768,7 +2768,7 @@ if __name__ == '__main__':
 
         pruned_names = set()
         for filename in options.prune_files:
-            f = open(filename)
+            f = open(filename, encoding="utf-8")
             string = f.read()
 
             matched_tokens = set(search_re.findall(string))
