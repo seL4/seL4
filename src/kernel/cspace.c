@@ -191,6 +191,5 @@ resolveAddressBits_ret_t resolveAddressBits(cap_t nodeCap, cptr_t capptr, word_t
         }
     }
 
-    ret.status = EXCEPTION_NONE;
-    return ret;
+    UNREACHABLE();
 }
