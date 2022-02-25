@@ -2807,7 +2807,7 @@ class OutputFile(object):
             global temp_output_files
             temp_output_files.append(self)
         else:
-            self.file = open(filename, mode)
+            self.file = open(filename, mode, encoding="utf-8")
 
     def write(self, *args, **kwargs):
         self.file.write(*args, **kwargs)
@@ -2857,7 +2857,7 @@ if __name__ == '__main__':
 
     if len(args) > 0:
         in_filename = args[0]
-        in_file = open(in_filename)
+        in_file = open(in_filename, encoding="utf-8")
 
         if len(args) > 1:
             out_file = OutputFile(args[1])
@@ -2939,7 +2939,7 @@ if __name__ == '__main__':
 
         pruned_names = set()
         for filename in options.prune_files:
-            f = open(filename)
+            f = open(filename, encoding="utf-8")
             string = f.read()
 
             matched_tokens = set(search_re.findall(string))
