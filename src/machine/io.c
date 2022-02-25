@@ -5,7 +5,7 @@
  *
  * Portions derived from musl:
  *
- * Copyright © 2005-2020 Rich Felker, et al.
+ * Copyright (c) 2005-2020 Rich Felker, et al.
  *
  * SPDX-License-Identifier: MIT
  */
