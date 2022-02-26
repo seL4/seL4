@@ -85,17 +85,46 @@ elseif(KernelArchARM)
     endif()
 
 elseif(KernelArchRiscV)
-    if(KernelSel4ArchRiscV64)
-        if(KernelHaveFPU)
-            string(APPEND common_flags " -march=rv64imafdc -mabi=lp64d")
-        else()
-            string(APPEND common_flags " -march=rv64imac -mabi=lp64")
-        endif()
-    elseif(KernelSel4ArchRiscV32)
-        string(APPEND common_flags " -march=rv32imac -mabi=ilp32")
+    # The "RISC-V Instruction Set Manual, Volume I: RISC-V User-Level ISA",
+    # chapter "ISA Extension Naming Conventions" describes the march string. Its
+    # form is roughly "rv(32|64)((im?a?f?d?)|g)q?c?b?...", where 'g' equals
+    # 'mafd_Zicsr_Zifencei'. Underscores are allowed as extension separator and
+    # even required between for all Z-extensions.
+
+    if(KernelSel4ArchRiscV32)
+        set(_riscv_march "rv32i") # Currently we don't support "rv32e"
+        set(_riscv_mabi "ilp32")
+    elseif(KernelSel4ArchRiscV64)
+        set(_riscv_march "rv64i")
+        set(_riscv_mabi "lp64")
     else()
         message(FATAL_ERROR "unknown RISC-V KernelSel4Arch '${KernelSel4Arch}'")
     endif()
+
+    # Currently there are no KernelRiscvExtM or KernelRiscvExtA, thus the
+    # M-extension and A-extension are always enabled.
+    string(APPEND _riscv_march "ma")
+
+    # FPU support. The Q-extension implies the D-extension, which implies the
+    # F-extension, which implies the "Zicsr"-extension. Currently there is no
+    # KernelRiscvExtQ yet.
+    if(KernelRiscvExtD)
+        # Since the D-extension implies F-extension, specifying "d" would be
+        # sufficient. But it's common practice to say "fd"
+        string(APPEND _riscv_march "fd")
+        # Pass floating-point values up to 64 bits in F registers
+        string(APPEND _riscv_mabi "d")
+    elseif(KernelRiscvExtF)
+        string(APPEND _riscv_march "f")
+        # Pass floating-point values up to 32 bits in F registers
+        string(APPEND _riscv_mabi "f")
+    endif()
+
+    # Currently there is no KernelRiscvExtC and thus the C-extension is always
+    # enabled
+    string(APPEND _riscv_march "c")
+
+    string(APPEND common_flags " -march=${_riscv_march} -mabi=${_riscv_mabi}")
 
 else()
     message(FATAL_ERROR "unknown KernelArch '${KernelArch}'")
