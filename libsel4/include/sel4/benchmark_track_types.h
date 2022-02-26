@@ -21,12 +21,8 @@ typedef enum {
     Entry_VMFault,
     Entry_Syscall,
     Entry_UnimplementedDevice,
-#ifdef CONFIG_ARCH_ARM
-    Entry_VCPUFault,
-#endif
-#ifdef CONFIG_ARCH_X86
-    Entry_VMExit,
-#endif
+    Entry_VCPUFault, /* currently used on ARM only */
+    Entry_VMExit, /* currently used on x86 only */
 } entry_type_t;
 
 /**
