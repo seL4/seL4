@@ -36,7 +36,7 @@ switchToThread_fp(tcb_t *thread, vspace_root_t *vroot, pde_t stored_hw_asid)
         vcpu_switch(thread->tcbArch.tcbVCPU);
     }
     asid = (asid_t)(stored_hw_asid.words[0] & 0xffff);
-    armv_contextSwitch(vroot, asid);
+    armv_contextSwitch_HWASID(vroot, asid);
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
     benchmark_utilisation_switch(NODE_STATE(ksCurThread), thread);
