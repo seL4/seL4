@@ -38,6 +38,8 @@ Upcoming release: BINARY COMPATIBLE
   constant seL4_GlobalsFrame from libsel4 as well as the IPC buffer in GlobalsFrame caveat from CAVEATS-generic.md
 * Implement KernelArmExportPTMRUser and KernelArmExportVTMRUser options for Arm generic timer use access on aarch32.
 * Removed obsolete define `HAVE_AUTOCONF`
+* Removed user address space reserved slots restriction on 40bit PA platforms when KernelArmHypervisorSupport is set.
+  This change is reflected in the definition of the seL4_UserTop constant that holds the largest user virtual address.
 
 ## Upgrade Notes
 ---

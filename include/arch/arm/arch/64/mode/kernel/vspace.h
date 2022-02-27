@@ -14,22 +14,6 @@
 #define activate_global_pd activate_kernel_vspace
 #define MODE_RESERVED 0
 
-/* The VTABLE_VMID_SLOT in user-level applications's vspace root
- * is reserved for storing its allocated hardware 8-bit VMID
- * when running EL2. Note that this assumes that the IPA size for S2
- * translation and the VA size for the S1 translation do not use full
- * 48-bit. Please see the definition of seL4_UserTop for details.
- */
-#define VTABLE_VMID_SLOT   MASK(seL4_VSpaceIndexBits)
-
-/* The VTABLE_SMMU_SLOT in user-level applications's vspace root is reserved
- * for storing the number of context banks bound with this vspace when the
- * SMMU feature is enabled. This assumes the user-level address space do not
- * use the second last entry in the vspace root, which is preserved by the
- * seL4_UserTop.
- */
-#define VTABLE_SMMU_SLOT   (MASK(seL4_VSpaceIndexBits) - 1)
-
 /* ==================== BOOT CODE FINISHES HERE ==================== */
 
 bool_t CONST isVTableRoot(cap_t cap);
