@@ -86,7 +86,7 @@ GenerationTool = tools/parse_doxygen_xml.py
 
 GenerateObjectInvocationTool = tools/gen_invocations.py
 
-InterfaceDtd = $(Libsel4Dir)/tools/sel4_idl.dtd
+InterfaceDtd = $(Libsel4Dir)/tools/sel4_idl.xsd
 
 .PHONY: FORCE
 
