@@ -50,6 +50,7 @@ lookupPTSlot_ret_t lookupPTSlot(pde_t *pd, vptr_t vptr);
 pde_t *CONST lookupPDSlot(pde_t *pd, vptr_t vptr);
 void deleteASIDPool(asid_t base, asid_pool_t *pool);
 void deleteASID(asid_t asid, pde_t *pd);
+pde_t *pageTableMapped(asid_t asid, vptr_t vaddr, pte_t *pt);
 void unmapPageTable(asid_t asid, vptr_t vaddr, pte_t *pt);
 void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr);
 hw_asid_t getHWASID(asid_t asid);

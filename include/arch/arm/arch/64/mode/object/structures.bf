@@ -325,36 +325,6 @@ tagged_union pude pude_type {
     tag pude_pd                     3
 }
 
-block pde_large {
-    padding                         9
-    field UXN                       1
-    padding                         6
-    field_high page_base_address    27
-    padding                         9
-    field nG                        1
-    field AF                        1
-    field SH                        2
-    field AP                        2
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    field AttrIndx                  4
-#else
-    padding                         1
-    field AttrIndx                  3
-#endif
-    field pde_type                  2
-}
-
-block pde_small {
-    padding                         16
-    field_high pt_base_address      36
-    padding                         10
-    field pde_type                  2
-}
-
-tagged_union pde pde_type {
-    tag pde_large                   1
-    tag pde_small                   3
-}
 
 -- See the definition of pte_type for explanation
 -- for pte_sw_type and pte_hw_type
