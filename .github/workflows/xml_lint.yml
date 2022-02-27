@@ -12,11 +12,11 @@ on:
       - master
     paths:
       - 'libsel4/**/sel4*.xml'
-      - 'libsel4/**/sel4*.dtd'
+      - 'libsel4/**/sel4*.xsd'
   pull_request:
     paths:
       - 'libsel4/**/sel4*.xml'
-      - 'libsel4/**/sel4*.dtd'
+      - 'libsel4/**/sel4*.xsd'
 
 jobs:
   xmllint:
@@ -29,4 +29,4 @@ jobs:
     - name: run xmllint
       run: |
         find libsel4 -name "sel4*.xml" | \
-        xargs xmllint --dtdvalid libsel4/tools/sel4_idl.dtd --noout
+        xargs xmllint --schema libsel4/tools/sel4_idl.xsd --noout
