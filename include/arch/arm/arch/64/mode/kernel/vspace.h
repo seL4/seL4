@@ -19,9 +19,9 @@ bool_t CONST isVTableRoot(cap_t cap);
 bool_t CONST isValidNativeRoot(cap_t cap);
 
 pgde_t *pageUpperDirectoryMapped(asid_t asid, vptr_t vaddr, pude_t *pud);
-pude_t *pageDirectoryMapped(asid_t asid, vptr_t vaddr, pde_t *pd);
+pude_t *pageDirectoryMapped(asid_t asid, vptr_t vaddr, pte_t *pd);
+pte_t *pageTableMapped(asid_t asid, vptr_t vaddr, pte_t *pt);
 void unmapPageUpperDirectory(asid_t asid, vptr_t vaddr, pude_t *pud);
-void unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd);
 
 void unmapPageTable(asid_t asid, vptr_t vaddr, pte_t *pt);
 void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr);

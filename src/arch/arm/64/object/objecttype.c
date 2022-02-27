@@ -184,9 +184,9 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
 
     case cap_page_directory_cap:
         if (final && cap_page_directory_cap_get_capPDIsMapped(cap)) {
-            unmapPageDirectory(cap_page_directory_cap_get_capPDMappedASID(cap),
-                               cap_page_directory_cap_get_capPDMappedAddress(cap),
-                               PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(cap)));
+            unmapPageTable(cap_page_directory_cap_get_capPDMappedASID(cap),
+                           cap_page_directory_cap_get_capPDMappedAddress(cap),
+                           PTE_PTR(cap_page_directory_cap_get_capPDBasePtr(cap)));
         }
         break;
 
