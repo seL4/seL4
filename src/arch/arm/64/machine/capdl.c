@@ -71,9 +71,9 @@ static void cap_frame_print_attrs_pd(pde_t *pdSlot)
 
 static void cap_frame_print_attrs_pt(pte_t *ptSlot)
 {
-    cap_frame_print_attrs_impl(pte_ptr_get_SH(ptSlot),
-                               pte_ptr_get_AP(ptSlot),
-                               pte_ptr_get_UXN(ptSlot));
+    cap_frame_print_attrs_impl(pte_pte_page_ptr_get_SH(ptSlot),
+                               pte_pte_page_ptr_get_AP(ptSlot),
+                               pte_pte_page_ptr_get_UXN(ptSlot));
 }
 
 static void cap_frame_print_attrs_impl(word_t SH, word_t AP, word_t NXN)
@@ -148,7 +148,7 @@ static void _cap_frame_print_attrs_vptr(word_t vptr, vspace_root_t *vspace)
             pte_t *pt = paddr_to_pptr(pde_pde_small_ptr_get_pt_base_address(pdSlot));
             pte_t *ptSlot = pt + GET_PT_INDEX(vptr);
 
-            if (pte_ptr_get_present(ptSlot)) {
+            if (pte_4k_page_ptr_get_present(ptSlot)) {
                 printf("frame_%p_%04lu ", ptSlot, GET_PT_INDEX(vptr));
                 cap_frame_print_attrs_pt(ptSlot);
                 break;
@@ -182,7 +182,7 @@ static void arm64_cap_pt_print_slots(pde_t *pdSlot, vptr_t vptr)
     for (word_t i = 0; i < BIT(PT_INDEX_OFFSET + PT_INDEX_BITS); i += (1 << PT_INDEX_OFFSET)) {
         pte_t *ptSlot = pt + GET_PT_INDEX(i);
 
-        if (pte_ptr_get_present(ptSlot)) {
+        if (pte_4k_page_ptr_get_present(ptSlot)) {
             // print pte entries
             printf("0x%lx: frame_%p_%04lu", GET_PT_INDEX(i), ptSlot, GET_PT_INDEX(i));
             cap_frame_print_attrs_pt(ptSlot);
@@ -453,8 +453,8 @@ void arm64_obj_pt_print_slots(pde_t *pdSlot)
     for (word_t i = 0; i < BIT(PT_INDEX_OFFSET + PT_INDEX_BITS); i += (1 << PT_INDEX_OFFSET)) {
         pte_t *ptSlot = pt + GET_PT_INDEX(i);
 
-        if (pte_ptr_get_present(ptSlot)) {
-            ret.frameBase = pte_ptr_get_page_base_address(ptSlot);
+        if (pte_4k_page_ptr_get_present(ptSlot)) {
+            ret.frameBase = pte_page_ptr_get_page_base_address(ptSlot);
             ret.frameSize = ARMSmallPage;
             printf("frame_%p_%04lu = frame ", ptSlot, GET_PT_INDEX(i));
             obj_frame_print_attrs(ret);

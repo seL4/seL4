@@ -279,17 +279,19 @@ static inline pde_t pde_invalid_new(void)
     };
 }
 
-static inline bool_t pte_ptr_get_present(pte_t *pt)
+static inline bool_t pte_4k_page_ptr_get_present(pte_t *pt)
 {
-    return (pte_ptr_get_reserved(pt) == 0x3);
+    return (pte_ptr_get_pte_type(pt) == pte_pte_4k_page);
 }
 
-static inline pte_t pte_invalid_new(void)
+static inline bool_t pte_ptr_get_valid(pte_t *pt)
 {
-    return (pte_t) {
-        {
-            0
-        }
-    };
+    return (pte_ptr_get_pte_type(pt) != pte_pte_invalid);
 }
 
+static inline uint64_t pte_page_ptr_get_page_base_address(pte_t *pt)
+{
+    uint64_t ret;
+    ret = (pt->words[0] & 0xfffffffff000ull);
+    return ret;
+}
