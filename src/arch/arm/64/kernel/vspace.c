@@ -26,7 +26,6 @@
 #include <arch/object/iospace.h>
 #include <arch/object/vcpu.h>
 #include <arch/machine/tlb.h>
-#define RESERVED 3
 
 /*
  * Memory types are defined in Memory Attribute Indirection Register.
@@ -218,13 +217,12 @@ BOOT_CODE void map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_righ
         attr_index = DEVICE_nGnRnE;
         shareable = 0;
     }
-    armKSGlobalKernelPT[GET_PT_INDEX(vaddr)] = pte_new(uxn, paddr,
-                                                       0, /* global */
-                                                       1, /* access flag */
-                                                       shareable,
-                                                       APFromVMRights(vm_rights),
-                                                       attr_index,
-                                                       RESERVED);
+    armKSGlobalKernelPT[GET_PT_INDEX(vaddr)] = pte_pte_4k_page_new(uxn, paddr,
+                                                                   0, /* global */
+                                                                   1, /* access flag */
+                                                                   shareable,
+                                                                   APFromVMRights(vm_rights),
+                                                                   attr_index);
 }
 
 BOOT_CODE void map_kernel_window(void)
@@ -319,7 +317,7 @@ static BOOT_CODE void map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap, bool_t
     pd += GET_PD_INDEX(vptr);
     assert(pde_pde_small_ptr_get_present(pd));
     pt = paddr_to_pptr(pde_pde_small_ptr_get_pt_base_address(pd));
-    *(pt + GET_PT_INDEX(vptr)) = pte_new(
+    *(pt + GET_PT_INDEX(vptr)) = pte_pte_4k_page_new(
                                      !executable,                    /* unprivileged execute never */
                                      pptr_to_paddr(pptr),            /* page_base_address    */
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
@@ -331,11 +329,10 @@ static BOOT_CODE void map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap, bool_t
                                      SMP_TERNARY(SMP_SHARE, 0),              /* Inner-shareable if SMP enabled, otherwise unshared */
                                      APFromVMRights(VMReadWrite),
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-                                     S2_NORMAL,
+                                     S2_NORMAL
 #else
-                                     NORMAL,
+                                     NORMAL
 #endif
-                                     RESERVED
                                  );
 }
 
@@ -784,8 +781,8 @@ static lookupFrame_ret_t lookupFrame(vspace_root_t *vspace, vptr_t vptr)
             pte_t *pt = paddr_to_pptr(pde_pde_small_ptr_get_pt_base_address(pdSlot));
             pte_t *ptSlot = pt + GET_PT_INDEX(vptr);
 
-            if (pte_ptr_get_present(ptSlot)) {
-                ret.frameBase = pte_ptr_get_page_base_address(ptSlot);
+            if (pte_4k_page_ptr_get_present(ptSlot)) {
+                ret.frameBase = pte_page_ptr_get_page_base_address(ptSlot);
                 ret.frameSize = ARMSmallPage;
                 ret.valid = true;
                 return ret;
@@ -806,7 +803,7 @@ static pte_t makeUser3rdLevel(paddr_t paddr, vm_rights_t vm_rights, vm_attribute
     bool_t nonexecutable = vm_attributes_get_armExecuteNever(attributes);
 
     if (vm_attributes_get_armPageCacheable(attributes)) {
-        return pte_new(
+        return pte_pte_4k_page_new(
                    nonexecutable,              /* unprivileged execute never */
                    paddr,
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
@@ -818,14 +815,13 @@ static pte_t makeUser3rdLevel(paddr_t paddr, vm_rights_t vm_rights, vm_attribute
                    SMP_TERNARY(SMP_SHARE, 0),          /* Inner-shareable if SMP enabled, otherwise unshared */
                    APFromVMRights(vm_rights),
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-                   S2_NORMAL,
+                   S2_NORMAL
 #else
-                   NORMAL,
+                   NORMAL
 #endif
-                   RESERVED
                );
     } else {
-        return pte_new(
+        return pte_pte_4k_page_new(
                    nonexecutable,              /* unprivileged execute never */
                    paddr,
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
@@ -837,12 +833,11 @@ static pte_t makeUser3rdLevel(paddr_t paddr, vm_rights_t vm_rights, vm_attribute
                    0,                          /* Ignored - Outter shareable */
                    APFromVMRights(vm_rights),
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-                   S2_DEVICE_nGnRnE,
+                   S2_DEVICE_nGnRnE
 #else
-                   DEVICE_nGnRnE,
+                   DEVICE_nGnRnE
 #endif
 
-                   RESERVED
                );
     }
 }
@@ -1332,9 +1327,9 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr)
             return;
         }
 
-        if (pte_ptr_get_present(lu_ret.ptSlot) &&
-            pte_ptr_get_page_base_address(lu_ret.ptSlot) == addr) {
-            *(lu_ret.ptSlot) = pte_invalid_new();
+        if (pte_4k_page_ptr_get_present(lu_ret.ptSlot) &&
+            pte_page_ptr_get_page_base_address(lu_ret.ptSlot) == addr) {
+            *(lu_ret.ptSlot) = pte_pte_invalid_new();
 
             cleanByVA_PoU((vptr_t)lu_ret.ptSlot, pptr_to_paddr(lu_ret.ptSlot));
         }
@@ -1592,7 +1587,7 @@ static exception_t performLargePageInvocationMap(asid_t asid, cap_t cap, cte_t *
 static exception_t performSmallPageInvocationMap(asid_t asid, cap_t cap, cte_t *ctSlot,
                                                  pte_t pte, pte_t *ptSlot)
 {
-    bool_t tlbflush_required = pte_ptr_get_present(ptSlot);
+    bool_t tlbflush_required = pte_4k_page_ptr_get_present(ptSlot);
 
     ctSlot->cap = cap;
     *ptSlot = pte;

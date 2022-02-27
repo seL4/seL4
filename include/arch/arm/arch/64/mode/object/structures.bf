@@ -356,8 +356,23 @@ tagged_union pde pde_type {
     tag pde_small                   3
 }
 
-block pte {
-    padding                         9
+-- See the definition of pte_type for explanation
+-- for pte_sw_type and pte_hw_type
+block pte_table {
+    padding                         5
+    field pte_sw_type               1
+    padding                         10
+    field_high pt_base_address      36
+    padding                         10
+    field pte_hw_type               2
+}
+
+
+-- The level 1 and 2 page pte structure
+block pte_page {
+    padding                         5
+    field pte_sw_type               1
+    padding                         3
     field UXN                       1
     padding                         6
     field_high page_base_address    36
@@ -371,8 +386,48 @@ block pte {
     padding                         1
     field AttrIndx                  3
 #endif
-    field reserved                  2 -- must be 0b11
+    field pte_hw_type               2
 }
+
+-- The level 3 page pte structure
+block pte_4k_page {
+    padding                         5
+    field pte_sw_type               1
+    padding                         3
+    field UXN                       1
+    padding                         6
+    field_high page_base_address    36
+    field nG                        1
+    field AF                        1
+    field SH                        2
+    field AP                        2
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    field AttrIndx                  4
+#else
+    padding                         1
+    field AttrIndx                  3
+#endif
+    field pte_hw_type               2
+}
+
+block pte_invalid {
+    padding                         5
+    field pte_sw_type               1
+    padding                         56
+    field pte_hw_type               2
+}
+
+-- There are two page type fields because the 4k page size
+-- uses a different hardware encoding. We use bit 58
+-- which is reserved for software use to encode this
+-- difference in the tag for these types.
+tagged_union pte pte_type(pte_hw_type, pte_sw_type) {
+    tag pte_table               (3, 0)
+    tag pte_page                (1, 0)
+    tag pte_4k_page             (3, 1)
+    tag pte_invalid             (0, 0)
+}
+
 
 block ttbr {
     field asid                      16
