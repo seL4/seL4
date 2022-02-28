@@ -13,10 +13,14 @@ on:
     paths:
       - 'libsel4/**/sel4*.xml'
       - 'libsel4/**/sel4*.xsd'
+      - 'libsel4/include/api/syscall.xml'
+      - 'libsel4/include/api/syscall.xsd'
   pull_request:
     paths:
       - 'libsel4/**/sel4*.xml'
       - 'libsel4/**/sel4*.xsd'
+      - 'libsel4/include/api/syscall.xml'
+      - 'libsel4/include/api/syscall.xsd'
 
 jobs:
   xmllint:
@@ -30,3 +34,4 @@ jobs:
       run: |
         find libsel4 -name "sel4*.xml" | \
         xargs xmllint --schema libsel4/tools/sel4_idl.xsd --noout
+        xmllint --schema libsel4/include/api/syscall.xsd --noout libsel4/include/api/syscall.xml
