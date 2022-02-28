@@ -35,8 +35,6 @@ typedef word_t vm_rights_t;
  * Yet the kernel will still use a stage-1 translation with 48 bit input addresses and a 4-level
  * translation.  Therefore, PUD and PGD size for the kernel can be different from EL1/EL0
  * so we do not use the libsel4 definitions */
-#define PGD_SIZE_BITS       12
-#define PGD_INDEX_BITS      9
 #define PUD_SIZE_BITS       12
 #define PUD_INDEX_BITS      9
 #define UPUD_SIZE_BITS      seL4_PUDBits
@@ -109,8 +107,8 @@ static inline word_t CONST cap_get_archCapSizeBits(cap_t cap)
     case cap_page_upper_directory_cap:
         return seL4_PUDBits;
 
-    case cap_page_global_directory_cap:
-        return seL4_PGDBits;
+    case cap_vspace_cap:
+        return seL4_VSpaceBits;
 
     case cap_asid_pool_cap:
         return seL4_ASIDPoolBits;
@@ -146,7 +144,7 @@ static inline bool_t CONST cap_get_archCapIsPhysical(cap_t cap)
     case cap_page_upper_directory_cap:
         return true;
 
-    case cap_page_global_directory_cap:
+    case cap_vspace_cap:
         return true;
 
     case cap_asid_pool_cap:
@@ -182,8 +180,8 @@ static inline void *CONST cap_get_archCapPtr(cap_t cap)
     case cap_page_upper_directory_cap:
         return PT_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(cap));
 
-    case cap_page_global_directory_cap:
-        return PT_PTR(cap_page_global_directory_cap_get_capPGDBasePtr(cap));
+    case cap_vspace_cap:
+        return VSPACE_PTR(cap_vspace_cap_get_capPTBasePtr(cap));
 
     case cap_asid_control_cap:
         return NULL;

@@ -61,14 +61,14 @@ block page_upper_directory_cap {
 }
 
 -- First-level page table (page global directory)
-block page_global_directory_cap {
-    field capPGDMappedASID           16
-    field_high capPGDBasePtr         48
+block vspace_cap {
+    field capMappedASID              16
+    field_high capPTBasePtr          48
 
     field capType                    5
-    field capPGDIsMapped             1
+    field capIsMapped                1
 #ifdef CONFIG_ARM_SMMU 
-    field capPGDMappedCB             8
+    field capMappedCB                8
     padding                          50
 #else 
     padding                          58
@@ -165,7 +165,7 @@ tagged_union cap capType {
     tag frame_cap                   1
     tag page_table_cap              3
     tag page_upper_directory_cap    7
-    tag page_global_directory_cap   9
+    tag vspace_cap                  9
     tag asid_control_cap            11
     tag asid_pool_cap               13
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT

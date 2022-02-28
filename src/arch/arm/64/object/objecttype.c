@@ -32,12 +32,12 @@ deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
     deriveCap_ret_t ret;
 
     switch (cap_get_capType(cap)) {
-    case cap_page_global_directory_cap:
-        if (cap_page_global_directory_cap_get_capPGDIsMapped(cap)) {
+    case cap_vspace_cap:
+        if (cap_vspace_cap_get_capIsMapped(cap)) {
             ret.cap = cap;
             ret.status = EXCEPTION_NONE;
         } else {
-            userError("Deriving a PDG cap without an assigned ASID");
+            userError("Deriving a VSpace cap without an assigned ASID");
             current_syscall_error.type = seL4_IllegalOperation;
             ret.cap = cap_null_cap_new();
             ret.status = EXCEPTION_SYSCALL_ERROR;
@@ -135,16 +135,16 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
         }
         break;
 
-    case cap_page_global_directory_cap:
+    case cap_vspace_cap:
 #ifdef CONFIG_ARM_SMMU
-        if (cap_page_global_directory_cap_get_capPGDMappedCB(cap) != CB_INVALID) {
-            smmu_cb_delete_vspace(cap_page_global_directory_cap_get_capPGDMappedCB(cap),
-                                  cap_page_global_directory_cap_get_capPGDMappedASID(cap));
+        if (cap_vspace_cap_get_capMappedCB(cap) != CB_INVALID) {
+            smmu_cb_delete_vspace(cap_vspace_cap_get_capMappedCB(cap),
+                                  cap_vspace_cap_get_capMappedASID(cap));
         }
 #endif
-        if (final && cap_page_global_directory_cap_get_capPGDIsMapped(cap)) {
-            deleteASID(cap_page_global_directory_cap_get_capPGDMappedASID(cap),
-                       VSPACE_PTR(cap_page_global_directory_cap_get_capPGDBasePtr(cap)));
+        if (final && cap_vspace_cap_get_capIsMapped(cap)) {
+            deleteASID(cap_vspace_cap_get_capMappedASID(cap),
+                       VSPACE_PTR(cap_vspace_cap_get_capPTBasePtr(cap)));
         }
         break;
 
@@ -244,10 +244,10 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
         }
         break;
 
-    case cap_page_global_directory_cap:
-        if (cap_get_capType(cap_b) == cap_page_global_directory_cap) {
-            return cap_page_global_directory_cap_get_capPGDBasePtr(cap_a) ==
-                   cap_page_global_directory_cap_get_capPGDBasePtr(cap_b);
+    case cap_vspace_cap:
+        if (cap_get_capType(cap_b) == cap_vspace_cap) {
+            return cap_vspace_cap_get_capPTBasePtr(cap_a) ==
+                   cap_vspace_cap_get_capPTBasePtr(cap_b);
         }
         break;
 
@@ -390,18 +390,18 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
     case seL4_ARM_PageGlobalDirectoryObject:
 #ifdef CONFIG_ARM_SMMU
 
-        return cap_page_global_directory_cap_new(
-                   asidInvalid,           /* capPGDMappedASID   */
-                   (word_t)regionBase,    /* capPGDBasePtr      */
-                   0,                     /* capPGDIsMapped     */
-                   CB_INVALID             /* capPGDMappedCB     */
+        return cap_vspace_cap_new(
+                   asidInvalid,           /* capMappedASID   */
+                   (word_t)regionBase,    /* capPTBasePtr    */
+                   0,                     /* capIsMapped     */
+                   CB_INVALID             /* capMappedCB     */
                );
 #else
 
-        return cap_page_global_directory_cap_new(
-                   asidInvalid,           /* capPGDMappedASID   */
-                   (word_t)regionBase,    /* capPGDBasePtr      */
-                   0                      /* capPGDIsMapped     */
+        return cap_vspace_cap_new(
+                   asidInvalid,           /* capMappedASID   */
+                   (word_t)regionBase,    /* capPTBasePtr    */
+                   0                      /* capIsMapped     */
                );
 #endif /*!CONFIG_ARM_SMMU*/
 #endif /*!AARCH64_VSPACE_S2_START_L1*/

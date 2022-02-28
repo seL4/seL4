@@ -222,7 +222,7 @@ void obj_vtable_print_slots(tcb_t *tcb)
 {
     if (isVTableRoot(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap) && !seen(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap)) {
         add_to_seen(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap);
-        vspace_root_t *vspace = cap_vtable_root_get_basePtr(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap);
+        vspace_root_t *vspace = VSPACE_PTR(cap_vspace_cap_get_capPTBasePtr(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap));
 
         /*
         * ARM hyp uses 3 level translation rather than the usual 4 level.
@@ -303,8 +303,8 @@ void print_cap_arch(cap_t cap)
         }
         break;
     }
-    case cap_page_global_directory_cap: {
-        asid_t asid = cap_page_global_directory_cap_get_capPGDMappedASID(cap);
+    case cap_vspace_cap: {
+        asid_t asid = cap_vspace_cap_get_capMappedASID(cap);
         findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
         if (asid) {
             printf("%p_pd (asid: %lu)\n",
@@ -357,7 +357,7 @@ void print_object_arch(cap_t cap)
     case cap_frame_cap:
     case cap_page_table_cap:
     case cap_page_upper_directory_cap:
-    case cap_page_global_directory_cap:
+    case cap_vspace_cap:
         /* don't need to deal with these objects since they get handled from vtable */
         break;
 
@@ -467,7 +467,7 @@ void obj_tcb_print_vtable(tcb_t *tcb)
 {
     if (isVTableRoot(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap) && !seen(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap)) {
         add_to_seen(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap);
-        vspace_root_t *vspace = cap_vtable_root_get_basePtr(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap);
+        vspace_root_t *vspace = VSPACE_PTR(cap_vspace_cap_get_capPTBasePtr(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap));
 
         /*
          * ARM hyp uses 3 level translation rather than the usual 4 level.
