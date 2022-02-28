@@ -97,7 +97,7 @@ void NORETURN fastpath_call(word_t cptr, word_t msgInfo)
 #endif
 #ifdef CONFIG_ARCH_AARCH64
     /* Need to test that the ASID is still valid */
-    asid_t asid = cap_vtable_root_get_mappedASID(newVTable);
+    asid_t asid = cap_vspace_cap_get_capMappedASID(newVTable);
     asid_map_t asid_map = findMapForASID(asid);
     if (unlikely(asid_map_get_type(asid_map) != asid_map_asid_map_vspace ||
                  VSPACE_PTR(asid_map_asid_map_vspace_get_vspace_root(asid_map)) != cap_pd)) {
@@ -374,7 +374,7 @@ void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo)
 #endif
 #ifdef CONFIG_ARCH_AARCH64
     /* Need to test that the ASID is still valid */
-    asid_t asid = cap_vtable_root_get_mappedASID(newVTable);
+    asid_t asid = cap_vspace_cap_get_capMappedASID(newVTable);
     asid_map_t asid_map = findMapForASID(asid);
     if (unlikely(asid_map_get_type(asid_map) != asid_map_asid_map_vspace ||
                  VSPACE_PTR(asid_map_asid_map_vspace_get_vspace_root(asid_map)) != cap_pd)) {

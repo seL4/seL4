@@ -212,7 +212,7 @@ BOOT_CODE void map_kernel_window(void)
     assert(GET_KPT_INDEX(PPTR_BASE, KLVL_FRM_ARM_PT_LVL(0)) == 1);
 #else
     /* verify that the kernel window as at the last entry of the PGD */
-    assert(GET_KPT_INDEX(PPTR_BASE, KLVL_FRM_ARM_PT_LVL(0)) == BIT(PGD_INDEX_BITS) - 1);
+    assert(GET_KPT_INDEX(PPTR_BASE, KLVL_FRM_ARM_PT_LVL(0)) == BIT(PT_INDEX_BITS) - 1);
 #endif
     assert(IS_ALIGNED(PPTR_BASE, seL4_LargePageBits));
     /* verify that the kernel device window is 1gb aligned and 1gb in size */
@@ -448,10 +448,13 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
     seL4_SlotPos slot_pos_after;
 
     /* create the PGD */
-    vspace_cap = cap_vtable_cap_new(
-                     IT_ASID,        /* capPGDMappedASID */
-                     rootserver.vspace, /* capPGDBasePtr   */
-                     1               /* capPGDIsMapped   */
+    vspace_cap = cap_vspace_cap_new(
+                     IT_ASID,           /* capMappedASID */
+                     rootserver.vspace, /* capPTBasePtr  */
+                     1                  /* capIsMapped   */
+#ifdef CONFIG_ARM_SMMU
+                     , 0                /* capMappedCB   */
+#endif
                  );
     slot_pos_before = ndks_boot.slot_pos_cur;
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadVSpace), vspace_cap);
@@ -525,7 +528,7 @@ BOOT_CODE void write_it_asid_pool(cap_t it_ap_cap, cap_t it_vspace_cap)
                               0,
 #endif
                               /* vspace_root: reference to vspace root page table object */
-                              (word_t)cap_vtable_root_get_basePtr(it_vspace_cap)
+                              (word_t)cap_vspace_cap_get_capPTBasePtr(it_vspace_cap)
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
                               /* stored_hw_vmid, stored_vmid_valid: Assigned hardware VMID for TLB. */
                               , 0, false
@@ -740,13 +743,13 @@ exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
 
 bool_t CONST isVTableRoot(cap_t cap)
 {
-    return cap_get_capType(cap) == cap_vtable_root_cap;
+    return cap_get_capType(cap) == cap_vspace_cap;
 }
 
 bool_t CONST isValidNativeRoot(cap_t cap)
 {
     return isVTableRoot(cap) &&
-           cap_vtable_root_isMapped(cap);
+           cap_vspace_cap_get_capIsMapped(cap);
 }
 
 bool_t CONST isValidVTableRoot(cap_t cap)
@@ -768,8 +771,8 @@ void setVMRoot(tcb_t *tcb)
         return;
     }
 
-    vspaceRoot = VSPACE_PTR(cap_vtable_root_get_basePtr(threadRoot));
-    asid = cap_vtable_root_get_mappedASID(threadRoot);
+    vspaceRoot = VSPACE_PTR(cap_vspace_cap_get_capPTBasePtr(threadRoot));
+    asid = cap_vspace_cap_get_capMappedASID(threadRoot);
     find_ret = findVSpaceForASID(asid);
     if (unlikely(find_ret.status != EXCEPTION_NONE || find_ret.vspace_root != vspaceRoot)) {
         setCurrentUserVSpaceRoot(ttbr_new(0, addrFromKPPtr(armKSGlobalUserVSpace)));
@@ -785,9 +788,9 @@ static bool_t setVMRootForFlush(vspace_root_t *vspace, asid_t asid)
 
     threadRoot = TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbVTable)->cap;
 
-    if (cap_get_capType(threadRoot) == cap_vtable_root_cap &&
-        cap_vtable_root_isMapped(threadRoot) &&
-        cap_vtable_root_get_basePtr(threadRoot) == vspace) {
+    if (cap_get_capType(threadRoot) == cap_vspace_cap &&
+        cap_vspace_cap_get_capIsMapped(threadRoot) &&
+        VSPACE_PTR(cap_vspace_cap_get_capPTBasePtr(threadRoot)) == vspace) {
         return false;
     }
 
@@ -1335,8 +1338,8 @@ static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, unsigned int l
         }
 
         /* Make sure that the supplied pgd is ok */
-        vspaceRoot = cap_vtable_root_get_basePtr(cap);
-        asid = cap_vtable_root_get_mappedASID(cap);
+        vspaceRoot = VSPACE_PTR(cap_vspace_cap_get_capPTBasePtr(cap));
+        asid = cap_vspace_cap_get_capMappedASID(cap);
 
         find_ret = findVSpaceForASID(asid);
         if (unlikely(find_ret.status != EXCEPTION_NONE)) {
@@ -1437,8 +1440,8 @@ static exception_t decodeARMPageUpperDirectoryInvocation(word_t invLabel, unsign
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    pgd = cap_vtable_root_get_basePtr(pgdCap);
-    asid = cap_vtable_root_get_mappedASID(pgdCap);
+    pgd = VSPACE_PTR(cap_vspace_cap_get_capPTBasePtr(pgdCap));
+    asid = cap_vspace_cap_get_capMappedASID(pgdCap);
 
     if (unlikely(vaddr > USER_TOP)) {
         current_syscall_error.type = seL4_InvalidArgument;
@@ -1531,8 +1534,8 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, unsigned int le
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    vspaceRoot = cap_vtable_root_get_basePtr(vspaceRootCap);
-    asid = cap_vtable_root_get_mappedASID(vspaceRootCap);
+    vspaceRoot = VSPACE_PTR(cap_vspace_cap_get_capPTBasePtr(vspaceRootCap));
+    asid = cap_vspace_cap_get_capMappedASID(vspaceRootCap);
 
     if (unlikely(vaddr > USER_TOP)) {
         current_syscall_error.type = seL4_InvalidArgument;
@@ -1604,8 +1607,8 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        vspaceRoot = cap_vtable_root_get_basePtr(vspaceRootCap);
-        asid = cap_vtable_root_get_mappedASID(vspaceRootCap);
+        vspaceRoot = VSPACE_PTR(cap_vspace_cap_get_capPTBasePtr(vspaceRootCap));
+        asid = cap_vspace_cap_get_capMappedASID(vspaceRootCap);
 
         find_ret = findVSpaceForASID(asid);
         if (unlikely(find_ret.status != EXCEPTION_NONE)) {
@@ -1753,7 +1756,7 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
                                    cte_t *cte, cap_t cap, bool_t call, word_t *buffer)
 {
     switch (cap_get_capType(cap)) {
-    case cap_vtable_root_cap:
+    case cap_vspace_cap:
         return decodeARMVSpaceRootInvocation(invLabel, length, cte, cap, buffer);
 #ifndef AARCH64_VSPACE_S2_START_L1
     case cap_page_upper_directory_cap:
@@ -1859,7 +1862,7 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
         vspaceCapSlot = current_extra_caps.excaprefs[0];
         vspaceCap = vspaceCapSlot->cap;
 
-        if (unlikely(!isVTableRoot(vspaceCap) || cap_vtable_root_isMapped(vspaceCap))) {
+        if (unlikely(!isVTableRoot(vspaceCap) || cap_vspace_cap_get_capIsMapped(vspaceCap))) {
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
 
@@ -1967,12 +1970,12 @@ void Arch_userStackTrace(tcb_t *tptr)
     threadRoot = TCB_PTR_CTE_PTR(tptr, tcbVTable)->cap;
 
     /* lookup the vspace root */
-    if (cap_get_capType(threadRoot) != cap_vtable_root_cap) {
+    if (cap_get_capType(threadRoot) != cap_vspace_cap) {
         printf("Invalid vspace\n");
         return;
     }
 
-    vspaceRoot = cap_vtable_root_get_basePtr(threadRoot);
+    vspaceRoot = VSPACE_PTR(cap_vspace_cap_get_capPTBasePtr(threadRoot));
     sp = getRegister(tptr, SP_EL0);
 
     /* check for alignment so we don't have to worry about accessing
