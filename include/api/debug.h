@@ -59,7 +59,7 @@ static inline void debug_printKernelEntryReason(void)
         break;
 #endif
     default:
-        printf("Unknown\n");
+        printf("Unknown (%u)\n", ksKernelEntry.path);
         break;
 
     }
