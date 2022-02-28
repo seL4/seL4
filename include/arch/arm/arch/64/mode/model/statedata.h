@@ -24,8 +24,8 @@ extern asid_pool_t *armKSASIDTable[BIT(asidHighBits)] VISIBLE;
 extern vspace_root_t armKSGlobalUserVSpace[BIT(seL4_VSpaceIndexBits)] VISIBLE;
 extern pgde_t armKSGlobalKernelPGD[BIT(PGD_INDEX_BITS)] VISIBLE;
 
-extern pude_t armKSGlobalKernelPUD[BIT(PUD_INDEX_BITS)] VISIBLE;
-extern pte_t armKSGlobalKernelPDs[BIT(PUD_INDEX_BITS)][BIT(PT_INDEX_BITS)] VISIBLE;
+extern pte_t armKSGlobalKernelPUD[BIT(PT_INDEX_BITS)] VISIBLE;
+extern pte_t armKSGlobalKernelPDs[BIT(PT_INDEX_BITS)][BIT(PT_INDEX_BITS)] VISIBLE;
 extern pte_t armKSGlobalKernelPT[BIT(PT_INDEX_BITS)] VISIBLE;
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT

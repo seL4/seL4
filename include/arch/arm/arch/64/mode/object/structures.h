@@ -47,14 +47,13 @@ typedef word_t vm_rights_t;
 #define PT_INDEX_BITS       seL4_PageTableIndexBits
 
 #define PT_INDEX_OFFSET     (seL4_PageBits)
-#define PUD_INDEX_OFFSET    (PT_INDEX_OFFSET + PT_INDEX_BITS + PT_INDEX_BITS)
-#define PGD_INDEX_OFFSET    (PUD_INDEX_OFFSET + PUD_INDEX_BITS)
+#define PGD_INDEX_OFFSET    (PT_INDEX_OFFSET + PT_INDEX_BITS + PT_INDEX_BITS + PT_INDEX_BITS)
 
 #define VCPU_SIZE_BITS      seL4_VCPUBits
 
 #ifdef AARCH64_VSPACE_S2_START_L1
 /* For hyp with 40 bit PA, EL1 and EL0 use a 3 level translation and skips the PGD */
-typedef pude_t vspace_root_t;
+typedef pte_t vspace_root_t;
 #else
 /* Otherwise we use a 4-level translation */
 typedef pgde_t vspace_root_t;
@@ -63,8 +62,6 @@ typedef pgde_t vspace_root_t;
 #define VSPACE_PTR(r)       ((vspace_root_t *)(r))
 
 #define GET_PGD_INDEX(x)    (((x) >> (PGD_INDEX_OFFSET)) & MASK(PGD_INDEX_BITS))
-#define GET_PUD_INDEX(x)    (((x) >> (PUD_INDEX_OFFSET)) & MASK(PUD_INDEX_BITS))
-#define GET_UPUD_INDEX(x)   (((x) >> (PUD_INDEX_OFFSET)) & MASK(UPUD_INDEX_BITS))
 
 #define PGDE_PTR(r)         ((pgde_t *)(r))
 #define PGDE_PTR_PTR(r)     ((pgde_t **)(r))
@@ -72,13 +69,6 @@ typedef pgde_t vspace_root_t;
 
 #define PGD_PTR(r)          ((pgde_t *)(r))
 #define PGD_REF(p)          ((word_t)(r))
-
-#define PUDE_PTR(r)         ((pude_t *)(r))
-#define PUDE_PTR_PTR(r)     ((pude_t **)(r))
-#define PUDE_REF(p)         ((word_t)(p))
-
-#define PUD_PTR(r)          ((pude_t *)(r))
-#define PUD_PREF(p)         ((word_t)(p))
 
 #define PTE_PTR(r)          ((pte_t *)(r))
 #define PTE_PTR_PTR(r)      ((pte_t **)(r))
@@ -210,7 +200,7 @@ static inline void *CONST cap_get_archCapPtr(cap_t cap)
         return PT_PTR(cap_page_directory_cap_get_capPDBasePtr(cap));
 
     case cap_page_upper_directory_cap:
-        return PUD_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(cap));
+        return PT_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(cap));
 
     case cap_page_global_directory_cap:
         return PGD_PTR(cap_page_global_directory_cap_get_capPGDBasePtr(cap));
@@ -235,25 +225,6 @@ static inline void *CONST cap_get_archCapPtr(cap_t cap)
 static inline bool_t pgde_pgde_pud_ptr_get_present(pgde_t *pgd)
 {
     return (pgde_ptr_get_pgde_type(pgd) == pgde_pgde_pud);
-}
-
-static inline bool_t pude_pude_pd_ptr_get_present(pude_t *pud)
-{
-    return (pude_ptr_get_pude_type(pud) == pude_pude_pd);
-}
-
-static inline bool_t pude_pude_1g_ptr_get_present(pude_t *pud)
-{
-    return (pude_ptr_get_pude_type(pud) == pude_pude_1g);
-}
-
-static inline pude_t pude_invalid_new(void)
-{
-    return (pude_t) {
-        {
-            0
-        }
-    };
 }
 
 static inline bool_t pte_pte_page_ptr_get_present(pte_t *pt)
