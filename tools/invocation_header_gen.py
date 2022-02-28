@@ -14,6 +14,8 @@ import argparse
 import sys
 import xml.dom.minidom
 import pkg_resources
+from condition import condition_to_cpp
+
 # We require jinja2 to be at least version 2.10,
 # In the past we used the 'namespace' feature from that version.
 # other versions of jinja, particularly `minijinja`, don't support namespaces.
@@ -167,7 +169,7 @@ def parse_xml(xml_file):
     invocation_labels = []
     for method in doc.getElementsByTagName("method"):
         invocation_labels.append((str(method.getAttribute("id")),
-                                  str(method.getAttribute("condition"))))
+                                  str(condition_to_cpp(method.getElementsByTagName("condition")))))
 
     return invocation_labels
 
