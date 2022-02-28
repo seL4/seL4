@@ -170,13 +170,13 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
 #endif
         if (final && cap_page_upper_directory_cap_get_capPUDIsMapped(cap)) {
             deleteASID(cap_page_upper_directory_cap_get_capPUDMappedASID(cap),
-                       PUDE_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(cap)));
+                       PTE_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(cap)));
         }
 #else
         if (final && cap_page_upper_directory_cap_get_capPUDIsMapped(cap)) {
-            unmapPageUpperDirectory(cap_page_upper_directory_cap_get_capPUDMappedASID(cap),
-                                    cap_page_upper_directory_cap_get_capPUDMappedAddress(cap),
-                                    PUDE_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(cap)));
+            unmapPageTable(cap_page_upper_directory_cap_get_capPUDMappedASID(cap),
+                           cap_page_upper_directory_cap_get_capPUDMappedAddress(cap),
+                           PTE_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(cap)));
         }
 
 #endif
