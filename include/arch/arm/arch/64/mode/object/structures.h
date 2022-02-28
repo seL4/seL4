@@ -30,16 +30,6 @@ enum vm_rights {
 };
 typedef word_t vm_rights_t;
 
-/* If hypervisor support for aarch64 is enabled and we run on processors with
- * 40-bit PA, the stage-2 translation for EL1/EL0 uses a 3-level translation, skipping the PGD level.
- * Yet the kernel will still use a stage-1 translation with 48 bit input addresses and a 4-level
- * translation.  Therefore, PUD and PGD size for the kernel can be different from EL1/EL0
- * so we do not use the libsel4 definitions */
-#define PUD_SIZE_BITS       12
-#define PUD_INDEX_BITS      9
-#define UPUD_SIZE_BITS      seL4_PUDBits
-#define UPUD_INDEX_BITS     seL4_PUDIndexBits
-
 #define PTE_SIZE_BITS       seL4_PageTableEntryBits
 #define PT_INDEX_BITS       seL4_PageTableIndexBits
 
@@ -104,9 +94,6 @@ static inline word_t CONST cap_get_archCapSizeBits(cap_t cap)
     case cap_page_table_cap:
         return seL4_PageTableBits;
 
-    case cap_page_upper_directory_cap:
-        return seL4_PUDBits;
-
     case cap_vspace_cap:
         return seL4_VSpaceBits;
 
@@ -141,9 +128,6 @@ static inline bool_t CONST cap_get_archCapIsPhysical(cap_t cap)
     case cap_page_table_cap:
         return true;
 
-    case cap_page_upper_directory_cap:
-        return true;
-
     case cap_vspace_cap:
         return true;
 
@@ -176,9 +160,6 @@ static inline void *CONST cap_get_archCapPtr(cap_t cap)
 
     case cap_page_table_cap:
         return PT_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
-
-    case cap_page_upper_directory_cap:
-        return PT_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(cap));
 
     case cap_vspace_cap:
         return VSPACE_PTR(cap_vspace_cap_get_capPTBasePtr(cap));

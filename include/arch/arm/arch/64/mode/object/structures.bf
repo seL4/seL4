@@ -32,7 +32,7 @@ block frame_cap {
     padding                          6
 }
 
--- Forth-level page table
+-- Page table caps
 block page_table_cap {
     field capPTMappedASID            16
     field_high capPTBasePtr          48
@@ -44,23 +44,7 @@ block page_table_cap {
     padding                          20
 }
 
--- Second-level page table (page upper directory)
-block page_upper_directory_cap {
-    field capPUDMappedASID           16
-    field_high capPUDBasePtr         48
-
-    field capType                    5
-    field capPUDIsMapped             1
-    field_high capPUDMappedAddress   10
-#if defined (CONFIG_ARM_SMMU)  && defined (AARCH64_VSPACE_S2_START_L1)
-    field capPUDMappedCB             8
-    padding                          40
-#else 
-    padding                          48
-#endif 
-}
-
--- First-level page table (page global directory)
+-- First-level page table (vspace_root)
 block vspace_cap {
     field capMappedASID              16
     field_high capPTBasePtr          48
@@ -164,7 +148,6 @@ tagged_union cap capType {
     -- 5-bit tag arch caps
     tag frame_cap                   1
     tag page_table_cap              3
-    tag page_upper_directory_cap    7
     tag vspace_cap                  9
     tag asid_control_cap            11
     tag asid_pool_cap               13

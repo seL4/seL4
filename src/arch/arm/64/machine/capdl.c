@@ -195,13 +195,15 @@ static void arm64_cap_pud_print_slots(void *pgdSlot_or_vspace, vptr_t vptr)
 {
 #ifdef AARCH64_VSPACE_S2_START_L1
     pte_t *pud = pgdSlot_or_vspace;
+    word_t index_bits = seL4_VSpaceIndexBits;
     printf("%p_pd {\n", pgdSlot_or_vspace);
 #else
     pte_t *pud = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pgdSlot_or_vspace));
+    word_t index_bits = seL4_PageTableIndexBits;
     printf("pud_%p_%04lu {\n", pgdSlot_or_vspace, GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(0)));
 #endif
 
-    for (word_t i = 0; i < BIT(UPUD_INDEX_BITS); i++) {
+    for (word_t i = 0; i < BIT(index_bits); i++) {
         pte_t *pudSlot = pud + i;
         if (pte_ptr_get_pte_type(pudSlot) == pte_pte_table) {
             printf("0x%lx: pd_%p_%04lu\n", i, pudSlot, i);
@@ -210,7 +212,7 @@ static void arm64_cap_pud_print_slots(void *pgdSlot_or_vspace, vptr_t vptr)
 
     printf("}\n"); /* pgd/pud */
 
-    for (word_t i = 0; i < BIT(UPUD_INDEX_BITS); i++) {
+    for (word_t i = 0; i < BIT(index_bits); i++) {
         pte_t *pudSlot = pud + GET_UPT_INDEX(i, ULVL_FRM_ARM_PT_LVL(1));
         if (pte_ptr_get_pte_type(pudSlot) == pte_pte_table) {
             arm64_cap_pd_print_slots(pudSlot, vptr + (i * GET_ULVL_PGSIZE(ULVL_FRM_ARM_PT_LVL(1))));
@@ -261,22 +263,11 @@ void print_cap_arch(cap_t cap)
 {
 
     switch (cap_get_capType(cap)) {
-    case cap_page_table_cap:
-    case cap_page_upper_directory_cap: {
-        asid_t asid = 0;
-        vptr_t vptr = 0;
-        pte_t *target_pt = NULL;
-        switch (cap_get_capType(cap)) {
-        case cap_page_table_cap:
-            asid = cap_page_table_cap_get_capPTMappedASID(cap);
-            vptr = cap_page_table_cap_get_capPTMappedAddress(cap);
-            target_pt = PT_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
-            break;
-        case cap_page_upper_directory_cap:
-            asid = cap_page_upper_directory_cap_get_capPUDMappedASID(cap);
-            vptr = cap_page_upper_directory_cap_get_capPUDMappedAddress(cap);
-            target_pt = PT_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(cap));
-        }
+    case cap_page_table_cap: {
+        asid_t asid = cap_page_table_cap_get_capPTMappedASID(cap);
+        vptr_t vptr = cap_page_table_cap_get_capPTMappedAddress(cap);
+        pte_t *target_pt = PT_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
+
         findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
         pte_t *ptSlot = NULL;
         pte_t *pt = (pte_t *)find_ret.vspace_root;
@@ -356,7 +347,6 @@ void print_object_arch(cap_t cap)
     switch (cap_get_capType(cap)) {
     case cap_frame_cap:
     case cap_page_table_cap:
-    case cap_page_upper_directory_cap:
     case cap_vspace_cap:
         /* don't need to deal with these objects since they get handled from vtable */
         break;
@@ -444,8 +434,12 @@ void arm64_obj_pd_print_slots(pte_t *pudSlot)
 void arm64_obj_pud_print_slots(void *pgdSlot_or_vspace)
 {
     pte_t *pud = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pgdSlot_or_vspace));
-
-    for (word_t i = 0; i < BIT(UPUD_INDEX_BITS); i++) {
+#ifdef AARCH64_VSPACE_S2_START_L1
+    word_t index_bits = seL4_VSpaceIndexBits;
+#else
+    word_t index_bits = seL4_PageTableIndexBits;
+#endif
+    for (word_t i = 0; i < BIT(index_bits); i++) {
         pte_t *pudSlot = pud + i;
 
         switch (pte_ptr_get_pte_type(pudSlot)) {
