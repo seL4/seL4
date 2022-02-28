@@ -47,7 +47,6 @@ typedef word_t vm_rights_t;
 #define PT_INDEX_BITS       seL4_PageTableIndexBits
 
 #define PT_INDEX_OFFSET     (seL4_PageBits)
-#define PGD_INDEX_OFFSET    (PT_INDEX_OFFSET + PT_INDEX_BITS + PT_INDEX_BITS + PT_INDEX_BITS)
 
 #define VCPU_SIZE_BITS      seL4_VCPUBits
 
@@ -56,19 +55,10 @@ typedef word_t vm_rights_t;
 typedef pte_t vspace_root_t;
 #else
 /* Otherwise we use a 4-level translation */
-typedef pgde_t vspace_root_t;
+typedef pte_t vspace_root_t;
 #endif
 
 #define VSPACE_PTR(r)       ((vspace_root_t *)(r))
-
-#define GET_PGD_INDEX(x)    (((x) >> (PGD_INDEX_OFFSET)) & MASK(PGD_INDEX_BITS))
-
-#define PGDE_PTR(r)         ((pgde_t *)(r))
-#define PGDE_PTR_PTR(r)     ((pgde_t **)(r))
-#define PGDE_REF(p)         ((word_t)(p))
-
-#define PGD_PTR(r)          ((pgde_t *)(r))
-#define PGD_REF(p)          ((word_t)(r))
 
 #define PTE_PTR(r)          ((pte_t *)(r))
 #define PTE_PTR_PTR(r)      ((pte_t **)(r))
@@ -203,7 +193,7 @@ static inline void *CONST cap_get_archCapPtr(cap_t cap)
         return PT_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(cap));
 
     case cap_page_global_directory_cap:
-        return PGD_PTR(cap_page_global_directory_cap_get_capPGDBasePtr(cap));
+        return PT_PTR(cap_page_global_directory_cap_get_capPGDBasePtr(cap));
 
     case cap_asid_control_cap:
         return NULL;
@@ -220,11 +210,6 @@ static inline void *CONST cap_get_archCapPtr(cap_t cap)
         /* Unreachable, but GCC can't figure that out */
         return NULL;
     }
-}
-
-static inline bool_t pgde_pgde_pud_ptr_get_present(pgde_t *pgd)
-{
-    return (pgde_ptr_get_pgde_type(pgd) == pgde_pgde_pud);
 }
 
 static inline bool_t pte_pte_page_ptr_get_present(pte_t *pt)
