@@ -89,7 +89,7 @@ static inline exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *po
 #define cap_vtable_root_get_mappedASID(_c) \
     cap_page_global_directory_cap_get_capPGDMappedASID(_c)
 #define cap_vtable_root_get_basePtr(_c) \
-    PGDE_PTR(cap_page_global_directory_cap_get_capPGDBasePtr(_c))
+    VSPACE_PTR(cap_page_global_directory_cap_get_capPGDBasePtr(_c))
 #define cap_vtable_root_isMapped(_c) cap_page_global_directory_cap_get_capPGDIsMapped(_c)
 
 #ifdef CONFIG_ARM_SMMU

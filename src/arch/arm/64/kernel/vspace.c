@@ -75,24 +75,11 @@ enum mair_s2_types {
 
 #define SMP_SHARE   3
 
-struct lookupPGDSlot_ret {
-    exception_t status;
-    pgde_t *pgdSlot;
-};
-typedef struct lookupPGDSlot_ret lookupPGDSlot_ret_t;
-
 struct lookupPTSlot_ret {
-    exception_t status;
     pte_t *ptSlot;
+    word_t ptBitsLeft;
 };
 typedef struct lookupPTSlot_ret lookupPTSlot_ret_t;
-
-struct lookupFrame_ret {
-    paddr_t frameBase;
-    vm_page_size_t frameSize;
-    bool_t valid;
-};
-typedef struct lookupFrame_ret lookupFrame_ret_t;
 
 struct findVSpaceForASID_ret {
     exception_t status;
@@ -222,10 +209,10 @@ BOOT_CODE void map_kernel_window(void)
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     /* verify that the kernel window as at the second entry of the PGD */
-    assert(GET_PGD_INDEX(PPTR_BASE) == 1);
+    assert(GET_KPT_INDEX(PPTR_BASE, KLVL_FRM_ARM_PT_LVL(0)) == 1);
 #else
     /* verify that the kernel window as at the last entry of the PGD */
-    assert(GET_PGD_INDEX(PPTR_BASE) == BIT(PGD_INDEX_BITS) - 1);
+    assert(GET_KPT_INDEX(PPTR_BASE, KLVL_FRM_ARM_PT_LVL(0)) == BIT(PGD_INDEX_BITS) - 1);
 #endif
     assert(IS_ALIGNED(PPTR_BASE, seL4_LargePageBits));
     /* verify that the kernel device window is 1gb aligned and 1gb in size */
@@ -233,8 +220,8 @@ BOOT_CODE void map_kernel_window(void)
     assert(IS_ALIGNED(PPTR_TOP, seL4_HugePageBits));
 
     /* place the PUD into the PGD */
-    armKSGlobalKernelPGD[GET_PGD_INDEX(PPTR_BASE)] = pgde_pgde_pud_new(
-                                                         addrFromKPPtr(armKSGlobalKernelPUD));
+    armKSGlobalKernelPGD[GET_KPT_INDEX(PPTR_BASE, KLVL_FRM_ARM_PT_LVL(0))] = pte_pte_table_new(
+                                                                                 addrFromKPPtr(armKSGlobalKernelPUD));
 
     /* place all PDs except the last one in PUD */
     for (idx = GET_KPT_INDEX(PPTR_BASE, KLVL_FRM_ARM_PT_LVL(1)); idx < GET_KPT_INDEX(PPTR_TOP, KLVL_FRM_ARM_PT_LVL(1));
@@ -297,9 +284,9 @@ static BOOT_CODE void map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap, bool_t
 #ifdef AARCH64_VSPACE_S2_START_L1
     pud = vspaceRoot;
 #else
-    vspaceRoot += GET_PGD_INDEX(vptr);
-    assert(pgde_pgde_pud_ptr_get_present(vspaceRoot));
-    pud = paddr_to_pptr(pgde_pgde_pud_ptr_get_pud_base_address(vspaceRoot));
+    vspaceRoot += GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(0));
+    assert(pte_pte_table_ptr_get_present(vspaceRoot));
+    pud = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(vspaceRoot));
 #endif
     pud += GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(1));
     assert(pte_pte_table_ptr_get_present(pud));
@@ -358,9 +345,9 @@ static BOOT_CODE void map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
 #ifdef AARCH64_VSPACE_S2_START_L1
     pud = vspaceRoot;
 #else
-    vspaceRoot += GET_PGD_INDEX(vptr);
-    assert(pgde_pgde_pud_ptr_get_present(vspaceRoot));
-    pud = paddr_to_pptr(pgde_pgde_pud_ptr_get_pud_base_address(vspaceRoot));
+    vspaceRoot += GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(0));
+    assert(pte_pte_table_ptr_get_present(vspaceRoot));
+    pud = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(vspaceRoot));
 #endif
     pud += GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(1));
     assert(pte_pte_table_ptr_get_present(pud));
@@ -395,9 +382,9 @@ static BOOT_CODE void map_it_pd_cap(cap_t vspace_cap, cap_t pd_cap)
 #ifdef AARCH64_VSPACE_S2_START_L1
     pud = vspaceRoot;
 #else
-    vspaceRoot += GET_PGD_INDEX(vptr);
-    assert(pgde_pgde_pud_ptr_get_present(vspaceRoot));
-    pud = paddr_to_pptr(pgde_pgde_pud_ptr_get_pud_base_address(vspaceRoot));
+    vspaceRoot += GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(0));
+    assert(pte_pte_table_ptr_get_present(vspaceRoot));
+    pud = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(vspaceRoot));
 #endif
     *(pud + GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(1))) = pte_pte_table_new(
                                                                pptr_to_paddr(pd)
@@ -420,14 +407,14 @@ static BOOT_CODE cap_t create_it_pd_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vp
 #ifndef AARCH64_VSPACE_S2_START_L1
 static BOOT_CODE void map_it_pud_cap(cap_t vspace_cap, cap_t pud_cap)
 {
-    pgde_t *pgd = PGD_PTR(pptr_of_cap(vspace_cap));
+    pte_t *pgd = PT_PTR(pptr_of_cap(vspace_cap));
     pte_t *pud = PT_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(pud_cap));
     vptr_t vptr = cap_page_upper_directory_cap_get_capPUDMappedAddress(pud_cap);
 
     assert(cap_page_upper_directory_cap_get_capPUDIsMapped(pud_cap));
 
-    *(pgd + GET_PGD_INDEX(vptr)) = pgde_pgde_pud_new(
-                                       pptr_to_paddr(pud));
+    *(pgd + GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(0))) = pte_pte_table_new(
+                                                               pptr_to_paddr(pud));
 }
 
 static BOOT_CODE cap_t create_it_pud_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
@@ -447,7 +434,7 @@ BOOT_CODE word_t arch_get_n_paging(v_region_t it_v_reg)
 {
     return
 #ifndef AARCH64_VSPACE_S2_START_L1
-        get_n_paging(it_v_reg, PGD_INDEX_OFFSET) +
+        get_n_paging(it_v_reg, GET_ULVL_PGSIZE_BITS(ULVL_FRM_ARM_PT_LVL(0))) +
 #endif
         get_n_paging(it_v_reg, GET_ULVL_PGSIZE_BITS(ULVL_FRM_ARM_PT_LVL(1))) +
         get_n_paging(it_v_reg, GET_ULVL_PGSIZE_BITS(ULVL_FRM_ARM_PT_LVL(2)));
@@ -471,9 +458,9 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
 
 #ifndef AARCH64_VSPACE_S2_START_L1
     /* Create any PUDs needed for the user land image */
-    for (vptr = ROUND_DOWN(it_v_reg.start, PGD_INDEX_OFFSET);
+    for (vptr = ROUND_DOWN(it_v_reg.start, GET_ULVL_PGSIZE_BITS(ULVL_FRM_ARM_PT_LVL(0)));
          vptr < it_v_reg.end;
-         vptr += BIT(PGD_INDEX_OFFSET)) {
+         vptr += GET_ULVL_PGSIZE(ULVL_FRM_ARM_PT_LVL(0))) {
         if (!provide_cap(root_cnode_cap, create_it_pud_cap(vspace_cap, it_alloc_paging(), vptr, IT_ASID))) {
             return cap_null_cap_new();
         }
@@ -634,245 +621,82 @@ exception_t checkValidIPCBuffer(vptr_t vptr, cap_t cap)
     return EXCEPTION_NONE;
 }
 
-static lookupPGDSlot_ret_t lookupPGDSlot(vspace_root_t *vspace, vptr_t vptr)
-{
-    lookupPGDSlot_ret_t ret;
-
-    pgde_t *pgd = PGDE_PTR(vspace);
-    word_t pgdIndex = GET_PGD_INDEX(vptr);
-    ret.status = EXCEPTION_NONE;
-    ret.pgdSlot = pgd + pgdIndex;
-    return ret;
-}
-
-static lookupPTSlot_ret_t lookupPUDSlot(vspace_root_t *vspace, vptr_t vptr)
-{
-    lookupPTSlot_ret_t ret;
-
-#ifdef AARCH64_VSPACE_S2_START_L1
-    pte_t *pud = PTE_PTR(vspace);
-    word_t pudIndex = GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(1));
-    ret.status = EXCEPTION_NONE;
-    ret.ptSlot = pud + pudIndex;
-    return ret;
-#else
-    lookupPGDSlot_ret_t pgdSlot = lookupPGDSlot(vspace, vptr);
-
-    if (!pgde_pgde_pud_ptr_get_present(pgdSlot.pgdSlot)) {
-        current_lookup_fault = lookup_fault_missing_capability_new(PGD_INDEX_OFFSET);
-
-        ret.ptSlot = NULL;
-        ret.status = EXCEPTION_LOOKUP_FAULT;
-        return ret;
-    } else {
-        pte_t *pud;
-        pte_t *pudSlot;
-        word_t pudIndex = GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(1));
-        pud = paddr_to_pptr(pgde_pgde_pud_ptr_get_pud_base_address(pgdSlot.pgdSlot));
-        pudSlot = pud + pudIndex;
-
-        ret.status = EXCEPTION_NONE;
-        ret.ptSlot = pudSlot;
-        return ret;
-    }
-#endif
-}
-
-static lookupPTSlot_ret_t lookupPDSlot(vspace_root_t *vspace, vptr_t vptr)
-{
-    lookupPTSlot_ret_t pudSlot;
-    lookupPTSlot_ret_t ret;
-
-    pudSlot = lookupPUDSlot(vspace, vptr);
-    if (pudSlot.status != EXCEPTION_NONE) {
-        ret.ptSlot = NULL;
-        ret.status = pudSlot.status;
-        return ret;
-    }
-    if (!pte_pte_table_ptr_get_present(pudSlot.ptSlot)) {
-        current_lookup_fault = lookup_fault_missing_capability_new(GET_ULVL_PGSIZE_BITS(ULVL_FRM_ARM_PT_LVL(1)));
-
-        ret.ptSlot = NULL;
-        ret.status = EXCEPTION_LOOKUP_FAULT;
-        return ret;
-    } else {
-        pte_t *pd;
-        pte_t *pdSlot;
-        word_t pdIndex = GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(2));
-        pd = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pudSlot.ptSlot));
-        pdSlot = pd + pdIndex;
-
-        ret.status = EXCEPTION_NONE;
-        ret.ptSlot = pdSlot;
-        return ret;
-    }
-}
-
 static lookupPTSlot_ret_t lookupPTSlot(vspace_root_t *vspace, vptr_t vptr)
 {
     lookupPTSlot_ret_t ret;
-    lookupPTSlot_ret_t pdSlot;
 
-    pdSlot = lookupPDSlot(vspace, vptr);
-    if (pdSlot.status != EXCEPTION_NONE) {
-        ret.ptSlot = NULL;
-        ret.status = pdSlot.status;
-        return ret;
-    }
-    if (!pte_pte_table_ptr_get_present(pdSlot.ptSlot)) {
-        current_lookup_fault = lookup_fault_missing_capability_new(GET_ULVL_PGSIZE_BITS(ULVL_FRM_ARM_PT_LVL(2)));
+    word_t level = UPT_LEVELS - 1;
+    pte_t *pt = vspace;
 
-        ret.ptSlot = NULL;
-        ret.status = EXCEPTION_LOOKUP_FAULT;
-        return ret;
-    } else {
-        pte_t *pt;
-        pte_t *ptSlot;
-        word_t ptIndex = GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(3));
-        pt = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pdSlot.ptSlot));
-        ptSlot = pt + ptIndex;
+    /* this is how many bits we potentially have left to decode. Initially we have the
+     * full address space to decode, and every time we walk this will be reduced. The
+     * final value of this after the walk is the size of the frame that can be inserted,
+     * or already exists, in ret.ptSlot. The following formulation is an invariant of
+     * the loop: */
+    ret.ptBitsLeft = PT_INDEX_BITS * level + seL4_PageBits;
+    ret.ptSlot = pt + ((vptr >> ret.ptBitsLeft) & MASK(seL4_VSpaceIndexBits));
 
-        ret.ptSlot = ptSlot;
-        ret.status = EXCEPTION_NONE;
-        return ret;
-    }
-}
-
-static lookupFrame_ret_t lookupFrame(vspace_root_t *vspace, vptr_t vptr)
-{
-    lookupPTSlot_ret_t pudSlot;
-    lookupFrame_ret_t ret;
-
-    pudSlot = lookupPUDSlot(vspace, vptr);
-    if (pudSlot.status != EXCEPTION_NONE) {
-        ret.valid = false;
-        return ret;
+    while (pte_pte_table_ptr_get_present(ret.ptSlot) && likely(level > 0)) {
+        level--;
+        ret.ptBitsLeft -= PT_INDEX_BITS;
+        pt = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(ret.ptSlot));
+        ret.ptSlot = pt + ((vptr >> ret.ptBitsLeft) & MASK(PT_INDEX_BITS));
     }
 
-    switch (pte_ptr_get_pte_type(pudSlot.ptSlot)) {
-    case pte_pte_page:
-        ret.frameBase = pte_page_ptr_get_page_base_address(pudSlot.ptSlot);
-        ret.frameSize = ARMHugePage;
-        ret.valid = true;
-        return ret;
-
-    case pte_pte_table: {
-        pte_t *pd = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pudSlot.ptSlot));
-        pte_t *pdSlot = pd + GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(2));
-
-        if (pte_ptr_get_pte_type(pdSlot) == pte_pte_page) {
-            ret.frameBase = pte_page_ptr_get_page_base_address(pdSlot);
-            ret.frameSize = ARMLargePage;
-            ret.valid = true;
-            return ret;
-        }
-
-        if (pte_ptr_get_pte_type(pdSlot) == pte_pte_table) {
-            pte_t *pt = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pdSlot));
-            pte_t *ptSlot = pt + GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(3));
-
-            if (pte_4k_page_ptr_get_present(ptSlot)) {
-                ret.frameBase = pte_page_ptr_get_page_base_address(ptSlot);
-                ret.frameSize = ARMSmallPage;
-                ret.valid = true;
-                return ret;
-            }
-        }
-    }
-    }
-
-    ret.valid = false;
     return ret;
 }
 
 /* Note that if the hypervisor support is enabled, the user page tables use
  * stage-2 translation format. Otherwise, they follow the stage-1 translation format.
  */
-static pte_t makeUser3rdLevel(paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t attributes)
+static pte_t makeUserPage(paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t attributes, vm_page_size_t page_size)
 {
     bool_t nonexecutable = vm_attributes_get_armExecuteNever(attributes);
-
+    pte_t ret;
     if (vm_attributes_get_armPageCacheable(attributes)) {
-        return pte_pte_4k_page_new(
-                   nonexecutable,              /* unprivileged execute never */
-                   paddr,
+        ret = pte_pte_page_new(
+                  nonexecutable,              /* unprivileged execute never */
+                  paddr,
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-                   0,
+                  0,
 #else
-                   1,                          /* not global */
+                  1,                          /* not global */
 #endif
-                   1,                          /* access flag */
-                   SMP_TERNARY(SMP_SHARE, 0),          /* Inner-shareable if SMP enabled, otherwise unshared */
-                   APFromVMRights(vm_rights),
+                  1,                          /* access flag */
+                  SMP_TERNARY(SMP_SHARE, 0),          /* Inner-shareable if SMP enabled, otherwise unshared */
+                  APFromVMRights(vm_rights),
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-                   S2_NORMAL
+                  S2_NORMAL
 #else
-                   NORMAL
+                  NORMAL
 #endif
-               );
+              );
     } else {
-        return pte_pte_4k_page_new(
-                   nonexecutable,              /* unprivileged execute never */
-                   paddr,
+        ret = pte_pte_page_new(
+                  nonexecutable,              /* unprivileged execute never */
+                  paddr,
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-                   0,
+                  0,
 #else
-                   1,                          /* not global */
+                  1,                          /* not global */
 #endif
-                   1,                          /* access flag */
-                   0,                          /* Ignored - Outter shareable */
-                   APFromVMRights(vm_rights),
+                  1,                          /* access flag */
+                  0,                          /* Ignored - Outter shareable */
+                  APFromVMRights(vm_rights),
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-                   S2_DEVICE_nGnRnE
+                  S2_DEVICE_nGnRnE
 #else
-                   DEVICE_nGnRnE
+                  DEVICE_nGnRnE
 #endif
 
-               );
+              );
     }
-}
-
-static pte_t makeUser2ndLevel(paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t attributes)
-{
-    bool_t nonexecutable = vm_attributes_get_armExecuteNever(attributes);
-
-    if (vm_attributes_get_armPageCacheable(attributes)) {
-        return pte_pte_page_new(
-                   nonexecutable,              /* unprivileged execute never */
-                   paddr,
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-                   0,
-#else
-                   1,                          /* not global */
-#endif
-                   1,                          /* access flag */
-                   SMP_TERNARY(SMP_SHARE, 0),          /* Inner-shareable if SMP enabled, otherwise unshared */
-                   APFromVMRights(vm_rights),
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-                   S2_NORMAL
-#else
-                   NORMAL
-#endif
-               );
-    } else {
-        return pte_pte_page_new(
-                   nonexecutable,              /* unprivileged execute never */
-                   paddr,
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-                   0,
-#else
-                   1,                          /* not global */
-#endif
-                   1,                          /* access flag */
-                   0,                          /* Ignored - Outter shareable */
-                   APFromVMRights(vm_rights),
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-                   S2_DEVICE_nGnRnE
-#else
-                   DEVICE_nGnRnE
-#endif
-               );
+    /* If The target page size is 4k, then really pte_pte_4k_page_new() should be used
+       but instead we just update the type manually after using pte_pte_page_new(). */
+    if (page_size == ARMSmallPage) {
+        ret.words[0] |= 0x3;
     }
+    return ret;
 }
 
 exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
@@ -1183,75 +1007,35 @@ void unmapPageTable(asid_t asid, vptr_t vptr, pte_t *target_pt)
     invalidateTLBByASID(asid);
 }
 
-
-
 void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr)
 {
-    paddr_t addr;
     findVSpaceForASID_ret_t find_ret;
+    lookupPTSlot_ret_t  lu_ret;
 
-    addr = pptr_to_paddr((void *)pptr);
     find_ret = findVSpaceForASID(asid);
-    if (unlikely(find_ret.status != EXCEPTION_NONE)) {
+    if (find_ret.status != EXCEPTION_NONE) {
         return;
     }
 
-    switch (page_size) {
-    case ARMSmallPage: {
-        lookupPTSlot_ret_t lu_ret;
-
-        lu_ret = lookupPTSlot(find_ret.vspace_root, vptr);
-        if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
-            return;
-        }
-
-        if (pte_4k_page_ptr_get_present(lu_ret.ptSlot) &&
-            pte_page_ptr_get_page_base_address(lu_ret.ptSlot) == addr) {
-            *(lu_ret.ptSlot) = pte_pte_invalid_new();
-
-            cleanByVA_PoU((vptr_t)lu_ret.ptSlot, pptr_to_paddr(lu_ret.ptSlot));
-        }
-        break;
+    lu_ret = lookupPTSlot(find_ret.vspace_root, vptr);
+    if (unlikely(lu_ret.ptBitsLeft != pageBitsForSize(page_size))) {
+        /* Do nothing if the wrong size object was returned */
+        return;
     }
 
-    case ARMLargePage: {
-        lookupPTSlot_ret_t lu_ret;
-
-        lu_ret = lookupPDSlot(find_ret.vspace_root, vptr);
-        if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
-            return;
-        }
-
-        if (pte_pte_page_ptr_get_present(lu_ret.ptSlot) &&
-            pte_page_ptr_get_page_base_address(lu_ret.ptSlot) == addr) {
-            *(lu_ret.ptSlot) = pte_pte_invalid_new();
-
-            cleanByVA_PoU((vptr_t)lu_ret.ptSlot, pptr_to_paddr(lu_ret.ptSlot));
-        }
-        break;
+    if (!pte_ptr_get_valid(lu_ret.ptSlot) ||
+        (pte_pte_table_ptr_get_present(lu_ret.ptSlot) && lu_ret.ptBitsLeft > PAGE_BITS)) {
+        /* Do nothing if no page is present */
+        return;
     }
 
-    case ARMHugePage: {
-        lookupPTSlot_ret_t lu_ret;
-
-        lu_ret = lookupPUDSlot(find_ret.vspace_root, vptr);
-        if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
-            return;
-        }
-
-        if (pte_pte_page_ptr_get_present(lu_ret.ptSlot) &&
-            pte_page_ptr_get_page_base_address(lu_ret.ptSlot) == addr) {
-            *(lu_ret.ptSlot) = pte_pte_invalid_new();
-
-            cleanByVA_PoU((vptr_t)lu_ret.ptSlot, pptr_to_paddr(lu_ret.ptSlot));
-        }
-        break;
+    if (pte_page_ptr_get_page_base_address(lu_ret.ptSlot) != pptr_to_paddr((void *)pptr)) {
+        /* Do nothing if the mapped page is not the same physical frame */
+        return;
     }
 
-    default:
-        fail("Invalid ARM page type");
-    }
-
+    *(lu_ret.ptSlot) = pte_pte_invalid_new();
+    cleanByVA_PoU((vptr_t)lu_ret.ptSlot, pptr_to_paddr(lu_ret.ptSlot));
     assert(asid < BIT(16));
     invalidateTLBByASIDVA(asid, vptr);
 }
@@ -1361,7 +1145,7 @@ static exception_t performVSpaceFlush(int invLabel, vspace_root_t *vspaceRoot, a
 }
 
 #ifndef AARCH64_VSPACE_S2_START_L1
-static exception_t performUpperPageDirectoryInvocationMap(cap_t cap, cte_t *ctSlot, pgde_t pgde, pgde_t *pgdSlot)
+static exception_t performUpperPageDirectoryInvocationMap(cap_t cap, cte_t *ctSlot, pte_t pgde, pte_t *pgdSlot)
 {
     ctSlot->cap = cap;
     *pgdSlot = pgde;
@@ -1428,44 +1212,10 @@ static exception_t performPageTableInvocationUnmap(cap_t cap, cte_t *ctSlot)
     return EXCEPTION_NONE;
 }
 
-static exception_t performHugePageInvocationMap(asid_t asid, cap_t cap, cte_t *ctSlot,
-                                                pte_t pude, pte_t *pudSlot)
+static exception_t performPageInvocationMap(asid_t asid, cap_t cap, cte_t *ctSlot,
+                                            pte_t pte, pte_t *ptSlot)
 {
-    bool_t tlbflush_required = pte_pte_page_ptr_get_present(pudSlot);
-
-    ctSlot->cap = cap;
-    *pudSlot = pude;
-
-    cleanByVA_PoU((vptr_t)pudSlot, pptr_to_paddr(pudSlot));
-    if (unlikely(tlbflush_required)) {
-        assert(asid < BIT(16));
-        invalidateTLBByASIDVA(asid, cap_frame_cap_get_capFMappedAddress(cap));
-    }
-
-    return EXCEPTION_NONE;
-}
-
-static exception_t performLargePageInvocationMap(asid_t asid, cap_t cap, cte_t *ctSlot,
-                                                 pte_t pde, pte_t *pdSlot)
-{
-    bool_t tlbflush_required = pte_pte_page_ptr_get_present(pdSlot);
-
-    ctSlot->cap = cap;
-    *pdSlot = pde;
-
-    cleanByVA_PoU((vptr_t)pdSlot, pptr_to_paddr(pdSlot));
-    if (unlikely(tlbflush_required)) {
-        assert(asid < BIT(16));
-        invalidateTLBByASIDVA(asid, cap_frame_cap_get_capFMappedAddress(cap));
-    }
-
-    return EXCEPTION_NONE;
-}
-
-static exception_t performSmallPageInvocationMap(asid_t asid, cap_t cap, cte_t *ctSlot,
-                                                 pte_t pte, pte_t *ptSlot)
-{
-    bool_t tlbflush_required = pte_4k_page_ptr_get_present(ptSlot);
+    bool_t tlbflush_required = pte_ptr_get_valid(ptSlot);
 
     ctSlot->cap = cap;
     *ptSlot = pte;
@@ -1567,7 +1317,7 @@ static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, unsigned int l
     paddr_t pstart;
     asid_t asid;
     vspace_root_t *vspaceRoot;
-    lookupFrame_ret_t resolve_ret;
+    lookupPTSlot_ret_t resolve_ret;
     findVSpaceForASID_ret_t find_ret;
 
     switch (invLabel) {
@@ -1626,9 +1376,12 @@ static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, unsigned int l
         }
 
         /* Look up the frame containing 'start'. */
-        resolve_ret = lookupFrame(vspaceRoot, start);
+        resolve_ret = lookupPTSlot(vspaceRoot, start);
 
-        if (!resolve_ret.valid) {
+        /* Check that the returned slot is a page. */
+        if (!pte_ptr_get_valid(resolve_ret.ptSlot) ||
+            (pte_pte_table_ptr_get_present(resolve_ret.ptSlot) && resolve_ret.ptBitsLeft > PAGE_BITS)) {
+
             /* Fail silently, as there can't be any stale cached data (for the
              * given address space), and getting a syscall error because the
              * relevant page is non-resident would be 'astonishing'. */
@@ -1637,16 +1390,18 @@ static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, unsigned int l
         }
 
         /* Refuse to cross a page boundary. */
-        if (PAGE_BASE(start, resolve_ret.frameSize) != PAGE_BASE(end - 1, resolve_ret.frameSize)) {
+        if (ROUND_DOWN(start, resolve_ret.ptBitsLeft) != ROUND_DOWN(end - 1, resolve_ret.ptBitsLeft)) {
             current_syscall_error.type = seL4_RangeError;
             current_syscall_error.rangeErrorMin = start;
-            current_syscall_error.rangeErrorMax = PAGE_BASE(start, resolve_ret.frameSize) +
-                                                  MASK(pageBitsForSize(resolve_ret.frameSize));
+            current_syscall_error.rangeErrorMax = ROUND_DOWN(start, resolve_ret.ptBitsLeft) +
+                                                  MASK(resolve_ret.ptBitsLeft);
             return EXCEPTION_SYSCALL_ERROR;
         }
 
         /* Calculate the physical start address. */
-        pstart = resolve_ret.frameBase + PAGE_OFFSET(start, resolve_ret.frameSize);
+        paddr_t frame_base = pte_page_ptr_get_page_base_address(resolve_ret.ptSlot);
+
+        pstart = frame_base + (start & MASK(resolve_ret.ptBitsLeft));
 
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performVSpaceFlush(invLabel, vspaceRoot, asid, start, end - 1, pstart);
@@ -1663,10 +1418,10 @@ static exception_t decodeARMPageUpperDirectoryInvocation(word_t invLabel, unsign
 {
     cap_t pgdCap;
     vspace_root_t *pgd;
-    pgde_t pgde;
+    pte_t pgde;
     asid_t asid;
     vptr_t vaddr;
-    lookupPGDSlot_ret_t pgdSlot;
+    lookupPTSlot_ret_t pgdSlot;
     findVSpaceForASID_ret_t find_ret;
 
     if (invLabel == ARMPageUpperDirectoryUnmap) {
@@ -1695,7 +1450,7 @@ static exception_t decodeARMPageUpperDirectoryInvocation(word_t invLabel, unsign
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    vaddr = getSyscallArg(0, buffer) & (~MASK(PGD_INDEX_OFFSET));
+    vaddr = getSyscallArg(0, buffer) & (~MASK(GET_ULVL_PGSIZE_BITS(ULVL_FRM_ARM_PT_LVL(0))));
     pgdCap = current_extra_caps.excaprefs[0]->cap;
 
     if (unlikely(!isValidNativeRoot(pgdCap))) {
@@ -1726,14 +1481,21 @@ static exception_t decodeARMPageUpperDirectoryInvocation(word_t invLabel, unsign
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    pgdSlot = lookupPGDSlot(pgd, vaddr);
+    pgdSlot = lookupPTSlot(pgd, vaddr);
 
-    if (unlikely(pgde_pgde_pud_ptr_get_present(pgdSlot.pgdSlot))) {
+    if (unlikely(pgdSlot.ptBitsLeft > GET_ULVL_PGSIZE_BITS(ULVL_FRM_ARM_PT_LVL(0)))) {
+        current_syscall_error.type = seL4_FailedLookup;
+        current_syscall_error.failedLookupWasSource = false;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if (unlikely(pte_pte_table_ptr_get_present(pgdSlot.ptSlot) ||
+                 pgdSlot.ptBitsLeft < GET_ULVL_PGSIZE_BITS(ULVL_FRM_ARM_PT_LVL(0)))) {
         current_syscall_error.type = seL4_DeleteFirst;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    pgde = pgde_pgde_pud_new(
+    pgde = pte_pte_table_new(
                pptr_to_paddr(PTE_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(cap))));
 
     cap_page_upper_directory_cap_ptr_set_capPUDIsMapped(&cap, 1);
@@ -1741,7 +1503,7 @@ static exception_t decodeARMPageUpperDirectoryInvocation(word_t invLabel, unsign
     cap_page_upper_directory_cap_ptr_set_capPUDMappedAddress(&cap, vaddr);
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    return performUpperPageDirectoryInvocationMap(cap, cte, pgde, pgdSlot.pgdSlot);
+    return performUpperPageDirectoryInvocationMap(cap, cte, pgde, pgdSlot.ptSlot);
 }
 #endif
 
@@ -1813,16 +1575,17 @@ static exception_t decodeARMPageDirectoryInvocation(word_t invLabel, unsigned in
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    pudSlot = lookupPUDSlot(vspaceRoot, vaddr);
+    pudSlot = lookupPTSlot(vspaceRoot, vaddr);
 
-    if (pudSlot.status != EXCEPTION_NONE) {
+    if (unlikely(pudSlot.ptBitsLeft > GET_ULVL_PGSIZE_BITS(ULVL_FRM_ARM_PT_LVL(1)))) {
         current_syscall_error.type = seL4_FailedLookup;
         current_syscall_error.failedLookupWasSource = false;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     if (unlikely(pte_pte_table_ptr_get_present(pudSlot.ptSlot) ||
-                 pte_pte_page_ptr_get_present(pudSlot.ptSlot))) {
+                 pte_pte_page_ptr_get_present(pudSlot.ptSlot) ||
+                 pudSlot.ptBitsLeft < GET_ULVL_PGSIZE_BITS(ULVL_FRM_ARM_PT_LVL(1)))) {
         current_syscall_error.type = seL4_DeleteFirst;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -1905,16 +1668,17 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, unsigned int le
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    pdSlot = lookupPDSlot(vspaceRoot, vaddr);
+    pdSlot = lookupPTSlot(vspaceRoot, vaddr);
 
-    if (pdSlot.status != EXCEPTION_NONE) {
+    if (pdSlot.ptBitsLeft > GET_ULVL_PGSIZE_BITS(ULVL_FRM_ARM_PT_LVL(2))) {
         current_syscall_error.type = seL4_FailedLookup;
         current_syscall_error.failedLookupWasSource = false;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     if (unlikely(pte_pte_table_ptr_get_present(pdSlot.ptSlot) ||
-                 pte_pte_page_ptr_get_present(pdSlot.ptSlot))) {
+                 pte_pte_page_ptr_get_present(pdSlot.ptSlot) ||
+                 pdSlot.ptBitsLeft < GET_ULVL_PGSIZE_BITS(ULVL_FRM_ARM_PT_LVL(2)))) {
         current_syscall_error.type = seL4_DeleteFirst;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -2013,45 +1777,17 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
 
         base = pptr_to_paddr((void *)cap_frame_cap_get_capFBasePtr(cap));
 
-        if (frameSize == ARMSmallPage) {
-            lookupPTSlot_ret_t lu_ret = lookupPTSlot(vspaceRoot, vaddr);
-
-            if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
-                current_syscall_error.type = seL4_FailedLookup;
-                current_syscall_error.failedLookupWasSource = false;
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-
-            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-            return performSmallPageInvocationMap(asid, cap, cte,
-                                                 makeUser3rdLevel(base, vmRights, attributes), lu_ret.ptSlot);
-
-        } else if (frameSize == ARMLargePage) {
-            lookupPTSlot_ret_t lu_ret = lookupPDSlot(vspaceRoot, vaddr);
-
-            if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
-                current_syscall_error.type = seL4_FailedLookup;
-                current_syscall_error.failedLookupWasSource = false;
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-
-            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-            return performLargePageInvocationMap(asid, cap, cte,
-                                                 makeUser2ndLevel(base, vmRights, attributes), lu_ret.ptSlot);
-
-        } else {
-            lookupPTSlot_ret_t lu_ret = lookupPUDSlot(vspaceRoot, vaddr);
-
-            if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
-                current_syscall_error.type = seL4_FailedLookup;
-                current_syscall_error.failedLookupWasSource = false;
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-
-            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-            return performHugePageInvocationMap(asid, cap, cte,
-                                                makeUser2ndLevel(base, vmRights, attributes), lu_ret.ptSlot);
+        lookupPTSlot_ret_t lu_ret = lookupPTSlot(vspaceRoot, vaddr);
+        if (unlikely(lu_ret.ptBitsLeft != pageBitsForSize(frameSize))) {
+            current_lookup_fault = lookup_fault_missing_capability_new(lu_ret.ptBitsLeft);
+            current_syscall_error.type = seL4_FailedLookup;
+            current_syscall_error.failedLookupWasSource = false;
+            return EXCEPTION_SYSCALL_ERROR;
         }
+
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+        return performPageInvocationMap(asid, cap, cte,
+                                        makeUserPage(base, vmRights, attributes, frameSize), lu_ret.ptSlot);
     }
 
     case ARMPageUnmap:
@@ -2325,21 +2061,22 @@ typedef struct readWordFromVSpace_ret {
 
 static readWordFromVSpace_ret_t readWordFromVSpace(vspace_root_t *pd, word_t vaddr)
 {
-    lookupFrame_ret_t lookup_frame_ret;
     readWordFromVSpace_ret_t ret;
     word_t offset;
     pptr_t kernel_vaddr;
     word_t *value;
 
-    lookup_frame_ret = lookupFrame(pd, vaddr);
+    lookupPTSlot_ret_t lookup_ret = lookupPTSlot(pd, vaddr);
 
-    if (!lookup_frame_ret.valid) {
+    /* Check that the returned slot is a page. */
+    if (!pte_ptr_get_valid(lookup_ret.ptSlot) ||
+        (pte_pte_table_ptr_get_present(lookup_ret.ptSlot) && lookup_ret.ptBitsLeft > PAGE_BITS)) {
         ret.status = EXCEPTION_LOOKUP_FAULT;
         return ret;
     }
 
-    offset = vaddr & MASK(pageBitsForSize(lookup_frame_ret.frameSize));
-    kernel_vaddr = (word_t)paddr_to_pptr(lookup_frame_ret.frameBase);
+    offset = vaddr & MASK(lookup_ret.ptBitsLeft);
+    kernel_vaddr = (word_t)paddr_to_pptr(pte_page_ptr_get_page_base_address(lookup_ret.ptSlot));
     value = (word_t *)(kernel_vaddr + offset);
 
     ret.status = EXCEPTION_NONE;

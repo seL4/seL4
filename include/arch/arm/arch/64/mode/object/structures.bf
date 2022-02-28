@@ -271,22 +271,6 @@ tagged_union asid_map type {
 -- PGDE, PUDE, PDEs and PTEs, assuming 48-bit physical address
 base 64(48,0)
 
-block pgde_invalid {
-    padding                         62
-    field pgde_type                 2
-}
-
-block pgde_pud {
-    padding                         16
-    field_high pud_base_address     36
-    padding                         10
-    field pgde_type                 2 -- must be 0b11
-}
-
-tagged_union pgde pgde_type {
-    tag pgde_invalid                0
-    tag pgde_pud                    3
-}
 
 -- See the definition of pte_type for explanation
 -- for pte_sw_type and pte_hw_type
