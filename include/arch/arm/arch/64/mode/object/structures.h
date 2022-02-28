@@ -42,7 +42,6 @@ typedef word_t vm_rights_t;
 #define UPUD_SIZE_BITS      seL4_PUDBits
 #define UPUD_INDEX_BITS     seL4_PUDIndexBits
 
-#define PDE_SIZE_BITS       seL4_PageDirEntryBits
 #define PTE_SIZE_BITS       seL4_PageTableEntryBits
 #define PT_INDEX_BITS       seL4_PageTableIndexBits
 
@@ -107,9 +106,6 @@ static inline word_t CONST cap_get_archCapSizeBits(cap_t cap)
     case cap_page_table_cap:
         return seL4_PageTableBits;
 
-    case cap_page_directory_cap:
-        return seL4_PageDirBits;
-
     case cap_page_upper_directory_cap:
         return seL4_PUDBits;
 
@@ -147,9 +143,6 @@ static inline bool_t CONST cap_get_archCapIsPhysical(cap_t cap)
     case cap_page_table_cap:
         return true;
 
-    case cap_page_directory_cap:
-        return true;
-
     case cap_page_upper_directory_cap:
         return true;
 
@@ -185,9 +178,6 @@ static inline void *CONST cap_get_archCapPtr(cap_t cap)
 
     case cap_page_table_cap:
         return PT_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
-
-    case cap_page_directory_cap:
-        return PT_PTR(cap_page_directory_cap_get_capPDBasePtr(cap));
 
     case cap_page_upper_directory_cap:
         return PT_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(cap));
