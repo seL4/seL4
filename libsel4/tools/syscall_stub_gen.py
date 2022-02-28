@@ -285,7 +285,6 @@ def init_arch_types(wordsize, args):
             Type("seL4_ARM_VMAttributes", wordsize, wordsize),
             CapType("seL4_ARM_Page", wordsize),
             CapType("seL4_ARM_PageTable", wordsize),
-            CapType("seL4_ARM_PageDirectory", wordsize),
             CapType("seL4_ARM_PageUpperDirectory", wordsize),
             CapType("seL4_ARM_PageGlobalDirectory", wordsize),
             CapType("seL4_ARM_VSpace", wordsize),

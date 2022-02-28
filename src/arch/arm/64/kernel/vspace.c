@@ -374,10 +374,10 @@ static BOOT_CODE void map_it_pd_cap(cap_t vspace_cap, cap_t pd_cap)
 {
     vspace_root_t *vspaceRoot = VSPACE_PTR(pptr_of_cap(vspace_cap));
     pte_t *pud;
-    pte_t *pd = PT_PTR(cap_page_directory_cap_get_capPDBasePtr(pd_cap));
-    vptr_t vptr = cap_page_directory_cap_get_capPDMappedAddress(pd_cap);
+    pte_t *pd = PT_PTR(cap_page_table_cap_get_capPTBasePtr(pd_cap));
+    vptr_t vptr = cap_page_table_cap_get_capPTMappedAddress(pd_cap);
 
-    assert(cap_page_directory_cap_get_capPDIsMapped(pd_cap));
+    assert(cap_page_table_cap_get_capPTIsMapped(pd_cap));
 
 #ifdef AARCH64_VSPACE_S2_START_L1
     pud = vspaceRoot;
@@ -394,11 +394,11 @@ static BOOT_CODE void map_it_pd_cap(cap_t vspace_cap, cap_t pd_cap)
 static BOOT_CODE cap_t create_it_pd_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
 {
     cap_t cap;
-    cap = cap_page_directory_cap_new(
-              asid,                   /* capPDMappedASID */
-              pptr,                   /* capPDBasePtr */
-              1,                      /* capPDIsMapped */
-              vptr                    /* capPDMappedAddress */
+    cap = cap_page_table_cap_new(
+              asid,                   /* capPTMappedASID */
+              pptr,                   /* capPTBasePtr */
+              1,                      /* capPTIsMapped */
+              vptr                    /* capPTMappedAddress */
           );
     map_it_pd_cap(vspace_cap, cap);
     return cap;
@@ -1168,28 +1168,6 @@ static exception_t performUpperPageDirectoryInvocationUnmap(cap_t cap, cte_t *ct
 }
 #endif
 
-static exception_t performPageDirectoryInvocationMap(cap_t cap, cte_t *ctSlot, pte_t pude, pte_t *pudSlot)
-{
-    ctSlot->cap = cap;
-    *pudSlot = pude;
-    cleanByVA_PoU((vptr_t)pudSlot, pptr_to_paddr(pudSlot));
-
-    return EXCEPTION_NONE;
-}
-
-static exception_t performPageDirectoryInvocationUnmap(cap_t cap, cte_t *ctSlot)
-{
-    if (cap_page_directory_cap_get_capPDIsMapped(cap)) {
-        pte_t *pd = PT_PTR(cap_page_directory_cap_get_capPDBasePtr(cap));
-        unmapPageTable(cap_page_directory_cap_get_capPDMappedASID(cap),
-                       cap_page_directory_cap_get_capPDMappedAddress(cap), pd);
-        clearMemory_PT((void *)pd, cap_get_capSizeBits(cap));
-    }
-
-    cap_page_directory_cap_ptr_set_capPDIsMapped(&(ctSlot->cap), 0);
-    return EXCEPTION_NONE;
-}
-
 static exception_t performPageTableInvocationMap(cap_t cap, cte_t *ctSlot, pte_t pte, pte_t *ptSlot)
 {
     ctSlot->cap = cap;
@@ -1507,99 +1485,6 @@ static exception_t decodeARMPageUpperDirectoryInvocation(word_t invLabel, unsign
 }
 #endif
 
-static exception_t decodeARMPageDirectoryInvocation(word_t invLabel, unsigned int length,
-                                                    cte_t *cte, cap_t cap, word_t *buffer)
-{
-    cap_t vspaceRootCap;
-    vspace_root_t *vspaceRoot;
-    pte_t pude;
-    asid_t asid;
-    vptr_t vaddr;
-    lookupPTSlot_ret_t pudSlot;
-    findVSpaceForASID_ret_t find_ret;
-
-    if (invLabel == ARMPageDirectoryUnmap) {
-        if (unlikely(!isFinalCapability(cte))) {
-            current_syscall_error.type = seL4_RevokeFirst;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        return performPageDirectoryInvocationUnmap(cap, cte);
-    }
-
-    if (unlikely(invLabel != ARMPageDirectoryMap)) {
-        current_syscall_error.type = seL4_IllegalOperation;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    if (unlikely(length < 2 || current_extra_caps.excaprefs[0] == NULL)) {
-        current_syscall_error.type = seL4_TruncatedMessage;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    if (unlikely(cap_page_directory_cap_get_capPDIsMapped(cap))) {
-        current_syscall_error.type = seL4_InvalidCapability;
-        current_syscall_error.invalidCapNumber = 0;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    vaddr = getSyscallArg(0, buffer) & (~MASK(GET_ULVL_PGSIZE_BITS(ULVL_FRM_ARM_PT_LVL(1))));
-    vspaceRootCap = current_extra_caps.excaprefs[0]->cap;
-
-    if (unlikely(!isValidNativeRoot(vspaceRootCap))) {
-        current_syscall_error.type = seL4_InvalidCapability;
-        current_syscall_error.invalidCapNumber = 1;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    vspaceRoot = cap_vtable_root_get_basePtr(vspaceRootCap);
-    asid = cap_vtable_root_get_mappedASID(vspaceRootCap);
-
-    if (unlikely(vaddr > USER_TOP)) {
-        current_syscall_error.type = seL4_InvalidArgument;
-        current_syscall_error.invalidArgumentNumber = 0;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    find_ret = findVSpaceForASID(asid);
-    if (unlikely(find_ret.status != EXCEPTION_NONE)) {
-        current_syscall_error.type = seL4_FailedLookup;
-        current_syscall_error.failedLookupWasSource = false;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    if (unlikely(find_ret.vspace_root != vspaceRoot)) {
-        current_syscall_error.type = seL4_InvalidCapability;
-        current_syscall_error.invalidCapNumber = 1;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    pudSlot = lookupPTSlot(vspaceRoot, vaddr);
-
-    if (unlikely(pudSlot.ptBitsLeft > GET_ULVL_PGSIZE_BITS(ULVL_FRM_ARM_PT_LVL(1)))) {
-        current_syscall_error.type = seL4_FailedLookup;
-        current_syscall_error.failedLookupWasSource = false;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    if (unlikely(pte_pte_table_ptr_get_present(pudSlot.ptSlot) ||
-                 pte_pte_page_ptr_get_present(pudSlot.ptSlot) ||
-                 pudSlot.ptBitsLeft < GET_ULVL_PGSIZE_BITS(ULVL_FRM_ARM_PT_LVL(1)))) {
-        current_syscall_error.type = seL4_DeleteFirst;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    pude = pte_pte_table_new(pptr_to_paddr(PTE_PTR(cap_page_directory_cap_get_capPDBasePtr(cap))));
-
-    cap_page_directory_cap_ptr_set_capPDIsMapped(&cap, 1);
-    cap_page_directory_cap_ptr_set_capPDMappedASID(&cap, asid);
-    cap_page_directory_cap_ptr_set_capPDMappedAddress(&cap, vaddr);
-
-    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    return performPageDirectoryInvocationMap(cap, cte, pude, pudSlot.ptSlot);
-}
-
 static exception_t decodeARMPageTableInvocation(word_t invLabel, unsigned int length,
                                                 cte_t *cte, cap_t cap, word_t *buffer)
 {
@@ -1608,7 +1493,7 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, unsigned int le
     pte_t pte;
     asid_t asid;
     vptr_t vaddr;
-    lookupPTSlot_ret_t pdSlot;
+    lookupPTSlot_ret_t ptSlot;
     findVSpaceForASID_ret_t find_ret;
 
     if (invLabel == ARMPageTableUnmap) {
@@ -1637,7 +1522,7 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, unsigned int le
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    vaddr = getSyscallArg(0, buffer) & (~MASK(GET_ULVL_PGSIZE_BITS(ULVL_FRM_ARM_PT_LVL(2))));
+    vaddr = getSyscallArg(0, buffer);
     vspaceRootCap = current_extra_caps.excaprefs[0]->cap;
 
     if (unlikely(!isValidNativeRoot(vspaceRootCap))) {
@@ -1668,17 +1553,9 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, unsigned int le
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    pdSlot = lookupPTSlot(vspaceRoot, vaddr);
+    ptSlot = lookupPTSlot(vspaceRoot, vaddr);
 
-    if (pdSlot.ptBitsLeft > GET_ULVL_PGSIZE_BITS(ULVL_FRM_ARM_PT_LVL(2))) {
-        current_syscall_error.type = seL4_FailedLookup;
-        current_syscall_error.failedLookupWasSource = false;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    if (unlikely(pte_pte_table_ptr_get_present(pdSlot.ptSlot) ||
-                 pte_pte_page_ptr_get_present(pdSlot.ptSlot) ||
-                 pdSlot.ptBitsLeft < GET_ULVL_PGSIZE_BITS(ULVL_FRM_ARM_PT_LVL(2)))) {
+    if (unlikely(ptSlot.ptBitsLeft == seL4_PageBits || pte_ptr_get_valid(ptSlot.ptSlot))) {
         current_syscall_error.type = seL4_DeleteFirst;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -1687,10 +1564,10 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, unsigned int le
 
     cap_page_table_cap_ptr_set_capPTIsMapped(&cap, 1);
     cap_page_table_cap_ptr_set_capPTMappedASID(&cap, asid);
-    cap_page_table_cap_ptr_set_capPTMappedAddress(&cap, vaddr);
+    cap_page_table_cap_ptr_set_capPTMappedAddress(&cap, (vaddr & ~MASK(ptSlot.ptBitsLeft)));
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    return performPageTableInvocationMap(cap, cte, pte, pdSlot.ptSlot);
+    return performPageTableInvocationMap(cap, cte, pte, ptSlot.ptSlot);
 }
 
 static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length,
@@ -1882,9 +1759,6 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
     case cap_page_upper_directory_cap:
         return decodeARMPageUpperDirectoryInvocation(invLabel, length, cte, cap, buffer);
 #endif
-    case cap_page_directory_cap:
-        return decodeARMPageDirectoryInvocation(invLabel, length, cte, cap, buffer);
-
     case cap_page_table_cap:
         return decodeARMPageTableInvocation(invLabel, length, cte, cap, buffer);
 

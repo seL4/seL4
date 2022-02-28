@@ -44,18 +44,6 @@ block page_table_cap {
     padding                          20
 }
 
--- Third-level page table (page directory)
-block page_directory_cap {
-    field capPDMappedASID            16
-    field_high capPDBasePtr          48
-
-    field capType                    5
-    padding                          10
-    field capPDIsMapped              1
-    field_high capPDMappedAddress    19
-    padding                          29
-}
-
 -- Second-level page table (page upper directory)
 block page_upper_directory_cap {
     field capPUDMappedASID           16
@@ -176,7 +164,6 @@ tagged_union cap capType {
     -- 5-bit tag arch caps
     tag frame_cap                   1
     tag page_table_cap              3
-    tag page_directory_cap          5
     tag page_upper_directory_cap    7
     tag page_global_directory_cap   9
     tag asid_control_cap            11

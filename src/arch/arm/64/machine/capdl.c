@@ -262,7 +262,6 @@ void print_cap_arch(cap_t cap)
 
     switch (cap_get_capType(cap)) {
     case cap_page_table_cap:
-    case cap_page_directory_cap:
     case cap_page_upper_directory_cap: {
         asid_t asid = 0;
         vptr_t vptr = 0;
@@ -273,10 +272,6 @@ void print_cap_arch(cap_t cap)
             vptr = cap_page_table_cap_get_capPTMappedAddress(cap);
             target_pt = PT_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
             break;
-        case cap_page_directory_cap:
-            asid = cap_page_directory_cap_get_capPDMappedASID(cap);
-            vptr = cap_page_directory_cap_get_capPDMappedAddress(cap);
-            target_pt = PT_PTR(cap_page_directory_cap_get_capPDBasePtr(cap));
         case cap_page_upper_directory_cap:
             asid = cap_page_upper_directory_cap_get_capPUDMappedASID(cap);
             vptr = cap_page_upper_directory_cap_get_capPUDMappedAddress(cap);
@@ -361,7 +356,6 @@ void print_object_arch(cap_t cap)
     switch (cap_get_capType(cap)) {
     case cap_frame_cap:
     case cap_page_table_cap:
-    case cap_page_directory_cap:
     case cap_page_upper_directory_cap:
     case cap_page_global_directory_cap:
         /* don't need to deal with these objects since they get handled from vtable */

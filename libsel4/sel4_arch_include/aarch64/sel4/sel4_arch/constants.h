@@ -187,10 +187,6 @@ typedef enum {
 #define seL4_PageTableEntryBits 3
 #define seL4_PageTableIndexBits 9
 
-#define seL4_PageDirBits 12
-#define seL4_PageDirEntryBits 3
-#define seL4_PageDirIndexBits 9
-
 #define seL4_NumASIDPoolsBits 7
 #define seL4_ASIDPoolBits 12
 #define seL4_ASIDPoolIndexBits 9
@@ -236,7 +232,6 @@ typedef enum {
 
 #ifndef __ASSEMBLER__
 SEL4_SIZE_SANITY(seL4_PageTableEntryBits, seL4_PageTableIndexBits, seL4_PageTableBits);
-SEL4_SIZE_SANITY(seL4_PageDirEntryBits, seL4_PageDirIndexBits, seL4_PageDirBits);
 SEL4_SIZE_SANITY(seL4_WordSizeBits, seL4_ASIDPoolIndexBits, seL4_ASIDPoolBits);
 SEL4_SIZE_SANITY(seL4_PGDEntryBits, seL4_PGDIndexBits, seL4_PGDBits);
 SEL4_SIZE_SANITY(seL4_PUDEntryBits, seL4_PUDIndexBits, seL4_PUDBits);
