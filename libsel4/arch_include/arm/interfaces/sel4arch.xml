@@ -84,6 +84,7 @@
     <interface name="seL4_ARM_IOPageTable" manual_name="I/O Page Table"
         cap_description="Capability to the I/O page table being operated on.">
         <method id="ARMIOPageTableMap" name="Map" condition="defined(CONFIG_TK1_SMMU)">
+            <condition><config var="CONFIG_TK1_SMMU"/></condition>
             <description>
                 TODO
             </description>
@@ -107,6 +108,7 @@
             </error>
         </method>
         <method id="ARMIOPageTableUnmap" name="Unmap" condition="defined(CONFIG_TK1_SMMU)">
+            <condition><config var="CONFIG_TK1_SMMU"/></condition>
             <description>
                 TODO
             </description>
@@ -205,6 +207,7 @@
             </error>
         </method>
         <method id="ARMPageMapIO" name="MapIO" condition="defined(CONFIG_TK1_SMMU)" manual_name="Map I/O">
+            <condition><config var="CONFIG_TK1_SMMU"/></condition>
             <brief>
                 TODO
             </brief>
@@ -512,6 +515,7 @@
         cap_description="Capability to the VCPU being operated on.">
         <method id="ARMVCPUSetTCB" name="SetTCB" condition="defined(CONFIG_ARM_HYPERVISOR_SUPPORT)"
             manual_name="Set TCB">
+                <condition><config var="CONFIG_ARM_HYPERVISOR_SUPPORT"/></condition>
                 <brief>
                     Bind a TCB to a virtual CPU
                 </brief>
@@ -535,6 +539,7 @@
         </method>
         <method id="ARMVCPUInjectIRQ" name="InjectIRQ" condition="defined(CONFIG_ARM_HYPERVISOR_SUPPORT)"
             manual_name="Inject IRQ">
+                <condition><config var="CONFIG_ARM_HYPERVISOR_SUPPORT"/></condition>
                 <brief>
                     Inject an IRQ to a virtual CPU
                 </brief>
@@ -572,6 +577,7 @@
         </method>
         <method id="ARMVCPUReadReg" name="ReadRegs" condition="defined(CONFIG_ARM_HYPERVISOR_SUPPORT)"
             manual_name="Read Registers">
+                <condition><config var="CONFIG_ARM_HYPERVISOR_SUPPORT"/></condition>
                 <brief>
                     Read a virtual CPU register
                 </brief>
@@ -600,6 +606,7 @@
         </method>
         <method id="ARMVCPUWriteReg" name="WriteRegs" condition="defined(CONFIG_ARM_HYPERVISOR_SUPPORT)"
             manual_name="Write Registers">
+                <condition><config var="CONFIG_ARM_HYPERVISOR_SUPPORT"/></condition>
                 <brief>
                     Write a virtual CPU register
                 </brief>
@@ -628,6 +635,7 @@
         </method>
         <method id="ARMVCPUAckVPPI" name="AckVPPI" condition="defined(CONFIG_ARM_HYPERVISOR_SUPPORT)"
             manual_name="Acknowledge Virtual PPI IRQ">
+                <condition><config var="CONFIG_ARM_HYPERVISOR_SUPPORT"/></condition>
                 <brief>
                     Acknowledge a PPI IRQ previously forwarded from a VPPIEvent fault
                 </brief>
@@ -706,7 +714,8 @@
         </method>
 
        <method id="ARMIRQIssueIRQHandlerTriggerCore" name="GetTriggerCore" manual_name="GetTriggerCore"
-           manual_label="irq_controlgettriggercore" condition="CONFIG_MAX_NUM_NODES > 1">
+           manual_label="irq_controlgettriggercore" condition="defined(CONFIG_ENABLE_SMP_SUPPORT)">
+            <condition><config var="CONFIG_ENABLE_SMP_SUPPORT"/></condition>
             <brief>
                 Create an IRQ handler capability and specify the trigger method (edge or level) and the target core.
             </brief>
@@ -762,6 +771,7 @@
     <interface name="seL4_ARM_SIDControl" manual_name="SID Control" cap_description="A SIDControl capability. This gives you the authority to make this call.">
        <method id="ARMSIDIssueSIDManager" name="GetSID" manual_name="GetSID"
            manual_label="sid_controlgetsid" condition="defined(CONFIG_ARM_SMMU)">
+            <condition><config var="CONFIG_ARM_SMMU"/></condition>
             <brief>
                 Create a SID capability.
             </brief>
@@ -807,6 +817,7 @@
         </method>
        <method id="ARMSIDGetFault" name="GetFault" manual_name="GetFault"
            manual_label="sid_controlgetfault" condition="defined(CONFIG_ARM_SMMU)">
+            <condition><config var="CONFIG_ARM_SMMU"/></condition>
             <brief>
                 Get the fault status of the SMMU.
             </brief>
@@ -837,6 +848,7 @@
         </method>
         <method id="ARMSIDClearFault" name="ClearFault" manual_name="ClearFault"
            manual_label="sid_controlclearfault" condition="defined(CONFIG_ARM_SMMU)">
+            <condition><config var="CONFIG_ARM_SMMU"/></condition>
             <brief>
                 Clear the fault status of the SMMU.
             </brief>
@@ -858,6 +870,7 @@
     <interface name="seL4_ARM_SID" manual_name="SID" cap_description="A SID capability. This gives you the authority to make this call.">
        <method id="ARMSIDBindCB" name="BindCB" manual_name="BindCB"
            manual_label="sid_bindcb" condition="defined(CONFIG_ARM_SMMU)">
+            <condition><config var="CONFIG_ARM_SMMU"/></condition>
             <brief>
                 Binding a context bank to a stream ID.
             </brief>
@@ -885,6 +898,7 @@
         </method>
        <method id="ARMSIDUnbindCB" name="UnbindCB" manual_name="UnbindCB"
            manual_label="sid_unbindcb" condition="defined(CONFIG_ARM_SMMU)">
+            <condition><config var="CONFIG_ARM_SMMU"/></condition>
             <brief>
                 Unbinding a context bank from a stream ID.
             </brief>
@@ -907,6 +921,7 @@
     <interface name="seL4_ARM_CBControl" manual_name="CB Control" cap_description="A CBControl capability. This gives you the authority to make this call.">
        <method id="ARMCBIssueCBManager" name="GetCB" manual_name="GetCB"
            manual_label="cb_controlgetcb" condition="defined(CONFIG_ARM_SMMU)">
+            <condition><config var="CONFIG_ARM_SMMU"/></condition>
             <brief>
                 Create a CB capability.
             </brief>
@@ -952,6 +967,7 @@
         </method>
         <method id="ARMCBTLBInvalidateAll" name="TLBInvalidateAll" manual_name="TLBInvalidateAll"
            manual_label="cb_controltlbinvalidate" condition="defined(CONFIG_ARM_SMMU)">
+            <condition><config var="CONFIG_ARM_SMMU"/></condition>
             <brief>
                 Invalidate all TLB entries.
             </brief>
@@ -973,6 +989,7 @@
     <interface name="seL4_ARM_CB" manual_name="CB" cap_description="A CB capability. This gives you the authority to make this call.">
        <method id="ARMCBAssignVspace" name="AssignVspace" manual_name="AssignVspace"
            manual_label="cb_assignvspace" condition="defined(CONFIG_ARM_SMMU)">
+            <condition><config var="CONFIG_ARM_SMMU"/></condition>
             <brief>
                 Assigning a vspace to a context bank.
             </brief>
@@ -1000,6 +1017,7 @@
         </method>
         <method id="ARMCBUnassignVspace" name="UnassignVspace" manual_name="UnassignVspace"
            manual_label="cb_unassignvspace" condition="defined(CONFIG_ARM_SMMU)">
+            <condition><config var="CONFIG_ARM_SMMU"/></condition>
             <brief>
                 Unassigning a vspace to a context bank.
             </brief>
@@ -1020,6 +1038,7 @@
         </method>
         <method id="ARMCBTLBInvalidate" name="TLBInvalidate" manual_name="TLBInvalidate"
            manual_label="cb_tlbinvalidate" condition="defined(CONFIG_ARM_SMMU)">
+            <condition><config var="CONFIG_ARM_SMMU"/></condition>
             <brief>
                 Invalidating TLB entries used by the current ASID in this context bank.
             </brief>
@@ -1040,6 +1059,7 @@
         </method>
         <method id="ARMCBGetFault" name="CBGetFault" manual_name="CBGetFault"
            manual_label="cb_getfault" condition="defined(CONFIG_ARM_SMMU)">
+            <condition><config var="CONFIG_ARM_SMMU"/></condition>
             <brief>
                 Get the fault status of the context bank.
             </brief>
@@ -1068,6 +1088,7 @@
         </method>
         <method id="ARMCBClearFault" name="CBClearFault" manual_name="CBClearFault"
            manual_label="cb_clearfault" condition="defined(CONFIG_ARM_SMMU)">
+            <condition><config var="CONFIG_ARM_SMMU"/></condition>
             <brief>
                  Clear the fault status of the context bank.
             </brief>
