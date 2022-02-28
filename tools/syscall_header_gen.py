@@ -16,6 +16,8 @@ import re
 import sys
 import xml.dom.minidom
 import pkg_resources
+from condition import condition_to_cpp
+
 # We require jinja2 to be at least version 2.10,
 # In the past we used the 'namespace' feature from that version.
 # other versions of jinja, particularly `minijinja`, don't support namespaces.
@@ -140,7 +142,7 @@ def parse_args():
 def parse_syscall_list(element):
     syscalls = []
     for config in element.getElementsByTagName("config"):
-        config_condition = config.getAttribute("condition")
+        config_condition = condition_to_cpp(config.getElementsByTagName("condition"))
         config_syscalls = []
         for syscall in config.getElementsByTagName("syscall"):
             name = str(syscall.getAttribute("name"))
