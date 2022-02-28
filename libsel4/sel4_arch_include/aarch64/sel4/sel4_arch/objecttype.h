@@ -8,7 +8,6 @@
 
 typedef enum _mode_object {
     seL4_ARM_HugePageObject = seL4_NonArchObjectTypeCount,
-    seL4_ARM_PageUpperDirectoryObject,
-    seL4_ARM_PageGlobalDirectoryObject,
+    seL4_ARM_VSpaceObject,
     seL4_ModeObjectTypeCount
 } seL4_ModeObjectType;

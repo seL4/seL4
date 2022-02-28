@@ -44,18 +44,6 @@ deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
         }
         return ret;
 
-    case cap_page_upper_directory_cap:
-        if (cap_page_upper_directory_cap_get_capPUDIsMapped(cap)) {
-            ret.cap = cap;
-            ret.status = EXCEPTION_NONE;
-        } else {
-            userError("Deriving a PUD cap without an assigned ASID");
-            current_syscall_error.type = seL4_IllegalOperation;
-            ret.cap = cap_null_cap_new();
-            ret.status = EXCEPTION_SYSCALL_ERROR;
-        }
-        return ret;
-
     case cap_page_table_cap:
         if (cap_page_table_cap_get_capPTIsMapped(cap)) {
             ret.cap = cap;
@@ -148,28 +136,6 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
         }
         break;
 
-    case cap_page_upper_directory_cap:
-#ifdef AARCH64_VSPACE_S2_START_L1
-#ifdef CONFIG_ARM_SMMU
-        if (cap_page_upper_directory_cap_get_capPGDMappedCB(cap) != CB_INVALID) {
-            smmu_cb_delete_vspace(cap_page_upper_directory_cap_get_capPUDMappedCB(cap),
-                                  cap_page_upper_directory_cap_get_capPUDMappedASID(cap));
-        }
-#endif
-        if (final && cap_page_upper_directory_cap_get_capPUDIsMapped(cap)) {
-            deleteASID(cap_page_upper_directory_cap_get_capPUDMappedASID(cap),
-                       PTE_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(cap)));
-        }
-#else
-        if (final && cap_page_upper_directory_cap_get_capPUDIsMapped(cap)) {
-            unmapPageTable(cap_page_upper_directory_cap_get_capPUDMappedASID(cap),
-                           cap_page_upper_directory_cap_get_capPUDMappedAddress(cap),
-                           PTE_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(cap)));
-        }
-
-#endif
-        break;
-
     case cap_page_table_cap:
         if (final && cap_page_table_cap_get_capPTIsMapped(cap)) {
             unmapPageTable(cap_page_table_cap_get_capPTMappedASID(cap),
@@ -234,13 +200,6 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
         if (cap_get_capType(cap_b) == cap_page_table_cap) {
             return cap_page_table_cap_get_capPTBasePtr(cap_a) ==
                    cap_page_table_cap_get_capPTBasePtr(cap_b);
-        }
-        break;
-
-    case cap_page_upper_directory_cap:
-        if (cap_get_capType(cap_b) == cap_page_upper_directory_cap) {
-            return cap_page_upper_directory_cap_get_capPUDBasePtr(cap_a) ==
-                   cap_page_upper_directory_cap_get_capPUDBasePtr(cap_b);
         }
         break;
 
@@ -338,12 +297,8 @@ word_t Arch_getObjectSize(word_t t)
         return ARMHugePageBits;
     case seL4_ARM_PageTableObject:
         return seL4_PageTableBits;
-    case seL4_ARM_PageUpperDirectoryObject:
-        return seL4_PUDBits;
-#ifndef AARCH64_VSPACE_S2_START_L1
-    case seL4_ARM_PageGlobalDirectoryObject:
-        return seL4_PGDBits;
-#endif
+    case seL4_ARM_VSpaceObject:
+        return seL4_VSpaceBits;
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case seL4_ARM_VCPUObject:
         return VCPU_SIZE_BITS;
@@ -386,8 +341,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
                    VMReadWrite,           /* capFVMRights */
                    !!deviceMemory         /* capFIsDevice */
                );
-#ifndef AARCH64_VSPACE_S2_START_L1
-    case seL4_ARM_PageGlobalDirectoryObject:
+    case seL4_ARM_VSpaceObject:
 #ifdef CONFIG_ARM_SMMU
 
         return cap_vspace_cap_new(
@@ -404,15 +358,6 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
                    0                      /* capIsMapped     */
                );
 #endif /*!CONFIG_ARM_SMMU*/
-#endif /*!AARCH64_VSPACE_S2_START_L1*/
-    case seL4_ARM_PageUpperDirectoryObject:
-        return cap_page_upper_directory_cap_new(
-                   asidInvalid,           /* capPUDMappedASID    */
-                   (word_t)regionBase,    /* capPUDBasePtr       */
-                   0,                     /* capPUDIsMapped      */
-                   0                      /* capPUDMappedAddress */
-               );
-
     case seL4_ARM_PageTableObject:
         return cap_page_table_cap_new(
                    asidInvalid,           /* capPTMappedASID    */
