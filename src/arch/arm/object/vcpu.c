@@ -280,6 +280,10 @@ void associateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
     }
     tcb->tcbArch.tcbVCPU = vcpu;
     vcpu->vcpuTCB = tcb;
+
+    if (tcb == NODE_STATE(ksCurThread)) {
+        vcpu_switch(vcpu);
+    }
 }
 
 void dissociateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
