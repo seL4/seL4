@@ -55,7 +55,6 @@
         </xsd:sequence>
         <xsd:attribute name="name" type="xsd:string" use="required" />
         <xsd:attribute name="id" type="xsd:string" use="required" />
-        <xsd:attribute name="condition" type="xsd:string" use="optional" />
         <xsd:attribute name="manual_name" type="xsd:string" use="optional" />
         <xsd:attribute name="manual_label" type="xsd:string" use="optional" />
     </xsd:complexType>

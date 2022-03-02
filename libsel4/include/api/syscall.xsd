@@ -38,7 +38,6 @@
             <xsd:element name="condition" minOccurs="0" maxOccurs="1" type="Unary"/>
             <xsd:element name="syscall" minOccurs="1" maxOccurs="unbounded" type="SyscallType"/>
         </xsd:sequence>
-        <xsd:attribute name="condition" type="xsd:string" />
     </xsd:complexType>
 
     <xsd:group name="ConfigGroup">
