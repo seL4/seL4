@@ -209,7 +209,7 @@
     </interface>
     <interface name="seL4_ARM_PageUpperDirectory" manual_name="Page Upper Directory"
         cap_description="Capability to the upper page directory being operated on.">
-        <method id="ARMPageUpperDirectoryMap" name="Map" condition="!(defined(CONFIG_ARM_HYPERVISOR_SUPPORT) &amp;&amp; defined(CONFIG_ARM_PA_SIZE_BITS_40))">
+        <method id="ARMPageUpperDirectoryMap" name="Map">
             <condition>
                 <not>
                     <and>
@@ -261,8 +261,7 @@
                 </description>
             </error>
         </method>
-        <method id="ARMPageUpperDirectoryUnmap" name="Unmap"
-            condition="!(defined(CONFIG_ARM_HYPERVISOR_SUPPORT) &amp;&amp; defined(CONFIG_ARM_PA_SIZE_BITS_40))">
+        <method id="ARMPageUpperDirectoryUnmap" name="Unmap">
             <condition>
                 <not>
                     <and>
