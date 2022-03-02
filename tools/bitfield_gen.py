@@ -108,8 +108,8 @@ def t_IDENTIFIER(t):
 
 
 def t_INTLIT(t):
-    r'([1-9][0-9]*|0[oO]?[0-7]+|0[xX][0-9a-fA-F]+|0[bB][01]+|0)[lL]?'
-    t.value = int(t.value, 0)
+    r'([1-9][0-9_]*|0[oO]?[0-7_]+|0[xX][0-9a-fA-F_]+|0[bB][01_]+|0)[lL]?'
+    t.value = int(t.value.replace('_', ''), 0)
     return t
 
 
