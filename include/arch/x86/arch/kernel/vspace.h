@@ -74,8 +74,6 @@ asid_map_t findMapForASID(asid_t asid);
 lookupPTSlot_ret_t lookupPTSlot(vspace_root_t *vspace, vptr_t vptr);
 lookupPDSlot_ret_t lookupPDSlot(vspace_root_t *vspace, vptr_t vptr);
 void copyGlobalMappings(vspace_root_t *new_vspace);
-word_t *PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread);
-exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType);
 void unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd);
 void unmapPageTable(asid_t, vptr_t vaddr, pte_t *pt);
 
@@ -94,7 +92,6 @@ exception_t decodeX86ModeMapPage(word_t invLabel, vm_page_size_t page_size, cte_
 void setVMRoot(tcb_t *tcb);
 bool_t CONST isValidVTableRoot(cap_t cap);
 bool_t CONST isValidNativeRoot(cap_t cap);
-exception_t checkValidIPCBuffer(vptr_t vptr, cap_t cap);
 vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_rights_mask);
 void flushTable(vspace_root_t *vspace, word_t vptr, pte_t *pt, asid_t asid);
 
@@ -123,10 +120,6 @@ pde_t CONST makeUserPDELargePage(paddr_t paddr, vm_attributes_t vm_attr, vm_righ
 pde_t CONST makeUserPDEPageTable(paddr_t paddr, vm_attributes_t vm_attr);
 pde_t CONST makeUserPDEInvalid(void);
 
-
-#ifdef CONFIG_PRINTING
-void Arch_userStackTrace(tcb_t *tptr);
-#endif
 
 static inline bool_t checkVPAlignment(vm_page_size_t sz, word_t w)
 {

@@ -29,20 +29,12 @@ void write_it_asid_pool(cap_t it_ap_cap, cap_t it_pd_cap);
 /* need a fake array to get the pointer from the linker script */
 extern char arm_vector_table[1];
 
-word_t *PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread);
-exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType);
 pde_t *pageTableMapped(asid_t asid, vptr_t vaddr, pte_t *pt);
 void setVMRoot(tcb_t *tcb);
 bool_t CONST isValidVTableRoot(cap_t cap);
-exception_t checkValidIPCBuffer(vptr_t vptr, cap_t cap);
 
 vm_rights_t CONST maskVMRights(vm_rights_t vm_rights,
                                seL4_CapRights_t cap_rights_mask);
 
 exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
                                    cte_t *cte, cap_t cap, word_t *buffer);
-
-#ifdef CONFIG_PRINTING
-void Arch_userStackTrace(tcb_t *tptr);
-#endif
-
