@@ -31,21 +31,11 @@ def condition_to_cpp(conditions):
                 raise Exception("Missing or empty config variable")
             return "defined({})".format(cfg_var)
         elif expr.tagName == "not":
-            child = expr.firstChild
-            if child.tagName == "and" or child.tagName == "or":
-                return "!({})".format(helper(child))
-            else:
-                return "!{}".format(helper(child))
+            return "!{}".format(helper(expr.firstChild))
         else:
-            # The lack of parentheses here is probably not correct for
-            # sequences of and/or but would change the output in a way which
-            # doesn't match the output we test this against.
-            #
-            # This issue will not arise in with the current input.
-            # Fix this in a subsequent patch.
             op_str = {'and': ' && ', 'or': ' || '}.get(expr.tagName)
             if op_str:
-                return op_str.join([helper(e) for e in expr.childNodes])
+                return '(' + op_str.join([helper(e) for e in expr.childNodes]) + ')'
 
             raise Exception("Unrecognized element `{}` in condition".format(expr.tagName))
 
