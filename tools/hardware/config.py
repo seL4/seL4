@@ -111,9 +111,12 @@ class RISCVConfig(Config):
 
 def get_arch_config(sel4arch: str, addrspace_max: int) -> Config:
     ''' Return an appropriate Config object for the given architecture '''
-    if sel4arch in ['aarch32', 'aarch64', 'arm_hyp']:
-        return ARMConfig(sel4arch, addrspace_max)
-    elif sel4arch in ['riscv32', 'riscv64']:
-        return RISCVConfig(sel4arch, addrspace_max)
-    else:
-        raise ValueError('Unsupported sel4arch "{}" specified.'.format(sel4arch))
+
+    for (ctor, arch_list) in [
+        (ARMConfig,   ['aarch32', 'aarch64', 'arm_hyp']),
+        (RISCVConfig, ['riscv32', 'riscv64']),
+    ]:
+        if sel4arch in arch_list:
+            return ctor(sel4arch, addrspace_max)
+
+    raise ValueError('Unsupported sel4arch "{}" specified.'.format(sel4arch))
