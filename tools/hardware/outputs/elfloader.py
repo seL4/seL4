@@ -173,6 +173,6 @@ def run(tree: fdt.FdtParser, hardware: rule.HardwareYaml, config: config.Config,
     args.elfloader_out.close()
 
 
-def add_args(parser):
+def add_args(parser: argparse.ArgumentParser):
     parser.add_argument('--elfloader-out', help='output file for elfloader header',
                         type=argparse.FileType('w'))

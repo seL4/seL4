@@ -216,6 +216,6 @@ def run(tree: FdtParser, hw_yaml: HardwareYaml, config: Config, args: argparse.N
         args.header_out)
 
 
-def add_args(parser):
+def add_args(parser: argparse.ArgumentParser):
     parser.add_argument('--header-out', help='output file for c header',
                         type=argparse.FileType('w'))

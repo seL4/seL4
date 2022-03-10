@@ -14,7 +14,7 @@ from hardware.memory import Region
 from hardware.utils.rule import KernelRegionGroup
 
 
-def get_memory_regions(tree: FdtParser):
+def get_memory_regions(tree: FdtParser) -> Set[Region]:
     ''' Get all regions with device_type = memory in the tree '''
     regions = set()
 
