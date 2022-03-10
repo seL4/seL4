@@ -12,10 +12,11 @@ from typing import List
 import hardware
 from hardware.config import Config
 from hardware.fdt import FdtParser
+from hardware.memory import Region
 from hardware.utils.rule import HardwareYaml
 
 
-def make_yaml_list_of_regions(regions) -> List:
+def make_yaml_list_of_regions(regions: List[Region]) -> List:
     return [
         {
             'start': r.base,
@@ -25,7 +26,7 @@ def make_yaml_list_of_regions(regions) -> List:
     ]
 
 
-def create_yaml_file(dev_mem, phys_mem, outputStream):
+def create_yaml_file(dev_mem: List[Region], phys_mem: List[Region], outputStream):
 
     yaml.add_representer(
         int,
@@ -64,6 +65,6 @@ def run(tree: FdtParser, hw_yaml: HardwareYaml, config: Config,
     create_yaml_file(dev_mem, phys_mem, args.yaml_out)
 
 
-def add_args(parser):
+def add_args(parser: argparse.ArgumentParser):
     parser.add_argument('--yaml-out', help='output file for memory yaml',
                         type=argparse.FileType('w'))
