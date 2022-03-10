@@ -5,14 +5,20 @@
 #
 
 ''' generate a c header file from the device tree '''
+
+from __future__ import annotations
 import argparse
 import builtins
 import jinja2
-from typing import Dict, List
 import hardware
 from hardware.config import Config
 from hardware.fdt import FdtParser
 from hardware.utils.rule import HardwareYaml
+
+# "annotations" exists in __future__ since 3.7.0b1, but even in 3.10 the
+# decision to make it mandatory has been postponed.
+import sys
+assert sys.version_info >= (3, 7)
 
 
 HEADER_TEMPLATE = '''/*

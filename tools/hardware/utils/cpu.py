@@ -4,10 +4,15 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-from typing import List
-
+from __future__ import annotations
 from hardware.device import WrappedNode
 from hardware.fdt import FdtParser
+
+# "annotations" exists in __future__ since 3.7.0b1, but even in 3.10 the
+# decision to make it mandatory has been postponed.
+import sys
+assert sys.version_info >= (3, 7)
+
 
 # documentation for CPU bindings:
 # https://www.kernel.org/doc/Documentation/devicetree/bindings/arm/cpus.yaml

@@ -6,16 +6,19 @@
 
 ''' generate a header file for the elfloader from a device tree '''
 
+from __future__ import annotations
 import argparse
 import builtins
 import logging
 import pyfdt.pyfdt
-
 from jinja2 import Environment, BaseLoader
-from typing import List
-
 from hardware import config, device, fdt
 from hardware.utils import cpu, memory, rule
+
+# "annotations" exists in __future__ since 3.7.0b1, but even in 3.10 the
+# decision to make it mandatory has been postponed.
+import sys
+assert sys.version_info >= (3, 7)
 
 
 HEADER_TEMPLATE = '''/*
