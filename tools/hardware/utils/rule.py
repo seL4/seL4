@@ -4,12 +4,10 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
+from __future__ import annotations
 from collections import defaultdict
 from functools import lru_cache
-from typing import Dict, List
-
 import logging
-
 from hardware.config import Config
 from hardware.device import WrappedNode
 from hardware.fdt import FdtParser
@@ -56,7 +54,7 @@ class KernelRegionGroup:
         ''' True if this group has a macro '''
         return self.macro is not None
 
-    def take_labels(self, other_group: 'KernelRegionGroup'):
+    def take_labels(self, other_group: KernelRegionGroup):
         ''' Take another group's labels and add them to our own '''
         if self != other_group:
             raise ValueError('need to have equal size and base to take labels')

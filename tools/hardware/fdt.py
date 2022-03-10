@@ -4,9 +4,8 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-from typing import Any, Dict, IO, List
+from __future__ import annotations
 import pyfdt.pyfdt
-
 from hardware.device import WrappedNode
 from hardware.irq import create_irq_controller, IrqController
 
