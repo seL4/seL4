@@ -29,4 +29,3 @@ struct extra_caps {
     cte_ptr_t excaprefs[seL4_MsgMaxExtraCaps];
 };
 typedef struct extra_caps extra_caps_t;
-

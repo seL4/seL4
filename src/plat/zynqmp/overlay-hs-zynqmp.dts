@@ -1,0 +1,12 @@
+/*
+ * Copyright 2019, DornerWorks
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+    amba {
+		/* bug: pcie node generates untyped objects too large for hypervisor mode */
+		/delete-node/ pcie@fd0e0000;
+    };
+};

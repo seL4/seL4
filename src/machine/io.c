@@ -5,7 +5,7 @@
  *
  * Portions derived from musl:
  *
- * Copyright © 2005-2020 Rich Felker, et al.
+ * Copyright (c) 2005-2020 Rich Felker, et al.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -95,9 +95,9 @@ static inline bool_t isdigit(char c)
            c <= '9';
 }
 
-/* Convenient bit representation for modifier flags, which all fall
- * within 31 codepoints of the space character. */
-
+/* Convenient bit representation for modifier flags, which all fall within 31
+ * codepoints of the space character.
+ */
 #define MASK_TYPE(a) (1U<<( a -' '))
 
 #define ALT_FORM     (1U<<('#'-' '))
@@ -109,13 +109,9 @@ static inline bool_t isdigit(char c)
 
 #define FLAGMASK (ALT_FORM|ZERO_PAD|LEFT_ADJ|PAD_POS|MARK_POS|GROUPED)
 
-#define INTMAX_MAX INT32_MAX
-#define INT_MAX  0x7fffffff
-
-#define ULONG_MAX ((unsigned long)(-1))
-
 /* State machine to accept length modifiers + conversion specifiers.
- * Result is 0 on failure, or an argument type to pop on success. */
+ * Result is 0 on failure, or an argument type to pop on success.
+ */
 
 enum {
     BARE, LPRE, LLPRE, HPRE, HHPRE, BIGLPRE,
@@ -182,7 +178,7 @@ static const unsigned char states[]['z' - 'A' + 1] = {
 #define DIGIT(c) (c - '0')
 
 union arg {
-    word_t i;
+    uintmax_t i;
     long double f;
     void *p;
 };
@@ -247,7 +243,7 @@ static const char xdigits[16] = {
     "0123456789ABCDEF"
 };
 
-static char *fmt_x(word_t x, char *s, int lower)
+static char *fmt_x(uintmax_t x, char *s, int lower)
 {
     for (; x; x >>= 4) {
         *--s = xdigits[(x & 15)] | lower;
@@ -255,7 +251,7 @@ static char *fmt_x(word_t x, char *s, int lower)
     return s;
 }
 
-static char *fmt_o(word_t x, char *s)
+static char *fmt_o(uintmax_t x, char *s)
 {
     for (; x; x >>= 3) {
         *--s = '0' + (x & 7);
@@ -263,21 +259,43 @@ static char *fmt_o(word_t x, char *s)
     return s;
 }
 
-static char *fmt_u(word_t x, char *s)
+static char *fmt_u(uintmax_t x, char *s)
 {
-    unsigned long y;
-    for (; x > ULONG_MAX; x /= 10) {
-        *--s = '0' + x % 10;
-    }
-    for (y = x;           y; y /= 10) {
-        *--s = '0' + y % 10;
+    while (0 != x) {
+#if defined(CONFIG_ARCH_AARCH32) || defined(CONFIG_ARCH_RISCV32) || defined(CONFIG_ARCH_IA32)
+        /* On 32-bit systems, dividing a 64-bit number by 10 makes the compiler
+         * call a helper function from a compiler runtime library. The actual
+         * function differs, currently for x86 it's __udivdi3(), for ARM its
+         * __aeabi_uldivmod() and for RISC-V it's __umoddi3(). The kernel is not
+         * supposed to have dependencies on a compiler library, so the algorithm
+         * below (taken from Hacker's Delight) is used to divide by 10 with only
+         * basic operation and avoiding even multiplication.
+         */
+        uintmax_t q = (x >> 1) + (x >> 2); /* q = x/2 + x/4 = 3x/4 */
+        q += (q >> 4); /* q += (3x/4)/16 = 51x/2^6 */
+        q += (q >> 8); /* q += (51x/2^6)/2^8 = 13107x/2^14 */
+        q += (q >> 16); /* q += (13107x/2^14)/2^16 = 858993458x/2^30 */
+        q += (q >> 32); /* q += (858993458x/2^30)/2^32 = .../2^62 */
+        q >>= 3; /* q is roughly 0.8x, so q/8 is roughly x/10 */
+        unsigned int rem = x - (((q << 2) + q) << 1); // rem = x - 10q */
+        if (rem > 9) { /* handle rounding issues */
+            q += 1;
+            rem = x - (((q << 2) + q) << 1); /* recalculate reminder */
+            assert(rem <= 9); /* there must be no rounding error now */
+        }
+#else
+        uintmax_t q = x / 10;
+        unsigned int rem = x % 10;
+#endif
+        *--s = '0' + rem;
+        x = q;
     }
     return s;
 }
 
-// Maximum buffer size taken to ensure correct adaptation
-// However, it could be reduced/removed if we could measure
-// the buf length under all code paths
+/* Maximum buffer size taken to ensure correct adaptation. However, it could be
+ * reduced/removed if we could measure the buf length under all code paths
+ */
 #define LDBL_MANT_DIG 113
 
 #define NL_ARGMAX 9
@@ -286,7 +304,7 @@ static int getint(char **s)
 {
     int i;
     for (i = 0; isdigit(**s); (*s)++) {
-        if (i > INT_MAX / 10U || DIGIT(**s) > INT_MAX - 10 * i) {
+        if (i > INTMAX_MAX / 10U || DIGIT(**s) > INTMAX_MAX - 10 * i) {
             i = -1;
         } else {
             i = 10 * i + DIGIT(**s);
@@ -304,17 +322,18 @@ static int printf_core(out_wrap_t *f, const char *fmt, va_list *ap, union arg *n
     int argpos;
     unsigned st, ps;
     int cnt = 0, l = 0;
-    word_t i;
-    char buf[sizeof(word_t) * 3 + 3 + LDBL_MANT_DIG / 4];
+    char buf[sizeof(uintmax_t) * 3 + 3 + LDBL_MANT_DIG / 4];
     const char *prefix;
     int t, pl;
 
     for (;;) {
-        /* This error is only specified for snprintf, but since it's
-         * unspecified for other forms, do the same. Stop immediately
-         * on overflow; otherwise %n could produce wrong results. */
-        if (l > INT_MAX - cnt) {
-            goto overflow;
+        if (l > INTMAX_MAX - cnt) {
+            /* This error is only specified for snprintf, for other function
+             * from the printf() family the behavior is unspecified. Stopping
+             * immediately here also seems sane, otherwise %n could produce
+             * wrong results.
+             */
+            return -1; /* overflow */
         }
 
         /* Update output count, end loop when fmt is exhausted */
@@ -326,8 +345,8 @@ static int printf_core(out_wrap_t *f, const char *fmt, va_list *ap, union arg *n
         /* Handle literal text and %% format specifiers */
         for (a = s; *s && *s != '%'; s++);
         for (z = s; s[0] == '%' && s[1] == '%'; z++, s += 2);
-        if (z - a > INT_MAX - cnt) {
-            goto overflow;
+        if (z - a > INTMAX_MAX - cnt) {
+            return -1; /* overflow */
         }
         l = z - a;
         out(f, a, l);
@@ -360,14 +379,14 @@ static int printf_core(out_wrap_t *f, const char *fmt, va_list *ap, union arg *n
                 w = f ? va_arg(*ap, int) : 0;
                 s++;
             } else {
-                goto inval;
+                return -1; /* invalid */
             }
             if (w < 0) {
                 fl |= LEFT_ADJ;
                 w = -w;
             }
         } else if ((w = getint(&s)) < 0) {
-            goto overflow;
+            return -1; /* overflow */
         }
 
         /* Read precision */
@@ -380,7 +399,7 @@ static int printf_core(out_wrap_t *f, const char *fmt, va_list *ap, union arg *n
                 p = f ? va_arg(*ap, int) : 0;
                 s += 2;
             } else {
-                goto inval;
+                return -1;/* invalid */
             }
             xp = (p >= 0);
         } else if (*s == '.') {
@@ -396,19 +415,19 @@ static int printf_core(out_wrap_t *f, const char *fmt, va_list *ap, union arg *n
         st = 0;
         do {
             if (OOB(*s)) {
-                goto inval;
+                return -1; /* invalid */
             }
             ps = st;
             st = states[st]S(*s++);
         } while (st - 1 < STOP);
         if (!st) {
-            goto inval;
+            return -1; /* invalid */
         }
 
         /* Check validity of argument type (nl/normal) */
         if (st == NOARG) {
             if (argpos >= 0) {
-                goto inval;
+                return -1; /* invalid */
             }
         } else {
             if (argpos >= 0) {
@@ -470,9 +489,9 @@ static int printf_core(out_wrap_t *f, const char *fmt, va_list *ap, union arg *n
             fl &= ~ZERO_PAD;
         } else if (t == 's') {
             a = arg.p ? arg.p : "(null)";
-            z = a + strnlen(a, p < 0 ? INT_MAX : p);
+            z = a + strnlen(a, p < 0 ? UINTPTR_MAX : p);
             if (p < 0 && *z) {
-                goto overflow;
+                return -1; /* overflow */
             }
             p = z - a;
             fl &= ~ZERO_PAD;
@@ -513,7 +532,7 @@ static int printf_core(out_wrap_t *f, const char *fmt, va_list *ap, union arg *n
                 break;
             }
             if (xp && p < 0) {
-                goto overflow;
+                return -1; /* overflow */
             }
             if (xp) {
                 fl &= ~ZERO_PAD;
@@ -528,14 +547,14 @@ static int printf_core(out_wrap_t *f, const char *fmt, va_list *ap, union arg *n
         if (p < z - a) {
             p = z - a;
         }
-        if (p > INT_MAX - pl) {
-            goto overflow;
+        if (p > INTMAX_MAX - pl) {
+            return -1; /* overflow */
         }
         if (w < pl + p) {
             w = pl + p;
         }
-        if (w > INT_MAX - cnt) {
-            goto overflow;
+        if (w > INTMAX_MAX - cnt) {
+            return -1; /* overflow */
         }
 
         pad(f, ' ', w, pl + p, fl);
@@ -555,19 +574,16 @@ static int printf_core(out_wrap_t *f, const char *fmt, va_list *ap, union arg *n
         return 0;
     }
 
+    int i;
     for (i = 1; i <= NL_ARGMAX && nl_type[i]; i++) {
         pop_arg(nl_arg + i, nl_type[i], ap);
     }
     for (; i <= NL_ARGMAX && !nl_type[i]; i++);
     if (i <= NL_ARGMAX) {
-        goto inval;
+        return -1; /* invalid */
     }
-    return 1;
 
-// goto for potential debug error support
-inval:
-overflow:
-    return -1;
+    return 1;
 }
 
 static int vprintf(out_wrap_t *out, const char *fmt, va_list ap)
@@ -577,7 +593,7 @@ static int vprintf(out_wrap_t *out, const char *fmt, va_list ap)
     union arg nl_arg[NL_ARGMAX + 1];
     int ret;
 
-    // validate format string
+    /* validate format string */
     va_copy(ap2, ap);
     if (printf_core(NULL, fmt, &ap2, nl_arg, nl_type) < 0) {
         va_end(ap2);

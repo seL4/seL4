@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <config.h>
 #include <types.h>
 #include <api/failures.h>
 #include <object/structures.h>
@@ -22,9 +23,6 @@ void write_it_asid_pool(cap_t it_ap_cap, cap_t it_lvl1pt_cap);
 
 /* ==================== BOOT CODE FINISHES HERE ==================== */
 #define IT_ASID 1
-
-void idle_thread(void);
-#define idleThreadStart (&idle_thread)
 
 struct lookupPTSlot_ret {
     pte_t *ptSlot;

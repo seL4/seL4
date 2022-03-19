@@ -291,20 +291,6 @@ BOOT_CODE void map_kernel_window(void)
         )
     );
 
-#ifdef CONFIG_KERNEL_GLOBALS_FRAME
-    /* map globals frame */
-    map_kernel_frame(
-        addrFromKPPtr(armKSGlobalsFrame),
-        seL4_GlobalsFrame,
-        VMReadOnly,
-        vm_attributes_new(
-            true,  /* armExecuteNever */
-            true,  /* armParityEnabled */
-            true   /* armPageCacheable */
-        )
-    );
-#endif /* CONFIG_KERNEL_GLOBALS_FRAME */
-
     map_kernel_devices();
 }
 
@@ -384,33 +370,6 @@ BOOT_CODE void map_kernel_window(void)
             true   /* armPageCacheable */
         )
     );
-
-#ifdef CONFIG_KERNEL_GLOBALS_FRAME
-    /* map globals frame */
-    map_kernel_frame(
-        addrFromKPPtr(armKSGlobalsFrame),
-        seL4_GlobalsFrame,
-        VMReadOnly,
-        vm_attributes_new(
-            false, /* armExecuteNever */
-            true,  /* armParityEnabled */
-            true   /* armPageCacheable */
-        )
-    );
-    /* map globals into user global PT */
-    pteS2 = pte_pte_small_new(
-                1, /* Not Executeable */
-                0, /* Not contiguous */
-                addrFromKPPtr(armKSGlobalsFrame),
-                1, /* AF -- always set */
-                0, /* Not shared */
-                HAPFromVMRights(VMReadOnly),
-                MEMATTR_CACHEABLE  /* Cacheable */
-            );
-    memzero(armUSGlobalPT, 1 << seL4_PageTableBits);
-    idx = (seL4_GlobalsFrame >> PAGE_BITS) & (MASK(PT_INDEX_BITS));
-    armUSGlobalPT[idx] = pteS2;
-#endif /* CONFIG_KERNEL_GLOBALS_FRAME */
 
     map_kernel_devices();
 }
@@ -850,7 +809,7 @@ static pte_t CONST makeUserPTE(vm_page_size_t page_size, paddr_t paddr,
                                     0, /* APX = 0, privileged full access */
                                     5, /* TEX = 0b101, outer write-back, write-allocate */
                                     ap,
-                                    0, 1, /* Inner write-back, write-allocate (except on ARM11) */
+                                    0, 1, /* Inner write-back, write-allocate */
                                     nonexecutable);
         } else {
             pte = pte_pte_small_new(paddr,
@@ -874,7 +833,7 @@ static pte_t CONST makeUserPTE(vm_page_size_t page_size, paddr_t paddr,
                                     SMP_TERNARY(1, 0), /* shareable if SMP enabled, otherwise unshared */
                                     0, /* APX = 0, privileged full access */
                                     ap,
-                                    0, 1, /* Inner write-back, write-allocate (except on ARM11) */
+                                    0, 1, /* Inner write-back, write-allocate */
                                     1 /* reserved */);
         } else {
             pte = pte_pte_large_new(paddr,
@@ -990,7 +949,7 @@ static pde_t CONST makeUserPDE(vm_page_size_t page_size, paddr_t paddr, bool_t p
                                    0, /* APX = 0, privileged full access */
                                    5, /* TEX = 0b101, outer write-back, write-allocate */
                                    ap, parity, domain, nonexecutable,
-                                   0, 1 /* Inner write-back, write-allocate (except on ARM11) */);
+                                   0, 1 /* Inner write-back, write-allocate */);
     } else {
         return pde_pde_section_new(paddr, size2,
                                    1, /* not global */
@@ -1243,14 +1202,6 @@ void copyGlobalMappings(pde_t *newPD)
             newPD[i] = global_pd[i];
         }
     }
-#else
-#ifdef CONFIG_KERNEL_GLOBALS_FRAME
-    /* Kernel and user MMUs are completely independent, however,
-     * we still need to share the globals page. */
-    pde_t pde;
-    pde = pde_pde_coarse_new(addrFromKPPtr(armUSGlobalPT));
-    newPD[BIT(PD_INDEX_BITS) - 1] = pde;
-#endif /* CONFIG_KERNEL_GLOBALS_FRAME */
 #endif
 }
 

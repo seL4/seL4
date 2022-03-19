@@ -72,6 +72,23 @@ class Generator(object):
             string = soup.get_text()
 
         if string is not None:
+            # HACK: Due to the extra spacing that gets inserted by our scripts between XML
+            # elements to ensure doxygen can read xmlonly tags, we can no longer tell here
+            # if the text after an xml tag should have been flush against the result
+            # of the xml tag or not.
+            #
+            # For example, the following in an IDL file:
+            #    Testing <texttt text="1"/>, 2, 3
+            # Generates these C comments:
+            #    Testing  @xmlonly <texttt text="1"/> @endxmlonly , 2, 3
+            # Which generates this doxygen output:
+            #    Testing <texttt text="1"/>  , 2, 3
+            #
+            # To deal with this, just pick out punctuation that looks like it should have been
+            # flush against the xml and remove the leading spaces.
+            if string.startswith("  ,") or string.startswith("  ."):
+                string = string[2:]
+
             if escape:
                 return self.text_escape(string)
             else:
@@ -142,6 +159,7 @@ class Generator(object):
         param_order = []
         types_iter = iter(parent.find_all('type'))
         names = parent.find_all('declname')
+        errors = {}
 
         # the first type is the return type
         ret_type = six.next(types_iter)
@@ -154,7 +172,9 @@ class Generator(object):
             params[str(n.text)] = {"type": param_type}
             param_order.append(str(n.text))
 
-        param_items = parent.find_all("parameteritem")
+        param_items = parent.find_all(
+            lambda e: e.name == "parameteritem" and e.parent["kind"] == "param")
+
         for param_item in param_items:
             param_name_node = param_item.find("parametername")
             param_desc_node = param_item.find("parameterdescription")
@@ -172,6 +192,26 @@ class Generator(object):
                 param_info = params[param_name]
                 params_str += self.generate_param_string(param_info, param_name)
 
+        error_items = parent.find_all(
+            lambda e: e.name == "parameteritem" and e.parent["kind"] == "retval")
+
+        for error_item in error_items:
+            error_name_node = error_item.find("parametername")
+            error_desc_node = error_item.find("parameterdescription")
+
+            error_name = self.get_text(error_name_node, escape=False)
+            error_desc = self.parse_para(error_desc_node.find('para'), ref_dict)
+
+            errors[error_name] = {"desc": error_desc}
+
+        if len(errors) == 0:
+            errors_str = self.generate_empty_error_string()
+        else:
+            errors_str = ""
+            for error_name in sorted(errors):
+                error_info = errors[error_name]
+                errors_str += self.generate_error_string(error_info, error_name)
+
         details = ""
         for n in parent.detaileddescription.find_all('para', recursive=False):
             if not n.parameterlist:
@@ -185,7 +225,7 @@ class Generator(object):
             if n['kind'] == "return":
                 ret = self.parse_para(n.find('para'), ref_dict)
                 break
-        return (self.todo_if_empty(details.strip()), params_str, self.todo_if_empty(ret.strip()))
+        return (self.todo_if_empty(details.strip()), params_str, errors_str, self.todo_if_empty(ret.strip()))
 
     def parse_prototype(self, parent, escape=True):
         """
@@ -236,7 +276,13 @@ class Generator(object):
     def generate_empty_param_string(self):
         return ""
 
-    def generate_api_doc(self, level, member, params, ret, details):
+    def generate_error_string(self, error_info, error_name):
+        return ""
+
+    def generate_empty_error_string(self):
+        return ""
+
+    def generate_api_doc(self, level, member, params, ret, details, errors):
         return ""
 
     def todo_if_empty(self, s):
@@ -306,7 +352,22 @@ class LatexGenerator(Generator):
     def generate_empty_param_string(self):
         return "\\param{void}{}{}"
 
-    def generate_api_doc(self, level, member, params, ret, details):
+    def generate_errors(self, error_string):
+        """
+        Wraps the errors in an \errortable
+        """
+
+        if error_string:
+            return "\errortable{%s}" % error_string
+        return ""
+
+    def generate_error_string(self, error_info, error_name):
+        return "\\error{%(name)s}{%(desc)s}\n" % {
+            "name": self.get_text(error_name),
+            "desc": self.todo_if_empty(error_info.get("desc", "").strip()),
+        }
+
+    def generate_api_doc(self, level, member, params, ret, details, errors):
         manual_node = member.manual
         return """
 \\apidoc
@@ -318,6 +379,7 @@ class LatexGenerator(Generator):
 {%(params)s}
 {%(ret)s}
 {%(details)s}
+{%(errors)s}
         """ % {
             "level": self.level_to_header(level),
             "label": manual_node["label"],
@@ -326,6 +388,7 @@ class LatexGenerator(Generator):
             "prototype": self.parse_prototype(member),
             "params": params,
             "ret": ret,
+            "errors": self.generate_errors(errors),
             "details": details,
         }
 
@@ -450,7 +513,26 @@ Type | Name | Description
             "desc": self.todo_if_empty(param_info.get("desc", "").strip()),
         }
 
-    def generate_api_doc(self, level, member, params, ret, details):
+    def generate_errors(self, error_string):
+        """
+        Returns the errors in a formatted Markdown table
+        """
+
+        if error_string:
+            return """
+Error Code | Possible Cause
+--- | ---
+%s
+            """ % error_string
+        return ""
+
+    def generate_error_string(self, error_info, error_name):
+        return "`%(name)s` | %(desc)s\n" % {
+            "name": self.get_text(error_name, escape=False),
+            "desc": self.todo_if_empty(error_info.get("desc", "").strip()),
+        }
+
+    def generate_api_doc(self, level, member, params, ret, details, errors):
         manual_node = member.manual
 
         # Descriptions that just contain a document reference are removed.
@@ -467,6 +549,7 @@ Type | Name | Description
         ret_string = re.sub(r'DOCREF', "", ret_string)
         details_string = re.sub(r'DOCREF', "", details_string)
         params_string = re.sub(r'DOCREF', "", params)
+        errors_string = re.sub(r'DOCREF', "", errors)
 
         return """
 %(hash)s %(name)s
@@ -475,6 +558,8 @@ Type | Name | Description
 %(brief)s
 %(params)s
 %(ret)s
+
+%(errors)s
 
 %(details)s
 """ % {
@@ -485,6 +570,7 @@ Type | Name | Description
             "prototype": self.parse_prototype(member, escape=False),
             "params": self.generate_params(params_string),
             "ret": ret_string,
+            "errors": self.generate_errors(errors_string),
             "details": details_string,
         }
 
@@ -530,8 +616,8 @@ def generate_general_syscall_doc(generator, input_file_name, level, ref_dict):
 
         for member in elements:
             manual_node = member.manual
-            details, params, ret = generator.parse_detailed_desc(member, ref_dict)
-            output += generator.generate_api_doc(level, member, params, ret, details)
+            details, params, errors, ret = generator.parse_detailed_desc(member, ref_dict)
+            output += generator.generate_api_doc(level, member, params, ret, details, errors)
         return output
 
 

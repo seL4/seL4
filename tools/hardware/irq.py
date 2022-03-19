@@ -185,6 +185,8 @@ CONTROLLERS = {
     'qcom,msm-qgic2': ArmGic,
     'ti,am33xx-intc': RawIrqController,
     'ti,omap3-intc': RawIrqController,
+    'riscv,cpu-intc': RawIrqController,
+    'riscv,plic0': RawIrqController,
 }
 
 

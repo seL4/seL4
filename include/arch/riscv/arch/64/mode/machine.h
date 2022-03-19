@@ -6,6 +6,20 @@
 
 #pragma once
 
-/* Place holder for 64-bit machine header */
-
+#include <util.h>
 #include <arch/model/smp.h>
+#include <stdint.h>
+
+static inline uint64_t riscv_read_time(void)
+{
+    uint64_t n;
+    asm volatile("rdtime %0" : "=r"(n));
+    return n;
+}
+
+static inline uint64_t riscv_read_cycle(void)
+{
+    uint64_t n;
+    asm volatile("rdcycle %0" : "=r"(n));
+    return n;
+}

@@ -13,6 +13,9 @@
  */
 
 #pragma once
+
+#include <sel4/macros.h>
+
 /**
  * Hidden function, use the macros seL4_Fail or seL4_Assert.
  */
@@ -34,12 +37,7 @@ void __assert_fail(const char  *str, const char *file, int line, const char *fun
 /**
  * An assert that tests that the expr is a compile time constant and
  * evaluates to true.
- *
- * This code is similar to compile_time_assert in libutils/include/utils/compile_time.h,
- * we may want to have only one. Also, using __COUNTER__ its not necessary to have name
- * for uniqueness so I've removed it, although maybe there is another reason for it, like
- * some compilers don't support __COUNTER__.
  */
 #define seL4_CompileTimeAssert(expr) \
-    extern char __seL4_CompileTimeAssertFailed_ ## __COUNTER__[__builtin_constant_p(expr) ? ((expr) ? 1 : -1) : -1] __attribute__((unused))
+    SEL4_COMPILE_ASSERT(seL4_CompileTimeAssert, expr)
 

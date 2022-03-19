@@ -1,0 +1,51 @@
+# Copyright 2021, Proofcraft Pty ltd
+#
+# SPDX-License-Identifier: BSD-2-Clause
+
+# Sync proofs: deploy new verification manifest on successful preprocess test
+
+name: Proof Sync
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  code:
+    name: Code Freeze
+    runs-on: ubuntu-latest
+    outputs:
+      xml: ${{ steps.repo.outputs.xml }}
+    steps:
+    - id: repo
+      uses: seL4/ci-actions/repo-checkout@master
+      with:
+        manifest_repo: verification-manifest
+        manifest: devel.xml
+
+  preprocess:
+    name: Preprocess
+    needs: code
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [ARM, ARM_HYP, AARCH64, RISCV64, X64]
+        # no MCS here, auto-updating mcs.xml should be a separate job.
+    steps:
+    - uses: seL4/ci-actions/preprocess@master
+      with:
+        L4V_ARCH: ${{ matrix.arch }}
+
+  deploy:
+    name: Deploy manifest
+    needs: [code, preprocess]
+    if: ${{ github.repository_owner == 'seL4' }}
+    runs-on: ubuntu-latest
+    steps:
+    - uses: seL4/ci-actions/l4v-deploy@master
+      with:
+        xml: ${{ needs.code.outputs.xml }}
+        preprocess: 'true'
+      env:
+        GH_SSH: ${{ secrets.CI_SSH }}

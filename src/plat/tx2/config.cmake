@@ -21,7 +21,7 @@ if(KernelPlatformTx2)
     list(APPEND KernelDTSList "tools/dts/tx2.dts")
     list(APPEND KernelDTSList "src/plat/tx2/overlay-tx2.dts")
     declare_default_headers(
-        TIMER_FREQUENCY 31250000llu
+        TIMER_FREQUENCY 31250000
         MAX_IRQ 383
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h
         NUM_PPI 32

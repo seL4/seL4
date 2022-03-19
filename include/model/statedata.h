@@ -48,7 +48,7 @@
 #define ARCH_NODE_STATE_ON_CORE(_state, _core) _state
 #define NODE_STATE_ON_CORE(_state, _core)      _state
 
-#define CURRENT_CPU_INDEX() 0
+#define CURRENT_CPU_INDEX() SEL4_WORD_CONST(0)
 
 #endif /* ENABLE_SMP_SUPPORT */
 
@@ -69,6 +69,7 @@ NODE_STATE_DECLARE(time_t, ksConsumed);
 NODE_STATE_DECLARE(time_t, ksCurTime);
 NODE_STATE_DECLARE(bool_t, ksReprogram);
 NODE_STATE_DECLARE(sched_context_t, *ksCurSC);
+NODE_STATE_DECLARE(sched_context_t, *ksIdleSC);
 #endif
 
 #ifdef CONFIG_HAVE_FPU

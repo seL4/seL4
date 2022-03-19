@@ -4,7 +4,7 @@
 
 # Compilation actions to run on pull requests
 
-name: Kernel
+name: Compile
 
 on:
   push:
@@ -14,14 +14,13 @@ on:
 
 jobs:
   standalone_kernel:
-    name: compile
+    name: kernel
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        arch: [ARM, ARM_HYP, RISCV64, X64]
+        arch: [ARM, ARM_HYP, AARCH64, RISCV64, X64]
         compiler: [gcc, llvm]
-        python: [py2, py3]
         exclude:
           # llvm RISCV64 compilation is not currently supported
           - arch: RISCV64
@@ -32,4 +31,3 @@ jobs:
       with:
         ARCH: ${{ matrix.arch }}
         COMPILER: ${{ matrix.compiler }}
-        PYTHON: ${{ matrix.python }}

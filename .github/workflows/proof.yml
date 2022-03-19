@@ -14,9 +14,10 @@ jobs:
     runs-on: ubuntu-latest
     # run on any normal trigger when the label exists, and run when the label is added
     # don't run again when other labels are added
-    if: ${{ github.event.action != 'labeled' &&
-              contains(github.event.pull_request.labels.*.name, 'proof-test') ||
-            github.event.action == 'labeled' && github.event.label.name == 'proof-test' }}
+    if: ${{ github.repository_owner == 'seL4' &&
+            (github.event.action != 'labeled' &&
+               contains(github.event.pull_request.labels.*.name, 'proof-test') ||
+             github.event.action == 'labeled' && github.event.label.name == 'proof-test') }}
     strategy:
       fail-fast: false
       matrix:
@@ -29,12 +30,14 @@ jobs:
             session: CRefine SimplExportAndRefine
           - arch: X64
             session: CRefine
+    # test only most recent push to PR:
+    concurrency: seL4-PR-C-proofs-pr-${{ github.event.number }}-idx-${{ strategy.job-index }}
     steps:
     - name: Proofs
       uses: seL4/ci-actions/aws-proofs@master
       with:
         L4V_ARCH: ${{ matrix.arch }}
-        isa_branch: ts-2020
+        isa_branch: ts-2021
         session: ${{ matrix.session }}
         manifest: default.xml
       env:

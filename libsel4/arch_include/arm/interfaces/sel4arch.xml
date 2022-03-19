@@ -16,11 +16,6 @@
                 Takes a VSpace capability as an argument,
                 and installs a reference to the invoked
                 <texttt text='PageTable'/> in the VSpace according to the provided virtual address.
-                If higher-level paging structures do not exist for the virtual address
-                this operation will fail, returning a seL4_FailedLookup error. If the page table
-                is already mapped this operation will fail, returning a seL4_InvalidCapability error. If
-                another object is already mapped at this level for the virtual address
-                this operation will fail, returning a seL4_DeleteFirst error.
             </description>
             <param dir="in" name="vspace" type="seL4_CPtr"
             description="Capability to the VSpace which will contain the mapping.
@@ -28,9 +23,37 @@
             <param dir="in" name="vaddr" type="seL4_Word"
             description="Virtual address to map the page into."/>
             <param dir="in" name="attr" type="seL4_ARM_VMAttributes">
-                <description> 
+                <description>
                     VM Attributes for the mapping. <docref>Possible values for this type are given in <autoref label="ch:vspace"/>  .</docref>
                 </description>
+            <error name="seL4_DeleteFirst">
+                <description>
+                    A mapping already exists for this level in <texttt text="vspace"/> at <texttt text="vaddr."/>
+                </description>
+            </error>
+            <error name="seL4_FailedLookup">
+                <description>
+                    On aarch64, <texttt text="vspace"/> does not have a Page Directory mapped at <texttt text="vaddr"/>.
+                    Or, <texttt text="vspace"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="vaddr"/> is in the kernel virtual address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="vspace"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="vspace"/> is not assigned to an ASID pool.
+                    Or, <texttt text="_service"/> is already mapped in a VSpace.
+                </description>
+            </error>
             </param>
         </method>
         <method id="ARMPageTableUnmap" name="Unmap" manual_label="pagetable_unmap">
@@ -41,15 +64,62 @@
                 Removes the reference to the invoked <texttt text="Page Table"/> from its
                 containing <texttt text="Page Directory"/>.
             </description>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RevokeFirst">
+                <description>
+                    A copy of the <texttt text="_service"/> capability exists.
+                </description>
+            </error>
         </method>
     </interface>
     <interface name="seL4_ARM_IOPageTable" manual_name="I/O Page Table"
         cap_description="Capability to the I/O page table being operated on.">
         <method id="ARMIOPageTableMap" name="Map" condition="defined(CONFIG_TK1_SMMU)">
+            <description>
+                TODO
+            </description>
             <param dir="in" name="iospace" type="seL4_ARM_IOSpace"/>
             <param dir="in" name="ioaddr" type="seL4_Word"/>
+            <error name="seL4_DeleteFirst">
+                <description>
+                    All required page tables are already mapped in <texttt text="iospace"/> at <texttt text="ioaddr"/>.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="iospace"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is already mapped in an IOSpace.
+                </description>
+            </error>
         </method>
         <method id="ARMIOPageTableUnmap" name="Unmap" condition="defined(CONFIG_TK1_SMMU)">
+            <description>
+                TODO
+            </description>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
     </interface>
     <interface name="seL4_ARM_Page" manual_name="Page"
@@ -59,14 +129,12 @@
                 Map a page into an address space or update the mapping attributes.
             </brief>
             <description>
-                Takes a VSpace capability, as an
-                argument and installs a reference
+                Takes a VSpace capability, as an argument and installs a reference
                 to the given <texttt text="Page"/> in the lowest-level unmapped paging structure
-		corresponding to the given address, or updates the mapping attributes if the page is
-		already mapped at this address. If the required paging structures are not present
-                this operation will fail, returning a seL4_FailedLookup error. The page must not
-		already be mapped through this capability in a different VSpace or at a different
-		address; the page may be mapped in multiple VSpaces by copying the capability.
+                corresponding to the given address, or updates the mapping attributes if the page is
+                already mapped at this address. The page must not already be mapped through this
+                capability in a different VSpace or at a different address; the page may be mapped
+                in multiple VSpaces by copying the capability.
             </description>
             <param dir="in" name="vspace" type="seL4_CPtr"
             description="Capability to the VSpace which will contain the mapping.
@@ -83,6 +151,40 @@
                     VM Attributes for the mapping.<docref>Possible values for this type are given in <autoref label="ch:vspace"/>  .</docref>
                 </description>
             </param>
+            <error name="seL4_AlignmentError">
+                <description>
+                    The <texttt text="vaddr"/> is not aligned to the page size of <texttt text="_service"/>.
+                </description>
+            </error>
+            <error name="seL4_DeleteFirst">
+                <description>
+                    A mapping already exists in <texttt text="vspace"/> at <texttt text="vaddr"/>.
+                </description>
+            </error>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="vspace"/> does not have a paging structure at the required level mapped at <texttt text="vaddr"/>.
+                    Or, <texttt text="vspace"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="_service"/> is already mapped in <texttt text="vspace"/> at a different virtual address.
+                    Or, <texttt text="vaddr"/> is in the kernel virtual address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="vspace"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="vspace"/> is not assigned to an ASID pool.
+                    Or, <texttt text="_service"/> is already mapped in a different VSpace.
+                </description>
+            </error>
         </method>
         <method id="ARMPageUnmap" name="Unmap">
             <brief>
@@ -91,17 +193,55 @@
             <description>
                 Removes an existing mapping.
             </description>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
         <method id="ARMPageMapIO" name="MapIO" condition="defined(CONFIG_TK1_SMMU)" manual_name="Map I/O">
             <brief>
-                
+                TODO
             </brief>
             <description>
-
+                TODO
             </description>
             <param dir="in" name="iospace" type="seL4_ARM_IOSpace"/>
             <param dir="in" name="rights" type="seL4_CapRights_t"/>
             <param dir="in" name="ioaddr" type="seL4_Word"/>
+            <error name="seL4_DeleteFirst">
+                <description>
+                    A mapping already exists in <texttt text="iospace"/> at <texttt text="ioaddr"/>.
+                </description>
+            </error>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="iospace"/> does not have a sufficient number of IO Page Tables mapped at <texttt text="ioaddr"/>.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    No rights were specified in <texttt text="rights"/>.
+                    Or, the rights in the <texttt text="_service"/> capability do not include <texttt text="rights"/>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="iospace"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is already mapped.
+                    Or, <texttt text="_service"/> is not a page of size 4 KiB.
+                </description>
+            </error>
         </method>
         <method id="ARMPageClean_Data" name="Clean_Data" manual_name="Clean Data">
             <brief>
@@ -114,12 +254,35 @@
             description="The offset, relative to the start of the page inclusive."/>
             <param dir="in" name="end_offset" type="seL4_Word"
             description="The offset, relative to the start of the page exclusive."/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The VSpace of <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is not mapped in a VSpace.
+                    Or, if hypervisor support is configured, the requested range overlaps the kernel physical address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="start_offset"/> is greater than or equal to <texttt text="end_offset"/>.
+                    Or, <texttt text="start_offset"/> or <texttt text="end_offset"/> exceeds the page size of <texttt text="_service"/>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
         <method id="ARMPageInvalidate_Data" name="Invalidate_Data" manual_name="Invalidate Data">
             <brief>
-                Invalidates the cache range within the given page. The start and end are relative to the page being serviced 
-                and should be aligned to a cache line boundary where possible. 
-                An additional clean is performed on the outer cache lines if the start and end are 
+                Invalidates the cache range within the given page. The start and end are relative to the page being serviced
+                and should be aligned to a cache line boundary where possible.
+                An additional clean is performed on the outer cache lines if the start and end are
                 not aligned, to clean out the bytes between the requested and the cache line boundary.
             </brief>
             <description>
@@ -129,11 +292,34 @@
             description="The offset, relative to the start of the page inclusive."/>
             <param dir="in" name="end_offset" type="seL4_Word"
             description="The offset, relative to the start of the page exclusive."/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The VSpace of <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is not mapped in a VSpace.
+                    Or, if hypervisor support is configured, the requested range overlaps the kernel physical address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="start_offset"/> is greater than or equal to <texttt text="end_offset"/>.
+                    Or, <texttt text="start_offset"/> or <texttt text="end_offset"/> exceeds the page size of <texttt text="_service"/>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
         <method id="ARMPageCleanInvalidate_Data" name="CleanInvalidate_Data"
             manual_name="Clean and Invalidate Data">
             <brief>
-                Clean and invalidates the cache range within the given page. The range will be flushed out to RAM. 
+                Clean and invalidates the cache range within the given page. The range will be flushed out to RAM.
                 The start and end are relative to the page being serviced.
             </brief>
             <description>
@@ -143,10 +329,33 @@
             description="The offset, relative to the start of the page inclusive."/>
             <param dir="in" name="end_offset" type="seL4_Word"
             description="The offset, relative to the start of the page exclusive."/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The VSpace of <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is not mapped in a VSpace.
+                    Or, if hypervisor support is configured, the requested range overlaps the kernel physical address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="start_offset"/> is greater than or equal to <texttt text="end_offset"/>.
+                    Or, <texttt text="start_offset"/> or <texttt text="end_offset"/> exceeds the page size of <texttt text="_service"/>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
         <method id="ARMPageUnify_Instruction" name="Unify_Instruction" manual_name="Unify Instruction">
             <brief>
-                Unify Instruction Cache. Cleans data lines to point of unification, invalidate 
+                Unify Instruction Cache. Cleans data lines to point of unification, invalidate
                 corresponding instruction lines to point of unification, then invalidates branch
                 predictors. The start and end are relative to the page being
                 serviced.
@@ -158,6 +367,29 @@
             description="The offset, relative to the start of the page inclusive."/>
             <param dir="in" name="end_offset" type="seL4_Word"
             description="The offset, relative to the start of the page exclusive."/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The VSpace of <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is not mapped in a VSpace.
+                    Or, if hypervisor support is configured, the requested range overlaps the kernel physical address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="start_offset"/> is greater than or equal to <texttt text="end_offset"/>.
+                    Or, <texttt text="start_offset"/> or <texttt text="end_offset"/> exceeds the page size of <texttt text="_service"/>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
         <method id="ARMPageGetAddress" name="GetAddress" manual_name="Get Address">
             <brief>
@@ -173,6 +405,16 @@
                 of the message register and tag contents upon error.</docref>
             </return>
             <param dir="out" name="paddr" type="seL4_Word"/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
     </interface>
     <interface name="seL4_ARM_ASIDControl" manual_name="ASID Control"
@@ -194,6 +436,41 @@
             description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="depth" type="seL4_Uint8"
             description="Number of bits of index to resolve to find the destination slot."/>
+            <error name="seL4_DeleteFirst">
+                <description>
+                    The destination slot contains a capability.
+                    Or, there are no more ASID pools available.
+                </description>
+            </error>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="index"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                    Or, <texttt text="root"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="untyped"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="untyped"/> is not the exact size of an ASID pool object.
+                    Or, <texttt text="untyped"/> is a device untyped <docref>(see <autoref label="sec:kernmemalloc"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_RevokeFirst">
+                <description>
+                    The <texttt text="untyped"/> has been used to retype an object.
+                    Or, a copy of the <texttt text="untyped"/> capability exists.
+                </description>
+            </error>
         </method>
     </interface>
     <interface name="seL4_ARM_ASIDPool" manual_name="ASID Pool"
@@ -208,6 +485,27 @@
             </description>
             <param dir="in" name="vspace" type="seL4_CPtr"
             description="The VSpace that is being assigned to an ASID pool. Must not already be assigned to an ASID pool."/>
+            <error name="seL4_DeleteFirst">
+                <description>
+                    There are no more ASIDs available in <texttt text="_service"/>.
+                </description>
+            </error>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The ASID pool of <texttt text="_service"/> is no longer assigned.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="vspace"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="vspace"/> is already assigned to an ASID pool.
+                </description>
+            </error>
         </method>
     </interface>
     <interface name="seL4_ARM_VCPU" manual_name="VCPU"
@@ -224,12 +522,25 @@
              </description>
             <param dir="in" name="tcb" type="seL4_TCB"
             description="Capability to TCB to bind to a virtual CPU"/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="tcb"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
         <method id="ARMVCPUInjectIRQ" name="InjectIRQ" condition="defined(CONFIG_ARM_HYPERVISOR_SUPPORT)"
             manual_name="Inject IRQ">
                 <brief>
                     Inject an IRQ to a virtual CPU
                 </brief>
+            <description>
+                TODO
+            </description>
             <param dir="in" name="virq" type="seL4_Uint16"
             description="Virtual IRQ ID"/>
             <param dir="in" name="priority" type="seL4_Uint8"
@@ -238,26 +549,82 @@
             description="IRQ group"/>
             <param dir="in" name="index" type="seL4_Uint8"
             description="IRQ index"/>
+            <error name="seL4_DeleteFirst">
+                <description>
+                    The <texttt text="index"/> is in use.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="virq"/>, <texttt text="priority"/>, <texttt text="group"/>, or <texttt text="index"/> is invalid.
+                </description>
+            </error>
         </method>
         <method id="ARMVCPUReadReg" name="ReadRegs" condition="defined(CONFIG_ARM_HYPERVISOR_SUPPORT)"
             manual_name="Read Registers">
                 <brief>
                     Read a virtual CPU register
                 </brief>
+            <description>
+                TODO
+            </description>
             <param dir="in" name="field" type="seL4_Word"
             description="Register to read from a VCPU"/>
             <param dir="out" name="value" type="seL4_Word"
             description="Returned value of the VCPU register"/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="field"/> is invalid.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
         <method id="ARMVCPUWriteReg" name="WriteRegs" condition="defined(CONFIG_ARM_HYPERVISOR_SUPPORT)"
             manual_name="Write Registers">
                 <brief>
                     Write a virtual CPU register
                 </brief>
+            <description>
+                TODO
+            </description>
             <param dir="in" name="field" type="seL4_Word"
             description="Register ID to write to a VCPU"/>
             <param dir="in" name="value" type="seL4_Word"
             description="Value to be written to the VCPU register"/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="field"/> is invalid.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
         <method id="ARMVCPUAckVPPI" name="AckVPPI" condition="defined(CONFIG_ARM_HYPERVISOR_SUPPORT)"
             manual_name="Acknowledge Virtual PPI IRQ">
@@ -270,7 +637,21 @@
             </description>
             <param dir="in" name="irq" type="seL4_Word"
             description="irq to ack."/>
-
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="irq"/> is invalid.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
     </interface>
    <interface name="seL4_IRQControl" manual_name="IRQ Control" cap_description="An IRQControl capability. This gives you the authority to make this call.">
@@ -289,6 +670,39 @@
             <param dir="in" name="root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
+            <error name="seL4_DeleteFirst">
+                <description>
+                    The destination slot contains a capability.
+                </description>
+            </error>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="index"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                    Or, <texttt text="root"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, the platform does not support setting the IRQ trigger.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="irq"/> is invalid.
+                    Or, <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_RevokeFirst">
+                <description>
+                    An IRQ handler capability for <texttt text="irq"/> has already been created.
+                </description>
+            </error>
         </method>
 
        <method id="ARMIRQIssueIRQHandlerTriggerCore" name="GetTriggerCore" manual_name="GetTriggerCore"
@@ -306,6 +720,43 @@
             <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
             <param dir="in" name="target" type="seL4_Word" description="Indicates the target core ID to which this irq will be sent."/>
+            <error name="seL4_DeleteFirst">
+                <description>
+                    The destination slot contains a capability.
+                </description>
+            </error>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="index"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                    Or, <texttt text="root"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, SMP support is not enabled.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="target"/> is invalid.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_RevokeFirst">
+                <description>
+                    An IRQ handler capability for <texttt text="irq"/> has already been created.
+                </description>
+            </error>
         </method>
     </interface>
     <interface name="seL4_ARM_SIDControl" manual_name="SID Control" cap_description="A SIDControl capability. This gives you the authority to make this call.">
@@ -321,6 +772,38 @@
             <param dir="in" name="root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
+            <error name="seL4_DeleteFirst">
+                <description>
+                    The destination slot contains a capability.
+                </description>
+            </error>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="index"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                    Or, <texttt text="root"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                    Or, <texttt text="sid"/> is invalid.
+                </description>
+            </error>
+            <error name="seL4_RevokeFirst">
+                <description>
+                    An SID capability for <texttt text="sid"/> has already been created.
+                </description>
+            </error>
         </method>
        <method id="ARMSIDGetFault" name="GetFault" manual_name="GetFault"
            manual_label="sid_controlgetfault" condition="defined(CONFIG_ARM_SMMU)">
@@ -341,6 +824,16 @@
             <param dir="out" name="status" type="seL4_Word"/>
             <param dir="out" name="syndrome_0" type="seL4_Word"/>
             <param dir="out" name="syndrome_1" type="seL4_Word"/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
         <method id="ARMSIDClearFault" name="ClearFault" manual_name="ClearFault"
            manual_label="sid_controlclearfault" condition="defined(CONFIG_ARM_SMMU)">
@@ -350,6 +843,16 @@
             <description>
                 <docref>See <autoref label="sec:smmuv2-fault-handling"/>.</docref>
             </description>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
     </interface>
     <interface name="seL4_ARM_SID" manual_name="SID" cap_description="A SID capability. This gives you the authority to make this call.">
@@ -363,6 +866,22 @@
             </description>
            <param dir="in" name="cb" type="seL4_CPtr"
             description="The CB that is being binded to a stream ID. Must already has an assigned vspace."/>
+            <error name="seL4_DeleteFirst">
+                <description>
+                    The <texttt text="_service"/> is already bound to a context bank.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="cb"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="cb"/> is not assigned to a VSpace.
+                </description>
+            </error>
         </method>
        <method id="ARMSIDUnbindCB" name="UnbindCB" manual_name="UnbindCB"
            manual_label="sid_unbindcb" condition="defined(CONFIG_ARM_SMMU)">
@@ -372,6 +891,17 @@
             <description>
                 <docref>See <autoref label="sec:smmuv2-configuring-streams-transactions"/>.</docref>
             </description>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is not bound to a context block.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
     </interface>
     <interface name="seL4_ARM_CBControl" manual_name="CB Control" cap_description="A CBControl capability. This gives you the authority to make this call.">
@@ -387,6 +917,38 @@
             <param dir="in" name="root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
+            <error name="seL4_DeleteFirst">
+                <description>
+                    The destination slot contains a capability.
+                </description>
+            </error>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="index"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                    Or, <texttt text="root"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                    Or, <texttt text="cb"/> is invalid.
+                </description>
+            </error>
+            <error name="seL4_RevokeFirst">
+                <description>
+                    A CB capability for <texttt text="cb"/> has already been created.
+                </description>
+            </error>
         </method>
         <method id="ARMCBTLBInvalidateAll" name="TLBInvalidateAll" manual_name="TLBInvalidateAll"
            manual_label="cb_controltlbinvalidate" condition="defined(CONFIG_ARM_SMMU)">
@@ -396,6 +958,16 @@
             <description>
                 <docref>See <autoref label="sec:smmuv2-tlb-invalidation"/>.</docref>
             </description>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
     </interface>
     <interface name="seL4_ARM_CB" manual_name="CB" cap_description="A CB capability. This gives you the authority to make this call.">
@@ -409,6 +981,22 @@
             </description>
            <param dir="in" name="vspace" type="seL4_CPtr"
             description="The VSpace that is being assigned to a context bank. Must already has an assigned ASID."/>
+            <error name="seL4_DeleteFirst">
+                <description>
+                    The <texttt text="_service"/> is already assigned to a VSpace.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="vspace"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="vspace"/> is not assigned to an ASID pool.
+                </description>
+            </error>
         </method>
         <method id="ARMCBUnassignVspace" name="UnassignVspace" manual_name="UnassignVspace"
            manual_label="cb_unassignvspace" condition="defined(CONFIG_ARM_SMMU)">
@@ -418,6 +1006,17 @@
             <description>
                 <docref>See <autoref label="sec:smmuv2-configuring-context-banks"/>.</docref>
             </description>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is not assigned to a VSpace.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
         <method id="ARMCBTLBInvalidate" name="TLBInvalidate" manual_name="TLBInvalidate"
            manual_label="cb_tlbinvalidate" condition="defined(CONFIG_ARM_SMMU)">
@@ -427,6 +1026,17 @@
             <description>
                 <docref>See <autoref label="sec:smmuv2-tlb-invalidation"/>.</docref>
             </description>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is not assigned to a VSpace.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
         <method id="ARMCBGetFault" name="CBGetFault" manual_name="CBGetFault"
            manual_label="cb_getfault" condition="defined(CONFIG_ARM_SMMU)">
@@ -445,6 +1055,16 @@
             </return>
             <param dir="out" name="status" type="seL4_Word"/>
             <param dir="out" name="address" type="seL4_Word"/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
         <method id="ARMCBClearFault" name="CBClearFault" manual_name="CBClearFault"
            manual_label="cb_clearfault" condition="defined(CONFIG_ARM_SMMU)">
@@ -454,6 +1074,16 @@
             <description>
                 <docref>See <autoref label="sec:smmuv2-fault-handling"/>.</docref>
             </description>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
     </interface>
 </api>

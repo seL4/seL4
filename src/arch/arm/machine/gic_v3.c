@@ -180,7 +180,7 @@ BOOT_CODE static void dist_init(void)
 BOOT_CODE static void gicr_locate_interface(void)
 {
     word_t offset;
-    int core_id = SMP_TERNARY(getCurrentCPUIndex(), 0);
+    int core_id = CURRENT_CPU_INDEX();
     word_t mpidr = get_current_mpidr();
     uint32_t val;
 
@@ -385,3 +385,9 @@ void setIRQTarget(irq_t irq, seL4_Word target)
 }
 
 #endif /* ENABLE_SMP_SUPPORT */
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+
+unsigned int gic_vcpu_num_list_regs;
+
+#endif /* End of CONFIG_ARM_HYPERVISOR_SUPPORT */

@@ -8,6 +8,7 @@
 #pragma once
 
 #include <autoconf.h>
+#include <sel4/macros.h>
 
 #define seL4_WordBits           64
 /* log 2 bits in a word */

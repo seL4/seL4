@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 #
@@ -6,12 +6,12 @@
 #
 
 python_sources=$(find ../tools ../manual/tools ../libsel4/tools -name '*.py')
-if [[ -z $python_sources ]]; then
+if [ -z "$python_sources" ]; then
     echo "Unable to find python source files"
     exit 1
 fi
 pylintrc=$(find . -name 'pylintrc')
-if [[ -z $pylintrc ]]; then
+if [ -z "$pylintrc" ]; then
     echo "Unable to find pylintrc"
     exit 1
 fi

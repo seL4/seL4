@@ -24,7 +24,7 @@ if(KernelPlatformTK1)
     list(APPEND KernelDTSList "tools/dts/tk1.dts")
     list(APPEND KernelDTSList "src/plat/tk1/overlay-tk1.dts")
     declare_default_headers(
-        TIMER_FREQUENCY 12000000llu
+        TIMER_FREQUENCY 12000000
         MAX_IRQ 191
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h
         NUM_PPI 32

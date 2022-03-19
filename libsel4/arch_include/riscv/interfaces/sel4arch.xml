@@ -62,6 +62,34 @@
                 in <autoref label="ch:vspace"/>.</docref>
             </description>
             </param>
+            <error name="seL4_DeleteFirst">
+                <description>
+                    A page is mapped in <texttt text="vspace"/> at <texttt text="vaddr"/>.
+                    Or, all required page tables are already mapped in <texttt text="vspace"/> at <texttt text="vaddr"/>.
+                </description>
+            </error>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="vspace"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="vaddr"/> is in the kernel virtual address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="vspace"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="vspace"/> is not assigned to an ASID pool.
+                    Or, <texttt text="_service"/> is already mapped in a VSpace.
+                </description>
+            </error>
         </method>
         <method id="RISCVPageTableUnmap" name="Unmap" manual_label="pagetable_unmap">
             <brief>
@@ -70,6 +98,22 @@
             <description>
                 <docref>See <autoref label="ch:vspace"/></docref>
             </description>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RevokeFirst">
+                <description>
+                    The <texttt text="_service"/> is the root of a VSpace.
+                    Or, a copy of the <texttt text="_service"/> capability exists.
+                </description>
+            </error>
         </method>
     </interface>
     <interface name="seL4_RISCV_Page" manual_name="Page" cap_description="Capability to the page to invoke.">
@@ -101,6 +145,41 @@
                 in <autoref label="ch:vspace"/>.</docref>
             </description>
             </param>
+            <error name="seL4_AlignmentError">
+                <description>
+                    The <texttt text="vaddr"/> is not aligned to the page size of <texttt text="_service"/>.
+                </description>
+            </error>
+            <error name="seL4_DeleteFirst">
+                <description>
+                    A mapping already exists in <texttt text="vspace"/> at <texttt text="vaddr"/>.
+                </description>
+            </error>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="vspace"/> does not have a paging structure at the required level mapped at <texttt text="vaddr"/>.
+                    Or, <texttt text="vspace"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="_service"/> is already mapped in <texttt text="vspace"/> at a different virtual address.
+                    Or, <texttt text="vaddr"/> is in the kernel virtual address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="vspace"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="vspace"/> is not the root of a VSpace.
+                    Or, <texttt text="vspace"/> is not assigned to an ASID pool.
+                    Or, <texttt text="_service"/> is already mapped in a different VSpace.
+                </description>
+            </error>
         </method>
         <method id="RISCVPageUnmap" name="Unmap">
             <brief>
@@ -109,6 +188,16 @@
             <description>
                 Removes an existing mapping.
             </description>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
         <method id="RISCVPageGetAddress" name="GetAddress">
             <brief>
@@ -124,6 +213,16 @@
                 of the message register and tag contents upon error.</docref>
             </return>
             <param dir="out" name="paddr" type="seL4_Word"/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
     </interface>
     <interface name="seL4_RISCV_ASIDControl" manual_name="ASID Control"
@@ -145,6 +244,41 @@
             description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth of 32."/>
             <param dir="in" name="depth" type="seL4_Uint8"
             description="Number of bits of index to resolve to find the destination slot."/>
+            <error name="seL4_DeleteFirst">
+                <description>
+                    The destination slot contains a capability.
+                    Or, there are no more ASID pools available.
+                </description>
+            </error>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="index"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                    Or, <texttt text="root"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="untyped"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="untyped"/> is not the exact size of an ASID pool object.
+                    Or, <texttt text="untyped"/> is a device untyped <docref>(see <autoref label="sec:kernmemalloc"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_RevokeFirst">
+                <description>
+                    The <texttt text="untyped"/> has been used to retype an object.
+                    Or, a copy of the <texttt text="untyped"/> capability exists.
+                </description>
+            </error>
         </method>
     </interface>
     <interface name="seL4_RISCV_ASIDPool" manual_name="ASID Pool"
@@ -162,6 +296,23 @@
                     to an ASID pool.
             </description>
             </param>
+            <error name="seL4_DeleteFirst">
+                <description>
+                    There are no more ASIDs available in <texttt text="_service"/>.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="vspace"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="vspace"/> is already assigned to an ASID pool.
+                    Or, <texttt text="vspace"/> is mapped in a VSpace.
+                </description>
+            </error>
         </method>
     </interface>
     <interface name="seL4_IRQControl" manual_name="IRQ Control" cap_description="An IRQControl capability. This gives you the authority to make this call.">
@@ -180,6 +331,39 @@
             <param dir="in" name="root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
+            <error name="seL4_DeleteFirst">
+                <description>
+                    The destination slot contains a capability.
+                </description>
+            </error>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="index"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                    Or, <texttt text="root"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, the platform does not support setting the IRQ trigger.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="irq"/> is invalid.
+                    Or, <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_RevokeFirst">
+                <description>
+                    An IRQ handler capability for <texttt text="irq"/> has already been created.
+                </description>
+            </error>
         </method>
 
     </interface>

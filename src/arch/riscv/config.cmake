@@ -83,8 +83,9 @@ elseif(KernelPTLevels EQUAL 4)
 endif()
 
 if(KernelRiscvExtD)
+    # The D extension depends on the base single-precision
+    # instruction subset F.
     set(KernelRiscvExtF ON)
-    set(KernelHaveFPU ON)
 endif()
 
 if(KernelRiscvExtF)
@@ -116,7 +117,7 @@ add_sources(
         object/tcb.c
         smp/ipi.c
         object/vcpu.c
-    ASMFILES halt.S head.S traps.S
+    ASMFILES head.S traps.S
 )
 
 add_bf_source_old("KernelArchRiscV" "structures.bf" "include/arch/riscv" "arch/object")

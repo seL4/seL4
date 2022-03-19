@@ -128,8 +128,8 @@ capability, the badge is transferred to the receiving thread's
 \texttt{badge} register.
 
 An endpoint capability with a zero badge is said to be \emph{unbadged}.
-Such a capability can be badged with the \apifunc{seL4\_CNode\_Mutate}{cnode_mutate} or \apifunc{seL4\_CNode\_Mint}{cnode_mint}
-invocations on the \obj{CNode} containing the capability. Endpoint
+Such a capability can be badged with the \apifunc{seL4\_CNode\_Mint}{cnode_mint}
+invocation on the \obj{CNode} containing the capability. Endpoint
 capabilities with badges cannot be unbadged, rebadged or used to create
 child capabilities with different badges.
 

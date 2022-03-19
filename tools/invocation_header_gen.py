@@ -14,8 +14,11 @@ import argparse
 import sys
 import xml.dom.minidom
 import pkg_resources
-# We require jinja2 to be at least version 2.10 as we use the 'namespace' feature from
-# that version
+# We require jinja2 to be at least version 2.10,
+# In the past we used the 'namespace' feature from that version.
+# other versions of jinja, particularly `minijinja`, don't support namespaces.
+# However in case `namespace` is needed in the future require a
+# version which supports it.
 pkg_resources.require("jinja2>=2.10")
 
 
@@ -71,17 +74,15 @@ SEL4_ARCH_INVOCATION_TEMPLATE = COMMON_HEADER + """
 #include <api/invocation.h>
 {%- endif %}
 
-{%- set ns = namespace(first=True) %}
 enum sel4_arch_invocation_label {
     {%- for label, condition in invocations %}
         {%- if condition %}
-            {%- if ns.first %}
+            {%- if loop.first %}
 #error "First sel4_arch invocation label cannot be conditional"
             {%- endif %}
 #if {{condition}}
         {%- endif %}
-        {%- if ns.first %}
-            {%- set ns.first = False %}
+        {%- if loop.first %}
     {{label}} = nInvocationLabels,
         {%- else %}
     {{label}},
@@ -90,7 +91,7 @@ enum sel4_arch_invocation_label {
 #endif
         {%- endif %}
     {%- endfor %}
-    {%- if ns.first %}
+    {%- if invocations|length == 0 %}
     nSeL4ArchInvocationLabels = nInvocationLabels
     {%- else %}
     nSeL4ArchInvocationLabels
@@ -109,18 +110,16 @@ ARCH_INVOCATION_TEMPLATE = COMMON_HEADER + """
 #include <arch/api/sel4_invocation.h>
 {%- endif %}
 
-{%- set ns = namespace(first=1) %}
 enum arch_invocation_label {
     {%- for label, condition in invocations %}
     {%- if condition %}
-    {%- if ns.first  %}
+    {%- if loop.first  %}
 #error "First arch invocation label cannot be conditional"
     {%- endif %}
 #if {{condition}}
     {%- endif %}
-    {%- if ns.first %}
+    {%- if loop.first %}
     {{label}} = nSeL4ArchInvocationLabels,
-    {%- set ns.first = False %}
     {%- else %}
     {{label}},
     {%- endif %}
@@ -128,7 +127,7 @@ enum arch_invocation_label {
 #endif
     {%- endif %}
     {%- endfor %}
-    {%- if ns.first %}
+    {%- if invocations|length == 0 %}
     nArchInvocationLabels = nSeL4ArchInvocationLabels
     {%- else %}
     nArchInvocationLabels

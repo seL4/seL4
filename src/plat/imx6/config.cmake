@@ -54,16 +54,18 @@ if(KernelPlatImx6)
     list(APPEND KernelDTSList "src/plat/imx6/overlay-${KernelARMPlatform}.dts")
 
     if(KernelIsMCS)
-        list(APPEND KernelDTSList "src/plat/imx6/mcs-overlay-imx6.dts")
+        if(KernelARMPlatform STREQUAL "nitrogen6sx")
+            list(APPEND KernelDTSList "src/plat/imx6/mcs-overlay-nitrogen6sx.dts")
+        else()
+            list(APPEND KernelDTSList "src/plat/imx6/mcs-overlay-imx6.dts")
+        endif()
         set(timer_file drivers/timer/arm_global.h)
-        set(timer_freq 498000000llu)
     else()
         set(timer_file drivers/timer/arm_priv.h)
-        set(timer_freq 498000000llu)
     endif()
 
     declare_default_headers(
-        TIMER_FREQUENCY ${timer_freq}
+        TIMER_FREQUENCY 498000000
         MAX_IRQ 159
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h
         NUM_PPI 32

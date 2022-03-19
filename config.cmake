@@ -6,8 +6,6 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-set(configure_string "${config_configure_string}")
-
 config_option(
     KernelIsMCS KERNEL_MCS "Use the MCS kernel configuration, which is not verified."
     DEFAULT OFF
@@ -49,7 +47,7 @@ set_property(
 )
 
 # These options are now set in seL4Config.cmake
-if(DEFINED CONFIGURE_MAX_IRQ)
+if(DEFINED CALLED_declare_default_headers)
     # calculate the irq cnode size based on MAX_IRQ
     if("${KernelArch}" STREQUAL "riscv")
         set(MAX_IRQ "${CONFIGURE_PLIC_MAX_NUM_INT}")
@@ -110,6 +108,18 @@ if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
     )
     set(config_file "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware.yml")
     set(config_schema "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware_schema.yml")
+    set(
+        KernelCustomDTSOverlay ""
+        CACHE FILEPATH "Provide an additional overlay to append to the selected KernelPlatform's \
+        device tree during build time"
+    )
+    if(NOT "${KernelCustomDTSOverlay}" STREQUAL "")
+        if(NOT EXISTS ${KernelCustomDTSOverlay})
+            message(FATAL_ERROR "Can't open external overlay file '${KernelCustomDTSOverlay}'!")
+        endif()
+        list(APPEND KernelDTSList "${KernelCustomDTSOverlay}")
+        message(STATUS "Using ${KernelCustomDTSOverlay} overlay")
+    endif()
 
     find_program(DTC_TOOL dtc)
     if("${DTC_TOOL}" STREQUAL "DTC_TOOL-NOTFOUND")
@@ -137,14 +147,27 @@ if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
         execute_process(
             COMMAND
                 ${DTC_TOOL} -q -I dts -O dtb -o ${KernelDTBPath} ${KernelDTSIntermediate}
+            RESULT_VARIABLE error
         )
+        if(error)
+            message(FATAL_ERROR "Failed to compile DTS to DTB: ${KernelDTBPath}")
+        endif()
+        # CMAKE_HOST_APPLE is a built-in CMake variable
+        if(CMAKE_HOST_APPLE)
+            set(STAT_ARGS "-f%z")
+        else()
+            set(STAT_ARGS "-c '%s'")
+        endif()
         # Track the size of the DTB for downstream tools
         execute_process(
-            COMMAND
-                ${STAT_TOOL} -c '%s' ${KernelDTBPath}
+            COMMAND ${STAT_TOOL} ${STAT_ARGS} ${KernelDTBPath}
             OUTPUT_VARIABLE KernelDTBSize
             OUTPUT_STRIP_TRAILING_WHITESPACE
+            RESULT_VARIABLE error
         )
+        if(error)
+            message(FATAL_ERROR "Failed to determine KernelDTBSize: ${KernelDTBPath}")
+        endif()
         string(
             REPLACE
                 "\'"
@@ -166,8 +189,8 @@ if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
                 ${PYTHON3} "${HARDWARE_GEN_PATH}" --dtb "${KernelDTBPath}" --compat-strings
                 --compat-strings-out "${compatibility_outfile}" --c-header --header-out
                 "${device_dest}" --hardware-config "${config_file}" --hardware-schema
-                "${config_schema}" --yaml --yaml-out "${platform_yaml}" --arch "${KernelArch}"
-                --addrspace-max "${KernelPaddrUserTop}"
+                "${config_schema}" --yaml --yaml-out "${platform_yaml}" --sel4arch
+                "${KernelSel4Arch}" --addrspace-max "${KernelPaddrUserTop}"
             RESULT_VARIABLE error
         )
         if(error)
@@ -276,6 +299,13 @@ config_string(
     UNQUOTE
 )
 
+# Set CONFIG_ENABLE_SMP_SUPPORT as an alias of CONFIG_MAX_NUM_NODES > 1
+if(KernelMaxNumNodes GREATER 1)
+    config_set(KernelEnableSMPSupport ENABLE_SMP_SUPPORT ON)
+else()
+    config_set(KernelEnableSMPSupport ENABLE_SMP_SUPPORT OFF)
+endif()
+
 config_string(
     KernelStackBits KERNEL_STACK_BITS
     "This describes the log2 size of the kernel stack. Great care should be taken as\
@@ -339,7 +369,7 @@ config_option(
 config_choice(
     KernelBenchmarks
     KERNEL_BENCHMARK
-    "Enable benchamrks including logging and tracing info. \
+    "Enable benchmarks including logging and tracing info. \
     Setting this value > 1 enables a 1MB log buffer and functions for extracting data from it \
     at user level. NOTE this is only tested on the sabre and will not work on platforms with < 512mb memory. \
     This is not fully implemented for x86. \
@@ -360,6 +390,14 @@ if(NOT (KernelBenchmarks STREQUAL "none"))
 else()
     config_set(KernelEnableBenchmarks ENABLE_BENCHMARKS OFF)
 endif()
+
+# Reflect the existence of kernel Log buffer
+if(KernelBenchmarksTrackKernelEntries OR KernelBenchmarksTracepoints)
+    config_set(KernelLogBuffer KERNEL_LOG_BUFFER ON)
+else()
+    config_set(KernelLogBuffer KERNEL_LOG_BUFFER OFF)
+endif()
+
 config_string(
     KernelMaxNumTracePoints MAX_NUM_TRACE_POINTS
     "Use TRACE_POINT_START(k) and TRACE_POINT_STOP(k) macros for recording data, \

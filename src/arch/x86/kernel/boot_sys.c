@@ -213,7 +213,7 @@ static BOOT_CODE bool_t add_mem_p_regs(p_region_t reg)
     printf("Adding physical memory region 0x%lx-0x%lx\n", reg.start, reg.end);
     boot_state.mem_p_regs.list[boot_state.mem_p_regs.count] = reg;
     boot_state.mem_p_regs.count++;
-    return reserve_region(reg);
+    return true;
 }
 
 /*
@@ -563,11 +563,11 @@ static BOOT_CODE bool_t try_boot_sys_mbi1(
         }
         uint32_t multiboot_mmap_length = mbi->part2.mmap_length;
         if (multiboot_mmap_length > (SEL4_MULTIBOOT_MAX_MMAP_ENTRIES * sizeof(seL4_X86_mb_mmap_t))) {
-            multiboot_mmap_length = SEL4_MULTIBOOT_MAX_MMAP_ENTRIES * sizeof(seL4_X86_mb_mmap_t);
             printf("Warning: Multiboot has reported more memory map entries, %zd, "
                    "than the max amount that will be passed in the bootinfo, %d. "
                    "These extra regions will still be turned into untyped caps.",
                    multiboot_mmap_length / sizeof(seL4_X86_mb_mmap_t), SEL4_MULTIBOOT_MAX_MMAP_ENTRIES);
+            multiboot_mmap_length = SEL4_MULTIBOOT_MAX_MMAP_ENTRIES * sizeof(seL4_X86_mb_mmap_t);
         }
         memcpy(&boot_state.mb_mmap_info.mmap, (void *)(word_t)mbi->part2.mmap_addr, multiboot_mmap_length);
         boot_state.mb_mmap_info.mmap_length = multiboot_mmap_length;

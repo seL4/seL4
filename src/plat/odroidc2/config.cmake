@@ -17,7 +17,7 @@ if(KernelPlatformOdroidc2)
     list(APPEND KernelDTSList "tools/dts/odroidc2.dts")
     list(APPEND KernelDTSList "src/plat/odroidc2/overlay-odroidc2.dts")
     declare_default_headers(
-        TIMER_FREQUENCY 24000000llu
+        TIMER_FREQUENCY 24000000
         MAX_IRQ 250
         NUM_PPI 32
         TIMER drivers/timer/arm_generic.h

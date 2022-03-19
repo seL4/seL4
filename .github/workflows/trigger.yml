@@ -1,0 +1,20 @@
+# Copyright 2021, Proofcraft Pty Ltd
+#
+# SPDX-License-Identifier: BSD-2-Clause
+
+# Trigger repository dispatch on main test repos
+name: Trigger
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  trigger:
+    name: Repository Dispatch
+    if: ${{ github.repository_owner == 'seL4' }}
+    runs-on: ubuntu-latest
+    steps:
+    - uses: seL4/ci-actions/trigger@master
+      with:
+        token: ${{ secrets.PRIV_REPO_TOKEN }}

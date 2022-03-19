@@ -110,28 +110,3 @@
 
 #define LOAD  ld
 #define STORE sd
-
-#ifndef __ASSEMBLER__
-
-#include <stdint.h>
-
-static inline uint64_t riscv_read_time(void)
-{
-    uint64_t n;
-    asm volatile(
-        "rdtime %0"
-        : "=r"(n));
-    return n;
-}
-
-static inline uint64_t riscv_read_cycle(void)
-{
-    uint64_t n;
-    asm volatile(
-        "rdcycle %0"
-        : "=r"(n));
-    return n;
-}
-
-#endif /* __ASSEMBLER__ */
-

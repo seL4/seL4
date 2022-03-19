@@ -28,7 +28,11 @@ void _assert_fail(
 ) NORETURN;
 
 #define assert(expr) \
-    if(!(expr)) _assert_fail(#expr, __FILE__, __LINE__, __FUNCTION__)
+    do { \
+        if (!(expr)) { \
+            _assert_fail(#expr, __FILE__, __LINE__, __FUNCTION__); \
+        } \
+    } while(0)
 
 #else /* !DEBUG */
 
@@ -38,15 +42,28 @@ void _assert_fail(
 
 #endif /* DEBUG */
 
-/* Create an assert that will trigger a compile error if it fails. */
+/* Create an assert that triggers a compile error if the condition fails. We do
+ * not include sel4/macros.h that provides SEL4_COMPILE_ASSERT() for two
+ * reasons:
+ * - The kernel's source internals shall not have any unnecessary dependency on
+ *     the user interface headers.
+ * - The kernel user API headers aims to be compiler agnostic and stick to the
+ *     standard(s). As _Static_assert() is a c11 feature, the c99 used for
+ *     kernel compilation would use a helper macro. While this works, it
+ *     creates strange error messages when the condition fails. Since kernel
+ *     compilation supports just gcc and clang, and both are known to provide
+ *     _Static_assert() even in c99, we can just use this.
+ *
+ * Unfortunately, the C parser does not understand _Static_assert(), so there is
+ * still the need for the helper macro there. In addition, the macro
+ * unverified_compile_assert() exists, because some compile asserts contain
+ * expressions that the C parser cannot handle, too.
+ */
+#ifdef CONFIG_VERIFICATION_BUILD
 #define compile_assert(name, expr) \
         typedef int __assert_failed_##name[(expr) ? 1 : -1] UNUSED;
-
-/* Sometimes compile asserts contain expressions that the C parser cannot
- * handle. For such expressions unverified_compile_assert should be used. */
-#ifdef CONFIG_VERIFICATION_BUILD
 #define unverified_compile_assert(name, expr)
-#else
-#define unverified_compile_assert compile_assert
-#endif
-
+#else /* not CONFIG_VERIFICATION_BUILD */
+#define compile_assert(name, expr) _Static_assert(expr, #name);
+#define unverified_compile_assert(name, expr) compile_assert(name, expr)
+#endif /* [not] CONFIG_VERIFICATION_BUILD */

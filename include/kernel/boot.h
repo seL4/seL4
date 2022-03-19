@@ -5,6 +5,9 @@
  */
 
 #pragma once
+
+#include <config.h>
+#include <types.h>
 #include <bootinfo.h>
 #include <arch/bootinfo.h>
 
@@ -25,7 +28,6 @@ typedef struct ndks_boot {
     region_t   freemem[MAX_NUM_FREEMEM_REG];
     seL4_BootInfo      *bi_frame;
     seL4_SlotPos slot_pos_cur;
-    seL4_SlotPos slot_pos_max;
 } ndks_boot_t;
 
 extern ndks_boot_t ndks_boot;
@@ -41,7 +43,6 @@ bool_t init_freemem(word_t n_available, const p_region_t *available,
                     word_t n_reserved, const region_t *reserved,
                     v_region_t it_v_reg, word_t extra_bi_size_bits);
 bool_t reserve_region(p_region_t reg);
-bool_t insert_region(region_t reg);
 void write_slot(slot_ptr_t slot_ptr, cap_t cap);
 cap_t create_root_cnode(void);
 bool_t provide_cap(cap_t root_cnode_cap, cap_t cap);
@@ -134,7 +135,3 @@ static inline BOOT_CODE pptr_t it_alloc_paging(void)
 
 /* return the amount of paging structures required to cover v_reg */
 word_t arch_get_n_paging(v_region_t it_veg);
-
-/* Create pptrs for all root server objects, starting at pptr, to cover the
- * virtual memory region v_reg, and any extra boot info. */
-void create_rootserver_objects(pptr_t start, v_region_t v_reg, word_t extra_bi_size_bits);

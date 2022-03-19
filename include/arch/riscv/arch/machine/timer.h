@@ -39,12 +39,12 @@ static inline PURE ticks_t getTimerPrecision(void)
 
 static inline CONST ticks_t getMaxTicksToUs(void)
 {
-    return UINT64_MAX / TICKS_IN_US;
+    return UINT64_MAX;
 }
 
-static inline PURE time_t getMaxUsToTicks(void)
+static inline CONST time_t getMaxUsToTicks(void)
 {
-    return usToTicks(getMaxTicksToUs());
+    return UINT64_MAX / TICKS_IN_US;
 }
 
 /* Read the current time from the timer. */

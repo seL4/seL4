@@ -17,9 +17,7 @@
 
 #ifdef CONFIG_ARCH_ARM
 static inline
-#ifndef CONFIG_ARCH_ARM_V6
 FORCE_INLINE
-#endif
 #endif
 void NORETURN fastpath_call(word_t cptr, word_t msgInfo)
 {
@@ -131,7 +129,7 @@ void NORETURN fastpath_call(word_t cptr, word_t msgInfo)
 #endif
 
     /* Ensure the original caller is in the current domain and can be scheduled directly. */
-    if (unlikely(dest->tcbDomain != ksCurDomain && maxDom)) {
+    if (unlikely(dest->tcbDomain != ksCurDomain && 0 < maxDom)) {
         slowpath(SysCall);
     }
 
@@ -223,9 +221,7 @@ void NORETURN fastpath_call(word_t cptr, word_t msgInfo)
 
 #ifdef CONFIG_ARCH_ARM
 static inline
-#ifndef CONFIG_ARCH_ARM_V6
 FORCE_INLINE
-#endif
 #endif
 #ifdef CONFIG_KERNEL_MCS
 void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo, word_t reply)
@@ -377,7 +373,7 @@ void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo)
 #endif
 
     /* Ensure the original caller is in the current domain and can be scheduled directly. */
-    if (unlikely(caller->tcbDomain != ksCurDomain && maxDom)) {
+    if (unlikely(caller->tcbDomain != ksCurDomain && 0 < maxDom)) {
         slowpath(SysReplyRecv);
     }
 

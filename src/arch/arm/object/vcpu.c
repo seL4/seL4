@@ -12,8 +12,8 @@
 #include <armv/vcpu.h>
 #include <arch/machine/debug.h> /* Arch_debug[A/Di]ssociateVCPUTCB() */
 #include <arch/machine/debug_conf.h>
-#include <arch/machine/gic_v2.h>
 #include <drivers/timer/arm_generic.h>
+#include <plat/platform_gen.h> /* Ensure correct GIC header is included */
 
 BOOT_CODE void vcpu_boot_init(void)
 {
@@ -280,6 +280,10 @@ void associateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
     }
     tcb->tcbArch.tcbVCPU = vcpu;
     vcpu->vcpuTCB = tcb;
+
+    if (tcb == NODE_STATE(ksCurThread)) {
+        vcpu_switch(vcpu);
+    }
 }
 
 void dissociateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)

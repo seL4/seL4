@@ -40,6 +40,33 @@
             description="Start address"/>
             <param dir="in" name="end" type="seL4_Word"
             description="End address"/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="start"/> or <texttt text="end"/> is in the kernel virtual address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="start"/> is greater than or equal to <texttt text="end"/>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The specified range crosses a page boundary.
+                </description>
+            </error>
         </method>
         <method id="ARMPDInvalidate_Data" name="Invalidate_Data" manual_name="Invalidate Data" manual_label="pd_invalidate">
                 <brief>
@@ -52,6 +79,33 @@
             description="Start address"/>
             <param dir="in" name="end" type="seL4_Word"
             description="End address"/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="start"/> or <texttt text="end"/> is in the kernel virtual address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="start"/> is greater than or equal to <texttt text="end"/>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The specified range crosses a page boundary.
+                </description>
+            </error>
         </method>
         <method id="ARMPDCleanInvalidate_Data" name="CleanInvalidate_Data"
             manual_name="Clean and Invalidate Data" manual_label="pd_clean_invalidate">
@@ -65,6 +119,33 @@
             description="Start address"/>
             <param dir="in" name="end" type="seL4_Word"
             description="End address"/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="start"/> or <texttt text="end"/> is in the kernel virtual address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="start"/> is greater than or equal to <texttt text="end"/>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The specified range crosses a page boundary.
+                </description>
+            </error>
         </method>
         <method id="ARMPDUnify_Instruction" name="Unify_Instruction" manual_name="Unify Instruction" manual_label="pd_unify_instruction">
                 <brief>
@@ -77,6 +158,33 @@
             description="Start address"/>
             <param dir="in" name="end" type="seL4_Word"
             description="End address"/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="start"/> or <texttt text="end"/> is in the kernel virtual address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="start"/> is greater than or equal to <texttt text="end"/>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The specified range crosses a page boundary.
+                </description>
+            </error>
         </method>
     </interface>
 </api>

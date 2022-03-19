@@ -15,6 +15,7 @@ static exception_t invokeSchedControl_ConfigureFlags(sched_context_t *target, wo
 {
 
     target->scBadge = badge;
+    target->scSporadic = (flags & seL4_SchedContext_Sporadic) != 0;
 
     /* don't modify parameters of tcb while it is in a sorted queue */
     if (target->scTcb) {
@@ -24,25 +25,14 @@ static exception_t invokeSchedControl_ConfigureFlags(sched_context_t *target, wo
         tcbReleaseRemove(target->scTcb);
         tcbSchedDequeue(target->scTcb);
         /* bill the current consumed amount before adjusting the params */
-        if (NODE_STATE_ON_CORE(ksCurSC, target->scCore) == target) {
-#ifdef ENABLE_SMP_SUPPORT
-            if (target->scCore == getCurrentCPUIndex()) {
-#endif /* ENABLE_SMP_SUPPORT */
-                /* This could potentially mutate state but if it returns
-                 * true no state was modified, thus removing it should
-                 * be the same. */
-                assert(checkBudget());
-                commitTime();
-#ifdef ENABLE_SMP_SUPPORT
-            } else {
-                chargeBudget(NODE_STATE_ON_CORE(ksConsumed, target->scCore), false, target->scCore, false);
-                doReschedule(target->scCore);
-            }
-#endif /* ENABLE_SMP_SUPPORT */
+        if (NODE_STATE(ksCurSC) == target) {
+            /* This could potentially mutate state but if it returns
+             * true no state was modified, thus removing it should
+             * be the same. */
+            assert(checkBudget());
+            commitTime();
         }
     }
-
-    target->scSporadic = (flags & seL4_SchedContext_Sporadic) != 0;
 
     if (budget == period) {
         /* this is a cool hack: for round robin, we set the

@@ -48,6 +48,37 @@
                 description="Number of slots into the node at which capabilities start being placed."/>
             <param dir="in" name="num_objects" type="seL4_Word"
                 description="Number of capabilities to create."/>
+            <error name="seL4_DeleteFirst" description="A capability exists in the destination window of the CNode."/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="root"/>, <texttt text="node_index"/>, or <texttt text="node_depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="size_bits"/> is too big or too small for the requested object type.
+                    Or, <texttt text="type"/> cannot be created from a device untyped <docref>(see <autoref label="sec:kernmemalloc"/>)</docref>.
+                    Or, the requested object <texttt text="type"/> does not exist.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_NotEnoughMemory" description="The total size of the new objects exceeds the space available."/>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="num_objects"/> do not fit in the destination CNode at <texttt text="node_offset"/>.
+                    Or, <texttt text="num_objects"/> is greater than <texttt text="CONFIG_RETYPE_FAN_OUT_LIMIT"/>.
+                    Or, <texttt text="size_bits"/> is too large.
+                </description>
+            </error>
         </method>
 
     </interface>
@@ -69,6 +100,22 @@
             <param dir="in" name="count" type="seL4_Word" description="The number of registers to read."/>
             <param dir="out" name="regs" type="seL4_UserContext"
                 description="The structure to read the registers into."/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is the current thread's TCB.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="count"/> requested too few or too many registers.
+                </description>
+            </error>
         </method>
 
         <method id="TCBWriteRegisters" name="WriteRegisters" manual_name="Write Registers" manual_label="tcb_writeregisters">
@@ -86,6 +133,17 @@
                 description="The number of registers to be set."/>
             <param dir="in" name="regs" type="seL4_UserContext"
                 description="Data structure containing the new register values."/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is the current thread's TCB.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
 
         <method id="TCBCopyRegisters" name="CopyRegisters" manual_name="Copy Registers" manual_label="tcb_copyregisters">
@@ -109,6 +167,16 @@
                 description="Integer registers should be transferred."/>
             <param dir="in" name="arch_flags" type="seL4_Uint8"
                 description="Architecture dependent flags. These have no mearing on either x86 or ARM."/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="source"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
 
         <method id="TCBConfigure" name="Configure" manual_name="Configure" manual_label="tcb_configure" condition="!defined(CONFIG_KERNEL_MCS)">
@@ -132,6 +200,25 @@
                 description="Location of the thread's IPC buffer. Must be 512-byte aligned. The IPC buffer may not cross a page boundary."/>
             <param dir="in" name="bufferFrame" type="seL4_CPtr"
                 description="Capability to a page containing the thread's IPC buffer."/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/>, <texttt text="bufferFrame"/>, <texttt text="cspace_root"/>, or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="vspace_root"/> is not assigned to an ASID pool.
+                    Or, <texttt text="cspace_root_data"/> is invalid.
+                    Or, <texttt text="buffer"/> is not aligned.
+                    Or, <texttt text="bufferFrame"/> is retyped from a device untyped <docref>(see <autoref label="sec:kernmemalloc"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RevokeFirst">
+                <description>
+                    The <texttt text="bufferFrame"/>, <texttt text="cspace_root"/>, or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
         <method id="TCBConfigure" name="Configure" manual_name="Configure (MCS)" manual_label="tcb_configure_mcs" condition="defined(CONFIG_KERNEL_MCS)">
             <brief>
@@ -152,6 +239,29 @@
                 description="Location of the thread's IPC buffer. Must be 512-byte aligned. The IPC buffer may not cross a page boundary."/>
             <param dir="in" name="bufferFrame" type="seL4_CPtr"
                 description="Capability to a page containing the thread's IPC buffer."/>
+            <error name="seL4_AlignmentError">
+                <description>
+                    The <texttt text="buffer"/> is not aligned.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/>, <texttt text="bufferFrame"/>, <texttt text="cspace_root"/>, or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="vspace_root"/> is not assigned to an ASID pool.
+                    Or, <texttt text="cspace_root_data"/> is invalid.
+                    Or, <texttt text="bufferFrame"/> is retyped from a device untyped <docref>(see <autoref label="sec:kernmemalloc"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RevokeFirst">
+                <description>
+                    The <texttt text="bufferFrame"/>, <texttt text="cspace_root"/>, or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
 
         <method id="TCBSetPriority" name="SetPriority" manual_name="Set Priority" manual_label="tcb_setpriority">
@@ -165,6 +275,21 @@
                 description="Capability to the TCB to use the MCP from when setting the priority."/>
             <param dir="in" name="priority" type="seL4_Word"
                 description="The thread's new priority."/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="authority"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="priority"/> is greater than the maximum controlled priority of <texttt text="authority"/>.
+                </description>
+            </error>
         </method>
 
         <method id="TCBSetMCPriority" name="SetMCPriority" manual_name="Set Maximum Controlled Priority" manual_label="tcb_setmcpriority">
@@ -178,6 +303,21 @@
                 description="Capability to the TCB to use the MCP from when setting the MCP."/>
             <param dir="in" name="mcp" type="seL4_Word"
                 description="The thread's new maximum controlled priority."/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="authority"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="mcp"/> is greater than the maximum controlled priority of <texttt text="authority"/>.
+                </description>
+            </error>
         </method>
 
         <method id="TCBSetSchedParams" name="SetSchedParams" manual_name="Set Sched Params" manual_label="tcb_setschedparams" condition="!defined(CONFIG_KERNEL_MCS)">
@@ -193,6 +333,22 @@
                 description="The thread's new maximum controlled priority."/>
             <param dir="in" name="priority" type="seL4_Word"
                 description="The thread's new priority."/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="authority"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="mcp"/> is greater than the maximum controlled priority of <texttt text="authority"/>.
+                    Or, <texttt text="priority"/> is greater than the maximum controlled priority of <texttt text="authority"/>.
+                </description>
+            </error>
         </method>
         <method id="TCBSetSchedParams" name="SetSchedParams" manual_name="Set Sched Params (MCS)" manual_label="tcb_setschedparams_mcs" condition="defined(CONFIG_KERNEL_MCS)">
             <brief>
@@ -212,6 +368,26 @@
                 description="Capability to the scheduling context that the TCB should run on. If the scheduling context is already bound to a notification or TCB that is not this TCB this operation will fail. Similarly, if this TCB is already bound to a scheduling context that is not this scheduling context, this will also fail."/>
             <param dir="in" name="fault_ep" type="seL4_CPtr"
                 description="CPTR to the endpoint which receives IPCs when this thread faults."/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> or <texttt text="sched_context"/> is already bound.
+                    Or, <texttt text="_service"/> is the current thread's TCB.
+                    Or, <texttt text="_service"/> is a TCB in the blocked state and <texttt text="sched_context"/> is not schedulable.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/>, <texttt text="authority"/>, <texttt text="sched_context"/>, or <texttt text="fault_ep"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="fault_ep"/> does not have both Write rights and either Grant or GrantReply rights to the Endpoint <docref>(see <autoref label="sec:cap_rights"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="mcp"/> is greater than the maximum controlled priority of <texttt text="authority"/>.
+                    Or, <texttt text="priority"/> is greater than the maximum controlled priority of <texttt text="authority"/>.
+                </description>
+            </error>
         </method>
 
         <method id="TCBSetTimeoutEndpoint" name="SetTimeoutEndpoint" manual_name="Set Timeout Endpoint" manual_label="tcb_settimeoutendpoint" condition="defined(CONFIG_KERNEL_MCS)">
@@ -223,6 +399,17 @@
             </description>
             <param dir="in" name="timeout_fault_ep" type="seL4_CPtr"
                 description="CPTR to the endpoint which receives IPCs when this thread triggers timeout faults. Can be null."/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="timeout_fault_ep"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="timeout_fault_ep"/> does not have both Write rights and either Grant or GrantReply rights to the Endpoint <docref>(see <autoref label="sec:cap_rights"/>)</docref>.
+                </description>
+            </error>
         </method>
         <method id="TCBSetIPCBuffer" name="SetIPCBuffer" manual_name="Set IPC Buffer" manual_label="tcb_setipcbuffer">
             <brief>
@@ -235,6 +422,27 @@
                 description="Location of the thread's IPC buffer. Must be 512-byte aligned. The IPC buffer may not cross a page boundary."/>
             <param dir="in" name="bufferFrame" type="seL4_CPtr"
                 description="Capability to a page containing the thread's IPC buffer."/>
+            <error name="seL4_AlignmentError">
+                <description>
+                    The <texttt text="buffer"/> is not aligned.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="bufferFrame"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="bufferFrame"/> is retyped from a device untyped <docref>(see <autoref label="sec:kernmemalloc"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RevokeFirst">
+                <description>
+                    The <texttt text="bufferFrame"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
 
         <method id="TCBSetSpace" name="SetSpace" manual_name="Set Space" manual_label="tcb_setspace" condition="!defined(CONFIG_KERNEL_MCS)">
@@ -254,6 +462,23 @@
                 description="The new VSpace root."/>
             <param dir="in" name="vspace_root_data" type="seL4_Word"
                 description="Has no effect on x86 or ARM processors."/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/>, <texttt text="cspace_root"/>, or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="vspace_root"/> is not assigned to an ASID pool.
+                    Or, <texttt text="cspace_root_data"/> is invalid.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RevokeFirst">
+                <description>
+                    The <texttt text="cspace_root"/> or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
 
         <method id="TCBSetSpace" name="SetSpace" manual_name="Set Space" manual_label="tcb_setspace_mcs" condition="defined(CONFIG_KERNEL_MCS)">
@@ -273,6 +498,24 @@
                 description="The new VSpace root."/>
             <param dir="in" name="vspace_root_data" type="seL4_Word"
                 description="Has no effect on x86 or ARM processors."/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/>, <texttt text="cspace_root"/>, or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="vspace_root"/> is not assigned to an ASID pool.
+                    Or, <texttt text="cspace_root_data"/> is invalid.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="fault_ep"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="fault_ep"/> does not have both Write rights and either Grant or GrantReply rights to the Endpoint <docref>(see <autoref label="sec:cap_rights"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_RevokeFirst">
+                <description>
+                    The <texttt text="cspace_root"/> or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
 
         <method id="TCBSuspend" name="Suspend" manual_name="Suspend" manual_label="tcb_suspend">
@@ -282,6 +525,16 @@
             <description>
                 <docref>See <autoref label="sec:thread_deactivation"/></docref>
             </description>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
 
         <method id="TCBResume" name="Resume" manual_name="Resume" manual_label="tcb_resume">
@@ -291,6 +544,16 @@
             <description>
                 <docref>See <autoref label="sec:thread_deactivation"/></docref>
             </description>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
 
         <method id="TCBBindNotification" name="BindNotification" manual_name="Bind Notification" manual_label="tcb_bindnotification">
@@ -301,6 +564,18 @@
                 <docref>See <autoref label="sec:notification-binding"/></docref>
             </description>
             <param dir="in" name="notification" type="seL4_CPtr" description="Notification to bind."/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="notification"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> or <texttt text="notification"/> is already bound.
+                    Or, <texttt text="notification"/> does not have Read rights to the Notification <docref>(see <autoref label="sec:cap_rights"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
 
         <method id="TCBUnbindNotification" name="UnbindNotification" manual_name="Unbind Notification" manual_label="tcb_unbindnotification">
@@ -310,9 +585,20 @@
             <description>
                 <docref>See <autoref label="sec:notification-binding"/></docref>
             </description>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is not bound to a notification.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
 
-        <method id="TCBSetAffinity" name="SetAffinity" condition="(!defined CONFIG_KERNEL_MCS) &amp;&amp; CONFIG_MAX_NUM_NODES > 1" manual_name="Set CPU Affinity" manual_label="tcb_setaffinity">
+        <method id="TCBSetAffinity" name="SetAffinity" condition="!defined(CONFIG_KERNEL_MCS) &amp;&amp; CONFIG_MAX_NUM_NODES > 1" manual_name="Set CPU Affinity" manual_label="tcb_setaffinity">
             <brief>
                 Change a thread's current CPU in multicore machine
             </brief>
@@ -321,6 +607,17 @@
             </description>
             <param dir="in" name="affinity" type="seL4_Word"
                 description="The thread's new CPU to run."/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="affinity"/> is not a valid CPU number.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
 
         <method id="TCBSetBreakpoint" name="SetBreakpoint" condition="defined(CONFIG_HARDWARE_DEBUG_API)" manual_name="Set Breakpoint" manual_label="tcb_setbreakpoint">
@@ -343,6 +640,33 @@
                 description="A positive integer indicating the trigger-span of the watchpoint. Must be zero when 'type' is seL4_InstructionBreakpoint."/>
             <param dir="in" name="rw" type="seL4_Word"
                 description="One of seL4_BreakOnRead, meaning the breakpoint will only be triggered on read-access; seL4_BreakOnWrite meaning the breakpoint will only be triggered on write-access, and seL4_BreakOnReadWrite meaning the breakpoint will be triggered on any access."/>
+            <error name="seL4_AlignmentError">
+                <description>
+                    The <texttt text="vaddr"/> is not aligned to <texttt text="size"/> bytes.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="bp_num"/>, <texttt text="size"/>, or <texttt text="rw"/> is not valid for the given <texttt text="type"/>.
+                    Or, argument values are inappropriate for the target architecture.
+                    Or, <texttt text="vaddr"/> is in the kernel virtual address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The argument values are inappropriate for the target architecture.
+                </description>
+            </error>
         </method>
 
         <method id="TCBGetBreakpoint" name="GetBreakpoint" condition="defined(CONFIG_HARDWARE_DEBUG_API)" manual_name="Get Breakpoint" manual_label="tcb_getbreakpoint">
@@ -373,6 +697,21 @@
             <param dir="out" name="size" type="seL4_Word"/>
             <param dir="out" name="rw" type="seL4_Word"/>
             <param dir="out" name="is_enabled" type="seL4_Bool"/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The argument values are inappropriate for the target architecture.
+                </description>
+            </error>
         </method>
 
         <method id="TCBUnsetBreakpoint" name="UnsetBreakpoint" condition="defined(CONFIG_HARDWARE_DEBUG_API)" manual_name="Unset Breakpoint" manual_label="tcb_unsetbreakpoint">
@@ -388,6 +727,22 @@
             </description>
             <param dir="in" name="bp_num" type="seL4_Uint16"
                 description="The API-ID of a target breakpoint. This ID will be a positive integer, with values ranging from 0 to seL4_NumHWBreakpoints - 1."/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, the argument values are inappropriate for the target architecture.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The argument values are inappropriate for the target architecture.
+                </description>
+            </error>
         </method>
 
         <method id="TCBConfigureSingleStepping" name="ConfigureSingleStepping" condition="defined(CONFIG_HARDWARE_DEBUG_API)"
@@ -414,6 +769,22 @@
             <param dir="in" name="num_instructions" type="seL4_Word"
                 description="Number of instructions to step over before delivering a fault to the target thread's fault endpoint. Setting this to 0 disables single-stepping."/>
             <param dir="out" name="bp_was_consumed" type="seL4_Bool"/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, the argument values are inappropriate for the target architecture.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The argument values are inappropriate for the target architecture.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
 
         <method id="TCBSetTLSBase" name="SetTLSBase" manual_name="Set TLS Base" manual_label="tcb_settlsbase">
@@ -427,6 +798,16 @@
              </return>
              <param dir="in" name="tls_base" type="seL4_Word"
                 description="The TLS base to set"/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
          </method>
 
     </interface>
@@ -442,6 +823,26 @@
             <cap_param append_description="CPTR to the CNode at the root of the CSpace where the capability will be found. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="index" type="seL4_Word" description="CPTR to the capability. Resolved from the root of the _service parameter."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of index to resolve to find the capability being operated on."/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="index"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                </description>
+            </error>
         </method>
 
         <method id="CNodeDelete" name="Delete" manual_name="Delete" manual_label="cnode_delete">
@@ -454,6 +855,26 @@
             <cap_param append_description="CPTR to the CNode at the root of the CSpace where the capability will be found. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="index" type="seL4_Word" description="CPTR to the capability. Resolved from the root of the _service parameter."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of index to resolve to find the capability being operated on."/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="index"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                </description>
+            </error>
         </method>
 
         <method id="CNodeCancelBadgedSends" name="CancelBadgedSends" manual_name="Cancel Badged Sends" manual_label="cnode_cancelbadgedsends">
@@ -469,6 +890,27 @@
             <cap_param append_description="CPTR to the CNode at the root of the CSpace where the capability will be found. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="index" type="seL4_Word" description="CPTR to the capability. Resolved from the root of the _service parameter."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of index to resolve to find the capability being operated on."/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="index"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, the capability does not have full rights to the Endpoint <docref>(see <autoref label="sec:cap_rights"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                </description>
+            </error>
         </method>
 
         <method id="CNodeCopy" name="Copy" manual_name="Copy" manual_label="cnode_copy">
@@ -489,6 +931,35 @@
                     The rights inherited by the new capability.<docref>Possible values for this type are given in <autoref label="sec:cap_rights"/>  .</docref>
                 </description>
             </param>
+            <error name="seL4_DeleteFirst" description="The destination slot contains a capability."/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The index or depth of the source or destination is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                    Or, <texttt text="src_root"/> is a CPtr to a capability of the wrong type.
+                    Or, the source slot is empty.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, the source capability cannot be derived <docref>(see <autoref label="sec:cap_derivation"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="dest_depth"/> or <texttt text="src_depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_RevokeFirst">
+                <description>
+                    The source capability cannot be derived <docref>(see <autoref label="sec:cap_derivation"/>)</docref>.
+                </description>
+            </error>
         </method>
 
         <method id="CNodeMint" name="Mint" manual_name="Mint" manual_label="cnode_mint">
@@ -510,6 +981,36 @@
                 </description>
             </param>
             <param dir="in" name="badge" type="seL4_Word" description="Badge or guard to be applied to the new capability. For badges on 32-bit platforms, the high 4 bits are ignored."/>
+            <error name="seL4_DeleteFirst" description="The destination slot contains a capability."/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The index or depth of the source or destination is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                    Or, <texttt text="src_root"/> is a CPtr to a capability of the wrong type.
+                    Or, the source slot is empty.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, the source capability cannot be derived <docref>(see <autoref label="sec:cap_derivation"/>)</docref>.
+                    Or, the badge or guard value is invalid.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="dest_depth"/> or <texttt text="src_depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_RevokeFirst">
+                <description>
+                    The source capability cannot be derived <docref>(see <autoref label="sec:cap_derivation"/>)</docref>.
+                </description>
+            </error>
         </method>
 
         <method id="CNodeMove" name="Move" manual_name="Move" manual_label="cnode_move">
@@ -525,11 +1026,38 @@
             <param dir="in" name="src_root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the source CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="src_index" type="seL4_Word" description="CPTR to the source slot. Resolved from the root of the source CSpace."/>
             <param dir="in" name="src_depth" type="seL4_Uint8" description="Number of bits of src_index to resolve to find the source slot."/>
+            <error name="seL4_DeleteFirst" description="The destination slot contains a capability."/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The index or depth of the source or destination is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                    Or, <texttt text="src_root"/> is a CPtr to a capability of the wrong type.
+                    Or, the source slot is empty.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="dest_depth"/> or <texttt text="src_depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                </description>
+            </error>
         </method>
 
         <method id="CNodeMutate" name="Mutate" manual_name="Mutate" manual_label="cnode_mutate">
             <brief>
-                Move a capability, setting its badge in the process
+                Move a capability, setting its guard in the process. This
+                operation is mostly useful for setting the guard of a CNode
+                capability without losing revokability of that CNode capability.
+                All other uses can be replaced by a combination of Mint and
+                Delete.
             </brief>
             <description>
                 <docref>See <autoref label="sec:cnode-ops"/>.</docref>
@@ -540,7 +1068,31 @@
             <param dir="in" name="src_root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the source CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="src_index" type="seL4_Word" description="CPTR to the source slot. Resolved from the root of the source CSpace."/>
             <param dir="in" name="src_depth" type="seL4_Uint8" description="Number of bits of src_index to resolve to find the source slot."/>
-            <param dir="in" name="badge" type="seL4_Word" description="Badge or guard to be applied to the new capability. For badges on 32-bit platforms, the high 4 bits are ignored."/>
+            <param dir="in" name="badge" type="seL4_Word" description="Guard to be applied to the new capability."/>
+            <error name="seL4_DeleteFirst" description="The destination slot contains a capability."/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The index or depth of the source or destination is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                    Or, <texttt text="src_root"/> is a CPtr to a capability of the wrong type.
+                    Or, the source slot is empty.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, the guard value is invalid.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="dest_depth"/> or <texttt text="src_depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                </description>
+            </error>
         </method>
 
         <method id="CNodeRotate" name="Rotate" manual_name="Rotate" manual_label="cnode_rotate">
@@ -562,6 +1114,31 @@
             <param dir="in" name="src_root" type="seL4_CNode" description="CPTR to the CNode at the root of the CSpace where the source slot will be found. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="src_index" type="seL4_Word" description="CPTR to the source slot. Resolved relative to src_root."/>
             <param dir="in" name="src_depth" type="seL4_Uint8" description="Depth to resolve src_index to."/>
+            <error name="seL4_DeleteFirst" description="If the destination is not the same slot as the source and the destination slot contains a capability."/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The index or depth of the source, destination, or pivot is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                    Or, <texttt text="src_root"/> or <texttt text="pivot_root"/> is a CPtr to a capability of the wrong type.
+                    Or, the source or pivot slot is empty.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, the pivot is the same slot as the source or destination.
+                    Or, the guard value on the destination or pivot is invalid.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="dest_depth"/>, <texttt text="src_depth"/>, or <texttt text="pivot_depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                </description>
+            </error>
         </method>
 
         <method id="CNodeSaveCaller" name="SaveCaller" manual_name="Save Caller" manual_label="cnode_savecaller" condition="!defined(CONFIG_KERNEL_MCS)">
@@ -574,6 +1151,27 @@
             <cap_param append_description="CPTR to the CNode at the root of the CSpace where the capability is to be saved. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="index" type="seL4_Word" description="CPTR to the slot in which to save the capability. Resolved from the root of the _service parameter."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of index to resolve to find the slot being targeted."/>
+            <error name="seL4_DeleteFirst" description="The destination slot contains a capability."/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="index"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                </description>
+            </error>
         </method>
 
     </interface>
@@ -591,6 +1189,35 @@
             <param dir="in" name="root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
+            <error name="seL4_DeleteFirst" description="The destination slot contains a capability."/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="root"/>, <texttt text="index"/>, or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, on x86, an IOAPIC is being used.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="irq"/> is invalid for the target architecture.
+                    Or, on x86, <texttt text="irq"/> is not in the ISA IRQ range.
+                    Or, <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_RevokeFirst">
+                <description>
+                    An IRQ handler capability for <texttt text="irq"/> has already been created.
+                </description>
+            </error>
         </method>
 
     </interface>
@@ -604,6 +1231,16 @@
             <description>
                 <docref>See <autoref label="sec:interrupts"/>.</docref>
             </description>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
 
         <method id="IRQSetIRQHandler" name="SetNotification" manual_name="Set Notification" manual_label="irq_handlersetnotification">
@@ -615,6 +1252,17 @@
                 <docref>See <autoref label="sec:interrupts"/>.</docref>
             </description>
             <param dir="in" name="notification" type="seL4_CPtr" description="The notification which the IRQs will signal."/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="notification"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="notification"/> does not have the Write right <docref>(see <autoref label="sec:cap_rights"/>)</docref>.
+                </description>
+            </error>
         </method>
 
         <method id="IRQClearIRQHandler" name="Clear" manual_name="Clear" manual_label="irq_handlerclear">
@@ -624,6 +1272,16 @@
             <description>
                 <docref>See <autoref label="sec:interrupts"/>.</docref>
             </description>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
 
     </interface>
@@ -639,6 +1297,22 @@
             </description>
             <param dir="in" name="domain" type="seL4_Uint8" description="The thread's new domain."/>
             <param dir="in" name="thread" type="seL4_TCB" description="Capability to the TCB which is being operated on."/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="domain"/> is greater than <texttt text="CONFIG_NUM_DOMAINS"/>.
+                    Or, <texttt text="thread"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
     </interface>
 
@@ -664,6 +1338,22 @@
                 description="Identifier for this scheduling context. Delivered to timeout exception handler. Can be used to determine which scheduling context triggered the timeout." />
             <param dir="in" name="flags" type="seL4_Word"
                 description="Bitwise OR'd set of seL4_SchedContextFlag." />
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="schedcontext"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="budget"/> or <texttt text="period"/> or <texttt text="extra_refills"/> is too big or too small.
+                    Or, <texttt text="budget"/> is greater than <texttt text="period"/>.
+                </description>
+            </error>
         </method>
 
     </interface>
@@ -683,8 +1373,9 @@
                 a signal arrives, the passive thread will receive the scheduling context and possess it
                 until it waits on the notification object again.
 
-                This operation will fail if the scheduling context is already bound to a thread or
-                notification object.
+                This operation will fail for notification objects if the scheduling context is already
+                bound to a notification object, and for thread objects if the the scheduling context is
+                already bound to a thread.
             </brief>
             <description>
                 See <autoref label="sec:threads"/>
@@ -692,6 +1383,18 @@
             <return><errorenumdesc/></return>
             <param dir="in" name="cap" type="seL4_CPtr"
                 description="Capability to a TCB or a notification object"/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> or <texttt text="cap"/> is already bound to the same type of object.
+                    Or, <texttt text="cap"/> is a TCB in the blocked state and <texttt text="_service"/> is not schedulable.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="cap"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
 
         <method id="SchedContextUnbind" name="Unbind"
@@ -704,6 +1407,17 @@
                 See <autoref label="sec:threads"/>
             </description>
             <return><errorenumdesc/></return>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, the current thread's TCB is bound to <texttt text="_service"/>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
 
         <method id="SchedContextUnbindObject" name="UnbindObject"
@@ -725,6 +1439,18 @@
             <return><errorenumdesc/></return>
             <param dir="in" name="cap" type="seL4_CPtr"
                 description="Capability to a notification that is bound to the scheduling context or capability to a tcb that is bound to this scheduling context or has received it through scheduling context donation."/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="cap"/> is not bound to <texttt text="_service"/>.
+                    Or, <texttt text="cap"/> is the current thread's TCB.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="cap"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
         <method id="SchedContextConsumed" name="Consumed" manual_name="Consumed"
                 manual_label="schedcontext_consumed" condition="defined(CONFIG_KERNEL_MCS)">
@@ -734,10 +1460,19 @@
             <description>
                 See <autoref label="sec:threads"/>
             </description>
-        <return><errorenumdesc/></return>
-        <param dir="out" name="consumed" type="seL4_Time"
-               description="Amount consumed by this scheduling context."/>
-
+            <return><errorenumdesc/></return>
+            <param dir="out" name="consumed" type="seL4_Time"
+                description="Amount consumed by this scheduling context."/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
        </method>
        <method id="SchedContextYieldTo" name="YieldTo"
            manual_name="YieldTo" manual_label="schedcontext_yieldto" condition="defined(CONFIG_KERNEL_MCS)">
@@ -751,6 +1486,18 @@
               TODO
           </description>
             <param dir="out" name="consumed" type="seL4_Time"/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is not bound to a TCB or is bound to the current thread's TCB.
+                    Or, the target thread's priority is greater than the current thread's maximum controlled priority <docref>(see <autoref label="sec:sched"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
         </method>
     </interface>
 

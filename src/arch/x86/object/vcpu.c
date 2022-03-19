@@ -1005,7 +1005,7 @@ BOOT_CODE bool_t vtx_init(void)
     }
     /* Initialize the fixed values only on the boot core. All other cores
      * will just check that the fixed values are valid */
-    if (SMP_TERNARY(getCurrentCPUIndex(), 0) == 0) {
+    if (CURRENT_CPU_INDEX() == 0) {
         if (!init_vtx_fixed_values(vmx_basic_msr_get_true_msrs(vmx_basic))) {
             printf("vt-x: lack of required features\n");
             return false;

@@ -13,10 +13,6 @@
 
 #ifndef __ASSEMBLER__
 
-int get_num_avail_p_regs(void);
-const p_region_t *get_avail_p_regs(void);
-int get_num_dev_p_regs(void);
-p_region_t get_dev_p_reg(word_t i);
 void map_kernel_devices(void);
 
 void initL2Cache(void);
@@ -69,10 +65,6 @@ static inline void arch_pause(void)
 }
 #endif /* ENABLE_SMP_SUPPORT */
 
-static inline void Arch_finaliseInterrupt(void)
-{
-}
-
 /* Update the value of the actual regsiter to hold the expected value */
 static inline exception_t Arch_setTLSRegister(word_t tls_base)
 {
@@ -83,4 +75,3 @@ static inline exception_t Arch_setTLSRegister(word_t tls_base)
 }
 
 #endif /* __ASSEMBLER__ */
-

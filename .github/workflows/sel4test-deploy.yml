@@ -1,0 +1,132 @@
+# Copyright 2021, Proofcraft Pty Ltd
+#
+# SPDX-License-Identifier: BSD-2-Clause
+
+# Deploy default.xml to sel4test-manifest after successful runs.
+
+name: seL4Test
+
+on:
+  push:
+    branches: [master]
+    paths-ignore:
+      - '**.md'
+
+  # allow manual trigger
+  workflow_dispatch:
+
+  # allow explict trigger from other repos when dependencies have changed
+  repository_dispatch:
+    types: [deps-update]
+
+jobs:
+  code:
+    name: Freeze Code
+    runs-on: ubuntu-latest
+    outputs:
+      xml: ${{ steps.repo.outputs.xml }}
+    steps:
+    - id: repo
+      uses: seL4/ci-actions/repo-checkout@master
+      with:
+        manifest_repo: sel4test-manifest
+        manifest: master.xml
+
+  sim:
+    name: Simulation
+    needs: code
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        march: [armv7a, armv8a, nehalem, rv32imac, rv64imac]
+        compiler: [gcc, clang]
+        exclude:
+          - march: rv32imac
+            compiler: clang
+          - march: rv64imac
+            compiler: clang
+    steps:
+    - uses: seL4/ci-actions/sel4test-sim@master
+      with:
+        xml: ${{ needs.code.outputs.xml }}
+        march: ${{ matrix.march }}
+        compiler: ${{ matrix.compiler }}
+
+  hw-build:
+    name: HW Build
+    needs: code
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        march: [armv7a, armv8a, nehalem]
+        compiler: [gcc, clang]
+        include:
+          - march: rv64imac
+            compiler: gcc
+    steps:
+    - name: Build
+      uses: seL4/ci-actions/sel4test-hw@master
+      with:
+        xml: ${{ needs.code.outputs.xml }}
+        march: ${{ matrix.march }}
+        compiler: ${{ matrix.compiler }}
+    - name: Upload images
+      uses: actions/upload-artifact@v2
+      with:
+        name: images-${{ matrix.march }}-${{ matrix.compiler }}
+        path: '*-images.tar.gz'
+
+  the_matrix:
+    name: Matrix
+    needs: hw-build
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+    - id: matrix
+      uses: seL4/ci-actions/sel4test-hw-matrix@master
+
+  hw-run:
+    name: HW Run
+    if: ${{ github.repository_owner == 'seL4' }}
+    runs-on: ubuntu-latest
+    needs: [sim, the_matrix]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.the_matrix.outputs.matrix) }}
+    # do not run concurrently with other workflows, but do run concurrently in the build matrix
+    concurrency: hw-run-${{ strategy.job-index }}
+    steps:
+      - name: Get machine queue
+        uses: actions/checkout@v2
+        with:
+          repository: seL4/machine_queue
+          path: machine_queue
+          token: ${{ secrets.PRIV_REPO_TOKEN }}
+      - name: Download image
+        uses: actions/download-artifact@v2
+        with:
+          name: images-${{ matrix.march }}-${{ matrix.compiler }}
+      - name: Run
+        uses: seL4/ci-actions/sel4test-hw-run@master
+        with:
+          platform: ${{ matrix.platform }}
+          compiler: ${{ matrix.compiler }}
+          mode: ${{ matrix.mode }}
+          index: $${{ strategy.job-index }}
+        env:
+          HW_SSH: ${{ secrets.HW_SSH }}
+
+  deploy:
+    name: Deploy manifest
+    if: ${{ github.repository_owner == 'seL4' }}
+    runs-on: ubuntu-latest
+    needs: [code, hw-run]
+    steps:
+    - name: Deploy
+      uses: seL4/ci-actions/manifest-deploy@master
+      with:
+        xml: ${{ needs.code.outputs.xml }}
+        manifest_repo: sel4test-manifest
+      env:
+        GH_SSH: ${{ secrets.CI_SSH }}

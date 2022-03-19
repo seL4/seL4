@@ -13,33 +13,6 @@
 /* Prototyped here as this is referenced from assembly */
 void arm_errata(void);
 
-#ifdef ARM1136_WORKAROUND
-/*
- * Potentially work around ARM1136 errata #364296, which can cause data
- * cache corruption.
- *
- * The fix involves disabling hit-under-miss via an undocumented bit in
- * the aux control register, as well as the FI bit in the control
- * register. The result of enabling these two bits is for fast
- * interrupts to *not* be enabled, but hit-under-miss to be disabled. We
- * only need to do this for a particular revision of the ARM1136.
- */
-BOOT_CODE static void errata_arm1136(void)
-{
-    /* See if we are affected by the errata. */
-    if ((getProcessorID() & ~0xf) == ARM1136_R0PX) {
-
-        /* Enable the Fast Interrupts bit in the control register. */
-        writeSystemControlRegister(
-            readSystemControlRegister() | BIT(CONTROL_FI));
-
-        /* Set undocumented bit 31 in the auxiliary control register */
-        writeAuxiliaryControlRegister(
-            readAuxiliaryControlRegister() | BIT(31));
-    }
-}
-#endif
-
 #ifdef CONFIG_ARM_ERRATA_773022
 /*
  * There is an errata for Cortex-A15 up to r0p4 where the loop buffer
@@ -65,9 +38,6 @@ BOOT_CODE static void errata_armA15_773022(void)
 
 BOOT_CODE void VISIBLE arm_errata(void)
 {
-#ifdef ARM1136_WORKAROUND
-    errata_arm1136();
-#endif
 #ifdef CONFIG_ARM_ERRATA_773022
     errata_armA15_773022();
 #endif

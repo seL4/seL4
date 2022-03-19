@@ -240,8 +240,13 @@ BOOT_CODE void map_kernel_window(void)
     pptr_t vaddr;
     word_t idx;
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    /* verify that the kernel window as at the second entry of the PGD */
+    assert(GET_PGD_INDEX(PPTR_BASE) == 1);
+#else
     /* verify that the kernel window as at the last entry of the PGD */
     assert(GET_PGD_INDEX(PPTR_BASE) == BIT(PGD_INDEX_BITS) - 1);
+#endif
     assert(IS_ALIGNED(PPTR_BASE, seL4_LargePageBits));
     /* verify that the kernel device window is 1gb aligned and 1gb in size */
     assert(GET_PUD_INDEX(PPTR_TOP) == BIT(PUD_INDEX_BITS) - 1);

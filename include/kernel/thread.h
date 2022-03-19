@@ -18,7 +18,7 @@
 
 static inline CONST word_t ready_queues_index(word_t dom, word_t prio)
 {
-    if (CONFIG_NUM_DOMAINS > 1) {
+    if (numDomains > 1) {
         return dom * CONFIG_NUM_PRIORITIES + prio;
     } else {
         assert(dom == 0);
@@ -117,13 +117,13 @@ static inline bool_t PURE isRoundRobin(sched_context_t *sc)
 
 static inline bool_t isCurDomainExpired(void)
 {
-    return CONFIG_NUM_DOMAINS > 1 &&
+    return numDomains > 1 &&
            ksDomainTime == 0;
 }
 
 static inline void commitTime(void)
 {
-    if (NODE_STATE(ksCurSC)->scRefillMax) {
+    if (likely(NODE_STATE(ksCurSC)->scRefillMax && (NODE_STATE(ksCurSC) != NODE_STATE(ksIdleSC)))) {
         if (likely(NODE_STATE(ksConsumed) > 0)) {
             /* if this function is called the head refil must be sufficient to
              * charge ksConsumed */
@@ -159,6 +159,13 @@ static inline bool_t PURE isSchedulable(const tcb_t *thread)
 #else
 #define isSchedulable isRunnable
 #endif
+
+void Arch_switchToThread(tcb_t *tcb);
+void Arch_switchToIdleThread(void);
+void Arch_configureIdleThread(tcb_t *tcb);
+void Arch_activateIdleThread(tcb_t *tcb);
+
+void idle_thread(void);
 
 void configureIdleThread(tcb_t *tcb);
 void activateThread(void);
@@ -212,7 +219,7 @@ static inline void updateRestartPC(tcb_t *tcb)
 void endTimeslice(bool_t can_timeout_fault);
 
 /* called when a thread has used up its head refill */
-void chargeBudget(ticks_t consumed, bool_t canTimeoutFault, word_t core, bool_t isCurCPU);
+void chargeBudget(ticks_t consumed, bool_t canTimeoutFault);
 
 /* Update the kernels timestamp and stores in ksCurTime.
  * The difference between the previous kernel timestamp and the one just read
@@ -228,19 +235,25 @@ static inline void updateTimestamp(void)
     assert(NODE_STATE(ksCurTime) < MAX_RELEASE_TIME);
     time_t consumed = (NODE_STATE(ksCurTime) - prev);
     NODE_STATE(ksConsumed) += consumed;
-    if (CONFIG_NUM_DOMAINS > 1) {
-
+    if (numDomains > 1) {
         if ((consumed + MIN_BUDGET) >= ksDomainTime) {
             ksDomainTime = 0;
         } else {
             ksDomainTime -= consumed;
         }
-        if (unlikely(isCurDomainExpired())) {
-            NODE_STATE(ksReprogram) = true;
-            rescheduleRequired();
-        }
     }
 
+}
+
+/*
+ * Check if domain time has expired
+ */
+static inline void checkDomainTime(void)
+{
+    if (unlikely(isCurDomainExpired())) {
+        NODE_STATE(ksReprogram) = true;
+        rescheduleRequired();
+    }
 }
 
 /* Check if the current thread/domain budget has expired.
@@ -263,7 +276,7 @@ static inline bool_t checkBudget(void)
         return true;
     }
 
-    chargeBudget(NODE_STATE(ksConsumed), true, CURRENT_CPU_INDEX(), true);
+    chargeBudget(NODE_STATE(ksConsumed), true);
     return false;
 }
 
