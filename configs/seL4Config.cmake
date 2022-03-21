@@ -227,11 +227,18 @@ if(KernelArchARM)
     config_set(KernelArmMach ARM_MACH "${KernelArmMach}")
 endif()
 
-if("${TRIPLE}" STREQUAL "")
+set(LLVM_TOOLCHAIN ON CACHE BOOL "if using clang as compiler (auto detected)")
+if (CMAKE_ASM_COMPILER_ID MATCHES "GNU")
+    set(LLVM_TOOLCHAIN OFF)
+endif()
+
+
+if("$LLVM_TOOLCHAIN" STREQUAL "ON")
     set(toolchain_file gcc.cmake)
 else()
     set(toolchain_file llvm.cmake)
 endif()
+
 set(toolchain_outputfile "${CMAKE_BINARY_DIR}/${toolchain_file}")
 if(
     ("${CMAKE_TOOLCHAIN_FILE}" STREQUAL "")
@@ -244,16 +251,6 @@ if(
     configure_file(
         "${CMAKE_CURRENT_LIST_DIR}/../${toolchain_file}" "${toolchain_outputfile}.temp" @ONLY
     )
-    if(EXISTS "${toolchain_outputfile}")
-        file(READ "${toolchain_outputfile}.temp" filea)
-        file(READ "${toolchain_outputfile}" fileb)
-        if(NOT "${filea}" STREQUAL "${fileb}")
-            message(
-                FATAL_ERROR
-                    "Config changes have resulted in a different toolchain file. This is not supported"
-            )
-        endif()
-    endif()
     file(RENAME "${toolchain_outputfile}.temp" "${toolchain_outputfile}")
     set(CMAKE_TOOLCHAIN_FILE "${toolchain_outputfile}" CACHE PATH "")
 endif()
