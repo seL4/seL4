@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 #
+# Copyright 2022, Proofcraft Pty Ltd
 # Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 #
 # SPDX-License-Identifier: BSD-2-Clause
@@ -226,10 +227,30 @@ def p_fields_padding(t):
     t[0] = t[1] + [(None, t[3], False)]
 
 
+def p_tag_name_parts_one(t):
+    """tag_name_parts : IDENTIFIER"""
+    t[0] = [t[1]]
+
+
+def p_tag_name_parts(t):
+    """tag_name_parts : tag_name_parts COMMA IDENTIFIER"""
+    t[0] = t[1] + [t[3]]
+
+
+def p_tag_slices_empty(t):
+    """tag_slices : """
+    t[0] = []
+
+
+def p_tag_slices(t):
+    """tag_slices : LPAREN tag_name_parts RPAREN"""
+    t[0] = t[2]
+
+
 def p_tagged_union(t):
-    """tagged_union : TAGGED_UNION IDENTIFIER IDENTIFIER""" \
+    """tagged_union : TAGGED_UNION IDENTIFIER IDENTIFIER tag_slices""" \
         """ LBRACE masks tags RBRACE"""
-    t[0] = TaggedUnion(name=t[2], tagname=t[3], classes=t[5], tags=t[6])
+    t[0] = TaggedUnion(name=t[2], tagname=t[3], tag_slices=t[4], classes=t[6], tags=t[7])
 
 
 def p_tags_empty(t):
@@ -237,8 +258,28 @@ def p_tags_empty(t):
     t[0] = []
 
 
+def p_tag_values_one(t):
+    """tag_values : INTLIT"""
+    t[0] = [t[1]]
+
+
+def p_tag_values(t):
+    """tag_values : tag_values COMMA INTLIT"""
+    t[0] = t[1] + [t[3]]
+
+
+def p_tag_value(t):
+    """tag_value : LPAREN tag_values RPAREN"""
+    t[0] = t[2]
+
+
+def p_tag_value_one(t):
+    """tag_value : INTLIT"""
+    t[0] = [t[1]]
+
+
 def p_tags(t):
-    """tags : tags TAG IDENTIFIER INTLIT"""
+    """tags : tags TAG IDENTIFIER tag_value"""
     t[0] = t[1] + [(t[3], t[4])]
 
 
@@ -357,7 +398,7 @@ union_reader_template = \
 %(union)s_%(block)s_get_%(field)s(%(union)s_t %(union)s) {
     %(type)s ret;
     %(assert)s(((%(union)s.words[%(tagindex)d] >> %(tagshift)d) & 0x%(tagmask)x) ==
-           %(union)s_%(block)s);
+           %(tagvalue)s);
 
     ret = (%(union)s.words[%(index)d] & 0x%(mask)x%(suf)s) %(r_shift_op)s %(shift)d;
     /* Possibly sign extend */
@@ -373,7 +414,7 @@ ptr_union_reader_template = \
     %(type)s ret;
     %(assert)s(((%(union)s_ptr->words[%(tagindex)d] >> """ \
     """%(tagshift)d) & 0x%(tagmask)x) ==
-           %(union)s_%(block)s);
+           %(tagvalue)s);
 
     ret = (%(union)s_ptr->words[%(index)d] & 0x%(mask)x%(suf)s) """ \
     """%(r_shift_op)s %(shift)d;
@@ -388,7 +429,7 @@ union_writer_template = \
     """%(inline)s %(union)s_t CONST
 %(union)s_%(block)s_set_%(field)s(%(union)s_t %(union)s, %(type)s v%(base)d) {
     %(assert)s(((%(union)s.words[%(tagindex)d] >> %(tagshift)d) & 0x%(tagmask)x) ==
-           %(union)s_%(block)s);
+           %(tagvalue)s);
     /* fail if user has passed bits that we will override */
     %(assert)s((((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d ) | 0x%(high_bits)x) & v%(base)d) == ((%(sign_extend)d && (v%(base)d & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
 
@@ -403,7 +444,7 @@ ptr_union_writer_template = \
                                       %(type)s v%(base)d) {
     %(assert)s(((%(union)s_ptr->words[%(tagindex)d] >> """ \
     """%(tagshift)d) & 0x%(tagmask)x) ==
-           %(union)s_%(block)s);
+           %(tagvalue)s);
 
     /* fail if user has passed bits that we will override */
     %(assert)s((((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) | 0x%(high_bits)x) & v%(base)d) == ((%(sign_extend)d && (v%(base)d & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
@@ -986,7 +1027,7 @@ proof_templates = {
   apply (erule %(name)s_lift_%(block)s[THEN subst[OF sym]]; simp?)
   apply ((intro conjI sign_extend_eq)?;
          (simp add: mask_def shift_over_ao_dists multi_shift_simps word_size
-                    word_ao_dist word_bw_assocs word_and_max_simps))?
+                    word_ao_dist word_bw_assocs word_and_max_simps %(name)s_%(block)s_def))?
   done'''],
 
     'ptr_empty_union_new_spec_direct': [
@@ -1224,16 +1265,53 @@ def det_values(*dicts):
     return itertools.chain(*(values(d) for d in dicts))
 
 
+def shiftr(n):
+    """Shift right by possibly negative amount"""
+    return f">> {n}" if n >= 0 else f"<< {-n}"
+
+
 class TaggedUnion:
-    def __init__(self, name, tagname, classes, tags):
+    def __init__(self, name, tagname, tag_slices, classes, tags):
         self.name = name
+        if len(tag_slices) == 0:
+            tag_slices = [tagname]
+        self.tag_slices = tag_slices
         self.tagname = tagname
         self.constant_suffix = ''
+        self.classes = dict(classes)
+        self.tags = tags
+
+    def resolve_tag_values(self):
+        """Turn compound tag values into single tag values."""
+
+        for name, value, ref in self.tags:
+            if self.sliced_tag:
+                if len(value) > 1:
+                    if len(value) != len(self.tag_slices):
+                        raise ValueError("Tag value for element %s of tagged union"
+                                         "%s has incorrect number of parts" % (name, self.name))
+                    compressed = 0
+                    position = 0
+                    for i, tag_slice in enumerate(self.tag_slices):
+                        _, size, _ = ref.field_map[tag_slice]
+                        if value[i] > 2 ** size - 1:
+                            raise ValueError("Tag value %s for element %s of tagged union"
+                                             "%s is too large for its field size" %
+                                             (value[i], name, self.name))
+                        compressed |= value[i] << position
+                        position += size
+                    value[0] = compressed
+            else:
+                if len(value) != 1:
+                    raise ValueError("Tag value %s for element %s of tagged union"
+                                     "%s must be a single value" % (value, name, self.name))
+
+        self.tags = [(name, value[0], ref) for name, value, ref in self.tags]
 
         # Check for duplicate tags
         used_names = set()
         used_values = set()
-        for name, value in tags:
+        for name, value, _ in self.tags:
             if name in used_names:
                 raise ValueError("Duplicate tag name %s" % name)
             if value in used_values:
@@ -1241,45 +1319,60 @@ class TaggedUnion:
 
             used_names.add(name)
             used_values.add(value)
-        self.classes = dict(classes)
-        self.tags = tags
 
     def resolve(self, params, symtab):
         # Grab block references for tags
         self.tags = [(name, value, symtab[name]) for name, value in self.tags]
-        self.make_classes(params)
+
+        self.sliced_tag = len(self.tag_slices) > 1
+
+        if self.sliced_tag and self.classes:
+            raise ValueError("Tagged union %s has both sliced tags and class masks." % self.name)
+
+        if self.sliced_tag:
+            self.record_tag_data()
+        else:
+            self.make_classes(params)
+
+        self.resolve_tag_values()
 
         # Ensure that block sizes and tag size & position match for
         # all tags in the union
         union_base = None
         union_size = None
         for name, value, ref in self.tags:
-            _tag_offset, _tag_size, _tag_high = ref.field_map[self.tagname]
+            for tag_slice in self.tag_slices:
+                _tag_offset, _tag_size, _tag_high = ref.field_map[tag_slice]
 
-            if union_base is None:
-                union_base = ref.base
-            elif union_base != ref.base:
-                raise ValueError("Base mismatch for element %s"
-                                 " of tagged union %s" % (name, self.name))
+                if union_base is None:
+                    union_base = ref.base
+                elif union_base != ref.base:
+                    raise ValueError("Base mismatch for element %s"
+                                     " of tagged union %s" % (name, self.name))
 
-            if union_size is None:
-                union_size = ref.size
-            elif union_size != ref.size:
-                raise ValueError("Size mismatch for element %s"
-                                 " of tagged union %s" % (name, self.name))
+                if union_size is None:
+                    union_size = ref.size
+                elif union_size != ref.size:
+                    raise ValueError("Size mismatch for element %s"
+                                     " of tagged union %s" % (name, self.name))
 
-            if _tag_offset != self.tag_offset[_tag_size]:
-                raise ValueError("Tag offset mismatch for element %s"
-                                 " of tagged union %s" % (name, self.name))
+                if _tag_offset != self.tag_offset[tag_slice if self.sliced_tag else _tag_size]:
+                    raise ValueError("Tag offset mismatch for element %s"
+                                     " of tagged union %s" % (name, self.name))
 
-            self.assert_value_in_class(name, value, _tag_size)
+                if self.sliced_tag:
+                    if _tag_size != self.tag_size[tag_slice]:
+                        raise ValueError("Tag size mismatch for element %s"
+                                         " of tagged union %s" % (name, self.name))
+                else:
+                    self.assert_value_in_class(name, value, _tag_size)
 
-            if _tag_high:
-                raise ValueError("Tag field is high-aligned for element %s"
-                                 " of tagged union %s" % (name, self.name))
+                if _tag_high:
+                    raise ValueError("Tag field is high-aligned for element %s"
+                                     " of tagged union %s" % (name, self.name))
 
-            # Flag block as belonging to a tagged union
-            ref.tagged = True
+                # Flag block as belonging to a tagged union
+                ref.tagged = True
 
         self.union_base = union_base
         self.union_size = union_size
@@ -1292,6 +1385,8 @@ class TaggedUnion:
         self.base_sign_extend = base_sign_extend
 
         tag_index = None
+
+        # This works for both tag classes and tag slices:
         for w in self.tag_offset:
             tag_offset = self.tag_offset[w]
 
@@ -1303,6 +1398,27 @@ class TaggedUnion:
                     "The tag field of tagged union %s"
                     " is in a different word (%s) to the others (%s)."
                     % (self.name, hex(tag_offset // base), hex(tag_index)))
+
+        self.tag_index = tag_index
+
+        if self.sliced_tag:
+            self.tag_mask = 0
+            self.tag_offsets = []
+            compressed_offset = 0
+            for slice in self.tag_slices:
+                size = self.tag_size[slice]
+                offset = self.tag_offset[slice] % base
+                self.tag_offsets += [(size, offset, compressed_offset)]
+                compressed_offset += size
+                self.tag_mask |= ((2 ** size) - 1) << offset
+        else:
+            self.tag_mask = None  # may depend on class
+
+    def expanded_tag_val(self, compressed):
+        """Expand a compressed tag value for use with the tag mask"""
+        parts = [((compressed >> position) & ((1 << size) - 1)) << offset
+                 for size, offset, position in self.tag_offsets]
+        return reduce(lambda x, y: x | y, parts, 0)
 
     def generate_hol_proofs(self, params, type_map):
         output = params.output
@@ -1369,7 +1485,7 @@ class TaggedUnion:
             # Generate struct_new specs
             arg_list = ["\<acute>" + field
                         for field in ref.visible_order
-                        if field != self.tagname]
+                        if field not in self.tag_slices]
 
             # Generate modifies proof
             if not params.skip_modifies:
@@ -1407,9 +1523,9 @@ class TaggedUnion:
             else:
                 field_eq_list = []
                 for field in ref.visible_order:
-                    offset, size, high = ref.field_map[field]
+                    _, size, high = ref.field_map[field]
 
-                    if field == self.tagname:
+                    if field in self.tag_slices:
                         continue
 
                     mask = field_mask_proof(self.base, self.base_bits,
@@ -1437,16 +1553,19 @@ class TaggedUnion:
                                       "args": ', '.join(arg_list),
                                       "field_eqs": field_eqs})
 
-            _, size, _ = ref.field_map[self.tagname]
-            if any([w for w in self.widths if w < size]):
-                tag_mask_helpers = ("%s_%s_tag_mask_helpers"
-                                    % (self.name, ref.name))
-            else:
+            if self.sliced_tag:
                 tag_mask_helpers = ""
+            else:
+                _, size, _ = ref.field_map[self.tagname]
+                if any([w for w in self.widths if w < size]):
+                    tag_mask_helpers = ("%s_%s_tag_mask_helpers"
+                                        % (self.name, ref.name))
+                else:
+                    tag_mask_helpers = ""
 
             # Generate get/set specs
-            for (field, offset, size, high) in ref.fields:
-                if field == self.tagname:
+            for (field, _, size, high) in ref.fields:
+                if field in self.tag_slices:
                     continue
 
                 mask = field_mask_proof(self.base, self.base_bits,
@@ -1543,7 +1662,7 @@ class TaggedUnion:
         # Generate block records with tag field removed
         for name, value, ref in self.tags:
             if ref.generate_hol_defs(params,
-                                     suppressed_field=self.tagname,
+                                     suppressed_fields=self.tag_slices,
                                      prefix="%s_" % self.name,
                                      in_union=True):
                 empty_blocks[ref] = True
@@ -1564,60 +1683,80 @@ class TaggedUnion:
         subs = {"name":      self.name,
                 "base":      self.base}
 
-        templates = ([union_get_tag_def_entry_template] * (len(self.widths) - 1)
-                     + [union_get_tag_def_final_template])
+        if self.sliced_tag:
+            slice_subs = dict(subs, tag_mask=self.tag_mask, tag_index=self.tag_index)
 
-        fs = (union_get_tag_def_header_template % subs
-              + "".join([template %
-                         dict(subs,
-                              tag_size=width,
-                              classmask=self.word_classmask(width),
-                              tag_index=self.tag_offset[width] // self.base,
-                              tag_shift=self.tag_offset[width] % self.base)
-                         for template, width in zip(templates, self.widths)])
-              + union_get_tag_def_footer_template % subs)
+        if self.sliced_tag:
+            fs = (union_get_tag_def_header_template % subs
+                  + self.compressed_tag_expr(
+                      '(index (%(name)s_C.words_C %(name)s) %(tag_index)d)' % slice_subs,
+                      code=False
+                  )
+                  + union_get_tag_def_footer_template % subs)
+        else:
+            templates = ([union_get_tag_def_entry_template] * (len(self.widths) - 1)
+                         + [union_get_tag_def_final_template])
+
+            fs = (union_get_tag_def_header_template % subs
+                  + "".join([template %
+                             dict(subs,
+                                  tag_size=width,
+                                  classmask=self.word_classmask(width),
+                                  tag_index=self.tag_index,
+                                  tag_shift=self.tag_offset[width] % self.base)
+                             for template, width in zip(templates, self.widths)])
+                  + union_get_tag_def_footer_template % subs)
 
         print(fs, file=output)
         print(file=output)
 
         # Generate get_tag_eq_x lemma
-        templates = ([union_get_tag_eq_x_def_entry_template]
-                     * (len(self.widths) - 1)
-                     + [union_get_tag_eq_x_def_final_template])
+        if self.sliced_tag:
+            fs = (union_get_tag_eq_x_def_header_template % subs
+                  + self.compressed_tag_expr(
+                      '(index (%(name)s_C.words_C c) %(tag_index)d)' % slice_subs,
+                      code=False
+                  )
+                  + union_get_tag_eq_x_def_footer_template % subs)
+        else:
+            templates = ([union_get_tag_eq_x_def_entry_template]
+                         * (len(self.widths) - 1)
+                         + [union_get_tag_eq_x_def_final_template])
 
-        fs = (union_get_tag_eq_x_def_header_template % subs
-              + "".join([template %
-                         dict(subs,
-                              tag_size=width,
-                              classmask=self.word_classmask(width),
-                              tag_index=self.tag_offset[width] // self.base,
-                              tag_shift=self.tag_offset[width] % self.base)
-                         for template, width in zip(templates, self.widths)])
-              + union_get_tag_eq_x_def_footer_template % subs)
+            fs = (union_get_tag_eq_x_def_header_template % subs
+                  + "".join([template %
+                             dict(subs,
+                                  tag_size=width,
+                                  classmask=self.word_classmask(width),
+                                  tag_index=self.tag_offset[width] // self.base,
+                                  tag_shift=self.tag_offset[width] % self.base)
+                             for template, width in zip(templates, self.widths)])
+                  + union_get_tag_eq_x_def_footer_template % subs)
 
         print(fs, file=output)
         print(file=output)
 
         # Generate mask helper lemmas
 
-        for name, value, ref in self.tags:
-            offset, size, _ = ref.field_map[self.tagname]
-            part_widths = [w for w in self.widths if w < size]
-            if part_widths:
-                subs = {"name":         self.name,
-                        "block":        name,
-                        "full_mask":    hex(2 ** size - 1),
-                        "full_value":   hex(value)}
+        if not self.sliced_tag:
+            for name, value, ref in self.tags:
+                offset, size, _ = ref.field_map[self.tagname]
+                part_widths = [w for w in self.widths if w < size]
+                if part_widths:
+                    subs = {"name":         self.name,
+                            "block":        name,
+                            "full_mask":    hex(2 ** size - 1),
+                            "full_value":   hex(value)}
 
-                fs = (union_tag_mask_helpers_header_template % subs
-                      + "".join([union_tag_mask_helpers_entry_template %
-                                 dict(subs, part_mask=hex(2 ** pw - 1),
-                                      part_value=hex(value & (2 ** pw - 1)))
-                                 for pw in part_widths])
-                      + union_tag_mask_helpers_footer_template)
+                    fs = (union_tag_mask_helpers_header_template % subs
+                          + "".join([union_tag_mask_helpers_entry_template %
+                                     dict(subs, part_mask=hex(2 ** pw - 1),
+                                          part_value=hex(value & (2 ** pw - 1)))
+                                     for pw in part_widths])
+                          + union_tag_mask_helpers_footer_template)
 
-                print(fs, file=output)
-                print(file=output)
+                    print(fs, file=output)
+                    print(file=output)
 
         # Generate lift definition
         collapse_proofs = ""
@@ -1628,7 +1767,7 @@ class TaggedUnion:
             for field in ref.visible_order:
                 offset, size, high = ref.field_map[field]
 
-                if field == self.tagname:
+                if field in self.tag_slices:
                     continue
 
                 index = offset // self.base
@@ -1709,6 +1848,15 @@ class TaggedUnion:
         print(block_lift_lemmas, file=output)
         print(file=output)
 
+    def compressed_tag_expr(self, source, code=True):
+        def mask(size):
+            return f"0x{(1 << size) - 1:x}{self.constant_suffix}" if code else f"mask {size}"
+        bit_or = "|" if code else "OR"
+        bit_and = "&" if code else "AND"
+        return f"\n        {bit_or} ".join([
+            f"(({source} {bit_and} ({mask(size)} << {offset})) {shiftr(offset-position)})"
+            for size, offset, position in self.tag_offsets])
+
     def generate(self, params):
         output = params.output
 
@@ -1741,56 +1889,79 @@ class TaggedUnion:
             'suf': self.constant_suffix}
 
         # Generate tag reader
-        templates = ([tag_reader_entry_template] * (len(self.widths) - 1)
-                     + [tag_reader_final_template])
+        if self.sliced_tag:
+            fs = (tag_reader_header_template % subs
+                  + "    return "
+                  + self.compressed_tag_expr(f"{self.name}.words[{self.tag_index}]")
+                  + ";"
+                  + tag_reader_footer_template % subs)
+        else:
+            templates = ([tag_reader_entry_template] * (len(self.widths) - 1)
+                         + [tag_reader_final_template])
 
-        fs = (tag_reader_header_template % subs
-              + "".join([template %
-                         dict(subs,
-                              mask=2 ** width - 1,
-                              classmask=self.word_classmask(width),
-                              index=self.tag_offset[width] // self.base,
-                              shift=self.tag_offset[width] % self.base)
-                         for template, width in zip(templates, self.widths)])
-              + tag_reader_footer_template % subs)
+            fs = (tag_reader_header_template % subs
+                  + "".join([template %
+                             dict(subs,
+                                  mask=2 ** width - 1,
+                                  classmask=self.word_classmask(width),
+                                  index=self.tag_offset[width] // self.base,
+                                  shift=self.tag_offset[width] % self.base)
+                             for template, width in zip(templates, self.widths)])
+                  + tag_reader_footer_template % subs)
 
         emit_named("%s_get_%s" % (self.name, self.tagname), params, fs)
 
         # Generate tag eq reader
-        templates = ([tag_eq_reader_entry_template] * (len(self.widths) - 1)
-                     + [tag_eq_reader_final_template])
+        if self.sliced_tag:
+            fs = (tag_eq_reader_header_template % subs
+                  + "    return ("
+                  + self.compressed_tag_expr(f"{self.name}.words[{self.tag_index}]")
+                  + ") == ex_type_tag;"
+                  + tag_eq_reader_footer_template % subs)
+        else:
+            templates = ([tag_eq_reader_entry_template] * (len(self.widths) - 1)
+                         + [tag_eq_reader_final_template])
 
-        fs = (tag_eq_reader_header_template % subs
-              + "".join([template %
-                         dict(subs,
-                              mask=2 ** width - 1,
-                              classmask=self.word_classmask(width),
-                              index=self.tag_offset[width] // self.base,
-                              shift=self.tag_offset[width] % self.base)
-                         for template, width in zip(templates, self.widths)])
-              + tag_eq_reader_footer_template % subs)
+            fs = (tag_eq_reader_header_template % subs
+                  + "".join([template %
+                             dict(subs,
+                                  mask=2 ** width - 1,
+                                  classmask=self.word_classmask(width),
+                                  index=self.tag_offset[width] // self.base,
+                                  shift=self.tag_offset[width] % self.base)
+                             for template, width in zip(templates, self.widths)])
+                  + tag_eq_reader_footer_template % subs)
 
         emit_named("%s_%s_equals" % (self.name, self.tagname), params, fs)
 
         # Generate pointer lifted tag reader
-        templates = ([ptr_tag_reader_entry_template] * (len(self.widths) - 1)
-                     + [ptr_tag_reader_final_template])
+        if self.sliced_tag:
+            fs = (ptr_tag_reader_header_template % subs
+                  + "    return "
+                  + self.compressed_tag_expr(f"{self.name}_ptr->words[{self.tag_index}]")
+                  + ";"
+                  + ptr_tag_reader_footer_template % subs)
+        else:
+            templates = ([ptr_tag_reader_entry_template] * (len(self.widths) - 1)
+                         + [ptr_tag_reader_final_template])
 
-        fs = (ptr_tag_reader_header_template % subs
-              + "".join([template %
-                         dict(subs,
-                              mask=2 ** width - 1,
-                              classmask=self.word_classmask(width),
-                              index=self.tag_offset[width] // self.base,
-                              shift=self.tag_offset[width] % self.base)
-                         for template, width in zip(templates, self.widths)])
-              + ptr_tag_reader_footer_template % subs)
+            fs = (ptr_tag_reader_header_template % subs
+                  + "".join([template %
+                             dict(subs,
+                                  mask=2 ** width - 1,
+                                  classmask=self.word_classmask(width),
+                                  index=self.tag_offset[width] // self.base,
+                                  shift=self.tag_offset[width] % self.base)
+                             for template, width in zip(templates, self.widths)])
+                  + ptr_tag_reader_footer_template % subs)
 
         emit_named("%s_ptr_get_%s" % (self.name, self.tagname), params, fs)
 
+        suf = self.constant_suffix
+
         for name, value, ref in self.tags:
             # Generate generators
-            param_fields = [field for field in ref.visible_order if field != self.tagname]
+            param_fields = [field for field in ref.visible_order if field not in self.tag_slices]
             param_list = ["%s %s" % (TYPES[options.environment][self.base], field)
                           for field in param_fields]
 
@@ -1804,13 +1975,19 @@ class TaggedUnion:
             field_updates = {word: [] for word in range(self.multiple)}
             field_asserts = ["    /* fail if user has passed bits that we will override */"]
 
-            for field in ref.visible_order:
-                offset, size, high = ref.field_map[field]
+            for field in ref.visible_order + ([self.tagname] if self.sliced_tag else []):
 
-                if field == self.tagname:
+                if field == self.tagname and self.sliced_tag:
+                    f_value = f"0x{self.expanded_tag_val(value):x}{suf}"
+                    offset, size, high = 0, self.base, False
+                elif field == self.tagname and not self.sliced_tag:
                     f_value = "(%s)%s_%s" % (TYPES[options.environment][self.base], self.name, name)
-                else:
+                    offset, size, high = ref.field_map[field]
+                elif field not in self.tag_slices:
                     f_value = field
+                    offset, size, high = ref.field_map[field]
+                else:
+                    continue
 
                 index = offset // self.base
                 if high:
@@ -1833,7 +2010,6 @@ class TaggedUnion:
                         mask = ((1 << size) - 1) << (self.base_bits - size)
                     else:
                         mask = (1 << size) - 1
-                    suf = self.constant_suffix
 
                     field_asserts.append(
                         "    %s((%s & ~0x%x%s) == ((%d && (%s & (1%s << %d))) ? 0x%x : 0));"
@@ -1842,7 +2018,6 @@ class TaggedUnion:
 
                     field_updates[index].append(
                         "(%s & 0x%x%s) %s %d" % (f_value, mask, suf, shift_op, shift))
-
                 else:
                     field_updates[index].append("%s %s %d" % (f_value, shift_op, shift))
 
@@ -1871,11 +2046,21 @@ class TaggedUnion:
             emit_named("%s_%s_ptr_new" % (self.name, name), params, ptr_generator)
 
             # Generate field readers/writers
-            tagnameoffset, tagnamesize, _ = ref.field_map[self.tagname]
-            tagmask = (2 ** tagnamesize) - 1
+            if self.sliced_tag:
+                tagshift = 0
+                tagindex = self.tag_index
+                tagmask = self.tag_mask
+                tagvalue = f"0x{self.expanded_tag_val(value):x}{suf}"
+            else:
+                tagnameoffset, tagnamesize, _ = ref.field_map[self.tagname]
+                tagindex = self.tag_index
+                tagshift = tagnameoffset % self.base
+                tagmask = (2 ** tagnamesize) - 1
+                tagvalue = self.name + "_" + ref.name
+
             for field, offset, size, high in ref.fields:
                 # Don't duplicate tag accessors
-                if field == self.tagname:
+                if field in self.tag_slices:
                     continue
 
                 index = offset // self.base
@@ -1910,9 +2095,10 @@ class TaggedUnion:
                     "r_shift_op": read_shift,
                     "w_shift_op": write_shift,
                     "mask": mask,
-                    "tagindex": tagnameoffset // self.base,
-                    "tagshift": tagnameoffset % self.base,
+                    "tagindex": tagindex,
+                    "tagshift": tagshift,
                     "tagmask": tagmask,
+                    "tagvalue": tagvalue,
                     "union": self.name,
                     "suf": self.constant_suffix,
                     "high_bits": high_bits,
@@ -2020,6 +2206,25 @@ class TaggedUnion:
         "relevant word."
 
         return (self.classes[width] << (self.class_offset % self.base))
+
+    def record_tag_data(self):
+        "Record size and offset of all tag slices"
+
+        # Assuming tag slices are at same position and size in all blocks, we
+        # can use any tag (e.g. the first one) to read out size and offset.
+        # (This assumption is checked later).
+
+        _, _, ref = self.tags[0]
+
+        self.tag_offset = {}
+        self.tag_size = {}
+
+        for tag_slice in self.tag_slices:
+            offset, size, _ = ref.field_map[tag_slice]
+            self.tag_offset[tag_slice] = offset
+            self.tag_size[tag_slice] = size
+
+        self.widths = []
 
     def make_classes(self, params):
         "Calculate an encoding for variable width tagnames"
@@ -2191,7 +2396,7 @@ class Block:
                                  "crosses a word boundary"
                                  % (name, self.name))
 
-    def generate_hol_defs(self, params, suppressed_field=None,
+    def generate_hol_defs(self, params, suppressed_fields=[],
                           prefix="", in_union=False):
         output = params.output
 
@@ -2207,14 +2412,12 @@ class Block:
         empty = True
 
         for field in self.visible_order:
-            if suppressed_field == field:
+            if field in suppressed_fields:
                 continue
 
             empty = False
 
             out += '    %s_CL :: "word%d"\n' % (field, self.base)
-
-        word_updates = ""
 
         if not empty:
             print(out, file=output)

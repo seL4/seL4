@@ -41,7 +41,7 @@
 #define IS_ALIGNED(n, b) (!((n) & MASK(b)))
 #define ROUND_DOWN(n, b) (((n) >> (b)) << (b))
 #define ROUND_UP(n, b) (((((n) - UL_CONST(1)) >> (b)) + UL_CONST(1)) << (b))
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
