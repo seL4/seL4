@@ -27,6 +27,8 @@ jobs:
     name: XML Lint
     runs-on: ubuntu-latest
     steps:
+    - name: apt-get update
+      run: sudo apt-get update
     - name: install xmllint
       run: sudo apt-get install libxml2-utils
     - uses: actions/checkout@v2
