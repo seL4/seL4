@@ -11,7 +11,7 @@
 
 /* This is a check that prevents using this driver blindly. Extend the list if
  * this driver is confirmed to be working on other platforms. */
-#if !defined(CONFIG_PLAT_HIFIVE) && !defined(CONFIG_PLAT_POLARFIRE)
+#if !defined(CONFIG_PLAT_HIFIVE) && !defined(CONFIG_PLAT_POLARFIRE) && !defined(CONFIG_PLAT_SPIKE)
 #error "This code supports the SiFive U54/U74 PLIC only."
 #endif
 
