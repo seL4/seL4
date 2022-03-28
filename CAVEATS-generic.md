@@ -50,7 +50,7 @@ provides principled access control for execution time, but its formal
 verification is currently still in progress.
 
 
-## Re-using Address Spaces (ARM and x86):
+## Re-using Address Spaces
 
 Before an ASID/page directory/page table can be reused, all frame caps
 installed in it should be revoked. The kernel will not do this automatically
