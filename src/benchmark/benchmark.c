@@ -31,7 +31,7 @@ exception_t handle_SysBenchmarkFlushCaches(void)
 
 exception_t handle_SysBenchmarkResetLog(void)
 {
-#ifdef CONFIG_ENABLE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_LOG_BUFFER
     if (ksUserLogBuffer == 0) {
         userError("A user-level buffer has to be set before resetting benchmark.\
                 Use seL4_BenchmarkSetLogBuffer\n");
@@ -40,7 +40,7 @@ exception_t handle_SysBenchmarkResetLog(void)
     }
 
     ksLogIndex = 0;
-#endif /* CONFIG_ENABLE_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_KERNEL_LOG_BUFFER */
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
     NODE_STATE(benchmark_log_utilisation_enabled) = true;
@@ -60,10 +60,10 @@ exception_t handle_SysBenchmarkResetLog(void)
 
 exception_t handle_SysBenchmarkFinalizeLog(void)
 {
-#ifdef CONFIG_ENABLE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_LOG_BUFFER
     ksLogIndexFinalized = ksLogIndex;
     setRegister(NODE_STATE(ksCurThread), capRegister, ksLogIndexFinalized);
-#endif /* CONFIG_ENABLE_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_KERNEL_LOG_BUFFER */
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
     benchmark_utilisation_finalise();
@@ -72,7 +72,7 @@ exception_t handle_SysBenchmarkFinalizeLog(void)
     return EXCEPTION_NONE;
 }
 
-#ifdef CONFIG_ENABLE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_LOG_BUFFER
 exception_t handle_SysBenchmarkSetLogBuffer(void)
 {
     word_t cptr_userFrame = getRegister(NODE_STATE(ksCurThread), capRegister);
@@ -84,7 +84,7 @@ exception_t handle_SysBenchmarkSetLogBuffer(void)
     setRegister(NODE_STATE(ksCurThread), capRegister, seL4_NoError);
     return EXCEPTION_NONE;
 }
-#endif /* CONFIG_ENABLE_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_KERNEL_LOG_BUFFER */
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 
