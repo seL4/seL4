@@ -181,10 +181,10 @@ exception_t handleUnknownSyscall(word_t w)
         return handle_SysBenchmarkResetLog();
     case SysBenchmarkFinalizeLog:
         return handle_SysBenchmarkFinalizeLog();
-#ifdef CONFIG_ENABLE_KERNEL_LOG_BUFFER
+#ifdef CONFIG_KERNEL_LOG_BUFFER
     case SysBenchmarkSetLogBuffer:
         return handle_SysBenchmarkSetLogBuffer();
-#endif /* CONFIG_ENABLE_KERNEL_LOG_BUFFER */
+#endif /* CONFIG_KERNEL_LOG_BUFFER */
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
     case SysBenchmarkGetThreadUtilisation:
         return handle_SysBenchmarkGetThreadUtilisation();
