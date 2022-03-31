@@ -9,7 +9,7 @@ cmake_minimum_required(VERSION 3.7.2)
 declare_platform(odroidc4 KernelPlatformOdroidc4 PLAT_ODROIDC4 KernelSel4ArchAarch64)
 
 if(KernelPlatformOdroidc4)
-    declare_seL4_arch(aarch64)
+    declare_seL4_arch("aarch64")
     set(KernelArmCortexA55 ON)
     set(KernelArchArmV8a ON)
     config_set(KernelARMPlatform ARM_PLAT odroidc4)

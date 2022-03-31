@@ -9,8 +9,7 @@ cmake_minimum_required(VERSION 3.7.2)
 declare_platform(rockpro64 KernelPlatformRockpro64 PLAT_ROCKPRO64 KernelSel4ArchAarch64)
 
 if(KernelPlatformRockpro64)
-
-    declare_seL4_arch(aarch64)
+    declare_seL4_arch("aarch64")
     set(KernelArmCortexA53 ON)
     set(KernelArchArmV8a ON)
     set(KernelArmGicV3 ON)

@@ -9,7 +9,7 @@ cmake_minimum_required(VERSION 3.7.2)
 declare_platform(apq8064 KernelPlatformAPQ8064 PLAT_APQ8064 KernelSel4ArchAarch32)
 
 if(KernelPlatformAPQ8064)
-    declare_seL4_arch(aarch32)
+    declare_seL4_arch("aarch32")
 
     # MCS is not supported on apq8064. It requires a timer driver that
     # implements the tickless programming requirements.

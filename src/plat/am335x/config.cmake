@@ -20,7 +20,7 @@ foreach(config IN LISTS cmake_configs)
 endforeach()
 
 if(KernelPlatformAM335X)
-    declare_seL4_arch(aarch32)
+    declare_seL4_arch("aarch32")
 
     set(KernelHardwareDebugAPIUnsupported ON CACHE INTERNAL "")
 

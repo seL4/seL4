@@ -9,7 +9,7 @@ cmake_minimum_required(VERSION 3.7.2)
 declare_platform(tx2 KernelPlatformTx2 PLAT_TX2 KernelSel4ArchAarch64)
 
 if(KernelPlatformTx2)
-    declare_seL4_arch(aarch64)
+    declare_seL4_arch("aarch64")
     # Note: If we enable the Denver 2 cores, which are 40-bit PA,
     # the 44-bit PA for Cortex-A57 cores would need to be downgraded to 40bit.
     set(KernelArmCortexA57 ON)

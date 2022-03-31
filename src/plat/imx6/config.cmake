@@ -46,7 +46,7 @@ if(KernelPlatImx6)
     endif()
 
     config_set(KernelARMPlatform ARM_PLAT ${KernelARMPlatform})
-    declare_seL4_arch(aarch32)
+    declare_seL4_arch("aarch32")
     set(KernelArmCortexA9 ON)
     set(KernelArchArmV7a ON)
     set(KernelArmMach "imx" CACHE INTERNAL "")

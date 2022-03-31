@@ -9,7 +9,7 @@ cmake_minimum_required(VERSION 3.7.2)
 declare_platform(tqma8xqp1gb KernelPlatformTqma8xqp1gb PLAT_TQMA8XQP1GB KernelArchARM)
 
 if(KernelPlatformTqma8xqp1gb)
-    declare_seL4_arch(aarch64)
+    declare_seL4_arch("aarch64")
     set(KernelArmCortexA35 ON)
     set(KernelArchArmV8a ON)
     set(KernelArmGicV3 ON)

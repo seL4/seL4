@@ -10,7 +10,7 @@ cmake_minimum_required(VERSION 3.7.2)
 declare_platform(hifive KernelPlatformHifive PLAT_HIFIVE KernelSel4ArchRiscV64)
 
 if(KernelPlatformHifive)
-    declare_seL4_arch(riscv64)
+    declare_seL4_arch("riscv64")
     config_set(KernelRiscVPlatform RISCV_PLAT "hifive")
     config_set(KernelPlatformFirstHartID FIRST_HART_ID 1)
     config_set(KernelOpenSBIPlatform OPENSBI_PLATFORM "sifive/fu540")

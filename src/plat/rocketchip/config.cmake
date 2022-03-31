@@ -10,7 +10,7 @@ cmake_minimum_required(VERSION 3.7.2)
 declare_platform(rocketchip KernelPlatformRocketchip PLAT_ROCKETCHIP KernelArchRiscV)
 
 if(KernelPlatformRocketchip)
-    declare_seL4_arch(riscv64)
+    declare_seL4_arch("riscv64")
     config_set(KernelRiscVPlatform RISCV_PLAT "rocketchip")
     config_set(KernelPlatformFirstHartID FIRST_HART_ID 0)
     config_set(KernelOpenSBIPlatform OPENSBI_PLATFORM "generic")

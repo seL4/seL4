@@ -10,16 +10,8 @@ cmake_minimum_required(VERSION 3.7.2)
 declare_platform(maaxboard KernelPlatformMaaxboard PLAT_MAAXBOARD KernelArchARM)
 
 if(KernelPlatformMaaxboard)
-    if("${KernelSel4Arch}" STREQUAL aarch32)
-        declare_seL4_arch(aarch32)
-    elseif("${KernelSel4Arch}" STREQUAL aarch64)
-        declare_seL4_arch(aarch64)
-    else()
-        fallback_declare_seL4_arch_default(aarch64)
-    endif()
-
+    declare_seL4_arch("aarch64;aarch32") # default to aarch64
     config_set(KernelPlatImx8mq PLAT_IMX8MQ ON)
-
     set(KernelArmCortexA53 ON)
     set(KernelArchArmV8a ON)
     set(KernelArmGicV3 ON)

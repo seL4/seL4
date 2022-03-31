@@ -9,7 +9,7 @@ cmake_minimum_required(VERSION 3.7.2)
 declare_platform(allwinnerA20 KernelPlatformAllwinnerA20 PLAT_ALLWINNERA20 KernelSel4ArchAarch32)
 
 if(KernelPlatformAllwinnerA20)
-    declare_seL4_arch(aarch32)
+    declare_seL4_arch("aarch32")
     set(KernelArmCortexA7 ON)
     set(KernelArchArmV7a ON)
     config_set(KernelARMPlatform ARM_PLAT allwinnerA20)
