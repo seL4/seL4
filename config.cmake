@@ -147,8 +147,10 @@ if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
         if(error)
             message(FATAL_ERROR "Failed to compile DTS to DTB: ${KernelDTBPath}")
         endif()
-        # CMAKE_HOST_APPLE is a built-in CMake variable
-        if(CMAKE_HOST_APPLE)
+        # The macOS and GNU coreutils `stat` utilities have different interfaces.
+        # Check if we're using the macOS version, otherwise assume GNU coreutils.
+        # CMAKE_HOST_APPLE is a built-in CMake variable.
+        if(CMAKE_HOST_APPLE AND "${STAT_TOOL}" STREQUAL "/usr/bin/stat")
             set(STAT_ARGS "-f%z")
         else()
             set(STAT_ARGS "-c '%s'")
