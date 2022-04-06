@@ -135,3 +135,31 @@ static inline BOOT_CODE pptr_t it_alloc_paging(void)
 
 /* return the amount of paging structures required to cover v_reg */
 word_t arch_get_n_paging(v_region_t it_veg);
+
+#if defined(CONFIG_ARCH_ARM) || defined(CONFIG_ARCH_RISCV)
+
+bool_t arch_init_freemem(
+    p_region_t ui_p_reg,
+    p_region_t dtb_p_reg,
+    v_region_t it_v_reg,
+    word_t extra_bi_size_bits);
+
+void arch_init_irqs(cap_t root_cnode_cap);
+#ifdef CONFIG_ARM_SMMU
+void arch_init_smmu(cap_t root_cnode_cap);
+#endif
+
+#ifdef ENABLE_SMP_SUPPORT
+void arch_release_secondary_cores(void);
+void setup_kernel_on_secondary_core(void);
+#endif /* ENABLE_SMP_SUPPORT */
+
+bool_t setup_kernel(
+    paddr_t ui_p_reg_start,
+    paddr_t ui_p_reg_end,
+    word_t pv_offset,
+    vptr_t  v_entry,
+    paddr_t dtb_phys_addr,
+    word_t  dtb_size);
+
+#endif /* CONFIG_ARCH_ARM || CONFIG_ARCH_RISCV */

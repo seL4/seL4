@@ -1,5 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2021, HENSOLDT Cyber
+ *
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -940,3 +942,340 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
            "objects, need size/alignment of 2^%"SEL4_PRIu_word"\n", max);
     return false;
 }
+
+#if defined(CONFIG_ARCH_ARM) || defined(CONFIG_ARCH_RISCV)
+
+BOOT_CODE bool_t setup_kernel(
+    paddr_t ui_p_reg_start,
+    paddr_t ui_p_reg_end,
+    word_t pv_offset,
+    vptr_t  v_entry,
+    paddr_t dtb_phys_addr,
+    word_t  dtb_size)
+{
+    printf("Bootstrapping kernel\n");
+
+    word_t extra_bi_size = 0;
+
+    /* If a DTB was provided, pass the data on as extra bootinfo */
+    p_region_t dtb_p_reg = P_REG_EMPTY;
+    if (dtb_size > 0) {
+        paddr_t dtb_phys_end = dtb_phys_addr + dtb_size;
+        if (dtb_phys_end < dtb_phys_addr) {
+            /* An integer overflow happened in DTB end address calculation, the
+             * location or size passed seems invalid.
+             */
+            printf("ERROR: DTB location at %"SEL4_PRIx_word
+                   " len %"SEL4_PRIu_word" invalid\n",
+                   dtb_phys_addr, dtb_size);
+            return false;
+        }
+        /* If the DTB is located in physical memory that is not mapped in the
+         * kernel window we cannot access it.
+         */
+        if (dtb_phys_end >= PADDR_TOP) {
+            printf("ERROR: DTB at [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] "
+                   "exceeds PADDR_TOP (%"SEL4_PRIx_word")\n",
+                   dtb_phys_addr, dtb_phys_end, PADDR_TOP);
+            return false;
+        }
+        /* DTB seems valid and accessible, pass it on in bootinfo. */
+        extra_bi_size += sizeof(seL4_BootInfoHeader) + dtb_size;
+        /* Remember the memory region it uses. */
+        dtb_p_reg = (p_region_t) {
+            .start = dtb_phys_addr,
+            .end   = dtb_phys_end
+        };
+    }
+
+    /* Setup the region of the initial thread, which consist of
+     *  - the user image
+     *  - the IPC buffer (one page)
+     *  - the bootinfo (BI_FRAME_SIZE_BITS)
+     *  - the extra bootinfo (extra_bi_size)
+     */
+    p_region_t ui_p_reg = {
+        .start = ui_p_reg_start,
+        .end   = ui_p_reg_end
+    };
+    /* Convert user image from physical addresses to userland vptrs. */
+    v_region_t ui_v_reg = {
+        .start = ui_p_reg.start - pv_offset,
+        .end   = ui_p_reg.end   - pv_offset
+    };
+    vptr_t ipcbuf_vptr = ui_v_reg.end;
+    vptr_t bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
+    vptr_t extra_bi_frame_vptr = bi_frame_vptr + BIT(BI_FRAME_SIZE_BITS);
+    word_t extra_bi_size_bits = calculate_extra_bi_size_bits(extra_bi_size);
+    v_region_t it_v_reg = {
+        .start = ui_v_reg.start,
+        .end   = extra_bi_frame_vptr + BIT(extra_bi_size_bits)
+    };
+    if (it_v_reg.end >= USER_TOP) {
+        /* Variable arguments for printf() require well defined integer types to
+         * work properly. Unfortunately, the definition of USER_TOP differs
+         * between platforms (int, long), so we have to cast here to play safe.
+         */
+        printf("ERROR: userland image virt [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]"
+               "exceeds USER_TOP (%"SEL4_PRIx_word")\n",
+               it_v_reg.start, it_v_reg.end, (word_t)USER_TOP);
+        return false;
+    }
+
+    /* make the free memory available to alloc_region() */
+    if (!arch_init_freemem(ui_p_reg, dtb_p_reg, it_v_reg, extra_bi_size_bits)) {
+        printf("ERROR: free memory management initialization failed\n");
+        return false;
+    }
+
+    /* create the root cnode */
+    cap_t root_cnode_cap = create_root_cnode();
+    if (cap_get_capType(root_cnode_cap) == cap_null_cap) {
+        printf("ERROR: root c-node creation failed\n");
+        return false;
+    }
+
+    /* create the cap for managing thread domains */
+    create_domain_cap(root_cnode_cap);
+
+    /* initialise the IRQ states */
+    arch_init_irqs(root_cnode_cap);
+    /* provide the IRQ control cap */
+    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapIRQControl),
+               cap_irq_control_cap_new());
+
+#ifdef CONFIG_ARM_SMMU
+    /* Initialise the SMMU if present. Currently there is no RISC-V platform
+     * with an SMMU, thus there is no generic define CONFIG_SMMU, just the ARM
+     * specific CONFIG_ARM_SMMU. This function also provides the SMMU control
+     * caps, because this is also still ARM specific.
+     */
+    arch_init_smmu(root_cnode_cap);
+#endif /* CONFIG_ARM_SMMU */
+
+    /* create the bootinfo frame */
+    populate_bi_frame(0, CONFIG_MAX_NUM_NODES, ipcbuf_vptr, extra_bi_size);
+    pptr_t extra_bi_offset = 0;
+    /* put DTB in the bootinfo block, if present. */
+    seL4_BootInfoHeader header;
+    if (dtb_size > 0) {
+        header.id = SEL4_BOOTINFO_HEADER_FDT;
+        header.len = sizeof(header) + dtb_size;
+        *(seL4_BootInfoHeader *)(rootserver.extra_bi + extra_bi_offset) = header;
+        extra_bi_offset += sizeof(header);
+        memcpy((void *)(rootserver.extra_bi + extra_bi_offset),
+               paddr_to_pptr(dtb_phys_addr),
+               dtb_size);
+        extra_bi_offset += dtb_size;
+    }
+
+    if (extra_bi_size > extra_bi_offset) {
+        /* provide a chunk for any leftover padding in the extended boot info */
+        header.id = SEL4_BOOTINFO_HEADER_PADDING;
+        header.len = (extra_bi_size - extra_bi_offset);
+        *(seL4_BootInfoHeader *)(rootserver.extra_bi + extra_bi_offset) = header;
+    }
+
+#ifdef CONFIG_TK1_SMMU
+    ndks_boot.bi_frame->ioSpaceCaps = create_iospace_caps(root_cnode_cap);
+    if (ndks_boot.bi_frame->ioSpaceCaps.start == 0 &&
+        ndks_boot.bi_frame->ioSpaceCaps.end == 0) {
+        printf("ERROR: SMMU I/O space creation failed\n");
+        return false;
+    }
+#else /* not CONFIG_TK1_SMMU */
+    ndks_boot.bi_frame->ioSpaceCaps = S_REG_EMPTY;
+#endif /* [not] CONFIG_TK1_SMMU */
+
+    /* Construct an initial address space with enough virtual addresses
+     * to cover the user image + ipc buffer and bootinfo frames */
+    cap_t it_pd_cap = create_it_address_space(root_cnode_cap, it_v_reg);
+    if (cap_get_capType(it_pd_cap) == cap_null_cap) {
+        printf("ERROR: address space creation for initial thread failed\n");
+        return false;
+    }
+
+    /* Create and map bootinfo frame cap */
+    create_bi_frame_cap(root_cnode_cap, it_pd_cap, bi_frame_vptr);
+
+    /* create and map extra bootinfo region */
+    if (extra_bi_size > 0) {
+        region_t extra_bi_region = {
+            .start = rootserver.extra_bi,
+            .end = rootserver.extra_bi + extra_bi_size
+        };
+        create_frames_of_region_ret_t extra_bi_ret =
+            create_frames_of_region(
+                root_cnode_cap,
+                it_pd_cap,
+                extra_bi_region,
+                true,
+                pptr_to_paddr((void *)extra_bi_region.start) - extra_bi_frame_vptr
+            );
+        if (!extra_bi_ret.success) {
+            printf("ERROR: mapping extra boot info to initial thread failed\n");
+            return false;
+        }
+        ndks_boot.bi_frame->extraBIPages = extra_bi_ret.region;
+    }
+
+#ifdef CONFIG_KERNEL_MCS
+    init_sched_control(root_cnode_cap, CONFIG_MAX_NUM_NODES);
+#endif
+
+    /* create the initial thread's IPC buffer */
+    cap_t ipcbuf_cap = create_ipcbuf_frame_cap(root_cnode_cap, it_pd_cap,
+                                               ipcbuf_vptr);
+    if (cap_get_capType(ipcbuf_cap) == cap_null_cap) {
+        printf("ERROR: could not create IPC buffer for initial thread\n");
+        return false;
+    }
+
+    /* create all userland image frames */
+    create_frames_of_region_ret_t create_frames_ret =
+        create_frames_of_region(
+            root_cnode_cap,
+            it_pd_cap,
+            paddr_to_pptr_reg(ui_p_reg),
+            true,
+            pv_offset
+        );
+    if (!create_frames_ret.success) {
+        printf("ERROR: could not create all userland image frames\n");
+        return false;
+    }
+    ndks_boot.bi_frame->userImageFrames = create_frames_ret.region;
+
+    /* create and initialise the initial thread's ASID pool */
+    cap_t it_ap_cap = create_it_asid_pool(root_cnode_cap);
+    if (cap_get_capType(it_ap_cap) == cap_null_cap) {
+        printf("ERROR: could not create ASID pool for initial thread\n");
+        return false;
+    }
+    write_it_asid_pool(it_ap_cap, it_pd_cap);
+
+#ifdef CONFIG_KERNEL_MCS
+    NODE_STATE(ksCurTime) = getCurrentTime();
+#endif
+
+    /* create the idle thread */
+    if (!create_idle_thread()) {
+        printf("ERROR: could not create idle thread\n");
+        return false;
+    }
+
+#ifdef CONFIG_ARCH_ARM
+    /* Before creating the initial thread (which also switches to it)
+     * we clean the cache so that any page table information written
+     * as a result of calling create_frames_of_region will be correctly
+     * read by the hardware page table walker */
+    cleanInvalidateL1Caches();
+#endif /* CONFIG_ARCH_ARM */
+
+    /* create the initial thread */
+    tcb_t *initial = create_initial_thread(
+                         root_cnode_cap,
+                         it_pd_cap,
+                         v_entry,
+                         bi_frame_vptr,
+                         ipcbuf_vptr,
+                         ipcbuf_cap
+                     );
+
+    if (initial == NULL) {
+        printf("ERROR: could not create initial thread\n");
+        return false;
+    }
+
+    init_core_state(initial);
+
+    /* Create untypeds for both devices and memory accessible via the kernel
+     * window. This converts the all remaining free memory into UT objects and
+     * provide the caps.
+     */
+    region_t boot_mem_reuse_reg = {
+#ifdef CONFIG_ARCH_ARM
+        /* Since this is generic code now, on ARM we should do what is done on
+         * RISC-V, because this is way to translate the addresses. On ARM the
+         * translation just happens to be a no-op due to the chosen memory
+         * layout, that why using the values directly works.
+         */
+        .start = KERNEL_ELF_BASE,
+        .end   = (pptr_t)ki_boot_end
+#else /* anything else */
+        .start = (word_t)paddr_to_pptr(kpptr_to_paddr((void *)KERNEL_ELF_BASE)),
+        .end   = (word_t)paddr_to_pptr(kpptr_to_paddr(ki_boot_end))
+#endif
+    };
+
+    if (!create_untypeds(root_cnode_cap, boot_mem_reuse_reg)) {
+        printf("ERROR: could not create untypteds for kernel image boot memory\n");
+        return false;
+    }
+
+    /* no shared-frame caps (neither ARM nor RISC-V has multikernel support) */
+    ndks_boot.bi_frame->sharedFrames = S_REG_EMPTY;
+
+    /* finalise the bootinfo frame */
+    bi_finalise();
+
+#ifdef CONFIG_ARCH_ARM
+    /* Flushing the L1 cache and invalidating the TLB is good enough here to
+     * make sure everything written by the kernel is visible to userland. There
+     * are no uncached userland frames at this stage that require enforcing
+     * flushing to RAM. Any retyping operation will clean the memory down to RAM
+     * anyway.
+     */
+    cleanInvalidateL1Caches();
+    invalidateLocalTLB();
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        invalidateHypTLB();
+    }
+#endif /* CONFIG_ARCH_ARM */
+
+    /* the kernel has been initialized and the primary core is up and running */
+    ksNumCPUs = 1;
+
+#ifdef ENABLE_SMP_SUPPORT
+
+    /* Kernel initialization is done. Initialize BKL and boot up all other
+     * cores. There is no need to enforce taking the BLK here or synchronize
+     * the boot flows again explicitly with the primary core. All secondary
+     * cores can boot in parallel and exit to userland. There are no other
+     * thread besides the initial thread at this boot stage, so the cores end up
+     * in the idle loop.
+     */
+    clh_lock_init();
+    arch_release_secondary_cores();
+
+    /* Wait until all the secondary cores are done initialising */
+    while (ksNumCPUs != CONFIG_MAX_NUM_NODES) {
+        /* perform a memory release+acquire to get new values of ksNumCPUs */
+        __atomic_signal_fence(__ATOMIC_ACQ_REL);
+    }
+
+    /* All cores are up now, so there could be concurrency. The kernel setup was
+     * finished before the secondary cores are released, so all the primary core
+     * has to do now is schedule the initial thread. Currently, there is nothing
+     * that touches any global data and thus requires acquiring the BKL,
+     * nevertheless we grab it here to play.
+     */
+    NODE_LOCK_SYS;
+
+#endif /* ENABLE_SMP_SUPPORT */
+
+    /* kernel successfully initialized */
+    printf("Booting all finished, dropped to user space\n");
+    return true;
+}
+
+#ifdef ENABLE_SMP_SUPPORT
+BOOT_CODE void setup_kernel_on_secondary_core(void)
+{
+    NODE_LOCK_SYS;
+    ksNumCPUs++;
+    init_core_state(SchedulerAction_ResumeCurrentThread);
+}
+#endif /* ENABLE_SMP_SUPPORT */
+
+#endif /* CONFIG_ARCH_ARM || CONFIG_ARCH_RISCV */

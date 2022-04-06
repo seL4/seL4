@@ -40,6 +40,7 @@ Upcoming release: BINARY COMPATIBLE
 * Removed obsolete define `HAVE_AUTOCONF`
 * Removed user address space reserved slots restriction on 40bit PA platforms when KernelArmHypervisorSupport is set.
   This change is reflected in the definition of the seL4_UserTop constant that holds the largest user virtual address.
+* Merge ARM and RISC-V generic kernel initialization code
 
 ## Upgrade Notes
 ---
