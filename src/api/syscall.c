@@ -34,7 +34,7 @@
 /* The haskell function 'handleEvent' is split into 'handleXXX' variants
  * for each event causing a kernel entry */
 
-exception_t handleInterruptEntry(void)
+void handleInterruptEntry(void)
 {
     irq_t irq;
 
@@ -63,22 +63,20 @@ exception_t handleInterruptEntry(void)
 #ifdef CONFIG_KERNEL_MCS
     }
 #endif
-
-    return EXCEPTION_NONE;
 }
 
-exception_t handleUnknownSyscall(word_t w)
+void handleUnknownSyscall(word_t w)
 {
 #ifdef CONFIG_PRINTING
     if (w == SysDebugPutChar) {
         kernel_putchar(getRegister(NODE_STATE(ksCurThread), capRegister));
-        return EXCEPTION_NONE;
+        return;
     }
     if (w == SysDebugDumpScheduler) {
 #ifdef CONFIG_DEBUG_BUILD
         debug_dumpScheduler();
 #endif
-        return EXCEPTION_NONE;
+        return;
     }
 #endif
 #ifdef CONFIG_DEBUG_BUILD
@@ -92,14 +90,14 @@ exception_t handleUnknownSyscall(word_t w)
         printf("Debug snapshot syscall from user thread %p \"%s\"\n",
                tptr, TCB_PTR_DEBUG_PTR(tptr)->tcbName);
         debug_capDL();
-        return EXCEPTION_NONE;
+        return;
     }
     if (w == SysDebugCapIdentify) {
         word_t cptr = getRegister(NODE_STATE(ksCurThread), capRegister);
         lookupCapAndSlot_ret_t lu_ret = lookupCapAndSlot(NODE_STATE(ksCurThread), cptr);
         word_t cap_type = cap_get_capType(lu_ret.cap);
         setRegister(NODE_STATE(ksCurThread), capRegister, cap_type);
-        return EXCEPTION_NONE;
+        return;
     }
 
     if (w == SysDebugNameThread) {
@@ -128,11 +126,12 @@ exception_t handleUnknownSyscall(word_t w)
             halt();
         }
         setThreadName(TCB_PTR(cap_thread_cap_get_capTCBPtr(lu_ret.cap)), name);
-        return EXCEPTION_NONE;
+        return;
     }
 #ifdef ENABLE_SMP_SUPPORT
     if (w == SysDebugSendIPI) {
-        return handle_SysDebugSendIPI();
+        handle_SysDebugSendIPI();
+        return;
     }
 #endif /* ENABLE_SMP_SUPPORT */
 #endif /* CONFIG_DEBUG_BUILD */
@@ -141,7 +140,7 @@ exception_t handleUnknownSyscall(word_t w)
     if (w == SysDebugRun) {
         ((void (*)(void *))getRegister(NODE_STATE(ksCurThread), capRegister))((void *)getRegister(NODE_STATE(ksCurThread),
                                                                                                   msgInfoRegister));
-        return EXCEPTION_NONE;
+        return;
     }
 #endif
 
@@ -155,7 +154,7 @@ exception_t handleUnknownSyscall(word_t w)
             val = getSyscallArg(0, NULL);
         }
         x86_wrmsr(reg, val);
-        return EXCEPTION_NONE;
+        return;
     } else if (w == SysX86DangerousRDMSR) {
         uint64_t val;
         uint32_t reg = getRegister(NODE_STATE(ksCurThread), capRegister);
@@ -169,36 +168,44 @@ exception_t handleUnknownSyscall(word_t w)
             setMR(NODE_STATE(ksCurThread), NULL, 0, val);
         }
         setRegister(NODE_STATE(ksCurThread), msgInfoRegister, wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, num)));
-        return EXCEPTION_NONE;
+        return;
     }
 #endif
 
 #ifdef CONFIG_ENABLE_BENCHMARKS
     switch (w) {
     case SysBenchmarkFlushCaches:
-        return handle_SysBenchmarkFlushCaches();
+        handle_SysBenchmarkFlushCaches();
+        return;
     case SysBenchmarkResetLog:
-        return handle_SysBenchmarkResetLog();
+        handle_SysBenchmarkResetLog();
+        return;
     case SysBenchmarkFinalizeLog:
-        return handle_SysBenchmarkFinalizeLog();
+        handle_SysBenchmarkFinalizeLog();
+        return;
 #ifdef CONFIG_KERNEL_LOG_BUFFER
     case SysBenchmarkSetLogBuffer:
-        return handle_SysBenchmarkSetLogBuffer();
+        handle_SysBenchmarkSetLogBuffer();
+        return;
 #endif /* CONFIG_KERNEL_LOG_BUFFER */
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
     case SysBenchmarkGetThreadUtilisation:
-        return handle_SysBenchmarkGetThreadUtilisation();
+        handle_SysBenchmarkGetThreadUtilisation();
+        return;
     case SysBenchmarkResetThreadUtilisation:
-        return handle_SysBenchmarkResetThreadUtilisation();
+        handle_SysBenchmarkResetThreadUtilisation();
+        return;
 #ifdef CONFIG_DEBUG_BUILD
     case SysBenchmarkDumpAllThreadsUtilisation:
-        return handle_SysBenchmarkDumpAllThreadsUtilisation();
+        handle_SysBenchmarkDumpAllThreadsUtilisation();
+        return;
     case SysBenchmarkResetAllThreadsUtilisation:
-        return handle_SysBenchmarkResetAllThreadsUtilisation();
+        handle_SysBenchmarkResetAllThreadsUtilisation();
+        return;
 #endif /* CONFIG_DEBUG_BUILD */
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
     case SysBenchmarkNullSyscall:
-        return EXCEPTION_NONE;
+        return;
     default:
         break; /* syscall is not for benchmarking */
     } /* end switch(w) */
@@ -214,7 +221,12 @@ exception_t handleUnknownSyscall(word_t w)
              * value. For many architectures, the TLS variables only get
              * updated on a thread switch.
              */
-            return Arch_setTLSRegister(tls_base);
+            exception_t ret = Arch_setTLSRegister(tls_base);
+            if (unlikely(ret != EXCEPTION_NONE)) {
+                userError("could not set TLS register");
+            }
+            return;
+
         }
 #endif
         current_fault = seL4_Fault_UnknownSyscall_new(w);
@@ -223,11 +235,9 @@ exception_t handleUnknownSyscall(word_t w)
 
     schedule();
     activateThread();
-
-    return EXCEPTION_NONE;
 }
 
-exception_t handleUserLevelFault(word_t w_a, word_t w_b)
+void handleUserLevelFault(word_t w_a, word_t w_b)
 {
     MCS_DO_IF_BUDGET({
         current_fault = seL4_Fault_UserException_new(w_a, w_b);
@@ -235,11 +245,9 @@ exception_t handleUserLevelFault(word_t w_a, word_t w_b)
     })
     schedule();
     activateThread();
-
-    return EXCEPTION_NONE;
 }
 
-exception_t handleVMFaultEvent(vm_fault_type_t vm_faultType)
+void handleVMFaultEvent(vm_fault_type_t vm_faultType)
 {
     MCS_DO_IF_BUDGET({
 
@@ -252,8 +260,6 @@ exception_t handleVMFaultEvent(vm_fault_type_t vm_faultType)
 
     schedule();
     activateThread();
-
-    return EXCEPTION_NONE;
 }
 
 #ifdef CONFIG_KERNEL_MCS
@@ -511,7 +517,7 @@ static void handleYield(void)
 #endif
 }
 
-exception_t handleSyscall(syscall_t syscall)
+void handleSyscall(syscall_t syscall)
 {
     exception_t ret;
     irq_t irq;
@@ -626,6 +632,4 @@ exception_t handleSyscall(syscall_t syscall)
 
     schedule();
     activateThread();
-
-    return EXCEPTION_NONE;
 }
