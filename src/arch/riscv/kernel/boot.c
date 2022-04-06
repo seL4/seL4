@@ -51,7 +51,7 @@ BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vpt
     return cap;
 }
 
-BOOT_CODE static bool_t arch_init_freemem(region_t ui_reg,
+BOOT_CODE static bool_t arch_init_freemem(p_region_t ui_p_reg,
                                           p_region_t dtb_p_reg,
                                           v_region_t it_v_reg,
                                           word_t extra_bi_size_bits)
@@ -80,7 +80,7 @@ BOOT_CODE static bool_t arch_init_freemem(region_t ui_reg,
         printf("ERROR: no slot to add user image to reserved regions\n");
         return false;
     }
-    res_reg[index] = ui_reg;
+    res_reg[index] = paddr_to_pptr_reg(ui_p_reg);
     index += 1;
 
     /* avail_p_regs comes from the auto-generated code */
@@ -187,35 +187,6 @@ static BOOT_CODE bool_t try_init_kernel(
     word_t  dtb_size
 )
 {
-    cap_t root_cnode_cap;
-    cap_t it_pd_cap;
-    cap_t it_ap_cap;
-    cap_t ipcbuf_cap;
-    p_region_t boot_mem_reuse_p_reg = ((p_region_t) {
-        kpptr_to_paddr((void *)KERNEL_ELF_BASE), kpptr_to_paddr(ki_boot_end)
-    });
-    region_t boot_mem_reuse_reg = paddr_to_pptr_reg(boot_mem_reuse_p_reg);
-    region_t ui_reg = paddr_to_pptr_reg((p_region_t) {
-        ui_p_reg_start, ui_p_reg_end
-    });
-    word_t extra_bi_size = 0;
-    pptr_t extra_bi_offset = 0;
-    vptr_t extra_bi_frame_vptr;
-    vptr_t bi_frame_vptr;
-    vptr_t ipcbuf_vptr;
-    create_frames_of_region_ret_t create_frames_ret;
-    create_frames_of_region_ret_t extra_bi_ret;
-
-    /* convert from physical addresses to userland vptrs */
-    v_region_t ui_v_reg = {
-        .start = ui_p_reg_start - pv_offset,
-        .end   = ui_p_reg_end   - pv_offset
-    };
-
-    ipcbuf_vptr = ui_v_reg.end;
-    bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
-    extra_bi_frame_vptr = bi_frame_vptr + BIT(BI_FRAME_SIZE_BITS);
-
     map_kernel_window();
 
     /* initialise the CPU */
@@ -226,6 +197,7 @@ static BOOT_CODE bool_t try_init_kernel(
     /* initialize the platform */
     init_plat();
 
+    word_t extra_bi_size = 0;
     /* If a DTB was provided, pass the data on as extra bootinfo */
     p_region_t dtb_p_reg = P_REG_EMPTY;
     if (dtb_size > 0) {
@@ -257,8 +229,25 @@ static BOOT_CODE bool_t try_init_kernel(
         };
     }
 
-    /* The region of the initial thread is the user image + ipcbuf + boot info + extra */
+    /* Setup the region of the initial thread, which consist of
+     *  - the user image
+     *  - the IPC buffer
+     *  - the bootinfo
+     *  - the extra bootinfo
+     */
     word_t extra_bi_size_bits = calculate_extra_bi_size_bits(extra_bi_size);
+    p_region_t ui_p_reg = {
+        .start = ui_p_reg_start,
+        .end   = ui_p_reg_end
+    };
+    /* Convert user image from physical addresses to userland vptrs. */
+    v_region_t ui_v_reg = {
+        .start = ui_p_reg.start - pv_offset,
+        .end   = ui_p_reg.end   - pv_offset
+    };
+    vptr_t ipcbuf_vptr = ui_v_reg.end;
+    vptr_t bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
+    vptr_t extra_bi_frame_vptr = bi_frame_vptr + BIT(BI_FRAME_SIZE_BITS);
     v_region_t it_v_reg = {
         .start = ui_v_reg.start,
         .end   = extra_bi_frame_vptr + BIT(extra_bi_size_bits)
@@ -275,13 +264,13 @@ static BOOT_CODE bool_t try_init_kernel(
     }
 
     /* make the free memory available to alloc_region() */
-    if (!arch_init_freemem(ui_reg, dtb_p_reg, it_v_reg, extra_bi_size_bits)) {
+    if (!arch_init_freemem(ui_p_reg, dtb_p_reg, it_v_reg, extra_bi_size_bits)) {
         printf("ERROR: free memory management initialization failed\n");
         return false;
     }
 
     /* create the root cnode */
-    root_cnode_cap = create_root_cnode();
+    cap_t root_cnode_cap = create_root_cnode();
     if (cap_get_capType(root_cnode_cap) == cap_null_cap) {
         printf("ERROR: root c-node creation failed\n");
         return false;
@@ -295,7 +284,7 @@ static BOOT_CODE bool_t try_init_kernel(
 
     /* create the bootinfo frame */
     populate_bi_frame(0, CONFIG_MAX_NUM_NODES, ipcbuf_vptr, extra_bi_size);
-
+    pptr_t extra_bi_offset = 0;
     /* put DTB in the bootinfo block, if present. */
     seL4_BootInfoHeader header;
     if (dtb_size > 0) {
@@ -318,7 +307,7 @@ static BOOT_CODE bool_t try_init_kernel(
 
     /* Construct an initial address space with enough virtual addresses
      * to cover the user image + ipc buffer and bootinfo frames */
-    it_pd_cap = create_it_address_space(root_cnode_cap, it_v_reg);
+    cap_t it_pd_cap = create_it_address_space(root_cnode_cap, it_v_reg);
     if (cap_get_capType(it_pd_cap) == cap_null_cap) {
         printf("ERROR: address space creation for initial thread failed\n");
         return false;
@@ -337,7 +326,7 @@ static BOOT_CODE bool_t try_init_kernel(
             .start = rootserver.extra_bi,
             .end = rootserver.extra_bi + extra_bi_size
         };
-        extra_bi_ret =
+        create_frames_of_region_ret_t extra_bi_ret =
             create_frames_of_region(
                 root_cnode_cap,
                 it_pd_cap,
@@ -357,18 +346,19 @@ static BOOT_CODE bool_t try_init_kernel(
 #endif
 
     /* create the initial thread's IPC buffer */
-    ipcbuf_cap = create_ipcbuf_frame_cap(root_cnode_cap, it_pd_cap, ipcbuf_vptr);
+    cap_t ipcbuf_cap = create_ipcbuf_frame_cap(root_cnode_cap, it_pd_cap,
+                                               ipcbuf_vptr);
     if (cap_get_capType(ipcbuf_cap) == cap_null_cap) {
         printf("ERROR: could not create IPC buffer for initial thread\n");
         return false;
     }
 
     /* create all userland image frames */
-    create_frames_ret =
+    create_frames_of_region_ret_t create_frames_ret =
         create_frames_of_region(
             root_cnode_cap,
             it_pd_cap,
-            ui_reg,
+            paddr_to_pptr_reg(ui_p_reg),
             true,
             pv_offset
         );
@@ -379,7 +369,7 @@ static BOOT_CODE bool_t try_init_kernel(
     ndks_boot.bi_frame->userImageFrames = create_frames_ret.region;
 
     /* create the initial thread's ASID pool */
-    it_ap_cap = create_it_asid_pool(root_cnode_cap);
+    cap_t it_ap_cap = create_it_asid_pool(root_cnode_cap);
     if (cap_get_capType(it_ap_cap) == cap_null_cap) {
         printf("ERROR: could not create ASID pool for initial thread\n");
         return false;
@@ -414,9 +404,11 @@ static BOOT_CODE bool_t try_init_kernel(
     init_core_state(initial);
 
     /* convert the remaining free memory into UT objects and provide the caps */
-    if (!create_untypeds(
-            root_cnode_cap,
-            boot_mem_reuse_reg)) {
+    region_t boot_mem_reuse_reg = paddr_to_pptr_reg((p_region_t) {
+        .start = kpptr_to_paddr((void *)KERNEL_ELF_BASE),
+        .end   = kpptr_to_paddr(ki_boot_end)
+    });
+    if (!create_untypeds(root_cnode_cap, boot_mem_reuse_reg)) {
         printf("ERROR: could not create untypteds for kernel image boot memory\n");
         return false;
     }
