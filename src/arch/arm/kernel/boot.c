@@ -29,8 +29,11 @@
 #endif
 
 #ifdef ENABLE_SMP_SUPPORT
-/* sync variable to prevent other nodes from booting
- * until kernel data structures initialized */
+/* SMP boot synchronization works based on a global variable with the initial
+ * value 0, as the loader must zero all BSS variables. Secondary cores keep
+ * spinning until the primary core has initialized all kernel structures and
+ * then set it to 1.
+ */
 BOOT_BSS static volatile int node_boot_lock;
 #endif /* ENABLE_SMP_SUPPORT */
 
@@ -282,6 +285,7 @@ BOOT_CODE static bool_t try_init_kernel_secondary_core(void)
 BOOT_CODE static void release_secondary_cpus(void)
 {
     /* release the cpus at the same time */
+    assert(0 == node_boot_lock); /* Sanity check for a proper lock state. */
     node_boot_lock = 1;
 
     /*
