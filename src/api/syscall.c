@@ -65,35 +65,51 @@ void handleInterruptEntry(void)
 #endif
 }
 
-void handleUnknownSyscall(word_t w)
+
+void handleUnknownSyscall(syscall_t syscall)
 {
+    switch (syscall)
+    {
+
 #ifdef CONFIG_PRINTING
-    if (w == SysDebugPutChar) {
-        kernel_putchar(getRegister(NODE_STATE(ksCurThread), capRegister));
+    case SysDebugPutChar: {
+        /* Debug printing is not coupled to CONFIG_DEBUG_BUILD, thus non-debug
+         * builds can also show status and error message.
+         */
+        char c = getRegister(NODE_STATE(ksCurThread), capRegister);
+        kernel_putchar(c);
         return;
     }
-    if (w == SysDebugDumpScheduler) {
+#endif /* CONFIG_PRINTING */
+
 #ifdef CONFIG_DEBUG_BUILD
+
+    case SysDebugDumpScheduler:
+        /* Without CONFIG_PRINTING this syscall still exists, but it does
+         * nothing.
+         */
+#ifdef CONFIG_PRINTING
         debug_dumpScheduler();
-#endif
+#endif /* CONFIG_PRINTING */
         return;
-    }
-#endif
-#ifdef CONFIG_DEBUG_BUILD
-    if (w == SysDebugHalt) {
+
+    case SysDebugHalt: {
         tcb_t *UNUSED tptr = NODE_STATE(ksCurThread);
-        printf("Debug halt syscall from user thread %p \"%s\"\n", tptr, TCB_PTR_DEBUG_PTR(tptr)->tcbName);
+        printf("Debug halt syscall from user thread %p \"%s\"\n",
+               tptr, TCB_PTR_DEBUG_PTR(tptr)->tcbName);
         halt();
         UNREACHABLE();
     }
-    if (w == SysDebugSnapshot) {
+
+    case SysDebugSnapshot: {
         tcb_t *UNUSED tptr = NODE_STATE(ksCurThread);
         printf("Debug snapshot syscall from user thread %p \"%s\"\n",
                tptr, TCB_PTR_DEBUG_PTR(tptr)->tcbName);
         debug_capDL();
         return;
     }
-    if (w == SysDebugCapIdentify) {
+
+    case SysDebugCapIdentify: {
         word_t cptr = getRegister(NODE_STATE(ksCurThread), capRegister);
         lookupCapAndSlot_ret_t lu_ret = lookupCapAndSlot(NODE_STATE(ksCurThread), cptr);
         word_t cap_type = cap_get_capType(lu_ret.cap);
@@ -101,39 +117,42 @@ void handleUnknownSyscall(word_t w)
         return;
     }
 
-    if (w == SysDebugNameThread) {
+    case SysDebugNameThread: {
         /* This is a syscall meant to aid debugging, so if anything goes wrong
-         * then assume the system is completely misconfigured and halt */
-        const char *name;
-        word_t len;
+         * then assume the system is completely misconfigured and halt
+         */
         word_t cptr = getRegister(NODE_STATE(ksCurThread), capRegister);
         lookupCapAndSlot_ret_t lu_ret = lookupCapAndSlot(NODE_STATE(ksCurThread), cptr);
-        /* ensure we got a TCB cap */
         word_t cap_type = cap_get_capType(lu_ret.cap);
+
+        /* ensure we got a TCB cap */
         if (cap_type != cap_thread_cap) {
             userError("SysDebugNameThread: cap is not a TCB, halting");
             halt();
             UNREACHABLE();
         }
-        /* Add 1 to the IPC buffer to skip the message info word */
-        name = (const char *)(lookupIPCBuffer(true, NODE_STATE(ksCurThread)) + 1);
-        if (!name) {
+        seL4_IPCBuffer *ipcBuffer = (seL4_IPCBuffer *)lookupIPCBuffer(true, NODE_STATE(ksCurThread));
+        if (!ipcBuffer) {
             userError("SysDebugNameThread: Failed to lookup IPC buffer, halting");
             halt();
             UNREACHABLE();
         }
-        /* ensure the name isn't too long */
-        len = strnlen(name, seL4_MsgMaxLength * sizeof(word_t));
-        if (len == seL4_MsgMaxLength * sizeof(word_t)) {
-            userError("SysDebugNameThread: Name too long, halting");
+        const char *name = (const char *)(&ipcBuffer->msg);
+        const word_t max_len = seL4_MsgMaxLength * sizeof(word_t);
+        assert(max_len == sizeof(ipcBuffer->msg));
+        word_t len = strnlen(name, max_len);
+        if (len == max_len) {
+            userError("SysDebugNameThread: Name exceeds %"SEL4_PRIu_word" chars, halting",
+                      max_len - 1);
             halt();
             UNREACHABLE();
         }
         setThreadName(TCB_PTR(cap_thread_cap_get_capTCBPtr(lu_ret.cap)), name);
         return;
     }
+
 #ifdef ENABLE_SMP_SUPPORT
-    if (w == SysDebugSendIPI) {
+    case SysDebugSendIPI: {
         handle_SysDebugSendIPI();
         return;
     }
@@ -141,28 +160,31 @@ void handleUnknownSyscall(word_t w)
 #endif /* CONFIG_DEBUG_BUILD */
 
 #ifdef CONFIG_DANGEROUS_CODE_INJECTION
-    if (w == SysDebugRun) {
-        ((void (*)(void *))getRegister(NODE_STATE(ksCurThread), capRegister))((void *)getRegister(NODE_STATE(ksCurThread),
-                                                                                                  msgInfoRegister));
+    case SysDebugRun: {
+        /* This syscall can be enabled even on non-debug builds. */
+        typedef void (*func_ptr)(void * ctx);
+        func_ptr injected_func = (func_ptr)getRegister(NODE_STATE(ksCurThread), capRegister);
+        void *ctx = (void *)getRegister(NODE_STATE(ksCurThread), msgInfoRegister);
+        injected_func(ctx);
         return;
     }
-#endif
+#endif /* CONFIG_DANGEROUS_CODE_INJECTION */
 
 #ifdef CONFIG_KERNEL_X86_DANGEROUS_MSR
-    if (w == SysX86DangerousWRMSR) {
-        uint64_t val;
+
+    case SysX86DangerousWRMSR: {
         uint32_t reg = getRegister(NODE_STATE(ksCurThread), capRegister);
-        if (CONFIG_WORD_SIZE == 32) {
-            val = (uint64_t)getSyscallArg(0, NULL) | ((uint64_t)getSyscallArg(1, NULL) << 32);
-        } else {
-            val = getSyscallArg(0, NULL);
+        uint64_t val = getSyscallArg(0, NULL);
+        if (CONFIG_WORD_SIZE == 64) {
+            val |= (uint64_t)getSyscallArg(1, NULL) << 32;
         }
         x86_wrmsr(reg, val);
         return;
-    } else if (w == SysX86DangerousRDMSR) {
-        uint64_t val;
+    }
+
+    case SysX86DangerousRDMSR: {
         uint32_t reg = getRegister(NODE_STATE(ksCurThread), capRegister);
-        val = x86_rdmsr(reg);
+        uint64_t val = x86_rdmsr(reg);
         int num = 1;
         if (CONFIG_WORD_SIZE == 32) {
             setMR(NODE_STATE(ksCurThread), NULL, 0, val & 0xffffffff);
@@ -171,13 +193,15 @@ void handleUnknownSyscall(word_t w)
         } else {
             setMR(NODE_STATE(ksCurThread), NULL, 0, val);
         }
-        setRegister(NODE_STATE(ksCurThread), msgInfoRegister, wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, num)));
+        setRegister(NODE_STATE(ksCurThread), msgInfoRegister,
+                    wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, num)));
         return;
     }
-#endif
+
+#endif /* CONFIG_KERNEL_X86_DANGEROUS_MSR */
 
 #ifdef CONFIG_ENABLE_BENCHMARKS
-    switch (w) {
+
     case SysBenchmarkFlushCaches:
         handle_SysBenchmarkFlushCaches();
         return;
@@ -210,31 +234,41 @@ void handleUnknownSyscall(word_t w)
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
     case SysBenchmarkNullSyscall:
         return;
-    default:
-        break; /* syscall is not for benchmarking */
-    } /* end switch(w) */
+
 #endif /* CONFIG_ENABLE_BENCHMARKS */
 
+    default:
+        /* No matching handler so far, continue below. */
+        break;
+
+    } // end switch (syscall)
+
     MCS_DO_IF_BUDGET({
-#ifdef CONFIG_SET_TLS_BASE_SELF
-        if (w == SysSetTLSBase)
+        switch (syscall)
         {
+
+#ifdef CONFIG_SET_TLS_BASE_SELF
+        case SysSetTLSBase: {
             word_t tls_base = getRegister(NODE_STATE(ksCurThread), capRegister);
-            /*
-             * This updates the real register as opposed to the thread state
+            /* This updates the real register as opposed to the thread state
              * value. For many architectures, the TLS variables only get
              * updated on a thread switch.
              */
             exception_t ret = Arch_setTLSRegister(tls_base);
             if (unlikely(ret != EXCEPTION_NONE)) {
                 userError("could not set TLS register");
+                halt();
+                UNREACHABLE();
             }
             return;
-
         }
-#endif
-        current_fault = seL4_Fault_UnknownSyscall_new(w);
-        handleFault(NODE_STATE(ksCurThread));
+#endif /* CONFIG_SET_TLS_BASE_SELF */
+
+        default:
+            current_fault = seL4_Fault_UnknownSyscall_new(syscall);
+            handleFault(NODE_STATE(ksCurThread));
+
+        } // end switch (syscall)
     })
 
     schedule();
