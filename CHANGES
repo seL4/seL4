@@ -44,6 +44,7 @@ Upcoming release: BREAKING
   This change is reflected in the definition of the seL4_UserTop constant that holds the largest user virtual address.
 * aarch32 VM fault messages now deliver original (untranslated) faulting IP in a hypervisor context, matching
   aarch64 behaviour.
+* Merge ARM and RISC-V generic kernel initialization code
 
 ## Upgrade Notes
 ---
