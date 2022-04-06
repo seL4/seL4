@@ -21,6 +21,11 @@
 #include <machine.h>
 
 #ifdef ENABLE_SMP_SUPPORT
+/* SMP boot synchronization works based on a global variable with the initial
+ * value 0, as the loader must zero all BSS variables. Secondary cores keep
+ * spinning until the primary core has initialized all kernel structures and
+ * then set it to 1.
+ */
 BOOT_BSS static volatile word_t node_boot_lock;
 #endif
 
@@ -166,6 +171,7 @@ BOOT_CODE static bool_t try_init_kernel_secondary_core(word_t hart_id, word_t co
 
 BOOT_CODE static void release_secondary_cores(void)
 {
+    assert(0 == node_boot_lock); /* Sanity check for a proper lock state. */
     node_boot_lock = 1;
     /* At this point in time the primary core (executing this code) already uses
      * the seL4 MMU/cache setup. However, the secondary cores are still using
