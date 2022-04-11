@@ -6,6 +6,9 @@
 
 #GDB macros for displaying seL4 data structures. Currently a work in progress.
 #TODO: macros for examining an address space
+# Note: This assumes KERNEL_OFFSET is a symbol that has the same value
+# as PPTR_BASE_OFFSET
+
 
 set print pretty on
 
@@ -39,6 +42,8 @@ document sel4
   Type help <command> for more information on a specific command
 end
 
+# Discover type of target
+#
 define runqueues
   set $found=0
   while($found<255)
@@ -387,7 +392,7 @@ end
 
 define pd_for_asid
   set $asid = $arg0
-  set $poolPtr = ia32KSASIDTable[$asid >> asidLowBits];
+  set $poolPtr = x86KSASIDTable[$asid >> asidLowBits];
   set $pd = poolPtr->array[$asid & ((1<<asidLowBits)-1)];
   if( !$asid || !$poolPtr )
     printf "Something went wrong\n"
@@ -517,10 +522,6 @@ document irq_handler
   Print the endpoints and handling threads for an IRQ. arg0: the IRQ number
 end
 
-define wombat_current
-  print ((struct thread_info *)per_cpu___l4_current_tinfo)->task
-end
-
 define finish_irq
   set $current_sel4_thread = ksCurThread
 #set $current = ((struct thread_info *)per_cpu___l4_current_tinfo)->task
@@ -535,7 +536,7 @@ end
 
 define n2
   next
-  if $eip>0xf0000000
+  if $eip>(unsigned long)&KERNEL_OFFSET
     printf "IRQ happened\n"
     finish_irq
   end
@@ -546,11 +547,11 @@ document n2
 end
 
 define vtd_root
-  print ia32KSvtdRootTable
+  print x86KSvtdRootTable
 end
 
 define decode_vtd_root_entry
-  set $vtd_root_entry = (vtd_root_entry_t)$arg0
+  set $vtd_root_entry = (vtd_rte_t)$arg0
   set $vtd_re_ctp = ($vtd_root_entry.words[0] & 0xfffff000)
   set $vtd_re_present = ($vtd_root_entry.words[0] & 0x1)
 end
@@ -569,7 +570,7 @@ document print_vtd_root_entry
 end
 
 define print_vtd_root_table 
-  set $vtd_root_entry_ptr = ia32KSvtdRootTable
+  set $vtd_root_entry_ptr = x86KSvtdRootTable
   set $count = 0
   while($count < 256)
     decode_vtd_root_entry $vtd_root_entry_ptr[$count] 
@@ -586,7 +587,7 @@ document print_vtd_root_table
 end
 
 define decode_vtd_context_entry
-  set $vtd_context_entry = (vtd_context_entry_t)$arg0
+  set $vtd_context_entry = (vtd_cte_t)$arg0
   set $vtd_ce_did = ($vtd_context_entry.words[2] & 0xffff00) >> 8
   set $vtd_ce_aw = ($vtd_context_entry.words[2] & 0x7)
   set $vtd_ce_asr = ($vtd_context_entry.words[0] & 0xfffff000)
@@ -609,7 +610,7 @@ document print_vtd_context_entry
 end
 
 define print_vtd_context_table
-  set $vtd_context_entry_ptr = (vtd_context_entry_t *)$arg0
+  set $vtd_context_entry_ptr = (vtd_cte_t *)$arg0
   set $count = 0
   while($count < 256)
     decode_vtd_context_entry $vtd_context_entry_ptr[$count]
@@ -663,9 +664,10 @@ document print_vtd_page_table
   "Prints all of the fields in a vtd page table. arg0: a pointer to the page table"
 end
 
+
 define paddr_to_vaddr
-  set $var = (unsigned int)$arg0
-  set $vaddr = ($var + 0xf0000000)
+  set $var = (unsigned long)$arg0
+  set $vaddr = ($var + (unsigned long)&KERNEL_OFFSET)
 end
 
 document paddr_to_vaddr
@@ -673,7 +675,7 @@ document paddr_to_vaddr
 end
 
 define vaddr_to_paddr
-  set $paddr = ($arg0 - 0xf0000000)
+  set $paddr = ($arg0 - (unsigned long)&KERNEL_OFFSET)
 end
 
 document vaddr_to_paddr
@@ -685,14 +687,16 @@ define lookup_vtd_address
   set $devfn = $arg1
   set $address = $arg2
 
-  set $vtd_root_entry_ptr = ia32KSvtdRootTable
+  set $vtd_root_entry_ptr = x86KSvtdRootTable
   decode_vtd_root_entry $vtd_root_entry_ptr[$bus]
   if($vtd_re_present)
     printf "Root entry: \n"
     print_vtd_root_entry
     paddr_to_vaddr $vtd_re_ctp
-    set $vtd_context_entry_ptr = (vtd_context_entry_t *)$vaddr
-    decode_vtd_context_entry $vtd_context_entry_ptr[$devfn]
+    print/x $vaddr
+    set $vtd_context_entry_ptr = (vtd_cte_t *)$vaddr
+    paddr_to_vaddr $vtd_context_entry_ptr[$devfn]
+    decode_vtd_context_entry $vaddr
     if($vtd_ce_present)
       printf "Context entry: \n"
       print_vtd_context_entry
@@ -765,7 +769,7 @@ define decode_pte
 end
 
 document decode_pte
- Decode an IA32 page table leaf entry into its component parts.
+ Decode an X86 page table leaf entry into its component parts.
  If the PRESENT bit is 0 then the rest of the bits can be anything
  (OSs typically reuse them for swap housekeeping)
 end
