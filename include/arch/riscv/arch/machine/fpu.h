@@ -27,7 +27,7 @@ static inline void set_fs_off(void)
 
 #define FL "flw"
 #define FS "fsw"
-#define FP_REG_TYPES "4"
+#define FP_REG_BYTES "4"
 
 #endif
 

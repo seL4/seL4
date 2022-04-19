@@ -289,13 +289,13 @@ BOOT_CODE static void release_secondary_cpus(void)
 
 #ifndef CONFIG_ARCH_AARCH64
     /* At this point in time the other CPUs do *not* have the seL4 global pd set.
-     * However, they still have a PD from the elfloader (which is mapping mmemory
+     * However, they still have a PD from the elfloader (which is mapping memory
      * as strongly ordered uncached, as a result we need to explicitly clean
      * the cache for it to see the update of node_boot_lock
      *
      * For ARMv8, the elfloader sets the page table entries as inner shareable
      * (so is the attribute of the seL4 global PD) when SMP is enabled, and
-     * turns on the cache. Thus, we do not need to clean and invaliate the cache.
+     * turns on the cache. Thus, we do not need to clean and invalidate the cache.
      */
     cleanInvalidateL1Caches();
     plat_cleanInvalidateL2Cache();
@@ -344,7 +344,7 @@ static BOOT_CODE bool_t try_init_kernel(
 
     ipcbuf_vptr = ui_v_reg.end;
     bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
-    extra_bi_frame_vptr = bi_frame_vptr + BIT(PAGE_BITS);
+    extra_bi_frame_vptr = bi_frame_vptr + BIT(BI_FRAME_SIZE_BITS);
 
     /* setup virtual memory for the kernel */
     map_kernel_window();
@@ -364,7 +364,7 @@ static BOOT_CODE bool_t try_init_kernel(
     /* If a DTB was provided, pass the data on as extra bootinfo */
     p_region_t dtb_p_reg = P_REG_EMPTY;
     if (dtb_size > 0) {
-        paddr_t dtb_phys_end = ROUND_UP(dtb_phys_addr + dtb_size, PAGE_BITS);
+        paddr_t dtb_phys_end = dtb_phys_addr + dtb_size;
         if (dtb_phys_end < dtb_phys_addr) {
             /* An integer overflow happened in DTB end address calculation, the
              * location or size passed seems invalid.
@@ -385,7 +385,7 @@ static BOOT_CODE bool_t try_init_kernel(
         }
         /* DTB seems valid and accessible, pass it on in bootinfo. */
         extra_bi_size += sizeof(seL4_BootInfoHeader) + dtb_size;
-        /* Remember the page aligned memory region it uses. */
+        /* Remember the memory region it uses. */
         dtb_p_reg = (p_region_t) {
             .start = dtb_phys_addr,
             .end   = dtb_phys_end
@@ -447,7 +447,7 @@ static BOOT_CODE bool_t try_init_kernel(
     }
 
     if (extra_bi_size > extra_bi_offset) {
-        /* provde a chunk for any leftover padding in the extended boot info */
+        /* provide a chunk for any leftover padding in the extended boot info */
         header.id = SEL4_BOOTINFO_HEADER_PADDING;
         header.len = (extra_bi_size - extra_bi_offset);
         *(seL4_BootInfoHeader *)(rootserver.extra_bi + extra_bi_offset) = header;

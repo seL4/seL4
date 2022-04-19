@@ -51,10 +51,20 @@ jobs:
         name: images-${{ matrix.march }}-${{ matrix.compiler }}
         path: '*-images.tar.gz'
 
+  the_matrix:
+    name: Matrix
+    needs: hw-build
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+    - id: matrix
+      uses: seL4/ci-actions/sel4test-hw-matrix@master
+
   hw-run:
     name: HW Run
     runs-on: ubuntu-latest
-    needs: hw-build
+    needs: the_matrix
     if: ${{ github.repository_owner == 'seL4' &&
             (github.event_name == 'push' ||
              github.event_name == 'pull_request_target' &&
@@ -65,35 +75,7 @@ jobs:
                github.event.label.name == 'hw-test') }}
     strategy:
       fail-fast: false
-      matrix:
-        # commented-out platforms hopefully available soon
-        platform:
-          - sabre
-          # - hikey
-          - imx8mm_evk
-          - odroid_c2
-          # - odroid_xu4
-          - am335x_boneblack
-          - tx2
-          # - rpi3
-          - zynqmp
-        compiler: [gcc, clang]
-        include:
-           - platform: pc99
-             compiler: gcc
-             mode: 32
-           - platform: pc99
-             compiler: gcc
-             mode: 64
-           - platform: pc99
-             compiler: clang
-             mode: 32
-           - platform: pc99
-             compiler: clang
-             mode: 64
-        # include:
-        #    - platform: hifive
-        #      compiler: gcc
+      matrix: ${{ fromJson(needs.the_matrix.outputs.matrix) }}
     steps:
       - name: Get machine queue
         uses: actions/checkout@v2
@@ -101,15 +83,10 @@ jobs:
           repository: seL4/machine_queue
           path: machine_queue
           token: ${{ secrets.PRIV_REPO_TOKEN }}
-      - name: Get march
-        id: plat
-        uses: seL4/ci-actions/march-of-platform@master
-        with:
-          platform: ${{ matrix.platform }}
       - name: Download image
         uses: actions/download-artifact@v2
         with:
-          name: images-${{ steps.plat.outputs.march }}-${{ matrix.compiler }}
+          name: images-${{ matrix.march }}-${{ matrix.compiler }}
       - name: Run
         uses: seL4/ci-actions/sel4test-hw-run@master
         with:

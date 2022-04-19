@@ -37,7 +37,7 @@
  * The layout of IRQs into the CNode are all of PPI's for each core first, followed
  * by the global interrupts.  Examples:
  *   core: 0, irq: 12 -> index 12.
- *   core: 2, irq: 16 -> (2 * 32) + 12
+ *   core: 2, irq: 16 -> (2 * 32) + 16
  *   core: 1, irq: 33, (4 total cores) -> (4 * 32) + (33-32).
  */
 #define IRQ_IS_PPI(_irq) (HW_IRQ_IS_PPI(_irq.irq))

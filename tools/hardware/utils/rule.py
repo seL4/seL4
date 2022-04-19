@@ -39,7 +39,7 @@ class KernelRegionGroup:
 
     def __init__(self, region: Region, kernel_name: str, page_bits: int, max_size: int, condition_macro: str = None, user_ok: bool = False):
         self.macro = condition_macro
-        self.desc = region.owner.path
+        self.desc = region.owner.path if region.owner else 'dynamically generated region'
         self.kernel_offset = -1
         self.page_bits = page_bits
         self.labels = {}  # dict of label => offset within region.
@@ -78,7 +78,7 @@ class KernelRegionGroup:
         self.kernel_offset = offset
         return offset + self.size
 
-    def get_labelled_addresses(self):
+    def get_labelled_addresses(self) -> Dict:
         ''' Get a dict of address -> label for the kernel '''
         ret = {}
         for (k, v) in self.labels.items():

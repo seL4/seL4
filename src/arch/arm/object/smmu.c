@@ -371,7 +371,7 @@ exception_t smmu_delete_cb(cap_t cap)
 
 void smmu_cb_delete_vspace(word_t cb, asid_t asid)
 {
-    /* Deleting the vsapce cap stored in context bank's CNode, causing:
+    /* Deleting the vspace cap stored in context bank's CNode, causing:
      * -reset the relationship between context bank and vspace's ASID
      * -disabe the context bank as its vspace no longer exists*/
     smmuStateCBAsidTable[cb] = ASID_INVALID;

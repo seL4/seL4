@@ -242,12 +242,6 @@ SEL4_SIZE_SANITY(seL4_PGDEntryBits, seL4_PGDIndexBits, seL4_PGDBits);
 #define seL4_LogBufferSize (LIBSEL4_BIT(20))
 #endif /* CONFIG_ENABLE_BENCHMARKS */
 
-#ifdef CONFIG_HARDWARE_DEBUG_API
-#define seL4_FirstBreakpoint (0)
-#define seL4_FirstDualFunctionMonitor (-1)
-#define seL4_NumDualFunctionMonitors (0)
-#endif
-
 #define seL4_FastMessageRegisters 4
 
 /* IPC buffer is 512 bytes, giving size bits of 9 */

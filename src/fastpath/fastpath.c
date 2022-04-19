@@ -99,7 +99,23 @@ void NORETURN fastpath_call(word_t cptr, word_t msgInfo)
     stored_hw_asid.words[0] = 0;
 #endif
 #ifdef CONFIG_ARCH_AARCH64
-    stored_hw_asid.words[0] = cap_vtable_root_get_mappedASID(newVTable);
+    /* Need to test that the ASID is still valid */
+    asid_t asid = cap_vtable_root_get_mappedASID(newVTable);
+    asid_map_t asid_map = findMapForASID(asid);
+    if (unlikely(asid_map_get_type(asid_map) != asid_map_asid_map_vspace ||
+                 VSPACE_PTR(asid_map_asid_map_vspace_get_vspace_root(asid_map)) != cap_pd)) {
+        slowpath(SysCall);
+    }
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    /* Ensure the vmid is valid. */
+    if (unlikely(!asid_map_asid_map_vspace_get_stored_vmid_valid(asid_map))) {
+        slowpath(SysCall);
+    }
+    /* vmids are the tags used instead of hw_asids in hyp mode */
+    stored_hw_asid.words[0] = asid_map_asid_map_vspace_get_stored_hw_vmid(asid_map);
+#else
+    stored_hw_asid.words[0] = asid;
+#endif
 #endif
 
 #ifdef CONFIG_ARCH_RISCV
@@ -352,7 +368,24 @@ void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo)
     stored_hw_asid.words[0] = 0;
 #endif
 #ifdef CONFIG_ARCH_AARCH64
-    stored_hw_asid.words[0] = cap_vtable_root_get_mappedASID(newVTable);
+    /* Need to test that the ASID is still valid */
+    asid_t asid = cap_vtable_root_get_mappedASID(newVTable);
+    asid_map_t asid_map = findMapForASID(asid);
+    if (unlikely(asid_map_get_type(asid_map) != asid_map_asid_map_vspace ||
+                 VSPACE_PTR(asid_map_asid_map_vspace_get_vspace_root(asid_map)) != cap_pd)) {
+        slowpath(SysReplyRecv);
+    }
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    /* Ensure the vmid is valid. */
+    if (unlikely(!asid_map_asid_map_vspace_get_stored_vmid_valid(asid_map))) {
+        slowpath(SysReplyRecv);
+    }
+
+    /* vmids are the tags used instead of hw_asids in hyp mode */
+    stored_hw_asid.words[0] = asid_map_asid_map_vspace_get_stored_hw_vmid(asid_map);
+#else
+    stored_hw_asid.words[0] = asid;
+#endif
 #endif
 
 #ifdef CONFIG_ARCH_RISCV

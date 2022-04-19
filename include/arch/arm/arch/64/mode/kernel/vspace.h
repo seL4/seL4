@@ -14,22 +14,6 @@
 #define activate_global_pd activate_kernel_vspace
 #define MODE_RESERVED 0
 
-/* The VTABLE_VMID_SLOT in user-level applications's vspace root
- * is reserved for storing its allocated hardware 8-bit VMID
- * when running EL2. Note that this assumes that the IPA size for S2
- * translation and the VA size for the S1 translation do not use full
- * 48-bit. Please see the definition of seL4_UserTop for details.
- */
-#define VTABLE_VMID_SLOT   MASK(seL4_VSpaceIndexBits)
-
-/* The VTABLE_SMMU_SLOT in user-level applications's vspace root is reserved
- * for storing the number of context banks bound with this vspace when the
- * SMMU feature is enabled. This assumes the user-level address space do not
- * use the second last entry in the vspace root, which is preserved by the
- * seL4_UserTop.
- */
-#define VTABLE_SMMU_SLOT   (MASK(seL4_VSpaceIndexBits) - 1)
-
 /* ==================== BOOT CODE FINISHES HERE ==================== */
 
 bool_t CONST isVTableRoot(cap_t cap);
@@ -48,6 +32,8 @@ void deleteASID(asid_t asid, vspace_root_t *vspace);
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 hw_asid_t getHWASID(asid_t asid);
 #endif
+
+asid_map_t findMapForASID(asid_t asid);
 
 #ifdef __clang__
 static const region_t BOOT_RODATA mode_reserved_region[] = {};
@@ -71,13 +57,8 @@ static const region_t BOOT_RODATA *mode_reserved_region = NULL;
 #define cap_vtable_root_ptr_set_mappedCB(_c, cb) \
     cap_page_upper_directory_cap_ptr_set_capPUDMappedCB(_c, cb)
 #define cap_vtable_cap_new(_a, _v, _m) cap_page_upper_directory_cap_new(_a, _v, _m, 0, CB_INVALID)
-#define vtable_invalid_new(_a, _v) pude_pude_invalid_new(_a, _v, 0)
-#define vtable_invalid_smmu_new(_cb) pude_pude_invalid_new(0, false, _cb)
-#define vtable_invalid_get_bind_cb(_v) \
-    pude_pude_invalid_get_bind_cb(_v)
 #else
 #define cap_vtable_cap_new(_a, _v, _m) cap_page_upper_directory_cap_new(_a, _v, _m, 0)
-#define vtable_invalid_new(_a, _v) pude_pude_invalid_new(_a, _v)
 #endif  /*!CONFIG_ARM_SMMU*/
 
 #define vtable_invalid_get_stored_asid_valid(_v) \
@@ -88,12 +69,19 @@ static inline exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *po
 {
     cap_page_upper_directory_cap_ptr_set_capPUDMappedASID(&cte->cap, asid);
     cap_page_upper_directory_cap_ptr_set_capPUDIsMapped(&cte->cap, 1);
-    poolPtr->array[asid & MASK(asidLowBits)] =
-        PUDE_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(cte->cap));
+    asid_map_t asid_map = asid_map_asid_map_vspace_new(
 #ifdef CONFIG_ARM_SMMU
-    vspace_root_t *vtable = poolPtr->array[asid & MASK(asidLowBits)];
-    vtable[VTABLE_SMMU_SLOT] = vtable_invalid_smmu_new(0);
+                              /* bind_cb: Number of bound context banks */
+                              0,
 #endif
+                              /* vspace_root: reference to vspace root page table object */
+                              cap_page_upper_directory_cap_get_capPUDBasePtr(cte->cap)
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+                              /* stored_hw_vmid, stored_vmid_valid: Assigned hardware VMID for TLB. */
+                              , 0, false
+#endif
+                          );
+    poolPtr->array[asid & MASK(asidLowBits)] = asid_map;
     return EXCEPTION_NONE;
 }
 
@@ -114,14 +102,9 @@ static inline exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *po
     cap_page_global_directory_cap_ptr_set_capPGDMappedCB(_c, cb)
 #define cap_vtable_cap_new(_a, _v, _m) \
     cap_page_global_directory_cap_new(_a, _v, _m, CB_INVALID)
-#define vtable_invalid_new(_a, _v) pgde_pgde_invalid_new(_a, _v, 0)
-#define vtable_invalid_smmu_new(_cb) pgde_pgde_invalid_new(0, false, _cb)
-#define vtable_invalid_get_bind_cb(_v) \
-    pgde_pgde_invalid_get_bind_cb(_v)
 #else
 #define cap_vtable_cap_new(_a, _v, _m) \
     cap_page_global_directory_cap_new(_a, _v, _m)
-#define vtable_invalid_new(_a, _v) pgde_pgde_invalid_new(_a, _v)
 #endif /*!CONFIG_ARM_SMMU*/
 
 #define vtable_invalid_get_stored_asid_valid(_v) \
@@ -132,13 +115,21 @@ static inline exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *po
 {
     cap_page_global_directory_cap_ptr_set_capPGDMappedASID(&cte->cap, asid);
     cap_page_global_directory_cap_ptr_set_capPGDIsMapped(&cte->cap, 1);
-    poolPtr->array[asid & MASK(asidLowBits)] =
-        PGDE_PTR(cap_page_global_directory_cap_get_capPGDBasePtr(cte->cap));
-
+    asid_map_t asid_map = asid_map_asid_map_vspace_new(
 #ifdef CONFIG_ARM_SMMU
-    vspace_root_t *vtable = poolPtr->array[asid & MASK(asidLowBits)];
-    vtable[VTABLE_SMMU_SLOT] = vtable_invalid_smmu_new(0);
+                              /* bind_cb: Number of bound context banks */
+                              0,
 #endif
+                              /* vspace_root: reference to vspace root page table object */
+                              cap_page_global_directory_cap_get_capPGDBasePtr(cte->cap)
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+                              /* stored_hw_vmid, stored_vmid_valid: Assigned hardware VMID for TLB. */
+                              , 0, false
+#endif
+                          );
+
+    poolPtr->array[asid & MASK(asidLowBits)] = asid_map;
+
     return EXCEPTION_NONE;
 }
 

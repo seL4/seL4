@@ -26,7 +26,7 @@ typedef word_t syscall_error_type_t;
 
 struct syscall_error {
     word_t invalidArgumentNumber;
-    word_t  invalidCapNumber;
+    word_t invalidCapNumber;
     word_t rangeErrorMin;
     word_t rangeErrorMax;
     word_t memoryLeft;

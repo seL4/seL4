@@ -83,6 +83,9 @@
 #define KDEV_BASE KERNEL_PT_BASE
 
 #ifndef __ASSEMBLER__
+/* It is required that USER_TOP must be aligned to at least 20 bits */
+compile_assert(USER_TOP_correctly_aligned, IS_ALIGNED(USER_TOP, 20));
+
 #include <plat/machine/hardware.h>
 #endif
 

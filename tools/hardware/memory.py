@@ -5,23 +5,21 @@
 #
 
 import functools
-
-import hardware.utils as utils
+import hardware
 
 
 @functools.total_ordering
 class Region:
     ''' Represents a region of memory. '''
 
-    def __init__(self, base: int, size: int, owner: 'WrappedNode'):
+    def __init__(self, base: int, size: int, owner: 'WrappedNode' = None):
         self.base = base
         self.size = size
         self.owner = owner
 
     @staticmethod
     def clone(other):
-        ret = Region(other.base, other.size)
-        return ret
+        return Region(other.base, other.size)
 
     def __repr__(self):
         ''' Returns a string representation that is a valid Python expression
@@ -49,23 +47,19 @@ class Region:
         return hash((self.base, self.size))
 
     @staticmethod
-    def from_range(start, end, owner):
+    def from_range(start, end, owner=None):
         ''' create a region from a start/end rather than start/size '''
         if start > end:
             raise ValueError(
                 'invalid rage start (0x{:x}) > end (0x{:x})'.format(start > end))
-        ret = Region(start, end - start, owner)
-        return ret
+        return Region(start, end - start, owner)
 
     def overlaps(self, other):
         ''' returns True if this region overlaps the given region '''
-        # either our base is first, and to overlap our end must be > other.base
-        if self.base <= other.base and (self.base + self.size) > other.base:
-            return True
+        # Either our base is first, and to overlap our end must be > other.base
         # or other.base is first, and to overlap other's end must be > self.base
-        elif other.base <= self.base and (other.base + other.size) > self.base:
-            return True
-        return False
+        return (self.base <= other.base and (self.base + self.size) > other.base) \
+            or (other.base <= self.base and (other.base + other.size) > self.base)
 
     def reserve(self, excluded):
         ''' returns an array of regions that represent this region
@@ -92,7 +86,7 @@ class Region:
 
     def align_base(self, align_bits):
         ''' align this region up to a given number of bits '''
-        new_base = utils.align_up(self.base, align_bits)
+        new_base = hardware.utils.align_up(self.base, align_bits)
         diff = new_base - self.base
         if self.size < diff:
             raise ValueError(
@@ -106,10 +100,9 @@ class Region:
         ''' align this region's size to a given number of bits.
          will move the base address down and the region's size
          up '''
-        new_base = utils.align_down(self.base, align_bits)
-        new_size = utils.align_up(self.size, align_bits)
-        new = Region(new_base, new_size, self.owner)
-        return new
+        new_base = hardware.utils.align_down(self.base, align_bits)
+        new_size = hardware.utils.align_up(self.size, align_bits)
+        return Region(new_base, new_size, self.owner)
 
     def make_chunks(self, chunksz):
         base = self.base

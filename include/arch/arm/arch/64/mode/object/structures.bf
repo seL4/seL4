@@ -65,8 +65,8 @@ block page_upper_directory_cap {
     field capPUDIsMapped             1
     field_high capPUDMappedAddress   10
 #if defined (CONFIG_ARM_SMMU)  && defined (AARCH64_VSPACE_S2_START_L1)
-    field capPUDMappedCB             12
-    padding                          36
+    field capPUDMappedCB             8
+    padding                          40
 #else 
     padding                          48
 #endif 
@@ -80,8 +80,8 @@ block page_global_directory_cap {
     field capType                    5
     field capPGDIsMapped             1
 #ifdef CONFIG_ARM_SMMU 
-    field capPGDMappedCB             12
-    padding                          46
+    field capPGDMappedCB             8
+    padding                          50
 #else 
     padding                          58
 #endif 
@@ -143,9 +143,9 @@ block cb_control_cap {
 
 block cb_cap {
 
-    padding               40
+    padding               44
     field capBindSID      12
-    field capCB           12
+    field capCB           8
 
 
     field capType         5
@@ -239,19 +239,40 @@ block vm_attributes {
 
 ---- ARM-specific object types
 
+block asid_map_none {
+    padding                         63
+    field type                      1
+}
+
+--- hw_vmids are required in hyp mode
+block asid_map_vspace {
+#ifdef CONFIG_ARM_SMMU
+    field bind_cb                   8
+    padding                         8
+#else
+    padding                         16
+#endif
+    field_high vspace_root          36
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    padding                         2
+    field stored_hw_vmid            8
+    field stored_vmid_valid         1
+#else
+    padding                         11
+#endif
+    field type                      1
+}
+
+tagged_union asid_map type {
+    tag asid_map_none 0
+    tag asid_map_vspace 1
+}
+
 -- PGDE, PUDE, PDEs and PTEs, assuming 48-bit physical address
 base 64(48,0)
 
--- hw_asids are required in hyp mode
 block pgde_invalid {
-    field stored_hw_asid            8
-    field stored_asid_valid         1
-#ifdef CONFIG_ARM_SMMU
-    field bind_cb                   12
-    padding                         41
-#else
-    padding                         53
-#endif
+    padding                         62
     field pgde_type                 2
 }
 
@@ -268,14 +289,7 @@ tagged_union pgde pgde_type {
 }
 
 block pude_invalid {
-    field stored_hw_asid            8
-    field stored_asid_valid         1
- #ifdef CONFIG_ARM_SMMU
-    field bind_cb                   12
-    padding                         41
-#else
-    padding                         53
-#endif
+    padding                         62
     field pude_type                 2
 }
 

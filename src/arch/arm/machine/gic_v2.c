@@ -18,7 +18,7 @@
 /* Use this to forward interrupts to all CPUs when debugging */
 #define TARGET_CPU_ALL_ALLINT   TARGET_CPU_ALLINT(0xff)
 
-#define IRQ_SET_ALL 0xffffffff;
+#define IRQ_SET_ALL 0xffffffff
 
 #ifndef GIC_V2_DISTRIBUTOR_PPTR
 #error GIC_V2_DISTRIBUTOR_PPTR must be defined for virtual memory access to the gic distributer

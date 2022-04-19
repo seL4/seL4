@@ -50,15 +50,7 @@ provides principled access control for execution time, but its formal
 verification is currently still in progress.
 
 
-## IPC buffer in globals frame may be stale
-
-When a thread invokes its own TCB object to (re-)register its IPC buffer and
-the thread is re-scheduled immediately, the userland IPC buffer pointer in the
-globals frame may still show the old value. It is updated on the next thread
-switch.
-
-
-## Re-using Address Spaces (ARM and x86):
+## Re-using Address Spaces
 
 Before an ASID/page directory/page table can be reused, all frame caps
 installed in it should be revoked. The kernel will not do this automatically

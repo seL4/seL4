@@ -48,10 +48,9 @@ set_property(
 
 # These options are now set in seL4Config.cmake
 if(DEFINED CALLED_declare_default_headers)
-    # calculate the irq cnode size based on MAX_IRQ
+    # calculate the irq cnode size based on MAX_NUM_IRQ
     if("${KernelArch}" STREQUAL "riscv")
-        set(MAX_IRQ "${CONFIGURE_PLIC_MAX_NUM_INT}")
-        math(EXPR MAX_NUM_IRQ "${MAX_IRQ} + 2")
+        math(EXPR MAX_NUM_IRQ "${CONFIGURE_PLIC_MAX_NUM_INT} + 2")
     else()
         if(
             DEFINED KernelMaxNumNodes
@@ -71,10 +70,6 @@ if(DEFINED CALLED_declare_default_headers)
         math(EXPR BITS "${BITS} + 1")
         math(EXPR MAX_NUM_IRQ "${MAX_NUM_IRQ} >> 1")
     endwhile()
-    math(EXPR SLOTS "1 << ${BITS}")
-    if("${SLOTS}" LESS "${MAX_IRQ}")
-        math(EXPR BITS "${BITS} + 1")
-    endif()
     set(CONFIGURE_IRQ_SLOT_BITS "${BITS}" CACHE INTERNAL "")
     if(NOT DEFINED CONFIGURE_TIMER_PRECISION)
         set(CONFIGURE_TIMER_PRECISION "0")
@@ -108,6 +103,18 @@ if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
     )
     set(config_file "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware.yml")
     set(config_schema "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware_schema.yml")
+    set(
+        KernelCustomDTSOverlay ""
+        CACHE FILEPATH "Provide an additional overlay to append to the selected KernelPlatform's \
+        device tree during build time"
+    )
+    if(NOT "${KernelCustomDTSOverlay}" STREQUAL "")
+        if(NOT EXISTS ${KernelCustomDTSOverlay})
+            message(FATAL_ERROR "Can't open external overlay file '${KernelCustomDTSOverlay}'!")
+        endif()
+        list(APPEND KernelDTSList "${KernelCustomDTSOverlay}")
+        message(STATUS "Using ${KernelCustomDTSOverlay} overlay")
+    endif()
 
     find_program(DTC_TOOL dtc)
     if("${DTC_TOOL}" STREQUAL "DTC_TOOL-NOTFOUND")
@@ -140,10 +147,17 @@ if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
         if(error)
             message(FATAL_ERROR "Failed to compile DTS to DTB: ${KernelDTBPath}")
         endif()
+        # The macOS and GNU coreutils `stat` utilities have different interfaces.
+        # Check if we're using the macOS version, otherwise assume GNU coreutils.
+        # CMAKE_HOST_APPLE is a built-in CMake variable.
+        if(CMAKE_HOST_APPLE AND "${STAT_TOOL}" STREQUAL "/usr/bin/stat")
+            set(STAT_ARGS "-f%z")
+        else()
+            set(STAT_ARGS "-c '%s'")
+        endif()
         # Track the size of the DTB for downstream tools
         execute_process(
-            COMMAND
-                ${STAT_TOOL} -c '%s' ${KernelDTBPath}
+            COMMAND ${STAT_TOOL} ${STAT_ARGS} ${KernelDTBPath}
             OUTPUT_VARIABLE KernelDTBSize
             OUTPUT_STRIP_TRAILING_WHITESPACE
             RESULT_VARIABLE error
@@ -172,8 +186,8 @@ if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
                 ${PYTHON3} "${HARDWARE_GEN_PATH}" --dtb "${KernelDTBPath}" --compat-strings
                 --compat-strings-out "${compatibility_outfile}" --c-header --header-out
                 "${device_dest}" --hardware-config "${config_file}" --hardware-schema
-                "${config_schema}" --yaml --yaml-out "${platform_yaml}" --arch "${KernelArch}"
-                --addrspace-max "${KernelPaddrUserTop}"
+                "${config_schema}" --yaml --yaml-out "${platform_yaml}" --sel4arch
+                "${KernelSel4Arch}" --addrspace-max "${KernelPaddrUserTop}"
             RESULT_VARIABLE error
         )
         if(error)
@@ -352,7 +366,7 @@ config_option(
 config_choice(
     KernelBenchmarks
     KERNEL_BENCHMARK
-    "Enable benchamrks including logging and tracing info. \
+    "Enable benchmarks including logging and tracing info. \
     Setting this value > 1 enables a 1MB log buffer and functions for extracting data from it \
     at user level. NOTE this is only tested on the sabre and will not work on platforms with < 512mb memory. \
     This is not fully implemented for x86. \
@@ -374,7 +388,7 @@ else()
     config_set(KernelEnableBenchmarks ENABLE_BENCHMARKS OFF)
 endif()
 
-# Reflect the existance of kernel Log buffer
+# Reflect the existence of kernel Log buffer
 if(KernelBenchmarksTrackKernelEntries OR KernelBenchmarksTracepoints)
     config_set(KernelLogBuffer KERNEL_LOG_BUFFER ON)
 else()

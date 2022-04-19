@@ -351,10 +351,8 @@ static inline void cleanByVA(vptr_t vaddr, paddr_t paddr)
     asm volatile("ldr r0, [sp]" : : : "r0");
     /* Erratum 586320 -- clean twice with interrupts disabled. */
     asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
-    asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
-#else
-    asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
 #endif
+    asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
     /* Erratum 586323 - end with DMB to ensure the write goes out. */
     dmb();
 }
@@ -366,14 +364,12 @@ static inline void cleanByVA_PoU(vptr_t vaddr, paddr_t paddr)
     /* Erratum 586324 -- perform a dummy cached load before flushing. */
     asm volatile("ldr r0, [sp]" : : : "r0");
     asm volatile("mcr p15, 0, %0, c7, c11, 1" : : "r"(vaddr));
-#elif defined(CONFIG_PLAT_EXYNOS5)
+#elif defined(CONFIG_ARCH_ARM_V6)
+    /* V6 doesn't distinguish PoU and PoC, so use the basic flush. */
+    asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
+#elif defined(CONFIG_ARM_CORTEX_A7) || defined(CONFIG_ARM_CORTEX_A15) || \
+    defined(CONFIG_ARM_CORTEX_A53)
     /* Flush to coherency for table walks... Why? */
-    asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
-#elif defined(CONFIG_PLAT_IMX7)
-    asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
-#elif defined(CONFIG_PLAT_TK1)
-    asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
-#elif defined(CONFIG_ARM_CORTEX_A53)
     asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
 #else
     asm volatile("mcr p15, 0, %0, c7, c11, 1" : : "r"(vaddr));
@@ -388,10 +384,8 @@ static inline void invalidateByVA(vptr_t vaddr, paddr_t paddr)
 #ifdef CONFIG_ARM_CORTEX_A8
     /* Erratum 586324 -- perform a dummy cached load before flushing. */
     asm volatile("ldr r0, [sp]" : : : "r0");
-    asm volatile("mcr p15, 0, %0, c7, c6, 1" : : "r"(vaddr));
-#else
-    asm volatile("mcr p15, 0, %0, c7, c6, 1" : : "r"(vaddr));
 #endif
+    asm volatile("mcr p15, 0, %0, c7, c6, 1" : : "r"(vaddr));
     dmb();
 }
 
@@ -426,10 +420,8 @@ static inline void cleanInvalByVA(vptr_t vaddr, paddr_t paddr)
     asm volatile("ldr r0, [sp]" : : : "r0");
     /* Erratum 586320 -- clean twice with interrupts disabled. */
     asm volatile("mcr p15, 0, %0, c7, c14, 1" : : "r"(vaddr));
-    asm volatile("mcr p15, 0, %0, c7, c14, 1" : : "r"(vaddr));
-#else
-    asm volatile("mcr p15, 0, %0, c7, c14, 1" : : "r"(vaddr));
 #endif
+    asm volatile("mcr p15, 0, %0, c7, c14, 1" : : "r"(vaddr));
     dsb();
 }
 

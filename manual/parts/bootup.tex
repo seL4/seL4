@@ -119,7 +119,7 @@ of slots in the initial thread's CNode, starting with CPTR \texttt{start} and wi
 \end{table}
 
 Depending on the architecture and platform there might be additional pieces of boot
-information. If \texttt{extraLen} is greater then zero then 4K after the start of bootinfo
+information. If \texttt{extraLen} is greater than zero, then 4K after the start of bootinfo
 is a region of extraLen bytes containing additional bootinfo structures. Each chunk starts
 with a \texttt{seL4\_BootInfoHeader}, described in \autoref{tab:bi_header_struct}, that
 describes what the chunk is and how long it is, where the length includes the header. The

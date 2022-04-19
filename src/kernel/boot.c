@@ -205,8 +205,10 @@ BOOT_CODE static void create_rootserver_objects(pptr_t start, v_region_t it_v_re
     /* at this point we are up to creating 4k objects - which is the min size of
      * extra_bi so this is the last chance to allocate it */
     maybe_alloc_extra_bi(seL4_PageBits, extra_bi_size_bits);
+    compile_assert(invalid_seL4_ASIDPoolBits, seL4_ASIDPoolBits == seL4_PageBits);
     rootserver.asid_pool = alloc_rootserver_obj(seL4_ASIDPoolBits, 1);
     rootserver.ipc_buf = alloc_rootserver_obj(seL4_PageBits, 1);
+    compile_assert(invalid_BI_FRAME_SIZE_BITS, BI_FRAME_SIZE_BITS == seL4_PageBits);
     rootserver.boot_info = alloc_rootserver_obj(BI_FRAME_SIZE_BITS, 1);
 
     /* TCBs on aarch32 can be larger than page tables in certain configs */
@@ -376,16 +378,22 @@ BOOT_CODE create_frames_of_region_ret_t create_frames_of_region(
         } else {
             frame_cap = create_unmapped_it_frame_cap(f, false);
         }
-        if (!provide_cap(root_cnode_cap, frame_cap))
+        if (!provide_cap(root_cnode_cap, frame_cap)) {
             return (create_frames_of_region_ret_t) {
-            S_REG_EMPTY, false
-        };
+                .region  = S_REG_EMPTY,
+                .success = false
+            };
+        }
     }
 
     slot_pos_after = ndks_boot.slot_pos_cur;
 
     return (create_frames_of_region_ret_t) {
-        (seL4_SlotRegion) { slot_pos_before, slot_pos_after }, true
+        .region = (seL4_SlotRegion) {
+            .start = slot_pos_before,
+            .end   = slot_pos_after
+        },
+        .success = true
     };
 }
 
@@ -453,6 +461,7 @@ BOOT_CODE bool_t create_idle_thread(void)
         bool_t result = configure_sched_context(NODE_STATE_ON_CORE(ksIdleThread, i), SC_PTR(&ksIdleThreadSC[SMP_TERNARY(i, 0)]),
                                                 usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_IN_MS), SMP_TERNARY(i, 0));
         SMP_COND_STATEMENT(NODE_STATE_ON_CORE(ksIdleThread, i)->tcbSchedContext->scCore = i;)
+        NODE_STATE_ON_CORE(ksIdleSC, i) = SC_PTR(&ksIdleThreadSC[SMP_TERNARY(i, 0)]);
         if (!result) {
             printf("Kernel init failed: Unable to allocate sc for idle thread\n");
             return false;
@@ -582,7 +591,10 @@ BOOT_CODE static bool_t provide_untyped_cap(
     word_t i = ndks_boot.slot_pos_cur - first_untyped_slot;
     if (i < CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS) {
         ndks_boot.bi_frame->untypedList[i] = (seL4_UntypedDesc) {
-            pptr_to_paddr((void *)pptr), size_bits, device_memory, {0}
+            .paddr    = pptr_to_paddr((void *)pptr),
+            .sizeBits = size_bits,
+            .isDevice = device_memory,
+            .padding  = {0}
         };
         ut_cap = cap_untyped_cap_new(MAX_FREE_INDEX(size_bits),
                                      device_memory, size_bits, pptr);
@@ -644,6 +656,9 @@ BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap,
                 start, ndks_boot.reserved[i].start
             });
             if (!create_untypeds_for_region(root_cnode_cap, true, reg, first_untyped_slot)) {
+                printf("ERROR: creation of untypeds for device region #%u at"
+                       " [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] failed\n",
+                       (unsigned int)i, reg.start, reg.end);
                 return false;
             }
         }
@@ -657,12 +672,18 @@ BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap,
         });
 
         if (!create_untypeds_for_region(root_cnode_cap, true, reg, first_untyped_slot)) {
+            printf("ERROR: creation of untypeds for top device region"
+                   " [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] failed\n",
+                   reg.start, reg.end);
             return false;
         }
     }
 
     /* if boot_mem_reuse_reg is not empty, we can create UT objs from boot code/data frames */
     if (!create_untypeds_for_region(root_cnode_cap, false, boot_mem_reuse_reg, first_untyped_slot)) {
+        printf("ERROR: creation of untypeds for recycled boot memory"
+               " [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] failed\n",
+               boot_mem_reuse_reg.start, boot_mem_reuse_reg.end);
         return false;
     }
 
@@ -671,6 +692,9 @@ BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap,
         region_t reg = ndks_boot.freemem[i];
         ndks_boot.freemem[i] = REG_EMPTY;
         if (!create_untypeds_for_region(root_cnode_cap, false, reg, first_untyped_slot)) {
+            printf("ERROR: creation of untypeds for free memory region #%u at"
+                   " [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] failed\n",
+                   (unsigned int)i, reg.start, reg.end);
             return false;
         }
     }
@@ -808,7 +832,7 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
             /* skip the entire region - it's empty now after trimming */
             a++;
         } else if (reserved[r].end <= avail_reg[a].start) {
-            /* the reserved region is below the available region - skip it*/
+            /* the reserved region is below the available region - skip it */
             reserve_region(pptr_to_paddr_reg(reserved[r]));
             r++;
         } else if (reserved[r].start >= avail_reg[a].end) {
@@ -862,7 +886,7 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
         return false;
     }
     /* skip any empty regions */
-    for (; is_reg_empty(ndks_boot.freemem[i]) && i >= 0; i--);
+    for (; i >= 0 && is_reg_empty(ndks_boot.freemem[i]); i--);
 
     /* try to grab the last available p region to create the root server objects
      * from. If possible, retain any left over memory as an extra p region */
