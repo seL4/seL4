@@ -86,17 +86,18 @@ if(KernelPlatformQEMUArmVirt)
         set(QEMU_SMP_OPTION "1")
     endif()
     find_program(QEMU_BINARY qemu-system-${QEMU_ARCH})
+    # Run QEMU to get the device tree binary. QEMU prints a status message to
+    # stderr (and not stdout), we capture it and then print it to stdout to
+    # avoid polluting stderr unnecessarily.
     execute_process(
         COMMAND
             ${QEMU_BINARY} -machine virt,dumpdtb=${DTBPath},${QEMU_VIRT_OPTION} -m ${QEMU_MEMORY}
             -cpu ${ARM_CPU} -smp ${QEMU_SMP_OPTION} -nographic
+        ERROR_STRIP_TRAILING_WHITESPACE
         ERROR_VARIABLE QEMU_OUTPUT_MESSAGE
         RESULT_VARIABLE error
     )
-    if(${QEMU_OUTPUT_MESSAGE})
-        string(STRIP ${QEMU_OUTPUT_MESSAGE} QEMU_OUTPUT_MESSAGE)
-    endif()
-    message(STATUS ${QEMU_OUTPUT_MESSAGE})
+    message(STATUS "${QEMU_OUTPUT_MESSAGE}")
     if(error)
         message(FATAL_ERROR "Failed to dump DTB using ${QEMU_BINARY})")
     endif()
