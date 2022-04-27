@@ -35,6 +35,7 @@
  *  - GRE Unused Device Gathering, Reordering, Early write acknowledgement
  *  - NORMAL_NC Normal Memory, Inner/Outer non-cacheable
  *  - NORMAL Normal Memory, Inner/Outer Write-back non-transient, Write-allocate, Read-allocate
+ *  - NORMAL_WT Normal Memory, Inner/Outer Write-through non-transient, No-Write-allocate, Read-allocate
  * Note: These should match with contents of MAIR_EL1 register!
  */
 enum mair_types {
@@ -42,7 +43,8 @@ enum mair_types {
     DEVICE_nGnRE = 1,
     DEVICE_GRE = 2,
     NORMAL_NC = 3,
-    NORMAL = 4
+    NORMAL = 4,
+    NORMAL_WT = 5
 };
 
 /* Stage-2 translation memory attributes */
@@ -2562,7 +2564,7 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
                              1,                         /* access flag */
                              SMP_TERNARY(SMP_SHARE, 0), /* Inner-shareable if SMP enabled, otherwise unshared */
                              0,                         /* VMKernelOnly */
-                             NORMAL);
+                             NORMAL_WT);
 
     cleanByVA_PoU((vptr_t)armKSGlobalLogPDE, addrFromKPPtr(armKSGlobalLogPDE));
     invalidateTranslationSingle(KS_LOG_PPTR);
