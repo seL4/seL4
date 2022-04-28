@@ -169,7 +169,8 @@ exception_t decodeX86PortControlInvocation(
 static exception_t invokeX86PortIn(word_t invLabel, uint16_t port, bool_t call)
 {
     uint32_t res;
-    word_t len;
+    tcb_t *thread;
+    thread = NODE_STATE(ksCurThread);
 
     switch (invLabel) {
     case X86IOPortIn8:
@@ -184,31 +185,13 @@ static exception_t invokeX86PortIn(word_t invLabel, uint16_t port, bool_t call)
     }
 
     if (call) {
-        setRegister(NODE_STATE(ksCurThread), badgeRegister, 0);
-
-        if (n_msgRegisters < 1) {
-            word_t *ipcBuffer;
-            ipcBuffer = lookupIPCBuffer(true, NODE_STATE(ksCurThread));
-            if (ipcBuffer != NULL) {
-                ipcBuffer[1] = res;
-                len = 1;
-            } else {
-                len = 0;
-            }
-        } else {
-            setRegister(NODE_STATE(ksCurThread), msgRegisters[0], res);
-            len = 1;
-        }
-
-        setRegister(NODE_STATE(ksCurThread), msgInfoRegister,
-                    wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, len)));
+        word_t *ipcBuffer = lookupIPCBuffer(true, thread);
+        setRegister(thread, badgeRegister, 0);
+        unsigned int length = setMR(thread, ipcBuffer, 0, res);
+        setRegister(thread, msgInfoRegister, wordFromMessageInfo(
+                        seL4_MessageInfo_new(0, 0, 0, length)));
     }
-    // Prevent handleInvocation from attempting to complete the 'call' with an empty
-    // message (via replyFromKernel_success_empty) by forcing the thread state to
-    // be running. This prevents our stored message we just created from being
-    // overwritten.
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
-
     return EXCEPTION_NONE;
 }
 
