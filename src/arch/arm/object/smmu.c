@@ -28,15 +28,21 @@ exception_t decodeARMSIDControlInvocation(word_t label, unsigned int length, cpt
     lookupSlot_ret_t lu_ret;
     exception_t status;
     uint32_t faultStatus, faultSyndrome_0, faultSyndrome_1;
+    tcb_t *thread;
 
     if (label == ARMSIDGetFault) {
+        thread = NODE_STATE(ksCurThread);
         smmu_read_fault_state(&faultStatus, &faultSyndrome_0, &faultSyndrome_1);
-        setRegister(NODE_STATE(ksCurThread), msgRegisters[0], faultStatus);
-        setRegister(NODE_STATE(ksCurThread), msgRegisters[1], faultSyndrome_0);
-        setRegister(NODE_STATE(ksCurThread), msgRegisters[2], faultSyndrome_1);
-        setRegister(NODE_STATE(ksCurThread), msgInfoRegister,
-                    wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, 3)));
-        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+        if (call) {
+            word_t *ipcBuffer = lookupIPCBuffer(true, thread);
+            setRegister(thread, badgeRegister, 0);
+            setMR(thread, ipcBuffer, 0, faultStatus);
+            setMR(thread, ipcBuffer, 1, faultSyndrome_0);
+            setMR(thread, ipcBuffer, 2, faultSyndrome_1);
+            setRegister(thread, msgInfoRegister, wordFromMessageInfo(
+                            seL4_MessageInfo_new(0, 0, 0, 3)));
+        }
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
         return EXCEPTION_NONE;
     }
 
@@ -254,6 +260,7 @@ exception_t decodeARMCBInvocation(word_t label, unsigned int length, cptr_t cptr
     word_t cb;
     uint32_t faultStatus;
     word_t faultAddress;
+    tcb_t *thread;
 
     switch (label) {
     case ARMCBTLBInvalidate:
@@ -322,12 +329,17 @@ exception_t decodeARMCBInvocation(word_t label, unsigned int length, cptr_t cptr
         return EXCEPTION_NONE;
 
     case ARMCBGetFault:
+        thread = NODE_STATE(ksCurThread);
         smmu_cb_read_fault_state(cap_cb_cap_get_capCB(cap), &faultStatus, &faultAddress);
-        setRegister(NODE_STATE(ksCurThread), msgRegisters[0], faultStatus);
-        setRegister(NODE_STATE(ksCurThread), msgRegisters[1], faultAddress);
-        setRegister(NODE_STATE(ksCurThread), msgInfoRegister,
-                    wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, 2)));
-        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+        if (call) {
+            word_t *ipcBuffer = lookupIPCBuffer(true, thread);
+            setRegister(thread, badgeRegister, 0);
+            setMR(thread, ipcBuffer, 0, faultStatus);
+            setMR(thread, ipcBuffer, 1, faultAddress);
+            setRegister(thread, msgInfoRegister, wordFromMessageInfo(
+                            seL4_MessageInfo_new(0, 0, 0, 2)));
+        }
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
         return EXCEPTION_NONE;
 
     case ARMCBClearFault:

@@ -221,22 +221,26 @@ void unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd)
 }
 
 static exception_t performIA32PageDirectoryGetStatusBits(lookupPTSlot_ret_t ptSlot, lookupPDSlot_ret_t pdSlot,
-                                                         word_t *buffer)
+                                                         bool_t call, word_t *buffer)
 {
-    if (pdSlot.status == EXCEPTION_NONE &&
-        ((pde_ptr_get_page_size(pdSlot.pdSlot) == pde_pde_large) &&
-         pde_pde_large_ptr_get_present(pdSlot.pdSlot))) {
+    tcb_t *thread;
+    thread = NODE_STATE(ksCurThread);
+    if (call) {
+        setRegister(thread, badgeRegister, 0);
+        if (pdSlot.status == EXCEPTION_NONE &&
+            ((pde_ptr_get_page_size(pdSlot.pdSlot) == pde_pde_large) &&
+             pde_pde_large_ptr_get_present(pdSlot.pdSlot))) {
 
-        setMR(NODE_STATE(ksCurThread), buffer, 0, pde_pde_large_ptr_get_accessed(pdSlot.pdSlot));
-        setMR(NODE_STATE(ksCurThread), buffer, 1, pde_pde_large_ptr_get_dirty(pdSlot.pdSlot));
-        return EXCEPTION_NONE;
+            setMR(NODE_STATE(ksCurThread), buffer, 0, pde_pde_large_ptr_get_accessed(pdSlot.pdSlot));
+            setMR(NODE_STATE(ksCurThread), buffer, 1, pde_pde_large_ptr_get_dirty(pdSlot.pdSlot));
+        } else {
+            assert(ptSlot.status == EXCEPTION_NONE && pte_ptr_get_present(ptSlot.ptSlot));
+            setMR(NODE_STATE(ksCurThread), buffer, 0, pte_ptr_get_accessed(ptSlot.ptSlot));
+            setMR(NODE_STATE(ksCurThread), buffer, 1, pte_ptr_get_dirty(ptSlot.ptSlot));
+        }
+        setRegister(thread, msgInfoRegister, wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, 2)));
     }
-
-    assert(ptSlot.status == EXCEPTION_NONE && pte_ptr_get_present(ptSlot.ptSlot));
-
-    setMR(NODE_STATE(ksCurThread), buffer, 0, pte_ptr_get_accessed(ptSlot.ptSlot));
-    setMR(NODE_STATE(ksCurThread), buffer, 1, pte_ptr_get_dirty(ptSlot.ptSlot));
-
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
     return EXCEPTION_NONE;
 }
 
@@ -245,6 +249,7 @@ exception_t decodeIA32PageDirectoryInvocation(
     word_t length,
     cte_t *cte,
     cap_t cap,
+    bool_t call,
     word_t *buffer
 )
 {
@@ -294,7 +299,7 @@ exception_t decodeIA32PageDirectoryInvocation(
         }
 
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        return performIA32PageDirectoryGetStatusBits(ptSlot, pdSlot, buffer);
+        return performIA32PageDirectoryGetStatusBits(ptSlot, pdSlot, call, buffer);
     }
 
     default:
