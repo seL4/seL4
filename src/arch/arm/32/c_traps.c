@@ -48,7 +48,7 @@ void VISIBLE NORETURN restore_user_context(void)
             "msr elr_hyp, lr           \n"
             /* prepare the user status register */
             "ldr lr, [sp, #8]          \n"
-            "msr spsr_hyp, lr          \n"
+            "msr spsr, lr              \n"
             /* Finally, pop our LR */
             "pop {lr}                  \n"
             /* Return to user */
