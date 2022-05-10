@@ -85,6 +85,10 @@
 #ifndef __ASSEMBLER__
 /* It is required that USER_TOP must be aligned to at least 20 bits */
 compile_assert(USER_TOP_correctly_aligned, IS_ALIGNED(USER_TOP, 20));
+/* It is required on arm_hyp that USER_TOP isn't lower than the top GiB */
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+compile_assert(USER_TOP_top_gb, USER_TOP >= 0xC0000000);
+#endif
 
 #include <plat/machine/hardware.h>
 #endif
