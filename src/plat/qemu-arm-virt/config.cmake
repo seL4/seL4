@@ -10,12 +10,23 @@ declare_platform(qemu-arm-virt KernelPlatformQEMUArmVirt PLAT_QEMU_ARM_VIRT Kern
 
 set(MIN_QEMU_VERSION "3.1.0")
 
+set(qemu_user_top 0xa0000000)
 if(KernelPlatformQEMUArmVirt)
     if("${ARM_CPU}" STREQUAL "cortex-a15")
-        declare_seL4_arch(aarch32)
+        if("${KernelSel4Arch}" STREQUAL aarch32)
+            declare_seL4_arch(aarch32)
+        elseif("${KernelSel4Arch}" STREQUAL arm_hyp)
+            declare_seL4_arch(arm_hyp)
+        else()
+            fallback_declare_seL4_arch_default(aarch32)
+        endif()
+        if(KernelSel4ArchArmHyp)
+            set(qemu_user_top 0xe0000000)
+        endif()
         set(QEMU_ARCH "arm")
         set(KernelArmCortexA15 ON)
         set(KernelArchArmV7a ON)
+        set(KernelArchArmV7ve ON)
     elseif("${ARM_CPU}" STREQUAL "cortex-a53")
         declare_seL4_arch(aarch64)
         set(QEMU_ARCH "aarch64")
@@ -60,7 +71,7 @@ if(KernelPlatformQEMUArmVirt)
     config_set(KernelARMPlatform ARM_PLAT qemu-arm-virt)
     set(DTBPath "${CMAKE_BINARY_DIR}/virt.dtb")
     set(DTSPath "${CMAKE_BINARY_DIR}/virt.dts")
-    if(KernelArmHypervisorSupport)
+    if(KernelArmHypervisorSupport OR KernelSel4ArchArmHyp)
         set(QEMU_VIRT_OPTION "virtualization=on,highmem=off,secure=off")
     else()
         if(Kernel32)
@@ -100,7 +111,7 @@ if(KernelPlatformQEMUArmVirt)
     endif()
     list(APPEND KernelDTSList "${DTSPath}")
     list(APPEND KernelDTSList "src/plat/qemu-arm-virt/overlay-qemu-arm-virt.dts")
-    if(KernelArmHypervisorSupport)
+    if(KernelArmHypervisorSupport OR KernelSel4ArchArmHyp)
         list(APPEND KernelDTSList "src/plat/qemu-arm-virt/overlay-reserve-vm-memory.dts")
     endif()
     declare_default_headers(
@@ -122,7 +133,7 @@ add_sources(
 
 config_string(
     KernelUserTop USER_TOP "Set seL4_UserTop constant"
-    DEFAULT 0xa0000000
+    DEFAULT ${qemu_user_top}
     UNQUOTE
     DEPENDS "KernelPlatformQEMUArmVirt;KernelSel4ArchAarch32"
 )
