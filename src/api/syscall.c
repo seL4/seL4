@@ -41,7 +41,6 @@ exception_t handleInterruptEntry(void)
     irq = getActiveIRQ();
 #ifdef CONFIG_KERNEL_MCS
     if (SMP_TERNARY(clh_is_self_in_queue(), 1)) {
-        updateTimestamp();
         checkBudget();
     }
 #endif

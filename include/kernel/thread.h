@@ -221,12 +221,12 @@ void endTimeslice(bool_t can_timeout_fault);
 /* called when a thread has used up its head refill */
 void chargeBudget(ticks_t consumed, bool_t canTimeoutFault);
 
-/* Update the kernels timestamp and stores in ksCurTime.
+/* Update the kernel's timestamp and store it in ksCurTime.
  * The difference between the previous kernel timestamp and the one just read
- * is stored in ksConsumed.
+ * is added to ksConsumed.
  *
- * Should be called on every kernel entry
- * where threads can be billed.
+ * Should be called on every kernel entry where threads can be billed.
+ * Will be called without holding the kernel lock!
  */
 static inline void updateTimestamp(void)
 {
@@ -235,6 +235,7 @@ static inline void updateTimestamp(void)
     assert(NODE_STATE(ksCurTime) < MAX_RELEASE_TIME);
     time_t consumed = (NODE_STATE(ksCurTime) - prev);
     NODE_STATE(ksConsumed) += consumed;
+    /* Not supported for SMP: */
     if (numDomains > 1) {
         if ((consumed + MIN_BUDGET) >= ksDomainTime) {
             ksDomainTime = 0;
@@ -242,7 +243,6 @@ static inline void updateTimestamp(void)
             ksDomainTime -= consumed;
         }
     }
-
 }
 
 /*
