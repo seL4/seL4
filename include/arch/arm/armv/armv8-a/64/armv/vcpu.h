@@ -24,7 +24,7 @@
 
 /* Allow native tasks to run at EL0, but restrict access */
 #define HCR_NATIVE ( HCR_COMMON | HCR_TGE | HCR_TVM | HCR_TTLB | HCR_DC \
-                   | HCR_TAC | HCR_SWIO |  HCR_TSC | HCR_IMO | HCR_FMO | HCR_AMO)
+                   | HCR_TAC | HCR_SWIO |  HCR_TSC )
 #define HCR_VCPU   ( HCR_COMMON | HCR_TSC)
 
 #define SCTLR_EL1_UCI       BIT(26)     /* Enable EL0 access to DC CVAU, DC CIVAC, DC CVAC,
