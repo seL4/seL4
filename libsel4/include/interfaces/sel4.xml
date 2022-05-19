@@ -96,7 +96,7 @@
             <param dir="in" name="suspend_source" type="seL4_Bool"
                 description="The invocation should also suspend the source thread."/>
             <param dir="in" name="arch_flags" type="seL4_Uint8"
-                description="Architecture dependent flags. These have no mearing on either x86 or ARM."/>
+                description="Architecture dependent flags. These have no meaning on x86, ARM, and RISC-V."/>
             <param dir="in" name="count" type="seL4_Word" description="The number of registers to read."/>
             <param dir="out" name="regs" type="seL4_UserContext"
                 description="The structure to read the registers into."/>
@@ -128,7 +128,7 @@
             <param dir="in" name="resume_target" type="seL4_Bool"
                 description="The invocation should also resume the destination thread."/>
             <param dir="in" name="arch_flags" type="seL4_Uint8"
-                description="Architecture dependent flags. These have no mearing on either x86 or ARM."/>
+                description="Architecture dependent flags. These have no meaning on x86, ARM, and RISC-V."/>
             <param dir="in" name="count" type="seL4_Word"
                 description="The number of registers to be set."/>
             <param dir="in" name="regs" type="seL4_UserContext"
@@ -166,7 +166,7 @@
             <param dir="in" name="transfer_integer" type="seL4_Bool"
                 description="Integer registers should be transferred."/>
             <param dir="in" name="arch_flags" type="seL4_Uint8"
-                description="Architecture dependent flags. These have no mearing on either x86 or ARM."/>
+                description="Architecture dependent flags. These have no meaning on x86, ARM, and RISC-V."/>
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
