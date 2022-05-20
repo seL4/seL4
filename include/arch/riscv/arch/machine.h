@@ -100,7 +100,7 @@ static inline void sfence(void)
 {
     fence_w_rw();
     sfence_local();
-    word_tmask = get_sbi_mask_for_all_remote_harts();
+    word_t mask = get_sbi_mask_for_all_remote_harts();
     sbi_remote_sfence_vma(mask, 0, 0);
 }
 
