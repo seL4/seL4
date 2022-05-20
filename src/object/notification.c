@@ -81,7 +81,7 @@ void sendSignal(notification_t *ntfnPtr, word_t badge)
                     possibleSwitchTo(tcb);
                 })
 #ifdef CONFIG_KERNEL_MCS
-                if (sc_sporadic(tcb->tcbSchedContext) && sc_active(tcb->tcbSchedContext)) {
+                if (sc_sporadic(tcb->tcbSchedContext)) {
                     /* We know that the tcb can't have the current SC
                      * as its own SC as this point as it should still be
                      * associated with the current thread, or no thread.
@@ -166,7 +166,7 @@ void sendSignal(notification_t *ntfnPtr, word_t badge)
         })
 
 #ifdef CONFIG_KERNEL_MCS
-        if (sc_sporadic(dest->tcbSchedContext) && sc_active(dest->tcbSchedContext)) {
+        if (sc_sporadic(dest->tcbSchedContext)) {
             /* We know that the receiver can't have the current SC
              * as its own SC as this point as it should still be
              * associated with the current thread.
@@ -310,7 +310,7 @@ void completeSignal(notification_t *ntfnPtr, tcb_t *tcb)
         notification_ptr_set_state(ntfnPtr, NtfnState_Idle);
 #ifdef CONFIG_KERNEL_MCS
         maybeDonateSchedContext(tcb, ntfnPtr);
-        if (sc_sporadic(tcb->tcbSchedContext) && sc_active(tcb->tcbSchedContext)) {
+        if (sc_sporadic(tcb->tcbSchedContext)) {
             sched_context_t *sc = SC_PTR(notification_ptr_get_ntfnSchedContext(ntfnPtr));
             if (tcb->tcbSchedContext == sc && tcb->tcbSchedContext != NODE_STATE(ksCurSC)) {
                 /* We know that the tcb can't have the current SC
