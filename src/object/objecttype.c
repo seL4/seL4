@@ -79,12 +79,8 @@ deriveCap_ret_t deriveCap(cte_t *slot, cap_t cap)
         break;
 
     case cap_untyped_cap:
-        ret.status = ensureNoChildren(slot);
-        if (ret.status != EXCEPTION_NONE) {
-            ret.cap = cap_null_cap_new();
-        } else {
-            ret.cap = cap;
-        }
+        ret.status = EXCEPTION_NONE;
+        ret.cap = cap;
         break;
 
 #ifndef CONFIG_KERNEL_MCS
