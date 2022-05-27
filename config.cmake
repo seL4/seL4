@@ -336,6 +336,15 @@ config_option(
 )
 
 config_option(
+    KernelBinaryVerificationBuild BINARY_VERIFICATION_BUILD
+    "When enabled, this configuration option restricts the use of other options that would \
+     interfere with binary verification. For example, it will disable some inter-procedural \
+     optimisations. Enabling this options does NOT imply that you are using a verified kernel."
+    DEFAULT OFF
+    DEPENDS "KernelVerificationBuild"
+)
+
+config_option(
     KernelDebugBuild DEBUG_BUILD "Enable debug facilities (symbols and assertions) in the kernel"
     DEFAULT ON
     DEPENDS "NOT KernelVerificationBuild"
@@ -448,10 +457,25 @@ config_choice(
 )
 
 config_option(
+    KernelOptimisationCloneFunctions KERNEL_OPTIMISATION_CLONE_FUNCTIONS
+    "If enabled, allow inter-procedural optimisations that can generate cloned or partial \
+     functions, according to the coarse optimisation setting (KernelOptimisation). \
+     By default, these optimisations are present at -O2 and higher. \
+     If disabled, prevent those optimisations, regardless of the coarse optimisation setting. \
+     The main use of this option is to disable cloned and partial functions when performing \
+     binary verification at -O2. \
+     This currently only affects GCC builds."
+    DEFAULT ON
+    DEPENDS "NOT KernelBinaryVerificationBuild"
+    DEFAULT_DISABLED OFF
+)
+
+config_option(
     KernelFWholeProgram KERNEL_FWHOLE_PROGRAM
     "Enable -fwhole-program when linking kernel. This should work modulo gcc bugs, which \
     are not uncommon with -fwhole-program. Consider this feature experimental!"
     DEFAULT OFF
+    DEPENDS "NOT KernelBinaryVerificationBuild"
 )
 
 config_option(
