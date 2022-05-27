@@ -242,6 +242,11 @@ KernelCommonFlags(
     -nostdlib -fno-pic -fno-pie
 )
 
+# Disable cloned functions. This is needed for binary verification at -O2.
+if(NOT KernelOptimisationCloneFunctions AND (CMAKE_C_COMPILER_ID STREQUAL "GNU"))
+    KernelCommonFlags(-fno-partial-inlining -fno-ipa-cp -fno-ipa-sra)
+endif()
+
 if(KernelFWholeProgram)
     # KernelFWholeProgram is still an experimental feature and disabled by
     # default. Clarify if the linker step via GCC actually cares about this
