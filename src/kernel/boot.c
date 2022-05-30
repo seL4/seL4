@@ -412,10 +412,10 @@ BOOT_CODE cap_t create_it_asid_pool(cap_t root_cnode_cap)
 }
 
 #ifdef CONFIG_KERNEL_MCS
-BOOT_CODE static bool_t configure_sched_context(tcb_t *tcb, sched_context_t *sc_pptr, ticks_t timeslice, word_t core)
+BOOT_CODE static bool_t configure_sched_context(tcb_t *tcb, sched_context_t *sc_pptr, ticks_t timeslice)
 {
     tcb->tcbSchedContext = sc_pptr;
-    REFILL_NEW(tcb->tcbSchedContext, MIN_REFILLS, timeslice, 0, core);
+    refill_new(tcb->tcbSchedContext, MIN_REFILLS, timeslice, 0);
 
     tcb->tcbSchedContext->scTcb = tcb;
     return true;
@@ -459,7 +459,7 @@ BOOT_CODE bool_t create_idle_thread(void)
         SMP_COND_STATEMENT(NODE_STATE_ON_CORE(ksIdleThread, i)->tcbAffinity = i);
 #ifdef CONFIG_KERNEL_MCS
         bool_t result = configure_sched_context(NODE_STATE_ON_CORE(ksIdleThread, i), SC_PTR(&ksIdleThreadSC[SMP_TERNARY(i, 0)]),
-                                                usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_IN_MS), SMP_TERNARY(i, 0));
+                                                usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_IN_MS));
         SMP_COND_STATEMENT(NODE_STATE_ON_CORE(ksIdleThread, i)->tcbSchedContext->scCore = i;)
         NODE_STATE_ON_CORE(ksIdleSC, i) = SC_PTR(&ksIdleThreadSC[SMP_TERNARY(i, 0)]);
         if (!result) {
@@ -513,7 +513,7 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
 
     /* initialise TCB */
 #ifdef CONFIG_KERNEL_MCS
-    if (!configure_sched_context(tcb, SC_PTR(rootserver.sc), usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_IN_MS), 0)) {
+    if (!configure_sched_context(tcb, SC_PTR(rootserver.sc), usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_IN_MS))) {
         return NULL;
     }
 #endif

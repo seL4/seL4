@@ -153,11 +153,7 @@ static inline void maybe_add_empty_tail(sched_context_t *sc)
     }
 }
 
-#ifdef ENABLE_SMP_SUPPORT
-void refill_new(sched_context_t *sc, word_t max_refills, ticks_t budget, ticks_t period, word_t core)
-#else
 void refill_new(sched_context_t *sc, word_t max_refills, ticks_t budget, ticks_t period)
-#endif
 {
     sc->scPeriod = period;
     sc->scRefillHead = 0;
