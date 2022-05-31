@@ -553,6 +553,26 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
     return tcb;
 }
 
+#ifdef ENABLE_SMP_CLOCK_SYNC_TEST_ON_BOOT
+BOOT_CODE void clock_sync_test(void)
+{
+    ticks_t t, t0;
+    ticks_t margin = usToTicks(1) + getTimerPrecision();
+
+    assert(getCurrentCPUIndex() != 0);
+    t = NODE_STATE_ON_CORE(ksCurTime, 0);
+    do {
+        /* perform a memory acquire to get new values of ksCurTime */
+        __atomic_thread_fence(__ATOMIC_ACQUIRE);
+        t0 = NODE_STATE_ON_CORE(ksCurTime, 0);
+    } while (t0 == t);
+    t = getCurrentTime();
+    printf("clock_sync_test[%d]: t0 = %"PRIu64", t = %"PRIu64", td = %"PRIi64"\n",
+           (int)getCurrentCPUIndex(), t0, t, t - t0);
+    assert(t0 <= margin + t && t <= t0 + margin);
+}
+#endif
+
 BOOT_CODE void init_core_state(tcb_t *scheduler_action)
 {
 #ifdef CONFIG_HAVE_FPU

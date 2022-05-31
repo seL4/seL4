@@ -159,6 +159,7 @@ BOOT_CODE static bool_t try_init_kernel_secondary_core(word_t hart_id, word_t co
     init_cpu();
     NODE_LOCK_SYS;
 
+    clock_sync_test();
     ksNumCPUs++;
     init_core_state(SchedulerAction_ResumeCurrentThread);
     ifence_local();
@@ -171,11 +172,14 @@ BOOT_CODE static void release_secondary_cores(void)
     fence_w_r();
 
     while (ksNumCPUs != CONFIG_MAX_NUM_NODES) {
-        __atomic_signal_fence(__ATOMIC_ACQ_REL);
+#ifdef ENABLE_SMP_CLOCK_SYNC_TEST_ON_BOOT
+        NODE_STATE(ksCurTime) = getCurrentTime();
+#endif
+        __atomic_thread_fence(__ATOMIC_ACQ_REL);
     }
 }
+#endif /* ENABLE_SMP_SUPPORT */
 
-#endif
 /* Main kernel initialisation function. */
 
 static BOOT_CODE bool_t try_init_kernel(
