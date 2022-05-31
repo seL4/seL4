@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <arch/machine.h>
+#include <arch/machine/timer.h>
 #include <arch/kernel/boot_sys.h>
 #include <arch/kernel/smp_sys.h>
 #include <smp/lock.h>
@@ -64,7 +65,12 @@ BOOT_CODE void start_boot_aps(void)
         start_cpu(boot_state.cpus[current_ap_index], BOOT_NODE_PADDR);
 
         /* wait for current AP to boot up */
-        while (smp_aps_index == current_ap_index);
+        while (smp_aps_index == current_ap_index) {
+#ifdef ENABLE_SMP_CLOCK_SYNC_TEST_ON_BOOT
+            NODE_STATE(ksCurTime) = getCurrentTime();
+            __atomic_thread_fence(__ATOMIC_ACQ_REL);
+#endif
+        }
     }
 }
 
@@ -126,6 +132,7 @@ VISIBLE void boot_node(void)
         fail("boot_node failed for some reason :(\n");
     }
 
+    clock_sync_test();
     smp_aps_index++;
 
     /* grab BKL before leaving the kernel */
