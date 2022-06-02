@@ -377,10 +377,5 @@ void arch_clean_invalidate_L1_caches(word_t type);
 
 static inline paddr_t addressTranslateS1(vptr_t vaddr)
 {
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     return ats1e1r(vaddr);
-#else
-    /* shouldn't be called on non-hyp, added for consistency with AArch32 */
-    return vaddr;
-#endif
 }
