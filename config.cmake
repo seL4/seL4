@@ -92,6 +92,18 @@ include(src/arch/${KernelArch}/config.cmake)
 include(include/${KernelWordSize}/mode/config.cmake)
 include(src/config.cmake)
 
+set(KernelCustomDTS "" CACHE FILEPATH "Provide a device tree file to use instead of the \
+KernelPlatform's defaults")
+
+if(NOT "${KernelCustomDTS}" STREQUAL "")
+    if(NOT EXISTS ${KernelCustomDTS})
+        message(FATAL_ERROR "Can't open external dts file '${KernelCustomDTS}'!")
+    endif()
+    # Override list to hold only custom dts
+    set(KernelDTSList "${KernelCustomDTS}")
+    message(STATUS "Using custom ${KernelCustomDTS} device tree, ignoring default dts and overlays")
+endif()
+
 if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
     set(KernelDTSIntermediate "${CMAKE_CURRENT_BINARY_DIR}/kernel.dts")
     set(
