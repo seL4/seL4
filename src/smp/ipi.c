@@ -21,6 +21,11 @@
  * or this call will idle forever */
 void ipiStallCoreCallback(bool_t irqPath)
 {
+    // ipiStallCore can only be called for a single core at a time to be able to assume
+    // kernel mutual exclusion as the caller node is blocked until this stall completes
+    // and all other nodes are out of the kernel or blocked on the lock.
+    assert(totalCoreBarrier == 1);
+
     if (clh_is_self_in_queue() && !irqPath) {
         /* The current thread is running as we would replace this thread with an idle thread
          *
