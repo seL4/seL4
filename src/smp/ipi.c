@@ -45,14 +45,21 @@ void ipiStallCoreCallback(bool_t irqPath)
     if (!irqPath && thread_state_ptr_get_tsType(&NODE_STATE(ksCurThread)->tcbState) == ThreadState_Running) {
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     }
-
-    SCHED_ENQUEUE_CURRENT_TCB;
-    switchToIdleThread();
 #ifdef CONFIG_KERNEL_MCS
-    commitTime();
-    NODE_STATE(ksCurSC) = NODE_STATE(ksIdleThread)->tcbSchedContext;
+    updateTimestamp();
 #endif
+    if (config_ternary(CONFIG_KERNEL_MCS, checkBudget(),1)) {
+        SCHED_ENQUEUE_CURRENT_TCB;
+    }
+    switchToIdleThread();
     NODE_STATE(ksSchedulerAction) = SchedulerAction_ResumeCurrentThread;
+    doMaskReschedule(ARCH_NODE_STATE(ipiReschedulePending));
+    ARCH_NODE_STATE(ipiReschedulePending) = 0;
+
+#ifdef CONFIG_KERNEL_MCS
+    switchSchedContext();
+    NODE_STATE(ksReprogram) = false;
+#endif
 
     if (irqPath) {
         return;
