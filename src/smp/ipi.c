@@ -26,7 +26,14 @@ void ipiStallCoreCallback(bool_t irqPath)
     // and all other nodes are out of the kernel or blocked on the lock.
     assert(totalCoreBarrier == 1);
 
-    if (clh_is_self_in_queue() && !irqPath) {
+    // There's 3 ways that this function can be called:
+    // - On the IRQ path where the lock isn't acquired
+    // - On the IRQ path where the lock is attempted to be acquired
+    // - On the non-IRQ path where the lock is attempted to be acquired
+    // !irqPath implies clh_is_self_in_queue()
+    assert(clh_is_self_in_queue() || irqPath);
+
+    if (!irqPath) {
         /* The current thread is running as we would replace this thread with an idle thread
          *
          * The instruction should be re-executed if we are in kernel to handle syscalls.
