@@ -21,6 +21,11 @@
  * or this call will idle forever */
 void ipiStallCoreCallback(bool_t irqPath)
 {
+    // ipiStallCore can only be called for a single core at a time to be able to assume
+    // kernel mutual exclusion as the caller node is blocked until this stall completes
+    // and all other nodes are out of the kernel or blocked on the lock.
+    assert(big_kernel_lock.ipi.totalCoreBarrier == 1);
+
     word_t cpu = getCurrentCPUIndex();
     clh_node_t *node = &big_kernel_lock.node[cpu];
 
