@@ -70,7 +70,7 @@ static void handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0,
             break;
         }
 
-        big_kernel_lock.node_owners[getCurrentCPUIndex()].ipi = 0;
+        big_kernel_lock.node[getCurrentCPUIndex()].ipi = 0;
         ipi_wait(totalCoreBarrier);
     }
 }
@@ -92,7 +92,7 @@ static void x86_ipi_send_mask(interrupt_t ipi, word_t mask, bool_t isBlocking)
         word_t sub_mask = mask & cpu_mapping.other_indexes_in_cluster[core];
         target_clusters[nr_target_clusters] |= cpu_mapping.index_to_logical_id[core];
         if (isBlocking) {
-            big_kernel_lock.node_owners[core].ipi = 1;
+            big_kernel_lock.node[core].ipi = 1;
         }
 
         /* check if there is any other core in this cluster */
@@ -100,7 +100,7 @@ static void x86_ipi_send_mask(interrupt_t ipi, word_t mask, bool_t isBlocking)
             int index = wordBits - 1 - clzl(sub_mask);
             target_clusters[nr_target_clusters] |= cpu_mapping.index_to_logical_id[index];
             if (isBlocking) {
-                big_kernel_lock.node_owners[index].ipi = 1;
+                big_kernel_lock.node[index].ipi = 1;
             }
             sub_mask &= ~BIT(index);
         }
