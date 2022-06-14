@@ -36,10 +36,4 @@ static inline PURE word_t getCurrentCPUID(void)
     return cpu_mapping.index_to_cpu_id[getCurrentCPUIndex()];
 }
 
-static inline bool_t try_arch_atomic_exchange_rlx(void *ptr, void *new_val, void **prev)
-{
-    *prev = __atomic_exchange_n((void **) ptr, new_val, __ATOMIC_RELAXED);
-    return true;
-}
-
 #endif /* ENABLE_SMP_SUPPORT */
