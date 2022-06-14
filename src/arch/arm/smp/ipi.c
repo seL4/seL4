@@ -73,7 +73,7 @@ static void handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0,
             break;
         }
 
-        big_kernel_lock.node_owners[getCurrentCPUIndex()].ipi = 0;
+        big_kernel_lock.node[getCurrentCPUIndex()].ipi = 0;
         ipi_wait(totalCoreBarrier);
     }
 }
