@@ -41,16 +41,15 @@ void ipiStallCoreCallback(bool_t irqPath)
         NODE_STATE(ksSchedulerAction) = SchedulerAction_ResumeCurrentThread;
 
         /* Let the cpu requesting this IPI to continue while we waiting on lock */
-        big_kernel_lock.node_owners[getCurrentCPUIndex()].ipi = 0;
+        big_kernel_lock.node[getCurrentCPUIndex()].ipi = 0;
 #ifdef CONFIG_ARCH_RISCV
         ipi_clear_irq(irq_remote_call_ipi);
 #endif
         ipi_wait(totalCoreBarrier);
 
         /* Continue waiting on lock */
-        while (big_kernel_lock.node_owners[getCurrentCPUIndex()].next->value != CLHState_Granted) {
+        while (big_kernel_lock.node[getCurrentCPUIndex()].watch->state != CLHState_Granted) {
             if (clh_is_ipi_pending(getCurrentCPUIndex())) {
-
                 /* Multiple calls for similar reason could result in stack overflow */
                 assert((IpiRemoteCall_t)remoteCall != IpiRemoteCall_Stall);
                 handleIPI(CORE_IRQ_TO_IRQT(getCurrentCPUIndex(), irq_remote_call_ipi), irqPath);
@@ -127,7 +126,7 @@ void generic_ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
     while (mask) {
         int index = wordBits - 1 - clzl(mask);
         if (isBlocking) {
-            big_kernel_lock.node_owners[index].ipi = 1;
+            big_kernel_lock.node[index].ipi = 1;
             target_cores[nr_target_cores] = index;
             nr_target_cores++;
         } else {
