@@ -11,28 +11,12 @@
 
 #ifdef ENABLE_SMP_SUPPORT
 
-static IpiModeRemoteCall_t remoteCall;   /* the remote call being requested */
-
-static inline void init_ipi_args(IpiRemoteCall_t func,
-                                 word_t data1, word_t data2, word_t data3,
-                                 word_t mask)
-{
-    remoteCall = (IpiModeRemoteCall_t)func;
-    ipi_args[0] = data1;
-    ipi_args[1] = data2;
-    ipi_args[2] = data3;
-
-    /* get number of cores involved in this IPI */
-    totalCoreBarrier = popcountl(mask);
-}
-
-static void handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0,
-                             word_t arg1, word_t arg2, bool_t irqPath)
+void handleRemoteCall(IpiRemoteCall_t call, word_t arg0, word_t arg1, word_t arg2, bool_t irqPath)
 {
     /* we gets spurious irq_remote_call_ipi calls, e.g. when handling IPI
      * in lock while hardware IPI is pending. Guard against spurious IPIs! */
     if (clh_is_ipi_pending(getCurrentCPUIndex())) {
-        switch ((IpiRemoteCall_t)call) {
+        switch (call) {
         case IpiRemoteCall_Stall:
             ipiStallCoreCallback(irqPath);
             break;
@@ -74,7 +58,7 @@ static void handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0,
         }
 
         big_kernel_lock.node[getCurrentCPUIndex()].ipi = 0;
-        ipi_wait(totalCoreBarrier);
+        ipi_wait();
     }
 }
 

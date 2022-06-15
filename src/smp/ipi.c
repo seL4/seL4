@@ -45,13 +45,13 @@ void ipiStallCoreCallback(bool_t irqPath)
 #ifdef CONFIG_ARCH_RISCV
         ipi_clear_irq(irq_remote_call_ipi);
 #endif
-        ipi_wait(totalCoreBarrier);
+        ipi_wait();
 
         /* Continue waiting on lock */
         while (big_kernel_lock.node[getCurrentCPUIndex()].watch->state != CLHState_Granted) {
             if (clh_is_ipi_pending(getCurrentCPUIndex())) {
                 /* Multiple calls for similar reason could result in stack overflow */
-                assert((IpiRemoteCall_t)remoteCall != IpiRemoteCall_Stall);
+                assert(big_kernel_lock.ipi.remoteCall != IpiRemoteCall_Stall);
                 handleIPI(CORE_IRQ_TO_IRQT(getCurrentCPUIndex(), irq_remote_call_ipi), irqPath);
             }
             arch_pause();
@@ -78,10 +78,46 @@ void ipiStallCoreCallback(bool_t irqPath)
     }
 }
 
+void ipi_wait(void)
+{
+    ipi_state_t *ipi = &big_kernel_lock.ipi;
+    word_t cores = ipi->totalCoreBarrier;
+    word_t localsense = ipi->globalsense;
+    word_t *count = &ipi->count;
+
+    if (__atomic_fetch_add(count, 1, __ATOMIC_ACQ_REL) == cores) {
+        *count = 0;
+        ipi->globalsense = ~ipi->globalsense;
+        __atomic_thread_fence(__ATOMIC_RELEASE);
+    }
+
+    while (localsense == ipi->globalsense) {
+        __atomic_thread_fence(__ATOMIC_ACQUIRE);
+        arch_pause();
+    }
+}
+
+static inline void init_ipi_args(IpiRemoteCall_t func,
+                                 word_t data1, word_t data2, word_t data3,
+                                 word_t mask)
+{
+    ipi_state_t *ipi = &big_kernel_lock.ipi;
+
+    ipi->remoteCall = func;
+    ipi->args[0] = data1;
+    ipi->args[1] = data2;
+    ipi->args[2] = data3;
+
+    /* get number of cores involved in this IPI */
+    ipi->totalCoreBarrier = popcountl(mask);
+}
+
 void handleIPI(irq_t irq, bool_t irqPath)
 {
+    ipi_state_t *ipi = &big_kernel_lock.ipi;
+
     if (IRQT_TO_IRQ(irq) == irq_remote_call_ipi) {
-        handleRemoteCall(remoteCall, get_ipi_arg(0), get_ipi_arg(1), get_ipi_arg(2), irqPath);
+        handleRemoteCall(ipi->remoteCall, ipi->args[0], ipi->args[1], ipi->args[2], irqPath);
     } else if (IRQT_TO_IRQ(irq) == irq_reschedule_ipi) {
         rescheduleRequired();
 #ifdef CONFIG_ARCH_RISCV
@@ -105,7 +141,7 @@ void doRemoteMaskOp(IpiRemoteCall_t func, word_t data1, word_t data2, word_t dat
         /* make sure no resource access passes from this point */
         asm volatile("" ::: "memory");
         ipi_send_mask(CORE_IRQ_TO_IRQT(0, irq_remote_call_ipi), mask, true);
-        ipi_wait(totalCoreBarrier);
+        ipi_wait();
     }
 }
 
