@@ -27,9 +27,7 @@ typedef enum {
 /* Lock request */
 typedef struct clh_req {
     clh_req_state_t state;
-
-    PAD_TO_NEXT_CACHE_LN(sizeof(clh_req_state_t));
-} clh_req_t;
+} ALIGN(L1_CACHE_LINE_SIZE) clh_req_t;
 
 /* Our node (called "Process" in the paper) */
 typedef struct clh_node {
@@ -37,19 +35,14 @@ typedef struct clh_node {
     clh_req_t *myreq; // Used to grant the lock to our successor.
     /* This is the software blocking IPI flag */
     word_t ipi;
-
-    PAD_TO_NEXT_CACHE_LN(sizeof(clh_req_t *) +
-                         sizeof(clh_req_t *) +
-                         sizeof(word_t));
-} clh_node_t;
+} ALIGN(L1_CACHE_LINE_SIZE) clh_node_t;
 
 typedef struct clh_lock {
     clh_req_t request[CONFIG_MAX_NUM_NODES + 1];
     clh_node_t node[CONFIG_MAX_NUM_NODES];
 
     clh_req_t *tail;
-    PAD_TO_NEXT_CACHE_LN(sizeof(clh_req_t *));
-} clh_lock_t;
+} ALIGN(L1_CACHE_LINE_SIZE) clh_lock_t;
 
 extern clh_lock_t big_kernel_lock;
 BOOT_CODE void clh_lock_init(void);
