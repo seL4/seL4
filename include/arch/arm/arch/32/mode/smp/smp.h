@@ -8,11 +8,6 @@
 #include <config.h>
 
 #ifdef ENABLE_SMP_SUPPORT
-
-#define LD_EX               "ldrex "
-#define ST_EX               "strex "
-#define OP_WIDTH
-
 extern char kernel_stack_alloc[CONFIG_MAX_NUM_NODES][BIT(CONFIG_KERNEL_STACK_BITS)];
 
 static inline CONST cpu_id_t getCurrentCPUIndex(void)
