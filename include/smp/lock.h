@@ -42,7 +42,10 @@ typedef struct clh_lock {
     clh_node_t node[CONFIG_MAX_NUM_NODES];
 
     clh_req_t *tail;
-} ALIGN(L1_CACHE_LINE_SIZE) clh_lock_t;
+
+    /* Global IPI state */
+    ipi_state_t ipi;
+} ALIGN(EXCL_RES_GRANULE_SIZE) clh_lock_t;
 
 extern clh_lock_t big_kernel_lock;
 BOOT_CODE void clh_lock_init(void);
