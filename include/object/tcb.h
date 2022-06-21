@@ -146,7 +146,7 @@ exception_t decodeDomainInvocation(word_t invLabel, word_t length, word_t *buffe
 exception_t decodeBindNotification(cap_t cap);
 exception_t decodeUnbindNotification(cap_t cap);
 #ifdef CONFIG_KERNEL_MCS
-exception_t decodeSetTimeoutEndpoint(cap_t cap, cte_t *slot);
+exception_t decodeSetTimeoutEndpoint(cap_t cap, word_t length, cte_t *slot, word_t *buffer);
 #endif
 
 

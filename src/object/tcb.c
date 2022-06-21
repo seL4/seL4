@@ -851,7 +851,7 @@ exception_t decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
 
 #ifdef CONFIG_KERNEL_MCS
     case TCBSetTimeoutEndpoint:
-        return decodeSetTimeoutEndpoint(cap, slot);
+        return decodeSetTimeoutEndpoint(cap, length, slot, buffer);
 #else
 #ifdef ENABLE_SMP_SUPPORT
     case TCBSetAffinity:
@@ -1251,17 +1251,31 @@ exception_t decodeSetMCPriority(cap_t cap, word_t length, word_t *buffer)
 }
 
 #ifdef CONFIG_KERNEL_MCS
-exception_t decodeSetTimeoutEndpoint(cap_t cap, cte_t *slot)
+exception_t decodeSetTimeoutEndpoint(cap_t cap, word_t length, cte_t *slot, word_t *buffer)
 {
-    if (current_extra_caps.excaprefs[0] == NULL) {
-        userError("TCB SetSchedParams: Truncated message.");
+    if (length < 2 || current_extra_caps.excaprefs[0] == NULL) {
+        userError("TCB SetTimeoutEndpoint: Truncated message.");
+        current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
+    word_t thData = getSyscallArg(0, buffer);
+    word_t thRights = getSyscallArg(1, buffer);
     cte_t *thSlot = current_extra_caps.excaprefs[0];
     cap_t thCap   = current_extra_caps.excaprefs[0]->cap;
 
     /* timeout handler */
+    if (thData != 0 || thRights != 0) {
+        thCap = updateCapData(false, thData, thCap);
+        thCap = maskCapRights(rightsFromWord(thRights), thCap);
+    }
+
+    deriveCap_ret_t dc_ret = deriveCap(thSlot, thCap);
+    if (dc_ret.status != EXCEPTION_NONE) {
+        return dc_ret.status;
+    }
+    thCap = dc_ret.cap;
+
     if (!validFaultHandler(thCap)) {
         userError("TCB SetTimeoutEndpoint: timeout endpoint cap invalid.");
         current_syscall_error.invalidCapNumber = 1;
@@ -1281,12 +1295,17 @@ exception_t decodeSetTimeoutEndpoint(cap_t cap, cte_t *slot)
 #endif
 
 #ifdef CONFIG_KERNEL_MCS
+#define DECODE_SET_SCHED_PARAMS 4
+#else
+#define DECODE_SET_SCHED_PARAMS 2
+#endif
+#ifdef CONFIG_KERNEL_MCS
 exception_t decodeSetSchedParams(cap_t cap, word_t length, cte_t *slot, word_t *buffer)
 #else
 exception_t decodeSetSchedParams(cap_t cap, word_t length, word_t *buffer)
 #endif
 {
-    if (length < 2 || current_extra_caps.excaprefs[0] == NULL
+    if (length < DECODE_SET_SCHED_PARAMS || current_extra_caps.excaprefs[0] == NULL
 #ifdef CONFIG_KERNEL_MCS
         || current_extra_caps.excaprefs[1] == NULL || current_extra_caps.excaprefs[2] == NULL
 #endif
@@ -1303,6 +1322,9 @@ exception_t decodeSetSchedParams(cap_t cap, word_t length, word_t *buffer)
     cap_t scCap   = current_extra_caps.excaprefs[1]->cap;
     cte_t *fhSlot = current_extra_caps.excaprefs[2];
     cap_t fhCap   = current_extra_caps.excaprefs[2]->cap;
+
+    word_t fhData = getSyscallArg(2, buffer);
+    word_t fhRights = getSyscallArg(3, buffer);
 #endif
 
     if (cap_get_capType(authCap) != cap_thread_cap) {
@@ -1362,6 +1384,18 @@ exception_t decodeSetSchedParams(cap_t cap, word_t length, word_t *buffer)
         current_syscall_error.invalidCapNumber = 2;
         return EXCEPTION_SYSCALL_ERROR;
     }
+
+    /* fault handler */
+    if (fhData != 0 || fhRights != 0) {
+        fhCap = updateCapData(false, fhData, fhCap);
+        fhCap = maskCapRights(rightsFromWord(fhRights), fhCap);
+    }
+
+    deriveCap_ret_t dc_ret = deriveCap(fhSlot, fhCap);
+    if (dc_ret.status != EXCEPTION_NONE) {
+        return dc_ret.status;
+    }
+    fhCap = dc_ret.cap;
 
     if (!validFaultHandler(fhCap)) {
         userError("TCB Configure: fault endpoint cap invalid.");
@@ -1450,7 +1484,7 @@ exception_t decodeSetIPCBuffer(cap_t cap, word_t length, cte_t *slot, word_t *bu
 }
 
 #ifdef CONFIG_KERNEL_MCS
-#define DECODE_SET_SPACE_PARAMS 2
+#define DECODE_SET_SPACE_PARAMS 4
 #else
 #define DECODE_SET_SPACE_PARAMS 3
 #endif
@@ -1473,8 +1507,10 @@ exception_t decodeSetSpace(cap_t cap, word_t length, cte_t *slot, word_t *buffer
     }
 
 #ifdef CONFIG_KERNEL_MCS
-    cRootData = getSyscallArg(0, buffer);
-    vRootData = getSyscallArg(1, buffer);
+    word_t fhData    = getSyscallArg(0, buffer);
+    word_t fhRights = getSyscallArg(1, buffer);
+    cRootData = getSyscallArg(2, buffer);
+    vRootData = getSyscallArg(3, buffer);
 
     cte_t *fhSlot     = current_extra_caps.excaprefs[0];
     cap_t fhCap      = current_extra_caps.excaprefs[0]->cap;
@@ -1536,6 +1572,17 @@ exception_t decodeSetSpace(cap_t cap, word_t length, cte_t *slot, word_t *buffer
 
 #ifdef CONFIG_KERNEL_MCS
     /* fault handler */
+    if (fhData != 0 || fhRights != 0) {
+        fhCap = updateCapData(false, fhData, fhCap);
+        fhCap = maskCapRights(rightsFromWord(fhRights), fhCap);
+    }
+
+    dc_ret = deriveCap(fhSlot, fhCap);
+    if (dc_ret.status != EXCEPTION_NONE) {
+        return dc_ret.status;
+    }
+    fhCap = dc_ret.cap;
+
     if (!validFaultHandler(fhCap)) {
         userError("TCB SetSpace: fault endpoint cap invalid.");
         current_syscall_error.invalidCapNumber = 1;
