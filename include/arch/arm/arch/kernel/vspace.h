@@ -40,7 +40,7 @@ vm_rights_t CONST maskVMRights(vm_rights_t vm_rights,
                                seL4_CapRights_t cap_rights_mask);
 
 exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
-                                   cte_t *cte, cap_t cap, word_t *buffer);
+                                   cte_t *cte, cap_t cap, bool_t call, word_t *buffer);
 
 #ifdef CONFIG_PRINTING
 void Arch_userStackTrace(tcb_t *tptr);

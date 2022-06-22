@@ -608,10 +608,11 @@ static exception_t decodeDisableIOPort(cap_t cap, word_t length, word_t *buffer)
     return invokeDisableIOPort(vcpu, low, high);
 }
 
-static exception_t invokeWriteVMCS(vcpu_t *vcpu, word_t *buffer, word_t field, word_t value)
+static exception_t invokeWriteVMCS(vcpu_t *vcpu, bool_t call, word_t *buffer, word_t field, word_t value)
 {
     tcb_t *thread;
     thread = NODE_STATE(ksCurThread);
+
     if (ARCH_NODE_STATE(x86KSCurrentVCPU) != vcpu) {
         switchVCPU(vcpu);
     }
@@ -629,13 +630,19 @@ static exception_t invokeWriteVMCS(vcpu_t *vcpu, word_t *buffer, word_t field, w
         vcpu->cr0_shadow = vcpu->cached_cr0_shadow = value;
         break;
     }
-    setMR(thread, buffer, 0, value);
     vmwrite(field, value);
-    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+
+    if (call) {
+        setRegister(thread, badgeRegister, 0);
+        unsigned int length = setMR(thread, buffer, 0, value);
+        setRegister(thread, msgInfoRegister, wordFromMessageInfo(
+                        seL4_MessageInfo_new(0, 0, 0, length)));
+    }
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
     return EXCEPTION_NONE;
 }
 
-static exception_t decodeWriteVMCS(cap_t cap, word_t length, word_t *buffer)
+static exception_t decodeWriteVMCS(cap_t cap, word_t length, bool_t call, word_t *buffer)
 {
     word_t field;
     word_t value;
@@ -737,7 +744,7 @@ static exception_t decodeWriteVMCS(cap_t cap, word_t length, word_t *buffer)
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
-    return invokeWriteVMCS(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)), buffer, field, value);
+    return invokeWriteVMCS(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)), call, buffer, field, value);
 }
 
 static word_t readVMCSField(vcpu_t *vcpu, word_t field)
@@ -758,19 +765,22 @@ static word_t readVMCSField(vcpu_t *vcpu, word_t field)
     return vmread(field);
 }
 
-static exception_t invokeReadVMCS(vcpu_t *vcpu, word_t field, word_t *buffer)
+static exception_t invokeReadVMCS(vcpu_t *vcpu, word_t field, bool_t call, word_t *buffer)
 {
     tcb_t *thread;
     thread = NODE_STATE(ksCurThread);
-
-    setMR(thread, buffer, 0, readVMCSField(vcpu, field));
-    setRegister(thread, msgInfoRegister, wordFromMessageInfo(
-                    seL4_MessageInfo_new(0, 0, 0, 1)));
-    setThreadState(thread, ThreadState_Restart);
+    word_t value = readVMCSField(vcpu, field);
+    if (call) {
+        setRegister(thread, badgeRegister, 0);
+        unsigned int length = setMR(thread, buffer, 0, value);
+        setRegister(thread, msgInfoRegister, wordFromMessageInfo(
+                        seL4_MessageInfo_new(0, 0, 0, length)));
+    }
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
     return EXCEPTION_NONE;
 }
 
-static exception_t decodeReadVMCS(cap_t cap, word_t length, word_t *buffer)
+static exception_t decodeReadVMCS(cap_t cap, word_t length, bool_t call, word_t *buffer)
 {
     if (length < 1) {
         userError("VCPU ReadVMCS: Not enough arguments.");
@@ -866,7 +876,7 @@ static exception_t decodeReadVMCS(cap_t cap, word_t length, word_t *buffer)
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
-    return invokeReadVMCS(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)), field, buffer);
+    return invokeReadVMCS(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)), field, call, buffer);
 }
 
 static exception_t invokeSetTCB(vcpu_t *vcpu, tcb_t *tcb)
@@ -940,6 +950,7 @@ exception_t decodeX86VCPUInvocation(
     cptr_t cptr,
     cte_t *slot,
     cap_t cap,
+    bool_t call,
     word_t *buffer
 )
 {
@@ -947,9 +958,9 @@ exception_t decodeX86VCPUInvocation(
     case X86VCPUSetTCB:
         return decodeSetTCB(cap, length, buffer);
     case X86VCPUReadVMCS:
-        return decodeReadVMCS(cap, length, buffer);
+        return decodeReadVMCS(cap, length, call, buffer);
     case X86VCPUWriteVMCS:
-        return decodeWriteVMCS(cap, length, buffer);
+        return decodeWriteVMCS(cap, length, call, buffer);
     case X86VCPUEnableIOPort:
         return decodeEnableIOPort(cap, length, buffer);
     case X86VCPUDisableIOPort:

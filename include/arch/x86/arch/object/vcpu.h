@@ -326,6 +326,7 @@ exception_t decodeX86VCPUInvocation(
     cptr_t cptr,
     cte_t *slot,
     cap_t cap,
+    bool_t call,
     word_t *buffer
 );
 

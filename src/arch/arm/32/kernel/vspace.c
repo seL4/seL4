@@ -1945,18 +1945,22 @@ static exception_t performPageFlush(int invLabel, pde_t *pd, asid_t asid, vptr_t
     return EXCEPTION_NONE;
 }
 
-static exception_t performPageGetAddress(void *vbase_ptr)
+static exception_t performPageGetAddress(void *vbase_ptr, bool_t call)
 {
-    paddr_t capFBasePtr;
-
     /* Get the physical address of this frame. */
+    paddr_t capFBasePtr;
     capFBasePtr = addrFromPPtr(vbase_ptr);
 
-    /* return it in the first message register */
-    setRegister(NODE_STATE(ksCurThread), msgRegisters[0], capFBasePtr);
-    setRegister(NODE_STATE(ksCurThread), msgInfoRegister,
-                wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, 1)));
-
+    tcb_t *thread;
+    thread = NODE_STATE(ksCurThread);
+    if (call) {
+        word_t *ipcBuffer = lookupIPCBuffer(true, thread);
+        setRegister(thread, badgeRegister, 0);
+        unsigned int length = setMR(thread, ipcBuffer, 0, capFBasePtr);
+        setRegister(thread, msgInfoRegister, wordFromMessageInfo(
+                        seL4_MessageInfo_new(0, 0, 0, length)));
+    }
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
     return EXCEPTION_NONE;
 }
 
@@ -2226,7 +2230,7 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, word_t length,
 }
 
 static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
-                                            cte_t *cte, cap_t cap, word_t *buffer)
+                                            cte_t *cte, cap_t cap, bool_t call, word_t *buffer)
 {
     switch (invLabel) {
     case ARMPageMap: {
@@ -2483,7 +2487,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
         assert(n_msgRegisters >= 1);
 
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        return performPageGetAddress((void *)generic_frame_cap_get_capFBasePtr(cap));
+        return performPageGetAddress((void *)generic_frame_cap_get_capFBasePtr(cap), call);
     }
 
     default:
@@ -2495,7 +2499,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
 }
 
 exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
-                                   cte_t *cte, cap_t cap, word_t *buffer)
+                                   cte_t *cte, cap_t cap, bool_t call, word_t *buffer)
 {
     switch (cap_get_capType(cap)) {
     case cap_page_directory_cap:
@@ -2507,7 +2511,7 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
 
     case cap_small_frame_cap:
     case cap_frame_cap:
-        return decodeARMFrameInvocation(invLabel, length, cte, cap, buffer);
+        return decodeARMFrameInvocation(invLabel, length, cte, cap, call, buffer);
 
     case cap_asid_control_cap: {
         word_t i;
