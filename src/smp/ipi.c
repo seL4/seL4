@@ -21,6 +21,9 @@
  * or this call will idle forever */
 void ipiStallCoreCallback(bool_t irqPath)
 {
+    word_t cpu = getCurrentCPUIndex();
+    clh_node_t *node = &big_kernel_lock.node[cpu];
+
     if (clh_is_self_in_queue() && !irqPath) {
         /* The current thread is running as we would replace this thread with an idle thread
          *
@@ -40,19 +43,20 @@ void ipiStallCoreCallback(bool_t irqPath)
 #endif
         NODE_STATE(ksSchedulerAction) = SchedulerAction_ResumeCurrentThread;
 
-        /* Let the cpu requesting this IPI to continue while we waiting on lock */
-        big_kernel_lock.node[getCurrentCPUIndex()].ipi = 0;
+        /* Let the cpu requesting this IPI continue while we wait on the lock */
+        node->ipi = 0;
 #ifdef CONFIG_ARCH_RISCV
         ipi_clear_irq(irq_remote_call_ipi);
 #endif
         ipi_wait();
 
         /* Continue waiting on lock */
-        while (big_kernel_lock.node[getCurrentCPUIndex()].watch->state != CLHState_Granted) {
-            if (clh_is_ipi_pending(getCurrentCPUIndex())) {
+        while (node->watch->state != CLHState_Granted) {
+            __atomic_thread_fence(__ATOMIC_ACQUIRE);
+            if (clh_is_ipi_pending(cpu)) {
                 /* Multiple calls for similar reason could result in stack overflow */
                 assert(big_kernel_lock.ipi.remoteCall != IpiRemoteCall_Stall);
-                handleIPI(CORE_IRQ_TO_IRQT(getCurrentCPUIndex(), irq_remote_call_ipi), irqPath);
+                handleIPI(CORE_IRQ_TO_IRQT(cpu, irq_remote_call_ipi), irqPath);
             }
             arch_pause();
         }
