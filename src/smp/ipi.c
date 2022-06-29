@@ -91,10 +91,11 @@ void ipi_wait(void)
 
     if (__atomic_fetch_add(count, 1, __ATOMIC_ACQ_REL) == cores) {
         *count = 0;
-        ipi->globalsense = ~ipi->globalsense;
+        ipi->globalsense++;
         __atomic_thread_fence(__ATOMIC_RELEASE);
     }
-
+    /* Check globalsense instead of count to protect against a race where
+     * a new IPI started before this core saw that the old one finished. */
     while (localsense == ipi->globalsense) {
         __atomic_thread_fence(__ATOMIC_ACQUIRE);
         arch_pause();
