@@ -30,6 +30,9 @@ void reply_push(tcb_t *tcb_caller, tcb_t *tcb_callee, reply_t *reply, bool_t can
 
     /* link caller and reply */
     reply->replyTCB = tcb_caller;
+
+    /* canGrant should have already been set according to the grant
+       right on the receiver's endpoint capability. */
     setThreadStateBlockedOnReply(tcb_caller, reply);
 
     if (sc_donated != NULL && tcb_callee->tcbSchedContext == NULL && canDonate) {
