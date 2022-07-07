@@ -31,11 +31,19 @@ jobs:
     strategy:
       matrix:
         arch: [ARM, ARM_HYP, AARCH64, RISCV64, X64]
-        # no MCS here, auto-updating mcs.xml should be a separate job.
+        feature: ["", MCS]
+        exclude:
+          - arch: ARM_HYP
+            feature: MCS
+          - arch: AARCH64
+            feature: MCS
+          - arch: X64
+            feature: MCS
     steps:
     - uses: seL4/ci-actions/preprocess@master
       with:
         L4V_ARCH: ${{ matrix.arch }}
+        L4V_FEATURES: ${{ matrix.feature }}
 
   deploy:
     name: Deploy manifest
