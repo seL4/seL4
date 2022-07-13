@@ -70,10 +70,10 @@ static pte_t pte_next(word_t phys_addr, bool_t is_leaf)
 
     return pte_new(ppn,
                    0,     /* sw */
-                   1,     /* dirty */
-                   1,     /* accessed */
+                   is_leaf ? 1 : 0,     /* dirty (leaf)/reserved (non-leaf) */
+                   is_leaf ? 1 : 0,     /* accessed (leaf)/reserved (non-leaf) */
                    1,     /* global */
-                   0,     /* user */
+                   is_leaf ? 0 : 0,     /* user (leaf)/reserved (non-leaf) */
                    exec,  /* execute */
                    write, /* write */
                    read,  /* read */
@@ -180,10 +180,10 @@ BOOT_CODE void map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
     *targetSlot = pte_new(
                       (addrFromPPtr(pt) >> seL4_PageBits),
                       0, /* sw */
-                      1, /* dirty */
-                      1, /* accessed */
+                      0, /* dirty (reserved non-leaf) */
+                      0, /* accessed (reserved non-leaf) */
                       0,  /* global */
-                      0,  /* user */
+                      0,  /* user (reserved non-leaf) */
                       0,  /* execute */
                       0,  /* write */
                       0,  /* read */
@@ -207,10 +207,10 @@ BOOT_CODE void map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap)
     *targetSlot = pte_new(
                       (pptr_to_paddr(frame_pptr) >> seL4_PageBits),
                       0, /* sw */
-                      1, /* dirty */
-                      1, /* accessed */
+                      1, /* dirty (leaf) */
+                      1, /* accessed (leaf) */
                       0,  /* global */
-                      1,  /* user */
+                      1,  /* user (leaf) */
                       1,  /* execute */
                       1,  /* write */
                       1,  /* read */
@@ -531,10 +531,10 @@ void unmapPageTable(asid_t asid, vptr_t vptr, pte_t *target_pt)
     *ptSlot = pte_new(
                   0,  /* phy_address */
                   0,  /* sw */
-                  0,  /* dirty */
-                  0,  /* accessed */
+                  0,  /* dirty (reserved non-leaf) */
+                  0,  /* accessed (reserved non-leaf) */
                   0,  /* global */
-                  0,  /* user */
+                  0,  /* user (reserved non-leaf) */
                   0,  /* execute */
                   0,  /* write */
                   0,  /* read */
@@ -656,10 +656,10 @@ static pte_t CONST makeUserPTE(paddr_t paddr, bool_t executable, vm_rights_t vm_
         return pte_new(
                    paddr >> seL4_PageBits,
                    0, /* sw */
-                   1, /* dirty */
-                   1, /* accessed */
+                   1, /* dirty (leaf) */
+                   1, /* accessed (leaf) */
                    0, /* global */
-                   1, /* user */
+                   1, /* user (leaf) */
                    executable, /* execute */
                    RISCVGetWriteFromVMRights(vm_rights), /* write */
                    RISCVGetReadFromVMRights(vm_rights), /* read */
@@ -773,10 +773,10 @@ static exception_t decodeRISCVPageTableInvocation(word_t label, word_t length,
                         PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap)));
     pte_t pte = pte_new((paddr >> seL4_PageBits),
                         0, /* sw */
-                        1, /* dirty */
-                        1, /* accessed */
+                        0, /* dirty (reserved non-leaf) */
+                        0, /* accessed (reserved non-leaf) */
                         0,  /* global */
-                        0,  /* user */
+                        0,  /* user (reserved non-leaf) */
                         0,  /* execute */
                         0,  /* write */
                         0,  /* read */
