@@ -78,7 +78,7 @@ SECTIONS
         *(._idle_thread)
     }
 
-    .bss . : AT(ADDR(.bss) - KERNEL_OFFSET)
+    .bss . (NOLOAD): AT(ADDR(.bss) - KERNEL_OFFSET)
     {
         *(.bss)
         *(COMMON) /* fallback in case '-fno-common' is not used */
