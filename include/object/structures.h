@@ -396,25 +396,28 @@ struct reply {
      * (the last caller before the server) or another reply object. 0 if no scheduling
      * context was passed along the call chain */
     call_stack_t replyNext;
+
+    /* Unused, explicit padding to make struct size the correct power of 2. */
+    word_t padding;
 };
 #endif
 
 /* Ensure object sizes are sane */
-compile_assert(cte_size_sane, sizeof(cte_t) <= BIT(seL4_SlotBits))
+compile_assert(cte_size_sane, sizeof(cte_t) == BIT(seL4_SlotBits))
 compile_assert(tcb_cte_size_sane, TCB_CNODE_SIZE_BITS <= TCB_SIZE_BITS)
 compile_assert(tcb_size_sane,
                BIT(TCB_SIZE_BITS) >= sizeof(tcb_t))
 compile_assert(tcb_size_not_excessive,
                BIT(TCB_SIZE_BITS - 1) < sizeof(tcb_t))
-compile_assert(ep_size_sane, sizeof(endpoint_t) <= BIT(seL4_EndpointBits))
-compile_assert(notification_size_sane, sizeof(notification_t) <= BIT(seL4_NotificationBits))
+compile_assert(ep_size_sane, sizeof(endpoint_t) == BIT(seL4_EndpointBits))
+compile_assert(notification_size_sane, sizeof(notification_t) == BIT(seL4_NotificationBits))
 
 /* Check the IPC buffer is the right size */
 compile_assert(ipc_buf_size_sane, sizeof(seL4_IPCBuffer) == BIT(seL4_IPCBufferSizeBits))
 #ifdef CONFIG_KERNEL_MCS
-compile_assert(sc_core_size_sane, (sizeof(sched_context_t) + MIN_REFILLS *sizeof(refill_t) <=
+compile_assert(sc_core_size_sane, (sizeof(sched_context_t) + MIN_REFILLS *sizeof(refill_t) ==
                                    seL4_CoreSchedContextBytes))
-compile_assert(reply_size_sane, sizeof(reply_t) <= BIT(seL4_ReplyBits))
+compile_assert(reply_size_sane, sizeof(reply_t) == BIT(seL4_ReplyBits))
 compile_assert(refill_size_sane, (sizeof(refill_t) == seL4_RefillSizeBytes))
 #endif
 
