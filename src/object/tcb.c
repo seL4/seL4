@@ -1265,8 +1265,10 @@ exception_t decodeSetTimeoutEndpoint(cap_t cap, word_t length, cte_t *slot, word
     cap_t thCap   = current_extra_caps.excaprefs[0]->cap;
 
     /* timeout handler */
-    if (thData != 0 || thRights != 0) {
+    if (thData != 0) {
         thCap = updateCapData(false, thData, thCap);
+    }
+    if (thRights != 0) {
         thCap = maskCapRights(rightsFromWord(thRights), thCap);
     }
 
@@ -1386,8 +1388,10 @@ exception_t decodeSetSchedParams(cap_t cap, word_t length, word_t *buffer)
     }
 
     /* fault handler */
-    if (fhData != 0 || fhRights != 0) {
+    if (fhData != 0) {
         fhCap = updateCapData(false, fhData, fhCap);
+    }
+    if (fhRights != 0) {
         fhCap = maskCapRights(rightsFromWord(fhRights), fhCap);
     }
 
@@ -1572,8 +1576,10 @@ exception_t decodeSetSpace(cap_t cap, word_t length, cte_t *slot, word_t *buffer
 
 #ifdef CONFIG_KERNEL_MCS
     /* fault handler */
-    if (fhData != 0 || fhRights != 0) {
+    if (fhData != 0) {
         fhCap = updateCapData(false, fhData, fhCap);
+    }
+    if (fhRights != 0) {
         fhCap = maskCapRights(rightsFromWord(fhRights), fhCap);
     }
 
