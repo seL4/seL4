@@ -1258,6 +1258,15 @@ static deriveCap_ret_t update_badge_rights(cap_t cap, word_t length, cte_t *slot
         word_t data = getSyscallArg(offset, buffer);
 
         cap = updateCapData(false, data, cap);
+        if (cap_get_capType(cap) == cap_null_cap) {
+            deriveCap_ret_t ret;
+
+            userError("TCB update_badge_rights: Cap already badged or null.");
+            current_syscall_error.type = seL4_IllegalOperation;
+            ret.cap = cap_null_cap_new();
+            ret.status = EXCEPTION_SYSCALL_ERROR;
+            return ret;
+        }
     }
     if (length >= offset + 2) {
         word_t rights = getSyscallArg(offset + 1, buffer);
