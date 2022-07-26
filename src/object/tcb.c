@@ -1251,6 +1251,22 @@ exception_t decodeSetMCPriority(cap_t cap, word_t length, word_t *buffer)
 }
 
 #ifdef CONFIG_KERNEL_MCS
+
+static deriveCap_ret_t update_badge_rights(cap_t cap, word_t length, cte_t *slot, word_t *buffer, word_t offset)
+{
+    if (length >= offset + 1) {
+        word_t data = getSyscallArg(offset, buffer);
+
+        cap = updateCapData(false, data, cap);
+    }
+    if (length >= offset + 2) {
+        word_t rights = getSyscallArg(offset + 1, buffer);
+
+        cap = maskCapRights(rightsFromWord(rights), cap);
+    }
+    return deriveCap(slot, cap);
+}
+
 exception_t decodeSetTimeoutEndpoint(cap_t cap, word_t length, cte_t *slot, word_t *buffer)
 {
     if (current_extra_caps.excaprefs[0] == NULL) {
@@ -1263,23 +1279,7 @@ exception_t decodeSetTimeoutEndpoint(cap_t cap, word_t length, cte_t *slot, word
     cap_t thCap   = current_extra_caps.excaprefs[0]->cap;
 
     /* timeout handler */
-    word_t thData = 0;
-    word_t thRights = 0;
-
-    if (length >= 1) {
-        thData = getSyscallArg(0, buffer);
-    }
-    if (length >= 2) {
-        thRights = getSyscallArg(1, buffer);
-    }
-    if (thData != 0) {
-        thCap = updateCapData(false, thData, thCap);
-    }
-    if (thRights != 0) {
-        thCap = maskCapRights(rightsFromWord(thRights), thCap);
-    }
-
-    deriveCap_ret_t dc_ret = deriveCap(thSlot, thCap);
+    deriveCap_ret_t dc_ret = update_badge_rights(thCap, length, thSlot, buffer, 0);
     if (dc_ret.status != EXCEPTION_NONE) {
         return dc_ret.status;
     }
@@ -1387,23 +1387,7 @@ exception_t decodeSetSchedParams(cap_t cap, word_t length, word_t *buffer)
     }
 
     /* fault handler */
-    word_t fhData = 0;
-    word_t fhRights = 0;
-
-    if (length >= 3) {
-        fhData = getSyscallArg(2, buffer);
-    }
-    if (length >= 4) {
-        fhRights = getSyscallArg(3, buffer);
-    }
-    if (fhData != 0) {
-        fhCap = updateCapData(false, fhData, fhCap);
-    }
-    if (fhRights != 0) {
-        fhCap = maskCapRights(rightsFromWord(fhRights), fhCap);
-    }
-
-    deriveCap_ret_t dc_ret = deriveCap(fhSlot, fhCap);
+    deriveCap_ret_t dc_ret = update_badge_rights(fhCap, length, fhSlot, buffer, 2);
     if (dc_ret.status != EXCEPTION_NONE) {
         return dc_ret.status;
     }
@@ -1582,23 +1566,7 @@ exception_t decodeSetSpace(cap_t cap, word_t length, cte_t *slot, word_t *buffer
 
 #ifdef CONFIG_KERNEL_MCS
     /* fault handler */
-    word_t fhData = 0;
-    word_t fhRights = 0;
-
-    if (length >= 3) {
-        fhData = getSyscallArg(2, buffer);
-    }
-    if (length >= 4) {
-        fhRights = getSyscallArg(3, buffer);
-    }
-    if (fhData != 0) {
-        fhCap = updateCapData(false, fhData, fhCap);
-    }
-    if (fhRights != 0) {
-        fhCap = maskCapRights(rightsFromWord(fhRights), fhCap);
-    }
-
-    dc_ret = deriveCap(fhSlot, fhCap);
+    deriveCap_ret_t dc_ret = update_badge_rights(fhCap, length, fhSlot, buffer, 2);
     if (dc_ret.status != EXCEPTION_NONE) {
         return dc_ret.status;
     }
