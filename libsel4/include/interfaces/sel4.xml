@@ -513,14 +513,6 @@
             </description>
             <param dir="in" name="fault_ep" type="seL4_CPtr"
                 description="CPTR to the endpoint which receives IPCs when this thread faults. On MCS this cap gets copied into the TCB."/>
-            <param dir="in" name="fault_ep_data" type="seL4_Word"
-                description="Optionally set the badge of the new fault handler endpoint. If set to zero, this parameter has no effect."/>
-            <param dir="in" name="fault_ep_rights" type="seL4_CapRights_t">
-                <description>
-                    Optionally set the rights inherited by the new fault handler Endpoint capability.<docref>Possible values for this type are given in <autoref label="sec:cap_rights"/>  .</docref>
-                    If set to zero, this parameter has no effect.
-                </description>
-            </param>
             <param dir="in" name="cspace_root" type="seL4_CNode"
                 description="The new CSpace root."/>
             <param dir="in" name="cspace_root_data" type="seL4_Word"
@@ -529,6 +521,14 @@
                 description="The new VSpace root."/>
             <param dir="in" name="vspace_root_data" type="seL4_Word"
                 description="Has no effect on x86 or ARM processors."/>
+            <param dir="in" name="fault_ep_data" type="seL4_Word"
+                description="Optionally set the badge of the new fault handler endpoint. If set to zero, this parameter has no effect."/>
+            <param dir="in" name="fault_ep_rights" type="seL4_CapRights_t">
+                <description>
+                    Optionally set the rights inherited by the new fault handler Endpoint capability.<docref>Possible values for this type are given in <autoref label="sec:cap_rights"/>  .</docref>
+                    If set to zero, this parameter has no effect.
+                </description>
+            </param>
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/>, <texttt text="cspace_root"/>, or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
