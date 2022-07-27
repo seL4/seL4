@@ -204,30 +204,32 @@ function(GenProofsBFTarget target_name target_file pbf_path pbf_target prunes de
     )
 endfunction(GenProofsBFTarget)
 
-macro(cfg_str_add_disabled cfg_str name)
+macro(cfg_str_add_disabled cfg_str cfg_json name)
     # include in liner files can't use double slash comments
     list(APPEND ${cfg_str} "/* disabled: CONFIG_${name} */")
+    string(JSON ${cfg_json} SET ${${cfg_json}} "${name}" "null")
 endmacro()
 
-macro(cfg_str_add_define cfg_str name value comment)
+macro(cfg_str_add_define cfg_str cfg_json name value comment)
     set(cfg_define_str "#define CONFIG_${name}  ${value}")
     if(NOT "${comment}" STREQUAL "")
         # include in liner files can't use double slash comments
         string(APPEND cfg_define_str "  /* ${comment} */")
     endif()
     list(APPEND ${cfg_str} ${cfg_define_str})
+    string(JSON ${cfg_json} SET ${${cfg_json}} ${name} "\"${value}\"")
 endmacro()
 
-macro(cfg_str_add cfg_str name value)
+macro(cfg_str_add cfg_str cfg_json name value)
     if("${value}" STREQUAL "")
-        cfg_str_add_define(${cfg_str} ${name} "" "empty")
+        cfg_str_add_define(${cfg_str} ${cfg_json} ${name} "" "empty")
     else()
-        cfg_str_add_define(${cfg_str} ${name} "${value}" "")
+        cfg_str_add_define(${cfg_str} ${cfg_json} ${name} "${value}" "")
     endif()
 endmacro()
 
-macro(cfg_str_add_as_1 cfg_str name var)
-    cfg_str_add_define(${cfg_str} ${name} "1" "${var}=${${var}}")
+macro(cfg_str_add_as_1 cfg_str cfg_json name var)
+    cfg_str_add_define(${cfg_str} ${cfg_json} ${name} "1" "${var}=${${var}}")
 endmacro()
 
 # config_option(cmake_option_name c_config_name doc DEFAULT default [DEPENDS deps] [DEFAULT_DISABLE default_disabled])
@@ -289,12 +291,14 @@ function(config_option optionname configname doc)
         set(${optionname}_DISABLED TRUE CACHE INTERNAL "" FORCE)
     endif()
     set(local_config_string "${configure_string}")
+    set(local_config_json "${configure_json}")
     if(${optionname})
-        cfg_str_add_as_1(local_config_string ${configname} ${optionname})
+        cfg_str_add_as_1(local_config_string local_config_json ${configname} ${optionname})
     else()
-        cfg_str_add_disabled(local_config_string ${configname})
+        cfg_str_add_disabled(local_config_string local_config_json ${configname})
     endif()
     set(configure_string "${local_config_string}" PARENT_SCOPE)
+    set(configure_json "${local_config_json}" PARENT_SCOPE)
 endfunction(config_option)
 
 # Set a configuration option to a particular value. This value will not appear in
@@ -304,13 +308,13 @@ macro(config_set optionname configname value)
     set(${optionname} "${value}" CACHE INTERNAL "" FORCE)
     set(c_define "CONFIG_${configname}")
     if("${value}" STREQUAL "OFF")
-        cfg_str_add_disabled(configure_string ${configname})
+        cfg_str_add_disabled(configure_string configure_json ${configname})
     else()
         if("${value}" STREQUAL "ON")
-            cfg_str_add_as_1(configure_string ${configname} ${optionname})
+            cfg_str_add_as_1(configure_string configure_json ${configname} ${optionname})
         else()
             # we have to quote ${value} here because it could be empty
-            cfg_str_add(configure_string ${configname} "${value}")
+            cfg_str_add(configure_string configure_json ${configname} "${value}")
         endif()
     endif()
 endmacro(config_set)
@@ -344,6 +348,7 @@ function(config_string optionname configname doc)
     endif()
     set(valid ON)
     set(local_config_string "${configure_string}")
+    set(local_config_json "${configure_json}")
     if(NOT "${CONFIG_DEPENDS}" STREQUAL "")
         # Check the passed in dependencies. This loop and logic is inspired by the
         # actual cmake_dependent_option code
@@ -398,9 +403,10 @@ function(config_string optionname configname doc)
         else()
             set(quote "\"")
         endif()
-        cfg_str_add(local_config_string ${configname} "${quote}@${cfg_tag_option}@${quote}")
+        cfg_str_add(local_config_string local_config_json ${configname} "${quote}@${cfg_tag_option}@${quote}")
     endif()
     set(configure_string "${local_config_string}" PARENT_SCOPE)
+    set(configure_json "${local_config_json}" PARENT_SCOPE)
 endfunction(config_string)
 
 # Defines a multi choice / select configuration option
@@ -426,6 +432,7 @@ function(config_choice optionname configname doc)
     # Cannot use ARGN because each argument itself is a list
     math(EXPR limit "${ARGC} - 1")
     set(local_config_string "${configure_string}")
+    set(local_config_json "${configure_json}")
     # force_default represents whether we need to force a new value or not. We would need
     # to force a new value for example if we detect that the current selected choice is
     # no longer (due to conditions) a valid choice
@@ -490,11 +497,11 @@ function(config_choice optionname configname doc)
             # Check if this option is the one that is currently set
             if("${${optionname}}" STREQUAL "${option_value}")
                 set(${option_cache} ON CACHE INTERNAL "" FORCE)
-                cfg_str_add_as_1(local_config_string ${option_config} ${option_cache})
+                cfg_str_add_as_1(local_config_string local_config_json ${option_config} ${option_cache})
                 set(found_current ON)
             else()
                 set(${option_cache} OFF CACHE INTERNAL "" FORCE)
-                cfg_str_add_disabled(local_config_string ${option_config})
+                cfg_str_add_disabled(local_config_string local_config_json ${option_config})
             endif()
         else()
             # Remove this config as it's not valid
@@ -509,8 +516,9 @@ function(config_choice optionname configname doc)
         # None of the choices were valid. Remove this option so its not visible
         unset(${optionname} CACHE)
     else()
-        cfg_str_add(local_config_string ${configname} "@${optionname}@")
+        cfg_str_add(local_config_string local_config_json ${configname} "@${optionname}@")
         set(configure_string "${local_config_string}" PARENT_SCOPE)
+        set(configure_json "${local_config_json}" PARENT_SCOPE)
         set(${optionname} "${default}" CACHE STRING "${doc}" ${force_default})
         # This is a directory scope setting used to allow or prevent config options
         # from appearing in the cmake config GUI
@@ -523,13 +531,14 @@ function(config_choice optionname configname doc)
             # choice earlier, since we didn't know we were going to revert to
             # the default. So add the option setting here
             set(${first_cache} ON CACHE INTERNAL "" FORCE)
-            cfg_str_add_as_1(local_config_string ${first_config} ${first_cache})
+            cfg_str_add_as_1(local_config_string local_config_json ${first_config} ${first_cache})
         endif()
     endif()
     # Save all possible options to an internal value.  This is to allow enumerating the options elsewhere.
     # We create a new variable because cmake doesn't support arbitrary properties on cache variables.
     set(${optionname}_all_strings ${all_strings} CACHE INTERNAL "" FORCE)
     set(configure_string "${local_config_string}" PARENT_SCOPE)
+    set(configure_json "${local_config_json}" PARENT_SCOPE)
 endfunction(config_choice)
 
 # Defines a target for a 'configuration' library, which generates a header based
@@ -545,7 +554,9 @@ endfunction(config_choice)
 function(add_config_library prefix configure_template)
     set(config_dir "${CMAKE_CURRENT_BINARY_DIR}/gen_config")
     set(config_file "${config_dir}/${prefix}/gen_config.h")
+    set(config_json_file "${config_dir}/${prefix}/gen_config.json")
     string(CONFIGURE "${configure_template}" config_header_contents)
+    string(CONFIGURE "${configure_json}" config_json_contents)
     # Turn the list of configurations into a valid C file of different lines
     string(
         REPLACE
@@ -555,6 +566,7 @@ function(add_config_library prefix configure_template)
             "${config_header_contents}"
     )
     file(GENERATE OUTPUT "${config_file}" CONTENT "\n#pragma once\n\n${config_header_contents}")
+    file(GENERATE OUTPUT "${config_json_file}" CONTENT "${config_json_contents}")
     add_custom_target(${prefix}_Gen DEPENDS "${config_file}")
     add_library(${prefix}_Config INTERFACE)
     target_include_directories(${prefix}_Config INTERFACE "${config_dir}")

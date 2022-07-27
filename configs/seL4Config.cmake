@@ -8,6 +8,7 @@
 # Architecture selection
 #
 set(configure_string "")
+set(configure_json "{}")
 set(c_sources "")
 set(asm_sources "")
 set(bf_declarations "")
