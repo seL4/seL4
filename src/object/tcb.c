@@ -1252,28 +1252,45 @@ exception_t decodeSetMCPriority(cap_t cap, word_t length, word_t *buffer)
 
 #ifdef CONFIG_KERNEL_MCS
 
-static deriveCap_ret_t update_badge_rights(cap_t cap, word_t length, cte_t *slot, word_t *buffer, word_t offset)
+static cap_t updateBadgeRights(cap_t cap, word_t length, word_t *buffer, word_t offset)
 {
     if (length >= offset + 1) {
         word_t data = getSyscallArg(offset, buffer);
-
         cap = updateCapData(false, data, cap);
-        if (cap_get_capType(cap) == cap_null_cap) {
-            deriveCap_ret_t ret;
-
-            userError("TCB update_badge_rights: Cap already badged or null.");
-            current_syscall_error.type = seL4_IllegalOperation;
-            ret.cap = cap_null_cap_new();
-            ret.status = EXCEPTION_SYSCALL_ERROR;
-            return ret;
-        }
     }
     if (length >= offset + 2) {
         word_t rights = getSyscallArg(offset + 1, buffer);
-
         cap = maskCapRights(rightsFromWord(rights), cap);
     }
-    return deriveCap(slot, cap);
+    return cap;
+}
+
+static deriveCap_ret_t updateAndCheckHandlerEP(cap_t cap, word_t length, cte_t *slot, word_t *buffer,
+                                               word_t offset, word_t capPosition)
+{
+    cap_t updatedCap = updateBadgeRights(cap, length, buffer, offset);
+    deriveCap_ret_t dc_ret = deriveCap(slot, updatedCap);
+    if (dc_ret.status != EXCEPTION_NONE) {
+        return dc_ret;
+    }
+    updatedCap = dc_ret.cap;
+    if (cap_get_capType(cap) != cap_get_capType(updatedCap)) {
+        userError("TCB updateAndCheckHandlerEP: Mutated cap would be invalid.");
+        current_syscall_error.type = seL4_IllegalOperation;
+        dc_ret.cap = cap_null_cap_new();
+        dc_ret.status = EXCEPTION_SYSCALL_ERROR;
+        return dc_ret;
+    }
+
+    if (!validFaultHandler(updatedCap)) {
+        userError("TCB updateAndCheckHandlerEP: handler endpoint cap invalid.");
+        current_syscall_error.type = seL4_InvalidCapability;
+        current_syscall_error.invalidCapNumber = capPosition;
+        dc_ret.cap = cap_null_cap_new();
+        dc_ret.status = EXCEPTION_SYSCALL_ERROR;
+        return dc_ret;
+    }
+    return dc_ret;
 }
 
 exception_t decodeSetTimeoutEndpoint(cap_t cap, word_t length, cte_t *slot, word_t *buffer)
@@ -1288,17 +1305,11 @@ exception_t decodeSetTimeoutEndpoint(cap_t cap, word_t length, cte_t *slot, word
     cap_t thCap   = current_extra_caps.excaprefs[0]->cap;
 
     /* timeout handler */
-    deriveCap_ret_t dc_ret = update_badge_rights(thCap, length, thSlot, buffer, 0);
+    deriveCap_ret_t dc_ret = updateAndCheckHandlerEP(thCap, length, thSlot, buffer, 0, 1);
     if (dc_ret.status != EXCEPTION_NONE) {
         return dc_ret.status;
     }
     thCap = dc_ret.cap;
-
-    if (!validFaultHandler(thCap)) {
-        userError("TCB SetTimeoutEndpoint: timeout endpoint cap invalid.");
-        current_syscall_error.invalidCapNumber = 1;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeTCB_ThreadControlCaps(
@@ -1396,18 +1407,11 @@ exception_t decodeSetSchedParams(cap_t cap, word_t length, word_t *buffer)
     }
 
     /* fault handler */
-    deriveCap_ret_t dc_ret = update_badge_rights(fhCap, length, fhSlot, buffer, 2);
+    deriveCap_ret_t dc_ret = updateAndCheckHandlerEP(fhCap, length, fhSlot, buffer, 2, 3);
     if (dc_ret.status != EXCEPTION_NONE) {
         return dc_ret.status;
     }
     fhCap = dc_ret.cap;
-
-    if (!validFaultHandler(fhCap)) {
-        userError("TCB Configure: fault endpoint cap invalid.");
-        current_syscall_error.type = seL4_InvalidCapability;
-        current_syscall_error.invalidCapNumber = 3;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
 #endif
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
 #ifdef CONFIG_KERNEL_MCS
@@ -1575,17 +1579,11 @@ exception_t decodeSetSpace(cap_t cap, word_t length, cte_t *slot, word_t *buffer
 
 #ifdef CONFIG_KERNEL_MCS
     /* fault handler */
-    deriveCap_ret_t dc_ret = update_badge_rights(fhCap, length, fhSlot, buffer, 2);
+    dc_ret = updateAndCheckHandlerEP(fhCap, length, fhSlot, buffer, 2, 1);
     if (dc_ret.status != EXCEPTION_NONE) {
         return dc_ret.status;
     }
     fhCap = dc_ret.cap;
-
-    if (!validFaultHandler(fhCap)) {
-        userError("TCB SetSpace: fault endpoint cap invalid.");
-        current_syscall_error.invalidCapNumber = 1;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
 #endif
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
