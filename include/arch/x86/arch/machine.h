@@ -55,6 +55,7 @@
  */
 #define SKYLAKE_1_MODEL_ID      0x4E
 #define SKYLAKE_2_MODEL_ID      0x5E
+#define SKYLAKE_X_MODEL_ID      0x55
 #define BROADWELL_1_MODEL_ID    0x4D
 #define BROADWELL_2_MODEL_ID    0x56
 #define BROADWELL_3_MODEL_ID    0x4F

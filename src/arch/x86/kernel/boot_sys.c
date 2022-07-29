@@ -270,6 +270,7 @@ static BOOT_CODE bool_t is_compiled_for_microarchitecture(void)
     switch (model_info->model) {
     case SKYLAKE_1_MODEL_ID:
     case SKYLAKE_2_MODEL_ID:
+    case SKYLAKE_X_MODEL_ID:
         if (microarch_generation > 7) {
             return false;
         }
