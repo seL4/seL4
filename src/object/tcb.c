@@ -1022,29 +1022,6 @@ exception_t decodeWriteRegisters(cap_t cap, word_t length, word_t *buffer)
                                     w, transferArch, buffer);
 }
 
-#ifdef CONFIG_KERNEL_MCS
-static bool_t validFaultHandler(cap_t cap)
-{
-    switch (cap_get_capType(cap)) {
-    case cap_endpoint_cap:
-        if (!cap_endpoint_cap_get_capCanSend(cap) ||
-            (!cap_endpoint_cap_get_capCanGrant(cap) &&
-             !cap_endpoint_cap_get_capCanGrantReply(cap))) {
-            current_syscall_error.type = seL4_InvalidCapability;
-            return false;
-        }
-        break;
-    case cap_null_cap:
-        /* just has no fault endpoint */
-        break;
-    default:
-        current_syscall_error.type = seL4_InvalidCapability;
-        return false;
-    }
-    return true;
-}
-#endif
-
 /* TCBConfigure batches SetIPCBuffer and parts of SetSpace. */
 exception_t decodeTCBConfigure(cap_t cap, word_t length, cte_t *slot, word_t *buffer)
 {
@@ -1252,45 +1229,50 @@ exception_t decodeSetMCPriority(cap_t cap, word_t length, word_t *buffer)
 
 #ifdef CONFIG_KERNEL_MCS
 
-static cap_t updateBadgeRights(cap_t cap, word_t length, word_t *buffer, word_t offset)
-{
-    if (length >= offset + 1) {
-        word_t data = getSyscallArg(offset, buffer);
-        cap = updateCapData(false, data, cap);
-    }
-    if (length >= offset + 2) {
-        word_t rights = getSyscallArg(offset + 1, buffer);
-        cap = maskCapRights(rightsFromWord(rights), cap);
-    }
-    return cap;
-}
-
 static deriveCap_ret_t updateAndCheckHandlerEP(cap_t cap, word_t length, cte_t *slot, word_t *buffer,
                                                word_t offset, word_t capPosition)
 {
-    cap_t updatedCap = updateBadgeRights(cap, length, buffer, offset);
-    deriveCap_ret_t dc_ret = deriveCap(slot, updatedCap);
-    if (dc_ret.status != EXCEPTION_NONE) {
-        return dc_ret;
-    }
-    updatedCap = dc_ret.cap;
-    if (cap_get_capType(cap) != cap_get_capType(updatedCap)) {
-        userError("TCB updateAndCheckHandlerEP: Mutated cap would be invalid.");
-        current_syscall_error.type = seL4_IllegalOperation;
-        dc_ret.cap = cap_null_cap_new();
-        dc_ret.status = EXCEPTION_SYSCALL_ERROR;
-        return dc_ret;
-    }
-
-    if (!validFaultHandler(updatedCap)) {
-        userError("TCB updateAndCheckHandlerEP: handler endpoint cap invalid.");
+    deriveCap_ret_t ret;
+    if (cap_get_capType(cap) != cap_null_cap && cap_get_capType(cap) != cap_endpoint_cap) {
+        userError("TCB updateAndCheckHandlerEP: handler cap not null or an Endpoint.");
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = capPosition;
-        dc_ret.cap = cap_null_cap_new();
-        dc_ret.status = EXCEPTION_SYSCALL_ERROR;
-        return dc_ret;
+        ret.cap = cap_null_cap_new();
+        ret.status = EXCEPTION_SYSCALL_ERROR;
+        return ret;
     }
-    return dc_ret;
+
+    if (length >= offset + 1) {
+        word_t data = getSyscallArg(offset, buffer);
+
+        cap = updateCapData(false, data, cap);
+        if (cap_get_capType(cap) == cap_null_cap) {
+            userError("TCB updateAndCheckHandlerEP: cap already badged or null.");
+            current_syscall_error.type = seL4_IllegalOperation;
+            ret.cap = cap_null_cap_new();
+            ret.status = EXCEPTION_SYSCALL_ERROR;
+            return ret;
+        }
+    }
+
+    if (length >= offset + 2) {
+        word_t rights = getSyscallArg(offset + 1, buffer);
+
+        cap = maskCapRights(rightsFromWord(rights), cap);
+    }
+
+    if (cap_get_capType(cap) == cap_endpoint_cap &&
+        (!cap_endpoint_cap_get_capCanSend(cap) ||
+         (!cap_endpoint_cap_get_capCanGrant(cap) &&
+          !cap_endpoint_cap_get_capCanGrantReply(cap)))) {
+        userError("TCB updateAndCheckHandlerEP: insufficient endpoint rights.");
+        current_syscall_error.type = seL4_InvalidCapability;
+        current_syscall_error.invalidCapNumber = capPosition;
+        ret.cap = cap_null_cap_new();
+        ret.status = EXCEPTION_SYSCALL_ERROR;
+        return ret;
+    }
+    return deriveCap(slot, cap);;
 }
 
 exception_t decodeSetTimeoutEndpoint(cap_t cap, word_t length, cte_t *slot, word_t *buffer)
