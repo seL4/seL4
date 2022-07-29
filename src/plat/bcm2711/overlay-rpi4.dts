@@ -23,7 +23,7 @@
 	 * https://github.com/raspberrypi/firmware/issues/1374 for
 	 * reference.
 	 *
-	 * RPi4B seems to be in "low peripheral" mode by default.
+	 * RPi4B runs in "low peripheral" mode by default.
 	 * These values were observed from running
 	 * Raspbian instance from /proc/iomem and /sys/firmware/devicetree/base
 	 *
@@ -37,36 +37,18 @@
 	 * 0x01 0x00000000 0x80000000  2048MB
 	 * 0x01 0x80000000 0x80000000  2048MB
 	 *
-	 * Disjunct memory areas seem to work only
-	 * when declared in different memory DT nodes.
-	 *
-	 * If all of the declarations below are in the
-	 * same node, the kernel build system seems
-	 * to only understand the second 3008MB area
-	 * and ignores the rest.
 	 */
 
 	/delete-node/ memory;
 
 	memory@0 {
 		device_type = "memory";
-		reg = < 0x00000000 0x00000000 0x3b400000 >;
-	};
-
-	memory@40000000 {
-		device_type = "memory";
-		reg = < 0x00000000 0x40000000 0xbc000000 >;
-	};
-
-	memory@100000000 {
-		device_type = "memory";
-		reg = < 0x00000001 0x00000000 0x80000000
+		reg = < 0x00000000 0x00000000 0x3b400000
+			0x00000000 0x40000000 0xbc000000
+			0x00000001 0x00000000 0x80000000
 			0x00000001 0x80000000 0x80000000 >;
 	};
 
-	/* TODO: add DMA dedicated ranges
-	 * here also?
-	 */
 	reserved-memory {
 		#address-cells = <0x02>;
 		#size-cells = <0x01>;
@@ -93,7 +75,7 @@
 		 * by declaring it as reserved memory.
 		 */
 		reserved-memory@3b400000 {
-			reg = < 0x00000000 0x3b400000 0x04C00000 >;
+			reg = < 0x00000000 0x3b400000 0x04c00000 >;
 			no-map;
 		};
 	};
