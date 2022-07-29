@@ -15,6 +15,7 @@
 #define IOAPIC_WINDOW 0x10
 
 #define IOAPIC_REG_IOAPICID 0x00
+#define IOAPIC_REG_IOAPICVER 0x01
 #define IOAPIC_REG_IOREDTBL 0x10
 
 #define IOREDTBL_LOW(reg) (IOAPIC_REG_IOREDTBL + (reg) * 2)
@@ -35,6 +36,10 @@
 /* Cache what we believe is in the low word of the IOREDTBL. This
  * has all the state of trigger modes etc etc */
 static uint32_t ioredtbl_state[IOAPIC_IRQ_LINES * MAX(1, CONFIG_MAX_NUM_IOAPIC)];
+/*
+ * The number of IRQ lines for each IOAPIC
+ */
+static uint8_t ioapic_nirqs[MAX(1, CONFIG_MAX_NUM_IOAPIC)];
 
 /* Number of IOAPICs in the system */
 static uint32_t num_ioapics = 0;
@@ -52,12 +57,17 @@ static uint32_t ioapic_read(uint32_t ioapic, word_t reg)
 static void single_ioapic_init(word_t ioapic, cpu_id_t delivery_cpu)
 {
     uint32_t i;
+    uint32_t nirqs;
+
+    ioapic_write(ioapic, IOAPIC_REGSEL, IOAPIC_REG_IOAPICVER);
+    nirqs = (ioapic_read(ioapic, IOAPIC_WINDOW) >> 16) + 1;
+    ioapic_nirqs[ioapic] = nirqs;
 
     /* Mask all the IRQs. In doing so we happen to set
      * the vector to 0, which we can assert against in
      * mask_interrupt to ensure a vector is assigned
      * before we unmask */
-    for (i = 0; i < IOAPIC_IRQ_LINES; i++) {
+    for (i = 0; i < nirqs; i++) {
         /* Send to desired cpu */
         ioapic_write(ioapic, IOAPIC_REGSEL, IOREDTBL_HIGH(i));
         ioapic_write(ioapic, IOAPIC_WINDOW, (ioapic_read(ioapic,
@@ -87,7 +97,7 @@ void ioapic_init(uint32_t num_nodes, cpu_id_t *cpu_list, uint32_t num_ioapic)
 void ioapic_mask(bool_t mask, uint32_t ioapic, uint32_t pin)
 {
     int index = ioapic * IOAPIC_IRQ_LINES + pin;
-    if (ioapic >= num_ioapics || pin >= IOAPIC_IRQ_LINES) {
+    if (ioapic >= num_ioapics || pin >= ioapic_nirqs[ioapic]) {
         /* silently ignore requests to non existent parts of the interrupt space */
         return;
     }
@@ -118,8 +128,8 @@ exception_t ioapic_decode_map_pin_to_vector(word_t ioapic, word_t pin, word_t le
         current_syscall_error.rangeErrorMax = num_ioapics - 1;
         return EXCEPTION_SYSCALL_ERROR;
     }
-    if (pin >= IOAPIC_IRQ_LINES) {
-        userError("Invalid IOAPIC pin %ld, there are %d pins", (long)pin, IOAPIC_IRQ_LINES);
+    if (pin >= ioapic_nirqs[ioapic]) {
+        userError("Invalid IOAPIC pin %ld, there are %d pins", (long)pin, ioapic_nirqs[ioapic]);
         current_syscall_error.type = seL4_RangeError;
         current_syscall_error.rangeErrorMin = 0;
         current_syscall_error.rangeErrorMax = IOAPIC_IRQ_LINES - 1;
