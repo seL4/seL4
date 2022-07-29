@@ -63,6 +63,12 @@ static void single_ioapic_init(word_t ioapic, cpu_id_t delivery_cpu)
     nirqs = (ioapic_read(ioapic, IOAPIC_WINDOW) >> 16) + 1;
     ioapic_nirqs[ioapic] = nirqs;
 
+    /*
+     * All current implementations have 24 or fewer lines
+     * Protect against the future one that may have more
+     */
+    assert(nirqs <= IOAPIC_IRQ_LINES);
+
     /* Mask all the IRQs. In doing so we happen to set
      * the vector to 0, which we can assert against in
      * mask_interrupt to ensure a vector is assigned
