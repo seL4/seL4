@@ -50,7 +50,7 @@ endif()
 
 config_option(
     KernelRiscVHypervisorSupport RISCV_HYPERVISOR_SUPPORT
-    "Build as Hypervisor. Utilise RISCV virtualisation extensions to build the kernel as a hypervisor"
+    "Build as Hypervisor. Utilise RISC-V H-Extension (v0.6.1) to build the kernel as a hypervisor"
     DEFAULT OFF
     DEPENDS "KernelArchRiscV"
 )
