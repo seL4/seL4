@@ -4,7 +4,7 @@
 
 #include <config.h>
 
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
 
 #include <api/failures.h>
 #include <linker.h>

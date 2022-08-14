@@ -63,6 +63,6 @@ void setVMRoot(tcb_t *tcb);
 void Arch_userStackTrace(tcb_t *tptr);
 #endif
 
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
 uint32_t fetch_faulting_instruction(vm_fault_type_t type);
 #endif

@@ -127,7 +127,7 @@ void VISIBLE NORETURN c_handle_exception(void)
     case RISCVInstructionPageFault:
         handleVMFaultEvent(scause);
         break;
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
     case RISCVEnvHypCall:
     case RISCVVirtualInstruction:
         handleVCPUFault(scause);

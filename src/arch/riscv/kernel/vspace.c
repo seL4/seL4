@@ -302,7 +302,7 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
 
 BOOT_CODE void activate_kernel_vspace(void)
 {
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
     setKernelVSpaceRoot(kpptr_to_paddr(&kernel_root_pageTable), 0);
 #else
     setVSpaceRoot(kpptr_to_paddr(&kernel_root_pageTable), 0);
@@ -416,7 +416,7 @@ lookupPTSlot_ret_t lookupPTSlot(pte_t *lvl1pt, vptr_t vptr)
     return ret;
 }
 
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
 /* We get the actual faulting instruction, so that the user-mode
  * VMM does not need to do nested page table walking.
  */
@@ -454,7 +454,7 @@ exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
 
     addr = read_stval();
 
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
     uint32_t instruction = 0;
 #endif
 
@@ -474,7 +474,7 @@ exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
         current_fault = seL4_Fault_VMFault_new(addr, instruction, RISCVInstructionAccessFault, true);
         return EXCEPTION_FAULT;
 
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
     /* For guest page fault, guest physical address faulted is used. */
 
     case RISCVLoadGuestPageFault:
@@ -663,7 +663,7 @@ void setVMRoot(tcb_t *tcb)
     }
 
     setVSpaceRoot(addrFromPPtr(lvl1pt), asid);
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
     vcpu_switch(tcb->tcbArch.tcbVCPU);
 #endif
 }

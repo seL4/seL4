@@ -46,7 +46,7 @@ block page_table_cap {
     field_high  capPTMappedAddress  39
 }
 
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
 -- The size of root page table for stage-2 translation is
 -- 16 KiB, so we add a new captype to reflect the difference.
 block s2_root_page_table_cap {
@@ -79,7 +79,7 @@ block asid_pool_cap {
     field_high  capASIDPool     37
 }
 
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
 block vcpu_cap {
     padding                     64
 
@@ -131,7 +131,7 @@ tagged_union cap capType {
     tag page_table_cap      3
     tag asid_control_cap    11
     tag asid_pool_cap       13
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
     tag vcpu_cap                15
     tag s2_root_page_table_cap  17
     tag vmid_control_cap        19
@@ -143,7 +143,7 @@ tagged_union cap capType {
 
 block VMFault {
     field     address           64
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
     field     instruction       32
 #else
     padding                     32
@@ -155,7 +155,7 @@ block VMFault {
     field     seL4_FaultType    4
 }
 
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
 
 block VCPUFault {
     field   cause               64

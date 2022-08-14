@@ -62,7 +62,7 @@ enum vm_fault_type {
     RISCVAddressMisaligned = 6,
     RISCVStoreAccessFault = 7,
     RISCVEnvCall = 8,
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
     RISCVEnvHypCall = 10,
 #endif
     /* 9-11 reserved */
@@ -71,7 +71,7 @@ enum vm_fault_type {
     /* 14 - reserved */
     RISCVStorePageFault = 15
                           /* >= 16 reserved */
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
     ,
     RISCVInstructionGuestPageFault = 20,
     RISCVLoadGuestPageFault = 21,

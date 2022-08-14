@@ -21,7 +21,7 @@ NODE_STATE_BEGIN(archNodeState)
 /* TODO: add RISCV-dependent fields here */
 /* Bitmask of all cores should receive the reschedule IPI */
 NODE_STATE_DECLARE(word_t, ipiReschedulePending);
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
 NODE_STATE_DECLARE(vcpu_t, *riscvHSCurVCPU);
 NODE_STATE_DECLARE(bool_t, riscvHSVCPUActive);
 #endif

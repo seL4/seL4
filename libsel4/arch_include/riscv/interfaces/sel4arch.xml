@@ -369,7 +369,7 @@
     </interface>
 
     <interface name="seL4_RISCV_VCPU" manual_name="VCPU">
-        <method id="RISCVVCPUSetTCB" name="SetTCB" condition="defined(CONFIG_RISCV_HE)"
+        <method id="RISCVVCPUSetTCB" name="SetTCB" condition="defined(CONFIG_RISCV_HYPERVISOR_SUPPORT)"
             manual_name="Set TCB">
                 <brief>
                     Bind a TCB to a virtual CPU
@@ -382,7 +382,7 @@
             <param dir="in" name="tcb" type="seL4_TCB"
             description="Capability to TCB to bind to a virtual CPU"/>
         </method>
-        <method id="RISCVVCPUReadReg" name="ReadRegs" condition="defined(CONFIG_RISCV_HE)"
+        <method id="RISCVVCPUReadReg" name="ReadRegs" condition="defined(CONFIG_RISCV_HYPERVISOR_SUPPORT)"
             manual_name="Read Registers">
                 <brief>
                     Read a virtual CPU register
@@ -392,7 +392,7 @@
             <param dir="out" name="value" type="seL4_Word"
             description="Returned value of the VCPU register"/>
         </method>
-        <method id="RISCVVCPUWriteReg" name="WriteRegs" condition="defined(CONFIG_RISCV_HE)"
+        <method id="RISCVVCPUWriteReg" name="WriteRegs" condition="defined(CONFIG_RISCV_HYPERVISOR_SUPPORT)"
             manual_name="Write Registers">
                 <brief>
                     Write a virtual CPU register

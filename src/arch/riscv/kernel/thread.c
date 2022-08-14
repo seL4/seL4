@@ -18,7 +18,7 @@ extern char kernel_stack_alloc[CONFIG_MAX_NUM_NODES][BIT(CONFIG_KERNEL_STACK_BIT
 void Arch_switchToThread(tcb_t *tcb)
 {
 
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
     hstatus_set(HSTATUS_SPV);
 #endif
     setVMRoot(tcb);
@@ -44,7 +44,7 @@ BOOT_CODE void Arch_configureIdleThread(tcb_t *tcb)
 
 void Arch_switchToIdleThread(void)
 {
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
     /* Idle thread runs in HS-mode */
     hstatus_clear(HSTATUS_SPV);
     vcpu_switch(NULL);

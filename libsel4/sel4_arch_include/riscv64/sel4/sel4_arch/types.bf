@@ -23,7 +23,7 @@ block VMFault {
     field     seL4_FaultType    4
 }
 
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
 block VCPUFault {
     padding 512
     padding 128

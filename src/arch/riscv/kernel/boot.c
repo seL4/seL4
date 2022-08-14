@@ -141,7 +141,7 @@ BOOT_CODE static void init_cpu(void)
     activate_kernel_vspace();
 #endif
 
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
     vcpu_boot_init();
 #endif
 }

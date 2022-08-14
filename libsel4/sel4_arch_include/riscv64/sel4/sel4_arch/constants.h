@@ -39,13 +39,13 @@
 #define seL4_TeraPageBits      39
 #define seL4_PageTableBits     12
 #define seL4_S2RootPageTableBits 14
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
 #define seL4_VSpaceBits        seL4_S2RootPageTableBits
 #else
 #define seL4_VSpaceBits        seL4_PageTableBits
 #endif
 
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
 /* Assume 14-bit VMID for the RISCV64 */
 #define seL4_NumASIDPoolsBits   5
 #define seL4_ASIDPoolIndexBits  9
@@ -71,7 +71,7 @@
 
 typedef enum {
     seL4_VMFault_IP,
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
     seL4_VMFault_Instruction,
 #endif
     seL4_VMFault_Addr,
@@ -80,7 +80,7 @@ typedef enum {
     seL4_VMFault_Length,
 } seL4_VMFault_Msg;
 
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
 typedef enum {
     seL4_VCPUFault_Cause,
     seL4_VCPUFault_Data,
@@ -155,7 +155,7 @@ typedef enum {
 } seL4_TimeoutMsg;
 #endif
 
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
 
 typedef enum {
     seL4_VCPUReg_SSTATUS = 0,
@@ -171,7 +171,7 @@ typedef enum {
     seL4_VCPUReg_Num,
 } seL4_VCPUReg;
 
-#endif /* end of CONFIG_RISCV_HE */
+#endif /* end of CONFIG_RISCV_HYPERVISOR_SUPPORT */
 
 #endif /* __ASSEMBLER__ */
 

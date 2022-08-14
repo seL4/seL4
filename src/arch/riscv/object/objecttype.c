@@ -43,7 +43,7 @@ deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
         ret.status = EXCEPTION_NONE;
         return ret;
 
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
     case cap_vcpu_cap:
         ret.cap = cap;
         ret.status = EXCEPTION_NONE;
@@ -118,7 +118,7 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
         break;
     case cap_asid_control_cap:
         break;
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
     case cap_vcpu_cap:
         if (final) {
             vcpu_finalise(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)));
@@ -164,7 +164,7 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
         }
         break;
 
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
     case cap_vcpu_cap:
         if (cap_get_capType(cap_b) == cap_vcpu_cap) {
             return cap_vcpu_cap_get_capVCPUPtr(cap_a) ==
@@ -207,7 +207,7 @@ word_t Arch_getObjectSize(word_t t)
     case seL4_RISCV_Tera_Page:
         return seL4_TeraPageBits;
 #endif
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
     case seL4_RISCV_VCPUObject:
         return VCPU_SIZE_BITS;
 #endif
@@ -304,7 +304,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t
                    0                       /* capPTMappedAddress */
                );
 
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
     case seL4_RISCV_VCPUObject:
         vcpu_init(VCPU_PTR(regionBase));
         printf("region %p\n", regionBase);
@@ -330,7 +330,7 @@ exception_t Arch_decodeInvocation(
     word_t *buffer
 )
 {
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
     switch (cap_get_capType(cap)) {
         case cap_vcpu_cap:
             return decodeRISCVVCPUInvocation(label, length, cptr, slot, cap, call, buffer);
@@ -346,7 +346,7 @@ void Arch_prepareThreadDelete(tcb_t *thread)
 #ifdef CONFIG_HAVE_FPU
     fpuThreadDelete(thread);
 #endif
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
     if (thread->tcbArch.tcbVCPU) {
         dissociateVCPUTCB(thread->tcbArch.tcbVCPU, thread);
     }

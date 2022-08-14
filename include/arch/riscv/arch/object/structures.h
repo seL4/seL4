@@ -35,7 +35,7 @@ typedef struct asid_pool asid_pool_t;
 
 typedef struct arch_tcb {
     user_context_t tcbContext;
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
     struct vcpu *tcbVCPU;
 #endif
 } arch_tcb_t;

@@ -49,7 +49,7 @@ elseif(KernelWordSize EQUAL 64)
 endif()
 
 config_option(
-    KernelRiscVHypervisorSupport RISCV_HE
+    KernelRiscVHypervisorSupport RISCV_HYPERVISOR_SUPPORT
     "Build as Hypervisor. Utilise RISCV virtualisation extensions to build the kernel as a hypervisor"
     DEFAULT OFF
     DEPENDS "KernelArchRiscV"

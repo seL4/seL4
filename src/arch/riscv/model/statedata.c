@@ -28,7 +28,7 @@ pte_t kernel_image_level2_log_buffer_pt[BIT(PT_INDEX_BITS)] ALIGN_BSS(BIT(seL4_P
 #endif
 
 SMP_STATE_DEFINE(core_map_t, coreMap);
-#ifdef CONFIG_RISCV_HE
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
 UP_STATE_DEFINE(vcpu_t, *riscvHSCurVCPU);
 UP_STATE_DEFINE(bool_t, riscvHSVCPUActive);
 #endif
