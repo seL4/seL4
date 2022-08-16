@@ -24,4 +24,22 @@ LIBSEL4_INLINE seL4_Error seL4_SchedControl_Configure(seL4_SchedControl _service
     return seL4_SchedControl_ConfigureFlags(_service, schedcontext, budget, period, extra_refills, badge,
                                             seL4_SchedContext_NoFlag);
 }
+
+LIBSEL4_INLINE seL4_Error seL4_TCB_SetSchedParams(seL4_TCB _service, seL4_TCB authority, seL4_Word mcp,
+                                                  seL4_Word priority, seL4_CPtr sched_context, seL4_CPtr fault_ep)
+{
+    return seL4_TCB_SetSchedParamsFH(_service, authority, mcp, priority, sched_context, fault_ep, 0, seL4_NoRights);
+}
+
+LIBSEL4_INLINE seL4_Error seL4_TCB_SetTimeoutEndpoint(seL4_TCB _service, seL4_CPtr timeout_fault_ep)
+{
+    return seL4_TCB_SetTimeoutEndpointBadge(_service, timeout_fault_ep, 0, seL4_NoRights);
+}
+
+LIBSEL4_INLINE seL4_Error seL4_TCB_SetSpace(seL4_TCB _service, seL4_Word fault_ep, seL4_CNode cspace_root,
+                                            seL4_Word cspace_root_data, seL4_CPtr vspace_root, seL4_Word vspace_root_data)
+{
+    return seL4_TCB_SetSpaceFH(_service, fault_ep, cspace_root, cspace_root_data, vspace_root, vspace_root_data, 0,
+                               seL4_NoRights);
+}
 #endif
