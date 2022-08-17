@@ -42,11 +42,6 @@
 			linux,cma-default;
 			alloc-ranges = <0x00 0x00 0x40000000>;
 		};
-
-		vc_mem {
-			size = <0xc0000000>;
-			alloc-ranges = <0x00 0x3ec00000 0xc0000000>;
-		};
 	};
 
 	thermal-zones {
