@@ -108,11 +108,13 @@ void cmdline_parse(const char *cmdline, cmdline_opt_t *cmdline_opt)
 #if defined(CONFIG_PRINTING) || defined(CONFIG_DEBUG_BUILD)
     /* use BIOS data area to read serial configuration. The BDA is not
      * fully standardized and parts are absolete. See http://wiki.osdev.org/Memory_Map_(x86)#BIOS_Data_Area_.28BDA.29
-     * for an explanation */
-/*
- * gcc-12 gives array bounds warning (treated as errors by the  build system)
- * for any address below 4096.  Turn that off fo accessing the BIOS area.
- */
+     * for an explanation
+     */
+    /*
+     * gcc-12 gives array bounds warning (treated as errors by the
+     * build system) for any address below 4096.  Turn that off for
+     * accessing the BIOS area.
+     */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Warray-bounds"
 

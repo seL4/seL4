@@ -202,6 +202,10 @@ add_compile_options(
     # - https://gcc.gnu.org/gcc-10/changes.html
     # - https://releases.llvm.org/11.0.0/tools/clang/docs/ReleaseNotes.html
     -fno-common
+    # gcc-12 assumes pointers into the first page are always errors.
+    # Allow low pointers by making the assumed page size 0.
+    --param=min-pagesize=0
+
 )
 
 # Linker parameters. There are two kinds actually:
