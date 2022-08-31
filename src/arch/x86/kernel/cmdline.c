@@ -152,9 +152,9 @@ void cmdline_parse(const char *cmdline, cmdline_opt_t *cmdline_opt)
         x86KSdebugPort = cmdline_opt->debug_port;
         printf("Boot config: debug_port = 0x%x\n", cmdline_opt->debug_port);
     }
+#pragma GCC diagnostic pop
 #endif
 
     cmdline_opt->disable_iommu = parse_bool(cmdline, cmdline_str_disable_iommu);
     printf("Boot config: disable_iommu = %s\n", cmdline_opt->disable_iommu ? "true" : "false");
 }
-#pragma GCC diagnostic pop
