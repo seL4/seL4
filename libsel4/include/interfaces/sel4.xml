@@ -433,39 +433,6 @@
                 </description>
             </error>
         </method>
-        <method id="TCBSetIPCBuffer" name="SetIPCBuffer" manual_name="Set IPC Buffer" manual_label="tcb_setipcbuffer">
-            <brief>
-                Set a thread's IPC buffer
-            </brief>
-            <description>
-                See Sections <shortref sec="threads"/> and <shortref sec="messageinfo"/>
-            </description>
-            <param dir="in" name="buffer" type="seL4_Word"
-                description="Location of the thread's IPC buffer. Must be 512-byte aligned. The IPC buffer may not cross a page boundary."/>
-            <param dir="in" name="bufferFrame" type="seL4_CPtr"
-                description="Capability to a page containing the thread's IPC buffer."/>
-            <error name="seL4_AlignmentError">
-                <description>
-                    The <texttt text="buffer"/> is not aligned.
-                </description>
-            </error>
-            <error name="seL4_IllegalOperation">
-                <description>
-                    The <texttt text="_service"/> or <texttt text="bufferFrame"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="bufferFrame"/> is retyped from a device untyped <docref>(see <autoref label="sec:kernmemalloc"/>)</docref>.
-                </description>
-            </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                </description>
-            </error>
-            <error name="seL4_RevokeFirst">
-                <description>
-                    The <texttt text="bufferFrame"/> is a CPtr to a capability of the wrong type.
-                </description>
-            </error>
-        </method>
 
         <method id="TCBSetSpace" name="SetSpace" manual_name="Set Space" manual_label="tcb_setspace">
             <condition><not><config var="CONFIG_KERNEL_MCS"/></not></condition>
