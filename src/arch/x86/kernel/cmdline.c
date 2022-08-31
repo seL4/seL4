@@ -109,7 +109,9 @@ void cmdline_parse(const char *cmdline, cmdline_opt_t *cmdline_opt)
     /* use BIOS data area to read serial configuration. The BDA is not
      * fully standardized and parts are absolete. See http://wiki.osdev.org/Memory_Map_(x86)#BIOS_Data_Area_.28BDA.29
      * for an explanation */
-#pragma  GCC diagnostic ignored "-Warray-bounds"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+
     const unsigned short *bda_port = (unsigned short *)0x400;
     const unsigned short *bda_equi = (unsigned short *)0x410;
     int const bda_ports_count       = (*bda_equi >> 9) & 0x7;
@@ -155,5 +157,4 @@ void cmdline_parse(const char *cmdline, cmdline_opt_t *cmdline_opt)
     cmdline_opt->disable_iommu = parse_bool(cmdline, cmdline_str_disable_iommu);
     printf("Boot config: disable_iommu = %s\n", cmdline_opt->disable_iommu ? "true" : "false");
 }
-
 #pragma GCC diagnostic pop
