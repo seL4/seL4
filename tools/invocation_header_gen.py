@@ -155,9 +155,13 @@ def parse_xml(xml_file):
         sys.exit(-1)
 
     invocation_labels = []
+    invocation_ids = set()
     for method in doc.getElementsByTagName("method"):
-        invocation_labels.append((str(method.getAttribute("id")),
-                                  str(condition_to_cpp(method.getElementsByTagName("condition")))))
+        mid = str(method.getAttribute("id"))
+        mc = str(condition_to_cpp(method.getElementsByTagName("condition")))
+        if mid+mc not in invocation_ids:
+            invocation_ids.add(mid+mc)
+            invocation_labels.append((mid, mc))
 
     return invocation_labels
 
