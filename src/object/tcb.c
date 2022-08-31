@@ -830,22 +830,17 @@ exception_t decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
     case TCBSetMCPriority:
         return decodeSetMCPriority(cap, length, buffer);
 
+    case TCBSetSchedParams:
 #ifdef CONFIG_KERNEL_MCS
-    case TCBSetSchedParamsFH:
         return decodeSetSchedParams(cap, length, slot, buffer);
 #else
-    case TCBSetSchedParams:
         return decodeSetSchedParams(cap, length, buffer);
 #endif
 
     case TCBSetIPCBuffer:
         return decodeSetIPCBuffer(cap, length, slot, buffer);
 
-#ifdef CONFIG_KERNEL_MCS
-    case TCBSetSpaceFH:
-#else
     case TCBSetSpace:
-#endif
         return decodeSetSpace(cap, length, slot, buffer);
 
     case TCBBindNotification:
@@ -855,7 +850,7 @@ exception_t decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
         return decodeUnbindNotification(cap);
 
 #ifdef CONFIG_KERNEL_MCS
-    case TCBSetTimeoutEndpointBadge:
+    case TCBSetTimeoutEndpoint:
         return decodeSetTimeoutEndpoint(cap, length, slot, buffer);
 #else
 #ifdef ENABLE_SMP_SUPPORT
@@ -1267,8 +1262,9 @@ static deriveCap_ret_t updateAndCheckHandlerEP(cap_t cap, word_t length, cte_t *
         return ret;
     }
 
-    word_t data = getSyscallArg(offset, buffer);
-    if (data != 0) {
+    if (length >= offset + 1) {
+        word_t data = getSyscallArg(offset, buffer);
+
         cap = updateCapData(false, data, cap);
         if (cap_get_capType(cap) == cap_null_cap) {
             userError("TCB updateAndCheckHandlerEP: handler cap being rebadged when already badged or null.");
@@ -1279,8 +1275,9 @@ static deriveCap_ret_t updateAndCheckHandlerEP(cap_t cap, word_t length, cte_t *
         }
     }
 
-    word_t rights = getSyscallArg(offset + 1, buffer);
-    if (rights != 0) {
+    if (length >= offset + 2) {
+        word_t rights = getSyscallArg(offset + 1, buffer);
+
         cap = maskCapRights(rightsFromWord(rights), cap);
     }
 
@@ -1297,7 +1294,7 @@ static deriveCap_ret_t updateAndCheckHandlerEP(cap_t cap, word_t length, cte_t *
 
 exception_t decodeSetTimeoutEndpoint(cap_t cap, word_t length, cte_t *slot, word_t *buffer)
 {
-    if (length < 2 || current_extra_caps.excaprefs[0] == NULL) {
+    if (current_extra_caps.excaprefs[0] == NULL) {
         userError("TCB SetTimeoutEndpoint: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -1326,14 +1323,12 @@ exception_t decodeSetTimeoutEndpoint(cap_t cap, word_t length, cte_t *slot, word
 #endif
 
 #ifdef CONFIG_KERNEL_MCS
-#define DECODE_SET_SCHED_PARAMS 4
 exception_t decodeSetSchedParams(cap_t cap, word_t length, cte_t *slot, word_t *buffer)
 #else
-#define DECODE_SET_SCHED_PARAMS 2
 exception_t decodeSetSchedParams(cap_t cap, word_t length, word_t *buffer)
 #endif
 {
-    if (length < DECODE_SET_SCHED_PARAMS || current_extra_caps.excaprefs[0] == NULL
+    if (length < 2 || current_extra_caps.excaprefs[0] == NULL
 #ifdef CONFIG_KERNEL_MCS
         || current_extra_caps.excaprefs[1] == NULL || current_extra_caps.excaprefs[2] == NULL
 #endif
@@ -1497,7 +1492,7 @@ exception_t decodeSetIPCBuffer(cap_t cap, word_t length, cte_t *slot, word_t *bu
 }
 
 #ifdef CONFIG_KERNEL_MCS
-#define DECODE_SET_SPACE_PARAMS 4
+#define DECODE_SET_SPACE_PARAMS 2
 #else
 #define DECODE_SET_SPACE_PARAMS 3
 #endif
