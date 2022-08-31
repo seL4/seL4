@@ -40,6 +40,7 @@
         <xsd:attribute name="name" type="xsd:string" use="required" />
         <xsd:attribute name="manual_name" type="xsd:string" use="optional" />
         <xsd:attribute name="cap_description" type="xsd:string" use="optional" />
+        <xsd:attribute name="duplicate" type="xsd:boolean" use="optional" />
     </xsd:complexType>
 
 
