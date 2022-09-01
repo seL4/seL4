@@ -1265,13 +1265,15 @@ static deriveCap_ret_t updateAndCheckHandlerEP(cap_t cap, word_t length, cte_t *
     if (length >= offset + 1) {
         word_t data = getSyscallArg(offset, buffer);
 
-        cap = updateCapData(false, data, cap);
-        if (cap_get_capType(cap) == cap_null_cap) {
-            userError("TCB updateAndCheckHandlerEP: handler cap being rebadged when already badged or null.");
-            current_syscall_error.type = seL4_IllegalOperation;
-            ret.cap = cap_null_cap_new();
-            ret.status = EXCEPTION_SYSCALL_ERROR;
-            return ret;
+        if (cap_get_capType(cap) != cap_null_cap && data != 0) {
+            cap = updateCapData(false, data, cap);
+            if (cap_get_capType(cap) == cap_null_cap) {
+                userError("TCB updateAndCheckHandlerEP: handler cap being rebadged when already badged or null.");
+                current_syscall_error.type = seL4_IllegalOperation;
+                ret.cap = cap_null_cap_new();
+                ret.status = EXCEPTION_SYSCALL_ERROR;
+                return ret;
+            }
         }
     }
 
