@@ -87,6 +87,18 @@ block vcpu_cap {
 }
 #endif
 
+#ifndef CONFIG_ENABLE_SMP_SUPPORT
+
+block sgi_signal_cap {
+    padding                 32
+    field capSGITarget      32
+
+    field capType           5
+    field capSGIIRQ         4
+    padding                 55
+}
+
+#endif
 #ifdef CONFIG_ARM_SMMU
 
 block sid_control_cap {
@@ -171,6 +183,9 @@ tagged_union cap capType {
 #endif
 #ifdef CONFIG_ALLOW_SMC_CALLS
     tag smc_cap                     25
+#endif
+#ifndef CONFIG_ENABLE_SMP_SUPPORT
+    tag sgi_signal_cap              27
 #endif
 }
 

@@ -28,6 +28,9 @@
 
 #define ICC_SGI1R_INTID_SHIFT          (24)
 #define ICC_SGI1R_AFF1_SHIFT           (16)
+#define ICC_SGI1R_AFF2_SHIFT           (32)
+#define ICC_SGI1R_AFF3_SHIFT           (48)
+#define ICC_SGI1R_RS_SHIFT             (44)
 #define ICC_SGI1R_IRM_BIT              (40)
 #define ICC_SGI1R_CPUTARGETLIST_MASK   0xffff
 
@@ -72,6 +75,17 @@ static inline uint64_t mpidr_to_gic_affinity(void)
     affinity = (uint64_t)MPIDR_AFF3(mpidr) << 32 | MPIDR_AFF2(mpidr) << 16 |
                MPIDR_AFF1(mpidr) << 8  | MPIDR_AFF0(mpidr);
     return affinity;
+}
+
+static inline uint64_t sgir_word_from_args(word_t irq, word_t target)
+{
+    uint64_t t = target; /* make sure shifts below are on 64 bit */
+    return (uint64_t) irq << ICC_SGI1R_INTID_SHIFT
+           | (1llu << (t & 0xf)) // AFF0 base
+           | ((t >> 4)  & 0x0f) << ICC_SGI1R_RS_SHIFT // AFF0 Range select
+           | ((t >> 8)  & 0xff) << ICC_SGI1R_AFF1_SHIFT // AFF1
+           | ((t >> 16) & 0xff) << ICC_SGI1R_AFF2_SHIFT // AFF2
+           | ((t >> 24) & 0xff) << ICC_SGI1R_AFF2_SHIFT; // AFF3
 }
 
 /* Wait for completion of a distributor change */
@@ -341,6 +355,18 @@ BOOT_CODE void cpu_initLocalIRQController(void)
 
     gicr_init();
     cpu_iface_init();
+}
+
+bool_t plat_SGITargetValid(word_t target)
+{
+    return target < GIC_SGI_NUM_TARGETS;
+}
+
+void plat_sendSGI(word_t irq, word_t target)
+{
+    uint64_t sgi1r_base = sgir_word_from_args(irq, target);
+    SYSTEM_WRITE_64(ICC_SGI1R_EL1, sgi1r_base);
+    isb();
 }
 
 #ifdef ENABLE_SMP_SUPPORT
