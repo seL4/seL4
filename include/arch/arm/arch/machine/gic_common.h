@@ -22,6 +22,7 @@
 /* CPU specific IRQ's */
 #define SGI_START         0u
 #define PPI_START         16u
+#define NUM_SGIS          16u
 
 /* Shared Peripheral Interrupts */
 #define SPI_START         32u
