@@ -102,6 +102,19 @@ block vcpu_cap {
 }
 #endif
 
+#ifndef CONFIG_ENABLE_SMP_SUPPORT
+
+block sgi_signal_cap {
+    field capSGITarget      32
+
+    padding                 20
+    field capSGIIRQ         4
+    field capType           8
+}
+
+#endif
+
+
 #ifdef CONFIG_TK1_SMMU
 -- IO space caps
 -- each module has an engine that can be enabled
@@ -178,6 +191,9 @@ tagged_union cap capType {
 #ifdef CONFIG_TK1_SMMU
     tag io_space_cap            0x1f
     tag io_page_table_cap       0x2f
+#endif
+#ifndef CONFIG_ENABLE_SMP_SUPPORT
+    tag sgi_signal_cap          0x3f
 #endif
 }
 
