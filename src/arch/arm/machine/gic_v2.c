@@ -175,6 +175,16 @@ BOOT_CODE void cpu_initLocalIRQController(void)
     cpu_iface_init();
 }
 
+bool_t plat_SGITargetValid(word_t target)
+{
+    return target < GIC_SGI_NUM_TARGETS;
+}
+
+void plat_sendSGI(word_t irq, word_t target)
+{
+    gic_dist->sgi_control = (BIT(target) << (GICD_SGIR_CPUTARGETLIST_SHIFT)) | (irq << GICD_SGIR_SGIINTID_SHIFT);
+}
+
 #ifdef ENABLE_SMP_SUPPORT
 /*
 * 25-24: target lister filter
