@@ -107,6 +107,10 @@ static inline word_t CONST cap_get_archCapSizeBits(cap_t cap)
     case cap_vcpu_cap:
         return seL4_VCPUBits;
 #endif
+#if CONFIG_MAX_NUM_NODES == 1
+    case cap_sgi_signal_cap:
+        return 0;
+#endif
 
     default:
         /* Unreachable, but GCC can't figure that out */
@@ -141,6 +145,10 @@ static inline bool_t CONST cap_get_archCapIsPhysical(cap_t cap)
     case cap_vcpu_cap:
         return true;
 #endif
+#if CONFIG_MAX_NUM_NODES == 1
+    case cap_sgi_signal_cap:
+        return false;
+#endif
 
     default:
         /* Unreachable, but GCC can't figure that out */
@@ -173,6 +181,10 @@ static inline void *CONST cap_get_archCapPtr(cap_t cap)
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case cap_vcpu_cap:
         return VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap));
+#endif
+#if CONFIG_MAX_NUM_NODES == 1
+    case cap_sgi_signal_cap:
+        return NULL;
 #endif
 
     default:

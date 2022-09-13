@@ -24,9 +24,7 @@
 #include <string.h>
 #include <kernel/traps.h>
 #include <arch/machine.h>
-#ifdef ENABLE_SMP_SUPPORT
 #include <smp/ipi.h>
-#endif
 #ifdef CONFIG_DEBUG_BUILD
 #include <arch/machine/capdl.h>
 #endif
@@ -130,11 +128,9 @@ exception_t handleUnknownSyscall(word_t w)
         setThreadName(TCB_PTR(cap_thread_cap_get_capTCBPtr(lu_ret.cap)), name);
         return EXCEPTION_NONE;
     }
-#ifdef ENABLE_SMP_SUPPORT
     if (w == SysDebugSendIPI) {
         return handle_SysDebugSendIPI();
     }
-#endif /* ENABLE_SMP_SUPPORT */
 #endif /* CONFIG_DEBUG_BUILD */
 
 #ifdef CONFIG_DANGEROUS_CODE_INJECTION

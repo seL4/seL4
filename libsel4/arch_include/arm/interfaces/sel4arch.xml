@@ -772,6 +772,49 @@
                 </description>
             </error>
         </method>
+        <method id="ARMIRQIssueSGISignal" name="IssueSGISignal" manual_name="IssueSGISignal"
+           manual_label="irq_controlissuesgisignal" condition="CONFIG_MAX_NUM_NODES == 1">
+            <brief>
+                Create an SGI signal capability.
+            </brief>
+            <description>
+            </description>
+            <param dir="in" name="irq" type="seL4_Word" description="The SGI INTID (0-15) that can be signalled."/>
+            <param dir="in" name="targets" type="seL4_Word" description="A bitfield of node IDs that will be targeted."/>
+
+            <param dir="in" name="root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
+            <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
+            <error name="seL4_DeleteFirst">
+                <description>
+                    The destination slot contains a capability.
+                </description>
+            </error>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="index"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                    Or, <texttt text="root"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, the platform does not support setting the IRQ trigger.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="irqs"/> or <texttt text="targets"/> contains bits that are out of range.
+                    Or, <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                </description>
+            </error>
+        </method>
+
     </interface>
     <interface name="seL4_ARM_SIDControl" manual_name="SID Control" cap_description="A SIDControl capability. This gives you the authority to make this call.">
        <method id="ARMSIDIssueSIDManager" name="GetSID" manual_name="Get SID" manual_label="sid_controlgetsid">

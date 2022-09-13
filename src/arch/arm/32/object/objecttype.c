@@ -87,6 +87,13 @@ deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
         return ret;
 #endif
 
+#if CONFIG_MAX_NUM_NODES == 1
+    case cap_sgi_signal_cap:
+        ret.cap = cap;
+        ret.status = EXCEPTION_NONE;
+        return ret;
+#endif
+
 #ifdef CONFIG_TK1_SMMU
     case cap_io_space_cap:
         ret.cap = cap;
@@ -225,6 +232,13 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
         break;
 #endif
 
+#if CONFIG_MAX_NUM_NODES == 1
+    case cap_sgi_signal_cap:
+        // do nothing
+        break;
+#endif
+
+
 #ifdef CONFIG_TK1_SMMU
     case cap_io_space_cap:
         if (final) {
@@ -299,6 +313,18 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
         }
         break;
 #endif
+
+#if CONFIG_MAX_NUM_NODES == 1
+    case cap_sgi_signal_cap:
+        if (cap_get_capType(cap_b) == cap_sgi_signal_cap) {
+            return (cap_sgi_signal_cap_get_capSGIIRQ(cap_a) ==
+                    cap_sgi_signal_cap_get_capSGIIRQ(cap_b) &&
+                    cap_sgi_signal_cap_get_capSGITargetMask(cap_a) ==
+                    cap_sgi_signal_cap_get_capSGITargetMask(cap_b));
+        }
+        break;
+#endif
+
 
 #ifdef CONFIG_TK1_SMMU
     case cap_io_space_cap:
@@ -540,7 +566,7 @@ exception_t Arch_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr,
     /* The C parser cannot handle a switch statement with only a default
      * case. So we need to do some gymnastics to remove the switch if
      * there are no other cases */
-#if defined(CONFIG_TK1_SMMU) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
+#if defined(CONFIG_TK1_SMMU) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT) || (CONFIG_MAX_NUM_NODES == 1)
     switch (cap_get_capType(cap)) {
 #ifdef CONFIG_TK1_SMMU
     case cap_io_space_cap:
@@ -552,6 +578,11 @@ exception_t Arch_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr,
     case cap_vcpu_cap:
         return decodeARMVCPUInvocation(invLabel, length, cptr, slot, cap, call, buffer);
 #endif /* end of CONFIG_ARM_HYPERVISOR_SUPPORT */
+#if CONFIG_MAX_NUM_NODES == 1
+    case cap_sgi_signal_cap:
+        return decodeSGISignalInvocation(invLabel, length, cap, buffer);
+#endif /* end of CONFIG_MAX_NUM_NODES == 1 */
+
     default:
 #else
 {
