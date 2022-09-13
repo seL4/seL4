@@ -649,8 +649,8 @@ LIBSEL4_INLINE_FUNC void seL4_DebugSendIPI(seL4_Uint8 target, unsigned irq)
 {
     arm_sys_send(seL4_SysDebugSendIPI, target, irq, 0, 0, 0, 0);
 }
-#endif /* CONFIG_ENABLE_SMP_SUPPORT */
 #endif
+#endif /* CONFIG_DEBUG_BUILD */
 
 #ifdef CONFIG_DANGEROUS_CODE_INJECTION
 LIBSEL4_INLINE_FUNC void seL4_DebugRun(void (* userfn)(void *), void *userarg)
