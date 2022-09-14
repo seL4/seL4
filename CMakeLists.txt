@@ -284,7 +284,7 @@ elseif(KernelArchARM)
              )
             OR
                 ((CMAKE_C_COMPILER_ID STREQUAL "Clang")
-                 AND (CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL "11.0.0")
+                 AND (CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL "12.0.0")
                  )
         )
             add_compile_options(-mno-outline-atomics)
