@@ -42,8 +42,7 @@ BOOT_CODE static bool_t arch_init_freemem(p_region_t ui_p_reg,
                                           word_t extra_bi_size_bits)
 {
     /* reserve the kernel image region */
-    reserved[0].start = KERNEL_ELF_BASE;
-    reserved[0].end = (pptr_t)ki_end;
+    reserved[0] = paddr_to_pptr_reg(get_p_reg_kernel_img());
 
     int index = 1;
 
@@ -568,12 +567,8 @@ static BOOT_CODE bool_t try_init_kernel(
     init_core_state(initial);
 
     /* create all of the untypeds. Both devices and kernel window memory */
-    if (!create_untypeds(
-            root_cnode_cap,
-    (region_t) {
-    KERNEL_ELF_BASE, (pptr_t)ki_boot_end
-    } /* reusable boot code/data */
-        )) {
+    if (!create_untypeds(root_cnode_cap,
+                         paddr_to_pptr_reg(get_p_reg_kernel_img_boot()))) {
         printf("ERROR: could not create untypteds for kernel image boot memory\n");
         return false;
     }

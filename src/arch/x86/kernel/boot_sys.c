@@ -7,6 +7,7 @@
 #include <config.h>
 #include <util.h>
 #include <hardware.h>
+#include <machine.h>
 #include <machine/io.h>
 #include <arch/machine.h>
 #include <arch/kernel/apic.h>
@@ -143,8 +144,6 @@ BOOT_CODE static paddr_t load_boot_module(word_t boot_module_start, paddr_t load
 
 static BOOT_CODE bool_t try_boot_sys_node(cpu_id_t cpu_id)
 {
-    p_region_t boot_mem_reuse_p_reg;
-
     if (!map_kernel_window(
             boot_state.num_ioapic,
             boot_state.ioapic_paddr,
@@ -164,10 +163,6 @@ static BOOT_CODE bool_t try_boot_sys_node(cpu_id_t cpu_id)
     }
 #endif
 
-    /* reuse boot code/data memory */
-    boot_mem_reuse_p_reg.start = KERNEL_ELF_PADDR_BASE;
-    boot_mem_reuse_p_reg.end = kpptr_to_paddr(ki_boot_end);
-
     /* initialise the CPU */
     if (!init_cpu(config_set(CONFIG_IRQ_IOAPIC) ? 1 : 0)) {
         return false;
@@ -178,7 +173,7 @@ static BOOT_CODE bool_t try_boot_sys_node(cpu_id_t cpu_id)
             cpu_id,
             &boot_state.mem_p_regs,
             boot_state.ui_info,
-            boot_mem_reuse_p_reg,
+            get_p_reg_kernel_img_boot(),
             /* parameters below not modeled in abstract specification */
             boot_state.num_drhu,
             boot_state.drhu_list,
@@ -341,8 +336,7 @@ static BOOT_CODE bool_t try_boot_sys(void)
     p_region_t ui_p_regs;
     paddr_t load_paddr;
 
-    boot_state.ki_p_reg.start = KERNEL_ELF_PADDR_BASE;
-    boot_state.ki_p_reg.end = kpptr_to_paddr(ki_end);
+    boot_state.ki_p_reg = get_p_reg_kernel_img();
 
     if (!x86_cpuid_initialize()) {
         printf("Warning: Your x86 CPU has an unsupported vendor, '%s'.\n"

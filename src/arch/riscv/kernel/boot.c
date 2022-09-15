@@ -56,13 +56,8 @@ BOOT_CODE static bool_t arch_init_freemem(region_t ui_reg,
                                           v_region_t it_v_reg,
                                           word_t extra_bi_size_bits)
 {
-    /* Reserve the kernel image region. This may look a bit awkward, as the
-     * symbols are a reference in the kernel image window, but all allocations
-     * are done in terms of the main kernel window, so we do some translation.
-     */
-    res_reg[0].start = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void *)KERNEL_ELF_BASE));
-    res_reg[0].end = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void *)ki_end));
-
+    /* reserve the kernel image region */
+    res_reg[0] = paddr_to_pptr_reg(get_p_reg_kernel_img());
     int index = 1;
 
     /* add the dtb region, if it is not empty */
@@ -191,10 +186,6 @@ static BOOT_CODE bool_t try_init_kernel(
     cap_t it_pd_cap;
     cap_t it_ap_cap;
     cap_t ipcbuf_cap;
-    p_region_t boot_mem_reuse_p_reg = ((p_region_t) {
-        kpptr_to_paddr((void *)KERNEL_ELF_BASE), kpptr_to_paddr(ki_boot_end)
-    });
-    region_t boot_mem_reuse_reg = paddr_to_pptr_reg(boot_mem_reuse_p_reg);
     region_t ui_reg = paddr_to_pptr_reg((p_region_t) {
         ui_p_reg_start, ui_p_reg_end
     });
@@ -414,9 +405,8 @@ static BOOT_CODE bool_t try_init_kernel(
     init_core_state(initial);
 
     /* convert the remaining free memory into UT objects and provide the caps */
-    if (!create_untypeds(
-            root_cnode_cap,
-            boot_mem_reuse_reg)) {
+    if (!create_untypeds(root_cnode_cap,
+                         paddr_to_pptr_reg(get_p_reg_kernel_img_boot()))) {
         printf("ERROR: could not create untypteds for kernel image boot memory\n");
         return false;
     }
