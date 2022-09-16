@@ -232,11 +232,11 @@ static inline void updateTimestamp(void)
 {
     ticks_t prev = NODE_STATE(ksCurTime);
     NODE_STATE(ksCurTime) = getCurrentTime();
-    assert(NODE_STATE(ksCurTime) < MAX_RELEASE_TIME);
+    assert(NODE_STATE(ksCurTime) < MAX_RELEASE_TICKS);
     ticks_t consumed = (NODE_STATE(ksCurTime) - prev);
     NODE_STATE(ksConsumed) += consumed;
     if (numDomains > 1) {
-        if ((consumed + MIN_BUDGET) >= ksDomainTime) {
+        if ((consumed + MIN_BUDGET_TICKS) >= ksDomainTime) {
             ksDomainTime = 0;
         } else {
             ksDomainTime -= consumed;

@@ -41,7 +41,7 @@ static inline void ackDeadlineIRQ(void)
 #include <arch/machine/timer.h>
 static inline void resetTimer(void)
 {
-    SYSTEM_WRITE_WORD(CNT_TVAL, TIMER_RELOAD);
+    SYSTEM_WRITE_WORD(CNT_TVAL, TIMER_RELOAD_TICKS);
     /* Ensure that the timer deasserts the IRQ before GIC EOIR/DIR.
      * This is sufficient to remove the pending state from the GICR
      * and avoid the interrupt happening twice because of the level

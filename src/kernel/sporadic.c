@@ -161,7 +161,7 @@ void refill_new(sched_context_t *sc, word_t max_refills, ticks_t budget, ticks_t
     sc->scRefillHead = 0;
     sc->scRefillTail = 0;
     sc->scRefillMax = max_refills;
-    assert(budget >= MIN_BUDGET);
+    assert(budget >= MIN_BUDGET_TICKS);
     /* full budget available */
     refill_head(sc)->rAmount = budget;
     /* budget can be used from now */
@@ -263,7 +263,7 @@ void refill_budget_check(ticks_t usage)
      * that assertion we ensure that we never delate a refill past this
      * point in the future.
      */
-    while (refill_head(sc)->rAmount <= usage && refill_head(sc)->rTime < MAX_RELEASE_TIME) {
+    while (refill_head(sc)->rAmount <= usage && refill_head(sc)->rTime < MAX_RELEASE_TICKS) {
         usage -= refill_head(sc)->rAmount;
 
         if (refill_single(sc)) {
@@ -279,7 +279,7 @@ void refill_budget_check(ticks_t usage)
      * If the head time is still sufficiently far from the point of
      * integer overflow then the usage must be smaller than the head.
      */
-    if (usage > 0 && refill_head(sc)->rTime < MAX_RELEASE_TIME) {
+    if (usage > 0 && refill_head(sc)->rTime < MAX_RELEASE_TICKS) {
         assert(refill_head(sc)->rAmount > usage);
         refill_t used = (refill_t) {
             .rAmount = usage,
@@ -302,7 +302,7 @@ void refill_budget_check(ticks_t usage)
     }
 
     /* Ensure the head refill has the minimum budget */
-    while (refill_head(sc)->rAmount < MIN_BUDGET) {
+    while (refill_head(sc)->rAmount < MIN_BUDGET_TICKS) {
         refill_t head = refill_pop_head(sc);
         refill_head(sc)->rAmount += head.rAmount;
         /* Delay head to ensure the subsequent refill doesn't end any

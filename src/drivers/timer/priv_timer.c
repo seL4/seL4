@@ -19,8 +19,8 @@ timer_t *const priv_timer = (timer_t *) ARM_MP_PRIV_TIMER_PPTR;
 #define TIMER_INTERVAL_MS    (CONFIG_TIMER_TICK_MS)
 #define TIMER_COUNT_BITS 32
 
-#define PRESCALE ((TIMER_RELOAD) >> TIMER_COUNT_BITS)
-#define TMR_LOAD ((TIMER_RELOAD) / (PRESCALE + 1))
+#define PRESCALE ((TIMER_RELOAD_TICKS) >> TIMER_COUNT_BITS)
+#define TMR_LOAD ((TIMER_RELOAD_TICKS) / (PRESCALE + 1))
 
 BOOT_CODE void initTimer(void)
 {

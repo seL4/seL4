@@ -150,13 +150,13 @@ BOOT_CODE void initTimer(void)
     maskInterrupt(/*disable*/ true, KERNEL_TIMER_IRQ);
 
     /* Set the reload value */
-    timer->tldr = 0xFFFFFFFFUL - TIMER_RELOAD;
+    timer->tldr = 0xFFFFFFFFUL - TIMER_RELOAD_TICKS;
 
     /* Enables interrupt on overflow */
     timer->tier = TIER_OVERFLOW_ENABLE;
 
     /* Clear the read register */
-    timer->tcrr = 0xFFFFFFFFUL - TIMER_RELOAD;
+    timer->tcrr = 0xFFFFFFFFUL - TIMER_RELOAD_TICKS;
 
     /* Set autoreload and start the timer */
     timer->tclr = TCLR_AUTORELOAD | TCLR_STARTTIMER;

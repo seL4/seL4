@@ -32,7 +32,7 @@ timer_t *dgt_tmr = (timer_t *) DGT_TIMER_PPTR;
 #define PRESCALER          DGTTMR_CLK_CTRL_DIV1
 #define PRESCALE_VAL       1
 
-#define TIMER_MATCH_VAL  (TIMER_RELOAD / PRESCALE_VAL)
+#define TIMER_MATCH_VAL  (TIMER_RELOAD_TICKS / PRESCALE_VAL)
 
 BOOT_CODE void initTimer(void)
 {

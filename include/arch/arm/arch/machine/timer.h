@@ -59,9 +59,9 @@ static inline CONST ticks_t getTimerPrecision(void)
 #include <plat/machine/hardware.h>
 
 /* but multiply by timer tick ms */
-#define TIMER_RELOAD    (TICKS_PER_MS * CONFIG_TIMER_TICK_MS)
+#define TIMER_RELOAD_TICKS    (TICKS_PER_MS * CONFIG_TIMER_TICK_MS)
 
-#if (TIMER_RELOAD >= UINTPTR_MAX)
+#if (TIMER_RELOAD_TICKS >= UINTPTR_MAX)
 #error "Timer reload too high"
 #endif
 
