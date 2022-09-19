@@ -343,11 +343,10 @@ BOOT_CODE static void release_secondary_cpus(void)
 #endif /* ENABLE_SMP_SUPPORT */
 
 /* Main kernel initialisation function. */
-
 static BOOT_CODE bool_t try_init_kernel(
     paddr_t ui_p_reg_start,
     paddr_t ui_p_reg_end,
-    sword_t pv_offset,
+    word_t  pv_offset,
     vptr_t  v_entry,
     paddr_t dtb_phys_addr,
     word_t  dtb_size
@@ -368,7 +367,27 @@ static BOOT_CODE bool_t try_init_kernel(
     create_frames_of_region_ret_t create_frames_ret;
     create_frames_of_region_ret_t extra_bi_ret;
 
-    /* convert from physical addresses to userland vptrs */
+    /* Convert from physical addresses to userland vptrs with the parameter
+     * pv_offset, which is defined as:
+     *     virt_address + pv_offset = phys_address
+     * The offset is usually a positive value, because the virtual address of
+     * the user image is a low value and the actually physical address is much
+     * greater. However, there is no restrictions on the physical and virtual
+     * image location in general. Defining pv_offset as a signed value might
+     * seem the intuitive choice how to handle this, but there is are two
+     * catches here that break the C rules. We can't cover the full integer
+     * range then, and overflows/underflows are well defined for unsigned values
+     * only. They are undefined for signed values, even if such operations
+     * practically work in many cases due to how compiler and machine implement
+     * negative integers using the two's-complement.
+     * Assume a 32-bit system with virt_address=0xc0000000 and phys_address=0,
+     * then pv_offset would have to be -0xc0000000. This value is not in the
+     * 32-bit signed integer range. Calculating '0 - 0xc0000000' using unsigned
+     * integers, the result is 0x40000000 after an underflow, the reverse
+     * calculation '0xc0000000 + 0x40000000' results in 0 again after overflow.
+     * If 0x40000000 is a signed integer, the result is likely the same, but the
+     * whole operation is completely undefined by C rules.
+     */
     v_region_t ui_v_reg = {
         .start = ui_p_reg_start - pv_offset,
         .end   = ui_p_reg_end   - pv_offset
@@ -623,13 +642,16 @@ static BOOT_CODE bool_t try_init_kernel(
     return true;
 }
 
+/* This is called from assembly code and thus there are no specific types in
+ * the signature.
+ */
 BOOT_CODE VISIBLE void init_kernel(
-    paddr_t ui_phys_start,
-    paddr_t ui_phys_end,
-    sword_t ui_pv_offset,
-    vptr_t  ui_virt_entry,
-    paddr_t dtb_phys_addr,
-    uint32_t dtb_size
+    word_t ui_p_reg_start,
+    word_t ui_p_reg_end,
+    word_t pv_offset,
+    word_t v_entry,
+    word_t dtb_addr_p,
+    word_t dtb_size
 )
 {
     bool_t result;
