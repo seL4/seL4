@@ -102,6 +102,18 @@ def get_phys_mem_regions(tree: FdtParser, hw_yaml: HardwareYaml) \
     # after we have removed the reserved region from the device tree, because we
     # also get 'kernel_phys_base' here. And once we have that, the memory
     # regions can't the modified any longer.
+    # By convention, the first region holds the kernel image. But there is no
+    # strict requirement that it must be in the first region, any region would
+    # do. An exception is thrown if the region is too small to satisfy the
+    # kernel's alignment requirement. Currently there is no solution for this,
+    # so this must be solved by the first platform that runs into this problem.
+    # During the boot process, the kernel will mark its own memory as reserved,
+    # so there is no need to split the region here in a part before the kernel
+    # and a part that has the kernel in the beginning.
+    # Unfortunately, we do not know the kernel size here, so there is no
+    # guarantee the kernel really fits into that region. For now, we leave this
+    # issue to be resolved by the boot flow. Loading the ELF loader will fail
+    # anyway if there is not enough space.
     kernel_phys_align = hw_yaml.config.get_kernel_phys_align()
     if kernel_phys_align != 0:
         # Align the first so that the ELF loader will be able to load the kernel
@@ -146,4 +158,4 @@ def get_phys_mem_regions(tree: FdtParser, hw_yaml: HardwareYaml) \
     # create a properly ordered list from the set or regions
     dev_region_list = sorted(all_regions, key=lambda r: r.base)
 
-    return mem_region_list, dev_region_list, kernel_phys_base
+    return mem_region_list, reserved_region_list, dev_region_list, kernel_phys_base

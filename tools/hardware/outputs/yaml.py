@@ -50,15 +50,15 @@ def run(tree: FdtParser, hw_yaml: HardwareYaml, args: argparse.Namespace):
     if not args.yaml_out:
         raise ValueError('you need to provide a yaml-out to use the yaml output method')
 
-    # Get the physical memory and device regions, we don't care about the kernel
-    # phy_base address here.
-    phys_mem, dev_mem, _ = hardware.utils.memory.get_phys_mem_regions(tree,
-                                                                      hw_yaml)
+    # Get the physical memory and device regions.
+    phys_mem, res_mem, dev_mem, _ = \
+        hardware.utils.memory.get_phys_mem_regions(tree, hw_yaml)
 
     create_yaml_file(
         {
             'devices':  dev_mem,
-            'memory':   phys_mem
+            'memory':   phys_mem,
+            'reserved': res_mem
         },
         args.yaml_out)
 

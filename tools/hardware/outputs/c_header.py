@@ -33,7 +33,7 @@ HEADER_TEMPLATE = '''/*
 
 #pragma once
 
-#define physBase {{ "0x{:x}".format(physBase) }}
+#define physBase {{ "0x{:x}".format(kernel_phy_base) }}
 
 #ifndef __ASSEMBLER__
 
@@ -111,13 +111,34 @@ static const kernel_frame_t BOOT_RODATA *const kernel_device_frames = NULL;
 /* PHYSICAL MEMORY */
 static const p_region_t BOOT_RODATA avail_p_regs[] = {
     {% for reg in physical_memory %}
-    /* {{ reg.owner.path }} */
+    /* from {{ reg.owner.path }} */
     {
         .start = {{ "0x{:x}".format(reg.base) }},
         .end   = {{ "0x{:x}".format(reg.base + reg.size) }}
     },
     {% endfor %}
 };
+
+/* RESERVED REGIONS */
+{% if len(reserved_regions) > 0 %}
+static const p_region_t BOOT_RODATA reserved_p_regs[] = {
+    {% for reg in reserved_regions %}
+    /* from {{ reg.owner.path }} */
+    {
+        .start = {{ "0x{:x}".format(reg.base) }},
+        .end   = {{ "0x{:x}".format(reg.base + reg.size) }}
+    },
+    {% endfor %}
+};
+
+#define NUM_RESERVED_PHYS_MEM_REGIONS ARRAY_SIZE(reserved_p_regs)
+{% else %}
+/* The C parser used for formal verification process follows strict C rules,
+ * which do not allow empty arrays. Thus this is defined as NULL.
+ */
+static const p_region_t BOOT_RODATA *const reserved_p_regs = NULL;
+#define NUM_RESERVED_PHYS_MEM_REGIONS 0
+{% endif %}
 
 #endif /* !__ASSEMBLER__ */
 
@@ -127,8 +148,10 @@ static const p_region_t BOOT_RODATA avail_p_regs[] = {
 def create_c_header_file(hw_yaml: HardwareYaml,
                          kernel_irqs: List[KernelInterrupt],
                          kernel_dev_addr_macros: Dict[str, int],
-                         kernel_regions: List[Region], physBase: int,
-                         physical_memory: List[Region], outputStream):
+                         kernel_regions: List[Region], kernel_phy_base: int,
+                         physical_memory: List[Region],
+                         reserved_regions: List[Region],
+                         outputStream):
     jinja_env = jinja2.Environment(loader=jinja2.BaseLoader, trim_blocks=True,
                                    lstrip_blocks=True)
 
@@ -140,8 +163,9 @@ def create_c_header_file(hw_yaml: HardwareYaml,
             'kernel_irqs': kernel_irqs,
             'kernel_dev_addr_macros': kernel_dev_addr_macros,
             'kernel_regions': kernel_regions,
-            'physBase': physBase,
-            'physical_memory': physical_memory})
+            'kernel_phy_base': kernel_phy_base,
+            'physical_memory': physical_memory,
+            'reserved_regions': reserved_regions})
     data = template.render(template_args)
 
     with outputStream:
@@ -152,12 +176,14 @@ def run(tree: FdtParser, hw_yaml: HardwareYaml, args: argparse.Namespace):
     if not args.header_out:
         raise ValueError('You need to specify a header-out to use c header output')
 
-    # We only care about the available physical memory and the kernel's phys
-    # base. The device memory regions are not relevant here.
-    physical_memory, _, physBase = hardware.utils.memory.get_phys_mem_regions(tree,
-                                                                              hw_yaml)
+    # We only care about the available physical memory. The device memory
+    # regions are not relevant here.
+    physical_memory, reserved_regions, _, kernel_phy_base = \
+        hardware.utils.memory.get_phys_mem_regions(tree, hw_yaml)
 
-    # Collect the interrupts and kernel regions for the devices.
+    # Build a set or irqs and list of KernelRegionGroups, where each element
+    # represents a single contiguous region of memory that is associated with a
+    # device.
     kernel_irq_dict = {}  # dict of 'label:irq_obj'
     kernel_regions = []  # list of Regions.
     for dev in tree.get_kernel_devices():
@@ -197,8 +223,9 @@ def run(tree: FdtParser, hw_yaml: HardwareYaml, args: argparse.Namespace):
         sorted(kernel_irq_dict.values(), key=lambda irq: irq.label),
         sorted(kernel_dev_addr_macros.items(), key=lambda tupel: tupel[1]),
         kernel_regions,
-        physBase,
+        kernel_phy_base,
         physical_memory,
+        reserved_regions,
         args.header_out)
 
 

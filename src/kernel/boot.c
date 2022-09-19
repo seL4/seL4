@@ -798,6 +798,7 @@ BOOT_BSS static region_t avail_reg[MAX_NUM_FREEMEM_REG];
  * A region represents an area of memory.
  */
 BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
+                              word_t n_hard_reserved, const p_region_t *hard_reserved,
                               word_t n_reserved, const region_t *reserved,
                               v_region_t it_v_reg, word_t extra_bi_size_bits)
 {
@@ -809,6 +810,8 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
     if (!check_reserved_memory(n_reserved, reserved)) {
         return false;
     }
+
+    /* ToDo: process hard_reserved */
 
     for (word_t i = 0; i < ARRAY_SIZE(ndks_boot.freemem); i++) {
         ndks_boot.freemem[i] = REG_EMPTY;
