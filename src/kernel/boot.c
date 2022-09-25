@@ -832,6 +832,12 @@ BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap)
 
 BOOT_CODE void bi_finalise(void)
 {
+
+    if (rootserver.paging.start != rootserver.paging.end) {
+        printf("WARNING: internal book keeping errror. Less pagetables allocated than predicted: "
+               "%ld page tables allocated but not used.\n", (rootserver.paging.end - rootserver.paging.start) >> seL4_PageTableBits);
+    }
+
     ndks_boot.bi_frame->empty = (seL4_SlotRegion) {
         .start = ndks_boot.slot_pos_cur,
         .end   = BIT(CONFIG_ROOT_CNODE_SIZE_BITS)
