@@ -395,10 +395,7 @@ static BOOT_CODE bool_t try_init_kernel(
 #endif
 
     /* create the idle thread */
-    if (!create_idle_thread()) {
-        printf("ERROR: could not create idle thread\n");
-        return false;
-    }
+    create_idle_thread();
 
     /* create the initial thread */
     tcb_t *initial = create_initial_thread(

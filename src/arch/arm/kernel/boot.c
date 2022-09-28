@@ -543,10 +543,7 @@ static BOOT_CODE bool_t try_init_kernel(
 #endif
 
     /* create the idle thread */
-    if (!create_idle_thread()) {
-        printf("ERROR: could not create idle thread\n");
-        return false;
-    }
+    create_idle_thread();
 
     /* Before creating the initial thread (which also switches to it)
      * we clean the cache so that any page table information written
