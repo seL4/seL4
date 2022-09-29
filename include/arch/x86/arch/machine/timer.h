@@ -25,6 +25,9 @@ static inline PURE ticks_t usToTicks(time_t us)
     return us * x86KStscMhz;
 }
 
+/* Get the max. time_t value (time in us) that can be expressed in ticks_t. This
+ * is the max. value usToTicks() can be passed without overflowing.
+ */
 static inline PURE time_t getMaxUsToTicks(void)
 {
     return div64(UINT64_MAX, x86KStscMhz);
@@ -44,6 +47,9 @@ static inline ticks_t getCurrentTime(void)
     return x86_rdtsc();
 }
 
+/* Get the max. ticks_t value that can be expressed in time_t (time in us). This
+ * is the max. value ticksToUs() can be passed without overflowing.
+ */
 static inline CONST ticks_t getMaxTicksToUs(void)
 {
     return UINT64_MAX;
