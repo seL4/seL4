@@ -306,14 +306,35 @@ static inline void maskInterrupt(bool_t disable, irq_t irq)
     }
 }
 
+
+static inline void deactivateInterrupt(irq_t irq)
+{
+    word_t hw_irq = IRQT_TO_IRQ(irq);
+    /* Perform deactivation of hw_irq */
+    SYSTEM_WRITE_WORD(ICC_DIR_EL1, hw_irq);
+}
+
 static inline void ackInterrupt(irq_t irq)
 {
     assert(IS_IRQ_VALID(active_irq[CURRENT_CPU_INDEX()])
            && (active_irq[CURRENT_CPU_INDEX()] & IRQ_MASK) == IRQT_TO_IRQ(irq));
+    active_irq[CURRENT_CPU_INDEX()] = IRQ_NONE;
+
+    word_t hw_irq = IRQT_TO_IRQ(irq);
 
     /* Set End of Interrupt for active IRQ: ICC_EOIR1_EL1 */
-    SYSTEM_WRITE_WORD(ICC_EOIR1_EL1, active_irq[CURRENT_CPU_INDEX()]);
-    active_irq[CURRENT_CPU_INDEX()] = IRQ_NONE;
+    /* Perform priority drop for current IRQ */
+    SYSTEM_WRITE_WORD(ICC_EOIR1_EL1, hw_irq);
+
+    // If the IRQ is not going to user level then we need to deactivate it too.
+    if (unlikely(hw_irq > maxIRQ) ||
+        intStateIRQTable[IRQT_TO_IDX(irq)] != IRQSignal) {
+        /* There needs to be an isb() to ensure completion of the system
+         * register write in ackInterrupt
+         */
+        isb();
+        deactivateInterrupt(irq);
+    }
 
 }
 
