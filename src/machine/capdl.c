@@ -122,11 +122,13 @@ static inline ticks_t sc_get_budget(sched_context_t *sc)
 void obj_sc_print_attrs(cap_t sc_cap)
 {
     sched_context_t *sc = SC_PTR(cap_sched_context_cap_get_capSCPtr(sc_cap));
-    printf("(period: %lu, budget: %lu, %lu bits)\n",
-           (long unsigned int)ticksToUs(sc->scPeriod),
-           (long unsigned int)ticksToUs(sc_get_budget(sc)),
-           (word_t)cap_sched_context_cap_get_capSCSizeBits(sc_cap)
-          );
+    ticks_t period = sc->scPeriod;
+    ticks_t budget = sc_get_budget(sc);
+    printf("(period: %"PRIu64" us (%"PRIu64" ticks), budget: %"PRIu64 " us "
+           "(%"PRIu64" ticks), %"SEL4_PRIu_word" bits)\n",
+           ticksToUs(period), period,
+           ticksToUs(budget), budget,
+           (word_t)cap_sched_context_cap_get_capSCSizeBits(sc_cap));
 }
 #endif /* CONFIG_KERNEL_MCS */
 
