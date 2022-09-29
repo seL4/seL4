@@ -149,8 +149,12 @@ void invokeIRQHandler_AckIRQ(irq_t irq)
         return;
     }
 #endif
-    maskInterrupt(false, irq);
-#endif
+    if (config_set(CONFIG_ARM_GIC_V3_SUPPORT)) {
+        deactivateInterrupt(irq);
+    } else {
+        maskInterrupt(false, irq);
+    }
+#endif /* CONFIG_ARCH_RISCV */
 }
 
 void invokeIRQHandler_SetIRQHandler(irq_t irq, cap_t cap, cte_t *slot)
@@ -218,8 +222,11 @@ void handleInterrupt(irq_t irq)
 #endif
         }
 #ifndef CONFIG_ARCH_RISCV
-        maskInterrupt(true, irq);
+        if (!config_set(CONFIG_ARM_GIC_V3_SUPPORT)) {
+            maskInterrupt(true, irq);
+        }
 #endif
+
         break;
     }
 
