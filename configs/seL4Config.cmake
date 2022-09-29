@@ -60,6 +60,8 @@ macro(declare_seL4_arch sel4_arch)
         config_set(KernelWordSize WORD_SIZE 64)
         set(Kernel64 ON CACHE INTERNAL "")
         set(Kernel32 OFF CACHE INTERNAL "")
+    else()
+        message(FATAL_ERROR "unsupported seL4 architecture: '${sel4_arch}'")
     endif()
 
 endmacro()
