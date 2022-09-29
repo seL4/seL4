@@ -8,7 +8,7 @@
 #include <object/structures.h>
 #include <model/statedata.h>
 
-/* Default schedule. */
+/* Default schedule. The length is in ms */
 const dschedule_t ksDomSchedule[] = {
     { .domain = 0, .length = 1 },
 };
