@@ -77,30 +77,6 @@ static inline void writeAuxiliaryControlRegister(word_t acr)
     MSR("actlr_el1", acr);
 }
 
-static inline void writeTPIDR_EL0(word_t reg)
-{
-    MSR("tpidr_el0", reg);
-}
-
-static inline word_t readTPIDR_EL0(void)
-{
-    word_t reg;
-    MRS("tpidr_el0", reg);
-    return reg;
-}
-
-static inline void writeTPIDRRO_EL0(word_t reg)
-{
-    MSR("tpidrro_el0", reg);
-}
-
-static inline word_t readTPIDRRO_EL0(void)
-{
-    word_t reg;
-    MRS("tpidrro_el0", reg);
-    return reg;
-}
-
 static inline void writeTPIDR_EL1(word_t reg)
 {
     MSR("tpidr_el1", reg);
@@ -111,18 +87,6 @@ static inline word_t readTPIDR_EL1(void)
     word_t reg;
     MRS("tpidr_el1", reg);
     return reg;
-}
-
-static void arm_save_thread_id(tcb_t *thread)
-{
-    setRegister(thread, TPIDR_EL0, readTPIDR_EL0());
-    setRegister(thread, TPIDRRO_EL0, readTPIDRRO_EL0());
-}
-
-static void arm_load_thread_id(tcb_t *thread)
-{
-    writeTPIDR_EL0(getRegister(thread, TPIDR_EL0));
-    writeTPIDRRO_EL0(getRegister(thread, TPIDRRO_EL0));
 }
 
 #define TCR_EL2_RES1 (BIT(23) | BIT(31))

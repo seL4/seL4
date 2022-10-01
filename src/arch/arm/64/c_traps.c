@@ -29,6 +29,10 @@ void VISIBLE NORETURN restore_user_context(void)
     asm volatile(
         "mov     sp, %0                     \n"
 
+        /* Restore thread's TPIDR_EL0 and TPIDRRO_EL0 */
+        "ldp     x21, x22, [sp, %[TPIDR_EL0]] \n"
+        "mrs     tpidr_el0, x21               \n"
+        "mrs     tpidrro_el0, x22             \n"
         /* Restore thread's SPSR, LR, and SP */
         "ldp     x21, x22, [sp, %[SP_EL0]] \n"
         "ldr     x23, [sp, %[SPSR_EL1]]    \n"
@@ -60,6 +64,7 @@ void VISIBLE NORETURN restore_user_context(void)
         "eret"
         :
         : "r"(NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers),
+        [TPIDR_EL0]"i"(PT_TPIDR_EL0),
         [SP_EL0] "i"(PT_SP_EL0), [SPSR_EL1] "i"(PT_SPSR_EL1), [LR] "i"(PT_LR)
         : "memory"
     );
