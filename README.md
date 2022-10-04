@@ -4,8 +4,6 @@
      SPDX-License-Identifier: GPL-2.0-only
 -->
 
-# Testing
-
 The seL4 microkernel
 ====================
 
