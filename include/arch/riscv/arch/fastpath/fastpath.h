@@ -98,11 +98,13 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
 {
     NODE_UNLOCK_IF_HELD;
 
+    word_t cur_thread_regs = (word_t)cur_thread->tcbArch.tcbContext.registers;
+
 #ifdef ENABLE_SMP_SUPPORT
     word_t sp;
     asm volatile("csrr %0, sscratch" : "=r"(sp));
     sp -= sizeof(word_t);
-    *((word_t *)sp) = TCB_REF(cur_thread);
+    *((word_t *)sp) = cur_thread_regs;
 #endif
 
     c_exit_hook();
@@ -114,7 +116,7 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
 
     register word_t badge_reg asm("a0") = badge;
     register word_t msgInfo_reg asm("a1") = msgInfo;
-    register word_t cur_thread_reg asm("t0") = TCB_REF(cur_thread);
+    register word_t cur_thread_reg asm("t0") = cur_thread_regs;
 
     asm volatile(
         LOAD_S "  ra, (0*%[REGSIZE])(t0)  \n"
