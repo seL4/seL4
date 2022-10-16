@@ -155,16 +155,19 @@ void handle_SysDebugSendIPI(void)
     if (target > CONFIG_MAX_NUM_NODES) {
         userError("SysDebugSendIPI: Invalid target, halting");
         halt();
+        UNREACHABLE();
     }
     if (irq > 15) {
         userError("SysDebugSendIPI: Invalid IRQ, not a SGI, halting");
         halt();
+        UNREACHABLE();
     }
     ipi_send_target(CORE_IRQ_TO_IRQT(0, irq), BIT(target));
     return;
 #else /* not CONFIG_ARCH_ARM */
     userError("SysDebugSendIPI: not supported on this architecture");
     halt();
+    UNREACHABLE();
 #endif  /* [not] CONFIG_ARCH_ARM */
 }
 #endif /* CONFIG_DEBUG_BUILD */

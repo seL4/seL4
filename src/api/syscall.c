@@ -84,6 +84,7 @@ void handleUnknownSyscall(word_t w)
         tcb_t *UNUSED tptr = NODE_STATE(ksCurThread);
         printf("Debug halt syscall from user thread %p \"%s\"\n", tptr, TCB_PTR_DEBUG_PTR(tptr)->tcbName);
         halt();
+        UNREACHABLE();
     }
     if (w == SysDebugSnapshot) {
         tcb_t *UNUSED tptr = NODE_STATE(ksCurThread);
@@ -112,18 +113,21 @@ void handleUnknownSyscall(word_t w)
         if (cap_type != cap_thread_cap) {
             userError("SysDebugNameThread: cap is not a TCB, halting");
             halt();
+            UNREACHABLE();
         }
         /* Add 1 to the IPC buffer to skip the message info word */
         name = (const char *)(lookupIPCBuffer(true, NODE_STATE(ksCurThread)) + 1);
         if (!name) {
             userError("SysDebugNameThread: Failed to lookup IPC buffer, halting");
             halt();
+            UNREACHABLE();
         }
         /* ensure the name isn't too long */
         len = strnlen(name, seL4_MsgMaxLength * sizeof(word_t));
         if (len == seL4_MsgMaxLength * sizeof(word_t)) {
             userError("SysDebugNameThread: Name too long, halting");
             halt();
+            UNREACHABLE();
         }
         setThreadName(TCB_PTR(cap_thread_cap_get_capTCBPtr(lu_ret.cap)), name);
         return;
