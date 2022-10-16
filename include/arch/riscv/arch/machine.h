@@ -141,12 +141,12 @@ static inline void clearMemory(void *ptr, unsigned int bits)
 
 static inline void write_satp(word_t value)
 {
-    asm volatile("csrw satp, %0" :: "rK"(value));
+    asm volatile("csrw satp, %0" :: "r"(value));
 }
 
 static inline void write_stvec(word_t value)
 {
-    asm volatile("csrw stvec, %0" :: "rK"(value));
+    asm volatile("csrw stvec, %0" :: "r"(value));
 }
 
 static inline word_t read_stval(void)
@@ -199,13 +199,13 @@ static inline word_t read_sie(void)
 static inline void set_sie_mask(word_t mask_high)
 {
     word_t temp;
-    asm volatile("csrrs %0, sie, %1" : "=r"(temp) : "rK"(mask_high));
+    asm volatile("csrrs %0, sie, %1" : "=r"(temp) : "r"(mask_high));
 }
 
 static inline void clear_sie_mask(word_t mask_low)
 {
     word_t temp;
-    asm volatile("csrrc %0, sie, %1" : "=r"(temp) : "rK"(mask_low));
+    asm volatile("csrrc %0, sie, %1" : "=r"(temp) : "r"(mask_low));
 }
 
 #ifdef CONFIG_HAVE_FPU
@@ -218,7 +218,7 @@ static inline uint32_t read_fcsr(void)
 
 static inline void write_fcsr(uint32_t value)
 {
-    asm volatile("csrw fcsr, %0" :: "rK"(value));
+    asm volatile("csrw fcsr, %0" :: "r"(value));
 }
 #endif
 
