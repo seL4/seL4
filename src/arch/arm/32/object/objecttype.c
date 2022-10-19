@@ -80,6 +80,13 @@ deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
         ret.status = EXCEPTION_NONE;
         return ret;
 
+#ifdef CONFIG_HAVE_FPU
+    case cap_fpu_cap:
+        ret.status = EXCEPTION_NONE;
+        ret.cap = cap_null_cap_new();
+        return ret;
+#endif
+
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case cap_vcpu_cap:
         ret.cap = cap;
@@ -239,6 +246,15 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
         break;
 #endif
 
+#ifdef CONFIG_HAVE_FPU
+    case cap_fpu_cap:
+        if (final) {
+            fpu_t *fpu = FPU_PTR(cap_fpu_cap_get_capFpuPtr(cap));
+            unbindMaybeFpu(fpu);
+        }
+        break;
+#endif
+
     default:
         break;
     }
@@ -315,6 +331,15 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
         }
         break;
 #endif
+
+#ifdef CONFIG_HAVE_FPU 
+    case cap_fpu_cap:
+        if (cap_get_capType(cap_b) == cap_fpu_cap) {
+            return cap_fpu_cap_get_capFpuPtr(cap_a) ==
+                   cap_fpu_cap_get_capFpuPtr(cap_b);
+        }
+        break;
+#endif
     }
 
     return false;
@@ -362,6 +387,10 @@ word_t Arch_getObjectSize(word_t t)
         return PTE_SIZE_BITS + PT_INDEX_BITS;
     case seL4_ARM_PageDirectoryObject:
         return PDE_SIZE_BITS + PD_INDEX_BITS;
+#ifdef CONFIG_HAVE_FPU
+    case seL4_ARM_FPUObject:
+        return seL4_FPUBits;
+#endif
 #ifdef CONFIG_TK1_SMMU
     case seL4_ARM_IOPageTableObject:
         return seL4_IOPageTableBits;
@@ -506,6 +535,12 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
 
         return cap_page_directory_cap_new(false, asidInvalid,
                                           (word_t)regionBase);
+#ifdef CONFIG_HAVE_FPU    
+    case seL4_ARM_FPUObject:
+        memzero(regionBase, BIT(seL4_FPUBits));
+        return cap_fpu_cap_new((word_t) regionBase);
+#endif
+
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case seL4_ARM_VCPUObject:
         /** AUXUPD: "(True, ptr_retyp

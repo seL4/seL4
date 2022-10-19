@@ -23,10 +23,14 @@
 #endif
 #define seL4_EndpointBits       4
 #define seL4_IPCBufferSizeBits  10
-#ifdef CONFIG_HAVE_FPU
-#define seL4_TCBBits            11
-#else
 #define seL4_TCBBits            10
+
+#ifdef CONFIG_HAVE_FPU
+#ifdef CONFIG_RISCV_EXT_D
+#define seL4_FPUBits            8
+#elif CONFIG_RISCV_EXT_F
+#define seL4_FPUBits            7
+#endif
 #endif
 
 /* Sv39/Sv48 pages/ptes sizes */

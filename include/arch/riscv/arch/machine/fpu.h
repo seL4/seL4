@@ -59,7 +59,7 @@ static inline word_t read_sstatus_fs(void)
  * to actually enable/disable FPU accesses in
  * user mode.
  */
-static inline void saveFpuState(user_fpu_state_t *dest)
+static inline void saveFpuState(tcb_fpu_t *dest)
 {
     set_fs_clean();
 
@@ -94,17 +94,25 @@ static inline void saveFpuState(user_fpu_state_t *dest)
         FS " f27, 27*" FP_REG_BYTES "(%0)\n\t"
         FS " f28, 28*" FP_REG_BYTES "(%0)\n\t"
         FS " f29, 29*" FP_REG_BYTES "(%0)\n\t"
-        FS " f30, 30*" FP_REG_BYTES "(%0)\n\t"
-        FS " f31, 31*" FP_REG_BYTES "(%0)\n\t"
+#if defined(CONFIG_RISCV_EXT_F) && defined(CONFIG_ARCH_RISCV64)
+        FS " f30, 0*"  FP_REG_BYTES "(%1)\n\t"
+        FS " f31, 1*"  FP_REG_BYTES "(%1)\n\t"
         :
-        : "r"(&dest->regs[0])
+        : "r"(&dest->tcbBoundFpu->regs[0]), "r"(&dest->regs[0])
         : "memory"
+#else
+        FS " f30, 30*" FP_REG_BYTES "(%0)\n\t"
+        FS " f31, 0*"  FP_REG_BYTES "(%1)\n\t"
+        :
+        : "r"(&dest->tcbBoundFpu->regs[0]), "r"(&dest->regs[0])
+        : "memory"
+#endif
     );
 
     dest->fcsr = read_fcsr();
 }
 
-static inline void loadFpuState(user_fpu_state_t *src)
+static inline void loadFpuState(tcb_fpu_t *src)
 {
     set_fs_clean();
 
@@ -139,10 +147,19 @@ static inline void loadFpuState(user_fpu_state_t *src)
         FL " f27, 27*" FP_REG_BYTES "(%0)\n\t"
         FL " f28, 28*" FP_REG_BYTES "(%0)\n\t"
         FL " f29, 29*" FP_REG_BYTES "(%0)\n\t"
-        FL " f30, 30*" FP_REG_BYTES "(%0)\n\t"
-        FL " f31, 31*" FP_REG_BYTES "(%0)\n\t"
+#if defined(CONFIG_RISCV_EXT_F) && defined(CONFIG_ARCH_RISCV64)
+        FL " f30, 0*"  FP_REG_BYTES "(%1)\n\t"
+        FL " f31, 1*"  FP_REG_BYTES "(%1)\n\t"
         :
-        : "r"(&src->regs[0])
+        : "r"(&src->tcbBoundFpu->regs[0]), "r"(&src->regs[0])
+        : "memory"
+#else
+        FL " f30, 30*" FP_REG_BYTES "(%0)\n\t"
+        FL " f31, 0*"  FP_REG_BYTES "(%1)\n\t"
+        :
+        : "r"(&src->tcbBoundFpu->regs[0]), "r"(&src->regs[0])
+        : "memory"
+#endif
     );
 
     write_fcsr(src->fcsr);

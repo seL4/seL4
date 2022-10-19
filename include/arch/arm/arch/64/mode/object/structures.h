@@ -16,8 +16,33 @@
 #include <arch/machine/hardware.h>
 #include <arch/machine/registerset.h>
 
+#ifdef CONFIG_HAVE_FPU
+typedef struct fpu {
+    uint64_t vregs[62];
+    uint32_t fpsr;
+    uint32_t fpcr;
+
+    /* Backlink from fpu to TCB */
+    struct tcb *fpuBoundTCB;
+} fpu_t;
+
+compile_assert(fpu_object_size_correct, sizeof(fpu_t) == BIT(seL4_FPUBits));
+
+typedef struct tcb_fpu {
+    /* Object created from retyping an untyped */
+    fpu_t *tcbBoundFpu;
+
+    /* Last quad-word register in the fpu */
+    uint64_t q31[2];
+} tcb_fpu_t;
+#endif
+
 typedef struct arch_tcb {
     user_context_t tcbContext;
+
+#ifdef CONFIG_HAVE_FPU
+    tcb_fpu_t tcbFpu;
+#endif
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     struct vcpu *tcbVCPU;
 #endif
@@ -97,6 +122,9 @@ typedef pgde_t vspace_root_t;
 
 #define PT_PTR(r)           ((pte_t *)(r))
 #define PT_REF(p)           ((word_t)(p))
+
+#define FPU_PTR(r)          ((fpu_t *)(r))
+#define FPU_REF(p)          ((word_t)(p))
 
 /* Generate a vcpu_t pointer from a vcpu block reference */
 #define VCPU_PTR(r)       ((struct vcpu *)(r))

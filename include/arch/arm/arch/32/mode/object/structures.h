@@ -16,9 +16,39 @@
 #include <arch/machine/hardware.h>
 #include <arch/machine/registerset.h>
 
+#ifdef CONFIG_HAVE_FPU
+typedef struct fpu {
+    uint64_t regs_d0_d14[15];
+    uint64_t regs_d16_d31[16];
+    uint32_t fpexc;
+
+    /* Backlink from fpu to TCB */
+    struct tcb *fpuBoundTCB;
+} fpu_t;
+
+compile_assert(fpu_object_size_correct, sizeof(fpu_t) == BIT(seL4_FPUBits));
+
+typedef struct tcb_fpu {
+    /* Object created from retyping an untyped */
+    fpu_t *tcbBoundFpu;
+
+    /* Last d-register in the fpu. We store d15 instead of d31 because there's
+     * a possibility that only _half_ of the FPU can be used. */
+    uint64_t d15;
+
+    /* Status control register */
+    uint32_t fpscr;
+} tcb_fpu_t;
+#endif /* CONFIG_HAVE_FPU */
+
+
 typedef struct arch_tcb {
     /* saved user-level context of thread (72 bytes) */
-    user_context_t tcbContext;
+user_context_t tcbContext;
+
+#ifdef CONFIG_HAVE_FPU
+    tcb_fpu_t tcbFpu;
+#endif
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     /* Pointer to associated VCPU. NULL if not associated.
      * tcb->tcbVCPU->vcpuTCB == tcb. */
@@ -47,6 +77,9 @@ typedef pde_t vspace_root_t;
 #define PD_INDEX_BITS seL4_PageDirIndexBits
 #define PT_INDEX_BITS seL4_PageTableIndexBits
 #define VCPU_SIZE_BITS seL4_VCPUBits
+
+#define FPU_PTR(r)          ((fpu_t *)(r))
+#define FPU_REF(p)          ((word_t)(p))
 
 /* Generate a vcpu_t pointer from a vcpu block reference */
 #define VCPU_PTR(r)       ((struct vcpu *)(r))

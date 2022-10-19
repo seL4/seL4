@@ -148,6 +148,10 @@ exception_t decodeUnbindNotification(cap_t cap);
 #ifdef CONFIG_KERNEL_MCS
 exception_t decodeSetTimeoutEndpoint(cap_t cap, cte_t *slot);
 #endif
+#ifdef CONFIG_HAVE_FPU
+exception_t decodeBindFpu(cap_t cap);
+exception_t decodeUnbindFpu(cap_t cap);
+#endif
 
 
 #ifdef CONFIG_KERNEL_MCS

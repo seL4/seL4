@@ -23,6 +23,7 @@ typedef enum _object {
 #ifdef CONFIG_TK1_SMMU
     seL4_ARM_IOPageTableObject,
 #endif
+    seL4_ARM_FPUObject,
     seL4_ObjectTypeCount
 } seL4_ArchObjectType;
 

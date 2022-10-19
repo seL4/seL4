@@ -605,6 +605,19 @@
             </error>
         </method>
 
+        <method id="TCBBindFPU" name="BindFPU" manual_name="Bind FPU" manual_label="tcb_bindfpu">
+            <brief>
+                Binds an FPU object to a <obj name="TCB"/>
+            </brief>
+            <param dir="in" name="fpu" type="seL4_CPtr" description="FPU to bind."/>
+        </method>
+
+        <method id="TCBUnbindFPU" name="UnbindFPU" manual_name="Unbind FPU" manual_label="tcb_unbindfpu">
+            <brief>
+                Unbinds an fpu object from a <obj name="TCB"/>
+            </brief>
+        </method>
+
         <method id="TCBSetAffinity" name="SetAffinity" manual_name="Set CPU Affinity" manual_label="tcb_setaffinity">
             <condition>
                 <and>
