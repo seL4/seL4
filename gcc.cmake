@@ -109,6 +109,9 @@ if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
         if(CMAKE_HOST_APPLE)
             # CMAKE_HOST_APPLE is a CMake variable that evaluates to True on a Mac OSX system
             FindPrefixedGCC(CROSS_COMPILER_PREFIX "x86_64-linux-gnu-" "x86_64-unknown-linux-gnu-")
+        elseif("${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
+            # If we're on an aarch64 host, gcc won't support x86. Set an x86 compatible toolchain
+            FindPrefixedGCC(CROSS_COMPILER_PREFIX "x86_64-linux-gnu-" "x86_64-unknown-linux-gnu-")
         endif()
     endif()
 endif()
