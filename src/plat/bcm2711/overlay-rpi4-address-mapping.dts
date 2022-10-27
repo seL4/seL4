@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2021, Hensoldt Cyber GmbH
+ * Copyright 2022, Technology Innovation Institute
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -17,8 +18,12 @@
 	 * addresses in this overlay file.
 	 */
 	soc {
-		gpio@7e200000 {
-			reg = <0xfe200000 0xb4>;
+		timer@7e003000 {
+			reg = <0xfe003000 0x1000>;
+			/* Channels 0 and 2 used by VC, so just expose 1 and
+			 * 3. Otherwise we're spammed with spurious
+			 * interrupts. */
+			interrupts = <0x00 0x41 0x04 0x00 0x43 0x04>;
 		};
 
 		serial@7e201400 {

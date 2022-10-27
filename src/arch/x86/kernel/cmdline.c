@@ -108,7 +108,16 @@ void cmdline_parse(const char *cmdline, cmdline_opt_t *cmdline_opt)
 #if defined(CONFIG_PRINTING) || defined(CONFIG_DEBUG_BUILD)
     /* use BIOS data area to read serial configuration. The BDA is not
      * fully standardized and parts are absolete. See http://wiki.osdev.org/Memory_Map_(x86)#BIOS_Data_Area_.28BDA.29
-     * for an explanation */
+     * for an explanation
+     */
+    /*
+     * gcc-12 gives array bounds warning (treated as errors by the
+     * build system) for any address below 4096.  Turn that off for
+     * accessing the BIOS area.
+     */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+
     const unsigned short *bda_port = (unsigned short *)0x400;
     const unsigned short *bda_equi = (unsigned short *)0x410;
     int const bda_ports_count       = (*bda_equi >> 9) & 0x7;
@@ -149,6 +158,7 @@ void cmdline_parse(const char *cmdline, cmdline_opt_t *cmdline_opt)
         x86KSdebugPort = cmdline_opt->debug_port;
         printf("Boot config: debug_port = 0x%x\n", cmdline_opt->debug_port);
     }
+#pragma GCC diagnostic pop
 #endif
 
     cmdline_opt->disable_iommu = parse_bool(cmdline, cmdline_str_disable_iommu);

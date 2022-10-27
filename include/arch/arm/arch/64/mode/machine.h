@@ -375,4 +375,7 @@ static inline word_t ats2e0r(word_t va)
 void arch_clean_invalidate_caches(void);
 void arch_clean_invalidate_L1_caches(word_t type);
 
-
+static inline paddr_t addressTranslateS1(vptr_t vaddr)
+{
+    return ats1e1r(vaddr);
+}

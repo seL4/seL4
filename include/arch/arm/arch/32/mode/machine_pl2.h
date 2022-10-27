@@ -118,7 +118,7 @@ static inline void invalidateHypTLB(void)
     isb();
 }
 
-static inline paddr_t PURE addressTranslateS1CPR(vptr_t vaddr)
+static inline paddr_t PURE addressTranslateS1(vptr_t vaddr)
 {
     uint32_t ipa0, ipa1;
     asm volatile("mcr  p15, 0, %0, c7, c8, 0" :: "r"(vaddr));
@@ -192,7 +192,7 @@ static inline word_t readHTPIDR(void)
 {
     return 0;
 }
-static inline paddr_t addressTranslateS1CPR(vptr_t vaddr)
+static inline paddr_t addressTranslateS1(vptr_t vaddr)
 {
     return vaddr;
 }
