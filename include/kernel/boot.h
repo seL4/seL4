@@ -18,7 +18,7 @@
 typedef cte_t  slot_t;
 typedef cte_t *slot_ptr_t;
 #define SLOT_PTR(pptr, pos) (((slot_ptr_t)(pptr)) + (pos))
-#define pptr_of_cap (pptr_t)cap_get_capPtr
+#define pptr_of_cap(cap) ((pptr_t)cap_get_capPtr(cap))
 
 /* (node-local) state accessed only during bootstrapping */
 

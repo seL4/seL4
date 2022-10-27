@@ -1,6 +1,7 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright (C) 2021, Hensoldt Cyber GmbH
+ * Copyright 2021, Technology Innovation Institute
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -17,8 +18,65 @@
 		    &{/timer};
 	};
 
+	/*
+	 * See BCM2711 TRM section 1.2 and
+	 * https://github.com/raspberrypi/firmware/issues/1374 for
+	 * reference.
+	 *
+	 * RPi4B runs in "low peripheral" mode by default.
+	 * These values were observed from running
+	 * Raspbian instance from /proc/iomem and /sys/firmware/devicetree/base
+	 *
+	 * By default, the RPi 4B has 76MB reserved for the VideoCore/GPU.
+	 * So, we have following memory ranges available:
+	 *
+	 * VC GPU RAM 76MB -> 0x40000000-0x04C00000 = 0x3b400000
+	 *
+	 * 0x00 0x00000000 0x3b400000  948MB
+	 * 0x00 0x40000000 0xbc000000  3008MB
+	 * 0x01 0x00000000 0x80000000  2048MB
+	 * 0x01 0x80000000 0x80000000  2048MB
+	 *
+	 */
+
+	/delete-node/ memory;
+
 	memory@0 {
-		/* This is configurable in the Pi's config.txt, but we use 128MiB of RAM by default. */
-		reg = <0x00 0x00000000 0x08000000>;
+		device_type = "memory";
+		reg = < 0x00000000 0x00000000 0x3b400000
+			0x00000000 0x40000000 0xbc000000
+			0x00000001 0x00000000 0x80000000
+			0x00000001 0x80000000 0x80000000 >;
+	};
+
+	reserved-memory {
+		#address-cells = <0x02>;
+		#size-cells = <0x01>;
+		ranges;
+
+		/* Keep the first page of physical memory is reserved for the initial
+		 * bootloader (e.g. armstub). It has parked the secondary cores there,
+		 * they spin until they get released. When SMP is enabled, the kernel
+		 * will release them during boot and this memory can be reused.
+		 * However, we still have to ensure the kernel image itself is not
+		 * placed here. In non-SMP configurations, the cores must keep spinning
+		 * forever. Re-using this memory will cause the secondary cores to
+		 * execute whatever content is placed there, which likely makes them
+		 * run amok.
+		 * See also https://leiradel.github.io/2019/01/20/Raspberry-Pi-Stubs.html#armstub8s
+		 */
+		reserved-memory@0{
+			reg = < 0x00000000 0x00000000 0x00001000 >;
+			no-map;
+		};
+
+		/* Enforce that nothing tries to
+		 * use the VideoCore memory area
+		 * by declaring it as reserved memory.
+		 */
+		reserved-memory@3b400000 {
+			reg = < 0x00000000 0x3b400000 0x04c00000 >;
+			no-map;
+		};
 	};
 };

@@ -22,7 +22,7 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 Further information about [seL4 releases](https://docs.sel4.systems/sel4_release/) is available.
 
 ---
-Upcoming release: BINARY COMPATIBLE
+Upcoming release: BREAKING
 
 ## Changes
 
@@ -42,6 +42,8 @@ Upcoming release: BINARY COMPATIBLE
 * Removed obsolete define `HAVE_AUTOCONF`
 * Removed user address space reserved slots restriction on 40bit PA platforms when KernelArmHypervisorSupport is set.
   This change is reflected in the definition of the seL4_UserTop constant that holds the largest user virtual address.
+* aarch32 VM fault messages now deliver original (untranslated) faulting IP in a hypervisor context, matching
+  aarch64 behaviour.
 
 ## Upgrade Notes
 ---

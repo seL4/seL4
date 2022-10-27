@@ -6,7 +6,4 @@
 
 #pragma once
 
-#include <autoconf.h>
-#include <sel4/types.h>
-#include <sel4/arch/syscalls.h>
-
+/* nothing here */
