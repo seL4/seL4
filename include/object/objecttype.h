@@ -36,7 +36,7 @@ exception_t performInvocation_Endpoint(endpoint_t *ep, word_t badge,
                                        bool_t block, bool_t call, bool_t canDonate);
 exception_t performInvocation_Notification(notification_t *ntfn,
                                            word_t badge);
-exception_t performInvocation_Reply(tcb_t *thread, reply_t *reply, bool_t canGrant);
+exception_t performInvocation_Reply(tcb_t *thread, reply_t *reply);
 #else
 exception_t decodeInvocation(word_t invLabel, word_t length,
                              cptr_t capIndex, cte_t *slot, cap_t cap,
