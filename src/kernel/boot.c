@@ -412,13 +412,11 @@ BOOT_CODE cap_t create_it_asid_pool(cap_t root_cnode_cap)
 }
 
 #ifdef CONFIG_KERNEL_MCS
-BOOT_CODE static bool_t configure_sched_context(tcb_t *tcb, sched_context_t *sc_pptr, ticks_t timeslice)
+BOOT_CODE static void configure_sched_context(tcb_t *tcb, sched_context_t *sc_pptr, ticks_t timeslice)
 {
     tcb->tcbSchedContext = sc_pptr;
     refill_new(tcb->tcbSchedContext, MIN_REFILLS, timeslice, 0);
-
     tcb->tcbSchedContext->scTcb = tcb;
-    return true;
 }
 
 BOOT_CODE bool_t init_sched_control(cap_t root_cnode_cap, word_t num_nodes)
@@ -443,7 +441,7 @@ BOOT_CODE bool_t init_sched_control(cap_t root_cnode_cap, word_t num_nodes)
 }
 #endif
 
-BOOT_CODE bool_t create_idle_thread(void)
+BOOT_CODE void create_idle_thread(void)
 {
     pptr_t pptr;
 
@@ -458,19 +456,14 @@ BOOT_CODE bool_t create_idle_thread(void)
 #endif
         SMP_COND_STATEMENT(NODE_STATE_ON_CORE(ksIdleThread, i)->tcbAffinity = i);
 #ifdef CONFIG_KERNEL_MCS
-        bool_t result = configure_sched_context(NODE_STATE_ON_CORE(ksIdleThread, i), SC_PTR(&ksIdleThreadSC[SMP_TERNARY(i, 0)]),
-                                                usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_IN_MS));
+        configure_sched_context(NODE_STATE_ON_CORE(ksIdleThread, i), SC_PTR(&ksIdleThreadSC[SMP_TERNARY(i, 0)]),
+                                usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_IN_MS));
         SMP_COND_STATEMENT(NODE_STATE_ON_CORE(ksIdleThread, i)->tcbSchedContext->scCore = i;)
         NODE_STATE_ON_CORE(ksIdleSC, i) = SC_PTR(&ksIdleThreadSC[SMP_TERNARY(i, 0)]);
-        if (!result) {
-            printf("Kernel init failed: Unable to allocate sc for idle thread\n");
-            return false;
-        }
 #endif
 #ifdef ENABLE_SMP_SUPPORT
     }
 #endif /* ENABLE_SMP_SUPPORT */
-    return true;
 }
 
 BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vptr_t ui_v_entry, vptr_t bi_frame_vptr,
@@ -513,9 +506,7 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
 
     /* initialise TCB */
 #ifdef CONFIG_KERNEL_MCS
-    if (!configure_sched_context(tcb, SC_PTR(rootserver.sc), usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_IN_MS))) {
-        return NULL;
-    }
+    configure_sched_context(tcb, SC_PTR(rootserver.sc), usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_IN_MS));
 #endif
 
     tcb->tcbPriority = seL4_MaxPrio;
