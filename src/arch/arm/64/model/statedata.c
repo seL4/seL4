@@ -110,11 +110,12 @@ hw_asid_t armKSNextASID;
 #endif
 
 #ifdef CONFIG_ARM_SMMU
+
 /*recording the state of created SID caps*/
-bool_t smmuStateSIDTable[SMMU_MAX_SID];
+bool_t smmuStateSIDTable[BIT(SMMU_SID_CNODE_SLOT_BITS)];
 /* CNode containing the cb_cap that is assigned to sids*/
 cte_t smmuStateSIDNode[BIT(SMMU_SID_CNODE_SLOT_BITS)] ALIGN(BIT(SMMU_SID_CNODE_SLOT_BITS + seL4_SlotBits));
-compile_assert(smmuStateSIDCNodeSize, sizeof(smmuStateSIDNode) >= ((SMMU_MAX_SID) * sizeof(cte_t)));
+compile_assert(smmuStateSIDCNodeSize, sizeof(smmuStateSIDNode) >= ((BIT(SMMU_SID_CNODE_SLOT_BITS)) * sizeof(cte_t)));
 
 /*recording the state of the created cb caps*/
 bool_t smmuStateCBTable[SMMU_MAX_CB];
