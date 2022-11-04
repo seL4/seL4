@@ -173,15 +173,9 @@ BOOT_CODE static void release_secondary_cores(void)
      * the seL4 MMU/cache setup. However, the secondary cores are still using
      * the elfloader's MMU/cache setup, and thus the update of node_boot_lock
      * may not be visible there if the setups differ. Currently, the mappings
-     * match, so a write-before-read fence below is all that is needed. It acts
-     * as a barrier to ensure the write really happens and becomes globally
-     * visible to make the secondary harts boot before we start the polling loop
-     * that checks ksNumCPUs to determine when all nodes are up. However, the
-     * RISC-V Unprivileged ISA spec (V20191214-draft, section A.3.6 "Fences")
-     * states that "fence w,r" is one of the uncommon combination and thus not
-     * recommended to be used.
+     * match, so a barrier is all that is needed.
      */
-    fence_w_r();
+    fence_rw_rw();
 
     while (ksNumCPUs != CONFIG_MAX_NUM_NODES) {
 #ifdef ENABLE_SMP_CLOCK_SYNC_TEST_ON_BOOT
