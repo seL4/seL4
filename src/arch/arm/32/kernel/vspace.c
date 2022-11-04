@@ -542,7 +542,7 @@ BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vpt
 
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
 
-BOOT_CODE void activate_global_pd(void)
+BOOT_CODE void activate_kernel_vspace(void)
 {
     /* Ensure that there's nothing stale in newly-mapped regions, and
        that everything we've written (particularly the kernel page tables)
@@ -556,7 +556,7 @@ BOOT_CODE void activate_global_pd(void)
 
 #else
 
-BOOT_CODE void activate_global_pd(void)
+BOOT_CODE void activate_kernel_vspace(void)
 {
     uint32_t r;
     /* Ensure that there's nothing stale in newly-mapped regions, and

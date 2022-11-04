@@ -21,7 +21,7 @@ cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, asid_t 
 
 void map_kernel_window(void);
 void map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights, vm_attributes_t vm_attributes);
-void activate_global_pd(void);
+void activate_kernel_vspace(void);
 void write_it_asid_pool(cap_t it_ap_cap, cap_t it_pd_cap);
 
 /* ==================== BOOT CODE FINISHES HERE ==================== */
