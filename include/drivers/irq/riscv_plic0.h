@@ -69,12 +69,12 @@
 
 
 
-static inline uint32_t readl(uint64_t addr)
+static inline uint32_t readl(word_t addr)
 {
     return *((volatile uint32_t *)(addr));
 }
 
-static inline void writel(uint32_t val, uint64_t addr)
+static inline void writel(uint32_t val, word_t addr)
 {
     *((volatile uint32_t *)(addr)) = val;
 }
@@ -136,7 +136,7 @@ static inline void plic_complete_claim(irq_t irq)
 
 static inline void plic_mask_irq(bool_t disable, irq_t irq)
 {
-    uint64_t addr = 0;
+    word_t addr = 0;
     uint32_t val = 0;
     uint32_t bit = 0;
 
