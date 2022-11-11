@@ -18,7 +18,9 @@
 exception_t handle_SysBenchmarkFlushCaches(void);
 exception_t handle_SysBenchmarkResetLog(void);
 exception_t handle_SysBenchmarkFinalizeLog(void);
+#ifdef CONFIG_KERNEL_LOG_BUFFER
 exception_t handle_SysBenchmarkSetLogBuffer(void);
+#endif /* CONFIG_KERNEL_LOG_BUFFER */
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 exception_t handle_SysBenchmarkGetThreadUtilisation(void);
 exception_t handle_SysBenchmarkResetThreadUtilisation(void);

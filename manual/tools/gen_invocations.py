@@ -123,7 +123,7 @@ def main():
     args = parser.parse_args()
 
     if args.dtd is not None:
-        dtd = etree.DTD(args.dtd)
+        dtd = etree.XMLSchema(etree.parse(args.dtd))
         for f in args.files:
             xml = etree.parse(f)
             if not dtd.validate(xml):

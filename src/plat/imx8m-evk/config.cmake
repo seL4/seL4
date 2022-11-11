@@ -1,5 +1,6 @@
 #
 # Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+# Copyright 2022, Capgemini Engineering
 #
 # SPDX-License-Identifier: GPL-2.0-only
 #
@@ -17,7 +18,9 @@ if(KernelPlatformImx8mq-evk OR KernelPlatformImx8mm-evk)
     else()
         fallback_declare_seL4_arch_default(aarch64)
     endif()
-
+    if(KernelPlatformImx8mq-evk)
+        config_set(KernelPlatImx8mq PLAT_IMX8MQ ON)
+    endif()
     set(KernelArmCortexA53 ON)
     set(KernelArchArmV8a ON)
     set(KernelArmGicV3 ON)

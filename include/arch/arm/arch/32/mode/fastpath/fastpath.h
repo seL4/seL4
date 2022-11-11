@@ -118,12 +118,12 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
 
     c_exit_hook();
 
-#ifdef CONFIG_ARM_CP14_SAVE_AND_RESTORE_NATIVE_THREADS
-    restore_user_debug_context(NODE_STATE(ksCurThread));
+#ifdef ARM_CP14_SAVE_AND_RESTORE_NATIVE_THREADS
+    restore_user_debug_context(cur_thread);
 #endif
 
 #ifdef CONFIG_HAVE_FPU
-    lazyFPURestore(NODE_STATE(ksCurThread));
+    lazyFPURestore(cur_thread);
 #endif /* CONFIG_HAVE_FPU */
 
     register word_t badge_reg asm("r0") = badge;
@@ -144,7 +144,7 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
             "msr elr_hyp, lr    \n"
             /* prepare the user status register */
             "ldr lr, [sp, #8]   \n"
-            "msr spsr_hyp, lr   \n"
+            "msr spsr, lr       \n"
             /* Finally, pop our LR */
             "pop {lr}           \n"
             /* Return to user */

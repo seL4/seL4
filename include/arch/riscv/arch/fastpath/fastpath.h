@@ -108,8 +108,8 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
     c_exit_hook();
 
 #ifdef CONFIG_HAVE_FPU
-    lazyFPURestore(NODE_STATE(ksCurThread));
-    set_tcb_fs_state(NODE_STATE(ksCurThread), isFpuEnable());
+    lazyFPURestore(cur_thread);
+    set_tcb_fs_state(cur_thread, isFpuEnable());
 #endif
 
     register word_t badge_reg asm("a0") = badge;

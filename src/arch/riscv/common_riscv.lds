@@ -33,6 +33,10 @@ SECTIONS
     {
         *(.boot.data)
     }
+    .boot.bss . : AT(ADDR(.boot.bss) - KERNEL_OFFSET)
+    {
+        *(.boot.bss)
+    }
     . = ALIGN(4K);
 
     ki_boot_end = .;
@@ -48,12 +52,13 @@ SECTIONS
 
     /* Start of data section */
     _sdata = .;
-    .sdata : {
+    .small : {
+        /* Small data that should be accessed relative to gp.  ld has trouble
+           with the relaxation if they are not in a single section. */
         __global_pointer$ = . + 0x800;
-        *(.sdata*)
-    }
-    .srodata : {
         *(.srodata*)
+        *(.sdata*)
+        *(.sbss)
     }
 
     .rodata . : AT(ADDR(.rodata) - KERNEL_OFFSET)
@@ -67,11 +72,16 @@ SECTIONS
         *(.data)
     }
 
-    .bss . : AT(ADDR(.bss) - KERNEL_OFFSET)
+    /* The kernel's idle thread section contains no code or data. */
+    ._idle_thread . (NOLOAD): AT(ADDR(._idle_thread) - KERNEL_OFFSET)
+    {
+        *(._idle_thread)
+    }
+
+    .bss . (NOLOAD): AT(ADDR(.bss) - KERNEL_OFFSET)
     {
         *(.bss)
         *(COMMON) /* fallback in case '-fno-common' is not used */
-        *(.sbss)
 
         /* 4k breakpoint stack */
         _breakpoint_stack_bottom = .;

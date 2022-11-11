@@ -96,7 +96,7 @@
             <param dir="in" name="suspend_source" type="seL4_Bool"
                 description="The invocation should also suspend the source thread."/>
             <param dir="in" name="arch_flags" type="seL4_Uint8"
-                description="Architecture dependent flags. These have no mearing on either x86 or ARM."/>
+                description="Architecture dependent flags. These have no meaning on x86, ARM, and RISC-V."/>
             <param dir="in" name="count" type="seL4_Word" description="The number of registers to read."/>
             <param dir="out" name="regs" type="seL4_UserContext"
                 description="The structure to read the registers into."/>
@@ -128,7 +128,7 @@
             <param dir="in" name="resume_target" type="seL4_Bool"
                 description="The invocation should also resume the destination thread."/>
             <param dir="in" name="arch_flags" type="seL4_Uint8"
-                description="Architecture dependent flags. These have no mearing on either x86 or ARM."/>
+                description="Architecture dependent flags. These have no meaning on x86, ARM, and RISC-V."/>
             <param dir="in" name="count" type="seL4_Word"
                 description="The number of registers to be set."/>
             <param dir="in" name="regs" type="seL4_UserContext"
@@ -166,7 +166,7 @@
             <param dir="in" name="transfer_integer" type="seL4_Bool"
                 description="Integer registers should be transferred."/>
             <param dir="in" name="arch_flags" type="seL4_Uint8"
-                description="Architecture dependent flags. These have no mearing on either x86 or ARM."/>
+                description="Architecture dependent flags. These have no meaning on x86, ARM, and RISC-V."/>
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
@@ -179,7 +179,8 @@
             </error>
         </method>
 
-        <method id="TCBConfigure" name="Configure" manual_name="Configure" manual_label="tcb_configure" condition="!defined(CONFIG_KERNEL_MCS)">
+        <method id="TCBConfigure" name="Configure" manual_name="Configure" manual_label="tcb_configure">
+            <condition><not><config var="CONFIG_KERNEL_MCS"/></not></condition>
             <brief>
                 Set the parameters of a TCB
             </brief>
@@ -220,7 +221,8 @@
                 </description>
             </error>
         </method>
-        <method id="TCBConfigure" name="Configure" manual_name="Configure (MCS)" manual_label="tcb_configure_mcs" condition="defined(CONFIG_KERNEL_MCS)">
+        <method id="TCBConfigure" name="Configure" manual_name="Configure (MCS)" manual_label="tcb_configure_mcs">
+            <condition><config var="CONFIG_KERNEL_MCS"/></condition>
             <brief>
                 Set the parameters of a TCB
             </brief>
@@ -320,7 +322,8 @@
             </error>
         </method>
 
-        <method id="TCBSetSchedParams" name="SetSchedParams" manual_name="Set Sched Params" manual_label="tcb_setschedparams" condition="!defined(CONFIG_KERNEL_MCS)">
+        <method id="TCBSetSchedParams" name="SetSchedParams" manual_name="Set Sched Params" manual_label="tcb_setschedparams">
+            <condition><not><config var="CONFIG_KERNEL_MCS"/></not></condition>
             <brief>
                 Change a thread's priority and maximum controlled priority.
             </brief>
@@ -350,7 +353,8 @@
                 </description>
             </error>
         </method>
-        <method id="TCBSetSchedParams" name="SetSchedParams" manual_name="Set Sched Params (MCS)" manual_label="tcb_setschedparams_mcs" condition="defined(CONFIG_KERNEL_MCS)">
+        <method id="TCBSetSchedParams" name="SetSchedParams" manual_name="Set Sched Params (MCS)" manual_label="tcb_setschedparams_mcs">
+            <condition><config var="CONFIG_KERNEL_MCS"/></condition>
             <brief>
                 Change a thread's priority, maximum controlled priority, scheduling context
                 and fault handler.
@@ -390,7 +394,8 @@
             </error>
         </method>
 
-        <method id="TCBSetTimeoutEndpoint" name="SetTimeoutEndpoint" manual_name="Set Timeout Endpoint" manual_label="tcb_settimeoutendpoint" condition="defined(CONFIG_KERNEL_MCS)">
+        <method id="TCBSetTimeoutEndpoint" name="SetTimeoutEndpoint" manual_name="Set Timeout Endpoint" manual_label="tcb_settimeoutendpoint">
+            <condition><config var="CONFIG_KERNEL_MCS"/></condition>
             <brief>
                 Set a thread's timeout endpoint.
             </brief>
@@ -445,7 +450,8 @@
             </error>
         </method>
 
-        <method id="TCBSetSpace" name="SetSpace" manual_name="Set Space" manual_label="tcb_setspace" condition="!defined(CONFIG_KERNEL_MCS)">
+        <method id="TCBSetSpace" name="SetSpace" manual_name="Set Space" manual_label="tcb_setspace">
+            <condition><not><config var="CONFIG_KERNEL_MCS"/></not></condition>
             <brief>
                 Set the fault endpoint, CSpace and VSpace of a thread
             </brief>
@@ -481,7 +487,8 @@
             </error>
         </method>
 
-        <method id="TCBSetSpace" name="SetSpace" manual_name="Set Space" manual_label="tcb_setspace_mcs" condition="defined(CONFIG_KERNEL_MCS)">
+        <method id="TCBSetSpace" name="SetSpace" manual_name="Set Space" manual_label="tcb_setspace_mcs">
+            <condition><config var="CONFIG_KERNEL_MCS"/></condition>
             <brief>
                 Set the fault endpoint, CSpace and VSpace of a thread
             </brief>
@@ -598,7 +605,13 @@
             </error>
         </method>
 
-        <method id="TCBSetAffinity" name="SetAffinity" condition="(!defined CONFIG_KERNEL_MCS) &amp;&amp; CONFIG_MAX_NUM_NODES > 1" manual_name="Set CPU Affinity" manual_label="tcb_setaffinity">
+        <method id="TCBSetAffinity" name="SetAffinity" manual_name="Set CPU Affinity" manual_label="tcb_setaffinity">
+            <condition>
+                <and>
+                    <not><config var="CONFIG_KERNEL_MCS"/></not>
+                    <config var="CONFIG_ENABLE_SMP_SUPPORT"/>
+                </and>
+            </condition>
             <brief>
                 Change a thread's current CPU in multicore machine
             </brief>
@@ -620,7 +633,8 @@
             </error>
         </method>
 
-        <method id="TCBSetBreakpoint" name="SetBreakpoint" condition="defined(CONFIG_HARDWARE_DEBUG_API)" manual_name="Set Breakpoint" manual_label="tcb_setbreakpoint">
+        <method id="TCBSetBreakpoint" name="SetBreakpoint" manual_name="Set Breakpoint" manual_label="tcb_setbreakpoint">
+            <condition><config var="CONFIG_HARDWARE_DEBUG_API"/></condition>
             <brief>
                 Set or modify a thread's breakpoints or watchpoints. Calls to this function
                 overwrite previous configurations for the target breakpoint. Do not use this
@@ -669,7 +683,8 @@
             </error>
         </method>
 
-        <method id="TCBGetBreakpoint" name="GetBreakpoint" condition="defined(CONFIG_HARDWARE_DEBUG_API)" manual_name="Get Breakpoint" manual_label="tcb_getbreakpoint">
+        <method id="TCBGetBreakpoint" name="GetBreakpoint" manual_name="Get Breakpoint" manual_label="tcb_getbreakpoint">
+            <condition><config var="CONFIG_HARDWARE_DEBUG_API"/></condition>
             <brief>
                 Read a breakpoint or watchpoint's current configuration.
             </brief>
@@ -714,7 +729,8 @@
             </error>
         </method>
 
-        <method id="TCBUnsetBreakpoint" name="UnsetBreakpoint" condition="defined(CONFIG_HARDWARE_DEBUG_API)" manual_name="Unset Breakpoint" manual_label="tcb_unsetbreakpoint">
+        <method id="TCBUnsetBreakpoint" name="UnsetBreakpoint" manual_name="Unset Breakpoint" manual_label="tcb_unsetbreakpoint">
+            <condition><config var="CONFIG_HARDWARE_DEBUG_API"/></condition>
             <brief>
                 Disables a hardware breakpoint or watchpoint. The caller should assume that
                 the underlying configuration of the hardware registers has also been cleared.
@@ -745,8 +761,9 @@
             </error>
         </method>
 
-        <method id="TCBConfigureSingleStepping" name="ConfigureSingleStepping" condition="defined(CONFIG_HARDWARE_DEBUG_API)"
+        <method id="TCBConfigureSingleStepping" name="ConfigureSingleStepping"
             manual_name="Configure Single Stepping" manual_label="tcb_configuresinglestepping">
+            <condition><config var="CONFIG_HARDWARE_DEBUG_API"/></condition>
             <brief>
                 Set or modify single stepping options for the target TCB. Subsequent calls to this
                 function overwrite previous configuration. Depending on your processor architecture,
@@ -1141,7 +1158,8 @@
             </error>
         </method>
 
-        <method id="CNodeSaveCaller" name="SaveCaller" manual_name="Save Caller" manual_label="cnode_savecaller" condition="!defined(CONFIG_KERNEL_MCS)">
+        <method id="CNodeSaveCaller" name="SaveCaller" manual_name="Save Caller" manual_label="cnode_savecaller">
+            <condition><not><config var="CONFIG_KERNEL_MCS"/></not></condition>
             <brief>
                 Save the reply capability from the last time the thread was called in the given CSpace so that it can be invoked later
             </brief>
@@ -1318,7 +1336,8 @@
 
     <interface name="seL4_SchedControl">
 
-        <method id="SchedControlConfigureFlags" name="ConfigureFlags" manual_name="ConfigureFlags" manual_label="schedcontrol_configureflags" condition="defined(CONFIG_KERNEL_MCS)">
+        <method id="SchedControlConfigureFlags" name="ConfigureFlags" manual_name="ConfigureFlags" manual_label="schedcontrol_configureflags">
+            <condition><config var="CONFIG_KERNEL_MCS"/></condition>
             <brief>
                 Set the parameters of a scheduling context by invoking the scheduling control capability. If the scheduling context is bound to a currently running thread, the parameters will take effect immediately: that is the current budget will be increased or reduced by the difference between the new and previous budget and the replenishment time will be updated according to any difference in the period. This can result in active threads being post-poned or released depending on the nature of the parameter change and the state of the thread. Additionally, if the scheduling context was previously empty (no budget) but bound to a runnable thread, this can result in a thread running for the first time since it now has access to CPU time. This call will return seL4 Invalid Argument if the parameters are too small (smaller than the kernel WCET for this platform) or too large (will overflow the timer).
             </brief>
@@ -1361,7 +1380,8 @@
     <interface name="seL4_SchedContext">
 
         <method id="SchedContextBind" name="Bind"
-            manual_name="Bind" manual_label="schedcontext_bind" condition="defined(CONFIG_KERNEL_MCS)">
+            manual_name="Bind" manual_label="schedcontext_bind">
+            <condition><config var="CONFIG_KERNEL_MCS"/></condition>
             <brief>
                 Bind an object to a scheduling context. The object can be a notification object or a
                 thread.
@@ -1398,7 +1418,8 @@
         </method>
 
         <method id="SchedContextUnbind" name="Unbind"
-            manual_name="Unbind" manual_label="schedcontext_unbind" condition="defined(CONFIG_KERNEL_MCS)">
+            manual_name="Unbind" manual_label="schedcontext_unbind">
+            <condition><config var="CONFIG_KERNEL_MCS"/></condition>
             <brief>
                 Unbind any objects (threads or notification objects) from a scheduling context. This
                 will render the bound thread passive, see Section 6.1.5.
@@ -1421,7 +1442,8 @@
         </method>
 
         <method id="SchedContextUnbindObject" name="UnbindObject"
-            manual_name="UnbindObject" manual_label="schedcontext_unbindobject" condition="defined(CONFIG_KERNEL_MCS)">
+            manual_name="UnbindObject" manual_label="schedcontext_unbindobject">
+            <condition><config var="CONFIG_KERNEL_MCS"/></condition>
             <brief>
                 Unbind an object from a scheduling context. The object can be either a thread or a
                 notification.
@@ -1452,8 +1474,8 @@
                 </description>
             </error>
         </method>
-        <method id="SchedContextConsumed" name="Consumed" manual_name="Consumed"
-                manual_label="schedcontext_consumed" condition="defined(CONFIG_KERNEL_MCS)">
+        <method id="SchedContextConsumed" name="Consumed" manual_name="Consumed" manual_label="schedcontext_consumed">
+            <condition><config var="CONFIG_KERNEL_MCS"/></condition>
             <brief>
                 Return the amount of time used by this scheduling context since this function was last called or a timeout exception triggered.
             </brief>
@@ -1474,9 +1496,9 @@
                 </description>
             </error>
        </method>
-       <method id="SchedContextYieldTo" name="YieldTo"
-           manual_name="YieldTo" manual_label="schedcontext_yieldto" condition="defined(CONFIG_KERNEL_MCS)">
-           <brief>
+       <method id="SchedContextYieldTo" name="YieldTo" manual_name="YieldTo" manual_label="schedcontext_yieldto">
+          <condition><config var="CONFIG_KERNEL_MCS"/></condition>
+          <brief>
               If a thread is currently runnable and running on this scheduling context and the scheduling context has available budget, place it at the head of the scheduling queue.
               If the caller is at an equal priority to the thread this will result in the thread being scheduled.
               If the caller is at a higher priority the thread will not run until the threads priority is the highest priority in the system.

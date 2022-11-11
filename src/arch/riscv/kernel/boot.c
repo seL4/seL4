@@ -159,6 +159,7 @@ BOOT_CODE static bool_t try_init_kernel_secondary_core(word_t hart_id, word_t co
     init_cpu();
     NODE_LOCK_SYS;
 
+    clock_sync_test();
     ksNumCPUs++;
     init_core_state(SchedulerAction_ResumeCurrentThread);
     ifence_local();
@@ -171,11 +172,14 @@ BOOT_CODE static void release_secondary_cores(void)
     fence_w_r();
 
     while (ksNumCPUs != CONFIG_MAX_NUM_NODES) {
-        __atomic_signal_fence(__ATOMIC_ACQ_REL);
+#ifdef ENABLE_SMP_CLOCK_SYNC_TEST_ON_BOOT
+        NODE_STATE(ksCurTime) = getCurrentTime();
+#endif
+        __atomic_thread_fence(__ATOMIC_ACQ_REL);
     }
 }
+#endif /* ENABLE_SMP_SUPPORT */
 
-#endif
 /* Main kernel initialisation function. */
 
 static BOOT_CODE bool_t try_init_kernel(
@@ -214,7 +218,7 @@ static BOOT_CODE bool_t try_init_kernel(
 
     ipcbuf_vptr = ui_v_reg.end;
     bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
-    extra_bi_frame_vptr = bi_frame_vptr + BIT(PAGE_BITS);
+    extra_bi_frame_vptr = bi_frame_vptr + BIT(BI_FRAME_SIZE_BITS);
 
     map_kernel_window();
 
@@ -229,7 +233,7 @@ static BOOT_CODE bool_t try_init_kernel(
     /* If a DTB was provided, pass the data on as extra bootinfo */
     p_region_t dtb_p_reg = P_REG_EMPTY;
     if (dtb_size > 0) {
-        paddr_t dtb_phys_end = ROUND_UP(dtb_phys_addr + dtb_size, PAGE_BITS);
+        paddr_t dtb_phys_end = dtb_phys_addr + dtb_size;
         if (dtb_phys_end < dtb_phys_addr) {
             /* An integer overflow happened in DTB end address calculation, the
              * location or size passed seems invalid.
@@ -250,9 +254,9 @@ static BOOT_CODE bool_t try_init_kernel(
         }
         /* DTB seems valid and accessible, pass it on in bootinfo. */
         extra_bi_size += sizeof(seL4_BootInfoHeader) + dtb_size;
-        /* Remember the page aligned memory region it uses. */
+        /* Remember the memory region it uses. */
         dtb_p_reg = (p_region_t) {
-            .start = ROUND_DOWN(dtb_phys_addr, PAGE_BITS),
+            .start = dtb_phys_addr,
             .end   = dtb_phys_end
         };
     }
@@ -391,10 +395,7 @@ static BOOT_CODE bool_t try_init_kernel(
 #endif
 
     /* create the idle thread */
-    if (!create_idle_thread()) {
-        printf("ERROR: could not create idle thread\n");
-        return false;
-    }
+    create_idle_thread();
 
     /* create the initial thread */
     tcb_t *initial = create_initial_thread(

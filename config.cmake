@@ -48,10 +48,9 @@ set_property(
 
 # These options are now set in seL4Config.cmake
 if(DEFINED CALLED_declare_default_headers)
-    # calculate the irq cnode size based on MAX_IRQ
+    # calculate the irq cnode size based on MAX_NUM_IRQ
     if("${KernelArch}" STREQUAL "riscv")
-        set(MAX_IRQ "${CONFIGURE_PLIC_MAX_NUM_INT}")
-        math(EXPR MAX_NUM_IRQ "${MAX_IRQ} + 2")
+        math(EXPR MAX_NUM_IRQ "${CONFIGURE_PLIC_MAX_NUM_INT} + 2")
     else()
         if(
             DEFINED KernelMaxNumNodes
@@ -71,13 +70,12 @@ if(DEFINED CALLED_declare_default_headers)
         math(EXPR BITS "${BITS} + 1")
         math(EXPR MAX_NUM_IRQ "${MAX_NUM_IRQ} >> 1")
     endwhile()
-    math(EXPR SLOTS "1 << ${BITS}")
-    if("${SLOTS}" LESS "${MAX_IRQ}")
-        math(EXPR BITS "${BITS} + 1")
-    endif()
     set(CONFIGURE_IRQ_SLOT_BITS "${BITS}" CACHE INTERNAL "")
     if(NOT DEFINED CONFIGURE_TIMER_PRECISION)
         set(CONFIGURE_TIMER_PRECISION "0")
+    endif()
+    if(NOT DEFINED CONFIGURE_TIMER_OVERHEAD_TICKS)
+        set(CONFIGURE_TIMER_OVERHEAD_TICKS "0")
     endif()
     configure_file(
         src/arch/${KernelArch}/platform_gen.h.in
@@ -93,6 +91,18 @@ set(KernelSetTLSBaseSelf OFF)
 include(src/arch/${KernelArch}/config.cmake)
 include(include/${KernelWordSize}/mode/config.cmake)
 include(src/config.cmake)
+
+set(KernelCustomDTS "" CACHE FILEPATH "Provide a device tree file to use instead of the \
+KernelPlatform's defaults")
+
+if(NOT "${KernelCustomDTS}" STREQUAL "")
+    if(NOT EXISTS ${KernelCustomDTS})
+        message(FATAL_ERROR "Can't open external dts file '${KernelCustomDTS}'!")
+    endif()
+    # Override list to hold only custom dts
+    set(KernelDTSList "${KernelCustomDTS}")
+    message(STATUS "Using custom ${KernelCustomDTS} device tree, ignoring default dts and overlays")
+endif()
 
 if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
     set(KernelDTSIntermediate "${CMAKE_CURRENT_BINARY_DIR}/kernel.dts")
@@ -152,10 +162,17 @@ if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
         if(error)
             message(FATAL_ERROR "Failed to compile DTS to DTB: ${KernelDTBPath}")
         endif()
+        # The macOS and GNU coreutils `stat` utilities have different interfaces.
+        # Check if we're using the macOS version, otherwise assume GNU coreutils.
+        # CMAKE_HOST_APPLE is a built-in CMake variable.
+        if(CMAKE_HOST_APPLE AND "${STAT_TOOL}" STREQUAL "/usr/bin/stat")
+            set(STAT_ARGS "-f%z")
+        else()
+            set(STAT_ARGS "-c '%s'")
+        endif()
         # Track the size of the DTB for downstream tools
         execute_process(
-            COMMAND
-                ${STAT_TOOL} -c '%s' ${KernelDTBPath}
+            COMMAND ${STAT_TOOL} ${STAT_ARGS} ${KernelDTBPath}
             OUTPUT_VARIABLE KernelDTBSize
             OUTPUT_STRIP_TRAILING_WHITESPACE
             RESULT_VARIABLE error
@@ -331,6 +348,15 @@ config_option(
 )
 
 config_option(
+    KernelBinaryVerificationBuild BINARY_VERIFICATION_BUILD
+    "When enabled, this configuration option restricts the use of other options that would \
+     interfere with binary verification. For example, it will disable some inter-procedural \
+     optimisations. Enabling this options does NOT imply that you are using a verified kernel."
+    DEFAULT OFF
+    DEPENDS "KernelVerificationBuild"
+)
+
+config_option(
     KernelDebugBuild DEBUG_BUILD "Enable debug facilities (symbols and assertions) in the kernel"
     DEFAULT ON
     DEPENDS "NOT KernelVerificationBuild"
@@ -443,10 +469,25 @@ config_choice(
 )
 
 config_option(
+    KernelOptimisationCloneFunctions KERNEL_OPTIMISATION_CLONE_FUNCTIONS
+    "If enabled, allow inter-procedural optimisations that can generate cloned or partial \
+     functions, according to the coarse optimisation setting (KernelOptimisation). \
+     By default, these optimisations are present at -O2 and higher. \
+     If disabled, prevent those optimisations, regardless of the coarse optimisation setting. \
+     The main use of this option is to disable cloned and partial functions when performing \
+     binary verification at -O2. \
+     This currently only affects GCC builds."
+    DEFAULT ON
+    DEPENDS "NOT KernelBinaryVerificationBuild"
+    DEFAULT_DISABLED OFF
+)
+
+config_option(
     KernelFWholeProgram KERNEL_FWHOLE_PROGRAM
     "Enable -fwhole-program when linking kernel. This should work modulo gcc bugs, which \
     are not uncommon with -fwhole-program. Consider this feature experimental!"
     DEFAULT OFF
+    DEPENDS "NOT KernelBinaryVerificationBuild"
 )
 
 config_option(

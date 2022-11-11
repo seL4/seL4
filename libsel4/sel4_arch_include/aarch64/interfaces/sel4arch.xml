@@ -209,13 +209,21 @@
     </interface>
     <interface name="seL4_ARM_PageUpperDirectory" manual_name="Page Upper Directory"
         cap_description="Capability to the upper page directory being operated on.">
-        <method id="ARMPageUpperDirectoryMap" name="Map" condition="!(defined CONFIG_ARM_HYPERVISOR_SUPPORT &amp;&amp; defined CONFIG_ARM_PA_SIZE_BITS_40)">
-                <brief>
-                    Map an upper page directory
-                </brief>
-                <description>
-                    Map an upper page directory (level 1) to a top level translation table (level 0).
-                </description>
+        <method id="ARMPageUpperDirectoryMap" name="Map">
+            <condition>
+                <not>
+                    <and>
+                        <config var="CONFIG_ARM_HYPERVISOR_SUPPORT"/>
+                        <config var="CONFIG_ARM_PA_SIZE_BITS_40"/>
+                    </and>
+                </not>
+            </condition>
+            <brief>
+                Map an upper page directory
+            </brief>
+            <description>
+                Map an upper page directory (level 1) to a top level translation table (level 0).
+            </description>
             <param dir="in" name="vspace" type="seL4_CPtr"
             description="Top level translation table. Must be assigned to an ASID pool."/>
             <param dir="in" name="vaddr" type="seL4_Word"
@@ -253,8 +261,15 @@
                 </description>
             </error>
         </method>
-        <method id="ARMPageUpperDirectoryUnmap" name="Unmap"
-            condition="!(defined CONFIG_ARM_HYPERVISOR_SUPPORT &amp;&amp; defined CONFIG_ARM_PA_SIZE_BITS_40)">
+        <method id="ARMPageUpperDirectoryUnmap" name="Unmap">
+            <condition>
+                <not>
+                    <and>
+                        <config var="CONFIG_ARM_HYPERVISOR_SUPPORT"/>
+                        <config var="CONFIG_ARM_PA_SIZE_BITS_40"/>
+                    </and>
+                </not>
+            </condition>
             <description>
                 TODO
             </description>

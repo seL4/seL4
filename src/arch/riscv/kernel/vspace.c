@@ -34,7 +34,7 @@ struct resolve_ret {
 };
 typedef struct resolve_ret resolve_ret_t;
 
-static exception_t performPageGetAddress(void *vbase_ptr);
+static exception_t performPageGetAddress(void *vbase_ptr, bool_t call);
 
 static word_t CONST RISCVGetWriteFromVMRights(vm_rights_t vm_rights)
 {
@@ -70,10 +70,10 @@ static pte_t pte_next(word_t phys_addr, bool_t is_leaf)
 
     return pte_new(ppn,
                    0,     /* sw */
-                   1,     /* dirty */
-                   1,     /* accessed */
+                   is_leaf ? 1 : 0,     /* dirty (leaf)/reserved (non-leaf) */
+                   is_leaf ? 1 : 0,     /* accessed (leaf)/reserved (non-leaf) */
                    1,     /* global */
-                   0,     /* user */
+                   is_leaf ? 0 : 0,     /* user (leaf)/reserved (non-leaf) */
                    exec,  /* execute */
                    write, /* write */
                    read,  /* read */
@@ -180,10 +180,10 @@ BOOT_CODE void map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
     *targetSlot = pte_new(
                       (addrFromPPtr(pt) >> seL4_PageBits),
                       0, /* sw */
-                      1, /* dirty */
-                      1, /* accessed */
+                      0, /* dirty (reserved non-leaf) */
+                      0, /* accessed (reserved non-leaf) */
                       0,  /* global */
-                      0,  /* user */
+                      0,  /* user (reserved non-leaf) */
                       0,  /* execute */
                       0,  /* write */
                       0,  /* read */
@@ -207,10 +207,10 @@ BOOT_CODE void map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap)
     *targetSlot = pte_new(
                       (pptr_to_paddr(frame_pptr) >> seL4_PageBits),
                       0, /* sw */
-                      1, /* dirty */
-                      1, /* accessed */
+                      1, /* dirty (leaf) */
+                      1, /* accessed (leaf) */
                       0,  /* global */
-                      1,  /* user */
+                      1,  /* user (leaf) */
                       1,  /* execute */
                       1,  /* write */
                       1,  /* read */
@@ -531,10 +531,10 @@ void unmapPageTable(asid_t asid, vptr_t vptr, pte_t *target_pt)
     *ptSlot = pte_new(
                   0,  /* phy_address */
                   0,  /* sw */
-                  0,  /* dirty */
-                  0,  /* accessed */
+                  0,  /* dirty (reserved non-leaf) */
+                  0,  /* accessed (reserved non-leaf) */
                   0,  /* global */
-                  0,  /* user */
+                  0,  /* user (reserved non-leaf) */
                   0,  /* execute */
                   0,  /* write */
                   0,  /* read */
@@ -656,10 +656,10 @@ static pte_t CONST makeUserPTE(paddr_t paddr, bool_t executable, vm_rights_t vm_
         return pte_new(
                    paddr >> seL4_PageBits,
                    0, /* sw */
-                   1, /* dirty */
-                   1, /* accessed */
+                   1, /* dirty (leaf) */
+                   1, /* accessed (leaf) */
                    0, /* global */
-                   1, /* user */
+                   1, /* user (leaf) */
                    executable, /* execute */
                    RISCVGetWriteFromVMRights(vm_rights), /* write */
                    RISCVGetReadFromVMRights(vm_rights), /* read */
@@ -773,10 +773,10 @@ static exception_t decodeRISCVPageTableInvocation(word_t label, word_t length,
                         PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap)));
     pte_t pte = pte_new((paddr >> seL4_PageBits),
                         0, /* sw */
-                        1, /* dirty */
-                        1, /* accessed */
+                        0, /* dirty (reserved non-leaf) */
+                        0, /* accessed (reserved non-leaf) */
                         0,  /* global */
-                        0,  /* user */
+                        0,  /* user (reserved non-leaf) */
                         0,  /* execute */
                         0,  /* write */
                         0,  /* read */
@@ -792,7 +792,7 @@ static exception_t decodeRISCVPageTableInvocation(word_t label, word_t length,
 }
 
 static exception_t decodeRISCVFrameInvocation(word_t label, word_t length,
-                                              cte_t *cte, cap_t cap, word_t *buffer)
+                                              cte_t *cte, cap_t cap, bool_t call, word_t *buffer)
 {
     switch (label) {
     case RISCVPageMap: {
@@ -911,7 +911,7 @@ static exception_t decodeRISCVFrameInvocation(word_t label, word_t length,
         assert(n_msgRegisters >= 1);
 
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        return performPageGetAddress((void *)cap_frame_cap_get_capFBasePtr(cap));
+        return performPageGetAddress((void *)cap_frame_cap_get_capFBasePtr(cap), call);
     }
 
     default:
@@ -924,7 +924,7 @@ static exception_t decodeRISCVFrameInvocation(word_t label, word_t length,
 }
 
 exception_t decodeRISCVMMUInvocation(word_t label, word_t length, cptr_t cptr,
-                                     cte_t *cte, cap_t cap, word_t *buffer)
+                                     cte_t *cte, cap_t cap, bool_t call, word_t *buffer)
 {
     switch (cap_get_capType(cap)) {
 
@@ -932,7 +932,7 @@ exception_t decodeRISCVMMUInvocation(word_t label, word_t length, cptr_t cptr,
         return decodeRISCVPageTableInvocation(label, length, cte, cap, buffer);
 
     case cap_frame_cap:
-        return decodeRISCVFrameInvocation(label, length, cte, cap, buffer);
+        return decodeRISCVFrameInvocation(label, length, cte, cap, call, buffer);
 
     case cap_asid_control_cap: {
         word_t     i;
@@ -1099,18 +1099,22 @@ exception_t performPageTableInvocationUnmap(cap_t cap, cte_t *ctSlot)
     return EXCEPTION_NONE;
 }
 
-static exception_t performPageGetAddress(void *vbase_ptr)
+static exception_t performPageGetAddress(void *vbase_ptr, bool_t call)
 {
-    paddr_t capFBasePtr;
-
     /* Get the physical address of this frame. */
+    paddr_t capFBasePtr;
     capFBasePtr = addrFromPPtr(vbase_ptr);
 
-    /* return it in the first message register */
-    setRegister(NODE_STATE(ksCurThread), msgRegisters[0], capFBasePtr);
-    setRegister(NODE_STATE(ksCurThread), msgInfoRegister,
-                wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, 1)));
-
+    tcb_t *thread;
+    thread = NODE_STATE(ksCurThread);
+    if (call) {
+        word_t *ipcBuffer = lookupIPCBuffer(true, thread);
+        setRegister(thread, badgeRegister, 0);
+        unsigned int length = setMR(thread, ipcBuffer, 0, capFBasePtr);
+        setRegister(thread, msgInfoRegister, wordFromMessageInfo(
+                        seL4_MessageInfo_new(0, 0, 0, length)));
+    }
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
     return EXCEPTION_NONE;
 }
 

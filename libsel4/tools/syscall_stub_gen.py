@@ -43,6 +43,7 @@ import xml.dom.minidom
 from argparse import ArgumentParser
 import sys
 from functools import reduce
+from condition import condition_to_cpp
 
 # Number of bits in a standard word
 WORD_SIZE_BITS_ARCH = {
@@ -847,7 +848,7 @@ def parse_xml_file(input_file, valid_types):
         for method in interface.getElementsByTagName("method"):
             method_name = method.getAttribute("name")
             method_id = method.getAttribute("id")
-            method_condition = method.getAttribute("condition")
+            method_condition = condition_to_cpp(method.getElementsByTagName("condition"))
             method_manual_name = method.getAttribute("manual_name") or method_name
             method_manual_label = method.getAttribute("manual_label")
 
@@ -980,8 +981,7 @@ def generate_stub_file(arch, wordsize, input_files, output_file, use_only_ipc_bu
  * Automatically generated system call stubs.
  */
 
-#ifndef __LIBSEL4_SEL4_CLIENT_H
-#define __LIBSEL4_SEL4_CLIENT_H
+#pragma once
 """)
 
     # Emit the includes
@@ -1034,10 +1034,6 @@ def generate_stub_file(arch, wordsize, input_files, output_file, use_only_ipc_bu
                                     method_id, inputs, outputs, structs, use_only_ipc_buffer, comment, mcs))
         if condition != "":
             result.append("#endif")
-
-    # Print footer.
-    result.append("#endif /* __LIBSEL4_SEL4_CLIENT_H */")
-    result.append("")
 
     # Write the output
     output = open(output_file, "w")

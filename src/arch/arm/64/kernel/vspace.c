@@ -35,6 +35,7 @@
  *  - GRE Unused Device Gathering, Reordering, Early write acknowledgement
  *  - NORMAL_NC Normal Memory, Inner/Outer non-cacheable
  *  - NORMAL Normal Memory, Inner/Outer Write-back non-transient, Write-allocate, Read-allocate
+ *  - NORMAL_WT Normal Memory, Inner/Outer Write-through non-transient, No-Write-allocate, Read-allocate
  * Note: These should match with contents of MAIR_EL1 register!
  */
 enum mair_types {
@@ -42,7 +43,8 @@ enum mair_types {
     DEVICE_nGnRE = 1,
     DEVICE_GRE = 2,
     NORMAL_NC = 3,
-    NORMAL = 4
+    NORMAL = 4,
+    NORMAL_WT = 5
 };
 
 /* Stage-2 translation memory attributes */
@@ -551,24 +553,43 @@ BOOT_CODE void activate_kernel_vspace(void)
 BOOT_CODE void write_it_asid_pool(cap_t it_ap_cap, cap_t it_vspace_cap)
 {
     asid_pool_t *ap = ASID_POOL_PTR(pptr_of_cap(it_ap_cap));
-    ap->array[IT_ASID] = (void *)(pptr_of_cap(it_vspace_cap));
-    armKSASIDTable[IT_ASID >> asidLowBits] = ap;
+    asid_map_t asid_map = asid_map_asid_map_vspace_new(
 #ifdef CONFIG_ARM_SMMU
-    vspace_root_t *vtable = ap->array[IT_ASID];
-    vtable[VTABLE_SMMU_SLOT] = vtable_invalid_smmu_new(0);
+                              /* bind_cb: Number of bound context banks */
+                              0,
 #endif
+                              /* vspace_root: reference to vspace root page table object */
+                              (word_t)cap_vtable_root_get_basePtr(it_vspace_cap)
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+                              /* stored_hw_vmid, stored_vmid_valid: Assigned hardware VMID for TLB. */
+                              , 0, false
+#endif
+                          );
+    ap->array[IT_ASID] = asid_map;
+    armKSASIDTable[IT_ASID >> asidLowBits] = ap;
 }
 
 /* ==================== BOOT CODE FINISHES HERE ==================== */
 
-static findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
+asid_map_t findMapForASID(asid_t asid)
 {
-    findVSpaceForASID_ret_t ret;
     asid_pool_t *poolPtr;
-    vspace_root_t *vspace_root;
 
     poolPtr = armKSASIDTable[asid >> asidLowBits];
     if (!poolPtr) {
+        return asid_map_asid_map_none_new();
+    }
+
+    return poolPtr->array[asid & MASK(asidLowBits)];
+}
+
+static findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
+{
+    findVSpaceForASID_ret_t ret;
+    asid_map_t asid_map;
+
+    asid_map = findMapForASID(asid);
+    if (asid_map_get_type(asid_map) != asid_map_asid_map_vspace) {
         current_lookup_fault = lookup_fault_invalid_root_new();
 
         ret.vspace_root = NULL;
@@ -576,16 +597,7 @@ static findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
         return ret;
     }
 
-    vspace_root = poolPtr->array[asid & MASK(asidLowBits)];
-    if (!vspace_root) {
-        current_lookup_fault = lookup_fault_invalid_root_new();
-
-        ret.vspace_root = NULL;
-        ret.status = EXCEPTION_LOOKUP_FAULT;
-        return ret;
-    }
-
-    ret.vspace_root = vspace_root;
+    ret.vspace_root = (vspace_root_t *)asid_map_asid_map_vspace_get_vspace_root(asid_map);
     ret.status = EXCEPTION_NONE;
     return ret;
 }
@@ -943,7 +955,7 @@ exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
         /* use the IPA */
         if (ARCH_NODE_STATE(armHSVCPUActive)) {
-            addr = GET_PAR_ADDR(ats1e1r(addr)) | (addr & MASK(PAGE_BITS));
+            addr = GET_PAR_ADDR(addressTranslateS1(addr)) | (addr & MASK(PAGE_BITS));
         }
 #endif
         current_fault = seL4_Fault_VMFault_new(addr, fault, false);
@@ -958,7 +970,7 @@ exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
         if (ARCH_NODE_STATE(armHSVCPUActive)) {
-            pc = GET_PAR_ADDR(ats1e1r(pc)) | (pc & MASK(PAGE_BITS));
+            pc = GET_PAR_ADDR(addressTranslateS1(pc)) | (pc & MASK(PAGE_BITS));
         }
 #endif
         current_fault = seL4_Fault_VMFault_new(pc, fault, true);
@@ -1071,45 +1083,36 @@ pude_t *pageDirectoryMapped(asid_t asid, vptr_t vaddr, pde_t *pd)
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 
-static void invalidateASID(asid_t asid)
+static asid_map_t *getMapRefForASID(asid_t asid)
 {
-    asid_pool_t *asidPool;
+    asid_pool_t *poolPtr;
 
-    asidPool = armKSASIDTable[asid >> asidLowBits];
-    assert(asidPool);
+    poolPtr = armKSASIDTable[asid >> asidLowBits];
+    assert(poolPtr != NULL);
 
-    vspace_root_t *vtable = asidPool->array[asid & MASK(asidLowBits)];
-    assert(vtable);
-
-    vtable[VTABLE_VMID_SLOT] = vtable_invalid_new(0, false);
+    return &poolPtr->array[asid & MASK(asidLowBits)];
 }
 
-static vspace_root_t PURE loadHWASID(asid_t asid)
+static void invalidateASID(asid_t asid)
 {
-    asid_pool_t *asidPool;
+    asid_map_t *asid_map;
 
-    asidPool = armKSASIDTable[asid >> asidLowBits];
-    assert(asidPool);
+    asid_map = getMapRefForASID(asid);
+    assert(asid_map_get_type(*asid_map) == asid_map_asid_map_vspace);
 
-    vspace_root_t *vtable = asidPool->array[asid & MASK(asidLowBits)];
-    assert(vtable);
-
-    return vtable[VTABLE_VMID_SLOT];
+    asid_map_asid_map_vspace_ptr_set_stored_hw_vmid(asid_map, 0);
+    asid_map_asid_map_vspace_ptr_set_stored_vmid_valid(asid_map, false);
 }
 
 static void storeHWASID(asid_t asid, hw_asid_t hw_asid)
 {
-    asid_pool_t *asidPool;
+    asid_map_t *asid_map;
 
-    asidPool = armKSASIDTable[asid >> asidLowBits];
-    assert(asidPool);
+    asid_map = getMapRefForASID(asid);
+    assert(asid_map_get_type(*asid_map) == asid_map_asid_map_vspace);
 
-    vspace_root_t *vtable = asidPool->array[asid & MASK(asidLowBits)];
-    assert(vtable);
-
-    /* Store HW VMID in the last entry
-       Masquerade as an invalid PDGE */
-    vtable[VTABLE_VMID_SLOT] = vtable_invalid_new(hw_asid, true);
+    asid_map_asid_map_vspace_ptr_set_stored_hw_vmid(asid_map, hw_asid);
+    asid_map_asid_map_vspace_ptr_set_stored_vmid_valid(asid_map, true);
 
     armKSHWASIDTable[hw_asid] = asid;
 }
@@ -1146,11 +1149,11 @@ static hw_asid_t findFreeHWASID(void)
 
 hw_asid_t getHWASID(asid_t asid)
 {
-    vspace_root_t stored_hw_asid;
+    asid_map_t asid_map;
 
-    stored_hw_asid = loadHWASID(asid);
-    if (vtable_invalid_get_stored_asid_valid(stored_hw_asid)) {
-        return vtable_invalid_get_stored_hw_asid(stored_hw_asid);
+    asid_map = findMapForASID(asid);
+    if (asid_map_asid_map_vspace_get_stored_vmid_valid(asid_map)) {
+        return asid_map_asid_map_vspace_get_stored_hw_vmid(asid_map);
     } else {
         hw_asid_t new_hw_asid;
 
@@ -1162,11 +1165,11 @@ hw_asid_t getHWASID(asid_t asid)
 
 static void invalidateASIDEntry(asid_t asid)
 {
-    vspace_root_t stored_hw_asid;
+    asid_map_t asid_map;
 
-    stored_hw_asid = loadHWASID(asid);
-    if (vtable_invalid_get_stored_asid_valid(stored_hw_asid)) {
-        armKSHWASIDTable[vtable_invalid_get_stored_hw_asid(stored_hw_asid)] =
+    asid_map = findMapForASID(asid);
+    if (asid_map_asid_map_vspace_get_stored_vmid_valid(asid_map)) {
+        armKSHWASIDTable[asid_map_asid_map_vspace_get_stored_hw_vmid(asid_map)] =
             asidInvalid;
     }
     invalidateASID(asid);
@@ -1175,66 +1178,62 @@ static void invalidateASIDEntry(asid_t asid)
 #endif
 
 #ifdef CONFIG_ARM_SMMU
-static vspace_root_t getASIDBindCB(asid_t asid)
+static word_t getASIDBindCB(asid_t asid)
 {
     asid_pool_t *asidPool;
 
     asidPool = armKSASIDTable[asid >> asidLowBits];
     assert(asidPool);
 
-    vspace_root_t *vtable = asidPool->array[asid & MASK(asidLowBits)];
-    assert(vtable);
+    asid_map_t asid_map = asidPool->array[asid & MASK(asidLowBits)];
+    assert(asid_map_get_type(asid_map) == asid_map_asid_map_vspace);
 
-    return vtable[VTABLE_SMMU_SLOT];
+    return asid_map_asid_map_vspace_get_bind_cb(asid_map);
 }
 
 void increaseASIDBindCB(asid_t asid)
 {
     asid_pool_t *asidPool;
-    vspace_root_t stored_info;
 
     asidPool = armKSASIDTable[asid >> asidLowBits];
     assert(asidPool);
 
-    vspace_root_t *vtable = asidPool->array[asid & MASK(asidLowBits)];
-    assert(vtable);
+    asid_map_t *asid_map = &asidPool->array[asid & MASK(asidLowBits)];
+    assert(asid_map_ptr_get_type(asid_map) == asid_map_asid_map_vspace);
 
-    stored_info = vtable[VTABLE_SMMU_SLOT];
-    vtable[VTABLE_SMMU_SLOT] = vtable_invalid_smmu_new(vtable_invalid_get_bind_cb(stored_info) + 1);
+    asid_map_asid_map_vspace_ptr_set_bind_cb(asid_map, asid_map_asid_map_vspace_ptr_get_bind_cb(asid_map) + 1);
 }
 
 void decreaseASIDBindCB(asid_t asid)
 {
     asid_pool_t *asidPool;
-    vspace_root_t stored_info;
 
     asidPool = armKSASIDTable[asid >> asidLowBits];
     assert(asidPool);
 
-    vspace_root_t *vtable = asidPool->array[asid & MASK(asidLowBits)];
-    assert(vtable);
+    asid_map_t *asid_map = &asidPool->array[asid & MASK(asidLowBits)];
+    assert(asid_map_ptr_get_type(asid_map) == asid_map_asid_map_vspace);
 
-    stored_info = vtable[VTABLE_SMMU_SLOT];
-    vtable[VTABLE_SMMU_SLOT] = vtable_invalid_smmu_new(vtable_invalid_get_bind_cb(stored_info) - 1);
+    asid_map_asid_map_vspace_ptr_set_bind_cb(asid_map, asid_map_asid_map_vspace_ptr_get_bind_cb(asid_map) - 1);
 }
 #endif
 
 static inline void invalidateTLBByASID(asid_t asid)
 {
 #ifdef CONFIG_ARM_SMMU
-    vspace_root_t bind_cb = getASIDBindCB(asid);
-    if (unlikely(vtable_invalid_get_bind_cb(bind_cb))) {
-        invalidateSMMUTLBByASID(asid, vtable_invalid_get_bind_cb(bind_cb));
+    word_t bind_cb = getASIDBindCB(asid);
+    if (unlikely(bind_cb)) {
+        invalidateSMMUTLBByASID(asid, bind_cb);
     }
 #endif
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    vspace_root_t stored_hw_asid;
+    asid_map_t asid_map;
 
-    stored_hw_asid = loadHWASID(asid);
-    if (!vtable_invalid_get_stored_asid_valid(stored_hw_asid)) {
+    asid_map = findMapForASID(asid);
+    if (!asid_map_asid_map_vspace_get_stored_vmid_valid(asid_map)) {
         return;
     }
-    invalidateTranslationASID(vtable_invalid_get_stored_hw_asid(stored_hw_asid));
+    invalidateTranslationASID(asid_map_asid_map_vspace_get_stored_hw_vmid(asid_map));
 #else
     invalidateTranslationASID(asid);
 #endif
@@ -1243,19 +1242,19 @@ static inline void invalidateTLBByASID(asid_t asid)
 static inline void invalidateTLBByASIDVA(asid_t asid, vptr_t vaddr)
 {
 #ifdef CONFIG_ARM_SMMU
-    vspace_root_t bind_cb = getASIDBindCB(asid);
-    if (unlikely(vtable_invalid_get_bind_cb(bind_cb))) {
-        invalidateSMMUTLBByASIDVA(asid, vaddr, vtable_invalid_get_bind_cb(bind_cb));
+    word_t bind_cb = getASIDBindCB(asid);
+    if (unlikely(bind_cb)) {
+        invalidateSMMUTLBByASIDVA(asid, vaddr, bind_cb);
     }
 #endif
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    vspace_root_t stored_hw_asid;
+    asid_map_t asid_map;
 
-    stored_hw_asid = loadHWASID(asid);
-    if (!vtable_invalid_get_stored_asid_valid(stored_hw_asid)) {
+    asid_map = findMapForASID(asid);
+    if (!asid_map_asid_map_vspace_get_stored_vmid_valid(asid_map)) {
         return;
     }
-    uint64_t hw_asid = vtable_invalid_get_stored_hw_asid(stored_hw_asid);
+    uint64_t hw_asid = asid_map_asid_map_vspace_get_stored_hw_vmid(asid_map);
     invalidateTranslationSingle((hw_asid << 48) | vaddr >> seL4_PageBits);
 #else
     invalidateTranslationSingle((asid << 48) | vaddr >> seL4_PageBits);
@@ -1291,11 +1290,7 @@ void unmapPageUpperDirectory(asid_t asid, vptr_t vaddr, pude_t *pud)
 
     pgdSlot = pageUpperDirectoryMapped(asid, vaddr, pud);
     if (likely(pgdSlot != NULL)) {
-#ifdef CONFIG_ARM_SMMU
-        *pgdSlot = pgde_pgde_invalid_new(0, false, 0);
-#else
-        *pgdSlot = pgde_pgde_invalid_new(0, false);
-#endif
+        *pgdSlot = pgde_pgde_invalid_new();
         cleanByVA_PoU((vptr_t)pgdSlot, pptr_to_paddr(pgdSlot));
         invalidateTLBByASID(asid);
     }
@@ -1404,13 +1399,17 @@ void deleteASID(asid_t asid, vspace_root_t *vspace)
 
     poolPtr = armKSASIDTable[asid >> asidLowBits];
 
-    if (poolPtr != NULL && poolPtr->array[asid & MASK(asidLowBits)] == vspace) {
-        invalidateTLBByASID(asid);
+    if (poolPtr != NULL) {
+        asid_map_t asid_map = poolPtr->array[asid & MASK(asidLowBits)];
+        if (asid_map_get_type(asid_map) == asid_map_asid_map_vspace &&
+            (vspace_root_t *)asid_map_asid_map_vspace_get_vspace_root(asid_map) == vspace) {
+            invalidateTLBByASID(asid);
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-        invalidateASIDEntry(asid);
+            invalidateASIDEntry(asid);
 #endif
-        poolPtr->array[asid & MASK(asidLowBits)] = NULL;
-        setVMRoot(NODE_STATE(ksCurThread));
+            poolPtr->array[asid & MASK(asidLowBits)] = asid_map_asid_map_none_new();
+            setVMRoot(NODE_STATE(ksCurThread));
+        }
     }
 }
 
@@ -1422,7 +1421,8 @@ void deleteASIDPool(asid_t asid_base, asid_pool_t *pool)
 
     if (armKSASIDTable[asid_base >> asidLowBits] == pool) {
         for (offset = 0; offset < BIT(asidLowBits); offset++) {
-            if (pool->array[offset]) {
+            asid_map_t asid_map = pool->array[offset];
+            if (asid_map_get_type(asid_map) == asid_map_asid_map_vspace) {
                 invalidateTLBByASID(asid_base + offset);
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
                 invalidateASIDEntry(asid_base + offset);
@@ -1660,14 +1660,20 @@ static exception_t performPageFlush(int invLabel, vspace_root_t *vspaceRoot, asi
     return EXCEPTION_NONE;
 }
 
-static exception_t performPageGetAddress(pptr_t base_ptr)
+static exception_t performPageGetAddress(pptr_t base_ptr, bool_t call)
 {
     paddr_t base = pptr_to_paddr((void *)base_ptr);
 
-    setRegister(NODE_STATE(ksCurThread), msgRegisters[0], base);
-    setRegister(NODE_STATE(ksCurThread), msgInfoRegister,
-                wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, 1)));
-
+    tcb_t *thread;
+    thread = NODE_STATE(ksCurThread);
+    if (call) {
+        word_t *ipcBuffer = lookupIPCBuffer(true, thread);
+        setRegister(thread, badgeRegister, 0);
+        unsigned int length = setMR(thread, ipcBuffer, 0, base);
+        setRegister(thread, msgInfoRegister, wordFromMessageInfo(
+                        seL4_MessageInfo_new(0, 0, 0, length)));
+    }
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
     return EXCEPTION_NONE;
 }
 
@@ -2061,7 +2067,7 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, unsigned int le
 }
 
 static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length,
-                                            cte_t *cte, cap_t cap, word_t *buffer)
+                                            cte_t *cte, cap_t cap, bool_t call, word_t *buffer)
 {
     switch (invLabel) {
     case ARMPageMap: {
@@ -2259,7 +2265,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
 
     case ARMPageGetAddress:
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        return performPageGetAddress(cap_frame_cap_get_capFBasePtr(cap));
+        return performPageGetAddress(cap_frame_cap_get_capFBasePtr(cap), call);
 
     default:
         current_syscall_error.type = seL4_IllegalOperation;
@@ -2268,7 +2274,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
 }
 
 exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
-                                   cte_t *cte, cap_t cap, word_t *buffer)
+                                   cte_t *cte, cap_t cap, bool_t call, word_t *buffer)
 {
     switch (cap_get_capType(cap)) {
     case cap_vtable_root_cap:
@@ -2284,7 +2290,7 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
         return decodeARMPageTableInvocation(invLabel, length, cte, cap, buffer);
 
     case cap_frame_cap:
-        return decodeARMFrameInvocation(invLabel, length, cte, cap, buffer);
+        return decodeARMFrameInvocation(invLabel, length, cte, cap, call, buffer);
 
     case cap_asid_control_cap: {
         unsigned int i;
@@ -2406,7 +2412,8 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
 
         /* Find first free ASID */
         asid = cap_asid_pool_cap_get_capASIDBase(cap);
-        for (i = 0; i < (1 << asidLowBits) && (asid + i == 0 || pool->array[i]); i++);
+        for (i = 0; i < (1 << asidLowBits) && (asid + i == 0
+                                               || (asid_map_get_type(pool->array[i]) != asid_map_asid_map_none)); i++);
 
         if (unlikely(i == 1 << asidLowBits)) {
             current_syscall_error.type = seL4_DeleteFirst;
@@ -2563,7 +2570,7 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
                              1,                         /* access flag */
                              SMP_TERNARY(SMP_SHARE, 0), /* Inner-shareable if SMP enabled, otherwise unshared */
                              0,                         /* VMKernelOnly */
-                             NORMAL);
+                             NORMAL_WT);
 
     cleanByVA_PoU((vptr_t)armKSGlobalLogPDE, addrFromKPPtr(armKSGlobalLogPDE));
     invalidateTranslationSingle(KS_LOG_PPTR);

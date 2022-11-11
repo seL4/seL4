@@ -149,10 +149,10 @@ resolveAddressBits_ret_t resolveAddressBits(cap_t nodeCap, cptr_t capptr, word_t
 
         capGuard = cap_cnode_cap_get_capCNodeGuard(nodeCap);
 
-        /* sjw --- the MASK(5) here is to avoid the case where n_bits = 32
-           and guardBits = 0, as it violates the C spec to >> by more
-           than 31 */
-
+        /* The MASK(wordRadix) here is to avoid the case where
+         * n_bits = wordBits (=2^wordRadix) and guardBits = 0, as it violates
+         * the C spec to shift right by more than wordBits-1.
+         */
         guard = (capptr >> ((n_bits - guardBits) & MASK(wordRadix))) & MASK(guardBits);
         if (unlikely(guardBits > n_bits || guard != capGuard)) {
             current_lookup_fault =
@@ -191,6 +191,5 @@ resolveAddressBits_ret_t resolveAddressBits(cap_t nodeCap, cptr_t capptr, word_t
         }
     }
 
-    ret.status = EXCEPTION_NONE;
-    return ret;
+    UNREACHABLE();
 }

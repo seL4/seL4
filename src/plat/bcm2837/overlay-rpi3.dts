@@ -41,4 +41,14 @@
 			no-map;
 		};
 	};
+
+        soc {
+                timer@7e003000 {
+                        reg = <0x3F003000 0x1000>;
+			/* Channels 0 and 2 used by VC, so just expose 1 and
+			 * 3. Otherwise we're spammed with spurious
+			 * interrupts. */
+                        interrupts = <0x01 0x01 0x01 0x03>;
+                };
+        };
 };

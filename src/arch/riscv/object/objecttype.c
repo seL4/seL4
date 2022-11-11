@@ -298,7 +298,7 @@ exception_t Arch_decodeInvocation(
     word_t *buffer
 )
 {
-    return decodeRISCVMMUInvocation(label, length, cptr, slot, cap, buffer);
+    return decodeRISCVMMUInvocation(label, length, cptr, slot, cap, call, buffer);
 }
 
 void Arch_prepareThreadDelete(tcb_t *thread)

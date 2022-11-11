@@ -13,7 +13,7 @@
 #ifdef __ASSEMBLER__
 
 /* Provide a helper macro to define integer constants that are not of the
- * default type 'ìnt', but 'unsigned long [long]'. When such constants are
+ * default type 'int', but 'unsigned long [long]'. When such constants are
  * shared between assembly and C code, some assemblers will fail because they
  * don't support C-style integer suffixes like 'ul'. Using a macro works around
  * this, as the suffix is only applied when the C compiler is used and dropped
@@ -41,7 +41,7 @@
 #define IS_ALIGNED(n, b) (!((n) & MASK(b)))
 #define ROUND_DOWN(n, b) (((n) >> (b)) << (b))
 #define ROUND_UP(n, b) (((((n) - UL_CONST(1)) >> (b)) + UL_CONST(1)) << (b))
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 

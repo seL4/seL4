@@ -35,10 +35,33 @@
 
     <xsd:complexType name="ConfigType" >
         <xsd:sequence>
+            <xsd:element name="condition" minOccurs="0" maxOccurs="1" type="Unary"/>
             <xsd:element name="syscall" minOccurs="1" maxOccurs="unbounded" type="SyscallType"/>
         </xsd:sequence>
-        <xsd:attribute name="condition" type="xsd:string" />
     </xsd:complexType>
+
+    <xsd:group name="ConfigGroup">
+        <xsd:choice>
+            <xsd:element name="and" type="N-ary" />
+            <xsd:element name="or" type="N-ary" />
+            <xsd:element name="not" type="Unary" />
+            <xsd:element name="config">
+                <xsd:complexType>
+                        <xsd:attribute name="var" type="xsd:string" use="required"/>
+                </xsd:complexType>
+            </xsd:element>
+        </xsd:choice>
+    </xsd:group>
+
+  <xsd:complexType name="Unary">
+        <xsd:group ref="ConfigGroup"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="N-ary">
+    <xsd:sequence>
+            <xsd:group ref="ConfigGroup" minOccurs="2" maxOccurs="unbounded"/>
+    </xsd:sequence>
+  </xsd:complexType>
 
     <xsd:complexType name="SyscallType">
         <xsd:attribute name="name" type="xsd:string" />

@@ -68,8 +68,9 @@ elseif(KernelPTLevels EQUAL 4)
 endif()
 
 if(KernelRiscvExtD)
+    # The D extension depends on the base single-precision
+    # instruction subset F.
     set(KernelRiscvExtF ON)
-    set(KernelHaveFPU ON)
 endif()
 
 if(KernelRiscvExtF)

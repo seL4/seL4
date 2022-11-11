@@ -40,57 +40,105 @@ RequireTool(XMLLINT_PATH xmllint.sh)
 # Process the configuration scripts
 include(config.cmake)
 
-# Define default global flag information so that users can compile with the same basic architecture
-# flags as the kernel
+# Define default global flag information so that users can compile with the same
+# basic architecture flags as the kernel
+
+string(APPEND common_flags " -D__KERNEL_${KernelWordSize}__")
+
 if(KernelArchX86)
-    if(${KernelX86MicroArch} STREQUAL generic)
-        set(build_arch "-mtune=generic")
+    if(${KernelX86MicroArch} STREQUAL "generic")
+        string(APPEND common_flags " -mtune=generic")
     else()
-        set(build_arch "-march=${KernelX86MicroArch}")
+        string(APPEND common_flags " -march=${KernelX86MicroArch}")
     endif()
-    if(Kernel64)
-        if(NOT LLVM_TOOLCHAIN)
-            string(APPEND asm_common_flags " -Wa,--64")
-        endif()
-        string(APPEND c_common_flags " -m64")
+
+    if(KernelSel4ArchX86_64)
+        string(APPEND common_exe_flags " -Wl,-m,elf_x86_64")
+    elseif(KernelSel4ArchIA32)
+        string(APPEND common_exe_flags " -Wl,-m,elf_i386")
     else()
-        if(NOT LLVM_TOOLCHAIN)
-            string(APPEND asm_common_flags " -Wa,--32")
-        else()
+        message(FATAL_ERROR "unknown x86 KernelSel4Arch '${KernelSel4Arch}'")
+    endif()
+
+    string(APPEND c_common_flags " -m${KernelWordSize}")
+
+    if(LLVM_TOOLCHAIN)
+        if(KernelSel4ArchIA32)
             string(APPEND asm_common_flags " -m32")
         endif()
-        string(APPEND c_common_flags " -m32")
+    else() # default is GCC toolchain
+        string(APPEND asm_common_flags " -Wa,--${KernelWordSize}")
     endif()
-endif()
-if(KernelArchARM)
+
+elseif(KernelArchARM)
     set(arm_march "${KernelArmArmV}${KernelArmMachFeatureModifiers}")
     string(APPEND c_common_flags " -march=${arm_march}")
     string(APPEND asm_common_flags " -march=${arm_march}")
-    # Explicitly request ARM instead of THUMB for compilation. This option is not
-    # relevant on aarch64
-    if(NOT KernelSel4ArchAarch64)
+
+    if(KernelSel4ArchAarch64)
+        # nothing special
+    elseif(KernelSel4ArchAarch32)
+        # Explicitly request ARM instead of THUMB for compilation.
         string(APPEND c_common_flags " -marm")
-    endif()
-endif()
-if(KernelArchRiscV)
-    if(Kernel64)
-        if(KernelHaveFPU)
-            string(APPEND common_flags " -march=rv64imafdc")
-            string(APPEND common_flags " -mabi=lp64d")
-        else()
-            string(APPEND common_flags " -march=rv64imac")
-            string(APPEND common_flags " -mabi=lp64")
-        endif()
     else()
-        string(APPEND common_flags " -march=rv32imac")
-        string(APPEND common_flags " -mabi=ilp32")
+        message(FATAL_ERROR "unknown ARM KernelSel4Arch '${KernelSel4Arch}'")
     endif()
-endif()
-string(APPEND common_flags " ${build_arch}")
-if(Kernel64)
-    string(APPEND common_flags " -D__KERNEL_64__")
+
+elseif(KernelArchRiscV)
+    # The "RISC-V Instruction Set Manual, Volume I: RISC-V User-Level ISA",
+    # chapter "ISA Extension Naming Conventions" describes the march string. Its
+    # form is roughly "rv(32|64)((im?a?f?d?)|g)q?c?b?...", where 'g' equals
+    # 'mafd_Zicsr_Zifencei'. Underscores are allowed as extension separator and
+    # even required between for all Z-extensions.
+
+    if(KernelSel4ArchRiscV32)
+        set(_riscv_march "rv32i") # Currently we don't support "rv32e"
+        set(_riscv_mabi "ilp32")
+    elseif(KernelSel4ArchRiscV64)
+        set(_riscv_march "rv64i")
+        set(_riscv_mabi "lp64")
+    else()
+        message(FATAL_ERROR "unknown RISC-V KernelSel4Arch '${KernelSel4Arch}'")
+    endif()
+
+    # Currently there are no KernelRiscvExtM or KernelRiscvExtA, thus the
+    # M-extension and A-extension are always enabled.
+    string(APPEND _riscv_march "ma")
+
+    # FPU support. The Q-extension implies the D-extension, which implies the
+    # F-extension, which implies the "Zicsr"-extension. Currently there is no
+    # KernelRiscvExtQ yet.
+    if(KernelRiscvExtD)
+        # Since the D-extension implies F-extension, specifying "d" would be
+        # sufficient. But it's common practice to say "fd"
+        string(APPEND _riscv_march "fd")
+        # Pass floating-point values up to 64 bits in F registers
+        string(APPEND _riscv_mabi "d")
+    elseif(KernelRiscvExtF)
+        string(APPEND _riscv_march "f")
+        # Pass floating-point values up to 32 bits in F registers
+        string(APPEND _riscv_mabi "f")
+    endif()
+
+    # Currently there is no KernelRiscvExtC and thus the C-extension is always
+    # enabled
+    string(APPEND _riscv_march "c")
+
+    # Determine if GNU toolchain is used and if yes, whether GCC version >= 11.3 (implies binutils version >= 2.38)
+    if(
+        CMAKE_ASM_COMPILER_ID STREQUAL "GNU"
+        AND CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL "11.3"
+    )
+        # Manually enable Zicsr and Zifencei extensions
+        # This became necessary due to a change in the default ISA version in GNU binutils 2.38 which is the
+        # default binutils version shipped with GCC 11.3
+        string(APPEND _riscv_march "_zicsr_zifencei")
+    endif()
+
+    string(APPEND common_flags " -march=${_riscv_march} -mabi=${_riscv_mabi}")
+
 else()
-    string(APPEND common_flags " -D__KERNEL_32__")
+    message(FATAL_ERROR "unknown KernelArch '${KernelArch}'")
 endif()
 
 set(
@@ -98,74 +146,33 @@ set(
     CACHE INTERNAL "Default ASM flags for compilation \
     (subset of flags used by the kernel build)"
 )
+
 set(
     BASE_C_FLAGS "${c_common_flags} ${common_flags}"
     CACHE INTERNAL "Default C flags for compilation \
     (subset of flags used by the kernel)"
 )
+
 set(
     BASE_CXX_FLAGS "${cxx_common_flags} ${c_common_flags} ${common_flags}"
     CACHE INTERNAL "Default CXX flags for compilation"
 )
-if(KernelArchX86)
-    if(Kernel64)
-        string(APPEND common_exe_flags " -Wl,-m -Wl,elf_x86_64")
-    else()
-        string(APPEND common_exe_flags " -Wl,-m -Wl,elf_i386")
-    endif()
-endif()
+
 set(
     BASE_EXE_LINKER_FLAGS "${common_flags} ${common_exe_flags} "
     CACHE INTERNAL "Default flags for linker an elf binary application"
 )
-# Initializing the kernel build flags starting from the same base flags that the users will use
+
+# Setup kernel specific flags. Initialize all flags them from the same base
+# flags that the users will use. The kernel is a stand-alone application with a
+# custom implementation of the standard libraries.
 include(${KERNEL_FLAGS_PATH})
 
-# Setup kernel specific flags
-macro(KernelCommonFlags)
-    foreach(common_flag IN ITEMS ${ARGV})
-        add_compile_options(${common_flag})
-        string(APPEND CMAKE_EXE_LINKER_FLAGS " ${common_flag} ")
-    endforeach()
-endmacro(KernelCommonFlags)
-KernelCommonFlags(-nostdlib ${KernelOptimisation})
-if(KernelFWholeProgram)
-    KernelCommonFlags(-fwhole-program)
-endif()
-if(KernelDebugBuild)
-    KernelCommonFlags(-DDEBUG -g -ggdb)
-    # Pretend to CMake that we're a release build with debug info. This is because
-    # we do actually allow CMake to do the final link step, so we'd like it not to
-    # strip our binary
-    set(CMAKE_BUILD_TYPE "RelWithDebInfo")
-else()
-    set(CMAKE_BUILD_TYPE "Release")
-endif()
-if(KernelArchX86 AND Kernel64)
-    KernelCommonFlags(-mcmodel=kernel)
-endif()
-if(KernelArchARM)
-    if(KernelSel4ArchAarch64)
-        KernelCommonFlags(-mgeneral-regs-only)
-        if(
-            (CMAKE_C_COMPILER_ID STREQUAL "GNU")
-            AND (CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL "10.0.0")
-        )
-            add_compile_options(-mno-outline-atomics)
-        endif()
-    else()
-        KernelCommonFlags(-mfloat-abi=soft)
-    endif()
-endif()
-if(KernelArchRiscV)
-    KernelCommonFlags(-mcmodel=medany)
-endif()
-KernelCommonFlags(-fno-pic -fno-pie)
 add_compile_options(
-    -nostdinc
-    -fno-stack-protector
-    -fno-asynchronous-unwind-tables
     -std=c99
+    #-----------------------------------
+    # Configure warnings
+    #-----------------------------------
     -Wall
     -Werror
     -Wstrict-prototypes
@@ -175,10 +182,20 @@ add_compile_options(
     -Wundef
     -Wpointer-arith
     -Wno-nonnull
-    -ffreestanding
+    #-----------------------------------
+    # Configure compiler settings.
+    #-----------------------------------
+    -nostdinc # Do not use any system include paths, only use those given
+              # explicitly by the "-I <path>" parameters.
+    -ffreestanding # implies "-fno-builtin". Execution will not start at main().
+                   # No assumptions about the meaning of function names from the
+                   # standard library are made, except for memcpy(), memmove(),
+                   # memset() and memcmp(). __builtin_trap() will call abort().
+    -fno-stack-protector
+    -fno-asynchronous-unwind-tables
     # GCC < 10 and clang < 11 put uninitialized global variables into a 'COMMON'
     # section unless '-fno-common' is specified. The linker will put anything
-    # from 'COMMON' as the end of the '.bss' it nothing else is specified in the
+    # from 'COMMON' as the end of the '.bss' if nothing else is specified in the
     # linker script. Besides making the variable placement look odd, this also
     # tends to waste a page because we puts large aligned block at the end.
     # Eventually, GCC 10 and clang 11 made '-fno-common' the default, see
@@ -187,11 +204,107 @@ add_compile_options(
     -fno-common
 )
 
-# Add all the common flags to the linker args
-string(APPEND CMAKE_EXE_LINKER_FLAGS " -ffreestanding -Wl,--build-id=none -static -Wl,-n ")
+# Linker parameters. There are two kinds actually:
+#   - flags processed by GCC when invoking it as linker wrapper
+#   - flags passed by GCC to the actual linker invocation ("-Wl,<flag>").
+string(
+    APPEND CMAKE_EXE_LINKER_FLAGS
+    # KernelCommonFlags adds "-nostdlib", it's the GCC linker step counterpart
+    # for "-ffreestanding" and makes GCC not use the standard system startup
+    # files or libraries. This also excludes GCC's helper library libgcc. Any
+    # libraries that are to be linked must be specified explicitly. Tests have
+    # shown that this parameter doesn't prevent GCC from adding paths from a
+    # "-L <path>" argument to the linker invocation for the standard libs, and
+    # there seems no option that prevents this apart from providing an entirely
+    # different specs file via -specs=<file>. Note that "-Wl,-nostdlib" is not
+    # used here, because it is not needed. It makes the linker use library
+    # directories specified on the command line only and ignore any SEARCH_DIR
+    # set in a linker script. We provide our own linker scripts, and these
+    # don't set SEARCH_DIR.
+    " -static" # Implies "-no-pie" (and overrides "-pie"). The ld 2.37 docs say
+               # "-no-pie" is a linker option, but passing "-Wl,-no-pie" fails.
+    " -Wl,--build-id=none" # Ensure reproducible builds
+    " -Wl,-n" # Disable page alignment of sections
+)
+
+# Setup kernel specific flags used for both the compilation and linking step
+macro(KernelCommonFlags)
+    foreach(common_flag IN ITEMS ${ARGV})
+        add_compile_options(${common_flag})
+        string(APPEND CMAKE_EXE_LINKER_FLAGS " ${common_flag} ")
+    endforeach()
+endmacro(KernelCommonFlags)
+
+KernelCommonFlags(
+    ${KernelOptimisation}
+    # The following options are gcc options, it is unclear if ld options are
+    # generated automatically when gcc wraps the linking step and invokes ld.
+    -nostdlib -fno-pic -fno-pie
+)
+
+# Disable cloned functions. This is needed for binary verification at -O2.
+if(NOT KernelOptimisationCloneFunctions AND (CMAKE_C_COMPILER_ID STREQUAL "GNU"))
+    KernelCommonFlags(-fno-partial-inlining -fno-ipa-cp -fno-ipa-sra)
+endif()
+
+if(KernelFWholeProgram)
+    # KernelFWholeProgram is still an experimental feature and disabled by
+    # default. Clarify if the linker step via GCC actually cares about this
+    # parameter. There are also the options -flto and -fuse-linker-plugin that
+    # might be a more modern approach.
+    KernelCommonFlags(-fwhole-program)
+endif()
+
+if(KernelDebugBuild)
+    KernelCommonFlags(-DDEBUG -g -ggdb)
+    # Pretend to CMake that we're a release build with debug info. This is because
+    # we do actually allow CMake to do the final link step, so we'd like it not to
+    # strip our binary
+    set(CMAKE_BUILD_TYPE "RelWithDebInfo")
+else()
+    set(CMAKE_BUILD_TYPE "Release")
+endif()
 
 if(KernelArchX86)
+    if(KernelSel4ArchX86_64)
+        KernelCommonFlags(-mcmodel=kernel)
+    elseif(KernelSel4ArchIA32)
+        # nothing special
+    else()
+        message(FATAL_ERROR "unknown x86 KernelSel4Arch '${KernelSel4Arch}'")
+    endif()
     add_compile_options(-mno-mmx -mno-sse -mno-sse2 -mno-3dnow)
+
+elseif(KernelArchARM)
+    if(KernelSel4ArchAarch64)
+        KernelCommonFlags(-mgeneral-regs-only)
+        if(
+            ((CMAKE_C_COMPILER_ID STREQUAL "GNU")
+             AND (CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL "10.0.0")
+             )
+            OR
+                ((CMAKE_C_COMPILER_ID STREQUAL "Clang")
+                 AND (CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL "12.0.0")
+                 )
+        )
+            add_compile_options(-mno-outline-atomics)
+        endif()
+    elseif(KernelSel4ArchAarch32)
+        KernelCommonFlags(-mfloat-abi=soft)
+    else()
+        message(FATAL_ERROR "unknown ARM KernelSel4Arch '${KernelSel4Arch}'")
+    endif()
+
+elseif(KernelArchRiscV)
+    # Group "small" data objects together in a small-data section so they can
+    # be referenced using gp-relative addressing.  The exact value of
+    # small-data-limit is not crucial but it should be lowered if .small
+    # exceeds 4KiB.
+    #
+    KernelCommonFlags(-mcmodel=medany -msmall-data-limit=1024)
+
+else()
+    message(FATAL_ERROR "unknown KernelArch '${KernelArch}'")
 endif()
 
 # Sort the C sources to ensure a stable layout of the final C file

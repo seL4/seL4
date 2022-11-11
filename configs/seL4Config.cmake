@@ -60,6 +60,8 @@ macro(declare_seL4_arch sel4_arch)
         config_set(KernelWordSize WORD_SIZE 64)
         set(Kernel64 ON CACHE INTERNAL "")
         set(Kernel32 OFF CACHE INTERNAL "")
+    else()
+        message(FATAL_ERROR "unsupported seL4 architecture: '${sel4_arch}'")
     endif()
 
 endmacro()
@@ -118,7 +120,7 @@ macro(declare_default_headers)
     cmake_parse_arguments(
         CONFIGURE
         ""
-        "TIMER_FREQUENCY;MAX_IRQ;NUM_PPI;PLIC_MAX_NUM_INT;INTERRUPT_CONTROLLER;TIMER;SMMU;CLK_SHIFT;CLK_MAGIC;KERNEL_WCET;TIMER_PRECISION;MAX_SID;MAX_CB"
+        "TIMER_FREQUENCY;MAX_IRQ;NUM_PPI;PLIC_MAX_NUM_INT;INTERRUPT_CONTROLLER;TIMER;SMMU;CLK_SHIFT;CLK_MAGIC;KERNEL_WCET;TIMER_PRECISION;TIMER_OVERHEAD_TICKS;MAX_SID;MAX_CB"
         ""
         ${ARGN}
     )

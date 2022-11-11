@@ -22,12 +22,14 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 Further information about [seL4 releases](https://docs.sel4.systems/sel4_release/) is available.
 
 ---
-Upcoming release: BINARY COMPATIBLE
+Upcoming release: BREAKING
 
 ## Changes
 
  * Added support for the ARM Cortex A55
  * Added support for the ODroid C4
+ * Added support for the Avnet MaaXBoard
+ * Added support for arm_hyp on qemu-arm-virt platfrom with cortex-a15 CPU
  * Rename libsel4 config option ENABLE_SMP_SUPPORT to CONFIG_ENABLE_SMP_SUPPORT to be namespace compliant.
  * Rename libsel4 config option AARCH64_VSPACE_S2_START_L1 to CONFIG_AARCH64_VSPACE_S2_START_L1 to be namespace
    compliant.
@@ -35,9 +37,13 @@ Upcoming release: BINARY COMPATIBLE
 * Remove ARM1136JF_S and ARMv6 support. This architecture version is being removed as it is sufficiently old and
   unused. See https://sel4.atlassian.net/browse/RFC-8.
 * Remove ARMv6 specific configs: KernelGlobalsFrame and KernelDangerousCodeInjectionOnUndefInstr. This removes the
-  constant seL4_GlobalsFrame from libsel4.
+  constant seL4_GlobalsFrame from libsel4 as well as the IPC buffer in GlobalsFrame caveat from CAVEATS-generic.md
 * Implement KernelArmExportPTMRUser and KernelArmExportVTMRUser options for Arm generic timer use access on aarch32.
 * Removed obsolete define `HAVE_AUTOCONF`
+* Removed user address space reserved slots restriction on 40bit PA platforms when KernelArmHypervisorSupport is set.
+  This change is reflected in the definition of the seL4_UserTop constant that holds the largest user virtual address.
+* aarch32 VM fault messages now deliver original (untranslated) faulting IP in a hypervisor context, matching
+  aarch64 behaviour.
 
 ## Upgrade Notes
 ---

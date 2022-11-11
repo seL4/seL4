@@ -50,7 +50,7 @@ static inline CONST ticks_t usToTicks(time_t us)
 
 static inline CONST ticks_t getTimerPrecision(void)
 {
-    return usToTicks(TIMER_PRECISION);
+    return usToTicks(TIMER_PRECISION) + TIMER_OVERHEAD_TICKS;
 }
 #else /* CONFIG_KERNEL_MCS */
 #include <mode/machine/timer.h>
