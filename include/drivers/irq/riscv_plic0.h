@@ -4,15 +4,18 @@
  *
  * SPDX-License-Identifier: GPL-2.0-only
  *
- * SiFive U54/U74 PLIC handling (HiFive Unleashed/Unmatched, Polarfire)
+ * SiFive U54/U74 PLIC handling (HiFive Unleashed/Unmatched, Polarfire,
+ * QEMU RISC-V virt)
  */
 
 #pragma once
 
 /* This is a check that prevents using this driver blindly. Extend the list if
  * this driver is confirmed to be working on other platforms. */
-#if !defined(CONFIG_PLAT_HIFIVE) && !defined(CONFIG_PLAT_POLARFIRE)
-#error "This code supports the SiFive U54/U74 PLIC only."
+#if !defined(CONFIG_PLAT_HIFIVE) && \
+    !defined(CONFIG_PLAT_POLARFIRE) && \
+    !defined(CONFIG_PLAT_QEMU_RISCV_VIRT)
+#error "Check if this platform suppots a PLIC."
 #endif
 
 /* tell the kernel we have the set trigger feature */

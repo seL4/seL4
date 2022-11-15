@@ -7,79 +7,40 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-declare_platform(qemu-arm-virt KernelPlatformQEMUArmVirt PLAT_QEMU_ARM_VIRT KernelArchARM)
+declare_platform(qemu-riscv-virt KernelPlatformQEMURiscVVirt PLAT_QEMU_RISCV_VIRT KernelArchRiscV)
 
-set(qemu_user_top 0xa0000000)
+if(KernelPlatformQEMURiscVVirt)
 
-macro(setup_qemu_armv7)
-    if("${KernelSel4Arch}" STREQUAL aarch32)
-        declare_seL4_arch(aarch32)
-    elseif("${KernelSel4Arch}" STREQUAL arm_hyp)
-        declare_seL4_arch(arm_hyp)
+    if("${KernelSel4Arch}" STREQUAL riscv64)
+        declare_seL4_arch(riscv64)
+    elseif("${KernelSel4Arch}" STREQUAL riscv32)
+        declare_seL4_arch(riscv32) # This is still untested
     else()
-        fallback_declare_seL4_arch_default(aarch32)
-    endif()
-    if(KernelSel4ArchArmHyp)
-        set(qemu_user_top 0xe0000000)
-    endif()
-    set(QEMU_ARCH "arm")
-    set(KernelArchArmV7a ON)
-endmacro()
-
-macro(setup_qemu_armv8)
-    declare_seL4_arch(aarch64)
-    set(QEMU_ARCH "aarch64")
-    set(KernelArchArmV8a ON)
-endmacro()
-
-if(KernelPlatformQEMUArmVirt)
-
-    if(NOT ARM_CPU)
-        message(STATUS "ARM_CPU not set, defaulting to cortex-a53")
-        set(ARM_CPU "cortex-a53")
+        fallback_declare_seL4_arch_default(riscv64)
     endif()
 
-    if("${ARM_CPU}" STREQUAL "cortex-a7")
-        setup_qemu_armv7()
-        set(KernelArmCortexA7 ON)
-    elseif("${ARM_CPU}" STREQUAL "cortex-a15")
-        setup_qemu_armv7()
-        set(KernelArmCortexA15 ON)
-        set(KernelArchArmV7ve ON)
-    elseif("${ARM_CPU}" STREQUAL "cortex-a53")
-        setup_qemu_armv8()
-        set(KernelArmCortexA53 ON)
-    elseif("${ARM_CPU}" STREQUAL "cortex-a57")
-        setup_qemu_armv8()
-        set(KernelArmCortexA57 ON)
-    elseif("${ARM_CPU}" STREQUAL "cortex-a72")
-        setup_qemu_armv8()
-        set(KernelArmCortexA72 ON)
-    else()
-        message(FATAL_ERROR "Unsupported ARM_CPU: '${ARM_CPU}'")
-    endif()
-
-    config_set(KernelARMPlatform ARM_PLAT qemu-arm-virt)
+    config_set(KernelOpenSBIPlatform OPENSBI_PLATFORM "generic")
+    config_set(KernelPlatformFirstHartID FIRST_HART_ID 0)
 
     # If neither QEMU_DTS nor QEMU_DTB is set explicitly, the device tree is
     # extracted from QEMU. This keeps it nicely up to date with the the actual
     # QEMU versions that is used, and it's quite convenient for development.
     if(NOT DEFINED QEMU_DTS)
 
-        set(QEMU_DTS "${CMAKE_BINARY_DIR}/qemu-arm-virt.dts")
+        set(QEMU_DTS "${CMAKE_BINARY_DIR}/qemu-riscv-virt.dts")
 
         if(NOT DEFINED QEMU_DTB)
 
             message(STATUS "Extracting device tree from QEMU")
-            set(QEMU_DTB "${CMAKE_BINARY_DIR}/qemu-arm-virt.dtb")
+            set(QEMU_DTB "${CMAKE_BINARY_DIR}/qemu-riscv-virt.dtb")
 
             # Use the system's QEMU if no custom QEMU is provided. Have a sanity
             # check about the version to ensure it can be used.
             if(NOT QEMU_BINARY)
-                set(QEMU_BINARY "qemu-system-${QEMU_ARCH}")
+                set(QEMU_BINARY "qemu-system-${KernelSel4Arch}")
                 find_program(QEMU_BINARY ${QEMU_BINARY})
-                # ARM virtual platform works since QEMU 3.1.0
-                set(MIN_QEMU_VERSION "3.1.0")
+                # RISC-V virtual platform works since QEMU v5.1.0
+                set(MIN_QEMU_VERSION "5.1.0")
                 execute_process(
                     COMMAND ${QEMU_BINARY} -version
                     RESULT_VARIABLE error
@@ -107,13 +68,9 @@ if(KernelPlatformQEMUArmVirt)
 
             if(NOT DEFINED QEMU_MACHINE)
                 set(QEMU_MACHINE "virt")
-                list(APPEND QEMU_MACHINE "secure=off")
-                if(KernelArmHypervisorSupport OR KernelSel4ArchArmHyp)
-                    list(APPEND QEMU_MACHINE "virtualization=on")
-                endif()
-                if(Kernel32)
-                    list(APPEND QEMU_MACHINE "highmem=off")
-                endif()
+                #list(APPEND QEMU_MACHINE "aclint=off")   # on/off
+                #list(APPEND QEMU_MACHINE "aia=none")     # none/aplic/aplic-imsic
+                #list(APPEND QEMU_MACHINE "aia-guests=0") # VS-level AIA IMSIC pages per hart
                 list(APPEND QEMU_MACHINE "dumpdtb=${QEMU_DTB}")
 
                 # Lists are just strings with ";" as item separator, so we can
@@ -126,16 +83,17 @@ if(KernelPlatformQEMUArmVirt)
                         QEMU_MACHINE
                         "${QEMU_MACHINE}"
                 )
+            endif()
 
+            if(NOT DEFINED QEMU_CPU)
+                set(QEMU_CPU "rv${KernelWordSize}")
             endif()
 
             if(NOT DEFINED QEMU_MEMORY)
-                # Having 1 GiB of memory as default is a legacy from the past
-                # that is kept for compatibility. It should be increased to
-                # 2 GiB, which seems a good trade-off nowadays. It's sufficient
-                # for test/demo systems, but still something the host can
-                # provide without running short on resources.
-                set(QEMU_MEMORY "1024")
+                # Having 3 GiB of memory as default seems a good trade-off. It's
+                # sufficient for test/demo systems, but still something the host
+                # can provide without running short on resources.
+                set(QEMU_MEMORY "3072")
             endif()
 
             if(KernelMaxNumNodes)
@@ -155,12 +113,14 @@ if(KernelPlatformQEMUArmVirt)
                 "-machine"
                 "${QEMU_MACHINE}"
                 "-cpu"
-                "${ARM_CPU}"
+                "${QEMU_CPU}"
                 "-smp"
                 "${QEMU_SMP_OPTION}"
                 "-m"
                 "${QEMU_MEMORY}"
                 "-nographic"
+                "-bios"
+                "none"
             )
             # When dumping the DTB to a file, QEMU prints a status message to
             # stderr. Capture it and print on stdout to avoid polluting stderr
@@ -217,33 +177,14 @@ if(KernelPlatformQEMUArmVirt)
 
     endif()
 
-    list(APPEND KernelDTSList "${QEMU_DTS}" "${CMAKE_CURRENT_LIST_DIR}/overlay-qemu-arm-virt.dts")
+    list(APPEND KernelDTSList "${QEMU_DTS}" "${CMAKE_CURRENT_LIST_DIR}/overlay-qemu-riscv-virt.dts")
 
-    if(KernelArmHypervisorSupport OR KernelSel4ArchArmHyp)
-        list(APPEND KernelDTSList "${CMAKE_CURRENT_LIST_DIR}/overlay-reserve-vm-memory.dts")
-    endif()
-
+    # QEMU emulates a SiFive PLIC/CLINT with 127 interrupt sources by default.
+    # The CLINT timer pretends to run at 10 MHz, but this speed may not hold in
+    # practical measurements.
     declare_default_headers(
-        TIMER_FREQUENCY 62500000
-        MAX_IRQ 159
-        NUM_PPI 32
-        TIMER drivers/timer/arm_generic.h
-        INTERRUPT_CONTROLLER arch/machine/gic_v2.h
-        CLK_MAGIC 4611686019llu
-        CLK_SHIFT 58u
-        KERNEL_WCET 10u
+        TIMER_FREQUENCY 10000000 PLIC_MAX_NUM_INT 128
+        INTERRUPT_CONTROLLER drivers/irq/riscv_plic0.h
     )
 
 endif()
-
-add_sources(
-    DEP "KernelPlatformQEMUArmVirt"
-    CFILES src/arch/arm/machine/gic_v2.c src/arch/arm/machine/l2c_nop.c
-)
-
-config_string(
-    KernelUserTop USER_TOP "Set seL4_UserTop constant"
-    DEFAULT ${qemu_user_top}
-    UNQUOTE
-    DEPENDS "KernelPlatformQEMUArmVirt;KernelSel4ArchAarch32"
-)
