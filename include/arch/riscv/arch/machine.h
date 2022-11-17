@@ -638,10 +638,7 @@ static inline void setVSpaceRoot(paddr_t addr, asid_t asid)
                            asid,                         /* asid */
                            addr >> seL4_PageBits); /* PPN */
 
-    /* Current toolchain still uses sptbr register name although it got renamed in priv-1.10.
-     * This will most likely need to change with newer toolchains
-     */
-    write_sptbr(satp.words[0]);
+    write_satp(satp.words[0]);
 
     /* Order read/write operations */
     sfence();
