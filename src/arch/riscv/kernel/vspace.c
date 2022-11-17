@@ -459,6 +459,8 @@ exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
 #endif
 
     switch (vm_faultType) {
+
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
     case RISCVLoadPageFault:
     case RISCVLoadAccessFault:
         current_fault = seL4_Fault_VMFault_new(addr, instruction, RISCVLoadAccessFault, false);
@@ -474,9 +476,7 @@ exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
         current_fault = seL4_Fault_VMFault_new(addr, instruction, RISCVInstructionAccessFault, true);
         return EXCEPTION_FAULT;
 
-#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
     /* For guest page fault, guest physical address faulted is used. */
-
     case RISCVLoadGuestPageFault:
         addr = read_htval();
         addr <<= 2;
@@ -495,6 +495,21 @@ exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
         addr = read_htval();
         addr <<= 2;
         current_fault = seL4_Fault_VMFault_new(addr, instruction, RISCVInstructionGuestPageFault, true);
+        return EXCEPTION_FAULT;
+#else
+    case RISCVLoadPageFault:
+    case RISCVLoadAccessFault:
+        current_fault = seL4_Fault_VMFault_new(addr, RISCVLoadAccessFault, false);
+        return EXCEPTION_FAULT;
+
+    case RISCVStorePageFault:
+    case RISCVStoreAccessFault:
+        current_fault = seL4_Fault_VMFault_new(addr, RISCVStoreAccessFault,false);
+        return EXCEPTION_FAULT;
+
+    case RISCVInstructionPageFault:
+    case RISCVInstructionAccessFault:
+        current_fault = seL4_Fault_VMFault_new(addr, RISCVInstructionAccessFault, true);
         return EXCEPTION_FAULT;
 #endif
 
