@@ -17,6 +17,9 @@ tagged_union seL4_Fault seL4_FaultType {
 
     -- arch specific faults
     tag VMFault 6
+#ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
+    tag VCPUFault 7
+#endif
 #else
     -- arch specific faults
     tag VMFault 5
