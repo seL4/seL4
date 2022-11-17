@@ -338,7 +338,7 @@ exception_t Arch_decodeInvocation(
             break;
     }
 #endif
-    return decodeRISCVMMUInvocation(label, length, cptr, slot, cap, extraCaps, call, buffer);
+    return decodeRISCVMMUInvocation(label, length, cptr, slot, cap, call, buffer);
 }
 
 void Arch_prepareThreadDelete(tcb_t *thread)
