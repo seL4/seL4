@@ -468,7 +468,7 @@ exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
 
     case RISCVStorePageFault:
     case RISCVStoreAccessFault:
-        current_fault = seL4_Fault_VMFault_new(addr, instruction, RISCVStoreAccessFault,false);
+        current_fault = seL4_Fault_VMFault_new(addr, instruction, RISCVStoreAccessFault, false);
         return EXCEPTION_FAULT;
 
     case RISCVInstructionPageFault:
@@ -504,7 +504,7 @@ exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
 
     case RISCVStorePageFault:
     case RISCVStoreAccessFault:
-        current_fault = seL4_Fault_VMFault_new(addr, RISCVStoreAccessFault,false);
+        current_fault = seL4_Fault_VMFault_new(addr, RISCVStoreAccessFault, false);
         return EXCEPTION_FAULT;
 
     case RISCVInstructionPageFault:
