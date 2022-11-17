@@ -156,7 +156,6 @@ block VMFault {
 }
 
 #ifdef CONFIG_RISCV_HYPERVISOR_SUPPORT
-
 block VCPUFault {
     field   cause               64
 
@@ -164,7 +163,6 @@ block VCPUFault {
     padding                     28
     field    seL4_FaultType     4
 }
-
 #endif
 
 -- VM attributes
