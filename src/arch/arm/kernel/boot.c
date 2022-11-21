@@ -299,7 +299,7 @@ BOOT_CODE static void release_secondary_cpus(void)
      * On AARCH32 the elfloader uses strongly ordered uncached memory, but seL4
      * has caching enabled, thus explicit cache cleaning is required.
      */
-#ifndef CONFIG_ARCH_AARCH64
+#ifdef CONFIG_ARCH_AARCH32
     cleanInvalidateL1Caches();
     plat_cleanInvalidateL2Cache();
 #endif
