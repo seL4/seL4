@@ -49,7 +49,7 @@ jobs:
         xml: ${{ needs.code.outputs.xml }}
         march: ${{ matrix.march }}
     - name: Upload images
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: images-${{ matrix.march }}
         path: '*-images.tar.gz'
@@ -80,7 +80,7 @@ jobs:
     concurrency: sel4bench-hw-pr-${{ github.event.number }}-${{ strategy.job-index }}
     steps:
       - name: Get machine queue
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: seL4/machine_queue
           path: machine_queue
@@ -91,7 +91,7 @@ jobs:
         with:
           platform: ${{ matrix.platform }}
       - name: Download image
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: images-${{ steps.plat.outputs.march }}
       - name: Run
@@ -103,7 +103,7 @@ jobs:
         env:
           HW_SSH: ${{ secrets.HW_SSH }}
       - name: Upload results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           # funky expression below is to work around lack of ternary operator
           name: sel4bench-results-${{ matrix.platform }}${{ matrix.req != '' && format('-{0}', matrix.req) || '' }}
