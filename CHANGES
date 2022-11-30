@@ -65,6 +65,10 @@ Upcoming release: BREAKING
   optimization.
 * Added SMC Capability (smc_cap) and SMC forwarding for aarch64 platforms. See
   [RFC-9](https://sel4.atlassian.net/browse/RFC-9).
+* Rename object interface files `include/interfaces/sel4.xml`, `arch_include/*/interfaces/sel4arch.xml`, and
+  `sel4_arch_include/*/interfaces/sel4arch.xml` to `include/interfaces/object-api.xml`,
+  `arch_include/*/interfaces/object-api-arch.xml`, and `sel4_arch_include/*/interfaces/object-api-sel4-arch.xml`,
+  respectively.
 
 ## Upgrade Notes
 
