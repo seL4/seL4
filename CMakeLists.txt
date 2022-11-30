@@ -737,6 +737,23 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
         DESTINATION libsel4/include
         FILES_MATCHING
         PATTERN "*.h"
+        PATTERN "*.pbf"
+        PATTERN "api/syscall.xml"
+        PATTERN "api/syscall.xsd"
+        PATTERN "interfaces/sel4.xml"
+    )
+    # Manually resolve conflict between the two files name sel4arch.xml
+    install(
+        FILES
+            "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/arch_include/${KernelArch}/interfaces/sel4arch.xml"
+        DESTINATION libsel4/include/interfaces
+        RENAME sel4-arch.xml
+    )
+    install(
+        FILES
+            "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/sel4_arch_include/${KernelSel4Arch}/interfaces/sel4arch.xml"
+        DESTINATION libsel4/include/interfaces
+        RENAME sel4-sel4arch.xml
     )
     # Install libsel4 sources to libsel4/src
     install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/src/" DESTINATION libsel4/src)
