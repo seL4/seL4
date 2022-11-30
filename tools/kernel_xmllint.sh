@@ -5,9 +5,9 @@
 # SPDX-License-Identifier: BSD-2-Clause
 #
 
-xml_sources=$(find ../libsel4/arch_include/*/interfaces ../libsel4/sel4_arch_include/*/interfaces -name 'sel4arch.xml')
+xml_sources=$(find ../libsel4/arch_include/*/interfaces ../libsel4/sel4_arch_include/*/interfaces -name 'object-api*.xml')
 if [ -z "$xml_sources" ]; then
-    echo "Unable to find sel4arch.xml files"
+    echo "Unable to find object-api*.xml files"
     exit 1
 fi
 
