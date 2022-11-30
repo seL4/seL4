@@ -405,7 +405,8 @@ set(xml_headers "")
 set(header_dest "gen_headers/arch/api/invocation.h")
 gen_invocation_header(
     OUTPUT ${header_dest}
-    XML ${CMAKE_CURRENT_SOURCE_DIR}/libsel4/arch_include/${KernelArch}/interfaces/sel4arch.xml
+    XML
+        ${CMAKE_CURRENT_SOURCE_DIR}/libsel4/arch_include/${KernelArch}/interfaces/object-api-arch.xml
     ARCH
 )
 list(APPEND xml_headers "${header_dest}")
@@ -415,7 +416,7 @@ set(header_dest "gen_headers/arch/api/sel4_invocation.h")
 gen_invocation_header(
     OUTPUT "${header_dest}"
     XML
-        "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/sel4_arch_include/${KernelSel4Arch}/interfaces/sel4arch.xml"
+        "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/sel4_arch_include/${KernelSel4Arch}/interfaces/object-api-sel4-arch.xml"
     SEL4ARCH
 )
 list(APPEND xml_headers "${header_dest}")
@@ -424,7 +425,7 @@ list(APPEND gen_files_list "${header_dest}")
 set(header_dest "gen_headers/api/invocation.h")
 gen_invocation_header(
     OUTPUT "${header_dest}"
-    XML "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/include/interfaces/sel4.xml"
+    XML "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/include/interfaces/object-api.xml"
 )
 list(APPEND xml_headers "${header_dest}")
 list(APPEND gen_files_list "${header_dest}")
@@ -742,25 +743,8 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
         PATTERN "*.pbf"
         PATTERN "api/syscall.xml"
         PATTERN "api/syscall.xsd"
+        PATTERN "object-api*.xml"
         PATTERN "gen_config.json"
-    )
-    # Manually install object API files with non-conflicting names
-    install(
-        FILES "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/include/interfaces/sel4.xml"
-        DESTINATION libsel4/include/interfaces
-        RENAME object-api.xml
-    )
-    install(
-        FILES
-            "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/arch_include/${KernelArch}/interfaces/sel4arch.xml"
-        DESTINATION libsel4/include/interfaces
-        RENAME object-api-arch.xml
-    )
-    install(
-        FILES
-            "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/sel4_arch_include/${KernelSel4Arch}/interfaces/sel4arch.xml"
-        DESTINATION libsel4/include/interfaces
-        RENAME object-api-sel4-arch.xml
     )
     # Install libsel4 sources to libsel4/src
     install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/src/" DESTINATION libsel4/src)
