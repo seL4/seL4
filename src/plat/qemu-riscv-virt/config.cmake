@@ -90,10 +90,19 @@ if(KernelPlatformQEMURiscVVirt)
             endif()
 
             if(NOT DEFINED QEMU_MEMORY)
-                # Having 3 GiB of memory as default seems a good trade-off. It's
-                # sufficient for test/demo systems, but still something the host
-                # can provide without running short on resources.
-                set(QEMU_MEMORY "3072")
+                if(KernelSel4ArchRiscV32)
+                    # The memory starts at 2 GiB (0x80000000), so 2 GiB can be
+                    # accessed using 32-bit addresses. While RV32's Sv32 MMU
+                    # scheme supports accessing a 34-bit physical address space,
+                    # the 32-bit version of seL4 can access physical addresses
+                    # in the 32-bit range only.
+                    set(QEMU_MEMORY "2048")
+                else()
+                    # Having 3 GiB of memory as default seems a good trade-off.
+                    # It's sufficient for test/demo systems, but still something
+                    # the host can provide without running short on resources.
+                    set(QEMU_MEMORY "3072")
+                endif()
             endif()
 
             if(KernelMaxNumNodes)
