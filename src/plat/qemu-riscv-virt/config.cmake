@@ -179,9 +179,9 @@ if(KernelPlatformQEMURiscVVirt)
 
     list(APPEND KernelDTSList "${QEMU_DTS}" "${CMAKE_CURRENT_LIST_DIR}/overlay-qemu-riscv-virt.dts")
 
-    if(KernelRiscVHypervisorSupport)
-        set(KernelRiscVNumVTimers 1) # @ivanv
-    endif()
+    # if(KernelRiscVHypervisorSupport)
+    #     set(KernelRiscVNumVTimers 1) # @ivanv
+    # endif()
 
     # QEMU emulates a SiFive PLIC/CLINT with 127 interrupt sources by default.
     # The CLINT timer pretends to run at 10 MHz, but this speed may not hold in

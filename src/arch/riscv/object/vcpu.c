@@ -243,10 +243,12 @@ static word_t readVCPUReg(vcpu_t *vcpu, word_t field)
 static void writeVCPUReg(vcpu_t *vcpu, word_t field, word_t value)
 {
     assert(vcpu);
+#if CONFIG_RISCV_NUM_VTIMERS > 0
     if (field == seL4_VCPUReg_TIMER) {
         setVTimer(1, value);
         return;
     }
+#endif
 
     return vcpu_write_reg(vcpu, field, value);
 }
