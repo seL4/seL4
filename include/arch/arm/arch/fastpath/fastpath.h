@@ -14,6 +14,12 @@
 void slowpath(syscall_t syscall)
 NORETURN;
 
+#ifdef CONFIG_SIGNAL_FASTPATH
+static inline
+void fastpath_signal(word_t cptr, word_t msgInfo)
+NORETURN;
+#endif
+
 static inline
 void fastpath_call(word_t cptr, word_t r_msgInfo)
 NORETURN;

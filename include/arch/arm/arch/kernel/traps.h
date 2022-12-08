@@ -29,6 +29,9 @@ VISIBLE SECTION(".vectors.text");
 void c_handle_fastpath_call(word_t cptr, word_t msgInfo)
 VISIBLE SECTION(".vectors.text");
 
+void c_handle_fastpath_signal(word_t cptr, word_t msgInfo)
+VISIBLE SECTION(".vectors.text");
+
 #ifdef CONFIG_KERNEL_MCS
 void c_handle_fastpath_reply_recv(word_t cptr, word_t msgInfo, word_t reply)
 #else
