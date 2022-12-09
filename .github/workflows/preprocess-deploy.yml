@@ -37,6 +37,19 @@ jobs:
       with:
         L4V_ARCH: ${{ matrix.arch }}
 
+  preprocess-mcs:
+    name: Preprocess MCS
+    needs: code
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [ARM, RISCV64]
+    steps:
+    - uses: seL4/ci-actions/preprocess@master
+      with:
+        L4V_ARCH: ${{ matrix.arch }}
+        L4V_FEATURES: MCS
+
   deploy:
     name: Deploy manifest
     needs: [code, preprocess]
@@ -47,5 +60,19 @@ jobs:
       with:
         xml: ${{ needs.code.outputs.xml }}
         preprocess: 'true'
+      env:
+        GH_SSH: ${{ secrets.CI_SSH }}
+
+  deploy-mcs:
+    name: Deploy MCS manifest
+    needs: [code, preprocess-mcs]
+    if: ${{ github.repository_owner == 'seL4' }}
+    runs-on: ubuntu-latest
+    steps:
+    - uses: seL4/ci-actions/l4v-deploy@master
+      with:
+        xml: ${{ needs.code.outputs.xml }}
+        preprocess: 'true'
+        manifest: mcs.xml
       env:
         GH_SSH: ${{ secrets.CI_SSH }}
