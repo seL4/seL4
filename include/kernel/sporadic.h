@@ -101,11 +101,12 @@ static inline bool_t refill_single(sched_context_t *sc)
  * has available if usage is charged to it. */
 static inline ticks_t refill_capacity(sched_context_t *sc, ticks_t usage)
 {
-    if (unlikely(usage > refill_head(sc)->rAmount)) {
+    ticks_t head_amount = refill_head(sc)->rAmount;
+    if (unlikely(usage > head_amount)) {
         return 0;
     }
 
-    return refill_head(sc)->rAmount - usage;
+    return head_amount - usage;
 }
 
 /*
