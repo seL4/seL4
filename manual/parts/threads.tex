@@ -596,7 +596,7 @@ the thread. The contents of the IPC message are given below.\\
 \textbf{Meaning} & \textbf{IPC buffer location} \\
 \midrule
     Program counter to restart execution at. & \ipcbloc{seL4\_VMFault\_IP} \\
-Address that caused the fault. & \ipcbloc{seL4\_VMFault\_SP} \\
+Address that caused the fault. & \ipcbloc{seL4\_VMFault\_Addr} \\
     Instruction fault (1 if the fault was caused by an instruction fetch). & \ipcbloc{seL4\_VMFault\_PrefetchFault}  \\
 Fault status register (FSR). Contains information about the cause of the fault. Architecture dependent. & \ipcbloc{seL4\_VMFault\_FSR} \\
 \bottomrule
