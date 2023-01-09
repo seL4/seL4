@@ -154,6 +154,24 @@ void VISIBLE c_handle_fastpath_call(word_t cptr, word_t msgInfo)
     UNREACHABLE();
 }
 
+#ifdef CONFIG_KERNEL_MCS
+#ifdef CONFIG_SIGNAL_FASTPATH
+ALIGN(L1_CACHE_LINE_SIZE)
+void VISIBLE c_handle_fastpath_signal(word_t cptr, word_t msgInfo)
+{
+    NODE_LOCK_SYS;
+
+    c_entry_hook();
+#ifdef TRACK_KERNEL_ENTRIES
+    benchmark_debug_syscall_start(cptr, msgInfo, SysCall);
+    ksKernelEntry.is_fastpath = 1;
+#endif /* DEBUG */
+    fastpath_signal(cptr, msgInfo);
+    UNREACHABLE();
+}
+#endif /* CONFIG_SIGNAL_FASTPATH */
+#endif /* CONFIG_KERNEL_MCS */
+
 ALIGN(L1_CACHE_LINE_SIZE)
 #ifdef CONFIG_KERNEL_MCS
 void VISIBLE c_handle_fastpath_reply_recv(word_t cptr, word_t msgInfo, word_t reply)

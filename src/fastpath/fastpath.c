@@ -6,9 +6,6 @@
 
 #include <config.h>
 #include <fastpath/fastpath.h>
-#ifdef CONFIG_KERNEL_MCS
-#include <object/reply.h>
-#endif
 
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
 #include <benchmark/benchmark_track.h>
@@ -521,3 +518,167 @@ void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo)
 
     fastpath_restore(badge, msgInfo, NODE_STATE(ksCurThread));
 }
+
+#ifdef CONFIG_SIGNAL_FASTPATH
+#ifdef CONFIG_ARCH_ARM
+static inline
+FORCE_INLINE
+#endif
+void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
+{
+    word_t fault_type;
+    sched_context_t *sc = NULL;
+    bool_t schedulable = false;
+    bool_t crossnode = false;
+    bool_t idle = false;
+    tcb_t *dest = NULL;
+
+    /* Get fault type. */
+    fault_type = seL4_Fault_get_seL4_FaultType(NODE_STATE(ksCurThread)->tcbFault);
+
+    /* Check there's no saved fault. Can be removed if the current thread can't
+     * have a fault while invoking the fastpath */
+    if (unlikely(fault_type != seL4_Fault_NullFault)) {
+        slowpath(SysSend);
+    }
+
+    /* Lookup the cap */
+    cap_t cap = lookup_fp(TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbCTable)->cap, cptr);
+
+    /* Check it's a notification */
+    if (unlikely(!cap_capType_equals(cap, cap_notification_cap))) {
+        slowpath(SysSend);
+    }
+
+    /* Check that we are allowed to send to this cap */
+    if (unlikely(!cap_notification_cap_get_capNtfnCanSend(cap))) {
+        slowpath(SysSend);
+    }
+
+    /* Check that the current domain hasn't expired */
+    if (unlikely(isCurDomainExpired())) {
+        slowpath(SysSend);
+    }
+
+    /* Get the notification address */
+    notification_t *ntfnPtr = NTFN_PTR(cap_notification_cap_get_capNtfnPtr(cap));
+
+    /* Get the notification state */
+    uint32_t ntfnState = notification_ptr_get_state(ntfnPtr);
+
+    /* Get the notification badge */
+    word_t badge = cap_notification_cap_get_capNtfnBadge(cap);
+    switch (ntfnState) {
+    case NtfnState_Active:
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
+        ksKernelEntry.is_fastpath = true;
+#endif
+        ntfn_set_active(ntfnPtr, badge | notification_ptr_get_ntfnMsgIdentifier(ntfnPtr));
+        restore_user_context();
+        UNREACHABLE();
+    case NtfnState_Idle:
+        dest = (tcb_t *) notification_ptr_get_ntfnBoundTCB(ntfnPtr);
+
+        if (!dest || thread_state_ptr_get_tsType(&dest->tcbState) != ThreadState_BlockedOnReceive) {
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
+            ksKernelEntry.is_fastpath = true;
+#endif
+            ntfn_set_active(ntfnPtr, badge);
+            restore_user_context();
+            UNREACHABLE();
+        }
+
+        idle = true;
+        break;
+    case NtfnState_Waiting:
+        dest = TCB_PTR(notification_ptr_get_ntfnQueue_head(ntfnPtr));
+        break;
+    default:
+        fail("Invalid notification state");
+    }
+
+    /* Get the bound SC of the signalled thread */
+    sc = dest->tcbSchedContext;
+
+    /* If the signalled thread doesn't have a bound SC, check if one can be
+     * donated from the notification. If not, go to the slowpath */
+    if (!sc) {
+        sc = SC_PTR(notification_ptr_get_ntfnSchedContext(ntfnPtr));
+        if (sc == NULL || sc->scTcb != NULL) {
+            slowpath(SysSend);
+        }
+
+        /* Slowpath the case where dest has its FPU context in the FPU of a core*/
+#if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_HAVE_FPU)
+        if (nativeThreadUsingFPU(dest)) {
+            slowpath(SysSend);
+        }
+#endif
+    }
+
+    /* Only fastpath signal to threads which will not become the new highest prio thread on the
+     * core of their SC, even if the currently running thread on the core is the idle thread. */
+    if (NODE_STATE_ON_CORE(ksCurThread, sc->scCore)->tcbPriority < dest->tcbPriority) {
+        slowpath(SysSend);
+    }
+
+    /* Simplified schedContext_resume that does not change state and reverts to the
+     * slowpath in cases where the SC does not have sufficient budget, as this case
+     * adds extra scheduler logic. Normally, this is done after donation of SC
+     * but after tweaking it, I don't see anything executed in schedContext_donate
+     * that will affect the conditions of this check */
+    if (sc->scRefillMax > 0) {
+        if (!(refill_ready(sc) && refill_sufficient(sc, 0))) {
+            slowpath(SysSend);
+        }
+        schedulable = true;
+    }
+
+    /* Check if signal is cross-core or cross-domain */
+    if (ksCurDomain != dest->tcbDomain SMP_COND_STATEMENT( || sc->scCore != getCurrentCPUIndex())) {
+        crossnode = true;
+    }
+
+    /*  Point of no return */
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
+    ksKernelEntry.is_fastpath = true;
+#endif
+
+    if (idle) {
+        /* Cancel the IPC that the signalled thread is waiting on */
+        cancelIPC_fp(dest);
+    } else {
+        /* Dequeue dest from the notification queue */
+        ntfn_queue_dequeue_fp(dest, ntfnPtr);
+    }
+
+    /* Wake up the signalled thread and tranfer badge */
+    setRegister(dest, badgeRegister, badge);
+    thread_state_ptr_set_tsType_np(&dest->tcbState, ThreadState_Running);
+
+    /* Donate SC if necessary. The checks for this were already done before
+     * the point of no return */
+    maybeDonateSchedContext_fp(dest, sc);
+
+    /* Left this in the same form as the slowpath. Not sure if optimal */
+    if (sc_sporadic(dest->tcbSchedContext)) {
+        assert(dest->tcbSchedContext != NODE_STATE(ksCurSC));
+        if (dest->tcbSchedContext != NODE_STATE(ksCurSC)) {
+            refill_unblock_check(dest->tcbSchedContext);
+        }
+    }
+
+    /* If dest was already not schedulable prior to the budget check
+     * the slowpath doesn't seem to do anything special besides just not
+     * not scheduling the dest thread. */
+    if (schedulable) {
+        if (NODE_STATE(ksCurThread)->tcbPriority > dest->tcbPriority || crossnode) {
+            SCHED_ENQUEUE(dest);
+        } else {
+            SCHED_APPEND(dest);
+        }
+    }
+
+    restore_user_context();
+}
+#endif
