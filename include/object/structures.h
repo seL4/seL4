@@ -397,8 +397,8 @@ struct reply {
      * receiver's endpoint cap when the receiver called receiveIPC with a capability to this reply.
      * This is the case whether replyTCB indicates the receiver waiting for a caller, or a caller
      * waiting for a reply. The value of canGrant is undefined when replyTCB is NULL. In order to
-     * grant through a reply, the replier must have both a grant right on the reply cap, and a
-     * grant right on the endpoint cap used to receive the call. */
+     * grant through a reply, the replier must have had a grant right on the endpoint cap used to
+     * receive the call. */
     bool_t canGrant;
 };
 #endif

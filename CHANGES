@@ -48,9 +48,8 @@ Upcoming release: BREAKING
 
 ## MCS
 
-* To grant capabilities when replying to a call in MCS configurations, it is now necessary to have grant rights on both
-  the reply cap and the endpoint cap used to receive the call. Previously, the grant right on the endpoint cap was
-  ignored in MCS configurations.
+* To grant capabilities when replying to a call in MCS configurations, it is now necessary to have grant rights on
+  the endpoint cap used to receive the call. The grant right on reply caps has been removed.
 
 ## Upgrade Notes
 
