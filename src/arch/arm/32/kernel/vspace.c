@@ -1662,7 +1662,11 @@ createSafeMappingEntries_PTE
 
         /* Check that we are not overwriting an existing mapping */
         if (pte_ptr_get_pteType(ret.pte_entries.base) != pte_pte_invalid) {
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT   
             paddr_t pte_paddr = pte_pte_large_ptr_get_address(ret.pte_entries.base);
+#else
+            paddr_t pte_paddr = pte_pte_small_ptr_get_address(ret.pte_entries.base);
+#endif
             if (pte_paddr && frame_asid == asidInvalid) {
                 userError("Virtual address already mapped");
                 current_syscall_error.type = seL4_DeleteFirst;
