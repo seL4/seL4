@@ -865,7 +865,7 @@ typedef struct create_mapping_pte_return create_mapping_pte_return_t;
 
 static create_mapping_pte_return_t createSafeMappingEntries_PTE(paddr_t base, word_t vaddr, vm_rights_t vmRights,
                                                                 vm_attributes_t attr,
-                                                                vspace_root_t *vspace)
+                                                                vspace_root_t *vspace, asid_t frame_asid)
 {
     create_mapping_pte_return_t ret;
     lookupPTSlot_ret_t          lu_ret;
@@ -876,6 +876,14 @@ static create_mapping_pte_return_t createSafeMappingEntries_PTE(paddr_t base, wo
         current_syscall_error.failedLookupWasSource = false;
         ret.status = EXCEPTION_SYSCALL_ERROR;
         /* current_lookup_fault will have been set by lookupPTSlot */
+        return ret;
+    }
+
+    /* Check that we are not overwriting an existing mapping */
+    if (pte_ptr_get_present(lu_ret.ptSlot) && frame_asid == asidInvalid) {
+        userError("Virtual address already mapped");
+        current_syscall_error.type = seL4_DeleteFirst;
+        ret.status = EXCEPTION_SYSCALL_ERROR;
         return ret;
     }
 
@@ -894,7 +902,7 @@ typedef struct create_mapping_pde_return create_mapping_pde_return_t;
 
 static create_mapping_pde_return_t createSafeMappingEntries_PDE(paddr_t base, word_t vaddr, vm_rights_t vmRights,
                                                                 vm_attributes_t attr,
-                                                                vspace_root_t *vspace)
+                                                                vspace_root_t *vspace, asid_t frame_asid)
 {
     create_mapping_pde_return_t ret;
     lookupPDSlot_ret_t          lu_ret;
@@ -917,6 +925,15 @@ static create_mapping_pde_return_t createSafeMappingEntries_PDE(paddr_t base, wo
         return ret;
     }
 
+    /* Check that we are not overwriting an existing mapping */
+    if (pde_ptr_get_page_size(ret.pdSlot) == pde_pde_large) {
+        if (pde_pde_large_ptr_get_present(ret.pdSlot) && frame_asid == asidInvalid) {
+            userError("Virtual address already mapped");
+            current_syscall_error.type = seL4_DeleteFirst;
+            ret.status = EXCEPTION_SYSCALL_ERROR;
+            return ret;
+        }   
+    }
 
     ret.pde = makeUserPDELargePage(base, attr, vmRights);
     ret.status = EXCEPTION_NONE;
@@ -945,7 +962,7 @@ exception_t decodeX86FrameInvocation(
         vm_rights_t     vmRights;
         vm_attributes_t vmAttr;
         vm_page_size_t  frameSize;
-        asid_t          asid;
+        asid_t          asid, frame_asid;
 
         if (length < 3 || current_extra_caps.excaprefs[0] == NULL) {
             current_syscall_error.type = seL4_TruncatedMessage;
@@ -970,9 +987,10 @@ exception_t decodeX86FrameInvocation(
         }
         vspace = (vspace_root_t *)pptr_of_cap(vspaceCap);
         asid = cap_get_capMappedASID(vspaceCap);
+        frame_asid = cap_frame_cap_get_capFMappedASID(cap);
 
-        if (cap_frame_cap_get_capFMappedASID(cap) != asidInvalid) {
-            if (cap_frame_cap_get_capFMappedASID(cap) != asid) {
+        if (frame_asid != asidInvalid) {
+            if (frame_asid != asid) {
                 current_syscall_error.type = seL4_InvalidCapability;
                 current_syscall_error.invalidCapNumber = 1;
 
@@ -1044,7 +1062,7 @@ exception_t decodeX86FrameInvocation(
         case X86_SmallPage: {
             create_mapping_pte_return_t map_ret;
 
-            map_ret = createSafeMappingEntries_PTE(paddr, vaddr, vmRights, vmAttr, vspace);
+            map_ret = createSafeMappingEntries_PTE(paddr, vaddr, vmRights, vmAttr, vspace, frame_asid);
             if (map_ret.status != EXCEPTION_NONE) {
                 return map_ret.status;
             }
@@ -1057,7 +1075,7 @@ exception_t decodeX86FrameInvocation(
         case X86_LargePage: {
             create_mapping_pde_return_t map_ret;
 
-            map_ret = createSafeMappingEntries_PDE(paddr, vaddr, vmRights, vmAttr, vspace);
+            map_ret = createSafeMappingEntries_PDE(paddr, vaddr, vmRights, vmAttr, vspace, frame_asid);
             if (map_ret.status != EXCEPTION_NONE) {
                 return map_ret.status;
             }
@@ -1067,7 +1085,7 @@ exception_t decodeX86FrameInvocation(
         }
 
         default: {
-            return decodeX86ModeMapPage(invLabel, frameSize, cte, cap, vspace, vaddr, paddr, vmRights, vmAttr);
+            return decodeX86ModeMapPage(invLabel, frameSize, cte, cap, vspace, vaddr, paddr, vmRights, vmAttr, frame_asid);
         }
         }
 

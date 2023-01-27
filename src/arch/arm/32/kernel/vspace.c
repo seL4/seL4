@@ -1561,7 +1561,7 @@ typedef struct create_mappings_pde_return create_mappings_pde_return_t;
 static create_mappings_pte_return_t
 createSafeMappingEntries_PTE
 (paddr_t base, word_t vaddr, vm_page_size_t frameSize,
- vm_rights_t vmRights, vm_attributes_t attr, pde_t *pd)
+ vm_rights_t vmRights, vm_attributes_t attr, pde_t *pd, asid_t frame_asid)
 {
 
     create_mappings_pte_return_t ret;
@@ -1607,6 +1607,17 @@ createSafeMappingEntries_PTE
             return ret;
         }
 
+        /* Check that we are not overwriting an existing mapping */
+        if (pte_ptr_get_pteType(ret.pte_entries.base) != pte_pte_invalid) {
+            paddr_t pte_paddr = pte_pte_small_ptr_get_address(ret.pte_entries.base);
+            if (pte_paddr && frame_asid == asidInvalid) {
+                userError("Virtual address already mapped");
+                current_syscall_error.type = seL4_DeleteFirst;
+                ret.status = EXCEPTION_SYSCALL_ERROR;
+                return ret;
+            }  
+        }
+
         ret.status = EXCEPTION_NONE;
         return ret;
 
@@ -1649,6 +1660,17 @@ createSafeMappingEntries_PTE
             }
         }
 
+        /* Check that we are not overwriting an existing mapping */
+        if (pte_ptr_get_pteType(ret.pte_entries.base) != pte_pte_invalid) {
+            paddr_t pte_paddr = pte_pte_large_ptr_get_address(ret.pte_entries.base);
+            if (pte_paddr && frame_asid == asidInvalid) {
+                userError("Virtual address already mapped");
+                current_syscall_error.type = seL4_DeleteFirst;
+                ret.status = EXCEPTION_SYSCALL_ERROR;
+                return ret;
+            }
+        }
+
         ret.status = EXCEPTION_NONE;
         return ret;
 
@@ -1661,7 +1683,7 @@ createSafeMappingEntries_PTE
 static create_mappings_pde_return_t
 createSafeMappingEntries_PDE
 (paddr_t base, word_t vaddr, vm_page_size_t frameSize,
- vm_rights_t vmRights, vm_attributes_t attr, pde_t *pd)
+ vm_rights_t vmRights, vm_attributes_t attr, pde_t *pd, asid_t frame_asid)
 {
 
     create_mappings_pde_return_t ret;
@@ -1698,6 +1720,18 @@ createSafeMappingEntries_PDE
             return ret;
         }
 
+        /* Check that we are not overwriting an existing mapping */
+        if (pde_ptr_get_pdeType(ret.pde_entries.base) == pde_pde_section) {
+            paddr_t pde_paddr = pde_pde_section_ptr_get_address(ret.pde_entries.base); 
+            if (pde_paddr && frame_asid == asidInvalid) {
+                userError("Virtual address already mapped");
+                current_syscall_error.type = seL4_DeleteFirst;
+                ret.status = EXCEPTION_SYSCALL_ERROR;
+                return ret;
+            }
+        }
+
+
         ret.status = EXCEPTION_NONE;
         return ret;
 
@@ -1727,6 +1761,17 @@ createSafeMappingEntries_PDE
                 ret.status = EXCEPTION_SYSCALL_ERROR;
 
                 return ret;
+            }
+
+            /* Check that we are not overwriting an existing mapping */
+            if (pde_ptr_get_pdeType(ret.pde_entries.base) == pde_pde_section) {
+                paddr_t pde_paddr = pde_pde_section_ptr_get_address(&ret.pde_entries.base[i]); 
+                if (pde_paddr && frame_asid == asidInvalid) {
+                    userError("Virtual address already mapped");
+                    current_syscall_error.type = seL4_DeleteFirst;
+                    ret.status = EXCEPTION_SYSCALL_ERROR;
+                    return ret;
+                }
             }
         }
 
@@ -2238,7 +2283,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
         paddr_t capFBasePtr;
         cap_t pdCap;
         pde_t *pd;
-        asid_t asid;
+        asid_t asid, frame_asid;
         vm_rights_t capVMRights, vmRights;
         vm_page_size_t frameSize;
         vm_attributes_t attr;
@@ -2271,9 +2316,10 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
         pd = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(
                          pdCap));
         asid = cap_page_directory_cap_get_capPDMappedASID(pdCap);
+        frame_asid = generic_frame_cap_get_capFMappedASID(cap);
 
         if (generic_frame_cap_get_capFIsMapped(cap)) {
-            if (generic_frame_cap_get_capFMappedASID(cap) != asid) {
+            if (frame_asid != asid) {
                 current_syscall_error.type = seL4_InvalidCapability;
                 current_syscall_error.invalidCapNumber = 1;
 
@@ -2344,7 +2390,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
             create_mappings_pte_return_t map_ret;
             map_ret = createSafeMappingEntries_PTE(capFBasePtr, vaddr,
                                                    frameSize, vmRights,
-                                                   attr, pd);
+                                                   attr, pd, frame_asid);
             if (unlikely(map_ret.status != EXCEPTION_NONE)) {
 #ifdef CONFIG_PRINTING
                 if (current_syscall_error.type == seL4_DeleteFirst) {
@@ -2362,7 +2408,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
             create_mappings_pde_return_t map_ret;
             map_ret = createSafeMappingEntries_PDE(capFBasePtr, vaddr,
                                                    frameSize, vmRights,
-                                                   attr, pd);
+                                                   attr, pd, frame_asid);
             if (unlikely(map_ret.status != EXCEPTION_NONE)) {
 #ifdef CONFIG_PRINTING
                 if (current_syscall_error.type == seL4_DeleteFirst) {
