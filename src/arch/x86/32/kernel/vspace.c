@@ -651,7 +651,7 @@ bool_t modeUnmapPage(vm_page_size_t page_size, vspace_root_t *vroot, vptr_t vadd
 }
 
 exception_t decodeX86ModeMapPage(word_t invLabel, vm_page_size_t page_size, cte_t *cte, cap_t cap,
-                                 vspace_root_t *vroot, vptr_t vaddr, paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t vm_attr)
+                                 vspace_root_t *vroot, vptr_t vaddr, paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t vm_attr, asid_t frame_asid)
 {
     fail("Invalid Page type");
 }

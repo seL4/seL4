@@ -1562,13 +1562,17 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
         frame_asid = cap_frame_cap_get_capFMappedASID(cap);
 
         if (frame_asid != asidInvalid) {
+            /* The invoked frame cap is currently mapped in a different vspace */
             if (frame_asid != asid) {
                 userError("ARMPageMap: Attempting to remap a frame that does not belong to the passed address space");
                 current_syscall_error.type = seL4_InvalidCapability;
                 current_syscall_error.invalidCapNumber = 1;
                 return EXCEPTION_SYSCALL_ERROR;
 
-            } else if (cap_frame_cap_get_capFMappedAddress(cap) != vaddr) {
+            }
+
+            /* The invoked frame cap is already mapped to a different address in this vspace  */
+            if (cap_frame_cap_get_capFMappedAddress(cap) != vaddr) {
                 userError("ARMPageMap: Attempting to map frame into multiple addresses");
                 current_syscall_error.type = seL4_InvalidArgument;
                 current_syscall_error.invalidArgumentNumber = 0;
@@ -1586,6 +1590,67 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
         cap = cap_frame_cap_set_capFMappedAddress(cap, vaddr);
 
         base = pptr_to_paddr((void *)cap_frame_cap_get_capFBasePtr(cap));
+
+        if (frameSize == ARMSmallPage) {
+            lookupPTSlot_ret_t lu_ret = lookupPTSlot(vspaceRoot, vaddr);
+
+            if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
+                current_syscall_error.type = seL4_FailedLookup;
+                current_syscall_error.failedLookupWasSource = false;
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+
+            /* Check that we are not overwriting an existing mapping */
+            if (frame_asid == asidInvalid && unlikely(pte_ptr_get_present(lu_ret.ptSlot))) {
+                userError("Virtual address already mapped");
+                current_syscall_error.type = seL4_DeleteFirst;
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+
+            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+            return performSmallPageInvocationMap(asid, cap, cte,
+                                                 makeUser3rdLevel(base, vmRights, attributes), lu_ret.ptSlot);
+
+        } else if (frameSize == ARMLargePage) {
+            lookupPDSlot_ret_t lu_ret = lookupPDSlot(vspaceRoot, vaddr);
+
+            if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
+                current_syscall_error.type = seL4_FailedLookup;
+                current_syscall_error.failedLookupWasSource = false;
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+
+            /* Check that we are not overwriting an existing mapping */
+            if (frame_asid == asidInvalid && unlikely(pde_pde_large_ptr_get_present(lu_ret.pdSlot))) {
+                userError("Virtual address already mapped");
+                current_syscall_error.type = seL4_DeleteFirst;
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+
+            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+            return performLargePageInvocationMap(asid, cap, cte,
+                                                 makeUser2ndLevel(base, vmRights, attributes), lu_ret.pdSlot);
+
+        } else {
+            lookupPUDSlot_ret_t lu_ret = lookupPUDSlot(vspaceRoot, vaddr);
+
+            if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
+                current_syscall_error.type = seL4_FailedLookup;
+                current_syscall_error.failedLookupWasSource = false;
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+
+            /* Check that we are not overwriting an existing mapping */
+            if (frame_asid == asidInvalid && unlikely(pude_pude_1g_ptr_get_present(lu_ret.pudSlot))) {
+                userError("Virtual address already mapped");
+                current_syscall_error.type = seL4_DeleteFirst;
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+
+            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+            return performHugePageInvocationMap(asid, cap, cte,
+                                                makeUser1stLevel(base, vmRights, attributes), lu_ret.pudSlot);
+        }
 
         lookupPTSlot_ret_t lu_ret = lookupPTSlot(vspaceRoot, vaddr);
         if (unlikely(lu_ret.ptBitsLeft != pageBitsForSize(frameSize))) {
