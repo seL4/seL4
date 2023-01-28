@@ -1770,7 +1770,7 @@ createSafeMappingEntries_PDE
 
         /* Check that we are not overwriting an existing mapping */
         if (pde_ptr_get_pdeType(ret.pde_entries.base) == pde_pde_section) {
-            paddr_t pde_paddr = pde_pde_section_ptr_get_address(&ret.pde_entries.base[i]);
+            paddr_t pde_paddr = pde_pde_section_ptr_get_address(ret.pde_entries.base);
             if (pde_paddr && frame_asid == asidInvalid) {
                 userError("Virtual address already mapped");
                 current_syscall_error.type = seL4_DeleteFirst;
