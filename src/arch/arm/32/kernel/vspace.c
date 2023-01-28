@@ -1615,7 +1615,7 @@ createSafeMappingEntries_PTE
                 current_syscall_error.type = seL4_DeleteFirst;
                 ret.status = EXCEPTION_SYSCALL_ERROR;
                 return ret;
-            }  
+            }
         }
 
         ret.status = EXCEPTION_NONE;
@@ -1662,7 +1662,7 @@ createSafeMappingEntries_PTE
 
         /* Check that we are not overwriting an existing mapping */
         if (pte_ptr_get_pteType(ret.pte_entries.base) != pte_pte_invalid) {
-#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT   
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
             paddr_t pte_paddr = pte_pte_large_ptr_get_address(ret.pte_entries.base);
 #else
             paddr_t pte_paddr = pte_pte_small_ptr_get_address(ret.pte_entries.base);
@@ -1726,7 +1726,7 @@ createSafeMappingEntries_PDE
 
         /* Check that we are not overwriting an existing mapping */
         if (pde_ptr_get_pdeType(ret.pde_entries.base) == pde_pde_section) {
-            paddr_t pde_paddr = pde_pde_section_ptr_get_address(ret.pde_entries.base); 
+            paddr_t pde_paddr = pde_pde_section_ptr_get_address(ret.pde_entries.base);
             if (pde_paddr && frame_asid == asidInvalid) {
                 userError("Virtual address already mapped");
                 current_syscall_error.type = seL4_DeleteFirst;
@@ -1766,16 +1766,16 @@ createSafeMappingEntries_PDE
 
                 return ret;
             }
+        }
 
-            /* Check that we are not overwriting an existing mapping */
-            if (pde_ptr_get_pdeType(ret.pde_entries.base) == pde_pde_section) {
-                paddr_t pde_paddr = pde_pde_section_ptr_get_address(&ret.pde_entries.base[i]); 
-                if (pde_paddr && frame_asid == asidInvalid) {
-                    userError("Virtual address already mapped");
-                    current_syscall_error.type = seL4_DeleteFirst;
-                    ret.status = EXCEPTION_SYSCALL_ERROR;
-                    return ret;
-                }
+        /* Check that we are not overwriting an existing mapping */
+        if (pde_ptr_get_pdeType(ret.pde_entries.base) == pde_pde_section) {
+            paddr_t pde_paddr = pde_pde_section_ptr_get_address(&ret.pde_entries.base[i]);
+            if (pde_paddr && frame_asid == asidInvalid) {
+                userError("Virtual address already mapped");
+                current_syscall_error.type = seL4_DeleteFirst;
+                ret.status = EXCEPTION_SYSCALL_ERROR;
+                return ret;
             }
         }
 

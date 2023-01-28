@@ -2200,7 +2200,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
                 current_syscall_error.failedLookupWasSource = false;
                 return EXCEPTION_SYSCALL_ERROR;
             }
-            
+
             /* Check that we are not overwriting an existing mapping */
             if (frame_asid == asidInvalid && unlikely(pude_pude_1g_ptr_get_present(lu_ret.pudSlot))) {
                 userError("Virtual address already mapped");

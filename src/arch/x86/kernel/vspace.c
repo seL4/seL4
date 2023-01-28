@@ -932,7 +932,7 @@ static create_mapping_pde_return_t createSafeMappingEntries_PDE(paddr_t base, wo
             current_syscall_error.type = seL4_DeleteFirst;
             ret.status = EXCEPTION_SYSCALL_ERROR;
             return ret;
-        }   
+        }
     }
 
     ret.pde = makeUserPDELargePage(base, attr, vmRights);
