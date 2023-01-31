@@ -11,6 +11,8 @@ cmake_script_build_kernel()
 
 set(KernelPlatform "imx6" CACHE STRING "")
 set(KernelVerificationBuild ON CACHE BOOL "")
+set(KernelBinaryVerificationBuild ON CACHE BOOL "")
+set(KernelOptimisationCloneFunctions OFF CACHE BOOL "")
 set(KernelIPCBufferLocation "threadID_register" CACHE STRING "")
 set(KernelMaxNumNodes "1" CACHE STRING "")
 set(KernelOptimisation "-O2" CACHE STRING "")
