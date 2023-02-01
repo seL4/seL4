@@ -233,6 +233,13 @@ static BOOT_CODE bool_t try_init_kernel(
     /* If a DTB was provided, pass the data on as extra bootinfo */
     p_region_t dtb_p_reg = P_REG_EMPTY;
     if (dtb_size > 0) {
+#ifdef CONFIG_PLAT_ROCKETCHIP_ZCU102
+        /* The softcore rocketchip instantiation doesn't work well when this
+         * page isn't reserved. Round up so the whole page is reserved to
+         * avoid the problem
+         */
+        dtb_size = ROUND_UP(dtb_size, PAGE_BITS);
+#endif
         paddr_t dtb_phys_end = dtb_phys_addr + dtb_size;
         if (dtb_phys_end < dtb_phys_addr) {
             /* An integer overflow happened in DTB end address calculation, the
