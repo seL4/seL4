@@ -865,7 +865,7 @@ typedef struct create_mapping_pte_return create_mapping_pte_return_t;
 
 static create_mapping_pte_return_t createSafeMappingEntries_PTE(paddr_t base, word_t vaddr, vm_rights_t vmRights,
                                                                 vm_attributes_t attr,
-                                                                vspace_root_t *vspace, asid_t frame_asid)
+                                                                vspace_root_t *vspace, bool_t is_remap)
 {
     create_mapping_pte_return_t ret;
     lookupPTSlot_ret_t          lu_ret;
@@ -880,7 +880,7 @@ static create_mapping_pte_return_t createSafeMappingEntries_PTE(paddr_t base, wo
     }
 
     /* Check that we are not overwriting an existing mapping */
-    if (pte_ptr_get_present(lu_ret.ptSlot) && frame_asid == asidInvalid) {
+    if (pte_ptr_get_present(lu_ret.ptSlot) && !is_remap) {
         userError("Virtual address already mapped");
         current_syscall_error.type = seL4_DeleteFirst;
         ret.status = EXCEPTION_SYSCALL_ERROR;
@@ -902,7 +902,7 @@ typedef struct create_mapping_pde_return create_mapping_pde_return_t;
 
 static create_mapping_pde_return_t createSafeMappingEntries_PDE(paddr_t base, word_t vaddr, vm_rights_t vmRights,
                                                                 vm_attributes_t attr,
-                                                                vspace_root_t *vspace, asid_t frame_asid)
+                                                                vspace_root_t *vspace, bool_t is_remap)
 {
     create_mapping_pde_return_t ret;
     lookupPDSlot_ret_t          lu_ret;
@@ -927,7 +927,7 @@ static create_mapping_pde_return_t createSafeMappingEntries_PDE(paddr_t base, wo
 
     /* Check that we are not overwriting an existing mapping */
     if (pde_ptr_get_page_size(ret.pdSlot) == pde_pde_large) {
-        if (pde_pde_large_ptr_get_present(ret.pdSlot) && frame_asid == asidInvalid) {
+        if (pde_pde_large_ptr_get_present(ret.pdSlot) && !is_remap) {
             userError("Virtual address already mapped");
             current_syscall_error.type = seL4_DeleteFirst;
             ret.status = EXCEPTION_SYSCALL_ERROR;
@@ -963,6 +963,7 @@ exception_t decodeX86FrameInvocation(
         vm_attributes_t vmAttr;
         vm_page_size_t  frameSize;
         asid_t          asid, frame_asid;
+        bool_t          is_remap;
 
         if (length < 3 || current_extra_caps.excaprefs[0] == NULL) {
             current_syscall_error.type = seL4_TruncatedMessage;
@@ -1011,6 +1012,8 @@ exception_t decodeX86FrameInvocation(
 
                 return EXCEPTION_SYSCALL_ERROR;
             }
+
+            is_remap = true;
         } else {
             vtop = vaddr + BIT(pageBitsForSize(frameSize));
 
@@ -1022,6 +1025,8 @@ exception_t decodeX86FrameInvocation(
 
                 return EXCEPTION_SYSCALL_ERROR;
             }
+
+            is_remap = false;
         }
 
         {
@@ -1062,7 +1067,7 @@ exception_t decodeX86FrameInvocation(
         case X86_SmallPage: {
             create_mapping_pte_return_t map_ret;
 
-            map_ret = createSafeMappingEntries_PTE(paddr, vaddr, vmRights, vmAttr, vspace, frame_asid);
+            map_ret = createSafeMappingEntries_PTE(paddr, vaddr, vmRights, vmAttr, vspace, is_remap);
             if (map_ret.status != EXCEPTION_NONE) {
                 return map_ret.status;
             }
@@ -1075,7 +1080,7 @@ exception_t decodeX86FrameInvocation(
         case X86_LargePage: {
             create_mapping_pde_return_t map_ret;
 
-            map_ret = createSafeMappingEntries_PDE(paddr, vaddr, vmRights, vmAttr, vspace, frame_asid);
+            map_ret = createSafeMappingEntries_PDE(paddr, vaddr, vmRights, vmAttr, vspace, is_remap);
             if (map_ret.status != EXCEPTION_NONE) {
                 return map_ret.status;
             }
@@ -1085,7 +1090,7 @@ exception_t decodeX86FrameInvocation(
         }
 
         default: {
-            return decodeX86ModeMapPage(invLabel, frameSize, cte, cap, vspace, vaddr, paddr, vmRights, vmAttr, frame_asid);
+            return decodeX86ModeMapPage(invLabel, frameSize, cte, cap, vspace, vaddr, paddr, vmRights, vmAttr, is_remap);
         }
         }
 

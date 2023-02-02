@@ -2078,6 +2078,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
         vm_page_size_t frameSize;
         vm_attributes_t attributes;
         findVSpaceForASID_ret_t find_ret;
+        bool_t is_remap;
 
         if (unlikely(length < 3 || current_extra_caps.excaprefs[0] == NULL)) {
             current_syscall_error.type = seL4_TruncatedMessage;
@@ -2139,12 +2140,16 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
                 current_syscall_error.invalidArgumentNumber = 2;
                 return EXCEPTION_SYSCALL_ERROR;
             }
+
+            is_remap = true;
         } else {
             if (unlikely(vaddr + BIT(pageBitsForSize(frameSize)) - 1 > USER_TOP)) {
                 current_syscall_error.type = seL4_InvalidArgument;
                 current_syscall_error.invalidArgumentNumber = 0;
                 return EXCEPTION_SYSCALL_ERROR;
             }
+
+            is_remap = false;
         }
 
         cap = cap_frame_cap_set_capFMappedASID(cap, asid);
@@ -2162,7 +2167,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
             }
 
             /* Check that we are not overwriting an existing mapping */
-            if (frame_asid == asidInvalid && unlikely(pte_ptr_get_present(lu_ret.ptSlot))) {
+            if (!is_remap && unlikely(pte_ptr_get_present(lu_ret.ptSlot))) {
                 userError("Virtual address already mapped");
                 current_syscall_error.type = seL4_DeleteFirst;
                 return EXCEPTION_SYSCALL_ERROR;
@@ -2182,7 +2187,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
             }
 
             /* Check that we are not overwriting an existing mapping */
-            if (frame_asid == asidInvalid && unlikely(pde_pde_large_ptr_get_present(lu_ret.pdSlot))) {
+            if (!is_remap && unlikely(pde_pde_large_ptr_get_present(lu_ret.pdSlot))) {
                 userError("Virtual address already mapped");
                 current_syscall_error.type = seL4_DeleteFirst;
                 return EXCEPTION_SYSCALL_ERROR;
@@ -2202,7 +2207,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
             }
 
             /* Check that we are not overwriting an existing mapping */
-            if (frame_asid == asidInvalid && unlikely(pude_pude_1g_ptr_get_present(lu_ret.pudSlot))) {
+            if (!is_remap && unlikely(pude_pude_1g_ptr_get_present(lu_ret.pudSlot))) {
                 userError("Virtual address already mapped");
                 current_syscall_error.type = seL4_DeleteFirst;
                 return EXCEPTION_SYSCALL_ERROR;
