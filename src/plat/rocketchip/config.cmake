@@ -14,7 +14,9 @@ if(KernelPlatformRocketchip)
     config_set(KernelRiscVPlatform RISCV_PLAT "rocketchip")
     config_set(KernelPlatformFirstHartID FIRST_HART_ID 0)
     config_set(KernelOpenSBIPlatform OPENSBI_PLATFORM "generic")
-    list(APPEND KernelDTSList "tools/dts/rocketchip.dts")
+    list(
+        APPEND KernelDTSList "tools/dts/rocketchip.dts" "src/plat/rocketchip/overlay-rocketchip.dts"
+    )
     # This is an experimental platform that supports accessing peripherals, but
     # the status of support for external interrupts via a PLIC is unclear and
     # may differ depending on the version that is synthesized. Declaring no
