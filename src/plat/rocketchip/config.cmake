@@ -32,13 +32,20 @@ if(KernelPlatformRocketchip)
     config_set(${cmake_config} ${c_config} ON)
 
     config_set(KernelPlatformFirstHartID FIRST_HART_ID 0)
-    config_set(KernelOpenSBIPlatform OPENSBI_PLATFORM "generic")
     list(APPEND KernelDTSList "tools/dts/rocketchip.dts")
     # The Rocketchip-ZCU102 is a softcore instantiation that runs on the ZCU102's
     # FPGA fabric. Information on generating and running seL4 on the platform can
     # be found at https://docs.sel4.systems/Hardware/
     if(KernelPlatformRocketchipZCU102)
+        # The rocket-fpga-zcu104 platform can be found at the following git repo:
+        # https://github.com/bao-project/opensbi/tree/bao/rocket
+        #
+        # In order for this to function, please ensure the bao-project/opensbi
+        # repo is added as a remote to the tools/opensbi project in the seL4 codebase
+        config_set(KernelOpenSBIPlatform OPENSBI_PLATFORM "rocket-fpga-zcu104")
         list(APPEND KernelDTSList "src/plat/rocketchip/overlay-rocketchip-zcu102.dts")
+    else()
+        config_set(KernelOpenSBIPlatform OPENSBI_PLATFORM "generic")
     endif()
     # This is an experimental platform that supports accessing peripherals, but
     # the status of support for external interrupts via a PLIC is unclear and
