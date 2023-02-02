@@ -5,6 +5,11 @@
  */
 
 / {
+	chosen {
+		seL4,kernel-devices =
+		    &{/soc/interrupt-controller@c000000};
+	};
+
 	/delete-node/ memory@80000000;
 
 	L6: memory@40000000 {

@@ -14,7 +14,8 @@
  * this driver is confirmed to be working on other platforms. */
 #if !defined(CONFIG_PLAT_HIFIVE) && \
     !defined(CONFIG_PLAT_POLARFIRE) && \
-    !defined(CONFIG_PLAT_QEMU_RISCV_VIRT)
+    !defined(CONFIG_PLAT_QEMU_RISCV_VIRT) && \
+    !defined(CONFIG_PLAT_ROCKETCHIP_ZCU102)
 #error "Check if this platform suppots a PLIC."
 #endif
 
