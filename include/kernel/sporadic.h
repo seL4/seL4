@@ -126,7 +126,7 @@ static inline bool_t refill_sufficient(sched_context_t *sc, ticks_t usage)
  */
 static inline bool_t refill_ready(sched_context_t *sc)
 {
-    return refill_head(sc)->rTime <= (NODE_STATE(ksCurTime) + getKernelWcetTicks());
+    return refill_head(sc)->rTime <= NODE_STATE(ksCurTime);
 }
 
 /*
