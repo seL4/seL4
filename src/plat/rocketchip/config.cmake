@@ -44,18 +44,23 @@ if(KernelPlatformRocketchip)
         # repo is added as a remote to the tools/opensbi project in the seL4 codebase
         config_set(KernelOpenSBIPlatform OPENSBI_PLATFORM "rocket-fpga-zcu104")
         list(APPEND KernelDTSList "src/plat/rocketchip/overlay-rocketchip-zcu102.dts")
+        # The zcu102 instantiation supports the PLIC and external interrupts
+        declare_default_headers(
+            TIMER_FREQUENCY 10000000 PLIC_MAX_NUM_INT 128
+            INTERRUPT_CONTROLLER drivers/irq/riscv_plic0.h
+        )
     else()
         config_set(KernelOpenSBIPlatform OPENSBI_PLATFORM "generic")
+        # This is an experimental platform that supports accessing peripherals, but
+        # the status of support for external interrupts via a PLIC is unclear and
+        # may differ depending on the version that is synthesized. Declaring no
+        # interrupts and using the dummy PLIC driver seems the best option for now
+        # to avoid confusion or even crashes.
+        declare_default_headers(
+            TIMER_FREQUENCY 10000000 PLIC_MAX_NUM_INT 0
+            INTERRUPT_CONTROLLER drivers/irq/riscv_plic_dummy.h
+        )
     endif()
-    # This is an experimental platform that supports accessing peripherals, but
-    # the status of support for external interrupts via a PLIC is unclear and
-    # may differ depending on the version that is synthesized. Declaring no
-    # interrupts and using the dummy PLIC driver seems the best option for now
-    # to avoid confusion or even crashes.
-    declare_default_headers(
-        TIMER_FREQUENCY 10000000 PLIC_MAX_NUM_INT 0
-        INTERRUPT_CONTROLLER drivers/irq/riscv_plic_dummy.h
-    )
 else()
     unset(KernelPlatformFirstHartID CACHE)
 endif()
