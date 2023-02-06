@@ -40,7 +40,7 @@ ERROR_CODE=$?
 if cmp $TMP_FILE $TARGET_FILE > /dev/null 2> /dev/null; then
     mv -f $TMP_FILE $TARGET_FILE
 else
-    rm -f $TMP_FILE
+    # rm -f $TMP_FILE
 fi
 
 # Return with the error code.

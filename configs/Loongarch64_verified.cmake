@@ -1,0 +1,29 @@
+#!/usr/bin/env -S cmake -P
+#
+# Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+# Copyright 2022, tyyteam
+#
+# SPDX-License-Identifier: GPL-2.0-only
+#
+
+# If this file is executed then build the kernel.elf and kernel_all_pp.c file
+include(${CMAKE_CURRENT_LIST_DIR}/../tools/helpers.cmake)
+cmake_script_build_kernel()
+
+set(KernelSel4Arch "loongarch64" CACHE STRING "")
+set(KernelPlatform "3A5000" CACHE STRING "")
+set(KernelPTLevels "3" CACHE STRING "")
+set(KernelVerificationBuild ON CACHE BOOL "")
+set(KernelMaxNumNodes "1" CACHE STRING "")
+set(KernelOptimisation "-O0" CACHE STRING "")
+set(KernelRetypeFanOutLimit "256" CACHE STRING "")
+set(KernelBenchmarks "none" CACHE STRING "")
+set(KernelDangerousCodeInjection OFF CACHE BOOL "")
+set(KernelFastpath ON CACHE BOOL "")
+set(KernelPrinting ON CACHE BOOL "")
+set(KernelNumDomains 16 CACHE STRING "")
+set(KernelMaxNumBootinfoUntypedCap 166 CACHE STRING "")
+set(KernelRootCNodeSizeBits 19 CACHE STRING "")
+set(KernelMaxNumBootinfoUntypedCaps 50 CACHE STRING "")
+set(KernelClzNoBuiltin ON CACHE BOOL "")
+set(KernelCtzNoBuiltin ON CACHE BOOL "")

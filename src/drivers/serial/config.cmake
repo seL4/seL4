@@ -44,3 +44,9 @@ register_driver(
     PREFIX src/drivers/serial
     CFILES "meson-gx-uart.c"
 )
+register_driver(
+    compatibility_strings "3A5000,loongson3A5000-uart"
+    PREFIX src/drivers/serial
+    CFILES "loongson3A5000-uart.c"
+)
+

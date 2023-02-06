@@ -193,6 +193,7 @@ devices:
       - ti,omap3-uart
       - xlnx,xuartps
       - ns16550a
+      - 3A5000,loongson3A5000-uart
     regions:
       - index: 0
         kernel: UART_PPTR

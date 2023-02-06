@@ -137,6 +137,16 @@ elseif(KernelArchRiscV)
 
     string(APPEND common_flags " -march=${_riscv_march} -mabi=${_riscv_mabi}")
 
+elseif(KernelArchLoongarch)
+
+    string(APPEND common_flags " -march=loongarch64 -mabi=lp64d -mtune=loongarch64")
+    if(KernelSel4ArchLoongarch64)
+        # nothing special
+        string(APPEND common_flags " -Wno-error=array-bounds")
+    else()
+        message(FATAL_ERROR "unknown Loongarch KernelSel4Arch '${KernelSel4Arch}'")
+    endif()
+
 else()
     message(FATAL_ERROR "unknown KernelArch '${KernelArch}'")
 endif()
@@ -303,6 +313,8 @@ elseif(KernelArchRiscV)
     #
     KernelCommonFlags(-mcmodel=medany -msmall-data-limit=1024)
 
+elseif(KernelArchLoongarch)
+    # do nothing
 else()
     message(FATAL_ERROR "unknown KernelArch '${KernelArch}'")
 endif()
@@ -326,8 +338,10 @@ if(KernelArchARM)
     include_directories(
         "include/arch/arm/armv/${KernelArmArmV}"
         "include/arch/arm/armv/${KernelArmArmV}/${KernelWordSize}"
-    )
+    )   
 endif()
+
+
 
 if(KernelArmMach STREQUAL "exynos")
     include_directories("include/plat/exynos_common/")
@@ -502,7 +516,6 @@ foreach(bf_dec ${bf_declarations})
             dummy_headers "${CMAKE_CURRENT_BINARY_DIR}/generated_prune/${bf_gen_dir}/${bf_target}"
     )
 endforeach()
-
 add_custom_command(
     OUTPUT ${dummy_headers}
     COMMAND
@@ -649,6 +662,8 @@ if(KernelArchARM)
     set(linker_source "src/arch/arm/common_arm.lds")
 elseif(KernelArchRiscV)
     set(linker_source "src/arch/riscv/common_riscv.lds")
+    elseif(KernelArchLoongarch)
+    set(linker_source "src/arch/loongarch/common_loongarch.lds")
 else()
     set(linker_source "src/plat/${KernelPlatform}/linker.lds")
 endif()

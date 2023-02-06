@@ -40,7 +40,6 @@ void activateThread(void)
         assert(thread_state_get_tsType(NODE_STATE(ksCurThread)->tcbState) == ThreadState_Running);
     }
 #endif
-
     switch (thread_state_get_tsType(NODE_STATE(ksCurThread)->tcbState)) {
     case ThreadState_Running:
 #ifdef CONFIG_VTX
@@ -433,6 +432,7 @@ void chooseThread(void)
         assert(refill_ready(thread->tcbSchedContext));
 #endif
         switchToThread(thread);
+        // printf("======================[Func chooseThread] hit!\n");
     } else {
         switchToIdleThread();
     }
@@ -453,6 +453,7 @@ void switchToThread(tcb_t *thread)
     Arch_switchToThread(thread);
     tcbSchedDequeue(thread);
     NODE_STATE(ksCurThread) = thread;
+    // printf("new thread`s tcb state: %llu\n",thread->tcbState.words[0]);
 }
 
 void switchToIdleThread(void)

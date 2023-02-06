@@ -55,7 +55,6 @@ def main(args: argparse.Namespace):
     schema = yaml.load(args.hardware_schema, Loader=yaml.FullLoader)
     validate_rules(rules, schema)
     hw_yaml = HardwareYaml(rules, cfg)
-
     arg_dict = vars(args)
     for t in sorted(OUTPUTS.keys()):
         if arg_dict[t]:

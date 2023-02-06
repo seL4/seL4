@@ -92,7 +92,7 @@
 #endif
 /** MODIFIES: */
 void __builtin_unreachable(void);
-#define UNREACHABLE()  __builtin_unreachable()
+#define UNREACHABLE()  do { while(1); __builtin_unreachable(); } while (0)
 #define MAY_ALIAS    __attribute__((may_alias))
 
 #define OFFSETOF(type, member)   __builtin_offsetof(type, member)

@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 from typing import List, Set
+
 from hardware.memory import Region
 
 
@@ -108,6 +109,29 @@ class RISCVConfig(Config):
             return self.MEGAPAGE_BITS_RV64
         raise ValueError('Unsupported sel4arch "{}" specified.'.format(self.sel4arch))
 
+class LoongarchConfig(Config):
+    ''' Config class for Loongarch '''
+    arch = 'loongarch'
+    # RESERVED_SPACE = 2**26  # 2^26= 64 MiByte
+    RESERVED_SPACE = 0
+
+    def get_bootloader_reserve(self) -> int:
+        return self.RESERVED_SPACE
+
+    def align_memory(self, regions: Set[Region]) -> List[Region]:
+        ''' loongarch wants physBase to be the physical load address of the kernel. '''
+        ret = sorted(regions)
+        extra_reserved = set()
+
+        physBase = ret[0].base
+
+        resv = Region(ret[0].base, self.get_bootloader_reserve())
+        extra_reserved.add(resv)
+        ret[0].base += self.get_bootloader_reserve()
+        ret[0].size -= self.get_bootloader_reserve()
+        
+        return ret, extra_reserved, physBase   
+
 
 def get_arch_config(sel4arch: str, addrspace_max: int) -> Config:
     ''' Return an appropriate Config object for the given architecture '''
@@ -115,5 +139,7 @@ def get_arch_config(sel4arch: str, addrspace_max: int) -> Config:
         return ARMConfig(sel4arch, addrspace_max)
     elif sel4arch in ['riscv32', 'riscv64']:
         return RISCVConfig(sel4arch, addrspace_max)
+    elif sel4arch in ['loongarch64']:
+        return LoongarchConfig(sel4arch, addrspace_max)
     else:
         raise ValueError('Unsupported sel4arch "{}" specified.'.format(sel4arch))

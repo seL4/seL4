@@ -69,7 +69,6 @@ void NORETURN fastpath_call(word_t cptr, word_t msgInfo)
         slowpath(SysCall);
     }
 #endif
-
     /* Get destination thread.*/
     newVTable = TCB_PTR_CTE_PTR(dest, tcbVTable)->cap;
 
@@ -117,6 +116,10 @@ void NORETURN fastpath_call(word_t cptr, word_t msgInfo)
 
 #ifdef CONFIG_ARCH_RISCV
     /* Get HW ASID */
+    stored_hw_asid.words[0] = cap_page_table_cap_get_capPTMappedASID(newVTable);
+#endif
+
+#ifdef CONFIG_ARCH_LOONGARCH
     stored_hw_asid.words[0] = cap_page_table_cap_get_capPTMappedASID(newVTable);
 #endif
 
@@ -386,6 +389,10 @@ void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo)
 #endif
 
 #ifdef CONFIG_ARCH_RISCV
+    stored_hw_asid.words[0] = cap_page_table_cap_get_capPTMappedASID(newVTable);
+#endif
+
+#ifdef CONFIG_ARCH_LOONGARCH
     stored_hw_asid.words[0] = cap_page_table_cap_get_capPTMappedASID(newVTable);
 #endif
 

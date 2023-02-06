@@ -1,0 +1,64 @@
+/*
+ * Copyright 2022, tyyteam(Qingtao Liu, Yang Lei, Yang Chen)
+ * qtliu@mail.ustc.edu.cn, le24@mail.ustc.edu.cn, chenyangcs@mail.ustc.edu.cn
+ * 
+ * Derived from:
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+#pragma once
+
+#include <config.h>
+
+#define TIMER_CLOCK_HZ ULL_CONST(@CONFIGURE_TIMER_FREQUENCY@)
+
+#include <machine/interrupt.h>
+
+/*
+ * On LoongArch we have multiple types of interrupts for each core: one Inter-Processor Interrupt (IPI),
+ * one Timer Interrupt (TI), one Performance Monitor Counter Overflow Interrupt (PMCOV),
+ * eight HardWare Interrupts (HWI0-HWI7), and two SoftWare Interrupts (SWI0-SWI1). 
+ * 
+ * Currently, for the external interrupts, qemu only support extend io interrupt controller 
+ * simulating Loongson3A5000, which are mapped to HWI0~HWI7.
+ * 
+ * This file will be updated to support more external interrupts.
+ * 
+ * See https://github.com/loongson and https://github.com/loongarch64 for more information.
+ */
+enum IRQConstants {
+    KERNEL_SW_IRQ0=0,
+    KERNEL_SW_IRQ1=1,
+
+    HW_IRQ_OFFSET = 1,
+    HW_IRQ0=2,
+    HW_IRQ1=3,
+    HW_IRQ2=4,
+    HW_IRQ3=5,
+    HW_IRQ4=6,
+    HW_IRQ5=7,
+    HW_IRQ6=8,
+    HW_IRQ7=9,
+    HW_MAX_IRQ = HW_IRQ_OFFSET + (@CONFIGURE_HW_MAX_NUM_INT@),
+    
+    KERNEL_PMC_IRQ=10,
+    KERNEL_TIMER_IRQ=11,
+    
+#ifdef ENABLE_SMP_SUPPORT
+    INTERRUPT_IPI=12,
+    maxIRQ=INTERRUPT_IPI
+#else
+    maxIRQ = KERNEL_TIMER_IRQ
+#endif
+
+} platform_interrupt_t;
+
+enum irqNumbers {
+    irqInvalid = 255
+};
+
+#define IRQ_CNODE_SLOT_BITS (@CONFIGURE_IRQ_SLOT_BITS@)
+
+#include <@CONFIGURE_INTERRUPT_CONTROLLER@>

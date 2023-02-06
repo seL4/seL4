@@ -18,7 +18,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/../tools/helpers.cmake)
 
 # Create and set all of the Kernel config options that can be derived from the
 # seL4 arch which is one of the following:
-# aarch32, aarch64, arm_hyp, riscv32, riscv64, x86_64, ia32
+# aarch32, aarch64, arm_hyp, riscv32, riscv64, x86_64, ia32, loongarch64
 # This macro is intended to be called from within a platform config.
 macro(declare_seL4_arch sel4_arch)
     set(KernelSel4Arch "${sel4_arch}" CACHE STRING "" FORCE)
@@ -33,8 +33,9 @@ macro(declare_seL4_arch sel4_arch)
         "riscv64;KernelSel4ArchRiscV64;ARCH_RISCV64"
         "x86_64;KernelSel4ArchX86_64;ARCH_X86_64"
         "ia32;KernelSel4ArchIA32;ARCH_IA32"
+        "loongarch64;KernelSel4ArchLoongarch64;ARCH_LOONGARCH64"
     )
-
+    
     if(KernelSel4ArchArmHyp)
         # arm-hyp is basically aarch32. This should be cleaned up and aligned
         # with other architectures, where hypervisor support is an additional
@@ -49,6 +50,7 @@ macro(declare_seL4_arch sel4_arch)
         "arm;KernelArchARM;ARCH_ARM;KernelSel4ArchAarch32 OR KernelSel4ArchAarch64"
         "riscv;KernelArchRiscV;ARCH_RISCV;KernelSel4ArchRiscV32 OR KernelSel4ArchRiscV64"
         "x86;KernelArchX86;ARCH_X86;KernelSel4ArchX86_64 OR KernelSel4ArchIA32"
+        "loongarch;KernelArchLoongarch;ARCH_LOONGARCH;KernelSel4ArchLoongarch64"
     )
 
     # Set kernel mode options
@@ -56,7 +58,7 @@ macro(declare_seL4_arch sel4_arch)
         config_set(KernelWordSize WORD_SIZE 32)
         set(Kernel64 OFF CACHE INTERNAL "")
         set(Kernel32 ON CACHE INTERNAL "")
-    elseif(KernelSel4ArchAarch64 OR KernelSel4ArchRiscV64 OR KernelSel4ArchX86_64)
+    elseif(KernelSel4ArchAarch64 OR KernelSel4ArchRiscV64 OR KernelSel4ArchX86_64 OR KernelSel4ArchLoongarch64)
         config_set(KernelWordSize WORD_SIZE 64)
         set(Kernel64 ON CACHE INTERNAL "")
         set(Kernel32 OFF CACHE INTERNAL "")
@@ -120,7 +122,7 @@ macro(declare_default_headers)
     cmake_parse_arguments(
         CONFIGURE
         ""
-        "TIMER_FREQUENCY;MAX_IRQ;NUM_PPI;PLIC_MAX_NUM_INT;INTERRUPT_CONTROLLER;TIMER;SMMU;CLK_SHIFT;CLK_MAGIC;KERNEL_WCET;TIMER_PRECISION;TIMER_OVERHEAD_TICKS;MAX_SID;MAX_CB"
+        "TIMER_FREQUENCY;MAX_IRQ;NUM_PPI;HW_MAX_NUM_INT;PLIC_MAX_NUM_INT;INTERRUPT_CONTROLLER;TIMER;SMMU;CLK_SHIFT;CLK_MAGIC;KERNEL_WCET;TIMER_PRECISION;TIMER_OVERHEAD_TICKS;MAX_SID;MAX_CB"
         ""
         ${ARGN}
     )

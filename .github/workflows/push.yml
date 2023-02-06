@@ -16,10 +16,10 @@ jobs:
     name: License Check
     runs-on: ubuntu-latest
     steps:
-    - uses: seL4/ci-actions/license-check@master
+    - uses: tyyteam/la-seL4-ci-actions/license-check@master
 
   links:
     name: Links
     runs-on: ubuntu-latest
     steps:
-      - uses: seL4/ci-actions/link-check@master
+      - uses: tyyteam/la-seL4-ci-actions/link-check@master

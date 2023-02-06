@@ -55,6 +55,7 @@ WORD_SIZE_BITS_ARCH = {
     "arm_hyp": 32,
     "riscv32": 32,
     "riscv64": 64,
+    "loongarch64": 64,
 }
 
 MESSAGE_REGISTERS_FOR_ARCH = {
@@ -66,6 +67,7 @@ MESSAGE_REGISTERS_FOR_ARCH = {
     "arm_hyp": 4,
     "riscv32": 4,
     "riscv64": 4,
+    "loongarch64": 4,
 }
 
 WORD_CONST_SUFFIX_BITS = {
@@ -366,6 +368,14 @@ def init_arch_types(wordsize):
             CapType("seL4_RISCV_ASIDControl", wordsize),
             CapType("seL4_RISCV_ASIDPool", wordsize),
             StructType("seL4_UserContext", wordsize * 32, wordsize),
+        ],
+        "loongarch64": [
+            Type("seL4_LOONGARCH_VMAttributes", wordsize, wordsize),
+            CapType("seL4_LOONGARCH_Page", wordsize),
+            CapType("seL4_LOONGARCH_PageTable", wordsize),
+            CapType("seL4_LOONGARCH_ASIDControl", wordsize),
+            CapType("seL4_LOONGARCH_ASIDPool", wordsize),
+            StructType("seL4_UserContext", wordsize * 31, wordsize),
         ]
     }
 

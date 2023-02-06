@@ -59,6 +59,8 @@ exception_t handleInterruptEntry(void)
     if (SMP_TERNARY(clh_is_self_in_queue(), 1)) {
 #endif
         schedule();
+        // int state = thread_state_get_tsType(NODE_STATE(ksCurThread)->tcbState);
+        // printf("[Func handleInterruptEntry] ksCurThread->tcbState: %d\n", state);
         activateThread();
 #ifdef CONFIG_KERNEL_MCS
     }

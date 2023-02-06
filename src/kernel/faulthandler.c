@@ -1,15 +1,15 @@
-/*
- * Copyright 2014, General Dynamics C4 Systems
- *
- * SPDX-License-Identifier: GPL-2.0-only
- */
+// /*
+//  * Copyright 2014, General Dynamics C4 Systems
+//  *
+//  * SPDX-License-Identifier: GPL-2.0-only
+//  */
 
-#include <api/failures.h>
-#include <kernel/cspace.h>
-#include <kernel/faulthandler.h>
-#include <kernel/thread.h>
-#include <machine/io.h>
-#include <arch/machine.h>
+// #include <api/failures.h>
+// #include <kernel/cspace.h>
+// #include <kernel/faulthandler.h>
+// #include <kernel/thread.h>
+// #include <machine/io.h>
+// #include <arch/machine.h>
 
 #ifdef CONFIG_KERNEL_MCS
 void handleFault(tcb_t *tptr)
@@ -21,11 +21,11 @@ void handleFault(tcb_t *tptr)
     }
 }
 
-void handleTimeout(tcb_t *tptr)
-{
-    assert(validTimeoutHandler(tptr));
-    sendFaultIPC(tptr, TCB_PTR_CTE_PTR(tptr, tcbTimeoutHandler)->cap, false);
-}
+// void handleTimeout(tcb_t *tptr)
+// {
+//     assert(validTimeoutHandler(tptr));
+//     sendFaultIPC(tptr, TCB_PTR_CTE_PTR(tptr, tcbTimeoutHandler)->cap, false);
+// }
 
 bool_t sendFaultIPC(tcb_t *tptr, cap_t handlerCap, bool_t can_donate)
 {

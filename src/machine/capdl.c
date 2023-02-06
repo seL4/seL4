@@ -506,7 +506,7 @@ void print_object(cap_t cap)
         break;
     }
     default:
-        print_object_arch(cap);
+        // print_object_arch(cap);
         break;
     }
 }
