@@ -128,7 +128,7 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
 
     register word_t badge_reg asm("r0") = badge;
     register word_t msgInfo_reg asm("r1") = msgInfo;
-    register word_t cur_thread_reg asm("r2") = (word_t)cur_thread;
+    register word_t cur_thread_reg asm("r2") = (word_t)cur_thread->tcbArch.tcbContext.registers;
 
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         asm volatile( /* r0 and r1 should be preserved */
