@@ -2,6 +2,7 @@
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
  * Copyright 2021, HENSOLDT Cyber
+ * Copyright 2023, DornerWorks
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -90,6 +91,12 @@ SECTIONS
 
         /* large data such as the globals frame and global PD */
         *(.bss.aligned)
+#if defined(CONFIG_PLAT_ROCKETCHIP_ZCU102)
+        /* softcore instantiation on ZCU102 needs these bytes to
+         * avoid userspace issues
+         */
+        . = . + 8;
+#endif
     }
 
     . = ALIGN(4K);
