@@ -300,6 +300,10 @@ struct tcb {
     struct tcb *tcbEPNext;
     struct tcb *tcbEPPrev;
 
+#ifdef CONFIG_KERNEL_MCS
+    /* if tcb is in a call, pointer to the reply object, 1 word */
+    reply_t *tcbReply;
+#endif
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
     /* 16 bytes (12 bytes aarch32) */
     benchmark_util_t benchmark;
