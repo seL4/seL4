@@ -4,28 +4,19 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-from typing import List, Set
-
+from __future__ import annotations
 import hardware
-from hardware.config import Config
 from hardware.device import WrappedNode
 from hardware.fdt import FdtParser
 from hardware.memory import Region
-from hardware.utils.rule import KernelRegionGroup
+from hardware.utils.rule import HardwareYaml, KernelRegionGroup
 
+# "annotations" exists in __future__ since 3.7.0b1, but even in 3.10 the
+# decision to make it mandatory has been postponed.
+import sys
+assert sys.version_info >= (3, 7)
 
-def get_memory_regions(tree: FdtParser):
-    ''' Get all regions with device_type = memory in the tree '''
-    regions = set()
-
-    def visitor(node: WrappedNode):
-        if node.has_prop('device_type') and node.get_prop('device_type').strings[0] == 'memory':
-            regions.update(node.get_regions())
-    tree.visit(visitor)
-    return regions
-
-
-def merge_memory_regions(regions: Set[Region]) -> Set[Region]:
+def merge_regions(regions: Set[Region]) -> Set[Region]:
     ''' Check all region and merge adjacent ones '''
     all_regions = [dict(idx=idx, region=region, right_adj=None, left_adj=None)
                    for (idx, region) in enumerate(regions)]
@@ -55,60 +46,116 @@ def merge_memory_regions(regions: Set[Region]) -> Set[Region]:
     return contiguous_regions
 
 
-def parse_reserved_regions(node: WrappedNode) -> Set[Region]:
-    ''' Parse a reserved-memory node, looking for regions that are
-        unusable by OS (e.g. reserved for firmware/bootloader) '''
-    if node is None:
-        return set()
+def carve_out_region(regions: Set[Region], reserved_reg: Region) -> Set[Region]:
+    '''
+    Returns a set of regions with the reserved area carved out. None of the
+    regions in the returned set will overlap with the reserved area.
+    '''
+    ret_regions = set()
 
-    ret = set()
-    for child in node:
-        if child.has_prop('reg') and child.has_prop('no-map'):
-            ret.update(child.get_regions())
-    return ret
+    for r in regions:
+        reg_list = r.reserve(reserved_reg)
+        ret_regions.update(reg_list)
 
-
-def reserve_regions(regions: Set[Region], reserved: Set[Region]) -> Set[Region]:
-    ''' Given a set of regions, and a set of reserved regions,
-        return a new set that is the first set of regions minus the second set. '''
-    ret = set(regions)
-
-    while len(reserved) > 0:
-        reserve = reserved.pop()
-        new_ret = set()
-        for el in ret:
-            r = el.reserve(reserve)
-            new_ret.update(r)
-        ret = new_ret
-    return ret
+    return ret_regions
 
 
-def get_physical_memory(tree: FdtParser, config: Config) -> List[Region]:
-    ''' returns a list of regions representing physical memory as used by the kernel '''
-    regions = merge_memory_regions(get_memory_regions(tree))
-    reserved = parse_reserved_regions(tree.get_path('/reserved-memory'))
-    regions = reserve_regions(regions, reserved)
-    regions, extra_reserved, physBase = config.align_memory(regions)
+def get_phys_mem_regions(tree: FdtParser, hw_yaml: HardwareYaml) \
+        -> (List[Region], List[Region], int):
+    '''
+    Returns a list of regions representing physical memory as used by the kernel
+    '''
 
-    return regions, reserved.union(extra_reserved), physBase
+    # Using a set instead of a list as the advantage that duplicate regions are
+    # ignored automatically when adding them
+    mem_regions = set()
+    reserved_regions = set()
 
+    # Get all regions with 'device_type = memory' in the tree.
+    def visitor(node: WrappedNode):
+        if node.has_prop('device_type') and node.get_prop('device_type').strings[0] == 'memory':
+            # ToDo: Check if any regions are beyond the physical memory range
+            #       we support (config.addrspace_max) and drop these ranges.
+            mem_regions.update(node.get_regions())
 
-def get_addrspace_exclude(regions: List[Region], config: Config):
-    ''' Returns a list of regions that represents the inverse of the given region list. '''
-    ret = set()
-    # We can't create untypeds that exceed the addrspace_max, so we round down to the smallest
-    # untyped size alignment so that the kernel will be able to turn the entire range into untypeds.
-    as_max = hardware.utils.align_down(config.addrspace_max,
-                                       config.get_smallest_kernel_object_alignment())
-    ret.add(Region(0, as_max))
+    tree.visit(visitor)
 
-    for reg in regions:
-        if type(reg) == KernelRegionGroup:
-            if reg.user_ok:
+    # Check device tree for reserved memory that we can't use.
+    node = tree.get_path('/reserved-memory')
+    if node:
+        for child in node:
+            if not child.has_prop('reg') or not child.has_prop('no-map'):
                 continue
-        new_ret = set()
-        for el in ret:
-            new_ret.update(el.reserve(reg))
+            tree_reserved_regs = child.get_regions()
+            if tree_reserved_regs:
+                reserved_regions.update(tree_reserved_regs)
+                # carve out all reserved regions from the memory
+                for r in tree_reserved_regs:
+                    mem_regions = carve_out_region(mem_regions, r)
 
-        ret = new_ret
-    return sorted(ret, key=lambda a: a.base)
+    # Merge adjacent regions and create a properly ordered list from the
+    # available memory regions set
+    mem_region_list = sorted(merge_regions(mem_regions),
+                             key=lambda r: r.base)
+
+    # Check config for memory alignment and reservation needs. Needs to be done
+    # after we have removed the reserved region from the device tree, because we
+    # also get 'kernel_phys_base' here. And once we have that, the memory
+    # regions can't the modified any longer.
+    # By convention, the first region holds the kernel image. But there is no
+    # strict requirement that it must be in the first region, any region would
+    # do. An exception is thrown if the region is too small to satisfy the
+    # kernel's alignment requirement. Currently there is no solution for this,
+    # so this must be solved by the first platform that runs into this problem.
+    # During the boot process, the kernel will mark its own memory as reserved,
+    # so there is no need to split the region here in a part before the kernel
+    # and a part that has the kernel in the beginning.
+    # Unfortunately, we do not know the kernel size here, so there is no
+    # guarantee the kernel really fits into that region. For now, we leave this
+    # issue to be resolved by the boot flow. Loading the ELF loader will fail
+    # anyway if there is not enough space.
+    kernel_phys_align = hw_yaml.config.get_kernel_phys_align()
+    if kernel_phys_align != 0:
+        # Align the first so that the ELF loader will be able to load the kernel
+        # into it. Will return the aligned memory region list, a set of any
+        # regions of memory that were
+        new_first_reg = mem_region_list[0].align_base(kernel_phys_align)
+        reserved_regions.add(
+            Region(mem_region_list[0].base,
+                   new_first_reg.base - mem_region_list[0].base))
+        mem_region_list[0] = new_first_reg
+
+    kernel_phys_base = mem_region_list[0].base
+
+    # Merge adjacent regions and create a properly ordered list from the
+    # reserved memory regions set
+    reserved_region_list = sorted(merge_regions(reserved_regions),
+                                  key=lambda r: r.base)
+
+    # Build the device regions by starting with a set with one region for the
+    # whole address space and then remove know memory, reserved regions and
+    # kernel devices. Since we can't create untypeds that exceed the
+    # addrspace_max, we round down to the smallest untyped size alignment so
+    # that the kernel will be able to turn the entire range into untypeds.
+    all_regions = {
+        Region(
+            0,
+            hardware.utils.align_down(
+                hw_yaml.config.addrspace_max,
+                hw_yaml.config.get_smallest_kernel_object_alignment()))
+    }
+
+    for reg in mem_region_list + reserved_region_list:
+        all_regions = carve_out_region(all_regions, reg)
+    # if there are hardware rules, process them
+    if hw_yaml:
+        for dev in tree.get_kernel_devices():
+            hw_regions = hw_yaml.get_rule(dev).get_regions(dev)
+            for reg in hw_regions:
+                if (type(reg) != KernelRegionGroup or not reg.user_ok):
+                    all_regions = carve_out_region(all_regions, reg)
+
+    # create a properly ordered list from the set or regions
+    dev_region_list = sorted(all_regions, key=lambda r: r.base)
+
+    return mem_region_list, reserved_region_list, dev_region_list, kernel_phys_base

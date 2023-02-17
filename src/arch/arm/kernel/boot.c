@@ -109,6 +109,7 @@ BOOT_CODE static bool_t arch_init_freemem(p_region_t ui_p_reg,
 
     /* avail_p_regs comes from the auto-generated code */
     return init_freemem(ARRAY_SIZE(avail_p_regs), avail_p_regs,
+                        NUM_RESERVED_PHYS_MEM_REGIONS, reserved_p_regs,
                         index, reserved,
                         it_v_reg, extra_bi_size_bits);
 }

@@ -4,16 +4,19 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
+from __future__ import annotations
 from collections import defaultdict
 from functools import lru_cache
-from typing import Dict, List
-
 import logging
-
 from hardware.config import Config
 from hardware.device import WrappedNode
 from hardware.fdt import FdtParser
 from hardware.memory import Region
+
+# "annotations" exists in __future__ since 3.7.0b1, but even in 3.10 the
+# decision to make it mandatory has been postponed.
+import sys
+assert sys.version_info >= (3, 7)
 
 
 def get_macro_str(macro: str) -> str:
@@ -56,7 +59,7 @@ class KernelRegionGroup:
         ''' True if this group has a macro '''
         return self.macro is not None
 
-    def take_labels(self, other_group: 'KernelRegionGroup'):
+    def take_labels(self, other_group: KernelRegionGroup):
         ''' Take another group's labels and add them to our own '''
         if self != other_group:
             raise ValueError('need to have equal size and base to take labels')
@@ -64,15 +67,15 @@ class KernelRegionGroup:
             self.labels[k] = v
         self.desc += ', ' + other_group.desc
 
-    def get_macro(self):
+    def get_macro(self) -> str:
         ''' Get the #ifdef line for this region group '''
         return get_macro_str(self.macro)
 
-    def get_endif(self):
+    def get_endif(self) -> str:
         ''' Get the #endif line for this region group '''
         return get_endif(self.macro)
 
-    def set_kernel_offset(self, offset):
+    def set_kernel_offset(self, offset) -> int:
         ''' Set the base offset that this region is mapped at in the kernel.
             Returns the next free address in the kernel (i.e. base offset + region size) '''
         self.kernel_offset = offset
@@ -85,7 +88,7 @@ class KernelRegionGroup:
             ret[v + self.kernel_offset] = k
         return ret
 
-    def get_map_offset(self, reg):
+    def get_map_offset(self, reg) -> int:
         ''' Get the offset that the given region is mapped at. '''
         index = self.regions.index(reg)
         return self.kernel_offset + (index * (1 << self.page_bits))
@@ -94,10 +97,10 @@ class KernelRegionGroup:
         ''' Get this region group's description '''
         return self.desc
 
-    def __repr__(self):
+    def __repr__(self) -> int:
         return 'KernelRegion(reg={},labels={})'.format(self.regions, self.labels)
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return other.base == self.base and other.size == self.size
 
 
@@ -113,31 +116,31 @@ class KernelInterrupt:
         self.enable_macro = enable_macro
         self.desc = desc
 
-    def get_enable_macro_str(self):
+    def get_enable_macro_str(self) -> str:
         ''' Get the enable macro #ifdef line '''
         return get_macro_str(self.enable_macro)
 
-    def has_enable(self):
+    def has_enable(self) -> bool:
         ''' True if this interrupt has an enable macro '''
         return self.enable_macro is not None
 
-    def get_enable_endif(self):
+    def get_enable_endif(self) -> str:
         ''' Get the enable macro #endif line '''
         return get_endif(self.enable_macro)
 
-    def get_sel_macro_str(self):
+    def get_sel_macro_str(self) -> str:
         ''' Get the select macro #ifdef line '''
         return get_macro_str(self.sel_macro)
 
-    def has_sel(self):
+    def has_sel(self) -> bool:
         ''' True if this interrupt has a select macro '''
         return self.sel_macro is not None
 
-    def get_sel_endif(self):
+    def get_sel_endif(self) -> str:
         ''' Get the select macro #endif line '''
         return get_endif(self.sel_macro)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return 'KernelInterrupt(label={},irq={},sel_macro={},false_irq={})'.format(self.label, self.irq, self.sel_macro, self.false_irq)
 
 
@@ -213,10 +216,11 @@ class DeviceRule:
 
 
 class HardwareYaml:
-    ''' Represents the hardware configuration file '''
+    ''' Represents the hardware configuration '''
 
     def __init__(self, yaml: dict, config: Config):
         self.rules = {}
+        self.config = config
         for dev in yaml['devices']:
             rule = DeviceRule(dev, config)
             for compat in dev['compatible']:

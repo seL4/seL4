@@ -5,14 +5,20 @@
 #
 
 ''' generate a c header file from the device tree '''
+
+from __future__ import annotations
 import argparse
 import builtins
 import jinja2
-from typing import Dict, List
 import hardware
-from hardware.config import Config
 from hardware.fdt import FdtParser
-from hardware.utils.rule import HardwareYaml
+from hardware.memory import Region
+from hardware.utils.rule import HardwareYaml, KernelInterrupt
+
+# "annotations" exists in __future__ since 3.7.0b1, but even in 3.10 the
+# decision to make it mandatory has been postponed.
+import sys
+assert sys.version_info >= (3, 7)
 
 
 HEADER_TEMPLATE = '''/*
@@ -27,7 +33,7 @@ HEADER_TEMPLATE = '''/*
 
 #pragma once
 
-#define physBase {{ "0x{:x}".format(physBase) }}
+#define physBase {{ "0x{:x}".format(kernel_phy_base) }}
 
 #ifndef __ASSEMBLER__
 
@@ -48,7 +54,7 @@ HEADER_TEMPLATE = '''/*
 #define {{ irq.label }} {{ irq.irq }}
 {% if irq.has_sel() %}
 #else
-#define {{ irq.label }} {{ irq.false_irq }}
+#define {{ irq.label }} {{ irq.false_irq }} /* dummy value */
 {{ irq.get_sel_endif() }}
 {% endif %}
 {% if irq.has_enable() %}
@@ -57,7 +63,7 @@ HEADER_TEMPLATE = '''/*
 {% endfor -%}
 
 /* KERNEL DEVICES */
-{% for (addr, macro) in sorted(kernel_macros.items()) %}
+{% for (macro, addr) in kernel_dev_addr_macros %}
 #define {{ macro }} (KDEV_BASE + {{ "0x{:x}".format(addr) }})
 {% endfor %}
 
@@ -67,17 +73,13 @@ static const kernel_frame_t BOOT_RODATA kernel_device_frames[] = {
     {% if group.has_macro() %}
     {{ group.get_macro() }}
     {% endif %}
-    /* {{ group.get_desc() }} */
+    /* {{ group.get_desc() }}
+     * contains {{ ', '.join(group.labels.keys()) }}
+     */
     {% for reg in group.regions %}
     {
         .paddr = {{ "0x{:x}".format(reg.base) }},
-        {% set map_addr = group.get_map_offset(reg) %}
-        {% if map_addr in kernel_macros %}
-        .pptr = {{ kernel_macros[map_addr] }},
-        {% else %}
-        /* contains {{ ', '.join(group.labels.keys()) }} */
-        .pptr = KDEV_BASE + {{ "0x{:x}".format(map_addr) }},
-        {% endif %}
+        .pptr = KDEV_BASE + {{ "0x{:x}".format(group.get_map_offset(reg)) }},
         {% if config.arch == 'arm' %}
         .armExecuteNever = true,
         {% endif %}
@@ -109,7 +111,7 @@ static const kernel_frame_t BOOT_RODATA *const kernel_device_frames = NULL;
 /* PHYSICAL MEMORY */
 static const p_region_t BOOT_RODATA avail_p_regs[] = {
     {% for reg in physical_memory %}
-    /* {{ reg.owner.path }} */
+    /* from {{ reg.owner.path }} */
     {
         .start = {{ "0x{:x}".format(reg.base) }},
         .end   = {{ "0x{:x}".format(reg.base + reg.size) }}
@@ -117,69 +119,39 @@ static const p_region_t BOOT_RODATA avail_p_regs[] = {
     {% endfor %}
 };
 
+/* RESERVED REGIONS */
+{% if len(reserved_regions) > 0 %}
+static const p_region_t BOOT_RODATA reserved_p_regs[] = {
+    {% for reg in reserved_regions %}
+    /* from {{ reg.owner.path }} */
+    {
+        .start = {{ "0x{:x}".format(reg.base) }},
+        .end   = {{ "0x{:x}".format(reg.base + reg.size) }}
+    },
+    {% endfor %}
+};
+
+#define NUM_RESERVED_PHYS_MEM_REGIONS ARRAY_SIZE(reserved_p_regs)
+{% else %}
+/* The C parser used for formal verification process follows strict C rules,
+ * which do not allow empty arrays. Thus this is defined as NULL.
+ */
+static const p_region_t BOOT_RODATA *const reserved_p_regs = NULL;
+#define NUM_RESERVED_PHYS_MEM_REGIONS 0
+{% endif %}
+
 #endif /* !__ASSEMBLER__ */
 
 '''
 
 
-def get_kernel_devices(tree: FdtParser, hw_yaml: HardwareYaml) -> (List, Dict):
-    '''
-    Given a device tree and a set of rules, returns a tuple (groups, offsets).
-
-    Groups is a list of 'KernelRegionGroups', each of which represents a single
-    contiguous region of memory that is associated with a device.
-    Offsets is a dict of offset -> label, where label is the name given to the
-    kernel for that address (e.g. SERIAL_PPTR) and offset is the offset from
-    KDEV_BASE at which it's mapped.
-    '''
-    kernel_devices = tree.get_kernel_devices()
-
-    kernel_offset = 0
-    groups = []
-    for dev in kernel_devices:
-        dev_rule = hw_yaml.get_rule(dev)
-        new_regions = dev_rule.get_regions(dev)
-        for reg in new_regions:
-            if reg in groups:
-                other = groups[groups.index(reg)]
-                other.take_labels(reg)
-            else:
-                groups.append(reg)
-
-    offsets = {}
-    for group in groups:
-        kernel_offset = group.set_kernel_offset(kernel_offset)
-        offsets.update(group.get_labelled_addresses())
-    return (groups, offsets)
-
-
-def get_interrupts(tree: FdtParser, hw_yaml: HardwareYaml) -> List:
-    ''' Get dict of interrupts, {label: KernelInterrupt} from the DT and hardware rules. '''
-    kernel_devices = tree.get_kernel_devices()
-
-    irqs = []
-    for dev in kernel_devices:
-        dev_rule = hw_yaml.get_rule(dev)
-        if len(dev_rule.interrupts.items()) > 0:
-            irqs += dev_rule.get_interrupts(tree, dev)
-
-    ret = {}
-    for irq in irqs:
-        if irq.label in ret:
-            if irq.prio > ret[irq.label].prio:
-                ret[irq.label] = irq
-        else:
-            ret[irq.label] = irq
-
-    ret = list(ret.values())
-    ret.sort(key=lambda a: a.label)
-    return ret
-
-
-def create_c_header_file(config, kernel_irqs: List, kernel_macros: Dict,
-                         kernel_regions: List, physBase: int, physical_memory,
+def create_c_header_file(hw_yaml: HardwareYaml,
+                         kernel_irqs: List[KernelInterrupt],
+                         kernel_dev_addr_macros: Dict[str, int],
+                         kernel_regions: List[Region], kernel_phy_base: int,
+                         physical_memory: List[Region],
+                         reserved_regions: List[Region],
                          outputStream):
-
     jinja_env = jinja2.Environment(loader=jinja2.BaseLoader, trim_blocks=True,
                                    lstrip_blocks=True)
 
@@ -187,35 +159,76 @@ def create_c_header_file(config, kernel_irqs: List, kernel_macros: Dict,
     template_args = dict(
         builtins.__dict__,
         **{
-            'config': config,
+            'config': hw_yaml.config,
             'kernel_irqs': kernel_irqs,
-            'kernel_macros': kernel_macros,
+            'kernel_dev_addr_macros': kernel_dev_addr_macros,
             'kernel_regions': kernel_regions,
-            'physBase': physBase,
-            'physical_memory': physical_memory})
+            'kernel_phy_base': kernel_phy_base,
+            'physical_memory': physical_memory,
+            'reserved_regions': reserved_regions})
     data = template.render(template_args)
 
     with outputStream:
         outputStream.write(data)
 
 
-def run(tree: FdtParser, hw_yaml: HardwareYaml, config: Config, args: argparse.Namespace):
+def run(tree: FdtParser, hw_yaml: HardwareYaml, args: argparse.Namespace):
     if not args.header_out:
         raise ValueError('You need to specify a header-out to use c header output')
 
-    physical_memory, reserved, physBase = hardware.utils.memory.get_physical_memory(tree, config)
-    kernel_regions, kernel_macros = get_kernel_devices(tree, hw_yaml)
+    # We only care about the available physical memory. The device memory
+    # regions are not relevant here.
+    physical_memory, reserved_regions, _, kernel_phy_base = \
+        hardware.utils.memory.get_phys_mem_regions(tree, hw_yaml)
+
+    # Build a set or irqs and list of KernelRegionGroups, where each element
+    # represents a single contiguous region of memory that is associated with a
+    # device.
+    kernel_irq_dict = {}  # dict of 'label:irq_obj'
+    kernel_regions = []  # list of Regions.
+    for dev in tree.get_kernel_devices():
+        dev_rule = hw_yaml.get_rule(dev)
+
+        if len(dev_rule.interrupts.items()) > 0:
+            for irq in dev_rule.get_interrupts(tree, dev):
+                # Add the interrupt if it does not exists or overwrite an
+                # existing entry if the priority for this device is higher
+                if (not irq.label in kernel_irq_dict) or \
+                   (irq.prio > kernel_irq_dict[irq.label].prio):
+                    kernel_irq_dict[irq.label] = irq
+
+        for reg in dev_rule.get_regions(dev):
+            existing_reg = next((r for r in kernel_regions if r == reg), None)
+            if existing_reg:
+                existing_reg.take_labels(reg)
+            else:
+                kernel_regions.append(reg)
+
+    # Build a dict of 'label: offset' entries, where label is the name given to
+    # the kernel for that address (e.g. SERIAL_PPTR) and offset is the offset
+    # from KDEV_BASE at which it's mapped.
+    kernel_dev_addr_macros = {}
+    kernel_offset = 0
+    for group in kernel_regions:
+        kernel_offset = group.set_kernel_offset(kernel_offset)
+        for (offset, label) in group.get_labelled_addresses().items():
+            if label in kernel_dev_addr_macros:
+                raise ValueError(
+                    '"{} = 0x{:x}" already exists, cannot change to 0x{:x}'.format(
+                        label, kernel_dev_addr_macros[label], offset))
+            kernel_dev_addr_macros[label] = offset
 
     create_c_header_file(
-        config,
-        get_interrupts(tree, hw_yaml),
-        kernel_macros,
+        hw_yaml,
+        sorted(kernel_irq_dict.values(), key=lambda irq: irq.label),
+        sorted(kernel_dev_addr_macros.items(), key=lambda tupel: tupel[1]),
         kernel_regions,
-        physBase,
+        kernel_phy_base,
         physical_memory,
+        reserved_regions,
         args.header_out)
 
 
-def add_args(parser):
+def add_args(parser: argparse.ArgumentParser):
     parser.add_argument('--header-out', help='output file for c header',
                         type=argparse.FileType('w'))

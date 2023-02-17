@@ -4,26 +4,27 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
+from __future__ import annotations
 from collections import OrderedDict
-from typing import Any, Dict, Generator, List, Tuple, cast
-
 import logging
 import pyfdt.pyfdt
-
 from hardware.memory import Region
+
+# "annotations" exists in __future__ since 3.7.0b1, but even in 3.10 the
+# decision to make it mandatory has been postponed.
+import sys
+assert sys.version_info >= (3, 7)
 
 
 class WrappedNode:
     ''' A wrapper around an underlying pyfdt node '''
 
-    # TODO: Python 3.7 with 'from __future__ import annotations' will remove the need
-    # to put 'WrappedNode' in a string.
-    def __init__(self, node: pyfdt.pyfdt.FdtNode, parent: 'WrappedNode', path: str):
+    def __init__(self, node: pyfdt.pyfdt.FdtNode, parent: WrappedNode, path: str):
         self.node = node
         self.parent = parent
         self.depth = 0
         self.path = path
-        self.children: Dict[str, 'WrappedNode'] = OrderedDict()
+        self.children: Dict[str, WrappedNode] = OrderedDict()
         self.props: Dict[str, pyfdt.pyfdt.FdtProperty] = {}
         for prop in node:
             if not isinstance(prop, pyfdt.pyfdt.FdtProperty):
@@ -38,7 +39,7 @@ class WrappedNode:
         else:
             self.is_cpu_addressable = True  # root node is always cpu addressable
 
-    def add_child(self, child: 'WrappedNode'):
+    def add_child(self, child: WrappedNode):
         ''' Add a child to this node '''
         self.children[child.node.get_name()] = child
 
@@ -142,7 +143,7 @@ class WrappedNode:
             ret += child.visit(visitor)
         return ret
 
-    def __iter__(self) -> Generator['WrappedNode', None, None]:
+    def __iter__(self) -> Generator[WrappedNode, None, None]:
         ''' Iterate over all immediate children of this node '''
         for child in self.children.values():
             yield child
