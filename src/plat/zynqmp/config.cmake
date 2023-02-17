@@ -45,6 +45,7 @@ if(KernelPlatformZynqmp)
 
     set(KernelArmCortexA53 ON)
     set(KernelArchArmV8a ON)
+    set(KernelArmSMMU ON)
 
     config_set(KernelArmMach MACH "zynq")
 
@@ -72,7 +73,9 @@ if(KernelPlatformZynqmp)
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h
         CLK_MAGIC 1374389535llu
         CLK_SHIFT 37u
-        KERNEL_WCET 10u
+        KERNEL_WCET 10u SMMU drivers/smmu/smmuv2.h
+        MAX_SID 32767
+        MAX_CB 16
     )
 endif()
 
