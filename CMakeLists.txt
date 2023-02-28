@@ -757,5 +757,12 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
     )
     # Install libsel4 sources to libsel4/src
     install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/src/" DESTINATION libsel4/src)
+    # Install additional support files
+    if(DEFINED KernelDTBPath)
+        install(FILES ${KernelDTBPath} DESTINATION support)
+    endif()
+    if(DEFINED platform_yaml)
+        install(FILES ${platform_yaml} DESTINATION support)
+    endif()
 
 endif()
