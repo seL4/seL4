@@ -742,6 +742,7 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
         PATTERN "api/syscall.xml"
         PATTERN "api/syscall.xsd"
         PATTERN "interfaces/sel4.xml"
+        PATTERN "gen_config.json"
     )
     # Manually resolve conflict between the two files name sel4arch.xml
     install(
