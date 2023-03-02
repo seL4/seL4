@@ -45,6 +45,7 @@ Upcoming release: BREAKING
   This change is reflected in the definition of the seL4_UserTop constant that holds the largest user virtual address.
 * aarch32 VM fault messages now deliver original (untranslated) faulting IP in a hypervisor context, matching
   aarch64 behaviour.
+* Correct the minimum size of a scheduling context. This changes the value of `seL4_MinSchedContextBits`.
 
 ## Upgrade Notes
 ---
