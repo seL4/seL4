@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 #include <config.h>
+
+#ifdef CONFIG_ARM_SMMU
+
 #include <types.h>
 #include <plat/machine/devices_gen.h>
 #include <drivers/smmu/smmuv2.h>
@@ -639,3 +642,4 @@ void smmu_cb_clear_fault_state(int cb)
     smmu_write_reg32(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_FSR, CBn_FSR_CLEAR_ALL);
 }
 
+#endif /* CONFIG_ARM_SMMU */
