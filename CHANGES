@@ -36,7 +36,7 @@ Upcoming release: BREAKING
   compliant.
 * Remove imx31/kzm platform support. This platform is being removed as it is sufficiently old and unused.
 * Remove ARM1136JF_S and ARMv6 support. This architecture version is being removed as it is sufficiently old and
-  unused. See <https://sel4.atlassian.net/browse/RFC-8.>
+  unused. See [RFC-8](https://sel4.atlassian.net/browse/RFC-8).
 * Remove ARMv6 specific configs: KernelGlobalsFrame and KernelDangerousCodeInjectionOnUndefInstr. This removes the
   constant seL4_GlobalsFrame from libsel4 as well as the IPC buffer in GlobalsFrame caveat from CAVEATS-generic.md
 * Implement KernelArmExportPTMRUser and KernelArmExportVTMRUser options for Arm generic timer use access on aarch32.
@@ -48,6 +48,12 @@ Upcoming release: BREAKING
 * Correct the minimum size of a scheduling context. This changes the value of `seL4_MinSchedContextBits`.
 
 ## Upgrade Notes
+
+* The change in `seL4_MinSchedContextBits` can lead to failure where code previously created
+  scheduling contexts with size `seL4_MinSchedContextBits` and expected more than the 2 minimum
+  refills to be available for that size. Either use a larger size (the previous value 8 of
+  `seL4_MinSchedContextBits`) in retyping, or request fewer refills.
+
 ---
 12.1.0 2021-06-10: SOURCE COMPATIBLE
 
