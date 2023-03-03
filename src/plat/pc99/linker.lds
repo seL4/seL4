@@ -10,8 +10,8 @@
 
 ENTRY(_start)
 
-KLOAD_PADDR = KERNEL_ELF_PADDR_BASE;
-KLOAD_VADDR = KERNEL_ELF_BASE;
+KLOAD_PADDR = KERNEL_ELF_PADDR_BASE_RAW;
+KLOAD_VADDR = KERNEL_ELF_BASE_RAW;
 
 /* WARNING: constants also defined in plat/machine/hardware.h */
 #if defined(CONFIG_ARCH_IA32)

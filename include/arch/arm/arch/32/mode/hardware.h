@@ -54,7 +54,7 @@
 
 /* The first physical address to map into the kernel's physical memory
  * window */
-#define PADDR_BASE physBase
+#define PADDR_BASE physBase()
 
 /* The base address in virtual memory to use for the 1:1 physical memory
  * mapping */
@@ -70,9 +70,13 @@
 
 /* The physical memory address to use for mapping the kernel ELF */
 #define KERNEL_ELF_PADDR_BASE PADDR_BASE
+/* For use by the linker (only integer constants allowed) */
+#define KERNEL_ELF_PADDR_BASE_RAW PHYS_BASE_RAW
 
 /* The base address in virtual memory to use for the kernel ELF mapping */
 #define KERNEL_ELF_BASE (USER_TOP + (KERNEL_ELF_PADDR_BASE & MASK(22)))
+/* For use by the linker (only integer constants allowed) */
+#define KERNEL_ELF_BASE_RAW (USER_TOP + (KERNEL_ELF_PADDR_BASE_RAW & MASK(22)))
 
 /* This is a page table mapping at the end of the virtual address space
  * to map objects with 4KiB pages rather than 4MiB large pages. */
