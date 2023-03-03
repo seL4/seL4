@@ -45,6 +45,12 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_SSH: ${{ secrets.AWS_SSH }}
         GH_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+    - name: Upload kernel builds
+      uses: actions/upload-artifact@v3
+      with:
+        name: kernel-builds
+        path: artifacts/kernel-builds
+        if-no-files-found: ignore
     - name: Upload logs
       uses: actions/upload-artifact@v3
       with:
