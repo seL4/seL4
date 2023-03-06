@@ -40,6 +40,9 @@ static const region_t BOOT_RODATA mode_reserved_region[] = {};
 static const region_t BOOT_RODATA *mode_reserved_region = NULL;
 #endif
 
+#define PAR_EL1_MASK 0x0000fffffffff000ul
+#define GET_PAR_ADDR(x) ((x) & PAR_EL1_MASK)
+
 #ifdef AARCH64_VSPACE_S2_START_L1
 
 #define cap_vtable_root_cap cap_page_upper_directory_cap

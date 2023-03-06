@@ -281,6 +281,12 @@ config_string(
 )
 config_option(KernelFastpath FASTPATH "Enable IPC fastpath" DEFAULT ON)
 
+config_option(
+    KernelExceptionFastpath EXCEPTION_FASTPATH "Enable exception fastpath"
+    DEFAULT OFF
+    DEPENDS "NOT KernelVerificationBuild; KernelSel4ArchAarch64"
+)
+
 config_string(
     KernelNumDomains NUM_DOMAINS "The number of scheduler domains in the system"
     DEFAULT 1

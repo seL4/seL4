@@ -62,6 +62,15 @@ void VISIBLE NORETURN c_handle_enfp(void)
 }
 #endif /* CONFIG_HAVE_FPU */
 
+#ifdef CONFIG_EXCEPTION_FASTPATH
+void NORETURN vm_fault_slowpath(vm_fault_type_t type)
+{
+    handleVMFaultEvent(type);
+    restore_user_context();
+    UNREACHABLE();
+}
+#endif
+
 static inline void NORETURN c_handle_vm_fault(vm_fault_type_t type)
 {
     NODE_LOCK_SYS;
@@ -70,10 +79,15 @@ static inline void NORETURN c_handle_vm_fault(vm_fault_type_t type)
 #ifdef TRACK_KERNEL_ENTRIES
     ksKernelEntry.path = Entry_VMFault;
     ksKernelEntry.word = getRegister(NODE_STATE(ksCurThread), NextIP);
+    ksKernelEntry.is_fastpath = false;
 #endif
 
+#ifdef CONFIG_EXCEPTION_FASTPATH
+    fastpath_vm_fault(type);
+# else
     handleVMFaultEvent(type);
     restore_user_context();
+#endif
     UNREACHABLE();
 }
 
