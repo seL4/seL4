@@ -26,17 +26,17 @@ Upcoming release: BREAKING
 
 ## Changes
 
- * Added support for the ARM Cortex A55
- * Added support for the ODroid C4
- * Added support for the Avnet MaaXBoard
- * Added support for arm_hyp on qemu-arm-virt platfrom with cortex-a15 CPU
- * Added support for qemu-riscv-virt
- * Rename libsel4 config option ENABLE_SMP_SUPPORT to CONFIG_ENABLE_SMP_SUPPORT to be namespace compliant.
- * Rename libsel4 config option AARCH64_VSPACE_S2_START_L1 to CONFIG_AARCH64_VSPACE_S2_START_L1 to be namespace
-   compliant.
+* Added support for the ARM Cortex A55
+* Added support for the ODroid C4
+* Added support for the Avnet MaaXBoard
+* Added support for arm_hyp on qemu-arm-virt platfrom with cortex-a15 CPU
+* Added support for qemu-riscv-virt
+* Rename libsel4 config option ENABLE_SMP_SUPPORT to CONFIG_ENABLE_SMP_SUPPORT to be namespace compliant.
+* Rename libsel4 config option AARCH64_VSPACE_S2_START_L1 to CONFIG_AARCH64_VSPACE_S2_START_L1 to be namespace
+  compliant.
 * Remove imx31/kzm platform support. This platform is being removed as it is sufficiently old and unused.
 * Remove ARM1136JF_S and ARMv6 support. This architecture version is being removed as it is sufficiently old and
-  unused. See https://sel4.atlassian.net/browse/RFC-8.
+  unused. See [RFC-8](https://sel4.atlassian.net/browse/RFC-8).
 * Remove ARMv6 specific configs: KernelGlobalsFrame and KernelDangerousCodeInjectionOnUndefInstr. This removes the
   constant seL4_GlobalsFrame from libsel4 as well as the IPC buffer in GlobalsFrame caveat from CAVEATS-generic.md
 * Implement KernelArmExportPTMRUser and KernelArmExportVTMRUser options for Arm generic timer use access on aarch32.
@@ -46,8 +46,17 @@ Upcoming release: BREAKING
 * aarch32 VM fault messages now deliver original (untranslated) faulting IP in a hypervisor context, matching
   aarch64 behaviour.
 * Correct the minimum size of a scheduling context. This changes the value of `seL4_MinSchedContextBits`.
+* Changed how `gen_config.h` files are generated. Previously, they were generated at CMake configure time. Now, they
+  are generated at build time as a dependency of the `${prefix}_Gen` target. To manually build the kernel
+  `gen_config.h` file after running `cmake`, run `ninja gen_config/kernel/gen_config.h`.
 
 ## Upgrade Notes
+
+* The change in `seL4_MinSchedContextBits` can lead to failure where code previously created
+  scheduling contexts with size `seL4_MinSchedContextBits` and expected more than the 2 minimum
+  refills to be available for that size. Either use a larger size (the previous value 8 of
+  `seL4_MinSchedContextBits`) in retyping, or request fewer refills.
+
 ---
 12.1.0 2021-06-10: SOURCE COMPATIBLE
 
