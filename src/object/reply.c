@@ -27,6 +27,10 @@ void reply_push(tcb_t *tcb_caller, tcb_t *tcb_callee, reply_t *reply, bool_t can
 
     /* link caller and reply */
     reply->replyTCB = tcb_caller;
+
+    /* canGrant should have already been set according to the grant
+       right on the receiver's endpoint capability. */
+
     thread_state_ptr_set_replyObject(&tcb_caller->tcbState, REPLY_REF(reply));
     setThreadState(tcb_caller, ThreadState_BlockedOnReply);
 

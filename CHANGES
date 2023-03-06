@@ -50,7 +50,14 @@ Upcoming release: BREAKING
   are generated at build time as a dependency of the `${prefix}_Gen` target. To manually build the kernel
   `gen_config.h` file after running `cmake`, run `ninja gen_config/kernel/gen_config.h`.
 
+## MCS
+
+* To grant capabilities when replying to a call in MCS configurations, it is now necessary to have grant rights on both
+  the reply cap and the endpoint cap used to receive the call. Previously, the grant right on the endpoint cap was
+  ignored in MCS configurations.
+
 ## Upgrade Notes
+
 ---
 12.1.0 2021-06-10: SOURCE COMPATIBLE
 
