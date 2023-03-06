@@ -45,6 +45,43 @@ switchToThread_fp(tcb_t *thread, vspace_root_t *vroot, pde_t stored_hw_asid)
     NODE_STATE(ksCurThread) = thread;
 }
 
+#ifdef CONFIG_EXCEPTION_FASTPATH
+static inline void fastpath_set_tcbfault_vm_fault(vm_fault_type_t type)
+{
+    switch (type) {
+    case ARMDataAbort: {
+        word_t addr, fault;
+
+        addr = getFAR();
+        fault = getDFSR();
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+        /* use the IPA */
+        if (ARCH_NODE_STATE(armHSVCPUActive)) {
+            addr = GET_PAR_ADDR(addressTranslateS1(addr)) | (addr & MASK(PAGE_BITS));
+        }
+#endif
+        NODE_STATE(ksCurThread)->tcbFault = seL4_Fault_VMFault_new(addr, fault, false);
+        break;
+    }
+    case ARMPrefetchAbort: {
+        word_t pc, fault;
+
+        pc = getRestartPC(NODE_STATE(ksCurThread));
+        fault = getIFSR();
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+        if (ARCH_NODE_STATE(armHSVCPUActive)) {
+            pc = GET_PAR_ADDR(addressTranslateS1(pc)) | (pc & MASK(PAGE_BITS));
+        }
+#endif
+        NODE_STATE(ksCurThread)->tcbFault = seL4_Fault_VMFault_new(pc, fault, true);
+        break;
+    }
+    }
+}
+#endif
+
 static inline void mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(
     mdb_node_t *node_ptr, word_t mdbNext,
     word_t mdbRevocable, word_t mdbFirstBadged)

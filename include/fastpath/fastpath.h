@@ -70,6 +70,19 @@ static inline void ntfn_queue_dequeue_fp(tcb_t *dest, notification_t *ntfn_ptr)
 }
 #endif
 
+#ifdef CONFIG_EXCEPTION_FASTPATH
+static inline void fastpath_vm_fault_set_mrs(tcb_t *dest)
+{
+    setRegister(dest, msgRegisters[0] + seL4_VMFault_IP, getRestartPC(NODE_STATE(ksCurThread)));
+    setRegister(dest, msgRegisters[0] + seL4_VMFault_Addr,
+                seL4_Fault_VMFault_get_address(NODE_STATE(ksCurThread)->tcbFault));
+    setRegister(dest, msgRegisters[0] + seL4_VMFault_PrefetchFault,
+                seL4_Fault_VMFault_get_instructionFault(NODE_STATE(ksCurThread)->tcbFault));
+    setRegister(dest, msgRegisters[0] + seL4_VMFault_FSR,
+                seL4_Fault_VMFault_get_FSR(NODE_STATE(ksCurThread)->tcbFault));
+}
+#endif
+
 /* Fastpath cap lookup.  Returns a null_cap on failure. */
 static inline cap_t FORCE_INLINE lookup_fp(cap_t cap, cptr_t cptr)
 {

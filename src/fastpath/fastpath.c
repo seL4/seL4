@@ -337,9 +337,17 @@ void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo)
     /* Check that the caller has not faulted, in which case a fault
        reply is generated instead. */
     fault_type = seL4_Fault_get_seL4_FaultType(caller->tcbFault);
+
+    /* Change this as more types of faults are supported */
+#ifndef CONFIG_EXCEPTION_FASTPATH
     if (unlikely(fault_type != seL4_Fault_NullFault)) {
         slowpath(SysReplyRecv);
     }
+#else
+    if (unlikely(fault_type != seL4_Fault_NullFault && fault_type != seL4_Fault_VMFault)) {
+        slowpath(SysReplyRecv);
+    }
+#endif
 
     /* Get destination thread.*/
     newVTable = TCB_PTR_CTE_PTR(caller, tcbVTable)->cap;
@@ -502,21 +510,49 @@ void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo)
     callerSlot->cteMDBNode = nullMDBNode;
 #endif
 
-    /* I know there's no fault, so straight to the transfer. */
+#ifdef CONFIG_EXCEPTION_FASTPATH
+    if (unlikely(fault_type != seL4_Fault_NullFault)) {
+        /* Note - this works as is for VM faults but will need to be changed when other faults are added. VM faults always
+         * restart the faulting thread upon reply but this is not always the case with other types of faults. This can either
+         * be handled in the fastpath or redirected to the slowpath, but either way, this code must be changed so we do not
+         * forcefully switch to a thread which is meant to stay inactive. */
 
-    /* Replies don't have a badge. */
-    badge = 0;
 
-    fastpath_copy_mrs(length, NODE_STATE(ksCurThread), caller);
+        /* In the slowpath, the thread is set to ThreadState_Restart and its PC is set to its restartPC in activateThread().
+         * In the fastpath, this step is bypassed and we directly complete the activateThread() steps that set the PC and make
+         * the thread runnable. */
+        word_t pc = getRestartPC(caller);
+        setNextPC(caller, pc);
 
-    /* Dest thread is set Running, but not queued. */
-    thread_state_ptr_set_tsType_np(&caller->tcbState,
-                                   ThreadState_Running);
-    switchToThread_fp(caller, cap_pd, stored_hw_asid);
+        /* Clear the tcbFault variable to indicate that it has been handled. */
+        caller->tcbFault = seL4_Fault_NullFault_new();
 
-    msgInfo = wordFromMessageInfo(seL4_MessageInfo_set_capsUnwrapped(info, 0));
+        /* Dest thread is set Running, but not queued. */
+        thread_state_ptr_set_tsType_np(&caller->tcbState, ThreadState_Running);
+        switchToThread_fp(caller, cap_pd, stored_hw_asid);
 
-    fastpath_restore(badge, msgInfo, NODE_STATE(ksCurThread));
+        /* The badge/msginfo do not need to be not sent - this is not necessary for exceptions */
+        restore_user_context();
+    } else {
+#endif
+        /* There's no fault, so straight to the transfer. */
+
+        /* Replies don't have a badge. */
+        badge = 0;
+
+        fastpath_copy_mrs(length, NODE_STATE(ksCurThread), caller);
+
+        /* Dest thread is set Running, but not queued. */
+        thread_state_ptr_set_tsType_np(&caller->tcbState, ThreadState_Running);
+        switchToThread_fp(caller, cap_pd, stored_hw_asid);
+
+        msgInfo = wordFromMessageInfo(seL4_MessageInfo_set_capsUnwrapped(info, 0));
+
+        fastpath_restore(badge, msgInfo, NODE_STATE(ksCurThread));
+
+#ifdef CONFIG_EXCEPTION_FASTPATH
+    }
+#endif
 }
 
 #ifdef CONFIG_SIGNAL_FASTPATH
@@ -680,5 +716,189 @@ void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
     }
 
     restore_user_context();
+}
+#endif
+
+#ifdef CONFIG_EXCEPTION_FASTPATH
+static inline
+FORCE_INLINE
+void NORETURN fastpath_vm_fault(vm_fault_type_t type)
+{
+    cap_t handler_cap;
+    endpoint_t *ep_ptr;
+    tcb_t *dest;
+    cap_t newVTable;
+    vspace_root_t *cap_pd;
+    word_t badge;
+    seL4_MessageInfo_t info;
+    word_t msgInfo;
+    pde_t stored_hw_asid;
+    dom_t dom;
+
+    /* Get the fault handler endpoint */
+#ifdef CONFIG_KERNEL_MCS
+    handler_cap = TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbFaultHandler)->cap;
+#else
+    cptr_t handlerCPtr;
+    handlerCPtr = NODE_STATE(ksCurThread)->tcbFaultHandler;
+    handler_cap = lookup_fp(TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbCTable)->cap, handlerCPtr);
+#endif
+
+    /* Check that the cap is an endpoint cap and on non-mcs, that you can send to it and create the reply cap */
+    if (unlikely(!cap_capType_equals(handler_cap, cap_endpoint_cap)
+#ifndef CONFIG_KERNEL_MCS
+                 || !cap_endpoint_cap_get_capCanSend(handler_cap) || (!cap_endpoint_cap_get_capCanGrant(handler_cap) &&
+                                                                      !cap_endpoint_cap_get_capCanGrantReply(handler_cap))
+#endif
+                )) {
+        vm_fault_slowpath(type);
+    }
+
+    /* Get the endpoint address */
+    ep_ptr = EP_PTR(cap_endpoint_cap_get_capEPPtr(handler_cap));
+
+    /* Get the destination thread, which is only going to be valid
+    * if the endpoint is valid. */
+    dest = TCB_PTR(endpoint_ptr_get_epQueue_head(ep_ptr));
+
+    /* Check that there's a thread waiting to receive */
+    if (unlikely(endpoint_ptr_get_state(ep_ptr) != EPState_Recv)) {
+        vm_fault_slowpath(type);
+    }
+
+    /* Get destination thread.*/
+    newVTable = TCB_PTR_CTE_PTR(dest, tcbVTable)->cap;
+
+    /* Get vspace root. */
+    cap_pd = cap_vtable_cap_get_vspace_root_fp(newVTable);
+
+    /* Ensure that the destination has a valid VTable. */
+    if (unlikely(! isValidVTableRoot_fp(newVTable))) {
+        vm_fault_slowpath(type);
+    }
+
+#ifdef CONFIG_ARCH_AARCH64
+    /* Need to test that the ASID is still valid */
+    asid_t asid = cap_vtable_root_get_mappedASID(newVTable);
+    asid_map_t asid_map = findMapForASID(asid);
+    if (unlikely(asid_map_get_type(asid_map) != asid_map_asid_map_vspace ||
+                 VSPACE_PTR(asid_map_asid_map_vspace_get_vspace_root(asid_map)) != cap_pd)) {
+        vm_fault_slowpath(type);
+    }
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    /* Ensure the vmid is valid. */
+    if (unlikely(!asid_map_asid_map_vspace_get_stored_vmid_valid(asid_map))) {
+        vm_fault_slowpath(type);
+    }
+
+    /* vmids are the tags used instead of hw_asids in hyp mode */
+    stored_hw_asid.words[0] = asid_map_asid_map_vspace_get_stored_hw_vmid(asid_map);
+#else
+    stored_hw_asid.words[0] = asid;
+#endif
+#endif
+
+    /* let gcc optimise this out for 1 domain */
+    dom = maxDom ? ksCurDomain : 0;
+    /* ensure only the idle thread or lower prio threads are present in the scheduler */
+    if (unlikely(dest->tcbPriority < NODE_STATE(ksCurThread->tcbPriority) &&
+                 !isHighestPrio(dom, dest->tcbPriority))) {
+
+        vm_fault_slowpath(type);
+    }
+
+    /* Ensure the original caller is in the current domain and can be scheduled directly. */
+    if (unlikely(dest->tcbDomain != ksCurDomain && 0 < maxDom)) {
+        vm_fault_slowpath(type);
+    }
+
+#ifdef CONFIG_KERNEL_MCS
+    if (unlikely(dest->tcbSchedContext != NULL)) {
+        vm_fault_slowpath(type);
+    }
+
+    reply_t *reply = thread_state_get_replyObject_np(dest->tcbState);
+    if (unlikely(reply == NULL)) {
+        vm_fault_slowpath(type);
+    }
+#endif
+
+#ifdef ENABLE_SMP_SUPPORT
+    /* Ensure both threads have the same affinity */
+    if (unlikely(NODE_STATE(ksCurThread)->tcbAffinity != dest->tcbAffinity)) {
+        vm_fault_slowpath(type);
+    }
+#endif /* ENABLE_SMP_SUPPORT */
+
+    /*
+     * --- POINT OF NO RETURN ---
+     *
+     * At this stage, we have committed to performing the IPC.
+     */
+
+    /* Sets the tcb fault based on the vm fault information. Has one slowpath transition
+    but only for a debug fault on AARCH32 */
+
+    fastpath_set_tcbfault_vm_fault(type);
+
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
+    ksKernelEntry.is_fastpath = true;
+#endif
+
+    /* Dequeue the destination. */
+    endpoint_ptr_set_epQueue_head_np(ep_ptr, TCB_REF(dest->tcbEPNext));
+    if (unlikely(dest->tcbEPNext)) {
+        dest->tcbEPNext->tcbEPPrev = NULL;
+    } else {
+        endpoint_ptr_mset_epQueue_tail_state(ep_ptr, 0, EPState_Idle);
+    }
+
+    badge = cap_endpoint_cap_get_capEPBadge(handler_cap);
+
+    /* Unlink dest <-> reply, link src (cur thread) <-> reply */
+    thread_state_ptr_set_tsType_np(&NODE_STATE(ksCurThread)->tcbState, ThreadState_BlockedOnReply);
+#ifdef CONFIG_KERNEL_MCS
+
+    thread_state_ptr_set_replyObject_np(&dest->tcbState, 0);
+    thread_state_ptr_set_replyObject_np(&NODE_STATE(ksCurThread)->tcbState, REPLY_REF(reply));
+    reply->replyTCB = NODE_STATE(ksCurThread);
+
+    sched_context_t *sc = NODE_STATE(ksCurThread)->tcbSchedContext;
+    sc->scTcb = dest;
+    dest->tcbSchedContext = sc;
+    NODE_STATE(ksCurThread)->tcbSchedContext = NULL;
+
+    reply_t *old_caller = sc->scReply;
+    reply->replyPrev = call_stack_new(REPLY_REF(sc->scReply), false);
+    if (unlikely(old_caller)) {
+        old_caller->replyNext = call_stack_new(REPLY_REF(reply), false);
+    }
+    reply->replyNext = call_stack_new(SC_REF(sc), true);
+    sc->scReply = reply;
+#else
+    /* Get sender reply slot */
+    cte_t *replySlot = TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbReply);
+
+    /* Get dest caller slot */
+    cte_t *callerSlot = TCB_PTR_CTE_PTR(dest, tcbCaller);
+
+    /* Insert reply cap */
+    word_t replyCanGrant = thread_state_ptr_get_blockingIPCCanGrant(&dest->tcbState);;
+    cap_reply_cap_ptr_new_np(&callerSlot->cap, replyCanGrant, 0, TCB_REF(NODE_STATE(ksCurThread)));
+    mdb_node_ptr_set_mdbPrev_np(&callerSlot->cteMDBNode, CTE_REF(replySlot));
+    mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(&replySlot->cteMDBNode, CTE_REF(callerSlot), 1, 1);
+#endif
+    /* Set the message registers for the vm fault*/
+    fastpath_vm_fault_set_mrs(dest);
+
+    /* Generate the msginfo */
+    info = seL4_MessageInfo_new(seL4_Fault_VMFault, 0, 0, seL4_VMFault_Length);
+
+    /* Set the fault handler to running */
+    thread_state_ptr_set_tsType_np(&dest->tcbState, ThreadState_Running);
+    switchToThread_fp(dest, cap_pd, stored_hw_asid);
+    msgInfo = wordFromMessageInfo(seL4_MessageInfo_set_capsUnwrapped(info, 0));
+
+    fastpath_restore(badge, msgInfo, NODE_STATE(ksCurThread));
 }
 #endif
