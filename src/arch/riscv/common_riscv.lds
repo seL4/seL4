@@ -16,11 +16,11 @@ ENTRY(_start)
 #include <sel4/plat/api/constants.h>
 #include <plat/machine/devices_gen.h>
 
-KERNEL_OFFSET = KERNEL_ELF_BASE - KERNEL_ELF_PADDR_BASE;
+KERNEL_OFFSET = KERNEL_ELF_BASE_RAW - KERNEL_ELF_PADDR_BASE_RAW;
 
 SECTIONS
 {
-    . = KERNEL_ELF_BASE;
+    . = KERNEL_ELF_BASE_RAW;
 
     .boot.text . : AT(ADDR(.boot.text) - KERNEL_OFFSET)
     {
