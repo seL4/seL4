@@ -249,6 +249,11 @@ void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
                     bool_t canDonate = sender->tcbSchedContext != NULL
                                        && seL4_Fault_get_seL4_FaultType(sender->tcbFault) != seL4_Fault_Timeout;
                     reply_push(sender, thread, replyPtr, canDonate);
+#ifdef ENABLE_SMP_SUPPORT
+                    if (isSchedulable(thread) && thread->tcbAffinity != getCurrentCPUIndex()) {
+                        possibleSwitchTo(thread);
+                    }
+#endif
                 } else {
                     setThreadState(sender, ThreadState_Inactive);
                 }
