@@ -196,6 +196,11 @@ static BOOT_CODE bool_t try_boot_sys_node(cpu_id_t cpu_id)
 
 static BOOT_CODE bool_t add_mem_p_regs(p_region_t reg)
 {
+    if (reg.start == reg.end) {
+        // Return true here if asked to add an empty region.
+        // Some of the callers round down the end address to
+        return true;
+    }
     if (reg.end > PADDR_TOP && reg.start > PADDR_TOP) {
         /* Return true here as it's not an error for there to exist memory outside the kernel window,
          * we're just going to ignore it and leave it to be given out as device memory */
@@ -233,10 +238,11 @@ static BOOT_CODE bool_t parse_mem_map(uint32_t mmap_length, uint32_t mmap_addr)
             printf("\tPhysical memory region not addressable\n");
         } else {
             printf("\tPhysical Memory Region from %lx size %lx type %d\n", (long)mem_start, (long)mem_length, type);
-            if (type == MULTIBOOT_MMAP_USEABLE_TYPE && mem_start >= HIGHMEM_PADDR) {
+            if (type == MULTIBOOT_MMAP_USEABLE_TYPE && mem_start >= HIGHMEM_PADDR && mem_length >= BIT(PAGE_BITS)) {
+
                 if (!add_mem_p_regs((p_region_t) {
-                mem_start, mem_start + mem_length
-            })) {
+                ROUND_UP(mem_start, PAGE_BITS), ROUND_DOWN(mem_start + mem_length, PAGE_BITS),
+                })) {
                     return false;
                 }
             }
