@@ -941,8 +941,6 @@ static pude_t makeUser1stLevel(paddr_t paddr, vm_rights_t vm_rights, vm_attribut
     }
 }
 
-#define PAR_EL1_MASK 0x0000fffffffff000ul
-#define GET_PAR_ADDR(x) ((x) & PAR_EL1_MASK)
 exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
 {
     switch (vm_faultType) {

@@ -31,6 +31,7 @@ include(tools/internal.cmake)
 set(PYTHON3 "python3" CACHE INTERNAL "")
 RequireTool(CPP_GEN_PATH cpp_gen.sh)
 RequireTool(CIRCULAR_INCLUDES circular_includes.py)
+RequireTool(CONFIG_GEN_PATH config_gen.py)
 RequireTool(BF_GEN_PATH bitfield_gen.py)
 RequireTool(HARDWARE_GEN_PATH hardware_gen.py)
 RequireTool(INVOCATION_ID_GEN_PATH invocation_header_gen.py)
@@ -279,8 +280,13 @@ elseif(KernelArchARM)
     if(KernelSel4ArchAarch64)
         KernelCommonFlags(-mgeneral-regs-only)
         if(
-            (CMAKE_C_COMPILER_ID STREQUAL "GNU")
-            AND (CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL "10.0.0")
+            ((CMAKE_C_COMPILER_ID STREQUAL "GNU")
+             AND (CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL "10.0.0")
+             )
+            OR
+                ((CMAKE_C_COMPILER_ID STREQUAL "Clang")
+                 AND (CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL "12.0.0")
+                 )
         )
             add_compile_options(-mno-outline-atomics)
         endif()
@@ -732,8 +738,33 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
         DESTINATION libsel4/include
         FILES_MATCHING
         PATTERN "*.h"
+        PATTERN "*.pbf"
+        PATTERN "api/syscall.xml"
+        PATTERN "api/syscall.xsd"
+        PATTERN "interfaces/sel4.xml"
+        PATTERN "gen_config.json"
+    )
+    # Manually resolve conflict between the two files name sel4arch.xml
+    install(
+        FILES
+            "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/arch_include/${KernelArch}/interfaces/sel4arch.xml"
+        DESTINATION libsel4/include/interfaces
+        RENAME sel4-arch.xml
+    )
+    install(
+        FILES
+            "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/sel4_arch_include/${KernelSel4Arch}/interfaces/sel4arch.xml"
+        DESTINATION libsel4/include/interfaces
+        RENAME sel4-sel4arch.xml
     )
     # Install libsel4 sources to libsel4/src
     install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/src/" DESTINATION libsel4/src)
+    # Install additional support files
+    if(DEFINED KernelDTBPath)
+        install(FILES ${KernelDTBPath} DESTINATION support)
+    endif()
+    if(DEFINED platform_yaml)
+        install(FILES ${platform_yaml} DESTINATION support)
+    endif()
 
 endif()

@@ -203,7 +203,7 @@ BOOT_CODE void map_kernel_window(void)
     /* mapping of KERNEL_ELF_BASE (virtual address) to kernel's
      * KERNEL_ELF_PHYS_BASE  */
     /* up to end of virtual address space minus 16M using 16M frames */
-    phys = physBase;
+    phys = physBase();
     idx = PPTR_BASE >> pageBitsForSize(ARMSection);
 
     while (idx < BIT(PD_INDEX_BITS) - SECTIONS_PER_SUPER_SECTION) {
@@ -319,7 +319,7 @@ BOOT_CODE void map_kernel_window(void)
     }
     /* mapping of PPTR_BASE (virtual address) to kernel's physBase  */
     /* up to end of virtual address space minus 2M using 2M frames */
-    phys = physBase;
+    phys = physBase();
     for (; idx < BIT(PT_INDEX_BITS) - 1; idx++) {
         pde = pdeS1_pdeS1_section_new(
                   0, /* Executable */
@@ -542,7 +542,7 @@ BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vpt
 
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
 
-BOOT_CODE void activate_global_pd(void)
+BOOT_CODE void activate_kernel_vspace(void)
 {
     /* Ensure that there's nothing stale in newly-mapped regions, and
        that everything we've written (particularly the kernel page tables)
@@ -556,7 +556,7 @@ BOOT_CODE void activate_global_pd(void)
 
 #else
 
-BOOT_CODE void activate_global_pd(void)
+BOOT_CODE void activate_kernel_vspace(void)
 {
     uint32_t r;
     /* Ensure that there's nothing stale in newly-mapped regions, and
@@ -2469,7 +2469,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
         /* Don't let applications flush outside of the kernel window */
-        if (pstart < physBase || ((end - start) + pstart) > PADDR_TOP) {
+        if (pstart < physBase() || ((end - start) + pstart) > PADDR_TOP) {
             userError("Page Flush: Overlaps kernel region.");
             current_syscall_error.type = seL4_IllegalOperation;
             return EXCEPTION_SYSCALL_ERROR;

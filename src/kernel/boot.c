@@ -412,13 +412,11 @@ BOOT_CODE cap_t create_it_asid_pool(cap_t root_cnode_cap)
 }
 
 #ifdef CONFIG_KERNEL_MCS
-BOOT_CODE static bool_t configure_sched_context(tcb_t *tcb, sched_context_t *sc_pptr, ticks_t timeslice, word_t core)
+BOOT_CODE static void configure_sched_context(tcb_t *tcb, sched_context_t *sc_pptr, ticks_t timeslice)
 {
     tcb->tcbSchedContext = sc_pptr;
-    REFILL_NEW(tcb->tcbSchedContext, MIN_REFILLS, timeslice, 0, core);
-
+    refill_new(tcb->tcbSchedContext, MIN_REFILLS, timeslice, 0);
     tcb->tcbSchedContext->scTcb = tcb;
-    return true;
 }
 
 BOOT_CODE bool_t init_sched_control(cap_t root_cnode_cap, word_t num_nodes)
@@ -443,7 +441,7 @@ BOOT_CODE bool_t init_sched_control(cap_t root_cnode_cap, word_t num_nodes)
 }
 #endif
 
-BOOT_CODE bool_t create_idle_thread(void)
+BOOT_CODE void create_idle_thread(void)
 {
     pptr_t pptr;
 
@@ -458,19 +456,14 @@ BOOT_CODE bool_t create_idle_thread(void)
 #endif
         SMP_COND_STATEMENT(NODE_STATE_ON_CORE(ksIdleThread, i)->tcbAffinity = i);
 #ifdef CONFIG_KERNEL_MCS
-        bool_t result = configure_sched_context(NODE_STATE_ON_CORE(ksIdleThread, i), SC_PTR(&ksIdleThreadSC[SMP_TERNARY(i, 0)]),
-                                                usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_IN_MS), SMP_TERNARY(i, 0));
+        configure_sched_context(NODE_STATE_ON_CORE(ksIdleThread, i), SC_PTR(&ksIdleThreadSC[SMP_TERNARY(i, 0)]),
+                                usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_IN_MS));
         SMP_COND_STATEMENT(NODE_STATE_ON_CORE(ksIdleThread, i)->tcbSchedContext->scCore = i;)
         NODE_STATE_ON_CORE(ksIdleSC, i) = SC_PTR(&ksIdleThreadSC[SMP_TERNARY(i, 0)]);
-        if (!result) {
-            printf("Kernel init failed: Unable to allocate sc for idle thread\n");
-            return false;
-        }
 #endif
 #ifdef ENABLE_SMP_SUPPORT
     }
 #endif /* ENABLE_SMP_SUPPORT */
-    return true;
 }
 
 BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vptr_t ui_v_entry, vptr_t bi_frame_vptr,
@@ -513,9 +506,7 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
 
     /* initialise TCB */
 #ifdef CONFIG_KERNEL_MCS
-    if (!configure_sched_context(tcb, SC_PTR(rootserver.sc), usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_IN_MS), 0)) {
-        return NULL;
-    }
+    configure_sched_context(tcb, SC_PTR(rootserver.sc), usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_IN_MS));
 #endif
 
     tcb->tcbPriority = seL4_MaxPrio;
@@ -552,6 +543,26 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
 
     return tcb;
 }
+
+#ifdef ENABLE_SMP_CLOCK_SYNC_TEST_ON_BOOT
+BOOT_CODE void clock_sync_test(void)
+{
+    ticks_t t, t0;
+    ticks_t margin = usToTicks(1) + getTimerPrecision();
+
+    assert(getCurrentCPUIndex() != 0);
+    t = NODE_STATE_ON_CORE(ksCurTime, 0);
+    do {
+        /* perform a memory acquire to get new values of ksCurTime */
+        __atomic_thread_fence(__ATOMIC_ACQUIRE);
+        t0 = NODE_STATE_ON_CORE(ksCurTime, 0);
+    } while (t0 == t);
+    t = getCurrentTime();
+    printf("clock_sync_test[%d]: t0 = %"PRIu64", t = %"PRIu64", td = %"PRIi64"\n",
+           (int)getCurrentCPUIndex(), t0, t, t - t0);
+    assert(t0 <= margin + t && t <= t0 + margin);
+}
+#endif
 
 BOOT_CODE void init_core_state(tcb_t *scheduler_action)
 {

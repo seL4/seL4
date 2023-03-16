@@ -11,7 +11,6 @@
 #include <api/failures.h>
 #include <object/structures.h>
 
-#define activate_global_pd activate_kernel_vspace
 #define MODE_RESERVED 0
 
 /* ==================== BOOT CODE FINISHES HERE ==================== */
@@ -40,6 +39,9 @@ static const region_t BOOT_RODATA mode_reserved_region[] = {};
 #else
 static const region_t BOOT_RODATA *mode_reserved_region = NULL;
 #endif
+
+#define PAR_EL1_MASK 0x0000fffffffff000ul
+#define GET_PAR_ADDR(x) ((x) & PAR_EL1_MASK)
 
 #ifdef AARCH64_VSPACE_S2_START_L1
 

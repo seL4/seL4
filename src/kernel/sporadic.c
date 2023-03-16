@@ -153,11 +153,7 @@ static inline void maybe_add_empty_tail(sched_context_t *sc)
     }
 }
 
-#ifdef ENABLE_SMP_SUPPORT
-void refill_new(sched_context_t *sc, word_t max_refills, ticks_t budget, ticks_t period, word_t core)
-#else
 void refill_new(sched_context_t *sc, word_t max_refills, ticks_t budget, ticks_t period)
-#endif
 {
     sc->scPeriod = period;
     sc->scRefillHead = 0;
@@ -167,7 +163,7 @@ void refill_new(sched_context_t *sc, word_t max_refills, ticks_t budget, ticks_t
     /* full budget available */
     refill_head(sc)->rAmount = budget;
     /* budget can be used from now */
-    refill_head(sc)->rTime = NODE_STATE_ON_CORE(ksCurTime, core);
+    refill_head(sc)->rTime = NODE_STATE(ksCurTime);
     maybe_add_empty_tail(sc);
     REFILL_SANITY_CHECK(sc, budget);
 }
@@ -194,7 +190,7 @@ void refill_update(sched_context_t *sc, ticks_t new_period, ticks_t new_budget, 
     sc->scPeriod = new_period;
 
     if (refill_ready(sc)) {
-        refill_head(sc)->rTime = NODE_STATE_ON_CORE(ksCurTime, sc->scCore);
+        refill_head(sc)->rTime = NODE_STATE(ksCurTime);
     }
 
     if (refill_head(sc)->rAmount >= new_budget) {
@@ -327,7 +323,7 @@ void refill_unblock_check(sched_context_t *sc)
     /* advance earliest activation time to now */
     REFILL_SANITY_START(sc);
     if (refill_ready(sc)) {
-        refill_head(sc)->rTime = NODE_STATE_ON_CORE(ksCurTime, sc->scCore);
+        refill_head(sc)->rTime = NODE_STATE(ksCurTime);
         NODE_STATE(ksReprogram) = true;
 
         /* merge available replenishments */

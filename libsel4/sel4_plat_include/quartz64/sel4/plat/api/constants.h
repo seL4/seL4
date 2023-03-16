@@ -4,4 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <sel4/deprecated.h>
+#pragma once
+
+#include <autoconf.h>
+#include <sel4/arch/constants_cortex_a55.h>
