@@ -36,16 +36,13 @@
 
 void handleInterruptEntry(void)
 {
-    irq_t irq;
-
 #ifdef CONFIG_KERNEL_MCS
     if (SMP_TERNARY(clh_is_self_in_queue(), 1)) {
         updateTimestamp();
         checkBudget();
     }
 #endif
-
-    irq = getActiveIRQ();
+    irq_t irq = getActiveIRQ();
     if (IRQT_TO_IRQ(irq) != IRQT_TO_IRQ(irqInvalid)) {
         handleInterrupt(irq);
     } else {
