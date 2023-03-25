@@ -11,14 +11,7 @@ declare_platform(qemu-riscv-virt KernelPlatformQEMURiscVVirt PLAT_QEMU_RISCV_VIR
 
 if(KernelPlatformQEMURiscVVirt)
 
-    if("${KernelSel4Arch}" STREQUAL riscv64)
-        declare_seL4_arch(riscv64)
-    elseif("${KernelSel4Arch}" STREQUAL riscv32)
-        declare_seL4_arch(riscv32) # This is still untested
-    else()
-        fallback_declare_seL4_arch_default(riscv64)
-    endif()
-
+    declare_seL4_arch(riscv64 riscv32)
     config_set(KernelOpenSBIPlatform OPENSBI_PLATFORM "generic")
     config_set(KernelPlatformFirstHartID FIRST_HART_ID 0)
     set(KernelRiscvUseClintMtime ON)
