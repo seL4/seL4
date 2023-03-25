@@ -238,14 +238,12 @@ respectively.
 
 \subsection{ASID Control}
 
-For internal kernel book-keeping purposes, there is a fixed maximum
-number of applications the system can support.  In order to manage
-this limited resource, the microkernel provides an \obj{ASID Control}
-capability. The \obj{ASID Control} capability is used to generate a
-capability that authorises the use of a subset of available address-space identifiers.
-This newly created capability is called an
-\obj{ASID Pool}. \obj{ASID Control} only has a single \texttt{MakePool} method for each
-architecture, listed in the table below.
+The kernel supports a fixed maximum number of address space identifiers (ASIDs), which is
+architecture dependent. In order to manage this limited resource, seL4 provides an \obj{ASID
+Control} capability. The \obj{ASID Control} capability can be used together with an \obj{Untyped}
+capability to create \obj{ASID pool} objects and capabilities, which authorise the use of a subset
+of available address space identifiers. \obj{ASID Control} has a single \texttt{MakePool} method for
+each architecture, listed in the table below.
 
 \begin{tabularx}{\textwidth}{Xl} \toprule
 \emph{Architectures} & \emph{Methods} \\ \midrule
@@ -257,11 +255,11 @@ RISC-V               & \autoref{group__riscv__seL4__RISCV__ASIDControl} \\
 
 \subsection{ASID Pool}
 
-An \obj{ASID Pool} confers the right to create a subset of the available
-maximum applications. For a VSpace to be usable by an application, it
-must be assigned to an ASID. This is done using a capability to an
-\obj{ASID Pool}. The \obj{ASID Pool} object has a single method, \texttt{Assign}, for each
-architecture:
+An \obj{ASID Pool} confers the right to use a subset of the globally available address space
+identifiers. The size of this subset is architecture dependent. For a VSpace object to be usable by
+a thread, it must be assigned to an ASID via an \obj{ASID Pool} capability. Each ASID can be
+assigned to at most one VSpace. The \obj{ASID Pool} capability has a single invocation,
+\texttt{Assign}, for each architecture.
 
 \begin{tabularx}{\textwidth}{Xl} \toprule
 \emph{Architectures} & \emph{Methods} \\ \midrule
@@ -276,7 +274,7 @@ A parameter of type \texttt{seL4\_ARM\_VMAttributes} or
 \texttt{seL4\_x86\_VMAttributes} is used to specify the cache behaviour of the
 page being mapped; possible values for Arm that can be bitwise OR'd together are
 shown in \autoref{tbl:vmattr_arm} \ifxeightsix and an enumeration of valid values
-for IA-32 are shown in \autoref{tbl:vmattr_ia32}\fi. Mapping attributtes can be updated on existing mappings using the Map invocation with the same virtual address.
+for IA-32 are shown in \autoref{tbl:vmattr_ia32}\fi. Mapping attributes can be updated on existing mappings using the Map invocation with the same virtual address.
 
 \begin{table}[htb]
   \begin{center}
@@ -316,14 +314,14 @@ for IA-32 are shown in \autoref{tbl:vmattr_ia32}\fi. Mapping attributtes can be 
 
 \section{Sharing Memory}
 
-seL4 does not allow \obj{Page Table}s to be shared, but does allow
-pages to be shared between address spaces.
-To share a page, the capability to the
-\obj{Page} must first be
-duplicated using the \apifunc{seL4\_CNode\_Copy}{cnode_copy} method and the new copy must
-be used in the \apifunc{seL4\_ARM\_Page\_Map}{arm_page_map} \ifxeightsix or \apifunc{seL4\_x86\_Page\_Map}{x86_page_map} \fi method that maps the page into the second
-address space. Attempting to map the same capability
-twice will result in an error.
+The seL4 kernel does not allow intermediate paging structures (e.g.\ \obj{PageTable} objects) to be
+shared, but it does allow pages to be shared between VSpaces, and VSpaces to be shared by threads.
+
+To share a page, the capability to the \obj{Page} must first be duplicated using the
+\apifunc{seL4\_CNode\_Copy}{cnode_copy} method and the copy must be used in the Map invocation
+(e.g.\ \apifunc{seL4\_ARM\_Page\_Map}{arm_page_map} \ifxeightsix or
+\apifunc{seL4\_x86\_Page\_Map}{x86_page_map}\fi) that maps the page into the second address space.
+Attempting to map the same capability twice will result in an error.
 
 
 \section{Page Faults}
