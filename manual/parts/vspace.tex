@@ -57,9 +57,9 @@ The rest of this section details the paging structures for each architecture.
 
 \subsubsection{IA-32}
 
-On IA-32, the VSpace object is implemented by the \texttt{PageDirectory} object, which covers the
+On IA-32, the VSpace object is implemented by the \obj{PageDirectory} object, which covers the
 entire 4\,GiB range in the 32-bit address space, and forms the top-level paging structure. Second
-level page-tables (\texttt{PageTable} objects) each cover a 4\,MiB range. Structures at both levels
+level page-tables (\obj{PageTable} objects) each cover a 4\,MiB range. Structures at both levels
 are indexed by 10 bits in the virtual address.
 
 \begin{tabularx}{\textwidth}{Xlll} \toprule
@@ -71,7 +71,7 @@ are indexed by 10 bits in the virtual address.
 
 \subsubsection{x64}
 
-On x86-64, the VSpace object is implemented by the \texttt{PML4} object. Three further levels of
+On x86-64, the VSpace object is implemented by the \obj{PML4} object. Three further levels of
 paging structure are defined, as shown in the table below. All structures are indexed by 9 bits of
 the virtual address.
 
@@ -86,9 +86,9 @@ the virtual address.
 
 \subsubsection{AArch32}
 
-Like IA-32, Arm AArch32 implements the VSpace object with a \texttt{PageDirectory} object which
+Like IA-32, Arm AArch32 implements the VSpace object with a \obj{PageDirectory} object which
 covers the entire 4\,GiB address range.  The second-level structures on AArch32 are
-\texttt{PageTable} objects and cover 1\,MiB address ranges.
+\obj{PageTable} objects and cover 1\,MiB address ranges.
 
 \begin{tabularx}{\textwidth}{Xlll} \toprule
 \emph{Object}          & \emph{Address Bits} & \emph{Level} & \emph{Methods} \\ \midrule
@@ -100,7 +100,7 @@ covers the entire 4\,GiB address range.  The second-level structures on AArch32 
 \subsubsection{AArch64}
 
 Arm AArch64 processors have a four-level page-table structure. The VSpace object is implemented by the
-\texttt{PageGlobalDirectory} object. All paging structures are indexed by 9 bits of the virtual address.
+\obj{PageGlobalDirectory} object. All paging structures are indexed by 9 bits of the virtual address.
 
 \begin{tabularx}{\textwidth}{Xlll} \toprule
 \emph{Object}                    & \emph{Address Bits} & \emph{Level} & \emph{Methods} \\ \midrule
@@ -113,12 +113,12 @@ Arm AArch64 processors have a four-level page-table structure. The VSpace object
 
 \subsection{RISC-V}
 
-RISC-V provides the same paging structure for all levels, \texttt{PageTable}. This means the VSpace
-object is here also implemented by the \texttt{PageTable} object.
+RISC-V provides the same paging structure for all levels, \obj{PageTable}. This means the VSpace
+object is here also implemented by the \obj{PageTable} object.
 
 \subsubsection{RISC-V 32-bit}
 
-32-bit RISC-V \texttt{PageTables} are indexed by 10 bits of virtual address.
+32-bit RISC-V \obj{PageTables} are indexed by 10 bits of virtual address.
 
 \begin{tabularx}{\textwidth}{Xlll} \toprule
 \emph{Object}          & \emph{Address Bits} & \emph{Level} & \emph{Methods} \\ \midrule
@@ -129,7 +129,7 @@ object is here also implemented by the \texttt{PageTable} object.
 
 \subsubsection{RISC-V 64-bit}
 
-64-bit RISC-V follows the SV39 model, where \texttt{PageTables} are indexed by 9 bits of virtual address.
+64-bit RISC-V follows the SV39 model, where \obj{PageTables} are indexed by 9 bits of virtual address.
 Although RISC-V allows
 for multiple different numbers of paging levels, currently seL4 only supports exactly three levels
 of paging structures.
