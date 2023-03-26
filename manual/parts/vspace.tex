@@ -99,12 +99,21 @@ covers the entire 4\,GiB address range.  The second-level structures on AArch32 
 
 \subsubsection{AArch64}
 
-Arm AArch64 processors have a four-level page-table structure. The VSpace object is implemented by the
-\obj{PageGlobalDirectory} object. All paging structures are indexed by 9 bits of the virtual address.
+Depending on configuration, Arm AArch64 processors have page-table structures with 3 or 4 levels.
+The VSpace object is therefore implemented either by the \obj{PageGlobalDirectory} object (4 level
+configs) or the \obj{PageUpperDirectory} object (3 level configs). To help with writing code that is
+generic in this distinction, \texttt{libsel4} provides the macro \texttt{seL4\_ARM\_VSpaceObject}
+that expands to the correct corresponding object. All intermediate paging structures are indexed by
+9 bits of the virtual address. Depending on configuration, the top-level object is indexed by either
+9 or 10 bits. The macro \texttt{seL4\_VSpaceIndexBits} makes this value available under a generic
+name. The table below shows the four-level configuration. On three-level configurations, the
+invocations for \texttt{seL4\_ARM\_VSpaceObject} capabilities are instead available on
+\obj{PageUpperDirectory} caps.
 
 \begin{tabularx}{\textwidth}{Xlll} \toprule
 \emph{Object}                    & \emph{Address Bits} & \emph{Level} & \emph{Methods} \\ \midrule
-    \texttt{PageGlobalDirectory} & 39---47             & 0            & \autoref{group__aarch64__seL4__ARM__PageGlobalDirectory} \\
+    \texttt{PageGlobalDirectory}/\texttt{seL4\_ARM\_VSpaceObject}
+                                 & 39---47             & 0            & \autoref{group__aarch64__seL4__ARM__VSpace} \\
     \texttt{PageUpperDirectory}  & 30---38             & 1            & \autoref{group__aarch64__seL4__ARM__PageUpperDirectory} \\
 \texttt{PageDirectory}           & 21---29             & 2            & \autoref{group__aarch64__seL4__ARM__PageDirectory} \\
 \texttt{PageTable}               & 12---20             & 3            & \autoref{group__arm__seL4__ARM__PageTable} \\
