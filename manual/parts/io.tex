@@ -62,10 +62,10 @@ be considered as the kernel outsourcing the allocation of this namespace to
 user level.
 
 \begin{description}
-    \item[\apifunc{seL4\_IRQControl\_GetIOAPIC}{x86_irq_handler_getioapic}] creates
+    \item[\apifunc{seL4\_IRQControl\_GetIOAPIC}{x86_irq_control_get_io_apic}] creates
     an \obj{IRQHandler} capability for an IOAPIC interrupt
 
-    \item[\apifunc{seL4\_IRQControl\_GetMSI}{x86_irq_handler_getmsi}] creates
+    \item[\apifunc{seL4\_IRQControl\_GetMSI}{x86_irq_control_get_msi}] creates
     an \obj{IRQHandler} capability for an MSI interrupt
 \end{description}
 
