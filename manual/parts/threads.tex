@@ -107,7 +107,7 @@ a scheduling context object available in order to be admitted to the scheduler.
 Access to CPU execution time is controlled through scheduling context objects.
 Scheduling contexts are configured with a tuple of
 \textit{budget}$(b)$ and \textit{period} $(p)$, both in microseconds, set by
-\apifunc{seL4\_SchedControl\_Configure}{schedcontrol_configure} (see \autoref{sec:sc_creation}).
+\apifunc{seL4\_SchedControl\_Configure\_Flags}{schedcontrol_configureflags} (see \autoref{sec:sc_creation}).
 The tuple $(b, p)$ forms an upper bound on the thread's execution -- the kernel will not permit a
 thread to run for more than $b$ out of every $p$ microseconds. However, $\frac{b}{p}$ does not
 represent a lower bound on execution, as a thread must have the highest or equal highest priority
@@ -497,7 +497,7 @@ registers, \texttt{seL4\_NumDualFunctionMonitors} will be set to \texttt{0} and
 
 \end{description}
 
-\begin{table}[h]
+\begin{table}[ht]
 \begin{tabularx}{\textwidth}{XXX}
 \toprule
 \textbf{Value sent} & \textbf{IPC buffer location} \\
