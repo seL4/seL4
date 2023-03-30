@@ -88,13 +88,22 @@ the virtual address.
 
 Like IA-32, Arm AArch32 implements the VSpace object with a \obj{PageDirectory} object which
 covers the entire 4\,GiB address range.  The second-level structures on AArch32 are
-\obj{PageTable} objects and cover 1\,MiB address ranges.
+\obj{PageTable} objects. The address range they cover is configuration-dependent: 1\,MiB
+(20 address bits) for standard configurations, and 2\,MiB (21 address bits) for hypervisor
+configurations.
 
 \begin{tabularx}{\textwidth}{Xlll} \toprule
 \emph{Object}          & \emph{Address Bits} & \emph{Level} & \emph{Methods} \\ \midrule
 \texttt{PageDirectory} & 20---31             & 0            & \autoref{group__aarch32__seL4__ARM__PageDirectory} \\
 \texttt{PageTable}     & 12---19             & 1            & \autoref{group__arm__seL4__ARM__PageTable} \\
 \bottomrule
+\end{tabularx}
+
+\begin{tabularx}{\textwidth}{Xlll} \toprule
+  \emph{Object}          & \emph{Address Bits} & \emph{Level} & \emph{Methods} \\ \midrule
+  \texttt{PageDirectory (hyp)} & 21---31     & 0            & \autoref{group__aarch32__seL4__ARM__PageDirectory} \\
+  \texttt{PageTable (hyp)}     & 12---20     & 1            & \autoref{group__arm__seL4__ARM__PageTable} \\
+  \bottomrule
 \end{tabularx}
 
 \subsubsection{AArch64}
