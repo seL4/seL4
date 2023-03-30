@@ -339,7 +339,8 @@ To share a page, the capability to the \obj{Page} must first be duplicated using
 \apifunc{seL4\_CNode\_Copy}{cnode_copy} method and the copy must be used in the Map invocation
 (e.g.\ \apifunc{seL4\_ARM\_Page\_Map}{arm_page_map} \ifxeightsix or
 \apifunc{seL4\_x86\_Page\_Map}{x86_page_map}\fi) that maps the page into the second address space.
-Attempting to map the same capability twice will result in an error.
+Attempting to map the same capability twice in different page tables or address spaces will result
+in an error.
 
 
 \section{Page Faults}
