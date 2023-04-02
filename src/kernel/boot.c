@@ -624,6 +624,14 @@ BOOT_CODE static bool_t create_untypeds_for_region(
     seL4_SlotPos first_untyped_slot
 )
 {
+    /* Sanity check for overflow -- it is Ok for device untypeds to contain
+     * invalid kernel pointers, because they will never be accessed, but we
+     * still need start <= end for the code below to work correctly.
+     */
+    if (reg.end < reg.start) {
+        return false;
+    }
+
     while (!is_reg_empty(reg)) {
 
         /* Calculate the bit size of the region. */
@@ -830,6 +838,7 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
         avail_reg[i] = paddr_to_pptr_reg(available[i]);
         avail_reg[i].end = ceiling_kernel_window(avail_reg[i].end);
         avail_reg[i].start = ceiling_kernel_window(avail_reg[i].start);
+        assert(REG_VALID(avail_reg[i]));
     }
 
     word_t a = 0;

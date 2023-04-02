@@ -46,16 +46,19 @@ enum _bool {
 };
 typedef word_t bool_t;
 
+/** A region of kernel virtual memory. Empty if start == end. Must satisfy start <= end. */
 typedef struct region {
     pptr_t start;
     pptr_t end;
 } region_t;
 
+/** A region of physical addresses. Empty if start == end. Must satisfy start <= end. */
 typedef struct p_region {
     paddr_t start;
     paddr_t end;
 } p_region_t;
 
+/** A region of user virtual addresses. Empty if start == end. Must satisfy start <= end. */
 typedef struct v_region {
     vptr_t start;
     vptr_t end;
@@ -63,6 +66,7 @@ typedef struct v_region {
 
 #define REG_EMPTY (region_t){ .start = 0, .end = 0 }
 #define P_REG_EMPTY (p_region_t){ .start = 0, .end = 0 }
+#define REG_VALID(reg) ((reg).start <= (reg).end)
 
 /* equivalent to a word_t except that we tell the compiler that we may alias with
  * any other type (similar to a char pointer) */

@@ -62,6 +62,7 @@ BOOT_CODE static bool_t arch_init_freemem(region_t ui_reg,
      */
     res_reg[0].start = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void *)KERNEL_ELF_BASE));
     res_reg[0].end = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void *)ki_end));
+    assert(REG_VALID(res_reg[0]));
 
     int index = 1;
 
@@ -72,6 +73,7 @@ BOOT_CODE static bool_t arch_init_freemem(region_t ui_reg,
             return false;
         }
         res_reg[index] = paddr_to_pptr_reg(dtb_p_reg);
+        assert(REG_VALID(res_reg[index]));
         index += 1;
     }
 
@@ -199,9 +201,11 @@ static BOOT_CODE bool_t try_init_kernel(
         kpptr_to_paddr((void *)KERNEL_ELF_BASE), kpptr_to_paddr(ki_boot_end)
     });
     region_t boot_mem_reuse_reg = paddr_to_pptr_reg(boot_mem_reuse_p_reg);
+    assert(REG_VALID(boot_mem_reuse_reg));
     region_t ui_reg = paddr_to_pptr_reg((p_region_t) {
         ui_p_reg_start, ui_p_reg_end
     });
+    assert(REG_VALID(ui_reg));
     word_t extra_bi_size = 0;
     pptr_t extra_bi_offset = 0;
     vptr_t extra_bi_frame_vptr;

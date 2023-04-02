@@ -77,6 +77,7 @@ BOOT_CODE static bool_t arch_init_freemem(p_region_t ui_p_reg,
     // in the x86 linker script.
     ui_p_reg.start = KERNEL_ELF_PADDR_BASE;
     reserved[0] = paddr_to_pptr_reg(ui_p_reg);
+    assert(REG_VALID(reserved[0]));
     return init_freemem(mem_p_regs->count, mem_p_regs->list, MAX_RESERVED,
                         reserved, it_v_reg, extra_bi_size_bits);
 }
@@ -114,6 +115,9 @@ BOOT_CODE bool_t init_sys_state(
     /* convert from physical addresses to kernel pptrs */
     region_t ui_reg             = paddr_to_pptr_reg(ui_info.p_reg);
     region_t boot_mem_reuse_reg = paddr_to_pptr_reg(boot_mem_reuse_p_reg);
+
+    assert(REG_VALID(ui_reg));
+    assert(REG_VALID(boot_mem_reuse_reg));
 
     /* convert from physical addresses to userland vptrs */
     v_region_t ui_v_reg;

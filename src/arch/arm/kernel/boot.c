@@ -68,6 +68,7 @@ BOOT_CODE static bool_t arch_init_freemem(p_region_t ui_p_reg,
     }
     if (ui_p_reg.start < PADDR_TOP) {
         region_t ui_reg = paddr_to_pptr_reg(ui_p_reg);
+        assert(REG_VALID(ui_reg));
         if (MODE_RESERVED == 1) {
             if (index + 1 >= ARRAY_SIZE(reserved)) {
                 printf("ERROR: no slot to add the user image and the "
@@ -332,6 +333,7 @@ static BOOT_CODE bool_t try_init_kernel(
         ui_p_reg_start, ui_p_reg_end
     };
     region_t ui_reg = paddr_to_pptr_reg(ui_p_reg);
+    assert(REG_VALID(ui_reg));
     word_t extra_bi_size = 0;
     pptr_t extra_bi_offset = 0;
     vptr_t extra_bi_frame_vptr;

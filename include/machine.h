@@ -39,16 +39,43 @@ static inline paddr_t CONST addrFromKPPtr(const void *pptr)
 #define pptr_to_paddr(x)   addrFromPPtr(x)
 #define kpptr_to_paddr(x)  addrFromKPPtr(x)
 
+/**
+ * Convert a physical address region to a kernel virtual address region in the
+ * physical memory window.
+ *
+ * Inverse of pptr_to_paddr_reg(). The returned region may not be valid if
+ * address translation overflows only one address, but not the other. It is the
+ * caller's repsonsibility to know or check that this is not the case. It is Ok
+ * for both values to overflow if the values still satisfy platform invariants
+ * (e.g. are canonical) or if they are used in device untypeds only (i.e. never
+ * dereferenced).
+ *
+ * @param p_reg Physical address region.
+ * @return Kernel virtual address region.
+ */
 static inline region_t CONST paddr_to_pptr_reg(const p_region_t p_reg)
 {
+    assert(p_reg.start <= p_reg.end);
     return (region_t) {
         .start = (paddr_t)paddr_to_pptr(p_reg.start),
         .end   = (paddr_t)paddr_to_pptr(p_reg.end)
     };
 }
 
+/**
+ * Convert a kernel virtual address region to a phyiscal address region.
+ *
+ * Inverse of paddr_to_pptr_reg(). The returned region may not be valid if
+ * address translation overflows only one address, but not the other. It is the
+ * caller's repsonsibility to know or check this is not the case. It is Ok for
+ * both values to overflow.
+ *
+ * @param reg Kernel virtual address region.
+ * @return Physical address region.
+ */
 static inline p_region_t CONST pptr_to_paddr_reg(const region_t reg)
 {
+    assert(reg.start <= reg.end);
     return (p_region_t) {
         .start = pptr_to_paddr((const void *)reg.start),
         .end   = pptr_to_paddr((const void *)reg.end),
