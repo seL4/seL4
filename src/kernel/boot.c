@@ -765,7 +765,7 @@ BOOT_CODE static bool_t check_available_memory(word_t n_available,
         }
 
         /* Regions must be ordered and must not overlap. */
-        if ((i > 0) && (r->start < available[i - 1].end)) {
+        if ((i > 0) && (r->start <= available[i - 1].end)) {
             printf("ERROR: memory region %d in wrong order\n", (int)i);
             return false;
         }
@@ -792,7 +792,7 @@ BOOT_CODE static bool_t check_reserved_memory(word_t n_reserved,
         }
 
         /* Regions must be ordered and must not overlap. */
-        if ((i > 0) && (r->start < reserved[i - 1].end)) {
+        if ((i > 0) && (r->start <= reserved[i - 1].end)) {
             printf("ERROR: reserved region %"SEL4_PRIu_word" in wrong order\n", i);
             return false;
         }
