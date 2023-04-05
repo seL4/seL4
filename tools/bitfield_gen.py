@@ -7,7 +7,7 @@
 #
 
 ##
-# A tool for generating bifield structures with get/set/new methods
+# A tool for generating bitfield structures with get/set/new methods
 # including Isabelle/HOL specifications and correctness proofs.
 ##
 
