@@ -587,6 +587,7 @@ foreach(bf_dec ${bf_declarations})
         "${pbf_target}"
         "kernel_all_pp_prune.c"
         "kernel_all_pp_prune_wrapper"
+        "${bf_file}"
     )
     GenDefsBFTarget(
         "${bf_gen_target}_def"
