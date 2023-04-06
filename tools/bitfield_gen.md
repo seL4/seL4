@@ -5,6 +5,25 @@
 
 # Bitfield Generator Manual
 
+- [Introduction](#introduction)
+- [Bit Field Generator by Example](#bit-field-generator-by-example)
+  - [Blocks](#blocks)
+  - [Field High](#field-high)
+  - [Visible Field Order](#visible-field-order)
+  - [Tagged Unions](#tagged-unions)
+  - [Advanced Tag Fields](#advanced-tag-fields)
+    - [Tag Slices](#tag-slices)
+    - [Masks](#masks)
+  - [Raw Value Access](#raw-value-access)
+  - [Architecture Parameters and Canonical Pointers](#architecture-parameters-and-canonical-pointers)
+- [Syntax Reference](#syntax-reference)
+  - [Lexical Structure](#lexical-structure)
+  - [Syntactic Structure](#syntactic-structure)
+  - [Restrictions](#restrictions)
+- [Correctness](#correctness)
+- [Limitations](#limitations)
+
+
 ## Introduction
 
 The tool `bitfield_gen.py` in the `seL4/tools/` directory generates bitfield
