@@ -8,6 +8,7 @@
 
 #include <autoconf.h>
 #include <sel4/macros.h>
+#include <sel4/sel4_arch/constants.h>
 
 /* caps with fixed slot positions in the root CNode */
 enum {
@@ -79,11 +80,26 @@ typedef struct seL4_BootInfo {
      * to make this struct easier to represent in other languages */
 } seL4_BootInfo;
 
-/* If extraLen > 0, then 4K after the start of bootinfo there is a region of the
- * size extraLen that contains additional boot info data chunks. They are
- * arch/platform specific and may or may not exist in any given execution. Each
- * chunk has a header that contains an ID to describe the chunk. All IDs share a
- * global namespace to ensure uniqueness.
+/* The boot info frame must be large enough to hold the seL4_BootInfo data
+ * structure. Due to internal restrictions, the size must be of the form 2^n and
+ * the minimum is one page.
+ */
+#define seL4_BootInfoFrameSizeBits  seL4_PageBits
+#define seL4_BootInfoFrameSize      LIBSEL4_BIT(seL4_BootInfoFrameSizeBits)
+
+SEL4_COMPILE_ASSERT(
+    invalid_seL4_BootInfoFrameSize,
+    sizeof(seL4_BootInfo) <= seL4_BootInfoFrameSize)
+
+/* If seL4_BootInfo.extraLen > 0, this indicate the presence of additional boot
+ * information chunks starting at the offset SEL4_BI_FRAME_SIZE. Note that since
+ * x86, Arm and RISC-V use 4 KiByte pages and the boot info frame usually is one
+ * page, legacy userland code often contains the hard-coded assumption, that
+ * this offset is 4 KiByte instead of using SEL4_BI_FRAME_SIZE. Unfortunately,
+ * seL4_BootInfo currently has no field that allows passing this offset.
+ * The additional boot is arch/platform specific, it may or may not exist in any
+ * given execution. Each chunk has a header that contains an ID to describe the
+ * chunk. All IDs share a global namespace to ensure uniqueness.
  */
 typedef enum {
     SEL4_BOOTINFO_HEADER_PADDING            = 0,
