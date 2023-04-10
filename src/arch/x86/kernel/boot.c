@@ -123,7 +123,7 @@ BOOT_CODE bool_t init_sys_state(
 
     ipcbuf_vptr = ui_v_reg.end;
     bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
-    extra_bi_frame_vptr = bi_frame_vptr + BIT(BI_FRAME_SIZE_BITS);
+    extra_bi_frame_vptr = bi_frame_vptr + BIT(seL4_BootInfoFrameSizeBits);
 
     if (vbe->vbeMode != -1) {
         extra_bi_size += sizeof(seL4_X86_BootInfo_VBE);

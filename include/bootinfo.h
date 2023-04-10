@@ -15,5 +15,3 @@
 #define BI_REF(p) ((word_t)(p))
 
 #define S_REG_EMPTY (seL4_SlotRegion){ .start = 0, .end = 0 }
-
-#define BI_FRAME_SIZE_BITS seL4_BootInfoFrameSizeBits
