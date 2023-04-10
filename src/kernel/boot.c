@@ -177,7 +177,7 @@ BOOT_CODE static word_t calculate_rootserver_size(v_region_t it_v_reg, word_t ex
     word_t size = BIT(CONFIG_ROOT_CNODE_SIZE_BITS + seL4_SlotBits);
     size += BIT(seL4_TCBBits); // root thread tcb
     size += BIT(seL4_PageBits); // ipc buf
-    size += BIT(BI_FRAME_SIZE_BITS); // boot info
+    size += BIT(seL4_BootInfoFrameBits); // boot info
     size += BIT(seL4_ASIDPoolBits);
     size += extra_bi_size_bits > 0 ? BIT(extra_bi_size_bits) : 0;
     size += BIT(seL4_VSpaceBits); // root vspace
@@ -232,8 +232,8 @@ BOOT_CODE static void create_rootserver_objects(pptr_t start, v_region_t it_v_re
      * of allocations used in the current implementation here, it can't be any
      * bigger.
      */
-    compile_assert(invalid_BI_FRAME_SIZE_BITS, BI_FRAME_SIZE_BITS == seL4_PageBits);
-    rootserver.boot_info = alloc_rootserver_obj(BI_FRAME_SIZE_BITS, 1);
+    compile_assert(invalid_seL4_BootInfoFrameBits, seL4_BootInfoFrameBits == seL4_PageBits);
+    rootserver.boot_info = alloc_rootserver_obj(seL4_BootInfoFrameBits, 1);
 
     /* TCBs on aarch32 can be larger than page tables in certain configs */
 #if seL4_TCBBits >= seL4_PageTableBits
@@ -348,7 +348,7 @@ BOOT_CODE void populate_bi_frame(node_id_t node_id, word_t num_nodes,
                                  vptr_t ipcbuf_vptr, word_t extra_bi_size)
 {
     /* clear boot info memory */
-    clearMemory((void *)rootserver.boot_info, BI_FRAME_SIZE_BITS);
+    clearMemory((void *)rootserver.boot_info, seL4_BootInfoFrameBits);
     if (extra_bi_size) {
         clearMemory((void *)rootserver.extra_bi,
                     calculate_extra_bi_size_bits(extra_bi_size));
