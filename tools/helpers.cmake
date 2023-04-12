@@ -132,7 +132,7 @@ endfunction(GenBFTarget)
 # environment is empty for kernel generation and "libsel4" for generating non kernel headers
 # prunes is an optional list of files that will be passed as --prune options to the bitfield
 # generator
-function(GenHBFTarget environment target_name target_file pbf_path pbf_target prunes deps)
+function(GenHBFTarget environment target_name target_file pbf_path pbf_target prunes deps orig_file)
     set(args "")
     if(NOT "${environment}" STREQUAL "")
         list(APPEND args --environment "${environment}")
@@ -141,6 +141,7 @@ function(GenHBFTarget environment target_name target_file pbf_path pbf_target pr
         get_absolute_source_or_binary(prune_absolute "${prune}")
         list(APPEND args "--prune" "${prune_absolute}")
     endforeach()
+    list(APPEND args --from_file "${orig_file}")
     list(APPEND deps ${prunes})
     GenBFTarget("${args}" "${target_name}" "${target_file}" "${pbf_path}" "${pbf_target}" "${deps}")
 endfunction(GenHBFTarget)
