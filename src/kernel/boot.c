@@ -640,7 +640,7 @@ BOOT_CODE static bool_t provide_untyped_cap(
 
     /* All cap ptrs must be aligned to object size */
     if (!IS_ALIGNED(pptr, size_bits)) {
-        printf("Kernel init: Unaligned untyped pptr %p (alignment %lu)", (void *)pptr, size_bits);
+        printf("Kernel init: Unaligned untyped pptr %p (alignment %"SEL4_PRIu_word")", (void *)pptr, size_bits);
         return false;
     }
 
