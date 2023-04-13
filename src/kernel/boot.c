@@ -634,19 +634,19 @@ BOOT_CODE static bool_t provide_untyped_cap(
 
     /* Bounds check for size parameter */
     if (size_bits > seL4_MaxUntypedBits || size_bits < seL4_MinUntypedBits) {
-        printf("Kernel init: Invalid untyped size %"SEL4_PRIu_word, size_bits);
+        printf("Kernel init: Invalid untyped size %"SEL4_PRIu_word"\n", size_bits);
         return false;
     }
 
     /* All cap ptrs must be aligned to object size */
     if (!IS_ALIGNED(pptr, size_bits)) {
-        printf("Kernel init: Unaligned untyped pptr %p (alignment %"SEL4_PRIu_word")", (void *)pptr, size_bits);
+        printf("Kernel init: Unaligned untyped pptr %p (alignment %"SEL4_PRIu_word")\n", (void *)pptr, size_bits);
         return false;
     }
 
     /* All cap ptrs apart from device untypeds must be in the kernel window. */
     if (!device_memory && !pptr_in_kernel_window(pptr)) {
-        printf("Kernel init: Non-device untyped pptr %p outside kernel window",
+        printf("Kernel init: Non-device untyped pptr %p outside kernel window\n",
                (void *)pptr);
         return false;
     }
@@ -655,7 +655,7 @@ BOOT_CODE static bool_t provide_untyped_cap(
        need to assume that the kernel window is aligned up to potentially
        seL4_MaxUntypedBits. */
     if (!device_memory && !pptr_in_kernel_window(pptr + MASK(size_bits))) {
-        printf("Kernel init: End of non-device untyped at %p outside kernel window (size %"SEL4_PRIu_word")",
+        printf("Kernel init: End of non-device untyped at %p outside kernel window (size %"SEL4_PRIu_word")\n",
                (void *)pptr, size_bits);
         return false;
     }
