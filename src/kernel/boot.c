@@ -634,7 +634,7 @@ BOOT_CODE static bool_t provide_untyped_cap(
 
     /* Bounds check for size parameter */
     if (size_bits > seL4_MaxUntypedBits || size_bits < seL4_MinUntypedBits) {
-        printf("Kernel init: Invalid untyped size %lu", size_bits);
+        printf("Kernel init: Invalid untyped size %"SEL4_PRIu_word, size_bits);
         return false;
     }
 
