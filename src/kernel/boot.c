@@ -678,6 +678,21 @@ BOOT_CODE static bool_t provide_untyped_cap(
     return ret;
 }
 
+/**
+ * Create untyped caps for a region of kernel-virtual memory.
+ *
+ * Takes care of alignement, size and potentially wrapping memory regions. It is fine to provide a
+ * region with end < start if the memory is device memory.
+ *
+ * If the region start is not aligned to seL4_MinUntypedBits, the part up to the next aligned
+ * address will be ignored and is lost, because it is too small to create kernel objects in.
+ *
+ * @param root_cnode_cap Cap to the CNode to store the untypeds in.
+ * @param device_memory  Whether the region is device memory.
+ * @param reg Region of kernel-virtual memory. May wrap around.
+ * @param first_untyped_slot First available untyped boot info slot.
+ * @return true on success, false on failure.
+ */
 BOOT_CODE static bool_t create_untypeds_for_region(
     cap_t      root_cnode_cap,
     bool_t     device_memory,
@@ -685,9 +700,17 @@ BOOT_CODE static bool_t create_untypeds_for_region(
     seL4_SlotPos first_untyped_slot
 )
 {
+    /* This code works with regions that wrap (where end < start), because the loop cuts up the
+       region into size-aligned chunks, one for each cap. Memory chunks that are size-aligned cannot
+       themselves overflow, so they satisfy alignement, size, and overflow conditionds. The region
+       [0..end) is not neccessarily part of the kernel window (depending on the value of PPTR_BASE).
+       This is fine for device untypeds. For normal untypeds, the region is assumed to be fully in
+       the kernel window. This is not checked here. */
     while (!is_reg_empty(reg)) {
 
-        /* Calculate the bit size of the region. */
+        /* Calculate the bit size of the region. This is also correct for end < start: it will
+           return the correct size of the set [start..-1] union [0..end). This will then be too
+           large for alignment, so the code further down will reduce the size. */
         unsigned int size_bits = seL4_WordBits - 1 - clzl(reg.end - reg.start);
         /* The size can't exceed the largest possible untyped size. */
         if (size_bits > seL4_MaxUntypedBits) {
@@ -825,7 +848,8 @@ BOOT_CODE static bool_t check_available_memory(word_t n_available,
             return false;
         }
 
-        /* Regions must be ordered and must not overlap. */
+        /* Regions must be ordered and must not overlap. Regions are [start..end),
+           so the == case is fine. Directly adjacent regions are allowed. */
         if ((i > 0) && (r->start < available[i - 1].end)) {
             printf("ERROR: memory region %d in wrong order\n", (int)i);
             return false;
@@ -852,7 +876,8 @@ BOOT_CODE static bool_t check_reserved_memory(word_t n_reserved,
             return false;
         }
 
-        /* Regions must be ordered and must not overlap. */
+        /* Regions must be ordered and must not overlap. Regions are [start..end),
+           so the == case is fine. Directly adjacent regions are allowed. */
         if ((i > 0) && (r->start < reserved[i - 1].end)) {
             printf("ERROR: reserved region %"SEL4_PRIu_word" in wrong order\n", i);
             return false;
