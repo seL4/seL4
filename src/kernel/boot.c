@@ -655,7 +655,7 @@ BOOT_CODE static bool_t provide_untyped_cap(
        need to assume that the kernel window is aligned up to potentially
        seL4_MaxUntypedBits. */
     if (!device_memory && !pptr_in_kernel_window(pptr + MASK(size_bits))) {
-        printf("Kernel init: End of non-device untyped at %p outside kernel window (size %lu)",
+        printf("Kernel init: End of non-device untyped at %p outside kernel window (size %"SEL4_PRIu_word")",
                (void *)pptr, size_bits);
         return false;
     }
