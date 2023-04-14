@@ -131,6 +131,7 @@ void generic_ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
             target_cores[nr_target_cores] = index;
             nr_target_cores++;
         } else {
+            IPI_MEM_BARRIER;
             ipi_send_target(ipi, cpuIndexToID(index));
         }
         mask &= ~BIT(index);
