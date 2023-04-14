@@ -589,6 +589,35 @@ BOOT_CODE void init_core_state(tcb_t *scheduler_action)
 #endif
 }
 
+/**
+ * Sanity check if a kernel-virtual pointer is in the kernel window that maps
+ * physical memory.
+ *
+ * This check is necessary, but not sufficient, because it only checks for the
+ * pointer interval, not for any potential holes in the memory window.
+ *
+ * @param pptr the pointer to check
+ * @return false if the pointer is definitely not in the kernel window, true
+ *         otherwise.
+ */
+BOOT_CODE static bool_t pptr_in_kernel_window(pptr_t pptr)
+{
+    return pptr >= PPTR_BASE && pptr < PPTR_TOP;
+}
+
+/**
+ * Create an untyped cap, store it in a cnode and mark it in boot info.
+ *
+ * The function can fail if basic sanity checks fail, or if there is no space in
+ * boot info or cnode to store the cap.
+ *
+ * @param root_cnode_cap cap to the cnode to store the untyped cap in
+ * @param device_memory true if the cap to create is a device untyped
+ * @param pptr the kernel-virtual address of the untyped
+ * @param size_bits the size of the untyped in bits
+ * @param first_untyped_slot next available slot in the boot info structure
+ * @return true on success, false on failure
+ */
 BOOT_CODE static bool_t provide_untyped_cap(
     cap_t      root_cnode_cap,
     bool_t     device_memory,
@@ -599,6 +628,38 @@ BOOT_CODE static bool_t provide_untyped_cap(
 {
     bool_t ret;
     cap_t ut_cap;
+
+    /* Since we are in boot code, we can do extensive error checking and
+       return failure if anything unexpected happens. */
+
+    /* Bounds check for size parameter */
+    if (size_bits > seL4_MaxUntypedBits || size_bits < seL4_MinUntypedBits) {
+        printf("Kernel init: Invalid untyped size %"SEL4_PRIu_word, size_bits);
+        return false;
+    }
+
+    /* All cap ptrs must be aligned to object size */
+    if (!IS_ALIGNED(pptr, size_bits)) {
+        printf("Kernel init: Unaligned untyped pptr %p (alignment %"SEL4_PRIu_word")", (void *)pptr, size_bits);
+        return false;
+    }
+
+    /* All cap ptrs apart from device untypeds must be in the kernel window. */
+    if (!device_memory && !pptr_in_kernel_window(pptr)) {
+        printf("Kernel init: Non-device untyped pptr %p outside kernel window",
+               (void *)pptr);
+        return false;
+    }
+
+    /* Check that the end of the region is also in the kernel window, so we don't
+       need to assume that the kernel window is aligned up to potentially
+       seL4_MaxUntypedBits. */
+    if (!device_memory && !pptr_in_kernel_window(pptr + MASK(size_bits))) {
+        printf("Kernel init: End of non-device untyped at %p outside kernel window (size %"SEL4_PRIu_word")",
+               (void *)pptr, size_bits);
+        return false;
+    }
+
     word_t i = ndks_boot.slot_pos_cur - first_untyped_slot;
     if (i < CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS) {
         ndks_boot.bi_frame->untypedList[i] = (seL4_UntypedDesc) {
@@ -617,6 +678,21 @@ BOOT_CODE static bool_t provide_untyped_cap(
     return ret;
 }
 
+/**
+ * Create untyped caps for a region of kernel-virtual memory.
+ *
+ * Takes care of alignement, size and potentially wrapping memory regions. It is fine to provide a
+ * region with end < start if the memory is device memory.
+ *
+ * If the region start is not aligned to seL4_MinUntypedBits, the part up to the next aligned
+ * address will be ignored and is lost, because it is too small to create kernel objects in.
+ *
+ * @param root_cnode_cap Cap to the CNode to store the untypeds in.
+ * @param device_memory  Whether the region is device memory.
+ * @param reg Region of kernel-virtual memory. May wrap around.
+ * @param first_untyped_slot First available untyped boot info slot.
+ * @return true on success, false on failure.
+ */
 BOOT_CODE static bool_t create_untypeds_for_region(
     cap_t      root_cnode_cap,
     bool_t     device_memory,
@@ -624,9 +700,17 @@ BOOT_CODE static bool_t create_untypeds_for_region(
     seL4_SlotPos first_untyped_slot
 )
 {
+    /* This code works with regions that wrap (where end < start), because the loop cuts up the
+       region into size-aligned chunks, one for each cap. Memory chunks that are size-aligned cannot
+       themselves overflow, so they satisfy alignement, size, and overflow conditionds. The region
+       [0..end) is not neccessarily part of the kernel window (depending on the value of PPTR_BASE).
+       This is fine for device untypeds. For normal untypeds, the region is assumed to be fully in
+       the kernel window. This is not checked here. */
     while (!is_reg_empty(reg)) {
 
-        /* Calculate the bit size of the region. */
+        /* Calculate the bit size of the region. This is also correct for end < start: it will
+           return the correct size of the set [start..-1] union [0..end). This will then be too
+           large for alignment, so the code further down will reduce the size. */
         unsigned int size_bits = seL4_WordBits - 1 - clzl(reg.end - reg.start);
         /* The size can't exceed the largest possible untyped size. */
         if (size_bits > seL4_MaxUntypedBits) {
@@ -764,7 +848,8 @@ BOOT_CODE static bool_t check_available_memory(word_t n_available,
             return false;
         }
 
-        /* Regions must be ordered and must not overlap. */
+        /* Regions must be ordered and must not overlap. Regions are [start..end),
+           so the == case is fine. Directly adjacent regions are allowed. */
         if ((i > 0) && (r->start < available[i - 1].end)) {
             printf("ERROR: memory region %d in wrong order\n", (int)i);
             return false;
@@ -791,7 +876,8 @@ BOOT_CODE static bool_t check_reserved_memory(word_t n_reserved,
             return false;
         }
 
-        /* Regions must be ordered and must not overlap. */
+        /* Regions must be ordered and must not overlap. Regions are [start..end),
+           so the == case is fine. Directly adjacent regions are allowed. */
         if ((i > 0) && (r->start < reserved[i - 1].end)) {
             printf("ERROR: reserved region %"SEL4_PRIu_word" in wrong order\n", i);
             return false;
