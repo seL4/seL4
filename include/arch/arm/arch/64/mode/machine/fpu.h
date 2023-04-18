@@ -88,6 +88,7 @@ static inline void enableTrapFpu(void)
     MRS("cptr_el2", cptr);
     cptr |= (BIT(10) | BIT(31));
     MSR("cptr_el2", cptr);
+    isb();
 }
 
 /* Disable trapping FPU instructions to EL2 */
@@ -97,6 +98,7 @@ static inline void disableTrapFpu(void)
     MRS("cptr_el2", cptr);
     cptr &= ~(BIT(10) | BIT(31));
     MSR("cptr_el2", cptr);
+    isb();
 }
 
 /* Enable FPU access in EL0 and EL1 */
@@ -106,6 +108,7 @@ static inline void enableFpuEL01(void)
     MRS("cpacr_el1", cpacr);
     cpacr |= (3 << CPACR_EL1_FPEN);
     MSR("cpacr_el1", cpacr);
+    isb();
 }
 
 /* Disable FPU access in EL0 */
@@ -116,6 +119,7 @@ static inline void disableFpuEL0(void)
     cpacr &= ~(3 << CPACR_EL1_FPEN);
     cpacr |= (1 << CPACR_EL1_FPEN);
     MSR("cpacr_el1", cpacr);
+    isb();
 }
 
 /* Enable the FPU to be used without faulting.

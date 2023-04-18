@@ -6,7 +6,4 @@
 
 #pragma once
 
-#include <autoconf.h>
-#include <sel4/macros.h>
-#include <sel4/sel4_arch/deprecated.h>
-
+/* nothing here */

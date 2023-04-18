@@ -56,13 +56,16 @@
 \newcommand{\Htextbf}[1]{\textbf{\hyperpage{#1}}}
 \urlstyle{rm}
 
+% fancyhdr complains about the default (12pt) being too low
+\setlength{\headheight}{14pt}
+
 % If statements
 \usepackage{ifthen}
 
 % Numbered subsubsections
 \setcounter{secnumdepth}{5}
 
-% Subsubsections it table of contents
+% Subsubsections in table of contents
 \setcounter{tocdepth}{5}
 
 % API functions / Kernel Objects
@@ -96,7 +99,7 @@
   \vfill
 
   % Don't indent paragraphs; instead, just leave some vertical space.
-  \parindent 0pt\parskip 6pt
+  \parindent 0pt\parskip 6pt plus 2pt
 
   \copyright\ the seL4 authors and contributors.\\
   \textsc{All rights reserved}.
@@ -152,9 +155,11 @@ for details.
 
   \cleardoublepage
   \setcounter{page}{1}
+  \sloppy
   \tableofcontents
   \listoftables
   \listoffigures
+  \fussy
 
   \cleardoublepage
   \setcounter{page}{1}

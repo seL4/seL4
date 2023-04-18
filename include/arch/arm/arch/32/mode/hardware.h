@@ -54,7 +54,7 @@
 
 /* The first physical address to map into the kernel's physical memory
  * window */
-#define PADDR_BASE physBase
+#define PADDR_BASE physBase()
 
 /* The base address in virtual memory to use for the 1:1 physical memory
  * mapping */
@@ -70,9 +70,13 @@
 
 /* The physical memory address to use for mapping the kernel ELF */
 #define KERNEL_ELF_PADDR_BASE PADDR_BASE
+/* For use by the linker (only integer constants allowed) */
+#define KERNEL_ELF_PADDR_BASE_RAW PHYS_BASE_RAW
 
 /* The base address in virtual memory to use for the kernel ELF mapping */
 #define KERNEL_ELF_BASE (USER_TOP + (KERNEL_ELF_PADDR_BASE & MASK(22)))
+/* For use by the linker (only integer constants allowed) */
+#define KERNEL_ELF_BASE_RAW (USER_TOP + (KERNEL_ELF_PADDR_BASE_RAW & MASK(22)))
 
 /* This is a page table mapping at the end of the virtual address space
  * to map objects with 4KiB pages rather than 4MiB large pages. */
@@ -85,10 +89,15 @@
 #ifndef __ASSEMBLER__
 /* It is required that USER_TOP must be aligned to at least 20 bits */
 compile_assert(USER_TOP_correctly_aligned, IS_ALIGNED(USER_TOP, 20));
+
 /* It is required on arm_hyp that USER_TOP isn't lower than the top GiB */
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 compile_assert(USER_TOP_top_gb, USER_TOP >= 0xC0000000);
 #endif
+
+/* For alignment conditions to translate over addrFromPPtr, physBase must be
+   aligned to at least the size of a SuperSection. */
+compile_assert(physBase_aligned, IS_ALIGNED(PHYS_BASE_RAW, seL4_SuperSectionBits));
 
 #include <plat/machine/hardware.h>
 #endif

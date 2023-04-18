@@ -95,7 +95,7 @@ Capabilities are managed largely through invoking \obj{CNode} methods.
   also reduce its rights similarly to
   \apifunc{seL4\_CNode\_Mint}{cnode_mint}, but without making
   a copy. That is, if the capability is revokable, it remains revokable.
-  Similar to \apifunc{seL4\_CNode\_Mint} it can
+  Similar to \apifunc{seL4\_CNode\_Mint}{cnode_mint} it can
   be used to adjust the guard of a \obj{CNode} capability. It cannot be
   used to badge endpoint capabilities.
 \item[\apifunc{seL4\_CNode\_Rotate}{cnode_rotate}] moves two

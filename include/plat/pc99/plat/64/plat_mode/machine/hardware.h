@@ -88,9 +88,13 @@
 
 /* The physical memory address to use for mapping the kernel ELF */
 #define KERNEL_ELF_PADDR_BASE UL_CONST(0x00100000)
+/* For use by the linker (only integer constants allowed) */
+#define KERNEL_ELF_PADDR_BASE_RAW KERNEL_ELF_PADDR_BASE
 
 /* Kernel mapping starts directly after the physical memory window */
 #define KERNEL_ELF_BASE (PPTR_TOP + KERNEL_ELF_PADDR_BASE)
+/* For use by the linker (only integer constants allowed) */
+#define KERNEL_ELF_BASE_RAW (PPTR_TOP + KERNEL_ELF_PADDR_BASE_RAW)
 
 /* Put the kernel devices at the very beginning of the top
  * 1GB. This means they are precisely after the kernel binary

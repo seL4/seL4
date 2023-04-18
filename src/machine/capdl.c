@@ -106,18 +106,14 @@ void obj_tcb_print_attrs(tcb_t *tcb)
 
 #ifdef CONFIG_KERNEL_MCS
 
-/* to make compilers happy */
-#define REFILL_INDEX(sc, index) (((refill_t *) (SC_REF(sc) + sizeof(sched_context_t)))[index])
-#define REFILL_HEAD(sc) REFILL_INDEX((sc), (sc)->scRefillHead)
-
 static inline ticks_t sc_get_budget(sched_context_t *sc)
 {
-    ticks_t sum = REFILL_HEAD(sc).rAmount;
+    ticks_t sum = refill_head(sc)->rAmount;
     word_t current = sc->scRefillHead;
 
     while (current != sc->scRefillTail) {
         current = ((current == sc->scRefillMax - 1u) ? (0) : current + 1u);
-        sum += REFILL_INDEX(sc, current).rAmount;
+        sum += refill_index(sc, current)->rAmount;
     }
 
     return sum;

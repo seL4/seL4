@@ -71,7 +71,7 @@ BEGIN_FUNC(_start)
     mov     x7, x4
     mov     x8, x5
 
-    /* Make sure interrupts are disable */
+    /* Make sure interrupts are disabled */
     msr daifset, #DAIFSET_MASK
 
     /* Initialise sctlr_el1 or sctlr_el2 register */
