@@ -575,19 +575,17 @@ cap_t createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceM
     case seL4_SchedContextObject:
         /** AUXUPD:
             "(True,
-              ptr_retyps (refills_len (unat \<acute>userSize)
-                                      (size_of TYPE(sched_context_C))
-                                      (size_of TYPE(refill_C)))
-                         (Ptr ((ptr_val \<acute>regionBase) +
-                               word_of_nat (size_of TYPE(sched_context_C))) :: refill_C ptr)
+              ptr_arr_retyps (refills_len (unat \<acute>userSize)
+                                          (size_of TYPE(sched_context_C))
+                                          (size_of TYPE(refill_C)))
+                             (Ptr ((ptr_val \<acute>regionBase) +
+                                   word_of_nat (size_of TYPE(sched_context_C))) :: refill_C ptr)
               \<circ> ptr_retyp (Ptr (ptr_val \<acute>regionBase) :: sched_context_C ptr))" */
         /** GHOSTUPD: "(True, gs_new_sc_size (ptr_val \<acute>regionBase) (unat \<acute>userSize))" */
-        memzero(regionBase, BIT(userSize));
         return cap_sched_context_cap_new(SC_REF(regionBase), userSize);
 
     case seL4_ReplyObject:
         /** AUXUPD: "(True, ptr_retyp (Ptr (ptr_val \<acute>regionBase) :: reply_C ptr))" */
-        memzero(regionBase, 1UL << seL4_ReplyBits);
         return cap_reply_cap_new(REPLY_REF(regionBase), true);
 #endif
 

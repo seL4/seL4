@@ -92,10 +92,14 @@
 /* This represents the physical address that the kernel image will be linked to. This needs to
  * be on a 1gb boundary as we currently require being able to creating a mapping to this address
  * as the largest frame size */
-#define KERNEL_ELF_PADDR_BASE (physBase + UL_CONST(0x4000000))
+#define KERNEL_ELF_PADDR_BASE (physBase() + UL_CONST(0x4000000))
+/* For use by the linker (only integer constants allowed) */
+#define KERNEL_ELF_PADDR_BASE_RAW (PHYS_BASE_RAW + UL_CONST(0x4000000))
 
 /* The base address in virtual memory to use for the kernel ELF mapping */
 #define KERNEL_ELF_BASE (PPTR_TOP + (KERNEL_ELF_PADDR_BASE & MASK(30)))
+/* For use by the linker (only integer constants allowed) */
+#define KERNEL_ELF_BASE_RAW (PPTR_TOP + (KERNEL_ELF_PADDR_BASE_RAW & MASK(30)))
 
 /* The base address in virtual memory to use for the kernel device
  * mapping region. These are mapped in the kernel page table. */

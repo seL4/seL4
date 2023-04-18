@@ -170,7 +170,9 @@ struct gic_dist_map {
     uint32_t spendsgirn[4];         /* [0xF20, 0xF30) */
     uint32_t res9[5236];            /* [0x0F30, 0x6100) */
 
-    uint64_t iroutern[960];         /* [0x6100, 0x7F00) */
+    uint64_t iroutern[960];         /* [0x6100, 0x7F00) irouter<n> to configure IRQs
+                                     * with INTID from 32 to 1019. iroutern[0] is the
+                                     * interrupt routing for SPI 32 */
 };
 
 _Static_assert(0x6100 == SEL4_OFFSETOF(struct gic_dist_map, iroutern),

@@ -173,7 +173,7 @@ BOOT_CODE static void dist_init(void)
     /* Route all global IRQs to this CPU */
     affinity = mpidr_to_gic_affinity();
     for (i = SPI_START; i < nr_lines; i++) {
-        gic_dist->iroutern[i] = affinity;
+        gic_dist->iroutern[i - SPI_START] = affinity;
     }
 }
 
@@ -277,7 +277,7 @@ BOOT_CODE static void cpu_iface_init(void)
 
     /* EOI drops priority and deactivates the interrupt: ICC_CTLR_EL1 */
     SYSTEM_READ_WORD(ICC_CTLR_EL1, icc_ctlr);
-    icc_ctlr &= ~BIT(GICC_CTLR_EL1_EOImode_drop);
+    icc_ctlr &= ~GICC_CTLR_EL1_EOImode_drop;
     SYSTEM_WRITE_WORD(ICC_CTLR_EL1, icc_ctlr);
 
     /* Enable Group1 interrupts: ICC_IGRPEN1_EL1 */
@@ -381,7 +381,7 @@ void setIRQTarget(irq_t irq, seL4_Word target)
     }
 
     word_t hw_irq = IRQT_TO_IRQ(irq);
-    gic_dist->iroutern[hw_irq] = MPIDR_AFF_MASK(mpidr_map[target]);
+    gic_dist->iroutern[hw_irq - SPI_START] = MPIDR_AFF_MASK(mpidr_map[target]);
 }
 
 #endif /* ENABLE_SMP_SUPPORT */

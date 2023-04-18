@@ -6,6 +6,83 @@
 
 #pragma once
 
+#ifdef CONFIG_KERNEL_MCS
+#include <object/reply.h>
+#include <object/notification.h>
+#endif
+
+#ifdef CONFIG_SIGNAL_FASTPATH
+/* Equivalent to schedContext_donate without migrateTCB() */
+static inline void maybeDonateSchedContext_fp(tcb_t *dest, sched_context_t *sc)
+{
+    if (!dest->tcbSchedContext) {
+        sc->scTcb = dest;
+        dest->tcbSchedContext = sc;
+    }
+
+#ifdef ENABLE_SMP_SUPPORT
+#ifdef CONFIG_DEBUG_BUILD
+    tcbDebugRemove(dest);
+#endif
+    /* The part of migrateTCB() that doesn't involve the slowpathed FPU save */
+    dest->tcbAffinity = sc->scCore;
+#ifdef CONFIG_DEBUG_BUILD
+    tcbDebugAppend(dest);
+#endif
+#endif
+}
+
+static inline void cancelIPC_fp(tcb_t *dest)
+{
+    endpoint_t *ep_ptr;
+    tcb_queue_t queue;
+    ep_ptr = EP_PTR(thread_state_get_blockingObject(dest->tcbState));
+
+    queue = ep_ptr_get_queue(ep_ptr);
+    queue = tcbEPDequeue(dest, queue);
+    ep_ptr_set_queue(ep_ptr, queue);
+
+    if (!queue.head) {
+        endpoint_ptr_set_state(ep_ptr, EPState_Idle);
+    }
+
+    reply_t *reply = REPLY_PTR(thread_state_get_replyObject(dest->tcbState));
+    if (reply != NULL) {
+        reply_unlink(reply, dest);
+    }
+}
+
+/* Dequeue TCB from notification queue */
+static inline void ntfn_queue_dequeue_fp(tcb_t *dest, notification_t *ntfn_ptr)
+{
+    tcb_queue_t ntfn_queue;
+    ntfn_queue.head = (tcb_t *)notification_ptr_get_ntfnQueue_head(ntfn_ptr);
+    ntfn_queue.end = (tcb_t *)notification_ptr_get_ntfnQueue_tail(ntfn_ptr);
+
+    ntfn_queue = tcbEPDequeue(dest, ntfn_queue);
+
+    notification_ptr_set_ntfnQueue_head(ntfn_ptr, (word_t)ntfn_queue.head);
+    notification_ptr_set_ntfnQueue_tail(ntfn_ptr, (word_t)ntfn_queue.end);
+
+    if (!ntfn_queue.head) {
+        notification_ptr_set_state(ntfn_ptr, NtfnState_Idle);
+    }
+}
+#endif
+
+#ifdef CONFIG_EXCEPTION_FASTPATH
+static inline void fastpath_vm_fault_set_mrs(tcb_t *dest)
+{
+    setRegister(dest, msgRegisters[0] + seL4_VMFault_IP, getRestartPC(NODE_STATE(ksCurThread)));
+    setRegister(dest, msgRegisters[0] + seL4_VMFault_Addr,
+                seL4_Fault_VMFault_get_address(NODE_STATE(ksCurThread)->tcbFault));
+    setRegister(dest, msgRegisters[0] + seL4_VMFault_PrefetchFault,
+                seL4_Fault_VMFault_get_instructionFault(NODE_STATE(ksCurThread)->tcbFault));
+    setRegister(dest, msgRegisters[0] + seL4_VMFault_FSR,
+                seL4_Fault_VMFault_get_FSR(NODE_STATE(ksCurThread)->tcbFault));
+}
+#endif
+
 /* Fastpath cap lookup.  Returns a null_cap on failure. */
 static inline cap_t FORCE_INLINE lookup_fp(cap_t cap, cptr_t cptr)
 {

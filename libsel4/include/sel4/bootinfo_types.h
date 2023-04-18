@@ -52,6 +52,10 @@ typedef struct seL4_UntypedDesc {
     seL4_Uint8 padding[sizeof(seL4_Word) - 2 * sizeof(seL4_Uint8)];
 } seL4_UntypedDesc;
 
+SEL4_COMPILE_ASSERT(
+    invalid_seL4_UntypedDesc,
+    sizeof(seL4_UntypedDesc) == 2 * sizeof(seL4_Word));
+
 typedef struct seL4_BootInfo {
     seL4_Word         extraLen;        /* length of any additional bootinfo information */
     seL4_NodeId       nodeID;          /* ID [0..numNodes-1] of the seL4 node (0 if uniprocessor) */

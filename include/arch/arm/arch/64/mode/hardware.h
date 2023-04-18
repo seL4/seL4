@@ -186,10 +186,14 @@
 #endif
 
 /* The physical memory address to use for mapping the kernel ELF */
-#define KERNEL_ELF_PADDR_BASE physBase
+#define KERNEL_ELF_PADDR_BASE physBase()
+/* For use by the linker (only integer constants allowed) */
+#define KERNEL_ELF_PADDR_BASE_RAW PHYS_BASE_RAW
 
 /* The base address in virtual memory to use for the kernel ELF mapping */
 #define KERNEL_ELF_BASE (PPTR_BASE_OFFSET + KERNEL_ELF_PADDR_BASE)
+/* For use by the linker (only integer constants allowed) */
+#define KERNEL_ELF_BASE_RAW (PPTR_BASE_OFFSET + KERNEL_ELF_PADDR_BASE_RAW)
 
 /* This is a page table mapping at the end of the virtual address space
  * to map objects with 4KiB pages rather than 4MiB large pages. */
@@ -206,6 +210,7 @@
 /* The log buffer is placed before the device region */
 #define KS_LOG_PPTR (KDEV_BASE - UL_CONST(0x200000))
 
+#ifndef __ASSEMBLER__
 /* All PPTR addresses must be canonical to be able to be stored in caps or objects.
    Check that all UTs that are created will have valid address in the PPTR space.
    For non-hyp, PPTR_BASE is in the top part of the address space and device untyped
@@ -214,7 +219,6 @@
    overflow without going into address ranges that are non-canonical.  These static
    asserts check that the kernel config won't lead to UTs being created that aren't
    representable. */
-#ifndef __ASSEMBLER__
 compile_assert(ut_max_less_than_cannonical, CONFIG_PADDR_USER_DEVICE_TOP <= BIT(47));
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 compile_assert(ut_max_is_cannonical, (PPTR_BASE + CONFIG_PADDR_USER_DEVICE_TOP) <= BIT(48));

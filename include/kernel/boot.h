@@ -48,7 +48,7 @@ cap_t create_root_cnode(void);
 bool_t provide_cap(cap_t root_cnode_cap, cap_t cap);
 cap_t create_it_asid_pool(cap_t root_cnode_cap);
 void write_it_pd_pts(cap_t root_cnode_cap, cap_t it_pd_cap);
-bool_t create_idle_thread(void);
+void create_idle_thread(void);
 bool_t create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg);
 void bi_finalise(void);
 void create_domain_cap(cap_t root_cnode_cap);

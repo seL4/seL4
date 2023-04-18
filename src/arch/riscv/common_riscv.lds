@@ -2,6 +2,7 @@
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
  * Copyright 2021, HENSOLDT Cyber
+ * Copyright 2023, DornerWorks
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -15,11 +16,11 @@ ENTRY(_start)
 #include <sel4/plat/api/constants.h>
 #include <plat/machine/devices_gen.h>
 
-KERNEL_OFFSET = KERNEL_ELF_BASE - KERNEL_ELF_PADDR_BASE;
+KERNEL_OFFSET = KERNEL_ELF_BASE_RAW - KERNEL_ELF_PADDR_BASE_RAW;
 
 SECTIONS
 {
-    . = KERNEL_ELF_BASE;
+    . = KERNEL_ELF_BASE_RAW;
 
     .boot.text . : AT(ADDR(.boot.text) - KERNEL_OFFSET)
     {
@@ -90,6 +91,12 @@ SECTIONS
 
         /* large data such as the globals frame and global PD */
         *(.bss.aligned)
+#if defined(CONFIG_PLAT_ROCKETCHIP_ZCU102)
+        /* softcore instantiation on ZCU102 needs these bytes to
+         * avoid userspace issues
+         */
+        . = . + 8;
+#endif
     }
 
     . = ALIGN(4K);

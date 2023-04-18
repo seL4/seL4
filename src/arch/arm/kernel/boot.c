@@ -179,7 +179,7 @@ BOOT_CODE static bool_t init_cpu(void)
     }
 #endif
 
-    activate_global_pd();
+    activate_kernel_vspace();
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         vcpu_boot_init();
     }
@@ -220,7 +220,7 @@ BOOT_CODE static bool_t init_cpu(void)
             return false;
         }
     } else {
-        printf("Platform claims to have FP hardware, but does not!");
+        printf("Platform claims to have FP hardware, but does not!\n");
         return false;
     }
 #endif /* CONFIG_HAVE_FPU */
@@ -543,10 +543,7 @@ static BOOT_CODE bool_t try_init_kernel(
 #endif
 
     /* create the idle thread */
-    if (!create_idle_thread()) {
-        printf("ERROR: could not create idle thread\n");
-        return false;
-    }
+    create_idle_thread();
 
     /* Before creating the initial thread (which also switches to it)
      * we clean the cache so that any page table information written

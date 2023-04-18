@@ -71,7 +71,7 @@ jobs:
         march: ${{ matrix.march }}
         compiler: ${{ matrix.compiler }}
     - name: Upload images
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: images-${{ matrix.march }}-${{ matrix.compiler }}
         path: '*-images.tar.gz'
@@ -98,13 +98,13 @@ jobs:
     concurrency: hw-run-${{ strategy.job-index }}
     steps:
       - name: Get machine queue
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: seL4/machine_queue
           path: machine_queue
           token: ${{ secrets.PRIV_REPO_TOKEN }}
       - name: Download image
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: images-${{ matrix.march }}-${{ matrix.compiler }}
       - name: Run

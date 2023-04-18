@@ -6,6 +6,9 @@
 
 / {
     chosen {
+        seL4,elfloader-devices =
+            "serial0",
+            &{/amba/slcr@f8000000/rstc@200};
         seL4,kernel-devices =
             "serial0",
             &{/amba/interrupt-controller@f8f01000},
