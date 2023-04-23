@@ -20,13 +20,4 @@
         <member name="fs_base"/>
         <member name="gs_base"/>
     </struct>
-    <struct name="seL4_VCPUContext">
-        <member name="eax"/>
-        <member name="ebx"/>
-        <member name="ecx"/>
-        <member name="edx"/>
-        <member name="esi"/>
-        <member name="edi"/>
-        <member name="ebp"/>
-    </struct>
 </api>

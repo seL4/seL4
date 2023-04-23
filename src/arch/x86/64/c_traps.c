@@ -39,10 +39,13 @@ static void NORETURN restore_vmx(void)
     /* Do not support breakpoints in VMs, so just disable all breakpoints */
     loadAllDisabledBreakpointState(cur_thread);
 #endif
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
     vcpu_restore_guest_msrs(cur_thread->tcbArch.tcbVCPU);
+#endif
     if (cur_thread->tcbArch.tcbVCPU->launched) {
         /* attempt to do a vmresume */
         asm volatile(
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
             // Arguments are getting stored in general purpose registers that need to be used.
             // Copy them to unused general purpose registers
             "movq %[host_msr], %%r8\n"
@@ -90,6 +93,10 @@ static void NORETURN restore_vmx(void)
             "shr $0x20,%%rdx\n"
             "wrmsr\n"
             "movq %%r10, %%rsp\n" // reg
+#else
+            // Set our stack pointer to the top of the tcb so we can efficiently pop
+            "movq %[reg], %%rsp\n"
+#endif
             "popq %%rax\n"
             "popq %%rbx\n"
             "popq %%rcx\n"
@@ -97,6 +104,7 @@ static void NORETURN restore_vmx(void)
             "popq %%rsi\n"
             "popq %%rdi\n"
             "popq %%rbp\n"
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
             "popq %%r8\n"
             "popq %%r9\n"
             "popq %%r10\n"
@@ -105,6 +113,11 @@ static void NORETURN restore_vmx(void)
             "popq %%r13\n"
             "popq %%r14\n"
             "popq %%r15\n"
+#else
+#ifdef ENABLE_SMP_SUPPORT
+            "swapgs\n"
+#endif
+#endif /* CONFIG_X86_64_VTX_64BIT_GUESTS */
             // Now do the vmresume
             "vmresume\n"
             "setb %%al\n"
@@ -113,6 +126,7 @@ static void NORETURN restore_vmx(void)
             "movzx %%bl, %%rsi\n"
             // if we get here we failed
 
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
             // Restore host's GS, Shadow GS, and FS
             "sub $0xA8, %%rsp\n" // 15 * 8 (regs) + 3 * 8 (guest_msr) + 3 * 8 (host_msr)
             "mov $0xC0000101, %%ecx\n"
@@ -131,14 +145,30 @@ static void NORETURN restore_vmx(void)
             "shr $0x20, %%rdx\n"
             "wrmsr\n" // FS
 
+#else
+#ifdef ENABLE_SMP_SUPPORT
+            "swapgs\n"
+            "movq %%gs:%c[stack_offset], %%rsp\n"
+#else
+            "leaq kernel_stack_alloc + %c[stack_size], %%rsp\n"
+#endif
+#endif
             "movq %[failed], %%rax\n"
             "jmp *%%rax\n"
             :
             : [reg]"r"(&cur_thread->tcbArch.tcbVCPU->gp_registers[VCPU_EAX]),
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
             [failed]"r"(vmlaunch_failed),
             [stack_size]"i"(BIT(CONFIG_KERNEL_STACK_BITS)),
             [guest_msr]"r"(&cur_thread->tcbArch.tcbVCPU->guest_msr_registers[VCPU_GS]),
             [host_msr]"r"(&cur_thread->tcbArch.tcbVCPU->host_msr_registers[n_vcpu_msr_register])
+#else
+            [failed]"i"(&vmlaunch_failed),
+            [stack_size]"i"(BIT(CONFIG_KERNEL_STACK_BITS))
+#ifdef ENABLE_SMP_SUPPORT
+            , [stack_offset]"i"(OFFSETOF(nodeInfo_t, stackTop))
+#endif
+#endif
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
             : "memory"
@@ -146,6 +176,7 @@ static void NORETURN restore_vmx(void)
     } else {
         /* attempt to do a vmlaunch */
         asm volatile(
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
             // Arguments are getting stored in general purpose registers that need to be used.
             // Copy them to unused general purpose registers
             "movq %[host_msr], %%r8\n"
@@ -193,6 +224,10 @@ static void NORETURN restore_vmx(void)
             "shr $0x20,%%rdx\n"
             "wrmsr\n"
             "movq %%r10, %%rsp\n" // reg
+#else
+            // Set our stack pointer to the top of the tcb so we can efficiently pop
+            "movq %[reg], %%rsp\n"
+#endif
             "popq %%rax\n"
             "popq %%rbx\n"
             "popq %%rcx\n"
@@ -200,6 +235,7 @@ static void NORETURN restore_vmx(void)
             "popq %%rsi\n"
             "popq %%rdi\n"
             "popq %%rbp\n"
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
             "popq %%r8\n"
             "popq %%r9\n"
             "popq %%r10\n"
@@ -208,6 +244,11 @@ static void NORETURN restore_vmx(void)
             "popq %%r13\n"
             "popq %%r14\n"
             "popq %%r15\n"
+#else
+#ifdef ENABLE_SMP_SUPPORT
+            "swapgs\n"
+#endif
+#endif
             // Now do the vmresume
             "vmlaunch\n"
             // if we get here we failed
@@ -216,6 +257,7 @@ static void NORETURN restore_vmx(void)
             "movzx %%al, %%rdi\n"
             "movzx %%bl, %%rsi\n"
 
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
             // Restore host's GS, Shadow GS, and FS
             "sub $0xA8, %%rsp\n" // 15 * 8 (regs) + 3 * 8 (guest_msr) + 3 * 8 (host_msr)
             "mov $0xC0000101, %%ecx\n"
@@ -233,15 +275,30 @@ static void NORETURN restore_vmx(void)
             "movq %%rax, %%rdx\n"
             "shr $0x20, %%rdx\n"
             "wrmsr\n" // FS
-
+#else
+#ifdef ENABLE_SMP_SUPPORT
+            "swapgs\n"
+            "movq %%gs:%c[stack_offset], %%rsp\n"
+#else
+            "leaq kernel_stack_alloc + %c[stack_size], %%rsp\n"
+#endif
+#endif
             "movq %[failed], %%rax\n"
             "jmp *%%rax\n"
             :
             : [reg]"r"(&cur_thread->tcbArch.tcbVCPU->gp_registers[VCPU_EAX]),
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
             [failed]"r"(vmlaunch_failed),
             [stack_size]"i"(BIT(CONFIG_KERNEL_STACK_BITS)),
             [guest_msr]"r"(&cur_thread->tcbArch.tcbVCPU->guest_msr_registers[VCPU_GS]),
             [host_msr]"r"(&cur_thread->tcbArch.tcbVCPU->host_msr_registers[n_vcpu_msr_register])
+#else
+            [failed]"i"(&vmlaunch_failed),
+            [stack_size]"i"(BIT(CONFIG_KERNEL_STACK_BITS))
+#ifdef ENABLE_SMP_SUPPORT
+            , [stack_offset]"i"(OFFSETOF(nodeInfo_t, stackTop))
+#endif
+#endif
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
             : "memory"
