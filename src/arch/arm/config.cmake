@@ -190,6 +190,15 @@ config_option(
 )
 
 config_option(
+    KernelAArch64UserCacheEnable AARCH64_USER_CACHE_ENABLE
+    "Enable any attempt to execute a DC CVAU, DC CIVAC, DC CVAC, or IC IVAU \
+    instruction or access to CTR_EL0 at EL0 using AArch64. \
+    When disabled, these operations will be trapped."
+    DEFAULT ON
+    DEPENDS "KernelSel4ArchAarch64"
+)
+
+config_option(
     KernelAArch64SErrorIgnore AARCH64_SERROR_IGNORE
     "By default any SError interrupt will halt the kernel. SErrors may \
     be caused by e.g. writes to read-only device registers or ECC errors. \
