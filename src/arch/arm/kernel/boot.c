@@ -220,7 +220,7 @@ BOOT_CODE static bool_t init_cpu(void)
             return false;
         }
     } else {
-        printf("Platform claims to have FP hardware, but does not!");
+        printf("Platform claims to have FP hardware, but does not!\n");
         return false;
     }
 #endif /* CONFIG_HAVE_FPU */
