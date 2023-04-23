@@ -122,6 +122,9 @@ genbf(
 if(KernelIsMCS)
     set(mcs --mcs)
 endif()
+if(KernelX86_64VTX64BitGuests)
+    set(64bitguests --x86-vtx-64-bit-guests)
+endif()
 add_custom_command(
     OUTPUT include/sel4/syscall.h
     COMMAND rm -f include/sel4/syscall.h
@@ -154,8 +157,8 @@ add_custom_command(
     COMMAND
         echo "CONFIG_WORD_SIZE=${KernelWordSize}" > config
     COMMAND
-        "${PYTHON3}" "${SYSCALL_STUB_GEN_PATH}" ${buffer} ${mcs} -a "${KernelSel4Arch}" -c config -o
-        include/interfaces/sel4_client.h ${interface_xmls}
+        "${PYTHON3}" "${SYSCALL_STUB_GEN_PATH}" ${buffer} ${64bitguests} ${mcs} -a
+        "${KernelSel4Arch}" -c config -o include/interfaces/sel4_client.h ${interface_xmls}
     DEPENDS
         "${SYSCALL_STUB_GEN_PATH}"
         ${interface_xmls}

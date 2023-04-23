@@ -28,24 +28,7 @@
         <member name="fs_base"/>
         <member name="gs_base"/>
     </struct>
-    <struct name="seL4_VCPUContext">
-        <!-- eax -> ebp are actually rax -> rbp. Kept for consistency -->
-        <member name="eax"/>
-        <member name="ebx"/>
-        <member name="ecx"/>
-        <member name="edx"/>
-        <member name="esi"/>
-        <member name="edi"/>
-        <member name="ebp"/>
-        <member name="r8"/>
-        <member name="r9"/>
-        <member name="r10"/>
-        <member name="r11"/>
-        <member name="r12"/>
-        <member name="r13"/>
-        <member name="r14"/>
-        <member name="r15"/>
-    </struct>
+
     <interface name="seL4_X86_PDPT" manual_name="PDPT">
         <method id="X86PDPTMap" name="Map">
             <description>
@@ -104,7 +87,8 @@
         </method>
     </interface>
     <interface name="seL4_X86_VCPU" manual_name="VCPU" cap_description='VCPU object to operate on'>
-      <method id="X86VCPUReadMSR" name="ReadMSR" condition="defined(CONFIG_VTX)">
+      <method id="X86VCPUReadMSR" name="ReadMSR">
+        <condition><config var="CONFIG_X86_64_VTX_64BIT_GUESTS"/></condition>
         <brief>
           Read 64-bit specific MSR field from the hardware
         </brief>
@@ -125,7 +109,8 @@
         <param dir="out" name="value" type="seL4_Word"
                description='Value returned by `rdmsr` instruction'/>
       </method>
-      <method id="X86VCPUWriteMSR" name="WriteMSR" condition="defined(CONFIG_VTX)">
+      <method id="X86VCPUWriteMSR" name="WriteMSR">
+        <condition><config var="CONFIG_X86_64_VTX_64BIT_GUESTS"/></condition>
         <brief>
           Write 64-bit specific MSR field to the hardware
         </brief>

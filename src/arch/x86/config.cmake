@@ -83,6 +83,12 @@ config_option(
 )
 
 config_option(
+    KernelX86_64VTX64BitGuests X86_64_VTX_64BIT_GUESTS "Support 64-bit guests"
+    DEFAULT OFF
+    DEPENDS "KernelArchX86;KernelVTX;NOT KernelVerificationBuild"
+)
+
+config_option(
     KernelIOMMU IOMMU "IOMMU support for VT-d enabled chipset"
     DEFAULT ON
     DEPENDS "KernelPlatPC99; NOT KernelVerificationBuild"

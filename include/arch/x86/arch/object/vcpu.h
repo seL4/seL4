@@ -240,7 +240,7 @@ enum vcpu_gp_register {
     VCPU_ESI,
     VCPU_EDI,
     VCPU_EBP,
-#ifdef CONFIG_ARCH_X86_64
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
     VCPU_R8,
     VCPU_R9,
     VCPU_R10,
@@ -256,7 +256,7 @@ enum vcpu_gp_register {
     VCPU_ESP,
 };
 
-#ifdef CONFIG_ARCH_X86_64
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
 enum vcpu_guest_syscall_register {
     VCPU_STAR = 0,
     VCPU_CSTAR,
@@ -288,7 +288,7 @@ struct vcpu {
     user_fpu_state_t fpuState;
 
     /* Arrays for guest and hosts MSR registers */
-#ifdef CONFIG_ARCH_X86_64
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
     word_t host_msr_registers[n_vcpu_msr_register];
     word_t guest_msr_registers[n_vcpu_msr_register];
 #endif
@@ -328,7 +328,7 @@ struct vcpu {
     word_t cached_cr0_mask;
     word_t cached_cr0;
 
-#ifdef CONFIG_ARCH_X86_64
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
     word_t syscall_registers[n_vcpu_guest_syscall_register];
 #endif
 
@@ -389,7 +389,7 @@ void invept(ept_pml4e_t *ept_pml4);
 /* Removes any IO port mappings that have been cached for the given VPID */
 void clearVPIDIOPortMappings(vpid_t vpid, uint16_t first, uint16_t last);
 
-#ifdef CONFIG_ARCH_X86_64
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
 void vcpu_restore_guest_msrs(vcpu_t *vcpu);
 void vcpu_restore_host_msrs(void);
 #endif

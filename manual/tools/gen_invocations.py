@@ -25,13 +25,13 @@ FN_DECL_PREFIX = "static inline"
 DEFAULT_RETURN_TYPE = "int"
 
 
-def init_all_types():
+def init_all_types(args):
     """
     Return an array of all c types involved in the sel4 interface
     """
 
     data_types = syscall_stub_gen.init_data_types(WORD_SIZE)
-    arch_types = list(itertools.chain(*syscall_stub_gen.init_arch_types(WORD_SIZE).values()))
+    arch_types = list(itertools.chain(*syscall_stub_gen.init_arch_types(WORD_SIZE, args).values()))
 
     return data_types + arch_types
 
@@ -53,14 +53,14 @@ def generate_prototype(interface_name, method_name, method_id, inputs, outputs, 
     return "%s\n%s %s %s(%s);" % (comment, prefix, return_type, name, param_list)
 
 
-def gen_invocations(input_files, output_file):
+def gen_invocations(input_files, output_file, args):
     """
     Given a collection of input xml files describing sel4 interfaces,
     generates a c header file containing doxygen-commented function
     prototypes.
     """
 
-    types = init_all_types()
+    types = init_all_types(args)
 
     for input_file in input_files:
         methods, _, api = syscall_stub_gen.parse_xml_file(input_file, types)
@@ -106,6 +106,8 @@ def process_args():
                                                  'containing object invocation prototypes',
                                      usage=usage_str)
 
+    parser.add_argument("--x86-vtx-64-bit-guests", dest="x86_vtx_64bit", action="store_true", default=False,
+                        help="Whether the vtx VCPU objects need to be large enough for 64-bit guests.")
     parser.add_argument("-o", "--output", dest="output", default="/dev/stdout",
                         type=str,
                         help="Output file to write stub to. (default: %(default)s).")
@@ -135,7 +137,7 @@ def main():
         os.makedirs(os.path.dirname(args.output))
 
     with open(args.output, "w") as output:
-        gen_invocations(args.files, output)
+        gen_invocations(args.files, output, args)
 
 
 if __name__ == "__main__":
