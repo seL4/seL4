@@ -852,7 +852,7 @@ BOOT_CODE static word_t check_available_memory(word_t n_available,
     }
 
     word_t cnt = 0;
-    printf("available phys memory regions: %"SEL4_PRIu_word"\n", n_available);
+    printf("Available phys memory regions: %"SEL4_PRIu_word"\n", n_available);
     /* Force ordering and exclusivity of available regions. */
     for (word_t i = 0; i < n_available; i++) {
         const p_region_t *r = &available[i];
@@ -933,7 +933,7 @@ BOOT_CODE static word_t check_available_memory(word_t n_available,
 BOOT_CODE static bool_t check_reserved_memory(word_t n_reserved,
                                               const region_t *reserved)
 {
-    printf("reserved virt address space regions: %"SEL4_PRIu_word"\n",
+    printf("Reserved virt address space regions: %"SEL4_PRIu_word"\n",
            n_reserved);
     /* Force ordering and exclusivity of reserved regions. */
     for (word_t i = 0; i < n_reserved; i++) {
