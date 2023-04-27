@@ -321,7 +321,7 @@ static exception_t handleInvocation(bool_t isCall, bool_t isBlocking)
     lu_ret = lookupCapAndSlot(thread, cptr);
 
     if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
-        userError("Invocation of invalid cap #%lu.", cptr);
+        userError("Invocation of invalid cap #%"SEL4_PRIu_word, cptr);
         current_fault = seL4_Fault_CapFault_new(cptr, false);
 
         if (isBlocking) {
@@ -648,7 +648,7 @@ void handleSyscall(syscall_t syscall)
             break;
 
         default:
-            fail("Invalid syscall");
+            fail("Invalid syscall %"SEL4_PRIu_word, syscall);
         }
 
     })
