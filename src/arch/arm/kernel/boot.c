@@ -252,15 +252,13 @@ BOOT_CODE static void init_plat(void)
 #ifdef ENABLE_SMP_SUPPORT
 BOOT_CODE static bool_t try_init_kernel_secondary_core(void)
 {
-    unsigned i;
-
     /* need to first wait until some kernel init has been done */
     while (!node_boot_lock);
 
     /* Perform cpu init */
     init_cpu();
 
-    for (i = 0; i < NUM_PPI; i++) {
+    for (unsigned int i = 0; i < NUM_PPI; i++) {
         maskInterrupt(true, CORE_IRQ_TO_IRQT(getCurrentCPUIndex(), i));
     }
     setIRQState(IRQIPI, CORE_IRQ_TO_IRQT(getCurrentCPUIndex(), irq_remote_call_ipi));
