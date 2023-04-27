@@ -607,6 +607,7 @@ void handleSyscall(syscall_t syscall)
         case SysNBWait:
             handleRecv(false, false);
             break;
+
         case SysReplyRecv: {
             cptr_t reply = getRegister(NODE_STATE(ksCurThread), replyRegister);
             ret = handleInvocation(false, false, true, true, reply);
