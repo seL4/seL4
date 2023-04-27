@@ -303,38 +303,26 @@ static exception_t handleInvocation(bool_t isCall, bool_t isBlocking, bool_t can
 static exception_t handleInvocation(bool_t isCall, bool_t isBlocking)
 #endif
 {
-    seL4_MessageInfo_t info;
-    lookupCapAndSlot_ret_t lu_ret;
-    word_t *buffer;
     exception_t status;
-    word_t length;
-    tcb_t *thread;
-
-    thread = NODE_STATE(ksCurThread);
-
-    info = messageInfoFromWord(getRegister(thread, msgInfoRegister));
+    tcb_t *thread = NODE_STATE(ksCurThread);
 #ifndef CONFIG_KERNEL_MCS
     cptr_t cptr = getRegister(thread, capRegister);
 #endif
 
     /* faulting section */
-    lu_ret = lookupCapAndSlot(thread, cptr);
-
+    lookupCapAndSlot_ret_t lu_ret = lookupCapAndSlot(thread, cptr);
     if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
         userError("Invocation of invalid cap #%"SEL4_PRIu_word, cptr);
         current_fault = seL4_Fault_CapFault_new(cptr, false);
-
         if (isBlocking) {
             handleFault(thread);
         }
-
         return EXCEPTION_NONE;
     }
 
-    buffer = lookupIPCBuffer(false, thread);
-
+    word_t *buffer = lookupIPCBuffer(false, thread);
+    seL4_MessageInfo_t info = messageInfoFromWord(getRegister(thread, msgInfoRegister));
     status = lookupExtraCaps(thread, buffer, info);
-
     if (unlikely(status != EXCEPTION_NONE)) {
         userError("Lookup of extra caps failed.");
         if (isBlocking) {
@@ -344,21 +332,18 @@ static exception_t handleInvocation(bool_t isCall, bool_t isBlocking)
     }
 
     /* Syscall error/Preemptible section */
-    length = seL4_MessageInfo_get_length(info);
+    word_t length = seL4_MessageInfo_get_length(info);
     if (unlikely(length > n_msgRegisters && !buffer)) {
         length = n_msgRegisters;
     }
-#ifdef CONFIG_KERNEL_MCS
+
     status = decodeInvocation(seL4_MessageInfo_get_label(info), length,
                               cptr, lu_ret.slot, lu_ret.cap,
                               isBlocking, isCall,
-                              canDonate, firstPhase, buffer);
-#else
-    status = decodeInvocation(seL4_MessageInfo_get_label(info), length,
-                              cptr, lu_ret.slot, lu_ret.cap,
-                              isBlocking, isCall, buffer);
+#ifdef CONFIG_KERNEL_MCS
+                              canDonate, firstPhase,
 #endif
-
+                              buffer);
     if (unlikely(status == EXCEPTION_PREEMPTED)) {
         return status;
     }
