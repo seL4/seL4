@@ -9,6 +9,8 @@
 ##
 # A tool for generating bitfield structures with get/set/new methods
 # including Isabelle/HOL specifications and correctness proofs.
+#
+# See bitfield_gen.md for syntax, examples, and more information.
 ##
 
 from __future__ import print_function, division
@@ -2822,37 +2824,50 @@ def finish_output():
 
 # Toplevel
 if __name__ == '__main__':
-    # Parse arguments to set mode and grab I/O filenames
+    # Parse arguments
     params = {}
     in_filename = None
     in_file = sys.stdin
     out_file = sys.stdout
-    mode = 'c_defs'
 
     parser = optparse.OptionParser()
-    parser.add_option('--c_defs', action='store_true', default=False)
     parser.add_option('--environment', action='store', default='sel4',
-                      choices=list(INCLUDES.keys()))
-    parser.add_option('--hol_defs', action='store_true', default=False)
-    parser.add_option('--hol_proofs', action='store_true', default=False)
+                      choices=list(INCLUDES.keys()),
+                      help="one of %s" % list(INCLUDES.keys()))
+    parser.add_option('--hol_defs', action='store_true', default=False,
+                      help="generate Isabell/HOL definition theory files")
+    parser.add_option('--hol_proofs', action='store_true', default=False,
+                      help="generate Isabelle/HOL proof theory files. "
+                           "Needs --umm_types option")
     parser.add_option('--sorry_lemmas', action='store_true',
-                      dest='sorry', default=False)
+                      dest='sorry', default=False,
+                      help="emit lemma statements, but omit the proofs for "
+                           "faster processing")
     parser.add_option('--prune', action='append',
-                      dest="prune_files", default=[])
+                      dest="prune_files", default=[],
+                      help="add a pruning file. Only functions mentioned in "
+                           "one of the pruning files will be generated.")
     parser.add_option('--toplevel', action='append',
-                      dest="toplevel_types", default=[])
+                      dest="toplevel_types", default=[],
+                      help="add a Isabelle/HOL top-level heap type. These are "
+                           "used to generate frame conditions.")
     parser.add_option('--umm_types', action='store',
-                      dest="umm_types_file", default=None)
-    parser.add_option('--multifile_base', action='store', default=None)
+                      dest="umm_types_file", default=None,
+                      help="set umm_types.txt file location. The file is "
+                           "expected to contain type dependency information.")
     parser.add_option('--cspec-dir', action='store', default=None,
-                      help="Location of the 'cspec' directory containing 'KernelState_C'.")
+                      help="location of the 'cspec' directory containing theory"
+                           " 'KernelState_C'")
     parser.add_option('--thy-output-path', action='store', default=None,
-                      help="Path that the output theory files will be located in.")
-    parser.add_option('--skip_modifies', action='store_true', default=False)
-    parser.add_option('--showclasses', action='store_true', default=False)
-    parser.add_option('--debug', action='store_true', default=False)
+                      help="where to put output theory files")
+    parser.add_option('--skip_modifies', action='store_true', default=False,
+                      help="do not generate 'modifies' proofs")
+    parser.add_option('--showclasses', action='store_true', default=False,
+                      help="print parsed classes for debugging")
+    parser.add_option('--debug', action='store_true', default=False,
+                      help="switch on generator debug output")
     parser.add_option('--from_file', action='store', default=None,
-                      help="Original source file before preprocessing.")
+                      help="original source file before preprocessing")
 
     options, args = parser.parse_args()
     DEBUG = options.debug
