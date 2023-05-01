@@ -2954,51 +2954,20 @@ if __name__ == '__main__':
     # Generate the output
     if options.hol_defs:
         # Fetch kernel
-        if options.multifile_base is None:
-            print("theory %s_defs" % module_name, file=out_file)
-            print("imports \"%s/KernelState_C\"" % (
-                os.path.relpath(options.cspec_dir,
-                                os.path.dirname(out_file.filename))), file=out_file)
-            print("begin", file=out_file)
-            print(file=out_file)
+        print("theory %s_defs" % module_name, file=out_file)
+        print("imports \"%s/KernelState_C\"" % (
+            os.path.relpath(options.cspec_dir,
+                            os.path.dirname(out_file.filename))), file=out_file)
+        print("begin", file=out_file)
+        print(file=out_file)
 
-            print(defs_global_lemmas, file=out_file)
-            print(file=out_file)
+        print(defs_global_lemmas, file=out_file)
+        print(file=out_file)
 
-            for e in det_values(blocks, unions):
-                e.generate_hol_defs(options)
+        for e in det_values(blocks, unions):
+            e.generate_hol_defs(options)
 
-            print("end", file=out_file)
-        else:
-            print("theory %s_defs" % module_name, file=out_file)
-            print("imports", file=out_file)
-            print("  \"%s/KernelState_C\"" % (
-                os.path.relpath(options.cspec_dir,
-                                os.path.dirname(out_file.filename))), file=out_file)
-            for e in det_values(blocks, unions):
-                print("  %s_%s_defs" % (module_name, e.name),
-                      file=out_file)
-            print("begin", file=out_file)
-            print("end", file=out_file)
-
-            for e in det_values(blocks, unions):
-                base_filename = \
-                    os.path.basename(options.multifile_base).split('.')[0]
-                submodule_name = base_filename + "_" + \
-                    e.name + "_defs"
-                out_file = OutputFile(options.multifile_base + "_" +
-                                      e.name + "_defs" + ".thy")
-
-                print("theory %s imports \"%s/KernelState_C\" begin" % (
-                    submodule_name, os.path.relpath(options.cspec_dir,
-                                                    os.path.dirname(out_file.filename))),
-                      file=out_file)
-                print(file=out_file)
-
-                options.output = out_file
-                e.generate_hol_defs(options)
-
-                print("end", file=out_file)
+        print("end", file=out_file)
     elif options.hol_proofs:
         def is_bit_type(tp):
             return umm.is_base(tp) & (umm.base_name(tp) in
@@ -3019,45 +2988,16 @@ if __name__ == '__main__':
 
                 type_map[tp] = (toptp, path)
 
-        if options.multifile_base is None:
-            print("theory %s_proofs" % module_name, file=out_file)
-            print("imports %s_defs" % module_name, file=out_file)
-            print("begin", file=out_file)
-            print(file=out_file)
-            print(file=out_file)
+        print("theory %s_proofs" % module_name, file=out_file)
+        print("imports %s_defs" % module_name, file=out_file)
+        print("begin", file=out_file)
+        print(file=out_file)
+        print(file=out_file)
 
-            for e in det_values(blocks, unions):
-                e.generate_hol_proofs(options, type_map)
+        for e in det_values(blocks, unions):
+            e.generate_hol_proofs(options, type_map)
 
-            print("end", file=out_file)
-        else:
-            # top types are broken here.
-            print("theory %s_proofs" % module_name, file=out_file)
-            print("imports", file=out_file)
-            for e in det_values(blocks, unions):
-                print("  %s_%s_proofs" % (module_name, e.name),
-                      file=out_file)
-            print("begin", file=out_file)
-            print("end", file=out_file)
-
-            for e in det_values(blocks, unions):
-                base_filename = \
-                    os.path.basename(options.multifile_base).split('.')[0]
-                submodule_name = base_filename + "_" + \
-                    e.name + "_proofs"
-                out_file = OutputFile(options.multifile_base + "_" +
-                                      e.name + "_proofs" + ".thy")
-
-                print(("theory %s imports "
-                       + "%s_%s_defs begin") % (
-                    submodule_name, base_filename, e.name),
-                    file=out_file)
-                print(file=out_file)
-
-                options.output = out_file
-                e.generate_hol_proofs(options, type_map)
-
-                print("end", file=out_file)
+        print("end", file=out_file)
     else:
         if options.from_file:
             print(f"/* generated from {options.from_file} */\n", file=out_file)
