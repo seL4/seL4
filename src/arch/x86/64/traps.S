@@ -729,7 +729,7 @@ BEGIN_FUNC(handle_vmexit)
     movq %rax, %rdx
     shr $0x20, %rdx
     wrmsr # FS
-#endif
+#endif /* CONFIG_X86_64_VTX_64BIT_GUESTS */
 
     # switch to kernel stack
     LOAD_KERNEL_STACK
