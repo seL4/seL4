@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-from typing import List, Set
+from typing import List, Set, Tuple
 
 import hardware
 from hardware.config import Config
@@ -83,7 +83,7 @@ def reserve_regions(regions: Set[Region], reserved: Set[Region]) -> Set[Region]:
     return ret
 
 
-def get_physical_memory(tree: FdtParser, config: Config) -> List[Region]:
+def get_physical_memory(tree: FdtParser, config: Config) -> Tuple[List[Region], Set[Region], int]:
     ''' returns a list of regions representing physical memory as used by the kernel '''
     regions = merge_memory_regions(get_memory_regions(tree))
     reserved = parse_reserved_regions(tree.get_path('/reserved-memory'))
