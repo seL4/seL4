@@ -386,13 +386,13 @@ static inline void set_gic_vcpu_ctrl_vmcr(uint32_t vmcr)
 static inline uint32_t get_gic_vcpu_ctrl_apr(void)
 {
     uint32_t reg;
-    MRS(ICH_AP0R0_EL2, reg);
+    MRS(ICH_AP1R0_EL2, reg);
     return reg;
 }
 
 static inline void set_gic_vcpu_ctrl_apr(uint32_t apr)
 {
-    MSR(ICH_AP0R0_EL2, apr);
+    MSR(ICH_AP1R0_EL2, apr);
 }
 
 static inline uint32_t get_gic_vcpu_ctrl_vtr(void)
