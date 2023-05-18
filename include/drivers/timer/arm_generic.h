@@ -43,7 +43,6 @@ static inline void ackDeadlineIRQ(void)
 static inline void resetTimer(void)
 {
     SYSTEM_WRITE_WORD(CNT_TVAL, TIMER_RELOAD);
-    SYSTEM_WRITE_WORD(CNT_CTL, BIT(0));
     /* Ensure that the timer deasserts the IRQ before GIC EOIR/DIR.
      * This is sufficient to remove the pending state from the GICR
      * and avoid the interrupt happening twice because of the level
