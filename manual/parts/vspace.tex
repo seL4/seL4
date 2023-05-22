@@ -288,11 +288,13 @@ RISC-V               & \autoref{group__riscv__seL4__RISCV__ASIDPool} \\
 \end{tabularx}
 
 \section{Mapping Attributes}
-A parameter of type \texttt{seL4\_ARM\_VMAttributes} or
-\texttt{seL4\_x86\_VMAttributes} is used to specify the cache behaviour of the
-page being mapped; possible values for Arm that can be bitwise OR'd together are
-shown in \autoref{tbl:vmattr_arm} \ifxeightsix and an enumeration of valid values
-for IA-32 are shown in \autoref{tbl:vmattr_ia32}\fi. Mapping attributes can be updated on existing mappings using the Map invocation with the same virtual address.
+A parameter of type \texttt{seL4\_ARM\_VMAttributes}, \texttt{seL4\_x86\_VMAttributes}
+, or \texttt{seL4\_RISCV\_VMAttributes} is used to specify the cache behaviour of the
+page being mapped. Possible values for Arm that can be bitwise OR'd together are
+shown in \autoref{tbl:vmattr_arm} \ifxeightsix. An enumeration of valid values
+for IA-32 are shown in \autoref{tbl:vmattr_ia32}\fi. Possible values for RISC-V that
+can be bitwise OR'd together are shown in \autoref{tbl:vmattr_riscv}. Mapping attributes
+can be updated on existing mappings using the Map invocation with the same virtual address.
 
 \begin{table}[htb]
   \begin{center}
@@ -326,6 +328,20 @@ for IA-32 are shown in \autoref{tbl:vmattr_ia32}\fi. Mapping attributes can be u
       \bottomrule
     \end{tabularx}
     \caption{\label{tbl:vmattr_ia32} Virtual memory attributes for x86 page
+      table entries.}
+  \end{center}
+\end{table}
+
+\begin{table}[htb]
+  \begin{center}
+    \begin{tabularx}{\textwidth}{p{0.33\textwidth}X}
+      \toprule
+      Attribute & Meaning \\
+      \midrule
+      \texttt{seL4\_RISCV\_ExecuteNever} & Map this memory as non-executable \\
+      \bottomrule
+    \end{tabularx}
+    \caption{\label{tbl:vmattr_riscv} Virtual memory attributes for RISC-V page
       table entries.}
   \end{center}
 \end{table}
