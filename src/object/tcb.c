@@ -1696,9 +1696,11 @@ static inline exception_t installTCBCap(tcb_t *target, cap_t tCap, cte_t *slot,
     }
 
     /* cteDelete on a cap installed in the tcb cannot fail */
-    if (sameObjectAs(newCap, srcSlot->cap) &&
-        sameObjectAs(tCap, slot->cap)) {
-        cteInsert(newCap, srcSlot, rootSlot);
+    if (cap_get_capType(newCap) != cap_null_cap) {
+        if (sameObjectAs(newCap, srcSlot->cap) &&
+            sameObjectAs(tCap, slot->cap)) {
+            cteInsert(newCap, srcSlot, rootSlot);
+        }
     }
     return e;
 }
