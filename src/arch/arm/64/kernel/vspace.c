@@ -103,6 +103,9 @@ typedef struct lookupPTSlot_ret lookupPTSlot_ret_t;
 struct lookupFrame_ret {
     paddr_t frameBase;
     vm_page_size_t frameSize;
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
+    vm_rights_t vm_rights;
+#endif
     bool_t valid;
 };
 typedef struct lookupFrame_ret lookupFrame_ret_t;
@@ -168,6 +171,26 @@ static word_t CONST APFromVMRights(vm_rights_t vm_rights)
         fail("Invalid VM rights");
     }
 }
+
+
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
+static vm_rights_t CONST VMRightsFromAP(word_t access_perms)
+{
+    switch (access_perms) {
+    case 0:
+        return VMKernelOnly;
+    case 1:
+        return VMReadWrite;
+    case 2:
+        return VMKernelReadOnly;
+    case 3:
+        return VMReadOnly;
+    default:
+        fail("Invalid AP bit");
+    }
+}
+#endif
+
 
 vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_rights_mask)
 {
@@ -774,6 +797,9 @@ static lookupFrame_ret_t lookupFrame(vspace_root_t *vspace, vptr_t vptr)
     case pude_pude_1g:
         ret.frameBase = pude_pude_1g_ptr_get_page_base_address(pudSlot.pudSlot);
         ret.frameSize = ARMHugePage;
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
+        ret.vm_rights = VMRightsFromAP(pude_pude_1g_ptr_get_AP(pudSlot.pudSlot));
+#endif
         ret.valid = true;
         return ret;
 
@@ -784,6 +810,9 @@ static lookupFrame_ret_t lookupFrame(vspace_root_t *vspace, vptr_t vptr)
         if (pde_ptr_get_pde_type(pdSlot) == pde_pde_large) {
             ret.frameBase = pde_pde_large_ptr_get_page_base_address(pdSlot);
             ret.frameSize = ARMLargePage;
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
+            ret.vm_rights = VMRightsFromAP(pde_pde_large_ptr_get_AP(pdSlot));
+#endif
             ret.valid = true;
             return ret;
         }
@@ -795,6 +824,9 @@ static lookupFrame_ret_t lookupFrame(vspace_root_t *vspace, vptr_t vptr)
             if (pte_ptr_get_present(ptSlot)) {
                 ret.frameBase = pte_ptr_get_page_base_address(ptSlot);
                 ret.frameSize = ARMSmallPage;
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
+                ret.vm_rights = VMRightsFromAP(pte_ptr_get_AP(ptSlot));
+#endif
                 ret.valid = true;
                 return ret;
             }
@@ -1763,6 +1795,13 @@ static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, unsigned int l
         /* Look up the frame containing 'start'. */
         resolve_ret = lookupFrame(vspaceRoot, start);
 
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
+        if (invLabel == ARMVSpaceInvalidate_Data && resolve_ret.vm_rights != VMReadWrite) {
+            userError("ARMVSpaceInvalidate_Data: Cannot call on mapping without write rights.");
+            current_syscall_error.type = seL4_IllegalOperation;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+#endif
         if (!resolve_ret.valid) {
             /* Fail silently, as there can't be any stale cached data (for the
              * given address space), and getting a syscall error because the
@@ -2251,6 +2290,18 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
         /* Don't let applications flush outside of the kernel window */
         if (pstart < PADDR_BASE || ((end - start) + pstart) > PADDR_TOP) {
             userError("Page Flush: Overlaps kernel region.");
+            current_syscall_error.type = seL4_IllegalOperation;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+#endif
+
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
+        /* When in EL1, the mapping must be write-able for ARMPageInvalidate_Data */
+        lookupFrame_ret_t resolve_ret = lookupFrame(find_ret.vspace_root, vaddr + start);
+        /* resolve_ret.valid must be true based on the capFMappedASID check above succeeding */
+        assert(resolve_ret.valid);
+        if (invLabel == ARMPageInvalidate_Data && resolve_ret.vm_rights != VMReadWrite) {
+            userError("ARMPageInvalidate_Data: Cannot call on mapping without write rights.");
             current_syscall_error.type = seL4_IllegalOperation;
             return EXCEPTION_SYSCALL_ERROR;
         }
