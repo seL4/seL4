@@ -149,14 +149,6 @@ static word_t CONST APFromVMRights(vm_rights_t vm_rights)
             return 1;
         }
 
-    case VMKernelReadOnly:
-        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-            /* no corresponding AP for S2AP, return None */
-            return 0;
-        } else {
-            return 2;
-        }
-
     case VMReadOnly:
         if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
             return 1;
