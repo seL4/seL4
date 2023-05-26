@@ -1,0 +1,16 @@
+/*
+ * Copyright 2023, UNSW
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+    /delete-node/ memory;
+
+    /* Memory for the 1GB RAM variant of the RPi4B, see overlay-pi4.dts for an
+     * explanation of the memory ranges.
+     */
+    memory@0 {
+        device_type = "memory";
+        reg = < 0x00000000 0x00000000 0x3b400000 >;
+    };
+};
