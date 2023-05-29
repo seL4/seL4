@@ -55,7 +55,8 @@ typedef enum {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 
 typedef enum {
-    seL4_VGICMaintenance_IDX,
+    seL4_VGICMaintenance_EISR1,
+    seL4_VGICMaintenance_EISR0,
     seL4_VGICMaintenance_Length,
     SEL4_FORCE_LONG_ENUM(seL4_VGICMaintenance_Msg),
 } seL4_VGICMaintenance_Msg;
