@@ -239,6 +239,7 @@ tagged_union cap capType {
 ---- IA32 specific fault types
 
 block VMFault {
+    padding                     32
     field     address           32
     field     FSR               5
     padding                     7
