@@ -175,7 +175,7 @@ struct gic_dist_map {
                                      * interrupt routing for SPI 32 */
 };
 
-_Static_assert(0x6100 == SEL4_OFFSETOF(struct gic_dist_map, iroutern),
+compile_assert(0x6100 == SEL4_OFFSETOF(struct gic_dist_map, iroutern),
                "Error in struct gic_dist_map");
 
 /* Memory map for GIC Redistributor Registers for control and physical LPI's */
