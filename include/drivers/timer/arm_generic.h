@@ -32,13 +32,22 @@ static inline void ackDeadlineIRQ(void)
 {
     ticks_t deadline = UINT64_MAX;
     setDeadline(deadline);
+    /* Ensure that the timer deasserts the IRQ before GIC EOIR/DIR.
+     * This is sufficient to remove the pending state from the GICR
+     * and avoid the interrupt happening twice because of the level
+     * sensitive configuration. */
+    isb();
 }
 #else /* CONFIG_KERNEL_MCS */
 #include <arch/machine/timer.h>
 static inline void resetTimer(void)
 {
     SYSTEM_WRITE_WORD(CNT_TVAL, TIMER_RELOAD);
-    SYSTEM_WRITE_WORD(CNT_CTL, BIT(0));
+    /* Ensure that the timer deasserts the IRQ before GIC EOIR/DIR.
+     * This is sufficient to remove the pending state from the GICR
+     * and avoid the interrupt happening twice because of the level
+     * sensitive configuration. */
+    isb();
 }
 #endif /* !CONFIG_KERNEL_MCS */
 
