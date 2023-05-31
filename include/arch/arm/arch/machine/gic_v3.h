@@ -175,8 +175,11 @@ struct gic_dist_map {
                                      * interrupt routing for SPI 32 */
 };
 
-compile_assert(0x6100 == SEL4_OFFSETOF(struct gic_dist_map, iroutern),
-               "Error in struct gic_dist_map");
+/* __builtin_offsetof is not in the verification C subset, so we can only check this in
+   non-verification builds. We specifically do not declare a macro for the builtin, because
+   we do not want break the verification subset by accident. */
+unverified_compile_assert(error_in_gic_dist_map,
+                          0x6100 == __builtin_offsetof(struct gic_dist_map, iroutern));
 
 /* Memory map for GIC Redistributor Registers for control and physical LPI's */
 struct gic_rdist_map {          /* Starting */
