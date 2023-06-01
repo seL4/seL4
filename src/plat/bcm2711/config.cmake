@@ -28,7 +28,7 @@ if(KernelPlatformRpi4)
 
     if(NOT DEFINED RPI4_MEMORY)
         # By default we assume an RPi4B model with 8GB of RAM
-        set("${RPI4_MEMORY}" "8192")
+        set(RPI4_MEMORY "8192")
     endif()
 
     if("${RPI4_MEMORY}" STREQUAL "1024")
