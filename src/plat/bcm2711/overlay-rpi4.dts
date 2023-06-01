@@ -37,17 +37,15 @@
 	 * 0x01 0x00000000 0x80000000  2048MB
 	 * 0x01 0x80000000 0x80000000  2048MB
 	 *
+	 * In "low peripheral" mode there is a reserved region [0xfc000000, 0x100000000)
+	 * which is why the region starting at 0x40000000 has a size of 0xbc000000.
+	 *
+	 * There are multiple models of the RPi4B with different sizes of RAM.
+	 * The above outlines the memory ranges for the 8GB model, for models
+	 * with less than 4GB of RAM, the last two ranges are omitted. For the
+	 * 2GB model, the range starting at 0x40000000 is smaller in size.
+	 *
 	 */
-
-	/delete-node/ memory;
-
-	memory@0 {
-		device_type = "memory";
-		reg = < 0x00000000 0x00000000 0x3b400000
-			0x00000000 0x40000000 0xbc000000
-			0x00000001 0x00000000 0x80000000
-			0x00000001 0x80000000 0x80000000 >;
-	};
 
 	reserved-memory {
 		#address-cells = <0x02>;
