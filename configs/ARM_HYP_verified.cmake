@@ -11,6 +11,7 @@ cmake_script_build_kernel()
 
 set(KernelPlatform "tk1" CACHE STRING "")
 set(KernelSel4Arch "arm_hyp" CACHE STRING "")
+set(KernelAArch32FPUEnableContextSwitch OFF CACHE BOOL "")
 set(KernelVerificationBuild ON CACHE BOOL "")
 set(KernelIPCBufferLocation "threadID_register" CACHE STRING "")
 set(KernelMaxNumNodes "1" CACHE STRING "")

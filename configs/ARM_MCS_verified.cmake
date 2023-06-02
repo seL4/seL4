@@ -10,6 +10,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/../tools/helpers.cmake)
 cmake_script_build_kernel()
 
 set(KernelPlatform "imx6" CACHE STRING "")
+set(KernelAArch32FPUEnableContextSwitch OFF CACHE BOOL "")
 set(KernelVerificationBuild ON CACHE BOOL "")
 set(KernelBinaryVerificationBuild ON CACHE BOOL "")
 set(KernelOptimisationCloneFunctions OFF CACHE BOOL "")
