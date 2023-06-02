@@ -75,6 +75,7 @@ static inline uint64_t mpidr_to_gic_affinity(void)
 }
 
 /* Wait for completion of a distributor change */
+/** DONT_TRANSLATE */
 static uint32_t gicv3_do_wait_for_rwp(volatile uint32_t *ctlr_addr)
 {
     uint32_t val;
