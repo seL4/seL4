@@ -175,9 +175,7 @@ void VGICMaintenance(void)
 
         /* the hardware should never give us an invalid index, but we don't
          * want to trust it that far */
-        if (irq_idx == -1  || irq_idx >= gic_vcpu_num_list_regs) {
-            current_fault = seL4_Fault_VGICMaintenance_new(eisr1, eisr0);
-        } else {
+        if (irq_idx != -1  || irq_idx < gic_vcpu_num_list_regs) {
             virq_t virq;
             /* Per spec definition, a vIRQ can only trigger an EOI IRQ iff its
              * (i) LR state is invalid, (ii) LR hw bit = 0, and (iii) LR eoi bit = 1.
@@ -195,13 +193,10 @@ void VGICMaintenance(void)
             } else {
                 /* FIXME This should not happen */
             }
-            current_fault = seL4_Fault_VGICMaintenance_new(eisr1, eisr0);
         }
-
-    } else {
-        /* Assume that it was an EOI for a LR that was not present */
-        current_fault = seL4_Fault_VGICMaintenance_new(eisr1, eisr0);
     }
+
+    current_fault = seL4_Fault_VGICMaintenance_new(eisr1, eisr0);
 
     /* Current VCPU being active should indicate that the current thread
      * is runnable. At present, verification cannot establish this so we
