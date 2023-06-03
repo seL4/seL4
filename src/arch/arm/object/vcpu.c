@@ -164,39 +164,48 @@ void VGICMaintenance(void)
     eisr0 = get_gic_vcpu_ctrl_eisr0();
     eisr1 = get_gic_vcpu_ctrl_eisr1();
     flags = get_gic_vcpu_ctrl_misr();
+    uint64_t consumed_eisr = ((uint64_t)eisr1 << 32) | eisr0;
 
     if (flags & VGIC_MISR_EOI) {
-        int8_t irq_idx = -1;
-        if (eisr0) {
-            irq_idx = ctzl(eisr0);
-        } else if (eisr1) {
-            irq_idx = ctzl(eisr1) + 32;
-        }
+        while (eisr1 | eisr0) {
+            /* it will never happen to have both eisr0 and eisr1 with zeros */
+            uint8_t irq_idx = 0;
+            if (eisr0) {
+                irq_idx = ctzl(eisr0);
+                /* clear bit at irq_idx */
+                eisr0 &= ~((uint32_t)1 << irq_idx);
+            } else if (eisr1) {
+                irq_idx = ctzl(eisr1);
+                /* clear bit at irq_idx */
+                eisr1 &= ~((uint32_t)1 << irq_idx);
+                irq_idx += 32;
+            }
 
-        /* the hardware should never give us an invalid index, but we don't
-         * want to trust it that far */
-        if (irq_idx != -1  || irq_idx < gic_vcpu_num_list_regs) {
-            virq_t virq;
-            /* Per spec definition, a vIRQ can only trigger an EOI IRQ iff its
-             * (i) LR state is invalid, (ii) LR hw bit = 0, and (iii) LR eoi bit = 1.
-             *
-             * Since maintenance IRQ is level-sensitive, it is required to remove the
-             * EOIed LR, to avoid causing the maintenance IRQ again */
-            virq.words[0] = 0;
-            set_gic_vcpu_ctrl_lr(irq_idx, virq);
+            /* the hardware should never give us an invalid index, but we don't
+             * want to trust it that far */
+            if (irq_idx < gic_vcpu_num_list_regs) {
+                virq_t virq;
+                /* Per spec definition, a vIRQ can only trigger an EOI IRQ iff its
+                 * (i) LR state is invalid, (ii) LR hw bit = 0, and (iii) LR eoi bit = 1.
+                 *
+                 * Since maintenance IRQ is level-sensitive, it is required to remove the
+                 * EOIed LRs, to avoid causing the maintenance IRQ again */
+                virq.words[0] = 0;
+                set_gic_vcpu_ctrl_lr(irq_idx, virq);
 
-            /* decodeVCPUInjectIRQ below checks the vgic.lr register,
-             * so we should also sync the shadow data structure as well */
-            assert(ARCH_NODE_STATE(armHSCurVCPU) != NULL && ARCH_NODE_STATE(armHSVCPUActive));
-            if (ARCH_NODE_STATE(armHSCurVCPU) != NULL && ARCH_NODE_STATE(armHSVCPUActive)) {
-                ARCH_NODE_STATE(armHSCurVCPU)->vgic.lr[irq_idx] = virq;
-            } else {
-                /* FIXME This should not happen */
+                /* decodeVCPUInjectIRQ below checks the vgic.lr register,
+                 * so we should also sync the shadow data structure as well */
+                assert(ARCH_NODE_STATE(armHSCurVCPU) != NULL && ARCH_NODE_STATE(armHSVCPUActive));
+                if (ARCH_NODE_STATE(armHSCurVCPU) != NULL && ARCH_NODE_STATE(armHSVCPUActive)) {
+                    ARCH_NODE_STATE(armHSCurVCPU)->vgic.lr[irq_idx] = virq;
+                }
             }
         }
     }
 
-    current_fault = seL4_Fault_VGICMaintenance_new(eisr1, eisr0);
+    /* At this point, all EOIed vIRQs are removed for the LRs and will be signalled
+     * through fault ipc msg. */
+    current_fault = seL4_Fault_VGICMaintenance_new(consumed_eisr >> 32, consumed_eisr & 0xffffffff);
 
     /* Current VCPU being active should indicate that the current thread
      * is runnable. At present, verification cannot establish this so we
