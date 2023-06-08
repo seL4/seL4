@@ -70,7 +70,7 @@
  *    = sign extension bit for canonical addresses
  *    (= 47 on x64, 38 on RISCV64 sv39, 47 on RISCV64 sv48)
  *  b = The number of bits used by kernel mapping.
- *    = 38 (half of the 1 level page table) on RISCV64 sc39
+ *    = 38 (half of the 1 level page table) on RISCV64 sv39
  *    = 39 (entire second level page table) on aarch64 / X64 / sv48
  */
 
