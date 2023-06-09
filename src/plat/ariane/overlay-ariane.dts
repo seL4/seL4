@@ -7,6 +7,19 @@
 / {
 	chosen {
 		seL4,kernel-devices =
+            &{/soc/clint@2000000},
 		    &{/soc/interrupt-controller@c000000};
 	};
+
+    /*
+     * The size and address of the CLINT is from the memory map listed in the
+     * CVA6 documentation. It can be found here:
+     * https://docs.openhwgroup.org/projects/cva6-user-manual/05_cva6_apu/cva6_apu.html#memory-map
+     */
+    soc {
+        clint@2000000 {
+            compatible = "riscv,cpu-intc";
+            reg = <0x00000000 0x2000000 0x00000000 0x0000c0000>;
+        };
+    };
 };
