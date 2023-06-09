@@ -1,0 +1,26 @@
+/*
+ * Copyright 2023, UNSW
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+    chosen {
+        seL4,kernel-devices =
+            &{/soc/clint@2000000};
+    };
+
+    /*
+     * The size and address of the CLINT is derived from the source code
+     * of QEMU (which supports the Spike as a platform) and the Spike RISC-V
+     * ISA simulator. At the time of writing the two simulators do not agree
+     * on the size of the CLINT. We take the larger of the two sizes (0xc0000)
+     * in order to be safe.
+     */
+    soc {
+        clint@2000000 {
+            compatible = "riscv,cpu-intc";
+            reg = <0x00000000 0x2000000 0x00000000 0x0000c0000>;
+        };
+    };
+};

@@ -15,6 +15,15 @@
          *
          */
         seL4,kernel-devices =
+            &{/soc/clint@2000000},
             &{/soc/plic@c000000};
+    };
+
+    /* The size and address of the CLINT is derived from QEMU source code. */
+    soc {
+        clint@2000000 {
+            compatible = "riscv,cpu-intc";
+            reg = <0x00000000 0x2000000 0x00000000 0x000010000>;
+        };
     };
 };
