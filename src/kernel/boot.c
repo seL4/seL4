@@ -23,6 +23,26 @@ BOOT_BSS ndks_boot_t ndks_boot;
 BOOT_BSS rootserver_mem_t rootserver;
 BOOT_BSS static region_t rootserver_mem;
 
+/* Returns the physical region of the kernel image boot part, which is the part
+ * that is no longer needed once booting is finished. */
+extern char ki_boot_end[1];
+BOOT_CODE p_region_t get_p_reg_kernel_img_boot(void)
+{
+    return (p_region_t) {
+        .start = kpptr_to_paddr((const void *)KERNEL_ELF_BASE),
+        .end   = kpptr_to_paddr(ki_boot_end)
+    };
+}
+
+/* Returns the physical region of the kernel image. */
+BOOT_CODE p_region_t get_p_reg_kernel_img(void)
+{
+    return (p_region_t) {
+        .start = kpptr_to_paddr((const void *)KERNEL_ELF_BASE),
+        .end   = kpptr_to_paddr(ki_end)
+    };
+}
+
 BOOT_CODE static void merge_regions(void)
 {
     /* Walk through reserved regions and see if any can be merged */
@@ -739,8 +759,7 @@ BOOT_CODE static bool_t create_untypeds_for_region(
     return true;
 }
 
-BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap,
-                                 region_t boot_mem_reuse_reg)
+BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap)
 {
     seL4_SlotPos first_untyped_slot = ndks_boot.slot_pos_cur;
 
@@ -774,7 +793,11 @@ BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap,
         }
     }
 
-    /* if boot_mem_reuse_reg is not empty, we can create UT objs from boot code/data frames */
+    /* There is a part of the kernel (code/data) that is only needed for the
+     * boot process. We can create UT objects for these frames, so the memory
+     * can be reused.
+     */
+    region_t boot_mem_reuse_reg = paddr_to_pptr_reg(get_p_reg_kernel_img_boot());
     if (!create_untypeds_for_region(root_cnode_cap, false, boot_mem_reuse_reg, first_untyped_slot)) {
         printf("ERROR: creation of untypeds for recycled boot memory"
                " [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] failed\n",
