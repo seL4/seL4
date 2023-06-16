@@ -116,6 +116,10 @@ if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
         platform_yaml "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/platform_gen.yaml"
         CACHE INTERNAL "Location of platform YAML description"
     )
+    set(
+        platform_json "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/platform_gen.json"
+        CACHE INTERNAL "Location of platform JSON description"
+    )
     set(config_file "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware.yml")
     set(config_schema "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware_schema.yml")
     set(
@@ -202,7 +206,8 @@ if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
                 --compat-strings-out "${compatibility_outfile}" --c-header --header-out
                 "${device_dest}" --hardware-config "${config_file}" --hardware-schema
                 "${config_schema}" --yaml --yaml-out "${platform_yaml}" --sel4arch
-                "${KernelSel4Arch}" --addrspace-max "${KernelPaddrUserTop}"
+                "${KernelSel4Arch}" --addrspace-max "${KernelPaddrUserTop}" --json --json-out
+                "${platform_json}"
             RESULT_VARIABLE error
         )
         if(error)
