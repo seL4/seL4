@@ -767,5 +767,8 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
     if(DEFINED platform_yaml)
         install(FILES ${platform_yaml} DESTINATION support)
     endif()
+    if(DEFINED platform_json)
+        install(FILES ${platform_json} DESTINATION support)
+    endif()
 
 endif()
