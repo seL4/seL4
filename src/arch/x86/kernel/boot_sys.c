@@ -179,7 +179,7 @@ static BOOT_CODE bool_t try_boot_sys_node(cpu_id_t cpu_id)
             &boot_state.mem_p_regs,
             boot_state.ui_info,
             boot_mem_reuse_p_reg,
-            /* parameters below not modeled in abstract specification */
+            /* parameters below not modelled in abstract specification */
             boot_state.num_drhu,
             boot_state.drhu_list,
             &boot_state.rmrr_list,
