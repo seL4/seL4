@@ -88,7 +88,7 @@ void Arch_migrateTCB(tcb_t *thread)
     assert(thread->tcbSchedContext != NULL);
 #endif
 
-    /* check if thread own its current core FPU */
+    /* check if thread owns its current core FPU */
     if (nativeThreadUsingFPU(thread)) {
         switchFpuOwner(NULL, thread->tcbAffinity);
     }
