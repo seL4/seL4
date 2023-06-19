@@ -136,6 +136,11 @@ static inline BOOT_CODE pptr_t it_alloc_paging(void)
 /* return the amount of paging structures required to cover v_reg */
 word_t arch_get_n_paging(v_region_t it_veg);
 
+bool_t finalize_init_kernel(void);
+#ifdef ENABLE_SMP_SUPPORT
+bool_t finalize_init_kernel_on_secondary_core(void);
+#endif
+
 #if defined(CONFIG_DEBUG_BUILD) && defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_MCS)
 /* Test whether clocks are synchronised across nodes */
 #define ENABLE_SMP_CLOCK_SYNC_TEST_ON_BOOT

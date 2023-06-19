@@ -272,14 +272,8 @@ BOOT_CODE static bool_t try_init_kernel_secondary_core(void)
     setIRQState(IRQReserved, CORE_IRQ_TO_IRQT(getCurrentCPUIndex(), INTERRUPT_VGIC_MAINTENANCE));
     setIRQState(IRQReserved, CORE_IRQ_TO_IRQT(getCurrentCPUIndex(), INTERRUPT_VTIMER_EVENT));
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
-    NODE_LOCK_SYS;
 
-    clock_sync_test();
-    ksNumCPUs++;
-
-    init_core_state(SchedulerAction_ResumeCurrentThread);
-
-    return true;
+    return finalize_init_kernel();
 }
 
 BOOT_CODE static void release_secondary_cpus(void)
@@ -599,23 +593,7 @@ static BOOT_CODE bool_t try_init_kernel(
         invalidateHypTLB();
     }
 
-    ksNumCPUs = 1;
-
-    /* initialize BKL before booting up other cores */
-    SMP_COND_STATEMENT(clh_lock_init());
-    SMP_COND_STATEMENT(release_secondary_cpus());
-
-    /* All cores are up now, so there can be concurrency. The kernel booting is
-     * supposed to be finished before the secondary cores are released, all the
-     * primary has to do now is schedule the initial thread. Currently there is
-     * nothing that touches any global data structures, nevertheless we grab the
-     * BKL here to play safe. It is released when the kernel is left. */
-    NODE_LOCK_SYS;
-
-    printf("Booting all finished, dropped to user space\n");
-
-    /* kernel successfully initialized */
-    return true;
+    return finalize_init_kernel(true);
 }
 
 BOOT_CODE VISIBLE void init_kernel(
@@ -654,11 +632,4 @@ BOOT_CODE VISIBLE void init_kernel(
         fail("ERROR: kernel init failed");
         UNREACHABLE();
     }
-
-#ifdef CONFIG_KERNEL_MCS
-    NODE_STATE(ksCurTime) = getCurrentTime();
-    NODE_STATE(ksConsumed) = 0;
-#endif
-    schedule();
-    activateThread();
 }

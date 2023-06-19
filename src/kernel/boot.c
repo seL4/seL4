@@ -1037,3 +1037,76 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
            "objects, need size/alignment of 2^%"SEL4_PRIu_word"\n", max);
     return false;
 }
+
+static BOOT_CODE bool_t run_kernel(bool_t is_primary_core)
+{
+    /* When we reach this point, all cores are up and thus there can be
+     * concurrency. Most of kernel initialization is supposed happen on the
+     * primary core, while secondary cores are waiting to be released. All that
+     * should be left here is running the initial thread on the primary core,
+     * while all other cores run the idle thread.
+     * We still need to perform some generic node specific initialization. There
+     * is nothing that touches any global data structures, but to play
+     * safe and have a nice boot order, we grab the BKL here. It is released
+     * when the kernel is left.
+     */
+    NODE_LOCK_SYS;
+
+    if (is_primary_core) {
+        printf("Booting all finished, dropped to user space\n");
+    }
+
+#ifdef CONFIG_ARCH_X86)
+    ARCH_NODE_STATE(x86KScurInterrupt) = int_invalid;
+    ARCH_NODE_STATE(x86KSPendingInterrupt) = int_invalid;
+#endif
+
+#ifdef CONFIG_KERNEL_MCS
+    /* Ensure the most recent timestamp is used. */
+    NODE_STATE(ksCurTime) = getCurrentTime();
+#endif
+
+    schedule();
+    activateThread();
+
+    return true;
+}
+
+BOOT_CODE bool_t finalize_init_kernel()
+{
+    SMP_COND_STATEMENT(clh_lock_init());
+
+#if defined(CONFIG_ARCH_RISCV) || defined(CONFIG_ARCH_ARM)
+    ksNumCPUs = 1;
+    SMP_COND_STATEMENT(release_secondary_cores());
+#elif defined(CONFIG_ARCH_X86)
+    /* ksNumCPUs was set already */
+    SMP_COND_STATEMENT(start_boot_aps());
+#else
+#error "unknown arch"
+#endif
+
+    run_kernel(true);
+}
+
+BOOT_CODE bool_t finalize_init_kernel_on_secondary_core()
+{
+    clock_sync_test();
+
+#if defined(CONFIG_ARCH_RISCV) || defined(CONFIG_ARCH_ARM)
+    ksNumCPUs++;
+#elif defined(CONFIG_ARCH_X86)
+    /* ksNumCPUs was set already */
+#else
+#error "unknown arch"
+#endif
+
+    init_core_state(SchedulerAction_ResumeCurrentThread);
+
+#ifdef CONFIG_ARCH_RISCV
+    /* ToDo: Is this really needed? Should this be generic? */
+    ifence_local();
+#endif
+
+    run_kernel(false);
+}

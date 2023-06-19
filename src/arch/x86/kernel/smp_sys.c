@@ -132,18 +132,11 @@ VISIBLE void boot_node(void)
         fail("boot_node failed for some reason :(\n");
     }
 
-    clock_sync_test();
     smp_aps_index++;
 
-    /* grab BKL before leaving the kernel */
-    NODE_LOCK_SYS;
-
-    init_core_state(SchedulerAction_ChooseNewThread);
-    ARCH_NODE_STATE(x86KScurInterrupt) = int_invalid;
-    ARCH_NODE_STATE(x86KSPendingInterrupt) = int_invalid;
-
-    schedule();
-    activateThread();
+    if (!finalize_init_kernel_on_secondary_core()) {
+        fail("finalize_init_kernel_on_secondary_core failed for some reason :(\n");
+    }
 }
 
 #endif /* ENABLE_SMP_SUPPORT */
