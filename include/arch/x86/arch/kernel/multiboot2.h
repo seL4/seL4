@@ -42,6 +42,11 @@ typedef struct multiboot2_fb {
     uint8_t  type;
 } PACKED multiboot2_fb_t;
 
+typedef struct multiboot2_devmem {
+    uint64_t addr;
+    uint64_t size;
+} PACKED multiboot2_devmem_t;
+
 enum multiboot2_tags {
     MULTIBOOT2_TAG_END     = 0,
     MULTIBOOT2_TAG_CMDLINE = 1,
@@ -50,5 +55,6 @@ enum multiboot2_tags {
     MULTIBOOT2_TAG_FB      = 8,
     MULTIBOOT2_TAG_ACPI_1  = 14,
     MULTIBOOT2_TAG_ACPI_2  = 15,
+    MULTIBOOT2_TAG_DEVMEM  = 42,
 };
 

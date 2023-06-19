@@ -23,7 +23,7 @@
 
 #include <plat/machine/intel-vtd.h>
 
-#define MAX_RESERVED 1
+#define MAX_RESERVED 2
 BOOT_BSS static region_t reserved[MAX_RESERVED];
 
 /* functions exactly corresponding to abstract specification */
@@ -68,16 +68,27 @@ BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
 }
 
 BOOT_CODE static bool_t arch_init_freemem(p_region_t ui_p_reg,
+                                          p_region_t extra_device_p_reg,
                                           v_region_t it_v_reg,
                                           mem_p_regs_t *mem_p_regs,
                                           word_t extra_bi_size_bits)
 {
+    int index = 0;
+
     // Extend the reserved region down to include the base of the kernel image.
     // KERNEL_ELF_PADDR_BASE is the lowest physical load address used
     // in the x86 linker script.
     ui_p_reg.start = KERNEL_ELF_PADDR_BASE;
-    reserved[0] = paddr_to_pptr_reg(ui_p_reg);
-    return init_freemem(mem_p_regs->count, mem_p_regs->list, MAX_RESERVED,
+    reserved[index] = paddr_to_pptr_reg(ui_p_reg);
+    index++;
+
+    /* add the extra device region, if it is not empty */
+    if (extra_device_p_reg.start != extra_device_p_reg.end) {
+        reserved[index] = paddr_to_pptr_reg(extra_device_p_reg);
+        index++;
+    }
+
+    return init_freemem(mem_p_regs->count, mem_p_regs->list, index,
                         reserved, it_v_reg, extra_bi_size_bits);
 }
 
@@ -94,7 +105,8 @@ BOOT_CODE bool_t init_sys_state(
     acpi_rsdp_t      *acpi_rsdp,
     seL4_X86_BootInfo_VBE *vbe,
     seL4_X86_BootInfo_mmap_t *mb_mmap,
-    seL4_X86_BootInfo_fb_t *fb_info
+    seL4_X86_BootInfo_fb_t *fb_info,
+    p_region_t    extra_device_p_reg
 )
 {
     cap_t         root_cnode_cap;
@@ -109,6 +121,7 @@ BOOT_CODE bool_t init_sys_state(
     uint32_t      tsc_freq;
     create_frames_of_region_ret_t create_frames_ret;
     create_frames_of_region_ret_t extra_bi_ret;
+    seL4_SlotPos first_untyped_slot;
 
     /* convert from physical addresses to kernel pptrs */
     region_t ui_reg             = paddr_to_pptr_reg(ui_info.p_reg);
@@ -150,7 +163,7 @@ BOOT_CODE bool_t init_sys_state(
     }
 #endif /* CONFIG_IOMMU */
 
-    if (!arch_init_freemem(ui_info.p_reg, it_v_reg, mem_p_regs, extra_bi_size_bits)) {
+    if (!arch_init_freemem(ui_info.p_reg, extra_device_p_reg, it_v_reg, mem_p_regs, extra_bi_size_bits)) {
         printf("ERROR: free memory management initialization failed\n");
         return false;
     }
@@ -326,8 +339,14 @@ BOOT_CODE bool_t init_sys_state(
     ndks_boot.bi_frame->numIOPTLevels = -1;
 #endif
 
+    /* add the optional region of extra device memory */
+    first_untyped_slot = ndks_boot.slot_pos_cur;
+    if (extra_device_p_reg.start != extra_device_p_reg.end) {
+        create_untypeds_for_region(root_cnode_cap, true, paddr_to_pptr_reg(extra_device_p_reg), first_untyped_slot);
+    }
+
     /* create all of the untypeds. Both devices and kernel window memory */
-    if (!create_untypeds(root_cnode_cap, ndks_boot.slot_pos_cur)) {
+    if (!create_untypeds(root_cnode_cap, first_untyped_slot)) {
         return false;
     }
 

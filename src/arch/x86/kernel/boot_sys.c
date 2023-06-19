@@ -179,7 +179,8 @@ static BOOT_CODE bool_t try_boot_sys_node(cpu_id_t cpu_id)
             &boot_state.acpi_rsdp,
             &boot_state.vbe_info,
             &boot_state.mb_mmap_info,
-            &boot_state.fb_info
+            &boot_state.fb_info,
+            boot_state.extra_device_p_reg
         )) {
         return false;
     }
@@ -621,6 +622,8 @@ static BOOT_CODE bool_t try_boot_sys_mbi2(
     boot_state.mem_p_regs.count = 0;
     boot_state.mb_mmap_info.mmap_length = 0;
     boot_state.vbe_info.vbeMode = -1;
+    boot_state.extra_device_p_reg.start = 0;
+    boot_state.extra_device_p_reg.end = 0;
 
     while (tag < tag_e && tag->type != MULTIBOOT2_TAG_END) {
         word_t const behind_tag = (word_t)tag + sizeof(*tag);
@@ -685,6 +688,11 @@ static BOOT_CODE bool_t try_boot_sys_mbi2(
             printf("Got framebuffer info in multiboot2. Current video mode is at physical address=%llx pitch=%u resolution=%ux%u@%u type=%u\n",
                    fb->addr, fb->pitch, fb->width, fb->height, fb->bpp, fb->type);
             boot_state.fb_info = *fb;
+        } else if (tag->type == MULTIBOOT2_TAG_DEVMEM) {
+            multiboot2_devmem_t const *devmem = (multiboot2_devmem_t const *)behind_tag;
+            printf("Got extra device memory region at 0x%llx size 0x%llx\n", devmem->addr, devmem->size);
+            boot_state.extra_device_p_reg.start = devmem->addr;
+            boot_state.extra_device_p_reg.end = devmem->addr + devmem->size;
         }
 
         tag = (multiboot2_tag_t const *)((word_t)tag + ROUND_UP(tag->size, 3));
