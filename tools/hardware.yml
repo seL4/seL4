@@ -208,6 +208,17 @@ devices:
         kernel: PLIC_PPTR
         kernel_size: 0x04000000
 
+  # SiFive CLINT (HiFive, Polarfire, Ariane, QEMU RISC-V virt, Spike)
+  # Note that not all CLINTs with this compatible string are of the same size.
+  # However, omitting the kernel_size field works as each kernel device frame
+  # is of size 0x200000, which is currently larger than the CLINT's of all
+  # supported platforms.
+  - compatible:
+      - riscv,cpu-intc
+    regions:
+      - index: 0
+        kernel: CLINT_PPTR
+
   # elfloader rules
   - compatible:
       - arm,psci-0.2

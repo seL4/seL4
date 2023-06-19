@@ -1,5 +1,5 @@
 /*
- * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright 2023, UNSW
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -11,14 +11,11 @@
             &{/soc/interrupt-controller@c000000};
     };
 
-    /*
-     * According to the SiFive "FU540-C000 Manual" (version v1p4)
-     * the CLINT is mapped from 0x0200_0000 to 0x0200_FFFF.
-     */
+    /* The size and address of the CLINT is derived from the Rocketchip source code. */
     soc {
         clint@2000000 {
             compatible = "riscv,cpu-intc";
-            reg = <0x00000000 0x2000000 0x00000000 0x000010000>;
+            reg = <0x2000000 0x10000>;
         };
     };
 };

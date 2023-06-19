@@ -26,7 +26,7 @@ exception_t CONST Arch_performTransfer(word_t arch, tcb_t *tcb_src, tcb_t *tcb_d
 void Arch_migrateTCB(tcb_t *thread)
 {
 #ifdef CONFIG_HAVE_FPU
-    /* check if thread own its current core FPU */
+    /* check if thread owns its current core FPU */
     if (nativeThreadUsingFPU(thread)) {
         switchFpuOwner(NULL, thread->tcbAffinity);
     }
