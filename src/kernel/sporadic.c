@@ -73,7 +73,9 @@ static UNUSED bool_t refill_ordered(sched_context_t *sc)
 
     while (current != sc->scRefillTail) {
         if (!(refill_index(sc, current)->rTime + refill_index(sc, current)->rAmount <= refill_index(sc, next)->rTime)) {
+#ifdef CONFIG_PRINTING
             refill_print(sc);
+#endif
             return false;
         }
         current = next;
