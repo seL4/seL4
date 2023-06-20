@@ -49,12 +49,12 @@ pointer. The thread can then be activated either by setting the
 or by separately calling the \apifunc{seL4\_TCB\_Resume}{tcb_resume} method. Both of these methods
 place the thread in a runnable state.
 
-On the master kernel, this will result in the thread immediately being added to
+In non-MCS configurations of the kernel, this will result in the thread immediately being added to
 the scheduler. On the MCS kernel, the thread will only begin running if it has a
 scheduling context object.
 
 In a SMP configuration of the kernel, the thread will resume on the core
-corresponding to the affinity of the thread. For master, this is set using
+corresponding to the affinity of the thread. For the non-MCS configurations of the kernel, this is set using
 \apifunc{seL4\_TCB\_SetAffinity}{tcb_setaffinity}, while on the MCS kernel the affinity is
 derived from the scheduling context object.
 
