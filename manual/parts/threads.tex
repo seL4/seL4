@@ -54,9 +54,11 @@ the scheduler. On the MCS kernel, the thread will only begin running if it has a
 scheduling context object.
 
 In a SMP configuration of the kernel, the thread will resume on the node
-corresponding to the affinity of the thread. For the non-MCS configurations of the kernel, this is set using
-\apifunc{seL4\_TCB\_SetAffinity}{tcb_setaffinity}, while on the MCS kernel the affinity is
-derived from the scheduling context object.
+corresponding to the affinity of the thread. For non-MCS configurations, the
+default thread affinity is the node the thread's \obj{TCB} object was created
+on, and \apifunc{seL4\_TCB\_SetAffinity}{tcb_setaffinity} can be used to
+explicitly set the affinity. On MCS configurations, the affinity is derived
+from the scheduling context object (see \autoref{sec:sc_creation}).
 
 \subsection{Thread Deactivation}
 \label{sec:thread_deactivation}
@@ -71,6 +73,14 @@ reused or left suspended indefinitely if not needed. Threads will be
 automatically suspended when the last capability to their \obj{TCB} is
 deleted.
 % an example of which is demonstrated in \nameref{ex:second_thread}.
+
+\subsection{Affinity}
+\label{sec:thread_affinity}
+
+It is architecture and platform specific, how an affinity value maps to a
+specific node (core, hart) on a specific platform. There is no guarantee that
+affinity values are compatible across different platforms.
+
 
 \subsection{Scheduling}
 \label{sec:sched}
