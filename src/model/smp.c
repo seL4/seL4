@@ -18,10 +18,10 @@ void migrateTCB(tcb_t *tcb, word_t new_core)
 #ifdef CONFIG_HAVE_FPU
     /* If the thread owns the FPU of the core it is currently running on (which
      * is not necessarily the core, that we are now running on), then release
-     * this cores's FPU.
+     * that cores's FPU.
      */
-    if (nativeThreadUsingFPU(thread)) {
-        switchFpuOwner(NULL, thread->tcbAffinity);
+    if (nativeThreadUsingFPU(tcb)) {
+        switchFpuOwner(NULL, tcb->tcbAffinity);
     }
 #endif /* CONFIG_HAVE_FPU */
     tcb->tcbAffinity = new_core;
