@@ -702,8 +702,8 @@ BOOT_CODE static bool_t create_untypeds_for_region(
 {
     /* This code works with regions that wrap (where end < start), because the loop cuts up the
        region into size-aligned chunks, one for each cap. Memory chunks that are size-aligned cannot
-       themselves overflow, so they satisfy alignement, size, and overflow conditionds. The region
-       [0..end) is not neccessarily part of the kernel window (depending on the value of PPTR_BASE).
+       themselves overflow, so they satisfy alignment, size, and overflow conditions. The region
+       [0..end) is not necessarily part of the kernel window (depending on the value of PPTR_BASE).
        This is fine for device untypeds. For normal untypeds, the region is assumed to be fully in
        the kernel window. This is not checked here. */
     while (!is_reg_empty(reg)) {

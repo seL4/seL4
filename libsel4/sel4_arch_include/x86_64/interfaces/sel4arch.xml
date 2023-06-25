@@ -86,4 +86,56 @@
             </error>
         </method>
     </interface>
+    <interface name="seL4_X86_VCPU" manual_name="VCPU" cap_description='VCPU object to operate on'>
+      <method id="X86VCPUReadMSR" name="ReadMSR">
+        <condition><config var="CONFIG_X86_64_VTX_64BIT_GUESTS"/></condition>
+        <brief>
+          Read 64-bit specific MSR field from the hardware
+        </brief>
+        <description>
+          Thin wrapper around the <texttt text='rdmsr'/> instruction that is performed on
+          specific, needed registers. Certain registers might simply be cached and restored
+          later.
+        </description>
+        <return>
+          A <texttt text='seL4_X86_VCPU_ReadMSR_t'/> struct that contains a
+          <texttt text='seL4_Word value'/>, which holds the return result of the
+          <texttt text='rdmsr'/> instruction, and <texttt text='int error'/>.
+          <docref>See <autoref label='sec:errors'/> for a description
+          of the message register and tag contents upon error.</docref>
+        </return>
+        <param dir="in" name="field" type="seL4_Word"
+               description='Field to give to `rdmsr` instruction'/>
+        <param dir="out" name="value" type="seL4_Word"
+               description='Value returned by `rdmsr` instruction'/>
+      </method>
+      <method id="X86VCPUWriteMSR" name="WriteMSR">
+        <condition><config var="CONFIG_X86_64_VTX_64BIT_GUESTS"/></condition>
+        <brief>
+          Write 64-bit specific MSR field to the hardware
+        </brief>
+        <description>
+          Thin wrapper around the <texttt text='wrmsr'/> instruction that is performed on
+          specific, needed registers. As well as validating that
+          a legal field is requested, the value may be modified to ensure any
+          bits that are fixed in the hardware are correct, and that any features
+          required for kernel correctness are not disabled <docref>(see <autoref label='sec:virt'/>)</docref>.
+
+          The final value written to the hardware is returned and can be compared
+          to the input parameter to determine what bits the kernel changed.
+        </description>
+        <return>
+          A <texttt text='seL4_X86_VCPU_WriteMSR_t'/> struct that contains a
+          <texttt text='seL4_Word writen'/>, which holds the final value written with the <texttt text='wrmsr'/> instruction,
+          and <texttt text='int error'/>. <docref>See <autoref label='sec:errors'/> for a description
+          of the message register and tag contents upon error.</docref>
+        </return>
+        <param dir="in" name="field" type="seL4_Word"
+               description='Field to give to `wrsmr` instruction'/>
+        <param dir="in" name="value" type="seL4_Word"
+               description='Value to write using `wrsmr` instruction'/>
+        <param dir="out" name="written" type="seL4_Word"
+               description='Final value written using `wrsmr` after kernel validation'/>
+      </method>
+    </interface>
 </api>

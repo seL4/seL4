@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <autoconf.h>
+#include <sel4/config.h>
 #include <sel4/macros.h>
 
 #define EXCEPT_IPC_LENGTH SEL4_DEPRECATE_MACRO(seL4_UnknownSyscall_Length)

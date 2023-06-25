@@ -5,7 +5,7 @@
  */
 
 #pragma once
-#include <autoconf.h>
+#include <sel4/config.h>
 
 /**
  * @defgroup MCSSystemCalls MCS System Calls

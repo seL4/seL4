@@ -28,8 +28,13 @@
 #define VMXON_REGION_SIZE 4096
 
 const vcpu_gp_register_t crExitRegs[] = {
-    VCPU_EAX, VCPU_ECX, VCPU_EDX, VCPU_EBX, VCPU_ESP, VCPU_EBP, VCPU_ESI, VCPU_EDI
+    VCPU_EAX, VCPU_ECX, VCPU_EDX, VCPU_EBX, VCPU_ESP, VCPU_EBP, VCPU_ESI, VCPU_EDI,
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
+    VCPU_R8, VCPU_R9, VCPU_R10, VCPU_R11, VCPU_R12, VCPU_R13, VCPU_R14, VCPU_R15,
+#endif /* CONFIG_X86_64_VTX_64BIT_GUESTS */
 };
+
+#define MSR_BITMAP_MASK(x) ((x) & 0x1fff)
 
 typedef struct msr_bitmap {
     word_t bitmap[0x2000 / sizeof(word_t) / 8];
@@ -137,6 +142,21 @@ static void vmptrld(void *vmcs_ptr)
     assert(!error);
 }
 
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
+void vcpu_restore_guest_msrs(vcpu_t *vcpu)
+{
+    x86_wrmsr(IA32_STAR_MSR, vcpu->syscall_registers[VCPU_STAR]);
+    x86_wrmsr(IA32_LSTAR_MSR, vcpu->syscall_registers[VCPU_LSTAR]);
+    x86_wrmsr(IA32_CSTAR_MSR, vcpu->syscall_registers[VCPU_CSTAR]);
+    x86_wrmsr(IA32_FMASK_MSR, vcpu->syscall_registers[VCPU_SYSCALL_MASK]);
+}
+
+void vcpu_restore_host_msrs(void)
+{
+    init_syscall_msrs();
+}
+#endif
+
 static void switchVCPU(vcpu_t *vcpu)
 {
 #ifdef ENABLE_SMP_SUPPORT
@@ -237,8 +257,12 @@ static bool_t BOOT_CODE init_vtx_fixed_values(bool_t useTrueMsrs)
         BIT(20) |   //Save guest IA32_EFER on exit
         BIT(21);    //Load host IA32_EFER
 #ifdef CONFIG_ARCH_X86_64
-    exit_control_mask |= BIT(9); //Host address-space size
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
+    uint32_t entry_control_mask = 0;
+    entry_control_mask |= BIT(9); //Guest address-space size
 #endif
+    exit_control_mask |= BIT(9); //Host address-space size
+#endif /* CONFIG_ARCH_X86_64 */
     /* Read out the fixed high and low bits from the MSRs */
     uint32_t pinbased_ctls;
     uint32_t procbased_ctls;
@@ -320,12 +344,22 @@ static bool_t BOOT_CODE init_vtx_fixed_values(bool_t useTrueMsrs)
         printf("vt-x: Unsupported exit control features %lx\n", (long)missing);
         return false;
     }
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
+    missing = (~entry_control_low) & entry_control_mask;
+    if (missing) {
+        printf("vt-x: Unsupported entry control features %lx\n", (long)missing);
+        return false;
+    }
+#endif /* CONFIG_X86_64_VTX_64BIT_GUESTS */
 
     /* Force the bits we require to be high */
     pin_control_high |= pin_control_mask;
     primary_control_high |= primary_control_mask;
     secondary_control_high |= secondary_control_mask;
     exit_control_high |= exit_control_mask;
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
+    entry_control_high |= entry_control_mask;
+#endif /* CONFIG_X86_64_VTX_64BIT_GUESTS */
 
     return true;
 }
@@ -517,13 +551,123 @@ static exception_t invokeVCPUWriteRegisters(vcpu_t *vcpu, word_t *buffer)
 
 static exception_t decodeVCPUWriteRegisters(cap_t cap, word_t length, word_t *buffer)
 {
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
+    if (length < 15) {
+#else
     if (length < 7) {
+#endif /* CONFIG_X86_64_VTX_64BIT_GUESTS */
         userError("VCPU WriteRegisters: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
     return invokeVCPUWriteRegisters(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)), buffer);
 }
+
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
+static exception_t invokeWriteMSR(vcpu_t *vcpu, word_t *buffer, word_t field, word_t value)
+{
+    tcb_t *thread;
+    thread = NODE_STATE(ksCurThread);
+    if (ARCH_NODE_STATE(x86KSCurrentVCPU) != vcpu) {
+        switchVCPU(vcpu);
+    }
+    switch (field) {
+    case IA32_LSTAR_MSR:
+        vcpu->syscall_registers[VCPU_LSTAR] = value;
+        break;
+    case IA32_STAR_MSR:
+        vcpu->syscall_registers[VCPU_STAR] = value;
+        break;
+    case IA32_CSTAR_MSR:
+        vcpu->syscall_registers[VCPU_CSTAR] = value;
+        break;
+    case IA32_FMASK_MSR:
+        vcpu->syscall_registers[VCPU_SYSCALL_MASK] = value;
+        break;
+    }
+    setMR(thread, buffer, 0, value);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+    return EXCEPTION_NONE;
+}
+
+static exception_t decodeVCPUWriteMSR(cap_t cap, word_t length, word_t *buffer)
+{
+    word_t field;
+    word_t value;
+
+    if (length < 2) {
+        userError("VCPU WriteMSR: Not enough arguments.");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    field = getSyscallArg(0, buffer);
+    value = getSyscallArg(1, buffer);
+    switch (field) {
+    case IA32_LSTAR_MSR:
+    case IA32_STAR_MSR:
+    case IA32_CSTAR_MSR:
+    case IA32_FMASK_MSR:
+        break;
+    default:
+        userError("VCPU WriteMSR: Invalid field %lx.", (long)field);
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+    return invokeWriteMSR(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)), buffer, field, value);
+}
+
+static exception_t invokeReadMSR(vcpu_t *vcpu, word_t field, word_t *buffer)
+{
+    tcb_t *thread;
+    thread = NODE_STATE(ksCurThread);
+
+    word_t value = 0;
+
+    switch (field) {
+    case IA32_LSTAR_MSR:
+        value = vcpu->syscall_registers[VCPU_LSTAR];
+        break;
+    case IA32_STAR_MSR:
+        value = vcpu->syscall_registers[VCPU_STAR];
+        break;
+    case IA32_CSTAR_MSR:
+        value = vcpu->syscall_registers[VCPU_CSTAR];
+        break;
+    case IA32_FMASK_MSR:
+        value = vcpu->syscall_registers[VCPU_SYSCALL_MASK];
+        break;
+    }
+
+    setMR(thread, buffer, 0, value);
+    setRegister(thread, msgInfoRegister, wordFromMessageInfo(
+                    seL4_MessageInfo_new(0, 0, 0, 1)));
+    setThreadState(thread, ThreadState_Restart);
+    return EXCEPTION_NONE;
+}
+
+static exception_t decodeVCPUReadMSR(cap_t cap, word_t length, word_t *buffer)
+{
+    if (length < 1) {
+        userError("VCPU ReadMSR: Not enough arguments.");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+    word_t field = getSyscallArg(0, buffer);
+    switch (field) {
+    case IA32_LSTAR_MSR:
+    case IA32_STAR_MSR:
+    case IA32_CSTAR_MSR:
+    case IA32_FMASK_MSR:
+        break;
+    default:
+        userError("VCPU ReadMSR: Invalid field %lx.", (long)field);
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+    return invokeReadMSR(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)), field, buffer);
+}
+#endif  /* CONFIG_X86_64_VTX_64BIT_GUESTS */
 
 static exception_t invokeEnableIOPort(vcpu_t *vcpu, cte_t *slot, cap_t cap, uint16_t low, uint16_t high)
 {
@@ -967,6 +1111,12 @@ exception_t decodeX86VCPUInvocation(
         return decodeDisableIOPort(cap, length, buffer);
     case X86VCPUWriteRegisters:
         return decodeVCPUWriteRegisters(cap, length, buffer);
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
+    case X86VCPUWriteMSR:
+        return decodeVCPUWriteMSR(cap, length, buffer);
+    case X86VCPUReadMSR:
+        return decodeVCPUReadMSR(cap, length, buffer);
+#endif /* CONFIG_X86_64_VTX_64BIT_GUESTS */
     default:
         userError("VCPU: Illegal operation.");
         current_syscall_error.type = seL4_IllegalOperation;
@@ -1046,7 +1196,15 @@ BOOT_CODE bool_t vtx_init(void)
     clear_bit(msr_bitmap_region.low_msr_write.bitmap, IA32_SYSENTER_CS_MSR);
     clear_bit(msr_bitmap_region.low_msr_write.bitmap, IA32_SYSENTER_ESP_MSR);
     clear_bit(msr_bitmap_region.low_msr_write.bitmap, IA32_SYSENTER_EIP_MSR);
-
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
+    /* Allow guest access to FS and both GS MSRs */
+    clear_bit(msr_bitmap_region.high_msr_read.bitmap, MSR_BITMAP_MASK(IA32_FS_BASE_MSR));
+    clear_bit(msr_bitmap_region.high_msr_read.bitmap, MSR_BITMAP_MASK(IA32_GS_BASE_MSR));
+    clear_bit(msr_bitmap_region.high_msr_read.bitmap, MSR_BITMAP_MASK(IA32_KERNEL_GS_BASE_MSR));
+    clear_bit(msr_bitmap_region.high_msr_write.bitmap, MSR_BITMAP_MASK(IA32_FS_BASE_MSR));
+    clear_bit(msr_bitmap_region.high_msr_write.bitmap, MSR_BITMAP_MASK(IA32_GS_BASE_MSR));
+    clear_bit(msr_bitmap_region.high_msr_write.bitmap, MSR_BITMAP_MASK(IA32_KERNEL_GS_BASE_MSR));
+#endif
     /* The VMX_EPT_VPID_CAP MSR exists if VMX supports EPT or VPIDs. Whilst
      * VPID support is optional, EPT support is not and is already checked for,
      * so we know that this MSR is safe to read */
@@ -1139,6 +1297,9 @@ exception_t handleVmexit(void)
     word_t qualification;
     uint32_t reason;
     finishVmexitSaving();
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
+    vcpu_restore_host_msrs();
+#endif
     /* the basic exit reason is the bottom 16 bits of the exit reason field */
     reason = vmread(VMX_DATA_EXIT_REASON) & MASK(16);
     if (reason == EXTERNAL_INTERRUPT) {

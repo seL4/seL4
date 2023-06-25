@@ -432,14 +432,14 @@ def generate_stub(arch, wordsize, interface_name, method_name, method_id, input_
     return "\n".join(result) + "\n"
 
 
-def generate_stub_file(arch, wordsize, input_files, output_file, use_only_ipc_buffer, mcs):
+def generate_stub_file(arch, wordsize, input_files, output_file, use_only_ipc_buffer, mcs, args):
     """
     Generate a header file containing system call stubs for seL4.
     """
     result = []
 
     data_types = syscall_stub_gen.init_data_types(wordsize)
-    arch_types = syscall_stub_gen.init_arch_types(wordsize)
+    arch_types = syscall_stub_gen.init_arch_types(wordsize, args)
 
     # Parse XML
     methods = []
@@ -522,6 +522,8 @@ def process_args():
                         help="Architecture to generate stubs for.")
     parser.add_argument("--mcs", dest="mcs", action="store_true",
                         help="Generate MCS api.")
+    parser.add_argument("--x86-vtx-64-bit-guests", dest="x86_vtx_64bit", action="store_true", default=False,
+                        help="Whether the vtx VCPU objects need to be large enough for 64-bit guests.")
 
     parser.add_argument("files", metavar="FILES", nargs="+",
                         help="Input XML files.")
@@ -536,7 +538,7 @@ def main():
 
     wordsize = syscall_stub_gen.WORD_SIZE_BITS_ARCH[args.arch]
     # Generate the stubs.
-    generate_stub_file(args.arch, wordsize, args.files, args.output, args.buffer, args.mcs)
+    generate_stub_file(args.arch, wordsize, args.files, args.output, args.buffer, args.mcs, args)
 
 
 if __name__ == "__main__":

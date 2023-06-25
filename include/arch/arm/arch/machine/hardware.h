@@ -22,7 +22,11 @@ typedef word_t vm_fault_type_t;
 
 #define IPI_MEM_BARRIER \
   do { \
-     dmb(); \
+     /* This can be relaxed for GICv2 but for GICv3 dmb() no longer works */ \
+     /* since the way IPI is triggered is different (memory-mapped or MSR inst.) */ \
+     /* and dmb() is not able to avoid re-ordering between memory accesses and */ \
+     /* instructions. In order to support both GICv2 and v3 dsb() is required. */ \
+     dsb_ishst(); \
   } while (0)
 
 #endif /* __ASSEMBLER__ */

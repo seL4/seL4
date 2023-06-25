@@ -23,6 +23,14 @@
 #define CR_ALIGN_CLEAR   0
 #endif
 
+#if defined(CONFIG_ARM_HYPERVISOR_SUPPORT) && defined(CONFIG_AARCH64_USER_CACHE_ENABLE)
+#define CR_USER_CACHE_OPS_SET (BIT(CONTROL_UCT) | BIT(CONTROL_UCI))
+#define CR_USER_CACHE_OPS_CLEAR 0
+#else
+#define CR_USER_CACHE_OPS_SET 0
+#define CR_USER_CACHE_OPS_CLEAR (BIT(CONTROL_UCT) | BIT(CONTROL_UCI))
+#endif
+
 #ifndef CONFIG_DEBUG_DISABLE_L1_ICACHE
     #define CR_L1_ICACHE_SET   BIT(CONTROL_I)
     #define CR_L1_ICACHE_CLEAR 0
@@ -42,11 +50,13 @@
 #define CR_BITS_SET    (CR_ALIGN_SET | \
                         CR_L1_ICACHE_SET | \
                         CR_L1_DCACHE_SET | \
+                        CR_USER_CACHE_OPS_SET | \
                         BIT(CONTROL_M))
 
 #define CR_BITS_CLEAR  (CR_ALIGN_CLEAR | \
                         CR_L1_ICACHE_CLEAR | \
                         CR_L1_DCACHE_CLEAR | \
+                        CR_USER_CACHE_OPS_CLEAR | \
                         BIT(CONTROL_SA0) | \
                         BIT(CONTROL_EE) | \
                         BIT(CONTROL_E0E))

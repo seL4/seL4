@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <autoconf.h>
+#include <sel4/config.h>
 
 typedef enum _object {
     seL4_RISCV_4K_Page = seL4_ModeObjectTypeCount,

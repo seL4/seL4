@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <autoconf.h>
+#include <sel4/config.h>
 
 #if !defined(CONFIG_PLAT_ZYNQMP) && !defined(PLAT_ZYNQMP_ZCU102)
 #error "unknown platform"

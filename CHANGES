@@ -49,6 +49,9 @@ Upcoming release: BREAKING
 * Changed how `gen_config.h` files are generated. Previously, they were generated at CMake configure time. Now, they
   are generated at build time as a dependency of the `${prefix}_Gen` target. To manually build the kernel
   `gen_config.h` file after running `cmake`, run `ninja gen_config/kernel/gen_config.h`.
+* Remove the ability for user-space on RISC-V platforms to access the core-local interrupt controller (CLINT). The
+  CLINT contains memory-mapped registers that the kernel depends on for timer interrupts and hence should not be
+  accessible by user-space.
 
 ## Upgrade Notes
 

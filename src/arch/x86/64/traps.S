@@ -670,7 +670,19 @@ END_FUNC(handle_syscall)
 # RSP points to the end of the VCPUs general purpose register array
 #ifdef CONFIG_VTX
 BEGIN_FUNC(handle_vmexit)
+#ifndef CONFIG_X86_64_VTX_64BIT_GUESTS
     MAYBE_SWAPGS
+#else
+    # Save the guest's gp registers
+    push    %r15
+    push    %r14
+    push    %r13
+    push    %r12
+    push    %r11
+    push    %r10
+    push    %r9
+    push    %r8
+#endif
     push    %rbp
     push    %rdi
     push    %rsi
@@ -678,6 +690,46 @@ BEGIN_FUNC(handle_vmexit)
     push    %rcx
     push    %rbx
     push    %rax
+
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
+    # Save the guest's GS, Shadow GS, and FS
+    mov $0xC0000100, %ecx
+    rdmsr
+    shl $0x20,%rdx
+    or %rdx, %rax
+    pushq %rax # Save FS
+    swapgs
+    mov $0xC0000101, %ecx
+    rdmsr
+    shl $0x20,%rdx
+    or %rdx, %rax
+    pushq %rax # Save Shadow GS
+    swapgs
+    rdmsr
+    shl $0x20,%rdx
+    or %rdx, %rax
+    pushq %rax # Save GS
+
+    # RSP now at host_gs registers
+    sub $0x18, %rsp
+
+    # Restore the host's GS and Shadow GS
+    pop %rax
+    movq %rax, %rdx
+    shr $0x20, %rdx
+    wrmsr # GS
+    swapgs
+    pop %rax
+    movq %rax, %rdx
+    shr $0x20, %rdx
+    wrmsr # Shadow GS
+    swapgs
+    mov $0xC0000100, %ecx
+    pop %rax
+    movq %rax, %rdx
+    shr $0x20, %rdx
+    wrmsr # FS
+#endif /* CONFIG_X86_64_VTX_64BIT_GUESTS */
 
     # switch to kernel stack
     LOAD_KERNEL_STACK

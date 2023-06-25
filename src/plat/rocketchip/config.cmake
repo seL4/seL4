@@ -50,6 +50,7 @@ if(KernelPlatformRocketchip)
             INTERRUPT_CONTROLLER drivers/irq/riscv_plic0.h
         )
     else()
+        list(APPEND KernelDTSList "src/plat/rocketchip/overlay-rocketchip-base.dts")
         config_set(KernelOpenSBIPlatform OPENSBI_PLATFORM "generic")
         # This is an experimental platform that supports accessing peripherals, but
         # the status of support for external interrupts via a PLIC is unclear and

@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <autoconf.h>
+#include <sel4/config.h>
 #ifdef CONFIG_KERNEL_MCS
 #define LIBSEL4_MCS_REPLY reply
 #else

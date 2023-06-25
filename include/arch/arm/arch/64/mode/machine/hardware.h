@@ -18,8 +18,11 @@
 #define CONTROL_SA0       4  /* Stack Alignment Check Enable for EL0 */
 #define CONTROL_SA        3  /* Stack Alignment Check for EL1 */
 #define CONTROL_I         12 /* Instruction access Cacheability control */
+#define CONTROL_UCT       15 /* Enable EL0 access to CTR_EL0   */
 #define CONTROL_E0E       24 /* Endianness of data accesses at EL0 */
 #define CONTROL_EE        25 /* Endianness of data accesses at EL1 */
+#define CONTROL_UCI       26 /* Trap EL0 execution of cache maintenance
+                                instructions to EL1 (aarch64 only) */
 
 #ifndef __ASSEMBLER__
 

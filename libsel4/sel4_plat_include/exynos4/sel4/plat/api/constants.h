@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <autoconf.h>
+#include <sel4/config.h>
 #include <sel4/arch/constants_cortex_a9.h>
 
 /* First address in the virtual address space that is not accessible to user level */

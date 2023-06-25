@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <autoconf.h>
+#include <sel4/config.h>
 
 #ifndef CONST
 #define CONST   __attribute__((__const__))
@@ -19,7 +19,6 @@
 #define SEL4_PACKED             __attribute__((packed))
 #define SEL4_DEPRECATED(x)      __attribute__((deprecated(x)))
 #define SEL4_DEPRECATE_MACRO(x) _Pragma("deprecated") x
-#define SEL4_OFFSETOF(type, member) __builtin_offsetof(type, member)
 
 #define LIBSEL4_UNUSED          __attribute__((unused))
 #define LIBSEL4_WEAK            __attribute__((weak))

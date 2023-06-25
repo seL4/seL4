@@ -26,6 +26,25 @@ if(KernelPlatformRpi4)
     list(APPEND KernelDTSList "src/plat/bcm2711/overlay-rpi4.dts")
     list(APPEND KernelDTSList "src/plat/bcm2711/overlay-rpi4-address-mapping.dts")
 
+    if(NOT DEFINED RPI4_MEMORY)
+        # By default we assume an RPi4B model with 8GB of RAM
+        set(RPI4_MEMORY "8192")
+    endif()
+
+    if("${RPI4_MEMORY}" STREQUAL "1024")
+        list(APPEND KernelDTSList "src/plat/bcm2711/overlay-rpi4-1gb.dts")
+    elseif("${RPI4_MEMORY}" STREQUAL "2048")
+        list(APPEND KernelDTSList "src/plat/bcm2711/overlay-rpi4-2gb.dts")
+    elseif("${RPI4_MEMORY}" STREQUAL "4096")
+        list(APPEND KernelDTSList "src/plat/bcm2711/overlay-rpi4-4gb.dts")
+    elseif("${RPI4_MEMORY}" STREQUAL "8192")
+        list(APPEND KernelDTSList "src/plat/bcm2711/overlay-rpi4-8gb.dts")
+    else()
+        message(FATAL_ERROR "Unsupported memory size given ${RPI4_MEMORY},
+                            supported memory sizes (in megabytes) are 1024,
+                            2048, 4096, and 8192.")
+    endif()
+
     # - The clock frequency is 54 MHz as can be seen in bcm2711.dtsi in the
     # Linux Kernel under clk_osc, thus TIMER_FREQUENCY = 54000000.
     # - The GIC-400 offers 216 SPI IRQs (MAX_IRQ = 216) as can be seen in the

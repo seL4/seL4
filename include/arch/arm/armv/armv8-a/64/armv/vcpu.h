@@ -32,17 +32,23 @@
 #define SCTLR_EL1_C         BIT(2)      /* Enable data and unified caches */
 #define SCTLR_EL1_I         BIT(12)     /* Enable instruction cache       */
 #define SCTLR_EL1_CP15BEN   BIT(5)      /* AArch32 CP15 barrier enable    */
-#define SCTLR_EL1_UTC       BIT(15)     /* Enable EL0 access to CTR_EL0   */
+#define SCTLR_EL1_UCT       BIT(15)     /* Enable EL0 access to CTR_EL0   */
 #define SCTLR_EL1_NTWI      BIT(16)     /* WFI executed as normal         */
 #define SCTLR_EL1_NTWE      BIT(18)     /* WFE executed as normal         */
+
+#ifdef CONFIG_AARCH64_USER_CACHE_ENABLE
+#define SCTLR_NATIVE_USER_CACHE_OPS (SCTLR_EL1_UCI | SCTLR_EL1_UCT)
+#else
+#define SCTLR_NATIVE_USER_CACHE_OPS
+#endif
 
 /* Disable MMU, SP alignment check, and alignment check */
 /* A57 default value */
 #define SCTLR_EL1_RES      0x30d00800   /* Reserved value */
-#define SCTLR_EL1          ( SCTLR_EL1_RES | SCTLR_EL1_CP15BEN | SCTLR_EL1_UTC \
-                           | SCTLR_EL1_NTWI | SCTLR_EL1_NTWE )
-#define SCTLR_EL1_NATIVE   (SCTLR_EL1 | SCTLR_EL1_C | SCTLR_EL1_I | SCTLR_EL1_UCI)
-#define SCTLR_EL1_VM       (SCTLR_EL1 | SCTLR_EL1_UCI)
+#define SCTLR_EL1          ( SCTLR_EL1_RES | SCTLR_EL1_CP15BEN | \
+                             SCTLR_EL1_NTWI | SCTLR_EL1_NTWE )
+#define SCTLR_EL1_NATIVE   (SCTLR_EL1 | SCTLR_EL1_C | SCTLR_EL1_I | SCTLR_NATIVE_USER_CACHE_OPS)
+#define SCTLR_EL1_VM       (SCTLR_EL1 | SCTLR_EL1_UCT | SCTLR_EL1_UCI)
 #define SCTLR_DEFAULT      SCTLR_EL1_NATIVE
 
 #define UNKNOWN_FAULT       0x2000000

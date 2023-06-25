@@ -169,7 +169,13 @@ BOOT_CODE static bool_t try_init_kernel_secondary_core(word_t hart_id, word_t co
 BOOT_CODE static void release_secondary_cores(void)
 {
     node_boot_lock = 1;
-    fence_w_r();
+    /* At this point in time the primary core (executing this code) already uses
+     * the seL4 MMU/cache setup. However, the secondary cores are still using
+     * the elfloader's MMU/cache setup, and thus the update of node_boot_lock
+     * may not be visible there if the setups differ. Currently, the mappings
+     * match, so a barrier is all that is needed.
+     */
+    fence_rw_rw();
 
     while (ksNumCPUs != CONFIG_MAX_NUM_NODES) {
 #ifdef ENABLE_SMP_CLOCK_SYNC_TEST_ON_BOOT

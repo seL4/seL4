@@ -39,89 +39,169 @@ static void NORETURN restore_vmx(void)
     /* Do not support breakpoints in VMs, so just disable all breakpoints */
     loadAllDisabledBreakpointState(cur_thread);
 #endif
-    if (cur_thread->tcbArch.tcbVCPU->launched) {
-        /* attempt to do a vmresume */
-        asm volatile(
-            // Set our stack pointer to the top of the tcb so we can efficiently pop
-            "movq %[reg], %%rsp\n"
-            "popq %%rax\n"
-            "popq %%rbx\n"
-            "popq %%rcx\n"
-            "popq %%rdx\n"
-            "popq %%rsi\n"
-            "popq %%rdi\n"
-            "popq %%rbp\n"
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
+    vcpu_restore_guest_msrs(cur_thread->tcbArch.tcbVCPU);
+#endif /* CONFIG_X86_64_VTX_64BIT_GUESTS */
+    /* attempt to do a vmlaunch/vmresume */
+    asm volatile(
+        // Arguments are getting stored in general purpose registers that need to be used.
+        // Copy them to unused general purpose registers
+        "movq %[launched], %%rbx\n"
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
+        "movq %[host_msr], %%r8\n"
+        "movq %[guest_msr], %%r9\n"
+        "movq %[reg], %%r10\n"
+
+        // Save host's GS, Shadow GS, and FS
+        "mov $0xC0000101, %%ecx\n"
+        "rdmsr\n"
+        "shl $0x20,%%rdx\n"
+        "or %%rdx, %%rax\n"
+        "mov %%rax, %%r11\n" // R11 has GS
+        "swapgs\n"
+        "rdmsr\n"
+        "shl $0x20,%%rdx\n"
+        "or %%rdx,%%rax\n"
+        "mov %%rax, %%r12\n" // R12 has Shadow GS
+        "mov $0xC0000100, %%ecx\n"
+        "rdmsr\n"
+        "shl $0x20,%%rdx\n"
+        "or %%rdx, %%rax\n"
+        "mov %%rax, %%r13\n" // R13 has FS
+        "movq %%r8, %%rsp\n" // host_gs
+        "pushq %%r13\n"
+        "pushq %%r12\n"
+        "pushq %%r11\n"
+
+        // Restore guest's GS and Shadow GS
+        "mov $0xC0000101, %%ecx\n"
+        "swapgs\n"
+        "movq %%r9, %%rsp\n" // guest_gs
+        "popq %%rax\n"       // GS
+        "mov %%rax,%%rdx\n"
+        "shr $0x20,%%rdx\n"
+        "wrmsr\n"
+        "swapgs\n"
+        "popq %%rax\n"       // Shadow GS
+        "mov %%rax,%%rdx\n"
+        "shr $0x20,%%rdx\n"
+        "wrmsr\n"
+        "swapgs\n"
+        "mov $0xC0000100, %%ecx\n"
+        "popq %%rax\n"       // FS
+        "mov %%rax,%%rdx\n"
+        "shr $0x20,%%rdx\n"
+        "wrmsr\n"
+        "movq %%r10, %%rsp\n" // reg
+#else /* not CONFIG_X86_64_VTX_64BIT_GUESTS */
+        // Set our stack pointer to the top of the tcb so we can efficiently pop
+        "movq %[reg], %%rsp\n"
+#endif /* CONFIG_X86_64_VTX_64BIT_GUESTS */
+        "cmpq $0x1, (%%rbx)\n" // is the VM launched already?
+        "jne launch\n"
+        "popq %%rax\n"
+        "popq %%rbx\n"
+        "popq %%rcx\n"
+        "popq %%rdx\n"
+        "popq %%rsi\n"
+        "popq %%rdi\n"
+        "popq %%rbp\n"
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
+        "popq %%r8\n"
+        "popq %%r9\n"
+        "popq %%r10\n"
+        "popq %%r11\n"
+        "popq %%r12\n"
+        "popq %%r13\n"
+        "popq %%r14\n"
+        "popq %%r15\n"
+#else /* not CONFIG_X86_64_VTX_64BIT_GUESTS */
 #ifdef ENABLE_SMP_SUPPORT
-            "swapgs\n"
+        "swapgs\n"
 #endif
-            // Now do the vmresume
-            "vmresume\n"
-            "setb %%al\n"
-            "sete %%bl\n"
-            "movzx %%al, %%rdi\n"
-            "movzx %%bl, %%rsi\n"
-            // if we get here we failed
+#endif /* CONFIG_X86_64_VTX_64BIT_GUESTS */
+        "vmresume\n" // yes, do the vmresume
+        "jmp done\n"
+
+        "launch:\n"
+        "popq %%rax\n"
+        "popq %%rbx\n"
+        "popq %%rcx\n"
+        "popq %%rdx\n"
+        "popq %%rsi\n"
+        "popq %%rdi\n"
+        "popq %%rbp\n"
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
+        "popq %%r8\n"
+        "popq %%r9\n"
+        "popq %%r10\n"
+        "popq %%r11\n"
+        "popq %%r12\n"
+        "popq %%r13\n"
+        "popq %%r14\n"
+        "popq %%r15\n"
+#else /* not CONFIG_X86_64_VTX_64BIT_GUESTS */
 #ifdef ENABLE_SMP_SUPPORT
-            "swapgs\n"
-            "movq %%gs:%c[stack_offset], %%rsp\n"
+        "swapgs\n"
+#endif
+#endif /* CONFIG_X86_64_VTX_64BIT_GUESTS */
+        "vmlaunch\n" // no, do the vmlaunch
+
+        "done:\n"
+        "setb %%al\n"
+        "sete %%bl\n"
+        "movzx %%al, %%rdi\n"
+        "movzx %%bl, %%rsi\n"
+        // if we get here we failed
+
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
+        // Restore host's GS, Shadow GS, and FS
+        "sub $0xA8, %%rsp\n" // 15 * 8 (regs) + 3 * 8 (guest_msr) + 3 * 8 (host_msr)
+        "mov $0xC0000101, %%ecx\n"
+        "pop %%rax\n"
+        "movq %%rax, %%rdx\n"
+        "shr $0x20, %%rdx\n"
+        "wrmsr\n" // GS
+        "swapgs\n"
+        "pop %%rax\n"
+        "movq %%rax, %%rdx\n"
+        "shr $0x20, %%rdx\n"
+        "wrmsr\n" // Shadow GS
+        "mov $0xC0000100, %%ecx\n"
+        "pop %%rax\n"
+        "movq %%rax, %%rdx\n"
+        "shr $0x20, %%rdx\n"
+        "wrmsr\n" // FS
+
+#else /* not CONFIG_X86_64_VTX_64BIT_GUESTS */
+#ifdef ENABLE_SMP_SUPPORT
+        "swapgs\n"
+        "movq %%gs:%c[stack_offset], %%rsp\n"
 #else
-            "leaq kernel_stack_alloc + %c[stack_size], %%rsp\n"
+        "leaq kernel_stack_alloc + %c[stack_size], %%rsp\n"
 #endif
-            "movq %[failed], %%rax\n"
-            "jmp *%%rax\n"
-            :
-            : [reg]"r"(&cur_thread->tcbArch.tcbVCPU->gp_registers[VCPU_EAX]),
-            [failed]"i"(&vmlaunch_failed),
-            [stack_size]"i"(BIT(CONFIG_KERNEL_STACK_BITS))
+#endif /* CONFIG_X86_64_VTX_64BIT_GUESTS */
+        "movq %[failed], %%rax\n"
+        "jmp *%%rax\n"
+        :
+        : [reg]"r"(&cur_thread->tcbArch.tcbVCPU->gp_registers[VCPU_EAX]),
+        [launched]"r"(&cur_thread->tcbArch.tcbVCPU->launched),
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
+        [failed]"r"(vmlaunch_failed),
+        [stack_size]"i"(BIT(CONFIG_KERNEL_STACK_BITS)),
+        [guest_msr]"r"(&cur_thread->tcbArch.tcbVCPU->guest_msr_registers[VCPU_GS]),
+        [host_msr]"r"(&cur_thread->tcbArch.tcbVCPU->host_msr_registers[n_vcpu_msr_register])
+#else /* not CONFIG_X86_64_VTX_64BIT_GUESTS */
+        [failed]"i"(&vmlaunch_failed),
+        [stack_size]"i"(BIT(CONFIG_KERNEL_STACK_BITS))
 #ifdef ENABLE_SMP_SUPPORT
-            , [stack_offset]"i"(OFFSETOF(nodeInfo_t, stackTop))
+        , [stack_offset]"i"(OFFSETOF(nodeInfo_t, stackTop))
 #endif
-            // Clobber memory so the compiler is forced to complete all stores
-            // before running this assembler
-            : "memory"
-        );
-    } else {
-        /* attempt to do a vmlaunch */
-        asm volatile(
-            // Set our stack pointer to the top of the tcb so we can efficiently pop
-            "movq %[reg], %%rsp\n"
-            "popq %%rax\n"
-            "popq %%rbx\n"
-            "popq %%rcx\n"
-            "popq %%rdx\n"
-            "popq %%rsi\n"
-            "popq %%rdi\n"
-            "popq %%rbp\n"
-#ifdef ENABLE_SMP_SUPPORT
-            "swapgs\n"
-#endif
-            // Now do the vmresume
-            "vmlaunch\n"
-            // if we get here we failed
-            "setb %%al\n"
-            "sete %%bl\n"
-            "movzx %%al, %%rdi\n"
-            "movzx %%bl, %%rsi\n"
-#ifdef ENABLE_SMP_SUPPORT
-            "swapgs\n"
-            "movq %%gs:%c[stack_offset], %%rsp\n"
-#else
-            "leaq kernel_stack_alloc + %c[stack_size], %%rsp\n"
-#endif
-            "movq %[failed], %%rax\n"
-            "jmp *%%rax\n"
-            :
-            : [reg]"r"(&cur_thread->tcbArch.tcbVCPU->gp_registers[VCPU_EAX]),
-            [failed]"i"(&vmlaunch_failed),
-            [stack_size]"i"(BIT(CONFIG_KERNEL_STACK_BITS))
-#ifdef ENABLE_SMP_SUPPORT
-            , [stack_offset]"i"(OFFSETOF(nodeInfo_t, stackTop))
-#endif
-            // Clobber memory so the compiler is forced to complete all stores
-            // before running this assembler
-            : "memory"
-        );
-    }
+#endif /* CONFIG_X86_64_VTX_64BIT_GUESTS */
+        // Clobber memory so the compiler is forced to complete all stores
+        // before running this assembler
+        : "memory"
+    );
     UNREACHABLE();
 }
 #endif

@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <autoconf.h>
+#include <sel4/config.h>
 #include <sel4/types.h>
 
 #ifdef CONFIG_KERNEL_MCS

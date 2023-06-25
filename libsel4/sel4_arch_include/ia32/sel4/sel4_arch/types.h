@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <autoconf.h>
+#include <sel4/config.h>
 #include <sel4/simple_types.h>
 
 /* User context as used by seL4_TCB_ReadRegisters / seL4_TCB_WriteRegisters */

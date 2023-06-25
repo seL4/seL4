@@ -351,6 +351,7 @@ static inline word_t ats1e2r(word_t va)
 {
     word_t par;
     asm volatile("at s1e2r, %0" :: "r"(va));
+    isb();
     MRS("par_el1", par);
     return par;
 }
@@ -359,6 +360,7 @@ static inline word_t ats1e1r(word_t va)
 {
     word_t par;
     asm volatile("at s1e1r, %0" :: "r"(va));
+    isb();
     MRS("par_el1", par);
     return par;
 }
@@ -368,6 +370,7 @@ static inline word_t ats2e0r(word_t va)
 {
     word_t par;
     asm volatile("at s12e0r, %0" :: "r"(va));
+    isb();
     MRS("par_el1", par);
     return par;
 }

@@ -75,26 +75,27 @@ static inline uint64_t mpidr_to_gic_affinity(void)
 }
 
 /* Wait for completion of a distributor change */
+/** DONT_TRANSLATE */
 static uint32_t gicv3_do_wait_for_rwp(volatile uint32_t *ctlr_addr)
 {
     uint32_t val;
     bool_t waiting = true;
     uint32_t ret = 0;
 
-    uint32_t gpt_cnt_tval = 0;
+    uint64_t gpt_cnt_tval = 0;
     uint32_t deadline_ms =  GIC_DEADLINE_MS;
-    uint32_t gpt_cnt_ciel;
+    uint64_t gpt_cnt_ciel;
 
     /* Check the value before reading the generic timer */
     val = *ctlr_addr;
     if (!(val & GICD_CTLR_RWP)) {
         return 0;
     }
-    SYSTEM_READ_WORD(CNTFRQ, gpt_cnt_tval);
+    SYSTEM_READ_64(CNT_CT, gpt_cnt_tval);
     gpt_cnt_ciel = gpt_cnt_tval + (deadline_ms * TICKS_PER_MS);
 
     while (waiting) {
-        SYSTEM_READ_WORD(CNTFRQ, gpt_cnt_tval);
+        SYSTEM_READ_64(CNT_CT, gpt_cnt_tval);
         val = *ctlr_addr;
 
         if (gpt_cnt_tval >= gpt_cnt_ciel) {

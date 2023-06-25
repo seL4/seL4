@@ -14,6 +14,18 @@
         <member name="esi"/>
         <member name="edi"/>
         <member name="ebp"/>
+        <!--
+            The following 8 members are only conditionally selected
+            based on VTX configuration.
+         -->
+        <member name="r8"/>
+        <member name="r9"/>
+        <member name="r10"/>
+        <member name="r11"/>
+        <member name="r12"/>
+        <member name="r13"/>
+        <member name="r14"/>
+        <member name="r15"/>
     </struct>
     <interface name="seL4_X86_PageDirectory" manual_name="Page Directory"
         cap_description="Capability to the page directory being operated on.">

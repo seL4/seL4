@@ -6,7 +6,7 @@
  */
 #pragma once
 
-#include <autoconf.h>
+#include <sel4/config.h>
 /* RasPi4 uses a BCM2711 SoC with 4x Cortex-A72. */
 #include <sel4/arch/constants_cortex_a72.h>
 
