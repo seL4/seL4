@@ -135,7 +135,9 @@ static inline exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *po
     return EXCEPTION_NONE;
 }
 
+#endif
+
+#ifdef CONFIG_ARM_SMMU
 void increaseASIDBindCB(asid_t asid);
 void decreaseASIDBindCB(asid_t asid);
-
 #endif

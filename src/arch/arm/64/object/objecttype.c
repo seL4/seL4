@@ -163,7 +163,7 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
     case cap_page_upper_directory_cap:
 #ifdef AARCH64_VSPACE_S2_START_L1
 #ifdef CONFIG_ARM_SMMU
-        if (cap_page_upper_directory_cap_get_capPGDMappedCB(cap) != CB_INVALID) {
+        if (cap_page_upper_directory_cap_get_capPUDMappedCB(cap) != CB_INVALID) {
             smmu_cb_delete_vspace(cap_page_upper_directory_cap_get_capPUDMappedCB(cap),
                                   cap_page_upper_directory_cap_get_capPUDMappedASID(cap));
         }
@@ -439,7 +439,12 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
                    asidInvalid,           /* capPUDMappedASID    */
                    (word_t)regionBase,    /* capPUDBasePtr       */
                    0,                     /* capPUDIsMapped      */
+#if defined(CONFIG_ARM_SMMU) && defined(AARCH64_VSPACE_S2_START_L1)
+                   0,                     /* capPUDMappedAddress */
+                   CB_INVALID             /* capPUDMappedCB     */
+#else
                    0                      /* capPUDMappedAddress */
+#endif
                );
 
     case seL4_ARM_PageDirectoryObject:
