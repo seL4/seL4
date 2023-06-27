@@ -744,6 +744,9 @@ static inline bool_t vcpu_reg_saved_when_disabled(word_t field)
     switch (field) {
     case seL4_VCPUReg_SCTLR:
     case seL4_VCPUReg_CNTV_CTL:
+    case seL4_VCPUReg_CNTV_CVAL:
+    case seL4_VCPUReg_CNTVOFF:
+    case seL4_VCPUReg_CNTKCTL_EL1:
 #ifdef CONFIG_HAVE_FPU
     case seL4_VCPUReg_CPACR:
 #endif
