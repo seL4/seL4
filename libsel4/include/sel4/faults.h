@@ -20,8 +20,7 @@ LIBSEL4_INLINE_FUNC seL4_Fault_t seL4_getFault(seL4_MessageInfo_t tag)
                                        seL4_GetMR(seL4_CapFault_InRecvPhase),
                                        seL4_GetMR(seL4_CapFault_LookupFailureType),
                                        seL4_GetMR(seL4_CapFault_BitsLeft),
-                                       seL4_GetMR(seL4_CapFault_GuardMismatch_GuardFound),
-                                       seL4_GetMR(seL4_CapFault_GuardMismatch_BitsFound));
+                                       seL4_GetMR(seL4_CapFault_BitsFound));
 #ifdef CONFIG_HARDWARE_DEBUG_API
     case seL4_Fault_DebugException:
         return seL4_Fault_DebugException_new(seL4_GetMR(seL4_DebugException_FaultIP),

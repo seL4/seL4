@@ -126,8 +126,8 @@ lookupSlot_ret_t lookupPivotSlot(cap_t root, cptr_t capptr, word_t depth)
 resolveAddressBits_ret_t resolveAddressBits(cap_t nodeCap, cptr_t capptr, word_t n_bits)
 {
     resolveAddressBits_ret_t ret;
-    word_t radixBits, guardBits, levelBits, guard;
-    word_t capGuard, offset;
+    word_t radixBits, guardBits, levelBits;
+    word_t offset;
     cte_t *slot;
 
     ret.bitsRemaining = n_bits;
@@ -147,16 +147,9 @@ resolveAddressBits_ret_t resolveAddressBits(cap_t nodeCap, cptr_t capptr, word_t
         /* Haskell error: "All CNodes must resolve bits" */
         assert(levelBits != 0);
 
-        capGuard = cap_cnode_cap_get_capCNodeGuard(nodeCap);
-
-        /* The MASK(wordRadix) here is to avoid the case where
-         * n_bits = wordBits (=2^wordRadix) and guardBits = 0, as it violates
-         * the C spec to shift right by more than wordBits-1.
-         */
-        guard = (capptr >> ((n_bits - guardBits) & MASK(wordRadix))) & MASK(guardBits);
-        if (unlikely(guardBits > n_bits || guard != capGuard)) {
+        if (unlikely(guardBits > n_bits)) {
             current_lookup_fault =
-                lookup_fault_guard_mismatch_new(capGuard, n_bits, guardBits);
+                lookup_fault_guard_mismatch_new(n_bits, guardBits);
             ret.status = EXCEPTION_LOOKUP_FAULT;
             return ret;
         }

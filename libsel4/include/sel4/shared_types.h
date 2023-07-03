@@ -24,9 +24,7 @@ typedef enum {
     seL4_CapFault_InRecvPhase,
     seL4_CapFault_LookupFailureType,
     seL4_CapFault_BitsLeft,
-    seL4_CapFault_DepthMismatch_BitsFound,
-    seL4_CapFault_GuardMismatch_GuardFound = seL4_CapFault_DepthMismatch_BitsFound,
-    seL4_CapFault_GuardMismatch_BitsFound,
+    seL4_CapFault_BitsFound,
     SEL4_FORCE_LONG_ENUM(seL4_CapFault_Msg),
 } seL4_CapFault_Msg;
 

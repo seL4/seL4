@@ -24,9 +24,3 @@ block seL4_CapRights {
     field capAllowRead 1
     field capAllowWrite 1
 }
-
--- CNode cap data
-block seL4_CNode_CapData {
-    field guard 58
-    field guardSize 6
-}

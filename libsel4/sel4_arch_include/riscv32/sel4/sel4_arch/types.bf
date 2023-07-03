@@ -43,8 +43,7 @@ block CapFault {
    -- these vary according to LookupFailureType
    field MR4 32
    field MR5 32
-   field MR6 32
-   padding 28
+   padding 60
    field seL4_FaultType 4
 }
 

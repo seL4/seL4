@@ -37,9 +37,7 @@ setMRs_lookup_failure(tcb_t *receiver, word_t *receiveIPCBuffer,
     /* check constants match libsel4 */
     if (offset == seL4_CapFault_LookupFailureType) {
         assert(offset + 1 == seL4_CapFault_BitsLeft);
-        assert(offset + 2 == seL4_CapFault_DepthMismatch_BitsFound);
-        assert(offset + 2 == seL4_CapFault_GuardMismatch_GuardFound);
-        assert(offset + 3 == seL4_CapFault_GuardMismatch_BitsFound);
+        assert(offset + 2 == seL4_CapFault_BitsFound);
     } else {
         assert(offset == 1);
     }
@@ -61,9 +59,7 @@ setMRs_lookup_failure(tcb_t *receiver, word_t *receiveIPCBuffer,
     case lookup_fault_guard_mismatch:
         setMR(receiver, receiveIPCBuffer, offset + 1,
               lookup_fault_guard_mismatch_get_bitsLeft(luf));
-        setMR(receiver, receiveIPCBuffer, offset + 2,
-              lookup_fault_guard_mismatch_get_guardFound(luf));
-        return setMR(receiver, receiveIPCBuffer, offset + 3,
+        return setMR(receiver, receiveIPCBuffer, offset + 2,
                      lookup_fault_guard_mismatch_get_bitsFound(luf));
 
     default:

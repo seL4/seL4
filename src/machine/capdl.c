@@ -194,9 +194,8 @@ void obj_tcb_print_cnodes(cap_t cnode, tcb_t *tcb)
 
 void cap_cnode_print_attrs(cap_t cnode)
 {
-    printf("(guard: %lu, guard_size: %lu)\n",
-           (long unsigned int)cap_cnode_cap_get_capCNodeGuard(cnode),
-           (long unsigned int)cap_cnode_cap_get_capCNodeGuardSize(cnode));
+    printf("(guard_size: %lu)\n",
+    (long unsigned int)cap_cnode_cap_get_capCNodeGuardSize(cnode));
 }
 
 void cap_ep_print_attrs(cap_t ep)

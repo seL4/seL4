@@ -256,7 +256,6 @@ create_root_cnode(void)
     cap_t cap = cap_cnode_cap_new(
                     CONFIG_ROOT_CNODE_SIZE_BITS, /* radix */
                     wordBits - CONFIG_ROOT_CNODE_SIZE_BITS, /* guard size */
-                    0, /* guard */
                     rootserver.cnode); /* pptr */
 
     /* write the root CNode cap into the root CNode */

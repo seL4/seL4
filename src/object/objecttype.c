@@ -416,22 +416,11 @@ cap_t CONST updateCapData(bool_t preserve, word_t newData, cap_t cap)
         }
 
     case cap_cnode_cap: {
-        word_t guard, guardSize;
-        seL4_CNode_CapData_t w = { .words = { newData } };
-
-        guardSize = seL4_CNode_CapData_get_guardSize(w);
-
-        if (guardSize + cap_cnode_cap_get_capCNodeRadix(cap) > wordBits) {
+        /* newData being passed in is the guard size */
+        if (newData + cap_cnode_cap_get_capCNodeRadix(cap) > wordBits) {
             return cap_null_cap_new();
         } else {
-            cap_t new_cap;
-
-            guard = seL4_CNode_CapData_get_guard(w) & MASK(guardSize);
-            new_cap = cap_cnode_cap_set_capCNodeGuard(cap, guard);
-            new_cap = cap_cnode_cap_set_capCNodeGuardSize(new_cap,
-                                                          guardSize);
-
-            return new_cap;
+            return cap_cnode_cap_set_capCNodeGuardSize(cap, newData);
         }
     }
 
@@ -562,7 +551,7 @@ cap_t createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceM
         /** GHOSTUPD: "(True, gs_new_cnodes (unat \<acute>userSize)
                                 (ptr_val \<acute>regionBase)
                                 (4 + unat \<acute>userSize))" */
-        return cap_cnode_cap_new(userSize, 0, 0, CTE_REF(regionBase));
+        return cap_cnode_cap_new(userSize, 0, CTE_REF(regionBase));
 
     case seL4_UntypedObject:
         /*

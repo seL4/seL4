@@ -89,7 +89,7 @@ static inline cap_t FORCE_INLINE lookup_fp(cap_t cap, cptr_t cptr)
     word_t cptr2;
     cte_t *slot;
     word_t guardBits, radixBits, bits;
-    word_t radix, capGuard;
+    word_t radix;
 
     bits = 0;
 
@@ -101,16 +101,6 @@ static inline cap_t FORCE_INLINE lookup_fp(cap_t cap, cptr_t cptr)
         guardBits = cap_cnode_cap_get_capCNodeGuardSize(cap);
         radixBits = cap_cnode_cap_get_capCNodeRadix(cap);
         cptr2 = cptr << bits;
-
-        capGuard = cap_cnode_cap_get_capCNodeGuard(cap);
-
-        /* Check the guard. Depth mismatch check is deferred.
-           The 32MinusGuardSize encoding contains an exception
-           when the guard is 0, when 32MinusGuardSize will be
-           reported as 0 also. In this case we skip the check */
-        if (likely(guardBits) && unlikely(cptr2 >> (wordBits - guardBits) != capGuard)) {
-            return cap_null_cap_new();
-        }
 
         radix = cptr2 << guardBits >> (wordBits - radixBits);
         slot = CTE_PTR(cap_cnode_cap_get_capCNodePtr(cap)) + radix;

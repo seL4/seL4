@@ -107,9 +107,8 @@ block reply_cap(capReplyCanGrant, capReplyMaster, capTCBPtr, capType) {
 #endif
 
 -- The user-visible format of the data word is defined by cnode_capdata, below.
-block cnode_cap(capCNodeRadix, capCNodeGuardSize, capCNodeGuard,
-                capCNodePtr, capType) {
-    field capCNodeGuard 64
+block cnode_cap(capCNodeRadix, capCNodeGuardSize, capCNodePtr, capType) {
+    padding 64
 
     field capType 5
     field capCNodeGuardSize 6
@@ -353,7 +352,7 @@ block depth_mismatch {
 }
 
 block guard_mismatch {
-    field guardFound 64
+    padding 64
 
     padding 48
     field bitsLeft 7
