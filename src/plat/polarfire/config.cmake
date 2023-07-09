@@ -13,6 +13,7 @@ if(KernelPlatformPolarfire)
     config_set(KernelRiscVPlatform RISCV_PLAT "polarfire")
     config_set(KernelOpenSBIPlatform OPENSBI_PLATFORM "generic")
     config_set(KernelPlatformFirstHartID FIRST_HART_ID 1)
+    set(KernelRiscvUseClintMtime ON)
     list(APPEND KernelDTSList "tools/dts/mpfs_icicle.dts")
     list(APPEND KernelDTSList "src/plat/polarfire/overlay-polarfire.dts")
     declare_default_headers(

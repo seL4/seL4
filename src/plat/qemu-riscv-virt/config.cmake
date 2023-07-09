@@ -21,6 +21,7 @@ if(KernelPlatformQEMURiscVVirt)
 
     config_set(KernelOpenSBIPlatform OPENSBI_PLATFORM "generic")
     config_set(KernelPlatformFirstHartID FIRST_HART_ID 0)
+    set(KernelRiscvUseClintMtime ON)
 
     # If neither QEMU_DTS nor QEMU_DTB is set explicitly, the device tree is
     # extracted from QEMU. This keeps it nicely up to date with the the actual
