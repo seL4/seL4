@@ -61,6 +61,10 @@ Upcoming release: BREAKING
     If the lookup for the provided address stops at a slot that can map a page directory, it will map the object as a
     page directory. If there already is a page directory mapped, the lookup will proceed to the next level and it will
     map as a page table instead of returning an error.
+* Optimize reading hardware timestamp for RISC-V platforms. The optimization is enabled with the new
+  `KernelRiscvUseClintMtime` configuration option which is enabled by default for all current RISC-V
+  platforms. With future RISC-V platforms, enabling this configuration option may not actually be an
+  optimization.
 
 ## Upgrade Notes
 
