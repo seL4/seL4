@@ -75,7 +75,7 @@
 #define SCTLR   sctlr_el1
 #endif
 
-.section .boot.text
+.section .boot.text, "ax"
 BEGIN_FUNC(_start)
     /* Save x4 and x5 so we don't clobber it */
     mov     x7, x4

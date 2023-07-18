@@ -14,9 +14,9 @@
  * as integer type according to the ABI.
  */
 
-.section .boot.text
+.section .boot.text, "ax"
 
-.section .text
+.section .text, "ax"
 
 BEGIN_FUNC(out8)                        # port, value
     movq    %rdi, %rdx
