@@ -1524,7 +1524,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
             } else if (cap_frame_cap_get_capFMappedAddress(cap) != vaddr) {
                 userError("ARMPageMap: Attempting to map frame into multiple addresses");
                 current_syscall_error.type = seL4_InvalidArgument;
-                current_syscall_error.invalidArgumentNumber = 2;
+                current_syscall_error.invalidArgumentNumber = 0;
                 return EXCEPTION_SYSCALL_ERROR;
             }
         } else {
