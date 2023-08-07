@@ -304,7 +304,7 @@ find_file(
     KernelDomainSchedule default_domain.c
     PATHS src/config
     CMAKE_FIND_ROOT_PATH_BOTH
-    DOC "A C file providing the symbols ksDomSchedule and ksDomeScheudleLength \
+    DOC "A C file providing the symbols ksDomSchedule and ksDomScheduleLength \
         to be linked with the kernel as a scheduling configuration."
 )
 if(SEL4_CONFIG_DEFAULT_ADVANCED)
