@@ -52,6 +52,15 @@ Upcoming release: BREAKING
 * Remove the ability for user-space on RISC-V platforms to access the core-local interrupt controller (CLINT). The
   CLINT contains memory-mapped registers that the kernel depends on for timer interrupts and hence should not be
   accessible by user-space.
+* AArch64: remove VSpace object types, seL4_ARM_PageDirectory and seL4_ARM_PageUpperDirectory
+  The functionality previously provided by these types will be provided by the existing seL4_ARM_PageTable object type.
+  This allows for a simpler API and enables a smaller kernel implementation that will be easier to verify.
+  libsel4 provides a source compatibility translation that maps the old libsel4 names and constants the new ones in
+  <sel4/sel4_arch/deprecated.h>. There are some exceptional cases where kernel behavior has changed:
+  - A Page directory and page table are now the same kind of object and can be mapped at any page table level.
+    If the lookup for the provided address stops at a slot that can map a page directory, it will map the object as a
+    page directory. If there already is a page directory mapped, the lookup will proceed to the next level and it will
+    map as a page table instead of returning an error.
 
 ## Upgrade Notes
 

@@ -32,7 +32,7 @@ block frame_cap {
     padding                          6
 }
 
--- Forth-level page table
+-- Page table caps
 block page_table_cap {
     field capPTMappedASID            16
     field_high capPTBasePtr          48
@@ -44,43 +44,15 @@ block page_table_cap {
     padding                          20
 }
 
--- Third-level page table (page directory)
-block page_directory_cap {
-    field capPDMappedASID            16
-    field_high capPDBasePtr          48
+-- First-level page table (vspace_root)
+block vspace_cap {
+    field capMappedASID              16
+    field_high capPTBasePtr          48
 
     field capType                    5
-    padding                          10
-    field capPDIsMapped              1
-    field_high capPDMappedAddress    19
-    padding                          29
-}
-
--- Second-level page table (page upper directory)
-block page_upper_directory_cap {
-    field capPUDMappedASID           16
-    field_high capPUDBasePtr         48
-
-    field capType                    5
-    field capPUDIsMapped             1
-    field_high capPUDMappedAddress   10
-#if defined (CONFIG_ARM_SMMU)  && defined (AARCH64_VSPACE_S2_START_L1)
-    field capPUDMappedCB             8
-    padding                          40
-#else 
-    padding                          48
-#endif 
-}
-
--- First-level page table (page global directory)
-block page_global_directory_cap {
-    field capPGDMappedASID           16
-    field_high capPGDBasePtr         48
-
-    field capType                    5
-    field capPGDIsMapped             1
+    field capIsMapped                1
 #ifdef CONFIG_ARM_SMMU 
-    field capPGDMappedCB             8
+    field capMappedCB                8
     padding                          50
 #else 
     padding                          58
@@ -176,9 +148,7 @@ tagged_union cap capType {
     -- 5-bit tag arch caps
     tag frame_cap                   1
     tag page_table_cap              3
-    tag page_directory_cap          5
-    tag page_upper_directory_cap    7
-    tag page_global_directory_cap   9
+    tag vspace_cap                  9
     tag asid_control_cap            11
     tag asid_pool_cap               13
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
@@ -271,93 +241,24 @@ tagged_union asid_map type {
 -- PGDE, PUDE, PDEs and PTEs, assuming 48-bit physical address
 base 64(48,0)
 
-block pgde_invalid {
-    padding                         62
-    field pgde_type                 2
-}
 
-block pgde_pud {
-    padding                         16
-    field_high pud_base_address     36
+-- See the definition of pte_type for explanation
+-- for pte_sw_type and pte_hw_type
+block pte_table {
+    padding                         5
+    field pte_sw_type               1
     padding                         10
-    field pgde_type                 2 -- must be 0b11
-}
-
-tagged_union pgde pgde_type {
-    tag pgde_invalid                0
-    tag pgde_pud                    3
-}
-
-block pude_invalid {
-    padding                         62
-    field pude_type                 2
-}
-
-block pude_1g {
-    padding                         9
-    field UXN                       1
-    padding                         6
-    field_high page_base_address    18
-    padding                         18
-    field nG                        1
-    field AF                        1
-    field SH                        2
-    field AP                        2
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    field AttrIndx                  4
-#else
-    padding                         1
-    field AttrIndx                  3
-#endif
-    field pude_type                 2
-}
-
-block pude_pd {
-    padding                         16
-    field_high pd_base_address      36
-    padding                         10
-    field pude_type                 2
-}
-
-tagged_union pude pude_type {
-    tag pude_invalid                0
-    tag pude_1g                     1
-    tag pude_pd                     3
-}
-
-block pde_large {
-    padding                         9
-    field UXN                       1
-    padding                         6
-    field_high page_base_address    27
-    padding                         9
-    field nG                        1
-    field AF                        1
-    field SH                        2
-    field AP                        2
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    field AttrIndx                  4
-#else
-    padding                         1
-    field AttrIndx                  3
-#endif
-    field pde_type                  2
-}
-
-block pde_small {
-    padding                         16
     field_high pt_base_address      36
     padding                         10
-    field pde_type                  2
+    field pte_hw_type               2
 }
 
-tagged_union pde pde_type {
-    tag pde_large                   1
-    tag pde_small                   3
-}
 
-block pte {
-    padding                         9
+-- The level 1 and 2 page pte structure
+block pte_page {
+    padding                         5
+    field pte_sw_type               1
+    padding                         3
     field UXN                       1
     padding                         6
     field_high page_base_address    36
@@ -371,8 +272,48 @@ block pte {
     padding                         1
     field AttrIndx                  3
 #endif
-    field reserved                  2 -- must be 0b11
+    field pte_hw_type               2
 }
+
+-- The level 3 page pte structure
+block pte_4k_page {
+    padding                         5
+    field pte_sw_type               1
+    padding                         3
+    field UXN                       1
+    padding                         6
+    field_high page_base_address    36
+    field nG                        1
+    field AF                        1
+    field SH                        2
+    field AP                        2
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    field AttrIndx                  4
+#else
+    padding                         1
+    field AttrIndx                  3
+#endif
+    field pte_hw_type               2
+}
+
+block pte_invalid {
+    padding                         5
+    field pte_sw_type               1
+    padding                         56
+    field pte_hw_type               2
+}
+
+-- There are two page type fields because the 4k page size
+-- uses a different hardware encoding. We use bit 58
+-- which is reserved for software use to encode this
+-- difference in the tag for these types.
+tagged_union pte pte_type(pte_hw_type, pte_sw_type) {
+    tag pte_table               (3, 0)
+    tag pte_page                (1, 0)
+    tag pte_4k_page             (3, 1)
+    tag pte_invalid             (0, 0)
+}
+
 
 block ttbr {
     field asid                      16
