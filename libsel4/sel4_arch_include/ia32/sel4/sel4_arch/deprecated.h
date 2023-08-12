@@ -9,6 +9,8 @@
 #include <sel4/config.h>
 #include <sel4/macros.h>
 
+#ifndef __ASSEMBLER__
+
 #define EXCEPT_IPC_LENGTH SEL4_DEPRECATE_MACRO(seL4_UnknownSyscall_Length)
 
 typedef seL4_Word seL4_UserExceptIPCRegister SEL4_DEPRECATED("use seL4_UserException_Msg");
@@ -84,3 +86,4 @@ static inline SEL4_DEPRECATED("") seL4_Bool seL4_Fault_isNonPresentFault(seL4_Wo
     return !(FaultStatusRegister & 0x1);
 }
 
+#endif /*__ASSEMBLER__*/

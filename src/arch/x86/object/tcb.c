@@ -80,17 +80,3 @@ exception_t decodeSetEPTRoot(cap_t cap)
     return performSetEPTRoot(TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), dc_ret.cap, rootSlot);
 }
 #endif
-
-#ifdef ENABLE_SMP_SUPPORT
-void Arch_migrateTCB(tcb_t *thread)
-{
-#ifdef CONFIG_KERNEL_MCS
-    assert(thread->tcbSchedContext != NULL);
-#endif
-
-    /* check if thread own its current core FPU */
-    if (nativeThreadUsingFPU(thread)) {
-        switchFpuOwner(NULL, thread->tcbAffinity);
-    }
-}
-#endif /* ENABLE_SMP_SUPPORT */

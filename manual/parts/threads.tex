@@ -677,8 +677,8 @@ Memory access of the guest execution mode is controlled by requiring the use of 
 Page Tables (EPT). A series of EPT related paging structure objects (\obj{EPTPML4}, \obj{EPTPDPT}, \obj{EPTPD}, \obj{EPTPT})
 exist and are manipulated in exactly the same manner as the objects for the regular virtual
 address space. Once constructed a \obj{TCB} can be given an \obj{EPTPML4} as an EPT root with \apifunc{seL4\_TCB\_SetEPTRoot}{x86_set_eptroot},
-which serves as the vspace root when executing in guest mode, with the vspace root set
-with \apifunc{seL4\_TCB\_SetSPace}{tcb_setspace} or \apifunc{seL4\_TCB\_Configure}{tcb_configure}
+which serves as the VSpace root when executing in guest mode, with the VSpace root set
+with \apifunc{seL4\_TCB\_SetSpace}{tcb_setspace} or \apifunc{seL4\_TCB\_Configure}{tcb_configure}
 continuing to provide translation when the TCB is executing in its normal mode.
 
 Direct access to I/O ports can be given to the privileged execution mode through the

@@ -16,7 +16,6 @@ typedef enum _object {
     seL4_ARM_SuperSectionObject,
 #endif
     seL4_ARM_PageTableObject,
-    seL4_ARM_PageDirectoryObject,
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     seL4_ARM_VCPUObject,
 #endif

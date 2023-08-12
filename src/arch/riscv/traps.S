@@ -115,14 +115,19 @@ handle_syscall:
 
 #ifdef CONFIG_FASTPATH
   li t3, SYSCALL_CALL
-  beq a7, t3, c_handle_fastpath_call
+  bne a7, t3, .Ltest_replyrecv
+  j c_handle_fastpath_call
 
+.Ltest_replyrecv:
   li t3, SYSCALL_REPLY_RECV
 #ifdef CONFIG_KERNEL_MCS
   /* move reply to 3rd argument */
   mv a2, a6
 #endif
-  beq a7, t3, c_handle_fastpath_reply_recv
+  bne a7, t3, .Lslowpath
+  j c_handle_fastpath_reply_recv
+
+.Lslowpath:
 #endif
 
   /* move syscall number to 3rd argument */

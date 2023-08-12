@@ -272,7 +272,7 @@ exception_t decodeARMCBInvocation(word_t label, unsigned int length, cptr_t cptr
         cb = cap_cb_cap_get_capCB(cap);
         cbSlot = smmuStateCBNode + cb;
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        smmu_tlb_invalidate_cb(cb, cap_vtable_root_get_mappedASID(cbSlot->cap));
+        smmu_tlb_invalidate_cb(cb, cap_vspace_cap_get_capMappedASID(cbSlot->cap));
         return EXCEPTION_NONE;
 
     case ARMCBAssignVspace:
@@ -284,7 +284,7 @@ exception_t decodeARMCBInvocation(word_t label, unsigned int length, cptr_t cptr
         vspaceCapSlot = current_extra_caps.excaprefs[0];
         vspaceCap = vspaceCapSlot->cap;
 
-        if (unlikely(!isVTableRoot(vspaceCap) || !cap_vtable_root_isMapped(vspaceCap))) {
+        if (unlikely(!isVTableRoot(vspaceCap) || !cap_vspace_cap_get_capIsMapped(vspaceCap))) {
             userError("ARMCBAssignVspace: the vspace is invalid");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
@@ -302,14 +302,14 @@ exception_t decodeARMCBInvocation(word_t label, unsigned int length, cptr_t cptr
 
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         /*setting up vspace for the context bank in SMMU*/
-        smmu_cb_assign_vspace(cb, cap_vtable_root_get_basePtr(vspaceCap),
-                              cap_vtable_root_get_mappedASID(vspaceCap));
+        smmu_cb_assign_vspace(cb, VSPACE_PTR(cap_vspace_cap_get_capPTBasePtr(vspaceCap)),
+                              cap_vspace_cap_get_capMappedASID(vspaceCap));
         /*Connecting vspace cap to context bank*/
         cteInsert(vspaceCap, vspaceCapSlot, cbSlot);
-        cap_vtable_root_ptr_set_mappedCB(&(cbSlot->cap), cb);
+        cap_vspace_cap_ptr_set_capMappedCB(&(cbSlot->cap), cb);
         /*set relationship between CB and ASID*/
-        smmuStateCBAsidTable[cb] = cap_vtable_root_get_mappedASID(vspaceCap);
-        increaseASIDBindCB(cap_vtable_root_get_mappedASID(vspaceCap));
+        smmuStateCBAsidTable[cb] = cap_vspace_cap_get_capMappedASID(vspaceCap);
+        increaseASIDBindCB(cap_vspace_cap_get_capMappedASID(vspaceCap));
         return EXCEPTION_NONE;
 
     case ARMCBUnassignVspace:
