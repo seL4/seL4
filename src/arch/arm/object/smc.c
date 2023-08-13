@@ -8,7 +8,9 @@
 #ifdef CONFIG_ALLOW_SMC_CALLS
 #include <arch/object/smc.h>
 
-static exception_t invokeSMCCall(word_t *buffer)
+compile_assert(n_msgRegisters_less_than_smc_regs, n_msgRegisters <= NUM_SMC_REGS);
+
+static exception_t invokeSMCCall(word_t *buffer, bool_t call)
 {
     word_t i;
     seL4_Word arg[NUM_SMC_REGS];
@@ -42,18 +44,22 @@ static exception_t invokeSMCCall(word_t *buffer)
     arg[6] = r6;
     arg[7] = r7;
 
-    for (i = 0; i < n_msgRegisters; i++) {
-        setRegister(NODE_STATE(ksCurThread), msgRegisters[i], arg[i]);
-    }
-
-    if (ipcBuffer != NULL && i < NUM_SMC_REGS) {
-        for (; i < NUM_SMC_REGS; i++) {
-            ipcBuffer[i + 1] = arg[i];
+    if (call) {
+        for (i = 0; i < n_msgRegisters; i++) {
+            setRegister(NODE_STATE(ksCurThread), msgRegisters[i], arg[i]);
         }
-    }
-    setRegister(NODE_STATE(ksCurThread), msgInfoRegister, wordFromMessageInfo(
-                    seL4_MessageInfo_new(0, 0, 0, i)));
 
+        if (ipcBuffer != NULL) {
+            for (; i < NUM_SMC_REGS; i++) {
+                ipcBuffer[i + 1] = arg[i];
+            }
+        }
+
+        setRegister(NODE_STATE(ksCurThread), badgeRegister, 0);
+        setRegister(NODE_STATE(ksCurThread), msgInfoRegister, wordFromMessageInfo(
+                        seL4_MessageInfo_new(0, 0, 0, i)));
+    }
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
     return EXCEPTION_NONE;
 }
 
@@ -63,6 +69,12 @@ exception_t decodeARMSMCInvocation(word_t label, unsigned int length, cptr_t cpt
     if (label != ARMSMCCall) {
         userError("ARMSMCInvocation: Illegal operation.");
         current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if (length < NUM_SMC_REGS) {
+        userError("ARMSMCCall: Truncated message.");
+        current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
@@ -76,7 +88,7 @@ exception_t decodeARMSMCInvocation(word_t label, unsigned int length, cptr_t cpt
     }
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    return invokeSMCCall(buffer);
+    return invokeSMCCall(buffer, call);
 }
 
 #endif
