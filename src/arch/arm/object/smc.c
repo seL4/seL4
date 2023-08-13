@@ -8,7 +8,7 @@
 #ifdef CONFIG_ALLOW_SMC_CALLS
 #include <arch/object/smc.h>
 
-static exception_t performSMCCall(word_t *buffer)
+static exception_t invokeSMCCall(word_t *buffer)
 {
     word_t i;
     seL4_Word arg[NUM_SMC_REGS];
@@ -60,32 +60,23 @@ static exception_t performSMCCall(word_t *buffer)
 exception_t decodeARMSMCInvocation(word_t label, unsigned int length, cptr_t cptr,
                                    cte_t *srcSlot, cap_t cap, bool_t call, word_t *buffer)
 {
-    word_t badge;
-    word_t smc_func_id;
-
-    switch (label) {
-    case ARMSMCCall:
-        badge = cap_smc_cap_get_capSMCBadge(cap);
-        smc_func_id = getSyscallArg(0, buffer);
-
-        if (badge == smc_func_id) {
-            performSMCCall(buffer);
-        } else if (badge == 0) {
-            performSMCCall(buffer);
-        } else {
-            userError("ARMSMCInvocation: Illegal operation.");
-            current_syscall_error.type = seL4_IllegalOperation;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        return EXCEPTION_NONE;
-
-    default:
+    if (label != ARMSMCCall) {
         userError("ARMSMCInvocation: Illegal operation.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
+
+    word_t badge = cap_smc_cap_get_capSMCBadge(cap);
+    word_t smc_func_id = getSyscallArg(0, buffer);
+
+    if (badge != 0 && badge != smc_func_id) {
+        userError("ARMSMCCall: Illegal operation.");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+    return invokeSMCCall(buffer);
 }
 
 #endif
