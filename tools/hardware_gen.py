@@ -13,7 +13,7 @@ import yaml
 import hardware
 from hardware.config import Config
 from hardware.fdt import FdtParser
-from hardware.outputs import c_header, compat_strings, yaml as yaml_out, elfloader
+from hardware.outputs import c_header, compat_strings, yaml as yaml_out, json as json_out, elfloader
 from hardware.utils.rule import HardwareYaml
 
 
@@ -22,6 +22,7 @@ OUTPUTS = {
     'compat_strings': compat_strings,
     'elfloader': elfloader,
     'yaml': yaml_out,
+    'json': json_out,
 }
 
 
