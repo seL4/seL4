@@ -275,6 +275,13 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
         }
         break;
 #endif
+#ifdef CONFIG_ALLOW_SMC_CALLS
+    case cap_smc_cap:
+        if (cap_get_capType(cap_b) == cap_smc_cap) {
+            return true;
+        }
+        break;
+#endif
     }
     return false;
 }
