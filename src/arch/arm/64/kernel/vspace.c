@@ -1448,9 +1448,9 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, unsigned int le
 
     pte = pte_pte_table_new(pptr_to_paddr(PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap))));
 
-    cap_page_table_cap_ptr_set_capPTIsMapped(&cap, 1);
-    cap_page_table_cap_ptr_set_capPTMappedASID(&cap, asid);
-    cap_page_table_cap_ptr_set_capPTMappedAddress(&cap, (vaddr & ~MASK(ptSlot.ptBitsLeft)));
+    cap = cap_page_table_cap_set_capPTIsMapped(cap, 1);
+    cap = cap_page_table_cap_set_capPTMappedASID(cap, asid);
+    cap = cap_page_table_cap_set_capPTMappedAddress(cap, (vaddr & ~MASK(ptSlot.ptBitsLeft)));
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return performPageTableInvocationMap(cap, cte, pte, ptSlot.ptSlot);
@@ -1512,7 +1512,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
         }
 
         /* In the case of remap, the cap should have a valid asid */
-        frame_asid = cap_frame_cap_ptr_get_capFMappedASID(&cap);
+        frame_asid = cap_frame_cap_get_capFMappedASID(cap);
 
         if (frame_asid != asidInvalid) {
             if (frame_asid != asid) {
