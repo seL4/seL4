@@ -196,6 +196,7 @@ static inline void writeAMAIR(word_t reg)
     MSR(REG_AMAIR_EL1, reg);
 }
 
+/** DONT_TRANSLATE */
 static inline word_t readCIDR(void)
 {
     uint32_t reg;
@@ -203,6 +204,7 @@ static inline word_t readCIDR(void)
     return (word_t)reg;
 }
 
+/** DONT_TRANSLATE */
 static inline void writeCIDR(word_t reg)
 {
     MSR(REG_CONTEXTIDR_EL1, (uint32_t)reg);
@@ -220,6 +222,7 @@ static inline void writeACTLR(word_t reg)
     MSR(REG_ACTLR_EL1, reg);
 }
 
+/** DONT_TRANSLATE */
 static inline word_t readAFSR0(void)
 {
     uint32_t reg;
@@ -227,11 +230,13 @@ static inline word_t readAFSR0(void)
     return (word_t)reg;
 }
 
+/** DONT_TRANSLATE */
 static inline void writeAFSR0(word_t reg)
 {
     MSR(REG_AFSR0_EL1, (uint32_t)reg);
 }
 
+/** DONT_TRANSLATE */
 static inline word_t readAFSR1(void)
 {
     uint32_t reg;
@@ -239,11 +244,13 @@ static inline word_t readAFSR1(void)
     return (word_t)reg;
 }
 
+/** DONT_TRANSLATE */
 static inline void writeAFSR1(word_t reg)
 {
     MSR(REG_AFSR1_EL1, (uint32_t)reg);
 }
 
+/** DONT_TRANSLATE */
 static inline word_t readESR(void)
 {
     uint32_t reg;
@@ -251,6 +258,7 @@ static inline word_t readESR(void)
     return (word_t)reg;
 }
 
+/** DONT_TRANSLATE */
 static inline void writeESR(word_t reg)
 {
     MSR(REG_ESR_EL1, (uint32_t)reg);
@@ -269,6 +277,7 @@ static inline void writeFAR(word_t reg)
 }
 
 /* ISR is read-only */
+/** DONT_TRANSLATE */
 static inline word_t readISR(void)
 {
     uint32_t reg;
@@ -535,6 +544,7 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
     return;
 }
 
+/** DONT_TRANSLATE */
 static inline void vcpu_init_vtcr(void)
 {
 
