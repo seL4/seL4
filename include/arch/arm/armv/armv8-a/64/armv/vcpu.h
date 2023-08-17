@@ -487,61 +487,82 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
 {
     switch (reg_index) {
     case seL4_VCPUReg_SCTLR:
-        return setSCTLR(reg);
+        setSCTLR(reg);
+        break;
     case seL4_VCPUReg_TTBR0:
-        return writeTTBR0(reg);
+        writeTTBR0(reg);
+        break;
     case seL4_VCPUReg_TTBR1:
-        return writeTTBR1(reg);
+        writeTTBR1(reg);
+        break;
     case seL4_VCPUReg_TCR:
-        return writeTCR(reg);
+        writeTCR(reg);
+        break;
     case seL4_VCPUReg_MAIR:
-        return writeMAIR(reg);
+        writeMAIR(reg);
+        break;
     case seL4_VCPUReg_AMAIR:
-        return writeAMAIR(reg);
+        writeAMAIR(reg);
+        break;
     case seL4_VCPUReg_CIDR:
-        return writeCIDR(reg);
+        writeCIDR(reg);
+        break;
     case seL4_VCPUReg_ACTLR:
-        return writeACTLR(reg);
+        writeACTLR(reg);
+        break;
     case seL4_VCPUReg_CPACR:
-        return writeCPACR_EL1(reg);
+        writeCPACR_EL1(reg);
+        break;
     case seL4_VCPUReg_AFSR0:
-        return writeAFSR0(reg);
+        writeAFSR0(reg);
+        break;
     case seL4_VCPUReg_AFSR1:
-        return writeAFSR1(reg);
+        writeAFSR1(reg);
+        break;
     case seL4_VCPUReg_ESR:
-        return writeESR(reg);
+        writeESR(reg);
+        break;
     case seL4_VCPUReg_FAR:
-        return writeFAR(reg);
+        writeFAR(reg);
+        break;
     case seL4_VCPUReg_ISR:
         /* ISR is read-only */
-        return;
+        break;
     case seL4_VCPUReg_VBAR:
-        return writeVBAR(reg);
+        writeVBAR(reg);
+        break;
     case seL4_VCPUReg_TPIDR_EL1:
-        return writeTPIDR_EL1(reg);
+        writeTPIDR_EL1(reg);
+        break;
     case seL4_VCPUReg_SP_EL1:
-        return writeSP_EL1(reg);
+        writeSP_EL1(reg);
+        break;
     case seL4_VCPUReg_ELR_EL1:
-        return writeELR_EL1(reg);
+        writeELR_EL1(reg);
+        break;
     case seL4_VCPUReg_SPSR_EL1:
-        return writeSPSR_EL1(reg);
+        writeSPSR_EL1(reg);
+        break;
     case seL4_VCPUReg_CNTV_CTL:
-        return writeCNTV_CTL_EL0(reg);
+        writeCNTV_CTL_EL0(reg);
+        break;
     case seL4_VCPUReg_CNTV_CVAL:
-        return writeCNTV_CVAL_EL0(reg);
+        writeCNTV_CVAL_EL0(reg);
+        break;
     case seL4_VCPUReg_CNTVOFF:
-        return writeCNTVOFF_EL2(reg);
+        writeCNTVOFF_EL2(reg);
+        break;
     case seL4_VCPUReg_CNTKCTL_EL1:
-        return writeCNTKCTL_EL1(reg);
+        writeCNTKCTL_EL1(reg);
+        break;
 #ifdef ENABLE_SMP_SUPPORT
     case seL4_VCPUReg_VMPIDR_EL2:
-        return writeVMPIDR_EL2(reg);
+        writeVMPIDR_EL2(reg);
+        break;
 #endif /* ENABLE_SMP_SUPPORT */
     default:
         fail("ARM/HYP: Invalid register index");
     }
-
-    return;
 }
 
 /** DONT_TRANSLATE */
