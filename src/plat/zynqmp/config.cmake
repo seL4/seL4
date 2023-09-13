@@ -20,6 +20,26 @@ foreach(config IN LISTS cmake_configs)
     unset(${config} CACHE)
 endforeach()
 
+config_choice(
+    KernelZynqmpPetalinuxVersion
+    KERNEL_ZYNQMP_PETALINUX_VERSION
+    "The version of Petalinux to use for the kernel device tree"
+    "2018_3;KernelZynqmpPetalinux2018_3;ZYNQMP_PETALINUX_2018_3;KernelPlatformZynqmp"
+    "2021_1;KernelZynqmpPetalinux2021_1;ZYNQMP_PETALINUX_2021_1;KernelPlatformZynqmp"
+)
+
+config_choice(
+    KernelZynqmpBusName
+    ZYNQMP_BUS_NAME
+    "The bus name in the the kernel device tree (axi/amba)"
+    "amba;KernelZynqmpPetalinuxAmbaBus;ZYNQMP_PETALINUX_AMBA;KernelPlatformZynqmp"
+    "axi;KernelZynqmpPetalinuxAxiBus;ZYNQMP_PETALINUX_AXI;KernelPlatformZynqmp"
+)
+
+if(KernelZynqmpPetalinux2021_1)
+    set(KernelZynqmpBusName "axi")
+endif()
+
 if(KernelPlatformZynqmp)
     set(KernelHardwareDebugAPIUnsupported ON CACHE INTERNAL "")
     if("${KernelSel4Arch}" STREQUAL aarch32)
@@ -49,19 +69,25 @@ if(KernelPlatformZynqmp)
     config_set(KernelArmMach MACH "zynq")
 
     if(KernelPlatformZynqmpUltra96v2)
-        list(APPEND KernelDTSList "tools/dts/ultra96v2.dts")
+        list(APPEND KernelDTSList "tools/dts/${KernelZynqmpPetalinuxVersion}/ultra96v2.dts")
     elseif(KernelPlatformZynqmpUltra96)
         list(APPEND KernelDTSList "tools/dts/ultra96.dts")
     elseif(KernelPlatformZynqmpZcu102)
-        list(APPEND KernelDTSList "tools/dts/zynqmp.dts")
+        list(APPEND KernelDTSList "tools/dts/${KernelZynqmpPetalinuxVersion}/zynqmp.dts")
     else()
         message(FATAL_ERROR "unknown platform")
     endif()
 
     if(KernelSel4ArchAarch32)
-        list(APPEND KernelDTSList "src/plat/zynqmp/overlay-zynqmp32.dts")
+        list(
+            APPEND
+                KernelDTSList "src/plat/zynqmp/${KernelZynqmpPetalinuxVersion}/overlay-zynqmp32.dts"
+        )
     else()
-        list(APPEND KernelDTSList "src/plat/zynqmp/overlay-zynqmp.dts")
+        list(
+            APPEND
+                KernelDTSList "src/plat/zynqmp/${KernelZynqmpPetalinuxVersion}/overlay-zynqmp.dts"
+        )
     endif()
 
     declare_default_headers(
