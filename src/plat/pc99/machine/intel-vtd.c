@@ -45,7 +45,7 @@
 #define CIRG        (29 + 32) /* Context Invalidation Request Granularity */
 #define CAIG        27  /* Context Actual Invalidation Granularity */
 #define CAIG_MASK   0x3
-#define IVO_MASK    0x3FF
+#define IRO_MASK    0x3FF /* IOTLB Register Offset mask */
 #define IVT         31  /* Invalidate IOTLB */
 #define IIRG        28  /* IOTLB Invalidation Request Granularity */
 #define IAIG        25  /* IOTLB Actual Invalidation Granularity */
@@ -111,9 +111,9 @@ static inline void vtd_write64(drhu_id_t drhu_id, uint32_t offset, uint64_t valu
     *(volatile uint64_t *)(PPTR_DRHU_START + (drhu_id << PAGE_BITS) + offset) = value;
 }
 
-static inline uint32_t get_ivo(drhu_id_t drhu_id)
+static inline uint32_t get_iro(drhu_id_t drhu_id)
 {
-    return ((vtd_read32(drhu_id, ECAP_REG) >> 8) & IVO_MASK) * 16;
+    return ((vtd_read32(drhu_id, ECAP_REG) >> 8) & IRO_MASK) * 16;
 }
 
 static uint32_t get_fro_offset(drhu_id_t drhu_id)
@@ -173,14 +173,14 @@ void invalidate_iotlb(void)
 
     uint8_t   invalidate_command = IOTLB_GLOBAL_INVALIDATE;
     uint32_t  iotlb_reg_upper;
-    uint32_t  ivo_offset;
+    uint32_t  iro_offset;
     drhu_id_t i;
 
     for (i = 0; i < x86KSnumDrhu; i++) {
-        ivo_offset = get_ivo(i);
+        iro_offset = get_iro(i);
 
         /* Wait till IVT bit is clear */
-        while ((vtd_read32(i, ivo_offset + IOTLB_REG + 4) >> IVT) & 1);
+        while ((vtd_read32(i, iro_offset + IOTLB_REG + 4) >> IVT) & 1);
 
         /* Program IIRG for Global Invalidation by setting bit 60 which
          * will be bit 28 in upper 32 bits of IOTLB_REG
@@ -191,11 +191,11 @@ void invalidate_iotlb(void)
         iotlb_reg_upper |= BIT(IVT);
         iotlb_reg_upper |= DMA_TLB_READ_DRAIN | DMA_TLB_WRITE_DRAIN;
 
-        vtd_write32(i, ivo_offset + IOTLB_REG, 0);
-        vtd_write32(i, ivo_offset + IOTLB_REG + 4, iotlb_reg_upper);
+        vtd_write32(i, iro_offset + IOTLB_REG, 0);
+        vtd_write32(i, iro_offset + IOTLB_REG + 4, iotlb_reg_upper);
 
         /* Wait for the invalidation to complete */
-        while ((vtd_read32(i, ivo_offset + IOTLB_REG + 4) >> IVT) & 1);
+        while ((vtd_read32(i, iro_offset + IOTLB_REG + 4) >> IVT) & 1);
     }
 }
 
