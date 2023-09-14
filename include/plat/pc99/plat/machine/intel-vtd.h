@@ -11,7 +11,6 @@
 #ifdef CONFIG_IOMMU
 
 void invalidate_iotlb(void);
-void invalidate_context_cache(void);
 void vtd_handle_fault(void);
 /* calculate the number of IOPTs needed to map the rmrr regions */
 word_t vtd_get_n_paging(acpi_rmrr_list_t *rmrr_list);

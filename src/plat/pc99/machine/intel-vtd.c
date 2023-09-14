@@ -129,7 +129,7 @@ static uint32_t get_fro_offset(drhu_id_t drhu_id)
     return fro_offset << 4;
 }
 
-void invalidate_context_cache(void)
+static void invalidate_context_cache(void)
 {
     /* FIXME - bugzilla bug 172
      * 1. Instead of assuming global invalidation, this function should
@@ -236,7 +236,7 @@ static void vtd_process_faults(drhu_id_t i)
             address[0] = vtd_read32(i, fr_reg);
             reason = vtd_read32(i, fr_reg + 12) & FR_MASK;
 
-            printf("IOMMU: DMA %s page fault ", fault_type ? "read" : "write");
+            printf("IOMMU 0x%x: DMA %s page fault ", i, fault_type ? "read" : "write");
             printf("from 0x%x (bus: 0x%lx/dev: 0x%lx/fun: 0x%lx) ", source_id,
                    SID_BUS(source_id), SID_DEV(source_id), SID_FUNC(source_id));
             printf("on address 0x%x:%x ", address[1], address[0]);
