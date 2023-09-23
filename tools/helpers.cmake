@@ -542,7 +542,6 @@ function(add_config_library prefix configure_template)
     set(config_yaml_file "${config_dir}/${prefix}/gen_config.yaml")
     set(config_header_file "${config_dir}/${prefix}/gen_config.h")
     set(config_json_file "${config_dir}/${prefix}/gen_config.json")
-    set(config_files "${config_yaml_file}" "${config_header_file}" "${config_json_file}")
 
     set(quote "\"")
     string(CONFIGURE "${configure_template}" config_yaml_contents ESCAPE_QUOTES @ONLY)
@@ -550,28 +549,27 @@ function(add_config_library prefix configure_template)
     if("${config_yaml_contents}" STREQUAL "")
         set(config_yaml_contents "{}")
     endif()
-    file(GENERATE OUTPUT "${config_yaml_file}" CONTENT "${config_yaml_contents}")
+    file(WRITE "${config_yaml_file}" "${config_yaml_contents}")
 
-    add_custom_command(
-        OUTPUT "${config_header_file}" "${config_json_file}"
+    execute_process(
         COMMAND
-            "${PYTHON3}" "${CONFIG_GEN_PATH}" "${config_yaml_file}"
-            --write-c "${config_header_file}"
-            --write-json "${config_json_file}"
-        DEPENDS "${CONFIG_GEN_PATH}" "${config_yaml_file}"
-        COMMENT "Generating from ${config_yaml_file}"
-        VERBATIM
+            "${PYTHON3}" "${CONFIG_GEN_PATH}" "${config_yaml_file}" --write-c
+            "${config_header_file}" --write-json "${config_json_file}"
+        RESULT_VARIABLE error
     )
+    if(error)
+        message(FATAL_ERROR "Failed to generate header: ${config_yaml_file}")
+    endif()
 
-    add_custom_target(${prefix}_Gen DEPENDS ${config_files})
+    add_custom_target(${prefix}_Gen DEPENDS "${config_header_file}")
     add_library(${prefix}_Config INTERFACE)
     target_include_directories(${prefix}_Config INTERFACE "${config_dir}")
-    add_dependencies(${prefix}_Config ${prefix}_Gen ${config_files})
+    add_dependencies(${prefix}_Config ${prefix}_Gen ${config_header_file})
     set_property(GLOBAL APPEND PROPERTY CONFIG_LIBRARIES "${prefix}")
     # Set a property on the library that is a list of the files we generated. This
     # allows custom build commands to easily get a file dependency list so they can
     # 'depend' upon this target easily
-    set_property(TARGET ${prefix}_Gen APPEND PROPERTY GENERATED_FILES ${config_files})
+    set_property(TARGET ${prefix}_Gen APPEND PROPERTY GENERATED_FILES ${config_header_file})
 endfunction(add_config_library)
 
 macro(get_generated_files output target)
