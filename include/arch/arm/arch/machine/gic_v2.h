@@ -22,6 +22,7 @@
 
 #define IRQ_MASK MASK(10u)
 #define GIC_VCPU_MAX_NUM_LR 64
+#define GIC_DIST_CONFIG_SIZE 64
 
 /* Helpers for VGIC */
 #define VGIC_HCR_EOI_INVALID_COUNT(hcr) (((hcr) >> 27) & 0x1f)
@@ -124,13 +125,14 @@ struct gic_cpu_iface_map {
 
 extern volatile struct gic_dist_map *const gic_dist;
 extern volatile struct gic_cpu_iface_map *const gic_cpuiface;
+extern uint32_t gic_dist_config_cache[GIC_DIST_CONFIG_SIZE];
 
 /* Helpers */
 static inline int is_irq_edge_triggered(word_t irq)
 {
     int word = irq >> 4;
     int bit = ((irq & 0xf) * 2);
-    return !!(gic_dist->config[word] & BIT(bit + 1));
+    return !!(gic_dist_config_cache[word] & BIT(bit + 1));
 }
 
 static inline void dist_pending_clr(word_t irq)

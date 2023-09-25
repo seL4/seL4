@@ -25,6 +25,7 @@
 #else  /* GIC_DISTRIBUTOR_PPTR */
 volatile struct gic_dist_map *const gic_dist =
     (volatile struct gic_dist_map *)(GIC_V2_DISTRIBUTOR_PPTR);
+uint32_t gic_dist_config_cache[GIC_DIST_CONFIG_SIZE];
 #endif /* GIC_DISTRIBUTOR_PPTR */
 
 #ifndef GIC_V2_CONTROLLER_PPTR
@@ -95,6 +96,10 @@ BOOT_CODE static void dist_init(void)
         gic_dist->config[i >> 5] = 0x55555555;
     }
 
+    for (i = 0; i < GIC_DIST_CONFIG_SIZE; i++) {
+        gic_dist_config_cache[i] = gic_dist->config[i];
+    }
+
     /* group 0 for secure; group 1 for non-secure */
     for (i = 0; i < nirqs; i += 32) {
         if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT) && !config_set(CONFIG_PLAT_QEMU_ARM_VIRT)) {
@@ -157,8 +162,10 @@ void setIRQTrigger(irq_t irq, bool_t trigger)
     if (trigger) {
         /* set the bit */
         gic_dist->config[index] |= BIT(offset + 1);
+        gic_dist_config_cache[index] |= BIT(offset + 1);
     } else {
         gic_dist->config[index] &= ~BIT(offset + 1);
+        gic_dist_config_cache[index] &= ~BIT(offset + 1);
     }
 }
 
