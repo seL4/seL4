@@ -655,51 +655,26 @@ static lookupPTSlot_ret_t lookupPTSlot(vspace_root_t *vspace, vptr_t vptr)
 static pte_t makeUserPage(paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t attributes, vm_page_size_t page_size)
 {
     bool_t nonexecutable = vm_attributes_get_armExecuteNever(attributes);
-    pte_t ret;
-    if (vm_attributes_get_armPageCacheable(attributes)) {
-        ret = pte_pte_page_new(
-                  nonexecutable,              /* unprivileged execute never */
-                  paddr,
+    word_t cacheable = vm_attributes_get_armPageCacheable(attributes);
+
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-                  0,
+    word_t nG = 0; /* not global */
+    word_t attridx = cacheable ? S2_NORMAL : S2_DEVICE_nGnRnE;
 #else
-                  1,                          /* not global */
-#endif
-                  1,                          /* access flag */
-                  SMP_TERNARY(SMP_SHARE, 0),          /* Inner-shareable if SMP enabled, otherwise unshared */
-                  APFromVMRights(vm_rights),
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-                  S2_NORMAL
-#else
-                  NORMAL
-#endif
-              );
-    } else {
-        ret = pte_pte_page_new(
-                  nonexecutable,              /* unprivileged execute never */
-                  paddr,
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-                  0,
-#else
-                  1,                          /* not global */
-#endif
-                  1,                          /* access flag */
-                  0,                          /* Ignored - Outter shareable */
-                  APFromVMRights(vm_rights),
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-                  S2_DEVICE_nGnRnE
-#else
-                  DEVICE_nGnRnE
+    word_t nG = 1; /* not global */
+    word_t attridx = cacheable ? NORMAL : DEVICE_nGnRnE;
 #endif
 
-              );
-    }
-    /* If The target page size is 4k, then really pte_pte_4k_page_new() should be used
-       but instead we just update the type manually after using pte_pte_page_new(). */
+    /* Inner-shareable if SMP enabled, otherwise unshared (ignored for devices) */
+    word_t shareable = cacheable ? SMP_TERNARY(SMP_SHARE, 0) : 0;
+
     if (page_size == ARMSmallPage) {
-        ret.words[0] |= 0x3;
+        return pte_pte_4k_page_new(nonexecutable, paddr, nG, 1 /* access flag */,
+                                   shareable, APFromVMRights(vm_rights), attridx);
+    } else {
+        return pte_pte_page_new(nonexecutable, paddr, nG, 1 /* access flag */,
+                                shareable, APFromVMRights(vm_rights), attridx);
     }
-    return ret;
 }
 
 exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
