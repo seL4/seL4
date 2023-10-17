@@ -652,7 +652,7 @@ static lookupPTSlot_ret_t lookupPTSlot(vspace_root_t *vspace, vptr_t vptr)
 /* Note that if the hypervisor support is enabled, the user page tables use
  * stage-2 translation format. Otherwise, they follow the stage-1 translation format.
  */
-static pte_t makeUserPage(paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t attributes, vm_page_size_t page_size)
+static pte_t makeUserPagePTE(paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t attributes, vm_page_size_t page_size)
 {
     bool_t nonexecutable = vm_attributes_get_armExecuteNever(attributes);
     word_t cacheable = vm_attributes_get_armPageCacheable(attributes);
@@ -1525,7 +1525,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
 
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performPageInvocationMap(asid, cap, cte,
-                                        makeUserPage(base, vmRights, attributes, frameSize), lu_ret.ptSlot);
+                                        makeUserPagePTE(base, vmRights, attributes, frameSize), lu_ret.ptSlot);
     }
 
     case ARMPageUnmap:
