@@ -18,6 +18,7 @@
 #include <plat/machine/intel-vtd.h>
 #include <util.h>
 
+/* Register Offsets */
 #define RTADDR_REG  0x20
 #define GCMD_REG    0x18
 #define GSTS_REG    0x1C
@@ -30,12 +31,30 @@
 #define FEADDR_REG  0x40
 #define FEUADDR_REG 0x44
 #define CAP_REG     0x08
+#define IRTA_REG    0xb8 /* Interrupt remapping table addr register */
 
 /* Bit Positions within Registers */
+/* Global Command Register (GCMD_REG) fields */
 #define SRTP        30  /* Set Root Table Pointer */
-#define RTPS        30  /* Root Table Pointer Status */
 #define TE          31  /* Translation Enable */
+#define IRE         25  /* Interrupt Remapping Enable */
+#define SIRTP       24  /* Set Interrupt Remap Table Pointer */
+#define CFI         23  /* Compatibility Format Interrupt */
+
+/* Global Status Register (GSTS_REG) fields */
+#define RTPS        30  /* Root Table Pointer Status */
 #define TES         31  /* Translation Enable Status */
+#define IRES        25  /* Interrupt Remapping Enable Status */
+#define IRTPS       24  /* Interrupt Remap Table Pointer Status */
+#define CFIS        23  /* Compatibility Format Interrupt Status */
+
+/* Interrupt Remapping Table Address Register (IRTA_REG) fields */
+#define IRTA_REG_IRTA   12  /* Interrupt Remapping Table Address */
+#define IRTA_REG_EIME   11  /* Extended Interrupt Mode Enable */
+#define IRTA_REG_S      0   /* size of the interrupt remapping table. */
+
+#define IRTA_REG_IRTA_MASK  ~0xFFF
+#define IRTA_REG_S_MASK     0x7
 
 /* ICC is 63rd bit in CCMD_REG, but since we will be
  * accessing this register as 4 byte word, ICC becomes
@@ -87,6 +106,15 @@
 #define DMA_TLB_WRITE_DRAIN BIT(16)
 
 #define N_VTD_CONTEXTS 256
+
+/* The size (IRTA_REG_S) to configure for a 4K interrupt remapping table.
+ * The number of 128-bit IRTEs in a 4K interrupt remapping table is
+ * 2 ** (7 + 1) = 256.
+ *
+ * These need to be changed if we support larger IRT in the future.
+ */
+#define VTD_IRT_SIZE_4K    0x7
+#define N_VTD_IRTES_4K     (2 << VTD_IRT_SIZE_4K)
 
 typedef uint32_t drhu_id_t;
 
@@ -392,6 +420,32 @@ BOOT_CODE static void vtd_create_context_table(uint8_t bus, acpi_rmrr_list_t *rm
     }
 }
 
+BOOT_CODE static void vtd_create_irq_remapping_table(drhu_id_t drhu_id, paddr_t irt_paddr)
+{
+    uint64_t status = vtd_read64(drhu_id, IRTA_REG);
+
+    /* set the size of the interrupt remapping table.
+     *
+     * Every bit in the IRTA register should be 0 by default, but we clear the bits
+     * anyways just in case something weired happened.
+     */
+    status &= ~IRTA_REG_S_MASK;
+    status |= VTD_IRT_SIZE_4K;
+    /* put the address into the IRTA register */
+    status &= ~IRTA_REG_IRTA_MASK;
+    status |= irt_paddr;
+    vtd_write64(drhu_id, IRTA_REG, status);
+
+    status = vtd_read32(drhu_id, GSTS_REG);
+    status |= BIT(SIRTP);
+    /* Set Interrupt Remap Table Pointer */
+    vtd_write32(drhu_id, GCMD_REG, status);
+    /* Wait for interrupt-remapping operation to complete by polling
+     * IRTPS bit from GSTS_REG
+     */
+    while (!((vtd_read32(drhu_id, GSTS_REG) >> IRTPS) & 0x1));
+}
+
 BOOT_CODE static bool_t vtd_enable(cpu_id_t cpu_id)
 {
     drhu_id_t i;
@@ -440,7 +494,7 @@ BOOT_CODE static bool_t vtd_enable(cpu_id_t cpu_id)
         vtd_write32(i, GCMD_REG, status);
         while (((vtd_read32(i, GSTS_REG) >> WBFS) & 1));
 
-        printf("IOMMU 0x%x: enabling...", i);
+        printf("IOMMU 0x%x: enabling DMA translation...", i);
 
         status = vtd_read32(i, GSTS_REG);
         status |= BIT(TE);
@@ -451,8 +505,19 @@ BOOT_CODE static bool_t vtd_enable(cpu_id_t cpu_id)
          * TES bit from GSTS_REG
          */
         while (!((vtd_read32(i, GSTS_REG) >> TES) & 1));
+        printf(" enabled.\n");
 
-        printf(" enabled\n");
+        printf("IOMMU 0x%x: enabling interrupt-remapping...", i);
+
+        status = vtd_read32(i, GSTS_REG);
+        status |= BIT(IRE);
+        /* Enable interrupt-remapping */
+        vtd_write32(i, GCMD_REG, status);
+        /* Wait for interrupt-remapping operation to complete by polling
+         * IRES bit from GSTS_REG
+         */
+        while (!((vtd_read32(i, GSTS_REG) >> IRES) & 1));
+        printf(" enabled.\n");
     }
     return true;
 }
@@ -527,6 +592,18 @@ BOOT_CODE bool_t vtd_init(cpu_id_t  cpu_id, acpi_rmrr_list_t *rmrr_list)
     }
 
     flushCacheRange(x86KSvtdRootTable, VTD_RT_SIZE_BITS);
+
+    /* alloc one 4k page for the IRT */
+    vtd_irte_t *irt_pptr = (vtd_irte_t *) it_alloc_paging();
+    printf("IOMMU: Configuring shared interrupt remapping table (pptr=%p)...", irt_pptr);
+
+    for (drhu_id_t i = 0; i < x86KSnumDrhu; i++) {
+        /* Remapping hardware units in the platform are configured to share
+         * interrupt-remapping table
+         */
+        vtd_create_irq_remapping_table(i, pptr_to_paddr(irt_pptr));
+    }
+    printf(" done.\n");
 
     if (!vtd_enable(cpu_id)) {
         return false;
