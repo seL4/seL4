@@ -196,6 +196,7 @@ static inline void writeAMAIR(word_t reg)
     MSR(REG_AMAIR_EL1, reg);
 }
 
+/** MODIFIES: */
 /** DONT_TRANSLATE */
 static inline word_t readCIDR(void)
 {
@@ -204,6 +205,7 @@ static inline word_t readCIDR(void)
     return (word_t)reg;
 }
 
+/** MODIFIES: phantom_machine_state */
 /** DONT_TRANSLATE */
 static inline void writeCIDR(word_t reg)
 {
@@ -222,6 +224,7 @@ static inline void writeACTLR(word_t reg)
     MSR(REG_ACTLR_EL1, reg);
 }
 
+/** MODIFIES: */
 /** DONT_TRANSLATE */
 static inline word_t readAFSR0(void)
 {
@@ -230,12 +233,14 @@ static inline word_t readAFSR0(void)
     return (word_t)reg;
 }
 
+/** MODIFIES: phantom_machine_state */
 /** DONT_TRANSLATE */
 static inline void writeAFSR0(word_t reg)
 {
     MSR(REG_AFSR0_EL1, (uint32_t)reg);
 }
 
+/** MODIFIES: */
 /** DONT_TRANSLATE */
 static inline word_t readAFSR1(void)
 {
@@ -244,12 +249,14 @@ static inline word_t readAFSR1(void)
     return (word_t)reg;
 }
 
+/** MODIFIES: phantom_machine_state */
 /** DONT_TRANSLATE */
 static inline void writeAFSR1(word_t reg)
 {
     MSR(REG_AFSR1_EL1, (uint32_t)reg);
 }
 
+/** MODIFIES: */
 /** DONT_TRANSLATE */
 static inline word_t readESR(void)
 {
@@ -258,6 +265,7 @@ static inline word_t readESR(void)
     return (word_t)reg;
 }
 
+/** MODIFIES: phantom_machine_state */
 /** DONT_TRANSLATE */
 static inline void writeESR(word_t reg)
 {
@@ -277,6 +285,7 @@ static inline void writeFAR(word_t reg)
 }
 
 /* ISR is read-only */
+/** MODIFIES: */
 /** DONT_TRANSLATE */
 static inline word_t readISR(void)
 {
