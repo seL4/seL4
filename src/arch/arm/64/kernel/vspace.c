@@ -1502,7 +1502,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
             if (frame_asid != asid) {
                 userError("ARMPageMap: Attempting to remap a frame that does not belong to the passed address space");
                 current_syscall_error.type = seL4_InvalidCapability;
-                current_syscall_error.invalidArgumentNumber = 0;
+                current_syscall_error.invalidArgumentNumber = 1;
                 return EXCEPTION_SYSCALL_ERROR;
 
             } else if (cap_frame_cap_get_capFMappedAddress(cap) != vaddr) {
