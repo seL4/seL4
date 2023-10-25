@@ -18,7 +18,6 @@ typedef word_t vm_fault_type_t;
 
 #define PAGE_BASE(_p, _s)        ((_p) & ~MASK(pageBitsForSize((_s))))
 #define PAGE_OFFSET(_p, _s)      ((_p) & MASK(pageBitsForSize((_s))))
-#define IS_PAGE_ALIGNED(_p, _s)  (((_p) & MASK(pageBitsForSize((_s)))) == 0)
 
 #define IPI_MEM_BARRIER \
   do { \
