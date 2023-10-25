@@ -47,14 +47,14 @@ static inline exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *po
                               0,
 #endif
                               /* vspace_root: reference to vspace root page table object */
-                              cap_vspace_cap_get_capPTBasePtr(cap)
+                              cap_vspace_cap_get_capVSBasePtr(cap)
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
                               /* stored_hw_vmid, stored_vmid_valid: Assigned hardware VMID for TLB. */
                               , 0, false
 #endif
                           );
-    cap = cap_vspace_cap_set_capMappedASID(cap, asid);
-    cap = cap_vspace_cap_set_capIsMapped(cap, 1);
+    cap = cap_vspace_cap_set_capVSMappedASID(cap, asid);
+    cap = cap_vspace_cap_set_capVSIsMapped(cap, 1);
     vspaceCapSlot->cap = cap;
 
     poolPtr->array[asid & MASK(asidLowBits)] = asid_map;

@@ -46,17 +46,17 @@ block page_table_cap {
 
 -- First-level page table (vspace_root)
 block vspace_cap {
-    field capMappedASID              16
-    field_high capPTBasePtr          48
+    field capVSMappedASID            16
+    field_high capVSBasePtr          48
 
     field capType                    5
-    field capIsMapped                1
-#ifdef CONFIG_ARM_SMMU 
-    field capMappedCB                8
+    field capVSIsMapped              1
+#ifdef CONFIG_ARM_SMMU
+    field capVSMappedCB              8
     padding                          50
-#else 
+#else
     padding                          58
-#endif 
+#endif
 }
 
 -- Cap to the table of 2^7 ASID pools

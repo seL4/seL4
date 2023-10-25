@@ -224,7 +224,7 @@ void obj_vtable_print_slots(tcb_t *tcb)
 {
     if (isVTableRoot(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap) && !seen(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap)) {
         add_to_seen(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap);
-        vspace_root_t *vspace = VSPACE_PTR(cap_vspace_cap_get_capPTBasePtr(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap));
+        vspace_root_t *vspace = VSPACE_PTR(cap_vspace_cap_get_capVSBasePtr(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap));
 
         /*
         * ARM hyp uses 3 level translation rather than the usual 4 level.
@@ -295,7 +295,7 @@ void print_cap_arch(cap_t cap)
         break;
     }
     case cap_vspace_cap: {
-        asid_t asid = cap_vspace_cap_get_capMappedASID(cap);
+        asid_t asid = cap_vspace_cap_get_capVSMappedASID(cap);
         findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
         if (asid) {
             printf("%p_pd (asid: %lu)\n",
@@ -461,7 +461,7 @@ void obj_tcb_print_vtable(tcb_t *tcb)
 {
     if (isVTableRoot(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap) && !seen(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap)) {
         add_to_seen(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap);
-        vspace_root_t *vspace = VSPACE_PTR(cap_vspace_cap_get_capPTBasePtr(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap));
+        vspace_root_t *vspace = VSPACE_PTR(cap_vspace_cap_get_capVSBasePtr(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap));
 
         /*
          * ARM hyp uses 3 level translation rather than the usual 4 level.
