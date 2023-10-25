@@ -162,7 +162,7 @@ static inline void *CONST cap_get_archCapPtr(cap_t cap)
         return PT_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
 
     case cap_vspace_cap:
-        return VSPACE_PTR(cap_vspace_cap_get_capPTBasePtr(cap));
+        return VSPACE_PTR(cap_vspace_cap_get_capVSBasePtr(cap));
 
     case cap_asid_control_cap:
         return NULL;
