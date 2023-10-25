@@ -38,22 +38,25 @@ static const region_t BOOT_RODATA *mode_reserved_region = NULL;
 #define PAR_EL1_MASK 0x0000fffffffff000ul
 #define GET_PAR_ADDR(x) ((x) & PAR_EL1_MASK)
 
-static inline exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *poolPtr, cte_t *cte)
+static inline exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *poolPtr, cte_t *vspaceCapSlot)
 {
-    cap_vspace_cap_ptr_set_capMappedASID(&cte->cap, asid);
-    cap_vspace_cap_ptr_set_capIsMapped(&cte->cap, 1);
+    cap_t cap = vspaceCapSlot->cap;
     asid_map_t asid_map = asid_map_asid_map_vspace_new(
 #ifdef CONFIG_ARM_SMMU
                               /* bind_cb: Number of bound context banks */
                               0,
 #endif
                               /* vspace_root: reference to vspace root page table object */
-                              cap_vspace_cap_get_capPTBasePtr(cte->cap)
+                              cap_vspace_cap_get_capPTBasePtr(cap)
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
                               /* stored_hw_vmid, stored_vmid_valid: Assigned hardware VMID for TLB. */
                               , 0, false
 #endif
                           );
+    cap = cap_vspace_cap_set_capMappedASID(cap, asid);
+    cap = cap_vspace_cap_set_capIsMapped(cap, 1);
+    vspaceCapSlot->cap = cap;
+
     poolPtr->array[asid & MASK(asidLowBits)] = asid_map;
     return EXCEPTION_NONE;
 }
