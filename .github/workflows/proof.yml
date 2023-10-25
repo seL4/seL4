@@ -30,6 +30,9 @@ jobs:
             session: CRefine SimplExportAndRefine
           - arch: X64
             session: CRefine
+          - arch: RISCV64
+            features: MCS
+            session: CRefine
     # test only most recent push to PR:
     concurrency: seL4-PR-C-proofs-pr-${{ github.event.number }}-idx-${{ strategy.job-index }}
     steps:
@@ -37,9 +40,10 @@ jobs:
       uses: seL4/ci-actions/aws-proofs@master
       with:
         L4V_ARCH: ${{ matrix.arch }}
-        isa_branch: ts-2022
+        L4V_FEATURES: ${{ matrix.features }}
+        isa_branch: ts-2023
         session: ${{ matrix.session }}
-        manifest: default.xml
+        manifest: ${{ matrix.features == 'MCS' && 'mcs.xml' || 'default.xml' }}
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

@@ -52,6 +52,9 @@ struct gicVCpuIface {
     uint32_t hcr;
     uint32_t vmcr;
     uint32_t apr;
+    /* virq_t[] requires word-size alignment; add extra padding for
+     * 64-bit platforms to make this struct packed. */
+    uint32_t gicVCpuIface_padding;
     virq_t lr[GIC_VCPU_MAX_NUM_LR];
 };
 
@@ -76,10 +79,10 @@ struct vcpu {
     bool_t vppi_masked[n_VPPIEventIRQ];
 #ifdef CONFIG_VTIMER_UPDATE_VOFFSET
     /* vTimer is 8-bytes wide and has same alignment requirement.
-     * To keep the struct packed on 32-bit platforms when accompanied by an
-     * odd number of 32-bit words, we need to add a padding word.
+     * The struct will remain packed on 32-bit platforms when n_VPPIEventIRQ
+     * is odd, but were it to become even, an extra word of padding will be
+     * necessary.
      * */
-    word_t vcpu_padding;
     struct vTimer virtTimer;
 #endif
 };
