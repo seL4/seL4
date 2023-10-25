@@ -1435,6 +1435,11 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, unsigned int le
     return performPageTableInvocationMap(cap, cte, pte, ptSlot.ptSlot);
 }
 
+static inline bool_t CONST checkVPAlignment(vm_page_size_t sz, word_t w)
+{
+    return (w & MASK(pageBitsForSize(sz))) == 0;
+}
+
 static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length,
                                             cte_t *cte, cap_t cap, bool_t call, word_t *buffer)
 {
@@ -1485,7 +1490,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        if (unlikely(!IS_PAGE_ALIGNED(vaddr, frameSize))) {
+        if (unlikely(!checkVPAlignment(frameSize, vaddr))) {
             current_syscall_error.type = seL4_AlignmentError;
             return EXCEPTION_SYSCALL_ERROR;
         }
