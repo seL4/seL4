@@ -851,7 +851,7 @@ exception_t decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
 
 #ifdef CONFIG_KERNEL_MCS
     case TCBSetTimeoutEndpoint:
-        return decodeSetTimeoutEndpoint(cap, slot);
+        return decodeSetTimeoutEndpoint(cap, length, slot, buffer);
 #else
 #ifdef ENABLE_SMP_SUPPORT
     case TCBSetAffinity:
@@ -1021,29 +1021,6 @@ exception_t decodeWriteRegisters(cap_t cap, word_t length, word_t *buffer)
                                     flags & BIT(WriteRegisters_resume),
                                     w, transferArch, buffer);
 }
-
-#ifdef CONFIG_KERNEL_MCS
-static bool_t validFaultHandler(cap_t cap)
-{
-    switch (cap_get_capType(cap)) {
-    case cap_endpoint_cap:
-        if (!cap_endpoint_cap_get_capCanSend(cap) ||
-            (!cap_endpoint_cap_get_capCanGrant(cap) &&
-             !cap_endpoint_cap_get_capCanGrantReply(cap))) {
-            current_syscall_error.type = seL4_InvalidCapability;
-            return false;
-        }
-        break;
-    case cap_null_cap:
-        /* just has no fault endpoint */
-        break;
-    default:
-        current_syscall_error.type = seL4_InvalidCapability;
-        return false;
-    }
-    return true;
-}
-#endif
 
 /* TCBConfigure batches SetIPCBuffer and parts of SetSpace. */
 exception_t decodeTCBConfigure(cap_t cap, word_t length, cte_t *slot, word_t *buffer)
@@ -1251,10 +1228,77 @@ exception_t decodeSetMCPriority(cap_t cap, word_t length, word_t *buffer)
 }
 
 #ifdef CONFIG_KERNEL_MCS
-exception_t decodeSetTimeoutEndpoint(cap_t cap, cte_t *slot)
+static bool_t validFaultHandler(cap_t cap)
+{
+    switch (cap_get_capType(cap)) {
+    case cap_endpoint_cap:
+        if (!cap_endpoint_cap_get_capCanSend(cap) ||
+            (!cap_endpoint_cap_get_capCanGrant(cap) &&
+             !cap_endpoint_cap_get_capCanGrantReply(cap))) {
+            current_syscall_error.type = seL4_InvalidCapability;
+            return false;
+        }
+        break;
+    case cap_null_cap:
+        /* just has no fault endpoint */
+        break;
+    default:
+        current_syscall_error.type = seL4_InvalidCapability;
+        return false;
+    }
+    return true;
+}
+
+static deriveCap_ret_t updateAndCheckHandlerEP(cap_t cap, word_t length, cte_t *slot, word_t *buffer,
+                                               word_t offset, word_t capPosition)
+{
+    deriveCap_ret_t ret;
+    if (cap_get_capType(cap) != cap_null_cap && cap_get_capType(cap) != cap_endpoint_cap) {
+        userError("TCB updateAndCheckHandlerEP: handler cap not null nor an Endpoint.");
+        current_syscall_error.type = seL4_InvalidCapability;
+        current_syscall_error.invalidCapNumber = capPosition;
+        ret.cap = cap_null_cap_new();
+        ret.status = EXCEPTION_SYSCALL_ERROR;
+        return ret;
+    }
+
+    if (length >= offset + 1) {
+        word_t data = getSyscallArg(offset, buffer);
+
+        if (cap_get_capType(cap) != cap_null_cap && data != 0) {
+            cap = updateCapData(false, data, cap);
+            if (cap_get_capType(cap) == cap_null_cap) {
+                userError("TCB updateAndCheckHandlerEP: handler cap being rebadged when already badged or null.");
+                current_syscall_error.type = seL4_IllegalOperation;
+                ret.cap = cap_null_cap_new();
+                ret.status = EXCEPTION_SYSCALL_ERROR;
+                return ret;
+            }
+        }
+    }
+
+    if (length >= offset + 2) {
+        word_t rights = getSyscallArg(offset + 1, buffer);
+
+        cap = maskCapRights(rightsFromWord(rights), cap);
+    }
+
+    if (!validFaultHandler(cap)) {
+        userError("TCB updateAndCheckHandlerEP: insufficient endpoint rights.");
+        current_syscall_error.type = seL4_InvalidCapability;
+        current_syscall_error.invalidCapNumber = capPosition;
+        ret.cap = cap_null_cap_new();
+        ret.status = EXCEPTION_SYSCALL_ERROR;
+        return ret;
+    }
+    return deriveCap(slot, cap);;
+}
+
+exception_t decodeSetTimeoutEndpoint(cap_t cap, word_t length, cte_t *slot, word_t *buffer)
 {
     if (current_extra_caps.excaprefs[0] == NULL) {
-        userError("TCB SetSchedParams: Truncated message.");
+        userError("TCB SetTimeoutEndpoint: Truncated message.");
+        current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
@@ -1262,11 +1306,11 @@ exception_t decodeSetTimeoutEndpoint(cap_t cap, cte_t *slot)
     cap_t thCap   = current_extra_caps.excaprefs[0]->cap;
 
     /* timeout handler */
-    if (!validFaultHandler(thCap)) {
-        userError("TCB SetTimeoutEndpoint: timeout endpoint cap invalid.");
-        current_syscall_error.invalidCapNumber = 1;
-        return EXCEPTION_SYSCALL_ERROR;
+    deriveCap_ret_t dc_ret = updateAndCheckHandlerEP(thCap, length, thSlot, buffer, 0, 1);
+    if (dc_ret.status != EXCEPTION_NONE) {
+        return dc_ret.status;
     }
+    thCap = dc_ret.cap;
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeTCB_ThreadControlCaps(
@@ -1363,12 +1407,12 @@ exception_t decodeSetSchedParams(cap_t cap, word_t length, word_t *buffer)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (!validFaultHandler(fhCap)) {
-        userError("TCB Configure: fault endpoint cap invalid.");
-        current_syscall_error.type = seL4_InvalidCapability;
-        current_syscall_error.invalidCapNumber = 3;
-        return EXCEPTION_SYSCALL_ERROR;
+    /* fault handler */
+    deriveCap_ret_t dc_ret = updateAndCheckHandlerEP(fhCap, length, fhSlot, buffer, 2, 3);
+    if (dc_ret.status != EXCEPTION_NONE) {
+        return dc_ret.status;
     }
+    fhCap = dc_ret.cap;
 #endif
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
 #ifdef CONFIG_KERNEL_MCS
@@ -1536,11 +1580,11 @@ exception_t decodeSetSpace(cap_t cap, word_t length, cte_t *slot, word_t *buffer
 
 #ifdef CONFIG_KERNEL_MCS
     /* fault handler */
-    if (!validFaultHandler(fhCap)) {
-        userError("TCB SetSpace: fault endpoint cap invalid.");
-        current_syscall_error.invalidCapNumber = 1;
-        return EXCEPTION_SYSCALL_ERROR;
+    dc_ret = updateAndCheckHandlerEP(fhCap, length, fhSlot, buffer, 2, 1);
+    if (dc_ret.status != EXCEPTION_NONE) {
+        return dc_ret.status;
     }
+    fhCap = dc_ret.cap;
 #endif
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);

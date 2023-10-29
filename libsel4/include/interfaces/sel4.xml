@@ -353,6 +353,7 @@
                 </description>
             </error>
         </method>
+
         <method id="TCBSetSchedParams" name="SetSchedParams" manual_name="Set Sched Params (MCS)" manual_label="tcb_setschedparams_mcs">
             <condition><config var="CONFIG_KERNEL_MCS"/></condition>
             <brief>
@@ -372,6 +373,54 @@
                 description="Capability to the scheduling context that the TCB should run on. If the scheduling context is already bound to a notification or TCB that is not this TCB this operation will fail. Similarly, if this TCB is already bound to a scheduling context that is not this scheduling context, this will also fail."/>
             <param dir="in" name="fault_ep" type="seL4_CPtr"
                 description="CPTR to the endpoint which receives IPCs when this thread faults."/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> or <texttt text="sched_context"/> is already bound.
+                    Or, <texttt text="_service"/> is the current thread's TCB.
+                    Or, <texttt text="_service"/> is a TCB in the blocked state and <texttt text="sched_context"/> is not schedulable.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/>, <texttt text="authority"/>, <texttt text="sched_context"/>, or <texttt text="fault_ep"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="fault_ep"/> does not have both Write rights and either Grant or GrantReply rights to the Endpoint <docref>(see <autoref label="sec:cap_rights"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="mcp"/> is greater than the maximum controlled priority of <texttt text="authority"/>.
+                    Or, <texttt text="priority"/> is greater than the maximum controlled priority of <texttt text="authority"/>.
+                </description>
+            </error>
+        </method>
+        <method id="TCBSetSchedParams" name="SetSchedParamsFH" manual_name="Set Sched Params (MCS)" manual_label="tcb_setschedparams_mcs">
+            <condition><config var="CONFIG_KERNEL_MCS"/></condition>
+            <brief>
+                Change a thread's priority, maximum controlled priority, scheduling context
+                and fault handler.
+            </brief>
+            <description>
+                <docref>See <autoref label="sec:sched"/></docref>
+            </description>
+            <param dir="in" name="authority" type="seL4_TCB"
+                description="Capability to the TCB to use the MCP from when setting the priority and MCP."/>
+            <param dir="in" name="mcp" type="seL4_Word"
+                description="The thread's new maximum controlled priority."/>
+            <param dir="in" name="priority" type="seL4_Word"
+                description="The thread's new priority."/>
+            <param dir="in" name="sched_context" type="seL4_CPtr"
+                description="Capability to the scheduling context that the TCB should run on. If the scheduling context is already bound to a notification or TCB that is not this TCB this operation will fail. Similarly, if this TCB is already bound to a scheduling context that is not this scheduling context, this will also fail."/>
+            <param dir="in" name="fault_ep" type="seL4_CPtr"
+                description="CPTR to the endpoint which receives IPCs when this thread faults."/>
+            <param dir="in" name="fault_ep_data" type="seL4_Word"
+                description="Optionally set the badge of the new fault handler Endpoint. If set to zero, this parameter has no effect."/>
+            <param dir="in" name="fault_ep_rights" type="seL4_CapRights_t">
+                <description>
+                    Optionally set the rights inherited by the new fault handler Endpoint capability.<docref>Possible values for this type are given in <autoref label="sec:cap_rights"/>  .</docref>
+                    If set to zero, this parameter has no effect.
+                </description>
+            </param>
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
@@ -449,6 +498,36 @@
                 </description>
             </error>
         </method>
+        <method id="TCBSetTimeoutEndpoint" name="SetTimeoutEndpointBadge" manual_name="Set Timeout Endpoint" manual_label="tcb_settimeoutendpoint">
+            <condition><config var="CONFIG_KERNEL_MCS"/></condition>
+            <brief>
+                Set a thread's timeout endpoint.
+            </brief>
+            <description>
+                Timeout exception messages will be delivered to this endpoint if it is not a null capability.
+            </description>
+            <param dir="in" name="timeout_fault_ep" type="seL4_CPtr"
+                description="CPTR to the endpoint which receives IPCs when this thread triggers timeout faults. Can be null."/>
+            <param dir="in" name="timeout_ep_data" type="seL4_Word"
+                description="Optionally set the badge of the new timeout handler Endpoint. If set to zero, this parameter has no effect."/>
+            <param dir="in" name="timeout_ep_rights" type="seL4_CapRights_t">
+                <description>
+                    Optionally set the rights inherited by the new timeout handler Endpoint capability.<docref>Possible values for this type are given in <autoref label="sec:cap_rights"/>  .</docref>
+                    If set to zero, this parameter has no effect.
+                </description>
+            </param>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="timeout_fault_ep"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="timeout_fault_ep"/> does not have both Write rights and either Grant or GrantReply rights to the Endpoint <docref>(see <autoref label="sec:cap_rights"/>)</docref>.
+                </description>
+            </error>
+        </method>
 
         <method id="TCBSetSpace" name="SetSpace" manual_name="Set Space" manual_label="tcb_setspace">
             <condition><not><config var="CONFIG_KERNEL_MCS"/></not></condition>
@@ -505,6 +584,51 @@
                 description="The new VSpace root."/>
             <param dir="in" name="vspace_root_data" type="seL4_Word"
                 description="Has no effect on x86 or ARM processors."/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/>, <texttt text="cspace_root"/>, or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="vspace_root"/> is not assigned to an ASID pool.
+                    Or, <texttt text="cspace_root_data"/> is invalid.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="fault_ep"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="fault_ep"/> does not have both Write rights and either Grant or GrantReply rights to the Endpoint <docref>(see <autoref label="sec:cap_rights"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_RevokeFirst">
+                <description>
+                    The <texttt text="cspace_root"/> or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+        </method>
+        <method id="TCBSetSpace" name="SetSpaceFH" manual_name="Set Space" manual_label="tcb_setspace_mcs">
+            <condition><config var="CONFIG_KERNEL_MCS"/></condition>
+            <brief>
+                Set the fault endpoint, CSpace and VSpace of a thread
+            </brief>
+            <description>
+                <docref>See <autoref label="sec:threads"/></docref>
+            </description>
+            <param dir="in" name="fault_ep" type="seL4_CPtr"
+                description="CPTR to the endpoint which receives IPCs when this thread faults. On MCS this cap gets copied into the TCB."/>
+            <param dir="in" name="cspace_root" type="seL4_CNode"
+                description="The new CSpace root."/>
+            <param dir="in" name="cspace_root_data" type="seL4_Word"
+                description="Optionally set the guard and guard size of the new root CNode. If set to zero, this parameter has no effect."/>
+            <param dir="in" name="vspace_root" type="seL4_CPtr"
+                description="The new VSpace root."/>
+            <param dir="in" name="vspace_root_data" type="seL4_Word"
+                description="Has no effect on x86 or ARM processors."/>
+            <param dir="in" name="fault_ep_data" type="seL4_Word"
+                description="Optionally set the badge of the new fault handler endpoint. If set to zero, this parameter has no effect."/>
+            <param dir="in" name="fault_ep_rights" type="seL4_CapRights_t">
+                <description>
+                    Optionally set the rights inherited by the new fault handler Endpoint capability.<docref>Possible values for this type are given in <autoref label="sec:cap_rights"/>  .</docref>
+                    If set to zero, this parameter has no effect.
+                </description>
+            </param>
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/>, <texttt text="cspace_root"/>, or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
