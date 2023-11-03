@@ -13,9 +13,9 @@ doxygen comments from a given interface defined in an xml file.
 import os
 import sys
 import argparse
-import operator
 import logging
 import itertools
+from pathlib import Path
 from libsel4_tools import syscall_stub_gen
 from lxml import etree
 
@@ -53,7 +53,7 @@ def generate_prototype(interface_name, method_name, method_id, inputs, outputs, 
     return "%s\n%s %s %s(%s);" % (comment, prefix, return_type, name, param_list)
 
 
-def gen_invocations(input_files, output_file, args):
+def gen_invocations(input_files, output_dir, args):
     """
     Given a collection of input xml files describing seL4 interfaces,
     generates a c header file containing doxygen-commented function
@@ -62,9 +62,18 @@ def gen_invocations(input_files, output_file, args):
 
     types = init_all_types(args)
 
+    group_file_name = output_dir / "group_defs.h"
+    if os.path.exists(group_file_name):
+        os.remove(group_file_name)
+
     for input_file in input_files:
         methods, _, api = syscall_stub_gen.parse_xml_file(input_file, types)
-        prototypes = []
+
+        # dict mapping group id to list of prototypes
+        prototypes = {}
+
+        # dict mapping group id to group name
+        groups = {}
 
         # figure out the prefix to use for an interface group id. This makes groups per arch,
         # sel4_arch unique even through the interface name is the same.
@@ -79,24 +88,37 @@ def gen_invocations(input_files, output_file, args):
         for interface_name, methods in itertools.groupby(methods, lambda x: x[0]):
             group_id = interface_name if prefix is None else prefix + '_' + interface_name
             group_name = interface_name
-            output_file.write("/**\n * @defgroup %s %s\n * @{\n */\n\n" % (group_id, group_name))
-            output_file.write("/** @} */\n")
+
+            if group_id in groups:
+                if group_name != groups[group_id]:
+                    raise Exception(f"Group {group_id} has inconsistent names: {group_name} "
+                                    f"!= {groups[group_id]}")
+            else:
+                groups[group_id] = group_name
+
             for (interface_name, method_name, method_id, inputs, outputs, _, comment) in methods:
-                prototype = "/**\n * @addtogroup %s %s\n * @{\n */\n\n" % (group_id, group_name)
-                prototype += generate_prototype(interface_name,
-                                                method_name, method_id, inputs, outputs, comment)
-                prototype += "/** @} */\n"
-                prototypes.append(prototype)
+                prototype = "/**\n * @addtogroup %s\n * @{\n */\n\n" % group_id
+                prototype += generate_prototype(interface_name, method_name, method_id, inputs,
+                                                outputs, comment)
+                prototype += "\n/** @} */\n"
+                if group_id not in prototypes:
+                    prototypes[group_id] = [prototype]
+                else:
+                    prototypes[group_id].append(prototype)
 
-        prototypes.sort()
+        with open(group_file_name, "a") as groups_file:
+            groups_file.write("/**\n * @defgroup %s %s\n * @{\n */\n\n" % (api.name, api.name))
+            for group_id, group_name in sorted(groups.items()):
+                groups_file.write("/**\n * @defgroup %s %s\n */\n\n" % (group_id, group_name))
+            groups_file.write("/** @} */\n\n")
 
-        output_file.write("/**\n * @defgroup %s %s\n * @{\n */\n\n" % (api.name, api.name))
-
-        for prototype in prototypes:
-            output_file.write(prototype)
-            output_file.write("\n\n")
-
-        output_file.write("/** @} */\n")
+        for group_id, group_prototypes in prototypes.items():
+            group_prototypes.sort()
+            output_name = output_dir / f"{group_id}.h"
+            with open(output_name, "w") as output_file:
+                for prototype in group_prototypes:
+                    output_file.write(prototype)
+                    output_file.write("\n\n")
 
 
 def process_args():
@@ -108,9 +130,9 @@ def process_args():
 
     parser.add_argument("--x86-vtx-64-bit-guests", dest="x86_vtx_64bit", action="store_true", default=False,
                         help="Whether the vtx VCPU objects need to be large enough for 64-bit guests.")
-    parser.add_argument("-o", "--output", dest="output", default="/dev/stdout",
+    parser.add_argument("-o", "--output", dest="output", default="stage",
                         type=str,
-                        help="Output file to write stub to. (default: %(default)s).")
+                        help="Output directory to write stubs to. (default: %(default)s).")
     parser.add_argument("files", metavar="FILES", nargs="+", type=str,
                         help="Input XML files.")
 
@@ -133,11 +155,14 @@ def main():
                 logging.error(dtd.error_log)
                 return -1
 
-    if not os.path.exists(os.path.dirname(args.output)):
-        os.makedirs(os.path.dirname(args.output))
+    if not os.path.exists(args.output):
+        os.makedirs(args.output)
 
-    with open(args.output, "w") as output:
-        gen_invocations(args.files, output, args)
+    if not os.path.isdir(args.output):
+        logging.error(f"{args.output} is not a directory")
+        return -1
+
+    gen_invocations(args.files, Path(args.output), args)
 
 
 if __name__ == "__main__":

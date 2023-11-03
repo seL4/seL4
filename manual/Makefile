@@ -135,7 +135,7 @@ ${DOXYGEN_XML_OUT}: ${DoxygenMarker}
 # Without excluding one of the two files, the doc strings get merged in inconsistent ways
 # and lead to bad output in the manual. If there is a better way to support duplicates
 # then it could be used instead.
-${DoxygenMarker}: ${Stage}/object_invocations.h
+${DoxygenMarker}: ${Stage}/group_defs.h
 	@echo "====> Running doxygen"
 	( cat Doxyfile ; echo "EXCLUDE = ./../libsel4/include/sel4/syscalls_master.h" ) | $(doxygen) -
 	( cat Doxyfile ; echo "EXCLUDE = ./../libsel4/include/sel4/syscalls_mcs.h" ) | $(doxygen) -
@@ -162,16 +162,16 @@ ${GeneratedMarkdownDir}/%.md: ${DoxygenXml}/group__%.xml Makefile
 generated-markdown: $(addsuffix .md, $(addprefix ${GeneratedMarkdownDir}/, ${SYSCALLS} ${OBJECTS}))
 
 # Generate object invocation prototypes
-${Stage}/object_invocations.h: ${Libsel4Dir}/include/interfaces/sel4.xml \
-                               ${Libsel4Dir}/arch_include/x86/interfaces/sel4arch.xml \
-                               ${Libsel4Dir}/arch_include/arm/interfaces/sel4arch.xml \
-                               ${Libsel4Dir}/sel4_arch_include/aarch32/interfaces/sel4arch.xml \
-                               ${Libsel4Dir}/sel4_arch_include/aarch64/interfaces/sel4arch.xml \
-                               ${Libsel4Dir}/sel4_arch_include/ia32/interfaces/sel4arch.xml \
-                               ${Libsel4Dir}/sel4_arch_include/x86_64/interfaces/sel4arch.xml \
-                               ${Libsel4Dir}/arch_include/riscv/interfaces/sel4arch.xml
+${Stage}/group_defs.h: ${Libsel4Dir}/include/interfaces/sel4.xml \
+                       ${Libsel4Dir}/arch_include/x86/interfaces/sel4arch.xml \
+                       ${Libsel4Dir}/arch_include/arm/interfaces/sel4arch.xml \
+                       ${Libsel4Dir}/sel4_arch_include/aarch32/interfaces/sel4arch.xml \
+                       ${Libsel4Dir}/sel4_arch_include/aarch64/interfaces/sel4arch.xml \
+                       ${Libsel4Dir}/sel4_arch_include/ia32/interfaces/sel4arch.xml \
+                       ${Libsel4Dir}/sel4_arch_include/x86_64/interfaces/sel4arch.xml \
+                       ${Libsel4Dir}/arch_include/riscv/interfaces/sel4arch.xml
 	@echo "====> Generating documented object invocation header"
-	${Q}${PYTHON} ${GenerateObjectInvocationTool} --dtd ${InterfaceDtd} --output $@ $^
+	${Q}${PYTHON} ${GenerateObjectInvocationTool} --dtd ${InterfaceDtd} --output ${Stage} $^
 
 # Fetch information from the environment that needs to go into the document.
 env.tex: FORCE
