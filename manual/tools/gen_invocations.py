@@ -27,7 +27,7 @@ DEFAULT_RETURN_TYPE = "int"
 
 def init_all_types(args):
     """
-    Return an array of all c types involved in the sel4 interface
+    Return an array of all c types involved in the seL4 interface
     """
 
     data_types = syscall_stub_gen.init_data_types(WORD_SIZE)
@@ -55,7 +55,7 @@ def generate_prototype(interface_name, method_name, method_id, inputs, outputs, 
 
 def gen_invocations(input_files, output_file, args):
     """
-    Given a collection of input xml files describing sel4 interfaces,
+    Given a collection of input xml files describing seL4 interfaces,
     generates a c header file containing doxygen-commented function
     prototypes.
     """
