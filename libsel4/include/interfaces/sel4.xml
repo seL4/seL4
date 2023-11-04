@@ -487,7 +487,7 @@
             </error>
         </method>
 
-        <method id="TCBSetSpace" name="SetSpace" manual_name="Set Space" manual_label="tcb_setspace_mcs">
+        <method id="TCBSetSpace" name="SetSpace" manual_name="Set Space (MCS)" manual_label="tcb_setspace_mcs">
             <condition><config var="CONFIG_KERNEL_MCS"/></condition>
             <brief>
                 Set the fault endpoint, CSpace and VSpace of a thread
