@@ -53,6 +53,111 @@ def generate_prototype(interface_name, method_name, method_id, inputs, outputs, 
     return "%s\n%s %s %s(%s);" % (comment, prefix, return_type, name, param_list)
 
 
+def eval_condition(condition, values):
+    """
+    Evaluates a method condition string to True or False. Empty values and
+    expressions evaluate to False. Raises an exception if the parse failed.
+    Values dict must map to strings "True", "False", or to None.
+
+    Accepted grammar:
+    condition ::= term ("&&" term)*
+    term ::= "defined" "(" identifier ")" | "!" term | "(" condition ")"
+    """
+
+    pos = 0
+
+    def accept(string):
+        nonlocal pos
+        # if we overflow len(condition), the equality will fail
+        if condition[pos:pos+len(string)] == string:
+            pos += len(string)
+            return True
+        else:
+            return False
+
+    def skip_whitespace():
+        nonlocal pos
+        while pos < len(condition) and condition[pos].isspace():
+            pos += 1
+
+    def parse_defined():
+        nonlocal pos
+        skip_whitespace()
+        if not accept("defined("):
+            return None
+        skip_whitespace()
+        if not condition[pos].isalpha():
+            return None
+        start = pos
+        while pos < len(condition) and (condition[pos].isalnum() or condition[pos] == "_"):
+            pos += 1
+        end = pos
+        if not accept(")"):
+            return None
+        return values.get(condition[start:end], "False")
+
+    def parse_not():
+        nonlocal pos
+        skip_whitespace()
+        if not accept("!"):
+            return None
+        term = parse_term()
+        if term == "True":
+            return "False"
+        elif term == "False":
+            return "True"
+        else:
+            return None
+
+    def parse_paren():
+        nonlocal pos
+        skip_whitespace()
+        if not accept("("):
+            return None
+        result = parse_condition()
+        if not accept(")"):
+            return None
+        return result
+
+    def parse_term():
+        return parse_defined() or parse_not() or parse_paren()
+
+    def parse_condition():
+        nonlocal pos
+        skip_whitespace()
+        term = parse_term()
+        if not term:
+            return None
+        skip_whitespace()
+        while accept("&&"):
+            next_term = parse_term()
+            if not next_term:
+                return None
+            skip_whitespace()
+            if next_term == "False":
+                term = "False"
+        return term
+
+    if condition == '':
+        return False
+    cond = parse_condition()
+    skip_whitespace()
+    if not cond or pos != len(condition):
+        raise Exception(f"Failed to parse condition '{condition}'")
+    if cond == "True":
+        return True
+    if cond == "False":
+        return False
+    raise Exception(f"Unexpected value {cond} for condition '{condition}'")
+
+
+def is_mcs(method_condition):
+    """
+    Returns whether the condition evaluates to true when CONFIG_KERNEL_MCS is set.
+    """
+    return eval_condition(method_condition, {"CONFIG_KERNEL_MCS": "True"})
+
+
 def gen_invocations(input_files, output_dir, args):
     """
     Given a collection of input xml files describing seL4 interfaces,
@@ -87,6 +192,7 @@ def gen_invocations(input_files, output_dir, args):
         # group the methods in each interface
         for interface_name, methods in itertools.groupby(methods, lambda x: x[0]):
             group_id = interface_name if prefix is None else prefix + '_' + interface_name
+            group_id_mcs = group_id + "_mcs"
             group_name = interface_name
 
             if group_id in groups:
@@ -95,21 +201,25 @@ def gen_invocations(input_files, output_dir, args):
                                     f"!= {groups[group_id]}")
             else:
                 groups[group_id] = group_name
+                groups[group_id_mcs] = group_name + " (MCS)"
 
-            for (interface_name, method_name, method_id, inputs, outputs, _, comment) in methods:
-                prototype = "/**\n * @addtogroup %s\n * @{\n */\n\n" % group_id
+            for (interface_name, method_name, method_id, inputs, outputs, condition,
+                 comment) in methods:
+                g_id = group_id_mcs if is_mcs(condition) else group_id
+                prototype = "/**\n * @addtogroup %s\n * @{\n */\n\n" % g_id
                 prototype += generate_prototype(interface_name, method_name, method_id, inputs,
                                                 outputs, comment)
                 prototype += "\n/** @} */\n"
-                if group_id not in prototypes:
-                    prototypes[group_id] = [prototype]
+                if g_id not in prototypes:
+                    prototypes[g_id] = [prototype]
                 else:
-                    prototypes[group_id].append(prototype)
+                    prototypes[g_id].append(prototype)
 
         with open(group_file_name, "a") as groups_file:
             groups_file.write("/**\n * @defgroup %s %s\n * @{\n */\n\n" % (api.name, api.name))
             for group_id, group_name in sorted(groups.items()):
-                groups_file.write("/**\n * @defgroup %s %s\n */\n\n" % (group_id, group_name))
+                if group_id in prototypes:
+                    groups_file.write("/**\n * @defgroup %s %s\n */\n\n" % (group_id, group_name))
             groups_file.write("/** @} */\n\n")
 
         for group_id, group_prototypes in prototypes.items():
