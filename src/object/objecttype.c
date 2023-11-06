@@ -230,6 +230,7 @@ finaliseCap_ret_t finaliseCap(cap_t cap, bool_t final, bool_t exposed)
             }
             /* mark the sc as no longer valid */
             sc->scRefillMax = 0;
+            sc->scSporadic = false;
             fc_ret.remainder = cap_null_cap_new();
             fc_ret.cleanupInfo = cap_null_cap_new();
             return fc_ret;
