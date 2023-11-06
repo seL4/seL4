@@ -65,9 +65,10 @@ static inline void setDeadline(ticks_t deadline)
     if (likely(x86KSapicRatio == 0)) {
         x86_wrmsr(IA32_TSC_DEADLINE_MSR, deadline);
     } else {
-        /* convert deadline from tscKhz to apic khz */
-        deadline -= getCurrentTime();
-        apic_write_reg(APIC_TIMER_COUNT, div64(deadline, x86KSapicRatio));
+        /* Must not underflow */
+        deadline -= MIN(deadline, getCurrentTime());
+        /* Convert deadline from tscKhz to apic khz. Must be at least 1 tick. */
+        apic_write_reg(APIC_TIMER_COUNT, MAX(1, div64(deadline, x86KSapicRatio)));
     }
 }
 #else
