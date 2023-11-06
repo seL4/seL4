@@ -62,7 +62,6 @@ static inline PURE time_t ticksToUs(ticks_t ticks)
 
 static inline void setDeadline(ticks_t deadline)
 {
-    assert(deadline > NODE_STATE(ksCurTime));
     if (likely(x86KSapicRatio == 0)) {
         x86_wrmsr(IA32_TSC_DEADLINE_MSR, deadline);
     } else {

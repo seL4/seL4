@@ -16,7 +16,9 @@
 /* Read the current time from the timer. */
 /** MODIFIES: [*] */
 static inline ticks_t getCurrentTime(void);
-/* set the next deadline irq - deadline is absolute */
+/* Set the next deadline irq - deadline is absolute and may be slightly in
+   the past. If it is set in the past, we expect an interrupt to be raised
+   immediately after we leave the kernel. */
 /** MODIFIES: [*] */
 static inline void setDeadline(ticks_t deadline);
 /* ack previous deadline irq */
