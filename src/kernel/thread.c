@@ -585,6 +585,13 @@ void setNextInterrupt(void)
         next_interrupt = MIN(refill_head(NODE_STATE(ksReleaseHead)->tcbSchedContext)->rTime, next_interrupt);
     }
 
+    /* We should never be attempting to schedule anything earlier than ksCurTime */
+    assert(next_interrupt >= NODE_STATE(ksCurTime));
+
+    /* Our lower bound ksCurTime is slightly in the past (at kernel entry) and
+       we are further subtracting getTimerPrecision(), so we may be setting a
+       deadline in the past. If that is the case, we assume the IRQ will be
+       raised immediately after we leave the kernel. */
     setDeadline(next_interrupt - getTimerPrecision());
 }
 

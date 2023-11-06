@@ -24,7 +24,6 @@ static inline ticks_t getCurrentTime(void)
 /** DONT_TRANSLATE **/
 static inline void setDeadline(ticks_t deadline)
 {
-    assert(deadline >= NODE_STATE(ksCurTime));
     SYSTEM_WRITE_64(CNT_CVAL, deadline);
 }
 
