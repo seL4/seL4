@@ -46,6 +46,9 @@ SECTIONS
     {
         . = ALIGN(4K);
 
+       /* Traps and fastpath */
+        *(.text.traps)
+        *(.text.fastpath)
 
         /* Standard kernel */
         *(.text)

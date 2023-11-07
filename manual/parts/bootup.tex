@@ -118,14 +118,15 @@ of slots in the initial thread's CNode, starting with CPTR \texttt{start} and wi
   \end{center}
 \end{table}
 
-Depending on the architecture and platform there might be additional pieces of boot
-information. If \texttt{extraLen} is greater than zero, then 4K after the start of bootinfo
-is a region of extraLen bytes containing additional bootinfo structures. Each chunk starts
-with a \texttt{seL4\_BootInfoHeader}, described in \autoref{tab:bi_header_struct}, that
-describes what the chunk is and how long it is, where the length includes the header. The
-length can be used to skip over chunks that you do not understand. The only generally
-defined chunk type is \texttt{SEL4\_BOOTINFO\_HEADER\_PADDING} and describes an empty
-chunk that has no data, any other types are platform or architecture specific. The
+The size of the fixed Boot Info Frame is \texttt{seL4\_BootInfoFrameSize}. In the standard
+configuration, this is one page, which is 4 KiByte on x86, ARM and RISC-V. Depending on the
+architecture and platform, there might be additional pieces of variable boot information
+following afterwards. The overall size of this data is \texttt{extraLen}, it contains a
+sequence of blobs, where each one start with a \texttt{seL4\_BootInfoHeader} described in
+\autoref{tab:bi_header_struct}. This header describes what the blob is and how long it is,
+where the length includes the header. Thus, the length can be used to skip over unknown
+chunks. The only generally defined chunk type is \texttt{SEL4\_BOOTINFO\_HEADER\_PADDING}
+and describes a blob where any payload data exists for padding only. The
 \texttt{extraBIPages} slot region gives the frames capabilities for the pages that make up
 the additional boot info region.
 

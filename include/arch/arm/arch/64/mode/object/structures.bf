@@ -46,17 +46,17 @@ block page_table_cap {
 
 -- First-level page table (vspace_root)
 block vspace_cap {
-    field capMappedASID              16
-    field_high capPTBasePtr          48
+    field capVSMappedASID            16
+    field_high capVSBasePtr          48
 
     field capType                    5
-    field capIsMapped                1
-#ifdef CONFIG_ARM_SMMU 
-    field capMappedCB                8
+    field capVSIsMapped              1
+#ifdef CONFIG_ARM_SMMU
+    field capVSMappedCB              8
     padding                          50
-#else 
+#else
     padding                          58
-#endif 
+#endif
 }
 
 -- Cap to the table of 2^7 ASID pools
@@ -126,6 +126,15 @@ block cb_cap {
 
 #endif
 
+#ifdef CONFIG_ALLOW_SMC_CALLS
+block smc_cap {
+    field capSMCBadge 64
+
+    field capType  5
+    padding        59
+}
+#endif
+
 -- NB: odd numbers are arch caps (see isArchCap())
 tagged_union cap capType {
     -- 5-bit tag caps
@@ -159,6 +168,9 @@ tagged_union cap capType {
     tag sid_cap                     19
     tag cb_control_cap              21
     tag cb_cap                      23
+#endif
+#ifdef CONFIG_ALLOW_SMC_CALLS
+    tag smc_cap                     25
 #endif
 }
 

@@ -29,8 +29,11 @@
 #endif
 
 #ifdef ENABLE_SMP_SUPPORT
-/* sync variable to prevent other nodes from booting
- * until kernel data structures initialized */
+/* SMP boot synchronization works based on a global variable with the initial
+ * value 0, as the loader must zero all BSS variables. Secondary cores keep
+ * spinning until the primary core has initialized all kernel structures and
+ * then set it to 1.
+ */
 BOOT_BSS static volatile int node_boot_lock;
 #endif /* ENABLE_SMP_SUPPORT */
 
@@ -161,6 +164,14 @@ BOOT_CODE static void init_smmu(cap_t root_cnode_cap)
 
 #endif
 
+#ifdef CONFIG_ALLOW_SMC_CALLS
+BOOT_CODE static void init_smc(cap_t root_cnode_cap)
+{
+    /* Provide the SMC cap*/
+    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapSMC), cap_smc_cap_new(0));
+}
+#endif
+
 /** This and only this function initialises the CPU.
  *
  * It does NOT initialise any kernel state.
@@ -252,15 +263,13 @@ BOOT_CODE static void init_plat(void)
 #ifdef ENABLE_SMP_SUPPORT
 BOOT_CODE static bool_t try_init_kernel_secondary_core(void)
 {
-    unsigned i;
-
     /* need to first wait until some kernel init has been done */
     while (!node_boot_lock);
 
     /* Perform cpu init */
     init_cpu();
 
-    for (i = 0; i < NUM_PPI; i++) {
+    for (unsigned int i = 0; i < NUM_PPI; i++) {
         maskInterrupt(true, CORE_IRQ_TO_IRQT(getCurrentCPUIndex(), i));
     }
     setIRQState(IRQIPI, CORE_IRQ_TO_IRQT(getCurrentCPUIndex(), irq_remote_call_ipi));
@@ -284,6 +293,7 @@ BOOT_CODE static bool_t try_init_kernel_secondary_core(void)
 BOOT_CODE static void release_secondary_cpus(void)
 {
     /* release the cpus at the same time */
+    assert(0 == node_boot_lock); /* Sanity check for a proper lock state. */
     node_boot_lock = 1;
 
     /*
@@ -349,7 +359,7 @@ static BOOT_CODE bool_t try_init_kernel(
 
     ipcbuf_vptr = ui_v_reg.end;
     bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
-    extra_bi_frame_vptr = bi_frame_vptr + BIT(BI_FRAME_SIZE_BITS);
+    extra_bi_frame_vptr = bi_frame_vptr + BIT(seL4_BootInfoFrameBits);
 
     /* setup virtual memory for the kernel */
     map_kernel_window();
@@ -436,6 +446,10 @@ static BOOT_CODE bool_t try_init_kernel(
     /* initialise the SMMU and provide the SMMU control caps*/
     init_smmu(root_cnode_cap);
 #endif
+#ifdef CONFIG_ALLOW_SMC_CALLS
+    init_smc(root_cnode_cap);
+#endif
+
     populate_bi_frame(0, CONFIG_MAX_NUM_NODES, ipcbuf_vptr, extra_bi_size);
 
     /* put DTB in the bootinfo block, if present. */

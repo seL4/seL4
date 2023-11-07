@@ -22,3 +22,8 @@ typedef struct seL4_UserContext_ {
     /* Thread ID registers */
     seL4_Word tpidr_el0, tpidrro_el0;
 } seL4_UserContext;
+
+typedef struct seL4_ARM_SMCContext_ {
+    /* register arguments */
+    seL4_Word x0, x1, x2, x3, x4, x5, x6, x7;
+} seL4_ARM_SMCContext;

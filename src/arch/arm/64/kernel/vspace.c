@@ -449,11 +449,11 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
 
     /* create the PGD */
     vspace_cap = cap_vspace_cap_new(
-                     IT_ASID,           /* capMappedASID */
-                     rootserver.vspace, /* capPTBasePtr  */
-                     1                  /* capIsMapped   */
+                     IT_ASID,           /* capVSMappedASID */
+                     rootserver.vspace, /* capVSBasePtr    */
+                     1                  /* capVSIsMapped   */
 #ifdef CONFIG_ARM_SMMU
-                     , 0                /* capMappedCB   */
+                     , 0                /* capVSMappedCB   */
 #endif
                  );
     slot_pos_before = ndks_boot.slot_pos_cur;
@@ -528,7 +528,7 @@ BOOT_CODE void write_it_asid_pool(cap_t it_ap_cap, cap_t it_vspace_cap)
                               0,
 #endif
                               /* vspace_root: reference to vspace root page table object */
-                              (word_t)cap_vspace_cap_get_capPTBasePtr(it_vspace_cap)
+                              (word_t)cap_vspace_cap_get_capVSBasePtr(it_vspace_cap)
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
                               /* stored_hw_vmid, stored_vmid_valid: Assigned hardware VMID for TLB. */
                               , 0, false
@@ -652,54 +652,29 @@ static lookupPTSlot_ret_t lookupPTSlot(vspace_root_t *vspace, vptr_t vptr)
 /* Note that if the hypervisor support is enabled, the user page tables use
  * stage-2 translation format. Otherwise, they follow the stage-1 translation format.
  */
-static pte_t makeUserPage(paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t attributes, vm_page_size_t page_size)
+static pte_t makeUserPagePTE(paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t attributes, vm_page_size_t page_size)
 {
     bool_t nonexecutable = vm_attributes_get_armExecuteNever(attributes);
-    pte_t ret;
-    if (vm_attributes_get_armPageCacheable(attributes)) {
-        ret = pte_pte_page_new(
-                  nonexecutable,              /* unprivileged execute never */
-                  paddr,
+    word_t cacheable = vm_attributes_get_armPageCacheable(attributes);
+
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-                  0,
+    word_t nG = 0; /* not global */
+    word_t attridx = cacheable ? S2_NORMAL : S2_DEVICE_nGnRnE;
 #else
-                  1,                          /* not global */
-#endif
-                  1,                          /* access flag */
-                  SMP_TERNARY(SMP_SHARE, 0),          /* Inner-shareable if SMP enabled, otherwise unshared */
-                  APFromVMRights(vm_rights),
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-                  S2_NORMAL
-#else
-                  NORMAL
-#endif
-              );
-    } else {
-        ret = pte_pte_page_new(
-                  nonexecutable,              /* unprivileged execute never */
-                  paddr,
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-                  0,
-#else
-                  1,                          /* not global */
-#endif
-                  1,                          /* access flag */
-                  0,                          /* Ignored - Outter shareable */
-                  APFromVMRights(vm_rights),
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-                  S2_DEVICE_nGnRnE
-#else
-                  DEVICE_nGnRnE
+    word_t nG = 1; /* not global */
+    word_t attridx = cacheable ? NORMAL : DEVICE_nGnRnE;
 #endif
 
-              );
-    }
-    /* If The target page size is 4k, then really pte_pte_4k_page_new() should be used
-       but instead we just update the type manually after using pte_pte_page_new(). */
+    /* Inner-shareable if SMP enabled, otherwise unshared (ignored for devices) */
+    word_t shareable = cacheable ? SMP_TERNARY(SMP_SHARE, 0) : 0;
+
     if (page_size == ARMSmallPage) {
-        ret.words[0] |= 0x3;
+        return pte_pte_4k_page_new(nonexecutable, paddr, nG, 1 /* access flag */,
+                                   shareable, APFromVMRights(vm_rights), attridx);
+    } else {
+        return pte_pte_page_new(nonexecutable, paddr, nG, 1 /* access flag */,
+                                shareable, APFromVMRights(vm_rights), attridx);
     }
-    return ret;
 }
 
 exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
@@ -749,7 +724,7 @@ bool_t CONST isVTableRoot(cap_t cap)
 bool_t CONST isValidNativeRoot(cap_t cap)
 {
     return isVTableRoot(cap) &&
-           cap_vspace_cap_get_capIsMapped(cap);
+           cap_vspace_cap_get_capVSIsMapped(cap);
 }
 
 bool_t CONST isValidVTableRoot(cap_t cap)
@@ -771,8 +746,8 @@ void setVMRoot(tcb_t *tcb)
         return;
     }
 
-    vspaceRoot = VSPACE_PTR(cap_vspace_cap_get_capPTBasePtr(threadRoot));
-    asid = cap_vspace_cap_get_capMappedASID(threadRoot);
+    vspaceRoot = VSPACE_PTR(cap_vspace_cap_get_capVSBasePtr(threadRoot));
+    asid = cap_vspace_cap_get_capVSMappedASID(threadRoot);
     find_ret = findVSpaceForASID(asid);
     if (unlikely(find_ret.status != EXCEPTION_NONE || find_ret.vspace_root != vspaceRoot)) {
         setCurrentUserVSpaceRoot(ttbr_new(0, addrFromKPPtr(armKSGlobalUserVSpace)));
@@ -789,8 +764,8 @@ static bool_t setVMRootForFlush(vspace_root_t *vspace, asid_t asid)
     threadRoot = TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbVTable)->cap;
 
     if (cap_get_capType(threadRoot) == cap_vspace_cap &&
-        cap_vspace_cap_get_capIsMapped(threadRoot) &&
-        VSPACE_PTR(cap_vspace_cap_get_capPTBasePtr(threadRoot)) == vspace) {
+        cap_vspace_cap_get_capVSIsMapped(threadRoot) &&
+        VSPACE_PTR(cap_vspace_cap_get_capVSBasePtr(threadRoot)) == vspace) {
         return false;
     }
 
@@ -1197,8 +1172,12 @@ static exception_t performPageInvocationUnmap(cap_t cap, cte_t *ctSlot)
                   cap_frame_cap_get_capFBasePtr(cap));
     }
 
-    cap_frame_cap_ptr_set_capFMappedASID(&ctSlot->cap, asidInvalid);
-    cap_frame_cap_ptr_set_capFMappedAddress(&ctSlot->cap, 0);
+    cap_t slotCap = ctSlot->cap;
+    slotCap = cap_frame_cap_set_capFMappedAddress(slotCap, 0);
+    slotCap = cap_frame_cap_set_capFMappedASID(slotCap, asidInvalid);
+    ctSlot->cap = slotCap;
+
+
     return EXCEPTION_NONE;
 }
 
@@ -1315,8 +1294,8 @@ static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, unsigned int l
         }
 
         /* Make sure that the supplied pgd is ok */
-        vspaceRoot = VSPACE_PTR(cap_vspace_cap_get_capPTBasePtr(cap));
-        asid = cap_vspace_cap_get_capMappedASID(cap);
+        vspaceRoot = VSPACE_PTR(cap_vspace_cap_get_capVSBasePtr(cap));
+        asid = cap_vspace_cap_get_capVSMappedASID(cap);
 
         find_ret = findVSpaceForASID(asid);
         if (unlikely(find_ret.status != EXCEPTION_NONE)) {
@@ -1417,8 +1396,8 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, unsigned int le
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    vspaceRoot = VSPACE_PTR(cap_vspace_cap_get_capPTBasePtr(vspaceRootCap));
-    asid = cap_vspace_cap_get_capMappedASID(vspaceRootCap);
+    vspaceRoot = VSPACE_PTR(cap_vspace_cap_get_capVSBasePtr(vspaceRootCap));
+    asid = cap_vspace_cap_get_capVSMappedASID(vspaceRootCap);
 
     if (unlikely(vaddr > USER_TOP)) {
         current_syscall_error.type = seL4_InvalidArgument;
@@ -1448,12 +1427,17 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, unsigned int le
 
     pte = pte_pte_table_new(pptr_to_paddr(PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap))));
 
-    cap_page_table_cap_ptr_set_capPTIsMapped(&cap, 1);
-    cap_page_table_cap_ptr_set_capPTMappedASID(&cap, asid);
-    cap_page_table_cap_ptr_set_capPTMappedAddress(&cap, (vaddr & ~MASK(ptSlot.ptBitsLeft)));
+    cap = cap_page_table_cap_set_capPTIsMapped(cap, 1);
+    cap = cap_page_table_cap_set_capPTMappedASID(cap, asid);
+    cap = cap_page_table_cap_set_capPTMappedAddress(cap, (vaddr & ~MASK(ptSlot.ptBitsLeft)));
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return performPageTableInvocationMap(cap, cte, pte, ptSlot.ptSlot);
+}
+
+static inline bool_t CONST checkVPAlignment(vm_page_size_t sz, word_t w)
+{
+    return (w & MASK(pageBitsForSize(sz))) == 0;
 }
 
 static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length,
@@ -1490,8 +1474,8 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        vspaceRoot = VSPACE_PTR(cap_vspace_cap_get_capPTBasePtr(vspaceRootCap));
-        asid = cap_vspace_cap_get_capMappedASID(vspaceRootCap);
+        vspaceRoot = VSPACE_PTR(cap_vspace_cap_get_capVSBasePtr(vspaceRootCap));
+        asid = cap_vspace_cap_get_capVSMappedASID(vspaceRootCap);
 
         find_ret = findVSpaceForASID(asid);
         if (unlikely(find_ret.status != EXCEPTION_NONE)) {
@@ -1506,19 +1490,19 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        if (unlikely(!IS_PAGE_ALIGNED(vaddr, frameSize))) {
+        if (unlikely(!checkVPAlignment(frameSize, vaddr))) {
             current_syscall_error.type = seL4_AlignmentError;
             return EXCEPTION_SYSCALL_ERROR;
         }
 
         /* In the case of remap, the cap should have a valid asid */
-        frame_asid = cap_frame_cap_ptr_get_capFMappedASID(&cap);
+        frame_asid = cap_frame_cap_get_capFMappedASID(cap);
 
         if (frame_asid != asidInvalid) {
             if (frame_asid != asid) {
                 userError("ARMPageMap: Attempting to remap a frame that does not belong to the passed address space");
                 current_syscall_error.type = seL4_InvalidCapability;
-                current_syscall_error.invalidArgumentNumber = 0;
+                current_syscall_error.invalidArgumentNumber = 1;
                 return EXCEPTION_SYSCALL_ERROR;
 
             } else if (cap_frame_cap_get_capFMappedAddress(cap) != vaddr) {
@@ -1550,7 +1534,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
 
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performPageInvocationMap(asid, cap, cte,
-                                        makeUserPage(base, vmRights, attributes, frameSize), lu_ret.ptSlot);
+                                        makeUserPagePTE(base, vmRights, attributes, frameSize), lu_ret.ptSlot);
     }
 
     case ARMPageUnmap:
@@ -1741,7 +1725,7 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
         vspaceCapSlot = current_extra_caps.excaprefs[0];
         vspaceCap = vspaceCapSlot->cap;
 
-        if (unlikely(!isVTableRoot(vspaceCap) || cap_vspace_cap_get_capIsMapped(vspaceCap))) {
+        if (unlikely(!isVTableRoot(vspaceCap) || cap_vspace_cap_get_capVSIsMapped(vspaceCap))) {
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
 
@@ -1854,7 +1838,7 @@ void Arch_userStackTrace(tcb_t *tptr)
         return;
     }
 
-    vspaceRoot = VSPACE_PTR(cap_vspace_cap_get_capPTBasePtr(threadRoot));
+    vspaceRoot = VSPACE_PTR(cap_vspace_cap_get_capVSBasePtr(threadRoot));
     sp = getRegister(tptr, SP_EL0);
 
     /* check for alignment so we don't have to worry about accessing

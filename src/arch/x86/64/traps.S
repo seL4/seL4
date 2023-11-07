@@ -170,7 +170,7 @@ int_##number:                                       \
 #define INT_HANDLER_WITH_ERR_CODE(number,except) INT_HANDLER_COMMON(number,,except)
 #define INT_HANDLER_WITHOUT_ERR_CODE(number,except) INT_HANDLER_COMMON(number,pushq $0x0,except)
 
-.section .text
+.section .text, "ax"
 .code64
 
 INT_HANDLER_WITHOUT_ERR_CODE(00,1)

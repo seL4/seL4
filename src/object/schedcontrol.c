@@ -13,10 +13,6 @@
 static exception_t invokeSchedControl_ConfigureFlags(sched_context_t *target, word_t core, ticks_t budget,
                                                      ticks_t period, word_t max_refills, word_t badge, word_t flags)
 {
-
-    target->scBadge = badge;
-    target->scSporadic = (flags & seL4_SchedContext_Sporadic) != 0;
-
     /* don't modify parameters of tcb while it is in a sorted queue */
     if (target->scTcb) {
         /* possibly stall a remote core */
@@ -72,6 +68,9 @@ static exception_t invokeSchedControl_ConfigureFlags(sched_context_t *target, wo
             rescheduleRequired();
         }
     }
+
+    target->scBadge = badge;
+    target->scSporadic = (flags & seL4_SchedContext_Sporadic) != 0;
 
     return EXCEPTION_NONE;
 }

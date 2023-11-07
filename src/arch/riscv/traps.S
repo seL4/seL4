@@ -14,7 +14,7 @@
 
 #define REGBYTES (CONFIG_WORD_SIZE / 8)
 
-.section .text
+.section .text.traps, "ax"
 
 .global trap_entry
 .extern c_handle_syscall

@@ -6,7 +6,7 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-if(KernelArchARM)
+if(KernelSel4ArchAarch32)
     set_property(TARGET kernel_config_target APPEND PROPERTY TOPLEVELTYPES pde_C)
 endif()
 
@@ -208,6 +208,16 @@ config_option(
 )
 mark_as_advanced(KernelAArch64SErrorIgnore)
 
+config_option(
+    KernelAllowSMCCalls ALLOW_SMC_CALLS "Allow components to make SMC calls. \
+    WARNING: Allowing SMC calls causes a couple of issues. Since seL4 cannot \
+    pre-empt the secure monitor, the WCET is no longer guaranteed. Also, since the \
+    secure monitor is a higher privilege level and can make any change in the \
+    system, the proofs can no longer be guaranteed."
+    DEFAULT OFF
+    DEPENDS "NOT KernelVerificationBuild; KernelSel4ArchAarch64"
+)
+
 if(KernelAArch32FPUEnableContextSwitch OR KernelSel4ArchAarch64)
     set(KernelHaveFPU ON)
 endif()
@@ -253,6 +263,7 @@ add_sources(
         object/iospace.c
         object/vcpu.c
         object/smmu.c
+        object/smc.c
         smp/ipi.c
 )
 

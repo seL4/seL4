@@ -33,7 +33,7 @@ deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
 
     switch (cap_get_capType(cap)) {
     case cap_vspace_cap:
-        if (cap_vspace_cap_get_capIsMapped(cap)) {
+        if (cap_vspace_cap_get_capVSIsMapped(cap)) {
             ret.cap = cap;
             ret.status = EXCEPTION_NONE;
         } else {
@@ -85,6 +85,12 @@ deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
         ret.status = EXCEPTION_NONE;
         return ret;
 #endif
+#ifdef CONFIG_ALLOW_SMC_CALLS
+    case cap_smc_cap:
+        ret.cap = cap;
+        ret.status = EXCEPTION_NONE;
+        return ret;
+#endif
     default:
         /* This assert has no equivalent in haskell,
          * as the options are restricted by type */
@@ -94,7 +100,19 @@ deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
 
 cap_t CONST Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
 {
-    return cap;
+#ifdef CONFIG_ALLOW_SMC_CALLS
+    if (cap_get_capType(cap) == cap_smc_cap) {
+        if (!preserve && cap_smc_cap_get_capSMCBadge(cap) == 0) {
+            return cap_smc_cap_set_capSMCBadge(cap, data);
+        } else {
+            return cap_null_cap_new();
+        }
+    } else {
+#endif
+        return cap;
+#ifdef CONFIG_ALLOW_SMC_CALLS
+    }
+#endif
 }
 
 cap_t CONST Arch_maskCapRights(seL4_CapRights_t cap_rights_mask, cap_t cap)
@@ -125,14 +143,14 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
 
     case cap_vspace_cap:
 #ifdef CONFIG_ARM_SMMU
-        if (cap_vspace_cap_get_capMappedCB(cap) != CB_INVALID) {
-            smmu_cb_delete_vspace(cap_vspace_cap_get_capMappedCB(cap),
-                                  cap_vspace_cap_get_capMappedASID(cap));
+        if (cap_vspace_cap_get_capVSMappedCB(cap) != CB_INVALID) {
+            smmu_cb_delete_vspace(cap_vspace_cap_get_capVSMappedCB(cap),
+                                  cap_vspace_cap_get_capVSMappedASID(cap));
         }
 #endif
-        if (final && cap_vspace_cap_get_capIsMapped(cap)) {
-            deleteASID(cap_vspace_cap_get_capMappedASID(cap),
-                       VSPACE_PTR(cap_vspace_cap_get_capPTBasePtr(cap)));
+        if (final && cap_vspace_cap_get_capVSIsMapped(cap)) {
+            deleteASID(cap_vspace_cap_get_capVSMappedASID(cap),
+                       VSPACE_PTR(cap_vspace_cap_get_capVSBasePtr(cap)));
         }
         break;
 
@@ -205,8 +223,8 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
 
     case cap_vspace_cap:
         if (cap_get_capType(cap_b) == cap_vspace_cap) {
-            return cap_vspace_cap_get_capPTBasePtr(cap_a) ==
-                   cap_vspace_cap_get_capPTBasePtr(cap_b);
+            return cap_vspace_cap_get_capVSBasePtr(cap_a) ==
+                   cap_vspace_cap_get_capVSBasePtr(cap_b);
         }
         break;
 
@@ -254,6 +272,13 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
         if (cap_get_capType(cap_b) == cap_cb_cap) {
             return cap_cb_cap_get_capCB(cap_a) ==
                    cap_cb_cap_get_capCB(cap_b);
+        }
+        break;
+#endif
+#ifdef CONFIG_ALLOW_SMC_CALLS
+    case cap_smc_cap:
+        if (cap_get_capType(cap_b) == cap_smc_cap) {
+            return true;
         }
         break;
 #endif
@@ -345,17 +370,17 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
 #ifdef CONFIG_ARM_SMMU
 
         return cap_vspace_cap_new(
-                   asidInvalid,           /* capMappedASID   */
-                   (word_t)regionBase,    /* capPTBasePtr    */
-                   0,                     /* capIsMapped     */
-                   CB_INVALID             /* capMappedCB     */
+                   asidInvalid,           /* capVSMappedASID */
+                   (word_t)regionBase,    /* capVSBasePtr    */
+                   0,                     /* capVSIsMapped   */
+                   CB_INVALID             /* capVSMappedCB   */
                );
 #else
 
         return cap_vspace_cap_new(
-                   asidInvalid,           /* capMappedASID   */
-                   (word_t)regionBase,    /* capPTBasePtr    */
-                   0                      /* capIsMapped     */
+                   asidInvalid,           /* capVSMappedASID */
+                   (word_t)regionBase,    /* capVSBasePtr    */
+                   0                      /* capVSIsMapped   */
                );
 #endif /*!CONFIG_ARM_SMMU*/
     case seL4_ARM_PageTableObject:
@@ -387,7 +412,7 @@ exception_t Arch_decodeInvocation(word_t label, word_t length, cptr_t cptr,
     /* The C parser cannot handle a switch statement with only a default
      * case. So we need to do some gymnastics to remove the switch if
      * there are no other cases */
-#if defined(CONFIG_ARM_HYPERVISOR_SUPPORT) || defined(CONFIG_ARM_SMMU)
+#if defined(CONFIG_ARM_HYPERVISOR_SUPPORT) || defined(CONFIG_ARM_SMMU) || defined(CONFIG_ALLOW_SMC_CALLS)
     switch (cap_get_capType(cap)) {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case cap_vcpu_cap:
@@ -403,6 +428,10 @@ exception_t Arch_decodeInvocation(word_t label, word_t length, cptr_t cptr,
     case cap_cb_cap:
         return decodeARMCBInvocation(label, length, cptr, slot, cap, call, buffer);
 #endif /*CONFIG_ARM_SMMU*/
+#ifdef CONFIG_ALLOW_SMC_CALLS
+    case cap_smc_cap:
+        return decodeARMSMCInvocation(label, length, cptr, slot, cap, call, buffer);
+#endif
     default:
 #else
 {

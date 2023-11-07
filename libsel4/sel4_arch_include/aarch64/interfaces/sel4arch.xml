@@ -44,6 +44,16 @@
         <member name="tpidr_el0"/>
         <member name="tpidrro_el0"/>
     </struct>
+    <struct name="seL4_ARM_SMCContext">
+        <member name="x0"/>
+        <member name="x1"/>
+        <member name="x2"/>
+        <member name="x3"/>
+        <member name="x4"/>
+        <member name="x5"/>
+        <member name="x6"/>
+        <member name="x7"/>
+    </struct>
     <interface name="seL4_ARM_VSpace" manual_name="Page Global Directory"
         cap_description="Capability to the top level translation table being operated on.">
         <method id="ARMVSpaceClean_Data" name="Clean_Data" manual_label="vspace_clean"
@@ -205,6 +215,22 @@
                     The specified range crosses a page boundary.
                 </description>
             </error>
+        </method>
+    </interface>
+    <interface name="seL4_ARM_SMC" manual_name="SMC" cap_description="Capability to allow threads to make Secure Monitor Calls.">
+        <method id="ARMSMCCall" name="Call" manual_name="SMC Call" manual_label="smc_call">
+            <brief>
+                Tell the microkernel to make the real SMC call.
+            </brief>
+            <description>
+                Takes x0-x7 as arguments to an SMC call which are defined as a seL4_ARM_SMCContext
+                struct. The microkernel makes the SMC call and then returns the results as a
+                new seL4_ARM_SMCContext.
+            </description>
+            <param dir="in" name="smc_args" type="seL4_ARM_SMCContext"
+                description="The structure that has the provided arguments."/>
+            <param dir="out" name="smc_response" type="seL4_ARM_SMCContext"
+                description="The structure to capture the responses."/>
         </method>
     </interface>
 </api>

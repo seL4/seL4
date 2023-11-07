@@ -135,6 +135,13 @@ if(KernelPlatformQEMUArmVirt)
                 # 2 GiB, which seems a good trade-off nowadays. It's sufficient
                 # for test/demo systems, but still something the host can
                 # provide without running short on resources.
+                # The memory starts at 1 GiB (0x40000000), so up to 3 GiB can be
+                # accessed before exceeding the 32-bit address space. For 32-bit
+                # systems, using memory beyond this point is non-trivial. While
+                # the LPAE MMU model supports accessing up to a 1 TiB (40-bit)
+                # physical address space even on 32-bit systems, the 32-bit
+                # version of seL4 can access physical addresses in the 32-bit
+                # range only.
                 set(QEMU_MEMORY "1024")
             endif()
 
@@ -218,6 +225,10 @@ if(KernelPlatformQEMUArmVirt)
     endif()
 
     list(APPEND KernelDTSList "${QEMU_DTS}" "${CMAKE_CURRENT_LIST_DIR}/overlay-qemu-arm-virt.dts")
+
+    if(KernelSel4ArchAarch32)
+        list(APPEND KernelDTSList "${CMAKE_CURRENT_LIST_DIR}/overlay-qemu-arm-virt32.dts")
+    endif()
 
     if(KernelArmHypervisorSupport OR KernelSel4ArchArmHyp)
         list(APPEND KernelDTSList "${CMAKE_CURRENT_LIST_DIR}/overlay-reserve-vm-memory.dts")
