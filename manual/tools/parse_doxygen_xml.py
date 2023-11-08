@@ -594,7 +594,7 @@ def generate_general_syscall_doc(generator, input_file_name, level, ref_dict):
     dir_name = os.path.dirname(input_file_name)
     with open(input_file_name, "r") as f:
         output = ""
-        soup = BeautifulSoup(f, "lxml")
+        soup = BeautifulSoup(f, features="lxml-xml")
         elements = soup.find_all("memberdef")
         summary = soup.find('compounddef')
         # parse any top level descriptions
@@ -660,7 +660,7 @@ def main():
             if "SystemCalls" not in f:
                 continue
             with open(os.path.join(dir_name, f), "r") as source:
-                soup = BeautifulSoup(source, "lxml")
+                soup = BeautifulSoup(source, features="lxml-xml")
                 ref_dict.update(generator.build_ref_dict(soup))
 
     output_str = generate_general_syscall_doc(generator, args.input, args.level, ref_dict)

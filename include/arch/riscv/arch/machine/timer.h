@@ -62,7 +62,6 @@ static inline ticks_t getCurrentTime(void)
 /* set the next deadline irq - deadline is absolute */
 static inline void setDeadline(ticks_t deadline)
 {
-    assert(deadline > NODE_STATE(ksCurTime));
     /* Setting the timer acknowledges any existing IRQs */
     sbi_set_timer(deadline);
 }
