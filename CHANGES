@@ -32,6 +32,7 @@ Upcoming release: BREAKING
 * Added support for arm_hyp on qemu-arm-virt platfrom with cortex-a15 CPU
 * Added support for qemu-riscv-virt
 * Added support for the Pine64 Star64
+* Added support for the NVIDIA Orin Jetson
 * Rename libsel4 config option ENABLE_SMP_SUPPORT to CONFIG_ENABLE_SMP_SUPPORT to be namespace compliant.
 * Rename libsel4 config option AARCH64_VSPACE_S2_START_L1 to CONFIG_AARCH64_VSPACE_S2_START_L1 to be namespace
   compliant.
