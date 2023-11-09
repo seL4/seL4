@@ -625,7 +625,6 @@ void endTimeslice(bool_t can_timeout_fault)
         handleTimeout(NODE_STATE(ksCurThread));
     } else if (refill_ready(NODE_STATE(ksCurSC)) && refill_sufficient(NODE_STATE(ksCurSC), 0)) {
         /* apply round robin */
-        assert(refill_sufficient(NODE_STATE(ksCurSC), 0));
         assert(!thread_state_get_tcbQueued(NODE_STATE(ksCurThread)->tcbState));
         SCHED_APPEND_CURRENT_TCB;
     } else {
