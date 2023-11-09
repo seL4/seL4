@@ -193,6 +193,7 @@ devices:
       - ti,omap3-uart
       - xlnx,xuartps
       - ns16550a
+      - nvidia,tegra194-tcu
     regions:
       - index: 0
         kernel: UART_PPTR

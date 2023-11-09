@@ -44,3 +44,8 @@ register_driver(
     PREFIX src/drivers/serial
     CFILES "meson-gx-uart.c"
 )
+register_driver(
+    compatibility_strings "nvidia,tegra194-tcu"
+    PREFIX src/drivers/serial
+    CFILES "tegra194-tcu.c"
+)
