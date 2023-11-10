@@ -17,6 +17,7 @@
 #include <plat/machine/acpi.h>
 #include <plat/machine/intel-vtd.h>
 #include <util.h>
+#include <plat/machine/ioapic.h>
 
 /* Register Offsets */
 #define RTADDR_REG  0x20
@@ -291,6 +292,48 @@ void vtd_handle_fault(void)
     for (i = 0; i < x86KSnumDrhu; i++) {
         vtd_process_faults(i);
     }
+}
+
+word_t vtd_create_irte_ioapic(word_t vector, word_t level, cpu_id_t delivery_cpu)
+{
+    if (x86KSnumDrhu == 0) {
+        return false;
+    }
+
+    /* Remapping hardware units are configured to share the interrupt-remapping table,
+     * so we just read the table address from the first unit
+     */
+    vtd_irte_t *irt_pptr = (vtd_irte_t *) paddr_to_pptr(vtd_read64(0, IRTA_REG) & IRTA_REG_IRTA_MASK);
+    /* Sanity checking whether the Interrupt Remapping Table is initialized */
+    assert(irt_pptr != paddr_to_pptr(0));
+
+    word_t entry;
+    for (entry = 0; entry < MIN(MAX_IOAPIC, N_VTD_IRTES_4K) && vtd_irte_ptr_get_present(&irt_pptr[entry]); entry++);
+    if (entry >= MIN(MAX_IOAPIC, N_VTD_IRTES_4K)) {
+        /* We have #MAX_IOAPIC IRT entries reserved for ioapic. The loop above should always 
+         * be able to find an entry, unless #MAX_IOAPIC is greater than #N_VTD_IRTES_4K. If it 
+         * ever happens, we should consider making the size of the IRT configurable.
+        */
+        printf("IOMMU: failed to allocate a free IRTE for IOAPIC vector %lu.\n", vector);
+        return MAX_IOAPIC;
+    }
+
+    irt_pptr[entry] = vtd_irte_new(
+                          0, /* Source Validation Type */
+                          0, /* Source-id Qualifier */
+                          0, /* Source Identifier */
+                          delivery_cpu, /* Destination ID */
+                          vector, /* Vector */
+                          0, /* IRTE Mode, value 0 indicates remapped IRQ */
+                          0, /*  Delivery Mode */
+                          level, /* Trigger Mode */
+                          0, /* Redirection Hint */
+                          0, /* Destination Mode */
+                          false, /* Disabling Fault Processing Disable (FPD) */
+                          true); /* Present */
+
+    printf("IOMMU: added IRTE %lu for IOAPIC vector %lu.\n", entry, vector);
+    return entry;
 }
 
 BOOT_CODE word_t vtd_get_n_paging(acpi_rmrr_list_t *rmrr_list)

@@ -11,6 +11,7 @@
 #include <linker.h>
 #include <plat/machine/hardware.h>
 #include <plat/machine/pci.h>
+#include <plat/machine/intel-vtd.h>
 
 void Arch_irqStateInit(void)
 {
