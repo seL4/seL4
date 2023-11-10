@@ -13,6 +13,8 @@
 void invalidate_iotlb(void);
 void vtd_handle_fault(void);
 word_t vtd_create_irte_ioapic(word_t vector, word_t level, cpu_id_t delivery_cpu);
+exception_t vtd_decode_irte_msi(word_t entry, word_t vector);
+void vtd_create_irte_msi(word_t entry, word_t vector, word_t pci_bus, word_t pci_dev, word_t pci_func);
 /* calculate the number of IOPTs needed to map the rmrr regions */
 word_t vtd_get_n_paging(acpi_rmrr_list_t *rmrr_list);
 /* initialise the number of IOPTs */

@@ -336,6 +336,69 @@ word_t vtd_create_irte_ioapic(word_t vector, word_t level, cpu_id_t delivery_cpu
     return entry;
 }
 
+exception_t vtd_decode_irte_msi(word_t entry, word_t vector)
+{
+    if (x86KSnumDrhu == 0) {
+        return EXCEPTION_NONE;
+    }
+
+    if (entry < MAX_IOAPIC || entry >= N_VTD_IRTES_4K) {
+        userError("IOMMU: Invalid handle %lu for MSI vector %lu, should be between %d-%d.", entry, vector, MAX_IOAPIC,
+                  N_VTD_IRTES_4K);
+        current_syscall_error.type = seL4_RangeError;
+        current_syscall_error.rangeErrorMin = MAX_IOAPIC;
+        current_syscall_error.rangeErrorMax = N_VTD_IRTES_4K;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    /* Remapping hardware units are configured to share the interrupt-remapping table,
+     * so we just read the table address from the first unit
+     */
+    vtd_irte_t *irt_pptr = (vtd_irte_t *) paddr_to_pptr(vtd_read64(0, IRTA_REG) & IRTA_REG_IRTA_MASK);
+    /* Sanity checking whether the Interrupt Remapping Table is initialized */
+    assert(irt_pptr != paddr_to_pptr(0));
+
+    if (vtd_irte_ptr_get_present(&irt_pptr[entry]) == 1) {
+        userError("IOMMU: Invalid handle %lu for MSI vector %lu, the handle is occupied by vector %lu.",
+                  entry, vector, (word_t)vtd_irte_ptr_get_vector(&irt_pptr[entry]));
+        current_syscall_error.type = seL4_InvalidArgument;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+    return EXCEPTION_NONE;
+}
+
+void vtd_create_irte_msi(word_t entry, word_t vector, word_t pci_bus, word_t pci_dev, word_t pci_func)
+{
+    if (x86KSnumDrhu == 0) {
+        return;
+    }
+
+    /* Remapping hardware units are configured to share the interrupt-remapping table,
+     * so we just read the table address from the first unit
+     */
+    vtd_irte_t *irt_pptr = (vtd_irte_t *) paddr_to_pptr(vtd_read64(0, IRTA_REG) & IRTA_REG_IRTA_MASK);
+    /* Sanity checks */
+    assert(irt_pptr != paddr_to_pptr(0));
+    assert(entry < N_VTD_IRTES_4K && entry >= MAX_IOAPIC);
+    assert(vtd_irte_ptr_get_present(&irt_pptr[entry]) == 0);
+
+    irt_pptr[entry] = vtd_irte_new(
+                          1, /* Source Validation Type */
+                          0, /* Source-id Qualifier */
+                          (pci_bus << 8) + (pci_dev << 4) + pci_func, /* Source Identifier */
+                          0, /* Destination ID */
+                          vector, /* Vector */
+                          0, /* IRTE Mode, value 0 indicates remapped IRQ */
+                          0, /*  Delivery Mode */
+                          0, /* Trigger Mode, irrelevant to MSI */
+                          0, /* Redirection Hint */
+                          0, /* Destination Mode */
+                          false, /* Disabling Fault Processing Disable (FPD) */
+                          true); /* Present */
+
+    printf("IOMMU: added IRTE %lu for MSI vector %lu.\n", entry, vector);
+}
+
 BOOT_CODE word_t vtd_get_n_paging(acpi_rmrr_list_t *rmrr_list)
 {
     if (x86KSnumDrhu == 0) {
