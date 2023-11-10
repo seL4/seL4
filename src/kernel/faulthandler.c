@@ -14,22 +14,8 @@
 #include <arch/machine.h>
 
 #ifdef CONFIG_KERNEL_MCS
-void handleFault(tcb_t *tptr)
-{
-    bool_t hasFaultHandler = sendFaultIPC(tptr, TCB_PTR_CTE_PTR(tptr, tcbFaultHandler)->cap,
-                                          tptr->tcbSchedContext != NULL);
-    if (!hasFaultHandler) {
-        handleNoFaultHandler(tptr);
-    }
-}
 
-void handleTimeout(tcb_t *tptr)
-{
-    assert(validTimeoutHandler(tptr));
-    sendFaultIPC(tptr, TCB_PTR_CTE_PTR(tptr, tcbTimeoutHandler)->cap, false);
-}
-
-bool_t sendFaultIPC(tcb_t *tptr, cap_t handlerCap, bool_t can_donate)
+static bool_t sendFaultIPC(tcb_t *tptr, cap_t handlerCap, bool_t can_donate)
 {
     if (cap_get_capType(handlerCap) == cap_endpoint_cap) {
         assert(isValidFaultHandler(handlerCap, false));
@@ -47,20 +33,16 @@ bool_t sendFaultIPC(tcb_t *tptr, cap_t handlerCap, bool_t can_donate)
         return false;
     }
 }
-#else
 
-void handleFault(tcb_t *tptr)
+void handleTimeout(tcb_t *tptr)
 {
-    exception_t status;
-    seL4_Fault_t fault = current_fault;
-
-    status = sendFaultIPC(tptr);
-    if (status != EXCEPTION_NONE) {
-        handleDoubleFault(tptr, fault);
-    }
+    assert(validTimeoutHandler(tptr));
+    sendFaultIPC(tptr, TCB_PTR_CTE_PTR(tptr, tcbTimeoutHandler)->cap, false);
 }
 
-exception_t sendFaultIPC(tcb_t *tptr)
+#else
+
+static exception_t sendFaultIPC(tcb_t *tptr)
 {
     cptr_t handlerCPtr;
     cap_t  handlerCap;
@@ -96,6 +78,26 @@ exception_t sendFaultIPC(tcb_t *tptr)
     }
 }
 #endif
+
+void handleFault(tcb_t *tptr)
+{
+#ifdef CONFIG_KERNEL_MCS
+    bool_t can_donate = tptr->tcbSchedContext != NULL;
+    bool_t hasFaultHandler = sendFaultIPC(tptr,
+                                          TCB_PTR_CTE_PTR(tptr, tcbFaultHandler)->cap,
+                                          can_donate);
+    if (!hasFaultHandler) {
+        handleNoFaultHandler(tptr);
+    }
+#else /* not CONFIG_KERNEL_MCS */
+    seL4_Fault_t fault = current_fault;
+    exception_t status = sendFaultIPC(tptr);
+    if (status != EXCEPTION_NONE) {
+        handleDoubleFault(tptr, fault);
+    }
+#endif /* [not] CONFIG_KERNEL_MCS */
+}
+
 
 #ifdef CONFIG_PRINTING
 static void print_fault(seL4_Fault_t f)
