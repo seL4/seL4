@@ -141,32 +141,45 @@ static void print_fault(seL4_Fault_t f)
 }
 #endif
 
-#ifdef CONFIG_KERNEL_MCS
-void handleNoFaultHandler(tcb_t *tptr)
-#else
-/* The second fault, ex2, is stored in the global current_fault */
-void handleDoubleFault(tcb_t *tptr, seL4_Fault_t ex1)
-#endif
+void handleFault(tcb_t *tptr)
 {
-#ifdef CONFIG_PRINTING
 #ifdef CONFIG_KERNEL_MCS
+    bool_t can_donate = tptr->tcbSchedContext != NULL;
+    bool_t hasFaultHandler = sendFaultIPC(tptr, TCB_PTR_CTE_PTR(tptr,
+                                          tcbFaultHandler)->cap, can_donate);
+    if (hasFaultHandler) {
+        return;
+    }
+#ifdef CONFIG_PRINTING
     printf("Found thread has no fault handler while trying to handle:\n");
     print_fault(current_fault);
-#else
+#endif /* CONFIG_PRINTING */
+
+#else /* not CONFIG_KERNEL_MCS */
+
+    seL4_Fault_t fault = current_fault;
+    exception_t status = sendFaultIPC(tptr);
+    if (status == EXCEPTION_NONE) {
+        return;
+    }
+#ifdef CONFIG_PRINTING
     seL4_Fault_t ex2 = current_fault;
     printf("Caught ");
     print_fault(ex2);
     printf("\nwhile trying to handle:\n");
-    print_fault(ex1);
-#endif
+    print_fault(fault);
+#endif /* CONFIG_PRINTING */
+
+#endif /* [not] CONFIG_KERNEL_MCS */
+
+#ifdef CONFIG_PRINTING
 #ifdef CONFIG_DEBUG_BUILD
     printf("\nin thread %p \"%s\" ", tptr, TCB_PTR_DEBUG_PTR(tptr)->tcbName);
 #endif /* CONFIG_DEBUG_BUILD */
-
     printf("at address %p\n", (void *)getRestartPC(tptr));
     printf("With stack:\n");
     Arch_userStackTrace(tptr);
-#endif
+#endif /* CONFIG_PRINTING */
 
     setThreadState(tptr, ThreadState_Inactive);
 }
