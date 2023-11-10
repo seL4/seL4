@@ -1,0 +1,17 @@
+/*
+ * Copyright 2023, NIO
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+	chosen {
+		seL4,elfloader-devices =
+			&{/combined-uart},
+			&{/psci};
+
+		seL4,kernel-devices =
+			&{/combined-uart},
+			&{/interrupt-controller@f400000},
+			&{/timer};
+	};
+};

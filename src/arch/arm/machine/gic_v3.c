@@ -14,8 +14,10 @@
 #define RDIST_BANK_SZ 0x00010000
 /* One GICR region and one GICR_SGI region */
 #define GICR_PER_CORE_SIZE  (0x20000)
-/* Assume 8 cores */
-#define GICR_SIZE           (0x100000)
+/* Assume 12 cores
+ * NOTE: this is hardcoded to the same value for the GICR region in hardware.yml
+ */
+#define GICR_SIZE           (0x180000)
 
 #define GIC_DEADLINE_MS 2
 #define GIC_REG_WIDTH   32

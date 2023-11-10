@@ -46,8 +46,10 @@ devices:
       # GICRedistributor
       - index: 1
         kernel: GICR_PPTR
-        # Assume 8 cores max
-        kernel_size: 0x100000
+        # Assume 12 cores max
+        # Changing this requires changing the GICR_SIZE constant
+        # in gic_v3.c as well.
+        kernel_size: 0x180000
     interrupts:
       INTERRUPT_VGIC_MAINTENANCE: 0
   # Broadcom second level IRQ controller (interrupt-controller/brcm,bcm2835-armctrl-ic.txt),
