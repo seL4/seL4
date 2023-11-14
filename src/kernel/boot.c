@@ -686,7 +686,7 @@ BOOT_CODE static bool_t provide_untyped_cap(
     }
 
     word_t i = ndks_boot.slot_pos_cur - first_untyped_slot;
-    if (i < CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS) {
+    if (i < ARRAY_SIZE(ndks_boot.bi_frame->untypedList)) {
         ndks_boot.bi_frame->untypedList[i] = (seL4_UntypedDesc) {
             .paddr    = pptr_to_paddr((void *)pptr),
             .sizeBits = size_bits,
