@@ -28,11 +28,6 @@
 #define ICC_SGI1R_EL1 "p15, 0, %Q0, %R0, c12"
 #endif
 
-#define ICC_SGI1R_INTID_SHIFT          (24)
-#define ICC_SGI1R_AFF1_SHIFT           (16)
-#define ICC_SGI1R_IRM_BIT              (40)
-#define ICC_SGI1R_CPUTARGETLIST_MASK   0xffff
-
 volatile struct gic_dist_map *const gic_dist = (volatile struct gic_dist_map *)(GICD_PPTR);
 volatile void *const gicr_base = (volatile uint8_t *)(GICR_PPTR);
 
@@ -345,34 +340,19 @@ BOOT_CODE void cpu_initLocalIRQController(void)
 }
 
 #ifdef ENABLE_SMP_SUPPORT
-#define MPIDR_MT(x)   (x & BIT(24))
-
-void ipi_send_target(irq_t irq, word_t cpuTargetList)
+/* This function is called with a single node. */
+void ipi_send_target(irq_t irq, word_t cpuID)
 {
-    uint64_t sgi1r_base = ((word_t) IRQT_TO_IRQ(irq)) << ICC_SGI1R_INTID_SHIFT;
-    word_t sgi1r[CONFIG_MAX_NUM_NODES];
-    word_t last_aff1 = 0;
-
-    for (word_t i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
-        sgi1r[i] = 0;
-        if (cpuTargetList & BIT(i)) {
-            word_t mpidr = mpidr_map[i];
-            word_t aff1 = MPIDR_AFF1(mpidr);
-            word_t aff0 = MPIDR_AFF0(mpidr);
-            // AFF1 is assumed to be contiguous and less than CONFIG_MAX_NUM_NODES.
-            // The targets are grouped by AFF1.
-            assert(aff1 >= 0 && aff1 < CONFIG_MAX_NUM_NODES);
-            sgi1r[aff1] |= sgi1r_base | (aff1 << ICC_SGI1R_AFF1_SHIFT) | (1 << aff0);
-            if (aff1 > last_aff1) {
-                last_aff1 = aff1;
-            }
-        }
-    }
-    for (word_t i = 0; i <= last_aff1; i++) {
-        if (sgi1r[i] != 0) {
-            SYSTEM_WRITE_64(ICC_SGI1R_EL1, sgi1r[i]);
-        }
-    }
+    assert(cpuID < CONFIG_MAX_NUM_NODES);
+    word_t sgi1r_base = ((word_t) IRQT_TO_IRQ(irq)) << ICC_SGI1R_INT_ID_SHIFT;
+    word_t mpidr = mpidr_map[cpuID];
+    word_t aff0  = MPIDR_AFF0(mpidr);
+    word_t aff1  = MPIDR_AFF1(mpidr);
+    word_t aff2  = MPIDR_AFF2(mpidr);
+    word_t aff3  = MPIDR_AFF3(mpidr);
+    word_t sgi = sgi1r_base | (aff3 << ICC_SGI1R_AFF3_SHIFT) | (aff2 << ICC_SGI1R_AFF2_SHIFT);
+    sgi |= (aff1 << ICC_SGI1R_AFF1_SHIFT) | (1 << aff0);
+    SYSTEM_WRITE_64(ICC_SGI1R_EL1, sgi);
     isb();
 }
 
