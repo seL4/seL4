@@ -224,6 +224,10 @@ seL4_Yield(void);
  *               sender, or the notification word of the
  *               notification object that was signalled.
  *               This parameter is ignored if `NULL`.
+ * @return A `seL4_MessageInfo_t` structure
+ * @xmlonly
+ * <docref>as described in <autoref label="sec:messageinfo"/></docref>
+ * @endxmlonly
  */
 LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_Wait(seL4_CPtr src, seL4_Word *sender);
@@ -246,6 +250,10 @@ seL4_Wait(seL4_CPtr src, seL4_Word *sender);
  *               sender, or the notification word of the
  *               notification object that was signalled.
  *               This parameter is ignored if `NULL`.
+ * @return A `seL4_MessageInfo_t` structure
+ * @xmlonly
+ * <docref>as described in <autoref label="sec:messageinfo"/></docref>
+ * @endxmlonly
  */
 LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_NBWait(seL4_CPtr src, seL4_Word *sender);
@@ -269,7 +277,6 @@ seL4_NBWait(seL4_CPtr src, seL4_Word *sender);
  *               sender, or the notification word of the
  *               notification object that was signalled.
  *               This parameter is ignored if `NULL`.
- *
  * @return A `seL4_MessageInfo_t` structure
  * @xmlonly
  * <docref>as described in <autoref label="sec:messageinfo"/></docref>

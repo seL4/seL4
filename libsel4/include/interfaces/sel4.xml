@@ -806,15 +806,13 @@
 
         <method id="TCBSetTLSBase" name="SetTLSBase" manual_name="Set TLS Base" manual_label="tcb_settlsbase">
             <brief>
-                Set the TLS base of the target TCB. This intended for use on architectures where the register
-                used for TLS can only be written to in privilidged mode
+                Set the TLS base of the target TCB.
              </brief>
              <description>
+                An invocation for setting the Thread Local Storage (TLS) base address. This ensures that across all platforms, the TLSBase register is viewed as being completely mutable, just like all of the general purpose registers, even on platforms where modification is a privileged operation.
              </description>
-             <return>
-             </return>
              <param dir="in" name="tls_base" type="seL4_Word"
-                description="The TLS base to set"/>
+                description="The TLS base to set."/>
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
@@ -1334,7 +1332,7 @@
         </method>
     </interface>
 
-    <interface name="seL4_SchedControl">
+    <interface name="seL4_SchedControl" cap_description="Capability to a scheduling control object.">
 
         <method id="SchedControlConfigureFlags" name="ConfigureFlags" manual_name="ConfigureFlags" manual_label="schedcontrol_configureflags">
             <condition><config var="CONFIG_KERNEL_MCS"/></condition>
@@ -1377,7 +1375,7 @@
 
     </interface>
 
-    <interface name="seL4_SchedContext">
+    <interface name="seL4_SchedContext" cap_description="Capability to the scheduling context which is being operated on.">
 
         <method id="SchedContextBind" name="Bind"
             manual_name="Bind" manual_label="schedcontext_bind">
@@ -1505,8 +1503,11 @@
               The caller must have a maximum control priority greater than or equal to the threads priority.
           </brief>
           <description>
-              TODO
+              Capability to the scheduling context which is being operated on.
           </description>
+          <return>
+            See <autoref label="sec:scheduling_contexts"/>
+          </return>
             <param dir="out" name="consumed" type="seL4_Time"/>
             <error name="seL4_IllegalOperation">
                 <description>

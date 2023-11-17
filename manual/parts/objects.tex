@@ -21,7 +21,7 @@ The basic services seL4 provides are as follows:
     \item[Threads] are an abstraction of CPU execution that supports
     running software;
 
-    \item[Scheduling contexts] (MCS only) are an abstraction of CPU execuion time.
+    \item[Scheduling contexts] (MCS only) are an abstraction of CPU execution time.
 
     \item[Address spaces] are virtual memory spaces that each contain an
     application. Applications are limited to accessing memory in their
@@ -69,7 +69,7 @@ Conceptually, a capability resides in an application's \emph{capability
 space}; an address in this space refers to a \emph{slot} which may or
 may not contain a capability.  An application may refer to
 a capability---to request a kernel service, for example---using the
-address of the slot holding that capability.  This means, the seL4 
+address of the slot holding that capability.  This means, the seL4
 capability model is an instance of a \emph{segregated} (or \emph{partitioned})
 capability system, where capabilities are managed by the kernel.
 
@@ -114,7 +114,7 @@ The seL4 kernel provides a message-passing service for communication between
 threads. This mechanism is also used for communication with kernel-provided
 services. There is a standard message format, each message containing a
 number of data words and possibly some capabilities. The structure and encoding
-of these messages are described in detail in \autoref{ch:ipc}. 
+of these messages are described in detail in \autoref{ch:ipc}.
 
 Threads send messages by invoking capabilities within their capability space.
 When an endpoint, notification or reply capability is invoked in this way, the
@@ -305,11 +305,11 @@ manipulation, and combination of these kernel objects:
       provide a simple signalling mechanism. A \obj{Notification}
       is a word-size array of flags, each of which behaves like a binary semaphore. Operations
       are \emph{signalling} a subset of flags in a single operation,
-      polling to check any flags, 
+      polling to check any flags,
       and blocking until any are signalled. Notification capabilities
       can be signal-only or wait-only.
 
-    \item[Virtual Address Space Objects] (see \autoref{ch:vspace}) 
+    \item[Virtual Address Space Objects] (see \autoref{ch:vspace})
     are used to construct a virtual
     address space (or VSpace) for one or more threads. These
     objects largely directly correspond to those of the hardware, and
@@ -321,7 +321,7 @@ manipulation, and combination of these kernel objects:
     and acknowledge interrupts from hardware devices.
     Initially, there is a capability to \obj{IRQControl},
     which allows for the creation of \obj{IRQHandler} capabilities.
-    An \obj{IRQHandler} capability permits the management of a specific 
+    An \obj{IRQHandler} capability permits the management of a specific
     interrupt source associated with a specific device.
     It is delegated to
     a device driver to access an interrupt source. The \obj{IRQHandler}
