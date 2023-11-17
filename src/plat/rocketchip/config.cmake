@@ -47,7 +47,8 @@ if(KernelPlatformRocketchip)
         list(APPEND KernelDTSList "src/plat/rocketchip/overlay-rocketchip-zcu102.dts")
         # The zcu102 instantiation supports the PLIC and external interrupts
         declare_default_headers(
-            TIMER_FREQUENCY 10000000 PLIC_MAX_NUM_INT 128
+            TIMER_FREQUENCY 10000000
+            MAX_IRQ 128
             INTERRUPT_CONTROLLER drivers/irq/riscv_plic0.h
         )
     else()
@@ -59,7 +60,8 @@ if(KernelPlatformRocketchip)
         # interrupts and using the dummy PLIC driver seems the best option for now
         # to avoid confusion or even crashes.
         declare_default_headers(
-            TIMER_FREQUENCY 10000000 PLIC_MAX_NUM_INT 0
+            TIMER_FREQUENCY 10000000
+            MAX_IRQ 0
             INTERRUPT_CONTROLLER drivers/irq/riscv_plic_dummy.h
         )
     endif()

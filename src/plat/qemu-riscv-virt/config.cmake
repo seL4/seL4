@@ -190,7 +190,8 @@ if(KernelPlatformQEMURiscVVirt)
     # The CLINT timer pretends to run at 10 MHz, but this speed may not hold in
     # practical measurements.
     declare_default_headers(
-        TIMER_FREQUENCY 10000000 PLIC_MAX_NUM_INT 128
+        TIMER_FREQUENCY 10000000
+        MAX_IRQ 128
         INTERRUPT_CONTROLLER drivers/irq/riscv_plic0.h
     )
 
