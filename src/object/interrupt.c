@@ -155,9 +155,9 @@ void invokeIRQHandler_AckIRQ(irq_t irq)
 
 void invokeIRQHandler_SetIRQHandler(irq_t irq, cap_t cap, cte_t *slot)
 {
-    cte_t *irqSlot;
+    word_t idx = IRQT_TO_IDX(irq);
+    cte_t *irqSlot = &intStateIRQNode[idx];
 
-    irqSlot = intStateIRQNode + IRQT_TO_IDX(irq);
     /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (-1))" */
     cteDeleteOne(irqSlot);
     cteInsert(cap, slot, irqSlot);
@@ -165,18 +165,18 @@ void invokeIRQHandler_SetIRQHandler(irq_t irq, cap_t cap, cte_t *slot)
 
 void invokeIRQHandler_ClearIRQHandler(irq_t irq)
 {
-    cte_t *irqSlot;
+    word_t idx = IRQT_TO_IDX(irq);
+    cte_t *irqSlot = &intStateIRQNode[idx];
 
-    irqSlot = intStateIRQNode + IRQT_TO_IDX(irq);
     /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (-1))" */
     cteDeleteOne(irqSlot);
 }
 
 void deletingIRQHandler(irq_t irq)
 {
-    cte_t *slot;
+    word_t idx = IRQT_TO_IDX(irq);
+    cte_t *slot = &intStateIRQNode[idx];
 
-    slot = intStateIRQNode + IRQT_TO_IDX(irq);
     /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (ucast cap_notification_cap))" */
     cteDeleteOne(slot);
 }
