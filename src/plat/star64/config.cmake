@@ -21,10 +21,11 @@ if(KernelPlatformStar64)
     list(APPEND KernelDTSList "${CMAKE_CURRENT_LIST_DIR}/overlay-star64.dts")
     # The value for TIMER_FREQUENCY is from the "timebase-frequency" field on
     # the "cpus" node in the Star64 device tree.
-    # The value for PLIC_MAX_NUM_INT comes from the DTS "plic" node which says
+    # The value for MAX_IRQ comes from the DTS "plic" node which says
     # "riscv,ndev = <0x88>".
     declare_default_headers(
-        TIMER_FREQUENCY 4000000 PLIC_MAX_NUM_INT 136
+        TIMER_FREQUENCY 4000000
+        MAX_IRQ 136
         INTERRUPT_CONTROLLER drivers/irq/riscv_plic0.h
     )
 else()

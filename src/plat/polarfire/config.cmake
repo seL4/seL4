@@ -17,7 +17,8 @@ if(KernelPlatformPolarfire)
     list(APPEND KernelDTSList "tools/dts/mpfs_icicle.dts")
     list(APPEND KernelDTSList "src/plat/polarfire/overlay-polarfire.dts")
     declare_default_headers(
-        TIMER_FREQUENCY 1000000 PLIC_MAX_NUM_INT 186
+        TIMER_FREQUENCY 1000000
+        MAX_IRQ 186
         INTERRUPT_CONTROLLER drivers/irq/riscv_plic0.h
     )
 else()
