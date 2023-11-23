@@ -164,7 +164,7 @@ if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
             RESULT_VARIABLE error
         )
         if(error)
-            message(FATAL_ERROR "Failed to compile DTS to DTB: ${KernelDTBPath}")
+            message(FATAL_ERROR "Failed to compile DTS to DTB: ${KernelDTSIntermediate}")
         endif()
         # The macOS and GNU coreutils `stat` utilities have different interfaces.
         # Check if we're using the macOS version, otherwise assume GNU coreutils.
