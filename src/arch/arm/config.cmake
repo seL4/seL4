@@ -32,6 +32,9 @@ elseif(KernelArmCortexA72)
     # (https://developer.arm.com/documentation/100095/0001/memory-management-unit/about-the-mmu)
     set(KernelArmPASizeBits44 ON)
     math(EXPR KernelPaddrUserTop "(1 << 44)")
+elseif(KernelArmMorello)
+    set(KernelArmPASizeBits48 ON)
+    math(EXPR KernelPaddrUserTop "(1 << 47)")
 endif()
 config_set(KernelArmPASizeBits40 ARM_PA_SIZE_BITS_40 "${KernelArmPASizeBits40}")
 config_set(KernelArmPASizeBits44 ARM_PA_SIZE_BITS_44 "${KernelArmPASizeBits44}")
@@ -231,6 +234,7 @@ if(
     OR KernelArmCortexA55
     OR KernelArmCortexA57
     OR KernelArmCortexA72
+    OR KernelArmMorello
 )
     # According to https://developer.arm.com/documentation/100095/0001/functional-description/about-the-cortex-a72-processor-functions/components-of-the-processor
     # the L1 instruction on the Cortex-A72 cache has a 64-byte cache line.
