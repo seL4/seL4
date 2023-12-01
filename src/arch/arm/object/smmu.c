@@ -18,7 +18,7 @@ static exception_t checkARMCBVspace(cap_t cap)
     return EXCEPTION_NONE;
 }
 
-exception_t decodeARMSIDControlInvocation(word_t label, unsigned int length, cptr_t cptr,
+exception_t decodeARMSIDControlInvocation(word_t label, word_t length, cptr_t cptr,
                                           cte_t *srcSlot, cap_t cap, bool_t call, word_t *buffer)
 {
 
@@ -99,7 +99,7 @@ exception_t decodeARMSIDControlInvocation(word_t label, unsigned int length, cpt
     return EXCEPTION_NONE;
 }
 
-exception_t decodeARMSIDInvocation(word_t label, unsigned int length, cptr_t cptr,
+exception_t decodeARMSIDInvocation(word_t label, word_t length, cptr_t cptr,
                                    cte_t *srcSlot, cap_t cap, bool_t call, word_t *buffer)
 {
     cap_t cbCap;
@@ -185,7 +185,7 @@ exception_t smmu_delete_sid(cap_t cap)
     return status;
 }
 
-exception_t decodeARMCBControlInvocation(word_t label, unsigned int length, cptr_t cptr,
+exception_t decodeARMCBControlInvocation(word_t label, word_t length, cptr_t cptr,
                                          cte_t *srcSlot, cap_t cap, bool_t call, word_t *buffer)
 {
 
@@ -249,7 +249,7 @@ exception_t decodeARMCBControlInvocation(word_t label, unsigned int length, cptr
     return EXCEPTION_NONE;
 }
 
-exception_t decodeARMCBInvocation(word_t label, unsigned int length, cptr_t cptr,
+exception_t decodeARMCBInvocation(word_t label, word_t length, cptr_t cptr,
                                   cte_t *srcSlot, cap_t cap, bool_t call, word_t *buffer)
 {
 
