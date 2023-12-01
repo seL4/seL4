@@ -977,7 +977,7 @@ contain the mapping"/>
                 </description>
             </error>
         </method>
-        <method id="X86VCPUEnableIOPort" name="EnableIOPort" manual_name="Enable IO Port" manual_label="vcpu_enableioport">
+        <method id="X86VCPUEnableIOPort" name="EnableIOPort" manual_name="Enable I/O Port" manual_label="vcpu_enableioport">
             <condition><config var="CONFIG_VTX"/></condition>
             <brief>
                 Enable I/O port range in guest execution
@@ -1012,7 +1012,7 @@ contain the mapping"/>
                 </description>
             </error>
         </method>
-        <method id="X86VCPUDisableIOPort" name="DisableIOPort" manual_name="Disable IO Port">
+        <method id="X86VCPUDisableIOPort" name="DisableIOPort" manual_name="Disable I/O Port">
             <condition><config var="CONFIG_VTX"/></condition>
             <brief>
                 Disable I/O port range in privileged execution

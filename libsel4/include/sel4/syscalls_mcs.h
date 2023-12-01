@@ -114,7 +114,7 @@ LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_ReplyRecv(seL4_CPtr src, seL4_MessageInfo_t msgInfo, seL4_Word *sender, seL4_CPtr reply);
 
 /**
- * @xmlonly <manual name="NBRecv" label="sel4_mcs_nbrecv"/> @endxmlonly
+ * @xmlonly <manual name="Non-Blocking Recv" label="sel4_mcs_nbrecv"/> @endxmlonly
  * @brief Receive a message from an endpoint but do not block
  *        in the case that no messages are pending
  *
@@ -140,7 +140,7 @@ LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_NBRecv(seL4_CPtr src, seL4_Word *sender, seL4_CPtr reply);
 
 /**
- * @xmlonly <manual name="NBSend Recv" label="sel4_nbsendrecv"/> @endxmlonly
+ * @xmlonly <manual name="Non-Blocking Send Recv" label="sel4_nbsendrecv"/> @endxmlonly
  * @brief Non-blocking send on one capability, and a blocking recieve on another in a single
  *        system call.
  *
@@ -168,7 +168,7 @@ LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_NBSendRecv(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_CPtr src, seL4_Word *sender, seL4_CPtr reply);
 
 /**
- * @xmlonly <manual name="NBSend Wait" label="sel4_nbsendwait"/> @endxmlonly
+ * @xmlonly <manual name="Non-Blocking Send Wait" label="sel4_nbsendwait"/> @endxmlonly
  * @brief Non-blocking invoke of a capability and wait on another in one system call
  *
  * @xmlonly
@@ -233,7 +233,7 @@ LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_Wait(seL4_CPtr src, seL4_Word *sender);
 
 /**
- * @xmlonly <manual name="NBWait" label="sel4_nbwait"/> @endxmlonly
+ * @xmlonly <manual name="Non-Blocking Wait" label="sel4_nbwait"/> @endxmlonly
  * @brief Perform a polling wait on an endpoint or notification object
  *
  * Poll a notification or endpoint waiting for a message. No reply object is
