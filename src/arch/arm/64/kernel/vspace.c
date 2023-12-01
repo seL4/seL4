@@ -1247,7 +1247,7 @@ static exception_t performASIDControlInvocation(void *frame, cte_t *slot,
     return EXCEPTION_NONE;
 }
 
-static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, unsigned int length,
+static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, word_t length,
                                                  cte_t *cte, cap_t cap, word_t *buffer)
 {
     vptr_t start, end;
@@ -1350,7 +1350,7 @@ static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, unsigned int l
 }
 
 
-static exception_t decodeARMPageTableInvocation(word_t invLabel, unsigned int length,
+static exception_t decodeARMPageTableInvocation(word_t invLabel, word_t length,
                                                 cte_t *cte, cap_t cap, word_t *buffer)
 {
     cap_t vspaceRootCap;
@@ -1440,7 +1440,7 @@ static inline bool_t CONST checkVPAlignment(vm_page_size_t sz, word_t w)
     return (w & MASK(pageBitsForSize(sz))) == 0;
 }
 
-static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length,
+static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
                                             cte_t *cte, cap_t cap, bool_t call, word_t *buffer)
 {
     switch (invLabel) {
