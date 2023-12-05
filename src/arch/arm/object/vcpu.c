@@ -32,7 +32,7 @@ BOOT_CODE void vcpu_boot_init(void)
 static void vcpu_save(vcpu_t *vcpu, bool_t active)
 {
     word_t i;
-    unsigned int lr_num;
+    word_t lr_num;
 
     assert(vcpu);
     dsb();
@@ -85,7 +85,7 @@ void vcpu_restore(vcpu_t *vcpu)
 {
     assert(vcpu);
     word_t i;
-    unsigned int lr_num;
+    word_t lr_num;
     /* Turn off the VGIC */
     set_gic_vcpu_ctrl_hcr(0);
     isb();
