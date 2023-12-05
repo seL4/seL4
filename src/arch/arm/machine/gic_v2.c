@@ -228,6 +228,6 @@ volatile struct gich_vcpu_ctrl_map *gic_vcpu_ctrl =
     (volatile struct gich_vcpu_ctrl_map *)(GIC_V2_VCPUCTRL_PPTR);
 #endif /* GIC_PL400_GICVCPUCTRL_PPTR */
 
-unsigned int gic_vcpu_num_list_regs;
+word_t gic_vcpu_num_list_regs;
 
 #endif /* End of CONFIG_ARM_HYPERVISOR_SUPPORT */

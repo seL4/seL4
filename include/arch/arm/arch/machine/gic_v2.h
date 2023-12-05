@@ -216,7 +216,7 @@ struct gich_vcpu_ctrl_map {
 };
 
 extern volatile struct gich_vcpu_ctrl_map *gic_vcpu_ctrl;
-extern unsigned int gic_vcpu_num_list_regs;
+extern word_t gic_vcpu_num_list_regs;
 
 static inline uint32_t get_gic_vcpu_ctrl_hcr(void)
 {
