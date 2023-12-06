@@ -444,9 +444,9 @@
             <param dir="in" name="untyped" type="seL4_Untyped"
             description="Capability to an untyped memory object that will become the pool. Must be 4K bytes."/>
             <param dir="in" name="root" type="seL4_CNode"
-            description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
+            description="CPtr to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="index" type="seL4_Word"
-            description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
+            description="CPtr to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="depth" type="seL4_Uint8"
             description="Number of bits of index to resolve to find the destination slot."/>
             <error name="seL4_DeleteFirst">
@@ -680,8 +680,8 @@
             <param dir="in" name="irq" type="seL4_Word" description="The IRQ that you want this capability to handle."/>
 
             <param dir="in" name="trigger" type="seL4_Word" description="Indicates whether this IRQ is edge (1) or level (0) triggered."/>
-            <param dir="in" name="root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
-            <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
+            <param dir="in" name="root" type="seL4_CNode" description="CPtr to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="index" type="seL4_Word" description="CPtr to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
             <error name="seL4_DeleteFirst">
                 <description>
@@ -730,8 +730,8 @@
             <param dir="in" name="irq" type="seL4_Word" description="The IRQ that you want this capability to handle."/>
 
             <param dir="in" name="trigger" type="seL4_Word" description="Indicates whether this IRQ is edge (1) or level (0) triggered."/>
-            <param dir="in" name="root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
-            <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
+            <param dir="in" name="root" type="seL4_CNode" description="CPtr to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="index" type="seL4_Word" description="CPtr to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
             <param dir="in" name="target" type="seL4_Word" description="Indicates the target core ID to which this irq will be sent."/>
             <error name="seL4_DeleteFirst">
@@ -783,8 +783,8 @@
                 <docref>See <autoref label="sec:smmuv2-creating-sel4-arm-sid-capabilities"/>.</docref>
             </description>
             <param dir="in" name="sid" type="seL4_Word" description="The SID that you want this capability to manage."/>
-            <param dir="in" name="root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
-            <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
+            <param dir="in" name="root" type="seL4_CNode" description="CPtr to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="index" type="seL4_Word" description="CPtr to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
             <error name="seL4_DeleteFirst">
                 <description>
@@ -928,8 +928,8 @@
                 <docref>See <autoref label="sec:smmuv2-creating-sel4-arm-cb-capabilities"/>.</docref>
             </description>
             <param dir="in" name="cb" type="seL4_Word" description="The CB that you want this capability to manage."/>
-            <param dir="in" name="root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
-            <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
+            <param dir="in" name="root" type="seL4_CNode" description="CPtr to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="index" type="seL4_Word" description="CPtr to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
             <error name="seL4_DeleteFirst">
                 <description>

@@ -25,7 +25,7 @@ thread's own resources as well as to all available global resources.
 The CNode size can be configured at compile time (default is $2^{12}$
 slots), but the guard is always chosen so that the CNode resolves exactly
 the number of bits in the architecture (32 bits or 64 bits). This means, the
-first slot of the CNode has CPTR 0x0, the second slot has CPTR 0x1 etc.
+first slot of the CNode has CPtr 0x0, the second slot has CPtr 0x1 etc.
 
 The first 15 slots (or 14 slots if not MCS) contain specific capabilities as listed in
 \autoref{tab:cnode_content}.
@@ -68,7 +68,7 @@ The first 15 slots (or 14 slots if not MCS) contain specific capabilities as lis
 
 \section{\label{ch:bootup:bootinfo}BootInfo Frame}
 
-CNode slots with CPTR \texttt{seL4\_NumInitialCaps} (defined in the seL4
+CNode slots with CPtr \texttt{seL4\_NumInitialCaps} (defined in the seL4
 userland library) and above are filled dynamically during
 bootstrapping. Their exact contents depend on the userland image size,
 platform configuration (devices) etc. In order to tell the initial thread
@@ -84,9 +84,9 @@ capabilities, it also informs the initial thread about
 the current platform's configuration.
 
 The type \texttt{seL4\_SlotRegion} is a C struct
-which contains \texttt{start} and \texttt{end} slot CPTRs. It denotes a region
-of slots in the initial thread's CNode, starting with CPTR \texttt{start} and with
-\texttt{end} being the CPTR of the first slot after the region ends, i.e.\
+which contains \texttt{start} and \texttt{end} slot CPtrs. It denotes a region
+of slots in the initial thread's CNode, starting with CPtr \texttt{start} and with
+\texttt{end} being the CPtr of the first slot after the region ends, i.e.\
 \texttt{end - 1} points to the last slot of the region.
 
 \begin{table}[htb]
