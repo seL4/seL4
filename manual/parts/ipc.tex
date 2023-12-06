@@ -57,10 +57,10 @@ manner in which capabilities were received. It is described in
         \ipcparam{seL4\_CPtr[]}{(in)}{caps}{Capabilities to transfer}
         \ipcparam{seL4\_CapData\_t[]}{(out)}{badges}{Badges for
         endpoint capabilities received}
-        \ipcparam{seL4\_CPtr}{}{receiveCNode}{CPTR to a CNode from which to
+        \ipcparam{seL4\_CPtr}{}{receiveCNode}{CPtr to a CNode from which to
         find
         the receive slot}
-        \ipcparam{seL4\_CPtr}{}{receiveIndex}{CPTR to the receive slot
+        \ipcparam{seL4\_CPtr}{}{receiveIndex}{CPtr to the receive slot
         relative to \texttt{receiveCNode}}
         \ipcparam{seL4\_Word}{}{receiveDepth}{Number of bits of
         \texttt{receiveIndex} to
@@ -99,7 +99,7 @@ the user level stubs provided with the kernel do not do this.
 \obj{Endpoint}s allow a small amount
 of data and capabilities (namely the IPC buffer) to be transferred between two
 threads. \obj{Endpoint} objects are invoked directly using the seL4 system calls
-described in \autoref{sec:syscalls}. 
+described in \autoref{sec:syscalls}.
 
 IPC \obj{Endpoints} uses a rendezvous model and as such is
 synchronous and blocking. An \obj{Endpoint} object  may queue
@@ -148,7 +148,7 @@ result in transfer of the raw message, without any capability transfer.
 
 Capabilities to be sent in a message are specified in the sending thread's
 IPC buffer in the \texttt{caps} field. Each entry in that array is interpreted
-as a CPTR in the sending thread's capability space. The number of capabilities
+as a CPtr in the sending thread's capability space. The number of capabilities
 to send is specified in the \texttt{extraCaps} field of the message tag.
 
 The receiver specifies the slot

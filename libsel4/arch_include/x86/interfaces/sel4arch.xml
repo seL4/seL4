@@ -487,9 +487,9 @@ contain the mapping"/>
             <param dir="in" name="untyped" type="seL4_Untyped"
                 description='Capability to an untyped memory object that will become the pool. Must be 4K bytes.'/>
             <param dir="in" name="root" type="seL4_CNode"
-                description='CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize.'/>
+                description='CPtr to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize.'/>
             <param dir="in" name="index" type="seL4_Word"
-                description='CPTR to the destination slot. Resolved from the root of the destination CSpace.'/>
+                description='CPtr to the destination slot. Resolved from the root of the destination CSpace.'/>
             <param dir="in" name="depth" type="seL4_Uint8"
                 description='Number of bits of index to resolve to find the destination slot.'/>
             <error name="seL4_DeleteFirst">
@@ -569,8 +569,8 @@ contain the mapping"/>
                 </description>
             <param dir="in" name="first_port" type="seL4_Word" description="First port of the range of the issued capability."/>
             <param dir="in" name="last_port" type="seL4_Word" description="Last port of the range of the issued capability."/>
-            <param dir="in" name="root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the destination CSpace."/>
-            <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
+            <param dir="in" name="root" type="seL4_CNode" description="CPtr to the CNode that forms the root of the destination CSpace."/>
+            <param dir="in" name="index" type="seL4_Word" description="CPtr to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
             <error name="seL4_DeleteFirst">
                 <description>
@@ -758,9 +758,9 @@ contain the mapping"/>
                 <docref>See <autoref label='sec:interrupts'/> and <autoref label='sec:x86_interrupts'/>.</docref>
             </description>
             <param dir="in" name="root" type="seL4_CNode"
-                description='CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize.'/>
+                description='CPtr to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize.'/>
             <param dir="in" name="index" type="seL4_Word"
-                description='CPTR to the destination slot. Resolved from the root of the destination CSpace.'/>
+                description='CPtr to the destination slot. Resolved from the root of the destination CSpace.'/>
             <param dir="in" name="depth" type="seL4_Uint8"
                 description='Number of bits of index to resolve to find the destination slot.'/>
 
@@ -815,9 +815,9 @@ contain the mapping"/>
                 <docref>See <autoref label='sec:interrupts'/> and <autoref label='sec:x86_interrupts'/>.</docref>
             </description>
             <param dir="in" name="root" type="seL4_CNode"
-                description='CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize.'/>
+                description='CPtr to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize.'/>
             <param dir="in" name="index" type="seL4_Word"
-                description='CPTR to the destination slot. Resolved from the root of the destination CSpace.'/>
+                description='CPtr to the destination slot. Resolved from the root of the destination CSpace.'/>
             <param dir="in" name="depth" type="seL4_Uint8"
                 description='Number of bits of index to resolve to find the destination slot.'/>
             <param dir="in" name="pci_bus" type="seL4_Word" description='PCI bus ID of the device that will generate the interrupt.'/>
@@ -870,7 +870,7 @@ contain the mapping"/>
                 <docref>See <autoref label='sec:virt'/>.</docref>
             </description>
             <param dir="in" name="eptpml4" type="seL4_X86_EPTPML4"
-                description='CPTR to an EPT PML4 object to act as the guest mode vspace root'/>
+                description='CPtr to an EPT PML4 object to act as the guest mode vspace root'/>
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> or <texttt text="eptpml4"/> is a CPtr to a capability of the wrong type.
@@ -894,7 +894,7 @@ contain the mapping"/>
                 Configures the one-to-one binding of a VCPU and TCB, overwriting any previous binding
                 in both. <docref>See <autoref label='sec:virt'/>.</docref>
             </description>
-            <param dir="in" name="tcb" type="seL4_TCB" description='CPTR of the TCB to bind to'/>
+            <param dir="in" name="tcb" type="seL4_TCB" description='CPtr of the TCB to bind to'/>
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> or <texttt text="tcb"/> is a CPtr to a capability of the wrong type.
