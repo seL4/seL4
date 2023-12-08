@@ -50,6 +50,11 @@ jobs:
       with:
         name: images-${{ matrix.march }}-${{ matrix.compiler }}
         path: '*-images.tar.gz'
+    - name: Upload kernel.elf files
+      uses: actions/upload-artifact@v3
+      with:
+        name: kernel.elf-${{ matrix.march }}-${{ matrix.compiler }}
+        path: '*-kernel.elf'
 
   the_matrix:
     name: Matrix
