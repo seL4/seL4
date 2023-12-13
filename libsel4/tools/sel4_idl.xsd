@@ -96,6 +96,8 @@
             <xsd:element name="shortref" type="ShortRefType"/>
             <xsd:element name="obj" type="ObjType"/>
             <xsd:element name="autoref" type="AutoRefType"/>
+            <xsd:element name="genref" type="GenRefType"/>
+            <xsd:element name="errornewline" type="ErrorNewLineType" />
         </xsd:choice>
     </xsd:group>
 
@@ -152,10 +154,14 @@
         <xsd:attribute name="label" type="xsd:string" use="required"/>
     </xsd:complexType>
 
+    <xsd:complexType name="GenRefType">
+        <xsd:attribute name="name" type="xsd:string" use="required"/>
+    </xsd:complexType>
 
     <xsd:complexType name="ObjType">
         <xsd:attribute name="name" type="xsd:string" use="required"/>
     </xsd:complexType>
 
     <xsd:complexType name="ErrorEnumDescType"/>
+
 </xsd:schema>

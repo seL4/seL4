@@ -30,6 +30,7 @@ class Generator(object):
             'ref': self.ref_to_format,
             'nameref': self.nref_to_format,
             'shortref': lambda p, r: "%s" % p['sec'],
+            'genref': lambda p, r: "%s" % p['name'],
             'obj': lambda p, r: "%s" % p['name'],
             'errorenumdesc': lambda p, r: "",
             'orderedlist': self.parse_ordered_list,
@@ -308,6 +309,7 @@ class LatexGenerator(Generator):
         parse_table['computeroutput'] = lambda p, r: '\\texttt{%s}' % self.get_text(p)
         parse_table['texttt'] = lambda p, r: '\\texttt{%s}' % self.get_text(p['text'])
         parse_table['shortref'] = lambda p, r: "\\ref{sec:%s}" % p['sec']
+        parse_table['genref'] = lambda p, r: "\\ref{%s}" % p['name']
         parse_table['obj'] = lambda p, r: "\\obj{%s}" % p['name']
         parse_table['errorenumdesc'] = lambda p, r: "\\errorenumdesc"
         parse_table['listitem'] = lambda p, r: "\\item " + self.parse_para(p.para, r) + "\n"

@@ -4,6 +4,13 @@
 
      SPDX-License-Identifier: BSD-2-Clause
 -->
+<!DOCTYPE api [
+    <!ENTITY illegal_operation "The <texttt text='_service'/> is a CPtr to a capability of the wrong type (see <genref name='error:illegal_operation'/> in common error codes)">
+    <!ENTITY or_illegal_operation "Or, the <texttt text='_service'/> is a CPtr to a capability of the wrong type (see <genref name='error:illegal_operation'/> in common error codes)">
+    <!ENTITY invalid_capability "The <texttt text='_service'/> is a CPtr to a capability of the wrong type (see <genref name='error:invalid_capability'/> in common error codes.)">
+    <!ENTITY or_invalid_capability "Or, the <texttt text='_service'/> is a CPtr to a capability of the wrong type (see <genref name='error:invalid_capability'/> in common error codes.)">
+
+]>
 
 <api name="ObjectApi">
 
@@ -56,9 +63,10 @@
             </error>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &illegal_operation;
                 </description>
             </error>
+
             <error name="seL4_InvalidArgument">
                 <description>
                     The <texttt text="size_bits"/> is too big or too small for the requested object type.
@@ -68,7 +76,7 @@
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
             <error name="seL4_NotEnoughMemory" description="The total size of the new objects exceeds the space available."/>
@@ -102,13 +110,13 @@
                 description="The structure to read the registers into."/>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="_service"/> is the current thread's TCB.
+                    The <texttt text="_service"/> is the current thread's TCB.
+                    &or_illegal_operation;
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
             <error name="seL4_RangeError">
@@ -135,13 +143,13 @@
                 description="Data structure containing the new register values."/>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="_service"/> is the current thread's TCB.
+                    The <texttt text="_service"/> is the current thread's TCB.
+                    &or_illegal_operation;
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
         </method>
@@ -169,12 +177,14 @@
                 description="Architecture dependent flags. These have no meaning on x86, ARM, and RISC-V."/>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &illegal_operation;
                 </description>
             </error>
+
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> or <texttt text="source"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="source"/> is a CPtr to a capability of the wrong type.
+                    &or_invalid_capability;
                 </description>
             </error>
         </method>
@@ -203,16 +213,17 @@
                 description="Capability to a page containing the thread's IPC buffer."/>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/>, <texttt text="bufferFrame"/>, <texttt text="cspace_root"/>, or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="bufferFrame"/>, <texttt text="cspace_root"/>, or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="vspace_root"/> is not assigned to an ASID pool.
                     Or, <texttt text="cspace_root_data"/> is invalid.
                     Or, <texttt text="buffer"/> is not aligned.
                     Or, <texttt text="bufferFrame"/> is retyped from a device untyped <docref>(see <autoref label="sec:kernmemalloc"/>)</docref>.
+                    &or_illegal_operation;
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
             <error name="seL4_RevokeFirst">
@@ -248,15 +259,16 @@
             </error>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/>, <texttt text="bufferFrame"/>, <texttt text="cspace_root"/>, or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="bufferFrame"/>, <texttt text="cspace_root"/>, or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="vspace_root"/> is not assigned to an ASID pool.
                     Or, <texttt text="cspace_root_data"/> is invalid.
                     Or, <texttt text="bufferFrame"/> is retyped from a device untyped <docref>(see <autoref label="sec:kernmemalloc"/>)</docref>.
+                    &or_illegal_operation;
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
             <error name="seL4_RevokeFirst">
@@ -277,16 +289,18 @@
                 description="Capability to the TCB to use the MCP from when setting the priority."/>
             <param dir="in" name="priority" type="seL4_Word"
                 description="The thread's new priority."/>
-            <error name="seL4_IllegalOperation">
+            <!-- <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &illegal_operation;
                 </description>
             </error>
+
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> or <texttt text="authority"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="authority"/> is a CPtr to a capability of the wrong type.
+                    &or_invalid_capability;
                 </description>
-            </error>
+            </error> -->
             <error name="seL4_RangeError">
                 <description>
                     The <texttt text="priority"/> is greater than the maximum controlled priority of <texttt text="authority"/>.
@@ -307,12 +321,14 @@
                 description="The thread's new maximum controlled priority."/>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &illegal_operation;
                 </description>
             </error>
+
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> or <texttt text="authority"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="authority"/> is a CPtr to a capability of the wrong type.
+                    &or_invalid_capability;
                 </description>
             </error>
             <error name="seL4_RangeError">
@@ -338,12 +354,14 @@
                 description="The thread's new priority."/>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &illegal_operation;
                 </description>
             </error>
+
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> or <texttt text="authority"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="authority"/> is a CPtr to a capability of the wrong type.
+                    &or_invalid_capability;
                 </description>
             </error>
             <error name="seL4_RangeError">
@@ -372,20 +390,21 @@
                 description="Capability to the scheduling context that the TCB should run on. If the scheduling context is already bound to a notification or TCB that is not this TCB this operation will fail. Similarly, if this TCB is already bound to a scheduling context that is not this scheduling context, this will also fail."/>
             <param dir="in" name="fault_ep" type="seL4_CPtr"
                 description="CPtr to the endpoint which receives IPCs when this thread faults."/>
-            <error name="seL4_IllegalOperation">
+            <!-- <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="_service"/> or <texttt text="sched_context"/> is already bound.
+                    The <texttt text="_service"/> or <texttt text="sched_context"/> is already bound.
                     Or, <texttt text="_service"/> is the current thread's TCB.
                     Or, <texttt text="_service"/> is a TCB in the blocked state and <texttt text="sched_context"/> is not schedulable.
+                    &or_illegal_operation;
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/>, <texttt text="authority"/>, <texttt text="sched_context"/>, or <texttt text="fault_ep"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="authority"/>, <texttt text="sched_context"/>, or <texttt text="fault_ep"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="fault_ep"/> does not have both Write rights and either Grant or GrantReply rights to the Endpoint <docref>(see <autoref label="sec:cap_rights"/>)</docref>.
+                    &or_invalid_capability;
                 </description>
-            </error>
+            </error> -->
             <error name="seL4_RangeError">
                 <description>
                     The <texttt text="mcp"/> is greater than the maximum controlled priority of <texttt text="authority"/>.
@@ -406,13 +425,15 @@
                 description="CPtr to the endpoint which receives IPCs when this thread triggers timeout faults. Can be null."/>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &illegal_operation;
                 </description>
             </error>
+
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> or <texttt text="timeout_fault_ep"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="timeout_fault_ep"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="timeout_fault_ep"/> does not have both Write rights and either Grant or GrantReply rights to the Endpoint <docref>(see <autoref label="sec:cap_rights"/>)</docref>.
+                    &or_invalid_capability;
                 </description>
             </error>
         </method>
@@ -434,13 +455,14 @@
             </error>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> or <texttt text="bufferFrame"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="bufferFrame"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="bufferFrame"/> is retyped from a device untyped <docref>(see <autoref label="sec:kernmemalloc"/>)</docref>.
+                    &or_illegal_operation;
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
             <error name="seL4_RevokeFirst">
@@ -470,14 +492,15 @@
                 description="Has no effect on x86 or ARM processors."/>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/>, <texttt text="cspace_root"/>, or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="cspace_root"/>, or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="vspace_root"/> is not assigned to an ASID pool.
                     Or, <texttt text="cspace_root_data"/> is invalid.
+                    &or_illegal_operation;
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
             <error name="seL4_RevokeFirst">
@@ -507,15 +530,17 @@
                 description="Has no effect on x86 or ARM processors."/>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/>, <texttt text="cspace_root"/>, or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="cspace_root"/>, or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="vspace_root"/> is not assigned to an ASID pool.
                     Or, <texttt text="cspace_root_data"/> is invalid.
+                    &or_illegal_operation;
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> or <texttt text="fault_ep"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="fault_ep"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="fault_ep"/> does not have both Write rights and either Grant or GrantReply rights to the Endpoint <docref>(see <autoref label="sec:cap_rights"/>)</docref>.
+                    &or_invalid_capability;
                 </description>
             </error>
             <error name="seL4_RevokeFirst">
@@ -534,12 +559,13 @@
             </description>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &illegal_operation;
                 </description>
             </error>
+
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
         </method>
@@ -553,12 +579,13 @@
             </description>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &illegal_operation;
                 </description>
             </error>
+
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
         </method>
@@ -573,14 +600,15 @@
             <param dir="in" name="notification" type="seL4_CPtr" description="Notification to bind."/>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> or <texttt text="notification"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="notification"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="_service"/> or <texttt text="notification"/> is already bound.
                     Or, <texttt text="notification"/> does not have Read rights to the Notification <docref>(see <autoref label="sec:cap_rights"/>)</docref>.
+                    &or_illegal_operation;
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
         </method>
@@ -594,13 +622,13 @@
             </description>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="_service"/> is not bound to a notification.
+                    The <texttt text="_service"/> is not bound to a notification.
+                    &or_illegal_operation;
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
         </method>
@@ -622,13 +650,13 @@
                 description="The thread's new CPU to run."/>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="affinity"/> is not a valid CPU number.
+                    The <texttt text="affinity"/> is not a valid CPU number.
+                    &or_illegal_operation;
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
         </method>
@@ -661,9 +689,10 @@
             </error>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &illegal_operation;
                 </description>
             </error>
+
             <error name="seL4_InvalidArgument">
                 <description>
                     The <texttt text="bp_num"/>, <texttt text="size"/>, or <texttt text="rw"/> is not valid for the given <texttt text="type"/>.
@@ -673,7 +702,7 @@
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
             <error name="seL4_RangeError">
@@ -714,12 +743,13 @@
             <param dir="out" name="is_enabled" type="seL4_Bool"/>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &illegal_operation;
                 </description>
             </error>
+
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
             <error name="seL4_RangeError">
@@ -745,13 +775,13 @@
                 description="The API-ID of a target breakpoint. This ID will be a positive integer, with values ranging from 0 to seL4_NumHWBreakpoints - 1."/>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, the argument values are inappropriate for the target architecture.
+                    The argument values are inappropriate for the target architecture.
+                    &or_illegal_operation;
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
             <error name="seL4_RangeError">
@@ -788,8 +818,8 @@
             <param dir="out" name="bp_was_consumed" type="seL4_Bool"/>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, the argument values are inappropriate for the target architecture.
+                    The argument values are inappropriate for the target architecture.
+                    &or_illegal_operation;
                 </description>
             </error>
             <error name="seL4_InvalidArgument">
@@ -799,7 +829,7 @@
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
         </method>
@@ -815,12 +845,13 @@
                 description="The TLS base to set."/>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &illegal_operation;
                 </description>
             </error>
+
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
          </method>
@@ -845,12 +876,13 @@
             </error>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &illegal_operation;
                 </description>
             </error>
+
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
             <error name="seL4_RangeError">
@@ -877,12 +909,13 @@
             </error>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &illegal_operation;
                 </description>
             </error>
+
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
             <error name="seL4_RangeError">
@@ -912,13 +945,13 @@
             </error>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, the capability does not have full rights to the Endpoint <docref>(see <autoref label="sec:cap_rights"/>)</docref>.
+                    The capability does not have full rights to the Endpoint <docref>(see <autoref label="sec:cap_rights"/>)</docref>.
+                    &or_illegal_operation;
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
             <error name="seL4_RangeError">
@@ -956,13 +989,13 @@
             </error>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, the source capability cannot be derived<docref> (see <autoref label="sec:cap_derivation"/>)</docref>.
+                    The source capability cannot be derived<docref> (see <autoref label="sec:cap_derivation"/>)</docref>
+                    &or_illegal_operation;
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
             <error name="seL4_RangeError">
@@ -1006,14 +1039,14 @@
             </error>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, the source capability cannot be derived <docref>(see <autoref label="sec:cap_derivation"/>)</docref>.
+                    The source capability cannot be derived <docref>(see <autoref label="sec:cap_derivation"/>)</docref>.
                     Or, the badge or guard value is invalid.
+                    &or_illegal_operation;
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
             <error name="seL4_RangeError">
@@ -1051,12 +1084,13 @@
             </error>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &illegal_operation;
                 </description>
             </error>
+
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
             <error name="seL4_RangeError">
@@ -1094,13 +1128,13 @@
             </error>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, the guard value is invalid.
+                    The guard value is invalid.
+                    &or_illegal_operation;
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
             <error name="seL4_RangeError">
@@ -1139,14 +1173,14 @@
             </error>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, the pivot is the same slot as the source or destination.
+                    The pivot is the same slot as the source or destination.
                     Or, the guard value on the destination or pivot is invalid.
+                    &or_illegal_operation;
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
             <error name="seL4_RangeError">
@@ -1175,12 +1209,13 @@
             </error>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &illegal_operation;
                 </description>
             </error>
+
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
             <error name="seL4_RangeError">
@@ -1213,13 +1248,13 @@
             </error>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, on x86, an IOAPIC is being used.
+                    On x86, an IOAPIC is being used.
+                    &or_illegal_operation;
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
             <error name="seL4_RangeError">
@@ -1249,12 +1284,13 @@
             </description>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &illegal_operation;
                 </description>
             </error>
+
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
         </method>
@@ -1270,13 +1306,15 @@
             <param dir="in" name="notification" type="seL4_CPtr" description="The notification which the IRQs will signal."/>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &illegal_operation;
                 </description>
             </error>
+
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> or <texttt text="notification"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="notification"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="notification"/> does not have the Write right <docref>(see <autoref label="sec:cap_rights"/>)</docref>.
+                    &or_invalid_capability;
                 </description>
             </error>
         </method>
@@ -1290,12 +1328,13 @@
             </description>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &illegal_operation;
                 </description>
             </error>
+
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
         </method>
@@ -1315,9 +1354,10 @@
             <param dir="in" name="thread" type="seL4_TCB" description="Capability to the TCB which is being operated on."/>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &illegal_operation;
                 </description>
             </error>
+
             <error name="seL4_InvalidArgument">
                 <description>
                     The <texttt text="domain"/> is greater than <texttt text="CONFIG_NUM_DOMAINS"/>.
@@ -1326,7 +1366,7 @@
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
         </method>
@@ -1357,12 +1397,14 @@
                 description="Bitwise OR'd set of seL4_SchedContextFlag." />
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &illegal_operation;
                 </description>
             </error>
+
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> or <texttt text="schedcontext"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="schedcontext"/> is a CPtr to a capability of the wrong type.
+                    &or_invalid_capability;
                 </description>
             </error>
             <error name="seL4_RangeError">
@@ -1402,14 +1444,15 @@
                 description="Capability to a TCB or a notification object"/>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="_service"/> or <texttt text="cap"/> is already bound to the same type of object.
+                    The <texttt text="cap"/> is already bound to the same type of object.
                     Or, <texttt text="cap"/> is a TCB in the blocked state and <texttt text="_service"/> is not schedulable.
+                    &or_illegal_operation;
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> or <texttt text="cap"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="cap"/> is a CPtr to a capability of the wrong type.
+                    &or_invalid_capability;
                 </description>
             </error>
         </method>
@@ -1426,13 +1469,13 @@
             <return><errorenumdesc/></return>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, the current thread's TCB is bound to <texttt text="_service"/>.
+                    The current thread's TCB is bound to <texttt text="_service"/>.
+                    &or_illegal_operation;
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
         </method>
@@ -1459,14 +1502,15 @@
                 description="Capability to a notification that is bound to the scheduling context or capability to a tcb that is bound to this scheduling context or has received it through scheduling context donation."/>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="cap"/> is not bound to <texttt text="_service"/>.
+                    The <texttt text="cap"/> is not bound to <texttt text="_service"/>.
                     Or, <texttt text="cap"/> is the current thread's TCB.
+                    &or_illegal_operation;
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> or <texttt text="cap"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="cap"/> is a CPtr to a capability of the wrong type.
+                    &or_invalid_capability;
                 </description>
             </error>
         </method>
@@ -1483,12 +1527,13 @@
                 description="Amount consumed by this scheduling context."/>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &illegal_operation;
                 </description>
             </error>
+
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
        </method>
@@ -1509,14 +1554,20 @@
             <param dir="out" name="consumed" type="seL4_Time"/>
             <error name="seL4_IllegalOperation">
                 <description>
+<<<<<<< HEAD
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="_service"/> is not bound to a TCB or is bound to the current thread's TCB.
                     Or, the target thread's priority is greater than the current thread's maximum controlled priority<docref> (see <autoref label="sec:sched"/>)</docref>.
+=======
+                    The <texttt text="_service"/> is not bound to a TCB or is bound to the current thread's TCB.
+                    Or, the target thread's priority is greater than the current thread's maximum controlled priority <docref>(see <autoref label="sec:sched"/>)</docref>.
+                    &or_illegal_operation;
+>>>>>>> 36d29691 (combine common api error codes)
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
         </method>
