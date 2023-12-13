@@ -30,13 +30,16 @@ class Generator(object):
             'ref': self.ref_to_format,
             'nameref': self.nref_to_format,
             'shortref': lambda p, r: "%s" % p['sec'],
+            'genref': lambda p, r: "%s" % p['name'],
             'obj': lambda p, r: "%s" % p['name'],
             'errorenumdesc': lambda p, r: "",
             'orderedlist': self.parse_ordered_list,
             'listitem': lambda p, r: self.parse_para(p.para, r),
             'itemizedlist': self.parse_itemized_list,
             'autoref': lambda p, r: "%s" % p['label'],
-            'docref': self.parse_recurse
+            'docref': self.parse_recurse,
+            'commonerrorref': self.parse_recurse,
+            'apiref': self.parse_recurse
         }
         return parse_table
 
@@ -135,13 +138,16 @@ class Generator(object):
         that may appear inside a paragraph. Unhandled cases are
         not parsed and result in an empty string.
         """
-        parse_table = self.get_parse_table()
-        if para_node.name is None:
-            return self.get_text(para_node, escape=True)
-        elif para_node.name in parse_table:
-            return parse_table[para_node.name](para_node, ref_dict)
-        else:
+        if not hasattr(para_node, "name"):
             return ""
+        else:
+            parse_table = self.get_parse_table()
+            if para_node.name is None:
+                return self.get_text(para_node, escape=True)
+            elif para_node.name in parse_table:
+                return parse_table[para_node.name](para_node, ref_dict)
+            else:
+                return ""
 
     def parse_brief(self, parent):
         """
@@ -308,10 +314,12 @@ class LatexGenerator(Generator):
         parse_table['computeroutput'] = lambda p, r: '\\texttt{%s}' % self.get_text(p)
         parse_table['texttt'] = lambda p, r: '\\texttt{%s}' % self.get_text(p['text'])
         parse_table['shortref'] = lambda p, r: "\\ref{sec:%s}" % p['sec']
+        parse_table['genref'] = lambda p, r: "\\ref{%s}" % p['name']
         parse_table['obj'] = lambda p, r: "\\obj{%s}" % p['name']
         parse_table['errorenumdesc'] = lambda p, r: "\\errorenumdesc"
         parse_table['listitem'] = lambda p, r: "\\item " + self.parse_para(p.para, r) + "\n"
         parse_table['autoref'] = lambda p, r: "\\autoref{%s}" % p['label']
+        parse_table['apiref'] = lambda p, r: ""
         return parse_table
 
     def default_return_doc(self, ret_type):

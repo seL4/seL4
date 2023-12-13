@@ -4,8 +4,10 @@
 
      SPDX-License-Identifier: BSD-2-Clause
 -->
+<!DOCTYPE api>
 
-<api name="ObjectApiX64" label_prefix="x86_64_">
+
+<api name="ObjectApiX64" label_prefix="x86_64_" xmlns:xi="http://www.w3.org/2001/XInclude" xml:base="../../../tools/" >
     <struct name="seL4_UserContext">
         <member name="rip"/>
         <member name="rsp"/>
@@ -47,6 +49,7 @@
             <error name="seL4_DeleteFirst">
                 <description>
                     A mapping already exists for this level in <texttt text="vspace"/> at <texttt text="vaddr"/>.
+                    <xi:include href="common_error_illegal_operation.xml" xpointer="xpointer(//commonerrorref)"/>
                 </description>
             </error>
             <error name="seL4_FailedLookup">
@@ -54,11 +57,7 @@
                     The <texttt text="pml4"/> is not assigned to an ASID pool.
                 </description>
             </error>
-            <error name="seL4_IllegalOperation">
-                <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                </description>
-            </error>
+            <xi:include href="common_error_illegal_operation.xml" />
             <error name="seL4_InvalidArgument">
                 <description>
                     The <texttt text="vaddr"/> is in the kernel virtual address range.
@@ -66,9 +65,10 @@
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> or <texttt text="pml4"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="pml4"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="pml4"/> is not assigned to an ASID pool.
                     Or, <texttt text="_service"/> is already mapped in a VSpace.
+                    <xi:include href="common_error_invalid_capability_append.xml" />
                 </description>
             </error>
         </method>
@@ -79,14 +79,10 @@
             <description>
                <docref>See <autoref label="ch:vspace"/></docref>
             </description>
-            <error name="seL4_IllegalOperation">
+            <xi:include href="common_error_illegal_operation.xml" />
+            <error name="seL4_InvalidCapabilities">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                </description>
-            </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
                 </description>
             </error>
             <error name="seL4_RevokeFirst">

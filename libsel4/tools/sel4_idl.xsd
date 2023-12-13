@@ -1,9 +1,11 @@
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
 <!--
      Copyright 2022, seL4 Project a Series of LF Projects, LLC
 
      SPDX-License-Identifier: BSD-2-Clause
 -->
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="xml_namespace.xsd"/>
 
     <xsd:annotation>
         <xsd:documentation xml:lang="en">
@@ -20,6 +22,7 @@
         </xsd:sequence>
         <xsd:attribute name="name" type="xsd:string" use="optional" />
         <xsd:attribute name="label_prefix" type="xsd:string" use="optional"/>
+        <xsd:attribute ref="xml:base"/>
     </xsd:complexType>
 
     <xsd:complexType name="StructType">
@@ -57,6 +60,7 @@
         <xsd:attribute name="id" type="xsd:string" use="required" />
         <xsd:attribute name="manual_name" type="xsd:string" use="optional" />
         <xsd:attribute name="manual_label" type="xsd:string" use="optional" />
+        <xsd:attribute ref="xml:base"/>
     </xsd:complexType>
 
     <xsd:group name="ConfigGroup">
@@ -96,6 +100,8 @@
             <xsd:element name="shortref" type="ShortRefType"/>
             <xsd:element name="obj" type="ObjType"/>
             <xsd:element name="autoref" type="AutoRefType"/>
+            <xsd:element name="genref" type="GenRefType"/>
+            <xsd:element name="commonerrorref" type="CommonErrorRefType" />
         </xsd:choice>
     </xsd:group>
 
@@ -121,6 +127,20 @@
         </xsd:choice>
     </xsd:complexType>
 
+    <xsd:complexType name="ApiRefType" mixed="true">
+        <xsd:choice minOccurs="0" maxOccurs="unbounded">
+            <xsd:group ref="DocElements" minOccurs="0" maxOccurs="unbounded"/>
+        </xsd:choice>
+    </xsd:complexType>
+
+    <xsd:complexType name="CommonErrorRefType" mixed="true">
+        <xsd:choice minOccurs="0" maxOccurs="unbounded">
+            <xsd:group ref="DocElements" minOccurs="0" maxOccurs="unbounded"/>
+            <xsd:element name="docref" type="DocRefType"/>
+            <xsd:element name="apiref" type="ApiRefType" />
+        </xsd:choice>
+    </xsd:complexType>
+
     <xsd:complexType name="CapParamType">
         <xsd:attribute name="append_description" type="xsd:string" use="optional"/>
     </xsd:complexType>
@@ -142,6 +162,7 @@
         </xsd:choice>
         <xsd:attribute name="name" type="xsd:string" use="required"/>
         <xsd:attribute name="description" type="xsd:string" use="optional"/>
+        <xsd:attribute ref="xml:base"/>
     </xsd:complexType>
 
     <xsd:complexType name="ShortRefType">
@@ -152,10 +173,14 @@
         <xsd:attribute name="label" type="xsd:string" use="required"/>
     </xsd:complexType>
 
+    <xsd:complexType name="GenRefType">
+        <xsd:attribute name="name" type="xsd:string" use="required"/>
+    </xsd:complexType>
 
     <xsd:complexType name="ObjType">
         <xsd:attribute name="name" type="xsd:string" use="required"/>
     </xsd:complexType>
 
     <xsd:complexType name="ErrorEnumDescType"/>
+
 </xsd:schema>

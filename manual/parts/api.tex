@@ -268,6 +268,23 @@ complete the \apifunc{seL4\_Untyped\_Retype}{untyped_retype} request.
 \end{tabularx}
 \vfill
 
+
+\subsection{Common Error Codes} \label{sec:common_errors}
+
+\setword{}{common_errors} This section lists common error codes. The same field may also result in specific errors for an invocation, which are described in the error codes of that invocation.
+
+\begin{tabularx}{\textwidth}{p{0.35\textwidth}X}
+\toprule
+    Error Code & Possible Cause (Generic) \\
+\midrule
+    \setword{\ipcbloc{seL4\_IllegalOperation}}{error:illegal_operation} & The \texttt{\_service} is a CPtr to a capability of the wrong type. \\
+    \setword{\ipcbloc{seL4\_InvalidCapability}}{error:invalid_capability} & The \texttt{\_service} is a CPtr to a capability of the wrong type. \\
+    \setword{\ipcbloc{seL4\_TruncatedMessage}}{error:truncated_message} & Too few message words or capabilities were sent in the message. \\
+\bottomrule
+\end{tabularx}
+\vfill
+
+
 \section{System Calls}
 
 \subsection{General System Calls}

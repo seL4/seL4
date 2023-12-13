@@ -88,6 +88,13 @@
 % Read information about the repository.
 \input{env}
 
+\makeatletter
+\newcommand{\setword}[2]{%
+  \phantomsection
+  #1\def\@currentlabel{\unexpanded{#1}}\label{#2}%
+}
+\makeatother
+
 \begin{document}
 
   \title{seL4\\ Reference Manual}

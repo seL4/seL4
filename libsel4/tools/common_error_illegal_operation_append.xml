@@ -1,0 +1,14 @@
+<!--
+     Copyright 2024, seL4 Project a Series of LF Projects, LLC.
+
+     SPDX-License-Identifier: CC-BY-SA-4.0
+
+-->
+<commonerrorref>
+	<docref>
+		Or, see <genref name='error:illegal_operation'/> in common error codes.
+	</docref>
+	<apiref>
+		Or, a common error occurred: The <texttt text="_service" /> is a CPtr to a capability of the wrong type.
+	</apiref>
+</commonerrorref>
