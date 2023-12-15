@@ -9,19 +9,12 @@
 # ============================
 
 from __future__ import print_function
+from importlib.metadata import version
 from jinja2 import Environment, BaseLoader
 import argparse
 import sys
 import xml.dom.minidom
-import pkg_resources
 from condition import condition_to_cpp
-
-# We require jinja2 to be at least version 2.10,
-# In the past we used the 'namespace' feature from that version.
-# other versions of jinja, particularly `minijinja`, don't support namespaces.
-# However in case `namespace` is needed in the future require a
-# version which supports it.
-pkg_resources.require("jinja2>=2.10")
 
 
 COMMON_HEADER = """
@@ -184,6 +177,15 @@ def generate(args, invocations):
 
 
 if __name__ == "__main__":
+    # We require jinja2 to be at least version 2.10,
+    # In the past we used the 'namespace' feature from that version.
+    # other versions of jinja, particularly `minijinja`, don't support
+    # namespaces. However in case `namespace` is needed in the future require a
+    # version which supports it.
+    jinja2_version = version("jinja2")
+    if jinja2_version < "2.10":
+        sys.exit("Jinja2 should be >= 2.10")
+
     args = parse_args()
 
     invocations = parse_xml(args.xml)
