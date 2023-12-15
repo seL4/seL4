@@ -156,6 +156,14 @@ def parse_xml(xml_file):
 
 
 def generate(args, invocations):
+    # We require jinja2 to be at least version 2.10,
+    # In the past we used the 'namespace' feature from that version.
+    # other versions of jinja, particularly `minijinja`, don't support
+    # namespaces. However in case `namespace` is needed in the future require a
+    # version which supports it.
+    jinja2_version = version("jinja2")
+    if jinja2_version < "2.10":
+        sys.exit("Jinja2 should be >= 2.10")
 
     header_title = "API"
     if args.libsel4:
@@ -177,15 +185,6 @@ def generate(args, invocations):
 
 
 if __name__ == "__main__":
-    # We require jinja2 to be at least version 2.10,
-    # In the past we used the 'namespace' feature from that version.
-    # other versions of jinja, particularly `minijinja`, don't support
-    # namespaces. However in case `namespace` is needed in the future require a
-    # version which supports it.
-    jinja2_version = version("jinja2")
-    if jinja2_version < "2.10":
-        sys.exit("Jinja2 should be >= 2.10")
-
     args = parse_args()
 
     invocations = parse_xml(args.xml)
