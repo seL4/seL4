@@ -210,7 +210,7 @@ def generate_kernel_file(kernel_header, api, debug):
     # version which supports it.
     jinja2_version = version("jinja2")
     if jinja2_version < "2.10":
-        sys.exit("Jinja2 should be >= 2.10")
+        raise Warning("Jinja2 should be >= 2.10")
 
     template = Environment(loader=BaseLoader, trim_blocks=False,
                            lstrip_blocks=False).from_string(KERNEL_HEADER_TEMPLATE)
