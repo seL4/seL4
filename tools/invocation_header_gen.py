@@ -163,7 +163,7 @@ def generate(args, invocations):
     # version which supports it.
     jinja2_version = version("jinja2")
     if jinja2_version < "2.10":
-        sys.exit("Jinja2 should be >= 2.10")
+        raise Warning("Jinja2 should be >= 2.10")
 
     header_title = "API"
     if args.libsel4:
