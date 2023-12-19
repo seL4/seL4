@@ -178,7 +178,7 @@ def generate(args, invocations):
         template = Environment(loader=BaseLoader).from_string(INVOCATION_TEMPLATE)
 
     data = template.render({'header_title': header_title, 'libsel4': args.libsel4,
-                            'invocations': invocations, 'num_invocations': len(invocations)})
+                            'invocations': invocations})
     args.dest.write(data)
 
     args.dest.close()
