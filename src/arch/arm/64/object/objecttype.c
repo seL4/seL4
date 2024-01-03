@@ -338,6 +338,19 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
 {
     switch (t) {
     case seL4_ARM_SmallPageObject:
+        if (deviceMemory) {
+            /** AUXUPD: "(True, ptr_retyps 1
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_device_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSmallPage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat ARMSmallPageBits))" */
+        } else {
+            /** AUXUPD: "(True, ptr_retyps 1
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSmallPage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat ARMSmallPageBits))" */
+        }
         return cap_frame_cap_new(
                    asidInvalid,           /* capFMappedASID */
                    (word_t)regionBase,    /* capFBasePtr */
@@ -348,6 +361,19 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
                );
 
     case seL4_ARM_LargePageObject:
+        if (deviceMemory) {
+            /** AUXUPD: "(True, ptr_retyps (2^9)
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_device_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMLargePage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat ARMLargePageBits))" */
+        } else {
+            /** AUXUPD: "(True, ptr_retyps (2^9)
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMLargePage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat ARMLargePageBits))" */
+        }
         return cap_frame_cap_new(
                    asidInvalid,           /* capFMappedASID */
                    (word_t)regionBase,    /* capFBasePtr */
@@ -358,6 +384,19 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
                );
 
     case seL4_ARM_HugePageObject:
+        if (deviceMemory) {
+            /** AUXUPD: "(True, ptr_retyps (2^18)
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_device_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMHugePage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat ARMHugePageBits))" */
+        } else {
+            /** AUXUPD: "(True, ptr_retyps (2^18)
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMHugePage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat ARMHugePageBits))" */
+        }
         return cap_frame_cap_new(
                    asidInvalid,           /* capFMappedASID */
                    (word_t)regionBase,    /* capFBasePtr */
@@ -377,6 +416,9 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
                );
 #else
 
+        /** AUXUPD: "(True, ptr_retyps 1
+              (Ptr (ptr_val \<acute>regionBase) :: (pte_C[vs_array_len]) ptr))" */
+        /** GHOSTUPD: "(True, gs_new_pt_t VSRootPT_T (ptr_val \<acute>regionBase))" */
         return cap_vspace_cap_new(
                    asidInvalid,           /* capVSMappedASID */
                    (word_t)regionBase,    /* capVSBasePtr    */
@@ -384,6 +426,9 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
                );
 #endif /*!CONFIG_ARM_SMMU*/
     case seL4_ARM_PageTableObject:
+        /** AUXUPD: "(True, ptr_retyps 1
+              (Ptr (ptr_val \<acute>regionBase) :: (pte_C[pt_array_len]) ptr))" */
+        /** GHOSTUPD: "(True, gs_new_pt_t NormalPT_T (ptr_val \<acute>regionBase))" */
         return cap_page_table_cap_new(
                    asidInvalid,           /* capPTMappedASID    */
                    (word_t)regionBase,    /* capPTBasePtr       */
