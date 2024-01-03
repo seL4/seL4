@@ -776,37 +776,51 @@ static bool_t setVMRootForFlush(vspace_root_t *vspace, asid_t asid)
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 
-static asid_map_t *getMapRefForASID(asid_t asid)
+static inline asid_pool_t *getPoolPtr(asid_t asid)
 {
-    asid_pool_t *poolPtr;
+    return armKSASIDTable[asid >> asidLowBits];
+}
 
-    poolPtr = armKSASIDTable[asid >> asidLowBits];
+static inline asid_map_t getASIDMap(asid_pool_t *poolPtr, asid_t asid)
+{
     assert(poolPtr != NULL);
+    return poolPtr->array[asid & MASK(asidLowBits)];
+}
 
-    return &poolPtr->array[asid & MASK(asidLowBits)];
+static inline void setASIDMap(asid_pool_t *poolPtr, asid_t asid, asid_map_t asid_map)
+{
+    assert(poolPtr != NULL);
+    poolPtr->array[asid & MASK(asidLowBits)] = asid_map;
 }
 
 static void invalidateASID(asid_t asid)
 {
-    asid_map_t *asid_map;
+    asid_pool_t *poolPtr;
+    asid_map_t asid_map;
 
-    asid_map = getMapRefForASID(asid);
-    assert(asid_map_get_type(*asid_map) == asid_map_asid_map_vspace);
+    poolPtr = getPoolPtr(asid);
+    asid_map = getASIDMap(poolPtr, asid);
+    assert(asid_map_get_type(asid_map) == asid_map_asid_map_vspace);
 
-    asid_map_asid_map_vspace_ptr_set_stored_hw_vmid(asid_map, 0);
-    asid_map_asid_map_vspace_ptr_set_stored_vmid_valid(asid_map, false);
+    asid_map = asid_map_asid_map_vspace_set_stored_hw_vmid(asid_map, 0);
+    asid_map = asid_map_asid_map_vspace_set_stored_vmid_valid(asid_map, false);
+
+    setASIDMap(poolPtr, asid, asid_map);
 }
 
 static void storeHWASID(asid_t asid, hw_asid_t hw_asid)
 {
-    asid_map_t *asid_map;
+    asid_pool_t *poolPtr;
+    asid_map_t asid_map;
 
-    asid_map = getMapRefForASID(asid);
-    assert(asid_map_get_type(*asid_map) == asid_map_asid_map_vspace);
+    poolPtr = getPoolPtr(asid);
+    asid_map = getASIDMap(poolPtr, asid);
+    assert(asid_map_get_type(asid_map) == asid_map_asid_map_vspace);
 
-    asid_map_asid_map_vspace_ptr_set_stored_hw_vmid(asid_map, hw_asid);
-    asid_map_asid_map_vspace_ptr_set_stored_vmid_valid(asid_map, true);
+    asid_map = asid_map_asid_map_vspace_set_stored_hw_vmid(asid_map, hw_asid);
+    asid_map = asid_map_asid_map_vspace_set_stored_vmid_valid(asid_map, true);
 
+    setASIDMap(poolPtr, asid, asid_map);
     armKSHWASIDTable[hw_asid] = asid;
 }
 
