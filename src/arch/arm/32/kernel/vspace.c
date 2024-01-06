@@ -1189,9 +1189,7 @@ void copyGlobalMappings(pde_t *newPD)
     pde_t *global_pd = armKSGlobalPD;
 
     for (i = PPTR_BASE >> ARMSectionBits; i < BIT(PD_INDEX_BITS); i++) {
-        if (i != PD_ASID_SLOT) {
-            newPD[i] = global_pd[i];
-        }
+        newPD[i] = global_pd[i];
     }
 #endif
 }
