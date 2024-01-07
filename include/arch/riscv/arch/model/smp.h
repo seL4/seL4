@@ -51,8 +51,7 @@ static inline bool_t try_arch_atomic_exchange_rlx(void *ptr, void *new_val, void
 
 static inline CONST cpu_id_t getCurrentCPUIndex(void)
 {
-    word_t sp;
-    asm volatile("csrr %0, sscratch" : "=r"(sp));
+    word_t sp = read_sscratch();
     sp -= (word_t)kernel_stack_alloc;
     sp -= 8;
     return (sp >> CONFIG_KERNEL_STACK_BITS);
