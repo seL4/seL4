@@ -101,8 +101,7 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
     word_t cur_thread_regs = (word_t)cur_thread->tcbArch.tcbContext.registers;
 
 #ifdef ENABLE_SMP_SUPPORT
-    word_t sp;
-    asm volatile("csrr %0, sscratch" : "=r"(sp));
+    word_t sp = read_sscratch();
     sp -= sizeof(word_t);
     *((word_t *)sp) = cur_thread_regs;
 #endif
