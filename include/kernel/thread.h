@@ -297,6 +297,22 @@ static inline bool_t checkBudgetRestart(void)
 }
 
 
+static inline ticks_t getNextInterrupt(void) {
+
+    ticks_t next_interrupt = NODE_STATE(ksCurTime) +
+                             refill_head(NODE_STATE(ksCurThread)->tcbSchedContext)->rAmount;
+
+    if (numDomains > 1) {
+        next_interrupt = MIN(next_interrupt, NODE_STATE(ksCurTime) + ksDomainTime);
+    }
+
+    if (NODE_STATE(ksReleaseHead) != NULL) {
+        next_interrupt = MIN(refill_head(NODE_STATE(ksReleaseHead)->tcbSchedContext)->rTime, next_interrupt);
+    }
+
+    return next_interrupt;
+}
+
 /* Set the next kernel tick, which is either the end of the current
  * domains timeslice OR the end of the current threads timeslice.
  */

@@ -11,7 +11,7 @@
 #include <object/notification.h>
 #endif
 
-#ifdef CONFIG_SIGNAL_FASTPATH
+#if defined(CONFIG_SIGNAL_FASTPATH) || defined(CONFIG_IRQ_FASTPATH)
 /* Equivalent to schedContext_donate without migrateTCB() */
 static inline void maybeDonateSchedContext_fp(tcb_t *dest, sched_context_t *sc)
 {
