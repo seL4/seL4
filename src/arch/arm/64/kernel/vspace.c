@@ -1244,10 +1244,13 @@ static exception_t performPageGetAddress(pptr_t base_ptr, bool_t call)
 static exception_t performASIDControlInvocation(void *frame, cte_t *slot,
                                                 cte_t *parent, asid_t asid_base)
 {
+    /** AUXUPD: "(True, typ_region_bytes (ptr_val \<acute>frame) 12)" */
+    /** GHOSTUPD: "(True, gs_clear_region (ptr_val \<acute>frame) 12)" */
     cap_untyped_cap_ptr_set_capFreeIndex(&(parent->cap),
                                          MAX_FREE_INDEX(cap_untyped_cap_get_capBlockSize(parent->cap)));
 
     memzero(frame, BIT(seL4_ASIDPoolBits));
+    /** AUXUPD: "(True, ptr_retyps 1 (Ptr (ptr_val \<acute>frame) :: asid_pool_C ptr))" */
 
     cteInsert(
         cap_asid_pool_cap_new(
