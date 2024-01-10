@@ -1,0 +1,28 @@
+/*
+ * Copyright 2026, STMicroelectronics
+ *
+ * SPDX-License-Identifier: BSD-2-Clause
+ */
+
+/ {
+	chosen {
+		seL4,elfloader-devices =
+		    "serial0",
+		    &{/psci};
+
+		seL4,kernel-devices =
+		    "serial0",
+		    &{/interrupt-controller@4ac00000},
+		    &{/timer};
+	};
+
+        /* vgic maintenance interrupt */
+	interrupt-controller@4ac00000 {
+		interrupt-parent = <0x05>;
+		interrupts = <0x01 0x09 0x308>;
+	};
+
+	vm-memory@b0000000 {
+		reg = <0x0 0xb0000000 0x0 0x20000000>;
+	};
+};
