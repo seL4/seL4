@@ -21,3 +21,5 @@ register_driver(compatibility_strings "qcom,msm-uartdm" PREFIX src/drivers/seria
 register_driver(compatibility_strings "xlnx,xuartps" PREFIX src/drivers/serial CFILES "xuartps.c")
 register_driver(compatibility_strings "amlogic,meson-gx-uart" PREFIX src/drivers/serial
                 CFILES "meson-gx-uart.c")
+register_driver(compatibility_strings "st,stm32h7-uart" PREFIX src/drivers/serial
+                CFILES "stm32h7-uart.c")
