@@ -1073,7 +1073,7 @@ void deleteASIDPool(asid_t asid_base, asid_pool_t *pool)
     }
 }
 
-static void doFlush(int invLabel, vptr_t start, vptr_t end, paddr_t pstart)
+static void doFlush(word_t invLabel, vptr_t start, vptr_t end, paddr_t pstart)
 {
     switch (invLabel) {
     case ARMVSpaceClean_Data:
@@ -1110,7 +1110,7 @@ static void doFlush(int invLabel, vptr_t start, vptr_t end, paddr_t pstart)
 
 /* ================= INVOCATION HANDLING STARTS HERE ================== */
 
-static exception_t performVSpaceFlush(int invLabel, vspace_root_t *vspaceRoot, asid_t asid,
+static exception_t performVSpaceFlush(word_t invLabel, vspace_root_t *vspaceRoot, asid_t asid,
                                       vptr_t start, vptr_t end, paddr_t pstart)
 {
 
@@ -1195,7 +1195,7 @@ static exception_t performPageInvocationUnmap(cap_t cap, cte_t *ctSlot)
     return EXCEPTION_NONE;
 }
 
-static exception_t performPageFlush(int invLabel, vspace_root_t *vspaceRoot, asid_t asid,
+static exception_t performPageFlush(word_t invLabel, vspace_root_t *vspaceRoot, asid_t asid,
                                     vptr_t start, vptr_t end, paddr_t pstart)
 {
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
