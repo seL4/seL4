@@ -692,6 +692,19 @@ BOOT_CODE static bool_t provide_untyped_cap(
             .isDevice = device_memory,
             .padding  = {0}
         };
+
+        /* If the untyped cap is a device memory, the kernel has no mapping for it
+         * and hence pptr does not make sense and is not used. Zeroing pptr here
+         * makes it clear that this untyped is not used/mapped, and avoids an
+         * assertion error in the generated cap_untyped_cap_new where it checks
+         * if the pptr is canonical virtual address regardless if it is device
+         * untyped or not, which may fail on systems that have 48-bit physical
+         * address space or larger.
+         */
+        if (device_memory) {
+            pptr = 0;
+        }
+
         ut_cap = cap_untyped_cap_new(MAX_FREE_INDEX(size_bits),
                                      device_memory, size_bits, pptr);
         ret = provide_cap(root_cnode_cap, ut_cap);
