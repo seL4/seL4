@@ -1,0 +1,21 @@
+/*
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright 2022, Capgemini Engineering
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+
+    /* 32-bit kernel platforms require memory to be clamped to the top of
+     * the kernel window.
+     */
+	memory@40000000 {
+		device_type = "memory";
+		reg = < 0x00 0x40000000 0x00 0x1f000000 >;
+	};
+
+	/* These devices extend out of the 32-bit memory range.*/
+	/delete-node/gpu@38000000;
+	/delete-node/gpu3d@38000000;
+};
