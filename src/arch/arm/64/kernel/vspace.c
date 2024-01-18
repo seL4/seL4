@@ -1649,7 +1649,7 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
         return decodeARMFrameInvocation(invLabel, length, cte, cap, call, buffer);
 
     case cap_asid_control_cap: {
-        unsigned int i;
+        word_t i;
         asid_t asid_base;
         word_t index, depth;
         cap_t untyped, root;
