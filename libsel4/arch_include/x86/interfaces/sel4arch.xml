@@ -750,7 +750,7 @@ contain the mapping"/>
     </interface>
 
     <interface name="seL4_IRQControl" manual_name="IRQ Control" cap_description='An IRQControl capability. This gives you the authority to make this call.'>
-        <method id="X86IRQIssueIRQHandlerIOAPIC" name="GetIOAPIC" manual_name="Get I/O APIC">
+        <method id="X86IRQIssueIRQHandlerIOAPIC" name="GetIOAPIC" manual_name="Get I/O APIC Handler">
             <brief>
                 Create an IRQ handler capability for an interrupt from an IOAPIC.
             </brief>
@@ -807,7 +807,7 @@ contain the mapping"/>
                 </description>
             </error>
         </method>
-        <method id="X86IRQIssueIRQHandlerMSI" name="GetMSI" manual_name="Get MSI">
+        <method id="X86IRQIssueIRQHandlerMSI" name="GetMSI" manual_name="Get MSI Handler">
             <brief>
                 Create an IRQ handler capability for an interrupt from an MSI.
             </brief>
