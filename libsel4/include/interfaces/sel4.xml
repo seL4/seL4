@@ -1194,7 +1194,7 @@
 
     <interface name="seL4_IRQControl" manual_name="IRQ Control" cap_description="An IRQControl capability. This gives you the authority to make this call.">
 
-        <method id="IRQIssueIRQHandler" name="GetIRQHandler" manual_name="Get IRQ Handler" manual_label="irq_controlget">
+        <method id="IRQIssueIRQHandler" name="Get" manual_name="Get IRQ Handler" manual_label="irq_controlget">
             <brief>
                 Create an IRQ handler capability
             </brief>
