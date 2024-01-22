@@ -1273,6 +1273,7 @@ static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, word_t length,
     vspace_root_t *vspaceRoot;
     lookupPTSlot_ret_t resolve_ret;
     findVSpaceForASID_ret_t find_ret;
+    pte_t pte;
 
     switch (invLabel) {
     case ARMVSpaceClean_Data:
@@ -1331,10 +1332,10 @@ static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, word_t length,
 
         /* Look up the frame containing 'start'. */
         resolve_ret = lookupPTSlot(vspaceRoot, start);
+        pte = *resolve_ret.ptSlot;
 
         /* Check that the returned slot is a page. */
-        if (!pte_ptr_get_valid(resolve_ret.ptSlot) ||
-            (pte_pte_table_ptr_get_present(resolve_ret.ptSlot) && resolve_ret.ptBitsLeft > PAGE_BITS)) {
+        if (!pte_is_page_type(pte)) {
 
             /* Fail silently, as there can't be any stale cached data (for the
              * given address space), and getting a syscall error because the
@@ -1353,7 +1354,7 @@ static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, word_t length,
         }
 
         /* Calculate the physical start address. */
-        paddr_t frame_base = pte_page_ptr_get_page_base_address(resolve_ret.ptSlot);
+        paddr_t frame_base = pte_get_page_base_address(pte);
 
         pstart = frame_base + (start & MASK(resolve_ret.ptBitsLeft));
 
