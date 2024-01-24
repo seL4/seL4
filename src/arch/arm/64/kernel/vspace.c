@@ -1003,6 +1003,7 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr)
 {
     findVSpaceForASID_ret_t find_ret;
     lookupPTSlot_ret_t  lu_ret;
+    pte_t pte;
 
     find_ret = findVSpaceForASID(asid);
     if (find_ret.status != EXCEPTION_NONE) {
@@ -1015,13 +1016,13 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr)
         return;
     }
 
-    if (!pte_ptr_get_valid(lu_ret.ptSlot) ||
-        (pte_pte_table_ptr_get_present(lu_ret.ptSlot) && lu_ret.ptBitsLeft > PAGE_BITS)) {
+    pte = *(lu_ret.ptSlot);
+    if (!pte_is_page_type(pte)) {
         /* Do nothing if no page is present */
         return;
     }
 
-    if (pte_page_ptr_get_page_base_address(lu_ret.ptSlot) != pptr_to_paddr((void *)pptr)) {
+    if (pte_get_page_base_address(pte) != pptr_to_paddr((void *)pptr)) {
         /* Do nothing if the mapped page is not the same physical frame */
         return;
     }
