@@ -776,37 +776,51 @@ static bool_t setVMRootForFlush(vspace_root_t *vspace, asid_t asid)
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 
-static asid_map_t *getMapRefForASID(asid_t asid)
+static inline asid_pool_t *getPoolPtr(asid_t asid)
 {
-    asid_pool_t *poolPtr;
+    return armKSASIDTable[asid >> asidLowBits];
+}
 
-    poolPtr = armKSASIDTable[asid >> asidLowBits];
+static inline asid_map_t getASIDMap(asid_pool_t *poolPtr, asid_t asid)
+{
     assert(poolPtr != NULL);
+    return poolPtr->array[asid & MASK(asidLowBits)];
+}
 
-    return &poolPtr->array[asid & MASK(asidLowBits)];
+static inline void setASIDMap(asid_pool_t *poolPtr, asid_t asid, asid_map_t asid_map)
+{
+    assert(poolPtr != NULL);
+    poolPtr->array[asid & MASK(asidLowBits)] = asid_map;
 }
 
 static void invalidateASID(asid_t asid)
 {
-    asid_map_t *asid_map;
+    asid_pool_t *poolPtr;
+    asid_map_t asid_map;
 
-    asid_map = getMapRefForASID(asid);
-    assert(asid_map_get_type(*asid_map) == asid_map_asid_map_vspace);
+    poolPtr = getPoolPtr(asid);
+    asid_map = getASIDMap(poolPtr, asid);
+    assert(asid_map_get_type(asid_map) == asid_map_asid_map_vspace);
 
-    asid_map_asid_map_vspace_ptr_set_stored_hw_vmid(asid_map, 0);
-    asid_map_asid_map_vspace_ptr_set_stored_vmid_valid(asid_map, false);
+    asid_map = asid_map_asid_map_vspace_set_stored_hw_vmid(asid_map, 0);
+    asid_map = asid_map_asid_map_vspace_set_stored_vmid_valid(asid_map, false);
+
+    setASIDMap(poolPtr, asid, asid_map);
 }
 
 static void storeHWASID(asid_t asid, hw_asid_t hw_asid)
 {
-    asid_map_t *asid_map;
+    asid_pool_t *poolPtr;
+    asid_map_t asid_map;
 
-    asid_map = getMapRefForASID(asid);
-    assert(asid_map_get_type(*asid_map) == asid_map_asid_map_vspace);
+    poolPtr = getPoolPtr(asid);
+    asid_map = getASIDMap(poolPtr, asid);
+    assert(asid_map_get_type(asid_map) == asid_map_asid_map_vspace);
 
-    asid_map_asid_map_vspace_ptr_set_stored_hw_vmid(asid_map, hw_asid);
-    asid_map_asid_map_vspace_ptr_set_stored_vmid_valid(asid_map, true);
+    asid_map = asid_map_asid_map_vspace_set_stored_hw_vmid(asid_map, hw_asid);
+    asid_map = asid_map_asid_map_vspace_set_stored_vmid_valid(asid_map, true);
 
+    setASIDMap(poolPtr, asid, asid_map);
     armKSHWASIDTable[hw_asid] = asid;
 }
 
@@ -989,6 +1003,7 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr)
 {
     findVSpaceForASID_ret_t find_ret;
     lookupPTSlot_ret_t  lu_ret;
+    pte_t pte;
 
     find_ret = findVSpaceForASID(asid);
     if (find_ret.status != EXCEPTION_NONE) {
@@ -1001,13 +1016,13 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr)
         return;
     }
 
-    if (!pte_ptr_get_valid(lu_ret.ptSlot) ||
-        (pte_pte_table_ptr_get_present(lu_ret.ptSlot) && lu_ret.ptBitsLeft > PAGE_BITS)) {
+    pte = *(lu_ret.ptSlot);
+    if (!pte_is_page_type(pte)) {
         /* Do nothing if no page is present */
         return;
     }
 
-    if (pte_page_ptr_get_page_base_address(lu_ret.ptSlot) != pptr_to_paddr((void *)pptr)) {
+    if (pte_get_page_base_address(pte) != pptr_to_paddr((void *)pptr)) {
         /* Do nothing if the mapped page is not the same physical frame */
         return;
     }
@@ -1059,7 +1074,7 @@ void deleteASIDPool(asid_t asid_base, asid_pool_t *pool)
     }
 }
 
-static void doFlush(int invLabel, vptr_t start, vptr_t end, paddr_t pstart)
+static void doFlush(word_t invLabel, vptr_t start, vptr_t end, paddr_t pstart)
 {
     switch (invLabel) {
     case ARMVSpaceClean_Data:
@@ -1096,7 +1111,7 @@ static void doFlush(int invLabel, vptr_t start, vptr_t end, paddr_t pstart)
 
 /* ================= INVOCATION HANDLING STARTS HERE ================== */
 
-static exception_t performVSpaceFlush(int invLabel, vspace_root_t *vspaceRoot, asid_t asid,
+static exception_t performVSpaceFlush(word_t invLabel, vspace_root_t *vspaceRoot, asid_t asid,
                                       vptr_t start, vptr_t end, paddr_t pstart)
 {
 
@@ -1181,7 +1196,7 @@ static exception_t performPageInvocationUnmap(cap_t cap, cte_t *ctSlot)
     return EXCEPTION_NONE;
 }
 
-static exception_t performPageFlush(int invLabel, vspace_root_t *vspaceRoot, asid_t asid,
+static exception_t performPageFlush(word_t invLabel, vspace_root_t *vspaceRoot, asid_t asid,
                                     vptr_t start, vptr_t end, paddr_t pstart)
 {
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
@@ -1230,10 +1245,13 @@ static exception_t performPageGetAddress(pptr_t base_ptr, bool_t call)
 static exception_t performASIDControlInvocation(void *frame, cte_t *slot,
                                                 cte_t *parent, asid_t asid_base)
 {
+    /** AUXUPD: "(True, typ_region_bytes (ptr_val \<acute>frame) 12)" */
+    /** GHOSTUPD: "(True, gs_clear_region (ptr_val \<acute>frame) 12)" */
     cap_untyped_cap_ptr_set_capFreeIndex(&(parent->cap),
                                          MAX_FREE_INDEX(cap_untyped_cap_get_capBlockSize(parent->cap)));
 
     memzero(frame, BIT(seL4_ASIDPoolBits));
+    /** AUXUPD: "(True, ptr_retyps 1 (Ptr (ptr_val \<acute>frame) :: asid_pool_C ptr))" */
 
     cteInsert(
         cap_asid_pool_cap_new(
@@ -1256,6 +1274,7 @@ static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, word_t length,
     vspace_root_t *vspaceRoot;
     lookupPTSlot_ret_t resolve_ret;
     findVSpaceForASID_ret_t find_ret;
+    pte_t pte;
 
     switch (invLabel) {
     case ARMVSpaceClean_Data:
@@ -1314,10 +1333,10 @@ static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, word_t length,
 
         /* Look up the frame containing 'start'. */
         resolve_ret = lookupPTSlot(vspaceRoot, start);
+        pte = *resolve_ret.ptSlot;
 
         /* Check that the returned slot is a page. */
-        if (!pte_ptr_get_valid(resolve_ret.ptSlot) ||
-            (pte_pte_table_ptr_get_present(resolve_ret.ptSlot) && resolve_ret.ptBitsLeft > PAGE_BITS)) {
+        if (!pte_is_page_type(pte)) {
 
             /* Fail silently, as there can't be any stale cached data (for the
              * given address space), and getting a syscall error because the
@@ -1336,7 +1355,7 @@ static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, word_t length,
         }
 
         /* Calculate the physical start address. */
-        paddr_t frame_base = pte_page_ptr_get_page_base_address(resolve_ret.ptSlot);
+        paddr_t frame_base = pte_get_page_base_address(pte);
 
         pstart = frame_base + (start & MASK(resolve_ret.ptBitsLeft));
 
@@ -1632,7 +1651,7 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
         return decodeARMFrameInvocation(invLabel, length, cte, cap, call, buffer);
 
     case cap_asid_control_cap: {
-        unsigned int i;
+        word_t i;
         asid_t asid_base;
         word_t index, depth;
         cap_t untyped, root;

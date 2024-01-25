@@ -125,7 +125,7 @@ LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_ReplyRecv(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sender);
 
 /**
- * @xmlonly <manual name="NBRecv" label="sel4_nbrecv"/> @endxmlonly
+ * @xmlonly <manual name="Non-Blocking Recv" label="sel4_nbrecv"/> @endxmlonly
  * @brief Receive a message from an endpoint but do not block
  *        in the case that no messages are pending
  *
