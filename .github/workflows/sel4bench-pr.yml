@@ -84,7 +84,6 @@ jobs:
         with:
           repository: seL4/machine_queue
           path: machine_queue
-          token: ${{ secrets.PRIV_REPO_TOKEN }}
       - name: Get march
         id: plat
         uses: seL4/ci-actions/march-of-platform@master
