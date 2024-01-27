@@ -85,7 +85,6 @@ jobs:
         with:
           repository: seL4/machine_queue
           path: machine_queue
-          token: ${{ secrets.PRIV_REPO_TOKEN }}
       - name: Download image
         uses: actions/download-artifact@v4
         with:
