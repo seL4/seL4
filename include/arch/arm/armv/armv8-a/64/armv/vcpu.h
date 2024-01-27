@@ -24,7 +24,7 @@
 
 /* Allow native tasks to run at EL0, but restrict access */
 #define HCR_NATIVE ( HCR_COMMON | HCR_TGE | HCR_TVM | HCR_TTLB | HCR_DC \
-                   | HCR_TAC | HCR_SWIO |  HCR_TSC | HCR_IMO | HCR_FMO | HCR_AMO)
+                   | HCR_TAC | HCR_SWIO |  HCR_TSC )
 #define HCR_VCPU   ( HCR_COMMON | HCR_TSC)
 
 #define SCTLR_EL1_UCI       BIT(26)     /* Enable EL0 access to DC CVAU, DC CIVAC, DC CVAC,
@@ -32,17 +32,23 @@
 #define SCTLR_EL1_C         BIT(2)      /* Enable data and unified caches */
 #define SCTLR_EL1_I         BIT(12)     /* Enable instruction cache       */
 #define SCTLR_EL1_CP15BEN   BIT(5)      /* AArch32 CP15 barrier enable    */
-#define SCTLR_EL1_UTC       BIT(15)     /* Enable EL0 access to CTR_EL0   */
+#define SCTLR_EL1_UCT       BIT(15)     /* Enable EL0 access to CTR_EL0   */
 #define SCTLR_EL1_NTWI      BIT(16)     /* WFI executed as normal         */
 #define SCTLR_EL1_NTWE      BIT(18)     /* WFE executed as normal         */
+
+#ifdef CONFIG_AARCH64_USER_CACHE_ENABLE
+#define SCTLR_NATIVE_USER_CACHE_OPS (SCTLR_EL1_UCI | SCTLR_EL1_UCT)
+#else
+#define SCTLR_NATIVE_USER_CACHE_OPS
+#endif
 
 /* Disable MMU, SP alignment check, and alignment check */
 /* A57 default value */
 #define SCTLR_EL1_RES      0x30d00800   /* Reserved value */
-#define SCTLR_EL1          ( SCTLR_EL1_RES | SCTLR_EL1_CP15BEN | SCTLR_EL1_UTC \
-                           | SCTLR_EL1_NTWI | SCTLR_EL1_NTWE )
-#define SCTLR_EL1_NATIVE   (SCTLR_EL1 | SCTLR_EL1_C | SCTLR_EL1_I | SCTLR_EL1_UCI)
-#define SCTLR_EL1_VM       (SCTLR_EL1 | SCTLR_EL1_UCI)
+#define SCTLR_EL1          ( SCTLR_EL1_RES | SCTLR_EL1_CP15BEN | \
+                             SCTLR_EL1_NTWI | SCTLR_EL1_NTWE )
+#define SCTLR_EL1_NATIVE   (SCTLR_EL1 | SCTLR_EL1_C | SCTLR_EL1_I | SCTLR_NATIVE_USER_CACHE_OPS)
+#define SCTLR_EL1_VM       (SCTLR_EL1 | SCTLR_EL1_UCT | SCTLR_EL1_UCI)
 #define SCTLR_DEFAULT      SCTLR_EL1_NATIVE
 
 #define UNKNOWN_FAULT       0x2000000
@@ -190,6 +196,8 @@ static inline void writeAMAIR(word_t reg)
     MSR(REG_AMAIR_EL1, reg);
 }
 
+/** MODIFIES: */
+/** DONT_TRANSLATE */
 static inline word_t readCIDR(void)
 {
     uint32_t reg;
@@ -197,6 +205,8 @@ static inline word_t readCIDR(void)
     return (word_t)reg;
 }
 
+/** MODIFIES: phantom_machine_state */
+/** DONT_TRANSLATE */
 static inline void writeCIDR(word_t reg)
 {
     MSR(REG_CONTEXTIDR_EL1, (uint32_t)reg);
@@ -214,6 +224,8 @@ static inline void writeACTLR(word_t reg)
     MSR(REG_ACTLR_EL1, reg);
 }
 
+/** MODIFIES: */
+/** DONT_TRANSLATE */
 static inline word_t readAFSR0(void)
 {
     uint32_t reg;
@@ -221,11 +233,15 @@ static inline word_t readAFSR0(void)
     return (word_t)reg;
 }
 
+/** MODIFIES: phantom_machine_state */
+/** DONT_TRANSLATE */
 static inline void writeAFSR0(word_t reg)
 {
     MSR(REG_AFSR0_EL1, (uint32_t)reg);
 }
 
+/** MODIFIES: */
+/** DONT_TRANSLATE */
 static inline word_t readAFSR1(void)
 {
     uint32_t reg;
@@ -233,11 +249,15 @@ static inline word_t readAFSR1(void)
     return (word_t)reg;
 }
 
+/** MODIFIES: phantom_machine_state */
+/** DONT_TRANSLATE */
 static inline void writeAFSR1(word_t reg)
 {
     MSR(REG_AFSR1_EL1, (uint32_t)reg);
 }
 
+/** MODIFIES: */
+/** DONT_TRANSLATE */
 static inline word_t readESR(void)
 {
     uint32_t reg;
@@ -245,6 +265,8 @@ static inline word_t readESR(void)
     return (word_t)reg;
 }
 
+/** MODIFIES: phantom_machine_state */
+/** DONT_TRANSLATE */
 static inline void writeESR(word_t reg)
 {
     MSR(REG_ESR_EL1, (uint32_t)reg);
@@ -263,6 +285,8 @@ static inline void writeFAR(word_t reg)
 }
 
 /* ISR is read-only */
+/** MODIFIES: */
+/** DONT_TRANSLATE */
 static inline word_t readISR(void)
 {
     uint32_t reg;
@@ -402,6 +426,11 @@ static inline void writeVMPIDR_EL2(word_t reg)
     MSR(REG_VMPIDR_EL2, reg);
 }
 
+static inline void setHCR(word_t reg)
+{
+    MSR(REG_HCR_EL2, reg);
+}
+
 static word_t vcpu_hw_read_reg(word_t reg_index)
 {
     word_t reg = 0;
@@ -467,63 +496,85 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
 {
     switch (reg_index) {
     case seL4_VCPUReg_SCTLR:
-        return setSCTLR(reg);
+        setSCTLR(reg);
+        break;
     case seL4_VCPUReg_TTBR0:
-        return writeTTBR0(reg);
+        writeTTBR0(reg);
+        break;
     case seL4_VCPUReg_TTBR1:
-        return writeTTBR1(reg);
+        writeTTBR1(reg);
+        break;
     case seL4_VCPUReg_TCR:
-        return writeTCR(reg);
+        writeTCR(reg);
+        break;
     case seL4_VCPUReg_MAIR:
-        return writeMAIR(reg);
+        writeMAIR(reg);
+        break;
     case seL4_VCPUReg_AMAIR:
-        return writeAMAIR(reg);
+        writeAMAIR(reg);
+        break;
     case seL4_VCPUReg_CIDR:
-        return writeCIDR(reg);
+        writeCIDR(reg);
+        break;
     case seL4_VCPUReg_ACTLR:
-        return writeACTLR(reg);
+        writeACTLR(reg);
+        break;
     case seL4_VCPUReg_CPACR:
-        return writeCPACR_EL1(reg);
+        writeCPACR_EL1(reg);
+        break;
     case seL4_VCPUReg_AFSR0:
-        return writeAFSR0(reg);
+        writeAFSR0(reg);
+        break;
     case seL4_VCPUReg_AFSR1:
-        return writeAFSR1(reg);
+        writeAFSR1(reg);
+        break;
     case seL4_VCPUReg_ESR:
-        return writeESR(reg);
+        writeESR(reg);
+        break;
     case seL4_VCPUReg_FAR:
-        return writeFAR(reg);
+        writeFAR(reg);
+        break;
     case seL4_VCPUReg_ISR:
         /* ISR is read-only */
-        return;
+        break;
     case seL4_VCPUReg_VBAR:
-        return writeVBAR(reg);
+        writeVBAR(reg);
+        break;
     case seL4_VCPUReg_TPIDR_EL1:
-        return writeTPIDR_EL1(reg);
+        writeTPIDR_EL1(reg);
+        break;
     case seL4_VCPUReg_SP_EL1:
-        return writeSP_EL1(reg);
+        writeSP_EL1(reg);
+        break;
     case seL4_VCPUReg_ELR_EL1:
-        return writeELR_EL1(reg);
+        writeELR_EL1(reg);
+        break;
     case seL4_VCPUReg_SPSR_EL1:
-        return writeSPSR_EL1(reg);
+        writeSPSR_EL1(reg);
+        break;
     case seL4_VCPUReg_CNTV_CTL:
-        return writeCNTV_CTL_EL0(reg);
+        writeCNTV_CTL_EL0(reg);
+        break;
     case seL4_VCPUReg_CNTV_CVAL:
-        return writeCNTV_CVAL_EL0(reg);
+        writeCNTV_CVAL_EL0(reg);
+        break;
     case seL4_VCPUReg_CNTVOFF:
-        return writeCNTVOFF_EL2(reg);
+        writeCNTVOFF_EL2(reg);
+        break;
     case seL4_VCPUReg_CNTKCTL_EL1:
-        return writeCNTKCTL_EL1(reg);
+        writeCNTKCTL_EL1(reg);
+        break;
 #ifdef ENABLE_SMP_SUPPORT
     case seL4_VCPUReg_VMPIDR_EL2:
-        return writeVMPIDR_EL2(reg);
+        writeVMPIDR_EL2(reg);
+        break;
 #endif /* ENABLE_SMP_SUPPORT */
     default:
         fail("ARM/HYP: Invalid register index");
     }
-
-    return;
 }
 
+/** DONT_TRANSLATE */
 static inline void vcpu_init_vtcr(void)
 {
 
@@ -585,9 +636,8 @@ static inline void armv_vcpu_save(vcpu_t *vcpu, UNUSED bool_t active)
 
 static inline void vcpu_enable(vcpu_t *vcpu)
 {
-    MSR(REG_HCR_EL2, HCR_VCPU);
-    isb();
     vcpu_restore_reg(vcpu, seL4_VCPUReg_SCTLR);
+    setHCR(HCR_VCPU);
     isb();
 
     set_gic_vcpu_ctrl_hcr(vcpu->vgic.hcr);
@@ -619,7 +669,7 @@ static inline void vcpu_disable(vcpu_t *vcpu)
     /* Stage 1 MMU off */
     setSCTLR(SCTLR_DEFAULT);
     isb();
-    MSR(REG_HCR_EL2, HCR_NATIVE);
+    setHCR(HCR_NATIVE);
     isb();
 
 #ifdef CONFIG_HAVE_FPU

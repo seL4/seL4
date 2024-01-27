@@ -101,25 +101,29 @@ function(genbf target_prefix pbf_location bf_location header_output)
         ${target_prefix}_pbf
         ""
         ""
+        "${bf_location}"
     )
 endfunction(genbf)
 
 genbf(
     "libsel4_shared_types_gen"
-    "${CMAKE_CURRENT_BINARY_DIR}/generated/shared_types_gen/shared_types.pbf"
+    "${CMAKE_CURRENT_BINARY_DIR}/include/sel4/shared_types.pbf"
     "${CMAKE_CURRENT_SOURCE_DIR}/mode_include/${KernelWordSize}/sel4/shared_types.bf"
     "${CMAKE_CURRENT_BINARY_DIR}/include/sel4/shared_types_gen.h"
 )
 
 genbf(
     "libsel4_sel4_arch_types_gen"
-    "${CMAKE_CURRENT_BINARY_DIR}/generated/sel4_arch_shared_types/types.pbf"
+    "${CMAKE_CURRENT_BINARY_DIR}/sel4_arch_include/${KernelSel4Arch}/sel4/sel4_arch/types.pbf"
     "${CMAKE_CURRENT_SOURCE_DIR}/sel4_arch_include/${KernelSel4Arch}/sel4/sel4_arch/types.bf"
     "${CMAKE_CURRENT_BINARY_DIR}/sel4_arch_include/${KernelSel4Arch}/sel4/sel4_arch/types_gen.h"
 )
 
 if(KernelIsMCS)
     set(mcs --mcs)
+endif()
+if(KernelX86_64VTX64BitGuests)
+    set(64bitguests --x86-vtx-64-bit-guests)
 endif()
 add_custom_command(
     OUTPUT include/sel4/syscall.h
@@ -153,8 +157,8 @@ add_custom_command(
     COMMAND
         echo "CONFIG_WORD_SIZE=${KernelWordSize}" > config
     COMMAND
-        "${PYTHON3}" "${SYSCALL_STUB_GEN_PATH}" ${buffer} ${mcs} -a "${KernelSel4Arch}" -c config -o
-        include/interfaces/sel4_client.h ${interface_xmls}
+        "${PYTHON3}" "${SYSCALL_STUB_GEN_PATH}" ${buffer} ${64bitguests} ${mcs} -a
+        "${KernelSel4Arch}" -c config -o include/interfaces/sel4_client.h ${interface_xmls}
     DEPENDS
         "${SYSCALL_STUB_GEN_PATH}"
         ${interface_xmls}

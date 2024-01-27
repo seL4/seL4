@@ -6,20 +6,13 @@
 
 #pragma once
 
-#include <autoconf.h>
+#include <sel4/config.h>
 
 #if !defined(CONFIG_PLAT_ZYNQMP) && !defined(PLAT_ZYNQMP_ZCU102)
 #error "unknown platform"
 #endif
 
-/* Cortex A57 manual, section 10.6.1 */
-#define seL4_NumHWBreakpoints (10)
-#define seL4_NumExclusiveBreakpoints (6)
-#define seL4_NumExclusiveWatchpoints (4)
-#ifdef CONFIG_HARDWARE_DEBUG_API
-#define seL4_FirstWatchpoint (6)
-#define seL4_NumDualFunctionMonitors (0)
-#endif
+#include <sel4/arch/constants_cortex_a53.h>
 
 #if CONFIG_WORD_SIZE == 32
 /* First address in the virtual address space that is not accessible to user level */

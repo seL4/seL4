@@ -6,32 +6,38 @@
 
 \chapter{\label{ch:intro}Introduction}
 
-% FIXME: Use of service, mechanism and abstraction is munged through here and the rest of the manual
+% FIXME: Use of service, mechanism and abstraction is munged through the rest of the manual
 
-The seL4 microkernel is an operating-system kernel designed to be
-a secure, safe, and reliable foundation for systems in a wide variety of
-application domains. As a microkernel, it provides a small number of
-services to applications, such as abstractions to create and manage virtual address
-spaces, threads, and inter-process communication (IPC). The small number
-of services provided by seL4 directly translates to a small
-implementation of approximately $8700$ lines of C code. This has allowed
-the ARMv6 version of the kernel to be formally proved in the Isabelle/HOL
-theorem prover to adhere to its formal
-specification~\cite{Boyton_09,Cock_KS_08,Derrin_EKCC_06,Elkaduwe_GE_08,Klein_EHACDEEKNSTW_09,Tuch_KN_07,Winwood_KSACN_09},
-which in turn enabled proofs of the kernel's enforcement of
-integrity~\cite{Sewell_WGMAK_11} and
-confidentiality~\cite{Murray_MBGBSLGK_13}. The kernel's small size was
-also instrumental in performing a complete and sound analysis of
-worst-case execution time~\cite{Blackham_SCRH_11,Blackham_SH_12}.
+The seL4 microkernel is an operating-system kernel designed to be a secure,
+safe, and reliable foundation for systems in a wide variety of application
+domains. As a microkernel, it provides a small number of mechanisms that can be
+used to build applications, such as virtual address spaces, threads, and
+inter-process communication (IPC).
 
-This manual describes the seL4 kernel's API from a user's point of view.
-The document starts by giving a brief overview of the seL4 microkernel
-design, followed by a reference of the high-level API exposed by the
-seL4 kernel to userspace.
+The small number of mechanisms translates to a small implementation on the order
+of $10,000$ lines of C code, depending on architecture and configured features.
+This has enabled formal verification of the
+kernel~\cite{Boyton_09,Cock_KS_08,Derrin_EKCC_06,Elkaduwe_KE_08,Klein_EHACDEEKNSTW_09,Tuch_KN_07,Winwood_KSACN_09}
+in the Isabelle/HOL theorem prover, which in turn enabled proofs of the kernel's
+enforcement of integrity~\cite{Sewell_WGMAK_11} and
+confidentiality~\cite{Murray_MBGBSLGK_13}. The kernel's small size was also
+instrumental in performing a complete and sound analysis of worst-case execution
+time~\cite{Blackham_SCRH_11,Blackham_SH_12}. \citet{Klein_AEMSKH_14} give a
+comprehensive technical summary of the verification, and the seL4 white
+paper~\cite{whitepaper} provides a shorter, but more accessible overview.
 
-While we have tried to ensure that this manual accurately reflects the
-behaviour of the seL4 kernel, this document is by no means a formal
-specification of the kernel. When the precise behaviour of the kernel
-under a particular circumstance needs to be known, users should refer to
-the seL4 abstract specification, which
-gives a formal description of the seL4 kernel.
+Functional correctness proofs for the kernel are available for multiple
+architectures and platforms. For Arm32, this optionally includes hypervisor
+extensions, and the security proofs mentioned above. See the seL4 documentation
+site for the currently supported proofs~\cite{doc_site_proofs}.
+
+This manual describes the seL4 kernel's API from a user's point of view. The
+document starts by giving a brief overview of the seL4 microkernel design,
+followed by a reference of the high-level API exposed by the seL4 kernel to
+userspace.
+
+While we have tried to ensure that this manual accurately reflects the behaviour
+of the seL4 kernel, this document is by no means a formal specification of the
+kernel. When the precise behaviour of the kernel under a particular circumstance
+needs to be known, users should refer to the abstract specification of
+seL4~\cite{seL4_spec}, which gives a fully formal description.

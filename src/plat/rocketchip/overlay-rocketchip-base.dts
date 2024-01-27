@@ -1,0 +1,21 @@
+/*
+ * Copyright 2023, UNSW
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+    chosen {
+        seL4,kernel-devices =
+            &{/soc/clint@2000000},
+            &{/soc/interrupt-controller@c000000};
+    };
+
+    /* The size and address of the CLINT is derived from the Rocketchip source code. */
+    soc {
+        clint@2000000 {
+            compatible = "riscv,cpu-intc";
+            reg = <0x2000000 0x10000>;
+        };
+    };
+};

@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <autoconf.h>
+#include <sel4/config.h>
 #include <sel4/macros.h>
 #include <sel4/simple_types.h>
 #include <sel4/sel4_arch/types.h>
@@ -37,6 +37,20 @@ typedef enum {
     SEL4_FORCE_LONG_ENUM(seL4_X86_VMAttributes),
 } seL4_X86_VMAttributes;
 
+typedef enum {
+    seL4_X86_EPT_Uncached_VMAttributes = 6,
+    seL4_X86_EPT_Uncacheable = 0,
+    seL4_X86_EPT_WriteCombining = 1,
+    seL4_X86_EPT_WriteThrough = 4,
+    seL4_X86_EPT_WriteProtected = 5,
+    seL4_X86_EPT_WriteBack = 6,
+    seL4_X86_EPT_Default_VMAttributes = 6,
+    SEL4_FORCE_LONG_ENUM(seL4_X86_EPT_VMAttributes),
+} seL4_X86_EPT_VMAttributes;
+
 typedef struct seL4_VCPUContext_ {
     seL4_Word eax, ebx, ecx, edx, esi, edi, ebp;
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
+    seL4_Word r8, r9, r10, r11, r12, r13, r14, r15;
+#endif
 } seL4_VCPUContext;

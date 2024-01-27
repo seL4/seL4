@@ -55,9 +55,20 @@ endfunction(FindPrefixedGCC)
 if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
     if(("${arch}" STREQUAL "arm") OR ("${arch}" STREQUAL "x86") OR ("${arch}" STREQUAL "riscv"))
         if(${sel4_arch} STREQUAL "aarch32" OR ${sel4_arch} STREQUAL "arm_hyp")
-            FindPrefixedGCC(CROSS_COMPILER_PREFIX "arm-linux-gnueabi-" "arm-linux-gnu-")
+            FindPrefixedGCC(
+                CROSS_COMPILER_PREFIX
+                "arm-linux-gnueabi-"
+                "arm-linux-gnu-"
+                "arm-none-eabi-"
+            )
         elseif(${sel4_arch} STREQUAL "aarch64")
-            set(CROSS_COMPILER_PREFIX "aarch64-linux-gnu-")
+            FindPrefixedGCC(
+                CROSS_COMPILER_PREFIX
+                "aarch64-linux-gnu-"
+                "aarch64-unknown-linux-gnu-"
+                "aarch64-none-linux-gnu-"
+                "aarch64-none-elf-"
+            )
         elseif(${arch} STREQUAL "riscv")
             FindPrefixedGCC(
                 CROSS_COMPILER_PREFIX
@@ -71,12 +82,23 @@ if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
         # If initialised with -DCMAKE_TOOLCHAIN_FILE="$SCRIPT_PATH/gcc.cmake" this script
         # understood the following arguments: ARM, AARCH32, AARCH32HF, AARCH64, RISCV32, RISCV64, APPLE
         if(AARCH32 OR ARM)
-            FindPrefixedGCC(CROSS_COMPILER_PREFIX "arm-linux-gnueabi-" "arm-linux-gnu-")
+            FindPrefixedGCC(
+                CROSS_COMPILER_PREFIX
+                "arm-linux-gnueabi-"
+                "arm-linux-gnu-"
+                "arm-none-eabi-"
+            )
             if(ARM)
                 message("ARM flag is deprecated, please use AARCH32")
             endif()
         elseif(AARCH64)
-            set(CROSS_COMPILER_PREFIX "aarch64-linux-gnu-")
+            FindPrefixedGCC(
+                CROSS_COMPILER_PREFIX
+                "aarch64-linux-gnu-"
+                "aarch64-unknown-linux-gnu-"
+                "aarch64-none-linux-gnu-"
+                "aarch64-none-elf-"
+            )
         elseif(RISCV32 OR RISCV64)
             FindPrefixedGCC(
                 CROSS_COMPILER_PREFIX
@@ -95,10 +117,19 @@ if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
     endif()
 
     if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
-        # If we haven't set a target above we assume x86_64/ia32 target
-        if(APPLE)
-            # APPLE is a CMake variable that evaluates to True on a Mac OSX system
-            set(CROSS_COMPILER_PREFIX "x86_64-unknown-linux-gnu-")
+        # If we haven't set a target above we assume x86_64/ia32 target, and hence have to
+        # find an appropriate x86 compatible toolchain. If we're on an AArch64 host, GCC will
+        # not support x86. If we're on macOS (detected via CMAKE_HOST_APPLE), we need to find
+        # the appropriate x86 compiler regardless of host architecture. This is as `gcc`
+        # usually actually uses clang on macOS, not GCC.
+        if("${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "aarch64" OR CMAKE_HOST_APPLE)
+            if("${sel4_arch}" STREQUAL "ia32")
+                FindPrefixedGCC(CROSS_COMPILER_PREFIX "i686-linux-gnu-" "i686-unknown-linux-gnu-")
+            else()
+                FindPrefixedGCC(
+                    CROSS_COMPILER_PREFIX "x86_64-linux-gnu-" "x86_64-unknown-linux-gnu-"
+                )
+            endif()
         endif()
     endif()
 endif()

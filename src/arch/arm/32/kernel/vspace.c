@@ -203,7 +203,7 @@ BOOT_CODE void map_kernel_window(void)
     /* mapping of KERNEL_ELF_BASE (virtual address) to kernel's
      * KERNEL_ELF_PHYS_BASE  */
     /* up to end of virtual address space minus 16M using 16M frames */
-    phys = physBase;
+    phys = physBase();
     idx = PPTR_BASE >> pageBitsForSize(ARMSection);
 
     while (idx < BIT(PD_INDEX_BITS) - SECTIONS_PER_SUPER_SECTION) {
@@ -291,20 +291,6 @@ BOOT_CODE void map_kernel_window(void)
         )
     );
 
-#ifdef CONFIG_KERNEL_GLOBALS_FRAME
-    /* map globals frame */
-    map_kernel_frame(
-        addrFromKPPtr(armKSGlobalsFrame),
-        seL4_GlobalsFrame,
-        VMReadOnly,
-        vm_attributes_new(
-            true,  /* armExecuteNever */
-            true,  /* armParityEnabled */
-            true   /* armPageCacheable */
-        )
-    );
-#endif /* CONFIG_KERNEL_GLOBALS_FRAME */
-
     map_kernel_devices();
 }
 
@@ -333,7 +319,7 @@ BOOT_CODE void map_kernel_window(void)
     }
     /* mapping of PPTR_BASE (virtual address) to kernel's physBase  */
     /* up to end of virtual address space minus 2M using 2M frames */
-    phys = physBase;
+    phys = physBase();
     for (; idx < BIT(PT_INDEX_BITS) - 1; idx++) {
         pde = pdeS1_pdeS1_section_new(
                   0, /* Executable */
@@ -384,33 +370,6 @@ BOOT_CODE void map_kernel_window(void)
             true   /* armPageCacheable */
         )
     );
-
-#ifdef CONFIG_KERNEL_GLOBALS_FRAME
-    /* map globals frame */
-    map_kernel_frame(
-        addrFromKPPtr(armKSGlobalsFrame),
-        seL4_GlobalsFrame,
-        VMReadOnly,
-        vm_attributes_new(
-            false, /* armExecuteNever */
-            true,  /* armParityEnabled */
-            true   /* armPageCacheable */
-        )
-    );
-    /* map globals into user global PT */
-    pteS2 = pte_pte_small_new(
-                1, /* Not Executeable */
-                0, /* Not contiguous */
-                addrFromKPPtr(armKSGlobalsFrame),
-                1, /* AF -- always set */
-                0, /* Not shared */
-                HAPFromVMRights(VMReadOnly),
-                MEMATTR_CACHEABLE  /* Cacheable */
-            );
-    memzero(armUSGlobalPT, 1 << seL4_PageTableBits);
-    idx = (seL4_GlobalsFrame >> PAGE_BITS) & (MASK(PT_INDEX_BITS));
-    armUSGlobalPT[idx] = pteS2;
-#endif /* CONFIG_KERNEL_GLOBALS_FRAME */
 
     map_kernel_devices();
 }
@@ -583,7 +542,7 @@ BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vpt
 
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
 
-BOOT_CODE void activate_global_pd(void)
+BOOT_CODE void activate_kernel_vspace(void)
 {
     /* Ensure that there's nothing stale in newly-mapped regions, and
        that everything we've written (particularly the kernel page tables)
@@ -597,7 +556,7 @@ BOOT_CODE void activate_global_pd(void)
 
 #else
 
-BOOT_CODE void activate_global_pd(void)
+BOOT_CODE void activate_kernel_vspace(void)
 {
     uint32_t r;
     /* Ensure that there's nothing stale in newly-mapped regions, and
@@ -850,7 +809,7 @@ static pte_t CONST makeUserPTE(vm_page_size_t page_size, paddr_t paddr,
                                     0, /* APX = 0, privileged full access */
                                     5, /* TEX = 0b101, outer write-back, write-allocate */
                                     ap,
-                                    0, 1, /* Inner write-back, write-allocate (except on ARM11) */
+                                    0, 1, /* Inner write-back, write-allocate */
                                     nonexecutable);
         } else {
             pte = pte_pte_small_new(paddr,
@@ -874,7 +833,7 @@ static pte_t CONST makeUserPTE(vm_page_size_t page_size, paddr_t paddr,
                                     SMP_TERNARY(1, 0), /* shareable if SMP enabled, otherwise unshared */
                                     0, /* APX = 0, privileged full access */
                                     ap,
-                                    0, 1, /* Inner write-back, write-allocate (except on ARM11) */
+                                    0, 1, /* Inner write-back, write-allocate */
                                     1 /* reserved */);
         } else {
             pte = pte_pte_large_new(paddr,
@@ -990,7 +949,7 @@ static pde_t CONST makeUserPDE(vm_page_size_t page_size, paddr_t paddr, bool_t p
                                    0, /* APX = 0, privileged full access */
                                    5, /* TEX = 0b101, outer write-back, write-allocate */
                                    ap, parity, domain, nonexecutable,
-                                   0, 1 /* Inner write-back, write-allocate (except on ARM11) */);
+                                   0, 1 /* Inner write-back, write-allocate */);
     } else {
         return pde_pde_section_new(paddr, size2,
                                    1, /* not global */
@@ -1243,14 +1202,6 @@ void copyGlobalMappings(pde_t *newPD)
             newPD[i] = global_pd[i];
         }
     }
-#else
-#ifdef CONFIG_KERNEL_GLOBALS_FRAME
-    /* Kernel and user MMUs are completely independent, however,
-     * we still need to share the globals page. */
-    pde_t pde;
-    pde = pde_pde_coarse_new(addrFromKPPtr(armUSGlobalPT));
-    newPD[BIT(PD_INDEX_BITS) - 1] = pde;
-#endif /* CONFIG_KERNEL_GLOBALS_FRAME */
 #endif
 }
 
@@ -1262,7 +1213,7 @@ exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
         addr = getHDFAR();
-        addr = (addressTranslateS1CPR(addr) & ~MASK(PAGE_BITS)) | (addr & MASK(PAGE_BITS));
+        addr = (addressTranslateS1(addr) & ~MASK(PAGE_BITS)) | (addr & MASK(PAGE_BITS));
         /* MSBs tell us that this was a DataAbort */
         fault = getHSR() & 0x3ffffff;
 #else
@@ -1293,7 +1244,7 @@ exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
         pc = getRestartPC(thread);
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-        pc = (addressTranslateS1CPR(pc) & ~MASK(PAGE_BITS)) | (pc & MASK(PAGE_BITS));
+        pc = (addressTranslateS1(pc) & ~MASK(PAGE_BITS)) | (pc & MASK(PAGE_BITS));
         /* MSBs tell us that this was a PrefetchAbort */
         fault = getHSR() & 0x3ffffff;
 #else
@@ -1994,18 +1945,22 @@ static exception_t performPageFlush(int invLabel, pde_t *pd, asid_t asid, vptr_t
     return EXCEPTION_NONE;
 }
 
-static exception_t performPageGetAddress(void *vbase_ptr)
+static exception_t performPageGetAddress(void *vbase_ptr, bool_t call)
 {
-    paddr_t capFBasePtr;
-
     /* Get the physical address of this frame. */
+    paddr_t capFBasePtr;
     capFBasePtr = addrFromPPtr(vbase_ptr);
 
-    /* return it in the first message register */
-    setRegister(NODE_STATE(ksCurThread), msgRegisters[0], capFBasePtr);
-    setRegister(NODE_STATE(ksCurThread), msgInfoRegister,
-                wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, 1)));
-
+    tcb_t *thread;
+    thread = NODE_STATE(ksCurThread);
+    if (call) {
+        word_t *ipcBuffer = lookupIPCBuffer(true, thread);
+        setRegister(thread, badgeRegister, 0);
+        unsigned int length = setMR(thread, ipcBuffer, 0, capFBasePtr);
+        setRegister(thread, msgInfoRegister, wordFromMessageInfo(
+                        seL4_MessageInfo_new(0, 0, 0, length)));
+    }
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
     return EXCEPTION_NONE;
 }
 
@@ -2275,7 +2230,7 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, word_t length,
 }
 
 static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
-                                            cte_t *cte, cap_t cap, word_t *buffer)
+                                            cte_t *cte, cap_t cap, bool_t call, word_t *buffer)
 {
     switch (invLabel) {
     case ARMPageMap: {
@@ -2514,7 +2469,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
         /* Don't let applications flush outside of the kernel window */
-        if (pstart < physBase || ((end - start) + pstart) > PADDR_TOP) {
+        if (pstart < physBase() || ((end - start) + pstart) > PADDR_TOP) {
             userError("Page Flush: Overlaps kernel region.");
             current_syscall_error.type = seL4_IllegalOperation;
             return EXCEPTION_SYSCALL_ERROR;
@@ -2532,7 +2487,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
         assert(n_msgRegisters >= 1);
 
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        return performPageGetAddress((void *)generic_frame_cap_get_capFBasePtr(cap));
+        return performPageGetAddress((void *)generic_frame_cap_get_capFBasePtr(cap), call);
     }
 
     default:
@@ -2544,7 +2499,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
 }
 
 exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
-                                   cte_t *cte, cap_t cap, word_t *buffer)
+                                   cte_t *cte, cap_t cap, bool_t call, word_t *buffer)
 {
     switch (cap_get_capType(cap)) {
     case cap_page_directory_cap:
@@ -2556,7 +2511,7 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
 
     case cap_small_frame_cap:
     case cap_frame_cap:
-        return decodeARMFrameInvocation(invLabel, length, cte, cap, buffer);
+        return decodeARMFrameInvocation(invLabel, length, cte, cap, call, buffer);
 
     case cap_asid_control_cap: {
         word_t i;

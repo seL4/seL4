@@ -44,6 +44,16 @@
         <member name="tpidr_el0"/>
         <member name="tpidrro_el0"/>
     </struct>
+    <struct name="seL4_ARM_SMCContext">
+        <member name="x0"/>
+        <member name="x1"/>
+        <member name="x2"/>
+        <member name="x3"/>
+        <member name="x4"/>
+        <member name="x5"/>
+        <member name="x6"/>
+        <member name="x7"/>
+    </struct>
     <interface name="seL4_ARM_VSpace" manual_name="Page Global Directory"
         cap_description="Capability to the top level translation table being operated on.">
         <method id="ARMVSpaceClean_Data" name="Clean_Data" manual_label="vspace_clean"
@@ -58,6 +68,33 @@
             description="Start address"/>
             <param dir="in" name="end" type="seL4_Word"
             description="End address"/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="end"/> is in the kernel virtual address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="start"/> is greater than or equal to <texttt text="end"/>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The specified range crosses a page boundary.
+                </description>
+            </error>
         </method>
         <method id="ARMVSpaceInvalidate_Data" name="Invalidate_Data"
             manual_name="Invalidate Data" manual_label="vspace_invalidate">
@@ -71,6 +108,33 @@
             description="Start address"/>
             <param dir="in" name="end" type="seL4_Word"
             description="End address"/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="end"/> is in the kernel virtual address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="start"/> is greater than or equal to <texttt text="end"/>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The specified range crosses a page boundary.
+                </description>
+            </error>
         </method>
         <method id="ARMVSpaceCleanInvalidate_Data" name="CleanInvalidate_Data"
             manual_name="Clean and Invalidate Data" manual_label="vspace_clean_invalidate">
@@ -84,6 +148,33 @@
             description="Start address"/>
             <param dir="in" name="end" type="seL4_Word"
             description="End address"/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="end"/> is in the kernel virtual address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="start"/> is greater than or equal to <texttt text="end"/>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The specified range crosses a page boundary.
+                </description>
+            </error>
         </method>
         <method id="ARMVSpaceUnify_Instruction" name="Unify_Instruction"
             manual_name="Unify Instruction" manual_label="vspace_unify_instruction">
@@ -97,67 +188,49 @@
              description="Start address"/>
              <param dir="in" name="end" type="seL4_Word"
 	     description="End address"/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="end"/> is in the kernel virtual address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="start"/> is greater than or equal to <texttt text="end"/>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The specified range crosses a page boundary.
+                </description>
+            </error>
         </method>
     </interface>
-    <interface name="seL4_ARM_PageUpperDirectory" manual_name="Page Upper Directory"
-        cap_description="Capability to the upper page directory being operated on.">
-        <method id="ARMPageUpperDirectoryMap" name="Map" condition="!(defined CONFIG_ARM_HYPERVISOR_SUPPORT &amp;&amp; defined CONFIG_ARM_PA_SIZE_BITS_40)">
-                <brief>
-                    Map an upper page directory
-                </brief>
-                <description>
-                    Map an upper page directory (level 1) to a top level translation table (level 0).
-                    If the upper page directory is already mapped this operation will fail,
-                    returning a seL4_InvalidCapability error. If another object is already mapped at this
-                    level for the virtual address this operation will fail,
-                    returning a seL4_DeleteFirst error.
-                </description>
-            <param dir="in" name="vspace" type="seL4_CPtr"
-            description="Top level translation table. Must be assigned to an ASID pool."/>
-            <param dir="in" name="vaddr" type="seL4_Word"
-            description="Virtual address"/>
-            <param dir="in" name="attr" type="seL4_ARM_VMAttributes">
-                <description>
-                    VM Attributes for the mapping.<docref>Possible values for this type are given in <autoref label="ch:vspace"/>  .</docref>
-                </description>
-            </param>
-        </method>
-        <method id="ARMPageUpperDirectoryUnmap" name="Unmap"
-            condition="!(defined CONFIG_ARM_HYPERVISOR_SUPPORT &amp;&amp; defined CONFIG_ARM_PA_SIZE_BITS_40)">
-        </method>
-    </interface>
-    <interface name="seL4_ARM_PageDirectory" manual_name="Page Directory"
-        cap_description="Capability to the page directory being operated on.">
-        <method id="ARMPageDirectoryMap" name="Map">
-                <brief>
-                    Map a page directory
-                </brief>
-                <description>
-                    Map a page directory (level 2) to an upper page directory (level 1).
-                    If an upper page directory does not exist for the virtual address this
-                    operation will fail, returning a seL4_FailedLookup error. If the page
-                    directory is already mapped this operation will fail,
-                    returning a seL4_InvalidCapability error. If another object is already mapped
-                    at this level for the virtual address this operation will
-                    fail, returning a seL4_DeleteFirst error.
-                </description>
-            <param dir="in" name="vspace" type="seL4_CPtr"
-            description="Top level translation table. Must be assigned to an ASID pool."/>
-            <param dir="in" name="vaddr" type="seL4_Word"
-            description="Virtual adress"/>
-            <param dir="in" name="attr" type="seL4_ARM_VMAttributes">
-                <description>
-                    VM Attributes for the mapping.<docref>Possible values for this type are given in <autoref label="ch:vspace"/>  .</docref>
-                </description>
-            </param>
-        </method>
-        <method id="ARMPageDirectoryUnmap" name="Unmap">
-                <brief>
-                    Unmap a page directory
-                </brief>
-                <description>
-                    Unmap a page directory (level 2) from an upper page directory (level 1)
-                </description>
+    <interface name="seL4_ARM_SMC" manual_name="SMC" cap_description="Capability to allow threads to make Secure Monitor Calls.">
+        <method id="ARMSMCCall" name="Call" manual_name="SMC Call" manual_label="smc_call">
+            <brief>
+                Tell the microkernel to make the real SMC call.
+            </brief>
+            <description>
+                Takes x0-x7 as arguments to an SMC call which are defined as a seL4_ARM_SMCContext
+                struct. The microkernel makes the SMC call and then returns the results as a
+                new seL4_ARM_SMCContext.
+            </description>
+            <param dir="in" name="smc_args" type="seL4_ARM_SMCContext"
+                description="The structure that has the provided arguments."/>
+            <param dir="out" name="smc_response" type="seL4_ARM_SMCContext"
+                description="The structure to capture the responses."/>
         </method>
     </interface>
 </api>

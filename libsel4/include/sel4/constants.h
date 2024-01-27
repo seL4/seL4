@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <autoconf.h>
+#include <sel4/config.h>
 #include <sel4/macros.h>
 
 #ifndef __ASSEMBLER__
@@ -74,12 +74,18 @@ typedef enum {
 
 #ifdef CONFIG_KERNEL_MCS
 /* Minimum size of a scheduling context (2^{n} bytes) */
-#define seL4_MinSchedContextBits 8
+#define seL4_MinSchedContextBits 7
 #ifndef __ASSEMBLER__
-/* the size of a scheduling context, excluding extra refills */
+/* The size of a scheduling context, including the minimum 2 refills, excluding
+   any extra refills (= 10 words, 2 tick_t, 2 refills (= 2 tick_t each)) */
 #define seL4_CoreSchedContextBytes (10 * sizeof(seL4_Word) + (6 * 8))
 /* the size of a single extra refill */
 #define seL4_RefillSizeBytes (2 * 8)
+SEL4_COMPILE_ASSERT(MinSchedContextBits_min_1, seL4_MinSchedContextBits > 1)
+SEL4_COMPILE_ASSERT(MinSchedContextBits_sufficient,
+                    seL4_CoreSchedContextBytes <= LIBSEL4_BIT(seL4_MinSchedContextBits))
+SEL4_COMPILE_ASSERT(MinSchedContextBits_necessary,
+                    seL4_CoreSchedContextBytes > LIBSEL4_BIT(seL4_MinSchedContextBits - 1))
 
 /*
  * @brief Calculate the max extra refills a scheduling context can contain for a specific size.

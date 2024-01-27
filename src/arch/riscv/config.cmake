@@ -27,6 +27,16 @@ config_option(
     DEPENDS "KernelArchRiscV"
 )
 
+config_option(
+    KernelRiscvUseClintMtime RISCV_USE_CLINT_MTIME "When reading the timestamp \
+    from the hardware, directly access the CLINT timer register (mtime) instead \
+    of using the rdtime instruction. This is a performance optimization, but \
+    only for platforms where executing the rdtime instruction results in a \
+    trap into M-mode software which then accesses the CLINT timer register."
+    DEFAULT OFF
+    DEPENDS "KernelArchRiscV"
+)
+
 # Until RISC-V has instructions to count leading/trailing zeros, we provide
 # library implementations. Platforms that implement the bit manipulation
 # extension can override these settings to remove the library functions from
@@ -68,8 +78,9 @@ elseif(KernelPTLevels EQUAL 4)
 endif()
 
 if(KernelRiscvExtD)
+    # The D extension depends on the base single-precision
+    # instruction subset F.
     set(KernelRiscvExtF ON)
-    set(KernelHaveFPU ON)
 endif()
 
 if(KernelRiscvExtF)
@@ -100,7 +111,7 @@ add_sources(
         object/objecttype.c
         object/tcb.c
         smp/ipi.c
-    ASMFILES halt.S head.S traps.S
+    ASMFILES head.S traps.S
 )
 
 add_bf_source_old("KernelArchRiscV" "structures.bf" "include/arch/riscv" "arch/object")

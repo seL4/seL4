@@ -13,11 +13,13 @@ if(KernelPlatformHifive)
     declare_seL4_arch(riscv64)
     config_set(KernelRiscVPlatform RISCV_PLAT "hifive")
     config_set(KernelPlatformFirstHartID FIRST_HART_ID 1)
-    config_set(KernelOpenSBIPlatform OPENSBI_PLATFORM "sifive/fu540")
+    config_set(KernelOpenSBIPlatform OPENSBI_PLATFORM "generic")
+    set(KernelRiscvUseClintMtime ON)
     list(APPEND KernelDTSList "tools/dts/hifive.dts")
     list(APPEND KernelDTSList "src/plat/hifive/overlay-hifive.dts")
     declare_default_headers(
-        TIMER_FREQUENCY 1000000 PLIC_MAX_NUM_INT 53
+        TIMER_FREQUENCY 1000000
+        MAX_IRQ 53
         INTERRUPT_CONTROLLER drivers/irq/riscv_plic0.h
     )
 else()

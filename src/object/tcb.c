@@ -519,23 +519,34 @@ static exception_t decodeSetAffinity(cap_t cap, word_t length, word_t *buffer)
 #endif /* ENABLE_SMP_SUPPORT */
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
-static exception_t invokeConfigureSingleStepping(word_t *buffer, tcb_t *t,
+static exception_t invokeConfigureSingleStepping(bool_t call, word_t *buffer, tcb_t *t,
                                                  uint16_t bp_num, word_t n_instrs)
 {
     bool_t bp_was_consumed;
+    tcb_t *thread;
+    thread = NODE_STATE(ksCurThread);
+    word_t value;
 
     bp_was_consumed = configureSingleStepping(t, bp_num, n_instrs, false);
     if (n_instrs == 0) {
         unsetBreakpointUsedFlag(t, bp_num);
-        setMR(NODE_STATE(ksCurThread), buffer, 0, false);
+        value = false;
     } else {
         setBreakpointUsedFlag(t, bp_num);
-        setMR(NODE_STATE(ksCurThread), buffer, 0, bp_was_consumed);
+        value = bp_was_consumed;
     }
+
+    if (call) {
+        setRegister(thread, badgeRegister, 0);
+        unsigned int length = setMR(thread, buffer, 0, value);
+        setRegister(thread, msgInfoRegister, wordFromMessageInfo(
+                        seL4_MessageInfo_new(0, 0, 0, length)));
+    }
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
     return EXCEPTION_NONE;
 }
 
-static exception_t decodeConfigureSingleStepping(cap_t cap, word_t *buffer)
+static exception_t decodeConfigureSingleStepping(cap_t cap, bool_t call, word_t *buffer)
 {
     uint16_t bp_num;
     word_t n_instrs;
@@ -554,7 +565,7 @@ static exception_t decodeConfigureSingleStepping(cap_t cap, word_t *buffer)
     }
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    return invokeConfigureSingleStepping(buffer, tcb, bp_num, n_instrs);
+    return invokeConfigureSingleStepping(call, buffer, tcb, bp_num, n_instrs);
 }
 
 static exception_t invokeSetBreakpoint(tcb_t *tcb, uint16_t bp_num,
@@ -683,20 +694,27 @@ static exception_t decodeSetBreakpoint(cap_t cap, word_t *buffer)
                                vaddr, type, size, rw);
 }
 
-static exception_t invokeGetBreakpoint(word_t *buffer, tcb_t *tcb, uint16_t bp_num)
+static exception_t invokeGetBreakpoint(bool_t call, word_t *buffer, tcb_t *tcb, uint16_t bp_num)
 {
+    tcb_t *thread;
+    thread = NODE_STATE(ksCurThread);
     getBreakpoint_t res;
-
     res = getBreakpoint(tcb, bp_num);
-    setMR(NODE_STATE(ksCurThread), buffer, 0, res.vaddr);
-    setMR(NODE_STATE(ksCurThread), buffer, 1, res.type);
-    setMR(NODE_STATE(ksCurThread), buffer, 2, res.size);
-    setMR(NODE_STATE(ksCurThread), buffer, 3, res.rw);
-    setMR(NODE_STATE(ksCurThread), buffer, 4, res.is_enabled);
+    if (call) {
+        setRegister(thread, badgeRegister, 0);
+        setMR(NODE_STATE(ksCurThread), buffer, 0, res.vaddr);
+        setMR(NODE_STATE(ksCurThread), buffer, 1, res.type);
+        setMR(NODE_STATE(ksCurThread), buffer, 2, res.size);
+        setMR(NODE_STATE(ksCurThread), buffer, 3, res.rw);
+        setMR(NODE_STATE(ksCurThread), buffer, 4, res.is_enabled);
+        setRegister(thread, msgInfoRegister, wordFromMessageInfo(
+                        seL4_MessageInfo_new(0, 0, 0, 5)));
+    }
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
     return EXCEPTION_NONE;
 }
 
-static exception_t decodeGetBreakpoint(cap_t cap, word_t *buffer)
+static exception_t decodeGetBreakpoint(cap_t cap, bool_t call, word_t *buffer)
 {
     tcb_t *tcb;
     uint16_t bp_num;
@@ -712,7 +730,7 @@ static exception_t decodeGetBreakpoint(cap_t cap, word_t *buffer)
     }
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    return invokeGetBreakpoint(buffer, tcb, bp_num);
+    return invokeGetBreakpoint(call, buffer, tcb, bp_num);
 }
 
 static exception_t invokeUnsetBreakpoint(tcb_t *tcb, uint16_t bp_num)
@@ -849,13 +867,13 @@ exception_t decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
     case TCBConfigureSingleStepping:
-        return decodeConfigureSingleStepping(cap, buffer);
+        return decodeConfigureSingleStepping(cap, call, buffer);
 
     case TCBSetBreakpoint:
         return decodeSetBreakpoint(cap, buffer);
 
     case TCBGetBreakpoint:
-        return decodeGetBreakpoint(cap, buffer);
+        return decodeGetBreakpoint(cap, call, buffer);
 
     case TCBUnsetBreakpoint:
         return decodeUnsetBreakpoint(cap, buffer);
@@ -1012,7 +1030,6 @@ static bool_t validFaultHandler(cap_t cap)
         if (!cap_endpoint_cap_get_capCanSend(cap) ||
             (!cap_endpoint_cap_get_capCanGrant(cap) &&
              !cap_endpoint_cap_get_capCanGrantReply(cap))) {
-            current_syscall_error.type = seL4_InvalidCapability;
             return false;
         }
         break;
@@ -1020,7 +1037,6 @@ static bool_t validFaultHandler(cap_t cap)
         /* just has no fault endpoint */
         break;
     default:
-        current_syscall_error.type = seL4_InvalidCapability;
         return false;
     }
     return true;
@@ -1246,6 +1262,7 @@ exception_t decodeSetTimeoutEndpoint(cap_t cap, cte_t *slot)
     /* timeout handler */
     if (!validFaultHandler(thCap)) {
         userError("TCB SetTimeoutEndpoint: timeout endpoint cap invalid.");
+        current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -1520,6 +1537,7 @@ exception_t decodeSetSpace(cap_t cap, word_t length, cte_t *slot, word_t *buffer
     /* fault handler */
     if (!validFaultHandler(fhCap)) {
         userError("TCB SetSpace: fault endpoint cap invalid.");
+        current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -1561,9 +1579,9 @@ exception_t decodeDomainInvocation(word_t invLabel, word_t length, word_t *buffe
         return EXCEPTION_SYSCALL_ERROR;
     } else {
         domain = getSyscallArg(0, buffer);
-        if (domain >= CONFIG_NUM_DOMAINS) {
+        if (domain >= numDomains) {
             userError("Domain Configure: invalid domain (%lu >= %u).",
-                      domain, CONFIG_NUM_DOMAINS);
+                      domain, numDomains);
             current_syscall_error.type = seL4_InvalidArgument;
             current_syscall_error.invalidArgumentNumber = 0;
             return EXCEPTION_SYSCALL_ERROR;
@@ -1678,9 +1696,11 @@ static inline exception_t installTCBCap(tcb_t *target, cap_t tCap, cte_t *slot,
     }
 
     /* cteDelete on a cap installed in the tcb cannot fail */
-    if (sameObjectAs(newCap, srcSlot->cap) &&
-        sameObjectAs(tCap, slot->cap)) {
-        cteInsert(newCap, srcSlot, rootSlot);
+    if (cap_get_capType(newCap) != cap_null_cap) {
+        if (sameObjectAs(newCap, srcSlot->cap) &&
+            sameObjectAs(tCap, slot->cap)) {
+            cteInsert(newCap, srcSlot, rootSlot);
+        }
     }
     return e;
 }

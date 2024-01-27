@@ -23,6 +23,14 @@
 #define CR_ALIGN_CLEAR   0
 #endif
 
+#if !defined(CONFIG_ARM_HYPERVISOR_SUPPORT) && defined(CONFIG_AARCH64_USER_CACHE_ENABLE)
+#define CR_USER_CACHE_OPS_SET (BIT(CONTROL_UCT) | BIT(CONTROL_UCI))
+#define CR_USER_CACHE_OPS_CLEAR 0
+#else
+#define CR_USER_CACHE_OPS_SET 0
+#define CR_USER_CACHE_OPS_CLEAR (BIT(CONTROL_UCT) | BIT(CONTROL_UCI))
+#endif
+
 #ifndef CONFIG_DEBUG_DISABLE_L1_ICACHE
     #define CR_L1_ICACHE_SET   BIT(CONTROL_I)
     #define CR_L1_ICACHE_CLEAR 0
@@ -42,11 +50,13 @@
 #define CR_BITS_SET    (CR_ALIGN_SET | \
                         CR_L1_ICACHE_SET | \
                         CR_L1_DCACHE_SET | \
+                        CR_USER_CACHE_OPS_SET | \
                         BIT(CONTROL_M))
 
 #define CR_BITS_CLEAR  (CR_ALIGN_CLEAR | \
                         CR_L1_ICACHE_CLEAR | \
                         CR_L1_DCACHE_CLEAR | \
+                        CR_USER_CACHE_OPS_CLEAR | \
                         BIT(CONTROL_SA0) | \
                         BIT(CONTROL_EE) | \
                         BIT(CONTROL_E0E))
@@ -65,7 +75,7 @@
 #define SCTLR   sctlr_el1
 #endif
 
-.section .boot.text
+.section .boot.text, "ax"
 BEGIN_FUNC(_start)
     /* Save x4, x5, x6, x7 so we don't clobber it */
     mov     x14, x4
@@ -73,7 +83,7 @@ BEGIN_FUNC(_start)
     mov     x16, x6
     mov     x17, x7
 
-    /* Make sure interrupts are disable */
+    /* Make sure interrupts are disabled */
     msr daifset, #DAIFSET_MASK
 
     /* Initialise sctlr_el1 or sctlr_el2 register */

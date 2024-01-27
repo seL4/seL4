@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <autoconf.h>
+#include <sel4/config.h>
 #include <sel4/types.h>
 
 #ifdef CONFIG_KERNEL_MCS
@@ -68,7 +68,7 @@ static inline void arm_sys_send(seL4_Word sys, seL4_Word dest, seL4_Word info_ar
     /* Perform the system call. */
     register seL4_Word scno asm("r7") = sys;
     asm volatile(
-        "swi $0"
+        "swi #0"
         : "+r"(destptr), "+r"(msg0), "+r"(msg1), "+r"(msg2),
         "+r"(msg3), "+r"(info)
         : "r"(scno)
@@ -90,7 +90,7 @@ static inline void arm_sys_reply(seL4_Word sys, seL4_Word info_arg, seL4_Word mr
     /* Perform the system call. */
     register seL4_Word scno asm("r7") = sys;
     asm volatile(
-        "swi $0"
+        "swi #0"
         : "+r"(msg0), "+r"(msg1), "+r"(msg2), "+r"(msg3),
         "+r"(info)
         : "r"(scno)
@@ -106,7 +106,7 @@ static inline void arm_sys_send_null(seL4_Word sys, seL4_Word src, seL4_Word inf
     /* Perform the system call. */
     register seL4_Word scno asm("r7") = sys;
     asm volatile(
-        "swi $0"
+        "swi #0"
         : "+r"(destptr), "+r"(info)
         : "r"(scno)
     );
@@ -129,7 +129,7 @@ static inline void arm_sys_recv(seL4_Word sys, seL4_Word src, seL4_Word *out_bad
     /* Perform the system call. */
     register seL4_Word scno asm("r7") = sys;
     asm volatile(
-        "swi $0"
+        "swi #0"
         : "=r"(msg0), "=r"(msg1), "=r"(msg2), "=r"(msg3),
         "=r"(info), "+r"(src_and_badge)
         : "r"(scno) MCS_PARAM
@@ -160,7 +160,7 @@ static inline void arm_sys_send_recv(seL4_Word sys, seL4_Word dest, seL4_Word *o
     MCS_PARAM_DECL("r6");
     register seL4_Word scno asm("r7") = sys;
     asm volatile(
-        "swi $0"
+        "swi #0"
         : "+r"(msg0), "+r"(msg1), "+r"(msg2), "+r"(msg3),
         "+r"(info), "+r"(destptr)
         : "r"(scno) MCS_PARAM
@@ -195,7 +195,7 @@ static inline void arm_sys_nbsend_recv(seL4_Word sys, seL4_Word dest, seL4_Word 
     /* Perform the system call. */
     register seL4_Word scno asm("r7") = sys;
     asm volatile(
-        "swi $0"
+        "swi #0"
         : "+r"(msg0), "+r"(msg1), "+r"(msg2), "+r"(msg3),
         "+r"(src_and_badge), "+r"(info)
         : "r"(scno), "r"(reply_reg), "r"(dest_reg)
@@ -215,7 +215,7 @@ static inline void arm_sys_null(seL4_Word sys)
 {
     register seL4_Word scno asm("r7") = sys;
     asm volatile(
-        "swi $0"
+        "swi #0"
         : /* no outputs */
         : "r"(scno)
     );

@@ -62,10 +62,10 @@ be considered as the kernel outsourcing the allocation of this namespace to
 user level.
 
 \begin{description}
-    \item[\apifunc{seL4\_IRQControl\_GetIOAPIC}{x86_irq_handler_getioapic}] creates
+    \item[\apifunc{seL4\_IRQControl\_GetIOAPIC}{x86_irq_control_get_io_apic}] creates
     an \obj{IRQHandler} capability for an IOAPIC interrupt
 
-    \item[\apifunc{seL4\_IRQControl\_GetMSI}{x86_irq_handler_getmsi}] creates
+    \item[\apifunc{seL4\_IRQControl\_GetMSI}{x86_irq_control_get_msi}] creates
     an \obj{IRQHandler} capability for an MSI interrupt
 \end{description}
 
@@ -316,9 +316,9 @@ VSpace used by the bank with the following API:
 
 \begin{description}
     \item[\apifunc{seL4\_ARM\_CB\_AssignVspace}{arm_cb_assignvspace}] configures
-        the context bank to use the provided VSapce root for translations.
+        the context bank to use the provided VSpace root for translations.
     \item[\apifunc{seL4\_ARM\_CB\_UnassignVspace}{arm_cb_unassignvspace}] removes
-        the configured VSpace and conducting a TLB invalidation.
+        the configured VSpace and invalidates the TLB.
 \end{description}
 
 The SMMU-v2 uses the same paging structure as the MMU (AArch\_64 and AArch\_32

@@ -7,6 +7,18 @@
 / {
 	chosen {
 		seL4,kernel-devices =
+            &{/soc/clint@2000000},
 		    &{/soc/interrupt-controller@c000000};
 	};
+
+    /*
+     * According to the "PolarFire SoC MSS Technical Reference Manual"
+     * (revision H), the CLINT is mapped from 0x0200_0000 to 0x0200_FFFF.
+     */
+    soc {
+        clint@2000000 {
+            compatible = "riscv,cpu-intc";
+            reg = <0x00000000 0x2000000 0x00000000 0x000010000>;
+        };
+    };
 };

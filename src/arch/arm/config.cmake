@@ -6,7 +6,7 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-if(KernelArchARM)
+if(KernelSel4ArchAarch32)
     set_property(TARGET kernel_config_target APPEND PROPERTY TOPLEVELTYPES pde_C)
 endif()
 
@@ -43,19 +43,8 @@ if(KernelSel4ArchAarch32)
     math(EXPR KernelPaddrUserTop "(1 << 32) - 1")
 endif()
 
-include(src/arch/arm/armv/armv6/config.cmake)
 include(src/arch/arm/armv/armv7-a/config.cmake)
 include(src/arch/arm/armv/armv8-a/config.cmake)
-
-config_option(
-    KernelDangerousCodeInjectionOnUndefInstr DANGEROUS_CODE_INJECTION_ON_UNDEF_INSTR
-    "Replaces the undefined instruction handler with a call to a function pointer in r8. \
-    This is an alternative mechanism to the code injection syscall. On ARMv6 the syscall \
-    interferes with the caches and branch predictor in such a way that it is unsuitable \
-    for benchmarking. This option has no effect on non-ARMv6 platforms."
-    DEFAULT OFF
-    DEPENDS "KernelArchArmV6;NOT KernelVerificationBuild"
-)
 
 config_option(
     KernelDebugDisableL2Cache DEBUG_DISABLE_L2_CACHE
@@ -141,7 +130,12 @@ config_option(
     DEFAULT_DISABLED OFF
 )
 
-config_option(KernelArmSMMU ARM_SMMU "Enable SystemMMU" DEFAULT OFF DEPENDS "KernelPlatformTx2")
+config_option(
+    KernelArmSMMU ARM_SMMU "Enable SystemMMU"
+    DEFAULT ON
+    DEPENDS "KernelPlatformTx2"
+    DEFAULT_DISABLED OFF
+)
 
 config_option(
     KernelTk1SMMU TK1_SMMU "Enable SystemMMU for the Tegra TK1 SoC"
@@ -191,8 +185,17 @@ config_option(
         operations in a multithreading environment, instead of relying on \
         software emulation of FPU/VFP from the C library (e.g. mfloat-abi=soft)."
     DEFAULT ON
-    DEPENDS "KernelSel4ArchAarch32;NOT KernelArchArmV6;NOT KernelVerificationBuild"
+    DEPENDS "KernelSel4ArchAarch32"
     DEFAULT_DISABLED OFF
+)
+
+config_option(
+    KernelAArch64UserCacheEnable AARCH64_USER_CACHE_ENABLE
+    "Enable any attempt to execute a DC CVAU, DC CIVAC, DC CVAC, or IC IVAU \
+    instruction or access to CTR_EL0 at EL0 using AArch64. \
+    When disabled, these operations will be trapped."
+    DEFAULT ON
+    DEPENDS "KernelSel4ArchAarch64"
 )
 
 config_option(
@@ -204,6 +207,16 @@ config_option(
     DEPENDS "KernelSel4ArchAarch64;NOT KernelVerificationBuild"
 )
 mark_as_advanced(KernelAArch64SErrorIgnore)
+
+config_option(
+    KernelAllowSMCCalls ALLOW_SMC_CALLS "Allow components to make SMC calls. \
+    WARNING: Allowing SMC calls causes a couple of issues. Since seL4 cannot \
+    pre-empt the secure monitor, the WCET is no longer guaranteed. Also, since the \
+    secure monitor is a higher privilege level and can make any change in the \
+    system, the proofs can no longer be guaranteed."
+    DEFAULT OFF
+    DEPENDS "NOT KernelVerificationBuild; KernelSel4ArchAarch64"
+)
 
 if(KernelAArch32FPUEnableContextSwitch OR KernelSel4ArchAarch64)
     set(KernelHaveFPU ON)
@@ -227,23 +240,9 @@ if(
     # the L1 instruction on the Cortex-A72 cache has a 64-byte cache line.
     # Thus, 6 bits are needed.
     config_set(KernelArmCacheLineSizeBits L1_CACHE_LINE_SIZE_BITS "6")
-elseif(KernelArmCortexA9 OR KernelArm1136JF_S)
+elseif(KernelArmCortexA9)
     config_set(KernelArmCacheLineSizeBits L1_CACHE_LINE_SIZE_BITS "5")
 endif()
-
-if(KernelArchArmV6)
-    # This is currently needed in ARMv6 to provide thread IDs via the
-    # globals frame. The globals frame should be removed along with this
-    # in favour of reserving r9 as a thread ID register.
-    #
-    # See SELFOUR-2253
-    set(KernelSetTLSBaseSelf ON)
-endif()
-
-# Provides a 4K region of read-only memory mapped into every vspace to
-# provide a virtual thread-id register not otherwise provided by the
-# platform.
-config_set(KernelGlobalsFrame KERNEL_GLOBALS_FRAME ${KernelArchArmV6})
 
 add_sources(
     DEP "KernelArchARM"
@@ -264,6 +263,7 @@ add_sources(
         object/iospace.c
         object/vcpu.c
         object/smmu.c
+        object/smc.c
         smp/ipi.c
 )
 

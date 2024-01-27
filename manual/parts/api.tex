@@ -7,10 +7,25 @@
 %macros for API documentation
 \newcommand{\param}[3]{\texttt{#1}&\texttt{#2}&#3\\ }
 
+\newcommand{\errortable}[1]{
+    \begin{center}
+    \begin{minipage}{0.95\textwidth}
+    \begin{tabularx}{\textwidth}{lX}
+    \toprule
+    \textbf{Error Code} & \textbf{Possible Cause} \\
+    \midrule
+    #1
+    \bottomrule
+    \end{tabularx}
+    \end{minipage}
+    \end{center}
+}
+\newcommand{\error}[2]{\texttt{#1}&#2\\ }
+
 \newcommand{\inputapidoc}[1] {\input{parts/api/#1.tex}}
 \newcommand{\inputgeneratedapidoc}[1] {\input{generated/#1.tex}}
 
-\newcommand{\apidoc}[8][subsection]
+\newcommand{\apidoc}[9][subsection]
 {
     \ifthenelse{\equal{#1}{subsection}}{
         \subsection{\label{api:#2}#3}
@@ -39,6 +54,8 @@
     \textit{Return value:} #7 \par
 
     \textit{Description:} #8 \par
+
+    #9
 
     \vfill
 }

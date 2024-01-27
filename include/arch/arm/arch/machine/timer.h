@@ -26,7 +26,9 @@
 
 void initTimer(void);
 
-/* get the max value usToTicks can be passed without overflowing */
+/* Get the max. time_t value (time in us) that can be expressed in ticks_t. This
+ * is the max. value usToTicks() can be passed without overflowing.
+ */
 static inline CONST time_t getMaxUsToTicks(void)
 {
 #if USE_KHZ
@@ -40,7 +42,7 @@ static inline CONST ticks_t usToTicks(time_t us)
 {
 #if USE_KHZ
     /* reciprocal division overflows too quickly for dividing by KHZ_IN_MHZ.
-     * This operation isn't  used frequently or on many platforms, so use manual
+     * This operation isn't used frequently or on many platforms, so use manual
      * division here */
     return div64(us * TIMER_CLOCK_KHZ, KHZ_IN_MHZ);
 #else
@@ -50,7 +52,7 @@ static inline CONST ticks_t usToTicks(time_t us)
 
 static inline CONST ticks_t getTimerPrecision(void)
 {
-    return usToTicks(TIMER_PRECISION);
+    return usToTicks(TIMER_PRECISION) + TIMER_OVERHEAD_TICKS;
 }
 #else /* CONFIG_KERNEL_MCS */
 #include <mode/machine/timer.h>

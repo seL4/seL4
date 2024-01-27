@@ -99,7 +99,7 @@ def paths_to_type(mp, f, start):
 
 
 def build_types(file):
-    in_file = open(file, 'r')
+    in_file = open(file, 'r', encoding='utf-8')
 
     lines = map(lambda x: x.rstrip(), in_file.readlines())
 

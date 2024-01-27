@@ -664,13 +664,6 @@ bool_t configureSingleStepping(tcb_t *t,
                                word_t n_instr,
                                bool_t is_reply)
 {
-    /* ARMv7 manual, section D13.3.1:
-     *  "v6.1 Debug introduces instruction address mismatch comparisons.
-     *  v6 Debug does not support these comparisons."
-     *
-     * ^ The above line means that single-stepping is not supported on v6 debug.
-     * I.e, the KZM cannot use single-stepping.
-     */
 
     if (is_reply) {
         bp_num = t->tcbArch.tcbContext.breakpointState.single_step_hw_bp_num;
@@ -1286,10 +1279,11 @@ void restore_user_debug_context(tcb_t *target_thread)
         loadBreakpointState(target_thread);
     }
 
-    /* ARMv6 manual, sec D3.3.7:
-     * "The update of a BVR or a BCR is only guaranteed to be visible to
-     * subsequent instructions after the execution of a PrefetchFlush operation,
-     * the taking of an exception, or the return from an exception."
+    /* ARMv7 manual, sec C3.7:
+     * "Usually, an exception return sequence is a context change operation as
+     * well as a context synchronization operation, in which case the context
+     * change operation is guaranteed to take effect on the debug logic by the
+     * end of that exception return sequence."
      *
      * So we don't need to execute ISB here because we're about to RFE.
      */

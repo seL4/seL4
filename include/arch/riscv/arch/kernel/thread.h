@@ -9,11 +9,6 @@
 
 #include <object.h>
 
-void Arch_switchToThread(tcb_t *tcb);
-void Arch_switchToIdleThread(void);
-void Arch_configureIdleThread(tcb_t *tcb);
-void Arch_activateIdleThread(tcb_t *tcb);
-
 static inline bool_t CONST Arch_getSanitiseRegisterInfo(tcb_t *thread)
 {
     return 0;

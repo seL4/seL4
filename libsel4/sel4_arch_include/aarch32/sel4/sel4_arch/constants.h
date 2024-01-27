@@ -6,15 +6,10 @@
 
 #pragma once
 
-#include <autoconf.h>
+#include <sel4/config.h>
 #include <sel4/macros.h>
 
 #ifndef __ASSEMBLER__
-#ifdef CONFIG_KERNEL_GLOBALS_FRAME
-enum {
-    seL4_GlobalsFrame = 0xffffc000,
-};
-#endif /* CONFIG_KERNEL_GLOBALS_FRAME */
 
 /* format of an unknown syscall message */
 typedef enum {
@@ -246,12 +241,6 @@ SEL4_SIZE_SANITY(seL4_PGDEntryBits, seL4_PGDIndexBits, seL4_PGDBits);
 /* size of kernel log buffer in bytes */
 #define seL4_LogBufferSize (LIBSEL4_BIT(20))
 #endif /* CONFIG_ENABLE_BENCHMARKS */
-
-#ifdef CONFIG_HARDWARE_DEBUG_API
-#define seL4_FirstBreakpoint (0)
-#define seL4_FirstDualFunctionMonitor (-1)
-#define seL4_NumDualFunctionMonitors (0)
-#endif
 
 #define seL4_FastMessageRegisters 4
 

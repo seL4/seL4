@@ -16,16 +16,20 @@
 #include <arch/object/smmu.h>
 #endif
 
+#ifdef CONFIG_ALLOW_SMC_CALLS
+#include <arch/object/smc.h>
+#endif
+
 /* The top level asid mapping table */
 extern asid_pool_t *armKSASIDTable[BIT(asidHighBits)] VISIBLE;
 
 /* This is the temporary userspace page table in kernel. It is required before running
  * user thread to avoid speculative page table walking with the wrong page table. */
 extern vspace_root_t armKSGlobalUserVSpace[BIT(seL4_VSpaceIndexBits)] VISIBLE;
-extern pgde_t armKSGlobalKernelPGD[BIT(PGD_INDEX_BITS)] VISIBLE;
+extern pte_t armKSGlobalKernelPGD[BIT(PT_INDEX_BITS)] VISIBLE;
 
-extern pude_t armKSGlobalKernelPUD[BIT(PUD_INDEX_BITS)] VISIBLE;
-extern pde_t armKSGlobalKernelPDs[BIT(PUD_INDEX_BITS)][BIT(PD_INDEX_BITS)] VISIBLE;
+extern pte_t armKSGlobalKernelPUD[BIT(PT_INDEX_BITS)] VISIBLE;
+extern pte_t armKSGlobalKernelPDs[BIT(PT_INDEX_BITS)][BIT(PT_INDEX_BITS)] VISIBLE;
 extern pte_t armKSGlobalKernelPT[BIT(PT_INDEX_BITS)] VISIBLE;
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT

@@ -9,6 +9,12 @@
 #include <config.h>
 #include <arch/kernel/vspace.h>
 
+
+static inline void armv_contextSwitch_HWASID(vspace_root_t *vspace, asid_t asid)
+{
+    setCurrentUserVSpaceRoot(ttbr_new(asid, pptr_to_paddr(vspace)));
+}
+
 /*
  * In AARCH64, hardware and virtual asids are the same and are written
  * when updating the translation table base register.

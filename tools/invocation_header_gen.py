@@ -9,14 +9,12 @@
 # ============================
 
 from __future__ import print_function
+from importlib.metadata import version
 from jinja2 import Environment, BaseLoader
 import argparse
 import sys
 import xml.dom.minidom
-import pkg_resources
-# We require jinja2 to be at least version 2.10 as we use the 'namespace' feature from
-# that version
-pkg_resources.require("jinja2>=2.10")
+from condition import condition_to_cpp
 
 
 COMMON_HEADER = """
@@ -37,8 +35,7 @@ COMMON_HEADER = """
  */"""
 
 INVOCATION_TEMPLATE = COMMON_HEADER + """
-#ifndef __{{header_title}}_INVOCATION_H
-#define __{{header_title}}_INVOCATION_H
+#pragma once
 
 enum invocation_label {
     InvalidInvocation,
@@ -58,30 +55,24 @@ enum invocation_label {
 #include <sel4/sel4_arch/invocation.h>
 #include <sel4/arch/invocation.h>
 {%- endif %}
-
-#endif /* __{{header_title}}_INVOCATION_H */
-
 """
 
 SEL4_ARCH_INVOCATION_TEMPLATE = COMMON_HEADER + """
-#ifndef __{{header_title}}_SEL4_ARCH_INVOCATION_H
-#define __{{header_title}}_SEL4_ARCH_INVOCATION_H
+#pragma once
 
 {%- if not libsel4 %}
 #include <api/invocation.h>
 {%- endif %}
 
-{%- set ns = namespace(first=True) %}
 enum sel4_arch_invocation_label {
     {%- for label, condition in invocations %}
         {%- if condition %}
-            {%- if ns.first %}
+            {%- if loop.first %}
 #error "First sel4_arch invocation label cannot be conditional"
             {%- endif %}
 #if {{condition}}
         {%- endif %}
-        {%- if ns.first %}
-            {%- set ns.first = False %}
+        {%- if loop.first %}
     {{label}} = nInvocationLabels,
         {%- else %}
     {{label}},
@@ -90,37 +81,31 @@ enum sel4_arch_invocation_label {
 #endif
         {%- endif %}
     {%- endfor %}
-    {%- if ns.first %}
+    {%- if invocations|length == 0 %}
     nSeL4ArchInvocationLabels = nInvocationLabels
     {%- else %}
     nSeL4ArchInvocationLabels
     {%- endif %}
 };
-
-#endif /* __{{header_title}}_SEL4_ARCH_INVOCATION_H */
-
 """
 
 ARCH_INVOCATION_TEMPLATE = COMMON_HEADER + """
-#ifndef __{{header_title}}_ARCH_INVOCATION_H
-#define __{{header_title}}_ARCH_INVOCATION_H
+#pragma once
 
 {%- if not libsel4 %}
 #include <arch/api/sel4_invocation.h>
 {%- endif %}
 
-{%- set ns = namespace(first=1) %}
 enum arch_invocation_label {
     {%- for label, condition in invocations %}
     {%- if condition %}
-    {%- if ns.first  %}
+    {%- if loop.first  %}
 #error "First arch invocation label cannot be conditional"
     {%- endif %}
 #if {{condition}}
     {%- endif %}
-    {%- if ns.first %}
+    {%- if loop.first %}
     {{label}} = nSeL4ArchInvocationLabels,
-    {%- set ns.first = False %}
     {%- else %}
     {{label}},
     {%- endif %}
@@ -128,15 +113,12 @@ enum arch_invocation_label {
 #endif
     {%- endif %}
     {%- endfor %}
-    {%- if ns.first %}
+    {%- if invocations|length == 0 %}
     nArchInvocationLabels = nSeL4ArchInvocationLabels
     {%- else %}
     nArchInvocationLabels
     {%- endif %}
 };
-
-#endif /* __{{header_title}}_ARCH_INVOCATION_H */
-
 """
 
 
@@ -168,12 +150,20 @@ def parse_xml(xml_file):
     invocation_labels = []
     for method in doc.getElementsByTagName("method"):
         invocation_labels.append((str(method.getAttribute("id")),
-                                  str(method.getAttribute("condition"))))
+                                  str(condition_to_cpp(method.getElementsByTagName("condition")))))
 
     return invocation_labels
 
 
 def generate(args, invocations):
+    # We require jinja2 to be at least version 2.10,
+    # In the past we used the 'namespace' feature from that version.
+    # other versions of jinja, particularly `minijinja`, don't support
+    # namespaces. However in case `namespace` is needed in the future require a
+    # version which supports it.
+    jinja2_version = version("jinja2")
+    if jinja2_version < "2.10":
+        raise Warning("Jinja2 should be >= 2.10")
 
     header_title = "API"
     if args.libsel4:
@@ -188,7 +178,7 @@ def generate(args, invocations):
         template = Environment(loader=BaseLoader).from_string(INVOCATION_TEMPLATE)
 
     data = template.render({'header_title': header_title, 'libsel4': args.libsel4,
-                            'invocations': invocations, 'num_invocations': len(invocations)})
+                            'invocations': invocations})
     args.dest.write(data)
 
     args.dest.close()

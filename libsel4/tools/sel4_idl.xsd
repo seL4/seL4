@@ -1,0 +1,161 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<!--
+     Copyright 2022, seL4 Project a Series of LF Projects, LLC
+
+     SPDX-License-Identifier: BSD-2-Clause
+-->
+
+    <xsd:annotation>
+        <xsd:documentation xml:lang="en">
+            seL4 api generator schema.
+        </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:element name="api" type="APIType"/>
+
+    <xsd:complexType name="APIType">
+        <xsd:sequence>
+            <xsd:element name="struct" minOccurs="0" maxOccurs="unbounded" type="StructType" />
+            <xsd:element name="interface" minOccurs="0" maxOccurs="unbounded" type="InterfaceType"/>
+        </xsd:sequence>
+        <xsd:attribute name="name" type="xsd:string" use="optional" />
+        <xsd:attribute name="label_prefix" type="xsd:string" use="optional"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="StructType">
+        <xsd:sequence>
+            <xsd:element name="member" minOccurs="0" maxOccurs="unbounded" type="StructMemberType" />
+        </xsd:sequence>
+        <xsd:attribute name="name" type="xsd:string" use="required" />
+    </xsd:complexType>
+
+    <xsd:complexType name="StructMemberType">
+        <xsd:attribute name="name" type="xsd:string" use="required" />
+    </xsd:complexType>
+
+    <xsd:complexType name="InterfaceType">
+        <xsd:sequence>
+            <xsd:element name="method" minOccurs="0" maxOccurs="unbounded" type="MethodType"/>
+        </xsd:sequence>
+        <xsd:attribute name="name" type="xsd:string" use="required" />
+        <xsd:attribute name="manual_name" type="xsd:string" use="optional" />
+        <xsd:attribute name="cap_description" type="xsd:string" use="optional" />
+    </xsd:complexType>
+
+
+    <xsd:complexType name="MethodType">
+        <xsd:sequence>
+            <xsd:element name="condition" type="Unary" minOccurs="0" maxOccurs="1"/>
+            <xsd:element name="brief" type="DescriptionType" minOccurs="0" maxOccurs="1" />
+            <xsd:element name="description" type="DescriptionType" minOccurs="0" maxOccurs="1" />
+            <xsd:element name="return" type="ReturnType" minOccurs="0" maxOccurs="1" />
+            <xsd:element name="cap_param" type="CapParamType" minOccurs="0" maxOccurs="1" />
+            <xsd:element name="param" type="ParamType" minOccurs="0" maxOccurs="unbounded" />
+            <xsd:element name="error" type="ErrorType" minOccurs="0" maxOccurs="unbounded" />
+        </xsd:sequence>
+        <xsd:attribute name="name" type="xsd:string" use="required" />
+        <xsd:attribute name="id" type="xsd:string" use="required" />
+        <xsd:attribute name="manual_name" type="xsd:string" use="optional" />
+        <xsd:attribute name="manual_label" type="xsd:string" use="optional" />
+    </xsd:complexType>
+
+    <xsd:group name="ConfigGroup">
+        <xsd:choice>
+            <xsd:element name="and" type="N-ary" />
+            <xsd:element name="or" type="N-ary" />
+            <xsd:element name="not" type="Unary" />
+            <xsd:element name="config">
+                <xsd:complexType>
+                        <xsd:attribute name="var" type="xsd:string" use="required"/>
+                </xsd:complexType>
+            </xsd:element>
+        </xsd:choice>
+    </xsd:group>
+
+  <xsd:complexType name="Unary">
+        <xsd:group ref="ConfigGroup"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="N-ary">
+    <xsd:sequence>
+            <xsd:group ref="ConfigGroup" minOccurs="2" maxOccurs="unbounded"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+    <xsd:group name="DocElements">
+        <xsd:choice>
+            <xsd:element name="texttt">
+                <xsd:complexType>
+                <xsd:simpleContent>
+                    <xsd:extension base="xsd:string">
+                        <xsd:attribute name="text" type="xsd:string"/>
+                    </xsd:extension>
+                </xsd:simpleContent>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="shortref" type="ShortRefType"/>
+            <xsd:element name="obj" type="ObjType"/>
+            <xsd:element name="autoref" type="AutoRefType"/>
+        </xsd:choice>
+    </xsd:group>
+
+
+    <xsd:complexType name="DescriptionType" mixed="true">
+        <xsd:choice minOccurs="0" maxOccurs="unbounded">
+            <xsd:group ref="DocElements" minOccurs="0" maxOccurs="unbounded"/>
+            <xsd:element name="docref" type="DocRefType"/>
+        </xsd:choice>
+    </xsd:complexType>
+
+    <xsd:complexType name="ReturnType" mixed="true">
+        <xsd:choice minOccurs="0" maxOccurs="unbounded">
+            <xsd:group ref="DocElements" minOccurs="0" maxOccurs="unbounded"/>
+            <xsd:element name="docref" type="DocRefType"/>
+            <xsd:element name="errorenumdesc" type="ErrorEnumDescType"/>
+        </xsd:choice>
+    </xsd:complexType>
+
+    <xsd:complexType name="DocRefType" mixed="true">
+        <xsd:choice minOccurs="0" maxOccurs="unbounded">
+            <xsd:group ref="DocElements" minOccurs="0" maxOccurs="unbounded"/>
+        </xsd:choice>
+    </xsd:complexType>
+
+    <xsd:complexType name="CapParamType">
+        <xsd:attribute name="append_description" type="xsd:string" use="optional"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="ParamType">
+        <xsd:sequence>
+            <xsd:element name="description" minOccurs="0" maxOccurs="1" type="DescriptionType"/>
+            <xsd:element name="error" minOccurs="0" maxOccurs="unbounded" type="ErrorType"/>
+        </xsd:sequence>
+        <xsd:attribute name="type" type="xsd:string" use="required"/>
+        <xsd:attribute name="name" type="xsd:string" use="required"/>
+        <xsd:attribute name="dir" type="xsd:string" use="required"/>
+        <xsd:attribute name="description" type="xsd:string" use="optional"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="ErrorType">
+        <xsd:choice>
+            <xsd:element name="description" type="DescriptionType" minOccurs="0" maxOccurs="1"/>
+        </xsd:choice>
+        <xsd:attribute name="name" type="xsd:string" use="required"/>
+        <xsd:attribute name="description" type="xsd:string" use="optional"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="ShortRefType">
+        <xsd:attribute name="sec" type="xsd:string" use="required"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="AutoRefType">
+        <xsd:attribute name="label" type="xsd:string" use="required"/>
+    </xsd:complexType>
+
+
+    <xsd:complexType name="ObjType">
+        <xsd:attribute name="name" type="xsd:string" use="required"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="ErrorEnumDescType"/>
+</xsd:schema>

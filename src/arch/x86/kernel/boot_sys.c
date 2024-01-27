@@ -143,8 +143,6 @@ BOOT_CODE static paddr_t load_boot_module(word_t boot_module_start, paddr_t load
 
 static BOOT_CODE bool_t try_boot_sys_node(cpu_id_t cpu_id)
 {
-    p_region_t boot_mem_reuse_p_reg;
-
     if (!map_kernel_window(
             boot_state.num_ioapic,
             boot_state.ioapic_paddr,
@@ -164,10 +162,6 @@ static BOOT_CODE bool_t try_boot_sys_node(cpu_id_t cpu_id)
     }
 #endif
 
-    /* reuse boot code/data memory */
-    boot_mem_reuse_p_reg.start = KERNEL_ELF_PADDR_BASE;
-    boot_mem_reuse_p_reg.end = kpptr_to_paddr(ki_boot_end);
-
     /* initialise the CPU */
     if (!init_cpu(config_set(CONFIG_IRQ_IOAPIC) ? 1 : 0)) {
         return false;
@@ -178,8 +172,7 @@ static BOOT_CODE bool_t try_boot_sys_node(cpu_id_t cpu_id)
             cpu_id,
             &boot_state.mem_p_regs,
             boot_state.ui_info,
-            boot_mem_reuse_p_reg,
-            /* parameters below not modeled in abstract specification */
+            /* parameters below not modelled in abstract specification */
             boot_state.num_drhu,
             boot_state.drhu_list,
             &boot_state.rmrr_list,
@@ -196,6 +189,11 @@ static BOOT_CODE bool_t try_boot_sys_node(cpu_id_t cpu_id)
 
 static BOOT_CODE bool_t add_mem_p_regs(p_region_t reg)
 {
+    if (reg.start == reg.end) {
+        // Return true here if asked to add an empty region.
+        // Some of the callers round down the end address to
+        return true;
+    }
     if (reg.end > PADDR_TOP && reg.start > PADDR_TOP) {
         /* Return true here as it's not an error for there to exist memory outside the kernel window,
          * we're just going to ignore it and leave it to be given out as device memory */
@@ -213,7 +211,7 @@ static BOOT_CODE bool_t add_mem_p_regs(p_region_t reg)
     printf("Adding physical memory region 0x%lx-0x%lx\n", reg.start, reg.end);
     boot_state.mem_p_regs.list[boot_state.mem_p_regs.count] = reg;
     boot_state.mem_p_regs.count++;
-    return reserve_region(reg);
+    return true;
 }
 
 /*
@@ -233,10 +231,11 @@ static BOOT_CODE bool_t parse_mem_map(uint32_t mmap_length, uint32_t mmap_addr)
             printf("\tPhysical memory region not addressable\n");
         } else {
             printf("\tPhysical Memory Region from %lx size %lx type %d\n", (long)mem_start, (long)mem_length, type);
-            if (type == MULTIBOOT_MMAP_USEABLE_TYPE && mem_start >= HIGHMEM_PADDR) {
+            if (type == MULTIBOOT_MMAP_USEABLE_TYPE && mem_start >= HIGHMEM_PADDR && mem_length >= BIT(PAGE_BITS)) {
+
                 if (!add_mem_p_regs((p_region_t) {
-                mem_start, mem_start + mem_length
-            })) {
+                ROUND_UP(mem_start, PAGE_BITS), ROUND_DOWN(mem_start + mem_length, PAGE_BITS),
+                })) {
                     return false;
                 }
             }
@@ -270,6 +269,7 @@ static BOOT_CODE bool_t is_compiled_for_microarchitecture(void)
     switch (model_info->model) {
     case SKYLAKE_1_MODEL_ID:
     case SKYLAKE_2_MODEL_ID:
+    case SKYLAKE_X_MODEL_ID:
         if (microarch_generation > 7) {
             return false;
         }
@@ -340,8 +340,7 @@ static BOOT_CODE bool_t try_boot_sys(void)
     p_region_t ui_p_regs;
     paddr_t load_paddr;
 
-    boot_state.ki_p_reg.start = KERNEL_ELF_PADDR_BASE;
-    boot_state.ki_p_reg.end = kpptr_to_paddr(ki_end);
+    boot_state.ki_p_reg = get_p_reg_kernel_img();
 
     if (!x86_cpuid_initialize()) {
         printf("Warning: Your x86 CPU has an unsupported vendor, '%s'.\n"
@@ -563,11 +562,11 @@ static BOOT_CODE bool_t try_boot_sys_mbi1(
         }
         uint32_t multiboot_mmap_length = mbi->part2.mmap_length;
         if (multiboot_mmap_length > (SEL4_MULTIBOOT_MAX_MMAP_ENTRIES * sizeof(seL4_X86_mb_mmap_t))) {
-            multiboot_mmap_length = SEL4_MULTIBOOT_MAX_MMAP_ENTRIES * sizeof(seL4_X86_mb_mmap_t);
             printf("Warning: Multiboot has reported more memory map entries, %zd, "
                    "than the max amount that will be passed in the bootinfo, %d. "
                    "These extra regions will still be turned into untyped caps.",
                    multiboot_mmap_length / sizeof(seL4_X86_mb_mmap_t), SEL4_MULTIBOOT_MAX_MMAP_ENTRIES);
+            multiboot_mmap_length = SEL4_MULTIBOOT_MAX_MMAP_ENTRIES * sizeof(seL4_X86_mb_mmap_t);
         }
         memcpy(&boot_state.mb_mmap_info.mmap, (void *)(word_t)mbi->part2.mmap_addr, multiboot_mmap_length);
         boot_state.mb_mmap_info.mmap_length = multiboot_mmap_length;

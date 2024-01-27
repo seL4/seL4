@@ -21,7 +21,7 @@ The basic services seL4 provides are as follows:
     \item[Threads] are an abstraction of CPU execution that supports
     running software;
 
-    \item[Scheduling contexts] (MCS only) are an abstraction of CPU execuion time.
+    \item[Scheduling contexts] (MCS only) are an abstraction of CPU execution time.
 
     \item[Address spaces] are virtual memory spaces that each contain an
     application. Applications are limited to accessing memory in their
@@ -69,7 +69,7 @@ Conceptually, a capability resides in an application's \emph{capability
 space}; an address in this space refers to a \emph{slot} which may or
 may not contain a capability.  An application may refer to
 a capability---to request a kernel service, for example---using the
-address of the slot holding that capability.  This means, the seL4 
+address of the slot holding that capability.  This means, the seL4
 capability model is an instance of a \emph{segregated} (or \emph{partitioned})
 capability system, where capabilities are managed by the kernel.
 
@@ -93,7 +93,7 @@ Capabilities can also be revoked to withdraw
 authority. Revocation recursively removes any capabilities that have
 been derived from the original capability being revoked. The propagation of
 capabilities through the system is controlled by a
-\emph{take-grant}-based model~\cite{Elkaduwe_GE_08,Boyton_09}.
+\emph{take-grant}-based model~\cite{Elkaduwe_KE_08,Boyton_09}.
 
 \section{System Calls}
 \label{sec:syscalls}
@@ -114,7 +114,7 @@ The seL4 kernel provides a message-passing service for communication between
 threads. This mechanism is also used for communication with kernel-provided
 services. There is a standard message format, each message containing a
 number of data words and possibly some capabilities. The structure and encoding
-of these messages are described in detail in \autoref{ch:ipc}. 
+of these messages are described in detail in \autoref{ch:ipc}.
 
 Threads send messages by invoking capabilities within their capability space.
 When an endpoint, notification or reply capability is invoked in this way, the
@@ -305,11 +305,11 @@ manipulation, and combination of these kernel objects:
       provide a simple signalling mechanism. A \obj{Notification}
       is a word-size array of flags, each of which behaves like a binary semaphore. Operations
       are \emph{signalling} a subset of flags in a single operation,
-      polling to check any flags, 
+      polling to check any flags,
       and blocking until any are signalled. Notification capabilities
       can be signal-only or wait-only.
 
-    \item[Virtual Address Space Objects] (see \autoref{ch:vspace}) 
+    \item[Virtual Address Space Objects] (see \autoref{ch:vspace})
     are used to construct a virtual
     address space (or VSpace) for one or more threads. These
     objects largely directly correspond to those of the hardware, and
@@ -321,7 +321,7 @@ manipulation, and combination of these kernel objects:
     and acknowledge interrupts from hardware devices.
     Initially, there is a capability to \obj{IRQControl},
     which allows for the creation of \obj{IRQHandler} capabilities.
-    An \obj{IRQHandler} capability permits the management of a specific 
+    An \obj{IRQHandler} capability permits the management of a specific
     interrupt source associated with a specific device.
     It is delegated to
     a device driver to access an interrupt source. The \obj{IRQHandler}
@@ -419,28 +419,31 @@ creates new kernel objects by retyping untyped memory, the newly created
 capabilities would be inserted into the CDT as children of the untyped
 memory capability.
 
-For each \obj{Untyped Memory} region, the kernel keeps
-a \emph{watermark} recording how much of the region has previously been
-allocated. Whenever a user requests the kernel to create new objects in
-an untyped memory region, the kernel will carry out one of two actions:
-if there are already existing objects allocated in the region, the
+For each \obj{Untyped} capability pointing to an \obj{Untyped Memory} region,
+the kernel keeps a \emph{watermark} recording how much of the region has
+previously been allocated. Whenever a user requests the kernel to create new
+objects in an untyped memory region, the kernel will carry out one of two
+actions: if there are already existing objects allocated in the region, the
 kernel will allocate the new objects at the current watermark level, and
-increase the watermark. If all objects previously allocated in the
-region have been deleted, the kernel will reset the watermark and start
+increase the watermark. If all capabilities to objects previously allocated in
+the region have been deleted, the kernel will reset the watermark and start
 allocating new objects from the beginning of the region again.
 
-Finally, the \apifunc{seL4\_CNode\_Revoke}{cnode_revoke} method provided by \obj{CNode} objects
-destroys all capabilities derived from the argument capability. Revoking
-the last capability to a kernel object triggers the \emph{destroy}
-operation on the now unreferenced object. This simply cleans up any in-kernel dependencies between
-it, other objects and the kernel.
+Finally, the \apifunc{seL4\_CNode\_Revoke}{cnode_revoke} method provided by
+the \obj{CNode} objects deletes all capabilities derived from the argument
+capability. Revoking the last capability to a kernel object triggers the
+\emph{destroy} operation on the now unreferenced object. This cleans up any
+in-kernel dependencies between it, other objects and the kernel. It does not
+necessarily zero all memory state associated with the object yet. Memory zeroing
+will happen for the entire region when an untyped capability is \emph{reset} as
+part of the first retype operation after all child capabilities have been
+revoked.
 
-By calling \apifunc{seL4\_CNode\_Revoke}{cnode_revoke} on the original capability to an untyped memory
-object, the user removes all of the untyped memory object's
-children---that is, all capabilities pointing to objects in the untyped
-memory region.  Thus, after this invocation there are no valid references
-to any object within the untyped region, and the region may be safely
-retyped and reused.
+To reuse a region of memory, user code can call
+\apifunc{seL4\_CNode\_Revoke}{cnode_revoke} on the original untyped capability
+for that region, thereby removing all children of that capability. After this
+invocation, no references remain to any object within the untyped region, and
+the region may be safely retyped again.
 
 \subsection{Summary of Object Sizes}
 \label{sec:object_sizes}

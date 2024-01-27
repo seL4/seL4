@@ -1,6 +1,7 @@
 #!/usr/bin/env sh
 #
 # Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+# Copyright 2022, Capgemini Engineering
 #
 # SPDX-License-Identifier: GPL-2.0-only
 #
@@ -15,10 +16,6 @@ destdir=`pwd`
 cd "$1" || exit 1
 echo Using DTS from Linux $(make -s kernelversion)
 make ARCH=arm multi_v7_defconfig
-make ARCH=arm -j4 dtbs
-
-# for kzm
-make ARCH=arm imx_v6_v7_defconfig
 make ARCH=arm -j4 dtbs
 
 make ARCH=arm64 defconfig
@@ -36,6 +33,7 @@ LICENSE="/*
 "
 
 ARM_DTBS="
+am335x-bone=am335x-bone
 am335x-boneblack=am335x-boneblack
 am335x-boneblue=am335x-boneblue
 bcm2837-rpi-3-b=rpi3
@@ -43,7 +41,6 @@ exynos4412-odroidx=exynos4
 exynos5250-arndale=exynos5250
 exynos5410-odroidxu=exynos5410
 exynos5422-odroidxu4=exynos5422
-imx31-bug=kzm
 imx6q-sabrelite=sabre
 imx6q-wandboard-revd1=wandq
 imx7d-sdb=imx7sabre
@@ -64,7 +61,9 @@ xilinx/zynqmp-zcu102-rev1.0=zynqmp
 freescale/fsl-imx8mq-evk=imx8mq-evk
 freescale/fsl-imx8mm-evk=imx8mm-evk
 rockchip/rk3399-rockpro64=rockpro64
+rockchip/rk3566-quartz64-a=quartz64
 broadcom/bcm2711-rpi-4-b=rpi4
+avnet/maaxboard=maaxboard
 "
 
 extract_dts() {

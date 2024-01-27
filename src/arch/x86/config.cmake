@@ -62,7 +62,7 @@ config_choice(
 )
 
 config_option(
-    KernelUseLogcalIDs USE_LOGCAL_IDS
+    KernelUseLogicalIDs USE_LOGICAL_IDS
     "Use logical IDs to broadcast IPI between cores. Not all machines support logical \
     IDs. In xAPIC mode only 8 cores can be addressed using logical IDs."
     DEFAULT OFF
@@ -80,6 +80,12 @@ config_option(
     KernelVTX VTX "VTX support"
     DEFAULT OFF
     DEPENDS "KernelArchX86;NOT KernelVerificationBuild"
+)
+
+config_option(
+    KernelX86_64VTX64BitGuests X86_64_VTX_64BIT_GUESTS "Support 64-bit guests"
+    DEFAULT OFF
+    DEPENDS "KernelArchX86;KernelVTX;NOT KernelVerificationBuild"
 )
 
 config_option(

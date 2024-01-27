@@ -1,0 +1,153 @@
+/*
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright 2022, Capgemini Engineering
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+	chosen {
+		seL4,elfloader-devices =
+			"serial0",
+			&{/psci};
+
+		seL4,kernel-devices =
+			"serial0",
+			&{/soc@0/interrupt-controller@38800000},
+			&{/timer};
+	};
+
+	/* Redefine USB to use dwc3 driver.
+	 * This structure is compatible with the dwc3-generic driver used by both U-Boot and Linux.
+	 * Modify usb@38x00000 entries from maaxboard.dts.
+	 * Instead of adding and removing individual USB properties via the overlay, start from scratch:
+	 * 1. Delete existing USB nodes in maaxboard.dts
+	 * 2. Then build the USB nodes in overlay-maxboard.dts
+	 *
+	 * Also the extent of the memory map of the SYS_CTR timer needs increasing from the incorrect
+	 * value provided (0x20000) in the Avnet DTS.
+	 */
+
+	soc@0 {
+
+		bus@30400000 {
+			timer@306a0000 {
+				reg = <0x306a0000 0x30000>;
+			};
+		};
+
+		/delete-node/ usb@38100000;
+		/delete-node/ usb@38200000;
+
+		usb@38100000 {
+			compatible = "fsl,imx8mq-dwc3\0snps,dwc3";
+			#address-cells = <0x01>;
+			#size-cells = <0x01>;
+			reg = <0x38100000 0x10000>;
+			clocks = <0x02 0xce 0x02 0x98 0x02 0x01>;
+			clock-names = "bus_early\0ref\0suspend";
+			assigned-clocks = <0x02 0x6e 0x02 0x98>;
+			assigned-clock-parents = <0x02 0x56 0x02 0x48>;
+			assigned-clock-rates = <0x1dcd6500 0x5f5e100>;
+			interrupts = <0x00 0x28 0x04>;
+			status = "okay";
+			dr_mode = "host";
+			phys = <0x4c 0x4c>;
+			phy-names = "usb2-phy\0usb3-phy";
+			dwc3 {
+				compatible = "fsl,imx8mq-dwc3\0snps,dwc3";
+				reg = <0x38100000 0x10000>;
+				interrupts = <0x00 0x28 0x04>;
+				usb3-resume-missing-cas;
+				snps,power-down-scale = <0x02>;
+				status = "okay";
+				dr_mode = "host";
+				maximum-speed = "super-speed";
+			};
+		};
+
+		usb@38200000 {
+			compatible = "fsl,imx8mq-dwc3\0snps,dwc3";
+			#address-cells = <0x01>;
+			#size-cells = <0x01>;
+			reg = <0x38200000 0x10000>;
+			clocks = <0x02 0xcf 0x02 0x98 0x02 0x01>;
+			clock-names = "bus_early\0ref\0suspend";
+			assigned-clocks = <0x02 0x6e 0x02 0x98>;
+			assigned-clock-parents = <0x02 0x56 0x02 0x48>;
+			assigned-clock-rates = <0x1dcd6500 0x5f5e100>;
+			interrupts = <0x00 0x29 0x04>;
+			status = "okay";
+			dr_mode = "host";
+			phys = <0x4d 0x4d>;
+			phy-names = "usb2-phy\0usb3-phy";
+			dwc3 {
+				compatible = "fsl,imx8mq-dwc3\0snps,dwc3";
+				reg = <0x38200000 0x10000>;
+				interrupts = <0x00 0x29 0x04>;
+				usb3-resume-missing-cas;
+				snps,power-down-scale = <0x02>;
+				status = "okay";
+				dr_mode = "host";
+				maximum-speed = "super-speed";
+			};
+		};
+	};
+
+	/* These general purpose timers exist in the SoC documentation, but not in the DTS from Avnet */
+
+	gpt@302d0000 {
+		compatible = "fsl,imx8mq-gpt\0fsl,imx7d-gpt";
+		reg = < 0x00 0x302d0000 0x00 0x10000 >;
+		interrupts = < 0x00 0x37 0x04 >;
+		clocks = < 0x04 0xc5 0x04 0xc5 0x04 0xf9 >;
+		clock-names = "ipg\0per\0osc_per";
+		status = "disabled";
+	};
+
+	gpt@302e0000 {
+		compatible = "fsl,imx8mq-gpt\0fsl,imx7d-gpt";
+		reg = < 0x00 0x302e0000 0x00 0x10000 >;
+		interrupts = < 0x00 0x36 0x04 >;
+		clocks = < 0x04 0xc5 0x04 0xc5 0x04 0xf9 >;
+		clock-names = "ipg\0per\0osc_per";
+		status = "disabled";
+	};
+
+	gpt@302f0000 {
+		compatible = "fsl,imx8mq-gpt\0fsl,imx7d-gpt";
+		reg = < 0x00 0x302f0000 0x00 0x10000 >;
+		interrupts = < 0x00 0x35 0x04 >;
+		clocks = < 0x04 0xc5 0x04 0xc5 0x04 0xf9 >;
+		clock-names = "ipg\0per\0osc_per";
+		status = "disabled";
+	};
+
+	gpt@30700000 {
+		compatible = "fsl,imx8mq-gpt\0fsl,imx7d-gpt";
+		reg = < 0x00 0x30700000 0x00 0x10000 >;
+		interrupts = < 0x00 0x34 0x04 >;
+		clocks = < 0x04 0xc5 0x04 0xc5 0x04 0xf9 >;
+		clock-names = "ipg\0per\0osc_per";
+		status = "disabled";
+	};
+
+	gpt@306f0000 {
+		compatible = "fsl,imx8mq-gpt\0fsl,imx7d-gpt";
+		reg = < 0x00 0x306f0000 0x00 0x10000 >;
+		interrupts = < 0x00 0x33 0x04 >;
+		clocks = < 0x04 0xc5 0x04 0xc5 0x04 0xf9 >;
+		clock-names = "ipg\0per\0osc_per";
+		status = "disabled";
+	};
+
+	gpt@306e0000 {
+		compatible = "fsl,imx8mq-gpt\0fsl,imx7d-gpt";
+		reg = < 0x00 0x306e0000 0x00 0x10000 >;
+		interrupts = < 0x00 0x2e 0x04 >;
+		clocks = < 0x04 0xc5 0x04 0xc5 0x04 0xf9 >;
+		clock-names = "ipg\0per\0osc_per";
+		status = "disabled";
+	};
+
+};

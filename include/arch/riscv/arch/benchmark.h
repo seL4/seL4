@@ -16,5 +16,11 @@ static inline timestamp_t timestamp(void)
 {
     return riscv_read_cycle();
 }
+
+static inline void benchmark_arch_utilisation_reset(void)
+{
+    /* nothing here */
+}
+
 #endif /* CONFIG_ENABLE_BENCHMARK */
 

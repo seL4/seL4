@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <config.h>
 #include <types.h>
 #include <api/failures.h>
 #include <object/structures.h>
@@ -22,9 +23,6 @@ void write_it_asid_pool(cap_t it_ap_cap, cap_t it_lvl1pt_cap);
 
 /* ==================== BOOT CODE FINISHES HERE ==================== */
 #define IT_ASID 1
-
-void idle_thread(void);
-#define idleThreadStart (&idle_thread)
 
 struct lookupPTSlot_ret {
     pte_t *ptSlot;
@@ -52,7 +50,7 @@ exception_t checkValidIPCBuffer(vptr_t vptr, cap_t cap);
 vm_rights_t CONST maskVMRights(vm_rights_t vm_rights,
                                seL4_CapRights_t cap_rights_mask);
 exception_t decodeRISCVMMUInvocation(word_t label, word_t length, cptr_t cptr,
-                                     cte_t *cte, cap_t cap, word_t *buffer);
+                                     cte_t *cte, cap_t cap, bool_t call, word_t *buffer);
 exception_t performPageTableInvocationMap(cap_t cap, cte_t *ctSlot,
                                           pte_t lvl1pt, pte_t *ptSlot);
 exception_t performPageTableInvocationUnmap(cap_t cap, cte_t *ctSlot);
