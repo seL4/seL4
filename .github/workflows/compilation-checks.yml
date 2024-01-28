@@ -23,7 +23,7 @@ jobs:
         arch: [ARM, ARM_HYP, AARCH64, RISCV64, X64]
         compiler: [gcc, llvm]
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: seL4/ci-actions/standalone-kernel@master
       with:
         ARCH: ${{ matrix.arch }}

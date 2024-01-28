@@ -44,12 +44,12 @@ jobs:
         compiler: ${{ matrix.compiler }}
         sha: ${{ github.event.pull_request.head.sha }}
     - name: Upload images
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: images-${{ matrix.march }}-${{ matrix.compiler }}
         path: '*-images.tar.gz'
     - name: Upload kernel.elf files
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: kernel.elf-${{ matrix.march }}-${{ matrix.compiler }}
         path: '*-kernel.elf'
@@ -81,13 +81,13 @@ jobs:
       matrix: ${{ fromJson(needs.the_matrix.outputs.matrix) }}
     steps:
       - name: Get machine queue
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: seL4/machine_queue
           path: machine_queue
           token: ${{ secrets.PRIV_REPO_TOKEN }}
       - name: Download image
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: images-${{ matrix.march }}-${{ matrix.compiler }}
       - name: Run
