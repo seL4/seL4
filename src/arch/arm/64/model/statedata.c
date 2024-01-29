@@ -92,9 +92,9 @@ pte_t armKSGlobalKernelPT[BIT(PT_INDEX_BITS)] ALIGN_BSS(BIT(seL4_PageTableBits))
 #ifdef CONFIG_KERNEL_LOG_BUFFER
 pte_t *armKSGlobalLogPDE = &armKSGlobalKernelPDs[BIT(PT_INDEX_BITS) - 1][BIT(PT_INDEX_BITS) - 2];
 compile_assert(log_pude_is_correct_preallocated_pude,
-               GET_PUD_INDEX(KS_LOG_PPTR) == BIT(PT_INDEX_BITS) - 1);
+               GET_KPT_INDEX(KS_LOG_PPTR, 1) == BIT(PT_INDEX_BITS) - 1);
 compile_assert(log_pde_is_correct_preallocated_pde,
-               GET_PD_INDEX(KS_LOG_PPTR) == BIT(PT_INDEX_BITS) - 2);
+               GET_KPT_INDEX(KS_LOG_PPTR, 2) == BIT(PT_INDEX_BITS) - 2);
 #endif
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
