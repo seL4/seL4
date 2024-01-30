@@ -6,7 +6,7 @@
 #
 # See sel4test-hw/builds.yml in the repo seL4/ci-actions for configs.
 
-name: seL4Test HW
+name: seL4Test-HW
 
 on:
   # needs PR target for secrets access; guard by requiring label
@@ -16,6 +16,19 @@ on:
 # downgrade permissions to read-only as you would have in a standard PR action
 permissions:
   contents: read
+
+# To reduce the load (especiually on the machine queue) we cancel any older runs
+# of this workflow for the current PR. Such runs exist, if there were new pushes
+# to the PR's branch without waiting for the workflow to finish. As a side
+# effect, pushing new commits now becomes a convenient way to cancel all the
+# older runs, e.g. if they are stuck and would only be stopped by the timeout
+# eventually.
+# Note that we could do the concurrency handling at a finer level, and only wrap
+# the actual run on the hardware. But there seems not much gain in letting the
+# older builds run, as these are usually obsolete with new pushes also.
+concurrency:
+  group: ${{ github.workflow }}-pr-${{ github.event.number }}
+  cancel-in-progress: true
 
 jobs:
   hw-build:
