@@ -8,6 +8,19 @@ on:
   pull_request_target:
     types: [labeled, synchronize]
 
+# To reduce the load (especiually on the AWS instances) we cancel any older runs
+# of this workflow for the current PR. Such runs exist, if there were new pushes
+# to the PR's branch without waiting for the workflow to finish. As a side
+# effect, pushing new commits now becomes a convenient way to cancel all the
+# older runs, e.g. if they are stuck and would only be stopped by the timeout
+# eventually.
+# Note that we could do the concurrency handling at a finer level and wrap just
+# the actual runs on the AWS instances. But there is no gain in this level of
+# detail. This might change if additional jobs or steps are added here.
+concurrency:
+  group: ${{ github.workflow }}-pr-${{ github.event.number }}
+  cancel-in-progress: true
+
 jobs:
   cproof:
     name: C Proofs
@@ -33,8 +46,6 @@ jobs:
           - arch: RISCV64
             features: MCS
             session: CRefine
-    # test only most recent push to PR:
-    concurrency: seL4-PR-C-proofs-pr-${{ github.event.number }}-idx-${{ strategy.job-index }}
     steps:
     - name: Proofs
       uses: seL4/ci-actions/aws-proofs@master
