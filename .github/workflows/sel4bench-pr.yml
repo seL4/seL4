@@ -89,8 +89,6 @@ jobs:
             req: skylake
           - platform: pc99
             req: haswell3
-    # do run concurrently in the build matrix, but only one overall run per PR at a time
-    concurrency: sel4bench-hw-pr-${{ github.event.number }}-${{ strategy.job-index }}
     steps:
       - name: Get machine queue
         uses: actions/checkout@v4
