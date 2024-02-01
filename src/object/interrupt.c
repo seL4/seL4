@@ -145,7 +145,14 @@ void invokeIRQHandler_AckIRQ(irq_t irq)
 
 #if defined ENABLE_SMP_SUPPORT && defined CONFIG_ARCH_ARM
     if (IRQ_IS_PPI(irq) && IRQT_TO_CORE(irq) != getCurrentCPUIndex()) {
+#ifdef CONFIG_ARM_GIC_V3_SUPPORT
+        /* According to the GICv3 spec, SPIs can be deactivated from any PE,
+         * but SGIs and PPIs must be deactivated from their target PE.
+         */
+        doRemoteDeactivatePrivateInterrupt(IRQT_TO_CORE(irq), IRQT_TO_IDX(irq));
+#else /* CONFIG_ARM_GIC_V3_SUPPORT */
         doRemoteMaskPrivateInterrupt(IRQT_TO_CORE(irq), false, IRQT_TO_IDX(irq));
+#endif /* CONFIG_ARM_GIC_V3_SUPPORT */
         return;
     }
 #endif
