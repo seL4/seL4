@@ -59,6 +59,12 @@ static void handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0,
             maskInterrupt(arg0, IDX_TO_IRQT(arg1));
             break;
 
+#ifdef CONFIG_ARM_GIC_V3_SUPPORT
+        case IpiRemoteCall_DeactivatePrivateInterrupt:
+            deactivateInterrupt(IDX_TO_IRQT(arg1));
+            break;
+#endif
+
 #if defined CONFIG_ARM_HYPERVISOR_SUPPORT && defined ENABLE_SMP_SUPPORT
         case IpiRemoteCall_VCPUInjectInterrupt: {
             virq_t virq;
