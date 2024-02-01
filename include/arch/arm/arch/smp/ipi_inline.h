@@ -41,5 +41,12 @@ static inline void doRemoteMaskPrivateInterrupt(word_t cpu, word_t disable, word
 {
     doRemoteOp2Arg(IpiRemoteCall_MaskPrivateInterrupt, disable, irq, cpu);
 }
+
+#ifdef CONFIG_ARM_GIC_V3_SUPPORT
+static inline void doRemoteDeactivatePrivateInterrupt(word_t cpu, word_t irq)
+{
+    doRemoteOp1Arg(IpiRemoteCall_DeactivatePrivateInterrupt, irq, cpu);
+}
+#endif /* CONFIG_ARM_GIC_V3_SUPPORT */
 #endif /* ENABLE_SMP_SUPPORT */
 
