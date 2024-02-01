@@ -12,7 +12,10 @@ declare_platform(qemu-arm-virt KernelPlatformQEMUArmVirt PLAT_QEMU_ARM_VIRT Kern
 set(qemu_user_top 0xa0000000)
 
 macro(setup_qemu_armv7)
-    cmake_parse_arguments(ARMV7_OPTIONS "ve" "" "")
+    cmake_parse_arguments(ARMV7_OPTIONS "ve" "" "" ${ARGN})
+    if(ARMV7_OPTIONS_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "Unknown arguments: ${ARMV7_OPTIONS_UNPARSED_ARGUMENTS}")
+    endif()
     set(QEMU_ARCH "arm")
     set(KernelArchArmV7a ON)
     if(ARMV7_OPTIONS_ve)
