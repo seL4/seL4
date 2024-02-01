@@ -134,6 +134,12 @@ static inline void enableFpu(void)
     isFPUEnabledCached[CURRENT_CPU_INDEX()] = true;
 }
 
+/* Current verification model does not include lazy FPU switching, i.e. it acts
+ * as if this function always returns true, so no FPU faults could be produced.
+ * In order to guard against deriving a contradiction, we don't allow the C
+ * parser to translate it. */
+/** MODIFIES: */
+/** DONT_TRANSLATE */
 static inline bool_t isFpuEnable(void)
 {
     return isFPUEnabledCached[CURRENT_CPU_INDEX()];
