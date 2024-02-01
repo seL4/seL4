@@ -296,7 +296,6 @@ static inline void set_cntv_ctl(word_t val)
     MCR(CNTV_CTL, val);
 }
 
-#ifdef ENABLE_SMP_SUPPORT
 static inline word_t get_vmpidr(void)
 {
     word_t ret = 0;
@@ -308,7 +307,6 @@ static inline void set_vmpidr(word_t val)
 {
     MCR(VMPIDR, val);
 }
-#endif
 
 /** MODIFIES: phantom_machine_state */
 /** DONT_TRANSLATE */
@@ -486,10 +484,8 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
         return get_cntv_off_high();
     case seL4_VCPUReg_CNTVOFFlow:
         return get_cntv_off_low();
-#ifdef ENABLE_SMP_SUPPORT
     case seL4_VCPUReg_VMPIDR:
         return get_vmpidr();
-#endif /* ENABLE_SMP_SUPPORT */
     default:
         fail("ARM/HYP: Invalid register index");
     }
