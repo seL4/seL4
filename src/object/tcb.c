@@ -130,7 +130,7 @@ void tcbSchedEnqueue(tcb_t *tcb)
         idx = ready_queues_index(dom, prio);
         queue = NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbAffinity);
 
-        if (!queue.head) { /* Empty list */
+        if (tcb_queue_empty(queue)) {
             addToBitmap(SMP_TERNARY(tcb->tcbAffinity, 0), dom, prio);
         }
 
@@ -159,7 +159,7 @@ void tcbSchedAppend(tcb_t *tcb)
         idx = ready_queues_index(dom, prio);
         queue = NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbAffinity);
 
-        if (!queue.head) { /* Empty list */
+        if (tcb_queue_empty(queue)) {
             addToBitmap(SMP_TERNARY(tcb->tcbAffinity, 0), dom, prio);
         }
 
@@ -190,7 +190,7 @@ void tcbSchedDequeue(tcb_t *tcb)
 
         thread_state_ptr_set_tcbQueued(&tcb->tcbState, false);
 
-        if (likely(!new_queue.head)) {
+        if (likely(tcb_queue_empty(new_queue))) {
             removeFromBitmap(SMP_TERNARY(tcb->tcbAffinity, 0), dom, prio);
         }
     }
@@ -291,16 +291,16 @@ static inline ticks_t PURE tcbReadyTime(tcb_t *tcb)
     return refill_head(tcb->tcbSchedContext)->rTime;
 }
 
-static inline bool_t compare_times(word_t new_time, tcb_t *tcb)
+static inline bool_t PURE time_after(tcb_t *tcb, ticks_t new_time)
 {
     return tcb != NULL && new_time >= tcbReadyTime(tcb);
 }
 
-static tcb_t *compare_times_loop(word_t new_time, tcb_t *tcb)
+static tcb_t *find_time_after(tcb_t *tcb, ticks_t new_time)
 {
     tcb_t *after = tcb;
 
-    while (compare_times(new_time, after)) {
+    while (time_after(after, new_time)) {
         after = after->tcbSchedNext;
     }
 
@@ -318,7 +318,7 @@ void tcbReleaseEnqueue(tcb_t *tcb)
     new_time = tcbReadyTime(tcb);
     queue = NODE_STATE_ON_CORE(ksReleaseQueue, tcb->tcbAffinity);
 
-    if (!queue.head || new_time < tcbReadyTime(queue.head)) {
+    if (tcb_queue_empty(queue) || new_time < tcbReadyTime(queue.head)) {
         NODE_STATE_ON_CORE(ksReleaseQueue, tcb->tcbAffinity) = tcb_queue_prepend(queue, tcb);
         NODE_STATE_ON_CORE(ksReprogram, tcb->tcbAffinity) = true;
     } else {
@@ -326,7 +326,7 @@ void tcbReleaseEnqueue(tcb_t *tcb)
             NODE_STATE_ON_CORE(ksReleaseQueue, tcb->tcbAffinity) = tcb_queue_append(queue, tcb);
         } else {
             tcb_t *after;
-            after = compare_times_loop(new_time, queue.head);
+            after = find_time_after(queue.head, new_time);
             tcb_queue_insert(tcb, after);
         }
     }

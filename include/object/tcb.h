@@ -46,9 +46,14 @@ void tcbSchedAppend(tcb_t *tcb);
 void tcbSchedDequeue(tcb_t *tcb);
 tcb_queue_t tcb_queue_remove(tcb_queue_t queue, tcb_t *tcb);
 
+static inline bool_t PURE tcb_queue_empty(tcb_queue_t queue)
+{
+    return queue.head == NULL;
+}
+
 static inline tcb_queue_t tcb_queue_prepend(tcb_queue_t queue, tcb_t *tcb)
 {
-    if (!queue.head) { /* Empty list */
+    if (tcb_queue_empty(queue)) {
         queue.end = tcb;
     } else {
         tcb->tcbSchedNext = queue.head;
@@ -62,7 +67,7 @@ static inline tcb_queue_t tcb_queue_prepend(tcb_queue_t queue, tcb_t *tcb)
 
 static inline tcb_queue_t tcb_queue_append(tcb_queue_t queue, tcb_t *tcb)
 {
-    if (!queue.head) { /* Empty list */
+    if (tcb_queue_empty(queue)) {
         queue.head = tcb;
     } else {
         tcb->tcbSchedPrev = queue.end;
