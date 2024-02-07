@@ -126,7 +126,7 @@ static inline bool_t refill_sufficient(sched_context_t *sc, ticks_t usage)
  */
 static inline bool_t refill_ready(sched_context_t *sc)
 {
-    return refill_head(sc)->rTime <= (NODE_STATE(ksCurTime) + getKernelWcetTicks());
+    return refill_head(sc)->rTime <= NODE_STATE(ksCurTime);
 }
 
 /*
@@ -160,7 +160,10 @@ static inline bool_t sc_released(sched_context_t *sc)
  */
 static inline bool_t sc_sporadic(sched_context_t *sc)
 {
-    return sc != NULL && sc_active(sc) && sc->scSporadic;
+    /* asserting sc != NULL --> sc->scSporadic --> sc_active(sc). That means, when
+       this function returns true, we also know that sc_active(sc) is true */
+    assert(sc == NULL || !sc->scSporadic || sc_active(sc));
+    return sc != NULL && sc->scSporadic;
 }
 
 /*

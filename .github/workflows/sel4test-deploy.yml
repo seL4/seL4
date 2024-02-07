@@ -40,11 +40,6 @@ jobs:
       matrix:
         march: [armv7a, armv8a, nehalem, rv32imac, rv64imac]
         compiler: [gcc, clang]
-        exclude:
-          - march: rv32imac
-            compiler: clang
-          - march: rv64imac
-            compiler: clang
     steps:
     - uses: seL4/ci-actions/sel4test-sim@master
       with:
@@ -58,11 +53,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        march: [armv7a, armv8a, nehalem]
+        # There is no "rv32imac" hardware yet.
+        march: [armv7a, armv8a, nehalem, rv64imac]
         compiler: [gcc, clang]
-        include:
-          - march: rv64imac
-            compiler: gcc
     steps:
     - name: Build
       uses: seL4/ci-actions/sel4test-hw@master
@@ -71,7 +64,7 @@ jobs:
         march: ${{ matrix.march }}
         compiler: ${{ matrix.compiler }}
     - name: Upload images
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: images-${{ matrix.march }}-${{ matrix.compiler }}
         path: '*-images.tar.gz'
@@ -98,13 +91,12 @@ jobs:
     concurrency: hw-run-${{ strategy.job-index }}
     steps:
       - name: Get machine queue
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: seL4/machine_queue
           path: machine_queue
-          token: ${{ secrets.PRIV_REPO_TOKEN }}
       - name: Download image
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: images-${{ matrix.march }}-${{ matrix.compiler }}
       - name: Run

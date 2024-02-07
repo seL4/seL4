@@ -50,7 +50,7 @@ set_property(
 if(DEFINED CALLED_declare_default_headers)
     # calculate the irq cnode size based on MAX_NUM_IRQ
     if("${KernelArch}" STREQUAL "riscv")
-        math(EXPR MAX_NUM_IRQ "${CONFIGURE_PLIC_MAX_NUM_INT} + 2")
+        math(EXPR MAX_NUM_IRQ "${CONFIGURE_MAX_IRQ} + 2")
     else()
         if(
             DEFINED KernelMaxNumNodes
@@ -124,15 +124,19 @@ if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
     set(config_schema "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware_schema.yml")
     set(
         KernelCustomDTSOverlay ""
-        CACHE FILEPATH "Provide an additional overlay to append to the selected KernelPlatform's \
+        CACHE
+            STRING
+            "Provide an additional list of overlays to append to the selected KernelPlatform's \
         device tree during build time"
     )
     if(NOT "${KernelCustomDTSOverlay}" STREQUAL "")
-        if(NOT EXISTS ${KernelCustomDTSOverlay})
-            message(FATAL_ERROR "Can't open external overlay file '${KernelCustomDTSOverlay}'!")
-        endif()
-        list(APPEND KernelDTSList "${KernelCustomDTSOverlay}")
-        message(STATUS "Using ${KernelCustomDTSOverlay} overlay")
+        foreach(dts_entry IN ITEMS ${KernelCustomDTSOverlay})
+            if(NOT EXISTS ${dts_entry})
+                message(FATAL_ERROR "Can't open external overlay file '${dts_entry}'!")
+            endif()
+            list(APPEND KernelDTSList "${dts_entry}")
+            message(STATUS "Appending ${dts_entry} overlay")
+        endforeach()
     endif()
 
     find_program(DTC_TOOL dtc)
@@ -164,7 +168,7 @@ if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
             RESULT_VARIABLE error
         )
         if(error)
-            message(FATAL_ERROR "Failed to compile DTS to DTB: ${KernelDTBPath}")
+            message(FATAL_ERROR "Failed to compile DTS to DTB: ${KernelDTSIntermediate}")
         endif()
         # The macOS and GNU coreutils `stat` utilities have different interfaces.
         # Check if we're using the macOS version, otherwise assume GNU coreutils.

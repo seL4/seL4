@@ -33,7 +33,7 @@ deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
 
     switch (cap_get_capType(cap)) {
     case cap_vspace_cap:
-        if (cap_vspace_cap_get_capIsMapped(cap)) {
+        if (cap_vspace_cap_get_capVSIsMapped(cap)) {
             ret.cap = cap;
             ret.status = EXCEPTION_NONE;
         } else {
@@ -143,14 +143,14 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
 
     case cap_vspace_cap:
 #ifdef CONFIG_ARM_SMMU
-        if (cap_vspace_cap_get_capMappedCB(cap) != CB_INVALID) {
-            smmu_cb_delete_vspace(cap_vspace_cap_get_capMappedCB(cap),
-                                  cap_vspace_cap_get_capMappedASID(cap));
+        if (cap_vspace_cap_get_capVSMappedCB(cap) != CB_INVALID) {
+            smmu_cb_delete_vspace(cap_vspace_cap_get_capVSMappedCB(cap),
+                                  cap_vspace_cap_get_capVSMappedASID(cap));
         }
 #endif
-        if (final && cap_vspace_cap_get_capIsMapped(cap)) {
-            deleteASID(cap_vspace_cap_get_capMappedASID(cap),
-                       VSPACE_PTR(cap_vspace_cap_get_capPTBasePtr(cap)));
+        if (final && cap_vspace_cap_get_capVSIsMapped(cap)) {
+            deleteASID(cap_vspace_cap_get_capVSMappedASID(cap),
+                       VSPACE_PTR(cap_vspace_cap_get_capVSBasePtr(cap)));
         }
         break;
 
@@ -223,8 +223,8 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
 
     case cap_vspace_cap:
         if (cap_get_capType(cap_b) == cap_vspace_cap) {
-            return cap_vspace_cap_get_capPTBasePtr(cap_a) ==
-                   cap_vspace_cap_get_capPTBasePtr(cap_b);
+            return cap_vspace_cap_get_capVSBasePtr(cap_a) ==
+                   cap_vspace_cap_get_capVSBasePtr(cap_b);
         }
         break;
 
@@ -338,6 +338,19 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
 {
     switch (t) {
     case seL4_ARM_SmallPageObject:
+        if (deviceMemory) {
+            /** AUXUPD: "(True, ptr_retyps 1
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_device_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSmallPage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat ARMSmallPageBits))" */
+        } else {
+            /** AUXUPD: "(True, ptr_retyps 1
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSmallPage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat ARMSmallPageBits))" */
+        }
         return cap_frame_cap_new(
                    asidInvalid,           /* capFMappedASID */
                    (word_t)regionBase,    /* capFBasePtr */
@@ -348,6 +361,19 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
                );
 
     case seL4_ARM_LargePageObject:
+        if (deviceMemory) {
+            /** AUXUPD: "(True, ptr_retyps (2^9)
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_device_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMLargePage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat ARMLargePageBits))" */
+        } else {
+            /** AUXUPD: "(True, ptr_retyps (2^9)
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMLargePage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat ARMLargePageBits))" */
+        }
         return cap_frame_cap_new(
                    asidInvalid,           /* capFMappedASID */
                    (word_t)regionBase,    /* capFBasePtr */
@@ -358,6 +384,19 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
                );
 
     case seL4_ARM_HugePageObject:
+        if (deviceMemory) {
+            /** AUXUPD: "(True, ptr_retyps (2^18)
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_device_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMHugePage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat ARMHugePageBits))" */
+        } else {
+            /** AUXUPD: "(True, ptr_retyps (2^18)
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMHugePage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat ARMHugePageBits))" */
+        }
         return cap_frame_cap_new(
                    asidInvalid,           /* capFMappedASID */
                    (word_t)regionBase,    /* capFBasePtr */
@@ -370,20 +409,26 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
 #ifdef CONFIG_ARM_SMMU
 
         return cap_vspace_cap_new(
-                   asidInvalid,           /* capMappedASID   */
-                   (word_t)regionBase,    /* capPTBasePtr    */
-                   0,                     /* capIsMapped     */
-                   CB_INVALID             /* capMappedCB     */
+                   asidInvalid,           /* capVSMappedASID */
+                   (word_t)regionBase,    /* capVSBasePtr    */
+                   0,                     /* capVSIsMapped   */
+                   CB_INVALID             /* capVSMappedCB   */
                );
 #else
 
+        /** AUXUPD: "(True, ptr_retyps 1
+              (Ptr (ptr_val \<acute>regionBase) :: (pte_C[vs_array_len]) ptr))" */
+        /** GHOSTUPD: "(True, gs_new_pt_t VSRootPT_T (ptr_val \<acute>regionBase))" */
         return cap_vspace_cap_new(
-                   asidInvalid,           /* capMappedASID   */
-                   (word_t)regionBase,    /* capPTBasePtr    */
-                   0                      /* capIsMapped     */
+                   asidInvalid,           /* capVSMappedASID */
+                   (word_t)regionBase,    /* capVSBasePtr    */
+                   0                      /* capVSIsMapped   */
                );
 #endif /*!CONFIG_ARM_SMMU*/
     case seL4_ARM_PageTableObject:
+        /** AUXUPD: "(True, ptr_retyps 1
+              (Ptr (ptr_val \<acute>regionBase) :: (pte_C[pt_array_len]) ptr))" */
+        /** GHOSTUPD: "(True, gs_new_pt_t NormalPT_T (ptr_val \<acute>regionBase))" */
         return cap_page_table_cap_new(
                    asidInvalid,           /* capPTMappedASID    */
                    (word_t)regionBase,    /* capPTBasePtr       */

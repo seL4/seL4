@@ -23,7 +23,8 @@ if(KernelPlatformAriane)
     # interrupts and using the dummy PLIC driver seems the best option for now
     # to avoid confusion or even crashes.
     declare_default_headers(
-        TIMER_FREQUENCY 25000000 PLIC_MAX_NUM_INT 0
+        TIMER_FREQUENCY 25000000
+        MAX_IRQ 0
         INTERRUPT_CONTROLLER drivers/irq/riscv_plic_dummy.h
     )
 else()

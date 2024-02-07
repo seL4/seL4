@@ -53,5 +53,6 @@ additional_commands:
         CLK_SHIFT: '*'
         TIMER_PRECISION: '*'
         TIMER_OVERHEAD_TICKS: '*'
+        SMMU: '*'
         MAX_SID: '*'
         MAX_CB: '*'

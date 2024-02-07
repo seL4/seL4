@@ -18,12 +18,31 @@ set(KernelDTSList "")
 include(${KERNEL_ROOT_DIR}/tools/internal.cmake)
 include(${KERNEL_ROOT_DIR}/tools/helpers.cmake)
 
-# Create and set all of the Kernel config options that can be derived from the
-# seL4 arch which is one of the following:
-# aarch32, aarch64, arm_hyp, riscv32, riscv64, x86_64, ia32
-# This macro is intended to be called from within a platform config.
-macro(declare_seL4_arch sel4_arch)
-    set(KernelSel4Arch "${sel4_arch}" CACHE STRING "" FORCE)
+# helper macro to unify messages printed output
+# Usage example: print_message_multiple_options_helper("architectures" aarch32)
+macro(print_message_multiple_options_helper str_type default_str)
+    message(STATUS "platform ${KernelPlatform} supports multiple ${str_type}, none was given")
+    message(STATUS "  defaulting to: ${default_str}")
+endmacro()
+
+# This macro is used by platforms to declare which seL4 architecture(s) they
+# support. It takes a list and sets up the one selected by KernelSel4Arch. If
+# KernelSel4Arch is not set, the architecture specified by the first list
+# element is used.
+# Usage example: declare_seL4_arch("aarch64" "aarch32")
+macro(declare_seL4_arch)
+    # Since this is a macro and not a function, ARGV is not a real variable. One
+    # must be created to be able iterate over it.
+    set(_arch_list "${ARGV}")
+    if(NOT KernelSel4Arch)
+        # Use first architecture from list as default.
+        list(GET _arch_list 0 _default_KernelSel4Arch)
+        print_message_multiple_options_helper("architectures" "${_default_KernelSel4Arch}")
+        set(KernelSel4Arch "${_default_KernelSel4Arch}" CACHE STRING "" FORCE)
+    elseif(NOT "${KernelSel4Arch}" IN_LIST _arch_list)
+        message(FATAL_ERROR "KernelSel4Arch '${KernelSel4Arch}' not in '${_arch_list}'")
+    endif()
+
     config_choice(
         KernelSel4Arch
         SEL4_ARCH
@@ -63,16 +82,8 @@ macro(declare_seL4_arch sel4_arch)
         set(Kernel64 ON CACHE INTERNAL "")
         set(Kernel32 OFF CACHE INTERNAL "")
     else()
-        message(FATAL_ERROR "unsupported seL4 architecture: '${sel4_arch}'")
+        message(FATAL_ERROR "unsupported seL4 architecture: '${KernelSel4Arch}'")
     endif()
-
-endmacro()
-
-# helper macro to unify messages printed output
-# Usage example: print_message_multiple_options_helper("architectures" aarch32)
-macro(print_message_multiple_options_helper str_type default_str)
-    message(STATUS "platform ${KernelPlatform} supports multiple ${str_type}, none was given")
-    message(STATUS "  defaulting to: ${default_str}")
 endmacro()
 
 # Register a platform's config options to be set if it is selected.
@@ -105,14 +116,6 @@ macro(check_platform_and_fallback_to_default var_cmake_kernel_plat default_sub_p
     endif()
 endmacro()
 
-# helper macro that prints a message that no architecture is specified and
-# the default architecture will be used
-# Usage example: fallback_declare_seL4_arch_default(aarch32)
-macro(fallback_declare_seL4_arch_default default_arch)
-    print_message_multiple_options_helper("architectures" ${default_arch})
-    declare_seL4_arch(${default_arch})
-endmacro()
-
 # CLK_SHIFT and CLK_MAGIC are generated from tools/reciprocal.py
 # based on the TIMER_CLK_HZ to simulate division.
 # This could be moved to a cmake function
@@ -122,7 +125,7 @@ macro(declare_default_headers)
     cmake_parse_arguments(
         CONFIGURE
         ""
-        "TIMER_FREQUENCY;MAX_IRQ;NUM_PPI;PLIC_MAX_NUM_INT;INTERRUPT_CONTROLLER;TIMER;SMMU;CLK_SHIFT;CLK_MAGIC;KERNEL_WCET;TIMER_PRECISION;TIMER_OVERHEAD_TICKS;MAX_SID;MAX_CB"
+        "TIMER_FREQUENCY;MAX_IRQ;NUM_PPI;INTERRUPT_CONTROLLER;TIMER;SMMU;CLK_SHIFT;CLK_MAGIC;KERNEL_WCET;TIMER_PRECISION;TIMER_OVERHEAD_TICKS;MAX_SID;MAX_CB"
         ""
         ${ARGN}
     )

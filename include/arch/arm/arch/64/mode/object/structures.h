@@ -162,7 +162,7 @@ static inline void *CONST cap_get_archCapPtr(cap_t cap)
         return PT_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
 
     case cap_vspace_cap:
-        return VSPACE_PTR(cap_vspace_cap_get_capPTBasePtr(cap));
+        return VSPACE_PTR(cap_vspace_cap_get_capVSBasePtr(cap));
 
     case cap_asid_control_cap:
         return NULL;
@@ -201,9 +201,21 @@ static inline bool_t pte_ptr_get_valid(pte_t *pt)
     return (pte_ptr_get_pte_type(pt) != pte_pte_invalid);
 }
 
+static inline bool_t pte_is_page_type(pte_t pte)
+{
+    return pte_get_pte_type(pte) == pte_pte_4k_page ||
+           pte_get_pte_type(pte) == pte_pte_page;
+}
+
+/** Return base address for both of pte_4k_page and pte_page */
+static inline uint64_t pte_get_page_base_address(pte_t pte)
+{
+    assert(pte_is_page_type(pte));
+    return pte.words[0] & 0xfffffffff000ull;
+}
+
+/** Return base address for both of pte_4k_page and pte_page */
 static inline uint64_t pte_page_ptr_get_page_base_address(pte_t *pt)
 {
-    uint64_t ret;
-    ret = (pt->words[0] & 0xfffffffff000ull);
-    return ret;
+    return pte_get_page_base_address(*pt);
 }

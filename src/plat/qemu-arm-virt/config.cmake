@@ -12,18 +12,21 @@ declare_platform(qemu-arm-virt KernelPlatformQEMUArmVirt PLAT_QEMU_ARM_VIRT Kern
 set(qemu_user_top 0xa0000000)
 
 macro(setup_qemu_armv7)
-    if("${KernelSel4Arch}" STREQUAL aarch32)
-        declare_seL4_arch(aarch32)
-    elseif("${KernelSel4Arch}" STREQUAL arm_hyp)
-        declare_seL4_arch(arm_hyp)
-    else()
-        fallback_declare_seL4_arch_default(aarch32)
-    endif()
-    if(KernelSel4ArchArmHyp)
-        set(qemu_user_top 0xe0000000)
+    cmake_parse_arguments(ARMV7_OPTIONS "ve" "" "" ${ARGN})
+    if(ARMV7_OPTIONS_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "Unknown arguments: ${ARMV7_OPTIONS_UNPARSED_ARGUMENTS}")
     endif()
     set(QEMU_ARCH "arm")
     set(KernelArchArmV7a ON)
+    if(ARMV7_OPTIONS_ve)
+        declare_seL4_arch(aarch32 arm_hyp)
+        set(KernelArchArmV7ve ON)
+        if(KernelSel4ArchArmHyp)
+            set(qemu_user_top 0xe0000000)
+        endif()
+    else()
+        declare_seL4_arch(aarch32)
+    endif()
 endmacro()
 
 macro(setup_qemu_armv8)
@@ -35,17 +38,31 @@ endmacro()
 if(KernelPlatformQEMUArmVirt)
 
     if(NOT ARM_CPU)
-        message(STATUS "ARM_CPU not set, defaulting to cortex-a53")
-        set(ARM_CPU "cortex-a53")
+        # Our default QEMU configuration is AARCH64/Cortex-a53. If
+        # KernelSel4Arch is set to aarch32/arm_hyp, the default is Cortex-a15.
+        # If both ARM_CPU and KernelSel4Arch are set, conflicting values will be
+        # detected eventually. Note that the KernelSel4Archxxx variables are not
+        # set up here, because declare_seL4_arch() has not been called yet.
+        set(
+            arch_cpu_mapping # element format: "KernelSel4Arch:ARM_CPU"
+            ":cortex-a53" # used if KernelSel4Arch is empty or not set
+            "aarch64:cortex-a53"
+            "arm_hyp:cortex-a15"
+            "aarch32:cortex-a15"
+        )
+        if(NOT ";${arch_cpu_mapping};" MATCHES ";${KernelSel4Arch}:([^;]*);")
+            message(FATAL_ERROR "unsupported KernelSel4Arch: '${KernelSel4Arch}'")
+        endif()
+        set(ARM_CPU "${CMAKE_MATCH_1}")
+        message(STATUS "ARM_CPU not set, defaulting to ${ARM_CPU}")
     endif()
 
     if("${ARM_CPU}" STREQUAL "cortex-a7")
         setup_qemu_armv7()
         set(KernelArmCortexA7 ON)
     elseif("${ARM_CPU}" STREQUAL "cortex-a15")
-        setup_qemu_armv7()
+        setup_qemu_armv7(ve)
         set(KernelArmCortexA15 ON)
-        set(KernelArchArmV7ve ON)
     elseif("${ARM_CPU}" STREQUAL "cortex-a53")
         setup_qemu_armv8()
         set(KernelArmCortexA53 ON)
@@ -135,6 +152,13 @@ if(KernelPlatformQEMUArmVirt)
                 # 2 GiB, which seems a good trade-off nowadays. It's sufficient
                 # for test/demo systems, but still something the host can
                 # provide without running short on resources.
+                # The memory starts at 1 GiB (0x40000000), so up to 3 GiB can be
+                # accessed before exceeding the 32-bit address space. For 32-bit
+                # systems, using memory beyond this point is non-trivial. While
+                # the LPAE MMU model supports accessing up to a 1 TiB (40-bit)
+                # physical address space even on 32-bit systems, the 32-bit
+                # version of seL4 can access physical addresses in the 32-bit
+                # range only.
                 set(QEMU_MEMORY "1024")
             endif()
 
@@ -218,6 +242,10 @@ if(KernelPlatformQEMUArmVirt)
     endif()
 
     list(APPEND KernelDTSList "${QEMU_DTS}" "${CMAKE_CURRENT_LIST_DIR}/overlay-qemu-arm-virt.dts")
+
+    if(KernelSel4ArchAarch32)
+        list(APPEND KernelDTSList "${CMAKE_CURRENT_LIST_DIR}/overlay-qemu-arm-virt32.dts")
+    endif()
 
     if(KernelArmHypervisorSupport OR KernelSel4ArchArmHyp)
         list(APPEND KernelDTSList "${CMAKE_CURRENT_LIST_DIR}/overlay-reserve-vm-memory.dts")

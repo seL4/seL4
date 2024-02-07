@@ -11,13 +11,7 @@ cmake_minimum_required(VERSION 3.7.2)
 declare_platform(spike KernelPlatformSpike PLAT_SPIKE KernelArchRiscV)
 
 if(KernelPlatformSpike)
-    if("${KernelSel4Arch}" STREQUAL riscv32)
-        declare_seL4_arch(riscv32)
-    elseif("${KernelSel4Arch}" STREQUAL riscv64)
-        declare_seL4_arch(riscv64)
-    else()
-        fallback_declare_seL4_arch_default(riscv64)
-    endif()
+    declare_seL4_arch(riscv64 riscv32)
     config_set(KernelRiscVPlatform RISCV_PLAT "spike")
     config_set(KernelPlatformFirstHartID FIRST_HART_ID 0)
     config_set(KernelOpenSBIPlatform OPENSBI_PLATFORM "generic")
@@ -29,7 +23,8 @@ if(KernelPlatformSpike)
     endif()
     list(APPEND KernelDTSList "src/plat/spike/overlay-spike.dts")
     declare_default_headers(
-        TIMER_FREQUENCY 10000000 PLIC_MAX_NUM_INT 0
+        TIMER_FREQUENCY 10000000
+        MAX_IRQ 0
         INTERRUPT_CONTROLLER drivers/irq/riscv_plic_dummy.h
     )
 else()

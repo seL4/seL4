@@ -9,19 +9,12 @@
 # ============================
 
 from __future__ import print_function
+from importlib.metadata import version
 from jinja2 import Environment, BaseLoader
 import argparse
 import sys
 import xml.dom.minidom
-import pkg_resources
 from condition import condition_to_cpp
-
-# We require jinja2 to be at least version 2.10,
-# In the past we used the 'namespace' feature from that version.
-# other versions of jinja, particularly `minijinja`, don't support namespaces.
-# However in case `namespace` is needed in the future require a
-# version which supports it.
-pkg_resources.require("jinja2>=2.10")
 
 
 COMMON_HEADER = """
@@ -163,6 +156,14 @@ def parse_xml(xml_file):
 
 
 def generate(args, invocations):
+    # We require jinja2 to be at least version 2.10,
+    # In the past we used the 'namespace' feature from that version.
+    # other versions of jinja, particularly `minijinja`, don't support
+    # namespaces. However in case `namespace` is needed in the future require a
+    # version which supports it.
+    jinja2_version = version("jinja2")
+    if jinja2_version < "2.10":
+        raise Warning("Jinja2 should be >= 2.10")
 
     header_title = "API"
     if args.libsel4:
@@ -177,7 +178,7 @@ def generate(args, invocations):
         template = Environment(loader=BaseLoader).from_string(INVOCATION_TEMPLATE)
 
     data = template.render({'header_title': header_title, 'libsel4': args.libsel4,
-                            'invocations': invocations, 'num_invocations': len(invocations)})
+                            'invocations': invocations})
     args.dest.write(data)
 
     args.dest.close()

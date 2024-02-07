@@ -7,9 +7,9 @@
 
 <api name="ObjectApi">
 
-    <interface name="seL4_Untyped" manual_name="Untyped" cap_description="CPTR to an untyped object.">
+    <interface name="seL4_Untyped" manual_name="Untyped" cap_description="CPtr to an untyped object.">
 
-        <method id="UntypedRetype" name="Retype" manual_name="Retype" manual_label="untyped_retype">
+        <method id="UntypedRetype" name="Retype" manual_label="untyped_retype">
             <brief>
                 Retype an untyped object
             </brief>
@@ -39,9 +39,9 @@
             <param dir="in" name="size_bits" type="seL4_Word"
                 description="Used to determine the size of variable-sized objects."/>
             <param dir="in" name="root" type="seL4_CNode"
-                description="CPTR to the CNode at the root of the destination CSpace."/>
+                description="CPtr to the CNode at the root of the destination CSpace."/>
             <param dir="in" name="node_index" type="seL4_Word"
-                description="CPTR to the destination CNode. Resolved relative to the root parameter."/>
+                description="CPtr to the destination CNode. Resolved relative to the root parameter."/>
             <param dir="in" name="node_depth" type="seL4_Word"
                 description="Number of bits of node_index to translate when addressing the destination CNode."/>
             <param dir="in" name="node_offset" type="seL4_Word"
@@ -179,7 +179,7 @@
             </error>
         </method>
 
-        <method id="TCBConfigure" name="Configure" manual_name="Configure" manual_label="tcb_configure">
+        <method id="TCBConfigure" name="Configure" manual_label="tcb_configure">
             <condition><not><config var="CONFIG_KERNEL_MCS"/></not></condition>
             <brief>
                 Set the parameters of a TCB
@@ -188,7 +188,7 @@
                 <docref>See <autoref label="sec:threads"/></docref>
             </description>
             <param dir="in" name="fault_ep" type="seL4_Word"
-                description="CPTR to the endpoint which receives IPCs when this thread faults. This capability is in the CSpace of the thread being configured."/>
+                description="CPtr to the endpoint which receives IPCs when this thread faults. This capability is in the CSpace of the thread being configured."/>
             <param dir="in" name="cspace_root" type="seL4_CNode"
                 description="The new CSpace root."/>
             <param dir="in" name="cspace_root_data" type="seL4_Word"
@@ -371,7 +371,7 @@
             <param dir="in" name="sched_context" type="seL4_CPtr"
                 description="Capability to the scheduling context that the TCB should run on. If the scheduling context is already bound to a notification or TCB that is not this TCB this operation will fail. Similarly, if this TCB is already bound to a scheduling context that is not this scheduling context, this will also fail."/>
             <param dir="in" name="fault_ep" type="seL4_CPtr"
-                description="CPTR to the endpoint which receives IPCs when this thread faults."/>
+                description="CPtr to the endpoint which receives IPCs when this thread faults."/>
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
@@ -403,7 +403,7 @@
                 Timeout exception messages will be delivered to this endpoint if it is not a null capability.
             </description>
             <param dir="in" name="timeout_fault_ep" type="seL4_CPtr"
-                description="CPTR to the endpoint which receives IPCs when this thread triggers timeout faults. Can be null."/>
+                description="CPtr to the endpoint which receives IPCs when this thread triggers timeout faults. Can be null."/>
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
@@ -459,7 +459,7 @@
                 <docref>See <autoref label="sec:threads"/></docref>
             </description>
             <param dir="in" name="fault_ep" type="seL4_Word"
-                description="CPTR to the endpoint which receives IPCs when this thread faults. This capability is in the CSpace of the thread being configured."/>
+                description="CPtr to the endpoint which receives IPCs when this thread faults. This capability is in the CSpace of the thread being configured."/>
             <param dir="in" name="cspace_root" type="seL4_CNode"
                 description="The new CSpace root."/>
             <param dir="in" name="cspace_root_data" type="seL4_Word"
@@ -487,7 +487,7 @@
             </error>
         </method>
 
-        <method id="TCBSetSpace" name="SetSpace" manual_name="Set Space" manual_label="tcb_setspace_mcs">
+        <method id="TCBSetSpace" name="SetSpace" manual_name="Set Space (MCS)" manual_label="tcb_setspace_mcs">
             <condition><config var="CONFIG_KERNEL_MCS"/></condition>
             <brief>
                 Set the fault endpoint, CSpace and VSpace of a thread
@@ -496,7 +496,7 @@
                 <docref>See <autoref label="sec:threads"/></docref>
             </description>
             <param dir="in" name="fault_ep" type="seL4_CPtr"
-                description="CPTR to the endpoint which receives IPCs when this thread faults. On MCS this cap gets copied into the TCB."/>
+                description="CPtr to the endpoint which receives IPCs when this thread faults. On MCS this cap gets copied into the TCB."/>
             <param dir="in" name="cspace_root" type="seL4_CNode"
                 description="The new CSpace root."/>
             <param dir="in" name="cspace_root_data" type="seL4_Word"
@@ -525,7 +525,7 @@
             </error>
         </method>
 
-        <method id="TCBSuspend" name="Suspend" manual_name="Suspend" manual_label="tcb_suspend">
+        <method id="TCBSuspend" name="Suspend" manual_label="tcb_suspend">
             <brief>
                 Suspend a thread
             </brief>
@@ -544,7 +544,7 @@
             </error>
         </method>
 
-        <method id="TCBResume" name="Resume" manual_name="Resume" manual_label="tcb_resume">
+        <method id="TCBResume" name="Resume" manual_label="tcb_resume">
             <brief>
                 Resume a thread
             </brief>
@@ -806,15 +806,13 @@
 
         <method id="TCBSetTLSBase" name="SetTLSBase" manual_name="Set TLS Base" manual_label="tcb_settlsbase">
             <brief>
-                Set the TLS base of the target TCB. This intended for use on architectures where the register
-                used for TLS can only be written to in privilidged mode
+                Set the TLS base of the target TCB.
              </brief>
              <description>
+                An invocation for setting the Thread Local Storage (TLS) base address. This ensures that across all platforms, the TLSBase register is viewed as being completely mutable, just like all of the general purpose registers, even on platforms where modification is a privileged operation.
              </description>
-             <return>
-             </return>
              <param dir="in" name="tls_base" type="seL4_Word"
-                description="The TLS base to set"/>
+                description="The TLS base to set."/>
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
@@ -830,15 +828,15 @@
     </interface>
 
     <interface name="seL4_CNode" manual_name="CNode">
-        <method id="CNodeRevoke" name="Revoke" manual_name="Revoke" manual_label="cnode_revoke">
+        <method id="CNodeRevoke" name="Revoke" manual_label="cnode_revoke">
             <brief>
                 Delete all child capabilities of a capability
             </brief>
             <description>
                 <docref>See <autoref label="sec:cnode-ops"/>.</docref>
             </description>
-            <cap_param append_description="CPTR to the CNode at the root of the CSpace where the capability will be found. Must be at a depth equivalent to the wordsize."/>
-            <param dir="in" name="index" type="seL4_Word" description="CPTR to the capability. Resolved from the root of the _service parameter."/>
+            <cap_param append_description="CPtr to the CNode at the root of the CSpace where the capability will be found. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="index" type="seL4_Word" description="CPtr to the capability. Resolved from the root of the _service parameter."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of index to resolve to find the capability being operated on."/>
             <error name="seL4_FailedLookup">
                 <description>
@@ -862,15 +860,15 @@
             </error>
         </method>
 
-        <method id="CNodeDelete" name="Delete" manual_name="Delete" manual_label="cnode_delete">
+        <method id="CNodeDelete" name="Delete" manual_label="cnode_delete">
             <brief>
                 Delete a capability
             </brief>
             <description>
                 <docref>See <autoref label="sec:cnode-ops"/>.</docref>
             </description>
-            <cap_param append_description="CPTR to the CNode at the root of the CSpace where the capability will be found. Must be at a depth equivalent to the wordsize."/>
-            <param dir="in" name="index" type="seL4_Word" description="CPTR to the capability. Resolved from the root of the _service parameter."/>
+            <cap_param append_description="CPtr to the CNode at the root of the CSpace where the capability will be found. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="index" type="seL4_Word" description="CPtr to the capability. Resolved from the root of the _service parameter."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of index to resolve to find the capability being operated on."/>
             <error name="seL4_FailedLookup">
                 <description>
@@ -904,8 +902,8 @@
             <description>
                 <docref>See <autoref label="sec:cnode-ops"/>.</docref>
             </description>
-            <cap_param append_description="CPTR to the CNode at the root of the CSpace where the capability will be found. Must be at a depth equivalent to the wordsize."/>
-            <param dir="in" name="index" type="seL4_Word" description="CPTR to the capability. Resolved from the root of the _service parameter."/>
+            <cap_param append_description="CPtr to the CNode at the root of the CSpace where the capability will be found. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="index" type="seL4_Word" description="CPtr to the capability. Resolved from the root of the _service parameter."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of index to resolve to find the capability being operated on."/>
             <error name="seL4_FailedLookup">
                 <description>
@@ -930,18 +928,18 @@
             </error>
         </method>
 
-        <method id="CNodeCopy" name="Copy" manual_name="Copy" manual_label="cnode_copy">
+        <method id="CNodeCopy" name="Copy" manual_label="cnode_copy">
             <brief>
                 Copy a capability, setting its access rights whilst doing so
             </brief>
             <description>
                 <docref>See <autoref label="sec:cnode-ops"/>.</docref>
             </description>
-            <cap_param append_description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
-            <param dir="in" name="dest_index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
+            <cap_param append_description="CPtr to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="dest_index" type="seL4_Word" description="CPtr to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="dest_depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
-            <param dir="in" name="src_root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the source CSpace. Must be at a depth equivalent to the wordsize."/>
-            <param dir="in" name="src_index" type="seL4_Word" description="CPTR to the source slot. Resolved from the root of the source CSpace."/>
+            <param dir="in" name="src_root" type="seL4_CNode" description="CPtr to the CNode that forms the root of the source CSpace. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="src_index" type="seL4_Word" description="CPtr to the source slot. Resolved from the root of the source CSpace."/>
             <param dir="in" name="src_depth" type="seL4_Uint8" description="Number of bits of src_index to resolve to find the source slot."/>
             <param dir="in" name="rights" type="seL4_CapRights_t">
                 <description>
@@ -979,18 +977,18 @@
             </error>
         </method>
 
-        <method id="CNodeMint" name="Mint" manual_name="Mint" manual_label="cnode_mint">
+        <method id="CNodeMint" name="Mint" manual_label="cnode_mint">
             <brief>
                 Copy a capability, setting its access rights and badge whilst doing so
             </brief>
             <description>
                 <docref>See <autoref label="sec:cnode-ops"/>.</docref>
             </description>
-            <cap_param append_description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
-            <param dir="in" name="dest_index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
+            <cap_param append_description="CPtr to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="dest_index" type="seL4_Word" description="CPtr to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="dest_depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
-            <param dir="in" name="src_root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the source CSpace. Must be at a depth equivalent to the wordsize."/>
-            <param dir="in" name="src_index" type="seL4_Word" description="CPTR to the source slot. Resolved from the root of the source CSpace."/>
+            <param dir="in" name="src_root" type="seL4_CNode" description="CPtr to the CNode that forms the root of the source CSpace. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="src_index" type="seL4_Word" description="CPtr to the source slot. Resolved from the root of the source CSpace."/>
             <param dir="in" name="src_depth" type="seL4_Uint8" description="Number of bits of src_index to resolve to find the source slot."/>
             <param dir="in" name="rights" type="seL4_CapRights_t">
                 <description>
@@ -1030,18 +1028,18 @@
             </error>
         </method>
 
-        <method id="CNodeMove" name="Move" manual_name="Move" manual_label="cnode_move">
+        <method id="CNodeMove" name="Move" manual_label="cnode_move">
             <brief>
                 Move a capability
             </brief>
             <description>
                 <docref>See <autoref label="sec:cnode-ops"/>.</docref>
             </description>
-            <cap_param append_description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
-            <param dir="in" name="dest_index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
+            <cap_param append_description="CPtr to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="dest_index" type="seL4_Word" description="CPtr to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="dest_depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
-            <param dir="in" name="src_root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the source CSpace. Must be at a depth equivalent to the wordsize."/>
-            <param dir="in" name="src_index" type="seL4_Word" description="CPTR to the source slot. Resolved from the root of the source CSpace."/>
+            <param dir="in" name="src_root" type="seL4_CNode" description="CPtr to the CNode that forms the root of the source CSpace. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="src_index" type="seL4_Word" description="CPtr to the source slot. Resolved from the root of the source CSpace."/>
             <param dir="in" name="src_depth" type="seL4_Uint8" description="Number of bits of src_index to resolve to find the source slot."/>
             <error name="seL4_DeleteFirst" description="The destination slot contains a capability."/>
             <error name="seL4_FailedLookup">
@@ -1068,7 +1066,7 @@
             </error>
         </method>
 
-        <method id="CNodeMutate" name="Mutate" manual_name="Mutate" manual_label="cnode_mutate">
+        <method id="CNodeMutate" name="Mutate" manual_label="cnode_mutate">
             <brief>
                 Move a capability, setting its guard in the process. This
                 operation is mostly useful for setting the guard of a CNode
@@ -1079,11 +1077,11 @@
             <description>
                 <docref>See <autoref label="sec:cnode-ops"/>.</docref>
             </description>
-            <cap_param append_description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
-            <param dir="in" name="dest_index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
+            <cap_param append_description="CPtr to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="dest_index" type="seL4_Word" description="CPtr to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="dest_depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
-            <param dir="in" name="src_root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the source CSpace. Must be at a depth equivalent to the wordsize."/>
-            <param dir="in" name="src_index" type="seL4_Word" description="CPTR to the source slot. Resolved from the root of the source CSpace."/>
+            <param dir="in" name="src_root" type="seL4_CNode" description="CPtr to the CNode that forms the root of the source CSpace. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="src_index" type="seL4_Word" description="CPtr to the source slot. Resolved from the root of the source CSpace."/>
             <param dir="in" name="src_depth" type="seL4_Uint8" description="Number of bits of src_index to resolve to find the source slot."/>
             <param dir="in" name="badge" type="seL4_Word" description="Guard to be applied to the new capability."/>
             <error name="seL4_DeleteFirst" description="The destination slot contains a capability."/>
@@ -1112,7 +1110,7 @@
             </error>
         </method>
 
-        <method id="CNodeRotate" name="Rotate" manual_name="Rotate" manual_label="cnode_rotate">
+        <method id="CNodeRotate" name="Rotate" manual_label="cnode_rotate">
             <brief>
                 Given 3 capability slots - a destination, pivot and source - move the capability in the
                 pivot slot to the destination slot and the capability in the source slot to the pivot slot
@@ -1120,16 +1118,16 @@
             <description>
                 <docref>See <autoref label="sec:cnode-ops"/>.</docref>
             </description>
-            <cap_param append_description="CPTR to the CNode at the root of the CSpace where the destination slot will be found. Must be at a depth equivalent to the wordsize."/>
-            <param dir="in" name="dest_index" type="seL4_Word" description="CPTR to the destination slot. Resolved relative to _service. Must be empty unless it refers to the same slot as the source slot."/>
+            <cap_param append_description="CPtr to the CNode at the root of the CSpace where the destination slot will be found. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="dest_index" type="seL4_Word" description="CPtr to the destination slot. Resolved relative to _service. Must be empty unless it refers to the same slot as the source slot."/>
             <param dir="in" name="dest_depth" type="seL4_Uint8" description="Depth to resolve dest_index to."/>
             <param dir="in" name="dest_badge" type="seL4_Word" description="The new capdata for the capability that ends up in the destination slot."/>
-            <param dir="in" name="pivot_root" type="seL4_CNode" description="CPTR to the CNode at the root of the CSpace where the pivot slot will be found. Must be at a depth equivalent to the wordsize."/>
-            <param dir="in" name="pivot_index" type="seL4_Word" description="CPTR to the pivot slot. Resolved relative to pivot_root. The resolved slot must not refer to the source or destination slots."/>
+            <param dir="in" name="pivot_root" type="seL4_CNode" description="CPtr to the CNode at the root of the CSpace where the pivot slot will be found. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="pivot_index" type="seL4_Word" description="CPtr to the pivot slot. Resolved relative to pivot_root. The resolved slot must not refer to the source or destination slots."/>
             <param dir="in" name="pivot_depth" type="seL4_Uint8" description="Depth to resolve pivot_index to."/>
             <param dir="in" name="pivot_badge" type="seL4_Word" description="The new capdata for the capability that ends up in the pivot slot."/>
-            <param dir="in" name="src_root" type="seL4_CNode" description="CPTR to the CNode at the root of the CSpace where the source slot will be found. Must be at a depth equivalent to the wordsize."/>
-            <param dir="in" name="src_index" type="seL4_Word" description="CPTR to the source slot. Resolved relative to src_root."/>
+            <param dir="in" name="src_root" type="seL4_CNode" description="CPtr to the CNode at the root of the CSpace where the source slot will be found. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="src_index" type="seL4_Word" description="CPtr to the source slot. Resolved relative to src_root."/>
             <param dir="in" name="src_depth" type="seL4_Uint8" description="Depth to resolve src_index to."/>
             <error name="seL4_DeleteFirst" description="If the destination is not the same slot as the source and the destination slot contains a capability."/>
             <error name="seL4_FailedLookup">
@@ -1166,8 +1164,8 @@
             <description>
                 <docref>See <autoref label="sec:cnode-ops"/>.</docref>
             </description>
-            <cap_param append_description="CPTR to the CNode at the root of the CSpace where the capability is to be saved. Must be at a depth equivalent to the wordsize."/>
-            <param dir="in" name="index" type="seL4_Word" description="CPTR to the slot in which to save the capability. Resolved from the root of the _service parameter."/>
+            <cap_param append_description="CPtr to the CNode at the root of the CSpace where the capability is to be saved. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="index" type="seL4_Word" description="CPtr to the slot in which to save the capability. Resolved from the root of the _service parameter."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of index to resolve to find the slot being targeted."/>
             <error name="seL4_DeleteFirst" description="The destination slot contains a capability."/>
             <error name="seL4_FailedLookup">
@@ -1196,7 +1194,7 @@
 
     <interface name="seL4_IRQControl" manual_name="IRQ Control" cap_description="An IRQControl capability. This gives you the authority to make this call.">
 
-        <method id="IRQIssueIRQHandler" name="Get" manual_name="Get" manual_label="irq_controlget">
+        <method id="IRQIssueIRQHandler" name="Get" manual_name="Get IRQ Handler" manual_label="irq_controlget">
             <brief>
                 Create an IRQ handler capability
             </brief>
@@ -1204,8 +1202,8 @@
                 <docref>See <autoref label="sec:interrupts"/>.</docref>
             </description>
             <param dir="in" name="irq" type="seL4_Word" description="The IRQ that you want this capability to handle."/>
-            <param dir="in" name="root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
-            <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
+            <param dir="in" name="root" type="seL4_CNode" description="CPtr to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="index" type="seL4_Word" description="CPtr to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
             <error name="seL4_DeleteFirst" description="The destination slot contains a capability."/>
             <error name="seL4_FailedLookup">
@@ -1283,7 +1281,7 @@
             </error>
         </method>
 
-        <method id="IRQClearIRQHandler" name="Clear" manual_name="Clear" manual_label="irq_handlerclear">
+        <method id="IRQClearIRQHandler" name="Clear" manual_label="irq_handlerclear">
             <brief>
                 Clear the handler capability from the IRQ slot
             </brief>
@@ -1306,7 +1304,7 @@
 
     <interface name="seL4_DomainSet" manual_name="Domain Set" cap_description="Capability allowing domain configuration.">
 
-        <method id="DomainSetSet" name="Set" manual_name="Set" manual_label="domainset_set">
+        <method id="DomainSetSet" name="Set" manual_label="domainset_set">
             <brief>
                 Change the domain of a thread.
             </brief>
@@ -1334,9 +1332,9 @@
         </method>
     </interface>
 
-    <interface name="seL4_SchedControl">
+    <interface name="seL4_SchedControl" cap_description="Capability to a scheduling control object.">
 
-        <method id="SchedControlConfigureFlags" name="ConfigureFlags" manual_name="ConfigureFlags" manual_label="schedcontrol_configureflags">
+        <method id="SchedControlConfigureFlags" name="ConfigureFlags" manual_name="Configure Flags" manual_label="schedcontrol_configureflags">
             <condition><config var="CONFIG_KERNEL_MCS"/></condition>
             <brief>
                 Set the parameters of a scheduling context by invoking the scheduling control capability. If the scheduling context is bound to a currently running thread, the parameters will take effect immediately: that is the current budget will be increased or reduced by the difference between the new and previous budget and the replenishment time will be updated according to any difference in the period. This can result in active threads being post-poned or released depending on the nature of the parameter change and the state of the thread. Additionally, if the scheduling context was previously empty (no budget) but bound to a runnable thread, this can result in a thread running for the first time since it now has access to CPU time. This call will return seL4 Invalid Argument if the parameters are too small (smaller than the kernel WCET for this platform) or too large (will overflow the timer).
@@ -1377,10 +1375,9 @@
 
     </interface>
 
-    <interface name="seL4_SchedContext">
+    <interface name="seL4_SchedContext" cap_description="Capability to the scheduling context which is being operated on.">
 
-        <method id="SchedContextBind" name="Bind"
-            manual_name="Bind" manual_label="schedcontext_bind">
+        <method id="SchedContextBind" name="Bind" manual_label="schedcontext_bind">
             <condition><config var="CONFIG_KERNEL_MCS"/></condition>
             <brief>
                 Bind an object to a scheduling context. The object can be a notification object or a
@@ -1417,8 +1414,7 @@
             </error>
         </method>
 
-        <method id="SchedContextUnbind" name="Unbind"
-            manual_name="Unbind" manual_label="schedcontext_unbind">
+        <method id="SchedContextUnbind" name="Unbind" manual_label="schedcontext_unbind">
             <condition><config var="CONFIG_KERNEL_MCS"/></condition>
             <brief>
                 Unbind any objects (threads or notification objects) from a scheduling context. This
@@ -1442,7 +1438,7 @@
         </method>
 
         <method id="SchedContextUnbindObject" name="UnbindObject"
-            manual_name="UnbindObject" manual_label="schedcontext_unbindobject">
+            manual_name="Unbind Object" manual_label="schedcontext_unbindobject">
             <condition><config var="CONFIG_KERNEL_MCS"/></condition>
             <brief>
                 Unbind an object from a scheduling context. The object can be either a thread or a
@@ -1474,7 +1470,7 @@
                 </description>
             </error>
         </method>
-        <method id="SchedContextConsumed" name="Consumed" manual_name="Consumed" manual_label="schedcontext_consumed">
+        <method id="SchedContextConsumed" name="Consumed" manual_label="schedcontext_consumed">
             <condition><config var="CONFIG_KERNEL_MCS"/></condition>
             <brief>
                 Return the amount of time used by this scheduling context since this function was last called or a timeout exception triggered.
@@ -1496,7 +1492,7 @@
                 </description>
             </error>
        </method>
-       <method id="SchedContextYieldTo" name="YieldTo" manual_name="YieldTo" manual_label="schedcontext_yieldto">
+       <method id="SchedContextYieldTo" name="YieldTo" manual_name="Yield To" manual_label="schedcontext_yieldto">
           <condition><config var="CONFIG_KERNEL_MCS"/></condition>
           <brief>
               If a thread is currently runnable and running on this scheduling context and the scheduling context has available budget, place it at the head of the scheduling queue.
@@ -1505,8 +1501,11 @@
               The caller must have a maximum control priority greater than or equal to the threads priority.
           </brief>
           <description>
-              TODO
+              Capability to the scheduling context which is being operated on.
           </description>
+          <return>
+            See <autoref label="sec:scheduling_contexts"/>
+          </return>
             <param dir="out" name="consumed" type="seL4_Time"/>
             <error name="seL4_IllegalOperation">
                 <description>

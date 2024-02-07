@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  *
  * SiFive U54/U74 PLIC handling (HiFive Unleashed/Unmatched, Polarfire,
- * QEMU RISC-V virt)
+ * QEMU RISC-V virt, Star64)
  */
 
 #pragma once
@@ -15,7 +15,8 @@
 #if !defined(CONFIG_PLAT_HIFIVE) && \
     !defined(CONFIG_PLAT_POLARFIRE) && \
     !defined(CONFIG_PLAT_QEMU_RISCV_VIRT) && \
-    !defined(CONFIG_PLAT_ROCKETCHIP_ZCU102)
+    !defined(CONFIG_PLAT_ROCKETCHIP_ZCU102) && \
+    !defined(CONFIG_PLAT_STAR64)
 #error "Check if this platform suppots a PLIC."
 #endif
 
@@ -52,11 +53,12 @@
 
 #define PLIC_NUM_INTERRUPTS PLIC_MAX_IRQ
 
-#if defined(CONFIG_PLAT_HIFIVE) || defined(CONFIG_PLAT_POLARFIRE)
+#if defined(CONFIG_PLAT_HIFIVE) || \
+    defined(CONFIG_PLAT_POLARFIRE) || \
+    defined(CONFIG_PLAT_STAR64)
 
-/* SiFive U54-MC has 5 cores, and the first core does not
- * have supervisor mode. Therefore, we need to compensate
- * for the addresses.
+/* SiFive U54-MC and U74-MC have 5 cores, and the first core does not have
+ * supervisor mode. Therefore, we need to compensate for the addresses.
  */
 #define PLAT_PLIC_THRES_ADJUST(x) ((x) - PLIC_THRES_PER_CONTEXT)
 #define PLAT_PLIC_EN_ADJUST(x)    ((x) - PLIC_EN_PER_CONTEXT)

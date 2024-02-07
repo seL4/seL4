@@ -389,6 +389,6 @@ void setIRQTarget(irq_t irq, seL4_Word target)
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 
-unsigned int gic_vcpu_num_list_regs;
+word_t gic_vcpu_num_list_regs;
 
 #endif /* End of CONFIG_ARM_HYPERVISOR_SUPPORT */

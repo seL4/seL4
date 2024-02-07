@@ -19,14 +19,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # RISCV32 and IA32 are left out, as they have no verified config
         arch: [ARM, ARM_HYP, AARCH64, RISCV64, X64]
         compiler: [gcc, llvm]
-        exclude:
-          # llvm RISCV64 compilation is not currently supported
-          - arch: RISCV64
-            compiler: llvm
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: seL4/ci-actions/standalone-kernel@master
       with:
         ARCH: ${{ matrix.arch }}

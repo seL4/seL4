@@ -11,14 +11,7 @@ declare_platform(qemu-riscv-virt KernelPlatformQEMURiscVVirt PLAT_QEMU_RISCV_VIR
 
 if(KernelPlatformQEMURiscVVirt)
 
-    if("${KernelSel4Arch}" STREQUAL riscv64)
-        declare_seL4_arch(riscv64)
-    elseif("${KernelSel4Arch}" STREQUAL riscv32)
-        declare_seL4_arch(riscv32) # This is still untested
-    else()
-        fallback_declare_seL4_arch_default(riscv64)
-    endif()
-
+    declare_seL4_arch(riscv64 riscv32)
     config_set(KernelOpenSBIPlatform OPENSBI_PLATFORM "generic")
     config_set(KernelPlatformFirstHartID FIRST_HART_ID 0)
     set(KernelRiscvUseClintMtime ON)
@@ -189,11 +182,16 @@ if(KernelPlatformQEMURiscVVirt)
 
     list(APPEND KernelDTSList "${QEMU_DTS}" "${CMAKE_CURRENT_LIST_DIR}/overlay-qemu-riscv-virt.dts")
 
+    if(KernelSel4ArchRiscV32)
+        list(APPEND KernelDTSList "${CMAKE_CURRENT_LIST_DIR}/overlay-qemu-riscv-virt32.dts")
+    endif()
+
     # QEMU emulates a SiFive PLIC/CLINT with 127 interrupt sources by default.
     # The CLINT timer pretends to run at 10 MHz, but this speed may not hold in
     # practical measurements.
     declare_default_headers(
-        TIMER_FREQUENCY 10000000 PLIC_MAX_NUM_INT 128
+        TIMER_FREQUENCY 10000000
+        MAX_IRQ 128
         INTERRUPT_CONTROLLER drivers/irq/riscv_plic0.h
     )
 

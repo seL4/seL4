@@ -25,22 +25,22 @@ void c_handle_fastpath_reply_recv(word_t cptr, word_t msgInfo, word_t reply)
 #else
 void c_handle_fastpath_reply_recv(word_t cptr, word_t msgInfo)
 #endif
-VISIBLE NORETURN;
+VISIBLE NORETURN SECTION(".text.fastpath");
 
 void c_handle_fastpath_call(word_t cptr, word_t msgInfo)
-VISIBLE NORETURN;
+VISIBLE NORETURN SECTION(".text.fastpath");
 
 void c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
-VISIBLE NORETURN;
+VISIBLE NORETURN SECTION(".text.traps");
 
 void c_handle_interrupt(void)
-VISIBLE NORETURN;
+VISIBLE NORETURN SECTION(".text.traps");
 
 void c_handle_exception(void)
-VISIBLE NORETURN;
+VISIBLE NORETURN SECTION(".text.traps");
 
 void restore_user_context(void)
-VISIBLE NORETURN;
+VISIBLE NORETURN SECTION(".text.traps");
 
 void handle_exception(void);
 

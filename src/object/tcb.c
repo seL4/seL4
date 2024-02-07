@@ -1030,7 +1030,6 @@ static bool_t validFaultHandler(cap_t cap)
         if (!cap_endpoint_cap_get_capCanSend(cap) ||
             (!cap_endpoint_cap_get_capCanGrant(cap) &&
              !cap_endpoint_cap_get_capCanGrantReply(cap))) {
-            current_syscall_error.type = seL4_InvalidCapability;
             return false;
         }
         break;
@@ -1038,7 +1037,6 @@ static bool_t validFaultHandler(cap_t cap)
         /* just has no fault endpoint */
         break;
     default:
-        current_syscall_error.type = seL4_InvalidCapability;
         return false;
     }
     return true;
@@ -1264,6 +1262,7 @@ exception_t decodeSetTimeoutEndpoint(cap_t cap, cte_t *slot)
     /* timeout handler */
     if (!validFaultHandler(thCap)) {
         userError("TCB SetTimeoutEndpoint: timeout endpoint cap invalid.");
+        current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -1538,6 +1537,7 @@ exception_t decodeSetSpace(cap_t cap, word_t length, cte_t *slot, word_t *buffer
     /* fault handler */
     if (!validFaultHandler(fhCap)) {
         userError("TCB SetSpace: fault endpoint cap invalid.");
+        current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -1696,9 +1696,11 @@ static inline exception_t installTCBCap(tcb_t *target, cap_t tCap, cte_t *slot,
     }
 
     /* cteDelete on a cap installed in the tcb cannot fail */
-    if (sameObjectAs(newCap, srcSlot->cap) &&
-        sameObjectAs(tCap, slot->cap)) {
-        cteInsert(newCap, srcSlot, rootSlot);
+    if (cap_get_capType(newCap) != cap_null_cap) {
+        if (sameObjectAs(newCap, srcSlot->cap) &&
+            sameObjectAs(tCap, slot->cap)) {
+            cteInsert(newCap, srcSlot, rootSlot);
+        }
     }
     return e;
 }

@@ -4,7 +4,7 @@
 
 # Build and run sel4bench on pull requests, on label request
 
-name: seL4Bench PR
+name: seL4Bench-HW
 
 on:
   pull_request_target:
@@ -14,16 +14,29 @@ on:
 permissions:
   contents: read
 
+# To reduce the load (especiually on the machine queue) we cancel any older runs
+# of this workflow for the current PR. Such runs exist, if there were new pushes
+# to the PR's branch without waiting for the workflow to finish. As a side
+# effect, pushing new commits now becomes a convenient way to cancel all the
+# older runs, e.g. if they are stuck and would only be stopped by the timeout
+# eventually.
+# Note that we could do the concurrency handling at a finer level, and only wrap
+# the actual run on the hardware. But there seems not much gain in letting the
+# older builds run, as these are usually obsolete with new pushes also.
+concurrency:
+  group: ${{ github.workflow }}-pr-${{ github.event.number }}
+  cancel-in-progress: true
+
 jobs:
   code:
     name: Freeze Code
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'pull_request_target' &&
                github.event.action != 'labeled' &&
-               contains(github.event.pull_request.labels.*.name, 'hw-bench' ||
+               contains(github.event.pull_request.labels.*.name, 'hw-bench') ||
             github.event_name == 'pull_request_target' &&
                github.event.action == 'labeled' &&
-               github.event.label.name == 'hw-bench') }}
+               github.event.label.name == 'hw-bench' }}
     outputs:
       xml: ${{ steps.repo.outputs.xml }}
     steps:
@@ -49,7 +62,7 @@ jobs:
         xml: ${{ needs.code.outputs.xml }}
         march: ${{ matrix.march }}
     - name: Upload images
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: images-${{ matrix.march }}
         path: '*-images.tar.gz'
@@ -80,18 +93,17 @@ jobs:
     concurrency: sel4bench-hw-pr-${{ github.event.number }}-${{ strategy.job-index }}
     steps:
       - name: Get machine queue
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: seL4/machine_queue
           path: machine_queue
-          token: ${{ secrets.PRIV_REPO_TOKEN }}
       - name: Get march
         id: plat
         uses: seL4/ci-actions/march-of-platform@master
         with:
           platform: ${{ matrix.platform }}
       - name: Download image
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: images-${{ steps.plat.outputs.march }}
       - name: Run
@@ -103,7 +115,7 @@ jobs:
         env:
           HW_SSH: ${{ secrets.HW_SSH }}
       - name: Upload results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           # funky expression below is to work around lack of ternary operator
           name: sel4bench-results-${{ matrix.platform }}${{ matrix.req != '' && format('-{0}', matrix.req) || '' }}

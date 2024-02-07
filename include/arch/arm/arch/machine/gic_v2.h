@@ -126,21 +126,6 @@ extern volatile struct gic_dist_map *const gic_dist;
 extern volatile struct gic_cpu_iface_map *const gic_cpuiface;
 
 /* Helpers */
-static inline int is_irq_edge_triggered(word_t irq)
-{
-    int word = irq >> 4;
-    int bit = ((irq & 0xf) * 2);
-    return !!(gic_dist->config[word] & BIT(bit + 1));
-}
-
-static inline void dist_pending_clr(word_t irq)
-{
-    int word = IRQ_REG(irq);
-    int bit = IRQ_BIT(irq);
-    /* Using |= here is detrimental to your health */
-    gic_dist->pending_clr[word] = BIT(bit);
-}
-
 static inline void dist_enable_clr(word_t irq)
 {
     int word = IRQ_REG(irq);
@@ -198,9 +183,6 @@ static inline void ackInterrupt(irq_t irq)
 {
     assert(IS_IRQ_VALID(active_irq[CURRENT_CPU_INDEX()])
            && (active_irq[CURRENT_CPU_INDEX()] & IRQ_MASK) == IRQT_TO_IRQ(irq));
-    if (is_irq_edge_triggered(IRQT_TO_IRQ(irq))) {
-        dist_pending_clr(IRQT_TO_IRQ(irq));
-    }
     gic_cpuiface->eoi = active_irq[CURRENT_CPU_INDEX()];
     active_irq[CURRENT_CPU_INDEX()] = IRQ_NONE;
 
@@ -234,7 +216,7 @@ struct gich_vcpu_ctrl_map {
 };
 
 extern volatile struct gich_vcpu_ctrl_map *gic_vcpu_ctrl;
-extern unsigned int gic_vcpu_num_list_regs;
+extern word_t gic_vcpu_num_list_regs;
 
 static inline uint32_t get_gic_vcpu_ctrl_hcr(void)
 {
