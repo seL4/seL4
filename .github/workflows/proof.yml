@@ -52,11 +52,11 @@ jobs:
     - name: Upload kernel builds
       uses: actions/upload-artifact@v4
       with:
-        name: kernel-builds
+        name: kernel-builds-${{ matrix.arch }}-${{ matrix.features }}
         path: artifacts/kernel-builds
         if-no-files-found: ignore
     - name: Upload logs
       uses: actions/upload-artifact@v4
       with:
-        name: logs-${{ matrix.arch }}
+        name: logs-${{ matrix.arch }}-${{ matrix.features }}
         path: logs.tar.xz
