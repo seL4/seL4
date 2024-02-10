@@ -11,6 +11,7 @@
 word_t strnlen(const char *s, word_t maxlen)
 {
     word_t len;
+
     for (len = 0; len < maxlen && s[len]; len++);
     return len;
 }
