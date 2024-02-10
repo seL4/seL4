@@ -12,14 +12,6 @@ on:
   pull_request:
 
 jobs:
-  check:
-    name: License Check
-    runs-on: ubuntu-latest
-    steps:
-    - uses: seL4/ci-actions/license-check@master
-
-  links:
-    name: Links
-    runs-on: ubuntu-latest
-    steps:
-      - uses: seL4/ci-actions/link-check@master
+  checks:
+    name: Checks
+    uses: seL4/ci-actions/.github/workflows/push.yml@workflows

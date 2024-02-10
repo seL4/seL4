@@ -6,7 +6,7 @@
 #
 # See sel4test-sim/builds.yml in the repo seL4/ci-actions for configs.
 
-name: seL4Test-Sim
+name: seL4Test
 
 on:
   pull_request:
@@ -15,25 +15,7 @@ on:
       - 'LICENSES/**'
       - '*.md'
 
-# To reduce the load we cancel any older runs of this workflow for the current
-# PR. Such runs exist, if there were new pushes to the PR's branch without
-# waiting for the workflow to finish. As a side effect, pushing new commits now
-# becomes a convenient way to cancel all the older runs, e.g. if they are stuck
-# and would only be stopped by the timeout eventually.
-concurrency:
-  group: ${{ github.workflow }}-pr-${{ github.event.number }}
-  cancel-in-progress: true
-
 jobs:
   sim:
-    name: Simulation
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        march: [armv7a, armv8a, nehalem, rv32imac, rv64imac]
-        compiler: [gcc, clang]
-    steps:
-    - uses: seL4/ci-actions/sel4test-sim@master
-      with:
-        march: ${{ matrix.march }}
-        compiler: ${{ matrix.compiler }}
+    name: Sim
+    uses: seL4/ci-actions/.github/workflows/sel4test-sim.yml@workflows
