@@ -14,6 +14,7 @@ on:
       - 'manual/**'
       - 'LICENSES/**'
       - '*.md'
+  workflow_dispatch:
 
 jobs:
   sim:
