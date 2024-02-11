@@ -51,7 +51,7 @@ jobs:
         compiler: [gcc, clang]
     steps:
     - name: Build
-      uses: seL4/ci-actions/sel4test-hw@master
+      uses: axel-h/ci-actions/sel4test-hw@patch-axel-17
       with:
         march: ${{ matrix.march }}
         compiler: ${{ matrix.compiler }}
@@ -75,7 +75,7 @@ jobs:
       matrix: ${{ steps.matrix.outputs.matrix }}
     steps:
     - id: matrix
-      uses: seL4/ci-actions/sel4test-hw-matrix@master
+      uses: axel-h/ci-actions/sel4test-hw-matrix@patch-axel-17
 
   hw-run:
     name: HW Run
@@ -103,7 +103,7 @@ jobs:
         with:
           name: images-${{ matrix.march }}-${{ matrix.compiler }}
       - name: Run
-        uses: seL4/ci-actions/sel4test-hw-run@master
+        uses: axel-h/ci-actions/sel4test-hw-run@patch-axel-17
         with:
           platform: ${{ matrix.platform }}
           compiler: ${{ matrix.compiler }}

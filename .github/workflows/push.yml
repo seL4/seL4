@@ -16,10 +16,10 @@ jobs:
     name: License Check
     runs-on: ubuntu-latest
     steps:
-    - uses: seL4/ci-actions/license-check@master
+    - uses: axel-h/ci-actions/license-check@patch-axel-17
 
   links:
     name: Links
     runs-on: ubuntu-latest
     steps:
-      - uses: seL4/ci-actions/link-check@master
+      - uses: axel-h/ci-actions/link-check@patch-axel-17

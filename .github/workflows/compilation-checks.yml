@@ -31,7 +31,7 @@ jobs:
         compiler: [gcc, llvm]
     steps:
     - uses: actions/checkout@v4
-    - uses: seL4/ci-actions/standalone-kernel@master
+    - uses: axel-h/ci-actions/standalone-kernel@patch-axel-17
       with:
         ARCH: ${{ matrix.arch }}
         COMPILER: ${{ matrix.compiler }}
