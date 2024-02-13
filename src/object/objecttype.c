@@ -342,10 +342,8 @@ bool_t CONST sameRegionAs(cap_t cap_a, cap_t cap_b)
 
     case cap_irq_control_cap:
         if (cap_get_capType(cap_b) == cap_irq_control_cap ||
-#if CONFIG_MAX_NUM_NODES == 1
-            cap_get_capType(cap_b) == cap_sgi_signal_cap ||
-#endif
-            cap_get_capType(cap_b) == cap_irq_handler_cap) {
+            cap_get_capType(cap_b) == cap_irq_handler_cap ||
+            Arch_isIRQControlDescendant(cap_b)) {
             return true;
         }
         break;
@@ -388,16 +386,9 @@ bool_t CONST sameObjectAs(cap_t cap_a, cap_t cap_b)
     if (cap_get_capType(cap_a) == cap_untyped_cap) {
         return false;
     }
-    if (cap_get_capType(cap_a) == cap_irq_control_cap &&
-        cap_get_capType(cap_b) == cap_irq_handler_cap) {
+    if (cap_get_capType(cap_a) == cap_irq_control_cap) {
         return false;
     }
-#if CONFIG_MAX_NUM_NODES == 1
-    if (cap_get_capType(cap_a) == cap_irq_control_cap &&
-        cap_get_capType(cap_b) == cap_sgi_signal_cap) {
-        return false;
-    }
-#endif
     if (isArchCap(cap_a) && isArchCap(cap_b)) {
         return Arch_sameObjectAs(cap_a, cap_b);
     }
