@@ -92,7 +92,7 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
         return Arch_invokeIRQControl(irq, destSlot, srcSlot, trigger);
 #if CONFIG_MAX_NUM_NODES == 1
     } else if (invLabel == ARMIRQIssueSGISignal) {
-        if (length < 3 || current_extra_caps.excaprefs[0] == NULL) {
+        if (length < 4 || current_extra_caps.excaprefs[0] == NULL) {
             userError("IRQControl: IssueSGISignal: Truncated message.");
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
@@ -107,7 +107,7 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
         if (irq >= NUM_SGIS) {
             current_syscall_error.type = seL4_RangeError;
             current_syscall_error.rangeErrorMin = 0;
-            current_syscall_error.rangeErrorMax = NUM_SGIS -1;
+            current_syscall_error.rangeErrorMax = NUM_SGIS - 1;
             userError("IRQControl: IssueSGISignal: Invalid SGI IRQ 0x%lx.", irq);
             return EXCEPTION_SYSCALL_ERROR;
         }

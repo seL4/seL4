@@ -370,6 +370,12 @@ bool_t CONST Arch_sameObjectAs(cap_t cap_a, cap_t cap_b)
             return false;
         }
     }
+#if CONFIG_MAX_NUM_NODES == 1
+    if (cap_get_capType(cap_a) == cap_sgi_signal_cap) {
+        return false;
+    }
+#endif
+
     return Arch_sameRegionAs(cap_a, cap_b);
 }
 
