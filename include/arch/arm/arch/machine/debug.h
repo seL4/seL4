@@ -16,7 +16,28 @@
 void restore_user_debug_context(tcb_t *target_thread);
 void saveAllBreakpointState(tcb_t *t);
 void loadAllDisabledBreakpointState(void);
+
+#define DBGBCR_ENABLE                 (BIT(0))
+#define DBGWCR_ENABLE                 (BIT(0))
+
+DEBUG_GENERATE_READ_FN(readBcrCp, DBGBCR)
+DEBUG_GENERATE_READ_FN(readBvrCp, DBGBVR)
+DEBUG_GENERATE_READ_FN(readWcrCp, DBGWCR)
+DEBUG_GENERATE_READ_FN(readWvrCp, DBGWVR)
+DEBUG_GENERATE_WRITE_FN(writeBcrCp, DBGBCR)
+DEBUG_GENERATE_WRITE_FN(writeBvrCp, DBGBVR)
+DEBUG_GENERATE_WRITE_FN(writeWcrCp, DBGWCR)
+DEBUG_GENERATE_WRITE_FN(writeWvrCp, DBGWVR)
+
+void writeBvrContext(tcb_t *t, uint16_t index, word_t val);
 #endif
+
+#ifdef CONFIG_HARDWARE_DEBUG_API
+int getAndResetActiveBreakpoint(word_t vaddr, word_t reason);
+BOOT_CODE void disableAllBpsAndWps(void);
+uint16_t getBpNumFromType(uint16_t bp_num, word_t type);
+#endif /* CONFIG_HARDWARE_DEBUG_API */
+
 #ifdef ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS
 void Arch_debugAssociateVCPUTCB(tcb_t *t);
 void Arch_debugDissociateVCPUTCB(tcb_t *t);
@@ -109,6 +130,26 @@ static inline void initHDCR(void)
 #endif /* ARM_HYP_TRAP_CP14 */
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
+
+/** These next two functions are part of some state flags.
+ *
+ * A bitfield of all currently enabled breakpoints for a thread is kept in that
+ * thread's TCB. These two functions here set and unset the bits in that
+ * bitfield.
+ */
+static inline void setBreakpointUsedFlag(tcb_t *t, uint16_t bp_num)
+{
+    if (t != NULL) {
+        t->tcbArch.tcbContext.breakpointState.used_breakpoints_bf |= BIT(bp_num);
+    }
+}
+
+static inline void unsetBreakpointUsedFlag(tcb_t *t, uint16_t bp_num)
+{
+    if (t != NULL) {
+        t->tcbArch.tcbContext.breakpointState.used_breakpoints_bf &= ~BIT(bp_num);
+    }
+}
 
 static uint16_t convertBpNumToArch(uint16_t bp_num)
 {

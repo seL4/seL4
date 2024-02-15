@@ -58,15 +58,6 @@ enum watchpoint_access /* WCR[4:3] */ {
 
 #ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
 
-DEBUG_GENERATE_READ_FN(readBcrCp, DBGBCR)
-DEBUG_GENERATE_READ_FN(readBvrCp, DBGBVR)
-DEBUG_GENERATE_READ_FN(readWcrCp, DBGWCR)
-DEBUG_GENERATE_READ_FN(readWvrCp, DBGWVR)
-DEBUG_GENERATE_WRITE_FN(writeBcrCp, DBGBCR)
-DEBUG_GENERATE_WRITE_FN(writeBvrCp, DBGBVR)
-DEBUG_GENERATE_WRITE_FN(writeWcrCp, DBGWCR)
-DEBUG_GENERATE_WRITE_FN(writeWvrCp, DBGWVR)
-
 /* These next few functions (read*Context()/write*Context()) read from TCB
  * context and not from the hardware registers.
  */
@@ -101,7 +92,7 @@ static void writeBcrContext(tcb_t *t, uint16_t index, word_t val)
     t->tcbArch.tcbContext.breakpointState.breakpoint[index].cr = val;
 }
 
-static void writeBvrContext(tcb_t *t, uint16_t index, word_t val)
+void writeBvrContext(tcb_t *t, uint16_t index, word_t val)
 {
     assert(index < seL4_NumExclusiveBreakpoints);
     t->tcbArch.tcbContext.breakpointState.breakpoint[index].vr = val;
@@ -252,7 +243,7 @@ static word_t convertArchToAccess(word_t archaccess)
     }
 }
 
-static uint16_t getBpNumFromType(uint16_t bp_num, word_t type)
+uint16_t getBpNumFromType(uint16_t bp_num, word_t type)
 {
     assert(type == seL4_InstructionBreakpoint || type == seL4_DataBreakpoint
            || type == seL4_SingleStep);
@@ -467,7 +458,7 @@ bool_t configureSingleStepping(tcb_t *t,
 
 /** Load an initial, all-disabled setup state for the registers.
  */
-BOOT_CODE static void disableAllBpsAndWps(void)
+BOOT_CODE void disableAllBpsAndWps(void)
 {
     int i;
 
@@ -504,7 +495,7 @@ BOOT_CODE static void disableAllBpsAndWps(void)
  *         successfully detected which debug register triggered the exception.
  *         "Bp_num" will be negative otherwise.
  */
-static int getAndResetActiveBreakpoint(word_t vaddr, word_t reason)
+int getAndResetActiveBreakpoint(word_t vaddr, word_t reason)
 {
     word_t align_mask;
     int i, ret = -1;
