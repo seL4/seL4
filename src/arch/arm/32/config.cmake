@@ -15,6 +15,7 @@ add_sources(
         machine/registerset.c
         machine/fpu.c
         model/statedata.c
+        machine/debug.c
         c_traps.c
         idle.c
         kernel/thread.c
