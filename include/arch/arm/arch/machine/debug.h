@@ -10,6 +10,7 @@
 #include <api/types.h>
 #include <arch/machine/debug_conf.h>
 #include <sel4/plat/api/constants.h>
+#include <mode/machine/debug.h>
 #include <armv/debug.h>
 
 #ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
@@ -144,6 +145,23 @@ static inline void initHDCR(void)
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
 
+/** Convert a watchpoint size (0, 1, 2, 4 or 8 bytes) into the arch specific
+ * register encoding.
+ */
+static inline word_t convertSizeToArch(word_t size) {
+    switch (size) {
+    case 1:
+        return 0x1;
+    case 2:
+        return 0x3;
+    case 8:
+        return 0xFF;
+    default:
+        assert(size == 4);
+        return 0xF;
+    }
+}
+
 /** These next two functions are part of some state flags.
  *
  * A bitfield of all currently enabled breakpoints for a thread is kept in that
@@ -184,7 +202,9 @@ static inline syscall_error_t Arch_decodeConfigureSingleStepping(tcb_t *t,
                                                                  word_t n_instr,
                                                                  bool_t is_reply)
 {
+#ifdef CONFIG_ARCH_AARCH32
     word_t type;
+#endif
     syscall_error_t ret = {
         .type = seL4_NoError
     };
@@ -201,6 +221,7 @@ static inline syscall_error_t Arch_decodeConfigureSingleStepping(tcb_t *t,
             return ret;
         }
 
+#ifdef CONFIG_ARCH_AARCH32
         type = seL4_InstructionBreakpoint;
         bp_num = t->tcbArch.tcbContext.breakpointState.single_step_hw_bp_num;
     } else {
@@ -225,6 +246,7 @@ static inline syscall_error_t Arch_decodeConfigureSingleStepping(tcb_t *t,
             ret.invalidArgumentNumber = 0;
             return ret;
         }
+#endif /* CONFIG_ARCH_AARCH32*/
     }
 
     return ret;
@@ -260,12 +282,15 @@ static inline syscall_error_t Arch_decodeSetBreakpoint(tcb_t *t,
         }
     }
 
+#ifdef CONFIG_ARCH_AARCH32
     if (size == 8 && !byte8WatchpointsSupported()) {
         userError("Debug: 8-byte watchpoints not supported on this CPU.");
         ret.type = seL4_InvalidArgument;
         ret.invalidArgumentNumber = 3;
         return ret;
     }
+#endif /* CONFIG_ARCH_AARCH32 */
+
     if (size == 8 && type != seL4_DataBreakpoint) {
         userError("Debug: 8-byte sizes can only be used with watchpoints.");
         ret.type = seL4_InvalidArgument;
@@ -302,6 +327,7 @@ static inline syscall_error_t Arch_decodeUnsetBreakpoint(tcb_t *t, uint16_t bp_n
         return ret;
     }
 
+#ifdef CONFIG_ARCH_AARCH32
     word_t type;
 
     type = getTypeFromBpNum(bp_num);
@@ -315,6 +341,7 @@ static inline syscall_error_t Arch_decodeUnsetBreakpoint(tcb_t *t, uint16_t bp_n
             return ret;
         }
     }
+#endif /* CONFIG_ARCH_AARCH32 */
 
     return ret;
 }

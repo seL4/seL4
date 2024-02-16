@@ -142,6 +142,64 @@ static inline word_t getMethodOfEntry(void)
     return dbg_dscr_get_methodOfEntry(dscr);
 }
 
+/** Initiates or halts single-stepping on the target process.
+ *
+ * @param at arch_tcb_t for the target process to be configured.
+ * @param bp_num The hardware ID of the breakpoint register to be used.
+ * @param n_instr The number of instructions to step over.
+ */
+bool_t configureSingleStepping(tcb_t *t,
+                               uint16_t bp_num,
+                               word_t n_instr,
+                               bool_t is_reply)
+{
+
+    if (is_reply) {
+        bp_num = t->tcbArch.tcbContext.breakpointState.single_step_hw_bp_num;
+    } else {
+        bp_num = convertBpNumToArch(bp_num);
+    }
+
+    /* On ARM single-stepping is emulated using breakpoint mismatches. So you
+     * would basically set the breakpoint to mismatch everything, and this will
+     * cause an exception to be triggered on every instruction.
+     *
+     * We use NULL as the mismatch address since no code should be trying to
+     * execute NULL, so it's a perfect address to use as the mismatch
+     * criterion. An alternative might be to use an address in the kernel's
+     * high vaddrspace, since that's an address that it's impossible for
+     * userspace to be executing at.
+     */
+    dbg_bcr_t bcr;
+
+    bcr.words[0] = readBcrContext(t, bp_num);
+
+    /* If the user calls us with n_instr == 0, allow them to configure, but
+     * leave it disabled.
+     */
+    if (n_instr > 0) {
+        bcr = dbg_bcr_set_enabled(bcr, 1);
+        t->tcbArch.tcbContext.breakpointState.single_step_enabled = true;
+    } else {
+        bcr = dbg_bcr_set_enabled(bcr, 0);
+        t->tcbArch.tcbContext.breakpointState.single_step_enabled = false;
+    }
+
+    bcr = dbg_bcr_set_lbn(bcr, 0);
+    bcr = dbg_bcr_set_pmc(bcr, DBGBCR_PRIV_USER);
+    bcr = dbg_bcr_set_hmc(bcr, 0);
+    bcr = dbg_bcr_set_ssc(bcr, 0);
+    bcr = dbg_bcr_set_bas(bcr, convertSizeToArch(1));
+    bcr = Arch_setupBcr(bcr, false);
+
+    writeBvrContext(t, bp_num, t->tcbArch.tcbContext.registers[FaultIP]);
+    writeBcrContext(t, bp_num, bcr.words[0]);
+
+    t->tcbArch.tcbContext.breakpointState.n_instructions = n_instr;
+    t->tcbArch.tcbContext.breakpointState.single_step_hw_bp_num = bp_num;
+    return true;
+}
+
 /** Using the DBGDIDR register, detects the debug architecture version, and
  * does a preliminary check for the level of support for our debug API.
  *
