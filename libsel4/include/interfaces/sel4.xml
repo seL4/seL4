@@ -782,7 +782,8 @@
                 seL4_TCB_ConfigureSingleStepping with an <texttt text="num_instructions"/> argument of 0.
             </return>
             <param dir="in" name="bp_num" type="seL4_Uint16"
-                description="The API-ID of a target breakpoint. This ID will be a positive integer, with values ranging from 0 to seL4_NumHWBreakpoints - 1."/>
+                description="The API-ID of a target breakpoint. This ID will be a positive integer, with values ranging from 0 to seL4_NumHWBreakpoints - 1.
+                             This value is unused on AARCH64."/>
             <param dir="in" name="num_instructions" type="seL4_Word"
                 description="Number of instructions to step over before delivering a fault to the target thread's fault endpoint. Setting this to 0 disables single-stepping."/>
             <param dir="out" name="bp_was_consumed" type="seL4_Bool"/>

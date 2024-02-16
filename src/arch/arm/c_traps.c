@@ -45,7 +45,15 @@ void VISIBLE NORETURN c_handle_undefined_instruction(void)
 #ifdef CONFIG_ARCH_AARCH32
     handleUserLevelFault(0, 0);
 #else
-    handleUserLevelFault(getESR(), 0);
+    word_t esr = getESR();
+#ifdef CONFIG_HARDWARE_DEBUG_API
+    if (isDebugFault(esr)) {
+        handleDebugFaultEvent(esr);
+        restore_user_context();
+        UNREACHABLE();
+    }
+#endif
+    handleUserLevelFault(esr, 0);
 #endif
     restore_user_context();
     UNREACHABLE();
@@ -217,6 +225,15 @@ VISIBLE NORETURN void c_handle_vcpu_fault(word_t hsr)
     NODE_LOCK_SYS;
 
     c_entry_hook();
+
+#ifdef CONFIG_HARDWARE_DEBUG_API
+    word_t esr = getESR();
+    if (isDebugFault(esr)) {
+        handleDebugFaultEvent(esr);
+        restore_user_context();
+        UNREACHABLE();
+    }
+#endif
 
 #ifdef TRACK_KERNEL_ENTRIES
     ksKernelEntry.path = Entry_VCPUFault;

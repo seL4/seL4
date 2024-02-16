@@ -193,7 +193,6 @@ BOOT_CODE static bool_t init_cpu(void)
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         vcpu_boot_init();
     }
-
 #ifdef CONFIG_HARDWARE_DEBUG_API
     if (!Arch_initHardwareBreakpoints()) {
         printf("Kernel built with CONFIG_HARDWARE_DEBUG_API, but this board doesn't "

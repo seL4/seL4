@@ -141,8 +141,7 @@ static inline dbg_bcr_t Arch_setupBcr(dbg_bcr_t in_val, bool_t is_match)
     dbg_bcr_t bcr;
 
     bcr = dbg_bcr_set_addressMask(in_val, 0);
-    bcr = dbg_bcr_set_hypeModeControl(bcr, 0);
-    bcr = dbg_bcr_set_secureStateControl(bcr, 0);
+    bcr = dbg_bcr_set_bas(bcr, convertSizeToArch(4));
     if (is_match) {
         bcr = dbg_bcr_set_breakpointType(bcr, DBGBCR_TYPE_UNLINKED_INSTRUCTION_MATCH);
     } else {

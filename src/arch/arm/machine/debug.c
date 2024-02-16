@@ -309,9 +309,10 @@ void setBreakpoint(tcb_t *t,
         /* Preserve reserved bits. */
         bcr.words[0] = readBcrContext(t, bp_num);
         bcr = dbg_bcr_set_enabled(bcr, 1);
-        bcr = dbg_bcr_set_linkedBrp(bcr, 0);
-        bcr = dbg_bcr_set_supervisorAccess(bcr, DBGBCR_PRIV_USER);
-        bcr = dbg_bcr_set_byteAddressSelect(bcr, convertSizeToArch(4));
+        bcr = dbg_bcr_set_lbn(bcr, 0);
+        bcr = dbg_bcr_set_pmc(bcr, DBGBCR_PRIV_USER);
+        bcr = dbg_bcr_set_hmc(bcr, 0);
+        bcr = dbg_bcr_set_ssc(bcr, 0);
         bcr = Arch_setupBcr(bcr, true);
         writeBcrContext(t, bp_num, bcr.words[0]);
     } else {
@@ -322,12 +323,14 @@ void setBreakpoint(tcb_t *t,
         /* Preserve reserved bits */
         wcr.words[0] = readWcrContext(t, bp_num);
         wcr = dbg_wcr_set_enabled(wcr, 1);
-        wcr = dbg_wcr_set_supervisorAccess(wcr, DBGWCR_PRIV_USER);
-        wcr = dbg_wcr_set_byteAddressSelect(wcr, convertSizeToArch(size));
-        wcr = dbg_wcr_set_loadStore(wcr, convertAccessToArch(rw));
-        wcr = dbg_wcr_set_enableLinking(wcr, 0);
-        wcr = dbg_wcr_set_linkedBrp(wcr, 0);
-        wcr = Arch_setupWcr(wcr);
+        wcr = dbg_wcr_set_pac(wcr, DBGWCR_PRIV_USER);
+        wcr = dbg_wcr_set_bas(wcr, convertSizeToArch(size));
+        wcr = dbg_wcr_set_lsc(wcr, convertAccessToArch(rw));
+        wcr = dbg_wcr_set_watchpointType(wcr, 0);
+        wcr = dbg_wcr_set_lbn(wcr, 0);
+        wcr = dbg_wcr_set_addressMask(wcr, 0);
+        wcr = dbg_wcr_set_hmc(wcr, 0);
+        wcr = dbg_wcr_set_ssc(wcr, 0);
         writeWcrContext(t, bp_num, wcr.words[0]);
     }
 }
@@ -354,9 +357,11 @@ getBreakpoint_t getBreakpoint(tcb_t *t, uint16_t bp_num)
         dbg_bcr_t bcr;
 
         bcr.words[0] = readBcrContext(t, bp_num);
+#ifdef CONFIG_ARCH_AARCH32
         if (Arch_breakpointIsMismatch(bcr) == true) {
             ret.type = seL4_SingleStep;
         };
+#endif
         ret.size = 0;
         ret.rw = seL4_BreakOnRead;
         ret.vaddr = readBvrContext(t, bp_num);
@@ -365,8 +370,8 @@ getBreakpoint_t getBreakpoint(tcb_t *t, uint16_t bp_num)
         dbg_wcr_t wcr;
 
         wcr.words[0] = readWcrContext(t, bp_num);
-        ret.size = convertArchToSize(dbg_wcr_get_byteAddressSelect(wcr));
-        ret.rw = convertArchToAccess(dbg_wcr_get_loadStore(wcr));
+        ret.size = convertArchToSize(dbg_wcr_get_bas(wcr));
+        ret.rw = convertArchToAccess(dbg_wcr_get_lsc(wcr));
         ret.vaddr = readWvrContext(t, bp_num);
         ret.is_enabled = dbg_wcr_get_enabled(wcr);
     }
@@ -400,60 +405,6 @@ void unsetBreakpoint(tcb_t *t, uint16_t bp_num)
         writeWcrContext(t, bp_num, wcr.words[0]);
         writeWvrContext(t, bp_num, 0);
     }
-}
-
-/** Initiates or halts single-stepping on the target process.
- *
- * @param at arch_tcb_t for the target process to be configured.
- * @param bp_num The hardware ID of the breakpoint register to be used.
- * @param n_instr The number of instructions to step over.
- */
-bool_t configureSingleStepping(tcb_t *t,
-                               uint16_t bp_num,
-                               word_t n_instr,
-                               bool_t is_reply)
-{
-
-    if (is_reply) {
-        bp_num = t->tcbArch.tcbContext.breakpointState.single_step_hw_bp_num;
-    } else {
-        bp_num = convertBpNumToArch(bp_num);
-    }
-
-    /* On ARM single-stepping is emulated using breakpoint mismatches. The aim
-     * of single stepping is to execute a single instruction. By setting an
-     * instruction mismatch breakpoint to the current LR of the target thread,
-     * the thread will be able to execute this instruction, but attempting to
-     * execute any other instruction will result in the generation of a debug
-     * exception that will be delivered to the kernel, allowing us to simulate
-     * single stepping.
-     */
-    dbg_bcr_t bcr;
-
-    bcr.words[0] = readBcrContext(t, bp_num);
-
-    /* If the user calls us with n_instr == 0, allow them to configure, but
-     * leave it disabled.
-     */
-    if (n_instr > 0) {
-        bcr = dbg_bcr_set_enabled(bcr, 1);
-        t->tcbArch.tcbContext.breakpointState.single_step_enabled = true;
-    } else {
-        bcr = dbg_bcr_set_enabled(bcr, 0);
-        t->tcbArch.tcbContext.breakpointState.single_step_enabled = false;
-    }
-
-    bcr = dbg_bcr_set_linkedBrp(bcr, 0);
-    bcr = dbg_bcr_set_supervisorAccess(bcr, DBGBCR_PRIV_USER);
-    bcr = dbg_bcr_set_byteAddressSelect(bcr, convertSizeToArch(1));
-    bcr = Arch_setupBcr(bcr, false);
-
-    writeBvrContext(t, bp_num, t->tcbArch.tcbContext.registers[FaultIP]);
-    writeBcrContext(t, bp_num, bcr.words[0]);
-
-    t->tcbArch.tcbContext.breakpointState.n_instructions = n_instr;
-    t->tcbArch.tcbContext.breakpointState.single_step_hw_bp_num = bp_num;
-    return true;
 }
 
 /** Load an initial, all-disabled setup state for the registers.
@@ -497,7 +448,7 @@ BOOT_CODE void disableAllBpsAndWps(void)
  */
 int getAndResetActiveBreakpoint(word_t vaddr, word_t reason)
 {
-    word_t align_mask;
+    word_t align_mask = (word_t) -1;
     int i, ret = -1;
 
     if (reason == seL4_InstructionBreakpoint) {
@@ -510,8 +461,11 @@ int getAndResetActiveBreakpoint(word_t vaddr, word_t reason)
              * range, which means it's not guaranteed to match the aligned value
              * that was programmed into the address register.
              */
+// @alwin: check if this is okay
+#ifdef CONFIG_ARCH_AARCH32
             align_mask = convertArchToSize(dbg_bcr_get_byteAddressSelect(bcr));
             align_mask = ~(align_mask - 1);
+#endif /* CONFIG_ARCH_AARCH32 */
 
             if (bvr != (vaddr & align_mask) || !dbg_bcr_get_enabled(bcr)) {
                 continue;
@@ -528,7 +482,7 @@ int getAndResetActiveBreakpoint(word_t vaddr, word_t reason)
             word_t wvr = readWvrCp(i);
 
             wcr.words[0] = readWcrCp(i);
-            align_mask = convertArchToSize(dbg_wcr_get_byteAddressSelect(wcr));
+            align_mask = convertArchToSize(dbg_wcr_get_bas(wcr));
             align_mask = ~(align_mask - 1);
 
             if (wvr != (vaddr & align_mask) || !dbg_wcr_get_enabled(wcr)) {
@@ -685,6 +639,12 @@ void restore_user_debug_context(tcb_t *target_thread)
      *
      * So we don't need to execute ISB here because we're about to RFE.
      */
+
+#ifdef CONFIG_ARCH_AARCH64
+    arch_restore_user_debug_context(target_thread);
+#endif /* CONFIG_ARCH_ARCH64 */
+
+
 }
 
 #endif /* ARM_BASE_CP14_SAVE_AND_RESTORE */

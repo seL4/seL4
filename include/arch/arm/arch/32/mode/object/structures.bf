@@ -549,13 +549,13 @@ block dbg_bcr {
     padding 3
     field addressMask 5
     field breakpointType 4
-    field linkedBrp 4
-    field secureStateControl 2
-    field hypeModeControl 1
+    field lbn 4
+    field ssc 2
+    field hmc 1
     padding 4
-    field byteAddressSelect 4
+    field bas 4
     padding 2
-    field supervisorAccess 2
+    field pmc 2
     field enabled 1
 }
 
@@ -564,15 +564,16 @@ block dbg_wcr {
     padding 3
     field addressMask 5
     padding 3
-    field enableLinking 1
-    field linkedBrp 4
-    field secureStateControl 2
-    field hypeModeControl 1
-    field byteAddressSelect 8
-    field loadStore 2
-    field supervisorAccess 2
+    field watchpointType 1
+    field lbn 4
+    field ssc 2
+    field hmc 1
+    field bas 8
+    field lsc 2
+    field pac 2
     field enabled 1
 }
+
 #endif /* CONFIG_HARDWARE_DEBUG_API */
 
 #include <sel4/arch/shared_types.bf>

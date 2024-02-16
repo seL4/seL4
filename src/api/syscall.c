@@ -30,6 +30,9 @@
 #ifdef CONFIG_DEBUG_BUILD
 #include <arch/machine/capdl.h>
 #endif
+#ifdef CONFIG_HARDWARE_DEBUG_API
+#include <mode/machine/debug.h>
+#endif
 
 /* The haskell function 'handleEvent' is split into 'handleXXX' variants
  * for each event causing a kernel entry */
@@ -255,6 +258,22 @@ exception_t handleVMFaultEvent(vm_fault_type_t vm_faultType)
 
     return EXCEPTION_NONE;
 }
+
+#if defined(CONFIG_ARCH_AARCH64) && defined(CONFIG_HARDWARE_DEBUG_API)
+exception_t handleDebugFaultEvent(word_t esr)
+{
+    MCS_DO_IF_BUDGET({
+        current_fault = handleUserLevelDebugException(esr, getRestartPC(NODE_STATE(ksCurThread)));
+        if (seL4_Fault_get_seL4_FaultType(current_fault) != seL4_Fault_NullFault) {
+            handleFault(NODE_STATE(ksCurThread));
+        }
+    })
+    schedule();
+    activateThread();
+
+    return EXCEPTION_NONE;
+}
+#endif /* defined(CONFIG_ARCH_AARCH64) && defined(CONFIG_HARDWARE_DEBUG_API) */
 
 #ifdef CONFIG_KERNEL_MCS
 static exception_t handleInvocation(bool_t isCall, bool_t isBlocking, bool_t canDonate, bool_t firstPhase, cptr_t cptr)

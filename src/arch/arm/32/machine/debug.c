@@ -49,19 +49,6 @@
 
 #define DBGSDER_ENABLE_SECURE_USER_INVASIVE_DEBUG       (BIT(0))
 
-/* ARMv7 Manuals, c3.3.1:
- *  "Breakpoint debug events are synchronous. That is, the debug event acts
- *  like an exception that cancels the breakpointed instruction."
- *
- * ARMv7 Manuals, c3.4.1:
- *  "Watchpoint debug events are precise and can be synchronous or asynchronous:
- *  a synchronous Watchpoint debug event acts like a synchronous abort
- *  exception on the memory access instruction itself. An asynchronous
- *  Watchpoint debug event acts like a precise asynchronous abort exception that
- *  cancels a later instruction."
- */
-
-
 /** Describes the availability and level of support for the debug features on
  * a particular CPU. Currently a static local singleton instance, but for
  * multiprocessor adaptation, just make it per-CPU.
@@ -140,6 +127,62 @@ static inline word_t getMethodOfEntry(void)
 
     dscr.words[0] = readDscrCp();
     return dbg_dscr_get_methodOfEntry(dscr);
+}
+
+/** Initiates or halts single-stepping on the target process.
+ *
+ * @param at arch_tcb_t for the target process to be configured.
+ * @param bp_num The hardware ID of the breakpoint register to be used.
+ * @param n_instr The number of instructions to step over.
+ */
+bool_t configureSingleStepping(tcb_t *t,
+                               uint16_t bp_num,
+                               word_t n_instr,
+                               bool_t is_reply)
+{
+
+    if (is_reply) {
+        bp_num = t->tcbArch.tcbContext.breakpointState.single_step_hw_bp_num;
+    } else {
+        bp_num = convertBpNumToArch(bp_num);
+    }
+
+    /* On ARM single-stepping is emulated using breakpoint mismatches. So you
+     * would basically set the breakpoint to mismatch everything, and this will
+     * cause an exception to be triggered on every instruction.
+     *
+     * We use NULL as the mismatch address since no code should be trying to
+     * execute NULL, so it's a perfect address to use as the mismatch
+     * criterion. An alternative might be to use an address in the kernel's
+     * high vaddrspace, since that's an address that it's impossible for
+     * userspace to be executing at.
+     */
+    dbg_bcr_t bcr;
+
+    bcr.words[0] = readBcrContext(t, bp_num);
+
+    /* If the user calls us with n_instr == 0, allow them to configure, but
+     * leave it disabled.
+     */
+    if (n_instr > 0) {
+        bcr = dbg_bcr_set_enabled(bcr, 1);
+        t->tcbArch.tcbContext.breakpointState.single_step_enabled = true;
+    } else {
+        bcr = dbg_bcr_set_enabled(bcr, 0);
+        t->tcbArch.tcbContext.breakpointState.single_step_enabled = false;
+    }
+
+    bcr = dbg_bcr_set_linkedBrp(bcr, 0);
+    bcr = dbg_bcr_set_supervisorAccess(bcr, DBGBCR_PRIV_USER);
+    bcr = dbg_bcr_set_byteAddressSelect(bcr, convertSizeToArch(1));
+    bcr = Arch_setupBcr(bcr, false);
+
+    writeBvrContext(t, bp_num, 0);
+    writeBcrContext(t, bp_num, bcr.words[0]);
+
+    t->tcbArch.tcbContext.breakpointState.n_instructions = n_instr;
+    t->tcbArch.tcbContext.breakpointState.single_step_hw_bp_num = bp_num;
+    return true;
 }
 
 /** Using the DBGDIDR register, detects the debug architecture version, and
