@@ -378,8 +378,10 @@ exception_t invokeVCPUInjectIRQ(vcpu_t *vcpu, unsigned long index, virq_t virq)
     if (likely(ARCH_NODE_STATE(armHSCurVCPU) == vcpu)) {
         set_gic_vcpu_ctrl_lr(index, virq);
 #ifdef ENABLE_SMP_SUPPORT
-    } else if (vcpu->vcpuTCB->tcbAffinity != getCurrentCPUIndex()) {
-        doRemoteOp3Arg(IpiRemoteCall_VCPUInjectInterrupt, (word_t)vcpu, index, virq.words[0],      vcpu->vcpuTCB->tcbAffinity);
+    } else if (vcpu->vcpuTCB != NULL && vcpu->vcpuTCB->tcbAffinity != getCurrentCPUIndex()) {
+        doRemoteOp3Arg(IpiRemoteCall_VCPUInjectInterrupt,
+                       (word_t)vcpu, index, virq.words[0],
+                       vcpu->vcpuTCB->tcbAffinity);
 #endif /* CONFIG_ENABLE_SMP */
     } else {
         vcpu->vgic.lr[index] = virq;
