@@ -167,26 +167,6 @@ bool_t isDebugFault(word_t hsr_or_fsr);
  */
 seL4_Fault_t handleUserLevelDebugException(word_t fault_vaddr);
 
-/** These next two functions are part of some state flags.
- *
- * A bitfield of all currently enabled breakpoints for a thread is kept in that
- * thread's TCB. These two functions here set and unset the bits in that
- * bitfield.
- */
-static inline void setBreakpointUsedFlag(tcb_t *t, uint16_t bp_num)
-{
-    if (t != NULL) {
-        t->tcbArch.tcbContext.breakpointState.used_breakpoints_bf |= BIT(bp_num);
-    }
-}
-
-static inline void unsetBreakpointUsedFlag(tcb_t *t, uint16_t bp_num)
-{
-    if (t != NULL) {
-        t->tcbArch.tcbContext.breakpointState.used_breakpoints_bf &= ~BIT(bp_num);
-    }
-}
-
 #endif /* CONFIG_HARDWARE_DEBUG_API */
 
 #endif /* !__ASSEMBLER__ */
