@@ -110,6 +110,26 @@ static inline void initHDCR(void)
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
 
+/** These next two functions are part of some state flags.
+ *
+ * A bitfield of all currently enabled breakpoints for a thread is kept in that
+ * thread's TCB. These two functions here set and unset the bits in that
+ * bitfield.
+ */
+static inline void setBreakpointUsedFlag(tcb_t *t, uint16_t bp_num)
+{
+    if (t != NULL) {
+        t->tcbArch.tcbContext.breakpointState.used_breakpoints_bf |= BIT(bp_num);
+    }
+}
+
+static inline void unsetBreakpointUsedFlag(tcb_t *t, uint16_t bp_num)
+{
+    if (t != NULL) {
+        t->tcbArch.tcbContext.breakpointState.used_breakpoints_bf &= ~BIT(bp_num);
+    }
+}
+
 static uint16_t convertBpNumToArch(uint16_t bp_num)
 {
     if (bp_num >= seL4_NumExclusiveBreakpoints) {
