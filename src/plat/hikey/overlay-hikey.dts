@@ -10,7 +10,8 @@
 
 		seL4,elfloader-devices =
 		    "serial0",
-		    &{/psci};
+		    &{/psci},
+		    &{/timer};
 
 		seL4,kernel-devices =
 		    "serial0",

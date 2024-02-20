@@ -8,7 +8,8 @@
 	chosen {
 		seL4,elfloader-devices =
 		    &{/pl011@9000000},
-		    &{/psci};
+		    &{/psci},
+		    &{/timer};
 		seL4,kernel-devices =
             &{/pl011@9000000},
 		    &{/intc@8000000},

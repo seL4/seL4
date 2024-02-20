@@ -8,7 +8,8 @@
 	chosen {
 		seL4,elfloader-devices =
 		    "serial2",
-		    &{/psci};
+		    &{/psci},
+		    &{/timer};
 		seL4,kernel-devices =
 		    "serial2",
 		    &{/interrupt-controller@fee00000},
