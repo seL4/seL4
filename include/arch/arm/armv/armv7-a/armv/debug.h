@@ -141,8 +141,8 @@ static inline dbg_bcr_t Arch_setupBcr(dbg_bcr_t in_val, bool_t is_match)
     dbg_bcr_t bcr;
 
     bcr = dbg_bcr_set_addressMask(in_val, 0);
-    bcr = dbg_bcr_set_hypeModeControl(bcr, 0);
-    bcr = dbg_bcr_set_secureStateControl(bcr, 0);
+    bcr = dbg_bcr_set_hmc(bcr, 0);
+    bcr = dbg_bcr_set_ssc(bcr, 0);
     if (is_match) {
         bcr = dbg_bcr_set_breakpointType(bcr, DBGBCR_TYPE_UNLINKED_INSTRUCTION_MATCH);
     } else {
@@ -156,8 +156,8 @@ static inline dbg_wcr_t Arch_setupWcr(dbg_wcr_t in_val)
     dbg_wcr_t wcr;
 
     wcr = dbg_wcr_set_addressMask(in_val, 0);
-    wcr = dbg_wcr_set_hypeModeControl(wcr, 0);
-    wcr = dbg_wcr_set_secureStateControl(wcr, 0);
+    wcr = dbg_wcr_set_hmc(wcr, 0);
+    wcr = dbg_wcr_set_ssc(wcr, 0);
     return wcr;
 }
 
