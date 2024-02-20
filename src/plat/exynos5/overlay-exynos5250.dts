@@ -9,7 +9,8 @@
 	chosen {
 		stdout-path = "serial2:115200n8";
 		seL4,elfloader-devices =
-		    "serial2";
+		    "serial2",
+		    &{/soc/timer};
 		seL4,kernel-devices =
 		    "serial2",
 		    &{/soc/interrupt-controller@10481000},
