@@ -299,9 +299,9 @@ void setBreakpoint(tcb_t *t,
         /* Preserve reserved bits. */
         bcr.words[0] = readBcrContext(t, bp_num);
         bcr = dbg_bcr_set_enabled(bcr, 1);
-        bcr = dbg_bcr_set_linkedBrp(bcr, 0);
-        bcr = dbg_bcr_set_supervisorAccess(bcr, DBGBCR_PRIV_USER);
-        bcr = dbg_bcr_set_byteAddressSelect(bcr, convertSizeToArch(4));
+        bcr = dbg_bcr_set_lbn(bcr, 0);
+        bcr = dbg_bcr_set_pmc(bcr, DBGBCR_PRIV_USER);
+        bcr = dbg_bcr_set_bas(bcr, convertSizeToArch(4));
         bcr = Arch_setupBcr(bcr, true);
         writeBcrContext(t, bp_num, bcr.words[0]);
     } else {
@@ -312,11 +312,11 @@ void setBreakpoint(tcb_t *t,
         /* Preserve reserved bits */
         wcr.words[0] = readWcrContext(t, bp_num);
         wcr = dbg_wcr_set_enabled(wcr, 1);
-        wcr = dbg_wcr_set_supervisorAccess(wcr, DBGWCR_PRIV_USER);
-        wcr = dbg_wcr_set_byteAddressSelect(wcr, convertSizeToArch(size));
-        wcr = dbg_wcr_set_loadStore(wcr, convertAccessToArch(rw));
-        wcr = dbg_wcr_set_enableLinking(wcr, 0);
-        wcr = dbg_wcr_set_linkedBrp(wcr, 0);
+        wcr = dbg_wcr_set_pac(wcr, DBGWCR_PRIV_USER);
+        wcr = dbg_wcr_set_bas(wcr, convertSizeToArch(size));
+        wcr = dbg_wcr_set_lsc(wcr, convertAccessToArch(rw));
+        wcr = dbg_wcr_set_watchpointType(wcr, 0);
+        wcr = dbg_wcr_set_lbn(wcr, 0);
         wcr = Arch_setupWcr(wcr);
         writeWcrContext(t, bp_num, wcr.words[0]);
     }
@@ -355,8 +355,8 @@ getBreakpoint_t getBreakpoint(tcb_t *t, uint16_t bp_num)
         dbg_wcr_t wcr;
 
         wcr.words[0] = readWcrContext(t, bp_num);
-        ret.size = convertArchToSize(dbg_wcr_get_byteAddressSelect(wcr));
-        ret.rw = convertArchToAccess(dbg_wcr_get_loadStore(wcr));
+        ret.size = convertArchToSize(dbg_wcr_get_bas(wcr));
+        ret.rw = convertArchToAccess(dbg_wcr_get_lsc(wcr));
         ret.vaddr = readWvrContext(t, bp_num);
         ret.is_enabled = dbg_wcr_get_enabled(wcr);
     }
@@ -433,9 +433,9 @@ bool_t configureSingleStepping(tcb_t *t,
         t->tcbArch.tcbContext.breakpointState.single_step_enabled = false;
     }
 
-    bcr = dbg_bcr_set_linkedBrp(bcr, 0);
-    bcr = dbg_bcr_set_supervisorAccess(bcr, DBGBCR_PRIV_USER);
-    bcr = dbg_bcr_set_byteAddressSelect(bcr, convertSizeToArch(1));
+    bcr = dbg_bcr_set_lbn(bcr, 0);
+    bcr = dbg_bcr_set_pmc(bcr, DBGBCR_PRIV_USER);
+    bcr = dbg_bcr_set_bas(bcr, convertSizeToArch(1));
     bcr = Arch_setupBcr(bcr, false);
 
     writeBvrContext(t, bp_num, t->tcbArch.tcbContext.registers[FaultIP]);
@@ -500,7 +500,7 @@ int getAndResetActiveBreakpoint(word_t vaddr, word_t reason)
              * range, which means it's not guaranteed to match the aligned value
              * that was programmed into the address register.
              */
-            align_mask = convertArchToSize(dbg_bcr_get_byteAddressSelect(bcr));
+            align_mask = convertArchToSize(dbg_bcr_get_bas(bcr));
             align_mask = ~(align_mask - 1);
 
             if (bvr != (vaddr & align_mask) || !dbg_bcr_get_enabled(bcr)) {
@@ -518,7 +518,7 @@ int getAndResetActiveBreakpoint(word_t vaddr, word_t reason)
             word_t wvr = readWvrCp(i);
 
             wcr.words[0] = readWcrCp(i);
-            align_mask = convertArchToSize(dbg_wcr_get_byteAddressSelect(wcr));
+            align_mask = convertArchToSize(dbg_wcr_get_bas(wcr));
             align_mask = ~(align_mask - 1);
 
             if (wvr != (vaddr & align_mask) || !dbg_wcr_get_enabled(wcr)) {
