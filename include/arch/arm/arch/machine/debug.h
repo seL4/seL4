@@ -303,14 +303,12 @@ static inline syscall_error_t Arch_decodeUnsetBreakpoint(tcb_t *t, uint16_t bp_n
     }
 
     word_t type;
-    dbg_bcr_t bcr;
 
     type = getTypeFromBpNum(bp_num);
     bp_num = convertBpNumToArch(bp_num);
 
-    bcr.words[0] = t->tcbArch.tcbContext.breakpointState.breakpoint[bp_num].cr;
     if (type == seL4_InstructionBreakpoint) {
-        if (Arch_breakpointIsMismatch(bcr) == true && dbg_bcr_get_enabled(bcr)) {
+        if (Arch_breakpointIsSingleStepping(t, bp_num)) {
             userError("Rejecting call to unsetBreakpoint on breakpoint configured "
                       "for single-stepping (hwid %u).", bp_num);
             ret.type = seL4_IllegalOperation;
