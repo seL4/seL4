@@ -11,6 +11,9 @@
 /* Default schedule. The length is in ms */
 const dschedule_t ksDomSchedule[] = {
     { .domain = 0, .length = 1 },
+#if CONFIG_NUM_DOMAINS >= 2
+    { .domain = 1, .length = 1 },
+#endif
 };
 
 const word_t ksDomScheduleLength = ARRAY_SIZE(ksDomSchedule);
