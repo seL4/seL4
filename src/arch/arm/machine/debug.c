@@ -344,7 +344,7 @@ getBreakpoint_t getBreakpoint(tcb_t *t, uint16_t bp_num)
         dbg_bcr_t bcr;
 
         bcr.words[0] = readBcrContext(t, bp_num);
-        if (Arch_breakpointIsMismatch(bcr) == true) {
+        if (Arch_breakpointIsSingleStepping(t, bp_num)) {
             ret.type = seL4_SingleStep;
         };
         ret.size = 0;
