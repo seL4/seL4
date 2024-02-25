@@ -8,7 +8,7 @@
 import argparse
 import builtins
 import jinja2
-from typing import Dict, List
+from typing import Dict, List, Tuple
 import hardware
 from hardware.config import Config
 from hardware.fdt import FdtParser
@@ -131,7 +131,7 @@ static const p_region_t BOOT_RODATA avail_p_regs[] = {
 '''
 
 
-def get_kernel_devices(tree: FdtParser, hw_yaml: HardwareYaml) -> (List, Dict):
+def get_kernel_devices(tree: FdtParser, hw_yaml: HardwareYaml) -> Tuple[List, Dict]:
     '''
     Given a device tree and a set of rules, returns a tuple (groups, offsets).
 
