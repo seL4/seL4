@@ -30,14 +30,22 @@ class Region:
             self.size)
 
     def __eq__(self, other):
-        return self.base == other.base and self.size == other.size
+        if isinstance(other, type(self)):
+            return self.base == other.base and self.size == other.size
+        else:
+            # duck typing is not supported
+            return NotImplemented
 
     def __ne__(self, other):
         # Needed only for py2.
         return not self.__eq__(other)
 
     def __gt__(self, other):
-        return self.base > other.base
+        if isinstance(other, type(self)):
+            return self.base > other.base
+        else:
+            # duck typing is not supported
+            return NotImplemented
 
     def __hash__(self):
         return hash((self.base, self.size))
