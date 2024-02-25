@@ -51,7 +51,7 @@ class Region:
         ''' create a region from a start/end rather than start/size '''
         if start > end:
             raise ValueError(
-                'invalid rage start (0x{:x}) > end (0x{:x})'.format(start > end))
+                'invalid rage start (0x{:x}) > end (0x{:x})'.format(start, end))
         return Region(start, end - start, owner)
 
     def overlaps(self, other):
