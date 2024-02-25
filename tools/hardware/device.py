@@ -5,8 +5,8 @@
 #
 
 from collections import OrderedDict
-from typing import Any, Dict, Generator, List, Tuple, cast
-
+from typing import Dict, Generator, List, Tuple, cast
+from collections.abc import Callable
 import logging
 import pyfdt.pyfdt
 
@@ -133,7 +133,7 @@ class WrappedNode:
             return []
         return list(self.get_prop('interrupt-affinity').words)
 
-    def visit(self, visitor: Any):
+    def visit(self, visitor: Callable[[WrappedNode], None]):
         ''' Visit this node and all its children '''
         visitor(self)
         for child in self.children.values():

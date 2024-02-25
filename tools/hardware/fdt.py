@@ -4,7 +4,8 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-from typing import Any, Dict, IO, List, Union
+from typing import Dict, IO, List, Union
+from collections.abc import Callable
 import pyfdt.pyfdt
 
 from hardware.device import WrappedNode
@@ -107,6 +108,6 @@ class FdtParser:
         prop = chosen.get_prop('seL4,boot-cpu')
         return prop.words[0]
 
-    def visit(self, visitor: Any):
+    def visit(self, visitor: Callable[[WrappedNode], None]):
         ''' Walk the tree, calling the given visitor function on each node '''
         self.wrapped_root.visit(visitor)
