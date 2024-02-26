@@ -31,18 +31,18 @@ class Region:
             self.base + self.size - (1 if self.size > 0 else 0),
             self.size)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, type(self)):
             return self.base == other.base and self.size == other.size
         else:
             # duck typing is not supported
             return NotImplemented
 
-    def __ne__(self, other):
+    def __ne__(self, other: object) -> bool:
         # Needed only for py2.
         return not self.__eq__(other)
 
-    def __gt__(self, other):
+    def __gt__(self, other: object) -> bool:
         if isinstance(other, type(self)):
             return self.base > other.base
         else:

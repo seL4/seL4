@@ -99,7 +99,7 @@ class KernelRegionGroup:
     def __repr__(self) -> str:
         return 'KernelRegion(reg={},labels={})'.format(self.regions, self.labels)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, type(self)):
             return other.base == self.base and other.size == self.size
         else:
