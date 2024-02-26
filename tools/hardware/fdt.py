@@ -91,7 +91,10 @@ class FdtParser:
         for path in paths:
             if path[0] != '/':
                 path = self.lookup_alias(path)
-            ret.append(self.get_path(path))
+            node = self.get_path(path)
+            if node is not None:
+                ret.append(node)
+
         return ret
 
     def get_boot_cpu(self) -> int:
