@@ -92,8 +92,9 @@ class FdtParser:
             if path[0] != '/':
                 path = self.lookup_alias(path)
             node = self.get_path(path)
-            if node is not None:
-                ret.append(node)
+            if node is None:
+                raise KeyError(f"could not resolve path in chosen node: '{path}'")
+            ret.append(node)
 
         return ret
 
