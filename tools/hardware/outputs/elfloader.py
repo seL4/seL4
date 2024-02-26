@@ -158,7 +158,7 @@ def run(tree: fdt.FdtParser, hardware: rule.HardwareYaml, config: config.Config,
 
     device_info.sort(key=lambda a: a['compat'])
 
-    template = Environment(loader=BaseLoader, trim_blocks=True,
+    template = Environment(loader=BaseLoader(), trim_blocks=True,
                            lstrip_blocks=True).from_string(HEADER_TEMPLATE)
 
     template_args = dict(builtins.__dict__, **{
