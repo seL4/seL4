@@ -17,10 +17,6 @@ class Region:
         self.size = size
         self.owner = owner
 
-    @staticmethod
-    def clone(other):
-        return Region(other.base, other.size)
-
     def __repr__(self):
         ''' Returns a string representation that is a valid Python expression
         that eval() can parse. '''
