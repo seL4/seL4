@@ -149,7 +149,8 @@ static inline dbg_bcr_t Arch_setupBcr(dbg_bcr_t in_val, bool_t is_match)
     return bcr;
 }
 
-static inline bool_t Arch_breakpointIsSingleStepping(tcb_t *t, uint16_t bp_num) {
+static inline bool_t Arch_breakpointIsSingleStepping(tcb_t *t, uint16_t bp_num)
+{
     /* Detect if the bp is set up for single stepping */
 
     return (t->tcbArch.tcbContext.breakpointState.single_step_enabled &&

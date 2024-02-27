@@ -34,6 +34,11 @@
 #define OSDLR_LOCK (BIT(0))
 #define OSLAR_LOCK (BIT(0))
 
+bool_t byte8WatchpointsSupported(void)
+{
+    return true;
+}
+
 exception_t handleDebugFaultEvent(word_t esr)
 {
     MCS_DO_IF_BUDGET({

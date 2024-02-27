@@ -231,16 +231,7 @@ VISIBLE NORETURN void c_handle_vcpu_fault(word_t hsr)
     ksKernelEntry.path = Entry_VCPUFault;
     ksKernelEntry.word = hsr;
 #endif
-
-#ifdef CONFIG_HARDWARE_DEBUG_API
-    word_t esr = getESR();
-    if (isDebugFault(esr)) {
-        handleDebugFaultEvent(esr);
-    } else
-#endif
-    {
-        handleVCPUFault(hsr);
-    }
+    handleVCPUFault(hsr);
     restore_user_context();
     UNREACHABLE();
 }

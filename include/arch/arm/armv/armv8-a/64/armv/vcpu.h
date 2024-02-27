@@ -728,6 +728,13 @@ static inline bool_t armv_handleVCPUFault(word_t hsr)
     }
 #endif
 
+#ifdef CONFIG_HARDWARE_DEBUG_API
+    if (isDebugFault(hsr)) {
+        handleDebugFaultEvent(hsr);
+        return true;
+    }
+#endif
+
     if (hsr == UNKNOWN_FAULT) {
         handleUserLevelFault(getESR(), 0);
         return true;

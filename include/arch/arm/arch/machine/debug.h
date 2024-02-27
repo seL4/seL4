@@ -148,7 +148,8 @@ static inline void initHDCR(void)
 /** Convert a watchpoint size (0, 1, 2, 4 or 8 bytes) into the arch specific
  * register encoding.
  */
-static inline word_t convertSizeToArch(word_t size) {
+static inline word_t convertSizeToArch(word_t size)
+{
     switch (size) {
     case 1:
         return 0x1;
@@ -221,6 +222,9 @@ static inline syscall_error_t Arch_decodeConfigureSingleStepping(tcb_t *t,
             return ret;
         }
 
+        /* The following code relates to checking that the specified breakpoint is suitable to
+            for being used for conguring single stepping. AARCH64 does not need to use breakpoints
+            to simulate single stepping, so these checks can be ommited. */
 #ifdef CONFIG_ARCH_AARCH32
         type = seL4_InstructionBreakpoint;
         bp_num = t->tcbArch.tcbContext.breakpointState.single_step_hw_bp_num;
@@ -282,14 +286,12 @@ static inline syscall_error_t Arch_decodeSetBreakpoint(tcb_t *t,
         }
     }
 
-#ifdef CONFIG_ARCH_AARCH32
     if (size == 8 && !byte8WatchpointsSupported()) {
         userError("Debug: 8-byte watchpoints not supported on this CPU.");
         ret.type = seL4_InvalidArgument;
         ret.invalidArgumentNumber = 3;
         return ret;
     }
-#endif /* CONFIG_ARCH_AARCH32 */
 
     if (size == 8 && type != seL4_DataBreakpoint) {
         userError("Debug: 8-byte sizes can only be used with watchpoints.");
@@ -327,7 +329,6 @@ static inline syscall_error_t Arch_decodeUnsetBreakpoint(tcb_t *t, uint16_t bp_n
         return ret;
     }
 
-#ifdef CONFIG_ARCH_AARCH32
     word_t type;
 
     type = getTypeFromBpNum(bp_num);
@@ -341,7 +342,6 @@ static inline syscall_error_t Arch_decodeUnsetBreakpoint(tcb_t *t, uint16_t bp_n
             return ret;
         }
     }
-#endif /* CONFIG_ARCH_AARCH32 */
 
     return ret;
 }

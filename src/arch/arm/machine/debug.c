@@ -418,7 +418,7 @@ BOOT_CODE void disableAllBpsAndWps(void)
  */
 int getAndResetActiveBreakpoint(word_t vaddr, word_t reason)
 {
-    word_t align_mask = (word_t) -1;
+    word_t align_mask;
     int i, ret = -1;
 
     if (reason == seL4_InstructionBreakpoint) {
@@ -431,10 +431,8 @@ int getAndResetActiveBreakpoint(word_t vaddr, word_t reason)
              * range, which means it's not guaranteed to match the aligned value
              * that was programmed into the address register.
              */
-#ifdef CONFIG_ARCH_AARCH32
             align_mask = convertArchToSize(dbg_bcr_get_bas(bcr));
             align_mask = ~(align_mask - 1);
-#endif /* CONFIG_ARCH_AARCH32 */
 
             if (bvr != (vaddr & align_mask) || !dbg_bcr_get_enabled(bcr)) {
                 continue;
@@ -612,8 +610,6 @@ void restore_user_debug_context(tcb_t *target_thread)
 #ifdef CONFIG_ARCH_AARCH64
     aarch64_restore_user_debug_context(target_thread);
 #endif /* CONFIG_ARCH_ARCH64 */
-
-
 }
 
 #endif /* ARM_BASE_CP14_SAVE_AND_RESTORE */
