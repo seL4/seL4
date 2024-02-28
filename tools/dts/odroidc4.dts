@@ -2945,7 +2945,7 @@
 
 	memory@0 {
 		device_type = "memory";
-		reg = <0x00 0x00 0x00 0x40000000>;
+		reg = <0x00 0x00 0x00 0xf5800000>;
 	};
 
 	emmc-pwrseq {
