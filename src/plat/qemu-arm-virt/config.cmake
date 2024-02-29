@@ -273,5 +273,5 @@ config_string(
     KernelUserTop USER_TOP "Set seL4_UserTop constant"
     DEFAULT ${qemu_user_top}
     UNQUOTE
-    DEPENDS "KernelPlatformQEMUArmVirt;KernelSel4ArchAarch32"
+    DEPENDS "KernelPlatformQEMUArmVirt;KernelSel4ArchAarch32" UNDEF_DISABLED
 )
