@@ -1,0 +1,98 @@
+/*
+ * Copyright (c) 2020-2023, Arm Limited. All rights reserved.
+ * Copyright (c) 2024, Capabilities Ltd <heshamalmatary@capabilitieslimited.co.uk>
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
+/dts-v1/;
+
+/  {
+
+	compatible = "freebsd,bhyve";
+	#address-cells = <0x2>;
+	#size-cells = <0x2>;
+	interrupt-parent = <0x1>;
+	chosen {
+
+		fixup-applied;
+		u-boot,version = "2023.07.02";
+		stdout-path = "serial0:115200n8";
+	};
+	memory {
+
+		device_type = "memory";
+		reg = <0x1 0x0 0x0 0x40000000>;
+	};
+	cpus {
+
+		#address-cells = <0x2>;
+		#size-cells = <0x0>;
+		cpu@0 {
+
+			device_type = "cpu";
+			compatible = "arm,armv8";
+			reg = <0x0 0x0>;
+			enable-method = "psci";
+		};
+	};
+	psci {
+
+		compatible = "arm,psci-1.0";
+		method = "hvc";
+	};
+	interrupt-controller@2f000000 {
+
+		phandle = <0x1>;
+		compatible = "arm,gic-v3";
+		interrupt-controller;
+		#address-cells = <0x2>;
+		#interrupt-cells = <0x3>;
+		reg = <0x0 0x2f000000 0x0 0x10000 0x0 0x2f100000 0x0 0x20000>;
+		mbi-ranges = <0x100 0x40>;
+		msi-controller;
+	};
+	uart-clock {
+
+		compatible = "fixed-clock";
+		clock-output-names = "clk24mhz";
+		#clock-cells = <0x0>;
+		clock-frequency = <0x16e3600>;
+		phandle = <0x2>;
+	};
+	serial@10000 {
+
+		compatible = "arm,pl011", "arm,primecell";
+		reg = <0x0 0x10000 0x0 0x1000>;
+		interrupt-parent = <0x1>;
+		interrupts = <0x0 0x0 0x4>;
+		clocks = <0x2 0x2>;
+		clock-names = "uartclk", "apb_pclk";
+	};
+	aliases {
+
+		serial0 = "/serial@10000";
+	};
+	timer {
+
+		compatible = "arm,armv8-timer";
+		interrupt-parent = <0x1>;
+		/*interrupts = <0x1 0xd 0x8 0x1 0xe 0x8 0x1 0xb 0x8>;*/
+		interrupts = <0x1 0xd 0x8 0x1 0xe 0x8 0x1 0xb 0x8 0x01 0x0a 0x08>;
+	};
+	pcie@1f0000000 {
+
+		compatible = "pci-host-ecam-generic";
+		#address-cells = <0x3>;
+		#size-cells = <0x2>;
+		device_type = "pci";
+		bus-range = <0x0 0x1>;
+		reg = <0x0 0xe0000000 0x0 0x10000000>;
+		ranges = <0x1000000 0x0 0xdf000000 0x0 0xdf000000 0x0 0x1000000 0x2000000 0x0 0xa0000000 0x0 0xa0000000 0x0 0x3f000000>;
+		msi-map = <0x0 0x1 0x0 0x10000>;
+		msi-parent = <0x1>;
+		#interrupt-cells = <0x1>;
+		interrupt-parent = <0x1>;
+		interrupt-map-mask = <0x0 0x0 0x0 0x7>;
+		interrupt-map = <0x0 0x0 0x0 0x1 0x1 0x0 0x0 0x0 0x1 0x4>;
+	};
+};
