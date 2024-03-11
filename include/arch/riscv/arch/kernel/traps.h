@@ -43,4 +43,3 @@ void restore_user_context(void)
 VISIBLE NORETURN SECTION(".text.traps");
 
 void handle_exception(void);
-
