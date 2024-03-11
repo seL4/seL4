@@ -20,6 +20,9 @@ static inline void arch_c_exit_hook(void)
     /* Nothing architecture specific to be done. */
 }
 
+/* ASM trap entry. */
+void NORETURN trap_entry(void);
+
 #ifdef CONFIG_KERNEL_MCS
 void c_handle_fastpath_reply_recv(word_t cptr, word_t msgInfo, word_t reply)
 #else
