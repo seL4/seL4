@@ -260,6 +260,7 @@ def main():
         dtd = etree.XMLSchema(etree.parse(args.dtd))
         for f in args.files:
             xml = etree.parse(f)
+            xml.xinclude()
             if not dtd.validate(xml):
                 logging.error("Failed to validate %s against %s" % (f, args.dtd))
                 logging.error(dtd.error_log)
