@@ -297,7 +297,6 @@ endfunction(config_option)
 # configuration headers.
 macro(config_set optionname configname value)
     set(${optionname} "${value}" CACHE INTERNAL "" FORCE)
-    set(c_define "CONFIG_${configname}")
     if("${value}" STREQUAL "OFF")
         cfg_str_add_disabled(configure_string ${configname})
     else()
