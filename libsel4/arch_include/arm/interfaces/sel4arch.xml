@@ -773,7 +773,8 @@
             </error>
         </method>
         <method id="ARMIRQIssueSGISignal" name="IssueSGISignal" manual_name="IssueSGISignal"
-           manual_label="irq_controlissuesgisignal" condition="CONFIG_MAX_NUM_NODES == 1">
+           manual_label="irq_controlissuesgisignal">
+            <condition><not><config var="CONFIG_ENABLE_SMP_SUPPORT"/></not></condition>
             <brief>
                 Create an SGI signal capability.
             </brief>
