@@ -65,6 +65,7 @@ def eval_condition(condition, values):
     """
 
     pos = 0
+    undefined = "Undef"
 
     def accept(string):
         nonlocal pos
@@ -94,7 +95,7 @@ def eval_condition(condition, values):
         end = pos
         if not accept(")"):
             return None
-        return values.get(condition[start:end], "False")
+        return values.get(condition[start:end], undefined)
 
     def parse_not():
         nonlocal pos
@@ -106,6 +107,8 @@ def eval_condition(condition, values):
             return "False"
         elif term == "False":
             return "True"
+        elif term == undefined:
+            return undefined
         else:
             return None
 
@@ -143,11 +146,13 @@ def eval_condition(condition, values):
     cond = parse_condition()
     skip_whitespace()
     if not cond or pos != len(condition):
-        raise Exception(f"Failed to parse condition '{condition}'")
+        raise Exception(f"Failed to parse condition '{condition}' (got {cond} at {pos})")
     if cond == "True":
         return True
     if cond == "False":
         return False
+    if cond == undefined:
+        return None
     raise Exception(f"Unexpected value {cond} for condition '{condition}'")
 
 
@@ -155,7 +160,7 @@ def is_mcs(method_condition):
     """
     Returns whether the condition evaluates to true when CONFIG_KERNEL_MCS is set.
     """
-    return eval_condition(method_condition, {"CONFIG_KERNEL_MCS": "True"})
+    return eval_condition(method_condition, {"CONFIG_KERNEL_MCS": "True"}) is True
 
 
 def gen_invocations(input_files, output_dir, args):
