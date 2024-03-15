@@ -619,11 +619,9 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
     case seL4_VCPUReg_CNTVOFFlow:
         set_cntv_off_low(reg);
         break;
-#ifdef ENABLE_SMP_SUPPORT
     case seL4_VCPUReg_VMPIDR:
         set_vmpidr(reg);
         break;
-#endif /* ENABLE_SMP_SUPPORT */
     default:
         fail("ARM/HYP: Invalid register index");
     }
