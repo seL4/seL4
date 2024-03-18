@@ -26,8 +26,7 @@ void VISIBLE NORETURN restore_user_context(void)
     NODE_UNLOCK_IF_HELD;
 
 #ifdef ENABLE_SMP_SUPPORT
-    word_t sp;
-    asm volatile("csrr %0, sscratch" : "=r"(sp));
+    word_t sp = read_sscratch();
     sp -= sizeof(word_t);
     *((word_t *)sp) = cur_thread_reg;
 #endif
