@@ -957,7 +957,7 @@
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, the source capability cannot be derived <docref>(see <autoref label="sec:cap_derivation"/>)</docref>.
+                    Or, the source capability cannot be derived<docref> (see <autoref label="sec:cap_derivation"/>)</docref>.
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
@@ -972,7 +972,7 @@
             </error>
             <error name="seL4_RevokeFirst">
                 <description>
-                    The source capability cannot be derived <docref>(see <autoref label="sec:cap_derivation"/>)</docref>.
+                    The source capability cannot be derived<docref> (see <autoref label="sec:cap_derivation"/>)</docref>.
                 </description>
             </error>
         </method>
@@ -1340,7 +1340,7 @@
                 Set the parameters of a scheduling context by invoking the scheduling control capability. If the scheduling context is bound to a currently running thread, the parameters will take effect immediately: that is the current budget will be increased or reduced by the difference between the new and previous budget and the replenishment time will be updated according to any difference in the period. This can result in active threads being post-poned or released depending on the nature of the parameter change and the state of the thread. Additionally, if the scheduling context was previously empty (no budget) but bound to a runnable thread, this can result in a thread running for the first time since it now has access to CPU time. This call will return seL4 Invalid Argument if the parameters are too small (smaller than the kernel WCET for this platform) or too large (will overflow the timer).
             </brief>
             <description>
-                See <autoref label="sec:threads"/>
+                <docref>See <autoref label="sec:threads"/></docref>
             </description>
             <return><errorenumdesc/></return>
             <param dir="in" name="schedcontext" type="seL4_SchedContext"
@@ -1395,7 +1395,7 @@
                 already bound to a thread.
             </brief>
             <description>
-                See <autoref label="sec:threads"/>
+                <docref>See <autoref label="sec:threads"/></docref>
             </description>
             <return><errorenumdesc/></return>
             <param dir="in" name="cap" type="seL4_CPtr"
@@ -1421,7 +1421,7 @@
                 will render the bound thread passive, see Section 6.1.5.
             </brief>
             <description>
-                See <autoref label="sec:threads"/>
+                <docref>See <autoref label="sec:threads"/></docref>
             </description>
             <return><errorenumdesc/></return>
             <error name="seL4_IllegalOperation">
@@ -1452,7 +1452,7 @@
                 If the object is a notification and it is bound to the scheduling context, unbind it.
             </brief>
             <description>
-                See <autoref label="sec:passive"/>
+                <docref>See <autoref label="sec:passive"/></docref>
             </description>
             <return><errorenumdesc/></return>
             <param dir="in" name="cap" type="seL4_CPtr"
@@ -1476,7 +1476,7 @@
                 Return the amount of time used by this scheduling context since this function was last called or a timeout exception triggered.
             </brief>
             <description>
-                See <autoref label="sec:threads"/>
+                <docref>See <autoref label="sec:threads"/></docref>
             </description>
             <return><errorenumdesc/></return>
             <param dir="out" name="consumed" type="seL4_Time"
@@ -1504,14 +1504,14 @@
               Capability to the scheduling context which is being operated on.
           </description>
           <return>
-            See <autoref label="sec:scheduling_contexts"/>
+            <docref>See <autoref label="sec:scheduling_contexts"/></docref>
           </return>
             <param dir="out" name="consumed" type="seL4_Time"/>
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="_service"/> is not bound to a TCB or is bound to the current thread's TCB.
-                    Or, the target thread's priority is greater than the current thread's maximum controlled priority <docref>(see <autoref label="sec:sched"/>)</docref>.
+                    Or, the target thread's priority is greater than the current thread's maximum controlled priority<docref> (see <autoref label="sec:sched"/>)</docref>.
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
