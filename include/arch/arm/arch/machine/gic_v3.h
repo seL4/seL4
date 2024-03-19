@@ -49,6 +49,29 @@
 
 #define DEFAULT_PMR_VALUE            0xff
 
+/* SGI1R register. */
+#define ICC_SGI1R_TARGET_LIST_SHIFT         0
+#define ICC_SGI1R_TARGET_LIST_MASK          (0xffff << ICC_SGI1R_TARGET_LIST_SHIFT)
+#define ICC_SGI1R_TARGET_LIST_VAL(sgi1r)    (((sgi1r) & ICC_SGI1R_TARGET_LIST_MASK) >> ICC_SGI1R_TARGET_LIST_SHIFT)
+#define ICC_SGI1R_AFF1_SHIFT            16
+#define ICC_SGI1R_AFF1_MASK             (0xff << ICC_SGI1R_AFF1_SHIFT)
+#define ICC_SGI1R_AFF1_VAL(sgi1r)       (((sgi1r) & ICC_SGI1R_AFF1_MASK) >> ICC_SGI1R_AFF1_SHIFT)
+#define ICC_SGI1R_INT_ID_SHIFT          24
+#define ICC_SGI1R_INT_ID_MASK           (0xfull << ICC_SGI1R_INT_ID_SHIFT)
+#define ICC_SGI1R_INT_ID_VAL(sgi1r)     (((sgi1r) & ICC_SGI1R_INT_ID_MASK) >> ICC_SGI1R_INT_ID_SHIFT)
+#define ICC_SGI1R_AFF2_SHIFT            32
+#define ICC_SGI1R_AFF2_MASK             (0xffull << ICC_SGI1R_AFF2_SHIFT)
+#define ICC_SGI1R_AFF2_VAL(sgi1r)       (((sgi1r) & ICC_SGI1R_AFF2_MASK) >> ICC_SGI1R_AFF2_SHIFT)
+#define ICC_SGI1R_IRM_SHIFT             40
+#define ICC_SGI1R_IRM_MASK              (0x1ull << ICC_SGI1R_IRM_SHIFT)
+#define ICC_SGI1R_IRM_VAL(sgi1r)        (((sgi1r) & ICC_SGI1R_IRM_MASK) >> ICC_SGI1R_IRM_SHIFT)
+#define ICC_SGI1R_RS_SHIFT              44
+#define ICC_SGI1R_RS_MASK               (0xfull << ICC_SGI1R_RS_SHIFT)
+#define ICC_SGI1R_RS_VAL(sgi1r)         (((sgi1r) & ICC_SGI1R_RS_MASK) >> ICC_SGI1R_RS_SHIFT)
+#define ICC_SGI1R_AFF3_SHIFT            48
+#define ICC_SGI1R_AFF3_MASK             (0xffull << ICC_SGI1R_AFF3_SHIFT)
+#define ICC_SGI1R_AFF3_VAL(sgi1r)       (((sgi1r) & ICC_SGI1R_AFF3_MASK) >> ICC_SGI1R_AFF3_SHIFT)
+
 /* System registers for GIC CPU interface */
 #ifdef CONFIG_ARCH_AARCH64
 #define ICC_IAR1_EL1    "S3_0_C12_C12_0"
