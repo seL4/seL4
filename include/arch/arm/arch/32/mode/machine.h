@@ -369,7 +369,7 @@ static inline void cleanByVA_PoU(vptr_t vaddr, paddr_t paddr)
     /* V6 doesn't distinguish PoU and PoC, so use the basic flush. */
     asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
 #elif defined(CONFIG_ARM_CORTEX_A7) || defined(CONFIG_ARM_CORTEX_A15) || \
-    defined(CONFIG_ARM_CORTEX_A53)
+    defined(CONFIG_ARM_CORTEX_A53) || defined(CONFIG_ARM_CORTEX_A72)
     /* Flush to coherency for table walks... Why? */
     asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
 #else
