@@ -87,14 +87,14 @@ seL4_DebugSnapshot(void);
 
 /**
  * @xmlonly <manual name="Cap Identify" label="sel4_debugcapidentify"/> @endxmlonly
- * @brief Identify the type of a capability in the current cspace.
+ * @brief Identify the type of a capability in the current CSpace.
  *
  * This debugging system call returns the type of capability in a capability
- * slot in the current cspace. The type returned is not a libsel4 type, but
+ * slot in the current CSpace. The type returned is not a libsel4 type, but
  * refers to an internal seL4 type. This can be looked up in a built kernel by
  * looking for the (generated) `enum cap_tag`, type `cap_tag_t`.
  *
- * @param cap A capability slot in the current cspace.
+ * @param cap A capability slot in the current CSpace.
  * @return The type of capability passed in.
  *
  */
