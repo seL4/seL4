@@ -4,13 +4,14 @@
 
      SPDX-License-Identifier: BSD-2-Clause
 -->
-<!DOCTYPE api [
+<xi:include href="test-file-to-include.xml"/>
+<!-- <!DOCTYPE api [
     <!ENTITY illegal_operation "The <texttt text='_service'/> is a CPtr to a capability of the wrong type (see <genref name='error:illegal_operation'/> in common error codes)">
     <!ENTITY or_illegal_operation "Or, the <texttt text='_service'/> is a CPtr to a capability of the wrong type (see <genref name='error:illegal_operation'/> in common error codes)">
     <!ENTITY invalid_capability "The <texttt text='_service'/> is a CPtr to a capability of the wrong type (see <genref name='error:invalid_capability'/> in common error codes.)">
     <!ENTITY or_invalid_capability "Or, the <texttt text='_service'/> is a CPtr to a capability of the wrong type (see <genref name='error:invalid_capability'/> in common error codes.)">
+]> -->
 
-]>
 
 <api name="ObjectApiX64" label_prefix="x86_64_">
     <struct name="seL4_UserContext">

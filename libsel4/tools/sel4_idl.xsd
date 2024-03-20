@@ -1,4 +1,5 @@
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:xi="http://www.w3.org/2001/XInclude">
 <!--
      Copyright 2022, seL4 Project a Series of LF Projects, LLC
 
@@ -97,7 +98,6 @@
             <xsd:element name="obj" type="ObjType"/>
             <xsd:element name="autoref" type="AutoRefType"/>
             <xsd:element name="genref" type="GenRefType"/>
-            <xsd:element name="errornewline" type="ErrorNewLineType" />
         </xsd:choice>
     </xsd:group>
 
