@@ -44,6 +44,7 @@ from argparse import ArgumentParser
 import sys
 from functools import reduce
 from condition import condition_to_cpp
+from lxml import etree
 
 # Number of bits in a standard word
 WORD_SIZE_BITS_ARCH = {
@@ -824,10 +825,15 @@ def parse_xml_file(input_file, valid_types):
     for i in valid_types:
         type_names[i.name] = i
 
+    # Parse with xlml to get Xincludes first.
+    doc = etree.parse(input_file)
+    doc.xinclude()
+    input_text = etree.tostring(doc)
+
     # Parse the XML to generate method structures.
     methods = []
     structs = []
-    doc = xml.dom.minidom.parse(input_file)
+    doc = xml.dom.minidom.parseString(input_text)
 
     api = Api(doc.getElementsByTagName("api")[0])
 

@@ -228,6 +228,7 @@ clean:
 		*.out *.ps *-diff.tex *.mps .log *.pdf *.tgz *~ *.lof *.lot env.tex
 	rm -rf ${DoxygenOutput} ${GeneratedLatexDir} ${GeneratedMarkdownDir}
 	rm -rf ${Stage}
+	rm -rf *.acn *.glo *.gls *.ilg *.ist
 
 tar:	clean
 	( p=`pwd` && d=`basename "$$p"` && cd .. && \
@@ -291,6 +292,8 @@ references.bib: $(addsuffix .tex, $(Targets))
 	${Q}if ! test -e $*.bbl || test $(Bib) -nt $*.bbl; then rm -f $*.bbl; fi
 	@echo "====> LaTeX first pass: $(<)"
 	${Q}$(LaTeX) $< >.log || if egrep -q $(Error) $*.log ; then cat .log; rm $@; false ; fi
+	@echo "====> Glossary: $(<)"
+	${Q}makeindex -s manual.ist -o manual.gls manual.glo
 	${Q}if egrep -q $(Rerun_Bib) $*.log ; then echo "====> BibTex" && $(BibTeX) $* > /dev/null && echo "====> LaTeX BibTeX pass" && $(LaTeX) >.log $< ; fi
 	${Q}if egrep -q $(Rerun) $*.log ; then echo "====> LaTeX rerun" && $(LaTeX) >.log $<; fi
 	${Q}if egrep -q $(Rerun) $*.log ; then echo "====> LaTeX rerun" && $(LaTeX) >.log $<; fi
