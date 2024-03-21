@@ -4,16 +4,15 @@
 
      SPDX-License-Identifier: BSD-2-Clause
 -->
-<xi:include href="test-file-to-include.xml"/>
-<!-- <!DOCTYPE api [
+<!DOCTYPE api [
     <!ENTITY illegal_operation "The <texttt text='_service'/> is a CPtr to a capability of the wrong type (see <genref name='error:illegal_operation'/> in common error codes)">
     <!ENTITY or_illegal_operation "Or, the <texttt text='_service'/> is a CPtr to a capability of the wrong type (see <genref name='error:illegal_operation'/> in common error codes)">
     <!ENTITY invalid_capability "The <texttt text='_service'/> is a CPtr to a capability of the wrong type (see <genref name='error:invalid_capability'/> in common error codes.)">
     <!ENTITY or_invalid_capability "Or, the <texttt text='_service'/> is a CPtr to a capability of the wrong type (see <genref name='error:invalid_capability'/> in common error codes.)">
-]> -->
+]>
 
 
-<api name="ObjectApiX64" label_prefix="x86_64_">
+<api name="ObjectApiX64" label_prefix="x86_64_" xmlns:xi="http://www.w3.org/2001/XInclude">
     <struct name="seL4_UserContext">
         <member name="rip"/>
         <member name="rsp"/>
@@ -52,12 +51,14 @@
                     VM attributes for the mapping. <docref>Possible values for this type are given in <autoref label='ch:vspace'/>.</docref>
                 </description>
             </param>
+            <xi:include href="test-iz.xml"/>
             <error name="seL4_DeleteFirst">
                 <description>
                     A mapping already exists for this level in <texttt text="vspace"/> at <texttt text="vaddr"/>.
                 </description>
             </error>
-            <error name="seL4_FailedLookup">
+            <xi:include href="test-iz.xml"/>
+            <!-- <error name="seL4_FailedLookup">
                 <description>
                     The <texttt text="pml4"/> is not assigned to an ASID pool.
                 </description>
@@ -80,7 +81,7 @@
                     Or, <texttt text="_service"/> is already mapped in a VSpace.
                     &or_invalid_capability;
                 </description>
-            </error>
+            </error> -->
         </method>
         <method id="X86PDPTUnmap" name="Unmap">
             <brief>

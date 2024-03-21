@@ -1,5 +1,4 @@
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-            xmlns:xi="http://www.w3.org/2001/XInclude">
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
 <!--
      Copyright 2022, seL4 Project a Series of LF Projects, LLC
 
