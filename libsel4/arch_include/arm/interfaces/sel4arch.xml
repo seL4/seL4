@@ -151,12 +151,12 @@
             description="Virtual address to map the page into."/>
             <param dir="in" name="rights" type="seL4_CapRights_t">
                 <description>
-                    Rights for the mapping.<docref>Possible values for this type are given in <autoref label="sec:cap_rights"/>  .</docref>
+                    Rights for the mapping.<docref> Possible values for this type are given in <autoref label="sec:cap_rights"/>  .</docref>
                 </description>
             </param>
             <param dir="in" name="attr" type="seL4_ARM_VMAttributes">
                 <description>
-                    VM Attributes for the mapping.<docref>Possible values for this type are given in <autoref label="ch:vspace"/>  .</docref>
+                    VM Attributes for the mapping.<docref> Possible values for this type are given in <autoref label="ch:vspace"/>  .</docref>
                 </description>
             </param>
             <error name="seL4_AlignmentError">
@@ -223,7 +223,7 @@
             <param dir="in" name="iospace" type="seL4_ARM_IOSpace" description="The IOSpace to map the page into."/>
             <param dir="in" name="rights" type="seL4_CapRights_t">
                 <description>
-                    Rights for the mapping.<docref>Possible values for this type are given in <autoref label="sec:cap_rights"/>  .</docref>
+                    Rights for the mapping.<docref> Possible values for this type are given in <autoref label="sec:cap_rights"/>  .</docref>
                 </description>
             </param>
             <param dir="in" name="ioaddr" type="seL4_Word" description="Virtual address at which to map page."/>
