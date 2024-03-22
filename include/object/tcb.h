@@ -44,6 +44,57 @@ static inline unsigned int setMR(tcb_t *receiver, word_t *receiveIPCBuffer,
 void tcbSchedEnqueue(tcb_t *tcb);
 void tcbSchedAppend(tcb_t *tcb);
 void tcbSchedDequeue(tcb_t *tcb);
+tcb_queue_t tcb_queue_remove(tcb_queue_t queue, tcb_t *tcb);
+
+static inline bool_t PURE tcb_queue_empty(tcb_queue_t queue)
+{
+    return queue.head == NULL;
+}
+
+static inline tcb_queue_t tcb_queue_prepend(tcb_queue_t queue, tcb_t *tcb)
+{
+    if (tcb_queue_empty(queue)) {
+        queue.end = tcb;
+    } else {
+        tcb->tcbSchedNext = queue.head;
+        queue.head->tcbSchedPrev = tcb;
+    }
+
+    queue.head = tcb;
+
+    return queue;
+}
+
+static inline tcb_queue_t tcb_queue_append(tcb_queue_t queue, tcb_t *tcb)
+{
+    if (tcb_queue_empty(queue)) {
+        queue.head = tcb;
+    } else {
+        tcb->tcbSchedPrev = queue.end;
+        queue.end->tcbSchedNext = tcb;
+    }
+
+    queue.end = tcb;
+
+    return queue;
+}
+
+/* Insert a TCB into a queue immediately before another item in the queue
+   (the queue must initially contain at least two items) */
+static inline void tcb_queue_insert(tcb_t *tcb, tcb_t *after)
+{
+    tcb_t *before;
+    before = after->tcbSchedPrev;
+
+    assert(before != NULL);
+    assert(before != after);
+
+    tcb->tcbSchedPrev = before;
+    tcb->tcbSchedNext = after;
+
+    after->tcbSchedPrev = tcb;
+    before->tcbSchedNext = tcb;
+}
 
 #ifdef CONFIG_DEBUG_BUILD
 void tcbDebugAppend(tcb_t *tcb);
