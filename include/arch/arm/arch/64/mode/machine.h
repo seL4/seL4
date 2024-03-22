@@ -304,7 +304,7 @@ static inline void invalidateByVA_I(vptr_t vaddr, paddr_t paddr)
 
 static inline void invalidate_I_PoU(void)
 {
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef CONFIG_ENABLE_SMP_SUPPORT
     asm volatile("ic ialluis");
 #else
     asm volatile("ic iallu");

@@ -32,7 +32,7 @@
 
 .macro lsp_i _tmp
     mrs     \_tmp, TPIDR
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef CONFIG_ENABLE_SMP_SUPPORT
     bic     \_tmp, \_tmp, #0xfff
 #endif
     mov     sp, \_tmp
