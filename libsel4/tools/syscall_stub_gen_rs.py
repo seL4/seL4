@@ -485,11 +485,8 @@ def generate_stub_file(arch, input_files, output_file, use_only_ipc_buffer, mcs,
     result.append(" */")
     for (interface_name, method_name, method_id, inputs, outputs, condition, comment) in methods:
         if condition != "":
-            if condition == "(!defined CONFIG_KERNEL_MCS) && CONFIG_MAX_NUM_NODES > 1":
-                # NB: CONFIG_MAX_NUM_NODES > 1 =>'s CONFIG_SMP_SUPPORT
-                condition = 'all(not(feature = "CONFIG_KERNEL_MCS"), feature = "CONFIG_SMP_SUPPORT")'
-            elif condition == "CONFIG_MAX_NUM_NODES > 1":
-                condition = 'feature = "CONFIG_SMP_SUPPORT"'
+            if condition == "(!defined(CONFIG_KERNEL_MCS) && defined(CONFIG_ENABLE_SMP_SUPPORT))":
+                condition = 'all(not(feature = "CONFIG_KERNEL_MCS"), feature = "CONFIG_ENABLE_SMP_SUPPORT")'
             elif condition:
                 condition = condition.replace('defined', '')
                 condition = condition.replace('(', '')
