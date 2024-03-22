@@ -118,7 +118,7 @@ seL4_DebugCapIdentify(seL4_CPtr cap);
  */
 LIBSEL4_INLINE_FUNC void
 seL4_DebugNameThread(seL4_CPtr tcb, const char *name);
-#if CONFIG_MAX_NUM_NODES > 1 && defined CONFIG_ARCH_ARM
+#if defined(CONFIG_ENABLE_SMP_SUPPORT) && defined(CONFIG_ARCH_ARM)
 /**
  * @xmlonly <manual name="Send SGI 0-15" label="sel4_debugsendipi"/> @endxmlonly
  * @brief Sends arbitrary SGI.
