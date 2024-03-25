@@ -30,6 +30,8 @@ jobs:
             session: CRefine SimplExportAndRefine
           - arch: X64
             session: CRefine
+          - arch: AARCH64
+            session: CRefine
           - arch: RISCV64
             features: MCS
             session: CRefine
