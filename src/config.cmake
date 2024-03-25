@@ -20,6 +20,7 @@ add_sources(
         src/kernel/thread.c
         src/kernel/boot.c
         src/kernel/stack.c
+        src/kernel/debug.c
         src/object/notification.c
         src/object/cnode.c
         src/object/endpoint.c
