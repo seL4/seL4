@@ -307,13 +307,28 @@ static inline void maskInterrupt(bool_t disable, irq_t irq)
     }
 }
 
+static inline void prioDropInterrupt(irq_t irq)
+{
+    word_t hw_irq = IRQT_TO_IRQ(irq);
+    /* Perform priority drop for current IRQ */
+    SYSTEM_WRITE_WORD(ICC_EOIR1_EL1, hw_irq);
+
+}
+
+static inline void deactivateInterrupt(irq_t irq)
+{
+    word_t hw_irq = IRQT_TO_IRQ(irq);
+    /* Perform deactivation of hw_irq */
+    SYSTEM_WRITE_WORD(ICC_DIR_EL1, hw_irq);
+}
+
 static inline void ackInterrupt(irq_t irq)
 {
     assert(IS_IRQ_VALID(active_irq[CURRENT_CPU_INDEX()])
            && (active_irq[CURRENT_CPU_INDEX()] & IRQ_MASK) == IRQT_TO_IRQ(irq));
 
     /* Set End of Interrupt for active IRQ: ICC_EOIR1_EL1 */
-    SYSTEM_WRITE_WORD(ICC_EOIR1_EL1, active_irq[CURRENT_CPU_INDEX()]);
+    prioDropInterrupt(irq);
     active_irq[CURRENT_CPU_INDEX()] = IRQ_NONE;
 
 }
