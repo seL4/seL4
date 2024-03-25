@@ -10,6 +10,8 @@
 #include <plat/machine.h>
 #include <arch/types.h>
 
+#define MAX_IOAPIC  (IOAPIC_IRQ_LINES * CONFIG_MAX_NUM_IOAPIC)
+
 void ioapic_init(uint32_t num_nodes, cpu_id_t *cpu_list, uint32_t num_ioapic);
 void ioapic_mask(bool_t mask, uint32_t ioapic, uint32_t pin);
 

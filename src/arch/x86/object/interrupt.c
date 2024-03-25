@@ -11,6 +11,7 @@
 #include <linker.h>
 #include <plat/machine/hardware.h>
 #include <plat/machine/pci.h>
+#include <plat/machine/intel-vtd.h>
 
 void Arch_irqStateInit(void)
 {
@@ -63,6 +64,17 @@ static exception_t invokeIssueIRQHandlerIOAPIC(irq_t irq, word_t ioapic, word_t 
 {
     x86_irq_state_t irqState = x86_irq_state_irq_ioapic_new(ioapic, pin, level, polarity, 1);
     ioapic_map_pin_to_vector(ioapic, pin, level, polarity, vector);
+    return Arch_invokeIRQControl(irq, handlerSlot, controlSlot, irqState);
+}
+
+static exception_t invokeIssueIRQHandlerMSI(irq_t irq, word_t handle, word_t pci_bus, word_t pci_dev, word_t pci_func,
+                                               word_t vector,
+                                               cte_t *handlerSlot, cte_t *controlSlot)
+{
+    x86_irq_state_t irqState = x86_irq_state_irq_msi_new(pci_bus, pci_dev, pci_func, handle);
+#ifdef CONFIG_IOMMU
+    vtd_create_irte_msi(handle, vector, pci_bus, pci_dev, pci_func);
+#endif
     return Arch_invokeIRQControl(irq, handlerSlot, controlSlot, irqState);
 }
 
@@ -150,9 +162,6 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length, cte_
         word_t pci_dev = getSyscallArg(3, buffer);
         word_t pci_func = getSyscallArg(4, buffer);
         word_t handle = getSyscallArg(5, buffer);
-        x86_irq_state_t irqState;
-        /* until we support msi interrupt remaping through vt-d we ignore the
-         * vector and trust the user */
 
         if (pci_bus > PCI_BUS_MAX) {
             current_syscall_error.type = seL4_RangeError;
@@ -175,10 +184,14 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length, cte_
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        irqState = x86_irq_state_irq_msi_new(pci_bus, pci_dev, pci_func, handle);
-
+#ifdef CONFIG_IOMMU
+        status = vtd_decode_irte_msi(handle, vector);
+        if (status != EXCEPTION_NONE) {
+            return status;
+        }
+#endif
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        return Arch_invokeIRQControl(irq, destSlot, srcSlot, irqState);
+        return invokeIssueIRQHandlerMSI(irq, handle, pci_bus, pci_dev, pci_func, vector, destSlot, srcSlot);
     }
     break;
     default:

@@ -271,3 +271,26 @@ block ia32_arch_capabilities_msr {
     field ibrs_all      1
     field rdcl_no       1
 }
+
+#ifdef CONFIG_IOMMU
+
+-- Intel VT-d Interrupt Remapping Table Entry for Remapped Interrupts
+block vtd_irte {
+    padding                         44
+    field       sid_vtype           2
+    field       sid_q               2
+    field       source_id           16
+    field       dest_id             32
+    padding                         8
+    field       vector              8
+    field       irte_mode           1
+    padding                         7
+    field       delivery_mode       3
+    field       trigger_mode        1
+    field       redir_hint          1
+    field       dest_mode           1
+    field       fault_disable       1
+    field       present             1
+}
+
+#endif
