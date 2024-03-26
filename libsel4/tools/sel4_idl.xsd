@@ -128,7 +128,6 @@
     <xsd:complexType name="ParamType">
         <xsd:sequence>
             <xsd:element name="description" minOccurs="0" maxOccurs="1" type="DescriptionType"/>
-            <xsd:element name="error" minOccurs="0" maxOccurs="unbounded" type="ErrorType"/>
         </xsd:sequence>
         <xsd:attribute name="type" type="xsd:string" use="required"/>
         <xsd:attribute name="name" type="xsd:string" use="required"/>

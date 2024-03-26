@@ -26,6 +26,7 @@
                 <description>
                     VM Attributes for the mapping. <docref>Possible values for this type are given in <autoref label="ch:vspace"/>  .</docref>
                 </description>
+            </param>
             <error name="seL4_DeleteFirst">
                 <description>
                     A mapping already exists for this level in <texttt text="vspace"/> at <texttt text="vaddr."/>
@@ -54,7 +55,6 @@
                     Or, <texttt text="_service"/> is already mapped in a VSpace.
                 </description>
             </error>
-            </param>
         </method>
         <method id="ARMPageTableUnmap" name="Unmap" manual_label="pagetable_unmap">
             <brief>
