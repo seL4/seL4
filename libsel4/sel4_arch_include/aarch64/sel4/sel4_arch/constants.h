@@ -52,8 +52,6 @@ typedef enum {
     SEL4_FORCE_LONG_ENUM(seL4_VMFault_Msg),
 } seL4_VMFault_Msg;
 
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-
 typedef enum {
     seL4_VGICMaintenance_IDX,
     seL4_VGICMaintenance_Length,
@@ -114,8 +112,6 @@ typedef enum {
     seL4_VCPUReg_Num,
     SEL4_FORCE_LONG_ENUM(seL4_VCPUReg),
 } seL4_VCPUReg;
-
-#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 #ifdef CONFIG_KERNEL_MCS
 typedef enum {
