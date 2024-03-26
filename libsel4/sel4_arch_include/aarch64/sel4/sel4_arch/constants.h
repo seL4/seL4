@@ -112,6 +112,7 @@ typedef enum {
     seL4_VCPUReg_CNTKCTL_EL1,
 
     seL4_VCPUReg_Num,
+    SEL4_FORCE_LONG_ENUM(seL4_VCPUReg),
 } seL4_VCPUReg;
 
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
