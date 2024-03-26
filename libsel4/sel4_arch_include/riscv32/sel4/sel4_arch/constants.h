@@ -116,7 +116,7 @@ typedef enum {
     seL4_Timeout_Consumed_HighBits,
     seL4_Timeout_Consumed_LowBits,
     seL4_Timeout_Length,
-} seL4_TimeoutMsg;
+} seL4_Timeout_Msg;
 #endif
 #endif /* __ASSEMBLER__ */
 
