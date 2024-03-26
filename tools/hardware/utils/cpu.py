@@ -17,6 +17,9 @@ def get_cpus(tree: FdtParser) -> List[WrappedNode]:
     ' Return a list of all the CPUs described in this device tree. '
     cpus_node = tree.get_path('/cpus')
 
+    if cpus_node is None:
+        return []
+
     found_cpus = []
     for node in cpus_node:
         if node.has_prop('device_type') and node.get_prop('device_type').strings[0] == 'cpu':
