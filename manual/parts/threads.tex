@@ -658,11 +658,34 @@ such familiarity is therefore assumed in description.
 
 \subsection{Arm}
 
-When a \obj{TCB} has a bound \obj{VCPU} it is allowed to have the mode portion of the
-\texttt{cpsr} register set to values other than \texttt{user}. Specifically it may have any value other than
-\texttt{hypervisor}.
+When a \obj{TCB} has a bound \obj{VCPU} it will have access to (virtualised) system registers,
+cache and TLB maintenance instructions and be able to handle some exceptions itself.
+The virtual GIC will be enabled, allowing virtual interrupt delivery.
 
-TODO: this section needs more detail
+The virtualised system registers can be modified with \apifunc{seL4\_ARM\_VCPU\_WriteRegs}{arm_vcpu_write_registers}.
+By configuring the mode portion of the \texttt{SPSR\_EL1} or \texttt{cpsr} register,
+for ARMv8 and ARMv7 respectively, the thread can run in guest kernel mode.
+
+Interrupts are virtualised through the virtual GIC and need to be forwarded with
+\apifunc{seL4\_ARM\_VCPU\_InjectIRQ}{arm_vcpu_inject_irq}, which provides a way to manage
+Virtual GIC List Registers, a queue of pending IRQs to be delivered to the guest. To help
+with managing the list, the Virtual GIC will send GIC maintenance interrupts, which are
+delivered as VGIC Maintenance Faults. List Register state is saved and restored on \obj{VCPU}
+context switch, but there is currently no way to do that manually.
+
+Shared Peripheral Interrupts (SPIs) can be handled like any normal IRQs and forwarded as required.
+
+Virtual Private Peripheral Interrupts (PPI) are trapped and delivered as VPPI Event faults and need
+to be acknowledged with \apifunc{seL4\_ARM\_VCPU\_AckVPPI}{arm_vcpu_acknowledge_virtual_ppi_irq}.
+
+In addition to the above and standard exceptions, others are delivered as VCPU Faults.
+
+Stage 2 translation is enabled when the kernel supports virtualisation. \obj{VCPUs} will have control
+over stage 1 translations and stage 2 translations will be used for the rest of the system.
+As stage 2 translations use VMIDs instead of ASIDs to distinguish address spaces, VMIDs will be used
+to implement seL4 ASIDs. Practically this means that there is an ASID limit of 256 for all threads,
+until 16-bit VMIDs are supported. If more ASIDs are needed, ASIDs will be dynamically re-used, with
+the associated cache flushing and slowdowns.
 
 \subsection{x86}
 
