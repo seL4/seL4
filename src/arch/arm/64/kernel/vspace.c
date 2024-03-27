@@ -1918,7 +1918,7 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
 
     ksUserLogBuffer = pptr_to_paddr((void *) frame_pptr);
 
-    *armKSGlobalLogPDE = pde_pde_large_new(
+    *armKSGlobalLogPDE = pte_pte_page_new(
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
                              0, // XN
 #else
