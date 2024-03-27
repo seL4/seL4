@@ -172,7 +172,6 @@ ${Stage}/group_defs.h: ${Libsel4Dir}/include/interfaces/sel4.xml \
                        ${Libsel4Dir}/arch_include/riscv/interfaces/sel4arch.xml
 	@echo "====> Generating documented object invocation header"
 	${Q}${PYTHON} -i ${GenerateObjectInvocationTool} --dtd ${InterfaceDtd} --output ${Stage} $^
-	#${Q}${PYTHON} -m pdb -c c ${GenerateObjectInvocationTool} --dtd ${InterfaceDtd} --output ${Stage} $^
 
 # Fetch information from the environment that needs to go into the document.
 env.tex: FORCE

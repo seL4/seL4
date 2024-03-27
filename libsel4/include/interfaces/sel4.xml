@@ -9,7 +9,6 @@
     <!ENTITY or_illegal_operation "Or, the <texttt text='_service'/> is a CPtr to a capability of the wrong type (see <genref name='error:illegal_operation'/> in common error codes)">
     <!ENTITY invalid_capability "The <texttt text='_service'/> is a CPtr to a capability of the wrong type (see <genref name='error:invalid_capability'/> in common error codes.)">
     <!ENTITY or_invalid_capability "Or, the <texttt text='_service'/> is a CPtr to a capability of the wrong type (see <genref name='error:invalid_capability'/> in common error codes.)">
-
 ]>
 
 <api name="ObjectApi">
@@ -1554,15 +1553,9 @@
             <param dir="out" name="consumed" type="seL4_Time"/>
             <error name="seL4_IllegalOperation">
                 <description>
-<<<<<<< HEAD
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="_service"/> is not bound to a TCB or is bound to the current thread's TCB.
-                    Or, the target thread's priority is greater than the current thread's maximum controlled priority<docref> (see <autoref label="sec:sched"/>)</docref>.
-=======
                     The <texttt text="_service"/> is not bound to a TCB or is bound to the current thread's TCB.
-                    Or, the target thread's priority is greater than the current thread's maximum controlled priority <docref>(see <autoref label="sec:sched"/>)</docref>.
+                    Or, the target thread's priority is greater than the current thread's maximum controlled priority<docref> (see <autoref label="sec:sched"/>)</docref>.
                     &or_illegal_operation;
->>>>>>> 36d29691 (combine common api error codes)
                 </description>
             </error>
             <error name="seL4_InvalidCapability">

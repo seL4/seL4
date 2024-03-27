@@ -1,11 +1,5 @@
-<!-- <!DOCTYPE api [
-    <!ENTITY illegal_operation "The <texttt text='_service'/> is a CPtr to a capability of the wrong type (see <genref name='error:illegal_operation'/> in common error codes)">
-    <!ENTITY or_illegal_operation "Or, the <texttt text='_service'/> is a CPtr to a capability of the wrong type (see <genref name='error:illegal_operation'/> in common error codes)">
-    <!ENTITY invalid_capability "The <texttt text='_service'/> is a CPtr to a capability of the wrong type (see <genref name='error:invalid_capability'/> in common error codes.)">
-    <!ENTITY or_invalid_capability "Or, the <texttt text='_service'/> is a CPtr to a capability of the wrong type (see <genref name='error:invalid_capability'/> in common error codes.)">
-]> -->
 <error name="seL4_IllegalOperation">
 	<description>
-		The <texttt text="_service"/> BIRG is a CPtr to a capability of the wrong type.
+		The <texttt text="_service"/> BIRG is a CPtr to a capability of the wrong type - says birg.
 	</description>
 </error>

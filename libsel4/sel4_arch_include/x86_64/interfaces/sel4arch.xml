@@ -12,7 +12,7 @@
 ]>
 
 
-<api name="ObjectApiX64" label_prefix="x86_64_" xmlns:xi="http://www.w3.org/2001/XInclude">
+<api name="ObjectApiX64" label_prefix="x86_64_" xmlns:xi="http://www.w3.org/2001/XInclude" xml:base="../../../include/interfaces/" >
     <struct name="seL4_UserContext">
         <member name="rip"/>
         <member name="rsp"/>
@@ -51,14 +51,15 @@
                     VM attributes for the mapping. <docref>Possible values for this type are given in <autoref label='ch:vspace'/>.</docref>
                 </description>
             </param>
-            <xi:include href="test-iz.xml"/>
             <error name="seL4_DeleteFirst">
                 <description>
                     A mapping already exists for this level in <texttt text="vspace"/> at <texttt text="vaddr"/>.
                 </description>
             </error>
-            <xi:include href="test-iz.xml"/>
-            <!-- <error name="seL4_FailedLookup">
+            <xi:include href="test-iz1.xml" xpointer="xpointer(//error)"/>
+            <!-- <xi:include href="../test-iz2.xml"/> -->
+            <!--
+            <error name="seL4_FailedLookup">
                 <description>
                     The <texttt text="pml4"/> is not assigned to an ASID pool.
                 </description>
