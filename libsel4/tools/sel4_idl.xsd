@@ -5,6 +5,8 @@
      SPDX-License-Identifier: BSD-2-Clause
 -->
 
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="xml_namespace.xsd"/>
+
     <xsd:annotation>
         <xsd:documentation xml:lang="en">
             seL4 api generator schema.
@@ -20,6 +22,7 @@
         </xsd:sequence>
         <xsd:attribute name="name" type="xsd:string" use="optional" />
         <xsd:attribute name="label_prefix" type="xsd:string" use="optional"/>
+        <xsd:attribute ref="xml:base"/>
     </xsd:complexType>
 
     <xsd:complexType name="StructType">
@@ -96,6 +99,7 @@
             <xsd:element name="shortref" type="ShortRefType"/>
             <xsd:element name="obj" type="ObjType"/>
             <xsd:element name="autoref" type="AutoRefType"/>
+            <xsd:element name="genref" type="GenRefType"/>
         </xsd:choice>
     </xsd:group>
 
@@ -142,6 +146,7 @@
         </xsd:choice>
         <xsd:attribute name="name" type="xsd:string" use="required"/>
         <xsd:attribute name="description" type="xsd:string" use="optional"/>
+        <xsd:attribute ref="xml:base"/>
     </xsd:complexType>
 
     <xsd:complexType name="ShortRefType">
@@ -152,10 +157,14 @@
         <xsd:attribute name="label" type="xsd:string" use="required"/>
     </xsd:complexType>
 
+    <xsd:complexType name="GenRefType">
+        <xsd:attribute name="name" type="xsd:string" use="required"/>
+    </xsd:complexType>
 
     <xsd:complexType name="ObjType">
         <xsd:attribute name="name" type="xsd:string" use="required"/>
     </xsd:complexType>
 
     <xsd:complexType name="ErrorEnumDescType"/>
+
 </xsd:schema>

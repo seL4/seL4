@@ -4,6 +4,13 @@
 
      SPDX-License-Identifier: BSD-2-Clause
 -->
+<!DOCTYPE api [
+    <!ENTITY illegal_operation "The <texttt text='_service'/> is a CPtr to a capability of the wrong type (see <genref name='error:illegal_operation'/> in common error codes)">
+    <!ENTITY or_illegal_operation "Or, the <texttt text='_service'/> is a CPtr to a capability of the wrong type (see <genref name='error:illegal_operation'/> in common error codes)">
+    <!ENTITY invalid_capability "The <texttt text='_service'/> is a CPtr to a capability of the wrong type (see <genref name='error:invalid_capability'/> in common error codes.)">
+    <!ENTITY or_invalid_capability "Or, the <texttt text='_service'/> is a CPtr to a capability of the wrong type (see <genref name='error:invalid_capability'/> in common error codes.)">
+
+]>
 
 <api name="ObjectApiAarch32" label_prefix="aarch32_">
     <struct name="seL4_UserContext">
@@ -47,8 +54,8 @@
             </error>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="start"/> or <texttt text="end"/> is in the kernel virtual address range.
+                    The <texttt text="start"/> or <texttt text="end"/> is in the kernel virtual address range.
+                    &or_illegal_operation;
                 </description>
             </error>
             <error name="seL4_InvalidArgument">
@@ -58,8 +65,8 @@
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="_service"/> is not assigned to an ASID pool.
+                    The <texttt text="_service"/> is not assigned to an ASID pool.
+                    &or_illegal_operation;
                 </description>
             </error>
             <error name="seL4_RangeError">
@@ -86,8 +93,8 @@
             </error>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="start"/> or <texttt text="end"/> is in the kernel virtual address range.
+                    The <texttt text="start"/> or <texttt text="end"/> is in the kernel virtual address range.
+                    &or_illegal_operation;
                 </description>
             </error>
             <error name="seL4_InvalidArgument">
@@ -97,8 +104,8 @@
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="_service"/> is not assigned to an ASID pool.
+                    The <texttt text="_service"/> is not assigned to an ASID pool.
+                    &or_invalid_capability;
                 </description>
             </error>
             <error name="seL4_RangeError">
@@ -126,8 +133,8 @@
             </error>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="start"/> or <texttt text="end"/> is in the kernel virtual address range.
+                    The <texttt text="start"/> or <texttt text="end"/> is in the kernel virtual address range.
+                    &or_illegal_operation;
                 </description>
             </error>
             <error name="seL4_InvalidArgument">
@@ -137,8 +144,8 @@
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="_service"/> is not assigned to an ASID pool.
+                    The <texttt text="_service"/> is not assigned to an ASID pool.
+                    &or_invalid_capability;
                 </description>
             </error>
             <error name="seL4_RangeError">
@@ -165,8 +172,8 @@
             </error>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="start"/> or <texttt text="end"/> is in the kernel virtual address range.
+                    The <texttt text="start"/> or <texttt text="end"/> is in the kernel virtual address range.
+                    &or_illegal_operation;
                 </description>
             </error>
             <error name="seL4_InvalidArgument">
@@ -176,8 +183,8 @@
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="_service"/> is not assigned to an ASID pool.
+                    The <texttt text="_service"/> is not assigned to an ASID pool.
+                    &or_invalid_capability;
                 </description>
             </error>
             <error name="seL4_RangeError">

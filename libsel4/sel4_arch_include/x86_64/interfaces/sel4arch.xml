@@ -4,8 +4,15 @@
 
      SPDX-License-Identifier: BSD-2-Clause
 -->
+<!DOCTYPE api [
+    <!ENTITY illegal_operation "The <texttt text='_service'/> is a CPtr to a capability of the wrong type (see <genref name='error:illegal_operation'/> in common error codes)">
+    <!ENTITY or_illegal_operation "Or, the <texttt text='_service'/> is a CPtr to a capability of the wrong type (see <genref name='error:illegal_operation'/> in common error codes)">
+    <!ENTITY invalid_capability "The <texttt text='_service'/> is a CPtr to a capability of the wrong type (see <genref name='error:invalid_capability'/> in common error codes.)">
+    <!ENTITY or_invalid_capability "Or, the <texttt text='_service'/> is a CPtr to a capability of the wrong type (see <genref name='error:invalid_capability'/> in common error codes.)">
+]>
 
-<api name="ObjectApiX64" label_prefix="x86_64_">
+
+<api name="ObjectApiX64" label_prefix="x86_64_" xmlns:xi="http://www.w3.org/2001/XInclude" xml:base="../../../include/interfaces/" >
     <struct name="seL4_UserContext">
         <member name="rip"/>
         <member name="rsp"/>
@@ -49,6 +56,9 @@
                     A mapping already exists for this level in <texttt text="vspace"/> at <texttt text="vaddr"/>.
                 </description>
             </error>
+            <xi:include href="test-iz1.xml" xpointer="xpointer(//error)"/>
+            <!-- <xi:include href="../test-iz2.xml"/> -->
+            <!--
             <error name="seL4_FailedLookup">
                 <description>
                     The <texttt text="pml4"/> is not assigned to an ASID pool.
@@ -56,9 +66,10 @@
             </error>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &illegal_operation;
                 </description>
             </error>
+
             <error name="seL4_InvalidArgument">
                 <description>
                     The <texttt text="vaddr"/> is in the kernel virtual address range.
@@ -66,11 +77,12 @@
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> or <texttt text="pml4"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="pml4"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="pml4"/> is not assigned to an ASID pool.
                     Or, <texttt text="_service"/> is already mapped in a VSpace.
+                    &or_invalid_capability;
                 </description>
-            </error>
+            </error> -->
         </method>
         <method id="X86PDPTUnmap" name="Unmap">
             <brief>
@@ -81,12 +93,13 @@
             </description>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &illegal_operation;
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
+
+            <error name="seL4_InvalidCapabilities">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                   &invalid_capability;
                 </description>
             </error>
             <error name="seL4_RevokeFirst">

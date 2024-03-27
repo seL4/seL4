@@ -1,0 +1,5 @@
+<error name="seL4_IllegalOperation">
+	<description>
+		The <texttt text="_service"/> BIRG is a CPtr to a capability of the wrong type - says birg.
+	</description>
+</error>
