@@ -311,7 +311,7 @@ macro(config_set optionname configname value)
 endmacro(config_set)
 
 # config_cmake_string(cmake_option_name c_config_name doc DEFAULT default [DEPENDS dep]
-#   [DEFAULT_DISABLED default_disabled] [UNDEF_DISABLED] [QUOTE]
+#   [DEFAULT_DISABLED default_disabled] [UNDEF_DISABLED] [QUOTE])
 # Defines a configuration option that is a user configurable string. Most parameters
 # are the same as config_option
 # UNQUOTE if specified says this is something with more semantics like a number or identifier
