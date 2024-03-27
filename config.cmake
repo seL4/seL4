@@ -309,6 +309,13 @@ config_option(
     DEFAULT_DISABLED OFF
 )
 
+config_option(
+    KernelIRQFastpath IRQ_FASTPATH "Enable IRQ fastpath"
+    DEFAULT OFF
+    DEPENDS "KernelIsMCS; KernelFastpath; KernelSel4ArchAarch64; NOT KernelVerificationBuild"
+    DEFAULT_DISABLED OFF
+)
+
 find_file(
     KernelDomainSchedule default_domain.c
     PATHS src/config
