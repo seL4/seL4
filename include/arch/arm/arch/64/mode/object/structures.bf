@@ -87,6 +87,20 @@ block vcpu_cap {
 }
 #endif
 
+#if CONFIG_MAX_NUM_NODES == 1
+
+block sgi_signal_cap {
+    padding        32
+    field capSGIIRQ         16
+    -- Do we want to support multiple targets
+    -- with a single seL4_Send?
+    field capSGITargetMask  16
+
+    field capType  5
+    padding        59
+}
+
+#endif
 #ifdef CONFIG_ARM_SMMU
 
 block sid_control_cap {
@@ -171,6 +185,9 @@ tagged_union cap capType {
 #endif
 #ifdef CONFIG_ALLOW_SMC_CALLS
     tag smc_cap                     25
+#endif
+#if CONFIG_MAX_NUM_NODES == 1
+    tag sgi_signal_cap              27
 #endif
 }
 

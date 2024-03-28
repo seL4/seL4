@@ -54,8 +54,6 @@ void generic_ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking);
  */
 void ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking);
 
-/* Hardware implementation for sending IPIs */
-void ipi_send_target(irq_t irq, word_t cpuTargetList);
 
 /* This function switches the core it is called on to the idle thread,
  * in order to avoid IPI storms. If the core is waiting on the lock, the actual
@@ -156,9 +154,11 @@ static void inline doRemoteOp3Arg(IpiRemoteCall_t func, word_t data1, word_t dat
 void doMaskReschedule(word_t mask);
 
 
-#ifdef CONFIG_DEBUG_BUILD
-exception_t handle_SysDebugSendIPI(void);
-#endif
 
 #endif /* ENABLE_SMP_SUPPORT */
 
+#ifdef CONFIG_DEBUG_BUILD
+exception_t handle_SysDebugSendIPI(void);
+#endif
+/* Hardware implementation for sending IPIs */
+void ipi_send_target(irq_t irq, word_t cpuTargetList);
