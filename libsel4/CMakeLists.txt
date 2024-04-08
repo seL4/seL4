@@ -84,14 +84,9 @@ include_directories("$<TARGET_PROPERTY:sel4_autoconf,INTERFACE_INCLUDE_DIRECTORI
 function(genbf target_prefix pbf_location bf_location header_output)
     get_generated_files(gen_list sel4_autoconf_Gen)
     cppfile(
-        "${pbf_location}"
-        ${target_prefix}_pbf
-        "${bf_location}"
-        EXTRA_FLAGS
-        -P
-        EXTRA_DEPS
-        sel4_autoconf_Gen
-        ${gen_list}
+        "${pbf_location}" ${target_prefix}_pbf "${bf_location}"
+        EXTRA_FLAGS -P
+        EXTRA_DEPS sel4_autoconf_Gen ${gen_list}
     )
     GenHBFTarget(
         "libsel4"
