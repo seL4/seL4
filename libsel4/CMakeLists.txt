@@ -146,19 +146,14 @@ set(
     "${CMAKE_CURRENT_SOURCE_DIR}/arch_include/${KernelArch}/interfaces/sel4arch.xml"
     "${CMAKE_CURRENT_SOURCE_DIR}/include/interfaces/sel4.xml"
 )
+
 add_custom_command(
     OUTPUT include/interfaces/sel4_client.h
     COMMAND rm -f include/interfaces/sel4_client.h
     COMMAND
-        echo "CONFIG_WORD_SIZE=${KernelWordSize}" > config
-    COMMAND
         "${PYTHON3}" "${SYSCALL_STUB_GEN_PATH}" ${buffer} ${64bitguests} ${mcs} -a
-        "${KernelSel4Arch}" -c config -o include/interfaces/sel4_client.h ${interface_xmls}
-    DEPENDS
-        "${SYSCALL_STUB_GEN_PATH}"
-        ${interface_xmls}
-        BYPRODUCTS
-        config
+        "${KernelSel4Arch}" -o include/interfaces/sel4_client.h ${interface_xmls}
+    DEPENDS "${SYSCALL_STUB_GEN_PATH}" ${interface_xmls}
     COMMENT "Generate sel4_client.h"
     VERBATIM
 )
