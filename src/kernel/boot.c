@@ -361,7 +361,7 @@ BOOT_CODE void populate_bi_frame(node_id_t node_id, word_t num_nodes,
     bi->numIOPTLevels = 0;
     bi->ipcBuffer = (seL4_IPCBuffer *)ipcbuf_vptr;
     bi->initThreadCNodeSizeBits = CONFIG_ROOT_CNODE_SIZE_BITS;
-    bi->initThreadDomain = ksDomSchedule[ksDomScheduleIdx].domain;
+    bi->initThreadDomain = ksDomSchedule[NODE_STATE(ksDomScheduleIdx)].domain;
     bi->extraLen = extra_bi_size;
 
     ndks_boot.bi_frame = bi;
@@ -535,17 +535,17 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
 
     tcb->tcbPriority = seL4_MaxPrio;
     tcb->tcbMCP = seL4_MaxPrio;
-    tcb->tcbDomain = ksDomSchedule[ksDomScheduleIdx].domain;
+    tcb->tcbDomain = ksDomSchedule[NODE_STATE(ksDomScheduleIdx)].domain;
 #ifndef CONFIG_KERNEL_MCS
     setupReplyMaster(tcb);
 #endif
     setThreadState(tcb, ThreadState_Running);
 
-    ksCurDomain = ksDomSchedule[ksDomScheduleIdx].domain;
+    ksCurDomain = ksDomSchedule[NODE_STATE(ksDomScheduleIdx)].domain;
 #ifdef CONFIG_KERNEL_MCS
-    ksDomainTime = usToTicks(ksDomSchedule[ksDomScheduleIdx].length * US_IN_MS);
+    ksDomainTime = usToTicks(ksDomSchedule[NODE_STATE(ksDomScheduleIdx)].length * US_IN_MS);
 #else
-    ksDomainTime = ksDomSchedule[ksDomScheduleIdx].length;
+    ksDomainTime = ksDomSchedule[NODE_STATE(ksDomScheduleIdx)].length;
 #endif
     assert(ksCurDomain < CONFIG_NUM_DOMAINS && ksDomainTime > 0);
 

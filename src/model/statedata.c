@@ -92,7 +92,7 @@ word_t ksDomainTime;
 #endif
 
 /* An index into ksDomSchedule for active domain and length. */
-word_t ksDomScheduleIdx;
+UP_STATE_DEFINE(word_t, ksDomScheduleIdx);
 
 /* Only used by lockTLBEntry */
 word_t tlbLockCount = 0;
