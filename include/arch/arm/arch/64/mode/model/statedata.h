@@ -39,7 +39,7 @@ extern hw_asid_t armKSNextASID VISIBLE;
 #endif
 
 #ifdef CONFIG_KERNEL_LOG_BUFFER
-pde_t *armKSGlobalLogPTE;
+extern pte_t *armKSGlobalLogPTE;
 #endif
 
 
