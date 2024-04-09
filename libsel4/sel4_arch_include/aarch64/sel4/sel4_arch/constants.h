@@ -97,10 +97,8 @@ typedef enum {
     /* thread pointer/ID registers EL0/EL1 */
     seL4_VCPUReg_TPIDR_EL1,
 
-#if CONFIG_MAX_NUM_NODES > 1
     /* Virtualisation Multiprocessor ID Register */
     seL4_VCPUReg_VMPIDR_EL2,
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
 
     /* general registers x0 to x30 have been saved by traps.S */
     seL4_VCPUReg_SP_EL1,

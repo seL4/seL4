@@ -12,6 +12,13 @@ on:
       - master
   pull_request:
 
+# To reduce the load we cancel any older runs of this workflow for the current
+# PR. For deployment to the master branch, the workflow will run on each push,
+# and the `run_id` parameter will prevent cancellation.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || format('run-{0}', github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   standalone_kernel:
     name: kernel

@@ -1726,7 +1726,7 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
         cap_t vspaceCap;
         cte_t *vspaceCapSlot;
         asid_pool_t *pool;
-        unsigned int i;
+        word_t i;
         asid_t asid;
 
         if (unlikely(invLabel != ARMASIDPoolAssign)) {

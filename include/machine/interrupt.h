@@ -80,7 +80,7 @@ static inline bool_t isIRQPending(void);
  * When an IRQ is disabled, it should not raise an interrupt on the processor.
  *
  * @param[in]  disable  True to disable IRQ, False to enable IRQ
- * @param[in]  irq      The irq to modify
+ * @param[in]  irq      The IRQ to modify
  */
 static inline void maskInterrupt(bool_t disable, irq_t irq);
 
@@ -93,7 +93,7 @@ static inline void maskInterrupt(bool_t disable, irq_t irq);
  * but before user level has handled the cause and does not imply that the cause
  * of the interrupt has been handled.
  *
- * @param[in]  irq   irq to ack
+ * @param[in]  irq   IRQ to ack
  */
 static inline void ackInterrupt(irq_t irq);
 

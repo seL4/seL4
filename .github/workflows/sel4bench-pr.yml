@@ -4,7 +4,7 @@
 
 # Build and run sel4bench on pull requests, on label request
 
-name: seL4Bench PR
+name: seL4Bench-HW
 
 on:
   pull_request_target:
@@ -13,6 +13,19 @@ on:
 # downgrade permissions to read-only as you would have in a standard PR action
 permissions:
   contents: read
+
+# To reduce the load (especiually on the machine queue) we cancel any older runs
+# of this workflow for the current PR. Such runs exist, if there were new pushes
+# to the PR's branch without waiting for the workflow to finish. As a side
+# effect, pushing new commits now becomes a convenient way to cancel all the
+# older runs, e.g. if they are stuck and would only be stopped by the timeout
+# eventually.
+# Note that we could do the concurrency handling at a finer level, and only wrap
+# the actual run on the hardware. But there seems not much gain in letting the
+# older builds run, as these are usually obsolete with new pushes also.
+concurrency:
+  group: ${{ github.workflow }}-pr-${{ github.event.number }}
+  cancel-in-progress: true
 
 jobs:
   code:
@@ -76,15 +89,12 @@ jobs:
             req: skylake
           - platform: pc99
             req: haswell3
-    # do run concurrently in the build matrix, but only one overall run per PR at a time
-    concurrency: sel4bench-hw-pr-${{ github.event.number }}-${{ strategy.job-index }}
     steps:
       - name: Get machine queue
         uses: actions/checkout@v4
         with:
           repository: seL4/machine_queue
           path: machine_queue
-          token: ${{ secrets.PRIV_REPO_TOKEN }}
       - name: Get march
         id: plat
         uses: seL4/ci-actions/march-of-platform@master

@@ -123,6 +123,7 @@
 #define REG_HCR_EL2         "hcr_el2"
 #define REG_VTCR_EL2        "vtcr_el2"
 #define REG_VMPIDR_EL2      "vmpidr_el2"
+#define REG_MPIDR_EL1       "mpidr_el1"
 #define REG_ID_AA64MMFR0_EL1 "id_aa64mmfr0_el1"
 
 /* for EL1 SCTLR */
@@ -481,10 +482,8 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
         return readCNTVOFF_EL2();
     case seL4_VCPUReg_CNTKCTL_EL1:
         return readCNTKCTL_EL1();
-#ifdef ENABLE_SMP_SUPPORT
     case seL4_VCPUReg_VMPIDR_EL2:
         return readVMPIDR_EL2();
-#endif /* ENABLE_SMP_SUPPORT */
     default:
         fail("ARM/HYP: Invalid register index");
     }
@@ -564,11 +563,9 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
     case seL4_VCPUReg_CNTKCTL_EL1:
         writeCNTKCTL_EL1(reg);
         break;
-#ifdef ENABLE_SMP_SUPPORT
     case seL4_VCPUReg_VMPIDR_EL2:
         writeVMPIDR_EL2(reg);
         break;
-#endif /* ENABLE_SMP_SUPPORT */
     default:
         fail("ARM/HYP: Invalid register index");
     }

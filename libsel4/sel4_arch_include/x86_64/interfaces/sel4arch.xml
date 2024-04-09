@@ -41,7 +41,7 @@
             <param dir="in" name="vaddr" type="seL4_Word" description="Virtual address at which to map page."/>
             <param dir="in" name="attr" type="seL4_X86_VMAttributes">
                 <description>
-                    VM attributes for the mapping. Possible values for this type are given in <autoref label='ch:vspace'/>.
+                    VM attributes for the mapping. <docref>Possible values for this type are given in <autoref label='ch:vspace'/>.</docref>
                 </description>
             </param>
             <error name="seL4_DeleteFirst">
