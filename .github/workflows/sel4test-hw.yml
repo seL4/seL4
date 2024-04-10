@@ -31,9 +31,25 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  the_matrix:
+    name: Matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+    - id: matrix
+      uses: axel-h/ci-actions/sel4test-hw-matrix@patch-axel-17
+    - env:
+        json_steps_matrix: ${{ toJSON(steps.matrix) }}
+        json_steps_matrix_outputs_matrix: ${{ toJSON(steps.matrix.outputs.matrix) }}
+      run: |
+        echo steps.matrix = ${json_steps_matrix}
+        echo steps.matrix.outputs.matrix = ${json_steps_matrix_outputs_matrix}
+
   hw-build:
     name: HW Build
     runs-on: ubuntu-latest
+    needs: the_matrix
     if: ${{ github.event_name == 'push' ||
             github.event_name == 'pull_request_target' &&
               github.event.action != 'labeled' &&
@@ -67,20 +83,10 @@ jobs:
         name: kernel.elf-${{ matrix.march }}-${{ matrix.compiler }}
         path: '*-kernel.elf'
 
-  the_matrix:
-    name: Matrix
-    needs: hw-build
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.matrix.outputs.matrix }}
-    steps:
-    - id: matrix
-      uses: axel-h/ci-actions/sel4test-hw-matrix@patch-axel-17
-
   hw-run:
     name: HW Run
     runs-on: ubuntu-latest
-    needs: the_matrix
+    needs: [the_matrix, hw-build]
     if: ${{ github.repository_owner == 'seL4' &&
             (github.event_name == 'push' ||
              github.event_name == 'pull_request_target' &&
