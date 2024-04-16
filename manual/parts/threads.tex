@@ -614,6 +614,48 @@ Fault status register (FSR). Contains information about the cause of the fault. 
 \caption{\label{tbl:vm_fault_result_arm} VM Fault outcome on all architectures.}
 \end{table}
 
+
+\subsection{Arm Virtualisation Faults}
+\label{sec:arm-virt-fault}
+
+Arm with hypervisor support enabled can generate additional exceptions, see \autoref{sec:virt-arm}.
+Replying to the fault IPC will restart the VCPU thread.
+The contents of the IPC messages are given below.
+
+\begin{table}[h!]
+\begin{tabularx}{\textwidth}{XXX}
+\toprule
+\textbf{Meaning} & \textbf{IPC buffer location} \\
+\midrule
+    List Register index, -1 when unknown. & \ipcbloc{seL4\_VGICMaintenance\_IDX} \\
+\bottomrule
+\end{tabularx}
+\caption{\label{tbl:fault_arm_vgic} seL4\_Fault\_VGICMaintenance.}
+\end{table}
+
+\begin{table}[h!]
+\begin{tabularx}{\textwidth}{XXX}
+\toprule
+\textbf{Meaning} & \textbf{IPC buffer location} \\
+\midrule
+    Virtual PPI IRQ number. & \ipcbloc{seL4\_VPPIEvent\_IRQ} \\
+\bottomrule
+\end{tabularx}
+\caption{\label{tbl:fault_arm_vppi} seL4\_Fault\_VPPIEvent.}
+\end{table}
+
+\begin{table}[h!]
+\begin{tabularx}{\textwidth}{XXX}
+\toprule
+\textbf{Meaning} & \textbf{IPC buffer location} \\
+\midrule
+    Register value of HSR for aarch32 and ESR for aarch64. & \ipcbloc{seL4\_VCPUFault\_HSR} \\
+\bottomrule
+\end{tabularx}
+\caption{\label{tbl:fault_arm_vcpu} seL4\_Fault\_VCPUFault.}
+\end{table}
+
+
 \section{Domains}
 \label{sec:domains}
 
@@ -657,6 +699,7 @@ the underlying architecture specific hardware mechanisms is required to use thes
 such familiarity is therefore assumed in description.
 
 \subsection{Arm}
+\label{sec:virt-arm}
 
 When a \obj{TCB} has a bound \obj{VCPU} it will have access to (virtualised) system registers,
 cache and TLB maintenance instructions and be able to handle some exceptions itself.
