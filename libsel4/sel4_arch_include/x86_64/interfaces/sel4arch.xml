@@ -49,9 +49,9 @@
             <error name="seL4_DeleteFirst">
                 <description>
                     A mapping already exists for this level in <texttt text="vspace"/> at <texttt text="vaddr"/>.
-                    <xi:include href="common_error_illegal_operation.xml" xpointer="xpointer(//commonerrorref)"/>
                 </description>
             </error>
+            <xi:include href="common_error_illegal_operation.xml" />
             <error name="seL4_FailedLookup">
                 <description>
                     The <texttt text="pml4"/> is not assigned to an ASID pool.
@@ -80,11 +80,7 @@
                <docref>See <autoref label="ch:vspace"/></docref>
             </description>
             <xi:include href="common_error_illegal_operation.xml" />
-            <error name="seL4_InvalidCapabilities">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RevokeFirst">
                 <description>
                     A copy of the <texttt text="_service"/> capability exists.

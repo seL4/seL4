@@ -5,7 +5,7 @@
 
      SPDX-License-Identifier: BSD-2-Clause
 -->
-<!DOCTYPE api >
+<!DOCTYPE api>
 
 <api name="ObjectApiRISCV" label_prefix="riscv_" xmlns:xi="http://www.w3.org/2001/XInclude" xml:base="../../../tools/" >
 
@@ -97,11 +97,7 @@
                 <docref>See <autoref label="ch:vspace"/></docref>
             </description>
             <xi:include href="common_error_illegal_operation.xml" />
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RevokeFirst">
                 <description>
                     The <texttt text="_service"/> is the root of a VSpace.
@@ -180,11 +176,8 @@
                 Removes an existing mapping.
             </description>
             <xi:include href="common_error_illegal_operation.xml" />
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
+
         </method>
         <method id="RISCVPageGetAddress" name="GetAddress" manual_name="Get Address">
             <brief>
@@ -201,11 +194,8 @@
             </return>
             <param dir="out" name="paddr" type="seL4_Word"/>
             <xi:include href="common_error_illegal_operation.xml" />
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
+
         </method>
     </interface>
     <interface name="seL4_RISCV_ASIDControl" manual_name="ASID Control"
@@ -325,11 +315,7 @@
                     <xi:include href="common_error_illegal_operation_append.xml" />.
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RangeError">
                 <description>
                     The <texttt text="irq"/> is invalid.

@@ -63,11 +63,7 @@
                     Or, the requested object <texttt text="type"/> does not exist.
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_NotEnoughMemory" description="The total size of the new objects exceeds the space available."/>
             <error name="seL4_RangeError">
                 <description>
@@ -103,11 +99,7 @@
                     <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RangeError">
                 <description>
                     The <texttt text="count"/> requested too few or too many registers.
@@ -136,11 +128,8 @@
                     <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
+
         </method>
 
         <method id="TCBCopyRegisters" name="CopyRegisters" manual_name="Copy Registers" manual_label="tcb_copyregisters">
@@ -205,11 +194,7 @@
                     <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RevokeFirst">
                 <description>
                     The <texttt text="bufferFrame"/>, <texttt text="cspace_root"/>, or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
@@ -250,18 +235,13 @@
                     <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RevokeFirst">
                 <description>
                     The <texttt text="bufferFrame"/>, <texttt text="cspace_root"/>, or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
                 </description>
             </error>
         </method>
-
         <method id="TCBSetPriority" name="SetPriority" manual_name="Set Priority" manual_label="tcb_setpriority">
             <brief>
                 Change a thread's priority
@@ -286,7 +266,6 @@
                 </description>
             </error>
         </method>
-
         <method id="TCBSetMCPriority" name="SetMCPriority" manual_name="Set Maximum Controlled Priority" manual_label="tcb_setmcpriority">
             <brief>
                 Change a thread's maximum controlled priority
@@ -311,7 +290,6 @@
                 </description>
             </error>
         </method>
-
         <method id="TCBSetSchedParams" name="SetSchedParams" manual_name="Set Sched Params" manual_label="tcb_setschedparams">
             <condition><not><config var="CONFIG_KERNEL_MCS"/></not></condition>
             <brief>
@@ -359,7 +337,7 @@
                 description="Capability to the scheduling context that the TCB should run on. If the scheduling context is already bound to a notification or TCB that is not this TCB this operation will fail. Similarly, if this TCB is already bound to a scheduling context that is not this scheduling context, this will also fail."/>
             <param dir="in" name="fault_ep" type="seL4_CPtr"
                 description="CPtr to the endpoint which receives IPCs when this thread faults."/>
-            <!-- <error name="seL4_IllegalOperation">
+            <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> or <texttt text="sched_context"/> is already bound.
                     Or, <texttt text="_service"/> is the current thread's TCB.
@@ -373,7 +351,7 @@
                     Or, <texttt text="fault_ep"/> does not have both Write rights and either Grant or GrantReply rights to the Endpoint <docref>(see <autoref label="sec:cap_rights"/>)</docref>.
                     <xi:include href="common_error_invalid_capability_append.xml" />
                 </description>
-            </error> -->
+            </error>
             <error name="seL4_RangeError">
                 <description>
                     The <texttt text="mcp"/> is greater than the maximum controlled priority of <texttt text="authority"/>.
@@ -424,11 +402,7 @@
                     <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RevokeFirst">
                 <description>
                     The <texttt text="bufferFrame"/> is a CPtr to a capability of the wrong type.
@@ -462,11 +436,7 @@
                     <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RevokeFirst">
                 <description>
                     The <texttt text="cspace_root"/> or <texttt text="vspace_root"/> is a CPtr to a capability of the wrong type.
@@ -522,11 +492,8 @@
                 <docref>See <autoref label="sec:thread_deactivation"/></docref>
             </description>
             <xi:include href="common_error_illegal_operation.xml" />
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
+
         </method>
 
         <method id="TCBResume" name="Resume" manual_label="tcb_resume">
@@ -537,11 +504,8 @@
                 <docref>See <autoref label="sec:thread_deactivation"/></docref>
             </description>
             <xi:include href="common_error_illegal_operation.xml" />
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
+
         </method>
 
         <method id="TCBBindNotification" name="BindNotification" manual_name="Bind Notification" manual_label="tcb_bindnotification">
@@ -560,11 +524,8 @@
                     <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
+
         </method>
 
         <method id="TCBUnbindNotification" name="UnbindNotification" manual_name="Unbind Notification" manual_label="tcb_unbindnotification">
@@ -580,11 +541,8 @@
                     <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
+
         </method>
 
         <method id="TCBSetAffinity" name="SetAffinity" manual_name="Set CPU Affinity" manual_label="tcb_setaffinity">
@@ -608,11 +566,8 @@
                     <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
+
         </method>
 
         <method id="TCBSetBreakpoint" name="SetBreakpoint" manual_name="Set Breakpoint" manual_label="tcb_setbreakpoint">
@@ -649,11 +604,7 @@
                     Or, <texttt text="vaddr"/> is in the kernel virtual address range.
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RangeError">
                 <description>
                     The argument values are inappropriate for the target architecture.
@@ -691,11 +642,7 @@
             <param dir="out" name="rw" type="seL4_Word"/>
             <param dir="out" name="is_enabled" type="seL4_Bool"/>
             <xi:include href="common_error_illegal_operation.xml" />
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RangeError">
                 <description>
                     The argument values are inappropriate for the target architecture.
@@ -723,11 +670,7 @@
                     <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RangeError">
                 <description>
                     The argument values are inappropriate for the target architecture.
@@ -771,11 +714,8 @@
                     The argument values are inappropriate for the target architecture.
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
+
         </method>
 
         <method id="TCBSetTLSBase" name="SetTLSBase" manual_name="Set TLS Base" manual_label="tcb_settlsbase">
@@ -788,11 +728,8 @@
              <param dir="in" name="tls_base" type="seL4_Word"
                 description="The TLS base to set."/>
             <xi:include href="common_error_illegal_operation.xml" />
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
+
          </method>
 
     </interface>
@@ -814,11 +751,7 @@
                 </description>
             </error>
             <xi:include href="common_error_illegal_operation.xml" />
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RangeError">
                 <description>
                     The <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
@@ -842,11 +775,7 @@
                 </description>
             </error>
             <xi:include href="common_error_illegal_operation.xml" />
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RangeError">
                 <description>
                     The <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
@@ -878,11 +807,7 @@
                     <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RangeError">
                 <description>
                     The <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
@@ -922,11 +847,7 @@
                     <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RangeError">
                 <description>
                     The <texttt text="dest_depth"/> or <texttt text="src_depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
@@ -973,11 +894,7 @@
                     <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RangeError">
                 <description>
                     The <texttt text="dest_depth"/> or <texttt text="src_depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
@@ -1012,11 +929,7 @@
                 </description>
             </error>
             <xi:include href="common_error_illegal_operation.xml" />
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RangeError">
                 <description>
                     The <texttt text="dest_depth"/> or <texttt text="src_depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
@@ -1056,11 +969,7 @@
                     <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RangeError">
                 <description>
                     The <texttt text="dest_depth"/> or <texttt text="src_depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
@@ -1102,11 +1011,7 @@
                     <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RangeError">
                 <description>
                     The <texttt text="dest_depth"/>, <texttt text="src_depth"/>, or <texttt text="pivot_depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
@@ -1132,11 +1037,7 @@
                 </description>
             </error>
             <xi:include href="common_error_illegal_operation.xml" />
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RangeError">
                 <description>
                     The <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
@@ -1171,11 +1072,7 @@
                     <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RangeError">
                 <description>
                     The <texttt text="irq"/> is invalid for the target architecture.
@@ -1202,11 +1099,8 @@
                 <docref>See <autoref label="sec:interrupts"/>.</docref>
             </description>
             <xi:include href="common_error_illegal_operation.xml" />
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
+
         </method>
 
         <method id="IRQSetIRQHandler" name="SetNotification" manual_name="Set Notification" manual_label="irq_handlersetnotification">
@@ -1236,11 +1130,8 @@
                 <docref>See <autoref label="sec:interrupts"/>.</docref>
             </description>
             <xi:include href="common_error_illegal_operation.xml" />
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
+
         </method>
 
     </interface>
@@ -1263,11 +1154,8 @@
                     Or, <texttt text="thread"/> is a CPtr to a capability of the wrong type.
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
+
         </method>
     </interface>
 
@@ -1367,11 +1255,8 @@
                     <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
+
         </method>
 
         <method id="SchedContextUnbindObject" name="UnbindObject"
@@ -1420,11 +1305,8 @@
             <param dir="out" name="consumed" type="seL4_Time"
                 description="Amount consumed by this scheduling context."/>
             <xi:include href="common_error_illegal_operation.xml" />
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
+
        </method>
        <method id="SchedContextYieldTo" name="YieldTo" manual_name="Yield To" manual_label="schedcontext_yieldto">
           <condition><config var="CONFIG_KERNEL_MCS"/></condition>
@@ -1448,11 +1330,8 @@
                     <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
+
         </method>
     </interface>
 

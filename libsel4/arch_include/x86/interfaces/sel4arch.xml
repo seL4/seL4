@@ -4,8 +4,6 @@
 
      SPDX-License-Identifier: BSD-2-Clause
 -->
-<!DOCTYPE api >
-
 <api name="ObjectApiX86" label_prefix="x86_" xmlns:xi="http://www.w3.org/2001/XInclude" xml:base="../../../tools/" >
     <struct name="seL4_VCPUContext">
         <member name="eax"/>
@@ -57,7 +55,8 @@
                     Or, <texttt text="vspace"/> is not assigned to an ASID pool.
                 </description>
             </error>
-            <xi:include href="common_error_illegal_operation.xml" />            <error name="seL4_InvalidArgument">
+            <xi:include href="common_error_illegal_operation.xml" />
+            <error name="seL4_InvalidArgument">
                 <description>
                     The <texttt text="vaddr"/> is in the kernel virtual address range.
                 </description>
@@ -78,11 +77,8 @@
             <description>
                 <docref>See <autoref label="ch:vspace"/></docref>
             </description>
-            <xi:include href="common_error_illegal_operation.xml" />            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_illegal_operation.xml" />
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RevokeFirst">
                 <description>
                     A copy of the <texttt text="_service"/> capability exists.
@@ -104,17 +100,14 @@
             <param dir="in" name="vaddr" type="seL4_Word" description='Virtual address of the page to query'/>
             <param dir="out" name="accessed" type="seL4_Word"/>
             <param dir="out" name="dirty" type="seL4_Word"/>
-            <xi:include href="common_error_illegal_operation.xml" />            <error name="seL4_InvalidArgument">
+            <xi:include href="common_error_illegal_operation.xml" />
+            <error name="seL4_InvalidArgument">
                 <description>
                     The <texttt text="_service"/> does not have a mapping at <texttt text="vaddr"/>.
                     Or, <texttt text="vaddr"/> is in the kernel virtual address range.
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
         </method>
     </interface>
 
@@ -149,7 +142,8 @@
                     Or, <texttt text="vspace"/> is not assigned to an ASID pool.
                 </description>
             </error>
-            <xi:include href="common_error_illegal_operation.xml" />            <error name="seL4_InvalidArgument">
+            <xi:include href="common_error_illegal_operation.xml" />
+            <error name="seL4_InvalidArgument">
                 <description>
                     The <texttt text="vaddr"/> is in the kernel virtual address range.
                 </description>
@@ -172,11 +166,8 @@
                   <texttt text="PageDirectory"/>.
                 <docref>See <autoref label="ch:vspace"/></docref>
             </description>
-            <xi:include href="common_error_illegal_operation.xml" />            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_illegal_operation.xml" />
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RevokeFirst">
                 <description>
                     A copy of the <texttt text="_service"/> capability exists.
@@ -209,7 +200,8 @@
                     The <texttt text="iospace"/> does not have a paging structure at the required level mapped at <texttt text="ioaddr"/>.
                 </description>
             </error>
-            <xi:include href="common_error_illegal_operation.xml" />            <error name="seL4_InvalidCapability">
+            <xi:include href="common_error_illegal_operation.xml" />
+            <error name="seL4_InvalidCapability">
                 <description>
                     The <texttt text="iospace"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="iospace"/> is not assigned to a PCI device.
@@ -227,11 +219,8 @@
                 <docref>See <autoref label="sec:iospace"/></docref>
             </description>
             <cap_param append_description='The page table to unmap.'/>
-            <xi:include href="common_error_illegal_operation.xml" />            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_illegal_operation.xml" />
+            <xi:include href="common_error_invalid_capability.xml" />
         </method>
     </interface>
 
@@ -305,11 +294,8 @@
             <description>
                 Removes an existing mapping.
             </description>
-            <xi:include href="common_error_illegal_operation.xml" />            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_illegal_operation.xml" />
+            <xi:include href="common_error_invalid_capability.xml" />
         </method>
         <method id="X86PageMapIO" name="MapIO" manual_name="Map I/O" manual_label='page_map_io'>
             <condition><config var="CONFIG_IOMMU"/></condition>
@@ -338,7 +324,8 @@
                     The <texttt text="iospace"/> does not have a sufficient number of IO Page Tables mapped at <texttt text="ioaddr"/>.
                 </description>
             </error>
-            <xi:include href="common_error_illegal_operation.xml" />            <error name="seL4_InvalidArgument">
+            <xi:include href="common_error_illegal_operation.xml" />
+            <error name="seL4_InvalidArgument">
                 <description>
                     No rights were specified in <texttt text="rights"/>.
                     Or, the rights in the <texttt text="_service"/> capability do not include <texttt text="rights"/>.
@@ -369,11 +356,8 @@
                 of the message register and tag contents upon error.</docref>
             </return>
             <param dir="out" name="paddr" type="seL4_Word"/>
-            <xi:include href="common_error_illegal_operation.xml" />            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_illegal_operation.xml" />
+            <xi:include href="common_error_invalid_capability.xml" />
         </method>
         <method id="X86PageMapEPT" name="MapEPT" manual_name="Map EPT">
             <condition><config var="CONFIG_VTX"/></condition>
@@ -412,7 +396,8 @@ contain the mapping"/>
                     Or, <texttt text="vspace"/> is not assigned to an ASID pool.
                 </description>
             </error>
-            <xi:include href="common_error_illegal_operation.xml" />            <error name="seL4_InvalidCapability">
+            <xi:include href="common_error_illegal_operation.xml" />
+            <error name="seL4_InvalidCapability">
                 <description>
                     The <texttt text="vspace"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="vspace"/> is not assigned to an ASID pool.
@@ -456,7 +441,8 @@ contain the mapping"/>
                     Or, <texttt text="root"/> is a CPtr to a capability of the wrong type.
                 </description>
             </error>
-            <xi:include href="common_error_illegal_operation.xml" />            <error name="seL4_InvalidCapability">
+            <xi:include href="common_error_illegal_operation.xml" />
+            <error name="seL4_InvalidCapability">
                 <description>
                     The <texttt text="untyped"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="untyped"/> is not the exact size of an ASID pool object.
@@ -493,7 +479,8 @@ contain the mapping"/>
                     There are no more ASIDs available in <texttt text="_service"/>.
                 </description>
             </error>
-            <xi:include href="common_error_illegal_operation.xml" />            <error name="seL4_InvalidCapability">
+            <xi:include href="common_error_illegal_operation.xml" />
+            <error name="seL4_InvalidCapability">
                 <description>
                     The <texttt text="vspace"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="vspace"/> is already assigned to an ASID pool.
@@ -527,16 +514,13 @@ contain the mapping"/>
                     Or, <texttt text="root"/> is a CPtr to a capability of the wrong type.
                 </description>
             </error>
-            <xi:include href="common_error_illegal_operation.xml" />            <error name="seL4_InvalidArgument">
+            <xi:include href="common_error_illegal_operation.xml" />
+            <error name="seL4_InvalidArgument">
                 <description>
                     The <texttt text="last_port"/> is less than <texttt text="first_port"/>.
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RangeError">
                 <description>
                     The <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
@@ -569,11 +553,7 @@ contain the mapping"/>
                     <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
         </method>
         <method id="X86IOPortIn16" name="In16">
             <brief>
@@ -593,11 +573,7 @@ contain the mapping"/>
                     <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
         </method>
         <method id="X86IOPortIn32" name="In32">
             <brief>
@@ -617,11 +593,7 @@ contain the mapping"/>
                     <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
         </method>
         <method id="X86IOPortOut8" name="Out8">
             <brief>
@@ -638,11 +610,7 @@ contain the mapping"/>
                     <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
         </method>
         <method id="X86IOPortOut16" name="Out16">
             <brief>
@@ -659,11 +627,7 @@ contain the mapping"/>
                     <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
-            <error name="InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
         </method>
         <method id="X86IOPortOut32" name="Out32">
             <brief>
@@ -680,11 +644,7 @@ contain the mapping"/>
                     <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
         </method>
     </interface>
 
@@ -728,11 +688,7 @@ contain the mapping"/>
                    <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RangeError">
                 <description>
                     The <texttt text="vector"/>, <texttt text="ioapic"/>, or <texttt text="pin"/> is invalid.
@@ -781,11 +737,7 @@ contain the mapping"/>
                     <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RangeError">
                 <description>
                     The <texttt text="vector"/>, <texttt text="pic_bus"/>, <texttt text="pci_dev"/>, or <texttt text="pci_func"/> is invalid.
@@ -817,11 +769,7 @@ contain the mapping"/>
                     <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
         </method>
     </interface>
     <interface name="seL4_X86_VCPU" manual_name="VCPU" cap_description='VCPU object to operate on'>
@@ -841,11 +789,7 @@ contain the mapping"/>
                     <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
         </method>
         <method id="X86VCPUReadVMCS" name="ReadVMCS" manual_name="Read VMCS" manual_label="vcpu_readvmcs">
             <condition><config var="CONFIG_VTX"/></condition>
@@ -873,11 +817,7 @@ contain the mapping"/>
                     <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
         </method>
         <method id="X86VCPUWriteVMCS" name="WriteVMCS" manual_name="Write VMCS" manual_label="vcpu_writevmcs">
             <condition><config var="CONFIG_VTX"/></condition>
@@ -912,11 +852,7 @@ contain the mapping"/>
                     <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
         </method>
         <method id="X86VCPUEnableIOPort" name="EnableIOPort" manual_name="Enable I/O Port" manual_label="vcpu_enableioport">
             <condition><config var="CONFIG_VTX"/></condition>
@@ -948,11 +884,7 @@ contain the mapping"/>
                     The <texttt text="low"/> or <texttt text="high"/> IO port exceeds the range authorized by <texttt text="ioPort"/>.
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
         </method>
         <method id="X86VCPUDisableIOPort" name="DisableIOPort" manual_name="Disable I/O Port">
             <condition><config var="CONFIG_VTX"/></condition>
@@ -967,11 +899,8 @@ contain the mapping"/>
                 description='Start of the I/O port range to disable'/>
             <param dir="in" name="high" type="seL4_Word"
                 description='Last I/O port in the range to disable'/>
-            <xi:include href="common_error_illegal_operation.xml" />            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_illegal_operation.xml" />
+            <xi:include href="common_error_invalid_capability.xml" />
         </method>
         <method id="X86VCPUWriteRegisters" name="WriteRegisters" manual_name="Write Registers">
             <condition><config var="CONFIG_VTX"/></condition>
@@ -983,11 +912,8 @@ contain the mapping"/>
             </description>
             <param dir="in" name="regs" type="seL4_VCPUContext"
                 description='Data structure containing the new register values.'/>
-            <xi:include href="common_error_illegal_operation.xml" />            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_illegal_operation.xml" />
+            <xi:include href="common_error_invalid_capability.xml" />
         </method>
     </interface>
     <interface name="seL4_X86_EPTPDPT" manual_name="Extended Page Table Page Directory Page Table"
@@ -1019,7 +945,8 @@ contain the mapping"/>
                     The <texttt text="eptpml4"/> is not assigned to an ASID pool.
                 </description>
             </error>
-            <xi:include href="common_error_illegal_operation.xml" />            <error name="seL4_InvalidCapability">
+            <xi:include href="common_error_illegal_operation.xml" />
+            <error name="seL4_InvalidCapability">
                 <description>
                     The <texttt text="eptpml4"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="_service"/> is already mapped in a VSpace.
@@ -1036,11 +963,8 @@ contain the mapping"/>
             <description>
                 <docref>See <autoref label="ch:vspace"/></docref>
             </description>
-            <xi:include href="common_error_illegal_operation.xml" />            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_illegal_operation.xml" />
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RevokeFirst">
                 <description>
                     A copy of the <texttt text="_service"/> capability exists.
@@ -1078,7 +1002,8 @@ contain the mapping"/>
                     Or, <texttt text="eptpml4"/> does not have an EPTPDPT mapped at <texttt text="gpa"/>.
                 </description>
             </error>
-            <xi:include href="common_error_illegal_operation.xml" />            <error name="seL4_InvalidCapability">
+            <xi:include href="common_error_illegal_operation.xml" />
+            <error name="seL4_InvalidCapability">
                 <description>
                     The <texttt text="eptpml4"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="_service"/> is already mapped in a VSpace.
@@ -1095,11 +1020,8 @@ contain the mapping"/>
             <description>
                 <docref>See <autoref label="ch:vspace"/></docref>
             </description>
-            <xi:include href="common_error_illegal_operation.xml" />            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_illegal_operation.xml" />
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RevokeFirst">
                 <description>
                     A copy of the <texttt text="_service"/> capability exists.
@@ -1137,7 +1059,8 @@ contain the mapping"/>
                     Or, <texttt text="eptpml4"/> does not have an EPTPD mapped at <texttt text="gpa"/>.
                 </description>
             </error>
-            <xi:include href="common_error_illegal_operation.xml" />            <error name="seL4_InvalidCapability">
+            <xi:include href="common_error_illegal_operation.xml" />
+            <error name="seL4_InvalidCapability">
                 <description>
                     The <texttt text="eptpml4"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="_service"/> is already mapped in a VSpace.
@@ -1154,11 +1077,8 @@ contain the mapping"/>
             <description>
                 <docref>See <autoref label="ch:vspace"/></docref>
             </description>
-            <xi:include href="common_error_illegal_operation.xml" />            <error name="seL4_InvalidCapability">
-                <description>
-                   <xi:include href="common_error_invalid_capability.xml" xpointer="xpointer(//commonerrorref)" />
-                </description>
-            </error>
+            <xi:include href="common_error_illegal_operation.xml" />
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RevokeFirst">
                 <description>
                     A copy of the <texttt text="_service"/> capability exists.

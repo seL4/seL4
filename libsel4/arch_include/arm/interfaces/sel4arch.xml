@@ -4,6 +4,7 @@
 
      SPDX-License-Identifier: BSD-2-Clause
 -->
+<!DOCTYPE api>
 
 <api name="ObjectApiArm" label_prefix="arm_" xmlns:xi="http://www.w3.org/2001/XInclude" xml:base="../../../tools/" >
     <interface name="seL4_ARM_PageTable" manual_name="Page Table"
