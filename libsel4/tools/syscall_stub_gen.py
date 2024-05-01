@@ -44,6 +44,7 @@ from argparse import ArgumentParser
 import sys
 from functools import reduce
 from condition import condition_to_cpp
+from lxml import etree
 
 # Number of bits in a standard word
 WORD_SIZE_BITS_ARCH = {
@@ -824,10 +825,15 @@ def parse_xml_file(input_file, valid_types):
     for i in valid_types:
         type_names[i.name] = i
 
+    # Parse with xlml to get Xincludes first.
+    doc = etree.parse(input_file)
+    doc.xinclude()
+    input_text = etree.tostring(doc)
+
     # Parse the XML to generate method structures.
     methods = []
     structs = []
-    doc = xml.dom.minidom.parse(input_file)
+    doc = xml.dom.minidom.parseString(input_text)
 
     api = Api(doc.getElementsByTagName("api")[0])
 
@@ -959,7 +965,7 @@ def parse_xml_file(input_file, valid_types):
     return (methods, structs, api)
 
 
-def generate_stub_file(arch, wordsize, input_files, output_file, use_only_ipc_buffer, mcs, args):
+def generate_stub_file(arch, input_files, output_file, use_only_ipc_buffer, mcs, args):
     """
     Generate a header file containing system call stubs for seL4.
     """
@@ -967,7 +973,9 @@ def generate_stub_file(arch, wordsize, input_files, output_file, use_only_ipc_bu
 
     # Ensure architecture looks sane.
     if arch not in WORD_SIZE_BITS_ARCH.keys():
-        raise Exception("Invalid architecture.")
+        raise Exception(f"Invalid architecture: {arch}")
+
+    wordsize = WORD_SIZE_BITS_ARCH[arch]
 
     data_types = init_data_types(wordsize)
     arch_types = init_arch_types(wordsize, args)
@@ -1063,12 +1071,6 @@ def process_args():
                         help="Architecture to generate stubs for.")
     parser.add_argument("--mcs", dest="mcs", action="store_true",
                         help="Generate MCS api.")
-
-    wsizegroup = parser.add_mutually_exclusive_group()
-    wsizegroup.add_argument("-w", "--word-size", dest="wsize",
-                            help="Word size(in bits), for the platform.")
-    wsizegroup.add_argument("-c", "--cfile", dest="cfile",
-                            help="Config file for Kbuild, used to get Word size.")
     parser.add_argument("--x86-vtx-64-bit-guests", dest="x86_vtx_64bit", action="store_true", default=False,
                         help="Whether the vtx VCPU objects need to be large enough for 64-bit guests.")
 
@@ -1079,35 +1081,10 @@ def process_args():
 
 
 def main():
-
     parser = process_args()
     args = parser.parse_args()
-
-    if not (args.wsize or args.cfile):
-        parser.error("Require either -w/--word-size or -c/--cfile argument.")
-        sys.exit(2)
-
-    # Get word size
-    wordsize = -1
-
-    if args.cfile:
-        try:
-            with open(args.cfile) as conffile:
-                for line in conffile:
-                    if line.startswith('CONFIG_WORD_SIZE'):
-                        wordsize = int(line.split('=')[1].strip())
-        except IndexError:
-            print("Invalid word size in configuration file.")
-            sys.exit(2)
-    else:
-        wordsize = int(args.wsize)
-
-    if wordsize == -1:
-        print("Invalid word size.")
-        sys.exit(2)
-
     # Generate the stubs.
-    generate_stub_file(args.arch, wordsize, args.files, args.output, args.buffer, args.mcs, args)
+    generate_stub_file(args.arch, args.files, args.output, args.buffer, args.mcs, args)
 
 
 if __name__ == "__main__":

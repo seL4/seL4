@@ -14,6 +14,7 @@
 #include <object/interrupt.h>
 #include <arch/machine.h>
 #include <arch/kernel/boot.h>
+#include <arch/kernel/traps.h>
 #include <arch/kernel/vspace.h>
 #include <arch/benchmark.h>
 #include <linker.h>
@@ -110,9 +111,6 @@ BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
     /* provide the IRQ control cap */
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapIRQControl), cap_irq_control_cap_new());
 }
-
-/* ASM symbol for the CPU initialisation trap. */
-extern char trap_entry[1];
 
 /* This and only this function initialises the CPU. It does NOT initialise any kernel state. */
 

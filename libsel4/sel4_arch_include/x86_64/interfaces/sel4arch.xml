@@ -41,7 +41,7 @@
             <param dir="in" name="vaddr" type="seL4_Word" description="Virtual address at which to map page."/>
             <param dir="in" name="attr" type="seL4_X86_VMAttributes">
                 <description>
-                    VM attributes for the mapping. Possible values for this type are given in <autoref label='ch:vspace'/>.
+                    VM attributes for the mapping. <docref>Possible values for this type are given in <autoref label='ch:vspace'/>.</docref>
                 </description>
             </param>
             <error name="seL4_DeleteFirst">
@@ -97,7 +97,7 @@
         </method>
     </interface>
     <interface name="seL4_X86_VCPU" manual_name="VCPU" cap_description='VCPU object to operate on'>
-      <method id="X86VCPUReadMSR" name="ReadMSR">
+      <method id="X86VCPUReadMSR" name="ReadMSR" manual_name="Read MSR">
         <condition><config var="CONFIG_X86_64_VTX_64BIT_GUESTS"/></condition>
         <brief>
           Read 64-bit specific MSR field from the hardware
@@ -119,7 +119,7 @@
         <param dir="out" name="value" type="seL4_Word"
                description='Value returned by `rdmsr` instruction'/>
       </method>
-      <method id="X86VCPUWriteMSR" name="WriteMSR">
+      <method id="X86VCPUWriteMSR" name="WriteMSR" manual_name="Write MSR">
         <condition><config var="CONFIG_X86_64_VTX_64BIT_GUESTS"/></condition>
         <brief>
           Write 64-bit specific MSR field to the hardware

@@ -14,16 +14,14 @@
 
 #define REGBYTES (CONFIG_WORD_SIZE / 8)
 
-.section .text.traps, "ax"
-
-.global trap_entry
 .extern c_handle_syscall
 .extern c_handle_fastpath_reply_recv
 .extern c_handle_fastpath_call
 .extern c_handle_interrupt
 .extern c_handle_exception
 
-trap_entry:
+.section .text.traps, "ax"
+BEGIN_FUNC(trap_entry)
 
 #ifdef ENABLE_SMP_SUPPORT
 /* The sscratch contains the stack for the current core */
@@ -145,3 +143,5 @@ interrupt:
   /* Save NextIP */
   STORE   x1, (34*REGBYTES)(t0)
   j c_handle_interrupt
+
+END_FUNC(trap_entry)

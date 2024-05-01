@@ -9,7 +9,7 @@
 
     <interface name="seL4_Untyped" manual_name="Untyped" cap_description="CPtr to an untyped object.">
 
-        <method id="UntypedRetype" name="Retype" manual_name="Retype" manual_label="untyped_retype">
+        <method id="UntypedRetype" name="Retype" manual_label="untyped_retype">
             <brief>
                 Retype an untyped object
             </brief>
@@ -179,7 +179,7 @@
             </error>
         </method>
 
-        <method id="TCBConfigure" name="Configure" manual_name="Configure" manual_label="tcb_configure">
+        <method id="TCBConfigure" name="Configure" manual_label="tcb_configure">
             <condition><not><config var="CONFIG_KERNEL_MCS"/></not></condition>
             <brief>
                 Set the parameters of a TCB
@@ -525,7 +525,7 @@
             </error>
         </method>
 
-        <method id="TCBSuspend" name="Suspend" manual_name="Suspend" manual_label="tcb_suspend">
+        <method id="TCBSuspend" name="Suspend" manual_label="tcb_suspend">
             <brief>
                 Suspend a thread
             </brief>
@@ -544,7 +544,7 @@
             </error>
         </method>
 
-        <method id="TCBResume" name="Resume" manual_name="Resume" manual_label="tcb_resume">
+        <method id="TCBResume" name="Resume" manual_label="tcb_resume">
             <brief>
                 Resume a thread
             </brief>
@@ -828,7 +828,7 @@
     </interface>
 
     <interface name="seL4_CNode" manual_name="CNode">
-        <method id="CNodeRevoke" name="Revoke" manual_name="Revoke" manual_label="cnode_revoke">
+        <method id="CNodeRevoke" name="Revoke" manual_label="cnode_revoke">
             <brief>
                 Delete all child capabilities of a capability
             </brief>
@@ -860,7 +860,7 @@
             </error>
         </method>
 
-        <method id="CNodeDelete" name="Delete" manual_name="Delete" manual_label="cnode_delete">
+        <method id="CNodeDelete" name="Delete" manual_label="cnode_delete">
             <brief>
                 Delete a capability
             </brief>
@@ -928,7 +928,7 @@
             </error>
         </method>
 
-        <method id="CNodeCopy" name="Copy" manual_name="Copy" manual_label="cnode_copy">
+        <method id="CNodeCopy" name="Copy" manual_label="cnode_copy">
             <brief>
                 Copy a capability, setting its access rights whilst doing so
             </brief>
@@ -943,7 +943,7 @@
             <param dir="in" name="src_depth" type="seL4_Uint8" description="Number of bits of src_index to resolve to find the source slot."/>
             <param dir="in" name="rights" type="seL4_CapRights_t">
                 <description>
-                    The rights inherited by the new capability.<docref>Possible values for this type are given in <autoref label="sec:cap_rights"/>  .</docref>
+                    The rights inherited by the new capability.<docref> Possible values for this type are given in <autoref label="sec:cap_rights"/>  .</docref>
                 </description>
             </param>
             <error name="seL4_DeleteFirst" description="The destination slot contains a capability."/>
@@ -957,7 +957,7 @@
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, the source capability cannot be derived <docref>(see <autoref label="sec:cap_derivation"/>)</docref>.
+                    Or, the source capability cannot be derived<docref> (see <autoref label="sec:cap_derivation"/>)</docref>.
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
@@ -972,12 +972,12 @@
             </error>
             <error name="seL4_RevokeFirst">
                 <description>
-                    The source capability cannot be derived <docref>(see <autoref label="sec:cap_derivation"/>)</docref>.
+                    The source capability cannot be derived<docref> (see <autoref label="sec:cap_derivation"/>)</docref>.
                 </description>
             </error>
         </method>
 
-        <method id="CNodeMint" name="Mint" manual_name="Mint" manual_label="cnode_mint">
+        <method id="CNodeMint" name="Mint" manual_label="cnode_mint">
             <brief>
                 Copy a capability, setting its access rights and badge whilst doing so
             </brief>
@@ -992,7 +992,7 @@
             <param dir="in" name="src_depth" type="seL4_Uint8" description="Number of bits of src_index to resolve to find the source slot."/>
             <param dir="in" name="rights" type="seL4_CapRights_t">
                 <description>
-                    The rights inherited by the new capability.<docref>Possible values for this type are given in <autoref label="sec:cap_rights"/>  .</docref>
+                    The rights inherited by the new capability.<docref> Possible values for this type are given in <autoref label="sec:cap_rights"/>  .</docref>
                 </description>
             </param>
             <param dir="in" name="badge" type="seL4_Word" description="Badge or guard to be applied to the new capability. For badges on 32-bit platforms, the high 4 bits are ignored."/>
@@ -1028,7 +1028,7 @@
             </error>
         </method>
 
-        <method id="CNodeMove" name="Move" manual_name="Move" manual_label="cnode_move">
+        <method id="CNodeMove" name="Move" manual_label="cnode_move">
             <brief>
                 Move a capability
             </brief>
@@ -1066,7 +1066,7 @@
             </error>
         </method>
 
-        <method id="CNodeMutate" name="Mutate" manual_name="Mutate" manual_label="cnode_mutate">
+        <method id="CNodeMutate" name="Mutate" manual_label="cnode_mutate">
             <brief>
                 Move a capability, setting its guard in the process. This
                 operation is mostly useful for setting the guard of a CNode
@@ -1110,7 +1110,7 @@
             </error>
         </method>
 
-        <method id="CNodeRotate" name="Rotate" manual_name="Rotate" manual_label="cnode_rotate">
+        <method id="CNodeRotate" name="Rotate" manual_label="cnode_rotate">
             <brief>
                 Given 3 capability slots - a destination, pivot and source - move the capability in the
                 pivot slot to the destination slot and the capability in the source slot to the pivot slot
@@ -1194,7 +1194,7 @@
 
     <interface name="seL4_IRQControl" manual_name="IRQ Control" cap_description="An IRQControl capability. This gives you the authority to make this call.">
 
-        <method id="IRQIssueIRQHandler" name="Get" manual_name="Get" manual_label="irq_controlget">
+        <method id="IRQIssueIRQHandler" name="Get" manual_name="Get IRQ Handler" manual_label="irq_controlget">
             <brief>
                 Create an IRQ handler capability
             </brief>
@@ -1281,7 +1281,7 @@
             </error>
         </method>
 
-        <method id="IRQClearIRQHandler" name="Clear" manual_name="Clear" manual_label="irq_handlerclear">
+        <method id="IRQClearIRQHandler" name="Clear" manual_label="irq_handlerclear">
             <brief>
                 Clear the handler capability from the IRQ slot
             </brief>
@@ -1304,7 +1304,7 @@
 
     <interface name="seL4_DomainSet" manual_name="Domain Set" cap_description="Capability allowing domain configuration.">
 
-        <method id="DomainSetSet" name="Set" manual_name="Set" manual_label="domainset_set">
+        <method id="DomainSetSet" name="Set" manual_label="domainset_set">
             <brief>
                 Change the domain of a thread.
             </brief>
@@ -1334,13 +1334,13 @@
 
     <interface name="seL4_SchedControl" cap_description="Capability to a scheduling control object.">
 
-        <method id="SchedControlConfigureFlags" name="ConfigureFlags" manual_name="ConfigureFlags" manual_label="schedcontrol_configureflags">
+        <method id="SchedControlConfigureFlags" name="ConfigureFlags" manual_name="Configure Flags" manual_label="schedcontrol_configureflags">
             <condition><config var="CONFIG_KERNEL_MCS"/></condition>
             <brief>
                 Set the parameters of a scheduling context by invoking the scheduling control capability. If the scheduling context is bound to a currently running thread, the parameters will take effect immediately: that is the current budget will be increased or reduced by the difference between the new and previous budget and the replenishment time will be updated according to any difference in the period. This can result in active threads being post-poned or released depending on the nature of the parameter change and the state of the thread. Additionally, if the scheduling context was previously empty (no budget) but bound to a runnable thread, this can result in a thread running for the first time since it now has access to CPU time. This call will return seL4 Invalid Argument if the parameters are too small (smaller than the kernel WCET for this platform) or too large (will overflow the timer).
             </brief>
             <description>
-                See <autoref label="sec:threads"/>
+                <docref>See <autoref label="sec:threads"/></docref>
             </description>
             <return><errorenumdesc/></return>
             <param dir="in" name="schedcontext" type="seL4_SchedContext"
@@ -1377,8 +1377,7 @@
 
     <interface name="seL4_SchedContext" cap_description="Capability to the scheduling context which is being operated on.">
 
-        <method id="SchedContextBind" name="Bind"
-            manual_name="Bind" manual_label="schedcontext_bind">
+        <method id="SchedContextBind" name="Bind" manual_label="schedcontext_bind">
             <condition><config var="CONFIG_KERNEL_MCS"/></condition>
             <brief>
                 Bind an object to a scheduling context. The object can be a notification object or a
@@ -1396,7 +1395,7 @@
                 already bound to a thread.
             </brief>
             <description>
-                See <autoref label="sec:threads"/>
+                <docref>See <autoref label="sec:threads"/></docref>
             </description>
             <return><errorenumdesc/></return>
             <param dir="in" name="cap" type="seL4_CPtr"
@@ -1415,15 +1414,14 @@
             </error>
         </method>
 
-        <method id="SchedContextUnbind" name="Unbind"
-            manual_name="Unbind" manual_label="schedcontext_unbind">
+        <method id="SchedContextUnbind" name="Unbind" manual_label="schedcontext_unbind">
             <condition><config var="CONFIG_KERNEL_MCS"/></condition>
             <brief>
                 Unbind any objects (threads or notification objects) from a scheduling context. This
                 will render the bound thread passive, see Section 6.1.5.
             </brief>
             <description>
-                See <autoref label="sec:threads"/>
+                <docref>See <autoref label="sec:threads"/></docref>
             </description>
             <return><errorenumdesc/></return>
             <error name="seL4_IllegalOperation">
@@ -1440,7 +1438,7 @@
         </method>
 
         <method id="SchedContextUnbindObject" name="UnbindObject"
-            manual_name="UnbindObject" manual_label="schedcontext_unbindobject">
+            manual_name="Unbind Object" manual_label="schedcontext_unbindobject">
             <condition><config var="CONFIG_KERNEL_MCS"/></condition>
             <brief>
                 Unbind an object from a scheduling context. The object can be either a thread or a
@@ -1454,7 +1452,7 @@
                 If the object is a notification and it is bound to the scheduling context, unbind it.
             </brief>
             <description>
-                See <autoref label="sec:passive"/>
+                <docref>See <autoref label="sec:passive"/></docref>
             </description>
             <return><errorenumdesc/></return>
             <param dir="in" name="cap" type="seL4_CPtr"
@@ -1472,13 +1470,13 @@
                 </description>
             </error>
         </method>
-        <method id="SchedContextConsumed" name="Consumed" manual_name="Consumed" manual_label="schedcontext_consumed">
+        <method id="SchedContextConsumed" name="Consumed" manual_label="schedcontext_consumed">
             <condition><config var="CONFIG_KERNEL_MCS"/></condition>
             <brief>
                 Return the amount of time used by this scheduling context since this function was last called or a timeout exception triggered.
             </brief>
             <description>
-                See <autoref label="sec:threads"/>
+                <docref>See <autoref label="sec:threads"/></docref>
             </description>
             <return><errorenumdesc/></return>
             <param dir="out" name="consumed" type="seL4_Time"
@@ -1494,7 +1492,7 @@
                 </description>
             </error>
        </method>
-       <method id="SchedContextYieldTo" name="YieldTo" manual_name="YieldTo" manual_label="schedcontext_yieldto">
+       <method id="SchedContextYieldTo" name="YieldTo" manual_name="Yield To" manual_label="schedcontext_yieldto">
           <condition><config var="CONFIG_KERNEL_MCS"/></condition>
           <brief>
               If a thread is currently runnable and running on this scheduling context and the scheduling context has available budget, place it at the head of the scheduling queue.
@@ -1506,14 +1504,14 @@
               Capability to the scheduling context which is being operated on.
           </description>
           <return>
-            See <autoref label="sec:scheduling_contexts"/>
+            <docref>See <autoref label="sec:scheduling_contexts"/></docref>
           </return>
             <param dir="out" name="consumed" type="seL4_Time"/>
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="_service"/> is not bound to a TCB or is bound to the current thread's TCB.
-                    Or, the target thread's priority is greater than the current thread's maximum controlled priority <docref>(see <autoref label="sec:sched"/>)</docref>.
+                    Or, the target thread's priority is greater than the current thread's maximum controlled priority<docref> (see <autoref label="sec:sched"/>)</docref>.
                 </description>
             </error>
             <error name="seL4_InvalidCapability">

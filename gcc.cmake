@@ -145,6 +145,8 @@ set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
+set(CMAKE_TRY_COMPILE_PLATFORM_VARIABLES CROSS_COMPILER_PREFIX)
+
 mark_as_advanced(FORCE CMAKE_TOOLCHAIN_FILE)
 
 # Invoke compiler via ccache. This has no effect if ccache cannot be found.

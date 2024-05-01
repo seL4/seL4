@@ -1003,6 +1003,7 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr)
 {
     findVSpaceForASID_ret_t find_ret;
     lookupPTSlot_ret_t  lu_ret;
+    pte_t pte;
 
     find_ret = findVSpaceForASID(asid);
     if (find_ret.status != EXCEPTION_NONE) {
@@ -1015,13 +1016,13 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr)
         return;
     }
 
-    if (!pte_ptr_get_valid(lu_ret.ptSlot) ||
-        (pte_pte_table_ptr_get_present(lu_ret.ptSlot) && lu_ret.ptBitsLeft > PAGE_BITS)) {
+    pte = *(lu_ret.ptSlot);
+    if (!pte_is_page_type(pte)) {
         /* Do nothing if no page is present */
         return;
     }
 
-    if (pte_page_ptr_get_page_base_address(lu_ret.ptSlot) != pptr_to_paddr((void *)pptr)) {
+    if (pte_get_page_base_address(pte) != pptr_to_paddr((void *)pptr)) {
         /* Do nothing if the mapped page is not the same physical frame */
         return;
     }
@@ -1273,6 +1274,7 @@ static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, word_t length,
     vspace_root_t *vspaceRoot;
     lookupPTSlot_ret_t resolve_ret;
     findVSpaceForASID_ret_t find_ret;
+    pte_t pte;
 
     switch (invLabel) {
     case ARMVSpaceClean_Data:
@@ -1331,10 +1333,10 @@ static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, word_t length,
 
         /* Look up the frame containing 'start'. */
         resolve_ret = lookupPTSlot(vspaceRoot, start);
+        pte = *resolve_ret.ptSlot;
 
         /* Check that the returned slot is a page. */
-        if (!pte_ptr_get_valid(resolve_ret.ptSlot) ||
-            (pte_pte_table_ptr_get_present(resolve_ret.ptSlot) && resolve_ret.ptBitsLeft > PAGE_BITS)) {
+        if (!pte_is_page_type(pte)) {
 
             /* Fail silently, as there can't be any stale cached data (for the
              * given address space), and getting a syscall error because the
@@ -1353,7 +1355,7 @@ static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, word_t length,
         }
 
         /* Calculate the physical start address. */
-        paddr_t frame_base = pte_page_ptr_get_page_base_address(resolve_ret.ptSlot);
+        paddr_t frame_base = pte_get_page_base_address(pte);
 
         pstart = frame_base + (start & MASK(resolve_ret.ptBitsLeft));
 
@@ -1519,7 +1521,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
             if (frame_asid != asid) {
                 userError("ARMPageMap: Attempting to remap a frame that does not belong to the passed address space");
                 current_syscall_error.type = seL4_InvalidCapability;
-                current_syscall_error.invalidArgumentNumber = 1;
+                current_syscall_error.invalidCapNumber = 1;
                 return EXCEPTION_SYSCALL_ERROR;
 
             } else if (cap_frame_cap_get_capFMappedAddress(cap) != vaddr) {
@@ -1724,7 +1726,7 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
         cap_t vspaceCap;
         cte_t *vspaceCapSlot;
         asid_pool_t *pool;
-        unsigned int i;
+        word_t i;
         asid_t asid;
 
         if (unlikely(invLabel != ARMASIDPoolAssign)) {
@@ -1916,7 +1918,7 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
 
     ksUserLogBuffer = pptr_to_paddr((void *) frame_pptr);
 
-    *armKSGlobalLogPDE = pde_pde_large_new(
+    *armKSGlobalLogPTE = pte_pte_page_new(
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
                              0, // XN
 #else
@@ -1929,7 +1931,7 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
                              0,                         /* VMKernelOnly */
                              NORMAL_WT);
 
-    cleanByVA_PoU((vptr_t)armKSGlobalLogPDE, addrFromKPPtr(armKSGlobalLogPDE));
+    cleanByVA_PoU((vptr_t)armKSGlobalLogPTE, addrFromKPPtr(armKSGlobalLogPTE));
     invalidateTranslationSingle(KS_LOG_PPTR);
     return EXCEPTION_NONE;
 }

@@ -44,7 +44,7 @@ LIBSEL4_INLINE_FUNC void
 seL4_DebugPutChar(char c);
 
 /**
- * @xmlonly <manual name="Dump scheduler" label="sel4_dumpscheduler"/> @endxmlonly
+ * @xmlonly <manual name="Dump Scheduler" label="sel4_dumpscheduler"/> @endxmlonly
  * @brief Output the contents of the kernel scheduler.
  *
  * Dump the state of the all TCB objects to kernel serial output. This system call
@@ -87,14 +87,14 @@ seL4_DebugSnapshot(void);
 
 /**
  * @xmlonly <manual name="Cap Identify" label="sel4_debugcapidentify"/> @endxmlonly
- * @brief Identify the type of a capability in the current cspace.
+ * @brief Identify the type of a capability in the current CSpace.
  *
  * This debugging system call returns the type of capability in a capability
- * slot in the current cspace. The type returned is not a libsel4 type, but
+ * slot in the current CSpace. The type returned is not a libsel4 type, but
  * refers to an internal seL4 type. This can be looked up in a built kernel by
  * looking for the (generated) `enum cap_tag`, type `cap_tag_t`.
  *
- * @param cap A capability slot in the current cspace.
+ * @param cap A capability slot in the current CSpace.
  * @return The type of capability passed in.
  *
  */
@@ -118,7 +118,7 @@ seL4_DebugCapIdentify(seL4_CPtr cap);
  */
 LIBSEL4_INLINE_FUNC void
 seL4_DebugNameThread(seL4_CPtr tcb, const char *name);
-#if CONFIG_MAX_NUM_NODES > 1 && defined CONFIG_ARCH_ARM
+#if defined(CONFIG_ENABLE_SMP_SUPPORT) && defined(CONFIG_ARCH_ARM)
 /**
  * @xmlonly <manual name="Send SGI 0-15" label="sel4_debugsendipi"/> @endxmlonly
  * @brief Sends arbitrary SGI.
@@ -317,7 +317,7 @@ seL4_BenchmarkResetAllThreadsUtilisation(void);
 
 #ifdef CONFIG_VTX
 /**
- * @xmlonly <manual name="VMEnter" label="sel4_vmenter"/> @endxmlonly
+ * @xmlonly <manual name="VM Enter" label="sel4_vmenter"/> @endxmlonly
  * @brief Change current thread to execute from its bound VCPU
  *
  * Changes the execution mode of the current thread from normal TCB execution, to
@@ -374,7 +374,7 @@ seL4_VMEnter(seL4_Word *sender);
 
 #ifdef CONFIG_SET_TLS_BASE_SELF
 /**
- * @xmlonly <manual name="SetTLSBase" label="sel4_settlsbase"/> @endxmlonly
+ * @xmlonly <manual name="Set TLS Base" label="sel4_settlsbase"/> @endxmlonly
  * @brief Set the TLS base address and register of the currently executing thread.
  *
  * This stores the base address of the TLS region in the register

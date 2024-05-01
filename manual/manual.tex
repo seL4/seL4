@@ -13,6 +13,11 @@
 
 \usepackage{url}
 
+% Glossary
+\usepackage[acronym,toc]{glossaries}
+\input{parts/glossary}
+\makeglossaries
+
 % Setting this to true turns on the `draft' watermark
 \newif \ifDraft \Draftfalse
 %\Drafttrue
@@ -45,6 +50,7 @@
 \usepackage{verbatim}
 \usepackage[small,bf,up,width=0.75\textwidth]{caption}
 \usepackage[htt]{hyphenat}
+\usepackage[nottoc]{tocbibind}
 \renewcommand{\captionfont}{\small}
 
 \renewcommand{\chapterautorefname}{Chapter}
@@ -182,6 +188,10 @@ for details.
   \chapter{seL4 API Reference}
   \label{sec:api_reference}
   \input{parts/api}
+
+  % glossary
+  \printglossaries
+  \glsaddallunused
 
   % Bibliography
   \cleardoublepage

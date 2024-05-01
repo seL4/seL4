@@ -84,14 +84,9 @@ include_directories("$<TARGET_PROPERTY:sel4_autoconf,INTERFACE_INCLUDE_DIRECTORI
 function(genbf target_prefix pbf_location bf_location header_output)
     get_generated_files(gen_list sel4_autoconf_Gen)
     cppfile(
-        "${pbf_location}"
-        ${target_prefix}_pbf
-        "${bf_location}"
-        EXTRA_FLAGS
-        -P
-        EXTRA_DEPS
-        sel4_autoconf_Gen
-        ${gen_list}
+        "${pbf_location}" ${target_prefix}_pbf "${bf_location}"
+        EXTRA_FLAGS -P
+        EXTRA_DEPS sel4_autoconf_Gen ${gen_list}
     )
     GenHBFTarget(
         "libsel4"
@@ -151,19 +146,14 @@ set(
     "${CMAKE_CURRENT_SOURCE_DIR}/arch_include/${KernelArch}/interfaces/sel4arch.xml"
     "${CMAKE_CURRENT_SOURCE_DIR}/include/interfaces/sel4.xml"
 )
+
 add_custom_command(
     OUTPUT include/interfaces/sel4_client.h
     COMMAND rm -f include/interfaces/sel4_client.h
     COMMAND
-        echo "CONFIG_WORD_SIZE=${KernelWordSize}" > config
-    COMMAND
         "${PYTHON3}" "${SYSCALL_STUB_GEN_PATH}" ${buffer} ${64bitguests} ${mcs} -a
-        "${KernelSel4Arch}" -c config -o include/interfaces/sel4_client.h ${interface_xmls}
-    DEPENDS
-        "${SYSCALL_STUB_GEN_PATH}"
-        ${interface_xmls}
-        BYPRODUCTS
-        config
+        "${KernelSel4Arch}" -o include/interfaces/sel4_client.h ${interface_xmls}
+    DEPENDS "${SYSCALL_STUB_GEN_PATH}" ${interface_xmls}
     COMMENT "Generate sel4_client.h"
     VERBATIM
 )

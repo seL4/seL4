@@ -26,6 +26,24 @@ Upcoming release: BREAKING
 
 ## Changes
 
+### Security-relevant Changes
+
+* Fixed a kernel-crashing NULL pointer dereference when injecting an IRQ for a non-associated VCPU on SMP
+  configurations. This can be triggered from user-level by any thread that has access to or can create non-associated
+  VCPU objects. While HYP+SMP is not a verified configuration and is not thoroughly tested, it is generally assumed to
+  be working. If you are using this configuration, it is strongly recommended to upgrade.
+
+  * Affected configurations: only unverified HYP+SMP configurations on Arm platforms are affected.
+  * Affected versions: seL4 versions 12.0.0 and 12.1.0.
+  * Exploitability: Any thread that can create or that has access to an unassociated VCPU can cause the crash. In static
+    systems, only the system initialiser thread can create VCPUs and the standard capDL system initialiser will not
+    trigger the issue. VMMs could have the authority to dissociate an existing VCPU from a TCB if they have both
+    capabilities. That is, a malicious VMM could cause a crash, but generally VMMs are trusted, albeit not verified
+    code. Guest VMs generally do not have sufficient authority to exploit this vulnerability.
+  * Severity: Critical. This crashes the entire system.
+
+### Other Changes
+
 * Added support for the ARM Cortex A55
 * Added support for the ODroid C4
 * Added support for the Avnet MaaXBoard
@@ -65,6 +83,12 @@ Upcoming release: BREAKING
   optimization.
 * Added SMC Capability (smc_cap) and SMC forwarding for aarch64 platforms. See
   [RFC-9](https://sel4.atlassian.net/browse/RFC-9).
+* Arm+Hyp: Enabled access to seL4_VCPUReg_VMPIDR and seL4_VCPUReg_VMPIDR_EL2 for all hyp configurations.
+  Previously this register was only accessible for SMP kernel configurations. Non-SMP configurations can still require
+  access when wanting to control the value of MPIDR that the guest reads.
+  Note that the initial value for new seL4_ARM_VCPUs for this register is 0 which isn't a legal value for MPIDR_EL1 on
+  AArch64. It may be necessary for the register to be explicitly initialized by user level before launching a thread
+  associated with the new seL4_ARM_VCPU.
 
 ## Upgrade Notes
 

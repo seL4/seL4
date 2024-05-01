@@ -199,7 +199,7 @@
                 </description>
             </error>
         </method>
-        <method id="RISCVPageGetAddress" name="GetAddress">
+        <method id="RISCVPageGetAddress" name="GetAddress" manual_name="Get Address">
             <brief>
                 Get the physical address of a page.
             </brief>
@@ -227,7 +227,7 @@
     </interface>
     <interface name="seL4_RISCV_ASIDControl" manual_name="ASID Control"
         cap_description="The master ASIDControl capability to invoke.">
-        <method id="RISCVASIDControlMakePool" name="MakePool">
+        <method id="RISCVASIDControlMakePool" name="MakePool" manual_name="Make Pool">
            <brief>
                 Create an ASID Pool.
             </brief>
@@ -317,7 +317,7 @@
     </interface>
     <interface name="seL4_IRQControl" manual_name="IRQ Control" cap_description="An IRQControl capability. This gives you the authority to make this call.">
 
-       <method id="RISCVIRQIssueIRQHandlerTrigger" name="GetTrigger" manual_name="GetTrigger"
+       <method id="RISCVIRQIssueIRQHandlerTrigger" name="GetTrigger" manual_name="Get IRQ Handler with Trigger Type"
            manual_label="irq_controlgettrigger">
             <brief>
                 Create an IRQ handler capability and specify the trigger method (edge or level).

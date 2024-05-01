@@ -151,12 +151,12 @@
             description="Virtual address to map the page into."/>
             <param dir="in" name="rights" type="seL4_CapRights_t">
                 <description>
-                    Rights for the mapping.<docref>Possible values for this type are given in <autoref label="sec:cap_rights"/>  .</docref>
+                    Rights for the mapping.<docref> Possible values for this type are given in <autoref label="sec:cap_rights"/>  .</docref>
                 </description>
             </param>
             <param dir="in" name="attr" type="seL4_ARM_VMAttributes">
                 <description>
-                    VM Attributes for the mapping.<docref>Possible values for this type are given in <autoref label="ch:vspace"/>  .</docref>
+                    VM Attributes for the mapping.<docref> Possible values for this type are given in <autoref label="ch:vspace"/>  .</docref>
                 </description>
             </param>
             <error name="seL4_AlignmentError">
@@ -223,7 +223,7 @@
             <param dir="in" name="iospace" type="seL4_ARM_IOSpace" description="The IOSpace to map the page into."/>
             <param dir="in" name="rights" type="seL4_CapRights_t">
                 <description>
-                    Rights for the mapping.<docref>Possible values for this type are given in <autoref label="sec:cap_rights"/>  .</docref>
+                    Rights for the mapping.<docref> Possible values for this type are given in <autoref label="sec:cap_rights"/>  .</docref>
                 </description>
             </param>
             <param dir="in" name="ioaddr" type="seL4_Word" description="Virtual address at which to map page."/>
@@ -489,7 +489,7 @@
     <interface name="seL4_ARM_ASIDPool" manual_name="ASID Pool"
         cap_description="The ASID pool which is being assigned to. Must not be full. Each ASID pool can contain 1024 entries.">
         <method id="ARMASIDPoolAssign" name="Assign" manual_label="asidpool_assign"
-            manual_name="Asid Pool Assign">
+            manual_name="ASID Pool Assign">
             <brief>
                 Assign an ASID Pool.
             </brief>
@@ -669,7 +669,7 @@
     </interface>
    <interface name="seL4_IRQControl" manual_name="IRQ Control" cap_description="An IRQControl capability. This gives you the authority to make this call.">
 
-       <method id="ARMIRQIssueIRQHandlerTrigger" name="GetTrigger" manual_name="GetTrigger"
+       <method id="ARMIRQIssueIRQHandlerTrigger" name="GetTrigger" manual_name="Get IRQ Handler with Trigger Type"
            manual_label="irq_controlgettrigger">
             <brief>
                 Create an IRQ handler capability and specify the trigger method (edge or level).
@@ -718,7 +718,7 @@
             </error>
         </method>
 
-       <method id="ARMIRQIssueIRQHandlerTriggerCore" name="GetTriggerCore" manual_name="GetTriggerCore"
+       <method id="ARMIRQIssueIRQHandlerTriggerCore" name="GetTriggerCore" manual_name="Get IRQ Handler (SMP)"
            manual_label="irq_controlgettriggercore">
             <condition><config var="CONFIG_ENABLE_SMP_SUPPORT"/></condition>
             <brief>
@@ -774,7 +774,7 @@
         </method>
     </interface>
     <interface name="seL4_ARM_SIDControl" manual_name="SID Control" cap_description="A SIDControl capability. This gives you the authority to make this call.">
-       <method id="ARMSIDIssueSIDManager" name="GetSID" manual_name="GetSID" manual_label="sid_controlgetsid">
+       <method id="ARMSIDIssueSIDManager" name="GetSID" manual_name="Get SID" manual_label="sid_controlgetsid">
             <condition><config var="CONFIG_ARM_SMMU"/></condition>
             <brief>
                 Create a SID capability.
@@ -819,7 +819,7 @@
                 </description>
             </error>
         </method>
-       <method id="ARMSIDGetFault" name="GetFault" manual_name="GetFault" manual_label="sid_controlgetfault">
+       <method id="ARMSIDGetFault" name="GetFault" manual_name="Get Fault" manual_label="sid_controlgetfault">
             <condition><config var="CONFIG_ARM_SMMU"/></condition>
             <brief>
                 Get the fault status of the SMMU.
@@ -849,7 +849,7 @@
                 </description>
             </error>
         </method>
-        <method id="ARMSIDClearFault" name="ClearFault" manual_name="ClearFault" manual_label="sid_controlclearfault">
+        <method id="ARMSIDClearFault" name="ClearFault" manual_name="Clear Fault" manual_label="sid_controlclearfault">
             <condition><config var="CONFIG_ARM_SMMU"/></condition>
             <brief>
                 Clear the fault status of the SMMU.
@@ -870,7 +870,7 @@
         </method>
     </interface>
     <interface name="seL4_ARM_SID" manual_name="SID" cap_description="A SID capability. This gives you the authority to make this call.">
-       <method id="ARMSIDBindCB" name="BindCB" manual_name="BindCB" manual_label="sid_bindcb">
+       <method id="ARMSIDBindCB" name="BindCB" manual_name="Bind CB" manual_label="sid_bindcb">
             <condition><config var="CONFIG_ARM_SMMU"/></condition>
             <brief>
                 Binding a context bank to a stream ID.
@@ -897,7 +897,7 @@
                 </description>
             </error>
         </method>
-       <method id="ARMSIDUnbindCB" name="UnbindCB" manual_name="UnbindCB" manual_label="sid_unbindcb">
+       <method id="ARMSIDUnbindCB" name="UnbindCB" manual_name="Unbind CB" manual_label="sid_unbindcb">
             <condition><config var="CONFIG_ARM_SMMU"/></condition>
             <brief>
                 Unbinding a context bank from a stream ID.
@@ -919,7 +919,7 @@
         </method>
     </interface>
     <interface name="seL4_ARM_CBControl" manual_name="CB Control" cap_description="A CBControl capability. This gives you the authority to make this call.">
-       <method id="ARMCBIssueCBManager" name="GetCB" manual_name="GetCB" manual_label="cb_controlgetcb">
+       <method id="ARMCBIssueCBManager" name="GetCB" manual_name="Get CB" manual_label="cb_controlgetcb">
             <condition><config var="CONFIG_ARM_SMMU"/></condition>
             <brief>
                 Create a CB capability.
@@ -964,7 +964,7 @@
                 </description>
             </error>
         </method>
-        <method id="ARMCBTLBInvalidateAll" name="TLBInvalidateAll" manual_name="TLBInvalidateAll"
+        <method id="ARMCBTLBInvalidateAll" name="TLBInvalidateAll" manual_name="TLB Invalidate All"
            manual_label="cb_controltlbinvalidate">
             <condition><config var="CONFIG_ARM_SMMU"/></condition>
             <brief>
@@ -986,7 +986,7 @@
         </method>
     </interface>
     <interface name="seL4_ARM_CB" manual_name="CB" cap_description="A CB capability. This gives you the authority to make this call.">
-       <method id="ARMCBAssignVspace" name="AssignVspace" manual_name="AssignVspace" manual_label="cb_assignvspace">
+       <method id="ARMCBAssignVspace" name="AssignVspace" manual_name="Assign VSpace" manual_label="cb_assignvspace">
             <condition><config var="CONFIG_ARM_SMMU"/></condition>
             <brief>
                 Assigning a vspace to a context bank.
@@ -1013,7 +1013,7 @@
                 </description>
             </error>
         </method>
-        <method id="ARMCBUnassignVspace" name="UnassignVspace" manual_name="UnassignVspace" manual_label="cb_unassignvspace">
+        <method id="ARMCBUnassignVspace" name="UnassignVspace" manual_name="Unassign VSpace" manual_label="cb_unassignvspace">
             <condition><config var="CONFIG_ARM_SMMU"/></condition>
             <brief>
                 Unassigning a vspace to a context bank.
@@ -1033,7 +1033,7 @@
                 </description>
             </error>
         </method>
-        <method id="ARMCBTLBInvalidate" name="TLBInvalidate" manual_name="TLBInvalidate" manual_label="cb_tlbinvalidate">
+        <method id="ARMCBTLBInvalidate" name="TLBInvalidate" manual_name="TLB Invalidate" manual_label="cb_tlbinvalidate">
             <condition><config var="CONFIG_ARM_SMMU"/></condition>
             <brief>
                 Invalidating TLB entries used by the current ASID in this context bank.
@@ -1053,7 +1053,7 @@
                 </description>
             </error>
         </method>
-        <method id="ARMCBGetFault" name="CBGetFault" manual_name="CBGetFault"
+        <method id="ARMCBGetFault" name="CBGetFault" manual_name="CB Get Fault"
            manual_label="cb_getfault">
             <condition><config var="CONFIG_ARM_SMMU"/></condition>
             <brief>
@@ -1082,7 +1082,7 @@
                 </description>
             </error>
         </method>
-        <method id="ARMCBClearFault" name="CBClearFault" manual_name="CBClearFault" manual_label="cb_clearfault">
+        <method id="ARMCBClearFault" name="CBClearFault" manual_name="CB Clear Fault" manual_label="cb_clearfault">
             <condition><config var="CONFIG_ARM_SMMU"/></condition>
             <brief>
                  Clear the fault status of the context bank.

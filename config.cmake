@@ -124,15 +124,19 @@ if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
     set(config_schema "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware_schema.yml")
     set(
         KernelCustomDTSOverlay ""
-        CACHE FILEPATH "Provide an additional overlay to append to the selected KernelPlatform's \
+        CACHE
+            STRING
+            "Provide an additional list of overlays to append to the selected KernelPlatform's \
         device tree during build time"
     )
     if(NOT "${KernelCustomDTSOverlay}" STREQUAL "")
-        if(NOT EXISTS ${KernelCustomDTSOverlay})
-            message(FATAL_ERROR "Can't open external overlay file '${KernelCustomDTSOverlay}'!")
-        endif()
-        list(APPEND KernelDTSList "${KernelCustomDTSOverlay}")
-        message(STATUS "Using ${KernelCustomDTSOverlay} overlay")
+        foreach(dts_entry IN ITEMS ${KernelCustomDTSOverlay})
+            if(NOT EXISTS ${dts_entry})
+                message(FATAL_ERROR "Can't open external overlay file '${dts_entry}'!")
+            endif()
+            list(APPEND KernelDTSList "${dts_entry}")
+            message(STATUS "Appending ${dts_entry} overlay")
+        endforeach()
     endif()
 
     find_program(DTC_TOOL dtc)
@@ -244,20 +248,23 @@ config_string(
     KernelTimerTickMS TIMER_TICK_MS "Timer tick period in milliseconds"
     DEFAULT 2
     UNQUOTE
-    DEPENDS "NOT KernelIsMCS" UNDEF_DISABLED
+    DEPENDS "NOT KernelIsMCS"
+    UNDEF_DISABLED
 )
 config_string(
     KernelTimeSlice TIME_SLICE "Number of timer ticks until a thread is preempted."
     DEFAULT 5
     UNQUOTE
-    DEPENDS "NOT KernelIsMCS" UNDEF_DISABLED
+    DEPENDS "NOT KernelIsMCS"
+    UNDEF_DISABLED
 )
 config_string(
     KernelBootThreadTimeSlice BOOT_THREAD_TIME_SLICE
     "Number of milliseconds until the boot thread is preempted."
     DEFAULT 5
     UNQUOTE
-    DEPENDS "KernelIsMCS" UNDEF_DISABLED
+    DEPENDS "KernelIsMCS"
+    UNDEF_DISABLED
 )
 config_string(
     KernelRetypeFanOutLimit RETYPE_FAN_OUT_LIMIT
@@ -349,12 +356,12 @@ config_string(
     KernelFPUMaxRestoresSinceSwitch FPU_MAX_RESTORES_SINCE_SWITCH
     "This option is a heuristic to attempt to detect when the FPU is no longer in use,\
     allowing the kernel to save the FPU state out so that the FPU does not have to be\
-    enabled/disabled every thread swith. Every time we restore a thread and there is\
+    enabled/disabled every thread switch. Every time we restore a thread and there is\
     active FPU state, we increment this setting and if it exceeds this threshold we\
     switch to the NULL state."
     DEFAULT 64
-    DEPENDS "KernelHaveFPU" UNDEF_DISABLED
-    UNQUOTE
+    DEPENDS "KernelHaveFPU"
+    UNDEF_DISABLED UNQUOTE
 )
 
 config_option(
@@ -539,7 +546,8 @@ config_string(
      that can be fiddled with when running inside a simulator."
     DEFAULT 1
     UNQUOTE
-    DEPENDS "KernelIsMCS" UNDEF_DISABLED
+    DEPENDS "KernelIsMCS"
+    UNDEF_DISABLED
 )
 
 config_string(
@@ -548,7 +556,8 @@ config_string(
     either its period or budget configured."
     DEFAULT 0
     UNQUOTE
-    DEPENDS "KernelIsMCS" UNDEF_DISABLED
+    DEPENDS "KernelIsMCS"
+    UNDEF_DISABLED
 )
 
 config_option(

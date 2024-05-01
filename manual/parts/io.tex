@@ -92,7 +92,7 @@ by the given \obj{IO Port} capability in order for the method to succeed.
 
 The I/O port methods return error codes upon failure.
 A \texttt{seL4\_IllegalOperation} code is returned if port access is
-attempted outside the range allowed by the \obj{IO Port} capability. 
+attempted outside the range allowed by the \obj{IO Port} capability.
 Since invocations that
 read from I/O ports are required to return two values -- the value read
 and the error code -- a structure containing two members, \texttt{result}
@@ -135,7 +135,7 @@ mapped into the I/O address space. A \obj{Page} can be mapped into
 either a \obj{VSpace} or an \obj{IOSpace} but never into both at the same time.
 
 \obj{IOSpace} and \obj{VSpace} fault handling differ significantly.
-\obj{VSpace} page faults are redirected to the thread's exception handler (see \autoref{sec:faults}), 
+\obj{VSpace} page faults are redirected to the thread's exception handler (see \autoref{sec:faults}),
 which can take the
 appropriate action and restart the thread at the faulting instruction.
 There is no concept of an exception handler for an \obj{IOSpace}. Instead, faulting
@@ -148,7 +148,7 @@ CSpace. An \obj{IOSpace} capability for a specific device is created by
 using the \apifunc{seL4\_CNode\_Mint}{cnode_mint} method, passing the
 PCI identifier of the device as the low 16 bits of the \texttt{badge} argument, and
 a Domain ID as the high 16 bits of the \texttt{badge} argument.
-PCI identifiers are explained fully in the PCI specification 
+PCI identifiers are explained fully in the PCI specification
 \cite{Shanley:PCISA}, but are briefly described here. A PCI identifier is
 a 16-bit quantity.  The first 8 bits identify the bus that the device is on.
 The next 5 bits are the device identifier: the number of the device on
@@ -162,14 +162,14 @@ unsupported value is chosen.
 
 The IOMMU page-table structure has three levels.
 Page tables are mapped into an \obj{IOSpace} using the \apifunc{seL4\_X86\_IOPageTable\_Map}{x86_io_page_table_map} method.
-This method takes the \obj{IOPageTable} to map, the \obj{IOSpace} to map into 
+This method takes the \obj{IOPageTable} to map, the \obj{IOSpace} to map into
 and the address to map at. Three levels of page tables must be mapped before
 a frame can be mapped successfully. A frame is mapped with the
 \apifunc{seL4\_X86\_Page\_MapIO}{x86_page_map_io} method whose parameters are analogous to
-the corresponding method that maps \obj{Page}s into \obj{VSpaces} (see \autoref{ch:vspace}), 
+the corresponding method that maps \obj{Page}s into \obj{VSpaces} (see \autoref{ch:vspace}),
 namely \apifunc{seL4\_X86\_Page\_Map}{x86_page_map}.
 
-Unmapping is accomplished with the usual unmap (see \autoref{ch:vspace}) API 
+Unmapping is accomplished with the usual unmap (see \autoref{ch:vspace}) API
 call,
 \apifunc{seL4\_X86\_Page\_Unmap}{x86_page_unmap}.
 
@@ -191,7 +191,7 @@ with an identifier (StreamID) that is used to direct the transaction through a
 SMMU translation context bank (CB). A translation context bank can perform
 address translation, memory protection and memory attribute transformation.
 The standard specifies different types of address translations that correspond
-to stages in the ArmV8 virtual memory system architecture such as either 
+to stages in the ArmV8 virtual memory system architecture such as either
 non-secure  EL0, EL1 first and second stage translations, Hyp mode translations
 or secure mode translations. It is possible to associate different StreamIDs
 with the same context bank and it is possible to share address translation
@@ -218,7 +218,7 @@ context banks, bind context banks to page translation structures, implement
 SMMU fault handling and also perform explicit TLB maintenance.
 This allows system software to ensure that a device is only able to access and
 modify memory contents that it has been explicitly given access to and allow
-devices to be presented with a virtualized address space for performing DMA.
+devices to be presented with a virtualised address space for performing DMA.
 
 All the StreamIDs and context banks are accessible via capabilities. Control
 capabilities are used to create capabilities referring to each StreamID and
@@ -248,7 +248,7 @@ enabled, and seL4 is operating in EL2, the SMMU only does stage 2 translations.
 
 Four capabilities types provide access to SMMU resources:
 \begin{description}
-    \item[\obj{seL4\_ARM\_SID}] A capability granting access to a single 
+    \item[\obj{seL4\_ARM\_SID}] A capability granting access to a single
         transaction stream, which can be used to bind and unbind a stream to a
         single context bank.
     \item[\obj{seL4\_ARM\_CB}] A capbility representing a single specific context
@@ -280,7 +280,7 @@ tasks in the system.
 \item[\apifunc{seL4\_ARM\_SIDControl\_GetSID}{arm_sid_controlgetsid}] uses the
     \obj{seL4\_ARM\_SIDControl} capability to create a new \obj{seL4\_ARM\_SID}
     capability that represents a single StreamID.  This new capbility is placed
-    in the provided slot.  It is expected that whatever thread controls an 
+    in the provided slot.  It is expected that whatever thread controls an
     \obj{seL4\_ARM\_SIDControl} capability knows about how StreamIDs are
     allocated in a system.
 \end{description}
@@ -380,7 +380,7 @@ Similarly, deleting a VSpace\_cap that contains assigned context bank number wil
 
 Deleting the last ARM\_SID cap will:
 \begin{itemize}
-    \item Perform an \apifunc{seL4\_ARM\_SID\_UnbindCB}{arm_sid_unbindcb}, 
+    \item Perform an \apifunc{seL4\_ARM\_SID\_UnbindCB}{arm_sid_unbindcb},
         (deleting the copy of the assigned \obj{seL4\_ARM\_CB} cap)
     \item Disable the stream ID.
 \end{itemize}
@@ -470,7 +470,7 @@ which can be used to identify its context bank ID.
     \obj{seL4\_ARM\_SIDControl} cap (controlling stream ID distributions) are trusted.
 \item SMMU interrupts are handled as same as other IRQs, i,e, the kernel does not
     treat the SMMU IRQs special, reporting the interrupt via IRQ notifications.
-\item The kernel provides a API for reading the global fault registers: 
+\item The kernel provides a API for reading the global fault registers:
     \apifunc{seL4\_ARM\_SIDControl\_GetFault}{arm_sid_controlgetfault}. Because
     the IRQ notification can only deliver information via the badge, the owner
     of the StreamControl\_cap can retrieve more information via this API.
@@ -483,7 +483,7 @@ which can be used to identify its context bank ID.
     cap holder (the \obj{seL4\_ARM\_CB} cap holder).
 \item Once the fault handling is done, the server can call
     \apifunc{seL4\_ARM\_CB\_CBClearFault}{arm_cb_clearfault} to clear the fault
-    status on a context bank, and 
+    status on a context bank, and
     \apifunc{seL4\_ARM\_SIDControl\_ClearFault}{arm_sid_controlclearfault}
     to clear the fault status on SMMU.
 \end{itemize}
