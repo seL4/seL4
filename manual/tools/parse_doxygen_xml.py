@@ -14,7 +14,6 @@ import sys
 import os
 import re
 from bs4 import BeautifulSoup
-import six
 
 
 class Generator(object):
@@ -64,8 +63,6 @@ class Generator(object):
 
         if isinstance(soup, str):
             string = soup
-        elif isinstance(soup, six.string_types):
-            string = str(soup)
         elif soup.string:
             string = str(soup.string)
         else:
@@ -162,11 +159,11 @@ class Generator(object):
         errors = {}
 
         # the first type is the return type
-        ret_type = six.next(types_iter)
+        ret_type = next(types_iter)
 
         # the rest are parameters
         for n in names:
-            param_type = six.next(types_iter).text
+            param_type = next(types_iter).text
             if param_type == "void":
                 continue
             params[str(n.text)] = {"type": param_type}
