@@ -13,6 +13,17 @@ void lockTLBEntry(vptr_t vaddr)
     int n = tlbLockCount;
     int x, y;
 
+    /* tlbLockCount is used only in this function, which is called at most 2 times for unicore
+       platforms (and we only have unicore A8 platforms). */
+    assert(tlbLockCount < 2);
+    /* Since asserts are off in release mode, we enforce the bound on tlbLockCount manually, so we
+       don't have to verify calling context. We need the bound to be sure the bit operations below
+       are not undefined behaviour. We leave the assert in, because we want to know about it when
+       the calling context ever changes. */
+    if (tlbLockCount >= 2) {
+        return;
+    }
+
     tlbLockCount ++;
     /* Compute two values, x and y, to write to the lockdown register. */
 
