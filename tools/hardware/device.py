@@ -162,10 +162,10 @@ class WrappedNode:
         addr = Utils.translate_address(self, addr)
         return self.parent._translate_child_address(addr)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.path)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return 'WrappedNode(path={})'.format(self.path)
 
 

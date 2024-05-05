@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-from typing import List, Set, Tuple, Union
+from typing import List, Set, Tuple, TypedDict, Union
 
 import hardware
 from hardware.config import Config
@@ -14,9 +14,9 @@ from hardware.memory import Region
 from hardware.utils.rule import KernelRegionGroup
 
 
-def get_memory_regions(tree: FdtParser):
+def get_memory_regions(tree: FdtParser) -> Set[Region]:
     ''' Get all regions with device_type = memory in the tree '''
-    regions = set()
+    regions: Set[Region] = set()
 
     def visitor(node: WrappedNode):
         if node.has_prop('device_type') and node.get_prop('device_type').strings[0] == 'memory':
@@ -95,7 +95,7 @@ def get_physical_memory(tree: FdtParser, config: Config) -> Tuple[List[Region], 
 
 def get_addrspace_exclude(regions: List[Region], config: Config):
     ''' Returns a list of regions that represents the inverse of the given region list. '''
-    ret = set()
+    ret: Set[Region] = set()
     # We can't create untypeds that exceed the addrspace_max, so we round down to the smallest
     # untyped size alignment so that the kernel will be able to turn the entire range into untypeds.
     as_max = hardware.utils.align_down(config.addrspace_max,

@@ -12,7 +12,8 @@ from typing import Dict, List, Tuple
 import hardware
 from hardware.config import Config
 from hardware.fdt import FdtParser
-from hardware.utils.rule import HardwareYaml
+from hardware.memory import Region
+from hardware.utils.rule import HardwareYaml, KernelInterrupt, KernelRegionGroup
 
 
 HEADER_TEMPLATE = '''/*
@@ -131,7 +132,7 @@ static const p_region_t BOOT_RODATA avail_p_regs[] = {
 '''
 
 
-def get_kernel_devices(tree: FdtParser, hw_yaml: HardwareYaml) -> Tuple[List, Dict]:
+def get_kernel_devices(tree: FdtParser, hw_yaml: HardwareYaml) -> Tuple[List[KernelRegionGroup], Dict[int, str]]:
     '''
     Given a device tree and a set of rules, returns a tuple (groups, offsets).
 
@@ -144,7 +145,7 @@ def get_kernel_devices(tree: FdtParser, hw_yaml: HardwareYaml) -> Tuple[List, Di
     kernel_devices = tree.get_kernel_devices()
 
     kernel_offset = 0
-    groups = []
+    groups: List[KernelRegionGroup] = []
     for dev in kernel_devices:
         dev_rule = hw_yaml.get_rule(dev)
         new_regions = dev_rule.get_regions(dev)
@@ -155,14 +156,14 @@ def get_kernel_devices(tree: FdtParser, hw_yaml: HardwareYaml) -> Tuple[List, Di
             else:
                 groups.append(reg)
 
-    offsets = {}
+    offsets: Dict[int, str] = {}
     for group in groups:
         kernel_offset = group.set_kernel_offset(kernel_offset)
         offsets.update(group.get_labelled_addresses())
     return (groups, offsets)
 
 
-def get_interrupts(tree: FdtParser, hw_yaml: HardwareYaml) -> List:
+def get_interrupts(tree: FdtParser, hw_yaml: HardwareYaml) -> List[KernelInterrupt]:
     ''' Get dict of interrupts, {label: KernelInterrupt} from the DT and hardware rules. '''
     kernel_devices = tree.get_kernel_devices()
 
@@ -225,6 +226,6 @@ def run(tree: FdtParser, hw_yaml: HardwareYaml, config: Config, args: argparse.N
         args.header_out)
 
 
-def add_args(parser):
+def add_args(parser: argparse.ArgumentParser):
     parser.add_argument('--header-out', help='output file for c header',
                         type=argparse.FileType('w'))

@@ -5,15 +5,15 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
+from typing import List
 import logging
-
 from hardware.device import Utils, WrappedNode
 
 
 class IrqController:
     ''' Base class for IRQ controllers '''
 
-    def parse_irq(self, child, data):
+    def parse_irq(self, child: WrappedNode, data: List) -> int:
         ''' Given a node and a list of 32-bit integers representing
             that node's interrupt specifier list, parse one interrupt and return
             its number. '''
@@ -37,7 +37,7 @@ class IrqController:
         ''' Get the IRQ controller's interrupt-cells '''
         return self.node.get_prop('#interrupt-cells').words[0]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return 'IrqController(node={},kind={})'.format(self.node.path, type(self).__name__)
 
 
@@ -45,7 +45,7 @@ class InterruptNexus(IrqController):
     ''' IrqController for interrupt nexuses, which are a mechanism for
         "routing" interrupts from a child to multiple IRQ controllers. '''
 
-    def parse_irq(self, child, data):
+    def parse_irq(self, child: WrappedNode, data: List) -> int:
         # interrupt-map is a list of the following:
         # <<child unit address> <child interrupt specifier> <interrupt parent>
         #  <parent unit address> <parent interrupt specifier>>
@@ -119,7 +119,7 @@ class ArmGic(IrqController):
     IRQ_TYPE_EXTENDED_SPI = 2
     IRQ_TYPE_EXTENDED_PPI = 3
 
-    def parse_irq(self, child, data):
+    def parse_irq(self, child: WrappedNode, data: List) -> int:
         # at least 3 cells:
         # first cell is 1 if PPI, 0 if SPI
         # second cell: PPI or SPI number
@@ -151,7 +151,7 @@ class ArmGic(IrqController):
 class RawIrqController(IrqController):
     ''' parses IRQs of format <irq-num data...> '''
 
-    def parse_irq(self, child, data):
+    def parse_irq(self, child: WrappedNode, data: List) -> int:
         cells = self.get_interrupt_cells()
         num = data.pop(0)
         while cells > 1:
@@ -163,7 +163,7 @@ class RawIrqController(IrqController):
 class PassthroughIrqController(IrqController):
     ''' passes off IRQ parsing to node's interrupt-parent '''
 
-    def parse_irq(self, child, data):
+    def parse_irq(self, child: WrappedNode, data: List) -> int:
         irq_parent_ph = self.node.get_interrupt_parent()
         irq_parent = self.tree.get_irq_controller(irq_parent_ph)
 
@@ -190,7 +190,7 @@ CONTROLLERS = {
 }
 
 
-def create_irq_controller(node: WrappedNode, tree: 'FdtParser'):
+def create_irq_controller(node: WrappedNode, tree: 'FdtParser') -> IrqController:
     if node.has_prop('interrupt-map'):
         # interrupt nexus
         return InterruptNexus(node, tree)
