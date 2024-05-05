@@ -89,7 +89,7 @@ class FdtParser:
         paths = chosen.get_prop(prop).strings
 
         for path in paths:
-            if path[0] != '/':
+            if not path.startswith('/'):
                 path = self.lookup_alias(path)
             node = self.get_path(path)
             if node is None:
