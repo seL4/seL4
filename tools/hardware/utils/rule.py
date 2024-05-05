@@ -6,7 +6,7 @@
 
 from collections import defaultdict
 from functools import lru_cache
-from typing import Dict, List
+from typing import Dict, List, Union
 
 import logging
 
@@ -16,7 +16,7 @@ from hardware.fdt import FdtParser
 from hardware.memory import Region
 
 
-def get_macro_str(macro: str) -> str:
+def get_macro_str(macro: Union[str, None]) -> str:
     ''' Helper function that returns the appropriate C preprocessor line for a given macro '''
     if macro is None:
         return ''
@@ -26,7 +26,7 @@ def get_macro_str(macro: str) -> str:
     return '#ifdef ' + macro
 
 
-def get_endif(macro: str) -> str:
+def get_endif(macro: Union[str, None]) -> str:
     ''' Helper function that returns the appropriate endif line for a given macro '''
     if macro is None:
         return ''
@@ -37,7 +37,9 @@ def get_endif(macro: str) -> str:
 class KernelRegionGroup:
     ''' wraps a contiguous region of memory that is mapped into the kernel. '''
 
-    def __init__(self, region: Region, kernel_name: str, page_bits: int, max_size: int, condition_macro: str = None, user_ok: bool = False):
+    def __init__(self, region: Region, kernel_name: str, page_bits: int,
+                 max_size: int, condition_macro: Union[str, None] = None,
+                 user_ok: bool = False):
         self.macro = condition_macro
         self.desc = region.owner.path if region.owner else 'dynamically generated region'
         self.kernel_offset = -1
@@ -108,7 +110,10 @@ class KernelRegionGroup:
 class KernelInterrupt:
     ''' Represents an interrupt that is used by the kernel. '''
 
-    def __init__(self, label: str, irq: int, prio: int = 0, sel_macro: str = None, false_irq: int = -1, enable_macro: str = None, desc: str = None):
+    def __init__(self, label: str, irq: int, prio: int = 0,
+                 sel_macro: Union[str, None] = None, false_irq: int = -1,
+                 enable_macro: Union[str, None] = None,
+                 desc: Union[str, None] = None):
         self.label = label
         self.irq = irq
         self.prio = prio
@@ -239,7 +244,7 @@ class HardwareYaml:
         raise ValueError('Failed to match compatibles "{}" for node {}!'.format(
             ', '.join(device.get_prop('compatible').strings), device.path))
 
-    def get_matched_compatible(self, device: WrappedNode) -> str:
+    def get_matched_compatible(self, device: WrappedNode) -> Union[str, None]:
         ''' Returns the best matching compatible string for this device '''
         if not device.has_prop('compatible'):
             raise ValueError(

@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
+from typing import Union
 import functools
 import hardware
 
@@ -12,7 +13,8 @@ import hardware
 class Region:
     ''' Represents a region of memory. '''
 
-    def __init__(self, base: int, size: int, owner: 'WrappedNode' = None):
+    def __init__(self, base: int, size: int,
+                 owner: Union['WrappedNode', None] = None):
         self.base = base
         self.size = size
         self.owner = owner
@@ -51,7 +53,7 @@ class Region:
         return hash((self.base, self.size))
 
     @staticmethod
-    def from_range(start, end, owner=None):
+    def from_range(start, end, owner: Union['WrappedNode', None] = None):
         ''' create a region from a start/end rather than start/size '''
         if start > end:
             raise ValueError(

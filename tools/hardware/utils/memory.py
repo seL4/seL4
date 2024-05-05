@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-from typing import List, Set, Tuple
+from typing import List, Set, Tuple, Union
 
 import hardware
 from hardware.config import Config
@@ -55,7 +55,7 @@ def merge_memory_regions(regions: Set[Region]) -> Set[Region]:
     return contiguous_regions
 
 
-def parse_reserved_regions(node: WrappedNode) -> Set[Region]:
+def parse_reserved_regions(node: Union[WrappedNode, None]) -> Set[Region]:
     ''' Parse a reserved-memory node, looking for regions that are
         unusable by OS (e.g. reserved for firmware/bootloader) '''
     if node is None:
