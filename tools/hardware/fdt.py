@@ -109,4 +109,4 @@ class FdtParser:
 
     def visit(self, visitor: Any):
         ''' Walk the tree, calling the given visitor function on each node '''
-        return self.wrapped_root.visit(visitor)
+        self.wrapped_root.visit(visitor)
