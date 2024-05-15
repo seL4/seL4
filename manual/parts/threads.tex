@@ -123,7 +123,7 @@ thread to run for more than $b$ out of every $p$ microseconds. However, $\frac{b
 represent a lower bound on execution, as a thread must have the highest or equal highest priority
 of all runnable threads to be guaranteed to be scheduled at all, and the kernel does not conduct
 an admission test. As a result the set of all parameters is not necessarily schedulable. If
-multiple threads have available budget concurrently they are scheduled first-in first-out, and
+multiple threads have budgets available concurrently they are scheduled first-in first-out, and
 round-robin scheduling is applied once the budget is expired.
 
 A scheduling context that is eligible to be picked by the scheduler, i.e has budget available, is
@@ -150,7 +150,7 @@ While a thread is executing, it constantly drains the budget from the \texttt{rA
 replenishment list. If the \texttt{rTime} is in the future, the thread bound to that
 scheduling context is placed in a queue of threads waiting for more budget.
 
-Round-robin threads are treated that same as sporadic threads except for one case: how the
+Round-robin threads are treated that same as sporadic threads except regarding one aspect: how the
 budget is charged. Round-robin threads have two refills only, both of which are always ready to be
 used. When a round-robin thread stops executing, budget is moved from the head to the tail
 replenishment. Once the head budget is consumed, the thread is removed from the scheduling queue
@@ -169,7 +169,7 @@ value of 2 and is limited by the size of the scheduling context.
 
 Threads that have short execution times (e.g interrupt handlers) and are not frequently preempted
 should have less refills, while longer running threads with long values of $b$ should have a higher
-value. Threads bound to a scheduling context with 0 extra refills will behave periodically -- tasks
+value. Threads bound to a scheduling context with 0 extra refills will run periodically -- tasks
 that use their head replenishment, or call yield, will not be scheduled again until the start of
 their next period.
 
@@ -177,7 +177,7 @@ Given the number of replenishments is limited, if a node's SC changes and the ou
 have enough space to store the new replenishment, space is created by removing the current
 replenishment which can result in preemption if the next replenishment is not yet available.
 Scheduling contexts with a higher number of configured refills will consume closer
-to their whole budget, as they can be preempted or switch threads more often without filling their
+to their whole budget, as they can be preempted and switch threads more often without filling their
 replenishment queue. However, the scheduling overhead will be higher as the replenishment list is
 subject to fragmentation.
 
@@ -197,7 +197,7 @@ Threads can be unbound from a scheduling context with
 \apifunc{seL4\_SchedContext\_UnbindObject}{schedcontext_unbindobject}.  This is distinct from
 suspending a thread, in that threads that are blocked waiting in an endpoint or notification queue
 will remain in the queue and can still receive messages and signals.  However, the unbound thread
-will not be schedulable again until it receives a scheduling context.  Threads without scheduling
+will not be schedul\-able again until it receives a scheduling context.  Threads without scheduling
 contexts are referred to as \emph{passive} threads, as they cannot execute without the action of
 another thread.
 
@@ -251,7 +251,7 @@ invoked, the scheduling context will return to A.
 \apifunc{seL4\_NBSendRecv}{sel4_nbsendrecv} can also result in scheduling context donation.
 If the non-blocking send phase of the operation results in message delivery to a passive thread, the
 scheduling context will be donated to that passive thread and the thread making the system call becomes passive on the
-receiving endpoint in the receive phase.  No reply capability generated, so there
+receiving endpoint in the receive phase.  No reply capability is generated, so there
 is no guarantee that the scheduling context will return, which increases book keeping complexity but allows
 for data-flow like architectures rather than remote-procedure calls. Note that \apifunc{seL4\_Call}{sel4_call}
 does not guarantee the return of a scheduling context: this is an inherently trusted operation as the
@@ -284,7 +284,7 @@ Threads of sufficient maximum controlled priority and with possession of the
 appropriate scheduling context capability can manipulate the scheduler and
 implement user-level schedulers using IPC.
 
-Scheduling contexts provide access to and an upper bound on execution CPU time,
+Scheduling contexts provide access to an upper bound on execution CPU time,
 however when a thread executes is determined by thread priority.  Consequently,
 access to CPU is a function of thread MCPs, scheduling contexts and the
 \obj{SchedControl} capability.  The kernel will enforce that threads do not
@@ -304,7 +304,7 @@ sends this to the endpoint. This thread can then take the appropriate action.
 Fault IPC messages are described in \autoref{sec:faults}.  Standard exception-handler
 endpoints can be set with the \apifunc{seL4\_TCB\_SetSpace}{tcb_setspace} or
 \apifunc{seL4\_TCB\_SetSchedParams}{tcb_setschedparams} methods while Timeout exception
-handlers an be set with \apifunc{seL4\_TCB\_SetTimeoutEndpoint}{tcb_settimeoutendpoint} (MCS only).
+handlers can be set with \apifunc{seL4\_TCB\_SetTimeoutEndpoint}{tcb_settimeoutendpoint} (MCS only).
 With these methods, a
 capability address for the exception handler can be associated with a thread.
 This address is then used to lookup the handler endpoint, and the capability to
@@ -553,10 +553,14 @@ can be configured as single-steppers, to one at any given time. The register tha
 is currently configured (if any) for single-stepping will be the implicit
 \texttt{bp\_num} argument in a single-step debug fault reply.
 
-The kernel's single-stepping, also supports skipping a certain number of
+% The description for skipping num_instructions had an off-by-one error
+% I.e. num_instruction = 1 does not skip any instructions between stopps
+% num_instruction = 2 "skips" 1 instruction, but executes 2 instructions before stopping
+
+The kernel's single-stepping, also supports executing a certain number of
 instructions before delivering the single-step fault message. \texttt{Num\_instructions}
-should be set to \texttt{1} when single-stepping, or any non-zero integer value to skip that many
-instructions before resuming single-stepping. This skip-count can also be set in
+should be set to \texttt{1} when single-stepping, or any non-zero integer value to execute that many
+instructions before resuming single-stepping. This execution-count can also be set in
 the fault-reply to a single-step debug fault.
 
 \begin{table}[h]
@@ -564,7 +568,7 @@ the fault-reply to a single-step debug fault.
 \toprule
 \textbf{Value sent} & \textbf{Register set by reply} & \textbf{IPC buffer location} \\
 \midrule
-\reg{Breakpoint instruction address} & \texttt{num\_instructions} to skip & \ipcbloc{IPCBuffer[0]} \\
+\reg{Breakpoint instruction address} & \texttt{num\_instructions} to execute & \ipcbloc{IPCBuffer[0]} \\
 \reg{Exception reason} & --- & \ipcbloc{IPCBuffer[1]} \\
 \bottomrule
 \end{tabularx}
@@ -593,6 +597,8 @@ in the same format as outlined in \autoref{sec:read_write_registers}.
     consumed since last reset & \ipcbloc{seL4\_TimeoutFault\_Consumed\_LowBits}
     \\ \bottomrule \end{tabularx}\\ \\ \caption{\label{tbl:tf_message_32}
     Timeout fault outcome on 32-bit architectures.} \end{table}
+
+% TODO: describe outcome for 64-bit architectures
 
 \subsection{VM Fault}
 \label{sec:vm-fault}

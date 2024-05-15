@@ -571,7 +571,7 @@ contain the mapping"/>
             <param dir="in" name="last_port" type="seL4_Word" description="Last port of the range of the issued capability."/>
             <param dir="in" name="root" type="seL4_CNode" description="CPtr to the CNode that forms the root of the destination CSpace."/>
             <param dir="in" name="index" type="seL4_Word" description="CPtr to the destination slot. Resolved from the root of the destination CSpace."/>
-            <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
+            <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of index to resolve to find the destination slot."/>
             <error name="seL4_DeleteFirst">
                 <description>
                     The destination slot contains a capability.

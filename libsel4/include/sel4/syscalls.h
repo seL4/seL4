@@ -215,7 +215,7 @@ seL4_BenchmarkFinalizeLog(void);
  * @brief Set log buffer.
  *
  * Provide a large frame object for the kernel to use as a log-buffer.
- * The object must not be device memory, and must be seL4_LargePageBits in size.
+ * The object must not be device memory, and must be `seL4_LargePageBits` in size.
  *
  * @param[in] frame_cptr A capability pointer to a user allocated frame of seL4_LargePage size.
  * @return A `seL4_IllegalOperation` error if `frame_cptr` is not valid and couldn't set the buffer.
@@ -338,7 +338,7 @@ seL4_BenchmarkResetAllThreadsUtilisation(void);
  *      - `SEL4_VMENTER_CALL_CONTROL_ENTRY_MR` New value for the VM Entry Controls
  *
  * On return these same three message registers will be filled with the values at the point
- * that the privlidged mode ceased executing. If this function returns with `SEL4_VMENTER_RESULT_FAULT`
+ * that the privileged mode ceased executing. If this function returns with `SEL4_VMENTER_RESULT_FAULT`
  * then the following additional message registers will be filled out
  *      - `SEL4_VMENTER_FAULT_REASON_MR`
  *      - `SEL4_VMENTER_FAULT_QUALIFICATION_MR`

@@ -894,7 +894,7 @@
 
         <method id="CNodeCancelBadgedSends" name="CancelBadgedSends" manual_name="Cancel Badged Sends" manual_label="cnode_cancelbadgedsends">
             <brief>
-                The cancel badged sends method is intend to allow for the reuse of badges by an
+                The cancel badged sends method is intended to allow for the reuse of badges by an
                 authority. When used with a badged endpoint capability it
                 will cancel any outstanding send operations for that endpoint and badge.
                 This operation has no effect on un-badged or other objects.
@@ -1204,7 +1204,7 @@
             <param dir="in" name="irq" type="seL4_Word" description="The IRQ that you want this capability to handle."/>
             <param dir="in" name="root" type="seL4_CNode" description="CPtr to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="index" type="seL4_Word" description="CPtr to the destination slot. Resolved from the root of the destination CSpace."/>
-            <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
+            <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of index to resolve to find the destination slot."/>
             <error name="seL4_DeleteFirst" description="The destination slot contains a capability."/>
             <error name="seL4_FailedLookup">
                 <description>
@@ -1391,7 +1391,7 @@
                 until it waits on the notification object again.
 
                 This operation will fail for notification objects if the scheduling context is already
-                bound to a notification object, and for thread objects if the the scheduling context is
+                bound to a notification object, and for thread objects if the scheduling context is
                 already bound to a thread.
             </brief>
             <description>
@@ -1456,7 +1456,7 @@
             </description>
             <return><errorenumdesc/></return>
             <param dir="in" name="cap" type="seL4_CPtr"
-                description="Capability to a notification that is bound to the scheduling context or capability to a tcb that is bound to this scheduling context or has received it through scheduling context donation."/>
+                description="Capability to a notification that is bound to the scheduling context or capability to a TCB that is bound to this scheduling context or has received it through scheduling context donation."/>
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
