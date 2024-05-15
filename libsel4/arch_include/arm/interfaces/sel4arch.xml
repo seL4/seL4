@@ -13,9 +13,9 @@
                 Map a page table into an address space.
             </brief>
             <description>
-                Takes a VSpace capability as an argument,
-                and installs a reference to the invoked
-                <texttt text='PageTable'/> in the VSpace according to the provided virtual address.
+                Takes a VSpace capability as an argument, and installs a
+                reference to the page table in the VSpace at the provided
+                virtual address.
             </description>
             <param dir="in" name="vspace" type="seL4_CPtr"
             description="Capability to the VSpace which will contain the mapping.
@@ -137,7 +137,7 @@
                 Map a page into an address space or update the mapping attributes.
             </brief>
             <description>
-                Takes a VSpace capability, as an argument and installs a reference
+                Takes a VSpace capability as an argument and installs a reference
                 to the given <texttt text="Page"/> in the lowest-level unmapped paging structure
                 corresponding to the given address, or updates the mapping attributes if the page is
                 already mapped at this address. The page must not already be mapped through this
@@ -293,7 +293,7 @@
         </method>
         <method id="ARMPageInvalidate_Data" name="Invalidate_Data" manual_name="Invalidate Data">
             <brief>
-                Invalidates the cache range within the given page. The start and end are relative to the page being serviced
+                Invalidates the cache range within the given page. The start and end offsets are relative to the page being serviced
                 and should be aligned to a cache line boundary where possible.
                 An additional clean is performed on the outer cache lines if the start and end are
                 not aligned, to clean out the bytes between the requested and the cache line boundary.
@@ -333,7 +333,7 @@
             manual_name="Clean and Invalidate Data">
             <brief>
                 Clean and invalidates the cache range within the given page. The range will be flushed out to RAM.
-                The start and end are relative to the page being serviced.
+                The start and end offsets are relative to the page being serviced.
             </brief>
             <description>
                 <docref>See <autoref label="ch:vspace"/>.</docref>
@@ -370,7 +370,7 @@
             <brief>
                 Unify Instruction Cache. Cleans data lines to point of unification, invalidate
                 corresponding instruction lines to point of unification, then invalidates branch
-                predictors. The start and end are relative to the page being
+                predictors. The start and end offsets are relative to the page being
                 serviced.
             </brief>
             <description>
@@ -693,7 +693,7 @@
             <param dir="in" name="trigger" type="seL4_Word" description="Indicates whether this IRQ is edge (1) or level (0) triggered."/>
             <param dir="in" name="root" type="seL4_CNode" description="CPtr to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="index" type="seL4_Word" description="CPtr to the destination slot. Resolved from the root of the destination CSpace."/>
-            <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
+            <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of index to resolve to find the destination slot."/>
             <error name="seL4_DeleteFirst">
                 <description>
                     The destination slot contains a capability.
@@ -743,8 +743,8 @@
             <param dir="in" name="trigger" type="seL4_Word" description="Indicates whether this IRQ is edge (1) or level (0) triggered."/>
             <param dir="in" name="root" type="seL4_CNode" description="CPtr to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="index" type="seL4_Word" description="CPtr to the destination slot. Resolved from the root of the destination CSpace."/>
-            <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
-            <param dir="in" name="target" type="seL4_Word" description="Indicates the target core ID to which this irq will be sent."/>
+            <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of index to resolve to find the destination slot."/>
+            <param dir="in" name="target" type="seL4_Word" description="Indicates the target core ID to which this IRQ will be sent."/>
             <error name="seL4_DeleteFirst">
                 <description>
                     The destination slot contains a capability.
@@ -796,7 +796,7 @@
             <param dir="in" name="sid" type="seL4_Word" description="The SID that you want this capability to manage."/>
             <param dir="in" name="root" type="seL4_CNode" description="CPtr to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="index" type="seL4_Word" description="CPtr to the destination slot. Resolved from the root of the destination CSpace."/>
-            <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
+            <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of index to resolve to find the destination slot."/>
             <error name="seL4_DeleteFirst">
                 <description>
                     The destination slot contains a capability.
@@ -941,7 +941,7 @@
             <param dir="in" name="cb" type="seL4_Word" description="The CB that you want this capability to manage."/>
             <param dir="in" name="root" type="seL4_CNode" description="CPtr to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="index" type="seL4_Word" description="CPtr to the destination slot. Resolved from the root of the destination CSpace."/>
-            <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
+            <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of index to resolve to find the destination slot."/>
             <error name="seL4_DeleteFirst">
                 <description>
                     The destination slot contains a capability.
@@ -1000,7 +1000,7 @@
        <method id="ARMCBAssignVspace" name="AssignVspace" manual_name="Assign VSpace" manual_label="cb_assignvspace">
             <condition><config var="CONFIG_ARM_SMMU"/></condition>
             <brief>
-                Assigning a vspace to a context bank.
+                Assigning a VSpace to a context bank.
             </brief>
             <description>
                 <docref>See <autoref label="sec:smmuv2-configuring-context-banks"/>.</docref>
@@ -1027,7 +1027,7 @@
         <method id="ARMCBUnassignVspace" name="UnassignVspace" manual_name="Unassign VSpace" manual_label="cb_unassignvspace">
             <condition><config var="CONFIG_ARM_SMMU"/></condition>
             <brief>
-                Unassigning a vspace to a context bank.
+                Unassigning a VSpace to a context bank.
             </brief>
             <description>
                 <docref>See <autoref label="sec:smmuv2-configuring-context-banks"/>.</docref>

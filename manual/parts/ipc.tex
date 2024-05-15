@@ -111,10 +111,10 @@ system call or the second half of \apifunc{seL4\_ReplyRecv}{sel4_replyrecv}
 will wait for the first available sender.
 
 Trying to Send or Call without the Write right will fail and return an error. In
-the case of Send the error is ignored (The kernel isn't allowed to reply). Thus
-there is no way of knowing that a send has failed because of missing right.
+the case of Send the error is ignored (the kernel isn't allowed to reply). Thus
+there is no way of knowing that a send has failed because of a missing right.
 On the other hand calling \apifunc{seL4\_Recv}{sel4_recv} with a endpoint capability that
-does not have the Read right will raise a fault, see \autoref{sec:faults}. This
+does not have the Read right will raise a fault, see \autoref{sec:faults}. This is
 because otherwise the error message would be indistinguishable from a normal
 message received from another thread via the endpoint.
 
@@ -144,7 +144,7 @@ Messages may contain capabilities, which will be copied to the
 receiver, provided that the endpoint capability
 invoked by the sending thread has Grant rights. An attempt to send
 capabilities using an endpoint capability without the Grant right will
-result in transfer of the raw message, without any capability transfer.
+result in a transfer of the raw message, without any capability transfer.
 
 Capabilities to be sent in a message are specified in the sending thread's
 IPC buffer in the \texttt{caps} field. Each entry in that array is interpreted
@@ -191,7 +191,7 @@ reason, \apifunc{seL4\_Send}{sel4_send} and \apifunc{seL4\_Call}{sel4_call} syst
 no IPC or capability transfer takes place. The system call will return
 a lookup failure error as described in \autoref{sec:errors}.
 
-In the receive phase, seL4 transfers capabilities in the order that they
+In the receive phase, seL4 transfers capabilities in the order they
 are found in the sending thread's IPC buffer \texttt{caps} array
 and terminates as soon as an error is encountered. Possible error
 conditions are:
@@ -205,12 +205,12 @@ conditions are:
     CSpace may have changed and the source capability pointers may
     no longer be valid.
 
-    \item The destination slot cannot be looked up. Unlike the send
-    system call, the \apifunc{seL4\_Recv}{sel4_recv} system call does not check that the
-    destination slot exists and is empty before it initiates the receive.
-    Hence, the \apifunc{seL4\_Recv}{sel4_recv} system call will not fail with an error if the
-    destination slot is invalid and will instead transfer badged
-    capabilities until an attempt to save a capability to the
+    \item The destination slot cannot be looked up. Unlike the send system call,
+    the \apifunc{seL4\_Recv}{sel4_recv} system call does not check that the
+    destination slot exists and is empty before it initiates the receive
+    operation. Hence, the \apifunc{seL4\_Recv}{sel4_recv} system call will not
+    fail with an error if the destination slot is invalid and will instead
+    transfer badged capabilities until an attempt to save a capability to the
     destination slot is made.
 
     \item The capability being transferred cannot be derived. See
@@ -281,6 +281,6 @@ efficiency reasons (combining two operations into a single system
 call). It differs from
 \apifunc{seL4\_Send}{sel4_send} immediately followed by
 \apifunc{seL4\_Recv}{sel4_recv} in ways that allow certain system setup to work
-much more efficiently with much less setup that with a traditional setup.
+much more efficiently with much less setup than with a traditional setup.
 In particular, it is guaranteed that the reply received by the caller comes from
 the thread that received the call without having to check any kind of badge.

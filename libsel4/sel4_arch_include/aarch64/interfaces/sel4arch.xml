@@ -220,11 +220,11 @@
     <interface name="seL4_ARM_SMC" manual_name="SMC" cap_description="Capability to allow threads to make Secure Monitor Calls.">
         <method id="ARMSMCCall" name="Call" manual_name="SMC Call" manual_label="smc_call">
             <brief>
-                Tell the microkernel to make the real SMC call.
+                Tell the kernel to make the real SMC call.
             </brief>
             <description>
                 Takes x0-x7 as arguments to an SMC call which are defined as a seL4_ARM_SMCContext
-                struct. The microkernel makes the SMC call and then returns the results as a
+                struct. The kernel makes the SMC call and then returns the results as a
                 new seL4_ARM_SMCContext.
             </description>
             <param dir="in" name="smc_args" type="seL4_ARM_SMCContext"

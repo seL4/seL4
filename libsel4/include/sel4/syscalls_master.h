@@ -201,7 +201,7 @@ seL4_Wait(seL4_CPtr src, seL4_Word *sender);
 
 /**
  * @xmlonly <manual name="Poll" label="sel4_poll"/> @endxmlonly
- * @brief Perform a non-blocking recv on a notification object
+ * @brief Perform a non-blocking receive on a notification object
  *
  * This is not a proper system call known by the kernel. Rather, it is a
  * convenience wrapper which calls seL4_NBRecv().
