@@ -23,6 +23,8 @@
 #include <plat/machine/pic.h>
 #include <plat/machine/ioapic.h>
 #include <sel4/arch/bootinfo_types.h>
+#include <drivers/uart.h>
+#include <plat/machine/io.h>
 
 /* addresses defined in linker script */
 /* need a fake array to get the pointer from the linker script */
@@ -151,6 +153,12 @@ static BOOT_CODE bool_t try_boot_sys_node(cpu_id_t cpu_id)
         )) {
         return false;
     }
+
+#ifdef CONFIG_VGA_PRINTING
+    /*seL4 is using virtual addresses now so use the text buffer's VA too*/
+    set_vga_addr(PPTR_VGA);
+#endif
+
     setCurrentVSpaceRoot(kpptr_to_paddr(X86_KERNEL_VSPACE_ROOT), 0);
     /* Sync up the compilers view of the world here to force the PD to actually
      * be set *right now* instead of delayed */

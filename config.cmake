@@ -405,6 +405,13 @@ config_option(
 )
 
 config_option(
+    KernelVGAPrinting VGA_PRINTING
+    "Use VGA display for early prints, good for when there is no COM/Serial port available"
+    DEPENDS "KernelPrinting; KernelArchX86"
+    DEFAULT OFF
+)
+
+config_option(
     KernelInvocationReportErrorIPC KERNEL_INVOCATION_REPORT_ERROR_IPC
     "Allows the kernel to write the userError to the IPC buffer"
     DEFAULT OFF
