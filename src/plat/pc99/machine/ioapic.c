@@ -30,11 +30,19 @@
 #define IOAPICID_ID_BITS 4
 #define IOAPICID_ID_OFFSET 24
 
-#define IOREDTBL_HIGH_RESERVED_BITS 24
+#define IOREDTBL_HIGH_DESTINATION_BITS 24 /* the APIC ID of the CPU to receive the interrupt */
+
+/* IOREDTBL entries for remappable IOAPIC has a slightly different structure */
+#ifdef CONFIG_IOMMU
+#define IOREDTBL_LOW_INTERRUPT_INDEX_H_SHIFT    11 /*  The most significant bit of the interrupt index */
+
+#define IOREDTBL_HIGH_INTERRUPT_FORMAT_REMAP    BIT(16) /* indicates the Interrupt is in Remappable format. */
+#define IOREDTBL_HIGH_INTERRUPT_INDEX_L_SHIFT   17 /* interrupt index [14:0]  */
+#endif
 
 /* Cache what we believe is in the low word of the IOREDTBL. This
  * has all the state of trigger modes etc etc */
-static uint32_t ioredtbl_state[IOAPIC_IRQ_LINES * MAX(1, CONFIG_MAX_NUM_IOAPIC)];
+static uint32_t ioredtbl_state[MAX(1, MAX_IOAPIC)];
 
 /* Number of IOAPICs in the system */
 static uint32_t num_ioapics = 0;
@@ -61,7 +69,7 @@ static void single_ioapic_init(word_t ioapic, cpu_id_t delivery_cpu)
         /* Send to desired cpu */
         ioapic_write(ioapic, IOAPIC_REGSEL, IOREDTBL_HIGH(i));
         ioapic_write(ioapic, IOAPIC_WINDOW, (ioapic_read(ioapic,
-                                                         IOAPIC_WINDOW) & MASK(IOREDTBL_HIGH_RESERVED_BITS)) | (delivery_cpu << IOREDTBL_HIGH_RESERVED_BITS));
+                                                         IOAPIC_WINDOW) & MASK(IOREDTBL_HIGH_DESTINATION_BITS)) | (delivery_cpu << IOREDTBL_HIGH_DESTINATION_BITS));
         /* mask and set 0 vector */
         ioredtbl_state[i] = IOREDTBL_LOW_INTERRUPT_MASK;
         ioapic_write(ioapic, IOAPIC_REGSEL, IOREDTBL_LOW(i));
@@ -151,16 +159,31 @@ void ioapic_map_pin_to_vector(word_t ioapic, word_t pin, word_t level,
 
     index = ioapic * IOAPIC_IRQ_LINES + pin;
     ioapic_write(ioapic, IOAPIC_REGSEL, IOREDTBL_HIGH(pin));
-    ioredtbl_high = ioapic_read(ioapic, IOAPIC_WINDOW) & MASK(IOREDTBL_HIGH_RESERVED_BITS);
+    ioredtbl_high = ioapic_read(ioapic, IOAPIC_WINDOW) & MASK(IOREDTBL_HIGH_DESTINATION_BITS);
+#ifdef CONFIG_IOMMU
+    word_t entry = vtd_create_irte_ioapic(vector, level, ioapic_target_cpu);
+    if (entry >= MAX_IOAPIC) {
+        printf("IOAPIC: failed to create IRTE for vector %lu.", vector);
+        return;
+    }
+
+    /* set the interrupt format to remappable and set the interrupt index [14:0] */
+    ioredtbl_high |= IOREDTBL_HIGH_INTERRUPT_FORMAT_REMAP |
+                     (entry << IOREDTBL_HIGH_INTERRUPT_INDEX_L_SHIFT);
+#else
     /* delivery mode: physical mode only, using APIC ID */
-    ioredtbl_high |= (ioapic_target_cpu << IOREDTBL_HIGH_RESERVED_BITS);
+    ioredtbl_high |= (ioapic_target_cpu << IOREDTBL_HIGH_DESTINATION_BITS);
+#endif /* CONFIG_IOMMU */
     ioapic_write(ioapic, IOAPIC_WINDOW, ioredtbl_high);
     /* we do not need to add IRQ_INT_OFFSET to the vector here */
     ioredtbl_state[index] = IOREDTBL_LOW_INTERRUPT_MASK |
                             (level << IOREDTBL_LOW_TRIGGER_MODE_SHIFT) |
                             (polarity << IOREDTBL_LOW_POLARITY_SHIFT) |
                             vector;
-
+#ifdef CONFIG_IOMMU
+    /* set the most significant bit (15) of the interrupt index */
+    ioredtbl_state[index] |= (entry >> 14) << IOREDTBL_LOW_INTERRUPT_INDEX_H_SHIFT;
+#endif /* CONFIG_IOMMU */
     ioapic_write(ioapic, IOAPIC_REGSEL, IOREDTBL_LOW(pin));
     /* the upper 16 bits are reserved */
     ioredtbl_state[index] |= ioapic_read(ioapic, IOAPIC_WINDOW) & ~MASK(16);

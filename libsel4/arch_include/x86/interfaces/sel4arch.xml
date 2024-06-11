@@ -839,7 +839,7 @@ contain the mapping"/>
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, an IOAPIC is not in use.
+                    Or, an MSI is not in use.
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
@@ -856,6 +856,11 @@ contain the mapping"/>
             <error name="seL4_RevokeFirst">
                 <description>
                     An IRQ handler capability for <texttt text="vector"/> has already been created.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="handle"/> is already in used.
                 </description>
             </error>
         </method>

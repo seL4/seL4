@@ -17,7 +17,9 @@
 #include <plat/machine/acpi.h>
 #include <plat/machine/intel-vtd.h>
 #include <util.h>
+#include <plat/machine/ioapic.h>
 
+/* Register Offsets */
 #define RTADDR_REG  0x20
 #define GCMD_REG    0x18
 #define GSTS_REG    0x1C
@@ -30,12 +32,30 @@
 #define FEADDR_REG  0x40
 #define FEUADDR_REG 0x44
 #define CAP_REG     0x08
+#define IRTA_REG    0xb8 /* Interrupt remapping table addr register */
 
 /* Bit Positions within Registers */
+/* Global Command Register (GCMD_REG) fields */
 #define SRTP        30  /* Set Root Table Pointer */
-#define RTPS        30  /* Root Table Pointer Status */
 #define TE          31  /* Translation Enable */
+#define IRE         25  /* Interrupt Remapping Enable */
+#define SIRTP       24  /* Set Interrupt Remap Table Pointer */
+#define CFI         23  /* Compatibility Format Interrupt */
+
+/* Global Status Register (GSTS_REG) fields */
+#define RTPS        30  /* Root Table Pointer Status */
 #define TES         31  /* Translation Enable Status */
+#define IRES        25  /* Interrupt Remapping Enable Status */
+#define IRTPS       24  /* Interrupt Remap Table Pointer Status */
+#define CFIS        23  /* Compatibility Format Interrupt Status */
+
+/* Interrupt Remapping Table Address Register (IRTA_REG) fields */
+#define IRTA_REG_IRTA   12  /* Interrupt Remapping Table Address */
+#define IRTA_REG_EIME   11  /* Extended Interrupt Mode Enable */
+#define IRTA_REG_S      0   /* size of the interrupt remapping table. */
+
+#define IRTA_REG_IRTA_MASK  ~0xFFF
+#define IRTA_REG_S_MASK     0x7
 
 /* ICC is 63rd bit in CCMD_REG, but since we will be
  * accessing this register as 4 byte word, ICC becomes
@@ -45,7 +65,7 @@
 #define CIRG        (29 + 32) /* Context Invalidation Request Granularity */
 #define CAIG        27  /* Context Actual Invalidation Granularity */
 #define CAIG_MASK   0x3
-#define IVO_MASK    0x3FF
+#define IRO_MASK    0x3FF /* IOTLB Register Offset mask */
 #define IVT         31  /* Invalidate IOTLB */
 #define IIRG        28  /* IOTLB Invalidation Request Granularity */
 #define IAIG        25  /* IOTLB Actual Invalidation Granularity */
@@ -88,6 +108,15 @@
 
 #define N_VTD_CONTEXTS 256
 
+/* The size (IRTA_REG_S) to configure for a 4K interrupt remapping table.
+ * The number of 128-bit IRTEs in a 4K interrupt remapping table is
+ * 2 ** (7 + 1) = 256.
+ *
+ * These need to be changed if we support larger IRT in the future.
+ */
+#define VTD_IRT_SIZE_4K    0x7
+#define N_VTD_IRTES_4K     (2 << VTD_IRT_SIZE_4K)
+
 typedef uint32_t drhu_id_t;
 
 static inline uint32_t vtd_read32(drhu_id_t drhu_id, uint32_t offset)
@@ -111,9 +140,9 @@ static inline void vtd_write64(drhu_id_t drhu_id, uint32_t offset, uint64_t valu
     *(volatile uint64_t *)(PPTR_DRHU_START + (drhu_id << PAGE_BITS) + offset) = value;
 }
 
-static inline uint32_t get_ivo(drhu_id_t drhu_id)
+static inline uint32_t get_iro(drhu_id_t drhu_id)
 {
-    return ((vtd_read32(drhu_id, ECAP_REG) >> 8) & IVO_MASK) * 16;
+    return ((vtd_read32(drhu_id, ECAP_REG) >> 8) & IRO_MASK) * 16;
 }
 
 static uint32_t get_fro_offset(drhu_id_t drhu_id)
@@ -129,7 +158,7 @@ static uint32_t get_fro_offset(drhu_id_t drhu_id)
     return fro_offset << 4;
 }
 
-void invalidate_context_cache(void)
+static void invalidate_context_cache(void)
 {
     /* FIXME - bugzilla bug 172
      * 1. Instead of assuming global invalidation, this function should
@@ -173,14 +202,14 @@ void invalidate_iotlb(void)
 
     uint8_t   invalidate_command = IOTLB_GLOBAL_INVALIDATE;
     uint32_t  iotlb_reg_upper;
-    uint32_t  ivo_offset;
+    uint32_t  iro_offset;
     drhu_id_t i;
 
     for (i = 0; i < x86KSnumDrhu; i++) {
-        ivo_offset = get_ivo(i);
+        iro_offset = get_iro(i);
 
         /* Wait till IVT bit is clear */
-        while ((vtd_read32(i, ivo_offset + IOTLB_REG + 4) >> IVT) & 1);
+        while ((vtd_read32(i, iro_offset + IOTLB_REG + 4) >> IVT) & 1);
 
         /* Program IIRG for Global Invalidation by setting bit 60 which
          * will be bit 28 in upper 32 bits of IOTLB_REG
@@ -191,11 +220,11 @@ void invalidate_iotlb(void)
         iotlb_reg_upper |= BIT(IVT);
         iotlb_reg_upper |= DMA_TLB_READ_DRAIN | DMA_TLB_WRITE_DRAIN;
 
-        vtd_write32(i, ivo_offset + IOTLB_REG, 0);
-        vtd_write32(i, ivo_offset + IOTLB_REG + 4, iotlb_reg_upper);
+        vtd_write32(i, iro_offset + IOTLB_REG, 0);
+        vtd_write32(i, iro_offset + IOTLB_REG + 4, iotlb_reg_upper);
 
         /* Wait for the invalidation to complete */
-        while ((vtd_read32(i, ivo_offset + IOTLB_REG + 4) >> IVT) & 1);
+        while ((vtd_read32(i, iro_offset + IOTLB_REG + 4) >> IVT) & 1);
     }
 }
 
@@ -236,7 +265,7 @@ static void vtd_process_faults(drhu_id_t i)
             address[0] = vtd_read32(i, fr_reg);
             reason = vtd_read32(i, fr_reg + 12) & FR_MASK;
 
-            printf("IOMMU: DMA %s page fault ", fault_type ? "read" : "write");
+            printf("IOMMU 0x%x: DMA %s page fault ", i, fault_type ? "read" : "write");
             printf("from 0x%x (bus: 0x%lx/dev: 0x%lx/fun: 0x%lx) ", source_id,
                    SID_BUS(source_id), SID_DEV(source_id), SID_FUNC(source_id));
             printf("on address 0x%x:%x ", address[1], address[0]);
@@ -263,6 +292,111 @@ void vtd_handle_fault(void)
     for (i = 0; i < x86KSnumDrhu; i++) {
         vtd_process_faults(i);
     }
+}
+
+word_t vtd_create_irte_ioapic(word_t vector, word_t level, cpu_id_t delivery_cpu)
+{
+    if (x86KSnumDrhu == 0) {
+        return false;
+    }
+
+    /* Remapping hardware units are configured to share the interrupt-remapping table,
+     * so we just read the table address from the first unit
+     */
+    vtd_irte_t *irt_pptr = (vtd_irte_t *) paddr_to_pptr(vtd_read64(0, IRTA_REG) & IRTA_REG_IRTA_MASK);
+    /* Sanity checking whether the Interrupt Remapping Table is initialized */
+    assert(irt_pptr != paddr_to_pptr(0));
+
+    word_t entry;
+    for (entry = 0; entry < MIN(MAX_IOAPIC, N_VTD_IRTES_4K) && vtd_irte_ptr_get_present(&irt_pptr[entry]); entry++);
+    if (entry >= MIN(MAX_IOAPIC, N_VTD_IRTES_4K)) {
+        /* We have #MAX_IOAPIC IRT entries reserved for ioapic. The loop above should always 
+         * be able to find an entry, unless #MAX_IOAPIC is greater than #N_VTD_IRTES_4K. If it 
+         * ever happens, we should consider making the size of the IRT configurable.
+        */
+        printf("IOMMU: failed to allocate a free IRTE for IOAPIC vector %lu.\n", vector);
+        return MAX_IOAPIC;
+    }
+
+    irt_pptr[entry] = vtd_irte_new(
+                          0, /* Source Validation Type */
+                          0, /* Source-id Qualifier */
+                          0, /* Source Identifier */
+                          delivery_cpu, /* Destination ID */
+                          vector, /* Vector */
+                          0, /* IRTE Mode, value 0 indicates remapped IRQ */
+                          0, /*  Delivery Mode */
+                          level, /* Trigger Mode */
+                          0, /* Redirection Hint */
+                          0, /* Destination Mode */
+                          false, /* Disabling Fault Processing Disable (FPD) */
+                          true); /* Present */
+
+    printf("IOMMU: added IRTE %lu for IOAPIC vector %lu.\n", entry, vector);
+    return entry;
+}
+
+exception_t vtd_decode_irte_msi(word_t entry, word_t vector)
+{
+    if (x86KSnumDrhu == 0) {
+        return EXCEPTION_NONE;
+    }
+
+    if (entry < MAX_IOAPIC || entry >= N_VTD_IRTES_4K) {
+        userError("IOMMU: Invalid handle %lu for MSI vector %lu, should be between %d-%d.", entry, vector, MAX_IOAPIC,
+                  N_VTD_IRTES_4K);
+        current_syscall_error.type = seL4_RangeError;
+        current_syscall_error.rangeErrorMin = MAX_IOAPIC;
+        current_syscall_error.rangeErrorMax = N_VTD_IRTES_4K;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    /* Remapping hardware units are configured to share the interrupt-remapping table,
+     * so we just read the table address from the first unit
+     */
+    vtd_irte_t *irt_pptr = (vtd_irte_t *) paddr_to_pptr(vtd_read64(0, IRTA_REG) & IRTA_REG_IRTA_MASK);
+    /* Sanity checking whether the Interrupt Remapping Table is initialized */
+    assert(irt_pptr != paddr_to_pptr(0));
+
+    if (vtd_irte_ptr_get_present(&irt_pptr[entry]) == 1) {
+        userError("IOMMU: Invalid handle %lu for MSI vector %lu, the handle is occupied by vector %lu.",
+                  entry, vector, (word_t)vtd_irte_ptr_get_vector(&irt_pptr[entry]));
+        current_syscall_error.type = seL4_InvalidArgument;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+    return EXCEPTION_NONE;
+}
+
+void vtd_create_irte_msi(word_t entry, word_t vector, word_t pci_bus, word_t pci_dev, word_t pci_func)
+{
+    if (x86KSnumDrhu == 0) {
+        return;
+    }
+
+    /* Remapping hardware units are configured to share the interrupt-remapping table,
+     * so we just read the table address from the first unit
+     */
+    vtd_irte_t *irt_pptr = (vtd_irte_t *) paddr_to_pptr(vtd_read64(0, IRTA_REG) & IRTA_REG_IRTA_MASK);
+    /* Sanity checks */
+    assert(irt_pptr != paddr_to_pptr(0));
+    assert(entry < N_VTD_IRTES_4K && entry >= MAX_IOAPIC);
+    assert(vtd_irte_ptr_get_present(&irt_pptr[entry]) == 0);
+
+    irt_pptr[entry] = vtd_irte_new(
+                          1, /* Source Validation Type */
+                          0, /* Source-id Qualifier */
+                          (pci_bus << 8) + (pci_dev << 4) + pci_func, /* Source Identifier */
+                          0, /* Destination ID */
+                          vector, /* Vector */
+                          0, /* IRTE Mode, value 0 indicates remapped IRQ */
+                          0, /*  Delivery Mode */
+                          0, /* Trigger Mode, irrelevant to MSI */
+                          0, /* Redirection Hint */
+                          0, /* Destination Mode */
+                          false, /* Disabling Fault Processing Disable (FPD) */
+                          true); /* Present */
+
+    printf("IOMMU: added IRTE %lu for MSI vector %lu.\n", entry, vector);
 }
 
 BOOT_CODE word_t vtd_get_n_paging(acpi_rmrr_list_t *rmrr_list)
@@ -392,6 +526,32 @@ BOOT_CODE static void vtd_create_context_table(uint8_t bus, acpi_rmrr_list_t *rm
     }
 }
 
+BOOT_CODE static void vtd_create_irq_remapping_table(drhu_id_t drhu_id, paddr_t irt_paddr)
+{
+    uint64_t status = vtd_read64(drhu_id, IRTA_REG);
+
+    /* set the size of the interrupt remapping table.
+     *
+     * Every bit in the IRTA register should be 0 by default, but we clear the bits
+     * anyways just in case something weired happened.
+     */
+    status &= ~IRTA_REG_S_MASK;
+    status |= VTD_IRT_SIZE_4K;
+    /* put the address into the IRTA register */
+    status &= ~IRTA_REG_IRTA_MASK;
+    status |= irt_paddr;
+    vtd_write64(drhu_id, IRTA_REG, status);
+
+    status = vtd_read32(drhu_id, GSTS_REG);
+    status |= BIT(SIRTP);
+    /* Set Interrupt Remap Table Pointer */
+    vtd_write32(drhu_id, GCMD_REG, status);
+    /* Wait for interrupt-remapping operation to complete by polling
+     * IRTPS bit from GSTS_REG
+     */
+    while (!((vtd_read32(drhu_id, GSTS_REG) >> IRTPS) & 0x1));
+}
+
 BOOT_CODE static bool_t vtd_enable(cpu_id_t cpu_id)
 {
     drhu_id_t i;
@@ -440,7 +600,7 @@ BOOT_CODE static bool_t vtd_enable(cpu_id_t cpu_id)
         vtd_write32(i, GCMD_REG, status);
         while (((vtd_read32(i, GSTS_REG) >> WBFS) & 1));
 
-        printf("IOMMU 0x%x: enabling...", i);
+        printf("IOMMU 0x%x: enabling DMA translation...", i);
 
         status = vtd_read32(i, GSTS_REG);
         status |= BIT(TE);
@@ -451,8 +611,19 @@ BOOT_CODE static bool_t vtd_enable(cpu_id_t cpu_id)
          * TES bit from GSTS_REG
          */
         while (!((vtd_read32(i, GSTS_REG) >> TES) & 1));
+        printf(" enabled.\n");
 
-        printf(" enabled\n");
+        printf("IOMMU 0x%x: enabling interrupt-remapping...", i);
+
+        status = vtd_read32(i, GSTS_REG);
+        status |= BIT(IRE);
+        /* Enable interrupt-remapping */
+        vtd_write32(i, GCMD_REG, status);
+        /* Wait for interrupt-remapping operation to complete by polling
+         * IRES bit from GSTS_REG
+         */
+        while (!((vtd_read32(i, GSTS_REG) >> IRES) & 1));
+        printf(" enabled.\n");
     }
     return true;
 }
@@ -527,6 +698,18 @@ BOOT_CODE bool_t vtd_init(cpu_id_t  cpu_id, acpi_rmrr_list_t *rmrr_list)
     }
 
     flushCacheRange(x86KSvtdRootTable, VTD_RT_SIZE_BITS);
+
+    /* alloc one 4k page for the IRT */
+    vtd_irte_t *irt_pptr = (vtd_irte_t *) it_alloc_paging();
+    printf("IOMMU: Configuring shared interrupt remapping table (pptr=%p)...", irt_pptr);
+
+    for (drhu_id_t i = 0; i < x86KSnumDrhu; i++) {
+        /* Remapping hardware units in the platform are configured to share
+         * interrupt-remapping table
+         */
+        vtd_create_irq_remapping_table(i, pptr_to_paddr(irt_pptr));
+    }
+    printf(" done.\n");
 
     if (!vtd_enable(cpu_id)) {
         return false;
