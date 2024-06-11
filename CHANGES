@@ -77,10 +77,10 @@ Upcoming release: BREAKING
     If the lookup for the provided address stops at a slot that can map a page directory, it will map the object as a
     page directory. If there already is a page directory mapped, the lookup will proceed to the next level and it will
     map as a page table instead of returning an error.
-* Optimize reading hardware timestamp for RISC-V platforms. The optimization is enabled with the new
-  `KernelRiscvUseClintMtime` configuration option which is enabled by default for all current RISC-V
-  platforms. With future RISC-V platforms, enabling this configuration option may not actually be an
-  optimization.
+* Add configuration option `KernelRiscvUseClintMtime` for faster access of hardware timestamp on RISC-V platforms.
+  The configuration option is not enabled by default as it requires access to the CLINT which depends on the platform
+  and whether the M-mode firmware allows S-mode to access the CLINT. For example, newer versions of OpenSBI (1.0 and above)
+  do not allow direct access of the CLINT.
 * Added SMC Capability (smc_cap) and SMC forwarding for aarch64 platforms. See
   [RFC-9](https://sel4.atlassian.net/browse/RFC-9).
 * Arm+Hyp: Enabled access to seL4_VCPUReg_VMPIDR and seL4_VCPUReg_VMPIDR_EL2 for all hyp configurations.
