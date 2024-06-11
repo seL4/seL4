@@ -32,7 +32,8 @@ config_option(
     from the hardware, directly access the CLINT timer register (mtime) instead \
     of using the rdtime instruction. This is a performance optimization, but \
     only for platforms where executing the rdtime instruction results in a \
-    trap into M-mode software which then accesses the CLINT timer register."
+    trap into M-mode software which then accesses the CLINT timer register. \
+    Note that this option requires S-mode access to the CLINT."
     DEFAULT OFF
     DEPENDS "KernelArchRiscV"
 )
