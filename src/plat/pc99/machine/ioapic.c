@@ -18,6 +18,12 @@
 #define IOAPIC_REG_IOAPICVER 0x01
 #define IOAPIC_REG_IOREDTBL 0x10
 
+/*
+ * Maximum Redirection Entry, bits 23:16 in IOAPIC_REG_IOAPICVER -- corresponds
+ * to number of interrupt input pins for the IOAPIC minus one.
+ */
+#define IOAPICVER_MRE_MASK 0xff0000
+
 #define IOREDTBL_LOW(reg) (IOAPIC_REG_IOREDTBL + (reg) * 2)
 #define IOREDTBL_HIGH(reg) (IOREDTBL_LOW(reg) + 1)
 
@@ -64,12 +70,12 @@ static void single_ioapic_init(word_t ioapic, cpu_id_t delivery_cpu)
     uint32_t nirqs;
 
     ioapic_write(ioapic, IOAPIC_REGSEL, IOAPIC_REG_IOAPICVER);
-    nirqs = (ioapic_read(ioapic, IOAPIC_WINDOW) >> 16) + 1;
+    nirqs = ((ioapic_read(ioapic, IOAPIC_WINDOW) & IOAPICVER_MRE_MASK) >> 16) + 1;
     ioapic_nirqs[ioapic] = nirqs;
 
     /*
-     * All current implementations have 24 or fewer lines
-     * Protect against the future one that may have more
+     * The MRE field of the IOAPICVER register is supposed to only be able to
+     * return a max value of 239, which means a max nirqs value of IOAPIC_IRQ_LINES.
      */
     if (nirqs > IOAPIC_IRQ_LINES) {
         userError("%s: ioapic %lu has %u IRQs,\n"
