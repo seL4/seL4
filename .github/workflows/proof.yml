@@ -43,7 +43,6 @@ jobs:
       with:
         L4V_ARCH: ${{ matrix.arch }}
         L4V_FEATURES: ${{ matrix.features }}
-        isa_branch: ts-2023
         session: ${{ matrix.session }}
         manifest: ${{ matrix.features == 'MCS' && 'mcs.xml' || 'default.xml' }}
       env:
