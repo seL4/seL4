@@ -26,6 +26,7 @@
                 <description>
                     VM Attributes for the mapping. <docref>Possible values for this type are given in <autoref label="ch:vspace"/>  .</docref>
                 </description>
+            </param>
             <error name="seL4_DeleteFirst">
                 <description>
                     A mapping already exists for this level in <texttt text="vspace"/> at <texttt text="vaddr."/>
@@ -54,7 +55,6 @@
                     Or, <texttt text="_service"/> is already mapped in a VSpace.
                 </description>
             </error>
-            </param>
         </method>
         <method id="ARMPageTableUnmap" name="Unmap" manual_label="pagetable_unmap">
             <brief>
@@ -526,7 +526,7 @@
         <method id="ARMVCPUSetTCB" name="SetTCB" manual_name="Set TCB">
             <condition><config var="CONFIG_ARM_HYPERVISOR_SUPPORT"/></condition>
             <brief>
-                Bind a TCB to a virtual CPU
+                Bind a TCB to a virtual CPU.
             </brief>
              <description>
                  There is a 1:1 relationship between a virtual CPU and a TCB. If either (or both) of them is
@@ -549,10 +549,14 @@
         <method id="ARMVCPUInjectIRQ" name="InjectIRQ" manual_name="Inject IRQ">
             <condition><config var="CONFIG_ARM_HYPERVISOR_SUPPORT"/></condition>
             <brief>
-                Inject an IRQ to a virtual CPU
+                Inject an IRQ to a virtual CPU.
             </brief>
             <description>
-                TODO
+                Used to queue IRQs towards the VCPU.
+                Writes <texttt text="ICH_LRn_EL2"/> for GICv3 or <texttt text="LRn"/> for GICv2,
+                where <texttt text="n"/> is determined by <texttt text="index"/>.
+                The list register becomes available again when the guest acknowledges
+                the injected interrupt.
             </description>
             <param dir="in" name="virq" type="seL4_Uint16"
             description="Virtual IRQ ID"/>
@@ -561,10 +565,10 @@
             <param dir="in" name="group" type="seL4_Uint8"
             description="IRQ group"/>
             <param dir="in" name="index" type="seL4_Uint8"
-            description="IRQ index"/>
+            description="VGIC list register"/>
             <error name="seL4_DeleteFirst">
                 <description>
-                    The <texttt text="index"/> is in use.
+                    The <texttt text="index"/> is in use and not yet handled by the guest.
                 </description>
             </error>
             <error name="seL4_IllegalOperation">
@@ -586,12 +590,19 @@
         <method id="ARMVCPUReadReg" name="ReadRegs" manual_name="Read Registers">
             <condition><config var="CONFIG_ARM_HYPERVISOR_SUPPORT"/></condition>
             <brief>
-                Read a virtual CPU register
+                Read a virtual CPU register.
             </brief>
             <description>
-                TODO
+                Provides a way to read EL1 system registers, as well as <texttt text='VMPIDR_EL2'/>.
             </description>
-            <param dir="in" name="field" type="seL4_Word"
+            <return>
+                A <texttt text='seL4_ARM_VCPU_ReadRegs_t'/> struct that contains a
+                <texttt text='seL4_Word value'/>, which holds the value of the system register,
+                and <texttt text='int error'/>, which will be non-zero when an error occurred.
+                <docref>See <autoref label='sec:errors'/> for a description
+                of the message register and tag contents upon error.</docref>
+            </return>
+            <param dir="in" name="field" type="seL4_VCPUReg"
             description="Register to read from a VCPU"/>
             <param dir="out" name="value" type="seL4_Word"
             description="Returned value of the VCPU register"/>
@@ -614,12 +625,12 @@
         <method id="ARMVCPUWriteReg" name="WriteRegs" manual_name="Write Registers">
             <condition><config var="CONFIG_ARM_HYPERVISOR_SUPPORT"/></condition>
             <brief>
-                Write a virtual CPU register
+                Write a virtual CPU register.
             </brief>
             <description>
-                TODO
+                Provides a way to write EL1 system registers, as well as <texttt text='VMPIDR_EL2'/>.
             </description>
-            <param dir="in" name="field" type="seL4_Word"
+            <param dir="in" name="field" type="seL4_VCPUReg"
             description="Register ID to write to a VCPU"/>
             <param dir="in" name="value" type="seL4_Word"
             description="Value to be written to the VCPU register"/>
@@ -642,7 +653,7 @@
         <method id="ARMVCPUAckVPPI" name="AckVPPI" manual_name="Acknowledge Virtual PPI IRQ">
             <condition><config var="CONFIG_ARM_HYPERVISOR_SUPPORT"/></condition>
             <brief>
-                Acknowledge a PPI IRQ previously forwarded from a VPPIEvent fault
+                Acknowledge a PPI IRQ previously forwarded from a VPPIEvent fault.
             </brief>
             <description>
                 Acknowledge and unmask the PPI interrupt so that further interrupts can be forwarded
