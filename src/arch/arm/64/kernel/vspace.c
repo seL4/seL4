@@ -135,6 +135,39 @@ static word_t CONST APFromVMRights(vm_rights_t vm_rights)
     }
 }
 
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
+static inline CONST word_t pte_get_AP(pte_t pte)
+{
+    assert(pte_is_page_type(pte));
+    switch (pte_get_pte_type(pte)) {
+    case pte_pte_4k_page:
+        return pte_pte_4k_page_get_AP(pte);
+
+    case pte_pte_page:
+        return pte_pte_page_get_AP(pte);
+
+    default:
+        return 0;
+    }
+}
+
+static vm_rights_t CONST vmRightsFromPTE(pte_t pte)
+{
+    word_t access_perms = pte_get_AP(pte);
+    switch (access_perms) {
+    case 0:
+    case 2:
+        return VMKernelOnly;
+    case 1:
+        return VMReadWrite;
+    case 3:
+        return VMReadOnly;
+    default:
+        fail("Invalid AP bit");
+    }
+}
+#endif
+
 vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_rights_mask)
 {
     if (vm_rights == VMReadOnly &&
@@ -1354,6 +1387,15 @@ static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, word_t length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
+        /* When in EL1, the mapping must be write-able for ARMVSpaceInvalidate_Data */
+        if (invLabel == ARMVSpaceInvalidate_Data && vmRightsFromPTE(pte) != VMReadWrite) {
+            userError("ARMVSpaceInvalidate_Data: Cannot call on mapping without write rights.");
+            current_syscall_error.type = seL4_IllegalOperation;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+#endif
+
         /* Calculate the physical start address. */
         paddr_t frame_base = pte_get_page_base_address(pte);
 
@@ -1621,8 +1663,29 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
             current_syscall_error.type = seL4_IllegalOperation;
             return EXCEPTION_SYSCALL_ERROR;
         }
+#else
+        /* When in EL1, the mapping must be writeable for DC IVAC */
+        if (invLabel == ARMPageInvalidate_Data) {
+            lookupPTSlot_ret_t lu_ret = lookupPTSlot(find_ret.vspace_root, vaddr);
+            pte_t pte = *lu_ret.ptSlot;
+            void *base_ptr = (void *) cap_frame_cap_get_capFBasePtr(cap);
+            /* The cap mapping info could be out of date, so we need to check that the page we are
+               getting is the one the cap provides authority for. */
+            if (unlikely(lu_ret.ptBitsLeft != pageBitsForSize(cap_frame_cap_get_capFSize(cap)) ||
+                         !pte_is_page_type(pte) ||
+                         pte_get_page_base_address(pte) != pptr_to_paddr(base_ptr))) {
+                userError("ARMPageInvalidate_Data: Attempting to use cap with stale mapping information.");
+                current_syscall_error.type = seL4_InvalidCapability;
+                current_syscall_error.invalidCapNumber = 0;
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+            if (vmRightsFromPTE(pte) != VMReadWrite) {
+                userError("ARMPageInvalidate_Data: Cannot call on mapping without write rights.");
+                current_syscall_error.type = seL4_IllegalOperation;
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+        }
 #endif
-
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performPageFlush(invLabel, find_ret.vspace_root, asid, vaddr + start, vaddr + end - 1,
                                 pstart);
