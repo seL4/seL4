@@ -42,8 +42,7 @@ void VISIBLE NORETURN restore_user_context(void)
         LOAD_S " ra, (0*%[REGSIZE])(t0)  \n"
         LOAD_S "  sp, (1*%[REGSIZE])(t0)  \n"
         LOAD_S "  gp, (2*%[REGSIZE])(t0)  \n"
-        /* skip tp */
-        /* skip x5/t0 */
+        /* skip tp/x4, t0/x5, t1/x6, they are restored later */
         /* no-op store conditional to clear monitor state */
         /* this may succeed in implementations with very large reservations, but the saved ra is dead */
         "sc.w zero, zero, (t0)\n"

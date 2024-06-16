@@ -6,24 +6,26 @@
 
 #include <arch/machine/hardware.h>
 
-#if defined(CONFIG_ARM_CORTEX_A15) || defined(CONFIG_ARM_CORTEX_A7)
-/* The hardware does not support tlb locking */
-void lockTLBEntry(vptr_t vaddr)
-{
-
-}
-
-#else
+#if defined(CONFIG_ARM_CORTEX_A8)
 
 void lockTLBEntry(vptr_t vaddr)
 {
     int n = tlbLockCount;
     int x, y;
 
+    /* tlbLockCount is used only in this function, which is called at most 2 times for unicore
+       platforms (and we only have unicore A8 platforms). */
+    assert(tlbLockCount < 2);
+    /* Since asserts are off in release mode, we enforce the bound on tlbLockCount manually, so we
+       don't have to verify calling context. We need the bound to be sure the bit operations below
+       are not undefined behaviour. We leave the assert in, because we want to know about it when
+       the calling context ever changes. */
+    if (tlbLockCount >= 2) {
+        return;
+    }
+
     tlbLockCount ++;
     /* Compute two values, x and y, to write to the lockdown register. */
-
-#if defined(CONFIG_ARM_CORTEX_A8)
 
     /* Before lockdown, base = victim = num_locked_tlb_entries. */
     x = 1 | (n << 22) | (n << 27);
@@ -31,24 +33,16 @@ void lockTLBEntry(vptr_t vaddr)
     /* After lockdown, base = victim = num_locked_tlb_entries + 1. */
     y = (n << 22) | (n << 27);
 
-#elif defined(CONFIG_ARM_CORTEX_A9)
-
-    /* Before lockdown, victim = num_locked_tlb_entries. */
-    x = 1 | (n << 28);
-    n ++;
-    /* After lockdown, victim = num_locked_tlb_entries + 1. */
-    y = (n << 28);
-
-#else
-
-    userError("Undefined CPU for TLB lockdown.\n");
-    halt();
-
-#endif /* A8/A9 */
-
     lockTLBEntryCritical(vaddr, x, y);
 }
 
-#endif /* A15/A7 */
+/* if CORTEX_A8 */
+#else
 
+/* We don't currently support TLB locking for other processors. */
+void lockTLBEntry(vptr_t vaddr)
+{
 
+}
+
+#endif

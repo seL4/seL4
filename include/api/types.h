@@ -103,11 +103,11 @@ static inline word_t CONST wordFromMessageInfo(seL4_MessageInfo_t mi)
 #ifdef CONFIG_COLOUR_PRINTING
 #define ANSI_RESET "\033[0m"
 #define ANSI_GREEN ANSI_RESET "\033[32m"
-#define ANSI_DARK  ANSI_RESET "\033[30;1m"
+#define ANSI_BOLD  ANSI_RESET "\033[1m"
 #else
 #define ANSI_RESET ""
 #define ANSI_GREEN ANSI_RESET ""
-#define ANSI_DARK  ANSI_RESET ""
+#define ANSI_BOLD  ANSI_RESET ""
 #endif
 
 /*
@@ -135,8 +135,8 @@ extern struct debug_syscall_error current_debug_error;
  */
 #define userError(M, ...) \
     do {                                                                       \
-        out_error(ANSI_DARK "<<" ANSI_GREEN "seL4(CPU %" SEL4_PRIu_word ")"    \
-                ANSI_DARK " [%s/%d T%p \"%s\" @%lx]: " M ">>" ANSI_RESET "\n", \
+        out_error(ANSI_BOLD "<<" ANSI_GREEN "seL4(CPU %" SEL4_PRIu_word ")"    \
+                ANSI_BOLD " [%s/%d T%p \"%s\" @%lx]: " M ">>" ANSI_RESET "\n", \
                 CURRENT_CPU_INDEX(),                                           \
                 __func__, __LINE__, NODE_STATE(ksCurThread),                   \
                 THREAD_NAME,                                                   \

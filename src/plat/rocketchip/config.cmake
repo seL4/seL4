@@ -32,7 +32,6 @@ if(KernelPlatformRocketchip)
     config_set(${cmake_config} ${c_config} ON)
 
     config_set(KernelPlatformFirstHartID FIRST_HART_ID 0)
-    set(KernelRiscvUseClintMtime ON)
     list(APPEND KernelDTSList "tools/dts/rocketchip.dts")
     # The Rocketchip-ZCU102 is a softcore instantiation that runs on the ZCU102's
     # FPGA fabric. Information on generating and running seL4 on the platform can
