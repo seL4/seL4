@@ -79,7 +79,7 @@ MAX_MESSAGE_LENGTH = 64
 
 # Headers to include
 INCLUDES = [
-    'sel4/config.h', 'sel4/types.h'
+    'sel4/config.h', 'sel4/types.h', 'sel4/sel4_arch/constants.h'
 ]
 
 TYPES = {
@@ -280,6 +280,7 @@ def init_arch_types(wordsize, args):
             CapType("seL4_ARM_IOSpace", wordsize),
             CapType("seL4_ARM_IOPageTable", wordsize),
             StructType("seL4_UserContext", wordsize * 19, wordsize),
+            Type("seL4_VCPUReg", wordsize, wordsize),
         ] + arm_smmu,
 
         "aarch64": [
@@ -295,6 +296,7 @@ def init_arch_types(wordsize, args):
             CapType("seL4_ARM_SMC", wordsize),
             StructType("seL4_UserContext", wordsize * 36, wordsize),
             StructType("seL4_ARM_SMCContext", wordsize * 8, wordsize),
+            Type("seL4_VCPUReg", wordsize, wordsize),
         ] + arm_smmu,
 
         "arm_hyp": [
@@ -308,6 +310,7 @@ def init_arch_types(wordsize, args):
             CapType("seL4_ARM_IOSpace", wordsize),
             CapType("seL4_ARM_IOPageTable", wordsize),
             StructType("seL4_UserContext", wordsize * 19, wordsize),
+            Type("seL4_VCPUReg", wordsize, wordsize),
         ] + arm_smmu,
 
         "ia32": [
