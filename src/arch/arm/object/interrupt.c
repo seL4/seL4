@@ -21,10 +21,10 @@ static exception_t Arch_invokeIRQControl(irq_t irq, cte_t *handlerSlot, cte_t *c
 
 #if CONFIG_MAX_NUM_NODES == 1
 
-static exception_t Arch_invokeIssueSGISignal(word_t irq, word_t targets, cte_t *sgiSlot, cte_t *controlSlot)
+static exception_t Arch_invokeIssueSGISignal(word_t irq, word_t target, cte_t *sgiSlot, cte_t *controlSlot)
 {
 
-    cteInsert(cap_sgi_signal_cap_new(irq, targets), controlSlot, sgiSlot);
+    cteInsert(cap_sgi_signal_cap_new(irq, target), controlSlot, sgiSlot);
 
     return EXCEPTION_NONE;
 }
@@ -98,7 +98,7 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
             return EXCEPTION_SYSCALL_ERROR;
         }
         word_t irq = getSyscallArg(0, buffer);
-        word_t targets = getSyscallArg(1, buffer);
+        word_t target = getSyscallArg(1, buffer);
         word_t index = getSyscallArg(2, buffer);
         word_t depth = getSyscallArg(3, buffer);
 
@@ -112,11 +112,11 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        if (targets > MASK(GIC_SGI_TARGET_MASK_BITS)) {
+        if (target >= GIC_SGI_TARGET_MASK_BITS) {
             current_syscall_error.type = seL4_RangeError;
             current_syscall_error.rangeErrorMin = 0;
-            current_syscall_error.rangeErrorMax = MASK(GIC_SGI_TARGET_MASK_BITS);
-            userError("IRQControl: IssueSGISignal: Invalid SGI Target mask 0x%lx.", targets);
+            current_syscall_error.rangeErrorMax = GIC_SGI_TARGET_MASK_BITS - 1;
+            userError("IRQControl: IssueSGISignal: Invalid SGI Target 0x%lx.", target);
             return EXCEPTION_SYSCALL_ERROR;
         }
 
@@ -135,7 +135,7 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
             return status;
         }
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        return Arch_invokeIssueSGISignal(irq, targets, destSlot, srcSlot);
+        return Arch_invokeIssueSGISignal(irq, target, destSlot, srcSlot);
 
 #endif
 #ifdef ENABLE_SMP_SUPPORT
@@ -199,9 +199,9 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
 
 #if CONFIG_MAX_NUM_NODES == 1
 
-static exception_t invokeSGISignalGenerate(word_t irq, word_t targets)
+static exception_t invokeSGISignalGenerate(word_t irq, word_t target)
 {
-    ipi_send_target(CORE_IRQ_TO_IRQT(0, irq), targets);
+    ipi_send_target(CORE_IRQ_TO_IRQT(0, irq), BIT(target));
     return EXCEPTION_NONE;
 }
 
@@ -210,10 +210,10 @@ exception_t decodeSGISignalInvocation(word_t invLabel, word_t length,
                                       cap_t cap, word_t *buffer)
 {
 
-    word_t irq_auth = cap_sgi_signal_cap_get_capSGIIRQ(cap);
-    word_t targets_auth = cap_sgi_signal_cap_get_capSGITargetMask(cap);
+    word_t irq = cap_sgi_signal_cap_get_capSGIIRQ(cap);
+    word_t target = cap_sgi_signal_cap_get_capSGITarget(cap);
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    return invokeSGISignalGenerate(irq_auth, targets_auth);
+    return invokeSGISignalGenerate(irq, target);
 }
 #endif /* CONFIG_MAX_NUM_NODES == 1 */

@@ -781,7 +781,7 @@
             <description>
             </description>
             <param dir="in" name="irq" type="seL4_Word" description="The SGI INTID (0-15) that can be signalled."/>
-            <param dir="in" name="targets" type="seL4_Word" description="A bitfield of node IDs that will be targeted."/>
+            <param dir="in" name="target" type="seL4_Word" description="The node ID that will be targeted."/>
 
             <param dir="in" name="root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
@@ -800,7 +800,6 @@
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, the platform does not support setting the IRQ trigger.
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
@@ -810,7 +809,7 @@
             </error>
             <error name="seL4_RangeError">
                 <description>
-                    The <texttt text="irqs"/> or <texttt text="targets"/> contains bits that are out of range.
+                    The value of <texttt text="irq"/> or <texttt text="target"/> is out of range.
                     Or, <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
                 </description>
             </error>

@@ -268,8 +268,8 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
         if (cap_get_capType(cap_b) == cap_sgi_signal_cap) {
             return (cap_sgi_signal_cap_get_capSGIIRQ(cap_a) ==
                     cap_sgi_signal_cap_get_capSGIIRQ(cap_b) &&
-                    cap_sgi_signal_cap_get_capSGITargetMask(cap_a) ==
-                    cap_sgi_signal_cap_get_capSGITargetMask(cap_b));
+                    cap_sgi_signal_cap_get_capSGITarget(cap_a) ==
+                    cap_sgi_signal_cap_get_capSGITarget(cap_b));
         }
         break;
 #endif

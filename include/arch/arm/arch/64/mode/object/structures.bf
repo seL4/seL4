@@ -90,11 +90,9 @@ block vcpu_cap {
 #if CONFIG_MAX_NUM_NODES == 1
 
 block sgi_signal_cap {
-    padding        32
+    padding        44
     field capSGIIRQ         16
-    -- Do we want to support multiple targets
-    -- with a single seL4_Send?
-    field capSGITargetMask  16
+    field capSGITarget      4
 
     field capType  5
     padding        59

@@ -106,10 +106,8 @@ block vcpu_cap {
 
 block sgi_signal_cap {
     field capSGIIRQ         16
-    -- Do we want to support multiple targets
-    -- with a single seL4_Send?
-    field capSGITargetMask  16
-
+    field capSGITarget      4
+    padding                 12
 
     padding        24
     field capType  8
