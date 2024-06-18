@@ -18,7 +18,7 @@ static exception_t checkARMCBVspace(cap_t cap)
     return EXCEPTION_NONE;
 }
 
-exception_t decodeARMSIDControlInvocation(word_t label, unsigned int length, cptr_t cptr,
+exception_t decodeARMSIDControlInvocation(word_t label, word_t length, cptr_t cptr,
                                           cte_t *srcSlot, cap_t cap, bool_t call, word_t *buffer)
 {
 
@@ -28,15 +28,21 @@ exception_t decodeARMSIDControlInvocation(word_t label, unsigned int length, cpt
     lookupSlot_ret_t lu_ret;
     exception_t status;
     uint32_t faultStatus, faultSyndrome_0, faultSyndrome_1;
+    tcb_t *thread;
 
     if (label == ARMSIDGetFault) {
+        thread = NODE_STATE(ksCurThread);
         smmu_read_fault_state(&faultStatus, &faultSyndrome_0, &faultSyndrome_1);
-        setRegister(NODE_STATE(ksCurThread), msgRegisters[0], faultStatus);
-        setRegister(NODE_STATE(ksCurThread), msgRegisters[1], faultSyndrome_0);
-        setRegister(NODE_STATE(ksCurThread), msgRegisters[2], faultSyndrome_1);
-        setRegister(NODE_STATE(ksCurThread), msgInfoRegister,
-                    wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, 3)));
-        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+        if (call) {
+            word_t *ipcBuffer = lookupIPCBuffer(true, thread);
+            setRegister(thread, badgeRegister, 0);
+            setMR(thread, ipcBuffer, 0, faultStatus);
+            setMR(thread, ipcBuffer, 1, faultSyndrome_0);
+            setMR(thread, ipcBuffer, 2, faultSyndrome_1);
+            setRegister(thread, msgInfoRegister, wordFromMessageInfo(
+                            seL4_MessageInfo_new(0, 0, 0, 3)));
+        }
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
         return EXCEPTION_NONE;
     }
 
@@ -93,7 +99,7 @@ exception_t decodeARMSIDControlInvocation(word_t label, unsigned int length, cpt
     return EXCEPTION_NONE;
 }
 
-exception_t decodeARMSIDInvocation(word_t label, unsigned int length, cptr_t cptr,
+exception_t decodeARMSIDInvocation(word_t label, word_t length, cptr_t cptr,
                                    cte_t *srcSlot, cap_t cap, bool_t call, word_t *buffer)
 {
     cap_t cbCap;
@@ -179,7 +185,7 @@ exception_t smmu_delete_sid(cap_t cap)
     return status;
 }
 
-exception_t decodeARMCBControlInvocation(word_t label, unsigned int length, cptr_t cptr,
+exception_t decodeARMCBControlInvocation(word_t label, word_t length, cptr_t cptr,
                                          cte_t *srcSlot, cap_t cap, bool_t call, word_t *buffer)
 {
 
@@ -243,7 +249,7 @@ exception_t decodeARMCBControlInvocation(word_t label, unsigned int length, cptr
     return EXCEPTION_NONE;
 }
 
-exception_t decodeARMCBInvocation(word_t label, unsigned int length, cptr_t cptr,
+exception_t decodeARMCBInvocation(word_t label, word_t length, cptr_t cptr,
                                   cte_t *srcSlot, cap_t cap, bool_t call, word_t *buffer)
 {
 
@@ -254,6 +260,7 @@ exception_t decodeARMCBInvocation(word_t label, unsigned int length, cptr_t cptr
     word_t cb;
     uint32_t faultStatus;
     word_t faultAddress;
+    tcb_t *thread;
 
     switch (label) {
     case ARMCBTLBInvalidate:
@@ -265,7 +272,7 @@ exception_t decodeARMCBInvocation(word_t label, unsigned int length, cptr_t cptr
         cb = cap_cb_cap_get_capCB(cap);
         cbSlot = smmuStateCBNode + cb;
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        smmu_tlb_invalidate_cb(cb, cap_vtable_root_get_mappedASID(cbSlot->cap));
+        smmu_tlb_invalidate_cb(cb, cap_vspace_cap_get_capVSMappedASID(cbSlot->cap));
         return EXCEPTION_NONE;
 
     case ARMCBAssignVspace:
@@ -277,7 +284,7 @@ exception_t decodeARMCBInvocation(word_t label, unsigned int length, cptr_t cptr
         vspaceCapSlot = current_extra_caps.excaprefs[0];
         vspaceCap = vspaceCapSlot->cap;
 
-        if (unlikely(!isVTableRoot(vspaceCap) || !cap_vtable_root_isMapped(vspaceCap))) {
+        if (unlikely(!isVTableRoot(vspaceCap) || !cap_vspace_cap_get_capVSIsMapped(vspaceCap))) {
             userError("ARMCBAssignVspace: the vspace is invalid");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
@@ -295,14 +302,14 @@ exception_t decodeARMCBInvocation(word_t label, unsigned int length, cptr_t cptr
 
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         /*setting up vspace for the context bank in SMMU*/
-        smmu_cb_assign_vspace(cb, cap_vtable_root_get_basePtr(vspaceCap),
-                              cap_vtable_root_get_mappedASID(vspaceCap));
+        smmu_cb_assign_vspace(cb, VSPACE_PTR(cap_vspace_cap_get_capVSBasePtr(vspaceCap)),
+                              cap_vspace_cap_get_capVSMappedASID(vspaceCap));
         /*Connecting vspace cap to context bank*/
         cteInsert(vspaceCap, vspaceCapSlot, cbSlot);
-        cap_vtable_root_ptr_set_mappedCB(&(cbSlot->cap), cb);
+        cap_vspace_cap_ptr_set_capVSMappedCB(&(cbSlot->cap), cb);
         /*set relationship between CB and ASID*/
-        smmuStateCBAsidTable[cb] = cap_vtable_root_get_mappedASID(vspaceCap);
-        increaseASIDBindCB(cap_vtable_root_get_mappedASID(vspaceCap));
+        smmuStateCBAsidTable[cb] = cap_vspace_cap_get_capVSMappedASID(vspaceCap);
+        increaseASIDBindCB(cap_vspace_cap_get_capVSMappedASID(vspaceCap));
         return EXCEPTION_NONE;
 
     case ARMCBUnassignVspace:
@@ -322,12 +329,17 @@ exception_t decodeARMCBInvocation(word_t label, unsigned int length, cptr_t cptr
         return EXCEPTION_NONE;
 
     case ARMCBGetFault:
+        thread = NODE_STATE(ksCurThread);
         smmu_cb_read_fault_state(cap_cb_cap_get_capCB(cap), &faultStatus, &faultAddress);
-        setRegister(NODE_STATE(ksCurThread), msgRegisters[0], faultStatus);
-        setRegister(NODE_STATE(ksCurThread), msgRegisters[1], faultAddress);
-        setRegister(NODE_STATE(ksCurThread), msgInfoRegister,
-                    wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, 2)));
-        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+        if (call) {
+            word_t *ipcBuffer = lookupIPCBuffer(true, thread);
+            setRegister(thread, badgeRegister, 0);
+            setMR(thread, ipcBuffer, 0, faultStatus);
+            setMR(thread, ipcBuffer, 1, faultAddress);
+            setRegister(thread, msgInfoRegister, wordFromMessageInfo(
+                            seL4_MessageInfo_new(0, 0, 0, 2)));
+        }
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
         return EXCEPTION_NONE;
 
     case ARMCBClearFault:
@@ -361,7 +373,7 @@ exception_t smmu_delete_cb(cap_t cap)
 
 void smmu_cb_delete_vspace(word_t cb, asid_t asid)
 {
-    /* Deleting the vsapce cap stored in context bank's CNode, causing:
+    /* Deleting the vspace cap stored in context bank's CNode, causing:
      * -reset the relationship between context bank and vspace's ASID
      * -disabe the context bank as its vspace no longer exists*/
     smmuStateCBAsidTable[cb] = ASID_INVALID;

@@ -1,0 +1,44 @@
+/*
+ * Copyright 2023, DornerWorks
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+    chosen {
+        seL4,kernel-devices =
+            &{/soc/clint@2000000},
+            &{/soc/interrupt-controller@c000000};
+    };
+
+    /* The size and address of the CLINT is derived from the Rocketchip source code. */
+    soc {
+        clint@2000000 {
+            compatible = "riscv,cpu-intc";
+            reg = <0x2000000 0x10000>;
+        };
+    };
+
+	/delete-node/ memory@80000000;
+
+	L6: memory@40000000 {
+		device_type = "memory";
+		reg = <0x40000000 0x40000000>;
+	};
+
+	uartclk: uartclk {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <100000000>;
+	};
+
+	serial@ff010000{
+		compatible = "cdns,uart-r1p12";
+		status = "okay";
+		interrupts = <2>;
+		interrupt-parent = <&L0>;
+		reg = <0x0 0xff010000 0x0 0x1000>;
+		clock-names = "uart_clk", "pclk";
+		clocks = <&uartclk>, <&uartclk>;
+	};
+};

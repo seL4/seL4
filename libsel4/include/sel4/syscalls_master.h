@@ -5,7 +5,7 @@
  */
 
 #pragma once
-#include <autoconf.h>
+#include <sel4/config.h>
 
 /**
  * @defgroup GeneralSystemCalls System Calls (non-MCS)
@@ -72,7 +72,9 @@ seL4_Call(seL4_CPtr dest, seL4_MessageInfo_t msgInfo);
 /**
  * @xmlonly <manual name="Reply" label="sel4_reply"/> @endxmlonly
  * @brief Perform a send to a one-off reply capability stored when
- *        the thread was last called
+ *        the thread was last called. Does nothing if there is no
+ *        reply capability which can happen if the blocked thread
+ *        was unblocked via an operation such as destroying it.
  *
  * @xmlonly
  * <docref>See <autoref label="sec:sys_reply"/></docref>
@@ -123,7 +125,7 @@ LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_ReplyRecv(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sender);
 
 /**
- * @xmlonly <manual name="NBRecv" label="sel4_nbrecv"/> @endxmlonly
+ * @xmlonly <manual name="Non-Blocking Recv" label="sel4_nbrecv"/> @endxmlonly
  * @brief Receive a message from an endpoint but do not block
  *        in the case that no messages are pending
  *
@@ -199,7 +201,7 @@ seL4_Wait(seL4_CPtr src, seL4_Word *sender);
 
 /**
  * @xmlonly <manual name="Poll" label="sel4_poll"/> @endxmlonly
- * @brief Perform a non-blocking recv on a notification object
+ * @brief Perform a non-blocking receive on a notification object
  *
  * This is not a proper system call known by the kernel. Rather, it is a
  * convenience wrapper which calls seL4_NBRecv().

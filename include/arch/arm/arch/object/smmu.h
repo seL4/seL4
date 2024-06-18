@@ -14,18 +14,18 @@
 #define ASID_INVALID     nASIDs
 
 
-exception_t decodeARMSIDControlInvocation(word_t label, unsigned int length, cptr_t cptr,
+exception_t decodeARMSIDControlInvocation(word_t label, word_t length, cptr_t cptr,
                                           cte_t *srcSlot, cap_t cap,
                                           bool_t call, word_t *buffer);
 
-exception_t decodeARMSIDInvocation(word_t label, unsigned int length, cptr_t cptr,
+exception_t decodeARMSIDInvocation(word_t label, word_t length, cptr_t cptr,
                                    cte_t *srcSlot, cap_t cap, bool_t call, word_t *buffer);
 
-exception_t decodeARMCBControlInvocation(word_t label, unsigned int length, cptr_t cptr,
+exception_t decodeARMCBControlInvocation(word_t label, word_t length, cptr_t cptr,
                                          cte_t *srcSlot, cap_t cap,
                                          bool_t call, word_t *buffer);
 
-exception_t decodeARMCBInvocation(word_t label, unsigned int length, cptr_t cptr,
+exception_t decodeARMCBInvocation(word_t label, word_t length, cptr_t cptr,
                                   cte_t *srcSlot, cap_t cap, bool_t call, word_t *buffer);
 exception_t smmu_delete_cb(cap_t cap);
 exception_t smmu_delete_sid(cap_t cap);

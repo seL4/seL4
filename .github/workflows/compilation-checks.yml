@@ -12,6 +12,13 @@ on:
       - master
   pull_request:
 
+# To reduce the load we cancel any older runs of this workflow for the current
+# PR. For deployment to the master branch, the workflow will run on each push,
+# and the `run_id` parameter will prevent cancellation.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || format('run-{0}', github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   standalone_kernel:
     name: kernel
@@ -19,17 +26,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch: [ARM, ARM_HYP, RISCV64, X64]
+        # RISCV32 and IA32 are left out, as they have no verified config
+        arch: [ARM, ARM_HYP, AARCH64, RISCV64, X64]
         compiler: [gcc, llvm]
-        python: [py2, py3]
-        exclude:
-          # llvm RISCV64 compilation is not currently supported
-          - arch: RISCV64
-            compiler: llvm
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - uses: seL4/ci-actions/standalone-kernel@master
       with:
         ARCH: ${{ matrix.arch }}
         COMPILER: ${{ matrix.compiler }}
-        PYTHON: ${{ matrix.python }}

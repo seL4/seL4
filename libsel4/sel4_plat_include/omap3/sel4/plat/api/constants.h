@@ -6,16 +6,8 @@
 
 #pragma once
 
-#include <autoconf.h>
-
-/* Cortex a8 manual, table 12-11 */
-#define seL4_NumHWBreakpoints (8)
-#define seL4_NumExclusiveBreakpoints (6)
-#define seL4_NumExclusiveWatchpoints (2)
-#ifdef CONFIG_HARDWARE_DEBUG_API
-#define seL4_FirstWatchpoint (6)
-#define seL4_NumDualFunctionMonitors (0)
-#endif
+#include <sel4/config.h>
+#include <sel4/arch/constants_cortex_a8.h>
 
 /* First address in the virtual address space that is not accessible to user level */
 #define seL4_UserTop 0xf0000000

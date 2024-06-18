@@ -1,0 +1,116 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% SPDX-License-Identifier: GPL-2.0-only
+%
+
+\newglossaryentry{asid}{
+    name=ASID,
+    description={Address Space Identifier. Depending on architecture, the kernel provides software ASIDs, which are associated with VSpace root objects, and define the virtual address space of a thread. They are mapped to hardware ASIDs on demand when the architecture supports these. Multiple threads may be in the same address space}
+}
+
+\newglossaryentry{badge}{
+    name=Badge,
+    description={A badge is a piece of extra information stored in a capability, mostly used for endpoint and notification capabilities. It can be used by applications to identify caps previously handed out to clients}
+}
+
+\newglossaryentry{cap}{
+    name=Capability,
+    description={The main access control concept in seL4. A capability conceptually is a reference to a kernel object together with a set of access rights. Most seL4 capabilities store additional bits of information. Some of this additional information may be exposed to the user, but the bulk of it is kernel-internal book-keeping information. Capabilities are stored in CNodes and TCBs}
+}
+
+\newglossaryentry{cdt}{
+    name=CDT,
+    description={Capability Derivation Tree. A kernel-internal data structure that tracks the child/parent relationship between capabilities. Capabilities to new objects are children of the Untyped capability the object was created from. Capabilities can also be copied and result in either child or sibling capabilities, depending on the operation that was used and the depth of the existing derivation tree. The revoke operation will delete all children of the invoked capability}
+}
+
+\newglossaryentry{cnode}{
+    name=CNode,
+    description={Capability Node. Kernel-controlled storage that holds capabilities. Capability nodes can be created in different sizes and be shared between CSpaces}
+}
+
+\newglossaryentry{cptr}{
+    name=CPtr,
+    description={Capability Pointer. A user-level reference to a capability, relative to a specified root CNode or the thread’s CSpace root}
+}
+
+\newglossaryentry{cspace}{
+    name=CSpace,
+    description={A directed graph of CNodes. The CSpace of a thread defines the set of capabilities it has access to. The root of the graph is the CNode capability in the CSpace slot of the thread. The edges of the graph are the CNode capabilities residing in the CNodes spanned by this root}
+}
+
+\newglossaryentry{endpoint}{
+    name=Endpoint,
+    description={IPC is facilitated by small kernel objects known as endpoints, which act as general communication ports. Invocations on endpoint objects are used to send and receive IPC messages}
+}
+
+\newglossaryentry{guard}{
+    name=Guard,
+    description={Guard of a CNode capability. From the user’s perspetive the CSpace of a thread is organised as a guarded page table. The kernel will resolve user capability pointers into internal capability slot pointers. The guard of one link/edge in the CSpace graph defines a sequence of bits that will be stripped from the user-level capability pointer before resolving resumes at the next CNode}
+}
+
+\newglossaryentry{iommu}{
+    name=IOMMU,
+    description={Input–Output Memory Management Unit. Applies virtual address translation and memory protection to DMA capable I/O devices}
+}
+
+\newglossaryentry{iopagetable}{
+    name=IOPageTable,
+    description={This object represents a node in the multilevel page-table structure used by IOMMU hardware to translate hardware memory accesses}
+}
+
+\newglossaryentry{iospace}{
+    name=IOSpace,
+    description={This object represents the address space associated with a hardware device. It represents the right to modify a device’s address space. See \autoref{ch:io}}
+}
+
+\newglossaryentry{ipc}{
+    name=IPC,
+    description={Inter Process Communication is facilitated by endpoints, which act as general communication ports. Invocations on endpoint objects are used to send and receive messages}
+}
+
+\newglossaryentry{irqcontrol}{
+    name=IRQControl,
+    description={A single capability from which IRQHandler capabilities to all IRQ numbers in the system can be derived. This capability can be moved between CSpaces and CSpace slots but cannot be duplicated. Revoking this capability removes all IRQHandlers}
+}
+
+\newglossaryentry{irqhandler}{
+    name=IRQHandler,
+    description={Capabilities that represent the ability of a thread to handle a certain interrupt. See \autoref{ch:io}}
+}
+
+\newglossaryentry{notificationobject}{
+    name=Notification Object,
+    description={A word-size array of flags that provides a non-blocking signalling mechanism similar to a binary semaphore. Operations are signalling a subset of flags in a single operation, polling to check any flags, and blocking until any are signalled. Notification capabilities can be signal-only or wait-only}
+}
+
+\newglossaryentry{replyobject}{
+    name=Reply Object,
+    description={(MCS only) A reply object is a vessel for tracking reply messages, used to send a reply message and
+    wake up the caller}
+}
+
+\newglossaryentry{schedulingcontext}{
+    name=Scheduling Context,
+    description={(MCS only) An abstraction of CPU execution time}
+}
+
+\newglossaryentry{tcb}{
+    name=TCB,
+    description={Thread Control Block. The kernel object that stores management data for threads, such as the thread's CSpace, VSpace, thread state, or user registers}
+}
+
+\newglossaryentry{untypedmemory}{
+    name=Untyped Memory,
+    description={Memory that can be used to create kernel objects via the \apifunc{seL4\_Untyped\_Retype}{untyped_retype} invocation. It is the foundation of memory allocation in the seL4 kernel. See \autoref{sec:kernmemalloc}}
+}
+
+\newglossaryentry{vm}{
+    name=VM,
+    description={Virtual Memory. The concept of translating virtual memory addresses to physical frames. See \autoref{ch:vspace}}
+}
+
+\newglossaryentry{vspace}{
+    name=VSpace,
+    description={Virtual Address Space. In analogy to CSpace, the virtual memory space of a thread. See \autoref{ch:vspace}}
+}

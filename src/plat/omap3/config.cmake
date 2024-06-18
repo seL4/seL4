@@ -18,7 +18,7 @@ if(KernelPlatformOMAP3)
     list(APPEND KernelDTSList "tools/dts/omap3.dts")
     list(APPEND KernelDTSList "src/plat/omap3/overlay-omap3.dts")
     declare_default_headers(
-        TIMER_FREQUENCY 13000000llu
+        TIMER_FREQUENCY 13000000
         MAX_IRQ 95
         INTERRUPT_CONTROLLER drivers/irq/omap3.h
         TIMER drivers/timer/omap3430.h

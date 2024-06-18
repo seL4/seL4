@@ -70,7 +70,9 @@ static inline void setDeadline(ticks_t deadline)
     globalTimer->comparatorUpper = (uint32_t)(deadline >> 32llu);
     /* enable cmp */
     globalTimer->control |= BIT(COMP_ENABLE);
-    /* if this fails PRECISION is too low */
+    /* Assert that either the deadline is in the future or that the IRQ has already been raised.
+       This should be guaranteed by hardware from r2p0 on of the Cortex-A9 MPCore Technical
+       Reference Manual (r2p0 published in 2009) */
     assert(getCurrentTime() < deadline || globalTimer->isr == 1u);
 }
 

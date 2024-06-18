@@ -13,11 +13,11 @@
 #ifdef __ASSEMBLER__
 
 /* Provide a helper macro to define integer constants that are not of the
- * default type 'ìnt', but 'unsigned long'. When such constants are shared
- * between assembly and C code, some assemblers will fail because don't support
- * C-style integer suffixes like 'ul'. Using a macro works around this, as the
- * suffix is only applies when the C compiler is used and dropped when the
- * assembler runs.
+ * default type 'int', but 'unsigned long [long]'. When such constants are
+ * shared between assembly and C code, some assemblers will fail because they
+ * don't support C-style integer suffixes like 'ul'. Using a macro works around
+ * this, as the suffix is only applied when the C compiler is used and dropped
+ * when the assembler runs.
  */
 #define UL_CONST(x) x
 #define ULL_CONST(x) x
@@ -41,13 +41,13 @@
 #define IS_ALIGNED(n, b) (!((n) & MASK(b)))
 #define ROUND_DOWN(n, b) (((n) >> (b)) << (b))
 #define ROUND_UP(n, b) (((((n) - UL_CONST(1)) >> (b)) + UL_CONST(1)) << (b))
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
-/* Time constants are define to use the 'unsigned long long'. Rationale is, that
- * the C rules define the calculation result is determined by largest type
- * involved. Enforcing the larges possible type C provides avoids pitfalls with
+/* Time constants are defined to use the 'unsigned long long'. Rationale is,
+ * that the C rules define the calculation result is determined by largest type
+ * involved. Enforcing the largest possible type C provides avoids pitfalls with
  * 32-bit overflows when values are getting quite large. Keep in mind that even
  * 2^32 milli-seconds roll over within 50 days, which is an uptime that embedded
  * systems will reach easily and it resembles not even two months in a calendar
@@ -95,8 +95,7 @@ void __builtin_unreachable(void);
 #define UNREACHABLE()  __builtin_unreachable()
 #define MAY_ALIAS    __attribute__((may_alias))
 
-#define OFFSETOF(type, member) \
-    __builtin_offsetof(type, member)
+#define OFFSETOF(type, member)   __builtin_offsetof(type, member)
 
 #ifdef __GNUC__
 /* Borrowed from linux/include/linux/compiler.h */
@@ -136,10 +135,28 @@ int PURE strncmp(const char *s1, const char *s2, int n);
 long CONST char_to_long(char c);
 long PURE str_to_long(const char *str);
 
-// Library functions for counting leading/trailing zeros.
-// GCC's builtins will emit calls to these functions when the platform
-// does not provide suitable inline assembly.
-// We only emit function definitions if CONFIG_CLZL_IMPL etc are set.
+/* Library functions for counting leading/trailing zeros.
+ *
+ * GCC/LLVM provides builtin function like __builtin_clzl() for this, which
+ * either get translated to machine specific instructions or calls helper
+ * functions like __clzsi2() that a compiler library is expected to implement.
+ * At the time of writing this comment, the GCC documentation about the compiler
+ * library (https://gcc.gnu.org/onlinedocs/gccint/Integer-library-routines.html)
+ * is not very detailed and the signatures given for these helper functions
+ * appear incorrect. For example, is says "int __clzsi2(unsigned int a)", but
+ * both the GCC and LLVM libraries implement it in a way that is independent of
+ * the implementation choices for the sizes of `unsigned int`. Instead, it
+ * appears that `si` always signifies a 32-bit argument and `di` always
+ * signifies a 64-bit argument. Tests with __builtin_clzl() on RISC-V have shown
+ * that if 'unsigned long' is 32 bits __builtin_clzl() uses __clzsi2() and if
+ * the type is 64 bits __builtin_clzl() uses __clzdi2(). Thus using the types
+ * uint32_t and uint64_t from stdint.h in the signatures below is considered the
+ * semantically correct way.
+ * Note that we only emit actual function implementations for these functions if
+ * CONFIG_CLZ_32 etc. are set. Otherwise, the compiler's internal implementation
+ * may get used or compilation fails if there is no machine instruction.
+ */
+#include <stdint.h>
 CONST int __clzsi2(uint32_t x);
 CONST int __clzdi2(uint64_t x);
 CONST int __ctzsi2(uint32_t x);

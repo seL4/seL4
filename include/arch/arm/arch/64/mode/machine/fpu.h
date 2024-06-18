@@ -88,6 +88,7 @@ static inline void enableTrapFpu(void)
     MRS("cptr_el2", cptr);
     cptr |= (BIT(10) | BIT(31));
     MSR("cptr_el2", cptr);
+    isb();
 }
 
 /* Disable trapping FPU instructions to EL2 */
@@ -97,6 +98,7 @@ static inline void disableTrapFpu(void)
     MRS("cptr_el2", cptr);
     cptr &= ~(BIT(10) | BIT(31));
     MSR("cptr_el2", cptr);
+    isb();
 }
 
 /* Enable FPU access in EL0 and EL1 */
@@ -106,6 +108,7 @@ static inline void enableFpuEL01(void)
     MRS("cpacr_el1", cpacr);
     cpacr |= (3 << CPACR_EL1_FPEN);
     MSR("cpacr_el1", cpacr);
+    isb();
 }
 
 /* Disable FPU access in EL0 */
@@ -116,6 +119,7 @@ static inline void disableFpuEL0(void)
     cpacr &= ~(3 << CPACR_EL1_FPEN);
     cpacr |= (1 << CPACR_EL1_FPEN);
     MSR("cpacr_el1", cpacr);
+    isb();
 }
 
 /* Enable the FPU to be used without faulting.
@@ -130,6 +134,12 @@ static inline void enableFpu(void)
     isFPUEnabledCached[CURRENT_CPU_INDEX()] = true;
 }
 
+/* Current verification model does not include lazy FPU switching, i.e. it acts
+ * as if this function always returns true, so no FPU faults could be produced.
+ * In order to guard against deriving a contradiction, we don't allow the C
+ * parser to translate it. */
+/** MODIFIES: */
+/** DONT_TRANSLATE */
 static inline bool_t isFpuEnable(void)
 {
     return isFPUEnabledCached[CURRENT_CPU_INDEX()];

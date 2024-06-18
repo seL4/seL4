@@ -6,7 +6,7 @@
 
 #include <machine/assembler.h>
 
-.section .boot.text
+.section .boot.text, "ax"
 
 /* user-level selectors from </arch/mode/object/structures.h> */
 #define GDT_NULL    0

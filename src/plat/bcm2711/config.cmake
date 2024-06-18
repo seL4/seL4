@@ -10,20 +10,33 @@ cmake_minimum_required(VERSION 3.7.2)
 declare_platform(bcm2711 KernelPlatformRpi4 PLAT_BCM2711 KernelArchARM)
 
 if(KernelPlatformRpi4)
-    if("${KernelSel4Arch}" STREQUAL aarch32)
-        declare_seL4_arch(aarch32)
-    elseif("${KernelSel4Arch}" STREQUAL aarch64)
-        declare_seL4_arch(aarch64)
-    else()
-        # set aarch64 as default for RPi4
-        fallback_declare_seL4_arch_default(aarch64)
-    endif()
+    declare_seL4_arch(aarch64 aarch32)
     set(KernelArmCortexA72 ON)
     set(KernelArchArmV8a ON)
     config_set(KernelARMPlatform ARM_PLAT rpi4)
     set(KernelArmMachFeatureModifiers "+crc" CACHE INTERNAL "")
     list(APPEND KernelDTSList "tools/dts/rpi4.dts")
     list(APPEND KernelDTSList "src/plat/bcm2711/overlay-rpi4.dts")
+    list(APPEND KernelDTSList "src/plat/bcm2711/overlay-rpi4-address-mapping.dts")
+
+    if(NOT DEFINED RPI4_MEMORY)
+        # By default we assume an RPi4B model with 8GB of RAM
+        set(RPI4_MEMORY "8192")
+    endif()
+
+    if("${RPI4_MEMORY}" STREQUAL "1024")
+        list(APPEND KernelDTSList "src/plat/bcm2711/overlay-rpi4-1gb.dts")
+    elseif("${RPI4_MEMORY}" STREQUAL "2048")
+        list(APPEND KernelDTSList "src/plat/bcm2711/overlay-rpi4-2gb.dts")
+    elseif("${RPI4_MEMORY}" STREQUAL "4096")
+        list(APPEND KernelDTSList "src/plat/bcm2711/overlay-rpi4-4gb.dts")
+    elseif("${RPI4_MEMORY}" STREQUAL "8192")
+        list(APPEND KernelDTSList "src/plat/bcm2711/overlay-rpi4-8gb.dts")
+    else()
+        message(FATAL_ERROR "Unsupported memory size given ${RPI4_MEMORY},
+                            supported memory sizes (in megabytes) are 1024,
+                            2048, 4096, and 8192.")
+    endif()
 
     # - The clock frequency is 54 MHz as can be seen in bcm2711.dtsi in the
     # Linux Kernel under clk_osc, thus TIMER_FREQUENCY = 54000000.
@@ -34,7 +47,7 @@ if(KernelPlatformRpi4)
     # - CLK_MAGIC and CLK_SHIFT can be calculated with:
     #       tools/reciprocal.py --divisor 54000000
     declare_default_headers(
-        TIMER_FREQUENCY 54000000llu
+        TIMER_FREQUENCY 54000000
         MAX_IRQ 216
         NUM_PPI 32
         TIMER drivers/timer/arm_generic.h

@@ -6,7 +6,9 @@
 
 #pragma once
 
-#include <sel4/macros.h>
+/* This header collects deprecated items that are no longer part of sel4.h. */
+
+#include <sel4/sel4.h>
 #include <sel4/arch/deprecated.h>
 #include <sel4/sel4_arch/deprecated.h>
 
@@ -126,5 +128,3 @@ static inline SEL4_DEPRECATED("Use seL4_CNode_CapData_new().words[0]") seL4_Word
 {
     return seL4_CNode_CapData_new(guard, bits).words[0];
 }
-
-

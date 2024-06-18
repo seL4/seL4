@@ -1,6 +1,8 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ * Copyright 2021, HENSOLDT Cyber
+ * Copyright 2023, DornerWorks
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -14,11 +16,11 @@ ENTRY(_start)
 #include <sel4/plat/api/constants.h>
 #include <plat/machine/devices_gen.h>
 
-KERNEL_OFFSET = KERNEL_ELF_BASE - KERNEL_ELF_PADDR_BASE;
+KERNEL_OFFSET = KERNEL_ELF_BASE_RAW - KERNEL_ELF_PADDR_BASE_RAW;
 
 SECTIONS
 {
-    . = KERNEL_ELF_BASE;
+    . = KERNEL_ELF_BASE_RAW;
 
     .boot.text . : AT(ADDR(.boot.text) - KERNEL_OFFSET)
     {
@@ -32,15 +34,21 @@ SECTIONS
     {
         *(.boot.data)
     }
+    .boot.bss . : AT(ADDR(.boot.bss) - KERNEL_OFFSET)
+    {
+        *(.boot.bss)
+    }
     . = ALIGN(4K);
 
     ki_boot_end = .;
 
     .text . : AT(ADDR(.text) - KERNEL_OFFSET)
     {
-        /* Sit inside a large frame */
         . = ALIGN(4K);
 
+       /* Traps and fastpath */
+        *(.text.traps)
+        *(.text.fastpath)
 
         /* Standard kernel */
         *(.text)
@@ -48,12 +56,13 @@ SECTIONS
 
     /* Start of data section */
     _sdata = .;
-    .sdata : {
+    .small : {
+        /* Small data that should be accessed relative to gp.  ld has trouble
+           with the relaxation if they are not in a single section. */
         __global_pointer$ = . + 0x800;
-        *(.sdata*)
-    }
-    .srodata : {
         *(.srodata*)
+        *(.sdata*)
+        *(.sbss)
     }
 
     .rodata . : AT(ADDR(.rodata) - KERNEL_OFFSET)
@@ -67,11 +76,16 @@ SECTIONS
         *(.data)
     }
 
-    .bss . : AT(ADDR(.bss) - KERNEL_OFFSET)
+    /* The kernel's idle thread section contains no code or data. */
+    ._idle_thread . (NOLOAD): AT(ADDR(._idle_thread) - KERNEL_OFFSET)
+    {
+        *(._idle_thread)
+    }
+
+    .bss . (NOLOAD): AT(ADDR(.bss) - KERNEL_OFFSET)
     {
         *(.bss)
         *(COMMON) /* fallback in case '-fno-common' is not used */
-        *(.sbss)
 
         /* 4k breakpoint stack */
         _breakpoint_stack_bottom = .;
@@ -80,7 +94,12 @@ SECTIONS
 
         /* large data such as the globals frame and global PD */
         *(.bss.aligned)
+#if defined(CONFIG_PLAT_ROCKETCHIP_ZCU102)
+        /* softcore instantiation on ZCU102 needs these bytes to
+         * avoid userspace issues
+         */
         . = . + 8;
+#endif
     }
 
     . = ALIGN(4K);

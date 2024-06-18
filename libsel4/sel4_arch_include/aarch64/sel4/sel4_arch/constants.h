@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <autoconf.h>
+#include <sel4/config.h>
 #include <sel4/macros.h>
 
 #ifndef __ASSEMBLER__
@@ -52,8 +52,6 @@ typedef enum {
     SEL4_FORCE_LONG_ENUM(seL4_VMFault_Msg),
 } seL4_VMFault_Msg;
 
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-
 typedef enum {
     seL4_VGICMaintenance_IDX,
     seL4_VGICMaintenance_Length,
@@ -97,10 +95,8 @@ typedef enum {
     /* thread pointer/ID registers EL0/EL1 */
     seL4_VCPUReg_TPIDR_EL1,
 
-#if CONFIG_MAX_NUM_NODES > 1
     /* Virtualisation Multiprocessor ID Register */
     seL4_VCPUReg_VMPIDR_EL2,
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
 
     /* general registers x0 to x30 have been saved by traps.S */
     seL4_VCPUReg_SP_EL1,
@@ -114,9 +110,8 @@ typedef enum {
     seL4_VCPUReg_CNTKCTL_EL1,
 
     seL4_VCPUReg_Num,
+    SEL4_FORCE_LONG_ENUM(seL4_VCPUReg),
 } seL4_VCPUReg;
-
-#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 #ifdef CONFIG_KERNEL_MCS
 typedef enum {
@@ -163,7 +158,7 @@ typedef enum {
     seL4_Timeout_Consumed,
     seL4_Timeout_Length,
     SEL4_FORCE_LONG_ENUM(seL4_Timeout_Msg)
-} seL4_TimeoutMsg;
+} seL4_Timeout_Msg;
 #endif
 #endif /* !__ASSEMBLER__ */
 
@@ -187,41 +182,24 @@ typedef enum {
 #define seL4_PageTableEntryBits 3
 #define seL4_PageTableIndexBits 9
 
-#define seL4_PageDirBits 12
-#define seL4_PageDirEntryBits 3
-#define seL4_PageDirIndexBits 9
-
 #define seL4_NumASIDPoolsBits 7
 #define seL4_ASIDPoolBits 12
 #define seL4_ASIDPoolIndexBits 9
 #define seL4_IOPageTableBits 12
 #define seL4_WordSizeBits 3
 
-#define seL4_PUDEntryBits 3
+#define seL4_VSpaceEntryBits 3
 
 #if defined(CONFIG_ARM_HYPERVISOR_SUPPORT) && defined (CONFIG_ARM_PA_SIZE_BITS_40)
 /* for a 3 level translation, we skip the PGD */
-#define seL4_PGDBits 0
-#define seL4_PGDEntryBits 0
-#define seL4_PGDIndexBits    0
 
-#define seL4_PUDBits 13
-#define seL4_PUDIndexBits 10
-
-#define seL4_VSpaceBits seL4_PUDBits
-#define seL4_VSpaceIndexBits seL4_PUDIndexBits
-#define seL4_ARM_VSpaceObject seL4_ARM_PageUpperDirectoryObject
+#define seL4_VSpaceBits 13
+#define seL4_VSpaceIndexBits 10
 #else
-#define seL4_PGDBits 12
-#define seL4_PGDEntryBits 3
-#define seL4_PGDIndexBits    9
 
-#define seL4_PUDBits 12
-#define seL4_PUDIndexBits 9
 
-#define seL4_VSpaceBits seL4_PGDBits
-#define seL4_VSpaceIndexBits seL4_PGDIndexBits
-#define seL4_ARM_VSpaceObject seL4_ARM_PageGlobalDirectoryObject
+#define seL4_VSpaceBits 12
+#define seL4_VSpaceIndexBits 9
 #endif
 
 #define seL4_ARM_VCPUBits   12
@@ -236,10 +214,8 @@ typedef enum {
 
 #ifndef __ASSEMBLER__
 SEL4_SIZE_SANITY(seL4_PageTableEntryBits, seL4_PageTableIndexBits, seL4_PageTableBits);
-SEL4_SIZE_SANITY(seL4_PageDirEntryBits, seL4_PageDirIndexBits, seL4_PageDirBits);
 SEL4_SIZE_SANITY(seL4_WordSizeBits, seL4_ASIDPoolIndexBits, seL4_ASIDPoolBits);
-SEL4_SIZE_SANITY(seL4_PGDEntryBits, seL4_PGDIndexBits, seL4_PGDBits);
-SEL4_SIZE_SANITY(seL4_PUDEntryBits, seL4_PUDIndexBits, seL4_PUDBits);
+SEL4_SIZE_SANITY(seL4_VSpaceEntryBits, seL4_VSpaceIndexBits, seL4_VSpaceBits);
 #endif
 
 #ifdef CONFIG_ENABLE_BENCHMARKS
@@ -247,26 +223,12 @@ SEL4_SIZE_SANITY(seL4_PUDEntryBits, seL4_PUDIndexBits, seL4_PUDBits);
 #define seL4_LogBufferSize (LIBSEL4_BIT(20))
 #endif /* CONFIG_ENABLE_BENCHMARKS */
 
-#ifdef CONFIG_HARDWARE_DEBUG_API
-#define seL4_FirstBreakpoint (0)
-#define seL4_FirstDualFunctionMonitor (-1)
-#define seL4_NumDualFunctionMonitors (0)
-#endif
-
 #define seL4_FastMessageRegisters 4
 
 /* IPC buffer is 1024 bytes, giving size bits of 10 */
 #define seL4_IPCBufferSizeBits 10
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-#ifndef CONFIG_ARM_SMMU
-/* 1 slot at the end of the vspace is used to hold the VMID assigned to the vspace */
-#define seL4_VSpaceReservedSlots 1
-#else /*CONFIG_ARM_SMMU*/
-/* 1 slot at the end of the vspace is used to hold the VMID assigned to the vspace */
-/* 1 slot at the end of the vspace is used to hold the number of SMMU CBs assigned to the vspace */
-#define seL4_VSpaceReservedSlots 2
-#endif /*CONFIG_ARM_SMMU*/
 
 /* The userspace occupies the range 0x0 to 0xfffffffffff.
  * The stage-1 translation is disabled, and the stage-2
@@ -279,10 +241,7 @@ SEL4_SIZE_SANITY(seL4_PUDEntryBits, seL4_PUDIndexBits, seL4_PUDBits);
 #if defined(CONFIG_ARM_PA_SIZE_BITS_44)
 #define seL4_UserTop 0x00000fffffffffff
 #elif defined(CONFIG_ARM_PA_SIZE_BITS_40)
-/* Currently other definitions of seL4_UserTop already have free slots at the end and don't need to subtract for seL4_VSpaceReservedSlots.
- * Each slot used requires subtracting 1GiB from the top address.
- */
-#define seL4_UserTop (0x000000ffffffffff - seL4_VSpaceReservedSlots * 0x40000000)
+#define seL4_UserTop 0x000000ffffffffff
 #else
 #error "Unknown physical address width"
 #endif

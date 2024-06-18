@@ -8,25 +8,21 @@ cmake_minimum_required(VERSION 3.7.2)
 
 declare_platform(zynqmp KernelPlatformZynqmp PLAT_ZYNQMP KernelArchARM)
 
-set(c_configs PLAT_ZYNQMP_ZCU102 PLAT_ZYNQMP_ULTRA96)
-set(cmake_configs KernelPlatformZynqmpZcu102 KernelPlatformZynqmpUltra96)
-set(plat_lists zcu102 ultra96)
+set(c_configs PLAT_ZYNQMP_ZCU102 PLAT_ZYNQMP_ULTRA96 PLAT_ZYNQMP_ULTRA96V2)
+set(
+    cmake_configs
+    KernelPlatformZynqmpZcu102
+    KernelPlatformZynqmpUltra96
+    KernelPlatformZynqmpUltra96v2
+)
+set(plat_lists zcu102 ultra96 ultra96v2)
 foreach(config IN LISTS cmake_configs)
     unset(${config} CACHE)
 endforeach()
 
 if(KernelPlatformZynqmp)
     set(KernelHardwareDebugAPIUnsupported ON CACHE INTERNAL "")
-    if("${KernelSel4Arch}" STREQUAL aarch32)
-        declare_seL4_arch(aarch32)
-    elseif("${KernelSel4Arch}" STREQUAL aarch64)
-        declare_seL4_arch(aarch64)
-    elseif("${KernelSel4Arch}" STREQUAL arm_hyp)
-        declare_seL4_arch(arm_hyp)
-    else()
-        fallback_declare_seL4_arch_default(aarch64)
-    endif()
-
+    declare_seL4_arch(aarch64 aarch32 arm_hyp)
     check_platform_and_fallback_to_default(KernelARMPlatform "zcu102")
 
     list(FIND plat_lists ${KernelARMPlatform} index)
@@ -43,7 +39,9 @@ if(KernelPlatformZynqmp)
 
     config_set(KernelArmMach MACH "zynq")
 
-    if(KernelPlatformZynqmpUltra96)
+    if(KernelPlatformZynqmpUltra96v2)
+        list(APPEND KernelDTSList "tools/dts/ultra96v2.dts")
+    elseif(KernelPlatformZynqmpUltra96)
         list(APPEND KernelDTSList "tools/dts/ultra96.dts")
     elseif(KernelPlatformZynqmpZcu102)
         list(APPEND KernelDTSList "tools/dts/zynqmp.dts")
@@ -58,7 +56,7 @@ if(KernelPlatformZynqmp)
     endif()
 
     declare_default_headers(
-        TIMER_FREQUENCY 100000000llu
+        TIMER_FREQUENCY 100000000
         MAX_IRQ 187
         NUM_PPI 32
         TIMER drivers/timer/arm_generic.h

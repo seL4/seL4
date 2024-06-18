@@ -4,6 +4,8 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
+set(KERNEL_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}/..")
+
 #
 # Architecture selection
 #
@@ -13,15 +15,34 @@ set(asm_sources "")
 set(bf_declarations "")
 set(KernelDTSList "")
 
-include(${CMAKE_CURRENT_LIST_DIR}/../tools/internal.cmake)
-include(${CMAKE_CURRENT_LIST_DIR}/../tools/helpers.cmake)
+include(${KERNEL_ROOT_DIR}/tools/internal.cmake)
+include(${KERNEL_ROOT_DIR}/tools/helpers.cmake)
 
-# Create and set all of the Kernel config options that can be derived from the
-# seL4 arch which is one of the following:
-# aarch32, aarch64, arm_hyp, riscv32, riscv64, x86_64, ia32
-# This macro is intended to be called from within a platform config.
-macro(declare_seL4_arch sel4_arch)
-    set(KernelSel4Arch "${sel4_arch}" CACHE STRING "" FORCE)
+# helper macro to unify messages printed output
+# Usage example: print_message_multiple_options_helper("architectures" aarch32)
+macro(print_message_multiple_options_helper str_type default_str)
+    message(STATUS "platform ${KernelPlatform} supports multiple ${str_type}, none was given")
+    message(STATUS "  defaulting to: ${default_str}")
+endmacro()
+
+# This macro is used by platforms to declare which seL4 architecture(s) they
+# support. It takes a list and sets up the one selected by KernelSel4Arch. If
+# KernelSel4Arch is not set, the architecture specified by the first list
+# element is used.
+# Usage example: declare_seL4_arch("aarch64" "aarch32")
+macro(declare_seL4_arch)
+    # Since this is a macro and not a function, ARGV is not a real variable. One
+    # must be created to be able iterate over it.
+    set(_arch_list "${ARGV}")
+    if(NOT KernelSel4Arch)
+        # Use first architecture from list as default.
+        list(GET _arch_list 0 _default_KernelSel4Arch)
+        print_message_multiple_options_helper("architectures" "${_default_KernelSel4Arch}")
+        set(KernelSel4Arch "${_default_KernelSel4Arch}" CACHE STRING "" FORCE)
+    elseif(NOT "${KernelSel4Arch}" IN_LIST _arch_list)
+        message(FATAL_ERROR "KernelSel4Arch '${KernelSel4Arch}' not in '${_arch_list}'")
+    endif()
+
     config_choice(
         KernelSel4Arch
         SEL4_ARCH
@@ -60,15 +81,9 @@ macro(declare_seL4_arch sel4_arch)
         config_set(KernelWordSize WORD_SIZE 64)
         set(Kernel64 ON CACHE INTERNAL "")
         set(Kernel32 OFF CACHE INTERNAL "")
+    else()
+        message(FATAL_ERROR "unsupported seL4 architecture: '${KernelSel4Arch}'")
     endif()
-
-endmacro()
-
-# helper macro to unify messages printed output
-# Usage example: print_message_multiple_options_helper("architectures" aarch32)
-macro(print_message_multiple_options_helper str_type default_str)
-    message(STATUS "platform ${KernelPlatform} supports multiple ${str_type}, none was given")
-    message(STATUS "  defaulting to: ${default_str}")
 endmacro()
 
 # Register a platform's config options to be set if it is selected.
@@ -101,14 +116,6 @@ macro(check_platform_and_fallback_to_default var_cmake_kernel_plat default_sub_p
     endif()
 endmacro()
 
-# helper macro that prints a message that no architecture is specified and
-# the default architecture will be used
-# Usage example: fallback_declare_seL4_arch_default(aarch32)
-macro(fallback_declare_seL4_arch_default default_arch)
-    print_message_multiple_options_helper("architectures" ${default_arch})
-    declare_seL4_arch(${default_arch})
-endmacro()
-
 # CLK_SHIFT and CLK_MAGIC are generated from tools/reciprocal.py
 # based on the TIMER_CLK_HZ to simulate division.
 # This could be moved to a cmake function
@@ -118,7 +125,7 @@ macro(declare_default_headers)
     cmake_parse_arguments(
         CONFIGURE
         ""
-        "TIMER_FREQUENCY;MAX_IRQ;NUM_PPI;PLIC_MAX_NUM_INT;INTERRUPT_CONTROLLER;TIMER;SMMU;CLK_SHIFT;CLK_MAGIC;KERNEL_WCET;TIMER_PRECISION;MAX_SID;MAX_CB"
+        "TIMER_FREQUENCY;MAX_IRQ;NUM_PPI;INTERRUPT_CONTROLLER;TIMER;SMMU;CLK_SHIFT;CLK_MAGIC;KERNEL_WCET;TIMER_PRECISION;TIMER_OVERHEAD_TICKS;MAX_SID;MAX_CB"
         ""
         ${ARGN}
     )
@@ -140,12 +147,9 @@ foreach(
     KernelArmCortexA55
     KernelArmCortexA57
     KernelArmCortexA72
-    KernelArm1136JF_S
-    KernelArchArmV6
     KernelArchArmV7a
     KernelArchArmV7ve
     KernelArchArmV8a
-    KernelArmSMMU
     KernelAArch64SErrorIgnore
 )
     unset(${var} CACHE)
@@ -159,12 +163,24 @@ unset(KernelArmArmV CACHE)
 # Blacklist platforms without MCS support
 set(KernelPlatformSupportsMCS ON)
 
-file(GLOB result ${CMAKE_CURRENT_LIST_DIR}/../src/plat/*/config.cmake)
+file(GLOB result ${KERNEL_ROOT_DIR}/src/plat/*/config.cmake)
 list(SORT result)
 
 foreach(file ${result})
     include("${file}")
 endforeach()
+
+# Verify that, as a minimum any variables that are used
+# to find other build files are actually defined at this
+# point. This means at least: KernelArch KernelWordSize
+
+if("${KernelArch}" STREQUAL "")
+    message(FATAL_ERROR "Variable 'KernelArch' is not set.")
+endif()
+
+if("${KernelWordSize}" STREQUAL "")
+    message(FATAL_ERROR "Variable 'KernelWordSize' is not set.")
+endif()
 
 config_choice(KernelPlatform PLAT "Select the platform" ${kernel_platforms})
 
@@ -178,12 +194,9 @@ config_set(KernelArmCortexA53 ARM_CORTEX_A53 "${KernelArmCortexA53}")
 config_set(KernelArmCortexA55 ARM_CORTEX_A55 "${KernelArmCortexA55}")
 config_set(KernelArmCortexA57 ARM_CORTEX_A57 "${KernelArmCortexA57}")
 config_set(KernelArmCortexA72 ARM_CORTEX_A72 "${KernelArmCortexA72}")
-config_set(KernelArm1136JF_S ARM1136JF_S "${KernelArm1136JF_S}")
-config_set(KernelArchArmV6 ARCH_ARM_V6 "${KernelArchArmV6}")
 config_set(KernelArchArmV7a ARCH_ARM_V7A "${KernelArchArmV7a}")
 config_set(KernelArchArmV7ve ARCH_ARM_V7VE "${KernelArchArmV7ve}")
 config_set(KernelArchArmV8a ARCH_ARM_V8A "${KernelArchArmV8a}")
-config_set(KernelArmSMMU ARM_SMMU "${KernelArmSMMU}")
 config_set(KernelAArch64SErrorIgnore AARCH64_SERROR_IGNORE "${KernelAArch64SErrorIgnore}")
 
 # Check for v7ve before v7a as v7ve is a superset and we want to set the
@@ -195,8 +208,6 @@ elseif(KernelArchArmV7a)
     set(KernelArmArmV "armv7-a" CACHE INTERNAL "")
 elseif(KernelArchArmV8a)
     set(KernelArmArmV "armv8-a" CACHE INTERNAL "")
-elseif(KernelArchArmV6)
-    set(KernelArmArmV "armv6" CACHE INTERNAL "")
 endif()
 if(KernelArmCortexA7)
     set(KernelArmCPU "cortex-a7" CACHE INTERNAL "")
@@ -216,8 +227,6 @@ elseif(KernelArmCortexA57)
     set(KernelArmCPU "cortex-a57" CACHE INTERNAL "")
 elseif(KernelArmCortexA72)
     set(KernelArmCPU "cortex-a72" CACHE INTERNAL "")
-elseif(KernelArm1136JF_S)
-    set(KernelArmCPU "arm1136jf-s" CACHE INTERNAL "")
 endif()
 if(KernelArchARM)
     config_set(KernelArmMach ARM_MACH "${KernelArmMach}")
@@ -237,9 +246,7 @@ if(
         set(cross_prefix $CACHE{CROSS_COMPILER_PREFIX})
     endif()
 
-    configure_file(
-        "${CMAKE_CURRENT_LIST_DIR}/../${toolchain_file}" "${toolchain_outputfile}.temp" @ONLY
-    )
+    configure_file("${KERNEL_ROOT_DIR}/${toolchain_file}" "${toolchain_outputfile}.temp" @ONLY)
     if(EXISTS "${toolchain_outputfile}")
         file(READ "${toolchain_outputfile}.temp" filea)
         file(READ "${toolchain_outputfile}" fileb)

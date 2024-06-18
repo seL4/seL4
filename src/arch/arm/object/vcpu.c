@@ -12,8 +12,8 @@
 #include <armv/vcpu.h>
 #include <arch/machine/debug.h> /* Arch_debug[A/Di]ssociateVCPUTCB() */
 #include <arch/machine/debug_conf.h>
-#include <arch/machine/gic_v2.h>
 #include <drivers/timer/arm_generic.h>
+#include <plat/platform_gen.h> /* Ensure correct GIC header is included */
 
 BOOT_CODE void vcpu_boot_init(void)
 {
@@ -32,7 +32,7 @@ BOOT_CODE void vcpu_boot_init(void)
 static void vcpu_save(vcpu_t *vcpu, bool_t active)
 {
     word_t i;
-    unsigned int lr_num;
+    word_t lr_num;
 
     assert(vcpu);
     dsb();
@@ -85,7 +85,7 @@ void vcpu_restore(vcpu_t *vcpu)
 {
     assert(vcpu);
     word_t i;
-    unsigned int lr_num;
+    word_t lr_num;
     /* Turn off the VGIC */
     set_gic_vcpu_ctrl_hcr(0);
     isb();
@@ -280,6 +280,10 @@ void associateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
     }
     tcb->tcbArch.tcbVCPU = vcpu;
     vcpu->vcpuTCB = tcb;
+
+    if (tcb == NODE_STATE(ksCurThread)) {
+        vcpu_switch(vcpu);
+    }
 }
 
 void dissociateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
@@ -310,7 +314,7 @@ exception_t invokeVCPUWriteReg(vcpu_t *vcpu, word_t field, word_t value)
     return EXCEPTION_NONE;
 }
 
-exception_t decodeVCPUWriteReg(cap_t cap, unsigned int length, word_t *buffer)
+exception_t decodeVCPUWriteReg(cap_t cap, word_t length, word_t *buffer)
 {
     word_t field;
     word_t value;
@@ -347,7 +351,7 @@ exception_t invokeVCPUReadReg(vcpu_t *vcpu, word_t field, bool_t call)
     return EXCEPTION_NONE;
 }
 
-exception_t decodeVCPUReadReg(cap_t cap, unsigned int length, bool_t call, word_t *buffer)
+exception_t decodeVCPUReadReg(cap_t cap, word_t length, bool_t call, word_t *buffer)
 {
     word_t field;
     if (length < 1) {
@@ -374,8 +378,10 @@ exception_t invokeVCPUInjectIRQ(vcpu_t *vcpu, unsigned long index, virq_t virq)
     if (likely(ARCH_NODE_STATE(armHSCurVCPU) == vcpu)) {
         set_gic_vcpu_ctrl_lr(index, virq);
 #ifdef ENABLE_SMP_SUPPORT
-    } else if (vcpu->vcpuTCB->tcbAffinity != getCurrentCPUIndex()) {
-        doRemoteOp3Arg(IpiRemoteCall_VCPUInjectInterrupt, (word_t)vcpu, index, virq.words[0],      vcpu->vcpuTCB->tcbAffinity);
+    } else if (vcpu->vcpuTCB != NULL && vcpu->vcpuTCB->tcbAffinity != getCurrentCPUIndex()) {
+        doRemoteOp3Arg(IpiRemoteCall_VCPUInjectInterrupt,
+                       (word_t)vcpu, index, virq.words[0],
+                       vcpu->vcpuTCB->tcbAffinity);
 #endif /* CONFIG_ENABLE_SMP */
     } else {
         vcpu->vgic.lr[index] = virq;
@@ -384,7 +390,7 @@ exception_t invokeVCPUInjectIRQ(vcpu_t *vcpu, unsigned long index, virq_t virq)
     return EXCEPTION_NONE;
 }
 
-exception_t decodeVCPUInjectIRQ(cap_t cap, unsigned int length, word_t *buffer)
+exception_t decodeVCPUInjectIRQ(cap_t cap, word_t length, word_t *buffer)
 {
     word_t vid, priority, group, index;
     vcpu_t *vcpu;
@@ -469,7 +475,7 @@ exception_t decodeVCPUInjectIRQ(cap_t cap, unsigned int length, word_t *buffer)
 
 exception_t decodeARMVCPUInvocation(
     word_t label,
-    unsigned int length,
+    word_t length,
     cptr_t cptr,
     cte_t *slot,
     cap_t cap,
@@ -495,7 +501,7 @@ exception_t decodeARMVCPUInvocation(
     }
 }
 
-exception_t decodeVCPUAckVPPI(cap_t cap, unsigned int length, word_t *buffer)
+exception_t decodeVCPUAckVPPI(cap_t cap, word_t length, word_t *buffer)
 {
     vcpu_t *vcpu = VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap));
 

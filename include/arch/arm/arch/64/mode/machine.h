@@ -304,7 +304,7 @@ static inline void invalidateByVA_I(vptr_t vaddr, paddr_t paddr)
 
 static inline void invalidate_I_PoU(void)
 {
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef CONFIG_ENABLE_SMP_SUPPORT
     asm volatile("ic ialluis");
 #else
     asm volatile("ic iallu");
@@ -351,6 +351,7 @@ static inline word_t ats1e2r(word_t va)
 {
     word_t par;
     asm volatile("at s1e2r, %0" :: "r"(va));
+    isb();
     MRS("par_el1", par);
     return par;
 }
@@ -359,6 +360,7 @@ static inline word_t ats1e1r(word_t va)
 {
     word_t par;
     asm volatile("at s1e1r, %0" :: "r"(va));
+    isb();
     MRS("par_el1", par);
     return par;
 }
@@ -368,6 +370,7 @@ static inline word_t ats2e0r(word_t va)
 {
     word_t par;
     asm volatile("at s12e0r, %0" :: "r"(va));
+    isb();
     MRS("par_el1", par);
     return par;
 }
@@ -375,4 +378,7 @@ static inline word_t ats2e0r(word_t va)
 void arch_clean_invalidate_caches(void);
 void arch_clean_invalidate_L1_caches(word_t type);
 
-
+static inline paddr_t addressTranslateS1(vptr_t vaddr)
+{
+    return ats1e1r(vaddr);
+}

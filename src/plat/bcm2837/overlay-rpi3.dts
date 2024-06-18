@@ -7,7 +7,8 @@
 / {
 	chosen {
 		seL4,elfloader-devices =
-		    "serial1";
+		    "serial1",
+		    &{/timer};
 
 		seL4,kernel-devices =
 		    "serial1",
@@ -20,4 +21,35 @@
 		/* This is configurable in the Pi's config.txt, but we use 128MiB of RAM by default. */
 		reg = <0x00 0x08000000>;
 	};
+
+	reserved-memory {
+		#address-cells = <0x01>;
+		#size-cells = <0x01>;
+		ranges;
+		/* Keep the first page of physical memory is reserved for the initial
+		 * bootloader (e.g. armstub). It has parked the secondary cores there,
+		 * they spin until they get released. When SMP is enabled, the kernel
+		 * will release them during boot and this memory can be reused.
+		 * However, we still have to ensure the kernel image itself is not
+		 * placed here. In non-SMP configurations, the cores must keep spinning
+		 * forever. Re-using this memory will cause the secondary cores to
+		 * execute whatever content is placed there, which likely makes them
+		 * run amok.
+		 * See also https://leiradel.github.io/2019/01/20/Raspberry-Pi-Stubs.html#armstub8s
+		 */
+		reserved-memory@0{
+			reg = <0x0 0x1000>;
+			no-map;
+		};
+	};
+
+        soc {
+                timer@7e003000 {
+                        reg = <0x3F003000 0x1000>;
+			/* Channels 0 and 2 used by VC, so just expose 1 and
+			 * 3. Otherwise we're spammed with spurious
+			 * interrupts. */
+                        interrupts = <0x01 0x01 0x01 0x03>;
+                };
+        };
 };

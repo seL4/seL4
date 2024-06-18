@@ -25,7 +25,7 @@ compile_assert(SysReplyRecv_Minus2, SysReplyRecv == -2)
 
 /* Use macros to not break verification */
 #define endpoint_ptr_get_epQueue_tail_fp(ep_ptr) TCB_PTR(endpoint_ptr_get_epQueue_tail(ep_ptr))
-#define cap_vtable_cap_get_vspace_root_fp(vtable_cap) cap_vtable_root_get_basePtr(vtable_cap)
+#define cap_vtable_cap_get_vspace_root_fp(vtable_cap) VSPACE_PTR(cap_vspace_cap_get_capVSBasePtr(vtable_cap))
 
 static inline void FORCE_INLINE
 switchToThread_fp(tcb_t *thread, vspace_root_t *vroot, pde_t stored_hw_asid)
@@ -36,7 +36,7 @@ switchToThread_fp(tcb_t *thread, vspace_root_t *vroot, pde_t stored_hw_asid)
         vcpu_switch(thread->tcbArch.tcbVCPU);
     }
     asid = (asid_t)(stored_hw_asid.words[0] & 0xffff);
-    armv_contextSwitch(vroot, asid);
+    armv_contextSwitch_HWASID(vroot, asid);
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
     benchmark_utilisation_switch(NODE_STATE(ksCurThread), thread);
@@ -44,6 +44,43 @@ switchToThread_fp(tcb_t *thread, vspace_root_t *vroot, pde_t stored_hw_asid)
 
     NODE_STATE(ksCurThread) = thread;
 }
+
+#ifdef CONFIG_EXCEPTION_FASTPATH
+static inline void fastpath_set_tcbfault_vm_fault(vm_fault_type_t type)
+{
+    switch (type) {
+    case ARMDataAbort: {
+        word_t addr, fault;
+
+        addr = getFAR();
+        fault = getDFSR();
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+        /* use the IPA */
+        if (ARCH_NODE_STATE(armHSVCPUActive)) {
+            addr = GET_PAR_ADDR(addressTranslateS1(addr)) | (addr & MASK(PAGE_BITS));
+        }
+#endif
+        NODE_STATE(ksCurThread)->tcbFault = seL4_Fault_VMFault_new(addr, fault, false);
+        break;
+    }
+    case ARMPrefetchAbort: {
+        word_t pc, fault;
+
+        pc = getRestartPC(NODE_STATE(ksCurThread));
+        fault = getIFSR();
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+        if (ARCH_NODE_STATE(armHSVCPUActive)) {
+            pc = GET_PAR_ADDR(addressTranslateS1(pc)) | (pc & MASK(PAGE_BITS));
+        }
+#endif
+        NODE_STATE(ksCurThread)->tcbFault = seL4_Fault_VMFault_new(pc, fault, true);
+        break;
+    }
+    }
+}
+#endif
 
 static inline void mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(
     mdb_node_t *node_ptr, word_t mdbNext,
@@ -59,8 +96,8 @@ static inline void mdb_node_ptr_set_mdbPrev_np(mdb_node_t *node_ptr, word_t mdbP
 
 static inline bool_t isValidVTableRoot_fp(cap_t vspace_root_cap)
 {
-    return cap_capType_equals(vspace_root_cap, cap_vtable_root_cap)
-           && cap_vtable_root_isMapped(vspace_root_cap);
+    return cap_capType_equals(vspace_root_cap, cap_vspace_cap)
+           && cap_vspace_cap_get_capVSIsMapped(vspace_root_cap);
 }
 
 /* This is an accelerated check that msgLength, which appears
@@ -103,7 +140,7 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
     c_exit_hook();
 
 #ifdef CONFIG_HAVE_FPU
-    lazyFPURestore(NODE_STATE(ksCurThread));
+    lazyFPURestore(cur_thread);
 #endif /* CONFIG_HAVE_FPU */
 
     register word_t badge_reg asm("x0") = badge;

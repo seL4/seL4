@@ -32,9 +32,13 @@
 
 #pragma once
 
-
+#include <config.h>
 #include <stdint.h>
 
+/* See https://github.com/riscv/riscv-sbi-doc/blob/master/riscv-sbi.adoc for
+ * details about these command codes, they are the "legacy extensions"
+ * introduced by BBL and supported by OpenSBI.
+ */
 #define SBI_SET_TIMER 0
 #define SBI_CONSOLE_PUTCHAR 1
 #define SBI_CONSOLE_GETCHAR 2
@@ -44,6 +48,7 @@
 #define SBI_REMOTE_SFENCE_VMA 6
 #define SBI_REMOTE_SFENCE_VMA_ASID 7
 #define SBI_SHUTDOWN 8
+/* The values 9 - 15 are reserved. */
 
 static inline word_t sbi_call(word_t cmd,
                               word_t arg_0,
@@ -91,33 +96,62 @@ static inline void sbi_shutdown(void)
     SBI_CALL_0(SBI_SHUTDOWN);
 }
 
+#ifdef ENABLE_SMP_SUPPORT
+
 static inline void sbi_clear_ipi(void)
 {
     SBI_CALL_0(SBI_CLEAR_IPI);
 }
 
-static inline void sbi_send_ipi(const unsigned long *hart_mask)
+static inline void sbi_send_ipi(word_t hart_mask)
 {
-    SBI_CALL_1(SBI_SEND_IPI, (word_t)hart_mask);
+    /* ToDo: In the legacy SBI API the hart mask parameter is not a value, but
+     *       the virtual address of a bit vector. This was intended to allow
+     *       passing an arbitrary number of harts without being limited by the
+     *       architecture's word size. We hide this feature here because:
+     *       - All systems currently supported by the kernel have less harts
+     *           than bits in a word. Support for more harts would requires
+     *           reworking parts of the kernel.
+     *       - The legacy SBI interface is deprecated. Passing pointers with
+     *           virtual addresses has several practical drawbacks or corner
+     *           cases, these outweight the gain of being able to address all
+     *           harts in one call. The new interface uses a window concept and
+     *           passes plain values.
+     *       - Using pointers to local variables is perfectly fine in C, but
+     *           verification does not support this, because passing pointers to
+     *           stack objects is not allowed. However, verification does not
+     *           run for the RISC-V SMP configuration at the moment, thus
+     *           keeping this detail hidden here allows postponing finding a
+     *           solution and higher layers are kept agnostic of this.
+     */
+    word_t virt_addr_hart_mask = (word_t)&hart_mask;
+    SBI_CALL_1(SBI_SEND_IPI, virt_addr_hart_mask);
 }
 
-static inline void sbi_remote_fence_i(const unsigned long *hart_mask)
+static inline void sbi_remote_fence_i(word_t hart_mask)
 {
-    SBI_CALL_1(SBI_REMOTE_FENCE_I, (word_t)hart_mask);
+    /* See comment at sbi_send_ipi() about the pointer parameter. */
+    word_t virt_addr_hart_mask = (word_t)&hart_mask;
+    SBI_CALL_1(SBI_REMOTE_FENCE_I, virt_addr_hart_mask);
 }
 
-static inline void sbi_remote_sfence_vma(const unsigned long *hart_mask,
+static inline void sbi_remote_sfence_vma(word_t hart_mask,
                                          unsigned long start,
                                          unsigned long size)
 {
-    SBI_CALL_1(SBI_REMOTE_SFENCE_VMA, (word_t)hart_mask);
+    /* See comment at sbi_send_ipi() about the pointer parameter. */
+    word_t virt_addr_hart_mask = (word_t)&hart_mask;
+    SBI_CALL_1(SBI_REMOTE_SFENCE_VMA, virt_addr_hart_mask);
 }
 
-static inline void sbi_remote_sfence_vma_asid(const unsigned long *hart_mask,
+static inline void sbi_remote_sfence_vma_asid(word_t hart_mask,
                                               unsigned long start,
                                               unsigned long size,
                                               unsigned long asid)
 {
-    SBI_CALL_1(SBI_REMOTE_SFENCE_VMA_ASID, (word_t)hart_mask);
+    /* See comment at sbi_send_ipi() about the pointer parameter. */
+    word_t virt_addr_hart_mask = (word_t)&hart_mask;
+    SBI_CALL_1(SBI_REMOTE_SFENCE_VMA_ASID, virt_addr_hart_mask);
 }
 
+#endif /* ENABLE_SMP_SUPPORT */

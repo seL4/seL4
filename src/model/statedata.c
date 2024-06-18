@@ -27,7 +27,7 @@ UP_STATE_DEFINE(word_t, ksReadyQueuesL2Bitmap[CONFIG_NUM_DOMAINS][L2_BITMAP_SIZE
 compile_assert(ksReadyQueuesL1BitmapBigEnough, (L2_BITMAP_SIZE - 1) <= wordBits)
 #ifdef CONFIG_KERNEL_MCS
 /* Head of the queue of threads waiting for their budget to be replenished */
-UP_STATE_DEFINE(tcb_t *, ksReleaseHead);
+UP_STATE_DEFINE(tcb_queue_t, ksReleaseQueue);
 #endif
 
 /* Current thread TCB pointer */
@@ -56,6 +56,7 @@ UP_STATE_DEFINE(bool_t, ksReprogram);
 UP_STATE_DEFINE(ticks_t, ksCurTime);
 /* current scheduling context pointer */
 UP_STATE_DEFINE(sched_context_t *, ksCurSC);
+UP_STATE_DEFINE(sched_context_t *, ksIdleSC);
 #endif
 
 #ifdef CONFIG_DEBUG_BUILD

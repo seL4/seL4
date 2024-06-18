@@ -5,7 +5,7 @@
  */
 
 #pragma once
-#include <autoconf.h>
+#include <sel4/config.h>
 
 /**
  * @defgroup MCSSystemCalls MCS System Calls
@@ -104,7 +104,7 @@ seL4_NBSend(seL4_CPtr dest, seL4_MessageInfo_t msgInfo);
  *               This parameter is ignored if `NULL`.
  *
  * @param[in] reply The capability to the reply object, which is first invoked and then used
- *                  for the recv phase to store a new reply capability.
+ *                  for the receive phase to store a new reply capability.
  * @return A `seL4_MessageInfo_t` structure
  * @xmlonly
  * <docref>as described in <autoref label="sec:messageinfo"/></docref>
@@ -114,7 +114,7 @@ LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_ReplyRecv(seL4_CPtr src, seL4_MessageInfo_t msgInfo, seL4_Word *sender, seL4_CPtr reply);
 
 /**
- * @xmlonly <manual name="NBRecv" label="sel4_mcs_nbrecv"/> @endxmlonly
+ * @xmlonly <manual name="Non-Blocking Recv" label="sel4_mcs_nbrecv"/> @endxmlonly
  * @brief Receive a message from an endpoint but do not block
  *        in the case that no messages are pending
  *
@@ -140,8 +140,8 @@ LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_NBRecv(seL4_CPtr src, seL4_Word *sender, seL4_CPtr reply);
 
 /**
- * @xmlonly <manual name="NBSend Recv" label="sel4_nbsendrecv"/> @endxmlonly
- * @brief Non-blocking send on one capability, and a blocking recieve on another in a single
+ * @xmlonly <manual name="Non-Blocking Send Recv" label="sel4_nbsendrecv"/> @endxmlonly
+ * @brief Non-blocking send on one capability, and a blocking receive on another in a single
  *        system call.
  *
  * @xmlonly
@@ -158,7 +158,7 @@ seL4_NBRecv(seL4_CPtr src, seL4_Word *sender, seL4_CPtr reply);
  *               This parameter is ignored if `NULL`.
  * @param[in] src The capability to receive on.
  * @param[in] reply The capability to the reply object, which is first invoked and then used
- *                  for the recv phase to store a new reply capability.
+ *                  for the receive phase to store a new reply capability.
  * @return A `seL4_MessageInfo_t` structure
  * @xmlonly
  * as described in <autoref label="sec:messageinfo"/>
@@ -168,7 +168,7 @@ LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_NBSendRecv(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_CPtr src, seL4_Word *sender, seL4_CPtr reply);
 
 /**
- * @xmlonly <manual name="NBSend Wait" label="sel4_nbsendwait"/> @endxmlonly
+ * @xmlonly <manual name="Non-Blocking Send Wait" label="sel4_nbsendwait"/> @endxmlonly
  * @brief Non-blocking invoke of a capability and wait on another in one system call
  *
  * @xmlonly
@@ -210,7 +210,7 @@ seL4_Yield(void);
  *
  * Block on a notification or endpoint waiting for a message. No reply object is
  * required for a Wait. Wait should not be paired with Call, as it does not provide
- * a reply object. If Wait is paired with a Call the waiter will block after recieving
+ * a reply object. If Wait is paired with a Call the waiter will block after receiving
  * the message.
  *
  * @xmlonly
@@ -224,12 +224,16 @@ seL4_Yield(void);
  *               sender, or the notification word of the
  *               notification object that was signalled.
  *               This parameter is ignored if `NULL`.
+ * @return A `seL4_MessageInfo_t` structure
+ * @xmlonly
+ * <docref>as described in <autoref label="sec:messageinfo"/></docref>
+ * @endxmlonly
  */
 LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_Wait(seL4_CPtr src, seL4_Word *sender);
 
 /**
- * @xmlonly <manual name="NBWait" label="sel4_nbwait"/> @endxmlonly
+ * @xmlonly <manual name="Non-Blocking Wait" label="sel4_nbwait"/> @endxmlonly
  * @brief Perform a polling wait on an endpoint or notification object
  *
  * Poll a notification or endpoint waiting for a message. No reply object is
@@ -246,13 +250,17 @@ seL4_Wait(seL4_CPtr src, seL4_Word *sender);
  *               sender, or the notification word of the
  *               notification object that was signalled.
  *               This parameter is ignored if `NULL`.
+ * @return A `seL4_MessageInfo_t` structure
+ * @xmlonly
+ * <docref>as described in <autoref label="sec:messageinfo"/></docref>
+ * @endxmlonly
  */
 LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_NBWait(seL4_CPtr src, seL4_Word *sender);
 
 /**
  * @xmlonly <manual name="Poll" label="sel4_mcs_poll"/> @endxmlonly
- * @brief Perform a non-blocking recv on a notification object
+ * @brief Perform a non-blocking receive on a notification object
  *
  * This is not a proper system call known by the kernel. Rather, it is a
  * convenience wrapper which calls seL4_NBWait().
@@ -269,7 +277,6 @@ seL4_NBWait(seL4_CPtr src, seL4_Word *sender);
  *               sender, or the notification word of the
  *               notification object that was signalled.
  *               This parameter is ignored if `NULL`.
- *
  * @return A `seL4_MessageInfo_t` structure
  * @xmlonly
  * <docref>as described in <autoref label="sec:messageinfo"/></docref>

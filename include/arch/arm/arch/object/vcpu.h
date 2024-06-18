@@ -47,12 +47,14 @@
 #define HCR_SWIO     BIT( 1)     /* set/way invalidate override    */
 #define HCR_VM       BIT( 0)     /* Virtualization MMU enable      */
 
-#define GIC_VCPU_MAX_NUM_LR 64
 
 struct gicVCpuIface {
     uint32_t hcr;
     uint32_t vmcr;
     uint32_t apr;
+    /* virq_t[] requires word-size alignment; add extra padding for
+     * 64-bit platforms to make this struct packed. */
+    uint32_t gicVCpuIface_padding;
     virq_t lr[GIC_VCPU_MAX_NUM_LR];
 };
 
@@ -76,11 +78,13 @@ struct vcpu {
     word_t regs[seL4_VCPUReg_Num];
     bool_t vppi_masked[n_VPPIEventIRQ];
 #ifdef CONFIG_VTIMER_UPDATE_VOFFSET
-    /* vTimer is 8-bytes wide and has same alignment requirement.
-     * To keep the struct packed on 32-bit platforms when accompanied by an
-     * odd number of 32-bit words, we need to add a padding word.
-     * */
     word_t vcpu_padding;
+    /* vTimer is 8-bytes wide and has the same 8-byte alignment requirement.
+     * If the sum of n_VPPIEventIRQ and seL4_VCPUReg_Num is even, we do not need
+     * extra padding. If the sum is odd we do. It currently is odd, so the extra
+     * padding above is necessary for the struct to remain packed on 32 bit
+     * platforms.
+     */
     struct vTimer virtTimer;
 #endif
 };
@@ -105,7 +109,7 @@ void dissociateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb);
 
 exception_t decodeARMVCPUInvocation(
     word_t label,
-    unsigned int length,
+    word_t length,
     cptr_t cptr,
     cte_t *slot,
     cap_t cap,
@@ -119,11 +123,11 @@ void vcpu_switch(vcpu_t *cpu);
 void handleVCPUInjectInterruptIPI(vcpu_t *vcpu, unsigned long index, virq_t virq);
 #endif /* ENABLE_SMP_SUPPORT */
 
-exception_t decodeVCPUWriteReg(cap_t cap, unsigned int length, word_t *buffer);
-exception_t decodeVCPUReadReg(cap_t cap, unsigned int length, bool_t call, word_t *buffer);
-exception_t decodeVCPUInjectIRQ(cap_t cap, unsigned int length, word_t *buffer);
+exception_t decodeVCPUWriteReg(cap_t cap, word_t length, word_t *buffer);
+exception_t decodeVCPUReadReg(cap_t cap, word_t length, bool_t call, word_t *buffer);
+exception_t decodeVCPUInjectIRQ(cap_t cap, word_t length, word_t *buffer);
 exception_t decodeVCPUSetTCB(cap_t cap);
-exception_t decodeVCPUAckVPPI(cap_t cap, unsigned int length, word_t *buffer);
+exception_t decodeVCPUAckVPPI(cap_t cap, word_t length, word_t *buffer);
 
 exception_t invokeVCPUWriteReg(vcpu_t *vcpu, word_t field, word_t value);
 exception_t invokeVCPUReadReg(vcpu_t *vcpu, word_t field, bool_t call);

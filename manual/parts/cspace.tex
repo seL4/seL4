@@ -65,7 +65,8 @@ bytes on 32-bit architectures and 32 bytes on 64-bit architectures.
 Like any other object, a \obj{CNode} must be created by calling
 \apifunc{seL4\_Untyped\_Retype}{untyped_retype} on an appropriate
 amount of untyped memory (see \autoref{sec:object_sizes}).  The caller
-must therefore have a capability to enough untyped memory as well as
+must therefore have a capability to untyped memory with at least the size
+of a CSpace as well as
 enough free capability slots available in existing \obj{CNode}s for
 the \apifunc{seL4\_Untyped\_Retype}{untyped_retype} invocation to
 succeed.
@@ -93,8 +94,11 @@ Capabilities are managed largely through invoking \obj{CNode} methods.
 \item[\apifunc{seL4\_CNode\_Mutate}{cnode_mutate}] can move a
   capability similarly to \apifunc{seL4\_CNode\_Move}{cnode_move} and
   also reduce its rights similarly to
-  \apifunc{seL4\_CNode\_Mint}{cnode_mint}, although without an
-  original copy remaining.
+  \apifunc{seL4\_CNode\_Mint}{cnode_mint}, but without making
+  a copy. That is, if the capability is revokable, it remains revokable.
+  Similar to \apifunc{seL4\_CNode\_Mint}{cnode_mint} it can
+  be used to adjust the guard of a \obj{CNode} capability. It cannot be
+  used to badge endpoint capabilities.
 \item[\apifunc{seL4\_CNode\_Rotate}{cnode_rotate}] moves two
   capabilities between three specified capability slots. It is
   essentially two \apifunc{seL4\_CNode\_Move}{cnode_move} invocations:
@@ -381,7 +385,7 @@ features:
 \end{itemize}
 
 It should be noted that \autoref{fig1.4} demonstrates only what is
-possible, not what is usually practical. Although the CSpace is legal,
+possible, not what is usually practical. Although the example CSpace is legal,
 it would be reasonably difficult to work with due to the small number
 of slots and the circular references within it.
 
@@ -389,7 +393,7 @@ of slots and the circular references within it.
 \subsection{Addressing Capabilities}
 \label{sec:cap_addressing}
 
-A capability address is stored in a CPointer (abbreviated CPTR), which
+A capability address is stored in a CPointer (abbreviated CPtr), which
 is an unsigned integer variable. Capabilities are addressed in
 accordance with the translation algorithm described above.  Two
 special cases involve addressing \obj{CNode} capabilities themselves
@@ -484,7 +488,7 @@ depend on this.
 
 \subsection{Invalid Root}
 
-A CSpace CPTR root (within which a capability was to be looked up)
+A CSpace CPtr root (within which a capability was to be looked up)
 is invalid. For example, the capability is not a \obj{CNode} cap.\\  \\
 
 \begin{tabularx}{\textwidth}{XX}
@@ -512,7 +516,7 @@ have sufficient rights. \\ \\
 \subsection{Depth Mismatch}
 
 When resolving a capability, a CNode was traversed that resolved more
-bits than was left to decode in the CPTR or a non-CNode capability was
+bits than was left to decode in the CPtr or a non-CNode capability was
 encountered while there were still bits remaining to be looked up. \\ \\
 
 \begin{tabularx}{\textwidth}{XX}
@@ -520,7 +524,7 @@ encountered while there were still bits remaining to be looked up. \\ \\
   Data & Meaning \\
   \midrule
   \ipcbloc{Offset + 0} & \enummem{seL4\_DepthMismatch} \\
-  \ipcbloc{Offset + seL4\_CapFault\_BitsLeft} & Bits of CPTR remaining to decode \\
+  \ipcbloc{Offset + seL4\_CapFault\_BitsLeft} & Bits of CPtr remaining to decode \\
   \ipcbloc{Offset + seL4\_CapFault\_DepthMismatch\_BitsFound} & Bits that the current CNode being traversed resolved \\
   \bottomrule
 \end{tabularx}
@@ -529,14 +533,14 @@ encountered while there were still bits remaining to be looked up. \\ \\
 
 When resolving a capability, a CNode was traversed with a guard size
 larger than the number of bits remaining or the CNode's guard did not
-match the next bits of the CPTR being resolved. \\ \\
+match the next bits of the CPtr being resolved. \\ \\
 
 \begin{tabularx}{\textwidth}{XX}
   \toprule
   Data & Meaning \\
   \midrule
   \ipcbloc{Offset + 0} & \enummem{seL4\_GuardMismatch} \\
-    \ipcbloc{Offset + seL4\_CapFault\_BitsLeft} & Bits of CPTR remaining to decode \\
+    \ipcbloc{Offset + seL4\_CapFault\_BitsLeft} & Bits of CPtr remaining to decode \\
   \ipcbloc{Offset + seL4\_CapFault\_GuardMismatch\_GuardFound} & The CNode's guard \\
   \ipcbloc{Offset + seL4\_CapFault\_GuardMismatch\_BitsFound} & The CNode's guard size \\
   \bottomrule

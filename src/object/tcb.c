@@ -78,6 +78,39 @@ static inline void removeFromBitmap(word_t cpu, word_t dom, word_t prio)
     }
 }
 
+tcb_queue_t tcb_queue_remove(tcb_queue_t queue, tcb_t *tcb)
+{
+    tcb_t *before;
+    tcb_t *after;
+
+    before = tcb->tcbSchedPrev;
+    after = tcb->tcbSchedNext;
+
+    if (queue.head == tcb && queue.end == tcb) {
+        queue.head = NULL;
+        queue.end = NULL;
+    } else {
+        if (queue.head == tcb) {
+            after->tcbSchedPrev = NULL;
+            tcb->tcbSchedNext = NULL;
+            queue.head = after;
+        } else {
+            if (queue.end == tcb) {
+                before->tcbSchedNext = NULL;
+                tcb->tcbSchedPrev = NULL;
+                queue.end = before;
+            } else {
+                before->tcbSchedNext = after;
+                after->tcbSchedPrev = before;
+                tcb->tcbSchedPrev = NULL;
+                tcb->tcbSchedNext = NULL;
+            }
+        }
+    }
+
+    return queue;
+}
+
 /* Add TCB to the head of a scheduler queue */
 void tcbSchedEnqueue(tcb_t *tcb)
 {
@@ -97,17 +130,11 @@ void tcbSchedEnqueue(tcb_t *tcb)
         idx = ready_queues_index(dom, prio);
         queue = NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbAffinity);
 
-        if (!queue.end) { /* Empty list */
-            queue.end = tcb;
+        if (tcb_queue_empty(queue)) {
             addToBitmap(SMP_TERNARY(tcb->tcbAffinity, 0), dom, prio);
-        } else {
-            queue.head->tcbSchedPrev = tcb;
         }
-        tcb->tcbSchedPrev = NULL;
-        tcb->tcbSchedNext = queue.head;
-        queue.head = tcb;
 
-        NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbAffinity) = queue;
+        NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbAffinity) = tcb_queue_prepend(queue, tcb);
 
         thread_state_ptr_set_tcbQueued(&tcb->tcbState, true);
     }
@@ -132,17 +159,11 @@ void tcbSchedAppend(tcb_t *tcb)
         idx = ready_queues_index(dom, prio);
         queue = NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbAffinity);
 
-        if (!queue.head) { /* Empty list */
-            queue.head = tcb;
+        if (tcb_queue_empty(queue)) {
             addToBitmap(SMP_TERNARY(tcb->tcbAffinity, 0), dom, prio);
-        } else {
-            queue.end->tcbSchedNext = tcb;
         }
-        tcb->tcbSchedPrev = queue.end;
-        tcb->tcbSchedNext = NULL;
-        queue.end = tcb;
 
-        NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbAffinity) = queue;
+        NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbAffinity) = tcb_queue_append(queue, tcb);
 
         thread_state_ptr_set_tcbQueued(&tcb->tcbState, true);
     }
@@ -153,6 +174,7 @@ void tcbSchedDequeue(tcb_t *tcb)
 {
     if (thread_state_get_tcbQueued(tcb->tcbState)) {
         tcb_queue_t queue;
+        tcb_queue_t new_queue;
         dom_t dom;
         prio_t prio;
         word_t idx;
@@ -162,24 +184,15 @@ void tcbSchedDequeue(tcb_t *tcb)
         idx = ready_queues_index(dom, prio);
         queue = NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbAffinity);
 
-        if (tcb->tcbSchedPrev) {
-            tcb->tcbSchedPrev->tcbSchedNext = tcb->tcbSchedNext;
-        } else {
-            queue.head = tcb->tcbSchedNext;
-            if (likely(!tcb->tcbSchedNext)) {
-                removeFromBitmap(SMP_TERNARY(tcb->tcbAffinity, 0), dom, prio);
-            }
-        }
+        new_queue = tcb_queue_remove(queue, tcb);
 
-        if (tcb->tcbSchedNext) {
-            tcb->tcbSchedNext->tcbSchedPrev = tcb->tcbSchedPrev;
-        } else {
-            queue.end = tcb->tcbSchedPrev;
-        }
-
-        NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbAffinity) = queue;
+        NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbAffinity) = new_queue;
 
         thread_state_ptr_set_tcbQueued(&tcb->tcbState, false);
+
+        if (likely(tcb_queue_empty(new_queue))) {
+            removeFromBitmap(SMP_TERNARY(tcb->tcbAffinity, 0), dom, prio);
+        }
     }
 }
 
@@ -257,25 +270,41 @@ tcb_queue_t tcbEPDequeue(tcb_t *tcb, tcb_queue_t queue)
 }
 
 #ifdef CONFIG_KERNEL_MCS
+
 void tcbReleaseRemove(tcb_t *tcb)
 {
     if (likely(thread_state_get_tcbInReleaseQueue(tcb->tcbState))) {
-        if (tcb->tcbSchedPrev) {
-            tcb->tcbSchedPrev->tcbSchedNext = tcb->tcbSchedNext;
-        } else {
-            NODE_STATE_ON_CORE(ksReleaseHead, tcb->tcbAffinity) = tcb->tcbSchedNext;
-            /* the head has changed, we might need to set a new timeout */
+        tcb_queue_t queue = NODE_STATE_ON_CORE(ksReleaseQueue, tcb->tcbAffinity);
+
+        if (queue.head == tcb) {
             NODE_STATE_ON_CORE(ksReprogram, tcb->tcbAffinity) = true;
         }
 
-        if (tcb->tcbSchedNext) {
-            tcb->tcbSchedNext->tcbSchedPrev = tcb->tcbSchedPrev;
-        }
+        NODE_STATE_ON_CORE(ksReleaseQueue, tcb->tcbAffinity) = tcb_queue_remove(queue, tcb);
 
-        tcb->tcbSchedNext = NULL;
-        tcb->tcbSchedPrev = NULL;
         thread_state_ptr_set_tcbInReleaseQueue(&tcb->tcbState, false);
     }
+}
+
+static inline ticks_t PURE tcbReadyTime(tcb_t *tcb)
+{
+    return refill_head(tcb->tcbSchedContext)->rTime;
+}
+
+static inline bool_t PURE time_after(tcb_t *tcb, ticks_t new_time)
+{
+    return tcb != NULL && new_time >= tcbReadyTime(tcb);
+}
+
+static tcb_t *find_time_after(tcb_t *tcb, ticks_t new_time)
+{
+    tcb_t *after = tcb;
+
+    while (time_after(after, new_time)) {
+        after = after->tcbSchedNext;
+    }
+
+    return after;
 }
 
 void tcbReleaseEnqueue(tcb_t *tcb)
@@ -283,54 +312,37 @@ void tcbReleaseEnqueue(tcb_t *tcb)
     assert(thread_state_get_tcbInReleaseQueue(tcb->tcbState) == false);
     assert(thread_state_get_tcbQueued(tcb->tcbState) == false);
 
-    tcb_t *before = NULL;
-    tcb_t *after = NODE_STATE_ON_CORE(ksReleaseHead, tcb->tcbAffinity);
+    ticks_t new_time;
+    tcb_queue_t queue;
 
-    /* find our place in the ordered queue */
-    while (after != NULL &&
-           refill_head(tcb->tcbSchedContext)->rTime >= refill_head(after->tcbSchedContext)->rTime) {
-        before = after;
-        after = after->tcbSchedNext;
-    }
+    new_time = tcbReadyTime(tcb);
+    queue = NODE_STATE_ON_CORE(ksReleaseQueue, tcb->tcbAffinity);
 
-    if (before == NULL) {
-        /* insert at head */
-        NODE_STATE_ON_CORE(ksReleaseHead, tcb->tcbAffinity) = tcb;
+    if (tcb_queue_empty(queue) || new_time < tcbReadyTime(queue.head)) {
+        NODE_STATE_ON_CORE(ksReleaseQueue, tcb->tcbAffinity) = tcb_queue_prepend(queue, tcb);
         NODE_STATE_ON_CORE(ksReprogram, tcb->tcbAffinity) = true;
     } else {
-        before->tcbSchedNext = tcb;
+        if (tcbReadyTime(queue.end) <= new_time) {
+            NODE_STATE_ON_CORE(ksReleaseQueue, tcb->tcbAffinity) = tcb_queue_append(queue, tcb);
+        } else {
+            tcb_t *after;
+            after = find_time_after(queue.head, new_time);
+            tcb_queue_insert(tcb, after);
+        }
     }
-
-    if (after != NULL) {
-        after->tcbSchedPrev = tcb;
-    }
-
-    tcb->tcbSchedNext = after;
-    tcb->tcbSchedPrev = before;
 
     thread_state_ptr_set_tcbInReleaseQueue(&tcb->tcbState, true);
 }
 
 tcb_t *tcbReleaseDequeue(void)
 {
-    assert(NODE_STATE(ksReleaseHead) != NULL);
-    assert(NODE_STATE(ksReleaseHead)->tcbSchedPrev == NULL);
-    SMP_COND_STATEMENT(assert(NODE_STATE(ksReleaseHead)->tcbAffinity == getCurrentCPUIndex()));
+    assert(NODE_STATE(ksReleaseQueue.head) != NULL);
+    assert(NODE_STATE(ksReleaseQueue.head)->tcbSchedPrev == NULL);
+    SMP_COND_STATEMENT(assert(NODE_STATE(ksReleaseQueue.head)->tcbAffinity == getCurrentCPUIndex()));
 
-    tcb_t *detached_head = NODE_STATE(ksReleaseHead);
-    NODE_STATE(ksReleaseHead) = NODE_STATE(ksReleaseHead)->tcbSchedNext;
+    tcb_t *detached_head = NODE_STATE(ksReleaseQueue.head);
 
-    if (NODE_STATE(ksReleaseHead)) {
-        NODE_STATE(ksReleaseHead)->tcbSchedPrev = NULL;
-    }
-
-    if (detached_head->tcbSchedNext) {
-        detached_head->tcbSchedNext->tcbSchedPrev = NULL;
-        detached_head->tcbSchedNext = NULL;
-    }
-
-    thread_state_ptr_set_tcbInReleaseQueue(&detached_head->tcbState, false);
-    NODE_STATE(ksReprogram) = true;
+    tcbReleaseRemove(detached_head);
 
     return detached_head;
 }
@@ -519,23 +531,34 @@ static exception_t decodeSetAffinity(cap_t cap, word_t length, word_t *buffer)
 #endif /* ENABLE_SMP_SUPPORT */
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
-static exception_t invokeConfigureSingleStepping(word_t *buffer, tcb_t *t,
+static exception_t invokeConfigureSingleStepping(bool_t call, word_t *buffer, tcb_t *t,
                                                  uint16_t bp_num, word_t n_instrs)
 {
     bool_t bp_was_consumed;
+    tcb_t *thread;
+    thread = NODE_STATE(ksCurThread);
+    word_t value;
 
     bp_was_consumed = configureSingleStepping(t, bp_num, n_instrs, false);
     if (n_instrs == 0) {
         unsetBreakpointUsedFlag(t, bp_num);
-        setMR(NODE_STATE(ksCurThread), buffer, 0, false);
+        value = false;
     } else {
         setBreakpointUsedFlag(t, bp_num);
-        setMR(NODE_STATE(ksCurThread), buffer, 0, bp_was_consumed);
+        value = bp_was_consumed;
     }
+
+    if (call) {
+        setRegister(thread, badgeRegister, 0);
+        unsigned int length = setMR(thread, buffer, 0, value);
+        setRegister(thread, msgInfoRegister, wordFromMessageInfo(
+                        seL4_MessageInfo_new(0, 0, 0, length)));
+    }
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
     return EXCEPTION_NONE;
 }
 
-static exception_t decodeConfigureSingleStepping(cap_t cap, word_t *buffer)
+static exception_t decodeConfigureSingleStepping(cap_t cap, bool_t call, word_t *buffer)
 {
     uint16_t bp_num;
     word_t n_instrs;
@@ -554,7 +577,7 @@ static exception_t decodeConfigureSingleStepping(cap_t cap, word_t *buffer)
     }
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    return invokeConfigureSingleStepping(buffer, tcb, bp_num, n_instrs);
+    return invokeConfigureSingleStepping(call, buffer, tcb, bp_num, n_instrs);
 }
 
 static exception_t invokeSetBreakpoint(tcb_t *tcb, uint16_t bp_num,
@@ -683,20 +706,27 @@ static exception_t decodeSetBreakpoint(cap_t cap, word_t *buffer)
                                vaddr, type, size, rw);
 }
 
-static exception_t invokeGetBreakpoint(word_t *buffer, tcb_t *tcb, uint16_t bp_num)
+static exception_t invokeGetBreakpoint(bool_t call, word_t *buffer, tcb_t *tcb, uint16_t bp_num)
 {
+    tcb_t *thread;
+    thread = NODE_STATE(ksCurThread);
     getBreakpoint_t res;
-
     res = getBreakpoint(tcb, bp_num);
-    setMR(NODE_STATE(ksCurThread), buffer, 0, res.vaddr);
-    setMR(NODE_STATE(ksCurThread), buffer, 1, res.type);
-    setMR(NODE_STATE(ksCurThread), buffer, 2, res.size);
-    setMR(NODE_STATE(ksCurThread), buffer, 3, res.rw);
-    setMR(NODE_STATE(ksCurThread), buffer, 4, res.is_enabled);
+    if (call) {
+        setRegister(thread, badgeRegister, 0);
+        setMR(NODE_STATE(ksCurThread), buffer, 0, res.vaddr);
+        setMR(NODE_STATE(ksCurThread), buffer, 1, res.type);
+        setMR(NODE_STATE(ksCurThread), buffer, 2, res.size);
+        setMR(NODE_STATE(ksCurThread), buffer, 3, res.rw);
+        setMR(NODE_STATE(ksCurThread), buffer, 4, res.is_enabled);
+        setRegister(thread, msgInfoRegister, wordFromMessageInfo(
+                        seL4_MessageInfo_new(0, 0, 0, 5)));
+    }
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
     return EXCEPTION_NONE;
 }
 
-static exception_t decodeGetBreakpoint(cap_t cap, word_t *buffer)
+static exception_t decodeGetBreakpoint(cap_t cap, bool_t call, word_t *buffer)
 {
     tcb_t *tcb;
     uint16_t bp_num;
@@ -712,7 +742,7 @@ static exception_t decodeGetBreakpoint(cap_t cap, word_t *buffer)
     }
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    return invokeGetBreakpoint(buffer, tcb, bp_num);
+    return invokeGetBreakpoint(call, buffer, tcb, bp_num);
 }
 
 static exception_t invokeUnsetBreakpoint(tcb_t *tcb, uint16_t bp_num)
@@ -849,13 +879,13 @@ exception_t decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
     case TCBConfigureSingleStepping:
-        return decodeConfigureSingleStepping(cap, buffer);
+        return decodeConfigureSingleStepping(cap, call, buffer);
 
     case TCBSetBreakpoint:
         return decodeSetBreakpoint(cap, buffer);
 
     case TCBGetBreakpoint:
-        return decodeGetBreakpoint(cap, buffer);
+        return decodeGetBreakpoint(cap, call, buffer);
 
     case TCBUnsetBreakpoint:
         return decodeUnsetBreakpoint(cap, buffer);
@@ -1012,7 +1042,6 @@ static bool_t validFaultHandler(cap_t cap)
         if (!cap_endpoint_cap_get_capCanSend(cap) ||
             (!cap_endpoint_cap_get_capCanGrant(cap) &&
              !cap_endpoint_cap_get_capCanGrantReply(cap))) {
-            current_syscall_error.type = seL4_InvalidCapability;
             return false;
         }
         break;
@@ -1020,7 +1049,6 @@ static bool_t validFaultHandler(cap_t cap)
         /* just has no fault endpoint */
         break;
     default:
-        current_syscall_error.type = seL4_InvalidCapability;
         return false;
     }
     return true;
@@ -1246,6 +1274,7 @@ exception_t decodeSetTimeoutEndpoint(cap_t cap, cte_t *slot)
     /* timeout handler */
     if (!validFaultHandler(thCap)) {
         userError("TCB SetTimeoutEndpoint: timeout endpoint cap invalid.");
+        current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -1520,6 +1549,7 @@ exception_t decodeSetSpace(cap_t cap, word_t length, cte_t *slot, word_t *buffer
     /* fault handler */
     if (!validFaultHandler(fhCap)) {
         userError("TCB SetSpace: fault endpoint cap invalid.");
+        current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -1561,9 +1591,9 @@ exception_t decodeDomainInvocation(word_t invLabel, word_t length, word_t *buffe
         return EXCEPTION_SYSCALL_ERROR;
     } else {
         domain = getSyscallArg(0, buffer);
-        if (domain >= CONFIG_NUM_DOMAINS) {
+        if (domain >= numDomains) {
             userError("Domain Configure: invalid domain (%lu >= %u).",
-                      domain, CONFIG_NUM_DOMAINS);
+                      domain, numDomains);
             current_syscall_error.type = seL4_InvalidArgument;
             current_syscall_error.invalidArgumentNumber = 0;
             return EXCEPTION_SYSCALL_ERROR;
@@ -1678,9 +1708,11 @@ static inline exception_t installTCBCap(tcb_t *target, cap_t tCap, cte_t *slot,
     }
 
     /* cteDelete on a cap installed in the tcb cannot fail */
-    if (sameObjectAs(newCap, srcSlot->cap) &&
-        sameObjectAs(tCap, slot->cap)) {
-        cteInsert(newCap, srcSlot, rootSlot);
+    if (cap_get_capType(newCap) != cap_null_cap) {
+        if (sameObjectAs(newCap, srcSlot->cap) &&
+            sameObjectAs(tCap, slot->cap)) {
+            cteInsert(newCap, srcSlot, rootSlot);
+        }
     }
     return e;
 }

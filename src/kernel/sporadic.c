@@ -73,7 +73,9 @@ static UNUSED bool_t refill_ordered(sched_context_t *sc)
 
     while (current != sc->scRefillTail) {
         if (!(refill_index(sc, current)->rTime + refill_index(sc, current)->rAmount <= refill_index(sc, next)->rTime)) {
+#ifdef CONFIG_PRINTING
             refill_print(sc);
+#endif
             return false;
         }
         current = next;
@@ -153,21 +155,17 @@ static inline void maybe_add_empty_tail(sched_context_t *sc)
     }
 }
 
-#ifdef ENABLE_SMP_SUPPORT
-void refill_new(sched_context_t *sc, word_t max_refills, ticks_t budget, ticks_t period, word_t core)
-#else
 void refill_new(sched_context_t *sc, word_t max_refills, ticks_t budget, ticks_t period)
-#endif
 {
     sc->scPeriod = period;
     sc->scRefillHead = 0;
     sc->scRefillTail = 0;
     sc->scRefillMax = max_refills;
-    assert(budget > MIN_BUDGET);
+    assert(budget >= MIN_BUDGET);
     /* full budget available */
     refill_head(sc)->rAmount = budget;
     /* budget can be used from now */
-    refill_head(sc)->rTime = NODE_STATE_ON_CORE(ksCurTime, core);
+    refill_head(sc)->rTime = NODE_STATE(ksCurTime);
     maybe_add_empty_tail(sc);
     REFILL_SANITY_CHECK(sc, budget);
 }
@@ -194,7 +192,7 @@ void refill_update(sched_context_t *sc, ticks_t new_period, ticks_t new_budget, 
     sc->scPeriod = new_period;
 
     if (refill_ready(sc)) {
-        refill_head(sc)->rTime = NODE_STATE_ON_CORE(ksCurTime, sc->scCore);
+        refill_head(sc)->rTime = NODE_STATE(ksCurTime);
     }
 
     if (refill_head(sc)->rAmount >= new_budget) {
@@ -241,8 +239,8 @@ static inline void schedule_used(sched_context_t *sc, refill_t new)
 static bool_t refill_head_overlapping(sched_context_t *sc)
 {
     if (!refill_single(sc)) {
-        ticks_t amount = refill_head(sc)->rAmount;
-        ticks_t tail = refill_head(sc)->rTime + amount;
+        refill_t head = *refill_head(sc);
+        ticks_t tail = head.rTime + head.rAmount;
         return refill_index(sc, refill_next(sc, sc->scRefillHead))->rTime <= tail;
     } else {
         return false;
@@ -315,6 +313,12 @@ void refill_budget_check(ticks_t usage)
     REFILL_SANITY_END(sc);
 }
 
+static inline void merge_overlapping_head_refill(sched_context_t *sc)
+{
+    refill_t old_head = refill_pop_head(sc);
+    refill_head(sc)->rTime = old_head.rTime;
+    refill_head(sc)->rAmount += old_head.rAmount;
+}
 
 void refill_unblock_check(sched_context_t *sc)
 {
@@ -327,14 +331,12 @@ void refill_unblock_check(sched_context_t *sc)
     /* advance earliest activation time to now */
     REFILL_SANITY_START(sc);
     if (refill_ready(sc)) {
-        refill_head(sc)->rTime = NODE_STATE_ON_CORE(ksCurTime, sc->scCore);
+        refill_head(sc)->rTime = NODE_STATE(ksCurTime);
         NODE_STATE(ksReprogram) = true;
 
         /* merge available replenishments */
         while (refill_head_overlapping(sc)) {
-            refill_t old_head = refill_pop_head(sc);
-            refill_head(sc)->rTime = old_head.rTime;
-            refill_head(sc)->rAmount += old_head.rAmount;
+            merge_overlapping_head_refill(sc);
         }
 
         assert(refill_sufficient(sc, 0));

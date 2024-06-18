@@ -6,9 +6,10 @@
 
 #pragma once
 
-#include <autoconf.h>
+#include <sel4/config.h>
 #include <sel4/macros.h>
 
+#ifndef __ASSEMBLER__
 typedef seL4_Word seL4_ExceptIPCRegister SEL4_DEPRECATED("use seL4_UnknownSyscall_Msg");
 
 #define EXCEPT_IPC_SYS_MR_R0 SEL4_DEPRECATE_MACRO(seL4_UnknownSyscall_R0)
@@ -26,3 +27,4 @@ typedef seL4_Word seL4_ExceptIPCRegister SEL4_DEPRECATED("use seL4_UnknownSyscal
 #define EXCEPT_IPC_SYS_MR_SYSCALL SEL4_DEPRECATE_MACRO(seL4_UnknownSyscall_Syscall)
 #define EXCEPT_IPC_LENGTH SEL4_DEPRECATE_MACRO(seL4_UnknownSyscall_Length)
 
+#endif /*__ASSEMBLER__*/

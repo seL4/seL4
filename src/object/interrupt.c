@@ -134,8 +134,15 @@ exception_t decodeIRQHandlerInvocation(word_t invLabel, irq_t irq)
 void invokeIRQHandler_AckIRQ(irq_t irq)
 {
 #ifdef CONFIG_ARCH_RISCV
+#if !defined(CONFIG_PLAT_QEMU_RISCV_VIRT)
+    /* QEMU has a bug where interrupts must be
+     * immediately claimed, which is done in getActiveIRQ. For other
+     * platforms, the claim can wait and be done here.
+     */
     plic_complete_claim(irq);
+#endif
 #else
+
 #if defined ENABLE_SMP_SUPPORT && defined CONFIG_ARCH_ARM
     if (IRQ_IS_PPI(irq) && IRQT_TO_CORE(irq) != getCurrentCPUIndex()) {
         doRemoteMaskPrivateInterrupt(IRQT_TO_CORE(irq), false, IRQT_TO_IDX(irq));
@@ -182,21 +189,25 @@ void deletedIRQHandler(irq_t irq)
 void handleInterrupt(irq_t irq)
 {
     if (unlikely(IRQT_TO_IRQ(irq) > maxIRQ)) {
-        /* mask, ack and pretend it didn't happen. We assume that because
-         * the interrupt controller for the platform returned this IRQ that
-         * it is safe to use in mask and ack operations, even though it is
-         * above the claimed maxIRQ. i.e. we're assuming maxIRQ is wrong */
+        /* The interrupt number is out of range. Pretend it did not happen by
+         * handling it like an inactive interrupt (mask and ack). We assume this
+         * is acceptable, because the platform specific interrupt controller
+         * driver reported this interrupt. Maybe the value maxIRQ is just wrong
+         * or set to a lower value because the interrupts are unused.
+         */
         printf("Received IRQ %d, which is above the platforms maxIRQ of %d\n", (int)IRQT_TO_IRQ(irq), (int)maxIRQ);
         maskInterrupt(true, irq);
         ackInterrupt(irq);
         return;
     }
+
     switch (intStateIRQTable[IRQT_TO_IDX(irq)]) {
     case IRQSignal: {
+        /* Merging the variable declaration and initialization into one line
+         * requires an update in the proofs first. Might be a c89 legacy.
+         */
         cap_t cap;
-
         cap = intStateIRQNode[IRQT_TO_IDX(irq)].cap;
-
         if (cap_get_capType(cap) == cap_notification_cap &&
             cap_notification_cap_get_capNtfnCanSend(cap)) {
             sendSignal(NTFN_PTR(cap_notification_cap_get_capNtfnPtr(cap)),
@@ -233,10 +244,9 @@ void handleInterrupt(irq_t irq)
         break;
 
     case IRQInactive:
-        /*
-         * This case shouldn't happen anyway unless the hardware or
-         * platform code is broken. Hopefully masking it again should make
-         * the interrupt go away.
+        /* This case shouldn't happen anyway unless the hardware or platform
+         * code is broken. Hopefully masking it again should make the interrupt
+         * go away.
          */
         maskInterrupt(true, irq);
 #ifdef CONFIG_IRQ_REPORTING
@@ -249,6 +259,9 @@ void handleInterrupt(irq_t irq)
         fail("Invalid IRQ state");
     }
 
+    /* Every interrupt is ack'd, even if it is an inactive one. Rationale is,
+     * that for any interrupt reported by the platform specific code the generic
+     * kernel code does report here that it is done with handling it. */
     ackInterrupt(irq);
 }
 

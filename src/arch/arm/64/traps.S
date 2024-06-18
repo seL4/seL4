@@ -32,7 +32,7 @@
 
 .macro lsp_i _tmp
     mrs     \_tmp, TPIDR
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef CONFIG_ENABLE_SMP_SUPPORT
     bic     \_tmp, \_tmp, #0xfff
 #endif
     mov     sp, \_tmp
@@ -43,7 +43,7 @@
     b       \label
 .endm
 
-.section .vectors
+.section .vectors, "ax"
 
 BEGIN_FUNC(arm_vector_table)
     ventry  invalid_vector_entry           // Synchronous EL1t/EL2t
@@ -67,7 +67,7 @@ BEGIN_FUNC(arm_vector_table)
     ventry  invalid_vector_entry           // SError 32-bit EL0/EL1
 END_FUNC(arm_vector_table)
 
-.section .vectors.text
+.section .vectors.text, "ax"
 
 .macro kernel_enter
     /* Storing thread's stack frame */
@@ -203,6 +203,10 @@ lel_syscall:
 #ifdef CONFIG_FASTPATH
     cmp     x7, #SYSCALL_CALL
     b.eq    c_handle_fastpath_call
+#ifdef CONFIG_SIGNAL_FASTPATH
+    cmp     x7, #SYSCALL_SEND
+    b.eq    c_handle_fastpath_signal
+#endif /* CONFIG_SIGNAL_FASTPATH */
     cmp     x7, #SYSCALL_REPLY_RECV
 #ifdef CONFIG_KERNEL_MCS
     mov     x2, x6

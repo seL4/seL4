@@ -5,9 +5,7 @@
 # SPDX-License-Identifier: BSD-2-Clause
 #
 
-from __future__ import print_function
 import sys
-import six
 from functools import reduce
 
 # We assume length tp > 0
@@ -75,11 +73,10 @@ def is_base(x):
 def base_name(x):
     return x[1]
 
-# This assumes that membership is a DAG which is the case in C
-# We could memoize, doesn't seem worth it ...
-
 
 def paths_to_type(mp, f, start):
+    # This assumes that membership is a DAG which is the case in C
+
     def handle_one(fld):
         name, tp = fld
         if f(tp):
@@ -102,7 +99,7 @@ def paths_to_type(mp, f, start):
 
 
 def build_types(file):
-    in_file = open(file, 'r')
+    in_file = open(file, 'r', encoding='utf-8')
 
     lines = map(lambda x: x.rstrip(), in_file.readlines())
 
@@ -120,7 +117,7 @@ def print_graph(filename, out_file):
     mp = build_types(filename)
 
     print('digraph types {', file=out_file)
-    for k, flds in six.iteritems(mp):
+    for k, flds in mp.iteritems():
         for fld, tp in flds:
             # if is_base(tp):
             print('\t "%s" -> "%s" [label="%s"]' % (k, base_name(tp), fld),

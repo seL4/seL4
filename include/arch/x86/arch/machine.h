@@ -25,6 +25,7 @@
 #define IA32_GS_BASE_MSR        0xC0000101
 #define IA32_LSTAR_MSR          0xC0000082
 #define IA32_STAR_MSR           0xC0000081
+#define IA32_CSTAR_MSR          0xC0000083
 #define IA32_FMASK_MSR          0xC0000084
 #define IA32_EFER_MSR 0xC0000080
 #define IA32_PLATFORM_INFO_MSR  0xCE
@@ -55,6 +56,7 @@
  */
 #define SKYLAKE_1_MODEL_ID      0x4E
 #define SKYLAKE_2_MODEL_ID      0x5E
+#define SKYLAKE_X_MODEL_ID      0x55
 #define BROADWELL_1_MODEL_ID    0x4D
 #define BROADWELL_2_MODEL_ID    0x56
 #define BROADWELL_3_MODEL_ID    0x4F
@@ -357,11 +359,6 @@ static inline void x86_mfence(void)
 static inline unsigned long getFaultAddr(void)
 {
     return read_cr2();
-}
-
-static inline void Arch_finaliseInterrupt(void)
-{
-    ARCH_NODE_STATE(x86KScurInterrupt) = int_invalid;
 }
 
 static inline void x86_set_tls_segment_base(word_t tls_base);

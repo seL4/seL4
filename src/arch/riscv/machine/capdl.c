@@ -229,7 +229,9 @@ void debug_capDL(void)
 {
     printf("arch riscv\n");
     printf("objects {\n");
+#ifdef CONFIG_PRINTING
     print_objects();
+#endif
     printf("}\n");
 
     printf("caps {\n");

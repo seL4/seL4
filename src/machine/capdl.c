@@ -106,18 +106,14 @@ void obj_tcb_print_attrs(tcb_t *tcb)
 
 #ifdef CONFIG_KERNEL_MCS
 
-/* to make compilers happy */
-#define REFILL_INDEX(sc, index) (((refill_t *) (SC_REF(sc) + sizeof(sched_context_t)))[index])
-#define REFILL_HEAD(sc) REFILL_INDEX((sc), (sc)->scRefillHead)
-
 static inline ticks_t sc_get_budget(sched_context_t *sc)
 {
-    ticks_t sum = REFILL_HEAD(sc).rAmount;
+    ticks_t sum = refill_head(sc)->rAmount;
     word_t current = sc->scRefillHead;
 
     while (current != sc->scRefillTail) {
         current = ((current == sc->scRefillMax - 1u) ? (0) : current + 1u);
-        sum += REFILL_INDEX(sc, current).rAmount;
+        sum += refill_index(sc, current)->rAmount;
     }
 
     return sum;
@@ -126,11 +122,13 @@ static inline ticks_t sc_get_budget(sched_context_t *sc)
 void obj_sc_print_attrs(cap_t sc_cap)
 {
     sched_context_t *sc = SC_PTR(cap_sched_context_cap_get_capSCPtr(sc_cap));
-    printf("(period: %lu, budget: %lu, %lu bits)\n",
-           (long unsigned int)ticksToUs(sc->scPeriod),
-           (long unsigned int)ticksToUs(sc_get_budget(sc)),
-           (word_t)cap_sched_context_cap_get_capSCSizeBits(sc_cap)
-          );
+    ticks_t period = sc->scPeriod;
+    ticks_t budget = sc_get_budget(sc);
+    printf("(period: %"PRIu64" us (%"PRIu64" ticks), budget: %"PRIu64 " us "
+           "(%"PRIu64" ticks), %"SEL4_PRIu_word" bits)\n",
+           ticksToUs(period), period,
+           ticksToUs(budget), budget,
+           (word_t)cap_sched_context_cap_get_capSCSizeBits(sc_cap));
 }
 #endif /* CONFIG_KERNEL_MCS */
 

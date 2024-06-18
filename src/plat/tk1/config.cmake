@@ -9,13 +9,7 @@ cmake_minimum_required(VERSION 3.7.2)
 declare_platform(tk1 KernelPlatformTK1 PLAT_TK1 "KernelSel4ArchAarch32 OR KernelSel4ArchArmHyp")
 
 if(KernelPlatformTK1)
-    if("${KernelSel4Arch}" STREQUAL aarch32)
-        declare_seL4_arch(aarch32)
-    elseif("${KernelSel4Arch}" STREQUAL arm_hyp)
-        declare_seL4_arch(arm_hyp)
-    else()
-        fallback_declare_seL4_arch_default(aarch32)
-    endif()
+    declare_seL4_arch(aarch32 arm_hyp)
     set(KernelArmCortexA15 ON)
     set(KernelArchArmV7a ON)
     set(KernelArchArmV7ve ON)
@@ -24,11 +18,12 @@ if(KernelPlatformTK1)
     list(APPEND KernelDTSList "tools/dts/tk1.dts")
     list(APPEND KernelDTSList "src/plat/tk1/overlay-tk1.dts")
     declare_default_headers(
-        TIMER_FREQUENCY 12000000llu
+        TIMER_FREQUENCY 12000000
         MAX_IRQ 191
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h
         NUM_PPI 32
-        TIMER drivers/timer/arm_generic.h SMMU plat/machine/smmu.h
+        TIMER drivers/timer/arm_generic.h
+        SMMU plat/machine/smmu.h
         CLK_MAGIC 2863311531llu
         CLK_SHIFT 35u
         KERNEL_WCET 100u

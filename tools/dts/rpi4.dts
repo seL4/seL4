@@ -919,8 +919,6 @@
 			interrupts = <0x00 0x5d 0x04>;
 			clocks = <0x0c 0x00>;
 			status = "okay";
-			pinctrl-names = "default";
-			pinctrl-0 = <0x0d>;
 		};
 
 		spi@7e215080 {

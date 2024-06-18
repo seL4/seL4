@@ -1,0 +1,48 @@
+/*
+ * Copyright (C) 2021, Hensoldt Cyber GmbH
+ * Copyright 2022, Technology Innovation Institute
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+	/*
+	 * On the Raspberry Pi platforms two processing units are at play: the
+	 * VideoCore GPU and the ARM CPU. Both have different views on the address
+	 * space, meaning different base addresses(VC: 0x7e000000, ARM: 0xfe000000).
+	 * In TRMs and DTS files, generally the VideoCore view is used, resulting in
+	 * peripherals being listed with their respective VideoCore base address.
+	 * Since user code is running on the ARM cores, we are more interested in
+	 * the ARM peripheral addresses. Since there is no other mapping mechanism
+	 * implemented, we provide an explicit address mapping to the ARM base
+	 * addresses in this overlay file.
+	 */
+	soc {
+		timer@7e003000 {
+			reg = <0xfe003000 0x1000>;
+			/* Channels 0 and 2 used by VC, so just expose 1 and
+			 * 3. Otherwise we're spammed with spurious
+			 * interrupts. */
+			interrupts = <0x00 0x41 0x04 0x00 0x43 0x04>;
+		};
+
+		serial@7e201400 {
+			reg = <0xfe201400 0x200>;
+		};
+
+		serial@7e201600 {
+			reg = <0xfe201600 0x200>;
+		};
+
+		serial@7e201800 {
+			reg = <0xfe201800 0x200>;
+		};
+
+		serial@7e201a00 {
+			reg = <0xfe201a00 0x200>;
+		};
+
+		/* ToDo: Rewrite the base address for other peripherals. */
+	};
+
+};

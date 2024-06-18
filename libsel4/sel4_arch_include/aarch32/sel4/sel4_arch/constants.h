@@ -6,15 +6,10 @@
 
 #pragma once
 
-#include <autoconf.h>
+#include <sel4/config.h>
 #include <sel4/macros.h>
 
 #ifndef __ASSEMBLER__
-#ifdef CONFIG_KERNEL_GLOBALS_FRAME
-enum {
-    seL4_GlobalsFrame = 0xffffc000,
-};
-#endif /* CONFIG_KERNEL_GLOBALS_FRAME */
 
 /* format of an unknown syscall message */
 typedef enum {
@@ -58,7 +53,6 @@ typedef enum {
     SEL4_FORCE_LONG_ENUM(seL4_VMFault_Msg),
 } seL4_VMFault_Msg;
 
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 typedef enum {
     seL4_VGICMaintenance_IDX,
     seL4_VGICMaintenance_Length,
@@ -109,9 +103,7 @@ typedef enum {
     seL4_VCPUReg_R10fiq,
     seL4_VCPUReg_R11fiq,
     seL4_VCPUReg_R12fiq,
-#if  CONFIG_MAX_NUM_NODES > 1
     seL4_VCPUReg_VMPIDR,
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
     seL4_VCPUReg_SPSRsvc,
     seL4_VCPUReg_SPSRabt,
     seL4_VCPUReg_SPSRund,
@@ -123,8 +115,8 @@ typedef enum {
     seL4_VCPUReg_CNTVOFFhigh,
     seL4_VCPUReg_CNTVOFFlow,
     seL4_VCPUReg_Num,
+    SEL4_FORCE_LONG_ENUM(seL4_VCPUReg),
 } seL4_VCPUReg;
-#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 #ifdef CONFIG_KERNEL_MCS
 typedef enum {
@@ -134,7 +126,7 @@ typedef enum {
     seL4_Timeout_Consumed_LowBits,
     seL4_Timeout_Length,
     SEL4_FORCE_LONG_ENUM(seL4_Timeout_Msg)
-} seL4_TimeoutMsg;
+} seL4_Timeout_Msg;
 
 typedef enum {
     seL4_TimeoutReply_FaultIP,
@@ -246,12 +238,6 @@ SEL4_SIZE_SANITY(seL4_PGDEntryBits, seL4_PGDIndexBits, seL4_PGDBits);
 /* size of kernel log buffer in bytes */
 #define seL4_LogBufferSize (LIBSEL4_BIT(20))
 #endif /* CONFIG_ENABLE_BENCHMARKS */
-
-#ifdef CONFIG_HARDWARE_DEBUG_API
-#define seL4_FirstBreakpoint (0)
-#define seL4_FirstDualFunctionMonitor (-1)
-#define seL4_NumDualFunctionMonitors (0)
-#endif
 
 #define seL4_FastMessageRegisters 4
 

@@ -23,13 +23,7 @@ foreach(config IN LISTS cmake_configs)
 endforeach()
 unset(KernelPlatExynos54xx CACHE)
 if(KernelPlatExynos5)
-    if("${KernelSel4Arch}" STREQUAL aarch32)
-        declare_seL4_arch(aarch32)
-    elseif("${KernelSel4Arch}" STREQUAL arm_hyp)
-        declare_seL4_arch(arm_hyp)
-    else()
-        fallback_declare_seL4_arch_default(aarch32)
-    endif()
+    declare_seL4_arch(aarch32 arm_hyp)
     set(KernelArmCortexA15 ON)
     set(KernelArchArmV7ve ON)
     # v7ve is a superset of v7a, so we enable that as well
@@ -58,7 +52,7 @@ if(KernelPlatExynos5)
     list(APPEND KernelDTSList "tools/dts/${KernelARMPlatform}.dts")
     list(APPEND KernelDTSList "src/plat/exynos5/overlay-${KernelARMPlatform}.dts")
     declare_default_headers(
-        TIMER_FREQUENCY 24000000llu
+        TIMER_FREQUENCY 24000000
         MAX_IRQ 254
         NUM_PPI 32
         TIMER drivers/timer/arm_generic.h

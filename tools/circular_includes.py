@@ -28,7 +28,7 @@ def main(parse_args):
     if ignore_args and len(ignore_args):
         ignore_args = [re.escape(ignore) for ignore in ignore_args]
         ignore_re_string = '(' + '|'.join(ignore_args) + ')'
-        ignore_re = re.compile(r'^# 1 ".*' + ignore_re_string + '"')
+        ignore_re = re.compile(r'^# [01] ".*' + ignore_re_string + '"')
 
     header_re = re.compile(r'^# (\d+) "(.*\..)"')
 
@@ -58,7 +58,7 @@ def main(parse_args):
                 file_stack.append(header)
         else:
             # popped back up to an earlier header
-            while file_stack[-1] != header:
+            while (len(file_stack) > 0) and (file_stack[-1] != header):
                 file_stack.pop()
 
     return 0

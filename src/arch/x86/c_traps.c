@@ -35,7 +35,7 @@ void VISIBLE NORETURN c_handle_interrupt(int irq, int syscall)
         x86_enable_ibrs();
     }
 
-    /* Only grab the lock if we are not handeling 'int_remote_call_ipi' interrupt
+    /* Only grab the lock if we are not handling 'int_remote_call_ipi' interrupt
      * also flag this lock as IRQ lock if handling the irq interrupts. */
     NODE_LOCK_IF(irq != int_remote_call_ipi,
                  irq >= int_irq_min && irq <= int_irq_max);
@@ -126,6 +126,9 @@ void NORETURN slowpath(syscall_t syscall)
         ksKernelEntry.path = Entry_UnknownSyscall;
         /* ksKernelEntry.word word is already set to syscall */
 #endif /* TRACK_KERNEL_ENTRIES */
+        /* Contrary to the name, this handles all non-standard syscalls used in
+         * debug builds also.
+         */
         handleUnknownSyscall(syscall);
     } else {
 #ifdef TRACK_KERNEL_ENTRIES
@@ -206,10 +209,12 @@ void VISIBLE NORETURN c_handle_vmexit(void)
      * This needs to happen before the entry hook which will try to
      * restore the registers without having a means to determine whether
      * they may have been dirtied by a VM exit. */
+#ifndef CONFIG_X86_64_VTX_64BIT_GUESTS
     tcb_t *cur_thread = NODE_STATE(ksCurThread);
     ARCH_NODE_STATE(x86KSCurrentGSBase) = -(word_t)1;
     ARCH_NODE_STATE(x86KSCurrentFSBase) = -(word_t)1;
     x86_load_fsgs_base(cur_thread, CURRENT_CPU_INDEX());
+#endif
 
     c_entry_hook();
     /* NODE_LOCK will get called in handleVmexit */

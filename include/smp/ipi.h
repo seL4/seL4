@@ -155,18 +155,10 @@ static void inline doRemoteOp3Arg(IpiRemoteCall_t func, word_t data1, word_t dat
  */
 void doMaskReschedule(word_t mask);
 
-/* Request rescheduling on a core specified by cpu.
- * Returns immediately.
- *
- * @param cpu core to reschedule
- */
-static void inline doReschedule(word_t cpu)
-{
-    if (cpu != getCurrentCPUIndex()) {
-        assert(cpu < CONFIG_MAX_NUM_NODES);
-        doMaskReschedule(BIT(cpu));
-    }
-}
+
+#ifdef CONFIG_DEBUG_BUILD
+exception_t handle_SysDebugSendIPI(void);
+#endif
 
 #endif /* ENABLE_SMP_SUPPORT */
 

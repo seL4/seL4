@@ -7,5 +7,6 @@
 #pragma once
 
 typedef enum _mode_object {
-    seL4_ModeObjectTypeCount = seL4_NonArchObjectTypeCount,
+    seL4_ARM_PageDirectoryObject = seL4_NonArchObjectTypeCount,
+    seL4_ModeObjectTypeCount,
 } seL4_ModeObjectType;

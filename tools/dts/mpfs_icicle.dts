@@ -465,7 +465,8 @@
 
 	timer0: timer@20125000 {
 		compatible = "timer";
-                reg = <0x0 20125000 0x0 0x400>;
+                status = "okay";
+                reg = <0x0 0x20125000 0x0 0x1000>;
                 interrupt-parent = <&L1>;
                 interrupts = <82 83>;
                 timer-width = < 0x20 >;

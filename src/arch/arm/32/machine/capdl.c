@@ -506,7 +506,9 @@ void debug_capDL(void)
 {
     printf("arch aarch32\n");
     printf("objects {\n");
+#ifdef CONFIG_PRINTING
     print_objects();
+#endif
     printf("}\n");
 
     printf("caps {\n");

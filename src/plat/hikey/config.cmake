@@ -9,13 +9,8 @@ cmake_minimum_required(VERSION 3.7.2)
 declare_platform(hikey KernelPlatformHikey PLAT_HIKEY KernelArchARM)
 
 if(KernelPlatformHikey)
-    if("${KernelSel4Arch}" STREQUAL aarch32)
-        declare_seL4_arch(aarch32)
-    elseif("${KernelSel4Arch}" STREQUAL aarch64)
-        declare_seL4_arch(aarch64)
-    else()
-        fallback_declare_seL4_arch_default(aarch32)
-    endif()
+    # For historical reasons, Hikey defaults to aarch32
+    declare_seL4_arch(aarch32 aarch64)
     set(KernelArmCortexA53 ON)
     set(KernelArchArmV8a ON)
     config_set(KernelARMPlatform ARM_PLAT hikey)
@@ -23,7 +18,7 @@ if(KernelPlatformHikey)
     list(APPEND KernelDTSList "tools/dts/hikey.dts")
     list(APPEND KernelDTSList "src/plat/hikey/overlay-hikey.dts")
     declare_default_headers(
-        TIMER_FREQUENCY 1200000llu
+        TIMER_FREQUENCY 1200000
         MAX_IRQ 159
         TIMER drivers/timer/arm_generic.h
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h

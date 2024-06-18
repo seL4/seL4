@@ -49,6 +49,7 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
 #if defined ENABLE_SMP_SUPPORT
         if (IRQ_IS_PPI(irq)) {
             userError("Trying to get a handler on a PPI: use GetTriggerCore.");
+            current_syscall_error.type = seL4_IllegalOperation;
             return EXCEPTION_SYSCALL_ERROR;
         }
 #endif

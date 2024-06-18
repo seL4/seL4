@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        arch: [ARM, ARM_HYP, RISCV64, X64]
+        arch: [ARM, ARM_HYP, AARCH64, RISCV64, X64]
         # no MCS here, auto-updating mcs.xml should be a separate job.
     steps:
     - uses: seL4/ci-actions/preprocess@master
@@ -40,6 +40,7 @@ jobs:
   deploy:
     name: Deploy manifest
     needs: [code, preprocess]
+    if: ${{ github.repository_owner == 'seL4' }}
     runs-on: ubuntu-latest
     steps:
     - uses: seL4/ci-actions/l4v-deploy@master
