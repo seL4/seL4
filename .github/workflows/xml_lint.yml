@@ -35,5 +35,5 @@ jobs:
     - name: run xmllint
       run: |
         find libsel4 -name "sel4*.xml" | \
-        xargs xmllint --schema libsel4/tools/sel4_idl.xsd --noout
+        xargs xmllint --schema libsel4/tools/sel4_idl.xsd --xinclude --noout
         xmllint --schema libsel4/include/api/syscall.xsd --noout libsel4/include/api/syscall.xml

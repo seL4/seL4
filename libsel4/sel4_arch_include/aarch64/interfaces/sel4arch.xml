@@ -4,8 +4,9 @@
 
      SPDX-License-Identifier: BSD-2-Clause
 -->
+<!DOCTYPE api>
 
-<api name="ObjectApiAarch64" label_prefix="aarch64_">
+<api name="ObjectApiAarch64" label_prefix="aarch64_" xmlns:xi="http://www.w3.org/2001/XInclude" xml:base="../../../tools/" >
     <struct name="seL4_UserContext">
         <member name="pc"/>
         <member name="sp"/>
@@ -75,8 +76,8 @@
             </error>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="end"/> is in the kernel virtual address range.
+                    The <texttt text="end"/> is in the kernel virtual address range.
+                    <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
             <error name="seL4_InvalidArgument">
@@ -86,8 +87,8 @@
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="_service"/> is not assigned to an ASID pool.
+                    The <texttt text="_service"/> is not assigned to an ASID pool.
+                    <xi:include href="common_error_invalid_capability_append.xml" />
                 </description>
             </error>
             <error name="seL4_RangeError">
@@ -115,8 +116,8 @@
             </error>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="end"/> is in the kernel virtual address range.
+                    The <texttt text="end"/> is in the kernel virtual address range.
+                    <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
             <error name="seL4_InvalidArgument">
@@ -126,8 +127,8 @@
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="_service"/> is not assigned to an ASID pool.
+                    The <texttt text="_service"/> is not assigned to an ASID pool.
+                    <xi:include href="common_error_invalid_capability_append.xml" />
                 </description>
             </error>
             <error name="seL4_RangeError">
@@ -155,8 +156,8 @@
             </error>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="end"/> is in the kernel virtual address range.
+                    The <texttt text="end"/> is in the kernel virtual address range.
+                    <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
             <error name="seL4_InvalidArgument">
@@ -166,8 +167,8 @@
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="_service"/> is not assigned to an ASID pool.
+                    The <texttt text="_service"/> is not assigned to an ASID pool.
+                    <xi:include href="common_error_invalid_capability_append.xml" />
                 </description>
             </error>
             <error name="seL4_RangeError">
@@ -195,8 +196,8 @@
             </error>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="end"/> is in the kernel virtual address range.
+                    The <texttt text="end"/> is in the kernel virtual address range.
+                    <xi:include href="common_error_illegal_operation_append.xml" />
                 </description>
             </error>
             <error name="seL4_InvalidArgument">
@@ -206,8 +207,8 @@
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="_service"/> is not assigned to an ASID pool.
+                    The <texttt text="_service"/> is not assigned to an ASID pool.
+                    <xi:include href="common_error_invalid_capability_append.xml" />
                 </description>
             </error>
             <error name="seL4_RangeError">

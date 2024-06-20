@@ -5,8 +5,9 @@
 
      SPDX-License-Identifier: BSD-2-Clause
 -->
+<!DOCTYPE api>
 
-<api name="ObjectApiRISCV" label_prefix="riscv_">
+<api name="ObjectApiRISCV" label_prefix="riscv_" xmlns:xi="http://www.w3.org/2001/XInclude" xml:base="../../../tools/" >
 
     <struct name="seL4_UserContext">
             <member name="pc"/>
@@ -73,11 +74,7 @@
                     The <texttt text="vspace"/> is not assigned to an ASID pool.
                 </description>
             </error>
-            <error name="seL4_IllegalOperation">
-                <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                </description>
-            </error>
+            <xi:include href="common_error_illegal_operation.xml" />
             <error name="seL4_InvalidArgument">
                 <description>
                     The <texttt text="vaddr"/> is in the kernel virtual address range.
@@ -85,9 +82,10 @@
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> or <texttt text="vspace"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="vspace"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="vspace"/> is not assigned to an ASID pool.
                     Or, <texttt text="_service"/> is already mapped in a VSpace.
+                    <xi:include href="common_error_invalid_capability_append.xml" />
                 </description>
             </error>
         </method>
@@ -98,16 +96,8 @@
             <description>
                 <docref>See <autoref label="ch:vspace"/></docref>
             </description>
-            <error name="seL4_IllegalOperation">
-                <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                </description>
-            </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                </description>
-            </error>
+            <xi:include href="common_error_illegal_operation.xml" />
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RevokeFirst">
                 <description>
                     The <texttt text="_service"/> is the root of a VSpace.
@@ -161,11 +151,7 @@
                     Or, <texttt text="vspace"/> is not assigned to an ASID pool.
                 </description>
             </error>
-            <error name="seL4_IllegalOperation">
-                <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                </description>
-            </error>
+            <xi:include href="common_error_illegal_operation.xml" />
             <error name="seL4_InvalidArgument">
                 <description>
                     The <texttt text="_service"/> is already mapped in <texttt text="vspace"/> at a different virtual address.
@@ -174,10 +160,11 @@
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> or <texttt text="vspace"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="vspace"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="vspace"/> is not the root of a VSpace.
                     Or, <texttt text="vspace"/> is not assigned to an ASID pool.
                     Or, <texttt text="_service"/> is already mapped in a different VSpace.
+                    <xi:include href="common_error_invalid_capability_append.xml" />
                 </description>
             </error>
         </method>
@@ -188,16 +175,9 @@
             <description>
                 Removes an existing mapping.
             </description>
-            <error name="seL4_IllegalOperation">
-                <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                </description>
-            </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                </description>
-            </error>
+            <xi:include href="common_error_illegal_operation.xml" />
+            <xi:include href="common_error_invalid_capability.xml" />
+
         </method>
         <method id="RISCVPageGetAddress" name="GetAddress" manual_name="Get Address">
             <brief>
@@ -213,16 +193,9 @@
                 of the message register and tag contents upon error.</docref>
             </return>
             <param dir="out" name="paddr" type="seL4_Word"/>
-            <error name="seL4_IllegalOperation">
-                <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                </description>
-            </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                </description>
-            </error>
+            <xi:include href="common_error_illegal_operation.xml" />
+            <xi:include href="common_error_invalid_capability.xml" />
+
         </method>
     </interface>
     <interface name="seL4_RISCV_ASIDControl" manual_name="ASID Control"
@@ -256,16 +229,13 @@
                     Or, <texttt text="root"/> is a CPtr to a capability of the wrong type.
                 </description>
             </error>
-            <error name="seL4_IllegalOperation">
-                <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                </description>
-            </error>
+            <xi:include href="common_error_illegal_operation.xml" />
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> or <texttt text="untyped"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="untyped"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="untyped"/> is not the exact size of an ASID pool object.
                     Or, <texttt text="untyped"/> is a device untyped <docref>(see <autoref label="sec:kernmemalloc"/>)</docref>.
+                    <xi:include href="common_error_invalid_capability_append.xml" />
                 </description>
             </error>
             <error name="seL4_RangeError">
@@ -301,16 +271,13 @@
                     There are no more ASIDs available in <texttt text="_service"/>.
                 </description>
             </error>
-            <error name="seL4_IllegalOperation">
-                <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                </description>
-            </error>
+            <xi:include href="common_error_illegal_operation.xml" />
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> or <texttt text="vspace"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="vspace"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="vspace"/> is already assigned to an ASID pool.
                     Or, <texttt text="vspace"/> is mapped in a VSpace.
+                    <xi:include href="common_error_invalid_capability_append.xml" />
                 </description>
             </error>
         </method>
@@ -344,15 +311,11 @@
             </error>
             <error name="seL4_IllegalOperation">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                    Or, the platform does not support setting the IRQ trigger.
+                    The platform does not support setting the IRQ trigger.
+                    <xi:include href="common_error_illegal_operation_append.xml" />.
                 </description>
             </error>
-            <error name="seL4_InvalidCapability">
-                <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
-                </description>
-            </error>
+            <xi:include href="common_error_invalid_capability.xml" />
             <error name="seL4_RangeError">
                 <description>
                     The <texttt text="irq"/> is invalid.
