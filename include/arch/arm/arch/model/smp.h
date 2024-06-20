@@ -13,7 +13,11 @@
 #ifdef ENABLE_SMP_SUPPORT
 static inline cpu_id_t cpuIndexToID(word_t index)
 {
+#ifdef CONFIG_ARM_GIC_V3_SUPPORT
+    return index;
+#else
     return BIT(index);
+#endif
 }
 
 static inline bool_t try_arch_atomic_exchange_rlx(void *ptr, void *new_val, void **prev)

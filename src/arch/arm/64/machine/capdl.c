@@ -21,7 +21,7 @@ word_t get_tcb_sp(tcb_t *tcb)
 
 static void obj_frame_print_attrs(vm_page_size_t frameSize, paddr_t frameBase);
 static void cap_frame_print_attrs_pt(pte_t *ptSlot);
-static void cap_frame_print_attrs_impl(word_t SH, word_t AP, word_t NXN);
+static void cap_frame_print_attrs_impl(word_t AttrIndx, word_t AP, word_t NXN);
 static void cap_frame_print_attrs_vptr(word_t vptr, cap_t vspace);
 
 static void _cap_frame_print_attrs_vptr(word_t vptr, vspace_root_t *vspaceRoot);
@@ -55,12 +55,12 @@ static void arm64_cap_pud_print_slots(void *pgdSlot_or_vspace, vptr_t vptr);
 /* use when only have access to pte of frames */
 static void cap_frame_print_attrs_pt(pte_t *ptSlot)
 {
-    cap_frame_print_attrs_impl(pte_pte_page_ptr_get_SH(ptSlot),
+    cap_frame_print_attrs_impl(pte_pte_page_ptr_get_AttrIndx(ptSlot),
                                pte_pte_page_ptr_get_AP(ptSlot),
                                pte_pte_page_ptr_get_UXN(ptSlot));
 }
 
-static void cap_frame_print_attrs_impl(word_t SH, word_t AP, word_t NXN)
+static void cap_frame_print_attrs_impl(word_t AttrIndx, word_t AP, word_t NXN)
 {
     printf("(");
 
@@ -96,8 +96,8 @@ static void cap_frame_print_attrs_impl(word_t SH, word_t AP, word_t NXN)
         printf("X");
     }
 
-    /* Only has effect if SMP enabled */
-    if (SH != SMP_TERNARY(SMP_SHARE, 0)) {
+    /* DEVICE_nGnRnE is the only attribute we use for uncached memory right now. */
+    if (AttrIndx == DEVICE_nGnRnE) {
         printf(", uncached");
     }
 
