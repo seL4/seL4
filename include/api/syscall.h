@@ -18,7 +18,6 @@
 
 #ifdef CONFIG_KERNEL_MCS
 #define MCS_DO_IF_BUDGET(_block) \
-    updateTimestamp(); \
     if (likely(checkBudgetRestart())) { \
         _block \
     }
