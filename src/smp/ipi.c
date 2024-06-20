@@ -146,13 +146,16 @@ void generic_ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
     }
 }
 
-#endif /* ENABLE_SMP_SUPPORT */
 #ifdef CONFIG_DEBUG_BUILD
 exception_t handle_SysDebugSendIPI(void)
 {
 #ifdef CONFIG_ARCH_ARM
     word_t target = getRegister(NODE_STATE(ksCurThread), capRegister);
     word_t irq = getRegister(NODE_STATE(ksCurThread), msgInfoRegister);
+    if (target > CONFIG_MAX_NUM_NODES) {
+        userError("SysDebugSendIPI: Invalid target, halting");
+        halt();
+    }
     if (irq > 15) {
         userError("SysDebugSendIPI: Invalid IRQ, not a SGI, halting");
         halt();
@@ -165,3 +168,5 @@ exception_t handle_SysDebugSendIPI(void)
 #endif  /* [not] CONFIG_ARCH_ARM */
 }
 #endif /* CONFIG_DEBUG_BUILD */
+
+#endif /* ENABLE_SMP_SUPPORT */

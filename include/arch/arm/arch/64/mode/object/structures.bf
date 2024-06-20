@@ -90,12 +90,12 @@ block vcpu_cap {
 #if CONFIG_MAX_NUM_NODES == 1
 
 block sgi_signal_cap {
-    padding        44
-    field capSGIIRQ         16
-    field capSGITarget      4
+    padding                 32
+    field capSGITarget      32
 
-    field capType  5
-    padding        59
+    field capType           5
+    field capSGIIRQ         4
+    padding                 55
 }
 
 #endif

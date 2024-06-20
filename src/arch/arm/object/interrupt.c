@@ -24,7 +24,7 @@ static exception_t Arch_invokeIRQControl(irq_t irq, cte_t *handlerSlot, cte_t *c
 static exception_t Arch_invokeIssueSGISignal(word_t irq, word_t target, cte_t *sgiSlot, cte_t *controlSlot)
 {
 
-    cteInsert(cap_sgi_signal_cap_new(irq, target), controlSlot, sgiSlot);
+    cteInsert(cap_sgi_signal_cap_new(target, irq), controlSlot, sgiSlot);
 
     return EXCEPTION_NONE;
 }
@@ -112,10 +112,8 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        if (target >= GIC_SGI_TARGET_MASK_BITS) {
-            current_syscall_error.type = seL4_RangeError;
-            current_syscall_error.rangeErrorMin = 0;
-            current_syscall_error.rangeErrorMax = GIC_SGI_TARGET_MASK_BITS - 1;
+        if (!(plat_SGITargetValid(target))) {
+            current_syscall_error.type = seL4_InvalidArgument;
             userError("IRQControl: IssueSGISignal: Invalid SGI Target 0x%lx.", target);
             return EXCEPTION_SYSCALL_ERROR;
         }
@@ -201,7 +199,7 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
 
 static exception_t invokeSGISignalGenerate(word_t irq, word_t target)
 {
-    ipi_send_target(CORE_IRQ_TO_IRQT(0, irq), BIT(target));
+    plat_sendSGI(irq, target);
     return EXCEPTION_NONE;
 }
 

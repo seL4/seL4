@@ -28,6 +28,9 @@
 
 #define ICC_SGI1R_INTID_SHIFT          (24)
 #define ICC_SGI1R_AFF1_SHIFT           (16)
+#define ICC_SGI1R_AFF2_SHIFT           (32)
+#define ICC_SGI1R_AFF3_SHIFT           (48)
+#define ICC_SGI1R_RS_SHIFT             (44)
 #define ICC_SGI1R_IRM_BIT              (40)
 #define ICC_SGI1R_CPUTARGETLIST_MASK   0xffff
 
@@ -72,6 +75,15 @@ static inline uint64_t mpidr_to_gic_affinity(void)
     affinity = (uint64_t)MPIDR_AFF3(mpidr) << 32 | MPIDR_AFF2(mpidr) << 16 |
                MPIDR_AFF1(mpidr) << 8  | MPIDR_AFF0(mpidr);
     return affinity;
+}
+
+static inline uint64_t sgir_word_from_args(word_t irq, word_t target) {
+    return irq << ICC_SGI1R_INTID_SHIFT
+            | (1llu << (target & 0xf)) // AFF0 base
+            | (target & 0xf0) << (ICC_SGI1R_RS_SHIFT - 4) // AFF0 Range select
+            | (target & 0xff00) << (ICC_SGI1R_AFF1_SHIFT - 8) // AFF1
+            | (target & 0xff0000) << (ICC_SGI1R_AFF2_SHIFT - 16) // AFF2
+            | (target & 0xff000000) << (ICC_SGI1R_AFF2_SHIFT - 24); // AFF3
 }
 
 /* Wait for completion of a distributor change */
@@ -342,16 +354,47 @@ BOOT_CODE void cpu_initLocalIRQController(void)
     cpu_iface_init();
 }
 
-void ipi_send_target(irq_t irq, word_t cpuTargetList)
-{
-    uint64_t sgi1r_base = ((word_t) IRQT_TO_IRQ(irq)) << ICC_SGI1R_INTID_SHIFT;
+bool_t plat_SGITargetValid(word_t target) {
+    return true;
+}
 
-    SYSTEM_WRITE_64(ICC_SGI1R_EL1, sgi1r_base | cpuTargetList);
+void plat_sendSGI(word_t irq, word_t target) {
+    uint64_t sgi1r_base = sgir_word_from_args(irq, target);
+    SYSTEM_WRITE_64(ICC_SGI1R_EL1, sgi1r_base);
     isb();
 }
+
 #ifdef ENABLE_SMP_SUPPORT
 #define MPIDR_MT(x)   (x & BIT(24))
 
+void ipi_send_target(irq_t irq, word_t cpuTargetList)
+{
+    uint64_t sgi1r_base = ((word_t) IRQT_TO_IRQ(irq)) << ICC_SGI1R_INTID_SHIFT;
+    word_t sgi1r[CONFIG_MAX_NUM_NODES];
+    word_t last_aff1 = 0;
+
+    for (word_t i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
+        sgi1r[i] = 0;
+        if (cpuTargetList & BIT(i)) {
+            word_t mpidr = mpidr_map[i];
+            word_t aff1 = MPIDR_AFF1(mpidr);
+            word_t aff0 = MPIDR_AFF0(mpidr);
+            // AFF1 is assumed to be contiguous and less than CONFIG_MAX_NUM_NODES.
+            // The targets are grouped by AFF1.
+            assert(aff1 >= 0 && aff1 < CONFIG_MAX_NUM_NODES);
+            sgi1r[aff1] |= sgi1r_base | (aff1 << ICC_SGI1R_AFF1_SHIFT) | (1 << aff0);
+            if (aff1 > last_aff1) {
+                last_aff1 = aff1;
+            }
+        }
+    }
+    for (word_t i = 0; i <= last_aff1; i++) {
+        if (sgi1r[i] != 0) {
+            SYSTEM_WRITE_64(ICC_SGI1R_EL1, sgi1r[i]);
+        }
+    }
+    isb();
+}
 
 void setIRQTarget(irq_t irq, seL4_Word target)
 {
