@@ -55,7 +55,7 @@ Upcoming release: BREAKING
   compliant.
 * Remove imx31/kzm platform support. This platform is being removed as it is sufficiently old and unused.
 * Remove ARM1136JF_S and ARMv6 support. This architecture version is being removed as it is sufficiently old and
-  unused. See [RFC-8](https://sel4.atlassian.net/browse/RFC-8).
+  unused. See [RFC-8](https://sel4.github.io/rfcs/implemented/0080-remove-armv6-support.html).
 * Remove ARMv6 specific configs: KernelGlobalsFrame and KernelDangerousCodeInjectionOnUndefInstr. This removes the
   constant seL4_GlobalsFrame from libsel4 as well as the IPC buffer in GlobalsFrame caveat from CAVEATS-generic.md
 * Implement KernelArmExportPTMRUser and KernelArmExportVTMRUser options for Arm generic timer use access on aarch32.
@@ -68,7 +68,8 @@ Upcoming release: BREAKING
 * Remove the ability for user-space on RISC-V platforms to access the core-local interrupt controller (CLINT). The
   CLINT contains memory-mapped registers that the kernel depends on for timer interrupts and hence should not be
   accessible by user-space.
-* AArch64: remove VSpace object types, seL4_ARM_PageDirectory and seL4_ARM_PageUpperDirectory
+* AArch64: remove VSpace object types, seL4_ARM_PageDirectory and seL4_ARM_PageUpperDirectory.
+  See also the corresponding [RFC](https://sel4.github.io/rfcs/implemented/0100-refactor-aarch64-vspace.html)
   The functionality previously provided by these types will be provided by the existing seL4_ARM_PageTable object type.
   This allows for a simpler API and enables a smaller kernel implementation that will be easier to verify.
   libsel4 provides a source compatibility translation that maps the old libsel4 names and constants the new ones in
@@ -82,7 +83,7 @@ Upcoming release: BREAKING
   and whether the M-mode firmware allows S-mode to access the CLINT. For example, newer versions of OpenSBI (1.0 and above)
   do not allow direct access of the CLINT.
 * Added SMC Capability (smc_cap) and SMC forwarding for aarch64 platforms. See
-  [RFC-9](https://sel4.atlassian.net/browse/RFC-9).
+  [RFC-9](https://sel4.github.io/rfcs/implemented/0090-smc-cap.html).
 * Arm+Hyp: Enabled access to seL4_VCPUReg_VMPIDR and seL4_VCPUReg_VMPIDR_EL2 for all hyp configurations.
   Previously this register was only accessible for SMP kernel configurations. Non-SMP configurations can still require
   access when wanting to control the value of MPIDR that the guest reads.
