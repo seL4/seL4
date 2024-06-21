@@ -153,7 +153,7 @@ static inline bool_t PURE isSchedulable(const tcb_t *thread)
 {
     return isRunnable(thread) &&
            thread->tcbSchedContext != NULL &&
-           thread->tcbSchedContext->scRefillMax > 0 &&
+           sc_active(thread->tcbSchedContext) &&
            !thread_state_get_tcbInReleaseQueue(thread->tcbState);
 }
 #else
