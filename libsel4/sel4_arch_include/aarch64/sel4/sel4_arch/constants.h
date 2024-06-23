@@ -60,6 +60,7 @@ typedef enum {
 
 typedef enum {
     seL4_VPPIEvent_IRQ,
+    seL4_VPPIEvent_Length,
     SEL4_FORCE_LONG_ENUM(seL4_VPPIEvent_Msg),
 } seL4_VPPIEvent_Msg;
 
