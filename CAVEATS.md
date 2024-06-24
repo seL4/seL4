@@ -17,10 +17,10 @@ shows that the seL4 C code implements the abstract API specification of seL4,
 and that this specification satisfies the following high-level security
 properties:
 
-  * integrity (no write without authority),
-  * confidentiality (no read without authority), and
-  * intransitive non-interference (isolation between adequately
-    configured user-level components).
+- integrity (no write without authority),
+- confidentiality (no read without authority), and
+- intransitive non-interference (isolation between adequately
+  configured user-level components).
 
 The security property proofs depend on additional assumptions on the correct
 configuration of the system. See the `l4v` repository on github for more
@@ -63,3 +63,22 @@ the page cap c will still retain some authority in the new page directory,
 even though the user intention might be to run the new page directory under a
 new security context. The authority retained is to perform the unmap operation
 on the page the cap c refers to.
+
+## Intel VT-d (I/O MMU) support
+
+Intel VT-d support in seL4 was tested for the following chipsets:
+
+- Intel Q35 Express
+- Intel 5500
+
+On other chipsets with Intel VT-d support, seL4 might:
+
+- complain and disable IOMMU support
+- hang during bootstrapping
+- have some weird behaviour during runtime
+
+In any of these cases, the workaround is to disable VT-d support, either:
+
+- in the BIOS, or
+- by including `disable_iommu` into the MultiBoot (e.g. GRUB) command line
+  as described in the seL4 documentation
