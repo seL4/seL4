@@ -43,7 +43,7 @@ Further information about [seL4 releases](https://docs.sel4.systems/sel4_release
     code. Guest VMs generally do not have sufficient authority to exploit this vulnerability.
   * Severity: Critical. This crashes the entire system.
 
-#### Other Changes
+#### Platforms
 
 * Added support for the ARM Cortex A55
 * Added support for the ODroid C4
@@ -51,26 +51,35 @@ Further information about [seL4 releases](https://docs.sel4.systems/sel4_release
 * Added support for arm_hyp on qemu-arm-virt platfrom with cortex-a15 CPU
 * Added support for qemu-riscv-virt
 * Added support for the Pine64 Star64
-* Rename libsel4 config option ENABLE_SMP_SUPPORT to CONFIG_ENABLE_SMP_SUPPORT to be namespace compliant.
-* Rename libsel4 config option AARCH64_VSPACE_S2_START_L1 to CONFIG_AARCH64_VSPACE_S2_START_L1 to be namespace
-  compliant.
 * Remove imx31/kzm platform support. This platform is being removed as it is sufficiently old and unused.
 * Remove ARM1136JF_S and ARMv6 support. This architecture version is being removed as it is sufficiently old and
   unused. See [RFC-8](https://sel4.github.io/rfcs/implemented/0080-remove-armv6-support.html).
 * Remove ARMv6 specific configs: KernelGlobalsFrame and KernelDangerousCodeInjectionOnUndefInstr. This removes the
   constant seL4_GlobalsFrame from libsel4 as well as the IPC buffer in GlobalsFrame caveat from CAVEATS-generic.md
+
+#### Arm
+
+* Arm+Hyp: Enabled access to seL4_VCPUReg_VMPIDR and seL4_VCPUReg_VMPIDR_EL2 for all hyp configurations.
+  Previously this register was only accessible for SMP kernel configurations. Non-SMP configurations can still require
+  access when wanting to control the value of MPIDR that the guest reads.
+  Note that the initial value for new seL4_ARM_VCPUs for this register is 0 which isn't a legal value for MPIDR_EL1 on
+  AArch64. It may be necessary for the register to be explicitly initialized by user level before launching a thread
+  associated with the new seL4_ARM_VCPU.
+
+##### AArch32
+
 * Implement KernelArmExportPTMRUser and KernelArmExportVTMRUser options for Arm generic timer use access on aarch32.
-* Removed obsolete define `HAVE_AUTOCONF`
-* Removed user address space reserved slots restriction on 40bit PA platforms when KernelArmHypervisorSupport is set.
-  This change is reflected in the definition of the seL4_UserTop constant that holds the largest user virtual address.
 * aarch32 VM fault messages now deliver original (untranslated) faulting IP in a hypervisor context, matching
   aarch64 behaviour.
-* Correct the minimum size of a scheduling context. This changes the value of `seL4_MinSchedContextBits`.
-* Remove the ability for user-space on RISC-V platforms to access the core-local interrupt controller (CLINT). The
-  CLINT contains memory-mapped registers that the kernel depends on for timer interrupts and hence should not be
-  accessible by user-space.
+
+##### AArch64
+
+* Rename libsel4 config option AARCH64_VSPACE_S2_START_L1 to CONFIG_AARCH64_VSPACE_S2_START_L1 to be namespace
+  compliant.
+* Added SMC Capability (smc_cap) and SMC forwarding for aarch64 platforms. See
+  [RFC-9](https://sel4.github.io/rfcs/implemented/0090-smc-cap.html).
 * AArch64: remove VSpace object types, seL4_ARM_PageDirectory and seL4_ARM_PageUpperDirectory.
-  See also the corresponding [RFC](https://sel4.github.io/rfcs/implemented/0100-refactor-aarch64-vspace.html)
+  See also the corresponding [RFC](https://sel4.github.io/rfcs/implemented/0100-refactor-aarch64-vspace.html).
   The functionality previously provided by these types will be provided by the existing seL4_ARM_PageTable object type.
   This allows for a simpler API and enables a smaller kernel implementation that will be easier to verify.
   libsel4 provides a source compatibility translation that maps the old libsel4 names and constants the new ones in
@@ -79,18 +88,24 @@ Further information about [seL4 releases](https://docs.sel4.systems/sel4_release
     If the lookup for the provided address stops at a slot that can map a page directory, it will map the object as a
     page directory. If there already is a page directory mapped, the lookup will proceed to the next level and it will
     map as a page table instead of returning an error.
+* Removed user address space reserved slots restriction on 40bit PA platforms when KernelArmHypervisorSupport is set.
+  This change is reflected in the definition of the seL4_UserTop constant that holds the largest user virtual address.
+
+#### RISC-V
+
+* Remove the ability for user-space on RISC-V platforms to access the core-local interrupt controller (CLINT). The
+  CLINT contains memory-mapped registers that the kernel depends on for timer interrupts and hence should not be
+  accessible by user-space.
 * Add configuration option `KernelRiscvUseClintMtime` for faster access of hardware timestamp on RISC-V platforms.
   The configuration option is not enabled by default as it requires access to the CLINT which depends on the platform
   and whether the M-mode firmware allows S-mode to access the CLINT. For example, newer versions of OpenSBI (1.0 and above)
   do not allow direct access of the CLINT.
-* Added SMC Capability (smc_cap) and SMC forwarding for aarch64 platforms. See
-  [RFC-9](https://sel4.github.io/rfcs/implemented/0090-smc-cap.html).
-* Arm+Hyp: Enabled access to seL4_VCPUReg_VMPIDR and seL4_VCPUReg_VMPIDR_EL2 for all hyp configurations.
-  Previously this register was only accessible for SMP kernel configurations. Non-SMP configurations can still require
-  access when wanting to control the value of MPIDR that the guest reads.
-  Note that the initial value for new seL4_ARM_VCPUs for this register is 0 which isn't a legal value for MPIDR_EL1 on
-  AArch64. It may be necessary for the register to be explicitly initialized by user level before launching a thread
-  associated with the new seL4_ARM_VCPU.
+
+#### Other Changes
+
+* Correct the minimum size of a scheduling context. This changes the value of `seL4_MinSchedContextBits`.
+* Rename libsel4 config option ENABLE_SMP_SUPPORT to CONFIG_ENABLE_SMP_SUPPORT to be namespace compliant.
+* Removed obsolete define `HAVE_AUTOCONF`
 
 ### Upgrade Notes
 
