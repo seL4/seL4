@@ -46,11 +46,14 @@ Further information about [seL4 releases](https://docs.sel4.systems/sel4_release
 #### Platforms
 
 * Added support for the ARM Cortex A55
+* Added support for the imx8mp-evk platform
+* Added support for additional RPI4 variants
 * Added support for the ODroid C4
 * Added support for the Avnet MaaXBoard
 * Added support for arm_hyp on qemu-arm-virt platfrom with cortex-a15 CPU
 * Added support for qemu-riscv-virt
 * Added support for the Pine64 Star64
+* Added support for the TQMa8XQP 1GiB module
 * Remove imx31/kzm platform support. This platform is being removed as it is sufficiently old and unused.
 * Remove ARM1136JF_S and ARMv6 support. This architecture version is being removed as it is sufficiently old and
   unused. See [RFC-8](https://sel4.github.io/rfcs/implemented/0080-remove-armv6-support.html).
@@ -89,6 +92,7 @@ Further information about [seL4 releases](https://docs.sel4.systems/sel4_release
     map as a page table instead of returning an error.
 * Removed user address space reserved slots restriction on 40bit PA platforms when KernelArmHypervisorSupport is set.
   This change is reflected in the definition of the seL4_UserTop constant that holds the largest user virtual address.
+* Added support for GICv3 virtualization, tested on iMX8QXP
 
 #### RISC-V
 
