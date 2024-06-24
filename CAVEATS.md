@@ -102,7 +102,13 @@ verified.
 
 The combination of SMP and MCS is supported and is receiving active development,
 but it is less explored and less tested. It should still be considered
-experimental.
+experimental. There are no supported Armv7-a boards for SMP+MCS, only Armv8-a,
+RISC-V, and Intel. It is tested with `gcc` on `hifive`, `tqma8xqp1gb`,
+`odroidc4`, `zynqmp`, `tx1`, `tx2`, `pc99-32`, and `pc99-64`.
+
+The combination of SMP, MCS, and hypervisor extensions is currently supported on
+AArch64 only. It is less tested with lower code coverage; currently with `gcc`
+only, on `odroidc4`, `tx1`, and `tx2`.
 
 The combination of SMP and domain scheduler is not supported. The SMP
 configuration is not expected to satisfy strong intransitive non-interference
