@@ -43,8 +43,8 @@
 #define IRQ_IS_PPI(_irq) (HW_IRQ_IS_PPI(_irq.irq))
 #define CORE_IRQ_TO_IRQT(tgt, _irq) ((irq_t){.irq = (_irq), .target_core = (tgt)})
 #define IRQT_TO_IDX(_irq) (HW_IRQ_IS_PPI(_irq.irq) ? \
-                                 (irq.target_core)*NUM_PPI + (_irq.irq) : \
-                                 (CONFIG_MAX_NUM_NODES-1)*NUM_PPI + (_irq.irq))
+                                 (_irq.target_core) * NUM_PPI + (_irq.irq) : \
+                                 (CONFIG_MAX_NUM_NODES - 1) * NUM_PPI + (_irq.irq))
 
 #define IDX_TO_IRQT(idx) (((idx) < NUM_PPI*CONFIG_MAX_NUM_NODES) ? \
                         CORE_IRQ_TO_IRQT((idx) / NUM_PPI, (idx) - ((idx)/NUM_PPI)*NUM_PPI): \
