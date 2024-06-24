@@ -8,34 +8,64 @@
 
 ## Implementation Correctness
 
-Only the ARMv7 version on the imx6 platform of seL4 has the full stack of
-correctness proofs. This proof covers the functional behaviour of the C code of
-the kernel. It does not cover machine code, compiler, linker, boot code, cache
-and TLB management. Compiler and linker can be removed from this list by
-additionally running the binary verification tool chain for seL4. The proof
-shows that the seL4 C code implements the abstract API specification of seL4,
-and that this specification satisfies the following high-level security
-properties:
+The following seL4 architectures have platforms with a C-level functional
+correctness proof. Proof support for further platforms within these
+architectures is on the roadmap and expected in 2025.
+
+- AArch32: Armv7-a with and without hypervisor extensions, no SMMU, with
+  fast path
+  - Platforms (non-hyp): `sabre` (no FPU), `imx8mm-evk` (with FPU)
+  - Platforms (hyp, no FPU): `tk1`, `exynos5`
+- AArch64: Armv8-a with hypervisor extensions only, no SMMU, with fast path
+  - Platforms: `tx2`
+- RISC-V: 64-bit only, no fast path
+  - Platforms: `hifive`
+- x64: without VT-x and VT-d, no fast path
+  - Platforms: `pc99`
+
+This proof covers the functional behaviour of the C code of the kernel. It does
+not cover machine code, compiler, linker, boot code, cache and TLB management.
+Compiler and linker can be removed from this list by additionally running the
+binary verification tool chain for seL4 for AArch32 or RISC-V. The proof shows
+that the seL4 C code implements the formal [abstract API specification][ASpec]
+of seL4 and is free from standard C implementation defects such as buffer
+overruns or NULL pointer dereferences.
+
+For AArch32 without hypervisor extensions and without FPU, and for RISC-V, there
+are additional proofs that this specification satisfies the following high-level
+security properties:
 
 - integrity (no write without authority),
 - confidentiality (no read without authority), and
-- intransitive non-interference (isolation between adequately
-  configured user-level components).
+- intransitive non-interference (isolation, modulo timing channels, between
+  adequately configured user-level components).
 
 The security property proofs depend on additional assumptions on the correct
-configuration of the system. See the `l4v` repository on github for more
+configuration of the system. See the [l4v] repository on GitHub for more
 details.
 
-The x64 port of the kernel without VT-x and VT-d support has a functional
-correctness proof between abstract specification and C code, but without
-security theorems, and the ARMv7 version of the kernel with hypervisor
-extensions also has a functional correctness proofs, but without the security
-theorems. For the precise configuration of these three verified platforms, see
-the corresponding files in the `config/` directory.
+Similar proofs for AArch64 with hypervisor extensions are in progress.
 
-Proofs for the MCS version (mixed-criticality systems) and for seL4 on the
-RISC-V architecture are in progress.
+For AArch32, there additionally exist proofs for correct user-level system
+initialisation. See the [l4v] repository for details.
 
+Note that seL4 currently performs lazy FPU and VCPU switching, which can
+introduce information flow timing channels. An API-change proposal ([RFC]) to
+improve this behaviour is currently in progress.
+
+## Verified Configurations
+
+For the precise configuration of the verified platforms above, see the
+corresponding files in the seL4 `configs/` directory.
+
+The proofs are generally sensitive to changes in configuration parameters, and
+will break if these are changed. For some parameters, the proofs are explicitly
+set up to be robust, such as the number of domains `NUM_DOMAINS`, and the domain
+schedule. More such parameters are on the roadmap to be added and documented
+here.
+
+If in doubt, edit the corresponding `_verified` config files and re-run the
+proofs as specified in the [l4v] repository.
 
 ## Real Time
 
@@ -45,10 +75,59 @@ operations that are not preemptible (e.g., endpoint deletion, certain
 scheduling states, frame and CNode initialisation). These can (and must) be
 avoided by careful system configuration if low latency is required.
 
-The MCS configuration of the kernel addresses many of these problems and
-provides principled access control for execution time, but its formal
-verification is currently still in progress.
+## MCS
 
+The MCS configuration of the kernel addresses many of these real-time problems
+and provides principled access control for execution time, but its formal
+verification is currently still in progress. For RISC-V, design-level proofs
+have completed, and C-level proofs are in progress. Similar proofs for AArch64
+are planned.
+
+The MCS configuration is supported by the seL4 foundation and should generally
+be stable, with small API changes to be expected while verification is ongoing
+and the configuration is used in more systems. See open [requests for
+comments][RFC] (RFCs) for MCS for what is currently being discussed.
+
+## SMP
+
+A symmetric multi-processor (SMP) configuration for seL4 exists and is supported
+by the seL4 foundation, but currently without formal verification. While
+generally stable, there are a small number of known open issues, in particular
+when the kernel is compiled with `clang`. We recommend `gcc` for working with
+SMP configurations of seL4.
+
+The combination of SMP and hypervisor extensions is supported and should be
+generally stable, but like the plain SMP configuration it is not formally
+verified.
+
+The combination of SMP and MCS is supported and is receiving active development,
+but it is less explored and less tested. It should still be considered
+experimental.
+
+The combination of SMP and domain scheduler is not supported. The SMP
+configuration is not expected to satisfy strong intransitive non-interference
+for information flow.
+
+See the [seL4 issue tracker][issues] and the [sel4test issue tracker][sel4test
+issues] for details using the labels `MCS` and `SMP` for finding issues on these
+configurations.
+
+As these are unverified configurations, standard C implementation defects are
+possible and not excluded as in verified seL4 configurations.
+
+Supporting a static multi-kernel configuration with formal verification is on
+the roadmap for the AArch64 architecture, with initial work begun. We expect
+multi-kernel configurations to be more robust than SMP configurations, because
+they are simpler and closer to the current sequential seL4 proofs.
+
+In a multi-kernel configuration, each CPU core runs a separate instance of seL4,
+with each kernel instance getting access to disjoint subsets of memory of the
+machine. User-level memory can be shared as device-untyped memory, which the
+kernel manages but does not access. These configurations can already be set up
+without kernel changes by providing suitable device tree overlays to each kernel
+instance. Further work is planned to make such configurations easier to use and
+more robust against unsafe use/configurations, e.g. by managing IRQ controller
+access for each instance.
 
 ## Re-using Address Spaces
 
@@ -56,13 +135,13 @@ Before an ASID/page directory/page table can be reused, all frame caps
 installed in it should be revoked. The kernel will not do this automatically
 for the user.
 
-If, for instance, page cap c is installed in the address space denoted by a
-page directory under ASID A, and the page directory is subsequently revoked or
-deleted, and then a new page directory is installed under that same ASID A,
-the page cap c will still retain some authority in the new page directory,
+If, for instance, page cap `c` is installed in the address space denoted by a
+page directory under ASID `A`, and the page directory is subsequently revoked or
+deleted, and then a new page directory is installed under that same ASID `A`,
+the page cap `c` will still retain some authority in the new page directory,
 even though the user intention might be to run the new page directory under a
 new security context. The authority retained is to perform the unmap operation
-on the page the cap c refers to.
+on the page the cap `c` refers to.
 
 ## Intel VT-d (I/O MMU) support
 
@@ -82,3 +161,9 @@ In any of these cases, the workaround is to disable VT-d support, either:
 - in the BIOS, or
 - by including `disable_iommu` into the MultiBoot (e.g. GRUB) command line
   as described in the seL4 documentation
+
+[l4v]: https://github.com/seL4/l4v
+[RFC]: https://github.com/seL4/rfcs
+[issues]: https://github.com/seL4/seL4/issues/
+[sel4test issues]: https://github.com/seL4/sel4test/issues/
+[ASpec]: https://github.com/seL4/l4v/blob/master/spec/abstract
