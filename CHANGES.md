@@ -54,36 +54,35 @@ Further information about [seL4 releases](https://docs.sel4.systems/sel4_release
 * Remove imx31/kzm platform support. This platform is being removed as it is sufficiently old and unused.
 * Remove ARM1136JF_S and ARMv6 support. This architecture version is being removed as it is sufficiently old and
   unused. See [RFC-8](https://sel4.github.io/rfcs/implemented/0080-remove-armv6-support.html).
-* Remove ARMv6 specific configs: KernelGlobalsFrame and KernelDangerousCodeInjectionOnUndefInstr. This removes the
-  constant seL4_GlobalsFrame from libsel4 as well as the IPC buffer in GlobalsFrame caveat from CAVEATS-generic.md
+* Remove ARMv6 specific configs: `KernelGlobalsFrame` and `KernelDangerousCodeInjectionOnUndefInstr`. This removes the
+  constant `seL4_GlobalsFrame` from libsel4 as well as the IPC buffer in GlobalsFrame caveat from CAVEATS.md
 
 #### Arm
 
-* Arm+Hyp: Enabled access to seL4_VCPUReg_VMPIDR and seL4_VCPUReg_VMPIDR_EL2 for all hyp configurations.
-  Previously this register was only accessible for SMP kernel configurations. Non-SMP configurations can still require
-  access when wanting to control the value of MPIDR that the guest reads.
-  Note that the initial value for new seL4_ARM_VCPUs for this register is 0 which isn't a legal value for MPIDR_EL1 on
-  AArch64. It may be necessary for the register to be explicitly initialized by user level before launching a thread
-  associated with the new seL4_ARM_VCPU.
+* Arm+Hyp: Enabled access to `seL4_VCPUReg_VMPIDR` and `seL4_VCPUReg_VMPIDR_EL2` for all hyp configurations. Previously
+  this register was only accessible for SMP kernel configurations. Non-SMP configurations can still require access when
+  wanting to control the value of `MPIDR` that the guest reads. Note that the initial value for new seL4_ARM_VCPUs for
+  this register is 0 which isn't a legal value for `MPIDR_EL1` on AArch64. It may be necessary for the register to be
+  explicitly initialized by user level before launching a thread associated with the new seL4_ARM_VCPU.
 
 ##### AArch32
 
-* Implement KernelArmExportPTMRUser and KernelArmExportVTMRUser options for Arm generic timer use access on aarch32.
-* aarch32 VM fault messages now deliver original (untranslated) faulting IP in a hypervisor context, matching
-  aarch64 behaviour.
+* Implement `KernelArmExportPTMRUser` and `KernelArmExportVTMRUser` options for Arm generic timer use access on AArch32.
+* AArch32 VM fault messages now deliver original (untranslated) faulting IP in a hypervisor context, matching
+  AArch64 behaviour.
 
 ##### AArch64
 
-* Rename libsel4 config option AARCH64_VSPACE_S2_START_L1 to CONFIG_AARCH64_VSPACE_S2_START_L1 to be namespace
+* Rename libsel4 config option `AARCH64_VSPACE_S2_START_L1` to `CONFIG_AARCH64_VSPACE_S2_START_L1` to be namespace
   compliant.
-* Added SMC Capability (smc_cap) and SMC forwarding for aarch64 platforms. See
+* Added SMC Capability (`smc_cap`) and SMC forwarding for AArch64 platforms. See
   [RFC-9](https://sel4.github.io/rfcs/implemented/0090-smc-cap.html).
-* AArch64: remove VSpace object types, seL4_ARM_PageDirectory and seL4_ARM_PageUpperDirectory.
-  See also the corresponding [RFC](https://sel4.github.io/rfcs/implemented/0100-refactor-aarch64-vspace.html).
-  The functionality previously provided by these types will be provided by the existing seL4_ARM_PageTable object type.
-  This allows for a simpler API and enables a smaller kernel implementation that will be easier to verify.
-  libsel4 provides a source compatibility translation that maps the old libsel4 names and constants the new ones in
-  <sel4/sel4_arch/deprecated.h>. There are some exceptional cases where kernel behavior has changed:
+* Remove VSpace object types in AArch64: `seL4_ARM_PageDirectory` and `seL4_ARM_PageUpperDirectory`. See also the
+  corresponding [RFC](https://sel4.github.io/rfcs/implemented/0100-refactor-aarch64-vspace.html). The functionality
+  previously provided by these types will be provided by the existing `seL4_ARM_PageTable` object type. This allows for
+  a simpler API and enables a smaller kernel implementation that will be easier to verify. libsel4 provides a source
+  compatibility translation that maps the old libsel4 names and constants the new ones in
+  `<sel4/sel4_arch/deprecated.h>`. There are some exceptional cases where kernel behavior has changed:
   - A Page directory and page table are now the same kind of object and can be mapped at any page table level.
     If the lookup for the provided address stops at a slot that can map a page directory, it will map the object as a
     page directory. If there already is a page directory mapped, the lookup will proceed to the next level and it will
