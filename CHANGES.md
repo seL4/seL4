@@ -22,11 +22,12 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 Further information about [seL4 releases](https://docs.sel4.systems/sel4_release/) is available.
 
 ---
-Upcoming release: BREAKING
 
-## Changes
+## Upcoming release: BREAKING
 
-### Security-relevant Changes
+### Changes
+
+#### Security-relevant Changes
 
 * Fixed a kernel-crashing NULL pointer dereference when injecting an IRQ for a non-associated VCPU on SMP
   configurations. This can be triggered from user-level by any thread that has access to or can create non-associated
@@ -42,7 +43,7 @@ Upcoming release: BREAKING
     code. Guest VMs generally do not have sufficient authority to exploit this vulnerability.
   * Severity: Critical. This crashes the entire system.
 
-### Other Changes
+#### Other Changes
 
 * Added support for the ARM Cortex A55
 * Added support for the ODroid C4
@@ -91,7 +92,7 @@ Upcoming release: BREAKING
   AArch64. It may be necessary for the register to be explicitly initialized by user level before launching a thread
   associated with the new seL4_ARM_VCPU.
 
-## Upgrade Notes
+### Upgrade Notes
 
 * The change in `seL4_MinSchedContextBits` can lead to failure where code previously created
   scheduling contexts with size `seL4_MinSchedContextBits` and expected more than the 2 minimum
@@ -99,9 +100,10 @@ Upcoming release: BREAKING
   `seL4_MinSchedContextBits`) in retyping, or request fewer refills.
 
 ---
-12.1.0 2021-06-10: SOURCE COMPATIBLE
 
-## Changes
+## 12.1.0 2021-06-10: SOURCE COMPATIBLE
+
+### Changes
 
 * Moved kernel configuration header to libsel4.
 * Improved benchmarking:
@@ -142,7 +144,7 @@ Upcoming release: BREAKING
 * Added support for `PRIu64` and `SEL4_PRIu_word` in the kernel.
 * Changed various `printf` conversion specifiers to use `SEL4_PRIx_word` specifiers.
 
-### MCS
+#### MCS
 
 * Fixed a physical counter access issue on MCS on EL2.
 * Added MCS support for the ZynqMP.
@@ -165,7 +167,7 @@ Upcoming release: BREAKING
 * Fixed a dereference of a scheduling context after it's removed from the associated TCB.
 * Added MCS to the preprocess check.
 
-### x86
+#### x86
 
 * Removed a redundant de-reference for `seL4_X86DangerousRDMSR` in ia32.
 * Added a config option to set the frequency of the TSC.
@@ -173,7 +175,7 @@ Upcoming release: BREAKING
 * Removed the PT_PHDR segment from the linker script to work around an issue in a variant of syslinux that treats a
   PT_PHDR segment as distinct from a PT_LOAD segment.
 
-### Arm
+#### Arm
 
 * FPU ownership is now also given away on thread deletion instead of only on FPU exception.
 * Added basic build support for A35 core.
@@ -191,7 +193,7 @@ Upcoming release: BREAKING
 * Added support for the i.MX low-power UART.
 * Added an option to ignore SErrors which is enabled on default for the TX2.
 
-### RISC-V
+#### RISC-V
 
 * Added PLIC driver and updated the DTS for the Ariane.
 * Merged the PLIC drivers for the Ariane and the Hifive.
@@ -213,7 +215,7 @@ Upcoming release: BREAKING
 * Added support for `riscv64-elf-` toolchain.
 * Fixed a register bug in the assembly entry point for SMP with regards to the elfloader passing HART and core IDs.
 
-## Upgrade Notes
+### Upgrade Notes
 
 * Scheduling contexts can now be configured as constant-bandwidth or sporadic server.
   - Constant bandwidth observes a continuous constant bandwidth of budget/period.
@@ -227,8 +229,10 @@ Upcoming release: BREAKING
   since then. It is no longer used anywhere by now, so it can be removed.
 
 ---
-12.0.0 2020-10-30: BREAKING
-## Changes
+
+## 12.0.0 2020-10-30: BREAKING
+
+### Changes
 
 
 * Update licensing to reflect project transfer to seL4 Foundation. SPDX tags are now used to identify the licenses for
@@ -316,7 +320,7 @@ Upcoming release: BREAKING
   with a padding field that is a variable number of bytes depending on the platform.
 * Add GitHub actions scripts. These scripts replicate internal CI checks directly on GitHub
 
-### MCS
+#### MCS
 
 * Stop scheduling contexts from being bound to tcb's that already have scheduling contexts.
 * Fix x86 `KERNEL_TIMER_IRQ` definition. Previously, MCS preemption point handling would check the wrong interrupt on
@@ -331,14 +335,14 @@ Upcoming release: BREAKING
   or erroneous overflows of the scheduling math. Make the default max period/budget 1 hour.
 * rockpro64: enable mcs configurations
 
-### Arm
+#### Arm
 
 * arm: Add seL4_BenchmarkFlushL1Caches syscall to manually flush L1 caches in benchmark configurations.
 * New fault type when running in Arm hypervisor mode: seL4_Fault_VPPIEvent
-    - The kernel can keep track of IRQ state for each VCPU for a reduced set of PPI IRQs and deliver IRQ events as
-      VCPU faults for these interrupt numbers.
-    - Additionally a new VCPU invocation is introduced: seL4_ARM_VCPU_AckVPPI.
-      This is used to acknowledge a virtual PPI that was delivered as a fault.
+  - The kernel can keep track of IRQ state for each VCPU for a reduced set of PPI IRQs and deliver IRQ events as
+    VCPU faults for these interrupt numbers.
+  - Additionally a new VCPU invocation is introduced: seL4_ARM_VCPU_AckVPPI.
+    This is used to acknowledge a virtual PPI that was delivered as a fault.
 * Virtualise Arm Timer and VTimer interrupts to support sharing across VCPUs.
   - A VCPU will now save and restore VTimer registers for the generic timer and also deliver a VTimer IRQ via a
     seL4_Fault_VPPIEvent fault. This enables multiple VCPUs bound to the same physical core to share this device.
@@ -354,7 +358,7 @@ Upcoming release: BREAKING
   - Generate platform dtb based on KernelMaxNumNodes config value.
   - Reserve the first 512MiB of Ram as device untyped for use in virtualization configurations.
 
-#### Aarch32
+##### Aarch32
 
 * Moved TPIDRURO (PL0 Read-Only Thread ID register) to TCB register context from VCPU registers. This means
   changes to this register from user level have to go via seL4_TCB_Write Registers instead of seL4_ARM_VCPU_WriteRegs.
@@ -364,7 +368,7 @@ Upcoming release: BREAKING
 * arm_hyp: Move PGD definitions out of libsel4 as they don't correspond to any public interfaces and are only used
   internally by the kernel to manage its own address space.
 
-#### Aarch64
+##### Aarch64
 
 * aarch64: Fix a bug where saving ELR_EL1 when managing a VCPU object was reading from ELR_EL1 instead of writing to it.
 * aarch64: Fix a bug where saving FAR_EL1 when managing a VCPU object was only writing to the low 32 bits of the 64-bit
@@ -383,14 +387,14 @@ Upcoming release: BREAKING
   implementation supports using an SMMU to restrict memory access of VM guest pass-through devices, or for isolating
   devices and their drivers' memory accesses to the rest of a running system.
 
-### x86
+#### x86
 
 * Fix printf typo in `apic_init`.
 * x86_64: Fix PCID feature constant to use the correct bit.
 * Fix interrupt flag reset upon nested interrupt resume, `c_nested_interrupt`. This fixes an issue where ia32 kernels
   would crash if receiving a nested interrupt.
 
-### RISC-V
+#### RISC-V
 
 * Functional correctness of seL4/RISCV now formally verified at the C level.
 * Hifive: Enable seL4_IRQControl_GetTrigger object method. This method allocates an IRQ handler by ID and whether it is
@@ -416,10 +420,10 @@ Upcoming release: BREAKING
 * riscv32: Remove incorrectly provided constants for 512MiB 'huge pages' which is not part of the specification.
 * riscv: Lower .boot alignment to 4KiB. This makes the final kernel image more compact.
 
-## Upgrade Notes
+### Upgrade Notes
 
 * The project's licensing updates don't change the general licensing availability of the sources.
-  More information can be found: https://github.com/seL4/seL4/blob/master/LICENSE.md
+  More information can be found: <https://github.com/seL4/seL4/blob/master/LICENSE.md>
 * Any references to the padding1 or padding2 fields in seL4_UntypedDesc require updating to
   the new padding field. It is expected that these fields are unused.
 * Any platforms that have had changed kernel timer frequencies will see different scheduling
@@ -445,16 +449,16 @@ Upcoming release: BREAKING
   executing.
 
 ---
-11.0.0 2019-11-19: BREAKING
 
-## Changes
+## 11.0.0 2019-11-19: BREAKING
+
+### Changes
 
 * Add GrantReply access right for endpoint capabilities.
- - seL4_Call is permitted on endpoints with either the Grant or the GrantReply access rights.
- - Capabilities can only be transferred in a reply message if receiver's endpoint capability has the Grant right.
+  - seL4_Call is permitted on endpoints with either the Grant or the GrantReply access rights.
+  - Capabilities can only be transferred in a reply message if receiver's endpoint capability has the Grant right.
 * `seL4_CapRights_new` now takes 4 parameters
-* seL4_CapRightsBits added to libsel4. seL4_CapRightsBits is the number of bits
- to encode seL4_CapRights.
+* seL4_CapRightsBits added to libsel4. seL4_CapRightsBits is the number of bits to encode seL4_CapRights.
 * `seL4_UserTop` added
   - a new constant in libsel4 that contains the first virtual address unavailable to
     user level.
@@ -476,8 +480,8 @@ Upcoming release: BREAKING
 * Hifive board support and RISC-V external interrupt support via a PLIC driver.
 * Update seL4_FaultType size to 4bits.
 * Fix seL4_MappingFailedLookupLevel() for EPTs on x86.
-    - add SEL4_MAPING_LOOKUP_NO_[EPTPDPT, EPTPD, EPTPT] which now correspond to
-      the value returned by seL4_MappingFailedLookupLevel on X86 EPT mapping calls.
+  - add SEL4_MAPING_LOOKUP_NO_[EPTPDPT, EPTPD, EPTPT] which now correspond to
+    the value returned by seL4_MappingFailedLookupLevel on X86 EPT mapping calls.
 * BeagleBone Black renamed from am335x to am335x-boneblack.
 * Supported added for BeagleBone Blue (am335x-boneblue).
 * Remove IPC Buffer register in user space on all platforms
@@ -493,16 +497,16 @@ Upcoming release: BREAKING
 * Kernel log buffer: Specify on which core an IRQ was delivered.
 * Add new seL4_DebugSendIPI syscall to send arbitrary SGIs on ARM when SMP and DEBUG_BUILD are activated.
 * Support for aarch64-hyp configurations with 40-bit physical addresses (PA) added.
-    - The aarch64 api now refers to VSpaces rather than PageGlobalDirectories,
-      as depending on the PA the top level translation structure can change.
-    - all `seL4_ARM_PageGlobalDirectory` invocations are now `seL4_ARM_VSpace` invocations.
-    - new constants 'seL4_ARM_VSpaceObject` and `seL4_VSpaceIndexBits`.
+  - The aarch64 api now refers to VSpaces rather than PageGlobalDirectories,
+    as depending on the PA the top level translation structure can change.
+  - all `seL4_ARM_PageGlobalDirectory` invocations are now `seL4_ARM_VSpace` invocations.
+  - new constants 'seL4_ARM_VSpaceObject` and `seL4_VSpaceIndexBits`.
 * Merged MCS kernel feature.
   - this is not verified and is under active verification.
   - The goals of the MCS kernel is to provide strong temporal isolation and a basis for reasoning about time.
 * Moved aarch64 kernel window
-    - aarch64 kernel window is now placed at 0, meaning the kernel can access memory
-      below where the kernel image is mapped.
+  - aarch64 kernel window is now placed at 0, meaning the kernel can access memory
+    below where the kernel image is mapped.
 * aarch64: Moved TPIDRRO_EL0 (EL0 Read-Only Thread ID register) to TCB register context from VCPU registers. This means
   changes to this register from user level have to go via seL4_TCB_Write Registers instead of seL4_ARM_VCPU_WriteRegs.
 * Merge ARCH_Page_Remap functionality into ARCH_Page_Map. Remap was used for updating the mapping attributes of a page
@@ -510,9 +514,9 @@ Upcoming release: BREAKING
   result. The ARCH_Page_Remap invocation has been removed from all configurations.
 * riscv64: Experimental SMP support for RISCV64 on HiFive.
 * Support added for QEMU ARM virt platform, with 3 CPUs: cortex-a15, cortex-a53 and cortex-a57
-    - PLATFORM=qemu-arm-virt
-    - ARM_CPU={cortex-a15, cortex-a53, cortex-a57}
-    - QEMU_MEMORY=1024 (default)
+  - PLATFORM=qemu-arm-virt
+  - ARM_CPU={cortex-a15, cortex-a53, cortex-a57}
+  - QEMU_MEMORY=1024 (default)
 * Support added for rockpro64.
 * RISCV: Add support for Ariane SoC
 * Unify device untyped initialisation across x86, Arm and RISC-V
@@ -522,7 +526,7 @@ Upcoming release: BREAKING
   - Memory reserved for use by the kernel or other reserved regions are not accessible via any untypeds.
   - Devices used by the kernel are also not accessible via any untypeds.
 
-## Upgrade Notes
+### Upgrade Notes
 
 * Usages of Endpoints can now use seL4_Call without providing Grant rights by downgrading the Grant to GrantReply
 * The kernel no longer reserves a register for holding the address of a thread's IPC buffer. It is now expected that the
@@ -535,159 +539,175 @@ Upcoming release: BREAKING
   down for each device they refer to.
 
 ---
-10.1.1 2018-11-12: BINARY COMPATIBLE
 
-## Changes
- * Remove theoretical uninitialised variable use in infer_cpu_gic_id for binary translation validation
+## 10.1.1 2018-11-12: BINARY COMPATIBLE
 
-## Upgrade Notes
- * 10.1.0 has a known broken test in the proofs.  10.1.1 fixes this test.
+### Changes
 
----
-10.1.0 2018-11-07: SOURCE COMPATIBLE
+* Remove theoretical uninitialised variable use in infer_cpu_gic_id for binary translation validation
 
-## Changes
+### Upgrade Notes
 
- * structures in the boot info are not declared 'packed'
-    - these were previously packed (in the GCC attribute sense)
-    - some field lengths are tweaked to avoid padding
-    - this is a source-compatible change
- * ARM platforms can now set the trigger of an IRQ Handler capability
-     - seL4_IRQControl_GetTrigger allows users to obtain an IRQ Handler capability
-       and set the trigger (edge or level) in the interrupt controller.
- * Initial support for NVIDIA Jetson TX2 (ARMv8a, Cortex A57)
- * AARCH64 support added for raspberry pi 3 platform.
- * Code generation now use jinja2 instead of tempita.
- * AARCH32 HYP support added for running multiple ARM VMs
- * AARCH32 HYP VCPU registers updated.
- * A new invocation for setting TLSBase on all platforms.
-     - seL4_TCB_SetTLSBase
- * Kbuild/Kconfig/Makefile build system removed.
+* 10.1.0 has a known broken test in the proofs. 10.1.1 fixes this test.
 
 ---
-10.0.0 2018-05-28: BREAKING
 
-- Final version of the kernel  which supports integration with Kbuild based projects
-- Future versions, including this one, provide a CMake based build system
+## 10.1.0 2018-11-07: SOURCE COMPATIBLE
 
-For more information see https://docs.sel4.systems/Developing/Building.
+### Changes
 
-## Changes
-
- * x86 IO ports now have an explicit IOPortControl capability to gate their creation. IOPort capabilities  may now only
-   be created through the IOPortControl capability that is passed to the rootserver. Additionally IOPort capabilities
-   may not be derived to have smaller ranges and the IOPortControl will not issue overlapping IOPorts
- * 32-bit support added for the initial prototype RISC-V architecture port
-
-## Upgrade Notes
-
- * A rootserver must now create IOPort capabilities from the provided IOPortControl capability. As IOPorts can not
-   have their ranges further restricted after creation it must create capabilities with the final desired granularity,
-   remembering that since ranges cannot overlap you cannot issue a larger and smaller range that have any IO ports
-   in common.
-
----
-9.0.1 2018-04-18: BINARY COMPATIBLE
-
-## Changes
- * On 64-bit architectures, the `label` field of `seL4_MessageInfo` is now 52 bits wide. User-level programs
-   which use any of the following functions may break, if the program relies on these functions to mask the
-   `label` field to the previous width of 20 bits.
-     - `seL4_MessageInfo_new`
-     - `seL4_MessageInfo_get_label`
-     - `seL4_MessageInfo_set_label`
- * Initial prototype RISC-V architecture port. This port currently only supports running in 64-bit mode without FPU or
-   or multicore support on the Spike simulation platform. There is *no verification* for this platform.
-
-## Upgrade Notes
----
-9.0.0 2018-04-11: BREAKING
-
-= Changes =
- * Debugging option on x86 for syscall interface to read/write MSRs (this is an, equally dangerous, alternative to
-   dangerous code injection)
- * Mitigation for Meltdown (https://meltdownattack.com) on x86-64 implemented. Mitigation is via a form of kernel
-   page table isolation through the use of a Static Kernel Image with Microstate (SKIM) window that is used for
-   trapping to and from the kernel address space. This can be enabled/disabled through the build configuration
-   depending on whether you are running on vulnerable hardware or not.
- * Mitigation for Spectre (https://spectreattack.com) on x86 against the kernel implemented. Default is software
-   mitigation and is the best performing so users need to do nothing. This does *not* prevent user processes from
-   exploiting each other.
- * x86 configuration option for performing branch prediction barrier on context switch to prevent Spectre style
-   attacks between user processes using the indirect branch predictor
- * x86 configuration option for flushing the RSB on context switch to prevent Spectre style attacks between user
-   processes using the RSB
- * Define extended bootinfo header for the x86 TSC frequency
- * x86 TSC frequency exported in extended bootinfo header
- * `archInfo` is no longer a member of the bootinfo struct. Its only use was for TSC frequency on x86, which
-   can now be retrieved through the extended bootinfo
- * Invocations to set thread priority and maximum control priority (MCP) have changed.
-     - For both invocations, users must now provide a TCB capability `auth`
-     - The requested MCP/priority is checked against the MCP of the `auth` capability.
-     - Previous behavior checked against the invoked TCB, which could be subject to the confused deputy
-       problem.
- * seL4_TCB_Configure no longer takes prio, mcp as an argument. Instead these fields must be set separately
-   with seL4_TCB_SetPriority and seL4_TCB_SetMCPriority.
- * seL4_TCB_SetPriority and seL4_TCB_SetMCPriority now take seL4_Word instead of seL4_Uint8.
-       - seL4_MaxPrio remains at 255.
- * seL4_TCB_SetSchedParams is a new method where MCP and priority can be set in the same sytsem call.
- * Size of the TCB object is increased for some build configurations
-
-= Upgrade notes =
- * seL4_TCB_Configure calls that set priority should be changed to explicitly call seL4_TCB_SetSchedParams
-   or SetPriority
- * seL4_TCB_Configure calls that set MCP should be changed to explicitly call seL4_TCB_SetSchedParams
-   or seL4_TCB_SetMCPriority
+* structures in the boot info are not declared 'packed'
+  - these were previously packed (in the GCC attribute sense)
+  - some field lengths are tweaked to avoid padding
+  - this is a source-compatible change
+* ARM platforms can now set the trigger of an IRQ Handler capability
+  - seL4_IRQControl_GetTrigger allows users to obtain an IRQ Handler capability
+    and set the trigger (edge or level) in the interrupt controller.
+* Initial support for NVIDIA Jetson TX2 (ARMv8a, Cortex A57)
+* AARCH64 support added for raspberry pi 3 platform.
+* Code generation now use jinja2 instead of tempita.
+* AARCH32 HYP support added for running multiple ARM VMs
+* AARCH32 HYP VCPU registers updated.
+* A new invocation for setting TLSBase on all platforms.
+  - seL4_TCB_SetTLSBase
+* Kbuild/Kconfig/Makefile build system removed.
 
 ---
-8.0.0 2018-01-17
 
-= Changes =
- * Support for additional zynq platform Zynq UltraScale+ MPSoC (Xilinx ZCU102, ARMv8a, Cortex A53)
- * Support for multiboot2 bootloaders on x86 (contributed change from Genode Labs)
- * Deprecate seL4_CapData_t type and functions related to it
- * A fastpath improvement means that when there are two runnable threads and the target thread is the highest priority
-in the scheduler, the fastpath will be hit. Previously the fastpath would not be used on IPC from a high priority
-thread to a low priority thread.
- * As a consequence of the above change, scheduling behaviour has changed in the case where a non-blocking IPC is sent
-between two same priority threads: the sender will be scheduled, rather than the destination.
- * Benchmarking support for armv8/aarch64 is now available.
- * Additional x86 extra bootinfo type for retrieving frame buffer information from multiboot 2
- * Debugging option to export x86 Performance-Monitoring Counters to user level
+## 10.0.0 2018-05-28: BREAKING
 
-= Upgrade notes =
- * seL4_CapData_t should be replaced with just seL4_Word. Construction of badges should just be `x` instead of
-   `seL4_CapData_Badge_new(x)` and guards should be `seL4_CNode_CapData_new(x, y)` instead of
-   `seL4_CapData_Guard_new(x, y)`
- * Code that relied on non-blocking IPC to switch between threads of the same priority may break.
+* Final version of the kernel  which supports integration with Kbuild based projects
+* Future versions, including this one, provide a CMake based build system
 
----
-7.0.0 2017-09-05
+For more information see <https://docs.sel4.systems/Developing/Building>.
 
-= Changes =
- * Support for building standalone ia32 kernel added
- * ia32: Set sensible defaults for FS and GS selectors
- * aarch64: Use tpidrro_el0 for IPC buffer instead of tpidr_el0
- * More seL4 manual documentation added for aarch64 object invocations
- * Default NUM_DOMAINS set to 16 for x86-64 standalone builds
- * libsel4: Return seL4_Error in invocation stubs in 8fb06eecff9 ''' This is a source code level breaking change '''
- * Add a CMake based build system
- * x86: Increase TCB size for debug builds
- * libsel4: x86: Remove nested struct declarations ''' This is a source code level breaking change '''
- * Bugfix: x86: Unmap pages when delete non final frame caps
+### Changes
 
-= Upgrade notes =
- * This release is not source compatible with previous releases.
- * seL4 invocations that previously returned long now return seL4_Error which is an enum. Our libraries have already
-   been updated to reflect this change, but in other places where seL4 invocations are used directly, the return types
-   will need to be updated to reflect this change.
- * On x86 some structs in the Bootinfo have been rearranged. This only affects seL4_VBEModeInfoBlock_t which is used if
-   VESA BIOS Extensions (VBE) information is being used.
+* x86 IO ports now have an explicit IOPortControl capability to gate their creation. IOPort capabilities  may now only
+  be created through the IOPortControl capability that is passed to the rootserver. Additionally IOPort capabilities
+  may not be derived to have smaller ranges and the IOPortControl will not issue overlapping IOPorts
+* 32-bit support added for the initial prototype RISC-V architecture port
 
-= Known issues =
- * One of our tests is non-deterministicly becoming unresponsive on the SMP release build on the Sabre IMX.6 platform,
-   which is a non verified configuration of the kernel.  We are working on fixing this problem, and will likely do a
-   point release once it is fixed.
+### Upgrade Notes
+
+* A rootserver must now create IOPort capabilities from the provided IOPortControl capability. As IOPorts can not
+  have their ranges further restricted after creation it must create capabilities with the final desired granularity,
+  remembering that since ranges cannot overlap you cannot issue a larger and smaller range that have any IO ports
+  in common.
 
 ---
-For previous releases see https://docs.sel4.systems/sel4_release/
+
+## 9.0.1 2018-04-18: BINARY COMPATIBLE
+
+### Changes
+
+* On 64-bit architectures, the `label` field of `seL4_MessageInfo` is now 52 bits wide. User-level programs
+  which use any of the following functions may break, if the program relies on these functions to mask the
+  `label` field to the previous width of 20 bits.
+  - `seL4_MessageInfo_new`
+  - `seL4_MessageInfo_get_label`
+  - `seL4_MessageInfo_set_label`
+* Initial prototype RISC-V architecture port. This port currently only supports running in 64-bit mode without FPU or
+  or multicore support on the Spike simulation platform. There is *no verification* for this platform.
+
+---
+
+## 9.0.0 2018-04-11: BREAKING
+
+### Changes
+
+* Debugging option on x86 for syscall interface to read/write MSRs (this is an, equally dangerous, alternative to
+  dangerous code injection)
+* Mitigation for Meltdown (<https://meltdownattack.com>) on x86-64 implemented. Mitigation is via a form of kernel
+  page table isolation through the use of a Static Kernel Image with Microstate (SKIM) window that is used for
+  trapping to and from the kernel address space. This can be enabled/disabled through the build configuration
+  depending on whether you are running on vulnerable hardware or not.
+* Mitigation for Spectre (<https://spectreattack.com>) on x86 against the kernel implemented. Default is software
+  mitigation and is the best performing so users need to do nothing. This does *not* prevent user processes from
+  exploiting each other.
+* x86 configuration option for performing branch prediction barrier on context switch to prevent Spectre style
+  attacks between user processes using the indirect branch predictor
+* x86 configuration option for flushing the RSB on context switch to prevent Spectre style attacks between user
+  processes using the RSB
+* Define extended bootinfo header for the x86 TSC frequency
+* x86 TSC frequency exported in extended bootinfo header
+* `archInfo` is no longer a member of the bootinfo struct. Its only use was for TSC frequency on x86, which
+  can now be retrieved through the extended bootinfo
+* Invocations to set thread priority and maximum control priority (MCP) have changed.
+  - For both invocations, users must now provide a TCB capability `auth`
+  - The requested MCP/priority is checked against the MCP of the `auth` capability.
+  - Previous behavior checked against the invoked TCB, which could be subject to the confused deputy
+   problem.
+* seL4_TCB_Configure no longer takes prio, mcp as an argument. Instead these fields must be set separately
+  with seL4_TCB_SetPriority and seL4_TCB_SetMCPriority.
+* seL4_TCB_SetPriority and seL4_TCB_SetMCPriority now take seL4_Word instead of seL4_Uint8.
+  - seL4_MaxPrio remains at 255.
+* seL4_TCB_SetSchedParams is a new method where MCP and priority can be set in the same sytsem call.
+* Size of the TCB object is increased for some build configurations
+
+### Upgrade notes
+
+* seL4_TCB_Configure calls that set priority should be changed to explicitly call seL4_TCB_SetSchedParams
+  or SetPriority
+* seL4_TCB_Configure calls that set MCP should be changed to explicitly call seL4_TCB_SetSchedParams
+  or seL4_TCB_SetMCPriority
+
+---
+
+## 8.0.0 2018-01-17
+
+### Changes
+
+* Support for additional zynq platform Zynq UltraScale+ MPSoC (Xilinx ZCU102, ARMv8a, Cortex A53)
+* Support for multiboot2 bootloaders on x86 (contributed change from Genode Labs)
+* Deprecate seL4_CapData_t type and functions related to it
+* A fastpath improvement means that when there are two runnable threads and the target thread is the highest priority in
+  the scheduler, the fastpath will be hit. Previously the fastpath would not be used on IPC from a high priority thread
+  to a low priority thread.
+* As a consequence of the above change, scheduling behaviour has changed in the case where a non-blocking IPC is sent
+  between two same priority threads: the sender will be scheduled, rather than the destination.
+* Benchmarking support for armv8/aarch64 is now available.
+* Additional x86 extra bootinfo type for retrieving frame buffer information from multiboot 2
+* Debugging option to export x86 Performance-Monitoring Counters to user level
+
+### Upgrade notes
+
+* seL4_CapData_t should be replaced with just seL4_Word. Construction of badges should just be `x` instead of
+  `seL4_CapData_Badge_new(x)` and guards should be `seL4_CNode_CapData_new(x, y)` instead of
+  `seL4_CapData_Guard_new(x, y)`
+* Code that relied on non-blocking IPC to switch between threads of the same priority may break.
+
+---
+
+## 7.0.0 2017-09-05
+
+### Changes
+
+* Support for building standalone ia32 kernel added
+* ia32: Set sensible defaults for FS and GS selectors
+* aarch64: Use tpidrro_el0 for IPC buffer instead of tpidr_el0
+* More seL4 manual documentation added for aarch64 object invocations
+* Default NUM_DOMAINS set to 16 for x86-64 standalone builds
+* libsel4: Return seL4_Error in invocation stubs in 8fb06eecff9 ''' This is a source code level breaking change '''
+* Add a CMake based build system
+* x86: Increase TCB size for debug builds
+* libsel4: x86: Remove nested struct declarations ''' This is a source code level breaking change '''
+* Bugfix: x86: Unmap pages when delete non final frame caps
+
+### Upgrade notes
+
+* This release is not source compatible with previous releases.
+* seL4 invocations that previously returned long now return seL4_Error which is an enum. Our libraries have already been
+  updated to reflect this change, but in other places where seL4 invocations are used directly, the return types will
+  need to be updated to reflect this change.
+* On x86 some structs in the Bootinfo have been rearranged. This only affects seL4_VBEModeInfoBlock_t which is used if
+  VESA BIOS Extensions (VBE) information is being used.
+
+### Known issues
+
+* One of our tests is non-deterministically becoming unresponsive on the SMP release build on the Sabre IMX.6 platform,
+  which is a non verified configuration of the kernel.  We are working on fixing this problem, and will likely do a
+  point release once it is fixed.
+
+---
+For previous releases see <https://docs.sel4.systems/sel4_release/>
