@@ -33,3 +33,25 @@ typedef word_t vm_fault_type_t;
 #define L1_CACHE_LINE_SIZE_BITS CONFIG_L1_CACHE_LINE_SIZE_BITS
 #define L1_CACHE_LINE_SIZE BIT(L1_CACHE_LINE_SIZE_BITS)
 
+/*
+ * Used to align the big kernel lock to the exclusive reservation granule size.
+ * Without this nearby writes can delay atomic operations implemented with looping
+ * exclusive load/store instructions for an undefined time.
+ *
+ * Usually equal to L1_CACHE_LINE_SIZE, but 2k is the maximum for SMP systems.
+ *
+ * ARM Architecture Reference Manual ARMv7-A and ARMv7-R edition, chapter A3.4.5
+ * Load-Exclusive and Store-Exclusive usage restrictions, page 122 states:
+ *
+ * "The architecture sets an upper limit of 2048 bytes on the size of a region
+ *  that can be marked as exclusive."
+ *
+ * ARM Architecture Reference Manual ARMv8 for A-profile architecture, chapter
+ * B2.9.5 Load-Exclusive and Store-Exclusive instruction usage restrictions,
+ * page 216 states:
+ *
+ * "The architecture sets an upper limit of 2048 bytes on the Exclusives
+ *  reservation granule that can be marked as exclusive."
+ */
+#define EXCL_RES_GRANULE_SIZE 2048
+
