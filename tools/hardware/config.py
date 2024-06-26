@@ -48,7 +48,10 @@ class Config:
 class ARMConfig(Config):
     ''' Config class for ARM '''
     arch = 'arm'
-    SUPERSECTION_BITS = 24  # 2^24 = 16 MiByte
+
+    def __init__(self, sel4arch, addrspace_max):
+        super().__init__(sel4arch, addrspace_max)
+        self.SUPERSECTION_BITS = 25 if sel4arch == 'arm_hyp' else 24
 
     def get_kernel_phys_align(self) -> int:
         ''' on ARM the ELF loader expects to be able to map a supersection page to load the kernel. '''
