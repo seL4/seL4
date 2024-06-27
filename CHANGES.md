@@ -46,7 +46,7 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 * Added support for the ARM Cortex A55
 * Added support for the imx8mp-evk platform
 * Added support for additional RPI4 variants
-* Added support for the ODroid C4
+* Added support for the Odroid C4
 * Added support for the Avnet MaaXBoard
 * Added support for arm_hyp on qemu-arm-virt platfrom with cortex-a15 CPU
 * Added support for qemu-riscv-virt
@@ -60,7 +60,7 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 #### Arm
 
-* Arm+Hyp: Enabled access to `seL4_VCPUReg_VMPIDR` and `seL4_VCPUReg_VMPIDR_EL2` for all hyp configurations. Previously
+* Enabled access to `seL4_VCPUReg_VMPIDR` and `seL4_VCPUReg_VMPIDR_EL2` for all hypervisor configurations. Previously
   this register was only accessible for SMP kernel configurations. Non-SMP configurations can still require access when
   wanting to control the value of `MPIDR` that the guest reads. Note that the initial value for new seL4_ARM_VCPUs for
   this register is 0 which isn't a legal value for `MPIDR_EL1` on AArch64. It may be necessary for the register to be
