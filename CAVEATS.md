@@ -88,6 +88,13 @@ be stable, with small API changes to be expected while verification is ongoing
 and the configuration is used in more systems. See open [requests for
 comments][RFC] (RFCs) for MCS for what is currently being discussed.
 
+Note that the kernel worst-case execution time (WCET) configuration values in
+the kernel platform definitions are defaults only and need to be determined
+based on the specific use case -- for instance, static systems can be set up to
+have low latency and WCET, whereas dynamic systems or systems where untrusted
+code has authority to perform longer-running kernel operations may need higher
+values.
+
 ## SMP
 
 A symmetric multi-processor (SMP) configuration for seL4 exists and is supported
@@ -147,7 +154,8 @@ deleted, and then a new page directory is installed under that same ASID `A`,
 the page cap `c` will still retain some authority in the new page directory,
 even though the user intention might be to run the new page directory under a
 new security context. The authority retained is to perform the unmap operation
-on the page the cap `c` refers to.
+on the page the cap `c` refers to, as well as cache maintenance operations on the
+architectures that support these.
 
 ## Intel VT-d (I/O MMU) support
 
