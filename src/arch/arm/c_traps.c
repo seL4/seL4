@@ -10,6 +10,7 @@
 #include <arch/machine/registerset.h>
 #include <api/syscall.h>
 #include <machine/fpu.h>
+#include <mode/machine/debug.h>
 
 #include <sel4/benchmark_track_types.h>
 #include <benchmark/benchmark_track.h>
@@ -44,8 +45,16 @@ void VISIBLE NORETURN c_handle_undefined_instruction(void)
     /* There's only one user-level fault on ARM, and the code is (0,0) */
 #ifdef CONFIG_ARCH_AARCH32
     handleUserLevelFault(0, 0);
-#else
-    handleUserLevelFault(getESR(), 0);
+#elif CONFIG_ARCH_AARCH64
+    word_t esr = getESR();
+#ifdef CONFIG_HARDWARE_DEBUG_API
+    if (isDebugFault(esr)) {
+        handleDebugFaultEvent(esr);
+    } else
+#endif
+    {
+        handleUserLevelFault(esr, 0);
+    }
 #endif
     restore_user_context();
     UNREACHABLE();
