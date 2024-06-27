@@ -19,8 +19,6 @@ The following is a high-level description of changes to the seL4 kernel project,
 engineers who desire a summary of changes in more coarse-grained form than the Git commit history.  Each release
 description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BREAKING relative to the previous release.
 
-Further information about [seL4 releases](https://docs.sel4.systems/sel4_release/) is available.
-
 ---
 
 ## Upcoming release: BREAKING
