@@ -41,7 +41,19 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
     code. Guest VMs generally do not have sufficient authority to exploit this vulnerability.
   * Severity: Critical. This crashes the entire system.
 
-#### Platforms
+* Fixed a kernel-crashing cache maintenance operation on AArch64 (Armv8). On AArch64, when seL4 runs in EL1 the kernel
+  would fault with a data abort in `seL4_ARM_Page_Invalidate_Data` and `seL4_ARM_VSpace_Invalidate_Data` when the user
+  requested a `dc ivac` cache maintenance operation on a page that is not mapped writeable. If you are using seL4 in EL1
+  on AArch64, it is strongly recommended to upgrade.
+
+  * Affected configurations: unverified AArch64 configurations of seL4 with hypervisor extensions off (kernel runs in
+    EL1). AArch32 configurations and configurations where seL4 runs in EL2 are not affected.
+  * Affected versions: all versions since 5.0.0
+  * Exploitability: Any thread that has a VSpace capability or page capability to a page that is not mapped writable can
+    cause the data abort. Most Microkit and CAmkES systems do not give their component access to these capabilities, but any component with Untyped capabilities could create threads with enough capabilities to trigger the issue.
+  * Severity: Critical. This crashes the system.
+
+### Other Changes
 
 * Added support for the ARM Cortex A55
 * Added support for the imx8mp-evk platform
