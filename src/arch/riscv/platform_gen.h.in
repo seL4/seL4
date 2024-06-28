@@ -27,8 +27,7 @@
  * field name.
  */
 enum IRQConstants {
-    PLIC_IRQ_OFFSET = 0,
-    PLIC_MAX_IRQ = PLIC_IRQ_OFFSET + (@CONFIGURE_MAX_IRQ@),
+    PLIC_MAX_IRQ = @CONFIGURE_MAX_IRQ@,
 #ifdef ENABLE_SMP_SUPPORT
     INTERRUPT_IPI_0,
     INTERRUPT_IPI_1,
