@@ -29,3 +29,52 @@ word_t Arch_getObjectSize(word_t t);
 static inline void Arch_postCapDeletion(cap_t cap)
 {
 }
+
+/**
+ * Return true if the given arch cap can be a descendant of an IRQControlCap.
+ */
+static inline CONST bool_t Arch_isIRQControlDescendant(cap_t cap)
+{
+#if CONFIG_MAX_NUM_NODES == 1
+    return cap_get_capType(cap) == cap_sgi_signal_cap;
+#else
+    return false;
+#endif
+}
+
+/**
+ * isMDBParentOf for architecture caps. For most arch caps, this just returns
+ * true, but if there are badged versions of arch caps, this functions should
+ * perform the necessary checks.
+ *
+ * Called by the generic isMDBParentOf after the revocable bit has been checked
+ * and sameRegionAs has been established. This means we can assume both as true
+ * inside Arch_isMDBParentOf.
+ */
+static inline CONST bool_t Arch_isMDBParentOf(cap_t cap_a, cap_t cap_b, bool_t firstBadged)
+{
+    switch (cap_get_capType(cap_a)) {
+#if CONFIG_MAX_NUM_NODES == 1
+    case cap_sgi_signal_cap:
+        return !firstBadged;
+        break;
+#endif
+
+#ifdef CONFIG_ALLOW_SMC_CALLS
+    case cap_smc_cap: {
+        word_t badge;
+
+        badge = cap_smc_cap_get_capSMCBadge(cap_a);
+        if (badge == 0) {
+            return true;
+        }
+        return (badge == cap_smc_cap_get_capSMCBadge(cap_b)) &&
+               !firstBadged;
+        break;
+    }
+#endif
+
+    default:
+        return true;
+    }
+}
