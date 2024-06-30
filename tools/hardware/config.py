@@ -54,7 +54,7 @@ class ARMConfig(Config):
         self.SUPERSECTION_BITS = 25 if sel4arch == 'arm_hyp' else 24
 
     def get_kernel_phys_align(self) -> int:
-        ''' on ARM the ELF loader expects to be able to map a supersection page to load the kernel. '''
+        ''' On AArch32 the kernel requires at least super section alignment for physBase. '''
         return self.SUPERSECTION_BITS
 
     def align_memory(self, regions: Set[Region]) -> List[Region]:
