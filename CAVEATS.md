@@ -163,7 +163,9 @@ unmap operation for a mapping slot that now points to another frame, but cannot
 distinguish a cap with correct mapping information for the old VSpace from a cap
 with correct mapping information for the new VSpace.
 
-## Intel VT-d (I/O MMU) support
+## Intel VT-d (IOMMU)
+
+### Support
 
 Intel VT-d support in seL4 was tested for the following chipsets:
 
@@ -182,8 +184,49 @@ In any of these cases, the workaround is to disable VT-d support, either:
 - by including `disable_iommu` into the MultiBoot (e.g. GRUB) command line
   as described in the seL4 documentation
 
+### MSI Remapping
+
+This release does not yet provide support for IOMMU interrupt remapping, which
+means devices cannot be securely passed through to untrusted virtual machines,
+because they could then be used to trigger [arbitrary MSIs with arbitrary
+payload][MSI remap].
+
+Work on a MSI remapping feature is underway.
+
+## Information flow for x86
+
+While no configuration in this release of seL4 provides timing or other
+micro-architectural channel guarantees, timing channel exploits on the x86
+architecture are more widespread and relevant, especially for dynamic systems.
+
+The kernel does provide configuration options for mitigating [Meltdown] and
+[Spectre]-style attacks, but there are no specific mitigations for more recent
+such attacks such as [Zenbleed] and [Inception].
+
+Note that the kernel does not depend on secrets, cryptographic or otherwise, so
+most kernel targets for such attacks are not present, but timing channels
+exploits *can* enable one user-level thread to extract secrets from another.
+
+For many constrained systems, e.g. static embedded systems with known code, the
+existing mitigations may be sufficient. For more dynamic systems they are
+unlikely to be. Further mitigations could be added in the future with dedicated
+funding.
+
+## Rowhammer
+
+seL4 does not offer specific protection against hardware-based memory attacks
+such as Rowhammer, but it does provide primitives for user-level systems to, for
+instance, only map physical memory in such a way that Rowhammer is ineffective
+at crossing protection boundaries.
+
 [l4v]: https://github.com/seL4/l4v
 [RFC]: https://github.com/seL4/rfcs
 [issues]: https://github.com/seL4/seL4/issues/
 [sel4test issues]: https://github.com/seL4/sel4test/issues/
 [ASpec]: https://github.com/seL4/l4v/blob/master/spec/abstract
+
+[Meltdown]: https://meltdownattack.com
+[Spectre]: https://meltdownattack.com
+[Zenbleed]: https://lock.cmpxchg8b.com/zenbleed.html
+[Inception]: https://comsec.ethz.ch/research/microarch/inception/
+[MSI remap]: http://theinvisiblethings.blogspot.com/2011/05/following-white-rabbit-software-attacks.html
