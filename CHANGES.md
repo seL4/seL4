@@ -113,6 +113,10 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
   The configuration option is not enabled by default as it requires access to the CLINT which depends on the platform
   and whether the M-mode firmware allows S-mode to access the CLINT. For example, newer versions of OpenSBI (1.0 and above)
   do not allow direct access of the CLINT.
+* Rename object interface files `include/interfaces/sel4.xml`, `arch_include/*/interfaces/sel4arch.xml`, and
+  `sel4_arch_include/*/interfaces/sel4arch.xml` to `include/interfaces/object-api.xml`,
+  `arch_include/*/interfaces/object-api-arch.xml`, and `sel4_arch_include/*/interfaces/object-api-sel4-arch.xml`,
+  respectively.
 
 #### Other Changes
 

@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+<!--
+     Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+
+     SPDX-License-Identifier: BSD-2-Clause
+-->
+
+<api name="ObjectApiIa32">
+    <struct name="seL4_UserContext">
+        <member name="eip"/>
+        <member name="esp"/>
+        <member name="eflags"/>
+        <member name="eax"/>
+        <member name="ebx"/>
+        <member name="ecx"/>
+        <member name="edx"/>
+        <member name="esi"/>
+        <member name="edi"/>
+        <member name="ebp"/>
+        <member name="fs_base"/>
+        <member name="gs_base"/>
+    </struct>
+</api>
