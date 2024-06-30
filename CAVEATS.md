@@ -128,10 +128,12 @@ configurations.
 As these are unverified configurations, standard C implementation defects are
 possible and not excluded as in verified seL4 configurations.
 
-Supporting a static multi-kernel configuration with formal verification is on
-the roadmap for the AArch64 architecture, with initial work begun. We expect
-multi-kernel configurations to be more robust than SMP configurations, because
-they are simpler and closer to the current sequential seL4 proofs.
+An intermediate step towards higher assurance for seL4-based multicore systems
+is a static multi-kernel configuration of seL4. Formal verification for this
+configuration is on the roadmap for the AArch64 architecture, with initial work
+begun. Even without verification complete, we expect multi-kernel configurations
+to be more robust, because they are simpler and closer to the current sequential
+seL4 proofs.
 
 In a multi-kernel configuration, each CPU core runs a separate instance of seL4,
 with each kernel instance getting access to disjoint subsets of memory of the
@@ -144,18 +146,22 @@ access for each instance.
 
 ## Re-using Address Spaces
 
-Before an ASID/page directory/page table can be reused, all frame caps
-installed in it should be revoked. The kernel will not do this automatically
-for the user.
+Before a VSpace can be safely reused in a new security context, all frame caps
+previously installed in it should be deleted. The kernel will not do this
+automatically for the user.
 
-If, for instance, page cap `c` is installed in the address space denoted by a
-page directory under ASID `A`, and the page directory is subsequently revoked or
-deleted, and then a new page directory is installed under that same ASID `A`,
-the page cap `c` will still retain some authority in the new page directory,
-even though the user intention might be to run the new page directory under a
-new security context. The authority retained is to perform the unmap operation
-on the page the cap `c` refers to, as well as cache maintenance operations on the
-architectures that support these.
+If not deleted, old frame capabilities retain some authority in the new security
+context: the authority to perform cache maintenance operations and the unmap
+operation for mappings to the same frame at the same virtual address.
+
+Capabilities to mapped frames store the seL4 ASID and virtual address under
+which the frame is mapped to be able find the corresponding mapping slot. This
+information can become stale when, for instance, the page table object where the
+mapping resides is deleted, and a new page table object is created and used
+there instead. The kernel guards against obvious mistakes such as attempting an
+unmap operation for a mapping slot that now points to another frame, but cannot
+distinguish a cap with correct mapping information for the old VSpace from a cap
+with correct mapping information for the new VSpace.
 
 ## Intel VT-d (I/O MMU) support
 
