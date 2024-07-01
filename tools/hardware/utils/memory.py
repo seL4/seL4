@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-from typing import List, Set
+from typing import List, Set, Tuple, TypedDict, Union
 
 import hardware
 from hardware.config import Config
@@ -14,9 +14,9 @@ from hardware.memory import Region
 from hardware.utils.rule import KernelRegionGroup
 
 
-def get_memory_regions(tree: FdtParser):
+def get_memory_regions(tree: FdtParser) -> Set[Region]:
     ''' Get all regions with device_type = memory in the tree '''
-    regions = set()
+    regions: Set[Region] = set()
 
     def visitor(node: WrappedNode):
         if node.has_prop('device_type') and node.get_prop('device_type').strings[0] == 'memory':
@@ -27,12 +27,12 @@ def get_memory_regions(tree: FdtParser):
 
 def merge_memory_regions(regions: Set[Region]) -> Set[Region]:
     ''' Check all region and merge adjacent ones '''
-    all_regions = [dict(idx=idx, region=region, right_adj=None, left_adj=None)
-                   for (idx, region) in enumerate(regions)]
+    all_regions = [dict(region=region, right_adj=None, left_adj=None)
+                   for region in regions]
 
     # Find all right contiguous regions
-    for dreg in all_regions:
-        for dnreg in all_regions[dreg['idx']+1:]:
+    for idx, dreg in enumerate(all_regions):
+        for dnreg in all_regions[idx+1:]:
             if dreg['region'].owner == dnreg['region'].owner:
                 if dnreg['region'].base == dreg['region'].base + dreg['region'].size:
                     dreg['right_adj'] = dnreg
@@ -55,7 +55,7 @@ def merge_memory_regions(regions: Set[Region]) -> Set[Region]:
     return contiguous_regions
 
 
-def parse_reserved_regions(node: WrappedNode) -> Set[Region]:
+def parse_reserved_regions(node: Union[WrappedNode, None]) -> Set[Region]:
     ''' Parse a reserved-memory node, looking for regions that are
         unusable by OS (e.g. reserved for firmware/bootloader) '''
     if node is None:
@@ -83,7 +83,7 @@ def reserve_regions(regions: Set[Region], reserved: Set[Region]) -> Set[Region]:
     return ret
 
 
-def get_physical_memory(tree: FdtParser, config: Config) -> List[Region]:
+def get_physical_memory(tree: FdtParser, config: Config) -> Tuple[List[Region], Set[Region], int]:
     ''' returns a list of regions representing physical memory as used by the kernel '''
     regions = merge_memory_regions(get_memory_regions(tree))
     reserved = parse_reserved_regions(tree.get_path('/reserved-memory'))
@@ -95,7 +95,7 @@ def get_physical_memory(tree: FdtParser, config: Config) -> List[Region]:
 
 def get_addrspace_exclude(regions: List[Region], config: Config):
     ''' Returns a list of regions that represents the inverse of the given region list. '''
-    ret = set()
+    ret: Set[Region] = set()
     # We can't create untypeds that exceed the addrspace_max, so we round down to the smallest
     # untyped size alignment so that the kernel will be able to turn the entire range into untypeds.
     as_max = hardware.utils.align_down(config.addrspace_max,

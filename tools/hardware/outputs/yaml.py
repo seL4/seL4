@@ -8,14 +8,15 @@
 
 import argparse
 import yaml
-from typing import List
+from typing import Dict, List
 import hardware
 from hardware.config import Config
 from hardware.fdt import FdtParser
-from hardware.utils.rule import HardwareYaml
+from hardware.memory import Region
+from hardware.utils.rule import HardwareYaml, KernelRegionGroup
 
 
-def make_yaml_list_of_regions(regions) -> List:
+def make_yaml_list_of_regions(regions: List[Region]) -> List[Dict[str, int]]:
     return [
         {
             'start': r.base,
@@ -25,7 +26,7 @@ def make_yaml_list_of_regions(regions) -> List:
     ]
 
 
-def create_yaml_file(dev_mem, phys_mem, outputStream):
+def create_yaml_file(dev_mem: List[Region], phys_mem: List[Region], outputStream):
 
     yaml.add_representer(
         int,
@@ -40,7 +41,7 @@ def create_yaml_file(dev_mem, phys_mem, outputStream):
         yaml.dump(yaml_obj, outputStream)
 
 
-def get_kernel_devices(tree: FdtParser, hw_yaml: HardwareYaml):
+def get_kernel_devices(tree: FdtParser, hw_yaml: HardwareYaml) -> List[KernelRegionGroup]:
     kernel_devices = tree.get_kernel_devices()
 
     groups = []
@@ -64,6 +65,6 @@ def run(tree: FdtParser, hw_yaml: HardwareYaml, config: Config,
     create_yaml_file(dev_mem, phys_mem, args.yaml_out)
 
 
-def add_args(parser):
+def add_args(parser: argparse.ArgumentParser):
     parser.add_argument('--yaml-out', help='output file for memory yaml',
                         type=argparse.FileType('w'))
