@@ -24,12 +24,13 @@ architectures is on the roadmap and expected in 2025.
   - Platforms: `pc99`
 
 This proof covers the functional behaviour of the C code of the kernel. It does
-not cover machine code, compiler, linker, boot code, cache and TLB management.
-Compiler and linker can be removed from this list by additionally running the
-binary verification tool chain for seL4 for AArch32 or RISC-V. The proof shows
-that the seL4 C code implements the formal [abstract API specification][ASpec]
-of seL4 and is free from standard C implementation defects such as buffer
-overruns or NULL pointer dereferences.
+not cover machine code, compiler, linker, boot code, cache or TLB management.
+The compiler and linker can be removed from this list by additionally running the
+binary verification tool chain for seL4 for AArch32 or RISC-V.
+
+Overall, the functional correctness proof shows that the seL4 C code implements
+the formal [abstract API specification][ASpec] of seL4 and is free from standard
+C implementation defects such as buffer overruns or NULL pointer dereferences.
 
 For AArch32 without hypervisor extensions and without FPU, and for RISC-V, there
 are additional proofs that this specification satisfies the following high-level
@@ -85,7 +86,7 @@ are planned.
 
 The MCS configuration is supported by the seL4 foundation and should generally
 be stable, with small API changes to be expected while verification is ongoing
-and the configuration is used in more systems. See open [requests for
+and the configuration is deployed in more systems. See open [requests for
 comments][RFC] (RFCs) for MCS for what is currently being discussed.
 
 Note that the kernel worst-case execution time (WCET) configuration values in
@@ -98,7 +99,7 @@ values.
 ## SMP
 
 A symmetric multi-processor (SMP) configuration for seL4 exists and is supported
-by the seL4 foundation, but currently without formal verification. While
+by the seL4 Foundation, but currently without formal verification. While
 generally stable, there are a small number of known open issues, in particular
 when the kernel is compiled with `clang`. We recommend `gcc` for working with
 SMP configurations of seL4.
@@ -204,7 +205,7 @@ The kernel does provide configuration options for mitigating [Meltdown] and
 such attacks such as [Zenbleed] and [Inception].
 
 Note that the kernel does not depend on secrets, cryptographic or otherwise, so
-most kernel targets for such attacks are not present, but timing channels
+most kernel targets for such attacks are not present, but timing channel
 exploits *can* enable one user-level thread to extract secrets from another.
 
 For many constrained systems, e.g. static embedded systems with known code, the
