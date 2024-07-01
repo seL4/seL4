@@ -203,7 +203,6 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
   bound to a TCB. Without these restriction it is much easier to move scheduling contexts around: In effect having a SC
   bound on both the TCB and a notification acts as if the thread is running on a donated SC which will be returned when
   the tasks calls `Recv`/`Wait`, which is done by `maybeReturnSchedContext()`.
-* Fix scheduling context use-after-free on SMP
 * Only charge budgets for non-idle thread SCs
 * ARM+MCS: Introduce `TIMER_OVERHEAD_TICKS`. For ARM currently `TIMER_PRECISION` exists, but that is in microseconds and
   not fine-grained enough. `TIMER_OVERHEAD_TICKS` is needed to make periodic tasks synchronous with the system clock. If
@@ -212,6 +211,7 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 * SMP: Do not use cross-node `ksCurTime` assuming they are in sync (which they are not), instead use
   `NODE_STATE(ksCurTime)`.
 * SMP: Add clock synchronisation test on boot
+* SMP: Fix scheduling context use-after-free
 
 #### Other Changes
 
