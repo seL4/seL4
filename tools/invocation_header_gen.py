@@ -8,7 +8,6 @@
 # seL4 Invocation ID Generator
 # ============================
 
-from __future__ import print_function
 from importlib.metadata import version
 from jinja2 import Environment, BaseLoader
 import argparse

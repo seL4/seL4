@@ -47,6 +47,7 @@ StringTypes = (str, bytes)
 def func_code(f):
     return f.__code__
 
+
 # This regular expression is used to match valid token names
 _is_identifier = re.compile(r'^[a-zA-Z0-9_]+$')
 

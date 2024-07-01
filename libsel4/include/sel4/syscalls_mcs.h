@@ -104,7 +104,7 @@ seL4_NBSend(seL4_CPtr dest, seL4_MessageInfo_t msgInfo);
  *               This parameter is ignored if `NULL`.
  *
  * @param[in] reply The capability to the reply object, which is first invoked and then used
- *                  for the recv phase to store a new reply capability.
+ *                  for the receive phase to store a new reply capability.
  * @return A `seL4_MessageInfo_t` structure
  * @xmlonly
  * <docref>as described in <autoref label="sec:messageinfo"/></docref>
@@ -141,7 +141,7 @@ seL4_NBRecv(seL4_CPtr src, seL4_Word *sender, seL4_CPtr reply);
 
 /**
  * @xmlonly <manual name="Non-Blocking Send Recv" label="sel4_nbsendrecv"/> @endxmlonly
- * @brief Non-blocking send on one capability, and a blocking recieve on another in a single
+ * @brief Non-blocking send on one capability, and a blocking receive on another in a single
  *        system call.
  *
  * @xmlonly
@@ -158,7 +158,7 @@ seL4_NBRecv(seL4_CPtr src, seL4_Word *sender, seL4_CPtr reply);
  *               This parameter is ignored if `NULL`.
  * @param[in] src The capability to receive on.
  * @param[in] reply The capability to the reply object, which is first invoked and then used
- *                  for the recv phase to store a new reply capability.
+ *                  for the receive phase to store a new reply capability.
  * @return A `seL4_MessageInfo_t` structure
  * @xmlonly
  * as described in <autoref label="sec:messageinfo"/>
@@ -210,7 +210,7 @@ seL4_Yield(void);
  *
  * Block on a notification or endpoint waiting for a message. No reply object is
  * required for a Wait. Wait should not be paired with Call, as it does not provide
- * a reply object. If Wait is paired with a Call the waiter will block after recieving
+ * a reply object. If Wait is paired with a Call the waiter will block after receiving
  * the message.
  *
  * @xmlonly
@@ -260,7 +260,7 @@ seL4_NBWait(seL4_CPtr src, seL4_Word *sender);
 
 /**
  * @xmlonly <manual name="Poll" label="sel4_mcs_poll"/> @endxmlonly
- * @brief Perform a non-blocking recv on a notification object
+ * @brief Perform a non-blocking receive on a notification object
  *
  * This is not a proper system call known by the kernel. Rather, it is a
  * convenience wrapper which calls seL4_NBWait().

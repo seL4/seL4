@@ -21,7 +21,7 @@ The basic services seL4 provides are as follows:
     \item[Threads] are an abstraction of CPU execution that supports
     running software;
 
-    \item[Scheduling contexts] (MCS only) are an abstraction of CPU execution time.
+    \item[Scheduling contexts] (MCS only) are an abstraction of CPU execution time;
 
     \item[Address spaces] are virtual memory spaces that each contain an
     application. Applications are limited to accessing memory in their
@@ -31,7 +31,7 @@ The basic services seL4 provides are as follows:
     threads to communicate using message passing;
 
     \item[Reply objects] (MCS only) are used to store single-use reply capabilities,
-    and are provided by the receiver during message passing.
+    and are provided by the receiver during message passing;
 
     \item[Notifications] provide a non-blocking signalling mechanism
       similar to binary semaphores;
@@ -44,8 +44,8 @@ The basic services seL4 provides are as follows:
     kernel services along with their book-keeping information.
 \end{description}
 
-This chapter gives an overview of these services, describes how kernel
-objects are accessed by userspace applications, and describes how new
+This chapter gives an overview of these services and describes how kernel
+objects are accessed by userspace applications and how new
 objects can be created.
 
 \section{Capability-based Access Control}
@@ -173,7 +173,7 @@ The fundamental system calls are:
     section \ref{sec:faults}) when attempted with other capability types.
 
     In the MCS configuration, \emph{Receive} takes a reply capability---a
-    capability to a reply object--as a parameter.
+    capability to a reply object---as a parameter.
 \end{description}
 
 % TODO: seL4_Recv() gets hyphenated as
@@ -281,7 +281,7 @@ manipulation, and combination of these kernel objects:
        CPU time in seL4. Users can create scheduling contexts from untyped objects, however on
        creation scheduling contexts are \textit{empty} and do not represent any time.
        Initially, there is a capability to \obj{SchedControl} for each node, which
-       allows scheduling context to be populated with parameters, which combined with priority
+       allows scheduling context to be populated with parameters, which when combined with a priority
        control thread's access to CPU time.
 
     \item[\obj{Endpoints}] (see \autoref{ch:ipc}) facilitate message-passing
@@ -376,7 +376,7 @@ more of its clients.
 
 Untyped memory objects represent two different types of memory:
 general purpose memory, or device memory.
-\emph{General purpose} memory can be untyped into any other object
+\emph{General purpose} memory can be retyped into any other object
 type and used for any operation on untyped memory provided by the kernel.
 \emph{Device memory} covers memory regions reserved for devices
 as determined by the hardware platform, and usage of these objects
@@ -386,13 +386,13 @@ is restricted by the kernel in the following ways:
 \item Device untyped objects can only be retyped into frames or other
 untyped objects; developers cannot, for example, create an endpoint from device memory.
 \item Frame objects retyped from device untyped objects cannot be set as thread IPC buffers, or used
-in the creation of an ASID pool
+in the creation of an ASID pool.
 \end{itemize}
 
 The type attribute (whether it represents \emph{general purpose} or
 \emph{device} memory) of a child untyped object is inherited from its
-parent untyped object. That is, any child of a device untyped will
-also be a device untyped. Developers cannot change the type attribute of an untyped.
+parent untyped object. That is, any child of a device untyped object will
+also be a device untyped object. Developers cannot change the type attribute of an untyped object.
 
 \subsection{Reusing Memory}
 \label{s:memRevoke}
@@ -452,7 +452,7 @@ When retyping untyped memory it is useful to know how much memory the
 object will require. Object sizes are defined in libsel4.
 
 Note that \obj{CNode}s, \obj{SchedContext}s (MCS only), and \obj{Untyped Object}s
-have variables sizes. When retyping untyped memory into \obj{CNode}s
+have variable sizes. When retyping untyped memory into \obj{CNode}s
 or \obj{SchedContext}s, or breaking an
 \obj{Untyped Object} into smaller \obj{Untyped Object}s, the
 \texttt{size\_bits} argument to
@@ -487,3 +487,18 @@ the case of variable-sized objects, each object must also be of the same size.
 If the size of the memory area needed (calculated by the object size multiplied
 by \texttt{num\_objects}) is greater than the remaining unallocated memory of
 the \obj{Untyped Object}, an error will result.
+
+Useful constants for creating \obj{SchedContext} objects are listed below.
+
+{\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{ll}
+  \toprule
+  \texttt{seL4\_MinSchedContextBits} & minimum log2-size of a
+  scheduling context\\
+  \texttt{seL4\_CoreSchedContextBytes} & size in bytes of a scheduling
+  context, excluding extra refills\\
+  \texttt{seL4\_RefillSizeBytes} & size in bytes of a single extra
+  refill\\
+  \bottomrule
+\end{tabular}}
+  iz

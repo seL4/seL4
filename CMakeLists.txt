@@ -405,7 +405,8 @@ set(xml_headers "")
 set(header_dest "gen_headers/arch/api/invocation.h")
 gen_invocation_header(
     OUTPUT ${header_dest}
-    XML ${CMAKE_CURRENT_SOURCE_DIR}/libsel4/arch_include/${KernelArch}/interfaces/sel4arch.xml
+    XML
+        ${CMAKE_CURRENT_SOURCE_DIR}/libsel4/arch_include/${KernelArch}/interfaces/object-api-arch.xml
     ARCH
 )
 list(APPEND xml_headers "${header_dest}")
@@ -415,7 +416,7 @@ set(header_dest "gen_headers/arch/api/sel4_invocation.h")
 gen_invocation_header(
     OUTPUT "${header_dest}"
     XML
-        "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/sel4_arch_include/${KernelSel4Arch}/interfaces/sel4arch.xml"
+        "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/sel4_arch_include/${KernelSel4Arch}/interfaces/object-api-sel4-arch.xml"
     SEL4ARCH
 )
 list(APPEND xml_headers "${header_dest}")
@@ -424,7 +425,7 @@ list(APPEND gen_files_list "${header_dest}")
 set(header_dest "gen_headers/api/invocation.h")
 gen_invocation_header(
     OUTPUT "${header_dest}"
-    XML "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/include/interfaces/sel4.xml"
+    XML "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/include/interfaces/object-api.xml"
 )
 list(APPEND xml_headers "${header_dest}")
 list(APPEND gen_files_list "${header_dest}")
@@ -514,18 +515,14 @@ add_custom_command(
 add_custom_target(dummy_header_wrapper DEPENDS ${dummy_headers})
 
 cppfile(
-    kernel_all_pp_prune.c
-    kernel_all_pp_prune_wrapper
-    kernel_all.c
-    EXTRA_FLAGS
-    -CC
-    "-I${CMAKE_CURRENT_BINARY_DIR}/generated_prune"
+    kernel_all_pp_prune.c kernel_all_pp_prune_wrapper kernel_all.c
+    EXTRA_FLAGS -CC "-I${CMAKE_CURRENT_BINARY_DIR}/generated_prune"
     EXTRA_DEPS
-    kernel_all_c_wrapper
-    dummy_header_wrapper
-    xml_headers_target
-    kernel_config_headers
-    ${gen_files_list}
+        kernel_all_c_wrapper
+        dummy_header_wrapper
+        xml_headers_target
+        kernel_config_headers
+        ${gen_files_list}
 )
 
 #
@@ -570,14 +567,9 @@ foreach(bf_dec ${bf_declarations})
     set(pbf_name "generated/${bf_gen_dir}/${bf_name}.pbf")
     set(pbf_target "${bf_gen_target}_pbf")
     cppfile(
-        "${pbf_name}"
-        "${pbf_target}"
-        "${bf_file}"
-        EXTRA_FLAGS
-        -P
-        EXTRA_DEPS
-        kernel_config_headers
-        ${gen_files_list}
+        "${pbf_name}" "${pbf_target}" "${bf_file}"
+        EXTRA_FLAGS -P
+        EXTRA_DEPS kernel_config_headers ${gen_files_list}
     )
     GenHBFTarget(
         ""
@@ -629,18 +621,12 @@ set(CPPExtraFlags "-I${CMAKE_CURRENT_BINARY_DIR}/generated")
 #
 
 cppfile(
-    kernel_all.i
-    kernel_i_wrapper
-    kernel_all.c
-    EXTRA_DEPS
-    kernel_all_c_wrapper
-    kernel_headers
-    ${gen_files_list}
+    kernel_all.i kernel_i_wrapper kernel_all.c
+    EXTRA_DEPS kernel_all_c_wrapper kernel_headers ${gen_files_list}
     EXTRA_FLAGS
-    -CC
-    "${CPPExtraFlags}"
-    # The circular_includes script relies upon parsing out exactly 'kernel_all_copy.c' as
-    # a special case so we must ask cppfile to use this input name
+        -CC "${CPPExtraFlags}"
+        # The circular_includes script relies upon parsing out exactly 'kernel_all_copy.c' as
+        # a special case so we must ask cppfile to use this input name
     EXACT_NAME kernel_all_copy.c
 )
 
@@ -658,16 +644,9 @@ set(linker_lds_path "${CMAKE_CURRENT_BINARY_DIR}/linker.lds_pp")
 
 # Preprocess the linker script
 cppfile(
-    "${linker_lds_path}"
-    linker_ld_wrapper
-    "${linker_source}"
-    EXTRA_DEPS
-    kernel_headers
-    ${gen_files_list}
-    EXTRA_FLAGS
-    -CC
-    -P
-    "${CPPExtraFlags}"
+    "${linker_lds_path}" linker_ld_wrapper "${linker_source}"
+    EXTRA_DEPS kernel_headers ${gen_files_list}
+    EXTRA_FLAGS -CC -P "${CPPExtraFlags}"
 )
 
 add_custom_command(
@@ -742,25 +721,8 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
         PATTERN "*.pbf"
         PATTERN "api/syscall.xml"
         PATTERN "api/syscall.xsd"
+        PATTERN "object-api*.xml"
         PATTERN "gen_config.json"
-    )
-    # Manually install object API files with non-conflicting names
-    install(
-        FILES "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/include/interfaces/sel4.xml"
-        DESTINATION libsel4/include/interfaces
-        RENAME object-api.xml
-    )
-    install(
-        FILES
-            "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/arch_include/${KernelArch}/interfaces/sel4arch.xml"
-        DESTINATION libsel4/include/interfaces
-        RENAME object-api-arch.xml
-    )
-    install(
-        FILES
-            "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/sel4_arch_include/${KernelSel4Arch}/interfaces/sel4arch.xml"
-        DESTINATION libsel4/include/interfaces
-        RENAME object-api-sel4-arch.xml
     )
     # Install libsel4 sources to libsel4/src
     install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/src/" DESTINATION libsel4/src)

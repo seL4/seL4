@@ -529,16 +529,16 @@ ptr_tag_writer_template = \
 # HOL definition templates
 
 lift_def_template = \
-    '''definition %(name)s_lift :: "%(name)s_C \<Rightarrow> %(name)s_CL" where
-  "%(name)s_lift %(name)s \<equiv> \<lparr>
-       %(fields)s \<rparr>"'''
+    '''definition %(name)s_lift :: "%(name)s_C \\<Rightarrow> %(name)s_CL" where
+  "%(name)s_lift %(name)s \\<equiv> \\<lparr>
+       %(fields)s \\<rparr>"'''
 
 block_lift_def_template = \
     '''definition %(union)s_%(block)s_lift :: ''' \
-    '''"%(union)s_C \<Rightarrow> %(union)s_%(block)s_CL" where
-  "%(union)s_%(block)s_lift %(union)s \<equiv>
+    '''"%(union)s_C \\<Rightarrow> %(union)s_%(block)s_CL" where
+  "%(union)s_%(block)s_lift %(union)s \\<equiv>
     case (%(union)s_lift %(union)s) of ''' \
-    '''Some (%(generator)s rec) \<Rightarrow> rec"'''
+    '''Some (%(generator)s rec) \\<Rightarrow> rec"'''
 
 block_lift_lemma_template = \
     '''lemma %(union)s_%(block)s_lift:
@@ -548,13 +548,13 @@ block_lift_lemma_template = \
   by (clarsimp simp: %(union)s_tag_defs Let_def)'''
 
 union_get_tag_def_header_template = \
-    '''definition %(name)s_get_tag :: "%(name)s_C \<Rightarrow> word%(base)d" where
-  "%(name)s_get_tag %(name)s \<equiv>
+    '''definition %(name)s_get_tag :: "%(name)s_C \\<Rightarrow> word%(base)d" where
+  "%(name)s_get_tag %(name)s \\<equiv>
      '''
 
 union_get_tag_def_entry_template = \
     '''if ((index (%(name)s_C.words_C %(name)s) %(tag_index)d)''' \
-    ''' AND 0x%(classmask)x \<noteq> 0x%(classmask)x)
+    ''' AND 0x%(classmask)x \\<noteq> 0x%(classmask)x)
       then ((index (%(name)s_C.words_C %(name)s) %(tag_index)d)'''\
 ''' >> %(tag_shift)d) AND mask %(tag_size)d
       else '''
@@ -570,7 +570,7 @@ union_get_tag_eq_x_def_header_template = \
   "(%(name)s_get_tag c = x) = (('''
 
 union_get_tag_eq_x_def_entry_template = \
-    '''if ((x << %(tag_shift)d) AND 0x%(classmask)x \<noteq> 0x%(classmask)x)
+    '''if ((x << %(tag_shift)d) AND 0x%(classmask)x \\<noteq> 0x%(classmask)x)
       then ((index (%(name)s_C.words_C c) %(tag_index)d)''' \
 ''' >> %(tag_shift)d) AND mask %(tag_size)d
       else '''
@@ -586,7 +586,7 @@ union_tag_mask_helpers_header_template = \
     '''lemma %(name)s_%(block)s_tag_mask_helpers:'''
 
 union_tag_mask_helpers_entry_template = '''
-  "w && %(full_mask)s = %(full_value)s \<Longrightarrow> w'''\
+  "w && %(full_mask)s = %(full_value)s \\<Longrightarrow> w'''\
 ''' && %(part_mask)s = %(part_value)s"
 '''
 
@@ -594,24 +594,24 @@ union_tag_mask_helpers_footer_template = \
     '''  by (auto elim: word_sub_mask simp: mask_def)'''
 
 union_lift_def_template = \
-    '''definition %(name)s_lift :: "%(name)s_C \<Rightarrow> %(name)s_CL option" where
-  "%(name)s_lift %(name)s \<equiv>
+    '''definition %(name)s_lift :: "%(name)s_C \\<Rightarrow> %(name)s_CL option" where
+  "%(name)s_lift %(name)s \\<equiv>
     (let tag = %(name)s_get_tag %(name)s in
      %(tag_cases)s
      else None)"'''
 
 union_access_def_template = \
     '''definition %(union)s_%(block)s_access ::
-  "(%(union)s_%(block)s_CL \<Rightarrow> 'a) \<Rightarrow> %(union)s_CL \<Rightarrow> 'a" where
-  "%(union)s_%(block)s_access f %(union)s \<equiv>
-     (case %(union)s of %(generator)s rec \<Rightarrow> f rec)"'''
+  "(%(union)s_%(block)s_CL \\<Rightarrow> 'a) \\<Rightarrow> %(union)s_CL \\<Rightarrow> 'a" where
+  "%(union)s_%(block)s_access f %(union)s \\<equiv>
+     (case %(union)s of %(generator)s rec \\<Rightarrow> f rec)"'''
 
 union_update_def_template = \
     '''definition %(union)s_%(block)s_update ::
-  "(%(union)s_%(block)s_CL \<Rightarrow> %(union)s_%(block)s_CL) \<Rightarrow>'''\
-  '''%(union)s_CL \<Rightarrow> %(union)s_CL" where
-  "%(union)s_%(block)s_update f %(union)s \<equiv>
-     (case %(union)s of %(generator)s rec \<Rightarrow>
+  "(%(union)s_%(block)s_CL \\<Rightarrow> %(union)s_%(block)s_CL) \\<Rightarrow>'''\
+  '''%(union)s_CL \\<Rightarrow> %(union)s_CL" where
+  "%(union)s_%(block)s_update f %(union)s \\<equiv>
+     (case %(union)s of %(generator)s rec \\<Rightarrow>
         %(generator)s (f rec))"'''
 
 # HOL proof templates
@@ -627,8 +627,8 @@ lemmas %(name)s_ptr_guards[simp] =
 # FIXME: move to global theory
 defs_global_lemmas = '''
 lemma word_sub_mask:
-  "\<lbrakk> w && m1 = v1; m1 && m2 = m2; v1 && m2 = v2 \<rbrakk>
-     \<Longrightarrow> w && m2 = v2"
+  "\\<lbrakk> w && m1 = v1; m1 && m2 = m2; v1 && m2 = v2 \\<rbrakk>
+     \\<Longrightarrow> w && m2 = v2"
   by (clarsimp simp: word_bw_assocs)
 '''
 
@@ -641,37 +641,37 @@ lemma word_sub_mask:
 
 def ptr_basic_template(name, ptrname, retval, args, post):
     return ('''lemma (in ''' + loc_name + ''') %(name)s_ptr_''' + name + '''_spec:
-           defines "ptrval s \<equiv> cslift s ''' + ptrname + '''"
-           shows "\<forall>s. \<Gamma> \<turnstile> \<lbrace>s. s \<Turnstile>\<^sub>c ''' + ptrname + '''\<rbrace>
-            ''' + retval + '''PROC %(name)s_ptr_''' + name + '''(\<acute>%(name)s_ptr''' + args + ''')
+           defines "ptrval s \\<equiv> cslift s ''' + ptrname + '''"
+           shows "\\<forall>s. \\<Gamma> \\<turnstile> \\<lbrace>s. s \\<Turnstile>\\<^sub>c ''' + ptrname + '''\\<rbrace>
+            ''' + retval + '''PROC %(name)s_ptr_''' + name + '''(\\<acute>%(name)s_ptr''' + args + ''')
             ''' + post + ''' " ''')
 
 
 def ptr_union_basic_template(name, ptrname, retval, args, pre, post):
     return ('''lemma (in ''' + loc_name + ''') %(name)s_%(block)s_ptr_''' + name + '''_spec:
-    defines "ptrval s \<equiv> cslift s ''' + ptrname + '''"
-    shows "\<forall>s. \<Gamma> \<turnstile> \<lbrace>s. s \<Turnstile>\<^sub>c ''' + ptrname + " " + pre + '''\<rbrace>
-            ''' + retval + '''PROC %(name)s_%(block)s_ptr_''' + name + '''(\<acute>%(name)s_ptr''' + args + ''')
+    defines "ptrval s \\<equiv> cslift s ''' + ptrname + '''"
+    shows "\\<forall>s. \\<Gamma> \\<turnstile> \\<lbrace>s. s \\<Turnstile>\\<^sub>c ''' + ptrname + " " + pre + '''\\<rbrace>
+            ''' + retval + '''PROC %(name)s_%(block)s_ptr_''' + name + '''(\\<acute>%(name)s_ptr''' + args + ''')
             ''' + post + ''' " ''')
 
 
-direct_ptr_name = '\<^bsup>s\<^esup>%(name)s_ptr'
-path_ptr_name = '(cparent \<^bsup>s\<^esup>%(name)s_ptr [%(path)s] :: %(toptp)s ptr)'
+direct_ptr_name = '\\<^bsup>s\\<^esup>%(name)s_ptr'
+path_ptr_name = '(cparent \\<^bsup>s\\<^esup>%(name)s_ptr [%(path)s] :: %(toptp)s ptr)'
 
 
 def ptr_get_template(ptrname):
-    return ptr_basic_template('get_%(field)s', ptrname, '\<acute>%(ret_name)s :== ', '',
-                              '''\<lbrace>\<acute>%(ret_name)s = '''
+    return ptr_basic_template('get_%(field)s', ptrname, '\\<acute>%(ret_name)s :== ', '',
+                              '''\\<lbrace>\\<acute>%(ret_name)s = '''
                               '''%(name)s_CL.%(field)s_CL '''
-                              '''(%(name)s_lift (%(access_path)s))\<rbrace>''')
+                              '''(%(name)s_lift (%(access_path)s))\\<rbrace>''')
 
 
 def ptr_set_template(name, ptrname):
-    return ptr_basic_template(name, ptrname, '', ', \<acute>v%(base)d',
-                              '''{t. \<exists>%(name)s.
+    return ptr_basic_template(name, ptrname, '', ', \\<acute>v%(base)d',
+                              '''{t. \\<exists>%(name)s.
                               %(name)s_lift %(name)s =
-                              %(name)s_lift (%(access_path)s) \<lparr> %(name)s_CL.%(field)s_CL '''
-                              ''':= %(sign_extend)s(\<^bsup>s\<^esup>v%(base)d AND %(mask)s) \<rparr> \<and>
+                              %(name)s_lift (%(access_path)s) \\<lparr> %(name)s_CL.%(field)s_CL '''
+                              ''':= %(sign_extend)s(\\<^bsup>s\\<^esup>v%(base)d AND %(mask)s) \\<rparr> \\<and>
                               t_hrs_' (globals t) = hrs_mem_update (heap_update
                                       (''' + ptrname + ''')
                                       %(update_path)s)
@@ -681,8 +681,8 @@ def ptr_set_template(name, ptrname):
 
 def ptr_new_template(ptrname):
     return ptr_basic_template('new', ptrname, '', ', %(args)s',
-                              '''{t. \<exists>%(name)s. %(name)s_lift %(name)s = \<lparr>
-                              %(field_eqs)s \<rparr> \<and>
+                              '''{t. \\<exists>%(name)s. %(name)s_lift %(name)s = \\<lparr>
+                              %(field_eqs)s \\<rparr> \\<and>
                               t_hrs_' (globals t) = hrs_mem_update (heap_update
                                       (''' + ptrname + ''')
                                       %(update_path)s)
@@ -691,14 +691,14 @@ def ptr_new_template(ptrname):
 
 
 def ptr_get_tag_template(ptrname):
-    return ptr_basic_template('get_%(tagname)s', ptrname, '\<acute>%(ret_name)s :== ', '',
-                              '''\<lbrace>\<acute>%(ret_name)s = %(name)s_get_tag (%(access_path)s)\<rbrace>''')
+    return ptr_basic_template('get_%(tagname)s', ptrname, '\\<acute>%(ret_name)s :== ', '',
+                              '''\\<lbrace>\\<acute>%(ret_name)s = %(name)s_get_tag (%(access_path)s)\\<rbrace>''')
 
 
 def ptr_empty_union_new_template(ptrname):
     return ptr_union_basic_template('new', ptrname, '', '', '',
-                                    '''{t. \<exists>%(name)s. '''
-                                    '''%(name)s_get_tag %(name)s = scast %(name)s_%(block)s \<and>
+                                    '''{t. \\<exists>%(name)s. '''
+                                    '''%(name)s_get_tag %(name)s = scast %(name)s_%(block)s \\<and>
                                     t_hrs_' (globals t) = hrs_mem_update (heap_update
                                             (''' + ptrname + ''')
                                             %(update_path)s)
@@ -708,10 +708,10 @@ def ptr_empty_union_new_template(ptrname):
 
 def ptr_union_new_template(ptrname):
     return ptr_union_basic_template('new', ptrname, '', ', %(args)s', '',
-                                    '''{t. \<exists>%(name)s. '''
-                                    '''%(name)s_%(block)s_lift %(name)s = \<lparr>
-                                    %(field_eqs)s \<rparr> \<and>
-                                    %(name)s_get_tag %(name)s = scast %(name)s_%(block)s \<and>
+                                    '''{t. \\<exists>%(name)s. '''
+                                    '''%(name)s_%(block)s_lift %(name)s = \\<lparr>
+                                    %(field_eqs)s \\<rparr> \\<and>
+                                    %(name)s_get_tag %(name)s = scast %(name)s_%(block)s \\<and>
                                     t_hrs_' (globals t) = hrs_mem_update (heap_update
                                             (''' + ptrname + ''')
                                             %(update_path)s)
@@ -721,22 +721,22 @@ def ptr_union_new_template(ptrname):
 
 def ptr_union_get_template(ptrname):
     return ptr_union_basic_template('get_%(field)s', ptrname,
-                                    '\<acute>%(ret_name)s :== ', '',
-                                    '\<and> %(name)s_get_tag %(access_path)s = scast %(name)s_%(block)s',
-                                    '''\<lbrace>\<acute>%(ret_name)s = '''
+                                    '\\<acute>%(ret_name)s :== ', '',
+                                    '\\<and> %(name)s_get_tag %(access_path)s = scast %(name)s_%(block)s',
+                                    '''\\<lbrace>\\<acute>%(ret_name)s = '''
                                     '''%(name)s_%(block)s_CL.%(field)s_CL '''
-                                    '''(%(name)s_%(block)s_lift %(access_path)s)\<rbrace>''')
+                                    '''(%(name)s_%(block)s_lift %(access_path)s)\\<rbrace>''')
 
 
 def ptr_union_set_template(ptrname):
-    return ptr_union_basic_template('set_%(field)s', ptrname, '', ', \<acute>v%(base)d',
-                                    '\<and> %(name)s_get_tag %(access_path)s = scast %(name)s_%(block)s',
-                                    '''{t. \<exists>%(name)s. '''
+    return ptr_union_basic_template('set_%(field)s', ptrname, '', ', \\<acute>v%(base)d',
+                                    '\\<and> %(name)s_get_tag %(access_path)s = scast %(name)s_%(block)s',
+                                    '''{t. \\<exists>%(name)s. '''
                                     '''%(name)s_%(block)s_lift %(name)s =
                                     %(name)s_%(block)s_lift %(access_path)s '''
-                                    '''\<lparr> %(name)s_%(block)s_CL.%(field)s_CL '''
-                                    ''':= %(sign_extend)s(\<^bsup>s\<^esup>v%(base)d AND %(mask)s) \<rparr> \<and>
-                                    %(name)s_get_tag %(name)s = scast %(name)s_%(block)s \<and>
+                                    '''\\<lparr> %(name)s_%(block)s_CL.%(field)s_CL '''
+                                    ''':= %(sign_extend)s(\\<^bsup>s\\<^esup>v%(base)d AND %(mask)s) \\<rparr> \\<and>
+                                    %(name)s_get_tag %(name)s = scast %(name)s_%(block)s \\<and>
                                     t_hrs_' (globals t) = hrs_mem_update (heap_update
                                             (''' + ptrname + ''')
                                             %(update_path)s)
@@ -748,38 +748,38 @@ proof_templates = {
 
     'lift_collapse_proof': [
         '''lemma %(name)s_lift_%(block)s:
-  "%(name)s_get_tag %(name)s = scast %(name)s_%(block)s \<Longrightarrow>
+  "%(name)s_get_tag %(name)s = scast %(name)s_%(block)s \\<Longrightarrow>
   %(name)s_lift %(name)s =
   Some (%(value)s)"''',
         '''  by (simp add:%(name)s_lift_def %(name)s_tag_defs)'''],
 
     'words_NULL_proof': [
         '''lemma %(name)s_ptr_words_NULL:
-  "c_guard (p::%(name)s_C ptr) \<Longrightarrow>
-   0 < &(p\<rightarrow>[''words_C''])"''',
+  "c_guard (p::%(name)s_C ptr) \\<Longrightarrow>
+   0 < &(p\\<rightarrow>[''words_C''])"''',
         '''  by (fastforce intro:c_guard_NULL_fl simp:typ_uinfo_t_def)'''],
 
     'words_aligned_proof': [
         '''lemma %(name)s_ptr_words_aligned:
-  "c_guard (p::%(name)s_C ptr) \<Longrightarrow>
-   ptr_aligned ((Ptr &(p\<rightarrow>[''words_C'']))::'''
+  "c_guard (p::%(name)s_C ptr) \\<Longrightarrow>
+   ptr_aligned ((Ptr &(p\\<rightarrow>[''words_C'']))::'''
         '''((word%(base)d[%(words)d]) ptr))"''',
         '''  by (fastforce intro:c_guard_ptr_aligned_fl simp:typ_uinfo_t_def)'''],
 
     'words_ptr_safe_proof': [
         '''lemma %(name)s_ptr_words_ptr_safe:
-  "ptr_safe (p::%(name)s_C ptr) d \<Longrightarrow>
-   ptr_safe (Ptr &(p\<rightarrow>[''words_C''])::'''
+  "ptr_safe (p::%(name)s_C ptr) d \\<Longrightarrow>
+   ptr_safe (Ptr &(p\\<rightarrow>[''words_C''])::'''
         '''((word%(base)d[%(words)d]) ptr)) d"''',
         '''  by (fastforce intro:ptr_safe_mono simp:typ_uinfo_t_def)'''],
 
     'get_tag_fun_spec_proof': [
         '''lemma (in ''' + loc_name + ''') fun_spec:
-  "\<Gamma> \<turnstile> {\<sigma>}
-       \<acute>ret__%(rtype)s :== PROC %(name)s_get_%(tag_name)s('''
-        ''' \<acute>%(name))
-       \<lbrace>\<acute>ret__%(rtype)s = %(name)s_get_tag'''
-        '''\<^bsup>\<sigma>\<^esup>\<rbrace>"''',
+  "\\<Gamma> \\<turnstile> {\\<sigma>}
+       \\<acute>ret__%(rtype)s :== PROC %(name)s_get_%(tag_name)s('''
+        ''' \\<acute>%(name))
+       \\<lbrace>\\<acute>ret__%(rtype)s = %(name)s_get_tag'''
+        '''\\<^bsup>\\<sigma>\\<^esup>\\<rbrace>"''',
         '''  apply(rule allI, rule conseqPre, vcg)
   apply (clarsimp)
   apply (simp add:$(name)s_get_tag_def word_sle_def mask_def ucast_def)
@@ -787,14 +787,14 @@ proof_templates = {
 
     'const_modifies_proof': [
         '''lemma (in ''' + loc_name + ''') %(fun_name)s_modifies:
-  "\<forall> s. \<Gamma> \<turnstile>\<^bsub>/UNIV\<^esub> {s}
+  "\\<forall> s. \\<Gamma> \\<turnstile>\\<^bsub>/UNIV\\<^esub> {s}
        PROC %(fun_name)s(%(args)s)
        {t. t may_not_modify_globals s}"''',
         '''  by (vcg spec=modifies strip_guards=true)'''],
 
     'ptr_set_modifies_proof': [
         '''lemma (in ''' + loc_name + ''') %(fun_name)s_modifies:
-  "\<forall>s. \<Gamma> \<turnstile>\<^bsub>/UNIV\<^esub> {s}
+  "\\<forall>s. \\<Gamma> \\<turnstile>\\<^bsub>/UNIV\\<^esub> {s}
        PROC %(fun_name)s(%(args)s)
        {t. t may_only_modify_globals s in [t_hrs]}"''',
         '''  by (vcg spec=modifies strip_guards=true)'''],
@@ -802,10 +802,10 @@ proof_templates = {
 
     'new_spec': [
         '''lemma (in ''' + loc_name + ''') %(name)s_new_spec:
-  "\<forall> s. \<Gamma> \<turnstile> {s}
-       \<acute>ret__struct_%(name)s_C :== PROC %(name)s_new(%(args)s)
-       \<lbrace> %(name)s_lift \<acute>ret__struct_%(name)s_C = \<lparr>
-          %(field_eqs)s \<rparr> \<rbrace>"''',
+  "\\<forall> s. \\<Gamma> \\<turnstile> {s}
+       \\<acute>ret__struct_%(name)s_C :== PROC %(name)s_new(%(args)s)
+       \\<lbrace> %(name)s_lift \\<acute>ret__struct_%(name)s_C = \\<lparr>
+          %(field_eqs)s \\<rparr> \\<rbrace>"''',
         '''  apply (rule allI, rule conseqPre, vcg)
   apply (clarsimp simp: guard_simps)
   apply (simp add: %(name)s_lift_def)
@@ -825,12 +825,12 @@ proof_templates = {
 
     'get_spec': [
         '''lemma (in ''' + loc_name + ''') %(name)s_get_%(field)s_spec:
-  "\<forall>s. \<Gamma> \<turnstile> {s}
-       \<acute>%(ret_name)s :== '''
-        '''PROC %(name)s_get_%(field)s(\<acute>%(name)s)
-       \<lbrace>\<acute>%(ret_name)s = '''
+  "\\<forall>s. \\<Gamma> \\<turnstile> {s}
+       \\<acute>%(ret_name)s :== '''
+        '''PROC %(name)s_get_%(field)s(\\<acute>%(name)s)
+       \\<lbrace>\\<acute>%(ret_name)s = '''
         '''%(name)s_CL.%(field)s_CL '''
-        '''(%(name)s_lift \<^bsup>s\<^esup>%(name)s)\<rbrace>"''',
+        '''(%(name)s_lift \\<^bsup>s\\<^esup>%(name)s)\\<rbrace>"''',
         '''  apply (rule allI, rule conseqPre, vcg)
   apply clarsimp
   apply (simp add: %(name)s_lift_def mask_shift_simps guard_simps)
@@ -840,13 +840,13 @@ proof_templates = {
 
     'set_spec': [
         '''lemma (in ''' + loc_name + ''') %(name)s_set_%(field)s_spec:
-  "\<forall>s. \<Gamma> \<turnstile> {s}
-       \<acute>ret__struct_%(name)s_C :== '''
-        '''PROC %(name)s_set_%(field)s(\<acute>%(name)s, \<acute>v%(base)d)
-       \<lbrace>%(name)s_lift \<acute>ret__struct_%(name)s_C = '''
-        '''%(name)s_lift \<^bsup>s\<^esup>%(name)s \<lparr> '''
+  "\\<forall>s. \\<Gamma> \\<turnstile> {s}
+       \\<acute>ret__struct_%(name)s_C :== '''
+        '''PROC %(name)s_set_%(field)s(\\<acute>%(name)s, \\<acute>v%(base)d)
+       \\<lbrace>%(name)s_lift \\<acute>ret__struct_%(name)s_C = '''
+        '''%(name)s_lift \\<^bsup>s\\<^esup>%(name)s \\<lparr> '''
         '''%(name)s_CL.%(field)s_CL '''
-        ''':= %(sign_extend)s (\<^bsup>s\<^esup>v%(base)d AND %(mask)s) \<rparr>\<rbrace>"''',
+        ''':= %(sign_extend)s (\\<^bsup>s\\<^esup>v%(base)d AND %(mask)s) \\<rparr>\\<rbrace>"''',
         '''  apply(rule allI, rule conseqPre, vcg)
   apply (clarsimp simp: guard_simps ucast_id
                         %(name)s_lift_def
@@ -945,11 +945,11 @@ proof_templates = {
 
     'get_tag_spec': [
         '''lemma (in ''' + loc_name + ''') %(name)s_get_%(tagname)s_spec:
-  "\<forall>s. \<Gamma> \<turnstile> {s}
-       \<acute>%(ret_name)s :== ''' \
-    '''PROC %(name)s_get_%(tagname)s(\<acute>%(name)s)
-       \<lbrace>\<acute>%(ret_name)s = ''' \
-    '''%(name)s_get_tag \<^bsup>s\<^esup>%(name)s\<rbrace>"''',
+  "\\<forall>s. \\<Gamma> \\<turnstile> {s}
+       \\<acute>%(ret_name)s :== ''' \
+    '''PROC %(name)s_get_%(tagname)s(\\<acute>%(name)s)
+       \\<lbrace>\\<acute>%(ret_name)s = ''' \
+    '''%(name)s_get_tag \\<^bsup>s\\<^esup>%(name)s\\<rbrace>"''',
         '''  apply(rule allI, rule conseqPre, vcg)
   apply (clarsimp)
   apply (simp add:%(name)s_get_tag_def mask_shift_simps guard_simps)
@@ -957,10 +957,10 @@ proof_templates = {
 
     'get_tag_equals_spec': [
         '''lemma (in ''' + loc_name + ''') %(name)s_%(tagname)s_equals_spec:
-  "\<forall>s. \<Gamma> \<turnstile> {s}
-       \<acute>ret__int :==
-       PROC %(name)s_%(tagname)s_equals(\<acute>%(name)s, \<acute>%(name)s_type_tag)
-       \<lbrace>\<acute>ret__int = of_bl [%(name)s_get_tag \<^bsup>s\<^esup>%(name)s = \<^bsup>s\<^esup>%(name)s_type_tag]\<rbrace>"''',
+  "\\<forall>s. \\<Gamma> \\<turnstile> {s}
+       \\<acute>ret__int :==
+       PROC %(name)s_%(tagname)s_equals(\\<acute>%(name)s, \\<acute>%(name)s_type_tag)
+       \\<lbrace>\\<acute>ret__int = of_bl [%(name)s_get_tag \\<^bsup>s\\<^esup>%(name)s = \\<^bsup>s\\<^esup>%(name)s_type_tag]\\<rbrace>"''',
         '''  apply(rule allI, rule conseqPre, vcg)
   apply (clarsimp)
   apply (simp add:%(name)s_get_tag_eq_x mask_shift_simps guard_simps)
@@ -993,11 +993,11 @@ proof_templates = {
     'empty_union_new_spec': [
         '''lemma (in ''' + loc_name + ''') ''' \
         '''%(name)s_%(block)s_new_spec:
-  "\<forall>s. \<Gamma> \<turnstile> {s}
-       \<acute>ret__struct_%(name)s_C :== ''' \
+  "\\<forall>s. \\<Gamma> \\<turnstile> {s}
+       \\<acute>ret__struct_%(name)s_C :== ''' \
     '''PROC %(name)s_%(block)s_new()
-       \<lbrace>%(name)s_get_tag \<acute>ret__struct_%(name)s_C = ''' \
-     '''scast %(name)s_%(block)s\<rbrace>"''',
+       \\<lbrace>%(name)s_get_tag \\<acute>ret__struct_%(name)s_C = ''' \
+     '''scast %(name)s_%(block)s\\<rbrace>"''',
         '''  apply(rule allI, rule conseqPre, vcg)
   by (clarsimp simp: guard_simps
                      %(name)s_lift_def
@@ -1010,14 +1010,14 @@ proof_templates = {
     'union_new_spec': [
         '''lemma (in ''' + loc_name + ''') ''' \
         '''%(name)s_%(block)s_new_spec:
-  "\<forall>s. \<Gamma> \<turnstile> {s}
-       \<acute>ret__struct_%(name)s_C :== ''' \
+  "\\<forall>s. \\<Gamma> \\<turnstile> {s}
+       \\<acute>ret__struct_%(name)s_C :== ''' \
     '''PROC %(name)s_%(block)s_new(%(args)s)
-       \<lbrace>%(name)s_%(block)s_lift ''' \
-    '''\<acute>ret__struct_%(name)s_C = \<lparr>
-          %(field_eqs)s \<rparr> \<and>
-        %(name)s_get_tag \<acute>ret__struct_%(name)s_C = ''' \
-     '''scast %(name)s_%(block)s\<rbrace>"''',
+       \\<lbrace>%(name)s_%(block)s_lift ''' \
+    '''\\<acute>ret__struct_%(name)s_C = \\<lparr>
+          %(field_eqs)s \\<rparr> \\<and>
+        %(name)s_get_tag \\<acute>ret__struct_%(name)s_C = ''' \
+     '''scast %(name)s_%(block)s\\<rbrace>"''',
         '''  apply (rule allI, rule conseqPre, vcg)
   apply (clarsimp simp: guard_simps o_def mask_def shift_over_ao_dists)
   apply (rule context_conjI[THEN iffD1[OF conj_commute]],
@@ -1081,15 +1081,15 @@ proof_templates = {
     'union_get_spec': [
         '''lemma (in ''' + loc_name + ''') ''' \
         '''%(name)s_%(block)s_get_%(field)s_spec:
-  "\<forall>s. \<Gamma> \<turnstile> ''' \
-'''\<lbrace>s. %(name)s_get_tag \<acute>%(name)s = ''' \
-        '''scast %(name)s_%(block)s\<rbrace>
-       \<acute>%(ret_name)s :== ''' \
-       '''PROC %(name)s_%(block)s_get_%(field)s(\<acute>%(name)s)
-       \<lbrace>\<acute>%(ret_name)s = ''' \
+  "\\<forall>s. \\<Gamma> \\<turnstile> ''' \
+'''\\<lbrace>s. %(name)s_get_tag \\<acute>%(name)s = ''' \
+        '''scast %(name)s_%(block)s\\<rbrace>
+       \\<acute>%(ret_name)s :== ''' \
+       '''PROC %(name)s_%(block)s_get_%(field)s(\\<acute>%(name)s)
+       \\<lbrace>\\<acute>%(ret_name)s = ''' \
        '''%(name)s_%(block)s_CL.%(field)s_CL ''' \
-       '''(%(name)s_%(block)s_lift \<^bsup>s\<^esup>%(name)s)''' \
-       '''\<rbrace>"''',
+       '''(%(name)s_%(block)s_lift \\<^bsup>s\\<^esup>%(name)s)''' \
+       '''\\<rbrace>"''',
         '''  apply(rule allI, rule conseqPre, vcg)
   apply (clarsimp simp:guard_simps)
   apply (simp add:%(name)s_%(block)s_lift_def)
@@ -1110,17 +1110,17 @@ proof_templates = {
     'union_set_spec': [
         '''lemma (in ''' + loc_name + ''') ''' \
         '''%(name)s_%(block)s_set_%(field)s_spec:
-  "\<forall>s. \<Gamma> \<turnstile> ''' \
-'''\<lbrace>s. %(name)s_get_tag \<acute>%(name)s = ''' \
-        '''scast %(name)s_%(block)s\<rbrace>
-       \<acute>ret__struct_%(name)s_C :== ''' \
-    '''PROC %(name)s_%(block)s_set_%(field)s(\<acute>%(name)s, \<acute>v%(base)d)
-       \<lbrace>%(name)s_%(block)s_lift \<acute>ret__struct_%(name)s_C = ''' \
-    '''%(name)s_%(block)s_lift \<^bsup>s\<^esup>%(name)s \<lparr> ''' \
+  "\\<forall>s. \\<Gamma> \\<turnstile> ''' \
+'''\\<lbrace>s. %(name)s_get_tag \\<acute>%(name)s = ''' \
+        '''scast %(name)s_%(block)s\\<rbrace>
+       \\<acute>ret__struct_%(name)s_C :== ''' \
+    '''PROC %(name)s_%(block)s_set_%(field)s(\\<acute>%(name)s, \\<acute>v%(base)d)
+       \\<lbrace>%(name)s_%(block)s_lift \\<acute>ret__struct_%(name)s_C = ''' \
+    '''%(name)s_%(block)s_lift \\<^bsup>s\\<^esup>%(name)s \\<lparr> ''' \
         '''%(name)s_%(block)s_CL.%(field)s_CL ''' \
-        ''':= %(sign_extend)s (\<^bsup>s\<^esup>v%(base)d AND %(mask)s)\<rparr> \<and>
-        %(name)s_get_tag \<acute>ret__struct_%(name)s_C = ''' \
-     '''scast %(name)s_%(block)s\<rbrace>"''',
+        ''':= %(sign_extend)s (\\<^bsup>s\\<^esup>v%(base)d AND %(mask)s)\\<rparr> \\<and>
+        %(name)s_get_tag \\<acute>ret__struct_%(name)s_C = ''' \
+     '''scast %(name)s_%(block)s\\<rbrace>"''',
         '''  apply (rule allI, rule conseqPre, vcg)
   apply clarsimp
   apply (rule context_conjI[THEN iffD1[OF conj_commute]],
@@ -1460,14 +1460,14 @@ class TaggedUnion:
             emit_named("%(name)s_get_%(tagname)s" % substs, params,
                        make_proof('const_modifies_proof',
                                   {"fun_name": "%(name)s_get_%(tagname)s" % substs,
-                                   "args": ', '.join(["\<acute>ret__unsigned_long",
-                                                      "\<acute>%(name)s" % substs])},
+                                   "args": ', '.join(["\\<acute>ret__unsigned_long",
+                                                      "\\<acute>%(name)s" % substs])},
                                   params.sorry))
             emit_named("%(name)s_ptr_get_%(tagname)s" % substs, params,
                        make_proof('const_modifies_proof',
                                   {"fun_name": "%(name)s_ptr_get_%(tagname)s" % substs,
-                                   "args": ', '.join(["\<acute>ret__unsigned_long",
-                                                      "\<acute>%(name)s_ptr" % substs])},
+                                   "args": ', '.join(["\\<acute>ret__unsigned_long",
+                                                      "\\<acute>%(name)s_ptr" % substs])},
                                   params.sorry))
 
         emit_named("%s_get_%s" % (self.name, self.tagname), params,
@@ -1483,7 +1483,7 @@ class TaggedUnion:
 
         for name, value, ref in self.tags:
             # Generate struct_new specs
-            arg_list = ["\<acute>" + field
+            arg_list = ["\\<acute>" + field
                         for field in ref.visible_order
                         if field not in self.tag_slices]
 
@@ -1494,7 +1494,7 @@ class TaggedUnion:
                                       {"fun_name": "%s_%s_new" %
                                        (self.name, ref.name),
                                        "args": ', '.join([
-                                           "\<acute>ret__struct_%(name)s_C" % substs] +
+                                           "\\<acute>ret__struct_%(name)s_C" % substs] +
                                            arg_list)},
                                       params.sorry))
 
@@ -1503,7 +1503,7 @@ class TaggedUnion:
                                       {"fun_name": "%s_%s_ptr_new" %
                                        (self.name, ref.name),
                                        "args": ', '.join([
-                                           "\<acute>ret__struct_%(name)s_C" % substs] +
+                                           "\\<acute>ret__struct_%(name)s_C" % substs] +
                                            arg_list)},
                                       params.sorry))
 
@@ -1532,7 +1532,7 @@ class TaggedUnion:
                                             self.base_sign_extend, high, size)
                     sign_extend = sign_extend_proof(high, self.base_bits, self.base_sign_extend)
                     field_eq_list.append(
-                        "%s_%s_CL.%s_CL = %s(\<^bsup>s\<^esup>%s AND %s)" %
+                        "%s_%s_CL.%s_CL = %s(\\<^bsup>s\\<^esup>%s AND %s)" %
                         (self.name, ref.name, field, sign_extend,
                             var_name(field, self.base), mask))
                 field_eqs = ',\n          '.join(field_eq_list)
@@ -1589,8 +1589,8 @@ class TaggedUnion:
                                           {"fun_name": "%s_%s_get_%s" %
                                            (self.name, ref.name, field),
                                               "args": ', '.join([
-                                                  "\<acute>ret__unsigned_long",
-                                                  "\<acute>%s" % self.name])},
+                                                  "\\<acute>ret__unsigned_long",
+                                                  "\\<acute>%s" % self.name])},
                                           params.sorry))
 
                     emit_named("%s_%s_ptr_get_%s" % (self.name, ref.name, field),
@@ -1599,8 +1599,8 @@ class TaggedUnion:
                                           {"fun_name": "%s_%s_ptr_get_%s" %
                                            (self.name, ref.name, field),
                                               "args": ', '.join([
-                                                  "\<acute>ret__unsigned_long",
-                                                  "\<acute>%s_ptr" % self.name])},
+                                                  "\\<acute>ret__unsigned_long",
+                                                  "\\<acute>%s_ptr" % self.name])},
                                           params.sorry))
 
                 # Get spec
@@ -1616,9 +1616,9 @@ class TaggedUnion:
                                           {"fun_name": "%s_%s_set_%s" %
                                            (self.name, ref.name, field),
                                               "args": ', '.join([
-                                                  "\<acute>ret__struct_%s_C" % self.name,
-                                                  "\<acute>%s" % self.name,
-                                                  "\<acute>v%(base)d"])},
+                                                  "\\<acute>ret__struct_%s_C" % self.name,
+                                                  "\\<acute>%s" % self.name,
+                                                  "\\<acute>v%(base)d"])},
                                           params.sorry))
 
                     emit_named("%s_%s_ptr_set_%s" % (self.name, ref.name, field),
@@ -1627,8 +1627,8 @@ class TaggedUnion:
                                           {"fun_name": "%s_%s_ptr_set_%s" %
                                            (self.name, ref.name, field),
                                               "args": ', '.join([
-                                                  "\<acute>%s_ptr" % self.name,
-                                                  "\<acute>v%(base)d"])},
+                                                  "\\<acute>%s_ptr" % self.name,
+                                                  "\\<acute>v%(base)d"])},
                                           params.sorry))
 
                 # Set spec
@@ -1800,7 +1800,7 @@ class TaggedUnion:
             if len(field_inits) == 0:
                 value = gen_name(name, True)
             else:
-                value = "%s \<lparr> %s \<rparr>" % \
+                value = "%s \\<lparr> %s \\<rparr>" % \
                     (gen_name(name, True), ','.join(field_inits))
 
             tag_cases.append("if tag = scast %s then Some (%s)" %
@@ -2500,13 +2500,13 @@ class Block:
         print(file=output)
 
         # Generate struct_new specs
-        arg_list = ["\<acute>" + field for field in self.visible_order]
+        arg_list = ["\\<acute>" + field for field in self.visible_order]
 
         if not params.skip_modifies:
             emit_named("%s_new" % self.name, params,
                        make_proof('const_modifies_proof',
                                   {"fun_name": "%s_new" % self.name,
-                                   "args": ', '.join(["\<acute>ret__struct_%s_C" %
+                                   "args": ', '.join(["\\<acute>ret__struct_%s_C" %
                                                       self.name] +
                                                      arg_list)},
                                   params.sorry))
@@ -2518,7 +2518,7 @@ class Block:
             mask = field_mask_proof(self.base, self.base_bits, self.base_sign_extend, high, size)
             sign_extend = sign_extend_proof(high, self.base_bits, self.base_sign_extend)
 
-            field_eq_list.append("%s_CL.%s_CL = %s(\<^bsup>s\<^esup>%s AND %s)" %
+            field_eq_list.append("%s_CL.%s_CL = %s(\\<^bsup>s\\<^esup>%s AND %s)" %
                                  (self.name, field, sign_extend, field, mask))
         field_eqs = ',\n          '.join(field_eq_list)
 
@@ -2554,8 +2554,8 @@ class Block:
                            make_proof('const_modifies_proof',
                                       {"fun_name": "%s_get_%s" % (self.name, field),
                                        "args": ', '.join([
-                                           "\<acute>ret__unsigned_long",
-                                           "\<acute>%s" % self.name])},
+                                           "\\<acute>ret__unsigned_long",
+                                           "\\<acute>%s" % self.name])},
                                       params.sorry))
 
                 # Ptr get modifies spec
@@ -2563,8 +2563,8 @@ class Block:
                            make_proof('const_modifies_proof',
                                       {"fun_name": "%s_ptr_get_%s" % (self.name, field),
                                        "args": ', '.join([
-                                           "\<acute>ret__unsigned_long",
-                                           "\<acute>%s_ptr" % self.name])},
+                                           "\\<acute>ret__unsigned_long",
+                                           "\\<acute>%s_ptr" % self.name])},
                                       params.sorry))
 
             # Get spec
@@ -2577,17 +2577,17 @@ class Block:
                            make_proof('const_modifies_proof',
                                       {"fun_name": "%s_set_%s" % (self.name, field),
                                        "args": ', '.join([
-                                           "\<acute>ret__struct_%s_C" % self.name,
-                                           "\<acute>%s" % self.name,
-                                           "\<acute>v%(base)d"])},
+                                           "\\<acute>ret__struct_%s_C" % self.name,
+                                           "\\<acute>%s" % self.name,
+                                           "\\<acute>v%(base)d"])},
                                       params.sorry))
 
                 emit_named("%s_ptr_set_%s" % (self.name, field), params,
                            make_proof('ptr_set_modifies_proof',
                                       {"fun_name": "%s_ptr_set_%s" % (self.name, field),
                                        "args": ', '.join([
-                                           "\<acute>%s_ptr" % self.name,
-                                           "\<acute>v%(base)d"])},
+                                           "\\<acute>%s_ptr" % self.name,
+                                           "\\<acute>v%(base)d"])},
                                       params.sorry))
 
             # Set spec

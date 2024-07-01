@@ -581,8 +581,8 @@ void setNextInterrupt(void)
         next_interrupt = MIN(next_interrupt, NODE_STATE(ksCurTime) + ksDomainTime);
     }
 
-    if (NODE_STATE(ksReleaseHead) != NULL) {
-        next_interrupt = MIN(refill_head(NODE_STATE(ksReleaseHead)->tcbSchedContext)->rTime, next_interrupt);
+    if (NODE_STATE(ksReleaseQueue.head) != NULL) {
+        next_interrupt = MIN(refill_head(NODE_STATE(ksReleaseQueue.head)->tcbSchedContext)->rTime, next_interrupt);
     }
 
     /* We should never be attempting to schedule anything earlier than ksCurTime */
@@ -681,7 +681,8 @@ void rescheduleRequired(void)
 #ifdef CONFIG_KERNEL_MCS
 void awaken(void)
 {
-    while (unlikely(NODE_STATE(ksReleaseHead) != NULL && refill_ready(NODE_STATE(ksReleaseHead)->tcbSchedContext))) {
+    while (unlikely(NODE_STATE(ksReleaseQueue.head) != NULL
+                    && refill_ready(NODE_STATE(ksReleaseQueue.head)->tcbSchedContext))) {
         tcb_t *awakened = tcbReleaseDequeue();
         /* the currently running thread cannot have just woken up */
         assert(awakened != NODE_STATE(ksCurThread));
