@@ -487,3 +487,18 @@ the case of variable-sized objects, each object must also be of the same size.
 If the size of the memory area needed (calculated by the object size multiplied
 by \texttt{num\_objects}) is greater than the remaining unallocated memory of
 the \obj{Untyped Object}, an error will result.
+
+Useful constants for creating \obj{SchedContext} objects are listed below.
+
+{\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{ll}
+  \toprule
+  \texttt{seL4\_MinSchedContextBits} & minimum log2-size of a
+  scheduling context\\
+  \texttt{seL4\_CoreSchedContextBytes} & size in bytes of a scheduling
+  context, excluding extra refills\\
+  \texttt{seL4\_RefillSizeBytes} & size in bytes of a single extra
+  refill\\
+  \bottomrule
+\end{tabular}}
+  iz
