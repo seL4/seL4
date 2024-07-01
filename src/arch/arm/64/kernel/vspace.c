@@ -1664,26 +1664,25 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 #else
+        /* When in EL1, we are using the user page table for flushing and need to make sure
+           the mapping info in the cap is not stale. */
+        lookupPTSlot_ret_t lu_ret = lookupPTSlot(find_ret.vspace_root, vaddr);
+        pte_t pte = *lu_ret.ptSlot;
+        void *base_ptr = (void *) cap_frame_cap_get_capFBasePtr(cap);
+        if (unlikely(lu_ret.ptBitsLeft != pageBitsForSize(cap_frame_cap_get_capFSize(cap)) ||
+                     !pte_is_page_type(pte) ||
+                     pte_get_page_base_address(pte) != pptr_to_paddr(base_ptr))) {
+            userError("Page Flush: Attempting to use cap with stale mapping information.");
+            current_syscall_error.type = seL4_InvalidCapability;
+            current_syscall_error.invalidCapNumber = 0;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
         /* When in EL1, the mapping must be writeable for DC IVAC */
-        if (invLabel == ARMPageInvalidate_Data) {
-            lookupPTSlot_ret_t lu_ret = lookupPTSlot(find_ret.vspace_root, vaddr);
-            pte_t pte = *lu_ret.ptSlot;
-            void *base_ptr = (void *) cap_frame_cap_get_capFBasePtr(cap);
-            /* The cap mapping info could be out of date, so we need to check that the page we are
-               getting is the one the cap provides authority for. */
-            if (unlikely(lu_ret.ptBitsLeft != pageBitsForSize(cap_frame_cap_get_capFSize(cap)) ||
-                         !pte_is_page_type(pte) ||
-                         pte_get_page_base_address(pte) != pptr_to_paddr(base_ptr))) {
-                userError("ARMPageInvalidate_Data: Attempting to use cap with stale mapping information.");
-                current_syscall_error.type = seL4_InvalidCapability;
-                current_syscall_error.invalidCapNumber = 0;
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-            if (vmRightsFromPTE(pte) != VMReadWrite) {
-                userError("ARMPageInvalidate_Data: Cannot call on mapping without write rights.");
-                current_syscall_error.type = seL4_IllegalOperation;
-                return EXCEPTION_SYSCALL_ERROR;
-            }
+        if (invLabel == ARMPageInvalidate_Data && vmRightsFromPTE(pte) != VMReadWrite) {
+            userError("ARMPageInvalidate_Data: Cannot call on mapping without write rights.");
+            current_syscall_error.type = seL4_IllegalOperation;
+            return EXCEPTION_SYSCALL_ERROR;
         }
 #endif
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
