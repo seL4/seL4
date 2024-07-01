@@ -308,6 +308,11 @@ static void nextDomain(void)
 #ifdef CONFIG_KERNEL_MCS
     NODE_STATE(ksReprogram) = true;
 #endif
+#if defined(CONFIG_HAVE_FPU) && CONFIG_NUM_DOMAINS > 1
+    // Reset FPU state on domain switch.
+    // Domains > 1 and SMP are not supported.
+    switchFpuOwner(NULL, SMP_TERNARY(assert(0), 0));
+#endif
     ksWorkUnitsCompleted = 0;
     ksCurDomain = ksDomSchedule[ksDomScheduleIdx].domain;
 #ifdef CONFIG_KERNEL_MCS
