@@ -392,6 +392,9 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
             /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSmallPage
                                                     (ptr_val \<acute>regionBase)
                                                     (unat ARMSmallPageBits))" */
+            cleanCacheRange_RAM((word_t)regionBase,
+                                (word_t)regionBase + MASK(pageBitsForSize(ARMSmallPage)),
+                                addrFromPPtr(regionBase));
         }
         return cap_small_frame_cap_new(
                    ASID_LOW(asidInvalid), VMReadWrite,
@@ -415,6 +418,9 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
             /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMLargePage
                                                     (ptr_val \<acute>regionBase)
                                                     (unat ARMLargePageBits))" */
+            cleanCacheRange_RAM((word_t)regionBase,
+                                (word_t)regionBase + MASK(pageBitsForSize(ARMLargePage)),
+                                addrFromPPtr(regionBase));
         }
         return cap_frame_cap_new(
                    ARMLargePage, ASID_LOW(asidInvalid), VMReadWrite,
@@ -444,6 +450,9 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
             /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSection
                                             (ptr_val \<acute>regionBase)
                                             (unat ARMSectionBits))" */
+            cleanCacheRange_RAM((word_t)regionBase,
+                                (word_t)regionBase + MASK(pageBitsForSize(ARMSection)),
+                                addrFromPPtr(regionBase));
         }
         return cap_frame_cap_new(
                    ARMSection, ASID_LOW(asidInvalid), VMReadWrite,
@@ -473,6 +482,9 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
             /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSuperSection
                                                 (ptr_val \<acute>regionBase)
                                                 (unat ARMSuperSectionBits))" */
+            cleanCacheRange_RAM((word_t)regionBase,
+                                (word_t)regionBase + MASK(pageBitsForSize(ARMSuperSection)),
+                                addrFromPPtr(regionBase));
         }
         return cap_frame_cap_new(
                    ARMSuperSection, ASID_LOW(asidInvalid), VMReadWrite,
@@ -487,7 +499,9 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
         /** AUXUPD: "(True, ptr_retyps 1
               (Ptr (ptr_val \<acute>regionBase) :: (pte_C[256]) ptr))" */
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
-
+        cleanCacheRange_PoU((word_t)regionBase,
+                            (word_t)regionBase + MASK(seL4_PageTableBits),
+                            addrFromPPtr(regionBase));
         return cap_page_table_cap_new(false, asidInvalid, 0,
                                       (word_t)regionBase);
 
@@ -500,8 +514,9 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
               (Ptr (ptr_val \<acute>regionBase) :: (pde_C[4096]) ptr))" */
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
         copyGlobalMappings((pde_t *)regionBase);
+        /* Clean the entire PD to PoU for table walker */
         cleanCacheRange_PoU((word_t)regionBase,
-                            (word_t)regionBase + (1 << (PD_INDEX_BITS + PDE_SIZE_BITS)) - 1,
+                            (word_t)regionBase + MASK(seL4_PageDirBits),
                             addrFromPPtr(regionBase));
 
         return cap_page_directory_cap_new(false, asidInvalid,
@@ -516,10 +531,8 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
 
 #ifdef CONFIG_TK1_SMMU
     case seL4_ARM_IOPageTableObject:
-        /* When the untyped was zeroed it was cleaned to the PoU, but the SMMUs
-         * typically pull directly from RAM, so we do a futher clean to RAM here */
         cleanCacheRange_RAM((word_t)regionBase,
-                            (word_t)regionBase + (1 << seL4_IOPageTableBits) - 1,
+                            (word_t)regionBase + MASK(seL4_IOPageTableBits),
                             addrFromPPtr(regionBase));
         return cap_io_page_table_cap_new(0, asidInvalid, (word_t)regionBase, 0);
 #endif
