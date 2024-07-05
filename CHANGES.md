@@ -25,8 +25,10 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 ### Changes
 
+* Added `zynqmp` and `rpi4` to the set of verified AArch64 configs.
 
 ### Upgrade Notes
+
 ---
 
 ## 13.0.0 2024-07-01: BREAKING
