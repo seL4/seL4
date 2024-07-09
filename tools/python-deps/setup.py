@@ -46,6 +46,6 @@ setup(
     url="https://sel4.systems",
     licence='BSD2',
     author='TrustworthySystems',
-    author_email='Stephen.Sherratt@data61.csiro.au',
+    author_email='pypi@trustworthy.systems',
     install_requires=DEPS,
 )
