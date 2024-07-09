@@ -35,13 +35,13 @@ DEPS = [
     'pyfdt',
     'cmake-format==0.4.5',
     'guardonce',
-    'autopep8==1.4.3',
+    'autopep8==2.3.1',
     'libarchive-c',
 ]
 
 setup(
     name='sel4-deps',
-    version='0.4.0',
+    version='0.5.0',
     description='Metapackage for downloading build dependencies for the seL4 microkernel',
     url="https://sel4.systems",
     licence='BSD2',
