@@ -26,13 +26,7 @@ static bool_t isValidFaultHandler(cap_t cap, bool_t allow_null_cap)
 }
 
 #ifdef CONFIG_KERNEL_MCS
-static inline bool_t validTimeoutHandler(tcb_t *tptr)
-{
-    cap_t handlerCap = TCB_PTR_CTE_PTR(tptr, tcbTimeoutHandler)->cap)
-    return isValidFaultHandler(handlerCap, false);
-}
-
-void handleTimeout(tcb_t *tptr);
+bool_t tryRaisingTimeoutFault(tcb_t *tptr, word_t scBadge);
 void handleNoFaultHandler(tcb_t *tptr);
 #else
 void handleDoubleFault(tcb_t *tptr, seL4_Fault_t ex1);

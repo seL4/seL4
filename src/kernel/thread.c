@@ -13,6 +13,7 @@
 #include <kernel/thread.h>
 #include <kernel/vspace.h>
 #ifdef CONFIG_KERNEL_MCS
+#include <kernel/faulthandler.h>
 #include <object/schedcontext.h>
 #endif
 #include <model/statedata.h>
@@ -183,13 +184,9 @@ void doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, bool_t grant)
     if (receiver->tcbSchedContext && isRunnable(receiver)) {
         if (refill_ready(receiver->tcbSchedContext) && refill_sufficient(receiver->tcbSchedContext, 0)) {
             possibleSwitchTo(receiver);
-        } else {
-            if (validTimeoutHandler(receiver) && fault_type != seL4_Fault_Timeout) {
-                current_fault = seL4_Fault_Timeout_new(receiver->tcbSchedContext->scBadge);
-                handleTimeout(receiver);
-            } else {
-                postpone(receiver->tcbSchedContext);
-            }
+        } else if ((fault_type == seL4_Fault_Timeout) ||
+                   !tryRaisingTimeoutFault(receiver, receiver->tcbSchedContext->scBadge)) {
+            postpone(receiver->tcbSchedContext);
         }
     }
 #endif
@@ -620,9 +617,9 @@ void chargeBudget(ticks_t consumed, bool_t canTimeoutFault)
 
 void endTimeslice(bool_t can_timeout_fault)
 {
-    if (can_timeout_fault && !isRoundRobin(NODE_STATE(ksCurSC)) && validTimeoutHandler(NODE_STATE(ksCurThread))) {
-        current_fault = seL4_Fault_Timeout_new(NODE_STATE(ksCurSC)->scBadge);
-        handleTimeout(NODE_STATE(ksCurThread));
+    if (can_timeout_fault && !isRoundRobin(NODE_STATE(ksCurSC)) &&
+        tryRaisingTimeoutFault(NODE_STATE(ksCurThread), NODE_STATE(ksCurSC)->scBadge)) {
+        /* done */
     } else if (refill_ready(NODE_STATE(ksCurSC)) && refill_sufficient(NODE_STATE(ksCurSC), 0)) {
         /* apply round robin */
         assert(!thread_state_get_tcbQueued(NODE_STATE(ksCurThread)->tcbState));

@@ -34,10 +34,19 @@ static bool_t sendFaultIPC(tcb_t *tptr, cap_t handlerCap, bool_t can_donate)
     }
 }
 
-void handleTimeout(tcb_t *tptr)
+bool_t tryRaisingTimeoutFault(tcb_t *tptr, word_t scBadge)
 {
-    assert(validTimeoutHandler(tptr));
-    sendFaultIPC(tptr, TCB_PTR_CTE_PTR(tptr, tcbTimeoutHandler)->cap, false);
+    /* get the timeout handler */
+    cap_t handlerCap = TCB_PTR_CTE_PTR(tptr, tcbTimeoutHandler)->cap;
+    if (!isValidFaultHandler(handlerCap, false)) {
+        return false;
+    }
+
+    /* create the time fault and send the fault IPC */
+    tptr->tcbFault = seL4_Fault_Timeout_new(scBadge);
+    sendFaultIPC(tptr, handlerCap, false);
+
+    return true;
 }
 
 #else
