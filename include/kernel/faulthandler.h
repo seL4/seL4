@@ -10,10 +10,26 @@
 #include <types.h>
 #include <object.h>
 
+static bool_t isValidFaultHandler(cap_t cap, bool_t allow_null_cap)
+{
+    switch (cap_get_capType(cap)) {
+    case cap_endpoint_cap:
+        return cap_endpoint_cap_get_capCanSend(cap) &&
+               (cap_endpoint_cap_get_capCanGrant(cap) ||
+                cap_endpoint_cap_get_capCanGrantReply(cap));
+    case cap_null_cap:
+        return allow_null_cap;
+    default:
+        break;
+    }
+    return false;
+}
+
 #ifdef CONFIG_KERNEL_MCS
 static inline bool_t validTimeoutHandler(tcb_t *tptr)
 {
-    return cap_get_capType(TCB_PTR_CTE_PTR(tptr, tcbTimeoutHandler)->cap) == cap_endpoint_cap;
+    cap_t handlerCap = TCB_PTR_CTE_PTR(tptr, tcbTimeoutHandler)->cap)
+    return isValidFaultHandler(handlerCap, false);
 }
 
 void handleTimeout(tcb_t *tptr);

@@ -16,6 +16,7 @@
 #include <object/cnode.h>
 #ifdef CONFIG_KERNEL_MCS
 #include <object/schedcontext.h>
+#include <kernel/faulthandler.h>
 #endif
 #include <object/tcb.h>
 #include <kernel/cspace.h>
@@ -1034,27 +1035,6 @@ exception_t decodeWriteRegisters(cap_t cap, word_t length, word_t *buffer)
                                     w, transferArch, buffer);
 }
 
-#ifdef CONFIG_KERNEL_MCS
-static bool_t validFaultHandler(cap_t cap)
-{
-    switch (cap_get_capType(cap)) {
-    case cap_endpoint_cap:
-        if (!cap_endpoint_cap_get_capCanSend(cap) ||
-            (!cap_endpoint_cap_get_capCanGrant(cap) &&
-             !cap_endpoint_cap_get_capCanGrantReply(cap))) {
-            return false;
-        }
-        break;
-    case cap_null_cap:
-        /* just has no fault endpoint */
-        break;
-    default:
-        return false;
-    }
-    return true;
-}
-#endif
-
 /* TCBConfigure batches SetIPCBuffer and parts of SetSpace. */
 exception_t decodeTCBConfigure(cap_t cap, word_t length, cte_t *slot, word_t *buffer)
 {
@@ -1272,7 +1252,7 @@ exception_t decodeSetTimeoutEndpoint(cap_t cap, cte_t *slot)
     cap_t thCap   = current_extra_caps.excaprefs[0]->cap;
 
     /* timeout handler */
-    if (!validFaultHandler(thCap)) {
+    if (!isValidFaultHandler(thCap, true)) {
         userError("TCB SetTimeoutEndpoint: timeout endpoint cap invalid.");
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;
@@ -1374,7 +1354,7 @@ exception_t decodeSetSchedParams(cap_t cap, word_t length, word_t *buffer)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (!validFaultHandler(fhCap)) {
+    if (!isValidFaultHandler(fhCap, true)) {
         userError("TCB Configure: fault endpoint cap invalid.");
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 3;
@@ -1547,7 +1527,7 @@ exception_t decodeSetSpace(cap_t cap, word_t length, cte_t *slot, word_t *buffer
 
 #ifdef CONFIG_KERNEL_MCS
     /* fault handler */
-    if (!validFaultHandler(fhCap)) {
+    if (!isValidFaultHandler(fhCap, true)) {
         userError("TCB SetSpace: fault endpoint cap invalid.");
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;

@@ -32,10 +32,7 @@ void handleTimeout(tcb_t *tptr)
 bool_t sendFaultIPC(tcb_t *tptr, cap_t handlerCap, bool_t can_donate)
 {
     if (cap_get_capType(handlerCap) == cap_endpoint_cap) {
-        assert(cap_endpoint_cap_get_capCanSend(handlerCap));
-        assert(cap_endpoint_cap_get_capCanGrant(handlerCap) ||
-               cap_endpoint_cap_get_capCanGrantReply(handlerCap));
-
+        assert(isValidFaultHandler(handlerCap, false));
         tptr->tcbFault = current_fault;
         sendIPC(true, false,
                 cap_endpoint_cap_get_capEPBadge(handlerCap),
@@ -80,10 +77,7 @@ exception_t sendFaultIPC(tcb_t *tptr)
     }
     handlerCap = lu_ret.cap;
 
-    if (cap_get_capType(handlerCap) == cap_endpoint_cap &&
-        cap_endpoint_cap_get_capCanSend(handlerCap) &&
-        (cap_endpoint_cap_get_capCanGrant(handlerCap) ||
-         cap_endpoint_cap_get_capCanGrantReply(handlerCap))) {
+    if (isValidFaultHandler(handlerCap, false)) {
         tptr->tcbFault = current_fault;
         if (seL4_Fault_get_seL4_FaultType(current_fault) == seL4_Fault_CapFault) {
             tptr->tcbLookupFailure = original_lookup_fault;
