@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <config.h>
+#include <types.h>
 #include <object.h>
 
 #ifdef CONFIG_KERNEL_MCS

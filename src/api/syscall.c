@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <types.h>
+#include <object.h>
 #include <benchmark/benchmark.h>
 #include <arch/benchmark.h>
 #include <benchmark/benchmark_track.h>

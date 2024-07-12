@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
+#include <config.h>
+#include <util.h>
 #include <api/failures.h>
 #include <kernel/cspace.h>
 #include <kernel/faulthandler.h>
