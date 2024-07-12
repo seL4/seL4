@@ -35,7 +35,8 @@ DEPS = [
     'pyelftools',
     'sh',
     'pexpect',
-    'pyyaml>=5.1,<6',
+    'cython<3',  # build dependency for pyyaml 5; see https://github.com/yaml/pyyaml/issues/601
+    'pyyaml>=5.1,<5.4',  # <5.4 for cmake-format==0.4.5
     'jsonschema',
     'pyfdt',
     'cmake-format==0.4.5',
