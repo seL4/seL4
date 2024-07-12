@@ -7,31 +7,34 @@
 #include <config.h>
 #include <util.h>
 #include <api/failures.h>
+#include <api/debug.h>
 #include <kernel/cspace.h>
 #include <kernel/faulthandler.h>
 #include <kernel/thread.h>
-#include <machine/io.h>
 #include <arch/machine.h>
+
+static cap_t getFaultHandlerCap(tcb_t *tptr)
+{
+#ifdef CONFIG_KERNEL_MCS
+    return TCB_PTR_CTE_PTR(tptr, tcbFaultHandler)->cap;
+#else
+    lookupCap_ret_t lu_ret = lookupCap(tptr, tptr->tcbFaultHandler);
+    return (lu_ret.status == EXCEPTION_NONE) ? lu_ret.cap : cap_null_cap_new();
+#endif
+}
 
 #ifdef CONFIG_KERNEL_MCS
 
-static bool_t sendFaultIPC(tcb_t *tptr, cap_t handlerCap, bool_t can_donate)
+static void sendFaultIPC(tcb_t *tptr, cap_t handlerCap, bool_t can_donate)
 {
-    if (cap_get_capType(handlerCap) == cap_endpoint_cap) {
-        assert(isValidFaultHandler(handlerCap, false));
-        tptr->tcbFault = current_fault;
-        sendIPC(true, false,
-                cap_endpoint_cap_get_capEPBadge(handlerCap),
-                cap_endpoint_cap_get_capCanGrant(handlerCap),
-                cap_endpoint_cap_get_capCanGrantReply(handlerCap),
-                can_donate, tptr,
-                EP_PTR(cap_endpoint_cap_get_capEPPtr(handlerCap)));
-
-        return true;
-    } else {
-        assert(cap_get_capType(handlerCap) == cap_null_cap);
-        return false;
-    }
+    sendIPC(true, /* blocking */
+            false, /* can't do call */
+            cap_endpoint_cap_get_capEPBadge(handlerCap),
+            cap_endpoint_cap_get_capCanGrant(handlerCap),
+            cap_endpoint_cap_get_capCanGrantReply(handlerCap),
+            can_donate,
+            tptr,
+            EP_PTR(cap_endpoint_cap_get_capEPPtr(handlerCap)));
 }
 
 bool_t tryRaisingTimeoutFault(tcb_t *tptr, word_t scBadge)
@@ -49,130 +52,41 @@ bool_t tryRaisingTimeoutFault(tcb_t *tptr, word_t scBadge)
     return true;
 }
 
-#else
-
-static exception_t sendFaultIPC(tcb_t *tptr)
-{
-    cptr_t handlerCPtr;
-    cap_t  handlerCap;
-    lookupCap_ret_t lu_ret;
-    lookup_fault_t original_lookup_fault;
-
-    original_lookup_fault = current_lookup_fault;
-
-    handlerCPtr = tptr->tcbFaultHandler;
-    lu_ret = lookupCap(tptr, handlerCPtr);
-    if (lu_ret.status != EXCEPTION_NONE) {
-        current_fault = seL4_Fault_CapFault_new(handlerCPtr, false);
-        return EXCEPTION_FAULT;
-    }
-    handlerCap = lu_ret.cap;
-
-    if (isValidFaultHandler(handlerCap, false)) {
-        tptr->tcbFault = current_fault;
-        if (seL4_Fault_get_seL4_FaultType(current_fault) == seL4_Fault_CapFault) {
-            tptr->tcbLookupFailure = original_lookup_fault;
-        }
-        sendIPC(true, true,
-                cap_endpoint_cap_get_capEPBadge(handlerCap),
-                cap_endpoint_cap_get_capCanGrant(handlerCap), true, tptr,
-                EP_PTR(cap_endpoint_cap_get_capEPPtr(handlerCap)));
-
-        return EXCEPTION_NONE;
-    } else {
-        current_fault = seL4_Fault_CapFault_new(handlerCPtr, false);
-        current_lookup_fault = lookup_fault_missing_capability_new(0);
-
-        return EXCEPTION_FAULT;
-    }
-}
-#endif
+#endif /* CONFIG_KERNEL_MCS */
 
 void handleFault(tcb_t *tptr)
 {
-#ifdef CONFIG_KERNEL_MCS
-    bool_t can_donate = tptr->tcbSchedContext != NULL;
-    bool_t hasFaultHandler = sendFaultIPC(tptr,
-                                          TCB_PTR_CTE_PTR(tptr, tcbFaultHandler)->cap,
-                                          can_donate);
-    if (!hasFaultHandler) {
-        handleNoFaultHandler(tptr);
+    /* Set fault details from global variables. */
+    tptr->tcbFault = current_fault;
+    if (seL4_Fault_get_seL4_FaultType(current_fault) == seL4_Fault_CapFault) {
+        tptr->tcbLookupFailure = current_lookup_fault;
     }
+
+    /*
+     * Check if there is a fault handler. If not then log the fault details and
+     * suspend the thread.
+     */
+    cap_t handlerCap = getFaultHandlerCap(tptr);
+    if (!isValidFaultHandler(handlerCap, false)) {
+#ifdef CONFIG_PRINTING
+        print_thread_fault(tptr);
+#endif /* CONFIG_PRINTING */
+        setThreadState(tptr, ThreadState_Inactive);
+        return;
+    }
+
+    /* Send fault to the hander */
+#ifdef CONFIG_KERNEL_MCS
+    bool_t can_donate = (tptr->tcbSchedContext != NULL);
+    sendFaultIPC(tptr, handlerCap, can_donate);
 #else /* not CONFIG_KERNEL_MCS */
-    seL4_Fault_t fault = current_fault;
-    exception_t status = sendFaultIPC(tptr);
-    if (status != EXCEPTION_NONE) {
-        handleDoubleFault(tptr, fault);
-    }
+    sendIPC(true, /* blocking */
+            true, /* can do call */
+            cap_endpoint_cap_get_capEPBadge(handlerCap),
+            cap_endpoint_cap_get_capCanGrant(handlerCap),
+            true, /* canGrantReply */
+            tptr,
+            EP_PTR(cap_endpoint_cap_get_capEPPtr(handlerCap)));
 #endif /* [not] CONFIG_KERNEL_MCS */
-}
 
-
-#ifdef CONFIG_PRINTING
-static void print_fault(seL4_Fault_t f)
-{
-    switch (seL4_Fault_get_seL4_FaultType(f)) {
-    case seL4_Fault_NullFault:
-        printf("null fault");
-        break;
-    case seL4_Fault_CapFault:
-        printf("cap fault in %s phase at address %p",
-               seL4_Fault_CapFault_get_inReceivePhase(f) ? "receive" : "send",
-               (void *)seL4_Fault_CapFault_get_address(f));
-        break;
-    case seL4_Fault_VMFault:
-        printf("vm fault on %s at address %p with status %p",
-               seL4_Fault_VMFault_get_instructionFault(f) ? "code" : "data",
-               (void *)seL4_Fault_VMFault_get_address(f),
-               (void *)seL4_Fault_VMFault_get_FSR(f));
-        break;
-    case seL4_Fault_UnknownSyscall:
-        printf("unknown syscall %p",
-               (void *)seL4_Fault_UnknownSyscall_get_syscallNumber(f));
-        break;
-    case seL4_Fault_UserException:
-        printf("user exception %p code %p",
-               (void *)seL4_Fault_UserException_get_number(f),
-               (void *)seL4_Fault_UserException_get_code(f));
-        break;
-#ifdef CONFIG_KERNEL_MCS
-    case seL4_Fault_Timeout:
-        printf("Timeout fault for 0x%x\n", (unsigned int) seL4_Fault_Timeout_get_badge(f));
-        break;
-#endif
-    default:
-        printf("unknown fault");
-        break;
-    }
-}
-#endif
-
-#ifdef CONFIG_KERNEL_MCS
-void handleNoFaultHandler(tcb_t *tptr)
-#else
-/* The second fault, ex2, is stored in the global current_fault */
-void handleDoubleFault(tcb_t *tptr, seL4_Fault_t ex1)
-#endif
-{
-#ifdef CONFIG_PRINTING
-#ifdef CONFIG_KERNEL_MCS
-    printf("Found thread has no fault handler while trying to handle:\n");
-    print_fault(current_fault);
-#else
-    seL4_Fault_t ex2 = current_fault;
-    printf("Caught ");
-    print_fault(ex2);
-    printf("\nwhile trying to handle:\n");
-    print_fault(ex1);
-#endif
-#ifdef CONFIG_DEBUG_BUILD
-    printf("\nin thread %p \"%s\" ", tptr, TCB_PTR_DEBUG_PTR(tptr)->tcbName);
-#endif /* CONFIG_DEBUG_BUILD */
-
-    printf("at address %p\n", (void *)getRestartPC(tptr));
-    printf("With stack:\n");
-    Arch_userStackTrace(tptr);
-#endif
-
-    setThreadState(tptr, ThreadState_Inactive);
 }
