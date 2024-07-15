@@ -428,11 +428,6 @@ void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo)
     }
 #endif /* ENABLE_SMP_SUPPORT */
 
-#ifdef CONFIG_KERNEL_MCS
-    /* not possible to set reply object and not be blocked */
-    assert(thread_state_get_replyObject(NODE_STATE(ksCurThread)->tcbState) == 0);
-#endif
-
     /*
      * --- POINT OF NO RETURN ---
      *
