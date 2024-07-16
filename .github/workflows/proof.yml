@@ -30,6 +30,8 @@ jobs:
             session: CRefine SimplExportAndRefine
           - arch: X64
             session: CRefine
+          - arch: AARCH64
+            session: CRefine
           - arch: RISCV64
             features: MCS
             session: CRefine
@@ -41,7 +43,6 @@ jobs:
       with:
         L4V_ARCH: ${{ matrix.arch }}
         L4V_FEATURES: ${{ matrix.features }}
-        isa_branch: ts-2023
         session: ${{ matrix.session }}
         manifest: ${{ matrix.features == 'MCS' && 'mcs.xml' || 'default.xml' }}
       env:

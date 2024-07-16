@@ -30,7 +30,7 @@ _start:
   la sp, (kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS))
   csrw sscratch, x0 /* zero sscratch for the init task */
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef CONFIG_ENABLE_SMP_SUPPORT
 /* setup the per-core stack */
   mv t0, a7
   slli t0, t0, CONFIG_KERNEL_STACK_BITS

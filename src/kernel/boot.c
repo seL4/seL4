@@ -272,7 +272,7 @@ BOOT_CODE void write_slot(slot_ptr_t slot_ptr, cap_t cap)
 compile_assert(root_cnode_size_valid,
                CONFIG_ROOT_CNODE_SIZE_BITS < 32 - seL4_SlotBits &&
                BIT(CONFIG_ROOT_CNODE_SIZE_BITS) >= seL4_NumInitialCaps &&
-               BIT(CONFIG_ROOT_CNODE_SIZE_BITS) >= (seL4_PageBits - seL4_SlotBits))
+               CONFIG_ROOT_CNODE_SIZE_BITS >= (seL4_PageBits - seL4_SlotBits))
 
 BOOT_CODE cap_t
 create_root_cnode(void)
@@ -608,7 +608,8 @@ BOOT_CODE void init_core_state(tcb_t *scheduler_action)
     NODE_STATE(ksCurSC) = NODE_STATE(ksCurThread->tcbSchedContext);
     NODE_STATE(ksConsumed) = 0;
     NODE_STATE(ksReprogram) = true;
-    NODE_STATE(ksReleaseHead) = NULL;
+    NODE_STATE(ksReleaseQueue.head) = NULL;
+    NODE_STATE(ksReleaseQueue.end) = NULL;
     NODE_STATE(ksCurTime) = getCurrentTime();
 #endif
 }

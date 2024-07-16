@@ -52,8 +52,6 @@ typedef enum {
     SEL4_FORCE_LONG_ENUM(seL4_VMFault_Msg),
 } seL4_VMFault_Msg;
 
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-
 typedef enum {
     seL4_VGICMaintenance_IDX,
     seL4_VGICMaintenance_Length,
@@ -62,6 +60,7 @@ typedef enum {
 
 typedef enum {
     seL4_VPPIEvent_IRQ,
+    seL4_VPPIEvent_Length,
     SEL4_FORCE_LONG_ENUM(seL4_VPPIEvent_Msg),
 } seL4_VPPIEvent_Msg;
 
@@ -97,10 +96,8 @@ typedef enum {
     /* thread pointer/ID registers EL0/EL1 */
     seL4_VCPUReg_TPIDR_EL1,
 
-#if CONFIG_MAX_NUM_NODES > 1
     /* Virtualisation Multiprocessor ID Register */
     seL4_VCPUReg_VMPIDR_EL2,
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
 
     /* general registers x0 to x30 have been saved by traps.S */
     seL4_VCPUReg_SP_EL1,
@@ -114,9 +111,8 @@ typedef enum {
     seL4_VCPUReg_CNTKCTL_EL1,
 
     seL4_VCPUReg_Num,
+    SEL4_FORCE_LONG_ENUM(seL4_VCPUReg),
 } seL4_VCPUReg;
-
-#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 #ifdef CONFIG_KERNEL_MCS
 typedef enum {
@@ -163,7 +159,7 @@ typedef enum {
     seL4_Timeout_Consumed,
     seL4_Timeout_Length,
     SEL4_FORCE_LONG_ENUM(seL4_Timeout_Msg)
-} seL4_TimeoutMsg;
+} seL4_Timeout_Msg;
 #endif
 #endif /* !__ASSEMBLER__ */
 

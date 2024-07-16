@@ -1,0 +1,151 @@
+<?xml version="1.0" ?>
+<!--
+     Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+
+     SPDX-License-Identifier: BSD-2-Clause
+-->
+
+<api name="ObjectApiX64" label_prefix="x86_64_">
+    <struct name="seL4_UserContext">
+        <member name="rip"/>
+        <member name="rsp"/>
+        <member name="rflags"/>
+        <member name="rax"/>
+        <member name="rbx"/>
+        <member name="rcx"/>
+        <member name="rdx"/>
+        <member name="rsi"/>
+        <member name="rdi"/>
+        <member name="rbp"/>
+        <member name="r8"/>
+        <member name="r9"/>
+        <member name="r10"/>
+        <member name="r11"/>
+        <member name="r12"/>
+        <member name="r13"/>
+        <member name="r14"/>
+        <member name="r15"/>
+        <member name="fs_base"/>
+        <member name="gs_base"/>
+    </struct>
+
+    <interface name="seL4_X86_PDPT" manual_name="PDPT" cap_description="Capability to the PDPT being operated on.">
+        <method id="X86PDPTMap" name="Map">
+            <brief>
+                Map a page directory page table.
+            </brief>
+            <description>
+               <docref>See <autoref label="ch:vspace"/></docref>
+            </description>
+            <param dir="in" name="pml4" type="seL4_X64_PML4" description="Capability to the VSpace which will contain the mapping."/>
+            <param dir="in" name="vaddr" type="seL4_Word" description="Virtual address at which to map page."/>
+            <param dir="in" name="attr" type="seL4_X86_VMAttributes">
+                <description>
+                    VM attributes for the mapping. <docref>Possible values for this type are given in <autoref label='ch:vspace'/>.</docref>
+                </description>
+            </param>
+            <error name="seL4_DeleteFirst">
+                <description>
+                    A mapping already exists for this level in <texttt text="vspace"/> at <texttt text="vaddr"/>.
+                </description>
+            </error>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="pml4"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="vaddr"/> is in the kernel virtual address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="pml4"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="pml4"/> is not assigned to an ASID pool.
+                    Or, <texttt text="_service"/> is already mapped in a VSpace.
+                </description>
+            </error>
+        </method>
+        <method id="X86PDPTUnmap" name="Unmap">
+            <brief>
+                Unmap a page directory page table.
+            </brief>
+            <description>
+               <docref>See <autoref label="ch:vspace"/></docref>
+            </description>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RevokeFirst">
+                <description>
+                    A copy of the <texttt text="_service"/> capability exists.
+                </description>
+            </error>
+        </method>
+    </interface>
+    <interface name="seL4_X86_VCPU" manual_name="VCPU" cap_description='VCPU object to operate on'>
+      <method id="X86VCPUReadMSR" name="ReadMSR" manual_name="Read MSR">
+        <condition><config var="CONFIG_X86_64_VTX_64BIT_GUESTS"/></condition>
+        <brief>
+          Read 64-bit specific MSR field from the hardware
+        </brief>
+        <description>
+          Thin wrapper around the <texttt text='rdmsr'/> instruction that is performed on
+          specific, needed registers. Certain registers might simply be cached and restored
+          later.
+        </description>
+        <return>
+          A <texttt text='seL4_X86_VCPU_ReadMSR_t'/> struct that contains a
+          <texttt text='seL4_Word value'/>, which holds the return result of the
+          <texttt text='rdmsr'/> instruction, and <texttt text='int error'/>.
+          <docref>See <autoref label='sec:errors'/> for a description
+          of the message register and tag contents upon error.</docref>
+        </return>
+        <param dir="in" name="field" type="seL4_Word"
+               description='Field to give to `rdmsr` instruction'/>
+        <param dir="out" name="value" type="seL4_Word"
+               description='Value returned by `rdmsr` instruction'/>
+      </method>
+      <method id="X86VCPUWriteMSR" name="WriteMSR" manual_name="Write MSR">
+        <condition><config var="CONFIG_X86_64_VTX_64BIT_GUESTS"/></condition>
+        <brief>
+          Write 64-bit specific MSR field to the hardware
+        </brief>
+        <description>
+          Thin wrapper around the <texttt text='wrmsr'/> instruction that is performed on
+          specific, needed registers. As well as validating that
+          a legal field is requested, the value may be modified to ensure any
+          bits that are fixed in the hardware are correct, and that any features
+          required for kernel correctness are not disabled <docref>(see <autoref label='sec:virt'/>)</docref>.
+
+          The final value written to the hardware is returned and can be compared
+          to the input parameter to determine what bits the kernel changed.
+        </description>
+        <return>
+          A <texttt text='seL4_X86_VCPU_WriteMSR_t'/> struct that contains a
+          <texttt text='seL4_Word writen'/>, which holds the final value written with the <texttt text='wrmsr'/> instruction,
+          and <texttt text='int error'/>. <docref>See <autoref label='sec:errors'/> for a description
+          of the message register and tag contents upon error.</docref>
+        </return>
+        <param dir="in" name="field" type="seL4_Word"
+               description='Field to give to `wrsmr` instruction'/>
+        <param dir="in" name="value" type="seL4_Word"
+               description='Value to write using `wrsmr` instruction'/>
+        <param dir="out" name="written" type="seL4_Word"
+               description='Final value written using `wrsmr` after kernel validation'/>
+      </method>
+    </interface>
+</api>

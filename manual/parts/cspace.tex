@@ -65,7 +65,8 @@ bytes on 32-bit architectures and 32 bytes on 64-bit architectures.
 Like any other object, a \obj{CNode} must be created by calling
 \apifunc{seL4\_Untyped\_Retype}{untyped_retype} on an appropriate
 amount of untyped memory (see \autoref{sec:object_sizes}).  The caller
-must therefore have a capability to enough untyped memory as well as
+must therefore have a capability to untyped memory with at least the size
+of a CSpace as well as
 enough free capability slots available in existing \obj{CNode}s for
 the \apifunc{seL4\_Untyped\_Retype}{untyped_retype} invocation to
 succeed.
@@ -384,7 +385,7 @@ features:
 \end{itemize}
 
 It should be noted that \autoref{fig1.4} demonstrates only what is
-possible, not what is usually practical. Although the CSpace is legal,
+possible, not what is usually practical. Although the example CSpace is legal,
 it would be reasonably difficult to work with due to the small number
 of slots and the circular references within it.
 

@@ -121,7 +121,7 @@ typedef enum {
     seL4_Timeout_Consumed,
     seL4_Timeout_Length,
     SEL4_FORCE_LONG_ENUM(seL4_Timeout_Msg)
-} seL4_TimeoutMsg;
+} seL4_Timeout_Msg;
 
 typedef enum {
     seL4_TimeoutReply_FaultIP,

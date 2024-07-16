@@ -221,6 +221,13 @@ static inline void clear_sie_mask(word_t mask_low)
     asm volatile("csrrc %0, sie, %1" : "=r"(temp) : "rK"(mask_low));
 }
 
+static inline word_t read_sscratch(void)
+{
+    word_t temp;
+    asm volatile("csrr %0, sscratch" : "=r"(temp));
+    return temp;
+}
+
 #ifdef CONFIG_HAVE_FPU
 static inline uint32_t read_fcsr(void)
 {

@@ -54,17 +54,22 @@ add_config_library(sel4 "${configure_string}")
 # Currently we use autoconf.h, so generate one of those
 generate_autoconf(sel4_autoconf "kernel;sel4")
 
-gen_invocation_header(OUTPUT include/sel4/invocation.h XML include/interfaces/sel4.xml LIBSEL4)
+gen_invocation_header(
+    OUTPUT include/sel4/invocation.h
+    XML include/interfaces/object-api.xml
+    LIBSEL4
+)
 
 gen_invocation_header(
     OUTPUT sel4_arch_include/${KernelSel4Arch}/sel4/sel4_arch/invocation.h
-    XML "${CMAKE_CURRENT_SOURCE_DIR}/sel4_arch_include/${KernelSel4Arch}/interfaces/sel4arch.xml"
+    XML
+        "${CMAKE_CURRENT_SOURCE_DIR}/sel4_arch_include/${KernelSel4Arch}/interfaces/object-api-sel4-arch.xml"
     LIBSEL4 SEL4ARCH
 )
 
 gen_invocation_header(
     OUTPUT arch_include/${KernelArch}/sel4/arch/invocation.h
-    XML "${CMAKE_CURRENT_SOURCE_DIR}/arch_include/${KernelArch}/interfaces/sel4arch.xml"
+    XML "${CMAKE_CURRENT_SOURCE_DIR}/arch_include/${KernelArch}/interfaces/object-api-arch.xml"
     LIBSEL4 ARCH
 )
 
@@ -84,14 +89,9 @@ include_directories("$<TARGET_PROPERTY:sel4_autoconf,INTERFACE_INCLUDE_DIRECTORI
 function(genbf target_prefix pbf_location bf_location header_output)
     get_generated_files(gen_list sel4_autoconf_Gen)
     cppfile(
-        "${pbf_location}"
-        ${target_prefix}_pbf
-        "${bf_location}"
-        EXTRA_FLAGS
-        -P
-        EXTRA_DEPS
-        sel4_autoconf_Gen
-        ${gen_list}
+        "${pbf_location}" ${target_prefix}_pbf "${bf_location}"
+        EXTRA_FLAGS -P
+        EXTRA_DEPS sel4_autoconf_Gen ${gen_list}
     )
     GenHBFTarget(
         "libsel4"
@@ -147,23 +147,18 @@ add_custom_command(
 
 set(
     interface_xmls
-    "${CMAKE_CURRENT_SOURCE_DIR}/sel4_arch_include/${KernelSel4Arch}/interfaces/sel4arch.xml"
-    "${CMAKE_CURRENT_SOURCE_DIR}/arch_include/${KernelArch}/interfaces/sel4arch.xml"
-    "${CMAKE_CURRENT_SOURCE_DIR}/include/interfaces/sel4.xml"
+    "${CMAKE_CURRENT_SOURCE_DIR}/sel4_arch_include/${KernelSel4Arch}/interfaces/object-api-sel4-arch.xml"
+    "${CMAKE_CURRENT_SOURCE_DIR}/arch_include/${KernelArch}/interfaces/object-api-arch.xml"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/interfaces/object-api.xml"
 )
+
 add_custom_command(
     OUTPUT include/interfaces/sel4_client.h
     COMMAND rm -f include/interfaces/sel4_client.h
     COMMAND
-        echo "CONFIG_WORD_SIZE=${KernelWordSize}" > config
-    COMMAND
         "${PYTHON3}" "${SYSCALL_STUB_GEN_PATH}" ${buffer} ${64bitguests} ${mcs} -a
-        "${KernelSel4Arch}" -c config -o include/interfaces/sel4_client.h ${interface_xmls}
-    DEPENDS
-        "${SYSCALL_STUB_GEN_PATH}"
-        ${interface_xmls}
-        BYPRODUCTS
-        config
+        "${KernelSel4Arch}" -o include/interfaces/sel4_client.h ${interface_xmls}
+    DEPENDS "${SYSCALL_STUB_GEN_PATH}" ${interface_xmls}
     COMMENT "Generate sel4_client.h"
     VERBATIM
 )

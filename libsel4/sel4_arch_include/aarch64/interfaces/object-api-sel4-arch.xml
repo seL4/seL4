@@ -1,0 +1,236 @@
+<?xml version="1.0" ?>
+<!--
+     Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+
+     SPDX-License-Identifier: BSD-2-Clause
+-->
+
+<api name="ObjectApiAarch64" label_prefix="aarch64_">
+    <struct name="seL4_UserContext">
+        <member name="pc"/>
+        <member name="sp"/>
+        <member name="spsr"/>
+        <member name="x0"/>
+        <member name="x1"/>
+        <member name="x2"/>
+        <member name="x3"/>
+        <member name="x4"/>
+        <member name="x5"/>
+        <member name="x6"/>
+        <member name="x7"/>
+        <member name="x8"/>
+        <member name="x16"/>
+        <member name="x17"/>
+        <member name="x18"/>
+        <member name="x29"/>
+        <member name="x30"/>
+        <member name="x9"/>
+        <member name="x10"/>
+        <member name="x11"/>
+        <member name="x12"/>
+        <member name="x13"/>
+        <member name="x14"/>
+        <member name="x15"/>
+        <member name="x19"/>
+        <member name="x20"/>
+        <member name="x21"/>
+        <member name="x22"/>
+        <member name="x23"/>
+        <member name="x24"/>
+        <member name="x25"/>
+        <member name="x26"/>
+        <member name="x27"/>
+        <member name="x28"/>
+        <member name="tpidr_el0"/>
+        <member name="tpidrro_el0"/>
+    </struct>
+    <struct name="seL4_ARM_SMCContext">
+        <member name="x0"/>
+        <member name="x1"/>
+        <member name="x2"/>
+        <member name="x3"/>
+        <member name="x4"/>
+        <member name="x5"/>
+        <member name="x6"/>
+        <member name="x7"/>
+    </struct>
+    <interface name="seL4_ARM_VSpace" manual_name="Page Global Directory"
+        cap_description="Capability to the top level translation table being operated on.">
+        <method id="ARMVSpaceClean_Data" name="Clean_Data" manual_label="vspace_clean"
+            manual_name="Clean Data">
+                <brief>
+                    Clean cached pages within a top level translation table
+                </brief>
+                <description>
+                    <docref>See <autoref label="ch:vspace"/>.</docref>
+                </description>
+            <param dir="in" name="start" type="seL4_Word"
+            description="Start address"/>
+            <param dir="in" name="end" type="seL4_Word"
+            description="End address"/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="end"/> is in the kernel virtual address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="start"/> is greater than or equal to <texttt text="end"/>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The specified range crosses a page boundary.
+                </description>
+            </error>
+        </method>
+        <method id="ARMVSpaceInvalidate_Data" name="Invalidate_Data"
+            manual_name="Invalidate Data" manual_label="vspace_invalidate">
+                <brief>
+                    Invalidate cached pages within a top level translation table
+                </brief>
+             <description>
+                 <docref>See <autoref label="ch:vspace"/>.</docref>
+             </description>
+            <param dir="in" name="start" type="seL4_Word"
+            description="Start address"/>
+            <param dir="in" name="end" type="seL4_Word"
+            description="End address"/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="end"/> is in the kernel virtual address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="start"/> is greater than or equal to <texttt text="end"/>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The specified range crosses a page boundary.
+                </description>
+            </error>
+        </method>
+        <method id="ARMVSpaceCleanInvalidate_Data" name="CleanInvalidate_Data"
+            manual_name="Clean and Invalidate Data" manual_label="vspace_clean_invalidate">
+                <brief>
+                    Clean and invalidate cached pages within a top level translation table
+                </brief>
+             <description>
+                 <docref>See <autoref label="ch:vspace"/>.</docref>
+             </description>
+            <param dir="in" name="start" type="seL4_Word"
+            description="Start address"/>
+            <param dir="in" name="end" type="seL4_Word"
+            description="End address"/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="end"/> is in the kernel virtual address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="start"/> is greater than or equal to <texttt text="end"/>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The specified range crosses a page boundary.
+                </description>
+            </error>
+        </method>
+        <method id="ARMVSpaceUnify_Instruction" name="Unify_Instruction"
+            manual_name="Unify Instruction" manual_label="vspace_unify_instruction">
+                <brief>
+                    Clean and invalidate cached instruction pages to point of unification
+                </brief>
+             <description>
+                 <docref>See <autoref label="ch:vspace"/>.</docref>
+             </description>
+             <param dir="in" name="start" type="seL4_Word"
+             description="Start address"/>
+             <param dir="in" name="end" type="seL4_Word"
+	     description="End address"/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="end"/> is in the kernel virtual address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="start"/> is greater than or equal to <texttt text="end"/>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The specified range crosses a page boundary.
+                </description>
+            </error>
+        </method>
+    </interface>
+    <interface name="seL4_ARM_SMC" manual_name="SMC" cap_description="Capability to allow threads to make Secure Monitor Calls.">
+        <method id="ARMSMCCall" name="Call" manual_name="SMC Call" manual_label="smc_call">
+            <brief>
+                Tell the kernel to make the real SMC call.
+            </brief>
+            <description>
+                Takes x0-x7 as arguments to an SMC call which are defined as a seL4_ARM_SMCContext
+                struct. The kernel makes the SMC call and then returns the results as a
+                new seL4_ARM_SMCContext.
+            </description>
+            <param dir="in" name="smc_args" type="seL4_ARM_SMCContext"
+                description="The structure that has the provided arguments."/>
+            <param dir="out" name="smc_response" type="seL4_ARM_SMCContext"
+                description="The structure to capture the responses."/>
+        </method>
+    </interface>
+</api>

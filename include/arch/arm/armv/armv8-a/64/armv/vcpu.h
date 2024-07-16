@@ -14,18 +14,18 @@
 #include <drivers/timer/arm_generic.h>
 
 /* Note that the HCR_DC for ARMv8 disables S1 translation if enabled */
-#ifdef CONFIG_DISABLE_WFI_WFE_TRAPS
 /* Trap SMC and override CPSR.AIF */
-#define HCR_COMMON ( HCR_VM | HCR_RW | HCR_AMO | HCR_IMO | HCR_FMO )
-#else
-/* Trap WFI/WFE/SMC and override CPSR.AIF */
-#define HCR_COMMON ( HCR_TWI | HCR_TWE | HCR_VM | HCR_RW | HCR_AMO | HCR_IMO | HCR_FMO )
-#endif
+#define HCR_COMMON ( HCR_VM | HCR_RW | HCR_AMO | HCR_IMO | HCR_FMO | HCR_TSC)
 
 /* Allow native tasks to run at EL0, but restrict access */
 #define HCR_NATIVE ( HCR_COMMON | HCR_TGE | HCR_TVM | HCR_TTLB | HCR_DC \
                    | HCR_TAC | HCR_SWIO |  HCR_TSC )
-#define HCR_VCPU   ( HCR_COMMON | HCR_TSC)
+
+#ifdef CONFIG_DISABLE_WFI_WFE_TRAPS
+#define HCR_VCPU   ( HCR_COMMON)
+#else
+#define HCR_VCPU   ( HCR_COMMON | HCR_TWE | HCR_TWI)
+#endif
 
 #define SCTLR_EL1_UCI       BIT(26)     /* Enable EL0 access to DC CVAU, DC CIVAC, DC CVAC,
                                            and IC IVAU in AArch64 state   */
@@ -123,6 +123,7 @@
 #define REG_HCR_EL2         "hcr_el2"
 #define REG_VTCR_EL2        "vtcr_el2"
 #define REG_VMPIDR_EL2      "vmpidr_el2"
+#define REG_MPIDR_EL1       "mpidr_el1"
 #define REG_ID_AA64MMFR0_EL1 "id_aa64mmfr0_el1"
 
 /* for EL1 SCTLR */
@@ -481,10 +482,8 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
         return readCNTVOFF_EL2();
     case seL4_VCPUReg_CNTKCTL_EL1:
         return readCNTKCTL_EL1();
-#ifdef ENABLE_SMP_SUPPORT
     case seL4_VCPUReg_VMPIDR_EL2:
         return readVMPIDR_EL2();
-#endif /* ENABLE_SMP_SUPPORT */
     default:
         fail("ARM/HYP: Invalid register index");
     }
@@ -564,11 +563,9 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
     case seL4_VCPUReg_CNTKCTL_EL1:
         writeCNTKCTL_EL1(reg);
         break;
-#ifdef ENABLE_SMP_SUPPORT
     case seL4_VCPUReg_VMPIDR_EL2:
         writeVMPIDR_EL2(reg);
         break;
-#endif /* ENABLE_SMP_SUPPORT */
     default:
         fail("ARM/HYP: Invalid register index");
     }

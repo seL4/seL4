@@ -13,19 +13,19 @@
 #include <arch/object/vcpu.h>
 #include <drivers/timer/arm_generic.h>
 
-#ifdef CONFIG_DISABLE_WFI_WFE_TRAPS
 /* Trap SMC and override CPSR.AIF */
 #define HCR_COMMON ( HCR_TSC | HCR_AMO | HCR_IMO \
                    | HCR_FMO | HCR_DC  | HCR_VM)
-#else
-/* Trap WFI/WFE/SMC and override CPSR.AIF */
-#define HCR_COMMON ( HCR_TSC | HCR_TWE | HCR_TWI | HCR_AMO | HCR_IMO \
-                   | HCR_FMO | HCR_DC  | HCR_VM)
-#endif
+
 /* Allow native tasks to run at PL1, but restrict access */
 #define HCR_NATIVE ( HCR_COMMON | HCR_TGE | HCR_TVM | HCR_TTLB | HCR_TCACHE \
                    | HCR_TAC | HCR_SWIO)
+
+#ifdef CONFIG_DISABLE_WFI_WFE_TRAPS
 #define HCR_VCPU   (HCR_COMMON)
+#else
+#define HCR_VCPU   (HCR_COMMON | HCR_TWE | HCR_TWI)
+#endif
 
 /* Amongst other things we set the caches to enabled by default. This
  * may cause problems when booting guests that expect caches to be
@@ -296,7 +296,6 @@ static inline void set_cntv_ctl(word_t val)
     MCR(CNTV_CTL, val);
 }
 
-#ifdef ENABLE_SMP_SUPPORT
 static inline word_t get_vmpidr(void)
 {
     word_t ret = 0;
@@ -308,7 +307,6 @@ static inline void set_vmpidr(word_t val)
 {
     MCR(VMPIDR, val);
 }
-#endif
 
 /** MODIFIES: phantom_machine_state */
 /** DONT_TRANSLATE */
@@ -486,10 +484,8 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
         return get_cntv_off_high();
     case seL4_VCPUReg_CNTVOFFlow:
         return get_cntv_off_low();
-#ifdef ENABLE_SMP_SUPPORT
     case seL4_VCPUReg_VMPIDR:
         return get_vmpidr();
-#endif /* ENABLE_SMP_SUPPORT */
     default:
         fail("ARM/HYP: Invalid register index");
     }
@@ -623,11 +619,9 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
     case seL4_VCPUReg_CNTVOFFlow:
         set_cntv_off_low(reg);
         break;
-#ifdef ENABLE_SMP_SUPPORT
     case seL4_VCPUReg_VMPIDR:
         set_vmpidr(reg);
         break;
-#endif /* ENABLE_SMP_SUPPORT */
     default:
         fail("ARM/HYP: Invalid register index");
     }

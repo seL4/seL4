@@ -162,14 +162,14 @@ ${GeneratedMarkdownDir}/%.md: ${DoxygenXml}/group__%.xml Makefile
 generated-markdown: $(addsuffix .md, $(addprefix ${GeneratedMarkdownDir}/, ${SYSCALLS} ${OBJECTS}))
 
 # Generate object invocation prototypes
-${Stage}/group_defs.h: ${Libsel4Dir}/include/interfaces/sel4.xml \
-                       ${Libsel4Dir}/arch_include/x86/interfaces/sel4arch.xml \
-                       ${Libsel4Dir}/arch_include/arm/interfaces/sel4arch.xml \
-                       ${Libsel4Dir}/sel4_arch_include/aarch32/interfaces/sel4arch.xml \
-                       ${Libsel4Dir}/sel4_arch_include/aarch64/interfaces/sel4arch.xml \
-                       ${Libsel4Dir}/sel4_arch_include/ia32/interfaces/sel4arch.xml \
-                       ${Libsel4Dir}/sel4_arch_include/x86_64/interfaces/sel4arch.xml \
-                       ${Libsel4Dir}/arch_include/riscv/interfaces/sel4arch.xml
+${Stage}/group_defs.h: ${Libsel4Dir}/include/interfaces/object-api.xml \
+                       ${Libsel4Dir}/arch_include/x86/interfaces/object-api-arch.xml \
+                       ${Libsel4Dir}/arch_include/arm/interfaces/object-api-arch.xml \
+                       ${Libsel4Dir}/sel4_arch_include/aarch32/interfaces/object-api-sel4-arch.xml \
+                       ${Libsel4Dir}/sel4_arch_include/aarch64/interfaces/object-api-sel4-arch.xml \
+                       ${Libsel4Dir}/sel4_arch_include/ia32/interfaces/object-api-sel4-arch.xml \
+                       ${Libsel4Dir}/sel4_arch_include/x86_64/interfaces/object-api-sel4-arch.xml \
+                       ${Libsel4Dir}/arch_include/riscv/interfaces/object-api-arch.xml
 	@echo "====> Generating documented object invocation header"
 	${Q}${PYTHON} ${GenerateObjectInvocationTool} --dtd ${InterfaceDtd} --output ${Stage} $^
 
@@ -228,6 +228,7 @@ clean:
 		*.out *.ps *-diff.tex *.mps .log *.pdf *.tgz *~ *.lof *.lot env.tex
 	rm -rf ${DoxygenOutput} ${GeneratedLatexDir} ${GeneratedMarkdownDir}
 	rm -rf ${Stage}
+	rm -rf *.acn *.glo *.gls *.ilg *.ist
 
 tar:	clean
 	( p=`pwd` && d=`basename "$$p"` && cd .. && \
@@ -291,6 +292,8 @@ references.bib: $(addsuffix .tex, $(Targets))
 	${Q}if ! test -e $*.bbl || test $(Bib) -nt $*.bbl; then rm -f $*.bbl; fi
 	@echo "====> LaTeX first pass: $(<)"
 	${Q}$(LaTeX) $< >.log || if egrep -q $(Error) $*.log ; then cat .log; rm $@; false ; fi
+	@echo "====> Glossary: $(<)"
+	${Q}makeindex -s manual.ist -o manual.gls manual.glo
 	${Q}if egrep -q $(Rerun_Bib) $*.log ; then echo "====> BibTex" && $(BibTeX) $* > /dev/null && echo "====> LaTeX BibTeX pass" && $(LaTeX) >.log $< ; fi
 	${Q}if egrep -q $(Rerun) $*.log ; then echo "====> LaTeX rerun" && $(LaTeX) >.log $<; fi
 	${Q}if egrep -q $(Rerun) $*.log ; then echo "====> LaTeX rerun" && $(LaTeX) >.log $<; fi

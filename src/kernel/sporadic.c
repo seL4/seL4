@@ -239,8 +239,8 @@ static inline void schedule_used(sched_context_t *sc, refill_t new)
 static bool_t refill_head_overlapping(sched_context_t *sc)
 {
     if (!refill_single(sc)) {
-        ticks_t amount = refill_head(sc)->rAmount;
-        ticks_t tail = refill_head(sc)->rTime + amount;
+        refill_t head = *refill_head(sc);
+        ticks_t tail = head.rTime + head.rAmount;
         return refill_index(sc, refill_next(sc, sc->scRefillHead))->rTime <= tail;
     } else {
         return false;
@@ -313,6 +313,12 @@ void refill_budget_check(ticks_t usage)
     REFILL_SANITY_END(sc);
 }
 
+static inline void merge_overlapping_head_refill(sched_context_t *sc)
+{
+    refill_t old_head = refill_pop_head(sc);
+    refill_head(sc)->rTime = old_head.rTime;
+    refill_head(sc)->rAmount += old_head.rAmount;
+}
 
 void refill_unblock_check(sched_context_t *sc)
 {
@@ -330,9 +336,7 @@ void refill_unblock_check(sched_context_t *sc)
 
         /* merge available replenishments */
         while (refill_head_overlapping(sc)) {
-            refill_t old_head = refill_pop_head(sc);
-            refill_head(sc)->rTime = old_head.rTime;
-            refill_head(sc)->rAmount += old_head.rAmount;
+            merge_overlapping_head_refill(sc);
         }
 
         assert(refill_sufficient(sc, 0));

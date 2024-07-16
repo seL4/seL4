@@ -12,8 +12,6 @@ additional_commands:
       DEP: '*'
       PREFIX: '*'
   config_option:
-    flags:
-    - UNQUOTE
     kwargs:
       DEFAULT: '*'
       DEFAULT_DISABLED: '*'
@@ -21,10 +19,11 @@ additional_commands:
   config_string:
     flags:
     - UNQUOTE
+    - UNDEF_DISABLED
     kwargs:
       DEFAULT: '*'
       DEPENDS: '*'
-  cpp_file:
+  cppfile:
     kwargs:
       EXACT_NAME: '*'
       EXTRA_DEPS: '*'

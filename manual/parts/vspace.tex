@@ -169,7 +169,8 @@ the page writeable, the capability must have write permissions. The requested ma
 are specified with an argument of type \texttt{seL4\_CapRights} given to the mapping invocation. If
 the capability does not have sufficient permissions to authorise the given mapping, the mapping
 permissions are silently downgraded. Specific mapping permissions are dependent on the architecture
-and are documented in the \autoref{sec:api_reference} for each function.
+and are documented in the \autoref{sec:api_reference} for each function. On all architectures,
+mapping a page write-only will result in an inaccessible page.
 
 At minimum, each architecture defines \texttt{Map}, \texttt{Unmap} and
 \texttt{GetAddress} methods for pages.
@@ -319,7 +320,7 @@ can be updated on existing mappings using the Map invocation with the same virtu
       \texttt{seL4\_x86\_WriteBack} & Read and writes are cached \\
       \texttt{seL4\_x86\_CacheDisabled} & Prevent data in this mapping
       from being cached \\
-      \texttt{seL4\_x86\_WriteThrough} & Enable write through cacheing for this mapping \\
+      \texttt{seL4\_x86\_WriteThrough} & Enable write through caching for this mapping \\
       \texttt{seL4\_x86\_WriteCombining} & Enable write combining for this mapping \\
       \bottomrule
     \end{tabularx}
