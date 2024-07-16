@@ -14,7 +14,7 @@ static exception_t invokeSchedContext_UnbindObject(sched_context_t *sc, cap_t ca
 {
     switch (cap_get_capType(cap)) {
     case cap_thread_cap:
-        schedContext_unbindTCB(sc, sc->scTcb);
+        schedContext_unbindTCB(sc);
         break;
     case cap_notification_cap:
         schedContext_unbindNtfn(sc);
@@ -317,19 +317,20 @@ void schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb)
     }
 }
 
-void schedContext_unbindTCB(sched_context_t *sc, tcb_t *tcb)
+void schedContext_unbindTCB(sched_context_t *sc)
 {
-    assert(sc->scTcb == tcb);
+    tcb_t *tcb = sc->scTcb;
+    assert(tcb != NULL);
 
     /* tcb must already be stalled at this point */
     if (tcb == NODE_STATE(ksCurThread)) {
         rescheduleRequired();
     }
 
-    tcbSchedDequeue(sc->scTcb);
-    tcbReleaseRemove(sc->scTcb);
+    tcbSchedDequeue(tcb);
+    tcbReleaseRemove(tcb);
 
-    sc->scTcb->tcbSchedContext = NULL;
+    tcb->tcbSchedContext = NULL;
     sc->scTcb = NULL;
 }
 
@@ -337,7 +338,7 @@ void schedContext_unbindAllTCBs(sched_context_t *sc)
 {
     if (sc->scTcb) {
         SMP_COND_STATEMENT(remoteTCBStall(sc->scTcb));
-        schedContext_unbindTCB(sc, sc->scTcb);
+        schedContext_unbindTCB(sc);
     }
 }
 
