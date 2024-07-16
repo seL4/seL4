@@ -1870,7 +1870,7 @@ exception_t invokeTCB_ThreadControlSched(tcb_t *target, cte_t *slot,
         if (sc != NULL && sc != target->tcbSchedContext) {
             schedContext_bindTCB(sc, target);
         } else if (sc == NULL && target->tcbSchedContext != NULL) {
-            schedContext_unbindTCB(target->tcbSchedContext, target);
+            schedContext_unbindTCB(target->tcbSchedContext);
         }
     }
 
