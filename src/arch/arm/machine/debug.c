@@ -51,8 +51,7 @@ enum watchpoint_access /* WCR[4:3] */ {
 /* These next few functions (read*Context()/write*Context()) read from TCB
  * context and not from the hardware registers.
  */
-word_t
-readBcrContext(tcb_t *t, uint16_t index)
+word_t readBcrContext(tcb_t *t, uint16_t index)
 {
     assert(index < seL4_NumExclusiveBreakpoints);
     return t->tcbArch.tcbContext.breakpointState.breakpoint[index].cr;
@@ -164,24 +163,6 @@ UNUSED static void dumpBpsAndWpsContext(tcb_t *t, int nBp, int nWp)
  * BAS or you select a contiguous range. ARM has deprecated sparse byte
  * selection.
  */
-
-/** Convert a watchpoint size (0, 1, 2, 4 or 8 bytes) into the arch specific
- * register encoding.
- */
-static word_t convertSizeToArch(word_t size)
-{
-    switch (size) {
-    case 1:
-        return 0x1;
-    case 2:
-        return 0x3;
-    case 8:
-        return 0xFF;
-    default:
-        assert(size == 4);
-        return 0xF;
-    }
-}
 
 /** Convert an arch specific encoded watchpoint size back into a simple integer
  * representation.
@@ -301,6 +282,8 @@ void setBreakpoint(tcb_t *t,
         bcr = dbg_bcr_set_enabled(bcr, 1);
         bcr = dbg_bcr_set_lbn(bcr, 0);
         bcr = dbg_bcr_set_pmc(bcr, DBGBCR_PRIV_USER);
+        bcr = dbg_bcr_set_hmc(bcr, 0);
+        bcr = dbg_bcr_set_ssc(bcr, 0);
         bcr = dbg_bcr_set_bas(bcr, convertSizeToArch(4));
         bcr = Arch_setupBcr(bcr, true);
         writeBcrContext(t, bp_num, bcr.words[0]);
@@ -317,7 +300,9 @@ void setBreakpoint(tcb_t *t,
         wcr = dbg_wcr_set_lsc(wcr, convertAccessToArch(rw));
         wcr = dbg_wcr_set_watchpointType(wcr, 0);
         wcr = dbg_wcr_set_lbn(wcr, 0);
-        wcr = Arch_setupWcr(wcr);
+        wcr = dbg_wcr_set_addressMask(wcr, 0);
+        wcr = dbg_wcr_set_hmc(wcr, 0);
+        wcr = dbg_wcr_set_ssc(wcr, 0);
         writeWcrContext(t, bp_num, wcr.words[0]);
     }
 }
@@ -390,60 +375,6 @@ void unsetBreakpoint(tcb_t *t, uint16_t bp_num)
         writeWcrContext(t, bp_num, wcr.words[0]);
         writeWvrContext(t, bp_num, 0);
     }
-}
-
-/** Initiates or halts single-stepping on the target process.
- *
- * @param at arch_tcb_t for the target process to be configured.
- * @param bp_num The hardware ID of the breakpoint register to be used.
- * @param n_instr The number of instructions to step over.
- */
-bool_t configureSingleStepping(tcb_t *t,
-                               uint16_t bp_num,
-                               word_t n_instr,
-                               bool_t is_reply)
-{
-
-    if (is_reply) {
-        bp_num = t->tcbArch.tcbContext.breakpointState.single_step_hw_bp_num;
-    } else {
-        bp_num = convertBpNumToArch(bp_num);
-    }
-
-    /* On ARM single-stepping is emulated using breakpoint mismatches. The aim
-     * of single stepping is to execute a single instruction. By setting an
-     * instruction mismatch breakpoint to the current LR of the target thread,
-     * the thread will be able to execute this instruction, but attempting to
-     * execute any other instruction will result in the generation of a debug
-     * exception that will be delivered to the kernel, allowing us to simulate
-     * single stepping.
-     */
-    dbg_bcr_t bcr;
-
-    bcr.words[0] = readBcrContext(t, bp_num);
-
-    /* If the user calls us with n_instr == 0, allow them to configure, but
-     * leave it disabled.
-     */
-    if (n_instr > 0) {
-        bcr = dbg_bcr_set_enabled(bcr, 1);
-        t->tcbArch.tcbContext.breakpointState.single_step_enabled = true;
-    } else {
-        bcr = dbg_bcr_set_enabled(bcr, 0);
-        t->tcbArch.tcbContext.breakpointState.single_step_enabled = false;
-    }
-
-    bcr = dbg_bcr_set_lbn(bcr, 0);
-    bcr = dbg_bcr_set_pmc(bcr, DBGBCR_PRIV_USER);
-    bcr = dbg_bcr_set_bas(bcr, convertSizeToArch(1));
-    bcr = Arch_setupBcr(bcr, false);
-
-    writeBvrContext(t, bp_num, t->tcbArch.tcbContext.registers[FaultIP]);
-    writeBcrContext(t, bp_num, bcr.words[0]);
-
-    t->tcbArch.tcbContext.breakpointState.n_instructions = n_instr;
-    t->tcbArch.tcbContext.breakpointState.single_step_hw_bp_num = bp_num;
-    return true;
 }
 
 /** Load an initial, all-disabled setup state for the registers.
@@ -675,6 +606,10 @@ void restore_user_debug_context(tcb_t *target_thread)
      *
      * So we don't need to execute ISB here because we're about to RFE.
      */
+
+#ifdef CONFIG_ARCH_AARCH64
+    aarch64_restore_user_debug_context(target_thread);
+#endif /* CONFIG_ARCH_ARCH64 */
 }
 
 #endif /* ARM_BASE_CP14_SAVE_AND_RESTORE */
