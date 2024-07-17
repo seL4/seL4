@@ -17,7 +17,7 @@ architectures is on the roadmap and expected in 2025.
   - Platforms (non-hyp): `sabre` (no FPU), `imx8mm-evk` (with FPU)
   - Platforms (hyp, no FPU): `tk1`, `exynos5`
 - AArch64: Armv8-a with hypervisor extensions only, no SMMU, with fast path
-  - Platforms: `tx2`
+  - Platforms: `tx2`, `zynqmp`, `bcm2711` (rpi4)
 - RISC-V: 64-bit only, no fast path
   - Platforms: `hifive`
 - x64: without VT-x and VT-d, no fast path

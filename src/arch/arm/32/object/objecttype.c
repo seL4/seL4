@@ -195,7 +195,7 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
                     ksUserLogBuffer = 0;
 
                     /* Invalidate log page table entries */
-                    clearMemory((void *) armKSGlobalLogPT, BIT(seL4_PageTableBits));
+                    clearMemory((void *) armKSGlobalLogPT, seL4_PageTableBits);
 
                     cleanCacheRange_PoU((pptr_t) &armKSGlobalLogPT[0],
                                         (pptr_t) &armKSGlobalLogPT[0] + BIT(seL4_PageTableBits),
