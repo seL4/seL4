@@ -30,6 +30,9 @@
 #ifdef CONFIG_DEBUG_BUILD
 #include <arch/machine/capdl.h>
 #endif
+#ifdef CONFIG_HARDWARE_DEBUG_API
+#include <mode/machine/debug.h>
+#endif
 
 /* The haskell function 'handleEvent' is split into 'handleXXX' variants
  * for each event causing a kernel entry */
