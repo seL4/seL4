@@ -23,17 +23,16 @@ exception_t decodeSchedContextInvocation(word_t label, cap_t cap, word_t *buffer
  */
 void schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb);
 
-/* Unbind a specific tcb from a scheduling context. If the tcb is runnable,
+/* Unbind the tcb from a scheduling context. If the tcb is runnable,
  * remove from the scheduler.
  *
- * @param sc  scheduling context to unbind
- * @param tcb the tcb to unbind
+ * @param sc the scheduling context whose tcb will be unbound
  *
- * @pre   the tcb is bound to the sc,
- *        (sc->scTcb == tcb && tcb->tcbSchedContext == sc);
- * @post  (tcb->tcbSchedContext == NULL && sc->scTcb == NULL)
+ * @pre   the sc is not NULL and is bound to a tcb
+ *        (sc != NULL && sc->scTcb != NULL);
+ * @post  (sc->scTcb == NULL && sc->scTcb->tcbSchedContext == NULL)
  */
-void schedContext_unbindTCB(sched_context_t *sc, tcb_t *tcb);
+void schedContext_unbindTCB(sched_context_t *sc);
 
 /*
  * Unbind any tcb from a scheduling context. If the tcb bound to the scheduling

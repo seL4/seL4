@@ -124,6 +124,11 @@ if(KernelPlatformQEMURiscVVirt)
                 "-bios"
                 "none"
             )
+            # At this stage CMake may not have created CMAKE_BINARY_DIR yet, so
+            # ensure it exists and QEMU can put the DTB there.
+            if(NOT EXISTS "${CMAKE_BINARY_DIR}")
+                file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}")
+            endif()
             # When dumping the DTB to a file, QEMU prints a status message to
             # stderr. Capture it and print on stdout to avoid polluting stderr
             # unnecessarily.
