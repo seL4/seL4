@@ -567,8 +567,11 @@ void scheduleTCB(tcb_t *tptr)
 #ifdef CONFIG_KERNEL_MCS
 void postpone(sched_context_t *sc)
 {
-    tcbSchedDequeue(sc->scTcb);
-    tcbReleaseEnqueue(sc->scTcb);
+    tcb_t *tcb = sc->scTcb;
+    assert(tcb != NULL);
+
+    tcbSchedDequeue(tcb);
+    tcbReleaseEnqueue(tcb);
     NODE_STATE_ON_CORE(ksReprogram, sc->scCore) = true;
 }
 
