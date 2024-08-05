@@ -19,8 +19,9 @@
  * +1 for kernel
  * +1 for device tree binary
  * +1 for user image.
+ * +1 loader specified extra memory
  */
-#define NUM_RESERVED_REGIONS 3
+#define NUM_RESERVED_REGIONS 4
 
 /* The maximum number of reserved regions is:
  * +1 for each free memory region (MAX_NUM_FREEMEM_REG)
