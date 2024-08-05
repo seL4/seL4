@@ -170,11 +170,16 @@ struct gic_dist_map {
     uint32_t spendsgirn[4];         /* [0xF20, 0xF30) */
     uint32_t res9[5236];            /* [0x0F30, 0x6100) */
 
-    uint64_t iroutern[960];         /* [0x6100, 0x7F00) */
+    uint64_t iroutern[960];         /* [0x6100, 0x7F00) irouter<n> to configure IRQs
+                                     * with INTID from 32 to 1019. iroutern[0] is the
+                                     * interrupt routing for SPI 32 */
 };
 
-_Static_assert(0x6100 == SEL4_OFFSETOF(struct gic_dist_map, iroutern),
-               "Error in struct gic_dist_map");
+/* __builtin_offsetof is not in the verification C subset, so we can only check this in
+   non-verification builds. We specifically do not declare a macro for the builtin, because
+   we do not want break the verification subset by accident. */
+unverified_compile_assert(error_in_gic_dist_map,
+                          0x6100 == __builtin_offsetof(struct gic_dist_map, iroutern));
 
 /* Memory map for GIC Redistributor Registers for control and physical LPI's */
 struct gic_rdist_map {          /* Starting */
@@ -229,37 +234,6 @@ extern volatile struct gic_rdist_map *gic_rdist_map[CONFIG_MAX_NUM_NODES];
 extern volatile struct gic_rdist_sgi_ppi_map *gic_rdist_sgi_ppi_map[CONFIG_MAX_NUM_NODES];
 
 /* Helpers */
-static inline int is_irq_edge_triggered(word_t irq)
-{
-    uint32_t icfgr = 0;
-    int word = irq >> 4;
-    int bit = ((irq & 0xf) * 2);
-
-    if (HW_IRQ_IS_SGI(irq)) {
-        return 0;
-    }
-    if (HW_IRQ_IS_PPI(irq)) {
-        icfgr = gic_rdist_sgi_ppi_map[CURRENT_CPU_INDEX()]->icfgr1;
-    } else {
-        icfgr = gic_dist->icfgrn[word];
-    }
-
-    return !!(icfgr & BIT(bit + 1));
-}
-
-static inline void gic_pending_clr(word_t irq)
-{
-    int word = IRQ_REG(irq);
-    int bit = IRQ_BIT(irq);
-    /* Using |= here is detrimental to your health */
-    /* Applicable for SPI and PPIs */
-    if (irq < SPI_START) {
-        gic_rdist_sgi_ppi_map[CURRENT_CPU_INDEX()]->icpendr0 = BIT(bit);
-    } else {
-        gic_dist->icpendrn[word] = BIT(bit);
-    }
-}
-
 static inline void gic_enable_clr(word_t irq)
 {
     int word = IRQ_REG(irq);
@@ -335,12 +309,8 @@ static inline void maskInterrupt(bool_t disable, irq_t irq)
 
 static inline void ackInterrupt(irq_t irq)
 {
-    word_t hw_irq = IRQT_TO_IRQ(irq);
-    assert(IS_IRQ_VALID(active_irq[CURRENT_CPU_INDEX()]) && (active_irq[CURRENT_CPU_INDEX()] & IRQ_MASK) == hw_irq);
-
-    if (is_irq_edge_triggered(hw_irq)) {
-        gic_pending_clr(hw_irq);
-    }
+    assert(IS_IRQ_VALID(active_irq[CURRENT_CPU_INDEX()])
+           && (active_irq[CURRENT_CPU_INDEX()] & IRQ_MASK) == IRQT_TO_IRQ(irq));
 
     /* Set End of Interrupt for active IRQ: ICC_EOIR1_EL1 */
     SYSTEM_WRITE_WORD(ICC_EOIR1_EL1, active_irq[CURRENT_CPU_INDEX()]);
@@ -350,7 +320,7 @@ static inline void ackInterrupt(irq_t irq)
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 
-extern unsigned int gic_vcpu_num_list_regs;
+extern word_t gic_vcpu_num_list_regs;
 
 static inline uint32_t get_gic_vcpu_ctrl_hcr(void)
 {
@@ -384,13 +354,13 @@ static inline void set_gic_vcpu_ctrl_vmcr(uint32_t vmcr)
 static inline uint32_t get_gic_vcpu_ctrl_apr(void)
 {
     uint32_t reg;
-    MRS(ICH_AP0R0_EL2, reg);
+    MRS(ICH_AP1R0_EL2, reg);
     return reg;
 }
 
 static inline void set_gic_vcpu_ctrl_apr(uint32_t apr)
 {
-    MSR(ICH_AP0R0_EL2, apr);
+    MSR(ICH_AP1R0_EL2, apr);
 }
 
 static inline uint32_t get_gic_vcpu_ctrl_vtr(void)

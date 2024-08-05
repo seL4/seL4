@@ -14,7 +14,7 @@
 #include <config.h>
 #include <machine/assembler.h>
 
-.section .phys.text
+.section .phys.text, "ax"
 
 BEGIN_FUNC(enable_paging)
     # Set PSE (bit 4) to enable 4M pages

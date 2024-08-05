@@ -14,7 +14,6 @@ if(KernelPlatformTx2)
     # the 44-bit PA for Cortex-A57 cores would need to be downgraded to 40bit.
     set(KernelArmCortexA57 ON)
     set(KernelArchArmV8a ON)
-    set(KernelArmSMMU ON)
     set(KernelAArch64SErrorIgnore ON)
     config_set(KernelARMPlatform ARM_PLAT tx2)
     config_set(KernelArmMach MACH "nvidia")
@@ -28,7 +27,8 @@ if(KernelPlatformTx2)
         TIMER drivers/timer/arm_generic.h
         CLK_SHIFT 57u
         CLK_MAGIC 4611686019u
-        KERNEL_WCET 10u SMMU drivers/smmu/smmuv2.h
+        KERNEL_WCET 10u
+        SMMU drivers/smmu/smmuv2.h
         MAX_SID 128
         MAX_CB 64
     )

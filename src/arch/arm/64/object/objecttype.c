@@ -32,36 +32,12 @@ deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
     deriveCap_ret_t ret;
 
     switch (cap_get_capType(cap)) {
-    case cap_page_global_directory_cap:
-        if (cap_page_global_directory_cap_get_capPGDIsMapped(cap)) {
+    case cap_vspace_cap:
+        if (cap_vspace_cap_get_capVSIsMapped(cap)) {
             ret.cap = cap;
             ret.status = EXCEPTION_NONE;
         } else {
-            userError("Deriving a PDG cap without an assigned ASID");
-            current_syscall_error.type = seL4_IllegalOperation;
-            ret.cap = cap_null_cap_new();
-            ret.status = EXCEPTION_SYSCALL_ERROR;
-        }
-        return ret;
-
-    case cap_page_upper_directory_cap:
-        if (cap_page_upper_directory_cap_get_capPUDIsMapped(cap)) {
-            ret.cap = cap;
-            ret.status = EXCEPTION_NONE;
-        } else {
-            userError("Deriving a PUD cap without an assigned ASID");
-            current_syscall_error.type = seL4_IllegalOperation;
-            ret.cap = cap_null_cap_new();
-            ret.status = EXCEPTION_SYSCALL_ERROR;
-        }
-        return ret;
-
-    case cap_page_directory_cap:
-        if (cap_page_directory_cap_get_capPDIsMapped(cap)) {
-            ret.cap = cap;
-            ret.status = EXCEPTION_NONE;
-        } else {
-            userError("Deriving a PD cap without an assigned ASID");
+            userError("Deriving a VSpace cap without an assigned ASID");
             current_syscall_error.type = seL4_IllegalOperation;
             ret.cap = cap_null_cap_new();
             ret.status = EXCEPTION_SYSCALL_ERROR;
@@ -109,6 +85,12 @@ deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
         ret.status = EXCEPTION_NONE;
         return ret;
 #endif
+#ifdef CONFIG_ALLOW_SMC_CALLS
+    case cap_smc_cap:
+        ret.cap = cap;
+        ret.status = EXCEPTION_NONE;
+        return ret;
+#endif
     default:
         /* This assert has no equivalent in haskell,
          * as the options are restricted by type */
@@ -118,7 +100,19 @@ deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
 
 cap_t CONST Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
 {
-    return cap;
+#ifdef CONFIG_ALLOW_SMC_CALLS
+    if (cap_get_capType(cap) == cap_smc_cap) {
+        if (!preserve && cap_smc_cap_get_capSMCBadge(cap) == 0) {
+            return cap_smc_cap_set_capSMCBadge(cap, data);
+        } else {
+            return cap_null_cap_new();
+        }
+    } else {
+#endif
+        return cap;
+#ifdef CONFIG_ALLOW_SMC_CALLS
+    }
+#endif
 }
 
 cap_t CONST Arch_maskCapRights(seL4_CapRights_t cap_rights_mask, cap_t cap)
@@ -147,46 +141,16 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
         }
         break;
 
-    case cap_page_global_directory_cap:
+    case cap_vspace_cap:
 #ifdef CONFIG_ARM_SMMU
-        if (cap_page_global_directory_cap_get_capPGDMappedCB(cap) != CB_INVALID) {
-            smmu_cb_delete_vspace(cap_page_global_directory_cap_get_capPGDMappedCB(cap),
-                                  cap_page_global_directory_cap_get_capPGDMappedASID(cap));
+        if (cap_vspace_cap_get_capVSMappedCB(cap) != CB_INVALID) {
+            smmu_cb_delete_vspace(cap_vspace_cap_get_capVSMappedCB(cap),
+                                  cap_vspace_cap_get_capVSMappedASID(cap));
         }
 #endif
-        if (final && cap_page_global_directory_cap_get_capPGDIsMapped(cap)) {
-            deleteASID(cap_page_global_directory_cap_get_capPGDMappedASID(cap),
-                       VSPACE_PTR(cap_page_global_directory_cap_get_capPGDBasePtr(cap)));
-        }
-        break;
-
-    case cap_page_upper_directory_cap:
-#ifdef AARCH64_VSPACE_S2_START_L1
-#ifdef CONFIG_ARM_SMMU
-        if (cap_page_upper_directory_cap_get_capPGDMappedCB(cap) != CB_INVALID) {
-            smmu_cb_delete_vspace(cap_page_upper_directory_cap_get_capPUDMappedCB(cap),
-                                  cap_page_upper_directory_cap_get_capPUDMappedASID(cap));
-        }
-#endif
-        if (final && cap_page_upper_directory_cap_get_capPUDIsMapped(cap)) {
-            deleteASID(cap_page_upper_directory_cap_get_capPUDMappedASID(cap),
-                       PUDE_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(cap)));
-        }
-#else
-        if (final && cap_page_upper_directory_cap_get_capPUDIsMapped(cap)) {
-            unmapPageUpperDirectory(cap_page_upper_directory_cap_get_capPUDMappedASID(cap),
-                                    cap_page_upper_directory_cap_get_capPUDMappedAddress(cap),
-                                    PUDE_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(cap)));
-        }
-
-#endif
-        break;
-
-    case cap_page_directory_cap:
-        if (final && cap_page_directory_cap_get_capPDIsMapped(cap)) {
-            unmapPageDirectory(cap_page_directory_cap_get_capPDMappedASID(cap),
-                               cap_page_directory_cap_get_capPDMappedAddress(cap),
-                               PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(cap)));
+        if (final && cap_vspace_cap_get_capVSIsMapped(cap)) {
+            deleteASID(cap_vspace_cap_get_capVSMappedASID(cap),
+                       VSPACE_PTR(cap_vspace_cap_get_capVSBasePtr(cap)));
         }
         break;
 
@@ -257,24 +221,10 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
         }
         break;
 
-    case cap_page_directory_cap:
-        if (cap_get_capType(cap_b) == cap_page_directory_cap) {
-            return cap_page_directory_cap_get_capPDBasePtr(cap_a) ==
-                   cap_page_directory_cap_get_capPDBasePtr(cap_b);
-        }
-        break;
-
-    case cap_page_upper_directory_cap:
-        if (cap_get_capType(cap_b) == cap_page_upper_directory_cap) {
-            return cap_page_upper_directory_cap_get_capPUDBasePtr(cap_a) ==
-                   cap_page_upper_directory_cap_get_capPUDBasePtr(cap_b);
-        }
-        break;
-
-    case cap_page_global_directory_cap:
-        if (cap_get_capType(cap_b) == cap_page_global_directory_cap) {
-            return cap_page_global_directory_cap_get_capPGDBasePtr(cap_a) ==
-                   cap_page_global_directory_cap_get_capPGDBasePtr(cap_b);
+    case cap_vspace_cap:
+        if (cap_get_capType(cap_b) == cap_vspace_cap) {
+            return cap_vspace_cap_get_capVSBasePtr(cap_a) ==
+                   cap_vspace_cap_get_capVSBasePtr(cap_b);
         }
         break;
 
@@ -325,6 +275,13 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
         }
         break;
 #endif
+#ifdef CONFIG_ALLOW_SMC_CALLS
+    case cap_smc_cap:
+        if (cap_get_capType(cap_b) == cap_smc_cap) {
+            return true;
+        }
+        break;
+#endif
     }
     return false;
 }
@@ -365,14 +322,8 @@ word_t Arch_getObjectSize(word_t t)
         return ARMHugePageBits;
     case seL4_ARM_PageTableObject:
         return seL4_PageTableBits;
-    case seL4_ARM_PageDirectoryObject:
-        return seL4_PageDirBits;
-    case seL4_ARM_PageUpperDirectoryObject:
-        return seL4_PUDBits;
-#ifndef AARCH64_VSPACE_S2_START_L1
-    case seL4_ARM_PageGlobalDirectoryObject:
-        return seL4_PGDBits;
-#endif
+    case seL4_ARM_VSpaceObject:
+        return seL4_VSpaceBits;
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case seL4_ARM_VCPUObject:
         return VCPU_SIZE_BITS;
@@ -387,6 +338,19 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
 {
     switch (t) {
     case seL4_ARM_SmallPageObject:
+        if (deviceMemory) {
+            /** AUXUPD: "(True, ptr_retyps 1
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_device_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSmallPage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat ARMSmallPageBits))" */
+        } else {
+            /** AUXUPD: "(True, ptr_retyps 1
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSmallPage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat ARMSmallPageBits))" */
+        }
         return cap_frame_cap_new(
                    asidInvalid,           /* capFMappedASID */
                    (word_t)regionBase,    /* capFBasePtr */
@@ -397,6 +361,19 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
                );
 
     case seL4_ARM_LargePageObject:
+        if (deviceMemory) {
+            /** AUXUPD: "(True, ptr_retyps (2^9)
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_device_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMLargePage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat ARMLargePageBits))" */
+        } else {
+            /** AUXUPD: "(True, ptr_retyps (2^9)
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMLargePage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat ARMLargePageBits))" */
+        }
         return cap_frame_cap_new(
                    asidInvalid,           /* capFMappedASID */
                    (word_t)regionBase,    /* capFBasePtr */
@@ -407,6 +384,19 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
                );
 
     case seL4_ARM_HugePageObject:
+        if (deviceMemory) {
+            /** AUXUPD: "(True, ptr_retyps (2^18)
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_device_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMHugePage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat ARMHugePageBits))" */
+        } else {
+            /** AUXUPD: "(True, ptr_retyps (2^18)
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMHugePage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat ARMHugePageBits))" */
+        }
         return cap_frame_cap_new(
                    asidInvalid,           /* capFMappedASID */
                    (word_t)regionBase,    /* capFBasePtr */
@@ -415,42 +405,30 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
                    VMReadWrite,           /* capFVMRights */
                    !!deviceMemory         /* capFIsDevice */
                );
-#ifndef AARCH64_VSPACE_S2_START_L1
-    case seL4_ARM_PageGlobalDirectoryObject:
+    case seL4_ARM_VSpaceObject:
 #ifdef CONFIG_ARM_SMMU
 
-        return cap_page_global_directory_cap_new(
-                   asidInvalid,           /* capPGDMappedASID   */
-                   (word_t)regionBase,    /* capPGDBasePtr      */
-                   0,                     /* capPGDIsMapped     */
-                   CB_INVALID             /* capPGDMappedCB     */
+        return cap_vspace_cap_new(
+                   asidInvalid,           /* capVSMappedASID */
+                   (word_t)regionBase,    /* capVSBasePtr    */
+                   0,                     /* capVSIsMapped   */
+                   CB_INVALID             /* capVSMappedCB   */
                );
 #else
 
-        return cap_page_global_directory_cap_new(
-                   asidInvalid,           /* capPGDMappedASID   */
-                   (word_t)regionBase,    /* capPGDBasePtr      */
-                   0                      /* capPGDIsMapped     */
+        /** AUXUPD: "(True, ptr_retyps 1
+              (Ptr (ptr_val \<acute>regionBase) :: (pte_C[vs_array_len]) ptr))" */
+        /** GHOSTUPD: "(True, gs_new_pt_t VSRootPT_T (ptr_val \<acute>regionBase))" */
+        return cap_vspace_cap_new(
+                   asidInvalid,           /* capVSMappedASID */
+                   (word_t)regionBase,    /* capVSBasePtr    */
+                   0                      /* capVSIsMapped   */
                );
 #endif /*!CONFIG_ARM_SMMU*/
-#endif /*!AARCH64_VSPACE_S2_START_L1*/
-    case seL4_ARM_PageUpperDirectoryObject:
-        return cap_page_upper_directory_cap_new(
-                   asidInvalid,           /* capPUDMappedASID    */
-                   (word_t)regionBase,    /* capPUDBasePtr       */
-                   0,                     /* capPUDIsMapped      */
-                   0                      /* capPUDMappedAddress */
-               );
-
-    case seL4_ARM_PageDirectoryObject:
-        return cap_page_directory_cap_new(
-                   asidInvalid,           /* capPDMappedASID    */
-                   (word_t)regionBase,    /* capPDBasePtr       */
-                   0,                     /* capPDIsMapped      */
-                   0                      /* capPDMappedAddress */
-               );
-
     case seL4_ARM_PageTableObject:
+        /** AUXUPD: "(True, ptr_retyps 1
+              (Ptr (ptr_val \<acute>regionBase) :: (pte_C[pt_array_len]) ptr))" */
+        /** GHOSTUPD: "(True, gs_new_pt_t NormalPT_T (ptr_val \<acute>regionBase))" */
         return cap_page_table_cap_new(
                    asidInvalid,           /* capPTMappedASID    */
                    (word_t)regionBase,    /* capPTBasePtr       */
@@ -479,7 +457,7 @@ exception_t Arch_decodeInvocation(word_t label, word_t length, cptr_t cptr,
     /* The C parser cannot handle a switch statement with only a default
      * case. So we need to do some gymnastics to remove the switch if
      * there are no other cases */
-#if defined(CONFIG_ARM_HYPERVISOR_SUPPORT) || defined(CONFIG_ARM_SMMU)
+#if defined(CONFIG_ARM_HYPERVISOR_SUPPORT) || defined(CONFIG_ARM_SMMU) || defined(CONFIG_ALLOW_SMC_CALLS)
     switch (cap_get_capType(cap)) {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case cap_vcpu_cap:
@@ -495,11 +473,15 @@ exception_t Arch_decodeInvocation(word_t label, word_t length, cptr_t cptr,
     case cap_cb_cap:
         return decodeARMCBInvocation(label, length, cptr, slot, cap, call, buffer);
 #endif /*CONFIG_ARM_SMMU*/
+#ifdef CONFIG_ALLOW_SMC_CALLS
+    case cap_smc_cap:
+        return decodeARMSMCInvocation(label, length, cptr, slot, cap, call, buffer);
+#endif
     default:
 #else
 {
 #endif
-    return decodeARMMMUInvocation(label, length, cptr, slot, cap, buffer);
+    return decodeARMMMUInvocation(label, length, cptr, slot, cap, call, buffer);
 }
 }
 

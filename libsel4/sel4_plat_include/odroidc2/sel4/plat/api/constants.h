@@ -6,5 +6,5 @@
 
 #pragma once
 
-#include <autoconf.h>
+#include <sel4/config.h>
 #include <sel4/arch/constants_cortex_a53.h>

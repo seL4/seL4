@@ -31,7 +31,6 @@ bool_t init_sys_state(
     cpu_id_t      cpu_id,
     mem_p_regs_t  *mem_p_regs,
     ui_info_t     ui_info,
-    p_region_t    boot_mem_reuse_p_reg,
     /* parameters below not modeled in abstract specification */
     uint32_t      num_drhu,
     paddr_t      *drhu_list,

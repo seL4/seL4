@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <autoconf.h>
+#include <sel4/config.h>
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 enum benchmark_track_util_ipc_index {

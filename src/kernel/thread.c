@@ -91,7 +91,7 @@ void restart(tcb_t *target)
         cancelIPC(target);
 #ifdef CONFIG_KERNEL_MCS
         setThreadState(target, ThreadState_Restart);
-        if (sc_sporadic(target->tcbSchedContext) && sc_active(target->tcbSchedContext)
+        if (sc_sporadic(target->tcbSchedContext)
             && target->tcbSchedContext != NODE_STATE(ksCurSC)) {
             refill_unblock_check(target->tcbSchedContext);
         }
@@ -142,7 +142,7 @@ void doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, bool_t grant)
     assert(thread_state_get_replyObject(receiver->tcbState) == REPLY_REF(0));
     assert(reply->replyTCB == NULL);
 
-    if (sc_sporadic(receiver->tcbSchedContext) && sc_active(receiver->tcbSchedContext)
+    if (sc_sporadic(receiver->tcbSchedContext)
         && receiver->tcbSchedContext != NODE_STATE_ON_CORE(ksCurSC, receiver->tcbSchedContext->scCore)) {
         refill_unblock_check(receiver->tcbSchedContext);
     }
@@ -574,17 +574,24 @@ void postpone(sched_context_t *sc)
 
 void setNextInterrupt(void)
 {
-    time_t next_interrupt = NODE_STATE(ksCurTime) +
-                            refill_head(NODE_STATE(ksCurThread)->tcbSchedContext)->rAmount;
+    ticks_t next_interrupt = NODE_STATE(ksCurTime) +
+                             refill_head(NODE_STATE(ksCurThread)->tcbSchedContext)->rAmount;
 
     if (numDomains > 1) {
         next_interrupt = MIN(next_interrupt, NODE_STATE(ksCurTime) + ksDomainTime);
     }
 
-    if (NODE_STATE(ksReleaseHead) != NULL) {
-        next_interrupt = MIN(refill_head(NODE_STATE(ksReleaseHead)->tcbSchedContext)->rTime, next_interrupt);
+    if (NODE_STATE(ksReleaseQueue.head) != NULL) {
+        next_interrupt = MIN(refill_head(NODE_STATE(ksReleaseQueue.head)->tcbSchedContext)->rTime, next_interrupt);
     }
 
+    /* We should never be attempting to schedule anything earlier than ksCurTime */
+    assert(next_interrupt >= NODE_STATE(ksCurTime));
+
+    /* Our lower bound ksCurTime is slightly in the past (at kernel entry) and
+       we are further subtracting getTimerPrecision(), so we may be setting a
+       deadline in the past. If that is the case, we assume the IRQ will be
+       raised immediately after we leave the kernel. */
     setDeadline(next_interrupt - getTimerPrecision());
 }
 
@@ -618,7 +625,6 @@ void endTimeslice(bool_t can_timeout_fault)
         handleTimeout(NODE_STATE(ksCurThread));
     } else if (refill_ready(NODE_STATE(ksCurSC)) && refill_sufficient(NODE_STATE(ksCurSC), 0)) {
         /* apply round robin */
-        assert(refill_sufficient(NODE_STATE(ksCurSC), 0));
         assert(!thread_state_get_tcbQueued(NODE_STATE(ksCurThread)->tcbState));
         SCHED_APPEND_CURRENT_TCB;
     } else {
@@ -675,7 +681,8 @@ void rescheduleRequired(void)
 #ifdef CONFIG_KERNEL_MCS
 void awaken(void)
 {
-    while (unlikely(NODE_STATE(ksReleaseHead) != NULL && refill_ready(NODE_STATE(ksReleaseHead)->tcbSchedContext))) {
+    while (unlikely(NODE_STATE(ksReleaseQueue.head) != NULL
+                    && refill_ready(NODE_STATE(ksReleaseQueue.head)->tcbSchedContext))) {
         tcb_t *awakened = tcbReleaseDequeue();
         /* the currently running thread cannot have just woken up */
         assert(awakened != NODE_STATE(ksCurThread));

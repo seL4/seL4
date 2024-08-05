@@ -4,15 +4,20 @@
  *
  * SPDX-License-Identifier: GPL-2.0-only
  *
- * SiFive U54/U74 PLIC handling (HiFive Unleashed/Unmatched, Polarfire)
+ * SiFive U54/U74 PLIC handling (HiFive Unleashed/Unmatched, Polarfire,
+ * QEMU RISC-V virt, Star64)
  */
 
 #pragma once
 
 /* This is a check that prevents using this driver blindly. Extend the list if
  * this driver is confirmed to be working on other platforms. */
-#if !defined(CONFIG_PLAT_HIFIVE) && !defined(CONFIG_PLAT_POLARFIRE)
-#error "This code supports the SiFive U54/U74 PLIC only."
+#if !defined(CONFIG_PLAT_HIFIVE) && \
+    !defined(CONFIG_PLAT_POLARFIRE) && \
+    !defined(CONFIG_PLAT_QEMU_RISCV_VIRT) && \
+    !defined(CONFIG_PLAT_ROCKETCHIP_ZCU102) && \
+    !defined(CONFIG_PLAT_STAR64)
+#error "Check if this platform suppots a PLIC."
 #endif
 
 /* tell the kernel we have the set trigger feature */
@@ -48,11 +53,12 @@
 
 #define PLIC_NUM_INTERRUPTS PLIC_MAX_IRQ
 
-#if defined(CONFIG_PLAT_HIFIVE) || defined(CONFIG_PLAT_POLARFIRE)
+#if defined(CONFIG_PLAT_HIFIVE) || \
+    defined(CONFIG_PLAT_POLARFIRE) || \
+    defined(CONFIG_PLAT_STAR64)
 
-/* SiFive U54-MC has 5 cores, and the first core does not
- * have supervisor mode. Therefore, we need to compensate
- * for the addresses.
+/* SiFive U54-MC and U74-MC have 5 cores, and the first core does not have
+ * supervisor mode. Therefore, we need to compensate for the addresses.
  */
 #define PLAT_PLIC_THRES_ADJUST(x) ((x) - PLIC_THRES_PER_CONTEXT)
 #define PLAT_PLIC_EN_ADJUST(x)    ((x) - PLIC_EN_PER_CONTEXT)
@@ -66,12 +72,12 @@
 
 
 
-static inline uint32_t readl(uint64_t addr)
+static inline uint32_t readl(word_t addr)
 {
     return *((volatile uint32_t *)(addr));
 }
 
-static inline void writel(uint32_t val, uint64_t addr)
+static inline void writel(uint32_t val, word_t addr)
 {
     *((volatile uint32_t *)(addr)) = val;
 }
@@ -133,7 +139,7 @@ static inline void plic_complete_claim(irq_t irq)
 
 static inline void plic_mask_irq(bool_t disable, irq_t irq)
 {
-    uint64_t addr = 0;
+    word_t addr = 0;
     uint32_t val = 0;
     uint32_t bit = 0;
 

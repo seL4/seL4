@@ -1,0 +1,13 @@
+/*
+ * Copyright 2023, Ivan Velickovic
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+    /* The Pine64 Star64 Model-A also has model with 8GB of RAM. */
+    memory@40000000 {
+        device_type = "memory";
+        reg = <0x00 0x40000000 0x02 0x00>;
+    };
+};

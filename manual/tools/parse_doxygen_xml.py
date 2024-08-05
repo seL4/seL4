@@ -14,7 +14,6 @@ import sys
 import os
 import re
 from bs4 import BeautifulSoup
-import six
 
 
 class Generator(object):
@@ -64,8 +63,6 @@ class Generator(object):
 
         if isinstance(soup, str):
             string = soup
-        elif isinstance(soup, six.string_types):
-            string = str(soup)
         elif soup.string:
             string = str(soup.string)
         else:
@@ -162,11 +159,11 @@ class Generator(object):
         errors = {}
 
         # the first type is the return type
-        ret_type = six.next(types_iter)
+        ret_type = next(types_iter)
 
         # the rest are parameters
         for n in names:
-            param_type = six.next(types_iter).text
+            param_type = next(types_iter).text
             if param_type == "void":
                 continue
             params[str(n.text)] = {"type": param_type}
@@ -594,7 +591,7 @@ def generate_general_syscall_doc(generator, input_file_name, level, ref_dict):
     dir_name = os.path.dirname(input_file_name)
     with open(input_file_name, "r") as f:
         output = ""
-        soup = BeautifulSoup(f, "lxml")
+        soup = BeautifulSoup(f, features="lxml-xml")
         elements = soup.find_all("memberdef")
         summary = soup.find('compounddef')
         # parse any top level descriptions
@@ -660,7 +657,7 @@ def main():
             if "SystemCalls" not in f:
                 continue
             with open(os.path.join(dir_name, f), "r") as source:
-                soup = BeautifulSoup(source, "lxml")
+                soup = BeautifulSoup(source, features="lxml-xml")
                 ref_dict.update(generator.build_ref_dict(soup))
 
     output_str = generate_general_syscall_doc(generator, args.input, args.level, ref_dict)

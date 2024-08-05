@@ -153,7 +153,7 @@ static inline bool_t PURE isSchedulable(const tcb_t *thread)
 {
     return isRunnable(thread) &&
            thread->tcbSchedContext != NULL &&
-           thread->tcbSchedContext->scRefillMax > 0 &&
+           sc_active(thread->tcbSchedContext) &&
            !thread_state_get_tcbInReleaseQueue(thread->tcbState);
 }
 #else
@@ -230,10 +230,10 @@ void chargeBudget(ticks_t consumed, bool_t canTimeoutFault);
  */
 static inline void updateTimestamp(void)
 {
-    time_t prev = NODE_STATE(ksCurTime);
+    ticks_t prev = NODE_STATE(ksCurTime);
     NODE_STATE(ksCurTime) = getCurrentTime();
     assert(NODE_STATE(ksCurTime) < MAX_RELEASE_TIME);
-    time_t consumed = (NODE_STATE(ksCurTime) - prev);
+    ticks_t consumed = (NODE_STATE(ksCurTime) - prev);
     NODE_STATE(ksConsumed) += consumed;
     if (numDomains > 1) {
         if ((consumed + MIN_BUDGET) >= ksDomainTime) {

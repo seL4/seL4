@@ -209,10 +209,12 @@ void VISIBLE NORETURN c_handle_vmexit(void)
      * This needs to happen before the entry hook which will try to
      * restore the registers without having a means to determine whether
      * they may have been dirtied by a VM exit. */
+#ifndef CONFIG_X86_64_VTX_64BIT_GUESTS
     tcb_t *cur_thread = NODE_STATE(ksCurThread);
     ARCH_NODE_STATE(x86KSCurrentGSBase) = -(word_t)1;
     ARCH_NODE_STATE(x86KSCurrentFSBase) = -(word_t)1;
     x86_load_fsgs_base(cur_thread, CURRENT_CPU_INDEX());
+#endif
 
     c_entry_hook();
     /* NODE_LOCK will get called in handleVmexit */

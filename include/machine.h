@@ -35,22 +35,25 @@ static inline paddr_t CONST addrFromKPPtr(const void *pptr)
     return (paddr_t)pptr - KERNEL_ELF_BASE_OFFSET;
 }
 
+#define paddr_to_pptr(x)   ptrFromPAddr(x)
+#define pptr_to_paddr(x)   addrFromPPtr(x)
+#define kpptr_to_paddr(x)  addrFromKPPtr(x)
+
 static inline region_t CONST paddr_to_pptr_reg(const p_region_t p_reg)
 {
     return (region_t) {
-        p_reg.start + PPTR_BASE_OFFSET, p_reg.end + PPTR_BASE_OFFSET
+        .start = (paddr_t)paddr_to_pptr(p_reg.start),
+        .end   = (paddr_t)paddr_to_pptr(p_reg.end)
     };
 }
 
 static inline p_region_t CONST pptr_to_paddr_reg(const region_t reg)
 {
     return (p_region_t) {
-        reg.start - PPTR_BASE_OFFSET, reg.end - PPTR_BASE_OFFSET
+        .start = pptr_to_paddr((const void *)reg.start),
+        .end   = pptr_to_paddr((const void *)reg.end),
     };
 }
 
-#define paddr_to_pptr(x)   ptrFromPAddr(x)
-#define pptr_to_paddr(x)   addrFromPPtr(x)
-#define kpptr_to_paddr(x)  addrFromKPPtr(x)
 
 #include <mode/machine.h>

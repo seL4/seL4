@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <autoconf.h>
+#include <sel4/config.h>
 #ifdef CONFIG_KERNEL_MCS
 #define LIBSEL4_MCS_REPLY reply
 #else
@@ -223,7 +223,7 @@ LIBSEL4_INLINE_FUNC seL4_MessageInfo_t seL4_WaitWithMRs(seL4_CPtr src, seL4_Word
     return info;
 }
 
-static inline seL4_MessageInfo_t seL4_NBWait(seL4_CPtr src, seL4_Word *sender)
+LIBSEL4_INLINE_FUNC seL4_MessageInfo_t seL4_NBWait(seL4_CPtr src, seL4_Word *sender)
 {
     seL4_MessageInfo_t info;
     seL4_Word badge;

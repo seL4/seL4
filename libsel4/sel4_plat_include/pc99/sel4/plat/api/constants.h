@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <autoconf.h>
+#include <sel4/config.h>
 
 /* Defined for each architecture: the number of hardware breakpoints
  * available.

@@ -19,6 +19,12 @@ static inline tcb_queue_t PURE ep_ptr_get_queue(endpoint_t *epptr)
     return queue;
 }
 
+static inline void ep_ptr_set_queue(endpoint_t *epptr, tcb_queue_t queue)
+{
+    endpoint_ptr_set_epQueue_head(epptr, (word_t)queue.head);
+    endpoint_ptr_set_epQueue_tail(epptr, (word_t)queue.end);
+}
+
 #ifdef CONFIG_KERNEL_MCS
 void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
              bool_t canGrant, bool_t canGrantReply, bool_t canDonate, tcb_t *thread,

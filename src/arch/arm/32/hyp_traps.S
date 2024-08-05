@@ -98,7 +98,7 @@ END_FUNC(arm_vector_table)
     mrs lr, elr_hyp
     str lr, [sp, #4]
     /* Store SPSR */
-    mrs lr, spsr_hyp
+    mrs lr, spsr
     str lr, [sp, #8]
     /* Store SP_usr */
     mrs lr, sp_usr

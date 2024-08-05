@@ -16,7 +16,9 @@
  * CLK_MAGIC and TIMER_CLOCK_MHZ -- these definitions might need to move
  * if we come across an arm platform that does not suit this model */
 
-/* get the max value ticksToUs can be passed without overflowing */
+/* Get the max. ticks_t value that can be expressed in time_t (time in us). This
+ * is the max. value ticksToUs() can be passed without overflowing.
+ */
 static inline CONST ticks_t getMaxTicksToUs(void)
 {
 #if USE_KHZ

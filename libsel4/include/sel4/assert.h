@@ -32,7 +32,7 @@ void __assert_fail(const char  *str, const char *file, int line, const char *fun
  * expr as a string plus the file, line and function.
  */
 #define seL4_Assert(expr) \
-    do { if (!(expr)) { __assert_fail(#expr, __FILE__, __LINE__, __FUNCTION__); } } while(0)
+    do { if (!(expr)) { __assert_fail(#expr, __FILE__, __LINE__, __func__); } } while(0)
 
 /**
  * An assert that tests that the expr is a compile time constant and

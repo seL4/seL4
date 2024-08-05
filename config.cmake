@@ -50,7 +50,7 @@ set_property(
 if(DEFINED CALLED_declare_default_headers)
     # calculate the irq cnode size based on MAX_NUM_IRQ
     if("${KernelArch}" STREQUAL "riscv")
-        math(EXPR MAX_NUM_IRQ "${CONFIGURE_PLIC_MAX_NUM_INT} + 2")
+        math(EXPR MAX_NUM_IRQ "${CONFIGURE_MAX_IRQ} + 2")
     else()
         if(
             DEFINED KernelMaxNumNodes
@@ -74,6 +74,9 @@ if(DEFINED CALLED_declare_default_headers)
     if(NOT DEFINED CONFIGURE_TIMER_PRECISION)
         set(CONFIGURE_TIMER_PRECISION "0")
     endif()
+    if(NOT DEFINED CONFIGURE_TIMER_OVERHEAD_TICKS)
+        set(CONFIGURE_TIMER_OVERHEAD_TICKS "0")
+    endif()
     configure_file(
         src/arch/${KernelArch}/platform_gen.h.in
         ${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/platform_gen.h @ONLY
@@ -89,6 +92,18 @@ include(src/arch/${KernelArch}/config.cmake)
 include(include/${KernelWordSize}/mode/config.cmake)
 include(src/config.cmake)
 
+set(KernelCustomDTS "" CACHE FILEPATH "Provide a device tree file to use instead of the \
+KernelPlatform's defaults")
+
+if(NOT "${KernelCustomDTS}" STREQUAL "")
+    if(NOT EXISTS ${KernelCustomDTS})
+        message(FATAL_ERROR "Can't open external dts file '${KernelCustomDTS}'!")
+    endif()
+    # Override list to hold only custom dts
+    set(KernelDTSList "${KernelCustomDTS}")
+    message(STATUS "Using custom ${KernelCustomDTS} device tree, ignoring default dts and overlays")
+endif()
+
 if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
     set(KernelDTSIntermediate "${CMAKE_CURRENT_BINARY_DIR}/kernel.dts")
     set(
@@ -101,19 +116,27 @@ if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
         platform_yaml "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/platform_gen.yaml"
         CACHE INTERNAL "Location of platform YAML description"
     )
+    set(
+        platform_json "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/platform_gen.json"
+        CACHE INTERNAL "Location of platform JSON description"
+    )
     set(config_file "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware.yml")
     set(config_schema "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware_schema.yml")
     set(
         KernelCustomDTSOverlay ""
-        CACHE FILEPATH "Provide an additional overlay to append to the selected KernelPlatform's \
+        CACHE
+            STRING
+            "Provide an additional list of overlays to append to the selected KernelPlatform's \
         device tree during build time"
     )
     if(NOT "${KernelCustomDTSOverlay}" STREQUAL "")
-        if(NOT EXISTS ${KernelCustomDTSOverlay})
-            message(FATAL_ERROR "Can't open external overlay file '${KernelCustomDTSOverlay}'!")
-        endif()
-        list(APPEND KernelDTSList "${KernelCustomDTSOverlay}")
-        message(STATUS "Using ${KernelCustomDTSOverlay} overlay")
+        foreach(dts_entry IN ITEMS ${KernelCustomDTSOverlay})
+            if(NOT EXISTS ${dts_entry})
+                message(FATAL_ERROR "Can't open external overlay file '${dts_entry}'!")
+            endif()
+            list(APPEND KernelDTSList "${dts_entry}")
+            message(STATUS "Appending ${dts_entry} overlay")
+        endforeach()
     endif()
 
     find_program(DTC_TOOL dtc)
@@ -145,7 +168,7 @@ if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
             RESULT_VARIABLE error
         )
         if(error)
-            message(FATAL_ERROR "Failed to compile DTS to DTB: ${KernelDTBPath}")
+            message(FATAL_ERROR "Failed to compile DTS to DTB: ${KernelDTSIntermediate}")
         endif()
         # The macOS and GNU coreutils `stat` utilities have different interfaces.
         # Check if we're using the macOS version, otherwise assume GNU coreutils.
@@ -187,7 +210,8 @@ if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
                 --compat-strings-out "${compatibility_outfile}" --c-header --header-out
                 "${device_dest}" --hardware-config "${config_file}" --hardware-schema
                 "${config_schema}" --yaml --yaml-out "${platform_yaml}" --sel4arch
-                "${KernelSel4Arch}" --addrspace-max "${KernelPaddrUserTop}"
+                "${KernelSel4Arch}" --addrspace-max "${KernelPaddrUserTop}" --json --json-out
+                "${platform_json}"
             RESULT_VARIABLE error
         )
         if(error)
@@ -224,20 +248,23 @@ config_string(
     KernelTimerTickMS TIMER_TICK_MS "Timer tick period in milliseconds"
     DEFAULT 2
     UNQUOTE
-    DEPENDS "NOT KernelIsMCS" UNDEF_DISABLED
+    DEPENDS "NOT KernelIsMCS"
+    UNDEF_DISABLED
 )
 config_string(
     KernelTimeSlice TIME_SLICE "Number of timer ticks until a thread is preempted."
     DEFAULT 5
     UNQUOTE
-    DEPENDS "NOT KernelIsMCS" UNDEF_DISABLED
+    DEPENDS "NOT KernelIsMCS"
+    UNDEF_DISABLED
 )
 config_string(
     KernelBootThreadTimeSlice BOOT_THREAD_TIME_SLICE
     "Number of milliseconds until the boot thread is preempted."
     DEFAULT 5
     UNQUOTE
-    DEPENDS "KernelIsMCS" UNDEF_DISABLED
+    DEPENDS "KernelIsMCS"
+    UNDEF_DISABLED
 )
 config_string(
     KernelRetypeFanOutLimit RETYPE_FAN_OUT_LIMIT
@@ -266,17 +293,30 @@ config_string(
 )
 config_option(KernelFastpath FASTPATH "Enable IPC fastpath" DEFAULT ON)
 
+config_option(
+    KernelExceptionFastpath EXCEPTION_FASTPATH "Enable exception fastpath"
+    DEFAULT OFF
+    DEPENDS "NOT KernelVerificationBuild; KernelSel4ArchAarch64"
+)
+
 config_string(
     KernelNumDomains NUM_DOMAINS "The number of scheduler domains in the system"
     DEFAULT 1
     UNQUOTE
 )
 
+config_option(
+    KernelSignalFastpath SIGNAL_FASTPATH "Enable notification signal fastpath"
+    DEFAULT OFF
+    DEPENDS "KernelIsMCS; KernelFastpath; KernelSel4ArchAarch64; NOT KernelVerificationBuild"
+    DEFAULT_DISABLED OFF
+)
+
 find_file(
     KernelDomainSchedule default_domain.c
     PATHS src/config
     CMAKE_FIND_ROOT_PATH_BOTH
-    DOC "A C file providing the symbols ksDomSchedule and ksDomeScheudleLength \
+    DOC "A C file providing the symbols ksDomSchedule and ksDomScheduleLength \
         to be linked with the kernel as a scheduling configuration."
 )
 if(SEL4_CONFIG_DEFAULT_ADVANCED)
@@ -316,12 +356,12 @@ config_string(
     KernelFPUMaxRestoresSinceSwitch FPU_MAX_RESTORES_SINCE_SWITCH
     "This option is a heuristic to attempt to detect when the FPU is no longer in use,\
     allowing the kernel to save the FPU state out so that the FPU does not have to be\
-    enabled/disabled every thread swith. Every time we restore a thread and there is\
+    enabled/disabled every thread switch. Every time we restore a thread and there is\
     active FPU state, we increment this setting and if it exceeds this threshold we\
     switch to the NULL state."
     DEFAULT 64
-    DEPENDS "KernelHaveFPU" UNDEF_DISABLED
-    UNQUOTE
+    DEPENDS "KernelHaveFPU"
+    UNDEF_DISABLED UNQUOTE
 )
 
 config_option(
@@ -330,6 +370,15 @@ config_option(
     would compromise the verification story of the kernel. Enabling this option does NOT\
     imply you are using a verified kernel."
     DEFAULT ON
+)
+
+config_option(
+    KernelBinaryVerificationBuild BINARY_VERIFICATION_BUILD
+    "When enabled, this configuration option restricts the use of other options that would \
+     interfere with binary verification. For example, it will disable some inter-procedural \
+     optimisations. Enabling this options does NOT imply that you are using a verified kernel."
+    DEFAULT OFF
+    DEPENDS "KernelVerificationBuild"
 )
 
 config_option(
@@ -445,10 +494,25 @@ config_choice(
 )
 
 config_option(
+    KernelOptimisationCloneFunctions KERNEL_OPTIMISATION_CLONE_FUNCTIONS
+    "If enabled, allow inter-procedural optimisations that can generate cloned or partial \
+     functions, according to the coarse optimisation setting (KernelOptimisation). \
+     By default, these optimisations are present at -O2 and higher. \
+     If disabled, prevent those optimisations, regardless of the coarse optimisation setting. \
+     The main use of this option is to disable cloned and partial functions when performing \
+     binary verification at -O2. \
+     This currently only affects GCC builds."
+    DEFAULT ON
+    DEPENDS "NOT KernelBinaryVerificationBuild"
+    DEFAULT_DISABLED OFF
+)
+
+config_option(
     KernelFWholeProgram KERNEL_FWHOLE_PROGRAM
     "Enable -fwhole-program when linking kernel. This should work modulo gcc bugs, which \
     are not uncommon with -fwhole-program. Consider this feature experimental!"
     DEFAULT OFF
+    DEPENDS "NOT KernelBinaryVerificationBuild"
 )
 
 config_option(
@@ -482,7 +546,8 @@ config_string(
      that can be fiddled with when running inside a simulator."
     DEFAULT 1
     UNQUOTE
-    DEPENDS "KernelIsMCS" UNDEF_DISABLED
+    DEPENDS "KernelIsMCS"
+    UNDEF_DISABLED
 )
 
 config_string(
@@ -491,7 +556,8 @@ config_string(
     either its period or budget configured."
     DEFAULT 0
     UNQUOTE
-    DEPENDS "KernelIsMCS" UNDEF_DISABLED
+    DEPENDS "KernelIsMCS"
+    UNDEF_DISABLED
 )
 
 config_option(

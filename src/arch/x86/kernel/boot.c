@@ -87,7 +87,6 @@ BOOT_CODE bool_t init_sys_state(
     cpu_id_t      cpu_id,
     mem_p_regs_t  *mem_p_regs,
     ui_info_t     ui_info,
-    p_region_t    boot_mem_reuse_p_reg,
     /* parameters below not modeled in abstract specification */
     uint32_t      num_drhu,
     paddr_t      *drhu_list,
@@ -113,7 +112,6 @@ BOOT_CODE bool_t init_sys_state(
 
     /* convert from physical addresses to kernel pptrs */
     region_t ui_reg             = paddr_to_pptr_reg(ui_info.p_reg);
-    region_t boot_mem_reuse_reg = paddr_to_pptr_reg(boot_mem_reuse_p_reg);
 
     /* convert from physical addresses to userland vptrs */
     v_region_t ui_v_reg;
@@ -123,7 +121,7 @@ BOOT_CODE bool_t init_sys_state(
 
     ipcbuf_vptr = ui_v_reg.end;
     bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
-    extra_bi_frame_vptr = bi_frame_vptr + BIT(BI_FRAME_SIZE_BITS);
+    extra_bi_frame_vptr = bi_frame_vptr + BIT(seL4_BootInfoFrameBits);
 
     if (vbe->vbeMode != -1) {
         extra_bi_size += sizeof(seL4_X86_BootInfo_VBE);
@@ -299,9 +297,7 @@ BOOT_CODE bool_t init_sys_state(
 #endif
 
     /* create the idle thread */
-    if (!create_idle_thread()) {
-        return false;
-    }
+    create_idle_thread();
 
     /* create the initial thread */
     tcb_t *initial = create_initial_thread(root_cnode_cap,
@@ -331,7 +327,7 @@ BOOT_CODE bool_t init_sys_state(
 #endif
 
     /* create all of the untypeds. Both devices and kernel window memory */
-    if (!create_untypeds(root_cnode_cap, boot_mem_reuse_reg)) {
+    if (!create_untypeds(root_cnode_cap)) {
         return false;
     }
 

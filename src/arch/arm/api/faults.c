@@ -34,14 +34,7 @@ word_t Arch_setMRs_fault(tcb_t *sender, tcb_t *receiver, word_t *receiveIPCBuffe
 {
     switch (faultType) {
     case seL4_Fault_VMFault: {
-        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-            word_t ipa, va;
-            va = getRestartPC(sender);
-            ipa = (addressTranslateS1CPR(va) & ~MASK(PAGE_BITS)) | (va & MASK(PAGE_BITS));
-            setMR(receiver, receiveIPCBuffer, seL4_VMFault_IP, ipa);
-        } else {
-            setMR(receiver, receiveIPCBuffer, seL4_VMFault_IP, getRestartPC(sender));
-        }
+        setMR(receiver, receiveIPCBuffer, seL4_VMFault_IP, getRestartPC(sender));
         setMR(receiver, receiveIPCBuffer, seL4_VMFault_Addr,
               seL4_Fault_VMFault_get_address(sender->tcbFault));
         setMR(receiver, receiveIPCBuffer, seL4_VMFault_PrefetchFault,

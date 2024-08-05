@@ -30,7 +30,7 @@ void _assert_fail(
 #define assert(expr) \
     do { \
         if (!(expr)) { \
-            _assert_fail(#expr, __FILE__, __LINE__, __FUNCTION__); \
+            _assert_fail(#expr, __FILE__, __LINE__, __func__); \
         } \
     } while(0)
 

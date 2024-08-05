@@ -800,11 +800,24 @@ bool_t PURE isMDBParentOf(cte_t *cte_a, cte_t *cte_b)
         if (badge == 0) {
             return true;
         }
-        return
-            (badge == cap_notification_cap_get_capNtfnBadge(cte_b->cap)) &&
-            !mdb_node_get_mdbFirstBadged(cte_b->cteMDBNode);
+        return (badge == cap_notification_cap_get_capNtfnBadge(cte_b->cap)) &&
+               !mdb_node_get_mdbFirstBadged(cte_b->cteMDBNode);
         break;
     }
+
+#ifdef CONFIG_ALLOW_SMC_CALLS
+    case cap_smc_cap: {
+        word_t badge;
+
+        badge = cap_smc_cap_get_capSMCBadge(cte_a->cap);
+        if (badge == 0) {
+            return true;
+        }
+        return (badge == cap_smc_cap_get_capSMCBadge(cte_b->cap)) &&
+               !mdb_node_get_mdbFirstBadged(cte_b->cteMDBNode);
+        break;
+    }
+#endif
 
     default:
         return true;

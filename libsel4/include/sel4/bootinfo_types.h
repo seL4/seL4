@@ -6,11 +6,12 @@
 
 #pragma once
 
-#include <autoconf.h>
+#include <sel4/config.h>
 #include <sel4/macros.h>
+#include <sel4/sel4_arch/constants.h>
 
 /* caps with fixed slot positions in the root CNode */
-enum {
+enum seL4_RootCNodeCapSlots {
     seL4_CapNull                =  0, /* null cap */
     seL4_CapInitThreadTCB       =  1, /* initial thread's TCB cap */
     seL4_CapInitThreadCNode     =  2, /* initial thread's root CNode cap */
@@ -23,14 +24,11 @@ enum {
     seL4_CapBootInfoFrame       =  9, /* bootinfo frame cap */
     seL4_CapInitThreadIPCBuffer = 10, /* initial thread's IPC buffer frame cap */
     seL4_CapDomain              = 11, /* global domain controller cap */
-    seL4_CapSMMUSIDControl      = 12,  /*global SMMU SID controller cap, null cap if not supported*/
-    seL4_CapSMMUCBControl       = 13,  /*global SMMU CB controller cap, null cap if not supported*/
-#ifdef CONFIG_KERNEL_MCS
-    seL4_CapInitThreadSC        = 14, /* initial thread's scheduling context cap */
-    seL4_NumInitialCaps         = 15
-#else
-    seL4_NumInitialCaps         = 14
-#endif /* !CONFIG_KERNEL_MCS */
+    seL4_CapSMMUSIDControl      = 12, /* global SMMU SID controller cap, null cap if not supported */
+    seL4_CapSMMUCBControl       = 13, /* global SMMU CB controller cap, null cap if not supported */
+    seL4_CapInitThreadSC        = 14, /* initial thread's scheduling context cap, null cap if not supported */
+    seL4_CapSMC                 = 15, /* global SMC cap, null cap if not supported */
+    seL4_NumInitialCaps         = 16
 };
 
 /* Legacy code will have assumptions on the vspace root being a Page Directory
@@ -51,6 +49,10 @@ typedef struct seL4_UntypedDesc {
     seL4_Uint8 isDevice;/* whether the untyped is a device  */
     seL4_Uint8 padding[sizeof(seL4_Word) - 2 * sizeof(seL4_Uint8)];
 } seL4_UntypedDesc;
+
+SEL4_COMPILE_ASSERT(
+    invalid_seL4_UntypedDesc,
+    sizeof(seL4_UntypedDesc) == 2 * sizeof(seL4_Word));
 
 typedef struct seL4_BootInfo {
     seL4_Word         extraLen;        /* length of any additional bootinfo information */
@@ -75,12 +77,27 @@ typedef struct seL4_BootInfo {
      * to make this struct easier to represent in other languages */
 } seL4_BootInfo;
 
-/* If extraLen > 0, then 4K after the start of bootinfo there is a region of the
- * size extraLen that contains additional boot info data chunks. They are
- * arch/platform specific and may or may not exist in any given execution. Each
- * chunk has a header that contains an ID to describe the chunk. All IDs share a
- * global namespace to ensure uniqueness.
+/* The boot info frame must be large enough to hold the seL4_BootInfo data
+ * structure. Due to internal restrictions, the size must be of the form 2^n and
+ * the minimum is one page.
  */
+#define seL4_BootInfoFrameBits  seL4_PageBits
+#define seL4_BootInfoFrameSize  LIBSEL4_BIT(seL4_BootInfoFrameBits)
+
+SEL4_COMPILE_ASSERT(
+    invalid_seL4_BootInfoFrameSize,
+    sizeof(seL4_BootInfo) <= seL4_BootInfoFrameSize)
+
+/* If seL4_BootInfo.extraLen > 0, this indicate the presence of additional boot
+ * information chunks starting at the offset seL4_BootInfoFrameSize. Userland
+ * code often contains the hard-coded assumption that the offset is 4 KiByte,
+ * because the boot info frame usually is one page, which is 4 KiByte on x86,
+ * Arm and RISC-V.
+ * The additional boot info chunks are arch/platform specific, they may or may
+ * not exist in any given execution. Each chunk has a header that contains an ID
+ * to describe the chunk. All IDs share a global namespace to ensure uniqueness.
+ */
+
 typedef enum {
     SEL4_BOOTINFO_HEADER_PADDING            = 0,
     SEL4_BOOTINFO_HEADER_X86_VBE            = 1,

@@ -16,6 +16,24 @@
 #include <arch/sbi.h>
 #include <mode/machine.h>
 
+/* PPTR_BASE must be smaller than KERNEL_ELF_BASE. */
+compile_assert(pptr_base_less_elf_base, PPTR_BASE < KERNEL_ELF_BASE_RAW);
+/* physBase must be aligned to a page for verification to succeed. */
+compile_assert(phys_base_page_aligned, IS_ALIGNED(PHYS_BASE_RAW, seL4_PageBits));
+
+/* The following compile time checks are verification artifacts. Not necessarily
+   all systems need to satisfy these, but proofs will need to be changed
+   manually if they are not satisfied. These particular checks also are not
+   necessarily sufficient for all real platforms, but they are good sanity
+   checks to have always on. */
+
+/* PPTR_BASE must be at least twice as far away from KERNEL_ELF_BASE as a LargePage. */
+compile_assert(pptr_base_distance, PPTR_BASE + BIT(seL4_LargePageBits + 1) < KERNEL_ELF_BASE_RAW);
+/* Kernel ELF window must have at least 64k space */
+compile_assert(kernel_elf_distance, KERNEL_ELF_BASE_RAW + BIT(16) < KDEV_BASE);
+/* End of kernel ELF window must not overflow as a word_t */
+compile_assert(kernel_elf_no_overflow, KERNEL_ELF_BASE_RAW < KERNEL_ELF_BASE_RAW + BIT(16));
+
 /* Bit flags in CSR MIP/SIP (interrupt pending). */
 /* Bit 0 was SIP_USIP, but the N extension will be dropped in v1.12 */
 #define SIP_SSIP   1 /* S-Mode software interrupt pending. */
@@ -63,11 +81,6 @@ static inline void fence_r_rw(void)
     asm volatile("fence r,rw" ::: "memory");
 }
 
-static inline void fence_w_r(void)
-{
-    asm volatile("fence w,r" ::: "memory");
-}
-
 static inline void ifence_local(void)
 {
     asm volatile("fence.i":::"memory");
@@ -78,16 +91,21 @@ static inline void sfence_local(void)
     asm volatile("sfence.vma" ::: "memory");
 }
 
-static inline void ifence(void)
+static inline word_t get_sbi_mask_for_all_remote_harts(void)
 {
-    ifence_local();
-
     word_t mask = 0;
     for (int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
         if (i != getCurrentCPUIndex()) {
             mask |= BIT(cpuIndexToID(i));
         }
     }
+    return mask;
+}
+
+static inline void ifence(void)
+{
+    ifence_local();
+    word_t mask = get_sbi_mask_for_all_remote_harts();
     sbi_remote_fence_i(mask);
 }
 
@@ -95,13 +113,7 @@ static inline void sfence(void)
 {
     fence_w_rw();
     sfence_local();
-
-    word_t mask = 0;
-    for (int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
-        if (i != getCurrentCPUIndex()) {
-            mask |= BIT(cpuIndexToID(i));
-        }
-    }
+    word_t mask = get_sbi_mask_for_all_remote_harts();
     sbi_remote_sfence_vma(mask, 0, 0);
 }
 
@@ -113,13 +125,7 @@ static inline void hwASIDFlushLocal(asid_t asid)
 static inline void hwASIDFlush(asid_t asid)
 {
     hwASIDFlushLocal(asid);
-
-    word_t mask = 0;
-    for (int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
-        if (i != getCurrentCPUIndex()) {
-            mask |= BIT(cpuIndexToID(i));
-        }
-    }
+    word_t mask = get_sbi_mask_for_all_remote_harts();
     sbi_remote_sfence_vma_asid(mask, 0, 0, asid);
 }
 
@@ -213,6 +219,13 @@ static inline void clear_sie_mask(word_t mask_low)
 {
     word_t temp;
     asm volatile("csrrc %0, sie, %1" : "=r"(temp) : "rK"(mask_low));
+}
+
+static inline word_t read_sscratch(void)
+{
+    word_t temp;
+    asm volatile("csrr %0, sscratch" : "=r"(temp));
+    return temp;
 }
 
 #ifdef CONFIG_HAVE_FPU

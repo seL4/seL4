@@ -671,15 +671,13 @@ bool_t configureSingleStepping(tcb_t *t,
         bp_num = convertBpNumToArch(bp_num);
     }
 
-    /* On ARM single-stepping is emulated using breakpoint mismatches. So you
-     * would basically set the breakpoint to mismatch everything, and this will
-     * cause an exception to be triggered on every instruction.
-     *
-     * We use NULL as the mismatch address since no code should be trying to
-     * execute NULL, so it's a perfect address to use as the mismatch
-     * criterion. An alternative might be to use an address in the kernel's
-     * high vaddrspace, since that's an address that it's impossible for
-     * userspace to be executing at.
+    /* On ARM single-stepping is emulated using breakpoint mismatches. The aim
+     * of single stepping is to execute a single instruction. By setting an
+     * instruction mismatch breakpoint to the current LR of the target thread,
+     * the thread will be able to execute this instruction, but attempting to
+     * execute any other instruction will result in the generation of a debug
+     * exception that will be delivered to the kernel, allowing us to simulate
+     * single stepping.
      */
     dbg_bcr_t bcr;
 
@@ -701,7 +699,7 @@ bool_t configureSingleStepping(tcb_t *t,
     bcr = dbg_bcr_set_byteAddressSelect(bcr, convertSizeToArch(1));
     bcr = Arch_setupBcr(bcr, false);
 
-    writeBvrContext(t, bp_num, 0);
+    writeBvrContext(t, bp_num, t->tcbArch.tcbContext.registers[FaultIP]);
     writeBcrContext(t, bp_num, bcr.words[0]);
 
     t->tcbArch.tcbContext.breakpointState.n_instructions = n_instr;
@@ -1072,7 +1070,7 @@ seL4_Fault_t handleUserLevelDebugException(word_t fault_vaddr)
 #endif
 
     word_t method_of_entry = getMethodOfEntry();
-    int i, active_bp;
+    int active_bp;
     seL4_Fault_t ret;
     word_t bp_reason, bp_vaddr;
 
@@ -1086,24 +1084,29 @@ seL4_Fault_t handleUserLevelDebugException(word_t fault_vaddr)
          *  2. A breakpoint configured in mismatch mode to emulate
          *  single-stepping.
          *
-         * If the register is configured for mismatch, then it's a single-step
-         * exception. If the register is configured for match, then it's a
-         * normal breakpoint exception.
+         * We assume that the exception was triggered by a normal breakpoint
+         * unless the thread currently has single stepping enabled and the
+         * breakpoint value register used for this is mismatched with the
+         * current faultIP
          */
-        for (i = 0; i < seL4_NumExclusiveBreakpoints; i++) {
-            dbg_bcr_t bcr;
+        tcb_t *curr_thread = NODE_STATE(ksCurThread);
+        user_context_t *context = &curr_thread->tcbArch.tcbContext;
 
-            bcr.words[0] = readBcrCp(i);
-            if (!dbg_bcr_get_enabled(bcr) || Arch_breakpointIsMismatch(bcr) != true) {
-                continue;
+        if (context->breakpointState.single_step_enabled) {
+            word_t bvr;
+            word_t bp_num = context->breakpointState.single_step_hw_bp_num;
+
+            bvr = readBvrCp(bp_num);
+            if (bvr != context->registers[FaultIP]) {
+                bp_reason = seL4_SingleStep;
+                active_bp = bp_num;
+                /* Update the BVR so it doesn't fault on the same address
+                 * again (in the case of stepping through multiple instructions)
+                 */
+                writeBvrContext(curr_thread, active_bp, context->registers[FaultIP]);
             }
-            /* Return the first BP enabled and configured for mismatch. */
-            bp_reason = seL4_SingleStep;
-            active_bp = i;
-            break;
         }
         break;
-
     case DEBUG_ENTRY_SYNC_WATCHPOINT:
         bp_reason = seL4_DataBreakpoint;
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT

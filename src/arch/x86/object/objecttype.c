@@ -514,7 +514,7 @@ exception_t Arch_decodeInvocation(
     switch (cap_get_capType(cap)) {
     case cap_asid_control_cap:
     case cap_asid_pool_cap:
-        return decodeX86MMUInvocation(invLabel, length, cptr, slot, cap, buffer);
+        return decodeX86MMUInvocation(invLabel, length, cptr, slot, cap, call, buffer);
     case cap_io_port_control_cap:
         return decodeX86PortControlInvocation(invLabel, length, cptr, slot, cap, buffer);
     case cap_io_port_cap:
@@ -527,7 +527,7 @@ exception_t Arch_decodeInvocation(
 #endif
 #ifdef CONFIG_VTX
     case cap_vcpu_cap:
-        return decodeX86VCPUInvocation(invLabel, length, cptr, slot, cap, buffer);
+        return decodeX86VCPUInvocation(invLabel, length, cptr, slot, cap, call, buffer);
     case cap_ept_pml4_cap:
     case cap_ept_pdpt_cap:
     case cap_ept_pd_cap:
@@ -535,7 +535,7 @@ exception_t Arch_decodeInvocation(
         return decodeX86EPTInvocation(invLabel, length, cptr, slot, cap, buffer);
 #endif
     default:
-        return Mode_decodeInvocation(invLabel, length, cptr, slot, cap, buffer);
+        return Mode_decodeInvocation(invLabel, length, cptr, slot, cap, call, buffer);
     }
 }
 

@@ -102,6 +102,12 @@ static inline irq_t getActiveIRQ(void)
          * has claimed it in a multicore system.
          */
         irq = plic_get_claim();
+#ifdef CONFIG_PLAT_QEMU_RISCV_VIRT
+        /* QEMU bug requires external interrupts to be immediately claimed. For
+         * other platforms, the claim is done in invokeIRQHandler_AckIRQ.
+         */
+        plic_complete_claim(irq);
+#endif
 #ifdef ENABLE_SMP_SUPPORT
     } else if (sip & BIT(SIP_SSIP)) {
         sbi_clear_ipi();

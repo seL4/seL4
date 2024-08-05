@@ -20,8 +20,9 @@ if(KernelPlatformTqma8xqp1gb)
     list(APPEND KernelDTSList "src/plat/tqma8xqp1gb/overlay-${KernelPlatform}.dts")
     declare_default_headers(
         TIMER_FREQUENCY 8000000
-        MAX_IRQ 512
+        MAX_IRQ 511
         TIMER drivers/timer/arm_generic.h
+        TIMER_OVERHEAD_TICKS 1
         INTERRUPT_CONTROLLER arch/machine/gic_v3.h
         NUM_PPI 32
         CLK_MAGIC 1llu

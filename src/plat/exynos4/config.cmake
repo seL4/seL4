@@ -25,7 +25,6 @@ if(KernelPlatformExynos4)
         KERNEL_WCET 10u
         CLK_MAGIC 2863311531llu
         CLK_SHIFT 36u
-        TIMER_PRECISION 0u
     )
 endif()
 

@@ -19,21 +19,19 @@ word_t get_tcb_sp(tcb_t *tcb)
 
 #ifdef CONFIG_PRINTING
 
-static void obj_frame_print_attrs(lookupFrame_ret_t ret);
-static void cap_frame_print_attrs_pud(pude_t *pudSlot);
-static void cap_frame_print_attrs_pd(pde_t *pdSlot);
+static void obj_frame_print_attrs(vm_page_size_t frameSize, paddr_t frameBase);
 static void cap_frame_print_attrs_pt(pte_t *ptSlot);
 static void cap_frame_print_attrs_impl(word_t SH, word_t AP, word_t NXN);
 static void cap_frame_print_attrs_vptr(word_t vptr, cap_t vspace);
 
 static void _cap_frame_print_attrs_vptr(word_t vptr, vspace_root_t *vspaceRoot);
 
-static void arm64_obj_pt_print_slots(pde_t *pdSlot);
-static void arm64_obj_pd_print_slots(pude_t *pudSlot);
+static void arm64_obj_pt_print_slots(pte_t *pdSlot);
+static void arm64_obj_pd_print_slots(pte_t *pudSlot);
 static void arm64_obj_pud_print_slots(void *pgdSlot_or_vspace);
 
-static void arm64_cap_pt_print_slots(pde_t *pdSlot, vptr_t vptr);
-static void arm64_cap_pd_print_slots(pude_t *pudSlot, vptr_t vptr);
+static void arm64_cap_pt_print_slots(pte_t *pdSlot, vptr_t vptr);
+static void arm64_cap_pd_print_slots(pte_t *pudSlot, vptr_t vptr);
 static void arm64_cap_pud_print_slots(void *pgdSlot_or_vspace, vptr_t vptr);
 
 /* Stage-1 access permissions:
@@ -55,25 +53,11 @@ static void arm64_cap_pud_print_slots(void *pgdSlot_or_vspace, vptr_t vptr);
  *  EL2 still uses the Stage-1 AP format.
  */
 /* use when only have access to pte of frames */
-static void cap_frame_print_attrs_pud(pude_t *pudSlot)
-{
-    cap_frame_print_attrs_impl(pude_pude_1g_ptr_get_SH(pudSlot),
-                               pude_pude_1g_ptr_get_AP(pudSlot),
-                               pude_pude_1g_ptr_get_UXN(pudSlot));
-}
-
-static void cap_frame_print_attrs_pd(pde_t *pdSlot)
-{
-    cap_frame_print_attrs_impl(pde_pde_large_ptr_get_SH(pdSlot),
-                               pde_pde_large_ptr_get_AP(pdSlot),
-                               pde_pde_large_ptr_get_UXN(pdSlot));
-}
-
 static void cap_frame_print_attrs_pt(pte_t *ptSlot)
 {
-    cap_frame_print_attrs_impl(pte_ptr_get_SH(ptSlot),
-                               pte_ptr_get_AP(ptSlot),
-                               pte_ptr_get_UXN(ptSlot));
+    cap_frame_print_attrs_impl(pte_pte_page_ptr_get_SH(ptSlot),
+                               pte_pte_page_ptr_get_AP(ptSlot),
+                               pte_pte_page_ptr_get_UXN(ptSlot));
 }
 
 static void cap_frame_print_attrs_impl(word_t SH, word_t AP, word_t NXN)
@@ -123,47 +107,32 @@ static void cap_frame_print_attrs_impl(word_t SH, word_t AP, word_t NXN)
 /* use when only have access to vptr of frames */
 static void _cap_frame_print_attrs_vptr(word_t vptr, vspace_root_t *vspace)
 {
-    lookupPUDSlot_ret_t pudSlot = lookupPUDSlot(vspace, vptr);
-    if (pudSlot.status != EXCEPTION_NONE) {
-        return;
-    }
+    lookupPTSlot_ret_t ret = lookupPTSlot(vspace, vptr);
 
-    switch (pude_ptr_get_pude_type(pudSlot.pudSlot)) {
-    case pude_pude_1g:
-        printf("frame_%p_%04lu ", pudSlot.pudSlot, GET_PUD_INDEX(vptr));
-        cap_frame_print_attrs_pud(pudSlot.pudSlot);
-        break;
-
-    case pude_pude_pd: {
-        pde_t *pd = paddr_to_pptr(pude_pude_pd_ptr_get_pd_base_address(pudSlot.pudSlot));
-        pde_t *pdSlot = pd + GET_PD_INDEX(vptr);
-
-        switch (pde_ptr_get_pde_type(pdSlot)) {
-        case pde_pde_large:
-            printf("frame_%p_%04lu ", pdSlot, GET_PD_INDEX(vptr));
-            cap_frame_print_attrs_pd(pdSlot);
-            break;
-
-        case pde_pde_small: {
-            pte_t *pt = paddr_to_pptr(pde_pde_small_ptr_get_pt_base_address(pdSlot));
-            pte_t *ptSlot = pt + GET_PT_INDEX(vptr);
-
-            if (pte_ptr_get_present(ptSlot)) {
-                printf("frame_%p_%04lu ", ptSlot, GET_PT_INDEX(vptr));
-                cap_frame_print_attrs_pt(ptSlot);
-                break;
-            } else {
-                return;
-            }
-        }
-        default:
-            assert(0);
-        }
-        break;
-    }
-    default:
+    /* Check that the returned slot is a page. */
+    if (!pte_ptr_get_valid(ret.ptSlot) ||
+        (pte_pte_table_ptr_get_present(ret.ptSlot) && ret.ptBitsLeft > PAGE_BITS)) {
         assert(0);
     }
+
+    word_t table_index;
+    switch (ret.ptBitsLeft) {
+
+    case ARMHugePage:
+        table_index = GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(1));
+        break;
+    case ARMLargePage:
+        table_index = GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(2));
+        break;
+    case ARMSmallPage:
+        table_index = GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(3));
+        break;
+    default:
+        assert(0);
+
+    }
+    printf("frame_%p_%04lu ", ret.ptSlot, table_index);
+    cap_frame_print_attrs_pt(ret.ptSlot);
 }
 
 void cap_frame_print_attrs_vptr(word_t vptr, cap_t vspace)
@@ -174,50 +143,50 @@ void cap_frame_print_attrs_vptr(word_t vptr, cap_t vspace)
 /*
  * print object slots
  */
-static void arm64_cap_pt_print_slots(pde_t *pdSlot, vptr_t vptr)
+static void arm64_cap_pt_print_slots(pte_t *pdSlot, vptr_t vptr)
 {
-    pte_t *pt = paddr_to_pptr(pde_pde_small_ptr_get_pt_base_address(pdSlot));
-    printf("pt_%p_%04lu {\n", pdSlot, GET_PD_INDEX(vptr));
+    pte_t *pt = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pdSlot));
+    printf("pt_%p_%04lu {\n", pdSlot, GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(2)));
 
-    for (word_t i = 0; i < BIT(PT_INDEX_OFFSET + PT_INDEX_BITS); i += (1 << PT_INDEX_OFFSET)) {
-        pte_t *ptSlot = pt + GET_PT_INDEX(i);
+    for (word_t i = 0; i < BIT(PT_INDEX_BITS); i ++) {
+        pte_t *ptSlot = pt + i;
 
-        if (pte_ptr_get_present(ptSlot)) {
+        if (pte_4k_page_ptr_get_present(ptSlot)) {
             // print pte entries
-            printf("0x%lx: frame_%p_%04lu", GET_PT_INDEX(i), ptSlot, GET_PT_INDEX(i));
+            printf("0x%lx: frame_%p_%04lu", i, ptSlot, i);
             cap_frame_print_attrs_pt(ptSlot);
         }
     }
     printf("}\n"); /* pt */
 }
 
-static void arm64_cap_pd_print_slots(pude_t *pudSlot, vptr_t vptr)
+static void arm64_cap_pd_print_slots(pte_t *pudSlot, vptr_t vptr)
 {
-    printf("pd_%p_%04lu {\n", pudSlot, GET_PUD_INDEX(vptr));
-    pde_t *pd = paddr_to_pptr(pude_pude_pd_ptr_get_pd_base_address(pudSlot));
+    printf("pd_%p_%04lu {\n", pudSlot, GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(1)));
+    pte_t *pd = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pudSlot));
 
-    for (word_t i = 0; i < BIT(PD_INDEX_OFFSET + PD_INDEX_BITS); i += (1 << PD_INDEX_OFFSET)) {
-        pde_t *pdSlot = pd + GET_PD_INDEX(i);
+    for (word_t i = 0; i < BIT(PT_INDEX_BITS); i++) {
+        pte_t *pdSlot = pd + i;
 
-        switch (pde_ptr_get_pde_type(pdSlot)) {
+        switch (pte_ptr_get_pte_type(pdSlot)) {
 
-        case pde_pde_large:
-            printf("0x%lx: frame_%p_%04lu", GET_PD_INDEX(i), pdSlot, GET_PD_INDEX(i));
-            cap_frame_print_attrs_pd(pdSlot);
+        case pte_pte_page:
+            printf("0x%lx: frame_%p_%04lu", i, pdSlot, i);
+            cap_frame_print_attrs_pt(pdSlot);
             break;
 
-        case pde_pde_small:
-            printf("0x%lx: pt_%p_%04lu\n", GET_PD_INDEX(i), pdSlot, GET_PD_INDEX(i));
+        case pte_pte_table:
+            printf("0x%lx: pt_%p_%04lu\n", i, pdSlot, i);
             break;
         }
     }
 
     printf("}\n"); /* pd */
 
-    for (word_t i = 0; i < BIT(PD_INDEX_OFFSET + PD_INDEX_BITS); i += (1 << PD_INDEX_OFFSET)) {
-        pde_t *pdSlot = pd + GET_PD_INDEX(i);
-        if (pde_ptr_get_pde_type(pdSlot) == pde_pde_small) {
-            arm64_cap_pt_print_slots(pdSlot, i);
+    for (word_t i = 0; i < BIT(PT_INDEX_BITS); i++) {
+        pte_t *pdSlot = pd + i;
+        if (pte_ptr_get_pte_type(pdSlot) == pte_pte_table) {
+            arm64_cap_pt_print_slots(pdSlot, vptr + (i * GET_ULVL_PGSIZE(ULVL_FRM_ARM_PT_LVL(2))));
         }
     }
 }
@@ -225,26 +194,28 @@ static void arm64_cap_pd_print_slots(pude_t *pudSlot, vptr_t vptr)
 static void arm64_cap_pud_print_slots(void *pgdSlot_or_vspace, vptr_t vptr)
 {
 #ifdef AARCH64_VSPACE_S2_START_L1
-    pude_t *pud = pgdSlot_or_vspace;
+    pte_t *pud = pgdSlot_or_vspace;
+    word_t index_bits = seL4_VSpaceIndexBits;
     printf("%p_pd {\n", pgdSlot_or_vspace);
 #else
-    pude_t *pud = paddr_to_pptr(pgde_pgde_pud_ptr_get_pud_base_address(pgdSlot_or_vspace));
-    printf("pud_%p_%04lu {\n", pgdSlot_or_vspace, GET_PGD_INDEX(vptr));
+    pte_t *pud = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pgdSlot_or_vspace));
+    word_t index_bits = seL4_PageTableIndexBits;
+    printf("pud_%p_%04lu {\n", pgdSlot_or_vspace, GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(0)));
 #endif
 
-    for (word_t i = 0; i < BIT(PUD_INDEX_OFFSET + UPUD_INDEX_BITS); i += (1 << PUD_INDEX_OFFSET)) {
-        pude_t *pudSlot = pud + GET_PUD_INDEX(i);
-        if (pude_ptr_get_pude_type(pudSlot) == pude_pude_pd) {
-            printf("0x%lx: pd_%p_%04lu\n", GET_PUD_INDEX(i), pudSlot, GET_PUD_INDEX(i));
+    for (word_t i = 0; i < BIT(index_bits); i++) {
+        pte_t *pudSlot = pud + i;
+        if (pte_ptr_get_pte_type(pudSlot) == pte_pte_table) {
+            printf("0x%lx: pd_%p_%04lu\n", i, pudSlot, i);
         }
     }
 
     printf("}\n"); /* pgd/pud */
 
-    for (word_t i = 0; i < BIT(PUD_INDEX_OFFSET + UPUD_INDEX_BITS); i += (1 << PUD_INDEX_OFFSET)) {
-        pude_t *pudSlot = pud + GET_PUD_INDEX(i);
-        if (pude_ptr_get_pude_type(pudSlot) == pude_pude_pd) {
-            arm64_cap_pd_print_slots(pudSlot, i);
+    for (word_t i = 0; i < BIT(index_bits); i++) {
+        pte_t *pudSlot = pud + GET_UPT_INDEX(i, ULVL_FRM_ARM_PT_LVL(1));
+        if (pte_ptr_get_pte_type(pudSlot) == pte_pte_table) {
+            arm64_cap_pd_print_slots(pudSlot, vptr + (i * GET_ULVL_PGSIZE(ULVL_FRM_ARM_PT_LVL(1))));
         }
     }
 }
@@ -253,7 +224,7 @@ void obj_vtable_print_slots(tcb_t *tcb)
 {
     if (isVTableRoot(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap) && !seen(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap)) {
         add_to_seen(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap);
-        vspace_root_t *vspace = cap_vtable_root_get_basePtr(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap);
+        vspace_root_t *vspace = VSPACE_PTR(cap_vspace_cap_get_capVSBasePtr(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap));
 
         /*
         * ARM hyp uses 3 level translation rather than the usual 4 level.
@@ -263,18 +234,18 @@ void obj_vtable_print_slots(tcb_t *tcb)
         arm64_cap_pud_print_slots(vspace, 0);
 #else
         printf("%p_pd {\n", vspace);
-        for (word_t i = 0; i < BIT(PGD_INDEX_OFFSET + PGD_INDEX_BITS); i += (1UL << PGD_INDEX_OFFSET)) {
-            lookupPGDSlot_ret_t pgdSlot = lookupPGDSlot(vspace, i);
-            if (pgde_pgde_pud_ptr_get_present(pgdSlot.pgdSlot)) {
-                printf("0x%lx: pud_%p_%04lu\n", GET_PGD_INDEX(i), pgdSlot.pgdSlot, GET_PGD_INDEX(i));
+        for (word_t i = 0; i < PT_INDEX_BITS; i++) {
+            pte_t *ptSlot = vspace + i;
+            if (pte_pte_table_ptr_get_present(ptSlot)) {
+                printf("0x%lx: pud_%p_%04lu\n", i, ptSlot, i);
             }
         }
         printf("}\n"); /* pd */
 
-        for (word_t i = 0; i < BIT(PGD_INDEX_OFFSET + PGD_INDEX_BITS); i += (1UL << PGD_INDEX_OFFSET)) {
-            lookupPGDSlot_ret_t pgdSlot = lookupPGDSlot(vspace, i);
-            if (pgde_pgde_pud_ptr_get_present(pgdSlot.pgdSlot)) {
-                arm64_cap_pud_print_slots(pgdSlot.pgdSlot, i);
+        for (word_t i = 0; i < PT_INDEX_BITS; i++) {
+            pte_t *ptSlot = vspace + i;
+            if (pte_pte_table_ptr_get_present(ptSlot)) {
+                arm64_cap_pud_print_slots(ptSlot, i * GET_ULVL_PGSIZE(0));
             }
         }
 #endif
@@ -294,53 +265,37 @@ void print_cap_arch(cap_t cap)
     switch (cap_get_capType(cap)) {
     case cap_page_table_cap: {
         asid_t asid = cap_page_table_cap_get_capPTMappedASID(cap);
-        findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
         vptr_t vptr = cap_page_table_cap_get_capPTMappedAddress(cap);
+        pte_t *target_pt = PT_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
+
+        findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
+        pte_t *ptSlot = NULL;
+        pte_t *pt = (pte_t *)find_ret.vspace_root;
+        word_t level;
+        for (level = 0; level < UPT_LEVELS - 1 && pt != target_pt; level++) {
+            ptSlot = pt + GET_UPT_INDEX(vptr, level);
+            if (unlikely(!pte_pte_table_ptr_get_present(ptSlot))) {
+                /* couldn't find it */
+                break;
+            }
+            pt = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(ptSlot));
+        }
+        if (pt != target_pt) {
+            /* didn't find it */
+            break;
+        }
+
+
         if (asid) {
             printf("pt_%p_%04lu (asid: %lu)\n",
-                   lookupPDSlot(find_ret.vspace_root, vptr).pdSlot, GET_PD_INDEX(vptr), (long unsigned int)asid);
+                   target_pt, GET_UPT_INDEX(vptr, level), (long unsigned int)asid);
         } else {
-            printf("pt_%p_%04lu\n", lookupPDSlot(find_ret.vspace_root, vptr).pdSlot, GET_PD_INDEX(vptr));
+            printf("pt_%p_%04lu\n", target_pt, GET_UPT_INDEX(vptr, level));
         }
         break;
     }
-    case cap_page_directory_cap: {
-        asid_t asid = cap_page_directory_cap_get_capPDMappedASID(cap);
-        findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
-        vptr_t vptr = cap_page_directory_cap_get_capPDMappedAddress(cap);
-        if (asid) {
-            printf("pd_%p_%04lu (asid: %lu)\n",
-                   lookupPUDSlot(find_ret.vspace_root, vptr).pudSlot, GET_PUD_INDEX(vptr), (long unsigned int)asid);
-        } else {
-            printf("pd_%p_%04lu\n",
-                   lookupPUDSlot(find_ret.vspace_root, vptr).pudSlot, GET_PUD_INDEX(vptr));
-        }
-        break;
-    }
-    case cap_page_upper_directory_cap: {
-        asid_t asid = cap_page_upper_directory_cap_get_capPUDMappedASID(cap);
-        findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
-        vptr_t vptr = cap_page_upper_directory_cap_get_capPUDMappedAddress(cap);
-
-#ifdef AARCH64_VSPACE_S2_START_L1
-        if (asid) {
-            printf("pud_%p_%04lu (asid: %lu)\n",
-                   find_ret.vspace_root, GET_PGD_INDEX(vptr), (long unsigned int)asid);
-        } else {
-            printf("pud_%p_%04lu\n", find_ret.vspace_root, GET_PGD_INDEX(vptr));
-        }
-#else
-        if (asid) {
-            printf("pud_%p_%04lu (asid: %lu)\n",
-                   lookupPGDSlot(find_ret.vspace_root, vptr).pgdSlot, GET_PGD_INDEX(vptr), (long unsigned int)asid);
-        } else {
-            printf("pud_%p_%04lu\n", lookupPGDSlot(find_ret.vspace_root, vptr).pgdSlot, GET_PGD_INDEX(vptr));
-        }
-#endif
-        break;
-    }
-    case cap_page_global_directory_cap: {
-        asid_t asid = cap_page_global_directory_cap_get_capPGDMappedASID(cap);
+    case cap_vspace_cap: {
+        asid_t asid = cap_vspace_cap_get_capVSMappedASID(cap);
         findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
         if (asid) {
             printf("%p_pd (asid: %lu)\n",
@@ -392,9 +347,7 @@ void print_object_arch(cap_t cap)
     switch (cap_get_capType(cap)) {
     case cap_frame_cap:
     case cap_page_table_cap:
-    case cap_page_directory_cap:
-    case cap_page_upper_directory_cap:
-    case cap_page_global_directory_cap:
+    case cap_vspace_cap:
         /* don't need to deal with these objects since they get handled from vtable */
         break;
 
@@ -425,12 +378,12 @@ void print_object_arch(cap_t cap)
     }
 }
 
-void obj_frame_print_attrs(lookupFrame_ret_t ret)
+void obj_frame_print_attrs(vm_page_size_t frameSize, paddr_t frameBase)
 {
     printf("(");
 
     /* VM size */
-    switch (ret.frameSize) {
+    switch (frameSize) {
     case ARMHugePage:
         printf("1G");
         break;
@@ -442,44 +395,37 @@ void obj_frame_print_attrs(lookupFrame_ret_t ret)
         break;
     }
 
-    printf(", paddr: 0x%p)\n", (void *)ret.frameBase);
+    printf(", paddr: 0x%p)\n", (void *)frameBase);
 }
 
-void arm64_obj_pt_print_slots(pde_t *pdSlot)
+void arm64_obj_pt_print_slots(pte_t *pdSlot)
 {
-    lookupFrame_ret_t ret;
-    pte_t *pt = paddr_to_pptr(pde_pde_small_ptr_get_pt_base_address(pdSlot));
+    pte_t *pt = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pdSlot));
 
-    for (word_t i = 0; i < BIT(PT_INDEX_OFFSET + PT_INDEX_BITS); i += (1 << PT_INDEX_OFFSET)) {
-        pte_t *ptSlot = pt + GET_PT_INDEX(i);
+    for (word_t i = 0; i < BIT(PT_INDEX_BITS); i++) {
+        pte_t *ptSlot = pt + i;
 
-        if (pte_ptr_get_present(ptSlot)) {
-            ret.frameBase = pte_ptr_get_page_base_address(ptSlot);
-            ret.frameSize = ARMSmallPage;
-            printf("frame_%p_%04lu = frame ", ptSlot, GET_PT_INDEX(i));
-            obj_frame_print_attrs(ret);
+        if (pte_4k_page_ptr_get_present(ptSlot)) {
+            printf("frame_%p_%04lu = frame ", ptSlot, i);
+            obj_frame_print_attrs(ARMSmallPage, pte_page_ptr_get_page_base_address(ptSlot));
         }
     }
 }
 
-void arm64_obj_pd_print_slots(pude_t *pudSlot)
+void arm64_obj_pd_print_slots(pte_t *pudSlot)
 {
-    lookupFrame_ret_t ret;
-    pde_t *pd = paddr_to_pptr(pude_pude_pd_ptr_get_pd_base_address(pudSlot));
+    pte_t *pd = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pudSlot));
 
-    for (word_t i = 0; i < BIT(PD_INDEX_OFFSET + PD_INDEX_BITS); i += (1 << PD_INDEX_OFFSET)) {
-        pde_t *pdSlot = pd + GET_PD_INDEX(i);
+    for (word_t i = 0; i < BIT(PT_INDEX_BITS); i++) {
+        pte_t *pdSlot = pd + i;
 
-        if (pde_ptr_get_pde_type(pdSlot) == pde_pde_large) {
-            ret.frameBase = pde_pde_large_ptr_get_page_base_address(pdSlot);
-            ret.frameSize = ARMLargePage;
-
-            printf("frame_%p_%04lu = frame ", pdSlot, GET_PD_INDEX(i));
-            obj_frame_print_attrs(ret);
+        if (pte_ptr_get_pte_type(pdSlot) == pte_pte_page) {
+            printf("frame_%p_%04lu = frame ", pdSlot, i);
+            obj_frame_print_attrs(ARMLargePage, pte_page_ptr_get_page_base_address(pdSlot));
         }
 
-        if (pde_ptr_get_pde_type(pdSlot) == pde_pde_small) {
-            printf("pt_%p_%04lu = pt\n", pdSlot, GET_PD_INDEX(i));
+        if (pte_ptr_get_pte_type(pdSlot) == pte_pte_table) {
+            printf("pt_%p_%04lu = pt\n", pdSlot, i);
             arm64_obj_pt_print_slots(pdSlot);
         }
     }
@@ -487,23 +433,23 @@ void arm64_obj_pd_print_slots(pude_t *pudSlot)
 
 void arm64_obj_pud_print_slots(void *pgdSlot_or_vspace)
 {
-    lookupFrame_ret_t ret;
-    pude_t *pud = paddr_to_pptr(pgde_pgde_pud_ptr_get_pud_base_address(pgdSlot_or_vspace));
+    pte_t *pud = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pgdSlot_or_vspace));
+#ifdef AARCH64_VSPACE_S2_START_L1
+    word_t index_bits = seL4_VSpaceIndexBits;
+#else
+    word_t index_bits = seL4_PageTableIndexBits;
+#endif
+    for (word_t i = 0; i < BIT(index_bits); i++) {
+        pte_t *pudSlot = pud + i;
 
-    for (word_t i = 0; i < BIT(PUD_INDEX_OFFSET + UPUD_INDEX_BITS); i += (1 << PUD_INDEX_OFFSET)) {
-        pude_t *pudSlot = pud + GET_PUD_INDEX(i);
-
-        switch (pude_ptr_get_pude_type(pudSlot)) {
-        case pude_pude_1g:
-            ret.frameBase = pude_pude_1g_ptr_get_page_base_address(pudSlot);
-            ret.frameSize = ARMHugePage;
-
-            printf("frame_%p_%04lu = frame ", pudSlot, GET_PUD_INDEX(i));
-            obj_frame_print_attrs(ret);
+        switch (pte_ptr_get_pte_type(pudSlot)) {
+        case pte_pte_page:
+            printf("frame_%p_%04lu = frame ", pudSlot, i);
+            obj_frame_print_attrs(ARMHugePage, pte_page_ptr_get_page_base_address(pudSlot));
             break;
 
-        case pude_pude_pd: {
-            printf("pd_%p_%04lu = pd\n", pudSlot, GET_PUD_INDEX(i));
+        case pte_pte_table: {
+            printf("pd_%p_%04lu = pd\n", pudSlot, i);
             arm64_obj_pd_print_slots(pudSlot);
 
         }
@@ -515,7 +461,7 @@ void obj_tcb_print_vtable(tcb_t *tcb)
 {
     if (isVTableRoot(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap) && !seen(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap)) {
         add_to_seen(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap);
-        vspace_root_t *vspace = cap_vtable_root_get_basePtr(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap);
+        vspace_root_t *vspace = VSPACE_PTR(cap_vspace_cap_get_capVSBasePtr(TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap));
 
         /*
          * ARM hyp uses 3 level translation rather than the usual 4 level.
@@ -526,11 +472,11 @@ void obj_tcb_print_vtable(tcb_t *tcb)
         arm64_obj_pud_print_slots(vspace);
 #else
         printf("%p_pd = pgd\n", vspace);
-        for (word_t i = 0; i < BIT(PGD_INDEX_OFFSET + PGD_INDEX_BITS); i += (1UL << PGD_INDEX_OFFSET)) {
-            lookupPGDSlot_ret_t pgdSlot = lookupPGDSlot(vspace, i);
-            if (pgde_pgde_pud_ptr_get_present(pgdSlot.pgdSlot)) {
-                printf("pud_%p_%04lu = pud\n", pgdSlot.pgdSlot, GET_PGD_INDEX(i));
-                arm64_obj_pud_print_slots(pgdSlot.pgdSlot);
+        for (word_t i = 0; i < PT_INDEX_BITS; i++) {
+            pte_t *ptSlot = vspace + i;
+            if (pte_pte_table_ptr_get_present(ptSlot)) {
+                printf("pud_%p_%04lu = pud\n", ptSlot, i);
+                arm64_obj_pud_print_slots(ptSlot);
             }
         }
 #endif
@@ -543,7 +489,9 @@ void debug_capDL(void)
 {
     printf("arch aarch64\n");
     printf("objects {\n");
+#ifdef CONFIG_PRINTING
     print_objects();
+#endif
     printf("}\n");
 
     printf("caps {\n");

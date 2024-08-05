@@ -630,12 +630,13 @@ exception_t decodeX86ModeMMUInvocation(
     cptr_t cptr,
     cte_t *cte,
     cap_t cap,
+    bool_t call,
     word_t *buffer
 )
 {
     switch (cap_get_capType(cap)) {
     case cap_page_directory_cap:
-        return decodeIA32PageDirectoryInvocation(invLabel, length, cte, cap, buffer);
+        return decodeIA32PageDirectoryInvocation(invLabel, length, cte, cap, call, buffer);
 
     default:
         fail("Invalid arch cap type");

@@ -1,0 +1,29 @@
+/*
+ * Copyright 2022, HENSOLDT Cyber
+ *
+ *  * SPDX-License-Identifier: BSD-3-Clause
+ */
+
+/ {
+    reserved-memory {
+        #address-cells = <0x02>;
+        #size-cells = <0x02>;
+        ranges;
+
+        /* The 32-bit version of seL4 can handle a 32-bit physical
+         * address space (4 GiB) only, even if LPAE allows using a
+         * 40-bit physical address space. For now, reserving any memory
+         * starting at 0xffffffff is the easiest way to cope with
+         * platform configurations having pyhsical memory of exactly
+         * 4 GiB or above. The long-term fix is improving the seL4 build
+         * scripts to be aware of the 4 GiB limitation and never create
+         * any regions above. Furthermore, a way needs to be found to
+         * support using exactly 4 GiB also.
+         */
+        reserved-memory@ffffffff{
+            reg = < 0x00000000 0xffffffff 0xffffffff 0x00000001 >;
+            no-map;
+        };
+
+    };
+};

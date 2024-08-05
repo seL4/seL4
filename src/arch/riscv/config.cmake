@@ -10,8 +10,8 @@ config_string(
     KernelPTLevels PT_LEVELS "Number of page \
     table levels for RISC-V depends on the mode. For example there are: \
     2, 3 and 4 levels on Sv32, Sv39, Sv48 RISC-V paging modes respectively."
-    DEFAULT 3 UNDEF_DISABLED
-    UNQUOTE
+    DEFAULT 3
+    UNDEF_DISABLED UNQUOTE
     DEPENDS "KernelArchRiscV"
 )
 
@@ -23,6 +23,17 @@ config_option(
 
 config_option(
     KernelRiscvExtD RISCV_EXT_D "RISC-V extension for double-precision floating-point"
+    DEFAULT OFF
+    DEPENDS "KernelArchRiscV"
+)
+
+config_option(
+    KernelRiscvUseClintMtime RISCV_USE_CLINT_MTIME "When reading the timestamp \
+    from the hardware, directly access the CLINT timer register (mtime) instead \
+    of using the rdtime instruction. This is a performance optimization, but \
+    only for platforms where executing the rdtime instruction results in a \
+    trap into M-mode software which then accesses the CLINT timer register. \
+    Note that this option requires S-mode access to the CLINT."
     DEFAULT OFF
     DEPENDS "KernelArchRiscV"
 )

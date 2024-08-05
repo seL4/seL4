@@ -134,8 +134,15 @@ exception_t decodeIRQHandlerInvocation(word_t invLabel, irq_t irq)
 void invokeIRQHandler_AckIRQ(irq_t irq)
 {
 #ifdef CONFIG_ARCH_RISCV
+#if !defined(CONFIG_PLAT_QEMU_RISCV_VIRT)
+    /* QEMU has a bug where interrupts must be
+     * immediately claimed, which is done in getActiveIRQ. For other
+     * platforms, the claim can wait and be done here.
+     */
     plic_complete_claim(irq);
+#endif
 #else
+
 #if defined ENABLE_SMP_SUPPORT && defined CONFIG_ARCH_ARM
     if (IRQ_IS_PPI(irq) && IRQT_TO_CORE(irq) != getCurrentCPUIndex()) {
         doRemoteMaskPrivateInterrupt(IRQT_TO_CORE(irq), false, IRQT_TO_IDX(irq));

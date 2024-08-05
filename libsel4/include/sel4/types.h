@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <autoconf.h>
+#include <sel4/config.h>
 #include <sel4/simple_types.h>
 #include <sel4/macros.h>
 #include <sel4/arch/types.h>

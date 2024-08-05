@@ -17,6 +17,11 @@
 *.blg
 *.toc
 *.mpx
+*.acn
+*.glo
+*.gls
+*.ilg
+*.ist
 
 tools/parsetab.py
 manual/env.tex

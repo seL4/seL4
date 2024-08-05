@@ -99,16 +99,17 @@ vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_right
 void flushTable(vspace_root_t *vspace, word_t vptr, pte_t *pt, asid_t asid);
 
 exception_t decodeX86MMUInvocation(word_t invLabel, word_t length, cptr_t cptr, cte_t *cte,
-                                   cap_t cap, word_t *buffer);
+                                   cap_t cap, bool_t call, word_t *buffer);
 
 exception_t decodeX86ModeMMUInvocation(word_t invLabel, word_t length, cptr_t cptr, cte_t *cte,
-                                       cap_t cap, word_t *buffer);
+                                       cap_t cap, bool_t call, word_t *buffer);
 
 exception_t decodeIA32PageDirectoryInvocation(word_t invLabel, word_t length, cte_t *cte, cap_t cap,
-                                              word_t *buffer);
+                                              bool_t call, word_t *buffer);
 
 /* common functions for x86 */
-exception_t decodeX86FrameInvocation(word_t invLabel, word_t length, cte_t *cte, cap_t cap, word_t *buffer);
+exception_t decodeX86FrameInvocation(word_t invLabel, word_t length, cte_t *cte, cap_t cap,
+                                     bool_t call, word_t *buffer);
 
 uint32_t CONST WritableFromVMRights(vm_rights_t vm_rights);
 uint32_t CONST SuperUserFromVMRights(vm_rights_t vm_rights);

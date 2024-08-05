@@ -31,9 +31,9 @@ jobs:
       run: sudo apt-get update
     - name: install xmllint
       run: sudo apt-get install libxml2-utils
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: run xmllint
       run: |
-        find libsel4 -name "sel4*.xml" | \
+        find libsel4 -name "object-api*.xml" | \
         xargs xmllint --schema libsel4/tools/sel4_idl.xsd --noout
         xmllint --schema libsel4/include/api/syscall.xsd --noout libsel4/include/api/syscall.xml

@@ -79,7 +79,7 @@ int_##number:                                \
     SET_SELECTOR(fs, SEL_FS, tmp) \
     SET_SELECTOR(gs, SEL_GS, tmp)
 
-.section .text
+.section .text, "ax"
 
 INT_HANDLER_WITHOUT_ERR_CODE(00)
 INT_HANDLER_WITHOUT_ERR_CODE(01)

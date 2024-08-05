@@ -13,6 +13,22 @@
 #include <arch/model/smp.h>
 #include <arch/machine.h>
 
+/*
+ * SYSEXIT  0F 35     ; Return to compatibility mode from fast system call.
+ * SYSEXITQ 48 0F 35  ; Return to 64-bit mode from fast system call.
+ *
+ * clang uses "sysexitq" and gcc uses "rex.w sysexit" to generate 0x48,0x0F,0x35
+ * only at gcc 12 or later "sysexitq" works on both compilers.
+ */
+#if (defined(__clang__))
+#define SYSEXITQ "sysexitq"
+#elif defined(__GNUC__)
+#define SYSEXITQ "rex.w sysexit"
+#else
+#error "unsupported compiler"
+#endif
+
+
 static inline cr3_t makeCR3(paddr_t addr, word_t pcid)
 {
     return cr3_new(addr, config_set(CONFIG_SUPPORT_PCID) ? pcid : 0);

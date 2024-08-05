@@ -1,0 +1,27 @@
+/*
+ * Copyright 2024, Kry10 Limited.
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+    chosen {
+        seL4,elfloader-devices =
+            "serial1",
+            &{/psci},
+            &{/timer};
+
+        seL4,kernel-devices =
+            "serial1",
+            &{/soc@0/interrupt-controller@38800000},
+            &{/timer};
+    };
+
+    reserved-memory {
+        /* The following normal memory regions are Linux specific. */
+        /delete-node/ dsp@92400000;
+        /delete-node/ vdev0vring0@942f0000;
+        /delete-node/ vdev0vring1@942f8000;
+        /delete-node/ vdev0buffer@94300000;
+    };
+};

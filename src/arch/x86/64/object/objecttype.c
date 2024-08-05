@@ -320,6 +320,7 @@ exception_t Mode_decodeInvocation(
     cptr_t cptr,
     cte_t *slot,
     cap_t cap,
+    bool_t call,
     word_t *buffer
 )
 {
@@ -329,7 +330,7 @@ exception_t Mode_decodeInvocation(
     case cap_page_directory_cap:
     case cap_page_table_cap:
     case cap_frame_cap:
-        return decodeX86MMUInvocation(label, length, cptr, slot, cap, buffer);
+        return decodeX86MMUInvocation(label, length, cptr, slot, cap, call, buffer);
 
     default:
         current_syscall_error.type = seL4_InvalidCapability;

@@ -168,6 +168,9 @@ class WrappedNode:
     def __hash__(self):
         return hash(self.path)
 
+    def __repr__(self):
+        return 'WrappedNode(path={})'.format(self.path)
+
 
 class Utils:
     @staticmethod

@@ -14,6 +14,7 @@
 #include <object/interrupt.h>
 #include <arch/machine.h>
 #include <arch/kernel/boot.h>
+#include <arch/kernel/traps.h>
 #include <arch/kernel/vspace.h>
 #include <arch/benchmark.h>
 #include <linker.h>
@@ -21,6 +22,11 @@
 #include <machine.h>
 
 #ifdef ENABLE_SMP_SUPPORT
+/* SMP boot synchronization works based on a global variable with the initial
+ * value 0, as the loader must zero all BSS variables. Secondary cores keep
+ * spinning until the primary core has initialized all kernel structures and
+ * then set it to 1.
+ */
 BOOT_BSS static volatile word_t node_boot_lock;
 #endif
 
@@ -60,9 +66,7 @@ BOOT_CODE static bool_t arch_init_freemem(region_t ui_reg,
      * symbols are a reference in the kernel image window, but all allocations
      * are done in terms of the main kernel window, so we do some translation.
      */
-    res_reg[0].start = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void *)KERNEL_ELF_BASE));
-    res_reg[0].end = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void *)ki_end));
-
+    res_reg[0] = paddr_to_pptr_reg(get_p_reg_kernel_img());
     int index = 1;
 
     /* add the dtb region, if it is not empty */
@@ -107,9 +111,6 @@ BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
     /* provide the IRQ control cap */
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapIRQControl), cap_irq_control_cap_new());
 }
-
-/* ASM symbol for the CPU initialisation trap. */
-extern char trap_entry[1];
 
 /* This and only this function initialises the CPU. It does NOT initialise any kernel state. */
 
@@ -159,6 +160,7 @@ BOOT_CODE static bool_t try_init_kernel_secondary_core(word_t hart_id, word_t co
     init_cpu();
     NODE_LOCK_SYS;
 
+    clock_sync_test();
     ksNumCPUs++;
     init_core_state(SchedulerAction_ResumeCurrentThread);
     ifence_local();
@@ -167,15 +169,25 @@ BOOT_CODE static bool_t try_init_kernel_secondary_core(word_t hart_id, word_t co
 
 BOOT_CODE static void release_secondary_cores(void)
 {
+    assert(0 == node_boot_lock); /* Sanity check for a proper lock state. */
     node_boot_lock = 1;
-    fence_w_r();
+    /* At this point in time the primary core (executing this code) already uses
+     * the seL4 MMU/cache setup. However, the secondary cores are still using
+     * the elfloader's MMU/cache setup, and thus the update of node_boot_lock
+     * may not be visible there if the setups differ. Currently, the mappings
+     * match, so a barrier is all that is needed.
+     */
+    fence_rw_rw();
 
     while (ksNumCPUs != CONFIG_MAX_NUM_NODES) {
-        __atomic_signal_fence(__ATOMIC_ACQ_REL);
+#ifdef ENABLE_SMP_CLOCK_SYNC_TEST_ON_BOOT
+        NODE_STATE(ksCurTime) = getCurrentTime();
+#endif
+        __atomic_thread_fence(__ATOMIC_ACQ_REL);
     }
 }
+#endif /* ENABLE_SMP_SUPPORT */
 
-#endif
 /* Main kernel initialisation function. */
 
 static BOOT_CODE bool_t try_init_kernel(
@@ -191,10 +203,6 @@ static BOOT_CODE bool_t try_init_kernel(
     cap_t it_pd_cap;
     cap_t it_ap_cap;
     cap_t ipcbuf_cap;
-    p_region_t boot_mem_reuse_p_reg = ((p_region_t) {
-        kpptr_to_paddr((void *)KERNEL_ELF_BASE), kpptr_to_paddr(ki_boot_end)
-    });
-    region_t boot_mem_reuse_reg = paddr_to_pptr_reg(boot_mem_reuse_p_reg);
     region_t ui_reg = paddr_to_pptr_reg((p_region_t) {
         ui_p_reg_start, ui_p_reg_end
     });
@@ -214,7 +222,7 @@ static BOOT_CODE bool_t try_init_kernel(
 
     ipcbuf_vptr = ui_v_reg.end;
     bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
-    extra_bi_frame_vptr = bi_frame_vptr + BIT(BI_FRAME_SIZE_BITS);
+    extra_bi_frame_vptr = bi_frame_vptr + BIT(seL4_BootInfoFrameBits);
 
     map_kernel_window();
 
@@ -229,6 +237,13 @@ static BOOT_CODE bool_t try_init_kernel(
     /* If a DTB was provided, pass the data on as extra bootinfo */
     p_region_t dtb_p_reg = P_REG_EMPTY;
     if (dtb_size > 0) {
+#ifdef CONFIG_PLAT_ROCKETCHIP_ZCU102
+        /* The softcore rocketchip instantiation doesn't work well when this
+         * page isn't reserved. Round up so the whole page is reserved to
+         * avoid the problem
+         */
+        dtb_size = ROUND_UP(dtb_size, PAGE_BITS);
+#endif
         paddr_t dtb_phys_end = dtb_phys_addr + dtb_size;
         if (dtb_phys_end < dtb_phys_addr) {
             /* An integer overflow happened in DTB end address calculation, the
@@ -391,10 +406,7 @@ static BOOT_CODE bool_t try_init_kernel(
 #endif
 
     /* create the idle thread */
-    if (!create_idle_thread()) {
-        printf("ERROR: could not create idle thread\n");
-        return false;
-    }
+    create_idle_thread();
 
     /* create the initial thread */
     tcb_t *initial = create_initial_thread(
@@ -414,9 +426,7 @@ static BOOT_CODE bool_t try_init_kernel(
     init_core_state(initial);
 
     /* convert the remaining free memory into UT objects and provide the caps */
-    if (!create_untypeds(
-            root_cnode_cap,
-            boot_mem_reuse_reg)) {
+    if (!create_untypeds(root_cnode_cap)) {
         printf("ERROR: could not create untypteds for kernel image boot memory\n");
         return false;
     }

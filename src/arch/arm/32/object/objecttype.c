@@ -556,7 +556,7 @@ exception_t Arch_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr,
 #else
 {
 #endif
-    return decodeARMMMUInvocation(invLabel, length, cptr, slot, cap, buffer);
+    return decodeARMMMUInvocation(invLabel, length, cptr, slot, cap, call, buffer);
 }
 }
 

@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <autoconf.h>
+#include <sel4/config.h>
 
 /* The QEMU virt platform can emulate various cores */
 #if defined(CONFIG_ARM_CORTEX_A15)
@@ -15,6 +15,8 @@
 #include <sel4/arch/constants_cortex_a53.h>
 #elif defined(CONFIG_ARM_CORTEX_A57)
 #include <sel4/arch/constants_cortex_a57.h>
+#elif defined(CONFIG_ARM_CORTEX_A72)
+#include <sel4/arch/constants_cortex_a72.h>
 #else
 #error "unsupported core"
 #endif

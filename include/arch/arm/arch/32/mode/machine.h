@@ -59,6 +59,7 @@
 #define ID_PFR1    " p15, 0,  %0,  c0,  c1, 1" /* 32-bit RO CPU feature register */
 #define CPACR      " p15, 0,  %0,  c1,  c0, 2" /* 32-bit Architectural Feature Access Control Register */
 #define VMPIDR     " p15, 4,  %0,  c0,  c0, 5" /* 32-bit RW Virtualization Multiprocessor ID Register */
+#define MPIDR      " p15, 0,  %0, c0,  c0, 5"
 
 /* Use Hypervisor Physical timer */
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT

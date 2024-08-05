@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <autoconf.h>
+#include <sel4/config.h>
 #include <sel4/macros.h>
 
 #ifndef __ASSEMBLER__
@@ -52,8 +52,6 @@ typedef enum {
     SEL4_FORCE_LONG_ENUM(seL4_VMFault_Msg),
 } seL4_VMFault_Msg;
 
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-
 typedef enum {
     seL4_VGICMaintenance_IDX,
     seL4_VGICMaintenance_Length,
@@ -62,6 +60,7 @@ typedef enum {
 
 typedef enum {
     seL4_VPPIEvent_IRQ,
+    seL4_VPPIEvent_Length,
     SEL4_FORCE_LONG_ENUM(seL4_VPPIEvent_Msg),
 } seL4_VPPIEvent_Msg;
 
@@ -97,10 +96,8 @@ typedef enum {
     /* thread pointer/ID registers EL0/EL1 */
     seL4_VCPUReg_TPIDR_EL1,
 
-#if CONFIG_MAX_NUM_NODES > 1
     /* Virtualisation Multiprocessor ID Register */
     seL4_VCPUReg_VMPIDR_EL2,
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
 
     /* general registers x0 to x30 have been saved by traps.S */
     seL4_VCPUReg_SP_EL1,
@@ -114,9 +111,8 @@ typedef enum {
     seL4_VCPUReg_CNTKCTL_EL1,
 
     seL4_VCPUReg_Num,
+    SEL4_FORCE_LONG_ENUM(seL4_VCPUReg),
 } seL4_VCPUReg;
-
-#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 #ifdef CONFIG_KERNEL_MCS
 typedef enum {
@@ -163,7 +159,7 @@ typedef enum {
     seL4_Timeout_Consumed,
     seL4_Timeout_Length,
     SEL4_FORCE_LONG_ENUM(seL4_Timeout_Msg)
-} seL4_TimeoutMsg;
+} seL4_Timeout_Msg;
 #endif
 #endif /* !__ASSEMBLER__ */
 
@@ -187,41 +183,24 @@ typedef enum {
 #define seL4_PageTableEntryBits 3
 #define seL4_PageTableIndexBits 9
 
-#define seL4_PageDirBits 12
-#define seL4_PageDirEntryBits 3
-#define seL4_PageDirIndexBits 9
-
 #define seL4_NumASIDPoolsBits 7
 #define seL4_ASIDPoolBits 12
 #define seL4_ASIDPoolIndexBits 9
 #define seL4_IOPageTableBits 12
 #define seL4_WordSizeBits 3
 
-#define seL4_PUDEntryBits 3
+#define seL4_VSpaceEntryBits 3
 
 #if defined(CONFIG_ARM_HYPERVISOR_SUPPORT) && defined (CONFIG_ARM_PA_SIZE_BITS_40)
 /* for a 3 level translation, we skip the PGD */
-#define seL4_PGDBits 0
-#define seL4_PGDEntryBits 0
-#define seL4_PGDIndexBits    0
 
-#define seL4_PUDBits 13
-#define seL4_PUDIndexBits 10
-
-#define seL4_VSpaceBits seL4_PUDBits
-#define seL4_VSpaceIndexBits seL4_PUDIndexBits
-#define seL4_ARM_VSpaceObject seL4_ARM_PageUpperDirectoryObject
+#define seL4_VSpaceBits 13
+#define seL4_VSpaceIndexBits 10
 #else
-#define seL4_PGDBits 12
-#define seL4_PGDEntryBits 3
-#define seL4_PGDIndexBits    9
 
-#define seL4_PUDBits 12
-#define seL4_PUDIndexBits 9
 
-#define seL4_VSpaceBits seL4_PGDBits
-#define seL4_VSpaceIndexBits seL4_PGDIndexBits
-#define seL4_ARM_VSpaceObject seL4_ARM_PageGlobalDirectoryObject
+#define seL4_VSpaceBits 12
+#define seL4_VSpaceIndexBits 9
 #endif
 
 #define seL4_ARM_VCPUBits   12
@@ -236,10 +215,8 @@ typedef enum {
 
 #ifndef __ASSEMBLER__
 SEL4_SIZE_SANITY(seL4_PageTableEntryBits, seL4_PageTableIndexBits, seL4_PageTableBits);
-SEL4_SIZE_SANITY(seL4_PageDirEntryBits, seL4_PageDirIndexBits, seL4_PageDirBits);
 SEL4_SIZE_SANITY(seL4_WordSizeBits, seL4_ASIDPoolIndexBits, seL4_ASIDPoolBits);
-SEL4_SIZE_SANITY(seL4_PGDEntryBits, seL4_PGDIndexBits, seL4_PGDBits);
-SEL4_SIZE_SANITY(seL4_PUDEntryBits, seL4_PUDIndexBits, seL4_PUDBits);
+SEL4_SIZE_SANITY(seL4_VSpaceEntryBits, seL4_VSpaceIndexBits, seL4_VSpaceBits);
 #endif
 
 #ifdef CONFIG_ENABLE_BENCHMARKS

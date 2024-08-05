@@ -26,10 +26,10 @@ BOOT_CODE void initGenericTimer(void)
 #ifdef CONFIG_KERNEL_MCS
     /* this sets the irq to UINT64_MAX */
     ackDeadlineIRQ();
-    SYSTEM_WRITE_WORD(CNT_CTL, BIT(0));
 #else /* CONFIG_KERNEL_MCS */
     resetTimer();
 #endif /* !CONFIG_KERNEL_MCS */
+    SYSTEM_WRITE_WORD(CNT_CTL, BIT(0));
 }
 
 /*

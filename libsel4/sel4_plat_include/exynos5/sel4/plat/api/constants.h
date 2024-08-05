@@ -5,7 +5,7 @@
  */
 #pragma once
 
-#include <autoconf.h>
+#include <sel4/config.h>
 
 /* This is used for multiple SOCs:
  * - Exynos5250 (A15)

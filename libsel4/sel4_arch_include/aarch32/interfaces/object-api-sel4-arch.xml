@@ -1,0 +1,190 @@
+<?xml version="1.0" ?>
+<!--
+     Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+
+     SPDX-License-Identifier: BSD-2-Clause
+-->
+
+<api name="ObjectApiAarch32" label_prefix="aarch32_">
+    <struct name="seL4_UserContext">
+        <member name="pc"/>
+        <member name="sp"/>
+        <member name="cpsr"/>
+        <member name="r0"/>
+        <member name="r1"/>
+        <member name="r8"/>
+        <member name="r9"/>
+        <member name="r10"/>
+        <member name="r11"/>
+        <member name="r12"/>
+        <member name="r2"/>
+        <member name="r3"/>
+        <member name="r4"/>
+        <member name="r5"/>
+        <member name="r6"/>
+        <member name="r7"/>
+        <member name="r14"/>
+        <member name="tpidrurw"/>
+        <member name="tpidruro"/>
+    </struct>
+    <interface name="seL4_ARM_PageDirectory" manual_name="Page Directory"
+        cap_description="Capability to the page directory being operated on.">
+        <method id="ARMPDClean_Data" name="Clean_Data" manual_name="Clean Data" manual_label="pd_clean">
+                <brief>
+                    Clean cached pages within a page directory
+                </brief>
+                <description>
+                    <docref>See <autoref label="ch:vspace"/>.</docref>
+                </description>
+            <param dir="in" name="start" type="seL4_Word"
+            description="Start address"/>
+            <param dir="in" name="end" type="seL4_Word"
+            description="End address"/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="start"/> or <texttt text="end"/> is in the kernel virtual address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="start"/> is greater than or equal to <texttt text="end"/>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The specified range crosses a page boundary.
+                </description>
+            </error>
+        </method>
+        <method id="ARMPDInvalidate_Data" name="Invalidate_Data" manual_name="Invalidate Data" manual_label="pd_invalidate">
+                <brief>
+                    Invalidate cached pages within a page directory
+                </brief>
+             <description>
+                 <docref>See <autoref label="ch:vspace"/>.</docref>
+             </description>
+            <param dir="in" name="start" type="seL4_Word"
+            description="Start address"/>
+            <param dir="in" name="end" type="seL4_Word"
+            description="End address"/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="start"/> or <texttt text="end"/> is in the kernel virtual address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="start"/> is greater than or equal to <texttt text="end"/>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The specified range crosses a page boundary.
+                </description>
+            </error>
+        </method>
+        <method id="ARMPDCleanInvalidate_Data" name="CleanInvalidate_Data"
+            manual_name="Clean and Invalidate Data" manual_label="pd_clean_invalidate">
+                <brief>
+                    Clean and invalidate cached pages within a page directory
+                </brief>
+             <description>
+                 <docref>See <autoref label="ch:vspace"/>.</docref>
+             </description>
+            <param dir="in" name="start" type="seL4_Word"
+            description="Start address"/>
+            <param dir="in" name="end" type="seL4_Word"
+            description="End address"/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="start"/> or <texttt text="end"/> is in the kernel virtual address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="start"/> is greater than or equal to <texttt text="end"/>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The specified range crosses a page boundary.
+                </description>
+            </error>
+        </method>
+        <method id="ARMPDUnify_Instruction" name="Unify_Instruction" manual_name="Unify Instruction" manual_label="pd_unify_instruction">
+                <brief>
+                    Clean and invalidate cached instruction pages to point of unification
+                </brief>
+             <description>
+                 <docref>See <autoref label="ch:vspace"/>.</docref>
+             </description>
+            <param dir="in" name="start" type="seL4_Word"
+            description="Start address"/>
+            <param dir="in" name="end" type="seL4_Word"
+            description="End address"/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="start"/> or <texttt text="end"/> is in the kernel virtual address range.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="start"/> is greater than or equal to <texttt text="end"/>.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="_service"/> is not assigned to an ASID pool.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The specified range crosses a page boundary.
+                </description>
+            </error>
+        </method>
+    </interface>
+</api>

@@ -101,11 +101,12 @@ static inline bool_t refill_single(sched_context_t *sc)
  * has available if usage is charged to it. */
 static inline ticks_t refill_capacity(sched_context_t *sc, ticks_t usage)
 {
-    if (unlikely(usage > refill_head(sc)->rAmount)) {
+    ticks_t head_amount = refill_head(sc)->rAmount;
+    if (unlikely(usage > head_amount)) {
         return 0;
     }
 
-    return refill_head(sc)->rAmount - usage;
+    return head_amount - usage;
 }
 
 /*
@@ -125,7 +126,7 @@ static inline bool_t refill_sufficient(sched_context_t *sc, ticks_t usage)
  */
 static inline bool_t refill_ready(sched_context_t *sc)
 {
-    return refill_head(sc)->rTime <= (NODE_STATE_ON_CORE(ksCurTime, sc->scCore) + getKernelWcetTicks());
+    return refill_head(sc)->rTime <= NODE_STATE(ksCurTime);
 }
 
 /*
@@ -159,7 +160,10 @@ static inline bool_t sc_released(sched_context_t *sc)
  */
 static inline bool_t sc_sporadic(sched_context_t *sc)
 {
-    return sc != NULL && sc_active(sc) && sc->scSporadic;
+    /* asserting sc != NULL --> sc->scSporadic --> sc_active(sc). That means, when
+       this function returns true, we also know that sc_active(sc) is true */
+    assert(sc == NULL || !sc->scSporadic || sc_active(sc));
+    return sc != NULL && sc->scSporadic;
 }
 
 /*
@@ -173,13 +177,7 @@ static inline bool_t sc_constant_bandwidth(sched_context_t *sc)
 }
 
 /* Create a new refill in a non-active sc */
-#ifdef ENABLE_SMP_SUPPORT
-void refill_new(sched_context_t *sc, word_t max_refills, ticks_t budget, ticks_t period, word_t core);
-#define REFILL_NEW(sc, max_refills, budget, period, core) refill_new(sc, max_refills, budget, period, core)
-#else
 void refill_new(sched_context_t *sc, word_t max_refills, ticks_t budget, ticks_t period);
-#define REFILL_NEW(sc, max_refills, budget, period, core) refill_new(sc, max_refills, budget, period)
-#endif
 
 /* Update refills in an active sc without violating bandwidth constraints */
 void refill_update(sched_context_t *sc, ticks_t new_period, ticks_t new_budget, word_t new_max_refills);

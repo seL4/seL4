@@ -12,11 +12,11 @@
 
 ENTRY(_start)
 
-KERNEL_OFFSET = KERNEL_ELF_BASE - KERNEL_ELF_PADDR_BASE;
+KERNEL_OFFSET = KERNEL_ELF_BASE_RAW - KERNEL_ELF_PADDR_BASE_RAW;
 
 SECTIONS
 {
-    . = KERNEL_ELF_BASE;
+    . = KERNEL_ELF_BASE_RAW;
 
     .boot . : AT(ADDR(.boot) - KERNEL_OFFSET)
     {
@@ -59,7 +59,7 @@ SECTIONS
         *(.data)
     }
 
-    .bss . : AT(ADDR(.bss) - KERNEL_OFFSET)
+    .bss . (NOLOAD): AT(ADDR(.bss) - KERNEL_OFFSET)
     {
         *(.bss)
         *(COMMON) /* fallback in case '-fno-common' is not used */

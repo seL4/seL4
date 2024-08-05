@@ -7,18 +7,15 @@
 #include <config.h>
 #include <machine/assembler.h>
 
-#if defined(CONFIG_ARM_CORTEX_A15) || defined(CONFIG_ARM_CORTEX_A7)
-  /* The hardware does not support tlb locking */
-
-#else
+#if defined(CONFIG_ARM_CORTEX_A8)
 
 .code 32
 .section .text, "ax"
 .global lockTLBEntryCritical
 
-.balign (16*4)    
+.balign (16*4)
 BEGIN_FUNC(lockTLBEntryCritical)
- 
+
  /* lockTLBEntryCritical should lie within a single page so that spurious TLB walks do
  * not interfere. Aligning to a 64-byte instruction boundary will suffice, as
  * the critical section (i.e. this function) fits within 64 bytes.
@@ -38,4 +35,8 @@ BEGIN_FUNC(lockTLBEntryCritical)
     bx lr
 END_FUNC(lockTLBEntryCritical)
 
-#endif /* ARM_CORTEX_A15 */
+#else
+
+/* We don't currently support TLB locking for other processors. */
+
+#endif /* ARM_CORTEX_A8 */

@@ -9,7 +9,7 @@
 #include <machine/interrupt.h>
 
 #define PIC_IRQ_LINES 16
-#define IOAPIC_IRQ_LINES 24
+#define IOAPIC_IRQ_LINES 240
 
 /* interrupt vectors (corresponds to IDT entries) */
 

@@ -62,7 +62,13 @@ if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
                 "arm-none-eabi-"
             )
         elseif(${sel4_arch} STREQUAL "aarch64")
-            FindPrefixedGCC(CROSS_COMPILER_PREFIX "aarch64-linux-gnu-" "aarch64-unknown-linux-gnu-")
+            FindPrefixedGCC(
+                CROSS_COMPILER_PREFIX
+                "aarch64-linux-gnu-"
+                "aarch64-unknown-linux-gnu-"
+                "aarch64-none-linux-gnu-"
+                "aarch64-none-elf-"
+            )
         elseif(${arch} STREQUAL "riscv")
             FindPrefixedGCC(
                 CROSS_COMPILER_PREFIX
@@ -86,7 +92,13 @@ if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
                 message("ARM flag is deprecated, please use AARCH32")
             endif()
         elseif(AARCH64)
-            FindPrefixedGCC(CROSS_COMPILER_PREFIX "aarch64-linux-gnu-" "aarch64-unknown-linux-gnu-")
+            FindPrefixedGCC(
+                CROSS_COMPILER_PREFIX
+                "aarch64-linux-gnu-"
+                "aarch64-unknown-linux-gnu-"
+                "aarch64-none-linux-gnu-"
+                "aarch64-none-elf-"
+            )
         elseif(RISCV32 OR RISCV64)
             FindPrefixedGCC(
                 CROSS_COMPILER_PREFIX
@@ -105,10 +117,19 @@ if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
     endif()
 
     if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
-        # If we haven't set a target above we assume x86_64/ia32 target
-        if(CMAKE_HOST_APPLE)
-            # CMAKE_HOST_APPLE is a CMake variable that evaluates to True on a Mac OSX system
-            FindPrefixedGCC(CROSS_COMPILER_PREFIX "x86_64-linux-gnu-" "x86_64-unknown-linux-gnu-")
+        # If we haven't set a target above we assume x86_64/ia32 target, and hence have to
+        # find an appropriate x86 compatible toolchain. If we're on an AArch64 host, GCC will
+        # not support x86. If we're on macOS (detected via CMAKE_HOST_APPLE), we need to find
+        # the appropriate x86 compiler regardless of host architecture. This is as `gcc`
+        # usually actually uses clang on macOS, not GCC.
+        if("${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "aarch64" OR CMAKE_HOST_APPLE)
+            if("${sel4_arch}" STREQUAL "ia32")
+                FindPrefixedGCC(CROSS_COMPILER_PREFIX "i686-linux-gnu-" "i686-unknown-linux-gnu-")
+            else()
+                FindPrefixedGCC(
+                    CROSS_COMPILER_PREFIX "x86_64-linux-gnu-" "x86_64-unknown-linux-gnu-"
+                )
+            endif()
         endif()
     endif()
 endif()
@@ -123,6 +144,8 @@ set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
+
+set(CMAKE_TRY_COMPILE_PLATFORM_VARIABLES CROSS_COMPILER_PREFIX)
 
 mark_as_advanced(FORCE CMAKE_TOOLCHAIN_FILE)
 

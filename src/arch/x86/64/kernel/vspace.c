@@ -1407,6 +1407,7 @@ exception_t decodeX86ModeMMUInvocation(
     cptr_t cptr,
     cte_t *cte,
     cap_t cap,
+    bool_t call,
     word_t *buffer
 )
 {

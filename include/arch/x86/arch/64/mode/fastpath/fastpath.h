@@ -203,7 +203,7 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
 #endif /* CONFIG_KERNEL_SKIM_WINDOW */
 #endif /* defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW) */
             "sti\n"
-            "sysexitq\n"
+            SYSEXITQ"\n"
             :
             : "c"(&cur_thread->tcbArch.tcbContext.registers[RAX]),
             "D"(badge),

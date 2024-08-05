@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <autoconf.h>
+#include <sel4/config.h>
 
 typedef enum _mode_object {
     seL4_RISCV_Giga_Page = seL4_NonArchObjectTypeCount,

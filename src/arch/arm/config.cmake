@@ -6,7 +6,7 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-if(KernelArchARM)
+if(KernelSel4ArchAarch32)
     set_property(TARGET kernel_config_target APPEND PROPERTY TOPLEVELTYPES pde_C)
 endif()
 
@@ -130,7 +130,12 @@ config_option(
     DEFAULT_DISABLED OFF
 )
 
-config_option(KernelArmSMMU ARM_SMMU "Enable SystemMMU" DEFAULT OFF DEPENDS "KernelPlatformTx2")
+config_option(
+    KernelArmSMMU ARM_SMMU "Enable SystemMMU"
+    DEFAULT ON
+    DEPENDS "KernelPlatformTx2"
+    DEFAULT_DISABLED OFF
+)
 
 config_option(
     KernelTk1SMMU TK1_SMMU "Enable SystemMMU for the Tegra TK1 SoC"
@@ -180,8 +185,17 @@ config_option(
         operations in a multithreading environment, instead of relying on \
         software emulation of FPU/VFP from the C library (e.g. mfloat-abi=soft)."
     DEFAULT ON
-    DEPENDS "KernelSel4ArchAarch32;NOT KernelVerificationBuild"
+    DEPENDS "KernelSel4ArchAarch32"
     DEFAULT_DISABLED OFF
+)
+
+config_option(
+    KernelAArch64UserCacheEnable AARCH64_USER_CACHE_ENABLE
+    "Enable any attempt to execute a DC CVAU, DC CIVAC, DC CVAC, or IC IVAU \
+    instruction or access to CTR_EL0 at EL0 using AArch64. \
+    When disabled, these operations will be trapped."
+    DEFAULT ON
+    DEPENDS "KernelSel4ArchAarch64"
 )
 
 config_option(
@@ -193,6 +207,16 @@ config_option(
     DEPENDS "KernelSel4ArchAarch64;NOT KernelVerificationBuild"
 )
 mark_as_advanced(KernelAArch64SErrorIgnore)
+
+config_option(
+    KernelAllowSMCCalls ALLOW_SMC_CALLS "Allow components to make SMC calls. \
+    WARNING: Allowing SMC calls causes a couple of issues. Since seL4 cannot \
+    pre-empt the secure monitor, the WCET is no longer guaranteed. Also, since the \
+    secure monitor is a higher privilege level and can make any change in the \
+    system, the proofs can no longer be guaranteed."
+    DEFAULT OFF
+    DEPENDS "NOT KernelVerificationBuild; KernelSel4ArchAarch64"
+)
 
 if(KernelAArch32FPUEnableContextSwitch OR KernelSel4ArchAarch64)
     set(KernelHaveFPU ON)
@@ -239,6 +263,7 @@ add_sources(
         object/iospace.c
         object/vcpu.c
         object/smmu.c
+        object/smc.c
         smp/ipi.c
 )
 
