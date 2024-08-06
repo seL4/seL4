@@ -459,6 +459,7 @@ cap_t CONST maskCapRights(seL4_CapRights_t cap_rights, cap_t cap)
 #ifdef CONFIG_KERNEL_MCS
     case cap_sched_context_cap:
     case cap_sched_control_cap:
+    case cap_reply_cap:
 #endif
         return cap;
 
@@ -493,6 +494,8 @@ cap_t CONST maskCapRights(seL4_CapRights_t cap_rights, cap_t cap)
 
         return new_cap;
     }
+
+#ifndef CONFIG_KERNEL_MCS
     case cap_reply_cap: {
         cap_t new_cap;
 
@@ -501,7 +504,7 @@ cap_t CONST maskCapRights(seL4_CapRights_t cap_rights, cap_t cap)
                       seL4_CapRights_get_capAllowGrant(cap_rights));
         return new_cap;
     }
-
+#endif
 
     default:
         fail("Invalid cap type"); /* Sentinel for invalid enums */
@@ -587,7 +590,7 @@ cap_t createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceM
 
     case seL4_ReplyObject:
         /** AUXUPD: "(True, ptr_retyp (Ptr (ptr_val \<acute>regionBase) :: reply_C ptr))" */
-        return cap_reply_cap_new(REPLY_REF(regionBase), true);
+        return cap_reply_cap_new(REPLY_REF(regionBase));
 #endif
 
     default:
@@ -698,8 +701,7 @@ exception_t decodeInvocation(word_t invLabel, word_t length,
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performInvocation_Reply(
                    NODE_STATE(ksCurThread),
-                   REPLY_PTR(cap_reply_cap_get_capReplyPtr(cap)),
-                   cap_reply_cap_get_capReplyCanGrant(cap));
+                   REPLY_PTR(cap_reply_cap_get_capReplyPtr(cap)));
 #else
     case cap_reply_cap:
         if (unlikely(cap_reply_cap_get_capReplyMaster(cap))) {
@@ -812,9 +814,9 @@ exception_t performInvocation_Notification(notification_t *ntfn, word_t badge)
 }
 
 #ifdef CONFIG_KERNEL_MCS
-exception_t performInvocation_Reply(tcb_t *thread, reply_t *reply, bool_t canGrant)
+exception_t performInvocation_Reply(tcb_t *thread, reply_t *reply)
 {
-    doReplyTransfer(thread, reply, canGrant && reply->canGrant);
+    doReplyTransfer(thread, reply, reply->canGrant);
     return EXCEPTION_NONE;
 }
 #else
