@@ -177,6 +177,7 @@ BOOT_CODE static word_t calculate_rootserver_size(v_region_t it_v_reg, word_t ex
     word_t size = BIT(CONFIG_ROOT_CNODE_SIZE_BITS + seL4_SlotBits);
     size += BIT(seL4_TCBBits); // root thread tcb
     size += BIT(seL4_PageBits); // ipc buf
+    size += BIT(seL4_PageBits); // uart recv buffer
     size += BIT(seL4_BootInfoFrameBits); // boot info
     size += BIT(seL4_ASIDPoolBits);
     size += extra_bi_size_bits > 0 ? BIT(extra_bi_size_bits) : 0;
@@ -228,6 +229,7 @@ BOOT_CODE static void create_rootserver_objects(pptr_t start, v_region_t it_v_re
     compile_assert(invalid_seL4_ASIDPoolBits, seL4_ASIDPoolBits == seL4_PageBits);
     rootserver.asid_pool = alloc_rootserver_obj(seL4_ASIDPoolBits, 1);
     rootserver.ipc_buf = alloc_rootserver_obj(seL4_PageBits, 1);
+    rootserver.uart_recv_buf = alloc_rootserver_obj(seL4_PageBits, 1);
     /* The boot info size must be at least one page. Due to the hard-coded order
      * of allocations used in the current implementation here, it can't be any
      * bigger.
@@ -316,6 +318,17 @@ BOOT_CODE cap_t create_ipcbuf_frame_cap(cap_t root_cnode_cap, cap_t pd_cap, vptr
     /* create a cap of it and write it into the root CNode */
     cap_t cap = create_mapped_it_frame_cap(pd_cap, rootserver.ipc_buf, vptr, IT_ASID, false, false);
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadIPCBuffer), cap);
+
+    return cap;
+}
+
+BOOT_CODE cap_t create_uart_recv_buf(cap_t root_cnode_cap)
+{
+    clearMemory((void *)rootserver.uart_recv_buf, PAGE_BITS);
+
+    /* create a cap of it and write it into the root CNode */
+    cap_t cap = create_unmapped_it_frame_cap(rootserver.uart_recv_buf, false);
+    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapUARTRecvBuffer), cap);
 
     return cap;
 }
