@@ -56,6 +56,7 @@ void bi_finalise(void);
 void create_domain_cap(cap_t root_cnode_cap);
 
 cap_t create_ipcbuf_frame_cap(cap_t root_cnode_cap, cap_t pd_cap, vptr_t vptr);
+BOOT_CODE cap_t create_uart_recv_buf(cap_t root_cnode_cap);
 word_t calculate_extra_bi_size_bits(word_t extra_size);
 void populate_bi_frame(node_id_t node_id, word_t num_nodes, vptr_t ipcbuf_vptr,
                        word_t extra_bi_size);
@@ -105,6 +106,7 @@ typedef struct {
     pptr_t vspace;
     pptr_t asid_pool;
     pptr_t ipc_buf;
+    pptr_t uart_recv_buf;
     pptr_t boot_info;
     pptr_t extra_bi;
     pptr_t tcb;

@@ -37,12 +37,26 @@ static int index = 0;
 
 void uart_drv_putchar(unsigned char c);
 
-void init_serial(void)
+struct UARTRecvBuf {
+    unsigned int head;
+    unsigned int tail;
+    char data[2048];
+};
+
+struct UARTRecvBuf *uart_recv_buf;
+cap_t signal_ntfn = { 0 };
+
+void init_serial(cap_t uart_recv_cap)
 {
     /* enable tx, rx and rx irq */
     *(UART_REG(UART_CTRL)) |= UART_TX_EN | UART_RX_EN | UART_RX_IRQ;
     /* send irq when 1 char is available */
     *(UART_REG(UART_MISC)) = 1;
+    uart_recv_buf = (struct UARTRecvBuf *) cap_frame_cap_get_capFBasePtr(uart_recv_cap);
+}
+
+void serial_set_ntfn(cap_t ntfn) {
+    signal_ntfn = ntfn;
 }
 
 void wdog_reset(void)
@@ -53,12 +67,23 @@ void wdog_reset(void)
              WDOG_CLK_DIV_EN | WDOG_SYS_RESET_NOW);
 }
 
+
 void handleUartIRQ(void)
 {
     /* while there are chars to process */
     while (!(*UART_REG(UART_STATUS) & UART_RX_EMPTY)) {
         char c = *UART_REG(UART_RFIFO);
-        uart_drv_putchar(c);
+
+        /* Write to the userspace buffer */
+        uart_recv_buf->data[uart_recv_buf->head % 2048] = c;
+        uart_recv_buf->head++;
+
+        if (cap_get_capType(signal_ntfn) == cap_notification_cap) {
+            sendSignal(NTFN_PTR(cap_notification_cap_get_capNtfnPtr(signal_ntfn)),
+                       cap_notification_cap_get_capNtfnBadge(signal_ntfn));
+        }
+
+        // uart_drv_putchar(c);
         if (c == 'r') {
             index = 1;
         } else if (c == reset[index]) {

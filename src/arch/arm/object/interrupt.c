@@ -13,7 +13,9 @@
 static exception_t Arch_invokeIRQControl(irq_t irq, cte_t *handlerSlot, cte_t *controlSlot, bool_t trigger)
 {
 #ifdef HAVE_SET_TRIGGER
-    setIRQTrigger(irq, trigger);
+    if (irq != 0xfff) {
+        setIRQTrigger(irq, trigger);
+    }
 #endif
     return invokeIRQControl(irq, handlerSlot, controlSlot);
 }
@@ -45,29 +47,38 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
         }
 
         word_t irq_w = getSyscallArg(0, buffer);
-        irq_t irq = (irq_t) CORE_IRQ_TO_IRQT(0, irq_w);
+        /* 0xfff refers to the virtual IRQ used for serial recv */
+        irq_t irq;
+        if (irq_w == 0xfff) {
+            irq = irq_w;
+        } else {
+            irq = (irq_t) CORE_IRQ_TO_IRQT(0, irq_w);
+        }
         bool_t trigger = !!getSyscallArg(1, buffer);
         word_t index = getSyscallArg(2, buffer);
         word_t depth = getSyscallArg(3, buffer);
 
         cap_t cnodeCap = current_extra_caps.excaprefs[0]->cap;
 
-        exception_t status = Arch_checkIRQ(irq_w);
-        if (status != EXCEPTION_NONE) {
-            return status;
-        }
+        exception_t status;
+        if (irq_w != 0xfff) {
+           status = Arch_checkIRQ(irq_w);
+            if (status != EXCEPTION_NONE) {
+                return status;
+            }
 
 #if defined ENABLE_SMP_SUPPORT
-        if (IRQ_IS_PPI(irq)) {
-            userError("Trying to get a handler on a PPI: use GetTriggerCore.");
-            current_syscall_error.type = seL4_IllegalOperation;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
+            if (IRQ_IS_PPI(irq)) {
+                userError("Trying to get a handler on a PPI: use GetTriggerCore.");
+                current_syscall_error.type = seL4_IllegalOperation;
+                return EXCEPTION_SYSCALL_ERROR;
+            }
 #endif
-        if (isIRQActive(irq)) {
-            current_syscall_error.type = seL4_RevokeFirst;
-            userError("Rejecting request for IRQ %u. Already active.", (int)IRQT_TO_IRQ(irq));
-            return EXCEPTION_SYSCALL_ERROR;
+            if (isIRQActive(irq)) {
+                current_syscall_error.type = seL4_RevokeFirst;
+                userError("Rejecting request for IRQ %u. Already active.", (int)IRQT_TO_IRQ(irq));
+                return EXCEPTION_SYSCALL_ERROR;
+            }
         }
 
         lookupSlot_ret_t lu_ret = lookupTargetSlot(cnodeCap, index, depth);

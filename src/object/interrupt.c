@@ -42,15 +42,17 @@ exception_t decodeIRQControlInvocation(word_t invLabel, word_t length,
 
         cnodeCap = current_extra_caps.excaprefs[0]->cap;
 
-        status = Arch_checkIRQ(irq_w);
-        if (status != EXCEPTION_NONE) {
-            return status;
-        }
+        if (irq_w != 0xfff) {
+            status = Arch_checkIRQ(irq_w);
+            if (status != EXCEPTION_NONE) {
+                return status;
+            }
 
-        if (isIRQActive(irq)) {
-            current_syscall_error.type = seL4_RevokeFirst;
-            userError("Rejecting request for IRQ %u. Already active.", (int)IRQT_TO_IRQ(irq));
-            return EXCEPTION_SYSCALL_ERROR;
+            if (isIRQActive(irq)) {
+                current_syscall_error.type = seL4_RevokeFirst;
+                userError("Rejecting request for IRQ %u. Already active.", (int)IRQT_TO_IRQ(irq));
+                return EXCEPTION_SYSCALL_ERROR;
+            }
         }
 
         lu_ret = lookupTargetSlot(cnodeCap, index, depth);
@@ -77,8 +79,12 @@ exception_t decodeIRQControlInvocation(word_t invLabel, word_t length,
 
 exception_t invokeIRQControl(irq_t irq, cte_t *handlerSlot, cte_t *controlSlot)
 {
-    setIRQState(IRQSignal, irq);
-    cteInsert(cap_irq_handler_cap_new(IRQT_TO_IDX(irq)), controlSlot, handlerSlot);
+    if (irq != 0xfff) {
+        setIRQState(IRQSignal, irq);
+        cteInsert(cap_irq_handler_cap_new(IRQT_TO_IDX(irq)), controlSlot, handlerSlot);
+    } else {
+        cteInsert(cap_irq_handler_cap_new(irq), controlSlot, handlerSlot);
+    }
 
     return EXCEPTION_NONE;
 }
@@ -168,10 +174,14 @@ void invokeIRQHandler_SetIRQHandler(irq_t irq, cap_t cap, cte_t *slot)
 {
     cte_t *irqSlot;
 
-    irqSlot = intStateIRQNode + IRQT_TO_IDX(irq);
-    /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (-1))" */
-    cteDeleteOne(irqSlot);
-    cteInsert(cap, slot, irqSlot);
+    if (irq != 0xfff) {
+        irqSlot = intStateIRQNode + IRQT_TO_IDX(irq);
+        /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (-1))" */
+        cteDeleteOne(irqSlot);
+        cteInsert(cap, slot, irqSlot);
+    } else {
+        serial_set_ntfn(cap);
+    }
 }
 
 void invokeIRQHandler_ClearIRQHandler(irq_t irq)

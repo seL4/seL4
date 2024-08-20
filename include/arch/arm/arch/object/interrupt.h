@@ -53,14 +53,14 @@ static inline void handleReservedIRQ(irq_t irq)
     }
 #endif
 
-#ifdef CONFIG_IRQ_REPORTING
-    printf("Received unhandled reserved IRQ: 0x%lx\n", IRQT_TO_IRQ(irq));
-#endif
-
     if (IRQT_TO_IRQ(irq) == KERNEL_UART_IRQ) {
         handleUartIRQ();
         return;
     }
+
+#ifdef CONFIG_IRQ_REPORTING
+    printf("Received unhandled reserved IRQ: 0x%lx\n", IRQT_TO_IRQ(irq));
+#endif
 }
 
 

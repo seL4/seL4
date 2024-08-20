@@ -7,6 +7,10 @@
 #pragma once
 
 #include <config.h>
+#include <stdint.h>
+#include <string.h>
+#include <util.h>
+#include <arch/object/structures_gen.h>
 
 #ifdef CONFIG_DEBUG_BUILD
 /* io for dumping capdl */
@@ -14,7 +18,8 @@ unsigned char kernel_getDebugChar(void);
 #endif
 /* for reset */
 void handleUartIRQ(void);
-void init_serial(void);
+void init_serial(cap_t uart_recv_cap);
+void serial_set_ntfn(cap_t ntfn);
 
 
 #ifdef CONFIG_PRINTING

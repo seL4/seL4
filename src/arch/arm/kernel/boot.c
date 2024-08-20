@@ -339,7 +339,8 @@ static BOOT_CODE bool_t try_init_kernel(
     sword_t pv_offset,
     vptr_t  v_entry,
     paddr_t dtb_phys_addr,
-    word_t  dtb_size
+    word_t  dtb_size,
+    cap_t *uart_recv_cap_ret
 )
 {
     cap_t root_cnode_cap;
@@ -537,6 +538,13 @@ static BOOT_CODE bool_t try_init_kernel(
         return false;
     }
 
+    /* Create the UART_recv frame cap */
+    *uart_recv_cap_ret = create_uart_recv_buf(root_cnode_cap);
+    if (cap_get_capType(*uart_recv_cap_ret ) == cap_null_cap) {
+        printf("ERROR: could not create UART recv buffer cap\n");
+        return false;
+    }
+
     /* create all userland image frames */
     create_frames_ret =
         create_frames_of_region(
@@ -643,6 +651,7 @@ BOOT_CODE VISIBLE void init_kernel(
 )
 {
     bool_t result;
+    cap_t uart_recv_cap;
 
 #ifdef ENABLE_SMP_SUPPORT
     /* we assume there exists a cpu with id 0 and will use it for bootstrapping */
@@ -661,7 +670,7 @@ BOOT_CODE VISIBLE void init_kernel(
                              ui_p_reg_end,
                              pv_offset,
                              v_entry,
-                             dtb_addr_p, dtb_size);
+                             dtb_addr_p, dtb_size, &uart_recv_cap);
 
 #endif /* ENABLE_SMP_SUPPORT */
 
@@ -675,7 +684,7 @@ BOOT_CODE VISIBLE void init_kernel(
     NODE_STATE(ksConsumed) = 0;
 #endif
 
-    init_serial();
+    init_serial(uart_recv_cap);
     schedule();
     activateThread();
 }
