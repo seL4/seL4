@@ -1332,18 +1332,23 @@ exception_t decodeSetSchedParams(cap_t cap, word_t length, word_t *buffer)
 #ifdef CONFIG_KERNEL_MCS
     tcb_t *tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
     sched_context_t *sc = NULL;
+    thread_control_flag_t update_flags = thread_control_sched_update_mcp |
+                                         thread_control_sched_update_priority |
+                                         thread_control_sched_update_fault;
     switch (cap_get_capType(scCap)) {
     case cap_sched_context_cap:
         sc = SC_PTR(cap_sched_context_cap_get_capSCPtr(scCap));
-        if (tcb->tcbSchedContext) {
-            userError("TCB Configure: tcb already has a scheduling context.");
-            current_syscall_error.type = seL4_IllegalOperation;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-        if (sc->scTcb) {
-            userError("TCB Configure: sched contextext already bound.");
-            current_syscall_error.type = seL4_IllegalOperation;
-            return EXCEPTION_SYSCALL_ERROR;
+        if (tcb->tcbSchedContext != sc) {
+            if (tcb->tcbSchedContext) {
+                userError("TCB Configure: tcb already has a scheduling context.");
+                current_syscall_error.type = seL4_IllegalOperation;
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+            if (sc->scTcb) {
+                userError("TCB Configure: sched context already bound.");
+                current_syscall_error.type = seL4_IllegalOperation;
+                return EXCEPTION_SYSCALL_ERROR;
+            }
         }
         if (isBlocked(tcb) && !sc_released(sc)) {
             userError("TCB Configure: tcb blocked and scheduling context not schedulable.");
@@ -1365,6 +1370,11 @@ exception_t decodeSetSchedParams(cap_t cap, word_t length, word_t *buffer)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
+    /* If we are setting or unsetting the scheduling context, update the flags */
+    if (tcb->tcbSchedContext != sc) {
+        update_flags |= thread_control_sched_update_sc;
+    }
+
     if (!validFaultHandler(fhCap)) {
         userError("TCB Configure: fault endpoint cap invalid.");
         current_syscall_error.type = seL4_InvalidCapability;
@@ -1378,11 +1388,7 @@ exception_t decodeSetSchedParams(cap_t cap, word_t length, word_t *buffer)
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
                fhCap, fhSlot,
                newMcp, newPrio,
-               sc,
-               thread_control_sched_update_mcp |
-               thread_control_sched_update_priority |
-               thread_control_sched_update_sc |
-               thread_control_sched_update_fault);
+               sc, update_flags);
 #else
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), NULL,
