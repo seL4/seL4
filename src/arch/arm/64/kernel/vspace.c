@@ -20,6 +20,7 @@
 #include <object/untyped.h>
 #include <arch/api/invocation.h>
 #include <arch/kernel/vspace.h>
+#include <mode/machine/debug.h>
 #include <linker.h>
 #include <plat/machine/hardware.h>
 #include <armv/context_switch.h>
@@ -1298,22 +1299,203 @@ static exception_t performASIDControlInvocation(void *frame, cte_t *slot,
     return EXCEPTION_NONE;
 }
 
+#if defined(CONFIG_PRINTING) || defined(CONFIG_DEBUG_BUILD)
+
+typedef struct readWordFromVSpace_ret {
+    exception_t status;
+    word_t value;
+} readWordFromVSpace_ret_t;
+
+static readWordFromVSpace_ret_t readWordFromVSpace(vspace_root_t *pd, word_t vaddr)
+{
+    readWordFromVSpace_ret_t ret;
+    word_t offset;
+    pptr_t kernel_vaddr;
+    word_t *value;
+
+    lookupPTSlot_ret_t lookup_ret = lookupPTSlot(pd, vaddr);
+
+    /* Check that the returned slot is a page. */
+    if (!pte_ptr_get_valid(lookup_ret.ptSlot) ||
+        (pte_pte_table_ptr_get_present(lookup_ret.ptSlot) && lookup_ret.ptBitsLeft > PAGE_BITS)) {
+        ret.status = EXCEPTION_LOOKUP_FAULT;
+        return ret;
+    }
+
+    offset = vaddr & MASK(lookup_ret.ptBitsLeft);
+    kernel_vaddr = (word_t)paddr_to_pptr(pte_page_ptr_get_page_base_address(lookup_ret.ptSlot));
+    value = (word_t *)(kernel_vaddr + offset);
+
+    ret.status = EXCEPTION_NONE;
+    ret.value = *value;
+    return ret;
+}
+
+#ifdef CONFIG_PRINTING
+void Arch_userStackTrace(tcb_t *tptr)
+{
+    cap_t threadRoot;
+    vspace_root_t *vspaceRoot;
+    word_t sp;
+
+    threadRoot = TCB_PTR_CTE_PTR(tptr, tcbVTable)->cap;
+
+    /* lookup the vspace root */
+    if (cap_get_capType(threadRoot) != cap_vspace_cap) {
+        printf("Invalid vspace\n");
+        return;
+    }
+
+    vspaceRoot = VSPACE_PTR(cap_vspace_cap_get_capVSBasePtr(threadRoot));
+    sp = getRegister(tptr, SP_EL0);
+
+    /* check for alignment so we don't have to worry about accessing
+     * words that might be on two different pages */
+    if (!IS_ALIGNED(sp, seL4_WordSizeBits)) {
+        printf("SP not aligned\n");
+        return;
+    }
+
+    for (unsigned int i = 0; i < CONFIG_USER_STACK_TRACE_LENGTH; i++) {
+        word_t address = sp + (i * sizeof(word_t));
+        readWordFromVSpace_ret_t result = readWordFromVSpace(vspaceRoot,
+                                                             address);
+        if (result.status == EXCEPTION_NONE) {
+            printf("0x%"SEL4_PRIx_word": 0x%"SEL4_PRIx_word"\n",
+                   address, result.value);
+        } else {
+            printf("0x%"SEL4_PRIx_word": INVALID\n", address);
+        }
+    }
+}
+#endif /* CONFIG_PRINTING */
+
+#ifdef CONFIG_DEBUG_BUILD
+
+typedef struct writeWordToVSpace_ret {
+    exception_t status;
+} writeWordToVSpace_ret_t;
+
+static writeWordToVSpace_ret_t writeWordtoVSpace(vspace_root_t *pd, asid_t asid, word_t vaddr, word_t value) {
+    writeWordToVSpace_ret_t ret;
+    word_t offset;
+    pptr_t kernel_vaddr;
+    word_t *addr;
+
+    lookupPTSlot_ret_t lookup_ret = lookupPTSlot(pd, vaddr);
+
+    if (!pte_ptr_get_valid(lookup_ret.ptSlot) ||
+        (pte_pte_table_ptr_get_present(lookup_ret.ptSlot) && lookup_ret.ptBitsLeft > PAGE_BITS)) {
+        ret.status = EXCEPTION_LOOKUP_FAULT;
+        return ret;
+    }
+
+    offset = vaddr & MASK(lookup_ret.ptBitsLeft);
+    kernel_vaddr = (word_t) paddr_to_pptr(pte_page_ptr_get_page_base_address(lookup_ret.ptSlot));
+    addr = (word_t *) (kernel_vaddr + offset);
+    *addr = value;
+
+    performVSpaceFlush(ARMVSpaceUnify_Instruction, pd, asid, vaddr, vaddr + sizeof(word_t),
+                       pte_page_ptr_get_page_base_address(lookup_ret.ptSlot) + offset);
+    ret.status = EXCEPTION_NONE;
+    return ret;
+}
+#endif /* CONFIG_DEBUG_BUILD */
+#endif /* defined(CONFIG_PRINTING) || defined(CONFIG_DEBUG_BUILD) */
+
 static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, word_t length,
                                                  cte_t *cte, cap_t cap, word_t *buffer)
 {
-    vptr_t start, end;
-    paddr_t pstart;
     asid_t asid;
     vspace_root_t *vspaceRoot;
-    lookupPTSlot_ret_t resolve_ret;
     findVSpaceForASID_ret_t find_ret;
     pte_t pte;
 
     switch (invLabel) {
+#ifdef CONFIG_DEBUG_BUILD
+    case ARMVSpaceRead_Word:
+    case ARMVSpaceWrite_Word:
+    {
+        vptr_t vaddr;
+        word_t value = 0;
+
+        if ((invLabel == ARMVSpaceRead_Word && length < 1) ||
+            (invLabel == ARMVSpaceWrite_Word && length < 2)) {
+            userError("VSpaceRoot Read/Write Word: Truncated message.");
+            current_syscall_error.type = seL4_TruncatedMessage;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        vaddr = getSyscallArg(0, buffer);
+        if (invLabel == ARMVSpaceWrite_Word) {
+            value = getSyscallArg(1, buffer);
+        }
+
+        if (vaddr > USER_TOP) {
+            userError("VSpaceRoot Read/Write Word: Exceed the user addressable region.");
+            current_syscall_error.type = seL4_IllegalOperation;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        if (unlikely(!isValidNativeRoot(cap))) {
+            current_syscall_error.type = seL4_InvalidCapability;
+            current_syscall_error.invalidCapNumber = 0;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        vspaceRoot = VSPACE_PTR(cap_vspace_cap_get_capVSBasePtr(cap));
+        asid = cap_vspace_cap_get_capVSMappedASID(cap);
+
+        find_ret = findVSpaceForASID(asid);
+        if (unlikely(find_ret.status != EXCEPTION_NONE)) {
+            userError("VSpaceRoot Read/Write Word: No VSpace for ASID");
+            current_syscall_error.type = seL4_FailedLookup;
+            current_syscall_error.failedLookupWasSource = false;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        if (unlikely(find_ret.vspace_root != vspaceRoot)) {
+            userError("VSpaceRoot Read/Write Word: Invalid VSpace Cap");
+            current_syscall_error.type = seL4_InvalidCapability;
+            current_syscall_error.invalidCapNumber = 0;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        if (invLabel == ARMVSpaceRead_Word) {
+            readWordFromVSpace_ret_t ret = readWordFromVSpace(vspaceRoot, vaddr);
+            if (!ret.status) {
+                word_t *ipcBuffer = lookupIPCBuffer(true, NODE_STATE(ksCurThread));
+                setRegister(NODE_STATE(ksCurThread), badgeRegister, 0);
+                unsigned int length = setMR(NODE_STATE(ksCurThread), ipcBuffer, 0, ret.value);
+                setRegister(NODE_STATE(ksCurThread), msgInfoRegister, wordFromMessageInfo(
+                                seL4_MessageInfo_new(0, 0, 0, length)));
+                return EXCEPTION_NONE;
+            } else {
+                current_syscall_error.type = seL4_FailedLookup;
+            }
+        } else {
+            writeWordToVSpace_ret_t ret = writeWordtoVSpace(vspaceRoot, asid, vaddr, value);
+            if (!ret.status) {
+                setRegister(NODE_STATE(ksCurThread), badgeRegister, 0);
+                setRegister(NODE_STATE(ksCurThread), msgInfoRegister, wordFromMessageInfo(
+                                seL4_MessageInfo_new(0, 0, 0, 0)));
+                return EXCEPTION_NONE;
+            } else {
+                current_syscall_error.type = seL4_FailedLookup;
+           }
+        }
+
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+#endif /* CONFIG_DEBUG_BUILD */
     case ARMVSpaceClean_Data:
     case ARMVSpaceInvalidate_Data:
     case ARMVSpaceCleanInvalidate_Data:
     case ARMVSpaceUnify_Instruction:
+    {
+        vptr_t start, end;
+        paddr_t pstart;
+        lookupPTSlot_ret_t resolve_ret;
 
         if (length < 2) {
             userError("VSpaceRoot Flush: Truncated message.");
@@ -1403,7 +1585,7 @@ static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, word_t length,
 
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performVSpaceFlush(invLabel, vspaceRoot, asid, start, end - 1, pstart);
-
+    }
     default:
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
@@ -1873,75 +2055,6 @@ void kernelDataAbort(word_t pc)
     halt();
 }
 #endif /* CONFIG_DEBUG_BUILD */
-
-#ifdef CONFIG_PRINTING
-typedef struct readWordFromVSpace_ret {
-    exception_t status;
-    word_t value;
-} readWordFromVSpace_ret_t;
-
-static readWordFromVSpace_ret_t readWordFromVSpace(vspace_root_t *pd, word_t vaddr)
-{
-    readWordFromVSpace_ret_t ret;
-    word_t offset;
-    pptr_t kernel_vaddr;
-    word_t *value;
-
-    lookupPTSlot_ret_t lookup_ret = lookupPTSlot(pd, vaddr);
-
-    /* Check that the returned slot is a page. */
-    if (!pte_ptr_get_valid(lookup_ret.ptSlot) ||
-        (pte_pte_table_ptr_get_present(lookup_ret.ptSlot) && lookup_ret.ptBitsLeft > PAGE_BITS)) {
-        ret.status = EXCEPTION_LOOKUP_FAULT;
-        return ret;
-    }
-
-    offset = vaddr & MASK(lookup_ret.ptBitsLeft);
-    kernel_vaddr = (word_t)paddr_to_pptr(pte_page_ptr_get_page_base_address(lookup_ret.ptSlot));
-    value = (word_t *)(kernel_vaddr + offset);
-
-    ret.status = EXCEPTION_NONE;
-    ret.value = *value;
-    return ret;
-}
-
-void Arch_userStackTrace(tcb_t *tptr)
-{
-    cap_t threadRoot;
-    vspace_root_t *vspaceRoot;
-    word_t sp;
-
-    threadRoot = TCB_PTR_CTE_PTR(tptr, tcbVTable)->cap;
-
-    /* lookup the vspace root */
-    if (cap_get_capType(threadRoot) != cap_vspace_cap) {
-        printf("Invalid vspace\n");
-        return;
-    }
-
-    vspaceRoot = VSPACE_PTR(cap_vspace_cap_get_capVSBasePtr(threadRoot));
-    sp = getRegister(tptr, SP_EL0);
-
-    /* check for alignment so we don't have to worry about accessing
-     * words that might be on two different pages */
-    if (!IS_ALIGNED(sp, seL4_WordSizeBits)) {
-        printf("SP not aligned\n");
-        return;
-    }
-
-    for (unsigned int i = 0; i < CONFIG_USER_STACK_TRACE_LENGTH; i++) {
-        word_t address = sp + (i * sizeof(word_t));
-        readWordFromVSpace_ret_t result = readWordFromVSpace(vspaceRoot,
-                                                             address);
-        if (result.status == EXCEPTION_NONE) {
-            printf("0x%"SEL4_PRIx_word": 0x%"SEL4_PRIx_word"\n",
-                   address, result.value);
-        } else {
-            printf("0x%"SEL4_PRIx_word": INVALID\n", address);
-        }
-    }
-}
-#endif /* CONFIG_PRINTING */
 
 #if defined(CONFIG_KERNEL_LOG_BUFFER)
 exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
