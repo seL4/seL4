@@ -229,6 +229,19 @@ uint16_t getBpNumFromType(uint16_t bp_num, word_t type)
     }
 }
 
+static void calculate_wcr_BAS(seL4_Word address, seL4_Word size, seL4_Word *set_address, seL4_Word* bas) {
+    if (address % 4 == 0) {
+        *set_address = address;
+    } else {
+        *set_address = address & ~0x3; // Align to 4-byte boundary
+    }
+
+    *bas = 0;
+    for (int i = address - *set_address; i < (address - *set_address) + size; i++) {
+        *bas |= (1 << i);
+    }
+}
+
 /** Sets up the requested hardware breakpoint register.
  *
  * Acts as the backend for seL4_TCB_SetBreakpoint. Doesn't actually operate
@@ -290,13 +303,17 @@ void setBreakpoint(tcb_t *t,
     } else {
         dbg_wcr_t wcr;
 
-        writeWvrContext(t, bp_num, vaddr);
+        word_t bas;
+        word_t set_vaddr;
+        calculate_wcr_BAS(vaddr, size, &set_vaddr, &bas);
+
+        writeWvrContext(t, bp_num, set_vaddr);
 
         /* Preserve reserved bits */
         wcr.words[0] = readWcrContext(t, bp_num);
         wcr = dbg_wcr_set_enabled(wcr, 1);
         wcr = dbg_wcr_set_pac(wcr, DBGWCR_PRIV_USER);
-        wcr = dbg_wcr_set_bas(wcr, convertSizeToArch(size));
+        wcr = dbg_wcr_set_bas(wcr, bas);
         wcr = dbg_wcr_set_lsc(wcr, convertAccessToArch(rw));
         wcr = dbg_wcr_set_watchpointType(wcr, 0);
         wcr = dbg_wcr_set_lbn(wcr, 0);
@@ -449,6 +466,19 @@ int getAndResetActiveBreakpoint(word_t vaddr, word_t reason)
             word_t wvr = readWvrCp(i);
 
             wcr.words[0] = readWcrCp(i);
+
+            /* Align to the previous word*/
+            if (!dbg_wcr_get_enabled(wcr) || (vaddr & ~0x3) != wvr) {
+                continue;
+            }
+
+            if (vaddr % 4 != 0) {
+                int offset = vaddr % 4;
+                if ((dbg_wcr_get_bas(wcr) & offset) == 0) {
+                    continue;
+                }
+            }
+
             align_mask = convertArchToSize(dbg_wcr_get_bas(wcr));
             align_mask = ~(align_mask - 1);
 
