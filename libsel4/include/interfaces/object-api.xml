@@ -825,6 +825,28 @@
             </error>
          </method>
 
+        <method id="TCBSetFlags" name="SetFlags" manual_name="Set Feature Flags" manual_label="tcb_setflags">
+            <brief>
+                Set or clear <texttt text="seL4_TCBFlag"/> feature flags of the target TCB.
+            </brief>
+            <description>
+                A newly created TCB has all flags cleared.
+                Currently the only flag supported is <texttt text="seL4_TCBFlag_fpuDisabled"/>.
+                The flags are cleared and set in the given order, i.e. when a flag is both cleared and set, it will be set.
+                Unknown flags are ignored. Use zero for both clear and set to retrieve the current flags value.
+            </description>
+	    <return>
+                The resulting TCB flags value is returned in the first message register.
+            </return>
+            <param dir="in" name="clear" type="seL4_Word" description="Bitwise OR'd set of seL4_TCBFlag to clear."/>
+            <param dir="in" name="set" type="seL4_Word" description="Bitwise OR'd set of seL4_TCBFlag to set."/>
+            <param dir="out" name="flags" type="seL4_Word" description="Returned value of the TCB flags"/>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+        </method>
     </interface>
 
     <interface name="seL4_CNode" manual_name="CNode">

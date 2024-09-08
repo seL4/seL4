@@ -242,13 +242,15 @@ typedef struct sched_context sched_context_t;
 typedef struct reply reply_t;
 #endif
 
-/* TCB: size >= 18 words + sizeof(arch_tcb_t) + 1 word on MCS (aligned to nearest power of 2) */
 struct tcb {
     /* arch specific tcb state (including context)*/
     arch_tcb_t tcbArch;
 
     /* Thread state, 3 words */
     thread_state_t tcbState;
+
+    /* Currently only used for seL4_TCBFlag_fpuDisabled */
+    word_t tcbFlags; /* seL4_TCBFlag */
 
     /* Notification that this TCB is bound to. If this is set, when this TCB waits on
      * any sync endpoint, it may receive a signal from a Notification object.
