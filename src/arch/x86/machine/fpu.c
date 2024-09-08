@@ -10,6 +10,9 @@
 #include <arch/object/structures.h>
 #include <arch/machine/fpu.h>
 
+/* A valid initial FPU state, copied to every new thread. */
+#define x86KSnullFpuState NODE_STATE(ksIdleThread)->tcbArch.tcbContext.fpuState
+
 /*
  * Setup the FPU register state for a new thread.
  */
@@ -93,11 +96,11 @@ BOOT_CODE bool_t Arch_initFpu(void)
         }
 
         /* copy i387 FPU initial state from FPU */
-        saveFpuState(&x86KSnullFpuState);
+        saveFpuState(&NODE_STATE(ksIdleThread)->tcbArch);
         nullFpuState->i387.mxcsr = MXCSR_INIT_VALUE;
     } else {
         /* Store the null fpu state */
-        saveFpuState(&x86KSnullFpuState);
+        saveFpuState(&NODE_STATE(ksIdleThread)->tcbArch);
     }
     /* Set the FPU to lazy switch mode */
     disableFpu();

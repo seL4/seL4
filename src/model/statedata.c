@@ -42,8 +42,8 @@ UP_STATE_DEFINE(tcb_t *, ksIdleThread);
 UP_STATE_DEFINE(tcb_t *, ksSchedulerAction);
 
 #ifdef CONFIG_HAVE_FPU
-/* Currently active FPU state, or NULL if there is no active FPU state */
-UP_STATE_DEFINE(user_fpu_state_t *, ksActiveFPUState);
+/* The thread using the FPU, or NULL if FPU state is invalid */
+UP_STATE_DEFINE(tcb_t *, ksCurFPUOwner);
 #endif /* CONFIG_HAVE_FPU */
 
 #ifdef CONFIG_KERNEL_MCS
