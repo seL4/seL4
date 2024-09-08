@@ -12,21 +12,21 @@
 
 #ifdef CONFIG_HAVE_FPU
 /* Switch the owner of the FPU to the given thread on local core. */
-void switchLocalFpuOwner(user_fpu_state_t *new_owner)
+void switchLocalFpuOwner(tcb_t *new_owner)
 {
     enableFpu();
-    if (NODE_STATE(ksActiveFPUState)) {
-        saveFpuState(NODE_STATE(ksActiveFPUState));
+    if (NODE_STATE(ksCurFPUOwner)) {
+        saveFpuState(&NODE_STATE(ksCurFPUOwner)->tcbArch);
     }
     if (new_owner) {
-        loadFpuState(new_owner);
+        loadFpuState(&new_owner->tcbArch);
     } else {
         disableFpu();
     }
-    NODE_STATE(ksActiveFPUState) = new_owner;
+    NODE_STATE(ksCurFPUOwner) = new_owner;
 }
 
-void switchFpuOwner(user_fpu_state_t *new_owner, word_t cpu)
+void switchFpuOwner(tcb_t *new_owner, word_t cpu)
 {
 #ifdef ENABLE_SMP_SUPPORT
     if (cpu != getCurrentCPUIndex()) {
@@ -42,7 +42,7 @@ void switchFpuOwner(user_fpu_state_t *new_owner, word_t cpu)
 void fpuThreadDelete(tcb_t *thread)
 {
     /* If the thread being deleted currently owns the FPU, switch away from it
-     * so that 'ksActiveFPUState' doesn't point to invalid memory. */
+     * so that 'ksCurFPUOwner' doesn't point to invalid memory. */
     if (nativeThreadUsingFPU(thread)) {
         switchFpuOwner(NULL, SMP_TERNARY(thread->tcbAffinity, 0));
     }
