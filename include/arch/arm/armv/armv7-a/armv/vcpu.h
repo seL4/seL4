@@ -703,9 +703,8 @@ static inline void armv_vcpu_save(vcpu_t *vcpu, bool_t active)
 #endif
     isb();
 #ifdef CONFIG_HAVE_FPU
-    /* Other FPU registers are still lazily saved and restored when
-     * handleFPUFault is called. See the comments in vcpu_enable
-     * for more information.
+    /* Other FPU registers are still lazily saved and restored.
+     * See the comments in vcpu_enable for more information.
      */
     if (active && nativeThreadUsingFPU(vcpu->vcpuTCB)) {
         access_fpexc(vcpu, false);
@@ -849,15 +848,6 @@ static inline void armv_vcpu_init(vcpu_t *vcpu)
 
 static inline bool_t armv_handleVCPUFault(word_t hsr)
 {
-#ifdef CONFIG_HAVE_FPU
-    if (hsr == HSR_FPU_FAULT || hsr == HSR_TASE_FAULT) {
-        assert(!isFpuEnable());
-        handleFPUFault();
-        setNextPC(NODE_STATE(ksCurThread), getRestartPC(NODE_STATE(ksCurThread)));
-        return true;
-    }
-#endif
-
     return false;
 }
 

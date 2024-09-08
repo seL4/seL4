@@ -240,19 +240,6 @@ config_string(
     UNQUOTE
 )
 
-config_string(
-    KernelFPUMaxRestoresSinceSwitch
-    FPU_MAX_RESTORES_SINCE_SWITCH
-    "This option is a heuristic to attempt to detect when the FPU is no longer in use,\
-    allowing the kernel to save the FPU state out so that the FPU does not have to be\
-    enabled/disabled every thread switch. Every time we restore a thread and there is\
-    active FPU state, we increment this setting and if it exceeds this threshold we\
-    switch to the NULL state."
-    DEFAULT 64
-    DEPENDS "KernelHaveFPU"
-    UNDEF_DISABLED UNQUOTE
-)
-
 config_option(
     KernelVerificationBuild
     VERIFICATION_BUILD
