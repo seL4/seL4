@@ -91,15 +91,7 @@ BOOT_CODE bool_t Arch_initFpu(void)
             /* initialize the XSS MSR */
             x86_wrmsr(IA32_XSS_MSR, desired_features);
         }
-
-        /* copy i387 FPU initial state from FPU */
-        saveFpuState(&x86KSnullFpuState);
         nullFpuState->i387.mxcsr = MXCSR_INIT_VALUE;
-    } else {
-        /* Store the null fpu state */
-        saveFpuState(&x86KSnullFpuState);
     }
-    /* Set the FPU to lazy switch mode */
-    disableFpu();
     return true;
 }
