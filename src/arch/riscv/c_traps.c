@@ -123,14 +123,6 @@ void VISIBLE NORETURN c_handle_exception(void)
         handleVMFaultEvent(scause);
         break;
     default:
-#ifdef CONFIG_HAVE_FPU
-        if (!isFpuEnable()) {
-            /* we assume the illegal instruction is caused by FPU first */
-            handleFPUFault();
-            setNextPC(NODE_STATE(ksCurThread), getRestartPC(NODE_STATE(ksCurThread)));
-            break;
-        }
-#endif
         handleUserLevelFault(scause, 0);
         break;
     }

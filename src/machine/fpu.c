@@ -19,7 +19,6 @@ void switchLocalFpuOwner(user_fpu_state_t *new_owner)
         saveFpuState(NODE_STATE(ksActiveFPUState));
     }
     if (new_owner) {
-        NODE_STATE(ksFPURestoresSinceSwitch) = 0;
         loadFpuState(new_owner);
     } else {
         disableFpu();
@@ -37,24 +36,6 @@ void switchFpuOwner(user_fpu_state_t *new_owner, word_t cpu)
     {
         switchLocalFpuOwner(new_owner);
     }
-}
-
-/* Handle an FPU fault.
- *
- * This CPU exception is thrown when userspace attempts to use the FPU while
- * it is disabled. We need to save the current state of the FPU, and hand
- * it over. */
-exception_t handleFPUFault(void)
-{
-    /* If we have already given the FPU to the user, we should not reach here.
-     * This should only be able to occur on CPUs without an FPU at all, which
-     * we presumably are happy to assume will not be running seL4. */
-    assert(!nativeThreadUsingFPU(NODE_STATE(ksCurThread)));
-
-    /* Otherwise, lazily switch over the FPU. */
-    switchLocalFpuOwner(&NODE_STATE(ksCurThread)->tcbArch.tcbContext.fpuState);
-
-    return EXCEPTION_NONE;
 }
 
 /* Prepare for the deletion of the given thread. */
