@@ -59,8 +59,10 @@ static inline word_t read_sstatus_fs(void)
  * to actually enable/disable FPU accesses in
  * user mode.
  */
-static inline void saveFpuState(user_fpu_state_t *dest)
+static inline void saveFpuState(arch_tcb_t *arch_tcb)
 {
+    user_fpu_state_t *dest = &arch_tcb->tcbContext.fpuState;
+
     set_fs_clean();
 
     asm volatile(
@@ -104,8 +106,10 @@ static inline void saveFpuState(user_fpu_state_t *dest)
     dest->fcsr = read_fcsr();
 }
 
-static inline void loadFpuState(user_fpu_state_t *src)
+static inline void loadFpuState(const arch_tcb_t *arch_tcb)
 {
+    const user_fpu_state_t *src = &arch_tcb->tcbContext.fpuState;
+
     set_fs_clean();
 
     asm volatile(

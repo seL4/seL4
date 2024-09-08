@@ -304,6 +304,9 @@ struct vcpu {
     struct tcb *vcpuTCB;
     bool_t launched;
 
+    /* True if the FPU is used by the VCPU */
+    bool_t fpu_active;
+
     /* Currently assigned VPID */
     vpid_t vpid;
 
@@ -378,6 +381,7 @@ bool_t vtx_init(void);
 exception_t handleVmexit(void);
 exception_t handleVmEntryFail(void);
 void restoreVMCS(void);
+void vcpu_release_fpu(tcb_t*, vcpu_t*);
 void clearCurrentVCPU(void);
 
 #ifdef ENABLE_SMP_SUPPORT
