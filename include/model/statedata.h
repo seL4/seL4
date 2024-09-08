@@ -73,8 +73,8 @@ NODE_STATE_DECLARE(sched_context_t, *ksIdleSC);
 #endif
 
 #ifdef CONFIG_HAVE_FPU
-/* Current state installed in the FPU, or NULL if the FPU is currently invalid */
-NODE_STATE_DECLARE(user_fpu_state_t *, ksActiveFPUState);
+/* The thread using the FPU, or NULL if FPU state is invalid */
+NODE_STATE_DECLARE(tcb_t *, ksCurFPUOwner);
 #endif /* CONFIG_HAVE_FPU */
 
 #ifdef CONFIG_DEBUG_BUILD

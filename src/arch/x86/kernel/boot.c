@@ -299,6 +299,12 @@ BOOT_CODE bool_t init_sys_state(
     /* create the idle thread */
     create_idle_thread();
 
+    /* copy i387 FPU initial state from FPU */
+    saveFpuState(NODE_STATE(ksIdleThread));
+    x86KSnullFpuState = NODE_STATE(ksIdleThread)->tcbArch.tcbContext.fpuState;
+    /* Check that we can load it: */
+    loadFpuState(NODE_STATE(ksIdleThread));
+
     /* create the initial thread */
     tcb_t *initial = create_initial_thread(root_cnode_cap,
                                            it_vspace_cap,
