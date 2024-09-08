@@ -59,8 +59,17 @@ static inline uint32_t xsave_features_low(void)
 }
 
 /* Store state in the FPU registers into memory. */
-static inline void saveFpuState(user_fpu_state_t *dest)
+static inline void saveFpuState(arch_tcb_t *arch_tcb)
 {
+    user_fpu_state_t *dest = &arch_tcb->tcbContext.fpuState;
+#ifdef CONFIG_VTX
+    struct vcpu *vcpu = arch_tcb->tcbVCPU;
+
+    if (vcpu && vcpu->fpu_active) {
+        vcpu->fpu_active = false;
+        dest = &vcpu->fpuState;
+    }
+#endif
     if (config_set(CONFIG_FXSAVE)) {
         asm volatile("fxsave %[dest]" : [dest] "=m"(*dest));
     } else if (config_set(CONFIG_XSAVE_XSAVEOPT)) {
@@ -75,8 +84,16 @@ static inline void saveFpuState(user_fpu_state_t *dest)
 }
 
 /* Load FPU state from memory into the FPU registers. */
-static inline void loadFpuState(user_fpu_state_t *src)
+static inline void loadFpuState(const arch_tcb_t *arch_tcb)
 {
+    const user_fpu_state_t *src = &arch_tcb->tcbContext.fpuState;
+#ifdef CONFIG_VTX
+    const struct vcpu *vcpu = arch_tcb->tcbVCPU;
+
+    if (vcpu && vcpu->fpu_active) {
+        src = &vcpu->fpuState;
+    }
+#endif
     if (config_set(CONFIG_FXSAVE)) {
         asm volatile("fxrstor %[src]" :: [src] "m"(*src));
     } else if (config_set(CONFIG_XSAVE)) {
@@ -110,11 +127,4 @@ static inline void disableFpu(void)
 {
     write_cr0(read_cr0() | CR0_TASK_SWITCH);
 }
-
-#ifdef CONFIG_VTX
-static inline bool_t vcpuThreadUsingFPU(tcb_t *thread)
-{
-    return thread->tcbArch.tcbVCPU && &thread->tcbArch.tcbVCPU->fpuState == NODE_STATE(ksActiveFPUState);
-}
-#endif /* CONFIG_VTX */
 
