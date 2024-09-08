@@ -74,6 +74,14 @@ automatically suspended when the last capability to their \obj{TCB} is
 deleted.
 % an example of which is demonstrated in \nameref{ex:second_thread}.
 
+\subsection{Thread Feature Flags}
+\label{sec:thread_flags}
+Specific features can be enabled or disabled on a per TCB basis with
+\apifunc{seL4\_TCB\_SetFlags}{tcb_setflags}.
+
+If access to the Floating Point Unit is not needed, it can be disabled
+for individual threads to maximise context switching speed.
+
 \subsection{Affinity}
 \label{sec:thread_affinity}
 
