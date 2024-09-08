@@ -54,7 +54,7 @@ static void handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0,
             break;
 
         case IpiRemoteCall_switchFpuOwner:
-            switchLocalFpuOwner((user_fpu_state_t *)arg0);
+            switchLocalFpuOwner((tcb_t *)arg0);
             break;
 
 #ifdef CONFIG_VTX
