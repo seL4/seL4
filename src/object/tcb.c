@@ -792,6 +792,40 @@ static exception_t decodeSetTLSBase(cap_t cap, word_t length, word_t *buffer)
     return invokeSetTLSBase(TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), tls_base);
 }
 
+static exception_t invokeSetFlags(tcb_t *thread, word_t clear, word_t set)
+{
+    word_t flags = thread->flags;
+
+    flags &= ~clear;
+    flags |= set;
+    thread->flags = flags;
+
+#ifdef CONFIG_HAVE_FPU
+    /* Save current FPU state before disabling FPU: */
+    if (flags & seL4_TCBFlag_fpuDisabled) {
+        fpuThreadDelete(thread);
+    }
+#endif
+    return EXCEPTION_NONE;
+}
+
+static exception_t decodeSetFlags(cap_t cap, word_t length, word_t *buffer)
+{
+    tcb_t *thread = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
+
+    if (length < 2) {
+        userError("TCB SetFlags: Truncated message.");
+        current_syscall_error.type = seL4_TruncatedMessage;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    word_t clear = getSyscallArg(0, buffer);
+    word_t set   = getSyscallArg(1, buffer);
+
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+    return invokeSetFlags(thread, clear, set);
+}
+
 /* The following functions sit in the syscall error monad, but include the
  * exception cases for the preemptible bottom end, as they call the invoke
  * functions directly.  This is a significant deviation from the Haskell
@@ -884,6 +918,9 @@ exception_t decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
 
     case TCBSetTLSBase:
         return decodeSetTLSBase(cap, length, buffer);
+
+    case TCBSetFlags:
+        return decodeSetFlags(cap, length, buffer);
 
     default:
         /* Haskell: "throw IllegalOperation" */
