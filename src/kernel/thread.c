@@ -29,6 +29,7 @@ transferCaps(seL4_MessageInfo_t info,
 
 BOOT_CODE void configureIdleThread(tcb_t *tcb)
 {
+    tcb->tcbFlags = seL4_TCBFlag_fpuDisabled;
     Arch_configureIdleThread(tcb);
     setThreadState(tcb, ThreadState_IdleThreadState);
 }
