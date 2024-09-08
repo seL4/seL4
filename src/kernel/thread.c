@@ -19,6 +19,7 @@
 #include <arch/machine.h>
 #include <arch/kernel/thread.h>
 #include <machine/registerset.h>
+#include <machine/fpu.h>
 #include <linker.h>
 
 static seL4_MessageInfo_t
@@ -300,6 +301,14 @@ void doNBRecvFailedTransfer(tcb_t *thread)
     setRegister(thread, badgeRegister, 0);
 }
 
+static void prepareNextDomain(void)
+{
+#ifdef CONFIG_HAVE_FPU
+    /* Save FPU state now to avoid touching cross-domain state later */
+    switchLocalFpuOwner(NULL);
+#endif
+}
+
 static void nextDomain(void)
 {
     ksDomScheduleIdx++;
@@ -344,6 +353,7 @@ static void switchSchedContext(void)
 static void scheduleChooseNewThread(void)
 {
     if (ksDomainTime == 0) {
+        prepareNextDomain();
         nextDomain();
     }
     chooseThread();
