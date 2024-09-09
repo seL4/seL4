@@ -980,8 +980,8 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
                 insert_region(m);
                 if (avail_reg[a].end > reserved[r].end) {
                     avail_reg[a].start = reserved[r].end;
-                    reserve_region(pptr_to_paddr_reg(reserved[r]));
-                    r++;
+                    /* we could increment reserved index here, but it's more consistent with the
+                     * other overlapping case if we don't */
                 } else {
                     a++;
                 }
