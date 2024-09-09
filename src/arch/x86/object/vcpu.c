@@ -122,6 +122,9 @@ void clearCurrentVCPU(void)
         vmclear(vcpu);
         vcpu->launched = false;
         ARCH_NODE_STATE(x86KSCurrentVCPU) = NULL;
+        if (&vcpu->fpuState == NODE_STATE(ksActiveFPUState)) {
+            switchLocalFpuOwner(NULL);
+        }
     }
 }
 
