@@ -19,6 +19,8 @@ from hardware.utils.rule import HardwareYaml
 
 HEADER_TEMPLATE = '''/*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -37,6 +39,12 @@ HEADER_TEMPLATE = '''/*
 #include <mode/hardware.h>  /* for KDEV_BASE */
 #include <linker.h>         /* for BOOT_RODATA */
 #include <basic_types.h>    /* for p_region_t, kernel_frame_t (arch/types.h) */
+
+/* RISC-V specific */
+#if defined(__riscv)
+extern pptr_t clint_pptr;
+extern pptr_t plic_pptr;
+#endif
 
 /* Wrap raw physBase location constant to give it a symbolic name in C that's
  * visible to verification. This is necessary as there are no real constants

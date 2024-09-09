@@ -15,6 +15,15 @@ if(KernelPlatformQEMURiscVVirt)
     config_set(KernelOpenSBIPlatform OPENSBI_PLATFORM "generic")
     config_set(KernelPlatformFirstHartID FIRST_HART_ID 0)
 
+    # CHERI related configs
+    if(HaveCheri)
+      set(KernelArchCheriRiscv ON)
+      set(QEMU_ARCH "${KernelSel4Arch}cheri")
+      message(STATUS "Buidling with CHERI support")
+    else()
+      set(QEMU_ARCH "${KernelSel4Arch}")
+    endif()
+
     # If neither QEMU_DTS nor QEMU_DTB is set explicitly, the device tree is
     # extracted from QEMU. This keeps it nicely up to date with the the actual
     # QEMU versions that is used, and it's quite convenient for development.
@@ -30,7 +39,7 @@ if(KernelPlatformQEMURiscVVirt)
             # Use the system's QEMU if no custom QEMU is provided. Have a sanity
             # check about the version to ensure it can be used.
             if(NOT QEMU_BINARY)
-                set(QEMU_BINARY "qemu-system-${KernelSel4Arch}")
+                set(QEMU_BINARY "qemu-system-${QEMU_ARCH}")
                 find_program(QEMU_BINARY ${QEMU_BINARY})
                 # RISC-V virtual platform works since QEMU v5.1.0
                 set(MIN_QEMU_VERSION "5.1.0")

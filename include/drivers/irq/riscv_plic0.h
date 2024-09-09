@@ -1,6 +1,8 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2021, HENSOLDT Cyber
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  *
@@ -72,12 +74,12 @@
 
 
 
-static inline uint32_t readl(word_t addr)
+static inline uint32_t readl(pptr_t addr)
 {
     return *((volatile uint32_t *)(addr));
 }
 
-static inline void writel(uint32_t val, word_t addr)
+static inline void writel(uint32_t val, pptr_t addr)
 {
     *((volatile uint32_t *)(addr)) = val;
 }
@@ -103,7 +105,7 @@ static inline word_t plic_claim_offset(word_t hart_id, word_t context_id)
 
 static inline bool_t plic_pending_interrupt(word_t interrupt)
 {
-    word_t addr = PLIC_PPTR_BASE + PLIC_PENDING + (interrupt / 32) * 4;
+    pptr_t addr = plic_pptr + PLIC_PENDING + (interrupt / 32) * 4;
     word_t bit = interrupt % 32;
     if (readl(addr) & BIT(bit)) {
         return true;
@@ -127,24 +129,24 @@ static inline irq_t plic_get_claim(void)
 {
     /* Read the claim register for our HART interrupt context */
     word_t hart_id = plic_get_current_hart_id();
-    return readl(PLIC_PPTR_BASE + plic_claim_offset(hart_id, PLIC_SVC_CONTEXT));
+    return readl(plic_pptr + plic_claim_offset(hart_id, PLIC_SVC_CONTEXT));
 }
 
 static inline void plic_complete_claim(irq_t irq)
 {
     /* Complete the IRQ claim by writing back to the claim register. */
     word_t hart_id = plic_get_current_hart_id();
-    writel(irq, PLIC_PPTR_BASE + plic_claim_offset(hart_id, PLIC_SVC_CONTEXT));
+    writel(irq, plic_pptr + plic_claim_offset(hart_id, PLIC_SVC_CONTEXT));
 }
 
 static inline void plic_mask_irq(bool_t disable, irq_t irq)
 {
-    word_t addr = 0;
+    pptr_t addr = 0;
     uint32_t val = 0;
     uint32_t bit = 0;
 
     word_t hart_id = plic_get_current_hart_id();
-    addr = PLIC_PPTR_BASE + plic_enable_offset(hart_id, PLIC_SVC_CONTEXT) + (irq / 32) * 4;
+    addr = plic_pptr + plic_enable_offset(hart_id, PLIC_SVC_CONTEXT) + (irq / 32) * 4;
     bit = irq % 32;
 
     val = readl(addr);
@@ -167,7 +169,7 @@ static inline void plic_init_hart(void)
     }
 
     /* Set threshold to zero */
-    writel(0, (PLIC_PPTR_BASE + plic_thres_offset(hart_id, PLIC_SVC_CONTEXT)));
+    writel(0, (plic_pptr + plic_thres_offset(hart_id, PLIC_SVC_CONTEXT)));
 }
 
 static inline void plic_init_controller(void)
@@ -176,14 +178,14 @@ static inline void plic_init_controller(void)
     for (int i = 1; i <= PLIC_NUM_INTERRUPTS; i++) {
         /* Clear all pending bits */
         if (plic_pending_interrupt(i)) {
-            readl(PLIC_PPTR_BASE + plic_claim_offset(PLIC_HART_ID, PLIC_SVC_CONTEXT));
-            writel(i, PLIC_PPTR_BASE + plic_claim_offset(PLIC_HART_ID, PLIC_SVC_CONTEXT));
+            readl(plic_pptr + plic_claim_offset(PLIC_HART_ID, PLIC_SVC_CONTEXT));
+            writel(i, plic_pptr + plic_claim_offset(PLIC_HART_ID, PLIC_SVC_CONTEXT));
         }
     }
 
     /* Set the priorities of all interrupts to 1 */
     for (int i = 1; i <= PLIC_MAX_IRQ + 1; i++) {
-        writel(2, PLIC_PPTR_BASE + PLIC_PRIO + PLIC_PRIO_PER_ID * i);
+        writel(2, plic_pptr + PLIC_PRIO + PLIC_PRIO_PER_ID * i);
     }
 
 }

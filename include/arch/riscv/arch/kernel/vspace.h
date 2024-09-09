@@ -38,7 +38,7 @@ struct findVSpaceForASID_ret {
 typedef struct findVSpaceForASID_ret findVSpaceForASID_ret_t;
 
 void copyGlobalMappings(pte_t *newlvl1pt);
-word_t *PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread);
+register_t *PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread);
 lookupPTSlot_ret_t lookupPTSlot(pte_t *lvl1pt, vptr_t vptr);
 exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType);
 void unmapPageTable(asid_t, vptr_t vaddr, pte_t *pt);
@@ -50,7 +50,7 @@ exception_t checkValidIPCBuffer(vptr_t vptr, cap_t cap);
 vm_rights_t CONST maskVMRights(vm_rights_t vm_rights,
                                seL4_CapRights_t cap_rights_mask);
 exception_t decodeRISCVMMUInvocation(word_t label, word_t length, cptr_t cptr,
-                                     cte_t *cte, cap_t cap, bool_t call, word_t *buffer);
+                                     cte_t *cte, cap_t cap, bool_t call, register_t *buffer);
 exception_t performPageTableInvocationMap(cap_t cap, cte_t *ctSlot,
                                           pte_t lvl1pt, pte_t *ptSlot);
 exception_t performPageTableInvocationUnmap(cap_t cap, cte_t *ctSlot);

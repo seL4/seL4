@@ -125,10 +125,38 @@ elseif(KernelArchRiscV)
 
     if(KernelSel4ArchRiscV32)
         set(_riscv_march "rv32i") # Currently we don't support "rv32e"
-        set(_riscv_mabi "ilp32")
+
+        if(HaveCheri)
+            # User is always purecap if CHERI is enabled
+            set(_riscv_mabi "il32pc64")
+
+            if(CheriHybridKernel)
+                set(_riscv_mabi_kernel "ilp32")
+            else()
+                set(_riscv_mabi_kernel "il32pc64")
+            endif()
+        else()
+            set(_riscv_mabi "ilp32")
+            set(_riscv_mabi_kernel "ilp32")
+        endif()
+
     elseif(KernelSel4ArchRiscV64)
         set(_riscv_march "rv64i")
-        set(_riscv_mabi "lp64")
+
+        if(HaveCheri)
+            # User is always purecap if CHERI is enabled
+            set(_riscv_mabi "l64pc128")
+
+            if(CheriHybridKernel)
+                set(_riscv_mabi "lp64")
+            else()
+                set(_riscv_mabi_kernel "l64pc128")
+            endif()
+        else()
+            set(_riscv_mabi "lp64")
+            set(_riscv_mabi_kernel "lp64")
+        endif()
+
     else()
         message(FATAL_ERROR "unknown RISC-V KernelSel4Arch '${KernelSel4Arch}'")
     endif()
@@ -167,7 +195,23 @@ elseif(KernelArchRiscV)
         string(APPEND _riscv_march "_zicsr_zifencei")
     endif()
 
-    string(APPEND common_flags " -march=${_riscv_march} -mabi=${_riscv_mabi}")
+    if(HaveCheri)
+        # The "x" is for non-standard CHERI extension. This is going to change to "z" once
+        # CHERI is standardised in RISC-V.
+        string(APPEND _riscv_march "_xcheri")
+    else()
+        # CHERI mode lets non-kernel subsystems to use different ABIs than itself. Here, we
+        # just add an -mabi for compatibility with non-CHERI builds.
+        string(APPEND common_flags " -mabi=${_riscv_mabi} ")
+    endif()
+
+    string(APPEND common_flags " -march=${_riscv_march} ")
+    KernelCommonFlags(-mabi=${_riscv_mabi_kernel})
+
+    # Clang/lld don't support linker relaxation yet
+    if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
+        string(APPEND common_flags " -mno-relax")
+    endif()
 
 else()
     message(FATAL_ERROR "unknown KernelArch '${KernelArch}'")

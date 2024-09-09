@@ -1,6 +1,8 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: BSD-2-Clause
  */
@@ -14,19 +16,41 @@
 /* log 2 bits in a word */
 #define seL4_WordSizeBits       3
 
-#define seL4_SlotBits           5
-#ifdef CONFIG_KERNEL_MCS
-#define seL4_NotificationBits   6
-#define seL4_ReplyBits          5
+#if defined(__CHERI_PURE_CAPABILITY__)
+#define seL4_TCBBits 12
+#define seL4_SlotBits 7
+#define seL4_EndpointBits 7
+#define seL4_ASIDPoolIndexBits 7
+#define seL4_RegisterSizeBits 5
 #else
-#define seL4_NotificationBits   5
-#endif
-#define seL4_EndpointBits       4
-#define seL4_IPCBufferSizeBits  10
 #ifdef CONFIG_HAVE_FPU
 #define seL4_TCBBits            11
 #else
 #define seL4_TCBBits            10
+#endif
+#define seL4_SlotBits 5
+#define seL4_EndpointBits 4
+#define seL4_ASIDPoolIndexBits 9
+#define seL4_RegisterSizeBits 3
+#endif
+
+#ifdef CONFIG_KERNEL_MCS
+#define seL4_NotificationBits   6
+#define seL4_ReplyBits          5
+#else
+#if defined(__CHERI_PURE_CAPABILITY__)
+#define seL4_NotificationBits   8
+#else
+#define seL4_NotificationBits   5
+#endif
+#endif
+
+#if defined(CONFIG_HAVE_CHERI)
+/* IPC buffer is 2048 bytes, giving size bits of 11 */
+#define seL4_IPCBufferSizeBits 11
+#else
+/* IPC buffer is 1024 bytes, giving size bits of 10 */
+#define seL4_IPCBufferSizeBits 10
 #endif
 
 /* Sv39/Sv48 pages/ptes sizes */
@@ -41,7 +65,6 @@
 #define seL4_VSpaceBits        seL4_PageTableBits
 
 #define seL4_NumASIDPoolsBits   7
-#define seL4_ASIDPoolIndexBits  9
 #define seL4_ASIDPoolBits       12
 
 /* Untyped size limits */

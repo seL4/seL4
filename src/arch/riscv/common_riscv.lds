@@ -37,10 +37,9 @@ SECTIONS
     .boot.bss . : AT(ADDR(.boot.bss) - KERNEL_OFFSET)
     {
         *(.boot.bss)
+        . = ALIGN(4K);
+        ki_boot_end = .;
     }
-    . = ALIGN(4K);
-
-    ki_boot_end = .;
 
     .text . : AT(ADDR(.text) - KERNEL_OFFSET)
     {
@@ -64,6 +63,13 @@ SECTIONS
         *(.sdata*)
         *(.sbss)
     }
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    .captable . : AT(ADDR(.captable) - KERNEL_OFFSET) {
+        . = ALIGN(16);
+        *(.captable)
+    }
+#endif
 
     .rodata . : AT(ADDR(.rodata) - KERNEL_OFFSET)
     {
