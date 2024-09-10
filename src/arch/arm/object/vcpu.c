@@ -264,6 +264,14 @@ static void vcpu_invalidate_active(void)
     ARCH_NODE_STATE(armHSCurVCPU) = NULL;
 }
 
+void vcpu_flush(void)
+{
+    if (ARCH_NODE_STATE(armHSCurVCPU)) {
+        vcpu_save(ARCH_NODE_STATE(armHSCurVCPU), ARCH_NODE_STATE(armHSVCPUActive));
+        vcpu_invalidate_active();
+    }
+}
+
 void vcpu_finalise(vcpu_t *vcpu)
 {
     if (vcpu->vcpuTCB) {
