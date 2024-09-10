@@ -11,3 +11,8 @@ void Arch_postModifyRegisters(tcb_t *tptr)
 {
     Mode_postModifyRegisters(tptr);
 }
+
+void Arch_prepareNextDomain(void)
+{
+    /* Don't need to do anything */
+}

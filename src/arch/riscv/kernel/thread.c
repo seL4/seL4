@@ -55,3 +55,8 @@ void Arch_postModifyRegisters(tcb_t *tptr)
 {
     /* Nothing to do */
 }
+
+void Arch_prepareNextDomain(void)
+{
+    /* Don't need to do anything */
+}

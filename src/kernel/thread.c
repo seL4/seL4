@@ -314,6 +314,7 @@ void prepareSetDomain(tcb_t *tptr, dom_t dom)
 
 static void prepareNextDomain(void)
 {
+    Arch_prepareNextDomain();
 #ifdef CONFIG_HAVE_FPU
     /* Save FPU state now to avoid touching cross-domain state later */
     switchLocalFpuOwner(NULL);
