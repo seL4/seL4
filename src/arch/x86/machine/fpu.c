@@ -37,10 +37,6 @@ BOOT_CODE bool_t Arch_initFpu(void)
         uint64_t xsave_features;
         uint32_t xsave_instruction;
         uint64_t desired_features = config_ternary(CONFIG_XSAVE, CONFIG_XSAVE_FEATURE_SET, 1);
-        xsave_state_t *nullFpuState = (xsave_state_t *) &x86KSnullFpuState;
-
-        /* create NULL state for FPU to be used by XSAVE variants */
-        memzero(&x86KSnullFpuState, sizeof(x86KSnullFpuState));
 
         /* check for XSAVE support */
         if (!(x86_cpuid_ecx(1, 0) & BIT(26))) {
@@ -84,14 +80,10 @@ BOOT_CODE bool_t Arch_initFpu(void)
                 printf("XSAVES requested, but not supported\n");
                 return false;
             }
-
-            /* AVX state from extended region should be in compacted format */
-            nullFpuState->header.xcomp_bv = XCOMP_BV_COMPACTED_FORMAT;
-
-            /* initialize the XSS MSR */
-            x86_wrmsr(IA32_XSS_MSR, desired_features);
         }
-        nullFpuState->i387.mxcsr = MXCSR_INIT_VALUE;
+        /* Init MXCSR */
+        unsigned int mxcsr = MXCSR_INIT_VALUE;
+        asm volatile("ldmxcsr %0" :: "m"(mxcsr));
     }
     return true;
 }
