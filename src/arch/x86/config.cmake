@@ -167,6 +167,7 @@ config_choice(
         XSAVEOPT -> Save state taking advantage of both the init optimization and modified optimization \
         XSAVES -> Save state taking advantage of the modified optimization. This instruction is only \
             available in OS code, and is the preferred save method if it exists."
+    "XSAVES;KernelXSaveXSaveS;XSAVE_XSAVES;KernelFPUXSave"
     "XSAVEOPT;KernelXSaveXSaveOpt;XSAVE_XSAVEOPT;KernelFPUXSave"
     "XSAVE;KernelXSaveXSave;XSAVE_XSAVE;KernelFPUXSave"
     "XSAVEC;KernelXSaveXSaveC;XSAVE_XSAVEC;KernelFPUXSave"
@@ -186,7 +187,11 @@ config_string(
 )
 
 if(KernelFPUXSave)
-    set(default_xsave_size 576)
+    if ("${KernelXSaveFeatureSet}" EQUAL 7)
+        set(default_xsave_size 832)
+    else()
+        set(default_xsave_size 576)
+    endif()
 else()
     set(default_xsave_size 512)
 endif()
