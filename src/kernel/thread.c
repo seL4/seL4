@@ -304,12 +304,13 @@ void doNBRecvFailedTransfer(tcb_t *thread)
 
 void prepareSetDomain(tcb_t *tptr, dom_t dom)
 {
-#ifdef CONFIG_HAVE_FPU
     if (ksCurDomain != dom) {
+        Arch_prepareSetDomain(tptr, dom);
+#ifdef CONFIG_HAVE_FPU
         /* Save FPU state now to avoid touching cross-domain state later */
         fpuRelease(tptr);
-    }
 #endif
+    }
 }
 
 static void prepareNextDomain(void)

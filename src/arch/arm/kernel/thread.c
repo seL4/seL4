@@ -17,3 +17,10 @@ void Arch_prepareNextDomain(void)
         vcpu_flush();
     }
 }
+
+void Arch_prepareSetDomain(tcb_t *tptr, dom_t dom)
+{
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        vcpu_flush_if_current(tptr);
+    }
+}

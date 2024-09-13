@@ -272,6 +272,13 @@ void vcpu_flush(void)
     }
 }
 
+void vcpu_flush_if_current(tcb_t *tptr)
+{
+    if (tptr->tcbArch.tcbVCPU == ARCH_NODE_STATE(armHSCurVCPU)) {
+        vcpu_flush();
+    }
+}
+
 void vcpu_finalise(vcpu_t *vcpu)
 {
     if (vcpu->vcpuTCB) {
