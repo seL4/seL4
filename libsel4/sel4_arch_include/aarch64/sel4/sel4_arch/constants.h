@@ -84,6 +84,7 @@ typedef enum {
     /* other system registers EL1 */
     seL4_VCPUReg_ACTLR,
     seL4_VCPUReg_CPACR,
+    seL4_VCPUReg_PAR,
 
     /* exception handling registers EL1 */
     seL4_VCPUReg_AFSR0,
