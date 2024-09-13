@@ -114,6 +114,7 @@
 #define REG_ELR_EL1         "elr_el1"
 #define REG_SPSR_EL1        "spsr_el1"
 #define REG_CPACR_EL1       "cpacr_el1"
+#define REG_PAR_EL1         "par_el1"
 #define REG_CNTV_TVAL_EL0   "cntv_tval_el0"
 #define REG_CNTV_CTL_EL0    "cntv_ctl_el0"
 #define REG_CNTV_CVAL_EL0   "cntv_cval_el0"
@@ -344,6 +345,18 @@ static inline void writeCPACR_EL1(word_t reg)
     MSR(REG_CPACR_EL1, reg);
 }
 
+static inline word_t readPAR_EL1(void)
+{
+    word_t reg;
+    MRS(REG_PAR_EL1, reg);
+    return reg;
+}
+
+static inline void writePAR_EL1(word_t reg)
+{
+    MSR(REG_PAR_EL1, reg);
+}
+
 static inline word_t readCNTV_TVAL_EL0(void)
 {
     word_t reg;
@@ -443,6 +456,8 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
         return readACTLR();
     case seL4_VCPUReg_CPACR:
         return readCPACR_EL1();
+    case seL4_VCPUReg_PAR:
+        return readPAR_EL1();
     case seL4_VCPUReg_AFSR0:
         return readAFSR0();
     case seL4_VCPUReg_AFSR1:
@@ -507,6 +522,9 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
         break;
     case seL4_VCPUReg_CPACR:
         writeCPACR_EL1(reg);
+        break;
+    case seL4_VCPUReg_PAR:
+        writePAR_EL1(reg);
         break;
     case seL4_VCPUReg_AFSR0:
         writeAFSR0(reg);
