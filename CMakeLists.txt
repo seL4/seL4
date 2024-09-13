@@ -1,5 +1,7 @@
 #
 # Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+# Copyright 2024, Capabilities Limited
+# CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
 #
 # SPDX-License-Identifier: GPL-2.0-only
 #
@@ -53,6 +55,14 @@ endif()
 
 string(APPEND common_flags " -D__KERNEL_${KernelWordSize}__")
 
+# Setup kernel specific flags used for both the compilation and linking step
+macro(KernelCommonFlags)
+    foreach(common_flag IN ITEMS ${ARGV})
+        add_compile_options(${common_flag})
+        string(APPEND CMAKE_EXE_LINKER_FLAGS " ${common_flag} ")
+    endforeach()
+endmacro(KernelCommonFlags)
+
 if(KernelArchX86)
     if(${KernelX86MicroArch} STREQUAL "generic")
         string(APPEND common_flags " -mtune=generic")
@@ -79,7 +89,21 @@ if(KernelArchX86)
     endif()
 
 elseif(KernelArchARM)
-    set(arm_march "${KernelArmArmV}${KernelArmMachFeatureModifiers}")
+    if(HaveCheri)
+        # Only Morello has CHERI support for Arm
+        set(arm_march "morello${KernelArmMachFeatureModifiers}")
+
+        if(CheriPureCapKernel)
+            KernelCommonFlags(-mabi=purecap)
+        elseif(CheriHybridKernel)
+            KernelCommonFlags(-mabi=aapcs)
+        else()
+          message(FATAL_ERROR "seL4 can only be hybrid or purecap when CHERI is enabled")
+        endif()
+    else()
+        set(arm_march "${KernelArmArmV}${KernelArmMachFeatureModifiers}")
+    endif()
+
     string(APPEND c_common_flags " -march=${arm_march}")
     string(APPEND asm_common_flags " -march=${arm_march}")
 
@@ -235,14 +259,6 @@ string(
     " -Wl,-n" # Disable page alignment of sections
 )
 
-# Setup kernel specific flags used for both the compilation and linking step
-macro(KernelCommonFlags)
-    foreach(common_flag IN ITEMS ${ARGV})
-        add_compile_options(${common_flag})
-        string(APPEND CMAKE_EXE_LINKER_FLAGS " ${common_flag} ")
-    endforeach()
-endmacro(KernelCommonFlags)
-
 KernelCommonFlags(
     ${KernelOptimisation}
     # The following options are gcc options, it is unclear if ld options are
@@ -339,6 +355,11 @@ endif()
 
 if(KernelArmMach STREQUAL "exynos")
     include_directories("include/plat/exynos_common/")
+endif()
+
+# Add CHERI helper headers
+if(HaveCheri)
+    include_directories("include/cheri")
 endif()
 
 # Add libsel4 include directories. These are explicitly added instead of calling

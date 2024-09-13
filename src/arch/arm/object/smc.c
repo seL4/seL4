@@ -10,11 +10,11 @@
 
 compile_assert(n_msgRegisters_less_than_smc_regs, n_msgRegisters <= NUM_SMC_REGS);
 
-static exception_t invokeSMCCall(word_t *buffer, bool_t call)
+static exception_t invokeSMCCall(register_t *buffer, bool_t call)
 {
     word_t i;
     seL4_Word arg[NUM_SMC_REGS];
-    word_t *ipcBuffer;
+    register_t *ipcBuffer;
 
     for (i = 0; i < NUM_SMC_REGS; i++) {
         arg[i] = getSyscallArg(i, buffer);
@@ -64,7 +64,7 @@ static exception_t invokeSMCCall(word_t *buffer, bool_t call)
 }
 
 exception_t decodeARMSMCInvocation(word_t label, word_t length, cptr_t cptr,
-                                   cte_t *srcSlot, cap_t cap, bool_t call, word_t *buffer)
+                                   cte_t *srcSlot, cap_t cap, bool_t call, register_t *buffer)
 {
     if (label != ARMSMCCall) {
         userError("ARMSMCInvocation: Illegal operation.");

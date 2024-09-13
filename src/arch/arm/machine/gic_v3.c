@@ -1,6 +1,8 @@
 /*
  * Copyright 2019, DornerWorks
  * Copyright 2019, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -31,8 +33,8 @@
 #define ICC_SGI1R_IRM_BIT              (40)
 #define ICC_SGI1R_CPUTARGETLIST_MASK   0xffff
 
-volatile struct gic_dist_map *const gic_dist = (volatile struct gic_dist_map *)(GICD_PPTR);
-volatile void *const gicr_base = (volatile uint8_t *)(GICR_PPTR);
+volatile struct gic_dist_map *gic_dist = (volatile struct gic_dist_map *)(GICD_PPTR);
+volatile void *gicr_base = (volatile uint8_t *)(GICR_PPTR);
 
 word_t active_irq[CONFIG_MAX_NUM_NODES] = {IRQ_NONE};
 volatile struct gic_rdist_map *gic_rdist_map[CONFIG_MAX_NUM_NODES] = { 0 };
@@ -191,13 +193,13 @@ BOOT_CODE static void gicr_locate_interface(void)
      */
     for (offset = 0; offset < GICR_SIZE; offset += GICR_PER_CORE_SIZE) {
 
-        uint64_t typer = ((struct gic_rdist_map *)((word_t)gicr_base + offset))->typer;
+        uint64_t typer = ((struct gic_rdist_map *)((pptr_t)gicr_base + offset))->typer;
         if ((typer >> 32) == ((MPIDR_AFF3(mpidr) << 24) |
                               (MPIDR_AFF2(mpidr) << 16) |
                               (MPIDR_AFF1(mpidr) <<  8) |
                               MPIDR_AFF0(mpidr))) {
 
-            word_t gicr = (word_t)gicr_base + offset;
+            pptr_t gicr = (pptr_t)gicr_base + offset;
             if (gic_rdist_map[core_id] != NULL || gic_rdist_sgi_ppi_map[core_id] != NULL) {
                 printf("GICv3: %s[%d] %p is not null\n",
                        gic_rdist_map[core_id] == NULL ? "gic_rdist_map" : "gic_rdist_sgi_ppi_map",
@@ -266,6 +268,11 @@ BOOT_CODE static void gicr_init(void)
 BOOT_CODE static void cpu_iface_init(void)
 {
     uint32_t icc_ctlr = 0;
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    gic_dist = (volatile struct gic_dist_map *) cheri_build_device_cap((ptraddr_t)gic_dist, sizeof(struct gic_dist_map));
+    gicr_base = (volatile void*) cheri_build_device_cap((ptraddr_t)gicr_base, GICR_SIZE);
+#endif
 
     /* Enable system registers */
     gicv3_enable_sre();
@@ -336,10 +343,11 @@ BOOT_CODE void cpu_initLocalIRQController(void)
     word_t mpidr = 0;
     SYSTEM_READ_WORD(MPIDR, mpidr);
 
+    cpu_iface_init();
+
     mpidr_map[CURRENT_CPU_INDEX()] = mpidr;
 
     gicr_init();
-    cpu_iface_init();
 }
 
 #ifdef ENABLE_SMP_SUPPORT

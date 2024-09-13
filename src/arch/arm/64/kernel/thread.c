@@ -22,7 +22,7 @@ void Arch_switchToThread(tcb_t *tcb)
 BOOT_CODE void Arch_configureIdleThread(tcb_t *tcb)
 {
     setRegister(tcb, SPSR_EL1, PSTATE_IDLETHREAD);
-    setRegister(tcb, ELR_EL1, (word_t)&idle_thread);
+    setRegister(tcb, ELR_EL1, (register_t)&idle_thread);
 }
 
 void Arch_switchToIdleThread(void)
@@ -30,7 +30,7 @@ void Arch_switchToIdleThread(void)
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         vcpu_switch(NULL);
     }
-    setCurrentUserVSpaceRoot(ttbr_new(0, addrFromKPPtr(armKSGlobalUserVSpace)));
+    setCurrentUserVSpaceRoot(ttbr_new(0, kpptr_to_paddr(armKSGlobalUserVSpace)));
 }
 
 void Arch_activateIdleThread(tcb_t *tcb)

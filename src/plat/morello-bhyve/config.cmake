@@ -10,28 +10,15 @@ cmake_minimum_required(VERSION 3.7.2)
 declare_platform(morello-bhyve KernelPlatformMorelloBhyve PLAT_MORELLO_BHYVE  KernelSel4ArchAarch64)
 
 if(KernelPlatformMorelloBhyve)
-
-    # ARM_CPU is not currently used, but mention the name here
-    # for completeness and for future Morello/CPU features that
-    # may make use of this config (e.g., CHERI).
-    if(NOT ARM_CPU)
-        message(STATUS "ARM_CPU not set, defaulting to rainier")
-        set(ARM_CPU "rainier")
-    endif()
-
-    # Currently no CHERI support exists in seL4 Morello. Future
-    # support may extend the follwing config.
-    if(NOT CHERI_MODE)
-        message(STATUS "CHERI_MODE not set, disable it by default")
-        set(CHERI_MODE "none")
-    endif()
-
     config_set(KernelARMPlatform ARM_PLAT "morello-bhyve")
     declare_seL4_arch(aarch64)
 
     set(KernelArmMorello ON)
     set(KernelArchArmV8a ON)
     set(KernelArmGicV3 ON)
+
+    # CHERI config options
+    set(CheriPureCapLoader OFF)
 
     list(APPEND KernelDTSList "tools/dts/morello-bhyve.dts")
     list(APPEND KernelDTSList "src/plat/morello-bhyve/overlay-morello-bhyve.dts")

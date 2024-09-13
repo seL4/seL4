@@ -14,6 +14,10 @@ if(KernelPlatformMorelloSoC)
     set(KernelArmMorello ON)
     set(KernelArchArmV8a ON)
     set(KernelArmGicV3 ON)
+
+    # CHERI config options
+    set(CheriPureCapLoader OFF)
+
     config_set(KernelARMPlatform ARM_PLAT "morello-soc")
     list(APPEND KernelDTSList "tools/dts/morello-soc.dts")
     list(APPEND KernelDTSList "src/plat/morello-soc/overlay-morello-soc.dts")

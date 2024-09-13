@@ -1,5 +1,7 @@
 #
 # Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+# Copyright 2024, Capabilities Limited
+# CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
 #
 # SPDX-License-Identifier: GPL-2.0-only
 #
@@ -230,7 +232,16 @@ elseif(KernelArmCortexA57)
 elseif(KernelArmCortexA72)
     set(KernelArmCPU "cortex-a72" CACHE INTERNAL "")
 elseif(KernelArmMorello)
+    # Morello is both a CHERI architecture and an Arm CPU implementation
     set(KernelArmCPU "morello" CACHE INTERNAL "")
+
+    # Default Morello to build in purecap mode, otherwise set the following configs to OFF
+    config_set(cheriUserPurecap CHERI_PURECAP_USR ON)
+    config_set(cheriKernelPurecap CHERI_PURECAP_KRN ON)
+elseif(KernelArchCheriRiscv)
+    # Default CHERI-RISC-V to build in purecap mode, otherwise set the following configs to OFF
+    config_set(cheriUserPurecap CHERI_PURECAP_USR ON)
+    config_set(cheriKernelPurecap CHERI_PURECAP_KRN ON)
 endif()
 if(KernelArchARM)
     config_set(KernelArmMach ARM_MACH "${KernelArmMach}")

@@ -41,7 +41,7 @@ static inline void saveFpuState(user_fpu_state_t *dest)
         "mrs     %0, fpcr                   \n"
         "str     %w0, [%1, #16 * 32 + 4]    \n"
         : "=&r"(temp)
-        : "r"(dest)
+        : ASM_REG_CONSTR(dest)
         : "memory"
     );
 }
@@ -76,7 +76,7 @@ static inline void loadFpuState(user_fpu_state_t *src)
         "ldr     %w0, [%1, #16 * 32 + 4]    \n"
         "msr     fpcr, %0                   \n"
         : "=&r"(temp)
-        : "r"(src)
+        : ASM_REG_CONSTR(src)
         : "memory"
     );
 }

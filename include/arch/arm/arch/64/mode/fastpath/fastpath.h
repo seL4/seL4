@@ -1,5 +1,7 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -83,15 +85,34 @@ static inline void fastpath_set_tcbfault_vm_fault(vm_fault_type_t type)
 #endif
 
 static inline void mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(
-    mdb_node_t *node_ptr, word_t mdbNext,
+    mdb_node_t *node_ptr, pptr_t mdbNext,
     word_t mdbRevocable, word_t mdbFirstBadged)
 {
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    mdb_node_ptr_set_mdbFirstBadged(node_ptr, mdbFirstBadged);
+    mdb_node_ptr_set_mdbRevocable(node_ptr, mdbRevocable);
+    mdb_node_ptr_set_mdbNext(node_ptr, mdbNext);
+#else
+    /* FIXME: This should be more portable not assuming/inferring how the bitfield
+     * generator lays out its fields, including variable names such as "words[1]". It should
+     * instead use the setter functions for that.
+     */
     node_ptr->words[1] = mdbNext | (mdbRevocable << 1) | mdbFirstBadged;
+#endif
 }
 
-static inline void mdb_node_ptr_set_mdbPrev_np(mdb_node_t *node_ptr, word_t mdbPrev)
+static inline void mdb_node_ptr_set_mdbPrev_np(mdb_node_t *node_ptr, pptr_t mdbPrev)
 {
+#if defined(__CHERI_PURE_CAPABILITY__)
+    mdb_node_ptr_set_mdbPrev(node_ptr, mdbPrev);
+#else
+    /* FIXME: This could should be more portable not assuming/inferring how the bitfield
+     * generator lays out its fields, including variable names such as "words[0]". It should
+     * instead use the setter functions for that.
+     */
     node_ptr->words[0] = mdbPrev;
+#endif
 }
 
 static inline bool_t isValidVTableRoot_fp(cap_t vspace_root_cap)
@@ -149,43 +170,44 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
 
     register word_t badge_reg asm("x0") = badge;
     register word_t msgInfo_reg asm("x1") = msgInfo;
-    register word_t cur_thread_reg asm("x2") = (word_t)cur_thread->tcbArch.tcbContext.registers;
+    register pptr_t cur_thread_reg = (pptr_t)cur_thread->tcbArch.tcbContext.registers;
 
     asm volatile(
-        "mov     sp, x2                     \n"
+        "mov     " REGN(sp) ", %2                               \n"
 
         /* Restore thread's SPSR, LR, and SP */
-        "ldp     x21, x22, [sp, %[SP_EL0]]  \n"
-        "ldr     x23, [sp, %[SPSR_EL1]]     \n"
-        "msr     sp_el0, x21                \n"
+        "ldp     "REG(21)", "REG(22)", ["REGN(sp)", %[SP_EL0]]  \n"
+        "ldr     "REG(23)", ["REGN(sp)", %[SPSR_EL1]]           \n"
+        "msr     "REGN(sp_el0)", " REG(21)"                     \n"
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-        "msr     elr_el2, x22               \n"
-        "msr     spsr_el2, x23              \n"
+        "msr     "REGN(elr_el2)", "REG(22)"                     \n"
+        "msr     spsr_el2, x23                                  \n"
 #else
-        "msr     elr_el1, x22               \n"
-        "msr     spsr_el1, x23              \n"
+        "msr     "REGN(elr_el1)", "REG(22)"                     \n"
+        "msr     spsr_el1, x23                                  \n"
 #endif
 
         /* Restore remaining registers */
-        "ldp     x2,  x3,  [sp, #16 * 1]    \n"
-        "ldp     x4,  x5,  [sp, #16 * 2]    \n"
-        "ldp     x6,  x7,  [sp, #16 * 3]    \n"
-        "ldp     x8,  x9,  [sp, #16 * 4]    \n"
-        "ldp     x10, x11, [sp, #16 * 5]    \n"
-        "ldp     x12, x13, [sp, #16 * 6]    \n"
-        "ldp     x14, x15, [sp, #16 * 7]    \n"
-        "ldp     x16, x17, [sp, #16 * 8]    \n"
-        "ldp     x18, x19, [sp, #16 * 9]    \n"
-        "ldp     x20, x21, [sp, #16 * 10]   \n"
-        "ldp     x22, x23, [sp, #16 * 11]   \n"
-        "ldp     x24, x25, [sp, #16 * 12]   \n"
-        "ldp     x26, x27, [sp, #16 * 13]   \n"
-        "ldp     x28, x29, [sp, #16 * 14]   \n"
-        "ldr     x30, [sp, %[LR]]           \n"
-        "eret                                 "
+        "ldp     "REG(2)",  "REG(3)",  ["REGN(sp)", #(%[REGSZ] * 2) * 1]    \n"
+        "ldp     "REG(4)",  "REG(5)",  ["REGN(sp)", #(%[REGSZ] * 2) * 2]    \n"
+        "ldp     "REG(6)",  "REG(7)",  ["REGN(sp)", #(%[REGSZ] * 2) * 3]    \n"
+        "ldp     "REG(8)",  "REG(9)",  ["REGN(sp)", #(%[REGSZ] * 2) * 4]    \n"
+        "ldp     "REG(10)", "REG(11)", ["REGN(sp)", #(%[REGSZ] * 2) * 5]    \n"
+        "ldp     "REG(12)", "REG(13)", ["REGN(sp)", #(%[REGSZ] * 2) * 6]    \n"
+        "ldp     "REG(14)", "REG(15)", ["REGN(sp)", #(%[REGSZ] * 2) * 7]    \n"
+        "ldp     "REG(16)", "REG(17)", ["REGN(sp)", #(%[REGSZ] * 2) * 8]    \n"
+        "ldp     "REG(18)", "REG(19)", ["REGN(sp)", #(%[REGSZ] * 2) * 9]    \n"
+        "ldp     "REG(20)", "REG(21)", ["REGN(sp)", #(%[REGSZ] * 2) * 10]   \n"
+        "ldp     "REG(22)", "REG(23)", ["REGN(sp)", #(%[REGSZ] * 2) * 11]   \n"
+        "ldp     "REG(24)", "REG(25)", ["REGN(sp)", #(%[REGSZ] * 2) * 12]   \n"
+        "ldp     "REG(26)", "REG(27)", ["REGN(sp)", #(%[REGSZ] * 2) * 13]   \n"
+        "ldp     "REG(28)", "REG(29)", ["REGN(sp)", #(%[REGSZ] * 2) * 14]   \n"
+        "ldr     "REG(30)", ["REGN(sp)", %[LR]]                             \n"
+        "eret"
         :
-        : "r"(badge_reg), "r"(msgInfo_reg), "r"(cur_thread_reg),
-        [SP_EL0] "i"(PT_SP_EL0), [SPSR_EL1] "i"(PT_SPSR_EL1), [LR] "i"(PT_LR)
+        : "r"(badge_reg), "r"(msgInfo_reg), ASM_REG_CONSTR(cur_thread_reg),
+        [SP_EL0] "i"(PT_SP_EL0), [SPSR_EL1] "i"(PT_SPSR_EL1), [LR] "i"(PT_LR),
+        [REGSZ] "i" (REGSIZE)
         : "memory"
     );
 

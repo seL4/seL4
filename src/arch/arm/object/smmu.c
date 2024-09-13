@@ -19,7 +19,7 @@ static exception_t checkARMCBVspace(cap_t cap)
 }
 
 exception_t decodeARMSIDControlInvocation(word_t label, word_t length, cptr_t cptr,
-                                          cte_t *srcSlot, cap_t cap, bool_t call, word_t *buffer)
+                                          cte_t *srcSlot, cap_t cap, bool_t call, register_t *buffer)
 {
 
     word_t index, depth, sid;
@@ -34,7 +34,7 @@ exception_t decodeARMSIDControlInvocation(word_t label, word_t length, cptr_t cp
         thread = NODE_STATE(ksCurThread);
         smmu_read_fault_state(&faultStatus, &faultSyndrome_0, &faultSyndrome_1);
         if (call) {
-            word_t *ipcBuffer = lookupIPCBuffer(true, thread);
+            register_t *ipcBuffer = lookupIPCBuffer(true, thread);
             setRegister(thread, badgeRegister, 0);
             setMR(thread, ipcBuffer, 0, faultStatus);
             setMR(thread, ipcBuffer, 1, faultSyndrome_0);
@@ -100,7 +100,7 @@ exception_t decodeARMSIDControlInvocation(word_t label, word_t length, cptr_t cp
 }
 
 exception_t decodeARMSIDInvocation(word_t label, word_t length, cptr_t cptr,
-                                   cte_t *srcSlot, cap_t cap, bool_t call, word_t *buffer)
+                                   cte_t *srcSlot, cap_t cap, bool_t call, register_t *buffer)
 {
     cap_t cbCap;
     cte_t *cbCapSlot;
@@ -186,7 +186,7 @@ exception_t smmu_delete_sid(cap_t cap)
 }
 
 exception_t decodeARMCBControlInvocation(word_t label, word_t length, cptr_t cptr,
-                                         cte_t *srcSlot, cap_t cap, bool_t call, word_t *buffer)
+                                         cte_t *srcSlot, cap_t cap, bool_t call, register_t *buffer)
 {
 
     word_t index, depth, cb;
@@ -250,7 +250,7 @@ exception_t decodeARMCBControlInvocation(word_t label, word_t length, cptr_t cpt
 }
 
 exception_t decodeARMCBInvocation(word_t label, word_t length, cptr_t cptr,
-                                  cte_t *srcSlot, cap_t cap, bool_t call, word_t *buffer)
+                                  cte_t *srcSlot, cap_t cap, bool_t call, register_t *buffer)
 {
 
     cap_t vspaceCap;
@@ -332,7 +332,7 @@ exception_t decodeARMCBInvocation(word_t label, word_t length, cptr_t cptr,
         thread = NODE_STATE(ksCurThread);
         smmu_cb_read_fault_state(cap_cb_cap_get_capCB(cap), &faultStatus, &faultAddress);
         if (call) {
-            word_t *ipcBuffer = lookupIPCBuffer(true, thread);
+            register_t *ipcBuffer = lookupIPCBuffer(true, thread);
             setRegister(thread, badgeRegister, 0);
             setMR(thread, ipcBuffer, 0, faultStatus);
             setMR(thread, ipcBuffer, 1, faultAddress);

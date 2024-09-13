@@ -1,5 +1,7 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -22,6 +24,7 @@
 #define PMODE_EL1t              4
 #define PMODE_EL1h              5
 #define PMODE_EL2h              9
+#define PMODE_C64               (1 << 26)
 
 /* DAIF register */
 #define DAIF_FIRQ               (1 << 6)
@@ -39,7 +42,7 @@
 #define ESR_EC_LEL_SVC64        0x15    // SVC from a lower EL in AArch64 state
 #define ESR_EC_LEL_HVC64        0x16    // HVC from EL1 in AArch64 state
 #define ESR_EL1_EC_ENFP         0x7     // Access to Advanced SIMD or floating-point registers
-
+#define ESR_EC_LEL_MORELLO      0x29    // Trapped access to Morello instructions
 
 /* ID_AA64PFR0_EL1 register */
 #define ID_AA64PFR0_EL1_FP      16     // HWCap for Floating Point
@@ -58,13 +61,33 @@
 #define PSTATE_EXTRA_FLAGS  PMODE_SERROR
 #endif
 
+#if defined(CONFIG_HAVE_CHERI)
+ /* Register size is always 16 bytes when CHERI is enabled, whether hybrid or purecap */
+#define REGSIZE 16
+
+/* We only support purecap userspace when CHERI is enabled.
+ * Enable run-time PSTATE to operate in purecap mode (c64).
+ */
+#define PSTATE_USER         (PMODE_FIRQ | PMODE_EL0t | PSTATE_EXTRA_FLAGS | PMODE_C64)
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+#define PSTATE_IDLETHREAD   (PMODE_FIRQ | PMODE_EL2h | PSTATE_EXTRA_FLAGS | PMODE_C64)
+#else
+#define PSTATE_IDLETHREAD   (PMODE_FIRQ | PMODE_EL1h | PSTATE_EXTRA_FLAGS | PMODE_C64)
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
+
+#else /* !__has_feature(capabilities) */
+
+#define REGSIZE 8
 #define PSTATE_USER         (PMODE_FIRQ | PMODE_EL0t | PSTATE_EXTRA_FLAGS)
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 #define PSTATE_IDLETHREAD   (PMODE_FIRQ | PMODE_EL2h | PSTATE_EXTRA_FLAGS)
 #else
 #define PSTATE_IDLETHREAD   (PMODE_FIRQ | PMODE_EL1h | PSTATE_EXTRA_FLAGS)
-#endif
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
+#endif /* __has_feature(capabilities) */
+
 
 /* Offsets within the user context, these need to match the order in
  * regoff_t below */
@@ -151,9 +174,9 @@ enum _register {
 
 #define NEXT_PC_REG ELR_EL1
 
-compile_assert(sp_offset_correct, SP_EL0 *sizeof(word_t) == PT_SP_EL0)
-compile_assert(lr_svc_offset_correct, ELR_EL1 *sizeof(word_t) == PT_ELR_EL1)
-compile_assert(faultinstruction_offset_correct, FaultIP *sizeof(word_t) == PT_FaultIP)
+compile_assert(sp_offset_correct, SP_EL0 *sizeof(register_t) == PT_SP_EL0)
+compile_assert(lr_svc_offset_correct, ELR_EL1 *sizeof(register_t) == PT_ELR_EL1)
+compile_assert(faultinstruction_offset_correct, FaultIP *sizeof(register_t) == PT_FaultIP)
 
 typedef word_t regoff_t;
 
@@ -265,7 +288,7 @@ typedef struct user_fpu_state {
  * of the current thread's registers. The assert below should help.
  */
 struct user_context {
-    word_t registers[n_contextRegisters];
+    register_t registers[n_contextRegisters];
 #ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
     user_breakpoint_state_t breakpointState;
 #endif /* ARM_BASE_CP14_SAVE_AND_RESTORE */
@@ -291,5 +314,25 @@ static inline void Arch_initContext(user_context_t *context)
 #endif
 }
 
+/* Definitions for inlinle assembly */
+#if defined(CONFIG_HAVE_CHERI)
+#define REG(n) "c" STRINGIFY(n)
+#define REGN(name) "c" STRINGIFY(name)
+#define ASM_REG_CONSTR "C"
+#else
+#define REG(n) "x" STRINGIFY(n)
+#define REGN(name) STRINGIFY(name)
+#define ASM_REG_CONSTR "r"
+#endif
+
 #endif /* !__ASSEMBLER__ */
 
+#ifdef __ASSEMBLER__
+#if defined(CONFIG_HAVE_CHERI)
+#define REG(n) c##n
+#define REGN(name) c##name
+#else
+#define REG(n) x##n
+#define REGN(name) name
+#endif /* __CHERI_PURE_CAPABILITY__ */
+#endif

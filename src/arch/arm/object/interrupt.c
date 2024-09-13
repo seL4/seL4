@@ -19,7 +19,7 @@ static exception_t Arch_invokeIRQControl(irq_t irq, cte_t *handlerSlot, cte_t *c
 }
 
 exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
-                                            cte_t *srcSlot, word_t *buffer)
+                                            cte_t *srcSlot, register_t *buffer)
 {
     if (invLabel == ARMIRQIssueIRQHandlerTrigger) {
         if (length < 4 || current_extra_caps.excaprefs[0] == NULL) {

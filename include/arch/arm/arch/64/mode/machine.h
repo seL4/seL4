@@ -1,5 +1,7 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -43,8 +45,8 @@
 #define irq_reschedule_ipi         1
 #endif /* ENABLE_SMP_SUPPORT */
 
-word_t PURE getRestartPC(tcb_t *thread);
-void setNextPC(tcb_t *thread, word_t v);
+register_t PURE getRestartPC(tcb_t *thread);
+void setNextPC(tcb_t *thread, register_t v);
 
 static inline word_t getProcessorID(void)
 {
@@ -77,39 +79,39 @@ static inline void writeAuxiliaryControlRegister(word_t acr)
     MSR("actlr_el1", acr);
 }
 
-static inline void writeTPIDR_EL0(word_t reg)
+static inline void writeTPIDR_EL0(register_t reg)
 {
-    MSR("tpidr_el0", reg);
+    PMSR("tpidr_el0", reg);
 }
 
-static inline word_t readTPIDR_EL0(void)
+static inline register_t readTPIDR_EL0(void)
 {
-    word_t reg;
-    MRS("tpidr_el0", reg);
+    register_t reg;
+    PMRS("tpidr_el0", reg);
     return reg;
 }
 
-static inline void writeTPIDRRO_EL0(word_t reg)
+static inline void writeTPIDRRO_EL0(register_t reg)
 {
-    MSR("tpidrro_el0", reg);
+    PMSR("tpidrro_el0", reg);
 }
 
-static inline word_t readTPIDRRO_EL0(void)
+static inline register_t readTPIDRRO_EL0(void)
 {
-    word_t reg;
-    MRS("tpidrro_el0", reg);
+    register_t reg;
+    PMRS("tpidrro_el0", reg);
     return reg;
 }
 
-static inline void writeTPIDR_EL1(word_t reg)
+static inline void writeTPIDR_EL1(register_t reg)
 {
-    MSR("tpidr_el1", reg);
+    PMSR("tpidr_el1", reg);
 }
 
-static inline word_t readTPIDR_EL1(void)
+static inline register_t readTPIDR_EL1(void)
 {
-    word_t reg;
-    MRS("tpidr_el1", reg);
+    register_t reg;
+    PMRS("tpidr_el1", reg);
     return reg;
 }
 
@@ -194,7 +196,7 @@ static inline word_t getVTTBR(void)
     return vttbr;
 }
 
-static inline void setKernelStack(word_t stack_address)
+static inline void setKernelStack(pptr_t stack_address)
 {
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         writeTPIDR_EL2(stack_address);
@@ -207,9 +209,9 @@ static inline void setVtable(pptr_t addr)
 {
     dsb();
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        MSR("vbar_el2", addr);
+        PMSR("vbar_el2", addr);
     } else {
-        MSR("vbar_el1", addr);
+        PMSR("vbar_el1", addr);
     }
     isb();
 }
@@ -279,25 +281,25 @@ void lockTLBEntry(vptr_t vaddr);
 
 static inline void cleanByVA(vptr_t vaddr, paddr_t paddr)
 {
-    asm volatile("dc cvac, %0" : : "r"(vaddr));
+    asm volatile("dc cvac, %0" : : ASM_REG_CONSTR(vaddr));
     dmb();
 }
 
 static inline void cleanByVA_PoU(vptr_t vaddr, paddr_t paddr)
 {
-    asm volatile("dc cvau, %0" : : "r"(vaddr));
+    asm volatile("dc cvau, %0" : : ASM_REG_CONSTR(vaddr));
     dmb();
 }
 
 static inline void invalidateByVA(vptr_t vaddr, paddr_t paddr)
 {
-    asm volatile("dc ivac, %0" : : "r"(vaddr));
+    asm volatile("dc ivac, %0" : : ASM_REG_CONSTR(vaddr));
     dmb();
 }
 
 static inline void invalidateByVA_I(vptr_t vaddr, paddr_t paddr)
 {
-    asm volatile("ic ivau, %0" : : "r"(vaddr));
+    asm volatile("ic ivau, %0" : : ASM_REG_CONSTR(vaddr));
     dsb();
     isb();
 }
@@ -314,7 +316,7 @@ static inline void invalidate_I_PoU(void)
 
 static inline void cleanInvalByVA(vptr_t vaddr, paddr_t paddr)
 {
-    asm volatile("dc civac, %0" : : "r"(vaddr));
+    asm volatile("dc civac, %0" : : ASM_REG_CONSTR(vaddr));
     dsb();
 }
 
