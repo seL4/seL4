@@ -108,7 +108,6 @@
 #define REG_AFSR1_EL1       "afsr1_el1"
 #define REG_ESR_EL1         "esr_el1"
 #define REG_FAR_EL1         "far_el1"
-#define REG_ISR_EL1         "isr_el1"
 #define REG_VBAR_EL1        "vbar_el1"
 #define REG_TPIDR_EL1       "tpidr_el1"
 #define REG_SP_EL1          "sp_el1"
@@ -285,16 +284,6 @@ static inline void writeFAR(word_t reg)
     MSR(REG_FAR_EL1, reg);
 }
 
-/* ISR is read-only */
-/** MODIFIES: */
-/** DONT_TRANSLATE */
-static inline word_t readISR(void)
-{
-    uint32_t reg;
-    MRS(REG_ISR_EL1, reg);
-    return (word_t)reg;
-}
-
 static inline word_t readVBAR(void)
 {
     word_t reg;
@@ -462,8 +451,6 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
         return readESR();
     case seL4_VCPUReg_FAR:
         return readFAR();
-    case seL4_VCPUReg_ISR:
-        return readISR();
     case seL4_VCPUReg_VBAR:
         return readVBAR();
     case seL4_VCPUReg_TPIDR_EL1:
@@ -532,9 +519,6 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
         break;
     case seL4_VCPUReg_FAR:
         writeFAR(reg);
-        break;
-    case seL4_VCPUReg_ISR:
-        /* ISR is read-only */
         break;
     case seL4_VCPUReg_VBAR:
         writeVBAR(reg);
