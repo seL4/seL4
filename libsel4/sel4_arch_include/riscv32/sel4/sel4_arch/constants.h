@@ -23,7 +23,11 @@
 #endif
 #define seL4_EndpointBits       4
 #define seL4_IPCBufferSizeBits  9
+#ifdef CONFIG_HAVE_FPU
+#define seL4_TCBBits            10
+#else
 #define seL4_TCBBits            9
+#endif
 
 /* Untyped size limits */
 #define seL4_MinUntypedBits     4
