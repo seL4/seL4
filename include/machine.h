@@ -16,7 +16,7 @@
  * referred to a kernel virtual address. */
 static inline void *CONST ptrFromPAddr(paddr_t paddr)
 {
-    return (void *)(paddr + PPTR_BASE_OFFSET);
+    return (void *)(paddr + KERNEL_PPTR_OFFSET);
 }
 
 /* When obtaining a physical address from a reference to any object in
@@ -35,15 +35,15 @@ static inline paddr_t CONST addrFromKPPtr(const void *pptr)
     return (paddr_t)pptr - KERNEL_ELF_BASE_OFFSET;
 }
 
-#define paddr_to_pptr(x)   ptrFromPAddr(x)
+#define paddr_to_pptr(x)   ptrFromPAddr((uintptr_t) x)
 #define pptr_to_paddr(x)   addrFromPPtr(x)
 #define kpptr_to_paddr(x)  addrFromKPPtr(x)
 
 static inline region_t CONST paddr_to_pptr_reg(const p_region_t p_reg)
 {
-    return (region_t) {
-        .start = (paddr_t)paddr_to_pptr(p_reg.start),
-        .end   = (paddr_t)paddr_to_pptr(p_reg.end)
+    region_t pptr_reg = (region_t) {
+        .start = (pptr_t)paddr_to_pptr(p_reg.start),
+        .end   = (pptr_t)paddr_to_pptr(p_reg.end)
     };
 }
 

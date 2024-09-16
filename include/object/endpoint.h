@@ -21,8 +21,8 @@ static inline tcb_queue_t PURE ep_ptr_get_queue(endpoint_t *epptr)
 
 static inline void ep_ptr_set_queue(endpoint_t *epptr, tcb_queue_t queue)
 {
-    endpoint_ptr_set_epQueue_head(epptr, (word_t)queue.head);
-    endpoint_ptr_set_epQueue_tail(epptr, (word_t)queue.end);
+    endpoint_ptr_set_epQueue_head(epptr, (pptr_t)queue.head);
+    endpoint_ptr_set_epQueue_tail(epptr, (pptr_t)queue.end);
 }
 
 #ifdef CONFIG_KERNEL_MCS

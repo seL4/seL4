@@ -29,8 +29,8 @@ extern char ki_boot_end[1];
 BOOT_CODE p_region_t get_p_reg_kernel_img_boot(void)
 {
     return (p_region_t) {
-        .start = kpptr_to_paddr((const void *)KERNEL_ELF_BASE),
-        .end   = kpptr_to_paddr(ki_boot_end)
+        .start = kpptr_to_paddr((const void *)(uintptr_t)KERNEL_ELF_BASE),
+        .end   = kpptr_to_paddr((const void *)(uintptr_t)ki_boot_end)
     };
 }
 
@@ -38,8 +38,8 @@ BOOT_CODE p_region_t get_p_reg_kernel_img_boot(void)
 BOOT_CODE p_region_t get_p_reg_kernel_img(void)
 {
     return (p_region_t) {
-        .start = kpptr_to_paddr((const void *)KERNEL_ELF_BASE),
-        .end   = kpptr_to_paddr(ki_end)
+        .start = kpptr_to_paddr((const void *)(uintptr_t)KERNEL_ELF_BASE),
+        .end   = kpptr_to_paddr((const void *)(uintptr_t)ki_end)
     };
 }
 
