@@ -301,6 +301,16 @@ void doNBRecvFailedTransfer(tcb_t *thread)
     setRegister(thread, badgeRegister, 0);
 }
 
+void prepareSetDomain(tcb_t *tptr, dom_t dom)
+{
+#ifdef CONFIG_HAVE_FPU
+    if (ksCurDomain != dom) {
+        /* Save FPU state now to avoid touching cross-domain state later */
+        fpuThreadDelete(tptr);
+    }
+#endif
+}
+
 static void prepareNextDomain(void)
 {
 #ifdef CONFIG_HAVE_FPU
