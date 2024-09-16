@@ -90,7 +90,7 @@ BOOT_CODE bool_t reserve_region(p_region_t reg)
             if (ndks_boot.resv_count + 1 >= MAX_NUM_RESV_REG) {
                 printf("Can't mark region 0x%"SEL4_PRIx_word"-0x%"SEL4_PRIx_word
                        " as reserved, try increasing MAX_NUM_RESV_REG (currently %d)\n",
-                       reg.start, reg.end, (int)MAX_NUM_RESV_REG);
+                       (word_t)reg.start, (word_t)reg.end, (int)MAX_NUM_RESV_REG);
                 return false;
             }
             for (word_t j = ndks_boot.resv_count; j > i; j--) {
@@ -106,7 +106,7 @@ BOOT_CODE bool_t reserve_region(p_region_t reg)
     if (i + 1 == MAX_NUM_RESV_REG) {
         printf("Can't mark region 0x%"SEL4_PRIx_word"-0x%"SEL4_PRIx_word
                " as reserved, try increasing MAX_NUM_RESV_REG (currently %d)\n",
-               reg.start, reg.end, (int)MAX_NUM_RESV_REG);
+               (word_t)reg.start, (word_t)reg.end, (int)MAX_NUM_RESV_REG);
         return false;
     }
 
@@ -142,7 +142,7 @@ BOOT_CODE static bool_t insert_region(region_t reg)
      */
     printf("no free memory slot left for [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"],"
            " consider increasing MAX_NUM_FREEMEM_REG (%u)\n",
-           reg.start, reg.end, (unsigned int)MAX_NUM_FREEMEM_REG);
+           (word_t)reg.start, (word_t)reg.end, (unsigned int)MAX_NUM_FREEMEM_REG);
 
     /* For debug builds we consider this a fatal error. Rationale is, that the
      * caller does not check the error code at the moment, but just ignores any
@@ -669,14 +669,15 @@ BOOT_CODE static bool_t provide_untyped_cap(
 
     /* All cap ptrs must be aligned to object size */
     if (!IS_ALIGNED(pptr, size_bits)) {
-        printf("Kernel init: Unaligned untyped pptr %p (alignment %"SEL4_PRIu_word")\n", (void *)pptr, size_bits);
+        printf("Kernel init: Unaligned untyped pptr %"SEL4_PRIu_word" (alignment %"SEL4_PRIu_word")\n", (word_t)pptr,
+               size_bits);
         return false;
     }
 
     /* All cap ptrs apart from device untypeds must be in the kernel window. */
     if (!device_memory && !pptr_in_kernel_window(pptr)) {
-        printf("Kernel init: Non-device untyped pptr %p outside kernel window\n",
-               (void *)pptr);
+        printf("Kernel init: Non-device untyped pptr %"SEL4_PRIu_word"  outside kernel window\n",
+               (word_t)pptr);
         return false;
     }
 
@@ -684,8 +685,8 @@ BOOT_CODE static bool_t provide_untyped_cap(
        need to assume that the kernel window is aligned up to potentially
        seL4_MaxUntypedBits. */
     if (!device_memory && !pptr_in_kernel_window(pptr + MASK(size_bits))) {
-        printf("Kernel init: End of non-device untyped at %p outside kernel window (size %"SEL4_PRIu_word")\n",
-               (void *)pptr, size_bits);
+        printf("Kernel init: End of non-device untyped at %"SEL4_PRIu_word" outside kernel window (size %"SEL4_PRIu_word")\n",
+               (word_t)pptr, size_bits);
         return false;
     }
 
@@ -778,10 +779,11 @@ BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap)
             region_t reg = paddr_to_pptr_reg((p_region_t) {
                 start, ndks_boot.reserved[i].start
             });
+
             if (!create_untypeds_for_region(root_cnode_cap, true, reg, first_untyped_slot)) {
                 printf("ERROR: creation of untypeds for device region #%u at"
                        " [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] failed\n",
-                       (unsigned int)i, reg.start, reg.end);
+                       (unsigned int)i, (word_t)reg.start, (word_t)reg.end);
                 return false;
             }
         }
@@ -797,7 +799,7 @@ BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap)
         if (!create_untypeds_for_region(root_cnode_cap, true, reg, first_untyped_slot)) {
             printf("ERROR: creation of untypeds for top device region"
                    " [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] failed\n",
-                   reg.start, reg.end);
+                   (word_t)reg.start, (word_t)reg.end);
             return false;
         }
     }
@@ -810,7 +812,7 @@ BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap)
     if (!create_untypeds_for_region(root_cnode_cap, false, boot_mem_reuse_reg, first_untyped_slot)) {
         printf("ERROR: creation of untypeds for recycled boot memory"
                " [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] failed\n",
-               boot_mem_reuse_reg.start, boot_mem_reuse_reg.end);
+               (word_t)boot_mem_reuse_reg.start, (word_t)boot_mem_reuse_reg.end);
         return false;
     }
 
@@ -821,7 +823,7 @@ BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap)
         if (!create_untypeds_for_region(root_cnode_cap, false, reg, first_untyped_slot)) {
             printf("ERROR: creation of untypeds for free memory region #%u at"
                    " [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] failed\n",
-                   (unsigned int)i, reg.start, reg.end);
+                   (unsigned int)i, (word_t)reg.start, (word_t)reg.end);
             return false;
         }
     }
@@ -900,7 +902,7 @@ BOOT_CODE static bool_t check_reserved_memory(word_t n_reserved,
     /* Force ordering and exclusivity of reserved regions. */
     for (word_t i = 0; i < n_reserved; i++) {
         const region_t *r = &reserved[i];
-        printf("  [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]\n", r->start, r->end);
+        printf("  [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]\n", (word_t)r->start, (word_t)r->end);
 
         /* Reserved regions must be sane, the size is allowed to be zero. */
         if (r->start > r->end) {
