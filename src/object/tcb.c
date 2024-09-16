@@ -1613,6 +1613,7 @@ exception_t decodeDomainInvocation(word_t invLabel, word_t length, word_t *buffe
     }
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+    prepareSetDomain(TCB_PTR(cap_thread_cap_get_capTCBPtr(tcap)), domain);
     setDomain(TCB_PTR(cap_thread_cap_get_capTCBPtr(tcap)), domain);
     return EXCEPTION_NONE;
 }
