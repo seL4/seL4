@@ -1921,7 +1921,7 @@ static readWordFromVSpace_ret_t readWordFromVSpace(vspace_root_t *pd, word_t vad
     }
 
     offset = vaddr & MASK(lookup_ret.ptBitsLeft);
-    kernel_vaddr = (word_t)paddr_to_pptr(pte_page_ptr_get_page_base_address(lookup_ret.ptSlot));
+    kernel_vaddr = (pptr_t)paddr_to_pptr(pte_page_ptr_get_page_base_address(lookup_ret.ptSlot));
     value = (word_t *)(kernel_vaddr + offset);
 
     ret.status = EXCEPTION_NONE;

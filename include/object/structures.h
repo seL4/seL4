@@ -95,7 +95,7 @@ typedef word_t notification_state_t;
 
 /* Generate a cte_t pointer from a tcb_t pointer */
 #define TCB_PTR_CTE_PTR(p,i) \
-    (((cte_t *)((word_t)(p)&~MASK(seL4_TCBBits)))+(i))
+    (((cte_t *)((pptr_t)(p)&~MASK(seL4_TCBBits)))+(i))
 
 #define SC_REF(p) ((word_t) (p))
 #define SC_PTR(r) ((sched_context_t *) (r))
@@ -109,7 +109,7 @@ typedef word_t notification_state_t;
 #define ZombieType_ZombieTCB        BIT(wordRadix)
 #define ZombieType_ZombieCNode(n)   ((n) & MASK(wordRadix))
 
-static inline cap_t CONST Zombie_new(word_t number, word_t type, word_t ptr)
+static inline cap_t CONST Zombie_new(word_t number, word_t type, pptr_t ptr)
 {
     word_t mask;
 
@@ -137,7 +137,7 @@ static inline word_t CONST cap_zombie_cap_get_capZombieNumber(cap_t cap)
     return cap_zombie_cap_get_capZombieID(cap) & MASK(radix + 1);
 }
 
-static inline word_t CONST cap_zombie_cap_get_capZombiePtr(cap_t cap)
+static inline pptr_t CONST cap_zombie_cap_get_capZombiePtr(cap_t cap)
 {
     word_t radix = cap_zombie_cap_get_capZombieBits(cap);
     return cap_zombie_cap_get_capZombieID(cap) & ~MASK(radix + 1);
@@ -146,7 +146,7 @@ static inline word_t CONST cap_zombie_cap_get_capZombiePtr(cap_t cap)
 static inline cap_t CONST cap_zombie_cap_set_capZombieNumber(cap_t cap, word_t n)
 {
     word_t radix = cap_zombie_cap_get_capZombieBits(cap);
-    word_t ptr = cap_zombie_cap_get_capZombieID(cap) & ~MASK(radix + 1);
+    pptr_t ptr = cap_zombie_cap_get_capZombieID(cap) & ~MASK(radix + 1);
     return cap_zombie_cap_set_capZombieID(cap, ptr | (n & MASK(radix + 1)));
 }
 
