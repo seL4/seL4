@@ -16,10 +16,10 @@ void switchLocalFpuOwner(tcb_t *new_owner)
 {
     enableFpu();
     if (NODE_STATE(ksCurFPUOwner)) {
-        saveFpuState(&NODE_STATE(ksCurFPUOwner)->tcbArch);
+        saveFpuState(NODE_STATE(ksCurFPUOwner));
     }
     if (new_owner) {
-        loadFpuState(&new_owner->tcbArch);
+        loadFpuState(new_owner);
     } else {
         disableFpu();
     }

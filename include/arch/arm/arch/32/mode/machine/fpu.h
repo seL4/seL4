@@ -88,9 +88,9 @@ static void setEnFPEXC(void)
     VMSR(FPEXC, fpexc);
 }
 /* Store state in the FPU registers into memory. */
-static inline void saveFpuState(arch_tcb_t *arch_tcb)
+static inline void saveFpuState(tcb_t *thread)
 {
-    user_fpu_state_t *dest = &arch_tcb->tcbContext.fpuState;
+    user_fpu_state_t *dest = &thread->tcbArch.tcbContext.fpuState;
     word_t fpexc;
 
     /* Fetch FPEXC. */
@@ -177,9 +177,9 @@ static inline bool_t isFpuEnable(void)
 }
 
 /* Load FPU state from memory into the FPU registers. */
-static inline void loadFpuState(const arch_tcb_t *arch_tcb)
+static inline void loadFpuState(const tcb_t *thread)
 {
-    const user_fpu_state_t *src = &arch_tcb->tcbContext.fpuState;
+    const user_fpu_state_t *src = &thread->tcbArch.tcbContext.fpuState;
 
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         /* now we need to enable the EN bit in FPEXC */
