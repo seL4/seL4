@@ -34,11 +34,11 @@ static inline uint32_t xsave_features_low(void)
 }
 
 /* Store state in the FPU registers into memory. */
-static inline void saveFpuState(arch_tcb_t *arch_tcb)
+static inline void saveFpuState(tcb_t *thread)
 {
-    user_fpu_state_t *dest = &arch_tcb->tcbContext.fpuState;
+    user_fpu_state_t *dest = &thread->tcbArch.tcbContext.fpuState;
 #ifdef CONFIG_VTX
-    struct vcpu *vcpu = arch_tcb->tcbVCPU;
+    struct vcpu *vcpu = thread->tcbArch.tcbVCPU;
 
     if (vcpu && vcpu->fpu_active) {
         vcpu->fpu_active = false;
@@ -59,11 +59,11 @@ static inline void saveFpuState(arch_tcb_t *arch_tcb)
 }
 
 /* Load FPU state from memory into the FPU registers. */
-static inline void loadFpuState(const arch_tcb_t *arch_tcb)
+static inline void loadFpuState(const tcb_t *thread)
 {
-    const user_fpu_state_t *src = &arch_tcb->tcbContext.fpuState;
+    const user_fpu_state_t *src = &thread->tcbArch.tcbContext.fpuState;
 #ifdef CONFIG_VTX
-    const struct vcpu *vcpu = arch_tcb->tcbVCPU;
+    const struct vcpu *vcpu = thread->tcbArch.tcbVCPU;
 
     if (vcpu && vcpu->fpu_active) {
         src = &vcpu->fpuState;

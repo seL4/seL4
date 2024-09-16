@@ -1524,9 +1524,9 @@ void restoreVMCS(void)
         enableFpu();
         if (!expected_vmcs->fpu_active) {
             /* Host was using the FPU, switch to guest FPU state */
-            saveFpuState(&cur_thread->tcbArch);
+            saveFpuState(cur_thread);
             expected_vmcs->fpu_active = true;
-            loadFpuState(&cur_thread->tcbArch);
+            loadFpuState(cur_thread);
         }
     } else {
         /* Someone else used the FPU, load guest's FPU state */
