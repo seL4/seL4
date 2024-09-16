@@ -35,7 +35,8 @@ exception_t decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
     word_t nodeSize;
     word_t i;
     cte_t *destCNode;
-    word_t freeRef, alignedFreeRef, objectSize, untypedFreeBytes;
+    word_t objectSize, untypedFreeBytes;
+    pptr_t freeRef, alignedFreeRef;
     word_t freeIndex;
     bool_t deviceMemory;
     bool_t reset;

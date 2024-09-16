@@ -14,21 +14,21 @@
  * kernel via virtual addressing we always use the mapping of the memory
  * into the physical memory window, even if the mapping originally
  * referred to a kernel virtual address. */
-static inline void *CONST ptrFromPAddr(paddr_t paddr)
+static inline pptr_t CONST ptrFromPAddr(paddr_t paddr)
 {
-    return (void *)(paddr + PPTR_BASE_OFFSET);
+    return (pptr_t)(paddr + KERNEL_OFFSET);
 }
 
 /* When obtaining a physical address from a reference to any object in
  * the physical mapping window, this function must be used. */
-static inline paddr_t CONST addrFromPPtr(const void *pptr)
+static inline paddr_t CONST addrFromPPtr(const pptr_t pptr)
 {
     return (paddr_t)pptr - PPTR_BASE_OFFSET;
 }
 
 /* When obtaining a physical address from a reference to an address from
  * the kernel ELF mapping, this function must be used. */
-static inline paddr_t CONST addrFromKPPtr(const void *pptr)
+static inline paddr_t CONST addrFromKPPtr(const pptr_t pptr)
 {
     assert((paddr_t)pptr >= KERNEL_ELF_BASE);
     assert((paddr_t)pptr <= KERNEL_ELF_TOP);
