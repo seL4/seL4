@@ -72,7 +72,7 @@ enum _register {
     n_contextRegisters
 };
 
-typedef uint8_t register_t;
+typedef uint8_t regoff_t;
 
 enum messageSizes {
     n_msgRegisters = 4,
@@ -85,9 +85,9 @@ enum messageSizes {
 #endif
 };
 
-extern const register_t msgRegisters[] VISIBLE;
-extern const register_t frameRegisters[] VISIBLE;
-extern const register_t gpRegisters[] VISIBLE;
+extern const regoff_t msgRegisters[] VISIBLE;
+extern const regoff_t frameRegisters[] VISIBLE;
+extern const regoff_t gpRegisters[] VISIBLE;
 
 #ifdef CONFIG_HAVE_FPU
 
@@ -122,7 +122,7 @@ static inline void Arch_initContext(user_context_t *context)
     context->registers[SSTATUS] = SSTATUS_SPIE;
 }
 
-static inline word_t CONST sanitiseRegister(register_t reg, word_t v, bool_t archInfo)
+static inline register_t CONST sanitiseRegister(regoff_t reg, register_t v, bool_t archInfo)
 {
     return v;
 }

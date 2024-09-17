@@ -13,7 +13,7 @@ timestamp_t ksEnter;
 
 void benchmark_track_utilisation_dump(void)
 {
-    uint64_t *buffer = ((uint64_t *) & (((seL4_IPCBuffer *)lookupIPCBuffer(true, NODE_STATE(ksCurThread)))->msg[0]));
+    pptr_t *buffer = ((uint64_t *) & (((seL4_IPCBuffer *)lookupIPCBuffer(true, NODE_STATE(ksCurThread)))->msg[0]));
     tcb_t *tcb = NULL;
     word_t tcb_cptr = getRegister(NODE_STATE(ksCurThread), capRegister);
     lookupCap_ret_t lu_ret;

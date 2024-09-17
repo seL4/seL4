@@ -159,7 +159,7 @@ static inline void maybeStallSC(sched_context_t *sc)
 }
 #endif
 
-static inline void setConsumed(sched_context_t *sc, word_t *buffer)
+static inline void setConsumed(sched_context_t *sc, register_t *buffer)
 {
     time_t consumed = schedContext_updateConsumed(sc);
     word_t length = mode_setTimeArg(0, consumed, buffer, NODE_STATE(ksCurThread));

@@ -267,7 +267,7 @@ static exception_t handleInvocation(bool_t isCall, bool_t isBlocking)
 {
     seL4_MessageInfo_t info;
     lookupCapAndSlot_ret_t lu_ret;
-    word_t *buffer;
+    register_t *buffer;
     exception_t status;
     word_t length;
     tcb_t *thread;

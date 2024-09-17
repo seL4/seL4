@@ -1,5 +1,7 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: BSD-2-Clause
  */
@@ -10,12 +12,19 @@
 
 typedef struct seL4_IPCBuffer_ {
     seL4_MessageInfo_t tag;
-    seL4_Word msg[seL4_MsgMaxLength];
-    seL4_Word userData;
-    seL4_Word caps_or_badges[seL4_MsgMaxExtraCaps];
-    seL4_CPtr receiveCNode;
-    seL4_CPtr receiveIndex;
-    seL4_Word receiveDepth;
+    seL4_Register msg[seL4_MsgMaxLength];
+    seL4_Register userData;
+    /* cheriTODO: currently type everything in the buffer to be capability-width, even
+     * though others are definitely just integers/offsets. This is currently
+     * unoptimised but works with the size asserts and casts that seL4 does, assuming
+     * everything is of unsigned long size. In the future we want to have just
+     * integer types for those and refactor seL4's assumptions and casts to properly
+     * handle different types and sizes of fields within the IPC buffer.
+     */
+    seL4_Register caps_or_badges[seL4_MsgMaxExtraCaps];
+    seL4_Register receiveCNode;
+    seL4_Register receiveIndex;
+    seL4_Register receiveDepth;
 } seL4_IPCBuffer __attribute__((__aligned__(sizeof(struct seL4_IPCBuffer_))));
 
 typedef enum {

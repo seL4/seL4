@@ -1,5 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -40,7 +42,7 @@ static exception_t reduceZombie(cte_t *slot, bool_t exposed);
 #endif
 
 exception_t decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
-                                  word_t *buffer)
+                                  register_t *buffer)
 {
     lookupSlot_ret_t lu_ret;
     cte_t *destSlot;
@@ -898,7 +900,7 @@ bool_t PURE slotCapLongRunningDelete(cte_t *slot)
 
 /* This implementation is specialised to the (current) limit
  * of one cap receive slot. */
-cte_t *getReceiveSlots(tcb_t *thread, word_t *buffer)
+cte_t *getReceiveSlots(tcb_t *thread, register_t *buffer)
 {
     cap_transfer_t ct;
     cptr_t cptr;
@@ -933,7 +935,7 @@ cte_t *getReceiveSlots(tcb_t *thread, word_t *buffer)
     return slot;
 }
 
-cap_transfer_t PURE loadCapTransfer(word_t *buffer)
+cap_transfer_t PURE loadCapTransfer(register_t *buffer)
 {
     const int offset = seL4_MsgMaxLength + seL4_MsgMaxExtraCaps + 2;
     return capTransferFromWords(buffer + offset);

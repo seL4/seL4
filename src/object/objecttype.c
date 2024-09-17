@@ -1,5 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -628,12 +630,12 @@ void createNewObjects(object_t t, cte_t *parent,
 exception_t decodeInvocation(word_t invLabel, word_t length,
                              cptr_t capIndex, cte_t *slot, cap_t cap,
                              bool_t block, bool_t call,
-                             bool_t canDonate, bool_t firstPhase, word_t *buffer)
+                             bool_t canDonate, bool_t firstPhase, register_t *buffer)
 #else
 exception_t decodeInvocation(word_t invLabel, word_t length,
                              cptr_t capIndex, cte_t *slot, cap_t cap,
                              bool_t block, bool_t call,
-                             word_t *buffer)
+                             register_t *buffer)
 #endif
 {
     if (isArchCap(cap)) {

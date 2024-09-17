@@ -11,7 +11,7 @@
 #include <object/structures.h>
 
 exception_t decodeCNodeInvocation(word_t invLabel, word_t length,
-                                  cap_t cap, word_t *buffer);
+                                  cap_t cap, register_t *buffer);
 exception_t invokeCNodeRevoke(cte_t *destSlot);
 exception_t invokeCNodeDelete(cte_t *destSlot);
 exception_t invokeCNodeCancelBadgedSends(cap_t cap);
@@ -32,8 +32,8 @@ exception_t ensureNoChildren(cte_t *slot);
 exception_t ensureEmptySlot(cte_t *slot);
 bool_t PURE isFinalCapability(cte_t *cte);
 bool_t PURE slotCapLongRunningDelete(cte_t *slot);
-cte_t *getReceiveSlots(tcb_t *thread, word_t *buffer);
-cap_transfer_t PURE loadCapTransfer(word_t *buffer);
+cte_t *getReceiveSlots(tcb_t *thread, register_t *buffer);
+cap_transfer_t PURE loadCapTransfer(register_t *buffer);
 
 #ifndef CONFIG_KERNEL_MCS
 exception_t invokeCNodeSaveCaller(cte_t *destSlot);
