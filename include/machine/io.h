@@ -19,6 +19,8 @@ unsigned char kernel_getDebugChar(void);
 #include <arch/types.h>
 #include <stdarg.h>
 
+void init_console(void);
+
 /* the actual output function */
 void kernel_putDebugChar(unsigned char c);
 

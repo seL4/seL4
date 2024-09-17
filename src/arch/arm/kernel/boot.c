@@ -188,6 +188,10 @@ BOOT_CODE static bool_t init_cpu(void)
 {
     bool_t haveHWFPU;
 
+#if defined(CONFIG_PRINTING)
+    init_console();
+#endif /* CONFIG_PRINTING */
+
 #ifdef CONFIG_ARCH_AARCH64
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         if (!checkTCR_EL2()) {
@@ -258,6 +262,10 @@ BOOT_CODE static bool_t init_cpu(void)
 #ifdef CONFIG_ENABLE_BENCHMARKS
     arm_init_ccnt();
 #endif /* CONFIG_ENABLE_BENCHMARKS */
+
+#if defined(CONFIG_PRINTING)
+    init_console();
+#endif /* CONFIG_PRINTING */
 
     /* Export selected CPU features for access by PL0 */
     armv_init_user_access();
