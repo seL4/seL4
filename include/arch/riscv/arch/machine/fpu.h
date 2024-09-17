@@ -31,7 +31,7 @@ static inline void set_fs_off(void)
 
 #endif
 
-extern bool_t isFPUEnabledCached[CONFIG_MAX_NUM_NODES];
+extern bool_t isFPUEnabled[CONFIG_MAX_NUM_NODES];
 
 static inline void set_fs_clean(void)
 {
@@ -154,17 +154,17 @@ static inline void loadFpuState(const tcb_t *thread)
 
 static inline void enableFpu(void)
 {
-    isFPUEnabledCached[CURRENT_CPU_INDEX()] = true;
+    isFPUEnabled[CURRENT_CPU_INDEX()] = true;
 }
 
 static inline void disableFpu(void)
 {
-    isFPUEnabledCached[CURRENT_CPU_INDEX()] = false;
+    isFPUEnabled[CURRENT_CPU_INDEX()] = false;
 }
 
 static inline bool_t isFpuEnable(void)
 {
-    return isFPUEnabledCached[CURRENT_CPU_INDEX()];
+    return isFPUEnabled[CURRENT_CPU_INDEX()];
 }
 
 static inline void set_tcb_fs_state(tcb_t *tcb, bool_t enabled)
