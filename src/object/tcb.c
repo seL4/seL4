@@ -1650,8 +1650,8 @@ exception_t decodeBindNotification(cap_t cap)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if ((tcb_t *)notification_ptr_get_ntfnQueue_head(ntfnPtr)
-        || (tcb_t *)notification_ptr_get_ntfnBoundTCB(ntfnPtr)) {
+    if (TCB_PTR(notification_ptr_get_ntfnQueue_head(ntfnPtr))
+        || TCB_PTR(notification_ptr_get_ntfnBoundTCB(ntfnPtr))) {
         userError("TCB BindNotification: Notification cannot be bound.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
