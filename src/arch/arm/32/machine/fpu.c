@@ -10,12 +10,6 @@
 #include <config.h>
 #include <util.h>
 
-/* We cache the following value to avoid reading the coprocessor when isFpuEnable()
- * is called. enableFpu() and disableFpu(), the value is set to cache/reflect the
- * actual HW FPU enable/disable state.
- */
-bool_t isFPUEnabledCached[CONFIG_MAX_NUM_NODES];
-
 /*
  * The following function checks if the subarchitecture support asynchronous exceptions
  */
