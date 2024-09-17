@@ -25,6 +25,10 @@
 #define UART_REG(x) ((volatile uint32_t *)(UART_PPTR + (x)))
 
 #if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
+void init_console(void)
+{
+}
+
 void uart_drv_putchar(unsigned char c)
 {
     while (!(*UART_REG(STAT) & STAT_TDRE)) { }
