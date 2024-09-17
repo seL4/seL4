@@ -328,8 +328,7 @@ exception_t invokeCNodeCancelBadgedSends(cap_t cap)
 {
     word_t badge = cap_endpoint_cap_get_capEPBadge(cap);
     if (badge) {
-        endpoint_t *ep = (endpoint_t *)
-                         cap_endpoint_cap_get_capEPPtr(cap);
+        endpoint_t *ep = EP_PTR(cap_endpoint_cap_get_capEPPtr(cap));
         cancelBadgedSends(ep, badge);
     }
     return EXCEPTION_NONE;
@@ -600,7 +599,7 @@ static inline bool_t CONST capRemovable(cap_t cap, cte_t *slot)
         return true;
     case cap_zombie_cap: {
         word_t n = cap_zombie_cap_get_capZombieNumber(cap);
-        cte_t *z_slot = (cte_t *)cap_zombie_cap_get_capZombiePtr(cap);
+        cte_t *z_slot = CTE_PTR(cap_zombie_cap_get_capZombiePtr(cap));
         return (n == 0 || (n == 1 && slot == z_slot));
     }
     default:
@@ -670,7 +669,7 @@ static exception_t reduceZombie(cte_t *slot, bool_t immediate)
     exception_t status;
 
     assert(cap_get_capType(slot->cap) == cap_zombie_cap);
-    ptr = (cte_t *)cap_zombie_cap_get_capZombiePtr(slot->cap);
+    ptr = CTE_PTR(cap_zombie_cap_get_capZombiePtr(slot->cap));
     n = cap_zombie_cap_get_capZombieNumber(slot->cap);
     type = cap_zombie_cap_get_capZombieType(slot->cap);
 
@@ -691,7 +690,7 @@ static exception_t reduceZombie(cte_t *slot, bool_t immediate)
 
         case cap_zombie_cap: {
             cte_t *ptr2 =
-                (cte_t *)cap_zombie_cap_get_capZombiePtr(slot->cap);
+                CTE_PTR(cap_zombie_cap_get_capZombiePtr(slot->cap));
 
             if (ptr == ptr2 &&
                 cap_zombie_cap_get_capZombieNumber(slot->cap) == n &&
