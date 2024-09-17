@@ -8,8 +8,6 @@
 
 #include <mode/machine/registerset.h>
 
-extern bool_t isFPUEnabledCached[CONFIG_MAX_NUM_NODES];
-
 #ifdef CONFIG_HAVE_FPU
 /* Store state in the FPU registers into memory. */
 static inline void saveFpuState(tcb_t *thread)
@@ -133,18 +131,6 @@ static inline void enableFpu(void)
     } else {
         enableFpuEL01();
     }
-    isFPUEnabledCached[CURRENT_CPU_INDEX()] = true;
-}
-
-/* Current verification model does not include lazy FPU switching, i.e. it acts
- * as if this function always returns true, so no FPU faults could be produced.
- * In order to guard against deriving a contradiction, we don't allow the C
- * parser to translate it. */
-/** MODIFIES: */
-/** DONT_TRANSLATE */
-static inline bool_t isFpuEnable(void)
-{
-    return isFPUEnabledCached[CURRENT_CPU_INDEX()];
 }
 #endif /* CONFIG_HAVE_FPU */
 
@@ -156,6 +142,5 @@ static inline void disableFpu(void)
     } else {
         disableFpuEL0();
     }
-    isFPUEnabledCached[CURRENT_CPU_INDEX()] = false;
 }
 
