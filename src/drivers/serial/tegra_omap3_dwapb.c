@@ -19,6 +19,10 @@
 #define UART_REG(x) ((volatile uint32_t *)(UART_PPTR + (x)))
 
 #ifdef CONFIG_PRINTING
+void init_console(void)
+{
+}
+
 void uart_drv_putchar(unsigned char c)
 {
     while ((*UART_REG(ULSR) & ULSR_THRE) == 0);
