@@ -473,6 +473,11 @@ void switchToThread(tcb_t *thread)
     benchmark_utilisation_switch(NODE_STATE(ksCurThread), thread);
 #endif
     Arch_switchToThread(thread);
+
+#ifdef CONFIG_HAVE_FPU
+    lazyFPURestore(thread);
+#endif /* CONFIG_HAVE_FPU */
+
     tcbSchedDequeue(thread);
     NODE_STATE(ksCurThread) = thread;
 }

@@ -42,6 +42,10 @@ static inline void FORCE_INLINE switchToThread_fp(tcb_t *thread, pte_t *vroot, p
 
     setVSpaceRoot(addrFromPPtr(vroot), asid);
 
+#ifdef CONFIG_HAVE_FPU
+    lazyFPURestore(thread);
+#endif
+
     NODE_STATE(ksCurThread) = thread;
 }
 
@@ -109,7 +113,6 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
     c_exit_hook();
 
 #ifdef CONFIG_HAVE_FPU
-    lazyFPURestore(cur_thread);
     set_tcb_fs_state(cur_thread, isFpuEnable());
 #endif
 

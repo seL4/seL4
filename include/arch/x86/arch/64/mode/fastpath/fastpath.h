@@ -52,6 +52,8 @@ static inline void FORCE_INLINE switchToThread_fp(tcb_t *thread, vspace_root_t *
                  [offset] "i"(OFFSETOF(nodeInfo_t, currentThreadUserContext)));
 #endif /* ENABLE_SMP_SUPPORT */
 
+    lazyFPURestore(thread);
+
     if (config_set(CONFIG_KERNEL_X86_IBPB_ON_CONTEXT_SWITCH)) {
         x86_ibpb();
     }
@@ -131,7 +133,6 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
     }
     NODE_UNLOCK;
     c_exit_hook();
-    lazyFPURestore(cur_thread);
 
     if (config_set(CONFIG_KERNEL_SKIM_WINDOW)) {
         /* see restore_user_context for a full explanation of why we do this */
