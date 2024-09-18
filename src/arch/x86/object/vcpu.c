@@ -511,6 +511,8 @@ static void dissociateVcpuTcb(tcb_t *tcb, vcpu_t *vcpu)
 {
     assert(tcb->tcbArch.tcbVCPU == vcpu);
     assert(vcpu->vcpuTCB == tcb);
+    fpuRelease(tcb);
+    vcpu->fpu_active = false;
     tcb->tcbArch.tcbVCPU = NULL;
     vcpu->vcpuTCB = NULL;
 }
@@ -1519,11 +1521,14 @@ void vcpu_fpu_to_host(tcb_t *tcb, vcpu_t *vcpu)
     if (tcb->flags & seL4_TCBFlag_fpuDisabled) {
         /* FPU may have been enabled for the guest, but host isn't allowed to use it */
         disableFpu();
-    } else if (vcpu->fpu_active && nativeThreadUsingFPU(tcb)) {
+    } else if (nativeThreadUsingFPU(tcb) && vcpu->fpu_active) {
         /* Guest was using the FPU, switch to host FPU state */
         saveFpuState(tcb);
         vcpu->fpu_active = false;
         loadFpuState(tcb);
+    } else if (!nativeThreadUsingFPU(tcb)) {
+        /* Handle corner cases like dissociated vcpu */
+        switchLocalFpuOwner(tcb);
     }
 }
 
