@@ -27,7 +27,6 @@ static inline bool_t nativeThreadUsingFPU(tcb_t *thread)
     return thread == NODE_STATE_ON_CORE(ksCurFPUOwner, thread->tcbAffinity);
 }
 
-/* Called without global lock held! */
 static inline void FORCE_INLINE lazyFPURestore(tcb_t *thread)
 {
     if (thread->flags & seL4_TCBFlag_fpuDisabled) {
