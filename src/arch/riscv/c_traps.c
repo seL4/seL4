@@ -31,9 +31,7 @@ void VISIBLE NORETURN restore_user_context(void)
     *((word_t *)sp) = cur_thread_reg;
 #endif
 
-
 #ifdef CONFIG_HAVE_FPU
-    lazyFPURestore(NODE_STATE(ksCurThread));
     set_tcb_fs_state(NODE_STATE(ksCurThread), isFpuEnable());
 #endif
 

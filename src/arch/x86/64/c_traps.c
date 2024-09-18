@@ -233,12 +233,12 @@ void VISIBLE NORETURN restore_user_context(void)
 #ifdef CONFIG_VTX
     vcpu_t *vcpu = cur_thread->tcbArch.tcbVCPU;
     if (thread_state_ptr_get_tsType(&cur_thread->tcbState) == ThreadState_RunningVM) {
+        vcpu_fpu_to_guest(cur_thread, vcpu);
         restore_vmx(cur_thread, vcpu);
-    } else {
-        vcpu_release_fpu(cur_thread, vcpu);
+    } else if (vcpu) {
+        vcpu_fpu_to_host(cur_thread, vcpu);
     }
 #endif
-    lazyFPURestore(cur_thread);
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
     restore_user_debug_context(cur_thread);
