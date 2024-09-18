@@ -41,7 +41,6 @@ static inline void saveFpuState(tcb_t *thread)
     struct vcpu *vcpu = thread->tcbArch.tcbVCPU;
 
     if (vcpu && vcpu->fpu_active) {
-        vcpu->fpu_active = false;
         dest = &vcpu->fpuState;
     }
 #endif
