@@ -804,7 +804,7 @@ static void invokeSetFlags(tcb_t *thread, word_t clear, word_t set, bool_t call)
 #ifdef CONFIG_HAVE_FPU
     /* Save current FPU state before disabling FPU: */
     if (flags & seL4_TCBFlag_fpuDisabled) {
-        fpuThreadDelete(thread);
+        fpuRelease(thread);
     }
 #endif
     if (call) {

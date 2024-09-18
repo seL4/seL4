@@ -535,13 +535,13 @@ exception_t Arch_decodeInvocation(word_t label, word_t length, cptr_t cptr,
 
 void
 Arch_prepareThreadDelete(tcb_t * thread) {
-#ifdef CONFIG_HAVE_FPU
-    fpuThreadDelete(thread);
-#endif
-
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     if (thread->tcbArch.tcbVCPU) {
         dissociateVCPUTCB(thread->tcbArch.tcbVCPU, thread);
     }
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
+
+#ifdef CONFIG_HAVE_FPU
+    fpuRelease(thread);
+#endif
 }
