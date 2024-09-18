@@ -31,7 +31,7 @@ extern char ki_boot_end[1];
 BOOT_CODE p_region_t get_p_reg_kernel_img_boot(void)
 {
     return (p_region_t) {
-        .start = kpptr_to_paddr((const void *)KERNEL_ELF_BASE),
+        .start = kpptr_to_paddr(KERNEL_ELF_BASE),
         .end   = kpptr_to_paddr(ki_boot_end)
     };
 }
@@ -40,7 +40,7 @@ BOOT_CODE p_region_t get_p_reg_kernel_img_boot(void)
 BOOT_CODE p_region_t get_p_reg_kernel_img(void)
 {
     return (p_region_t) {
-        .start = kpptr_to_paddr((const void *)KERNEL_ELF_BASE),
+        .start = kpptr_to_paddr(KERNEL_ELF_BASE),
         .end   = kpptr_to_paddr(ki_end)
     };
 }
@@ -163,6 +163,11 @@ BOOT_CODE static pptr_t alloc_rootserver_obj(word_t size_bits, word_t n)
     /* we must not have run out of memory */
     assert(rootserver_mem.start <= rootserver_mem.end);
     memzero((void *) allocated, n * BIT(size_bits));
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    /* Bound the roosterver object capability */
+    allocated = (pptr_t) cheri_derive_data_cap((void *) allocated, (ptraddr_t) allocated, BIT(size_bits), -1);
+#endif
     return allocated;
 }
 
@@ -208,7 +213,14 @@ BOOT_CODE static void create_rootserver_objects(pptr_t start, v_region_t it_v_re
     word_t max = rootserver_max_size_bits(extra_bi_size_bits);
 
     word_t size = calculate_rootserver_size(it_v_reg, extra_bi_size_bits);
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    /* Bound the roosterver memory capability */
+    rootserver_mem.start = (pptr_t) cheri_derive_data_cap((void *) start, (ptraddr_t) start, size, -1);
+#else
     rootserver_mem.start = start;
+#endif
+
     rootserver_mem.end = start + size;
 
     maybe_alloc_extra_bi(max, extra_bi_size_bits);
@@ -699,6 +711,19 @@ BOOT_CODE static bool_t provide_untyped_cap(
             .isDevice = device_memory,
             .padding  = {0}
         };
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+        if (!device_memory) {
+            /*
+             * Make sure to apply proper bounds on new untyped memory. The received pptr could have wider
+             * bounds from the caller as it tries to allocate multiple power-of-two untypes from a single
+             * bigger chunk of memory. We only build caps for non-device memory as that's what the kernel
+             * could access; device memory isn't accessed by the kernel.
+             */
+            pptr = (pptr_t) cheri_derive_data_cap((void *)pptr, (ptraddr_t)pptr, BIT(size_bits), -1);
+        }
+#endif
+
         ut_cap = cap_untyped_cap_new(MAX_FREE_INDEX(size_bits),
                                      device_memory, size_bits, pptr);
         ret = provide_cap(root_cnode_cap, ut_cap);
@@ -751,7 +776,7 @@ BOOT_CODE static bool_t create_untypeds_for_region(
          * the region's bit size does not exceed the alignment of the region.
          */
         if (0 != reg.start) {
-            unsigned int align_bits = ctzl(reg.start);
+            unsigned int align_bits = ctzl((word_t)reg.start);
             if (size_bits > align_bits) {
                 size_bits = align_bits;
             }
@@ -850,8 +875,12 @@ BOOT_CODE static inline pptr_t ceiling_kernel_window(pptr_t p)
     /* Adjust address if it exceeds the kernel window
      * Note that we compare physical address in case of overflow.
      */
-    if (pptr_to_paddr((void *)p) > PADDR_TOP) {
-        p = PPTR_TOP;
+    if (pptr_to_paddr(p) > PADDR_TOP) {
+#if defined(__CHERI_PURE_CAPABILITY__)
+        p = (pptr_t) __builtin_cheri_address_set((void *) p, PPTR_TOP);
+#else
+        p = (pptr_t) PPTR_TOP;
+#endif
     }
     return p;
 }
@@ -977,6 +1006,9 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
                 /* the region overlaps with the start of the available region.
                  * trim start of the available region */
                 avail_reg[a].start = MIN(avail_reg[a].end, reserved[r].end);
+#if defined(__CHERI_PURE_CAPABILITY__)
+                avail_reg[a].start = (pptr_t) cheri_build_data_cap((ptraddr_t) avail_reg[a].start, avail_reg[a].end - avail_reg[a].start, -1);
+#endif
                 reserve_region(pptr_to_paddr_reg(reserved[r]));
                 r++;
             } else {
@@ -985,9 +1017,13 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
                  * the start to the end of the reserved region */
                 region_t m = avail_reg[a];
                 m.end = reserved[r].start;
+
                 insert_region(m);
                 if (avail_reg[a].end > reserved[r].end) {
                     avail_reg[a].start = reserved[r].end;
+#if defined(__CHERI_PURE_CAPABILITY__)
+                    avail_reg[a].start = (pptr_t) cheri_build_data_cap((ptraddr_t) avail_reg[a].start, avail_reg[a].end - avail_reg[a].start, -1);
+#endif
                     reserve_region(pptr_to_paddr_reg(reserved[r]));
                     r++;
                 } else {

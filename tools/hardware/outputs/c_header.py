@@ -1,5 +1,7 @@
 #
 # Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+# Copyright 2024, Capabilities Limited
+# CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
 #
 # SPDX-License-Identifier: GPL-2.0-only
 #
@@ -71,7 +73,14 @@ static inline CONST word_t physBase(void)
 {% endfor %}
 
 {% if len(kernel_regions) > 0 %}
+#if defined(__CHERI_PURE_CAPABILITY__)
+/* CHERI pointer capabilities are created and written for kernel devices
+ * at boot time. Thus, this cannot be const or readonly.
+ */
+static kernel_frame_t BOOT_DATA kernel_device_frames[] = {
+#else
 static const kernel_frame_t BOOT_RODATA kernel_device_frames[] = {
+#endif
     {% for group in kernel_regions %}
     {% if group.has_macro() %}
     {{ group.get_macro() }}
@@ -116,7 +125,14 @@ static const kernel_frame_t BOOT_RODATA *const kernel_device_frames = NULL;
 {% endif %}
 
 /* PHYSICAL MEMORY */
+#if defined(__CHERI_PURE_CAPABILITY__)
+/* CHERI pointer capabilities are created and written for regions.
+ * at boot time. Thus, this cannot be const or readonly.
+ */
+static p_region_t BOOT_DATA avail_p_regs[] = {
+#else
 static const p_region_t BOOT_RODATA avail_p_regs[] = {
+#endif
     {% for reg in physical_memory %}
     /* {{ reg.owner.path }} */
     {
