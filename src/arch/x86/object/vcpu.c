@@ -123,7 +123,7 @@ void clearCurrentVCPU(void)
         vcpu->launched = false;
         ARCH_NODE_STATE(x86KSCurrentVCPU) = NULL;
         if (vcpu->fpu_active && vcpu->vcpuTCB) {
-            fpuThreadDelete(vcpu->vcpuTCB);
+            fpuRelease(vcpu->vcpuTCB);
             vcpu->fpu_active = false;
         }
     }

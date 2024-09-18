@@ -14,7 +14,7 @@
 #ifdef CONFIG_HAVE_FPU
 
 /* Perform any actions required for the deletion of the given thread. */
-void fpuThreadDelete(tcb_t *thread);
+void fpuRelease(tcb_t *thread);
 
 void switchLocalFpuOwner(tcb_t *new_owner);
 
