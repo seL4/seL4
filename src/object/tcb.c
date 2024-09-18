@@ -366,7 +366,7 @@ void setupCallerCap(tcb_t *sender, tcb_t *receiver, bool_t canGrant)
     callerCap = callerSlot->cap;
     /* Haskell error: "Caller cap must not already exist" */
     assert(cap_get_capType(callerCap) == cap_null_cap);
-    cteInsert(cap_reply_cap_new(canGrant, false, TCB_REF(sender)),
+    cteInsert(cap_reply_cap_new(canGrant, false, (pptr_t)TCB_PTR(sender)),
               replySlot, callerSlot);
 }
 
@@ -1783,7 +1783,7 @@ exception_t invokeTCB_ThreadControl(tcb_t *target, cte_t *slot,
                                     thread_control_flag_t updateFlags)
 {
     exception_t e;
-    cap_t tCap = cap_thread_cap_new((word_t)target);
+    cap_t tCap = cap_thread_cap_new((pptr_t)target);
 
     if (updateFlags & thread_control_update_space) {
         target->tcbFaultHandler = faultep;
@@ -1857,7 +1857,7 @@ exception_t invokeTCB_ThreadControlSched(tcb_t *target, cte_t *slot,
                                          thread_control_flag_t updateFlags)
 {
     if (updateFlags & thread_control_sched_update_fault) {
-        cap_t tCap = cap_thread_cap_new((word_t)target);
+        cap_t tCap = cap_thread_cap_new((pptr_t)target);
         exception_t e = installTCBCap(target, tCap, slot, tcbFaultHandler, fh_newCap, fh_srcSlot);
         if (e != EXCEPTION_NONE) {
             return e;

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 #
 # Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+# Copyright 2024, Capabilities Limited
+# CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
 #
 # SPDX-License-Identifier: BSD-2-Clause
 #
@@ -77,6 +79,11 @@ WORD_CONST_SUFFIX_BITS = {
 # Maximum number of words that will be in a message.
 MAX_MESSAGE_LENGTH = 64
 
+# CHERI capability length in bits (if enabled). By default, make it 128 as most
+# current CHERI targets (e.g., Morello and rv64imacxcheri) are. This could be
+# changed later if 64-bit CHERI (e.g., rv32imaxcheri) are supproted.
+CHERI_CLEN = 128
+
 # Headers to include
 INCLUDES = [
     'sel4/config.h', 'sel4/types.h', 'sel4/sel4_arch/constants.h'
@@ -96,7 +103,7 @@ class Type(object):
     pointer.
     """
 
-    def __init__(self, name, size_bits, wordsize, double_word=False, native_size_bits=None):
+    def __init__(self, name, size_bits, wordsize, double_word=False, native_size_bits=None, is_cheri_cap=False):
         """
         Define a new type, named 'name' that is 'size_bits' bits
         long.
@@ -106,6 +113,7 @@ class Type(object):
         self.size_bits = size_bits
         self.wordsize = wordsize
         self.double_word = double_word
+        self.is_cheri_cap = is_cheri_cap
 
         #
         # Store the number of bits C will use for this type
@@ -116,6 +124,8 @@ class Type(object):
         #
         if native_size_bits:
             self.native_size_bits = native_size_bits
+        elif is_cheri_cap:
+            self.native_size_bits = size_bits
         else:
             self.native_size_bits = size_bits
 
@@ -134,7 +144,7 @@ class Type(object):
         Return a new Type class representing a pointer to this
         object.
         """
-        return PointerType(self, self.wordsize)
+        return PointerType(self, self.wordsize, self.is_cheri_cap)
 
     def c_expression(self, var_name, word_num=0):
         """
@@ -160,8 +170,8 @@ class PointerType(Type):
     A pointer to a standard type.
     """
 
-    def __init__(self, base_type, wordsize):
-        Type.__init__(self, base_type.name, wordsize, wordsize)
+    def __init__(self, base_type, wordsize, is_cheri_cap):
+        Type.__init__(self, base_type.name, wordsize, wordsize, is_cheri_cap)
         self.base_type = base_type
 
     def render_parameter_name(self, name):
@@ -189,8 +199,8 @@ class StructType(Type):
     A C 'struct' definition.
     """
 
-    def __init__(self, name, size_bits, wordsize):
-        Type.__init__(self, name, size_bits, wordsize)
+    def __init__(self, name, size_bits, wordsize, is_cheri_cap=False):
+        Type.__init__(self, name, size_bits, wordsize, is_cheri_cap=is_cheri_cap)
 
     def c_expression(self, var_name, word_num, member_name):
         assert word_num < self.size_bits / self.wordsize
@@ -229,7 +239,7 @@ class Api(object):
 #
 
 
-def init_data_types(wordsize):
+def init_data_types(wordsize, cheri_arch):
     types = [
         # Simple Types
         Type("int", 32, wordsize),
@@ -258,10 +268,16 @@ def init_data_types(wordsize):
         CapType("seL4_SchedControl", wordsize),
     ]
 
+    if cheri_arch and (cheri_arch == "morello" or "cheri" in cheri_arch):
+        types.append(Type("seL4_Register", wordsize * 2, wordsize * 2, is_cheri_cap=True))
+        CHERI_CLEN = wordsize * 2
+    else:
+        types.append(Type("seL4_Register", wordsize, wordsize, is_cheri_cap=False))
+
     return types
 
 
-def init_arch_types(wordsize, args):
+def init_arch_types(wordsize, args, enable_cheri):
     arm_smmu = [
         CapType("seL4_ARM_SIDControl", wordsize),
         CapType("seL4_ARM_SID", wordsize),
@@ -294,8 +310,8 @@ def init_arch_types(wordsize, args):
             CapType("seL4_ARM_IOSpace", wordsize),
             CapType("seL4_ARM_IOPageTable", wordsize),
             CapType("seL4_ARM_SMC", wordsize),
-            StructType("seL4_UserContext", wordsize * 36, wordsize),
-            StructType("seL4_ARM_SMCContext", wordsize * 8, wordsize),
+            StructType("seL4_UserContext", wordsize * 36 * (2 if enable_cheri else 1), wordsize, is_cheri_cap=enable_cheri),
+            StructType("seL4_ARM_SMCContext", wordsize * 8 * (2 if enable_cheri else 1), wordsize, is_cheri_cap=enable_cheri),
             Type("seL4_VCPUReg", wordsize, wordsize),
         ] + arm_smmu,
 
@@ -468,6 +484,11 @@ def generate_marshal_expressions(params, num_mrs, structs, wordsize):
                        1].append(param.type.double_word_expression(param.name, 1, wordsize))
             return
 
+        # CHERI pointer type doubles the base wordsize. For parameters in purecap mode, they
+        # are all of pointer size, not the base word size.
+        if param.type.is_cheri_cap:
+             wordsize = wordsize * 2
+
         # Single full word?
         if num_bits == wordsize:
             assert target_offset == 0
@@ -597,7 +618,7 @@ def generate_result_struct(interface_name, method_name, output_params):
     return "\n".join(result)
 
 
-def generate_stub(arch, wordsize, interface_name, method_name, method_id, input_params, output_params, structs, use_only_ipc_buffer, comment, mcs):
+def generate_stub(arch, wordsize, interface_name, method_name, method_id, input_params, output_params, structs, use_only_ipc_buffer, comment, mcs, is_cheri_cap):
     result = []
 
     if use_only_ipc_buffer:
@@ -666,7 +687,7 @@ def generate_stub(arch, wordsize, interface_name, method_name, method_id, input_
                   (method_id, len(cap_expressions), len(input_expressions)))
     result.append("\tseL4_MessageInfo_t output_tag;")
     for i in range(num_mrs):
-        result.append("\tseL4_Word mr%d;" % i)
+        result.append("\tseL4_Register mr%d;" % i)
     result.append("")
 
     #
@@ -693,7 +714,7 @@ def generate_stub(arch, wordsize, interface_name, method_name, method_id, input_
         # Initialise in-register parameters
         for i in range(num_mrs):
             if i < len(input_expressions):
-                result.append("\tmr%d = %s;" % (i, input_expressions[i]))
+                result.append("\tmr%d = (seL4_Register) %s;" % (i, input_expressions[i]))
             else:
                 result.append("\tmr%d = 0;" % i)
         # Initialise buffered parameters
@@ -749,8 +770,15 @@ def generate_stub(arch, wordsize, interface_name, method_name, method_id, input_
                 source_words["w%d" % i] = "seL4_GetMR(%d)" % i
         unmashalled_params = generate_unmarshal_expressions(output_params, wordsize)
         for (param, words) in unmashalled_params:
-            if param.type.pass_by_reference():
+            if param.type.is_cheri_cap:
                 members = struct_members(param.type, structs)
+                length = len(words) // 2
+                for i in range(length):
+                    result.append("\t%s->%s = %s;" %
+                                  (param.name, members[i], words[i] % source_words))
+            elif param.type.pass_by_reference():
+                members = struct_members(param.type, structs)
+
                 for i in range(len(words)):
                     result.append("\t%s->%s = %s;" %
                                   (param.name, members[i], words[i] % source_words))
@@ -968,11 +996,12 @@ def parse_xml_file(input_file, valid_types):
     return (methods, structs, api)
 
 
-def generate_stub_file(arch, input_files, output_file, use_only_ipc_buffer, mcs, args):
+def generate_stub_file(arch, input_files, output_file, use_only_ipc_buffer, mcs, cheri_arch, args):
     """
     Generate a header file containing system call stubs for seL4.
     """
     result = []
+    enable_cheri = False
 
     # Ensure architecture looks sane.
     if arch not in WORD_SIZE_BITS_ARCH.keys():
@@ -980,8 +1009,11 @@ def generate_stub_file(arch, input_files, output_file, use_only_ipc_buffer, mcs,
 
     wordsize = WORD_SIZE_BITS_ARCH[arch]
 
-    data_types = init_data_types(wordsize)
-    arch_types = init_arch_types(wordsize, args)
+    if cheri_arch:
+        enable_cheri = True
+
+    data_types = init_data_types(wordsize, cheri_arch)
+    arch_types = init_arch_types(wordsize, args, enable_cheri)
 
     # Parse XML
     methods = []
@@ -1047,7 +1079,7 @@ def generate_stub_file(arch, input_files, output_file, use_only_ipc_buffer, mcs,
         if condition != "":
             result.append("#if %s" % condition)
         result.append(generate_stub(arch, wordsize, interface_name, method_name,
-                                    method_id, inputs, outputs, structs, use_only_ipc_buffer, comment, mcs))
+                                    method_id, inputs, outputs, structs, use_only_ipc_buffer, comment, mcs, enable_cheri))
         if condition != "":
             result.append("#endif")
 
@@ -1080,6 +1112,9 @@ def process_args():
     parser.add_argument("files", metavar="FILES", nargs="+",
                         help="Input XML files.")
 
+    parser.add_argument('--cheri-arch', action='store', default=None,
+                      help="If CHERI is enabled, provide the CHERI architecture here")
+
     return parser
 
 
@@ -1087,7 +1122,7 @@ def main():
     parser = process_args()
     args = parser.parse_args()
     # Generate the stubs.
-    generate_stub_file(args.arch, args.files, args.output, args.buffer, args.mcs, args)
+    generate_stub_file(args.arch, args.files, args.output, args.buffer, args.mcs, args.cheri_arch, args)
 
 
 if __name__ == "__main__":

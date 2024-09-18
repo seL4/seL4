@@ -1,5 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -554,7 +556,11 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
 #endif
 
     /* create initial thread's TCB cap */
+#if defined(__CHERI_PURE_CAPABILITY__)
+    cap_t cap = cap_thread_cap_new((pptr_t)TCB_PTR(tcb));
+#else
     cap_t cap = cap_thread_cap_new(TCB_REF(tcb));
+#endif
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadTCB), cap);
 
 #ifdef CONFIG_KERNEL_MCS
