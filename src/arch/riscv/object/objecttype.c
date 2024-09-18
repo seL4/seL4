@@ -304,7 +304,7 @@ exception_t Arch_decodeInvocation(
 void Arch_prepareThreadDelete(tcb_t *thread)
 {
 #ifdef CONFIG_HAVE_FPU
-    fpuThreadDelete(thread);
+    fpuRelease(thread);
 #endif
 }
 

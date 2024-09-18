@@ -803,7 +803,7 @@ static exception_t invokeSetFlags(tcb_t *thread, word_t clear, word_t set)
 #ifdef CONFIG_HAVE_FPU
     /* Save current FPU state before disabling FPU: */
     if (flags & seL4_TCBFlag_fpuDisabled) {
-        fpuThreadDelete(thread);
+        fpuRelease(thread);
     }
 #endif
     return EXCEPTION_NONE;

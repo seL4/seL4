@@ -305,7 +305,7 @@ static void prepareSetDomain(tcb_t *tptr, dom_t dom)
 {
 #ifdef CONFIG_HAVE_FPU
     /* Save FPU state now to avoid touching cross-domain state later */
-    fpuThreadDelete(tptr);
+    fpuRelease(tptr);
 #endif
 }
 

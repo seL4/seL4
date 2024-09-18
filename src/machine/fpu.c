@@ -39,7 +39,7 @@ void switchFpuOwner(tcb_t *new_owner, word_t cpu)
 }
 
 /* Prepare for the deletion of the given thread. */
-void fpuThreadDelete(tcb_t *thread)
+void fpuRelease(tcb_t *thread)
 {
     /* If the thread being deleted currently owns the FPU, switch away from it
      * so that 'ksCurFPUOwner' doesn't point to invalid memory. */
