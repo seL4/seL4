@@ -122,8 +122,9 @@ void clearCurrentVCPU(void)
         vmclear(vcpu);
         vcpu->launched = false;
         ARCH_NODE_STATE(x86KSCurrentVCPU) = NULL;
-        if (vcpu->fpu_active) {
-            switchLocalFpuOwner(NULL);
+        if (vcpu->fpu_active && vcpu->vcpuTCB) {
+            fpuThreadDelete(vcpu->vcpuTCB);
+            vcpu->fpu_active = false;
         }
     }
 }
@@ -435,10 +436,9 @@ void vcpu_init(vcpu_t *vcpu)
 {
     vcpu->vcpuTCB = NULL;
     vcpu->launched = false;
+    vcpu->fpu_active = false;
 
     memcpy(vcpu->vmcs, &vmcs_revision, 4);
-
-    switchVCPU(vcpu);
 
     vcpu->cr0 = cr0_high & cr0_low;
     vcpu->cr0_shadow = 0;
@@ -448,6 +448,8 @@ void vcpu_init(vcpu_t *vcpu)
 #ifdef ENABLE_SMP_SUPPORT
     vcpu->last_cpu = getCurrentCPUIndex();
 #endif /* ENABLE_SMP_SUPPORT */
+
+    switchVCPU(vcpu);
 
     vmwrite(VMX_HOST_PAT, x86_rdmsr(IA32_PAT_MSR));
     vmwrite(VMX_HOST_EFER, x86_rdmsr(IA32_EFER_MSR));
@@ -515,9 +517,6 @@ static void dissociateVcpuTcb(tcb_t *tcb, vcpu_t *vcpu)
 
 void vcpu_finalise(vcpu_t *vcpu)
 {
-    if (vcpu->vcpuTCB) {
-        dissociateVcpuTcb(vcpu->vcpuTCB, vcpu);
-    }
     if (ARCH_NODE_STATE_ON_CORE(x86KSCurrentVCPU, vcpu->last_cpu) == vcpu) {
 #ifdef ENABLE_SMP_SUPPORT
         if (vcpu->last_cpu != getCurrentCPUIndex()) {
@@ -527,6 +526,9 @@ void vcpu_finalise(vcpu_t *vcpu)
         {
             clearCurrentVCPU();
         }
+    }
+    if (vcpu->vcpuTCB) {
+        dissociateVcpuTcb(vcpu->vcpuTCB, vcpu);
     }
 }
 
@@ -1486,6 +1488,45 @@ static void storeVPID(vcpu_t *vcpu, vpid_t vpid)
     vcpu->vpid = vpid;
 }
 
+/* Normally the seL4_TCBFlag_fpuDisabled TCB flag is used to decide whether to
+ * enable or disable the FPU. However, with x86 virtualisation there is only
+ * one TCB. Use the task flag for the host and always enable FPU for the guest.
+ *
+ * When either the host or the guest's FPU is loaded, ksCurFPUOwner will
+ * point to our TCB. saveFpuState and loadFpuState check fpu_active and
+ * do the right thing depending on the current FPU user.
+ */
+void vcpu_fpu_to_guest(tcb_t *tcb, vcpu_t *vcpu)
+{
+    if (nativeThreadUsingFPU(tcb)) {
+        /* Make sure FPU is enabled */
+        enableFpu();
+        if (!vcpu->fpu_active) {
+            /* Host was using the FPU, switch to guest FPU state */
+            saveFpuState(tcb);
+            vcpu->fpu_active = true;
+            loadFpuState(tcb);
+        }
+    } else {
+        /* Someone else used the FPU, load guest's FPU state */
+        vcpu->fpu_active = true;
+        switchLocalFpuOwner(tcb);
+    }
+}
+
+void vcpu_fpu_to_host(tcb_t *tcb, vcpu_t *vcpu)
+{
+    if (tcb->flags & seL4_TCBFlag_fpuDisabled) {
+        /* FPU may have been enabled for the guest, but host isn't allowed to use it */
+        disableFpu();
+    } else if (vcpu->fpu_active && nativeThreadUsingFPU(tcb)) {
+        /* Guest was using the FPU, switch to host FPU state */
+        saveFpuState(tcb);
+        vcpu->fpu_active = false;
+        loadFpuState(tcb);
+    }
+}
+
 void restoreVMCS(void)
 {
     tcb_t *cur_thread = NODE_STATE(ksCurThread);
@@ -1510,38 +1551,6 @@ void restoreVMCS(void)
         }
     }
     setEPTRoot(TCB_PTR_CTE_PTR(cur_thread, tcbArchEPTRoot)->cap, expected_vmcs);
-
-    /* Normally the seL4_TCBFlag_fpuDisabled TCB flag is used to decide whether to
-     * enable or disable the FPU. However, with x86 virtualisation there is only
-     * one TCB. Use the task flag for the host and always enable FPU for the guest.
-     *
-     * When either the host or the guest's FPU is loaded, ksCurFPUOwner will
-     * point to our TCB. saveFpuState and loadFpuState check fpu_active and
-     * do the right thing depending on the current FPU user.
-     */
-    if (nativeThreadUsingFPU(cur_thread)) {
-        /* Make sure FPU is enabled */
-        enableFpu();
-        if (!expected_vmcs->fpu_active) {
-            /* Host was using the FPU, switch to guest FPU state */
-            saveFpuState(cur_thread);
-            expected_vmcs->fpu_active = true;
-            loadFpuState(cur_thread);
-        }
-    } else {
-        /* Someone else used the FPU, load guest's FPU state */
-        expected_vmcs->fpu_active = true;
-        switchLocalFpuOwner(cur_thread);
-    }
-}
-
-void vcpu_release_fpu(tcb_t *current_thread, vcpu_t *vcpu)
-{
-    if (vcpu && vcpu->fpu_active) {
-        /* Guest was using the FPU, unload it and let lazyFPURestore do the rest */
-        fpuThreadDelete(current_thread);
-        vcpu->fpu_active = false;
-    }
 }
 
 void invept(ept_pml4e_t *ept_pml4)
