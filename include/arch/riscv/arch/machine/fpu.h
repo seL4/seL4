@@ -63,6 +63,12 @@ static inline void saveFpuState(tcb_t *thread)
 {
     user_fpu_state_t *dest = &thread->tcbArch.tcbContext.fpuState;
 
+    if (read_sstatus_fs() != SSTATUS_FS_DIRTY) {
+        /* Nothing changed, state in memory is already correct */
+        return;
+    }
+
+    /* Enable FPU */
     set_fs_clean();
 
     asm volatile(
@@ -110,6 +116,7 @@ static inline void loadFpuState(const tcb_t *thread)
 {
     const user_fpu_state_t *src = &thread->tcbArch.tcbContext.fpuState;
 
+    /* Enable FPU */
     set_fs_clean();
 
     asm volatile(
