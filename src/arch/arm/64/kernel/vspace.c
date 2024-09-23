@@ -2050,7 +2050,7 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
                              0,                         /* VMKernelOnly */
                              NORMAL_WT);
 
-    cleanByVA_PoU((vptr_t)armKSGlobalLogPTE, addrFromKPPtr(armKSGlobalLogPTE));
+    cleanByVA_PoU((vptr_t)armKSGlobalLogPTE, kpptr_to_paddr(armKSGlobalLogPTE));
     invalidateTranslationSingle(KS_LOG_PPTR);
     return EXCEPTION_NONE;
 }

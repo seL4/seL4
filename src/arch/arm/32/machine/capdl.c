@@ -204,7 +204,7 @@ void obj_vtable_print_slots(tcb_t *tcb)
         while (i < MAX_UL) {
             pde_t *pde = lookupPDSlot(pd, i);
             if (pde_ptr_get_pdeType(pde) == pde_pde_coarse) {
-                pte_t *pt = ptrFromPAddr(pde_pde_coarse_ptr_get_address(pde));
+                pte_t *pt = (pte_t *)paddr_to_pptr(pde_pde_coarse_ptr_get_address(pde));
                 printf("pt_%p_%04lu {\n", pde, PD_INDEX(i));
                 arm32_cap_pt_print_slots(pt);
                 printf("}\n"); /* pt */
@@ -229,7 +229,7 @@ static void cap_frame_print_attrs_vptr(word_t vptr, pde_t *pd)
         break;
     }
     case pde_pde_coarse: {
-        pte_t *pt = ptrFromPAddr(pde_pde_coarse_ptr_get_address(pde));
+        pte_t *pt = (pte_t *)paddr_to_pptr(pde_pde_coarse_ptr_get_address(pde));
         pte_t *pte = lookupPTSlot_nofail(pt, vptr);
         switch (pte_ptr_get_pteType(pte)) {
         case pte_pte_small: {
@@ -482,7 +482,7 @@ void obj_tcb_print_vtable(tcb_t *tcb)
             }
 
             case pde_pde_coarse: {
-                pte_t *pt = ptrFromPAddr(pde_pde_coarse_ptr_get_address(pde));
+                pte_t *pt = (pte_t *)paddr_to_pptr(pde_pde_coarse_ptr_get_address(pde));
                 printf("pt_%p_%04lu = pt\n", pde, PD_INDEX(i));
                 arm32_obj_pt_print_slots(pt);
                 ret.frameSize = ARMSection;

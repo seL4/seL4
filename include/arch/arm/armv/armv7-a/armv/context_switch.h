@@ -22,7 +22,7 @@ static inline void setHardwareASID(hw_asid_t hw_asid)
 static inline void armv_contextSwitch_HWASID(pde_t *cap_pd, hw_asid_t hw_asid)
 {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    writeContextIDAndPD(hw_asid, addrFromPPtr(cap_pd));
+    writeContextIDAndPD(hw_asid, pptr_to_paddr(cap_pd));
 #else
     /*
      * On ARMv7, speculative refills that complete between switching
@@ -38,10 +38,10 @@ static inline void armv_contextSwitch_HWASID(pde_t *cap_pd, hw_asid_t hw_asid)
      * do does not need a DSB
      */
     dsb();
-    writeTTBR0Ptr(addrFromKPPtr(armKSGlobalPD));
+    writeTTBR0Ptr(kpptr_to_paddr(armKSGlobalPD));
     isb();
     setHardwareASID(hw_asid);
-    writeTTBR0Ptr(addrFromPPtr(cap_pd));
+    writeTTBR0Ptr(pptr_to_paddr(cap_pd));
     isb();
 #endif
 }

@@ -257,9 +257,9 @@ BOOT_CODE void map_kernel_window(void)
     /* map log buffer page table. PTEs to be filled by user later by calling seL4_BenchmarkSetLogBuffer() */
     armKSGlobalPD[idx] =
         pde_pde_coarse_new(
-            addrFromKPPtr(armKSGlobalLogPT), /* address */
-            true,                           /* P       */
-            0                               /* Domain  */
+            kpptr_to_paddr(armKSGlobalLogPT), /* address */
+            true,                             /* P       */
+            0                                 /* Domain  */
         );
 
     memzero(armKSGlobalLogPT, BIT(seL4_PageTableBits));
@@ -271,9 +271,9 @@ BOOT_CODE void map_kernel_window(void)
     /* map page table covering last 1M of virtual address space to page directory */
     armKSGlobalPD[idx] =
         pde_pde_coarse_new(
-            addrFromKPPtr(armKSGlobalPT), /* address */
-            true,                        /* P       */
-            0                            /* Domain  */
+            kpptr_to_paddr(armKSGlobalPT), /* address */
+            true,                          /* P       */
+            0                              /* Domain  */
         );
 
     /* now start initialising the page table */
@@ -281,7 +281,7 @@ BOOT_CODE void map_kernel_window(void)
 
     /* map vector table */
     map_kernel_frame(
-        addrFromKPPtr(arm_vector_table),
+        kpptr_to_paddr(arm_vector_table),
         PPTR_VECTOR_TABLE,
         VMKernelOnly,
         vm_attributes_new(
@@ -308,7 +308,7 @@ BOOT_CODE void map_kernel_window(void)
         pde = pdeS1_pdeS1_invalid_new();
         armHSGlobalPGD[idx] = pde;
     }
-    pde = pdeS1_pdeS1_coarse_new(0, 0, 0, 0, addrFromKPPtr(armHSGlobalPD));
+    pde = pdeS1_pdeS1_coarse_new(0, 0, 0, 0, kpptr_to_paddr(armHSGlobalPD));
     armHSGlobalPGD[3] = pde;
 
     /* Initialise PMD */
@@ -337,7 +337,7 @@ BOOT_CODE void map_kernel_window(void)
         phys += BIT(PT_INDEX_BITS + PAGE_BITS);
     }
     /* map page table covering last 2M of virtual address space */
-    pde = pdeS1_pdeS1_coarse_new(0, 0, 0, 0, addrFromKPPtr(armHSGlobalPT));
+    pde = pdeS1_pdeS1_coarse_new(0, 0, 0, 0, kpptr_to_paddr(armHSGlobalPT));
     armHSGlobalPD[idx] = pde;
 
     /* now start initialising the page table */
@@ -361,7 +361,7 @@ BOOT_CODE void map_kernel_window(void)
     }
     /* map vector table */
     map_kernel_frame(
-        addrFromKPPtr(arm_vector_table),
+        kpptr_to_paddr(arm_vector_table),
         PPTR_VECTOR_TABLE,
         VMKernelOnly,
         vm_attributes_new(
@@ -387,12 +387,12 @@ static BOOT_CODE void map_it_frame_cap(cap_t pd_cap, cap_t frame_cap, bool_t exe
     assert(generic_frame_cap_get_capFMappedASID(frame_cap) != 0);
 
     pd += (vptr >> pageBitsForSize(ARMSection));
-    pt = ptrFromPAddr(pde_pde_coarse_ptr_get_address(pd));
+    pt = (pte_t *)paddr_to_pptr(pde_pde_coarse_ptr_get_address(pd));
     targetSlot = pt + ((vptr & MASK(pageBitsForSize(ARMSection)))
                        >> pageBitsForSize(ARMSmallPage));
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     *targetSlot = pte_pte_small_new(
-                      addrFromPPtr(frame),
+                      pptr_to_paddr(frame),
                       1, /* not global */
                       SMP_TERNARY(1, 0), /* shareable if SMP enabled, otherwise unshared */
                       0, /* APX = 0, privileged full access */
@@ -406,7 +406,7 @@ static BOOT_CODE void map_it_frame_cap(cap_t pd_cap, cap_t frame_cap, bool_t exe
     *targetSlot = pte_pte_small_new(
                       0, /* Executeable */
                       0, /* Not contiguous */
-                      addrFromPPtr(frame),
+                      pptr_to_paddr(frame),
                       1, /* AF -- always set */
                       0, /* Not shared */
                       HAPFromVMRights(VMReadWrite),
@@ -456,12 +456,12 @@ static BOOT_CODE void map_it_pt_cap(cap_t pd_cap, cap_t pt_cap)
 
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     *targetSlot = pde_pde_coarse_new(
-                      addrFromPPtr(pt), /* address */
+                      pptr_to_paddr(pt),/* address */
                       true,             /* P       */
                       0                 /* Domain  */
                   );
 #else
-    *targetSlot = pde_pde_coarse_new(addrFromPPtr(pt));
+    *targetSlot = pde_pde_coarse_new(pptr_to_paddr(pt));
 #endif
 }
 
@@ -498,7 +498,7 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
     /* create PD cap */
     copyGlobalMappings(PDE_PTR(rootserver.vspace));
     cleanCacheRange_PoU(rootserver.vspace, rootserver.vspace + (1 << seL4_PageDirBits) - 1,
-                        addrFromPPtr((void *)rootserver.vspace));
+                        pptr_to_paddr(rootserver.vspace));
     cap_t pd_cap =
         cap_page_directory_cap_new(
             true,    /* capPDIsMapped   */
@@ -548,7 +548,7 @@ BOOT_CODE void activate_kernel_vspace(void)
        that everything we've written (particularly the kernel page tables)
        is committed. */
     cleanInvalidateL1Caches();
-    setCurrentPD(addrFromKPPtr(armKSGlobalPD));
+    setCurrentPD(kpptr_to_paddr(armKSGlobalPD));
     invalidateLocalTLB();
     lockTLBEntry(PPTR_BASE);
     lockTLBEntry(PPTR_VECTOR_TABLE);
@@ -565,7 +565,7 @@ BOOT_CODE void activate_kernel_vspace(void)
     cleanInvalidateL1Caches();
     /* Setup the memory attributes: We use 2 indicies (cachable/non-cachable) */
     setHMAIR((ATTRINDX_NONCACHEABLE << 0) | (ATTRINDX_CACHEABLE << 8), 0);
-    setCurrentHypPD(addrFromKPPtr(armHSGlobalPGD));
+    setCurrentHypPD(kpptr_to_paddr(armHSGlobalPGD));
     invalidateHypTLB();
 #if 0 /* Can't lock entries on A15 */
     lockTLBEntry(PPTR_BASE);
@@ -706,7 +706,7 @@ lookupPTSlot_ret_t lookupPTSlot(pde_t *pd, vptr_t vptr)
         pte_t *pt, *ptSlot;
         unsigned int ptIndex;
 
-        pt = ptrFromPAddr(pde_pde_coarse_ptr_get_address(pdSlot));
+        pt = (pte_t *)paddr_to_pptr(pde_pde_coarse_ptr_get_address(pdSlot));
         ptIndex = (vptr >> PAGE_BITS) & MASK(PT_INDEX_BITS);
         ptSlot = pt + ptIndex;
 
@@ -755,7 +755,7 @@ static resolve_ret_t resolveVAddr(pde_t *pd, vptr_t vaddr)
         return ret;
 
     case pde_pde_coarse: {
-        pte_t *pt = ptrFromPAddr(pde_pde_coarse_ptr_get_address(pde));
+        pte_t *pt = (pte_t *)paddr_to_pptr(pde_pde_coarse_ptr_get_address(pde));
         pte_t *pte = lookupPTSlot_nofail(pt, vaddr);
         switch (pte_ptr_get_pteType(pte)) {
         case pte_pte_small:
@@ -1009,9 +1009,9 @@ void setVMRoot(tcb_t *tcb)
     if (cap_get_capType(threadRoot) != cap_page_directory_cap ||
         !cap_page_directory_cap_get_capPDIsMapped(threadRoot)) {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-        setCurrentPD(addrFromKPPtr(armUSGlobalPD));
+        setCurrentPD(kpptr_to_paddr(armUSGlobalPD));
 #else
-        setCurrentPD(addrFromKPPtr(armKSGlobalPD));
+        setCurrentPD(kpptr_to_paddr(armKSGlobalPD));
 #endif
         return;
     }
@@ -1021,9 +1021,9 @@ void setVMRoot(tcb_t *tcb)
     find_ret = findPDForASID(asid);
     if (unlikely(find_ret.status != EXCEPTION_NONE || find_ret.pd != pd)) {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-        setCurrentPD(addrFromKPPtr(armUSGlobalPD));
+        setCurrentPD(kpptr_to_paddr(armUSGlobalPD));
 #else
-        setCurrentPD(addrFromKPPtr(armKSGlobalPD));
+        setCurrentPD(kpptr_to_paddr(armKSGlobalPD));
 #endif
         return;
     }
@@ -1063,7 +1063,7 @@ pde_t *pageTableMapped(asid_t asid, vptr_t vaddr, pte_t *pt)
     pde = find_ret.pd[pdIndex];
 
     if (likely(pde_get_pdeType(pde) == pde_pde_coarse
-               && ptrFromPAddr(pde_pde_coarse_get_address(pde)) == pt)) {
+               && (pte_t *)paddr_to_pptr(pde_pde_coarse_get_address(pde)) == pt)) {
         return find_ret.pd;
     } else {
         return NULL;
@@ -1186,7 +1186,7 @@ void unmapPageTable(asid_t asid, vptr_t vaddr, pte_t *pt)
         pdSlot = pd + pdIndex;
 
         *pdSlot = pde_pde_invalid_new(0, 0);
-        cleanByVA_PoU((word_t)pdSlot, addrFromPPtr(pdSlot));
+        cleanByVA_PoU((word_t)pdSlot, pptr_to_paddr(pdSlot));
         flushTable(pd, asid, vaddr, pt);
     }
 }
@@ -1325,7 +1325,7 @@ static pte_t pte_pte_invalid_new(void)
 void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
 {
     findPDForASID_ret_t find_ret;
-    paddr_t addr = addrFromPPtr(pptr);
+    paddr_t addr = pptr_to_paddr(pptr);
 
     find_ret = findPDForASID(asid);
     if (unlikely(find_ret.status != EXCEPTION_NONE)) {
@@ -1354,7 +1354,7 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
         }
 
         *(lu_ret.ptSlot) = pte_pte_invalid_new();
-        cleanByVA_PoU((word_t)lu_ret.ptSlot, addrFromPPtr(lu_ret.ptSlot));
+        cleanByVA_PoU((word_t)lu_ret.ptSlot, pptr_to_paddr(lu_ret.ptSlot));
 
         break;
     }
@@ -1391,7 +1391,7 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
         }
         cleanCacheRange_PoU((word_t)&lu_ret.ptSlot[0],
                             LAST_BYTE_PTE(lu_ret.ptSlot, PAGES_PER_LARGE_PAGE),
-                            addrFromPPtr(&lu_ret.ptSlot[0]));
+                            pptr_to_paddr(&lu_ret.ptSlot[0]));
 
         break;
     }
@@ -1416,7 +1416,7 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
         }
 
         *pd = pde_pde_invalid_new(0, 0);
-        cleanByVA_PoU((word_t)pd, addrFromPPtr(pd));
+        cleanByVA_PoU((word_t)pd, pptr_to_paddr(pd));
 
         break;
     }
@@ -1445,7 +1445,7 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
             pd[i] = pde_pde_invalid_new(0, 0);
         }
         cleanCacheRange_PoU((word_t)&pd[0], LAST_BYTE_PDE(pd, SECTIONS_PER_SUPER_SECTION),
-                            addrFromPPtr(&pd[0]));
+                            pptr_to_paddr(&pd[0]));
 
         break;
     }
@@ -1824,7 +1824,7 @@ static exception_t performPageTableInvocationMap(cap_t cap, cte_t *ctSlot,
 {
     ctSlot->cap = cap;
     *pdSlot = pde;
-    cleanByVA_PoU((word_t)pdSlot, addrFromPPtr(pdSlot));
+    cleanByVA_PoU((word_t)pdSlot, pptr_to_paddr(pdSlot));
 
     return EXCEPTION_NONE;
 }
@@ -1870,7 +1870,7 @@ static exception_t performPageInvocationMapPTE(asid_t asid, cap_t cap, cte_t *ct
     }
     cleanCacheRange_PoU((word_t)pte_entries.base,
                         LAST_BYTE_PTE(pte_entries.base, pte_entries.length),
-                        addrFromPPtr(pte_entries.base));
+                        pptr_to_paddr(pte_entries.base));
     if (unlikely(tlbflush_required)) {
         invalidateTLBByASID(asid);
     }
@@ -1904,7 +1904,7 @@ static exception_t performPageInvocationMapPDE(asid_t asid, cap_t cap, cte_t *ct
     }
     cleanCacheRange_PoU((word_t)pde_entries.base,
                         LAST_BYTE_PDE(pde_entries.base, pde_entries.length),
-                        addrFromPPtr(pde_entries.base));
+                        pptr_to_paddr(pde_entries.base));
     if (unlikely(tlbflush_required)) {
         invalidateTLBByASID(asid);
     }
@@ -1949,7 +1949,7 @@ static exception_t performPageGetAddress(void *vbase_ptr, bool_t call)
 {
     /* Get the physical address of this frame. */
     paddr_t capFBasePtr;
-    capFBasePtr = addrFromPPtr(vbase_ptr);
+    capFBasePtr = pptr_to_paddr(vbase_ptr);
 
     tcb_t *thread;
     thread = NODE_STATE(ksCurThread);
@@ -2209,7 +2209,7 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, word_t length,
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    paddr = addrFromPPtr(
+    paddr = pptr_to_paddr(
                 PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap)));
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     pde = pde_pde_coarse_new(
@@ -2335,8 +2335,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        capFBasePtr = addrFromPPtr((void *)
-                                   generic_frame_cap_get_capFBasePtr(cap));
+        capFBasePtr = pptr_to_paddr(generic_frame_cap_get_capFBasePtr(cap));
 
         cap = generic_frame_cap_set_capFMappedAddress(cap, asid,
                                                       vaddr);
@@ -2453,7 +2452,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
 
         /* start and end are currently relative inside this page */
         page_size = 1 << pageBitsForSize(generic_frame_cap_get_capFSize(cap));
-        page_base = addrFromPPtr((void *)generic_frame_cap_get_capFBasePtr(cap));
+        page_base = pptr_to_paddr(generic_frame_cap_get_capFBasePtr(cap));
 
         if (start >= page_size || end > page_size) {
             userError("Page Flush: Requested range not inside page");
@@ -2702,7 +2701,7 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
 
     frame_pptr = generic_frame_cap_get_capFBasePtr(lu_ret.cap);
 
-    ksUserLogBuffer = pptr_to_paddr((void *) frame_pptr);
+    ksUserLogBuffer = pptr_to_paddr(frame_pptr);
 
     for (int idx = 0; idx < BIT(PT_INDEX_BITS); idx++) {
         paddr_t physical_address = ksUserLogBuffer + (idx << seL4_PageBits);
@@ -2720,7 +2719,7 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
                 0  /* executable */
             );
 
-        cleanByVA_PoU((vptr_t)&armKSGlobalLogPT[idx], addrFromKPPtr(&armKSGlobalLogPT[idx]));
+        cleanByVA_PoU((vptr_t)&armKSGlobalLogPT[idx], kpptr_to_paddr(&armKSGlobalLogPT[idx]));
         invalidateTranslationSingle(KS_LOG_PPTR + (idx * BIT(seL4_PageBits)));
     }
 

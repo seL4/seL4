@@ -199,7 +199,7 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
 
                     cleanCacheRange_PoU((pptr_t) &armKSGlobalLogPT[0],
                                         (pptr_t) &armKSGlobalLogPT[0] + BIT(seL4_PageTableBits),
-                                        addrFromKPPtr((void *)&armKSGlobalLogPT[0]));
+                                        kpptr_to_paddr(&armKSGlobalLogPT[0]));
 
                     for (int idx = 0; idx < BIT(PT_INDEX_BITS); idx++) {
                         invalidateTranslationSingle(KS_LOG_PPTR + (idx << seL4_PageBits));
@@ -502,7 +502,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
         copyGlobalMappings((pde_t *)regionBase);
         cleanCacheRange_PoU((word_t)regionBase,
                             (word_t)regionBase + (1 << (PD_INDEX_BITS + PDE_SIZE_BITS)) - 1,
-                            addrFromPPtr(regionBase));
+                            pptr_to_paddr(regionBase));
 
         return cap_page_directory_cap_new(false, asidInvalid,
                                           (word_t)regionBase);
@@ -520,7 +520,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
          * typically pull directly from RAM, so we do a futher clean to RAM here */
         cleanCacheRange_RAM((word_t)regionBase,
                             (word_t)regionBase + (1 << seL4_IOPageTableBits) - 1,
-                            addrFromPPtr(regionBase));
+                            pptr_to_paddr(regionBase));
         return cap_io_page_table_cap_new(0, asidInvalid, (word_t)regionBase, 0);
 #endif
     default:

@@ -100,7 +100,7 @@ static void x86_64_obj_pt_print_slots(pde_t *pdSlot)
 {
     paddr_t paddr;
     word_t page_size;
-    pte_t *pt = paddr_to_pptr(pde_pde_pt_ptr_get_pt_base_address(pdSlot));
+    pte_t *pt = (pte_t *)paddr_to_pptr(pde_pde_pt_ptr_get_pt_base_address(pdSlot));
 
     for (word_t i = 0; i < BIT(PT_INDEX_OFFSET + PT_INDEX_BITS); i += (1UL << PT_INDEX_OFFSET)) {
         pte_t *ptSlot = pt + GET_PT_INDEX(i);
@@ -118,7 +118,7 @@ static void x86_64_obj_pd_print_slots(pdpte_t *pdptSlot)
 {
     paddr_t paddr;
     word_t page_size;
-    pde_t *pd = paddr_to_pptr(pdpte_pdpte_pd_ptr_get_pd_base_address(pdptSlot));
+    pde_t *pd = (pde_t *)paddr_to_pptr(pdpte_pdpte_pd_ptr_get_pd_base_address(pdptSlot));
 
     for (word_t i = 0; i < BIT(PD_INDEX_OFFSET + PD_INDEX_BITS); i += (1UL << PD_INDEX_OFFSET)) {
         pde_t *pdSlot = pd + GET_PD_INDEX(i);
@@ -141,7 +141,7 @@ static void x86_64_obj_pdpt_print_slots(pml4e_t *pml4Slot)
 {
     paddr_t paddr;
     word_t page_size;
-    pdpte_t *pdpt = paddr_to_pptr(pml4e_ptr_get_pdpt_base_address(pml4Slot));
+    pdpte_t *pdpt = (pdpte_t *)paddr_to_pptr(pml4e_ptr_get_pdpt_base_address(pml4Slot));
 
     for (word_t i = 0; i < BIT(PDPT_INDEX_OFFSET + PDPT_INDEX_BITS); i += (1UL << PDPT_INDEX_OFFSET)) {
         pdpte_t *pdptSlot = pdpt + GET_PDPT_INDEX(i);
@@ -380,7 +380,7 @@ void print_ipc_buffer_slot(tcb_t *tcb)
 
 static void x86_64_cap_pt_print_slots(pde_t *pdSlot, vptr_t vptr)
 {
-    pte_t *pt = paddr_to_pptr(pde_pde_pt_ptr_get_pt_base_address(pdSlot));
+    pte_t *pt = (pte_t *)paddr_to_pptr(pde_pde_pt_ptr_get_pt_base_address(pdSlot));
     printf("pt_%p_%04lu {\n", pdSlot, GET_PD_INDEX(vptr));
 
     for (word_t i = 0; i < BIT(PT_INDEX_OFFSET + PT_INDEX_BITS); i += (1UL << PT_INDEX_OFFSET)) {
@@ -396,7 +396,7 @@ static void x86_64_cap_pt_print_slots(pde_t *pdSlot, vptr_t vptr)
 
 static void x86_64_cap_pd_print_slots(pdpte_t *pdptSlot, vptr_t vptr)
 {
-    pde_t *pd = paddr_to_pptr(pdpte_pdpte_pd_ptr_get_pd_base_address(pdptSlot));
+    pde_t *pd = (pde_t *)paddr_to_pptr(pdpte_pdpte_pd_ptr_get_pd_base_address(pdptSlot));
     printf("pd_%p_%04lu {\n", pdptSlot, GET_PDPT_INDEX(vptr));
 
     for (word_t i = 0; i < BIT(PD_INDEX_OFFSET + PD_INDEX_BITS); i += (1UL << PD_INDEX_OFFSET)) {
@@ -422,7 +422,7 @@ static void x86_64_cap_pd_print_slots(pdpte_t *pdptSlot, vptr_t vptr)
 
 static void x86_64_cap_pdpt_print_slots(pml4e_t *pml4Slot, vptr_t vptr)
 {
-    pdpte_t *pdpt = paddr_to_pptr(pml4e_ptr_get_pdpt_base_address(pml4Slot));
+    pdpte_t *pdpt = (pdpte_t *)paddr_to_pptr(pml4e_ptr_get_pdpt_base_address(pml4Slot));
 
     printf("pdpt_%p_%04lu {\n", pml4Slot, GET_PML4_INDEX(vptr));
     for (word_t i = 0; i < BIT(PDPT_INDEX_OFFSET + PDPT_INDEX_BITS); i += (1UL << PDPT_INDEX_OFFSET)) {
