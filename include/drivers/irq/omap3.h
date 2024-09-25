@@ -20,9 +20,7 @@
 
 #define INTCPS_SIR_IRQ_SPURIOUSIRQFLAG 0xFF0000
 
-enum irqNumbers {
-    irqInvalid = 255
-};
+irq_t irqInvalid = 255;
 
 /*
  * The struct below is used to discourage the compiler from generating literals

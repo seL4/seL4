@@ -122,9 +122,7 @@ volatile struct core_regs {
 #define LOCAL_TIMER_CTRL_EN_BIT 28
 #define LOCAL_TIMER_CTRL_RL_MASK MASK(28)
 
-enum irqNumbers {
-    irqInvalid = 255
-};
+irq_t irqInvalid = 255;
 
 static inline bool_t isIRQPending(void)
 {
