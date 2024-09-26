@@ -188,7 +188,7 @@ config_string(
 )
 
 if(KernelFPUXSave)
-    if ("${KernelXSaveFeatureSet}" EQUAL 7)
+    if("${KernelXSaveFeatureSet}" EQUAL 7)
         set(default_xsave_size 832)
     else()
         set(default_xsave_size 576)
