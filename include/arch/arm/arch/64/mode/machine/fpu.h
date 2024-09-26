@@ -85,16 +85,6 @@ static inline void loadFpuState(const tcb_t *thread)
     );
 }
 
-/* Trap any FPU related instructions to EL2 */
-static inline void enableTrapFpu(void)
-{
-    word_t cptr;
-    MRS("cptr_el2", cptr);
-    cptr |= (BIT(10) | BIT(31));
-    MSR("cptr_el2", cptr);
-    isb();
-}
-
 /* Disable trapping FPU instructions to EL2 */
 static inline void disableTrapFpu(void)
 {
@@ -115,17 +105,6 @@ static inline void enableFpuEL01(void)
     isb();
 }
 
-/* Disable FPU access in EL0 */
-static inline void disableFpuEL0(void)
-{
-    word_t cpacr;
-    MRS("cpacr_el1", cpacr);
-    cpacr &= ~(3 << CPACR_EL1_FPEN);
-    cpacr |= (1 << CPACR_EL1_FPEN);
-    MSR("cpacr_el1", cpacr);
-    isb();
-}
-
 /* Enable the FPU to be used without faulting.
  * Required even if the kernel attempts to use the FPU. */
 static inline void enableFpu(void)
@@ -137,6 +116,27 @@ static inline void enableFpu(void)
     }
 }
 #endif /* CONFIG_HAVE_FPU */
+
+/* Trap any FPU related instructions to EL2 */
+static inline void enableTrapFpu(void)
+{
+    word_t cptr;
+    MRS("cptr_el2", cptr);
+    cptr |= (BIT(10) | BIT(31));
+    MSR("cptr_el2", cptr);
+    isb();
+}
+
+/* Disable FPU access in EL0 */
+static inline void disableFpuEL0(void)
+{
+    word_t cpacr;
+    MRS("cpacr_el1", cpacr);
+    cpacr &= ~(3 << CPACR_EL1_FPEN);
+    cpacr |= (1 << CPACR_EL1_FPEN);
+    MSR("cpacr_el1", cpacr);
+    isb();
+}
 
 /* Disable the FPU so that usage of it causes a fault */
 static inline void disableFpu(void)
