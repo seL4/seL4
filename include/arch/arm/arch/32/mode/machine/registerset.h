@@ -226,12 +226,12 @@ typedef struct user_fpu_state {
  */
 struct user_context {
     word_t registers[n_contextRegisters];
-#ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
-    user_breakpoint_state_t breakpointState;
-#endif /* CONFIG_HARDWARE_DEBUG_API */
 #ifdef CONFIG_HAVE_FPU
     user_fpu_state_t fpuState;
 #endif /* CONFIG_HAVE_FPU */
+#ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
+    user_breakpoint_state_t breakpointState;
+#endif /* CONFIG_HARDWARE_DEBUG_API */
 };
 typedef struct user_context user_context_t;
 
