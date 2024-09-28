@@ -7,5 +7,4 @@
 
 include(${CMAKE_CURRENT_LIST_DIR}/include/ARM_verified_include.cmake)
 
-set(KernelPlatform "imx8mm-evk" CACHE STRING "")
-set(KernelAArch32FPUEnableContextSwitch ON CACHE BOOL "" FORCE)
+set(KernelPlatform "exynos4" CACHE STRING "")
