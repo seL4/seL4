@@ -35,6 +35,7 @@ RequireTool(CONFIG_GEN_PATH config_gen.py)
 RequireTool(BF_GEN_PATH bitfield_gen.py)
 RequireTool(HARDWARE_GEN_PATH hardware_gen.py)
 RequireTool(INVOCATION_ID_GEN_PATH invocation_header_gen.py)
+RequireTool(INVOCATION_JSON_GEN_PATH invocation_json_gen.py)
 RequireTool(SYSCALL_ID_GEN_PATH syscall_header_gen.py)
 RequireTool(XMLLINT_PATH xmllint.sh)
 
@@ -429,6 +430,37 @@ gen_invocation_header(
 )
 list(APPEND xml_headers "${header_dest}")
 list(APPEND gen_files_list "${header_dest}")
+
+get_absolute_source_or_binary(
+    invocations_absolute "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/include/interfaces/object-api.xml"
+)
+get_absolute_source_or_binary(
+    arch_invocations_absolute
+    "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/arch_include/${KernelArch}/interfaces/object-api-arch.xml"
+)
+get_absolute_source_or_binary(
+    sel4_arch_invocations_absolute
+    "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/sel4_arch_include/${KernelSel4Arch}/interfaces/object-api-sel4-arch.xml"
+)
+
+add_custom_command(
+    OUTPUT generated/invocations_all.json
+    COMMAND rm -f generated/invocations_all.json
+    COMMAND
+        "${PYTHON3}" "${INVOCATION_JSON_GEN_PATH}"
+        --gen_config gen_config/kernel/gen_config.json
+        --invocations "${invocations_absolute}"
+        --arch_invocations "${arch_invocations_absolute}"
+        --sel4_arch_invocations "${sel4_arch_invocations_absolute}"
+        --dest generated/invocations_all.json
+    DEPENDS
+        "gen_config/kernel/gen_config.json"
+        "${INVOCATION_JSON_GEN_PATH}"
+        "${invocations_absolute}"
+        "${arch_invocations_absolute}"
+        "${sel4_arch_invocations_absolute}"
+)
+list(APPEND gen_files_list "generated/invocations_all.json")
 
 set(syscall_xml_base "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/include/api")
 set(syscall_dest "gen_headers/arch/api/syscall.h")
