@@ -42,6 +42,12 @@ def condition_to_cpp(conditions):
     return helper(children[0])
 
 
+def remove_prefix(text, prefix) -> str:
+    if text.startswith(prefix):
+        return text[len(prefix):]
+    return text
+
+
 def expr_to_bool(expr, values) -> bool:
     if expr.tagName == "and":
         for child in expr.childNodes:
@@ -61,7 +67,7 @@ def expr_to_bool(expr, values) -> bool:
         if not cfg_var:
             raise Exception("Missing or empty config variable")
 
-        return values[cfg_var.removeprefix("CONFIG_")]
+        return values[remove_prefix(cfg_var, "CONFIG_")]
     raise Exception("Unrecognized element `{}` in condition".format(expr.tagName))
 
 
