@@ -444,17 +444,17 @@ get_absolute_source_or_binary(
 )
 
 add_custom_command(
-    OUTPUT generated/invocations_all.json
-    COMMAND rm -f generated/invocations_all.json
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/generated/invocations_all.json
+    COMMAND rm -f ${CMAKE_CURRENT_BINARY_DIR}/generated/invocations_all.json
     COMMAND
         "${PYTHON3}" "${INVOCATION_JSON_GEN_PATH}"
-        --gen_config gen_config/kernel/gen_config.json
+        --gen_config ${CMAKE_CURRENT_BINARY_DIR}/gen_config/kernel/gen_config.json
         --invocations "${invocations_absolute}"
         --arch_invocations "${arch_invocations_absolute}"
         --sel4_arch_invocations "${sel4_arch_invocations_absolute}"
-        --dest generated/invocations_all.json
+        --dest ${CMAKE_CURRENT_BINARY_DIR}/generated/invocations_all.json
     DEPENDS
-        "gen_config/kernel/gen_config.json"
+        "${CMAKE_CURRENT_BINARY_DIR}/gen_config/kernel/gen_config.json"
         "${INVOCATION_JSON_GEN_PATH}"
         "${invocations_absolute}"
         "${arch_invocations_absolute}"
