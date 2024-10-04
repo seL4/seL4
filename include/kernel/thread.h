@@ -123,7 +123,7 @@ static inline bool_t isCurDomainExpired(void)
 
 static inline void commitTime(void)
 {
-    if (likely(NODE_STATE(ksCurSC)->scRefillMax && (NODE_STATE(ksCurSC) != NODE_STATE(ksIdleSC)))) {
+    if (likely(sc_active(NODE_STATE(ksCurSC)) && (NODE_STATE(ksCurSC) != NODE_STATE(ksIdleSC)))) {
         if (likely(NODE_STATE(ksConsumed) > 0)) {
             /* if this function is called the head refil must be sufficient to
              * charge ksConsumed */
