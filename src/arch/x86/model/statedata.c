@@ -39,9 +39,6 @@ SMP_STATE_DEFINE(cpu_id_mapping_t, cpu_mapping);
 /* CPU Cache Line Size */
 uint32_t x86KScacheLineSizeBits;
 
-/* A valid initial FPU state, copied to every new thread. */
-user_fpu_state_t x86KSnullFpuState ALIGN(MIN_FPU_ALIGNMENT);
-
 /* Number of IOMMUs (DMA Remapping Hardware Units) */
 uint32_t x86KSnumDrhu;
 
