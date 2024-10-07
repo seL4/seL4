@@ -42,12 +42,10 @@ void cleanInvalidate_L1D(void);
 void cleanCaches_PoU(void);
 void cleanInvalidateL1Caches(void);
 
-/* Cleaning memory before user-level access */
+/* Cleaning memory before user-level access. Does not flush cache. */
 static inline void clearMemory(word_t *ptr, word_t bits)
 {
     memzero(ptr, BIT(bits));
-    cleanCacheRange_RAM((word_t)ptr, (word_t)ptr + BIT(bits) - 1,
-                        addrFromPPtr(ptr));
 }
 
 /* Cleaning memory before page table walker access */
