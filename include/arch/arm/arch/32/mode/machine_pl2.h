@@ -121,9 +121,19 @@ static inline void invalidateHypTLB(void)
 static inline paddr_t PURE addressTranslateS1(vptr_t vaddr)
 {
     uint32_t ipa0, ipa1;
+    uint32_t saved_ipa0, saved_ipa1;
+
+    asm volatile("mrrc p15, 0, %0, %1, c7"   : "=r"(saved_ipa0), "=r"(saved_ipa1));
+    /* Prevent re-ordering with the AT below */
+    isb();
+
     asm volatile("mcr  p15, 0, %0, c7, c8, 0" :: "r"(vaddr));
     isb();
     asm volatile("mrrc p15, 0, %0, %1, c7"   : "=r"(ipa0), "=r"(ipa1));
+
+    /* Prevent re-ordering with the read of PAR above */
+    isb();
+    asm volatile("mcrr p15, 0, %0, %1, c7"   : "=r"(saved_ipa0), "=r"(saved_ipa1));
 
     return ipa0;
 }
