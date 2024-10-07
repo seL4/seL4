@@ -11,9 +11,7 @@
 #include <machine/interrupt.h>
 #include <armv/machine.h>
 
-enum irqNumbers {
-    irqInvalid = 255
-};
+irq_t irqInvalid = 255;
 
 #define CMPER_REG(base, off) ((volatile uint32_t *)((base) + (off)))
 #define CMPER_TIMER3_CLKCTRL    0x84
