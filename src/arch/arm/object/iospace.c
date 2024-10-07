@@ -1,5 +1,7 @@
 /*
  * Copyright 2016, General Dynamics C4 Systems
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -125,9 +127,9 @@ static exception_t performARMIOPTInvocationMap(cap_t cap, cte_t *slot, iopde_t *
 
 
     *iopdSlot = iopde;
-    cleanCacheRange_RAM((word_t)iopdSlot,
-                        ((word_t)iopdSlot) + sizeof(iopde_t),
-                        addrFromPPtr(iopdSlot));
+    cleanCacheRange_RAM((vptr_t)iopdSlot,
+                        ((vptr_t)iopdSlot) + sizeof(iopde_t),
+                        pptr_to_paddr(iopdSlot));
 
     plat_smmu_tlb_flush_all();
     plat_smmu_ptc_flush_all();
@@ -226,9 +228,9 @@ static exception_t performARMIOMapInvocation(cap_t cap, cte_t *slot, iopte_t *io
                                              iopte_t iopte)
 {
     *ioptSlot = iopte;
-    cleanCacheRange_RAM((word_t)ioptSlot,
-                        ((word_t)ioptSlot) + sizeof(iopte_t),
-                        addrFromPPtr(ioptSlot));
+    cleanCacheRange_RAM((vptr_t)ioptSlot,
+                        ((vptr_t)ioptSlot) + sizeof(iopte_t),
+                        pptr_to_paddr(ioptSlot));
 
     plat_smmu_tlb_flush_all();
     plat_smmu_ptc_flush_all();
@@ -396,9 +398,9 @@ void deleteIOPageTable(cap_t io_pt_cap)
         }
 
         *lu_ret.iopdSlot = iopde_iopde_pt_new(0, 0, 0, 0);
-        cleanCacheRange_RAM((word_t)lu_ret.iopdSlot,
-                            ((word_t)lu_ret.iopdSlot) + sizeof(iopde_t),
-                            addrFromPPtr(lu_ret.iopdSlot));
+        cleanCacheRange_RAM((vptr_t)lu_ret.iopdSlot,
+                            ((vptr_t)lu_ret.iopdSlot) + sizeof(iopde_t),
+                            pptr_to_paddr(lu_ret.iopdSlot));
 
 
         /* nice to have: flush by address and asid */
@@ -429,9 +431,9 @@ void unmapIOPage(cap_t cap)
     }
 
     *lu_ret.ioptSlot = iopte_new(0, 0, 0, 0);
-    cleanCacheRange_RAM((word_t)lu_ret.ioptSlot,
-                        ((word_t)lu_ret.ioptSlot) + sizeof(iopte_t),
-                        addrFromPPtr(lu_ret.ioptSlot));
+    cleanCacheRange_RAM((vpr_t)lu_ret.ioptSlot,
+                        ((vptr_t)lu_ret.ioptSlot) + sizeof(iopte_t),
+                        pptr_to_paddr(lu_ret.ioptSlot));
 
     plat_smmu_tlb_flush_all();
     plat_smmu_ptc_flush_all();
@@ -447,7 +449,7 @@ void clearIOPageDirectory(cap_t cap)
     pd = plat_smmu_lookup_iopd_by_asid(asid);
 
     memset((void *)pd, 0, size);
-    cleanCacheRange_RAM((word_t)pd, (word_t)pd + size, addrFromPPtr(pd));
+    cleanCacheRange_RAM((vptr_t)pd, (vptr_t)pd + size, pptr_to_paddr(pd));
 
     plat_smmu_tlb_flush_all();
     plat_smmu_ptc_flush_all();

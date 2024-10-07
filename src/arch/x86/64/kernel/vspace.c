@@ -535,13 +535,13 @@ BOOT_CODE void map_it_frame_cap(cap_t pd_cap, cap_t frame_cap)
     assert(cap_frame_cap_get_capFMappedASID(frame_cap) != asidInvalid);
     pml4 += GET_PML4_INDEX(vptr);
     assert(pml4e_ptr_get_present(pml4));
-    pdpt = paddr_to_pptr(pml4e_ptr_get_pdpt_base_address(pml4));
+    pdpt = (pdpte_t *)paddr_to_pptr(pml4e_ptr_get_pdpt_base_address(pml4));
     pdpt += GET_PDPT_INDEX(vptr);
     assert(pdpte_pdpte_pd_ptr_get_present(pdpt));
-    pd = paddr_to_pptr(pdpte_pdpte_pd_ptr_get_pd_base_address(pdpt));
+    pd = (pde_t *)paddr_to_pptr(pdpte_pdpte_pd_ptr_get_pd_base_address(pdpt));
     pd += GET_PD_INDEX(vptr);
     assert(pde_pde_pt_ptr_get_present(pd));
-    pt = paddr_to_pptr(pde_pde_pt_ptr_get_pt_base_address(pd));
+    pt = (pte_t *)paddr_to_pptr(pde_pde_pt_ptr_get_pt_base_address(pd));
     *(pt + GET_PT_INDEX(vptr)) = pte_new(
                                      0,                      /* xd                   */
                                      pptr_to_paddr(pptr),    /* page_base_address    */
@@ -586,7 +586,7 @@ BOOT_CODE void map_it_pd_cap(cap_t vspace_cap, cap_t pd_cap)
     assert(cap_page_directory_cap_get_capPDIsMapped(pd_cap));
     pml4 += GET_PML4_INDEX(vptr);
     assert(pml4e_ptr_get_present(pml4));
-    pdpt = paddr_to_pptr(pml4e_ptr_get_pdpt_base_address(pml4));
+    pdpt = (pdpte_t *)paddr_to_pptr(pml4e_ptr_get_pdpt_base_address(pml4));
     *(pdpt + GET_PDPT_INDEX(vptr)) = pdpte_pdpte_pd_new(
                                          0,                      /* xd                   */
                                          pptr_to_paddr(pd),      /* pd_base_address      */
@@ -610,10 +610,10 @@ BOOT_CODE void map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
     assert(cap_page_table_cap_get_capPTIsMapped(pt_cap));
     pml4 += GET_PML4_INDEX(vptr);
     assert(pml4e_ptr_get_present(pml4));
-    pdpt = paddr_to_pptr(pml4e_ptr_get_pdpt_base_address(pml4));
+    pdpt = (pdpte_t *)paddr_to_pptr(pml4e_ptr_get_pdpt_base_address(pml4));
     pdpt += GET_PDPT_INDEX(vptr);
     assert(pdpte_pdpte_pd_ptr_get_present(pdpt));
-    pd = paddr_to_pptr(pdpte_pdpte_pd_ptr_get_pd_base_address(pdpt));
+    pd = (pde_t *)paddr_to_pptr(pdpte_pdpte_pd_ptr_get_pd_base_address(pdpt));
     *(pd + GET_PD_INDEX(vptr)) = pde_pde_pt_new(
                                      0,                      /* xd                   */
                                      pptr_to_paddr(pt),      /* pt_base_address      */
@@ -1008,7 +1008,7 @@ static lookupPDPTSlot_ret_t lookupPDPTSlot(vspace_root_t *pml4, vptr_t vptr)
         pdpte_t *pdpt;
         pdpte_t *pdptSlot;
         word_t pdptIndex = GET_PDPT_INDEX(vptr);
-        pdpt = paddr_to_pptr(pml4e_ptr_get_pdpt_base_address(pml4Slot));
+        pdpt = (pdpte_t *)paddr_to_pptr(pml4e_ptr_get_pdpt_base_address(pml4Slot));
         pdptSlot = pdpt + pdptIndex;
 
         ret.status = EXCEPTION_NONE;
@@ -1040,7 +1040,7 @@ lookupPDSlot_ret_t lookupPDSlot(vspace_root_t *pml4, vptr_t vptr)
         pde_t *pd;
         pde_t *pdSlot;
         word_t pdIndex = GET_PD_INDEX(vptr);
-        pd = paddr_to_pptr(pdpte_pdpte_pd_ptr_get_pd_base_address(pdptSlot.pdptSlot));
+        pd = (pde_t *)paddr_to_pptr(pdpte_pdpte_pd_ptr_get_pd_base_address(pdptSlot.pdptSlot));
         pdSlot = pd + pdIndex;
 
         ret.status = EXCEPTION_NONE;

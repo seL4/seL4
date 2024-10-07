@@ -18,6 +18,6 @@ static inline void handleReservedIRQ(irq_t irq)
 }
 
 exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
-                                            cte_t *srcSlot, word_t *buffer);
+                                            cte_t *srcSlot, register_t *buffer);
 exception_t Arch_checkIRQ(word_t irq_w);
 

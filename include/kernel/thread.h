@@ -179,11 +179,11 @@ void doReplyTransfer(tcb_t *sender, reply_t *reply, bool_t grant);
 void doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, bool_t grant);
 void timerTick(void);
 #endif
-void doNormalTransfer(tcb_t *sender, word_t *sendBuffer, endpoint_t *endpoint,
+void doNormalTransfer(tcb_t *sender, register_t *sendBuffer, endpoint_t *endpoint,
                       word_t badge, bool_t canGrant, tcb_t *receiver,
-                      word_t *receiveBuffer);
+                      register_t *receiveBuffer);
 void doFaultTransfer(word_t badge, tcb_t *sender, tcb_t *receiver,
-                     word_t *receiverIPCBuffer);
+                     register_t *receiverIPCBuffer);
 void doNBRecvFailedTransfer(tcb_t *thread);
 void schedule(void);
 void chooseThread(void);

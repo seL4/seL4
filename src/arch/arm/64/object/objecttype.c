@@ -353,7 +353,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
         }
         return cap_frame_cap_new(
                    asidInvalid,           /* capFMappedASID */
-                   (word_t)regionBase,    /* capFBasePtr */
+                   (pptr_t)regionBase,    /* capFBasePtr */
                    ARMSmallPage,          /* capFSize */
                    0,                     /* capFMappedAddress */
                    VMReadWrite,           /* capFVMRights */
@@ -376,7 +376,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
         }
         return cap_frame_cap_new(
                    asidInvalid,           /* capFMappedASID */
-                   (word_t)regionBase,    /* capFBasePtr */
+                   (pptr_t)regionBase,    /* capFBasePtr */
                    ARMLargePage,          /* capFSize */
                    0,                     /* capFMappedAddress */
                    VMReadWrite,           /* capFVMRights */
@@ -399,7 +399,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
         }
         return cap_frame_cap_new(
                    asidInvalid,           /* capFMappedASID */
-                   (word_t)regionBase,    /* capFBasePtr */
+                   (pptr_t)regionBase,    /* capFBasePtr */
                    ARMHugePage,           /* capFSize */
                    0,                     /* capFMappedAddress */
                    VMReadWrite,           /* capFVMRights */
@@ -410,7 +410,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
 
         return cap_vspace_cap_new(
                    asidInvalid,           /* capVSMappedASID */
-                   (word_t)regionBase,    /* capVSBasePtr    */
+                   (pptr_t)regionBase,    /* capVSBasePtr    */
                    0,                     /* capVSIsMapped   */
                    CB_INVALID             /* capVSMappedCB   */
                );
@@ -421,7 +421,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
         /** GHOSTUPD: "(True, gs_new_pt_t VSRootPT_T (ptr_val \<acute>regionBase))" */
         return cap_vspace_cap_new(
                    asidInvalid,           /* capVSMappedASID */
-                   (word_t)regionBase,    /* capVSBasePtr    */
+                   (pptr_t)regionBase,    /* capVSBasePtr    */
                    0                      /* capVSIsMapped   */
                );
 #endif /*!CONFIG_ARM_SMMU*/
@@ -431,7 +431,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
         /** GHOSTUPD: "(True, gs_new_pt_t NormalPT_T (ptr_val \<acute>regionBase))" */
         return cap_page_table_cap_new(
                    asidInvalid,           /* capPTMappedASID    */
-                   (word_t)regionBase,    /* capPTBasePtr       */
+                   (pptr_t)regionBase,    /* capPTBasePtr       */
                    0,                     /* capPTIsMapped      */
                    0                      /* capPTMappedAddress */
                );
@@ -451,7 +451,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
 
 exception_t Arch_decodeInvocation(word_t label, word_t length, cptr_t cptr,
                                   cte_t *slot, cap_t cap,
-                                  bool_t call, word_t *buffer)
+                                  bool_t call, register_t *buffer)
 {
 
     /* The C parser cannot handle a switch statement with only a default

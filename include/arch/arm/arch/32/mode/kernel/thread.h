@@ -5,7 +5,7 @@
  */
 #pragma once
 
-static inline word_t sanitiseRegister(register_t reg, word_t v, bool_t archInfo)
+static inline word_t sanitiseRegister(regoff_t reg, word_t v, bool_t archInfo)
 {
     if (reg == CPSR) {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT

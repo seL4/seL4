@@ -108,7 +108,7 @@ static lookupEPTPDPTSlot_ret_t CONST lookupEPTPDPTSlot(ept_pml4e_t *pml4, vptr_t
         return ret;
     }
 
-    ept_pdpte_t *pdpt = paddr_to_pptr(ept_pml4e_ptr_get_pdpt_base_address(pml4Slot));
+    ept_pdpte_t *pdpt = (ept_pdpte_t *)paddr_to_pptr(ept_pml4e_ptr_get_pdpt_base_address(pml4Slot));
     uint32_t index = GET_EPT_PDPT_INDEX(vptr);
     ret.pdptSlot = pdpt + index;
     ret.status = EXCEPTION_NONE;
@@ -138,7 +138,7 @@ static lookupEPTPDSlot_ret_t lookupEPTPDSlot(ept_pml4e_t *pml4, vptr_t vptr)
         return ret;
     }
 
-    ept_pde_t *pd = paddr_to_pptr(ept_pdpte_ptr_get_pd_base_address(lu_ret.pdptSlot));
+    ept_pde_t *pd = (ept_pde_t *)paddr_to_pptr(ept_pdpte_ptr_get_pd_base_address(lu_ret.pdptSlot));
     uint32_t index = GET_EPT_PD_INDEX(vptr);
     ret.pdSlot = pd + index;
     ret.status = EXCEPTION_NONE;
@@ -169,7 +169,7 @@ static lookupEPTPTSlot_ret_t lookupEPTPTSlot(ept_pml4e_t *pml4, vptr_t vptr)
         return ret;
     }
 
-    ept_pte_t *pt = paddr_to_pptr(ept_pde_ept_pde_pt_ptr_get_pt_base_address(lu_ret.pdSlot));
+    ept_pte_t *pt = (ept_pte_t *)paddr_to_pptr(ept_pde_ept_pde_pt_ptr_get_pt_base_address(lu_ret.pdSlot));
     uint32_t index = GET_EPT_PT_INDEX(vptr);
 
     ret.ptSlot = pt + index;
@@ -207,7 +207,7 @@ EPTPDPTMapped_ret_t EPTPDPTMapped(asid_t asid, vptr_t vptr, ept_pdpte_t *pdpt)
     pml4Slot = lookupEPTPML4Slot(asid_ret.ept, vptr);
 
     if (ept_pml4e_ptr_get_read(pml4Slot)
-        && ptrFromPAddr(ept_pml4e_ptr_get_pdpt_base_address(pml4Slot)) == pdpt) {
+        && (ept_pdpte_t *)paddr_to_pptr(ept_pml4e_ptr_get_pdpt_base_address(pml4Slot)) == pdpt) {
         ret.pml4 = asid_ret.ept;
         ret.pml4Slot = pml4Slot;
         ret.status = EXCEPTION_NONE;
@@ -404,7 +404,7 @@ EPTPageDirectoryMapped_ret_t EPTPageDirectoryMapped(asid_t asid, vptr_t vaddr, e
     }
 
     if (ept_pdpte_ptr_get_read(find_ret.pdptSlot)
-        && ptrFromPAddr(ept_pdpte_ptr_get_pd_base_address(find_ret.pdptSlot)) == pd) {
+        && (ept_pde_t *)paddr_to_pptr(ept_pdpte_ptr_get_pd_base_address(find_ret.pdptSlot)) == pd) {
         ret.pml4 = asid_ret.ept;
         ret.pdptSlot = find_ret.pdptSlot;
         ret.status = EXCEPTION_NONE;
@@ -592,7 +592,7 @@ EPTPageTableMapped_ret_t EPTPageTableMapped(asid_t asid, vptr_t vaddr, ept_pte_t
     }
 
     if (ept_pde_ptr_get_page_size(find_ret.pdSlot) == ept_pde_ept_pde_pt
-        && ptrFromPAddr(ept_pde_ept_pde_pt_ptr_get_pt_base_address(find_ret.pdSlot)) == pt) {
+        && (pte_t *)paddr_to_pptr(ept_pde_ept_pde_pt_ptr_get_pt_base_address(find_ret.pdSlot)) == pt) {
         ret.pml4 = asid_ret.ept;
         ret.pdSlot = find_ret.pdSlot;
         ret.status = EXCEPTION_NONE;
@@ -962,7 +962,7 @@ exception_t decodeX86EPTPageMap(
 void unmapEPTPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
 {
     findEPTForASID_ret_t find_ret;
-    paddr_t addr = addrFromPPtr(pptr);
+    paddr_t addr = pptr_to_paddr(pptr);
 
     find_ret = findEPTForASID(asid);
     if (find_ret.status != EXCEPTION_NONE) {

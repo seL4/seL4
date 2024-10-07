@@ -1,5 +1,7 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -225,7 +227,11 @@ BOOT_CODE void map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_righ
         attr_index = DEVICE_nGnRnE;
         shareable = 0;
     }
-    armKSGlobalKernelPT[GET_KPT_INDEX(vaddr, KLVL_FRM_ARM_PT_LVL(3))] = pte_pte_4k_page_new(uxn, paddr,
+    armKSGlobalKernelPT[GET_KPT_INDEX(vaddr, KLVL_FRM_ARM_PT_LVL(3))] = pte_pte_4k_page_new(
+#if defined(CONFIG_HAVE_CHERI)
+                                                                                            1, 1, 0, /* Enable capability loads/stores for the kernel */
+#endif
+                                                                                            uxn, paddr,
                                                                                             0, /* global */
                                                                                             1, /* access flag */
                                                                                             shareable,
@@ -254,13 +260,19 @@ BOOT_CODE void map_kernel_window(void)
 
     /* place the PUD into the PGD */
     armKSGlobalKernelPGD[GET_KPT_INDEX(PPTR_BASE, KLVL_FRM_ARM_PT_LVL(0))] = pte_pte_table_new(
-                                                                                 addrFromKPPtr(armKSGlobalKernelPUD));
+#if defined(CONFIG_HAVE_CHERI)
+                                                                                 1, 1, 0, /* Enable capability loads/stores for the kernel */
+#endif
+                                                                                 kpptr_to_paddr(armKSGlobalKernelPUD));
 
     /* place all PDs except the last one in PUD */
     for (idx = GET_KPT_INDEX(PPTR_BASE, KLVL_FRM_ARM_PT_LVL(1)); idx < GET_KPT_INDEX(PPTR_TOP, KLVL_FRM_ARM_PT_LVL(1));
          idx++) {
         armKSGlobalKernelPUD[idx] = pte_pte_table_new(
-                                        addrFromKPPtr(&armKSGlobalKernelPDs[idx][0])
+#if defined(CONFIG_HAVE_CHERI)
+                                        1, 1, 0, /* Enable capability loads/stores for the kernel */
+#endif
+                                        kpptr_to_paddr(&armKSGlobalKernelPDs[idx][0])
                                     );
     }
 
@@ -269,6 +281,9 @@ BOOT_CODE void map_kernel_window(void)
     for (paddr = PADDR_BASE; paddr < PADDR_TOP; paddr += BIT(seL4_LargePageBits)) {
         armKSGlobalKernelPDs[GET_KPT_INDEX(vaddr, KLVL_FRM_ARM_PT_LVL(1))][GET_KPT_INDEX(vaddr,
                                                                                          KLVL_FRM_ARM_PT_LVL(2))] = pte_pte_page_new(
+#if defined(CONFIG_HAVE_CHERI)
+                                                                                                                        1, 1, 0, /* Enable capability loads/stores for the kernel */
+#endif
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
                                                                                                                         0, // XN
 #else
@@ -286,12 +301,18 @@ BOOT_CODE void map_kernel_window(void)
 
     /* put the PD into the PUD for device window */
     armKSGlobalKernelPUD[GET_KPT_INDEX(PPTR_TOP, KLVL_FRM_ARM_PT_LVL(1))] = pte_pte_table_new(
-                                                                                addrFromKPPtr(&armKSGlobalKernelPDs[BIT(PT_INDEX_BITS) - 1][0])
+#if defined(CONFIG_HAVE_CHERI)
+                                                                                1, 1, 0, /* Enable capability loads/stores for the kernel */
+#endif
+                                                                                kpptr_to_paddr(&armKSGlobalKernelPDs[BIT(PT_INDEX_BITS) - 1][0])
                                                                             );
 
     /* put the PT into the PD for device window */
     armKSGlobalKernelPDs[BIT(PT_INDEX_BITS) - 1][BIT(PT_INDEX_BITS) - 1] = pte_pte_table_new(
-                                                                               addrFromKPPtr(armKSGlobalKernelPT)
+#if defined(CONFIG_HAVE_CHERI)
+                                                                               1, 1, 0, /* Enable capability loads/stores for the kernel */
+#endif
+                                                                               kpptr_to_paddr(armKSGlobalKernelPT)
                                                                            );
 
     map_kernel_devices();
@@ -310,7 +331,7 @@ static BOOT_CODE void map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap, bool_t
     pte_t *pt;
 
     vptr_t vptr = cap_frame_cap_get_capFMappedAddress(frame_cap);
-    void *pptr = (void *)cap_frame_cap_get_capFBasePtr(frame_cap);
+    void *pptr = (void *)cap_get_archCapPtr(frame_cap);
 
     assert(cap_frame_cap_get_capFMappedASID(frame_cap) != 0);
 
@@ -319,15 +340,18 @@ static BOOT_CODE void map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap, bool_t
 #else
     vspaceRoot += GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(0));
     assert(pte_pte_table_ptr_get_present(vspaceRoot));
-    pud = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(vspaceRoot));
+    pud = PT_PTR(paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(vspaceRoot)));
 #endif
     pud += GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(1));
     assert(pte_pte_table_ptr_get_present(pud));
-    pd = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pud));
+    pd = PT_PTR(paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pud)));
     pd += GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(2));
     assert(pte_pte_table_ptr_get_present(pd));
-    pt = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pd));
+    pt = PT_PTR(paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pd)));
     *(pt + GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(3))) = pte_pte_4k_page_new(
+#if defined(CONFIG_HAVE_CHERI)
+                                                              1, 1, 0, /* Enable capability loads/stores for the root task */
+#endif
                                                               !executable,                    /* unprivileged execute never */
                                                               pptr_to_paddr(pptr),            /* page_base_address    */
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
@@ -380,12 +404,15 @@ static BOOT_CODE void map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
 #else
     vspaceRoot += GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(0));
     assert(pte_pte_table_ptr_get_present(vspaceRoot));
-    pud = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(vspaceRoot));
+    pud = PT_PTR(paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(vspaceRoot)));
 #endif
     pud += GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(1));
     assert(pte_pte_table_ptr_get_present(pud));
-    pd = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pud));
+    pd = PT_PTR(paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pud)));
     *(pd + GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(2))) = pte_pte_table_new(
+#if defined(CONFIG_HAVE_CHERI)
+                                                              1, 1, 0, /* Enable capability loads/stores for the root task */
+#endif
                                                               pptr_to_paddr(pt)
                                                           );
 }
@@ -417,9 +444,12 @@ static BOOT_CODE void map_it_pd_cap(cap_t vspace_cap, cap_t pd_cap)
 #else
     vspaceRoot += GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(0));
     assert(pte_pte_table_ptr_get_present(vspaceRoot));
-    pud = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(vspaceRoot));
+    pud = PT_PTR(paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(vspaceRoot)));
 #endif
     *(pud + GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(1))) = pte_pte_table_new(
+#if defined(CONFIG_HAVE_CHERI)
+                                                               1, 1, 0, /* Enable capability loads/stores for the root task */
+#endif
                                                                pptr_to_paddr(pd)
                                                            );
 }
@@ -447,6 +477,9 @@ static BOOT_CODE void map_it_pud_cap(cap_t vspace_cap, cap_t pud_cap)
     assert(cap_page_table_cap_get_capPTIsMapped(pud_cap));
 
     *(pgd + GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(0))) = pte_pte_table_new(
+#if defined(CONFIG_HAVE_CHERI)
+                                                               1, 1, 0, /* Enable capability loads/stores */
+#endif
                                                                pptr_to_paddr(pud));
 }
 
@@ -543,10 +576,10 @@ BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vpt
 BOOT_CODE void activate_kernel_vspace(void)
 {
     cleanInvalidateL1Caches();
-    setCurrentKernelVSpaceRoot(ttbr_new(0, addrFromKPPtr(armKSGlobalKernelPGD)));
+    setCurrentKernelVSpaceRoot(ttbr_new(0, kpptr_to_paddr(armKSGlobalKernelPGD)));
 
     /* Prevent elf-loader address translation to fill up TLB */
-    setCurrentUserVSpaceRoot(ttbr_new(0, addrFromKPPtr(armKSGlobalUserVSpace)));
+    setCurrentUserVSpaceRoot(ttbr_new(0, kpptr_to_paddr(armKSGlobalUserVSpace)));
 
     invalidateLocalTLB();
     lockTLBEntry(KERNEL_ELF_BASE);
@@ -561,7 +594,7 @@ BOOT_CODE void write_it_asid_pool(cap_t it_ap_cap, cap_t it_vspace_cap)
                               0,
 #endif
                               /* vspace_root: reference to vspace root page table object */
-                              (word_t)cap_vspace_cap_get_capVSBasePtr(it_vspace_cap)
+                              (pptr_t)cap_vspace_cap_get_capVSBasePtr(it_vspace_cap)
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
                               /* stored_hw_vmid, stored_vmid_valid: Assigned hardware VMID for TLB. */
                               , 0, false
@@ -599,14 +632,14 @@ static findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
         return ret;
     }
 
-    ret.vspace_root = (vspace_root_t *)asid_map_asid_map_vspace_get_vspace_root(asid_map);
+    ret.vspace_root = VSPACE_PTR(asid_map_asid_map_vspace_get_vspace_root(asid_map));
     ret.status = EXCEPTION_NONE;
     return ret;
 }
 
-word_t *PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
+register_t *PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
 {
-    word_t w_bufferPtr;
+    pptr_t w_bufferPtr;
     cap_t bufferCap;
     vm_rights_t vm_rights;
 
@@ -623,12 +656,12 @@ word_t *PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
     vm_rights = cap_frame_cap_get_capFVMRights(bufferCap);
     if (likely(vm_rights == VMReadWrite ||
                (!isReceiver && vm_rights == VMReadOnly))) {
-        word_t basePtr;
+        register_t *basePtr;
         unsigned int pageBits;
 
-        basePtr = cap_frame_cap_get_capFBasePtr(bufferCap);
+        basePtr = (pptr_t *)cap_get_archCapPtr(bufferCap);
         pageBits = pageBitsForSize(cap_frame_cap_get_capFSize(bufferCap));
-        return (word_t *)(basePtr + (w_bufferPtr & MASK(pageBits)));
+        return (register_t *)(basePtr + (w_bufferPtr & MASK(pageBits)));
     } else {
         return NULL;
     }
@@ -675,7 +708,7 @@ static lookupPTSlot_ret_t lookupPTSlot(vspace_root_t *vspace, vptr_t vptr)
     while (pte_pte_table_ptr_get_present(ret.ptSlot) && likely(level > 0)) {
         level--;
         ret.ptBitsLeft -= PT_INDEX_BITS;
-        pt = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(ret.ptSlot));
+        pt = PT_PTR(paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(ret.ptSlot)));
         ret.ptSlot = pt + ((vptr >> ret.ptBitsLeft) & MASK(PT_INDEX_BITS));
     }
 
@@ -702,10 +735,20 @@ static pte_t makeUserPagePTE(paddr_t paddr, vm_rights_t vm_rights, vm_attributes
     word_t shareable = cacheable ? SMP_TERNARY(SMP_SHARE, 0) : 0;
 
     if (page_size == ARMSmallPage) {
-        return pte_pte_4k_page_new(nonexecutable, paddr, nG, 1 /* access flag */,
+        return pte_pte_4k_page_new(
+#if defined(CONFIG_HAVE_CHERI)
+                                   /* cheriTODO: fine-grain capability permissions per-user */
+                                   1, 1, 0, /* Enable capability loads/stores */
+#endif
+                                   nonexecutable, paddr, nG, 1 /* access flag */,
                                    shareable, APFromVMRights(vm_rights), attridx);
     } else {
-        return pte_pte_page_new(nonexecutable, paddr, nG, 1 /* access flag */,
+        return pte_pte_page_new(
+#if defined(CONFIG_HAVE_CHERI)
+                                /* cheriTODO: fine-grain capability permissions per-user */
+                                1, 1, 0, /* Enable capability loads/stores */
+#endif
+                                nonexecutable, paddr, nG, 1 /* access flag */,
                                 shareable, APFromVMRights(vm_rights), attridx);
     }
 }
@@ -775,7 +818,7 @@ void setVMRoot(tcb_t *tcb)
     threadRoot = TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap;
 
     if (!isValidNativeRoot(threadRoot)) {
-        setCurrentUserVSpaceRoot(ttbr_new(0, addrFromKPPtr(armKSGlobalUserVSpace)));
+        setCurrentUserVSpaceRoot(ttbr_new(0, kpptr_to_paddr(armKSGlobalUserVSpace)));
         return;
     }
 
@@ -783,7 +826,7 @@ void setVMRoot(tcb_t *tcb)
     asid = cap_vspace_cap_get_capVSMappedASID(threadRoot);
     find_ret = findVSpaceForASID(asid);
     if (unlikely(find_ret.status != EXCEPTION_NONE || find_ret.vspace_root != vspaceRoot)) {
-        setCurrentUserVSpaceRoot(ttbr_new(0, addrFromKPPtr(armKSGlobalUserVSpace)));
+        setCurrentUserVSpaceRoot(ttbr_new(0, kpptr_to_paddr(armKSGlobalUserVSpace)));
         return;
     }
 
@@ -1018,7 +1061,7 @@ void unmapPageTable(asid_t asid, vptr_t vptr, pte_t *target_pt)
             /* couldn't find it */
             return;
         }
-        pt = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(ptSlot));
+        pt = PT_PTR(paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(ptSlot)));
     }
 
     if (pt != target_pt) {
@@ -1055,7 +1098,7 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr)
         return;
     }
 
-    if (pte_get_page_base_address(pte) != pptr_to_paddr((void *)pptr)) {
+    if (pte_get_page_base_address(pte) != pptr_to_paddr(pptr)) {
         /* Do nothing if the mapped page is not the same physical frame */
         return;
     }
@@ -1260,12 +1303,12 @@ static exception_t performPageFlush(word_t invLabel, vspace_root_t *vspaceRoot, 
 
 static exception_t performPageGetAddress(pptr_t base_ptr, bool_t call)
 {
-    paddr_t base = pptr_to_paddr((void *)base_ptr);
+    paddr_t base = pptr_to_paddr(base_ptr);
 
     tcb_t *thread;
     thread = NODE_STATE(ksCurThread);
     if (call) {
-        word_t *ipcBuffer = lookupIPCBuffer(true, thread);
+        register_t *ipcBuffer = lookupIPCBuffer(true, thread);
         setRegister(thread, badgeRegister, 0);
         unsigned int length = setMR(thread, ipcBuffer, 0, base);
         setRegister(thread, msgInfoRegister, wordFromMessageInfo(
@@ -1288,8 +1331,8 @@ static exception_t performASIDControlInvocation(void *frame, cte_t *slot,
 
     cteInsert(
         cap_asid_pool_cap_new(
-            asid_base,         /* capASIDBase  */
-            WORD_REF(frame)    /* capASIDPool  */
+            asid_base,      /* capASIDBase  */
+            (pptr_t)frame   /* capASIDPool  */
         ), parent, slot);
 
     assert((asid_base & MASK(asidLowBits)) == 0);
@@ -1299,7 +1342,7 @@ static exception_t performASIDControlInvocation(void *frame, cte_t *slot,
 }
 
 static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, word_t length,
-                                                 cte_t *cte, cap_t cap, word_t *buffer)
+                                                 cte_t *cte, cap_t cap, register_t *buffer)
 {
     vptr_t start, end;
     paddr_t pstart;
@@ -1412,7 +1455,7 @@ static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, word_t length,
 
 
 static exception_t decodeARMPageTableInvocation(word_t invLabel, word_t length,
-                                                cte_t *cte, cap_t cap, word_t *buffer)
+                                                cte_t *cte, cap_t cap, register_t *buffer)
 {
     cap_t vspaceRootCap;
     vspace_root_t *vspaceRoot;
@@ -1486,7 +1529,12 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, word_t length,
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    pte = pte_pte_table_new(pptr_to_paddr(PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap))));
+    pte = pte_pte_table_new(
+#if defined(__CHERI_PURE_CAPABILITY__)
+                            /* cheriTODO: fine-grain capability permissions per-user */
+                            1, 1, 0, /* Enable capability loads/stores */
+#endif
+                            pptr_to_paddr(PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap))));
 
     cap = cap_page_table_cap_set_capPTIsMapped(cap, 1);
     cap = cap_page_table_cap_set_capPTMappedASID(cap, asid);
@@ -1502,7 +1550,7 @@ static inline bool_t CONST checkVPAlignment(vm_page_size_t sz, word_t w)
 }
 
 static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
-                                            cte_t *cte, cap_t cap, bool_t call, word_t *buffer)
+                                            cte_t *cte, cap_t cap, bool_t call, register_t *buffer)
 {
     switch (invLabel) {
     case ARMPageMap: {
@@ -1583,7 +1631,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
         cap = cap_frame_cap_set_capFMappedASID(cap, asid);
         cap = cap_frame_cap_set_capFMappedAddress(cap, vaddr);
 
-        base = pptr_to_paddr((void *)cap_frame_cap_get_capFBasePtr(cap));
+        base = pptr_to_paddr(cap_frame_cap_get_capFBasePtr(cap));
 
         lookupPTSlot_ret_t lu_ret = lookupPTSlot(vspaceRoot, vaddr);
         if (unlikely(lu_ret.ptBitsLeft != pageBitsForSize(frameSize))) {
@@ -1655,7 +1703,16 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        word_t pstart = pptr_to_paddr((void *)cap_frame_cap_get_capFBasePtr(cap)) + start;
+#if defined(__CHERI_PURE_CAPABILITY__)
+        /* FIXME: cheriTODO We need to re-build a CHERI user capability here as we
+         * don't embed CHERI capabilities for user mapped addresses within the seL4
+         * capability itself (capFMappedAddress). Only the kernel's address map of
+         * this page is embedded in the seL4 capability format.
+         */
+        vaddr = (vptr_t) cheri_build_user_cap((ptraddr_t)vaddr, page_size, -1);
+#endif
+
+        word_t pstart = pptr_to_paddr(cap_frame_cap_get_capFBasePtr(cap)) + start;
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
         /* Don't let applications flush outside of the kernel window */
         if (pstart < PADDR_BASE || ((end - start) + pstart) > PADDR_TOP) {
@@ -1686,7 +1743,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
         }
 #endif
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        return performPageFlush(invLabel, find_ret.vspace_root, asid, vaddr + start, vaddr + end - 1,
+        return performPageFlush(invLabel, find_ret.vspace_root, asid, vaddr + (word_t)start, vaddr + (word_t)end - 1,
                                 pstart);
     }
 
@@ -1701,7 +1758,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
 }
 
 exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
-                                   cte_t *cte, cap_t cap, bool_t call, word_t *buffer)
+                                   cte_t *cte, cap_t cap, bool_t call, register_t *buffer)
 {
     switch (cap_get_capType(cap)) {
     case cap_vspace_cap:
@@ -1897,7 +1954,7 @@ static readWordFromVSpace_ret_t readWordFromVSpace(vspace_root_t *pd, word_t vad
     }
 
     offset = vaddr & MASK(lookup_ret.ptBitsLeft);
-    kernel_vaddr = (word_t)paddr_to_pptr(pte_page_ptr_get_page_base_address(lookup_ret.ptSlot));
+    kernel_vaddr = paddr_to_pptr(pte_page_ptr_get_page_base_address(lookup_ret.ptSlot));
     value = (word_t *)(kernel_vaddr + offset);
 
     ret.status = EXCEPTION_NONE;
@@ -1993,7 +2050,7 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
                              0,                         /* VMKernelOnly */
                              NORMAL_WT);
 
-    cleanByVA_PoU((vptr_t)armKSGlobalLogPTE, addrFromKPPtr(armKSGlobalLogPTE));
+    cleanByVA_PoU((vptr_t)armKSGlobalLogPTE, kpptr_to_paddr(armKSGlobalLogPTE));
     invalidateTranslationSingle(KS_LOG_PPTR);
     return EXCEPTION_NONE;
 }

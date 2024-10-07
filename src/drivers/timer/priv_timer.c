@@ -1,5 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -9,7 +11,7 @@
 #include <arch/machine/timer.h>
 #include <drivers/timer/arm_priv.h>
 
-timer_t *const priv_timer = (timer_t *) ARM_MP_PRIV_TIMER_PPTR;
+timer_t *priv_timer = (timer_t *) ARM_MP_PRIV_TIMER_PPTR;
 
 #define TMR_CTRL_ENABLE      BIT(0)
 #define TMR_CTRL_AUTORELOAD  BIT(1)
@@ -24,6 +26,9 @@ timer_t *const priv_timer = (timer_t *) ARM_MP_PRIV_TIMER_PPTR;
 
 BOOT_CODE void initTimer(void)
 {
+#if defined(__CHERI_PURE_CAPABILITY__)
+    priv_timer = (volatile struct timer_t *) cheri_build_device_cap((ptraddr_t)priv_timer, sizeof(timer_t));
+#endif
     /* reset */
     priv_timer->ctrl = 0;
     priv_timer->ints = 0;

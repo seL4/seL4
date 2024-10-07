@@ -456,8 +456,8 @@ void print_cap(cap_t cap)
         break;
     }
     case cap_irq_handler_cap: {
-        printf("%p_%lu_irq\n",
-               (void *)cap_irq_handler_cap_get_capIRQ(cap),
+        printf("0x%lx_%lu_irq\n",
+               (unsigned long)cap_irq_handler_cap_get_capIRQ(cap),
                (long unsigned int)IRQT_TO_CORE(IDX_TO_IRQT(cap_irq_handler_cap_get_capIRQ(cap))));
         break;
     }
@@ -502,8 +502,8 @@ void print_object(cap_t cap)
     }
 #endif
     case cap_irq_handler_cap: {
-        printf("%p_%lu_irq = irq\n",
-               (void *)cap_irq_handler_cap_get_capIRQ(cap),
+        printf("0x%lx_%lu_irq = irq\n",
+               (unsigned long)cap_irq_handler_cap_get_capIRQ(cap),
                (long unsigned int)IRQT_TO_CORE(IDX_TO_IRQT(cap_irq_handler_cap_get_capIRQ(cap))));
         break;
     }

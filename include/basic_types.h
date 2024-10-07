@@ -82,6 +82,7 @@ typedef uint8_t seL4_Uint8;
 typedef uint16_t seL4_Uint16;
 typedef uint32_t seL4_Uint32;
 typedef word_t seL4_Word;
+typedef register_t seL4_Register;
 typedef cptr_t seL4_CPtr;
 typedef node_id_t seL4_NodeId;
 typedef paddr_t seL4_PAddr;

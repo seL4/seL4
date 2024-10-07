@@ -109,24 +109,24 @@ static void print_fault(seL4_Fault_t f)
         printf("null fault");
         break;
     case seL4_Fault_CapFault:
-        printf("cap fault in %s phase at address %p",
+        printf("cap fault in %s phase at address 0x%lx",
                seL4_Fault_CapFault_get_inReceivePhase(f) ? "receive" : "send",
-               (void *)seL4_Fault_CapFault_get_address(f));
+               (unsigned long)seL4_Fault_CapFault_get_address(f));
         break;
     case seL4_Fault_VMFault:
-        printf("vm fault on %s at address %p with status %p",
+        printf("vm fault on %s at address 0x%lx with status 0x%lx",
                seL4_Fault_VMFault_get_instructionFault(f) ? "code" : "data",
-               (void *)seL4_Fault_VMFault_get_address(f),
-               (void *)seL4_Fault_VMFault_get_FSR(f));
+               (unsigned long)seL4_Fault_VMFault_get_address(f),
+               (unsigned long)seL4_Fault_VMFault_get_FSR(f));
         break;
     case seL4_Fault_UnknownSyscall:
-        printf("unknown syscall %p",
-               (void *)seL4_Fault_UnknownSyscall_get_syscallNumber(f));
+        printf("unknown syscall 0x%lx",
+               (unsigned long)seL4_Fault_UnknownSyscall_get_syscallNumber(f));
         break;
     case seL4_Fault_UserException:
-        printf("user exception %p code %p",
-               (void *)seL4_Fault_UserException_get_number(f),
-               (void *)seL4_Fault_UserException_get_code(f));
+        printf("user exception 0x%lx code 0x%lx",
+               (unsigned long)seL4_Fault_UserException_get_number(f),
+               (unsigned long)seL4_Fault_UserException_get_code(f));
         break;
 #ifdef CONFIG_KERNEL_MCS
     case seL4_Fault_Timeout:
@@ -162,7 +162,7 @@ void handleDoubleFault(tcb_t *tptr, seL4_Fault_t ex1)
     printf("\nin thread %p \"%s\" ", tptr, TCB_PTR_DEBUG_PTR(tptr)->tcbName);
 #endif /* CONFIG_DEBUG_BUILD */
 
-    printf("at address %p\n", (void *)getRestartPC(tptr));
+    printf("at address 0x%lx\n", (unsigned long)getRestartPC(tptr));
     printf("With stack:\n");
     Arch_userStackTrace(tptr);
 #endif

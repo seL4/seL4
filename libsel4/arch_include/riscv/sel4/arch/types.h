@@ -1,6 +1,8 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: BSD-2-Clause
  */
@@ -18,46 +20,45 @@ typedef seL4_CPtr seL4_RISCV_ASIDControl;
 typedef seL4_CPtr seL4_RISCV_ASIDPool;
 
 
-#define seL4_EndpointBits     4
 /* User context as used by seL4_TCB_ReadRegisters / seL4_TCB_WriteRegisters */
 
 typedef struct seL4_UserContext_ {
-    seL4_Word pc;
-    seL4_Word ra;
-    seL4_Word sp;
-    seL4_Word gp;
+    seL4_Register pc;
+    seL4_Register ra;
+    seL4_Register sp;
+    seL4_Register gp;
 
-    seL4_Word s0;
-    seL4_Word s1;
-    seL4_Word s2;
-    seL4_Word s3;
-    seL4_Word s4;
-    seL4_Word s5;
-    seL4_Word s6;
-    seL4_Word s7;
-    seL4_Word s8;
-    seL4_Word s9;
-    seL4_Word s10;
-    seL4_Word s11;
+    seL4_Register s0;
+    seL4_Register s1;
+    seL4_Register s2;
+    seL4_Register s3;
+    seL4_Register s4;
+    seL4_Register s5;
+    seL4_Register s6;
+    seL4_Register s7;
+    seL4_Register s8;
+    seL4_Register s9;
+    seL4_Register s10;
+    seL4_Register s11;
 
-    seL4_Word a0;
-    seL4_Word a1;
-    seL4_Word a2;
-    seL4_Word a3;
-    seL4_Word a4;
-    seL4_Word a5;
-    seL4_Word a6;
-    seL4_Word a7;
+    seL4_Register a0;
+    seL4_Register a1;
+    seL4_Register a2;
+    seL4_Register a3;
+    seL4_Register a4;
+    seL4_Register a5;
+    seL4_Register a6;
+    seL4_Register a7;
 
-    seL4_Word t0;
-    seL4_Word t1;
-    seL4_Word t2;
-    seL4_Word t3;
-    seL4_Word t4;
-    seL4_Word t5;
-    seL4_Word t6;
+    seL4_Register t0;
+    seL4_Register t1;
+    seL4_Register t2;
+    seL4_Register t3;
+    seL4_Register t4;
+    seL4_Register t5;
+    seL4_Register t6;
 
-    seL4_Word tp;
+    seL4_Register tp;
 } seL4_UserContext;
 
 typedef enum {

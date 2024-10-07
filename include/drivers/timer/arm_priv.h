@@ -16,7 +16,7 @@ struct timer {
     uint32_t ints;
 };
 typedef volatile struct timer timer_t;
-extern timer_t *const priv_timer;
+extern timer_t *priv_timer;
 
 static inline void resetTimer(void)
 {

@@ -13,16 +13,16 @@ static inline tcb_queue_t PURE ep_ptr_get_queue(endpoint_t *epptr)
 {
     tcb_queue_t queue;
 
-    queue.head = (tcb_t *)endpoint_ptr_get_epQueue_head(epptr);
-    queue.end = (tcb_t *)endpoint_ptr_get_epQueue_tail(epptr);
+    queue.head = TCB_PTR(endpoint_ptr_get_epQueue_head(epptr));
+    queue.end = TCB_PTR(endpoint_ptr_get_epQueue_tail(epptr));
 
     return queue;
 }
 
 static inline void ep_ptr_set_queue(endpoint_t *epptr, tcb_queue_t queue)
 {
-    endpoint_ptr_set_epQueue_head(epptr, (word_t)queue.head);
-    endpoint_ptr_set_epQueue_tail(epptr, (word_t)queue.end);
+    endpoint_ptr_set_epQueue_head(epptr, (pptr_t)queue.head);
+    endpoint_ptr_set_epQueue_tail(epptr, (pptr_t)queue.end);
 }
 
 #ifdef CONFIG_KERNEL_MCS

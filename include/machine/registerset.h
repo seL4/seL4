@@ -24,14 +24,14 @@ typedef enum {
 #else
 #define MAX_MSG_SIZE MAX(n_syscallMessage, n_exceptionMessage)
 #endif
-extern const register_t fault_messages[][MAX_MSG_SIZE] VISIBLE;
+extern const regoff_t fault_messages[][MAX_MSG_SIZE] VISIBLE;
 
-static inline void setRegister(tcb_t *thread, register_t reg, word_t w)
+static inline void setRegister(tcb_t *thread, regoff_t reg, register_t w)
 {
     thread->tcbArch.tcbContext.registers[reg] = w;
 }
 
-static inline word_t PURE getRegister(tcb_t *thread, register_t reg)
+static inline register_t PURE getRegister(tcb_t *thread, regoff_t reg)
 {
     return thread->tcbArch.tcbContext.registers[reg];
 }

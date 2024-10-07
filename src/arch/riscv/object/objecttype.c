@@ -1,6 +1,8 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -211,7 +213,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t
         }
         return cap_frame_cap_new(
                    asidInvalid,                    /* capFMappedASID       */
-                   (word_t) regionBase,            /* capFBasePtr          */
+                   (pptr_t)regionBase,             /* capFBasePtr          */
                    RISCV_4K_Page,                  /* capFSize             */
                    wordFromVMRights(VMReadWrite),  /* capFVMRights         */
                    deviceMemory,                   /* capFIsDevice         */
@@ -234,8 +236,8 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t
         }
         return cap_frame_cap_new(
                    asidInvalid,                    /* capFMappedASID       */
-                   (word_t) regionBase,            /* capFBasePtr          */
-                   RISCV_Mega_Page,                  /* capFSize             */
+                   (pptr_t)regionBase,             /* capFBasePtr          */
+                   RISCV_Mega_Page,                /* capFSize             */
                    wordFromVMRights(VMReadWrite),  /* capFVMRights         */
                    deviceMemory,                   /* capFIsDevice         */
                    0                               /* capFMappedAddress    */
@@ -259,8 +261,8 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t
         }
         return cap_frame_cap_new(
                    asidInvalid,                    /* capFMappedASID       */
-                   (word_t) regionBase,            /* capFBasePtr          */
-                   RISCV_Giga_Page,                  /* capFSize             */
+                   (pptr_t)regionBase,             /* capFBasePtr          */
+                   RISCV_Giga_Page,                /* capFSize             */
                    wordFromVMRights(VMReadWrite),  /* capFVMRights         */
                    deviceMemory,                   /* capFIsDevice         */
                    0                               /* capFMappedAddress    */
@@ -273,7 +275,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t
               (Ptr (ptr_val \<acute>regionBase) :: (pte_C[512]) ptr))" */
         return cap_page_table_cap_new(
                    asidInvalid,            /* capPTMappedASID    */
-                   (word_t)regionBase,     /* capPTBasePtr       */
+                   (pptr_t)regionBase,     /* capPTBasePtr       */
                    0,                      /* capPTIsMapped      */
                    0                       /* capPTMappedAddress */
                );
@@ -295,7 +297,7 @@ exception_t Arch_decodeInvocation(
     cte_t *slot,
     cap_t cap,
     bool_t call,
-    word_t *buffer
+    register_t *buffer
 )
 {
     return decodeRISCVMMUInvocation(label, length, cptr, slot, cap, call, buffer);

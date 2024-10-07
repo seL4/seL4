@@ -1,5 +1,7 @@
 #
 # Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+# Copyright 2024, Capabilities Limited
+# CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
 #
 # SPDX-License-Identifier: GPL-2.0-only
 #
@@ -409,6 +411,41 @@ config_option(
     "Allows the kernel to write the userError to the IPC buffer"
     DEFAULT OFF
     DEPENDS "KernelPrinting"
+    DEFAULT_DISABLED OFF
+)
+
+config_option(
+    HaveCheri HAVE_CHERI "Enable CHERI for architectures that support it."
+    DEFAULT OFF
+    DEPENDS "NOT KernelVerificationBuild;"
+    DEFAULT_DISABLED OFF
+)
+
+config_option(
+    CheriPureCapUser CHERI_PURECAP_USER "Enable support for pureceap CHERI userspace"
+    DEFAULT ON
+    DEPENDS "HaveCheri"
+    DEFAULT_DISABLED OFF
+)
+
+config_option(
+    CheriHybridKernel CHERI_HYBRID_KERNEL "Enable building and running the kernel in hybrid CHERI mode and user in purecap mode"
+    DEFAULT OFF
+    DEPENDS "HaveCheri"
+    DEFAULT_DISABLED OFF
+)
+
+config_option(
+    CheriPureCapKernel CHERI_PURECAP_KERNEL "Enable building and running the kernel in purecap CHERI"
+    DEFAULT ON
+    DEPENDS "HaveCheri AND NOT CheriHybridKernel"
+    DEFAULT_DISABLED OFF
+)
+
+config_option(
+    CheriPureCapLoader CHERI_PURECAP_LOADER "Enable building and running the seL4 ELF Loader in purecap mode"
+    DEFAULT ON
+    DEPENDS "HaveCheri"
     DEFAULT_DISABLED OFF
 )
 

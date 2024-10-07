@@ -19,7 +19,7 @@ static exception_t performPageGetAddress(void *vbase_ptr, bool_t call)
 {
     /* Get the physical address of this frame. */
     paddr_t capFBasePtr;
-    capFBasePtr = addrFromPPtr(vbase_ptr);
+    capFBasePtr = pptr_to_paddr(vbase_ptr);
 
     tcb_t *thread;
     thread = NODE_STATE(ksCurThread);
@@ -638,7 +638,7 @@ lookupPTSlot_ret_t lookupPTSlot(vspace_root_t *vspace, vptr_t vptr)
         pte_t *ptSlot;
         word_t ptIndex;
 
-        pt = paddr_to_pptr(pde_pde_pt_ptr_get_pt_base_address(pdSlot.pdSlot));
+        pt = (pte_t *)paddr_to_pptr(pde_pde_pt_ptr_get_pt_base_address(pdSlot.pdSlot));
         ptIndex = (vptr >> PAGE_BITS) & MASK(PT_INDEX_BITS);
         ptSlot = pt + ptIndex;
 

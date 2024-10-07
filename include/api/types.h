@@ -61,7 +61,7 @@ static inline word_t CONST wordFromRights(seL4_CapRights_t seL4_CapRights)
     return seL4_CapRights.words[0] & MASK(seL4_CapRightsBits);
 }
 
-static inline cap_transfer_t PURE capTransferFromWords(word_t *wptr)
+static inline cap_transfer_t PURE capTransferFromWords(register_t *wptr)
 {
     cap_transfer_t transfer;
 

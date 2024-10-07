@@ -85,7 +85,7 @@ static inline void smmu_disable(void)
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         /* in hyp mode, we need call the hook in monitor mode */
         /* we need physical address here */
-        paddr_t addr = addrFromKPPtr(&do_smmu_disable);
+        paddr_t addr = kpptr_to_paddr(&do_smmu_disable);
         asm(".arch_extension sec\n");
         asm volatile("mov r0, %0\n\t"
                      "dsb\nisb\n"
@@ -102,7 +102,7 @@ static inline void smmu_disable(void)
 static inline void smmu_enable(void)
 {
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        paddr_t addr = addrFromKPPtr(&do_smmu_enable);
+        paddr_t addr = kpptr_to_paddr(&do_smmu_enable);
         asm(".arch_extension sec\n");
         asm volatile("mov r0, %0\n\t"
                      "dsb\nisb\n"
@@ -156,8 +156,8 @@ BOOT_CODE int plat_smmu_init(void)
         iopde_t *pd = (iopde_t *) smmu_pds[asid - SMMU_FIRST_ASID];
 
         memset(pd, 0, BIT(SMMU_PD_INDEX_BITS));
-        cleanCacheRange_RAM((word_t)pd, ((word_t)pd + BIT(SMMU_PD_INDEX_BITS)),
-                            addrFromPPtr(pd));
+        cleanCacheRange_RAM((vptr_t)pd, ((vptr_t)pd + BIT(SMMU_PD_INDEX_BITS)),
+                            pptr_to_paddr(pd));
 
         smmu_regs->smmu_ptb_asid = asid;
 

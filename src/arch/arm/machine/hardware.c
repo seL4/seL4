@@ -9,12 +9,12 @@
 #include <arch/machine.h>
 #include <plat/machine/hardware.h>
 
-word_t PURE getRestartPC(tcb_t *thread)
+register_t PURE getRestartPC(tcb_t *thread)
 {
     return getRegister(thread, FaultIP);
 }
 
-void setNextPC(tcb_t *thread, word_t v)
+void setNextPC(tcb_t *thread, register_t v)
 {
     setRegister(thread, NEXT_PC_REG, v);
 }
