@@ -42,6 +42,9 @@
 
 #define GICC_SRE_EL1_SRE             BIT(0)
 
+#define GICC_SRE_EL2_SRE             BIT(0)
+#define GICC_SRE_EL2_EN              BIT(3)
+
 #define GICR_WAKER_ProcessorSleep    BIT(1)
 #define GICR_WAKER_ChildrenAsleep    BIT(2)
 
@@ -60,6 +63,7 @@
 #define ICC_CTLR_EL1    "S3_0_C12_C12_4"
 #define ICC_IGRPEN1_EL1 "S3_0_C12_C12_7"
 #define ICC_SRE_EL1     "S3_0_C12_C12_5"
+#define ICC_SRE_EL2     "S3_4_C12_C9_5"
 #define MPIDR           "mpidr_el1"
 /* Virt control registers */
 #define ICH_AP0R0_EL2   "S3_4_C12_C8_0"
@@ -102,6 +106,7 @@
 #define ICC_CTLR_EL1    " p15, 0,  %0, c12,  c12, 4"
 #define ICC_IGRPEN1_EL1 " p15, 0,  %0, c12,  c12, 7"
 #define ICC_SRE_EL1     " p15, 0,  %0, c12,  c12, 5"
+#define ICC_SRE_EL2     " p15, 4,  %0, c12,  c9, 5"
 #define MPIDR           " p15, 0,  %0, c0,  c0, 5"
 
 /* Note: Virtualization control registers not currently defined for AARCH32 */
