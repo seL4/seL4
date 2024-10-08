@@ -125,11 +125,17 @@ static void gicv3_enable_sre(void)
 {
     uint32_t val = 0;
 
-    /* ICC_SRE_EL1 */
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    /* ICC_SRE_EL2/ICC_HSRE */
+    SYSTEM_READ_WORD(ICC_SRE_EL2, val);
+    val |= GICC_SRE_EL2_SRE | GICC_SRE_EL2_EN;
+    SYSTEM_WRITE_WORD(ICC_SRE_EL2, val);
+#else
+    /* ICC_SRE_EL1/ICC_SRE */
     SYSTEM_READ_WORD(ICC_SRE_EL1, val);
     val |= GICC_SRE_EL1_SRE;
-
     SYSTEM_WRITE_WORD(ICC_SRE_EL1, val);
+#endif
     isb();
 }
 
