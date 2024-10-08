@@ -137,12 +137,21 @@ static void gicv3_redist_wait_for_rwp(void)
 
 static void gicv3_enable_sre(void)
 {
-    word_t val = 0;
+    word_t val;
 
-    /* ICC_SRE_EL1 */
-    SYSTEM_READ_WORD(ICC_SRE_EL1, val);
-    val |= GICC_SRE_EL1_SRE;
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    /* Set SRE to enable register interface for GICv3 in EL2. Disable IRQ/FIQ legacy bypass.
+     * Set ICC_SRE_EL2.Enable to 0, so EL1 accesses to ICC_SRE_EL1 will trap.
+     *
+     * SRE may be RAO/WI and DIB/DFB may be read-only aliases of ICC_SRE_EL3 on cores
+     * with EL3. Writing to them is harmless.
+     */
+    val = GICC_SRE_EL2_SRE | GICC_SRE_EL2_DIB | GICC_SRE_EL2_DFB;
+    SYSTEM_WRITE_WORD(ICC_SRE_EL2, val);
+#endif
 
+    /* Enable register interface for GICv3 in EL1. Disable IRQ/FIQ legacy bypass. */
+    val = GICC_SRE_EL1_SRE | GICC_SRE_EL1_DIB | GICC_SRE_EL1_DFB;
     SYSTEM_WRITE_WORD(ICC_SRE_EL1, val);
     isb();
 }
