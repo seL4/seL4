@@ -145,12 +145,20 @@ void invokeIRQHandler_AckIRQ(irq_t irq)
 
 #if defined ENABLE_SMP_SUPPORT && defined CONFIG_ARCH_ARM
     if (IRQ_IS_PPI(irq) && IRQT_TO_CORE(irq) != getCurrentCPUIndex()) {
+#ifdef CONFIG_ARM_GIC_V3_SUPPORT
+        doRemoteDeactivatePrivateInterrupt(IRQT_TO_CORE(irq), IRQT_TO_IDX(irq));
+#else /* CONFIG_ARM_GIC_V3_SUPPORT */
         doRemoteMaskPrivateInterrupt(IRQT_TO_CORE(irq), false, IRQT_TO_IDX(irq));
+#endif /* CONFIG_ARM_GIC_V3_SUPPORT */
         return;
     }
 #endif
+#ifdef CONFIG_ARM_GIC_V3_SUPPORT
+    deactivateInterrupt(irq);
+#else /* CONFIG_ARM_GIC_V3_SUPPORT */
     maskInterrupt(false, irq);
-#endif
+#endif /* CONFIG_ARM_GIC_V3_SUPPORT */
+#endif /* CONFIG_ARCH_RISCV */
 }
 
 void invokeIRQHandler_SetIRQHandler(irq_t irq, cap_t cap, cte_t *slot)
@@ -217,9 +225,10 @@ void handleInterrupt(irq_t irq)
             printf("Undelivered IRQ: %d\n", (int)IRQT_TO_IRQ(irq));
 #endif
         }
-#ifndef CONFIG_ARCH_RISCV
+#if !defined(CONFIG_ARCH_RISCV) && !defined(CONFIG_ARM_GIC_V3_SUPPORT)
         maskInterrupt(true, irq);
 #endif
+
         break;
     }
 
@@ -263,6 +272,14 @@ void handleInterrupt(irq_t irq)
      * that for any interrupt reported by the platform specific code the generic
      * kernel code does report here that it is done with handling it. */
     ackInterrupt(irq);
+#ifdef CONFIG_ARM_GIC_V3_SUPPORT
+    /* GICv3 uses split priority drop from deactivation, so need to explicitly
+     * deactivate non-forwarded interrupts after they're acknowledged.
+     */
+    if (intStateIRQTable[IRQT_TO_IDX(irq)] != IRQSignal) {
+        deactivateInterrupt(irq);
+    }
+#endif /* CONFIG_ARM_GIC_V3_SUPPORT */
 }
 
 bool_t isIRQActive(irq_t irq)
