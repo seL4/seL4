@@ -173,13 +173,6 @@ static inline void writeHTPIDR(word_t reg)
     asm volatile("mcr p15, 4, %0, c13, c0, 2" :: "r"(reg));
 }
 
-static inline word_t readHTPIDR(void)
-{
-    word_t reg;
-    asm volatile("mrc p15, 4, %0, c13, c0, 2" : "=r"(reg));
-    return reg;
-}
-
 #else
 
 /* used in other files without guards */
@@ -188,10 +181,6 @@ static inline void invalidateHypTLB(void) {}
 static inline void writeContextIDPL2(word_t pd_val) {}
 static inline void writeContextIDAndPD(word_t id, word_t pd_val) {}
 static inline void writeHTPIDR(word_t htpidr) {}
-static inline word_t readHTPIDR(void)
-{
-    return 0;
-}
 static inline paddr_t addressTranslateS1(vptr_t vaddr)
 {
     return vaddr;
