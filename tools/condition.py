@@ -40,3 +40,52 @@ def condition_to_cpp(conditions):
             raise Exception("Unrecognized element `{}` in condition".format(expr.tagName))
 
     return helper(children[0])
+
+
+def remove_prefix(text, prefix) -> str:
+    if text.startswith(prefix):
+        return text[len(prefix):]
+    return text
+
+
+def expr_to_bool(expr, values) -> bool:
+    if expr.tagName == "and":
+        for child in expr.childNodes:
+            if not expr_to_bool(child, values):
+                return False
+        return True
+    elif expr.tagName == "or":
+        for chlid in expr.childNodes:
+            if expr_to_bool(child, values):
+                return True
+        return False
+    elif expr.tagName == "not":
+        assert len(expr.childNodes) == 1
+        return not expr_to_bool(expr.childNodes[0], values)
+    elif expr.tagName == "config":
+        cfg_var = expr.getAttribute("var")
+        if not cfg_var:
+            raise Exception("Missing or empty config variable")
+
+        return values[remove_prefix(cfg_var, "CONFIG_")]
+    raise Exception("Unrecognized element `{}` in condition".format(expr.tagName))
+
+
+# values to match on conditions and resolve them
+def condition_to_bool(conditions, values) -> bool:
+    n = len(conditions)
+    # Expect zero or one <condition> tag in the conditions list.
+    assert n <= 1
+    if n == 0:
+        return True
+
+    remove_ws_comments(conditions[0])
+    children = conditions[0].childNodes
+    if not children or len(children) == 0:
+        return True
+    # Expect that a condition tag has exactly one child node.
+    assert len(children) == 1
+
+    remove_ws_comments(children[0])
+
+    return expr_to_bool(children[0], values)
