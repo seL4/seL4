@@ -563,7 +563,7 @@ exception_t Arch_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr,
 void
 Arch_prepareThreadDelete(tcb_t * thread) {
 #ifdef CONFIG_HAVE_FPU
-    fpuThreadDelete(thread);
+    fpuRelease(thread);
 #endif
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
