@@ -223,7 +223,7 @@ sporadic server algorithm rather than to a continuous constant bandwidth.
 The kernel does not conduct any schedulability tests, as task admission is left to user-level policy
 and can be conducted online or offline, statically or dynamically or not at all.
 
-\subsection{Scheduling Context Donation}
+\subsection{Scheduling Context Donation} \label{sec:sc_donation}
 
 In addition to explicitly binding and removing scheduling contexts through
 \apifunc{seL4\_SchedContext\_Bind}{schedcontext_bind} and
