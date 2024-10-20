@@ -65,3 +65,9 @@ message source can be determined.
 
 Once a notification has been bound, the only thread that may perform
 \apifunc{seL4\_Wait}{sel4_wait} on the notification is the bound thread.
+
+In the MCS version of the kernel, \obj{Notification} objects can be bound with scheduling
+contexts: if a signal is delivered to a \obj{Notification} object with a passive thread
+(\autoref{sec:passive}) blocked waiting on it, the passive thread will receive the scheduling
+context bound to the \obj{Notification} object, returning the context back to the \obj{Notification} 
+object when the thread blocks on the notification again. See \autoref{sec:sc_donation} for details.
