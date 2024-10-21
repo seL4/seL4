@@ -1,5 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -29,12 +31,12 @@ static inline void plat_invalidateL2Range(paddr_t start, paddr_t end);
 static inline void plat_cleanInvalidateL2Range(paddr_t start, paddr_t end);
 static inline void plat_cleanInvalidateL2Cache(void);
 
-void cleanInvalidateCacheRange_RAM(word_t start, word_t end, paddr_t pstart);
-void cleanCacheRange_RAM(word_t start, word_t end, paddr_t pstart);
-void cleanCacheRange_PoU(word_t start, word_t end, paddr_t pstart);
-void invalidateCacheRange_RAM(word_t start, word_t end, paddr_t pstart);
-void invalidateCacheRange_I(word_t start, word_t end, paddr_t pstart);
-void branchFlushRange(word_t start, word_t end, paddr_t pstart);
+void cleanInvalidateCacheRange_RAM(vptr_t start, vptr_t end, paddr_t pstart);
+void cleanCacheRange_RAM(vptr_t start, vptr_t end, paddr_t pstart);
+void cleanCacheRange_PoU(vptr_t start, vptr_t end, paddr_t pstart);
+void invalidateCacheRange_RAM(vptr_t start, vptr_t end, paddr_t pstart);
+void invalidateCacheRange_I(vptr_t start, vptr_t end, paddr_t pstart);
+void branchFlushRange(vptr_t start, vptr_t end, paddr_t pstart);
 
 void clean_D_PoU(void);
 void cleanInvalidate_D_PoC(void);
@@ -46,7 +48,7 @@ void cleanInvalidateL1Caches(void);
 static inline void clearMemory(word_t *ptr, word_t bits)
 {
     memzero(ptr, BIT(bits));
-    cleanCacheRange_RAM((word_t)ptr, (word_t)ptr + BIT(bits) - 1,
+    cleanCacheRange_RAM((vptr_t)ptr, (vptr_t)ptr + BIT(bits) - 1,
                         addrFromPPtr(ptr));
 }
 
@@ -54,7 +56,7 @@ static inline void clearMemory(word_t *ptr, word_t bits)
 static inline void clearMemory_PT(word_t *ptr, word_t bits)
 {
     memzero(ptr, BIT(bits));
-    cleanCacheRange_PoU((word_t)ptr, (word_t)ptr + BIT(bits) - 1,
+    cleanCacheRange_PoU((vptr_t)ptr, (vptr_t)ptr + BIT(bits) - 1,
                         addrFromPPtr(ptr));
 }
 

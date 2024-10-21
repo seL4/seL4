@@ -1,5 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -40,7 +42,7 @@ static exception_t reduceZombie(cte_t *slot, bool_t exposed);
 #endif
 
 exception_t decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
-                                  word_t *buffer)
+                                  register_t *buffer)
 {
     lookupSlot_ret_t lu_ret;
     cte_t *destSlot;
@@ -326,8 +328,7 @@ exception_t invokeCNodeCancelBadgedSends(cap_t cap)
 {
     word_t badge = cap_endpoint_cap_get_capEPBadge(cap);
     if (badge) {
-        endpoint_t *ep = (endpoint_t *)
-                         cap_endpoint_cap_get_capEPPtr(cap);
+        endpoint_t *ep = EP_PTR(cap_endpoint_cap_get_capEPPtr(cap));
         cancelBadgedSends(ep, badge);
     }
     return EXCEPTION_NONE;
@@ -418,7 +419,7 @@ void cteInsert(cap_t newCap, cte_t *srcSlot, cte_t *destSlot)
 
     newCapIsRevocable = isCapRevocable(newCap, srcCap);
 
-    newMDB = mdb_node_set_mdbPrev(srcMDB, CTE_REF(srcSlot));
+    newMDB = mdb_node_set_mdbPrev(srcMDB, (pptr_t)CTE_PTR(srcSlot));
     newMDB = mdb_node_set_mdbRevocable(newMDB, newCapIsRevocable);
     newMDB = mdb_node_set_mdbFirstBadged(newMDB, newCapIsRevocable);
 
@@ -434,18 +435,18 @@ void cteInsert(cap_t newCap, cte_t *srcSlot, cte_t *destSlot)
 
     destSlot->cap = newCap;
     destSlot->cteMDBNode = newMDB;
-    mdb_node_ptr_set_mdbNext(&srcSlot->cteMDBNode, CTE_REF(destSlot));
+    mdb_node_ptr_set_mdbNext(&srcSlot->cteMDBNode, (pptr_t)CTE_PTR(destSlot));
     if (mdb_node_get_mdbNext(newMDB)) {
         mdb_node_ptr_set_mdbPrev(
             &CTE_PTR(mdb_node_get_mdbNext(newMDB))->cteMDBNode,
-            CTE_REF(destSlot));
+            (pptr_t)CTE_PTR(destSlot));
     }
 }
 
 void cteMove(cap_t newCap, cte_t *srcSlot, cte_t *destSlot)
 {
     mdb_node_t mdb;
-    word_t prev_ptr, next_ptr;
+    pptr_t prev_ptr, next_ptr;
 
     /* Haskell error: "cteMove to non-empty destination" */
     assert(cap_get_capType(destSlot->cap) == cap_null_cap);
@@ -463,13 +464,13 @@ void cteMove(cap_t newCap, cte_t *srcSlot, cte_t *destSlot)
     if (prev_ptr)
         mdb_node_ptr_set_mdbNext(
             &CTE_PTR(prev_ptr)->cteMDBNode,
-            CTE_REF(destSlot));
+            (pptr_t)CTE_PTR(destSlot));
 
     next_ptr = mdb_node_get_mdbNext(mdb);
     if (next_ptr)
         mdb_node_ptr_set_mdbPrev(
             &CTE_PTR(next_ptr)->cteMDBNode,
-            CTE_REF(destSlot));
+            (pptr_t)CTE_PTR(destSlot));
 }
 
 void capSwapForDelete(cte_t *slot1, cte_t *slot2)
@@ -489,7 +490,7 @@ void capSwapForDelete(cte_t *slot1, cte_t *slot2)
 void cteSwap(cap_t cap1, cte_t *slot1, cap_t cap2, cte_t *slot2)
 {
     mdb_node_t mdb1, mdb2;
-    word_t next_ptr, prev_ptr;
+    pptr_t next_ptr, prev_ptr;
 
     slot1->cap = cap2;
     slot2->cap = cap1;
@@ -500,13 +501,13 @@ void cteSwap(cap_t cap1, cte_t *slot1, cap_t cap2, cte_t *slot2)
     if (prev_ptr)
         mdb_node_ptr_set_mdbNext(
             &CTE_PTR(prev_ptr)->cteMDBNode,
-            CTE_REF(slot2));
+            (pptr_t)CTE_PTR(slot2));
 
     next_ptr = mdb_node_get_mdbNext(mdb1);
     if (next_ptr)
         mdb_node_ptr_set_mdbPrev(
             &CTE_PTR(next_ptr)->cteMDBNode,
-            CTE_REF(slot2));
+            (pptr_t)CTE_PTR(slot2));
 
     mdb2 = slot2->cteMDBNode;
     slot1->cteMDBNode = mdb2;
@@ -516,13 +517,13 @@ void cteSwap(cap_t cap1, cte_t *slot1, cap_t cap2, cte_t *slot2)
     if (prev_ptr)
         mdb_node_ptr_set_mdbNext(
             &CTE_PTR(prev_ptr)->cteMDBNode,
-            CTE_REF(slot1));
+            (pptr_t)CTE_PTR(slot1));
 
     next_ptr = mdb_node_get_mdbNext(mdb2);
     if (next_ptr)
         mdb_node_ptr_set_mdbPrev(
             &CTE_PTR(next_ptr)->cteMDBNode,
-            CTE_REF(slot1));
+            (pptr_t)CTE_PTR(slot1));
 }
 
 exception_t cteRevoke(cte_t *slot)
@@ -575,10 +576,10 @@ static void emptySlot(cte_t *slot, cap_t cleanupInfo)
         next = CTE_PTR(mdb_node_get_mdbNext(mdbNode));
 
         if (prev) {
-            mdb_node_ptr_set_mdbNext(&prev->cteMDBNode, CTE_REF(next));
+            mdb_node_ptr_set_mdbNext(&prev->cteMDBNode, (pptr_t)CTE_PTR(next));
         }
         if (next) {
-            mdb_node_ptr_set_mdbPrev(&next->cteMDBNode, CTE_REF(prev));
+            mdb_node_ptr_set_mdbPrev(&next->cteMDBNode, (pptr_t)CTE_PTR(prev));
         }
         if (next)
             mdb_node_ptr_set_mdbFirstBadged(&next->cteMDBNode,
@@ -598,7 +599,7 @@ static inline bool_t CONST capRemovable(cap_t cap, cte_t *slot)
         return true;
     case cap_zombie_cap: {
         word_t n = cap_zombie_cap_get_capZombieNumber(cap);
-        cte_t *z_slot = (cte_t *)cap_zombie_cap_get_capZombiePtr(cap);
+        cte_t *z_slot = CTE_PTR(cap_zombie_cap_get_capZombiePtr(cap));
         return (n == 0 || (n == 1 && slot == z_slot));
     }
     default:
@@ -668,7 +669,7 @@ static exception_t reduceZombie(cte_t *slot, bool_t immediate)
     exception_t status;
 
     assert(cap_get_capType(slot->cap) == cap_zombie_cap);
-    ptr = (cte_t *)cap_zombie_cap_get_capZombiePtr(slot->cap);
+    ptr = CTE_PTR(cap_zombie_cap_get_capZombiePtr(slot->cap));
     n = cap_zombie_cap_get_capZombieNumber(slot->cap);
     type = cap_zombie_cap_get_capZombieType(slot->cap);
 
@@ -689,7 +690,7 @@ static exception_t reduceZombie(cte_t *slot, bool_t immediate)
 
         case cap_zombie_cap: {
             cte_t *ptr2 =
-                (cte_t *)cap_zombie_cap_get_capZombiePtr(slot->cap);
+                CTE_PTR(cap_zombie_cap_get_capZombiePtr(slot->cap));
 
             if (ptr == ptr2 &&
                 cap_zombie_cap_get_capZombieNumber(slot->cap) == n &&
@@ -748,11 +749,11 @@ void insertNewCap(cte_t *parent, cte_t *slot, cap_t cap)
 
     next = CTE_PTR(mdb_node_get_mdbNext(parent->cteMDBNode));
     slot->cap = cap;
-    slot->cteMDBNode = mdb_node_new(CTE_REF(next), true, true, CTE_REF(parent));
+    slot->cteMDBNode = mdb_node_new((pptr_t)CTE_PTR(next), true, true, (pptr_t)CTE_PTR(parent));
     if (next) {
-        mdb_node_ptr_set_mdbPrev(&next->cteMDBNode, CTE_REF(slot));
+        mdb_node_ptr_set_mdbPrev(&next->cteMDBNode, (pptr_t)CTE_PTR(slot));
     }
-    mdb_node_ptr_set_mdbNext(&parent->cteMDBNode, CTE_REF(slot));
+    mdb_node_ptr_set_mdbNext(&parent->cteMDBNode, (pptr_t)CTE_PTR(slot));
 }
 
 #ifndef CONFIG_KERNEL_MCS
@@ -764,7 +765,7 @@ void setupReplyMaster(tcb_t *thread)
     if (cap_get_capType(slot->cap) == cap_null_cap) {
         /* Haskell asserts that no reply caps exist for this thread here. This
          * cannot be translated. */
-        slot->cap = cap_reply_cap_new(true, true, TCB_REF(thread));
+        slot->cap = cap_reply_cap_new(true, true, (pptr_t)TCB_PTR(thread));
         slot->cteMDBNode = nullMDBNode;
         mdb_node_ptr_set_mdbRevocable(&slot->cteMDBNode, true);
         mdb_node_ptr_set_mdbFirstBadged(&slot->cteMDBNode, true);
@@ -899,7 +900,7 @@ bool_t PURE slotCapLongRunningDelete(cte_t *slot)
 
 /* This implementation is specialised to the (current) limit
  * of one cap receive slot. */
-cte_t *getReceiveSlots(tcb_t *thread, word_t *buffer)
+cte_t *getReceiveSlots(tcb_t *thread, register_t *buffer)
 {
     cap_transfer_t ct;
     cptr_t cptr;
@@ -934,7 +935,7 @@ cte_t *getReceiveSlots(tcb_t *thread, word_t *buffer)
     return slot;
 }
 
-cap_transfer_t PURE loadCapTransfer(word_t *buffer)
+cap_transfer_t PURE loadCapTransfer(register_t *buffer)
 {
     const int offset = seL4_MsgMaxLength + seL4_MsgMaxExtraCaps + 2;
     return capTransferFromWords(buffer + offset);

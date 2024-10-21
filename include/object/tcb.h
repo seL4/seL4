@@ -1,5 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -25,8 +27,8 @@ struct tcb_queue {
 };
 typedef struct tcb_queue tcb_queue_t;
 
-static inline unsigned int setMR(tcb_t *receiver, word_t *receiveIPCBuffer,
-                                 unsigned int offset, word_t reg)
+static inline unsigned int setMR(tcb_t *receiver, register_t *receiveIPCBuffer,
+                                 unsigned int offset, register_t reg)
 {
     if (offset >= n_msgRegisters) {
         if (receiveIPCBuffer) {
@@ -171,28 +173,28 @@ void setupCallerCap(tcb_t *sender, tcb_t *receiver, bool_t canGrant);
 void deleteCallerCap(tcb_t *receiver);
 #endif
 
-word_t copyMRs(tcb_t *sender, word_t *sendBuf, tcb_t *receiver,
-               word_t *recvBuf, word_t n);
+word_t copyMRs(tcb_t *sender, register_t *sendBuf, tcb_t *receiver,
+               register_t *recvBuf, word_t n);
 exception_t decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
-                                cte_t *slot, bool_t call, word_t *buffer);
-exception_t decodeCopyRegisters(cap_t cap, word_t length, word_t *buffer);
+                                cte_t *slot, bool_t call, register_t *buffer);
+exception_t decodeCopyRegisters(cap_t cap, word_t length, register_t *buffer);
 exception_t decodeReadRegisters(cap_t cap, word_t length, bool_t call,
-                                word_t *buffer);
-exception_t decodeWriteRegisters(cap_t cap, word_t length, word_t *buffer);
+                                register_t *buffer);
+exception_t decodeWriteRegisters(cap_t cap, word_t length, register_t *buffer);
 exception_t decodeTCBConfigure(cap_t cap, word_t length,
-                               cte_t *slot, word_t *buffer);
-exception_t decodeSetPriority(cap_t cap, word_t length, word_t *buffer);
-exception_t decodeSetMCPriority(cap_t cap, word_t length, word_t *buffer);
+                               cte_t *slot, register_t *buffer);
+exception_t decodeSetPriority(cap_t cap, word_t length, register_t *buffer);
+exception_t decodeSetMCPriority(cap_t cap, word_t length, register_t *buffer);
 #ifdef CONFIG_KERNEL_MCS
-exception_t decodeSetSchedParams(cap_t cap, word_t length, cte_t *slot, word_t *buffer);
+exception_t decodeSetSchedParams(cap_t cap, word_t length, cte_t *slot, register_t *buffer);
 #else
-exception_t decodeSetSchedParams(cap_t cap, word_t length, word_t *buffer);
+exception_t decodeSetSchedParams(cap_t cap, word_t length, register_t *buffer);
 #endif
 exception_t decodeSetIPCBuffer(cap_t cap, word_t length,
-                               cte_t *slot, word_t *buffer);
+                               cte_t *slot, register_t *buffer);
 exception_t decodeSetSpace(cap_t cap, word_t length,
-                           cte_t *slot, word_t *buffer);
-exception_t decodeDomainInvocation(word_t invLabel, word_t length, word_t *buffer);
+                           cte_t *slot, register_t *buffer);
+exception_t decodeDomainInvocation(word_t invLabel, word_t length, register_t *buffer);
 exception_t decodeBindNotification(cap_t cap);
 exception_t decodeUnbindNotification(cap_t cap);
 #ifdef CONFIG_KERNEL_MCS
@@ -261,14 +263,14 @@ exception_t invokeTCB_CopyRegisters(tcb_t *dest, tcb_t *src,
 exception_t invokeTCB_ReadRegisters(tcb_t *src, bool_t suspendSource,
                                     word_t n, word_t arch, bool_t call);
 exception_t invokeTCB_WriteRegisters(tcb_t *dest, bool_t resumeTarget,
-                                     word_t n, word_t arch, word_t *buffer);
+                                     word_t n, word_t arch, register_t *buffer);
 exception_t invokeTCB_NotificationControl(tcb_t *tcb, notification_t *ntfnPtr);
 
-cptr_t PURE getExtraCPtr(word_t *bufferPtr, word_t i);
-void setExtraBadge(word_t *bufferPtr, word_t badge, word_t i);
+cptr_t PURE getExtraCPtr(register_t *bufferPtr, word_t i);
+void setExtraBadge(register_t *bufferPtr, word_t badge, word_t i);
 
-exception_t lookupExtraCaps(tcb_t *thread, word_t *bufferPtr, seL4_MessageInfo_t info);
-word_t setMRs_syscall_error(tcb_t *thread, word_t *receiveIPCBuffer);
+exception_t lookupExtraCaps(tcb_t *thread, register_t *bufferPtr, seL4_MessageInfo_t info);
+word_t setMRs_syscall_error(tcb_t *thread, register_t *receiveIPCBuffer);
 word_t CONST Arch_decodeTransfer(word_t flags);
 exception_t CONST Arch_performTransfer(word_t arch, tcb_t *tcb_src,
                                        tcb_t *tcb_dest);

@@ -1,5 +1,7 @@
 --
 -- Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+-- Copyright 2024, Capabilities Limited
+-- CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
 --
 -- SPDX-License-Identifier: GPL-2.0-only
 --
@@ -17,12 +19,18 @@ base 64(48,1)
 -- we need the structures to be visible here when building
 -- the capType
 #include <object/structures_64.bf>
- 
+
 ---- ARM-specific caps
 
-block frame_cap {
+block frame_cap (capFMappedASID, capFBasePtr, capFSize, capFMappedAddress,
+capFVMRights, capFIsDevice, capType) {
     field capFMappedASID             16
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding                          48
+#else
     field_high capFBasePtr           48
+#endif
 
     field capType                    5
     field capFSize                   2
@@ -30,24 +38,48 @@ block frame_cap {
     field capFVMRights               2
     field capFIsDevice               1
     padding                          6
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    cheri_cap capFBasePtr            128
+#endif
 }
 
 -- Page table caps
-block page_table_cap {
+block page_table_cap (capPTMappedASID, capPTBasePtr, capPTIsMapped,
+capPTMappedAddress, capType) {
     field capPTMappedASID            16
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding                          48
+#else
     field_high capPTBasePtr          48
+#endif
 
     field capType                    5
     padding                          10
     field capPTIsMapped              1
     field_high capPTMappedAddress    28
     padding                          20
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    cheri_cap capPTBasePtr 128
+#endif
 }
 
 -- First-level page table (vspace_root)
-block vspace_cap {
+block vspace_cap(capVSMappedASID, capVSBasePtr, capVSIsMapped,
+#ifdef CONFIG_ARM_SMMU
+capVSMappedCB,
+#endif
+capType) {
     field capVSMappedASID            16
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding                          48
+
+#else
     field_high capVSBasePtr          48
+#endif
 
     field capType                    5
     field capVSIsMapped              1
@@ -57,6 +89,10 @@ block vspace_cap {
 #else
     padding                          58
 #endif
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    cheri_cap capVSBasePtr 128
+#endif
 }
 
 -- Cap to the table of 2^7 ASID pools
@@ -65,6 +101,10 @@ block asid_control_cap {
 
     field capType                    5
     padding                          59
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding 128
+#endif
 }
 
 -- Cap to a pool of 2^9 ASIDs
@@ -73,8 +113,16 @@ block asid_pool_cap {
 
     field capType                   5
     field capASIDBase               16
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding                         43
+#else
     padding                         6
     field_high capASIDPool          37
+#endif
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    cheri_cap  capASIDPool          128
+#endif
 }
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
@@ -82,8 +130,14 @@ block vcpu_cap {
     padding                         64
 
     field      capType              5
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding                         48
+    padding                         11
+    cheri_cap capVCPUPtr 128
+#else
     field_high capVCPUPtr           48
     padding                         11
+#endif
 }
 #endif
 
@@ -94,6 +148,10 @@ block sid_control_cap {
 
     field capType  5
     padding        59
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding 128
+#endif
 }
 
 block sid_cap {
@@ -103,6 +161,10 @@ block sid_cap {
 
     field capType        5
     padding 59
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding 128
+#endif
 }
 
 block cb_control_cap {
@@ -110,6 +172,10 @@ block cb_control_cap {
 
     field capType        5
     padding              59
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding 128
+#endif
 }
 
 
@@ -122,6 +188,10 @@ block cb_cap {
 
     field capType         5
     padding               59
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding 128
+#endif
 }
 
 #endif
@@ -132,6 +202,10 @@ block smc_cap {
 
     field capType  5
     padding        59
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding 128
+#endif
 }
 #endif
 
@@ -211,6 +285,14 @@ block VPPIEvent {
 }
 #endif
 
+block CHERIfault {
+    field address                   64
+    field FSR                       32
+    field instructionFault          1
+    padding                         27
+    field seL4_FaultType            4
+}
+
 -- VM attributes
 
 block vm_attributes {
@@ -225,6 +307,11 @@ block vm_attributes {
 block asid_map_none {
     padding                         63
     field type                      1
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding 64
+    padding 128
+#endif
 }
 
 --- hw_vmids are required in hyp mode
@@ -235,7 +322,12 @@ block asid_map_vspace {
 #else
     padding                         16
 #endif
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding                         36
+#else
     field_high vspace_root          36
+#endif
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     padding                         2
     field stored_hw_vmid            8
@@ -244,6 +336,11 @@ block asid_map_vspace {
     padding                         11
 #endif
     field type                      1
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding 64
+    cheri_cap vspace_root           128
+#endif
 }
 
 tagged_union asid_map type {
@@ -258,7 +355,14 @@ base 64(48,0)
 -- See the definition of pte_type for explanation
 -- for pte_sw_type and pte_hw_type
 block pte_table {
+#if defined(CONFIG_HAVE_CHERI)
+    padding                         1
+    field LC                        2
+    field SC                        1
+    field CDBM                      1
+#else
     padding                         5
+#endif
     field pte_sw_type               1
     padding                         10
     field_high pt_base_address      36
@@ -269,7 +373,14 @@ block pte_table {
 
 -- The level 1 and 2 page pte structure
 block pte_page {
+#if defined(CONFIG_HAVE_CHERI)
+    padding                         1
+    field LC                        2
+    field SC                        1
+    field CDBM                      1
+#else
     padding                         5
+#endif
     field pte_sw_type               1
     padding                         3
     field UXN                       1
@@ -290,7 +401,14 @@ block pte_page {
 
 -- The level 3 page pte structure
 block pte_4k_page {
+#if defined(CONFIG_HAVE_CHERI)
+    padding                         1
+    field LC                        2
+    field SC                        1
+    field CDBM                      1
+#else
     padding                         5
+#endif
     field pte_sw_type               1
     padding                         3
     field UXN                       1

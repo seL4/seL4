@@ -2,6 +2,8 @@
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
  * Copyright 2021, HENSOLDT Cyber
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -143,8 +145,8 @@ static inline void hwASIDFlush(asid_t asid)
 
 #endif /* end of !ENABLE_SMP_SUPPORT */
 
-word_t PURE getRestartPC(tcb_t *thread);
-void setNextPC(tcb_t *thread, word_t v);
+register_t PURE getRestartPC(tcb_t *thread);
+void setNextPC(tcb_t *thread, register_t v);
 
 /* Cleaning memory before user-level access */
 static inline void clearMemory(void *ptr, unsigned int bits)
@@ -157,9 +159,13 @@ static inline void write_satp(word_t value)
     asm volatile("csrw satp, %0" :: "rK"(value));
 }
 
-static inline void write_stvec(word_t value)
+static inline void write_stvec(pptr_t value)
 {
+#if defined(__CHERI_PURE_CAPABILITY__)
+    asm volatile("cspecialw stcc, %0" :: ASM_REG_CONSTR "K"(value));
+#else
     asm volatile("csrw stvec, %0" :: "rK"(value));
+#endif
 }
 
 static inline word_t read_stval(void)
@@ -176,10 +182,14 @@ static inline word_t read_scause(void)
     return temp;
 }
 
-static inline word_t read_sepc(void)
+static inline register_t read_sepc(void)
 {
-    word_t temp;
+    register_t temp;
+#if defined(CONFIG_HAVE_CHERI)
+    asm volatile("cspecialr %0, sepcc" : "="ASM_REG_CONSTR(temp));
+#else
     asm volatile("csrr %0, sepc" : "=r"(temp));
+#endif
     return temp;
 }
 
@@ -221,10 +231,14 @@ static inline void clear_sie_mask(word_t mask_low)
     asm volatile("csrrc %0, sie, %1" : "=r"(temp) : "rK"(mask_low));
 }
 
-static inline word_t read_sscratch(void)
+static inline register_t read_sscratch(void)
 {
-    word_t temp;
+    register_t temp;
+#if defined(CONFIG_HAVE_CHERI)
+    asm volatile("cspecialr %0, sscratchc" : "="ASM_REG_CONSTR(temp));
+#else
     asm volatile("csrr %0, sscratch" : "=r"(temp));
+#endif
     return temp;
 }
 
@@ -292,7 +306,7 @@ static inline void arch_pause(void)
 #endif
 
 /* Update the value of the actual register to hold the expected value */
-static inline exception_t Arch_setTLSRegister(word_t tls_base)
+static inline exception_t Arch_setTLSRegister(register_t tls_base)
 {
     /* The register is always reloaded upon return from kernel. */
     setRegister(NODE_STATE(ksCurThread), TLS_BASE, tls_base);

@@ -13,7 +13,7 @@
 #include <plat/machine.h>
 
 exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
-                                            cte_t *srcSlot, word_t *buffer);
+                                            cte_t *srcSlot, register_t *buffer);
 
 /* Handle a platform-reserved IRQ. */
 static inline void handleReservedIRQ(irq_t irq)

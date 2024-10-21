@@ -1,5 +1,7 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: BSD-2-Clause
  */
@@ -51,6 +53,18 @@ typedef enum {
     seL4_VMFault_Length,
     SEL4_FORCE_LONG_ENUM(seL4_VMFault_Msg),
 } seL4_VMFault_Msg;
+
+/* Placeholder for CHERI fault messages.
+ * cheriTODO: introduce a new CHERI fault format and decouple it from VM faults,
+ * and expose it to user-level.
+ */
+typedef enum {
+    seL4_CHERIFault_IP,
+    seL4_CHERIFault_Addr,
+    seL4_CHERIFault_FSR,
+    seL4_CHERIFault_Length,
+    SEL4_FORCE_LONG_ENUM(seL4_CHERIFault_Msg),
+} seL4_CHERIFault_Msg;
 
 typedef enum {
     seL4_VGICMaintenance_IDX,
@@ -165,22 +179,40 @@ typedef enum {
 
 #define seL4_DataFault 0
 #define seL4_InstructionFault 1
+#define seL4_CHERIFault 2
+
 /* object sizes - 2^n */
 #define seL4_PageBits 12
 #define seL4_LargePageBits 21
 #define seL4_HugePageBits 30
-#define seL4_SlotBits 5
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+#define seL4_TCBBits 12
+#define seL4_SlotBits 7
+#define seL4_EndpointBits 7
+#define seL4_ASIDPoolIndexBits 7
+#define seL4_RegisterSizeBits 5
+#else
 #if defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYP_ENABLE_VCPU_CP14_SAVE_AND_RESTORE)
 #define seL4_TCBBits 12
 #else
 #define seL4_TCBBits 11
 #endif
+#define seL4_SlotBits 5
 #define seL4_EndpointBits 4
+#define seL4_ASIDPoolIndexBits 9
+#define seL4_RegisterSizeBits 3
+#endif
+
 #ifdef CONFIG_KERNEL_MCS
 #define seL4_NotificationBits 6
 #define seL4_ReplyBits           5
 #else
+#if defined(__CHERI_PURE_CAPABILITY__)
+#define seL4_NotificationBits 8
+#else
 #define seL4_NotificationBits 5
+#endif
 #endif
 
 #define seL4_PageTableBits 12
@@ -189,7 +221,6 @@ typedef enum {
 
 #define seL4_NumASIDPoolsBits 7
 #define seL4_ASIDPoolBits 12
-#define seL4_ASIDPoolIndexBits 9
 #define seL4_IOPageTableBits 12
 #define seL4_WordSizeBits 3
 
@@ -219,7 +250,7 @@ typedef enum {
 
 #ifndef __ASSEMBLER__
 SEL4_SIZE_SANITY(seL4_PageTableEntryBits, seL4_PageTableIndexBits, seL4_PageTableBits);
-SEL4_SIZE_SANITY(seL4_WordSizeBits, seL4_ASIDPoolIndexBits, seL4_ASIDPoolBits);
+SEL4_SIZE_SANITY(seL4_RegisterSizeBits, seL4_ASIDPoolIndexBits, seL4_ASIDPoolBits);
 SEL4_SIZE_SANITY(seL4_VSpaceEntryBits, seL4_VSpaceIndexBits, seL4_VSpaceBits);
 #endif
 
@@ -230,8 +261,13 @@ SEL4_SIZE_SANITY(seL4_VSpaceEntryBits, seL4_VSpaceIndexBits, seL4_VSpaceBits);
 
 #define seL4_FastMessageRegisters 4
 
+#if defined(CONFIG_HAVE_CHERI)
+/* IPC buffer is 2048 bytes, giving size bits of 11 */
+#define seL4_IPCBufferSizeBits 11
+#else
 /* IPC buffer is 1024 bytes, giving size bits of 10 */
 #define seL4_IPCBufferSizeBits 10
+#endif
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 

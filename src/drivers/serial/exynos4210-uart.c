@@ -33,6 +33,10 @@
 #define UART_REG(X) ((volatile uint32_t *)(UART_PPTR + (X)))
 
 #ifdef CONFIG_PRINTING
+void init_console(void)
+{
+}
+
 void uart_drv_putchar(unsigned char c)
 {
     while ((*UART_REG(UTRSTAT) & TXBUF_EMPTY) == 0);

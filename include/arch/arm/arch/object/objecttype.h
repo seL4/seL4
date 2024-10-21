@@ -22,7 +22,7 @@ bool_t CONST Arch_isFrameType(word_t type);
 cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory);
 exception_t Arch_decodeInvocation(word_t invLabel, word_t length,
                                   cptr_t cptr, cte_t *slot, cap_t cap,
-                                  bool_t call, word_t *buffer);
+                                  bool_t call, register_t *buffer);
 void Arch_prepareThreadDelete(tcb_t *thread);
 word_t Arch_getObjectSize(word_t t);
 

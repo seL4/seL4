@@ -8,22 +8,22 @@
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 
-static inline void writeTPIDR_EL2(word_t reg)
+static inline void writeTPIDR_EL2(register_t reg)
 {
-    MSR("tpidr_el2", reg);
+    PMSR("tpidr_el2", reg);
 }
 
-static inline word_t readTPIDR_EL2(void)
+static inline register_t readTPIDR_EL2(void)
 {
-    word_t reg;
-    MRS("tpidr_el2", reg);
+    register_t reg;
+    PMRS("tpidr_el2", reg);
     return reg;
 }
 
 #else
 
-static inline void writeTPIDR_EL2(word_t reg) {}
-static inline word_t readTPIDR_EL2(void)
+static inline void writeTPIDR_EL2(register_t reg) {}
+static inline register_t readTPIDR_EL2(void)
 {
     return 0;
 }

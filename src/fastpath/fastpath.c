@@ -1,5 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -175,7 +177,7 @@ void NORETURN fastpath_call(word_t cptr, word_t msgInfo)
 #endif
 
     /* Dequeue the destination. */
-    endpoint_ptr_set_epQueue_head_np(ep_ptr, TCB_REF(dest->tcbEPNext));
+    endpoint_ptr_set_epQueue_head_np(ep_ptr, (pptr_t)TCB_PTR(dest->tcbEPNext));
     if (unlikely(dest->tcbEPNext)) {
         dest->tcbEPNext->tcbEPPrev = NULL;
     } else {
@@ -214,10 +216,10 @@ void NORETURN fastpath_call(word_t cptr, word_t msgInfo)
     /* Insert reply cap */
     word_t replyCanGrant = thread_state_ptr_get_blockingIPCCanGrant(&dest->tcbState);;
     cap_reply_cap_ptr_new_np(&callerSlot->cap, replyCanGrant, 0,
-                             TCB_REF(NODE_STATE(ksCurThread)));
-    mdb_node_ptr_set_mdbPrev_np(&callerSlot->cteMDBNode, CTE_REF(replySlot));
+                             (pptr_t)TCB_PTR(NODE_STATE(ksCurThread)));
+    mdb_node_ptr_set_mdbPrev_np(&callerSlot->cteMDBNode, (pptr_t)CTE_PTR(replySlot));
     mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(
-        &replySlot->cteMDBNode, CTE_REF(callerSlot), 1, 1);
+        &replySlot->cteMDBNode, (pptr_t)CTE_PTR(callerSlot), 1, 1);
 #endif
 
     fastpath_copy_mrs(length, NODE_STATE(ksCurThread), dest);
@@ -445,12 +447,12 @@ void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo)
 
     /* Set thread state to BlockedOnReceive */
     thread_state_ptr_mset_blockingObject_tsType(
-        &NODE_STATE(ksCurThread)->tcbState, (word_t)ep_ptr, ThreadState_BlockedOnReceive);
+        &NODE_STATE(ksCurThread)->tcbState, (pptr_t)ep_ptr, ThreadState_BlockedOnReceive);
 #ifdef CONFIG_KERNEL_MCS
     /* unlink reply object from caller */
     thread_state_ptr_set_replyObject_np(&caller->tcbState, 0);
     /* set the reply object */
-    thread_state_ptr_set_replyObject_np(&NODE_STATE(ksCurThread)->tcbState, REPLY_REF(reply_ptr));
+    thread_state_ptr_set_replyObject_np(&NODE_STATE(ksCurThread)->tcbState, (pptr_t)REPLY_PTR(reply_ptr));
     reply_ptr->replyTCB = NODE_STATE(ksCurThread);
 #else
     thread_state_ptr_set_blockingIPCCanGrant(&NODE_STATE(ksCurThread)->tcbState,
@@ -464,15 +466,15 @@ void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo)
         NODE_STATE(ksCurThread)->tcbEPNext = NULL;
 
         /* Set head/tail of queue and endpoint state. */
-        endpoint_ptr_set_epQueue_head_np(ep_ptr, TCB_REF(NODE_STATE(ksCurThread)));
-        endpoint_ptr_mset_epQueue_tail_state(ep_ptr, TCB_REF(NODE_STATE(ksCurThread)),
+        endpoint_ptr_set_epQueue_head_np(ep_ptr, (pptr_t)TCB_PTR(NODE_STATE(ksCurThread)));
+        endpoint_ptr_mset_epQueue_tail_state(ep_ptr, (pptr_t)TCB_PTR(NODE_STATE(ksCurThread)),
                                              EPState_Recv);
     } else {
 #ifdef CONFIG_KERNEL_MCS
         /* Update queue. */
         tcb_queue_t queue = tcbEPAppend(NODE_STATE(ksCurThread), ep_ptr_get_queue(ep_ptr));
-        endpoint_ptr_set_epQueue_head_np(ep_ptr, TCB_REF(queue.head));
-        endpoint_ptr_mset_epQueue_tail_state(ep_ptr, TCB_REF(queue.end), EPState_Recv);
+        endpoint_ptr_set_epQueue_head_np(ep_ptr, (pptr_t)TCB_PTR(queue.head));
+        endpoint_ptr_mset_epQueue_tail_state(ep_ptr, (pptr_t)TCB_PTR(queue.end), EPState_Recv);
 #else
         /* Append current thread onto the queue. */
         endpointTail->tcbEPNext = NODE_STATE(ksCurThread);
@@ -480,7 +482,7 @@ void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo)
         NODE_STATE(ksCurThread)->tcbEPNext = NULL;
 
         /* Update tail of queue. */
-        endpoint_ptr_mset_epQueue_tail_state(ep_ptr, TCB_REF(NODE_STATE(ksCurThread)),
+        endpoint_ptr_mset_epQueue_tail_state(ep_ptr, (pptr_t)TCB_PTR(NODE_STATE(ksCurThread)),
                                              EPState_Recv);
 #endif
     }
@@ -846,7 +848,7 @@ void NORETURN fastpath_vm_fault(vm_fault_type_t type)
 #endif
 
     /* Dequeue the destination. */
-    endpoint_ptr_set_epQueue_head_np(ep_ptr, TCB_REF(dest->tcbEPNext));
+    endpoint_ptr_set_epQueue_head_np(ep_ptr, (pptr_t)TCB_PTR(dest->tcbEPNext));
     if (unlikely(dest->tcbEPNext)) {
         dest->tcbEPNext->tcbEPPrev = NULL;
     } else {
@@ -884,9 +886,9 @@ void NORETURN fastpath_vm_fault(vm_fault_type_t type)
 
     /* Insert reply cap */
     word_t replyCanGrant = thread_state_ptr_get_blockingIPCCanGrant(&dest->tcbState);;
-    cap_reply_cap_ptr_new_np(&callerSlot->cap, replyCanGrant, 0, TCB_REF(NODE_STATE(ksCurThread)));
-    mdb_node_ptr_set_mdbPrev_np(&callerSlot->cteMDBNode, CTE_REF(replySlot));
-    mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(&replySlot->cteMDBNode, CTE_REF(callerSlot), 1, 1);
+    cap_reply_cap_ptr_new_np(&callerSlot->cap, replyCanGrant, 0, (pptr_t)TCB_PTR(NODE_STATE(ksCurThread)));
+    mdb_node_ptr_set_mdbPrev_np(&callerSlot->cteMDBNode, (pptr_t)CTE_PTR(replySlot));
+    mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(&replySlot->cteMDBNode, (pptr_t)CTE_PTR(callerSlot), 1, 1);
 #endif
     /* Set the message registers for the vm fault*/
     fastpath_vm_fault_set_mrs(dest);

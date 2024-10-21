@@ -1,5 +1,7 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -15,27 +17,26 @@
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 
-#define ELR     elr_el2
 #define ESR     esr_el2
 #define SPSR    spsr_el2
-#define TPIDR   tpidr_el2
+#define TPIDR   REGN(tpidr_el2)
+#define ELR     REGN(elr_el2)
 
 #else
 
-#define ELR     elr_el1
 #define ESR     esr_el1
 #define SPSR    spsr_el1
-#define TPIDR   tpidr_el1
+#define TPIDR   REGN(tpidr_el1)
+#define ELR     REGN(elr_el1)
 
 #endif
-
 
 .macro lsp_i _tmp
     mrs     \_tmp, TPIDR
 #ifdef CONFIG_ENABLE_SMP_SUPPORT
     bic     \_tmp, \_tmp, #0xfff
 #endif
-    mov     sp, \_tmp
+    mov     REGN(sp), \_tmp
 .endm
 
 .macro ventry label
@@ -71,37 +72,37 @@ END_FUNC(arm_vector_table)
 
 .macro kernel_enter
     /* Storing thread's stack frame */
-    stp     x0,  x1,  [sp, #16 * 0]
-    stp     x2,  x3,  [sp, #16 * 1]
-    stp     x4,  x5,  [sp, #16 * 2]
-    stp     x6,  x7,  [sp, #16 * 3]
-    stp     x8,  x9,  [sp, #16 * 4]
-    stp     x10, x11, [sp, #16 * 5]
-    stp     x12, x13, [sp, #16 * 6]
-    stp     x14, x15, [sp, #16 * 7]
-    stp     x16, x17, [sp, #16 * 8]
-    stp     x18, x19, [sp, #16 * 9]
-    stp     x20, x21, [sp, #16 * 10]
-    stp     x22, x23, [sp, #16 * 11]
-    stp     x24, x25, [sp, #16 * 12]
-    stp     x26, x27, [sp, #16 * 13]
-    stp     x28, x29, [sp, #16 * 14]
+    stp     REG(0),  REG(1),  [REGN(sp), #(REGSIZE * 2) * 0]
+    stp     REG(2),  REG(3),  [REGN(sp), #(REGSIZE * 2) * 1]
+    stp     REG(4),  REG(5),  [REGN(sp), #(REGSIZE * 2) * 2]
+    stp     REG(6),  REG(7),  [REGN(sp), #(REGSIZE * 2) * 3]
+    stp     REG(8),  REG(9),  [REGN(sp), #(REGSIZE * 2) * 4]
+    stp     REG(10), REG(11), [REGN(sp), #(REGSIZE * 2) * 5]
+    stp     REG(12), REG(13), [REGN(sp), #(REGSIZE * 2) * 6]
+    stp     REG(14), REG(15), [REGN(sp), #(REGSIZE * 2) * 7]
+    stp     REG(16), REG(17), [REGN(sp), #(REGSIZE * 2) * 8]
+    stp     REG(18), REG(19), [REGN(sp), #(REGSIZE * 2) * 9]
+    stp     REG(20), REG(21), [REGN(sp), #(REGSIZE * 2) * 10]
+    stp     REG(22), REG(23), [REGN(sp), #(REGSIZE * 2) * 11]
+    stp     REG(24), REG(25), [REGN(sp), #(REGSIZE * 2) * 12]
+    stp     REG(26), REG(27), [REGN(sp), #(REGSIZE * 2) * 13]
+    stp     REG(28), REG(29), [REGN(sp), #(REGSIZE * 2) * 14]
 
     /* Store thread's SPSR, LR, and SP */
-    mrs     x21, sp_el0
-    mrs     x22, ELR
+    mrs     REG(21), REGN(sp_el0)
+    mrs     REG(22), ELR
     mrs     x23, SPSR
-    stp     x30, x21, [sp, #PT_LR]
-    stp     x22, x23, [sp, #PT_ELR_EL1]
+    stp     REG(30), REG(21), [REGN(sp), #PT_LR]
+    stp     REG(22), REG(23), [REGN(sp), #PT_ELR_EL1]
 .endm
 
 BEGIN_FUNC(invalid_vector_entry)
-    lsp_i   x19
+    lsp_i   REG(19)
     b       halt
 END_FUNC(invalid_vector_entry)
 
 BEGIN_FUNC(cur_el_sync)
-    lsp_i   x19
+    lsp_i   REG(19)
     /* Read esr and branch to respective labels */
     mrs     x25, ESR
     lsr     x24, x25, #ESR_EC_SHIFT
@@ -113,14 +114,14 @@ BEGIN_FUNC(cur_el_sync)
 
 cur_el_da:
 #ifdef CONFIG_DEBUG_BUILD
-    mrs     x0, ELR
+    mrs     REG(0), ELR
     bl      kernelDataAbort
 #endif /* CONFIG_DEBUG_BUILD */
     b       halt
 
 cur_el_ia:
 #ifdef CONFIG_DEBUG_BUILD
-    mrs     x0, ELR
+    mrs     REG(0), ELR
     bl      kernelPrefetchAbort
 #endif /* CONFIG_DEBUG_BUILD */
     b       halt
@@ -136,7 +137,7 @@ END_FUNC(cur_el_sync)
  * activate ksCurThread when returning from interrupt as long as idle thread is stateless.
  */
 BEGIN_FUNC(cur_el_irq)
-    lsp_i   x19
+    lsp_i   REG(19)
     b       c_handle_interrupt
 END_FUNC(cur_el_irq)
 
@@ -163,10 +164,10 @@ BEGIN_FUNC(lower_el_sync)
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     cmp     x24, #ESR_EC_LEL_HVC64
     b.eq    lel_syscall
-    mrs     x20, ELR
-    str     x20, [sp, #PT_FaultIP]
+    mrs     REG(20), ELR
+    str     REG(20), [REGN(sp), #PT_FaultIP]
 
-    lsp_i   x19
+    lsp_i   REG(19)
     /* move the ESR as the input */
     mov     x0, x25
     b       c_handle_vcpu_fault
@@ -177,25 +178,25 @@ BEGIN_FUNC(lower_el_sync)
 #endif
 
 lel_da:
-    mrs     x20, ELR
-    str     x20, [sp, #PT_FaultIP]
+    mrs     REG(20), ELR
+    str     REG(20), [REGN(sp), #PT_FaultIP]
 
-    lsp_i   x19
+    lsp_i   REG(19)
     b       c_handle_data_fault
 
 lel_ia:
-    mrs     x20, ELR
-    str     x20, [sp, #PT_FaultIP]
+    mrs     REG(20), ELR
+    str     REG(20), [REGN(sp), #PT_FaultIP]
 
-    lsp_i   x19
+    lsp_i   REG(19)
     b       c_handle_instruction_fault
 
 lel_syscall:
-    mrs     x20, ELR
-    sub     x20, x20, #4
-    str     x20, [sp, #PT_FaultIP]
+    mrs     REG(20), ELR
+    sub     REG(20), REG(20), #4
+    str     REG(20), [REGN(sp), #PT_FaultIP]
 
-    lsp_i   x19
+    lsp_i   REG(19)
 
 #ifdef CONFIG_FASTPATH
     cmp     x7, #SYSCALL_CALL
@@ -216,24 +217,24 @@ lel_syscall:
 
 el0_enfp:
 #ifdef CONFIG_HAVE_FPU
-    lsp_i   x19
+    lsp_i   REG(19)
     b       c_handle_enfp
 #endif /* CONFIG_HAVE_FPU */
 
 el0_user:
-    mrs     x20, ELR
-    str     x20, [sp, #PT_FaultIP]
+    mrs     REG(20), ELR
+    str     REG(20), [REGN(sp), #PT_FaultIP]
 
-    lsp_i   x19
+    lsp_i   REG(19)
     b       c_handle_undefined_instruction
 END_FUNC(lower_el_sync)
 
 BEGIN_FUNC(lower_el_irq)
     kernel_enter
-    mrs     x20, ELR
-    str     x20, [sp, #PT_FaultIP]
+    mrs     REG(20), ELR
+    str     REG(20), [REGN(sp), #PT_FaultIP]
 
-    lsp_i   x19
+    lsp_i   REG(19)
     b       c_handle_interrupt
 END_FUNC(lower_el_irq)
 

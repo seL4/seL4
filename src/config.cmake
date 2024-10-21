@@ -48,3 +48,9 @@ add_sources(
         src/object/schedcontrol.c
         src/kernel/sporadic.c
 )
+
+add_sources(
+    DEP HaveCheri
+    CFILES
+        src/machine/cheri.c
+)

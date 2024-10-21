@@ -267,7 +267,7 @@ static exception_t handleInvocation(bool_t isCall, bool_t isBlocking)
 {
     seL4_MessageInfo_t info;
     lookupCapAndSlot_ret_t lu_ret;
-    word_t *buffer;
+    register_t *buffer;
     exception_t status;
     word_t length;
     tcb_t *thread;
@@ -453,7 +453,7 @@ static void handleRecv(bool_t isBlocking)
         notification_t *ntfnPtr;
         tcb_t *boundTCB;
         ntfnPtr = NTFN_PTR(cap_notification_cap_get_capNtfnPtr(lu_ret.cap));
-        boundTCB = (tcb_t *)notification_ptr_get_ntfnBoundTCB(ntfnPtr);
+        boundTCB = TCB_PTR(notification_ptr_get_ntfnBoundTCB(ntfnPtr));
         if (unlikely(!cap_notification_cap_get_capNtfnCanReceive(lu_ret.cap)
                      || (boundTCB && boundTCB != NODE_STATE(ksCurThread)))) {
             current_lookup_fault = lookup_fault_missing_capability_new(0);

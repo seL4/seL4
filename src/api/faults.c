@@ -1,5 +1,7 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -26,7 +28,7 @@ compile_assert(seL4_UserException_Number, (word_t) n_exceptionMessage == seL4_Us
 compile_assert(seL4_UserException_Code, (word_t) n_exceptionMessage + 1 == seL4_UserException_Code)
 
 static inline unsigned int
-setMRs_lookup_failure(tcb_t *receiver, word_t *receiveIPCBuffer,
+setMRs_lookup_failure(tcb_t *receiver, register_t *receiveIPCBuffer,
                       lookup_fault_t luf, unsigned int offset)
 {
     word_t lufType = lookup_fault_get_lufType(luf);
@@ -79,17 +81,17 @@ static inline void copyMRsFaultReply(tcb_t *sender, tcb_t *receiver, MessageID_t
     archInfo = Arch_getSanitiseRegisterInfo(receiver);
 
     for (i = 0; i < MIN(length, n_msgRegisters); i++) {
-        register_t r = fault_messages[id][i];
-        word_t v = getRegister(sender, msgRegisters[i]);
+        regoff_t r = fault_messages[id][i];
+        register_t v = getRegister(sender, msgRegisters[i]);
         setRegister(receiver, r, sanitiseRegister(r, v, archInfo));
     }
 
     if (i < length) {
-        word_t *sendBuf = lookupIPCBuffer(false, sender);
+        register_t *sendBuf = lookupIPCBuffer(false, sender);
         if (sendBuf) {
             for (; i < length; i++) {
-                register_t r = fault_messages[id][i];
-                word_t v = sendBuf[i + 1];
+                regoff_t r = fault_messages[id][i];
+                register_t v = sendBuf[i + 1];
                 setRegister(receiver, r, sanitiseRegister(r, v, archInfo));
             }
         }
@@ -97,7 +99,7 @@ static inline void copyMRsFaultReply(tcb_t *sender, tcb_t *receiver, MessageID_t
 }
 
 static inline void copyMRsFault(tcb_t *sender, tcb_t *receiver, MessageID_t id,
-                                word_t length, word_t *receiveIPCBuffer)
+                                word_t length, register_t *receiveIPCBuffer)
 {
     word_t i;
     for (i = 0; i < MIN(length, n_msgRegisters); i++) {
@@ -188,7 +190,7 @@ bool_t handleFaultReply(tcb_t *receiver, tcb_t *sender)
     }
 }
 
-word_t setMRs_fault(tcb_t *sender, tcb_t *receiver, word_t *receiveIPCBuffer)
+word_t setMRs_fault(tcb_t *sender, tcb_t *receiver, register_t *receiveIPCBuffer)
 {
     switch (seL4_Fault_get_seL4_FaultType(sender->tcbFault)) {
     case seL4_Fault_CapFault:

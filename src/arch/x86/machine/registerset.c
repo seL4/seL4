@@ -25,7 +25,7 @@ void Arch_initContext(user_context_t *context)
 #endif
 }
 
-word_t sanitiseRegister(register_t reg, word_t v, bool_t archInfo)
+word_t sanitiseRegister(regoff_t reg, word_t v, bool_t archInfo)
 {
     /* First perform any mode specific sanitization */
     v = Mode_sanitiseRegister(reg, v);

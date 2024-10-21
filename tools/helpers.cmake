@@ -1,5 +1,7 @@
 #
 # Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+# Copyright 2024, Capabilities Limited
+# CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
 #
 # SPDX-License-Identifier: GPL-2.0-only
 #
@@ -137,6 +139,15 @@ function(GenHBFTarget environment target_name target_file pbf_path pbf_target pr
     if(NOT "${environment}" STREQUAL "")
         list(APPEND args --environment "${environment}")
     endif()
+
+    if(HaveCheri)
+        if(KernelArmMorello)
+            list(APPEND args --cheri-arch "morello")
+        elseif(KernelArchCheriRiscv)
+            list(APPEND args --cheri-arch "rv${KernelWordSize}xcheri")
+        endif()
+    endif()
+
     foreach(prune IN LISTS prunes)
         get_absolute_source_or_binary(prune_absolute "${prune}")
         list(APPEND args "--prune" "${prune_absolute}")

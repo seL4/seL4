@@ -1,5 +1,7 @@
 /*
  * Copyright 2016, General Dynamics C4 Systems
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -16,9 +18,20 @@
 #define PL011_UARTFR_TXFF         BIT(5)
 #define PL011_UARTFR_RXFE         BIT(4)
 
-#define UART_REG(x) ((volatile uint32_t *)(UART_PPTR + (x)))
 
 #ifdef CONFIG_PRINTING
+static volatile char *uart_map;
+#define UART_REG(x) ((volatile uint32_t *) (uart_map + (x)))
+
+void init_console(void)
+{
+#if defined(__CHERI_PURE_CAPABILITY__)
+    uart_map = (volatile char *) cheri_build_device_cap((ptraddr_t) UART_PPTR, 28);
+#else
+    uart_map = (volatile char *) UART_PPTR;
+#endif
+}
+
 void uart_drv_putchar(unsigned char c)
 {
     while ((*UART_REG(UARTFR) & PL011_UARTFR_TXFF) != 0);

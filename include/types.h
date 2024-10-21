@@ -8,3 +8,6 @@
 
 #include <basic_types.h>
 #include <compound_types.h>
+
+typedef __SIZE_TYPE__ size_t;
+typedef __SIZE_TYPE__ ptraddr_t;

@@ -2,6 +2,8 @@
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
  * Copyright 2021, HENSOLDT Cyber
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -20,6 +22,10 @@
 #include <linker.h>
 #include <plat/machine/hardware.h>
 #include <machine.h>
+
+#if defined(CONFIG_HAVE_CHERI)
+#include <mode/cheri.h>
+#endif
 
 #ifdef ENABLE_SMP_SUPPORT
 /* SMP boot synchronization works based on a global variable with the initial
@@ -128,7 +134,25 @@ BOOT_CODE static void init_cpu(void)
 
     activate_kernel_vspace();
     /* Write trap entry address to stvec */
-    write_stvec((word_t)trap_entry);
+#if defined(__CHERI_PURE_CAPABILITY__)
+    /* Need to re-build an unsealed exception entry capability */
+    write_stvec((pptr_t) __builtin_cheri_flags_set(
+        cheri_build_code_cap_unbounded((ptraddr_t)trap_entry,
+        __CHERI_CAP_PERMISSION_ACCESS_SYSTEM_REGISTERS__ |
+        __CHERI_CAP_PERMISSION_PERMIT_LOAD__ |
+        __CHERI_CAP_PERMISSION_PERMIT_LOAD_CAPABILITY__ |
+        __CHERI_CAP_PERMISSION_PERMIT_EXECUTE__),
+        1));
+
+    /* Set CHERI mode to no DDC/PCC relocations and tag-clearning on invalid capability manipulations
+     * by default.
+     * cheriTODO: uncomment when the hardware implementations support it (v9)?
+    word_t sccr = 0x3 << 31;
+    asm volatile("csrw sccsr, %0": :"r"(sccr):);
+    asm volatile("csrw uccsr, %0": :"r"(sccr):);*/
+#else
+    write_stvec((pptr_t)trap_entry);
+#endif
     initLocalIRQController();
 #ifndef CONFIG_KERNEL_MCS
     initTimer();
@@ -207,7 +231,7 @@ static BOOT_CODE bool_t try_init_kernel(
         ui_p_reg_start, ui_p_reg_end
     });
     word_t extra_bi_size = 0;
-    pptr_t extra_bi_offset = 0;
+    word_t extra_bi_offset = 0;
     vptr_t extra_bi_frame_vptr;
     vptr_t bi_frame_vptr;
     vptr_t ipcbuf_vptr;
@@ -260,7 +284,7 @@ static BOOT_CODE bool_t try_init_kernel(
         if (dtb_phys_end >= PADDR_TOP) {
             printf("ERROR: DTB at [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] "
                    "exceeds PADDR_TOP (%"SEL4_PRIx_word")\n",
-                   dtb_phys_addr, dtb_phys_end, PADDR_TOP);
+                   dtb_phys_addr, dtb_phys_end, (word_t)PADDR_TOP);
             return false;
         }
         /* DTB seems valid and accessible, pass it on in bootinfo. */
@@ -271,6 +295,40 @@ static BOOT_CODE bool_t try_init_kernel(
             .end   = dtb_phys_end
         };
     }
+
+#if defined(CONFIG_HAVE_CHERI)
+    /* Create CHERI capabilities for purecap user. This includes BootInfo pointer, IPC Buffer pointer,
+     * and the entry function pointer to the root task.
+     */
+    bi_frame_vptr = (vptr_t) cheri_build_user_cap(bi_frame_vptr, BIT(seL4_BootInfoFrameBits)+extra_bi_size,
+        __CHERI_CAP_PERMISSION_GLOBAL__ |
+        __CHERI_CAP_PERMISSION_PERMIT_LOAD__ |
+        __CHERI_CAP_PERMISSION_PERMIT_LOAD_CAPABILITY__ |
+        __CHERI_CAP_PERMISSION_PERMIT_STORE_CAPABILITY__ |
+        __CHERI_CAP_PERMISSION_PERMIT_STORE_LOCAL__ |
+        __CHERI_CAP_PERMISSION_PERMIT_STORE__);
+
+   ipcbuf_vptr = (vptr_t) cheri_build_user_cap(ipcbuf_vptr, sizeof(seL4_IPCBuffer),
+        __CHERI_CAP_PERMISSION_GLOBAL__ |
+        __CHERI_CAP_PERMISSION_PERMIT_LOAD__ |
+        __CHERI_CAP_PERMISSION_PERMIT_LOAD_CAPABILITY__ |
+        __CHERI_CAP_PERMISSION_PERMIT_STORE_CAPABILITY__ |
+        __CHERI_CAP_PERMISSION_PERMIT_STORE_LOCAL__ |
+        __CHERI_CAP_PERMISSION_PERMIT_STORE__);
+
+   v_entry = (vptr_t) __builtin_cheri_seal_entry((void *) __builtin_cheri_flags_set((void *)
+            __builtin_cheri_address_set(cheri_build_user_cap(0, USER_TOP,
+            __CHERI_CAP_PERMISSION_GLOBAL__ |
+            __CHERI_CAP_PERMISSION_PERMIT_LOAD__ |
+            __CHERI_CAP_PERMISSION_PERMIT_SEAL__ |
+            __CHERI_CAP_PERMISSION_PERMIT_LOAD_CAPABILITY__ |
+            __CHERI_CAP_PERMISSION_PERMIT_STORE_CAPABILITY__ |
+            __CHERI_CAP_PERMISSION_PERMIT_STORE_LOCAL__ |
+            __CHERI_CAP_PERMISSION_PERMIT_STORE__ |
+            __CHERI_CAP_PERMISSION_PERMIT_EXECUTE__),
+            v_entry),
+        1));
+#endif
 
     /* The region of the initial thread is the user image + ipcbuf + boot info + extra */
     word_t extra_bi_size_bits = calculate_extra_bi_size_bits(extra_bi_size);
@@ -285,7 +343,7 @@ static BOOT_CODE bool_t try_init_kernel(
          */
         printf("ERROR: userland image virt [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]"
                "exceeds USER_TOP (%"SEL4_PRIx_word")\n",
-               it_v_reg.start, it_v_reg.end, (word_t)USER_TOP);
+               (word_t)it_v_reg.start, (word_t)it_v_reg.end, (word_t)USER_TOP);
         return false;
     }
 
@@ -319,7 +377,7 @@ static BOOT_CODE bool_t try_init_kernel(
         *(seL4_BootInfoHeader *)(rootserver.extra_bi + extra_bi_offset) = header;
         extra_bi_offset += sizeof(header);
         memcpy((void *)(rootserver.extra_bi + extra_bi_offset),
-               paddr_to_pptr(dtb_phys_addr),
+               (const void *)paddr_to_pptr(dtb_phys_addr),
                dtb_size);
         extra_bi_offset += dtb_size;
     }
@@ -468,6 +526,10 @@ BOOT_CODE VISIBLE void init_kernel(
 )
 {
     bool_t result;
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+   _start_purecap();
+#endif
 
 #ifdef ENABLE_SMP_SUPPORT
     add_hart_to_core_map(hart_id, core_id);

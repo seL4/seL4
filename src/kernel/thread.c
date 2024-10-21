@@ -24,7 +24,7 @@
 static seL4_MessageInfo_t
 transferCaps(seL4_MessageInfo_t info,
              endpoint_t *endpoint, tcb_t *receiver,
-             word_t *receiveBuffer);
+             register_t *receiveBuffer);
 
 BOOT_CODE void configureIdleThread(tcb_t *tcb)
 {
@@ -49,7 +49,7 @@ void activateThread(void)
         break;
 
     case ThreadState_Restart: {
-        word_t pc;
+        register_t pc;
 
         pc = getRestartPC(NODE_STATE(ksCurThread));
         setNextPC(NODE_STATE(ksCurThread), pc);
@@ -195,9 +195,9 @@ void doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, bool_t grant)
 #endif
 }
 
-void doNormalTransfer(tcb_t *sender, word_t *sendBuffer, endpoint_t *endpoint,
+void doNormalTransfer(tcb_t *sender, register_t *sendBuffer, endpoint_t *endpoint,
                       word_t badge, bool_t canGrant, tcb_t *receiver,
-                      word_t *receiveBuffer)
+                      register_t *receiveBuffer)
 {
     word_t msgTransferred;
     seL4_MessageInfo_t tag;
@@ -225,7 +225,7 @@ void doNormalTransfer(tcb_t *sender, word_t *sendBuffer, endpoint_t *endpoint,
 }
 
 void doFaultTransfer(word_t badge, tcb_t *sender, tcb_t *receiver,
-                     word_t *receiverIPCBuffer)
+                     register_t *receiverIPCBuffer)
 {
     word_t sent;
     seL4_MessageInfo_t msgInfo;
@@ -240,7 +240,7 @@ void doFaultTransfer(word_t badge, tcb_t *sender, tcb_t *receiver,
 /* Like getReceiveSlots, this is specialised for single-cap transfer. */
 static seL4_MessageInfo_t transferCaps(seL4_MessageInfo_t info,
                                        endpoint_t *endpoint, tcb_t *receiver,
-                                       word_t *receiveBuffer)
+                                       register_t *receiveBuffer)
 {
     word_t i;
     cte_t *destSlot;

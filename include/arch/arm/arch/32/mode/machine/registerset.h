@@ -33,7 +33,7 @@
                              | CPSR_EXTRA_FLAGS   )
 
 /* Offsets within the user context, these need to match the order in
- * register_t below */
+ * regoff_t below */
 #define PT_SP               (13  * 4)
 #define PT_NextIP           (15 * 4)
 #define PT_ELR_hyp          (15 * 4)
@@ -116,7 +116,7 @@ compile_assert(elr_hyp_offset_correct, ELR_hyp *sizeof(word_t) == PT_ELR_hyp)
 compile_assert(faultinstruction_offset_correct, FaultIP *sizeof(word_t) == PT_FaultIP)
 compile_assert(r8_offset_correct, R8 *sizeof(word_t) == PT_R8)
 
-typedef word_t register_t;
+typedef word_t regoff_t;
 
 enum messageSizes {
     n_msgRegisters = seL4_FastMessageRegisters,
@@ -173,9 +173,9 @@ enum messageSizes {
     [seL4_TimeoutReply_R14] = R14,\
 }
 
-extern const register_t msgRegisters[];
-extern const register_t frameRegisters[];
-extern const register_t gpRegisters[];
+extern const regoff_t msgRegisters[];
+extern const regoff_t frameRegisters[];
+extern const regoff_t gpRegisters[];
 
 #ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
 typedef struct debug_register_pair {

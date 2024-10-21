@@ -30,8 +30,9 @@ def init_all_types(args):
     Return an array of all c types involved in the seL4 interface
     """
 
-    data_types = syscall_stub_gen.init_data_types(WORD_SIZE)
-    arch_types = list(itertools.chain(*syscall_stub_gen.init_arch_types(WORD_SIZE, args).values()))
+    # cheriTODO: document CHERI support
+    data_types = syscall_stub_gen.init_data_types(WORD_SIZE, None)
+    arch_types = list(itertools.chain(*syscall_stub_gen.init_arch_types(WORD_SIZE, args, False).values()))
 
     return data_types + arch_types
 

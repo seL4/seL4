@@ -2,6 +2,8 @@
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
  * Copyright 2021, HENSOLDT Cyber
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -19,12 +21,18 @@
 
 #define IS_IRQ_VALID(X) (((X)) <= maxIRQ && (X) != irqInvalid)
 
-word_t PURE getRestartPC(tcb_t *thread)
+/*
+ * Kernel virtual addresses for CLINT and PLIC (if exists).
+ */
+pptr_t clint_pptr = CLINT_PPTR;
+pptr_t plic_pptr = PLIC_PPTR;
+
+register_t PURE getRestartPC(tcb_t *thread)
 {
     return getRegister(thread, FaultIP);
 }
 
-void setNextPC(tcb_t *thread, word_t v)
+void setNextPC(tcb_t *thread, register_t v)
 {
     setRegister(thread, NextIP, v);
 }
@@ -245,6 +253,19 @@ BOOT_CODE void initTimer(void)
 BOOT_CODE void initLocalIRQController(void)
 {
     printf("Init local IRQ\n");
+#if defined(__CHERI_PURE_CAPABILITY__)
+    /*
+     * cheriTODO: Size of the CLINT is heuristically 0x10000, but we could refine
+     * that to get it from the DTB if needed.
+     */
+
+    clint_pptr = (pptr_t) cheri_build_device_cap((ptraddr_t) clint_pptr, 0x10000);
+    /*
+     * cheriTODO: Size of the CLINT is heuristically 0x10000, but we could refine
+     * that to get it from the DTB if needed.
+     */
+    plic_pptr = (pptr_t) cheri_build_device_cap((ptraddr_t) plic_pptr, 0x210000);
+#endif
 
     /* Init per-hart PLIC */
     plic_init_hart();

@@ -1,5 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -23,14 +25,14 @@
 #ifndef GIC_V2_DISTRIBUTOR_PPTR
 #error GIC_V2_DISTRIBUTOR_PPTR must be defined for virtual memory access to the gic distributer
 #else  /* GIC_DISTRIBUTOR_PPTR */
-volatile struct gic_dist_map *const gic_dist =
+volatile struct gic_dist_map *gic_dist =
     (volatile struct gic_dist_map *)(GIC_V2_DISTRIBUTOR_PPTR);
 #endif /* GIC_DISTRIBUTOR_PPTR */
 
 #ifndef GIC_V2_CONTROLLER_PPTR
 #error GIC_V2_CONTROLLER_PPTR must be defined for virtual memory access to the gic cpu interface
 #else  /* GIC_CONTROLLER_PPTR */
-volatile struct gic_cpu_iface_map *const gic_cpuiface =
+volatile struct gic_cpu_iface_map *gic_cpuiface =
     (volatile struct gic_cpu_iface_map *)(GIC_V2_CONTROLLER_PPTR);
 #endif /* GIC_CONTROLLER_PPTR */
 
@@ -111,6 +113,10 @@ BOOT_CODE static void cpu_iface_init(void)
 {
     uint32_t i;
 
+#if defined(__CHERI_PURE_CAPABILITY__)
+    gic_dist = (volatile struct gic_dist_map *) cheri_build_device_cap((ptraddr_t)gic_dist, sizeof(struct gic_dist_map));
+    gic_cpuiface = (volatile struct gic_cpu_iface_map *) cheri_build_device_cap((ptraddr_t)gic_cpuiface, sizeof(struct gic_cpu_iface_map));
+#endif
     /* For non-Exynos4, the registers are banked per CPU, need to clear them */
     gic_dist->enable_clr[0] = IRQ_SET_ALL;
     gic_dist->pending_clr[0] = IRQ_SET_ALL;

@@ -21,7 +21,7 @@
 #include <smp/ipi.h>
 
 exception_t decodeIRQControlInvocation(word_t invLabel, word_t length,
-                                       cte_t *srcSlot, word_t *buffer)
+                                       cte_t *srcSlot, register_t *buffer)
 {
     if (invLabel == IRQIssueIRQHandler) {
         word_t index, depth, irq_w;
