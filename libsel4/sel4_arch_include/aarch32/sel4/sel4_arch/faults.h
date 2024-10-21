@@ -41,7 +41,8 @@ LIBSEL4_INLINE_FUNC seL4_Fault_t seL4_getArchFault(seL4_MessageInfo_t tag)
                                       seL4_GetMR(seL4_VMFault_FSR));
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case seL4_Fault_VGICMaintenance:
-        return seL4_Fault_VGICMaintenance_new(seL4_GetMR(seL4_VGICMaintenance_IDX));
+        return seL4_Fault_VGICMaintenance_new(seL4_GetMR(seL4_VGICMaintenance_EISR1),
+                                              seL4_GetMR(seL4_VGICMaintenance_EISR0));
     case seL4_Fault_VCPUFault:
         return seL4_Fault_VCPUFault_new(seL4_GetMR(seL4_VCPUFault_HSR));
     case seL4_Fault_VPPIEvent:
