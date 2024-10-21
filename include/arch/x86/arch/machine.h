@@ -339,11 +339,10 @@ static inline void x86_load_fsgs_base(tcb_t *thread, cpu_id_t cpu)
     x86_write_gs_base(gs_base, cpu);
 }
 
-/* Cleaning memory before user-level access */
+/* Cleaning memory before user-level access. Does not flush cache. */
 static inline void clearMemory(void *ptr, unsigned int bits)
 {
     memzero(ptr, BIT(bits));
-    /* no cleaning of caches necessary on IA-32 */
 }
 
 /* Initialises MSRs required to setup sysenter and sysexit */
