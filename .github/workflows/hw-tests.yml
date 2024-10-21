@@ -1,0 +1,26 @@
+# Copyright 2024, Proofcraft Pty Ltd
+#
+# SPDX-License-Identifier: BSD-2-Clause
+
+# hardware builds and runs
+#
+# See sel4test-hw/builds.yml and sel4bench-hw/builds.yml in the repo
+# seL4/ci-actions for configs.
+
+name: HW
+
+on:
+  # needs PR target for secrets access; guard by requiring label
+  pull_request_target:
+    types: [synchronize, labeled]
+
+jobs:
+  sel4test:
+    name: seL4Test
+    uses: seL4/ci-actions/.github/workflows/sel4test-hw.yml@master
+    secrets: inherit
+
+  sel4bench:
+    name: seL4Bench
+    uses: seL4/ci-actions/.github/workflows/sel4bench-hw.yml@master
+    secrets: inherit
