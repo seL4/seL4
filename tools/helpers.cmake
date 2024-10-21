@@ -688,7 +688,7 @@ endmacro()
 # cmake -G Ninja ${args} -C ${CMAKE_ARGV2} ${CMAKE_CURRENT_LIST_DIR}/..
 # ninja kernel.elf
 # ninja kernel_all_pp_wrapper
-macro(cmake_script_build_kernel)
+macro(cmake_script_build_kernel RELPATH)
     if(NOT "${CMAKE_ARGC}" STREQUAL "")
         set(args "")
         foreach(i RANGE 3 ${CMAKE_ARGC})
@@ -702,7 +702,7 @@ macro(cmake_script_build_kernel)
         endforeach()
         execute_process(
             COMMAND
-                cmake -G Ninja ${args} -C ${CMAKE_ARGV2} ${CMAKE_CURRENT_LIST_DIR}/..
+                cmake -G Ninja ${args} -C ${CMAKE_ARGV2} ${CMAKE_CURRENT_LIST_DIR}/${RELPATH}
             INPUT_FILE /dev/stdin
             OUTPUT_FILE /dev/stdout
             ERROR_FILE /dev/stderr
