@@ -814,7 +814,7 @@ exception_t performInvocation_Notification(notification_t *ntfn, word_t badge)
 #ifdef CONFIG_KERNEL_MCS
 exception_t performInvocation_Reply(tcb_t *thread, reply_t *reply, bool_t canGrant)
 {
-    doReplyTransfer(thread, reply, canGrant);
+    doReplyTransfer(thread, reply, canGrant && reply->canGrant);
     return EXCEPTION_NONE;
 }
 #else
