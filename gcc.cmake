@@ -104,6 +104,7 @@ if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
                 CROSS_COMPILER_PREFIX
                 "riscv64-unknown-linux-gnu-"
                 "riscv64-unknown-elf-"
+                "riscv64-none-elf-"
                 "riscv64-elf-"
             )
         endif()

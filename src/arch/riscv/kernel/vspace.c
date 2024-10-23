@@ -888,7 +888,7 @@ static exception_t decodeRISCVFrameInvocation(word_t label, word_t length,
         } else {
             /* check this vaddr isn't already mapped */
             if (unlikely(pte_ptr_get_valid(lu_ret.ptSlot))) {
-                userError("Virtual address already mapped");
+                userError("Virtual address (0x%"SEL4_PRIx_word") already mapped", vaddr);
                 current_syscall_error.type = seL4_DeleteFirst;
                 return EXCEPTION_SYSCALL_ERROR;
             }
