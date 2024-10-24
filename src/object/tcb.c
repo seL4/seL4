@@ -333,19 +333,6 @@ void tcbReleaseEnqueue(tcb_t *tcb)
 
     thread_state_ptr_set_tcbInReleaseQueue(&tcb->tcbState, true);
 }
-
-tcb_t *tcbReleaseDequeue(void)
-{
-    assert(NODE_STATE(ksReleaseQueue.head) != NULL);
-    assert(NODE_STATE(ksReleaseQueue.head)->tcbSchedPrev == NULL);
-    SMP_COND_STATEMENT(assert(NODE_STATE(ksReleaseQueue.head)->tcbAffinity == getCurrentCPUIndex()));
-
-    tcb_t *detached_head = NODE_STATE(ksReleaseQueue.head);
-
-    tcbReleaseRemove(detached_head);
-
-    return detached_head;
-}
 #endif
 
 cptr_t PURE getExtraCPtr(word_t *bufferPtr, word_t i)
@@ -541,10 +528,14 @@ static exception_t invokeConfigureSingleStepping(bool_t call, word_t *buffer, tc
 
     bp_was_consumed = configureSingleStepping(t, bp_num, n_instrs, false);
     if (n_instrs == 0) {
+#ifndef CONFIG_ARCH_AARCH64
         unsetBreakpointUsedFlag(t, bp_num);
+#endif /* CONFIG_ARCH_AARCH64 */
         value = false;
     } else {
+#ifndef CONFIG_ARCH_AARCH64
         setBreakpointUsedFlag(t, bp_num);
+#endif /* CONFIG_ARCH_AARCH64 */
         value = bp_was_consumed;
     }
 
@@ -1883,7 +1874,7 @@ exception_t invokeTCB_ThreadControlSched(tcb_t *target, cte_t *slot,
         if (sc != NULL && sc != target->tcbSchedContext) {
             schedContext_bindTCB(sc, target);
         } else if (sc == NULL && target->tcbSchedContext != NULL) {
-            schedContext_unbindTCB(target->tcbSchedContext, target);
+            schedContext_unbindTCB(target->tcbSchedContext);
         }
     }
 

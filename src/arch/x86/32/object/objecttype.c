@@ -80,7 +80,7 @@ finaliseCap_ret_t Mode_finaliseCap(cap_t cap, bool_t final)
                         ksUserLogBuffer = 0;
 
                         /* Invalidate log page table entries */
-                        clearMemory(ia32KSGlobalLogPT, BIT(seL4_PageTableBits));
+                        clearMemory(ia32KSGlobalLogPT, seL4_PageTableBits);
 
                         for (int idx = 0; idx < BIT(PT_INDEX_BITS); idx++) {
                             invalidateTLBEntry(KS_LOG_PPTR + (idx << seL4_PageBits), MASK(ksNumCPUs));

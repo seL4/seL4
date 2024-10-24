@@ -412,4 +412,38 @@ tagged_union virq virqType {
 }
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
+#ifdef CONFIG_HARDWARE_DEBUG_API
+
+block dbg_bcr {
+    padding 34
+    padding 1
+    padding 5
+    field breakpointType 4
+    field lbn 4
+    field ssc 2
+    field hmc 1
+    padding 4
+    field bas 4
+    padding 2
+    field pmc 2
+    field enabled 1
+}
+
+block dbg_wcr {
+    padding 34
+    padding 1
+    field addressMask 5
+    padding 3
+    field watchpointType 1
+    field lbn 4
+    field ssc 2
+    field hmc 1
+    field bas 8
+    field lsc 2
+    field pac 2
+    field enabled 1
+}
+
+#endif /* CONFIG_HARDWARE_DEBUG_API */
+
 #include <sel4/arch/shared_types.bf>

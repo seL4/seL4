@@ -567,8 +567,11 @@ void scheduleTCB(tcb_t *tptr)
 #ifdef CONFIG_KERNEL_MCS
 void postpone(sched_context_t *sc)
 {
-    tcbSchedDequeue(sc->scTcb);
-    tcbReleaseEnqueue(sc->scTcb);
+    tcb_t *tcb = sc->scTcb;
+    assert(tcb != NULL);
+
+    tcbSchedDequeue(tcb);
+    tcbReleaseEnqueue(tcb);
     NODE_STATE_ON_CORE(ksReprogram, sc->scCore) = true;
 }
 
@@ -679,22 +682,35 @@ void rescheduleRequired(void)
 }
 
 #ifdef CONFIG_KERNEL_MCS
+
+static inline bool_t PURE release_q_non_empty_and_ready(void)
+{
+    return NODE_STATE(ksReleaseQueue.head) != NULL
+           && refill_ready(NODE_STATE(ksReleaseQueue.head)->tcbSchedContext);
+}
+
+static void tcbReleaseDequeue(void)
+{
+    assert(NODE_STATE(ksReleaseQueue.head) != NULL);
+    assert(NODE_STATE(ksReleaseQueue.head)->tcbSchedPrev == NULL);
+    SMP_COND_STATEMENT(assert(NODE_STATE(ksReleaseQueue.head)->tcbAffinity == getCurrentCPUIndex()));
+
+    tcb_t *awakened = NODE_STATE(ksReleaseQueue.head);
+    assert(awakened != NODE_STATE(ksCurThread));
+    tcbReleaseRemove(awakened);
+    /* round robin threads should not be in the release queue */
+    assert(!isRoundRobin(awakened->tcbSchedContext));
+    /* threads should wake up on the correct core */
+    SMP_COND_STATEMENT(assert(awakened->tcbAffinity == getCurrentCPUIndex()));
+    /* threads HEAD refill should always be >= MIN_BUDGET */
+    assert(refill_sufficient(awakened->tcbSchedContext, 0));
+    possibleSwitchTo(awakened);
+}
+
 void awaken(void)
 {
-    while (unlikely(NODE_STATE(ksReleaseQueue.head) != NULL
-                    && refill_ready(NODE_STATE(ksReleaseQueue.head)->tcbSchedContext))) {
-        tcb_t *awakened = tcbReleaseDequeue();
-        /* the currently running thread cannot have just woken up */
-        assert(awakened != NODE_STATE(ksCurThread));
-        /* round robin threads should not be in the release queue */
-        assert(!isRoundRobin(awakened->tcbSchedContext));
-        /* threads should wake up on the correct core */
-        SMP_COND_STATEMENT(assert(awakened->tcbAffinity == getCurrentCPUIndex()));
-        /* threads HEAD refill should always be >= MIN_BUDGET */
-        assert(refill_sufficient(awakened->tcbSchedContext, 0));
-        possibleSwitchTo(awakened);
-        /* changed head of release queue -> need to reprogram */
-        NODE_STATE(ksReprogram) = true;
+    while (unlikely(release_q_non_empty_and_ready())) {
+        tcbReleaseDequeue();
     }
 }
 #endif

@@ -21,11 +21,19 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 ---
 
-## Upcoming release: BREAKING
+## Upcoming release: BINARY COMPATIBLE
 
 ### Changes
 
-#### Security-relevant Changes
+* Added `zynqmp` and `rpi4` to the set of verified AArch64 configs.
+
+### Upgrade Notes
+
+---
+
+## 13.0.0 2024-07-01: BREAKING
+
+### Security-relevant Changes
 
 * Fixed a kernel-crashing NULL pointer dereference when injecting an IRQ for a non-associated VCPU on SMP
   configurations. This can be triggered from user-level by any thread that has access to or can create non-associated
@@ -48,12 +56,23 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
   * Affected configurations: unverified AArch64 configurations of seL4 with hypervisor extensions off (kernel runs in
     EL1). AArch32 configurations and configurations where seL4 runs in EL2 are not affected.
-  * Affected versions: all versions since 5.0.0
+  * Affected versions: all previous versions since 5.0.0
   * Exploitability: Any thread that has a VSpace capability or page capability to a page that is not mapped writable can
     cause the data abort. Most Microkit and CAmkES systems do not give their component access to these capabilities, but any component with Untyped capabilities could create threads with enough capabilities to trigger the issue.
   * Severity: Critical. This crashes the system.
 
-### Other Changes
+* Fixed a cache issue on Arm where cleared memory was not flushed to RAM, but only to the point of unification. This
+  means that uncached access was able to still see old memory content.
+
+  * Affected configurations: Arm platforms that distinguish flushing to PoU from flushing to RAM
+  * Affected versions: all previous versions since 4.0.0
+  * Exploitability: Low. The issue is trivially observable by mapping the same frame as cached and uncached.
+    However, it is unlikely to be exploitable in a real system, because re-using memory over security boundaries
+    is already excluded, so information leakage happens only within the same domain.
+  * Severity: Medium. It breaks functional correctness in the sense that a cleared frame may not yet be cleared when
+    viewed as uncached. It does not break any functional kernel behaviour.
+
+### Platforms
 
 * Added support for the ARM Cortex A55
 * Added support for the imx8mp-evk platform
@@ -69,6 +88,7 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
   unused. See [RFC-8](https://sel4.github.io/rfcs/implemented/0080-remove-armv6-support.html).
 * Remove ARMv6 specific configs: `KernelGlobalsFrame` and `KernelDangerousCodeInjectionOnUndefInstr`. This removes the
   constant `seL4_GlobalsFrame` from libsel4 as well as the IPC buffer in GlobalsFrame caveat from CAVEATS.md
+* rpi3+rpi4: Mark first memory page as reserved
 
 #### Arm
 
@@ -77,15 +97,46 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
   wanting to control the value of `MPIDR` that the guest reads. Note that the initial value for new seL4_ARM_VCPUs for
   this register is 0 which isn't a legal value for `MPIDR_EL1` on AArch64. It may be necessary for the register to be
   explicitly initialized by user level before launching a thread associated with the new seL4_ARM_VCPU.
+* Allow changing the VCPU of active thread: call `vcpu_switch` in `associateVCPUTCB`. This guarantees that the correct
+  VCPU will be activated when the kernel finishes execution. Previously, changing the VCPU of the current thread would
+  result in no VCPU being active.
+* benchmarking: use write-through kernel log buffer
+* arm_hyp: Access `SPSR` via non-banked instructions
+* `generic_timer`: force timer to de-assert IRQ.
+* No special handling for edge-triggered IRQs.
+  -  Clearing the pending state only has an effect if the IRQ state is active-and-pending, which happens for
+    edge-triggered interrupts if another edge happens on the IRQ line for the currently active interrupt. This window is
+    small enough to ignore, at worst user space will get another notification, which is harmless.
+
+    If unnecessary notifications are unwanted, the pending state should be cleared during `seL4_IRQHandler_Ack()`, as
+    that covers a much bigger window. However, edge-triggered interrupts are not expected to happen often. Making all
+    interrupt handling slightly faster and the code simpler is the better trade-off.
+* Make write-only mapping message consistent. There is a warning when creating a write-only mapping on AArch32/AArch64.
+  This message is now the same in all variants.
 
 ##### AArch32
 
 * Implement `KernelArmExportPTMRUser` and `KernelArmExportVTMRUser` options for Arm generic timer use access on AArch32.
 * AArch32 VM fault messages now deliver original (untranslated) faulting IP in a hypervisor context, matching
   AArch64 behaviour.
+* Fix single stepping on ARMv7
+* TLB: only perform TLB lockdown for Cortex A8.
+  - The code previously used the same instructions for Cortex A8 and A9, but the Cortex A8 instructions are undocumented
+    for A9, and A9 provides a slightly different TLB interface. As far as we can tell, the instructions were simply
+    ignored by the supported A8 platforms, so there was no current correctness issue. Since the instructions had no
+    effect, we removed A9 TLB lockdown support. This potential issue was discovered and reported by the UK's National
+    Cyber Security Centre (NCSC).
+* TLB: guard TLB lockdown count.
+  - `lockTLBEntry` uses the global `tlbLockCount` as input without checking bounds. This is fine, because the function
+    is called at most 2 times per core, but this is only apparent when checking the entire possible calling context.
+    Make this bound obvious locally by doing nothing if the function is called with values of `tlbLockCount` of 2 or
+    greater. This is safe, because TLB lockdown is a performance change only. Also add an assert for debug mode, because
+    we want to know if calling context ever changes. This potential issue was reported by The UK's National Cyber
+    Security Centre (NCSC).
 
 ##### AArch64
 
+* Add `AARCH64_verified.cmake` config for functional correctness on AArch64
 * Rename libsel4 config option `AARCH64_VSPACE_S2_START_L1` to `CONFIG_AARCH64_VSPACE_S2_START_L1` to be namespace
   compliant.
 * Added SMC Capability (`smc_cap`) and SMC forwarding for AArch64 platforms. See
@@ -103,6 +154,27 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 * Removed user address space reserved slots restriction on 40bit PA platforms when KernelArmHypervisorSupport is set.
   This change is reflected in the definition of the seL4_UserTop constant that holds the largest user virtual address.
 * Added support for GICv3 virtualization, tested on iMX8QXP
+* Implemented a signal fastpath on AArch64. Must be enabled explicitly with the `KernelSignalFastpath` config option.
+* Implemented a virtual memory fault fastpath on AArch64. Must be enabled explicitly with the `KernelExceptionFastpath` config option.
+* Add option `KernelAArch64UserCacheEnable` for user cache maintenance.
+  - Enables user level access to `DC CVAU`, `DC CIVAC`, `DC CVAC`, and `IC IVAU` which are cache maintenance operations
+    for the data caches and instruction caches underlying Normal memory and also access to the read-only cache-type
+    register `CTR_EL0` that provides cache type information. The ArmV8-A architecture allows access from EL0 as fast
+    cache maintenance operations improves DMA performance in user-level device drivers.
+
+    These instructions are a subset of the available cache maintenance instructions as they can only address lines by
+    virtual address (VA). They also require that the VA provided refers to a valid mapping with at least read
+    permissions. This corresponds to lines that the EL0 could already affect via regular operation and so it's not
+    expected to break any cache-partitioning scheme.
+
+    The config option allows this policy to be selected for a particular kernel configuration, but it is default enabled
+    as this has been the existing behavior for current aarch64,hyp configurations and have not been explicitly disabled
+    in non-hyp configurations.
+* make error reporting consistent: Report the VSpace cap (1) as invalid, instead of the frame cap (0) in
+  `ARMFrameInvocation` to stay consistent with the other architectures.
+* vcpu: only trap WFx instructions from VCPUs. When `KernelArmDisableWFIWFETraps` is disabled (trapping of WFI/WFE is
+  enabled), the kernel traps WFx instructions from both native and vCPU threads. This change brings the code in line
+  with the config description.
 
 #### RISC-V
 
@@ -117,12 +189,76 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
   `sel4_arch_include/*/interfaces/sel4arch.xml` to `include/interfaces/object-api.xml`,
   `arch_include/*/interfaces/object-api-arch.xml`, and `sel4_arch_include/*/interfaces/object-api-sel4-arch.xml`,
   respectively.
+* Improve PLIC driver API and documentation
+* Fix `getMaxUsToTicks` function tor return time instead of ticks.
+* Improve RISC-V PTE compliance: keep D, A, and U bits cleared.
+
+#### Intel
+
+* libsel4: add enum for EPT attributes.
+* VTX: fix EPT cache attribute setting. Previously the only effectively possible value was `EPTWriteBack`.
+* Add kernel support for 64-bit VMs
+* Provide `CONFIG_X86_64_VTX_64BIT_GUESTS` for 64-bit VM support
+* Only access real IOAPIC registers. IOAPICS can have varying numbers of lines attached. The actual number can be
+  accessed in the top 16 bits of the version register. Rather than assuming fixed 24 lines per IRQ, read the actual
+  number and use that.
+
+#### MCS
+
+* Rename `seL4_TimeoutMsg` to `seL4_Timeout_Msg` to make it consistent with the naming of other messages.
+* Correct the minimum size of a scheduling context. This changes the value of `seL4_MinSchedContextBits`.
+* Correct check for message length in `SchedControl_ConfigureFlags`
+* Allow lazy SchedContext rebind. Before, binding a scheduling context to a TCB was not allowed if the SC was bound to a
+  notification object. Also, binding an SC to a notification was not allowed if that scheduling context was already
+  bound to a TCB. Without these restriction it is much easier to move scheduling contexts around: In effect having a SC
+  bound on both the TCB and a notification acts as if the thread is running on a donated SC which will be returned when
+  the tasks calls `Recv`/`Wait`, which is done by `maybeReturnSchedContext()`.
+* Only charge budgets for non-idle thread SCs
+* ARM+MCS: Introduce `TIMER_OVERHEAD_TICKS`. For ARM currently `TIMER_PRECISION` exists, but that is in microseconds and
+  not fine-grained enough. `TIMER_OVERHEAD_TICKS` is needed to make periodic tasks synchronous with the system clock. If
+  this value is non-zero every period will be extended with the overhead of taking an interrupt and reading the system
+  clock. To avoid this drift, the configured value should be set to at least the average overhead.
+* SMP: Do not use cross-node `ksCurTime` assuming they are in sync (which they are not), instead use
+  `NODE_STATE(ksCurTime)`.
+* SMP: Add clock synchronisation test on boot
+* SMP: Fix scheduling context use-after-free
 
 #### Other Changes
 
-* Correct the minimum size of a scheduling context. This changes the value of `seL4_MinSchedContextBits`.
-* Rename libsel4 config option ENABLE_SMP_SUPPORT to CONFIG_ENABLE_SMP_SUPPORT to be namespace compliant.
+* boot: Introduce `seL4_BootInfoFrameSize` and `seL4_BootInfoFrameBits` for user land so there is no longer a need to
+  hard-code a 4 KiByte assumption. Remove `BI_FRAME_SIZE_BITS`.
+* Fix: Don't clobber msgInfo register in `PageGetAddress`, `ASIDControlInvocation`, `ARMCBInvocation`,
+  `A32PageDirectoryGetStatusBits`, `X86PortIn`, `WriteVMCS`, `ReadVMCS`, `ConfigureSingleStepping`, and `GetBreakpoint`.
+* `libsel4`: Make `bootinfo` consistent. Some slot positions in the rootnode would depend on configuration. However that
+  makes it difficult to add new root caps, especially if multiple caps only exist based on configuration. Make all caps
+  always there, but null if not configured.
+* `libsel4`: Eliminate unnamed enums
+* Improved consistency and completeness of user manual
+* Added manual for bitfield generator
+* `bitfield_gen`: allow non-contiguous tag fields. A tagged union can now optionally use multiple fields to indicate the
+  tag. These are called "sliced" tags in the code. The tag fields have to be at the same position and width in each
+  block of the tagged unions, and all tag fields have to be within the same word. See the manual for details.
+* Make `CONFIG_PRINTING` and `CONFIG_DEBUG_BUILD` usable independently from each other
+* Overall debug printing improvements
+* Fix invisible chars due to ANSI escape codes. On terminals with black background some debug output was invisible due
+  to black foreground colour. Use bold instead.
+* Rename libsel4 config option `ENABLE_SMP_SUPPORT` to `CONFIG_ENABLE_SMP_SUPPORT` to be namespace compliant.
 * Removed obsolete define `HAVE_AUTOCONF`
+* Remove userError from `seL4_ReplyRecv` path, because it too often incorrectly warns about legitimate operations
+* Update GDB macros
+* Add support for `cmake --install <dir>` for final build and config artefacts
+* `cmake`: support supplying custom device trees overrides
+* `cmake`: provide `gen_config.json` with kernel config settings
+* Provide `platform_gen.json` in addition to `platform_gen.yaml`
+* Allow build with GNU `binutils` >= 2.38
+* Allow compilation with clang 12
+* `cmake`: detect x86 cross-compiler for Arm host (e.g. on Apple M1)
+* Consistently use `/usr/bin/env` for bash/sh invocations
+* Require Python 3 consistently everywhere
+* Improved support for compiling on MacOS
+* General minor build system improvements and clean-up
+* Set up automated tests for CI and GitHub pull requests on seL4
+* Add vulnerability disclosure policy
 
 ### Upgrade Notes
 
