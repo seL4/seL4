@@ -196,7 +196,7 @@ static inline word_t getVTTBR(void)
     return vttbr;
 }
 
-static inline void setKernelStack(word_t stack_address)
+static inline void setKernelStack(pptr_t stack_address)
 {
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         writeTPIDR_EL2(stack_address);
@@ -281,25 +281,25 @@ void lockTLBEntry(vptr_t vaddr);
 
 static inline void cleanByVA(vptr_t vaddr, paddr_t paddr)
 {
-    asm volatile("dc cvac, %0" : : ASM_PTR_CONSTR((word_t)vaddr));
+    asm volatile("dc cvac, %0" : : ASM_PTR_CONSTR((uintptr_t)vaddr));
     dmb();
 }
 
 static inline void cleanByVA_PoU(vptr_t vaddr, paddr_t paddr)
 {
-    asm volatile("dc cvau, %0" : : ASM_PTR_CONSTR((word_t)vaddr));
+    asm volatile("dc cvau, %0" : : ASM_PTR_CONSTR((uintptr_t)vaddr));
     dmb();
 }
 
 static inline void invalidateByVA(vptr_t vaddr, paddr_t paddr)
 {
-    asm volatile("dc ivac, %0" : : ASM_PTR_CONSTR((word_t)vaddr));
+    asm volatile("dc ivac, %0" : : ASM_PTR_CONSTR((uintptr_t)vaddr));
     dmb();
 }
 
 static inline void invalidateByVA_I(vptr_t vaddr, paddr_t paddr)
 {
-    asm volatile("ic ivau, %0" : : ASM_PTR_CONSTR((word_t)vaddr));
+    asm volatile("ic ivau, %0" : : ASM_PTR_CONSTR((uintptr_t)vaddr));
     dsb();
     isb();
 }
@@ -316,7 +316,7 @@ static inline void invalidate_I_PoU(void)
 
 static inline void cleanInvalByVA(vptr_t vaddr, paddr_t paddr)
 {
-    asm volatile("dc civac, %0" : : ASM_PTR_CONSTR((word_t)vaddr));
+    asm volatile("dc civac, %0" : : ASM_PTR_CONSTR((uintptr_t)vaddr));
     dsb();
 }
 

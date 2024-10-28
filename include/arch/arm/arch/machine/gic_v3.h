@@ -229,7 +229,7 @@ struct gic_rdist_sgi_ppi_map {  /* Starting */
     uint32_t    nsacr;          /* 0x0E00 */
 };
 
-extern volatile struct gic_dist_map *const gic_dist;
+extern volatile struct gic_dist_map *gic_dist;
 extern volatile struct gic_rdist_map *gic_rdist_map[CONFIG_MAX_NUM_NODES];
 extern volatile struct gic_rdist_sgi_ppi_map *gic_rdist_sgi_ppi_map[CONFIG_MAX_NUM_NODES];
 

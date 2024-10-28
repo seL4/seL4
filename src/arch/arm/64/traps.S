@@ -37,7 +37,7 @@
 #ifdef CONFIG_ENABLE_SMP_SUPPORT
     bic     \_tmp, \_tmp, #0xfff
 #endif
-    mov     sp, \_tmp
+    mov     PTRN(sp), \_tmp
 .endm
 
 .macro ventry label
@@ -98,12 +98,12 @@ END_FUNC(arm_vector_table)
 .endm
 
 BEGIN_FUNC(invalid_vector_entry)
-    lsp_i   x19
+    lsp_i   PTR(19)
     b       halt
 END_FUNC(invalid_vector_entry)
 
 BEGIN_FUNC(cur_el_sync)
-    lsp_i   x19
+    lsp_i   PTR(19)
     /* Read esr and branch to respective labels */
     mrs     x25, ESR
     lsr     x24, x25, #ESR_EC_SHIFT
@@ -138,7 +138,7 @@ END_FUNC(cur_el_sync)
  * activate ksCurThread when returning from interrupt as long as idle thread is stateless.
  */
 BEGIN_FUNC(cur_el_irq)
-    lsp_i   x19
+    lsp_i   PTR(19)
     b       c_handle_interrupt
 END_FUNC(cur_el_irq)
 
@@ -168,7 +168,7 @@ BEGIN_FUNC(lower_el_sync)
     mrs     REG(20), ELR
     str     REG(20), [PTRN(sp), #PT_FaultIP]
 
-    lsp_i   x19
+    lsp_i   PTR(19)
     /* move the ESR as the input */
     mov     x0, x25
     b       c_handle_vcpu_fault
@@ -182,14 +182,14 @@ lel_da:
     mrs     REG(20), ELR
     str     REG(20), [PTRN(sp), #PT_FaultIP]
 
-    lsp_i   x19
+    lsp_i   PTR(19)
     b       c_handle_data_fault
 
 lel_ia:
     mrs     REG(20), ELR
     str     REG(20), [PTRN(sp), #PT_FaultIP]
 
-    lsp_i   x19
+    lsp_i   PTR(19)
     b       c_handle_instruction_fault
 
 lel_syscall:
@@ -197,7 +197,7 @@ lel_syscall:
     sub     REG(20), REG(20), #4
     str     REG(20), [PTRN(sp), #PT_FaultIP]
 
-    lsp_i   x19
+    lsp_i   PTR(19)
 
 #ifdef CONFIG_FASTPATH
     cmp     x7, #SYSCALL_CALL
@@ -218,7 +218,7 @@ lel_syscall:
 
 el0_enfp:
 #ifdef CONFIG_HAVE_FPU
-    lsp_i   x19
+    lsp_i   PTR(19)
     b       c_handle_enfp
 #endif /* CONFIG_HAVE_FPU */
 
@@ -226,7 +226,7 @@ el0_user:
     mrs     REG(20), ELR
     str     REG(20), [PTRN(sp), #PT_FaultIP]
 
-    lsp_i   x19
+    lsp_i   PTR(19)
     b       c_handle_undefined_instruction
 END_FUNC(lower_el_sync)
 
@@ -235,7 +235,7 @@ BEGIN_FUNC(lower_el_irq)
     mrs     REG(20), ELR
     str     REG(20), [PTRN(sp), #PT_FaultIP]
 
-    lsp_i   x19
+    lsp_i   PTR(19)
     b       c_handle_interrupt
 END_FUNC(lower_el_irq)
 

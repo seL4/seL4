@@ -319,7 +319,7 @@ static BOOT_CODE void map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap, bool_t
     pte_t *pt;
 
     vptr_t vptr = cap_frame_cap_get_capFMappedAddress(frame_cap);
-    void *pptr = (void *)cap_frame_cap_get_capFBasePtr(frame_cap);
+    void *pptr = (void *)cap_get_archCapPtr(frame_cap);
 
     assert(cap_frame_cap_get_capFMappedASID(frame_cap) != 0);
 
@@ -328,14 +328,14 @@ static BOOT_CODE void map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap, bool_t
 #else
     vspaceRoot += GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(0));
     assert(pte_pte_table_ptr_get_present(vspaceRoot));
-    pud = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(vspaceRoot));
+    pud = PT_PTR(paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(vspaceRoot)));
 #endif
     pud += GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(1));
     assert(pte_pte_table_ptr_get_present(pud));
-    pd = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pud));
+    pd = PT_PTR(paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pud)));
     pd += GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(2));
     assert(pte_pte_table_ptr_get_present(pd));
-    pt = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pd));
+    pt = PT_PTR(paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pd)));
     *(pt + GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(3))) = pte_pte_4k_page_new(
 #if defined(CONFIG_HAVE_CHERI)
                                                               1, 1, 0, /* Enable capability loads/stores for the root task */
@@ -392,11 +392,11 @@ static BOOT_CODE void map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
 #else
     vspaceRoot += GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(0));
     assert(pte_pte_table_ptr_get_present(vspaceRoot));
-    pud = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(vspaceRoot));
+    pud = PT_PTR(paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(vspaceRoot)));
 #endif
     pud += GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(1));
     assert(pte_pte_table_ptr_get_present(pud));
-    pd = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pud));
+    pd = PT_PTR(paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pud)));
     *(pd + GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(2))) = pte_pte_table_new(
                                                               pptr_to_paddr(pt)
                                                           );
@@ -429,7 +429,7 @@ static BOOT_CODE void map_it_pd_cap(cap_t vspace_cap, cap_t pd_cap)
 #else
     vspaceRoot += GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(0));
     assert(pte_pte_table_ptr_get_present(vspaceRoot));
-    pud = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(vspaceRoot));
+    pud = PT_PTR(paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(vspaceRoot)));
 #endif
     *(pud + GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(1))) = pte_pte_table_new(
                                                                pptr_to_paddr(pd)
@@ -573,7 +573,7 @@ BOOT_CODE void write_it_asid_pool(cap_t it_ap_cap, cap_t it_vspace_cap)
                               0,
 #endif
                               /* vspace_root: reference to vspace root page table object */
-                              (word_t)cap_vspace_cap_get_capVSBasePtr(it_vspace_cap)
+                              (pptr_t)cap_vspace_cap_get_capVSBasePtr(it_vspace_cap)
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
                               /* stored_hw_vmid, stored_vmid_valid: Assigned hardware VMID for TLB. */
                               , 0, false
@@ -611,7 +611,7 @@ static findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
         return ret;
     }
 
-    ret.vspace_root = (vspace_root_t *)asid_map_asid_map_vspace_get_vspace_root(asid_map);
+    ret.vspace_root = VSPACE_PTR(asid_map_asid_map_vspace_get_vspace_root(asid_map));
     ret.status = EXCEPTION_NONE;
     return ret;
 }
@@ -635,10 +635,10 @@ void *PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
     vm_rights = cap_frame_cap_get_capFVMRights(bufferCap);
     if (likely(vm_rights == VMReadWrite ||
                (!isReceiver && vm_rights == VMReadOnly))) {
-        word_t basePtr;
+        pptr_t basePtr;
         unsigned int pageBits;
 
-        basePtr = cap_frame_cap_get_capFBasePtr(bufferCap);
+        basePtr = (pptr_t)cap_get_archCapPtr(bufferCap);
         pageBits = pageBitsForSize(cap_frame_cap_get_capFSize(bufferCap));
         return (void *)(basePtr + (w_bufferPtr & MASK(pageBits)));
     } else {
@@ -687,7 +687,7 @@ static lookupPTSlot_ret_t lookupPTSlot(vspace_root_t *vspace, vptr_t vptr)
     while (pte_pte_table_ptr_get_present(ret.ptSlot) && likely(level > 0)) {
         level--;
         ret.ptBitsLeft -= PT_INDEX_BITS;
-        pt = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(ret.ptSlot));
+        pt = PT_PTR(paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(ret.ptSlot)));
         ret.ptSlot = pt + ((vptr >> ret.ptBitsLeft) & MASK(PT_INDEX_BITS));
     }
 
@@ -1042,7 +1042,7 @@ void unmapPageTable(asid_t asid, vptr_t vptr, pte_t *target_pt)
             /* couldn't find it */
             return;
         }
-        pt = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(ptSlot));
+        pt = PT_PTR(paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(ptSlot)));
     }
 
     if (pt != target_pt) {
@@ -1313,7 +1313,7 @@ static exception_t performASIDControlInvocation(void *frame, cte_t *slot,
     cteInsert(
         cap_asid_pool_cap_new(
             asid_base,         /* capASIDBase  */
-            WORD_REF(frame)    /* capASIDPool  */
+            (pptr_t)frame      /* capASIDPool  */
         ), parent, slot);
 
     assert((asid_base & MASK(asidLowBits)) == 0);
@@ -1678,6 +1678,15 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
             current_syscall_error.invalidArgumentNumber = 0;
             return EXCEPTION_SYSCALL_ERROR;
         }
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+        /* FIXME: cheriTODO We need to re-build a CHERI user capability here as we
+         * don't embed CHERI capabilities for user mapped addresses within the seL4
+         * capability itself (capFMappedAddress). Only the kernel's address map of
+         * this page is embedded in the seL4 capability format.
+         */
+        vaddr = (vptr_t) cheri_build_user_cap((ptraddr_t)vaddr, page_size, -1);
+#endif
 
         word_t pstart = pptr_to_paddr((void *)cap_frame_cap_get_capFBasePtr(cap)) + start;
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT

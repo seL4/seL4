@@ -216,7 +216,7 @@ BOOT_CODE static bool_t init_cpu(void)
     /* Setup kernel stack pointer.
      * On ARM SMP, the array index here is the CPU ID
      */
-    word_t stack_top = ((word_t) kernel_stack_alloc[CURRENT_CPU_INDEX()]) + BIT(CONFIG_KERNEL_STACK_BITS);
+    pptr_t stack_top = ((pptr_t) kernel_stack_alloc[CURRENT_CPU_INDEX()]) + BIT(CONFIG_KERNEL_STACK_BITS);
 #if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_ARCH_AARCH64)
     /* the least 12 bits are used to store logical core ID */
     stack_top |= getCurrentCPUIndex();
@@ -370,7 +370,7 @@ static BOOT_CODE bool_t try_init_kernel(
     };
     region_t ui_reg = paddr_to_pptr_reg(ui_p_reg);
     word_t extra_bi_size = 0;
-    pptr_t extra_bi_offset = 0;
+    word_t extra_bi_offset = 0;
     vptr_t extra_bi_frame_vptr;
     vptr_t bi_frame_vptr;
     vptr_t ipcbuf_vptr;
@@ -421,7 +421,7 @@ static BOOT_CODE bool_t try_init_kernel(
         if (dtb_phys_end >= PADDR_TOP) {
             printf("ERROR: DTB at [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] "
                    "exceeds PADDR_TOP (%"SEL4_PRIx_word")\n",
-                   dtb_phys_addr, dtb_phys_end, PADDR_TOP);
+                   dtb_phys_addr, dtb_phys_end, (word_t)PADDR_TOP);
             return false;
         }
         /* DTB seems valid and accessible, pass it on in bootinfo. */
@@ -521,7 +521,7 @@ static BOOT_CODE bool_t try_init_kernel(
         *(seL4_BootInfoHeader *)(rootserver.extra_bi + extra_bi_offset) = header;
         extra_bi_offset += sizeof(header);
         memcpy((void *)(rootserver.extra_bi + extra_bi_offset),
-               paddr_to_pptr(dtb_phys_addr),
+               (const void *) paddr_to_pptr(dtb_phys_addr),
                dtb_size);
         extra_bi_offset += dtb_size;
     }

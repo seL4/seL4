@@ -171,18 +171,34 @@ typedef enum {
 #define seL4_PageBits 12
 #define seL4_LargePageBits 21
 #define seL4_HugePageBits 30
-#define seL4_SlotBits 5
+
+#if defined(CONFIG_CHERI_PURECAP_KERNEL)
+#define seL4_TCBBits 12
+#define seL4_SlotBits 7
+#define seL4_EndpointBits 7
+#define seL4_ASIDPoolIndexBits 7
+#define seL4_RegisterSizeBits 5
+#else
 #if defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYP_ENABLE_VCPU_CP14_SAVE_AND_RESTORE) || defined(CONFIG_HAVE_CHERI)
 #define seL4_TCBBits 12
 #else
 #define seL4_TCBBits 11
 #endif
+#define seL4_SlotBits 5
 #define seL4_EndpointBits 4
+#define seL4_ASIDPoolIndexBits 9
+#define seL4_RegisterSizeBits 3
+#endif
+
 #ifdef CONFIG_KERNEL_MCS
 #define seL4_NotificationBits 6
 #define seL4_ReplyBits           5
 #else
+#if defined(CONFIG_CHERI_PURECAP_KERNEL)
+#define seL4_NotificationBits 8
+#else
 #define seL4_NotificationBits 5
+#endif
 #endif
 
 #define seL4_PageTableBits 12
@@ -191,7 +207,6 @@ typedef enum {
 
 #define seL4_NumASIDPoolsBits 7
 #define seL4_ASIDPoolBits 12
-#define seL4_ASIDPoolIndexBits 9
 #define seL4_IOPageTableBits 12
 #define seL4_WordSizeBits 3
 
@@ -221,7 +236,7 @@ typedef enum {
 
 #ifndef __ASSEMBLER__
 SEL4_SIZE_SANITY(seL4_PageTableEntryBits, seL4_PageTableIndexBits, seL4_PageTableBits);
-SEL4_SIZE_SANITY(seL4_WordSizeBits, seL4_ASIDPoolIndexBits, seL4_ASIDPoolBits);
+SEL4_SIZE_SANITY(seL4_RegisterSizeBits, seL4_ASIDPoolIndexBits, seL4_ASIDPoolBits);
 SEL4_SIZE_SANITY(seL4_VSpaceEntryBits, seL4_VSpaceIndexBits, seL4_VSpaceBits);
 #endif
 
