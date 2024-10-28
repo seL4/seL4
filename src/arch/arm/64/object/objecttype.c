@@ -464,7 +464,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
 
 exception_t Arch_decodeInvocation(word_t label, word_t length, cptr_t cptr,
                                   cte_t *slot, cap_t cap,
-                                  bool_t call, word_t *buffer)
+                                  bool_t call, rword_t *buffer)
 {
 
     /* The C parser cannot handle a switch statement with only a default

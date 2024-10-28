@@ -616,7 +616,7 @@ static findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
     return ret;
 }
 
-word_t *PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
+void *PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
 {
     word_t w_bufferPtr;
     cap_t bufferCap;
@@ -640,7 +640,7 @@ word_t *PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
 
         basePtr = cap_frame_cap_get_capFBasePtr(bufferCap);
         pageBits = pageBitsForSize(cap_frame_cap_get_capFSize(bufferCap));
-        return (word_t *)(basePtr + (w_bufferPtr & MASK(pageBits)));
+        return (void *)(basePtr + (w_bufferPtr & MASK(pageBits)));
     } else {
         return NULL;
     }
@@ -1287,7 +1287,7 @@ static exception_t performPageGetAddress(pptr_t base_ptr, bool_t call)
     tcb_t *thread;
     thread = NODE_STATE(ksCurThread);
     if (call) {
-        word_t *ipcBuffer = lookupIPCBuffer(true, thread);
+        rword_t *ipcBuffer = lookupIPCBuffer(true, thread);
         setRegister(thread, badgeRegister, 0);
         unsigned int length = setMR(thread, ipcBuffer, 0, base);
         setRegister(thread, msgInfoRegister, wordFromMessageInfo(
@@ -1321,7 +1321,7 @@ static exception_t performASIDControlInvocation(void *frame, cte_t *slot,
 }
 
 static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, word_t length,
-                                                 cte_t *cte, cap_t cap, word_t *buffer)
+                                                 cte_t *cte, cap_t cap, rword_t *buffer)
 {
     vptr_t start, end;
     paddr_t pstart;
@@ -1434,7 +1434,7 @@ static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, word_t length,
 
 
 static exception_t decodeARMPageTableInvocation(word_t invLabel, word_t length,
-                                                cte_t *cte, cap_t cap, word_t *buffer)
+                                                cte_t *cte, cap_t cap, rword_t *buffer)
 {
     cap_t vspaceRootCap;
     vspace_root_t *vspaceRoot;
@@ -1524,7 +1524,7 @@ static inline bool_t CONST checkVPAlignment(vm_page_size_t sz, word_t w)
 }
 
 static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
-                                            cte_t *cte, cap_t cap, bool_t call, word_t *buffer)
+                                            cte_t *cte, cap_t cap, bool_t call, rword_t *buffer)
 {
     switch (invLabel) {
     case ARMPageMap: {
@@ -1723,7 +1723,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
 }
 
 exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
-                                   cte_t *cte, cap_t cap, bool_t call, word_t *buffer)
+                                   cte_t *cte, cap_t cap, bool_t call, rword_t *buffer)
 {
     switch (cap_get_capType(cap)) {
     case cap_vspace_cap:
