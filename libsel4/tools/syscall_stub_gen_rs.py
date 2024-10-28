@@ -444,8 +444,9 @@ def generate_stub_file(arch, input_files, output_file, use_only_ipc_buffer, mcs,
 
     wordsize = syscall_stub_gen.WORD_SIZE_BITS_ARCH[arch]
 
-    data_types = syscall_stub_gen.init_data_types(wordsize)
-    arch_types = syscall_stub_gen.init_arch_types(wordsize, args)
+    # cheriTODO: document CHERI support
+    data_types = syscall_stub_gen.init_data_types(wordsize, None)
+    arch_types = syscall_stub_gen.init_arch_types(wordsize, args, False)
 
     # Parse XML
     methods = []

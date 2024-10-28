@@ -387,6 +387,6 @@ seL4_VMEnter(seL4_Word *sender);
  * @param tls_base The new base address to store in the register.
  */
 LIBSEL4_INLINE_FUNC void
-seL4_SetTLSBase(seL4_Word tls_base);
+seL4_SetTLSBase(seL4_Register tls_base);
 #endif
 
