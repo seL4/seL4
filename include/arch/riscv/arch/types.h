@@ -17,7 +17,6 @@ typedef signed long sword_t;
 /* for printf() formatting */
 #define _seL4_word_fmt  l
 
-typedef word_t vptr_t;
 typedef word_t paddr_t;
 typedef word_t pptr_t;
 typedef word_t cptr_t;
@@ -27,6 +26,14 @@ typedef word_t node_id_t;
 typedef word_t dom_t;
 
 typedef uint64_t timestamp_t;
+
+#if defined(CONFIG_HAVE_CHERI)
+typedef __uintcap_t rword_t;
+typedef __uintcap_t vptr_t;
+#else
+typedef word_t rword_t;
+typedef word_t vptr_t;
+#endif
 
 #define wordBits BIT(wordRadix)
 
