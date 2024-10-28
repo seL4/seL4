@@ -354,6 +354,11 @@ include_directories(
     "libsel4/mode_include/${KernelWordSize}"
 )
 
+# Add CHERI helper headers
+if(HaveCheri)
+    include_directories("include/cheri")
+endif()
+
 #
 # Config generation
 #
