@@ -97,7 +97,9 @@
  */
 #define CCTLR_EL1_C64E_MASK (0x1 << 5) /* Enable C64 mode upon exception */
 
-#if defined(CONFIG_CHERI_HYBRID_KERNEL)
+#if defined(__CHERI_PURE_CAPABILITY__)
+.extern _start_purecap
+#elif defined(CONFIG_CHERI_HYBRID_KERNEL)
 .extern _start_hybrid
 #endif
 
@@ -107,6 +109,9 @@
 #if defined(CONFIG_HAVE_CHERI)
  /* This macros is copied from CheriBSD */
 .macro morello_cpu_init
+#ifdef __CHERI_PURE_CAPABILITY__
+  .arch_extension a64c
+#endif
   /* Enable Morello instructions at EL0 and EL1 */
   mrs x5, cpacr_el1
   bic x5, x5, CPACR_CEN_MASK
@@ -122,6 +127,23 @@
   orr x5, x5, #(CCTLR_PERMVCT_MASK | CCTLR_SBL_MASK)
   msr cctlr_el0, x5
 
+#ifdef __CHERI_PURE_CAPABILITY__
+  /*
+   * Enable capablity sealing for branch and link at EL1
+   * Use PCC/DDC address interpretation.
+   * Use DDC as base for adrdp.
+   */
+  mrs x5, cctlr_el1
+  bic x5, x5, #(CCTLR_PCCBO_MASK | CCTLR_DDCBO_MASK | CCTLR_ADRDPB_MASK)
+  orr x5, x5, #(CCTLR_SBL_MASK)
+  orr x5, x5, #(CCTLR_EL1_C64E_MASK)
+  msr cctlr_el1, x5
+
+  /* We assume that we enter here in a64 mode. */
+  bx  #4
+
+  .arch_extension c64
+#endif
 .endmacro
 #endif
 
@@ -149,20 +171,20 @@ BEGIN_FUNC(_start)
 
 #ifdef ENABLE_SMP_SUPPORT
     /* tpidr_el1 has the logic ID of the core, starting from 0 */
-    mrs     x6, tpidr_el1
+    mrs     REG(6), tpidr_el1
     /* Set the sp for each core assuming linear indices */
-    ldr     x5, =BIT(CONFIG_KERNEL_STACK_BITS)
-    mul     x5, x5, x6
-    ldr     x4, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
-    add     x4, x4, x5
-    mov     sp, x4
+    ldr     REG(5), =BIT(CONFIG_KERNEL_STACK_BITS)
+    mul     REG(5), REG(5), REG(6)
+    ldr     REG(4), =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
+    add     REG(4), REG(4), REG(5)
+    mov     REGN(sp), REG(4)
     /* the kernel stack must be 4-KiB aligned since we use the
        lowest 12 bits to store the logical core ID. */
-    orr     x6, x6, x4
+    orr     REG(6), REG(6), REG(4)
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    msr     tpidr_el2, x6
+    msr     tpidr_el2, REG(6)
 #else
-    msr     tpidr_el1, x6
+    msr     tpidr_el1, REG(6)
 #endif
 #else
     ldr    x4, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
@@ -172,20 +194,33 @@ BEGIN_FUNC(_start)
 #if defined(CONFIG_HAVE_CHERI)
     /* Initialize morello capability ISA and switch to C64 if needed */
     morello_cpu_init
+
+#ifdef __CHERI_PURE_CAPABILITY__
+    mrs     c5, DDC
+    ldr     x6, =kernel_stack_alloc
+    scvalue c5, c5, x6
+    ldr     x6, =BIT(CONFIG_KERNEL_STACK_BITS)
+    scbnds  c5, c5, x6
+    scvalue c5, c5, x4
+    mov     csp, c5
+#endif
 #endif
     /* Attempt to workaround any known ARM errata. */
-    stp     x0, x1, [sp, #-16]!
-    stp     x2, x3, [sp, #-16]!
-    stp     x7, x8, [sp, #-16]!
+    stp     x0, x1, [PTRN(sp), #-(REGSIZE * 2)]!
+    stp     x2, x3, [PTRN(sp), #-(REGSIZE * 2)]!
+    stp     x7, x8, [PTRN(sp), #-(REGSIZE * 2)]!
+
     bl arm_errata
 
-#if defined(CONFIG_CHERI_HYBRID_KERNEL)
+#ifdef __CHERI_PURE_CAPABILITY__
+    bl _start_purecap
+#elif defined(CONFIG_CHERI_HYBRID_KERNEL)
     bl _start_hybrid
 #endif
 
-    ldp     x4, x5, [sp], #16
-    ldp     x2, x3, [sp], #16
-    ldp     x0, x1, [sp], #16
+    ldp     x4, x5, [PTRN(sp)], #(REGSIZE * 2)
+    ldp     x2, x3, [PTRN(sp)], #(REGSIZE * 2)
+    ldp     x0, x1, [PTRN(sp)], #(REGSIZE * 2)
 
     /* Call bootstrapping implemented in C with parameters:
      *  x0: user image physical start address

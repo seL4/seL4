@@ -122,8 +122,8 @@ struct gic_cpu_iface_map {
     uint32_t component_id[4];       /* [0xFF0, 0xFFF] PL390 only */
 };
 
-extern volatile struct gic_dist_map *const gic_dist;
-extern volatile struct gic_cpu_iface_map *const gic_cpuiface;
+extern volatile struct gic_dist_map *gic_dist;
+extern volatile struct gic_cpu_iface_map *gic_cpuiface;
 
 /* Helpers */
 static inline void dist_enable_clr(word_t irq)

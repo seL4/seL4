@@ -78,6 +78,7 @@ SECTIONS
 
     /DISCARD/ :
     {
+        *(.note.cheri)
         *(.note.gnu.build-id)
         *(.comment)
     }

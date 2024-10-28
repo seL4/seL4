@@ -318,10 +318,17 @@ static inline void Arch_initContext(user_context_t *context)
 #if defined(CONFIG_HAVE_CHERI)
 #define REG(n) "c" STRINGIFY(n)
 #define REGN(name) "c" STRINGIFY(name)
+#define ASM_REG_CONSTR "C"
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+#define PTR(n) "c" STRINGIFY(n)
+#define PTRN(name) "c" STRINGIFY(name)
+#define ASM_PTR_CONSTR "C"
+#else
 #define PTR(n) "x" STRINGIFY(n)
 #define PTRN(name) STRINGIFY(name)
-#define ASM_REG_CONSTR "C"
 #define ASM_PTR_CONSTR "r"
+#endif
 #else
 #define REG(n) "x" STRINGIFY(n)
 #define REGN(name) STRINGIFY(name)
@@ -337,12 +344,17 @@ static inline void Arch_initContext(user_context_t *context)
 #if defined(CONFIG_HAVE_CHERI)
 #define REG(n) c##n
 #define REGN(name) c##name
+#if defined(__CHERI_PURE_CAPABILITY__)
+#define PTR(n) REG(n)
+#define PTRN(name) REGN(name)
+#else
 #define PTR(n) x##n
 #define PTRN(name) name
+#endif
 #else
 #define REG(n) x##n
 #define REGN(name) name
 #define PTR(n) x##n
 #define PTRN(name) name
-#endif
+#endif /* __CHERI_PURE_CAPABILITY__ */
 #endif

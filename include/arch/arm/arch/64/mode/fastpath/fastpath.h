@@ -85,15 +85,34 @@ static inline void fastpath_set_tcbfault_vm_fault(vm_fault_type_t type)
 #endif
 
 static inline void mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(
-    mdb_node_t *node_ptr, word_t mdbNext,
+    mdb_node_t *node_ptr, pptr_t mdbNext,
     word_t mdbRevocable, word_t mdbFirstBadged)
 {
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    mdb_node_ptr_set_mdbFirstBadged(node_ptr, mdbFirstBadged);
+    mdb_node_ptr_set_mdbRevocable(node_ptr, mdbRevocable);
+    mdb_node_ptr_set_mdbNext(node_ptr, mdbNext);
+#else
+    /* FIXME: This should be more portable not assuming/inferring how the bitfield
+     * generator lays out its fields, including variable names such as "words[1]". It should
+     * instead use the setter functions for that.
+     */
     node_ptr->words[1] = mdbNext | (mdbRevocable << 1) | mdbFirstBadged;
+#endif
 }
 
-static inline void mdb_node_ptr_set_mdbPrev_np(mdb_node_t *node_ptr, word_t mdbPrev)
+static inline void mdb_node_ptr_set_mdbPrev_np(mdb_node_t *node_ptr, pptr_t mdbPrev)
 {
+#if defined(__CHERI_PURE_CAPABILITY__)
+    mdb_node_ptr_set_mdbPrev(node_ptr, mdbPrev);
+#else
+    /* FIXME: This could should be more portable not assuming/inferring how the bitfield
+     * generator lays out its fields, including variable names such as "words[0]". It should
+     * instead use the setter functions for that.
+     */
     node_ptr->words[0] = mdbPrev;
+#endif
 }
 
 static inline bool_t isValidVTableRoot_fp(cap_t vspace_root_cap)
@@ -151,7 +170,7 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
 
     register word_t badge_reg asm("x0") = badge;
     register word_t msgInfo_reg asm("x1") = msgInfo;
-    register word_t cur_thread_reg asm("x2") = (word_t)cur_thread->tcbArch.tcbContext.registers;
+    register pptr_t cur_thread_reg = (pptr_t)cur_thread->tcbArch.tcbContext.registers;
 
     asm volatile(
         "mov     "PTRN(sp)", %2                                 \n"
