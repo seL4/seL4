@@ -70,7 +70,7 @@ static inline void debug_printUserState(void)
 {
     tcb_t *tptr = NODE_STATE(ksCurThread);
     printf("Current thread: %s\n", TCB_PTR_DEBUG_PTR(tptr)->tcbName);
-    printf("Next instruction adress: %lx\n", getRestartPC(tptr));
+    printf("Next instruction adress: %lx\n", (word_t) getRestartPC(tptr));
     printf("Stack:\n");
     Arch_userStackTrace(tptr);
 }
@@ -114,7 +114,7 @@ static inline void debug_printTCB(tcb_t *tcb)
     }
 
     word_t core = SMP_TERNARY(tcb->tcbAffinity, 0);
-    printf("%15s\t%p\t%20lu\t%lu", state, (void *) getRestartPC(tcb), tcb->tcbPriority, core);
+    printf("%15s\t%lu\t%20lu\t%lu", state, (word_t) getRestartPC(tcb), tcb->tcbPriority, core);
 #ifdef CONFIG_KERNEL_MCS
     printf("\t%lu", (word_t) thread_state_get_tcbInReleaseQueue(tcb->tcbState));
 #endif
