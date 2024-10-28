@@ -1,5 +1,7 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: BSD-2-Clause
  */
@@ -9,18 +11,22 @@
 #include <sel4/macros.h>
 
 /*
- * Data   | short | int | long | long | void*  | notes
- * model  |       |     |      | long | size_t |
- * -------+-------+-----+------+------+--------+----------------
- * IP16   | 16    | 16  | 32   | 64   | 16     | MS-DOS SMALL memory model
- * LP32   | 16    | 16  | 32   | 64   | 32     | MS-DOS LARGE memory model
- * ILP32  | 16    | 32  | 32   | 64   | 32     | common for a 32-bit OS
- * LLP64  | 16    | 32  | 32   | 64   | 64     | 64-bit Windows, VC++, MinGW
- * LP64   | 16    | 32  | 64   | 64   | 64     | most 64-bit Unix systems
- * ILP64  | 16    | 64  | 64   | 64   | 64     | SPARC64, Solaris
- * SILP64 | 64    | 64  | 64   | 64   | 64     | UNICOS
+ * Data       | short | int | long | long | size_t | void*  |  notes
+ * model      |       |     |      | long |        |
+ * -----------+-------+-----+------+------+--------+----------------
+ * IP16       | 16    | 16  | 32   | 64   | 16     | 16     | MS-DOS SMALL memory model
+ * LP32       | 16    | 16  | 32   | 64   | 32     | 32     | MS-DOS LARGE memory model
+ * ILP32      | 16    | 32  | 32   | 64   | 32     | 32     | common for a 32-bit OS
+ * LLP64      | 16    | 32  | 32   | 64   | 64     | 64     | 64-bit Windows, VC++, MinGW
+ * LP64       | 16    | 32  | 64   | 64   | 64     | 64     | most 64-bit Unix systems
+ * ILP64      | 16    | 64  | 64   | 64   | 64     | 64     | SPARC64, Solaris
+ * SILP64     | 64    | 64  | 64   | 64   | 64     | 64     | UNICOS
+ * IL32PC64   | 16    | 32  | 32   | 64   | 32     | 64     | 32-bit CHERI OS
+ * L64PC128   | 16    | 32  | 64   | 64   | 64     | 128    | 64-bit CHERI OS
  *
  * libsel4 requires ILP32 on 32-bit systems and and LP64 on 64-bit systems
+ * On CHERI-enabled seL4, IL32P64 is required for 32-bit systems and
+ * L64PC128 for 64-bit.
  */
 
 /* Get the architectural definitions and types */
@@ -126,6 +132,12 @@ typedef seL4_Uint64 seL4_Word;
 #define SEL4_PRI_word   SEL4_PRIu_word
 
 typedef seL4_Word seL4_CPtr;
+
+#if defined(CONFIG_HAVE_CHERI)
+typedef __uintcap_t seL4_Register;
+#else
+typedef seL4_Word seL4_Register;
+#endif
 
 /* sanity check that the seL4_Word matches the definitions of the constants */
 #include <sel4/sel4_arch/constants.h>

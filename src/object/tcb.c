@@ -768,7 +768,7 @@ static exception_t decodeUnsetBreakpoint(cap_t cap, rword_t *buffer)
 }
 #endif /* CONFIG_HARDWARE_DEBUG_API */
 
-static exception_t invokeSetTLSBase(tcb_t *thread, word_t tls_base)
+static exception_t invokeSetTLSBase(tcb_t *thread, rword_t tls_base)
 {
     setRegister(thread, TLS_BASE, tls_base);
     if (thread == NODE_STATE(ksCurThread)) {
@@ -782,7 +782,7 @@ static exception_t invokeSetTLSBase(tcb_t *thread, word_t tls_base)
 
 static exception_t decodeSetTLSBase(cap_t cap, word_t length, rword_t *buffer)
 {
-    word_t tls_base;
+    rword_t tls_base;
 
     if (length < 1) {
         userError("TCB SetTLSBase: Truncated message.");
