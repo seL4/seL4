@@ -1,5 +1,7 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: BSD-2-Clause
  */
@@ -10,7 +12,7 @@
 
 typedef struct seL4_IPCBuffer_ {
     seL4_MessageInfo_t tag;
-    seL4_Word msg[seL4_MsgMaxLength];
+    seL4_Register msg[seL4_MsgMaxLength];
     seL4_Word userData;
     seL4_Word caps_or_badges[seL4_MsgMaxExtraCaps];
     seL4_CPtr receiveCNode;
