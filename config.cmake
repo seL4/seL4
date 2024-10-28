@@ -432,6 +432,23 @@ config_option(
     CheriHybridKernel CHERI_HYBRID_KERNEL
     "Enable building and running the kernel in hybrid CHERI mode and user in purecap mode"
     DEFAULT OFF
+    DEFAULT OFF
+    DEPENDS "HaveCheri"
+    DEFAULT_DISABLED OFF
+)
+
+config_option(
+    CheriPureCapKernel CHERI_PURECAP_KERNEL
+    "Enable building and running the kernel in purecap CHERI"
+    DEFAULT ON
+    DEPENDS "HaveCheri AND NOT CheriHybridKernel"
+    DEFAULT_DISABLED OFF
+)
+
+config_option(
+    CheriPureCapLoader CHERI_PURECAP_LOADER
+    "Enable building and running the seL4 ELF Loader in purecap mode"
+    DEFAULT ON
     DEPENDS "HaveCheri"
     DEFAULT_DISABLED OFF
 )
