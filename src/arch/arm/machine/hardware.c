@@ -9,12 +9,12 @@
 #include <arch/machine.h>
 #include <plat/machine/hardware.h>
 
-word_t PURE getRestartPC(tcb_t *thread)
+rword_t PURE getRestartPC(tcb_t *thread)
 {
     return getRegister(thread, FaultIP);
 }
 
-void setNextPC(tcb_t *thread, word_t v)
+void setNextPC(tcb_t *thread, rword_t v)
 {
     setRegister(thread, NEXT_PC_REG, v);
 }
@@ -32,8 +32,13 @@ BOOT_CODE void map_kernel_devices(void)
          */
         assert(frame->armExecuteNever);
         map_kernel_frame(frame->paddr, frame->pptr, VMKernelOnly,
-                         vm_attributes_new(frame->armExecuteNever, false,
-                                           false));
+                         vm_attributes_new(
+#if defined(CONFIG_HAVE_CHERI)
+                             /* Devices cannot have CHERI capabilities, disable LC/SC */
+                             0, 0, 0,
+#endif
+                             frame->armExecuteNever, false,
+                             false));
         if (!frame->userAvailable) {
             reserve_region((p_region_t) {
                 .start = frame->paddr,
