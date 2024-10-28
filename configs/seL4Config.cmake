@@ -1,5 +1,7 @@
 #
 # Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+# Copyright 2024, Capabilities Limited
+# CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
 #
 # SPDX-License-Identifier: GPL-2.0-only
 #
@@ -230,6 +232,7 @@ elseif(KernelArmCortexA57)
 elseif(KernelArmCortexA72)
     set(KernelArmCPU "cortex-a72" CACHE INTERNAL "")
 elseif(KernelArmMorello)
+    # Morello is both a CHERI architecture and an Arm CPU implementation
     set(KernelArmCPU "morello" CACHE INTERNAL "")
 endif()
 if(KernelArchARM)

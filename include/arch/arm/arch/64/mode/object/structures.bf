@@ -1,5 +1,7 @@
 --
 -- Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+-- Copyright 2024, Capabilities Limited
+-- CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
 --
 -- SPDX-License-Identifier: GPL-2.0-only
 --
@@ -269,7 +271,14 @@ block pte_table {
 
 -- The level 1 and 2 page pte structure
 block pte_page {
+#if defined(CONFIG_HAVE_CHERI)
+    padding                         1
+    field LC                        2
+    field SC                        1
+    field CDBM                      1
+#else
     padding                         5
+#endif
     field pte_sw_type               1
     padding                         3
     field UXN                       1
@@ -290,7 +299,14 @@ block pte_page {
 
 -- The level 3 page pte structure
 block pte_4k_page {
+#if defined(CONFIG_HAVE_CHERI)
+    padding                         1
+    field LC                        2
+    field SC                        1
+    field CDBM                      1
+#else
     padding                         5
+#endif
     field pte_sw_type               1
     padding                         3
     field UXN                       1

@@ -1,5 +1,7 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -225,12 +227,16 @@ BOOT_CODE void map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_righ
         attr_index = DEVICE_nGnRnE;
         shareable = 0;
     }
-    armKSGlobalKernelPT[GET_KPT_INDEX(vaddr, KLVL_FRM_ARM_PT_LVL(3))] = pte_pte_4k_page_new(uxn, paddr,
-                                                                                            0, /* global */
-                                                                                            1, /* access flag */
-                                                                                            shareable,
-                                                                                            APFromVMRights(vm_rights),
-                                                                                            attr_index);
+    armKSGlobalKernelPT[GET_KPT_INDEX(vaddr, KLVL_FRM_ARM_PT_LVL(3))] = pte_pte_4k_page_new(
+#if defined(CONFIG_HAVE_CHERI)
+                                                                            1, 1, 0, /* Enable capability loads/stores for the kernel */
+#endif
+                                                                            uxn, paddr,
+                                                                            0, /* global */
+                                                                            1, /* access flag */
+                                                                            shareable,
+                                                                            APFromVMRights(vm_rights),
+                                                                            attr_index);
 }
 
 BOOT_CODE void map_kernel_window(void)
@@ -269,6 +275,9 @@ BOOT_CODE void map_kernel_window(void)
     for (paddr = PADDR_BASE; paddr < PADDR_TOP; paddr += BIT(seL4_LargePageBits)) {
         armKSGlobalKernelPDs[GET_KPT_INDEX(vaddr, KLVL_FRM_ARM_PT_LVL(1))][GET_KPT_INDEX(vaddr,
                                                                                          KLVL_FRM_ARM_PT_LVL(2))] = pte_pte_page_new(
+#if defined(CONFIG_HAVE_CHERI)
+                                                                                                                        1, 1, 0, /* Enable capability loads/stores for the kernel */
+#endif
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
                                                                                                                         0, // XN
 #else
@@ -328,6 +337,9 @@ static BOOT_CODE void map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap, bool_t
     assert(pte_pte_table_ptr_get_present(pd));
     pt = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pd));
     *(pt + GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(3))) = pte_pte_4k_page_new(
+#if defined(CONFIG_HAVE_CHERI)
+                                                              1, 1, 0, /* Enable capability loads/stores for the root task */
+#endif
                                                               !executable,                    /* unprivileged execute never */
                                                               pptr_to_paddr(pptr),            /* page_base_address    */
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
@@ -702,10 +714,20 @@ static pte_t makeUserPagePTE(paddr_t paddr, vm_rights_t vm_rights, vm_attributes
     word_t shareable = cacheable ? SMP_TERNARY(SMP_SHARE, 0) : 0;
 
     if (page_size == ARMSmallPage) {
-        return pte_pte_4k_page_new(nonexecutable, paddr, nG, 1 /* access flag */,
+        return pte_pte_4k_page_new(
+#if defined(CONFIG_HAVE_CHERI)
+                                   /* cheriTODO: fine-grain capability permissions per-user */
+                                   1, 1, 0, /* Enable capability loads/stores */
+#endif
+                                   nonexecutable, paddr, nG, 1 /* access flag */,
                                    shareable, APFromVMRights(vm_rights), attridx);
     } else {
-        return pte_pte_page_new(nonexecutable, paddr, nG, 1 /* access flag */,
+        return pte_pte_page_new(
+#if defined(CONFIG_HAVE_CHERI)
+                                /* cheriTODO: fine-grain capability permissions per-user */
+                                1, 1, 0, /* Enable capability loads/stores */
+#endif
+                                nonexecutable, paddr, nG, 1 /* access flag */,
                                 shareable, APFromVMRights(vm_rights), attridx);
     }
 }
@@ -1686,8 +1708,8 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
         }
 #endif
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        return performPageFlush(invLabel, find_ret.vspace_root, asid, vaddr + start, vaddr + end - 1,
-                                pstart);
+        return performPageFlush(invLabel, find_ret.vspace_root, asid, vaddr + (word_t)start,
+                                vaddr + (word_t)end - 1, pstart);
     }
 
     case ARMPageGetAddress:
