@@ -7,7 +7,7 @@
 #include <assert.h>
 #include <arch/machine/registerset.h>
 
-const register_t msgRegisters[] = {
+const regoff_t msgRegisters[] = {
     R2, R3, R4, R5
 };
 compile_assert(
@@ -15,7 +15,7 @@ compile_assert(
     sizeof(msgRegisters) / sizeof(msgRegisters[0]) == n_msgRegisters
 );
 
-const register_t frameRegisters[] = {
+const regoff_t frameRegisters[] = {
     FaultIP, SP, CPSR,
     R0, R1, R8, R9, R10, R11, R12
 };
@@ -24,7 +24,7 @@ compile_assert(
     sizeof(frameRegisters) / sizeof(frameRegisters[0]) == n_frameRegisters
 );
 
-const register_t gpRegisters[] = {
+const regoff_t gpRegisters[] = {
     R2, R3, R4, R5, R6, R7, R14,
     TPIDRURW, TPIDRURO
 };

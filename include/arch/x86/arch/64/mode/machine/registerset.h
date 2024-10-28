@@ -72,7 +72,7 @@ enum _register {
     n_contextRegisters      = 24    /* 0xc0 */
 };
 
-typedef uint32_t register_t;
+typedef uint32_t regoff_t;
 
 enum messageSizes {
     n_msgRegisters = seL4_FastMessageRegisters,
@@ -137,9 +137,9 @@ enum messageSizes {
     [seL4_TimeoutReply_TLS_BASE] = TLS_BASE,\
 }
 
-extern const register_t msgRegisters[];
-extern const register_t frameRegisters[];
-extern const register_t gpRegisters[];
+extern const regoff_t msgRegisters[];
+extern const regoff_t frameRegisters[];
+extern const regoff_t gpRegisters[];
 
 #define FPU_PADDING word_t padding[1];
 

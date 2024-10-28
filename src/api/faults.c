@@ -81,7 +81,7 @@ static inline void copyMRsFaultReply(tcb_t *sender, tcb_t *receiver, MessageID_t
     archInfo = Arch_getSanitiseRegisterInfo(receiver);
 
     for (i = 0; i < MIN(length, n_msgRegisters); i++) {
-        register_t r = fault_messages[id][i];
+        regoff_t r = fault_messages[id][i];
         rword_t v = getRegister(sender, msgRegisters[i]);
         setRegister(receiver, r, sanitiseRegister(r, v, archInfo));
     }
@@ -90,7 +90,7 @@ static inline void copyMRsFaultReply(tcb_t *sender, tcb_t *receiver, MessageID_t
         rword_t *sendBuf = lookupIPCBuffer(false, sender);
         if (sendBuf) {
             for (; i < length; i++) {
-                register_t r = fault_messages[id][i];
+                regoff_t r = fault_messages[id][i];
                 rword_t v = sendBuf[i + 1];
                 setRegister(receiver, r, sanitiseRegister(r, v, archInfo));
             }

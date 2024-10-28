@@ -60,7 +60,7 @@ enum _register {
     /* 0x44 */  n_contextRegisters = 17
 };
 
-typedef word_t register_t;
+typedef word_t regoff_t;
 
 enum messageSizes {
     n_msgRegisters = seL4_FastMessageRegisters,
@@ -110,6 +110,6 @@ enum messageSizes {
     [seL4_TimeoutReply_GS_BASE] = GS_BASE,\
 }
 
-extern const register_t msgRegisters[];
-extern const register_t frameRegisters[];
-extern const register_t gpRegisters[];
+extern const regoff_t msgRegisters[];
+extern const regoff_t frameRegisters[];
+extern const regoff_t gpRegisters[];

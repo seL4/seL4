@@ -9,7 +9,7 @@
 #include <machine/fpu.h>
 #include <arch/object/structures.h>
 
-const register_t msgRegisters[] = {
+const regoff_t msgRegisters[] = {
     R10, R8, R9, R15
 };
 compile_assert(
@@ -17,7 +17,7 @@ compile_assert(
     sizeof(msgRegisters) / sizeof(msgRegisters[0]) == n_msgRegisters
 );
 
-const register_t frameRegisters[] = {
+const regoff_t frameRegisters[] = {
     FaultIP, RSP, FLAGS, RAX, RBX, RCX, RDX, RSI, RDI, RBP,
     R8, R9, R10, R11, R12, R13, R14, R15
 };
@@ -26,7 +26,7 @@ compile_assert(
     sizeof(frameRegisters) / sizeof(frameRegisters[0]) == n_frameRegisters
 );
 
-const register_t gpRegisters[] = {
+const regoff_t gpRegisters[] = {
     FS_BASE, GS_BASE
 };
 compile_assert(
@@ -54,7 +54,7 @@ void Mode_initContext(user_context_t *context)
     context->registers[RSP] = 0;
 }
 
-word_t Mode_sanitiseRegister(register_t reg, word_t v)
+word_t Mode_sanitiseRegister(regoff_t reg, word_t v)
 {
     if (reg == FaultIP || reg == NextIP || reg == FS_BASE || reg == GS_BASE) {
         /* ensure instruction address is canonical */
