@@ -1,5 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -138,7 +140,13 @@ static inline void thread_state_ptr_mset_blockingObject_tsType(thread_state_t *t
                                                                pptr_t ep_ref,
                                                                word_t tsType)
 {
-    ts_ptr->words[0] = ep_ref | tsType;
+    ts_ptr->words[0] = tsType;
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    ts_ptr->cheri_words[0] = ep_ref;
+#else
+    ts_ptr->words[0] |= ep_ref;
+#endif
 }
 
 #ifndef CONFIG_KERNEL_MCS
@@ -146,12 +154,24 @@ static inline void cap_reply_cap_ptr_new_np(cap_t *cap_ptr, word_t capReplyCanGr
                                             pptr_t capReplyMaster, pptr_t capTCBPtr)
 {
 #ifdef __KERNEL_64__
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    cap_ptr->cheri_words[0] = capTCBPtr;
+#else
     cap_ptr->words[1] = (word_t)capTCBPtr;
+#endif
+
     cap_ptr->words[0] = (capReplyMaster) | (capReplyCanGrant << 1) |
                         ((word_t)cap_reply_cap << 59);
 #else
+#if defined(__CHERI_PURE_CAPABILITY__)
+    cap_ptr->cheri_words[0] = capTCBPtr;
+    cap_ptr->words[0] = (capReplyMaster << 4) |
+                        (capReplyCanGrant << 5) | cap_reply_cap ;
+#else
     cap_ptr->words[0] = TCB_REF(capTCBPtr) | (capReplyMaster << 4) |
                         (capReplyCanGrant << 5) | cap_reply_cap ;
+#endif
 #endif
 }
 #endif
@@ -159,12 +179,21 @@ static inline void cap_reply_cap_ptr_new_np(cap_t *cap_ptr, word_t capReplyCanGr
 static inline void endpoint_ptr_mset_epQueue_tail_state(endpoint_t *ep_ptr, pptr_t epQueue_tail,
                                                         word_t state)
 {
+#if defined(__CHERI_PURE_CAPABILITY__)
+    ep_ptr->cheri_words[0] = epQueue_tail;
+    endpoint_ptr_set_state(ep_ptr, state);
+#else
     ep_ptr->words[0] = epQueue_tail | state;
+#endif
 }
 
 static inline void endpoint_ptr_set_epQueue_head_np(endpoint_t *ep_ptr, pptr_t epQueue_head)
 {
+#if defined(__CHERI_PURE_CAPABILITY__)
+    ep_ptr->cheri_words[1] = epQueue_head;
+#else
     ep_ptr->words[1] = epQueue_head;
+#endif
 }
 
 #ifdef CONFIG_KERNEL_MCS

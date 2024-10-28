@@ -34,7 +34,6 @@ set(PYTHON3 "python3" CACHE INTERNAL "")
 RequireTool(CPP_GEN_PATH cpp_gen.sh)
 RequireTool(CIRCULAR_INCLUDES circular_includes.py)
 RequireTool(CONFIG_GEN_PATH config_gen.py)
-RequireTool(BF_GEN_PATH bitfield_gen.py)
 RequireTool(HARDWARE_GEN_PATH hardware_gen.py)
 RequireTool(INVOCATION_ID_GEN_PATH invocation_header_gen.py)
 RequireTool(INVOCATION_JSON_GEN_PATH invocation_json_gen.py)
@@ -43,6 +42,14 @@ RequireTool(XMLLINT_PATH xmllint.sh)
 
 # Process the configuration scripts
 include(config.cmake)
+
+if(CheriPureCapKernel)
+    # Custom bitfield generator for purecap seL4 kernel that
+    # breaks the proofs.
+    RequireTool(BF_GEN_PATH bitfield_gen_cheri.py)
+else()
+    RequireTool(BF_GEN_PATH bitfield_gen.py)
+endif()
 
 # Define default global flag information so that users can compile with the same
 # basic architecture flags as the kernel

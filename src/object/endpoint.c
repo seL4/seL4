@@ -1,5 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -34,7 +36,7 @@ void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
             thread_state_ptr_set_tsType(&thread->tcbState,
                                         ThreadState_BlockedOnSend);
             thread_state_ptr_set_blockingObject(
-                &thread->tcbState, EP_REF(epptr));
+                &thread->tcbState, (pptr_t)EP_PTR(epptr));
             thread_state_ptr_set_blockingIPCBadge(
                 &thread->tcbState, badge);
             thread_state_ptr_set_blockingIPCCanGrant(
@@ -170,7 +172,7 @@ void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
                 thread_state_ptr_set_tsType(&thread->tcbState,
                                             ThreadState_BlockedOnReceive);
                 thread_state_ptr_set_blockingObject(
-                    &thread->tcbState, EP_REF(epptr));
+                    &thread->tcbState, (pptr_t)EP_PTR(epptr));
 #ifdef CONFIG_KERNEL_MCS
                 thread_state_ptr_set_replyObject(&thread->tcbState, REPLY_REF(replyPtr));
                 if (replyPtr) {

@@ -208,7 +208,7 @@ finaliseCap_ret_t finaliseCap(cap_t cap, bool_t final, bool_t exposed)
                 Zombie_new(
                     tcbArchCNodeEntries,
                     ZombieType_ZombieTCB,
-                    CTE_REF(cte_ptr)
+                    (pptr_t)CTE_PTR(cte_ptr)
                 );
             fc_ret.cleanupInfo = cap_null_cap_new();
             return fc_ret;
@@ -521,7 +521,7 @@ cap_t createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceM
     switch ((api_object_t)t) {
     case seL4_TCBObject: {
         tcb_t *tcb;
-        tcb = TCB_PTR((word_t)regionBase + TCB_OFFSET);
+        tcb = TCB_PTR((pptr_t)regionBase + TCB_OFFSET);
         /** AUXUPD: "(True, ptr_retyps 1
           (Ptr ((ptr_val \<acute>tcb) - ctcb_offset) :: (cte_C[5]) ptr)
             o (ptr_retyp \<acute>tcb))" */
@@ -544,20 +544,20 @@ cap_t createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceM
         tcbDebugAppend(tcb);
 #endif /* CONFIG_DEBUG_BUILD */
 
-        return cap_thread_cap_new(TCB_REF(tcb));
+        return cap_thread_cap_new((pptr_t)TCB_PTR(tcb));
     }
 
     case seL4_EndpointObject:
         /** AUXUPD: "(True, ptr_retyp
           (Ptr (ptr_val \<acute>regionBase) :: endpoint_C ptr))" */
         return cap_endpoint_cap_new(0, true, true, true, true,
-                                    EP_REF(regionBase));
+                                    (pptr_t)EP_PTR(regionBase));
 
     case seL4_NotificationObject:
         /** AUXUPD: "(True, ptr_retyp
               (Ptr (ptr_val \<acute>regionBase) :: notification_C ptr))" */
         return cap_notification_cap_new(0, true, true,
-                                        NTFN_REF(regionBase));
+                                        (pptr_t)NTFN_PTR(regionBase));
 
     case seL4_CapTableObject:
         /** AUXUPD: "(True, ptr_arr_retyps (2 ^ (unat \<acute>userSize))
@@ -565,14 +565,14 @@ cap_t createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceM
         /** GHOSTUPD: "(True, gs_new_cnodes (unat \<acute>userSize)
                                 (ptr_val \<acute>regionBase)
                                 (4 + unat \<acute>userSize))" */
-        return cap_cnode_cap_new(userSize, 0, 0, CTE_REF(regionBase));
+        return cap_cnode_cap_new(userSize, 0, 0, (pptr_t)CTE_PTR(regionBase));
 
     case seL4_UntypedObject:
         /*
          * No objects need to be created; instead, just insert caps into
          * the destination slots.
          */
-        return cap_untyped_cap_new(0, !!deviceMemory, userSize, WORD_REF(regionBase));
+        return cap_untyped_cap_new(0, !!deviceMemory, userSize, (pptr_t)regionBase);
 
 #ifdef CONFIG_KERNEL_MCS
     case seL4_SchedContextObject:
@@ -585,11 +585,11 @@ cap_t createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceM
                                    word_of_nat (size_of TYPE(sched_context_C))) :: refill_C ptr)
               \<circ> ptr_retyp (Ptr (ptr_val \<acute>regionBase) :: sched_context_C ptr))" */
         /** GHOSTUPD: "(True, gs_new_sc_size (ptr_val \<acute>regionBase) (unat \<acute>userSize))" */
-        return cap_sched_context_cap_new(SC_REF(regionBase), userSize);
+        return cap_sched_context_cap_new((pptr_t)SC_PTR(regionBase), userSize);
 
     case seL4_ReplyObject:
         /** AUXUPD: "(True, ptr_retyp (Ptr (ptr_val \<acute>regionBase) :: reply_C ptr))" */
-        return cap_reply_cap_new(REPLY_REF(regionBase), true);
+        return cap_reply_cap_new((pptr_t)REPLY_PTR(regionBase), true);
 #endif
 
     default:
@@ -617,7 +617,13 @@ void createNewObjects(object_t t, cte_t *parent,
     for (i = 0; i < destLength; i++) {
         /* Create the object. */
         /** AUXUPD: "(True, typ_region_bytes (ptr_val \<acute> nextFreeArea + ((\<acute> i) << unat (\<acute> objectSize))) (unat (\<acute> objectSize)))" */
+#if defined(__CHERI_PURE_CAPABILITY__)
+        pptr_t new_base = (pptr_t)nextFreeArea + (i << objectSize);
+        cap_t cap = createObject(t, (void *)cheri_derive_data_cap(regionBase, (ptraddr_t)new_base, totalObjectSize, -1),
+                                 userSize, deviceMemory);
+#else
         cap_t cap = createObject(t, (void *)((word_t)nextFreeArea + (i << objectSize)), userSize, deviceMemory);
+#endif
 
         /* Insert the cap into the user's cspace. */
         insertNewCap(parent, &destCNode[destOffset + i], cap);

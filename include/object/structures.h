@@ -1,5 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -399,14 +401,19 @@ struct reply {
 #endif
 
 /* Ensure object sizes are sane */
-compile_assert(cte_size_sane, sizeof(cte_t) == BIT(seL4_SlotBits))
+compile_assert(cte_size_sane, sizeof(cte_t) <= BIT(seL4_SlotBits))
 compile_assert(tcb_cte_size_sane, TCB_CNODE_SIZE_BITS <= TCB_SIZE_BITS)
 compile_assert(tcb_size_sane,
                BIT(TCB_SIZE_BITS) >= sizeof(tcb_t))
+/* This check fails on purecap kernel; it is fine to have (TCB_SIZE_BITS - 1) bigger
+ * than the tcb_t size as the CTE slot size (cte_t) got also increased.
+ */
+#if !defined(__CHERI_PURE_CAPABILITY__)
 compile_assert(tcb_size_not_excessive,
                BIT(TCB_SIZE_BITS - 1) < sizeof(tcb_t))
-compile_assert(ep_size_sane, sizeof(endpoint_t) == BIT(seL4_EndpointBits))
-compile_assert(notification_size_sane, sizeof(notification_t) == BIT(seL4_NotificationBits))
+#endif
+compile_assert(ep_size_sane, sizeof(endpoint_t) <= BIT(seL4_EndpointBits))
+compile_assert(notification_size_sane, sizeof(notification_t) <= BIT(seL4_NotificationBits))
 
 /* Check the IPC buffer is the right size */
 compile_assert(ipc_buf_size_sane, sizeof(seL4_IPCBuffer) == BIT(seL4_IPCBufferSizeBits))
