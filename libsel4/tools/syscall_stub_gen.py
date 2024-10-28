@@ -310,8 +310,10 @@ def init_arch_types(wordsize, args, enable_cheri):
             CapType("seL4_ARM_IOSpace", wordsize),
             CapType("seL4_ARM_IOPageTable", wordsize),
             CapType("seL4_ARM_SMC", wordsize),
-            StructType("seL4_UserContext", wordsize * 36 * (2 if enable_cheri else 1), wordsize, is_cheri_cap=enable_cheri),
-            StructType("seL4_ARM_SMCContext", wordsize * 8 * (2 if enable_cheri else 1), wordsize, is_cheri_cap=enable_cheri),
+            StructType("seL4_UserContext", wordsize * 36 * (2 if enable_cheri else 1),
+                       wordsize, is_cheri_cap=enable_cheri),
+            StructType("seL4_ARM_SMCContext", wordsize * 8 *
+                       (2 if enable_cheri else 1), wordsize, is_cheri_cap=enable_cheri),
             Type("seL4_VCPUReg", wordsize, wordsize),
         ] + arm_smmu,
 
