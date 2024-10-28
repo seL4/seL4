@@ -24,7 +24,7 @@ static word_t alignUp(word_t baseValue, word_t alignment)
 }
 
 exception_t decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
-                                    cap_t cap, bool_t call, word_t *buffer)
+                                    cap_t cap, bool_t call, rword_t *buffer)
 {
     word_t newType, userObjSize, nodeIndex;
     word_t nodeDepth, nodeOffset, nodeWindow;
