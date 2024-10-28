@@ -156,7 +156,7 @@ BOOT_CODE int plat_smmu_init(void)
         iopde_t *pd = (iopde_t *) smmu_pds[asid - SMMU_FIRST_ASID];
 
         memset(pd, 0, BIT(SMMU_PD_INDEX_BITS));
-        cleanCacheRange_RAM((word_t)pd, ((word_t)pd + BIT(SMMU_PD_INDEX_BITS)),
+        cleanCacheRange_RAM((vptr_t)pd, ((vptr_t)pd + BIT(SMMU_PD_INDEX_BITS)),
                             addrFromPPtr(pd));
 
         smmu_regs->smmu_ptb_asid = asid;

@@ -18,7 +18,7 @@
 #include <kernel/thread.h>
 #include <util.h>
 
-static word_t alignUp(word_t baseValue, word_t alignment)
+static uintptr_t alignUp(uintptr_t baseValue, word_t alignment)
 {
     return (baseValue + (BIT(alignment) - 1)) & ~MASK(alignment);
 }

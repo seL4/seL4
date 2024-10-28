@@ -20,7 +20,6 @@ typedef signed long sword_t;
 #define _seL4_word_fmt  l
 
 typedef word_t paddr_t;
-typedef word_t pptr_t;
 typedef word_t cptr_t;
 typedef word_t dev_id_t;
 typedef word_t cpu_id_t;
@@ -32,9 +31,17 @@ typedef uint64_t timestamp_t;
 #if defined(CONFIG_HAVE_CHERI)
 typedef __uintcap_t rword_t;
 typedef __uintcap_t vptr_t;
+#if defined(__CHERI_PURE_CAPABILITY__)
+typedef __uintcap_t uintptr_t;
+#else
+typedef word_t uintptr_t;
+#endif
+typedef uintptr_t pptr_t;
 #else
 typedef word_t rword_t;
 typedef word_t vptr_t;
+typedef word_t uintptr_t;
+typedef word_t pptr_t;
 #endif
 
 #define wordBits BIT(wordRadix)
