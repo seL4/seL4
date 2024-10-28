@@ -274,9 +274,9 @@ enum vcpu_msr_register {
 
 #endif
 
-typedef enum vcpu_gp_register vcpu_gp_register_t;;
+typedef enum vcpu_gp_register vcpu_gp_rword_t;;
 
-const vcpu_gp_register_t crExitRegs[];
+const vcpu_gp_rword_t crExitRegs[];
 
 struct vcpu {
     /* Storage for VMCS region. First field of vcpu_t so they share address.

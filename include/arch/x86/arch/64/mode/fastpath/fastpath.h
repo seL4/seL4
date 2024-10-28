@@ -96,7 +96,7 @@ static inline bool_t isValidVTableRoot_fp(cap_t vspace_root_cap)
 static inline void fastpath_copy_mrs(word_t length, tcb_t *src, tcb_t *dest)
 {
     word_t i;
-    register_t reg;
+    regoff_t reg;
 
     /* assuming that length < n_msgRegisters */
     for (i = 0; i < length; i ++) {
