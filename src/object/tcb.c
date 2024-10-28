@@ -2004,7 +2004,7 @@ exception_t invokeTCB_WriteRegisters(tcb_t *dest, bool_t resumeTarget,
                                      word_t n, word_t arch, rword_t *buffer)
 {
     word_t i;
-    word_t pc;
+    rword_t pc;
     exception_t e;
     bool_t archInfo;
 
