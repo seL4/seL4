@@ -304,7 +304,7 @@ static int getint(char **s)
 {
     int i;
     for (i = 0; isdigit(**s); (*s)++) {
-        if (i > INTMAX_MAX / 10U || DIGIT(**s) > INTMAX_MAX - 10 * i) {
+        if (i > UINTMAX_MAX / 10U || DIGIT(**s) > UINTMAX_MAX - 10 * i) {
             i = -1;
         } else {
             i = 10 * i + DIGIT(**s);
