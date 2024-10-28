@@ -359,7 +359,7 @@ BOOT_CODE void populate_bi_frame(node_id_t node_id, word_t num_nodes,
     bi->nodeID = node_id;
     bi->numNodes = num_nodes;
     bi->numIOPTLevels = 0;
-    bi->ipcBuffer = (seL4_IPCBuffer *)ipcbuf_vptr;
+    bi->ipcBuffer = (seL4_IPCBuffer * __user)ipcbuf_vptr;
     bi->initThreadCNodeSizeBits = CONFIG_ROOT_CNODE_SIZE_BITS;
     bi->initThreadDomain = ksDomSchedule[ksDomScheduleIdx].domain;
     bi->extraLen = extra_bi_size;
