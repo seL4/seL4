@@ -1,5 +1,7 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -23,7 +25,7 @@ static inline uint64_t riscv_read_time(void)
 {
     word_t n;
 #ifdef CONFIG_RISCV_USE_CLINT_MTIME
-    n = *(volatile word_t *)(CLINT_PPTR + CLINT_MTIME_OFFSET);
+    n = *(volatile word_t *)(clint_pptr + CLINT_MTIME_OFFSET);
 #else
     asm volatile("rdtime %0" : "=r"(n));
 #endif

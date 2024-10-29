@@ -1,5 +1,7 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -16,17 +18,23 @@ static inline void set_fs_off(void)
     asm volatile("csrc sstatus, %0" :: "rK"(SSTATUS_FS));
 }
 
+#if defined(__CHERI_PURE_CAPABILITY__)
+#define FPREFIX "c"
+#else
+#define FPREFIX ""
+#endif
+
 #ifdef CONFIG_HAVE_FPU
 #if defined(CONFIG_RISCV_EXT_D)
 
-#define FL "fld"
-#define FS "fsd"
+#define FL FPREFIX"fld"
+#define FS FPREFIX"fsd"
 #define FP_REG_BYTES "8"
 
 #elif defined(CONFIG_RISCV_EXT_F)
 
-#define FL "flw"
-#define FS "fsw"
+#define FL FPREFIX"flw"
+#define FS FPREFIX"fsw"
 #define FP_REG_BYTES "4"
 
 #endif
@@ -97,7 +105,7 @@ static inline void saveFpuState(user_fpu_state_t *dest)
         FS " f30, 30*" FP_REG_BYTES "(%0)\n\t"
         FS " f31, 31*" FP_REG_BYTES "(%0)\n\t"
         :
-        : "r"(&dest->regs[0])
+        : ASM_REG_CONSTR(&dest->regs[0])
         : "memory"
     );
 
@@ -142,7 +150,7 @@ static inline void loadFpuState(user_fpu_state_t *src)
         FL " f30, 30*" FP_REG_BYTES "(%0)\n\t"
         FL " f31, 31*" FP_REG_BYTES "(%0)\n\t"
         :
-        : "r"(&src->regs[0])
+        : ASM_REG_CONSTR(&src->regs[0])
     );
 
     write_fcsr(src->fcsr);

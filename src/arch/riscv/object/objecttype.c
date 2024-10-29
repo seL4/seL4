@@ -213,7 +213,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t
         }
         return cap_frame_cap_new(
                    asidInvalid,                    /* capFMappedASID       */
-                   (word_t) regionBase,            /* capFBasePtr          */
+                   (pptr_t)regionBase,             /* capFBasePtr          */
                    RISCV_4K_Page,                  /* capFSize             */
                    wordFromVMRights(VMReadWrite),  /* capFVMRights         */
                    deviceMemory,                   /* capFIsDevice         */
@@ -236,8 +236,8 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t
         }
         return cap_frame_cap_new(
                    asidInvalid,                    /* capFMappedASID       */
-                   (word_t) regionBase,            /* capFBasePtr          */
-                   RISCV_Mega_Page,                  /* capFSize             */
+                   (pptr_t)regionBase,             /* capFBasePtr          */
+                   RISCV_Mega_Page,                /* capFSize             */
                    wordFromVMRights(VMReadWrite),  /* capFVMRights         */
                    deviceMemory,                   /* capFIsDevice         */
                    0                               /* capFMappedAddress    */
@@ -261,8 +261,8 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t
         }
         return cap_frame_cap_new(
                    asidInvalid,                    /* capFMappedASID       */
-                   (word_t) regionBase,            /* capFBasePtr          */
-                   RISCV_Giga_Page,                  /* capFSize             */
+                   (pptr_t)regionBase,             /* capFBasePtr          */
+                   RISCV_Giga_Page,                /* capFSize             */
                    wordFromVMRights(VMReadWrite),  /* capFVMRights         */
                    deviceMemory,                   /* capFIsDevice         */
                    0                               /* capFMappedAddress    */
@@ -275,7 +275,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t
               (Ptr (ptr_val \<acute>regionBase) :: (pte_C[512]) ptr))" */
         return cap_page_table_cap_new(
                    asidInvalid,            /* capPTMappedASID    */
-                   (word_t)regionBase,     /* capPTBasePtr       */
+                   (pptr_t)regionBase,     /* capPTBasePtr       */
                    0,                      /* capPTIsMapped      */
                    0                       /* capPTMappedAddress */
                );

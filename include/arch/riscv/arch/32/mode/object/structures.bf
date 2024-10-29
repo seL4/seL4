@@ -1,6 +1,8 @@
 --
 -- Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 -- Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+-- Copyright 2024, Capabilities Limited
+-- CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
 --
 -- SPDX-License-Identifier: GPL-2.0-only
 --
@@ -16,9 +18,14 @@ base 32
 #include <object/structures_32.bf>
 
 -- frames
-block frame_cap {
+block frame_cap (capFMappedASID, capFBasePtr, capFSize,
+capFVMRights, capFIsDevice, capFMappedAddress, capType) {
     field       capFMappedASID      9
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding                         20
+#else
     field_high  capFBasePtr         20
+#endif
     padding                         3
 
     padding                         3
@@ -27,18 +34,30 @@ block frame_cap {
     field       capFIsDevice        1
     field_high  capFMappedAddress   20
     field       capType             4
+#if defined(__CHERI_PURE_CAPABILITY__)
+    cheri_cap  capFBasePtr          64
+#endif
 }
 
 -- N-level page table
-block page_table_cap {
+block page_table_cap (capPTMappedASID, capPTBasePtr, capPTIsMapped,
+capPTMappedAddress, capType) {
     field       capPTMappedASID     9
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding                         20
+#else
     field_high  capPTBasePtr        20
+#endif
     padding                         3
 
     padding                         7
     field       capPTIsMapped       1
     field_high  capPTMappedAddress  20
     field       capType             4
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    cheri_cap   capPTBasePtr        64
+#endif
 }
 
 -- Cap to the table of 1 ASID pool
@@ -47,6 +66,10 @@ block asid_control_cap {
 
     padding             28
     field   capType     4
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding             64
+#endif
 }
 
 -- Cap to a pool of 2^9 ASIDs
@@ -54,8 +77,16 @@ block asid_pool_cap {
     padding                     23
     field       capASIDBase     9
 
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding                     28
+#else
     field_high  capASIDPool     28
+#endif
     field       capType         4
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    cheri_cap capASIDPool       64
+#endif
 }
 
 -- NB: odd numbers are arch caps (see isArchCap())

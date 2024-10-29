@@ -231,7 +231,7 @@ static BOOT_CODE bool_t try_init_kernel(
         ui_p_reg_start, ui_p_reg_end
     });
     word_t extra_bi_size = 0;
-    pptr_t extra_bi_offset = 0;
+    word_t extra_bi_offset = 0;
     vptr_t extra_bi_frame_vptr;
     vptr_t bi_frame_vptr;
     vptr_t ipcbuf_vptr;
@@ -527,7 +527,9 @@ BOOT_CODE VISIBLE void init_kernel(
 {
     bool_t result;
 
-#if defined(CONFIG_HAVE_CHERI)
+#if defined(__CHERI_PURE_CAPABILITY__)
+    _start_purecap();
+#elif defined(CONFIG_HAVE_CHERI)
     _start_hybrid();
 #endif
 

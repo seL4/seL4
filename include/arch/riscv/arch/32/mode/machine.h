@@ -25,13 +25,13 @@ static inline uint64_t riscv_read_time(void)
     word_t nH1, nL, nH2;
 
 #ifdef CONFIG_RISCV_USE_CLINT_MTIME
-    nH1 = *(volatile uint32_t *)(CLINT_PPTR + CLINT_MTIME_OFFSET_HI);
-    nL = *(volatile uint32_t *)(CLINT_PPTR + CLINT_MTIME_OFFSET_LO);
-    nH2 = *(volatile uint32_t *)(CLINT_PPTR + CLINT_MTIME_OFFSET_HI);
+    nH1 = *(volatile uint32_t *)(clint_pptr + CLINT_MTIME_OFFSET_HI);
+    nL = *(volatile uint32_t *)(clint_pptr + CLINT_MTIME_OFFSET_LO);
+    nH2 = *(volatile uint32_t *)(clint_pptr + CLINT_MTIME_OFFSET_HI);
     if (nH1 != nH2) {
         /* Ensure that the time is correct if there is a rollover in the
          * high bits between reading the low and high bits. */
-        nL = *(volatile uint32_t *)(CLINT_PPTR + CLINT_MTIME_OFFSET_LO);
+        nL = *(volatile uint32_t *)(clint_pptr + CLINT_MTIME_OFFSET_LO);
     }
 #else
     asm volatile(

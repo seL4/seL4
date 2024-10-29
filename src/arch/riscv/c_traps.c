@@ -23,7 +23,7 @@
 /** DONT_TRANSLATE */
 void VISIBLE NORETURN restore_user_context(void)
 {
-    word_t cur_thread_reg = (word_t) NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers;
+    pptr_t cur_thread_reg = (pptr_t) NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers;
     c_exit_hook();
     NODE_UNLOCK_IF_HELD;
 
