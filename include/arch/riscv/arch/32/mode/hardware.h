@@ -1,5 +1,7 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright (c) 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -64,5 +66,18 @@
  * mapping region. These are mapped in the kernel page table. */
 #define KDEV_BASE UL_CONST(0xFFC00000)
 
+#if defined(CONFIG_HAVE_CHERI)
+/* Full capability-width register loads/stores */
+#define LOAD  lc
+#define STORE sc
+/* Integer-width register loads/stores */
+#define ILOAD  lw
+#define ISTORE sw
+#define REGBYTES 8
+#else
 #define LOAD  lw
 #define STORE sw
+#define ILOAD  LOAD
+#define ISTORE STORE
+#define REGBYTES 4
+#endif

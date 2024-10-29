@@ -154,6 +154,7 @@ foreach(
     KernelArchArmV7ve
     KernelArchArmV8a
     KernelAArch64SErrorIgnore
+    KernelArchCheriRiscv
 )
     unset(${var} CACHE)
     set(${var} OFF)
@@ -202,6 +203,7 @@ config_set(KernelArchArmV7a ARCH_ARM_V7A "${KernelArchArmV7a}")
 config_set(KernelArchArmV7ve ARCH_ARM_V7VE "${KernelArchArmV7ve}")
 config_set(KernelArchArmV8a ARCH_ARM_V8A "${KernelArchArmV8a}")
 config_set(KernelAArch64SErrorIgnore AARCH64_SERROR_IGNORE "${KernelAArch64SErrorIgnore}")
+config_set(KernelArchCheriRiscv ARCH_CHERI_RISCV "${KernelArchCheriRiscv}")
 
 # Check for v7ve before v7a as v7ve is a superset and we want to set the
 # actual armv to that, but leave armv7a config enabled for anything that
