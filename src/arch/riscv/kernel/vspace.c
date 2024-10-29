@@ -367,7 +367,7 @@ void copyGlobalMappings(pte_t *newLvl1pt)
     }
 }
 
-word_t *PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
+void *PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
 {
     word_t w_bufferPtr;
     cap_t bufferCap;
@@ -390,7 +390,7 @@ word_t *PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
 
         basePtr = cap_frame_cap_get_capFBasePtr(bufferCap);
         pageBits = pageBitsForSize(cap_frame_cap_get_capFSize(bufferCap));
-        return (word_t *)(basePtr + (w_bufferPtr & MASK(pageBits)));
+        return (void *)(basePtr + (w_bufferPtr & MASK(pageBits)));
     } else {
         return NULL;
     }
@@ -709,7 +709,7 @@ static inline bool_t CONST checkVPAlignment(vm_page_size_t sz, word_t w)
 }
 
 static exception_t decodeRISCVPageTableInvocation(word_t label, word_t length,
-                                                  cte_t *cte, cap_t cap, word_t *buffer)
+                                                  cte_t *cte, cap_t cap, rword_t *buffer)
 {
     if (label == RISCVPageTableUnmap) {
         if (unlikely(!isFinalCapability(cte))) {
@@ -831,7 +831,7 @@ static exception_t decodeRISCVPageTableInvocation(word_t label, word_t length,
 }
 
 static exception_t decodeRISCVFrameInvocation(word_t label, word_t length,
-                                              cte_t *cte, cap_t cap, bool_t call, word_t *buffer)
+                                              cte_t *cte, cap_t cap, bool_t call, rword_t *buffer)
 {
     switch (label) {
     case RISCVPageMap: {
@@ -963,7 +963,7 @@ static exception_t decodeRISCVFrameInvocation(word_t label, word_t length,
 }
 
 exception_t decodeRISCVMMUInvocation(word_t label, word_t length, cptr_t cptr,
-                                     cte_t *cte, cap_t cap, bool_t call, word_t *buffer)
+                                     cte_t *cte, cap_t cap, bool_t call, rword_t *buffer)
 {
     switch (cap_get_capType(cap)) {
 
@@ -1147,7 +1147,7 @@ static exception_t performPageGetAddress(void *vbase_ptr, bool_t call)
     tcb_t *thread;
     thread = NODE_STATE(ksCurThread);
     if (call) {
-        word_t *ipcBuffer = lookupIPCBuffer(true, thread);
+        rword_t *ipcBuffer = lookupIPCBuffer(true, thread);
         setRegister(thread, badgeRegister, 0);
         unsigned int length = setMR(thread, ipcBuffer, 0, capFBasePtr);
         setRegister(thread, msgInfoRegister, wordFromMessageInfo(
