@@ -93,7 +93,11 @@ BEGIN_FUNC(trap_entry)
 
 .option push
 .option norelax
+#if defined(__CHERI_PURE_CAPABILITY__)
+  clgc REGN(gp), __global_pointer$
+#else
   la gp, __global_pointer$
+#endif
 .option pop
 
 #ifdef ENABLE_SMP_SUPPORT
@@ -113,7 +117,13 @@ BEGIN_FUNC(trap_entry)
 #endif
 #else
   /* Load kernel's stack address */
+#if defined(__CHERI_PURE_CAPABILITY__)
+  clgc csp, kernel_stack_alloc
+  li t1, BIT(CONFIG_KERNEL_STACK_BITS)
+  cincoffset csp, csp, t1
+#else
   la sp, (kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS))
+#endif
 #endif
 
   /* Save exception PC */
@@ -145,7 +155,12 @@ handle_syscall:
 #ifdef CONFIG_FASTPATH
   li t3, SYSCALL_CALL
   bne a7, t3, .Ltest_replyrecv
+#if defined(__CHERI_PURE_CAPABILITY__)
+  clgc ct0, c_handle_fastpath_call
+  jr.cap ct0
+#else
   j c_handle_fastpath_call
+#endif
 
 .Ltest_replyrecv:
   li t3, SYSCALL_REPLY_RECV
@@ -154,7 +169,12 @@ handle_syscall:
   mv a2, a6
 #endif
   bne a7, t3, .Lslowpath
+#if defined(__CHERI_PURE_CAPABILITY__)
+  clgc ct0, c_handle_fastpath_reply_recv
+  jr.cap ct0
+#else
   j c_handle_fastpath_reply_recv
+#endif
 
 .Lslowpath:
 #endif
@@ -162,17 +182,31 @@ handle_syscall:
   /* move syscall number to 3rd argument */
   mv a2, a7
 
+#if defined(__CHERI_PURE_CAPABILITY__)
+  clgc ct0, c_handle_syscall
+  jr.cap ct0
+#else
   j c_handle_syscall
+#endif
 
 /* Not an interrupt or a syscall */
 exception:
   /* Save NextIP */
   STORE   REG(1), (34*REGBYTES)(PTRN(t0))
+#if defined(__CHERI_PURE_CAPABILITY__)
+  clgc ct0, c_handle_exception
+  jr.cap ct0
+#else
   j c_handle_exception
+#endif
 
 interrupt:
   /* Save NextIP */
   STORE   REG(1), (34*REGBYTES)(PTRN(t0))
+#if defined(__CHERI_PURE_CAPABILITY__)
+  clgc ct0, c_handle_interrupt
+  jr.cap ct0
+#else
   j c_handle_interrupt
-
+#endif
 END_FUNC(trap_entry)

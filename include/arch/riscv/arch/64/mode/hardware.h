@@ -115,11 +115,19 @@
 #endif
 
 #if defined(CONFIG_HAVE_CHERI)
+#if defined(__CHERI_PURE_CAPABILITY__)
+#define LOAD  clc
+#define STORE csc
+/* Integer-width register loads/stores */
+#define ILOAD  cld
+#define ISTORE csd
+#else
 #define LOAD  lc
 #define STORE sc
 /* Integer-width register loads/stores */
 #define ILOAD  ld
 #define ISTORE sd
+#endif
 #define REGBYTES 16
 #else
 #define LOAD  ld

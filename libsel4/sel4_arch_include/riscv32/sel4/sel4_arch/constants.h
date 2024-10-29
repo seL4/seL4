@@ -16,7 +16,24 @@
 /* log 2 bits in a word */
 #define seL4_WordSizeBits       2
 
+#if defined(CONFIG_CHERI_PURECAP_KERNEL)
+#define seL4_SlotBits           6
+#define seL4_TCBBits            11
+#define seL4_EndpointBits       6
+#define seL4_NotificationBits   7
+#define seL4_ASIDPoolIndexBits  3
+#else
 #define seL4_SlotBits           4
+#if defined(CONFIG_HAVE_FPU) || defined(CONFIG_HAVE_CHERI)
+#define seL4_TCBBits            10
+#else
+#define seL4_TCBBits            9
+#endif
+#define seL4_EndpointBits       4
+#define seL4_ASIDPoolIndexBits  4
+#endif
+
+#if !defined(CONFIG_CHERI_PURECAP_KERNEL)
 #ifdef CONFIG_KERNEL_MCS
 #define seL4_NotificationBits   5
 #define seL4_ReplyBits          4
@@ -24,12 +41,14 @@
 #define seL4_NotificationBits   4
 #endif
 #define seL4_EndpointBits       4
-#define seL4_IPCBufferSizeBits  9
 #if defined(CONFIG_HAVE_FPU) || defined(CONFIG_HAVE_CHERI)
 #define seL4_TCBBits            10
 #else
 #define seL4_TCBBits            9
 #endif
+#endif
+
+#define seL4_IPCBufferSizeBits  9
 
 /* Untyped size limits */
 #define seL4_MinUntypedBits     4
@@ -45,7 +64,6 @@
 #define seL4_VSpaceBits         seL4_PageTableBits
 
 #define seL4_NumASIDPoolsBits    5
-#define seL4_ASIDPoolIndexBits  4
 #define seL4_ASIDPoolBits       12
 #ifndef __ASSEMBLER__
 

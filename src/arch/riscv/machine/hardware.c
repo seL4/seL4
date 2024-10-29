@@ -21,6 +21,12 @@
 
 #define IS_IRQ_VALID(X) (((X)) <= maxIRQ && (X) != irqInvalid)
 
+/*
+ * Kernel virtual addresses for CLINT and PLIC (if exists).
+ */
+pptr_t clint_pptr = CLINT_PPTR;
+pptr_t plic_pptr = PLIC_PPTR;
+
 rword_t PURE getRestartPC(tcb_t *thread)
 {
     return getRegister(thread, FaultIP);
@@ -247,6 +253,19 @@ BOOT_CODE void initTimer(void)
 BOOT_CODE void initLocalIRQController(void)
 {
     printf("Init local IRQ\n");
+#if defined(__CHERI_PURE_CAPABILITY__)
+    /*
+     * cheriTODO: Size of the CLINT is heuristically 0x10000, but we could refine
+     * that to get it from the DTB if needed.
+     */
+
+    clint_pptr = (pptr_t) cheri_build_device_cap((ptraddr_t) clint_pptr, 0x10000);
+    /*
+     * cheriTODO: Size of the CLINT is heuristically 0x10000, but we could refine
+     * that to get it from the DTB if needed.
+     */
+    plic_pptr = (pptr_t) cheri_build_device_cap((ptraddr_t) plic_pptr, 0x210000);
+#endif
 
     /* Init per-hart PLIC */
     plic_init_hart();

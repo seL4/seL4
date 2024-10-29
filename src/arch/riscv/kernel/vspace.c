@@ -281,7 +281,7 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
     lvl1pt_cap =
         cap_page_table_cap_new(
             IT_ASID,               /* capPTMappedASID    */
-            (word_t) rootserver.vspace,  /* capPTBasePtr       */
+            rootserver.vspace,     /* capPTBasePtr       */
             1,                     /* capPTIsMapped      */
             (word_t) rootserver.vspace   /* capPTMappedAddress */
         );
@@ -384,9 +384,10 @@ void *PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
     vm_rights = cap_frame_cap_get_capFVMRights(bufferCap);
     if (likely(vm_rights == VMReadWrite ||
                (!isReceiver && vm_rights == VMReadOnly))) {
-        word_t basePtr, pageBits;
+        pptr_t basePtr;
+        word_t pageBits;
 
-        basePtr = cap_frame_cap_get_capFBasePtr(bufferCap);
+        basePtr = (pptr_t)cap_frame_cap_get_capFBasePtr(bufferCap);
         pageBits = pageBitsForSize(cap_frame_cap_get_capFSize(bufferCap));
         return (void *)(basePtr + (w_bufferPtr & MASK(pageBits)));
     } else {
@@ -481,7 +482,7 @@ static exception_t performASIDControlInvocation(void *frame, cte_t *slot, cte_t 
     cteInsert(
         cap_asid_pool_cap_new(
             asid_base,          /* capASIDBase  */
-            WORD_REF(frame)     /* capASIDPool  */
+            (pptr_t)frame       /* capASIDPool  */
         ),
         parent,
         slot
@@ -1215,7 +1216,7 @@ void Arch_userStackTrace(tcb_t *tptr)
         lookupPTSlot_ret_t ret = lookupPTSlot(vspace_root, address);
         if (pte_ptr_get_valid(ret.ptSlot) && !isPTEPageTable(ret.ptSlot)) {
             pptr_t pptr = (pptr_t)(getPPtrFromHWPTE(ret.ptSlot));
-            word_t *value = (word_t *)((word_t)pptr + (address & MASK(ret.ptBitsLeft)));
+            word_t *value = (word_t *)(pptr + (address & MASK(ret.ptBitsLeft)));
             printf("0x%lx: 0x%lx\n", (long) address, (long) *value);
         } else {
             printf("0x%lx: INVALID\n", (long) address);

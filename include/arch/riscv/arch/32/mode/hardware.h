@@ -68,11 +68,19 @@
 
 #if defined(CONFIG_HAVE_CHERI)
 /* Full capability-width register loads/stores */
+#if defined(__CHERI_PURE_CAPABILITY__)
+#define LOAD  clc
+#define STORE csc
+/* Integer-width register loads/stores */
+#define ILOAD  clw
+#define ISTORE csw
+#else
 #define LOAD  lc
 #define STORE sc
 /* Integer-width register loads/stores */
 #define ILOAD  lw
 #define ISTORE sw
+#endif
 #define REGBYTES 8
 #else
 #define LOAD  lw

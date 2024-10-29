@@ -20,7 +20,6 @@ typedef seL4_CPtr seL4_RISCV_ASIDControl;
 typedef seL4_CPtr seL4_RISCV_ASIDPool;
 
 
-#define seL4_EndpointBits     4
 /* User context as used by seL4_TCB_ReadRegisters / seL4_TCB_WriteRegisters */
 
 typedef struct seL4_UserContext_ {
