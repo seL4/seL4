@@ -112,7 +112,12 @@ block VMFault {
 -- VM attributes
 
 block vm_attributes {
+#if defined(CONFIG_HAVE_CHERI)
+    field cheri_ext          5
+    padding                  27
+#else
     padding 32
+#endif
     padding 31
     field riscvExecuteNever  1
 }

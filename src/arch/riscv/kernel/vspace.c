@@ -185,7 +185,6 @@ BOOT_CODE void map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
 
     *targetSlot = pte_new(
 #if defined(CONFIG_HAVE_CHERI) && (__riscv_xlen == 64)
-                      /* cheriTODO: export these bits to user and fine-grain them */
                       0x1c,  /* cheri_ext -- allow all capability loads/stores */
 #endif
                       (addrFromPPtr(pt) >> seL4_PageBits),
@@ -216,7 +215,6 @@ BOOT_CODE void map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap)
 
     *targetSlot = pte_new(
 #if defined(CONFIG_HAVE_CHERI) && (__riscv_xlen == 64)
-                      /* cheriTODO: export these bits to user and fine-grain them */
                       0x1c,  /* cheri_ext -- allow all capability loads/stores */
 #endif
                       (pptr_to_paddr(frame_pptr) >> seL4_PageBits),
@@ -552,8 +550,7 @@ void unmapPageTable(asid_t asid, vptr_t vptr, pte_t *target_pt)
     assert(ptSlot != NULL);
     *ptSlot = pte_new(
 #if defined(CONFIG_HAVE_CHERI) && (__riscv_xlen == 64)
-                  /* cheriTODO: export these bits to user and fine-grain them */
-                  0x1c,  /* cheri_ext -- allow all capability loads/stores */
+                  0,  /* cheri_ext */
 #endif
                   0,  /* phy_address */
                   0,  /* sw */
@@ -677,7 +674,12 @@ vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_right
 
 /* The rest of the file implements the RISCV object invocations */
 
+#if defined(CONFIG_HAVE_CHERI)
+static pte_t CONST makeUserPTE(paddr_t paddr, bool_t executable, vm_rights_t vm_rights,
+                               word_t cheri_ext)
+#else
 static pte_t CONST makeUserPTE(paddr_t paddr, bool_t executable, vm_rights_t vm_rights)
+#endif
 {
     word_t write = RISCVGetWriteFromVMRights(vm_rights);
     word_t read = RISCVGetReadFromVMRights(vm_rights);
@@ -686,8 +688,7 @@ static pte_t CONST makeUserPTE(paddr_t paddr, bool_t executable, vm_rights_t vm_
     } else {
         return pte_new(
 #if defined(CONFIG_HAVE_CHERI) && (__riscv_xlen == 64)
-                   /* cheriTODO: export these bits to user and fine-grain them */
-                   0x1c,  /* cheri_ext -- allow all capability loads/stores */
+                   cheri_ext,
 #endif
                    paddr >> seL4_PageBits,
                    0, /* sw */
@@ -934,7 +935,11 @@ static exception_t decodeRISCVFrameInvocation(word_t label, word_t length,
         cap = cap_frame_cap_set_capFMappedAddress(cap,  vaddr);
 
         bool_t executable = !vm_attributes_get_riscvExecuteNever(attr);
-        pte_t pte = makeUserPTE(frame_paddr, executable, vmRights);
+        pte_t pte = makeUserPTE(frame_paddr, executable, vmRights
+#if defined(CONFIG_HAVE_CHERI)
+                                , vm_attributes_get_cheri_ext(attr)
+#endif
+                               );
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performPageInvocationMapPTE(cap, cte, pte, lu_ret.ptSlot);
     }
