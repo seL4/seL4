@@ -216,7 +216,15 @@ block VPPIEvent {
 -- VM attributes
 
 block vm_attributes {
+#if defined(CONFIG_HAVE_CHERI)
+    padding                         1
+    field LC                        2
+    field SC                        1
+    field CDBM                      1
+    padding                         56
+#else
     padding                         61
+#endif
     field armExecuteNever           1
     field armParityEnabled          1
     field armPageCacheable          1

@@ -716,19 +716,21 @@ static pte_t makeUserPagePTE(paddr_t paddr, vm_rights_t vm_rights, vm_attributes
     if (page_size == ARMSmallPage) {
         return pte_pte_4k_page_new(
 #if defined(CONFIG_HAVE_CHERI)
-                                   /* cheriTODO: fine-grain capability permissions per-user */
-                                   1, 1, 0, /* Enable capability loads/stores */
+                   vm_attributes_get_LC(attributes),   /* Enable CHERI capability loads */
+                   vm_attributes_get_SC(attributes),   /* Enable CHERI capability stores */
+                   vm_attributes_get_CDBM(attributes), /* Enable tracking CHERI capability stores */
 #endif
-                                   nonexecutable, paddr, nG, 1 /* access flag */,
-                                   shareable, APFromVMRights(vm_rights), attridx);
+                   nonexecutable, paddr, nG, 1 /* access flag */,
+                   shareable, APFromVMRights(vm_rights), attridx);
     } else {
         return pte_pte_page_new(
 #if defined(CONFIG_HAVE_CHERI)
-                                /* cheriTODO: fine-grain capability permissions per-user */
-                                1, 1, 0, /* Enable capability loads/stores */
+                   vm_attributes_get_LC(attributes),   /* Enable CHERI capability loads */
+                   vm_attributes_get_SC(attributes),   /* Enable CHERI capability stores */
+                   vm_attributes_get_CDBM(attributes), /* Enable tracking CHERI capability stores */
 #endif
-                                nonexecutable, paddr, nG, 1 /* access flag */,
-                                shareable, APFromVMRights(vm_rights), attridx);
+                   nonexecutable, paddr, nG, 1 /* access flag */,
+                   shareable, APFromVMRights(vm_rights), attridx);
     }
 }
 
