@@ -88,10 +88,5 @@ BOOT_CODE bool_t Arch_initFpu(void)
         unsigned int mxcsr = MXCSR_INIT_VALUE;
         asm volatile("ldmxcsr %0" :: "m"(mxcsr));
     }
-    /* copy i387 FPU initial state from FPU */
-    saveFpuState(NODE_STATE(ksIdleThread));
-
-    /* Set the FPU to lazy switch mode */
-    disableFpu();
     return true;
 }
