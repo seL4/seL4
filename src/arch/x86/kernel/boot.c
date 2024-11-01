@@ -299,10 +299,8 @@ BOOT_CODE bool_t init_sys_state(
     /* create the idle thread */
     create_idle_thread();
 
-    /* initialise floating-point unit */
-    if (!Arch_initFpu()) {
-        return false;
-    }
+    /* copy i387 FPU initial state from FPU */
+    saveFpuState(NODE_STATE(ksIdleThread));
 
     /* create the initial thread */
     tcb_t *initial = create_initial_thread(root_cnode_cap,
@@ -400,6 +398,11 @@ BOOT_CODE bool_t init_cpu(
     /* Initialize hardware breakpoints */
     Arch_initHardwareBreakpoints();
 #endif
+
+    /* initialise floating-point unit */
+    if (!Arch_initFpu()) {
+        return false;
+    }
 
     /* initialise local APIC */
     if (!apic_init(mask_legacy_irqs)) {
