@@ -171,17 +171,13 @@ set(
 include(${KERNEL_FLAGS_PATH})
 
 add_compile_options(
-    -std=c99
     #-----------------------------------
     # Configure warnings
     #-----------------------------------
     -Wall
     -Werror
     -Wstrict-prototypes
-    -Wmissing-prototypes
     -Wnested-externs
-    -Wmissing-declarations
-    -Wundef
     -Wpointer-arith
     -Wno-nonnull
     #-----------------------------------
@@ -548,7 +544,7 @@ add_custom_target(dummy_header_wrapper DEPENDS ${dummy_headers})
 
 cppfile(
     kernel_all_pp_prune.c kernel_all_pp_prune_wrapper kernel_all.c
-    EXTRA_FLAGS -CC "-I${CMAKE_CURRENT_BINARY_DIR}/generated_prune"
+    EXTRA_FLAGS -CC "-I${CMAKE_CURRENT_BINARY_DIR}/generated_prune" -std=c99
     EXTRA_DEPS
         kernel_all_c_wrapper
         dummy_header_wrapper
@@ -656,7 +652,7 @@ cppfile(
     kernel_all.i kernel_i_wrapper kernel_all.c
     EXTRA_DEPS kernel_all_c_wrapper kernel_headers ${gen_files_list}
     EXTRA_FLAGS
-        -CC "${CPPExtraFlags}"
+        -CC "${CPPExtraFlags}" -std=c99
         # The circular_includes script relies upon parsing out exactly 'kernel_all_copy.c' as
         # a special case so we must ask cppfile to use this input name
     EXACT_NAME kernel_all_copy.c
@@ -709,6 +705,16 @@ target_link_libraries(kernel.elf PRIVATE kernel_Config kernel_autoconf)
 set_property(TARGET kernel.elf APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-T ${linker_lds_path} ")
 set_target_properties(kernel.elf PROPERTIES LINK_DEPENDS "${linker_lds_path}")
 add_dependencies(kernel.elf circular_includes)
+
+# options for kernel.elf only (not libsel4.a)
+target_compile_options(
+    kernel.elf
+    PRIVATE
+        -std=c99
+        -Wmissing-prototypes
+        -Wmissing-declarations
+        -Wundef
+)
 
 # The following commands setup the install target for copying generated files and
 # compilation outputs to an install location: CMAKE_INSTALL_PREFIX.
