@@ -132,7 +132,7 @@ void NORETURN VISIBLE restore_user_context(void)
     vcpu_t *vcpu = cur_thread->tcbArch.tcbVCPU;
     if (thread_state_ptr_get_tsType(&cur_thread->tcbState) == ThreadState_RunningVM) {
         restore_vmx(cur_thread, vcpu);
-    } else {
+    } else if (vcpu) {
         vcpu_fpu_to_host(cur_thread, vcpu);
     }
 #endif
