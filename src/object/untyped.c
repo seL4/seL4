@@ -18,13 +18,13 @@
 #include <kernel/thread.h>
 #include <util.h>
 
-static word_t alignUp(word_t baseValue, word_t alignment)
+static uintptr_t alignUp(uintptr_t baseValue, word_t alignment)
 {
     return (baseValue + (BIT(alignment) - 1)) & ~MASK(alignment);
 }
 
 exception_t decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
-                                    cap_t cap, bool_t call, word_t *buffer)
+                                    cap_t cap, bool_t call, rword_t *buffer)
 {
     word_t newType, userObjSize, nodeIndex;
     word_t nodeDepth, nodeOffset, nodeWindow;
@@ -35,7 +35,8 @@ exception_t decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
     word_t nodeSize;
     word_t i;
     cte_t *destCNode;
-    word_t freeRef, alignedFreeRef, objectSize, untypedFreeBytes;
+    word_t objectSize, untypedFreeBytes;
+    pptr_t freeRef, alignedFreeRef;
     word_t freeIndex;
     bool_t deviceMemory;
     bool_t reset;

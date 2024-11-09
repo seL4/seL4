@@ -26,8 +26,8 @@ typedef signed long long int64_t;
 typedef uint64_t    uintmax_t;
 typedef int64_t     intmax_t;
 
-#define INTMAX_MAX  UINT64_MAX
-#define UINTMAX_MAX INT64_MAX
+#define INTMAX_MAX  INT64_MAX
+#define UINTMAX_MAX UINT64_MAX
 
 #define PRId64     "lld"
 #define PRIi64     "lli"

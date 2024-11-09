@@ -1,5 +1,7 @@
 #
 # Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+# Copyright 2024, Capabilities Limited
+# CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
 #
 # SPDX-License-Identifier: GPL-2.0-only
 #
@@ -147,10 +149,12 @@ foreach(
     KernelArmCortexA55
     KernelArmCortexA57
     KernelArmCortexA72
+    KernelArmMorello
     KernelArchArmV7a
     KernelArchArmV7ve
     KernelArchArmV8a
     KernelAArch64SErrorIgnore
+    KernelArchCheriRiscv
 )
     unset(${var} CACHE)
     set(${var} OFF)
@@ -194,10 +198,12 @@ config_set(KernelArmCortexA53 ARM_CORTEX_A53 "${KernelArmCortexA53}")
 config_set(KernelArmCortexA55 ARM_CORTEX_A55 "${KernelArmCortexA55}")
 config_set(KernelArmCortexA57 ARM_CORTEX_A57 "${KernelArmCortexA57}")
 config_set(KernelArmCortexA72 ARM_CORTEX_A72 "${KernelArmCortexA72}")
+config_set(KernelArmMorello ARM_MORELLO "${KernelArmMorello}")
 config_set(KernelArchArmV7a ARCH_ARM_V7A "${KernelArchArmV7a}")
 config_set(KernelArchArmV7ve ARCH_ARM_V7VE "${KernelArchArmV7ve}")
 config_set(KernelArchArmV8a ARCH_ARM_V8A "${KernelArchArmV8a}")
 config_set(KernelAArch64SErrorIgnore AARCH64_SERROR_IGNORE "${KernelAArch64SErrorIgnore}")
+config_set(KernelArchCheriRiscv ARCH_CHERI_RISCV "${KernelArchCheriRiscv}")
 
 # Check for v7ve before v7a as v7ve is a superset and we want to set the
 # actual armv to that, but leave armv7a config enabled for anything that
@@ -227,6 +233,9 @@ elseif(KernelArmCortexA57)
     set(KernelArmCPU "cortex-a57" CACHE INTERNAL "")
 elseif(KernelArmCortexA72)
     set(KernelArmCPU "cortex-a72" CACHE INTERNAL "")
+elseif(KernelArmMorello)
+    # Morello is both a CHERI architecture and an Arm CPU implementation
+    set(KernelArmCPU "morello" CACHE INTERNAL "")
 endif()
 if(KernelArchARM)
     config_set(KernelArmMach ARM_MACH "${KernelArmMach}")

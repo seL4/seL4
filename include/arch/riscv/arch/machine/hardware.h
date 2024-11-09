@@ -66,8 +66,9 @@ enum vm_fault_type {
     RISCVInstructionPageFault = 12,
     RISCVLoadPageFault = 13,
     /* 14 - reserved */
-    RISCVStorePageFault = 15
-                          /* >= 16 reserved */
+    RISCVStorePageFault = 15,
+    RISCVCheriFault = 0x1c
+                      /* >= 16 reserved */
 };
 typedef word_t vm_fault_type_t;
 

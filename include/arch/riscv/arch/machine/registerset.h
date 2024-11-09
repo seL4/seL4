@@ -1,6 +1,8 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -72,7 +74,7 @@ enum _register {
     n_contextRegisters
 };
 
-typedef uint8_t register_t;
+typedef uint8_t regoff_t;
 
 enum messageSizes {
     n_msgRegisters = 4,
@@ -85,9 +87,9 @@ enum messageSizes {
 #endif
 };
 
-extern const register_t msgRegisters[] VISIBLE;
-extern const register_t frameRegisters[] VISIBLE;
-extern const register_t gpRegisters[] VISIBLE;
+extern const regoff_t msgRegisters[] VISIBLE;
+extern const regoff_t frameRegisters[] VISIBLE;
+extern const regoff_t gpRegisters[] VISIBLE;
 
 #ifdef CONFIG_HAVE_FPU
 
@@ -109,7 +111,7 @@ typedef struct user_fpu_state {
 #endif
 
 struct user_context {
-    word_t registers[n_contextRegisters];
+    rword_t registers[n_contextRegisters];
 #ifdef CONFIG_HAVE_FPU
     user_fpu_state_t fpuState;
 #endif
@@ -122,7 +124,7 @@ static inline void Arch_initContext(user_context_t *context)
     context->registers[SSTATUS] = SSTATUS_SPIE;
 }
 
-static inline word_t CONST sanitiseRegister(register_t reg, word_t v, bool_t archInfo)
+static inline rword_t CONST sanitiseRegister(regoff_t reg, rword_t v, bool_t archInfo)
 {
     return v;
 }
@@ -184,5 +186,47 @@ static inline word_t CONST sanitiseRegister(register_t reg, word_t v, bool_t arc
     [seL4_TimeoutReply_TP] = TP, \
 }
 
-#endif /* __ASSEMBLER__ */
+#if defined(CONFIG_HAVE_CHERI)
+#define REG(n) "c" STRINGIFY(n)
+#define REGN(name) "c" STRINGIFY(name)
+#define ASM_REG_CONSTR "C"
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+#define PTR(n) "c" STRINGIFY(n)
+#define PTRN(name) "c" STRINGIFY(name)
+#define ASM_PTR_CONSTR "C"
+#else
+#define PTR(n) "x" STRINGIFY(n)
+#define PTRN(name) STRINGIFY(name)
+#define ASM_PTR_CONSTR "r"
+#endif
+#else
+#define REG(n) "x" STRINGIFY(n)
+#define REGN(name) STRINGIFY(name)
+#define PTR(n) "x" STRINGIFY(n)
+#define PTRN(name) STRINGIFY(name)
+#define ASM_REG_CONSTR "r"
+#define ASM_PTR_CONSTR "r"
+#endif
+
+#else /* __ASSEMBLER__ */
+#if defined(CONFIG_HAVE_CHERI)
+#define REG(n) c##n
+#define REGN(name) c##name
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+#define PTR(n) c##n
+#define PTRN(name) REGN(name)
+#else
+#define PTR(n) x##n
+#define PTRN(name) name
+#endif
+#else
+#define REG(n) x##n
+#define REGN(name) name
+#define PTR(n) x##n
+#define PTRN(name) name
+#endif /* CONFIG_HAVE_CHERI */
+
+#endif /* !__ASSEMBLER__ */
 

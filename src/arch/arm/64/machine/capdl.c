@@ -1,5 +1,7 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -145,8 +147,8 @@ void cap_frame_print_attrs_vptr(word_t vptr, cap_t vspace)
  */
 static void arm64_cap_pt_print_slots(pte_t *pdSlot, vptr_t vptr)
 {
-    pte_t *pt = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pdSlot));
-    printf("pt_%p_%04lu {\n", pdSlot, GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(2)));
+    pte_t *pt = PT_PTR(paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pdSlot)));
+    printf("pt_%p_%04lu {\n", pdSlot, GET_UPT_INDEX((word_t)vptr, ULVL_FRM_ARM_PT_LVL(2)));
 
     for (word_t i = 0; i < BIT(PT_INDEX_BITS); i ++) {
         pte_t *ptSlot = pt + i;
@@ -162,8 +164,8 @@ static void arm64_cap_pt_print_slots(pte_t *pdSlot, vptr_t vptr)
 
 static void arm64_cap_pd_print_slots(pte_t *pudSlot, vptr_t vptr)
 {
-    printf("pd_%p_%04lu {\n", pudSlot, GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(1)));
-    pte_t *pd = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pudSlot));
+    printf("pd_%p_%04lu {\n", pudSlot, GET_UPT_INDEX((word_t)vptr, ULVL_FRM_ARM_PT_LVL(1)));
+    pte_t *pd = PT_PTR(paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pudSlot)));
 
     for (word_t i = 0; i < BIT(PT_INDEX_BITS); i++) {
         pte_t *pdSlot = pd + i;
@@ -198,9 +200,9 @@ static void arm64_cap_pud_print_slots(void *pgdSlot_or_vspace, vptr_t vptr)
     word_t index_bits = seL4_VSpaceIndexBits;
     printf("%p_pd {\n", pgdSlot_or_vspace);
 #else
-    pte_t *pud = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pgdSlot_or_vspace));
+    pte_t *pud = PT_PTR(paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pgdSlot_or_vspace)));
     word_t index_bits = seL4_PageTableIndexBits;
-    printf("pud_%p_%04lu {\n", pgdSlot_or_vspace, GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(0)));
+    printf("pud_%p_%04lu {\n", pgdSlot_or_vspace, GET_UPT_INDEX((word_t)vptr, ULVL_FRM_ARM_PT_LVL(0)));
 #endif
 
     for (word_t i = 0; i < BIT(index_bits); i++) {
@@ -278,7 +280,7 @@ void print_cap_arch(cap_t cap)
                 /* couldn't find it */
                 break;
             }
-            pt = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(ptSlot));
+            pt = PT_PTR(paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(ptSlot)));
         }
         if (pt != target_pt) {
             /* didn't find it */
@@ -288,9 +290,9 @@ void print_cap_arch(cap_t cap)
 
         if (asid) {
             printf("pt_%p_%04lu (asid: %lu)\n",
-                   target_pt, GET_UPT_INDEX(vptr, level), (long unsigned int)asid);
+                   target_pt, GET_UPT_INDEX((word_t)vptr, level), (long unsigned int)asid);
         } else {
-            printf("pt_%p_%04lu\n", target_pt, GET_UPT_INDEX(vptr, level));
+            printf("pt_%p_%04lu\n", target_pt, GET_UPT_INDEX((word_t)vptr, level));
         }
         break;
     }
@@ -318,12 +320,12 @@ void print_cap_arch(cap_t cap)
         break;
     }
     case cap_asid_pool_cap: {
-        printf("%p_asid_pool\n", (void *)cap_asid_pool_cap_get_capASIDPool(cap));
+        printf("%p_asid_pool\n", ASID_POOL_PTR(cap_asid_pool_cap_get_capASIDPool(cap)));
         break;
     }
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case cap_vcpu_cap: {
-        printf("%p_vcpu\n", (void *)cap_vcpu_cap_get_capVCPUPtr(cap));
+        printf("%p_vcpu\n", VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)));
         break;
     }
 #endif
@@ -353,13 +355,13 @@ void print_object_arch(cap_t cap)
 
     case cap_asid_pool_cap: {
         printf("%p_asid_pool = asid_pool ",
-               (void *)cap_asid_pool_cap_get_capASIDPool(cap));
+               ASID_POOL_PTR(cap_asid_pool_cap_get_capASIDPool(cap)));
         obj_asidpool_print_attrs(cap);
         break;
     }
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case cap_vcpu_cap: {
-        printf("%p_vcpu = vcpu\n", (void *)cap_vcpu_cap_get_capVCPUPtr(cap));
+        printf("%p_vcpu = vcpu\n", VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)));
         break;
     }
 #endif
@@ -395,12 +397,12 @@ void obj_frame_print_attrs(vm_page_size_t frameSize, paddr_t frameBase)
         break;
     }
 
-    printf(", paddr: 0x%p)\n", (void *)frameBase);
+    printf(", paddr: 0x%lx)\n", frameBase);
 }
 
 void arm64_obj_pt_print_slots(pte_t *pdSlot)
 {
-    pte_t *pt = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pdSlot));
+    pte_t *pt = PT_PTR(paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pdSlot)));
 
     for (word_t i = 0; i < BIT(PT_INDEX_BITS); i++) {
         pte_t *ptSlot = pt + i;
@@ -414,7 +416,7 @@ void arm64_obj_pt_print_slots(pte_t *pdSlot)
 
 void arm64_obj_pd_print_slots(pte_t *pudSlot)
 {
-    pte_t *pd = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pudSlot));
+    pte_t *pd = PT_PTR(paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pudSlot)));
 
     for (word_t i = 0; i < BIT(PT_INDEX_BITS); i++) {
         pte_t *pdSlot = pd + i;
@@ -433,7 +435,7 @@ void arm64_obj_pd_print_slots(pte_t *pudSlot)
 
 void arm64_obj_pud_print_slots(void *pgdSlot_or_vspace)
 {
-    pte_t *pud = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pgdSlot_or_vspace));
+    pte_t *pud = PT_PTR(paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pgdSlot_or_vspace)));
 #ifdef AARCH64_VSPACE_S2_START_L1
     word_t index_bits = seL4_VSpaceIndexBits;
 #else

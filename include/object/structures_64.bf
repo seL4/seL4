@@ -1,5 +1,7 @@
 --
 -- Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+-- Copyright 2024, Capabilities Limited
+-- CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
 --
 -- SPDX-License-Identifier: GPL-2.0-only
 --
@@ -9,6 +11,10 @@ block null_cap {
 
     field capType 5
     padding 59
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding 128
+#endif
 }
 
 block untyped_cap {
@@ -25,6 +31,7 @@ block untyped_cap {
     field capBlockSize 6
 
     field capType 5
+#if !defined(__CHERI_PURE_CAPABILITY__)
 #if BF_CANONICAL_RANGE == 48
     padding 11
     field_high capPtr 48
@@ -33,6 +40,12 @@ block untyped_cap {
     field_high capPtr 39
 #else
 #error "Unspecified canonical address range"
+#endif
+#endif
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding 59
+    cheri_cap capPtr 128
 #endif
 }
 
@@ -45,6 +58,7 @@ block endpoint_cap(capEPBadge, capCanGrantReply, capCanGrant, capCanSend,
     field capCanGrant 1
     field capCanReceive 1
     field capCanSend 1
+#if !defined(__CHERI_PURE_CAPABILITY__)
 #if BF_CANONICAL_RANGE == 48
     padding 7
     field_high capEPPtr 48
@@ -54,7 +68,12 @@ block endpoint_cap(capEPBadge, capCanGrantReply, capCanGrant, capCanSend,
 #else
 #error "Unspecified canonical address range"
 #endif
+#endif
 
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding 55
+    cheri_cap capEPPtr 128
+#endif
 }
 
 block notification_cap {
@@ -63,6 +82,7 @@ block notification_cap {
     field capType 5
     field capNtfnCanReceive 1
     field capNtfnCanSend 1
+#if !defined(__CHERI_PURE_CAPABILITY__)
 #if BF_CANONICAL_RANGE == 48
     padding 9
     field_high capNtfnPtr 48
@@ -71,6 +91,12 @@ block notification_cap {
     field_high capNtfnPtr 39
 #else
 #error "Unspecified canonical address range"
+#endif
+#endif
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding 57
+    cheri_cap capNtfnPtr 128
 #endif
 }
 
@@ -81,6 +107,10 @@ block reply_cap {
     field capType 5
     field capReplyCanGrant 1
     padding 58
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding 128
+#endif
 }
 
 block call_stack(callStackPtr, isHead) {
@@ -94,15 +124,28 @@ block call_stack(callStackPtr, isHead) {
 #else
 #error "Unspecified canonical address range"
 #endif
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    cheri_cap callStackPtr 128
+#endif
 }
 #else
+
 block reply_cap(capReplyCanGrant, capReplyMaster, capTCBPtr, capType) {
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding 64
+#else
     field capTCBPtr 64
+#endif
 
     field capType 5
     padding 57
     field capReplyCanGrant 1
     field capReplyMaster 1
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    cheri_cap capTCBPtr 128
+#endif
 }
 #endif
 
@@ -114,6 +157,8 @@ block cnode_cap(capCNodeRadix, capCNodeGuardSize, capCNodeGuard,
     field capType 5
     field capCNodeGuardSize 6
     field capCNodeRadix 6
+
+#if !defined(__CHERI_PURE_CAPABILITY__)
 #if BF_CANONICAL_RANGE == 48
     field_high capCNodePtr 47
 #elif BF_CANONICAL_RANGE == 39
@@ -122,12 +167,18 @@ block cnode_cap(capCNodeRadix, capCNodeGuardSize, capCNodeGuard,
 #else
 #error "Unspecified canonical address range"
 #endif
+
+#else
+    padding 47
+    cheri_cap capCNodePtr 128
+#endif
 }
 
 block thread_cap {
     padding 64
 
     field capType 5
+#if !defined(__CHERI_PURE_CAPABILITY__)
 #if BF_CANONICAL_RANGE == 48
     padding 11
     field_high capTCBPtr 48
@@ -137,6 +188,12 @@ block thread_cap {
 #else
 #error "Unspecified canonical address range"
 #endif
+#endif
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding 59
+    cheri_cap capTCBPtr 128
+#endif
 }
 
 block irq_control_cap {
@@ -144,6 +201,10 @@ block irq_control_cap {
 
     field capType  5
     padding 59
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding 128
+#endif
 }
 
 block irq_handler_cap {
@@ -156,14 +217,26 @@ block irq_handler_cap {
 
     field capType  5
     padding 59
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding 128
+#endif
 }
 
-block zombie_cap {
+block zombie_cap (capZombieID, capZombieType, capType) {
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding               64
+#else
     field capZombieID     64
+#endif
 
     field capType         5
     padding               52
     field capZombieType   7
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    cheri_cap capZombieID 128
+#endif
 }
 
 block domain_cap {
@@ -171,6 +244,10 @@ block domain_cap {
 
     field capType 5
     padding 59
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding 128
+#endif
 }
 
 #ifdef CONFIG_KERNEL_MCS
@@ -188,6 +265,10 @@ block sched_context_cap {
 
     field capType 5
     padding       59
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    cheri_cap capSCPtr 128
+#endif
 }
 
 block sched_control_cap {
@@ -195,13 +276,18 @@ block sched_control_cap {
 
     field capType 5
     padding       59
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding 128
+#endif
 }
 #endif
 
 ---- Arch-independent object types
 
--- Endpoint: size = 16 bytes
+-- Endpoint: size = 16 bytes for non-CHERI builds
 block endpoint {
+#if !defined(__CHERI_PURE_CAPABILITY__)
     field epQueue_head 64
 
 #if BF_CANONICAL_RANGE == 48
@@ -213,11 +299,20 @@ block endpoint {
 #else
 #error "Unspecified canonical address range"
 #endif
+#endif
     field state 2
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding 62
+    cheri_cap epQueue_head 128
+    cheri_cap epQueue_tail 128
+#endif
 }
 
 -- Async endpoint: size = 32 bytes (64 bytes on mcs)
+-- for non-CHERI builds
 block notification {
+#if !defined(__CHERI_PURE_CAPABILITY__)
 #if BF_CANONICAL_RANGE == 48
 #ifdef CONFIG_KERNEL_MCS
     padding 192
@@ -237,9 +332,11 @@ block notification {
 #else
 #error "Unspecified canonical address range"
 #endif
+#endif
 
     field ntfnMsgIdentifier 64
 
+#if !defined(__CHERI_PURE_CAPABILITY__)
 #if BF_CANONICAL_RANGE == 48
     padding 16
     field_high ntfnQueue_head 48
@@ -259,11 +356,20 @@ block notification {
 #else
 #error "Unspecified canonical address range"
 #endif
+#endif
     field state 2
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding 62
+    cheri_cap ntfnQueue_head 128
+    cheri_cap ntfnQueue_tail 128
+    cheri_cap ntfnBoundTCB 128
+#endif
 }
 
--- Mapping database (MDB) node: size = 16 bytes
-block mdb_node {
+-- Mapping database (MDB) node: size = 16 bytes for non-CHERI builds
+block mdb_node (mdbNext, mdbRevocable, mdbFirstBadged, mdbPrev) {
+#if !defined(__CHERI_PURE_CAPABILITY__)
 #if BF_CANONICAL_RANGE == 48
     padding 16
     field_high mdbNext 46
@@ -273,10 +379,19 @@ block mdb_node {
 #else
 #error "Unspecified canonical address range"
 #endif
+#endif
     field mdbRevocable 1
     field mdbFirstBadged 1
 
+#if !defined(__CHERI_PURE_CAPABILITY__)
     field mdbPrev 64
+#endif
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding 62
+    cheri_cap mdbNext 128
+    cheri_cap mdbPrev 128
+#endif
 }
 
 -- Thread state data
@@ -422,7 +537,7 @@ block Timeout {
 }
 #endif
 
--- Thread state: size = 24 bytes
+-- Thread state: size = 24 bytes for non-CHERI builds
 block thread_state(blockingIPCBadge, blockingIPCCanGrant,
                    blockingIPCCanGrantReply, blockingIPCIsCall,
 #ifdef CONFIG_KERNEL_MCS
@@ -455,6 +570,9 @@ block thread_state(blockingIPCBadge, blockingIPCCanGrant,
     field tcbInReleaseQueue 1
 #endif
 
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding 60
+#else
 #if BF_CANONICAL_RANGE == 48
     padding 16
     field_high blockingObject 44
@@ -464,5 +582,12 @@ block thread_state(blockingIPCBadge, blockingIPCCanGrant,
 #else
 #error "Unspecified canonical address range"
 #endif
+#endif
+
     field tsType 4
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    cheri_cap  blockingObject 128
+#endif
+
 }

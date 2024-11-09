@@ -1,5 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -19,7 +21,7 @@ static void cleanCacheRange_PoC(vptr_t start, vptr_t end, paddr_t pstart)
 
     for (index = LINE_INDEX(start); index < LINE_INDEX(end) + 1; index++) {
         line = index << L1_CACHE_LINE_SIZE_BITS;
-        cleanByVA(line, pstart + (line - start));
+        cleanByVA(LINE_START(start) + (word_t)(line - LINE_START(start)), pstart + (line - start));
     }
 }
 
@@ -46,7 +48,7 @@ void cleanInvalidateCacheRange_RAM(vptr_t start, vptr_t end, paddr_t pstart)
      * it to clean again should not affect performance */
     for (index = LINE_INDEX(start); index < LINE_INDEX(end) + 1; index++) {
         line = index << L1_CACHE_LINE_SIZE_BITS;
-        cleanInvalByVA(line, pstart + (line - start));
+        cleanInvalByVA(LINE_START(start) + (word_t)(line - LINE_START(start)), pstart + (line - start));
     }
     /* ensure clean and invalidate complete */
     dsb();
@@ -86,7 +88,7 @@ void cleanCacheRange_PoU(vptr_t start, vptr_t end, paddr_t pstart)
 
     for (index = LINE_INDEX(start); index < LINE_INDEX(end) + 1; index++) {
         line = index << L1_CACHE_LINE_SIZE_BITS;
-        cleanByVA_PoU(line, pstart + (line - start));
+        cleanByVA_PoU(LINE_START(start) + (word_t)(line - LINE_START(start)), pstart + (line - start));
     }
 }
 
@@ -126,7 +128,7 @@ void invalidateCacheRange_RAM(vptr_t start, vptr_t end, paddr_t pstart)
     /* Now invalidate L1 range */
     for (index = LINE_INDEX(start); index < LINE_INDEX(end) + 1; index++) {
         line = index << L1_CACHE_LINE_SIZE_BITS;
-        invalidateByVA(line, pstart + (line - start));
+        invalidateByVA(LINE_START(start) + (word_t)(line - LINE_START(start)), pstart + (line - start));
     }
     /* Ensure invalidate completes */
     dsb();
@@ -151,7 +153,7 @@ void invalidateCacheRange_I(vptr_t start, vptr_t end, paddr_t pstart)
 
     for (index = LINE_INDEX(start); index < LINE_INDEX(end) + 1; index++) {
         line = index << L1_CACHE_LINE_SIZE_BITS;
-        invalidateByVA_I(line, pstart + (line - start));
+        invalidateByVA(LINE_START(start) + (word_t)(line - LINE_START(start)), pstart + (line - start));
     }
 #endif
 }
@@ -163,7 +165,7 @@ void branchFlushRange(vptr_t start, vptr_t end, paddr_t pstart)
 
     for (index = LINE_INDEX(start); index < LINE_INDEX(end) + 1; index++) {
         line = index << L1_CACHE_LINE_SIZE_BITS;
-        branchFlush(line, pstart + (line - start));
+        branchFlush(LINE_START(start) + (word_t)(line - LINE_START(start)), pstart + (line - start));
     }
 }
 

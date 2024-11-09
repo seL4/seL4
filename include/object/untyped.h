@@ -22,14 +22,14 @@
  * be stored in capFreeIndex */
 #define MAX_FREE_INDEX(sizeBits) (BIT((sizeBits) - seL4_MinUntypedBits))
 #define FREE_INDEX_TO_OFFSET(freeIndex) ((freeIndex)<<seL4_MinUntypedBits)
-#define GET_FREE_REF(base,freeIndex) ((word_t)(((word_t)(base)) + FREE_INDEX_TO_OFFSET(freeIndex)))
+#define GET_FREE_REF(base,freeIndex) ((pptr_t)(((pptr_t)(base)) + FREE_INDEX_TO_OFFSET(freeIndex)))
 #define GET_FREE_INDEX(base,free) (((word_t)(free) - (word_t)(base))>>seL4_MinUntypedBits)
-#define GET_OFFSET_FREE_PTR(base, offset) ((void *)(((word_t)(base)) + (offset)))
+#define GET_OFFSET_FREE_PTR(base, offset) ((void *)(((pptr_t)(base)) + (offset)))
 #define OFFSET_TO_FREE_INDEX(offset) ((offset)>>seL4_MinUntypedBits)
 
 exception_t decodeUntypedInvocation(word_t invLabel, word_t length,
                                     cte_t *slot, cap_t cap,
-                                    bool_t call, word_t *buffer);
+                                    bool_t call, rword_t *buffer);
 exception_t invokeUntyped_Retype(cte_t *srcSlot, bool_t reset,
                                  void *retypeBase, object_t newType, word_t userSize,
                                  cte_t *destCNode, word_t destOffset, word_t destLength,

@@ -1,5 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -95,7 +97,7 @@ typedef word_t notification_state_t;
 
 /* Generate a cte_t pointer from a tcb_t pointer */
 #define TCB_PTR_CTE_PTR(p,i) \
-    (((cte_t *)((word_t)(p)&~MASK(seL4_TCBBits)))+(i))
+    (((cte_t *)((pptr_t)(p)&~MASK(seL4_TCBBits)))+(i))
 
 #define SC_REF(p) ((word_t) (p))
 #define SC_PTR(r) ((sched_context_t *) (r))
@@ -109,7 +111,7 @@ typedef word_t notification_state_t;
 #define ZombieType_ZombieTCB        BIT(wordRadix)
 #define ZombieType_ZombieCNode(n)   ((n) & MASK(wordRadix))
 
-static inline cap_t CONST Zombie_new(word_t number, word_t type, word_t ptr)
+static inline cap_t CONST Zombie_new(word_t number, word_t type, pptr_t ptr)
 {
     word_t mask;
 
@@ -137,7 +139,7 @@ static inline word_t CONST cap_zombie_cap_get_capZombieNumber(cap_t cap)
     return cap_zombie_cap_get_capZombieID(cap) & MASK(radix + 1);
 }
 
-static inline word_t CONST cap_zombie_cap_get_capZombiePtr(cap_t cap)
+static inline pptr_t CONST cap_zombie_cap_get_capZombiePtr(cap_t cap)
 {
     word_t radix = cap_zombie_cap_get_capZombieBits(cap);
     return cap_zombie_cap_get_capZombieID(cap) & ~MASK(radix + 1);
@@ -146,7 +148,7 @@ static inline word_t CONST cap_zombie_cap_get_capZombiePtr(cap_t cap)
 static inline cap_t CONST cap_zombie_cap_set_capZombieNumber(cap_t cap, word_t n)
 {
     word_t radix = cap_zombie_cap_get_capZombieBits(cap);
-    word_t ptr = cap_zombie_cap_get_capZombieID(cap) & ~MASK(radix + 1);
+    pptr_t ptr = cap_zombie_cap_get_capZombieID(cap) & ~MASK(radix + 1);
     return cap_zombie_cap_set_capZombieID(cap, ptr | (n & MASK(radix + 1)));
 }
 
@@ -399,14 +401,19 @@ struct reply {
 #endif
 
 /* Ensure object sizes are sane */
-compile_assert(cte_size_sane, sizeof(cte_t) == BIT(seL4_SlotBits))
+compile_assert(cte_size_sane, sizeof(cte_t) <= BIT(seL4_SlotBits))
 compile_assert(tcb_cte_size_sane, TCB_CNODE_SIZE_BITS <= TCB_SIZE_BITS)
 compile_assert(tcb_size_sane,
                BIT(TCB_SIZE_BITS) >= sizeof(tcb_t))
+/* This check fails on purecap kernel; it is fine to have (TCB_SIZE_BITS - 1) bigger
+ * than the tcb_t size as the CTE slot size (cte_t) got also increased.
+ */
+#if !defined(__CHERI_PURE_CAPABILITY__)
 compile_assert(tcb_size_not_excessive,
                BIT(TCB_SIZE_BITS - 1) < sizeof(tcb_t))
-compile_assert(ep_size_sane, sizeof(endpoint_t) == BIT(seL4_EndpointBits))
-compile_assert(notification_size_sane, sizeof(notification_t) == BIT(seL4_NotificationBits))
+#endif
+compile_assert(ep_size_sane, sizeof(endpoint_t) <= BIT(seL4_EndpointBits))
+compile_assert(notification_size_sane, sizeof(notification_t) <= BIT(seL4_NotificationBits))
 
 /* Check the IPC buffer is the right size */
 compile_assert(ipc_buf_size_sane, sizeof(seL4_IPCBuffer) == BIT(seL4_IPCBufferSizeBits))

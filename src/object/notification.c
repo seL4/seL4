@@ -1,5 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -20,16 +22,16 @@ static inline tcb_queue_t PURE ntfn_ptr_get_queue(notification_t *ntfnPtr)
 {
     tcb_queue_t ntfn_queue;
 
-    ntfn_queue.head = (tcb_t *)notification_ptr_get_ntfnQueue_head(ntfnPtr);
-    ntfn_queue.end = (tcb_t *)notification_ptr_get_ntfnQueue_tail(ntfnPtr);
+    ntfn_queue.head = TCB_PTR(notification_ptr_get_ntfnQueue_head(ntfnPtr));
+    ntfn_queue.end = TCB_PTR(notification_ptr_get_ntfnQueue_tail(ntfnPtr));
 
     return ntfn_queue;
 }
 
 static inline void ntfn_ptr_set_queue(notification_t *ntfnPtr, tcb_queue_t ntfn_queue)
 {
-    notification_ptr_set_ntfnQueue_head(ntfnPtr, (word_t)ntfn_queue.head);
-    notification_ptr_set_ntfnQueue_tail(ntfnPtr, (word_t)ntfn_queue.end);
+    notification_ptr_set_ntfnQueue_head(ntfnPtr, (pptr_t)ntfn_queue.head);
+    notification_ptr_set_ntfnQueue_tail(ntfnPtr, (pptr_t)ntfn_queue.end);
 }
 
 #ifdef CONFIG_KERNEL_MCS
@@ -63,7 +65,7 @@ void sendSignal(notification_t *ntfnPtr, word_t badge)
 {
     switch (notification_ptr_get_state(ntfnPtr)) {
     case NtfnState_Idle: {
-        tcb_t *tcb = (tcb_t *)notification_ptr_get_ntfnBoundTCB(ntfnPtr);
+        tcb_t *tcb = TCB_PTR(notification_ptr_get_ntfnBoundTCB(ntfnPtr));
         /* Check if we are bound and that thread is waiting for a message */
         if (tcb) {
             if (thread_state_ptr_get_tsType(&tcb->tcbState) == ThreadState_BlockedOnReceive) {
@@ -203,7 +205,7 @@ void receiveSignal(tcb_t *thread, cap_t cap, bool_t isBlocking)
             thread_state_ptr_set_tsType(&thread->tcbState,
                                         ThreadState_BlockedOnNotification);
             thread_state_ptr_set_blockingObject(&thread->tcbState,
-                                                NTFN_REF(ntfnPtr));
+                                                (pptr_t)NTFN_PTR(ntfnPtr));
             scheduleTCB(thread);
 
             /* Enqueue TCB */
@@ -325,14 +327,14 @@ void completeSignal(notification_t *ntfnPtr, tcb_t *tcb)
 
 static inline void doUnbindNotification(notification_t *ntfnPtr, tcb_t *tcbptr)
 {
-    notification_ptr_set_ntfnBoundTCB(ntfnPtr, (word_t) 0);
+    notification_ptr_set_ntfnBoundTCB(ntfnPtr, (pptr_t)0);
     tcbptr->tcbBoundNotification = NULL;
 }
 
 void unbindMaybeNotification(notification_t *ntfnPtr)
 {
     tcb_t *boundTCB;
-    boundTCB = (tcb_t *)notification_ptr_get_ntfnBoundTCB(ntfnPtr);
+    boundTCB = TCB_PTR(notification_ptr_get_ntfnBoundTCB(ntfnPtr));
 
     if (boundTCB) {
         doUnbindNotification(ntfnPtr, boundTCB);
@@ -351,7 +353,7 @@ void unbindNotification(tcb_t *tcb)
 
 void bindNotification(tcb_t *tcb, notification_t *ntfnPtr)
 {
-    notification_ptr_set_ntfnBoundTCB(ntfnPtr, (word_t)tcb);
+    notification_ptr_set_ntfnBoundTCB(ntfnPtr, (pptr_t)tcb);
     tcb->tcbBoundNotification = ntfnPtr;
 }
 

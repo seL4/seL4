@@ -1,5 +1,7 @@
 --
 -- Copyright 2014, General Dynamics C4 Systems
+-- Copyright 2024, Capabilities Limited
+-- CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
 --
 -- SPDX-License-Identifier: GPL-2.0-only
 --
@@ -12,22 +14,38 @@ block null_cap {
 
     padding 28
     field capType 4
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding 64
+#endif
 }
 
 -- The combination of freeIndex and blockSize must match up with the
 -- definitions of MIN_SIZE_BITS and MAX_SIZE_BITS
-block untyped_cap {
+block untyped_cap(capFreeIndex, capIsDevice, capBlockSize, capPtr, capType) {
     field capFreeIndex 26
     field capIsDevice  1
     field capBlockSize 5
 
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding           28
+#else
     field_high capPtr 28
+#endif
     field capType     4
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    cheri_cap capPtr  64
+#endif
 }
 
 block endpoint_cap(capEPBadge, capCanGrantReply, capCanGrant, capCanSend,
                    capCanReceive, capEPPtr, capType) {
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding 28
+#else
     field_high capEPPtr 28
+#endif
     field capCanGrantReply 1
     field capCanGrant 1
     field capCanReceive 1
@@ -35,16 +53,29 @@ block endpoint_cap(capEPBadge, capCanGrantReply, capCanGrant, capCanSend,
 
     field capEPBadge 28
     field capType 4
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    cheri_cap capEPPtr 64
+#endif
 }
 
-block notification_cap {
+block notification_cap (capNtfnBadge, capNtfnCanReceive, capNtfnCanSend,
+                        capNtfnPtr, capType) {
     field capNtfnBadge 28
     padding 2
     field capNtfnCanReceive 1
     field capNtfnCanSend 1
 
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding 28
+#else
     field_high capNtfnPtr 28
+#endif
     field capType 4
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    cheri_cap capNtfnPtr 64
+#endif
 }
 
 #ifdef CONFIG_KERNEL_MCS
@@ -65,10 +96,19 @@ block call_stack {
 block reply_cap(capReplyCanGrant, capReplyMaster, capTCBPtr, capType) {
     padding 32
 
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding 26
+#else
     field_high capTCBPtr 26
+#endif
+
     field capReplyCanGrant 1
     field capReplyMaster 1
     field capType 4
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    cheri_cap capTCBPtr 64
+#endif
 }
 #endif
 -- The user-visible format of the data word is defined by cnode_capdata, below.
@@ -79,16 +119,32 @@ block cnode_cap(capCNodeRadix, capCNodeGuardSize, capCNodeGuard,
     field capCNodeRadix 5
     field capCNodeGuard 18
 
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding 28
+#else
     field_high capCNodePtr 27
     padding 1
+#endif
     field capType 4
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    cheri_cap capCNodePtr 64
+#endif
 }
 
-block thread_cap {
+block thread_cap (capTCBPtr, capType) {
     padding              32
 
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding              28
+#else
     field_high capTCBPtr 28
+#endif
+
     field capType         4
+#if defined(__CHERI_PURE_CAPABILITY__)
+    cheri_cap capTCBPtr  64
+#endif
 }
 
 block irq_control_cap {
@@ -96,6 +152,9 @@ block irq_control_cap {
 
     padding       24
     field capType  8
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding       64
+#endif
 }
 
 block irq_handler_cap {
@@ -108,14 +167,25 @@ block irq_handler_cap {
 
     padding       24
     field capType  8
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding       64
+#endif
 }
 
-block zombie_cap {
+block zombie_cap (capZombieID, capZombieType, capType) {
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding               32
+#else
     field capZombieID     32
+#endif
 
     padding               18
     field capZombieType   6
     field capType         8
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    cheri_cap capZombieID 64
+#endif
 }
 
 block domain_cap {
@@ -123,6 +193,9 @@ block domain_cap {
 
     padding 24
     field capType 8
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding 64
+#endif
 }
 
 #ifdef CONFIG_KERNEL_MCS
@@ -144,8 +217,9 @@ block sched_control_cap {
 #endif
 ---- Arch-independent object types
 
--- Endpoint: size = 16 bytes
+-- Endpoint: size = 16 bytes for non-CHERI builds
 block endpoint {
+#if !defined(__CHERI_PURE_CAPABILITY__)
     padding 64
 
     field_high epQueue_head 28
@@ -153,11 +227,20 @@ block endpoint {
 
     field_high epQueue_tail 28
     padding 2
+#endif
     field state 2
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding                30
+    cheri_cap epQueue_head 64
+    cheri_cap epQueue_tail 64
+#endif
 }
 
 -- Notification object: size = 16 bytes (32 bytes on mcs)
+-- for non-CHERI builds
 block notification {
+#if !defined(__CHERI_PURE_CAPABILITY__)
 #ifdef CONFIG_KERNEL_MCS
     padding 96
 
@@ -175,18 +258,36 @@ block notification {
 
     field_high ntfnQueue_tail 28
     padding 2
+#else
+    field ntfnMsgIdentifier 32
+#endif
     field state 2
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding                  30
+    cheri_cap ntfnQueue_head 64
+    cheri_cap ntfnQueue_tail 64
+    cheri_cap ntfnBoundTCB   64
+#endif
 }
 
--- Mapping database (MDB) node: size = 8 bytes
-block mdb_node {
+-- Mapping database (MDB) node: size = 8 bytes for non-CHERI builds
+block mdb_node (mdbNext, mdbRevocable, mdbFirstBadged, mdbPrev) {
+#if !defined(__CHERI_PURE_CAPABILITY__)
     field_high mdbNext 29
     padding 1
+#endif
     field mdbRevocable 1
     field mdbFirstBadged 1
 
+#if !defined(__CHERI_PURE_CAPABILITY__)
     field_high mdbPrev 29
     padding 3
+#else
+    padding 30
+    cheri_cap mdbNext 64
+    cheri_cap mdbPrev 64
+#endif
 }
 
 -- Thread state data
@@ -319,7 +420,7 @@ block Timeout {
 }
 #endif
 
--- Thread state: size = 12 bytes
+-- Thread state: size = 12 bytes for non-CHERI builds
 block thread_state(blockingIPCBadge, blockingIPCCanGrant,
                    blockingIPCCanGrantReply, blockingIPCIsCall,
                    tcbQueued, blockingObject,
@@ -346,6 +447,14 @@ block thread_state(blockingIPCBadge, blockingIPCCanGrant,
     field tcbInReleaseQueue 1
 #endif
 
+#if defined(__CHERI_PURE_CAPABILITY__)
+    padding                   28
+#else
     field_high blockingObject 28
+#endif
     field tsType 4
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    cheri_cap  blockingObject 64
+#endif
 }

@@ -1,5 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -29,8 +31,8 @@ extern char ki_boot_end[1];
 BOOT_CODE p_region_t get_p_reg_kernel_img_boot(void)
 {
     return (p_region_t) {
-        .start = kpptr_to_paddr((const void *)KERNEL_ELF_BASE),
-        .end   = kpptr_to_paddr(ki_boot_end)
+        .start = kpptr_to_paddr((const void *)(uintptr_t)KERNEL_ELF_BASE),
+        .end   = kpptr_to_paddr((const void *)(uintptr_t)ki_boot_end)
     };
 }
 
@@ -38,8 +40,8 @@ BOOT_CODE p_region_t get_p_reg_kernel_img_boot(void)
 BOOT_CODE p_region_t get_p_reg_kernel_img(void)
 {
     return (p_region_t) {
-        .start = kpptr_to_paddr((const void *)KERNEL_ELF_BASE),
-        .end   = kpptr_to_paddr(ki_end)
+        .start = kpptr_to_paddr((const void *)(uintptr_t)KERNEL_ELF_BASE),
+        .end   = kpptr_to_paddr((const void *)(uintptr_t)ki_end)
     };
 }
 
@@ -90,7 +92,7 @@ BOOT_CODE bool_t reserve_region(p_region_t reg)
             if (ndks_boot.resv_count + 1 >= MAX_NUM_RESV_REG) {
                 printf("Can't mark region 0x%"SEL4_PRIx_word"-0x%"SEL4_PRIx_word
                        " as reserved, try increasing MAX_NUM_RESV_REG (currently %d)\n",
-                       reg.start, reg.end, (int)MAX_NUM_RESV_REG);
+                       (word_t)reg.start, (word_t)reg.end, (int)MAX_NUM_RESV_REG);
                 return false;
             }
             for (word_t j = ndks_boot.resv_count; j > i; j--) {
@@ -106,7 +108,7 @@ BOOT_CODE bool_t reserve_region(p_region_t reg)
     if (i + 1 == MAX_NUM_RESV_REG) {
         printf("Can't mark region 0x%"SEL4_PRIx_word"-0x%"SEL4_PRIx_word
                " as reserved, try increasing MAX_NUM_RESV_REG (currently %d)\n",
-               reg.start, reg.end, (int)MAX_NUM_RESV_REG);
+               (word_t)reg.start, (word_t)reg.end, (int)MAX_NUM_RESV_REG);
         return false;
     }
 
@@ -142,7 +144,7 @@ BOOT_CODE static bool_t insert_region(region_t reg)
      */
     printf("no free memory slot left for [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"],"
            " consider increasing MAX_NUM_FREEMEM_REG (%u)\n",
-           reg.start, reg.end, (unsigned int)MAX_NUM_FREEMEM_REG);
+           (word_t)reg.start, (word_t)reg.end, (unsigned int)MAX_NUM_FREEMEM_REG);
 
     /* For debug builds we consider this a fatal error. Rationale is, that the
      * caller does not check the error code at the moment, but just ignores any
@@ -161,6 +163,11 @@ BOOT_CODE static pptr_t alloc_rootserver_obj(word_t size_bits, word_t n)
     /* we must not have run out of memory */
     assert(rootserver_mem.start <= rootserver_mem.end);
     memzero((void *) allocated, n * BIT(size_bits));
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    /* Bound the roosterver object capability */
+    allocated = (pptr_t) cheri_derive_data_cap((void *) allocated, (ptraddr_t) allocated, BIT(size_bits), -1);
+#endif
     return allocated;
 }
 
@@ -206,7 +213,14 @@ BOOT_CODE static void create_rootserver_objects(pptr_t start, v_region_t it_v_re
     word_t max = rootserver_max_size_bits(extra_bi_size_bits);
 
     word_t size = calculate_rootserver_size(it_v_reg, extra_bi_size_bits);
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    /* Bound the roosterver memory capability */
+    rootserver_mem.start = (pptr_t) cheri_derive_data_cap((void *) start, (ptraddr_t) start, size, -1);
+#else
     rootserver_mem.start = start;
+#endif
+
     rootserver_mem.end = start + size;
 
     maybe_alloc_extra_bi(max, extra_bi_size_bits);
@@ -359,7 +373,11 @@ BOOT_CODE void populate_bi_frame(node_id_t node_id, word_t num_nodes,
     bi->nodeID = node_id;
     bi->numNodes = num_nodes;
     bi->numIOPTLevels = 0;
+#if defined(CONFIG_HAVE_CHERI)
+    bi->ipcBuffer = (seL4_IPCBuffer * __capability)ipcbuf_vptr;
+#else
     bi->ipcBuffer = (seL4_IPCBuffer *)ipcbuf_vptr;
+#endif
     bi->initThreadCNodeSizeBits = CONFIG_ROOT_CNODE_SIZE_BITS;
     bi->initThreadDomain = ksDomSchedule[ksDomScheduleIdx].domain;
     bi->extraLen = extra_bi_size;
@@ -554,7 +572,11 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
 #endif
 
     /* create initial thread's TCB cap */
+#if defined(__CHERI_PURE_CAPABILITY__)
+    cap_t cap = cap_thread_cap_new((pptr_t)TCB_PTR(tcb));
+#else
     cap_t cap = cap_thread_cap_new(TCB_REF(tcb));
+#endif
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadTCB), cap);
 
 #ifdef CONFIG_KERNEL_MCS
@@ -665,14 +687,15 @@ BOOT_CODE static bool_t provide_untyped_cap(
 
     /* All cap ptrs must be aligned to object size */
     if (!IS_ALIGNED(pptr, size_bits)) {
-        printf("Kernel init: Unaligned untyped pptr %p (alignment %"SEL4_PRIu_word")\n", (void *)pptr, size_bits);
+        printf("Kernel init: Unaligned untyped pptr %"SEL4_PRIu_word" (alignment %"SEL4_PRIu_word")\n", (word_t)pptr,
+               size_bits);
         return false;
     }
 
     /* All cap ptrs apart from device untypeds must be in the kernel window. */
     if (!device_memory && !pptr_in_kernel_window(pptr)) {
-        printf("Kernel init: Non-device untyped pptr %p outside kernel window\n",
-               (void *)pptr);
+        printf("Kernel init: Non-device untyped pptr %"SEL4_PRIu_word"  outside kernel window\n",
+               (word_t)pptr);
         return false;
     }
 
@@ -680,8 +703,8 @@ BOOT_CODE static bool_t provide_untyped_cap(
        need to assume that the kernel window is aligned up to potentially
        seL4_MaxUntypedBits. */
     if (!device_memory && !pptr_in_kernel_window(pptr + MASK(size_bits))) {
-        printf("Kernel init: End of non-device untyped at %p outside kernel window (size %"SEL4_PRIu_word")\n",
-               (void *)pptr, size_bits);
+        printf("Kernel init: End of non-device untyped at %"SEL4_PRIu_word" outside kernel window (size %"SEL4_PRIu_word")\n",
+               (word_t)pptr, size_bits);
         return false;
     }
 
@@ -693,6 +716,19 @@ BOOT_CODE static bool_t provide_untyped_cap(
             .isDevice = device_memory,
             .padding  = {0}
         };
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+        if (!device_memory) {
+            /*
+             * Make sure to apply proper bounds on new untyped memory. The received pptr could have wider
+             * bounds from the caller as it tries to allocate multiple power-of-two untypes from a single
+             * bigger chunk of memory. We only build caps for non-device memory as that's what the kernel
+             * could access; device memory isn't accessed by the kernel.
+             */
+            pptr = (pptr_t) cheri_derive_data_cap((void *)pptr, (ptraddr_t)pptr, BIT(size_bits), -1);
+        }
+#endif
+
         ut_cap = cap_untyped_cap_new(MAX_FREE_INDEX(size_bits),
                                      device_memory, size_bits, pptr);
         ret = provide_cap(root_cnode_cap, ut_cap);
@@ -745,7 +781,7 @@ BOOT_CODE static bool_t create_untypeds_for_region(
          * the region's bit size does not exceed the alignment of the region.
          */
         if (0 != reg.start) {
-            unsigned int align_bits = ctzl(reg.start);
+            unsigned int align_bits = ctzl((word_t)reg.start);
             if (size_bits > align_bits) {
                 size_bits = align_bits;
             }
@@ -774,10 +810,11 @@ BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap)
             region_t reg = paddr_to_pptr_reg((p_region_t) {
                 start, ndks_boot.reserved[i].start
             });
+
             if (!create_untypeds_for_region(root_cnode_cap, true, reg, first_untyped_slot)) {
                 printf("ERROR: creation of untypeds for device region #%u at"
                        " [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] failed\n",
-                       (unsigned int)i, reg.start, reg.end);
+                       (unsigned int)i, (word_t)reg.start, (word_t)reg.end);
                 return false;
             }
         }
@@ -793,7 +830,7 @@ BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap)
         if (!create_untypeds_for_region(root_cnode_cap, true, reg, first_untyped_slot)) {
             printf("ERROR: creation of untypeds for top device region"
                    " [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] failed\n",
-                   reg.start, reg.end);
+                   (word_t)reg.start, (word_t)reg.end);
             return false;
         }
     }
@@ -806,7 +843,7 @@ BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap)
     if (!create_untypeds_for_region(root_cnode_cap, false, boot_mem_reuse_reg, first_untyped_slot)) {
         printf("ERROR: creation of untypeds for recycled boot memory"
                " [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] failed\n",
-               boot_mem_reuse_reg.start, boot_mem_reuse_reg.end);
+               (word_t)boot_mem_reuse_reg.start, (word_t)boot_mem_reuse_reg.end);
         return false;
     }
 
@@ -817,7 +854,7 @@ BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap)
         if (!create_untypeds_for_region(root_cnode_cap, false, reg, first_untyped_slot)) {
             printf("ERROR: creation of untypeds for free memory region #%u at"
                    " [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] failed\n",
-                   (unsigned int)i, reg.start, reg.end);
+                   (unsigned int)i, (word_t)reg.start, (word_t)reg.end);
             return false;
         }
     }
@@ -844,7 +881,11 @@ BOOT_CODE static inline pptr_t ceiling_kernel_window(pptr_t p)
      * Note that we compare physical address in case of overflow.
      */
     if (pptr_to_paddr((void *)p) > PADDR_TOP) {
-        p = PPTR_TOP;
+#if defined(__CHERI_PURE_CAPABILITY__)
+        p = (pptr_t) __builtin_cheri_address_set((void *) p, PPTR_TOP);
+#else
+        p = (pptr_t) PPTR_TOP;
+#endif
     }
     return p;
 }
@@ -896,7 +937,7 @@ BOOT_CODE static bool_t check_reserved_memory(word_t n_reserved,
     /* Force ordering and exclusivity of reserved regions. */
     for (word_t i = 0; i < n_reserved; i++) {
         const region_t *r = &reserved[i];
-        printf("  [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]\n", r->start, r->end);
+        printf("  [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]\n", (word_t)r->start, (word_t)r->end);
 
         /* Reserved regions must be sane, the size is allowed to be zero. */
         if (r->start > r->end) {
@@ -970,6 +1011,10 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
                 /* the region overlaps with the start of the available region.
                  * trim start of the available region */
                 avail_reg[a].start = MIN(avail_reg[a].end, reserved[r].end);
+#if defined(__CHERI_PURE_CAPABILITY__)
+                avail_reg[a].start = (pptr_t) cheri_build_data_cap((ptraddr_t) avail_reg[a].start,
+                                                                   avail_reg[a].end - avail_reg[a].start, -1);
+#endif
                 reserve_region(pptr_to_paddr_reg(reserved[r]));
                 r++;
             } else {
@@ -978,9 +1023,14 @@ BOOT_CODE bool_t init_freemem(word_t n_available, const p_region_t *available,
                  * the start to the end of the reserved region */
                 region_t m = avail_reg[a];
                 m.end = reserved[r].start;
+
                 insert_region(m);
                 if (avail_reg[a].end > reserved[r].end) {
                     avail_reg[a].start = reserved[r].end;
+#if defined(__CHERI_PURE_CAPABILITY__)
+                    avail_reg[a].start = (pptr_t) cheri_build_data_cap((ptraddr_t) avail_reg[a].start,
+                                                                       avail_reg[a].end - avail_reg[a].start, -1);
+#endif
                     reserve_region(pptr_to_paddr_reg(reserved[r]));
                     r++;
                 } else {
