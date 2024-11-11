@@ -183,7 +183,7 @@ static inline void plic_init_controller(void)
     }
 
     /* Set the priorities of all interrupts to 1 */
-    for (int i = 1; i <= PLIC_MAX_IRQ + 1; i++) {
+    for (int i = 1; i <= PLIC_MAX_IRQ; i++) {
         writel(2, PLIC_PPTR_BASE + PLIC_PRIO + PLIC_PRIO_PER_ID * i);
     }
 
