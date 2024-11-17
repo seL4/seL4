@@ -716,14 +716,6 @@ static inline void armv_vcpu_init(vcpu_t *vcpu)
 
 static inline bool_t armv_handleVCPUFault(word_t hsr)
 {
-#ifdef CONFIG_HAVE_FPU
-    if ((ESR_EC(hsr) == ESR_EC_TFP || ESR_EC(hsr) == ESR_EC_CPACR) && !isFpuEnable()) {
-        handleFPUFault();
-        setNextPC(NODE_STATE(ksCurThread), getRestartPC(NODE_STATE(ksCurThread)));
-        return true;
-    }
-#endif
-
 #ifdef CONFIG_HARDWARE_DEBUG_API
     if (isDebugFault(hsr)) {
         handleDebugFaultEvent(hsr);
