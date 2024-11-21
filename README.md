@@ -103,7 +103,7 @@ A list of releases and current project status can be found under [seL4 releases]
 
 - [Roadmap](https://docs.sel4.systems/projects/roadmap): new features in development
 - [Hardware Support](https://docs.sel4.systems/Hardware): information about hardware platform ports
-- [Kernel Features]((https://docs.sel4.systems/projects/sel4/status)): information about available
+- [Kernel Features](https://docs.sel4.systems/projects/sel4/status): information about available
   kernel features
 - [Userland Components and
       Drivers](https://docs.sel4.systems/projects/available-user-components.html): available device
