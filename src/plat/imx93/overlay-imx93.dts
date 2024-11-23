@@ -1,0 +1,36 @@
+/*
+ * SPDX-License-Identifier: (GPL-2.0-or-later OR MIT)
+ * Copyright 2024 Indan Zupancic
+ */
+
+/ {
+	chosen {
+		seL4,elfloader-devices =
+			&lpuart1,
+			&{/psci},
+			&{/timer};
+
+		seL4,kernel-devices =
+			&lpuart1,
+			&gic,
+			&{/timer};
+	};
+
+	/* Maximum of 2 GB, use KernelCustomDTSOverlay if your board has less */
+	memory@80000000 {
+		device_type = "memory";
+		reg = <0x0 0x80000000 0x0 0x80000000>;
+	};
+
+	reserved-memory {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		/* 32MB reservation by ATF (optional, only when ELE used?) */
+		bl32@96000000 {
+			reg = <0x96000000 0x2000000>;
+			no-map;
+		};
+	};
+};
