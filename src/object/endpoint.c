@@ -309,7 +309,7 @@ void cancelIPC(tcb_t *tptr)
 
 #ifdef CONFIG_KERNEL_MCS
     /* cancel ipc cancels all faults */
-    seL4_Fault_NullFault_ptr_new(&tptr->tcbFault);
+    tptr->tcbFault = seL4_Fault_NullFault_new();
 #endif
 
     switch (thread_state_ptr_get_tsType(state)) {
@@ -335,7 +335,7 @@ void cancelIPC(tcb_t *tptr)
 
 #ifdef CONFIG_KERNEL_MCS
         if (thread_state_ptr_get_tsType(state) == ThreadState_BlockedOnReceive) {
-            reply_t *reply = REPLY_PTR(thread_state_get_replyObject(tptr->tcbState));
+            reply_t *reply = REPLY_PTR(thread_state_ptr_get_replyObject(state));
             if (reply != NULL) {
                 reply_unlink(reply, tptr);
             }
