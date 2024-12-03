@@ -16,7 +16,7 @@ exception_t Arch_checkIRQ(word_t irq)
         current_syscall_error.type = seL4_RangeError;
         current_syscall_error.rangeErrorMin = 1;
         current_syscall_error.rangeErrorMax = maxIRQ;
-        userError("Rejecting request for IRQ %u. IRQ is out of range [1..maxIRQ].", (int)irq);
+        userError("Rejecting request for IRQ %u. IRQ is out of range [1..%u].", (int)irq, maxIRQ);
         return EXCEPTION_SYSCALL_ERROR;
     }
     return EXCEPTION_NONE;
