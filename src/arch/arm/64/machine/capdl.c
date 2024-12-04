@@ -146,7 +146,7 @@ void cap_frame_print_attrs_vptr(word_t vptr, cap_t vspace)
 static void arm64_cap_pt_print_slots(pte_t *pdSlot, vptr_t vptr)
 {
     pte_t *pt = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pdSlot));
-    printf("pt_%p_%04lu {\n", pdSlot, GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(2)));
+    printf("pt_%p_%04lu {\n", pdSlot, GET_UPT_INDEX((word_t)vptr, ULVL_FRM_ARM_PT_LVL(2)));
 
     for (word_t i = 0; i < BIT(PT_INDEX_BITS); i ++) {
         pte_t *ptSlot = pt + i;
@@ -162,7 +162,7 @@ static void arm64_cap_pt_print_slots(pte_t *pdSlot, vptr_t vptr)
 
 static void arm64_cap_pd_print_slots(pte_t *pudSlot, vptr_t vptr)
 {
-    printf("pd_%p_%04lu {\n", pudSlot, GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(1)));
+    printf("pd_%p_%04lu {\n", pudSlot, GET_UPT_INDEX((word_t)vptr, ULVL_FRM_ARM_PT_LVL(1)));
     pte_t *pd = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pudSlot));
 
     for (word_t i = 0; i < BIT(PT_INDEX_BITS); i++) {
@@ -200,7 +200,7 @@ static void arm64_cap_pud_print_slots(void *pgdSlot_or_vspace, vptr_t vptr)
 #else
     pte_t *pud = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pgdSlot_or_vspace));
     word_t index_bits = seL4_PageTableIndexBits;
-    printf("pud_%p_%04lu {\n", pgdSlot_or_vspace, GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(0)));
+    printf("pud_%p_%04lu {\n", pgdSlot_or_vspace, GET_UPT_INDEX((word_t)vptr, ULVL_FRM_ARM_PT_LVL(0)));
 #endif
 
     for (word_t i = 0; i < BIT(index_bits); i++) {
@@ -288,9 +288,9 @@ void print_cap_arch(cap_t cap)
 
         if (asid) {
             printf("pt_%p_%04lu (asid: %lu)\n",
-                   target_pt, GET_UPT_INDEX(vptr, level), (long unsigned int)asid);
+                   target_pt, GET_UPT_INDEX((word_t)vptr, level), (long unsigned int)asid);
         } else {
-            printf("pt_%p_%04lu\n", target_pt, GET_UPT_INDEX(vptr, level));
+            printf("pt_%p_%04lu\n", target_pt, GET_UPT_INDEX((word_t)vptr, level));
         }
         break;
     }

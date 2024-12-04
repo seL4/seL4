@@ -2,6 +2,8 @@
  * Copyright 2020, DornerWorks
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -68,17 +70,21 @@ static pte_t pte_next(word_t phys_addr, bool_t is_leaf)
     uint8_t write = read;
     uint8_t exec = read;
 
-    return pte_new(ppn,
-                   0,     /* sw */
-                   is_leaf ? 1 : 0,     /* dirty (leaf)/reserved (non-leaf) */
-                   is_leaf ? 1 : 0,     /* accessed (leaf)/reserved (non-leaf) */
-                   1,     /* global */
-                   is_leaf ? 0 : 0,     /* user (leaf)/reserved (non-leaf) */
-                   exec,  /* execute */
-                   write, /* write */
-                   read,  /* read */
-                   1      /* valid */
-                  );
+    return pte_new(
+#if defined(CONFIG_HAVE_CHERI) && (__riscv_xlen == 64)
+               is_leaf ? 0x1c : 0,  /* cheri_ext -- allow all capability loads/stores */
+#endif
+               ppn,
+               0,     /* sw */
+               is_leaf ? 1 : 0,     /* dirty (leaf)/reserved (non-leaf) */
+               is_leaf ? 1 : 0,     /* accessed (leaf)/reserved (non-leaf) */
+               1,     /* global */
+               is_leaf ? 0 : 0,     /* user (leaf)/reserved (non-leaf) */
+               exec,  /* execute */
+               write, /* write */
+               read,  /* read */
+               1      /* valid */
+           );
 }
 
 /* ==================== BOOT CODE STARTS HERE ==================== */
@@ -178,6 +184,9 @@ BOOT_CODE void map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
     targetSlot = pt_ret.ptSlot;
 
     *targetSlot = pte_new(
+#if defined(CONFIG_HAVE_CHERI) && (__riscv_xlen == 64)
+                      0x1c,  /* cheri_ext -- allow all capability loads/stores */
+#endif
                       (addrFromPPtr(pt) >> seL4_PageBits),
                       0, /* sw */
                       0, /* dirty (reserved non-leaf) */
@@ -205,6 +214,9 @@ BOOT_CODE void map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap)
     pte_t *targetSlot = lu_ret.ptSlot;
 
     *targetSlot = pte_new(
+#if defined(CONFIG_HAVE_CHERI) && (__riscv_xlen == 64)
+                      0x1c,  /* cheri_ext -- allow all capability loads/stores */
+#endif
                       (pptr_to_paddr(frame_pptr) >> seL4_PageBits),
                       0, /* sw */
                       1, /* dirty (leaf) */
@@ -353,7 +365,7 @@ void copyGlobalMappings(pte_t *newLvl1pt)
     }
 }
 
-word_t *PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
+void *PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
 {
     word_t w_bufferPtr;
     cap_t bufferCap;
@@ -376,7 +388,7 @@ word_t *PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
 
         basePtr = cap_frame_cap_get_capFBasePtr(bufferCap);
         pageBits = pageBitsForSize(cap_frame_cap_get_capFSize(bufferCap));
-        return (word_t *)(basePtr + (w_bufferPtr & MASK(pageBits)));
+        return (void *)(basePtr + (w_bufferPtr & MASK(pageBits)));
     } else {
         return NULL;
     }
@@ -431,6 +443,14 @@ exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
     case RISCVInstructionAccessFault:
         current_fault = seL4_Fault_VMFault_new(addr, RISCVInstructionAccessFault, true);
         return EXCEPTION_FAULT;
+#if defined(CONFIG_HAVE_CHERI)
+    case RISCVCheriFault:
+        /* Extract the capability address that faulted to align with how the current VM
+         * fault message is forwarded */
+        addr = (uint64_t) getRegister(thread, ((addr >> 5) & 0x1f) - 1);
+        current_fault = seL4_Fault_VMFault_new(addr, (1 << 11) | read_stval(), false);
+        return EXCEPTION_FAULT;
+#endif
 
     default:
         fail("Invalid VM fault type");
@@ -529,6 +549,9 @@ void unmapPageTable(asid_t asid, vptr_t vptr, pte_t *target_pt)
     /* If we found a pt then ptSlot won't be null */
     assert(ptSlot != NULL);
     *ptSlot = pte_new(
+#if defined(CONFIG_HAVE_CHERI) && (__riscv_xlen == 64)
+                  0,  /* cheri_ext */
+#endif
                   0,  /* phy_address */
                   0,  /* sw */
                   0,  /* dirty (reserved non-leaf) */
@@ -651,7 +674,12 @@ vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_right
 
 /* The rest of the file implements the RISCV object invocations */
 
+#if defined(CONFIG_HAVE_CHERI)
+static pte_t CONST makeUserPTE(paddr_t paddr, bool_t executable, vm_rights_t vm_rights,
+                               word_t cheri_ext)
+#else
 static pte_t CONST makeUserPTE(paddr_t paddr, bool_t executable, vm_rights_t vm_rights)
+#endif
 {
     word_t write = RISCVGetWriteFromVMRights(vm_rights);
     word_t read = RISCVGetReadFromVMRights(vm_rights);
@@ -659,6 +687,9 @@ static pte_t CONST makeUserPTE(paddr_t paddr, bool_t executable, vm_rights_t vm_
         return pte_pte_invalid_new();
     } else {
         return pte_new(
+#if defined(CONFIG_HAVE_CHERI) && (__riscv_xlen == 64)
+                   cheri_ext,
+#endif
                    paddr >> seL4_PageBits,
                    0, /* sw */
                    1, /* dirty (leaf) */
@@ -679,7 +710,7 @@ static inline bool_t CONST checkVPAlignment(vm_page_size_t sz, word_t w)
 }
 
 static exception_t decodeRISCVPageTableInvocation(word_t label, word_t length,
-                                                  cte_t *cte, cap_t cap, word_t *buffer)
+                                                  cte_t *cte, cap_t cap, rword_t *buffer)
 {
     if (label == RISCVPageTableUnmap) {
         if (unlikely(!isFinalCapability(cte))) {
@@ -776,17 +807,21 @@ static exception_t decodeRISCVPageTableInvocation(word_t label, word_t length,
 
     paddr_t paddr = addrFromPPtr(
                         PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap)));
-    pte_t pte = pte_new((paddr >> seL4_PageBits),
-                        0, /* sw */
-                        0, /* dirty (reserved non-leaf) */
-                        0, /* accessed (reserved non-leaf) */
-                        0,  /* global */
-                        0,  /* user (reserved non-leaf) */
-                        0,  /* execute */
-                        0,  /* write */
-                        0,  /* read */
-                        1 /* valid */
-                       );
+    pte_t pte = pte_new(
+#if defined(CONFIG_HAVE_CHERI) && (__riscv_xlen == 64)
+                    0x0,  /* cheri_ext */
+#endif
+                    (paddr >> seL4_PageBits),
+                    0, /* sw */
+                    0, /* dirty (reserved non-leaf) */
+                    0, /* accessed (reserved non-leaf) */
+                    0,  /* global */
+                    0,  /* user (reserved non-leaf) */
+                    0,  /* execute */
+                    0,  /* write */
+                    0,  /* read */
+                    1 /* valid */
+                );
 
     cap = cap_page_table_cap_set_capPTIsMapped(cap, 1);
     cap = cap_page_table_cap_set_capPTMappedASID(cap, asid);
@@ -797,7 +832,7 @@ static exception_t decodeRISCVPageTableInvocation(word_t label, word_t length,
 }
 
 static exception_t decodeRISCVFrameInvocation(word_t label, word_t length,
-                                              cte_t *cte, cap_t cap, bool_t call, word_t *buffer)
+                                              cte_t *cte, cap_t cap, bool_t call, rword_t *buffer)
 {
     switch (label) {
     case RISCVPageMap: {
@@ -900,7 +935,11 @@ static exception_t decodeRISCVFrameInvocation(word_t label, word_t length,
         cap = cap_frame_cap_set_capFMappedAddress(cap,  vaddr);
 
         bool_t executable = !vm_attributes_get_riscvExecuteNever(attr);
-        pte_t pte = makeUserPTE(frame_paddr, executable, vmRights);
+        pte_t pte = makeUserPTE(frame_paddr, executable, vmRights
+#if defined(CONFIG_HAVE_CHERI)
+                                , vm_attributes_get_cheri_ext(attr)
+#endif
+                               );
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performPageInvocationMapPTE(cap, cte, pte, lu_ret.ptSlot);
     }
@@ -929,7 +968,7 @@ static exception_t decodeRISCVFrameInvocation(word_t label, word_t length,
 }
 
 exception_t decodeRISCVMMUInvocation(word_t label, word_t length, cptr_t cptr,
-                                     cte_t *cte, cap_t cap, bool_t call, word_t *buffer)
+                                     cte_t *cte, cap_t cap, bool_t call, rword_t *buffer)
 {
     switch (cap_get_capType(cap)) {
 
@@ -1113,7 +1152,7 @@ static exception_t performPageGetAddress(void *vbase_ptr, bool_t call)
     tcb_t *thread;
     thread = NODE_STATE(ksCurThread);
     if (call) {
-        word_t *ipcBuffer = lookupIPCBuffer(true, thread);
+        rword_t *ipcBuffer = lookupIPCBuffer(true, thread);
         setRegister(thread, badgeRegister, 0);
         unsigned int length = setMR(thread, ipcBuffer, 0, capFBasePtr);
         setRegister(thread, msgInfoRegister, wordFromMessageInfo(
@@ -1164,9 +1203,9 @@ void Arch_userStackTrace(tcb_t *tptr)
         return;
     }
 
-    word_t sp = getRegister(tptr, SP);
+    rword_t sp = getRegister(tptr, SP);
     if (!IS_ALIGNED(sp, seL4_WordSizeBits)) {
-        printf("SP %p not aligned", (void *) sp);
+        printf("SP %lx not aligned", (word_t) sp);
         return;
     }
 

@@ -2,6 +2,8 @@
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
  * Copyright 2021, HENSOLDT Cyber
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -19,12 +21,12 @@
 
 #define IS_IRQ_VALID(X) (((X)) <= maxIRQ && (X) != irqInvalid)
 
-word_t PURE getRestartPC(tcb_t *thread)
+rword_t PURE getRestartPC(tcb_t *thread)
 {
     return getRegister(thread, FaultIP);
 }
 
-void setNextPC(tcb_t *thread, word_t v)
+void setNextPC(tcb_t *thread, rword_t v)
 {
     setRegister(thread, NextIP, v);
 }
