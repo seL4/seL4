@@ -16,8 +16,9 @@
     !defined(CONFIG_PLAT_POLARFIRE) && \
     !defined(CONFIG_PLAT_QEMU_RISCV_VIRT) && \
     !defined(CONFIG_PLAT_ROCKETCHIP_ZCU102) && \
-    !defined(CONFIG_PLAT_STAR64)
-#error "Check if this platform suppots a PLIC."
+    !defined(CONFIG_PLAT_STAR64) && \
+    !defined(CONFIG_PLAT_ARIANE)
+#error "Check if this platform supports a PLIC."
 #endif
 
 /* tell the kernel we have the set trigger feature */
@@ -182,7 +183,7 @@ static inline void plic_init_controller(void)
     }
 
     /* Set the priorities of all interrupts to 1 */
-    for (int i = 1; i <= PLIC_MAX_IRQ + 1; i++) {
+    for (int i = 1; i <= PLIC_MAX_IRQ; i++) {
         writel(2, PLIC_PPTR_BASE + PLIC_PRIO + PLIC_PRIO_PER_ID * i);
     }
 
