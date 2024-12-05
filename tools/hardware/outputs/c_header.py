@@ -189,7 +189,7 @@ def create_c_header_file(config, kernel_irqs: List, kernel_macros: Dict,
                          kernel_regions: List, physBase: int, physical_memory,
                          outputStream):
 
-    jinja_env = jinja2.Environment(loader=jinja2.BaseLoader, trim_blocks=True,
+    jinja_env = jinja2.Environment(loader=jinja2.BaseLoader(), trim_blocks=True,
                                    lstrip_blocks=True)
 
     template = jinja_env.from_string(HEADER_TEMPLATE)
