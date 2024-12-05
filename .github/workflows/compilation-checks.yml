@@ -11,6 +11,7 @@ on:
     branches:
       - master
   pull_request:
+  workflow_dispatch:
 
 # To reduce the load we cancel any older runs of this workflow for the current
 # PR. For deployment to the master branch, the workflow will run on each push,
