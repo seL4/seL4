@@ -361,7 +361,8 @@ static BOOT_CODE cap_t create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid
             frame_size,                    /* capFSize */
             vptr,                          /* capFMappedAddress */
             wordFromVMRights(VMReadWrite), /* capFVMRights */
-            false                          /* capFIsDevice */
+            false,                         /* capFIsDevice */
+            0                              /* capIsDirty */
         );
 }
 
@@ -1511,6 +1512,9 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
         vm_attributes_t attributes;
         findVSpaceForASID_ret_t find_ret;
 
+        if (Arch_FrameBusyZeroing(cte)) {
+            return EXCEPTION_PREEMPTED;
+        }
         if (unlikely(length < 3 || current_extra_caps.excaprefs[0] == NULL)) {
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
