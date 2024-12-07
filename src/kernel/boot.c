@@ -281,7 +281,8 @@ create_root_cnode(void)
                     CONFIG_ROOT_CNODE_SIZE_BITS, /* radix */
                     wordBits - CONFIG_ROOT_CNODE_SIZE_BITS, /* guard size */
                     0, /* guard */
-                    rootserver.cnode); /* pptr */
+                    rootserver.cnode, /* pptr */
+                    false); /* not dirty */
 
     /* write the root CNode cap into the root CNode */
     write_slot(SLOT_PTR(rootserver.cnode, seL4_CapInitThreadCNode), cap);

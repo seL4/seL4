@@ -125,7 +125,9 @@ exception_t decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
             srcCap = maskCapRights(cap_rights, srcSlot->cap);
             dc_ret = deriveCap(srcSlot, srcCap);
             if (dc_ret.status != EXCEPTION_NONE) {
-                userError("Error deriving cap for CNode Copy operation.");
+                if (dc_ret.status != EXCEPTION_PREEMPTED) {
+                    userError("Error deriving cap for CNode Copy operation.");
+                }
                 return dc_ret.status;
             }
             newCap = dc_ret.cap;
@@ -146,7 +148,9 @@ exception_t decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
             dc_ret = deriveCap(srcSlot,
                                updateCapData(false, capData, srcCap));
             if (dc_ret.status != EXCEPTION_NONE) {
-                userError("Error deriving cap for CNode Mint operation.");
+                if (dc_ret.status != EXCEPTION_PREEMPTED) {
+                    userError("Error deriving cap for CNode Mint operation.");
+                }
                 return dc_ret.status;
             }
             newCap = dc_ret.cap;
@@ -917,3 +921,35 @@ cap_transfer_t PURE loadCapTransfer(word_t *buffer)
     const int offset = seL4_MsgMaxLength + seL4_MsgMaxExtraCaps + 2;
     return capTransferFromWords(buffer + offset);
 }
+
+bool_t CNodeBusyZeroing(cte_t *slot)
+{
+    cap_t cap = slot->cap;
+    bool_t dirty = cap_cnode_cap_get_capIsDirty(cap);
+    word_t base = cap_cnode_cap_get_capCNodePtr(cap);
+    word_t i = cap_cnode_cap_get_capCNodeGuard(cap);
+    word_t size = BIT(cap_cnode_cap_get_capCNodeRadix(cap));
+    word_t chunk = MIN(size, BIT(CONFIG_RESET_CHUNK_BITS));
+    exception_t status = EXCEPTION_NONE;
+
+    if (!dirty) {
+        return false;
+    }
+    for (; i < size && status != EXCEPTION_NONE; i += chunk) {
+        memzero((void*)(base + i), chunk);
+        status = preemptionPoint();
+    }
+    if (status != EXCEPTION_NONE) {
+        /* Remember how far we zeroed */
+        cap = cap_cnode_cap_set_capCNodeGuard(cap, i);
+    } else {
+        /* Done: All memory cleared and flushed */
+        cap = cap_cnode_cap_set_capCNodeGuard(cap, 0);
+        cap = cap_cnode_cap_set_capIsDirty(cap, false);
+    }
+    slot->cap = cap;
+    /* Always restart the syscall to prevent stale cap data anywhere: */
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+    return true;
+}
+

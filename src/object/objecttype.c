@@ -78,6 +78,16 @@ deriveCap_ret_t deriveCap(cte_t *slot, cap_t cap)
         ret.cap = cap_null_cap_new();
         break;
 
+    case cap_cnode_cap:
+        if (CNodeBusyZeroing(slot)) {
+            ret.cap = cap_null_cap_new();
+            ret.status = EXCEPTION_PREEMPTED;
+        } else {
+            ret.cap = cap;
+            ret.status = EXCEPTION_NONE;
+        }
+        return ret;
+
 #ifndef CONFIG_KERNEL_MCS
     case cap_reply_cap:
         ret.status = EXCEPTION_NONE;
@@ -554,7 +564,7 @@ cap_t createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceM
         /** GHOSTUPD: "(True, gs_new_cnodes (unat \<acute>userSize)
                                 (ptr_val \<acute>regionBase)
                                 (4 + unat \<acute>userSize))" */
-        return cap_cnode_cap_new(userSize, 0, 0, CTE_REF(regionBase));
+        return cap_cnode_cap_new(userSize, 0, 0, CTE_REF(regionBase), true);
 
     case seL4_UntypedObject:
         /*
@@ -737,6 +747,9 @@ exception_t decodeInvocation(word_t invLabel, word_t length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 #endif
+        if (CNodeBusyZeroing(slot)) {
+            return EXCEPTION_PREEMPTED;
+        }
         return decodeCNodeInvocation(invLabel, length, cap, buffer);
 
     case cap_untyped_cap:

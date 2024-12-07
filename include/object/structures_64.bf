@@ -102,16 +102,17 @@ block reply_cap(capReplyCanGrant, capReplyMaster, capTCBPtr, capType) {
 
 -- The user-visible format of the data word is defined by cnode_capdata, below.
 block cnode_cap(capCNodeRadix, capCNodeGuardSize, capCNodeGuard,
-                capCNodePtr, capType) {
+                capCNodePtr, capIsDirty, capType) {
     field capCNodeGuard 64
 
     field capType 5
     field capCNodeGuardSize 6
     field capCNodeRadix 6
+    field capIsDirty 1
 #if BF_CANONICAL_RANGE == 48
-    field_high capCNodePtr 47
+    field_high capCNodePtr 46
 #elif BF_CANONICAL_RANGE == 39
-    padding 9
+    padding 8
     field_high capCNodePtr 38
 #else
 #error "Unspecified canonical address range"
