@@ -12,23 +12,17 @@ block null_cap {
 }
 
 block untyped_cap {
-#if BF_CANONICAL_RANGE == 48
-    field capFreeIndex 48
-    padding 9
-#elif BF_CANONICAL_RANGE == 39
-    field capFreeIndex 39
-    padding 18
-#else
-#error "Unspecified canonical address range"
-#endif
     field capIsDevice 1
-    field capBlockSize 6
-
-    field capType 5
 #if BF_CANONICAL_RANGE == 48
+    padding 15
+    field capSize 48
+    field capType 5
     padding 11
     field_high capPtr 48
 #elif BF_CANONICAL_RANGE == 39
+    field capSize     39
+    padding 24
+    field capType 5
     padding 20
     field_high capPtr 39
 #else

@@ -1112,7 +1112,7 @@ static exception_t performX64PageDirectoryInvocationUnmap(cap_t cap, cte_t *ctSl
             cap_page_directory_cap_get_capPDMappedAddress(cap),
             pd
         );
-        clearMemory((void *)pd, cap_get_capSizeBits(cap));
+        memzero((void *)pd, cap_get_capSize(cap));
     }
 
     cap_page_directory_cap_ptr_set_capPDIsMapped(&(ctSlot->cap), 0);
@@ -1276,7 +1276,7 @@ static exception_t performX64PDPTInvocationUnmap(cap_t cap, cte_t *ctSlot)
         unmapPDPT(cap_pdpt_cap_get_capPDPTMappedASID(cap),
                   cap_pdpt_cap_get_capPDPTMappedAddress(cap),
                   pdpt);
-        clearMemory((void *)pdpt, cap_get_capSizeBits(cap));
+        memzero((void *)pdpt, cap_get_capSize(cap));
     }
 
     cap_pdpt_cap_ptr_set_capPDPTIsMapped(&(ctSlot->cap), 0);

@@ -389,24 +389,6 @@ exception_t invokeCNodeSaveCaller(cte_t *destSlot)
 }
 #endif
 
-/*
- * If creating a child UntypedCap, don't allow new objects to be created in the
- * parent.
- */
-static void setUntypedCapAsFull(cap_t srcCap, cap_t newCap, cte_t *srcSlot)
-{
-    if ((cap_get_capType(srcCap) == cap_untyped_cap)
-        && (cap_get_capType(newCap) == cap_untyped_cap)) {
-        if ((cap_untyped_cap_get_capPtr(srcCap)
-             == cap_untyped_cap_get_capPtr(newCap))
-            && (cap_untyped_cap_get_capBlockSize(newCap)
-                == cap_untyped_cap_get_capBlockSize(srcCap))) {
-            cap_untyped_cap_ptr_set_capFreeIndex(&(srcSlot->cap),
-                                                 MAX_FREE_INDEX(cap_untyped_cap_get_capBlockSize(srcCap)));
-        }
-    }
-}
-
 void cteInsert(cap_t newCap, cte_t *srcSlot, cte_t *destSlot)
 {
     mdb_node_t srcMDB, newMDB;
@@ -427,10 +409,6 @@ void cteInsert(cap_t newCap, cte_t *srcSlot, cte_t *destSlot)
     /* Haskell error: "cteInsert: mdb entry must be empty" */
     assert((cte_t *)mdb_node_get_mdbNext(destSlot->cteMDBNode) == NULL &&
            (cte_t *)mdb_node_get_mdbPrev(destSlot->cteMDBNode) == NULL);
-
-    /* Prevent parent untyped cap from being used again if creating a child
-     * untyped from it. */
-    setUntypedCapAsFull(srcCap, newCap, srcSlot);
 
     destSlot->cap = newCap;
     destSlot->cteMDBNode = newMDB;

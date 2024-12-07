@@ -14,15 +14,11 @@ block null_cap {
     field capType 4
 }
 
--- The combination of freeIndex and blockSize must match up with the
--- definitions of MIN_SIZE_BITS and MAX_SIZE_BITS
 block untyped_cap {
-    field capFreeIndex 26
-    field capIsDevice  1
-    field capBlockSize 5
-
-    field_high capPtr 28
-    field capType     4
+    field capIsDevice   1
+    field_high capSize 31
+    field_high capPtr  28
+    field capType       4
 }
 
 block endpoint_cap(capEPBadge, capCanGrantReply, capCanGrant, capCanSend,

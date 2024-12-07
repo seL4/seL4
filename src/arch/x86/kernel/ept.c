@@ -240,7 +240,7 @@ static exception_t performEPTPDPTInvocationUnmap(cap_t cap, cte_t *cte)
             cap_ept_pdpt_cap_get_capPDPTMappedASID(cap),
             cap_ept_pdpt_cap_get_capPDPTMappedAddress(cap),
             pdpt);
-        clearMemory((void *)pdpt, cap_get_capSizeBits(cap));
+        memzero((void *)pdpt, cap_get_capSize(cap));
     }
     cap_ept_pdpt_cap_ptr_set_capPDPTIsMapped(&(cte->cap), 0);
 
@@ -443,7 +443,7 @@ static exception_t performEPTPDInvocationUnmap(cap_t cap, cte_t *cte)
             cap_ept_pd_cap_get_capPDMappedASID(cap),
             cap_ept_pd_cap_get_capPDMappedAddress(cap),
             pd);
-        clearMemory((void *)pd, cap_get_capSizeBits(cap));
+        memzero((void *)pd, cap_get_capSize(cap));
     }
     cap_ept_pd_cap_ptr_set_capPDIsMapped(&(cte->cap), 0);
 
@@ -631,7 +631,7 @@ static exception_t performEPTPTInvocationUnmap(cap_t cap, cte_t *cte)
             cap_ept_pt_cap_get_capPTMappedASID(cap),
             cap_ept_pt_cap_get_capPTMappedAddress(cap),
             pt);
-        clearMemory((void *)pt, cap_get_capSizeBits(cap));
+        memzero((void *)pt, cap_get_capSize(cap));
     }
     cap_ept_pt_cap_ptr_set_capPTIsMapped(&(cte->cap), 0);
 

@@ -693,8 +693,7 @@ BOOT_CODE static bool_t provide_untyped_cap(
             .isDevice = device_memory,
             .padding  = {0}
         };
-        ut_cap = cap_untyped_cap_new(MAX_FREE_INDEX(size_bits),
-                                     device_memory, size_bits, pptr);
+        ut_cap = cap_untyped_cap_new(device_memory, BIT(size_bits), pptr);
         ret = provide_cap(root_cnode_cap, ut_cap);
     } else {
         printf("Kernel init: Too many untyped regions for boot info\n");

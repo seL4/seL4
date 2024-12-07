@@ -1186,7 +1186,7 @@ static exception_t performPageTableInvocationUnmap(cap_t cap, cte_t *ctSlot)
         pte_t *pt = PT_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
         unmapPageTable(cap_page_table_cap_get_capPTMappedASID(cap),
                        cap_page_table_cap_get_capPTMappedAddress(cap), pt);
-        clearMemory_PT((void *)pt, cap_get_capSizeBits(cap));
+        clearMemory_PT((void *)pt, cap_get_capSize(cap));
     }
 
     cap_page_table_cap_ptr_set_capPTIsMapped(&(ctSlot->cap), 0);
@@ -1278,11 +1278,6 @@ static exception_t performPageGetAddress(pptr_t base_ptr, bool_t call)
 static exception_t performASIDControlInvocation(void *frame, cte_t *slot,
                                                 cte_t *parent, asid_t asid_base)
 {
-    /** AUXUPD: "(True, typ_region_bytes (ptr_val \<acute>frame) 12)" */
-    /** GHOSTUPD: "(True, gs_clear_region (ptr_val \<acute>frame) 12)" */
-    cap_untyped_cap_ptr_set_capFreeIndex(&(parent->cap),
-                                         MAX_FREE_INDEX(cap_untyped_cap_get_capBlockSize(parent->cap)));
-
     memzero(frame, BIT(seL4_ASIDPoolBits));
     /** AUXUPD: "(True, ptr_retyps 1 (Ptr (ptr_val \<acute>frame) :: asid_pool_C ptr))" */
 
@@ -1754,7 +1749,7 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
         asid_base = i << asidLowBits;
 
         if (unlikely(cap_get_capType(untyped) != cap_untyped_cap ||
-                     cap_untyped_cap_get_capBlockSize(untyped) != seL4_ASIDPoolBits ||
+                     cap_untyped_cap_get_capSize(untyped) != BIT(seL4_ASIDPoolBits) ||
                      cap_untyped_cap_get_capIsDevice(untyped))) {
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
