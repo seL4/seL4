@@ -224,6 +224,7 @@ BOOT_CODE cap_t create_unmapped_it_frame_cap(pptr_t pptr, bool_t use_large)
     cap_t cap = cap_frame_cap_new(
                     asidInvalid,                     /* capFMappedASID       */
                     pptr,                            /* capFBasePtr          */
+                    0,                               /* capIsDirty           */
                     0,                               /* capFSize             */
                     0,                               /* capFVMRights         */
                     0,

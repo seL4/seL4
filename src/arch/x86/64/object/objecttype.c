@@ -194,6 +194,7 @@ cap_t Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
             /** GHOSTUPD: "(True, gs_new_frames vmpage_size.X64SmallPage
                                                     (ptr_val \<acute>regionBase)
                                                     (unat X64SmallPageBits))" */
+            memzero(regionBase, BIT(X86_SmallPage));
         }
         return cap_frame_cap_new(
                    asidInvalid,        /* capFMappedASID           */
@@ -202,7 +203,8 @@ cap_t Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
                    X86_MappingNone,    /* capFMapType              */
                    0,                  /* capFMappedAddress        */
                    VMReadWrite,        /* capFVMRights             */
-                   deviceMemory        /* capFIsDevice             */
+                   deviceMemory,       /* capFIsDevice             */
+                   false               /* capIsDirty               */
                );
 
     case seL4_X86_LargePageObject:
@@ -226,7 +228,8 @@ cap_t Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
                    X86_MappingNone,    /* capFMapType              */
                    0,                  /* capFMappedAddress        */
                    VMReadWrite,        /* capFVMRights             */
-                   deviceMemory        /* capFIsDevice             */
+                   deviceMemory,       /* capFIsDevice             */
+                   !deviceMemory       /* capIsDirty               */
                );
 
     case seL4_X64_HugePageObject:
@@ -250,7 +253,8 @@ cap_t Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
                    X86_MappingNone,    /* capFMapType              */
                    0,                  /* capFMappedAddress        */
                    VMReadWrite,        /* capFVMRights             */
-                   deviceMemory        /* capFIsDevice             */
+                   deviceMemory,       /* capFIsDevice             */
+                   !deviceMemory       /* capIsDirty               */
                );
 
     case seL4_X86_PageTableObject:

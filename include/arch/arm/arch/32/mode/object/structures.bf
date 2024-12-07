@@ -40,7 +40,8 @@ block frame_cap {
     field capFVMRights       2
     field_high capFMappedAddress 18
 
-    padding                  2
+    padding                  1
+    field capIsDirty         1
     field capFIsDevice       1
     field capFMappedASIDHigh 7
     field_high capFBasePtr  18

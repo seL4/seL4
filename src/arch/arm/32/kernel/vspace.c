@@ -426,6 +426,7 @@ static BOOT_CODE cap_t create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid
                 ASID_LOW(asid),                /* capFMappedASIDLow  */
                 wordFromVMRights(VMReadWrite), /* capFVMRights       */
                 vptr,                          /* capFMappedAddress  */
+                false,                         /* capIsDirty         */
                 false,                         /* capFIsDevice       */
                 ASID_HIGH(asid),               /* capFMappedASIDHigh */
                 pptr                           /* capFBasePtr        */

@@ -227,7 +227,8 @@ exception_t invokeUntyped_Retype(cte_t *srcSlot, void *retypeBase,
                                  cte_t *destCNode, word_t destOffset, word_t destLength,
                                  bool_t deviceMemory)
 {
-    if (newType != seL4_UntypedObject && newType != seL4_CapTableObject && !deviceMemory) {
+    if (newType != seL4_UntypedObject && newType != seL4_CapTableObject &&
+        !Arch_isFrameType(newType)) {
         memzero(retypeBase, total_size);
     }
     /* Create new objects and caps. */

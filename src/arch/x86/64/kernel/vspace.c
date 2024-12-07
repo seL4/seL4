@@ -777,7 +777,8 @@ static BOOT_CODE cap_t create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid
             map_type,                      /* capFMapType        */
             vptr,                          /* capFMappedAddress  */
             wordFromVMRights(VMReadWrite), /* capFVMRights       */
-            0                              /* capFIsDevice       */
+            0,                             /* capFIsDevice       */
+            false                          /* capIsDirty         */
         );
 }
 

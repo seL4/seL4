@@ -522,7 +522,7 @@ exception_t cteRevoke(cte_t *slot)
             return status;
         }
 
-        status = preemptionPoint();
+        status = preemptionPoint(false);
         if (status != EXCEPTION_NONE) {
             return status;
         }
@@ -629,7 +629,7 @@ static finaliseSlot_ret_t finaliseSlot(cte_t *slot, bool_t immediate)
             return ret;
         }
 
-        status = preemptionPoint();
+        status = preemptionPoint(false);
         if (status != EXCEPTION_NONE) {
             ret.status = status;
             ret.success = false;
@@ -937,7 +937,7 @@ bool_t CNodeBusyZeroing(cte_t *slot)
     }
     for (; i < size && status != EXCEPTION_NONE; i += chunk) {
         memzero((void*)(base + i), chunk);
-        status = preemptionPoint();
+        status = preemptionPoint(true);
     }
     if (status != EXCEPTION_NONE) {
         /* Remember how far we zeroed */
