@@ -40,11 +40,7 @@ void VISIBLE NORETURN restore_user_context(void)
 #endif
 
     asm volatile(
-#if defined(__CHERI_PURE_CAPABILITY__)
-        "cmove ct0, %[cur_thread]   \n"
-#else
-        "mv t0, %[cur_thread]       \n"
-#endif
+        MOVE_PTR " "PTRN(t0) ", %[cur_thread]                  \n"
         LOAD_S " "REGN(ra)  ", (0*%[REGSIZE])("PTRN(t0)")  \n"
         LOAD_S " "REGN(sp)  ", (1*%[REGSIZE])("PTRN(t0)")  \n"
         LOAD_S " "REGN(gp)  ", (2*%[REGSIZE])("PTRN(t0)")  \n"
@@ -84,17 +80,21 @@ void VISIBLE NORETURN restore_user_context(void)
         LOAD_S " "REGN(t6) ", (30*%[REGSIZE])("PTRN(t0)") \n"
         /* get sepc */
         LOAD_S " "REGN(t1) ", (34*%[REGSIZE])("PTRN(t0)")\n"
-#if defined(CONFIG_HAVE_CHERI)
-        "cspecialw sepcc, ct1  \n"
-#else
-        "csrw sepc, t1  \n"
+#if defined(CONFIG_ARCH_CHERI_RISCV_V_0_9) && !defined(__CHERI_PURE_CAPABILITY__)
+        MODESW "\n"
+#endif
+        CSRW " " SEPC ", " REGN(t1)  "\n"
+#if defined(CONFIG_ARCH_CHERI_RISCV_V_0_9) && !defined(__CHERI_PURE_CAPABILITY__)
+        MODESW "\n"
 #endif
 #ifndef ENABLE_SMP_SUPPORT
         /* Write back sscratch with cur_thread_reg to get it back on the next trap entry */
-#if defined(CONFIG_HAVE_CHERI)
-        "cspecialw sscratchc, ct0  \n"
-#else
-        "csrw sscratch, t0         \n"
+#if defined(CONFIG_ARCH_CHERI_RISCV_V_0_9) && !defined(__CHERI_PURE_CAPABILITY__)
+        MODESW "\n"
+#endif
+        CSRW " " SSCRATCH ", " REGN(t0)  "\n"
+#if defined(CONFIG_ARCH_CHERI_RISCV_V_0_9) && !defined(__CHERI_PURE_CAPABILITY__)
+        MODESW "\n"
 #endif
 #endif
         LOAD_S " "REGN(t1) ", (32*%[REGSIZE])("PTRN(t0)") \n"

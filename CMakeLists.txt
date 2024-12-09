@@ -197,9 +197,13 @@ elseif(KernelArchRiscV)
     endif()
 
     if(HaveCheri)
-        # The "x" is for non-standard CHERI extension. This is going to change to "z" once
-        # CHERI is standardised in RISC-V.
-        string(APPEND _riscv_march "_xcheri")
+        # The "x" is for non-standard Cambridge CHERI ISAv9 extension.
+        # "z" is for the standard CHERI-RISC-V extension (currently V.9.x).
+        if(KernelArchCheriRiscvV09)
+            string(APPEND _riscv_march "_zcherihybrid")
+        else()
+            string(APPEND _riscv_march "_xcheri")
+        endif()
     else()
         # CHERI mode lets non-kernel subsystems to use different ABIs than itself. Here, we
         # just add an -mabi for compatibility with non-CHERI builds.

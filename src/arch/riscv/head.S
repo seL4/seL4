@@ -10,6 +10,11 @@
 
 #include <config.h>
 #include <util.h>
+#include <arch/machine/registerset.h>
+
+#if defined(CONFIG_HAVE_CHERI)
+#include <mode/cheri.h>
+#endif
 
 .section .boot.text, "ax"
 .global _start
@@ -48,33 +53,74 @@ _start:
   csrw sscratch, sp
 #endif
 
+#if defined(CONFIG_HAVE_CHERI)
+    MOVE cs0, ca0
+    MOVE cs1, ca1
+    MOVE cs2, ca2
+    MOVE cs3, ca3
+    MOVE cs4, ca4
+    MOVE cs5, ca5
+    MOVE cs6, ca6
+    MOVE cs7, ca7
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+    # from now on, start purecap run-time mode
+#if defined(CONFIG_ARCH_CHERI_RISCV_V_0_9)
+    modesw
+    call _start_purecap
+#else
+    la              t2, _start_purecap
+    li              t1, 1
+    CSRR            ct0, ddc
+    CSETADDR        ct0, ct0, t2
+    SETMODE         ct0, ct0, t1     # set purecap mode on
+    jalr.cap        cra, ct0
+#endif
+.option capmode
+#else
+    call _start_hybrid
+#endif
+
+    MOVE ca0, cs0
+    MOVE ca1, cs1
+    MOVE ca2, cs2
+    MOVE ca3, cs3
+    MOVE ca4, cs4
+    MOVE ca5, cs5
+    MOVE ca6, cs6
+    MOVE ca7, cs7
+#endif
+
 #if defined(__CHERI_PURE_CAPABILITY__)
     # Construct a bounded stack capability
     li              t2, BIT(CONFIG_KERNEL_STACK_BITS)
     add             sp, sp, t2
-    cfromptr        csp, ddc, sp
-    csetbounds      csp, csp, t2
-    cincoffset      csp, csp, t2
+    CSRR            ct0, ddc
+    CSETADDR        csp, ct0, sp
+    CSETBNDS        csp, csp, t2
+    CADD            csp, csp, t2
     li              t2, __CHERI_CAP_PERMISSION_PERMIT_STORE__            | \
-                        __CHERI_CAP_PERMISSION_PERMIT_STORE_LOCAL__      | \
-                        __CHERI_CAP_PERMISSION_PERMIT_LOAD__             | \
                         __CHERI_CAP_PERMISSION_PERMIT_STORE_CAPABILITY__ | \
+                        __CHERI_CAP_PERMISSION_PERMIT_LOAD__             | \
                         __CHERI_CAP_PERMISSION_PERMIT_LOAD_CAPABILITY__
-    candperm        csp, csp, t2
+#if defined(CONFIG_ARCH_CHERI_RISCV_V_0_9)
+    ori             t2, t2, __CHERI_BW_CAP_PERMISSION_CAPABILITY__
+#else
+    ori             t2, t2, __CHERI_CAP_PERMISSION_PERMIT_STORE_LOCAL__
+#endif
+    ANDPERM         csp, csp, t2
 
-    # Jump to the C kernel
-    la              t1, init_kernel
-    cfromptr        ct0, ddc, t1
-
-.option capmode
-1:
     # Construct a valid cgp capability
     # cheriTODO: Bound cgp with proper permissions?
-    cfromptr cgp, ddc, gp
+    CSRR            ct1, ddc
+    CSETADDR        cgp, ct1, gp
 
-    li              t1, 1
-    csetflags       ct0, ct0, t1     # set purecap mode on
-
+#if defined(CONFIG_ARCH_CHERI_RISCV_V_0_9)
+    call init_kernel
+    tail            restore_user_context
+#else
+    # Jump to the C kernel
+    CLGC            ct0, init_kernel
 #ifdef __riscv_xcheri_mode_dependent_jumps
     jalr.cap        cra, ct0
     clgc            ct0, restore_user_context
@@ -83,6 +129,7 @@ _start:
     cjalr           cra, ct0
     clgc            ct0, restore_user_context
     cjr             ct0
+#endif
 #endif
 #else
 

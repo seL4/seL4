@@ -161,11 +161,7 @@ static inline void write_satp(word_t value)
 
 static inline void write_stvec(rword_t value)
 {
-#if defined(CONFIG_HAVE_CHERI)
-    asm volatile("cspecialw stcc, %0" :: ASM_REG_CONSTR "K"(value));
-#else
-    asm volatile("csrw stvec, %0" :: "rK"(value));
-#endif
+    asm volatile(CSRW STVEC ", %0" :: ASM_REG_CONSTR "K"(value));
 }
 
 static inline word_t read_stval(void)
@@ -174,6 +170,15 @@ static inline word_t read_stval(void)
     asm volatile("csrr %0, stval" : "=r"(temp));
     return temp;
 }
+
+#if defined(CONFIG_ARCH_CHERI_RISCV_V_0_9)
+static inline word_t read_stval2(void)
+{
+    word_t temp;
+    asm volatile("csrr %0, stval2" : "=r"(temp));
+    return temp;
+}
+#endif
 
 static inline word_t read_scause(void)
 {
@@ -185,11 +190,7 @@ static inline word_t read_scause(void)
 static inline rword_t read_sepc(void)
 {
     rword_t temp;
-#if defined(CONFIG_HAVE_CHERI)
-    asm volatile("cspecialr %0, sepcc" : "="ASM_REG_CONSTR(temp));
-#else
-    asm volatile("csrr %0, sepc" : "=r"(temp));
-#endif
+    asm volatile(CSRR "%0, " SEPC : "="ASM_REG_CONSTR(temp));
     return temp;
 }
 
@@ -234,11 +235,7 @@ static inline void clear_sie_mask(word_t mask_low)
 static inline rword_t read_sscratch(void)
 {
     rword_t temp;
-#if defined(CONFIG_HAVE_CHERI)
-    asm volatile("cspecialr %0, sscratchc" : "="ASM_REG_CONSTR(temp));
-#else
-    asm volatile("csrr %0, sscratch" : "=r"(temp));
-#endif
+    asm volatile(CSRR " %0, " SSCRATCH : "="ASM_REG_CONSTR(temp));
     return temp;
 }
 

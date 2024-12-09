@@ -38,6 +38,16 @@
 
 #pragma once
 
+#if defined(CONFIG_ARCH_CHERI_RISCV_V_0_9)
+#define __CHERI_CAP_PERMISSION_ACCESS_SYSTEM_REGISTERS__ __CHERI_BW_CAP_PERMISSION_ACCESS_SYSTEM_REGISTERS__
+#define __CHERI_CAP_PERMISSION_PERMIT_EXECUTE__ __CHERI_BW_CAP_PERMISSION_EXECUTE__
+#define __CHERI_CAP_PERMISSION_PERMIT_LOAD_CAPABILITY__ __CHERI_BW_CAP_PERMISSION_READ__
+#define __CHERI_CAP_PERMISSION_PERMIT_LOAD__ __CHERI_BW_CAP_PERMISSION_READ__
+#define __CHERI_CAP_PERMISSION_PERMIT_STORE__ __CHERI_BW_CAP_PERMISSION_WRITE__
+#define __CHERI_CAP_PERMISSION_PERMIT_STORE_CAPABILITY__ __CHERI_BW_CAP_PERMISSION_WRITE__
+#endif
+
+#ifndef __ASSEMBLER__
 #include <types.h>
 #include <linker.h>
 
@@ -58,3 +68,4 @@ void cheri_print_cap(const void *__capability cap);
 extern __uintcap_t KernelVirtOffsetCap;
 void _start_purecap(void);
 void _start_hybrid(void);
+#endif

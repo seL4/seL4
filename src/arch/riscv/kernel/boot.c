@@ -138,11 +138,14 @@ BOOT_CODE static void init_cpu(void)
     /* Need to re-build an unsealed exception entry capability */
     write_stvec((rword_t) __builtin_cheri_flags_set(
                     cheri_build_code_cap_unbounded((ptraddr_t)trap_entry,
+#if defined(CONFIG_ARCH_CHERI_RISCV_V_0_9)
+                                                   __CHERI_BW_CAP_PERMISSION_CAPABILITY__ |
+#endif
                                                    __CHERI_CAP_PERMISSION_ACCESS_SYSTEM_REGISTERS__ |
                                                    __CHERI_CAP_PERMISSION_PERMIT_LOAD__ |
                                                    __CHERI_CAP_PERMISSION_PERMIT_LOAD_CAPABILITY__ |
                                                    __CHERI_CAP_PERMISSION_PERMIT_EXECUTE__),
-                    config_set(CONFIG_CHERI_PURECAP_KERNEL)));
+                    config_set(CONFIG_CHERI_PURECAP_KERNEL) & !config_set(CONFIG_ARCH_CHERI_RISCV_V_0_9)));
 
     /* Set CHERI mode to no DDC/PCC relocations and tag-clearning on invalid capability manipulations
      * by default.
@@ -301,33 +304,45 @@ static BOOT_CODE bool_t try_init_kernel(
      * and the entry function pointer to the root task.
      */
     bi_frame_vptr = (vptr_t) cheri_build_user_cap(bi_frame_vptr, BIT(seL4_BootInfoFrameBits) + extra_bi_size,
+#if defined(CONFIG_ARCH_CHERI_RISCV_V_0_9)
+                                                  __CHERI_BW_CAP_PERMISSION_CAPABILITY__ |
+#else
                                                   __CHERI_CAP_PERMISSION_GLOBAL__ |
+                                                  __CHERI_CAP_PERMISSION_PERMIT_STORE_LOCAL__ |
+#endif
                                                   __CHERI_CAP_PERMISSION_PERMIT_LOAD__ |
                                                   __CHERI_CAP_PERMISSION_PERMIT_LOAD_CAPABILITY__ |
                                                   __CHERI_CAP_PERMISSION_PERMIT_STORE_CAPABILITY__ |
-                                                  __CHERI_CAP_PERMISSION_PERMIT_STORE_LOCAL__ |
                                                   __CHERI_CAP_PERMISSION_PERMIT_STORE__);
 
     ipcbuf_vptr = (vptr_t) cheri_build_user_cap(ipcbuf_vptr, sizeof(seL4_IPCBuffer),
+#if defined(CONFIG_ARCH_CHERI_RISCV_V_0_9)
+                                                __CHERI_BW_CAP_PERMISSION_CAPABILITY__ |
+#else
                                                 __CHERI_CAP_PERMISSION_GLOBAL__ |
+                                                __CHERI_CAP_PERMISSION_PERMIT_STORE_LOCAL__ |
+#endif
                                                 __CHERI_CAP_PERMISSION_PERMIT_LOAD__ |
                                                 __CHERI_CAP_PERMISSION_PERMIT_LOAD_CAPABILITY__ |
                                                 __CHERI_CAP_PERMISSION_PERMIT_STORE_CAPABILITY__ |
-                                                __CHERI_CAP_PERMISSION_PERMIT_STORE_LOCAL__ |
                                                 __CHERI_CAP_PERMISSION_PERMIT_STORE__);
 
     v_entry = (vptr_t) __builtin_cheri_seal_entry((void *__capability) __builtin_cheri_flags_set((void *__capability)
                                                                                                  __builtin_cheri_address_set(cheri_build_user_cap(0, USER_TOP,
+#if defined(CONFIG_ARCH_CHERI_RISCV_V_0_9)
+                                                                                                         __CHERI_BW_CAP_PERMISSION_CAPABILITY__ |
+#else
                                                                                                          __CHERI_CAP_PERMISSION_GLOBAL__ |
-                                                                                                         __CHERI_CAP_PERMISSION_PERMIT_LOAD__ |
+                                                                                                         __CHERI_CAP_PERMISSION_PERMIT_STORE_LOCAL__ |
                                                                                                          __CHERI_CAP_PERMISSION_PERMIT_SEAL__ |
+#endif
+                                                                                                         __CHERI_CAP_PERMISSION_PERMIT_LOAD__ |
                                                                                                          __CHERI_CAP_PERMISSION_PERMIT_LOAD_CAPABILITY__ |
                                                                                                          __CHERI_CAP_PERMISSION_PERMIT_STORE_CAPABILITY__ |
-                                                                                                         __CHERI_CAP_PERMISSION_PERMIT_STORE_LOCAL__ |
                                                                                                          __CHERI_CAP_PERMISSION_PERMIT_STORE__ |
                                                                                                          __CHERI_CAP_PERMISSION_PERMIT_EXECUTE__),
                                                                                                          v_entry),
-                                                                                                 1));
+                                                                                                 !config_set(CONFIG_ARCH_CHERI_RISCV_V_0_9)));
 #endif
 
     /* The region of the initial thread is the user image + ipcbuf + boot info + extra */
@@ -526,12 +541,6 @@ BOOT_CODE VISIBLE void init_kernel(
 )
 {
     bool_t result;
-
-#if defined(__CHERI_PURE_CAPABILITY__)
-    _start_purecap();
-#elif defined(CONFIG_HAVE_CHERI)
-    _start_hybrid();
-#endif
 
 #ifdef ENABLE_SMP_SUPPORT
     add_hart_to_core_map(hart_id, core_id);

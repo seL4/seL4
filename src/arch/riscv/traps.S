@@ -26,21 +26,14 @@ BEGIN_FUNC(trap_entry)
 
 #ifdef ENABLE_SMP_SUPPORT
 /* The sscratch contains the stack for the current core */
-#if defined(CONFIG_HAVE_CHERI)
-  cspecialrw csp, sscratchc, csp
-#else
-  csrrw sp, sscratch, sp
-#endif
+  CSRRW REGN(sp), SSCRATCH, REGN(sp)
 /* Now we have a valid kernel stack */
   STORE REGN(t0), (-2*REGBYTES)(PTRN(sp))
   LOAD  REGN(t0), (-1*REGBYTES)(PTRN(sp))
 #else
-#if defined(CONFIG_HAVE_CHERI)
-  cspecialrw ct0, sscratchc, ct0
-#else
-  csrrw t0, sscratch, t0
+  CSRRW REGN(t0), SSCRATCH, REGN(t0)
 #endif
-#endif
+
   STORE REGN(ra), (0*REGBYTES)(PTRN(t0))
 #ifndef ENABLE_SMP_SUPPORT
   STORE REGN(sp), (1*REGBYTES)(PTRN(t0))
@@ -77,11 +70,7 @@ BEGIN_FUNC(trap_entry)
 #ifdef ENABLE_SMP_SUPPORT
   LOAD  REG(1), (-2*REGBYTES)(PTRN((sp))
 #else
-#if defined(CONFIG_HAVE_CHERI)
-  cspecialr c1, sscratchc
-#else
-  csrr  x1, sscratch
-#endif
+  CSRR REG(1), SSCRATCH
 #endif
   STORE    REG(1), (4*REGBYTES)(PTRN(t0))
 
@@ -94,7 +83,7 @@ BEGIN_FUNC(trap_entry)
 .option push
 .option norelax
 #if defined(__CHERI_PURE_CAPABILITY__)
-  clgc REGN(gp), __global_pointer$
+  CLGC REGN(gp), __global_pointer$
 #else
   la gp, __global_pointer$
 #endif
@@ -102,36 +91,30 @@ BEGIN_FUNC(trap_entry)
 
 #ifdef ENABLE_SMP_SUPPORT
   /* save the user sp */
-#if defined(CONFIG_HAVE_CHERI)
-  cspecialr c1, sscratchc
+  CSRR REG(1), SSCRATCH
   STORE REG(1), (1*REGBYTES)(PTRN(t0))
 
-  /* restore sscratchc */
-  cspecialw  sscratchc, csp
-#else
-  csrr  x1, sscratch
-  STORE REG(1), (1*REGBYTES)(PTRN(t0))
-
-  /* restore the sscratch */
-  csrw  sscratch, sp
-#endif
+  /* restore sscratch(c) */
+  CSRRW SSCRATCH, REGN(sp)
 #else
   /* Load kernel's stack address */
 #if defined(__CHERI_PURE_CAPABILITY__)
-  clgc csp, kernel_stack_alloc
+  CLGC csp, kernel_stack_alloc
   li t1, BIT(CONFIG_KERNEL_STACK_BITS)
-  cincoffset csp, csp, t1
+  CADD csp, csp, t1
 #else
   la sp, (kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS))
 #endif
 #endif
 
   /* Save exception PC */
-#if defined(CONFIG_HAVE_CHERI)
-  cspecialr c1,  sepcc
-#else
-  csrr x1,  sepc
-#endif
+  /* A mode switch to capmode is required even for hybrid for the standard CHERI-RISC-V
+   * but not in purecap mode or Cambridge's CHERI ISAv9 CHERI-RISC-V. MODESW is
+   * just nops for those other cases.
+   */
+  MODESW
+  CSRR REG(1), SEPC
+  MODESW
 
   STORE   REG(1), (33*REGBYTES)(PTRN(t0))
 
@@ -144,19 +127,15 @@ BEGIN_FUNC(trap_entry)
 
 handle_syscall:
   /* Set the return address to sepc + 4 in the case of a system/environment call */
-#if defined(CONFIG_HAVE_CHERI)
-  cincoffset c1, c1, 4
-#else
-  addi x1, x1, 4
-#endif
+  CADDI REG(1), REG(1), 4
   /* Save NextIP */
   STORE   REG(1), (34*REGBYTES)(PTRN(t0))
 
 #ifdef CONFIG_FASTPATH
   li t3, SYSCALL_CALL
   bne a7, t3, .Ltest_replyrecv
-#if defined(__CHERI_PURE_CAPABILITY__)
-  clgc ct0, c_handle_fastpath_call
+#if defined(__CHERI_PURE_CAPABILITY__) && !defined(CONFIG_ARCH_CHERI_RISCV_V_0_9)
+  CLGC ct0, c_handle_fastpath_call
   jr.cap ct0
 #else
   j c_handle_fastpath_call
@@ -169,8 +148,8 @@ handle_syscall:
   mv a2, a6
 #endif
   bne a7, t3, .Lslowpath
-#if defined(__CHERI_PURE_CAPABILITY__)
-  clgc ct0, c_handle_fastpath_reply_recv
+#if defined(__CHERI_PURE_CAPABILITY__) && !defined(CONFIG_ARCH_CHERI_RISCV_V_0_9)
+  CLGC ct0, c_handle_fastpath_reply_recv
   jr.cap ct0
 #else
   j c_handle_fastpath_reply_recv
@@ -182,8 +161,8 @@ handle_syscall:
   /* move syscall number to 3rd argument */
   mv a2, a7
 
-#if defined(__CHERI_PURE_CAPABILITY__)
-  clgc ct0, c_handle_syscall
+#if defined(__CHERI_PURE_CAPABILITY__) && !defined(CONFIG_ARCH_CHERI_RISCV_V_0_9)
+  CLGC ct0, c_handle_syscall
   jr.cap ct0
 #else
   j c_handle_syscall
@@ -193,8 +172,8 @@ handle_syscall:
 exception:
   /* Save NextIP */
   STORE   REG(1), (34*REGBYTES)(PTRN(t0))
-#if defined(__CHERI_PURE_CAPABILITY__)
-  clgc ct0, c_handle_exception
+#if defined(__CHERI_PURE_CAPABILITY__) && !defined(CONFIG_ARCH_CHERI_RISCV_V_0_9)
+  CLGC ct0, c_handle_exception
   jr.cap ct0
 #else
   j c_handle_exception
@@ -203,8 +182,8 @@ exception:
 interrupt:
   /* Save NextIP */
   STORE   REG(1), (34*REGBYTES)(PTRN(t0))
-#if defined(__CHERI_PURE_CAPABILITY__)
-  clgc ct0, c_handle_interrupt
+#if defined(__CHERI_PURE_CAPABILITY__) && !defined(CONFIG_ARCH_CHERI_RISCV_V_0_9)
+  CLGC ct0, c_handle_interrupt
   jr.cap ct0
 #else
   j c_handle_interrupt

@@ -18,6 +18,10 @@ if(KernelPlatformQEMURiscVVirt)
     # CHERI related configs
     if(HaveCheri)
         set(KernelArchCheriRiscv ON)
+
+        # Uncomment if/when you need to build for the standard CHERI-RISC-V
+        #set(KernelArchCheriRiscvV09 ON)
+
         set(QEMU_ARCH "${KernelSel4Arch}cheri")
         message(STATUS "Buidling with CHERI support")
     else()

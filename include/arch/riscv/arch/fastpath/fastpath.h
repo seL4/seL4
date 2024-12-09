@@ -169,17 +169,21 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
         LOAD_S " "REGN(t6) ", (30*%[REGSIZE])("PTRN(t0)") \n"
         /* get sepc */
         LOAD_S " "REGN(t1) ", (34*%[REGSIZE])("PTRN(t0)") \n"
-#if defined(CONFIG_HAVE_CHERI)
-        "cspecialw sepcc, ct1  \n"
-#else
-        "csrw sepc, t1  \n"
+#if defined(CONFIG_ARCH_CHERI_RISCV_V_0_9) && !defined(__CHERI_PURE_CAPABILITY__)
+        MODESW "\n"
+#endif
+        CSRW " " SEPC ", " REGN(t1)  "\n"
+#if defined(CONFIG_ARCH_CHERI_RISCV_V_0_9) && !defined(__CHERI_PURE_CAPABILITY__)
+        MODESW "\n"
 #endif
 #ifndef ENABLE_SMP_SUPPORT
         /* Write back sscratch with cur_thread_reg to get it back on the next trap entry */
-#if defined(CONFIG_HAVE_CHERI)
-        "cspecialw sscratchc, ct0  \n"
-#else
-        "csrw sscratch, t0         \n"
+#if defined(CONFIG_ARCH_CHERI_RISCV_V_0_9) && defined(__CHERI_PURE_CAPABILITY__)
+        MODESW "\n"
+#endif
+        CSRW " " SSCRATCH ", " REGN(t0)  "\n"
+#if defined(CONFIG_ARCH_CHERI_RISCV_V_0_9) && defined(__CHERI_PURE_CAPABILITY__)
+        MODESW "\n"
 #endif
 #endif
         LOAD_S " "REGN(t1) ", (32*%[REGSIZE])("PTRN(t0)") \n"

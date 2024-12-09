@@ -17,6 +17,10 @@
 #include <util.h>
 #include <arch/types.h>
 
+#if defined(CONFIG_HAVE_CHERI)
+#include <mode/cheri.h>
+#endif
+
 enum _register {
 
     ra = 0, LR = 0,
@@ -187,6 +191,46 @@ static inline rword_t CONST sanitiseRegister(regoff_t reg, rword_t v, bool_t arc
 }
 
 #if defined(CONFIG_HAVE_CHERI)
+
+/* Registers */
+#define SSCRATCH "sscratchc"
+#define SEPC "sepcc"
+
+/* Instructions */
+#if defined(CONFIG_ARCH_CHERI_RISCV_V_0_9)
+#define CSRRW "csrrw "
+#define CSRW "csrw "
+#define CSRR "csrr "
+#define STVEC "stvecc"
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+#define MOVE  "cmv"
+#define MOVE_PTR "cmv"
+#define MODESW "nop"
+#else /* Hybrid */
+#define MOVE  "mv"
+#define MOVE_PTR "mv"
+#define MODESW "modesw"
+#endif
+
+#else /* Cambridge CHERI ISAv9 */
+
+/* Instructions */
+#define CSRRW "cspecialrw "
+#define CSRR "cspecialr "
+#define CSRW "cspecialw "
+#define STVEC "stcc"
+
+#define MOVE  "cmove"
+#if defined(__CHERI_PURE_CAPABILITY__)
+#define MOVE_PTR "cmove"
+#else /* Hybrid */
+#define MOVE_PTR "mv"
+#endif
+#define MODESW "nop"
+#endif
+
+/* Register prefixes and assembly constraints */
 #define REG(n) "c" STRINGIFY(n)
 #define REGN(name) "c" STRINGIFY(name)
 #define ASM_REG_CONSTR "C"
@@ -195,12 +239,28 @@ static inline rword_t CONST sanitiseRegister(regoff_t reg, rword_t v, bool_t arc
 #define PTR(n) "c" STRINGIFY(n)
 #define PTRN(name) "c" STRINGIFY(name)
 #define ASM_PTR_CONSTR "C"
-#else
+#else /* Hybrid */
 #define PTR(n) "x" STRINGIFY(n)
 #define PTRN(name) STRINGIFY(name)
 #define ASM_PTR_CONSTR "r"
 #endif
-#else
+
+#else /* No CHERI */
+
+/* Registers */
+#define SEPC "sepc"
+#define SSCRATCH "sscratch"
+#define STVEC "stvec"
+
+/* Instructions */
+#define MOVE  "mv"
+#define MODESW "nop"
+#define CSRRW "csrrw "
+#define CSRW "csrw "
+#define CSRR "csrr "
+#define MOVE_PTR "mv"
+
+/* Register prefixes and assembly constraints */
 #define REG(n) "x" STRINGIFY(n)
 #define REGN(name) STRINGIFY(name)
 #define PTR(n) "x" STRINGIFY(n)
@@ -211,6 +271,53 @@ static inline rword_t CONST sanitiseRegister(regoff_t reg, rword_t v, bool_t arc
 
 #else /* __ASSEMBLER__ */
 #if defined(CONFIG_HAVE_CHERI)
+
+/* Registers */
+#define SSCRATCH sscratchc
+#define SEPC sepcc
+
+/* Instructions */
+#if defined(CONFIG_ARCH_CHERI_RISCV_V_0_9)
+#define LOAD  lc
+#define STORE sc
+#define CSETBNDS scbnds
+#define CSETADDR scaddr
+#define CSRRW csrrw
+#define CSRR  csrr
+#define CADD  cadd
+#define CADDI caddi
+
+#if defined(__CHERI_PURE_CAPABILITY__)
+#define MOVE  cmv
+#define MOVE_PTR cmv
+#define MODESW nop
+#else /* Hybrid */
+#define MOVE  mv
+#define MOVE_PTR  mv
+#define MODESW modesw
+#endif
+
+#define ANDPERM acperm
+#define SETMODE scmode
+#define CLGC lgc
+
+#else /* Cambridge CHERI ISAv9 */
+
+/* Instructions */
+#define CSETBNDS csetbounds
+#define CSETADDR csetaddr
+#define CSRRW cspecialrw
+#define CSRR  cspecialr
+#define CADD  cincoffset
+#define CADDI  cincoffset
+#define MOVE  cmove
+#define MOVE_PTR mv
+#define MODESW nop
+#define ANDPERM candperm
+#define SETMODE csetflags
+#define CLGC clgc
+#endif
+
 #define REG(n) c##n
 #define REGN(name) c##name
 
@@ -221,7 +328,21 @@ static inline rword_t CONST sanitiseRegister(regoff_t reg, rword_t v, bool_t arc
 #define PTR(n) x##n
 #define PTRN(name) name
 #endif
-#else
+
+#else /* No CHERI */
+
+/* Registers */
+#define SSCRATCH sscratch
+#define SEPC sepc
+
+/* Instructions */
+#define CADD  add
+#define CADDI addi
+#define MODESW nop
+#define MOVE  mv
+#define MOVE_PTR mv
+
+/* Register prefixes */
 #define REG(n) x##n
 #define REGN(name) name
 #define PTR(n) x##n

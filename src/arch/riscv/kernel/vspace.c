@@ -446,10 +446,14 @@ exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
         return EXCEPTION_FAULT;
 #if defined(CONFIG_HAVE_CHERI)
     case RISCVCheriFault:
+#if defined(CONFIG_ARCH_CHERI_RISCV_V_0_9)
+        current_fault = seL4_Fault_VMFault_new(addr, (1 << 11) | (read_stval2() & 0xf), false);
+#else
         /* Extract the capability address that faulted to align with how the current VM
          * fault message is forwarded */
         addr = (uint64_t) getRegister(thread, ((addr >> 5) & 0x1f) - 1);
         current_fault = seL4_Fault_VMFault_new(addr, (1 << 11) | read_stval(), false);
+#endif
         return EXCEPTION_FAULT;
 #endif
 

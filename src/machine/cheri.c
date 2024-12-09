@@ -160,19 +160,6 @@ static void *__capability RootUserCap;
 static void *__capability RootKernelDeviceCap;
 __uintcap_t KernelVirtOffsetCap;
 
-inline void *__capability cheri_seal_cap(void *__capability unsealed_cap, size_t otype)
-{
-    void *__capability sealer = __builtin_cheri_address_set(RootKernelCap, otype);
-    return __builtin_cheri_seal(unsealed_cap, sealer);
-}
-
-inline void *__capability cheri_unseal_cap(void *__capability sealed_cap)
-{
-    size_t otype = __builtin_cheri_type_get(sealed_cap);
-    void *__capability unsealer = __builtin_cheri_address_set(RootKernelCap, otype);
-    return __builtin_cheri_unseal(sealed_cap, unsealer);
-}
-
 inline void *__capability cheri_build_data_cap(ptraddr_t address, size_t size, size_t perms)
 {
     void *__capability returned_cap = RootKernelCap;
@@ -259,10 +246,32 @@ void cheri_print_cap(const void *__capability cap)
 #if defined(__CHERI_PURE_CAPABILITY__)
 static const __SIZE_TYPE__ function_reloc_flag = (__SIZE_TYPE__)1
                                                  << (__SIZE_WIDTH__ - 1);
+#if defined(CONFIG_ARCH_CHERI_RISCV_V_0_9)
+static const __SIZE_TYPE__ function_pointer_permissions_mask =
+    ~(__SIZE_TYPE__)(__CHERI_CAP_PERMISSION_PERMIT_STORE_CAPABILITY__ |
+                     __CHERI_CAP_PERMISSION_PERMIT_STORE__);
+static const __SIZE_TYPE__ constant_pointer_permissions_mask =
+    ~(__SIZE_TYPE__)(__CHERI_CAP_PERMISSION_PERMIT_STORE_CAPABILITY__ |
+                     __CHERI_CAP_PERMISSION_PERMIT_STORE__ |
+                     __CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+static const __SIZE_TYPE__ global_pointer_permissions_mask =
+    ~(__SIZE_TYPE__)(__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+
+#else
 static const __SIZE_TYPE__ function_pointer_permissions_mask =
     ~(__SIZE_TYPE__)(__CHERI_CAP_PERMISSION_PERMIT_SEAL__ |
                      __CHERI_CAP_PERMISSION_PERMIT_STORE_CAPABILITY__ |
                      __CHERI_CAP_PERMISSION_PERMIT_STORE__);
+static const __SIZE_TYPE__ constant_pointer_permissions_mask =
+    ~(__SIZE_TYPE__)(__CHERI_CAP_PERMISSION_PERMIT_SEAL__ |
+                     __CHERI_CAP_PERMISSION_PERMIT_STORE_CAPABILITY__ |
+                     __CHERI_CAP_PERMISSION_PERMIT_STORE_LOCAL__ |
+                     __CHERI_CAP_PERMISSION_PERMIT_STORE__ |
+                     __CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+static const __SIZE_TYPE__ global_pointer_permissions_mask =
+    ~(__SIZE_TYPE__)(__CHERI_CAP_PERMISSION_PERMIT_SEAL__ |
+                     __CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+#endif
 #ifdef __aarch64__
 /*
  * Morello capreloc permission encoding (inverse of capability
@@ -277,15 +286,6 @@ static const __SIZE_TYPE__ constant_reloc_flag =
 static const __SIZE_TYPE__ constant_reloc_flag = (__SIZE_TYPE__)1
                                                  << (__SIZE_WIDTH__ - 2);
 #endif
-static const __SIZE_TYPE__ constant_pointer_permissions_mask =
-    ~(__SIZE_TYPE__)(__CHERI_CAP_PERMISSION_PERMIT_SEAL__ |
-                     __CHERI_CAP_PERMISSION_PERMIT_STORE_CAPABILITY__ |
-                     __CHERI_CAP_PERMISSION_PERMIT_STORE_LOCAL__ |
-                     __CHERI_CAP_PERMISSION_PERMIT_STORE__ |
-                     __CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
-static const __SIZE_TYPE__ global_pointer_permissions_mask =
-    ~(__SIZE_TYPE__)(__CHERI_CAP_PERMISSION_PERMIT_SEAL__ |
-                     __CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
 
 __attribute__((weak)) extern struct capreloc __start___cap_relocs;
 __attribute__((weak)) extern struct capreloc __stop___cap_relocs;
@@ -367,12 +367,21 @@ cheri_init_globals_3(void *__capability data_cap,
             : "=r"(start_addr), "=r"(stop_addr));
 #else
     void *__capability tmp;
+#if defined(CONFIG_ARCH_CHERI_RISCV_V_0_9)
+    __asm__(
+        "llc %2, __start___cap_relocs\n\t"
+        cgetaddr_or_offset " %0, %2\n\t"
+        "llc %2, __stop___cap_relocs\n\t"
+        cgetaddr_or_offset " %1, %2\n\t"
+        :"=r"(start_addr), "=r"(stop_addr), "=&C"(tmp));
+#else
     __asm__(
         "cllc %2, __start___cap_relocs\n\t"
         cgetaddr_or_offset " %0, %2\n\t"
         "cllc %2, __stop___cap_relocs\n\t"
         cgetaddr_or_offset " %1, %2\n\t"
         :"=r"(start_addr), "=r"(stop_addr), "=&C"(tmp));
+#endif
 #endif
 #elif defined(__aarch64__)
 #if !defined(__CHERI_PURE_CAPABILITY__)
@@ -534,7 +543,11 @@ BOOT_CODE void _start_purecap(void)
     /* We assume data/DDC is an almighty capability that will have all permissions, including
      * execute. Change this if needed.
      */
+#if defined(CONFIG_ARCH_CHERI_RISCV_V_0_9)
+    RootKernelCap = __builtin_cheri_flags_set(__builtin_cheri_global_data_get(), 0);
+#else
     RootKernelCap = __builtin_cheri_global_data_get();
+#endif
     size_t max_length = (__UINTPTR_TYPE__) __builtin_cheri_length_get(__builtin_cheri_global_data_get());
 
     /* seL4's kernel devices are mapped from KERNEL_PT_BASE to the most top address */
@@ -554,32 +567,40 @@ BOOT_CODE void _start_purecap(void)
      * executive permission.
      */
     RootUserCap = cheri_derive_data_cap(RootKernelCap, 0, (size_t) USER_TOP + 1,
+#if defined(CONFIG_ARCH_CHERI_RISCV_V_0_9)
+                                        __CHERI_BW_CAP_PERMISSION_CAPABILITY__ |
+#else
                                         __CHERI_CAP_PERMISSION_GLOBAL__ |
-                                        __CHERI_CAP_PERMISSION_PERMIT_LOAD__ |
+                                        __CHERI_CAP_PERMISSION_PERMIT_STORE_LOCAL__ |
+                                        __CHERI_CAP_PERMISSION_PERMIT_SEAL__ |
+#endif
 #if defined(__aarch64__)
                                         __ARM_CAP_PERMISSION_MUTABLE_LOAD__ |
                                         __ARM_CAP_PERMISSION_EXECUTIVE__ |
 #endif
                                         __CHERI_CAP_PERMISSION_PERMIT_LOAD_CAPABILITY__ |
-                                        __CHERI_CAP_PERMISSION_PERMIT_SEAL__ |
                                         __CHERI_CAP_PERMISSION_PERMIT_STORE_CAPABILITY__ |
-                                        __CHERI_CAP_PERMISSION_PERMIT_STORE_LOCAL__ |
+                                        __CHERI_CAP_PERMISSION_PERMIT_LOAD__ |
                                         __CHERI_CAP_PERMISSION_PERMIT_STORE__ |
                                         __CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
 
     /* Root kernel cap from PPTR_BASE to the highest address, used to create/derive caps for the kernel mappings only */
     RootKernelCap = cheri_derive_data_cap(RootKernelCap, PPTR_BASE, KDEV_BASE - PPTR_BASE,
+#if defined(CONFIG_ARCH_CHERI_RISCV_V_0_9)
+                                          __CHERI_BW_CAP_PERMISSION_CAPABILITY__ |
+#else
                                           __CHERI_CAP_PERMISSION_GLOBAL__ |
-                                          __CHERI_CAP_PERMISSION_ACCESS_SYSTEM_REGISTERS__ |
-                                          __CHERI_CAP_PERMISSION_PERMIT_LOAD__ |
-                                          __CHERI_CAP_PERMISSION_PERMIT_LOAD_CAPABILITY__ |
+                                          __CHERI_CAP_PERMISSION_PERMIT_STORE_LOCAL__ |
+                                          __CHERI_CAP_PERMISSION_PERMIT_SEAL__ |
+#endif
 #if defined(__aarch64__)
                                           __ARM_CAP_PERMISSION_EXECUTIVE__ |
                                           __ARM_CAP_PERMISSION_MUTABLE_LOAD__ |
 #endif
-                                          __CHERI_CAP_PERMISSION_PERMIT_SEAL__ |
+                                          __CHERI_CAP_PERMISSION_ACCESS_SYSTEM_REGISTERS__ |
+                                          __CHERI_CAP_PERMISSION_PERMIT_LOAD__ |
+                                          __CHERI_CAP_PERMISSION_PERMIT_LOAD_CAPABILITY__ |
                                           __CHERI_CAP_PERMISSION_PERMIT_STORE_CAPABILITY__ |
-                                          __CHERI_CAP_PERMISSION_PERMIT_STORE_LOCAL__ |
                                           __CHERI_CAP_PERMISSION_PERMIT_STORE__ |
                                           __CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
 }
@@ -591,7 +612,12 @@ BOOT_CODE void _start_hybrid(void)
     /* We assume data/DDC is an almighty capability that will have all permissions, including
      * execute. Change this if needed.
      */
+#if defined(CONFIG_ARCH_CHERI_RISCV_V_0_9)
+    RootKernelCap = __builtin_cheri_flags_set(__builtin_cheri_global_data_get(), 0);
+#else
     RootKernelCap = __builtin_cheri_global_data_get();
+#endif
+
     size_t max_length = (__UINTPTR_TYPE__) __builtin_cheri_length_get(__builtin_cheri_global_data_get());
 
     /* seL4's kernel devices are mapped from KERNEL_PT_BASE to the most top address */
@@ -605,16 +631,20 @@ BOOT_CODE void _start_hybrid(void)
      * executive permission.
      */
     RootUserCap = cheri_derive_data_cap(RootKernelCap, 0, (size_t) USER_TOP + 1,
+#if defined(CONFIG_ARCH_CHERI_RISCV_V_0_9)
+                                        __CHERI_BW_CAP_PERMISSION_CAPABILITY__ |
+#else
                                         __CHERI_CAP_PERMISSION_GLOBAL__ |
-                                        __CHERI_CAP_PERMISSION_PERMIT_LOAD__ |
+                                        __CHERI_CAP_PERMISSION_PERMIT_SEAL__ |
+                                        __CHERI_CAP_PERMISSION_PERMIT_STORE_LOCAL__ |
+#endif
 #if defined(__aarch64__)
                                         __ARM_CAP_PERMISSION_MUTABLE_LOAD__ |
                                         __ARM_CAP_PERMISSION_EXECUTIVE__ |
 #endif
                                         __CHERI_CAP_PERMISSION_PERMIT_LOAD_CAPABILITY__ |
-                                        __CHERI_CAP_PERMISSION_PERMIT_SEAL__ |
                                         __CHERI_CAP_PERMISSION_PERMIT_STORE_CAPABILITY__ |
-                                        __CHERI_CAP_PERMISSION_PERMIT_STORE_LOCAL__ |
+                                        __CHERI_CAP_PERMISSION_PERMIT_LOAD__ |
                                         __CHERI_CAP_PERMISSION_PERMIT_STORE__ |
                                         __CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
 }

@@ -131,6 +131,10 @@ endif()
 if(HaveCheri)
     if(KernelArmMorello)
         set(cheri_arch --cheri-arch morello)
+    # Standard CHERI-RISC-V
+    elseif(KernelArchCheriRiscvV09)
+        set(cheri_arch --cheri-arch rv${KernelWordSize}Zcherihybrid)
+    # Cambridge CHERI ISAv9 CHERI-RISC-V
     elseif(KernelArchCheriRiscv)
         set(cheri_arch --cheri-arch rv${KernelWordSize}xcheri)
     endif()
