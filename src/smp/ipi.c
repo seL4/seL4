@@ -35,8 +35,9 @@ void ipiStallCoreCallback(bool_t irqPath)
         SCHED_ENQUEUE_CURRENT_TCB;
         switchToIdleThread();
 #ifdef CONFIG_KERNEL_MCS
-        commitTime();
-        NODE_STATE(ksCurSC) = NODE_STATE(ksIdleThread)->tcbSchedContext;
+        /* This is safe because the Idle thread is not schedulable: */
+        chargeBudget(NODE_STATE(ksConsumed), false);
+        NODE_STATE(ksCurSC) = NODE_STATE(ksIdleSC);
 #endif
         NODE_STATE(ksSchedulerAction) = SchedulerAction_ResumeCurrentThread;
 
@@ -72,8 +73,9 @@ void ipiStallCoreCallback(bool_t irqPath)
         SCHED_ENQUEUE_CURRENT_TCB;
         switchToIdleThread();
 #ifdef CONFIG_KERNEL_MCS
-        commitTime();
-        NODE_STATE(ksCurSC) = NODE_STATE(ksIdleThread)->tcbSchedContext;
+        /* This is safe because the Idle thread is not schedulable: */
+        chargeBudget(NODE_STATE(ksConsumed), false);
+        NODE_STATE(ksCurSC) = NODE_STATE(ksIdleSC);
 #endif
         NODE_STATE(ksSchedulerAction) = SchedulerAction_ResumeCurrentThread;
     }
