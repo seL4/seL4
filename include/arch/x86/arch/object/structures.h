@@ -112,7 +112,7 @@ compile_assert(vtd_pt_size_sane, VTD_PT_INDEX_BITS + VTD_PTE_SIZE_BITS == seL4_I
 #define EPT_PT_PTR(r)    ((ept_pte_t *)(r))
 #define EPT_PT_REF(p)    ((word_t)(p))
 
-#define VCPU_PTR(r)       ((vcpu_t *)(r))
+#define VCPU_PTR(r)       ((struct vcpu *)(r))
 #define VCPU_REF(p)       ((word_t)(p))
 
 #endif /* CONFIG_VTX */
@@ -225,6 +225,9 @@ static inline bool_t CONST cap_get_archCapIsPhysical(cap_t cap)
         return true;
 
 #ifdef CONFIG_VTX
+    case cap_vcpu_cap:
+        return true;
+
     case cap_ept_pt_cap:
         return true;
 
@@ -278,6 +281,9 @@ static inline void *CONST cap_get_archCapPtr(cap_t cap)
         return ASID_POOL_PTR(cap_asid_pool_cap_get_capASIDPool(cap));
 
 #ifdef CONFIG_VTX
+    case cap_vcpu_cap:
+        return VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap));
+
     case cap_ept_pt_cap:
         return EPT_PT_PTR(cap_ept_pt_cap_get_capPTBasePtr(cap));
 
