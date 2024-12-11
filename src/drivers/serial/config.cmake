@@ -24,7 +24,7 @@ register_driver(
     CFILES "imx.c"
 )
 register_driver(
-    compatibility_strings "fsl,imx8qxp-lpuart"
+    compatibility_strings "fsl,imx8qxp-lpuart;fsl,imx7ulp-lpuart"
     PREFIX src/drivers/serial
     CFILES "imx-lpuart.c"
 )
