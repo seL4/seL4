@@ -32,6 +32,9 @@ if(KernelPlatformRpi4)
         list(APPEND KernelDTSList "src/plat/bcm2711/overlay-rpi4-4gb.dts")
     elseif("${RPI4_MEMORY}" STREQUAL "8192")
         list(APPEND KernelDTSList "src/plat/bcm2711/overlay-rpi4-8gb.dts")
+        if(KernelSel4ArchAarch32)
+            list(APPEND KernelDTSList "src/plat/bcm2711/overlay-rpi4-32bit.dts")
+        endif()
     else()
         message(FATAL_ERROR "Unsupported memory size given ${RPI4_MEMORY},
                             supported memory sizes (in megabytes) are 1024,
