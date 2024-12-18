@@ -20,6 +20,7 @@ if(KernelPlatformHifive)
         TIMER_FREQUENCY 1000000
         MAX_IRQ 53
         INTERRUPT_CONTROLLER drivers/irq/riscv_plic0.h
+        TIMER_PRECISION 3u
     )
 else()
     unset(KernelPlatformFirstHartID CACHE)
