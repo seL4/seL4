@@ -123,7 +123,7 @@ BOOT_CODE VISIBLE void map_kernel_window(void)
         pptr += RISCV_GET_LVL_PGSIZE(0);
         paddr += RISCV_GET_LVL_PGSIZE(0);
     }
-    /* now we should be mapping the 1GiB kernel base */
+    /* now map KERNEL_ELF_BASE to KERNEL_ELF_PADDR_BASE */
     assert(pptr == PPTR_TOP);
     pptr = ROUND_DOWN(KERNEL_ELF_BASE, RISCV_GET_LVL_PGSIZE_BITS(0));
     paddr = ROUND_DOWN(KERNEL_ELF_PADDR_BASE, RISCV_GET_LVL_PGSIZE_BITS(0));
@@ -157,7 +157,7 @@ BOOT_CODE VISIBLE void map_kernel_window(void)
         pte_next(kpptr_to_paddr(kernel_image_level2_dev_pt), false);
 #endif
 
-    /* There should be 1GiB free where we put device mapping */
+    /* There should be free space where we put device mapping */
     assert(pptr == UINTPTR_MAX - RISCV_GET_LVL_PGSIZE(0) + 1);
     map_kernel_devices();
 }
