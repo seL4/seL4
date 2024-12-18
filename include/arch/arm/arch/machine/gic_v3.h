@@ -361,7 +361,7 @@ static inline uint32_t get_gic_vcpu_ctrl_apr(void)
     return (uint32_t) reg;
 }
 
-static inline void set_gic_vcpu_ctrl_apr(uint64_t apr)
+static inline void set_gic_vcpu_ctrl_apr(uint32_t apr)
 {
     MSR(ICH_AP1R0_EL2, apr);
 }
