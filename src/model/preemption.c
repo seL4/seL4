@@ -13,7 +13,7 @@
 /*
  * Possibly preempt the current thread to allow an interrupt to be handled.
  */
-exception_t preemptionPoint(void)
+exception_t preemptionPoint(bool_t check)
 {
     /* Record that we have performed some work. */
     ksWorkUnitsCompleted++;
@@ -26,7 +26,7 @@ exception_t preemptionPoint(void)
      * We avoid checking for pending IRQs every call, as our callers tend to
      * call us in a tight loop and checking for pending IRQs can be quite slow.
      */
-    if (ksWorkUnitsCompleted >= CONFIG_MAX_NUM_WORK_UNITS_PER_PREEMPTION) {
+    if (ksWorkUnitsCompleted >= CONFIG_MAX_NUM_WORK_UNITS_PER_PREEMPTION || check) {
         ksWorkUnitsCompleted = 0;
 #ifdef CONFIG_KERNEL_MCS
         updateTimestamp();
