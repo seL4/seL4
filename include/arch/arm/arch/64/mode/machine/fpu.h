@@ -18,6 +18,7 @@ static inline void saveFpuState(user_fpu_state_t *dest)
 
     asm volatile(
         /* SIMD and floating-point register file */
+        ".arch_extension fp\n"
         "stp     q0, q1, [%1, #16 * 0]      \n"
         "stp     q2, q3, [%1, #16 * 2]      \n"
         "stp     q4, q5, [%1, #16 * 4]      \n"
@@ -40,6 +41,7 @@ static inline void saveFpuState(user_fpu_state_t *dest)
         "str     %w0, [%1, #16 * 32]        \n"
         "mrs     %0, fpcr                   \n"
         "str     %w0, [%1, #16 * 32 + 4]    \n"
+        ".arch_extension nofp\n"
         : "=&r"(temp)
         : "r"(dest)
         : "memory"
@@ -53,6 +55,7 @@ static inline void loadFpuState(user_fpu_state_t *src)
 
     asm volatile(
         /* SIMD and floating-point register file */
+        ".arch_extension fp\n"
         "ldp     q0, q1, [%1, #16 * 0]      \n"
         "ldp     q2, q3, [%1, #16 * 2]      \n"
         "ldp     q4, q5, [%1, #16 * 4]      \n"
@@ -75,6 +78,7 @@ static inline void loadFpuState(user_fpu_state_t *src)
         "msr     fpsr, %0                   \n"
         "ldr     %w0, [%1, #16 * 32 + 4]    \n"
         "msr     fpcr, %0                   \n"
+        ".arch_extension nofp\n"
         : "=&r"(temp)
         : "r"(src)
         : "memory"
