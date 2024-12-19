@@ -147,7 +147,7 @@ void generic_ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
 }
 
 #ifdef CONFIG_DEBUG_BUILD
-exception_t handle_SysDebugSendIPI(void)
+void handle_SysDebugSendIPI(void)
 {
 #ifdef CONFIG_ARCH_ARM
     word_t target = getRegister(NODE_STATE(ksCurThread), capRegister);
@@ -161,7 +161,7 @@ exception_t handle_SysDebugSendIPI(void)
         halt();
     }
     ipi_send_target(CORE_IRQ_TO_IRQT(0, irq), BIT(target));
-    return EXCEPTION_NONE;
+    return;
 #else /* not CONFIG_ARCH_ARM */
     userError("SysDebugSendIPI: not supported on this architecture");
     halt();
