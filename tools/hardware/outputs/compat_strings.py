@@ -25,6 +25,6 @@ def run(tree: FdtParser, hw_yaml: HardwareYaml, config: Config,
     args.compat_strings_out.close()
 
 
-def add_args(parser):
+def add_args(parser: argparse.ArgumentParser):
     parser.add_argument('--compat-strings-out',
                         help='output file for compat strings list', type=argparse.FileType('w'))
