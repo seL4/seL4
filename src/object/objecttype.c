@@ -570,7 +570,7 @@ cap_t createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceM
          * No objects need to be created; instead, just insert caps into
          * the destination slots.
          */
-        return cap_untyped_cap_new(0, !!deviceMemory, userSize, WORD_REF(regionBase));
+        return cap_untyped_cap_new(0, deviceMemory, userSize, WORD_REF(regionBase));
 
 #ifdef CONFIG_KERNEL_MCS
     case seL4_SchedContextObject:
