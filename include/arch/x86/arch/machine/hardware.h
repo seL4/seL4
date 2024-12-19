@@ -16,6 +16,7 @@
 #define LARGE_PAGE_BITS seL4_LargePageBits
 #define L1_CACHE_LINE_SIZE_BITS CTZL(CONFIG_CACHE_LN_SZ)
 #define L1_CACHE_LINE_SIZE CONFIG_CACHE_LN_SZ
+#define EXCL_RES_GRANULE_SIZE L1_CACHE_LINE_SIZE
 
 enum vm_fault_type {
     X86DataFault = seL4_DataFault,
