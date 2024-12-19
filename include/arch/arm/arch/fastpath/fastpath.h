@@ -33,6 +33,14 @@ void vm_fault_slowpath(vm_fault_type_t type)
 NORETURN;
 #endif
 
+#ifdef CONFIG_IRQ_FASTPATH
+static inline
+void fastpath_irq(void)
+NORETURN;
+#endif
+
+void slowpath_irq(void)
+NORETURN;
 
 static inline
 #ifdef CONFIG_KERNEL_MCS
