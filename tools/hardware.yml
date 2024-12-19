@@ -184,6 +184,7 @@ devices:
       - brcm,bcm2835-aux-uart
       - fsl,imx6q-uart
       - fsl,imx8qxp-lpuart
+      - fsl,imx7ulp-lpuart
       - fsl,imx6sx-uart
       - nvidia,tegra124-hsuart
       - nvidia,tegra20-uart

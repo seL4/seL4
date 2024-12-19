@@ -106,16 +106,21 @@ long PURE str_to_long(const char *str)
     long val = 0;
     char c;
 
-    /*check for "0x" */
+    /* NULL ptr and empty str */
+    if (str == NULL || *str == 0) {
+        return -1;
+    }
+
+    /* check for "0x", *(str + 1) may be 0, but must be allocated since str is not empty */
     if (*str == '0' && (*(str + 1) == 'x' || *(str + 1) == 'X')) {
         base = 16;
         str += 2;
+        /* '0x' on its own is malformed */
+        if (*str == 0) {
+            return -1;
+        }
     } else {
         base = 10;
-    }
-
-    if (!*str) {
-        return -1;
     }
 
     c = *str;
