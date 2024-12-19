@@ -12,7 +12,7 @@ import logging
 import pyfdt.pyfdt
 
 from jinja2 import Environment, BaseLoader
-from typing import List
+from typing import Dict, List, Union
 
 from hardware import config, device, fdt
 from hardware.utils import cpu, memory, rule
@@ -120,7 +120,7 @@ def get_elfloader_cpus(tree: fdt.FdtParser, devices: List[device.WrappedNode]) -
         if cpu_node.has_prop('reg'):
             cpuid = cpu_node.parse_address(list(cpu_node.get_prop('reg').words))
 
-        extra_data = 0
+        extra_data: Union[str, int] = 0
         if enable_method == 'psci' and psci_node:
             extra_data = 'PSCI_METHOD_' + psci_node.get_prop('method').strings[0].upper()
         elif enable_method == 'spin-table':
@@ -158,7 +158,7 @@ def run(tree: fdt.FdtParser, hardware: rule.HardwareYaml, config: config.Config,
 
     device_info.sort(key=lambda a: a['compat'])
 
-    template = Environment(loader=BaseLoader, trim_blocks=True,
+    template = Environment(loader=BaseLoader(), trim_blocks=True,
                            lstrip_blocks=True).from_string(HEADER_TEMPLATE)
 
     template_args = dict(builtins.__dict__, **{
@@ -173,6 +173,6 @@ def run(tree: fdt.FdtParser, hardware: rule.HardwareYaml, config: config.Config,
     args.elfloader_out.close()
 
 
-def add_args(parser):
+def add_args(parser: argparse.ArgumentParser):
     parser.add_argument('--elfloader-out', help='output file for elfloader header',
                         type=argparse.FileType('w'))
