@@ -8,5 +8,5 @@
 
 #include <api/failures.h>
 
-exception_t preemptionPoint(void);
+exception_t preemptionPoint(bool_t check);
 
