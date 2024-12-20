@@ -68,7 +68,6 @@ extern x86_arch_global_state_t x86KSGlobalState[CONFIG_MAX_NUM_NODES] ALIGN(L1_C
 
 extern asid_pool_t *x86KSASIDTable[];
 extern uint32_t x86KScacheLineSizeBits;
-extern user_fpu_state_t x86KSnullFpuState ALIGN(MIN_FPU_ALIGNMENT);
 
 #ifdef CONFIG_IOMMU
 extern uint32_t x86KSnumDrhu;

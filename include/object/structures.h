@@ -242,7 +242,6 @@ typedef struct sched_context sched_context_t;
 typedef struct reply reply_t;
 #endif
 
-/* TCB: size >= 18 words + sizeof(arch_tcb_t) + 1 word on MCS (aligned to nearest power of 2) */
 struct tcb {
     /* arch specific tcb state (including context)*/
     arch_tcb_t tcbArch;
@@ -299,6 +298,9 @@ struct tcb {
     /* Preivous and next pointers for endpoint and notification queues, 2 words */
     struct tcb *tcbEPNext;
     struct tcb *tcbEPPrev;
+
+    /* Currently only used for seL4_TCBFlag_fpuDisabled */
+    seL4_TCBFlag flags;
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
     /* 16 bytes (12 bytes aarch32) */
