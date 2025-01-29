@@ -1304,7 +1304,7 @@ exception_t decodeX86MMUInvocation(
         for (i = 0; i < nASIDPools && x86KSASIDTable[i]; i++);
 
         if (i == nASIDPools) {
-            /* no unallocated pool is found */
+            userError("ASIDControlMakePool: No unallocated pools found.");
             current_syscall_error.type = seL4_DeleteFirst;
 
             return EXCEPTION_SYSCALL_ERROR;
