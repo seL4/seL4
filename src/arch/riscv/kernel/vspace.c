@@ -974,7 +974,7 @@ exception_t decodeRISCVMMUInvocation(word_t label, word_t length, cptr_t cptr,
         for (i = 0; i < nASIDPools && riscvKSASIDTable[i]; i++);
 
         if (i == nASIDPools) {
-            /* no unallocated pool is found */
+            userError("ASIDControlMakePool: No unallocated pools found.");
             current_syscall_error.type = seL4_DeleteFirst;
 
             return EXCEPTION_SYSCALL_ERROR;
