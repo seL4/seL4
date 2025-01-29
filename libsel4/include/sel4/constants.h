@@ -70,6 +70,11 @@ typedef enum {
 } seL4_LookupFailureType;
 #endif /* !__ASSEMBLER__ */
 
+/* The number of pools that can be created with seL4_ARCH_ASIDControl_MakePool
+   The initial thread is allocated an ASID pool (seL4_CapInitThreadASIDPool)
+   so we cannot make all 2^seL4NumASIDPoolsBits - but instead, one less. */
+#define seL4_ASIDPoolMaxNewPools (LIBSEL4_BIT(seL4_NumASIDPoolsBits)-1)
+
 #ifdef CONFIG_KERNEL_MCS
 /* Minimum size of a scheduling context (2^{n} bytes) */
 #define seL4_MinSchedContextBits 7
