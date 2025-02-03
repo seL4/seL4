@@ -33,7 +33,7 @@
  *                |  |         Kernel ELF          |
  *            ----|  +-------------KERNEL_ELF_BASE-+ --+ 2^64 - 2GiB + (KERNEL_ELF_PADDR_BASE % 1GiB)
  *            |   |  |                             |
- *            |   -> +-----------------------------+ --+ 2^64 - 2GiB = (KERNEL_ELF_BASE % 1GiB)
+ *            |   -> +--------------------PPTR_TOP-+ --+ 2^64 - 2GiB
  * Shared 1GiB|      |                             |   |
  * table entry|      |           PSpace            |   |
  *            |      |  (direct kernel mappings)   |   +----+
@@ -56,7 +56,7 @@
  *                   |                             |        |      |  |                         |
  *                   |            User             |        |      |  |                         |
  *                   |                             |        |      |  |                         |
- *                   |                             |        +------+  +-------------------------+  KDEV_BASE - KERNEL_ELF_BASE + PADDR_LOAD
+ *                   |                             |        +------+  +-------------------------+
  *                   |                             |     kernel    |  |        Kernel ELF       |
  *                   |                             |   addressable |  +-------------------------+  KERNEL_ELF_PADDR_BASE
  *                   |                             |               |  |                         |

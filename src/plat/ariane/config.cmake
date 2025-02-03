@@ -16,15 +16,10 @@ if(KernelPlatformAriane)
     config_set(KernelOpenSBIPlatform OPENSBI_PLATFORM "fpga/ariane")
     list(APPEND KernelDTSList "tools/dts/ariane.dts")
     list(APPEND KernelDTSList "src/plat/ariane/overlay-ariane.dts")
-    # This is an experimental platform that supports accessing peripherals, but
-    # the status of support for external interrupts via a PLIC is unclear and
-    # may differ depending on the version that is synthesized. Declaring no
-    # interrupts and using the dummy PLIC driver seems the best option for now
-    # to avoid confusion or even crashes.
     declare_default_headers(
+        MAX_IRQ 30
         TIMER_FREQUENCY 25000000
-        MAX_IRQ 0
-        INTERRUPT_CONTROLLER drivers/irq/riscv_plic_dummy.h
+        INTERRUPT_CONTROLLER drivers/irq/riscv_plic0.h
     )
 else()
     unset(KernelPlatformFirstHartID CACHE)
