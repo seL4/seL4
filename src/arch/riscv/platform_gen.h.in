@@ -35,7 +35,7 @@ enum IRQConstants {
 #endif
     KERNEL_TIMER_IRQ,
     maxIRQ = KERNEL_TIMER_IRQ,
-} platform_interrupt_t;
+};
 
 enum irqNumbers {
     irqInvalid = 0
