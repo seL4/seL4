@@ -75,11 +75,17 @@ UP_STATE_DEFINE(timestamp_t, benchmark_kernel_number_schedules);
  * pending interrupts */
 word_t ksWorkUnitsCompleted;
 
+/* These two correspond to ksInterruptState in the proofs. They should be
+ * prefixed with ks**, but we leave them unprefixed as the proofs would need
+ * to be fixed. */
 irq_state_t intStateIRQTable[INT_STATE_ARRAY_SIZE];
-/* CNode containing interrupt handler endpoints - like all seL4 objects, this CNode needs to be
- * of a size that is a power of 2 and aligned to its size. */
+/* CNode containing interrupt handler endpoints - like all seL4 objects, this
+ * CNode needs to be of a size that is a power of 2 and aligned to its size. */
 cte_t intStateIRQNode[BIT(IRQ_CNODE_SLOT_BITS)] ALIGN(BIT(IRQ_CNODE_SLOT_BITS + seL4_SlotBits));
-compile_assert(irqCNodeSize, sizeof(intStateIRQNode) >= ((INT_STATE_ARRAY_SIZE) *sizeof(cte_t)));
+/* Number of intStateIRQNode slots should the the closest power of 2 to the
+   number of intStateIRQTable elements. */
+compile_assert(irqCNodeSize, BIT(IRQ_CNODE_SLOT_BITS) >= INT_STATE_ARRAY_SIZE);
+compile_assert(irqCNodeSizeNotExcessive, BIT(IRQ_CNODE_SLOT_BITS - 1) < INT_STATE_ARRAY_SIZE);
 
 /* Currently active domain */
 dom_t ksCurDomain;
