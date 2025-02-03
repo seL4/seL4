@@ -34,7 +34,7 @@ typedef struct clh_qnode_p {
     clh_qnode_t *node;
     clh_qnode_t *next;
     /* This is the software IPI flag */
-    word_t ipi;
+    volatile void        *ipi;
 
     PAD_TO_NEXT_CACHE_LN(sizeof(clh_qnode_t *) +
                          sizeof(clh_qnode_t *) +
@@ -54,7 +54,7 @@ BOOT_CODE void clh_lock_init(void);
 
 static inline bool_t FORCE_INLINE clh_is_ipi_pending(word_t cpu)
 {
-    return big_kernel_lock.node_owners[cpu].ipi == 1;
+    return big_kernel_lock.node_owners[cpu].ipi != NULL;
 }
 
 static inline void *sel4_atomic_exchange(void *ptr, bool_t

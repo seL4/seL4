@@ -12,6 +12,28 @@
 #include <smp/ipi.h>
 #include <smp/lock.h>
 
+static struct ipi_args ipi_args = { 0 };
+
+static inline void init_ipi_args(IpiRemoteCall_t func, word_t data0,
+                                 word_t data1, word_t data2, word_t mask)
+{
+    ipi_args.remoteCall = (word_t)func;
+    ipi_args.args[0] = data0;
+    ipi_args.args[1] = data1;
+    ipi_args.args[2] = data2;
+
+    /* Get number of cores involved in this IPI */
+    ipi_args.totalCoreBarrier = popcountl(mask);
+
+#ifdef CONFIG_ARCH_AARCH64
+    /* This is to make sure if a write to ebig_kernel_lock.node_owners[target_core].ipi
+     * is observed, the above writes are also observed by readers according the
+     * address dependancy.
+     */
+    asm volatile("dmb ishst" ::: "memory");
+#endif
+}
+
 /* This function switches the core it is called on to the idle thread,
  * in order to avoid IPI storms. If the core is waiting on the lock, the actual
  * switch will not occur until the core attempts to obtain the lock, at which
@@ -22,6 +44,9 @@
 void ipiStallCoreCallback(bool_t irqPath)
 {
     if (clh_is_self_in_queue() && !irqPath) {
+        cpu_id_t core = getCurrentCPUIndex();
+        struct ipi_args *args = (struct ipi_args *)big_kernel_lock.node_owners[core].ipi;
+
         /* The current thread is running as we would replace this thread with an idle thread
          *
          * The instruction should be re-executed if we are in kernel to handle syscalls.
@@ -41,23 +66,23 @@ void ipiStallCoreCallback(bool_t irqPath)
         NODE_STATE(ksSchedulerAction) = SchedulerAction_ResumeCurrentThread;
 
         /* Let the cpu requesting this IPI to continue while we waiting on lock */
-        big_kernel_lock.node_owners[getCurrentCPUIndex()].ipi = 0;
+        big_kernel_lock.node_owners[core].ipi = NULL;
 #ifdef CONFIG_ARCH_RISCV
         ipi_clear_irq(irq_remote_call_ipi);
 #endif
-        ipi_wait(totalCoreBarrier);
-
+        ipi_wait(args->totalCoreBarrier);
         /* Continue waiting on lock */
-        while (big_kernel_lock.node_owners[getCurrentCPUIndex()].next->value != CLHState_Granted) {
-            if (clh_is_ipi_pending(getCurrentCPUIndex())) {
-
+        while (big_kernel_lock.node_owners[core].next->value != CLHState_Granted) {
+            if (clh_is_ipi_pending(core)) {
+                args = (struct ipi_args *)big_kernel_lock.node_owners[core].ipi;
+                IpiRemoteCall_t remoteCall = args->remoteCall;
+                (void)remoteCall;
                 /* Multiple calls for similar reason could result in stack overflow */
                 assert((IpiRemoteCall_t)remoteCall != IpiRemoteCall_Stall);
-                handleIPI(CORE_IRQ_TO_IRQT(getCurrentCPUIndex(), irq_remote_call_ipi), irqPath);
+                handleIPI(CORE_IRQ_TO_IRQT(core, irq_remote_call_ipi), irqPath);
             }
             arch_pause();
         }
-
         /* make sure no resource access passes from this point */
         asm volatile("" ::: "memory");
 
@@ -82,7 +107,7 @@ void ipiStallCoreCallback(bool_t irqPath)
 void handleIPI(irq_t irq, bool_t irqPath)
 {
     if (IRQT_TO_IRQ(irq) == irq_remote_call_ipi) {
-        handleRemoteCall(remoteCall, get_ipi_arg(0), get_ipi_arg(1), get_ipi_arg(2), irqPath);
+        handleRemoteCall(irqPath);
     } else if (IRQT_TO_IRQ(irq) == irq_reschedule_ipi) {
         rescheduleRequired();
 #ifdef CONFIG_ARCH_RISCV
@@ -106,7 +131,7 @@ void doRemoteMaskOp(IpiRemoteCall_t func, word_t data1, word_t data2, word_t dat
         /* make sure no resource access passes from this point */
         asm volatile("" ::: "memory");
         ipi_send_mask(CORE_IRQ_TO_IRQT(0, irq_remote_call_ipi), mask, true);
-        ipi_wait(totalCoreBarrier);
+        ipi_wait(ipi_args.totalCoreBarrier);
     }
 }
 
@@ -127,7 +152,7 @@ void generic_ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
     while (mask) {
         int index = wordBits - 1 - clzl(mask);
         if (isBlocking) {
-            big_kernel_lock.node_owners[index].ipi = 1;
+            big_kernel_lock.node_owners[index].ipi = (void *)&ipi_args;
             target_cores[nr_target_cores] = index;
             nr_target_cores++;
         } else {
