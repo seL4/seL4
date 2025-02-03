@@ -57,3 +57,7 @@ UP_STATE_DEFINE(bool_t, armHSFPUEnabled);
 /* Null state for the Debug coprocessor's break/watchpoint registers */
 user_breakpoint_state_t armKSNullBreakpointState;
 #endif
+
+#ifdef CONFIG_ARM_HAS_TLB_LOCK
+word_t armKSTlbLockCount = 0;
+#endif /* CONFIG_ARM_HAS_TLB_LOCK */

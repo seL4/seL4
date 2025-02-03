@@ -94,9 +94,6 @@ word_t ksDomainTime;
 /* An index into ksDomSchedule for active domain and length. */
 word_t ksDomScheduleIdx;
 
-/* Only used by lockTLBEntry */
-word_t tlbLockCount = 0;
-
 /* Idle thread. */
 SECTION("._idle_thread") char ksIdleThreadTCB[CONFIG_MAX_NUM_NODES][BIT(seL4_TCBBits)] ALIGN(BIT(seL4_TCBBits));
 
