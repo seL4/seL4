@@ -11,27 +11,18 @@
 
 #ifdef ENABLE_SMP_SUPPORT
 
-static IpiModeRemoteCall_t remoteCall;   /* the remote call being requested */
-
-static inline void init_ipi_args(IpiRemoteCall_t func,
-                                 word_t data1, word_t data2, word_t data3,
-                                 word_t mask)
+static void handleRemoteCall(bool_t irqPath)
 {
-    remoteCall = (IpiModeRemoteCall_t)func;
-    ipi_args[0] = data1;
-    ipi_args[1] = data2;
-    ipi_args[2] = data3;
-
-    /* get number of cores involved in this IPI */
-    totalCoreBarrier = popcountl(mask);
-}
-
-static void handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0,
-                             word_t arg1, word_t arg2, bool_t irqPath)
-{
+    cpu_id_t core = getCurrentCPUIndex();
     /* we gets spurious irq_remote_call_ipi calls, e.g. when handling IPI
      * in lock while hardware IPI is pending. Guard against spurious IPIs! */
-    if (clh_is_ipi_pending(getCurrentCPUIndex())) {
+    if (clh_is_ipi_pending(core)) {
+        struct ipi_args *args = (struct ipi_args *)big_kernel_lock.node_owners[core].ipi;
+        IpiRemoteCall_t call = args->remoteCall;
+        word_t arg0 = args->args[0];
+        word_t arg1 = args->args[1];
+        word_t totalCoreBarrier = args->totalCoreBarrier;
+
         switch ((IpiRemoteCall_t)call) {
         case IpiRemoteCall_Stall:
             ipiStallCoreCallback(irqPath);
@@ -62,7 +53,7 @@ static void handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0,
 #if defined CONFIG_ARM_HYPERVISOR_SUPPORT && defined ENABLE_SMP_SUPPORT
         case IpiRemoteCall_VCPUInjectInterrupt: {
             virq_t virq;
-            virq.words[0] = arg2;
+            virq.words[0] = args->args[2];
             handleVCPUInjectInterruptIPI((vcpu_t *) arg0, arg1, virq);
             break;
         }
@@ -73,7 +64,7 @@ static void handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0,
             break;
         }
 
-        big_kernel_lock.node_owners[getCurrentCPUIndex()].ipi = 0;
+        big_kernel_lock.node_owners[core].ipi = NULL;
         ipi_wait(totalCoreBarrier);
     }
 }
