@@ -25,7 +25,7 @@ typedef enum {
 } clh_qnode_state_t;
 
 typedef struct clh_qnode {
-    clh_qnode_state_t value;
+    volatile clh_qnode_state_t value;
 
     PAD_TO_NEXT_CACHE_LN(sizeof(clh_qnode_state_t));
 } clh_qnode_t;
