@@ -132,6 +132,8 @@ END_FUNC(arm_prefetch_abort_exception)
 BEGIN_FUNC(arm_data_abort_exception)
     /* Full save/restore, documented in arm_swi_syscall */
     srsia #PMODE_SUPERVISOR
+    /* This also loads the Supervisor mode's banked registers, switching away
+     * from the ABORT stack pointer. See also heads.S where it is set up. */
     cps #PMODE_SUPERVISOR
     stmdb sp, {r0-lr}^
 
