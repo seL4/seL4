@@ -25,7 +25,7 @@ static inline void init_ipi_args(IpiRemoteCall_t func, word_t data0,
     /* Get number of cores involved in this IPI */
     ipi_args.totalCoreBarrier = popcountl(mask);
 
-#ifdef CONFIG_ARCH_AARCH64
+#ifdef CONFIG_ARCH_ARM
     /* This is to make sure if a write to ebig_kernel_lock.node_owners[target_core].ipi
      * is observed, the above writes are also observed by readers according the
      * address dependancy.
