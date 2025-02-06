@@ -96,6 +96,8 @@ void VISIBLE NORETURN restore_user_context(void)
 
 void VISIBLE NORETURN c_handle_interrupt(void)
 {
+    config_ternary(CONFIG_KERNEL_MCS, updateTimestamp();,)
+
     NODE_LOCK_IRQ_IF(getActiveIRQ() != irq_remote_call_ipi);
 
     c_entry_hook();
@@ -108,6 +110,8 @@ void VISIBLE NORETURN c_handle_interrupt(void)
 
 void VISIBLE NORETURN c_handle_exception(void)
 {
+    config_ternary(CONFIG_KERNEL_MCS, updateTimestamp();,)
+
     NODE_LOCK_SYS;
 
     c_entry_hook();
@@ -168,6 +172,8 @@ void VISIBLE c_handle_fastpath_reply_recv(word_t cptr, word_t msgInfo, word_t re
 void VISIBLE c_handle_fastpath_reply_recv(word_t cptr, word_t msgInfo)
 #endif
 {
+    config_ternary(CONFIG_KERNEL_MCS, updateTimestamp();,)
+
     NODE_LOCK_SYS;
 
     c_entry_hook();
@@ -186,6 +192,8 @@ void VISIBLE c_handle_fastpath_reply_recv(word_t cptr, word_t msgInfo)
 ALIGN(L1_CACHE_LINE_SIZE)
 void VISIBLE c_handle_fastpath_call(word_t cptr, word_t msgInfo)
 {
+    config_ternary(CONFIG_KERNEL_MCS, updateTimestamp();,)
+
     NODE_LOCK_SYS;
 
     c_entry_hook();
@@ -202,6 +210,8 @@ void VISIBLE c_handle_fastpath_call(word_t cptr, word_t msgInfo)
 
 void VISIBLE NORETURN c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 {
+    config_ternary(CONFIG_KERNEL_MCS, updateTimestamp();,)
+
     NODE_LOCK_SYS;
 
     c_entry_hook();

@@ -35,6 +35,8 @@ void VISIBLE NORETURN c_handle_interrupt(int irq, int syscall)
         x86_enable_ibrs();
     }
 
+    config_ternary(CONFIG_KERNEL_MCS, updateTimestamp();,)
+
     /* Only grab the lock if we are not handling 'int_remote_call_ipi' interrupt
      * also flag this lock as IRQ lock if handling the irq interrupts. */
     NODE_LOCK_IF(irq != int_remote_call_ipi,
@@ -153,6 +155,8 @@ void VISIBLE NORETURN c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t sy
         x86_enable_ibrs();
     }
 
+    config_ternary(CONFIG_KERNEL_MCS, updateTimestamp();,)
+
     NODE_LOCK_SYS;
 
     c_entry_hook();
@@ -217,6 +221,7 @@ void VISIBLE NORETURN c_handle_vmexit(void)
 #endif
 
     c_entry_hook();
+    config_ternary(CONFIG_KERNEL_MCS, updateTimestamp();,)
     /* NODE_LOCK will get called in handleVmexit */
     handleVmexit();
     restore_user_context();
