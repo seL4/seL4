@@ -18,7 +18,7 @@
 SMP_STATE_DEFINE(smpStatedata_t, ksSMP[CONFIG_MAX_NUM_NODES] ALIGN(L1_CACHE_LINE_SIZE));
 
 /* Global count of how many cpus there are */
-word_t ksNumCPUs;
+SMP_STATE_DEFINE(word_t, ksNumCPUs);
 
 /* Pointer to the head of the scheduler queue for each priority */
 UP_STATE_DEFINE(tcb_queue_t, ksReadyQueues[NUM_READY_QUEUES]);
@@ -81,8 +81,10 @@ irq_state_t intStateIRQTable[INT_STATE_ARRAY_SIZE];
 cte_t intStateIRQNode[BIT(IRQ_CNODE_SLOT_BITS)] ALIGN(BIT(IRQ_CNODE_SLOT_BITS + seL4_SlotBits));
 compile_assert(irqCNodeSize, sizeof(intStateIRQNode) >= ((INT_STATE_ARRAY_SIZE) *sizeof(cte_t)));
 
+#if CONFIG_NUM_DOMAINS > 1
 /* Currently active domain */
 dom_t ksCurDomain;
+#endif
 
 /* Domain timeslice remaining */
 #ifdef CONFIG_KERNEL_MCS

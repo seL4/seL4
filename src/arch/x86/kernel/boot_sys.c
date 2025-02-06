@@ -483,7 +483,7 @@ static BOOT_CODE bool_t try_boot_sys(void)
     }
 
     /* Total number of cores we intend to boot */
-    ksNumCPUs = boot_state.num_cpus;
+    SMP_COND_STATEMENT(ksNumCPUs = boot_state.num_cpus);
 
     printf("Starting node #0 with APIC ID %lu\n", boot_state.cpus[0]);
     if (!try_boot_sys_node(boot_state.cpus[0])) {
@@ -733,4 +733,3 @@ BOOT_CODE VISIBLE void boot_sys(
     schedule();
     activateThread();
 }
-

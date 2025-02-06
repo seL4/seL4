@@ -607,7 +607,7 @@ static BOOT_CODE bool_t try_init_kernel(
         invalidateHypTLB();
     }
 
-    ksNumCPUs = 1;
+    SMP_COND_STATEMENT(ksNumCPUs = 1);
 
     /* initialize BKL before booting up other cores */
     SMP_COND_STATEMENT(clh_lock_init());

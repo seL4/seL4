@@ -309,7 +309,11 @@ static void nextDomain(void)
     NODE_STATE(ksReprogram) = true;
 #endif
     ksWorkUnitsCompleted = 0;
+#if CONFIG_NUM_DOMAINS > 1
     ksCurDomain = ksDomSchedule[ksDomScheduleIdx].domain;
+#else
+    assert(ksDomSchedule[ksDomScheduleIdx].domain == ksCurDomain);
+#endif
 #ifdef CONFIG_KERNEL_MCS
     ksDomainTime = usToTicks(ksDomSchedule[ksDomScheduleIdx].length * US_IN_MS);
 #else

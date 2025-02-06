@@ -28,7 +28,6 @@ void NORETURN fastpath_call(word_t cptr, word_t msgInfo)
     vspace_root_t *cap_pd;
     pde_t stored_hw_asid;
     word_t fault_type;
-    dom_t dom;
 
     /* Get message info, length, and fault type. */
     info = messageInfoFromWord_raw(msgInfo);
@@ -120,11 +119,9 @@ void NORETURN fastpath_call(word_t cptr, word_t msgInfo)
     stored_hw_asid.words[0] = cap_page_table_cap_get_capPTMappedASID(newVTable);
 #endif
 
-    /* let gcc optimise this out for 1 domain */
-    dom = maxDom ? ksCurDomain : 0;
     /* ensure only the idle thread or lower prio threads are present in the scheduler */
     if (unlikely(dest->tcbPriority < NODE_STATE(ksCurThread->tcbPriority) &&
-                 !isHighestPrio(dom, dest->tcbPriority))) {
+                 !isHighestPrio(ksCurDomain, dest->tcbPriority))) {
         slowpath(SysCall);
     }
 
@@ -254,7 +251,6 @@ void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo)
     cap_t newVTable;
     vspace_root_t *cap_pd;
     pde_t stored_hw_asid;
-    dom_t dom;
 
     /* Get message info and length */
     info = messageInfoFromWord_raw(msgInfo);
@@ -398,8 +394,7 @@ void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo)
 #endif
 
     /* Ensure the original caller can be scheduled directly. */
-    dom = maxDom ? ksCurDomain : 0;
-    if (unlikely(!isHighestPrio(dom, caller->tcbPriority))) {
+    if (unlikely(!isHighestPrio(ksCurDomain, caller->tcbPriority))) {
         slowpath(SysReplyRecv);
     }
 
@@ -798,11 +793,9 @@ void NORETURN fastpath_vm_fault(vm_fault_type_t type)
 #endif
 #endif
 
-    /* let gcc optimise this out for 1 domain */
-    dom = maxDom ? ksCurDomain : 0;
     /* ensure only the idle thread or lower prio threads are present in the scheduler */
     if (unlikely(dest->tcbPriority < NODE_STATE(ksCurThread->tcbPriority) &&
-                 !isHighestPrio(dom, dest->tcbPriority))) {
+                 !isHighestPrio(ksCurDomain, dest->tcbPriority))) {
 
         vm_fault_slowpath(type);
     }

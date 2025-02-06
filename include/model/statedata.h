@@ -92,7 +92,11 @@ NODE_STATE_DECLARE(timestamp_t, benchmark_kernel_number_schedules);
 
 NODE_STATE_END(nodeState);
 
+#ifdef ENABLE_SMP_SUPPORT
 extern word_t ksNumCPUs;
+#else
+const word_t ksNumCPUs = 1;
+#endif
 
 #if defined ENABLE_SMP_SUPPORT && defined CONFIG_ARCH_ARM
 #define INT_STATE_ARRAY_SIZE ((CONFIG_MAX_NUM_NODES - 1) * NUM_PPI + maxIRQ + 1)
@@ -106,7 +110,13 @@ extern cte_t intStateIRQNode[];
 extern const dschedule_t ksDomSchedule[];
 extern const word_t ksDomScheduleLength;
 extern word_t ksDomScheduleIdx;
+
+#if CONFIG_NUM_DOMAINS > 1
 extern dom_t ksCurDomain;
+#else
+const dom_t ksCurDomain = 0;
+#endif
+
 #ifdef CONFIG_KERNEL_MCS
 extern ticks_t ksDomainTime;
 #else
@@ -130,4 +140,3 @@ extern paddr_t ksUserLogBuffer;
 #define MODE_NODE_STATE(_state)    MODE_NODE_STATE_ON_CORE(_state, getCurrentCPUIndex())
 #define ARCH_NODE_STATE(_state)    ARCH_NODE_STATE_ON_CORE(_state, getCurrentCPUIndex())
 #define NODE_STATE(_state)         NODE_STATE_ON_CORE(_state, getCurrentCPUIndex())
-

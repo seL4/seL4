@@ -437,7 +437,7 @@ static BOOT_CODE bool_t try_init_kernel(
     /* finalise the bootinfo frame */
     bi_finalise();
 
-    ksNumCPUs = 1;
+    SMP_COND_STATEMENT(ksNumCPUs = 1);
 
     SMP_COND_STATEMENT(clh_lock_init());
     SMP_COND_STATEMENT(release_secondary_cores());

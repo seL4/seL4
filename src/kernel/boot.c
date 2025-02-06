@@ -541,7 +541,11 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
 #endif
     setThreadState(tcb, ThreadState_Running);
 
+#if CONFIG_NUM_DOMAINS > 1
     ksCurDomain = ksDomSchedule[ksDomScheduleIdx].domain;
+#else
+    assert(ksDomSchedule[ksDomScheduleIdx].domain == ksCurDomain);
+#endif
 #ifdef CONFIG_KERNEL_MCS
     ksDomainTime = usToTicks(ksDomSchedule[ksDomScheduleIdx].length * US_IN_MS);
 #else
