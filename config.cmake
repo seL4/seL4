@@ -521,7 +521,7 @@ config_option(
     Useful for profiling."
     DEFAULT OFF
     DEPENDS
-        "NOT KernelARMHypervisorSupport;NOT KernelVerificationBuild;NOT KernelPlatformHikey;NOT KernelSkimWindow"
+        "NOT KernelArmHypervisorSupport;NOT KernelVerificationBuild;NOT KernelPlatformHikey;NOT KernelSkimWindow"
 )
 
 config_option(
