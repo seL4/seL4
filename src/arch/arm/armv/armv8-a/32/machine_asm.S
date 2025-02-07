@@ -7,9 +7,9 @@
 #include <config.h>
 #include <machine/assembler.h>
 
-#if defined(CONFIG_ARM_CORTEX_A53)
+#if defined(CONFIG_ARM_CORTEX_A53) || defined(CONFIG_ARM_CORTEX_A72)
 
-/* A53 hardware does not support TLB locking */
+/* A53,A72 hardware does not support TLB locking */
 BEGIN_FUNC(lockTLBEntry)
     bx lr
 END_FUNC(lockTLBEntry)
