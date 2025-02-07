@@ -4,7 +4,8 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-from typing import Any, Dict, IO, List
+from typing import Dict, IO, List, Union
+from collections.abc import Callable
 import pyfdt.pyfdt
 
 from hardware.device import WrappedNode
@@ -54,7 +55,7 @@ class FdtParser:
         ''' Look up a node by phandle '''
         return self.by_phandle[phandle]
 
-    def get_path(self, path: str) -> WrappedNode:
+    def get_path(self, path: str) -> Union[WrappedNode, None]:
         ''' Look up a node by path '''
         return self.by_path.get(path, None)
 
@@ -82,27 +83,31 @@ class FdtParser:
     def get_devices_list(self, prop) -> List[WrappedNode]:
         ''' Returns a list of devices that are used by the kernel '''
         chosen = self.get_path('/chosen')
-        if not chosen.has_prop(prop):
+        if (chosen is None) or (not chosen.has_prop(prop)):
             return []
 
         ret = []
         paths = chosen.get_prop(prop).strings
 
         for path in paths:
-            if path[0] != '/':
+            if not path.startswith('/'):
                 path = self.lookup_alias(path)
-            ret.append(self.get_path(path))
+            node = self.get_path(path)
+            if node is None:
+                raise KeyError(f"could not resolve path in chosen node: '{path}'")
+            ret.append(node)
+
         return ret
 
     def get_boot_cpu(self) -> int:
         ''' Returns phandle of the cpu node specified by the seL4,boot-cpu property '''
         chosen = self.get_path('/chosen')
-        if not chosen.has_prop('seL4,boot-cpu'):
+        if (chosen is None) or (not chosen.has_prop('seL4,boot-cpu')):
             raise KeyError('must specify seL4,boot-cpu in /chosen to get boot cpu')
 
         prop = chosen.get_prop('seL4,boot-cpu')
         return prop.words[0]
 
-    def visit(self, visitor: Any):
+    def visit(self, visitor: Callable[[WrappedNode], None]):
         ''' Walk the tree, calling the given visitor function on each node '''
-        return self.wrapped_root.visit(visitor)
+        self.wrapped_root.visit(visitor)
