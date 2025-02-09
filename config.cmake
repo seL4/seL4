@@ -282,7 +282,7 @@ config_string(
 config_string(
     KernelResetChunkBits RESET_CHUNK_BITS
     "Maximum size in bits of chunks of memory to zero before checking a preemption point."
-    DEFAULT 8
+    DEFAULT 14
     UNQUOTE
 )
 config_string(

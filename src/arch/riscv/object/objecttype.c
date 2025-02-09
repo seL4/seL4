@@ -208,10 +208,12 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t
             /** GHOSTUPD: "(True, gs_new_frames vmpage_size.RISCVSmallPage
                                                     (ptr_val \<acute>regionBase)
                                                     (unat RISCVPageBits))" */
+            memzero(regionBase, BIT(RISCV_4K_Page));
         }
         return cap_frame_cap_new(
                    asidInvalid,                    /* capFMappedASID       */
                    (word_t) regionBase,            /* capFBasePtr          */
+                   false,                          /* capIsDirty           */
                    RISCV_4K_Page,                  /* capFSize             */
                    wordFromVMRights(VMReadWrite),  /* capFVMRights         */
                    deviceMemory,                   /* capFIsDevice         */
@@ -235,7 +237,8 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t
         return cap_frame_cap_new(
                    asidInvalid,                    /* capFMappedASID       */
                    (word_t) regionBase,            /* capFBasePtr          */
-                   RISCV_Mega_Page,                  /* capFSize             */
+                   !deviceMemory,                  /* capIsDirty           */
+                   RISCV_Mega_Page,                /* capFSize             */
                    wordFromVMRights(VMReadWrite),  /* capFVMRights         */
                    deviceMemory,                   /* capFIsDevice         */
                    0                               /* capFMappedAddress    */
@@ -260,7 +263,8 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t
         return cap_frame_cap_new(
                    asidInvalid,                    /* capFMappedASID       */
                    (word_t) regionBase,            /* capFBasePtr          */
-                   RISCV_Giga_Page,                  /* capFSize             */
+                   !deviceMemory,                  /* capIsDirty           */
+                   RISCV_Giga_Page,                /* capFSize             */
                    wordFromVMRights(VMReadWrite),  /* capFVMRights         */
                    deviceMemory,                   /* capFIsDevice         */
                    0                               /* capFMappedAddress    */
