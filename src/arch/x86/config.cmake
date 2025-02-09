@@ -72,8 +72,8 @@ config_option(
 config_string(
     KernelCacheLnSz CACHE_LN_SZ "Define cache line size for the current architecture"
     DEFAULT 64
-    DEPENDS "KernelArchX86" UNDEF_DISABLED
-    UNQUOTE
+    DEPENDS "KernelArchX86"
+    UNDEF_DISABLED UNQUOTE
 )
 
 config_option(
@@ -165,12 +165,14 @@ config_choice(
             XSAVE buffer, if using non contiguous features, XSAVEC will attempt to use the init optimization \
             when saving \
         XSAVEOPT -> Save state taking advantage of both the init optimization and modified optimization \
-        XSAVES -> Save state taking advantage of the modified optimization. This instruction is only \
+        XSAVES -> Save state taking advantage of all optimizations. This instruction is only \
             available in OS code, and is the preferred save method if it exists."
-    "XSAVEOPT;KernelXSaveXSaveOpt;XSAVE_XSAVEOPT;KernelFPUXSave"
     "XSAVE;KernelXSaveXSave;XSAVE_XSAVE;KernelFPUXSave"
+    "XSAVES;KernelXSaveXSaveS;XSAVE_XSAVES;KernelFPUXSave"
+    "XSAVEOPT;KernelXSaveXSaveOpt;XSAVE_XSAVEOPT;KernelFPUXSave"
     "XSAVEC;KernelXSaveXSaveC;XSAVE_XSAVEC;KernelFPUXSave"
 )
+
 config_string(
     KernelXSaveFeatureSet XSAVE_FEATURE_SET
     "XSAVE can save and restore the state for various features \
@@ -186,7 +188,11 @@ config_string(
 )
 
 if(KernelFPUXSave)
-    set(default_xsave_size 576)
+    if("${KernelXSaveFeatureSet}" EQUAL 7)
+        set(default_xsave_size 832)
+    else()
+        set(default_xsave_size 576)
+    endif()
 else()
     set(default_xsave_size 512)
 endif()
@@ -229,8 +235,8 @@ config_string(
     "The bits per pixel of the linear graphics mode ot request. Value of zero indicates \
     no preference."
     DEFAULT 32
-    DEPENDS "KernelMultibootGFXModeLinear" UNDEF_DISABLED
-    UNQUOTE
+    DEPENDS "KernelMultibootGFXModeLinear"
+    UNDEF_DISABLED UNQUOTE
 )
 
 config_string(
@@ -239,8 +245,8 @@ config_string(
     number of pixels. For a text mode this is the number of characters, value of zero \
     indicates no preference."
     DEFAULT 0
-    DEPENDS "KernelMultibootGFXModeText OR KernelMultibootGFXModeLinear" UNDEF_DISABLED
-    UNQUOTE
+    DEPENDS "KernelMultibootGFXModeText OR KernelMultibootGFXModeLinear"
+    UNDEF_DISABLED UNQUOTE
 )
 config_string(
     KernelMultibootGFXHeight MULTIBOOT_GRAPHICS_MODE_HEIGHT
@@ -248,8 +254,8 @@ config_string(
     number of pixels. For a text mode this is the number of characters, value of zero \
     indicates no preference."
     DEFAULT 0
-    DEPENDS "KernelMultibootGFXModeText OR KernelMultibootGFXModeLinear" UNDEF_DISABLED
-    UNQUOTE
+    DEPENDS "KernelMultibootGFXModeText OR KernelMultibootGFXModeLinear"
+    UNDEF_DISABLED UNQUOTE
 )
 
 config_option(
