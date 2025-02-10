@@ -74,6 +74,7 @@ typedef enum {
 typedef enum {
     seL4_VCPUReg_SCTLR = 0,
     seL4_VCPUReg_ACTLR,
+    seL4_VCPUReg_PAR,
     seL4_VCPUReg_TTBCR,
     seL4_VCPUReg_TTBR0,
     seL4_VCPUReg_TTBR1,
