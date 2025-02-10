@@ -16,6 +16,9 @@ typedef enum {
     IpiRemoteCall_InvalidateTranslationAll,
     IpiRemoteCall_switchFpuOwner,
     IpiRemoteCall_MaskPrivateInterrupt,
+#ifdef CONFIG_ARM_GIC_V3_SUPPORT
+    IpiRemoteCall_DeactivatePrivateInterrupt,
+#endif
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     IpiRemoteCall_VCPUInjectInterrupt,
 #endif
