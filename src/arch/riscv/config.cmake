@@ -17,13 +17,13 @@ config_string(
 
 config_option(
     KernelRiscvExtF RISCV_EXT_F "RISC-V extension for single-precision floating-point"
-    DEFAULT OFF
+    DEFAULT ON
     DEPENDS "KernelArchRiscV"
 )
 
 config_option(
     KernelRiscvExtD RISCV_EXT_D "RISC-V extension for double-precision floating-point"
-    DEFAULT OFF
+    DEFAULT ON
     DEPENDS "KernelArchRiscV"
 )
 

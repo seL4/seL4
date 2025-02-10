@@ -76,6 +76,7 @@ if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
                 "riscv64-unknown-elf-"
                 "riscv64-none-elf-"
                 "riscv64-elf-"
+                "riscv64-linux-gnu-"
             )
         endif()
     else()
@@ -107,6 +108,7 @@ if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
                 "riscv64-unknown-elf-"
                 "riscv64-none-elf-"
                 "riscv64-elf-"
+                "riscv64-linux-gnu-"
             )
         endif()
     endif()
