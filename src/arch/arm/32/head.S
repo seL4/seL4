@@ -153,9 +153,12 @@ BEGIN_FUNC(_start)
 
     /* Hyp kernel always run in Hyp mode. */
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
-    /* Initialise ABORT stack pointer */
+    /* Initialise ABORT stack pointer.
+     * For ARM, the `sp' register is banked between PMODEs, so we configure
+     * a stack for when we take a exception (see traps.S, where we then switch
+     * modes and load the real kernel stack). */
     cps #PMODE_ABORT
-    ldr sp, =_breakpoint_stack_top
+    ldr sp, =_abort_stack_top
     cps #PMODE_SUPERVISOR
 #endif
 

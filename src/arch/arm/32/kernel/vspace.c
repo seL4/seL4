@@ -2547,8 +2547,8 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
         /* Find first free pool */
         for (i = 0; i < nASIDPools && armKSASIDTable[i]; i++);
 
-        if (unlikely(i == nASIDPools)) { /* If no unallocated pool is found */
-            userError("ASIDControlMakePool: No free pools found.");
+        if (unlikely(i == nASIDPools)) {
+            userError("ASIDControlMakePool: No unallocated pools found.");
             current_syscall_error.type = seL4_DeleteFirst;
 
             return EXCEPTION_SYSCALL_ERROR;
@@ -2872,4 +2872,3 @@ void Arch_userStackTrace(tcb_t *tptr)
     }
 }
 #endif
-
