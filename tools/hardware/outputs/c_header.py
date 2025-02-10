@@ -131,7 +131,7 @@ static const p_region_t BOOT_RODATA avail_p_regs[] = {
 '''
 
 
-def get_kernel_devices(tree: FdtParser, hw_yaml: HardwareYaml) -> (List, Dict):
+def get_kernel_devices(tree: FdtParser, hw_yaml: HardwareYaml, kernel_config_dict: Dict[str, str]) -> (List, Dict):
     '''
     Given a device tree and a set of rules, returns a tuple (groups, offsets).
 
@@ -208,12 +208,12 @@ def create_c_header_file(config, kernel_irqs: List, kernel_macros: Dict,
         outputStream.write(data)
 
 
-def run(tree: FdtParser, hw_yaml: HardwareYaml, config: Config, args: argparse.Namespace):
+def run(tree: FdtParser, hw_yaml: HardwareYaml, config: Config, kernel_config_dict, args: argparse.Namespace):
     if not args.header_out:
         raise ValueError('You need to specify a header-out to use c header output')
 
     physical_memory, reserved, physBase = hardware.utils.memory.get_physical_memory(tree, config)
-    kernel_regions, kernel_macros = get_kernel_devices(tree, hw_yaml)
+    kernel_regions, kernel_macros = get_kernel_devices(tree, hw_yaml, kernel_config_dict)
 
     create_c_header_file(
         config,
