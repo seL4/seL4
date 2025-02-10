@@ -8,7 +8,7 @@
 
 import argparse
 import yaml
-from typing import List
+from typing import Dict, List
 import hardware
 from hardware.config import Config
 from hardware.fdt import FdtParser
@@ -40,24 +40,29 @@ def create_yaml_file(dev_mem, phys_mem, outputStream):
         yaml.dump(yaml_obj, outputStream)
 
 
-def get_kernel_devices(tree: FdtParser, hw_yaml: HardwareYaml):
+def get_kernel_devices(tree: FdtParser, hw_yaml: HardwareYaml, kernel_config_dict: Dict[str, str]):
     kernel_devices = tree.get_kernel_devices()
 
     groups = []
     for dev in kernel_devices:
         rule = hw_yaml.get_rule(dev)
-        groups += rule.get_regions(dev)
+        new_regions = rule.get_regions(dev)
+        for reg in new_regions:
+            if reg.macro in kernel_config_dict:
+                if kernel_config_dict[reg.macro] != "ON":
+                    continue
+            groups.append(reg)
 
     return groups
 
 
 def run(tree: FdtParser, hw_yaml: HardwareYaml, config: Config,
-        args: argparse.Namespace):
+        kernel_config_dict, args: argparse.Namespace):
     if not args.yaml_out:
         raise ValueError('you need to provide a yaml-out to use the yaml output method')
 
     phys_mem, reserved, _ = hardware.utils.memory.get_physical_memory(tree, config)
-    kernel_devs = get_kernel_devices(tree, hw_yaml)
+    kernel_devs = get_kernel_devices(tree, hw_yaml, kernel_config_dict)
     dev_mem = hardware.utils.memory.get_addrspace_exclude(
         list(reserved) + phys_mem + kernel_devs, config)
 

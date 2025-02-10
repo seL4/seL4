@@ -87,11 +87,6 @@ SECTIONS
         *(.bss)
         *(COMMON) /* fallback in case '-fno-common' is not used */
 
-        /* 4k breakpoint stack */
-        _breakpoint_stack_bottom = .;
-        . = . + 4K;
-        _breakpoint_stack_top = .;
-
         /* large data such as the globals frame and global PD */
         *(.bss.aligned)
 #if defined(CONFIG_PLAT_ROCKETCHIP_ZCU102)
