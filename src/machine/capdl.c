@@ -29,7 +29,7 @@ int watermark = 0;
 void add_to_seen(cap_t c)
 {
     /* Won't work well if there're more than SEEN_SZ cnode */
-    if (watermark <= SEEN_SZ) {
+    if (watermark < SEEN_SZ) {
         seen_list[watermark] = c;
         watermark++;
     }

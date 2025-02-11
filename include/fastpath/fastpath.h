@@ -46,6 +46,8 @@ static inline void cancelIPC_fp(tcb_t *dest)
         endpoint_ptr_set_state(ep_ptr, EPState_Idle);
     }
 
+    /* we are in BlockedOnReceive, because fastpath_signal explicitly checks for it */
+    assert(thread_state_get_tsType(dest->tcbState) == ThreadState_BlockedOnReceive);
     reply_t *reply = REPLY_PTR(thread_state_get_replyObject(dest->tcbState));
     if (reply != NULL) {
         reply_unlink(reply, dest);

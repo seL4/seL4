@@ -41,7 +41,7 @@ jobs:
     name: Deploy manifest
     needs: [code, preprocess]
     if: ${{ github.repository_owner == 'seL4' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - uses: seL4/ci-actions/l4v-deploy@master
       with:

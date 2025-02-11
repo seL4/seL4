@@ -21,11 +21,19 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 ---
 
-## Upcoming release: BINARY COMPATIBLE
+## Upcoming release: BREAKING
 
 ### Changes
 
 * Added `zynqmp` and `rpi4` to the set of verified AArch64 configs.
+
+### Platforms
+
+* Removed the default settings `KernelArmVtimerUpdateVOffset` and `KernelArmDisableWFIWFETraps` from the platform
+  `tqma8xqp1gb`, since they are project specific settings, not platform settings. Add
+  `set(KernelArmVtimerUpdateVOffset OFF)` and
+  `set(KernelArmDisableWFIWFETraps ON)`
+  to your project settings to get the same configuration as before if you are using `tqma8xqp1gb`.
 
 ### Upgrade Notes
 
