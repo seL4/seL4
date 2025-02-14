@@ -111,7 +111,7 @@ static uint32_t gicv3_do_wait_for_rwp(volatile uint32_t *ctlr_addr)
     return ret;
 }
 
-static void gicv3_dist_wait_for_rwp(void)
+void gicv3_dist_wait_for_rwp(void)
 {
     gicv3_do_wait_for_rwp(&gic_dist->ctlr);
 }

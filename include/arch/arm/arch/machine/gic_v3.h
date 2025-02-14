@@ -233,6 +233,8 @@ extern volatile struct gic_dist_map *const gic_dist;
 extern volatile struct gic_rdist_map *gic_rdist_map[CONFIG_MAX_NUM_NODES];
 extern volatile struct gic_rdist_sgi_ppi_map *gic_rdist_sgi_ppi_map[CONFIG_MAX_NUM_NODES];
 
+void gicv3_dist_wait_for_rwp(void);
+
 /* Helpers */
 static inline void gic_enable_clr(word_t irq)
 {
@@ -243,6 +245,15 @@ static inline void gic_enable_clr(word_t irq)
         gic_rdist_sgi_ppi_map[CURRENT_CPU_INDEX()]->icenabler0 = BIT(bit);
     } else {
         gic_dist->icenablern[word] = BIT(bit);
+
+        /*
+         * GICD_ICENABLER<n> is special; a completion of a write to this
+         * register does not guarantee that the GIC has observed this write.
+         * The Arm GIC Specification, §12.9.7, GICD_ICENABLER<n> states that
+         * software must poll GICD_CTLR.RWP until it is 0. This is what our
+         * wait_for_rwp() function does.
+         */
+        gicv3_dist_wait_for_rwp();
     }
 
 }
