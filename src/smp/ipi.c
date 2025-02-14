@@ -167,7 +167,13 @@ void generic_ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
     while (mask) {
         int index = wordBits - 1 - clzl(mask);
         if (isBlocking) {
-            big_kernel_lock.node[index].ipi = 1;
+            /*
+             * All writes before setting ipi to 1 must be observed,
+             * as other cores may check the ipi flag at any moment.
+             * IPI_MEM_BARRIER is too late to prevent reordering
+             * between IPI data and flag reads.
+             */
+            __atomic_store_n(&big_kernel_lock.node[index].ipi, 1, __ATOMIC_RELEASE);
             target_cores[nr_target_cores] = index;
             nr_target_cores++;
         } else {
