@@ -52,7 +52,8 @@ BOOT_CODE void clh_lock_init(void);
 
 static inline bool_t FORCE_INLINE clh_is_ipi_pending(word_t cpu)
 {
-    return big_kernel_lock.node[cpu].ipi == 1;
+    /* Asssure IPI data is accessed only when this flag is set */
+    return __atomic_load_n(&big_kernel_lock.node[cpu].ipi, __ATOMIC_ACQUIRE);
 }
 
 static inline void FORCE_INLINE clh_lock_acquire(bool_t irqPath)
