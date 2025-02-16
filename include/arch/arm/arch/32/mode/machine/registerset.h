@@ -100,9 +100,13 @@ enum _register {
     /* user readable/writable thread ID register.
      * name comes from the ARM manual */
     TPIDRURW = 18,
-    TLS_BASE = TPIDRURW,
     /* user readonly thread ID register. */
     TPIDRURO = 19,
+#ifdef CONFIG_ARM_TLS_REG_TPIDRU
+    TLS_BASE = TPIDRURW,
+#elif defined(CONFIG_ARM_TLS_REG_TPIDRURO)
+    TLS_BASE = TPIDRURO,
+#endif
     n_contextRegisters = 20,
 };
 
