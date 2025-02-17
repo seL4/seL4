@@ -1,0 +1,33 @@
+/*
+ * Copyright 2025, UNSW
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+    reserved-memory {
+        /delete-node/ linux,cma;
+    };
+
+    chosen {
+        seL4,kernel-devices =
+            &{/soc/clint@2000000},
+            &{/soc/interrupt-controller@c000000};
+    };
+
+    /* 16GiB of main memory */
+    memory@80000000 {
+        reg = <0x00 0x80000000 0x04 0x00>;
+    };
+
+    /*
+     * According to the EIC7700X SoC manual the CLINT is mapped from
+     * 0x0200_0000 to 0x0200_C000.
+     */
+    soc {
+        clint@2000000 {
+            compatible = "riscv,cpu-intc";
+            reg = <0x00000000 0x2000000 0x00000000 0x00000c000>;
+        };
+    };
+};
