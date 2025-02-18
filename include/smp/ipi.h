@@ -14,21 +14,18 @@
 #ifdef ENABLE_SMP_SUPPORT
 #define MAX_IPI_ARGS    3   /* Maximum number of parameters to remote function */
 
+struct ipi_args {
+    word_t remoteCall;          // IPI remote call type
+    word_t args[MAX_IPI_ARGS];  // IPI remote call args
+    word_t totalCoreBarrier;    // Number of cores involved
+};
+
 static volatile struct {
     word_t count;
     word_t globalsense;
 
     PAD_TO_NEXT_CACHE_LN(sizeof(word_t) + sizeof(word_t));
 } ipiSyncBarrier = {0};                  /* IPI barrier for remote call synchronization */
-
-static volatile word_t totalCoreBarrier; /* number of cores involved in IPI 'in progress' */
-static word_t ipi_args[MAX_IPI_ARGS];    /* data to be passed to the remote call function */
-
-static inline word_t get_ipi_arg(word_t n)
-{
-    assert(n < MAX_IPI_ARGS);
-    return ipi_args[n];
-}
 
 static inline void ipi_wait(word_t cores)
 {
