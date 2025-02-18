@@ -340,6 +340,7 @@ BOOT_CODE void initL2Cache(void)
     /* Direct register access */
     l2cc->control.control |= CTRL_CTRL_EN;
 #endif /* TI_MSHIELD */
+    dsb();
 
 #if defined(CONFIG_ARM_CORTEX_A9) && defined(CONFIG_ENABLE_A9_PREFETCHER)
     /* Set bit 1 in the ACTLR, which on the cortex-a9 is the l2 prefetch enable
@@ -355,11 +356,14 @@ static inline void L2_cacheSync(void)
     dmb();
     l2cc->maintenance.cache_sync = 0;
     while (l2cc->maintenance.cache_sync & MAINTENANCE_PENDING);
+    dsb();
 }
 
 void plat_cleanInvalidateL2Cache(void)
 {
     if (!config_set(CONFIG_DEBUG_DISABLE_L2_CACHE)) {
+        /* Avoid normal memory writes being re-ordered with device memory writes */
+        dmb();
         l2cc->maintenance.clean_way = 0xffff;
         while (l2cc->maintenance.clean_way);
         L2_cacheSync();
@@ -372,6 +376,7 @@ void plat_cleanInvalidateL2Cache(void)
 void plat_cleanCache(void)
 {
 #ifndef CONFIG_DEBUG_DISABLE_L2_CACHE
+    dmb();
     /* Clean by way. */
     l2cc->maintenance.clean_way = 0xffff;
     while (l2cc->maintenance.clean_way & 0xffff);
@@ -385,6 +390,7 @@ void plat_cleanL2Range(paddr_t start, paddr_t end)
     /* Documentation specifies this as the only possible line size */
     assert(((l2cc->id.cache_type >> 12) & 0x3) == 0x0);
 
+    dmb();
     for (start = L2_LINE_START(start);
          start != L2_LINE_START(end + L2_LINE_SIZE);
          start += L2_LINE_SIZE) {
@@ -401,9 +407,9 @@ void plat_invalidateL2Range(paddr_t start, paddr_t end)
     /* Documentation specifies this as the only possible line size */
     assert(((l2cc->id.cache_type >> 12) & 0x3) == 0x0);
 
+    dmb();
     /* We assume that if this is a partial line that whoever is calling us
      * has already done the clean, so we just blindly invalidate all the lines */
-
     for (start = L2_LINE_START(start);
          start != L2_LINE_START(end + L2_LINE_SIZE);
          start += L2_LINE_SIZE) {
@@ -420,6 +426,7 @@ void plat_cleanInvalidateL2Range(paddr_t start, paddr_t end)
     /* Documentation specifies this as the only possible line size */
     assert(((l2cc->id.cache_type >> 12) & 0x3) == 0x0);
 
+    dmb();
     for (start = L2_LINE_START(start);
          start != L2_LINE_START(end + L2_LINE_SIZE);
          start += L2_LINE_SIZE) {
