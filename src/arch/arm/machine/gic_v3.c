@@ -123,7 +123,7 @@ static void gicv3_redist_wait_for_rwp(void)
 
 static void gicv3_enable_sre(void)
 {
-    uint32_t val = 0;
+    word_t val = 0;
 
     /* ICC_SRE_EL1 */
     SYSTEM_READ_WORD(ICC_SRE_EL1, val);
@@ -265,7 +265,7 @@ BOOT_CODE static void gicr_init(void)
 
 BOOT_CODE static void cpu_iface_init(void)
 {
-    uint32_t icc_ctlr = 0;
+    word_t icc_ctlr = 0;
 
     /* Enable system registers */
     gicv3_enable_sre();
