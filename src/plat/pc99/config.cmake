@@ -12,6 +12,12 @@ if(KernelPlatPC99)
     declare_seL4_arch(x86_64 ia32)
 endif()
 
+if(KernelVGAPrinting)
+    set(putchar_dev vga)
+else()
+    set(putchar_dev com)
+endif()
+
 add_sources(
     DEP "KernelPlatPC99"
     PREFIX src/plat/pc99/machine
@@ -21,7 +27,7 @@ add_sources(
         pic.c
         ioapic.c
         pit.c
-        io.c
+        dev/${putchar_dev}/io.c
         intel-vtd.c
 )
 
