@@ -71,13 +71,6 @@ static inline void *sel4_atomic_exchange(void *ptr, bool_t
     while (!try_arch_atomic_exchange_rlx(&big_kernel_lock.head,
                                          (void *) big_kernel_lock.node_owners[cpu].node,
                                          (void **) &prev)) {
-        if (clh_is_ipi_pending(cpu)) {
-            /* we only handle irq_remote_call_ipi here as other type of IPIs
-             * are async and could be delayed. 'handleIPI' may not return
-             * based on value of the 'irqPath'. */
-            handleIPI(CORE_IRQ_TO_IRQT(cpu, irq_remote_call_ipi), irqPath);
-        }
-
         arch_pause();
     }
 
