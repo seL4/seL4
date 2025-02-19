@@ -128,12 +128,10 @@ void generic_ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
         int index = wordBits - 1 - clzl(mask);
         if (isBlocking) {
             big_kernel_lock.node_owners[index].ipi = 1;
-            target_cores[nr_target_cores] = index;
-            nr_target_cores++;
-        } else {
-            IPI_MEM_BARRIER;
-            ipi_send_target(ipi, cpuIndexToID(index));
         }
+        target_cores[nr_target_cores] = index;
+        nr_target_cores++;
+
         mask &= ~BIT(index);
     }
 
