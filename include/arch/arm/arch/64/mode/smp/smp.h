@@ -12,10 +12,6 @@
 
 #ifdef ENABLE_SMP_SUPPORT
 
-#define LD_EX               "ldxr "
-#define ST_EX               "stxr "
-#define OP_WIDTH            "w"
-
 extern char kernel_stack_alloc[CONFIG_MAX_NUM_NODES][BIT(CONFIG_KERNEL_STACK_BITS)];
 compile_assert(kernel_stack_4k_aligned, KERNEL_STACK_ALIGNMENT == 4096)
 
