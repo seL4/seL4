@@ -218,6 +218,18 @@ config_option(
     DEPENDS "NOT KernelVerificationBuild; KernelSel4ArchAarch64"
 )
 
+config_choice(
+    KernelArmTLSReg
+    ARM_TLS_REG
+    "Which TLS register is used by "
+    "tpidru;KernelArmTLSRegTPIDRU;ARM_TLS_REG_TPIDRU;KernelArchARM"
+    "tpidruro;KernelArmTLSRegTPIDRURO;ARM_TLS_REG_TPIDRURO;KernelArchARM"
+)
+
+if(KernelArmTLSRegTPIDRURO)
+    set(KernelSetTLSBaseSelf ON)
+endif()
+
 if(KernelAArch32FPUEnableContextSwitch OR KernelSel4ArchAarch64)
     set(KernelHaveFPU ON)
 endif()
