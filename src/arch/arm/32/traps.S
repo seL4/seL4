@@ -114,6 +114,7 @@ BEGIN_FUNC(arm_prefetch_abort_exception)
 kernel_prefetch_fault:
 #ifdef CONFIG_DEBUG_BUILD
     mov r0, r8
+    mov r1, lr
     mrc p15, 0, sp, c13, c0, 4
     blx kernelPrefetchAbort
     /* Fallthrough to infinite loop should we foolishly return. */
