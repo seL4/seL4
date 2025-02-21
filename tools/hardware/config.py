@@ -90,16 +90,13 @@ class RISCVConfig(Config):
         ''' Currently the RISC-V port expects physBase to be the address that the
         bootloader is loaded at. To be generalised in the future. '''
         ret = sorted(regions)
-        extra_reserved = set()
 
         physBase = ret[0].base
 
-        resv = Region(ret[0].base, self.get_bootloader_reserve())
-        extra_reserved.add(resv)
         ret[0].base += self.get_bootloader_reserve()
         ret[0].size -= self.get_bootloader_reserve()
 
-        return ret, extra_reserved, physBase
+        return ret, set(), physBase
 
     def get_device_page_bits(self) -> int:
         ''' Get page size in bits for mapping devices for this arch '''
