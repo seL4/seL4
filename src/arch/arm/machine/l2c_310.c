@@ -364,16 +364,21 @@ static inline void L2_cacheSync(void)
     dsb();
 }
 
+/*
+ * Errata 727915 applies for PL310 revisions r2p0, r3p0, fixed in r3p1.
+ * i.MX6 has r3p1, so is not affected.
+ * If a new write arrives during the clean & invalidate operation,
+ * there is a small chance it will get lost.
+ * The same is true when doing separate clean and invalidate operations,
+ * hence that is not a proper work-around and worse than the errata.
+ */
 void plat_cleanInvalidateL2Cache(void)
 {
     if (!config_set(CONFIG_DEBUG_DISABLE_L2_CACHE)) {
         /* Avoid normal memory writes being reordered with device memory writes */
         dmb();
-        l2cc->maintenance.clean_way = 0xffff;
-        while (l2cc->maintenance.clean_way);
-        L2_cacheSync();
-        l2cc->maintenance.inv_way = 0xffff;
-        while (l2cc->maintenance.inv_way);
+        l2cc->maintenance.clean_inv_way = 0xffff;
+        while (l2cc->maintenance.clean_inv_way);
         L2_cacheSync();
     }
 }
@@ -439,10 +444,7 @@ void plat_cleanInvalidateL2Range(paddr_t start, paddr_t end)
     for (start = L2_LINE_START(start);
          start != L2_LINE_START(end + L2_LINE_SIZE);
          start += L2_LINE_SIZE) {
-        /* Work around an errata and call the clean and invalidate separately */
-        l2cc->maintenance.clean_pa = start;
-        dmb();
-        l2cc->maintenance.inv_pa = start;
+        l2cc->maintenance.clean_inv_pa = start;
         /* do not need to wait for every invalidate as 310 is atomic */
     }
     L2_cacheSync();
