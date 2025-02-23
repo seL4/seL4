@@ -23,7 +23,6 @@ void VISIBLE NORETURN restore_user_context(void)
 {
     word_t cur_thread_reg = (word_t) NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers;
     c_exit_hook();
-    NODE_UNLOCK_IF_HELD;
 
 #ifdef ENABLE_SMP_SUPPORT
     word_t sp = read_sscratch();
@@ -36,6 +35,8 @@ void VISIBLE NORETURN restore_user_context(void)
     lazyFPURestore(NODE_STATE(ksCurThread));
     set_tcb_fs_state(NODE_STATE(ksCurThread), isFpuEnable());
 #endif
+
+    NODE_UNLOCK_IF_HELD;
 
     asm volatile(
         "mv t0, %[cur_thread]       \n"
