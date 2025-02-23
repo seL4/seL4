@@ -67,7 +67,7 @@ SECTIONS
 #if defined(CONFIG_ARCH_AARCH32) && !defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
         /* 4k abort stack, needed for PMODE_ABORT on ARM32 */
         _abort_stack_bottom = .;
-        . = . + 4K;
+        . = . + 4K * CONFIG_MAX_NUM_NODES;
         _abort_stack_top = .;
 #endif
 
