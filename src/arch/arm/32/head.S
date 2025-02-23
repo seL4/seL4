@@ -130,7 +130,7 @@ BEGIN_FUNC(_start)
       * On ARM SMP, kernel_stack_alloc is indexed by CPU ID
       * to get different stacks for each core
       */
-    ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
+    ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS) - 8
 
 #ifdef ENABLE_SMP_SUPPORT
     /*
