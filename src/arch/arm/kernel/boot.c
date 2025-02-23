@@ -34,7 +34,7 @@
  * spinning until the primary core has initialized all kernel structures and
  * then set it to 1.
  */
-BOOT_BSS static volatile int node_boot_lock;
+BOOT_BSS static volatile _Atomic int node_boot_lock;
 #endif /* ENABLE_SMP_SUPPORT */
 
 BOOT_BSS static region_t reserved[NUM_RESERVED_REGIONS];
