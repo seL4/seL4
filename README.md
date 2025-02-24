@@ -37,7 +37,7 @@ system in a larger project.
   [3]: https://docs.sel4.systems/processes/contributing.html
   [4]: https://zenodo.org/badge/DOI/10.5281/zenodo.591727.svg
   [5]: https://sel4.systems/Info/Docs/seL4-manual-latest.pdf
-  [6]: https://docs.sel4.systems/GettingStarted
+  [6]: https://docs.sel4.systems/Resources#setting-up-your-machine
   [7]: https://docs.sel4.systems/releases/sel4
   [8]: https://docs.sel4.systems/projects/sel4/api-doc.html
 

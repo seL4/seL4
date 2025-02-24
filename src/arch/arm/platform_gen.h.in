@@ -16,7 +16,7 @@
 
 enum IRQConstants {
     maxIRQ                      = @CONFIGURE_MAX_IRQ@
-} platform_interrupt_t;
+};
 
 #define IRQ_CNODE_SLOT_BITS (@CONFIGURE_IRQ_SLOT_BITS@)
 
