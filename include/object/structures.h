@@ -249,6 +249,9 @@ struct tcb {
     /* Thread state, 3 words */
     thread_state_t tcbState;
 
+    /* Currently only used for seL4_TCBFlag_fpuDisabled */
+    word_t flags; /* seL4_TCBFlag */
+
     /* Notification that this TCB is bound to. If this is set, when this TCB waits on
      * any sync endpoint, it may receive a signal from a Notification object.
      * 1 word*/
@@ -298,9 +301,6 @@ struct tcb {
     /* Preivous and next pointers for endpoint and notification queues, 2 words */
     struct tcb *tcbEPNext;
     struct tcb *tcbEPPrev;
-
-    /* Currently only used for seL4_TCBFlag_fpuDisabled */
-    seL4_TCBFlag flags;
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
     /* 16 bytes (12 bytes aarch32) */
