@@ -266,18 +266,24 @@ typedef struct user_fpu_state {
  */
 struct user_context {
     word_t registers[n_contextRegisters];
+#ifdef CONFIG_HAVE_FPU
+    word_t _padding;
+    user_fpu_state_t fpuState;
+#endif /* CONFIG_HAVE_FPU */
 #ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
     user_breakpoint_state_t breakpointState;
 #endif /* ARM_BASE_CP14_SAVE_AND_RESTORE */
-#ifdef CONFIG_HAVE_FPU
-    user_fpu_state_t fpuState;
-#endif /* CONFIG_HAVE_FPU */
 };
 typedef struct user_context user_context_t;
 
 unverified_compile_assert(registers_are_first_member_of_user_context,
                           OFFSETOF(user_context_t, registers) == 0)
 
+#ifdef CONFIG_HAVE_FPU
+/* Aligning saves one cycle per LDP/STP instruction: */
+unverified_compile_assert(vregs_are_16_bytes_aligned,
+                          OFFSETOF(user_context_t, fpuState) % 16 == 0)
+#endif
 
 #ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
 void Arch_initBreakpointContext(user_context_t *context);

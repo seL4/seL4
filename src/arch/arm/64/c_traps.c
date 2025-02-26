@@ -26,10 +26,6 @@ void VISIBLE NORETURN restore_user_context(void)
     restore_user_debug_context(NODE_STATE(ksCurThread));
 #endif
 
-#ifdef CONFIG_HAVE_FPU
-    lazyFPURestore(NODE_STATE(ksCurThread));
-#endif /* CONFIG_HAVE_FPU */
-
     asm volatile(
         "mov     sp, %0                     \n"
 
