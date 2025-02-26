@@ -4,8 +4,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-cmake_minimum_required(VERSION 3.7.2)
-
 # We introduce a variable to hold this long expression to prevent the
 # code styler from line-wrapping the declare_platform() statement.  We
 # want to keep that on one line so the `griddle` tool (or humans) can
