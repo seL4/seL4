@@ -848,6 +848,11 @@ static inline bool_t vcpu_reg_saved_when_disabled(word_t field)
 {
     switch (field) {
     case seL4_VCPUReg_SCTLR:
+    case seL4_VCPUReg_CNTV_CTL:
+    case seL4_VCPUReg_CNTV_CVALhigh:
+    case seL4_VCPUReg_CNTV_CVALlow:
+    case seL4_VCPUReg_CNTVOFFhigh:
+    case seL4_VCPUReg_CNTVOFFlow:
         return true;
     default:
         return false;

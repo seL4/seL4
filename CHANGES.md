@@ -37,6 +37,18 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
   `set(KernelArmDisableWFIWFETraps ON)`
   to your project settings to get the same configuration as before if you are using `tqma8xqp1gb`.
 
+#### Arm
+
+* Fixed: under some circumstances, writes by a VMM to VCPU timer registers could have been reverted by the kernel to
+  their previous state. This was triggered when:
+
+  * a VCPU thread was running,
+  * the VCPU was then disabled but remained active by switching to a non-VCPU thread,
+  * that VCPU thread had the VCPU cap and performed the timer register writes,
+  * and execution then switched back to the VCPU thread.
+
+  This was found by Alison Felizzi and independently by Ryan Barry during the integrity proofs for AArch64 hyp mode.
+
 ### Upgrade Notes
 
 ---
