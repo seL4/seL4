@@ -17,7 +17,7 @@ on:
 jobs:
   sel4test:
     name: seL4Test
-    uses: seL4/ci-actions/.github/workflows/sel4test-hw.yml@master
+    uses: seL4/ci-actions/.github/workflows/sel4test-hw.yml@smp-tests
     secrets: inherit
 
   sel4bench:
