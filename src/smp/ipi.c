@@ -21,68 +21,97 @@
  * or this call will idle forever */
 void ipiStallCoreCallback(bool_t irqPath)
 {
-    if (clh_is_self_in_queue() && !irqPath) {
-        /* The current thread is running as we would replace this thread with an idle thread
-         *
-         * The instruction should be re-executed if we are in kernel to handle syscalls.
-         * Also, thread in 'ThreadState_RunningVM' should remain in same state.
-         * Note that, 'ThreadState_Restart' does not always result in regenerating exception
-         * if we are in kernel to handle them, e.g. hardware single step exception. */
-        if (thread_state_ptr_get_tsType(&NODE_STATE(ksCurThread)->tcbState) == ThreadState_Running) {
-            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        }
+    // ipiStallCore can only be called for a single core at a time to be able to assume
+    // kernel mutual exclusion as the caller node is blocked until this stall completes
+    // and all other nodes are out of the kernel or blocked on the lock.
+    assert(totalCoreBarrier == 1);
 
-        SCHED_ENQUEUE_CURRENT_TCB;
-        switchToIdleThread();
-#ifdef CONFIG_KERNEL_MCS
-        commitTime();
-        NODE_STATE(ksCurSC) = NODE_STATE(ksIdleThread)->tcbSchedContext;
-#endif
-        NODE_STATE(ksSchedulerAction) = SchedulerAction_ResumeCurrentThread;
+    // There's 3 ways that this function can be called:
+    // - On the IRQ path where the lock isn't acquired
+    // - On the IRQ path where the lock is attempted to be acquired
+    // - On the non-IRQ path where the lock is attempted to be acquired
+    // !irqPath implies clh_is_self_in_queue()
+    assert(clh_is_self_in_queue() || irqPath);
 
-        /* Let the cpu requesting this IPI to continue while we waiting on lock */
-        big_kernel_lock.node_owners[getCurrentCPUIndex()].ipi = 0;
-#ifdef CONFIG_ARCH_RISCV
-        ipi_clear_irq(irq_remote_call_ipi);
-#endif
-        ipi_wait(totalCoreBarrier);
-
-        /* Continue waiting on lock */
-        while (big_kernel_lock.node_owners[getCurrentCPUIndex()].next->value != CLHState_Granted) {
-            if (clh_is_ipi_pending(getCurrentCPUIndex())) {
-
-                /* Multiple calls for similar reason could result in stack overflow */
-                assert((IpiRemoteCall_t)remoteCall != IpiRemoteCall_Stall);
-                handleIPI(CORE_IRQ_TO_IRQT(getCurrentCPUIndex(), irq_remote_call_ipi), irqPath);
-            }
-            arch_pause();
-        }
-
-        /* make sure no resource access passes from this point */
-        asm volatile("" ::: "memory");
-
-        /* Start idle thread to capture the pending IPI */
-        activateThread();
-        restore_user_context();
-    } else {
-        /* We get here either without grabbing the lock from normal interrupt path or from
-         * inside the lock while waiting to grab the lock for handling pending interrupt.
-         * In latter case, we return to the 'clh_lock_acquire' to grab the lock and
-         * handle the pending interrupt. Its valid as interrups are async events! */
-        SCHED_ENQUEUE_CURRENT_TCB;
-        switchToIdleThread();
-#ifdef CONFIG_KERNEL_MCS
-        commitTime();
-        NODE_STATE(ksCurSC) = NODE_STATE(ksIdleThread)->tcbSchedContext;
-#endif
-        NODE_STATE(ksSchedulerAction) = SchedulerAction_ResumeCurrentThread;
+    /* The current thread is running as we would replace this thread with an idle thread
+     *
+     * The instruction should be re-executed if we are in kernel to handle syscalls.
+     * Also, thread in 'ThreadState_RunningVM' should remain in same state.
+     * Note that, 'ThreadState_Restart' does not always result in regenerating exception
+     * if we are in kernel to handle them, e.g. hardware single step exception. */
+    if (!irqPath && thread_state_ptr_get_tsType(&NODE_STATE(ksCurThread)->tcbState) == ThreadState_Running) {
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     }
+#ifdef CONFIG_KERNEL_MCS
+    updateTimestamp();
+#endif
+    if (config_ternary(CONFIG_KERNEL_MCS, checkBudget(),1)) {
+        SCHED_ENQUEUE_CURRENT_TCB;
+    }
+    switchToIdleThread();
+    NODE_STATE(ksSchedulerAction) = SchedulerAction_ResumeCurrentThread;
+    doMaskReschedule(ARCH_NODE_STATE(ipiReschedulePending));
+    ARCH_NODE_STATE(ipiReschedulePending) = 0;
+
+#ifdef CONFIG_KERNEL_MCS
+    switchSchedContext();
+    NODE_STATE(ksReprogram) = false;
+#endif
+
+    if (irqPath) {
+        return;
+    }
+
+    /* Let the cpu requesting this IPI to continue while we waiting on lock */
+    big_kernel_lock.node_owners[getCurrentCPUIndex()].ipi = 0;
+#ifdef CONFIG_ARCH_RISCV
+    ipi_clear_irq(irq_remote_call_ipi);
+#endif
+    ipi_wait(totalCoreBarrier);
+
+    /* Continue waiting on lock */
+    while (big_kernel_lock.node_owners[getCurrentCPUIndex()].next->value != CLHState_Granted) {
+        if (clh_is_ipi_pending(getCurrentCPUIndex())) {
+
+            /* Multiple calls for similar reason could result in stack overflow */
+            assert((IpiRemoteCall_t)remoteCall != IpiRemoteCall_Stall);
+            handleIPI(CORE_IRQ_TO_IRQT(getCurrentCPUIndex(), irq_remote_call_ipi), irqPath);
+        }
+        arch_pause();
+    }
+
+    /* make sure no resource access passes from this point */
+    __atomic_thread_fence(__ATOMIC_ACQUIRE);
+
+    /* Start idle thread to capture the pending IPI */
+    activateThread();
+    restore_user_context();
+    // No return from restore_user_context()
 }
 
 void handleIPI(irq_t irq, bool_t irqPath)
 {
     if (IRQT_TO_IRQ(irq) == irq_remote_call_ipi) {
         handleRemoteCall(remoteCall, get_ipi_arg(0), get_ipi_arg(1), get_ipi_arg(2), irqPath);
+        if (irqPath) {
+#ifdef CONFIG_KERNEL_MCS
+            assert(!NODE_STATE(ksCurThread)->tcbYieldTo);
+            assert(NODE_STATE(ksReprogram) == false);
+#endif
+            assert(NODE_STATE(ksSchedulerAction) == SchedulerAction_ResumeCurrentThread);
+            assert(ARCH_NODE_STATE(ipiReschedulePending) == 0);
+            switch (thread_state_get_tsType(NODE_STATE(ksCurThread)->tcbState)) {
+                case ThreadState_Running:
+                case ThreadState_IdleThreadState:
+            #ifdef CONFIG_VTX
+                case ThreadState_RunningVM:
+            #endif
+            break;
+            default:
+                fail("Current thread is blocked");
+
+            }
+        }
     } else if (IRQT_TO_IRQ(irq) == irq_reschedule_ipi) {
         rescheduleRequired();
 #ifdef CONFIG_ARCH_RISCV
