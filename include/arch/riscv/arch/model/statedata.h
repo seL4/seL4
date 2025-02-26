@@ -28,7 +28,7 @@ extern asid_pool_t *riscvKSASIDTable[BIT(asidHighBits)];
 extern pte_t kernel_root_pageTable[BIT(PT_INDEX_BITS)] VISIBLE;
 
 /* We need to introduce a level 1 page table in order to map OpenSBI into
-   a separate 2MiB page to avoid a PMP exception */
+   a separate 2MiB page to avoid a PMP exception. See map_kernel_window() */
 #if __riscv_xlen != 32
 extern pte_t kernel_image_level1_pt[BIT(PT_INDEX_BITS)];
 extern pte_t kernel_image_level1_dev_pt[BIT(PT_INDEX_BITS)];

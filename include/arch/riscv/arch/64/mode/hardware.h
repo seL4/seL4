@@ -30,14 +30,16 @@
  *                   +-----------------------------+ 2^64
  *                   |        Kernel Devices       |
  *                -> +-------------------KDEV_BASE-+ 2^64 - 1GiB
- *                |  |         Kernel ELF          |
- *            ----|  +-------------KERNEL_ELF_BASE-+ --+ 2^64 - 2GiB + (KERNEL_ELF_PADDR_BASE % 1GiB)
+ *                |  |                             |
+ *                |  +--------------KERNEL_ELF_TOP-+
+ *            --->|  |         Kernel ELF          |
+ *            |   |  +-------------KERNEL_ELF_BASE-+ --+ 2^64 - 2GiB + (KERNEL_ELF_PADDR_BASE % 1GiB)
  *            |   |  |                             |
  *            |   -> +--------------------PPTR_TOP-+ --+ 2^64 - 2GiB
  * Shared 1GiB|      |                             |   |
  * table entry|      |           PSpace            |   |
  *            |      |  (direct kernel mappings)   |   +----+
- *            ------>|                             |   |    |
+ *            ------>|=============================|   |    |
  *                   |                             |   |    |
  *                   +-------------------PPTR_BASE-+ --+ 2^64 - 2^b
  *                   |                             |        |         +-------------------------+
