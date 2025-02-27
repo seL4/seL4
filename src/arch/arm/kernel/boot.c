@@ -34,7 +34,7 @@
  * spinning until the primary core has initialized all kernel structures and
  * then set it to 1.
  */
-BOOT_BSS static volatile int node_boot_lock;
+BOOT_BSS static volatile _Atomic int node_boot_lock;
 #endif /* ENABLE_SMP_SUPPORT */
 
 BOOT_BSS static region_t reserved[NUM_RESERVED_REGIONS];
@@ -206,9 +206,14 @@ BOOT_CODE static bool_t init_cpu(void)
      * On ARM SMP, the array index here is the CPU ID
      */
     word_t stack_top = ((word_t) kernel_stack_alloc[CURRENT_CPU_INDEX()]) + BIT(CONFIG_KERNEL_STACK_BITS);
-#if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_ARCH_AARCH64)
+#ifdef ENABLE_SMP_SUPPORT
+#ifdef CONFIG_ARCH_AARCH64
     /* the least 12 bits are used to store logical core ID */
     stack_top |= getCurrentCPUIndex();
+#elif defined(CONFIG_ARCH_AARCH32)
+    /* Stack address encodes core ID, ensure it is in the right region */
+    stack_top -= 8;
+#endif
 #endif
     setKernelStack(stack_top);
 

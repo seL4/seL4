@@ -4,7 +4,7 @@
 
 # Deploy default.xml to sel4test-manifest after successful runs.
 
-name: seL4Test
+name: Deploy
 
 on:
   push:

@@ -130,7 +130,7 @@ BEGIN_FUNC(_start)
       * On ARM SMP, kernel_stack_alloc is indexed by CPU ID
       * to get different stacks for each core
       */
-    ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
+    ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS) - 8
 
 #ifdef ENABLE_SMP_SUPPORT
     /*
@@ -146,18 +146,27 @@ BEGIN_FUNC(_start)
     add     sp, sp, r5
 #endif /* ENABLE_SMP_SUPPORT */
 
+    /* Hyp kernel always run in Hyp mode. */
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
+    /* Initialise ABORT stack pointer.
+     * For ARM, the `sp' register is banked between PMODEs, so we configure
+     * a stack for when we take a exception (see traps.S, where we then switch
+     * modes and load the real kernel stack). */
+    cps #PMODE_ABORT
+    ldr sp, =_abort_stack_top
+#ifdef ENABLE_SMP_SUPPORT
+    /* Give each core its own abort stack */
+    ldr     r5, =4096
+    mul     r5, r4
+    add     sp, sp, r5
+#endif
+    cps #PMODE_SUPERVISOR
+#endif
+
     /* Attempt to workaround any known ARM errata. */
     push {r0-r3,r7-r8}
     blx arm_errata
     pop {r0-r3,r7-r8}
-
-    /* Hyp kernel always run in Hyp mode. */
-#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
-    /* Initialise ABORT stack pointer */
-    cps #PMODE_ABORT
-    ldr sp, =_breakpoint_stack_top
-    cps #PMODE_SUPERVISOR
-#endif
 
     /* Put the DTB address back on the new stack for init_kernel. */
     push {r7, r8}

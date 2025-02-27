@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-cmake_minimum_required(VERSION 3.7.2)
+cmake_minimum_required(VERSION 3.16.0)
 
 # Set the cmake compilation flags with kernel base flags
 # This allows, for example, user compilation to ensure they are building for the same

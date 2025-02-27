@@ -12,7 +12,7 @@ import logging
 import pyfdt.pyfdt
 
 from jinja2 import Environment, BaseLoader
-from typing import List
+from typing import Dict, List
 
 from hardware import config, device, fdt
 from hardware.utils import cpu, memory, rule
@@ -140,7 +140,7 @@ def get_elfloader_cpus(tree: fdt.FdtParser, devices: List[device.WrappedNode]) -
     return sorted(cpu_info, key=lambda a: a['cpuid'])
 
 
-def run(tree: fdt.FdtParser, hardware: rule.HardwareYaml, config: config.Config, args: argparse.Namespace):
+def run(tree: fdt.FdtParser, hardware: rule.HardwareYaml, config: config.Config, kernel_config_dict: Dict[str, str], args: argparse.Namespace):
     devices = tree.get_elfloader_devices()
     cpu_info = get_elfloader_cpus(tree, devices)
 

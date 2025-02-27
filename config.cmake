@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-cmake_minimum_required(VERSION 3.7.2)
+cmake_minimum_required(VERSION 3.16.0)
 
 config_option(
     KernelIsMCS KERNEL_MCS "Use the MCS kernel configuration, which is not verified."
@@ -102,133 +102,6 @@ if(NOT "${KernelCustomDTS}" STREQUAL "")
     # Override list to hold only custom dts
     set(KernelDTSList "${KernelCustomDTS}")
     message(STATUS "Using custom ${KernelCustomDTS} device tree, ignoring default dts and overlays")
-endif()
-
-if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
-    set(KernelDTSIntermediate "${CMAKE_CURRENT_BINARY_DIR}/kernel.dts")
-    set(
-        KernelDTBPath "${CMAKE_CURRENT_BINARY_DIR}/kernel.dtb"
-        CACHE INTERNAL "Location of kernel DTB file"
-    )
-    set(compatibility_outfile "${CMAKE_CURRENT_BINARY_DIR}/kernel_compat.txt")
-    set(device_dest "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/devices_gen.h")
-    set(
-        platform_yaml "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/platform_gen.yaml"
-        CACHE INTERNAL "Location of platform YAML description"
-    )
-    set(
-        platform_json "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/platform_gen.json"
-        CACHE INTERNAL "Location of platform JSON description"
-    )
-    set(config_file "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware.yml")
-    set(config_schema "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware_schema.yml")
-    set(
-        KernelCustomDTSOverlay ""
-        CACHE
-            STRING
-            "Provide an additional list of overlays to append to the selected KernelPlatform's \
-        device tree during build time"
-    )
-    if(NOT "${KernelCustomDTSOverlay}" STREQUAL "")
-        foreach(dts_entry IN ITEMS ${KernelCustomDTSOverlay})
-            if(NOT EXISTS ${dts_entry})
-                message(FATAL_ERROR "Can't open external overlay file '${dts_entry}'!")
-            endif()
-            list(APPEND KernelDTSList "${dts_entry}")
-            message(STATUS "Appending ${dts_entry} overlay")
-        endforeach()
-    endif()
-
-    find_program(DTC_TOOL dtc)
-    if("${DTC_TOOL}" STREQUAL "DTC_TOOL-NOTFOUND")
-        message(FATAL_ERROR "Cannot find 'dtc' program.")
-    endif()
-    find_program(STAT_TOOL stat)
-    if("${STAT_TOOL}" STREQUAL "STAT_TOOL-NOTFOUND")
-        message(FATAL_ERROR "Cannot find 'stat' program.")
-    endif()
-    mark_as_advanced(DTC_TOOL STAT_TOOL)
-    # Generate final DTS based on Linux DTS + seL4 overlay[s]
-    foreach(entry ${KernelDTSList})
-        get_absolute_source_or_binary(dts_tmp ${entry})
-        list(APPEND dts_list "${dts_tmp}")
-    endforeach()
-
-    check_outfile_stale(regen ${KernelDTBPath} dts_list ${CMAKE_CURRENT_BINARY_DIR}/dts.cmd)
-    if(regen)
-        file(REMOVE "${KernelDTSIntermediate}")
-        foreach(entry ${dts_list})
-            file(READ ${entry} CONTENTS)
-            file(APPEND "${KernelDTSIntermediate}" "${CONTENTS}")
-        endforeach()
-        # Compile DTS to DTB
-        execute_process(
-            COMMAND
-                ${DTC_TOOL} -q -I dts -O dtb -o ${KernelDTBPath} ${KernelDTSIntermediate}
-            RESULT_VARIABLE error
-        )
-        if(error)
-            message(FATAL_ERROR "Failed to compile DTS to DTB: ${KernelDTSIntermediate}")
-        endif()
-        # The macOS and GNU coreutils `stat` utilities have different interfaces.
-        # Check if we're using the macOS version, otherwise assume GNU coreutils.
-        # CMAKE_HOST_APPLE is a built-in CMake variable.
-        if(CMAKE_HOST_APPLE AND "${STAT_TOOL}" STREQUAL "/usr/bin/stat")
-            set(STAT_ARGS "-f%z")
-        else()
-            set(STAT_ARGS "-c '%s'")
-        endif()
-        # Track the size of the DTB for downstream tools
-        execute_process(
-            COMMAND ${STAT_TOOL} ${STAT_ARGS} ${KernelDTBPath}
-            OUTPUT_VARIABLE KernelDTBSize
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-            RESULT_VARIABLE error
-        )
-        if(error)
-            message(FATAL_ERROR "Failed to determine KernelDTBSize: ${KernelDTBPath}")
-        endif()
-        string(
-            REPLACE
-                "\'"
-                ""
-                KernelDTBSize
-                ${KernelDTBSize}
-        )
-        set(KernelDTBSize "${KernelDTBSize}" CACHE INTERNAL "Size of DTB blob, in bytes")
-    endif()
-
-    set(deps ${KernelDTBPath} ${config_file} ${config_schema} ${HARDWARE_GEN_PATH})
-    check_outfile_stale(regen ${device_dest} deps ${CMAKE_CURRENT_BINARY_DIR}/gen_header.cmd)
-    if(regen)
-        # Generate devices_gen header based on DTB
-        message(STATUS "${device_dest} is out of date. Regenerating from DTB...")
-        file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/")
-        execute_process(
-            COMMAND
-                ${PYTHON3} "${HARDWARE_GEN_PATH}" --dtb "${KernelDTBPath}" --compat-strings
-                --compat-strings-out "${compatibility_outfile}" --c-header --header-out
-                "${device_dest}" --hardware-config "${config_file}" --hardware-schema
-                "${config_schema}" --yaml --yaml-out "${platform_yaml}" --sel4arch
-                "${KernelSel4Arch}" --addrspace-max "${KernelPaddrUserTop}" --json --json-out
-                "${platform_json}"
-            RESULT_VARIABLE error
-        )
-        if(error)
-            message(FATAL_ERROR "Failed to generate from DTB: ${device_dest}")
-        endif()
-    endif()
-    file(READ "${compatibility_outfile}" compatibility_strings)
-
-    # Mark all file dependencies as CMake rerun dependencies.
-    set(cmake_deps ${deps} ${KernelDTSIntermediate} ${KernelDTSList} ${compatibility_outfile})
-    set_property(
-        DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-        APPEND
-        PROPERTY CMAKE_CONFIGURE_DEPENDS ${cmake_deps}
-    )
-
-    include(src/drivers/config.cmake)
 endif()
 
 # Enshrine common variables in the config
@@ -521,7 +394,7 @@ config_option(
     Useful for profiling."
     DEFAULT OFF
     DEPENDS
-        "NOT KernelARMHypervisorSupport;NOT KernelVerificationBuild;NOT KernelPlatformHikey;NOT KernelSkimWindow"
+        "NOT KernelArmHypervisorSupport;NOT KernelVerificationBuild;NOT KernelPlatformHikey;NOT KernelSkimWindow"
 )
 
 config_option(
@@ -597,5 +470,134 @@ config_option(
      of __builtin_ctzl and __builtin_ctzll."
     DEFAULT OFF
 )
+
+if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
+    set(KernelDTSIntermediate "${CMAKE_CURRENT_BINARY_DIR}/kernel.dts")
+    set(
+        KernelDTBPath "${CMAKE_CURRENT_BINARY_DIR}/kernel.dtb"
+        CACHE INTERNAL "Location of kernel DTB file"
+    )
+    set(compatibility_outfile "${CMAKE_CURRENT_BINARY_DIR}/kernel_compat.txt")
+    set(device_dest "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/devices_gen.h")
+    set(
+        platform_yaml "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/platform_gen.yaml"
+        CACHE INTERNAL "Location of platform YAML description"
+    )
+    set(
+        platform_json "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/platform_gen.json"
+        CACHE INTERNAL "Location of platform JSON description"
+    )
+    set(config_file "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware.yml")
+    set(config_schema "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware_schema.yml")
+    set(
+        KernelCustomDTSOverlay ""
+        CACHE
+            STRING
+            "Provide an additional list of overlays to append to the selected KernelPlatform's \
+        device tree during build time"
+    )
+    if(NOT "${KernelCustomDTSOverlay}" STREQUAL "")
+        foreach(dts_entry IN ITEMS ${KernelCustomDTSOverlay})
+            if(NOT EXISTS ${dts_entry})
+                message(FATAL_ERROR "Can't open external overlay file '${dts_entry}'!")
+            endif()
+            list(APPEND KernelDTSList "${dts_entry}")
+            message(STATUS "Appending ${dts_entry} overlay")
+        endforeach()
+    endif()
+
+    find_program(DTC_TOOL dtc)
+    if("${DTC_TOOL}" STREQUAL "DTC_TOOL-NOTFOUND")
+        message(FATAL_ERROR "Cannot find 'dtc' program.")
+    endif()
+    find_program(STAT_TOOL stat)
+    if("${STAT_TOOL}" STREQUAL "STAT_TOOL-NOTFOUND")
+        message(FATAL_ERROR "Cannot find 'stat' program.")
+    endif()
+    mark_as_advanced(DTC_TOOL STAT_TOOL)
+    # Generate final DTS based on Linux DTS + seL4 overlay[s]
+    foreach(entry ${KernelDTSList})
+        get_absolute_source_or_binary(dts_tmp ${entry})
+        list(APPEND dts_list "${dts_tmp}")
+    endforeach()
+
+    check_outfile_stale(regen ${KernelDTBPath} dts_list ${CMAKE_CURRENT_BINARY_DIR}/dts.cmd)
+    if(regen)
+        file(REMOVE "${KernelDTSIntermediate}")
+        foreach(entry ${dts_list})
+            file(READ ${entry} CONTENTS)
+            file(APPEND "${KernelDTSIntermediate}" "${CONTENTS}")
+        endforeach()
+        # Compile DTS to DTB
+        execute_process(
+            COMMAND
+                ${DTC_TOOL} -q -I dts -O dtb -o ${KernelDTBPath} ${KernelDTSIntermediate}
+            RESULT_VARIABLE error
+        )
+        if(error)
+            message(FATAL_ERROR "Failed to compile DTS to DTB: ${KernelDTSIntermediate}")
+        endif()
+        # The macOS and GNU coreutils `stat` utilities have different interfaces.
+        # Check if we're using the macOS version, otherwise assume GNU coreutils.
+        # CMAKE_HOST_APPLE is a built-in CMake variable.
+        if(CMAKE_HOST_APPLE AND "${STAT_TOOL}" STREQUAL "/usr/bin/stat")
+            set(STAT_ARGS "-f%z")
+        else()
+            set(STAT_ARGS "-c '%s'")
+        endif()
+        # Track the size of the DTB for downstream tools
+        execute_process(
+            COMMAND ${STAT_TOOL} ${STAT_ARGS} ${KernelDTBPath}
+            OUTPUT_VARIABLE KernelDTBSize
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            RESULT_VARIABLE error
+        )
+        if(error)
+            message(FATAL_ERROR "Failed to determine KernelDTBSize: ${KernelDTBPath}")
+        endif()
+        string(
+            REPLACE
+                "\'"
+                ""
+                KernelDTBSize
+                ${KernelDTBSize}
+        )
+        set(KernelDTBSize "${KernelDTBSize}" CACHE INTERNAL "Size of DTB blob, in bytes")
+    endif()
+
+    set(deps ${KernelDTBPath} ${config_file} ${config_schema} ${HARDWARE_GEN_PATH})
+    check_outfile_stale(regen ${device_dest} deps ${CMAKE_CURRENT_BINARY_DIR}/gen_header.cmd)
+    if(regen)
+        # Generate devices_gen header based on DTB
+        message(STATUS "${device_dest} is out of date. Regenerating from DTB...")
+        file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/")
+        execute_process(
+            COMMAND
+                ${PYTHON3} "${HARDWARE_GEN_PATH}" --dtb "${KernelDTBPath}" --compat-strings
+                --compat-strings-out "${compatibility_outfile}" --c-header --header-out
+                "${device_dest}" --hardware-config "${config_file}" --hardware-schema
+                "${config_schema}" --yaml --yaml-out "${platform_yaml}" --sel4arch
+                "${KernelSel4Arch}" --addrspace-max "${KernelPaddrUserTop}" --json --json-out
+                "${platform_json}" --kernel-config-flags "CONFIG_PRINTING=${KernelPrinting}"
+                "CONFIG_ARM_HYPERVISOR_SUPPORT=${KernelArmHypervisorSupport}"
+                "CONFIG_ARM_SMMU=${KernelArmSMMU}" "CONFIG_TK1_SMMU=${KernelTk1SMMU}"
+            RESULT_VARIABLE error
+        )
+        if(error)
+            message(FATAL_ERROR "Failed to generate from DTB: ${device_dest}")
+        endif()
+    endif()
+    file(READ "${compatibility_outfile}" compatibility_strings)
+
+    # Mark all file dependencies as CMake rerun dependencies.
+    set(cmake_deps ${deps} ${KernelDTSIntermediate} ${KernelDTSList} ${compatibility_outfile})
+    set_property(
+        DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        APPEND
+        PROPERTY CMAKE_CONFIGURE_DEPENDS ${cmake_deps}
+    )
+
+    include(src/drivers/config.cmake)
+endif()
 
 add_config_library(kernel "${configure_string}")

@@ -4,8 +4,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-cmake_minimum_required(VERSION 3.7.2)
-
 declare_platform(omap3 KernelPlatformOMAP3 PLAT_OMAP3 KernelSel4ArchAarch32)
 
 if(KernelPlatformOMAP3)

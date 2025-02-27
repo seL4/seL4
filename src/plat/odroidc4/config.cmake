@@ -4,8 +4,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-cmake_minimum_required(VERSION 3.7.2)
-
 declare_platform(odroidc4 KernelPlatformOdroidc4 PLAT_ODROIDC4 KernelSel4ArchAarch64)
 
 if(KernelPlatformOdroidc4)
@@ -13,7 +11,7 @@ if(KernelPlatformOdroidc4)
     set(KernelArmCortexA55 ON)
     set(KernelArchArmV8a ON)
     config_set(KernelARMPlatform ARM_PLAT odroidc4)
-    set(KernelArmMachFeatureModifiers "+crc" CACHE INTERNAL "")
+    set(KernelArmMachFeatureModifiers "+fp+simd+crc" CACHE INTERNAL "")
     list(APPEND KernelDTSList "tools/dts/odroidc4.dts" "src/plat/odroidc4/overlay-odroidc4.dts")
     # MAX_IRQ is based on the section 7.10.2 of the S905X3 SoC manual
     declare_default_headers(

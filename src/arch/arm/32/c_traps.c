@@ -20,8 +20,6 @@
 /** DONT_TRANSLATE */
 void VISIBLE NORETURN restore_user_context(void)
 {
-    NODE_UNLOCK_IF_HELD;
-
     word_t cur_thread_reg = (word_t) NODE_STATE(ksCurThread);
 
     c_exit_hook();
@@ -33,6 +31,8 @@ void VISIBLE NORETURN restore_user_context(void)
 #ifdef CONFIG_HAVE_FPU
     lazyFPURestore(NODE_STATE(ksCurThread));
 #endif /* CONFIG_HAVE_FPU */
+
+    NODE_UNLOCK_IF_HELD;
 
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         asm volatile(

@@ -4,8 +4,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-cmake_minimum_required(VERSION 3.7.2)
-
 declare_platform(star64 KernelPlatformStar64 PLAT_STAR64 KernelArchRiscV)
 
 if(KernelPlatformStar64)

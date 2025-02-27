@@ -6,8 +6,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-cmake_minimum_required(VERSION 3.7.2)
-
 declare_platform(rocketchip KernelPlatformRocketchip PLAT_ROCKETCHIP KernelArchRiscV)
 
 set(c_configs PLAT_ROCKETCHIP_BASE PLAT_ROCKETCHIP_ZCU102)

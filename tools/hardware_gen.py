@@ -59,7 +59,7 @@ def main(args: argparse.Namespace):
     arg_dict = vars(args)
     for t in sorted(OUTPUTS.keys()):
         if arg_dict[t]:
-            OUTPUTS[t].run(parsed_dt, hw_yaml, cfg, args)
+            OUTPUTS[t].run(parsed_dt, hw_yaml, cfg, kernel_config_dict, args)
 
 
 if __name__ == '__main__':
@@ -75,6 +75,8 @@ if __name__ == '__main__':
                         required=True, type=argparse.FileType('r'))
     parser.add_argument('--sel4arch', help='seL4 architecture to generate for',
                         required=True)
+    parser.add_argument('--kernel-config-flags',
+                        help='List of kernel config params', action='append', nargs='+')
     parser.add_argument('--addrspace-max',
                         help='maximum address that is available as device untyped', type=int, default=32)
 
@@ -84,6 +86,12 @@ if __name__ == '__main__':
     add_task_args(OUTPUTS, parser)
 
     args = parser.parse_args()
+
+    kernel_config_dict = dict()
+    if args.kernel_config_flags:
+        for option in sum(args.kernel_config_flags, []):
+            name, val = option.split('=')
+            kernel_config_dict[name] = val
 
     if args.enable_profiling:
         import cProfile

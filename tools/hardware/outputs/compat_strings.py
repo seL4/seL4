@@ -9,10 +9,11 @@ import argparse
 from hardware.config import Config
 from hardware.fdt import FdtParser
 from hardware.utils.rule import HardwareYaml
+from typing import Dict
 
 
 def run(tree: FdtParser, hw_yaml: HardwareYaml, config: Config,
-        args: argparse.Namespace):
+        kernel_config_dict: Dict[str, str], args: argparse.Namespace):
     if not args.compat_strings_out:
         raise ValueError('You need to specify a compat-strings-out to use compat strings output')
     chosen = tree.get_kernel_devices()

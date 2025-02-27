@@ -4,8 +4,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-cmake_minimum_required(VERSION 3.7.2)
-
 declare_platform(tx1 KernelPlatformTx1 PLAT_TX1 KernelSel4ArchAarch64)
 
 if(KernelPlatformTx1)
