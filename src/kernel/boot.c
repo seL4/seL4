@@ -572,7 +572,7 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
 BOOT_CODE void clock_sync_test(void)
 {
     ticks_t t, t0;
-    ticks_t margin = usToTicks(1) + getTimerPrecision();
+    ticks_t margin = usToTicks(CLOCK_SYNC_DELTA) + getTimerPrecision();
 
     assert(getCurrentCPUIndex() != 0);
     t = NODE_STATE_ON_CORE(ksCurTime, 0);

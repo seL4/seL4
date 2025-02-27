@@ -309,6 +309,14 @@ else()
     message(FATAL_ERROR "unknown KernelArch '${KernelArch}'")
 endif()
 
+if(
+    (CMAKE_C_COMPILER_ID STREQUAL "Clang")
+    AND (CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL "20.0.0")
+)
+    # To avoid clang: error: argument unused during compilation: '-c'
+    add_compile_options(-Wno-unused-command-line-argument)
+endif()
+
 # Sort the C sources to ensure a stable layout of the final C file
 list(SORT c_sources)
 # Add the domain schedule now that its sorted
