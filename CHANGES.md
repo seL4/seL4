@@ -48,6 +48,7 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 * Change fault based FPU context switching to a TCB flag based approach:
   New system call `seL4_TCB_SetFlags` and new flag `seL4_TCBFlag_fpuDisabled`.
   See [RFC-18](https://sel4.github.io/rfcs/implemented/0180-fpu-switching.html).
+* Multiple SMP related bugs fixed.
 
 ### Platforms
 
