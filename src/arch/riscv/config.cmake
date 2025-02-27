@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-cmake_minimum_required(VERSION 3.7.2)
+cmake_minimum_required(VERSION 3.16.0)
 
 config_string(
     KernelPTLevels PT_LEVELS "Number of page \
@@ -17,13 +17,18 @@ config_string(
 
 config_option(
     KernelRiscvExtF RISCV_EXT_F "RISC-V extension for single-precision floating-point"
-    DEFAULT OFF
+    DEFAULT ON
     DEPENDS "KernelArchRiscV"
 )
 
+set(_KernelRiscvExtD ON)
+if(LLVM_TOOLCHAIN AND KernelSel4ArchRiscV32)
+    set(_KernelRiscvExtD OFF)
+endif()
+
 config_option(
     KernelRiscvExtD RISCV_EXT_D "RISC-V extension for double-precision floating-point"
-    DEFAULT OFF
+    DEFAULT ${_KernelRiscvExtD}
     DEPENDS "KernelArchRiscV"
 )
 
