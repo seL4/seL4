@@ -37,6 +37,12 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
   `set(KernelArmDisableWFIWFETraps ON)`
   to your project settings to get the same configuration as before if you are using `tqma8xqp1gb`.
 
+#### Arm
+
+* Added config option for selecting which thread ID register is used for Kernel TLS syscalls and invocations.
+  KernelArmTLSReg can be used to select either `tpidru` or `tpidruro` as the TLS register used for `seL4_TCB_SetTLSBase` and `seL4_SetTLSBase` operations.
+  This config option's default value is `tpidru` which is what the register that the kernel currently uses for the TLS register for aarch32 and aarch64 platforms.
+
 ### Upgrade Notes
 
 ---
