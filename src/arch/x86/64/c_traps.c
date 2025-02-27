@@ -208,8 +208,9 @@ static void NORETURN restore_vmx(void)
 
 void VISIBLE NORETURN restore_user_context(void)
 {
-    NODE_UNLOCK_IF_HELD;
     c_exit_hook();
+
+    NODE_UNLOCK_IF_HELD;
 
     /* we've now 'exited' the kernel. If we have a pending interrupt
      * we should 'enter' it again */

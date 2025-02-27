@@ -4,8 +4,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-cmake_minimum_required(VERSION 3.7.2)
-
 declare_platform(bcm2837 KernelPlatformRpi3 PLAT_BCM2837 KernelArchARM)
 
 if(KernelPlatformRpi3)

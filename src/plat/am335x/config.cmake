@@ -4,8 +4,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-cmake_minimum_required(VERSION 3.7.2)
-
 declare_platform(am335x KernelPlatformAM335X PLAT_AM335X KernelSel4ArchAarch32)
 set(c_configs PLAT_AM335X_BONEBLACK PLAT_AM335X_BONEBLUE PLAT_AM335X_BONE)
 set(
