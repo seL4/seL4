@@ -105,15 +105,16 @@ BOOT_CODE void map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_righ
 
 BOOT_CODE VISIBLE void map_kernel_window(void)
 {
-    /* mapping of KERNEL_ELF_BASE (virtual address) to kernel's
-     * KERNEL_ELF_PHYS_BASE  */
     assert(CONFIG_PT_LEVELS > 1 && CONFIG_PT_LEVELS <= 4);
 
-    /* kernel window starts at PPTR_BASE */
-    word_t pptr = PPTR_BASE;
+    word_t pptr;  /* virtual */
+    word_t paddr; /* physical */
 
-    /* first we map in memory from PADDR_BASE */
-    word_t paddr = PADDR_BASE;
+    /* Reference <mode/hardware.h> for the layout.
+     * First, we map PSpace, the direct mapping of physical memory into
+     * the kernel window. */
+    pptr = PPTR_BASE;
+    paddr = PADDR_BASE;
     while (pptr < PPTR_TOP) {
         assert(IS_ALIGNED(pptr, RISCV_GET_LVL_PGSIZE_BITS(0)));
         assert(IS_ALIGNED(paddr, RISCV_GET_LVL_PGSIZE_BITS(0)));
@@ -123,42 +124,65 @@ BOOT_CODE VISIBLE void map_kernel_window(void)
         pptr += RISCV_GET_LVL_PGSIZE(0);
         paddr += RISCV_GET_LVL_PGSIZE(0);
     }
-    /* now map KERNEL_ELF_BASE to KERNEL_ELF_PADDR_BASE */
     assert(pptr == PPTR_TOP);
-    pptr = ROUND_DOWN(KERNEL_ELF_BASE, RISCV_GET_LVL_PGSIZE_BITS(0));
-    paddr = ROUND_DOWN(KERNEL_ELF_PADDR_BASE, RISCV_GET_LVL_PGSIZE_BITS(0));
 
-#if __riscv_xlen == 32
+#if __riscv_xlen == 64
+    /* Second we map the 1GiB region surrounding the Kernel ELF (kernel image)
+     * into the kernel window.
+     * This is then also mapped into the physical memory window.
+     * This goes from PPTR_TOP (2^64 - 2GiB) to KDEV_BASE (2^64 - 1GiB).
+     */
+    assert(pptr = ROUND_DOWN(KERNEL_ELF_BASE, RISCV_GET_LVL_PGSIZE_BITS(0)));
+    assert(paddr = ROUND_DOWN(KERNEL_ELF_PADDR_BASE, RISCV_GET_LVL_PGSIZE_BITS(0)));
+
+    /* the ELF must be within the 1GiB kernel image PT. */
+    assert(KERNEL_ELF_BASE >= PPTR_TOP);
+    assert(KERNEL_ELF_TOP  <= KDEV_BASE);
+    assert((KERNEL_ELF_TOP - KERNEL_ELF_BASE) <= RISCV_GET_LVL_PGSIZE(0));
+
+    /* We use an additional page table level, instead of a leaf page, to avoid
+     * a PMP Exception on the region covering OpenSBI memory. */
+    kernel_root_pageTable[RISCV_GET_PT_INDEX(KERNEL_ELF_BASE, 0)] =
+        pte_next(kpptr_to_paddr(kernel_image_level1_pt), false);
+    kernel_root_pageTable[RISCV_GET_PT_INDEX(KERNEL_ELF_PADDR_BASE + PPTR_BASE_OFFSET, 0)] =
+        pte_next(kpptr_to_paddr(kernel_image_level1_pt), false);
+
+    for (int i = 0; i < BIT(PT_INDEX_BITS); i++) {
+        assert(IS_ALIGNED(pptr, RISCV_GET_LVL_PGSIZE_BITS(1)));
+        assert(IS_ALIGNED(paddr, RISCV_GET_LVL_PGSIZE_BITS(1)));
+
+        kernel_image_level1_pt[i] = pte_next(paddr, true);
+
+        pptr += RISCV_GET_LVL_PGSIZE(1);
+        paddr += RISCV_GET_LVL_PGSIZE(1);
+    }
+    assert(pptr == KDEV_BASE);
+
+#else /* if __riscv_xlen == 32 */
+    /* Second we map the 4MiB region surrounding the Kernel ELF (kernel image)
+     * into the kernel window.
+     * This goes from PPTR_TOP (2^32 - 2^23) to KDEV_BASE (2^32 - 2^22);
+     * a size of 4MiB.
+     */
+    assert(pptr = ROUND_DOWN(KERNEL_ELF_BASE, RISCV_GET_LVL_PGSIZE_BITS(0)));
+    assert(paddr = ROUND_DOWN(KERNEL_ELF_PADDR_BASE, RISCV_GET_LVL_PGSIZE_BITS(0)));
+
     kernel_root_pageTable[RISCV_GET_PT_INDEX(pptr, 0)] = pte_next(paddr, true);
-    pptr += RISCV_GET_LVL_PGSIZE(0);
-    paddr += RISCV_GET_LVL_PGSIZE(0);
+
 #ifdef CONFIG_KERNEL_LOG_BUFFER
     kernel_root_pageTable[RISCV_GET_PT_INDEX(KS_LOG_PPTR, 0)] =
         pte_next(kpptr_to_paddr(kernel_image_level1_log_buffer_pt), false);
 #endif
-#else
-    word_t index = 0;
-    /* The kernel image is mapped twice, locating the two indexes in the
-     * root page table, pointing them to the same level 1 page table.
-     */
-    kernel_root_pageTable[RISCV_GET_PT_INDEX(KERNEL_ELF_PADDR_BASE + PPTR_BASE_OFFSET, 0)] =
-        pte_next(kpptr_to_paddr(kernel_image_level1_pt), false);
-    kernel_root_pageTable[RISCV_GET_PT_INDEX(pptr, 0)] =
-        pte_next(kpptr_to_paddr(kernel_image_level1_pt), false);
-    while (pptr < PPTR_TOP + RISCV_GET_LVL_PGSIZE(0)) {
-        kernel_image_level1_pt[index] = pte_next(paddr, true);
-        index++;
-        pptr += RISCV_GET_LVL_PGSIZE(1);
-        paddr += RISCV_GET_LVL_PGSIZE(1);
-    }
+#endif
 
+#if __riscv_xlen == 64
     /* Map kernel device page table */
+    assert(IS_ALIGNED(KDEV_BASE, RISCV_GET_LVL_PGSIZE_BITS(0)));
+    // TODO: belong in map_kernel_devices?
     kernel_root_pageTable[RISCV_GET_PT_INDEX(KDEV_BASE, 0)] =
         pte_next(kpptr_to_paddr(kernel_image_level1_dev_pt), false);
 #endif
-
-    /* There should be free space where we put device mapping */
-    assert(pptr == UINTPTR_MAX - RISCV_GET_LVL_PGSIZE(0) + 1);
+    /* Finally, we map the kernel device region(s) into the kernel window. */
     map_kernel_devices();
 }
 
