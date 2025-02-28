@@ -30,6 +30,8 @@
 #define IRQ_MASK MASK(16u)
 #define GIC_VCPU_MAX_NUM_LR 16
 
+#define GIC_SGI_TARGET_MASK_BITS 16
+
 /* Register bits */
 #define GICD_CTL_ENABLE 0x1
 #define GICD_CTLR_RWP                BIT(31)
