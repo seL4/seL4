@@ -393,8 +393,13 @@ struct reply {
      * context was passed along the call chain */
     call_stack_t replyNext;
 
-    /* Unused, explicit padding to make struct size the correct power of 2. */
-    word_t padding;
+    /* If replyTCB is non-NULL, then canGrant indicates whether there was a grant right on the
+     * receiver's endpoint cap when the receiver called receiveIPC with a capability to this reply.
+     * This is the case whether replyTCB indicates the receiver waiting for a caller, or a caller
+     * waiting for a reply. The value of canGrant is undefined when replyTCB is NULL. In order to
+     * grant through a reply, the replier must have both a grant right on the reply cap, and a
+     * grant right on the endpoint cap used to receive the call. */
+    bool_t canGrant;
 };
 #endif
 
