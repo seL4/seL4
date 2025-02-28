@@ -108,6 +108,8 @@ BOOT_CODE VISIBLE void map_kernel_window(void)
     /* mapping of KERNEL_ELF_BASE (virtual address) to kernel's
      * KERNEL_ELF_PHYS_BASE  */
     assert(CONFIG_PT_LEVELS > 1 && CONFIG_PT_LEVELS <= 4);
+    /* Kernel image finishes before KDEV_BASE */
+    assert(KDEV_BASE >= (word_t)ki_end);
 
     /* kernel window starts at PPTR_BASE */
     word_t pptr = PPTR_BASE;

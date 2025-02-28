@@ -1,5 +1,6 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright 2021, HENSOLDT Cyber
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -19,6 +20,24 @@
         clint@2000000 {
             compatible = "riscv,cpu-intc";
             reg = <0x00000000 0x2000000 0x00000000 0x000010000>;
+        };
+    };
+
+    reserved-memory {
+        #address-cells = <0x01>;
+        #size-cells = <0x01>;
+        ranges;
+
+        /* Reserve 2 MiB for SBI at the start of RAM (0x80000000 - 0x80200000).
+         * This is exactly one "megapage" in the MMU table. It leaves plenty of
+         * space for further SBI experimenting, given the known usage (as of
+         * June 2021) is:
+         * - BBL: 76 KiB (= 0x13000)
+         * - OpenSBI: 128 KiB (= 0x20000) with PMP protection
+         */
+        sbi@80000000 {
+            reg = <0x80000000 0x200000>;
+            no-map;
         };
     };
 };
