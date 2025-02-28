@@ -15,16 +15,21 @@ config_string(
     DEPENDS "KernelArchRiscV"
 )
 
+set(_KernelRiscvExtD ON)
+set(_KernelRiscvExtF ON)
+if(LLVM_TOOLCHAIN AND KernelSel4ArchRiscV32)
+    # Versions of clang we support can't compile for D double width floating
+    # point. But we've found that having F but not D still leads to errors with
+    # code that assumes if any floating point is enabled, both F and D are enabled.
+    set(_KernelRiscvExtD OFF)
+    set(_KernelRiscvExtF OFF)
+endif()
+
 config_option(
     KernelRiscvExtF RISCV_EXT_F "RISC-V extension for single-precision floating-point"
-    DEFAULT ON
+    DEFAULT ${_KernelRiscvExtF}
     DEPENDS "KernelArchRiscV"
 )
-
-set(_KernelRiscvExtD ON)
-if(LLVM_TOOLCHAIN AND KernelSel4ArchRiscV32)
-    set(_KernelRiscvExtD OFF)
-endif()
 
 config_option(
     KernelRiscvExtD RISCV_EXT_D "RISC-V extension for double-precision floating-point"
