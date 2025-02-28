@@ -1,5 +1,7 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -112,5 +114,17 @@
 #error Only PT_LEVELS == 3 is supported
 #endif
 
+#if defined(CONFIG_HAVE_CHERI)
+#define LOAD  lc
+#define STORE sc
+/* Integer-width register loads/stores */
+#define ILOAD  ld
+#define ISTORE sd
+#define REGBYTES 16
+#else
 #define LOAD  ld
 #define STORE sd
+#define ILOAD  LOAD
+#define ISTORE STORE
+#define REGBYTES 8
+#endif
