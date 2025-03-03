@@ -741,16 +741,23 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
     # Install kernel.elf to bin/kernel.elf
     install(TARGETS kernel.elf RUNTIME DESTINATION bin)
     # Install all libsel4 headers to libsel4/include
+    # If building for aarch32,hyp explicitly use aarch32 for sel4arch path
+    # otherwise the install command tries to install the arm_hyp symlink file
+    # instead of its realpath.
+    set(realpath_sel4arch "${KernelSel4Arch}")
+    if(KernelSel4ArchArmHyp)
+        set(realpath_sel4arch "aarch32")
+    endif()
     install(
         DIRECTORY
             "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/include/"
             "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/arch_include/${KernelArch}/"
-            "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/sel4_arch_include/${KernelSel4Arch}/"
+            "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/sel4_arch_include/${realpath_sel4arch}/"
             "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/sel4_plat_include/${KernelPlatform}/"
             "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/mode_include/${KernelWordSize}/"
             "${CMAKE_CURRENT_BINARY_DIR}/libsel4/include/"
             "${CMAKE_CURRENT_BINARY_DIR}/libsel4/arch_include/${KernelArch}/"
-            "${CMAKE_CURRENT_BINARY_DIR}/libsel4/sel4_arch_include/${KernelSel4Arch}/"
+            "${CMAKE_CURRENT_BINARY_DIR}/libsel4/sel4_arch_include/${realpath_sel4arch}/"
             # The following directories install the autoconf headers
             "${CMAKE_CURRENT_BINARY_DIR}/gen_config/"
             "${CMAKE_CURRENT_BINARY_DIR}/libsel4/gen_config/"
