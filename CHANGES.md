@@ -43,6 +43,12 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
   KernelArmTLSReg can be used to select either `tpidru` or `tpidruro` as the TLS register used for `seL4_TCB_SetTLSBase` and `seL4_SetTLSBase` operations.
   This config option's default value is `tpidru` which is what the register that the kernel currently uses for the TLS register for aarch32 and aarch64 platforms.
 
+## MCS
+
+* To grant capabilities when replying to a call in MCS configurations, it is now necessary to have grant rights on both
+  the reply cap and the endpoint cap used to receive the call. Previously, the grant right on the endpoint cap was
+  ignored in MCS configurations.
+
 ### Upgrade Notes
 
 ---
