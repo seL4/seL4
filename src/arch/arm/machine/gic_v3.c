@@ -34,7 +34,7 @@
 volatile struct gic_dist_map *const gic_dist = (volatile struct gic_dist_map *)(GICD_PPTR);
 volatile void *const gicr_base = (volatile uint8_t *)(GICR_PPTR);
 
-word_t active_irq[CONFIG_MAX_NUM_NODES] = {IRQ_NONE};
+word_t active_irq[CONFIG_MAX_NUM_NODES];
 volatile struct gic_rdist_map *gic_rdist_map[CONFIG_MAX_NUM_NODES] = { 0 };
 volatile struct gic_rdist_sgi_ppi_map *gic_rdist_sgi_ppi_map[CONFIG_MAX_NUM_NODES] = { 0 };
 
@@ -123,7 +123,7 @@ static void gicv3_redist_wait_for_rwp(void)
 
 static void gicv3_enable_sre(void)
 {
-    uint32_t val = 0;
+    word_t val = 0;
 
     /* ICC_SRE_EL1 */
     SYSTEM_READ_WORD(ICC_SRE_EL1, val);
@@ -168,7 +168,7 @@ BOOT_CODE static void dist_init(void)
     }
 
     /* Turn on the distributor */
-    gic_dist->ctlr = GICD_CTL_ENABLE | GICD_CTLR_ARE_NS | GICD_CTLR_ENABLE_G1NS | GICD_CTLR_ENABLE_G0;
+    gic_dist->ctlr = GICD_CTLR_ARE_NS | GICD_CTLR_ENABLE_G1NS | GICD_CTLR_ENABLE_G0;
     gicv3_dist_wait_for_rwp();
 
     /* Route all global IRQs to this CPU */
@@ -265,7 +265,7 @@ BOOT_CODE static void gicr_init(void)
 
 BOOT_CODE static void cpu_iface_init(void)
 {
-    uint32_t icc_ctlr = 0;
+    word_t icc_ctlr = 0;
 
     /* Enable system registers */
     gicv3_enable_sre();
@@ -337,6 +337,7 @@ BOOT_CODE void cpu_initLocalIRQController(void)
     SYSTEM_READ_WORD(MPIDR, mpidr);
 
     mpidr_map[CURRENT_CPU_INDEX()] = mpidr;
+    active_irq[CURRENT_CPU_INDEX()] = IRQ_NONE;
 
     gicr_init();
     cpu_iface_init();

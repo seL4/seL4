@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-cmake_minimum_required(VERSION 3.7.2)
+cmake_minimum_required(VERSION 3.16.0)
 
 if(KernelSel4ArchAarch32)
     set_property(TARGET kernel_config_target APPEND PROPERTY TOPLEVELTYPES pde_C)
@@ -217,6 +217,21 @@ config_option(
     DEFAULT OFF
     DEPENDS "NOT KernelVerificationBuild; KernelSel4ArchAarch64"
 )
+
+config_choice(
+    KernelArmTLSReg
+    ARM_TLS_REG
+    "Which TLS register is used for Kernel TLS syscalls and invocations. \
+    The usual registers used by gnu-elf ABIs are: \
+    - on aarch32: tpidruro \
+    - on aarch64: tpidru."
+    "tpidru;KernelArmTLSRegTPIDRU;ARM_TLS_REG_TPIDRU;KernelArchARM"
+    "tpidruro;KernelArmTLSRegTPIDRURO;ARM_TLS_REG_TPIDRURO;KernelArchARM"
+)
+
+if(KernelArmTLSRegTPIDRURO)
+    set(KernelSetTLSBaseSelf ON)
+endif()
 
 if(KernelAArch32FPUEnableContextSwitch OR KernelSel4ArchAarch64)
     set(KernelHaveFPU ON)

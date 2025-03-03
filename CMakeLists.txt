@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-cmake_minimum_required(VERSION 3.8.2)
+cmake_minimum_required(VERSION 3.16.0)
 include(CheckCCompilerFlag)
 
 include(${CMAKE_CURRENT_LIST_DIR}/configs/seL4Config.cmake)
@@ -307,6 +307,14 @@ elseif(KernelArchRiscV)
 
 else()
     message(FATAL_ERROR "unknown KernelArch '${KernelArch}'")
+endif()
+
+if(
+    (CMAKE_C_COMPILER_ID STREQUAL "Clang")
+    AND (CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL "20.0.0")
+)
+    # To avoid clang: error: argument unused during compilation: '-c'
+    add_compile_options(-Wno-unused-command-line-argument)
 endif()
 
 # Sort the C sources to ensure a stable layout of the final C file

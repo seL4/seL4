@@ -27,7 +27,7 @@
  * spinning until the primary core has initialized all kernel structures and
  * then set it to 1.
  */
-BOOT_BSS static volatile word_t node_boot_lock;
+BOOT_BSS static volatile _Atomic word_t node_boot_lock;
 #endif
 
 BOOT_BSS static region_t res_reg[NUM_RESERVED_REGIONS];

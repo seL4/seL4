@@ -309,7 +309,7 @@ void cancelIPC(tcb_t *tptr)
 
 #ifdef CONFIG_KERNEL_MCS
     /* cancel ipc cancels all faults */
-    seL4_Fault_NullFault_ptr_new(&tptr->tcbFault);
+    tptr->tcbFault = seL4_Fault_NullFault_new();
 #endif
 
     switch (thread_state_ptr_get_tsType(state)) {
@@ -334,9 +334,11 @@ void cancelIPC(tcb_t *tptr)
         }
 
 #ifdef CONFIG_KERNEL_MCS
-        reply_t *reply = REPLY_PTR(thread_state_get_replyObject(tptr->tcbState));
-        if (reply != NULL) {
-            reply_unlink(reply, tptr);
+        if (thread_state_ptr_get_tsType(state) == ThreadState_BlockedOnReceive) {
+            reply_t *reply = REPLY_PTR(thread_state_ptr_get_replyObject(state));
+            if (reply != NULL) {
+                reply_unlink(reply, tptr);
+            }
         }
 #endif
         setThreadState(tptr, ThreadState_Inactive);
@@ -412,9 +414,11 @@ void cancelAllIPC(endpoint_t *epptr)
         /* Set all blocked threads to restart */
         for (; thread; thread = thread->tcbEPNext) {
 #ifdef CONFIG_KERNEL_MCS
-            reply_t *reply = REPLY_PTR(thread_state_get_replyObject(thread->tcbState));
-            if (reply != NULL) {
-                reply_unlink(reply, thread);
+            if (thread_state_get_tsType(thread->tcbState) == ThreadState_BlockedOnReceive) {
+                reply_t *reply = REPLY_PTR(thread_state_get_replyObject(thread->tcbState));
+                if (reply != NULL) {
+                    reply_unlink(reply, thread);
+                }
             }
             restart_thread_if_no_fault(thread);
 #else
@@ -453,7 +457,7 @@ void cancelBadgedSends(endpoint_t *epptr, word_t badge)
             next = thread->tcbEPNext;
 #ifdef CONFIG_KERNEL_MCS
             /* senders do not have reply objects in their state, and we are only cancelling sends */
-            assert(REPLY_PTR(thread_state_get_replyObject(thread->tcbState)) == NULL);
+            assert(thread_state_get_tsType(thread->tcbState) == ThreadState_BlockedOnSend);
             if (b == badge) {
                 restart_thread_if_no_fault(thread);
                 queue = tcbEPDequeue(thread, queue);

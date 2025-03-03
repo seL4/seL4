@@ -91,10 +91,10 @@ BOOT_CODE void map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_righ
     kernel_root_pageTable[RISCV_GET_PT_INDEX(vaddr, 0)] = pte_next(paddr, true);
 #else
     if (vaddr >= KDEV_BASE) {
-        /* Map devices in 2nd-level page table */
+        /* Map devices in level 1 page table */
         paddr = ROUND_DOWN(paddr, RISCV_GET_LVL_PGSIZE_BITS(1));
         assert((paddr % RISCV_GET_LVL_PGSIZE(1)) == 0);
-        kernel_image_level2_dev_pt[RISCV_GET_PT_INDEX(vaddr, 1)] = pte_next(paddr, true);
+        kernel_image_level1_dev_pt[RISCV_GET_PT_INDEX(vaddr, 1)] = pte_next(paddr, true);
     } else {
         paddr = ROUND_DOWN(paddr, RISCV_GET_LVL_PGSIZE_BITS(0));
         assert((paddr % RISCV_GET_LVL_PGSIZE(0)) == 0);
@@ -108,6 +108,8 @@ BOOT_CODE VISIBLE void map_kernel_window(void)
     /* mapping of KERNEL_ELF_BASE (virtual address) to kernel's
      * KERNEL_ELF_PHYS_BASE  */
     assert(CONFIG_PT_LEVELS > 1 && CONFIG_PT_LEVELS <= 4);
+    /* Kernel image finishes before KDEV_BASE */
+    assert(KDEV_BASE >= (word_t)ki_end);
 
     /* kernel window starts at PPTR_BASE */
     word_t pptr = PPTR_BASE;
@@ -134,19 +136,19 @@ BOOT_CODE VISIBLE void map_kernel_window(void)
     paddr += RISCV_GET_LVL_PGSIZE(0);
 #ifdef CONFIG_KERNEL_LOG_BUFFER
     kernel_root_pageTable[RISCV_GET_PT_INDEX(KS_LOG_PPTR, 0)] =
-        pte_next(kpptr_to_paddr(kernel_image_level2_log_buffer_pt), false);
+        pte_next(kpptr_to_paddr(kernel_image_level1_log_buffer_pt), false);
 #endif
 #else
     word_t index = 0;
     /* The kernel image is mapped twice, locating the two indexes in the
-     * root page table, pointing them to the same second level page table.
+     * root page table, pointing them to the same level 1 page table.
      */
     kernel_root_pageTable[RISCV_GET_PT_INDEX(KERNEL_ELF_PADDR_BASE + PPTR_BASE_OFFSET, 0)] =
-        pte_next(kpptr_to_paddr(kernel_image_level2_pt), false);
+        pte_next(kpptr_to_paddr(kernel_image_level1_pt), false);
     kernel_root_pageTable[RISCV_GET_PT_INDEX(pptr, 0)] =
-        pte_next(kpptr_to_paddr(kernel_image_level2_pt), false);
+        pte_next(kpptr_to_paddr(kernel_image_level1_pt), false);
     while (pptr < PPTR_TOP + RISCV_GET_LVL_PGSIZE(0)) {
-        kernel_image_level2_pt[index] = pte_next(paddr, true);
+        kernel_image_level1_pt[index] = pte_next(paddr, true);
         index++;
         pptr += RISCV_GET_LVL_PGSIZE(1);
         paddr += RISCV_GET_LVL_PGSIZE(1);
@@ -154,7 +156,7 @@ BOOT_CODE VISIBLE void map_kernel_window(void)
 
     /* Map kernel device page table */
     kernel_root_pageTable[RISCV_GET_PT_INDEX(KDEV_BASE, 0)] =
-        pte_next(kpptr_to_paddr(kernel_image_level2_dev_pt), false);
+        pte_next(kpptr_to_paddr(kernel_image_level1_dev_pt), false);
 #endif
 
     /* There should be free space where we put device mapping */
@@ -1225,12 +1227,12 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
 #if __riscv_xlen == 32
     paddr_t physical_address = ksUserLogBuffer;
     for (word_t i = 0; i < BIT(PT_INDEX_BITS); i += 1) {
-        kernel_image_level2_log_buffer_pt[i] = pte_next(physical_address, true);
+        kernel_image_level1_log_buffer_pt[i] = pte_next(physical_address, true);
         physical_address += BIT(PAGE_BITS);
     }
     assert(physical_address - ksUserLogBuffer == BIT(seL4_LargePageBits));
 #else
-    kernel_image_level2_dev_pt[RISCV_GET_PT_INDEX(KS_LOG_PPTR, 1)] = pte_next(ksUserLogBuffer, true);
+    kernel_image_level1_dev_pt[RISCV_GET_PT_INDEX(KS_LOG_PPTR, 1)] = pte_next(ksUserLogBuffer, true);
 #endif
 
     sfence();

@@ -17,13 +17,16 @@ void reply_push(tcb_t *tcb_caller, tcb_t *tcb_callee, reply_t *reply, bool_t can
     assert(call_stack_get_callStackPtr(reply->replyPrev) == 0);
     assert(call_stack_get_callStackPtr(reply->replyNext) == 0);
 
-    /* tcb caller should not be in a existing call stack */
-    assert(thread_state_get_replyObject(tcb_caller->tcbState) == 0);
+    /* caller state must be blocked on send or active, so cannot be in a existing call stack */
+    assert(thread_state_get_tsType(tcb_caller->tcbState) == ThreadState_BlockedOnSend ||
+           thread_state_get_tsType(tcb_caller->tcbState) == ThreadState_Running ||
+           thread_state_get_tsType(tcb_caller->tcbState) == ThreadState_Restart);
 
-    /* unlink callee and reply - they may not have been linked already,
-     * if this rendesvous is occuring when seL4_Recv is called,
-     * however, no harm in overring 0 with 0 */
-    thread_state_ptr_set_replyObject(&tcb_callee->tcbState, 0);
+    /* callee state must be simple at this point (inactive, restart, or running),
+       so it also cannot have a reply reference associated with it. */
+    assert(thread_state_get_tsType(tcb_callee->tcbState) == ThreadState_Inactive ||
+           thread_state_get_tsType(tcb_callee->tcbState) == ThreadState_Running ||
+           thread_state_get_tsType(tcb_callee->tcbState) == ThreadState_Restart);
 
     /* link caller and reply */
     reply->replyTCB = tcb_caller;
