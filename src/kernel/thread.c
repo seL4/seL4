@@ -577,15 +577,19 @@ void postpone(sched_context_t *sc)
 
 void setNextInterrupt(void)
 {
-    ticks_t next_interrupt = NODE_STATE(ksCurTime) +
-                             refill_head(NODE_STATE(ksCurThread)->tcbSchedContext)->rAmount;
+    /* fetch the head refill separately to ease verification */
+    refill_t ct_head_refill = *refill_head(NODE_STATE(ksCurThread)->tcbSchedContext);
+    ticks_t next_interrupt = NODE_STATE(ksCurTime) + ct_head_refill.rAmount;
 
     if (numDomains > 1) {
         next_interrupt = MIN(next_interrupt, NODE_STATE(ksCurTime) + ksDomainTime);
     }
 
-    if (NODE_STATE(ksReleaseQueue.head) != NULL) {
-        next_interrupt = MIN(refill_head(NODE_STATE(ksReleaseQueue.head)->tcbSchedContext)->rTime, next_interrupt);
+    tcb_t *rlq_head = NODE_STATE(ksReleaseQueue.head);
+    if (rlq_head != NULL) {
+        /* fetch the head refill separately to ease verification */
+        refill_t rlq_head_refill = *refill_head(rlq_head->tcbSchedContext);
+        next_interrupt = MIN(rlq_head_refill.rTime, next_interrupt);
     }
 
     /* We should never be attempting to schedule anything earlier than ksCurTime */
