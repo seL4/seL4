@@ -98,6 +98,20 @@ static inline void maskInterrupt(bool_t disable, irq_t irq);
 static inline void ackInterrupt(irq_t irq);
 
 /**
+ * Deactivates the interrupt
+ *
+ * When the interrupt controller supports delegating the interrupt to a lower
+ * privilege level, this function can be called to signal the completion of
+ * interrupt processing so that the interrupt state machine can be moved out of
+ * the active state.
+ *
+ * Currently only supported by gicv3 driver.
+ *
+ * @param[in]  irq   The interrupt request
+ */
+static inline void deactivateInterrupt(irq_t irq);
+
+/**
  * Called when getActiveIRQ returns irqInvalid while the kernel is handling an
  * interrupt entry. An implementation is not required to do anything here, but
  * can report the spurious IRQ or try prevent it from reoccuring.
@@ -116,3 +130,7 @@ static inline void handleSpuriousIRQ(void);
  */
 static inline void handleReservedIRQ(irq_t irq);
 
+#ifndef CONFIG_ARM_GIC_V3_SUPPORT
+
+static inline void deactivateInterrupt(irq_t irq) {}
+#endif
