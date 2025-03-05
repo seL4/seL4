@@ -15,6 +15,9 @@
 #include <armv/machine.h>
 #include <machine/interrupt.h>
 
+/* No SGIs on this platform. */
+#define NUM_SGIS 0
+
 #define INTCPS_SIR_IRQ_SPURIOUSIRQFLAG 0xFF0000
 
 enum irqNumbers {
