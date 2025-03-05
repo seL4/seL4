@@ -40,11 +40,11 @@
      * - OpenSBI: 128 KiB (= 0x20000) with PMP protection
      */
     reserved-memory {
-        #address-cells = <0x01>;
-        #size-cells = <0x01>;
+        #address-cells = <0x02>;
+        #size-cells = <0x02>;
         ranges;
         sbi@80000000 {
-            reg = <0x80000000 0x200000>;
+            reg = <0x00000000 0x80000000 0x00000000 0x200000>;
             no-map;
         };
     };
