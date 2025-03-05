@@ -131,6 +131,13 @@ config_option(
 )
 
 config_option(
+    KernelArmHasTlbLock ARM_HAS_TLB_LOCK "Enable TLB Lock"
+    DEFAULT ON
+    DEPENDS "KernelArchARM;KernelArmCortexA8"
+    DEFAULT_DISABLED OFF
+)
+
+config_option(
     KernelArmSMMU ARM_SMMU "Enable SystemMMU"
     DEFAULT ON
     DEPENDS "KernelPlatformTx2"
