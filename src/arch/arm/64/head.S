@@ -1,6 +1,8 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2021, HENSOLDT Cyber
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -75,8 +77,60 @@
 #define SCTLR   sctlr_el1
 #endif
 
+#if defined(CONFIG_HAVE_CHERI)
+#define CPACR_CEN_MASK    (0x3 << 18)
+#define  CPACR_CEN_TRAP_ALL1  (0x0 << 18) /* Traps from EL0 and EL1 */
+#define  CPACR_CEN_TRAP_EL0 (0x1 << 18) /* Traps from EL0 */
+#define  CPACR_CEN_TRAP_ALL2  (0x2 << 18) /* Traps from EL0 and EL1 */
+#define  CPACR_CEN_TRAP_NONE  (0x3 << 18) /* No traps */
+#endif
+
+/* CCTLR_EL0 - Capability Control Register */
+#define CCTLR_SBL_MASK    (0x1 << 7) /* Capability sealing by branch and link */
+#define CCTLR_PERMVCT_MASK  (0x1 << 6) /* Permit access to CNTVCT w/o System */
+#define CCTLR_ADRDPB_MASK (0x1 << 4) /* ADRPD base selection */
+#define CCTLR_PCCBO_MASK  (0x1 << 3) /* PCC base offset enable */
+#define CCTLR_DDCBO_MASK  (0x1 << 2) /* PCC base offset enable */
+/*
+ * CCTLR_EL1 - Capability Control Register
+ * The rest of the fields mirror CCTLR_EL0
+ */
+#define CCTLR_EL1_C64E_MASK (0x1 << 5) /* Enable C64 mode upon exception */
+
+#if defined(CONFIG_CHERI_HYBRID_KERNEL)
+.extern _start_hybrid
+#endif
+
+/*
+ * Initialize morello on a cpu
+ */
+#if defined(CONFIG_HAVE_CHERI)
+ /* This macros is copied from CheriBSD */
+.macro morello_cpu_init
+  /* Enable Morello instructions at EL0 and EL1 */
+  mrs x5, cpacr_el1
+  bic x5, x5, CPACR_CEN_MASK
+  orr x5, x5, CPACR_CEN_TRAP_NONE
+  msr cpacr_el1, x5
+  isb
+
+  /*
+   * Allow access to CNTVCT_EL0 without PCC System permission and enable
+   * capability sealing for branch and link at EL0.
+   */
+  mrs x5, cctlr_el0
+  orr x5, x5, #(CCTLR_PERMVCT_MASK | CCTLR_SBL_MASK)
+  msr cctlr_el0, x5
+
+.endmacro
+#endif
+
 .section .boot.text, "ax"
 BEGIN_FUNC(_start)
+#if defined(CONFIG_HAVE_CHERI)
+  .arch_extension noc64
+  .arch_extension a64c
+#endif
     /* Save x4 and x5 so we don't clobber it */
     mov     x7, x4
     mov     x8, x5
@@ -115,11 +169,20 @@ BEGIN_FUNC(_start)
     mov    sp, x4
 #endif /* ENABLE_SMP_SUPPORT */
 
+#if defined(CONFIG_HAVE_CHERI)
+    /* Initialize morello capability ISA and switch to C64 if needed */
+    morello_cpu_init
+#endif
     /* Attempt to workaround any known ARM errata. */
     stp     x0, x1, [sp, #-16]!
     stp     x2, x3, [sp, #-16]!
     stp     x7, x8, [sp, #-16]!
     bl arm_errata
+
+#if defined(CONFIG_CHERI_HYBRID_KERNEL)
+    bl _start_hybrid
+#endif
+
     ldp     x4, x5, [sp], #16
     ldp     x2, x3, [sp], #16
     ldp     x0, x1, [sp], #16

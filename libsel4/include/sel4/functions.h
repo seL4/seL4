@@ -43,12 +43,12 @@ LIBSEL4_INLINE_FUNC seL4_IPCBuffer *seL4_GetIPCBuffer(void)
     return __sel4_ipc_buffer;
 }
 
-LIBSEL4_INLINE_FUNC seL4_Word seL4_GetMR(int i)
+LIBSEL4_INLINE_FUNC seL4_Register seL4_GetMR(int i)
 {
     return seL4_GetIPCBuffer()->msg[i];
 }
 
-LIBSEL4_INLINE_FUNC void seL4_SetMR(int i, seL4_Word mr)
+LIBSEL4_INLINE_FUNC void seL4_SetMR(int i, seL4_Register mr)
 {
     seL4_GetIPCBuffer()->msg[i] = mr;
 }

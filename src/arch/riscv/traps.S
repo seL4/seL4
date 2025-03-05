@@ -1,6 +1,8 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -12,8 +14,7 @@
 #include <arch/machine/registerset.h>
 #include <util.h>
 
-#define REGBYTES (CONFIG_WORD_SIZE / 8)
-
+.global trap_entry
 .extern c_handle_syscall
 .extern c_handle_fastpath_reply_recv
 .extern c_handle_fastpath_call
@@ -25,58 +26,70 @@ BEGIN_FUNC(trap_entry)
 
 #ifdef ENABLE_SMP_SUPPORT
 /* The sscratch contains the stack for the current core */
+#if defined(CONFIG_HAVE_CHERI)
+  cspecialrw csp, sscratchc, csp
+#else
   csrrw sp, sscratch, sp
+#endif
 /* Now we have a valid kernel stack */
-  STORE t0, (-2*REGBYTES)(sp)
-  LOAD  t0, (-1*REGBYTES)(sp)
+  STORE REGN(t0), (-2*REGBYTES)(PTRN(sp))
+  LOAD  REGN(t0), (-1*REGBYTES)(PTRN(sp))
+#else
+#if defined(CONFIG_HAVE_CHERI)
+  cspecialrw ct0, sscratchc, ct0
 #else
   csrrw t0, sscratch, t0
 #endif
-  STORE ra, (0*REGBYTES)(t0)
-#ifndef ENABLE_SMP_SUPPORT
-  STORE sp, (1*REGBYTES)(t0)
 #endif
-  STORE gp, (2*REGBYTES)(t0)
-  STORE tp, (3*REGBYTES)(t0)
-  STORE t1, (5*REGBYTES)(t0)
-  STORE t2, (6*REGBYTES)(t0)
-  STORE s0, (7*REGBYTES)(t0)
-  STORE s1, (8*REGBYTES)(t0)
-  STORE a0, (9*REGBYTES)(t0)
-  STORE a1, (10*REGBYTES)(t0)
-  STORE a2, (11*REGBYTES)(t0)
-  STORE a3, (12*REGBYTES)(t0)
-  STORE a4, (13*REGBYTES)(t0)
-  STORE a5, (14*REGBYTES)(t0)
-  STORE a6, (15*REGBYTES)(t0)
-  STORE a7, (16*REGBYTES)(t0)
-  STORE s2, (17*REGBYTES)(t0)
-  STORE s3, (18*REGBYTES)(t0)
-  STORE s4, (19*REGBYTES)(t0)
-  STORE s5, (20*REGBYTES)(t0)
-  STORE s6, (21*REGBYTES)(t0)
-  STORE s7, (22*REGBYTES)(t0)
-  STORE s8, (23*REGBYTES)(t0)
-  STORE s9, (24*REGBYTES)(t0)
-  STORE s10, (25*REGBYTES)(t0)
-  STORE s11, (26*REGBYTES)(t0)
-  STORE t3, (27*REGBYTES)(t0)
-  STORE t4, (28*REGBYTES)(t0)
-  STORE t5, (29*REGBYTES)(t0)
-  STORE t6, (30*REGBYTES)(t0)
+  STORE REGN(ra), (0*REGBYTES)(PTRN(t0))
+#ifndef ENABLE_SMP_SUPPORT
+  STORE REGN(sp), (1*REGBYTES)(PTRN(t0))
+#endif
+  STORE REGN(gp), (2*REGBYTES)(PTRN(t0))
+  STORE REGN(tp), (3*REGBYTES)(PTRN(t0))
+  STORE REGN(t1), (5*REGBYTES)(PTRN(t0))
+  STORE REGN(t2), (6*REGBYTES)(PTRN(t0))
+  STORE REGN(s0), (7*REGBYTES)(PTRN(t0))
+  STORE REGN(s1), (8*REGBYTES)(PTRN(t0))
+  STORE REGN(a0), (9*REGBYTES)(PTRN(t0))
+  STORE REGN(a1), (10*REGBYTES)(PTRN(t0))
+  STORE REGN(a2), (11*REGBYTES)(PTRN(t0))
+  STORE REGN(a3), (12*REGBYTES)(PTRN(t0))
+  STORE REGN(a4), (13*REGBYTES)(PTRN(t0))
+  STORE REGN(a5), (14*REGBYTES)(PTRN(t0))
+  STORE REGN(a6), (15*REGBYTES)(PTRN(t0))
+  STORE REGN(a7), (16*REGBYTES)(PTRN(t0))
+  STORE REGN(s2), (17*REGBYTES)(PTRN(t0))
+  STORE REGN(s3), (18*REGBYTES)(PTRN(t0))
+  STORE REGN(s4), (19*REGBYTES)(PTRN(t0))
+  STORE REGN(s5), (20*REGBYTES)(PTRN(t0))
+  STORE REGN(s6), (21*REGBYTES)(PTRN(t0))
+  STORE REGN(s7), (22*REGBYTES)(PTRN(t0))
+  STORE REGN(s8), (23*REGBYTES)(PTRN(t0))
+  STORE REGN(s9), (24*REGBYTES)(PTRN(t0))
+  STORE REGN(s10), (25*REGBYTES)(PTRN(t0))
+  STORE REGN(s11), (26*REGBYTES)(PTRN(t0))
+  STORE REGN(t3), (27*REGBYTES)(PTRN(t0))
+  STORE REGN(t4), (28*REGBYTES)(PTRN(t0))
+  STORE REGN(t5), (29*REGBYTES)(PTRN(t0))
+  STORE REGN(t6), (30*REGBYTES)(PTRN(t0))
   /* save t0 value */
 #ifdef ENABLE_SMP_SUPPORT
-  LOAD  x1, (-2*REGBYTES)(sp)
+  LOAD  REG(1), (-2*REGBYTES)(PTRN((sp))
+#else
+#if defined(CONFIG_HAVE_CHERI)
+  cspecialr c1, sscratchc
 #else
   csrr  x1, sscratch
 #endif
-  STORE    x1, (4*REGBYTES)(t0)
+#endif
+  STORE    REG(1), (4*REGBYTES)(PTRN(t0))
 
   csrr x1, sstatus
-  STORE x1, (32*REGBYTES)(t0)
+  ISTORE x1, (32*REGBYTES)(PTRN(t0))
 
   csrr s0, scause
-  STORE s0, (31*REGBYTES)(t0)
+  ISTORE s0, (31*REGBYTES)(PTRN(t0))
 
 .option push
 .option norelax
@@ -85,18 +98,32 @@ BEGIN_FUNC(trap_entry)
 
 #ifdef ENABLE_SMP_SUPPORT
   /* save the user sp */
+#if defined(CONFIG_HAVE_CHERI)
+  cspecialr c1, sscratchc
+  STORE REG(1), (1*REGBYTES)(PTRN(t0))
+
+  /* restore sscratchc */
+  cspecialw  sscratchc, csp
+#else
   csrr  x1, sscratch
-  STORE x1, (1*REGBYTES)(t0)
+  STORE REG(1), (1*REGBYTES)(PTRN(t0))
+
   /* restore the sscratch */
   csrw  sscratch, sp
+#endif
 #else
   /* Load kernel's stack address */
   la sp, (kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS))
 #endif
 
   /* Save exception PC */
+#if defined(CONFIG_HAVE_CHERI)
+  cspecialr c1,  sepcc
+#else
   csrr x1,  sepc
-  STORE   x1, (33*REGBYTES)(t0)
+#endif
+
+  STORE   REG(1), (33*REGBYTES)(PTRN(t0))
 
   /* Check if it's an interrupt */
   bltz s0, interrupt
@@ -107,9 +134,13 @@ BEGIN_FUNC(trap_entry)
 
 handle_syscall:
   /* Set the return address to sepc + 4 in the case of a system/environment call */
+#if defined(CONFIG_HAVE_CHERI)
+  cincoffset c1, c1, 4
+#else
   addi x1, x1, 4
+#endif
   /* Save NextIP */
-  STORE   x1, (34*REGBYTES)(t0)
+  STORE   REG(1), (34*REGBYTES)(PTRN(t0))
 
 #ifdef CONFIG_FASTPATH
   li t3, SYSCALL_CALL
@@ -136,12 +167,12 @@ handle_syscall:
 /* Not an interrupt or a syscall */
 exception:
   /* Save NextIP */
-  STORE   x1, (34*REGBYTES)(t0)
+  STORE   REG(1), (34*REGBYTES)(PTRN(t0))
   j c_handle_exception
 
 interrupt:
   /* Save NextIP */
-  STORE   x1, (34*REGBYTES)(t0)
+  STORE   REG(1), (34*REGBYTES)(PTRN(t0))
   j c_handle_interrupt
 
 END_FUNC(trap_entry)

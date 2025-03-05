@@ -1,6 +1,8 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: BSD-2-Clause
  */
@@ -23,7 +25,7 @@
 #endif
 #define seL4_EndpointBits       4
 #define seL4_IPCBufferSizeBits  10
-#ifdef CONFIG_HAVE_FPU
+#if defined(CONFIG_HAVE_FPU) || defined(CONFIG_HAVE_CHERI)
 #define seL4_TCBBits            11
 #else
 #define seL4_TCBBits            10
