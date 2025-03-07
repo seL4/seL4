@@ -24,6 +24,16 @@
 #define UART_RX_EN          BIT(13)
 #define UART_TX_EN          BIT(12)
 
+#define UART_TX_RST         BIT(22)
+#define UART_RX_RST         BIT(23)
+#define UART_CLEAR_ERR      BIT(24)
+
+#define UART_TX_BUSY        BIT(25)
+#define UART_RX_BUSY        BIT(26)
+
+#define UART_RECV_IRQ_MASK  0xff
+
+
 #define UART_REG(x) ((volatile uint32_t *)(UART_PPTR + (x)))
 
 #define WDOG_EN BIT(18)
@@ -48,7 +58,19 @@ cap_t signal_ntfn = { 0 };
 
 void init_serial(cap_t uart_recv_cap)
 {
+    /* Wait until receive and transmit state machines are no longer busy */
+    while (*(UART_REG(UART_STATUS)) & (UART_TX_BUSY | UART_RX_BUSY));
+
+    /* Disable transmit and receive */
+    *(UART_REG(UART_CTRL)) &= ~(UART_TX_EN | UART_RX_EN);
+
+    /* Reset UART state machine */
+    *(UART_REG(UART_CTRL)) |= (UART_TX_RST | UART_RX_RST | UART_CLEAR_ERR);
+    *(UART_REG(UART_CTRL)) &= ~(UART_TX_RST | UART_RX_RST | UART_CLEAR_ERR);
+
+
     /* enable tx, rx and rx irq */
+    *(UART_REG(UART_CTRL)) &= ~UART_RECV_IRQ_MASK;
     *(UART_REG(UART_CTRL)) |= UART_TX_EN | UART_RX_EN | UART_RX_IRQ;
     /* send irq when 1 char is available */
     *(UART_REG(UART_MISC)) = 1;
@@ -83,7 +105,6 @@ void handleUartIRQ(void)
                        cap_notification_cap_get_capNtfnBadge(signal_ntfn));
         }
 
-        // uart_drv_putchar(c);
         if (c == 'r') {
             index = 1;
         } else if (c == reset[index]) {
