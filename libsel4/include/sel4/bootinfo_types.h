@@ -59,7 +59,11 @@ typedef struct seL4_BootInfo {
     seL4_NodeId       nodeID;          /* ID [0..numNodes-1] of the seL4 node (0 if uniprocessor) */
     seL4_Word         numNodes;        /* number of seL4 nodes (1 if uniprocessor) */
     seL4_Word         numIOPTLevels;   /* number of IOMMU PT levels (0 if no IOMMU support) */
+#if defined(CONFIG_HAVE_CHERI)
+    seL4_IPCBuffer   *__capability ipcBuffer;       /* pointer to initial thread's IPC buffer */
+#else
     seL4_IPCBuffer   *ipcBuffer;       /* pointer to initial thread's IPC buffer */
+#endif
     seL4_SlotRegion   empty;           /* empty slots (null caps) */
     seL4_SlotRegion   sharedFrames;    /* shared-frame caps (shared between seL4 nodes) */
     seL4_SlotRegion   userImageFrames; /* userland-image frame caps */
