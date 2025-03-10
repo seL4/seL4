@@ -204,6 +204,7 @@ devices:
   # SiFive U54/U74 PLIC (HiFive, Polarfire)
   - compatible:
       - riscv,plic0
+      - sifive,plic-1.0.0
     regions:
       - index: 0
         kernel: PLIC_PPTR
