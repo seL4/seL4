@@ -630,8 +630,12 @@ static inline void armv_vcpu_boot_init(void)
 #endif
 }
 
-static inline void armv_vcpu_save(vcpu_t *vcpu, UNUSED bool_t active)
+static inline void armv_vcpu_save(vcpu_t *vcpu, bool_t active)
 {
+    /* If we aren't active then this state already got stored when we were disabled */
+    if (active) {
+        vcpu_save_reg(vcpu, seL4_VCPUReg_CPACR);
+    }
     vcpu_save_reg_range(vcpu, seL4_VCPUReg_TTBR0, seL4_VCPUReg_SPSR_EL1);
 
 #ifdef ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS
