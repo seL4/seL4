@@ -84,13 +84,13 @@ typedef enum {
     /* other system registers EL1 */
     seL4_VCPUReg_ACTLR,
     seL4_VCPUReg_CPACR,
+    seL4_VCPUReg_PAR,
 
     /* exception handling registers EL1 */
     seL4_VCPUReg_AFSR0,
     seL4_VCPUReg_AFSR1,
     seL4_VCPUReg_ESR,
     seL4_VCPUReg_FAR,
-    seL4_VCPUReg_ISR,
     seL4_VCPUReg_VBAR,
 
     /* thread pointer/ID registers EL0/EL1 */
