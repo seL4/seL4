@@ -43,6 +43,16 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
   KernelArmTLSReg can be used to select either `tpidru` or `tpidruro` as the TLS register used for `seL4_TCB_SetTLSBase` and `seL4_SetTLSBase` operations.
   This config option's default value is `tpidru` which is what the register that the kernel currently uses for the TLS register for aarch32 and aarch64 platforms.
 
+* Fixed: under some circumstances, writes by a VMM to VCPU timer registers could have been reverted by the kernel to
+  their previous state. This was triggered when:
+
+  * a VCPU thread was running,
+  * the VCPU was then disabled but remained active by switching to a non-VCPU thread,
+  * that VCPU thread had the VCPU cap and performed the timer register writes,
+  * and execution then switched back to the VCPU thread.
+
+  This was found by Alison Felizzi and independently by Ryan Barry during the integrity proofs for AArch64 hyp mode.
+
 ### Upgrade Notes
 
 ---
