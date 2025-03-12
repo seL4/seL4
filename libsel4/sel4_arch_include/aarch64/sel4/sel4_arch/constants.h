@@ -75,7 +75,8 @@ typedef enum {
     /* System control registers EL1 */
     seL4_VCPUReg_SCTLR = 0,
     seL4_VCPUReg_CPACR,
-    seL4_VCPUReg_TTBR0,
+    seL4_VCPURegSaveRange_start, /* begin vcpu save/restore reg range */
+    seL4_VCPUReg_TTBR0 = seL4_VCPURegSaveRange_start,
     seL4_VCPUReg_TTBR1,
     seL4_VCPUReg_TCR,
     seL4_VCPUReg_MAIR,
@@ -101,6 +102,7 @@ typedef enum {
     seL4_VCPUReg_SP_EL1,
     seL4_VCPUReg_ELR_EL1,
     seL4_VCPUReg_SPSR_EL1, // 32-bit
+    seL4_VCPURegSaveRange_end = seL4_VCPUReg_SPSR_EL1, /* end vcpu save/restore reg range */
 
     /* generic timer registers, to be completed */
     seL4_VCPUReg_CNTV_CTL,

@@ -636,7 +636,7 @@ static inline void armv_vcpu_save(vcpu_t *vcpu, bool_t active)
     if (active) {
         vcpu_save_reg(vcpu, seL4_VCPUReg_CPACR);
     }
-    vcpu_save_reg_range(vcpu, seL4_VCPUReg_TTBR0, seL4_VCPUReg_SPSR_EL1);
+    vcpu_save_reg_range(vcpu, seL4_VCPURegSaveRange_start, seL4_VCPURegSaveRange_end);
 
 #ifdef ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS
     /* This is done when we are asked to save and restore the CP14 debug context

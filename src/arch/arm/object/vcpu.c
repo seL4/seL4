@@ -99,11 +99,7 @@ void vcpu_restore(vcpu_t *vcpu)
     }
 
     /* restore registers */
-#ifdef CONFIG_ARCH_AARCH64
-    vcpu_restore_reg_range(vcpu, seL4_VCPUReg_TTBR0, seL4_VCPUReg_SPSR_EL1);
-#else
-    vcpu_restore_reg_range(vcpu, seL4_VCPUReg_ACTLR, seL4_VCPUReg_SPSRfiq);
-#endif
+    vcpu_restore_reg_range(vcpu, seL4_VCPURegSaveRange_start, seL4_VCPURegSaveRange_end);
     vcpu_enable(vcpu);
 }
 
