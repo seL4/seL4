@@ -152,6 +152,7 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
 
         if (target >= CONFIG_MAX_NUM_NODES) {
             current_syscall_error.type = seL4_InvalidArgument;
+            current_syscall_error.invalidArgumentNumber = 4;
             userError("Target core %lu is invalid.", target);
             return EXCEPTION_SYSCALL_ERROR;
         }
