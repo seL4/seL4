@@ -63,6 +63,9 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
     2.1. All registers from `seL4_VCPUReg_TTBR0` to `seL4_VCPUReg_SPSR_EL1` are saved. This range includes
          `seL4_VCPUReg_CPACR`, which overwrites the previously saved value and grants FPU access at EL0 and EL1.
 
+* Fixed: on aarch32 configurations with hypervisor support, `CNTKCTL` was not saved and restored alongside other virtual
+  timer registers. `seL4_VCPUReg_CNTKCTL` has been introduced to mirror `seL4_VCPUReg_CNTKCTL_EL1` from aarch64.
+
 ### Upgrade Notes
 
 ---
