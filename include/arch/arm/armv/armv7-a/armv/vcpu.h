@@ -296,6 +296,18 @@ static inline void set_cntv_ctl(word_t val)
     MCR(CNTV_CTL, val);
 }
 
+static inline word_t get_cntkctl(void)
+{
+    word_t ret = 0;
+    MRC(CNTKCTL, ret);
+    return ret;
+}
+
+static inline void set_cntkctl(word_t val)
+{
+    MCR(CNTKCTL, val);
+}
+
 static inline word_t get_vmpidr(void)
 {
     word_t ret = 0;
@@ -484,6 +496,8 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
         return get_cntv_off_high();
     case seL4_VCPUReg_CNTVOFFlow:
         return get_cntv_off_low();
+    case seL4_VCPUReg_CNTKCTL:
+        return get_cntkctl();
     case seL4_VCPUReg_VMPIDR:
         return get_vmpidr();
     default:
@@ -618,6 +632,9 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
         break;
     case seL4_VCPUReg_CNTVOFFlow:
         set_cntv_off_low(reg);
+        break;
+    case seL4_VCPUReg_CNTKCTL:
+        set_cntkctl(reg);
         break;
     case seL4_VCPUReg_VMPIDR:
         set_vmpidr(reg);
@@ -853,6 +870,7 @@ static inline bool_t vcpu_reg_saved_when_disabled(word_t field)
     case seL4_VCPUReg_CNTV_CVALlow:
     case seL4_VCPUReg_CNTVOFFhigh:
     case seL4_VCPUReg_CNTVOFFlow:
+    case seL4_VCPUReg_CNTKCTL:
         return true;
     default:
         return false;
