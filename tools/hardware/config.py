@@ -37,11 +37,18 @@ class ARMConfig(Config):
 
     def __init__(self, sel4arch, addrspace_max):
         super().__init__(sel4arch, addrspace_max)
-        self.SUPERSECTION_BITS = 25 if sel4arch == 'arm_hyp' else 24
+        # On AArch32 the kernel requires at least super section alignment for physBase.
+        # Page sizes differ on arm_hyp which is why the alignment changes even though
+        # both arm_hyp and arm are 32-bit.
+        if sel4arch == 'arm_hyp':
+            self.KERNEL_PHYS_ALIGN = 25
+        elif sel4arch == 'aarch32':
+            self.KERNEL_PHYS_ALIGN = 24
+        else:
+            self.KERNEL_PHYS_ALIGN = 0
 
     def get_kernel_phys_align(self) -> int:
-        ''' On AArch32 the kernel requires at least super section alignment for physBase. '''
-        return self.SUPERSECTION_BITS
+        return self.KERNEL_PHYS_ALIGN
 
 
 class RISCVConfig(Config):
