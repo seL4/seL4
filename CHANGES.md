@@ -63,6 +63,12 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
     2.1. All registers from `seL4_VCPUReg_TTBR0` to `seL4_VCPUReg_SPSR_EL1` are saved. This range includes
          `seL4_VCPUReg_CPACR`, which overwrites the previously saved value and grants FPU access at EL0 and EL1.
 
+## MCS
+
+* To grant capabilities when replying to a call in MCS configurations, it is now necessary to have grant rights on both
+  the reply cap and the endpoint cap used to receive the call. Previously, the grant right on the endpoint cap was
+  ignored in MCS configurations.
+
 ### Upgrade Notes
 
 ---
