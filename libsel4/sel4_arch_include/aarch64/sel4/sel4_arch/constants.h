@@ -1,5 +1,7 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: BSD-2-Clause
  */
@@ -170,7 +172,7 @@ typedef enum {
 #define seL4_LargePageBits 21
 #define seL4_HugePageBits 30
 #define seL4_SlotBits 5
-#if defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYP_ENABLE_VCPU_CP14_SAVE_AND_RESTORE)
+#if defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYP_ENABLE_VCPU_CP14_SAVE_AND_RESTORE) || defined(CONFIG_HAVE_CHERI)
 #define seL4_TCBBits 12
 #else
 #define seL4_TCBBits 11

@@ -162,7 +162,7 @@ void handleDoubleFault(tcb_t *tptr, seL4_Fault_t ex1)
     printf("\nin thread %p \"%s\" ", tptr, TCB_PTR_DEBUG_PTR(tptr)->tcbName);
 #endif /* CONFIG_DEBUG_BUILD */
 
-    printf("at address %p\n", (void *)getRestartPC(tptr));
+    printf("at address %p\n", (void *)(pptr_t)getRestartPC(tptr));
     printf("With stack:\n");
     Arch_userStackTrace(tptr);
 #endif
