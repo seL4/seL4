@@ -676,7 +676,7 @@ static inline void armv_vcpu_boot_init(void)
 static inline void armv_vcpu_save(vcpu_t *vcpu, bool_t active)
 {
     /* save registers */
-    vcpu_save_reg_range(vcpu, seL4_VCPUReg_ACTLR, seL4_VCPUReg_SPSRfiq);
+    vcpu_save_reg_range(vcpu, seL4_VCPURegSaveRange_start, seL4_VCPURegSaveRange_end);
 
 #ifdef ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS
     /* This is done when we are asked to save and restore the CP14 debug context
@@ -848,6 +848,11 @@ static inline bool_t vcpu_reg_saved_when_disabled(word_t field)
 {
     switch (field) {
     case seL4_VCPUReg_SCTLR:
+    case seL4_VCPUReg_CNTV_CTL:
+    case seL4_VCPUReg_CNTV_CVALhigh:
+    case seL4_VCPUReg_CNTV_CVALlow:
+    case seL4_VCPUReg_CNTVOFFhigh:
+    case seL4_VCPUReg_CNTVOFFlow:
         return true;
     default:
         return false;
