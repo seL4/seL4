@@ -34,3 +34,6 @@ extern pde_t armUSGlobalPD[BIT(PD_INDEX_BITS)] VISIBLE;
 extern pte_t   armUSGlobalPT[BIT(PT_INDEX_BITS)]   VISIBLE;
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
+#ifdef CONFIG_ARM_HAS_TLB_LOCK
+extern word_t armKSTlbLockCount VISIBLE;
+#endif /* CONFIG_ARM_HAS_TLB_LOCK */

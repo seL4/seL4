@@ -112,7 +112,6 @@ extern ticks_t ksDomainTime;
 #else
 extern word_t ksDomainTime;
 #endif
-extern word_t tlbLockCount VISIBLE;
 
 extern char ksIdleThreadTCB[CONFIG_MAX_NUM_NODES][BIT(seL4_TCBBits)];
 
@@ -130,4 +129,3 @@ extern paddr_t ksUserLogBuffer;
 #define MODE_NODE_STATE(_state)    MODE_NODE_STATE_ON_CORE(_state, getCurrentCPUIndex())
 #define ARCH_NODE_STATE(_state)    ARCH_NODE_STATE_ON_CORE(_state, getCurrentCPUIndex())
 #define NODE_STATE(_state)         NODE_STATE_ON_CORE(_state, getCurrentCPUIndex())
-
