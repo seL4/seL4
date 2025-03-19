@@ -117,6 +117,7 @@ typedef enum {
     seL4_VCPUReg_CNTV_CVALlow,
     seL4_VCPUReg_CNTVOFFhigh,
     seL4_VCPUReg_CNTVOFFlow,
+    seL4_VCPUReg_CNTKCTL,
     seL4_VCPUReg_Num,
     SEL4_FORCE_LONG_ENUM(seL4_VCPUReg),
 } seL4_VCPUReg;
