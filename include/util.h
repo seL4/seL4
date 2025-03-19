@@ -109,8 +109,16 @@ void __builtin_unreachable(void);
 /* need that for compiling with c99 instead of gnu99 */
 #define asm __asm__
 
-/* Evaluate a Kconfig-provided configuration setting at compile-time. */
-#define config_set(macro) _is_set_(macro)
+/* Wrapping an int literal such as 0 or 1 in a function to prevent it from being
+   simplified away in verification while still allowing the compiler to optimise
+   it out and do code elimination on the result. */
+static inline int wrap_config_set(int x)
+{
+    return x;
+}
+
+/* Evaluate a CMake configuration setting at compile-time. */
+#define config_set(macro) wrap_config_set(_is_set_(macro))
 #define _macrotest_1 ,
 #define _is_set_(value) _is_set__(_macrotest_##value)
 #define _is_set__(comma) _is_set___(comma 1, 0)
