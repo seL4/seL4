@@ -1,5 +1,7 @@
 #
 # Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+# Copyright 2024, Capabilities Limited
+# CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
 #
 # SPDX-License-Identifier: BSD-2-Clause
 #
@@ -125,6 +127,15 @@ endif()
 if(KernelX86_64VTX64BitGuests)
     set(64bitguests --x86-vtx-64-bit-guests)
 endif()
+
+if(HaveCheri)
+    if(KernelArmMorello)
+        set(cheri_arch --cheri-arch morello)
+    elseif(KernelArchCheriRiscv)
+        set(cheri_arch --cheri-arch rv${KernelWordSize}xcheri)
+    endif()
+endif()
+
 add_custom_command(
     OUTPUT include/sel4/syscall.h
     COMMAND rm -f include/sel4/syscall.h
@@ -156,7 +167,7 @@ add_custom_command(
     OUTPUT include/interfaces/sel4_client.h
     COMMAND rm -f include/interfaces/sel4_client.h
     COMMAND
-        "${PYTHON3}" "${SYSCALL_STUB_GEN_PATH}" ${buffer} ${64bitguests} ${mcs} -a
+        "${PYTHON3}" "${SYSCALL_STUB_GEN_PATH}" ${buffer} ${64bitguests} ${mcs} ${cheri_arch} -a
         "${KernelSel4Arch}" -o include/interfaces/sel4_client.h ${interface_xmls}
     DEPENDS "${SYSCALL_STUB_GEN_PATH}" ${interface_xmls}
     COMMENT "Generate sel4_client.h"
