@@ -154,7 +154,8 @@ static inline void saveFpuState(tcb_t *thread)
  *    it.
  *
  */
-
+/** MODIFIES: phantom_machine_state */
+/** DONT_TRANSLATE */
 static inline void enableFpu(void)
 {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
