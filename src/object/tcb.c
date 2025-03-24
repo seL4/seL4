@@ -1607,6 +1607,7 @@ exception_t decodeDomainInvocation(word_t invLabel, word_t length, word_t *buffe
 {
     word_t domain;
     cap_t tcap;
+    tcb_t *tptr;
 
     if (unlikely(invLabel != DomainSetSet)) {
         current_syscall_error.type = seL4_IllegalOperation;
@@ -1643,7 +1644,9 @@ exception_t decodeDomainInvocation(word_t invLabel, word_t length, word_t *buffe
     }
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    setDomain(TCB_PTR(cap_thread_cap_get_capTCBPtr(tcap)), domain);
+    tptr = TCB_PTR(cap_thread_cap_get_capTCBPtr(tcap));
+    prepareSetDomain(tptr, domain);
+    setDomain(tptr, domain);
     return EXCEPTION_NONE;
 }
 

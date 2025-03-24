@@ -492,7 +492,6 @@ void switchToIdleThread(void)
 
 void setDomain(tcb_t *tptr, dom_t dom)
 {
-    prepareSetDomain(tptr, dom);
     tcbSchedDequeue(tptr);
     tptr->tcbDomain = dom;
     if (isSchedulable(tptr)) {
