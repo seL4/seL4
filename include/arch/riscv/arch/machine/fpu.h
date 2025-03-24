@@ -152,6 +152,8 @@ static inline void loadFpuState(const tcb_t *thread)
     write_fcsr(src->fcsr);
 }
 
+/** MODIFIES: phantom_machine_state */
+/** DONT_TRANSLATE */
 static inline void enableFpu(void)
 {
     isFPUEnabled[CURRENT_CPU_INDEX()] = true;
