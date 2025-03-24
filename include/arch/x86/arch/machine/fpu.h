@@ -89,6 +89,8 @@ static inline void finit(void)
  * Enable the FPU to be used without faulting.
  * Required even if the kernel attempts to use the FPU.
  */
+/** MODIFIES: phantom_machine_state */
+/** DONT_TRANSLATE */
 static inline void enableFpu(void)
 {
     asm volatile("clts" :: "m"(control_reg_order));

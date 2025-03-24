@@ -107,6 +107,8 @@ static inline void enableFpuEL01(void)
 
 /* Enable the FPU to be used without faulting.
  * Required even if the kernel attempts to use the FPU. */
+/** MODIFIES: phantom_machine_state */
+/** DONT_TRANSLATE */
 static inline void enableFpu(void)
 {
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
