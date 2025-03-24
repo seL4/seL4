@@ -177,7 +177,7 @@ END_FUNC(arm_syscall)
  *********************************/
 
 BEGIN_FUNC(arm_hyp_prefetch_abort_exception)
-#ifdef DEBUG
+#ifdef CONFIG_DEBUG_BUILD
     mrc p15, 4, sp, c13, c0, 2
     mrs r0, elr_hyp
     blx kernelPrefetchAbort
@@ -188,7 +188,7 @@ BEGIN_FUNC(arm_hyp_prefetch_abort_exception)
 END_FUNC(arm_hyp_prefetch_abort_exception)
 
 BEGIN_FUNC(arm_hyp_data_abort_exception)
-#ifdef DEBUG
+#ifdef CONFIG_DEBUG_BUILD
     mrc p15, 4, sp, c13, c0, 2
     mrs r0, elr_hyp
     blx kernelDataAbort
@@ -199,7 +199,7 @@ BEGIN_FUNC(arm_hyp_data_abort_exception)
 END_FUNC(arm_hyp_data_abort_exception)
 
 BEGIN_FUNC(arm_hyp_undefined_inst_exception)
-#ifdef DEBUG
+#ifdef CONFIG_DEBUG_BUILD
     mrc p15, 4, sp, c13, c0, 2
     mrs r0, elr_hyp
     blx kernelUndefinedInstruction

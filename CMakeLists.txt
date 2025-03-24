@@ -258,7 +258,7 @@ if(KernelFWholeProgram)
 endif()
 
 if(KernelDebugBuild)
-    KernelCommonFlags(-DDEBUG -g -ggdb)
+    KernelCommonFlags(-g -ggdb)
     # Pretend to CMake that we're a release build with debug info. This is because
     # we do actually allow CMake to do the final link step, so we'd like it not to
     # strip our binary
