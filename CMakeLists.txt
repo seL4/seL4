@@ -257,14 +257,16 @@ if(KernelFWholeProgram)
     KernelCommonFlags(-fwhole-program)
 endif()
 
+# Stop CMake from appending various flags such as -O3/-O2, -DNDEBUG, -g, etc.
+# The kernel build sidesteps most of the CMake notions of release/debug and
+# has its own conceptualisations of the current optimisation levels which
+# override the CMake appending flags.
+set(CMAKE_BUILD_TYPE "None")
+
 if(KernelDebugBuild)
+    # As we control debug/release mode independently of CMake,
+    # append the debug information flags manually.
     KernelCommonFlags(-g -ggdb)
-    # Pretend to CMake that we're a release build with debug info. This is because
-    # we do actually allow CMake to do the final link step, so we'd like it not to
-    # strip our binary
-    set(CMAKE_BUILD_TYPE "RelWithDebInfo")
-else()
-    set(CMAKE_BUILD_TYPE "Release")
 endif()
 
 if(KernelArchX86)
