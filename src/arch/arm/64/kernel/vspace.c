@@ -1384,6 +1384,8 @@ static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, word_t length,
             current_syscall_error.rangeErrorMin = start;
             current_syscall_error.rangeErrorMax = ROUND_DOWN(start, resolve_ret.ptBitsLeft) +
                                                   MASK(resolve_ret.ptBitsLeft);
+            userError("VSpaceRoot Flush: cannot cross page boundary, valid range is [0x%lx..0x%lx)",
+                      current_syscall_error.rangeErrorMin, current_syscall_error.rangeErrorMax);
             return EXCEPTION_SYSCALL_ERROR;
         }
 
