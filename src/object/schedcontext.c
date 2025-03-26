@@ -159,20 +159,27 @@ static inline void maybeStallSC(sched_context_t *sc)
 }
 #endif
 
-static inline void setConsumed(sched_context_t *sc, word_t *buffer)
+static inline void setConsumed(sched_context_t *sc, tcb_t *thread, bool_t write_msg)
 {
     time_t consumed = schedContext_updateConsumed(sc);
-    word_t length = mode_setTimeArg(0, consumed, buffer, NODE_STATE(ksCurThread));
-    setRegister(NODE_STATE(ksCurThread), msgInfoRegister, wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, length)));
+
+    if (write_msg) {
+        word_t *buffer = lookupIPCBuffer(true, thread);
+        word_t length = mode_setTimeArg(0, consumed, buffer, thread);
+        setRegister(thread, badgeRegister, 0);
+        setRegister(thread, msgInfoRegister, wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, length)));
+    }
 }
 
-static exception_t invokeSchedContext_Consumed(sched_context_t *sc, word_t *buffer)
+static exception_t invokeSchedContext_Consumed(sched_context_t *sc, bool_t call)
 {
-    setConsumed(sc, buffer);
+    setConsumed(sc, NODE_STATE(ksCurThread), call);
+
+    assert(NODE_STATE(ksCurThread) == ThreadState_Running);
     return EXCEPTION_NONE;
 }
 
-static exception_t invokeSchedContext_YieldTo(sched_context_t *sc, word_t *buffer)
+static exception_t invokeSchedContext_YieldTo(sched_context_t *sc, bool_t call)
 {
     if (sc->scYieldFrom) {
         schedContext_completeYieldTo(sc->scYieldFrom);
@@ -207,13 +214,14 @@ static exception_t invokeSchedContext_YieldTo(sched_context_t *sc, word_t *buffe
     }
 
     if (return_now) {
-        setConsumed(sc, buffer);
+        setConsumed(sc, NODE_STATE(ksCurThread), call);
     }
 
+    assert(NODE_STATE(ksCurThread) == ThreadState_Running);
     return EXCEPTION_NONE;
 }
 
-static exception_t decodeSchedContext_YieldTo(sched_context_t *sc, word_t *buffer)
+static exception_t decodeSchedContext_YieldTo(sched_context_t *sc, bool_t call)
 {
     if (sc->scTcb == NULL) {
         userError("SchedContext_YieldTo: cannot yield to an inactive sched context");
@@ -244,11 +252,10 @@ static exception_t decodeSchedContext_YieldTo(sched_context_t *sc, word_t *buffe
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    return invokeSchedContext_YieldTo(sc, buffer);
+    return invokeSchedContext_YieldTo(sc, call);
 }
 
-exception_t decodeSchedContextInvocation(word_t label, cap_t cap, word_t *buffer)
+exception_t decodeSchedContextInvocation(word_t label, cap_t cap, bool_t call)
 {
     sched_context_t *sc = SC_PTR(cap_sched_context_cap_get_capSCPtr(cap));
 
@@ -257,8 +264,7 @@ exception_t decodeSchedContextInvocation(word_t label, cap_t cap, word_t *buffer
     switch (label) {
     case SchedContextConsumed:
         /* no decode */
-        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        return invokeSchedContext_Consumed(sc, buffer);
+        return invokeSchedContext_Consumed(sc, call);
     case SchedContextBind:
         return decodeSchedContext_Bind(sc);
     case SchedContextUnbindObject:
@@ -273,7 +279,7 @@ exception_t decodeSchedContextInvocation(word_t label, cap_t cap, word_t *buffer
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return invokeSchedContext_Unbind(sc);
     case SchedContextYieldTo:
-        return decodeSchedContext_YieldTo(sc, buffer);
+        return decodeSchedContext_YieldTo(sc, call);
     default:
         userError("SchedContext invocation: Illegal operation attempted.");
         current_syscall_error.type = seL4_IllegalOperation;
@@ -401,7 +407,7 @@ void schedContext_cancelYieldTo(tcb_t *tcb)
 void schedContext_completeYieldTo(tcb_t *yielder)
 {
     if (yielder && yielder->tcbYieldTo) {
-        setConsumed(yielder->tcbYieldTo, lookupIPCBuffer(true, yielder));
+        setConsumed(yielder->tcbYieldTo, yielder, true);
         schedContext_cancelYieldTo(yielder);
     }
 }

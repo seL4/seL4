@@ -777,7 +777,7 @@ exception_t decodeInvocation(word_t invLabel, word_t length,
             current_syscall_error.invalidCapNumber = 0;
             return EXCEPTION_SYSCALL_ERROR;
         }
-        return decodeSchedContextInvocation(invLabel, cap, buffer);
+        return decodeSchedContextInvocation(invLabel, cap, call);
 #endif
     default:
         fail("Invalid cap type");
