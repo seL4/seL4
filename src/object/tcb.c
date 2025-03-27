@@ -1575,7 +1575,7 @@ exception_t decodeSetSpace(cap_t cap, word_t length, cte_t *slot, word_t *buffer
 
 exception_t decodeDomainInvocation(word_t invLabel, word_t length, word_t *buffer)
 {
-    word_t domain;
+    dom_t domain;
     cap_t tcap;
 
     if (unlikely(invLabel != DomainSetSet)) {
@@ -1611,11 +1611,15 @@ exception_t decodeDomainInvocation(word_t invLabel, word_t length, word_t *buffe
         current_syscall_error.invalidArgumentNumber = 1;
         return EXCEPTION_SYSCALL_ERROR;
     }
-
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    prepareSetDomain(TCB_PTR(cap_thread_cap_get_capTCBPtr(tcap)), domain);
-    setDomain(TCB_PTR(cap_thread_cap_get_capTCBPtr(tcap)), domain);
+    invokeDomainSetSet(TCB_PTR(cap_thread_cap_get_capTCBPtr(tcap)), domain);
     return EXCEPTION_NONE;
+}
+
+void invokeDomainSetSet(tcb_t *tcb, dom_t domain)
+{
+    prepareSetDomain(tcb, domain);
+    setDomain(tcb, domain);
 }
 
 exception_t decodeBindNotification(cap_t cap)
