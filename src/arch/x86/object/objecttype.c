@@ -542,7 +542,7 @@ exception_t Arch_decodeInvocation(
 void Arch_prepareThreadDelete(tcb_t *thread)
 {
     /* Notify the lazy FPU module about this thread's deletion. */
-    fpuThreadDelete(thread);
+    fpuRelease(thread);
 }
 
 void Arch_postCapDeletion(cap_t cap)

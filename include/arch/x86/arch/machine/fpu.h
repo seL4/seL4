@@ -14,31 +14,6 @@
 #include <arch/machine/cpu_registers.h>
 
 #define MXCSR_INIT_VALUE               0x1f80
-#define XCOMP_BV_COMPACTED_FORMAT      (1ull << 63)
-
-/* The state format, as saved by FXSAVE and restored by FXRSTOR instructions. */
-typedef struct i387_state {
-    uint16_t cwd;               /* control word */
-    uint16_t swd;               /* status word */
-    uint16_t twd;               /* tag word */
-    uint16_t fop;               /* last instruction opcode */
-    uint32_t reserved[4];       /* instruction and data pointers */
-    uint32_t mxcsr;             /* MXCSR register state */
-    uint32_t mxcsr_mask;        /* MXCSR mask */
-    uint32_t st_space[32];      /* FPU registers */
-    uint32_t xmm_space[64];     /* XMM registers */
-    uint32_t padding[13];
-} PACKED i387_state_t;
-
-/* The state format, as saved by XSAVE and restored by XRSTOR instructions. */
-typedef struct xsave_state {
-    i387_state_t i387;
-    struct {
-        uint64_t xfeatures;
-        uint64_t xcomp_bv;      /* state-component bitmap */
-        uint64_t reserved[6];
-    } header;
-} PACKED xsave_state_t;
 
 /* Initialise the FPU. */
 bool_t Arch_initFpu(void);
@@ -59,8 +34,16 @@ static inline uint32_t xsave_features_low(void)
 }
 
 /* Store state in the FPU registers into memory. */
-static inline void saveFpuState(user_fpu_state_t *dest)
+static inline void saveFpuState(tcb_t *thread)
 {
+    user_fpu_state_t *dest = &thread->tcbArch.tcbContext.fpuState;
+#ifdef CONFIG_VTX
+    struct vcpu *vcpu = thread->tcbArch.tcbVCPU;
+
+    if (vcpu && vcpu->fpu_active) {
+        dest = &vcpu->fpuState;
+    }
+#endif
     if (config_set(CONFIG_FXSAVE)) {
         asm volatile("fxsave %[dest]" : [dest] "=m"(*dest));
     } else if (config_set(CONFIG_XSAVE_XSAVEOPT)) {
@@ -75,8 +58,16 @@ static inline void saveFpuState(user_fpu_state_t *dest)
 }
 
 /* Load FPU state from memory into the FPU registers. */
-static inline void loadFpuState(user_fpu_state_t *src)
+static inline void loadFpuState(const tcb_t *thread)
 {
+    const user_fpu_state_t *src = &thread->tcbArch.tcbContext.fpuState;
+#ifdef CONFIG_VTX
+    const struct vcpu *vcpu = thread->tcbArch.tcbVCPU;
+
+    if (vcpu && vcpu->fpu_active) {
+        src = &vcpu->fpuState;
+    }
+#endif
     if (config_set(CONFIG_FXSAVE)) {
         asm volatile("fxrstor %[src]" :: [src] "m"(*src));
     } else if (config_set(CONFIG_XSAVE)) {
@@ -98,6 +89,8 @@ static inline void finit(void)
  * Enable the FPU to be used without faulting.
  * Required even if the kernel attempts to use the FPU.
  */
+/** MODIFIES: phantom_machine_state */
+/** DONT_TRANSLATE */
 static inline void enableFpu(void)
 {
     asm volatile("clts" :: "m"(control_reg_order));
@@ -110,11 +103,4 @@ static inline void disableFpu(void)
 {
     write_cr0(read_cr0() | CR0_TASK_SWITCH);
 }
-
-#ifdef CONFIG_VTX
-static inline bool_t vcpuThreadUsingFPU(tcb_t *thread)
-{
-    return thread->tcbArch.tcbVCPU && &thread->tcbArch.tcbVCPU->fpuState == NODE_STATE(ksActiveFPUState);
-}
-#endif /* CONFIG_VTX */
 
