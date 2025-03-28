@@ -66,6 +66,12 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 * Fixed: on aarch32 configurations with hypervisor support, `CNTKCTL` was not saved and restored alongside other virtual
   timer registers. `seL4_VCPUReg_CNTKCTL` has been introduced to mirror `seL4_VCPUReg_CNTKCTL_EL1` from aarch64.
 
+## MCS
+
+* To grant capabilities when replying to a call in MCS configurations, it is now necessary to have grant rights on both
+  the reply cap and the endpoint cap used to receive the call. Previously, the grant right on the endpoint cap was
+  ignored in MCS configurations.
+
 ### Upgrade Notes
 
 ---
