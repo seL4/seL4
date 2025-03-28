@@ -1,5 +1,7 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -225,12 +227,16 @@ BOOT_CODE void map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_righ
         attr_index = DEVICE_nGnRnE;
         shareable = 0;
     }
-    armKSGlobalKernelPT[GET_KPT_INDEX(vaddr, KLVL_FRM_ARM_PT_LVL(3))] = pte_pte_4k_page_new(uxn, paddr,
-                                                                                            0, /* global */
-                                                                                            1, /* access flag */
-                                                                                            shareable,
-                                                                                            APFromVMRights(vm_rights),
-                                                                                            attr_index);
+    armKSGlobalKernelPT[GET_KPT_INDEX(vaddr, KLVL_FRM_ARM_PT_LVL(3))] = pte_pte_4k_page_new(
+#if defined(CONFIG_HAVE_CHERI)
+                                                                            1, 1, 0, /* Enable capability loads/stores for the kernel */
+#endif
+                                                                            uxn, paddr,
+                                                                            0, /* global */
+                                                                            1, /* access flag */
+                                                                            shareable,
+                                                                            APFromVMRights(vm_rights),
+                                                                            attr_index);
 }
 
 BOOT_CODE void map_kernel_window(void)
@@ -269,6 +275,9 @@ BOOT_CODE void map_kernel_window(void)
     for (paddr = PADDR_BASE; paddr < PADDR_TOP; paddr += BIT(seL4_LargePageBits)) {
         armKSGlobalKernelPDs[GET_KPT_INDEX(vaddr, KLVL_FRM_ARM_PT_LVL(1))][GET_KPT_INDEX(vaddr,
                                                                                          KLVL_FRM_ARM_PT_LVL(2))] = pte_pte_page_new(
+#if defined(CONFIG_HAVE_CHERI)
+                                                                                                                        1, 1, 0, /* Enable capability loads/stores for the kernel */
+#endif
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
                                                                                                                         0, // XN
 #else
@@ -328,6 +337,9 @@ static BOOT_CODE void map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap, bool_t
     assert(pte_pte_table_ptr_get_present(pd));
     pt = paddr_to_pptr(pte_pte_table_ptr_get_pt_base_address(pd));
     *(pt + GET_UPT_INDEX(vptr, ULVL_FRM_ARM_PT_LVL(3))) = pte_pte_4k_page_new(
+#if defined(CONFIG_HAVE_CHERI)
+                                                              1, 1, 0, /* Enable capability loads/stores for the root task */
+#endif
                                                               !executable,                    /* unprivileged execute never */
                                                               pptr_to_paddr(pptr),            /* page_base_address    */
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
@@ -604,7 +616,7 @@ static findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
     return ret;
 }
 
-word_t *PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
+void *PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
 {
     word_t w_bufferPtr;
     cap_t bufferCap;
@@ -628,7 +640,7 @@ word_t *PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
 
         basePtr = cap_frame_cap_get_capFBasePtr(bufferCap);
         pageBits = pageBitsForSize(cap_frame_cap_get_capFSize(bufferCap));
-        return (word_t *)(basePtr + (w_bufferPtr & MASK(pageBits)));
+        return (void *)(basePtr + (w_bufferPtr & MASK(pageBits)));
     } else {
         return NULL;
     }
@@ -702,11 +714,23 @@ static pte_t makeUserPagePTE(paddr_t paddr, vm_rights_t vm_rights, vm_attributes
     word_t shareable = cacheable ? SMP_TERNARY(SMP_SHARE, 0) : 0;
 
     if (page_size == ARMSmallPage) {
-        return pte_pte_4k_page_new(nonexecutable, paddr, nG, 1 /* access flag */,
-                                   shareable, APFromVMRights(vm_rights), attridx);
+        return pte_pte_4k_page_new(
+#if defined(CONFIG_HAVE_CHERI)
+                   vm_attributes_get_LC(attributes),   /* Enable CHERI capability loads */
+                   vm_attributes_get_SC(attributes),   /* Enable CHERI capability stores */
+                   vm_attributes_get_CDBM(attributes), /* Enable tracking CHERI capability stores */
+#endif
+                   nonexecutable, paddr, nG, 1 /* access flag */,
+                   shareable, APFromVMRights(vm_rights), attridx);
     } else {
-        return pte_pte_page_new(nonexecutable, paddr, nG, 1 /* access flag */,
-                                shareable, APFromVMRights(vm_rights), attridx);
+        return pte_pte_page_new(
+#if defined(CONFIG_HAVE_CHERI)
+                   vm_attributes_get_LC(attributes),   /* Enable CHERI capability loads */
+                   vm_attributes_get_SC(attributes),   /* Enable CHERI capability stores */
+                   vm_attributes_get_CDBM(attributes), /* Enable tracking CHERI capability stores */
+#endif
+                   nonexecutable, paddr, nG, 1 /* access flag */,
+                   shareable, APFromVMRights(vm_rights), attridx);
     }
 }
 
@@ -1265,7 +1289,7 @@ static exception_t performPageGetAddress(pptr_t base_ptr, bool_t call)
     tcb_t *thread;
     thread = NODE_STATE(ksCurThread);
     if (call) {
-        word_t *ipcBuffer = lookupIPCBuffer(true, thread);
+        rword_t *ipcBuffer = lookupIPCBuffer(true, thread);
         setRegister(thread, badgeRegister, 0);
         unsigned int length = setMR(thread, ipcBuffer, 0, base);
         setRegister(thread, msgInfoRegister, wordFromMessageInfo(
@@ -1299,7 +1323,7 @@ static exception_t performASIDControlInvocation(void *frame, cte_t *slot,
 }
 
 static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, word_t length,
-                                                 cte_t *cte, cap_t cap, word_t *buffer)
+                                                 cte_t *cte, cap_t cap, rword_t *buffer)
 {
     vptr_t start, end;
     paddr_t pstart;
@@ -1414,7 +1438,7 @@ static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, word_t length,
 
 
 static exception_t decodeARMPageTableInvocation(word_t invLabel, word_t length,
-                                                cte_t *cte, cap_t cap, word_t *buffer)
+                                                cte_t *cte, cap_t cap, rword_t *buffer)
 {
     cap_t vspaceRootCap;
     vspace_root_t *vspaceRoot;
@@ -1504,7 +1528,7 @@ static inline bool_t CONST checkVPAlignment(vm_page_size_t sz, word_t w)
 }
 
 static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
-                                            cte_t *cte, cap_t cap, bool_t call, word_t *buffer)
+                                            cte_t *cte, cap_t cap, bool_t call, rword_t *buffer)
 {
     switch (invLabel) {
     case ARMPageMap: {
@@ -1688,8 +1712,8 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
         }
 #endif
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        return performPageFlush(invLabel, find_ret.vspace_root, asid, vaddr + start, vaddr + end - 1,
-                                pstart);
+        return performPageFlush(invLabel, find_ret.vspace_root, asid, vaddr + (word_t)start,
+                                vaddr + (word_t)end - 1, pstart);
     }
 
     case ARMPageGetAddress:
@@ -1703,7 +1727,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
 }
 
 exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
-                                   cte_t *cte, cap_t cap, bool_t call, word_t *buffer)
+                                   cte_t *cte, cap_t cap, bool_t call, rword_t *buffer)
 {
     switch (cap_get_capType(cap)) {
     case cap_vspace_cap:
