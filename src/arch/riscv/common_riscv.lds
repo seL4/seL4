@@ -56,9 +56,16 @@ SECTIONS
 
     /* Start of data section */
     _sdata = .;
+
     .small : {
-        /* Small data that should be accessed relative to gp.  ld has trouble
-           with the relaxation if they are not in a single section. */
+        /* Small data that should be accessed with gp-relative addressing.
+           Reference CMakeLists.txt where we set msmall-data-limit to limit
+           the size of the "small" data so that we can address with the
+           allowed 12-bit offset to the __global__pointer$, which we place
+           at 0x800 at the centre of the small data page (it gives us the most
+           access; if we placed it at the start we would waste the negative
+           signed half of the immediate).
+        */
         __global_pointer$ = . + 0x800;
         *(.srodata*)
         *(.sdata*)
