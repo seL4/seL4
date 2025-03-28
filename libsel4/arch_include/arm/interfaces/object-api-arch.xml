@@ -783,6 +783,59 @@
                 </description>
             </error>
         </method>
+        <method id="ARMIRQIssueSGISignal" name="IssueSGISignal" manual_name="IssueSGISignal"
+           manual_label="irq_controlissuesgisignal">
+            <condition><not><config var="CONFIG_ENABLE_SMP_SUPPORT"/></not></condition>
+            <brief>
+                Create a software generated interrupt (SGI) signal capability.
+            </brief>
+            <description>
+                Create an SGISignal capability and place it in the specific target CSpace slot. The
+                capability can be used to raise an SGI with a specific ID on a specific target core.
+                Currently this feature is supported on GICv2 and GICv3 hardware. Only available on
+                non-SMP configurations.
+
+                The resulting capability can be invoked like a notification capability that supports
+                only signal/send. SGIs can be received by IRQ notification objects on the target
+                core like other IRQs. See also <autoref label="sec:interrupts"/>.
+            </description>
+            <param dir="in" name="irq" type="seL4_Word" description="The SGI INTID (0-15) that can be signalled."/>
+            <param dir="in" name="target" type="seL4_Word" description="The node ID that will be
+            targeted. 0-7 for GICv2 and 0-31 for GICv3. Targets within that range that are not
+            supported by the hardware will be ignored. For example, on a GICv3 board with 4 CPUs, the
+            capability for target 13 can be created, but signals to it will have no effect."/>
+
+            <param dir="in" name="root" type="seL4_CNode" description="CPtr to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="index" type="seL4_Word" description="CPtr to the destination slot. Resolved from the root of the destination CSpace."/>
+            <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
+            <error name="seL4_DeleteFirst">
+                <description>
+                    The destination slot contains a capability.
+                </description>
+            </error>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="index"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                    Or, <texttt text="root"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The value of <texttt text="irq"/> or <texttt text="target"/> is out of range.
+                    Or, <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                </description>
+            </error>
+        </method>
     </interface>
     <interface name="seL4_ARM_SIDControl" manual_name="SID Control" cap_description="A SIDControl capability. This gives you the authority to make this call.">
        <method id="ARMSIDIssueSIDManager" name="GetSID" manual_name="Get SID" manual_label="sid_controlgetsid">
