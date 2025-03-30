@@ -33,8 +33,13 @@
 .code32
 
 BEGIN_FUNC(print_string)
-    movw $0x3f8, %dx
 1:
+    movw $0x3f8+5, %dx
+2:
+    inb  (%dx), %al
+    test $0x20, %al
+    jz   2b
+    sub  $5, %dx
     movb (%ebx), %al
     outb %al, %dx
     incl %ebx
@@ -63,7 +68,7 @@ BEGIN_FUNC(huge_page_check)
     call hang
 
 huge_page_error_string:
-    .string "Huge page not supported by the processor"
+    .string "Huge page not supported by the processor\r\n"
     .set huge_page_error_size, . - huge_page_error_string
 END_FUNC(huge_page_check)
 #endif /* CONFIG_HUGE_PAGE */
@@ -137,7 +142,7 @@ BEGIN_FUNC(pcid_check)
     call hang
 
 pcid_error_string:
-    .string "PCIDs not supported by the processor"
+    .string "PCIDs not supported by the processor\r\n"
     .set pcid_error_size, . - pcid_error_string
 END_FUNC(pcid_check)
 
@@ -155,7 +160,7 @@ BEGIN_FUNC(invpcid_check)
     call  hang
 
 invpcid_error_string:
-    .string "INVPCID instruction not supported by the processor"
+    .string "INVPCID instruction not supported by the processor\r\n"
     .set invpcid_error_size, . - invpcid_error_string
 END_FUNC(invpcid_check)
 #endif /* CONFIG_SUPPORT_PCID */
@@ -174,7 +179,7 @@ BEGIN_FUNC(syscall_check)
     call  hang
 
 syscall_error_string:
-    .string "SYSCALL/SYSRET instruction not supported by the processor"
+    .string "SYSCALL/SYSRET instruction not supported by the processor\r\n"
     .set syscall_error_size, . - syscall_error_string
 END_FUNC(syscall_check)
 
@@ -197,7 +202,7 @@ BEGIN_FUNC(fsgsbase_enable)
     call hang
 
 fsgsbase_error_string:
-    .string "fsgsbase instructions not supported by the processor"
+    .string "fsgsbase instructions not supported by the processor\r\n"
     .set fsgsbase_error_size, . - fsgsbase_error_string
 END_FUNC(fsgsbase_enable)
 #endif /* CONFIG_FSGSBASE_INST */
