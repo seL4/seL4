@@ -290,7 +290,14 @@ static bool_t BOOT_CODE init_vtx_fixed_values(bool_t useTrueMsrs)
     entry_control_high = x86_rdmsr_low(entry_ctls);
     entry_control_low = x86_rdmsr_high(entry_ctls);
 
-    cr0_high = x86_rdmsr_low(IA32_VMX_CR0_FIXED0_MSR);
+    // Intel SDM, Vol. 3C, 24.8:
+    //
+    // > Later processors support a VM-execution control called "unrestricted
+    // > guest" (see Section 25.6.2). If this control is 1, CR0.PE and CR0.PG
+    // > may be 0 in VMX non-root operation (even if the capability MSR
+    // > IA32_VMX_CR0_FIXED0 reports otherwise).1 Such processors allow guest
+    // > software to run in unpaged protected mode or in real-address mode.
+    cr0_high = x86_rdmsr_low(IA32_VMX_CR0_FIXED0_MSR) & ~0x80000001;
     cr0_low = x86_rdmsr_low(IA32_VMX_CR0_FIXED1_MSR);
     cr4_high = x86_rdmsr_low(IA32_VMX_CR4_FIXED0_MSR);
     cr4_low = x86_rdmsr_low(IA32_VMX_CR4_FIXED1_MSR);
@@ -392,7 +399,7 @@ static bool_t BOOT_CODE check_vtx_fixed_values(bool_t useTrueMsrs)
     uint32_t local_entry_control_high = x86_rdmsr_low(entry_ctls);
     uint32_t local_entry_control_low = x86_rdmsr_high(entry_ctls);
 
-    uint32_t local_cr0_high = x86_rdmsr_low(IA32_VMX_CR0_FIXED0_MSR);
+    uint32_t local_cr0_high = x86_rdmsr_low(IA32_VMX_CR0_FIXED0_MSR) & ~0x80000001;
     uint32_t local_cr0_low = x86_rdmsr_low(IA32_VMX_CR0_FIXED1_MSR);
     uint32_t local_cr4_high = x86_rdmsr_low(IA32_VMX_CR4_FIXED0_MSR);
     uint32_t local_cr4_low = x86_rdmsr_low(IA32_VMX_CR4_FIXED1_MSR);
