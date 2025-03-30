@@ -1642,14 +1642,14 @@ exception_t decodeDomainInvocation(word_t invLabel, word_t length, word_t *buffe
         return EXCEPTION_SYSCALL_ERROR;
     }
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    return invokeDomainSetSet(TCB_PTR(cap_thread_cap_get_capTCBPtr(tcap)), domain);
+    invokeDomainSetSet(TCB_PTR(cap_thread_cap_get_capTCBPtr(tcap)), domain);
+    return EXCEPTION_NONE;
 }
 
-exception_t invokeDomainSetSet(tcb_t *tcb, dom_t domain)
+void invokeDomainSetSet(tcb_t *tcb, dom_t domain)
 {
     prepareSetDomain(tcb, domain);
     setDomain(tcb, domain);
-    return EXCEPTION_NONE;
 }
 
 exception_t decodeBindNotification(cap_t cap)
