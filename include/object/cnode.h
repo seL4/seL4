@@ -34,6 +34,7 @@ bool_t PURE isFinalCapability(cte_t *cte);
 bool_t PURE slotCapLongRunningDelete(cte_t *slot);
 cte_t *getReceiveSlots(tcb_t *thread, word_t *buffer);
 cap_transfer_t PURE loadCapTransfer(word_t *buffer);
+bool_t CNodeBusyZeroing(cte_t *slot);
 
 #ifndef CONFIG_KERNEL_MCS
 exception_t invokeCNodeSaveCaller(cte_t *destSlot);

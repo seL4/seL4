@@ -24,7 +24,8 @@ base 64(39,1)
 block frame_cap {
     field       capFMappedASID      16
     field_high  capFBasePtr         39
-    padding                         9
+    field       capIsDirty          1
+    padding                         8
 
     field       capType             5
     field       capFSize            2
