@@ -11,7 +11,8 @@
 #ifdef CONFIG_KERNEL_MCS
 static inline bool_t validTimeoutHandler(tcb_t *tptr)
 {
-    return cap_get_capType(TCB_PTR_CTE_PTR(tptr, tcbTimeoutHandler)->cap) == cap_endpoint_cap;
+    cap_t timeoutHandlerCap = TCB_PTR_CTE_PTR(tptr, tcbTimeoutHandler)->cap;
+    return cap_get_capType(timeoutHandlerCap) == cap_endpoint_cap;
 }
 
 void handleTimeout(tcb_t *tptr);

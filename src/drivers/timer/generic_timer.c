@@ -71,7 +71,6 @@ static void save_virt_timer(vcpu_t *vcpu)
     vcpu_save_reg(vcpu, seL4_VCPUReg_CNTV_CVAL);
     vcpu_save_reg(vcpu, seL4_VCPUReg_CNTVOFF);
     vcpu_save_reg(vcpu, seL4_VCPUReg_CNTKCTL_EL1);
-    check_export_arch_timer();
 #else
     uint64_t cval = get_cntv_cval_64();
     uint64_t cntvoff = get_cntv_off_64();
@@ -79,7 +78,9 @@ static void save_virt_timer(vcpu_t *vcpu)
     vcpu_write_reg(vcpu, seL4_VCPUReg_CNTV_CVALlow, (word_t)cval);
     vcpu_write_reg(vcpu, seL4_VCPUReg_CNTVOFFhigh, (word_t)(cntvoff >> 32));
     vcpu_write_reg(vcpu, seL4_VCPUReg_CNTVOFFlow, (word_t)cntvoff);
+    vcpu_save_reg(vcpu, seL4_VCPUReg_CNTKCTL);
 #endif
+    check_export_arch_timer();
 #ifdef CONFIG_VTIMER_UPDATE_VOFFSET
     /* Save counter value at the time the vcpu is disabled */
     vcpu->virtTimer.last_pcount = read_cntpct();
@@ -97,6 +98,7 @@ static void restore_virt_timer(vcpu_t *vcpu)
     uint32_t cval_low = vcpu_read_reg(vcpu, seL4_VCPUReg_CNTV_CVALlow);
     uint64_t cval = ((uint64_t)cval_high << 32) | (uint64_t) cval_low;
     set_cntv_cval_64(cval);
+    vcpu_restore_reg(vcpu, seL4_VCPUReg_CNTKCTL);
 #endif
 
     /* Set virtual timer offset */

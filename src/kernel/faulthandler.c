@@ -14,8 +14,8 @@
 #ifdef CONFIG_KERNEL_MCS
 void handleFault(tcb_t *tptr)
 {
-    bool_t hasFaultHandler = sendFaultIPC(tptr, TCB_PTR_CTE_PTR(tptr, tcbFaultHandler)->cap,
-                                          tptr->tcbSchedContext != NULL);
+    cap_t faultHandlerCap = TCB_PTR_CTE_PTR(tptr, tcbFaultHandler)->cap;
+    bool_t hasFaultHandler = sendFaultIPC(tptr, faultHandlerCap, tptr->tcbSchedContext != NULL);
     if (!hasFaultHandler) {
         handleNoFaultHandler(tptr);
     }
@@ -24,7 +24,8 @@ void handleFault(tcb_t *tptr)
 void handleTimeout(tcb_t *tptr)
 {
     assert(validTimeoutHandler(tptr));
-    sendFaultIPC(tptr, TCB_PTR_CTE_PTR(tptr, tcbTimeoutHandler)->cap, false);
+    cap_t timeoutHandlerCap = TCB_PTR_CTE_PTR(tptr, tcbTimeoutHandler)->cap;
+    sendFaultIPC(tptr, timeoutHandlerCap, false);
 }
 
 bool_t sendFaultIPC(tcb_t *tptr, cap_t handlerCap, bool_t can_donate)

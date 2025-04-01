@@ -255,6 +255,12 @@ elseif(KernelArmCortexA9)
     config_set(KernelArmCacheLineSizeBits L1_CACHE_LINE_SIZE_BITS "5")
 endif()
 
+if(KernelArmCortexA8)
+    config_set(KernelArmHasTlbLock ARM_HAS_TLB_LOCK ON)
+else()
+    config_set(KernelArmHasTlbLock ARM_HAS_TLB_LOCK OFF)
+endif()
+
 add_sources(
     DEP "KernelArchARM"
     PREFIX src/arch/arm
