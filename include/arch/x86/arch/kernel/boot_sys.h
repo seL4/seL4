@@ -8,6 +8,7 @@
 
 #include <arch/kernel/multiboot.h>
 #include <arch/kernel/multiboot2.h>
+#include <arch/kernel/pvh.h>
 
 /* type definitions (directly corresponding to abstract specification) */
 typedef struct boot_state {

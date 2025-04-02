@@ -31,6 +31,7 @@ PHDRS {
     phys PT_LOAD FILEHDR PHDRS ;
     boot PT_LOAD ;
     virt PT_LOAD ;
+    note PT_NOTE FLAGS(4) ;
 }
 
 SECTIONS
@@ -145,6 +146,11 @@ SECTIONS
 
     . = ALIGN(4K);
     ki_end = .;
+
+    .note :
+    {
+        KEEP(*(.note.Xen))
+    } :note
 
     /DISCARD/ :
     {

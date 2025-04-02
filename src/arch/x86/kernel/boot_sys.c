@@ -63,11 +63,11 @@ BOOT_CODE static paddr_t find_load_paddr(paddr_t min_paddr, word_t image_size)
     int i;
 
     for (i = 0; i < boot_state.mem_p_regs.count; i++) {
-        paddr_t start = MAX(min_paddr, boot_state.mem_p_regs.list[i].start);
+        paddr_t start = MAX(boot_state.ki_p_reg.end, MAX(min_paddr, boot_state.mem_p_regs.list[i].start));
         paddr_t end = boot_state.mem_p_regs.list[i].end;
         word_t region_size = end - start;
 
-        if (region_size >= image_size) {
+        if (end > start && region_size >= image_size) {
             return start;
         }
     }
@@ -75,11 +75,13 @@ BOOT_CODE static paddr_t find_load_paddr(paddr_t min_paddr, word_t image_size)
     return 0;
 }
 
-BOOT_CODE static paddr_t load_boot_module(word_t boot_module_start, paddr_t load_paddr)
+BOOT_CODE static paddr_t load_boot_module(word_t boot_module_start, paddr_t *load_paddr_p)
 {
     v_region_t v_reg;
     word_t entry;
     Elf_Header_t *elf_file = (Elf_Header_t *)boot_module_start;
+    paddr_t load_paddr;
+    paddr_t pa_src, pa_src_end, pa_dst;
 
     if (!elf_checkFile(elf_file)) {
         printf("Boot module does not contain a valid ELF image\n");
@@ -116,8 +118,29 @@ BOOT_CODE static paddr_t load_boot_module(word_t boot_module_start, paddr_t load
         return 0;
     }
 
-    load_paddr = find_load_paddr(load_paddr, v_reg.end - v_reg.start);
-    assert(load_paddr);
+    load_paddr = find_load_paddr(*load_paddr_p, v_reg.end - v_reg.start);
+    if (!load_paddr) {
+        /* unable to find enough continuous memory above module, try to move module and retry */
+        /* src and dst may overlap, so we cannot use memcpy here */
+        pa_dst = boot_module_start - (v_reg.end - v_reg.start);
+        assert(pa_dst >= boot_state.ki_p_reg.end);
+
+        pa_src_end = *load_paddr_p;
+        assert(pa_src_end > boot_module_start);
+
+        load_paddr = find_load_paddr(pa_src_end - (v_reg.end - v_reg.start), v_reg.end - v_reg.start);
+        assert(load_paddr);
+
+        printf("Moving module from 0x%lx (until 0x%lx) to 0x%lx...\n", boot_module_start, pa_src_end, pa_dst);
+
+        for (pa_src = boot_module_start; pa_src < pa_src_end; pa_src++) {
+            *(uint8_t *)pa_dst = *(uint8_t *)pa_src;
+            pa_dst++;
+        }
+
+        elf_file = (Elf_Header_t *)(boot_module_start - (v_reg.end - v_reg.start));
+    }
+    *load_paddr_p = load_paddr;
 
     /* fill ui_info struct */
     boot_state.ui_info.pv_offset = load_paddr - v_reg.start;
@@ -452,9 +475,7 @@ static BOOT_CODE bool_t try_boot_sys(void)
     assert(mods_end_paddr > boot_state.ki_p_reg.end);
 
     printf("ELF-loading userland images from boot modules:\n");
-    load_paddr = mods_end_paddr;
-
-    load_paddr = load_boot_module(boot_state.boot_module_start, load_paddr);
+    load_paddr = load_boot_module(boot_state.boot_module_start, &mods_end_paddr);
     if (!load_paddr) {
         return false;
     }
@@ -700,6 +721,84 @@ static BOOT_CODE bool_t try_boot_sys_mbi2(
     return true;
 }
 
+static BOOT_CODE bool_t hvm_parse_mem_map(hvm_memmap_entry_t *entries, uint32_t num_entries, uint32_t *mem_lower_out)
+{
+    uint32_t i;
+    hvm_memmap_entry_t *entry;
+    printf("Parsing HVM physical memory map\n");
+
+    for (i = 0; i < num_entries; i++) {
+        entry = &entries[i];
+        printf("\tPhysical Memory Region from %lx size %lx type %d\n", (long)entry->addr, (long)entry->size, entry->type);
+        if (entry->type == XEN_HVM_MEMMAP_TYPE_RAM  && entry->addr >= HIGHMEM_PADDR && entry->size >= BIT(PAGE_BITS)) {
+            if (!add_mem_p_regs((p_region_t) {
+            ROUND_UP(entry->addr, PAGE_BITS), ROUND_DOWN(entry->addr + entry->size, PAGE_BITS),
+            })) {
+                return false;
+            }
+        }
+
+        if (entry->type == XEN_HVM_MEMMAP_TYPE_RAM && entry->addr == 0) {
+            *mem_lower_out = entry->size;
+        }
+    }
+
+    return true;
+}
+
+static BOOT_CODE bool_t try_boot_sys_hvm(
+    hvm_start_info_t *info
+)
+{
+    word_t i;
+    hvm_modlist_entry_t *modules = (hvm_modlist_entry_t *)(word_t)info->modlist_paddr;
+
+    if (info->magic != HVM_START_MAGIC) {
+        printf("Boot loader is not Xen HVM compliant %x\n", info->magic);
+        return false;
+    }
+
+    cmdline_parse((const char *)(word_t)info->cmdline_paddr, &cmdline_opt);
+
+    if (info->memmap_entries == 0) {
+        printf("Boot loader did not provide information about physical memory size\n");
+        return false;
+    }
+
+    printf("Detected %d boot module(s):\n", info->nr_modules);
+
+    if (info->nr_modules < 1) {
+        printf("Expect at least one boot module (containing a userland image)\n");
+        return false;
+    }
+
+    for (i = 0; i < info->nr_modules; i++) {
+        printf(
+            "  module #%ld: start=0x%llx end=0x%llx size=0x%llx\n",
+            i,
+            modules[i].paddr,
+            modules[i].paddr + modules[i].size,
+            modules[i].size
+        );
+        if (boot_state.mods_end_paddr < modules[i].paddr + modules[i].size) {
+            boot_state.mods_end_paddr = modules[i].paddr + modules[i].size;
+        }
+    }
+
+    boot_state.mem_p_regs.count = 0;
+
+    if (!hvm_parse_mem_map((hvm_memmap_entry_t *)(word_t)info->memmap_paddr, info->memmap_entries, &boot_state.mem_lower)) {
+        return false;
+    }
+
+    boot_state.boot_module_start = modules[0].paddr;
+
+    memcpy(&boot_state.acpi_rsdp, (void *)(word_t)info->rsdp_paddr, sizeof(boot_state.acpi_rsdp));
+
+    return true;
+}
+
+
 BOOT_CODE VISIBLE void boot_sys(
     unsigned long multiboot_magic,
     void *mbi)
@@ -710,6 +809,8 @@ BOOT_CODE VISIBLE void boot_sys(
         result = try_boot_sys_mbi1(mbi);
     } else if (multiboot_magic == MULTIBOOT2_MAGIC) {
         result = try_boot_sys_mbi2(mbi);
+    } else if (multiboot_magic == HVM_START_MAGIC) {
+        result = try_boot_sys_hvm(mbi);
     } else {
         printf("Boot loader is not multiboot 1 or 2 compliant %lx\n", multiboot_magic);
     }
