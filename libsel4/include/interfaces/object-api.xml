@@ -811,7 +811,7 @@
              <description>
                 An invocation for setting the Thread Local Storage (TLS) base address. This ensures that across all platforms, the TLSBase register is viewed as being completely mutable, just like all of the general purpose registers, even on platforms where modification is a privileged operation.
              </description>
-             <param dir="in" name="tls_base" type="seL4_Word"
+             <param dir="in" name="tls_base" type="seL4_Register"
                 description="The TLS base to set."/>
             <error name="seL4_IllegalOperation">
                 <description>

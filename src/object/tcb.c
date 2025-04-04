@@ -1,5 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -335,15 +337,17 @@ void tcbReleaseEnqueue(tcb_t *tcb)
 }
 #endif
 
-cptr_t PURE getExtraCPtr(word_t *bufferPtr, word_t i)
+cptr_t PURE getExtraCPtr(void *bufferPtr, word_t i)
 {
-    return (cptr_t)bufferPtr[seL4_MsgMaxLength + 2 + i];
+    seL4_IPCBuffer *IPCBuffer = bufferPtr;
+    return (cptr_t)IPCBuffer->caps_or_badges[i];
 }
 
-void setExtraBadge(word_t *bufferPtr, word_t badge,
+void setExtraBadge(void *bufferPtr, word_t badge,
                    word_t i)
 {
-    bufferPtr[seL4_MsgMaxLength + 2 + i] = badge;
+    seL4_IPCBuffer *IPCBuffer = bufferPtr;
+    IPCBuffer->caps_or_badges[i] = badge;
 }
 
 #ifndef CONFIG_KERNEL_MCS
@@ -380,7 +384,7 @@ void deleteCallerCap(tcb_t *receiver)
 
 extra_caps_t current_extra_caps;
 
-exception_t lookupExtraCaps(tcb_t *thread, word_t *bufferPtr, seL4_MessageInfo_t info)
+exception_t lookupExtraCaps(tcb_t *thread, void *bufferPtr, seL4_MessageInfo_t info)
 {
     lookupSlot_raw_ret_t lu_ret;
     cptr_t cptr;
@@ -412,8 +416,8 @@ exception_t lookupExtraCaps(tcb_t *thread, word_t *bufferPtr, seL4_MessageInfo_t
 }
 
 /* Copy IPC MRs from one thread to another */
-word_t copyMRs(tcb_t *sender, word_t *sendBuf, tcb_t *receiver,
-               word_t *recvBuf, word_t n)
+word_t copyMRs(tcb_t *sender, rword_t *sendBuf, tcb_t *receiver,
+               rword_t *recvBuf, word_t n)
 {
     word_t i;
 
@@ -491,7 +495,7 @@ static exception_t invokeTCB_SetAffinity(tcb_t *thread, word_t affinity)
     return EXCEPTION_NONE;
 }
 
-static exception_t decodeSetAffinity(cap_t cap, word_t length, word_t *buffer)
+static exception_t decodeSetAffinity(cap_t cap, word_t length, rword_t *buffer)
 {
     tcb_t *tcb;
     word_t affinity;
@@ -518,7 +522,7 @@ static exception_t decodeSetAffinity(cap_t cap, word_t length, word_t *buffer)
 #endif /* ENABLE_SMP_SUPPORT */
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
-static exception_t invokeConfigureSingleStepping(bool_t call, word_t *buffer, tcb_t *t,
+static exception_t invokeConfigureSingleStepping(bool_t call, rword_t *buffer, tcb_t *t,
                                                  uint16_t bp_num, word_t n_instrs)
 {
     bool_t bp_was_consumed;
@@ -549,7 +553,7 @@ static exception_t invokeConfigureSingleStepping(bool_t call, word_t *buffer, tc
     return EXCEPTION_NONE;
 }
 
-static exception_t decodeConfigureSingleStepping(cap_t cap, bool_t call, word_t *buffer)
+static exception_t decodeConfigureSingleStepping(cap_t cap, bool_t call, rword_t *buffer)
 {
     uint16_t bp_num;
     word_t n_instrs;
@@ -580,7 +584,7 @@ static exception_t invokeSetBreakpoint(tcb_t *tcb, uint16_t bp_num,
     return EXCEPTION_NONE;
 }
 
-static exception_t decodeSetBreakpoint(cap_t cap, word_t *buffer)
+static exception_t decodeSetBreakpoint(cap_t cap, rword_t *buffer)
 {
     uint16_t bp_num;
     word_t vaddr, type, size, rw;
@@ -697,7 +701,7 @@ static exception_t decodeSetBreakpoint(cap_t cap, word_t *buffer)
                                vaddr, type, size, rw);
 }
 
-static exception_t invokeGetBreakpoint(bool_t call, word_t *buffer, tcb_t *tcb, uint16_t bp_num)
+static exception_t invokeGetBreakpoint(bool_t call, rword_t *buffer, tcb_t *tcb, uint16_t bp_num)
 {
     tcb_t *thread;
     thread = NODE_STATE(ksCurThread);
@@ -717,7 +721,7 @@ static exception_t invokeGetBreakpoint(bool_t call, word_t *buffer, tcb_t *tcb, 
     return EXCEPTION_NONE;
 }
 
-static exception_t decodeGetBreakpoint(cap_t cap, bool_t call, word_t *buffer)
+static exception_t decodeGetBreakpoint(cap_t cap, bool_t call, rword_t *buffer)
 {
     tcb_t *tcb;
     uint16_t bp_num;
@@ -744,7 +748,7 @@ static exception_t invokeUnsetBreakpoint(tcb_t *tcb, uint16_t bp_num)
     return EXCEPTION_NONE;
 }
 
-static exception_t decodeUnsetBreakpoint(cap_t cap, word_t *buffer)
+static exception_t decodeUnsetBreakpoint(cap_t cap, rword_t *buffer)
 {
     tcb_t *tcb;
     uint16_t bp_num;
@@ -764,7 +768,7 @@ static exception_t decodeUnsetBreakpoint(cap_t cap, word_t *buffer)
 }
 #endif /* CONFIG_HARDWARE_DEBUG_API */
 
-static exception_t invokeSetTLSBase(tcb_t *thread, word_t tls_base)
+static exception_t invokeSetTLSBase(tcb_t *thread, rword_t tls_base)
 {
     setRegister(thread, TLS_BASE, tls_base);
     if (thread == NODE_STATE(ksCurThread)) {
@@ -776,9 +780,9 @@ static exception_t invokeSetTLSBase(tcb_t *thread, word_t tls_base)
     return EXCEPTION_NONE;
 }
 
-static exception_t decodeSetTLSBase(cap_t cap, word_t length, word_t *buffer)
+static exception_t decodeSetTLSBase(cap_t cap, word_t length, rword_t *buffer)
 {
-    word_t tls_base;
+    rword_t tls_base;
 
     if (length < 1) {
         userError("TCB SetTLSBase: Truncated message.");
@@ -797,7 +801,7 @@ static exception_t decodeSetTLSBase(cap_t cap, word_t length, word_t *buffer)
  * functions directly.  This is a significant deviation from the Haskell
  * spec. */
 exception_t decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
-                                cte_t *slot, bool_t call, word_t *buffer)
+                                cte_t *slot, bool_t call, rword_t *buffer)
 {
     /* Stall the core if we are operating on a remote TCB that is currently running */
     SMP_COND_STATEMENT(remoteTCBStall(TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)));)
@@ -900,7 +904,7 @@ enum CopyRegistersFlags {
     CopyRegisters_transferInteger = 3
 };
 
-exception_t decodeCopyRegisters(cap_t cap, word_t length, word_t *buffer)
+exception_t decodeCopyRegisters(cap_t cap, word_t length, rword_t *buffer)
 {
     word_t transferArch;
     tcb_t *srcTCB;
@@ -944,7 +948,7 @@ enum ReadRegistersFlags {
 };
 
 exception_t decodeReadRegisters(cap_t cap, word_t length, bool_t call,
-                                word_t *buffer)
+                                rword_t *buffer)
 {
     word_t transferArch, flags, n;
     tcb_t *thread;
@@ -988,7 +992,7 @@ enum WriteRegistersFlags {
     WriteRegisters_resume = 0
 };
 
-exception_t decodeWriteRegisters(cap_t cap, word_t length, word_t *buffer)
+exception_t decodeWriteRegisters(cap_t cap, word_t length, rword_t *buffer)
 {
     word_t flags, w;
     word_t transferArch;
@@ -1047,7 +1051,7 @@ static bool_t validFaultHandler(cap_t cap)
 #endif
 
 /* TCBConfigure batches SetIPCBuffer and parts of SetSpace. */
-exception_t decodeTCBConfigure(cap_t cap, word_t length, cte_t *slot, word_t *buffer)
+exception_t decodeTCBConfigure(cap_t cap, word_t length, cte_t *slot, rword_t *buffer)
 {
     cte_t *bufferSlot, *cRootSlot, *vRootSlot;
     cap_t bufferCap, cRootCap, vRootCap;
@@ -1163,7 +1167,7 @@ exception_t decodeTCBConfigure(cap_t cap, word_t length, cte_t *slot, word_t *bu
 #endif
 }
 
-exception_t decodeSetPriority(cap_t cap, word_t length, word_t *buffer)
+exception_t decodeSetPriority(cap_t cap, word_t length, rword_t *buffer)
 {
     if (length < 1 || current_extra_caps.excaprefs[0] == NULL) {
         userError("TCB SetPriority: Truncated message.");
@@ -1207,7 +1211,7 @@ exception_t decodeSetPriority(cap_t cap, word_t length, word_t *buffer)
 #endif
 }
 
-exception_t decodeSetMCPriority(cap_t cap, word_t length, word_t *buffer)
+exception_t decodeSetMCPriority(cap_t cap, word_t length, rword_t *buffer)
 {
     if (length < 1 || current_extra_caps.excaprefs[0] == NULL) {
         userError("TCB SetMCPriority: Truncated message.");
@@ -1283,9 +1287,9 @@ exception_t decodeSetTimeoutEndpoint(cap_t cap, cte_t *slot)
 #endif
 
 #ifdef CONFIG_KERNEL_MCS
-exception_t decodeSetSchedParams(cap_t cap, word_t length, cte_t *slot, word_t *buffer)
+exception_t decodeSetSchedParams(cap_t cap, word_t length, cte_t *slot, rword_t *buffer)
 #else
-exception_t decodeSetSchedParams(cap_t cap, word_t length, word_t *buffer)
+exception_t decodeSetSchedParams(cap_t cap, word_t length, rword_t *buffer)
 #endif
 {
     if (length < 2 || current_extra_caps.excaprefs[0] == NULL
@@ -1396,7 +1400,7 @@ exception_t decodeSetSchedParams(cap_t cap, word_t length, word_t *buffer)
 }
 
 
-exception_t decodeSetIPCBuffer(cap_t cap, word_t length, cte_t *slot, word_t *buffer)
+exception_t decodeSetIPCBuffer(cap_t cap, word_t length, cte_t *slot, rword_t *buffer)
 {
     cptr_t cptr_bufferPtr;
     cap_t bufferCap;
@@ -1456,7 +1460,7 @@ exception_t decodeSetIPCBuffer(cap_t cap, word_t length, cte_t *slot, word_t *bu
 #else
 #define DECODE_SET_SPACE_PARAMS 3
 #endif
-exception_t decodeSetSpace(cap_t cap, word_t length, cte_t *slot, word_t *buffer)
+exception_t decodeSetSpace(cap_t cap, word_t length, cte_t *slot, rword_t *buffer)
 {
     word_t cRootData, vRootData;
     cte_t *cRootSlot, *vRootSlot;
@@ -1566,7 +1570,7 @@ exception_t decodeSetSpace(cap_t cap, word_t length, cte_t *slot, word_t *buffer
 #endif
 }
 
-exception_t decodeDomainInvocation(word_t invLabel, word_t length, word_t *buffer)
+exception_t decodeDomainInvocation(word_t invLabel, word_t length, rword_t *buffer)
 {
     word_t domain;
     cap_t tcap;
@@ -1955,7 +1959,7 @@ exception_t invokeTCB_ReadRegisters(tcb_t *tcb_src, bool_t suspendSource,
     }
 
     if (call) {
-        word_t *ipcBuffer;
+        rword_t *ipcBuffer;
 
         ipcBuffer = lookupIPCBuffer(true, thread);
 
@@ -1997,10 +2001,10 @@ exception_t invokeTCB_ReadRegisters(tcb_t *tcb_src, bool_t suspendSource,
 }
 
 exception_t invokeTCB_WriteRegisters(tcb_t *dest, bool_t resumeTarget,
-                                     word_t n, word_t arch, word_t *buffer)
+                                     word_t n, word_t arch, rword_t *buffer)
 {
     word_t i;
-    word_t pc;
+    rword_t pc;
     exception_t e;
     bool_t archInfo;
 
@@ -2065,7 +2069,7 @@ void setThreadName(tcb_t *tcb, const char *name)
 }
 #endif
 
-word_t setMRs_syscall_error(tcb_t *thread, word_t *receiveIPCBuffer)
+word_t setMRs_syscall_error(tcb_t *thread, rword_t *receiveIPCBuffer)
 {
     switch (current_syscall_error.type) {
     case seL4_InvalidArgument:

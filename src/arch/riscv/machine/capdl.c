@@ -167,7 +167,7 @@ void print_cap_arch(cap_t cap)
 
 static void obj_frame_print_attrs(paddr_t paddr)
 {
-    printf("(4k, paddr: 0x%p)\n", (void *)paddr);
+    printf("(4k, paddr: 0x%lx)\n", (word_t)paddr);
 }
 
 void print_object_arch(cap_t cap)

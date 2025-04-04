@@ -6,7 +6,7 @@
 
 #pragma once
 
-static inline word_t CONST sanitiseRegister(register_t reg, word_t v, bool_t archInfo)
+static inline rword_t CONST sanitiseRegister(register_t reg, rword_t v, bool_t archInfo)
 {
     if (reg == SPSR_EL1) {
         if (archInfo) {

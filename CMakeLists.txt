@@ -1,5 +1,7 @@
 #
 # Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+# Copyright 2024, Capabilities Limited
+# CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
 #
 # SPDX-License-Identifier: GPL-2.0-only
 #
@@ -47,6 +49,14 @@ include(config.cmake)
 
 string(APPEND common_flags " -D__KERNEL_${KernelWordSize}__")
 
+# Setup kernel specific flags used for both the compilation and linking step
+macro(KernelCommonFlags)
+    foreach(common_flag IN ITEMS ${ARGV})
+        add_compile_options(${common_flag})
+        string(APPEND CMAKE_EXE_LINKER_FLAGS " ${common_flag} ")
+    endforeach()
+endmacro(KernelCommonFlags)
+
 if(KernelArchX86)
     if(${KernelX86MicroArch} STREQUAL "generic")
         string(APPEND common_flags " -mtune=generic")
@@ -73,7 +83,19 @@ if(KernelArchX86)
     endif()
 
 elseif(KernelArchARM)
-    set(arm_march "${KernelArmArmV}${KernelArmMachFeatureModifiers}")
+    if(HaveCheri)
+        # Only Morello has CHERI support for Arm
+        set(arm_march "morello${KernelArmMachFeatureModifiers}")
+
+        if(CheriHybridKernel)
+            KernelCommonFlags(-mabi=aapcs)
+        else()
+            message(FATAL_ERROR "seL4 kernel can only be hybrid when CHERI is enabled")
+        endif()
+    else()
+        set(arm_march "${KernelArmArmV}${KernelArmMachFeatureModifiers}")
+    endif()
+
     string(APPEND c_common_flags " -march=${arm_march}")
     string(APPEND asm_common_flags " -march=${arm_march}")
 
@@ -95,10 +117,34 @@ elseif(KernelArchRiscV)
 
     if(KernelSel4ArchRiscV32)
         set(_riscv_march "rv32i") # Currently we don't support "rv32e"
-        set(_riscv_mabi "ilp32")
+
+        if(HaveCheri)
+            # User is always purecap if CHERI is enabled
+            set(_riscv_mabi "il32pc64")
+
+            if(CheriHybridKernel)
+                set(_riscv_mabi_kernel "ilp32")
+            endif()
+        else()
+            set(_riscv_mabi "ilp32")
+            set(_riscv_mabi_kernel "ilp32")
+        endif()
+
     elseif(KernelSel4ArchRiscV64)
         set(_riscv_march "rv64i")
-        set(_riscv_mabi "lp64")
+
+        if(HaveCheri)
+            # User is always purecap if CHERI is enabled
+            set(_riscv_mabi "l64pc128")
+
+            if(CheriHybridKernel)
+                set(_riscv_mabi "lp64")
+            endif()
+        else()
+            set(_riscv_mabi "lp64")
+            set(_riscv_mabi_kernel "lp64")
+        endif()
+
     else()
         message(FATAL_ERROR "unknown RISC-V KernelSel4Arch '${KernelSel4Arch}'")
     endif()
@@ -137,7 +183,23 @@ elseif(KernelArchRiscV)
         string(APPEND _riscv_march "_zicsr_zifencei")
     endif()
 
-    string(APPEND common_flags " -march=${_riscv_march} -mabi=${_riscv_mabi}")
+    if(HaveCheri)
+        # The "x" is for non-standard CHERI extension. This is going to change to "z" once
+        # CHERI is standardised in RISC-V.
+        string(APPEND _riscv_march "_xcheri")
+    else()
+        # CHERI mode lets non-kernel subsystems to use different ABIs than itself. Here, we
+        # just add an -mabi for compatibility with non-CHERI builds.
+        string(APPEND common_flags " -mabi=${_riscv_mabi} ")
+    endif()
+
+    string(APPEND common_flags " -march=${_riscv_march} ")
+    KernelCommonFlags(-mabi=${_riscv_mabi_kernel})
+
+    # Clang/lld don't support linker relaxation yet
+    if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
+        string(APPEND common_flags " -mno-relax")
+    endif()
 
 else()
     message(FATAL_ERROR "unknown KernelArch '${KernelArch}'")
@@ -228,14 +290,6 @@ string(
     " -Wl,--build-id=none" # Ensure reproducible builds
     " -Wl,-n" # Disable page alignment of sections
 )
-
-# Setup kernel specific flags used for both the compilation and linking step
-macro(KernelCommonFlags)
-    foreach(common_flag IN ITEMS ${ARGV})
-        add_compile_options(${common_flag})
-        string(APPEND CMAKE_EXE_LINKER_FLAGS " ${common_flag} ")
-    endforeach()
-endmacro(KernelCommonFlags)
 
 KernelCommonFlags(
     ${KernelOptimisation}
@@ -341,6 +395,11 @@ endif()
 
 if(KernelArmMach STREQUAL "exynos")
     include_directories("include/plat/exynos_common/")
+endif()
+
+# Add CHERI helper headers
+if(HaveCheri)
+    include_directories("include/cheri")
 endif()
 
 # Add libsel4 include directories. These are explicitly added instead of calling

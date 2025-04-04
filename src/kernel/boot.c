@@ -359,7 +359,11 @@ BOOT_CODE void populate_bi_frame(node_id_t node_id, word_t num_nodes,
     bi->nodeID = node_id;
     bi->numNodes = num_nodes;
     bi->numIOPTLevels = 0;
+#if defined(CONFIG_HAVE_CHERI)
+    bi->ipcBuffer = (seL4_IPCBuffer * __capability)ipcbuf_vptr;
+#else
     bi->ipcBuffer = (seL4_IPCBuffer *)ipcbuf_vptr;
+#endif
     bi->initThreadCNodeSizeBits = CONFIG_ROOT_CNODE_SIZE_BITS;
     bi->initThreadDomain = ksDomSchedule[ksDomScheduleIdx].domain;
     bi->extraLen = extra_bi_size;

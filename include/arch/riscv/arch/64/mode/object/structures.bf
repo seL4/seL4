@@ -1,6 +1,8 @@
 --
 -- Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 -- Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+-- Copyright 2024, Capabilities Limited
+-- CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
 --
 -- SPDX-License-Identifier: GPL-2.0-only
 --
@@ -96,8 +98,12 @@ block VMFault {
     field     address           64
 
     padding                     32
+#if defined(CONFIG_HAVE_CHERI)
+    field     FSR               12
+#else
     field     FSR               5
     padding                     7
+#endif
     field     instructionFault  1
     padding                     15
     field     seL4_FaultType    4
@@ -106,7 +112,12 @@ block VMFault {
 -- VM attributes
 
 block vm_attributes {
+#if defined(CONFIG_HAVE_CHERI)
+    field cheri_ext          5
+    padding                  27
+#else
     padding 32
+#endif
     padding 31
     field riscvExecuteNever  1
 }
@@ -123,7 +134,12 @@ block vm_attributes {
 -- because the vspace source code is the same for both architectures and doing
 -- the bit shifting manually only for 32-bit and not 64-bit is counter-intuitive.
 block pte {
+#if defined(CONFIG_HAVE_CHERI)
+    field cheri_ext        5
+    padding                5
+#else
     padding                10
+#endif
     field ppn              44
     field sw               2
     field dirty            1

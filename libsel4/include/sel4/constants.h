@@ -52,7 +52,16 @@ enum priorityConstants {
 enum seL4_MsgLimits {
     seL4_MsgLengthBits = 7,
     seL4_MsgExtraCapBits = 2,
+#if defined(CONFIG_HAVE_CHERI)
+    /* As CHERI doubles the register size, this affects the size of msg[]
+     * array, so we halve it here to have an overall fixed-size IPC buffer
+     * for both CHERI and non-CHERI builds. We further substract 1 more CHERI
+     * word to meet the alignment constraint set on the IPC buffer struct.
+     */
+    seL4_MsgMaxLength = 59
+#else
     seL4_MsgMaxLength = 120
+#endif
 };
 
 #define seL4_MsgMaxExtraCaps (LIBSEL4_BIT(seL4_MsgExtraCapBits)-1)

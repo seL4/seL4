@@ -1,6 +1,8 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -25,9 +27,9 @@ void VISIBLE NORETURN restore_user_context(void)
     c_exit_hook();
 
 #ifdef ENABLE_SMP_SUPPORT
-    word_t sp = read_sscratch();
-    sp -= sizeof(word_t);
-    *((word_t *)sp) = cur_thread_reg;
+    rword_t sp = read_sscratch();
+    sp -= sizeof(rword_t);
+    *((rword_t *)sp) = cur_thread_reg;
 #endif
 
 
@@ -39,56 +41,72 @@ void VISIBLE NORETURN restore_user_context(void)
     NODE_UNLOCK_IF_HELD;
 
     asm volatile(
+#if defined(__CHERI_PURE_CAPABILITY__)
+        "cmove ct0, %[cur_thread]   \n"
+#else
         "mv t0, %[cur_thread]       \n"
-        LOAD_S " ra, (0*%[REGSIZE])(t0)  \n"
-        LOAD_S "  sp, (1*%[REGSIZE])(t0)  \n"
-        LOAD_S "  gp, (2*%[REGSIZE])(t0)  \n"
-        LOAD_S "  tp, (3*%[REGSIZE])(t0)  \n"
+#endif
+        LOAD_S " "REGN(ra)  ", (0*%[REGSIZE])("PTRN(t0)")  \n"
+        LOAD_S " "REGN(sp)  ", (1*%[REGSIZE])("PTRN(t0)")  \n"
+        LOAD_S " "REGN(gp)  ", (2*%[REGSIZE])("PTRN(t0)")  \n"
+        LOAD_S " "REGN(tp)  ", (3*%[REGSIZE])("PTRN(t0)")  \n"
         /* skip t0/x5, t1/x6, they are restored later */
         /* no-op store conditional to clear monitor state */
         /* this may succeed in implementations with very large reservations, but the saved ra is dead */
-        "sc.w zero, zero, (t0)\n"
-        LOAD_S "  t2, (6*%[REGSIZE])(t0)  \n"
-        LOAD_S "  s0, (7*%[REGSIZE])(t0)  \n"
-        LOAD_S "  s1, (8*%[REGSIZE])(t0)  \n"
-        LOAD_S "  a0, (9*%[REGSIZE])(t0) \n"
-        LOAD_S "  a1, (10*%[REGSIZE])(t0) \n"
-        LOAD_S "  a2, (11*%[REGSIZE])(t0) \n"
-        LOAD_S "  a3, (12*%[REGSIZE])(t0) \n"
-        LOAD_S "  a4, (13*%[REGSIZE])(t0) \n"
-        LOAD_S "  a5, (14*%[REGSIZE])(t0) \n"
-        LOAD_S "  a6, (15*%[REGSIZE])(t0) \n"
-        LOAD_S "  a7, (16*%[REGSIZE])(t0) \n"
-        LOAD_S "  s2, (17*%[REGSIZE])(t0) \n"
-        LOAD_S "  s3, (18*%[REGSIZE])(t0) \n"
-        LOAD_S "  s4, (19*%[REGSIZE])(t0) \n"
-        LOAD_S "  s5, (20*%[REGSIZE])(t0) \n"
-        LOAD_S "  s6, (21*%[REGSIZE])(t0) \n"
-        LOAD_S "  s7, (22*%[REGSIZE])(t0) \n"
-        LOAD_S "  s8, (23*%[REGSIZE])(t0) \n"
-        LOAD_S "  s9, (24*%[REGSIZE])(t0) \n"
-        LOAD_S "  s10, (25*%[REGSIZE])(t0)\n"
-        LOAD_S "  s11, (26*%[REGSIZE])(t0)\n"
-        LOAD_S "  t3, (27*%[REGSIZE])(t0) \n"
-        LOAD_S "  t4, (28*%[REGSIZE])(t0) \n"
-        LOAD_S "  t5, (29*%[REGSIZE])(t0) \n"
-        LOAD_S "  t6, (30*%[REGSIZE])(t0) \n"
+#if defined(__CHERI_PURE_CAPABILITY__)
+        "csc.c   zero, c0, ("REGN(t0)")\n"
+#else
+        "sc.w zero, zero, ("PTRN(t0)")\n"
+#endif
+        LOAD_S " "REGN(t2) ", (6*%[REGSIZE])("PTRN(t0)")  \n"
+        LOAD_S " "REGN(s0) ", (7*%[REGSIZE])("PTRN(t0)")  \n"
+        LOAD_S " "REGN(s1) ", (8*%[REGSIZE])("PTRN(t0)")  \n"
+        LOAD_S " "REGN(a0) ", (9*%[REGSIZE])("PTRN(t0)") \n"
+        LOAD_S " "REGN(a1) ", (10*%[REGSIZE])("PTRN(t0)") \n"
+        LOAD_S " "REGN(a2) ", (11*%[REGSIZE])("PTRN(t0)") \n"
+        LOAD_S " "REGN(a3) ", (12*%[REGSIZE])("PTRN(t0)") \n"
+        LOAD_S " "REGN(a4) ", (13*%[REGSIZE])("PTRN(t0)") \n"
+        LOAD_S " "REGN(a5) ", (14*%[REGSIZE])("PTRN(t0)") \n"
+        LOAD_S " "REGN(a6) ", (15*%[REGSIZE])("PTRN(t0)") \n"
+        LOAD_S " "REGN(a7) ", (16*%[REGSIZE])("PTRN(t0)") \n"
+        LOAD_S " "REGN(s2) ", (17*%[REGSIZE])("PTRN(t0)") \n"
+        LOAD_S " "REGN(s3) ", (18*%[REGSIZE])("PTRN(t0)") \n"
+        LOAD_S " "REGN(s4) ", (19*%[REGSIZE])("PTRN(t0)") \n"
+        LOAD_S " "REGN(s5) ", (20*%[REGSIZE])("PTRN(t0)") \n"
+        LOAD_S " "REGN(s6) ", (21*%[REGSIZE])("PTRN(t0)") \n"
+        LOAD_S " "REGN(s7) ", (22*%[REGSIZE])("PTRN(t0)") \n"
+        LOAD_S " "REGN(s8) ", (23*%[REGSIZE])("PTRN(t0)") \n"
+        LOAD_S " "REGN(s9) ", (24*%[REGSIZE])("PTRN(t0)") \n"
+        LOAD_S " "REGN(s10) ", (25*%[REGSIZE])("PTRN(t0)")\n"
+        LOAD_S " "REGN(s11) ", (26*%[REGSIZE])("PTRN(t0)")\n"
+        LOAD_S " "REGN(t3) ", (27*%[REGSIZE])("PTRN(t0)") \n"
+        LOAD_S " "REGN(t4) ", (28*%[REGSIZE])("PTRN(t0)") \n"
+        LOAD_S " "REGN(t5) ", (29*%[REGSIZE])("PTRN(t0)") \n"
+        LOAD_S " "REGN(t6) ", (30*%[REGSIZE])("PTRN(t0)") \n"
         /* get sepc */
-        LOAD_S "  t1, (34*%[REGSIZE])(t0)\n"
+        LOAD_S " "REGN(t1) ", (34*%[REGSIZE])("PTRN(t0)")\n"
+#if defined(CONFIG_HAVE_CHERI)
+        "cspecialw sepcc, ct1  \n"
+#else
         "csrw sepc, t1  \n"
+#endif
 #ifndef ENABLE_SMP_SUPPORT
         /* Write back sscratch with cur_thread_reg to get it back on the next trap entry */
+#if defined(CONFIG_HAVE_CHERI)
+        "cspecialw sscratchc, ct0  \n"
+#else
         "csrw sscratch, t0         \n"
 #endif
-        LOAD_S "  t1, (32*%[REGSIZE])(t0) \n"
+#endif
+        LOAD_S " "REGN(t1) ", (32*%[REGSIZE])("PTRN(t0)") \n"
         "csrw sstatus, t1\n"
 
-        LOAD_S "  t1, (5*%[REGSIZE])(t0) \n"
-        LOAD_S "  t0, (4*%[REGSIZE])(t0) \n"
+        LOAD_S " "REGN(t1) ", (5*%[REGSIZE])("PTRN(t0)") \n"
+        LOAD_S " "REGN(t0) ", (4*%[REGSIZE])("PTRN(t0)") \n"
         "sret"
         : /* no output */
-        : [REGSIZE] "i"(sizeof(word_t)),
-        [cur_thread] "r"(cur_thread_reg)
+        : [REGSIZE] "i"(sizeof(rword_t)),
+        [cur_thread] ASM_PTR_CONSTR(cur_thread_reg)
         : "memory"
     );
 
@@ -130,6 +148,7 @@ void VISIBLE NORETURN c_handle_exception(void)
     case RISCVLoadPageFault:
     case RISCVStorePageFault:
     case RISCVInstructionPageFault:
+    case RISCVCheriFault:
         handleVMFaultEvent(scause);
         break;
     default:
