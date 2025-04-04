@@ -34,8 +34,6 @@
 #define FPEXC_DEX_BIT                29
 #define FPEXC_FP2V_BIT               28
 
-extern bool_t isFPUEnabledCached[CONFIG_MAX_NUM_NODES];
-
 static void clearEnFPEXC(void)
 {
     word_t fpexc;
@@ -88,8 +86,9 @@ static void setEnFPEXC(void)
     VMSR(FPEXC, fpexc);
 }
 /* Store state in the FPU registers into memory. */
-static inline void saveFpuState(user_fpu_state_t *dest)
+static inline void saveFpuState(tcb_t *thread)
 {
+    user_fpu_state_t *dest = &thread->tcbArch.tcbContext.fpuState;
     word_t fpexc;
 
     /* Fetch FPEXC. */
@@ -155,7 +154,8 @@ static inline void saveFpuState(user_fpu_state_t *dest)
  *    it.
  *
  */
-
+/** MODIFIES: phantom_machine_state */
+/** DONT_TRANSLATE */
 static inline void enableFpu(void)
 {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
@@ -166,18 +166,13 @@ static inline void enableFpu(void)
 #else
     setEnFPEXC();
 #endif
-    isFPUEnabledCached[CURRENT_CPU_INDEX()] = true;
-}
-
-/* Check if FPU is enable */
-static inline bool_t isFpuEnable(void)
-{
-    return isFPUEnabledCached[CURRENT_CPU_INDEX()];
 }
 
 /* Load FPU state from memory into the FPU registers. */
-static inline void loadFpuState(user_fpu_state_t *src)
+static inline void loadFpuState(const tcb_t *thread)
 {
+    const user_fpu_state_t *src = &thread->tcbArch.tcbContext.fpuState;
+
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         /* now we need to enable the EN bit in FPEXC */
         setEnFPEXC();
@@ -223,6 +218,5 @@ static inline void disableFpu(void)
     } else {
         clearEnFPEXC();
     }
-    isFPUEnabledCached[CURRENT_CPU_INDEX()] = false;
 }
 
