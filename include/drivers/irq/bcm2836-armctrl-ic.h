@@ -10,6 +10,9 @@
 #include <machine/io.h>
 #include <machine/interrupt.h>
 
+/* SGI not supported on this platform. */
+#define NUM_SGIS 0
+
 #define BASIC_IRQ_OFFSET                32
 #define NORMAL_IRQ_OFFSET               (BASIC_IRQ_OFFSET + 32)
 
@@ -143,4 +146,8 @@ static inline void handleSpuriousIRQ(void)
     /* Nothing to do here */
 }
 
-
+static inline void plat_sendSGI(word_t irq, word_t target)
+{
+    /* Unreachable; not supported on this platform. */
+    halt();
+}

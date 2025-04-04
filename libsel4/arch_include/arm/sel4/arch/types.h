@@ -23,6 +23,7 @@ typedef seL4_CPtr seL4_ARM_SID;
 typedef seL4_CPtr seL4_ARM_CBControl;
 typedef seL4_CPtr seL4_ARM_CB;
 typedef seL4_CPtr seL4_ARM_SMC;
+typedef seL4_CPtr seL4_ARM_SGI_Signal;
 
 typedef enum {
     seL4_ARM_PageCacheable = 0x01,
