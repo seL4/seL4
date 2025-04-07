@@ -25,16 +25,20 @@ def main():
         "--write-c",
         metavar="OUT_FILE",
         dest="out_file_c",
+        nargs="?",
         type=argparse.FileType("w"),
-        default=sys.stdout,
+        const=sys.stdout,
+        default=None,
         help="Output C header file.",
     )
     parser.add_argument(
         "--write-json",
         metavar="OUT_FILE",
         dest="out_file_json",
+        nargs="?",
         type=argparse.FileType("w"),
-        default=sys.stdout,
+        const=sys.stdout,
+        default=None,
         help="Output JSON file.",
     )
     args = parser.parse_args()
