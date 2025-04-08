@@ -552,7 +552,7 @@ function(add_config_library prefix configure_template)
 
     execute_process(
         COMMAND
-            "${PYTHON3}" "${CONFIG_GEN_PATH}" "${config_yaml_file}" --write-c
+            "${PYTHON3}" "${CONFIG_GEN_PATH}" "${config_yaml_file}" --skip-unchanged --write-c
             "${config_header_file}" --write-json "${config_json_file}"
         RESULT_VARIABLE error
     )
