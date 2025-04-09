@@ -13,13 +13,15 @@
 static exception_t invokeSchedControl_ConfigureFlags(sched_context_t *target, word_t core, ticks_t budget,
                                                      ticks_t period, word_t max_refills, word_t badge, word_t flags)
 {
-    /* don't modify parameters of tcb while it is in a sorted queue */
-    if (target->scTcb) {
+    tcb_t *thread = target->scTcb;
+
+    /* don't modify parameters of thread while it is in a sorted queue */
+    if (thread) {
         /* possibly stall a remote core */
-        SMP_COND_STATEMENT(remoteTCBStall(target->scTcb));
+        SMP_COND_STATEMENT(remoteTCBStall(thread));
         /* remove from scheduler */
-        tcbReleaseRemove(target->scTcb);
-        tcbSchedDequeue(target->scTcb);
+        tcbReleaseRemove(thread);
+        tcbSchedDequeue(thread);
         /* bill the current consumed amount before adjusting the params */
         if (NODE_STATE(ksCurSC) == target) {
             /* This could potentially mutate state but if it returns
@@ -36,8 +38,8 @@ static exception_t invokeSchedControl_ConfigureFlags(sched_context_t *target, wo
          * and avoids some special casing.
          */
         refill_new(target, MIN_REFILLS, budget, 0);
-    } else if (SMP_COND_STATEMENT(core == target->scCore &&) target->scRefillMax > 0 && target->scTcb
-               && isRunnable(target->scTcb)) {
+    } else if (SMP_COND_STATEMENT(core == target->scCore &&) sc_active(target) && thread
+               && isRunnable(thread)) {
         /* the scheduling context is active - it can be used, so
          * we need to preserve the bandwidth */
         refill_update(target, period, budget, max_refills);
@@ -49,22 +51,22 @@ static exception_t invokeSchedControl_ConfigureFlags(sched_context_t *target, wo
 
 #ifdef ENABLE_SMP_SUPPORT
     target->scCore = core;
-    if (target->scTcb) {
-        migrateTCB(target->scTcb, target->scCore);
+    if (thread) {
+        migrateTCB(thread, target->scCore);
     }
 #endif /* ENABLE_SMP_SUPPORT */
 
-    assert(target->scRefillMax > 0);
-    if (target->scTcb) {
+    assert(sc_active(target));
+    if (thread) {
         schedContext_resume(target);
         if (SMP_TERNARY(core == CURRENT_CPU_INDEX(), true)) {
-            if (isRunnable(target->scTcb) && target->scTcb != NODE_STATE(ksCurThread)) {
-                possibleSwitchTo(target->scTcb);
+            if (isRunnable(thread) && thread != NODE_STATE(ksCurThread)) {
+                possibleSwitchTo(thread);
             }
-        } else if (isRunnable(target->scTcb)) {
-            SCHED_ENQUEUE(target->scTcb);
+        } else if (isRunnable(thread)) {
+            SCHED_ENQUEUE(thread);
         }
-        if (target->scTcb == NODE_STATE(ksCurThread)) {
+        if (thread == NODE_STATE(ksCurThread)) {
             rescheduleRequired();
         }
     }

@@ -607,7 +607,9 @@ void chargeBudget(ticks_t consumed, bool_t canTimeoutFault)
     if (likely(NODE_STATE(ksCurSC) != NODE_STATE(ksIdleSC))) {
         if (isRoundRobin(NODE_STATE(ksCurSC))) {
             assert(refill_size(NODE_STATE(ksCurSC)) == MIN_REFILLS);
-            refill_head(NODE_STATE(ksCurSC))->rAmount += refill_tail(NODE_STATE(ksCurSC))->rAmount;
+            refill_t head = *refill_head(NODE_STATE(ksCurSC));
+            refill_t tail = *refill_tail(NODE_STATE(ksCurSC));
+            refill_head(NODE_STATE(ksCurSC))->rAmount = head.rAmount + tail.rAmount;
             refill_tail(NODE_STATE(ksCurSC))->rAmount = 0;
         } else {
             refill_budget_check(consumed);
@@ -627,7 +629,10 @@ void chargeBudget(ticks_t consumed, bool_t canTimeoutFault)
 
 void endTimeslice(bool_t can_timeout_fault)
 {
-    if (can_timeout_fault && !isRoundRobin(NODE_STATE(ksCurSC)) && validTimeoutHandler(NODE_STATE(ksCurThread))) {
+    bool_t round_robin = isRoundRobin(NODE_STATE(ksCurSC));
+    bool_t valid = validTimeoutHandler(NODE_STATE(ksCurThread));
+
+    if (can_timeout_fault && !round_robin && valid) {
         current_fault = seL4_Fault_Timeout_new(NODE_STATE(ksCurSC)->scBadge);
         handleTimeout(NODE_STATE(ksCurThread));
     } else if (refill_ready(NODE_STATE(ksCurSC)) && refill_sufficient(NODE_STATE(ksCurSC), 0)) {
