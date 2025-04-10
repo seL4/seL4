@@ -159,15 +159,20 @@ static inline void maybeStallSC(sched_context_t *sc)
 }
 #endif
 
+static inline void replyFromKernel_consumed(tcb_t *thread, time_t consumed)
+{
+    word_t *buffer = lookupIPCBuffer(true, thread);
+    setRegister(thread, badgeRegister, 0);
+    word_t length = mode_setTimeArg(0, consumed, buffer, thread);
+    setRegister(thread, msgInfoRegister, wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, length)));
+}
+
 static inline void setConsumed(sched_context_t *sc, tcb_t *thread, bool_t write_msg)
 {
     time_t consumed = schedContext_updateConsumed(sc);
 
     if (write_msg) {
-        word_t *buffer = lookupIPCBuffer(true, thread);
-        word_t length = mode_setTimeArg(0, consumed, buffer, thread);
-        setRegister(thread, badgeRegister, 0);
-        setRegister(thread, msgInfoRegister, wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, length)));
+        replyFromKernel_consumed(thread, consumed);
     }
 }
 
@@ -192,18 +197,21 @@ static exception_t invokeSchedContext_YieldTo(sched_context_t *sc, bool_t call)
      * if the thread isSchedulable, it is ready and sufficient.*/
     schedContext_resume(sc);
 
-    bool_t return_now = true;
-    if (isSchedulable(sc->scTcb)) {
+    tcb_t *tcb = sc->scTcb;
+
+    bool_t return_now;
+    if (isSchedulable(tcb)) {
         if (SMP_COND_STATEMENT(sc->scCore != getCurrentCPUIndex() ||)
-            sc->scTcb->tcbPriority < NODE_STATE(ksCurThread)->tcbPriority) {
-            tcbSchedDequeue(sc->scTcb);
-            SCHED_ENQUEUE(sc->scTcb);
+            tcb->tcbPriority < NODE_STATE(ksCurThread)->tcbPriority) {
+            tcbSchedDequeue(tcb);
+            SCHED_ENQUEUE(tcb);
+            return_now = true;
         } else {
             NODE_STATE(ksCurThread)->tcbYieldTo = sc;
             sc->scYieldFrom = NODE_STATE(ksCurThread);
-            tcbSchedDequeue(sc->scTcb);
+            tcbSchedDequeue(tcb);
             tcbSchedEnqueue(NODE_STATE(ksCurThread));
-            tcbSchedEnqueue(sc->scTcb);
+            tcbSchedEnqueue(tcb);
             rescheduleRequired();
 
             /* we are scheduling the thread associated with sc,
@@ -211,6 +219,8 @@ static exception_t invokeSchedContext_YieldTo(sched_context_t *sc, bool_t call)
              * until the caller is scheduled again */
             return_now = false;
         }
+    } else {
+        return_now = true;
     }
 
     if (return_now) {
@@ -231,15 +241,17 @@ static exception_t decodeSchedContext_YieldTo(sched_context_t *sc, bool_t call)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (sc->scTcb == NODE_STATE(ksCurThread)) {
+    tcb_t *tcb = sc->scTcb;
+
+    if (tcb == NODE_STATE(ksCurThread)) {
         userError("SchedContext_YieldTo: cannot seL4_SchedContext_YieldTo on self");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (sc->scTcb->tcbPriority > NODE_STATE(ksCurThread)->tcbMCP) {
+    if (tcb->tcbPriority > NODE_STATE(ksCurThread)->tcbMCP) {
         userError("SchedContext_YieldTo: insufficient mcp (%lu) to yield to a thread with prio (%lu)",
-                  (unsigned long) NODE_STATE(ksCurThread)->tcbMCP, (unsigned long) sc->scTcb->tcbPriority);
+                  (unsigned long) NODE_STATE(ksCurThread)->tcbMCP, (unsigned long) tcb->tcbPriority);
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -254,13 +266,12 @@ static exception_t decodeSchedContext_YieldTo(sched_context_t *sc, bool_t call)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeSchedContext_YieldTo(sc, call);
 }
 
-exception_t decodeSchedContextInvocation(word_t label, cap_t cap, bool_t call)
+exception_t decodeSchedContextInvocation(word_t label, sched_context_t *sc, bool_t call)
 {
-    sched_context_t *sc = SC_PTR(cap_sched_context_cap_get_capSCPtr(cap));
-
     SMP_COND_STATEMENT((maybeStallSC(sc));)
 
     switch (label) {
@@ -282,7 +293,6 @@ exception_t decodeSchedContextInvocation(word_t label, cap_t cap, bool_t call)
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return invokeSchedContext_Unbind(sc);
     case SchedContextYieldTo:
-        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return decodeSchedContext_YieldTo(sc, call);
     default:
         userError("SchedContext invocation: Illegal operation attempted.");
