@@ -114,7 +114,7 @@ static inline void sbi_send_ipi(word_t hart_mask)
      *           reworking parts of the kernel.
      *       - The legacy SBI interface is deprecated. Passing pointers with
      *           virtual addresses has several practical drawbacks or corner
-     *           cases, these outweight the gain of being able to address all
+     *           cases, these outweigh the gain of being able to address all
      *           harts in one call. The new interface uses a window concept and
      *           passes plain values.
      *       - Using pointers to local variables is perfectly fine in C, but

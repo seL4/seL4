@@ -15,7 +15,7 @@ base 64(39,1)
 #error "Only PT_LEVELS == 3 is currently supported on RISCV64"
 #endif
 
--- Including the common structures.bf is neccessary because
+-- Including the common structures.bf is necessary because
 -- we need the structures to be visible here when building
 -- the capType
 #include <object/structures_64.bf>

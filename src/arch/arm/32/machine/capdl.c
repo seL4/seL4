@@ -468,7 +468,7 @@ void obj_tcb_print_vtable(tcb_t *tcb)
                 }
 #else
                 if (pde_pde_section_ptr_get_contiguous_hint(pde)) {
-                    /* Entires are represented as 16 contiguous sections. We need to mask
+                    /* Entries are represented as 16 contiguous sections. We need to mask
                     to get the super section frame base */
                     ret.frameBase &= ~MASK(pageBitsForSize(ARMSuperSection));
                     ret.frameSize = ARMSuperSection;

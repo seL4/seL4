@@ -392,7 +392,7 @@ static void setBpVaddrContext(tcb_t *t, uint16_t bp_num, word_t vaddr)
  *
  * @param uds Arch TCB register context structure.
  * @param bp_num Hardware breakpoint ID.
- * @param vaddr USerspace virtual address on which you'd like this breakpoing
+ * @param vaddr USerspace virtual address on which you'd like this breakpoint
  *        to trigger.
  * @param types One of the seL4_BreakpointType values.
  * @param size positive integer indicating the byte-range size that should

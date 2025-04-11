@@ -2243,7 +2243,7 @@ class TaggedUnion:
         # where the 3rd and 4th lsbs signify whether the field should be
         # interpreted using a 4-bit mask (if 00, 01, or 10) or as an 8 or 16 bit
         # mask (if 11). And, in the latter case, the 8th lsb signifies whether
-        # to intrepret it as an 8 bit field (if 0) or a 16 bit field (if 1).
+        # to interpret it as an 8 bit field (if 0) or a 16 bit field (if 1).
         #
         # In this example we have:
         #   4-bit class:  classmask = 0b00001100

@@ -40,7 +40,7 @@ void VISIBLE NORETURN restore_user_context(void)
             "mov sp, %[cur_thread_reg] \n"
             /* Pop user registers */
             "pop {r0-r12}              \n"
-            /* Retore the user stack pointer */
+            /* Restore the user stack pointer */
             "pop {lr}                  \n"
             "msr sp_usr, lr            \n"
             /* prepare the exception return lr */

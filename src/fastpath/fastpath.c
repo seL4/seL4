@@ -683,7 +683,7 @@ void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
         ntfn_queue_dequeue_fp(dest, ntfnPtr);
     }
 
-    /* Wake up the signalled thread and tranfer badge */
+    /* Wake up the signalled thread and transfer badge */
     setRegister(dest, badgeRegister, badge);
     thread_state_ptr_set_tsType_np(&dest->tcbState, ThreadState_Running);
 

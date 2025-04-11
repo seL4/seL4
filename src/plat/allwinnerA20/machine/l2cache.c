@@ -26,7 +26,7 @@ void initL2Cache(void)
      * Set the L2EN bit in the Auxially Control Register.
      *
      * We assume the C bit is already set in the system control register (from
-     * head.S), and that the L2 Cache Auxilliary Control Register is correct
+     * head.S), and that the L2 Cache Auxiliary Control Register is correct
      * (as per reset).
      */
     writeACR(readACR() | 0x2);

@@ -137,7 +137,7 @@ static void vmptrld(void *vmcs_ptr)
         : "cc"
     );
     /* The usage of vmptrld should be correct by construction. As there is no
-     * capacity to propogate errors where vmptrld is used we will do our best
+     * capacity to propagate errors where vmptrld is used we will do our best
      * to detect bugs in debug builds by asserting */
     assert(!error);
 }
@@ -298,7 +298,7 @@ static bool_t BOOT_CODE init_vtx_fixed_values(bool_t useTrueMsrs)
     /* Check for VPID support */
     if (!(secondary_control_low & BIT(5))) {
         vmx_feature_vpid = 0;
-        printf("vt-x: VPIDs are not supported. Expect performance degredation\n");
+        printf("vt-x: VPIDs are not supported. Expect performance degradation\n");
     } else {
         vmx_feature_vpid = 1;
         secondary_control_mask |= BIT(5);
@@ -316,7 +316,7 @@ static bool_t BOOT_CODE init_vtx_fixed_values(bool_t useTrueMsrs)
     /* Check for external interrupt exiting */
     if (!(exit_control_low & BIT(15))) {
         vmx_feature_ack_on_exit = 0;
-        printf("vt-x: Interrupt ack on exit not supported. Expect performance degredation\n");
+        printf("vt-x: Interrupt ack on exit not supported. Expect performance degradation\n");
     } else {
         vmx_feature_ack_on_exit = 1;
         exit_control_mask |= BIT(15);
@@ -1337,18 +1337,18 @@ exception_t handleVmexit(void)
              * on cr0_mask meant that the VCPU owner did not claim ownership of the the task switch bit
              * however we may have temporarily claimed ownership for the purposes of FPU switching.
              * At this point we could still have a false positive, as the guest could be attempted to
-             * manipulate bits that are not task switch, so we still have to be careful and propogate
+             * manipulate bits that are not task switch, so we still have to be careful and propagate
              * all or some of an attempted write */
             qualification = vmread(VMX_DATA_EXIT_QUALIFICATION);
-            vmx_data_exit_qualification_control_regster_t qual;
+            vmx_data_exit_qualification_control_register_t qual;
             qual.words[0] = qualification;
             /* We only care about some of the exit qualification cases, we handle them here
              * and will deliver any others through to fault handler */
-            switch (vmx_data_exit_qualification_control_regster_get_access_type(qual)) {
+            switch (vmx_data_exit_qualification_control_register_get_access_type(qual)) {
             case VMX_EXIT_QUAL_TYPE_MOV_CR: {
                 /* check for cr0 */
-                if (vmx_data_exit_qualification_control_regster_get_cr(qual) == 0) {
-                    vcpu_gp_register_t source = crExitRegs[vmx_data_exit_qualification_control_regster_get_reg(qual)];
+                if (vmx_data_exit_qualification_control_register_get_cr(qual) == 0) {
+                    vcpu_gp_register_t source = crExitRegs[vmx_data_exit_qualification_control_register_get_reg(qual)];
                     word_t value;
                     if (source == VCPU_ESP) {
                         /* ESP is the only register that is is not part of the general purpose
@@ -1380,7 +1380,7 @@ exception_t handleVmexit(void)
                 return EXCEPTION_NONE;
             }
             case VMX_EXIT_QUAL_TYPE_LMSW: {
-                uint16_t value = vmx_data_exit_qualification_control_regster_get_data(qual);
+                uint16_t value = vmx_data_exit_qualification_control_register_get_data(qual);
                 /* First unset the task switch bit in cr0 */
                 NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->cr0 &= ~CR0_TASK_SWITCH;
                 /* now set it to the value we were given */
@@ -1446,7 +1446,7 @@ void VMCheckBoundNotification(tcb_t *tcb)
 {
     /* We want to check if the VM we are currently running has received
      * a message on its bound notification object. This check is done
-     * in c_traps when we first peform a SysVMEnter, but we could presently
+     * in c_traps when we first perform a SysVMEnter, but we could presently
      * be running a VM and another core may have placed a message on the
      * endpoint
      */
@@ -1592,7 +1592,7 @@ static inline vpid_t nextVPID(vpid_t vpid)
 static void invalidateVPID(vpid_t vpid)
 {
     vcpu_t *vcpu = x86KSVPIDTable[vpid];
-    /* clear the IO bitmap as when we sever the VPID asignment we lose
+    /* clear the IO bitmap as when we sever the VPID assignment we lose
      * the ability for the references in IO port capabilities to invalidate */
     memset(vcpu->io, ~0, sizeof(vcpu->io));
     /* invalidate the VPID context */

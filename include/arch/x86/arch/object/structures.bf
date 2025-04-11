@@ -254,7 +254,7 @@ block vmx_ept_vpid_cap_msr {
 -- This is the layout of the data exit qualification register
 -- when the exit reason (as read from the data exit reason)
 -- register is 'control register'
-block vmx_data_exit_qualification_control_regster {
+block vmx_data_exit_qualification_control_register {
     field data          16
     padding             4
     field reg           4

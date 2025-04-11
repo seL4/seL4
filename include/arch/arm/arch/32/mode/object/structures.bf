@@ -8,7 +8,7 @@
 -- Default base size: uint32_t
 base 32
 
--- Including the common structures_32.bf is neccessary because
+-- Including the common structures_32.bf is necessary because
 -- we need the structures to be visible here when building
 -- the capType
 #include <object/structures_32.bf>

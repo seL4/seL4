@@ -19,7 +19,7 @@ def parse_args():
     parser.add_argument('--invocations', type=argparse.FileType('r'),
                         help='Location of XML file with invocation definitions', required=True)
     parser.add_argument('--arch_invocations', type=argparse.FileType('r'),
-                        help='Location of XML file with arch invocation defintions', required=True)
+                        help='Location of XML file with arch invocation definitions', required=True)
     parser.add_argument('--sel4_arch_invocations', type=argparse.FileType('r'),
                         help='Location of XML file with seL4 arch invocation definitions', required=True)
     parser.add_argument('--dest', type=argparse.FileType('w+'),

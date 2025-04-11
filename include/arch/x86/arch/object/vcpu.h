@@ -251,7 +251,7 @@ enum vcpu_gp_register {
     VCPU_R15,
 #endif
     n_vcpu_gp_register,
-    /* We need to define a sentinal value to detect ESP that is strictly distinct
+    /* We need to define a sentinel value to detect ESP that is strictly distinct
      * from any of our other GP register indexes, so put that here */
     VCPU_ESP,
 };

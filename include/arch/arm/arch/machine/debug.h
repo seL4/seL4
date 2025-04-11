@@ -224,7 +224,7 @@ static inline syscall_error_t Arch_decodeConfigureSingleStepping(tcb_t *t,
 
         /* The following code relates to checking that the specified breakpoint is suitable to
             for being used for conguring single stepping. AARCH64 does not need to use breakpoints
-            to simulate single stepping, so these checks can be ommited. */
+            to simulate single stepping, so these checks can be omitted. */
 #ifdef CONFIG_ARCH_AARCH32
         type = seL4_InstructionBreakpoint;
         bp_num = t->tcbArch.tcbContext.breakpointState.single_step_hw_bp_num;
@@ -278,7 +278,7 @@ static inline syscall_error_t Arch_decodeSetBreakpoint(tcb_t *t,
         }
     } else if (type == seL4_InstructionBreakpoint) {
         if (bp_num >= seL4_NumExclusiveBreakpoints) {
-            userError("Debug: invalid instruction breakpoint nunber %u.", bp_num);
+            userError("Debug: invalid instruction breakpoint number %u.", bp_num);
             ret.type = seL4_RangeError;
             ret.rangeErrorMin = 0;
             ret.rangeErrorMax = seL4_NumExclusiveWatchpoints - 1;
