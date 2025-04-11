@@ -111,7 +111,7 @@ BOOT_CODE bool_t Arch_initHardwareBreakpoints(void)
     /* Ensure that all the breakpoint and watchpoint registers are initially disabled */
     disableAllBpsAndWps();
 
-    /* Ensure that single stepping is initally disabled */
+    /* Ensure that single stepping is initially disabled */
     MRS("MDSCR_EL1", mdscr);
     mdscr &= ~MDSCR_SS;
     MSR("MDSCR_EL1", mdscr);

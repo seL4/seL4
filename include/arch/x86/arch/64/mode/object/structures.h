@@ -28,7 +28,7 @@ compile_assert(gdt_idt_ptr_packed,
 compile_assert(unsigned_long_size_64,
                sizeof(unsigned long) == 8)
 
-compile_assert(unsinged_int_size_32,
+compile_assert(unsigned_int_size_32,
                sizeof(unsigned int) == 4)
 
 compile_assert(uint64_t_size_64,

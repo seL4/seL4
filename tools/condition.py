@@ -55,7 +55,7 @@ def expr_to_bool(expr, values) -> bool:
                 return False
         return True
     elif expr.tagName == "or":
-        for chlid in expr.childNodes:
+        for child in expr.childNodes:
             if expr_to_bool(child, values):
                 return True
         return False

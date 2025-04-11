@@ -23,11 +23,11 @@
 #define TRANS_PAGES_16KB       (1 << 4)
 #define TRANS_PAGES_64KB       (1 << 5)
 
-/*the default vritual address bits for partition TTBR0 and TTBR1*/
+/*the default virtual address bits for partition TTBR0 and TTBR1*/
 #define SMMU_VA_DEFAULT_BITS      48
 
 struct  smmu_feature {
-    bool_t stream_match;              /*stream match register funtionality included*/
+    bool_t stream_match;              /*stream match register functionality included*/
     bool_t trans_op;                  /*address translation operations supported*/
     bool_t cotable_walk;              /*coherent translation table walk*/
     bool_t broadcast_tlb;             /*broadcast TLB maintenance*/
@@ -92,7 +92,7 @@ static void smmu_tlb_sync(pptr_t base, uint32_t sync, uint32_t status)
 
 static inline uint32_t smmu_obs_size_to_bits(uint32_t size)
 {
-    /*coverting the output bus address size into address bit, defined in
+    /*converting the output bus address size into address bit, defined in
     IDx registers*/
     switch (size) {
     case 0:
@@ -111,7 +111,7 @@ static inline uint32_t smmu_obs_size_to_bits(uint32_t size)
 }
 static inline uint32_t smmu_ubs_size_to_bits(uint32_t size)
 {
-    /*coverting the upstream address size into address bit, defined in
+    /*converting the upstream address size into address bit, defined in
     IDx registers*/
     switch (size) {
     case 0:
@@ -135,17 +135,17 @@ BOOT_CODE static void smmu_mapping_init(void)
 {
     /*Creating mapping for the rest of SMMU address space.
      * the code assumes registers in each SMMU page are located in a 4K page
-     * even though the alignement of the (physical) pages can be 64K.
+     * even though the alignment of the (physical) pages can be 64K.
      * We make this assumption to compact the SMMU virtual address window.*/
 
     /* This is a temporary solution. A correct solution should be adjust
-     * the virutal address space layout of the kernel, leaving enough virtual
+     * the virtual address space layout of the kernel, leaving enough virtual
      * address space to SMMU windows. For example, SMMU on TX2 requires a 8M space
      * in total, including those empty areas resulted from the 64K alignment.
      * Also, kernel requires device space to be configured statically. To
      * support populate device space using HW config, we need to modify
      * kernel_frame_t and map_kernel_frame, allowing devices mapped in a
-     * seperate page table using HW config.*/
+     * separate page table using HW config.*/
 
     /*the current implementation has been only tested on the TX2 platform*/
 
@@ -211,7 +211,7 @@ BOOT_CODE static void smmu_config_prob(void)
     } else {
         smmu_dev_knowledge.supported_fmt |= NO_AARCH32_FMT;
     }
-    /*number of context fault intrrupts
+    /*number of context fault interrupts
     * However, in smmuv2, each context bank has dedicated interrupt pin
     * hence no requirement to specify implemented interrupts here.*/
     smmu_dev_knowledge.num_cfault_ints = IDR0_NUMIRPT_VAL(reg & IDR0_NUMIRPT);
@@ -243,7 +243,7 @@ BOOT_CODE static void smmu_config_prob(void)
     smmu_dev_knowledge.num_s2_cbanks = IDR1_NUMS2CB_VAL(reg & IDR1_NUMS2CB);
     /*total num of context banks*/
     smmu_dev_knowledge.num_cbanks = reg & IDR1_NUMCB;
-    /*calcuate the context bank base*/
+    /*calculate the context bank base*/
     smmu_dev_knowledge.cb_base = SMMU_CB_BASE_PADDR(
                                      SMMU_GLOBAL_SIZE(smmu_dev_knowledge.smmu_num_pages, smmu_dev_knowledge.smmu_page_size));
 
@@ -282,7 +282,7 @@ BOOT_CODE  static void smmu_dev_reset(void)
     pptr_t cb_bank_ptr;
     uint32_t major;
 
-    /*clear the fault syndrom registers*/
+    /*clear the fault syndrome registers*/
     smmu_write_reg32(SMMU_GR0_PPTR, SMMU_sGFSYNR0, reg);
     smmu_write_reg32(SMMU_GR0_PPTR, SMMU_sGFSYNR1, reg);
     /*clear the global FSR by writing back the read value*/
@@ -293,7 +293,7 @@ BOOT_CODE  static void smmu_dev_reset(void)
     reg = S2CR_PRIVCFG_SET(S2CR_PRIVCFG_DEFAULT);
     reg |= S2CR_TYPE_SET(S2CR_TYPE_CB);
 
-    /*the number of stream-to-context is realted to the stream indexing method*/
+    /*the number of stream-to-context is related to the stream indexing method*/
     if (smmu_dev_knowledge.stream_match) {
         /*stream matching*/
         for (int i = 0; i < smmu_dev_knowledge.num_stream_map_groups; i++) {
@@ -330,7 +330,7 @@ BOOT_CODE  static void smmu_dev_reset(void)
         cb_bank_ptr = SMMU_CBn_BASE_PPTR(i);
         /*disable context banks and clear the context bank fault registers*/
         smmu_write_reg32(cb_bank_ptr, SMMU_CBn_SCTLR, 0);
-        /*clear the syndrom register*/
+        /*clear the syndrome register*/
         smmu_write_reg64(cb_bank_ptr, SMMU_CBn_FAR, 0ULL);
         smmu_write_reg32(cb_bank_ptr, SMMU_CBn_FSR, CBn_FSR_CLEAR_ALL);
         /*special init requested by the smmu-500: start*/
@@ -349,7 +349,7 @@ BOOT_CODE  static void smmu_dev_reset(void)
     /*enable global fault reporting*/
     reg |= CR0_GFRE | CR0_GFIE | CR0_GCFGFRE | CR0_GCFGFIE;
     /*raise fault for any transaction that does not match to
-    any stream mapping table entires*/
+    any stream mapping table entries*/
     reg |= CR0_USFCFG;
     /*raise fault for stream match conflict*/
     reg |= CR0_SMCFCFG;
@@ -418,9 +418,9 @@ static void smmu_config_stage1(struct smmu_table_config *cfg,
         reg |= CBn_TCR_ORGN0_SET(CBn_TCR_GN_NCACHE);
         reg |= CBn_TCR_IRGN0_SET(CBn_TCR_GN_NCACHE);
     }
-    /*page size is configed as 4k*/
+    /*page size is configured as 4k*/
     reg |= CBn_TCR_TG0_SET(CBn_TCR_TG_4K);
-    /*the TTBR0 size, caculated according to the aarch64 formula*/
+    /*the TTBR0 size, calculated according to the aarch64 formula*/
     reg |= CBn_TCR_T0SZ_SET(64 - SMMU_VA_DEFAULT_BITS);
     /*disable (speculative) page table walks through TTBR1*/
     reg |= CBn_TCR_EPD1_DIS;
@@ -474,7 +474,7 @@ void smmu_cb_assign_vspace(word_t cb, vspace_root_t *vspace, asid_t asid)
     /* For the stage 2 translation, the VMID space is designed as a private
      * space, its value is equal to the context bank index. Using private VMID
      * space avoids synchronising with vspace management on VMID reallocations.
-     * Also, VMID used by SMMU need to be vaild all time once device transactions
+     * Also, VMID used by SMMU need to be valid all time once device transactions
      * are enabled. To maintain the TLB coherency, we introduces a set of mechanism
       * that connects vspace to context banks linked via ASID. */
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
@@ -514,8 +514,8 @@ void smmu_cb_assign_vspace(word_t cb, vspace_root_t *vspace, asid_t asid)
     smmu_write_reg32(SMMU_GR1_PPTR, SMMU_CBARn(cb), reg);
     /*TCR*/
     smmu_write_reg32(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_TCR, smmu_stage_table_config.tcr[0]);
-    /* stage 1 transaltion requires both ttbr 1 and ttbr 0
-     * stage 2 transaltion requires ttbr 0*/
+    /* stage 1 translation requires both ttbr 1 and ttbr 0
+     * stage 2 translation requires ttbr 0*/
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     /*TCR2 is required by stage 1 only*/
     smmu_write_reg32(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_TCR2, smmu_stage_table_config.tcr[1]);

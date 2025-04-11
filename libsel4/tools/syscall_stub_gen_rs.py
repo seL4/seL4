@@ -9,7 +9,7 @@
 #
 
 # This script is intended to work as a Rust-specific copy of syscall_stub_gen.py
-# Use it with sel4-sys crate to allow Rust applications inteface with the seL4 API.
+# Use it with sel4-sys crate to allow Rust applications interface with the seL4 API.
 
 from argparse import ArgumentParser
 import sys

@@ -226,7 +226,7 @@ BOOT_CODE bool_t init_sys_state(
         extra_bi_offset += 4;
     }
 
-    /* provde a chunk for any leftover padding in the extended boot info */
+    /* provide a chunk for any leftover padding in the extended boot info */
     seL4_BootInfoHeader padding_header;
     padding_header.id = SEL4_BOOTINFO_HEADER_PADDING;
     padding_header.len = (extra_bi_region.end - extra_bi_region.start) - extra_bi_offset;

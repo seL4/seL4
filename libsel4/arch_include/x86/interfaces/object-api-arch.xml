@@ -955,7 +955,7 @@ contain the mapping"/>
             </description>
             <return>
                 A <texttt text='seL4_X86_VCPU_WriteVMCS_t'/> struct that contains a
-                <texttt text='seL4_Word writen'/>, which holds the final value written with the <texttt text='vmwrite'/> instruction,
+                <texttt text='seL4_Word written'/>, which holds the final value written with the <texttt text='vmwrite'/> instruction,
                 and <texttt text='int error'/>. <docref>See <autoref label='sec:errors'/> for a description
                 of the message register and tag contents upon error.</docref>
             </return>

@@ -35,7 +35,7 @@ static void arm64_cap_pd_print_slots(pte_t *pudSlot, vptr_t vptr);
 static void arm64_cap_pud_print_slots(void *pgdSlot_or_vspace, vptr_t vptr);
 
 /* Stage-1 access permissions:
- * AP[2:1]  higer EL        EL0
+ * AP[2:1]  higher EL        EL0
  *   00       rw            None
  *   01       rw            rw
  *   10       r             None

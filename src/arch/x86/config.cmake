@@ -206,7 +206,7 @@ config_choice(
     KERNEL_FSGS_BASE
     "There are three ways to to set FS/GS base addresses: \
     IA32_FS/GS_GDT, IA32_FS/GS_BASE_MSR, and fsgsbase instructions. \
-    IA32_FS/GS_GDT and IA32_FS/GS_BASE_MSR are availble for 32-bit. \
+    IA32_FS/GS_GDT and IA32_FS/GS_BASE_MSR are available for 32-bit. \
     IA32_FS/GS_BASE_MSR and fsgsbase instructions are available for 64-bit."
     "inst;KernelFSGSBaseInst;FSGSBASE_INST;KernelSel4ArchX86_64"
     "gdt;KernelFSGSBaseGDT;FSGSBASE_GDT;KernelSel4ArchIA32"

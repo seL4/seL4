@@ -20,7 +20,7 @@
  * The RSP is aligned to a 16-byte boundary before pushing the stack frame.
  * In x86-64 mode, when stacks are switched as part of a 64-bit mode privilege-level
  * change, a new SS descriptor is not loaded. x86-64 mode loads only an inner-level
- * RSP from the TSS. The new SS selector is forced to NULL and the SS selctor's RPL
+ * RSP from the TSS. The new SS selector is forced to NULL and the SS selector's RPL
  * field is set to the new CPL. The old SS and RSP are saved on the new stack.
  *
  * Stack Usage with Privilege-Level Change
@@ -36,13 +36,13 @@
  * ES, DS and SS segment registers are not used in 64-bit mode, their
  * fields (base, limit and attribute) in segment descriptor registers
  * are ignored. Some forms of segment load instructions are also invalid.
- * Address caculations that reference the DS, ES or SS segments are treated
+ * Address calculations that reference the DS, ES or SS segments are treated
  * as if the segment base is zero. Mode change does not change the contents
  * of the segment registers or associated descriptor register. These registers
- * are also not changed during 64-bit mode exectuion, unless explicit
+ * are also not changed during 64-bit mode execution, unless explicit
  * segment loads are performed.
  *
- * In order to setup compability mode for an application, segment-load
+ * In order to setup compatibility mode for an application, segment-load
  * instructions (mov to Sreg, pop Sreg) work normally in 64-bit mode. An
  * entry is read from the system descriptor table (GDT or LDT) and is loaded
  * in the hidden portion of the segment descriptor. The descriptor-register

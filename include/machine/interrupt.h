@@ -16,7 +16,7 @@
  * kernel to track irq state. An irq_t is also used to interface with an
  * interrupt controller driver using the functions below.
  * For most configurations an irq_t is a word_t type and the irq_t values
- * directly map to harware irq numbers and are also used as indexes into the
+ * directly map to hardware irq numbers and are also used as indexes into the
  * kernel's irq cnode that it uses for tracking state.
  * However on SMP configurations where there can be multiple irq_t identifiers
  * for a single hardware irq number, such as when there are core local interrupts,
@@ -114,7 +114,7 @@ static inline void deactivateInterrupt(irq_t irq);
 /**
  * Called when getActiveIRQ returns irqInvalid while the kernel is handling an
  * interrupt entry. An implementation is not required to do anything here, but
- * can report the spurious IRQ or try prevent it from reoccuring.
+ * can report the spurious IRQ or try prevent it from reoccurring.
  */
 static inline void handleSpuriousIRQ(void);
 

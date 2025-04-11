@@ -9,7 +9,7 @@
  *
  * These are unconditional, there are conditional versions of
  * these in debug_assert.h and are name seL4_DebugAssert and
- * sl4_DebugCompileTimeAsssert.
+ * seL4_DebugCompileTimeAssert.
  */
 
 #pragma once

@@ -40,7 +40,7 @@ void cleanInvalidateCacheRange_RAM(vptr_t start, vptr_t end, paddr_t pstart)
     /* Now clean and invalidate the L2 range */
     plat_cleanInvalidateL2Range(pstart, pstart + (end - start));
 
-    /* Finally clean and invalidate the L1 range. The extra clean is only strictly neccessary
+    /* Finally clean and invalidate the L1 range. The extra clean is only strictly necessary
      * in a multiprocessor environment to prevent a write being lost if another core is
      * attempting a store at the same time. As the range should already be clean asking
      * it to clean again should not affect performance */
