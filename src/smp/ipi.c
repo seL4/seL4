@@ -71,7 +71,7 @@ void ipiStallCoreCallback(bool_t irqPath)
         /* We get here either without grabbing the lock from normal interrupt path or from
          * inside the lock while waiting to grab the lock for handling pending interrupt.
          * In latter case, we return to the 'clh_lock_acquire' to grab the lock and
-         * handle the pending interrupt. Its valid as interrups are async events! */
+         * handle the pending interrupt. Its valid as interrupts are async events! */
         SCHED_ENQUEUE_CURRENT_TCB;
         switchToIdleThread();
 #ifdef CONFIG_KERNEL_MCS

@@ -779,7 +779,7 @@ static inline void vcpu_enable(vcpu_t *vcpu)
      *
      * In the case above, the fpuState.fpexc of VM0 saves the value written
      * by the VM1, but the vcpu->fpexc of VM0 still contains the correct
-     * value when VM0 is disabed (vcpu_disable) or saved (vcpu_save).
+     * value when VM0 is disabled (vcpu_disable) or saved (vcpu_save).
      *
      *
      */

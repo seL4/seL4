@@ -92,7 +92,7 @@ endfunction(cppfile)
 # Function to generate a custom command to process a bitfield file. The input
 # (pbf_path) is either a .bf file or, if you used pre-processor directives, a
 # pre-processed .bf file. As this invokes a python tool that places a file
-# in the current working directory a unqiue 'work_dir' needs to be provided
+# in the current working directory a unique 'work_dir' needs to be provided
 # for this command to execute in
 # This function is not intended to be used directly, rather one of its wrappers
 # that is specialized to generate a specific kind of output should be used

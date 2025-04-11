@@ -180,7 +180,7 @@ BOOT_CODE void cpu_initLocalIRQController(void)
 * 25-24: target lister filter
 * 0b00 - send the ipi to the CPU interfaces specified in the CPU target list
 * 0b01 - send the ipi to all CPU interfaces except the cpu interface.
-*        that requrested teh ipi
+*        that requested the ipi
 * 0b10 - send the ipi only to the CPU interface that requested the IPI.
 * 0b11 - reserved
 *.

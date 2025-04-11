@@ -29,7 +29,7 @@ void Arch_irqStateInit(void)
 }
 
 /* for x86, the IRQIssueIRQHandler is only allowed to
- * issue a hander for IRQ 0-15, the isa IRQs.
+ * issue a handler for IRQ 0-15, the isa IRQs.
  * Use getIRQHandlerIOAPIC and getIRQHandlerMSI for
  * the IRQs >= 16. Additionally these IRQs only exist
  * if using the legacy PIC interrupt
@@ -151,7 +151,7 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length, cte_
         word_t pci_func = getSyscallArg(4, buffer);
         word_t handle = getSyscallArg(5, buffer);
         x86_irq_state_t irqState;
-        /* until we support msi interrupt remaping through vt-d we ignore the
+        /* until we support msi interrupt remapping through vt-d we ignore the
          * vector and trust the user */
 
         if (pci_bus > PCI_BUS_MAX) {

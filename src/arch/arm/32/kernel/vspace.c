@@ -179,8 +179,8 @@ BOOT_CODE void map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_righ
 #else /* CONFIG_ARM_HYPERVISOR_SUPPORT */
     armHSGlobalPT[idx] =
         pteS1_pteS1_small_new(
-            0, /* Executeable */
-            0, /* Executeable at PL1 */
+            0, /* Executable */
+            0, /* Executable at PL1 */
             0, /* Not contiguous */
             paddr,
             0, /* global */
@@ -404,7 +404,7 @@ static BOOT_CODE void map_it_frame_cap(cap_t pd_cap, cap_t frame_cap, bool_t exe
                   );
 #else
     *targetSlot = pte_pte_small_new(
-                      0, /* Executeable */
+                      0, /* Executable */
                       0, /* Not contiguous */
                       addrFromPPtr(frame),
                       1, /* AF -- always set */
@@ -563,7 +563,7 @@ BOOT_CODE void activate_kernel_vspace(void)
        that everything we've written (particularly the kernel page tables)
        is committed. */
     cleanInvalidateL1Caches();
-    /* Setup the memory attributes: We use 2 indicies (cachable/non-cachable) */
+    /* Setup the memory attributes: We use 2 indices (cachable/non-cacheable) */
     setHMAIR((ATTRINDX_NONCACHEABLE << 0) | (ATTRINDX_CACHEABLE << 8), 0);
     setCurrentHypPD(addrFromKPPtr(armHSGlobalPGD));
     invalidateHypTLB();
@@ -744,7 +744,7 @@ static resolve_ret_t resolveVAddr(pde_t *pd, vptr_t vaddr)
         }
 #else
         if (pde_pde_section_ptr_get_contiguous_hint(pde)) {
-            /* Entires are represented as 16 contiguous sections. We need to mask
+            /* Entries are represented as 16 contiguous sections. We need to mask
                to get the super section frame base */
             ret.frameBase &= ~MASK(pageBitsForSize(ARMSuperSection));
             ret.frameSize = ARMSuperSection;
