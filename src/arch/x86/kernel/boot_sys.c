@@ -411,7 +411,7 @@ static BOOT_CODE bool_t try_boot_sys(void)
         return false;
     }
 
-    /* check if kernel configuration matches platform requirments */
+    /* check if kernel configuration matches platform requirements */
     if (!acpi_fadt_scan(&boot_state.acpi_rsdp)) {
         return false;
     }

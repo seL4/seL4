@@ -109,7 +109,7 @@ static inline void saveFpuState(user_fpu_state_t *dest)
     dest->fpexc = fpexc;
 
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        /* before touching the regsiters, we need to set the EN bit */
+        /* before touching the registers, we need to set the EN bit */
         setEnFPEXC();
     }
 

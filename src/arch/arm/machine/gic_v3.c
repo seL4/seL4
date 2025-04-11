@@ -210,7 +210,7 @@ BOOT_CODE static void gicr_locate_interface(void)
 
             /*
              * GICR_WAKER should be Read-all-zeros in Non-secure world
-             * and we expect redistributors to be alread awoken by an earlier loader.
+             * and we expect redistributors to be already awoken by an earlier loader.
              * However if we get a value back then something is probably wrong.
              */
             val = gic_rdist_map[core_id]->waker;
