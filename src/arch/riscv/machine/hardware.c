@@ -31,6 +31,13 @@ void setNextPC(tcb_t *thread, word_t v)
 
 BOOT_CODE void map_kernel_devices(void)
 {
+#if __riscv_xlen == 64
+    /* Map kernel device page table */
+    assert(IS_ALIGNED(KDEV_BASE, RISCV_GET_LVL_PGSIZE_BITS(0)));
+    kernel_root_pageTable[RISCV_GET_PT_INDEX(KDEV_BASE, 0)] =
+        pte_next(kpptr_to_paddr(kernel_image_level1_dev_pt), false);
+#endif
+
     /* If there are no kernel device frames at all, then kernel_device_frames is
      * NULL. Thus we can't use ARRAY_SIZE(kernel_device_frames) here directly,
      * but have to use NUM_KERNEL_DEVICE_FRAMES that is defined accordingly.
