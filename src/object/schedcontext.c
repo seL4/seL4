@@ -401,13 +401,8 @@ void schedContext_unbindNtfn(sched_context_t *sc)
 time_t schedContext_updateConsumed(sched_context_t *sc)
 {
     ticks_t consumed = sc->scConsumed;
-    if (consumed >= getMaxTicksToUs()) {
-        sc->scConsumed -= getMaxTicksToUs();
-        return ticksToUs(getMaxTicksToUs());
-    } else {
-        sc->scConsumed = 0;
-        return ticksToUs(consumed);
-    }
+    sc->scConsumed = 0;
+    return ticksToUs(consumed);
 }
 
 void schedContext_cancelYieldTo(tcb_t *tcb)
