@@ -24,16 +24,6 @@
 #define FPSID_SW_BIT                 23
 #define FPSID_SUBARCH_SHIFT_POS      16
 
-#define FPEXC_EX_BIT                 31
-#define FPEXC_EN_BIT                 30
-
-#if defined(CONFIG_ARM_CORTEX_A7) || defined(CONFIG_ARM_CORTEX_A9)
-#define FPEXC_DEX_BIT                29
-#endif
-
-#define FPEXC_DEX_BIT                29
-#define FPEXC_FP2V_BIT               28
-
 static void clearEnFPEXC(void)
 {
     word_t fpexc;
