@@ -84,26 +84,12 @@ static inline void saveFpuState(tcb_t *thread)
     /* Fetch FPEXC. */
     VMRS(FPEXC, fpexc);
 
-#if defined(CONFIG_ARM_CORTEX_A7) || defined(CONFIG_ARM_CORTEX_A9)
-    /*
-    * Reset DEX bit to 0 in case a subarchitecture sets it.
-    * For example, Cortex-A7/A9 set this bit on deprecated vector VFP operations.
-    */
-    if (unlikely(fpexc & BIT(FPEXC_DEX_BIT))) {
-        fpexc &= ~BIT(FPEXC_DEX_BIT);
-        VMSR(FPEXC, fpexc);
-    }
-#endif
-
     dest->fpexc = fpexc;
 
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         /* before touching the registers, we need to set the EN bit */
         setEnFPEXC();
     }
-
-    /* We don't support asynchronous exceptions */
-    assert((dest->fpexc & BIT(FPEXC_EX_BIT)) == 0);
 
     if (isFPUD32SupportedCached) {
         register word_t regs_d16_d31 asm("ip") = (word_t) &dest->fpregs[16];
