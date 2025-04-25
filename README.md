@@ -61,8 +61,6 @@ Community
   - [Discourse](https://sel4.discourse.group/)
   - [seL4 Announce](https://lists.sel4.systems/postorius/lists/announce.sel4.systems)
   - [seL4 Devel](https://lists.sel4.systems/postorius/lists/devel.sel4.systems)
-- [Suggested projects](https://docs.sel4.systems/SuggestedProjects)
-- [Community projects](https://docs.sel4.systems/CommunityProjects)
 
 See the [contact] links on the seL4 website for the full list.
 
