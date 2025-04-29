@@ -16,7 +16,7 @@ In addition to our general [contribution guidelines][1], the kernel has addition
     + unless there is a concrete reason, if so please state that reason in the commit message.
 * Try to keep commits small for ease of reviewing.
 
-[1]: https://docs.sel4.systems/Contributing
+[1]: https://sel4.systems/Contribute
 
 ## Build/Test
 
