@@ -59,7 +59,7 @@ static inline void addToBitmap(word_t cpu, word_t dom, word_t prio)
 
     NODE_STATE_ON_CORE(ksReadyQueuesL1Bitmap[dom], cpu) |= BIT(l1index);
     /* we invert the l1 index when accessed the 2nd level of the bitmap in
-       order to increase the liklihood that high prio threads l2 index word will
+       order to increase the likelihood that high prio threads l2 index word will
        be on the same cache line as the l1 index word - this makes sure the
        fastpath is fastest for high prio threads */
     NODE_STATE_ON_CORE(ksReadyQueuesL2Bitmap[dom][l1index_inverted], cpu) |= BIT(prio & MASK(wordRadix));

@@ -31,7 +31,6 @@
 #define GIC_VCPU_MAX_NUM_LR 16
 
 /* Register bits */
-#define GICD_CTL_ENABLE 0x1
 #define GICD_CTLR_RWP                BIT(31)
 #define GICD_CTLR_ARE_NS             BIT(4)
 #define GICD_CTLR_ENABLE_G1NS         BIT(1)
@@ -265,7 +264,7 @@ static inline irq_t getActiveIRQ(void)
     irq_t irq;
 
     if (!IS_IRQ_VALID(active_irq[CURRENT_CPU_INDEX()])) {
-        uint32_t val = 0;
+        word_t val = 0;
         SYSTEM_READ_WORD(ICC_IAR1_EL1, val);
         active_irq[CURRENT_CPU_INDEX()] = val;
     }
@@ -288,7 +287,7 @@ static inline irq_t getActiveIRQ(void)
 /** DONT_TRANSLATE */
 static inline bool_t isIRQPending(void)
 {
-    uint32_t val = 0;
+    word_t val = 0;
     /* Check for pending IRQs in group 1: ICC_HPPIR1_EL1 */
     SYSTEM_READ_WORD(ICC_HPPIR1_EL1, val);
     return IS_IRQ_VALID(val);
@@ -307,14 +306,35 @@ static inline void maskInterrupt(bool_t disable, irq_t irq)
     }
 }
 
+
+static inline void deactivateInterrupt(irq_t irq)
+{
+    word_t hw_irq = IRQT_TO_IRQ(irq);
+    /* Perform deactivation of hw_irq */
+    SYSTEM_WRITE_WORD(ICC_DIR_EL1, hw_irq);
+}
+
 static inline void ackInterrupt(irq_t irq)
 {
     assert(IS_IRQ_VALID(active_irq[CURRENT_CPU_INDEX()])
            && (active_irq[CURRENT_CPU_INDEX()] & IRQ_MASK) == IRQT_TO_IRQ(irq));
+    active_irq[CURRENT_CPU_INDEX()] = IRQ_NONE;
+
+    word_t hw_irq = IRQT_TO_IRQ(irq);
 
     /* Set End of Interrupt for active IRQ: ICC_EOIR1_EL1 */
-    SYSTEM_WRITE_WORD(ICC_EOIR1_EL1, active_irq[CURRENT_CPU_INDEX()]);
-    active_irq[CURRENT_CPU_INDEX()] = IRQ_NONE;
+    /* Perform priority drop for current IRQ */
+    SYSTEM_WRITE_WORD(ICC_EOIR1_EL1, hw_irq);
+
+    // If the IRQ is not going to user level then we need to deactivate it too.
+    if (unlikely(hw_irq > maxIRQ) ||
+        intStateIRQTable[IRQT_TO_IDX(irq)] != IRQSignal) {
+        /* There needs to be an isb() to ensure completion of the system
+         * register write in ackInterrupt
+         */
+        isb();
+        deactivateInterrupt(irq);
+    }
 
 }
 
@@ -324,9 +344,10 @@ extern word_t gic_vcpu_num_list_regs;
 
 static inline uint32_t get_gic_vcpu_ctrl_hcr(void)
 {
-    uint32_t reg;
+    uint64_t reg;
     MRS(ICH_HCR_EL2, reg);
-    return reg;
+    /* 64 bit register read, top 32 bits reserved */
+    return (uint32_t) reg;
 }
 
 static inline void set_gic_vcpu_ctrl_hcr(uint32_t hcr)
@@ -336,9 +357,10 @@ static inline void set_gic_vcpu_ctrl_hcr(uint32_t hcr)
 
 static inline uint32_t get_gic_vcpu_ctrl_vmcr(void)
 {
-    uint32_t reg;
+    uint64_t reg;
     MRS(ICH_VMCR_EL2, reg);
-    return reg;
+    /* 64 bit register read, top 32 bits reserved */
+    return (uint32_t) reg;
 }
 
 static inline void set_gic_vcpu_ctrl_vmcr(uint32_t vmcr)
@@ -353,9 +375,10 @@ static inline void set_gic_vcpu_ctrl_vmcr(uint32_t vmcr)
  */
 static inline uint32_t get_gic_vcpu_ctrl_apr(void)
 {
-    uint32_t reg;
+    uint64_t reg;
     MRS(ICH_AP1R0_EL2, reg);
-    return reg;
+    /* 64 bit register read, top 32 bits reserved */
+    return (uint32_t) reg;
 }
 
 static inline void set_gic_vcpu_ctrl_apr(uint32_t apr)
@@ -365,15 +388,17 @@ static inline void set_gic_vcpu_ctrl_apr(uint32_t apr)
 
 static inline uint32_t get_gic_vcpu_ctrl_vtr(void)
 {
-    uint32_t reg;
+    uint64_t reg;
     MRS(ICH_VTR_EL2, reg);
-    return reg;
+    /* 64 bit register read, top 32 bits reserved */
+    return (uint32_t) reg;
 }
 
 static inline uint32_t get_gic_vcpu_ctrl_eisr0(void)
 {
-    uint32_t reg;
+    uint64_t reg;
     MRS(ICH_EISR_EL2, reg);
+    /* 64 bit register read, top 32 bits reserved */
     return reg;
 }
 
@@ -387,9 +412,10 @@ static inline uint32_t get_gic_vcpu_ctrl_eisr1(void)
 
 static inline uint32_t get_gic_vcpu_ctrl_misr(void)
 {
-    uint32_t reg;
+    uint64_t reg;
     MRS(ICH_MISR_EL2, reg);
-    return reg;
+    /* 64 bit register read, top 32 bits reserved */
+    return (uint32_t) reg;
 }
 
 static inline virq_t get_gic_vcpu_ctrl_lr(int num)

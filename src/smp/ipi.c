@@ -21,6 +21,9 @@
  * or this call will idle forever */
 void ipiStallCoreCallback(bool_t irqPath)
 {
+    word_t cpu = getCurrentCPUIndex();
+    clh_node_t *node = &big_kernel_lock.node[cpu];
+
     if (clh_is_self_in_queue() && !irqPath) {
         /* The current thread is running as we would replace this thread with an idle thread
          *
@@ -40,20 +43,20 @@ void ipiStallCoreCallback(bool_t irqPath)
 #endif
         NODE_STATE(ksSchedulerAction) = SchedulerAction_ResumeCurrentThread;
 
-        /* Let the cpu requesting this IPI to continue while we waiting on lock */
-        big_kernel_lock.node_owners[getCurrentCPUIndex()].ipi = 0;
+        /* Let the cpu requesting this IPI continue while we wait on the lock */
+        node->ipi = 0;
 #ifdef CONFIG_ARCH_RISCV
         ipi_clear_irq(irq_remote_call_ipi);
 #endif
-        ipi_wait(totalCoreBarrier);
+        ipi_wait();
 
         /* Continue waiting on lock */
-        while (big_kernel_lock.node_owners[getCurrentCPUIndex()].next->value != CLHState_Granted) {
-            if (clh_is_ipi_pending(getCurrentCPUIndex())) {
-
+        while (node->watch->state != CLHState_Granted) {
+            __atomic_thread_fence(__ATOMIC_ACQUIRE);
+            if (clh_is_ipi_pending(cpu)) {
                 /* Multiple calls for similar reason could result in stack overflow */
-                assert((IpiRemoteCall_t)remoteCall != IpiRemoteCall_Stall);
-                handleIPI(CORE_IRQ_TO_IRQT(getCurrentCPUIndex(), irq_remote_call_ipi), irqPath);
+                assert(big_kernel_lock.ipi.remoteCall != IpiRemoteCall_Stall);
+                handleIPI(CORE_IRQ_TO_IRQT(cpu, irq_remote_call_ipi), irqPath);
             }
             arch_pause();
         }
@@ -68,7 +71,7 @@ void ipiStallCoreCallback(bool_t irqPath)
         /* We get here either without grabbing the lock from normal interrupt path or from
          * inside the lock while waiting to grab the lock for handling pending interrupt.
          * In latter case, we return to the 'clh_lock_acquire' to grab the lock and
-         * handle the pending interrupt. Its valid as interrups are async events! */
+         * handle the pending interrupt. Its valid as interrupts are async events! */
         SCHED_ENQUEUE_CURRENT_TCB;
         switchToIdleThread();
 #ifdef CONFIG_KERNEL_MCS
@@ -79,10 +82,47 @@ void ipiStallCoreCallback(bool_t irqPath)
     }
 }
 
+void ipi_wait(void)
+{
+    ipi_state_t *ipi = &big_kernel_lock.ipi;
+    word_t cores = ipi->totalCoreBarrier;
+    word_t localsense = ipi->globalsense;
+    word_t *count = &ipi->count;
+
+    if (__atomic_fetch_add(count, 1, __ATOMIC_ACQ_REL) == cores) {
+        *count = 0;
+        ipi->globalsense++;
+        __atomic_thread_fence(__ATOMIC_RELEASE);
+    }
+    /* Check globalsense instead of count to protect against a race where
+     * a new IPI started before this core saw that the old one finished. */
+    while (localsense == ipi->globalsense) {
+        __atomic_thread_fence(__ATOMIC_ACQUIRE);
+        arch_pause();
+    }
+}
+
+static inline void init_ipi_args(IpiRemoteCall_t func,
+                                 word_t data1, word_t data2, word_t data3,
+                                 word_t mask)
+{
+    ipi_state_t *ipi = &big_kernel_lock.ipi;
+
+    ipi->remoteCall = func;
+    ipi->args[0] = data1;
+    ipi->args[1] = data2;
+    ipi->args[2] = data3;
+
+    /* get number of cores involved in this IPI */
+    ipi->totalCoreBarrier = popcountl(mask);
+}
+
 void handleIPI(irq_t irq, bool_t irqPath)
 {
+    ipi_state_t *ipi = &big_kernel_lock.ipi;
+
     if (IRQT_TO_IRQ(irq) == irq_remote_call_ipi) {
-        handleRemoteCall(remoteCall, get_ipi_arg(0), get_ipi_arg(1), get_ipi_arg(2), irqPath);
+        handleRemoteCall(ipi->remoteCall, ipi->args[0], ipi->args[1], ipi->args[2], irqPath);
     } else if (IRQT_TO_IRQ(irq) == irq_reschedule_ipi) {
         rescheduleRequired();
 #ifdef CONFIG_ARCH_RISCV
@@ -106,7 +146,7 @@ void doRemoteMaskOp(IpiRemoteCall_t func, word_t data1, word_t data2, word_t dat
         /* make sure no resource access passes from this point */
         asm volatile("" ::: "memory");
         ipi_send_mask(CORE_IRQ_TO_IRQT(0, irq_remote_call_ipi), mask, true);
-        ipi_wait(totalCoreBarrier);
+        ipi_wait();
     }
 }
 
@@ -127,7 +167,13 @@ void generic_ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
     while (mask) {
         int index = wordBits - 1 - clzl(mask);
         if (isBlocking) {
-            big_kernel_lock.node_owners[index].ipi = 1;
+            /*
+             * All writes before setting ipi to 1 must be observed,
+             * as other cores may check the ipi flag at any moment.
+             * IPI_MEM_BARRIER is too late to prevent reordering
+             * between IPI data and flag reads.
+             */
+            __atomic_store_n(&big_kernel_lock.node[index].ipi, 1, __ATOMIC_RELEASE);
             target_cores[nr_target_cores] = index;
             nr_target_cores++;
         } else {

@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-cmake_minimum_required(VERSION 3.7.2)
+cmake_minimum_required(VERSION 3.16.0)
 
 if(KernelArchX86)
     set_property(TARGET kernel_config_target APPEND PROPERTY TOPLEVELTYPES pde_C)
@@ -72,8 +72,8 @@ config_option(
 config_string(
     KernelCacheLnSz CACHE_LN_SZ "Define cache line size for the current architecture"
     DEFAULT 64
-    DEPENDS "KernelArchX86" UNDEF_DISABLED
-    UNQUOTE
+    DEPENDS "KernelArchX86"
+    UNDEF_DISABLED UNQUOTE
 )
 
 config_option(
@@ -206,7 +206,7 @@ config_choice(
     KERNEL_FSGS_BASE
     "There are three ways to to set FS/GS base addresses: \
     IA32_FS/GS_GDT, IA32_FS/GS_BASE_MSR, and fsgsbase instructions. \
-    IA32_FS/GS_GDT and IA32_FS/GS_BASE_MSR are availble for 32-bit. \
+    IA32_FS/GS_GDT and IA32_FS/GS_BASE_MSR are available for 32-bit. \
     IA32_FS/GS_BASE_MSR and fsgsbase instructions are available for 64-bit."
     "inst;KernelFSGSBaseInst;FSGSBASE_INST;KernelSel4ArchX86_64"
     "gdt;KernelFSGSBaseGDT;FSGSBASE_GDT;KernelSel4ArchIA32"
@@ -226,11 +226,11 @@ config_choice(
 
 config_string(
     KernelMultibootGFXDepth MULTIBOOT_GRAPHICS_MODE_DEPTH
-    "The bits per pixel of the linear graphics mode ot request. Value of zero indicates \
+    "The bits per pixel of the linear graphics mode to request. Value of zero indicates \
     no preference."
     DEFAULT 32
-    DEPENDS "KernelMultibootGFXModeLinear" UNDEF_DISABLED
-    UNQUOTE
+    DEPENDS "KernelMultibootGFXModeLinear"
+    UNDEF_DISABLED UNQUOTE
 )
 
 config_string(
@@ -239,8 +239,8 @@ config_string(
     number of pixels. For a text mode this is the number of characters, value of zero \
     indicates no preference."
     DEFAULT 0
-    DEPENDS "KernelMultibootGFXModeText OR KernelMultibootGFXModeLinear" UNDEF_DISABLED
-    UNQUOTE
+    DEPENDS "KernelMultibootGFXModeText OR KernelMultibootGFXModeLinear"
+    UNDEF_DISABLED UNQUOTE
 )
 config_string(
     KernelMultibootGFXHeight MULTIBOOT_GRAPHICS_MODE_HEIGHT
@@ -248,8 +248,8 @@ config_string(
     number of pixels. For a text mode this is the number of characters, value of zero \
     indicates no preference."
     DEFAULT 0
-    DEPENDS "KernelMultibootGFXModeText OR KernelMultibootGFXModeLinear" UNDEF_DISABLED
-    UNQUOTE
+    DEPENDS "KernelMultibootGFXModeText OR KernelMultibootGFXModeLinear"
+    UNDEF_DISABLED UNQUOTE
 )
 
 config_option(

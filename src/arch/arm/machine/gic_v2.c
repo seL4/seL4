@@ -34,7 +34,7 @@ volatile struct gic_cpu_iface_map *const gic_cpuiface =
     (volatile struct gic_cpu_iface_map *)(GIC_V2_CONTROLLER_PPTR);
 #endif /* GIC_CONTROLLER_PPTR */
 
-word_t active_irq[CONFIG_MAX_NUM_NODES] = {IRQ_NONE};
+word_t active_irq[CONFIG_MAX_NUM_NODES];
 
 /* Get the target id for this processor. We rely on the constraint that the registers
  * for PPI are read only and return only the current processor as the target.
@@ -171,6 +171,7 @@ BOOT_CODE void initIRQController(void)
 
 BOOT_CODE void cpu_initLocalIRQController(void)
 {
+    active_irq[CURRENT_CPU_INDEX()] = IRQ_NONE;
     cpu_iface_init();
 }
 
@@ -179,7 +180,7 @@ BOOT_CODE void cpu_initLocalIRQController(void)
 * 25-24: target lister filter
 * 0b00 - send the ipi to the CPU interfaces specified in the CPU target list
 * 0b01 - send the ipi to all CPU interfaces except the cpu interface.
-*        that requrested teh ipi
+*        that requested the ipi
 * 0b10 - send the ipi only to the CPU interface that requested the IPI.
 * 0b11 - reserved
 *.

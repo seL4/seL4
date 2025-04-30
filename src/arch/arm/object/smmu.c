@@ -375,7 +375,7 @@ void smmu_cb_delete_vspace(word_t cb, asid_t asid)
 {
     /* Deleting the vspace cap stored in context bank's CNode, causing:
      * -reset the relationship between context bank and vspace's ASID
-     * -disabe the context bank as its vspace no longer exists*/
+     * -disable the context bank as its vspace no longer exists*/
     smmuStateCBAsidTable[cb] = ASID_INVALID;
     decreaseASIDBindCB(asid);
     smmu_cb_disable(cb, asid);
@@ -386,7 +386,7 @@ void invalidateSMMUTLBByASID(asid_t asid, word_t bind_cb)
     /* Due to the requirement of one vspace (ASID) can be shared by
      * multiple threads and drivers, there is no obvious way to
      * directly locate all context banks associated with a given ASID without a
-     * serch. Another possible solution is representing all context banks in
+     * search. Another possible solution is representing all context banks in
      * bitmaps, which also requires a search. This operation can only be triggered
      * by ASID invalidation or similar operations, hence the performance is not a major issue.*/
     for (int cb = 0; cb < SMMU_MAX_CB && bind_cb; cb++) {
@@ -399,7 +399,7 @@ void invalidateSMMUTLBByASID(asid_t asid, word_t bind_cb)
 
 void invalidateSMMUTLBByASIDVA(asid_t asid, vptr_t vaddr, word_t bind_cb)
 {
-    /* Implemeneted in the same way as invalidateSMMUTLBByASID */
+    /* Implemented in the same way as invalidateSMMUTLBByASID */
     for (int cb = 0; cb < SMMU_MAX_CB && bind_cb; cb++) {
         if (unlikely(smmuStateCBAsidTable[cb] == asid)) {
             smmu_tlb_invalidate_cb_va(cb, asid, vaddr);

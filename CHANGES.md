@@ -26,6 +26,8 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 ### Changes
 
 * Added `zynqmp` and `rpi4` to the set of verified AArch64 configs.
+* riscv: Change default cmake options KernelRiscvExtF and KernelRiscvExtD from OFF to ON.
+  Except for RISCV32 with LLVM clang enabled will default both to OFF.
 
 ### Platforms
 
@@ -34,6 +36,35 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
   `set(KernelArmVtimerUpdateVOffset OFF)` and
   `set(KernelArmDisableWFIWFETraps ON)`
   to your project settings to get the same configuration as before if you are using `tqma8xqp1gb`.
+
+#### Arm
+
+* Added config option for selecting which thread ID register is used for Kernel TLS syscalls and invocations.
+  KernelArmTLSReg can be used to select either `tpidru` or `tpidruro` as the TLS register used for `seL4_TCB_SetTLSBase` and `seL4_SetTLSBase` operations.
+  This config option's default value is `tpidru` which is what the register that the kernel currently uses for the TLS register for aarch32 and aarch64 platforms.
+
+* Fixed: under some circumstances, writes by a VMM to VCPU timer registers could have been reverted by the kernel to
+  their previous state. This was triggered when:
+
+  * a VCPU thread was running,
+  * the VCPU was then disabled but remained active by switching to a non-VCPU thread,
+  * that VCPU thread had the VCPU cap and performed the timer register writes,
+  * and execution then switched back to the VCPU thread.
+
+  This was found by Alison Felizzi and independently by Ryan Barry during the integrity proofs for AArch64 hyp mode.
+
+* Fixed: under some circumstances, `seL4_VCPUReg_CPACR` is saved twice to the current VCPU. The value of this
+  register may change between saves, causing the latter save to unintentionally grant EL0/1 access to the FPU.
+
+  1. A thread with an active current VCPU switches to a thread without a VCPU. The current VCPU is disabled.
+    1.1. `seL4_VCPUReg_CPACR` is saved to the current VCPU.
+    1.2. `enableFpuEL01` updates the register, enabling FPU access in EL0 and EL1.
+  2. The thread without a VCPU switches to a thread with a different VCPU to the first
+    2.1. All registers from `seL4_VCPUReg_TTBR0` to `seL4_VCPUReg_SPSR_EL1` are saved. This range includes
+         `seL4_VCPUReg_CPACR`, which overwrites the previously saved value and grants FPU access at EL0 and EL1.
+
+* Fixed: on aarch32 configurations with hypervisor support, `CNTKCTL` was not saved and restored alongside other virtual
+  timer registers. `seL4_VCPUReg_CNTKCTL` has been introduced to mirror `seL4_VCPUReg_CNTKCTL_EL1` from aarch64.
 
 ### Upgrade Notes
 

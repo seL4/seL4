@@ -11,28 +11,12 @@
 
 #ifdef ENABLE_SMP_SUPPORT
 
-static IpiModeRemoteCall_t remoteCall;   /* the remote call being requested */
-
-static inline void init_ipi_args(IpiRemoteCall_t func,
-                                 word_t data1, word_t data2, word_t data3,
-                                 word_t mask)
-{
-    remoteCall = (IpiModeRemoteCall_t)func;
-    ipi_args[0] = data1;
-    ipi_args[1] = data2;
-    ipi_args[2] = data3;
-
-    /* get number of cores involved in this IPI */
-    totalCoreBarrier = popcountl(mask);
-}
-
-static void handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0,
-                             word_t arg1, word_t arg2, bool_t irqPath)
+void handleRemoteCall(IpiRemoteCall_t call, word_t arg0, word_t arg1, word_t arg2, bool_t irqPath)
 {
     /* we gets spurious irq_remote_call_ipi calls, e.g. when handling IPI
      * in lock while hardware IPI is pending. Guard against spurious IPIs! */
     if (clh_is_ipi_pending(getCurrentCPUIndex())) {
-        switch ((IpiRemoteCall_t)call) {
+        switch (call) {
         case IpiRemoteCall_Stall:
             ipiStallCoreCallback(irqPath);
             break;
@@ -59,6 +43,12 @@ static void handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0,
             maskInterrupt(arg0, IDX_TO_IRQT(arg1));
             break;
 
+#ifdef CONFIG_ARM_GIC_V3_SUPPORT
+        case IpiRemoteCall_DeactivatePrivateInterrupt:
+            deactivateInterrupt(IDX_TO_IRQT(arg1));
+            break;
+#endif
+
 #if defined CONFIG_ARM_HYPERVISOR_SUPPORT && defined ENABLE_SMP_SUPPORT
         case IpiRemoteCall_VCPUInjectInterrupt: {
             virq_t virq;
@@ -73,8 +63,8 @@ static void handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0,
             break;
         }
 
-        big_kernel_lock.node_owners[getCurrentCPUIndex()].ipi = 0;
-        ipi_wait(totalCoreBarrier);
+        big_kernel_lock.node[getCurrentCPUIndex()].ipi = 0;
+        ipi_wait();
     }
 }
 

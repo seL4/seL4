@@ -21,6 +21,7 @@ on:
       - 'libsel4/**/sel4*.xsd'
       - 'libsel4/include/api/syscall.xml'
       - 'libsel4/include/api/syscall.xsd'
+  workflow_dispatch:
 
 jobs:
   xmllint:

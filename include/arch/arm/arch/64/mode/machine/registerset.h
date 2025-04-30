@@ -46,7 +46,7 @@
 #define ID_AA64PFR0_EL1_ASIMD   20     // HWCap for Advanced SIMD
 
 /* CPACR_EL1 register */
-#define CPACR_EL1_FPEN          20     // FP regiters access
+#define CPACR_EL1_FPEN          20     // FP registers access
 
 /*
  * We cannot allow async aborts in the verified kernel, but they are useful
@@ -143,9 +143,13 @@ enum _register {
     /* user readable/writable thread ID register.
      * name comes from the ARM manual */
     TPIDR_EL0                   = 35,
-    TLS_BASE                    = TPIDR_EL0,
     /* user readonly thread ID register. */
     TPIDRRO_EL0                 = 36,
+#ifdef CONFIG_ARM_TLS_REG_TPIDRU
+    TLS_BASE = TPIDR_EL0,
+#elif defined(CONFIG_ARM_TLS_REG_TPIDRURO)
+    TLS_BASE = TPIDRRO_EL0,
+#endif
     n_contextRegisters          = 37,
 };
 

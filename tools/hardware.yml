@@ -204,6 +204,7 @@ devices:
   # SiFive U54/U74 PLIC (HiFive, Polarfire)
   - compatible:
       - riscv,plic0
+      - sifive,plic-1.0.0
     regions:
       - index: 0
         kernel: PLIC_PPTR
@@ -224,8 +225,7 @@ devices:
   - compatible:
       - arm,psci-0.2
       - arm,psci-1.0
-  - compatible:
       - fsl,imx6q-src
       - fsl,imx6sx-src
-  - compatible:
       - xlnx,zynq-reset
+      - raspberrypi,bcm2835-firmware

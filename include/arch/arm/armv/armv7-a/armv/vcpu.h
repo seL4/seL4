@@ -296,6 +296,18 @@ static inline void set_cntv_ctl(word_t val)
     MCR(CNTV_CTL, val);
 }
 
+static inline word_t get_cntkctl(void)
+{
+    word_t ret = 0;
+    MRC(CNTKCTL, ret);
+    return ret;
+}
+
+static inline void set_cntkctl(word_t val)
+{
+    MCR(CNTKCTL, val);
+}
+
 static inline word_t get_vmpidr(void)
 {
     word_t ret = 0;
@@ -484,6 +496,8 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
         return get_cntv_off_high();
     case seL4_VCPUReg_CNTVOFFlow:
         return get_cntv_off_low();
+    case seL4_VCPUReg_CNTKCTL:
+        return get_cntkctl();
     case seL4_VCPUReg_VMPIDR:
         return get_vmpidr();
     default:
@@ -619,6 +633,9 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
     case seL4_VCPUReg_CNTVOFFlow:
         set_cntv_off_low(reg);
         break;
+    case seL4_VCPUReg_CNTKCTL:
+        set_cntkctl(reg);
+        break;
     case seL4_VCPUReg_VMPIDR:
         set_vmpidr(reg);
         break;
@@ -676,7 +693,7 @@ static inline void armv_vcpu_boot_init(void)
 static inline void armv_vcpu_save(vcpu_t *vcpu, bool_t active)
 {
     /* save registers */
-    vcpu_save_reg_range(vcpu, seL4_VCPUReg_ACTLR, seL4_VCPUReg_SPSRfiq);
+    vcpu_save_reg_range(vcpu, seL4_VCPURegSaveRange_start, seL4_VCPURegSaveRange_end);
 
 #ifdef ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS
     /* This is done when we are asked to save and restore the CP14 debug context
@@ -762,7 +779,7 @@ static inline void vcpu_enable(vcpu_t *vcpu)
      *
      * In the case above, the fpuState.fpexc of VM0 saves the value written
      * by the VM1, but the vcpu->fpexc of VM0 still contains the correct
-     * value when VM0 is disabed (vcpu_disable) or saved (vcpu_save).
+     * value when VM0 is disabled (vcpu_disable) or saved (vcpu_save).
      *
      *
      */
@@ -848,6 +865,12 @@ static inline bool_t vcpu_reg_saved_when_disabled(word_t field)
 {
     switch (field) {
     case seL4_VCPUReg_SCTLR:
+    case seL4_VCPUReg_CNTV_CTL:
+    case seL4_VCPUReg_CNTV_CVALhigh:
+    case seL4_VCPUReg_CNTV_CVALlow:
+    case seL4_VCPUReg_CNTVOFFhigh:
+    case seL4_VCPUReg_CNTVOFFlow:
+    case seL4_VCPUReg_CNTKCTL:
         return true;
     default:
         return false;

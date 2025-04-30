@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-cmake_minimum_required(VERSION 3.8.2)
+cmake_minimum_required(VERSION 3.16.0)
 
 # Wrapper function around find_file that generates a fatal error if it isn't found
 # Is equivalent to find_file except that it adds CMAKE_CURRENT_SOURCE_DIR as a path and sets
@@ -92,7 +92,7 @@ endfunction(cppfile)
 # Function to generate a custom command to process a bitfield file. The input
 # (pbf_path) is either a .bf file or, if you used pre-processor directives, a
 # pre-processed .bf file. As this invokes a python tool that places a file
-# in the current working directory a unqiue 'work_dir' needs to be provided
+# in the current working directory a unique 'work_dir' needs to be provided
 # for this command to execute in
 # This function is not intended to be used directly, rather one of its wrappers
 # that is specialized to generate a specific kind of output should be used
@@ -552,7 +552,7 @@ function(add_config_library prefix configure_template)
 
     execute_process(
         COMMAND
-            "${PYTHON3}" "${CONFIG_GEN_PATH}" "${config_yaml_file}" --write-c
+            "${PYTHON3}" "${CONFIG_GEN_PATH}" "${config_yaml_file}" --skip-unchanged --write-c
             "${config_header_file}" --write-json "${config_json_file}"
         RESULT_VARIABLE error
     )

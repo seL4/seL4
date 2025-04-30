@@ -6,7 +6,7 @@
 #
 
 #
-# Concatinate files together, adding in appropriate "#line" directives.
+# Concatenate files together, adding in appropriate "#line" directives.
 #
 
 while [ $# -ge 1 ]; do

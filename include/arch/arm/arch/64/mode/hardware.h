@@ -219,8 +219,8 @@
    overflow without going into address ranges that are non-canonical.  These static
    asserts check that the kernel config won't lead to UTs being created that aren't
    representable. */
-compile_assert(ut_max_less_than_cannonical, CONFIG_PADDR_USER_DEVICE_TOP <= BIT(47));
+compile_assert(ut_max_less_than_canonical, CONFIG_PADDR_USER_DEVICE_TOP <= BIT(47));
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-compile_assert(ut_max_is_cannonical, (PPTR_BASE + CONFIG_PADDR_USER_DEVICE_TOP) <= BIT(48));
+compile_assert(ut_max_is_canonical, (PPTR_BASE + CONFIG_PADDR_USER_DEVICE_TOP) <= BIT(48));
 #endif
 #endif

@@ -48,7 +48,7 @@ typedef struct acpi_rsdt {
     uint32_t entry[1];
 } PACKED acpi_rsdt_t;
 
-/* Attemps to initialize acpi by searching for a valid RSDP block. If found a copy is placed in rsdp_data
+/* Attempts to initialize acpi by searching for a valid RSDP block. If found a copy is placed in rsdp_data
  * and true is returned, otherwise the contents of rsdp_data are undefined and false is returned. */
 bool_t acpi_init(acpi_rsdp_t *rsdp_data);
 

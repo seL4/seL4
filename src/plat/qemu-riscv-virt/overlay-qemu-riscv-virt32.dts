@@ -14,7 +14,7 @@
          * address space (4 GiB) only, even if SV32 allows using a
          * 34-bit physical address space. For now, reserving any memory
          * starting at 0xffffffff is the easiest way to cope with
-         * platform configurations having pyhsical memory of exactly
+         * platform configurations having physical memory of exactly
          * 4 GiB or above. The long-term fix is improving the seL4 build
          * scripts to be aware of the 4 GiB limitation and never create
          * any regions above. Furthermore, a way needs to be found to

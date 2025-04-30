@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-cmake_minimum_required(VERSION 3.7.2)
+cmake_minimum_required(VERSION 3.16.0)
 
 if(KernelSel4ArchAarch32)
     set_property(TARGET kernel_config_target APPEND PROPERTY TOPLEVELTYPES pde_C)
@@ -218,6 +218,21 @@ config_option(
     DEPENDS "NOT KernelVerificationBuild; KernelSel4ArchAarch64"
 )
 
+config_choice(
+    KernelArmTLSReg
+    ARM_TLS_REG
+    "Which TLS register is used for Kernel TLS syscalls and invocations. \
+    The usual registers used by gnu-elf ABIs are: \
+    - on aarch32: tpidruro \
+    - on aarch64: tpidru."
+    "tpidru;KernelArmTLSRegTPIDRU;ARM_TLS_REG_TPIDRU;KernelArchARM"
+    "tpidruro;KernelArmTLSRegTPIDRURO;ARM_TLS_REG_TPIDRURO;KernelArchARM"
+)
+
+if(KernelArmTLSRegTPIDRURO)
+    set(KernelSetTLSBaseSelf ON)
+endif()
+
 if(KernelAArch32FPUEnableContextSwitch OR KernelSel4ArchAarch64)
     set(KernelHaveFPU ON)
 endif()
@@ -238,6 +253,12 @@ if(
     config_set(KernelArmCacheLineSizeBits L1_CACHE_LINE_SIZE_BITS "6")
 elseif(KernelArmCortexA9)
     config_set(KernelArmCacheLineSizeBits L1_CACHE_LINE_SIZE_BITS "5")
+endif()
+
+if(KernelArmCortexA8)
+    config_set(KernelArmHasTlbLock ARM_HAS_TLB_LOCK ON)
+else()
+    config_set(KernelArmHasTlbLock ARM_HAS_TLB_LOCK OFF)
 endif()
 
 add_sources(

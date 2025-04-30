@@ -3,9 +3,6 @@
 #
 # SPDX-License-Identifier: GPL-2.0-only
 #
-
-cmake_minimum_required(VERSION 3.7.2)
-
 declare_platform(imx93 KernelPlatformIMX93 PLAT_IMX93 KernelArchARM)
 
 if(KernelPlatformIMX93)

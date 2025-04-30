@@ -26,4 +26,26 @@
             reg = <0x00000000 0x2000000 0x00000000 0x000010000>;
         };
     };
+
+    /*
+     * See https://github.com/qemu/qemu/blob/master/hw/riscv/virt.c for the
+     * QEMU/virt memory map. There are these areas:
+     * - Boot-ROM at 0x1000, len 0xf000
+     * - DRAM at 0x80000000 - end (2 GiB)
+     *
+     * Reserve 2 MiB for SBI at the start of RAM (0x80000000 - 0x80200000). This
+     * is exactly one "megapage" in the MMU table. It leaves plenty of space for
+     * further SBI experimenting, given the known usage (as of June 2021) is:
+     * - BBL: 76 KiB (= 0x13000)
+     * - OpenSBI: 128 KiB (= 0x20000) with PMP protection
+     */
+    reserved-memory {
+        #address-cells = <0x02>;
+        #size-cells = <0x02>;
+        ranges;
+        sbi@80000000 {
+            reg = <0x00000000 0x80000000 0x00000000 0x200000>;
+            no-map;
+        };
+    };
 };

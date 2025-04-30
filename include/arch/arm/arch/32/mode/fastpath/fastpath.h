@@ -136,7 +136,7 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
             /* Pop user registers, preserving r0 and r1 */
             "add sp, sp, #8     \n"
             "pop {r2-r12}       \n"
-            /* Retore the user stack pointer */
+            /* Restore the user stack pointer */
             "pop {lr}           \n"
             "msr sp_usr, lr     \n"
             /* prepare the exception return lr */

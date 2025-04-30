@@ -208,8 +208,9 @@ static void NORETURN restore_vmx(void)
 
 void VISIBLE NORETURN restore_user_context(void)
 {
-    NODE_UNLOCK_IF_HELD;
     c_exit_hook();
+
+    NODE_UNLOCK_IF_HELD;
 
     /* we've now 'exited' the kernel. If we have a pending interrupt
      * we should 'enter' it again */
@@ -263,7 +264,7 @@ void VISIBLE NORETURN restore_user_context(void)
             /* if we are using the SKIM window then we are trying to hide kernel state from
              * the user in the case of Meltdown where the kernel region is effectively readable
              * by the user. To prevent a storage channel across threads through the irq stack,
-             * which is idirectly controlled by the user, we need to clear the stack. We perform
+             * which is indirectly controlled by the user, we need to clear the stack. We perform
              * this here since when we return *from* an interrupt we must use this stack and
              * cannot clear it. This means if we restore from interrupt, then enter from a syscall
              * and switch to a different thread we must either on syscall entry, or before leaving

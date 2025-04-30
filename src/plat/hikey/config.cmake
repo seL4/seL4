@@ -4,8 +4,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-cmake_minimum_required(VERSION 3.7.2)
-
 declare_platform(hikey KernelPlatformHikey PLAT_HIKEY KernelArchARM)
 
 if(KernelPlatformHikey)
@@ -53,8 +51,8 @@ set_property(CACHE KernelArmHikeyPrefetcherStride PROPERTY STRINGS "2;3")
 
 config_string(
     KernelArmHikeyPrefetcherNPFSTRM ARM_HIKEY_PREFETCHER_NPFSTRM
-    "Number of indepedent prefetch streams \
-    Number of indepedent prefetch streams. Allowed values are 1 to 4.\
+    "Number of independent prefetch streams \
+    Number of independent prefetch streams. Allowed values are 1 to 4.\
     2 is the reset value"
     DEFAULT 2
     DEPENDS "KernelPlatformHikey;NOT KernelDebugDisablePrefetchers" DEFAULT_DISABLED 0

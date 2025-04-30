@@ -24,8 +24,8 @@ of the kernel, and does *not* fall under the heading of "derived work".
 Syscall headers are provided under BSD.
 
 For a longer explanation of how the seL4 license does or does not affect
-your own code see also [this blog post][3].
+your own code see also [the seL4 website][3].
 
 [1]: https://spdx.org
 [2]: https://spdx.org/licenses/Linux-syscall-note.html
-[3]: https://microkerneldude.wordpress.com/2019/12/09/what-does-sel4s-license-imply/
+[3]: https://sel4.systems/Legal/license.html

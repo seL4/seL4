@@ -125,7 +125,7 @@ bool_t x86_cpuid_initialize(void)
     /* First determine which vendor manufactured the CPU. */
     x86_cpuid_fill_vendor_string(ci);
 
-    /* Need both eax and ebx ouput values. */
+    /* Need both eax and ebx output values. */
     eax.words[0] = x86_cpuid_eax(1, 0);
     ebx.words[0] = x86_cpuid_ebx(1, 0);
 

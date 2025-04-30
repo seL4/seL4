@@ -41,7 +41,7 @@ void setBreakpoint(tcb_t *t,
  * @param vaddr[out] Address that the breakpoint is set to trigger on.
  * @param type[out] Type of operation that will trigger the breakpoint.
  * @param size[out] operand size that will trigger the breakpoint.
- * @param rw[out] Access type (read/write) that will trigger thr breakpoint.
+ * @param rw[out] Access type (read/write) that will trigger the breakpoint.
  * @param uds If NULL, this function call will read directly from the hardware
  *            registers.
  *            If non-NULL, 'uds' is assumed to be a pointer to a debug register
