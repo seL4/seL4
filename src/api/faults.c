@@ -219,14 +219,15 @@ word_t setMRs_fault(tcb_t *sender, tcb_t *receiver, word_t *receiveIPCBuffer)
 
 #ifdef CONFIG_KERNEL_MCS
     case seL4_Fault_Timeout: {
-        word_t len = setMR(receiver, receiveIPCBuffer, seL4_Timeout_Data,
-                           seL4_Fault_Timeout_get_badge(sender->tcbFault));
         if (sender->tcbSchedContext) {
+            word_t len;
             time_t consumed = schedContext_updateConsumed(sender->tcbSchedContext);
-            return mode_setTimeArg(len, consumed,
-                                   receiveIPCBuffer, receiver);
+            len = setMR(receiver, receiveIPCBuffer, seL4_Timeout_Data,
+                        seL4_Fault_Timeout_get_badge(sender->tcbFault));
+            return mode_setTimeArg(len, consumed, receiveIPCBuffer, receiver);
         } else {
-            return len;
+            return setMR(receiver, receiveIPCBuffer, seL4_Timeout_Data,
+                         seL4_Fault_Timeout_get_badge(sender->tcbFault));
         }
     }
 #endif
