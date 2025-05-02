@@ -260,10 +260,7 @@ typedef struct user_fpu_state {
 } user_fpu_state_t;
 #endif /* CONFIG_HAVE_FPU */
 
-/* ARM user-code context: size = 72 bytes
- * Or with hardware debug support built in:
- *      72 + sizeof(word_t) * (NUM_BPS + NUM_WPS) * 2
- *
+/*
  * The "word_t registers" member of this struct must come first, because in
  * head.S, we assume that an "ldr %0, =ksCurThread" will point to the beginning
  * of the current thread's registers. The assert below should help.
