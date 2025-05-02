@@ -92,22 +92,8 @@ static exception_t decodeSchedControl_ConfigureFlags(word_t length, cap_t cap, w
     }
 
     time_t budget_us = mode_parseTimeArg(0, buffer);
-    ticks_t budget_ticks = usToTicks(budget_us);
-    time_t period_us = mode_parseTimeArg(TIME_ARG_SIZE, buffer);
-    ticks_t period_ticks = usToTicks(period_us);
-    word_t extra_refills = getSyscallArg(TIME_ARG_SIZE * 2, buffer);
-    word_t badge = getSyscallArg(TIME_ARG_SIZE * 2 + 1, buffer);
-    word_t flags = getSyscallArg(TIME_ARG_SIZE * 2 + 2, buffer);
 
-    cap_t targetCap = current_extra_caps.excaprefs[0]->cap;
-    if (unlikely(cap_get_capType(targetCap) != cap_sched_context_cap)) {
-        userError("SchedControl_ConfigureFlags: target cap not a scheduling context cap");
-        current_syscall_error.type = seL4_InvalidCapability;
-        current_syscall_error.invalidCapNumber = 1;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    if (budget_us > MAX_PERIOD_US || budget_ticks < MIN_BUDGET) {
+    if (budget_us > MAX_PERIOD_US) {
         userError("SchedControl_ConfigureFlags: budget out of range.");
         current_syscall_error.type = seL4_RangeError;
         current_syscall_error.rangeErrorMin = MIN_BUDGET_US;
@@ -115,7 +101,29 @@ static exception_t decodeSchedControl_ConfigureFlags(word_t length, cap_t cap, w
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (period_us > MAX_PERIOD_US || period_ticks < MIN_BUDGET) {
+    ticks_t budget_ticks = usToTicks(budget_us);
+
+    time_t period_us = mode_parseTimeArg(TIME_ARG_SIZE, buffer);
+
+    if (period_us > MAX_PERIOD_US) {
+        userError("SchedControl_ConfigureFlags: period out of range.");
+        current_syscall_error.type = seL4_RangeError;
+        current_syscall_error.rangeErrorMin = MIN_BUDGET_US;
+        current_syscall_error.rangeErrorMax = MAX_PERIOD_US;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    ticks_t period_ticks = usToTicks(period_us);
+
+    if (budget_ticks < MIN_BUDGET) {
+        userError("SchedControl_ConfigureFlags: budget out of range.");
+        current_syscall_error.type = seL4_RangeError;
+        current_syscall_error.rangeErrorMin = MIN_BUDGET_US;
+        current_syscall_error.rangeErrorMax = MAX_PERIOD_US;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if (period_ticks < MIN_BUDGET) {
         userError("SchedControl_ConfigureFlags: period out of range.");
         current_syscall_error.type = seL4_RangeError;
         current_syscall_error.rangeErrorMin = MIN_BUDGET_US;
@@ -131,15 +139,29 @@ static exception_t decodeSchedControl_ConfigureFlags(word_t length, cap_t cap, w
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (extra_refills + MIN_REFILLS > refill_absolute_max(targetCap)) {
+    cap_t targetCap = current_extra_caps.excaprefs[0]->cap;
+    if (unlikely(cap_get_capType(targetCap) != cap_sched_context_cap)) {
+        userError("SchedControl_ConfigureFlags: target cap not a scheduling context cap");
+        current_syscall_error.type = seL4_InvalidCapability;
+        current_syscall_error.invalidCapNumber = 1;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    word_t extra_refills = getSyscallArg(TIME_ARG_SIZE * 2, buffer);
+    word_t max_refills = refill_absolute_max(targetCap);
+
+    if (extra_refills > max_refills - MIN_REFILLS) {
         current_syscall_error.type = seL4_RangeError;
         current_syscall_error.rangeErrorMin = 0;
-        current_syscall_error.rangeErrorMax = refill_absolute_max(targetCap) - MIN_REFILLS;
+        current_syscall_error.rangeErrorMax = max_refills - MIN_REFILLS;
         userError("Max refills invalid, got %lu, max %lu",
                   extra_refills,
                   current_syscall_error.rangeErrorMax);
         return EXCEPTION_SYSCALL_ERROR;
     }
+
+    word_t badge = getSyscallArg(TIME_ARG_SIZE * 2 + 1, buffer);
+    word_t flags = getSyscallArg(TIME_ARG_SIZE * 2 + 2, buffer);
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeSchedControl_ConfigureFlags(SC_PTR(cap_sched_context_cap_get_capSCPtr(targetCap)),
