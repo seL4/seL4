@@ -143,4 +143,3 @@ exception_t handle_SysDebugSendIPI(void);
 #endif
 
 #endif /* ENABLE_SMP_SUPPORT */
-
