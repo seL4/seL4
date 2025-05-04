@@ -112,6 +112,7 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
 
         if (!plat_SGITargetValid(target)) {
             current_syscall_error.type = seL4_InvalidArgument;
+            current_syscall_error.invalidArgumentNumber = 1;
             userError("IRQControl: IssueSGISignal: Invalid SGI Target 0x%lx.", target);
             return EXCEPTION_SYSCALL_ERROR;
         }
