@@ -28,6 +28,9 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 * Added `zynqmp` and `rpi4` to the set of verified AArch64 configs.
 * riscv: Change default cmake options KernelRiscvExtF and KernelRiscvExtD from OFF to ON.
   Except for RISCV32 with LLVM clang enabled will default both to OFF.
+* Change fault based FPU context switching to a TCB flag based approach:
+  New system call `seL4_TCB_SetFlags` and new flag `seL4_TCBFlag_fpuDisabled`.
+  See [RFC-18](https://sel4.github.io/rfcs/implemented/0180-fpu-switching.html).
 
 ### Platforms
 
@@ -66,7 +69,16 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 * Fixed: on aarch32 configurations with hypervisor support, `CNTKCTL` was not saved and restored alongside other virtual
   timer registers. `seL4_VCPUReg_CNTKCTL` has been introduced to mirror `seL4_VCPUReg_CNTKCTL_EL1` from aarch64.
 
+#### X86
+
+* FPU: Fixed XSAVES option. Now it's possible to enable this for newer x86 CPUs.
+* Avoid use-after-free if a VCPU with active FPU state gets deleted.
+
 ### Upgrade Notes
+
+Set `seL4_TCBFlag_fpuDisabled` for tasks not using the FPU to retain the old context switch performance.
+The -mgeneral-regs-only option may be needed to stop the compiler from issuing SIMD instructions to speed
+up integer operations.
 
 ---
 
