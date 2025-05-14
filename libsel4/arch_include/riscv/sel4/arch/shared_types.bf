@@ -1,5 +1,7 @@
 --
 -- Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+-- Copyright 2025, Capabilities Limited
+-- CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
 --
 -- SPDX-License-Identifier: BSD-2-Clause
 --

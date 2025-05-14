@@ -2,6 +2,8 @@
  * Copyright 2020, DornerWorks
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -26,6 +28,11 @@
 #include <plat/machine/hardware.h>
 #include <kernel/stack.h>
 #include <util.h>
+
+#if defined(CONFIG_HAVE_CHERI)
+/* Allow CHERI capability loads/stores by default */
+#define PTE_CHERI_RISCV_Default_VMAttributes 0x2lu
+#endif
 
 struct resolve_ret {
     paddr_t frameBase;
@@ -68,17 +75,21 @@ static pte_t pte_next(word_t phys_addr, bool_t is_leaf)
     uint8_t write = read;
     uint8_t exec = read;
 
-    return pte_new(ppn,
-                   0,     /* sw */
-                   is_leaf ? 1 : 0,     /* dirty (leaf)/reserved (non-leaf) */
-                   is_leaf ? 1 : 0,     /* accessed (leaf)/reserved (non-leaf) */
-                   1,     /* global */
-                   is_leaf ? 0 : 0,     /* user (leaf)/reserved (non-leaf) */
-                   exec,  /* execute */
-                   write, /* write */
-                   read,  /* read */
-                   1      /* valid */
-                  );
+    return pte_new(
+#if defined(CONFIG_HAVE_CHERI) && (__riscv_xlen == 64)
+               is_leaf ? PTE_CHERI_RISCV_Default_VMAttributes : 0,  /* cheri_ext */
+#endif
+               ppn,
+               0,     /* sw */
+               is_leaf ? 1 : 0,     /* dirty (leaf)/reserved (non-leaf) */
+               is_leaf ? 1 : 0,     /* accessed (leaf)/reserved (non-leaf) */
+               1,     /* global */
+               is_leaf ? 0 : 0,     /* user (leaf)/reserved (non-leaf) */
+               exec,  /* execute */
+               write, /* write */
+               read,  /* read */
+               1      /* valid */
+           );
 }
 
 /* ==================== BOOT CODE STARTS HERE ==================== */
@@ -180,6 +191,9 @@ BOOT_CODE void map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
     targetSlot = pt_ret.ptSlot;
 
     *targetSlot = pte_new(
+#if defined(CONFIG_HAVE_CHERI) && (__riscv_xlen == 64)
+                      0,
+#endif
                       (addrFromPPtr(pt) >> seL4_PageBits),
                       0, /* sw */
                       0, /* dirty (reserved non-leaf) */
@@ -207,6 +221,9 @@ BOOT_CODE void map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap)
     pte_t *targetSlot = lu_ret.ptSlot;
 
     *targetSlot = pte_new(
+#if defined(CONFIG_HAVE_CHERI) && (__riscv_xlen == 64)
+                      PTE_CHERI_RISCV_Default_VMAttributes,
+#endif
                       (pptr_to_paddr(frame_pptr) >> seL4_PageBits),
                       0, /* sw */
                       1, /* dirty (leaf) */
@@ -433,6 +450,12 @@ exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
     case RISCVInstructionAccessFault:
         current_fault = seL4_Fault_VMFault_new(addr, RISCVInstructionAccessFault, true);
         return EXCEPTION_FAULT;
+#if defined(CONFIG_HAVE_CHERI)
+    case RISCVCheriFault:
+        current_fault = seL4_Fault_VMFault_new(addr, (1 << 11) | ((read_stval2() >> 16) & 0xf) << 4 | (read_stval2() & 0xf),
+                                               false);
+        return EXCEPTION_FAULT;
+#endif
 
     default:
         fail("Invalid VM fault type");
@@ -531,6 +554,9 @@ void unmapPageTable(asid_t asid, vptr_t vptr, pte_t *target_pt)
     /* If we found a pt then ptSlot won't be null */
     assert(ptSlot != NULL);
     *ptSlot = pte_new(
+#if defined(CONFIG_HAVE_CHERI) && (__riscv_xlen == 64)
+                  0,
+#endif
                   0,  /* phy_address */
                   0,  /* sw */
                   0,  /* dirty (reserved non-leaf) */
@@ -661,6 +687,10 @@ static pte_t CONST makeUserPTE(paddr_t paddr, bool_t executable, vm_rights_t vm_
         return pte_pte_invalid_new();
     } else {
         return pte_new(
+#if defined(CONFIG_HAVE_CHERI) && (__riscv_xlen == 64)
+                   /* cheriTODO: export these bits to user and fine-grain them */
+                   PTE_CHERI_RISCV_Default_VMAttributes,
+#endif
                    paddr >> seL4_PageBits,
                    0, /* sw */
                    1, /* dirty (leaf) */
@@ -778,17 +808,21 @@ static exception_t decodeRISCVPageTableInvocation(word_t label, word_t length,
 
     paddr_t paddr = addrFromPPtr(
                         PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap)));
-    pte_t pte = pte_new((paddr >> seL4_PageBits),
-                        0, /* sw */
-                        0, /* dirty (reserved non-leaf) */
-                        0, /* accessed (reserved non-leaf) */
-                        0,  /* global */
-                        0,  /* user (reserved non-leaf) */
-                        0,  /* execute */
-                        0,  /* write */
-                        0,  /* read */
-                        1 /* valid */
-                       );
+    pte_t pte = pte_new(
+#if defined(CONFIG_HAVE_CHERI) && (__riscv_xlen == 64)
+                    0x0,  /* cheri_ext */
+#endif
+                    (paddr >> seL4_PageBits),
+                    0, /* sw */
+                    0, /* dirty (reserved non-leaf) */
+                    0, /* accessed (reserved non-leaf) */
+                    0,  /* global */
+                    0,  /* user (reserved non-leaf) */
+                    0,  /* execute */
+                    0,  /* write */
+                    0,  /* read */
+                    1 /* valid */
+                );
 
     cap = cap_page_table_cap_set_capPTIsMapped(cap, 1);
     cap = cap_page_table_cap_set_capPTMappedASID(cap, asid);

@@ -16,6 +16,10 @@
 .extern __global_pointer$
 .extern restore_user_context
 
+#if defined(CONFIG_HAVE_CHERI)
+.extern RootCheriCap
+#endif
+
 /*
  * When SMP is enabled, the elfloader passes the hart ID in a6
  * and logical core ID in a7.
@@ -37,6 +41,13 @@ _start:
   add  sp, sp, t0
   /* put the stack in sscratch */
   csrw sscratch, sp
+#endif
+
+#if defined(CONFIG_HAVE_CHERI)
+    /* Set up the root CHERI capability */
+    csrr ct0, ddc
+    la t1, RootCheriCap
+    sc ct0, 0(t1)
 #endif
 
   /* Call bootstrapping implemented in C with parameters:
