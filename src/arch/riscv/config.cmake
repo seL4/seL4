@@ -17,6 +17,7 @@ config_string(
 
 set(_KernelRiscvExtD ON)
 set(_KernelRiscvExtF ON)
+set(_KernelRiscvExtY OFF)
 if(LLVM_TOOLCHAIN AND KernelSel4ArchRiscV32)
     # Versions of clang we support can't compile for D double width floating
     # point. But we've found that having F but not D still leads to errors with
@@ -34,6 +35,13 @@ config_option(
 config_option(
     KernelRiscvExtD RISCV_EXT_D "RISC-V extension for double-precision floating-point"
     DEFAULT ${_KernelRiscvExtD}
+    DEPENDS "KernelArchRiscV"
+)
+
+# cheriTODO: Rename "Y" with the finalised extension name
+config_option(
+    KernelRiscvExtY RISCV_EXT_Y "RISC-V extension for CHERI"
+    DEFAULT ${_KernelRiscvExtY}
     DEPENDS "KernelArchRiscV"
 )
 
@@ -96,6 +104,10 @@ endif()
 
 if(KernelRiscvExtF)
     set(KernelHaveFPU ON)
+endif()
+
+if(KernelRiscvExtY)
+    set(HaveCheri ON)
 endif()
 
 # This is not supported on RISC-V

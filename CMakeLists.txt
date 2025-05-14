@@ -137,7 +137,16 @@ elseif(KernelArchRiscV)
         string(APPEND _riscv_march "_zicsr_zifencei")
     endif()
 
+    if(KernelRiscvExtY)
+        string(APPEND _riscv_march "_zcherihybrid")
+    endif()
+
     string(APPEND common_flags " -march=${_riscv_march} -mabi=${_riscv_mabi}")
+
+    # Clang/lld don't support linker relaxation yet
+    if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
+        string(APPEND common_flags " -mno-relax")
+    endif()
 
 else()
     message(FATAL_ERROR "unknown KernelArch '${KernelArch}'")
