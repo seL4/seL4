@@ -1,6 +1,8 @@
 --
 -- Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
 -- Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+-- Copyright 2024, Capabilities Limited
+-- CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
 --
 -- SPDX-License-Identifier: GPL-2.0-only
 --
@@ -94,8 +96,12 @@ tagged_union cap capType {
 block VMFault {
     field     address           32
 
+#if defined(CONFIG_HAVE_CHERI)
+    field     FSR               12
+#else
     field     FSR               5
     padding                     7
+#endif
     field     instructionFault  1
     padding                     15
     field     seL4_FaultType    4

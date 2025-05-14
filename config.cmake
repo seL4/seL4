@@ -290,7 +290,7 @@ config_option(
 config_option(
     HaveCheri HAVE_CHERI "Enable CHERI for architectures that support it."
     DEFAULT OFF
-    DEPENDS "NOT KernelVerificationBuild;"
+    DEPENDS "NOT KernelVerificationBuild; KernelArchCheriRiscv"
     DEFAULT_DISABLED OFF
 )
 

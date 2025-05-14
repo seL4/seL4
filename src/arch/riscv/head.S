@@ -2,6 +2,8 @@
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
  * Copyright 2021, HENSOLDT Cyber
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -15,6 +17,10 @@
 .extern kernel_stack_alloc
 .extern __global_pointer$
 .extern restore_user_context
+
+#if defined(CONFIG_HAVE_CHERI)
+.extern RootCheriCap
+#endif
 
 /*
  * When SMP is enabled, the elfloader passes the hart ID in a6
@@ -37,6 +43,13 @@ _start:
   add  sp, sp, t0
   /* put the stack in sscratch */
   csrw sscratch, sp
+#endif
+
+#if defined(CONFIG_HAVE_CHERI)
+    /* Set up the root CHERI capability */
+    csrr ct0, ddc
+    la t1, RootCheriCap
+    sc ct0, 0(t1)
 #endif
 
   /* Call bootstrapping implemented in C with parameters:
