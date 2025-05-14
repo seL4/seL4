@@ -1,5 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2025, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -809,6 +811,15 @@ exception_t decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
 
     case TCBWriteRegisters:
         return decodeWriteRegisters(cap, length, buffer);
+
+#if defined(CONFIG_HAVE_CHERI)
+    case CheriWriteRegister:
+        return decodeCheriWriteRegister(cap, length, buffer);
+    case CheriReadRegister:
+        return decodeCheriReadRegister(cap, length, call, buffer);
+    case CheriWriteMemoryCap:
+        return decodeCheriWriteMemoryCap(length, buffer);
+#endif
 
     case TCBCopyRegisters:
         return decodeCopyRegisters(cap, length, buffer);
@@ -2112,3 +2123,130 @@ word_t setMRs_syscall_error(tcb_t *thread, word_t *receiveIPCBuffer)
         fail("Invalid syscall error");
     }
 }
+
+#if defined(CONFIG_HAVE_CHERI)
+static exception_t invokeCheri_WriteRegister(tcb_t *tcb, register_t tcb_reg_idx, bool_t srcPCC, word_t *buffer)
+{
+    void *__user constructed_cap;
+    word_t cheri_base = getSyscallArg(1, buffer);
+    word_t cheri_addr = getSyscallArg(2, buffer);
+    word_t cheri_size = getSyscallArg(3, buffer);
+    CheriCapMeta_t cheri_meta = {.words[0] = getSyscallArg(4, buffer)};
+
+    /* TCB is valid, try to construct a valid CHERI cap */
+    if (CheriCapMeta_get_V(cheri_meta)) {
+        /* If the user passed a valid VSpace cap, construct a tagged CHERI cap
+         * off the kernel's PCC (almighty CHERI cap).
+         */
+        if (srcPCC) {
+            constructed_cap = CheriArch_get_pcc();
+        } else {
+            /* If the user didn't pass a valid VSpace cap, construct a CHERI cap
+             * off the requested reg_idx. It may or may not be tagged, we don't
+             * care.
+             */
+            constructed_cap = (void *__user) getRegister(tcb, tcb_reg_idx);
+        }
+    } else {
+        /* The user requested to write an untagged CHERI cap, so just set the source
+         * capability to an untagged CHERI cap with the address.
+         */
+        constructed_cap = (void *__user) cheri_addr;
+    }
+
+    constructed_cap = CheriArch_BuildCap(constructed_cap,                  /* src */
+                                         cheri_base,                       /* base */
+                                         cheri_addr,                       /* address */
+                                         cheri_size,                       /* size */
+                                         cheri_meta,                       /* meta */
+                                         1);                               /* user */
+
+    setRegister(tcb, tcb_reg_idx, (rword_t)constructed_cap);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+
+    return EXCEPTION_NONE;
+}
+
+exception_t decodeCheriWriteRegister(cap_t tcb_cap, word_t length, word_t *buffer)
+{
+    cap_t vRootCap;
+
+    if (length < 5 || current_extra_caps.excaprefs[0] == NULL) {
+        current_syscall_error.type = seL4_TruncatedMessage;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+
+    tcb_t *tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(tcb_cap));
+    word_t reg_idx = getSyscallArg(0, buffer);
+    vRootCap   = current_extra_caps.excaprefs[0]->cap;
+    register_t tcb_reg_idx;
+
+    if (tcb == NODE_STATE(ksCurThread)) {
+        userError("SysCheriWriteRegister: Attempted to write our own registers.");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if (reg_idx < n_frameRegisters) {
+        tcb_reg_idx = frameRegisters[reg_idx];
+    } else if (reg_idx < n_frameRegisters + n_gpRegisters) {
+        tcb_reg_idx = gpRegisters[reg_idx - n_frameRegisters];
+    } else if (reg_idx == DDC) {
+        tcb_reg_idx = DDC;
+    } else {
+        userError("SysCheriWriteRegister: Wrong reg_idx number");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    return invokeCheri_WriteRegister(tcb, tcb_reg_idx, isValidVTableRoot(vRootCap), buffer);
+}
+
+static exception_t invokeCheri_ReadRegister(tcb_t *tcb, register_t tcb_reg_idx, bool_t call, word_t *buffer)
+{
+    word_t msgLength = 0;
+    void *__user ret_reg = (void *__user) getRegister(tcb, tcb_reg_idx);
+    CheriCapMeta_t cheri_meta = CheriArch_GetCapMeta(ret_reg);
+
+    if (call) {
+        setMR(NODE_STATE(ksCurThread), buffer, 0, __builtin_cheri_base_get(ret_reg));
+        setMR(NODE_STATE(ksCurThread), buffer, 1, __builtin_cheri_address_get(ret_reg));
+        setMR(NODE_STATE(ksCurThread), buffer, 2, __builtin_cheri_length_get(ret_reg));
+        setMR(NODE_STATE(ksCurThread), buffer, 3, cheri_meta.words[0]);
+        msgLength = 4;
+    }
+
+    setRegister(NODE_STATE(ksCurThread), msgInfoRegister, wordFromMessageInfo(
+                    seL4_MessageInfo_new(0, 0, 0, msgLength)));
+
+    return EXCEPTION_NONE;
+}
+
+exception_t decodeCheriReadRegister(cap_t tcb_cap, word_t length, bool_t call, word_t *buffer)
+{
+    register_t tcb_reg_idx;
+
+    if (length < 1) {
+        current_syscall_error.type = seL4_TruncatedMessage;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    word_t reg_idx = getSyscallArg(0, buffer);
+    tcb_t *tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(tcb_cap));
+
+    if (reg_idx < n_frameRegisters) {
+        tcb_reg_idx = frameRegisters[reg_idx];
+    } else if (reg_idx < n_frameRegisters + n_gpRegisters) {
+        tcb_reg_idx = gpRegisters[reg_idx - n_frameRegisters];
+    } else if (reg_idx == DDC) {
+        tcb_reg_idx = DDC;
+    } else {
+        userError("SysCheriReadRegister: Wrong reg_idx number");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    return invokeCheri_ReadRegister(tcb, tcb_reg_idx, call, buffer);
+}
+#endif

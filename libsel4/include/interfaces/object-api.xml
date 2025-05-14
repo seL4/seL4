@@ -1,6 +1,8 @@
 <?xml version="1.0" ?>
 <!--
      Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+     Copyright (c) 2025, Capabilities Limited
+     CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
 
      SPDX-License-Identifier: BSD-2-Clause
 -->
@@ -139,6 +141,98 @@
                     Or, <texttt text="_service"/> is the current thread's TCB.
                 </description>
             </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+        </method>
+
+        <method id="CheriWriteRegister" name="CheriWriteRegister">
+            <condition><config var="CONFIG_HAVE_CHERI"/></condition>
+            <brief>
+                Write a CPU register"/>
+            </brief>
+            <description>
+                Provides a way to create and write a full CPU architectural register
+            </description>
+            <param dir="in" name="vspace" type="seL4_CPtr"
+                description="The VSpace root associated the CHERI capability is associated with"/>
+            <param dir="in" name="reg_idx" type="seL4_Word"
+                description="The source/destination CPU register to write a CHERI capability to"/>
+            <param dir="in" name="cheri_base" type="seL4_Word"
+                description="The CHERI capability's base."/>
+            <param dir="in" name="cheri_addr" type="seL4_Word"
+                description="The CHERI capability's address."/>
+            <param dir="in" name="cheri_size" type="seL4_Word"
+                description="The CHERI capability's size."/>
+            <param dir="in" name="cheri_meta" type="seL4_Word"
+                description="Per-arch CHERI capability's metadata (e.g., permissions, otype, etc)."/>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+        </method>
+        <method id="CheriWriteMemoryCap" name="CheriWriteMemoryCap">
+            <condition><config var="CONFIG_HAVE_CHERI"/></condition>
+            <brief>
+                Write a CHERI capability to memory"/>
+            </brief>
+            <description>
+                Provides a way to create and write a new full CPU architectural capability in memory
+            </description>
+            <param dir="in" name="vspace" type="seL4_CPtr"
+                description="The VSpace root associated the CHERI capability is associated with"/>
+            <param dir="in" name="page" type="seL4_CPtr"
+                description="A capability to a page in the passed vspace to write the CHERI capability to."/>
+            <param dir="in" name="vaddr" type="seL4_Word"
+                description="The destination's userspace memory address to write the CHERI capability to."/>
+            <param dir="in" name="cheri_base" type="seL4_Word"
+                description="The CHERI capability's base."/>
+            <param dir="in" name="cheri_addr" type="seL4_Word"
+                description="The CHERI capability's address."/>
+            <param dir="in" name="cheri_size" type="seL4_Word"
+                description="The CHERI capability's size."/>
+            <param dir="in" name="cheri_meta" type="seL4_Word"
+                description="Per-arch CHERI capability's metadata (e.g., permissions, otype, etc)."/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="vaddr"/> isn't a valid address that is mapped in the passed
+                    <texttt text="vspace"/> and can be written to.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="vspace"/>  is a CPtr to an invalid root VSpace capability.
+                </description>
+            </error>
+            <error name="seL4_AlignmentError">
+                <description>
+                    The passed <texttt text="vaddr"/> is not an aligned CHERI capability memory word.
+                </description>
+            </error>
+        </method>
+        <method id="CheriReadRegister" name="CheriReadRegister">
+            <condition><config var="CONFIG_HAVE_CHERI"/></condition>
+            <brief>
+                Read a CHERI capability's fields"/>
+            </brief>
+            <description>
+                Provides a way to retrieve a CHERI capability's fields in a register.
+            </description>
+            <param dir="in" name="reg_idx" type="seL4_Word"
+                description="The source CPU register to read a CHERI capability from"/>
+            <param dir="out" name="cheri_base" type="seL4_Word"
+                description="The CHERI capability's base."/>
+            <param dir="out" name="cheri_addr" type="seL4_Word"
+                description="The CHERI capability's address."/>
+            <param dir="out" name="cheri_size" type="seL4_Word"
+                description="The CHERI capability's size."/>
+            <param dir="out" name="cheri_meta" type="seL4_Word"
+                description="Per-arch CHERI capability's metadata (e.g., permissions, otype, etc)."/>
             <error name="seL4_InvalidCapability">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
