@@ -1191,6 +1191,79 @@ exception_t performPageInvocationUnmap(cap_t cap, cte_t *ctSlot)
     return EXCEPTION_NONE;
 }
 
+#if defined(CONFIG_HAVE_CHERI)
+static exception_t CheriArch_WriteCapMem(cap_t vRootCap, word_t vaddr, void *__capability cheri_cap)
+{
+
+    pte_t *vspace_root = PTE_PTR(pptr_of_cap(vRootCap));
+
+    lookupPTSlot_ret_t ret = lookupPTSlot(vspace_root, vaddr);
+    if (pte_ptr_get_valid(ret.ptSlot) && !isPTEPageTable(ret.ptSlot)) {
+        pptr_t pptr = (pptr_t)(getPPtrFromHWPTE(ret.ptSlot));
+        *((void *__capability *)((word_t)pptr + (vaddr & MASK(ret.ptBitsLeft)))) = cheri_cap;
+    } else {
+        userError("SysCheriWriteMemoryCap: can't write memory");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    return EXCEPTION_NONE;
+}
+
+exception_t handle_SysCheriWriteMemoryCap(word_t *ipc_buffer)
+{
+    cap_t vRootCap;
+    void *__capability constructed_cap;
+
+    word_t vaddr = getSyscallArg(0, ipc_buffer);
+    word_t cheri_base = getSyscallArg(1, ipc_buffer);
+    word_t cheri_addr = getSyscallArg(2, ipc_buffer);
+    word_t cheri_size = getSyscallArg(3, ipc_buffer);
+    CheriCapMeta_t cheri_meta = {.words[0] = getSyscallArg(4, ipc_buffer)};
+
+    vRootCap = current_extra_caps.excaprefs[0]->cap;
+
+    /* A valid VSpace cap must be passed in order to construct and write
+     * a valid CHERI capability to a user's VSpace memory.
+     */
+    if (!isValidVTableRoot(vRootCap)) {
+        userError("SysCheriWriteMemoryCap: Invalid VSpace cap");
+        current_syscall_error.type = seL4_InvalidCapability;
+        current_fault = seL4_Fault_CapFault_new(getExtraCPtr(ipc_buffer, 0), false);
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    /* A destination address to write a CHERI capability to must be CLEN-aligned */
+    if (!IS_ALIGNED(vaddr, seL4_WordSizeBits + 1)) {
+        userError("SysCheriWriteMemoryCap: Unaligned vaddr. CHERI caps are only written to CLEN-aligned memory words");
+        current_syscall_error.type = seL4_AlignmentError;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if (CheriCapMeta_get_V(cheri_meta)) {
+        /* Construct a valid CHERI cap off RootCheriCap (almighty cap) */
+        constructed_cap = NULL;
+    } else {
+        /* Construct an untagged CHERI capability */
+        constructed_cap = (void *__capability) cheri_addr;
+    }
+
+    constructed_cap = cheri_sel4_build_cap(constructed_cap,                  /* src */
+                                           cheri_base,                       /* base */
+                                           cheri_addr,                       /* address */
+                                           cheri_size,                       /* size */
+                                           CheriCapMeta_get_AP(cheri_meta),  /* perms */
+                                           CheriCapMeta_get_M(cheri_meta),   /* flags */
+                                           CheriCapMeta_get_CT(cheri_meta),  /* sentry */
+                                           1);                               /* user */
+
+    setRegister(NODE_STATE(ksCurThread), msgInfoRegister, wordFromMessageInfo(
+                    seL4_MessageInfo_new(0, 0, 0, 0)));
+
+    return CheriArch_WriteCapMem(vRootCap, vaddr, constructed_cap);
+}
+#endif
+
 #ifdef CONFIG_PRINTING
 void Arch_userStackTrace(tcb_t *tptr)
 {

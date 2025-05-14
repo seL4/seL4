@@ -5,6 +5,11 @@
  */
 #pragma once
 #include <arch/cheri/cheri.h>
+#include <api/failures.h>
 
 void *__capability cheri_sel4_build_cap(void *__capability src, word_t base, word_t address, word_t size,
                                         word_t perms, word_t flags, int sentry, int user);
+
+exception_t handle_SysCheriWriteRegister(cap_t tcb_cap, word_t *buffer);
+exception_t handle_SysCheriWriteMemoryCap(word_t *buffer);
+exception_t handle_SysCheriReadRegister(cap_t tcb_cap, word_t *buffer);

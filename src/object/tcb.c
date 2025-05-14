@@ -1,5 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2025, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -809,6 +811,15 @@ exception_t decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
 
     case TCBWriteRegisters:
         return decodeWriteRegisters(cap, length, buffer);
+
+#if defined(CONFIG_HAVE_CHERI)
+    case CheriWriteRegister:
+        return handle_SysCheriWriteRegister(cap, buffer);
+    case CheriReadRegister:
+        return handle_SysCheriReadRegister(cap, buffer);
+    case CheriWriteMemoryCap:
+        return handle_SysCheriWriteMemoryCap(buffer);
+#endif
 
     case TCBCopyRegisters:
         return decodeCopyRegisters(cap, length, buffer);
