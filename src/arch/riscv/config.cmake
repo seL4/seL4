@@ -125,4 +125,6 @@ add_sources(
     ASMFILES head.S traps.S
 )
 
+add_sources(DEP "KernelArchCheriRiscv" PREFIX src/arch/riscv CFILES cheri/cheri.c)
+
 add_bf_source_old("KernelArchRiscV" "structures.bf" "include/arch/riscv" "arch/object")
