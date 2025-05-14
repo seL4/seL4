@@ -13,6 +13,10 @@
 #include <arch/kernel/thread.h>
 #include <linker.h>
 
+#if defined(CONFIG_HAVE_CHERI)
+#include <cheri/cheri.h>
+#endif
+
 extern char kernel_stack_alloc[CONFIG_MAX_NUM_NODES][BIT(CONFIG_KERNEL_STACK_BITS)];
 
 void Arch_switchToThread(tcb_t *tcb)
@@ -22,7 +26,17 @@ void Arch_switchToThread(tcb_t *tcb)
 
 BOOT_CODE void Arch_configureIdleThread(tcb_t *tcb)
 {
-    setRegister(tcb, NextIP, (word_t)&idle_thread);
+#if defined(CONFIG_HAVE_CHERI)
+    /* Derive an idle thread's PCC from the kernel's PCC */
+    void *__capability idle_pcc = __builtin_cheri_address_set(CheriArch_get_pcc(), (word_t)idle_thread);
+    idle_pcc = __builtin_cheri_seal_entry(idle_pcc);
+    setRegister(tcb, NextIP, (rword_t)idle_pcc);
+
+    /* The idle thread should not be using any data memory (e.g., stack) */
+    setRegister(tcb, DDC, 0);
+#else
+    setRegister(tcb, NextIP, (rword_t)&idle_thread);
+#endif
 
     /* Enable interrupts and keep working in supervisor mode */
     setRegister(tcb, SSTATUS, (word_t) SSTATUS_SPP | SSTATUS_SPIE);

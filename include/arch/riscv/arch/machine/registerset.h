@@ -1,6 +1,7 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ * Copyright 2024-2026, Capabilities Limited
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -14,6 +15,10 @@
 #include <stdint.h>
 #include <util.h>
 #include <arch/types.h>
+
+#if defined(CONFIG_HAVE_CHERI)
+#include <cheri/cheri.h>
+#endif
 
 enum _register {
 
@@ -67,6 +72,9 @@ enum _register {
     FaultIP = 33, /* SEPC */
     NextIP = 34,
 
+#if defined(CONFIG_HAVE_CHERI)
+    DDC = 35,
+#endif
     /* TODO: add other user-level CSRs if needed (i.e. to avoid channels) */
 
     n_contextRegisters
@@ -109,7 +117,7 @@ typedef struct user_fpu_state {
 #endif
 
 struct user_context {
-    word_t registers[n_contextRegisters];
+    rword_t registers[n_contextRegisters];
 #ifdef CONFIG_HAVE_FPU
     user_fpu_state_t fpuState;
 #endif
@@ -122,7 +130,7 @@ static inline void Arch_initContext(user_context_t *context)
     context->registers[SSTATUS] = SSTATUS_SPIE;
 }
 
-static inline word_t CONST sanitiseRegister(register_t reg, word_t v, bool_t archInfo)
+static inline rword_t CONST sanitiseRegister(register_t reg, rword_t v, bool_t archInfo)
 {
     return v;
 }
@@ -184,5 +192,32 @@ static inline word_t CONST sanitiseRegister(register_t reg, word_t v, bool_t arc
     [seL4_TimeoutReply_TP] = TP, \
 }
 
-#endif /* __ASSEMBLER__ */
+#if defined(CONFIG_HAVE_CHERI)
+/* Instructions */
+#define MOVE  "ymv"
+#define ASM_REG_CONSTR "C"
+#else /* No CHERI */
+/* Instructions */
+#define MOVE  "mv"
+#define ASM_REG_CONSTR "r"
+#endif
 
+#else /* __ASSEMBLER__ */
+
+#if defined(CONFIG_HAVE_CHERI)
+
+/* Instructions */
+#define LOAD  ly
+#define STORE sy
+#define MOVE  ymv
+#define ADDI yaddi
+
+#else /* No CHERI */
+
+/* Instructions */
+#define MOVE  mv
+#define ADDI addi
+
+#endif /* CONFIG_HAVE_CHERI */
+
+#endif /* !__ASSEMBLER__ */

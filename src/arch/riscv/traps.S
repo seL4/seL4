@@ -12,8 +12,7 @@
 #include <arch/machine/registerset.h>
 #include <util.h>
 
-#define REGBYTES (CONFIG_WORD_SIZE / 8)
-
+.global trap_entry
 .extern c_handle_syscall
 .extern c_handle_fastpath_reply_recv
 .extern c_handle_fastpath_call
@@ -22,6 +21,10 @@
 
 .section .text.traps, "ax"
 BEGIN_FUNC(trap_entry)
+#if defined(CONFIG_HAVE_CHERI)
+.option push
+.option capmode
+#endif
 
 #ifdef ENABLE_SMP_SUPPORT
 /* The sscratch contains the stack for the current core */
@@ -73,30 +76,43 @@ BEGIN_FUNC(trap_entry)
   STORE    x1, (4*REGBYTES)(t0)
 
   csrr x1, sstatus
-  STORE x1, (32*REGBYTES)(t0)
+  ISTORE x1, (32*REGBYTES)(t0)
 
   csrr s0, scause
-  STORE s0, (31*REGBYTES)(t0)
-
-.option push
-.option norelax
-  la gp, __global_pointer$
-.option pop
+  ISTORE s0, (31*REGBYTES)(t0)
 
 #ifdef ENABLE_SMP_SUPPORT
   /* save the user sp */
   csrr  x1, sscratch
   STORE x1, (1*REGBYTES)(t0)
   /* restore the sscratch */
-  csrw  sscratch, sp
-#else
-  /* Load kernel's stack address */
-  la sp, (kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS))
+  csrw sscratch, sp
 #endif
 
   /* Save exception PC */
-  csrr x1,  sepc
+  csrr    x1, sepc
   STORE   x1, (33*REGBYTES)(t0)
+
+#if defined(CONFIG_HAVE_CHERI)
+  csrr    x2, ddc
+  STORE   x2, (35*REGBYTES)(t0)
+
+  /* Get and install the kernel's DDC, it's already in ct0 */
+  csrw ddc, ct0
+
+  /* From now on, we can run in hybrid kernel mode again */
+  ymodeswi
+.option pop
+#endif
+
+.option push
+.option norelax
+  la gp, __global_pointer$
+#if !defined(ENABLE_SMP_SUPPORT)
+  /* Load kernel's stack address */
+  la sp, (kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS))
+#endif
+.option pop
 
   /* Check if it's an interrupt */
   bltz s0, interrupt
@@ -107,7 +123,7 @@ BEGIN_FUNC(trap_entry)
 
 handle_syscall:
   /* Set the return address to sepc + 4 in the case of a system/environment call */
-  addi x1, x1, 4
+  ADDI x1, x1, 4
   /* Save NextIP */
   STORE   x1, (34*REGBYTES)(t0)
 

@@ -528,6 +528,35 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
     setRegister(tcb, capRegister, bi_frame_vptr);
     setNextPC(tcb, ui_v_entry);
 
+#if defined(CONFIG_HAVE_CHERI)
+    /* The loader that loads the root task's ELF is responsible of knowing whether
+     * it is a purecap ELF or not. If it's purecap, the loader should read the ELF's
+     * details in order to construct a bounded capability for the root task and pass
+     * it to the kernel. This is usually a code capability to the ELF's entry point
+     * bounded by the ELF segment's size that contails .text section, is sealed, and
+     * does not have ASR permissions. DDC should be invalid for a purecap root task
+     * ELF as well to prevent it from changing to hybrid/integer mode as it will fault
+     * on any integer loads/stores with invalid DDC.
+     *
+     * If the root task is in integer mode (e.g., legacy, hybrid, or even unmodified
+     * binary or Rust code), set DDC to almighty in order to be in compatible mode
+     * running hybrid/legacy code.
+     */
+    if (CheriArch_isIntegerMode((void *__user) ui_v_entry)) {
+        void *__user root_ddc = cheri_sel4_build_cap(
+                                    CheriArch_get_pcc(),   /* src */
+                                    0,                     /* base */
+                                    0,                     /* address */
+                                    UINTPTR_MAX,           /* size */
+                                    ~(__CHERI_CAP_PERMISSION_EXECUTE__), /* perms */
+                                    CHERI_INT_MODE,        /* flags */
+                                    0,                     /* sentry */
+                                    1);                    /* user */
+
+        setRegister(tcb, DDC, (rword_t)root_ddc);
+    }
+#endif
+
     /* initialise TCB */
 #ifdef CONFIG_KERNEL_MCS
     configure_sched_context(tcb, SC_PTR(rootserver.sc), usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_IN_MS));
