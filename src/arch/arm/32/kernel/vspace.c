@@ -40,8 +40,8 @@
 
 /* helper stuff to avoid fencepost errors when
  * getting the last byte of a PTE or PDE */
-#define LAST_BYTE_PTE(PTE,LENGTH) ((word_t)&(PTE)[(LENGTH)-1] + (BIT(PTE_SIZE_BITS)-1))
-#define LAST_BYTE_PDE(PDE,LENGTH) ((word_t)&(PDE)[(LENGTH)-1] + (BIT(PDE_SIZE_BITS)-1))
+#define LAST_BYTE_PTE(PTE,LENGTH) ((word_t)&(PTE)[(LENGTH)-1] + MASK(PTE_SIZE_BITS))
+#define LAST_BYTE_PDE(PDE,LENGTH) ((word_t)&(PDE)[(LENGTH)-1] + MASK(PDE_SIZE_BITS))
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 /* Stage 2 */
@@ -277,7 +277,7 @@ BOOT_CODE void map_kernel_window(void)
         );
 
     /* now start initialising the page table */
-    memzero(armKSGlobalPT, 1 << seL4_PageTableBits);
+    memzero(armKSGlobalPT, BIT(seL4_PageTableBits));
 
     /* map vector table */
     map_kernel_frame(
@@ -320,7 +320,7 @@ BOOT_CODE void map_kernel_window(void)
     /* mapping of PPTR_BASE (virtual address) to kernel's physBase  */
     /* up to end of virtual address space minus 2M using 2M frames */
     phys = physBase();
-    for (; idx < BIT(PT_INDEX_BITS) - 1; idx++) {
+    for (; idx < MASK(PT_INDEX_BITS); idx++) {
         pde = pdeS1_pdeS1_section_new(
                   0, /* Executable */
                   0, /* Executable in PL1 */
@@ -341,7 +341,7 @@ BOOT_CODE void map_kernel_window(void)
     armHSGlobalPD[idx] = pde;
 
     /* now start initialising the page table */
-    memzero(armHSGlobalPT, 1 << seL4_PageTableBits);
+    memzero(armHSGlobalPT, BIT(seL4_PageTableBits));
     for (idx = 0; idx < 256; idx++) {
         pteS1_t pte;
         pte = pteS1_pteS1_small_new(
@@ -497,7 +497,7 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
 
     /* create PD cap */
     copyGlobalMappings(PDE_PTR(rootserver.vspace));
-    cleanCacheRange_PoU(rootserver.vspace, rootserver.vspace + (1 << seL4_PageDirBits) - 1,
+    cleanCacheRange_PoU(rootserver.vspace, rootserver.vspace + MASK(seL4_PageDirBits),
                         addrFromPPtr((void *)rootserver.vspace));
     cap_t pd_cap =
         cap_page_directory_cap_new(
@@ -1984,7 +1984,7 @@ static exception_t performASIDControlInvocation(void *frame, cte_t *slot,
     cap_untyped_cap_ptr_set_capFreeIndex(&(parent->cap),
                                          MAX_FREE_INDEX(cap_untyped_cap_get_capBlockSize(parent->cap)));
 
-    memzero(frame, 1 << ARMSmallPageBits);
+    memzero(frame, BIT(ARMSmallPageBits));
     /** AUXUPD: "(True, ptr_retyps 1 (Ptr (ptr_val \<acute>frame) :: asid_pool_C ptr))" */
 
     cteInsert(cap_asid_pool_cap_new(asid_base, WORD_REF(frame)),
@@ -2288,7 +2288,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
                 return EXCEPTION_SYSCALL_ERROR;
             }
         } else {
-            vtop = vaddr + BIT(pageBitsForSize(frameSize)) - 1;
+            vtop = vaddr + MASK(pageBitsForSize(frameSize));
 
             if (unlikely(vtop >= USER_TOP)) {
                 userError("ARMPageMap: Cannot map frame over kernel window. vaddr: 0x%08lx, USER_TOP: 0x%08x", vaddr, USER_TOP);
@@ -2452,7 +2452,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
 
 
         /* start and end are currently relative inside this page */
-        page_size = 1 << pageBitsForSize(generic_frame_cap_get_capFSize(cap));
+        page_size = BIT(pageBitsForSize(generic_frame_cap_get_capFSize(cap)));
         page_base = addrFromPPtr((void *)generic_frame_cap_get_capFBasePtr(cap));
 
         if (start >= page_size || end > page_size) {
@@ -2647,9 +2647,9 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
 
         /* Find first free ASID */
         asid = cap_asid_pool_cap_get_capASIDBase(cap);
-        for (i = 0; i < (1 << asidLowBits) && (asid + i == 0 || pool->array[i]); i++);
+        for (i = 0; i < BIT(asidLowBits) && (asid + i == 0 || pool->array[i]); i++);
 
-        if (unlikely(i == 1 << asidLowBits)) {
+        if (unlikely(i == BIT(asidLowBits))) {
             userError("ASIDPoolAssign: No free ASID.");
             current_syscall_error.type = seL4_DeleteFirst;
 
