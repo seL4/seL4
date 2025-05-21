@@ -165,7 +165,7 @@ void Arch_switchToIdleThread(void);
 void Arch_configureIdleThread(tcb_t *tcb);
 void Arch_activateIdleThread(tcb_t *tcb);
 
-void idle_thread(void);
+void NORETURN idle_thread(void);
 
 void configureIdleThread(tcb_t *tcb);
 void activateThread(void);
@@ -316,4 +316,3 @@ static inline void setThreadStateBlockedOnReply(tcb_t *tptr, reply_t *reply)
     scheduleTCB(tptr);
 }
 #endif
-
