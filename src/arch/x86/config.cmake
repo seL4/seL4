@@ -419,7 +419,7 @@ add_sources(
            machine/registerset.c
            benchmark/benchmark.c
            smp/ipi.c
-    ASMFILES multiboot.S
+    ASMFILES multiboot.S idle.S
 )
 
 add_bf_source_old("KernelArchX86" "structures.bf" "include/arch/x86" "arch/object")

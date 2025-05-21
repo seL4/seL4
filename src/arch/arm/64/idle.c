@@ -8,13 +8,6 @@
 #include <mode/machine.h>
 #include <api/debug.h>
 
-void idle_thread(void)
-{
-    while (1) {
-        wfi();
-    }
-}
-
 /** DONT_TRANSLATE */
 void NORETURN NO_INLINE VISIBLE halt(void)
 {
