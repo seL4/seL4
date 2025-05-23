@@ -296,7 +296,7 @@ struct tcb {
     /* Previous and next pointers for scheduler queues , 2 words */
     struct tcb *tcbSchedNext;
     struct tcb *tcbSchedPrev;
-    /* Preivous and next pointers for endpoint and notification queues, 2 words */
+    /* Previous and next pointers for endpoint and notification queues, 2 words */
     struct tcb *tcbEPNext;
     struct tcb *tcbEPPrev;
 

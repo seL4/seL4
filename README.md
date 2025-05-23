@@ -33,8 +33,8 @@ This repository is usually not used in isolation, but as part of the build
 system in a larger project.
 
   [1]: http://sel4.systems/
-  [2]: https://docs.sel4.systems/projects/sel4/frequently-asked-questions
-  [3]: https://docs.sel4.systems/processes/contributing.html
+  [2]: https://sel4.systems/About/FAQ.html
+  [3]: https://sel4.systems/Contribute/
   [4]: https://zenodo.org/badge/DOI/10.5281/zenodo.591727.svg
   [5]: https://sel4.systems/Info/Docs/seL4-manual-latest.pdf
   [6]: https://docs.sel4.systems/Resources#setting-up-your-machine
@@ -45,7 +45,7 @@ seL4 Basics
 ---------------
 
 - [Tutorials](https://docs.sel4.systems/Tutorials)
-- [Documentation](https://docs.sel4.systems/projects/sel4/documentation)
+- [Documentation](https://sel4.systems/Learn/)
 - [seL4 libraries](https://docs.sel4.systems/projects/user_libs)
 - [seL4Test](https://docs.sel4.systems/projects/sel4test/)
 - [Debugging guide](https://docs.sel4.systems/projects/sel4-tutorials/debugging-guide)
@@ -61,12 +61,10 @@ Community
   - [Discourse](https://sel4.discourse.group/)
   - [seL4 Announce](https://lists.sel4.systems/postorius/lists/announce.sel4.systems)
   - [seL4 Devel](https://lists.sel4.systems/postorius/lists/devel.sel4.systems)
-- [Suggested projects](https://docs.sel4.systems/SuggestedProjects)
-- [Community projects](https://docs.sel4.systems/CommunityProjects)
 
-See the [contact] links on the seL4 website for the full list.
+See also the [contact] links on the seL4 website.
 
-[contact]: https://sel4.systems/contact
+[contact]: https://sel4.systems/contact.html
 
 Reporting security vulnerabilities
 ----------------------------------
@@ -101,7 +99,7 @@ Status
 
 A list of releases and current project status can be found under [seL4 releases][7].
 
-- [Roadmap](https://docs.sel4.systems/projects/roadmap): new features in development
+- [Roadmap](https://sel4.systems/roadmap.html): new features in development
 - [Hardware Support](https://docs.sel4.systems/Hardware): information about hardware platform ports
 - [Kernel Features](https://docs.sel4.systems/projects/sel4/status): information about available
   kernel features

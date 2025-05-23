@@ -46,7 +46,7 @@
 #define ID_AA64PFR0_EL1_ASIMD   20     // HWCap for Advanced SIMD
 
 /* CPACR_EL1 register */
-#define CPACR_EL1_FPEN          20     // FP regiters access
+#define CPACR_EL1_FPEN          20     // FP registers access
 
 /*
  * We cannot allow async aborts in the verified kernel, but they are useful

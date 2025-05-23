@@ -706,7 +706,7 @@ BOOT_CODE static bool_t provide_untyped_cap(
 /**
  * Create untyped caps for a region of kernel-virtual memory.
  *
- * Takes care of alignement, size and potentially wrapping memory regions. It is fine to provide a
+ * Takes care of alignment, size and potentially wrapping memory regions. It is fine to provide a
  * region with end < start if the memory is device memory.
  *
  * If the region start is not aligned to seL4_MinUntypedBits, the part up to the next aligned
@@ -834,7 +834,7 @@ BOOT_CODE void bi_finalise(void)
 {
 
     if (rootserver.paging.start != rootserver.paging.end) {
-        printf("WARNING: internal book keeping errror. Less pagetables allocated than predicted: "
+        printf("WARNING: internal book keeping error. Less pagetables allocated than predicted: "
                "%ld page tables allocated but not used.\n", (rootserver.paging.end - rootserver.paging.start) >> seL4_PageTableBits);
     }
 

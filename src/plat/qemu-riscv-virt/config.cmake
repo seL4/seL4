@@ -44,7 +44,7 @@ if(KernelPlatformQEMURiscVVirt)
                 string(
                     REGEX
                         MATCH
-                        "[0-9](\\.[0-9])+"
+                        "[0-9]+(\\.[0-9]+)+"
                         QEMU_VERSION
                         "${QEMU_STDOUT_MESSAGE}"
                 )

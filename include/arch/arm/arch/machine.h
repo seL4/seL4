@@ -63,7 +63,7 @@ static inline void arch_pause(void)
 }
 #endif /* ENABLE_SMP_SUPPORT */
 
-/* Update the value of the actual regsiter to hold the expected value */
+/* Update the value of the actual register to hold the expected value */
 static inline exception_t Arch_setTLSRegister(word_t tls_base)
 {
     /* This register is saved and restored on kernel exit and entry so
