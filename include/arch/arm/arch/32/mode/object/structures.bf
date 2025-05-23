@@ -184,6 +184,7 @@ tagged_union cap capType {
 ---- Arm specific fault types
 
 block VMFault {
+    padding       32
     field address 32
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     field FSR 26
@@ -199,20 +200,21 @@ block VMFault {
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 block VGICMaintenance {
-    field idx        6
-    field idxValid   1
-    padding         25
+    field eisr1     32
+    field eisr0     32
     padding         28
     field seL4_FaultType  4
 }
 
 block VCPUFault {
+    padding         32
     field hsr       32
     padding         28
     field seL4_FaultType  4
 }
 
 block VPPIEvent {
+    padding         32
     field irq_w     10
     padding         50
     field seL4_FaultType  4
