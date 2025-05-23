@@ -8,13 +8,6 @@
 #include <config.h>
 #include <arch/sbi.h>
 
-void idle_thread(void)
-{
-    while (1) {
-        asm volatile("wfi");
-    }
-}
-
 /** DONT_TRANSLATE */
 void VISIBLE NO_INLINE halt(void)
 {
