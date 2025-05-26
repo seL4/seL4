@@ -11,6 +11,9 @@
 #include <machine/interrupt.h>
 #include <armv/machine.h>
 
+/* No SGIs on this platform. */
+#define NUM_SGIS 0
+
 enum irqNumbers {
     irqInvalid = 255
 };
@@ -118,3 +121,8 @@ static inline void handleSpuriousIRQ(void)
     dsb();
 }
 
+static inline void plat_sendSGI(word_t irq, word_t target)
+{
+    /* Unreachable; not supported on this platform. */
+    halt();
+}

@@ -15,6 +15,9 @@
 exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
                                             cte_t *srcSlot, word_t *buffer);
 
+exception_t decodeSGISignalInvocation(word_t invLabel, word_t length,
+                                      cap_t cap, word_t *buffer);
+
 /* Handle a platform-reserved IRQ. */
 static inline void handleReservedIRQ(irq_t irq)
 {
