@@ -24,6 +24,10 @@ uint16_t in16(uint16_t port);
 uint32_t in32(uint16_t port);
 
 #if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
+#if defined(CONFIG_VGA_PRINTING)
+void set_vga_addr(uint64_t addr);
+uint64_t get_vga_addr(void);
+#endif /* CONFIG_VGA_PRINTING */
 void serial_init(uint16_t port);
 #endif
 
