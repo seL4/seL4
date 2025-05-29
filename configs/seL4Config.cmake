@@ -199,9 +199,17 @@ foreach(file ${result})
     include("${file}")
 endforeach()
 
+config_choice(KernelPlatform PLAT "Select the platform" ${kernel_platforms})
+
 # Verify that, as a minimum any variables that are used
 # to find other build files are actually defined at this
-# point. This means at least: KernelArch KernelWordSize
+# point. This means at least: KernelPlatform KernelArch KernelWordSize
+
+if("${KernelPlatform}" STREQUAL "")
+    message(FATAL_ERROR "Variable 'KernelPlatform' is not set - is PLATFORM '${PLATFORM}' correct? \
+Valid platforms are '${KernelPlatform_all_strings}'"
+    )
+endif()
 
 if("${KernelArch}" STREQUAL "")
     message(FATAL_ERROR "Variable 'KernelArch' is not set.")
@@ -210,8 +218,6 @@ endif()
 if("${KernelWordSize}" STREQUAL "")
     message(FATAL_ERROR "Variable 'KernelWordSize' is not set.")
 endif()
-
-config_choice(KernelPlatform PLAT "Select the platform" ${kernel_platforms})
 
 # Now enshrine all the common variables in the config
 config_set(KernelArmCortexA7 ARM_CORTEX_A7 "${KernelArmCortexA7}")
