@@ -127,6 +127,12 @@ typedef seL4_Uint64 seL4_Word;
 
 typedef seL4_Word seL4_CPtr;
 
+#if __has_feature(capabilities)
+typedef __uintcap_t seL4_Register;
+#else
+typedef seL4_Word seL4_Register;
+#endif
+
 /* sanity check that the seL4_Word matches the definitions of the constants */
 #include <sel4/sel4_arch/constants.h>
 

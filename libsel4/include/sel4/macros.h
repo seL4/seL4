@@ -16,6 +16,14 @@
 #define PURE    __attribute__((__pure__))
 #endif
 
+#ifndef __has_feature
+#define __has_feature(x) 0
+#endif
+
+#if !__has_feature(capabilities)
+#define __capability
+#endif
+
 #define SEL4_PACKED             __attribute__((packed))
 #define SEL4_DEPRECATED(x)      __attribute__((deprecated(x)))
 #define SEL4_DEPRECATE_MACRO(x) _Pragma("deprecated") x

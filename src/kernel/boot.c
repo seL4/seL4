@@ -1,5 +1,7 @@
 /*
  * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -359,7 +361,7 @@ BOOT_CODE void populate_bi_frame(node_id_t node_id, word_t num_nodes,
     bi->nodeID = node_id;
     bi->numNodes = num_nodes;
     bi->numIOPTLevels = 0;
-    bi->ipcBuffer = (seL4_IPCBuffer *)ipcbuf_vptr;
+    bi->ipcBuffer = (seL4_IPCBuffer * __capability)ipcbuf_vptr;
     bi->initThreadCNodeSizeBits = CONFIG_ROOT_CNODE_SIZE_BITS;
     bi->initThreadDomain = ksDomSchedule[ksDomScheduleIdx].domain;
     bi->extraLen = extra_bi_size;
@@ -527,6 +529,25 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
 
     setRegister(tcb, capRegister, bi_frame_vptr);
     setNextPC(tcb, ui_v_entry);
+
+#if defined(CONFIG_HAVE_CHERI)
+    /* If the root task is in integer mode, set DDC to almighty in order
+     * to be in compatible mode running hybrid/legacy code.
+     */
+    if (CheriArch_isIntegerMode((void *__capability) ui_v_entry)) {
+        void *__capability root_ddc = cheri_sel4_build_cap(
+                                          NULL,                  /* src */
+                                          0,                     /* base */
+                                          0,                     /* address */
+                                          UINTPTR_MAX,           /* size */
+                                          -1,                    /* perms */
+                                          CHERI_INT_MODE,        /* flags */
+                                          0,                     /* sentry */
+                                          1);                    /* user */
+
+        setRegister(tcb, DDC, (rword_t)root_ddc);
+    }
+#endif
 
     /* initialise TCB */
 #ifdef CONFIG_KERNEL_MCS
@@ -835,7 +856,8 @@ BOOT_CODE void bi_finalise(void)
 
     if (rootserver.paging.start != rootserver.paging.end) {
         printf("WARNING: internal book keeping error. Less pagetables allocated than predicted: "
-               "%ld page tables allocated but not used.\n", (rootserver.paging.end - rootserver.paging.start) >> seL4_PageTableBits);
+               "%ld page tables allocated but not used.\n",
+               (word_t)(rootserver.paging.end - rootserver.paging.start) >> seL4_PageTableBits);
     }
 
     ndks_boot.bi_frame->empty = (seL4_SlotRegion) {

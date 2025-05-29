@@ -49,7 +49,7 @@ void activateThread(void)
         break;
 
     case ThreadState_Restart: {
-        word_t pc;
+        rword_t pc;
 
         pc = getRestartPC(NODE_STATE(ksCurThread));
         setNextPC(NODE_STATE(ksCurThread), pc);

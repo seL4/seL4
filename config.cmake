@@ -1,5 +1,7 @@
 #
 # Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+# Copyright 2024, Capabilities Limited
+# CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
 #
 # SPDX-License-Identifier: GPL-2.0-only
 #
@@ -282,6 +284,13 @@ config_option(
     "Allows the kernel to write the userError to the IPC buffer"
     DEFAULT OFF
     DEPENDS "KernelPrinting"
+    DEFAULT_DISABLED OFF
+)
+
+config_option(
+    HaveCheri HAVE_CHERI "Enable CHERI for architectures that support it."
+    DEFAULT OFF
+    DEPENDS "NOT KernelVerificationBuild; KernelArchCheriRiscv"
     DEFAULT_DISABLED OFF
 )
 
