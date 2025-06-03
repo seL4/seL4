@@ -794,6 +794,7 @@ static exception_t decodeSetTLSBase(cap_t cap, word_t length, word_t *buffer)
 
 static void invokeSetFlags(tcb_t *thread, word_t clear, word_t set, bool_t call)
 {
+    tcb_t *cur_thread = NODE_STATE(ksCurThread);
     word_t flags = thread->tcbFlags;
 
     flags &= ~clear;
@@ -807,13 +808,13 @@ static void invokeSetFlags(tcb_t *thread, word_t clear, word_t set, bool_t call)
     }
 #endif
     if (call) {
-        word_t *ipcBuffer = lookupIPCBuffer(true, thread);
-        setRegister(thread, badgeRegister, 0);
-        unsigned int length = setMR(thread, ipcBuffer, 0, flags);
-        setRegister(thread, msgInfoRegister, wordFromMessageInfo(
+        word_t *ipcBuffer = lookupIPCBuffer(true, cur_thread);
+        setRegister(cur_thread, badgeRegister, 0);
+        unsigned int length = setMR(cur_thread, ipcBuffer, 0, flags);
+        setRegister(cur_thread, msgInfoRegister, wordFromMessageInfo(
                         seL4_MessageInfo_new(0, 0, 0, length)));
     }
-    setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
+    setThreadState(cur_thread, ThreadState_Running);
 }
 
 static exception_t decodeSetFlags(cap_t cap, word_t length, bool_t call, word_t *buffer)
