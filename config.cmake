@@ -112,7 +112,8 @@ config_set(KernelPaddrUserTop PADDR_USER_DEVICE_TOP "${KernelPaddrUserTop}")
 config_string(
     KernelRootCNodeSizeBits ROOT_CNODE_SIZE_BITS "Root CNode Size (2^n slots) \
     The acceptable range is 8-27 and 7-26, for 32-bit and 64-bit respectively. \
-    The root CNode needs at least enough space to contain up to BI_CAP_DYN_START."
+    The root CNode needs at least enough space to contain seL4_NumInitialCaps \
+    plus enough room for all the Untyped Caps."
     DEFAULT 12
     UNQUOTE
 )
