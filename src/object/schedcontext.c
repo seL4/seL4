@@ -251,7 +251,7 @@ static exception_t decodeSchedContext_YieldTo(sched_context_t *sc, bool_t call)
 
     if (tcb->tcbPriority > NODE_STATE(ksCurThread)->tcbMCP) {
         userError("SchedContext_YieldTo: insufficient mcp (%lu) to yield to a thread with prio (%lu)",
-                  (unsigned long) NODE_STATE(ksCurThread)->tcbMCP, (unsigned long) tcb->tcbPriority);
+                  NODE_STATE(ksCurThread)->tcbMCP, tcb->tcbPriority);
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
