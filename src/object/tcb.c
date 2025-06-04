@@ -1255,7 +1255,8 @@ exception_t decodeSetMCPriority(cap_t cap, word_t length, word_t *buffer)
 exception_t decodeSetTimeoutEndpoint(cap_t cap, cte_t *slot)
 {
     if (current_extra_caps.excaprefs[0] == NULL) {
-        userError("TCB SetSchedParams: Truncated message.");
+        userError("TCB SetTimeoutEndpoint: Truncated message.");
+        current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
