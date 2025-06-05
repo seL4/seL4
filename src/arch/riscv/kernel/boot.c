@@ -27,7 +27,7 @@
  * spinning until the primary core has initialized all kernel structures and
  * then set it to 1.
  */
-BOOT_BSS static volatile _Atomic word_t node_boot_lock;
+BOOT_BSS static word_t node_boot_lock;
 #endif
 
 BOOT_BSS static region_t res_reg[NUM_RESERVED_REGIONS];
@@ -153,15 +153,13 @@ BOOT_CODE static void init_plat(void)
 #ifdef ENABLE_SMP_SUPPORT
 BOOT_CODE static bool_t try_init_kernel_secondary_core(word_t hart_id, word_t core_id)
 {
-    while (!node_boot_lock);
-
-    fence_r_rw();
+    while (!__atomic_load_n(&node_boot_lock, __ATOMIC_ACQUIRE));
 
     init_cpu();
     NODE_LOCK_SYS;
 
     clock_sync_test();
-    ksNumCPUs++;
+    __atomic_fetch_add(&ksNumCPUs, 1, __ATOMIC_RELEASE);
     init_core_state(SchedulerAction_ResumeCurrentThread);
     ifence_local();
     return true;
@@ -169,21 +167,25 @@ BOOT_CODE static bool_t try_init_kernel_secondary_core(word_t hart_id, word_t co
 
 BOOT_CODE static void release_secondary_cores(void)
 {
-    assert(0 == node_boot_lock); /* Sanity check for a proper lock state. */
-    node_boot_lock = 1;
+    word_t locked = __atomic_exchange_n(&node_boot_lock, 1, __ATOMIC_RELEASE);
+    /* Sanity check for a proper lock state. */
+    assert(!locked);
     /* At this point in time the primary core (executing this code) already uses
      * the seL4 MMU/cache setup. However, the secondary cores are still using
      * the elfloader's MMU/cache setup, and thus the update of node_boot_lock
      * may not be visible there if the setups differ. Currently, the mappings
-     * match, so a barrier is all that is needed.
+     * match, and a atomic store-release is used to synchronize with secondary
+     * CPUs' load-acquire to publish all preceding memory writes.
      */
-    fence_rw_rw();
 
-    while (ksNumCPUs != CONFIG_MAX_NUM_NODES) {
+    /* The load-acquire on ksNumCPUs is paired with secondary cores' store-relese
+     * to ensure they've all finished initialization, and we (BSP) observes all
+     * side-effects.
+     */
+    while (__atomic_load_n(&ksNumCPUs, 0, __ATOMIC_ACQUIRE) != CONFIG_MAX_NUM_NODES) {
 #ifdef ENABLE_SMP_CLOCK_SYNC_TEST_ON_BOOT
-        NODE_STATE(ksCurTime) = getCurrentTime();
+        __atomic_store_n(&NODE_STATE(ksCurTime), getCurrentTime(), __ATOMIC_RELAXED);
 #endif
-        __atomic_thread_fence(__ATOMIC_ACQ_REL);
     }
 }
 #endif /* ENABLE_SMP_SUPPORT */

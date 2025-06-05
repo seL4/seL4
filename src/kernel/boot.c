@@ -575,11 +575,14 @@ BOOT_CODE void clock_sync_test(void)
     ticks_t margin = usToTicks(CLOCK_SYNC_DELTA) + getTimerPrecision();
 
     assert(getCurrentCPUIndex() != 0);
-    t = NODE_STATE_ON_CORE(ksCurTime, 0);
+    /* Use relaxed load, as we are not synchronizing or message-passing through
+     * ksCurTime, and there's coherence order guarantee on same atomic variable.
+     * Therefore, we'll observe a monotonically increasing of NODE 0's ksCurTime.
+     * (Not going back)
+     */
+    t = __atomic_load_n(&NODE_STATE_ON_CORE(ksCurTime, 0), __ATOMIC_RELAXED);
     do {
-        /* perform a memory acquire to get new values of ksCurTime */
-        __atomic_thread_fence(__ATOMIC_ACQUIRE);
-        t0 = NODE_STATE_ON_CORE(ksCurTime, 0);
+        t0 = __atomic_load_n(&NODE_STATE_ON_CORE(ksCurTime, 0), __ATOMIC_RELAXED);
     } while (t0 == t);
     t = getCurrentTime();
     printf("clock_sync_test[%d]: t0 = %"PRIu64", t = %"PRIu64", td = %"PRIi64"\n",

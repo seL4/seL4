@@ -67,8 +67,7 @@ BOOT_CODE void start_boot_aps(void)
         /* wait for current AP to boot up */
         while (smp_aps_index == current_ap_index) {
 #ifdef ENABLE_SMP_CLOCK_SYNC_TEST_ON_BOOT
-            NODE_STATE(ksCurTime) = getCurrentTime();
-            __atomic_thread_fence(__ATOMIC_ACQ_REL);
+            __atomic_store_n(NODE_STATE(ksCurTime), getCurrentTime(), __ATOMIC_RELAXED);
 #endif
         }
     }
