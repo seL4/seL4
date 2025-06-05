@@ -6,11 +6,6 @@
 
 #pragma once
 
-static inline void wfi(void)
-{
-    asm volatile("wfi" ::: "memory");
-}
-
 static inline void dsb(void)
 {
     asm volatile("dsb sy" ::: "memory");
@@ -42,4 +37,3 @@ static inline void isb(void)
 #define SYSTEM_READ_WORD(reg, v)  MRS(reg, v)
 #define SYSTEM_WRITE_64(reg, v)   MSR(reg, v)
 #define SYSTEM_READ_64(reg, v)    MRS(reg, v)
-
