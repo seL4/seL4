@@ -189,6 +189,7 @@ void schedule(void);
 void chooseThread(void);
 void switchToThread(tcb_t *thread);
 void switchToIdleThread(void);
+void prepareSetDomain(tcb_t *tptr, dom_t dom);
 void setDomain(tcb_t *tptr, dom_t dom);
 void setPriority(tcb_t *tptr, prio_t prio);
 void setMCPriority(tcb_t *tptr, prio_t mcp);
