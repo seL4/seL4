@@ -34,7 +34,7 @@
  * spinning until the primary core has initialized all kernel structures and
  * then set it to 1.
  */
-BOOT_BSS static volatile _Atomic int node_boot_lock;
+BOOT_BSS static int node_boot_lock;
 #endif /* ENABLE_SMP_SUPPORT */
 
 BOOT_BSS static region_t reserved[NUM_RESERVED_REGIONS];
@@ -269,7 +269,7 @@ BOOT_CODE static void init_plat(void)
 BOOT_CODE static bool_t try_init_kernel_secondary_core(void)
 {
     /* need to first wait until some kernel init has been done */
-    while (!node_boot_lock);
+    while (!__atomic_load_n(&node_boot_lock, __ATOMIC_SEQ_CST));
 
     /* Perform cpu init */
     init_cpu();
@@ -288,7 +288,7 @@ BOOT_CODE static bool_t try_init_kernel_secondary_core(void)
     NODE_LOCK_SYS;
 
     clock_sync_test();
-    ksNumCPUs++;
+    __atomic_fetch_add(&ksNumCPUs, 1, __ATOMIC_RELEASE);
 
     init_core_state(SchedulerAction_ResumeCurrentThread);
 
@@ -298,8 +298,8 @@ BOOT_CODE static bool_t try_init_kernel_secondary_core(void)
 BOOT_CODE static void release_secondary_cpus(void)
 {
     /* release the cpus at the same time */
-    assert(0 == node_boot_lock); /* Sanity check for a proper lock state. */
-    node_boot_lock = 1;
+    int locked = __atomic_exchange_n(&node_boot_lock, 1, __ATOMIC_SEQ_CST);
+    assert(!locked); /* Sanity check for a proper lock state. */
 
     /*
      * At this point in time the primary core (executing this code) already uses
@@ -318,12 +318,16 @@ BOOT_CODE static void release_secondary_cpus(void)
     plat_cleanInvalidateL2Cache();
 #endif
 
-    /* Wait until all the secondary cores are done initialising */
-    while (ksNumCPUs != CONFIG_MAX_NUM_NODES) {
+    /* Wait until all the secondary cores are done initialising
+     * The load-acquire on ksNumCPUs is paired with secondary cores' store-relese
+     * to ensure they've all finished initialization, and we (BSP) observes all
+     * side-effects from AP.
+     */
+    while (__atomic_load_n(&ksNumCPUs, __ATOMIC_ACQUIRE) != CONFIG_MAX_NUM_NODES) {
 #ifdef ENABLE_SMP_CLOCK_SYNC_TEST_ON_BOOT
-        NODE_STATE(ksCurTime) = getCurrentTime();
+        __atomic_store_n(NODE_STATE(ksCurTime), getCurrentTime(), __ATOMIC_RELAXED);
 #endif
-        /* perform a memory acquire to get new values of ksNumCPUs, release for ksCurTime */
+        /* XXX Do we still need this? */
         __atomic_thread_fence(__ATOMIC_ACQ_REL);
     }
 }
