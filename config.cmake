@@ -285,6 +285,13 @@ config_option(
     DEFAULT_DISABLED OFF
 )
 
+config_option(
+    HaveCheri HAVE_CHERI "Enable CHERI for architectures that support it."
+    DEFAULT OFF
+    DEPENDS "NOT KernelVerificationBuild; KernelArchCheriRiscv"
+    DEFAULT_DISABLED OFF
+)
+
 config_choice(
     KernelBenchmarks
     KERNEL_BENCHMARK
