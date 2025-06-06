@@ -29,7 +29,8 @@ block frame_cap {
     field_high capFMappedAddress     48
     field capFVMRights               2
     field capFIsDevice               1
-    padding                          6
+    padding                          5
+    field capIsDirty                 1
 }
 
 -- Page table caps

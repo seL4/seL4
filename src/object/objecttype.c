@@ -33,24 +33,24 @@
 word_t getObjectSize(word_t t, word_t userObjSize)
 {
     if (t >= seL4_NonArchObjectTypeCount) {
-        return Arch_getObjectSize(t);
+        return BIT(Arch_getObjectSize(t));
     } else {
         switch (t) {
         case seL4_TCBObject:
-            return seL4_TCBBits;
+            return BIT(seL4_TCBBits);
         case seL4_EndpointObject:
-            return seL4_EndpointBits;
+            return BIT(seL4_EndpointBits);
         case seL4_NotificationObject:
-            return seL4_NotificationBits;
+            return BIT(seL4_NotificationBits);
         case seL4_CapTableObject:
-            return seL4_SlotBits + userObjSize;
+            return BIT(seL4_SlotBits + userObjSize);
         case seL4_UntypedObject:
             return userObjSize;
 #ifdef CONFIG_KERNEL_MCS
         case seL4_SchedContextObject:
-            return userObjSize;
+            return BIT(userObjSize);
         case seL4_ReplyObject:
-            return seL4_ReplyBits;
+            return BIT(seL4_ReplyBits);
 #endif
         default:
             fail("Invalid object type");
@@ -78,14 +78,15 @@ deriveCap_ret_t deriveCap(cte_t *slot, cap_t cap)
         ret.cap = cap_null_cap_new();
         break;
 
-    case cap_untyped_cap:
-        ret.status = ensureNoChildren(slot);
-        if (ret.status != EXCEPTION_NONE) {
+    case cap_cnode_cap:
+        if (CNodeBusyZeroing(slot)) {
             ret.cap = cap_null_cap_new();
+            ret.status = EXCEPTION_PREEMPTED;
         } else {
             ret.cap = cap;
+            ret.status = EXCEPTION_NONE;
         }
-        break;
+        return ret;
 
 #ifndef CONFIG_KERNEL_MCS
     case cap_reply_cap:
@@ -285,8 +286,8 @@ bool_t CONST sameRegionAs(cap_t cap_a, cap_t cap_b)
             aBase = (word_t)WORD_PTR(cap_untyped_cap_get_capPtr(cap_a));
             bBase = (word_t)cap_get_capPtr(cap_b);
 
-            aTop = aBase + MASK(cap_untyped_cap_get_capBlockSize(cap_a));
-            bTop = bBase + MASK(cap_get_capSizeBits(cap_b));
+            aTop = aBase + cap_untyped_cap_get_capSize(cap_a) - 1;
+            bTop = bBase + cap_get_capSize(cap_b) - 1;
 
             return (aBase <= bBase) && (bTop <= aTop) && (bBase <= bTop);
         }
@@ -563,14 +564,14 @@ cap_t createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceM
         /** GHOSTUPD: "(True, gs_new_cnodes (unat \<acute>userSize)
                                 (ptr_val \<acute>regionBase)
                                 (4 + unat \<acute>userSize))" */
-        return cap_cnode_cap_new(userSize, 0, 0, CTE_REF(regionBase));
+        return cap_cnode_cap_new(userSize, 0, 0, CTE_REF(regionBase), true);
 
     case seL4_UntypedObject:
         /*
          * No objects need to be created; instead, just insert caps into
          * the destination slots.
          */
-        return cap_untyped_cap_new(0, !!deviceMemory, userSize, WORD_REF(regionBase));
+        return cap_untyped_cap_new(!!deviceMemory, userSize, WORD_REF(regionBase));
 
 #ifdef CONFIG_KERNEL_MCS
     case seL4_SchedContextObject:
@@ -606,16 +607,14 @@ void createNewObjects(object_t t, cte_t *parent,
 
     /* ghost check that we're visiting less bytes than the max object size */
     objectSize = getObjectSize(t, userSize);
-    totalObjectSize = destLength << objectSize;
-    /** GHOSTUPD: "(gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state = 0
-        \<or> \<acute>totalObjectSize <= gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state, id)" */
+    totalObjectSize = destLength * objectSize;
 
     /* Create the objects. */
     nextFreeArea = regionBase;
     for (i = 0; i < destLength; i++) {
         /* Create the object. */
         /** AUXUPD: "(True, typ_region_bytes (ptr_val \<acute> nextFreeArea + ((\<acute> i) << unat (\<acute> objectSize))) (unat (\<acute> objectSize)))" */
-        cap_t cap = createObject(t, (void *)((word_t)nextFreeArea + (i << objectSize)), userSize, deviceMemory);
+        cap_t cap = createObject(t, (void *)((word_t)nextFreeArea + (i * objectSize)), userSize, deviceMemory);
 
         /* Insert the cap into the user's cspace. */
         insertNewCap(parent, &destCNode[destOffset + i], cap);
@@ -748,6 +747,9 @@ exception_t decodeInvocation(word_t invLabel, word_t length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 #endif
+        if (CNodeBusyZeroing(slot)) {
+            return EXCEPTION_PREEMPTED;
+        }
         return decodeCNodeInvocation(invLabel, length, cap, buffer);
 
     case cap_untyped_cap:
@@ -826,7 +828,7 @@ exception_t performInvocation_Reply(tcb_t *thread, cte_t *slot, bool_t canGrant)
 }
 #endif
 
-word_t CONST cap_get_capSizeBits(cap_t cap)
+word_t CONST cap_get_capSize(cap_t cap)
 {
 
     cap_tag_t ctag;
@@ -835,26 +837,26 @@ word_t CONST cap_get_capSizeBits(cap_t cap)
 
     switch (ctag) {
     case cap_untyped_cap:
-        return cap_untyped_cap_get_capBlockSize(cap);
+        return cap_untyped_cap_get_capSize(cap);
 
     case cap_endpoint_cap:
-        return seL4_EndpointBits;
+        return BIT(seL4_EndpointBits);
 
     case cap_notification_cap:
-        return seL4_NotificationBits;
+        return BIT(seL4_NotificationBits);
 
     case cap_cnode_cap:
-        return cap_cnode_cap_get_capCNodeRadix(cap) + seL4_SlotBits;
+        return BIT(cap_cnode_cap_get_capCNodeRadix(cap) + seL4_SlotBits);
 
     case cap_thread_cap:
-        return seL4_TCBBits;
+        return BIT(seL4_TCBBits);
 
     case cap_zombie_cap: {
         word_t type = cap_zombie_cap_get_capZombieType(cap);
         if (type == ZombieType_ZombieTCB) {
-            return seL4_TCBBits;
+            return BIT(seL4_TCBBits);
         }
-        return ZombieType_ZombieCNode(type) + seL4_SlotBits;
+        return BIT(ZombieType_ZombieCNode(type) + seL4_SlotBits);
     }
 
     case cap_null_cap:
@@ -865,7 +867,7 @@ word_t CONST cap_get_capSizeBits(cap_t cap)
 
     case cap_reply_cap:
 #ifdef CONFIG_KERNEL_MCS
-        return seL4_ReplyBits;
+        return BIT(seL4_ReplyBits);
 #else
         return 0;
 #endif
@@ -881,11 +883,11 @@ word_t CONST cap_get_capSizeBits(cap_t cap)
 
 #ifdef CONFIG_KERNEL_MCS
     case cap_sched_context_cap:
-        return cap_sched_context_cap_get_capSCSizeBits(cap);
+        return BIT(cap_sched_context_cap_get_capSCSizeBits(cap));
 #endif
 
     default:
-        return cap_get_archCapSizeBits(cap);
+        return BIT(cap_get_archCapSizeBits(cap));
     }
 
 }
