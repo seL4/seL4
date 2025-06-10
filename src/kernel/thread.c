@@ -188,7 +188,9 @@ void doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, bool_t grant)
                 current_fault = seL4_Fault_Timeout_new(receiver->tcbSchedContext->scBadge);
                 handleTimeout(receiver);
             } else {
-                postpone(receiver->tcbSchedContext);
+                if (!thread_state_get_tcbInReleaseQueue(receiver->tcbState)) {
+                    postpone(receiver->tcbSchedContext);
+                }
             }
         }
     }
@@ -531,7 +533,7 @@ void setPriority(tcb_t *tptr, prio_t prio)
 void possibleSwitchTo(tcb_t *target)
 {
 #ifdef CONFIG_KERNEL_MCS
-    if (target->tcbSchedContext != NULL && !thread_state_get_tcbInReleaseQueue(target->tcbState)) {
+    if (target->tcbSchedContext != NULL && !thread_state_get_tcbInReleaseQueue(target->tcbState) && isRunnable(target)) {
 #endif
         if (ksCurDomain != target->tcbDomain
             SMP_COND_STATEMENT( || target->tcbAffinity != getCurrentCPUIndex())) {
