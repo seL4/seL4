@@ -22,12 +22,12 @@ block frame_cap {
     field       capFMappedASIDLow   10
     field_high  capFMappedAddress   20
 
-    padding                         1
     field       capFMapType         2
     field       capFIsDevice        1
     field       capFMappedASIDHigh  2
     field       capFVMRights        2
     field_high  capFBasePtr         20
+    field       capIsDirty          1
     field       capType             4
 }
 

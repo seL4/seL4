@@ -135,10 +135,10 @@ void obj_sc_print_attrs(cap_t sc_cap)
 void obj_ut_print_attrs(cte_t *slot, tcb_t *tcb)
 {
     /* might have two untypeds with the same address but different size */
-    printf("%p_%lu_untyped = ut (%lu bits, paddr: %p) {",
+    printf("%p_%lu_untyped = ut (%lu bytes, paddr: %p) {",
            (void *)cap_untyped_cap_get_capPtr(slot->cap),
-           (long unsigned int)cap_untyped_cap_get_capBlockSize(slot->cap),
-           (long unsigned int)cap_untyped_cap_get_capBlockSize(slot->cap),
+           (long unsigned int)cap_untyped_cap_get_capSize(slot->cap),
+           (long unsigned int)cap_untyped_cap_get_capSize(slot->cap),
            WORD_PTR(cap_untyped_cap_get_capPtr(slot->cap)));
 
     /* there is no need to check for a NullCap as NullCaps are
