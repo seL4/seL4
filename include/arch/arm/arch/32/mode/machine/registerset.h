@@ -32,6 +32,11 @@
                              | PMODE_IDLE         \
                              | CPSR_EXTRA_FLAGS   )
 
+#define FPEXC_EX_BIT        31
+#define FPEXC_EN_BIT        30
+#define FPEXC_DEX_BIT       29
+#define FPEXC_FP2V_BIT      28
+
 /* Offsets within the user context, these need to match the order in
  * register_t below */
 #define PT_SP               (13  * 4)
@@ -226,12 +231,12 @@ typedef struct user_fpu_state {
  */
 struct user_context {
     word_t registers[n_contextRegisters];
-#ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
-    user_breakpoint_state_t breakpointState;
-#endif /* CONFIG_HARDWARE_DEBUG_API */
 #ifdef CONFIG_HAVE_FPU
     user_fpu_state_t fpuState;
 #endif /* CONFIG_HAVE_FPU */
+#ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
+    user_breakpoint_state_t breakpointState;
+#endif /* CONFIG_HARDWARE_DEBUG_API */
 };
 typedef struct user_context user_context_t;
 
@@ -245,6 +250,9 @@ void Arch_initBreakpointContext(user_context_t *context);
 static inline void Arch_initContext(user_context_t *context)
 {
     context->registers[CPSR] = CPSR_USER;
+#ifdef CONFIG_HAVE_FPU
+    context->fpuState.fpexc = BIT(FPEXC_EN_BIT);
+#endif
 #ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
     Arch_initBreakpointContext(context);
 #endif

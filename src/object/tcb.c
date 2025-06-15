@@ -792,6 +792,49 @@ static exception_t decodeSetTLSBase(cap_t cap, word_t length, word_t *buffer)
     return invokeSetTLSBase(TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), tls_base);
 }
 
+static void invokeSetFlags(tcb_t *thread, word_t clear, word_t set, bool_t call)
+{
+    tcb_t *cur_thread = NODE_STATE(ksCurThread);
+    word_t flags = thread->tcbFlags;
+
+    flags &= ~clear;
+    flags |= set & seL4_TCBFlag_MASK;
+    thread->tcbFlags = flags;
+
+#ifdef CONFIG_HAVE_FPU
+    /* Save current FPU state before disabling FPU: */
+    if (flags & seL4_TCBFlag_fpuDisabled) {
+        fpuRelease(thread);
+    }
+#endif
+    if (call) {
+        word_t *ipcBuffer = lookupIPCBuffer(true, cur_thread);
+        setRegister(cur_thread, badgeRegister, 0);
+        unsigned int length = setMR(cur_thread, ipcBuffer, 0, flags);
+        setRegister(cur_thread, msgInfoRegister, wordFromMessageInfo(
+                        seL4_MessageInfo_new(0, 0, 0, length)));
+    }
+    setThreadState(cur_thread, ThreadState_Running);
+}
+
+static exception_t decodeSetFlags(cap_t cap, word_t length, bool_t call, word_t *buffer)
+{
+    tcb_t *thread = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
+
+    if (length < 2) {
+        userError("TCB SetFlags: Truncated message.");
+        current_syscall_error.type = seL4_TruncatedMessage;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    word_t clear = getSyscallArg(0, buffer);
+    word_t set   = getSyscallArg(1, buffer);
+
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+    invokeSetFlags(thread, clear, set, call);
+    return EXCEPTION_NONE;
+}
+
 /* The following functions sit in the syscall error monad, but include the
  * exception cases for the preemptible bottom end, as they call the invoke
  * functions directly.  This is a significant deviation from the Haskell
@@ -884,6 +927,9 @@ exception_t decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
 
     case TCBSetTLSBase:
         return decodeSetTLSBase(cap, length, buffer);
+
+    case TCBSetFlags:
+        return decodeSetFlags(cap, length, call, buffer);
 
     default:
         /* Haskell: "throw IllegalOperation" */
@@ -1575,7 +1621,7 @@ exception_t decodeSetSpace(cap_t cap, word_t length, cte_t *slot, word_t *buffer
 
 exception_t decodeDomainInvocation(word_t invLabel, word_t length, word_t *buffer)
 {
-    word_t domain;
+    dom_t domain;
     cap_t tcap;
 
     if (unlikely(invLabel != DomainSetSet)) {
@@ -1611,10 +1657,15 @@ exception_t decodeDomainInvocation(word_t invLabel, word_t length, word_t *buffe
         current_syscall_error.invalidArgumentNumber = 1;
         return EXCEPTION_SYSCALL_ERROR;
     }
-
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    setDomain(TCB_PTR(cap_thread_cap_get_capTCBPtr(tcap)), domain);
+    invokeDomainSetSet(TCB_PTR(cap_thread_cap_get_capTCBPtr(tcap)), domain);
     return EXCEPTION_NONE;
+}
+
+void invokeDomainSetSet(tcb_t *tcb, dom_t domain)
+{
+    prepareSetDomain(tcb, domain);
+    setDomain(tcb, domain);
 }
 
 exception_t decodeBindNotification(cap_t cap)
