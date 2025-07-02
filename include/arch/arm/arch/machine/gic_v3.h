@@ -32,9 +32,10 @@
 
 /* Register bits */
 #define GICD_CTLR_RWP                BIT(31)
-#define GICD_CTLR_ARE_NS             BIT(4)
-#define GICD_CTLR_ENABLE_G1NS         BIT(1)
+#define GICD_CTLR_ARE_NS             BIT(5)
+#define GICD_CTLR_ENABLE_G1NS        BIT(1)
 #define GICD_CTLR_ENABLE_G0          BIT(0)
+
 #define GICD_IROUTER_SPI_MODE_ANY    BIT(31)
 
 #define GICD_TYPE_LINESNR 0x01f
