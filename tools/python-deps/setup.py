@@ -35,18 +35,18 @@ DEPS = [
     'pyelftools',
     'sh',
     'pexpect',
-    'pyyaml>=5.1,<6',
+    'pyyaml>=5.1',
     'jsonschema',
     'pyfdt',
-    'cmake-format==0.4.5',
+    'cmake-format==0.6.13',
     'guardonce',
-    'autopep8==2.3.1',
+    'autopep8==2.3.2',
     'libarchive-c',
 ]
 
 setup(
     name='sel4-deps',
-    version='0.6.0',
+    version='0.7.0',
     description='Metapackage for downloading build dependencies for the seL4 microkernel',
     long_description="""
 This meta package depends on all python packages you need to build the seL4 microkernel and manual.
