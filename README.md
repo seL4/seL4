@@ -37,7 +37,7 @@ system in a larger project.
   [3]: https://sel4.systems/Contribute/
   [4]: https://zenodo.org/badge/DOI/10.5281/zenodo.591727.svg
   [5]: https://sel4.systems/Info/Docs/seL4-manual-latest.pdf
-  [6]: https://docs.sel4.systems/Resources#setting-up-your-machine
+  [6]: https://docs.sel4.systems/projects/buildsystem/host-dependencies.html
   [7]: https://docs.sel4.systems/releases/sel4
   [8]: https://docs.sel4.systems/projects/sel4/api-doc.html
 
