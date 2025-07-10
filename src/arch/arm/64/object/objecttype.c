@@ -12,6 +12,7 @@
 #include <arch/machine.h>
 #include <arch/model/statedata.h>
 #include <arch/object/objecttype.h>
+#include <model/preemption.h>
 
 bool_t Arch_isFrameType(word_t type)
 {
@@ -57,8 +58,13 @@ deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
         return ret;
 
     case cap_frame_cap:
-        ret.cap = cap_frame_cap_set_capFMappedASID(cap, asidInvalid);
-        ret.status = EXCEPTION_NONE;
+        if (Arch_FrameBusyZeroing(slot)) {
+            ret.cap = cap_null_cap_new();
+            ret.status = EXCEPTION_PREEMPTED;
+        } else {
+            ret.cap = cap_frame_cap_set_capFMappedASID(cap, asidInvalid);
+            ret.status = EXCEPTION_NONE;
+        }
         return ret;
 
     case cap_asid_control_cap:
@@ -365,25 +371,68 @@ word_t Arch_getObjectSize(word_t t)
     }
 }
 
+//TODO: Is this the old ClearMemory() again?
+static void zero_memory(word_t addr, unsigned int size)
+{
+    void* start = (void*)addr;
+    paddr_t pptr = addrFromPPtr(start);
+    word_t end = addr + size - 1ul;
+
+#if 0
+    for (word_t p = addr; p < end; p += BIT(L1_CACHE_LINE_SIZE_BITS)) {
+        asm volatile("dc zva, %0" :: "r"(p));
+    }
+#else
+    memzero(start, size);
+#endif
+    cleanCacheRange_RAM(addr, end, pptr);
+}
+
+bool_t Arch_FrameBusyZeroing(cte_t *slot)
+{
+    cap_t cap = slot->cap;
+    bool_t dirty = cap_frame_cap_get_capIsDirty(cap);
+    word_t base = cap_frame_cap_get_capFBasePtr(cap);
+    word_t i = cap_frame_cap_get_capFMappedAddress(cap);
+    word_t page_size = BIT(cap_frame_cap_get_capFSize(cap));
+    word_t chunk = MIN(page_size, BIT(CONFIG_RESET_CHUNK_BITS));
+    exception_t status = EXCEPTION_NONE;
+
+    if (!dirty) {
+        return false;
+    }
+    assert(cap_frame_cap_get_capFIsDevice(cap) == false);
+    assert(cap_frame_cap_get_capFMappedASID(cap) == asidInvalid);
+
+    for (; i < page_size && status != EXCEPTION_NONE; i += chunk) {
+        zero_memory(base + i, chunk);
+        status = preemptionPoint(true);
+    }
+    if (status != EXCEPTION_NONE) {
+        /* Remember how far we zeroed */
+        cap = cap_frame_cap_set_capFMappedAddress(cap, i);
+    } else {
+        /* Done: All memory cleared and flushed */
+        cap = cap_frame_cap_set_capFMappedAddress(cap, 0);
+        cap = cap_frame_cap_set_capIsDirty(cap, false);
+    }
+    slot->cap = cap;
+    /* Always restart the syscall to prevent stale cap data anywhere: */
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+    return true;
+}
+
 cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
 {
     switch (t) {
     case seL4_ARM_SmallPageObject:
-        if (deviceMemory) {
-            /** AUXUPD: "(True, ptr_retyps 1
-                     (Ptr (ptr_val \<acute>regionBase) :: user_data_device_C ptr))" */
-            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSmallPage
-                                                    (ptr_val \<acute>regionBase)
-                                                    (unat ARMSmallPageBits))" */
-        } else {
+        if (!deviceMemory) {
             /** AUXUPD: "(True, ptr_retyps 1
                      (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
             /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSmallPage
                                                     (ptr_val \<acute>regionBase)
                                                     (unat ARMSmallPageBits))" */
-            cleanCacheRange_RAM((word_t)regionBase,
-                                (word_t)regionBase + MASK(pageBitsForSize(ARMSmallPage)),
-                                addrFromPPtr(regionBase));
+            zero_memory((word_t)regionBase, BIT(ARMSmallPageBits));
         }
         return cap_frame_cap_new(
                    asidInvalid,           /* capFMappedASID */
@@ -391,59 +440,30 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
                    ARMSmallPage,          /* capFSize */
                    0,                     /* capFMappedAddress */
                    VMReadWrite,           /* capFVMRights */
-                   !!deviceMemory         /* capFIsDevice */
+                   !!deviceMemory,        /* capFIsDevice */
+                   0                      /* capIsDirty */
                );
 
     case seL4_ARM_LargePageObject:
-        if (deviceMemory) {
-            /** AUXUPD: "(True, ptr_retyps (2^9)
-                     (Ptr (ptr_val \<acute>regionBase) :: user_data_device_C ptr))" */
-            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMLargePage
-                                                    (ptr_val \<acute>regionBase)
-                                                    (unat ARMLargePageBits))" */
-        } else {
-            /** AUXUPD: "(True, ptr_retyps (2^9)
-                     (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
-            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMLargePage
-                                                    (ptr_val \<acute>regionBase)
-                                                    (unat ARMLargePageBits))" */
-            cleanCacheRange_RAM((word_t)regionBase,
-                                (word_t)regionBase + MASK(pageBitsForSize(ARMLargePage)),
-                                addrFromPPtr(regionBase));
-        }
         return cap_frame_cap_new(
                    asidInvalid,           /* capFMappedASID */
                    (word_t)regionBase,    /* capFBasePtr */
                    ARMLargePage,          /* capFSize */
                    0,                     /* capFMappedAddress */
                    VMReadWrite,           /* capFVMRights */
-                   !!deviceMemory         /* capFIsDevice */
+                   !!deviceMemory,        /* capFIsDevice */
+                   !deviceMemory          /* capIsDirty */
                );
 
     case seL4_ARM_HugePageObject:
-        if (deviceMemory) {
-            /** AUXUPD: "(True, ptr_retyps (2^18)
-                     (Ptr (ptr_val \<acute>regionBase) :: user_data_device_C ptr))" */
-            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMHugePage
-                                                    (ptr_val \<acute>regionBase)
-                                                    (unat ARMHugePageBits))" */
-        } else {
-            /** AUXUPD: "(True, ptr_retyps (2^18)
-                     (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
-            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMHugePage
-                                                    (ptr_val \<acute>regionBase)
-                                                    (unat ARMHugePageBits))" */
-            cleanCacheRange_RAM((word_t)regionBase,
-                                (word_t)regionBase + MASK(pageBitsForSize(ARMHugePage)),
-                                addrFromPPtr(regionBase));
-        }
         return cap_frame_cap_new(
                    asidInvalid,           /* capFMappedASID */
                    (word_t)regionBase,    /* capFBasePtr */
                    ARMHugePage,           /* capFSize */
                    0,                     /* capFMappedAddress */
                    VMReadWrite,           /* capFVMRights */
-                   !!deviceMemory         /* capFIsDevice */
+                   !!deviceMemory,        /* capFIsDevice */
+                   !deviceMemory          /* capIsDirty */
                );
     case seL4_ARM_VSpaceObject:
         /** AUXUPD: "(True, ptr_retyps 1
