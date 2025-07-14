@@ -350,12 +350,12 @@ class LatexGenerator(Generator):
         return "\\param{void}{}{}"
 
     def generate_errors(self, error_string):
-        """
+        r"""
         Wraps the errors in an \errortable
         """
 
         if error_string:
-            return "\errortable{%s}" % error_string
+            return "\\errortable{%s}" % error_string
         return ""
 
     def generate_error_string(self, error_info, error_name):
@@ -415,15 +415,15 @@ class MarkdownGenerator(Generator):
 
     # Dict mapping characters to their escape sequence in markdown
     ESCAPE_PATTERNS = {
-        "`": "\`",
-        "#": "\#",
-        "_": "\_",
-        "*": "\*",
-        "[": "\[",
-        "]": "\]",
-        "-": "\-",
-        "+": "\+",
-        "!": "\!",
+        "`": r"\`",
+        "#": r"\#",
+        "_": r"\_",
+        "*": r"\*",
+        "[": r"\[",
+        "]": r"\]",
+        "-": r"\-",
+        "+": r"\+",
+        "!": r"\!",
     }
 
     def get_parse_table(self):
