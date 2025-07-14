@@ -7,7 +7,7 @@
 
 """
 Script for generating latex from doxygen-generated xml files.
-The generatetd latex files are compatible with the seL4 manual.
+The generated latex files are compatible with the seL4 manual.
 """
 import argparse
 import sys
@@ -585,7 +585,7 @@ def generate_general_syscall_doc(generator, input_file_name, level, ref_dict):
     """
     Takes a path to a file containing doxygen-generated xml,
     and return a string containing latex suitable for inclusion
-    in the sel4 manual.
+    in the seL4 manual.
     """
 
     dir_name = os.path.dirname(input_file_name)
@@ -612,7 +612,6 @@ def generate_general_syscall_doc(generator, input_file_name, level, ref_dict):
             return "No methods."
 
         for member in elements:
-            manual_node = member.manual
             details, params, errors, ret = generator.parse_detailed_desc(member, ref_dict)
             output += generator.generate_api_doc(level, member, params, ret, details, errors)
         return output
