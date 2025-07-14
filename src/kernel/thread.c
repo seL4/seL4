@@ -19,6 +19,7 @@
 #include <arch/machine.h>
 #include <arch/kernel/thread.h>
 #include <machine/registerset.h>
+#include <machine/fpu.h>
 #include <linker.h>
 
 static seL4_MessageInfo_t
@@ -28,6 +29,7 @@ transferCaps(seL4_MessageInfo_t info,
 
 BOOT_CODE void configureIdleThread(tcb_t *tcb)
 {
+    tcb->tcbFlags = seL4_TCBFlag_fpuDisabled;
     Arch_configureIdleThread(tcb);
     setThreadState(tcb, ThreadState_IdleThreadState);
 }
@@ -300,6 +302,24 @@ void doNBRecvFailedTransfer(tcb_t *thread)
     setRegister(thread, badgeRegister, 0);
 }
 
+void prepareSetDomain(tcb_t *tptr, dom_t dom)
+{
+#ifdef CONFIG_HAVE_FPU
+    if (ksCurDomain != dom) {
+        /* Save FPU state now to avoid touching cross-domain state later */
+        fpuRelease(tptr);
+    }
+#endif
+}
+
+static void prepareNextDomain(void)
+{
+#ifdef CONFIG_HAVE_FPU
+    /* Save FPU state now to avoid touching cross-domain state later */
+    switchLocalFpuOwner(NULL);
+#endif
+}
+
 static void nextDomain(void)
 {
     ksDomScheduleIdx++;
@@ -344,6 +364,7 @@ static void switchSchedContext(void)
 static void scheduleChooseNewThread(void)
 {
     if (ksDomainTime == 0) {
+        prepareNextDomain();
         nextDomain();
     }
     chooseThread();
@@ -452,6 +473,11 @@ void switchToThread(tcb_t *thread)
     benchmark_utilisation_switch(NODE_STATE(ksCurThread), thread);
 #endif
     Arch_switchToThread(thread);
+
+#ifdef CONFIG_HAVE_FPU
+    lazyFPURestore(thread);
+#endif /* CONFIG_HAVE_FPU */
+
     tcbSchedDequeue(thread);
     NODE_STATE(ksCurThread) = thread;
 }
