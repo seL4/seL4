@@ -503,9 +503,15 @@ Type | Name | Description
             """ % param_string
         return ""
 
+    def make_nbsp(self, string):
+        """Make all spaces non-breaking"""
+
+        # Use unicode non-breaking space. HTML &nbsp; is not valid in all Markdown flavours.
+        return string.replace(" ", "\u00a0")
+
     def generate_param_string(self, param_info, param_name):
         return "`%(type)s` | `%(name)s` | %(desc)s\n" % {
-            "type": self.get_text(param_info["type"], escape=False),
+            "type": self.make_nbsp(self.get_text(param_info["type"], escape=False)),
             "name": self.get_text(param_name, escape=False),
             "desc": self.todo_if_empty(param_info.get("desc", "").strip()),
         }
