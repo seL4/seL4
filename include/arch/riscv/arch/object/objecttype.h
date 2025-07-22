@@ -30,3 +30,18 @@ static inline void Arch_postCapDeletion(cap_t cap)
 {
 }
 
+/**
+ * Return true if the given arch cap can be a descendant of an IRQControlCap.
+ */
+static inline CONST bool_t Arch_isIRQControlDescendant(cap_t cap)
+{
+    return false;
+}
+
+/**
+ * isMDBParentOf for architecture caps. See Arm version for more detailed docs.
+ */
+static inline CONST bool_t Arch_isMDBParentOf(cap_t cap_a, cap_t cap_b, bool_t firstBadged)
+{
+    return true;
+}
