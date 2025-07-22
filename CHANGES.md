@@ -917,4 +917,4 @@ For more information see <https://docs.sel4.systems/Developing/Building>.
   point release once it is fixed.
 
 ---
-For previous releases see <https://docs.sel4.systems/releases/sel4>
+For previous releases see <https://docs.sel4.systems/releases/seL4.html>
