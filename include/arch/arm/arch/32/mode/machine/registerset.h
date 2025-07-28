@@ -32,6 +32,11 @@
                              | PMODE_IDLE         \
                              | CPSR_EXTRA_FLAGS   )
 
+#define FPEXC_EX_BIT        31
+#define FPEXC_EN_BIT        30
+#define FPEXC_DEX_BIT       29
+#define FPEXC_FP2V_BIT      28
+
 /* Offsets within the user context, these need to match the order in
  * register_t below */
 #define PT_SP               (13  * 4)
@@ -100,9 +105,13 @@ enum _register {
     /* user readable/writable thread ID register.
      * name comes from the ARM manual */
     TPIDRURW = 18,
-    TLS_BASE = TPIDRURW,
     /* user readonly thread ID register. */
     TPIDRURO = 19,
+#ifdef CONFIG_ARM_TLS_REG_TPIDRU
+    TLS_BASE = TPIDRURW,
+#elif defined(CONFIG_ARM_TLS_REG_TPIDRURO)
+    TLS_BASE = TPIDRURO,
+#endif
     n_contextRegisters = 20,
 };
 
@@ -187,16 +196,16 @@ typedef struct debug_register_pair {
  * the size of the untyped needed for a TCB when watchpoint handling is
  * involved.
  */
-#define EXLUSIVE_WATCHPOINT_PADING 6
-#define EXLUSIVE_WATCHPOINT_PADDED \
-    (seL4_NumExclusiveWatchpoints > EXLUSIVE_WATCHPOINT_PADING) \
+#define EXCLUSIVE_WATCHPOINT_PADDING 6
+#define EXCLUSIVE_WATCHPOINT_PADDED \
+    (seL4_NumExclusiveWatchpoints > EXCLUSIVE_WATCHPOINT_PADDING) \
         ? seL4_NumExclusiveWatchpoints \
-        : EXLUSIVE_WATCHPOINT_PADING
+        : EXCLUSIVE_WATCHPOINT_PADDING
 
 typedef struct user_breakpoint_state {
     /* We don't use context comparisons. */
     debug_register_pair_t breakpoint[seL4_NumExclusiveBreakpoints],
-                          watchpoint[EXLUSIVE_WATCHPOINT_PADDED];
+                          watchpoint[EXCLUSIVE_WATCHPOINT_PADDED];
     uint32_t used_breakpoints_bf;
     word_t n_instructions;
     bool_t single_step_enabled;
@@ -222,12 +231,12 @@ typedef struct user_fpu_state {
  */
 struct user_context {
     word_t registers[n_contextRegisters];
-#ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
-    user_breakpoint_state_t breakpointState;
-#endif /* CONFIG_HARDWARE_DEBUG_API */
 #ifdef CONFIG_HAVE_FPU
     user_fpu_state_t fpuState;
 #endif /* CONFIG_HAVE_FPU */
+#ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
+    user_breakpoint_state_t breakpointState;
+#endif /* CONFIG_HARDWARE_DEBUG_API */
 };
 typedef struct user_context user_context_t;
 
@@ -241,6 +250,9 @@ void Arch_initBreakpointContext(user_context_t *context);
 static inline void Arch_initContext(user_context_t *context)
 {
     context->registers[CPSR] = CPSR_USER;
+#ifdef CONFIG_HAVE_FPU
+    context->fpuState.fpexc = BIT(FPEXC_EN_BIT);
+#endif
 #ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
     Arch_initBreakpointContext(context);
 #endif

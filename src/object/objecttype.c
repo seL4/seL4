@@ -342,7 +342,8 @@ bool_t CONST sameRegionAs(cap_t cap_a, cap_t cap_b)
 
     case cap_irq_control_cap:
         if (cap_get_capType(cap_b) == cap_irq_control_cap ||
-            cap_get_capType(cap_b) == cap_irq_handler_cap) {
+            cap_get_capType(cap_b) == cap_irq_handler_cap ||
+            Arch_isIRQControlDescendant(cap_b)) {
             return true;
         }
         break;
@@ -385,8 +386,7 @@ bool_t CONST sameObjectAs(cap_t cap_a, cap_t cap_b)
     if (cap_get_capType(cap_a) == cap_untyped_cap) {
         return false;
     }
-    if (cap_get_capType(cap_a) == cap_irq_control_cap &&
-        cap_get_capType(cap_b) == cap_irq_handler_cap) {
+    if (cap_get_capType(cap_a) == cap_irq_control_cap) {
         return false;
     }
     if (isArchCap(cap_a) && isArchCap(cap_b)) {
@@ -777,7 +777,8 @@ exception_t decodeInvocation(word_t invLabel, word_t length,
             current_syscall_error.invalidCapNumber = 0;
             return EXCEPTION_SYSCALL_ERROR;
         }
-        return decodeSchedContextInvocation(invLabel, cap, buffer);
+        sched_context_t *sc = SC_PTR(cap_sched_context_cap_get_capSCPtr(cap));
+        return decodeSchedContextInvocation(invLabel, sc, call);
 #endif
     default:
         fail("Invalid cap type");

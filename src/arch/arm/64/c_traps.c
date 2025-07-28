@@ -18,17 +18,13 @@
 /** DONT_TRANSLATE */
 void VISIBLE NORETURN restore_user_context(void)
 {
-    NODE_UNLOCK_IF_HELD;
-
     c_exit_hook();
 
 #ifdef ARM_CP14_SAVE_AND_RESTORE_NATIVE_THREADS
     restore_user_debug_context(NODE_STATE(ksCurThread));
 #endif
 
-#ifdef CONFIG_HAVE_FPU
-    lazyFPURestore(NODE_STATE(ksCurThread));
-#endif /* CONFIG_HAVE_FPU */
+    NODE_UNLOCK_IF_HELD;
 
     asm volatile(
         "mov     sp, %0                     \n"

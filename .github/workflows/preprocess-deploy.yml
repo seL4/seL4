@@ -10,6 +10,7 @@ on:
   push:
     branches:
       - master
+  workflow_dispatch:
 
 jobs:
   code:
@@ -31,21 +32,48 @@ jobs:
     strategy:
       matrix:
         arch: [ARM, ARM_HYP, AARCH64, RISCV64, X64]
-        # no MCS here, auto-updating mcs.xml should be a separate job.
+        # no MCS here, see separate preprocess-mcs.
     steps:
     - uses: seL4/ci-actions/preprocess@master
       with:
         L4V_ARCH: ${{ matrix.arch }}
 
+  preprocess-mcs:
+    name: Preprocess (MCS)
+    needs: code
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [RISCV64]
+    steps:
+    - uses: seL4/ci-actions/preprocess@master
+      with:
+        L4V_ARCH: ${{ matrix.arch }}
+        L4V_FEATURES: "MCS"
+
   deploy:
     name: Deploy manifest
     needs: [code, preprocess]
     if: ${{ github.repository_owner == 'seL4' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - uses: seL4/ci-actions/l4v-deploy@master
       with:
         xml: ${{ needs.code.outputs.xml }}
         preprocess: 'true'
+      env:
+        GH_SSH: ${{ secrets.CI_SSH }}
+
+  deploy-mcs:
+    name: Deploy MCS manifest
+    needs: [code, preprocess-mcs]
+    if: ${{ github.repository_owner == 'seL4' }}
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: seL4/ci-actions/l4v-deploy@master
+      with:
+        xml: ${{ needs.code.outputs.xml }}
+        preprocess: 'true'
+        manifest: mcs-devel.xml
       env:
         GH_SSH: ${{ secrets.CI_SSH }}

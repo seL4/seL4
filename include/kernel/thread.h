@@ -189,6 +189,7 @@ void schedule(void);
 void chooseThread(void);
 void switchToThread(tcb_t *thread);
 void switchToIdleThread(void);
+void prepareSetDomain(tcb_t *tptr, dom_t dom);
 void setDomain(tcb_t *tptr, dom_t dom);
 void setPriority(tcb_t *tptr, prio_t prio);
 void setMCPriority(tcb_t *tptr, prio_t mcp);
@@ -307,5 +308,12 @@ void awaken(void);
 /* Place the thread bound to this scheduling context in the release queue
  * of periodic threads waiting for budget recharge */
 void postpone(sched_context_t *sc);
+
+static inline void setThreadStateBlockedOnReply(tcb_t *tptr, reply_t *reply)
+{
+    thread_state_ptr_set_tsType(&tptr->tcbState, ThreadState_BlockedOnReply);
+    thread_state_ptr_set_replyObject(&tptr->tcbState, REPLY_REF(reply));
+    scheduleTCB(tptr);
+}
 #endif
 

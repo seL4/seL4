@@ -42,13 +42,7 @@ void VISIBLE NORETURN c_handle_interrupt(int irq, int syscall)
 
     c_entry_hook();
 
-    if (irq == int_unimpl_dev) {
-        handleFPUFault();
-#ifdef TRACK_KERNEL_ENTRIES
-        ksKernelEntry.path = Entry_UnimplementedDevice;
-        ksKernelEntry.word = irq;
-#endif
-    } else if (irq == int_page_fault) {
+    if (irq == int_page_fault) {
         /* Error code is in Error. Pull out bit 5, which is whether it was instruction or data */
         vm_fault_type_t type = (NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[Error] >> 4u) & 1u;
 #ifdef TRACK_KERNEL_ENTRIES

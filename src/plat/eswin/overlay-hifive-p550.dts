@@ -1,0 +1,49 @@
+/*
+ * Copyright 2025, UNSW
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+    reserved-memory {
+        /delete-node/ linux,cma;
+    };
+
+    chosen {
+        seL4,kernel-devices =
+            &{/soc/clint@2000000},
+            &{/soc/interrupt-controller@c000000};
+    };
+
+    /* 16GiB of main memory */
+    memory@80000000 {
+        reg = <0x00 0x80000000 0x04 0x00>;
+    };
+
+    /*
+     * According to the EIC7700X SoC manual the CLINT is mapped from
+     * 0x0200_0000 to 0x0200_C000.
+     */
+    soc {
+        clint@2000000 {
+            compatible = "riscv,cpu-intc";
+            reg = <0x00000000 0x2000000 0x00000000 0x00000c000>;
+        };
+    };
+
+    /* Reserve 2 MiB for SBI at the start of RAM (0x40000000 - 0x40200000). This
+     * is exactly one "megapage" in the MMU table. It leaves plenty of space for
+     * further SBI experimenting, given the known usage (as of June 2021) is:
+     * - BBL: 76 KiB (= 0x13000)
+     * - OpenSBI: 128 KiB (= 0x20000) with PMP protection
+     */
+    reserved-memory {
+        #address-cells = <0x02>;
+        #size-cells = <0x02>;
+        ranges;
+        sbi@40000000 {
+            reg = <0x0 0x80000000 0x0 0x200000>;
+            no-map;
+        };
+    };
+};

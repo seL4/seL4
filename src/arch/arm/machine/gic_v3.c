@@ -28,13 +28,16 @@
 
 #define ICC_SGI1R_INTID_SHIFT          (24)
 #define ICC_SGI1R_AFF1_SHIFT           (16)
+#define ICC_SGI1R_AFF2_SHIFT           (32)
+#define ICC_SGI1R_AFF3_SHIFT           (48)
+#define ICC_SGI1R_RS_SHIFT             (44)
 #define ICC_SGI1R_IRM_BIT              (40)
 #define ICC_SGI1R_CPUTARGETLIST_MASK   0xffff
 
 volatile struct gic_dist_map *const gic_dist = (volatile struct gic_dist_map *)(GICD_PPTR);
 volatile void *const gicr_base = (volatile uint8_t *)(GICR_PPTR);
 
-word_t active_irq[CONFIG_MAX_NUM_NODES] = {IRQ_NONE};
+word_t active_irq[CONFIG_MAX_NUM_NODES];
 volatile struct gic_rdist_map *gic_rdist_map[CONFIG_MAX_NUM_NODES] = { 0 };
 volatile struct gic_rdist_sgi_ppi_map *gic_rdist_sgi_ppi_map[CONFIG_MAX_NUM_NODES] = { 0 };
 
@@ -72,6 +75,17 @@ static inline uint64_t mpidr_to_gic_affinity(void)
     affinity = (uint64_t)MPIDR_AFF3(mpidr) << 32 | MPIDR_AFF2(mpidr) << 16 |
                MPIDR_AFF1(mpidr) << 8  | MPIDR_AFF0(mpidr);
     return affinity;
+}
+
+static inline uint64_t sgir_word_from_args(word_t irq, word_t target)
+{
+    uint64_t t = target; /* make sure shifts below are on 64 bit */
+    return (uint64_t) irq << ICC_SGI1R_INTID_SHIFT
+           | (1llu << (t & 0xf)) // AFF0 base
+           | ((t >> 4)  & 0x0f) << ICC_SGI1R_RS_SHIFT // AFF0 Range select
+           | ((t >> 8)  & 0xff) << ICC_SGI1R_AFF1_SHIFT // AFF1
+           | ((t >> 16) & 0xff) << ICC_SGI1R_AFF2_SHIFT // AFF2
+           | ((t >> 24) & 0xff) << ICC_SGI1R_AFF2_SHIFT; // AFF3
 }
 
 /* Wait for completion of a distributor change */
@@ -123,7 +137,7 @@ static void gicv3_redist_wait_for_rwp(void)
 
 static void gicv3_enable_sre(void)
 {
-    uint32_t val = 0;
+    word_t val = 0;
 
     /* ICC_SRE_EL1 */
     SYSTEM_READ_WORD(ICC_SRE_EL1, val);
@@ -168,7 +182,7 @@ BOOT_CODE static void dist_init(void)
     }
 
     /* Turn on the distributor */
-    gic_dist->ctlr = GICD_CTL_ENABLE | GICD_CTLR_ARE_NS | GICD_CTLR_ENABLE_G1NS | GICD_CTLR_ENABLE_G0;
+    gic_dist->ctlr = GICD_CTLR_ARE_NS | GICD_CTLR_ENABLE_G1NS | GICD_CTLR_ENABLE_G0;
     gicv3_dist_wait_for_rwp();
 
     /* Route all global IRQs to this CPU */
@@ -210,7 +224,7 @@ BOOT_CODE static void gicr_locate_interface(void)
 
             /*
              * GICR_WAKER should be Read-all-zeros in Non-secure world
-             * and we expect redistributors to be alread awoken by an earlier loader.
+             * and we expect redistributors to be already awoken by an earlier loader.
              * However if we get a value back then something is probably wrong.
              */
             val = gic_rdist_map[core_id]->waker;
@@ -265,7 +279,7 @@ BOOT_CODE static void gicr_init(void)
 
 BOOT_CODE static void cpu_iface_init(void)
 {
-    uint32_t icc_ctlr = 0;
+    word_t icc_ctlr = 0;
 
     /* Enable system registers */
     gicv3_enable_sre();
@@ -276,9 +290,9 @@ BOOT_CODE static void cpu_iface_init(void)
     /* Set priority mask register: ICC_PMR_EL1 */
     SYSTEM_WRITE_WORD(ICC_PMR_EL1, DEFAULT_PMR_VALUE);
 
-    /* EOI drops priority and deactivates the interrupt: ICC_CTLR_EL1 */
+    /* EOI drops priority of the interrupt, deactivation happens separately: ICC_CTLR_EL1 */
     SYSTEM_READ_WORD(ICC_CTLR_EL1, icc_ctlr);
-    icc_ctlr &= ~GICC_CTLR_EL1_EOImode_drop;
+    icc_ctlr |= GICC_CTLR_EL1_EOImode_drop;
     SYSTEM_WRITE_WORD(ICC_CTLR_EL1, icc_ctlr);
 
     /* Enable Group1 interrupts: ICC_IGRPEN1_EL1 */
@@ -337,9 +351,22 @@ BOOT_CODE void cpu_initLocalIRQController(void)
     SYSTEM_READ_WORD(MPIDR, mpidr);
 
     mpidr_map[CURRENT_CPU_INDEX()] = mpidr;
+    active_irq[CURRENT_CPU_INDEX()] = IRQ_NONE;
 
     gicr_init();
     cpu_iface_init();
+}
+
+bool_t plat_SGITargetValid(word_t target)
+{
+    return target < GIC_SGI_NUM_TARGETS;
+}
+
+void plat_sendSGI(word_t irq, word_t target)
+{
+    uint64_t sgi1r_base = sgir_word_from_args(irq, target);
+    SYSTEM_WRITE_64(ICC_SGI1R_EL1, sgi1r_base);
+    isb();
 }
 
 #ifdef ENABLE_SMP_SUPPORT

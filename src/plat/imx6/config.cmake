@@ -5,8 +5,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-cmake_minimum_required(VERSION 3.7.2)
-
 declare_platform(imx6 KernelPlatImx6 PLAT_IMX6 KernelSel4ArchAarch32)
 
 # disable platform specific settings by default in cache, will be enabled below

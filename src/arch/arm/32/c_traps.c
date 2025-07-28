@@ -20,8 +20,6 @@
 /** DONT_TRANSLATE */
 void VISIBLE NORETURN restore_user_context(void)
 {
-    NODE_UNLOCK_IF_HELD;
-
     word_t cur_thread_reg = (word_t) NODE_STATE(ksCurThread);
 
     c_exit_hook();
@@ -30,9 +28,7 @@ void VISIBLE NORETURN restore_user_context(void)
     restore_user_debug_context(NODE_STATE(ksCurThread));
 #endif
 
-#ifdef CONFIG_HAVE_FPU
-    lazyFPURestore(NODE_STATE(ksCurThread));
-#endif /* CONFIG_HAVE_FPU */
+    NODE_UNLOCK_IF_HELD;
 
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         asm volatile(
@@ -40,7 +36,7 @@ void VISIBLE NORETURN restore_user_context(void)
             "mov sp, %[cur_thread_reg] \n"
             /* Pop user registers */
             "pop {r0-r12}              \n"
-            /* Retore the user stack pointer */
+            /* Restore the user stack pointer */
             "pop {lr}                  \n"
             "msr sp_usr, lr            \n"
             /* prepare the exception return lr */

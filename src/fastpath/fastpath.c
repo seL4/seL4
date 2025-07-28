@@ -428,11 +428,6 @@ void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo)
     }
 #endif /* ENABLE_SMP_SUPPORT */
 
-#ifdef CONFIG_KERNEL_MCS
-    /* not possible to set reply object and not be blocked */
-    assert(thread_state_get_replyObject(NODE_STATE(ksCurThread)->tcbState) == 0);
-#endif
-
     /*
      * --- POINT OF NO RETURN ---
      *
@@ -688,7 +683,7 @@ void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
         ntfn_queue_dequeue_fp(dest, ntfnPtr);
     }
 
-    /* Wake up the signalled thread and tranfer badge */
+    /* Wake up the signalled thread and transfer badge */
     setRegister(dest, badgeRegister, badge);
     thread_state_ptr_set_tsType_np(&dest->tcbState, ThreadState_Running);
 

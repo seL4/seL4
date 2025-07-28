@@ -226,7 +226,7 @@ BOOT_CODE bool_t init_sys_state(
         extra_bi_offset += 4;
     }
 
-    /* provde a chunk for any leftover padding in the extended boot info */
+    /* provide a chunk for any leftover padding in the extended boot info */
     seL4_BootInfoHeader padding_header;
     padding_header.id = SEL4_BOOTINFO_HEADER_PADDING;
     padding_header.len = (extra_bi_region.end - extra_bi_region.start) - extra_bi_offset;
@@ -298,6 +298,12 @@ BOOT_CODE bool_t init_sys_state(
 
     /* create the idle thread */
     create_idle_thread();
+
+    /* copy i387 FPU initial state from FPU */
+    saveFpuState(NODE_STATE(ksIdleThread));
+    x86KSnullFpuState = NODE_STATE(ksIdleThread)->tcbArch.tcbContext.fpuState;
+    /* Check that we can load it: */
+    loadFpuState(NODE_STATE(ksIdleThread));
 
     /* create the initial thread */
     tcb_t *initial = create_initial_thread(root_cnode_cap,

@@ -780,6 +780,13 @@ bool_t PURE isMDBParentOf(cte_t *cte_a, cte_t *cte_b)
     if (!sameRegionAs(cte_a->cap, cte_b->cap)) {
         return false;
     }
+    /* We want to take care of arch caps first, because that is easier in the proofs.
+       We expect Arch_isMDBParentOf to return true if both caps are not architecture
+       specific. */
+    if (!Arch_isMDBParentOf(cte_a->cap, cte_b->cap,
+                            mdb_node_get_mdbFirstBadged(cte_b->cteMDBNode))) {
+        return false;
+    }
     switch (cap_get_capType(cte_a->cap)) {
     case cap_endpoint_cap: {
         word_t badge;
@@ -804,20 +811,6 @@ bool_t PURE isMDBParentOf(cte_t *cte_a, cte_t *cte_b)
                !mdb_node_get_mdbFirstBadged(cte_b->cteMDBNode);
         break;
     }
-
-#ifdef CONFIG_ALLOW_SMC_CALLS
-    case cap_smc_cap: {
-        word_t badge;
-
-        badge = cap_smc_cap_get_capSMCBadge(cte_a->cap);
-        if (badge == 0) {
-            return true;
-        }
-        return (badge == cap_smc_cap_get_capSMCBadge(cte_b->cap)) &&
-               !mdb_node_get_mdbFirstBadged(cte_b->cteMDBNode);
-        break;
-    }
-#endif
 
     default:
         return true;

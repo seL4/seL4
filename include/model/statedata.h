@@ -73,11 +73,10 @@ NODE_STATE_DECLARE(sched_context_t, *ksIdleSC);
 #endif
 
 #ifdef CONFIG_HAVE_FPU
-/* Current state installed in the FPU, or NULL if the FPU is currently invalid */
-NODE_STATE_DECLARE(user_fpu_state_t *, ksActiveFPUState);
-/* Number of times we have restored a user context with an active FPU without switching it */
-NODE_STATE_DECLARE(word_t, ksFPURestoresSinceSwitch);
+/* The thread using the FPU, or NULL if FPU state is invalid */
+NODE_STATE_DECLARE(tcb_t *, ksCurFPUOwner);
 #endif /* CONFIG_HAVE_FPU */
+
 #ifdef CONFIG_DEBUG_BUILD
 NODE_STATE_DECLARE(tcb_t *, ksDebugTCBs);
 #endif /* CONFIG_DEBUG_BUILD */
@@ -112,7 +111,6 @@ extern ticks_t ksDomainTime;
 #else
 extern word_t ksDomainTime;
 #endif
-extern word_t tlbLockCount VISIBLE;
 
 extern char ksIdleThreadTCB[CONFIG_MAX_NUM_NODES][BIT(seL4_TCBBits)];
 
@@ -130,4 +128,3 @@ extern paddr_t ksUserLogBuffer;
 #define MODE_NODE_STATE(_state)    MODE_NODE_STATE_ON_CORE(_state, getCurrentCPUIndex())
 #define ARCH_NODE_STATE(_state)    ARCH_NODE_STATE_ON_CORE(_state, getCurrentCPUIndex())
 #define NODE_STATE(_state)         NODE_STATE_ON_CORE(_state, getCurrentCPUIndex())
-

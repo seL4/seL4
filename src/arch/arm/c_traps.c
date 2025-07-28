@@ -27,21 +27,6 @@ void VISIBLE NORETURN c_handle_undefined_instruction(void)
     ksKernelEntry.word = getRegister(NODE_STATE(ksCurThread), NextIP);
 #endif
 
-#if defined(CONFIG_HAVE_FPU) && defined(CONFIG_ARCH_AARCH32)
-    /* We assume the first fault is a FP exception and enable FPU, if not already enabled */
-    if (!isFpuEnable()) {
-        handleFPUFault();
-
-        /* Restart the FP instruction that cause the fault */
-        setNextPC(NODE_STATE(ksCurThread), getRestartPC(NODE_STATE(ksCurThread)));
-    } else {
-        handleUserLevelFault(0, 0);
-    }
-
-    restore_user_context();
-    UNREACHABLE();
-#endif
-
     /* There's only one user-level fault on ARM, and the code is (0,0) */
 #ifdef CONFIG_ARCH_AARCH32
     handleUserLevelFault(0, 0);
@@ -59,17 +44,6 @@ void VISIBLE NORETURN c_handle_undefined_instruction(void)
     restore_user_context();
     UNREACHABLE();
 }
-
-#if defined(CONFIG_HAVE_FPU) && defined(CONFIG_ARCH_AARCH64)
-void VISIBLE NORETURN c_handle_enfp(void)
-{
-    c_entry_hook();
-
-    handleFPUFault();
-    restore_user_context();
-    UNREACHABLE();
-}
-#endif /* CONFIG_HAVE_FPU */
 
 #ifdef CONFIG_EXCEPTION_FASTPATH
 void NORETURN vm_fault_slowpath(vm_fault_type_t type)

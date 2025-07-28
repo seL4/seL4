@@ -23,7 +23,6 @@ void VISIBLE NORETURN restore_user_context(void)
 {
     word_t cur_thread_reg = (word_t) NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers;
     c_exit_hook();
-    NODE_UNLOCK_IF_HELD;
 
 #ifdef ENABLE_SMP_SUPPORT
     word_t sp = read_sscratch();
@@ -31,11 +30,11 @@ void VISIBLE NORETURN restore_user_context(void)
     *((word_t *)sp) = cur_thread_reg;
 #endif
 
-
 #ifdef CONFIG_HAVE_FPU
-    lazyFPURestore(NODE_STATE(ksCurThread));
     set_tcb_fs_state(NODE_STATE(ksCurThread), isFpuEnable());
 #endif
+
+    NODE_UNLOCK_IF_HELD;
 
     asm volatile(
         "mv t0, %[cur_thread]       \n"
@@ -108,6 +107,15 @@ void VISIBLE NORETURN c_handle_interrupt(void)
 
 void VISIBLE NORETURN c_handle_exception(void)
 {
+#ifdef CONFIG_DEBUG_BUILD
+    if (read_sstatus() & SSTATUS_SPP) {
+        printf("\n\nKERNEL ABORT (exception within s-mode)!\n");
+        printf("scause: 0x%"SEL4_PRIx_word", stval: 0x%"SEL4_PRIx_word"\n",
+               read_scause(), read_stval());
+        halt();
+    }
+#endif
+
     NODE_LOCK_SYS;
 
     c_entry_hook();
@@ -123,14 +131,6 @@ void VISIBLE NORETURN c_handle_exception(void)
         handleVMFaultEvent(scause);
         break;
     default:
-#ifdef CONFIG_HAVE_FPU
-        if (!isFpuEnable()) {
-            /* we assume the illegal instruction is caused by FPU first */
-            handleFPUFault();
-            setNextPC(NODE_STATE(ksCurThread), getRestartPC(NODE_STATE(ksCurThread)));
-            break;
-        }
-#endif
         handleUserLevelFault(scause, 0);
         break;
     }

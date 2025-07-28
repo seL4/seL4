@@ -4,8 +4,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-cmake_minimum_required(VERSION 3.7.2)
-
 declare_platform(tqma8xqp1gb KernelPlatformTqma8xqp1gb PLAT_TQMA8XQP1GB KernelArchARM)
 
 if(KernelPlatformTqma8xqp1gb)
@@ -14,8 +12,6 @@ if(KernelPlatformTqma8xqp1gb)
     set(KernelArchArmV8a ON)
     set(KernelArmGicV3 ON)
     config_set(KernelARMPlatform ARM_PLAT ${KernelPlatform})
-    set(KernelArmVtimerUpdateVOffset OFF)
-    set(KernelArmDisableWFIWFETraps ON)
     list(APPEND KernelDTSList "tools/dts/${KernelPlatform}.dts")
     list(APPEND KernelDTSList "src/plat/tqma8xqp1gb/overlay-${KernelPlatform}.dts")
     declare_default_headers(

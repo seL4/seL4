@@ -91,7 +91,7 @@ static inline bool_t refill_full(sched_context_t *sc)
     return refill_size(sc) == sc->scRefillMax;
 }
 
-/* @return true if the ciruclar buffer only contains 1 used slot */
+/* @return true if the circular buffer only contains 1 used slot */
 static inline bool_t refill_single(sched_context_t *sc)
 {
     return sc->scRefillHead == sc->scRefillTail;

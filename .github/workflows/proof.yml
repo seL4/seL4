@@ -45,6 +45,7 @@ jobs:
         L4V_FEATURES: ${{ matrix.features }}
         session: ${{ matrix.session }}
         manifest: ${{ matrix.features == 'MCS' && 'mcs.xml' || 'default.xml' }}
+        isa_branch: ${{ matrix.features == 'MCS' && 'ts-2024' || 'ts-2025' }}
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

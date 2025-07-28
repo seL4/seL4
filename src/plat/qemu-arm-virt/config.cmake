@@ -5,8 +5,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-cmake_minimum_required(VERSION 3.7.2)
-
 declare_platform(qemu-arm-virt KernelPlatformQEMUArmVirt PLAT_QEMU_ARM_VIRT KernelArchARM)
 
 set(qemu_user_top 0xa0000000)
@@ -109,7 +107,7 @@ if(KernelPlatformQEMUArmVirt)
                 string(
                     REGEX
                         MATCH
-                        "[0-9](\\.[0-9])+"
+                        "[0-9]+(\\.[0-9]+)+"
                         QEMU_VERSION
                         "${QEMU_STDOUT_MESSAGE}"
                 )

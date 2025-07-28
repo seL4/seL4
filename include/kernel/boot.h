@@ -145,6 +145,16 @@ word_t arch_get_n_paging(v_region_t it_veg);
 
 #ifdef ENABLE_SMP_CLOCK_SYNC_TEST_ON_BOOT
 BOOT_CODE void clock_sync_test(void);
+
+/* Delta (in us) allowed in the clock sync test in addition to getTimerPrecision().
+   On RISC-V, reading the clock goes via mmode. If mmode uses a big lock, that
+   can take considerable time */
+#ifdef CONFIG_ARCH_RISCV
+#define CLOCK_SYNC_DELTA 5
+#else
+#define CLOCK_SYNC_DELTA 1
+#endif
+
 #else
 #define clock_sync_test()
 #endif

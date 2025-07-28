@@ -31,16 +31,15 @@ static void NORETURN vmlaunch_failed(word_t failInvalid, word_t failValid)
     restore_user_context();
 }
 
-static void NORETURN restore_vmx(void)
+static void NORETURN restore_vmx(tcb_t *cur_thread, vcpu_t *vcpu)
 {
     restoreVMCS();
-    tcb_t *cur_thread = NODE_STATE(ksCurThread);
 #ifdef CONFIG_HARDWARE_DEBUG_API
     /* Do not support breakpoints in VMs, so just disable all breakpoints */
     loadAllDisabledBreakpointState(cur_thread);
 #endif
 #ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
-    vcpu_restore_guest_msrs(cur_thread->tcbArch.tcbVCPU);
+    vcpu_restore_guest_msrs(vcpu);
 #endif /* CONFIG_X86_64_VTX_64BIT_GUESTS */
     /* attempt to do a vmlaunch/vmresume */
     asm volatile(
@@ -184,13 +183,13 @@ static void NORETURN restore_vmx(void)
         "movq %[failed], %%rax\n"
         "jmp *%%rax\n"
         :
-        : [reg]"r"(&cur_thread->tcbArch.tcbVCPU->gp_registers[VCPU_EAX]),
-        [launched]"r"(&cur_thread->tcbArch.tcbVCPU->launched),
+        : [reg]"r"(&vcpu->gp_registers[VCPU_EAX]),
+        [launched]"r"(&vcpu->launched),
 #ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
         [failed]"r"(vmlaunch_failed),
         [stack_size]"i"(BIT(CONFIG_KERNEL_STACK_BITS)),
-        [guest_msr]"r"(&cur_thread->tcbArch.tcbVCPU->guest_msr_registers[VCPU_GS]),
-        [host_msr]"r"(&cur_thread->tcbArch.tcbVCPU->host_msr_registers[n_vcpu_msr_register])
+        [guest_msr]"r"(&vcpu->guest_msr_registers[VCPU_GS]),
+        [host_msr]"r"(&vcpu->host_msr_registers[n_vcpu_msr_register])
 #else /* not CONFIG_X86_64_VTX_64BIT_GUESTS */
         [failed]"i"(&vmlaunch_failed),
         [stack_size]"i"(BIT(CONFIG_KERNEL_STACK_BITS))
@@ -208,8 +207,9 @@ static void NORETURN restore_vmx(void)
 
 void VISIBLE NORETURN restore_user_context(void)
 {
-    NODE_UNLOCK_IF_HELD;
     c_exit_hook();
+
+    NODE_UNLOCK_IF_HELD;
 
     /* we've now 'exited' the kernel. If we have a pending interrupt
      * we should 'enter' it again */
@@ -232,11 +232,14 @@ void VISIBLE NORETURN restore_user_context(void)
     tcb_t *cur_thread = NODE_STATE(ksCurThread);
     word_t *irqstack = x64KSIRQStack[CURRENT_CPU_INDEX()];
 #ifdef CONFIG_VTX
+    vcpu_t *vcpu = cur_thread->tcbArch.tcbVCPU;
     if (thread_state_ptr_get_tsType(&cur_thread->tcbState) == ThreadState_RunningVM) {
-        restore_vmx();
+        vcpu_fpu_to_guest(cur_thread, vcpu);
+        restore_vmx(cur_thread, vcpu);
+    } else if (vcpu) {
+        vcpu_fpu_to_host(cur_thread, vcpu);
     }
 #endif
-    lazyFPURestore(cur_thread);
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
     restore_user_debug_context(cur_thread);
@@ -263,7 +266,7 @@ void VISIBLE NORETURN restore_user_context(void)
             /* if we are using the SKIM window then we are trying to hide kernel state from
              * the user in the case of Meltdown where the kernel region is effectively readable
              * by the user. To prevent a storage channel across threads through the irq stack,
-             * which is idirectly controlled by the user, we need to clear the stack. We perform
+             * which is indirectly controlled by the user, we need to clear the stack. We perform
              * this here since when we return *from* an interrupt we must use this stack and
              * cannot clear it. This means if we restore from interrupt, then enter from a syscall
              * and switch to a different thread we must either on syscall entry, or before leaving

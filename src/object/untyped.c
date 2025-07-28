@@ -28,7 +28,7 @@ exception_t decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
 {
     word_t newType, userObjSize, nodeIndex;
     word_t nodeDepth, nodeOffset, nodeWindow;
-    cte_t *rootSlot UNUSED;
+    cte_t *rootSlot;
     exception_t status;
     cap_t nodeCap;
     lookupSlot_ret_t lu_ret;
@@ -61,7 +61,6 @@ exception_t decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
     nodeDepth   = getSyscallArg(3, buffer);
     nodeOffset  = getSyscallArg(4, buffer);
     nodeWindow  = getSyscallArg(5, buffer);
-
     rootSlot = current_extra_caps.excaprefs[0];
 
     /* Is the requested object type valid? */
@@ -112,9 +111,9 @@ exception_t decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
 
     /* Lookup the destination CNode (where our caps will be placed in). */
     if (nodeDepth == 0) {
-        nodeCap = current_extra_caps.excaprefs[0]->cap;
+        nodeCap = rootSlot->cap;
     } else {
-        cap_t rootCap = current_extra_caps.excaprefs[0]->cap;
+        cap_t rootCap = rootSlot->cap;
         lu_ret = lookupTargetSlot(rootCap, nodeIndex, nodeDepth);
         if (lu_ret.status != EXCEPTION_NONE) {
             userError("Untyped Retype: Invalid destination address.");

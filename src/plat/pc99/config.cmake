@@ -4,8 +4,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-cmake_minimum_required(VERSION 3.7.2)
-
 declare_platform(pc99 KernelPlatPC99 PLAT_PC99 KernelArchX86)
 
 if(KernelPlatPC99)

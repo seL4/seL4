@@ -4,7 +4,7 @@
 
 # Deploy default.xml to sel4test-manifest after successful runs.
 
-name: seL4Test
+name: Deploy
 
 on:
   push:
@@ -112,7 +112,7 @@ jobs:
   deploy:
     name: Deploy manifest
     if: ${{ github.repository_owner == 'seL4' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: [code, hw-run]
     steps:
     - name: Deploy

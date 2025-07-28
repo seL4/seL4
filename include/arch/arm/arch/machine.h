@@ -23,6 +23,8 @@ void setIRQTrigger(irq_t irq, bool_t trigger);
 #ifdef ENABLE_SMP_SUPPORT
 void setIRQTarget(irq_t irq, seL4_Word target);
 #endif
+bool_t plat_SGITargetValid(word_t target);
+void plat_sendSGI(word_t irq, word_t target);
 
 static inline void plat_cleanL2Range(paddr_t start, paddr_t end);
 static inline void plat_invalidateL2Range(paddr_t start, paddr_t end);
@@ -42,12 +44,10 @@ void cleanInvalidate_L1D(void);
 void cleanCaches_PoU(void);
 void cleanInvalidateL1Caches(void);
 
-/* Cleaning memory before user-level access */
+/* Cleaning memory before user-level access. Does not flush cache. */
 static inline void clearMemory(word_t *ptr, word_t bits)
 {
     memzero(ptr, BIT(bits));
-    cleanCacheRange_RAM((word_t)ptr, (word_t)ptr + BIT(bits) - 1,
-                        addrFromPPtr(ptr));
 }
 
 /* Cleaning memory before page table walker access */
@@ -65,7 +65,7 @@ static inline void arch_pause(void)
 }
 #endif /* ENABLE_SMP_SUPPORT */
 
-/* Update the value of the actual regsiter to hold the expected value */
+/* Update the value of the actual register to hold the expected value */
 static inline exception_t Arch_setTLSRegister(word_t tls_base)
 {
     /* This register is saved and restored on kernel exit and entry so

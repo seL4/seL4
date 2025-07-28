@@ -88,7 +88,7 @@ struct findVSpaceForASID_ret {
 typedef struct findVSpaceForASID_ret findVSpaceForASID_ret_t;
 
 /* Stage-1 access permissions:
- * AP[2:1]  higer EL        EL0
+ * AP[2:1]  higher EL        EL0
  *   00       rw            None
  *   01       rw            rw
  *   10       r             None
@@ -193,7 +193,7 @@ vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_right
 /* ==================== BOOT CODE STARTS HERE ==================== */
 
 /* The 54th bit is defined as UXN (unprivileged execute-never) for stage 1
- * of any tranlsation regime for which stage 1 translation can support
+ * of any translation regime for which stage 1 translation can support
  * two VA ranges. This field applies only to execution at EL0. A value
  * of 0 indicates that this control permits execution.
  *
@@ -1384,6 +1384,8 @@ static exception_t decodeARMVSpaceRootInvocation(word_t invLabel, word_t length,
             current_syscall_error.rangeErrorMin = start;
             current_syscall_error.rangeErrorMax = ROUND_DOWN(start, resolve_ret.ptBitsLeft) +
                                                   MASK(resolve_ret.ptBitsLeft);
+            userError("VSpaceRoot Flush: cannot cross page boundary, valid range is [0x%lx..0x%lx)",
+                      current_syscall_error.rangeErrorMin, current_syscall_error.rangeErrorMax);
             return EXCEPTION_SYSCALL_ERROR;
         }
 
@@ -1745,7 +1747,8 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
         /* Find first free pool */
         for (i = 0; i < nASIDPools && armKSASIDTable[i]; i++);
 
-        if (unlikely(i == nASIDPools)) { /* If no unallocated pool is found */
+        if (unlikely(i == nASIDPools)) {
+            userError("ASIDControlMakePool: No unallocated pools found.");
             current_syscall_error.type = seL4_DeleteFirst;
 
             return EXCEPTION_SYSCALL_ERROR;
@@ -1998,4 +2001,3 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
     return EXCEPTION_NONE;
 }
 #endif /* CONFIG_KERNEL_LOG_BUFFER */
-

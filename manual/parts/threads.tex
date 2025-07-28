@@ -74,6 +74,14 @@ automatically suspended when the last capability to their \obj{TCB} is
 deleted.
 % an example of which is demonstrated in \nameref{ex:second_thread}.
 
+\subsection{Thread Feature Flags}
+\label{sec:thread_flags}
+Specific features can be enabled or disabled on a per TCB basis with
+\apifunc{seL4\_TCB\_SetFlags}{tcb_setflags}.
+
+If access to the Floating Point Unit is not needed, it can be disabled
+for individual threads to maximise context switching speed.
+
 \subsection{Affinity}
 \label{sec:thread_affinity}
 
@@ -562,7 +570,7 @@ is currently configured (if any) for single-stepping will be the implicit
 \texttt{bp\_num} argument in a single-step debug fault reply.
 
 % The description for skipping num_instructions had an off-by-one error
-% I.e. num_instruction = 1 does not skip any instructions between stopps
+% I.e. num_instruction = 1 does not skip any instructions between stops
 % num_instruction = 2 "skips" 1 instruction, but executes 2 instructions before stopping
 
 The kernel's single-stepping, also supports executing a certain number of

@@ -46,7 +46,7 @@
 #define ID_AA64PFR0_EL1_ASIMD   20     // HWCap for Advanced SIMD
 
 /* CPACR_EL1 register */
-#define CPACR_EL1_FPEN          20     // FP regiters access
+#define CPACR_EL1_FPEN          20     // FP registers access
 
 /*
  * We cannot allow async aborts in the verified kernel, but they are useful
@@ -143,9 +143,13 @@ enum _register {
     /* user readable/writable thread ID register.
      * name comes from the ARM manual */
     TPIDR_EL0                   = 35,
-    TLS_BASE                    = TPIDR_EL0,
     /* user readonly thread ID register. */
     TPIDRRO_EL0                 = 36,
+#ifdef CONFIG_ARM_TLS_REG_TPIDRU
+    TLS_BASE = TPIDR_EL0,
+#elif defined(CONFIG_ARM_TLS_REG_TPIDRURO)
+    TLS_BASE = TPIDRRO_EL0,
+#endif
     n_contextRegisters          = 37,
 };
 
@@ -256,28 +260,31 @@ typedef struct user_fpu_state {
 } user_fpu_state_t;
 #endif /* CONFIG_HAVE_FPU */
 
-/* ARM user-code context: size = 72 bytes
- * Or with hardware debug support built in:
- *      72 + sizeof(word_t) * (NUM_BPS + NUM_WPS) * 2
- *
+/*
  * The "word_t registers" member of this struct must come first, because in
  * head.S, we assume that an "ldr %0, =ksCurThread" will point to the beginning
  * of the current thread's registers. The assert below should help.
  */
 struct user_context {
     word_t registers[n_contextRegisters];
+#ifdef CONFIG_HAVE_FPU
+    word_t _padding;
+    user_fpu_state_t fpuState;
+#endif /* CONFIG_HAVE_FPU */
 #ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
     user_breakpoint_state_t breakpointState;
 #endif /* ARM_BASE_CP14_SAVE_AND_RESTORE */
-#ifdef CONFIG_HAVE_FPU
-    user_fpu_state_t fpuState;
-#endif /* CONFIG_HAVE_FPU */
 };
 typedef struct user_context user_context_t;
 
 unverified_compile_assert(registers_are_first_member_of_user_context,
                           OFFSETOF(user_context_t, registers) == 0)
 
+#ifdef CONFIG_HAVE_FPU
+/* Aligning saves one cycle per LDP/STP instruction: */
+unverified_compile_assert(vregs_are_16_bytes_aligned,
+                          OFFSETOF(user_context_t, fpuState) % 16 == 0)
+#endif
 
 #ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
 void Arch_initBreakpointContext(user_context_t *context);

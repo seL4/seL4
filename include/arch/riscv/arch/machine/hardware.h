@@ -39,13 +39,25 @@
 
 #define PAGE_BITS seL4_PageBits
 
+/* Used to align the big kernel lock to the exclusive reservation granule size.
+ * Without this nearby writes can delay atomic operations implemented with looping
+ * exclusive load/store instructions for an undefined time.
+ *
+ * See Volume II: RISC-V Privileged Architectures V20211203, page 82:
+ *
+ * For implementations with both page-based virtual memory and the “A” standard
+ * extension, the LR/SC reservation set must lie completely within a single base
+ * page (i.e., a naturally aligned 4 KiB region).
+ */
+#define EXCL_RES_GRANULE_SIZE BIT(seL4_PageBits)
+
 /* MMU RISC-V related definitions. See RISC-V manual priv-1.10 */
 
 /* Extract the n-level PT index from a virtual address. This works for any
  * configured RISC-V system with CONFIG_PT_LEVEL (which can be 2 on Sv32,
  * 3 on Sv39, or 4 on Sv48)
  */
-#define RISCV_GET_PT_INDEX(addr, n)  (((addr) >> (((PT_INDEX_BITS) * (((CONFIG_PT_LEVELS) - 1) - (n))) + seL4_PageBits)) & MASK(PT_INDEX_BITS))
+#define RISCV_GET_PT_INDEX(addr, n)  (((addr) >> RISCV_GET_LVL_PGSIZE_BITS(n)) & MASK(PT_INDEX_BITS))
 #define RISCV_GET_LVL_PGSIZE_BITS(n) (((PT_INDEX_BITS) * (((CONFIG_PT_LEVELS) - 1) - (n))) + seL4_PageBits)
 #define RISCV_GET_LVL_PGSIZE(n)      BIT(RISCV_GET_LVL_PGSIZE_BITS((n)))
 /*

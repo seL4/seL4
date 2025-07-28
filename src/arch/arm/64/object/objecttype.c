@@ -73,6 +73,13 @@ deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
         ret.status = EXCEPTION_NONE;
         return ret;
 #endif
+#ifndef CONFIG_ENABLE_SMP_SUPPORT
+    case cap_sgi_signal_cap:
+        ret.cap = cap;
+        ret.status = EXCEPTION_NONE;
+        return ret;
+#endif
+
 #ifdef CONFIG_ARM_SMMU
     case cap_sid_control_cap:
     case cap_cb_control_cap:
@@ -177,6 +184,13 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
         }
         break;
 #endif
+#ifndef CONFIG_ENABLE_SMP_SUPPORT
+    case cap_sgi_signal_cap:
+        // do nothing
+        break;
+#endif
+
+
 #ifdef CONFIG_ARM_SMMU
     case cap_cb_cap:
         if (cap_cb_cap_get_capBindSID(cap) != SID_INVALID) {
@@ -249,6 +263,17 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
         }
         break;
 #endif
+#ifndef CONFIG_ENABLE_SMP_SUPPORT
+    case cap_sgi_signal_cap:
+        if (cap_get_capType(cap_b) == cap_sgi_signal_cap) {
+            return (cap_sgi_signal_cap_get_capSGIIRQ(cap_a) ==
+                    cap_sgi_signal_cap_get_capSGIIRQ(cap_b) &&
+                    cap_sgi_signal_cap_get_capSGITarget(cap_a) ==
+                    cap_sgi_signal_cap_get_capSGITarget(cap_b));
+        }
+        break;
+#endif
+
 #ifdef CONFIG_ARM_SMMU
     case cap_sid_control_cap:
         if (cap_get_capType(cap_b) == cap_sid_control_cap ||
@@ -308,6 +333,12 @@ bool_t CONST Arch_sameObjectAs(cap_t cap_a, cap_t cap_b)
         return false;
     }
 #endif
+#ifndef CONFIG_ENABLE_SMP_SUPPORT
+    if (cap_get_capType(cap_a) == cap_sgi_signal_cap) {
+        return false;
+    }
+#endif
+
     return Arch_sameRegionAs(cap_a, cap_b);
 }
 
@@ -350,6 +381,9 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
             /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSmallPage
                                                     (ptr_val \<acute>regionBase)
                                                     (unat ARMSmallPageBits))" */
+            cleanCacheRange_RAM((word_t)regionBase,
+                                (word_t)regionBase + MASK(pageBitsForSize(ARMSmallPage)),
+                                addrFromPPtr(regionBase));
         }
         return cap_frame_cap_new(
                    asidInvalid,           /* capFMappedASID */
@@ -373,6 +407,9 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
             /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMLargePage
                                                     (ptr_val \<acute>regionBase)
                                                     (unat ARMLargePageBits))" */
+            cleanCacheRange_RAM((word_t)regionBase,
+                                (word_t)regionBase + MASK(pageBitsForSize(ARMLargePage)),
+                                addrFromPPtr(regionBase));
         }
         return cap_frame_cap_new(
                    asidInvalid,           /* capFMappedASID */
@@ -396,6 +433,9 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
             /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMHugePage
                                                     (ptr_val \<acute>regionBase)
                                                     (unat ARMHugePageBits))" */
+            cleanCacheRange_RAM((word_t)regionBase,
+                                (word_t)regionBase + MASK(pageBitsForSize(ARMHugePage)),
+                                addrFromPPtr(regionBase));
         }
         return cap_frame_cap_new(
                    asidInvalid,           /* capFMappedASID */
@@ -406,8 +446,13 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
                    !!deviceMemory         /* capFIsDevice */
                );
     case seL4_ARM_VSpaceObject:
+        /** AUXUPD: "(True, ptr_retyps 1
+              (Ptr (ptr_val \<acute>regionBase) :: (pte_C[vs_array_len]) ptr))" */
+        /** GHOSTUPD: "(True, gs_new_pt_t VSRootPT_T (ptr_val \<acute>regionBase))" */
+        cleanCacheRange_PoU((word_t)regionBase,
+                            (word_t)regionBase + MASK(seL4_VSpaceBits),
+                            addrFromPPtr(regionBase));
 #ifdef CONFIG_ARM_SMMU
-
         return cap_vspace_cap_new(
                    asidInvalid,           /* capVSMappedASID */
                    (word_t)regionBase,    /* capVSBasePtr    */
@@ -415,10 +460,6 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
                    CB_INVALID             /* capVSMappedCB   */
                );
 #else
-
-        /** AUXUPD: "(True, ptr_retyps 1
-              (Ptr (ptr_val \<acute>regionBase) :: (pte_C[vs_array_len]) ptr))" */
-        /** GHOSTUPD: "(True, gs_new_pt_t VSRootPT_T (ptr_val \<acute>regionBase))" */
         return cap_vspace_cap_new(
                    asidInvalid,           /* capVSMappedASID */
                    (word_t)regionBase,    /* capVSBasePtr    */
@@ -429,6 +470,9 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
         /** AUXUPD: "(True, ptr_retyps 1
               (Ptr (ptr_val \<acute>regionBase) :: (pte_C[pt_array_len]) ptr))" */
         /** GHOSTUPD: "(True, gs_new_pt_t NormalPT_T (ptr_val \<acute>regionBase))" */
+        cleanCacheRange_PoU((word_t)regionBase,
+                            (word_t)regionBase + MASK(seL4_PageTableBits),
+                            addrFromPPtr(regionBase));
         return cap_page_table_cap_new(
                    asidInvalid,           /* capPTMappedASID    */
                    (word_t)regionBase,    /* capPTBasePtr       */
@@ -457,12 +501,16 @@ exception_t Arch_decodeInvocation(word_t label, word_t length, cptr_t cptr,
     /* The C parser cannot handle a switch statement with only a default
      * case. So we need to do some gymnastics to remove the switch if
      * there are no other cases */
-#if defined(CONFIG_ARM_HYPERVISOR_SUPPORT) || defined(CONFIG_ARM_SMMU) || defined(CONFIG_ALLOW_SMC_CALLS)
+#if defined(CONFIG_ARM_HYPERVISOR_SUPPORT) || defined(CONFIG_ARM_SMMU) || defined(CONFIG_ALLOW_SMC_CALLS) || !defined(CONFIG_ENABLE_SMP_SUPPORT)
     switch (cap_get_capType(cap)) {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case cap_vcpu_cap:
         return decodeARMVCPUInvocation(label, length, cptr, slot, cap, call, buffer);
 #endif /* end of CONFIG_ARM_HYPERVISOR_SUPPORT */
+#ifndef CONFIG_ENABLE_SMP_SUPPORT
+    case cap_sgi_signal_cap:
+        return decodeSGISignalInvocation(label, length, cap, buffer);
+#endif /* end of !CONFIG_ENABLE_SMP_SUPPORT */
 #ifdef CONFIG_ARM_SMMU
     case cap_sid_control_cap:
         return decodeARMSIDControlInvocation(label, length, cptr, slot, cap, call, buffer);
@@ -487,13 +535,13 @@ exception_t Arch_decodeInvocation(word_t label, word_t length, cptr_t cptr,
 
 void
 Arch_prepareThreadDelete(tcb_t * thread) {
-#ifdef CONFIG_HAVE_FPU
-    fpuThreadDelete(thread);
-#endif
-
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     if (thread->tcbArch.tcbVCPU) {
         dissociateVCPUTCB(thread->tcbArch.tcbVCPU, thread);
     }
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
+
+#ifdef CONFIG_HAVE_FPU
+    fpuRelease(thread);
+#endif
 }

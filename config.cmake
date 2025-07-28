@@ -4,11 +4,10 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-cmake_minimum_required(VERSION 3.7.2)
+cmake_minimum_required(VERSION 3.16.0)
 
 config_option(
-    KernelIsMCS KERNEL_MCS "Use the MCS kernel configuration, which is not verified."
-    DEFAULT OFF
+    KernelIsMCS KERNEL_MCS "Use the MCS kernel configuration, which is not verified." DEFAULT OFF
 )
 
 # Error for unsupported MCS platforms
@@ -19,9 +18,18 @@ if(KernelIsMCS AND (NOT KernelPlatformSupportsMCS))
 endif()
 
 # Proof based configuration variables
-set(CSPEC_DIR "." CACHE PATH "")
-set(SKIP_MODIFIES ON CACHE BOOL "")
-set(SORRY_BITFIELD_PROOFS OFF CACHE BOOL "")
+set(CSPEC_DIR
+    "."
+    CACHE PATH ""
+)
+set(SKIP_MODIFIES
+    ON
+    CACHE BOOL ""
+)
+set(SORRY_BITFIELD_PROOFS
+    OFF
+    CACHE BOOL ""
+)
 find_file(UMM_TYPES umm_types.txt CMAKE_FIND_ROOT_PATH_BOTH)
 set(force FORCE)
 if(KernelVerificationBuild)
@@ -34,16 +42,15 @@ add_custom_target(kernel_config_target)
 set_property(
     TARGET kernel_config_target
     APPEND
-    PROPERTY
-        TOPLEVELTYPES
-        cte_C
-        tcb_C
-        endpoint_C
-        notification_C
-        asid_pool_C
-        pte_C
-        user_data_C
-        user_data_device_C
+    PROPERTY TOPLEVELTYPES
+             cte_C
+             tcb_C
+             endpoint_C
+             notification_C
+             asid_pool_C
+             pte_C
+             user_data_C
+             user_data_device_C
 )
 
 # These options are now set in seL4Config.cmake
@@ -52,14 +59,12 @@ if(DEFINED CALLED_declare_default_headers)
     if("${KernelArch}" STREQUAL "riscv")
         math(EXPR MAX_NUM_IRQ "${CONFIGURE_MAX_IRQ} + 2")
     else()
-        if(
-            DEFINED KernelMaxNumNodes
-            AND CONFIGURE_NUM_PPI GREATER "0"
-            AND "${KernelArch}" STREQUAL "arm"
+        if(DEFINED KernelMaxNumNodes
+           AND CONFIGURE_NUM_PPI GREATER "0"
+           AND "${KernelArch}" STREQUAL "arm"
         )
-            math(
-                EXPR MAX_NUM_IRQ
-                "(${KernelMaxNumNodes}-1)*${CONFIGURE_NUM_PPI} + ${CONFIGURE_MAX_IRQ}"
+            math(EXPR MAX_NUM_IRQ
+                 "(${KernelMaxNumNodes}-1)*${CONFIGURE_NUM_PPI} + ${CONFIGURE_MAX_IRQ}"
             )
         else()
             set(MAX_NUM_IRQ "${CONFIGURE_MAX_IRQ}")
@@ -70,7 +75,10 @@ if(DEFINED CALLED_declare_default_headers)
         math(EXPR BITS "${BITS} + 1")
         math(EXPR MAX_NUM_IRQ "${MAX_NUM_IRQ} >> 1")
     endwhile()
-    set(CONFIGURE_IRQ_SLOT_BITS "${BITS}" CACHE INTERNAL "")
+    set(CONFIGURE_IRQ_SLOT_BITS
+        "${BITS}"
+        CACHE INTERNAL ""
+    )
     if(NOT DEFINED CONFIGURE_TIMER_PRECISION)
         set(CONFIGURE_TIMER_PRECISION "0")
     endif()
@@ -92,8 +100,11 @@ include(src/arch/${KernelArch}/config.cmake)
 include(include/${KernelWordSize}/mode/config.cmake)
 include(src/config.cmake)
 
-set(KernelCustomDTS "" CACHE FILEPATH "Provide a device tree file to use instead of the \
-KernelPlatform's defaults")
+set(KernelCustomDTS
+    ""
+    CACHE FILEPATH "Provide a device tree file to use instead of the \
+KernelPlatform's defaults"
+)
 
 if(NOT "${KernelCustomDTS}" STREQUAL "")
     if(NOT EXISTS ${KernelCustomDTS})
@@ -104,142 +115,18 @@ if(NOT "${KernelCustomDTS}" STREQUAL "")
     message(STATUS "Using custom ${KernelCustomDTS} device tree, ignoring default dts and overlays")
 endif()
 
-if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
-    set(KernelDTSIntermediate "${CMAKE_CURRENT_BINARY_DIR}/kernel.dts")
-    set(
-        KernelDTBPath "${CMAKE_CURRENT_BINARY_DIR}/kernel.dtb"
-        CACHE INTERNAL "Location of kernel DTB file"
-    )
-    set(compatibility_outfile "${CMAKE_CURRENT_BINARY_DIR}/kernel_compat.txt")
-    set(device_dest "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/devices_gen.h")
-    set(
-        platform_yaml "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/platform_gen.yaml"
-        CACHE INTERNAL "Location of platform YAML description"
-    )
-    set(
-        platform_json "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/platform_gen.json"
-        CACHE INTERNAL "Location of platform JSON description"
-    )
-    set(config_file "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware.yml")
-    set(config_schema "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware_schema.yml")
-    set(
-        KernelCustomDTSOverlay ""
-        CACHE
-            STRING
-            "Provide an additional list of overlays to append to the selected KernelPlatform's \
-        device tree during build time"
-    )
-    if(NOT "${KernelCustomDTSOverlay}" STREQUAL "")
-        foreach(dts_entry IN ITEMS ${KernelCustomDTSOverlay})
-            if(NOT EXISTS ${dts_entry})
-                message(FATAL_ERROR "Can't open external overlay file '${dts_entry}'!")
-            endif()
-            list(APPEND KernelDTSList "${dts_entry}")
-            message(STATUS "Appending ${dts_entry} overlay")
-        endforeach()
-    endif()
-
-    find_program(DTC_TOOL dtc)
-    if("${DTC_TOOL}" STREQUAL "DTC_TOOL-NOTFOUND")
-        message(FATAL_ERROR "Cannot find 'dtc' program.")
-    endif()
-    find_program(STAT_TOOL stat)
-    if("${STAT_TOOL}" STREQUAL "STAT_TOOL-NOTFOUND")
-        message(FATAL_ERROR "Cannot find 'stat' program.")
-    endif()
-    mark_as_advanced(DTC_TOOL STAT_TOOL)
-    # Generate final DTS based on Linux DTS + seL4 overlay[s]
-    foreach(entry ${KernelDTSList})
-        get_absolute_source_or_binary(dts_tmp ${entry})
-        list(APPEND dts_list "${dts_tmp}")
-    endforeach()
-
-    check_outfile_stale(regen ${KernelDTBPath} dts_list ${CMAKE_CURRENT_BINARY_DIR}/dts.cmd)
-    if(regen)
-        file(REMOVE "${KernelDTSIntermediate}")
-        foreach(entry ${dts_list})
-            file(READ ${entry} CONTENTS)
-            file(APPEND "${KernelDTSIntermediate}" "${CONTENTS}")
-        endforeach()
-        # Compile DTS to DTB
-        execute_process(
-            COMMAND
-                ${DTC_TOOL} -q -I dts -O dtb -o ${KernelDTBPath} ${KernelDTSIntermediate}
-            RESULT_VARIABLE error
-        )
-        if(error)
-            message(FATAL_ERROR "Failed to compile DTS to DTB: ${KernelDTSIntermediate}")
-        endif()
-        # The macOS and GNU coreutils `stat` utilities have different interfaces.
-        # Check if we're using the macOS version, otherwise assume GNU coreutils.
-        # CMAKE_HOST_APPLE is a built-in CMake variable.
-        if(CMAKE_HOST_APPLE AND "${STAT_TOOL}" STREQUAL "/usr/bin/stat")
-            set(STAT_ARGS "-f%z")
-        else()
-            set(STAT_ARGS "-c '%s'")
-        endif()
-        # Track the size of the DTB for downstream tools
-        execute_process(
-            COMMAND ${STAT_TOOL} ${STAT_ARGS} ${KernelDTBPath}
-            OUTPUT_VARIABLE KernelDTBSize
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-            RESULT_VARIABLE error
-        )
-        if(error)
-            message(FATAL_ERROR "Failed to determine KernelDTBSize: ${KernelDTBPath}")
-        endif()
-        string(
-            REPLACE
-                "\'"
-                ""
-                KernelDTBSize
-                ${KernelDTBSize}
-        )
-        set(KernelDTBSize "${KernelDTBSize}" CACHE INTERNAL "Size of DTB blob, in bytes")
-    endif()
-
-    set(deps ${KernelDTBPath} ${config_file} ${config_schema} ${HARDWARE_GEN_PATH})
-    check_outfile_stale(regen ${device_dest} deps ${CMAKE_CURRENT_BINARY_DIR}/gen_header.cmd)
-    if(regen)
-        # Generate devices_gen header based on DTB
-        message(STATUS "${device_dest} is out of date. Regenerating from DTB...")
-        file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/")
-        execute_process(
-            COMMAND
-                ${PYTHON3} "${HARDWARE_GEN_PATH}" --dtb "${KernelDTBPath}" --compat-strings
-                --compat-strings-out "${compatibility_outfile}" --c-header --header-out
-                "${device_dest}" --hardware-config "${config_file}" --hardware-schema
-                "${config_schema}" --yaml --yaml-out "${platform_yaml}" --sel4arch
-                "${KernelSel4Arch}" --addrspace-max "${KernelPaddrUserTop}" --json --json-out
-                "${platform_json}"
-            RESULT_VARIABLE error
-        )
-        if(error)
-            message(FATAL_ERROR "Failed to generate from DTB: ${device_dest}")
-        endif()
-    endif()
-    file(READ "${compatibility_outfile}" compatibility_strings)
-
-    # Mark all file dependencies as CMake rerun dependencies.
-    set(cmake_deps ${deps} ${KernelDTSIntermediate} ${KernelDTSList} ${compatibility_outfile})
-    set_property(
-        DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-        APPEND
-        PROPERTY CMAKE_CONFIGURE_DEPENDS ${cmake_deps}
-    )
-
-    include(src/drivers/config.cmake)
-endif()
-
 # Enshrine common variables in the config
 config_set(KernelHaveFPU HAVE_FPU "${KernelHaveFPU}")
 config_set(KernelPaddrUserTop PADDR_USER_DEVICE_TOP "${KernelPaddrUserTop}")
 
 # System parameters
 config_string(
-    KernelRootCNodeSizeBits ROOT_CNODE_SIZE_BITS "Root CNode Size (2^n slots) \
+    KernelRootCNodeSizeBits
+    ROOT_CNODE_SIZE_BITS
+    "Root CNode Size (2^n slots) \
     The acceptable range is 8-27 and 7-26, for 32-bit and 64-bit respectively. \
-    The root CNode needs at least enough space to contain up to BI_CAP_DYN_START."
+    The root CNode needs at least enough space to contain seL4_NumInitialCaps \
+    plus enough room for all the Untyped Caps."
     DEFAULT 12
     UNQUOTE
 )
@@ -344,7 +231,8 @@ else()
 endif()
 
 config_string(
-    KernelStackBits KERNEL_STACK_BITS
+    KernelStackBits
+    KERNEL_STACK_BITS
     "This describes the log2 size of the kernel stack. Great care should be taken as\
     there is no guard below the stack so setting this too small will cause random\
     memory corruption"
@@ -352,20 +240,9 @@ config_string(
     UNQUOTE
 )
 
-config_string(
-    KernelFPUMaxRestoresSinceSwitch FPU_MAX_RESTORES_SINCE_SWITCH
-    "This option is a heuristic to attempt to detect when the FPU is no longer in use,\
-    allowing the kernel to save the FPU state out so that the FPU does not have to be\
-    enabled/disabled every thread switch. Every time we restore a thread and there is\
-    active FPU state, we increment this setting and if it exceeds this threshold we\
-    switch to the NULL state."
-    DEFAULT 64
-    DEPENDS "KernelHaveFPU"
-    UNDEF_DISABLED UNQUOTE
-)
-
 config_option(
-    KernelVerificationBuild VERIFICATION_BUILD
+    KernelVerificationBuild
+    VERIFICATION_BUILD
     "When enabled this configuration option prevents the usage of any other options that\
     would compromise the verification story of the kernel. Enabling this option does NOT\
     imply you are using a verified kernel."
@@ -373,7 +250,8 @@ config_option(
 )
 
 config_option(
-    KernelBinaryVerificationBuild BINARY_VERIFICATION_BUILD
+    KernelBinaryVerificationBuild
+    BINARY_VERIFICATION_BUILD
     "When enabled, this configuration option restricts the use of other options that would \
      interfere with binary verification. For example, it will disable some inter-procedural \
      optimisations. Enabling this options does NOT imply that you are using a verified kernel."
@@ -389,7 +267,8 @@ config_option(
 )
 
 config_option(
-    HardwareDebugAPI HARDWARE_DEBUG_API
+    HardwareDebugAPI
+    HARDWARE_DEBUG_API
     "Builds the kernel with support for a userspace debug API, which can \
     allows userspace processes to set breakpoints, watchpoints and to \
     single-step through thread execution."
@@ -445,7 +324,8 @@ else()
 endif()
 
 config_string(
-    KernelMaxNumTracePoints MAX_NUM_TRACE_POINTS
+    KernelMaxNumTracePoints
+    MAX_NUM_TRACE_POINTS
     "Use TRACE_POINT_START(k) and TRACE_POINT_STOP(k) macros for recording data, \
     where k is an integer between 0 and this value - 1. The maximum number of \
     different trace point identifiers which can be used."
@@ -455,7 +335,8 @@ config_string(
 )
 
 config_option(
-    KernelIRQReporting IRQ_REPORTING
+    KernelIRQReporting
+    IRQ_REPORTING
     "seL4 does not properly check for and handle spurious interrupts. This can result \
     in unnecessary output from the kernel during debug builds. If you are CERTAIN these \
     messages are benign then use this config to turn them off."
@@ -464,7 +345,8 @@ config_option(
     DEFAULT_DISABLED OFF
 )
 config_option(
-    KernelColourPrinting COLOUR_PRINTING
+    KernelColourPrinting
+    COLOUR_PRINTING
     "In debug mode, seL4 prints diagnostic messages to its serial output describing, \
     e.g., the cause of system call errors. This setting determines whether ANSI escape \
     codes are applied to colour code these error messages. You may wish to disable this \
@@ -494,7 +376,8 @@ config_choice(
 )
 
 config_option(
-    KernelOptimisationCloneFunctions KERNEL_OPTIMISATION_CLONE_FUNCTIONS
+    KernelOptimisationCloneFunctions
+    KERNEL_OPTIMISATION_CLONE_FUNCTIONS
     "If enabled, allow inter-procedural optimisations that can generate cloned or partial \
      functions, according to the coarse optimisation setting (KernelOptimisation). \
      By default, these optimisations are present at -O2 and higher. \
@@ -521,11 +404,12 @@ config_option(
     Useful for profiling."
     DEFAULT OFF
     DEPENDS
-        "NOT KernelARMHypervisorSupport;NOT KernelVerificationBuild;NOT KernelPlatformHikey;NOT KernelSkimWindow"
+        "NOT KernelArmHypervisorSupport;NOT KernelVerificationBuild;NOT KernelPlatformHikey;NOT KernelSkimWindow"
 )
 
 config_option(
-    KernelDebugDisablePrefetchers DEBUG_DISABLE_PREFETCHERS
+    KernelDebugDisablePrefetchers
+    DEBUG_DISABLE_PREFETCHERS
     "On ia32 platforms, this option disables the L2 hardware prefetcher, the L2 adjacent \
     cache line prefetcher, the DCU prefetcher and the DCU IP prefetcher. On the cortex \
     a53 this disables the L1 Data prefetcher."
@@ -538,7 +422,8 @@ config_option(
 config_set(KernelSetTLSBaseSelf SET_TLS_BASE_SELF ${KernelSetTLSBaseSelf})
 
 config_string(
-    KernelWcetScale KERNEL_WCET_SCALE
+    KernelWcetScale
+    KERNEL_WCET_SCALE
     "Multiplier to scale kernel WCET estimate by: the kernel WCET estimate  \
      is used to ensure a thread has enough budget to get in and out of the  \
      kernel. When running in a simulator the WCET estimate, which is tuned  \
@@ -562,40 +447,158 @@ config_string(
 
 config_option(
     KernelClz32 CLZ_32 "Define a __clzsi2 function to count leading zeros for uint32_t arguments. \
-                        Only needed on platforms which lack a builtin instruction."
-    DEFAULT OFF
+                        Only needed on platforms which lack a builtin instruction." DEFAULT OFF
 )
 
 config_option(
     KernelClz64 CLZ_64 "Define a __clzdi2 function to count leading zeros for uint64_t arguments. \
-                        Only needed on platforms which lack a builtin instruction."
-    DEFAULT OFF
+                        Only needed on platforms which lack a builtin instruction." DEFAULT OFF
 )
 
 config_option(
     KernelCtz32 CTZ_32 "Define a __ctzsi2 function to count trailing zeros for uint32_t arguments. \
-                        Only needed on platforms which lack a builtin instruction."
-    DEFAULT OFF
+                        Only needed on platforms which lack a builtin instruction." DEFAULT OFF
 )
 
 config_option(
     KernelCtz64 CTZ_64 "Define a __ctzdi2 function to count trailing zeros for uint64_t arguments. \
-                        Only needed on platforms which lack a builtin instruction."
-    DEFAULT OFF
+                        Only needed on platforms which lack a builtin instruction." DEFAULT OFF
 )
 
 config_option(
     KernelClzNoBuiltin CLZ_NO_BUILTIN
     "Expose implementations of clzl and clzll to verification by avoiding the use \
-     of __builtin_clzl and __builtin_clzll."
-    DEFAULT OFF
+     of __builtin_clzl and __builtin_clzll." DEFAULT OFF
 )
 
 config_option(
     KernelCtzNoBuiltin CTZ_NO_BUILTIN
     "Expose implementations of ctzl and ctzll to verification by avoiding the use \
-     of __builtin_ctzl and __builtin_ctzll."
-    DEFAULT OFF
+     of __builtin_ctzl and __builtin_ctzll." DEFAULT OFF
 )
+
+if(DEFINED KernelDTSList AND (NOT "${KernelDTSList}" STREQUAL ""))
+    set(KernelDTSIntermediate "${CMAKE_CURRENT_BINARY_DIR}/kernel.dts")
+    set(KernelDTBPath
+        "${CMAKE_CURRENT_BINARY_DIR}/kernel.dtb"
+        CACHE INTERNAL "Location of kernel DTB file"
+    )
+    set(compatibility_outfile "${CMAKE_CURRENT_BINARY_DIR}/kernel_compat.txt")
+    set(device_dest "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/devices_gen.h")
+    set(platform_yaml
+        "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/platform_gen.yaml"
+        CACHE INTERNAL "Location of platform YAML description"
+    )
+    set(platform_json
+        "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/platform_gen.json"
+        CACHE INTERNAL "Location of platform JSON description"
+    )
+    set(config_file "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware.yml")
+    set(config_schema "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware_schema.yml")
+    set(KernelCustomDTSOverlay
+        ""
+        CACHE STRING
+              "Provide an additional list of overlays to append to the selected KernelPlatform's \
+        device tree during build time"
+    )
+    if(NOT "${KernelCustomDTSOverlay}" STREQUAL "")
+        foreach(dts_entry IN ITEMS ${KernelCustomDTSOverlay})
+            if(NOT EXISTS ${dts_entry})
+                message(FATAL_ERROR "Can't open external overlay file '${dts_entry}'!")
+            endif()
+            list(APPEND KernelDTSList "${dts_entry}")
+            message(STATUS "Appending ${dts_entry} overlay")
+        endforeach()
+    endif()
+
+    find_program(DTC_TOOL dtc)
+    if("${DTC_TOOL}" STREQUAL "DTC_TOOL-NOTFOUND")
+        message(FATAL_ERROR "Cannot find 'dtc' program.")
+    endif()
+    find_program(STAT_TOOL stat)
+    if("${STAT_TOOL}" STREQUAL "STAT_TOOL-NOTFOUND")
+        message(FATAL_ERROR "Cannot find 'stat' program.")
+    endif()
+    mark_as_advanced(DTC_TOOL STAT_TOOL)
+    # Generate final DTS based on Linux DTS + seL4 overlay[s]
+    foreach(entry ${KernelDTSList})
+        get_absolute_source_or_binary(dts_tmp ${entry})
+        list(APPEND dts_list "${dts_tmp}")
+    endforeach()
+
+    check_outfile_stale(regen ${KernelDTBPath} dts_list ${CMAKE_CURRENT_BINARY_DIR}/dts.cmd)
+    if(regen)
+        file(REMOVE "${KernelDTSIntermediate}")
+        foreach(entry ${dts_list})
+            file(READ ${entry} CONTENTS)
+            file(APPEND "${KernelDTSIntermediate}" "${CONTENTS}")
+        endforeach()
+        # Compile DTS to DTB
+        execute_process(
+            COMMAND ${DTC_TOOL} -q -I dts -O dtb -o ${KernelDTBPath} ${KernelDTSIntermediate}
+            RESULT_VARIABLE error
+        )
+        if(error)
+            message(FATAL_ERROR "Failed to compile DTS to DTB: ${KernelDTSIntermediate}")
+        endif()
+        # The macOS and GNU coreutils `stat` utilities have different interfaces.
+        # Check if we're using the macOS version, otherwise assume GNU coreutils.
+        # CMAKE_HOST_APPLE is a built-in CMake variable.
+        if(CMAKE_HOST_APPLE AND "${STAT_TOOL}" STREQUAL "/usr/bin/stat")
+            set(STAT_ARGS "-f%z")
+        else()
+            set(STAT_ARGS "-c '%s'")
+        endif()
+        # Track the size of the DTB for downstream tools
+        execute_process(
+            COMMAND ${STAT_TOOL} ${STAT_ARGS} ${KernelDTBPath}
+            OUTPUT_VARIABLE KernelDTBSize
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            RESULT_VARIABLE error
+        )
+        if(error)
+            message(FATAL_ERROR "Failed to determine KernelDTBSize: ${KernelDTBPath}")
+        endif()
+        string(REPLACE "\'" "" KernelDTBSize ${KernelDTBSize})
+        set(KernelDTBSize
+            "${KernelDTBSize}"
+            CACHE INTERNAL "Size of DTB blob, in bytes"
+        )
+    endif()
+
+    set(deps ${KernelDTBPath} ${config_file} ${config_schema} ${HARDWARE_GEN_PATH})
+    check_outfile_stale(regen ${device_dest} deps ${CMAKE_CURRENT_BINARY_DIR}/gen_header.cmd)
+    if(regen)
+        # Generate devices_gen header based on DTB
+        message(STATUS "${device_dest} is out of date. Regenerating from DTB...")
+        file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/")
+        execute_process(
+            COMMAND
+                ${PYTHON3} "${HARDWARE_GEN_PATH}" --dtb "${KernelDTBPath}" --compat-strings
+                --compat-strings-out "${compatibility_outfile}" --c-header --header-out
+                "${device_dest}" --hardware-config "${config_file}" --hardware-schema
+                "${config_schema}" --yaml --yaml-out "${platform_yaml}" --sel4arch
+                "${KernelSel4Arch}" --addrspace-max "${KernelPaddrUserTop}" --json --json-out
+                "${platform_json}" --kernel-config-flags "CONFIG_PRINTING=${KernelPrinting}"
+                "CONFIG_ARM_HYPERVISOR_SUPPORT=${KernelArmHypervisorSupport}"
+                "CONFIG_ARM_SMMU=${KernelArmSMMU}" "CONFIG_TK1_SMMU=${KernelTk1SMMU}"
+            RESULT_VARIABLE error
+        )
+        if(error)
+            message(FATAL_ERROR "Failed to generate from DTB: ${device_dest}")
+        endif()
+    endif()
+    file(READ "${compatibility_outfile}" compatibility_strings)
+
+    # Mark all file dependencies as CMake rerun dependencies.
+    set(cmake_deps ${deps} ${KernelDTSIntermediate} ${KernelDTSList} ${compatibility_outfile})
+    set_property(
+        DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        APPEND
+        PROPERTY CMAKE_CONFIGURE_DEPENDS ${cmake_deps}
+    )
+
+    include(src/drivers/config.cmake)
+endif()
 
 add_config_library(kernel "${configure_string}")

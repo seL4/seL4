@@ -98,7 +98,7 @@ BOOT_CODE seL4_SlotRegion create_iospace_caps(cap_t root_cnode_cap)
     int num_smmu = plat_smmu_init();
 
     if (num_smmu == 0) {
-        printf("SMMU init failuer\n");
+        printf("SMMU init failure\n");
         return S_REG_EMPTY;
     }
 

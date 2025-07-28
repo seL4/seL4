@@ -17,18 +17,20 @@ void reply_push(tcb_t *tcb_caller, tcb_t *tcb_callee, reply_t *reply, bool_t can
     assert(call_stack_get_callStackPtr(reply->replyPrev) == 0);
     assert(call_stack_get_callStackPtr(reply->replyNext) == 0);
 
-    /* tcb caller should not be in a existing call stack */
-    assert(thread_state_get_replyObject(tcb_caller->tcbState) == 0);
+    /* caller state must be blocked on send or active, so cannot be in a existing call stack */
+    assert(thread_state_get_tsType(tcb_caller->tcbState) == ThreadState_BlockedOnSend ||
+           thread_state_get_tsType(tcb_caller->tcbState) == ThreadState_Running ||
+           thread_state_get_tsType(tcb_caller->tcbState) == ThreadState_Restart);
 
-    /* unlink callee and reply - they may not have been linked already,
-     * if this rendesvous is occuring when seL4_Recv is called,
-     * however, no harm in overring 0 with 0 */
-    thread_state_ptr_set_replyObject(&tcb_callee->tcbState, 0);
+    /* callee state must be simple at this point (inactive, restart, or running),
+       so it also cannot have a reply reference associated with it. */
+    assert(thread_state_get_tsType(tcb_callee->tcbState) == ThreadState_Inactive ||
+           thread_state_get_tsType(tcb_callee->tcbState) == ThreadState_Running ||
+           thread_state_get_tsType(tcb_callee->tcbState) == ThreadState_Restart);
 
     /* link caller and reply */
     reply->replyTCB = tcb_caller;
-    thread_state_ptr_set_replyObject(&tcb_caller->tcbState, REPLY_REF(reply));
-    setThreadState(tcb_caller, ThreadState_BlockedOnReply);
+    setThreadStateBlockedOnReply(tcb_caller, reply);
 
     if (sc_donated != NULL && tcb_callee->tcbSchedContext == NULL && canDonate) {
         reply_t *old_caller = sc_donated->scReply;
@@ -38,12 +40,12 @@ void reply_push(tcb_t *tcb_caller, tcb_t *tcb_callee, reply_t *reply, bool_t can
                SC_PTR(call_stack_get_callStackPtr(old_caller->replyNext)) == sc_donated);
 
         /* push on to stack */
-        reply->replyPrev = call_stack_new(REPLY_REF(old_caller), false);
         if (old_caller) {
             old_caller->replyNext = call_stack_new(REPLY_REF(reply), false);
         }
-        reply->replyNext = call_stack_new(SC_REF(sc_donated), true);
+        reply->replyPrev = call_stack_new(REPLY_REF(old_caller), false);
         sc_donated->scReply = reply;
+        reply->replyNext = call_stack_new(SC_REF(sc_donated), true);
 
         /* now do the actual donation */
         schedContext_donate(sc_donated, tcb_callee);
@@ -61,27 +63,24 @@ void reply_pop(reply_t *reply, tcb_t *tcb)
     word_t next_ptr = call_stack_get_callStackPtr(reply->replyNext);
     word_t prev_ptr = call_stack_get_callStackPtr(reply->replyPrev);
 
-    if (likely(next_ptr != 0)) {
-        assert(call_stack_get_isHead(reply->replyNext));
+    SC_PTR(next_ptr)->scReply = REPLY_PTR(prev_ptr);
+    if (prev_ptr != 0) {
+        REPLY_PTR(prev_ptr)->replyNext = reply->replyNext;
+        assert(call_stack_get_isHead(REPLY_PTR(prev_ptr)->replyNext));
+    }
 
-        SC_PTR(next_ptr)->scReply = REPLY_PTR(prev_ptr);
-        if (prev_ptr != 0) {
-            REPLY_PTR(prev_ptr)->replyNext = reply->replyNext;
-            assert(call_stack_get_isHead(REPLY_PTR(prev_ptr)->replyNext));
-        }
+    reply->replyNext = call_stack_new(0, false);
 
-        /* give it back */
-        if (tcb->tcbSchedContext == NULL) {
-            /* only give the SC back if our SC is NULL. This prevents
-             * strange behaviour when a thread is bound to an sc while it is
-             * in the BlockedOnReply state. The semantics in this case are that the
-             * SC cannot go back to the caller if the caller has received another one */
-            schedContext_donate(SC_PTR(next_ptr), tcb);
-        }
+    /* give it back */
+    if (tcb->tcbSchedContext == NULL) {
+        /* only give the SC back if our SC is NULL. This prevents
+         * strange behaviour when a thread is bound to an sc while it is
+         * in the BlockedOnReply state. The semantics in this case are that the
+         * SC cannot go back to the caller if the caller has received another one */
+        schedContext_donate(SC_PTR(next_ptr), tcb);
     }
 
     reply->replyPrev = call_stack_new(0, false);
-    reply->replyNext = call_stack_new(0, false);
     reply_unlink(reply, tcb);
 }
 

@@ -184,6 +184,7 @@ devices:
       - brcm,bcm2835-aux-uart
       - fsl,imx6q-uart
       - fsl,imx8qxp-lpuart
+      - fsl,imx7ulp-lpuart
       - fsl,imx6sx-uart
       - nvidia,tegra124-hsuart
       - nvidia,tegra20-uart
@@ -203,12 +204,13 @@ devices:
   # SiFive U54/U74 PLIC (HiFive, Polarfire)
   - compatible:
       - riscv,plic0
+      - sifive,plic-1.0.0
     regions:
       - index: 0
         kernel: PLIC_PPTR
         kernel_size: 0x04000000
 
-  # SiFive CLINT (HiFive, Polarfire, Ariane, QEMU RISC-V virt, Spike)
+  # SiFive CLINT (HiFive, Polarfire, Ariane, Cheshire, QEMU RISC-V virt, Spike)
   # Note that not all CLINTs with this compatible string are of the same size.
   # However, omitting the kernel_size field works as each kernel device frame
   # is of size 0x200000, which is currently larger than the CLINT's of all
@@ -223,8 +225,7 @@ devices:
   - compatible:
       - arm,psci-0.2
       - arm,psci-1.0
-  - compatible:
       - fsl,imx6q-src
       - fsl,imx6sx-src
-  - compatible:
       - xlnx,zynq-reset
+      - raspberrypi,bcm2835-firmware

@@ -29,7 +29,7 @@
 #define IA32_FMASK_MSR          0xC0000084
 #define IA32_EFER_MSR 0xC0000080
 #define IA32_PLATFORM_INFO_MSR  0xCE
-#define IA32_XSS_MSR            0xD0A
+#define IA32_XSS_MSR            0xDA0
 #define IA32_FEATURE_CONTROL_MSR 0x3A
 #define IA32_KERNEL_GS_BASE_MSR 0xC0000102
 #define IA32_VMX_BASIC_MSR      0x480
@@ -339,11 +339,10 @@ static inline void x86_load_fsgs_base(tcb_t *thread, cpu_id_t cpu)
     x86_write_gs_base(gs_base, cpu);
 }
 
-/* Cleaning memory before user-level access */
+/* Cleaning memory before user-level access. Does not flush cache. */
 static inline void clearMemory(void *ptr, unsigned int bits)
 {
     memzero(ptr, BIT(bits));
-    /* no cleaning of caches necessary on IA-32 */
 }
 
 /* Initialises MSRs required to setup sysenter and sysexit */

@@ -78,11 +78,11 @@ struct vcpu {
     word_t regs[seL4_VCPUReg_Num];
     bool_t vppi_masked[n_VPPIEventIRQ];
 #ifdef CONFIG_VTIMER_UPDATE_VOFFSET
-    word_t vcpu_padding;
+    /* word_t vcpu_padding; */
     /* vTimer is 8-bytes wide and has the same 8-byte alignment requirement.
-     * If the sum of n_VPPIEventIRQ and seL4_VCPUReg_Num is even, we do not need
-     * extra padding. If the sum is odd we do. It currently is odd, so the extra
-     * padding above is necessary for the struct to remain packed on 32 bit
+     * If the sum of n_VPPIEventIRQ and seL4_VCPUReg_Num is odd, we do not need
+     * extra padding. If the sum is even we do. It currently is odd, so the extra
+     * padding above is unnecessary for the struct to remain packed on 32 bit
      * platforms.
      */
     struct vTimer virtTimer;
@@ -90,6 +90,10 @@ struct vcpu {
 };
 typedef struct vcpu vcpu_t;
 compile_assert(vcpu_size_correct, sizeof(struct vcpu) <= BIT(VCPU_SIZE_BITS))
+#ifdef CONFIG_VTIMER_UPDATE_VOFFSET
+compile_assert(vcpu_virt_timer_alignment_valid,
+               (seL4_VCPUReg_Num + n_VPPIEventIRQ) % 2 == 1)
+#endif
 
 void VGICMaintenance(void);
 void handleVCPUFault(word_t hsr);

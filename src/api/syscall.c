@@ -482,7 +482,7 @@ static inline void mcsPreemptionPoint(void)
     if (isSchedulable(NODE_STATE(ksCurThread))) {
         /* if the thread is schedulable, the tcb and scheduling context are still valid */
         checkBudget();
-    } else if (NODE_STATE(ksCurSC)->scRefillMax) {
+    } else if (sc_active(NODE_STATE(ksCurSC))) {
         /* otherwise, if the thread is not schedulable, the SC could be valid - charge it if so */
         chargeBudget(NODE_STATE(ksConsumed), false);
     } else {
@@ -504,7 +504,8 @@ static void handleYield(void)
 #ifdef CONFIG_KERNEL_MCS
     /* Yield the current remaining budget */
     ticks_t consumed = NODE_STATE(ksCurSC)->scConsumed + NODE_STATE(ksConsumed);
-    chargeBudget(refill_head(NODE_STATE(ksCurSC))->rAmount, false);
+    refill_t head = *refill_head(NODE_STATE(ksCurSC));
+    chargeBudget(head.rAmount, false);
     /* Manually updated the scConsumed so that the full timeslice isn't added, just what was consumed */
     NODE_STATE(ksCurSC)->scConsumed = consumed;
 #else

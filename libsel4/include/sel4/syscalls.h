@@ -381,7 +381,7 @@ seL4_VMEnter(seL4_Word *sender);
  * reserved for that purpose on the given platform.
  *
  * Each platform has a specific register reserved for tracking the
- * base address of the TLS region (as sepcified in the ELF standard) in
+ * base address of the TLS region (as specified in the ELF standard) in
  * a manner compatible with the TLS method used with that architecture.
  *
  * @param tls_base The new base address to store in the register.

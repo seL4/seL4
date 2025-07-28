@@ -33,7 +33,7 @@
  *                |  |         Kernel ELF          |
  *            ----|  +-------------KERNEL_ELF_BASE-+ --+ 2^64 - 2GiB + (KERNEL_ELF_PADDR_BASE % 1GiB)
  *            |   |  |                             |
- *            |   -> +-----------------------------+ --+ 2^64 - 2GiB = (KERNEL_ELF_BASE % 1GiB)
+ *            |   -> +--------------------PPTR_TOP-+ --+ 2^64 - 2GiB
  * Shared 1GiB|      |                             |   |
  * table entry|      |           PSpace            |   |
  *            |      |  (direct kernel mappings)   |   +----+
@@ -56,7 +56,7 @@
  *                   |                             |        |      |  |                         |
  *                   |            User             |        |      |  |                         |
  *                   |                             |        |      |  |                         |
- *                   |                             |        +------+  +-------------------------+  KDEV_BASE - KERNEL_ELF_BASE + PADDR_LOAD
+ *                   |                             |        +------+  +-------------------------+
  *                   |                             |     kernel    |  |        Kernel ELF       |
  *                   |                             |   addressable |  +-------------------------+  KERNEL_ELF_PADDR_BASE
  *                   |                             |               |  |                         |
@@ -89,12 +89,10 @@
 #define PPTR_TOP UL_CONST(0xFFFFFFFF80000000)
 
 /* The physical memory address to use for mapping the kernel ELF */
-/* This represents the physical address that the kernel image will be linked to. This needs to
- * be on a 1gb boundary as we currently require being able to creating a mapping to this address
- * as the largest frame size */
-#define KERNEL_ELF_PADDR_BASE (physBase() + UL_CONST(0x4000000))
+/* This represents the physical address that the kernel image will be linked to. */
+#define KERNEL_ELF_PADDR_BASE physBase()
 /* For use by the linker (only integer constants allowed) */
-#define KERNEL_ELF_PADDR_BASE_RAW (PHYS_BASE_RAW + UL_CONST(0x4000000))
+#define KERNEL_ELF_PADDR_BASE_RAW PHYS_BASE_RAW
 
 /* The base address in virtual memory to use for the kernel ELF mapping */
 #define KERNEL_ELF_BASE (PPTR_TOP + (KERNEL_ELF_PADDR_BASE & MASK(30)))

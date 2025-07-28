@@ -19,6 +19,7 @@
 #include <arch/machine.h>
 #include <arch/kernel/thread.h>
 #include <machine/registerset.h>
+#include <machine/fpu.h>
 #include <linker.h>
 
 static seL4_MessageInfo_t
@@ -28,6 +29,7 @@ transferCaps(seL4_MessageInfo_t info,
 
 BOOT_CODE void configureIdleThread(tcb_t *tcb)
 {
+    tcb->tcbFlags = seL4_TCBFlag_fpuDisabled;
     Arch_configureIdleThread(tcb);
     setThreadState(tcb, ThreadState_IdleThreadState);
 }
@@ -139,7 +141,7 @@ void doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, bool_t grant)
 
     tcb_t *receiver = reply->replyTCB;
     reply_remove(reply, receiver);
-    assert(thread_state_get_replyObject(receiver->tcbState) == REPLY_REF(0));
+    assert(thread_state_get_tsType(receiver->tcbState) == ThreadState_Inactive);
     assert(reply->replyTCB == NULL);
 
     if (sc_sporadic(receiver->tcbSchedContext)
@@ -181,14 +183,15 @@ void doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, bool_t grant)
 
 #ifdef CONFIG_KERNEL_MCS
     if (receiver->tcbSchedContext && isRunnable(receiver)) {
-        if ((refill_ready(receiver->tcbSchedContext) && refill_sufficient(receiver->tcbSchedContext, 0))) {
+        sched_context_t *sc = receiver->tcbSchedContext;
+        if ((refill_ready(sc) && refill_sufficient(sc, 0))) {
             possibleSwitchTo(receiver);
         } else {
             if (validTimeoutHandler(receiver) && fault_type != seL4_Fault_Timeout) {
-                current_fault = seL4_Fault_Timeout_new(receiver->tcbSchedContext->scBadge);
+                current_fault = seL4_Fault_Timeout_new(sc->scBadge);
                 handleTimeout(receiver);
             } else {
-                postpone(receiver->tcbSchedContext);
+                postpone(sc);
             }
         }
     }
@@ -299,6 +302,24 @@ void doNBRecvFailedTransfer(tcb_t *thread)
     setRegister(thread, badgeRegister, 0);
 }
 
+void prepareSetDomain(tcb_t *tptr, dom_t dom)
+{
+#ifdef CONFIG_HAVE_FPU
+    if (ksCurDomain != dom) {
+        /* Save FPU state now to avoid touching cross-domain state later */
+        fpuRelease(tptr);
+    }
+#endif
+}
+
+static void prepareNextDomain(void)
+{
+#ifdef CONFIG_HAVE_FPU
+    /* Save FPU state now to avoid touching cross-domain state later */
+    switchLocalFpuOwner(NULL);
+#endif
+}
+
 static void nextDomain(void)
 {
     ksDomScheduleIdx++;
@@ -343,6 +364,7 @@ static void switchSchedContext(void)
 static void scheduleChooseNewThread(void)
 {
     if (ksDomainTime == 0) {
+        prepareNextDomain();
         nextDomain();
     }
     chooseThread();
@@ -451,6 +473,11 @@ void switchToThread(tcb_t *thread)
     benchmark_utilisation_switch(NODE_STATE(ksCurThread), thread);
 #endif
     Arch_switchToThread(thread);
+
+#ifdef CONFIG_HAVE_FPU
+    lazyFPURestore(thread);
+#endif /* CONFIG_HAVE_FPU */
+
     tcbSchedDequeue(thread);
     NODE_STATE(ksCurThread) = thread;
 }
@@ -577,15 +604,19 @@ void postpone(sched_context_t *sc)
 
 void setNextInterrupt(void)
 {
-    ticks_t next_interrupt = NODE_STATE(ksCurTime) +
-                             refill_head(NODE_STATE(ksCurThread)->tcbSchedContext)->rAmount;
+    /* fetch the head refill separately to ease verification */
+    refill_t ct_head_refill = *refill_head(NODE_STATE(ksCurThread)->tcbSchedContext);
+    ticks_t next_interrupt = NODE_STATE(ksCurTime) + ct_head_refill.rAmount;
 
     if (numDomains > 1) {
         next_interrupt = MIN(next_interrupt, NODE_STATE(ksCurTime) + ksDomainTime);
     }
 
-    if (NODE_STATE(ksReleaseQueue.head) != NULL) {
-        next_interrupt = MIN(refill_head(NODE_STATE(ksReleaseQueue.head)->tcbSchedContext)->rTime, next_interrupt);
+    tcb_t *rlq_head = NODE_STATE(ksReleaseQueue.head);
+    if (rlq_head != NULL) {
+        /* fetch the head refill separately to ease verification */
+        refill_t rlq_head_refill = *refill_head(rlq_head->tcbSchedContext);
+        next_interrupt = MIN(rlq_head_refill.rTime, next_interrupt);
     }
 
     /* We should never be attempting to schedule anything earlier than ksCurTime */
@@ -603,7 +634,9 @@ void chargeBudget(ticks_t consumed, bool_t canTimeoutFault)
     if (likely(NODE_STATE(ksCurSC) != NODE_STATE(ksIdleSC))) {
         if (isRoundRobin(NODE_STATE(ksCurSC))) {
             assert(refill_size(NODE_STATE(ksCurSC)) == MIN_REFILLS);
-            refill_head(NODE_STATE(ksCurSC))->rAmount += refill_tail(NODE_STATE(ksCurSC))->rAmount;
+            refill_t head = *refill_head(NODE_STATE(ksCurSC));
+            refill_t tail = *refill_tail(NODE_STATE(ksCurSC));
+            refill_head(NODE_STATE(ksCurSC))->rAmount = head.rAmount + tail.rAmount;
             refill_tail(NODE_STATE(ksCurSC))->rAmount = 0;
         } else {
             refill_budget_check(consumed);
@@ -623,7 +656,10 @@ void chargeBudget(ticks_t consumed, bool_t canTimeoutFault)
 
 void endTimeslice(bool_t can_timeout_fault)
 {
-    if (can_timeout_fault && !isRoundRobin(NODE_STATE(ksCurSC)) && validTimeoutHandler(NODE_STATE(ksCurThread))) {
+    bool_t round_robin = isRoundRobin(NODE_STATE(ksCurSC));
+    bool_t valid = validTimeoutHandler(NODE_STATE(ksCurThread));
+
+    if (can_timeout_fault && !round_robin && valid) {
         current_fault = seL4_Fault_Timeout_new(NODE_STATE(ksCurSC)->scBadge);
         handleTimeout(NODE_STATE(ksCurThread));
     } else if (refill_ready(NODE_STATE(ksCurSC)) && refill_sufficient(NODE_STATE(ksCurSC), 0)) {

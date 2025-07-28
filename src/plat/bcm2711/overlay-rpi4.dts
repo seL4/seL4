@@ -10,6 +10,7 @@
 	chosen {
 		seL4,elfloader-devices =
 		    "serial1",
+		    &{/soc/firmware},
 		    &{/timer};
 
 		seL4,kernel-devices =

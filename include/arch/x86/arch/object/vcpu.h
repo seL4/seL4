@@ -251,7 +251,7 @@ enum vcpu_gp_register {
     VCPU_R15,
 #endif
     n_vcpu_gp_register,
-    /* We need to define a sentinal value to detect ESP that is strictly distinct
+    /* We need to define a sentinel value to detect ESP that is strictly distinct
      * from any of our other GP register indexes, so put that here */
     VCPU_ESP,
 };
@@ -303,6 +303,9 @@ struct vcpu {
     /* TCB associated with this VCPU. */
     struct tcb *vcpuTCB;
     bool_t launched;
+
+    /* True if the FPU is used by the VCPU */
+    bool_t fpu_active;
 
     /* Currently assigned VPID */
     vpid_t vpid;
@@ -377,6 +380,8 @@ void vcpu_sysvmenter_reply_to_user(tcb_t *tcb);
 bool_t vtx_init(void);
 exception_t handleVmexit(void);
 exception_t handleVmEntryFail(void);
+void vcpu_fpu_to_guest(tcb_t *tcb, vcpu_t *vcpu);
+void vcpu_fpu_to_host(tcb_t *tcb, vcpu_t *vcpu);
 void restoreVMCS(void);
 void clearCurrentVCPU(void);
 

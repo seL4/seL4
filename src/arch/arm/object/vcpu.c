@@ -99,11 +99,7 @@ void vcpu_restore(vcpu_t *vcpu)
     }
 
     /* restore registers */
-#ifdef CONFIG_ARCH_AARCH64
-    vcpu_restore_reg_range(vcpu, seL4_VCPUReg_TTBR0, seL4_VCPUReg_SPSR_EL1);
-#else
-    vcpu_restore_reg_range(vcpu, seL4_VCPUReg_ACTLR, seL4_VCPUReg_SPSRfiq);
-#endif
+    vcpu_restore_reg_range(vcpu, seL4_VCPURegSaveRange_start, seL4_VCPURegSaveRange_end);
     vcpu_enable(vcpu);
 }
 
@@ -114,11 +110,16 @@ void VPPIEvent(irq_t irq)
      * correctly receive a fault IPC message. This may occur due to the
      * budget check that happens early in the handleInterruptEntry.
      *
-     * If the current thread does *not* have budget this interrupt is
-     * ignored for now. As it is a level-triggered interrupt it shall
-     * be re-raised (and not lost).
+     * If the current thread does *not* have budget, as indicated by its
+     * presence in the release queue, this interrupt is ignored for now.
+     * As it is a level-triggered interrupt it shall be re-raised
+     * (and not lost).
+     *
+     * Additionally, if we have already received a timeout fault due to
+     * our timeslice having ended, and we have a timeout fault handler for
+     * this thread, we do not want to overwrite that with our VCPU fault.
      */
-    if (thread_state_get_tcbQueued(NODE_STATE(ksCurThread)->tcbState)) {
+    if (!isSchedulable(NODE_STATE(ksCurThread))) {
         return;
     }
 #endif
@@ -145,7 +146,7 @@ void VGICMaintenance(void)
 
 #ifdef CONFIG_KERNEL_MCS
     /* See VPPIEvent for details on this check. */
-    if (thread_state_get_tcbQueued(NODE_STATE(ksCurThread)->tcbState)) {
+    if (!isSchedulable(NODE_STATE(ksCurThread))) {
         return;
     }
 #endif
