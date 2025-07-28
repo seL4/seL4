@@ -327,6 +327,15 @@ BOOT_CODE void create_bi_frame_cap(cap_t root_cnode_cap, cap_t pd_cap, vptr_t vp
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapBootInfoFrame), cap);
 }
 
+/**
+ * the size_bits we return is 0 for extra_size = 0
+ * and if it is non-zero the bits are always >= seL4_PageBits
+ * this is relied on in a few places, and gives us code of the form
+ *
+ *     extra_bi_size_bits > 0 ? BIT(extra_bi_size_bits) : 0
+ *
+ * which handles the 0-size case.
+ */
 BOOT_CODE word_t calculate_extra_bi_size_bits(word_t extra_size)
 {
     if (extra_size == 0) {

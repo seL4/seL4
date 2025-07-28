@@ -276,7 +276,7 @@ static BOOT_CODE bool_t try_init_kernel(
     word_t extra_bi_size_bits = calculate_extra_bi_size_bits(extra_bi_size);
     v_region_t it_v_reg = {
         .start = ui_v_reg.start,
-        .end   = extra_bi_frame_vptr + BIT(extra_bi_size_bits)
+        .end   = extra_bi_frame_vptr + (extra_bi_size_bits > 0 ? BIT(extra_bi_size_bits) : 0)
     };
     if (it_v_reg.end >= USER_TOP) {
         /* Variable arguments for printf() require well defined integer types
