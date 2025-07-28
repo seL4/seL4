@@ -38,7 +38,10 @@ macro(declare_seL4_arch)
         # Use first architecture from list as default.
         list(GET _arch_list 0 _default_KernelSel4Arch)
         print_message_multiple_options_helper("architectures" "${_default_KernelSel4Arch}")
-        set(KernelSel4Arch "${_default_KernelSel4Arch}" CACHE STRING "" FORCE)
+        set(KernelSel4Arch
+            "${_default_KernelSel4Arch}"
+            CACHE STRING "" FORCE
+        )
     elseif(NOT "${KernelSel4Arch}" IN_LIST _arch_list)
         message(FATAL_ERROR "KernelSel4Arch '${KernelSel4Arch}' not in '${_arch_list}'")
     endif()
@@ -73,14 +76,33 @@ macro(declare_seL4_arch)
     )
 
     # Set kernel mode options
-    if(KernelSel4ArchAarch32 OR KernelSel4ArchRiscV32 OR KernelSel4ArchIA32)
+    if(KernelSel4ArchAarch32
+       OR KernelSel4ArchRiscV32
+       OR KernelSel4ArchIA32
+    )
         config_set(KernelWordSize WORD_SIZE 32)
-        set(Kernel64 OFF CACHE INTERNAL "")
-        set(Kernel32 ON CACHE INTERNAL "")
-    elseif(KernelSel4ArchAarch64 OR KernelSel4ArchRiscV64 OR KernelSel4ArchX86_64)
+        set(Kernel64
+            OFF
+            CACHE INTERNAL ""
+        )
+        set(Kernel32
+            ON
+            CACHE INTERNAL ""
+        )
+    elseif(
+        KernelSel4ArchAarch64
+        OR KernelSel4ArchRiscV64
+        OR KernelSel4ArchX86_64
+    )
         config_set(KernelWordSize WORD_SIZE 64)
-        set(Kernel64 ON CACHE INTERNAL "")
-        set(Kernel32 OFF CACHE INTERNAL "")
+        set(Kernel64
+            ON
+            CACHE INTERNAL ""
+        )
+        set(Kernel32
+            OFF
+            CACHE INTERNAL ""
+        )
     else()
         message(FATAL_ERROR "unsupported seL4 architecture: '${KernelSel4Arch}'")
     endif()
@@ -98,11 +120,20 @@ endmacro()
 macro(declare_platform name config1 config2 enable_test)
     list(APPEND kernel_platforms "${name}\;${config1}\;${config2}\;${enable_test}")
     if("${KernelPlatform}" STREQUAL ${name})
-        set(${config1} ON CACHE INTERNAL "" FORCE)
+        set(${config1}
+            ON
+            CACHE INTERNAL "" FORCE
+        )
         # Write KernelPlatform into the cache in case it is only a local variable
-        set(KernelPlatform ${KernelPlatform} CACHE STRING "")
+        set(KernelPlatform
+            ${KernelPlatform}
+            CACHE STRING ""
+        )
     else()
-        set(${config1} OFF CACHE INTERNAL "" FORCE)
+        set(${config1}
+            OFF
+            CACHE INTERNAL "" FORCE
+        )
     endif()
 endmacro()
 
@@ -135,22 +166,20 @@ endmacro()
 # For all of the common variables we set a default value here if they haven't
 # been set by a platform.
 foreach(
-    var
-    IN
-    ITEMS
-    KernelArmCortexA7
-    KernelArmCortexA8
-    KernelArmCortexA9
-    KernelArmCortexA15
-    KernelArmCortexA35
-    KernelArmCortexA53
-    KernelArmCortexA55
-    KernelArmCortexA57
-    KernelArmCortexA72
-    KernelArchArmV7a
-    KernelArchArmV7ve
-    KernelArchArmV8a
-    KernelAArch64SErrorIgnore
+    var IN
+    ITEMS KernelArmCortexA7
+          KernelArmCortexA8
+          KernelArmCortexA9
+          KernelArmCortexA15
+          KernelArmCortexA35
+          KernelArmCortexA53
+          KernelArmCortexA55
+          KernelArmCortexA57
+          KernelArmCortexA72
+          KernelArchArmV7a
+          KernelArchArmV7ve
+          KernelArchArmV8a
+          KernelAArch64SErrorIgnore
 )
     unset(${var} CACHE)
     set(${var} OFF)
@@ -203,30 +232,66 @@ config_set(KernelAArch64SErrorIgnore AARCH64_SERROR_IGNORE "${KernelAArch64SErro
 # actual armv to that, but leave armv7a config enabled for anything that
 # checks directly against it
 if(KernelArchArmV7ve)
-    set(KernelArmArmV "armv7ve" CACHE INTERNAL "")
+    set(KernelArmArmV
+        "armv7ve"
+        CACHE INTERNAL ""
+    )
 elseif(KernelArchArmV7a)
-    set(KernelArmArmV "armv7-a" CACHE INTERNAL "")
+    set(KernelArmArmV
+        "armv7-a"
+        CACHE INTERNAL ""
+    )
 elseif(KernelArchArmV8a)
-    set(KernelArmArmV "armv8-a" CACHE INTERNAL "")
+    set(KernelArmArmV
+        "armv8-a"
+        CACHE INTERNAL ""
+    )
 endif()
 if(KernelArmCortexA7)
-    set(KernelArmCPU "cortex-a7" CACHE INTERNAL "")
+    set(KernelArmCPU
+        "cortex-a7"
+        CACHE INTERNAL ""
+    )
 elseif(KernelArmCortexA8)
-    set(KernelArmCPU "cortex-a8" CACHE INTERNAL "")
+    set(KernelArmCPU
+        "cortex-a8"
+        CACHE INTERNAL ""
+    )
 elseif(KernelArmCortexA9)
-    set(KernelArmCPU "cortex-a9" CACHE INTERNAL "")
+    set(KernelArmCPU
+        "cortex-a9"
+        CACHE INTERNAL ""
+    )
 elseif(KernelArmCortexA15)
-    set(KernelArmCPU "cortex-a15" CACHE INTERNAL "")
+    set(KernelArmCPU
+        "cortex-a15"
+        CACHE INTERNAL ""
+    )
 elseif(KernelArmCortexA35)
-    set(KernelArmCPU "cortex-a35" CACHE INTERNAL "")
+    set(KernelArmCPU
+        "cortex-a35"
+        CACHE INTERNAL ""
+    )
 elseif(KernelArmCortexA53)
-    set(KernelArmCPU "cortex-a53" CACHE INTERNAL "")
+    set(KernelArmCPU
+        "cortex-a53"
+        CACHE INTERNAL ""
+    )
 elseif(KernelArmCortexA55)
-    set(KernelArmCPU "cortex-a55" CACHE INTERNAL "")
+    set(KernelArmCPU
+        "cortex-a55"
+        CACHE INTERNAL ""
+    )
 elseif(KernelArmCortexA57)
-    set(KernelArmCPU "cortex-a57" CACHE INTERNAL "")
+    set(KernelArmCPU
+        "cortex-a57"
+        CACHE INTERNAL ""
+    )
 elseif(KernelArmCortexA72)
-    set(KernelArmCPU "cortex-a72" CACHE INTERNAL "")
+    set(KernelArmCPU
+        "cortex-a72"
+        CACHE INTERNAL ""
+    )
 endif()
 if(KernelArchARM)
     config_set(KernelArmMach ARM_MACH "${KernelArmMach}")
@@ -238,9 +303,8 @@ else()
     set(toolchain_file llvm.cmake)
 endif()
 set(toolchain_outputfile "${CMAKE_BINARY_DIR}/${toolchain_file}")
-if(
-    ("${CMAKE_TOOLCHAIN_FILE}" STREQUAL "")
-    OR ("${CMAKE_TOOLCHAIN_FILE}" STREQUAL "${toolchain_outputfile}")
+if(("${CMAKE_TOOLCHAIN_FILE}" STREQUAL "") OR ("${CMAKE_TOOLCHAIN_FILE}" STREQUAL
+                                               "${toolchain_outputfile}")
 )
     if(DEFINED CACHE{CROSS_COMPILER_PREFIX})
         set(cross_prefix $CACHE{CROSS_COMPILER_PREFIX})
@@ -258,5 +322,8 @@ if(
         endif()
     endif()
     file(RENAME "${toolchain_outputfile}.temp" "${toolchain_outputfile}")
-    set(CMAKE_TOOLCHAIN_FILE "${toolchain_outputfile}" CACHE PATH "")
+    set(CMAKE_TOOLCHAIN_FILE
+        "${toolchain_outputfile}"
+        CACHE PATH ""
+    )
 endif()
