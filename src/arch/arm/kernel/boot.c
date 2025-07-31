@@ -398,7 +398,7 @@ static BOOT_CODE bool_t try_init_kernel(
          * kernel window we cannot access it.
          */
         if (dtb_phys_end >= PADDR_TOP) {
-            printf("ERROR: DTB at [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] "
+            printf("ERROR: DTB at [%"SEL4_PRIx_word"..%"SEL4_PRIx_word") "
                    "exceeds PADDR_TOP (%"SEL4_PRIx_word")\n",
                    dtb_phys_addr, dtb_phys_end, PADDR_TOP);
             return false;
@@ -423,7 +423,7 @@ static BOOT_CODE bool_t try_init_kernel(
          * work properly. Unfortunately, the definition of USER_TOP differs
          * between platforms (int, long), so we have to cast here to play safe.
          */
-        printf("ERROR: userland image virt [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]"
+        printf("ERROR: userland image virt [%"SEL4_PRIx_word"..%"SEL4_PRIx_word")"
                "exceeds USER_TOP (%"SEL4_PRIx_word")\n",
                it_v_reg.start, it_v_reg.end, (word_t)USER_TOP);
         return false;
