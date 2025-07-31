@@ -266,6 +266,11 @@ BEGIN_FUNC(common_init)
     ret
 END_FUNC(common_init)
 
+BEGIN_FUNC(hvm_entry)
+    mov $0x336ec578, %eax /* HVM_START_MAGIC */
+    jmp _start
+END_FUNC(hvm_entry)
+
 BEGIN_FUNC(_start)
     /* Assume we are MultiBooted, e.g. by GRUB.
      * While not immediately checked, the magic number is checked prior to 
@@ -428,3 +433,13 @@ BEGIN_FUNC(_entry_ap64)
 END_FUNC(_entry_ap64)
 
 #endif /* ENABLE_SMP_SUPPORT */
+
+.section .note.Xen
+.align 4
+.long 4                  /* name size */
+.long 4                  /* data size */
+.long 18                 /* type (XEN_ELFNOTE_PHYS32_ENTRY) */
+.align 4
+.string "Xen"            /* name */
+.align 4
+.long hvm_entry          /* data */
