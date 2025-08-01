@@ -58,7 +58,7 @@ void create_domain_cap(cap_t root_cnode_cap);
 cap_t create_ipcbuf_frame_cap(cap_t root_cnode_cap, cap_t pd_cap, vptr_t vptr);
 word_t calculate_extra_bi_size_bits(word_t extra_size);
 void populate_bi_frame(node_id_t node_id, word_t num_nodes, vptr_t ipcbuf_vptr,
-                       word_t extra_bi_size_bits);
+                       word_t extra_bi_size);
 void create_bi_frame_cap(cap_t root_cnode_cap, cap_t pd_cap, vptr_t vptr);
 
 #ifdef CONFIG_KERNEL_MCS
