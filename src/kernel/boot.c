@@ -432,7 +432,7 @@ BOOT_CODE create_frames_of_region_ret_t create_frames_of_region(
 
 BOOT_CODE cap_t create_it_asid_pool(cap_t root_cnode_cap)
 {
-    cap_t ap_cap = cap_asid_pool_cap_new(ASID_HIGH(IT_ASID), rootserver.asid_pool);
+    cap_t ap_cap = cap_asid_pool_cap_new(ASID_HIGH(IT_ASID) << asidLowBits, rootserver.asid_pool);
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadASIDPool), ap_cap);
 
     /* create ASID control cap */
