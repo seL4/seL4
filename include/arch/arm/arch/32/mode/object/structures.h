@@ -113,7 +113,7 @@ typedef struct asid_pool asid_pool_t;
 static inline cap_t CONST cap_small_frame_cap_set_capFMappedASID(cap_t cap, word_t asid)
 {
     cap = cap_small_frame_cap_set_capFMappedASIDLow(cap,
-                                                    asid & MASK(asidLowBits));
+                                                    ASID_LOW(asid));
     return cap_small_frame_cap_set_capFMappedASIDHigh(cap,
                                                       (asid >> asidLowBits) & MASK(asidHighBits));
 }
@@ -127,7 +127,7 @@ static inline word_t CONST cap_small_frame_cap_get_capFMappedASID(cap_t cap)
 static inline cap_t CONST cap_frame_cap_set_capFMappedASID(cap_t cap, word_t asid)
 {
     cap = cap_frame_cap_set_capFMappedASIDLow(cap,
-                                              asid & MASK(asidLowBits));
+                                              ASID_LOW(asid));
     return cap_frame_cap_set_capFMappedASIDHigh(cap,
                                                 (asid >> asidLowBits) & MASK(asidHighBits));
 }
