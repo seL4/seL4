@@ -220,11 +220,6 @@ enum thread_control_flag {
     thread_control_update_ipc_buffer = 0x2,
     thread_control_update_space = 0x4,
     thread_control_update_mcp = 0x8,
-#ifdef CONFIG_KERNEL_MCS
-    thread_control_update_sc = 0x10,
-    thread_control_update_fault = 0x20,
-    thread_control_update_timeout = 0x40,
-#endif
 };
 #endif
 
