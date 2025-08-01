@@ -99,7 +99,6 @@ typedef struct asid_pool asid_pool_t;
 
 #define HW_ASID_SIZE_BITS 1
 
-#define ASID_POOL_INDEX_BITS seL4_ASIDPoolIndexBits
 #define ASID_BITS (asidHighBits+asidLowBits)
 
 #define nASIDPools BIT(asidHighBits)
@@ -433,4 +432,3 @@ static inline word_t PURE pte_ptr_get_pteType(pte_t *pte_ptr)
     }
 }
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
-

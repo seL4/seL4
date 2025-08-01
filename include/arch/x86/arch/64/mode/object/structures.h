@@ -102,8 +102,6 @@ struct asid_pool {
 
 typedef struct asid_pool asid_pool_t;
 
-#define ASID_POOL_INDEX_BITS  seL4_ASIDPoolIndexBits
-#define ASID_POOL_SIZE_BITS (seL4_ASIDPoolBits + WORD_SIZE_BITS)
 #define ASID_POOL_PTR(r)    ((asid_pool_t*)r)
 #define ASID_POOL_REF(p)    ((word_t)p)
 #define ASID_BITS           (asidHighBits + asidLowBits)
@@ -192,4 +190,3 @@ static inline void *CONST cap_get_modeCapPtr(cap_t cap)
         return NULL;
     }
 }
-

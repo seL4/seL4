@@ -73,7 +73,6 @@ typedef pte_t pde_t;
 #define ASID_POOL_REF(p)    ((word_t)p)
 
 
-#define ASID_POOL_INDEX_BITS seL4_ASIDPoolIndexBits
 #define ASID_BITS (asidHighBits+asidLowBits)
 #define nASIDs     BIT(ASID_BITS)
 #define nASIDPools BIT(asidHighBits)
