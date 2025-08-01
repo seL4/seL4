@@ -15,7 +15,7 @@
 #include <plat/machine/hardware.h>
 
 /* The top level asid mapping table */
-asid_pool_t *armKSASIDTable[BIT(asidHighBits)];
+asid_pool_t *armKSASIDTable[nASIDPools];
 
 /* The hardware ASID to virtual ASID mapping table */
 asid_t armKSHWASIDTable[BIT(hwASIDBits)];
