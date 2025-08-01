@@ -18,7 +18,7 @@
 #endif
 
 
-asid_pool_t *armKSASIDTable[BIT(asidHighBits)];
+asid_pool_t *armKSASIDTable[nASIDPools];
 
 /* AArch64 Memory map explanation:
  *
