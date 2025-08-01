@@ -28,6 +28,10 @@
 #define seL4_PUDBits 13
 #define seL4_PUDIndexBits 10
 #define seL4_ARM_PageUpperDirectoryObject seL4_ARM_VSpaceObject
+#define seL4_ARM_PageUpperDirectory seL4_ARM_VSpace
+
+/* this was previously defined always, so keep that here for consistency */
+#define seL4_ARM_PageGlobalDirectory seL4_CPtr
 
 #else
 
@@ -38,6 +42,7 @@
 #define seL4_PUDBits 12
 #define seL4_PUDIndexBits 9
 #define seL4_ARM_PageGlobalDirectoryObject seL4_ARM_VSpaceObject
+#define seL4_ARM_PageGlobalDirectory seL4_ARM_VSpace
 #define seL4_ARM_PageUpperDirectoryObject seL4_ARM_PageTableObject
 #define seL4_ARM_PageUpperDirectory seL4_ARM_PageTable;
 #define seL4_ARM_PageUpperDirectory_Map seL4_ARM_PageTable_Map

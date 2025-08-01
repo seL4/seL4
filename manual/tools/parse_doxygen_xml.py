@@ -96,10 +96,11 @@ class Generator(object):
         return ""
 
     def ref_to_format(self, para, ref_dict):
-        """Convert a reference by id to a latex command by looking up refid in para"""
-        if len(ref_dict) > 0:
+        """Format a reference by id by looking up refid in para. Return escaped content if not found."""
+        try:
             return self.ref_format(para["refid"], ref_dict)
-        return ""
+        except KeyError:
+            return self.text_escape(para.contents[0])
 
     def nref_to_format(self, para, ref_dict):
         """Convert a reference by name to a latex command by looking up refid in para"""
