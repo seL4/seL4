@@ -311,7 +311,7 @@ BOOT_CODE void write_it_asid_pool(cap_t it_ap_cap, cap_t it_lvl1pt_cap)
 {
     asid_pool_t *ap = ASID_POOL_PTR(pptr_of_cap(it_ap_cap));
     ap->array[IT_ASID] = PTE_PTR(pptr_of_cap(it_lvl1pt_cap));
-    riscvKSASIDTable[IT_ASID >> asidLowBits] = ap;
+    riscvKSASIDTable[ASID_HIGH(IT_ASID)] = ap;
 }
 
 /* ==================== BOOT CODE FINISHES HERE ==================== */
@@ -322,7 +322,7 @@ static findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
     asid_pool_t        *poolPtr;
     pte_t     *vspace_root;
 
-    poolPtr = riscvKSASIDTable[asid >> asidLowBits];
+    poolPtr = riscvKSASIDTable[ASID_HIGH(asid)];
     if (!poolPtr) {
         current_lookup_fault = lookup_fault_invalid_root_new();
 
@@ -444,8 +444,8 @@ void deleteASIDPool(asid_t asid_base, asid_pool_t *pool)
     /* Haskell error: "ASID pool's base must be aligned" */
     assert(IS_ALIGNED(asid_base, asidLowBits));
 
-    if (riscvKSASIDTable[asid_base >> asidLowBits] == pool) {
-        riscvKSASIDTable[asid_base >> asidLowBits] = NULL;
+    if (riscvKSASIDTable[ASID_HIGH(asid_base)] == pool) {
+        riscvKSASIDTable[ASID_HIGH(asid_base)] = NULL;
         setVMRoot(NODE_STATE(ksCurThread));
     }
 }
@@ -470,7 +470,7 @@ static exception_t performASIDControlInvocation(void *frame, cte_t *slot, cte_t 
     );
     /* Haskell error: "ASID pool's base must be aligned" */
     assert((asid_base & MASK(asidLowBits)) == 0);
-    riscvKSASIDTable[asid_base >> asidLowBits] = (asid_pool_t *)frame;
+    riscvKSASIDTable[ASID_HIGH(asid_base)] = (asid_pool_t *)frame;
 
     return EXCEPTION_NONE;
 }
@@ -495,7 +495,7 @@ void deleteASID(asid_t asid, pte_t *vspace)
 {
     asid_pool_t *poolPtr;
 
-    poolPtr = riscvKSASIDTable[asid >> asidLowBits];
+    poolPtr = riscvKSASIDTable[ASID_HIGH(asid)];
     if (poolPtr != NULL && poolPtr->array[asid & MASK(asidLowBits)] == vspace) {
         hwASIDFlush(asid);
         poolPtr->array[asid & MASK(asidLowBits)] = NULL;
@@ -1046,7 +1046,7 @@ exception_t decodeRISCVMMUInvocation(word_t label, word_t length, cptr_t cptr,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        pool = riscvKSASIDTable[cap_asid_pool_cap_get_capASIDBase(cap) >> asidLowBits];
+        pool = riscvKSASIDTable[ASID_HIGH(cap_asid_pool_cap_get_capASIDBase(cap))];
         if (!pool) {
             current_syscall_error.type = seL4_FailedLookup;
             current_syscall_error.failedLookupWasSource = false;

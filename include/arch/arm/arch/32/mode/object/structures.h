@@ -104,7 +104,11 @@ typedef struct asid_pool asid_pool_t;
 #define nASIDPools BIT(asidHighBits)
 
 #define ASID_LOW(a) (a & MASK(asidLowBits))
-#define ASID_HIGH(a) ((a >> asidLowBits) & MASK(asidHighBits))
+/* This *could* have been defined as ((a >> asidLowBits) & MASK(asidHighBits))
+ * but the compiler does not have enough information to be able to elide the
+ * mask operation, and ASIDs are only ever used internally to the kernel.
+ */
+#define ASID_HIGH(a) (a >> asidLowBits)
 
 static inline cap_t CONST cap_small_frame_cap_set_capFMappedASID(cap_t cap, word_t asid)
 {

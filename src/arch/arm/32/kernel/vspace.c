@@ -592,7 +592,7 @@ BOOT_CODE void write_it_asid_pool(cap_t it_ap_cap, cap_t it_pd_cap)
 {
     asid_pool_t *ap = ASID_POOL_PTR(pptr_of_cap(it_ap_cap));
     ap->array[IT_ASID] = PDE_PTR(pptr_of_cap(it_pd_cap));
-    armKSASIDTable[IT_ASID >> asidLowBits] = ap;
+    armKSASIDTable[ASID_HIGH(IT_ASID)] = ap;
 }
 
 /* ==================== BOOT CODE FINISHES HERE ==================== */
@@ -603,7 +603,7 @@ findPDForASID_ret_t findPDForASID(asid_t asid)
     asid_pool_t *poolPtr;
     pde_t *pd;
 
-    poolPtr = armKSASIDTable[asid >> asidLowBits];
+    poolPtr = armKSASIDTable[ASID_HIGH(asid)];
     if (unlikely(!poolPtr)) {
         current_lookup_fault = lookup_fault_invalid_root_new();
 
@@ -1075,7 +1075,7 @@ static void invalidateASID(asid_t asid)
     asid_pool_t *asidPool;
     pde_t *pd;
 
-    asidPool = armKSASIDTable[asid >> asidLowBits];
+    asidPool = armKSASIDTable[ASID_HIGH(asid)];
     assert(asidPool);
 
     pd = asidPool->array[asid & MASK(asidLowBits)];
@@ -1089,7 +1089,7 @@ static pde_t PURE loadHWASID(asid_t asid)
     asid_pool_t *asidPool;
     pde_t *pd;
 
-    asidPool = armKSASIDTable[asid >> asidLowBits];
+    asidPool = armKSASIDTable[ASID_HIGH(asid)];
     assert(asidPool);
 
     pd = asidPool->array[asid & MASK(asidLowBits)];
@@ -1103,7 +1103,7 @@ static void storeHWASID(asid_t asid, hw_asid_t hw_asid)
     asid_pool_t *asidPool;
     pde_t *pd;
 
-    asidPool = armKSASIDTable[asid >> asidLowBits];
+    asidPool = armKSASIDTable[ASID_HIGH(asid)];
     assert(asidPool);
 
     pd = asidPool->array[asid & MASK(asidLowBits)];
@@ -1282,14 +1282,14 @@ void deleteASIDPool(asid_t asid_base, asid_pool_t *pool)
     /* Haskell error: "ASID pool's base must be aligned" */
     assert((asid_base & MASK(asidLowBits)) == 0);
 
-    if (armKSASIDTable[asid_base >> asidLowBits] == pool) {
+    if (armKSASIDTable[ASID_HIGH(asid_base)] == pool) {
         for (offset = 0; offset < BIT(asidLowBits); offset++) {
             if (pool->array[offset]) {
                 flushSpace(asid_base + offset);
                 invalidateASIDEntry(asid_base + offset);
             }
         }
-        armKSASIDTable[asid_base >> asidLowBits] = NULL;
+        armKSASIDTable[ASID_HIGH(asid_base)] = NULL;
         setVMRoot(NODE_STATE(ksCurThread));
     }
 }
@@ -1298,7 +1298,7 @@ void deleteASID(asid_t asid, pde_t *pd)
 {
     asid_pool_t *poolPtr;
 
-    poolPtr = armKSASIDTable[asid >> asidLowBits];
+    poolPtr = armKSASIDTable[ASID_HIGH(asid)];
 
     if (poolPtr != NULL && poolPtr->array[asid & MASK(asidLowBits)] == pd) {
         flushSpace(asid);
@@ -1991,7 +1991,7 @@ static exception_t performASIDControlInvocation(void *frame, cte_t *slot,
               parent, slot);;
     /* Haskell error: "ASID pool's base must be aligned" */
     assert((asid_base & MASK(asidLowBits)) == 0);
-    armKSASIDTable[asid_base >> asidLowBits] = (asid_pool_t *)frame;
+    armKSASIDTable[ASID_HIGH(asid_base)] = (asid_pool_t *)frame;
 
     return EXCEPTION_NONE;
 }
@@ -2626,8 +2626,7 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        pool = armKSASIDTable[cap_asid_pool_cap_get_capASIDBase(cap) >>
-                                                                     asidLowBits];
+        pool = armKSASIDTable[ASID_HIGH(cap_asid_pool_cap_get_capASIDBase(cap))];
         if (unlikely(!pool)) {
             userError("ASIDPoolAssign: Failed to lookup pool.");
             current_syscall_error.type = seL4_FailedLookup;
