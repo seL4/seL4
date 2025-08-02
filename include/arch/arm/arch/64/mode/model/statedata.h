@@ -21,7 +21,7 @@
 #endif
 
 /* The top level asid mapping table */
-extern asid_pool_t *armKSASIDTable[BIT(asidHighBits)] VISIBLE;
+extern asid_pool_t *armKSASIDTable[nASIDPools] VISIBLE;
 
 /* This is the temporary userspace page table in kernel. It is required before running
  * user thread to avoid speculative page table walking with the wrong page table. */

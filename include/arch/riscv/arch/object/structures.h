@@ -31,7 +31,11 @@ typedef struct asid_pool asid_pool_t;
 #define ASID_BITS           (asidHighBits + asidLowBits)
 #define nASIDPools          BIT(asidHighBits)
 #define ASID_LOW(a)         (a & MASK(asidLowBits))
-#define ASID_HIGH(a)        ((a >> asidLowBits) & MASK(asidHighBits))
+/* This *could* have been defined as ((a >> asidLowBits) & MASK(asidHighBits))
+ * but the compiler does not have enough information to be able to elide the
+ * mask operation, and ASIDs are only ever used internally to the kernel.
+ */
+#define ASID_HIGH(a) (a >> asidLowBits)
 
 typedef struct arch_tcb {
     user_context_t tcbContext;
@@ -149,4 +153,3 @@ static inline bool_t CONST Arch_isCapRevocable(cap_t derivedCap, cap_t srcCap)
 }
 
 #endif /* !__ASSEMBLER__  */
-

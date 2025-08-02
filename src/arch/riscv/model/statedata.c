@@ -15,7 +15,7 @@
 #include <plat/machine/hardware.h>
 
 /* The top level asid mapping table */
-asid_pool_t *riscvKSASIDTable[BIT(asidHighBits)];
+asid_pool_t *riscvKSASIDTable[nASIDPools];
 
 /* Kernel Page Tables */
 pte_t kernel_root_pageTable[BIT(PT_INDEX_BITS)] ALIGN_BSS(BIT(seL4_PageTableBits));

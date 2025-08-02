@@ -51,13 +51,16 @@ struct asid_pool {
 
 typedef struct asid_pool asid_pool_t;
 
-#define ASID_POOL_INDEX_BITS    seL4_ASIDPoolIndexBits
 #define ASID_POOL_PTR(r)    ((asid_pool_t*)r)
 #define ASID_POOL_REF(p)    ((word_t)p)
 #define ASID_BITS           (asidHighBits + asidLowBits)
 #define nASIDPools          BIT(asidHighBits)
 #define ASID_LOW(a)         (a & MASK(asidLowBits))
-#define ASID_HIGH(a)        ((a >> asidLowBits) & MASK(asidHighBits))
+/* This *could* have been defined as ((a >> asidLowBits) & MASK(asidHighBits))
+ * but the compiler does not have enough information to be able to elide the
+ * mask operation, and ASIDs are only ever used internally to the kernel.
+ */
+#define ASID_HIGH(a) (a >> asidLowBits)
 
 static inline asid_t CONST cap_frame_cap_get_capFMappedASID(cap_t cap)
 {
@@ -116,4 +119,3 @@ static inline void *CONST cap_get_modeCapPtr(cap_t cap)
 {
     fail("Invalid mode cap type");
 }
-
