@@ -582,7 +582,7 @@ asid_map_t findMapForASID(asid_t asid)
         return asid_map_asid_map_none_new();
     }
 
-    return poolPtr->array[asid & MASK(asidLowBits)];
+    return poolPtr->array[ASID_LOW(asid)];
 }
 
 static findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
@@ -817,13 +817,13 @@ static inline asid_pool_t *getPoolPtr(asid_t asid)
 static inline asid_map_t getASIDMap(asid_pool_t *poolPtr, asid_t asid)
 {
     assert(poolPtr != NULL);
-    return poolPtr->array[asid & MASK(asidLowBits)];
+    return poolPtr->array[ASID_LOW(asid)];
 }
 
 static inline void setASIDMap(asid_pool_t *poolPtr, asid_t asid, asid_map_t asid_map)
 {
     assert(poolPtr != NULL);
-    poolPtr->array[asid & MASK(asidLowBits)] = asid_map;
+    poolPtr->array[ASID_LOW(asid)] = asid_map;
 }
 
 static void invalidateASID(asid_t asid)
@@ -925,7 +925,7 @@ static word_t getASIDBindCB(asid_t asid)
     asidPool = armKSASIDTable[ASID_HIGH(asid)];
     assert(asidPool);
 
-    asid_map_t asid_map = asidPool->array[asid & MASK(asidLowBits)];
+    asid_map_t asid_map = asidPool->array[ASID_LOW(asid)];
     assert(asid_map_get_type(asid_map) == asid_map_asid_map_vspace);
 
     return asid_map_asid_map_vspace_get_bind_cb(asid_map);
@@ -938,7 +938,7 @@ void increaseASIDBindCB(asid_t asid)
     asidPool = armKSASIDTable[ASID_HIGH(asid)];
     assert(asidPool);
 
-    asid_map_t *asid_map = &asidPool->array[asid & MASK(asidLowBits)];
+    asid_map_t *asid_map = &asidPool->array[ASID_LOW(asid)];
     assert(asid_map_ptr_get_type(asid_map) == asid_map_asid_map_vspace);
 
     asid_map_asid_map_vspace_ptr_set_bind_cb(asid_map, asid_map_asid_map_vspace_ptr_get_bind_cb(asid_map) + 1);
@@ -951,7 +951,7 @@ void decreaseASIDBindCB(asid_t asid)
     asidPool = armKSASIDTable[ASID_HIGH(asid)];
     assert(asidPool);
 
-    asid_map_t *asid_map = &asidPool->array[asid & MASK(asidLowBits)];
+    asid_map_t *asid_map = &asidPool->array[ASID_LOW(asid)];
     assert(asid_map_ptr_get_type(asid_map) == asid_map_asid_map_vspace);
 
     asid_map_asid_map_vspace_ptr_set_bind_cb(asid_map, asid_map_asid_map_vspace_ptr_get_bind_cb(asid_map) - 1);
@@ -1073,14 +1073,14 @@ void deleteASID(asid_t asid, vspace_root_t *vspace)
     poolPtr = armKSASIDTable[ASID_HIGH(asid)];
 
     if (poolPtr != NULL) {
-        asid_map_t asid_map = poolPtr->array[asid & MASK(asidLowBits)];
+        asid_map_t asid_map = poolPtr->array[ASID_LOW(asid)];
         if (asid_map_get_type(asid_map) == asid_map_asid_map_vspace &&
             (vspace_root_t *)asid_map_asid_map_vspace_get_vspace_root(asid_map) == vspace) {
             invalidateTLBByASID(asid);
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
             invalidateASIDEntry(asid);
 #endif
-            poolPtr->array[asid & MASK(asidLowBits)] = asid_map_asid_map_none_new();
+            poolPtr->array[ASID_LOW(asid)] = asid_map_asid_map_none_new();
             setVMRoot(NODE_STATE(ksCurThread));
         }
     }

@@ -612,7 +612,7 @@ findPDForASID_ret_t findPDForASID(asid_t asid)
         return ret;
     }
 
-    pd = poolPtr->array[asid & MASK(asidLowBits)];
+    pd = poolPtr->array[ASID_LOW(asid)];
     if (unlikely(!pd)) {
         current_lookup_fault = lookup_fault_invalid_root_new();
 
@@ -1078,7 +1078,7 @@ static void invalidateASID(asid_t asid)
     asidPool = armKSASIDTable[ASID_HIGH(asid)];
     assert(asidPool);
 
-    pd = asidPool->array[asid & MASK(asidLowBits)];
+    pd = asidPool->array[ASID_LOW(asid)];
     assert(pd);
 
     pd[PD_ASID_SLOT] = pde_pde_invalid_new(0, false);
@@ -1092,7 +1092,7 @@ static pde_t PURE loadHWASID(asid_t asid)
     asidPool = armKSASIDTable[ASID_HIGH(asid)];
     assert(asidPool);
 
-    pd = asidPool->array[asid & MASK(asidLowBits)];
+    pd = asidPool->array[ASID_LOW(asid)];
     assert(pd);
 
     return pd[PD_ASID_SLOT];
@@ -1106,7 +1106,7 @@ static void storeHWASID(asid_t asid, hw_asid_t hw_asid)
     asidPool = armKSASIDTable[ASID_HIGH(asid)];
     assert(asidPool);
 
-    pd = asidPool->array[asid & MASK(asidLowBits)];
+    pd = asidPool->array[ASID_LOW(asid)];
     assert(pd);
 
     /* Store HW ASID in the last entry
@@ -1300,10 +1300,10 @@ void deleteASID(asid_t asid, pde_t *pd)
 
     poolPtr = armKSASIDTable[ASID_HIGH(asid)];
 
-    if (poolPtr != NULL && poolPtr->array[asid & MASK(asidLowBits)] == pd) {
+    if (poolPtr != NULL && poolPtr->array[ASID_LOW(asid)] == pd) {
         flushSpace(asid);
         invalidateASIDEntry(asid);
-        poolPtr->array[asid & MASK(asidLowBits)] = NULL;
+        poolPtr->array[ASID_LOW(asid)] = NULL;
         setVMRoot(NODE_STATE(ksCurThread));
     }
 }
@@ -1969,7 +1969,7 @@ static exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *poolPtr,
 {
     cap_page_directory_cap_ptr_set_capPDMappedASID(&pdCapSlot->cap, asid);
     cap_page_directory_cap_ptr_set_capPDIsMapped(&pdCapSlot->cap, 1);
-    poolPtr->array[asid & MASK(asidLowBits)] =
+    poolPtr->array[ASID_LOW(asid)] =
         PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(pdCapSlot->cap));
 
     return EXCEPTION_NONE;

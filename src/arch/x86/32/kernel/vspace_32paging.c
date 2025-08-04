@@ -210,7 +210,7 @@ exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *poolPtr, cte_t *
         cap_page_directory_cap_ptr_set_capPDIsMapped(&vspaceCapSlot->cap, 1);
         asid_map = asid_map_asid_map_vspace_new(cap_page_directory_cap_get_capPDBasePtr(vspaceCapSlot->cap));
     }
-    poolPtr->array[asid & MASK(asidLowBits)] = asid_map;
+    poolPtr->array[ASID_LOW(asid)] = asid_map;
 
     return EXCEPTION_NONE;
 }

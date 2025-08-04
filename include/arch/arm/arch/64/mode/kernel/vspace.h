@@ -57,7 +57,7 @@ static inline exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *po
     cap = cap_vspace_cap_set_capVSIsMapped(cap, 1);
     vspaceCapSlot->cap = cap;
 
-    poolPtr->array[asid & MASK(asidLowBits)] = asid_map;
+    poolPtr->array[ASID_LOW(asid)] = asid_map;
     return EXCEPTION_NONE;
 }
 
