@@ -31,7 +31,7 @@ typedef struct asid_pool asid_pool_t;
 #define ASID_BITS           (asidHighBits + asidLowBits)
 #define nASIDPools          BIT(asidHighBits)
 #define ASID_LOW(a)         (a & MASK(asidLowBits))
-#define ASID_HIGH(a)        ((a >> asidLowBits) & MASK(asidHighBits))
+#define ASID_HIGH(a)        ((a) >> asidLowBits)
 
 typedef struct arch_tcb {
     user_context_t tcbContext;

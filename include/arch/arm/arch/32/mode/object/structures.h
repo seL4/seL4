@@ -104,14 +104,13 @@ typedef struct asid_pool asid_pool_t;
 #define nASIDPools BIT(asidHighBits)
 
 #define ASID_LOW(a) (a & MASK(asidLowBits))
-#define ASID_HIGH(a) ((a >> asidLowBits) & MASK(asidHighBits))
+#define ASID_HIGH(a) ((a) >> asidLowBits)
 
 static inline cap_t CONST cap_small_frame_cap_set_capFMappedASID(cap_t cap, word_t asid)
 {
     cap = cap_small_frame_cap_set_capFMappedASIDLow(cap,
                                                     asid & MASK(asidLowBits));
-    return cap_small_frame_cap_set_capFMappedASIDHigh(cap,
-                                                      (asid >> asidLowBits) & MASK(asidHighBits));
+    return cap_small_frame_cap_set_capFMappedASIDHigh(cap, ASID_HIGH(asid));
 }
 
 static inline word_t CONST cap_small_frame_cap_get_capFMappedASID(cap_t cap)
@@ -124,8 +123,7 @@ static inline cap_t CONST cap_frame_cap_set_capFMappedASID(cap_t cap, word_t asi
 {
     cap = cap_frame_cap_set_capFMappedASIDLow(cap,
                                               asid & MASK(asidLowBits));
-    return cap_frame_cap_set_capFMappedASIDHigh(cap,
-                                                (asid >> asidLowBits) & MASK(asidHighBits));
+    return cap_frame_cap_set_capFMappedASIDHigh(cap, ASID_HIGH(asid));
 }
 
 static inline word_t CONST cap_frame_cap_get_capFMappedASID(cap_t cap)
@@ -432,3 +430,4 @@ static inline word_t PURE pte_ptr_get_pteType(pte_t *pte_ptr)
     }
 }
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
+
