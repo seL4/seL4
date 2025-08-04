@@ -43,7 +43,7 @@ void deleteEPTASID(asid_t asid, ept_pml4e_t *ept)
 {
     asid_pool_t *poolPtr;
 
-    poolPtr = x86KSASIDTable[asid >> asidLowBits];
+    poolPtr = x86KSASIDTable[ASID_HIGH(asid)];
     if (poolPtr != NULL) {
         asid_map_t asid_map = poolPtr->array[asid & MASK(asidLowBits)];
         if (asid_map_get_type(asid_map) == asid_map_asid_map_ept &&

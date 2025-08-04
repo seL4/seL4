@@ -39,7 +39,7 @@ void deleteASIDPool(asid_t asid_base, asid_pool_t *pool)
     /* Haskell error: "ASID pool's base must be aligned" */
     assert(IS_ALIGNED(asid_base, asidLowBits));
 
-    if (x86KSASIDTable[asid_base >> asidLowBits] == pool) {
+    if (x86KSASIDTable[ASID_HIGH(asid_base)] == pool) {
         for (unsigned int offset = 0; offset < BIT(asidLowBits); offset++) {
             asid_map_t asid_map = pool->array[offset];
             if (asid_map_get_type(asid_map) == asid_map_asid_map_vspace) {
@@ -47,7 +47,7 @@ void deleteASIDPool(asid_t asid_base, asid_pool_t *pool)
                 hwASIDInvalidate(asid_base + offset, vspace);
             }
         }
-        x86KSASIDTable[asid_base >> asidLowBits] = NULL;
+        x86KSASIDTable[ASID_HIGH(asid_base)] = NULL;
         setVMRoot(NODE_STATE(ksCurThread));
     }
 }
@@ -72,7 +72,7 @@ exception_t performASIDControlInvocation(void *frame, cte_t *slot, cte_t *parent
     );
     /* Haskell error: "ASID pool's base must be aligned" */
     assert((asid_base & MASK(asidLowBits)) == 0);
-    x86KSASIDTable[asid_base >> asidLowBits] = (asid_pool_t *)frame;
+    x86KSASIDTable[ASID_HIGH(asid_base)] = (asid_pool_t *)frame;
 
     return EXCEPTION_NONE;
 }
@@ -81,7 +81,7 @@ void deleteASID(asid_t asid, vspace_root_t *vspace)
 {
     asid_pool_t *poolPtr;
 
-    poolPtr = x86KSASIDTable[asid >> asidLowBits];
+    poolPtr = x86KSASIDTable[ASID_HIGH(asid)];
     if (poolPtr != NULL) {
         asid_map_t asid_map = poolPtr->array[asid & MASK(asidLowBits)];
         if (asid_map_get_type(asid_map) == asid_map_asid_map_vspace &&
@@ -530,14 +530,14 @@ BOOT_CODE void write_it_asid_pool(cap_t it_ap_cap, cap_t it_vspace_cap)
 {
     asid_pool_t *ap = ASID_POOL_PTR(pptr_of_cap(it_ap_cap));
     ap->array[IT_ASID] = asid_map_asid_map_vspace_new(pptr_of_cap(it_vspace_cap));
-    x86KSASIDTable[IT_ASID >> asidLowBits] = ap;
+    x86KSASIDTable[ASID_HIGH(IT_ASID)] = ap;
 }
 
 asid_map_t findMapForASID(asid_t asid)
 {
     asid_pool_t        *poolPtr;
 
-    poolPtr = x86KSASIDTable[asid >> asidLowBits];
+    poolPtr = x86KSASIDTable[ASID_HIGH(asid)];
     if (!poolPtr) {
         return asid_map_asid_map_none_new();
     }
@@ -1374,7 +1374,7 @@ exception_t decodeX86MMUInvocation(
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        pool = x86KSASIDTable[cap_asid_pool_cap_get_capASIDBase(cap) >> asidLowBits];
+        pool = x86KSASIDTable[ASID_HIGH(cap_asid_pool_cap_get_capASIDBase(cap))];
         if (!pool) {
             current_syscall_error.type = seL4_FailedLookup;
             current_syscall_error.failedLookupWasSource = false;
