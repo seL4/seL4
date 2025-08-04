@@ -529,7 +529,7 @@ BOOT_CODE bool_t init_pat_msr(void)
 BOOT_CODE void write_it_asid_pool(cap_t it_ap_cap, cap_t it_vspace_cap)
 {
     asid_pool_t *ap = ASID_POOL_PTR(pptr_of_cap(it_ap_cap));
-    ap->array[IT_ASID] = asid_map_asid_map_vspace_new(pptr_of_cap(it_vspace_cap));
+    ap->array[ASID_LOW(IT_ASID)] = asid_map_asid_map_vspace_new(pptr_of_cap(it_vspace_cap));
     x86KSASIDTable[ASID_HIGH(IT_ASID)] = ap;
 }
 

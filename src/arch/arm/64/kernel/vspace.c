@@ -567,7 +567,7 @@ BOOT_CODE void write_it_asid_pool(cap_t it_ap_cap, cap_t it_vspace_cap)
                               , 0, false
 #endif
                           );
-    ap->array[IT_ASID] = asid_map;
+    ap->array[ASID_LOW(IT_ASID)] = asid_map;
     armKSASIDTable[ASID_HIGH(IT_ASID)] = ap;
 }
 
