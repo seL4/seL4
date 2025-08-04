@@ -397,8 +397,8 @@ union_reader_template = \
     """%(inline)s %(type)s CONST
 %(union)s_%(block)s_get_%(field)s(%(union)s_t %(union)s) {
     %(type)s ret;
-    %(assert)s(((%(union)s.words[%(tagindex)d] >> %(tagshift)d) & 0x%(tagmask)x) ==
-           %(tagvalue)s);
+    /* fail if union does not have the expected tag */
+    %(assert)s(((%(union)s.words[%(tagindex)d] >> %(tagshift)d) & 0x%(tagmask)x) == %(tagvalue)s);
 
     ret = (%(union)s.words[%(index)d] & 0x%(mask)x%(suf)s) %(r_shift_op)s %(shift)d;
     /* Possibly sign extend */
@@ -412,9 +412,9 @@ ptr_union_reader_template = \
     """%(inline)s %(type)s PURE
 %(union)s_%(block)s_ptr_get_%(field)s(%(union)s_t *%(union)s_ptr) {
     %(type)s ret;
+    /* fail if union does not have the expected tag */
     %(assert)s(((%(union)s_ptr->words[%(tagindex)d] >> """ \
-    """%(tagshift)d) & 0x%(tagmask)x) ==
-           %(tagvalue)s);
+    """%(tagshift)d) & 0x%(tagmask)x) == %(tagvalue)s);
 
     ret = (%(union)s_ptr->words[%(index)d] & 0x%(mask)x%(suf)s) """ \
     """%(r_shift_op)s %(shift)d;
@@ -428,8 +428,8 @@ ptr_union_reader_template = \
 union_writer_template = \
     """%(inline)s %(union)s_t CONST
 %(union)s_%(block)s_set_%(field)s(%(union)s_t %(union)s, %(type)s v%(base)d) {
-    %(assert)s(((%(union)s.words[%(tagindex)d] >> %(tagshift)d) & 0x%(tagmask)x) ==
-           %(tagvalue)s);
+    /* fail if union does not have the expected tag */
+    %(assert)s(((%(union)s.words[%(tagindex)d] >> %(tagshift)d) & 0x%(tagmask)x) == %(tagvalue)s);
     /* fail if user has passed bits that we will override */
     %(assert)s((((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d ) | 0x%(high_bits)x) & v%(base)d) == ((%(sign_extend)d && (v%(base)d & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
 
@@ -440,11 +440,10 @@ union_writer_template = \
 
 ptr_union_writer_template = \
     """%(inline)s void
-%(union)s_%(block)s_ptr_set_%(field)s(%(union)s_t *%(union)s_ptr,
-                                      %(type)s v%(base)d) {
+%(union)s_%(block)s_ptr_set_%(field)s(%(union)s_t *%(union)s_ptr, %(type)s v%(base)d) {
+    /* fail if union does not have the expected tag */
     %(assert)s(((%(union)s_ptr->words[%(tagindex)d] >> """ \
-    """%(tagshift)d) & 0x%(tagmask)x) ==
-           %(tagvalue)s);
+    """%(tagshift)d) & 0x%(tagmask)x) == %(tagvalue)s);
 
     /* fail if user has passed bits that we will override */
     %(assert)s((((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) | 0x%(high_bits)x) & v%(base)d) == ((%(sign_extend)d && (v%(base)d & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
@@ -2050,7 +2049,7 @@ class TaggedUnion:
                 tagshift = 0
                 tagindex = self.tag_index
                 tagmask = self.tag_mask
-                tagvalue = f"0x{self.expanded_tag_val(value):x}{suf}"
+                tagvalue = f"0x{self.expanded_tag_val(value):x}{suf} /* sliced tag {self.name}_{ref.name} */"
             else:
                 tagnameoffset, tagnamesize, _ = ref.field_map[self.tagname]
                 tagindex = self.tag_index
