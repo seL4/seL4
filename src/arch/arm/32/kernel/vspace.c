@@ -591,7 +591,7 @@ BOOT_CODE void activate_kernel_vspace(void)
 BOOT_CODE void write_it_asid_pool(cap_t it_ap_cap, cap_t it_pd_cap)
 {
     asid_pool_t *ap = ASID_POOL_PTR(pptr_of_cap(it_ap_cap));
-    ap->array[IT_ASID] = PDE_PTR(pptr_of_cap(it_pd_cap));
+    ap->array[ASID_LOW(IT_ASID)] = PDE_PTR(pptr_of_cap(it_pd_cap));
     armKSASIDTable[ASID_HIGH(IT_ASID)] = ap;
 }
 
