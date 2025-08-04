@@ -945,10 +945,10 @@ proof_templates = {
     'get_tag_spec': [
         '''lemma (in ''' + loc_name + ''') %(name)s_get_%(tagname)s_spec:
   "\\<forall>s. \\<Gamma> \\<turnstile> {s}
-       \\<acute>%(ret_name)s :== ''' \
-    '''PROC %(name)s_get_%(tagname)s(\\<acute>%(name)s)
-       \\<lbrace>\\<acute>%(ret_name)s = ''' \
-    '''%(name)s_get_tag \\<^bsup>s\\<^esup>%(name)s\\<rbrace>"''',
+       \\<acute>%(ret_name)s :== '''
+        '''PROC %(name)s_get_%(tagname)s(\\<acute>%(name)s)
+       \\<lbrace>\\<acute>%(ret_name)s = '''
+        '''%(name)s_get_tag \\<^bsup>s\\<^esup>%(name)s\\<rbrace>"''',
         '''  apply(rule allI, rule conseqPre, vcg)
   apply (clarsimp)
   apply (simp add:%(name)s_get_tag_def mask_shift_simps guard_simps)
@@ -990,13 +990,13 @@ proof_templates = {
 
 
     'empty_union_new_spec': [
-        '''lemma (in ''' + loc_name + ''') ''' \
+        '''lemma (in ''' + loc_name + ''') '''
         '''%(name)s_%(block)s_new_spec:
   "\\<forall>s. \\<Gamma> \\<turnstile> {s}
-       \\<acute>ret__struct_%(name)s_C :== ''' \
-    '''PROC %(name)s_%(block)s_new()
-       \\<lbrace>%(name)s_get_tag \\<acute>ret__struct_%(name)s_C = ''' \
-     '''scast %(name)s_%(block)s\\<rbrace>"''',
+       \\<acute>ret__struct_%(name)s_C :== '''
+        '''PROC %(name)s_%(block)s_new()
+       \\<lbrace>%(name)s_get_tag \\<acute>ret__struct_%(name)s_C = '''
+        '''scast %(name)s_%(block)s\\<rbrace>"''',
         '''  apply(rule allI, rule conseqPre, vcg)
   by (clarsimp simp: guard_simps
                      %(name)s_lift_def
@@ -1007,16 +1007,16 @@ proof_templates = {
                      word_of_int_hom_syms)'''],
 
     'union_new_spec': [
-        '''lemma (in ''' + loc_name + ''') ''' \
+        '''lemma (in ''' + loc_name + ''') '''
         '''%(name)s_%(block)s_new_spec:
   "\\<forall>s. \\<Gamma> \\<turnstile> {s}
-       \\<acute>ret__struct_%(name)s_C :== ''' \
-    '''PROC %(name)s_%(block)s_new(%(args)s)
-       \\<lbrace>%(name)s_%(block)s_lift ''' \
-    '''\\<acute>ret__struct_%(name)s_C = \\<lparr>
+       \\<acute>ret__struct_%(name)s_C :== '''
+        '''PROC %(name)s_%(block)s_new(%(args)s)
+       \\<lbrace>%(name)s_%(block)s_lift '''
+        '''\\<acute>ret__struct_%(name)s_C = \\<lparr>
           %(field_eqs)s \\<rparr> \\<and>
-        %(name)s_get_tag \\<acute>ret__struct_%(name)s_C = ''' \
-     '''scast %(name)s_%(block)s\\<rbrace>"''',
+        %(name)s_get_tag \\<acute>ret__struct_%(name)s_C = '''
+        '''scast %(name)s_%(block)s\\<rbrace>"''',
         '''  apply (rule allI, rule conseqPre, vcg)
   apply (clarsimp simp: guard_simps o_def mask_def shift_over_ao_dists)
   apply (rule context_conjI[THEN iffD1[OF conj_commute]],
@@ -1078,17 +1078,17 @@ proof_templates = {
   done'''],
 
     'union_get_spec': [
-        '''lemma (in ''' + loc_name + ''') ''' \
+        '''lemma (in ''' + loc_name + ''') '''
         '''%(name)s_%(block)s_get_%(field)s_spec:
-  "\\<forall>s. \\<Gamma> \\<turnstile> ''' \
-'''\\<lbrace>s. %(name)s_get_tag \\<acute>%(name)s = ''' \
+  "\\<forall>s. \\<Gamma> \\<turnstile> '''
+        '''\\<lbrace>s. %(name)s_get_tag \\<acute>%(name)s = '''
         '''scast %(name)s_%(block)s\\<rbrace>
-       \\<acute>%(ret_name)s :== ''' \
-       '''PROC %(name)s_%(block)s_get_%(field)s(\\<acute>%(name)s)
-       \\<lbrace>\\<acute>%(ret_name)s = ''' \
-       '''%(name)s_%(block)s_CL.%(field)s_CL ''' \
-       '''(%(name)s_%(block)s_lift \\<^bsup>s\\<^esup>%(name)s)''' \
-       '''\\<rbrace>"''',
+       \\<acute>%(ret_name)s :== '''
+        '''PROC %(name)s_%(block)s_get_%(field)s(\\<acute>%(name)s)
+       \\<lbrace>\\<acute>%(ret_name)s = '''
+        '''%(name)s_%(block)s_CL.%(field)s_CL '''
+        '''(%(name)s_%(block)s_lift \\<^bsup>s\\<^esup>%(name)s)'''
+        '''\\<rbrace>"''',
         '''  apply(rule allI, rule conseqPre, vcg)
   apply (clarsimp simp:guard_simps)
   apply (simp add:%(name)s_%(block)s_lift_def)
@@ -1107,19 +1107,19 @@ proof_templates = {
   done'''],
 
     'union_set_spec': [
-        '''lemma (in ''' + loc_name + ''') ''' \
+        '''lemma (in ''' + loc_name + ''') '''
         '''%(name)s_%(block)s_set_%(field)s_spec:
-  "\\<forall>s. \\<Gamma> \\<turnstile> ''' \
-'''\\<lbrace>s. %(name)s_get_tag \\<acute>%(name)s = ''' \
+  "\\<forall>s. \\<Gamma> \\<turnstile> '''
+        '''\\<lbrace>s. %(name)s_get_tag \\<acute>%(name)s = '''
         '''scast %(name)s_%(block)s\\<rbrace>
-       \\<acute>ret__struct_%(name)s_C :== ''' \
-    '''PROC %(name)s_%(block)s_set_%(field)s(\\<acute>%(name)s, \\<acute>v%(base)d)
-       \\<lbrace>%(name)s_%(block)s_lift \\<acute>ret__struct_%(name)s_C = ''' \
-    '''%(name)s_%(block)s_lift \\<^bsup>s\\<^esup>%(name)s \\<lparr> ''' \
-        '''%(name)s_%(block)s_CL.%(field)s_CL ''' \
+       \\<acute>ret__struct_%(name)s_C :== '''
+        '''PROC %(name)s_%(block)s_set_%(field)s(\\<acute>%(name)s, \\<acute>v%(base)d)
+       \\<lbrace>%(name)s_%(block)s_lift \\<acute>ret__struct_%(name)s_C = '''
+        '''%(name)s_%(block)s_lift \\<^bsup>s\\<^esup>%(name)s \\<lparr> '''
+        '''%(name)s_%(block)s_CL.%(field)s_CL '''
         ''':= %(sign_extend)s (\\<^bsup>s\\<^esup>v%(base)d AND %(mask)s)\\<rparr> \\<and>
-        %(name)s_get_tag \\<acute>ret__struct_%(name)s_C = ''' \
-     '''scast %(name)s_%(block)s\\<rbrace>"''',
+        %(name)s_get_tag \\<acute>ret__struct_%(name)s_C = '''
+        '''scast %(name)s_%(block)s\\<rbrace>"''',
         '''  apply (rule allI, rule conseqPre, vcg)
   apply clarsimp
   apply (rule context_conjI[THEN iffD1[OF conj_commute]],
@@ -1207,7 +1207,7 @@ def emit_named(name, params, string):
     # Emit a named definition/proof, only when the given name is in
     # params.names
 
-    if(name in params.names):
+    if name in params.names:
         print(string, file=params.output)
         print(file=params.output)
 
@@ -2281,7 +2281,7 @@ class TaggedUnion:
             self.classes[w] <<= self.tag_offset[w] - self.class_offset
 
         used_widths = sorted(list(used))
-        assert(len(used_widths) > 0)
+        assert len(used_widths) > 0
 
         if not self.classes:
             self.classes = {used_widths[0]: 0}
