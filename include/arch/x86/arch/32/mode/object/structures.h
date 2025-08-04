@@ -55,7 +55,7 @@ typedef struct asid_pool asid_pool_t;
 #define ASID_POOL_REF(p)    ((word_t)p)
 #define ASID_BITS           (asidHighBits + asidLowBits)
 #define nASIDPools          BIT(asidHighBits)
-#define ASID_LOW(a)         (a & MASK(asidLowBits))
+#define ASID_LOW(a)         ((a) & MASK(asidLowBits))
 #define ASID_HIGH(a)        ((a) >> asidLowBits)
 
 static inline asid_t CONST cap_frame_cap_get_capFMappedASID(cap_t cap)

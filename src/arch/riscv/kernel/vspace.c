@@ -331,7 +331,7 @@ static findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
         return ret;
     }
 
-    vspace_root = poolPtr->array[asid & MASK(asidLowBits)];
+    vspace_root = poolPtr->array[ASID_LOW(asid)];
     if (!vspace_root) {
         current_lookup_fault = lookup_fault_invalid_root_new();
 
@@ -486,7 +486,7 @@ static exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *poolPtr, 
 
     copyGlobalMappings(regionBase);
 
-    poolPtr->array[asid & MASK(asidLowBits)] = regionBase;
+    poolPtr->array[ASID_LOW(asid)] = regionBase;
 
     return EXCEPTION_NONE;
 }
@@ -496,9 +496,9 @@ void deleteASID(asid_t asid, pte_t *vspace)
     asid_pool_t *poolPtr;
 
     poolPtr = riscvKSASIDTable[ASID_HIGH(asid)];
-    if (poolPtr != NULL && poolPtr->array[asid & MASK(asidLowBits)] == vspace) {
+    if (poolPtr != NULL && poolPtr->array[ASID_LOW(asid)] == vspace) {
         hwASIDFlush(asid);
-        poolPtr->array[asid & MASK(asidLowBits)] = NULL;
+        poolPtr->array[ASID_LOW(asid)] = NULL;
         setVMRoot(NODE_STATE(ksCurThread));
     }
 }
