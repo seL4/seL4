@@ -14,7 +14,7 @@
 /* No SGIs on this platform. */
 #define NUM_SGIS 0
 
-irq_t irqInvalid = 255;
+static const irq_t irqInvalid = 255;
 
 #define CMPER_REG(base, off) ((volatile uint32_t *)((base) + (off)))
 #define CMPER_TIMER3_CLKCTRL    0x84
