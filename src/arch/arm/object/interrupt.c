@@ -12,9 +12,9 @@
 
 static exception_t Arch_invokeIRQControl(irq_t irq, cte_t *handlerSlot, cte_t *controlSlot, bool_t trigger)
 {
-#ifdef HAVE_SET_TRIGGER
-    setIRQTrigger(irq, trigger);
-#endif
+    if (config_set(HAVE_SET_TRIGGER)) {
+        setIRQTrigger(irq, trigger);
+    }
     return invokeIRQControl(irq, handlerSlot, controlSlot);
 }
 
