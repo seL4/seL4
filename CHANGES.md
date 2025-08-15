@@ -21,12 +21,18 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 ---
 
-## Upcoming release: BINARY COMPATIBLE
+## Upcoming release: BREAKING
 
 ### Changes
 
+* Runtime domain schedule configuration.
+  See [RFC-20](https://sel4.github.io/rfcs/implemented/0200-domain-schedules.html).
 
 ### Upgrade Notes
+
+If using domains, replace your custom schedule with initialisation code in user space.
+With MCS, the domain duration is now configured in timer ticks instead of microseconds.
+
 ---
 
 ## 14.0.0 2025-11-25: BREAKING

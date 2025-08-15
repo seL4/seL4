@@ -319,8 +319,6 @@ endif()
 
 # Sort the C sources to ensure a stable layout of the final C file
 list(SORT c_sources)
-# Add the domain schedule now that its sorted
-list(APPEND c_sources "${KernelDomainSchedule}")
 
 # Add static header includes
 include_directories(
