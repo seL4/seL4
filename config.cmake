@@ -192,23 +192,19 @@ config_string(
     UNQUOTE
 )
 
+config_string(
+    KernelNumDomainSchedules NUM_DOMAIN_SCHEDULES "Total number of domain scheduler entries"
+    DEFAULT 100
+    DEPENDS "${KernelNumDomains} GREATER 1" DEFAULT_DISABLED 1
+    UNQUOTE
+)
+
 config_option(
     KernelSignalFastpath SIGNAL_FASTPATH "Enable notification signal fastpath"
     DEFAULT OFF
     DEPENDS "KernelIsMCS; KernelFastpath; KernelSel4ArchAarch64; NOT KernelVerificationBuild"
     DEFAULT_DISABLED OFF
 )
-
-find_file(
-    KernelDomainSchedule default_domain.c
-    PATHS src/config
-    CMAKE_FIND_ROOT_PATH_BOTH
-    DOC "A C file providing the symbols ksDomSchedule and ksDomScheduleLength \
-        to be linked with the kernel as a scheduling configuration."
-)
-if(SEL4_CONFIG_DEFAULT_ADVANCED)
-    mark_as_advanced(KernelDomainSchedule)
-endif()
 
 config_string(
     KernelNumPriorities NUM_PRIORITIES "The number of priority levels per domain. Valid range 1-256"
