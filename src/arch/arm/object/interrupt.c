@@ -95,6 +95,14 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
         }
+
+        // wrap_config_set to prevent verification automation from simplifying it away
+        if (wrap_config_set(NUM_SGIS) == 0) {
+            current_syscall_error.type = seL4_IllegalOperation;
+            userError("IRQControl: IssueSGISignal not available on this platform.");
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
         word_t irq = getSyscallArg(0, buffer);
         word_t target = getSyscallArg(1, buffer);
         word_t index = getSyscallArg(2, buffer);
