@@ -38,7 +38,9 @@ config_option(
 )
 
 config_option(
-    KernelRiscvUseClintMtime RISCV_USE_CLINT_MTIME "When reading the timestamp \
+    KernelRiscvUseClintMtime
+    RISCV_USE_CLINT_MTIME
+    "When reading the timestamp \
     from the hardware, directly access the CLINT timer register (mtime) instead \
     of using the rdtime instruction. This is a performance optimization, but \
     only for platforms where executing the rdtime instruction results in a \
@@ -58,19 +60,37 @@ config_option(
 # even when the platform has sutiable inline assembly, we do not make these the
 # default.
 if(KernelWordSize EQUAL 32)
-    set(KernelClz32 ON CACHE BOOL "")
-    set(KernelCtz32 ON CACHE BOOL "")
+    set(KernelClz32
+        ON
+        CACHE BOOL ""
+    )
+    set(KernelCtz32
+        ON
+        CACHE BOOL ""
+    )
     if(KernelIsMCS)
         # Used for long division in timer calculations.
-        set(KernelClz64 ON CACHE BOOL "")
+        set(KernelClz64
+            ON
+            CACHE BOOL ""
+        )
     endif()
 elseif(KernelWordSize EQUAL 64)
-    set(KernelClz64 ON CACHE BOOL "")
-    set(KernelCtz64 ON CACHE BOOL "")
+    set(KernelClz64
+        ON
+        CACHE BOOL ""
+    )
+    set(KernelCtz64
+        ON
+        CACHE BOOL ""
+    )
 endif()
 
 if(KernelSel4ArchRiscV32)
-    set(KernelPTLevels 2 CACHE STRING "" FORCE)
+    set(KernelPTLevels
+        2
+        CACHE STRING "" FORCE
+    )
 endif()
 if(KernelPTLevels EQUAL 2)
     if(KernelSel4ArchRiscV32)
@@ -99,29 +119,31 @@ if(KernelRiscvExtF)
 endif()
 
 # This is not supported on RISC-V
-set(KernelHardwareDebugAPIUnsupported ON CACHE INTERNAL "")
+set(KernelHardwareDebugAPIUnsupported
+    ON
+    CACHE INTERNAL ""
+)
 
 add_sources(
     DEP "KernelArchRiscV"
     PREFIX src/arch/riscv
-    CFILES
-        c_traps.c
-        idle.c
-        api/faults.c
-        api/benchmark.c
-        kernel/boot.c
-        kernel/thread.c
-        kernel/vspace.c
-        machine/capdl.c
-        machine/hardware.c
-        machine/registerset.c
-        machine/io.c
-        machine/fpu.c
-        model/statedata.c
-        object/interrupt.c
-        object/objecttype.c
-        object/tcb.c
-        smp/ipi.c
+    CFILES c_traps.c
+           idle.c
+           api/faults.c
+           api/benchmark.c
+           kernel/boot.c
+           kernel/thread.c
+           kernel/vspace.c
+           machine/capdl.c
+           machine/hardware.c
+           machine/registerset.c
+           machine/io.c
+           machine/fpu.c
+           model/statedata.c
+           object/interrupt.c
+           object/objecttype.c
+           object/tcb.c
+           smp/ipi.c
     ASMFILES head.S traps.S idle.S
 )
 
