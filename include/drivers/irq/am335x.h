@@ -124,3 +124,9 @@ static inline void plat_sendSGI(word_t irq, word_t target)
     /* Unreachable; not supported on this platform. */
     halt();
 }
+
+static inline bool_t plat_SGITargetValid(word_t target)
+{
+    /* no SGIs on this platform */
+    return false;
+}
