@@ -144,6 +144,12 @@ static inline void handleSpuriousIRQ(void)
     /* Nothing to do here */
 }
 
+void setIRQTrigger(irq_t irq, bool_t trigger)
+{
+    /* Unreachable; not supported on this platform. */
+    UNREACHABLE();
+}
+
 static inline void plat_sendSGI(word_t irq, word_t target)
 {
     /* Unreachable; not supported on this platform. */
