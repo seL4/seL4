@@ -41,6 +41,10 @@ static inline void c_exit_hook(void)
     }
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 
+#ifdef TRACK_KERNEL_ENTRIES
+    ksKernelEntry.path = Entry_Unknown;
+#endif
+
     arch_c_exit_hook();
 }
 
