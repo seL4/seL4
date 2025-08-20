@@ -99,12 +99,12 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
 
     NODE_UNLOCK;
 
+    setKernelEntryStackPointer(cur_thread);
+
 #ifdef CONFIG_HARDWARE_DEBUG_API
     restore_user_debug_context(cur_thread);
     assert(!cur_thread->tcbArch.tcbContext.breakpointState.single_step_enabled);
 #endif
-
-    setKernelEntryStackPointer(cur_thread);
 
     if (config_set(CONFIG_KERNEL_X86_IBRS_BASIC)) {
         x86_disable_ibrs();
