@@ -204,7 +204,6 @@ static inline VPPIEventIRQ_t irqVPPIEventIndex(irq_t irq)
 
 #else /* end of CONFIG_ARM_HYPERVISOR_SUPPORT */
 
-/* used in boot.c with a guard, use a marco to avoid exposing vcpu_t */
 #define vcpu_boot_init() do {} while(0)
 #define vcpu_switch(x) do {} while(0)
 static inline void VGICMaintenance(void) {}
