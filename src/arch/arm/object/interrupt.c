@@ -96,7 +96,8 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        // wrap_config_set to prevent verification automation from simplifying it away
+        /* wrap_config_set to prevent verification automation from simplifying
+           away the condition when NUM_SGIS = 0 */
         if (wrap_config_set(NUM_SGIS) == 0) {
             current_syscall_error.type = seL4_IllegalOperation;
             userError("IRQControl: IssueSGISignal not available on this platform.");
@@ -110,7 +111,9 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
 
         cap_t cnodeCap = current_extra_caps.excaprefs[0]->cap;
 
-        if (irq >= NUM_SGIS) {
+        /* wrap_config_set to prevent verification automation from simplifying
+           away the condition when NUM_SGIS = 0 */
+        if (irq >= wrap_config_set(NUM_SGIS)) {
             current_syscall_error.type = seL4_RangeError;
             current_syscall_error.rangeErrorMin = 0;
             current_syscall_error.rangeErrorMax = NUM_SGIS - 1;
