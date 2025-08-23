@@ -19,7 +19,6 @@ void initL2Cache(void);
 
 void initIRQController(void);
 void cpu_initLocalIRQController(void);
-void setIRQTrigger(irq_t irq, bool_t trigger);
 #ifdef ENABLE_SMP_SUPPORT
 void setIRQTarget(irq_t irq, seL4_Word target);
 #endif
