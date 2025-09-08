@@ -8,6 +8,8 @@
 #include <mode/machine.h>
 #include <api/debug.h>
 
+void wdog_reset(void);
+
 /** DONT_TRANSLATE */
 void NORETURN NO_INLINE VISIBLE halt(void)
 {
@@ -20,6 +22,7 @@ void NORETURN NO_INLINE VISIBLE halt(void)
     debug_printKernelEntryReason();
 #endif
 #endif
+    wdog_reset();
     idle_thread();
     UNREACHABLE();
 }
