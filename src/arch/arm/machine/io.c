@@ -9,6 +9,13 @@
 #include <drivers/uart.h>
 
 #ifdef CONFIG_PRINTING
+
+/**
+ * This is initially the PADDR for the early kernel boots, and we switch it
+ * out to use the PPTR once the kernel has mapped memory in.
+ */
+pptr_t uart_pptr = UART_PADDR;
+
 void kernel_putDebugChar(unsigned char c)
 {
     uart_console_putchar(c);
