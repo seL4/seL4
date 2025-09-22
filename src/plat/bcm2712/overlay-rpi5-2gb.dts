@@ -1,0 +1,12 @@
+/*
+ * Copyright 2025, UNSW
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+    memory@0 {
+        device_type = "memory";
+        /* VideoCore memory lives at 0x3fc00000 onwards. */
+        reg = < 0x00000000 0x00000000 0x0 0x3fc00000>;
+    };
+};
