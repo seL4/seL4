@@ -153,7 +153,7 @@ void setIRQTrigger(irq_t irq, bool_t trigger)
 static inline void plat_sendSGI(word_t irq, word_t target)
 {
     /* Unreachable; not supported on this platform. */
-    halt();
+    UNREACHABLE();
 }
 
 static inline bool_t plat_SGITargetValid(word_t target)
