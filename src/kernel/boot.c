@@ -39,7 +39,7 @@ BOOT_CODE p_region_t get_p_reg_kernel_img(void)
 {
     return (p_region_t) {
         .start = kpptr_to_paddr((const void *)KERNEL_ELF_BASE),
-        .end   = kpptr_to_paddr(ki_end)
+        .end   = kpptr_to_paddr((const void *)KERNEL_ELF_TOP)
     };
 }
 
