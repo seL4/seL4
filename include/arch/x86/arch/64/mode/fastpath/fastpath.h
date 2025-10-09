@@ -131,8 +131,9 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
          */
         restore_user_context();
     }
-    NODE_UNLOCK;
     c_exit_hook();
+
+    NODE_UNLOCK;
 
     if (config_set(CONFIG_KERNEL_SKIM_WINDOW)) {
         /* see restore_user_context for a full explanation of why we do this */
