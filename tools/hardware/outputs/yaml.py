@@ -25,7 +25,7 @@ def make_yaml_list_of_regions(regions) -> List:
     ]
 
 
-def create_yaml_file(dev_mem, phys_mem, outputStream):
+def create_yaml_file(dev_mem, phys_mem, physBase, outputStream):
 
     yaml.add_representer(
         int,
@@ -33,7 +33,8 @@ def create_yaml_file(dev_mem, phys_mem, outputStream):
 
     yaml_obj = {
         'devices': make_yaml_list_of_regions(dev_mem),
-        'memory':  make_yaml_list_of_regions(phys_mem)
+        'memory':  make_yaml_list_of_regions(phys_mem),
+        'kernel_phys_base': physBase,
     }
 
     with outputStream:
@@ -61,12 +62,12 @@ def run(tree: FdtParser, hw_yaml: HardwareYaml, config: Config,
     if not args.yaml_out:
         raise ValueError('you need to provide a yaml-out to use the yaml output method')
 
-    phys_mem, reserved, _ = hardware.utils.memory.get_physical_memory(tree, config)
+    phys_mem, reserved, physBase = hardware.utils.memory.get_physical_memory(tree, config)
     kernel_devs = get_kernel_devices(tree, hw_yaml, kernel_config_dict)
     dev_mem = hardware.utils.memory.get_addrspace_exclude(
         list(reserved) + phys_mem + kernel_devs, config)
 
-    create_yaml_file(dev_mem, phys_mem, args.yaml_out)
+    create_yaml_file(dev_mem, phys_mem, physBase, args.yaml_out)
 
 
 def add_args(parser):

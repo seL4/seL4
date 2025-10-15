@@ -25,10 +25,11 @@ def make_json_list_of_regions(regions) -> List:
     ]
 
 
-def create_json_file(dev_mem, phys_mem, output_stream):
+def create_json_file(dev_mem, phys_mem, physBase, output_stream):
     json_obj = {
         'devices': make_json_list_of_regions(dev_mem),
-        'memory':  make_json_list_of_regions(phys_mem)
+        'memory':  make_json_list_of_regions(phys_mem),
+        'kernel_phys_base': physBase,
     }
 
     with output_stream:
@@ -56,12 +57,12 @@ def run(tree: FdtParser, hw_yaml: HardwareYaml, config: Config,
     if not args.json_out:
         raise ValueError('you need to provide a json-out to use the JSON output method')
 
-    phys_mem, reserved, _ = hardware.utils.memory.get_physical_memory(tree, config)
+    phys_mem, reserved, physBase = hardware.utils.memory.get_physical_memory(tree, config)
     kernel_devs = get_kernel_devices(tree, hw_yaml, kernel_config_dict)
     dev_mem = hardware.utils.memory.get_addrspace_exclude(
         list(reserved) + phys_mem + kernel_devs, config)
 
-    create_json_file(dev_mem, phys_mem, args.json_out)
+    create_json_file(dev_mem, phys_mem, physBase, args.json_out)
 
 
 def add_args(parser):
