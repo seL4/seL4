@@ -83,20 +83,22 @@ def reserve_regions(regions: Set[Region], reserved: Set[Region]) -> Set[Region]:
     return ret
 
 
-def align_memory(regions: Set[Region], config: Config) -> List[Region]:
-    ''' Given a set of regions, sort them and align the first so that the
-    ELF loader will be able to load the kernel into it. Will return the
-    aligned memory region list, a set of any regions of memory that were
-    aligned out and the physBase value that the kernel will use. '''
+def find_aligned_kernel_phys_base(regions: Set[Region], config: Config) -> List[Region]:
+    ''' Given a sorted set of regions, find an aligned physBase that the kernel
+        can use. Leave the actual regions untouched as the non-kernel normal
+        memory is still useable by userspace.'''
 
-    ret = sorted(regions)
+    # NOTE: This function assumes that the kernel lives in the first region
+    #       of memory. This is true for historical reasons, but this code could
+    #       be extended to use another region if needed. So far it hasn't been,
+    #       and other non-kernel (e.g. loader) code would need to be checked
+    #       to make sure that it does not make any invalid assumptions.
 
-    if config.get_kernel_phys_align() != 0:
-        new = ret[0].align_base(config.get_kernel_phys_align())
-        ret[0] = new
+    aligned_region_0 = regions[0].align_base(config.get_kernel_phys_align())
+    assert aligned_region_0.size != 0, "aligned region must not be empty"
 
-    physBase = ret[0].base
-    return ret, physBase
+    physBase = aligned_region_0.base
+    return physBase
 
 
 def get_physical_memory(tree: FdtParser, config: Config) -> List[Region]:
@@ -104,7 +106,8 @@ def get_physical_memory(tree: FdtParser, config: Config) -> List[Region]:
     regions = merge_memory_regions(get_memory_regions(tree))
     reserved = parse_reserved_regions(tree.get_path('/reserved-memory'))
     regions = reserve_regions(regions, reserved)
-    regions, physBase = align_memory(regions, config)
+    regions = sorted(regions)
+    physBase = find_aligned_kernel_phys_base(regions, config)
 
     return regions, reserved, physBase
 

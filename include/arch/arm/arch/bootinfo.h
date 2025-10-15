@@ -14,9 +14,10 @@
  * +1 for each available physical memory region (elements in avail_p_regs)
  * +1 for each MODE_RESERVED region, there might be none
  * +1 to allow the kernel to release its own boot data region
+ * +1 to allow the kernel to release memory below its alignment requirement
  * +1 for a possible gap between ELF images and rootserver objects
  */
-#define MAX_NUM_FREEMEM_REG (ARRAY_SIZE(avail_p_regs) + MODE_RESERVED + 1 + 1)
+#define MAX_NUM_FREEMEM_REG (ARRAY_SIZE(avail_p_regs) + MODE_RESERVED + 1 + 1 + 1)
 
 /* The regions reserved by the boot code are:
  * +1 for kernel
