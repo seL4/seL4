@@ -96,8 +96,12 @@ block VMFault {
     field     address           64
 
     padding                     32
+#if defined(CONFIG_HAVE_CHERI)
+    field     FSR               12
+#else
     field     FSR               5
     padding                     7
+#endif
     field     instructionFault  1
     padding                     15
     field     seL4_FaultType    4
@@ -123,7 +127,12 @@ block vm_attributes {
 -- because the vspace source code is the same for both architectures and doing
 -- the bit shifting manually only for 32-bit and not 64-bit is counter-intuitive.
 block pte {
+#if defined(CONFIG_HAVE_CHERI)
+    field cheri_ext        5
+    padding                5
+#else
     padding                10
+#endif
     field ppn              44
     field sw               2
     field dirty            1
