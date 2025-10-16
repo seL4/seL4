@@ -19,6 +19,7 @@ add_sources(
         src/kernel/faulthandler.c
         src/kernel/thread.c
         src/kernel/boot.c
+        src/kernel/domain.c
         src/kernel/stack.c
         src/object/notification.c
         src/object/cnode.c

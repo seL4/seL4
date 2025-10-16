@@ -323,19 +323,16 @@ static void prepareNextDomain(void)
 static void nextDomain(void)
 {
     ksDomScheduleIdx++;
-    if (ksDomScheduleIdx >= ksDomScheduleLength) {
-        ksDomScheduleIdx = 0;
+    if (ksDomScheduleIdx >= ksDomScheduleLength ||
+        ksDomSchedule[ksDomScheduleIdx].length == 0) {
+        ksDomScheduleIdx = ksDomScheduleStart;
     }
 #ifdef CONFIG_KERNEL_MCS
     NODE_STATE(ksReprogram) = true;
 #endif
     ksWorkUnitsCompleted = 0;
     ksCurDomain = ksDomSchedule[ksDomScheduleIdx].domain;
-#ifdef CONFIG_KERNEL_MCS
-    ksDomainTime = usToTicks(ksDomSchedule[ksDomScheduleIdx].length * US_IN_MS);
-#else
     ksDomainTime = ksDomSchedule[ksDomScheduleIdx].length;
-#endif
 }
 
 #ifdef CONFIG_KERNEL_MCS

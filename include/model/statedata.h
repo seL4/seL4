@@ -102,10 +102,11 @@ extern word_t ksWorkUnitsCompleted;
 extern irq_state_t intStateIRQTable[];
 extern cte_t intStateIRQNode[];
 
-extern const dschedule_t ksDomSchedule[];
-extern const word_t ksDomScheduleLength;
+extern dschedule_t ksDomSchedule[CONFIG_NUM_DOMAIN_SCHEDULES];
+static const word_t ksDomScheduleLength = CONFIG_NUM_DOMAIN_SCHEDULES;
 extern word_t ksDomScheduleIdx;
 extern dom_t ksCurDomain;
+extern word_t ksDomScheduleStart;
 #ifdef CONFIG_KERNEL_MCS
 extern ticks_t ksDomainTime;
 #else
