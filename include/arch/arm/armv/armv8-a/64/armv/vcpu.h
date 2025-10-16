@@ -108,13 +108,13 @@
 #define REG_AFSR1_EL1       "afsr1_el1"
 #define REG_ESR_EL1         "esr_el1"
 #define REG_FAR_EL1         "far_el1"
-#define REG_ISR_EL1         "isr_el1"
 #define REG_VBAR_EL1        "vbar_el1"
 #define REG_TPIDR_EL1       "tpidr_el1"
 #define REG_SP_EL1          "sp_el1"
 #define REG_ELR_EL1         "elr_el1"
 #define REG_SPSR_EL1        "spsr_el1"
 #define REG_CPACR_EL1       "cpacr_el1"
+#define REG_PAR_EL1         "par_el1"
 #define REG_CNTV_TVAL_EL0   "cntv_tval_el0"
 #define REG_CNTV_CTL_EL0    "cntv_ctl_el0"
 #define REG_CNTV_CVAL_EL0   "cntv_cval_el0"
@@ -285,16 +285,6 @@ static inline void writeFAR(word_t reg)
     MSR(REG_FAR_EL1, reg);
 }
 
-/* ISR is read-only */
-/** MODIFIES: */
-/** DONT_TRANSLATE */
-static inline word_t readISR(void)
-{
-    uint32_t reg;
-    MRS(REG_ISR_EL1, reg);
-    return (word_t)reg;
-}
-
 static inline word_t readVBAR(void)
 {
     word_t reg;
@@ -353,6 +343,18 @@ static inline word_t readCPACR_EL1(void)
 static inline void writeCPACR_EL1(word_t reg)
 {
     MSR(REG_CPACR_EL1, reg);
+}
+
+static inline word_t readPAR_EL1(void)
+{
+    word_t reg;
+    MRS(REG_PAR_EL1, reg);
+    return reg;
+}
+
+static inline void writePAR_EL1(word_t reg)
+{
+    MSR(REG_PAR_EL1, reg);
 }
 
 static inline word_t readCNTV_TVAL_EL0(void)
@@ -454,6 +456,8 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
         return readACTLR();
     case seL4_VCPUReg_CPACR:
         return readCPACR_EL1();
+    case seL4_VCPUReg_PAR:
+        return readPAR_EL1();
     case seL4_VCPUReg_AFSR0:
         return readAFSR0();
     case seL4_VCPUReg_AFSR1:
@@ -462,8 +466,6 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
         return readESR();
     case seL4_VCPUReg_FAR:
         return readFAR();
-    case seL4_VCPUReg_ISR:
-        return readISR();
     case seL4_VCPUReg_VBAR:
         return readVBAR();
     case seL4_VCPUReg_TPIDR_EL1:
@@ -521,6 +523,9 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
     case seL4_VCPUReg_CPACR:
         writeCPACR_EL1(reg);
         break;
+    case seL4_VCPUReg_PAR:
+        writePAR_EL1(reg);
+        break;
     case seL4_VCPUReg_AFSR0:
         writeAFSR0(reg);
         break;
@@ -532,9 +537,6 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
         break;
     case seL4_VCPUReg_FAR:
         writeFAR(reg);
-        break;
-    case seL4_VCPUReg_ISR:
-        /* ISR is read-only */
         break;
     case seL4_VCPUReg_VBAR:
         writeVBAR(reg);
