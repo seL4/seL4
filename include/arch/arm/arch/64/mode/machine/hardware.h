@@ -35,7 +35,8 @@
 
 #define KPT_LEVEL_SHIFT(n) (((PT_INDEX_BITS) * (((KPT_LEVELS) - 1) - (n))) + seL4_PageBits)
 #define GET_KPT_INDEX(addr, n)  (((addr) >> KPT_LEVEL_SHIFT(n)) & MASK(PT_INDEX_BITS))
-#define GET_KLVL_PGSIZE(n)      BIT(KPT_LEVEL_SHIFT((n)))
+#define GET_KLVL_PGSIZE_BITS(n) KPT_LEVEL_SHIFT(n)
+#define GET_KLVL_PGSIZE(n)      BIT(GET_KLVL_PGSIZE_BITS(n))
 
 #define UPT_LEVEL_SHIFT(n) (((PT_INDEX_BITS) * (((UPT_LEVELS) - 1) - (n))) + seL4_PageBits)
 #define UPT_INDEX_MASK(n) (n == 0 ? seL4_VSpaceIndexBits : PT_INDEX_BITS)

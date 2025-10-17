@@ -13,7 +13,12 @@
 /* When translating a physical address into an address accessible to the
  * kernel via virtual addressing we always use the mapping of the memory
  * into the physical memory window, even if the mapping originally
- * referred to a kernel virtual address. */
+ * referred to a kernel virtual address.
+ *
+ * As a result, this function should _not_ be used to modify memory if the
+ * addresses might lie within the kernel ELF mapping.
+ * See the comments in `map_kernel_elf_image()` on AArch64.
+ */
 static inline void *CONST ptrFromPAddr(paddr_t paddr)
 {
     return (void *)(paddr + PPTR_BASE_OFFSET);

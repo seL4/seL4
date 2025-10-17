@@ -45,7 +45,9 @@ class ARMConfig(Config):
         elif sel4arch == 'aarch32':
             self.KERNEL_PHYS_ALIGN = 24
         else:
-            self.KERNEL_PHYS_ALIGN = 0
+            # AArch64 requires an alignment up to the size of seL4_LargePageBits,
+            # see the compile_assert `elf_paddr_aligned`.
+            self.KERNEL_PHYS_ALIGN = 21
 
     def get_kernel_phys_align(self) -> int:
         return self.KERNEL_PHYS_ALIGN

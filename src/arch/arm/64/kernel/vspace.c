@@ -233,68 +233,173 @@ BOOT_CODE void map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_righ
                                                                                             attr_index);
 }
 
-BOOT_CODE void map_kernel_window(void)
-{
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+/* verify that the physical memory window as at the second entry of the PGD */
+compile_assert(physical_window_pgd_location,
+               GET_KPT_INDEX(PPTR_BASE, KLVL_FRM_ARM_PT_LVL(0)) == 1);
+#else
+/* verify that the physical memory window as at the last entry of the PGD */
+compile_assert(physical_window_pgd_location,
+               GET_KPT_INDEX(PPTR_BASE, KLVL_FRM_ARM_PT_LVL(0)) == BIT(PT_INDEX_BITS) - 1);
+#endif
+/* make sure that the PPTR_BASE and PPTR_TOP are huge paged aligned */
+compile_assert(physical_window_base_aligned, IS_ALIGNED(PPTR_BASE, seL4_HugePageBits));
+compile_assert(physical_window_top_aligned, IS_ALIGNED(PPTR_TOP, seL4_HugePageBits));
 
+/* the PPTR_BASE starts from the bottom of the kernel PUD */
+compile_assert(physical_window_bottom_kernel_region,
+               GET_KPT_INDEX(PPTR_BASE, KLVL_FRM_ARM_PT_LVL(1)) == 0);
+/* the PPTR_TOP then ends at the second-to-last entry of the PUD
+    note: because this is the exclusive value the assert is one higher than
+          you would expect.
+*/
+compile_assert(physical_window_top_kernel_region,
+               GET_KPT_INDEX(PPTR_TOP, KLVL_FRM_ARM_PT_LVL(1)) == BIT(PT_INDEX_BITS) - 1);
+
+BOOT_CODE void map_kernel_physical_window(void)
+{
     paddr_t paddr;
     pptr_t vaddr;
-    word_t idx;
 
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    /* verify that the kernel window as at the second entry of the PGD */
-    assert(GET_KPT_INDEX(PPTR_BASE, KLVL_FRM_ARM_PT_LVL(0)) == 1);
-#else
-    /* verify that the kernel window as at the last entry of the PGD */
-    assert(GET_KPT_INDEX(PPTR_BASE, KLVL_FRM_ARM_PT_LVL(0)) == BIT(PT_INDEX_BITS) - 1);
-#endif
-    assert(IS_ALIGNED(PPTR_BASE, seL4_LargePageBits));
-    /* verify that the kernel device window is 1gb aligned and 1gb in size */
-    assert(GET_KPT_INDEX(PPTR_TOP, KLVL_FRM_ARM_PT_LVL(1)) == BIT(PT_INDEX_BITS) - 1);
-    assert(IS_ALIGNED(PPTR_TOP, seL4_HugePageBits));
-
-    /* place the PUD into the PGD */
-    armKSGlobalKernelPGD[GET_KPT_INDEX(PPTR_BASE, KLVL_FRM_ARM_PT_LVL(0))] = pte_pte_table_new(
-                                                                                 addrFromKPPtr(armKSGlobalKernelPUD));
-
-    /* place all PDs except the last one in PUD */
-    for (idx = GET_KPT_INDEX(PPTR_BASE, KLVL_FRM_ARM_PT_LVL(1)); idx < GET_KPT_INDEX(PPTR_TOP, KLVL_FRM_ARM_PT_LVL(1));
-         idx++) {
-        armKSGlobalKernelPUD[idx] = pte_pte_table_new(
-                                        addrFromKPPtr(&armKSGlobalKernelPDs[idx][0])
-                                    );
-    }
-
-    /* map the kernel window using large pages */
+    /* map the physical memory window using large pages, which requires
+       filling each PUD with PDs and each PD with large page paddrs. */
     vaddr = PPTR_BASE;
-    for (paddr = PADDR_BASE; paddr < PADDR_TOP; paddr += BIT(seL4_LargePageBits)) {
-        armKSGlobalKernelPDs[GET_KPT_INDEX(vaddr, KLVL_FRM_ARM_PT_LVL(1))][GET_KPT_INDEX(vaddr,
-                                                                                         KLVL_FRM_ARM_PT_LVL(2))] = pte_pte_page_new(
+    paddr = PADDR_BASE;
+    for (word_t pud_idx = 0; pud_idx < BIT(PT_INDEX_BITS) - 1; pud_idx++) {
+
+        /* armKSGlobalKernelPDs is a 2-level array where the first index
+           corresponds to the PUD index, and the second is the PD index,*/
+        armKSGlobalKernelPUD[pud_idx]
+            = pte_pte_table_new(addrFromKPPtr(&armKSGlobalKernelPDs[pud_idx][0]));
+
+        /* because we know that the PPTR_BASE and PPTR_TOP have huge page (lvl1) alignment
+         * due to `physical_window_top_pud` and `physical_window_{base, top}_aligned`
+         * we can now fill out every PD in each PUD without worrying about edgecases */
+        for (word_t pd_idx = 0; pd_idx < BIT(PT_INDEX_BITS); pd_idx++) {
+
+            armKSGlobalKernelPDs[pud_idx][pd_idx]
+                = pte_pte_page_new(
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-                                                                                                                        0, // XN
+                      /* XN */ 0,
 #else
-                                                                                                                        1, // UXN
+                      /* UXN */ 1,
 #endif
-                                                                                                                        paddr,
-                                                                                                                        0,                        /* global */
-                                                                                                                        1,                        /* access flag */
-                                                                                                                        SMP_TERNARY(SMP_SHARE, 0),        /* Inner-shareable if SMP enabled, otherwise unshared */
-                                                                                                                        0,                        /* VMKernelOnly */
-                                                                                                                        NORMAL
-                                                                                                                    );
+                      /* page_base_address */ paddr,
+                      /* global (nG) */ 0,
+                      /* access flag (AF) */ 1,
+                      /* shareability (SH) */ SMP_TERNARY(SMP_SHARE, 0),
+                      /* AP */ APFromVMRights(VMKernelOnly),
+                      /* AttrIndx */ NORMAL
+                  );
+
+            assert(GET_KPT_INDEX(vaddr, KLVL_FRM_ARM_PT_LVL(1)) == pud_idx);
+            assert(GET_KPT_INDEX(vaddr, KLVL_FRM_ARM_PT_LVL(2)) == pd_idx);
+            paddr += BIT(seL4_LargePageBits);
+            vaddr += BIT(seL4_LargePageBits);
+        }
+    }
+}
+
+BOOT_CODE void map_kernel_elf_image(const word_t kernel_mappings_pud_idx)
+{
+    compile_assert(elf_paddr_aligned, IS_ALIGNED(KERNEL_ELF_PADDR_BASE_RAW, seL4_LargePageBits));
+    compile_assert(elf_base_aligned, IS_ALIGNED(KERNEL_ELF_BASE, seL4_LargePageBits));
+    /* asserts because ELF_TOP is dynamic */
+    assert(GET_KPT_INDEX(KERNEL_ELF_BASE, KLVL_FRM_ARM_PT_LVL(1)) == kernel_mappings_pud_idx);
+    assert(GET_KPT_INDEX(KERNEL_ELF_TOP, KLVL_FRM_ARM_PT_LVL(1)) == kernel_mappings_pud_idx);
+    assert(KERNEL_ELF_TOP <= KDEV_BASE);
+
+    /**
+     *  Per ARM ARM DDI 0487 (version L.b), in B2.11 "Mismatched memory attributes",
+     *  when physical memory locations are accessed with mismatched attributes
+     *  (caching, memory type (device/normal), shareability), the coherency of these
+     *  memory locations may be lost, as well as various violations of read and
+     *  write orderings or atomic operations. Other ARM documents refer to the
+     *  situation in which two virtual addresses map to the same physical address as
+     *  "Memory aliasing" (e.g. Document ID 102376 0200_01_en).
+     *
+     *  Currently, the memory attributes used in the physical memory window does
+     *  match that of the kernel ELF mapping, so this is OK. At the same time,
+     *  the current physical window mapping does use NORMAL memory covering memory
+     *  that is not DRAM, which is questionable for newer processors with more
+     *  speculative execution.
+     *
+     *  Hence, the kernel should never access kernel ELF memory through the physical
+     *  memory window, i.e., never modify the result of `ptrFromPAddr()` when the
+     *  physical address might lie within the kernel ELF. (Reads are fine if they
+     *  have been flushed appropriately per B2.11; this should be the case for
+     *  any paging structures).
+     *
+     *  As an addendum, LWN Article "ARM's multiply-mapped memory mess" specifies
+     *  that in ARMv6 specifications this kind of aliasing would be UNPREDICTABLE;
+     *  the current ARMv8 A-Profile specifications no longer contain this wording,
+     *  and instead specify the loss of coherency and other behaviours in B2.11.
+     *
+     */
+
+    const word_t kernel_elf_pd_start = GET_KPT_INDEX(KERNEL_ELF_BASE, KLVL_FRM_ARM_PT_LVL(2));
+    const word_t kernel_elf_pd_end   = GET_KPT_INDEX(KERNEL_ELF_TOP, KLVL_FRM_ARM_PT_LVL(2));
+
+    word_t paddr = KERNEL_ELF_PADDR_BASE;
+    word_t vaddr = KERNEL_ELF_BASE;
+    for (word_t pd_idx = kernel_elf_pd_start; pd_idx < kernel_elf_pd_end; pd_idx++) {
+        armKSGlobalKernelPDs[kernel_mappings_pud_idx][pd_idx]
+            = pte_pte_page_new(
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+                  /* XN */ 0,
+#else
+                  /* UXN */ 1,
+#endif
+                  /* page_base_address */ paddr,
+                  /* global (nG) */ 0,
+                  /* access flag (AF) */ 1,
+                  /* shareability (SH) */ SMP_TERNARY(SMP_SHARE, 0),
+                  /* AP */ APFromVMRights(VMKernelOnly),
+                  /* AttrIndx */ NORMAL
+              );
+
+        assert(pd_idx == GET_KPT_INDEX(vaddr, KLVL_FRM_ARM_PT_LVL(2)));
+        paddr += BIT(seL4_LargePageBits);
         vaddr += BIT(seL4_LargePageBits);
     }
+}
 
-    /* put the PD into the PUD for device window */
-    armKSGlobalKernelPUD[GET_KPT_INDEX(PPTR_TOP, KLVL_FRM_ARM_PT_LVL(1))] = pte_pte_table_new(
-                                                                                addrFromKPPtr(&armKSGlobalKernelPDs[BIT(PT_INDEX_BITS) - 1][0])
-                                                                            );
+/* work around the fact that C doesn't have real constants */
+#define kernel_mappings_pud_idx (GET_KPT_INDEX(PPTR_TOP, KLVL_FRM_ARM_PT_LVL(1)))
+#define device_mapping_pd_idx (GET_KPT_INDEX(KDEV_BASE, KLVL_FRM_ARM_PT_LVL(2)))
+
+BOOT_CODE void map_kernel_window(void)
+{
+    /* ====== 1: place the single PUD into the PGD for kernel window ======== */
+    armKSGlobalKernelPGD[GET_KPT_INDEX(PPTR_BASE, KLVL_FRM_ARM_PT_LVL(0))]
+        = pte_pte_table_new(addrFromKPPtr(armKSGlobalKernelPUD));
+
+    /* ============ 2: setup the physical memory window mappings ============ */
+    map_kernel_physical_window();
+
+    /* ========== 3: setup other kernel mappings (ELF, devices, etc) ======== */
+
+    /* put the PD into the PUD for kernel mappings */
+    armKSGlobalKernelPUD[kernel_mappings_pud_idx]
+        = pte_pte_table_new(addrFromKPPtr(&armKSGlobalKernelPDs[kernel_mappings_pud_idx][0]));
+
+    map_kernel_elf_image(kernel_mappings_pud_idx);
 
     /* put the PT into the PD for device window */
-    armKSGlobalKernelPDs[BIT(PT_INDEX_BITS) - 1][BIT(PT_INDEX_BITS) - 1] = pte_pte_table_new(
-                                                                               addrFromKPPtr(armKSGlobalKernelPT)
-                                                                           );
+    armKSGlobalKernelPDs[kernel_mappings_pud_idx][device_mapping_pd_idx]
+        = pte_pte_table_new(addrFromKPPtr(armKSGlobalKernelPT));
 
     map_kernel_devices();
+
+    /* ============= assertions ============== */
+    compile_assert(device_window_top_pd, device_mapping_pd_idx == BIT(PT_INDEX_BITS) - 1);
+    /* KDEV_BASE should be in the huge page (1GiB) above PPTR_TOP */
+    compile_assert(kdev_hugepage_above_pptr,
+                   ROUND_DOWN(KDEV_BASE, GET_KLVL_PGSIZE_BITS(1)) == PPTR_TOP);
+    compile_assert(kdev_in_kernel_mappings,
+                   kernel_mappings_pud_idx == GET_KPT_INDEX(KDEV_BASE, KLVL_FRM_ARM_PT_LVL(1)));
+    compile_assert(kernel_mappings_top_pud,
+                   kernel_mappings_pud_idx == BIT(PT_INDEX_BITS) - 1);
 }
 
 /* When the hypervisor support is enabled, the stage-2 translation table format

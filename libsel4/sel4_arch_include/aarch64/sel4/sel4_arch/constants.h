@@ -252,6 +252,9 @@ SEL4_SIZE_SANITY(seL4_VSpaceEntryBits, seL4_VSpaceIndexBits, seL4_VSpaceBits);
 #endif
 
 #else
-/* First address in the virtual address space that is not accessible to user level */
+/* First address in the virtual address space that is not accessible to user level.
+ * This is 2^47 due to the untyped limitation of a maximum of 47 bits; see the
+ * compile_assert() 'ut_max_less_than_canonical' and 'ut_max_is_canonical'.
+ */
 #define seL4_UserTop 0x00007fffffffffff
 #endif
