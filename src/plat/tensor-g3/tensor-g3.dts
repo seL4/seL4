@@ -1,0 +1,43 @@
+/dts-v1/;
+
+/ {
+    compatible = "google,tensor-g3", "google,zuma";
+    interrupt-parent = <&gic>;
+    #address-cells = <2>;
+    #size-cells = <2>;
+
+    chosen {
+        bootargs = "console=ttySAC0,115200n8";
+    };
+
+    memory@80000000 {
+        device_type = "memory";
+        /* 8GB total memory */
+        reg = <0x0 0x80000000 0x2 0x00000000>;
+    };
+
+    gic: interrupt-controller@10400000 {
+        compatible = "arm,gic-v3";
+        #interrupt-cells = <3>;
+        #address-cells = <2>;
+        #size-cells = <2>;
+        interrupt-controller;
+        /* Distributor + Redistributor regions */
+        reg = <0x0 0x10400000 0x0 0x10000>,     /* GICD */
+              <0x0 0x10440000 0x0 0x100000>;    /* GICR */
+    };
+
+    timer {
+        compatible = "arm,armv8-timer";
+        interrupts = <1 13 0xf08>,  /* Physical Secure */
+                     <1 14 0xf08>,  /* Physical Non-Secure */
+                     <1 11 0xf08>,  /* Virtual */
+                     <1 10 0xf08>;  /* Hypervisor */
+        clock-frequency = <24576000>;  /* 24.57 MHz */
+    };
+
+    psci {
+        compatible = "arm,psci-1.0";
+        method = "smc";
+    };
+};

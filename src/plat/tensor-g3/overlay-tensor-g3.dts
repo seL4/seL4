@@ -1,0 +1,17 @@
+/*
+ * Copyright 2025, Millpex
+ *
+ * SPDX-License-Identifier: BSD-2-Clause
+ */
+
+/ {
+        chosen {
+                seL4,elfloader-devices =
+                    &{/psci},
+                    &{/timer};
+
+                seL4,kernel-devices =
+                    &{/interrupt-controller@10400000},
+                    &{/timer};
+        };
+};

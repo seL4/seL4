@@ -1,0 +1,10 @@
+# platforms/plat/tensor-g3/Kconfig
+
+config PLAT_TENSOR_G3
+    bool "Google Pixel 8 (tensor-g3)"
+    depends on ARCH_AARCH64
+    select PLAT_SUPPORT_SECURE_BOOT
+    help
+        Target platform is the Google Pixel 8, codenamed 'tensor-g3'.
+        This platform is based on the Google Tensor G3 SoC.
+
