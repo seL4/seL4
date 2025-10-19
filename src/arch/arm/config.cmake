@@ -215,7 +215,7 @@ config_option(
     secure monitor is a higher privilege level and can make any change in the \
     system, the proofs can no longer be guaranteed."
     DEFAULT OFF
-    DEPENDS "NOT KernelVerificationBuild; KernelSel4ArchAarch64"
+    DEPENDS "KernelSel4ArchAarch64"
 )
 
 config_choice(
