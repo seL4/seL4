@@ -11,9 +11,6 @@
 #include <api/failures.h>
 #include <object/structures.h>
 
-/* PD slot reserved for storing the PD's allocated hardware ASID */
-#define PD_ASID_SLOT (0xff000000 >> (PT_INDEX_BITS + PAGE_BITS))
-
 enum pde_pte_tag {
     ME_PDE,
     ME_PTE
@@ -41,6 +38,7 @@ struct lookupPTSlot_ret {
 };
 typedef struct lookupPTSlot_ret lookupPTSlot_ret_t;
 
+
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 hw_asid_t getHWASID(asid_t asid);
 #endif
@@ -59,15 +57,7 @@ void flushPage(vm_page_size_t page_size, pde_t *pd, asid_t asid, word_t vptr);
 void flushTable(pde_t *pd, asid_t asid, word_t vptr, pte_t *pt);
 void flushSpace(asid_t asid);
 void invalidateTLBByASID(asid_t asid);
+asid_map_t findMapForASID(asid_t asid);
 
 bool_t CONST isIOSpaceFrameCap(cap_t cap);
-
-/* Reserved memory ranges */
-static const region_t BOOT_RODATA mode_reserved_region[] = {
-    {
-        (PD_ASID_SLOT + 0) << ARMSectionBits,
-                           (PD_ASID_SLOT + 1) << ARMSectionBits
-    }
-};
-#define MODE_RESERVED ARRAY_SIZE(mode_reserved_region)
 
