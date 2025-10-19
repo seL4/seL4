@@ -78,10 +78,11 @@
 .section .boot.text, "ax"
 BEGIN_FUNC(_start)
     /*
-     * Get the dtb and dtb size from the elfloader stack. Do this first because
-     * sp might change when we switch to supervisor mode.
+     * Get the dtb, dtb size, extra device base and extra device size
+     * from the elfloader stack. Do this first because sp might change
+     * when we switch to supervisor mode.
      */
-    pop {r7, r8}
+    pop {r7, r8, r9, r10}
 
     /* Supervisor/hypervisor mode, interrupts disabled */
     ldr r5, =CPSR_KERNEL
@@ -164,12 +165,12 @@ BEGIN_FUNC(_start)
 #endif
 
     /* Attempt to workaround any known ARM errata. */
-    push {r0-r3,r7-r8}
+    push {r0-r3,r7-r10}
     blx arm_errata
-    pop {r0-r3,r7-r8}
+    pop {r0-r3,r7-r10}
 
-    /* Put the DTB address back on the new stack for init_kernel. */
-    push {r7, r8}
+    /* Put the DTB and dev region address back on the new stack for init_kernel. */
+    push {r7, r8, r9, r10}
 
     /* Call bootstrapping implemented in C with parameters:
      *   r0: user image physical start address
@@ -178,6 +179,8 @@ BEGIN_FUNC(_start)
      *   r3: user image virtual entry address
      *   sp[0]: DTB physical address (0 if there is none)
      *   sp[1]: DTB size (0 if there is none)
+     *   sp[2]: extra device addr (0 if there is none)
+     *   sp[3]: extra device size (0 if there is none)
      */
     blx init_kernel
 
