@@ -1587,7 +1587,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
             }
 
             if (unlikely(pte_is_page_type(*lu_ret.ptSlot))) {
-                userError("Virtual address already mapped");
+                userError("Virtual address (0x%"SEL4_PRIx_word") already mapped", vaddr);
                 current_syscall_error.type = seL4_DeleteFirst;
                 return EXCEPTION_SYSCALL_ERROR;
             }

@@ -886,7 +886,7 @@ static create_mapping_pte_return_t createSafeMappingEntries_PTE(paddr_t base, wo
 
     /* Check that we are not overwriting an existing mapping */
     if (pte_ptr_get_present(lu_ret.ptSlot) && !is_remap) {
-        userError("Virtual address already mapped");
+        userError("Virtual address (0x%"SEL4_PRIx_word") already mapped", vaddr);
         current_syscall_error.type = seL4_DeleteFirst;
         ret.status = EXCEPTION_SYSCALL_ERROR;
         return ret;
@@ -933,7 +933,7 @@ static create_mapping_pde_return_t createSafeMappingEntries_PDE(paddr_t base, wo
     /* Check that we are not overwriting an existing mapping */
     if (pde_ptr_get_page_size(ret.pdSlot) == pde_pde_large) {
         if (pde_pde_large_ptr_get_present(ret.pdSlot) && !is_remap) {
-            userError("Virtual address already mapped");
+            userError("Virtual address (0x%"SEL4_PRIx_word") already mapped", vaddr);
             current_syscall_error.type = seL4_DeleteFirst;
             ret.status = EXCEPTION_SYSCALL_ERROR;
             return ret;

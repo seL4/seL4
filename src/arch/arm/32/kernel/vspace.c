@@ -1610,7 +1610,7 @@ createSafeMappingEntries_PTE
         /* Check that we are not overwriting an existing mapping */
         if (pte_ptr_get_pteType(ret.pte_entries.base) == pte_pte_small) {
             if (!is_remap) {
-                userError("Virtual address already mapped");
+                userError("Virtual address (0x%"SEL4_PRIx_word") already mapped", vaddr);
                 current_syscall_error.type = seL4_DeleteFirst;
                 ret.status = EXCEPTION_SYSCALL_ERROR;
                 return ret;
@@ -1667,7 +1667,7 @@ createSafeMappingEntries_PTE
 
 #endif
             if (!is_remap) {
-                userError("Virtual address already mapped");
+                userError("Virtual address (0x%"SEL4_PRIx_word") already mapped", vaddr);
                 current_syscall_error.type = seL4_DeleteFirst;
                 ret.status = EXCEPTION_SYSCALL_ERROR;
                 return ret;
@@ -1726,7 +1726,7 @@ createSafeMappingEntries_PDE
         /* Check that we are not overwriting an existing mapping */
         if (pde_ptr_get_pdeType(ret.pde_entries.base) == pde_pde_section) {
             if (!is_remap) {
-                userError("Virtual address already mapped");
+                userError("Virtual address (0x%"SEL4_PRIx_word") already mapped", vaddr);
                 current_syscall_error.type = seL4_DeleteFirst;
                 ret.status = EXCEPTION_SYSCALL_ERROR;
                 return ret;
@@ -1769,7 +1769,7 @@ createSafeMappingEntries_PDE
         /* Check that we are not overwriting an existing mapping */
         if (pde_ptr_get_pdeType(ret.pde_entries.base) == pde_pde_section) {
             if (!is_remap) {
-                userError("Virtual address already mapped");
+                userError("Virtual address (0x%"SEL4_PRIx_word") already mapped", vaddr);
                 current_syscall_error.type = seL4_DeleteFirst;
                 ret.status = EXCEPTION_SYSCALL_ERROR;
                 return ret;
