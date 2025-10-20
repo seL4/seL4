@@ -29,6 +29,8 @@ typedef struct boot_state {
     seL4_X86_BootInfo_VBE vbe_info; /* Potential VBE information from multiboot */
     seL4_X86_BootInfo_mmap_t mb_mmap_info; /* memory map information from multiboot */
     seL4_X86_BootInfo_fb_t fb_info; /* framebuffer information as set by bootloader */
+    uint32_t     efi_ptr32;   /* 32-bit EFI system table pointer */
+    uint64_t     efi_ptr64;   /* 64-bit EFI system table pointer */
 } boot_state_t;
 
 extern boot_state_t boot_state;
