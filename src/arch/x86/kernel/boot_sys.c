@@ -179,7 +179,9 @@ static BOOT_CODE bool_t try_boot_sys_node(cpu_id_t cpu_id)
             &boot_state.acpi_rsdp,
             &boot_state.vbe_info,
             &boot_state.mb_mmap_info,
-            &boot_state.fb_info
+            &boot_state.fb_info,
+            boot_state.efi_ptr32,
+            boot_state.efi_ptr64
         )) {
         return false;
     }
@@ -628,6 +630,18 @@ static BOOT_CODE bool_t try_boot_sys_mbi2(
         if (tag->type == MULTIBOOT2_TAG_CMDLINE) {
             char const *const cmdline = (char const * const)(behind_tag);
             cmdline_parse(cmdline, &cmdline_opt);
+        } else if (tag->type == MULTIBOOT2_TAG_EFI32) {
+            if (tag->size - sizeof(*tag) == sizeof(uint32_t)) {
+                boot_state.efi_ptr32 = *(uint32_t *)behind_tag;
+                printf("32-bit EFI system table at physical address=0x%x\n",
+                       boot_state.efi_ptr32);
+            }
+        } else if (tag->type == MULTIBOOT2_TAG_EFI64) {
+            if (tag->size - sizeof(*tag) == sizeof(uint64_t)) {
+                boot_state.efi_ptr64 = *(uint64_t *)behind_tag;
+                printf("64-bit EFI system table at physical address=0x%llx\n",
+                       boot_state.efi_ptr64);
+            }
         } else if (tag->type == MULTIBOOT2_TAG_ACPI_1) {
             if (ACPI_V1_SIZE == tag->size - sizeof(*tag)) {
                 memcpy(&boot_state.acpi_rsdp, (void *)behind_tag, tag->size - sizeof(*tag));
