@@ -478,9 +478,9 @@ BOOT_CODE VISIBLE void init_kernel(
     sword_t pv_offset,
     vptr_t  v_entry,
     paddr_t dtb_addr_p,
-    uint64_t dtb_size,
+    paddr_t dtb_size,
     paddr_t extra_device_addr_p,
-    uint64_t extra_device_size
+    paddr_t extra_device_size
 #ifdef ENABLE_SMP_SUPPORT
     ,
     word_t hart_id,
