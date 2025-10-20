@@ -38,7 +38,9 @@ bool_t init_sys_state(
     acpi_rsdp_t      *acpi_rsdp,
     seL4_X86_BootInfo_VBE *vbe,
     seL4_X86_BootInfo_mmap_t *mb_mmap,
-    seL4_X86_BootInfo_fb_t *fb_info
+    seL4_X86_BootInfo_fb_t *fb_info,
+    uint32_t      efi_systbl_ptr32,
+    uint64_t      efi_systbl_ptr64
 );
 
 bool_t init_cpu(
