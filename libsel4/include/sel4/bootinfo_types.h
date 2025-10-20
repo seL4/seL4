@@ -106,6 +106,7 @@ typedef enum {
     SEL4_BOOTINFO_HEADER_X86_FRAMEBUFFER    = 4,
     SEL4_BOOTINFO_HEADER_X86_TSC_FREQ       = 5, /* frequency is in MHz */
     SEL4_BOOTINFO_HEADER_FDT                = 6, /* device tree */
+    SEL4_BOOTINFO_HEADER_EFI_SYSTBL_PTR     = 7, /* EFI system table pointer */
     /* Add more IDs here, the two elements below must always be at the end. */
     SEL4_BOOTINFO_HEADER_NUM,
     SEL4_FORCE_LONG_ENUM(seL4_BootInfoID)
