@@ -9,9 +9,9 @@
 #include <model/statedata.h>
 
 /* Default schedule. The length is in ms */
-const dschedule_t ksDomSchedule[] = {
+dschedule_t ksDomSchedule[] = {
     { .domain = 0, .length = 1 },
 };
 
-const word_t ksDomScheduleLength = ARRAY_SIZE(ksDomSchedule);
+word_t ksDomScheduleLength = ARRAY_SIZE(ksDomSchedule);
 
