@@ -493,6 +493,7 @@ function(config_choice optionname configname doc)
         else()
             # Remove this config as it's not valid
             unset(${option_cache} CACHE)
+            cfg_str_add_disabled(local_config_string ${option_config})
         endif()
     endforeach()
     if(NOT found_current)
