@@ -671,6 +671,7 @@ static BOOT_CODE bool_t try_boot_sys_mbi2(
                 printf("\tPhysical Memory Region from %llx size %llx type %u\n", m->addr, m->size, m->type);
                 if (m->addr != (uint64_t)(word_t)m->addr) {
                     printf("\t\tPhysical memory region not addressable\n");
+                    continue;
                 }
 
                 if (m->type == MULTIBOOT_MMAP_USEABLE_TYPE && m->addr >= HIGHMEM_PADDR) {
