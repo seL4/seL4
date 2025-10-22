@@ -1,0 +1,24 @@
+/*
+ * Copyright 2025, UNSW
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+	chosen {
+		seL4,elfloader-devices =
+		    "serial2",
+		    &{/psci},
+		    &{/timer};
+
+		seL4,kernel-devices =
+		    "serial2",
+		    &{/interrupt-controller@fd400000},
+		    &{/timer};
+	};
+
+	memory@00000000 {
+		device_type = "memory";
+        reg = <0x00 0x200000 0x00 0xecc9c000>;
+	};
+};
