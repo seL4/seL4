@@ -226,6 +226,7 @@ BOOT_CODE cap_t create_unmapped_it_frame_cap(pptr_t pptr, bool_t use_large)
     cap_t cap = cap_frame_cap_new(
                     asidInvalid,                     /* capFMappedASID       */
                     pptr,                            /* capFBasePtr          */
+                    0,                               /* capIsDirty           */
                     0,                               /* capFSize             */
                     0,                               /* capFVMRights         */
                     0,
@@ -452,11 +453,6 @@ void deleteASIDPool(asid_t asid_base, asid_pool_t *pool)
 
 static exception_t performASIDControlInvocation(void *frame, cte_t *slot, cte_t *parent, asid_t asid_base)
 {
-    /** AUXUPD: "(True, typ_region_bytes (ptr_val \<acute>frame) 12)" */
-    /** GHOSTUPD: "(True, gs_clear_region (ptr_val \<acute>frame) 12)" */
-    cap_untyped_cap_ptr_set_capFreeIndex(&(parent->cap),
-                                         MAX_FREE_INDEX(cap_untyped_cap_get_capBlockSize(parent->cap)));
-
     memzero(frame, BIT(pageBitsForSize(RISCV_4K_Page)));
     /** AUXUPD: "(True, ptr_retyps 1 (Ptr (ptr_val \<acute>frame) :: asid_pool_C ptr))" */
 
@@ -985,7 +981,7 @@ exception_t decodeRISCVMMUInvocation(word_t label, word_t length, cptr_t cptr,
         asid_base = i << asidLowBits;
 
         if (cap_get_capType(untyped) != cap_untyped_cap ||
-            cap_untyped_cap_get_capBlockSize(untyped) != seL4_ASIDPoolBits ||
+            cap_untyped_cap_get_capSize(untyped) != BIT(seL4_ASIDPoolBits) ||
             cap_untyped_cap_get_capIsDevice(untyped)) {
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;

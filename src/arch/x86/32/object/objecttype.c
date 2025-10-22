@@ -134,6 +134,7 @@ cap_t Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
 {
     switch (t) {
     case seL4_X86_4K:
+        memzero(regionBase, BIT(X86_SmallPage));
         return cap_frame_cap_new(
                    X86_SmallPage,          /* capFSize             */
                    ASID_LOW(asidInvalid),  /* capFMappedASIDLow    */
@@ -142,7 +143,8 @@ cap_t Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
                    deviceMemory,           /* capFIsDevice         */
                    ASID_HIGH(asidInvalid), /* capFMappedASIDHigh   */
                    VMReadWrite,            /* capFVMRights         */
-                   (word_t)regionBase      /* capFBasePtr          */
+                   (word_t)regionBase,     /* capFBasePtr          */
+                   false                   /* capIsDirty           */
                );
 
     case seL4_X86_LargePageObject:
@@ -154,7 +156,8 @@ cap_t Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
                    deviceMemory,           /* capFIsDevice         */
                    ASID_HIGH(asidInvalid), /* capFMappedASIDHigh   */
                    VMReadWrite,            /* capFVMRights         */
-                   (word_t)regionBase      /* capFBasePtr          */
+                   (word_t)regionBase,     /* capFBasePtr          */
+                   !deviceMemory           /* capIsDirty           */
                );
 
     case seL4_X86_PageTableObject:
