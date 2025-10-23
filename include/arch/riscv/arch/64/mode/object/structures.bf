@@ -64,6 +64,17 @@ block asid_pool_cap {
     field_high  capASIDPool     37
 }
 
+#ifdef CONFIG_ALLOW_SBI_CALLS
+block sbi_cap {
+    field capSBIFIDBadge 64
+    field capType 5
+    field capSBIEIDBadge 28
+    field capSBIEIDBadged 1
+    field capSBIFIDBadged 1
+    padding 29
+}
+#endif
+
 -- NB: odd numbers are arch caps (see isArchCap())
 tagged_union cap capType {
     -- 5-bit tag caps
@@ -88,6 +99,9 @@ tagged_union cap capType {
     tag page_table_cap      3
     tag asid_control_cap    11
     tag asid_pool_cap       13
+#ifdef CONFIG_ALLOW_SBI_CALLS
+    tag sbi_cap             15
+#endif
 }
 
 ---- Arch-independent object types

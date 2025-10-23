@@ -16,6 +16,7 @@ typedef seL4_CPtr seL4_RISCV_Page;
 typedef seL4_CPtr seL4_RISCV_PageTable;
 typedef seL4_CPtr seL4_RISCV_ASIDControl;
 typedef seL4_CPtr seL4_RISCV_ASIDPool;
+typedef seL4_CPtr seL4_RISCV_SBI;
 
 
 #define seL4_EndpointBits     4
@@ -59,6 +60,22 @@ typedef struct seL4_UserContext_ {
 
     seL4_Word tp;
 } seL4_UserContext;
+
+typedef struct seL4_RISCV_SBIContext_ {
+    seL4_Word a0;
+    seL4_Word a1;
+    seL4_Word a2;
+    seL4_Word a3;
+    seL4_Word a4;
+    seL4_Word a5;
+    seL4_Word a6;
+    seL4_Word a7;
+} seL4_RISCV_SBIContext;
+
+typedef struct seL4_RISCV_SBIRet_ {
+    seL4_Word error;
+    seL4_Word value;
+} seL4_RISCV_SBIRet;
 
 typedef enum {
     seL4_RISCV_ExecuteNever = 0x1,
