@@ -28,7 +28,8 @@ enum seL4_RootCNodeCapSlots {
     seL4_CapSMMUCBControl       = 13, /* global SMMU CB controller cap, null cap if not supported */
     seL4_CapInitThreadSC        = 14, /* initial thread's scheduling context cap, null cap if not supported */
     seL4_CapSMC                 = 15, /* global SMC cap, null cap if not supported */
-    seL4_NumInitialCaps         = 16
+    seL4_CapSBI                 = 16, /* global SBI cap, null cap if not supported */
+    seL4_NumInitialCaps         = 17
 };
 
 /* Legacy code will have assumptions on the vspace root being a Page Directory
