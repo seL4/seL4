@@ -20,6 +20,16 @@ if(KernelPlatformImx8mq-evk OR KernelPlatformImx8mm-evk OR KernelPlatformImx8mp-
     else()
         set(IMX8M_MAX_IRQ 160 CACHE INTERNAL "")
     endif()
+
+    if (KernelPlatformImx8mq-evk)
+        # per the DTS, clock-frequency = < 0x7f2815 >;
+        # also per gpt_cnfrq, which also reports 8333333
+        set(IMX8M_TIMER_FREQUENCY 8333333 CACHE INTERNAL "")
+    else()
+        # per the DTS, clock-frequency = < 0x7a1200 >;
+        set(IMX8M_TIMER_FREQUENCY 8000000 CACHE INTERNAL "")
+    endif()
+
     set(KernelArmCortexA53 ON)
     set(KernelArchArmV8a ON)
     set(KernelArmGicV3 ON)
@@ -31,7 +41,7 @@ if(KernelPlatformImx8mq-evk OR KernelPlatformImx8mm-evk OR KernelPlatformImx8mp-
         list(APPEND KernelDTSList "src/plat/imx8m-evk/overlay-imx8m-32bit.dts")
     endif()
     declare_default_headers(
-        TIMER_FREQUENCY 8000000
+        TIMER_FREQUENCY ${IMX8M_TIMER_FREQUENCY}
         MAX_IRQ ${IMX8M_MAX_IRQ}
         TIMER drivers/timer/arm_generic.h
         INTERRUPT_CONTROLLER arch/machine/gic_v3.h

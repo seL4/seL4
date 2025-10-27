@@ -22,7 +22,7 @@ if(KernelPlatformMaaxboard)
         list(APPEND KernelDTSList "src/plat/maaxboard/overlay-${KernelPlatform}-32bit.dts")
     endif()
     declare_default_headers(
-        TIMER_FREQUENCY 8000000
+        TIMER_FREQUENCY 8333333
         MAX_IRQ 160
         TIMER drivers/timer/arm_generic.h
         INTERRUPT_CONTROLLER arch/machine/gic_v3.h
