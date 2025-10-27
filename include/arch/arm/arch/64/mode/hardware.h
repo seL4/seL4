@@ -11,47 +11,7 @@
 #include <arch/machine/hardware.h>
 #include <sel4/plat/api/constants.h>
 
-/* EL2 kernel address map:
- *
- * The EL2 mode kernel uses TTBR0_EL2 which covers the range of
- * 0x0 - 0x0000ffffffffffff (48 bits of vaddrspace).
- *
- * The CPU on the TX1 only allows for 48-bits of addressable virtual memory.
- * Within the seL4 EL2 kernel's separate vaddrspace, it uses
- * the 512 GiB at the top of that 48 bits of addressable
- * virtual memory.
- *
- * In EL2 there is no canonical-high portion of the address space since
- * address tagging is not supported in EL2. Therefore the kernel is linked
- * to the canonical lower portion of the address space (all the unused top bits
- * are set to 0, not 1).
- *
- * The memory map used by the EL2 kernel's separate address space
- * ends up looking something like this:
- *
- * +-----------------------------------+ <- 0xFFFFFFFF_FFFFFFFF
- * | Canonical high portion - unusable |
- * | virtual addrs                     |
- * +-----------------------------------+ <- PPTR_TOP: 256TiB mark (top of 48 bits)
- * | seL4 EL2 kernel                   |    ^
- * |                                   |    |
- * |                                   |    512GiB
- * |                                   |    of EL2 kernel windowing
- * |                                   |    into memory.
- * |                                   |    |
- * |                                   |    v
- * +-----------------------------------+ <- PPTR_BASE: 256TiB minus 512GiB.
- * | Unused virtual addresses within   |    ^
- * | the EL2 kernel's                  |    |
- * | separate vaddrspace.              |    Rest of the
- * |                                   |    EL2 kernel
- * |                                   |    vaddrspace, unused,
- * |                                   |    which is the rest of
- * |                                   |    the lower 256 TiB.
- * |                                   |    |
- * |                                   |    v
- * +-----------------------------------+ <- 0x0
- *
+/*
  * !defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
  *
  *          2^64 +-------------------+
@@ -108,8 +68,52 @@
  *                      |                   |
  *          2^64 - 2^21 +-------------------+ KDEV_BASE
  *
- *
+ */
+
+/*
  * defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
+ *
+ *    EL2 kernel address map:
+ *
+ *    The EL2 mode kernel uses TTBR0_EL2 which covers the range of
+ *    0x0 - 0x0000ffffffffffff (48 bits of vaddrspace).
+ *
+ *    The CPU on the TX1 only allows for 48-bits of addressable virtual memory.
+ *    Within the seL4 EL2 kernel's separate vaddrspace, it uses
+ *    the 512 GiB at the top of that 48 bits of addressable
+ *    virtual memory.
+ *
+ *    In EL2 there is no canonical-high portion of the address space since
+ *    address tagging is not supported in EL2. Therefore the kernel is linked
+ *    to the canonical lower portion of the address space (all the unused top bits
+ *    are set to 0, not 1).
+ *
+ *    The memory map used by the EL2 kernel's separate address space
+ *    ends up looking something like this:
+ *
+ *    +-----------------------------------+ <- 0xFFFFFFFF_FFFFFFFF
+ *    | Canonical high portion - unusable |
+ *    | virtual addrs                     |
+ *    +-----------------------------------+ <- PPTR_TOP: 256TiB mark (top of 48 bits)
+ *    | seL4 EL2 kernel                   |    ^
+ *    |                                   |    |
+ *    |                                   |    512GiB
+ *    |                                   |    of EL2 kernel windowing
+ *    |                                   |    into memory.
+ *    |                                   |    |
+ *    |                                   |    v
+ *    +-----------------------------------+ <- PPTR_BASE: 256TiB minus 512GiB.
+ *    | Unused virtual addresses within   |    ^
+ *    | the EL2 kernel's                  |    |
+ *    | separate vaddrspace.              |    Rest of the
+ *    |                                   |    EL2 kernel
+ *    |                                   |    vaddrspace, unused,
+ *    |                                   |    which is the rest of
+ *    |                                   |    the lower 256 TiB.
+ *    |                                   |    |
+ *    |                                   |    v
+ *    +-----------------------------------+ <- 0x0
+ *
  *
  *          2^64 +-------------------+
  *               |                   |
