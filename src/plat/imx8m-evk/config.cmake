@@ -9,32 +9,50 @@ declare_platform(imx8mq-evk KernelPlatformImx8mq-evk PLAT_IMX8MQ_EVK KernelArchA
 declare_platform(imx8mm-evk KernelPlatformImx8mm-evk PLAT_IMX8MM_EVK KernelArchARM)
 declare_platform(imx8mp-evk KernelPlatformImx8mp-evk PLAT_IMX8MP_EVK KernelArchARM)
 
-if(KernelPlatformImx8mq-evk OR KernelPlatformImx8mm-evk OR KernelPlatformImx8mp-evk)
+if(KernelPlatformImx8mq-evk
+   OR KernelPlatformImx8mm-evk
+   OR KernelPlatformImx8mp-evk
+)
     declare_seL4_arch(aarch64 aarch32)
     if(KernelPlatformImx8mq-evk)
         config_set(KernelPlatImx8mq PLAT_IMX8MQ ON)
     endif()
     if(KernelPlatformImx8mp-evk)
         # The i.MX 8M Plus SoC has higher interrupt numbers than the 8M Mini and the 8M Quad
-        set(IMX8M_MAX_IRQ 192 CACHE INTERNAL "")
+        set(IMX8M_MAX_IRQ
+            192
+            CACHE INTERNAL ""
+        )
     else()
-        set(IMX8M_MAX_IRQ 160 CACHE INTERNAL "")
+        set(IMX8M_MAX_IRQ
+            160
+            CACHE INTERNAL ""
+        )
     endif()
 
-    if (KernelPlatformImx8mq-evk)
+    if(KernelPlatformImx8mq-evk)
         # per the DTS, clock-frequency = < 0x7f2815 >;
         # also per gpt_cnfrq, which also reports 8333333
-        set(IMX8M_TIMER_FREQUENCY 8333333 CACHE INTERNAL "")
+        set(IMX8M_TIMER_FREQUENCY
+            8333333
+            CACHE INTERNAL ""
+        )
     else()
         # per the DTS, clock-frequency = < 0x7a1200 >;
-        set(IMX8M_TIMER_FREQUENCY 8000000 CACHE INTERNAL "")
+        set(IMX8M_TIMER_FREQUENCY
+            8000000
+            CACHE INTERNAL ""
+        )
     endif()
 
     set(KernelArmCortexA53 ON)
     set(KernelArchArmV8a ON)
     set(KernelArmGicV3 ON)
     config_set(KernelARMPlatform ARM_PLAT ${KernelPlatform})
-    set(KernelArmMach "imx" CACHE INTERNAL "")
+    set(KernelArmMach
+        "imx"
+        CACHE INTERNAL ""
+    )
     list(APPEND KernelDTSList "tools/dts/${KernelPlatform}.dts")
     list(APPEND KernelDTSList "src/plat/imx8m-evk/overlay-${KernelPlatform}.dts")
     if(KernelSel4ArchAarch32)
