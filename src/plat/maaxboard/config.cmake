@@ -15,7 +15,10 @@ if(KernelPlatformMaaxboard)
     set(KernelArchArmV8a ON)
     set(KernelArmGicV3 ON)
     config_set(KernelARMPlatform ARM_PLAT ${KernelPlatform})
-    set(KernelArmMach "imx" CACHE INTERNAL "")
+    set(KernelArmMach
+        "imx"
+        CACHE INTERNAL ""
+    )
     list(APPEND KernelDTSList "tools/dts/${KernelPlatform}.dts")
     list(APPEND KernelDTSList "src/plat/maaxboard/overlay-${KernelPlatform}.dts")
     if(KernelSel4ArchAarch32)
@@ -34,6 +37,6 @@ if(KernelPlatformMaaxboard)
 endif()
 
 add_sources(
-    DEP "KernelPlatformMaaxboard"
-    CFILES src/arch/arm/machine/gic_v3.c src/arch/arm/machine/l2c_nop.c
+    DEP "KernelPlatformMaaxboard" CFILES src/arch/arm/machine/gic_v3.c
+                                         src/arch/arm/machine/l2c_nop.c
 )
