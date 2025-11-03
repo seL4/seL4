@@ -315,24 +315,35 @@ BOOT_CODE void map_kernel_elf_image(pte_t kernel_mapping_pds[])
     }
 }
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+/* verify that the physical memory window as at the second entry of the PGD */
+compile_assert(physical_window_pgd_location,
+               GET_KPT_INDEX(PPTR_BASE, KLVL_FRM_ARM_PT_LVL(0)) == 1);
+#else
+/* verify that the physical memory window as at the last entry of the PGD */
+compile_assert(physical_window_pgd_location,
+               GET_KPT_INDEX(PPTR_BASE, KLVL_FRM_ARM_PT_LVL(0)) == BIT(PT_INDEX_BITS) - 1);
+#endif
+/* make sure that the PPTR_BASE and PPTR_TOP are huge paged aligned */
+compile_assert(physical_window_base_aligned, IS_ALIGNED(PPTR_BASE, seL4_HugePageBits));
+compile_assert(physical_window_top_aligned, IS_ALIGNED(PPTR_TOP, seL4_HugePageBits));
+
+/* the PPTR_BASE starts from the bottom of the kernel PUD */
+compile_assert(physical_window_bottom_kernel_region,
+               GET_KPT_INDEX(PPTR_BASE, KLVL_FRM_ARM_PT_LVL(1)) == 0);
+/* the PPTR_TOP then ends at the second-to-last entry of the PUD
+    note: because this is the exclusive value the assert is one higher than
+          you would expect.
+*/
+compile_assert(physical_window_top_kernel_region,
+               GET_KPT_INDEX(PPTR_TOP, KLVL_FRM_ARM_PT_LVL(1)) == BIT(PT_INDEX_BITS) - 1);
+
 BOOT_CODE void map_kernel_window(void)
 {
 
     paddr_t paddr;
     pptr_t vaddr;
     word_t idx;
-
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    /* verify that the kernel window as at the second entry of the PGD */
-    assert(GET_KPT_INDEX(PPTR_BASE, KLVL_FRM_ARM_PT_LVL(0)) == 1);
-#else
-    /* verify that the kernel window as at the last entry of the PGD */
-    assert(GET_KPT_INDEX(PPTR_BASE, KLVL_FRM_ARM_PT_LVL(0)) == BIT(PT_INDEX_BITS) - 1);
-#endif
-    assert(IS_ALIGNED(PPTR_BASE, seL4_LargePageBits));
-    /* verify that the kernel device window is 1gb aligned and 1gb in size */
-    assert(GET_KPT_INDEX(PPTR_TOP, KLVL_FRM_ARM_PT_LVL(1)) == BIT(PT_INDEX_BITS) - 1);
-    assert(IS_ALIGNED(PPTR_TOP, seL4_HugePageBits));
 
     /* place the PUD into the PGD */
     armKSGlobalKernelPGD[GET_KPT_INDEX(PPTR_BASE, KLVL_FRM_ARM_PT_LVL(0))]
