@@ -233,6 +233,88 @@ BOOT_CODE void map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_righ
                                                                                             attr_index);
 }
 
+/* Essentially, assert that the ELF, kernel devices, and log buffer are all in the same PUD.
+   In the current code this is the top index. This is arbitrary, the important part
+   is that they are all the same.
+ */
+compile_assert(elf_in_kernel_mappings, GET_KPT_INDEX(KERNEL_ELF_BASE,
+                                                     KLVL_FRM_ARM_PT_LVL(1)) == BIT(PT_INDEX_BITS) - 1);
+compile_assert(kdev_in_kernel_mappings, GET_KPT_INDEX(KDEV_BASE,
+                                                      KLVL_FRM_ARM_PT_LVL(1))      == BIT(PT_INDEX_BITS) - 1);
+compile_assert(log_buf_in_kernel_mappings, GET_KPT_INDEX(KS_LOG_BASE,
+                                                         KLVL_FRM_ARM_PT_LVL(1)) == BIT(PT_INDEX_BITS) - 1);
+
+/**
+ *  Per ARM ARM DDI 0487 (version L.b), in B2.11 "Mismatched memory attributes",
+ *  when physical memory locations are accessed with mismatched attributes
+ *  (caching, memory type (device/normal), shareability), the coherency of these
+ *  memory locations may be lost, as well as various violations of read and
+ *  write orderings or atomic operations. Other ARM documents refer to the
+ *  situation in which two virtual addresses map to the same physical address as
+ *  "Memory aliasing" (e.g. Document ID 102376 0200_01_en).
+ *
+ *  Currently, the memory attributes used in the physical memory window does
+ *  match that of the kernel ELF mapping, so this is OK. At the same time,
+ *  the current physical window mapping does use NORMAL memory covering memory
+ *  that is not DRAM, which is questionable for newer processors with more
+ *  speculative execution. (FIXME)
+ *
+ *  Hence, the kernel should never access kernel ELF memory through the physical
+ *  memory window, i.e., never modify the result of `ptrFromPAddr()` when the
+ *  physical address might lie within the kernel ELF. (Reads are fine if they
+ *  have been flushed appropriately per B2.11; this should be the case for
+ *  any paging structures).
+ *
+ *  As an addendum, LWN Article "ARM's multiply-mapped memory mess" specifies
+ *  that in ARMv6 specifications this kind of aliasing would be UNPREDICTABLE;
+ *  the current ARMv8 A-Profile specifications no longer contain this wording,
+ *  and instead specify the loss of coherency and other behaviours in B2.11.
+ *
+ */
+BOOT_CODE void map_kernel_elf_image(pte_t kernel_mapping_pds[])
+{
+    /** This is not strictly necessary, but to handle a non-aligned KERNEL_ELF_PADDR_BASE
+     *  we'd need to do a bit more logic and probably do what riscv64 does
+     *  where the *actual* KERNEL_ELF_BASE is rounded up to the alignment.
+     *  This is simpler and memory is cheap.
+     **/
+    compile_assert(elf_paddr_aligned, IS_ALIGNED(KERNEL_ELF_PADDR_BASE_RAW, seL4_LargePageBits));
+    compile_assert(elf_base_aligned, IS_ALIGNED(KERNEL_ELF_BASE, seL4_LargePageBits));
+
+    /* Please don't overlap with KDEV_BASE */
+    assert(KERNEL_ELF_TOP <= KDEV_BASE);
+    /* Please don't overlap with KS_LOG_PPTR */
+    assert(KERNEL_ELF_TOP <= KS_LOG_PPTR);
+
+    const word_t pd_start = GET_KPT_INDEX(KERNEL_ELF_BASE, KLVL_FRM_ARM_PT_LVL(2));
+    /* handle the fact that ELF_TOP is exclusive, not inclusive */
+    const word_t pd_end   = GET_KPT_INDEX(KERNEL_ELF_TOP - 1, KLVL_FRM_ARM_PT_LVL(2)) + 1;
+
+    paddr_t paddr = KERNEL_ELF_PADDR_BASE;
+    pptr_t vaddr = KERNEL_ELF_BASE;
+
+    for (word_t pd = pd_start; pd < pd_end; pd++) {
+        assert(pd == GET_KPT_INDEX(vaddr, KLVL_FRM_ARM_PT_LVL(2)));
+
+        kernel_mapping_pds[pd] = pte_pte_page_new(
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+                                     /* XN */ 0,
+#else
+                                     /* UXN */ 1,
+#endif
+                                     /* page_base_address */ paddr,
+                                     /* global (nG) */ 0,
+                                     /* access flag (AF) */ 1,
+                                     /* shareability (SH) */ SMP_TERNARY(SMP_SHARE, 0),
+                                     /* AP */ APFromVMRights(VMKernelOnly),
+                                     /* AttrIndx */ NORMAL
+                                 );
+
+        paddr += BIT(seL4_LargePageBits);
+        vaddr += BIT(seL4_LargePageBits);
+    }
+}
+
 BOOT_CODE void map_kernel_window(void)
 {
 
@@ -253,8 +335,8 @@ BOOT_CODE void map_kernel_window(void)
     assert(IS_ALIGNED(PPTR_TOP, seL4_HugePageBits));
 
     /* place the PUD into the PGD */
-    armKSGlobalKernelPGD[GET_KPT_INDEX(PPTR_BASE, KLVL_FRM_ARM_PT_LVL(0))] = pte_pte_table_new(
-                                                                                 addrFromKPPtr(armKSGlobalKernelPUD));
+    armKSGlobalKernelPGD[GET_KPT_INDEX(PPTR_BASE, KLVL_FRM_ARM_PT_LVL(0))]
+        = pte_pte_table_new(addrFromKPPtr(armKSGlobalKernelPUD));
 
     /* place all PDs except the last one in PUD */
     for (idx = GET_KPT_INDEX(PPTR_BASE, KLVL_FRM_ARM_PT_LVL(1)); idx < GET_KPT_INDEX(PPTR_TOP, KLVL_FRM_ARM_PT_LVL(1));
@@ -283,6 +365,13 @@ BOOT_CODE void map_kernel_window(void)
                                                                                                                     );
         vaddr += BIT(seL4_LargePageBits);
     }
+
+
+    const word_t kernel_mappings_pud_idx = GET_KPT_INDEX(KERNEL_ELF_BASE, KLVL_FRM_ARM_PT_LVL(1));
+    pte_t *kernel_mapping_pds = armKSGlobalKernelPDs[kernel_mappings_pud_idx];
+
+    /* map the kernel ELF */
+    map_kernel_elf_image(kernel_mapping_pds);
 
     /* put the PD into the PUD for device window */
     armKSGlobalKernelPUD[GET_KPT_INDEX(PPTR_TOP, KLVL_FRM_ARM_PT_LVL(1))] = pte_pte_table_new(
