@@ -370,18 +370,17 @@ BOOT_CODE void map_kernel_window(void)
     const word_t kernel_mappings_pud_idx = GET_KPT_INDEX(KERNEL_ELF_BASE, KLVL_FRM_ARM_PT_LVL(1));
     pte_t *kernel_mapping_pds = armKSGlobalKernelPDs[kernel_mappings_pud_idx];
 
+    /* place the kernel mapping PDs in the kernel mapping PUD */
+    armKSGlobalKernelPUD[kernel_mappings_pud_idx] = pte_pte_table_new(addrFromKPPtr(kernel_mapping_pds));
+
     /* map the kernel ELF */
     map_kernel_elf_image(kernel_mapping_pds);
 
-    /* put the PD into the PUD for device window */
-    armKSGlobalKernelPUD[GET_KPT_INDEX(PPTR_TOP, KLVL_FRM_ARM_PT_LVL(1))] = pte_pte_table_new(
-                                                                                addrFromKPPtr(&armKSGlobalKernelPDs[BIT(PT_INDEX_BITS) - 1][0])
-                                                                            );
-
-    /* put the PT into the PD for device window */
-    armKSGlobalKernelPDs[BIT(PT_INDEX_BITS) - 1][BIT(PT_INDEX_BITS) - 1] = pte_pte_table_new(
-                                                                               addrFromKPPtr(armKSGlobalKernelPT)
-                                                                           );
+    /* put the PT into the PD for device window. It would be nice if
+       we could pass kernel_mapping_pds[511] to map_kernel_devices(), but it is
+       shared between AArch64 and AArch32, so... */
+    kernel_mapping_pds[BIT(PT_INDEX_BITS) - 1]
+        = pte_pte_table_new(addrFromKPPtr(armKSGlobalKernelPT));
 
     map_kernel_devices();
 }
