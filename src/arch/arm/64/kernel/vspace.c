@@ -338,16 +338,11 @@ compile_assert(physical_window_bottom_kernel_region,
 compile_assert(physical_window_top_kernel_region,
                GET_KPT_INDEX(PPTR_TOP, KLVL_FRM_ARM_PT_LVL(1)) == BIT(PT_INDEX_BITS) - 1);
 
-BOOT_CODE void map_kernel_window(void)
+BOOT_CODE void map_kernel_physical_window(void)
 {
-
     paddr_t paddr;
     pptr_t vaddr;
     word_t idx;
-
-    /* place the PUD into the PGD */
-    armKSGlobalKernelPGD[GET_KPT_INDEX(PPTR_BASE, KLVL_FRM_ARM_PT_LVL(0))]
-        = pte_pte_table_new(addrFromKPPtr(armKSGlobalKernelPUD));
 
     /* place all PDs except the last one in PUD */
     for (idx = GET_KPT_INDEX(PPTR_BASE, KLVL_FRM_ARM_PT_LVL(1)); idx < GET_KPT_INDEX(PPTR_TOP, KLVL_FRM_ARM_PT_LVL(1));
@@ -376,7 +371,15 @@ BOOT_CODE void map_kernel_window(void)
                                                                                                                     );
         vaddr += BIT(seL4_LargePageBits);
     }
+}
 
+BOOT_CODE void map_kernel_window(void)
+{
+    /* place the PUD into the PGD */
+    armKSGlobalKernelPGD[GET_KPT_INDEX(PPTR_BASE, KLVL_FRM_ARM_PT_LVL(0))]
+        = pte_pte_table_new(addrFromKPPtr(armKSGlobalKernelPUD));
+
+    map_kernel_physical_window();
 
     const word_t kernel_mappings_pud_idx = GET_KPT_INDEX(KERNEL_ELF_BASE, KLVL_FRM_ARM_PT_LVL(1));
     pte_t *kernel_mapping_pds = armKSGlobalKernelPDs[kernel_mappings_pud_idx];
