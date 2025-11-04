@@ -19,6 +19,9 @@ enum exception {
     EXCEPTION_LOOKUP_FAULT,
     EXCEPTION_SYSCALL_ERROR,
     EXCEPTION_PREEMPTED
+#ifdef CONFIG_KERNEL_MCS
+    , EXCEPTION_TIME
+#endif
 };
 typedef word_t exception_t;
 

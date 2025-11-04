@@ -30,11 +30,12 @@ exception_t preemptionPoint(void)
         ksWorkUnitsCompleted = 0;
 #ifdef CONFIG_KERNEL_MCS
         updateTimestamp();
-        if (isIRQPending() || isCurDomainExpired()
+        if (isCurDomainExpired()
             || !(sc_active(NODE_STATE(ksCurSC)) && refill_sufficient(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed)))) {
-#else
-        if (isIRQPending()) {
+            return EXCEPTION_TIME;
+        }
 #endif
+        if (isIRQPending()) {
             return EXCEPTION_PREEMPTED;
         }
     }

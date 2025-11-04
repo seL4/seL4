@@ -327,9 +327,16 @@ static exception_t handleInvocation(bool_t isCall, bool_t isBlocking)
                               isBlocking, isCall, buffer);
 #endif
 
+#ifdef CONFIG_KERNEL_MCS
+    if (unlikely(status == EXCEPTION_PREEMPTED || status == EXCEPTION_TIME)) {
+        return status;
+    }
+#else
     if (unlikely(status == EXCEPTION_PREEMPTED)) {
         return status;
     }
+#endif
+
 
     if (unlikely(status == EXCEPTION_SYSCALL_ERROR)) {
         if (isCall) {
@@ -531,7 +538,13 @@ exception_t handleSyscall(syscall_t syscall)
             ret = handleInvocation(false, true, false, false, getRegister(NODE_STATE(ksCurThread), capRegister));
             if (unlikely(ret != EXCEPTION_NONE)) {
                 mcsPreemptionPoint();
+#ifdef CONFIG_KERNEL_MCS
+                if (ret == EXCEPTION_PREEMPTED) {
+                    checkInterrupt();
+                }
+#else
                 checkInterrupt();
+#endif
             }
 
             break;
@@ -540,7 +553,13 @@ exception_t handleSyscall(syscall_t syscall)
             ret = handleInvocation(false, false, false, false, getRegister(NODE_STATE(ksCurThread), capRegister));
             if (unlikely(ret != EXCEPTION_NONE)) {
                 mcsPreemptionPoint();
+#ifdef CONFIG_KERNEL_MCS
+                if (ret == EXCEPTION_PREEMPTED) {
+                    checkInterrupt();
+                }
+#else
                 checkInterrupt();
+#endif
             }
             break;
 
@@ -548,7 +567,13 @@ exception_t handleSyscall(syscall_t syscall)
             ret = handleInvocation(true, true, true, false, getRegister(NODE_STATE(ksCurThread), capRegister));
             if (unlikely(ret != EXCEPTION_NONE)) {
                 mcsPreemptionPoint();
+#ifdef CONFIG_KERNEL_MCS
+                if (ret == EXCEPTION_PREEMPTED) {
+                    checkInterrupt();
+                }
+#else
                 checkInterrupt();
+#endif
             }
             break;
 
@@ -587,7 +612,13 @@ exception_t handleSyscall(syscall_t syscall)
             ret = handleInvocation(false, false, true, true, dest);
             if (unlikely(ret != EXCEPTION_NONE)) {
                 mcsPreemptionPoint();
+#ifdef CONFIG_KERNEL_MCS
+                if (ret == EXCEPTION_PREEMPTED) {
+                    checkInterrupt();
+                }
+#else
                 checkInterrupt();
+#endif
                 break;
             }
             handleRecv(true, true);
@@ -598,7 +629,13 @@ exception_t handleSyscall(syscall_t syscall)
             ret = handleInvocation(false, false, true, true, getRegister(NODE_STATE(ksCurThread), replyRegister));
             if (unlikely(ret != EXCEPTION_NONE)) {
                 mcsPreemptionPoint();
+#ifdef CONFIG_KERNEL_MCS
+                if (ret == EXCEPTION_PREEMPTED) {
+                    checkInterrupt();
+                }
+#else
                 checkInterrupt();
+#endif
                 break;
             }
             handleRecv(true, false);
