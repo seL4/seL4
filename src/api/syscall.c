@@ -37,8 +37,8 @@
 /**
  * FIXME: This is a temporary hack to prevent the printing of incorrect
  *        spurious interrupt warnings on MCS when checkInterrupt() is called
- *        following preemptionPoint and the reason is because of the time
- *        expiry, rather than an active IRQ.
+ *        following preemptionPoint and the reason is because running
+ *        out of sufficient budget, rather than an active IRQ.
  *        See issue https://github.com/seL4/seL4/issues/1540 and
  *        https://github.com/seL4/seL4/pull/1544.
  **/
