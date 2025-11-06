@@ -60,10 +60,8 @@ block asid_pool_cap {
 
 #ifdef CONFIG_ALLOW_SBI_CALLS
 block sbi_cap {
-    field capSBIFIDBadge 30
-    field capSBIEIDBadged 1
-    field capSBIFIDBadged 1
-    field capSBIEIDBadge 28
+    field capSBIEIDBadge 32
+    field capSBIFIDBadge 28
     field capType 4
 }
 #endif

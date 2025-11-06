@@ -61,20 +61,21 @@ cap_t CONST Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
 {
 #ifdef CONFIG_ALLOW_SBI_CALLS
     if (cap_get_capType(cap) == cap_sbi_cap) {
-        if (preserve) {
-            return cap_null_cap_new();
+        return cap_null_cap_new();
+    }
+#endif
+    return cap;
+}
+
+cap_t CONST Arch_updateCapDataLong(bool_t preserve, word_t data, word_t data2, cap_t cap)
+{
+#ifdef CONFIG_ALLOW_SBI_CALLS
+    if (cap_get_capType(cap) == cap_sbi_cap) {
+        if (!preserve && cap_sbi_cap_get_capSBIEIDBadge(cap) == 0 && cap_sbi_cap_get_capSBIFIDBadge(cap) == 0) {
+            cap_t badged_cap = cap_sbi_cap_set_capSBIEIDBadge(cap, data);
+            return cap_sbi_cap_set_capSBIFIDBadge(badged_cap, data2);
         } else {
-            if (cap_sbi_cap_get_capSBIEIDBadge(cap)) {
-                if (cap_sbi_cap_get_capSBIFIDBadge(cap)) {
-                    return cap_null_cap_new();
-                } else {
-                    cap_t badged_cap = cap_sbi_cap_set_capSBIFIDBadge(cap, data);
-                    return cap_sbi_cap_set_capSBIFIDBadged(badged_cap, 1);
-                }
-            } else {
-                cap_t badged_cap = cap_sbi_cap_set_capSBIEIDBadge(cap, data);
-                return cap_sbi_cap_set_capSBIEIDBadged(badged_cap, 1);
-            }
+            return cap_null_cap_new();
         }
     }
 #endif

@@ -14,6 +14,7 @@
 
 deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap);
 cap_t CONST Arch_updateCapData(bool_t preserve, word_t data, cap_t cap);
+cap_t CONST Arch_updateCapDataLong(bool_t preserve, word_t data, word_t data2, cap_t cap);
 cap_t CONST Arch_maskCapRights(seL4_CapRights_t cap_rights_mask, cap_t cap);
 finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final);
 bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b);
@@ -46,33 +47,16 @@ static inline CONST bool_t Arch_isMDBParentOf(cap_t cap_a, cap_t cap_b, bool_t f
     switch (cap_get_capType(cap_a)) {
 #ifdef CONFIG_ALLOW_SBI_CALLS
     case cap_sbi_cap: {
-        if (!cap_sbi_cap_get_capSBIEIDBadged(cap_a)) {
-            /* If there is no EID badge then the cap cannot be badged. */
-            return true;
-        }
-
-        if (!cap_sbi_cap_get_capSBIEIDBadged(cap_b)) {
-            return false;
-        }
-
         word_t eid_a_badge = cap_sbi_cap_get_capSBIEIDBadge(cap_a);
         word_t eid_b_badge = cap_sbi_cap_get_capSBIEIDBadge(cap_b);
+        word_t fid_a_badge = cap_sbi_cap_get_capSBIFIDBadge(cap_a);
+        word_t fid_b_badge = cap_sbi_cap_get_capSBIFIDBadge(cap_b);
 
         if (eid_a_badge != eid_b_badge) {
             return false;
         }
 
-        if (!cap_sbi_cap_get_capSBIFIDBadged(cap_a)) {
-            return !firstBadged;
-        }
-
-        if (!cap_sbi_cap_get_capSBIFIDBadged(cap_b)) {
-            return false;
-        }
-
-        word_t fid_a_badge = cap_sbi_cap_get_capSBIFIDBadge(cap_a);
-        word_t fid_b_badge = cap_sbi_cap_get_capSBIFIDBadge(cap_b);
-        return (fid_a_badge == fid_b_badge && !firstBadged);
+        return (eid_a_badge == eid_b_badge && fid_a_badge == fid_b_badge && !firstBadged);
         break;
     }
 #endif

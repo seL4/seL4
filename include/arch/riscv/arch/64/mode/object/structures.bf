@@ -68,10 +68,8 @@ block asid_pool_cap {
 block sbi_cap {
     field capSBIFIDBadge 64
     field capType 5
-    field capSBIEIDBadge 28
-    field capSBIEIDBadged 1
-    field capSBIFIDBadged 1
-    padding 29
+    field capSBIEIDBadge 32
+    padding 27
 }
 #endif
 

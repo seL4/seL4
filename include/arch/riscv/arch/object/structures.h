@@ -148,10 +148,6 @@ static inline bool_t CONST Arch_isCapRevocable(cap_t derivedCap, cap_t srcCap)
 #ifdef CONFIG_ALLOW_SBI_CALLS
     switch (cap_get_capType(derivedCap)) {
     case cap_sbi_cap:
-        if (!cap_sbi_cap_get_capSBIEIDBadged(derivedCap) || !cap_sbi_cap_get_capSBIFIDBadged(derivedCap)) {
-            return true;
-        }
-
         return (cap_sbi_cap_get_capSBIFIDBadge(derivedCap) !=
             cap_sbi_cap_get_capSBIFIDBadge(srcCap) ||
             cap_sbi_cap_get_capSBIEIDBadge(derivedCap) !=

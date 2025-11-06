@@ -114,7 +114,7 @@ BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
 
 #ifdef CONFIG_ALLOW_SBI_CALLS
 BOOT_CODE static void init_sbi(cap_t root_cnode_cap) {
-    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapSBI), cap_sbi_cap_new(0, 0, 0, 0));
+    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapSBI), cap_sbi_cap_new(0, 0));
 }
 #endif
 

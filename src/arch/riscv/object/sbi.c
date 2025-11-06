@@ -78,25 +78,21 @@ exception_t decodeRISCVSBIInvocation(word_t label, unsigned int length, cptr_t c
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (cap_sbi_cap_get_capSBIEIDBadged(cap)) {
-        word_t eid_badge = cap_sbi_cap_get_capSBIEIDBadge(cap);
-        word_t eid = getSyscallArg(7, buffer);
-
+    word_t eid_badge = cap_sbi_cap_get_capSBIEIDBadge(cap);
+    word_t fid_badge = cap_sbi_cap_get_capSBIFIDBadge(cap);
+    word_t eid = getSyscallArg(7, buffer);
+    word_t fid = getSyscallArg(6, buffer);
+    if (eid_badge != 0 || fid_badge != 0) {
         if (eid != eid_badge) {
             userError("RISCVSBICall: Illegal operation, invalid EID given (0x%lx), only EID 0x%lx is allowed.", eid, eid_badge);
             current_syscall_error.type = seL4_IllegalOperation;
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        if (cap_sbi_cap_get_capSBIFIDBadged(cap)) {
-            word_t fid_badge = cap_sbi_cap_get_capSBIFIDBadge(cap);
-            word_t fid = getSyscallArg(6, buffer);
-
-            if (fid != fid_badge) {
-                userError("RISCVSBICall: Illegal operation, invalid FID given (0x%lx), only FID 0x%lx is allowed.", fid, fid_badge);
-                current_syscall_error.type = seL4_IllegalOperation;
-                return EXCEPTION_SYSCALL_ERROR;
-            }
+        if (fid != fid_badge) {
+            userError("RISCVSBICall: Illegal operation, invalid FID given (0x%lx), only FID 0x%lx is allowed.", fid, fid_badge);
+            current_syscall_error.type = seL4_IllegalOperation;
+            return EXCEPTION_SYSCALL_ERROR;
         }
     }
 
