@@ -23,6 +23,23 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 ## Upcoming release: BREAKING
 
+### Security-relevant Changes
+
+* Fixed a kernel-crashing defect on (unverified) x86 configurations with VT-x enabled where the kernel bookkeeping for
+  VCPU objects was incorrect. The kernel crash can be triggered by retyping multiple VCPU objects from the same Untyped
+  capability or by mixing the right deletion and retyping operations. Thanks to Mathieu Mirmont from Neutrality for
+  reporting and fixing this defect.
+
+  * Affected configurations: only unverified VT-x configurations on x86 platforms are affected.
+  * Affected versions: seL4 versions 4.0.0 to 13.0.0.
+  * Exploitability: Any thread on VT-x configurations with an untyped capability and a CNode capability can exploit
+    this bug. Static CAmKES and Microkit systems do not generally provide either of these to user-level components, but
+    in most dynamic systems, this combination of capabilities would be common for management components that provide
+    object allocation. The defect breaks the usual subsystem isolation properties that verified seL4 configurations
+    provide. In systems that follow the principle of least privilege this combination of capabilities should only be
+    available to trusted allocation components, which strongly reduces the scope of exploitability.
+  * Severity: Critical. This crashes the entire system.
+
 ### Changes
 
 * Added `zynqmp` and `rpi4` to the set of verified AArch64 configs.
