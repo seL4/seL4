@@ -173,6 +173,9 @@ void invokeIRQHandler_SetIRQHandler(irq_t irq, cap_t cap, cte_t *slot)
     /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (-1))" */
     cteDeleteOne(irqSlot);
     cteInsert(cap, slot, irqSlot);
+
+    /* Ack the interrupt in case there is a pending interrupt user space has missed. */
+    invokeIRQHandler_AckIRQ(irq);
 }
 
 void invokeIRQHandler_ClearIRQHandler(irq_t irq)
