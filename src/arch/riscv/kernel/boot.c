@@ -2,6 +2,8 @@
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
  * Copyright 2021, HENSOLDT Cyber
+ * Copyright 2024, Capabilities Limited
+ * CHERI support contributed by Capabilities Limited was developed by Hesham Almatary
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -20,6 +22,10 @@
 #include <linker.h>
 #include <plat/machine/hardware.h>
 #include <machine.h>
+
+#if defined(CONFIG_HAVE_CHERI)
+#include <cheri/cheri.h>
+#endif
 
 #ifdef ENABLE_SMP_SUPPORT
 /* SMP boot synchronization works based on a global variable with the initial
@@ -128,7 +134,18 @@ BOOT_CODE static void init_cpu(void)
 
     activate_kernel_vspace();
     /* Write trap entry address to stvec */
+#if defined(CONFIG_HAVE_CHERI)
+    /* Derive a trap handler's capability from the kernel's PCC */
+    void *__capability stvecc = CheriArch_get_pcc();
+    stvecc = __builtin_cheri_address_set(stvecc, (word_t)trap_entry);
+    /* Run the first assembly instructions in capability mode, the
+     * trap handler will switch to integer mode itself.
+     */
+    stvecc = __builtin_cheri_flags_set(stvecc, CHERI_CAP_MODE);
+    write_stvec((rword_t)stvecc);
+#else
     write_stvec((word_t)trap_entry);
+#endif
     initLocalIRQController();
 #ifndef CONFIG_KERNEL_MCS
     initTimer();
@@ -272,6 +289,33 @@ static BOOT_CODE bool_t try_init_kernel(
         };
     }
 
+#if defined(CONFIG_HAVE_CHERI)
+    /* Create CHERI capabilities for CHERI users. This includes BootInfo pointer and an
+     * IPC Buffer for the root task.
+     */
+    bi_frame_vptr = (vptr_t) cheri_sel4_build_cap(CheriArch_get_pcc(), /* src */
+                                                  bi_frame_vptr, /* base */
+                                                  bi_frame_vptr, /* address */
+                                                  BIT(seL4_BootInfoFrameBits), /* size */
+                                                  ~(__CHERI_CAP_PERMISSION_EXECUTE__), /* perms */
+                                                  0, /* flags */
+                                                  0, /* sentry */
+                                                  1  /* user */
+                                                 );
+
+    ipcbuf_vptr = (vptr_t) cheri_sel4_build_cap(CheriArch_get_pcc(), /* src */
+                                                ipcbuf_vptr, /* base */
+                                                ipcbuf_vptr, /* address */
+                                                sizeof(seL4_IPCBuffer), /* size */
+                                                ~(__CHERI_CAP_PERMISSION_EXECUTE__ | /* perms */
+                                                  __CHERI_CAP_PERMISSION_CAPABILITY__
+                                                 ),
+                                                0, /* flags */
+                                                0, /* sentry */
+                                                1  /* user */
+                                               );
+#endif
+
     /* The region of the initial thread is the user image + ipcbuf + boot info + extra */
     word_t extra_bi_size_bits = calculate_extra_bi_size_bits(extra_bi_size);
     v_region_t it_v_reg = {
@@ -285,7 +329,7 @@ static BOOT_CODE bool_t try_init_kernel(
          */
         printf("ERROR: userland image virt [%"SEL4_PRIx_word"..%"SEL4_PRIx_word")"
                "exceeds USER_TOP (%"SEL4_PRIx_word")\n",
-               it_v_reg.start, it_v_reg.end, (word_t)USER_TOP);
+               (word_t)it_v_reg.start, (word_t)it_v_reg.end, (word_t)USER_TOP);
         return false;
     }
 
@@ -497,6 +541,10 @@ BOOT_CODE VISIBLE void init_kernel(
 #ifdef CONFIG_KERNEL_MCS
     NODE_STATE(ksCurTime) = getCurrentTime();
     NODE_STATE(ksConsumed) = 0;
+#endif
+
+#if defined(CONFIG_HAVE_CHERI)
+    CheriArch_init_user();
 #endif
 
     schedule();
