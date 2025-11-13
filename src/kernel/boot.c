@@ -298,13 +298,6 @@ compile_assert(num_priorities_valid,
 BOOT_CODE void
 create_domain_cap(cap_t root_cnode_cap)
 {
-    /* Check domain scheduler assumptions. */
-    assert(ksDomScheduleLength > 0);
-    for (word_t i = 0; i < ksDomScheduleLength; i++) {
-        assert(ksDomSchedule[i].domain < CONFIG_NUM_DOMAINS);
-        assert(ksDomSchedule[i].length > 0);
-    }
-
     cap_t cap = cap_domain_cap_new();
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapDomain), cap);
 }
@@ -551,11 +544,7 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
     setThreadState(tcb, ThreadState_Running);
 
     ksCurDomain = ksDomSchedule[ksDomScheduleIdx].domain;
-#ifdef CONFIG_KERNEL_MCS
-    ksDomainTime = usToTicks(ksDomSchedule[ksDomScheduleIdx].length * US_IN_MS);
-#else
     ksDomainTime = ksDomSchedule[ksDomScheduleIdx].length;
-#endif
     assert(ksCurDomain < CONFIG_NUM_DOMAINS && ksDomainTime > 0);
 
 #ifndef CONFIG_KERNEL_MCS
