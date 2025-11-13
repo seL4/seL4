@@ -359,7 +359,9 @@ BOOT_CODE void cpu_initLocalIRQController(void)
 
 bool_t plat_SGITargetValid(word_t target)
 {
-    return target < GIC_SGI_NUM_TARGETS;
+    /* Aff0+Aff1+Aff2+Aff3 values are not guaranteed to be contiguous
+     * and the first core may have a non-zero affinity value. */
+    return target <= UINT32_MAX;
 }
 
 void plat_sendSGI(word_t irq, word_t target)

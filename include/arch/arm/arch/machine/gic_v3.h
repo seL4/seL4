@@ -35,8 +35,6 @@
 #define IRQ_MASK MASK(16u)
 #define GIC_VCPU_MAX_NUM_LR 16
 
-#define GIC_SGI_NUM_TARGETS 16
-
 /* Register bits */
 
 /**
