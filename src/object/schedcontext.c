@@ -143,10 +143,7 @@ static exception_t invokeSchedContext_Unbind(sched_context_t *sc)
 {
     schedContext_unbindAllTCBs(sc);
     schedContext_unbindNtfn(sc);
-    if (sc->scReply) {
-        sc->scReply->replyNext = call_stack_new(0, false);
-        sc->scReply = NULL;
-    }
+    schedContext_unbindReply(sc);
     return EXCEPTION_NONE;
 }
 
@@ -395,6 +392,25 @@ void schedContext_unbindNtfn(sched_context_t *sc)
     if (sc && sc->scNotification) {
         notification_ptr_set_ntfnSchedContext(sc->scNotification, SC_REF(0));
         sc->scNotification = NULL;
+    }
+}
+
+void schedContextMaybeUnbindNtfn(notification_t *ntfnPtr)
+{
+    sched_context_t *boundSchedContext;
+    boundSchedContext = (sched_context_t *)notification_ptr_get_ntfnSchedContext(ntfnPtr);
+
+    if (boundSchedContext) {
+        schedContext_unbindNtfn(boundSchedContext);
+    }
+}
+
+void schedContext_unbindReply(sched_context_t *sc)
+{
+    if (sc && sc->scReply) {
+        assert(call_stack_get_isHead(sc->scReply->replyNext));
+        sc->scReply->replyNext = call_stack_new(0, false);
+        sc->scReply = NULL;
     }
 }
 
