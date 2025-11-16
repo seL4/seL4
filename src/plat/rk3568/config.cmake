@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-declare_platform(rk3568 KernelPlatformRock3b PLAT_rk3568 KernelArchARM)
+declare_platform(rk3568 KernelPlatformRock3b PLAT_RK3568 KernelArchARM)
 
 if(KernelPlatformRock3b)
     declare_seL4_arch(aarch64)
