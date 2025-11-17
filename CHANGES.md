@@ -42,7 +42,7 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 ### Changes
 
-* Added `zynqmp` and `rpi4` to the set of verified AArch64 configs.
+* All Arm platforms supported by seL4 now have a verified configuration.
 * Added: build exports an `invocations_all.json` file with syscall invocation numbers.
 * Added option for suppressing generation of config output files in build process
 * Added `--skip-unchanged` option to build process to prevent time stamp update for config output files when these
