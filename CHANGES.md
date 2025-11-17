@@ -86,6 +86,15 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 #### Arm
 
+* Support SGIs (software generated interrupts) on platforms with GICv2 or GICv3 in non-SMP configurations. SGIs are
+  intended for signalling other cores when seL4 is used in a multi-kernel setup. On Arm, this is implemented with a new
+  capability `SGISignal`, which can be created from `IRQControl` capabilities with the new IRQ control invocation
+  `ARMIRQIssueSGISignal` for a specific IRQ and target core. The resulting `SGISignal` capability can be invoked like a
+  notification capability that supports only signal/send. SGIs can be received by IRQ notification objects on the target
+  core like other IRQs.
+
+  See also [RFC-17](https://sel4.github.io/rfcs/implemented/0170-multikernel-ipi-api.html)
+
 * Added config option for selecting which thread ID register is used for Kernel TLS syscalls and invocations.
   KernelArmTLSReg can be used to select either `tpidru` or `tpidruro` as the TLS register used for `seL4_TCB_SetTLSBase` and `seL4_SetTLSBase` operations.
   This config option's default value is `tpidru` which is what the register that the kernel currently uses for the TLS register for aarch32 and aarch64 platforms.
