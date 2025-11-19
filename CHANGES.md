@@ -43,15 +43,41 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 ### Changes
 
 * Added `zynqmp` and `rpi4` to the set of verified AArch64 configs.
-* riscv: Change default cmake options KernelRiscvExtF and KernelRiscvExtD from OFF to ON.
-  Except for RISCV32 with LLVM clang enabled will default both to OFF.
+* Added: build exports an `invocations_all.json` file with syscall invocation numbers.
+* Added option for suppressing generation of config output files in build process
+* Added `--skip-unchanged` option to build process to prevent time stamp update for config output files when these
+  files did not change.
+* Added recording of disabled options in build system config output files. Before, options that were hidden from the
+  CMake GUI due to unsatisfied config_choice conditions were not recorded. After this change, these hidden options are
+  recorded as disabled.
+* Added build system support for Qemu >= 10
 * Change fault based FPU context switching to a TCB flag based approach:
   New system call `seL4_TCB_SetFlags` and new flag `seL4_TCBFlag_fpuDisabled`.
   See [RFC-18](https://sel4.github.io/rfcs/implemented/0180-fpu-switching.html).
 * Multiple SMP related bugs fixed.
+* Change point of cache flush from untyped reset to retype. The kernel now flushes the cache only for those object types
+  where a flush is necessary, and only when the object is retyped, not when the untyped cap is reset. This reduces
+  overall need for flushing and delays it to the point of use. This speeds up boot time significantly.
+* Fixed kernel reply protocol for yieldTo (MCS). The kernel would previously for the yieldTo call:
+  * return messages with length field set to 0, even though they had content;
+  * generate a reply for send-only invocations of the system call;
+  * incorrectly indicate success/failure in some circumstances.
+  While these were all incorrect, they would be unlikely to be observed through normal use of libsel4.
+* Fixed TCB_SetSchedParams to match the API reference. TCB_SetSchedParams previously had more lenient checks.
+  Used new checks for simplifying the implementation.
+* Fixed error indication for SetTimeoutEndpoint and improve error message
+* Fixed: when the domain scheduler is used, avoid touching cross-domain state for VCPUs and FPU. Flush VCPU and FPU
+  state on domain switch.
+* Enable building with clang-18 and clang-20 (untested in CI).
+* Improve error message in build system for when invalid platform parameter is provided.
+* Improve boot printing: print half-open regions as `[a..b)`
 
 ### Platforms
 
+* Added support for the i.MX93 SoC
+* Added support for the Cheshire platform
+* Added support for the HiFive Premier P550 platform
+* Fixed imx8mq board timer frequency
 * Removed the default settings `KernelArmVtimerUpdateVOffset` and `KernelArmDisableWFIWFETraps` from the platform
   `tqma8xqp1gb`, since they are project specific settings, not platform settings. Add
   `set(KernelArmVtimerUpdateVOffset OFF)` and
@@ -87,16 +113,35 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 * Fixed: on aarch32 configurations with hypervisor support, `CNTKCTL` was not saved and restored alongside other virtual
   timer registers. `seL4_VCPUReg_CNTKCTL` has been introduced to mirror `seL4_VCPUReg_CNTKCTL_EL1` from aarch64.
 
+* Fixed VGIC and VPPI maintenance handling on MCS, which allowed a thread to simultaneously be blocked and in the
+  release queue.
+
+* Added port of debug API to AArch64.
+* Added implementation of Split EOI mode for GICv3 for improved interrupt performance.
+* Added `aarch64-elf-` as valid AArch64 toolchain prefix.
+
 #### X86
 
-* FPU: Fixed XSAVES option. Now it's possible to enable this for newer x86 CPUs.
-* Avoid use-after-free if a VCPU with active FPU state gets deleted.
+* Fixed XSAVES option for FPU. It is now possible to enable this for newer x86 CPUs.
+* Fixed: avoid use-after-free if a VCPU with active FPU state gets deleted.
+
+#### RISC-V
+
+* Fixed: TCB size on RISC-V 32-bit when FPU is enabled
+* Changed default cmake options KernelRiscvExtF and KernelRiscvExtD from OFF to ON.
+  Except for RISCV32 with LLVM clang enabled will default both to OFF.
+* Fixed: off-by-1 write for PLIC IRQ priorities. Effect so far only observed on Qemu.
+* Added: catch s-mode traps and halt in debug mode. For debugging only.
+* Added `riscv-none-elf-` as valid RISC-V toolchain prefix
+* Changed treatment of SBI memory: instead of special in-kernel treatment, SBI memory is now a
+  reserved region in the device tree and can therefore be adjusted per platform.
 
 ### Upgrade Notes
 
-Set `seL4_TCBFlag_fpuDisabled` for tasks not using the FPU to retain the old context switch performance.
-The -mgeneral-regs-only option may be needed to stop the compiler from issuing SIMD instructions to speed
-up integer operations.
+Set `seL4_TCBFlag_fpuDisabled` (with the `seL4_TCB_SetFlags` invocation of TCB capabilities) for
+tasks not using the FPU to retain the old context switch performance. The `-mgeneral-regs-only`
+option may be needed to stop the compiler from issuing SIMD instructions to speed up integer
+operations.
 
 ---
 
