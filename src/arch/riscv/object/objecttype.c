@@ -13,6 +13,10 @@
 #include <arch/model/statedata.h>
 #include <arch/object/objecttype.h>
 
+#ifdef CONFIG_ALLOW_SBI_CALLS
+#include <arch/object/sbi.h>
+#endif
+
 deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
 {
     deriveCap_ret_t ret;
@@ -39,6 +43,9 @@ deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
 
     case cap_asid_control_cap:
     case cap_asid_pool_cap:
+#ifdef CONFIG_ALLOW_SBI_CALLS
+    case cap_sbi_cap:
+#endif
         ret.cap = cap;
         ret.status = EXCEPTION_NONE;
         return ret;
@@ -52,6 +59,26 @@ deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
 
 cap_t CONST Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
 {
+#ifdef CONFIG_ALLOW_SBI_CALLS
+    if (cap_get_capType(cap) == cap_sbi_cap) {
+        return cap_null_cap_new();
+    }
+#endif
+    return cap;
+}
+
+cap_t CONST Arch_updateCapDataLong(bool_t preserve, word_t data, word_t data2, cap_t cap)
+{
+#ifdef CONFIG_ALLOW_SBI_CALLS
+    if (cap_get_capType(cap) == cap_sbi_cap) {
+        if (!preserve && cap_sbi_cap_get_capSBIEIDBadge(cap) == 0 && cap_sbi_cap_get_capSBIFIDBadge(cap) == 0) {
+            cap_t badged_cap = cap_sbi_cap_set_capSBIEIDBadge(cap, data);
+            return cap_sbi_cap_set_capSBIFIDBadge(badged_cap, data2);
+        } else {
+            return cap_null_cap_new();
+        }
+    }
+#endif
     return cap;
 }
 
@@ -149,6 +176,13 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
                    cap_asid_pool_cap_get_capASIDPool(cap_b);
         }
         break;
+#ifdef CONFIG_ALLOW_SBI_CALLS
+    case cap_sbi_cap:
+        if (cap_get_capType(cap_b) == cap_sbi_cap) {
+            return true;
+        }
+        break;
+#endif
     }
 
     return false;
@@ -298,6 +332,11 @@ exception_t Arch_decodeInvocation(
     word_t *buffer
 )
 {
+#ifdef CONFIG_ALLOW_SBI_CALLS
+    if (cap_get_capType(cap) == cap_sbi_cap) {
+        return decodeRISCVSBIInvocation(label, length, cptr, slot, cap, call, buffer);
+    }
+#endif
     return decodeRISCVMMUInvocation(label, length, cptr, slot, cap, call, buffer);
 }
 
