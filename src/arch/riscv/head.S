@@ -31,6 +31,24 @@ _start:
   csrw sscratch, x0 /* zero sscratch for the init task */
 
 #ifdef CONFIG_ENABLE_SMP_SUPPORT
+
+#if defined(CONFIG_HAVE_CHERI)
+  /*
+   * sscratchc will be used to hold the per-core kernel's stack
+   * on traps. It needs to be a valid capability as the first
+   * few trap instructions execute in capability mode and they
+   * swap csp with sscratchc as the first instruction then access
+   * memory via csp in the following two instructions.
+   */
+.option push
+.option capmode
+  modesw.cap
+  auipc ct0, 0
+  csrw sscratchc, t0
+  modesw.int
+.option pop
+#endif
+
 /* setup the per-core stack */
   mv t0, a7
   slli t0, t0, CONFIG_KERNEL_STACK_BITS

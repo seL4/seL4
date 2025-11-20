@@ -65,5 +65,19 @@
  * mapping region. These are mapped in the kernel page table. */
 #define KDEV_BASE UL_CONST(0xFFC00000)
 
+#if defined(CONFIG_HAVE_CHERI)
+/* Full capability-width register loads/stores */
+#define LOAD  lc
+#define STORE sc
+/* Integer-width register loads/stores */
+#define ILOAD  lw
+#define ISTORE sw
+#define REGBYTES 8
+#else
 #define LOAD  lw
 #define STORE sw
+/* Integer-width register loads/stores */
+#define ILOAD  LOAD
+#define ISTORE STORE
+#define REGBYTES 4
+#endif
