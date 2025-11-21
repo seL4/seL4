@@ -123,6 +123,8 @@ exception_t decodeARMVCPUInvocation(
 
 void vcpu_restore(vcpu_t *cpu);
 void vcpu_switch(vcpu_t *cpu);
+void vcpu_flush(void);
+void vcpu_flush_if_current(tcb_t *tptr);
 #ifdef ENABLE_SMP_SUPPORT
 void handleVCPUInjectInterruptIPI(vcpu_t *vcpu, unsigned long index, virq_t virq);
 #endif /* ENABLE_SMP_SUPPORT */
@@ -204,9 +206,10 @@ static inline VPPIEventIRQ_t irqVPPIEventIndex(irq_t irq)
 
 #else /* end of CONFIG_ARM_HYPERVISOR_SUPPORT */
 
-/* used in boot.c with a guard, use a marco to avoid exposing vcpu_t */
 #define vcpu_boot_init() do {} while(0)
 #define vcpu_switch(x) do {} while(0)
+#define vcpu_flush() do {} while(0)
+#define vcpu_flush_if_current(x) do {} while(0)
 static inline void VGICMaintenance(void) {}
 
 #endif /* end of !CONFIG_ARM_HYPERVISOR_SUPPORT */

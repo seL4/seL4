@@ -800,10 +800,10 @@
                 core like other IRQs. See also <autoref label="sec:interrupts"/>.
             </description>
             <param dir="in" name="irq" type="seL4_Word" description="The SGI INTID (0-15) that can be signalled."/>
-            <param dir="in" name="target" type="seL4_Word" description="The node ID that will be
-            targeted. 0-7 for GICv2 and 0-31 for GICv3. Targets within that range that are not
-            supported by the hardware will be ignored. For example, on a GICv3 board with 4 CPUs, the
-            capability for target 13 can be created, but signals to it will have no effect."/>
+            <param dir="in" name="target" type="seL4_Word" description="The node ID that will be targeted.
+            0-7 for GICv2 and the affinity value for GICv3 (concatenation of Aff3+Aff2+Aff1+Aff0 from MPIDR).
+            Targets within that range that are not supported by the hardware will be ignored. For example, on a GICv2
+            board with 4 CPUs, the capability for target 5 can be created, but signals to it will have no effect."/>
 
             <param dir="in" name="root" type="seL4_CNode" description="CPtr to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="index" type="seL4_Word" description="CPtr to the destination slot. Resolved from the root of the destination CSpace."/>
