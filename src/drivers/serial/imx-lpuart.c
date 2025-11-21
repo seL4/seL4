@@ -22,7 +22,7 @@
 
 #define STAT_TDRE (1 << 23)
 
-#define UART_REG(x) ((volatile uint32_t *)(UART_PPTR + (x)))
+#define UART_REG(x) ((volatile uint32_t *)(uart_pptr + (x)))
 
 #if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
 void uart_drv_putchar(unsigned char c)
