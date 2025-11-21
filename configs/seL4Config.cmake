@@ -199,6 +199,7 @@ foreach(file ${result})
     include("${file}")
 endforeach()
 
+set(kernel_platform_origin "${KernelPlatform}")
 config_choice(KernelPlatform PLAT "Select the platform" ${kernel_platforms})
 
 # Verify that, as a minimum any variables that are used
@@ -206,7 +207,7 @@ config_choice(KernelPlatform PLAT "Select the platform" ${kernel_platforms})
 # point. This means at least: KernelPlatform KernelArch KernelWordSize
 
 if("${KernelPlatform}" STREQUAL "")
-    message(FATAL_ERROR "Variable 'KernelPlatform' is not set - is PLATFORM '${PLATFORM}' correct? \
+    message(FATAL_ERROR "Variable 'KernelPlatform' is not set - Was tested value:'${kernel_platform_origin}' correct? \
 Valid platforms are '${KernelPlatform_all_strings}'"
     )
 endif()
