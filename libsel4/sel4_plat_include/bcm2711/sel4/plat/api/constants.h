@@ -12,7 +12,7 @@
 
 #if CONFIG_WORD_SIZE == 32
 /* First address in the virtual address space that is not accessible to user level */
-#define seL4_UserTop 0xe0000000
+#define seL4_UserTop 0xa0000000
 #else
 /* otherwise this is defined at the arch level */
 #endif
