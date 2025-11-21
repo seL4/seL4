@@ -211,14 +211,15 @@ typedef enum {
 #define seL4_VSpaceBits seL4_PageDirBits
 
 #ifdef CONFIG_TK1_SMMU
-#define seL4_NumASIDPoolsBits 6
-#else
 #define seL4_NumASIDPoolsBits 7
+#else
+#define seL4_NumASIDPoolsBits 8
 #endif
 #define seL4_ASIDPoolBits 12
-#define seL4_ASIDPoolIndexBits 10
+#define seL4_ASIDPoolIndexBits 9
 #define seL4_ARM_VCPUBits       12
 #define seL4_IOPageTableBits    12
+#define seL4_ASIDMapSizeBits 3
 
 /* bits in a word */
 #define seL4_WordBits (sizeof(seL4_Word) * 8)
@@ -228,7 +229,7 @@ typedef enum {
 #ifndef __ASSEMBLER__
 SEL4_SIZE_SANITY(seL4_PageTableEntryBits, seL4_PageTableIndexBits, seL4_PageTableBits);
 SEL4_SIZE_SANITY(seL4_PageDirEntryBits,   seL4_PageDirIndexBits,   seL4_PageDirBits);
-SEL4_SIZE_SANITY(seL4_WordSizeBits, seL4_ASIDPoolIndexBits, seL4_ASIDPoolBits);
+SEL4_SIZE_SANITY(seL4_ASIDMapSizeBits, seL4_ASIDPoolIndexBits, seL4_ASIDPoolBits);
 #ifdef seL4_PGDBits
 SEL4_SIZE_SANITY(seL4_PGDEntryBits, seL4_PGDIndexBits, seL4_PGDBits);
 #endif
