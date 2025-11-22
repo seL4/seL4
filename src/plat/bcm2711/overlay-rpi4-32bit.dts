@@ -1,0 +1,22 @@
+/*
+ * Copyright 2023, Kry10 Limited
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+
+    /* 32-bit kernel platforms require memory to be clamped to the top of
+     * the kernel window.
+     */
+    reserved-memory {
+        #address-cells = <0x02>;
+        #size-cells = <0x01>;
+        ranges;
+        reserved-memory@100000000{
+            reg = < 0x00000001 0x00000000 0x80000000
+                0x00000001 0x80000000 0x80000000 >;
+            no-map;
+        };
+    };
+};
