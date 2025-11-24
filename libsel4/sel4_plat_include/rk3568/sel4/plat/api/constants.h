@@ -13,4 +13,3 @@
 #else
 #error "unsupported core"
 #endif
-
