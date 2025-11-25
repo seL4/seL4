@@ -14,15 +14,11 @@ block null_cap {
     field capType 4
 }
 
--- The combination of freeIndex and blockSize must match up with the
--- definitions of MIN_SIZE_BITS and MAX_SIZE_BITS
 block untyped_cap {
-    field capFreeIndex 26
-    field capIsDevice  1
-    field capBlockSize 5
-
-    field_high capPtr 28
-    field capType     4
+    field capIsDevice   1
+    field_high capSize 31
+    field_high capPtr  28
+    field capType       4
 }
 
 block endpoint_cap(capEPBadge, capCanGrantReply, capCanGrant, capCanSend,
@@ -73,8 +69,9 @@ block reply_cap(capReplyCanGrant, capReplyMaster, capTCBPtr, capType) {
 #endif
 -- The user-visible format of the data word is defined by cnode_capdata, below.
 block cnode_cap(capCNodeRadix, capCNodeGuardSize, capCNodeGuard,
-                capCNodePtr, capType) {
-    padding 4
+                capCNodePtr, capIsDirty, capType) {
+    padding 3
+    field capIsDirty 1
     field capCNodeGuardSize 5
     field capCNodeRadix 5
     field capCNodeGuard 18

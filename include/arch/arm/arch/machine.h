@@ -50,10 +50,10 @@ static inline void clearMemory(word_t *ptr, word_t bits)
 }
 
 /* Cleaning memory before page table walker access */
-static inline void clearMemory_PT(word_t *ptr, word_t bits)
+static inline void clearMemory_PT(word_t *ptr, word_t size)
 {
-    memzero(ptr, BIT(bits));
-    cleanCacheRange_PoU((word_t)ptr, (word_t)ptr + BIT(bits) - 1,
+    memzero(ptr, size);
+    cleanCacheRange_PoU((word_t)ptr, (word_t)ptr + size - 1,
                         addrFromPPtr(ptr));
 }
 
