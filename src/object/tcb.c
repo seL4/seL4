@@ -1619,15 +1619,10 @@ exception_t decodeSetSpace(cap_t cap, word_t length, cte_t *slot, word_t *buffer
 #endif
 }
 
-exception_t decodeDomainInvocation(word_t invLabel, word_t length, word_t *buffer)
+static exception_t decodeDomainSetSetInvocation(word_t length, word_t *buffer)
 {
     dom_t domain;
     cap_t tcap;
-
-    if (unlikely(invLabel != DomainSetSet)) {
-        current_syscall_error.type = seL4_IllegalOperation;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
 
     if (unlikely(length == 0)) {
         userError("Domain Configure: Truncated message.");
@@ -1666,6 +1661,126 @@ void invokeDomainSetSet(tcb_t *tcb, dom_t domain)
 {
     prepareSetDomain(tcb, domain);
     setDomain(tcb, domain);
+}
+
+static void invokeDomainScheduleConfigure(word_t index, dom_t domain, word_t budget)
+{
+    dschedule_t s = {domain, budget};
+    ksDomSchedule[index] = s;
+}
+
+static exception_t decodeDomainScheduleConfigure(word_t length, word_t *buffer)
+{
+    word_t index;
+    dom_t domain;
+    word_t budget;
+
+    if (unlikely(length < 3)) {
+        userError("Domain Schedule Configure: Truncated message.");
+        current_syscall_error.type = seL4_TruncatedMessage;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    index = getSyscallArg(0, buffer);
+    domain = getSyscallArg(1, buffer);
+    budget = getSyscallArg(2, buffer);
+
+    if (index >= ksDomScheduleLength) {
+        userError("Domain Schedule Configure: Invalid index.");
+        current_syscall_error.invalidArgumentNumber = 0;
+        current_syscall_error.type = seL4_RangeError;
+        current_syscall_error.rangeErrorMin = 0;
+        current_syscall_error.rangeErrorMax = ksDomScheduleLength - 1;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if (domain >= numDomains) {
+        userError("Domain Schedule Configure: Invalid domain.");
+        current_syscall_error.invalidArgumentNumber = 1;
+        current_syscall_error.type = seL4_RangeError;
+        current_syscall_error.rangeErrorMin = 0;
+        current_syscall_error.rangeErrorMax = numDomains - 1;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    //TODO: Do we want to enforce zero domain when budget is zero?
+    //      It's not needed, but that's what the RFC says.
+    if (budget == 0 && domain != 0) {
+        userError("Domain Schedule Configure: Both domain and budget must be zero for end marker.");
+        current_syscall_error.invalidArgumentNumber = 1;
+        current_syscall_error.type = seL4_InvalidArgument;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if (index == ksDomScheduleStart && budget == 0) {
+        userError("Domain Schedule Configure: Starting schedule's budget may not be zero.");
+        current_syscall_error.invalidArgumentNumber = 2;
+        current_syscall_error.type = seL4_InvalidArgument;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+    invokeDomainScheduleConfigure(index, domain, budget);
+    return EXCEPTION_NONE;
+}
+
+static void invokeDomainScheduleSetStart(word_t index, bool_t activate)
+{
+    ksDomScheduleStart = index;
+    if (activate) {
+        ksDomainTime = 0;
+        rescheduleRequired();
+    }
+}
+
+static exception_t decodeDomainScheduleSetStart(word_t length, word_t *buffer)
+{
+    word_t index;
+    bool_t activate;
+
+    if (unlikely(length < 2)) {
+        userError("Domain Schedule Configure: Truncated message.");
+        current_syscall_error.type = seL4_TruncatedMessage;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    index = getSyscallArg(0, buffer);
+    activate = getSyscallArg(1, buffer);
+
+    if (index >= ksDomScheduleLength) {
+        userError("Domain Schedule Set Start: Invalid index.");
+        current_syscall_error.invalidArgumentNumber = 0;
+        current_syscall_error.type = seL4_RangeError;
+        current_syscall_error.rangeErrorMin = 0;
+        current_syscall_error.rangeErrorMax = ksDomScheduleLength - 1;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if (ksDomSchedule[index].length == 0) {
+        userError("Domain Schedule Set Start: Starting schedule must have budget.");
+        current_syscall_error.invalidArgumentNumber = 0;
+        current_syscall_error.type = seL4_InvalidArgument;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+    invokeDomainScheduleSetStart(index, activate);
+    return EXCEPTION_NONE;
+}
+
+exception_t decodeDomainInvocation(word_t invLabel, word_t length, word_t *buffer)
+{
+    switch (invLabel) {
+        case DomainSetSet:
+            return decodeDomainSetSetInvocation(length, buffer);
+        case DomainScheduleConfigure:
+            return decodeDomainScheduleConfigure(length, buffer);
+        case DomainScheduleSetStart:
+            return decodeDomainScheduleSetStart(length, buffer);
+        default:
+            current_syscall_error.type = seL4_IllegalOperation;
+            return EXCEPTION_SYSCALL_ERROR;
+    }
 }
 
 exception_t decodeBindNotification(cap_t cap)

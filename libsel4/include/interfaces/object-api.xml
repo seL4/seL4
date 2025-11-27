@@ -835,7 +835,7 @@
                 The flags are cleared and set in the given order, i.e. when a flag is both cleared and set, it will be set.
                 Unknown flags are ignored. Use zero for both clear and set to retrieve the current flags value.
             </description>
-	    <return>
+            <return>
                 The resulting TCB flags value is returned in the first message register.
             </return>
             <param dir="in" name="clear" type="seL4_Word" description="Bitwise OR'd set of seL4_TCBFlag to clear."/>
@@ -1342,13 +1342,85 @@
             </error>
             <error name="seL4_InvalidArgument">
                 <description>
-                    The <texttt text="domain"/> is greater than <texttt text="CONFIG_NUM_DOMAINS"/>.
+                    The <texttt text="domain"/> is greater than <texttt text="KernelNumDomains"/>.
                     Or, <texttt text="thread"/> is a CPtr to a capability of the wrong type.
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+        </method>
+        <method id="DomainScheduleConfigure" name="ScheduleConfigure" manual_label="domain_schedule_configure">
+            <brief>
+                Modify a domain scheduling entry.
+            </brief>
+            <description>
+                Configure the domain and time of a scheduling entry. A zero domain and time means
+                it is an end marker and the domain scheduler should go back to the starting index.
+                This makes it possible to configure multiple independent domain schedules and
+                switch between them atomically.
+
+                The scheduling entry will be modified immediately. However, if the currently active
+                index is modified, the change won't apply till the next time this entry is reached
+                by the domain scheduler.
+
+                After boot the first scheduling entry has domain zero and maximum budget, all other
+                entries will be end markers with zero domain and budget.
+                <docref>See <autoref label="sec:domains"/>.</docref>
+            </description>
+            <return><errorenumdesc/></return>
+            <param dir="in" name="index" type="seL4_Word" description="The scheduling entry to modify."/>
+            <param dir="in" name="domain" type="seL4_Uint8" description="The scheduling entry's new domain."/>
+            <param dir="in" name="budget" type="seL4_Word" description="Timeslice in ticks (milliseconds for non-MCS, timer ticks for MCS)."/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="index"/> points to the starting index and <texttt text="budget"/> is zero.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="index"/> is not smaller than <texttt text="KernelNumDomainSchedules"/>.
+                    Or, <texttt text="domain"/> is not smaller than <texttt text="KernelNumDomains"/>.
+                </description>
+            </error>
+        </method>
+        <method id="DomainScheduleSetStart" name="ScheduleSetStart" manual_label="domain_schedule_set_start">
+            <brief>
+                Change the starting index of the domain scheduler.
+            </brief>
+            <description>
+                The domain scheduler starts with the scheduler entry indicated by the starting index.
+                When reaching an end marker, the scheduler will go back to the starting entry again.
+                Starting index is zero after boot.
+
+                If <texttt text="activate"/> is true, the currently active scheduling index will be
+                changed to the new starting index immediately, before returning this system call.
+                (Effectively relinguishing all remaining budget of the last schedule.)
+                <docref>See <autoref label="sec:domains"/>.</docref>
+            </description>
+            <return><errorenumdesc/></return>
+            <param dir="in" name="index" type="seL4_Word" description="The new starting index."/>
+            <param dir="in" name="activate" type="seL4_Bool" description="Also change the current scheduling index immediately."/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="index"/> points to an entry with zero time (end marker).
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="index"/> is not smaller than <texttt text="KernelNumDomainSchedules"/>.
                 </description>
             </error>
         </method>
