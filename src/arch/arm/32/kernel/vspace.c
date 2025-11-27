@@ -1561,7 +1561,7 @@ typedef struct create_mappings_pde_return create_mappings_pde_return_t;
 static create_mappings_pte_return_t
 createSafeMappingEntries_PTE
 (paddr_t base, word_t vaddr, vm_page_size_t frameSize,
- vm_rights_t vmRights, vm_attributes_t attr, pde_t *pd)
+ vm_rights_t vmRights, vm_attributes_t attr, pde_t *pd, bool_t is_remap)
 {
 
     create_mappings_pte_return_t ret;
@@ -1607,6 +1607,16 @@ createSafeMappingEntries_PTE
             return ret;
         }
 
+        /* Check that we are not overwriting an existing mapping */
+        if (pte_ptr_get_pteType(ret.pte_entries.base) == pte_pte_small) {
+            if (!is_remap) {
+                userError("Virtual address (0x%"SEL4_PRIx_word") already mapped", vaddr);
+                current_syscall_error.type = seL4_DeleteFirst;
+                ret.status = EXCEPTION_SYSCALL_ERROR;
+                return ret;
+            }
+        }
+
         ret.status = EXCEPTION_NONE;
         return ret;
 
@@ -1649,6 +1659,21 @@ createSafeMappingEntries_PTE
             }
         }
 
+        /* Check that we are not overwriting an existing mapping */
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
+        if (pte_ptr_get_pteType(ret.pte_entries.base) == pte_pte_large) {
+#else
+        if (pte_ptr_get_pteType(ret.pte_entries.base) == pte_pte_small) {
+
+#endif
+            if (!is_remap) {
+                userError("Virtual address (0x%"SEL4_PRIx_word") already mapped", vaddr);
+                current_syscall_error.type = seL4_DeleteFirst;
+                ret.status = EXCEPTION_SYSCALL_ERROR;
+                return ret;
+            }
+        }
+
         ret.status = EXCEPTION_NONE;
         return ret;
 
@@ -1661,7 +1686,7 @@ createSafeMappingEntries_PTE
 static create_mappings_pde_return_t
 createSafeMappingEntries_PDE
 (paddr_t base, word_t vaddr, vm_page_size_t frameSize,
- vm_rights_t vmRights, vm_attributes_t attr, pde_t *pd)
+ vm_rights_t vmRights, vm_attributes_t attr, pde_t *pd, bool_t is_remap)
 {
 
     create_mappings_pde_return_t ret;
@@ -1698,6 +1723,17 @@ createSafeMappingEntries_PDE
             return ret;
         }
 
+        /* Check that we are not overwriting an existing mapping */
+        if (pde_ptr_get_pdeType(ret.pde_entries.base) == pde_pde_section) {
+            if (!is_remap) {
+                userError("Virtual address (0x%"SEL4_PRIx_word") already mapped", vaddr);
+                current_syscall_error.type = seL4_DeleteFirst;
+                ret.status = EXCEPTION_SYSCALL_ERROR;
+                return ret;
+            }
+        }
+
+
         ret.status = EXCEPTION_NONE;
         return ret;
 
@@ -1726,6 +1762,16 @@ createSafeMappingEntries_PDE
                     seL4_DeleteFirst;
                 ret.status = EXCEPTION_SYSCALL_ERROR;
 
+                return ret;
+            }
+        }
+
+        /* Check that we are not overwriting an existing mapping */
+        if (pde_ptr_get_pdeType(ret.pde_entries.base) == pde_pde_section) {
+            if (!is_remap) {
+                userError("Virtual address (0x%"SEL4_PRIx_word") already mapped", vaddr);
+                current_syscall_error.type = seL4_DeleteFirst;
+                ret.status = EXCEPTION_SYSCALL_ERROR;
                 return ret;
             }
         }
@@ -2238,10 +2284,11 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
         paddr_t capFBasePtr;
         cap_t pdCap;
         pde_t *pd;
-        asid_t asid;
+        asid_t asid, frame_asid;
         vm_rights_t capVMRights, vmRights;
         vm_page_size_t frameSize;
         vm_attributes_t attr;
+        bool_t is_remap;
 
         if (unlikely(length < 3 || current_extra_caps.excaprefs[0] == NULL)) {
             userError("ARMPageMap: Truncated message.");
@@ -2271,9 +2318,10 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
         pd = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(
                          pdCap));
         asid = cap_page_directory_cap_get_capPDMappedASID(pdCap);
+        frame_asid = generic_frame_cap_get_capFMappedASID(cap);
 
         if (generic_frame_cap_get_capFIsMapped(cap)) {
-            if (generic_frame_cap_get_capFMappedASID(cap) != asid) {
+            if (frame_asid != asid) {
                 current_syscall_error.type = seL4_InvalidCapability;
                 current_syscall_error.invalidCapNumber = 1;
 
@@ -2287,6 +2335,8 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
 
                 return EXCEPTION_SYSCALL_ERROR;
             }
+
+            is_remap = true;
         } else {
             vtop = vaddr + BIT(pageBitsForSize(frameSize)) - 1;
 
@@ -2298,6 +2348,8 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
 
                 return EXCEPTION_SYSCALL_ERROR;
             }
+
+            is_remap = false;
         }
 
         {
@@ -2344,7 +2396,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
             create_mappings_pte_return_t map_ret;
             map_ret = createSafeMappingEntries_PTE(capFBasePtr, vaddr,
                                                    frameSize, vmRights,
-                                                   attr, pd);
+                                                   attr, pd, is_remap);
             if (unlikely(map_ret.status != EXCEPTION_NONE)) {
 #ifdef CONFIG_PRINTING
                 if (current_syscall_error.type == seL4_DeleteFirst) {
@@ -2362,7 +2414,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
             create_mappings_pde_return_t map_ret;
             map_ret = createSafeMappingEntries_PDE(capFBasePtr, vaddr,
                                                    frameSize, vmRights,
-                                                   attr, pd);
+                                                   attr, pd, is_remap);
             if (unlikely(map_ret.status != EXCEPTION_NONE)) {
 #ifdef CONFIG_PRINTING
                 if (current_syscall_error.type == seL4_DeleteFirst) {
