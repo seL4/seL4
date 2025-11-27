@@ -112,6 +112,12 @@ BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapIRQControl), cap_irq_control_cap_new());
 }
 
+#ifdef CONFIG_ALLOW_SBI_CALLS
+BOOT_CODE static void init_sbi(cap_t root_cnode_cap) {
+    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapSBI), cap_sbi_cap_new(0, 0, 0, 0));
+}
+#endif
+
 /* This and only this function initialises the CPU. It does NOT initialise any kernel state. */
 
 #ifdef CONFIG_HAVE_FPU
@@ -369,6 +375,10 @@ static BOOT_CODE bool_t try_init_kernel(
 
 #ifdef CONFIG_KERNEL_MCS
     init_sched_control(root_cnode_cap, CONFIG_MAX_NUM_NODES);
+#endif
+
+#ifdef CONFIG_ALLOW_SBI_CALLS
+    init_sbi(root_cnode_cap);
 #endif
 
     /* create the initial thread's IPC buffer */
