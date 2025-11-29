@@ -94,7 +94,9 @@ BOOT_CODE bool_t init_sys_state(
     acpi_rsdp_t      *acpi_rsdp,
     seL4_X86_BootInfo_VBE *vbe,
     seL4_X86_BootInfo_mmap_t *mb_mmap,
-    seL4_X86_BootInfo_fb_t *fb_info
+    seL4_X86_BootInfo_fb_t *fb_info,
+    uint32_t      efi_systbl_ptr32,
+    uint64_t      efi_systbl_ptr64
 )
 {
     cap_t         root_cnode_cap;
@@ -131,6 +133,12 @@ BOOT_CODE bool_t init_sys_state(
     }
     if (fb_info && fb_info->addr) {
         extra_bi_size += sizeof(seL4_BootInfoHeader) + sizeof(*fb_info);
+    }
+    if (efi_systbl_ptr64) {
+        extra_bi_size += sizeof(seL4_BootInfoHeader) + sizeof(uint64_t);
+    }
+    if (efi_systbl_ptr32) {
+        extra_bi_size += sizeof(seL4_BootInfoHeader) + sizeof(uint32_t);
     }
 
     word_t mb_mmap_size = sizeof(seL4_X86_BootInfo_mmap_t);
@@ -224,6 +232,26 @@ BOOT_CODE bool_t init_sys_state(
         extra_bi_offset += sizeof(header);
         *(uint32_t *)(extra_bi_region.start + extra_bi_offset) = tsc_freq;
         extra_bi_offset += 4;
+    }
+
+    /* populate EFI system table pointer block */
+    if (efi_systbl_ptr64) {
+        seL4_BootInfoHeader header;
+        header.id = SEL4_BOOTINFO_HEADER_X86_EFI_SYSTBL_PTR;
+        header.len = sizeof(header) + sizeof(uint64_t);
+        *(seL4_BootInfoHeader *)(extra_bi_region.start + extra_bi_offset) = header;
+        extra_bi_offset += sizeof(header);
+        *(uint64_t *)(extra_bi_region.start + extra_bi_offset) = efi_systbl_ptr64;
+        extra_bi_offset += sizeof(uint64_t);
+    }
+    if (efi_systbl_ptr32) {
+        seL4_BootInfoHeader header;
+        header.id = SEL4_BOOTINFO_HEADER_X86_EFI_SYSTBL_PTR;
+        header.len = sizeof(header) + sizeof(uint32_t);
+        *(seL4_BootInfoHeader *)(extra_bi_region.start + extra_bi_offset) = header;
+        extra_bi_offset += sizeof(header);
+        *(uint32_t *)(extra_bi_region.start + extra_bi_offset) = efi_systbl_ptr32;
+        extra_bi_offset += sizeof(uint32_t);
     }
 
     /* provide a chunk for any leftover padding in the extended boot info */
