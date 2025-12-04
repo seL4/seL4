@@ -175,12 +175,16 @@ void NORETURN fastpath_call(word_t cptr, word_t msgInfo)
 #endif
 
     /* Dequeue the destination. */
+#ifdef CONFIG_KERNEL_MCS
+    tcbEPDequeue_fp(dest, ep_ptr);
+#else
     endpoint_ptr_set_epQueue_head_np(ep_ptr, TCB_REF(dest->tcbEPNext));
     if (unlikely(dest->tcbEPNext)) {
         dest->tcbEPNext->tcbEPPrev = NULL;
     } else {
         endpoint_ptr_mset_epQueue_tail_state(ep_ptr, 0, EPState_Idle);
     }
+#endif
 
     badge = cap_endpoint_cap_get_capEPBadge(ep_cap);
 
@@ -455,8 +459,13 @@ void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo)
     /* Place the thread in the endpoint queue */
     endpointTail = endpoint_ptr_get_epQueue_tail_fp(ep_ptr);
     if (likely(!endpointTail)) {
+#ifdef CONFIG_KERNEL_MCS
+        NODE_STATE(ksCurThread)->tcbSchedPrev = NULL;
+        NODE_STATE(ksCurThread)->tcbSchedNext = NULL;
+#else
         NODE_STATE(ksCurThread)->tcbEPPrev = NULL;
         NODE_STATE(ksCurThread)->tcbEPNext = NULL;
+#endif
 
         /* Set head/tail of queue and endpoint state. */
         endpoint_ptr_set_epQueue_head_np(ep_ptr, TCB_REF(NODE_STATE(ksCurThread)));
@@ -465,7 +474,7 @@ void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo)
     } else {
 #ifdef CONFIG_KERNEL_MCS
         /* Update queue. */
-        tcb_queue_t queue = tcbEPAppend(NODE_STATE(ksCurThread), ep_ptr_get_queue(ep_ptr));
+        tcb_queue_t queue = tcbIPCAppend(NODE_STATE(ksCurThread), ep_ptr_get_queue(ep_ptr));
         endpoint_ptr_set_epQueue_head_np(ep_ptr, TCB_REF(queue.head));
         endpoint_ptr_mset_epQueue_tail_state(ep_ptr, TCB_REF(queue.end), EPState_Recv);
 #else
@@ -841,12 +850,16 @@ void NORETURN fastpath_vm_fault(vm_fault_type_t type)
 #endif
 
     /* Dequeue the destination. */
+#ifdef CONFIG_KERNEL_MCS
+    tcbEPDequeue_fp(dest, ep_ptr);
+#else
     endpoint_ptr_set_epQueue_head_np(ep_ptr, TCB_REF(dest->tcbEPNext));
     if (unlikely(dest->tcbEPNext)) {
         dest->tcbEPNext->tcbEPPrev = NULL;
     } else {
         endpoint_ptr_mset_epQueue_tail_state(ep_ptr, 0, EPState_Idle);
     }
+#endif
 
     badge = cap_endpoint_cap_get_capEPBadge(handler_cap);
 
