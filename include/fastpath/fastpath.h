@@ -191,6 +191,16 @@ static inline reply_t *thread_state_get_replyObject_np(thread_state_t ts)
     return REPLY_PTR(ts.words[1]);
 #endif
 }
+
+static inline void tcbEPDequeue_fp(tcb_t *dest, endpoint_t *ep_ptr)
+{
+    endpoint_ptr_set_epQueue_head_np(ep_ptr, TCB_REF(dest->tcbSchedNext));
+    if (unlikely(dest->tcbSchedNext)) {
+        dest->tcbSchedNext->tcbSchedPrev = NULL;
+    } else {
+        endpoint_ptr_mset_epQueue_tail_state(ep_ptr, 0, EPState_Idle);
+    }
+}
 #endif
 
 #include <arch/fastpath/fastpath.h>
