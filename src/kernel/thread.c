@@ -589,7 +589,8 @@ void scheduleTCB(tcb_t *tptr)
     if (tptr == NODE_STATE(ksCurThread) &&
         NODE_STATE(ksSchedulerAction) == SchedulerAction_ResumeCurrentThread &&
         !isSchedulable(tptr)) {
-        rescheduleRequired();
+        /* short-cut rescheduleRequired(), because we know what the scheduler action is. */
+        NODE_STATE(ksSchedulerAction) = SchedulerAction_ChooseNewThread;
     }
 }
 
