@@ -315,12 +315,11 @@ void tcbReleaseEnqueue(tcb_t *tcb)
     ticks_t new_time;
     tcb_queue_t queue;
 
-    new_time = tcbReadyTime(tcb);
     queue = NODE_STATE_ON_CORE(ksReleaseQueue, tcb->tcbAffinity);
+    new_time = tcbReadyTime(tcb);
 
     if (tcb_queue_empty(queue) || new_time < tcbReadyTime(queue.head)) {
         NODE_STATE_ON_CORE(ksReleaseQueue, tcb->tcbAffinity) = tcb_queue_prepend(queue, tcb);
-        NODE_STATE_ON_CORE(ksReprogram, tcb->tcbAffinity) = true;
     } else {
         if (tcbReadyTime(queue.end) <= new_time) {
             NODE_STATE_ON_CORE(ksReleaseQueue, tcb->tcbAffinity) = tcb_queue_append(queue, tcb);
@@ -332,6 +331,10 @@ void tcbReleaseEnqueue(tcb_t *tcb)
     }
 
     thread_state_ptr_set_tcbInReleaseQueue(&tcb->tcbState, true);
+
+    if (queue.head != NODE_STATE_ON_CORE(ksReleaseQueue, tcb->tcbAffinity).head) {
+        NODE_STATE_ON_CORE(ksReprogram, tcb->tcbAffinity) = true;
+    }
 }
 #endif
 

@@ -102,12 +102,13 @@ void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
             schedContext_donate(thread->tcbSchedContext, dest);
         }
 
-        /* blocked threads should have enough budget to get out of the kernel */
-        assert(dest->tcbSchedContext == NULL || refill_sufficient(dest->tcbSchedContext, 0));
-        assert(dest->tcbSchedContext == NULL || refill_ready(dest->tcbSchedContext));
         setThreadState(dest, ThreadState_Running);
-        if (sc_sporadic(dest->tcbSchedContext) && dest->tcbSchedContext != NODE_STATE(ksCurSC)) {
-            refill_unblock_check(dest->tcbSchedContext);
+        sched_context_t *dest_sc = dest->tcbSchedContext;
+        /* blocked threads should have enough budget to get out of the kernel */
+        assert(dest_sc == NULL || refill_sufficient(dest_sc, 0));
+        assert(dest_sc == NULL || refill_ready(dest_sc));
+        if (sc_sporadic(dest_sc) && dest_sc != NODE_STATE(ksCurSC)) {
+            refill_unblock_check(dest_sc);
         }
         possibleSwitchTo(dest);
 #else
@@ -147,9 +148,10 @@ void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
     reply_t *replyPtr = NULL;
     if (cap_get_capType(replyCap) == cap_reply_cap) {
         replyPtr = REPLY_PTR(cap_reply_cap_get_capReplyPtr(replyCap));
-        if (unlikely(replyPtr->replyTCB != NULL && replyPtr->replyTCB != thread)) {
+        tcb_t *reply_tcb = replyPtr->replyTCB;
+        if (unlikely(reply_tcb != NULL && reply_tcb != thread)) {
             userError("Reply object already has unexecuted reply!");
-            cancelIPC(replyPtr->replyTCB);
+            cancelIPC(reply_tcb);
         }
     }
 #endif
@@ -181,14 +183,16 @@ void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
                     &thread->tcbState, EP_REF(epptr));
 #ifdef CONFIG_KERNEL_MCS
                 thread_state_ptr_set_replyObject(&thread->tcbState, REPLY_REF(replyPtr));
-                if (replyPtr) {
-                    replyPtr->replyTCB = thread;
-                }
 #else
                 thread_state_ptr_set_blockingIPCCanGrant(
                     &thread->tcbState, cap_endpoint_cap_get_capCanGrant(cap));
 #endif
                 scheduleTCB(thread);
+#ifdef CONFIG_KERNEL_MCS
+                if (replyPtr) {
+                    replyPtr->replyTCB = thread;
+                }
+#endif
 
                 /* Place calling thread in endpoint queue */
 #ifdef CONFIG_KERNEL_MCS
