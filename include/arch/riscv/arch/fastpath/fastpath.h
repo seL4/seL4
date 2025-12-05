@@ -42,6 +42,10 @@ static inline void FORCE_INLINE switchToThread_fp(tcb_t *thread, pte_t *vroot, p
 
     setVSpaceRoot(addrFromPPtr(vroot), asid);
 
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+    benchmark_utilisation_switch(NODE_STATE(ksCurThread), thread);
+#endif
+
 #ifdef CONFIG_HAVE_FPU
     lazyFPURestore(thread);
 #endif
