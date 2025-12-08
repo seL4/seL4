@@ -1092,7 +1092,8 @@ void vcpu_sysvmenter_reply_to_user(tcb_t *tcb)
     setMR(tcb, buffer, SEL4_VMENTER_CALL_EIP_MR, vmread(VMX_GUEST_RIP));
     setMR(tcb, buffer, SEL4_VMENTER_CALL_CONTROL_PPC_MR, vmread(VMX_CONTROL_PRIMARY_PROCESSOR_CONTROLS));
 
-    setMR(tcb, buffer, SEL4_VMENTER_CALL_CONTROL_ENTRY_MR, vmread(VMX_CONTROL_ENTRY_INTERRUPTION_INFO));
+    setMR(tcb, buffer, SEL4_VMENTER_CALL_INTERRUPT_INFO_MR,
+          vmread(VMX_CONTROL_ENTRY_INTERRUPTION_INFO));
     setRegister(tcb, msgInfoRegister, 0);
 }
 
@@ -1242,7 +1243,8 @@ static void setMRs_vmexit(uint32_t reason, word_t qualification)
     setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_CALL_EIP_MR, vmread(VMX_GUEST_RIP));
     setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_CALL_CONTROL_PPC_MR,
           vmread(VMX_CONTROL_PRIMARY_PROCESSOR_CONTROLS));
-    setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_CALL_CONTROL_ENTRY_MR, vmread(VMX_CONTROL_ENTRY_INTERRUPTION_INFO));
+    setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_CALL_INTERRUPT_INFO_MR,
+          vmread(VMX_CONTROL_ENTRY_INTERRUPTION_INFO));
     setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_FAULT_REASON_MR, reason);
     setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_FAULT_QUALIFICATION_MR, qualification);
 
