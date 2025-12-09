@@ -381,7 +381,8 @@ void schedule(void)
 
     if (NODE_STATE(ksSchedulerAction) != SchedulerAction_ResumeCurrentThread) {
         bool_t was_runnable;
-        if (isSchedulable(NODE_STATE(ksCurThread))) {
+        if (isSchedulable(NODE_STATE(ksCurThread))
+            SMP_COND_STATEMENT( && NODE_STATE(ksCurThread)->tcbAffinity == getCurrentCPUIndex())) {
             was_runnable = true;
             SCHED_ENQUEUE_CURRENT_TCB;
         } else {
@@ -399,7 +400,8 @@ void schedule(void)
              * information flow in non-fastpath cases. */
             bool_t fastfail =
                 NODE_STATE(ksCurThread) == NODE_STATE(ksIdleThread)
-                || (candidate->tcbPriority < NODE_STATE(ksCurThread)->tcbPriority);
+                || (candidate->tcbPriority < NODE_STATE(ksCurThread)->tcbPriority)
+                SMP_COND_STATEMENT( || NODE_STATE(ksCurThread)->tcbAffinity != getCurrentCPUIndex());
             if (fastfail &&
                 !isHighestPrio(ksCurDomain, candidate->tcbPriority)) {
                 SCHED_ENQUEUE(candidate);
