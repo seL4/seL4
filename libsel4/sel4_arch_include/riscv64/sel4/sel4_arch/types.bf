@@ -17,8 +17,13 @@ block VMFault {
     field     Addr              64
     field     PrefetchFault     64
     padding                     32
+#if defined(CONFIG_HAVE_CHERI)
+    field     FSR               12
+    padding                     1
+#else
     field     FSR               5
     padding                     8
+#endif
     padding                     15
     field     seL4_FaultType    4
 }
