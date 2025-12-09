@@ -835,6 +835,11 @@ static exception_t decodeSetFlags(cap_t cap, word_t length, bool_t call, word_t 
     return EXCEPTION_NONE;
 }
 
+#ifdef CONFIG_KERNEL_MCS
+#define TCBConfigure TCBConfigureMCS
+#define TCBSetSchedParams TCBSetSchedParamsMCS
+#define TCBSetSpace TCBSetSpaceMCS
+#endif
 /* The following functions sit in the syscall error monad, but include the
  * exception cases for the preemptible bottom end, as they call the invoke
  * functions directly.  This is a significant deviation from the Haskell
