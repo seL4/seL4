@@ -335,7 +335,7 @@ seL4_BenchmarkResetAllThreadsUtilisation(void);
  * The mapping of hardware register to message register is
  *      - `SEL4_VMENTER_CALL_EIP_MR` Address to start executing instructions at in the guest mode
  *      - `SEL4_VMENTER_CALL_CONTROL_PPC_MR` New value for the Primary Processor Based VM Execution Controls
- *      - `SEL4_VMENTER_CALL_CONTROL_ENTRY_MR` New value for the VM Entry Controls
+ *      - `SEL4_VMENTER_CALL_INTERRUPT_INFO_MR` New value for the VM Entry Interruption-Information
  *
  * On return these same three message registers will be filled with the values at the point
  * that the privileged mode ceased executing. If this function returns with `SEL4_VMENTER_RESULT_FAULT`

@@ -798,12 +798,19 @@
                 The resulting capability can be invoked like a notification capability that supports
                 only signal/send. SGIs can be received by IRQ notification objects on the target
                 core like other IRQs. See also <autoref label="sec:interrupts"/>.
+
+                Note that the kernel only checks architectural limits for SGI IRQ id and target. It
+                does not know whether the corresponding target core exists. Depending on hardware
+                implementation, signalling a non-existent target may create an unrecoverable SError.
+                This means it is the responsibility of the developer to not issue capabilities for
+                targets that do not exist.
             </description>
             <param dir="in" name="irq" type="seL4_Word" description="The SGI INTID (0-15) that can be signalled."/>
             <param dir="in" name="target" type="seL4_Word" description="The node ID that will be targeted.
             0-7 for GICv2 and the affinity value for GICv3 (concatenation of Aff3+Aff2+Aff1+Aff0 from MPIDR).
-            Targets within that range that are not supported by the hardware will be ignored. For example, on a GICv2
-            board with 4 CPUs, the capability for target 5 can be created, but signals to it will have no effect."/>
+            Targets within that range that are not supported by thde hardware will be not be rejected. For example,
+            on a GICv2 board with 4 CPUs, the capability for target 5 can be created. The result of later signalling
+            this target depends on the hardware implementation."/>
 
             <param dir="in" name="root" type="seL4_CNode" description="CPtr to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="index" type="seL4_Word" description="CPtr to the destination slot. Resolved from the root of the destination CSpace."/>
@@ -822,6 +829,7 @@
             <error name="seL4_IllegalOperation">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, SGIs are not supported on this platform.
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
@@ -833,6 +841,12 @@
                 <description>
                     The value of <texttt text="irq"/> or <texttt text="target"/> is out of range.
                     Or, <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The SGI target is not supported on this GIC. Note that this only checks
+                    architectural limits, not the presence of the target core on the current board.
                 </description>
             </error>
         </method>

@@ -21,7 +21,15 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 ---
 
-## Upcoming release: BREAKING
+## Upcoming release: BINARY COMPATIBLE
+
+### Changes
+
+
+### Upgrade Notes
+---
+
+## 14.0.0 2025-11-25: BREAKING
 
 ### Security-relevant Changes
 
@@ -42,7 +50,7 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 ### Changes
 
-* Added `zynqmp` and `rpi4` to the set of verified AArch64 configs.
+* All Arm platforms supported by seL4 now have a verified configuration.
 * Added: build exports an `invocations_all.json` file with syscall invocation numbers.
 * Added option for suppressing generation of config output files in build process
 * Added `--skip-unchanged` option to build process to prevent time stamp update for config output files when these
@@ -85,6 +93,15 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
   to your project settings to get the same configuration as before if you are using `tqma8xqp1gb`.
 
 #### Arm
+
+* Support SGIs (software generated interrupts) on platforms with GICv2 or GICv3 in non-SMP configurations. SGIs are
+  intended for signalling other cores when seL4 is used in a multi-kernel setup. On Arm, this is implemented with a new
+  capability `SGISignal`, which can be created from `IRQControl` capabilities with the new IRQ control invocation
+  `ARMIRQIssueSGISignal` for a specific IRQ and target core. The resulting `SGISignal` capability can be invoked like a
+  notification capability that supports only signal/send. SGIs can be received by IRQ notification objects on the target
+  core like other IRQs.
+
+  See also [RFC-17](https://sel4.github.io/rfcs/implemented/0170-multikernel-ipi-api.html)
 
 * Added config option for selecting which thread ID register is used for Kernel TLS syscalls and invocations.
   KernelArmTLSReg can be used to select either `tpidru` or `tpidruro` as the TLS register used for `seL4_TCB_SetTLSBase` and `seL4_SetTLSBase` operations.
