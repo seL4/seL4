@@ -50,6 +50,12 @@ config_option(
     DEPENDS "KernelArchRiscV"
 )
 
+config_option(
+    KernelAllowSBICalls ALLOW_SBI_CALLS "Allow user-space to make SBI calls. TODO"
+    DEFAULT OFF
+    DEPENDS "NOT KernelVerificationBuild; KernelArchRiscV"
+)
+
 # Until RISC-V has instructions to count leading/trailing zeros, we provide
 # library implementations. Platforms that implement the bit manipulation
 # extension can override these settings to remove the library functions from
@@ -143,6 +149,7 @@ add_sources(
            object/interrupt.c
            object/objecttype.c
            object/tcb.c
+           object/sbi.c
            smp/ipi.c
     ASMFILES head.S traps.S idle.S
 )

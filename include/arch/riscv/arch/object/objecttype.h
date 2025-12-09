@@ -43,5 +43,42 @@ static inline CONST bool_t Arch_isIRQControlDescendant(cap_t cap)
  */
 static inline CONST bool_t Arch_isMDBParentOf(cap_t cap_a, cap_t cap_b, bool_t firstBadged)
 {
-    return true;
+    switch (cap_get_capType(cap_a)) {
+#ifdef CONFIG_ALLOW_SBI_CALLS
+    case cap_sbi_cap: {
+        if (!cap_sbi_cap_get_capSBIEIDBadged(cap_a)) {
+            /* If there is no EID badge then the cap cannot be badged. */
+            return true;
+        }
+
+        if (!cap_sbi_cap_get_capSBIEIDBadged(cap_b)) {
+            return false;
+        }
+
+        word_t eid_a_badge = cap_sbi_cap_get_capSBIEIDBadge(cap_a);
+        word_t eid_b_badge = cap_sbi_cap_get_capSBIEIDBadge(cap_b);
+
+        if (eid_a_badge != eid_b_badge) {
+            return false;
+        }
+
+        if (!cap_sbi_cap_get_capSBIFIDBadged(cap_a)) {
+            return !firstBadged;
+        }
+
+        if (!cap_sbi_cap_get_capSBIFIDBadged(cap_b)) {
+            return false;
+        }
+
+        word_t fid_a_badge = cap_sbi_cap_get_capSBIFIDBadge(cap_a);
+        word_t fid_b_badge = cap_sbi_cap_get_capSBIFIDBadge(cap_b);
+        return (fid_a_badge == fid_b_badge && !firstBadged);
+        break;
+    }
+#endif
+
+    default:
+        return true;
+        break;
+    }
 }
