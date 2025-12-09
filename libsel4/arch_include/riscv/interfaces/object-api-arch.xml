@@ -42,6 +42,23 @@
             <member name="t6"/>
             <member name="tp"/>
     </struct>
+
+    <struct name="seL4_RISCV_SBIContext">
+        <member name="a0"/>
+        <member name="a1"/>
+        <member name="a2"/>
+        <member name="a3"/>
+        <member name="a4"/>
+        <member name="a5"/>
+        <member name="a6"/>
+        <member name="a7"/>
+    </struct>
+
+    <struct name="seL4_RISCV_SBIRet">
+        <member name="error"/>
+        <member name="value"/>
+    </struct>
+
     <interface name="seL4_RISCV_PageTable" manual_name="Page Table" cap_description="Capability to the page table to invoke.">
         <method id="RISCVPageTableMap" name="Map" manual_label="pagetable_map">
             <brief>
@@ -366,6 +383,25 @@
             </error>
         </method>
 
+    </interface>
+        <interface name="seL4_RISCV_SBI" manual_name="SBI" cap_description="Capability to allow threads to make SBI (Supervisor Binary Interface) calls.">
+        <method id="RISCVSBICall" name="Call" manual_name="SBI Call" manual_label="sbi_call">
+            <brief>
+                Specify SBI call
+            </brief>
+            <description>
+                Register a6 is for the SBI function ID (FID).
+                Register a7 is for the SBI extension ID (EID).
+                Registers a0-a5 are for the SBI call's arguments.
+                Takes a0-a7 as arguments to an SBI call which are defined as a seL4_RISCV_SBIContext
+                struct. The kernel makes the SBI call and then returns the registers a0 and a1
+                in a new seL4_RISCV_SBIRet as the result.
+            </description>
+            <param dir="in" name="sbi_args" type="seL4_RISCV_SBIContext"
+                description="The structure that has the provided arguments."/>
+            <param dir="out" name="sbi_ret" type="seL4_RISCV_SBIRet"
+                description="The structure to capture the responses."/>
+        </method>
     </interface>
 
 </api>
