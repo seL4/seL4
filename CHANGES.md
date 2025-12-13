@@ -21,12 +21,17 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 ---
 
-## Upcoming release: BINARY COMPATIBLE
+## Upcoming release: BREAKING
 
 ### Changes
 
+* Runtime domain schedule configuration.
+  See [RFC-20](https://sel4.github.io/rfcs/implemented/0200-domain-schedules.html).
 
 ### Upgrade Notes
+
+If using domains, replace your custom domain.c schedule with initialisation code in user space.
+
 ---
 
 ## 14.0.0 2025-11-25: BREAKING
