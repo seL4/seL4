@@ -7,7 +7,11 @@
 cmake_minimum_required(VERSION 3.16.0)
 
 if(KernelSel4ArchAarch32)
-    set_property(TARGET kernel_config_target APPEND PROPERTY TOPLEVELTYPES pde_C)
+    set_property(
+        TARGET kernel_config_target
+        APPEND
+        PROPERTY TOPLEVELTYPES pde_C
+    )
 endif()
 
 set(KernelArmPASizeBits40 OFF)
@@ -65,7 +69,8 @@ config_option(
     DEPENDS "KernelArchARM;KernelDebugDisableL2Cache"
 )
 config_option(
-    KernelDebugDisableBranchPrediction DEBUG_DISABLE_BRANCH_PREDICTION
+    KernelDebugDisableBranchPrediction
+    DEBUG_DISABLE_BRANCH_PREDICTION
     "Do not enable branch prediction (also called program flow control) on startup. \
     This makes execution time more deterministic at the expense of dramatically decreasing \
     performance. Primary use is for debugging."
@@ -98,7 +103,8 @@ else()
 endif()
 
 config_option(
-    KernelArmHypEnableVCPUCP14SaveAndRestore ARM_HYP_ENABLE_VCPU_CP14_SAVE_AND_RESTORE
+    KernelArmHypEnableVCPUCP14SaveAndRestore
+    ARM_HYP_ENABLE_VCPU_CP14_SAVE_AND_RESTORE
     "Trap, but don't save/restore VCPUs' CP14 accesses \
     This allows us to turn off the save and restore of VCPU threads' CP14 \
     context for performance (or other) reasons, we can just turn them off \
@@ -110,7 +116,8 @@ config_option(
 )
 
 config_option(
-    KernelArmErrata430973 ARM_ERRATA_430973
+    KernelArmErrata430973
+    ARM_ERRATA_430973
     "Enable workaround for 430973 Cortex-A8 (r1p0..r1p2) erratum \
     Enables a workaround for the 430973 Cortex-A8 (r1p0..r1p2) erratum. Error occurs \
     if code containing ARM/Thumb interworking branch is replaced by different code \
@@ -120,7 +127,8 @@ config_option(
 )
 
 config_option(
-    KernelArmErrata773022 ARM_ERRATA_773022
+    KernelArmErrata773022
+    ARM_ERRATA_773022
     "Enable workaround for 773022 Cortex-A15 (r0p0..r0p4) erratum \
     Enables a workaround for the 773022 Cortex-A15 (r0p0..r0p4) erratum. Error occurs \
     on rare sequences of instructions and results in the loop buffer delivering \
@@ -143,7 +151,10 @@ config_option(
     DEPENDS "KernelPlatformTK1"
 )
 
-config_option(KernelArmEnableA9Prefetcher ENABLE_A9_PREFETCHER "Enable Cortex-A9 prefetcher \
+config_option(
+    KernelArmEnableA9Prefetcher
+    ENABLE_A9_PREFETCHER
+    "Enable Cortex-A9 prefetcher \
     Cortex-A9 has an L1 and L2 prefetcher. By default \
     they are disabled. This config options allows \
     them to be turned on. Enabling the prefetchers \
@@ -151,10 +162,15 @@ config_option(KernelArmEnableA9Prefetcher ENABLE_A9_PREFETCHER "Enable Cortex-A9
     documents indicate that as of r4p1 version of \
     Cortex-A9 the bits used to enable the prefetchers \
     no longer exist, it is not clear if this is just \
-    a document error or not." DEFAULT OFF DEPENDS "KernelArmCortexA9")
+    a document error or not."
+    DEFAULT OFF
+    DEPENDS "KernelArmCortexA9"
+)
 
 config_option(
-    KernelArmExportPMUUser EXPORT_PMU_USER "PL0 access to PMU. \
+    KernelArmExportPMUUser
+    EXPORT_PMU_USER
+    "PL0 access to PMU. \
     Grant user access to Performance Monitoring Unit. \
     WARNING: While useful for evaluating performance, \
     this option opens timing and covert channels."
@@ -169,16 +185,24 @@ config_option(
     DEFAULT OFF
     DEPENDS "KernelArchArmV7a OR KernelArchArmV8a;KernelArmHypervisorSupport"
 )
-config_option(KernelTk1SMMUInterruptEnable SMMU_INTERRUPT_ENABLE "Enable SMMU interrupts. \
+config_option(
+    KernelTk1SMMUInterruptEnable
+    SMMU_INTERRUPT_ENABLE
+    "Enable SMMU interrupts. \
     SMMU interrupts currently only serve a debug purpose as \
     they are not forwarded to user level. Enabling this will \
     cause some fault types to print out a message in the kernel. \
     WARNING: Printing fault information is slow and rapid faults \
     can result in all time spent in the kernel printing fault \
-    messages" DEFAULT "${KernelDebugBuild}" DEPENDS "KernelTk1SMMU" DEFAULT_DISABLED OFF)
+    messages"
+    DEFAULT "${KernelDebugBuild}"
+    DEPENDS "KernelTk1SMMU"
+    DEFAULT_DISABLED OFF
+)
 
 config_option(
-    KernelAArch32FPUEnableContextSwitch AARCH32_FPU_ENABLE_CONTEXT_SWITCH
+    KernelAArch32FPUEnableContextSwitch
+    AARCH32_FPU_ENABLE_CONTEXT_SWITCH
     "Enable hardware VFP and SIMD context switch \
         This enables the VFP and SIMD context switch on platforms with \
         hardware support, allowing the user to execute hardware VFP and SIMD \
@@ -190,7 +214,8 @@ config_option(
 )
 
 config_option(
-    KernelAArch64UserCacheEnable AARCH64_USER_CACHE_ENABLE
+    KernelAArch64UserCacheEnable
+    AARCH64_USER_CACHE_ENABLE
     "Enable any attempt to execute a DC CVAU, DC CIVAC, DC CVAC, or IC IVAU \
     instruction or access to CTR_EL0 at EL0 using AArch64. \
     When disabled, these operations will be trapped."
@@ -199,7 +224,8 @@ config_option(
 )
 
 config_option(
-    KernelAArch64SErrorIgnore AARCH64_SERROR_IGNORE
+    KernelAArch64SErrorIgnore
+    AARCH64_SERROR_IGNORE
     "By default any SError interrupt will halt the kernel. SErrors may \
     be caused by e.g. writes to read-only device registers or ECC errors. \
     When this option is enabled SErrors will be ignored."
@@ -209,7 +235,9 @@ config_option(
 mark_as_advanced(KernelAArch64SErrorIgnore)
 
 config_option(
-    KernelAllowSMCCalls ALLOW_SMC_CALLS "Allow components to make SMC calls. \
+    KernelAllowSMCCalls
+    ALLOW_SMC_CALLS
+    "Allow components to make SMC calls. \
     WARNING: Allowing SMC calls causes a couple of issues. Since seL4 cannot \
     pre-empt the secure monitor, the WCET is no longer guaranteed. Also, since the \
     secure monitor is a higher privilege level and can make any change in the \
@@ -237,15 +265,14 @@ if(KernelAArch32FPUEnableContextSwitch OR KernelSel4ArchAarch64)
     set(KernelHaveFPU ON)
 endif()
 
-if(
-    KernelArmCortexA7
-    OR KernelArmCortexA8
-    OR KernelArmCortexA15
-    OR KernelArmCortexA35
-    OR KernelArmCortexA53
-    OR KernelArmCortexA55
-    OR KernelArmCortexA57
-    OR KernelArmCortexA72
+if(KernelArmCortexA7
+   OR KernelArmCortexA8
+   OR KernelArmCortexA15
+   OR KernelArmCortexA35
+   OR KernelArmCortexA53
+   OR KernelArmCortexA55
+   OR KernelArmCortexA57
+   OR KernelArmCortexA72
 )
     # According to https://developer.arm.com/documentation/100095/0001/functional-description/about-the-cortex-a72-processor-functions/components-of-the-processor
     # the L1 instruction on the Cortex-A72 cache has a 64-byte cache line.
@@ -264,24 +291,23 @@ endif()
 add_sources(
     DEP "KernelArchARM"
     PREFIX src/arch/arm
-    CFILES
-        c_traps.c
-        api/faults.c
-        benchmark/benchmark.c
-        kernel/boot.c
-        kernel/thread.c
-        machine/cache.c
-        machine/errata.c
-        machine/debug.c
-        machine/hardware.c
-        machine/io.c
-        object/interrupt.c
-        object/tcb.c
-        object/iospace.c
-        object/vcpu.c
-        object/smmu.c
-        object/smc.c
-        smp/ipi.c
+    CFILES c_traps.c
+           api/faults.c
+           benchmark/benchmark.c
+           kernel/boot.c
+           kernel/thread.c
+           machine/cache.c
+           machine/errata.c
+           machine/debug.c
+           machine/hardware.c
+           machine/io.c
+           object/interrupt.c
+           object/tcb.c
+           object/iospace.c
+           object/vcpu.c
+           object/smmu.c
+           object/smc.c
+           smp/ipi.c
 )
 
 add_bf_source_old("KernelArchARM" "structures.bf" "include/arch/arm" "arch/object")
