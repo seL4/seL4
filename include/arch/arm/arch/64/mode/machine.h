@@ -184,7 +184,7 @@ static inline void setCurrentUserVSpaceRoot(ttbr_t ttbr)
     } else {
         MSR("ttbr0_el1", ttbr.words[0]);
     }
-    isb();
+    /* No ISB because we count on context switch for synchronisation */
 }
 
 static inline word_t getVTTBR(void)

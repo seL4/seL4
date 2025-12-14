@@ -803,6 +803,8 @@ static bool_t setVMRootForFlush(vspace_root_t *vspace, asid_t asid)
     }
 
     armv_contextSwitch(vspace, asid);
+    /* Make sure that all context switch changes are done */
+    isb();
     return true;
 }
 
