@@ -281,7 +281,8 @@ create_root_cnode(void)
                     CONFIG_ROOT_CNODE_SIZE_BITS, /* radix */
                     wordBits - CONFIG_ROOT_CNODE_SIZE_BITS, /* guard size */
                     0, /* guard */
-                    rootserver.cnode); /* pptr */
+                    rootserver.cnode, /* pptr */
+                    false); /* not dirty */
 
     /* write the root CNode cap into the root CNode */
     write_slot(SLOT_PTR(rootserver.cnode, seL4_CapInitThreadCNode), cap);
@@ -702,8 +703,7 @@ BOOT_CODE static bool_t provide_untyped_cap(
             .isDevice = device_memory,
             .padding  = {0}
         };
-        ut_cap = cap_untyped_cap_new(MAX_FREE_INDEX(size_bits),
-                                     device_memory, size_bits, pptr);
+        ut_cap = cap_untyped_cap_new(device_memory, BIT(size_bits), pptr);
         ret = provide_cap(root_cnode_cap, ut_cap);
     } else {
         printf("Kernel init: Too many untyped regions for boot info\n");
