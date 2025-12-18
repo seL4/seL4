@@ -315,6 +315,7 @@ def init_arch_types(wordsize, args):
 
         "ia32": [
             Type("seL4_X86_VMAttributes", wordsize, wordsize),
+            Type("seL4_X86_EPT_VMAttributes", wordsize, wordsize),
             CapType("seL4_X86_IOPort", wordsize),
             CapType("seL4_X86_IOPortControl", wordsize),
             CapType("seL4_X86_ASIDControl", wordsize),
@@ -335,6 +336,7 @@ def init_arch_types(wordsize, args):
 
         "x86_64": [
             Type("seL4_X86_VMAttributes", wordsize, wordsize),
+            Type("seL4_X86_EPT_VMAttributes", wordsize, wordsize),
             CapType("seL4_X86_IOPort", wordsize),
             CapType("seL4_X86_IOPortControl", wordsize),
             CapType("seL4_X86_ASIDControl", wordsize),
