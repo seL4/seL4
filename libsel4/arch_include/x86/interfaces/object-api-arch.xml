@@ -435,7 +435,7 @@ contain the mapping"/>
                     Rights for the mapping. <docref>Possible values for this type are given in <autoref label='sec:cap_rights'/>.</docref>
                 </description>
             </param>
-            <param dir="in" name="attr" type="seL4_X86_VMAttributes">
+            <param dir="in" name="attr" type="seL4_X86_EPT_VMAttributes">
                 <description>
                     VM attributes for the mapping.<docref> Possible values for this type are given in <autoref label='ch:vspace'/>.</docref>
                 </description>
@@ -1072,7 +1072,7 @@ contain the mapping"/>
                 description='Capability to the EPT root which will contain the mapping'/>
             <param dir="in" name="gpa" type="seL4_Word"
                 description='Guest physical address to map the page into.'/>
-            <param dir="in" name="attr" type="seL4_X86_VMAttributes">
+            <param dir="in" name="attr" type="seL4_X86_EPT_VMAttributes">
                 <description>
                     VM attributes for the mapping. <docref>Possible values for this type are given in <autoref label='ch:vspace'/></docref>
                 </description>
@@ -1139,7 +1139,7 @@ contain the mapping"/>
                 description='Capability to the EPT root which will contain the mapping'/>
             <param dir="in" name="gpa" type="seL4_Word"
                 description='Guest physical address to map the page into.'/>
-            <param dir="in" name="attr" type="seL4_X86_VMAttributes">
+            <param dir="in" name="attr" type="seL4_X86_EPT_VMAttributes">
                 <description>
                     VM attributes for the mapping. <docref>Possible values for this type are given in <autoref label='ch:vspace'/></docref>
                 </description>
@@ -1207,7 +1207,7 @@ contain the mapping"/>
                 description='Capability to the EPT root which will contain the mapping'/>
             <param dir="in" name="gpa" type="seL4_Word"
                 description='Guest physical address to map the page into.'/>
-            <param dir="in" name="attr" type="seL4_X86_VMAttributes">
+            <param dir="in" name="attr" type="seL4_X86_EPT_VMAttributes">
                 <description>
                     VM attributes for the mapping. <docref>Possible values for this type are given in <autoref label='ch:vspace'/></docref>
                 </description>
