@@ -39,7 +39,7 @@
             </description>
             <param dir="in" name="pml4" type="seL4_X64_PML4" description="Capability to the VSpace which will contain the mapping."/>
             <param dir="in" name="vaddr" type="seL4_Word" description="Virtual address at which to map page."/>
-            <param dir="in" name="attr" type="seL4_X86_VMAttributes">
+            <param dir="in" name="attr" type="seL4_X86_EPT_VMAttributes">
                 <description>
                     VM attributes for the mapping. <docref>Possible values for this type are given in <autoref label='ch:vspace'/>.</docref>
                 </description>
