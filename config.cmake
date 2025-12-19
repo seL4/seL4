@@ -95,6 +95,7 @@ endif()
 # Set defaults for common variables
 set(KernelHaveFPU OFF)
 set(KernelSetTLSBaseSelf OFF)
+set(HaveCheri OFF)
 
 include(src/arch/${KernelArch}/config.cmake)
 include(include/${KernelWordSize}/mode/config.cmake)
@@ -118,6 +119,7 @@ endif()
 # Enshrine common variables in the config
 config_set(KernelHaveFPU HAVE_FPU "${KernelHaveFPU}")
 config_set(KernelPaddrUserTop PADDR_USER_DEVICE_TOP "${KernelPaddrUserTop}")
+config_set(HaveCheri HAVE_CHERI "${HaveCheri}")
 
 # System parameters
 config_string(
