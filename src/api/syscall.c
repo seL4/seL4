@@ -82,14 +82,10 @@ exception_t handleInterruptEntry(void)
 
     checkInterrupt(/* was_interrupt_entry */ true);
 
-#ifdef CONFIG_KERNEL_MCS
     if (SMP_TERNARY(clh_is_self_in_queue(), 1)) {
-#endif
         schedule();
         activateThread();
-#ifdef CONFIG_KERNEL_MCS
     }
-#endif
 
     return EXCEPTION_NONE;
 }
