@@ -32,6 +32,9 @@ elseif(KernelArmCortexA72)
     # (https://developer.arm.com/documentation/100095/0001/memory-management-unit/about-the-mmu)
     set(KernelArmPASizeBits44 ON)
     math(EXPR KernelPaddrUserTop "(1 << 44)")
+elseif(KernelArmCortexA76)
+    set(KernelArmPASizeBits40 ON)
+    math(EXPR KernelPaddrUserTop "(1 << 40)")
 endif()
 config_set(KernelArmPASizeBits40 ARM_PA_SIZE_BITS_40 "${KernelArmPASizeBits40}")
 config_set(KernelArmPASizeBits44 ARM_PA_SIZE_BITS_44 "${KernelArmPASizeBits44}")
@@ -86,7 +89,7 @@ config_option(
     "Build as Hypervisor. Utilise ARM virtualisation extensions to build the kernel as a hypervisor"
     DEFAULT ${KernelSel4ArchArmHyp}
     DEPENDS
-        "KernelArmCortexA15 OR KernelArmCortexA35 OR KernelArmCortexA57 OR KernelArmCortexA53 OR KernelArmCortexA55 OR KernelArmCortexA72"
+        "KernelArmCortexA15 OR KernelArmCortexA35 OR KernelArmCortexA57 OR KernelArmCortexA53 OR KernelArmCortexA55 OR KernelArmCortexA72 OR KernelArmCortexA76"
 )
 
 config_option(KernelArmGicV3 ARM_GIC_V3_SUPPORT "Build support for GICv3" DEFAULT OFF)
@@ -246,6 +249,7 @@ if(
     OR KernelArmCortexA55
     OR KernelArmCortexA57
     OR KernelArmCortexA72
+    OR KernelArmCortexA76
 )
     # According to https://developer.arm.com/documentation/100095/0001/functional-description/about-the-cortex-a72-processor-functions/components-of-the-processor
     # the L1 instruction on the Cortex-A72 cache has a 64-byte cache line.
