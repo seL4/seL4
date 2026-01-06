@@ -91,13 +91,26 @@ reserved = ('BLOCK', 'BASE', 'FIELD', 'FIELD_HIGH', 'MASK', 'PADDING',
             'TAGGED_UNION', 'TAG')
 
 tokens = reserved + ('IDENTIFIER', 'INTLIT', 'LBRACE', 'RBRACE',
-                     'LPAREN', 'RPAREN', 'COMMA')
+                     'LPAREN', 'RPAREN', 'COMMA', 'PLUS', 'MINUS',
+                     'MULT', 'DIV', 'MOD')
+
+# yacc directive for operator associativity and precedence from low to high
+precedence = (
+    ('left', 'PLUS', 'MINUS'),
+    ('left', 'MULT', 'DIV', 'MOD'),
+    ('right', 'UMINUS')
+)
 
 t_LBRACE = r'{'
 t_RBRACE = r'}'
 t_LPAREN = r'\('
 t_RPAREN = r'\)'
 t_COMMA = r','
+t_PLUS = r'\+'
+t_MINUS = r'\-'
+t_MULT = r'\*'
+t_DIV = r'/'
+t_MOD = r'%'
 
 reserved_map = dict((r.lower(), r) for r in reserved)
 
@@ -167,13 +180,13 @@ def p_entity_list_union(t):
 
 
 def p_base_simple(t):
-    """base : BASE INTLIT"""
-    t[0] = (t[2], t[2], 0)
+    """base : BASE int_expr"""
+    t[0] = (eval_expr(t[2]), eval_expr(t[2]), 0)
 
 
 def p_base_mask(t):
-    """base : BASE INTLIT LPAREN INTLIT COMMA INTLIT RPAREN"""
-    t[0] = (t[2], t[4], t[6])
+    """base : BASE int_expr LPAREN int_expr COMMA int_expr RPAREN"""
+    t[0] = (eval_expr(t[2]), eval_expr(t[4]), eval_expr(t[6]))
 
 
 def p_block(t):
@@ -213,17 +226,17 @@ def p_fields_empty(t):
 
 
 def p_fields_field(t):
-    """fields : fields FIELD IDENTIFIER INTLIT"""
+    """fields : fields FIELD IDENTIFIER int_expr"""
     t[0] = t[1] + [(t[3], t[4], False)]
 
 
 def p_fields_field_high(t):
-    """fields : fields FIELD_HIGH IDENTIFIER INTLIT"""
+    """fields : fields FIELD_HIGH IDENTIFIER int_expr"""
     t[0] = t[1] + [(t[3], t[4], True)]
 
 
 def p_fields_padding(t):
-    """fields : fields PADDING INTLIT"""
+    """fields : fields PADDING int_expr"""
     t[0] = t[1] + [(None, t[3], False)]
 
 
@@ -259,13 +272,13 @@ def p_tags_empty(t):
 
 
 def p_tag_values_one(t):
-    """tag_values : INTLIT"""
-    t[0] = [t[1]]
+    """tag_values : int_expr"""
+    t[0] = [eval_expr(t[1])]
 
 
 def p_tag_values(t):
-    """tag_values : tag_values COMMA INTLIT"""
-    t[0] = t[1] + [t[3]]
+    """tag_values : tag_values COMMA int_expr"""
+    t[0] = t[1] + [eval_expr(t[3])]
 
 
 def p_tag_value(t):
@@ -274,8 +287,8 @@ def p_tag_value(t):
 
 
 def p_tag_value_one(t):
-    """tag_value : INTLIT"""
-    t[0] = [t[1]]
+    """tag_value : int_expr"""
+    t[0] = [eval_expr(t[1])]
 
 
 def p_tags(t):
@@ -289,13 +302,77 @@ def p_masks_empty(t):
 
 
 def p_masks(t):
-    """masks : masks MASK INTLIT INTLIT"""
-    t[0] = t[1] + [(t[3], t[4])]
+    """masks : masks MASK int_expr int_expr"""
+    t[0] = t[1] + [(eval_expr(t[3]), eval_expr(t[4]))]
+
+
+def p_int_expr_binop(t):
+    """int_expr : int_expr PLUS int_expr
+                | int_expr MINUS int_expr
+                | int_expr MULT int_expr
+                | int_expr DIV int_expr
+                | int_expr MOD int_expr"""
+    t[0] = (t[2], t[1], t[3])
+
+
+def p_int_expr_uminus(t):
+    """int_expr : MINUS int_expr %prec UMINUS"""
+    t[0] = ('-', t[2])
+
+
+def p_int_expr_paren(t):
+    """int_expr : LPAREN int_expr RPAREN"""
+    t[0] = t[2]
+
+
+def p_int_expr_lit(t):
+    """int_expr : INTLIT"""
+    t[0] = t[1]
+
+
+def p_int_expr_const(t):
+    """int_expr : IDENTIFIER"""
+    t[0] = t[1]
 
 
 def p_error(t):
     print("Syntax error at token '%s'" % t.value, file=sys.stderr)
     sys.exit(1)
+
+
+# Evaluating int_expr
+
+def base_consts(base, base_bits):
+    return {'word_size': base, 'canonical_size': base_bits}
+
+
+def eval_expr(t, const_map={}):
+    if isinstance(t, int):
+        return t
+    if isinstance(t, str):
+        if t in const_map:
+            return const_map[t]
+        raise ValueError(f"Unknown constant '{t}'")
+    if len(t) == 2:
+        return - eval_expr(t[1], const_map)
+    if len(t) == 3:
+        x = eval_expr(t[1], const_map)
+        y = eval_expr(t[2], const_map)
+        if t[0] == '+':
+            return x + y
+        if t[0] == '-':
+            return x - y
+        if t[0] == '*':
+            return x * y
+        if t[0] == '/':
+            return x // y
+        if t[0] == '%':
+            return x % y
+
+        raise ValueError(f"Unknown binary operator '{t[0]}'")
+
+    raise ValueError(f"Unknown expression type for '{t}'")
+
 
 # Templates
 
@@ -2343,29 +2420,42 @@ class TaggedUnion:
 
 class Block:
     def __init__(self, name, fields, visible_order):
-        offset = 0
+        self.name = name
+        self.tagged = False
+        self.fields = fields
+        self.visible_order = visible_order
+
+    def set_base(self, base, base_bits, base_sign_extend, suffix):
+        self.base = base
+        self.constant_suffix = suffix
+        self.base_bits = base_bits
+        self.base_sign_extend = base_sign_extend
+        self.const_map = base_consts(base, base_bits)
+
+    def checks(self):
+        """Perform wellformedness checks and set up data structures. Needs to run
+        after eval_int_exprs(), so that field sizes are available."""
+
+        # remember whether visible_order was None or not
+        visible_order = self.visible_order
+        self.visible_order = visible_order or []
+
+        self.size = sum(size for _name, size, _high in self.fields)
         _fields = []
-        self.size = sum(size for _name, size, _high in fields)
         offset = self.size
-        self.constant_suffix = ''
 
-        if visible_order is None:
-            self.visible_order = []
-
-        for _name, _size, _high in fields:
+        for _name, _size, _high in self.fields:
             offset -= _size
-            if not _name is None:
+            if _name is not None:
                 if visible_order is None:
                     self.visible_order.append(_name)
                 _fields.append((_name, offset, _size, _high))
 
-        self.name = name
-        self.tagged = False
         self.fields = _fields
         self.field_map = dict((name, (offset, size, high))
-                              for name, offset, size, high in _fields)
+                              for name, offset, size, high in self.fields)
 
-        if not visible_order is None:
+        if visible_order is not None:
             missed_fields = set(self.field_map.keys())
 
             for _name in visible_order:
@@ -2380,11 +2470,6 @@ class Block:
 
             self.visible_order = visible_order
 
-    def set_base(self, base, base_bits, base_sign_extend, suffix):
-        self.base = base
-        self.constant_suffix = suffix
-        self.base_bits = base_bits
-        self.base_sign_extend = base_sign_extend
         if self.size % base != 0:
             raise ValueError("Size of block %s not a multiple of base"
                              % self.name)
@@ -2394,6 +2479,15 @@ class Block:
                 raise ValueError("Field %s of block %s "
                                  "crosses a word boundary"
                                  % (name, self.name))
+
+    def eval_int_exprs(self):
+        """Reduce integer expressions for fields to values. Includes field_high and padding."""
+
+        fields = []
+        for name, size, high in self.fields:
+            fields.append((name, eval_expr(size, self.const_map), high))
+
+        self.fields = fields
 
     def generate_hol_defs(self, params, suppressed_fields=[],
                           prefix="", in_union=False):
@@ -2920,6 +3014,8 @@ if __name__ == '__main__':
                 raise ValueError("Invalid base size: %d" % base)
             suffix = suffix_map[base]
             b.set_base(base, base_bits, base_sign_extend, suffix)
+            b.eval_int_exprs()
+            b.checks()
             blocks[name] = b
 
     symtab = {}

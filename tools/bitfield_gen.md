@@ -158,6 +158,31 @@ means, not necessarily all of the combinations above will appear in the
 generated files for seL4, only the ones that are actually used in the rest of
 the code.
 
+### Expressions
+
+All positions in the specification that allow numbers also allow basic
+arithmetic integer expressions with `+`, `-`, `*`, `/`, and `%`. The commands
+`field`, `padding`, `field_high`, and `field_ptr` also allow the constants
+`word_size` and `canonical_size`. `word_size` stands for the number of bits in a
+word, and `canonical_size` for the number of canonical bits in a pointer, both
+according most recent `base` declaration (see also [Architecture Parameters][]).
+
+For example, the `VMFault` example from Section [Blocks](#blocks) could have
+been written as follows, assuming a `base 32` definition for `word_size.
+
+```bf_gen
+block VMFault {
+    field     address           word_size
+
+    field     FSR               5
+    padding                     7
+    field     instructionFault  1
+    padding                     word_size - (5 + 7 + 1) - 4
+    field     seL4_FaultType    4
+}
+```
+
+
 ### Field High
 
 The usual access patterns for fields is that if we provide e.g. a value of 5 to
@@ -537,6 +562,11 @@ x64, one would declare `base 64(48,1)`, but if there is a specific block that
 wants to not store a pointer, but some other value as `field_high`, one could
 declare `base 64` just before and `base 64(48,1)` again just after that block.
 
+The `base` declaration sets the values of the constants `word_size` and
+`canonical_size` that can be used in size expressions. For example, after the
+declaration `base 64(48,1)`, `word_size` will be 64 and `canonical_size` 48.
+After `base 32`, `word_size` and `canonical_size` will both be 32.
+
 
 ## Syntax Reference
 
@@ -589,22 +619,31 @@ whitespace is ignored.
 spec :== ( base | block | tagged_union )*
 
 base ::= "base" ("32"|"64") canonical_spec?
-canonical_spec ::= "(" INTLIT "," ("0"|"1") ")"
+canonical_spec ::= "(" expr "," ("0"|"1") ")"
 
 block ::= "block" IDENT visible_order_spec_opt? "{" fields "}"
 visible_order_spec_opt ::= "(" visible_order_spec? ")"
 visible_order_spec ::= IDENT ("," IDENT)*
-fields ::= ( "field" IDENT INTLIT | "field_high" IDENT INTLIT | "padding" INTLIT )*
+fields ::= ( "field" IDENT expr | "field_high" IDENT expr | "padding" expr )*
 
 tagged_union ::= "tagged_union" IDENT IDENT tag_slices? "{" masks tags "}"
 
-tag_slices ::= "(" IDENT ("," IDENT)* ")"
-masks ::= ( "mask" INTLIT INTLIT )*
+masks ::= ( "mask" expr expr )*
 tags ::= ( "tag" IDENT tag_value )*
-tag_value ::= INTLIT | "(" INTLIT ( "," INTLIT )* ")"
+tag_slices ::= "(" IDENT ("," IDENT)* ")"
+tag_value ::= expr | "(" expr ( "," expr )* ")"
+
+expr ::= expr ("+" | "-" | "*" | "/" | "%") expr
+       | "-" expr | "(" expr ")" | INTLIT
+       | "word_size" | "canonical_size"
 ```
 
 Forward references to names that are declared later in the file are allowed.
+Multiplicative operators "*", "/", "%" bind stronger than "+" and "-". Binary
+operators are left-associative. Unary minus binds stronger than all of the
+other operators. The constants "word_size" and "canonical_size" are only
+available in "field", "field_high", "field_ptr", and "padding" expressions and
+refer to the most recent corresponding "base" declaration.
 
 ### Restrictions
 
@@ -613,6 +652,8 @@ section, but will be checked by the generator.
 
 - the canonical bit must be smaller than the `base` size
 - field sizes must not be larger than the `base` size
+- all field sizes must be positive
+- all padding sizes must be non-negative
 - the field sizes in a block must add up to multiples of the `base` size
 - all identifiers mentioned as tags in a union must be blocks
 - all blocks in a tagged union must have the same size
