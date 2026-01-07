@@ -1663,7 +1663,8 @@ createSafeMappingEntries_PTE
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
         if (pte_ptr_get_pteType(ret.pte_entries.base) == pte_pte_large) {
 #else
-        if (pte_ptr_get_pteType(ret.pte_entries.base) == pte_pte_small) {
+        if (pte_ptr_get_pteType(ret.pte_entries.base) == pte_pte_small &&
+            pte_pte_small_ptr_get_contiguous_hint(ret.pte_entries.base)) {
 
 #endif
             if (!is_remap) {
@@ -2284,7 +2285,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
         paddr_t capFBasePtr;
         cap_t pdCap;
         pde_t *pd;
-        asid_t asid, frame_asid;
+        asid_t asid;
         vm_rights_t capVMRights, vmRights;
         vm_page_size_t frameSize;
         vm_attributes_t attr;
@@ -2318,10 +2319,9 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
         pd = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(
                          pdCap));
         asid = cap_page_directory_cap_get_capPDMappedASID(pdCap);
-        frame_asid = generic_frame_cap_get_capFMappedASID(cap);
 
         if (generic_frame_cap_get_capFIsMapped(cap)) {
-            if (frame_asid != asid) {
+            if (generic_frame_cap_get_capFMappedASID(cap) != asid) {
                 current_syscall_error.type = seL4_InvalidCapability;
                 current_syscall_error.invalidCapNumber = 1;
 
