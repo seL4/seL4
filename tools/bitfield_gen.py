@@ -87,8 +87,8 @@ TYPES = {
 
 # Parser
 
-reserved = ('BLOCK', 'BASE', 'FIELD', 'FIELD_HIGH', 'MASK', 'PADDING',
-            'TAGGED_UNION', 'TAG')
+reserved = ('BLOCK', 'BASE', 'FIELD', 'FIELD_HIGH', 'FIELD_PTR', 'MASK',
+            'PADDING', 'TAGGED_UNION', 'TAG')
 
 tokens = reserved + ('IDENTIFIER', 'INTLIT', 'LBRACE', 'RBRACE',
                      'LPAREN', 'RPAREN', 'COMMA', 'PLUS', 'MINUS',
@@ -233,6 +233,21 @@ def p_fields_field(t):
 def p_fields_field_high(t):
     """fields : fields FIELD_HIGH IDENTIFIER int_expr"""
     t[0] = t[1] + [(t[3], t[4], True)]
+
+
+def p_fields_field_ptr(t):
+    """fields : fields FIELD_PTR IDENTIFIER int_expr"""
+    padding_size = ('-', t[4], "canonical_size")
+    field_size = "canonical_size"
+    t[0] = t[1] + [(None, padding_size, False), (t[3], field_size, True)]
+
+
+def p_fields_field_ptr_align(t):
+    """fields : fields FIELD_PTR LPAREN int_expr RPAREN IDENTIFIER int_expr"""
+    align = t[4]
+    padding_size = ('+', ('-', t[7], "canonical_size"), align)  # size - canonical_size + align
+    field_size = ('-', "canonical_size", align)
+    t[0] = t[1] + [(None, padding_size, False), (t[6], field_size, True)]
 
 
 def p_fields_padding(t):
@@ -2445,6 +2460,14 @@ class Block:
         offset = self.size
 
         for _name, _size, _high in self.fields:
+            if _name:
+                if _size <= 0:
+                    raise ValueError(f"Fields must have positive size, but {_name} "
+                                     f"in block {self.name} has size {_size}")
+            else:
+                if _size < 0:
+                    raise ValueError(f"Padding must be non-negative, but padding "
+                                     f"in block {self.name} has size {_size}")
             offset -= _size
             if _name is not None:
                 if visible_order is None:

@@ -252,6 +252,100 @@ that stores 36 bits (on a 64 bit base platform with 48 significant bits).
 
 [Architecture Parameters]: #architecture-parameters-and-canonical-pointers
 
+### Field Ptr
+
+Often we want to store a pointer with some known alignment (i.e. not all bits
+need to be stored), and pad out to a specific overall field size.
+The `field_ptr` abbreviation makes this convenient.
+
+```bf_gen
+block some_block {
+    ...
+    field_ptr(align) some_name size
+    ...
+}
+```
+
+stands for "a field `some_name` for a pointer with alignment `align` padded out
+to `size`". It is an abbreviation for
+
+```bf_gen
+block some_block {
+    ...
+    padding size - canonical_size + align
+    field_high some_name canonical_size - align
+    ...
+}
+```
+
+The `(align)` parameter can be left out and is equivalent to `field_ptr(0)`. The
+constant `canonical_size` in the expression above stands for the number of
+significant bits (the canonical size) of a pointer according to the most recent
+`base` definition. For example the long form
+
+```bf_gen
+base 64(48,1)
+
+block mdb_node {
+    padding 16
+    field_high mdbNext 46
+    field mdbRevocable 1
+    field mdbFirstBadged 1
+
+    field mdbPrev 64
+}
+```
+
+can be written more concisely as
+
+```bf_gen
+base 64(48,1)
+
+block mdb_node {
+    field_ptr(2) mdbNext 62
+    field mdbRevocable 1
+    field mdbFirstBadged 1
+
+    field mdbPrev 64
+}
+```
+
+The `field_ptr` abbreviation is especially useful for sharing the same block
+definition under different `base` declarations, e.g. for different
+architectures. For example, with a `base 64(39,1)` the `field_ptr` definition
+text remains the same, but expands to a different `field_high`/`padding`
+combination that achieves the same overall width:
+
+```bf_gen
+base 64(39,1)
+
+block mdb_node {
+    padding 25
+    field_high mdbNext 37
+    field mdbRevocable 1
+    field mdbFirstBadged 1
+
+    field mdbPrev 64
+}
+```
+
+can be also be written as
+
+```bf_gen
+base 64(39,1)
+
+block mdb_node {
+    field_ptr(2) mdbNext 62
+    field mdbRevocable 1
+    field mdbFirstBadged 1
+
+    field mdbPrev 64
+}
+```
+
+This means the same block definition can produce a constant field size while
+correctly accommodating multiple different `base` configurations.
+
 ### Visible Field Order
 
 Sometimes it is useful for the constructor to take its arguments in a particular
@@ -624,7 +718,10 @@ canonical_spec ::= "(" expr "," ("0"|"1") ")"
 block ::= "block" IDENT visible_order_spec_opt? "{" fields "}"
 visible_order_spec_opt ::= "(" visible_order_spec? ")"
 visible_order_spec ::= IDENT ("," IDENT)*
-fields ::= ( "field" IDENT expr | "field_high" IDENT expr | "padding" expr )*
+fields ::= ( "field" IDENT expr |
+             "field_high" IDENT expr |
+             "field_ptr" ("(" expr ")")? IDENT expr |
+             "padding" expr )*
 
 tagged_union ::= "tagged_union" IDENT IDENT tag_slices? "{" masks tags "}"
 
