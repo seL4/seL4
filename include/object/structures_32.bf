@@ -159,7 +159,7 @@ block endpoint {
 -- Notification object: size = 16 bytes (32 bytes on mcs)
 block notification {
 #ifdef CONFIG_KERNEL_MCS
-    padding 96
+    padding 3 * word_size
 
     field_high ntfnSchedContext 28
     padding 4
