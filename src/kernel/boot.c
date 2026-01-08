@@ -578,6 +578,21 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
 }
 
 #ifdef ENABLE_SMP_CLOCK_SYNC_TEST_ON_BOOT
+BOOT_CODE static bool_t hypervisor_present(void)
+{
+#ifdef CONFIG_ARCH_X86
+    uint32_t ebx = x86_cpuid_ebx(KVM_CPUID_SIGNATURE, 0);
+    uint32_t ecx = x86_cpuid_ecx(KVM_CPUID_SIGNATURE, 0);
+    uint32_t edx = x86_cpuid_edx(KVM_CPUID_SIGNATURE, 0);
+
+    if ((ebx == CPUID_KVM_EBX && ecx == CPUID_KVM_ECX && edx == CPUID_KVM_EDX)
+        || (ebx == CPUID_TCG_EBX && ecx == CPUID_TCG_ECX && edx == CPUID_TCG_EDX)) {
+        return true;
+    }
+#endif
+    return false;
+}
+
 BOOT_CODE void clock_sync_test(void)
 {
     ticks_t t, t0;
@@ -593,7 +608,16 @@ BOOT_CODE void clock_sync_test(void)
     t = getCurrentTime();
     printf("clock_sync_test[%d]: t0 = %"PRIu64", t = %"PRIu64", td = %"PRIi64"\n",
            (int)getCurrentCPUIndex(), t0, t, t - t0);
-    assert(t0 <= margin + t && t <= t0 + margin);
+    /*
+     * The test does not consistently work if we are in a virtual machine (e.g
+     * within QEMU) because the measurement cannot distinguish between
+     * interrupted clock reads and out-of-sync clocks.
+     */
+    if (hypervisor_present()) {
+        printf("clock_sync_test[%d]: disabled, detected running as VM\n", (int)getCurrentCPUIndex());
+    } else {
+        assert(t0 <= margin + t && t <= t0 + margin);
+    }
 }
 #endif
 
