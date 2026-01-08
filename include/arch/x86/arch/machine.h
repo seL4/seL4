@@ -96,6 +96,23 @@
 
 #define IA32_PRED_CMD_MSR                   0x49
 
+/*
+ * CPUID bits for detecting the kernel is running as a guest.
+ *
+ * These bits correspond to the strings "KVMKVMKVM" for KVM and "TCGTCGTCGTCG"
+ * for QEMU's Tiny Code Generator (TCG).
+ *
+ * https://docs.kernel.org/virt/kvm/x86/cpuid.html.
+ */
+#define KVM_CPUID_SIGNATURE 0x40000000
+
+#define CPUID_TCG_EBX 0x54474354
+#define CPUID_TCG_ECX 0x43544743
+#define CPUID_TCG_EDX 0x47435447
+#define CPUID_KVM_EBX 0x4b4d564b
+#define CPUID_KVM_ECX 0x564b4d56
+#define CPUID_KVM_EDX 0x4d
+
 word_t PURE getRestartPC(tcb_t *thread);
 void setNextPC(tcb_t *thread, word_t v);
 
