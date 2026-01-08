@@ -802,9 +802,12 @@ static void invokeSetFlags(tcb_t *thread, word_t clear, word_t set, bool_t call)
     thread->tcbFlags = flags;
 
 #ifdef CONFIG_HAVE_FPU
-    /* Save current FPU state before disabling FPU: */
     if (flags & seL4_TCBFlag_fpuDisabled) {
+        /* Save current FPU state before disabling FPU: */
         fpuRelease(thread);
+    } else if (thread == cur_thread) {
+        /* Restore FPU here as switchToThread() won't be called: */
+        lazyFPURestore(thread);
     }
 #endif
     if (call) {
