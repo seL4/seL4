@@ -113,7 +113,7 @@ BOOT_CODE static void x86_cpuid_amd_identity_initialize(cpu_identity_t *ci,
     }
 }
 
-bool_t x86_cpuid_initialize(void)
+BOOT_CODE bool_t x86_cpuid_initialize(void)
 {
     cpu_identity_t *ci = x86_cpuid_get_identity();
     struct family_model original;
