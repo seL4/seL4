@@ -363,7 +363,10 @@ def init_arch_types(wordsize, args):
             CapType("seL4_RISCV_PageTable", wordsize),
             CapType("seL4_RISCV_ASIDControl", wordsize),
             CapType("seL4_RISCV_ASIDPool", wordsize),
+            CapType("seL4_RISCV_SBI", wordsize),
             StructType("seL4_UserContext", wordsize * 32, wordsize),
+            StructType("seL4_RISCV_SBIContext", wordsize * 8, wordsize),
+            StructType("seL4_RISCV_SBIRet", wordsize * 2, wordsize),
         ],
         "riscv64": [
             Type("seL4_RISCV_VMAttributes", wordsize, wordsize),
@@ -371,7 +374,10 @@ def init_arch_types(wordsize, args):
             CapType("seL4_RISCV_PageTable", wordsize),
             CapType("seL4_RISCV_ASIDControl", wordsize),
             CapType("seL4_RISCV_ASIDPool", wordsize),
+            CapType("seL4_RISCV_SBI", wordsize),
             StructType("seL4_UserContext", wordsize * 32, wordsize),
+            StructType("seL4_RISCV_SBIContext", wordsize * 8, wordsize),
+            StructType("seL4_RISCV_SBIRet", wordsize * 2, wordsize),
         ]
     }
 

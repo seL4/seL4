@@ -1017,7 +1017,59 @@
                     The rights inherited by the new capability.<docref> Possible values for this type are given in <autoref label="sec:cap_rights"/>  .</docref>
                 </description>
             </param>
-            <param dir="in" name="badge" type="seL4_Word" description="Badge or guard to be applied to the new capability. For badges on 32-bit platforms, the high 4 bits are ignored."/>
+            <param dir="in" name="badge" type="seL4_Word" description="Badge or guard to be applied to the new capability. For badges on notifications and endpoints, the high 4 bits are ignored on 32-bit platforms."/>
+            <error name="seL4_DeleteFirst" description="The destination slot contains a capability."/>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The index or depth of the source or destination is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                    Or, <texttt text="src_root"/> is a CPtr to a capability of the wrong type.
+                    Or, the source slot is empty.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    Or, the source capability cannot be derived <docref>(see <autoref label="sec:cap_derivation"/>)</docref>.
+                    Or, the badge or guard value is invalid.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="dest_depth"/> or <texttt text="src_depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_RevokeFirst">
+                <description>
+                    The source capability cannot be derived <docref>(see <autoref label="sec:cap_derivation"/>)</docref>.
+                </description>
+            </error>
+        </method>
+
+       <method id="CNodeMintLong" name="MintLong" manual_label="cnode_mint_long">
+            <brief>
+                Same as CNodeMint but with a double-word sized badge, for cap types that support long badges.
+            </brief>
+            <description>
+                <docref>See <autoref label="sec:cnode-ops"/>.</docref>
+            </description>
+            <cap_param append_description="CPtr to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="dest_index" type="seL4_Word" description="CPtr to the destination slot. Resolved from the root of the destination CSpace."/>
+            <param dir="in" name="dest_depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
+            <param dir="in" name="src_root" type="seL4_CNode" description="CPtr to the CNode that forms the root of the source CSpace. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="src_index" type="seL4_Word" description="CPtr to the source slot. Resolved from the root of the source CSpace."/>
+            <param dir="in" name="src_depth" type="seL4_Uint8" description="Number of bits of src_index to resolve to find the source slot."/>
+            <param dir="in" name="rights" type="seL4_CapRights_t">
+                <description>
+                    The rights inherited by the new capability.<docref> Possible values for this type are given in <autoref label="sec:cap_rights"/>  .</docref>
+                </description>
+            </param>
+            <param dir="in" name="badge" type="seL4_Word" description="TODO"/>
+            <param dir="in" name="badge2" type="seL4_Word" description="TODO"/>
             <error name="seL4_DeleteFirst" description="The destination slot contains a capability."/>
             <error name="seL4_FailedLookup">
                 <description>
