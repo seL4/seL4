@@ -84,6 +84,13 @@ void VISIBLE NORETURN c_handle_instruction_fault(void)
     c_handle_vm_fault(seL4_InstructionFault);
 }
 
+void VISIBLE NORETURN slowpath_irq(void)
+{
+    handleInterruptEntry();
+    restore_user_context();
+    UNREACHABLE();
+}
+
 void VISIBLE NORETURN c_handle_interrupt(void)
 {
     NODE_LOCK_IRQ_IF(IRQT_TO_IRQ(getActiveIRQ()) != irq_remote_call_ipi);
@@ -95,8 +102,11 @@ void VISIBLE NORETURN c_handle_interrupt(void)
     ksKernelEntry.core = CURRENT_CPU_INDEX();
 #endif
 
-    handleInterruptEntry();
-    restore_user_context();
+#ifdef CONFIG_IRQ_FASTPATH
+    fastpath_irq();
+#else
+    slowpath_irq();
+#endif
 }
 
 void NORETURN slowpath(syscall_t syscall)
