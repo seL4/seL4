@@ -77,7 +77,6 @@ static inline void debug_printUserState(void)
 
 static inline void debug_printTCB(tcb_t *tcb)
 {
-    printf("%40s\t", TCB_PTR_DEBUG_PTR(tcb)->tcbName);
     char *state;
     switch (thread_state_get_tsType(tcb->tcbState)) {
     case ThreadState_Inactive:
@@ -113,10 +112,23 @@ static inline void debug_printTCB(tcb_t *tcb)
         fail("Unknown thread state");
     }
 
-    word_t core = SMP_TERNARY(tcb->tcbAffinity, 0);
-    printf("%15s\t%p\t%20lu\t%lu", state, (void *) getRestartPC(tcb), tcb->tcbPriority, core);
+    /* 40: (arbitrary) max print-length of name
+     * 16: max length of state
+     * 18: length of `0x + max 64 bit number'
+     * 4:  length of "Prio" header
+     * 4:  length of "Core" header
+     * 4:  length of "Dom" header, but +1 for consistency with Prio/Core headers
+     * 14: length of "InReleaseQueue" header */
+    printf("%-40s   %-16s   %-18p   %4lu", TCB_PTR_DEBUG_PTR(tcb)->tcbName, state,
+           (void *) getRestartPC(tcb), tcb->tcbPriority);
+#ifdef CONFIG_ENABLE_SMP_SUPPORT
+    printf("   %4lu", tcb->tcbAffinity);
+#endif
+#if CONFIG_NUM_DOMAINS > 1
+    printf("   %4lu", tcb->tcbDomain);
+#endif
 #ifdef CONFIG_KERNEL_MCS
-    printf("\t%lu", (word_t) thread_state_get_tcbInReleaseQueue(tcb->tcbState));
+    printf("   %-14s", thread_state_get_tcbInReleaseQueue(tcb->tcbState) ? "yes" : "no");
 #endif
     printf("\n");
 }
@@ -124,9 +136,24 @@ static inline void debug_printTCB(tcb_t *tcb)
 static inline void debug_dumpScheduler(void)
 {
     printf("Dumping all tcbs!\n");
-    printf("Name                                    \tState          \tIP                  \t Prio \t Core%s\n",
-           config_set(CONFIG_KERNEL_MCS) ?  "\t InReleaseQueue" : "");
-    printf("--------------------------------------------------------------------------------------\n");
+    /* keep in sync with debug_printTCB */
+    printf("%-40s   %-16s   %-18s   %-4s", "Name", "State", "IP", "Prio");
+#ifdef CONFIG_ENABLE_SMP_SUPPORT
+    printf("   %4s", "Core");
+#endif
+#if CONFIG_NUM_DOMAINS > 1
+    printf("   %4s", "Dom");
+#endif
+#ifdef CONFIG_KERNEL_MCS
+    printf("   %-14s", "InReleaseQueue");
+#endif
+    printf("\n");
+
+    /* unfortunately the number of '-' here needs to be manually kept in sync with above */
+    printf("----------------------------------------------------------------------------------------%s%s%s\n",
+           config_set(CONFIG_ENABLE_SMP_SUPPORT) ? "-------" : "",
+           (CONFIG_NUM_DOMAINS > 1)              ? "-------" : "",
+           config_set(CONFIG_KERNEL_MCS)         ? "-----------------" : "");
     for (tcb_t *curr = NODE_STATE(ksDebugTCBs); curr != NULL; curr = TCB_PTR_DEBUG_PTR(curr)->tcbDebugNext) {
         debug_printTCB(curr);
     }
