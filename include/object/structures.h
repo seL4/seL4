@@ -314,6 +314,12 @@ struct tcb {
 };
 typedef struct tcb tcb_t;
 
+/* To enable more uniform code shape between MCS and non-MCS configurations: */
+#ifdef CONFIG_KERNEL_MCS
+#define tcbEPNext tcbSchedNext
+#define tcbEPPrev tcbSchedPrev
+#endif
+
 #ifdef CONFIG_DEBUG_BUILD
 /* This debug_tcb object is inserted into the 'unused' region of a TCB object
    for debug build configurations. */
