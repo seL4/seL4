@@ -234,6 +234,9 @@ config_set(KernelArchArmV7ve ARCH_ARM_V7VE "${KernelArchArmV7ve}")
 config_set(KernelArchArmV8a ARCH_ARM_V8A "${KernelArchArmV8a}")
 config_set(KernelAArch64SErrorIgnore AARCH64_SERROR_IGNORE "${KernelAArch64SErrorIgnore}")
 
+# Export timer frequency to user space:
+config_set(KernelTimerFrequency TIMER_FREQUENCY "${CONFIGURE_TIMER_FREQUENCY}")
+
 # Check for v7ve before v7a as v7ve is a superset and we want to set the
 # actual armv to that, but leave armv7a config enabled for anything that
 # checks directly against it
