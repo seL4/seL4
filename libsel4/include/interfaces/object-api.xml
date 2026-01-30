@@ -197,8 +197,11 @@
                 description="The new VSpace root."/>
             <param dir="in" name="vspace_root_data" type="seL4_Word"
                 description="Has no effect on x86 or ARM processors."/>
-            <param dir="in" name="buffer" type="seL4_Word"
-                description="Location of the thread's IPC buffer. Must be 512-byte aligned. The IPC buffer may not cross a page boundary."/>
+            <param dir="in" name="buffer" type="seL4_Word">
+                <description>
+                    Location of the thread's IPC buffer. Must be aligned to <texttt text="seL4_IPCBufferSizeBits"/>. The IPC buffer may not cross a page boundary.
+                </description>
+            </param>
             <param dir="in" name="bufferFrame" type="seL4_CPtr"
                 description="Capability to a page containing the thread's IPC buffer."/>
             <error name="seL4_IllegalOperation">
@@ -237,8 +240,11 @@
                 description="The new VSpace root."/>
             <param dir="in" name="vspace_root_data" type="seL4_Word"
                 description="Has no effect on x86 or ARM processors."/>
-            <param dir="in" name="buffer" type="seL4_Word"
-                description="Location of the thread's IPC buffer. Must be 512-byte aligned. The IPC buffer may not cross a page boundary."/>
+            <param dir="in" name="buffer" type="seL4_Word">
+                <description>
+                    Location of the thread's IPC buffer. Must be aligned to <texttt text="seL4_IPCBufferSizeBits"/>. The IPC buffer may not cross a page boundary.
+                </description>
+            </param>
             <param dir="in" name="bufferFrame" type="seL4_CPtr"
                 description="Capability to a page containing the thread's IPC buffer."/>
             <error name="seL4_AlignmentError">
@@ -423,8 +429,11 @@
             <description>
                 See Sections <shortref sec="threads"/> and <shortref sec="messageinfo"/>
             </description>
-            <param dir="in" name="buffer" type="seL4_Word"
-                description="Location of the thread's IPC buffer. Must be 512-byte aligned. The IPC buffer may not cross a page boundary."/>
+            <param dir="in" name="buffer" type="seL4_Word">
+                <description>
+                    Location of the thread's IPC buffer. Must be aligned to <texttt text="seL4_IPCBufferSizeBits"/>. The IPC buffer may not cross a page boundary.
+                </description>
+            </param>
             <param dir="in" name="bufferFrame" type="seL4_CPtr"
                 description="Capability to a page containing the thread's IPC buffer."/>
             <error name="seL4_AlignmentError">
