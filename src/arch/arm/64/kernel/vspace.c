@@ -486,7 +486,7 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
                      rootserver.vspace, /* capVSBasePtr    */
                      1                  /* capVSIsMapped   */
 #ifdef CONFIG_ARM_SMMU
-                     , 0                /* capVSMappedCB   */
+                     , CB_INVALID       /* capVSMappedCB   */
 #endif
                  );
     slot_pos_before = ndks_boot.slot_pos_cur;
