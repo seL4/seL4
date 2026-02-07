@@ -84,14 +84,14 @@ compile_assert(irqCNodeSize, sizeof(intStateIRQNode) >= ((INT_STATE_ARRAY_SIZE) 
 dom_t ksCurDomain;
 
 /* Domain timeslice remaining */
-#ifdef CONFIG_KERNEL_MCS
 ticks_t ksDomainTime;
-#else
-word_t ksDomainTime;
-#endif
 
-/* An index into ksDomSchedule for active domain and length. */
+/* An index into ksDomSchedule for active domain and duration. */
 word_t ksDomScheduleIdx;
+
+/* The value ksDomScheduleId will be set to when reaching either the end of
+ * ksDomSchedule, or an end marker (entry with zero domain and duration). */
+word_t ksDomScheduleStart;
 
 /* Idle thread. */
 SECTION("._idle_thread") char ksIdleThreadTCB[CONFIG_MAX_NUM_NODES][BIT(seL4_TCBBits)] ALIGN(BIT(seL4_TCBBits));
