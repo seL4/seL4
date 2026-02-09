@@ -20,7 +20,7 @@ extern dschedule_t ksDomSchedule[CONFIG_NUM_DOMAIN_SCHEDULES];
 #define DSCHED_MAX_DURATION (UINT64_MAX >> DSCHED_DOMAIN_BITS)
 #define DSCHED_DURATION_MASK DSCHED_MAX_DURATION
 
-static dschedule_t dschedule_make(dom_t domain, uint64_t duration)
+static inline dschedule_t dschedule_make(dom_t domain, uint64_t duration)
 {
     return ((uint64_t)domain << DSCHED_DOMAIN_SHIFT) | duration;
 }
