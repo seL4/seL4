@@ -295,12 +295,17 @@ struct tcb {
     word_t tcbAffinity;
 #endif /* ENABLE_SMP_SUPPORT */
 
-    /* Previous and next pointers for scheduler queues , 2 words */
+    /* Previous and next pointers for scheduler queues, 2 words
+     * also used for endpoint and notification queues in MCS */
     struct tcb *tcbSchedNext;
     struct tcb *tcbSchedPrev;
-    /* Previous and next pointers for endpoint and notification queues, 2 words */
+
+#ifndef CONFIG_KERNEL_MCS
+    /* Previous and next pointers for endpoint and notification queues, 2 words
+     * only for non-MCS configurations */
     struct tcb *tcbEPNext;
     struct tcb *tcbEPPrev;
+#endif
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
     /* 16 bytes (12 bytes aarch32) */
@@ -308,6 +313,12 @@ struct tcb {
 #endif
 };
 typedef struct tcb tcb_t;
+
+/* To enable more uniform code shape between MCS and non-MCS configurations: */
+#ifdef CONFIG_KERNEL_MCS
+#define tcbEPNext tcbSchedNext
+#define tcbEPPrev tcbSchedPrev
+#endif
 
 #ifdef CONFIG_DEBUG_BUILD
 /* This debug_tcb object is inserted into the 'unused' region of a TCB object

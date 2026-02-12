@@ -465,7 +465,7 @@ void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo)
     } else {
 #ifdef CONFIG_KERNEL_MCS
         /* Update queue. */
-        tcb_queue_t queue = tcbEPAppend(NODE_STATE(ksCurThread), ep_ptr_get_queue(ep_ptr));
+        tcb_queue_t queue = tcbIPCAppend(NODE_STATE(ksCurThread), ep_ptr_get_queue(ep_ptr));
         endpoint_ptr_set_epQueue_head_np(ep_ptr, TCB_REF(queue.head));
         endpoint_ptr_mset_epQueue_tail_state(ep_ptr, TCB_REF(queue.end), EPState_Recv);
 #else
