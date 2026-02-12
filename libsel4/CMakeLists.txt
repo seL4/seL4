@@ -43,6 +43,14 @@ config_string(
     UNQUOTE
 )
 
+config_option(
+    LibSel4UseThreadLocals LIB_SEL4_USE_THREAD_LOCALS
+    "mark the __sel4_ipc_buffer variable as thread local using '__thread'. \
+     This requires thread local support to exist and is useful if multiple \
+     threads share the same virtual address space"
+    DEFAULT ON
+)
+
 if(LibSel4StubsUseIPCBufferOnly)
     set(buffer "--buffer")
 endif()
