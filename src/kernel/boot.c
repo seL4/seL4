@@ -758,18 +758,27 @@ BOOT_CODE static bool_t create_untypeds_for_region(
     seL4_SlotPos first_untyped_slot
 )
 {
+    /* The region end address can be inclusive or exclusive, this must be taken
+     * into account when calculating the region size. An end address is assumed
+     * to be inclusive if the LSB is 1.
+     */
+    word_t reg_size = reg.end - reg.start;
+    if (reg.end & 1) {
+        reg_size++; /* Increment length by 1 for inclusive end addresses. */
+        assert(reg_size > 0); /* Overflows are not expected. */
+    }
+
     /* This code works with regions that wrap (where end < start), because the loop cuts up the
        region into size-aligned chunks, one for each cap. Memory chunks that are size-aligned cannot
        themselves overflow, so they satisfy alignment, size, and overflow conditions. The region
        [0..end) is not necessarily part of the kernel window (depending on the value of PPTR_BASE).
        This is fine for device untypeds. For normal untypeds, the region is assumed to be fully in
        the kernel window. This is not checked here. */
-    while (!is_reg_empty(reg)) {
-
+    while (reg_size > 0) {
         /* Calculate the bit size of the region. This is also correct for end < start: it will
            return the correct size of the set [start..-1] union [0..end). This will then be too
            large for alignment, so the code further down will reduce the size. */
-        unsigned int size_bits = seL4_WordBits - 1 - clzl(reg.end - reg.start);
+        unsigned int size_bits = seL4_WordBits - 1 - clzl(reg_size);
         /* The size can't exceed the largest possible untyped size. */
         if (size_bits > seL4_MaxUntypedBits) {
             size_bits = seL4_MaxUntypedBits;
@@ -792,8 +801,14 @@ BOOT_CODE static bool_t create_untypeds_for_region(
                 return false;
             }
         }
-        reg.start += BIT(size_bits);
+
+        word_t chunk_size = BIT(size_bits);
+        reg.start += chunk_size;
+        assert(reg_size >= chunk_size);
+        reg_size -= chunk_size;
+
     }
+
     return true;
 }
 
