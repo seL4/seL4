@@ -42,6 +42,12 @@
 
 #endif
 
+#if defined(CONFIG_LIB_SEL4_USE_THREAD_LOCALS)
+#define LIBSEL4_THREAD_LOCAL    __thread
+#else
+#define LIBSEL4_THREAD_LOCAL
+#endif
+
 /* _Static_assert() is a c11 feature. Since the kernel is currently compiled
  * with c99, we have to emulate it. */
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
