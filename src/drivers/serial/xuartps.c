@@ -30,7 +30,7 @@
 #define UART_INTRPT_MASK_TXEMPTY     BIT(3)
 #define UART_CHANNEL_STS_TXEMPTY     BIT(3)
 
-#define UART_REG(x) ((volatile uint32_t *)(UART_PPTR + (x)))
+#define UART_REG(x) ((volatile uint32_t *)(uart_pptr + (x)))
 
 #ifdef CONFIG_PRINTING
 void uart_drv_putchar(unsigned char c)
