@@ -7,11 +7,11 @@
 #include <sel4/sel4.h>
 
 #ifdef CONFIG_KERNEL_INVOCATION_REPORT_ERROR_IPC
-__thread char __sel4_print_error = CONFIG_LIB_SEL4_PRINT_INVOCATION_ERRORS;
+LIBSEL4_THREAD_LOCAL char __sel4_print_error = CONFIG_LIB_SEL4_PRINT_INVOCATION_ERRORS;
 #endif
 
 /** Userland per-thread IPC buffer address **/
-__thread seL4_IPCBuffer *__sel4_ipc_buffer;
+LIBSEL4_THREAD_LOCAL seL4_IPCBuffer *__sel4_ipc_buffer;
 
 /** Consider moving bootinfo into libsel4_startup */
 seL4_BootInfo *bootinfo;
