@@ -60,7 +60,7 @@ static inline CONST bool_t Arch_isMDBParentOf(cap_t cap_a, cap_t cap_b, bool_t f
         break;
 #endif
 
-#ifdef CONFIG_ALLOW_SMC_CALLS
+#ifdef CONFIG_ARCH_AARCH64
     case cap_smc_cap: {
         word_t badge;
 
