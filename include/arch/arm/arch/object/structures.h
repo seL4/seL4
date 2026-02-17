@@ -19,7 +19,7 @@ static inline bool_t CONST Arch_isCapRevocable(cap_t derivedCap, cap_t srcCap)
         return cap_get_capType(srcCap) == cap_irq_control_cap;
 #endif
 
-#ifdef CONFIG_ALLOW_SMC_CALLS
+#ifdef CONFIG_ARCH_AARCH64
     case cap_smc_cap:
         return (cap_smc_cap_get_capSMCBadge(derivedCap) !=
                 cap_smc_cap_get_capSMCBadge(srcCap));

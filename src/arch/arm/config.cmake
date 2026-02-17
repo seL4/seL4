@@ -306,7 +306,6 @@ add_sources(
            object/iospace.c
            object/vcpu.c
            object/smmu.c
-           object/smc.c
            smp/ipi.c
 )
 
