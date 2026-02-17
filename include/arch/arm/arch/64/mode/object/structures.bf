@@ -137,14 +137,12 @@ block cb_cap {
 
 #endif
 
-#ifdef CONFIG_ALLOW_SMC_CALLS
 block smc_cap {
     field capSMCBadge 64
 
     field capType  5
     padding        59
 }
-#endif
 
 -- NB: odd numbers are arch caps (see isArchCap())
 tagged_union cap capType {
@@ -180,9 +178,7 @@ tagged_union cap capType {
     tag cb_control_cap              21
     tag cb_cap                      23
 #endif
-#ifdef CONFIG_ALLOW_SMC_CALLS
     tag smc_cap                     25
-#endif
 #ifndef CONFIG_ENABLE_SMP_SUPPORT
     tag sgi_signal_cap              27
 #endif
