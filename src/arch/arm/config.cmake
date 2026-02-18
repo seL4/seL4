@@ -175,7 +175,11 @@ config_option(KernelTk1SMMUInterruptEnable SMMU_INTERRUPT_ENABLE "Enable SMMU in
     cause some fault types to print out a message in the kernel. \
     WARNING: Printing fault information is slow and rapid faults \
     can result in all time spent in the kernel printing fault \
-    messages" DEFAULT "${KernelDebugBuild}" DEPENDS "KernelTk1SMMU" DEFAULT_DISABLED OFF)
+    messages"
+    DEFAULT "${KernelDebugBuild}"
+    DEPENDS "KernelTk1SMMU"
+    DEFAULT_DISABLED OFF
+)
 
 config_option(
     KernelAArch32FPUEnableContextSwitch AARCH32_FPU_ENABLE_CONTEXT_SWITCH

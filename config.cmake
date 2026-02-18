@@ -10,6 +10,35 @@ config_option(
     KernelIsMCS KERNEL_MCS "Use the MCS kernel configuration, which is not verified." DEFAULT OFF
 )
 
+config_option(
+    KernelVerificationBuild
+    VERIFICATION_BUILD
+    "When enabled this configuration option prevents the usage of any other options that\
+    would compromise the verification story of the kernel. Enabling this option does NOT\
+    imply you are using a verified kernel."
+    DEFAULT ON
+)
+
+config_string(
+    KernelNumDomains NUM_DOMAINS "The number of scheduler domains in the system"
+    DEFAULT 1
+    UNQUOTE
+)
+
+config_string(
+    KernelMaxNumNodes MAX_NUM_NODES "Max number of CPU cores to boot"
+    DEFAULT 1
+    DEPENDS "${KernelNumDomains} EQUAL 1"
+    UNQUOTE
+)
+
+# Set CONFIG_ENABLE_SMP_SUPPORT as an alias of CONFIG_MAX_NUM_NODES > 1
+if(KernelMaxNumNodes GREATER 1)
+    config_set(KernelEnableSMPSupport ENABLE_SMP_SUPPORT ON)
+else()
+    config_set(KernelEnableSMPSupport ENABLE_SMP_SUPPORT OFF)
+endif()
+
 # Error for unsupported MCS platforms
 if(KernelIsMCS AND (NOT KernelPlatformSupportsMCS))
     message(
@@ -186,12 +215,6 @@ config_option(
     DEPENDS "NOT KernelVerificationBuild; KernelSel4ArchAarch64"
 )
 
-config_string(
-    KernelNumDomains NUM_DOMAINS "The number of scheduler domains in the system"
-    DEFAULT 1
-    UNQUOTE
-)
-
 config_option(
     KernelSignalFastpath SIGNAL_FASTPATH "Enable notification signal fastpath"
     DEFAULT OFF
@@ -217,20 +240,6 @@ config_string(
 )
 
 config_string(
-    KernelMaxNumNodes MAX_NUM_NODES "Max number of CPU cores to boot"
-    DEFAULT 1
-    DEPENDS "${KernelNumDomains} EQUAL 1"
-    UNQUOTE
-)
-
-# Set CONFIG_ENABLE_SMP_SUPPORT as an alias of CONFIG_MAX_NUM_NODES > 1
-if(KernelMaxNumNodes GREATER 1)
-    config_set(KernelEnableSMPSupport ENABLE_SMP_SUPPORT ON)
-else()
-    config_set(KernelEnableSMPSupport ENABLE_SMP_SUPPORT OFF)
-endif()
-
-config_string(
     KernelStackBits
     KERNEL_STACK_BITS
     "This describes the log2 size of the kernel stack. Great care should be taken as\
@@ -238,15 +247,6 @@ config_string(
     memory corruption"
     DEFAULT 12
     UNQUOTE
-)
-
-config_option(
-    KernelVerificationBuild
-    VERIFICATION_BUILD
-    "When enabled this configuration option prevents the usage of any other options that\
-    would compromise the verification story of the kernel. Enabling this option does NOT\
-    imply you are using a verified kernel."
-    DEFAULT ON
 )
 
 config_option(
