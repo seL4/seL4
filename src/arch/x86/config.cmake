@@ -75,7 +75,7 @@ config_option(
     "Use logical IDs to broadcast IPI between cores. Not all machines support logical \
     IDs. In xAPIC mode only 8 cores can be addressed using logical IDs."
     DEFAULT OFF
-    DEPENDS "NOT ${KernelMaxNumNodes} EQUAL 1;KernelArchX86"
+    DEPENDS "KernelEnableSMPSupport;KernelArchX86"
 )
 
 config_string(
@@ -323,7 +323,7 @@ config_option(
     DEPENDS "KernelArchX86;NOT KernelVerificationBuild"
 )
 
-if(KernelArchX86 AND (NOT "${KernelMaxNumNodes}" EQUAL 1))
+if(KernelArchX86 AND KernelEnableSMPSupport)
     set(STIBDEP TRUE)
 else()
     set(STIBDEP FALSE)
