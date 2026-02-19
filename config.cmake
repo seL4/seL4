@@ -398,6 +398,17 @@ config_option(
     DEPENDS "NOT KernelBinaryVerificationBuild"
 )
 
+if(NOT KernelArchARM)
+    # This depends on KernelArmHypervisorSupport, the default will only
+    # be set if we are building for ARM configs. If building for other architectures
+    # this is problematic. We can assume that it is false at this point
+    set(KernelArmHypervisorSupport OFF CACHE INTERNAL "" FORCE)
+endif()
+
+if(NOT KernelArchX86)
+    # Similar to above, KernelSkimWindow is only defined in x86 configs
+    set(KernelSkimWindow OFF CACHE INTERNAL "" FORCE)
+endif()
 config_option(
     KernelDangerousCodeInjection DANGEROUS_CODE_INJECTION
     "Adds a system call that allows users to specify code to be run in kernel mode. \
