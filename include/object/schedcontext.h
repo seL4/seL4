@@ -64,6 +64,10 @@ void schedContext_donate(sched_context_t *sc, tcb_t *to);
 void schedContext_bindNtfn(sched_context_t *sc, notification_t *ntfn);
 /* unbind scheduling context from a notification */
 void schedContext_unbindNtfn(sched_context_t *sc);
+/* unbind notification from a scheduling context */
+void schedContextMaybeUnbindNtfn(notification_t *ntfnPtr);
+/* unbind scheduling context from a reply */
+void schedContext_unbindReply(sched_context_t *sc);
 
 time_t schedContext_updateConsumed(sched_context_t *sc);
 void schedContext_completeYieldTo(tcb_t *yielder);

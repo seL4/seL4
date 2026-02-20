@@ -523,7 +523,7 @@ exception_t Arch_decodeInvocation(word_t label, word_t length, cptr_t cptr,
 #endif /*CONFIG_ARM_SMMU*/
 #ifdef CONFIG_ALLOW_SMC_CALLS
     case cap_smc_cap:
-        return decodeARMSMCInvocation(label, length, cptr, slot, cap, call, buffer);
+        return decodeARMSMCInvocation(label, length, cap, call, buffer);
 #endif
     default:
 #else

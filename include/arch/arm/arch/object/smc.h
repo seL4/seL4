@@ -8,5 +8,5 @@
 
 #define NUM_SMC_REGS 8
 
-exception_t decodeARMSMCInvocation(word_t label, word_t length, cptr_t cptr,
-                                   cte_t *srcSlot, cap_t cap, bool_t call, word_t *buffer);
+exception_t decodeARMSMCInvocation(word_t label, word_t length, cap_t cap,
+                                   bool_t call, word_t *buffer);
