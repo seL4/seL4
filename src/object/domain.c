@@ -60,7 +60,7 @@ static exception_t decodeDomainSetSetInvocation(word_t length, word_t *buffer)
     return EXCEPTION_NONE;
 }
 
-static void invokeDomainScheduleConfigure(word_t index, dom_t domain, word_t duration)
+static void invokeDomainScheduleConfigure(word_t index, dom_t domain, ticks_t duration)
 {
     ksDomSchedule[index] = dschedule_make(domain, duration);
 }
