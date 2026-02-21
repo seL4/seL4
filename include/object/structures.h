@@ -27,11 +27,6 @@ enum irq_state {
 };
 typedef word_t irq_state_t;
 
-typedef struct dschedule {
-    dom_t domain;
-    word_t length;
-} dschedule_t;
-
 enum asidSizeConstants {
     asidHighBits = seL4_NumASIDPoolsBits,
     asidLowBits = seL4_ASIDPoolIndexBits

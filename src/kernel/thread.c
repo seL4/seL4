@@ -12,6 +12,7 @@
 #include <kernel/cspace.h>
 #include <kernel/thread.h>
 #include <kernel/vspace.h>
+#include <object/domain.h>
 #ifdef CONFIG_KERNEL_MCS
 #include <object/schedcontext.h>
 #endif
@@ -325,19 +326,16 @@ static void prepareNextDomain(void)
 static void nextDomain(void)
 {
     ksDomScheduleIdx++;
-    if (ksDomScheduleIdx >= ksDomScheduleLength) {
-        ksDomScheduleIdx = 0;
+    if (ksDomScheduleIdx >= domScheduleLength ||
+        dschedule_is_end_marker(ksDomScheduleIdx)) {
+        ksDomScheduleIdx = ksDomScheduleStart;
     }
 #ifdef CONFIG_KERNEL_MCS
     NODE_STATE(ksReprogram) = true;
 #endif
     ksWorkUnitsCompleted = 0;
-    ksCurDomain = ksDomSchedule[ksDomScheduleIdx].domain;
-#ifdef CONFIG_KERNEL_MCS
-    ksDomainTime = usToTicks(ksDomSchedule[ksDomScheduleIdx].length * US_IN_MS);
-#else
-    ksDomainTime = ksDomSchedule[ksDomScheduleIdx].length;
-#endif
+    ksCurDomain = dschedule_domain(ksDomSchedule[ksDomScheduleIdx]);
+    ksDomainTime = dschedule_duration(ksDomSchedule[ksDomScheduleIdx]);
 }
 
 #ifdef CONFIG_KERNEL_MCS

@@ -22,6 +22,7 @@ add_sources(
         src/kernel/stack.c
         src/object/notification.c
         src/object/cnode.c
+        src/object/domain.c
         src/object/endpoint.c
         src/object/interrupt.c
         src/object/objecttype.c
