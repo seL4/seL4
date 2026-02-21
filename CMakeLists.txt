@@ -298,11 +298,32 @@ elseif(KernelArchARM)
     endif()
 
 elseif(KernelArchRiscV)
-    # Group "small" data objects together in a small-data section so they can
-    # be referenced using gp-relative addressing.  The exact value of
-    # small-data-limit is not crucial but it should be lowered if .small
-    # exceeds 4KiB.
-    #
+    # -mcmodel=medany
+    #   According to the RISC-V ELF psABI document, we need to use the
+    #   'Medium any' code model, which is not the default. 'medlow' (medium
+    #   low) can address the lowest 2GiB and highest 2GiB of the 64-bit
+    #   address space. Whilst we do run the kernel above 0xFFFFFFFF'80000000,
+    #   the kernel initially begins execution [[see TODO]]
+
+      #  TODO: We actually seem to begin execution close to 0xFFFFFFFF'80200000
+      #   we would expect for the entry point and elf, so the elf loader is setting
+      #   up enough virtual memory.
+      #   So maybe we could use medlow??
+      #   Linux seems to support it (though defaults to medany for Rv64); it
+      #   does however force it's boot-code to be compiled with medany,
+      #   presumably since it relocates itself (though medany is not relocatable code)
+      #   If we don't need it I'd just like to document the fact that we use
+      #   it anyway, because it's more common for kernels or something.
+      # https://lists.openembedded.org/g/openembedded-core/message/151483
+      # documents that a lot of other kernel-like systems do use it
+      # but I don't think we necessarily need to?
+
+    # -msmall-data-limit=1024
+    #   RISC-V allows for relocations within a 12-bit offset of the global
+    #   pointer ($gp / __global_pointer$). If we group "small" data objects
+    #   in a small data section they can be all be referenced with gp-relative
+    #   addressing. Cross reference this to our RISC-V linker script.
+    #   Ref: https://www.sifive.com/blog/all-aboard-part-4-risc-v-code-models
     KernelCommonFlags(-mcmodel=medany -msmall-data-limit=1024)
 
 else()
