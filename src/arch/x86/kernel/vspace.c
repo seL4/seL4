@@ -149,6 +149,17 @@ BOOT_CODE bool_t map_kernel_window_devices(pte_t *pt, uint32_t num_ioapic, paddr
     assert(idx == (PPTR_APIC & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS);
     pt[idx] = pte;
     idx++;
+
+#ifdef CONFIG_VGA_PRINTING
+    /* map kernel device: VGA */
+    phys = get_vga_addr(); /* VGA Text buffer address */
+    pte = x86_make_device_pte(phys);
+
+    assert(idx == (PPTR_VGA & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS);
+    pt[idx] = pte;
+    idx++;
+
+#endif /*CONFIG_VGA_PRINTING*/
     for (i = 0; i < num_ioapic; i++) {
         phys = ioapic_paddrs[i];
         if (!reserve_region((p_region_t) {
