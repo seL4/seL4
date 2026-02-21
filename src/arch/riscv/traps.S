@@ -12,8 +12,7 @@
 #include <arch/machine/registerset.h>
 #include <util.h>
 
-#define REGBYTES (CONFIG_WORD_SIZE / 8)
-
+.global trap_entry
 .extern c_handle_syscall
 .extern c_handle_fastpath_reply_recv
 .extern c_handle_fastpath_call
@@ -22,81 +21,99 @@
 
 .section .text.traps, "ax"
 BEGIN_FUNC(trap_entry)
+#if defined(CONFIG_HAVE_CHERI)
+.option push
+.option capmode
+#endif
 
 #ifdef ENABLE_SMP_SUPPORT
 /* The sscratch contains the stack for the current core */
-  csrrw sp, sscratch, sp
+  csrrw REGN(sp), SSCRATCH, REGN(sp)
 /* Now we have a valid kernel stack */
-  STORE t0, (-2*REGBYTES)(sp)
-  LOAD  t0, (-1*REGBYTES)(sp)
+  STORE REGN(t0), (-2*REGBYTES)(REGN(sp))
+  LOAD  REGN(t0), (-1*REGBYTES)(REGN(sp))
 #else
-  csrrw t0, sscratch, t0
+  csrrw REGN(t0), SSCRATCH, REGN(t0)
 #endif
-  STORE ra, (0*REGBYTES)(t0)
+  STORE REGN(ra), (0*REGBYTES)(REGN(t0))
 #ifndef ENABLE_SMP_SUPPORT
-  STORE sp, (1*REGBYTES)(t0)
+  STORE REGN(sp), (1*REGBYTES)(REGN(t0))
 #endif
-  STORE gp, (2*REGBYTES)(t0)
-  STORE tp, (3*REGBYTES)(t0)
-  STORE t1, (5*REGBYTES)(t0)
-  STORE t2, (6*REGBYTES)(t0)
-  STORE s0, (7*REGBYTES)(t0)
-  STORE s1, (8*REGBYTES)(t0)
-  STORE a0, (9*REGBYTES)(t0)
-  STORE a1, (10*REGBYTES)(t0)
-  STORE a2, (11*REGBYTES)(t0)
-  STORE a3, (12*REGBYTES)(t0)
-  STORE a4, (13*REGBYTES)(t0)
-  STORE a5, (14*REGBYTES)(t0)
-  STORE a6, (15*REGBYTES)(t0)
-  STORE a7, (16*REGBYTES)(t0)
-  STORE s2, (17*REGBYTES)(t0)
-  STORE s3, (18*REGBYTES)(t0)
-  STORE s4, (19*REGBYTES)(t0)
-  STORE s5, (20*REGBYTES)(t0)
-  STORE s6, (21*REGBYTES)(t0)
-  STORE s7, (22*REGBYTES)(t0)
-  STORE s8, (23*REGBYTES)(t0)
-  STORE s9, (24*REGBYTES)(t0)
-  STORE s10, (25*REGBYTES)(t0)
-  STORE s11, (26*REGBYTES)(t0)
-  STORE t3, (27*REGBYTES)(t0)
-  STORE t4, (28*REGBYTES)(t0)
-  STORE t5, (29*REGBYTES)(t0)
-  STORE t6, (30*REGBYTES)(t0)
+  STORE REGN(gp), (2*REGBYTES)(REGN(t0))
+  STORE REGN(tp), (3*REGBYTES)(REGN(t0))
+  STORE REGN(t1), (5*REGBYTES)(REGN(t0))
+  STORE REGN(t2), (6*REGBYTES)(REGN(t0))
+  STORE REGN(s0), (7*REGBYTES)(REGN(t0))
+  STORE REGN(s1), (8*REGBYTES)(REGN(t0))
+  STORE REGN(a0), (9*REGBYTES)(REGN(t0))
+  STORE REGN(a1), (10*REGBYTES)(REGN(t0))
+  STORE REGN(a2), (11*REGBYTES)(REGN(t0))
+  STORE REGN(a3), (12*REGBYTES)(REGN(t0))
+  STORE REGN(a4), (13*REGBYTES)(REGN(t0))
+  STORE REGN(a5), (14*REGBYTES)(REGN(t0))
+  STORE REGN(a6), (15*REGBYTES)(REGN(t0))
+  STORE REGN(a7), (16*REGBYTES)(REGN(t0))
+  STORE REGN(s2), (17*REGBYTES)(REGN(t0))
+  STORE REGN(s3), (18*REGBYTES)(REGN(t0))
+  STORE REGN(s4), (19*REGBYTES)(REGN(t0))
+  STORE REGN(s5), (20*REGBYTES)(REGN(t0))
+  STORE REGN(s6), (21*REGBYTES)(REGN(t0))
+  STORE REGN(s7), (22*REGBYTES)(REGN(t0))
+  STORE REGN(s8), (23*REGBYTES)(REGN(t0))
+  STORE REGN(s9), (24*REGBYTES)(REGN(t0))
+  STORE REGN(s10), (25*REGBYTES)(REGN(t0))
+  STORE REGN(s11), (26*REGBYTES)(REGN(t0))
+  STORE REGN(t3), (27*REGBYTES)(REGN(t0))
+  STORE REGN(t4), (28*REGBYTES)(REGN(t0))
+  STORE REGN(t5), (29*REGBYTES)(REGN(t0))
+  STORE REGN(t6), (30*REGBYTES)(REGN(t0))
   /* save t0 value */
 #ifdef ENABLE_SMP_SUPPORT
-  LOAD  x1, (-2*REGBYTES)(sp)
+  LOAD  REG(1), (-2*REGBYTES)(REGN(sp))
 #else
-  csrr  x1, sscratch
+  csrr REG(1), SSCRATCH
 #endif
-  STORE    x1, (4*REGBYTES)(t0)
+  STORE    REG(1), (4*REGBYTES)(REGN(t0))
 
   csrr x1, sstatus
-  STORE x1, (32*REGBYTES)(t0)
+  ISTORE x1, (32*REGBYTES)(REGN(t0))
 
   csrr s0, scause
-  STORE s0, (31*REGBYTES)(t0)
+  ISTORE s0, (31*REGBYTES)(REGN(t0))
+
+#ifdef ENABLE_SMP_SUPPORT
+  /* save the user sp */
+  csrr REG(1), SSCRATCH
+  STORE REG(1), (1*REGBYTES)(REGN(t0))
+
+  /* restore sscratch(c) */
+  csrw SSCRATCH, REGN(sp)
+#endif
+
+  /* Save exception PC */
+  csrr    REG(1), SEPC
+  STORE   REG(1), (33*REGBYTES)(REGN(t0))
+
+#if defined(CONFIG_HAVE_CHERI)
+  csrr    REG(2), DDC
+  STORE   REG(2), (35*REGBYTES)(REGN(t0))
+
+  /* Get and install the kernel's DDC, it's already in ct0 */
+  csrw ddc, ct0
+
+  /* From now on, we can run in hybrid kernel mode again */
+  modesw.int
+.option pop
+#endif
 
 .option push
 .option norelax
   la gp, __global_pointer$
-.option pop
-
-#ifdef ENABLE_SMP_SUPPORT
-  /* save the user sp */
-  csrr  x1, sscratch
-  STORE x1, (1*REGBYTES)(t0)
-  /* restore the sscratch */
-  csrw  sscratch, sp
-#else
+#if !defined(ENABLE_SMP_SUPPORT)
   /* Load kernel's stack address */
   la sp, (kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS))
 #endif
-
-  /* Save exception PC */
-  csrr x1,  sepc
-  STORE   x1, (33*REGBYTES)(t0)
+.option pop
 
   /* Check if it's an interrupt */
   bltz s0, interrupt
@@ -107,9 +124,9 @@ BEGIN_FUNC(trap_entry)
 
 handle_syscall:
   /* Set the return address to sepc + 4 in the case of a system/environment call */
-  addi x1, x1, 4
+  CADDI REG(1), REG(1), 4
   /* Save NextIP */
-  STORE   x1, (34*REGBYTES)(t0)
+  STORE   REG(1), (34*REGBYTES)(PTRN(t0))
 
 #ifdef CONFIG_FASTPATH
   li t3, SYSCALL_CALL
@@ -136,12 +153,12 @@ handle_syscall:
 /* Not an interrupt or a syscall */
 exception:
   /* Save NextIP */
-  STORE   x1, (34*REGBYTES)(t0)
+  STORE   REG(1), (34*REGBYTES)(PTRN(t0))
   j c_handle_exception
 
 interrupt:
   /* Save NextIP */
-  STORE   x1, (34*REGBYTES)(t0)
+  STORE   REG(1), (34*REGBYTES)(PTRN(t0))
   j c_handle_interrupt
 
 END_FUNC(trap_entry)

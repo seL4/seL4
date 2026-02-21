@@ -78,8 +78,14 @@ enum vm_fault_type {
     RISCVInstructionPageFault = 12,
     RISCVLoadPageFault = 13,
     /* 14 - reserved */
-    RISCVStorePageFault = 15
-                          /* >= 16 reserved */
+    RISCVStorePageFault = 15,
+#if defined(CONFIG_HAVE_CHERI)
+    /* cheriTODO: The following value will change, update when it is done and supported.
+     * See https://github.com/riscv/riscv-cheri/issues/618
+     */
+    RISCVCheriFault = 0x1c
+#endif
+                      /* >= 16 reserved */
 };
 typedef word_t vm_fault_type_t;
 
