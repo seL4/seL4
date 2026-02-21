@@ -282,6 +282,20 @@ function(config_option optionname configname doc)
         # Check the passed in dependencies. This loop and logic is inspired by the
         # actual cmake_dependent_option code
         foreach(test ${CONFIG_DEPENDS})
+            # This is assuming that the only keywords that are in a depend string
+            # are or equal and not. Equal and not will be stripped away, and or
+            # replaced with ; so we can iterate through the list correctly.
+            string(REGEX REPLACE " OR " ";" depend_vars "${test}")
+            string(REGEX REPLACE " EQUAL [0-9A-Za-z_]*" "" depend_vars "${depend_vars}")
+            string(REGEX REPLACE "NOT " "" depend_vars "${depend_vars}")
+
+            foreach(depend_var ${depend_vars})
+                string(STRIP ${depend_var} depend_var)
+                if(NOT DEFINED ${depend_var})
+                    message(WARNING "${depend_var} not defined!")
+                endif()
+            endforeach()
+
             string(REGEX REPLACE " +" ";" test "${test}")
             if(NOT (${test}))
                 set(valid OFF)
@@ -526,8 +540,11 @@ function(config_choice optionname configname doc)
                 cfg_str_add_disabled(local_config_string ${option_config})
             endif()
         else()
-            # Remove this config as it's not valid
-            unset(${option_cache} CACHE)
+            # Ensure that we set this option to off in the cache.
+            set(${option_cache}
+                OFF
+                CACHE
+                INTERNAL "" FORCE)
             cfg_str_add_disabled(local_config_string ${option_config})
         endif()
     endforeach()
