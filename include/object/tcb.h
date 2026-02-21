@@ -119,13 +119,24 @@ void remoteTCBStall(tcb_t *tcb);
     remoteQueueUpdate(_t);          \
 } while (0)
 
+
+#define SCHED_ENQUEUE_CURRENT_TCB do {                                    \
+    assert(NODE_STATE(ksCurThread)->tcbAffinity == getCurrentCPUIndex()); \
+    tcbSchedEnqueue(NODE_STATE(ksCurThread));                             \
+} while (0)
+#define SCHED_APPEND_CURRENT_TCB do {                                     \
+    assert(NODE_STATE(ksCurThread)->tcbAffinity == getCurrentCPUIndex()); \
+    tcbSchedAppend(NODE_STATE(ksCurThread));                              \
+} while (0)
+
 #else
 #define SCHED_ENQUEUE(_t)           tcbSchedEnqueue(_t)
 #define SCHED_APPEND(_t)            tcbSchedAppend(_t)
-#endif /* ENABLE_SMP_SUPPORT */
 
 #define SCHED_ENQUEUE_CURRENT_TCB   tcbSchedEnqueue(NODE_STATE(ksCurThread))
 #define SCHED_APPEND_CURRENT_TCB    tcbSchedAppend(NODE_STATE(ksCurThread))
+#endif /* ENABLE_SMP_SUPPORT */
+
 
 #ifdef CONFIG_KERNEL_MCS
 /* Add TCB into the priority ordered endpoint queue */
