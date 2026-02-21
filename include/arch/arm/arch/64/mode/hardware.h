@@ -77,13 +77,10 @@
  *            2^64 - 2^30 +-------------------+ PPTR_TOP
  *                        |                   |
  *                        |                   |
+ *                        |                   |
  *                        |  Physical Memory  |
  *                        |      Window       |
  *                        |                   |
- *                        |                   |
- *                        | ----------------- | KERNEL_ELF_TOP
- *                        |     Kernel ELF    |
- *                        | ----------------- | KERNEL_ELF_BASE (at `physBase()`)
  *                        |                   |
  *                        |                   |
  *            2^64 - 2^39 +-------------------+ PPTR_BASE
@@ -113,7 +110,11 @@
  *                      |     Unmapped     |
  *                      |                  |
  *                      |                  |
- *          2^64 - 2^30 +------------------+
+ *                      +------------------+ KERNEL_ELF_TOP (not fixed)
+ *                      |                  |
+ *                      |    Kernel ELF    |
+ *                      |                  |
+ *          2^64 - 2^30 +------------------+ KERNEL_ELF_BASE
  */
 
 /*
@@ -137,7 +138,7 @@
  *     -  The kernel expects to be able to create untypeds from 0 to
  *        KernelPaddrUserTop (CONFIG_PADDR_USER_TOP) which can be up to 2^44 in
  *        the current kernel. The kernel (proofs) expect addresses in these
- *        untypeds to be valid (i.e. canonical, not dereferencable) virtual
+ *        untypeds to be valid (i.e. canonical, not dereferenceable) virtual
  *        addresses, but allows device UT addresses to exceed ("overflow") the
  *        bounds of the physical memory window (PPTR_BASE...PPTR_TOP) as it will
  *        not dereference them itself. In the EL1 translation regime, as we use
@@ -203,10 +204,6 @@
  *                        |      Window       |
  *                        |                   |
  *                        |                   |
- *                        | ----------------- | KERNEL_ELF_TOP
- *                        |     Kernel ELF    |
- *                        | ----------------- | KERNEL_ELF_BASE (at `physBase()`)
- *                        |                   |
  *                        |                   |
  *            2^40 - 2^39 +-------------------+ PPTR_BASE
  *
@@ -228,7 +225,11 @@
  *                      |     Unmapped     |
  *                      |                  |
  *                      |                  |
- *          2^40 - 2^30 +------------------+
+ *                      +------------------+ KERNEL_ELF_TOP (not fixed)
+ *                      |                  |
+ *                      |    Kernel ELF    |
+ *                      |                  |
+ *          2^40 - 2^30 +------------------+ KERNEL_ELF_BASE
  *
  */
 
@@ -259,25 +260,36 @@
 /* For use by the linker (only integer constants allowed) */
 #define KERNEL_ELF_PADDR_BASE_RAW PHYS_BASE_RAW
 
-/* The base address in virtual memory to use for the kernel ELF mapping */
-#define KERNEL_ELF_BASE (PPTR_BASE_OFFSET + KERNEL_ELF_PADDR_BASE)
-/* For use by the linker (only integer constants allowed) */
-#define KERNEL_ELF_BASE_RAW (PPTR_BASE_OFFSET + KERNEL_ELF_PADDR_BASE_RAW)
-
-/* This is a page table mapping at the end of the virtual address space
- * to map objects with 4KiB pages rather than 2MiB large pages. */
+/* The KERNEL_ELF_BASE virtual address is placed at an arbitrary high memory
+ * address above PPTR_TOP. It is mapped using 2MiB pages.
+ * Arbitrarily, it is placed directly at PPTR_TOP.
+ */
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-#define KERNEL_PT_BASE UL_CONST(0x000000ffffe00000)  /* 2^40 - 2^21 */
+#define KERNEL_ELF_BASE UL_CONST(0x000000ffc0000000)  /* 2^40 - 2^30 */
 #else
-#define KERNEL_PT_BASE UL_CONST(0xffffffffffe00000)  /* 2^64 - 2^21 */
+#define KERNEL_ELF_BASE UL_CONST(0xffffffffc0000000)  /* 2^64 - 2^30 */
 #endif
 
-/* The base address in virtual memory to use for the kernel device
- * mapping region. These are mapped in the kernel page table. */
-#define KDEV_BASE KERNEL_PT_BASE
+/* For use by the linker (as it is shared with arm32) */
+#define KERNEL_ELF_BASE_RAW KERNEL_ELF_BASE
 
-/* The log buffer is placed before the device region */
-#define KS_LOG_PPTR (KDEV_BASE - UL_CONST(0x200000))
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+/* The base address in virtual memory to use for kernel devices, which are
+ * mapped using a PT containing 4K pages.  */
+#define KDEV_BASE UL_CONST(0x000000ffffe00000)  /* 2^40 - 2^21 */
+#else
+#define KDEV_BASE UL_CONST(0xffffffffffe00000)  /* 2^64 - 2^21 */
+#endif
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+/* The log buffer is placed before the device region using a 2MiB page. */
+#define KS_LOG_BASE UL_CONST(0x000000ffffc00000)  /* 2^40 - 2 * 2^21 */
+#else
+#define KS_LOG_BASE UL_CONST(0xffffffffffc00000)  /* 2^64 - 2 * 2^21 */
+#endif
+
+/* For consistency with the rest of the code. Changing the code might be a good idea. */
+#define KS_LOG_PPTR KS_LOG_BASE
 
 #ifndef __ASSEMBLER__
 /* All PPTR addresses must be canonical to be able to be stored in caps or objects.
