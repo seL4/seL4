@@ -199,6 +199,8 @@ static BOOT_CODE bool_t try_init_kernel(
     word_t  dtb_size
 )
 {
+    printf("Bootstrapping kernel\n");
+
     cap_t root_cnode_cap;
     cap_t it_pd_cap;
     cap_t it_ap_cap;
@@ -228,8 +230,6 @@ static BOOT_CODE bool_t try_init_kernel(
 
     /* initialise the CPU */
     init_cpu();
-
-    printf("Bootstrapping kernel\n");
 
     /* initialize the platform */
     init_plat();

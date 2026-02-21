@@ -30,7 +30,7 @@
 #define TXBUF_EMPTY     BIT(1)
 #define RXBUF_READY     BIT(0)
 
-#define UART_REG(X) ((volatile uint32_t *)(UART_PPTR + (X)))
+#define UART_REG(X) ((volatile uint32_t *)(uart_pptr + (X)))
 
 #ifdef CONFIG_PRINTING
 void uart_drv_putchar(unsigned char c)

@@ -340,6 +340,8 @@ static BOOT_CODE bool_t try_init_kernel(
     word_t  dtb_size
 )
 {
+    printf("Bootstrapping kernel\n");
+
     cap_t root_cnode_cap;
     cap_t it_ap_cap;
     cap_t it_pd_cap;
@@ -369,14 +371,19 @@ static BOOT_CODE bool_t try_init_kernel(
     /* setup virtual memory for the kernel */
     map_kernel_window();
 
+#ifdef CONFIG_PRINTING
+    /* Switch printf() from using the physical UART address to the virtual
+     * UART address (in the kernel device region). printf() can no longer be
+     * called until activate_kernel_vspace() at the start of init_cpu() has
+     * finished. */
+    uart_pptr = UART_PPTR;
+#endif
+
     /* initialise the CPU */
     if (!init_cpu()) {
         printf("ERROR: CPU init failed\n");
         return false;
     }
-
-    /* debug output via serial port is only available from here */
-    printf("Bootstrapping kernel\n");
 
     /* initialise the platform */
     init_plat();

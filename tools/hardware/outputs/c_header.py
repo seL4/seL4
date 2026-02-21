@@ -12,7 +12,7 @@ from typing import Dict, List
 import hardware
 from hardware.config import Config
 from hardware.fdt import FdtParser
-from hardware.utils.rule import HardwareYaml
+from hardware.utils.rule import HardwareYaml, KernelRegionGroup
 
 
 HEADER_TEMPLATE = '''/*
@@ -69,6 +69,13 @@ static inline CONST word_t physBase(void)
 {% for (addr, macro) in sorted(kernel_macros.items()) %}
 #define {{ macro }} (KDEV_BASE + {{ "0x{:x}".format(addr) }})
 {% endfor %}
+
+{% if uart_region is not none %}
+/* UART DEVICE (early-printf) */
+{{ uart_region.get_macro() }}
+#define UART_PADDR ({{ "0x{:x}".format(uart_region.regions[0].base) }})
+{{ uart_region.get_endif() }}
+{% endif %}
 
 {% if len(kernel_regions) > 0 %}
 static const kernel_frame_t BOOT_RODATA kernel_device_frames[] = {
@@ -186,8 +193,8 @@ def get_interrupts(tree: FdtParser, hw_yaml: HardwareYaml) -> List:
 
 
 def create_c_header_file(config, kernel_irqs: List, kernel_macros: Dict,
-                         kernel_regions: List, physBase: int, physical_memory,
-                         outputStream):
+                         kernel_regions: List, physBase: int, uart_region: KernelRegionGroup,
+                         physical_memory, outputStream):
 
     jinja_env = jinja2.Environment(loader=jinja2.BaseLoader, trim_blocks=True,
                                    lstrip_blocks=True)
@@ -201,6 +208,7 @@ def create_c_header_file(config, kernel_irqs: List, kernel_macros: Dict,
             'kernel_macros': kernel_macros,
             'kernel_regions': kernel_regions,
             'physBase': physBase,
+            'uart_region': uart_region,
             'physical_memory': physical_memory})
     data = template.render(template_args)
 
@@ -215,12 +223,17 @@ def run(tree: FdtParser, hw_yaml: HardwareYaml, config: Config, kernel_config_di
     physical_memory, physBase = hardware.utils.memory.get_physical_memory(tree, config)
     kernel_regions, kernel_macros = get_kernel_devices(tree, hw_yaml, kernel_config_dict)
 
+    # FIXME: There is probably a better way to do this....
+    uart_region = next((r for r in kernel_regions if 'UART_PPTR' in r.labels), None)
+    assert uart_region is None or len(uart_region.regions) == 1
+
     create_c_header_file(
         config,
         get_interrupts(tree, hw_yaml),
         kernel_macros,
         kernel_regions,
         physBase,
+        uart_region,
         physical_memory,
         args.header_out)
 

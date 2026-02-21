@@ -19,6 +19,11 @@ unsigned char kernel_getDebugChar(void);
 #include <arch/types.h>
 #include <stdarg.h>
 
+#ifdef CONFIG_ARCH_ARM
+/* See arm/machine/io.c for definition */
+extern pptr_t uart_pptr;
+#endif
+
 /* the actual output function */
 void kernel_putDebugChar(unsigned char c);
 
