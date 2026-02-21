@@ -148,10 +148,8 @@ static inline bool_t CONST cap_get_archCapIsPhysical(cap_t cap)
     case cap_sgi_signal_cap:
         return false;
 #endif
-#ifdef CONFIG_ALLOW_SMC_CALLS
     case cap_smc_cap:
         return false;
-#endif
 
     default:
         /* Unreachable, but GCC can't figure that out */
@@ -189,10 +187,8 @@ static inline void *CONST cap_get_archCapPtr(cap_t cap)
     case cap_sgi_signal_cap:
         return NULL;
 #endif
-#ifdef CONFIG_ALLOW_SMC_CALLS
     case cap_smc_cap:
         return NULL;
-#endif
 
     default:
         /* Unreachable, but GCC can't figure that out */

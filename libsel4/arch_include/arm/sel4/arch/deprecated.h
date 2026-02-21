@@ -8,4 +8,6 @@
 
 #include <sel4/config.h>
 
-/* nothing here */
+#if defined(CONFIG_ARCH_AARCH64) && !defined(CONFIG_ALLOW_SMC_CALLS)
+#define CONFIG_ALLOW_SMC_CALLS SEL4_DEPRECATE_MACRO(1)
+#endif
