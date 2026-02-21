@@ -73,7 +73,7 @@ exception_t decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
 
     if (invLabel >= CNodeCopy && invLabel <= CNodeMutate) {
         cte_t *srcSlot;
-        word_t srcIndex, srcDepth, capData;
+        word_t srcIndex, srcDepth, capData, capData2;
         bool_t isMove;
         seL4_CapRights_t cap_rights;
         cap_t srcRoot, newCap;
@@ -143,10 +143,30 @@ exception_t decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
             cap_rights = rightsFromWord(getSyscallArg(4, buffer));
             capData = getSyscallArg(5, buffer);
             srcCap = maskCapRights(cap_rights, srcSlot->cap);
-            dc_ret = deriveCap(srcSlot,
-                               updateCapData(false, capData, srcCap));
+            dc_ret = deriveCap(srcSlot, updateCapData(false, capData, srcCap));
             if (dc_ret.status != EXCEPTION_NONE) {
                 userError("Error deriving cap for CNode Mint operation.");
+                return dc_ret.status;
+            }
+            newCap = dc_ret.cap;
+            isMove = false;
+
+            break;
+
+        case CNodeMintLong:
+            if (length < 7) {
+                userError("CNode Mint Long: Truncated message.");
+                current_syscall_error.type = seL4_TruncatedMessage;
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+
+            cap_rights = rightsFromWord(getSyscallArg(4, buffer));
+            capData = getSyscallArg(5, buffer);
+            capData2 = getSyscallArg(6, buffer);
+            srcCap = maskCapRights(cap_rights, srcSlot->cap);
+            dc_ret = deriveCap(srcSlot, updateCapDataLong(false, capData, capData2, srcCap));
+            if (dc_ret.status != EXCEPTION_NONE) {
+                userError("Error deriving cap for CNode Mint Long operation.");
                 return dc_ret.status;
             }
             newCap = dc_ret.cap;
