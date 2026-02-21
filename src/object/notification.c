@@ -145,6 +145,9 @@ void sendSignal(notification_t *ntfnPtr, word_t badge)
         assert(dest);
 
         /* Dequeue TCB */
+#ifdef CONFIG_KERNEL_MCS
+        tcbNTFNDequeue(dest, ntfnPtr);
+#else
         ntfn_queue = tcbEPDequeue(dest, ntfn_queue);
         ntfn_ptr_set_queue(ntfnPtr, ntfn_queue);
 
@@ -152,6 +155,7 @@ void sendSignal(notification_t *ntfnPtr, word_t badge)
         if (!ntfn_queue.head) {
             notification_ptr_set_state(ntfnPtr, NtfnState_Idle);
         }
+#endif /* CONFIG_KERNEL_MCS */
 
         setThreadState(dest, ThreadState_Running);
         setRegister(dest, badgeRegister, badge);
@@ -196,7 +200,6 @@ void receiveSignal(tcb_t *thread, cap_t cap, bool_t isBlocking)
     switch (notification_ptr_get_state(ntfnPtr)) {
     case NtfnState_Idle:
     case NtfnState_Waiting: {
-        tcb_queue_t ntfn_queue;
 
         if (isBlocking) {
             /* Block thread on notification object */
@@ -207,11 +210,16 @@ void receiveSignal(tcb_t *thread, cap_t cap, bool_t isBlocking)
             scheduleTCB(thread);
 
             /* Enqueue TCB */
+#ifdef CONFIG_KERNEL_MCS
+            tcbNTFNAppend(thread, ntfnPtr);
+#else
+            tcb_queue_t ntfn_queue;
             ntfn_queue = ntfn_ptr_get_queue(ntfnPtr);
             ntfn_queue = tcbEPAppend(thread, ntfn_queue);
 
             notification_ptr_set_state(ntfnPtr, NtfnState_Waiting);
             ntfn_ptr_set_queue(ntfnPtr, ntfn_queue);
+#endif /* CONFIG_KERNEL_MCS */
 
 #ifdef CONFIG_KERNEL_MCS
             maybeReturnSchedContext(ntfnPtr, thread);
@@ -240,47 +248,66 @@ void receiveSignal(tcb_t *thread, cap_t cap, bool_t isBlocking)
     }
 }
 
+#ifdef CONFIG_KERNEL_MCS
+static inline void removeAndRestartNTFNQueuedThread(tcb_t *thread, notification_t *ntfnPtr)
+{
+    tcbNTFNDequeue(thread, ntfnPtr);
+    setThreadState(thread, ThreadState_Restart);
+    if (sc_sporadic(thread->tcbSchedContext)) {
+        /* We know that the thread can't have the current SC as its own SC as
+         * this point as it should still be associated with the current thread,
+         * or no thread. This check is added here to reduce the cost of proving
+         * this to be true as a short-term stop-gap. */
+        assert(thread->tcbSchedContext != NODE_STATE(ksCurSC));
+        if (thread->tcbSchedContext != NODE_STATE(ksCurSC)) {
+            refill_unblock_check(thread->tcbSchedContext);
+        }
+    }
+    possibleSwitchTo(thread);
+}
+#endif
+
 void cancelAllSignals(notification_t *ntfnPtr)
 {
     if (notification_ptr_get_state(ntfnPtr) == NtfnState_Waiting) {
+        /* Clear the queue and set all blocked threads to Restart */
+#ifdef CONFIG_KERNEL_MCS
+        tcb_queue_t queue;
+        tcb_t *thread, *next;
+
+        queue = ntfn_ptr_get_queue(ntfnPtr);
+
+        for (thread = queue.head; thread; thread = next) {
+            next = thread->tcbSchedNext;
+            removeAndRestartNTFNQueuedThread(thread, ntfnPtr);
+        }
+#else
         tcb_t *thread = TCB_PTR(notification_ptr_get_ntfnQueue_head(ntfnPtr));
 
         notification_ptr_set_state(ntfnPtr, NtfnState_Idle);
         notification_ptr_set_ntfnQueue_head(ntfnPtr, 0);
         notification_ptr_set_ntfnQueue_tail(ntfnPtr, 0);
 
-        /* Set all waiting threads to Restart */
         for (; thread; thread = thread->tcbEPNext) {
             setThreadState(thread, ThreadState_Restart);
-#ifdef CONFIG_KERNEL_MCS
-            if (sc_sporadic(thread->tcbSchedContext)) {
-                /* We know that the thread can't have the current SC
-                 * as its own SC as this point as it should still be
-                 * associated with the current thread, or no thread.
-                 * This check is added here to reduce the cost of
-                 * proving this to be true as a short-term stop-gap. */
-                assert(thread->tcbSchedContext != NODE_STATE(ksCurSC));
-                if (thread->tcbSchedContext != NODE_STATE(ksCurSC)) {
-                    refill_unblock_check(thread->tcbSchedContext);
-                }
-            }
-            possibleSwitchTo(thread);
-#else
             SCHED_ENQUEUE(thread);
-#endif
         }
+#endif /* CONFIG_KERNEL_MCS */
         rescheduleRequired();
     }
 }
 
 void cancelSignal(tcb_t *threadPtr, notification_t *ntfnPtr)
 {
-    tcb_queue_t ntfn_queue;
 
     /* Haskell error "cancelSignal: notification object must be in a waiting" state */
     assert(notification_ptr_get_state(ntfnPtr) == NtfnState_Waiting);
 
     /* Dequeue TCB */
+#ifdef CONFIG_KERNEL_MCS
+    tcbNTFNDequeue(threadPtr, ntfnPtr);
+#else
+    tcb_queue_t ntfn_queue;
     ntfn_queue = ntfn_ptr_get_queue(ntfnPtr);
     ntfn_queue = tcbEPDequeue(threadPtr, ntfn_queue);
     ntfn_ptr_set_queue(ntfnPtr, ntfn_queue);
@@ -289,6 +316,7 @@ void cancelSignal(tcb_t *threadPtr, notification_t *ntfnPtr)
     if (!ntfn_queue.head) {
         notification_ptr_set_state(ntfnPtr, NtfnState_Idle);
     }
+#endif /* CONFIG_KERNEL_MCS */
 
     /* Make thread inactive */
     setThreadState(threadPtr, ThreadState_Inactive);
@@ -356,11 +384,36 @@ void bindNotification(tcb_t *tcb, notification_t *ntfnPtr)
 }
 
 #ifdef CONFIG_KERNEL_MCS
+void tcbNTFNAppend(tcb_t *thread, notification_t *ntfnPtr)
+{
+    tcb_queue_t queue;
+    tcb_queue_t new_queue;
+
+    queue = ntfn_ptr_get_queue(ntfnPtr);
+    new_queue = tcbIPCAppend(thread, queue);
+    ntfn_ptr_set_queue(ntfnPtr, new_queue);
+    notification_ptr_set_state(ntfnPtr, NtfnState_Waiting);
+}
+
+void tcbNTFNDequeue(tcb_t *thread, notification_t *ntfnPtr)
+{
+    tcb_queue_t queue;
+    tcb_queue_t new_queue;
+
+    queue = ntfn_ptr_get_queue(ntfnPtr);
+    new_queue = tcb_queue_remove(queue, thread);
+    ntfn_ptr_set_queue(ntfnPtr, new_queue);
+
+    if (tcb_queue_empty(new_queue)) {
+        notification_ptr_set_state(ntfnPtr, NtfnState_Idle);
+    }
+}
+
 void reorderNTFN(notification_t *ntfnPtr, tcb_t *thread)
 {
     tcb_queue_t queue = ntfn_ptr_get_queue(ntfnPtr);
-    queue = tcbEPDequeue(thread, queue);
-    queue = tcbEPAppend(thread, queue);
+    queue = tcb_queue_remove(queue, thread);
+    queue = tcbIPCAppend(thread, queue);
     ntfn_ptr_set_queue(ntfnPtr, queue);
 }
 #endif
