@@ -1560,15 +1560,20 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
 
         /* In the case of remap, the cap should have a valid asid */
         frame_asid = cap_frame_cap_get_capFMappedASID(cap);
+        lookupPTSlot_ret_t lu_ret = lookupPTSlot(vspaceRoot, vaddr);
 
         if (frame_asid != asidInvalid) {
+            /* The invoked frame cap is currently mapped in a different vspace */
             if (frame_asid != asid) {
                 userError("ARMPageMap: Attempting to remap a frame that does not belong to the passed address space");
                 current_syscall_error.type = seL4_InvalidCapability;
                 current_syscall_error.invalidCapNumber = 1;
                 return EXCEPTION_SYSCALL_ERROR;
 
-            } else if (cap_frame_cap_get_capFMappedAddress(cap) != vaddr) {
+            }
+
+            /* The invoked frame cap is already mapped to a different address in this vspace  */
+            if (cap_frame_cap_get_capFMappedAddress(cap) != vaddr) {
                 userError("ARMPageMap: Attempting to map frame into multiple addresses");
                 current_syscall_error.type = seL4_InvalidArgument;
                 current_syscall_error.invalidArgumentNumber = 0;
@@ -1580,6 +1585,13 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
                 current_syscall_error.invalidArgumentNumber = 0;
                 return EXCEPTION_SYSCALL_ERROR;
             }
+
+            if (unlikely(pte_is_page_type(*lu_ret.ptSlot))) {
+                userError("Virtual address (0x%"SEL4_PRIx_word") already mapped", vaddr);
+                current_syscall_error.type = seL4_DeleteFirst;
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+
         }
 
         cap = cap_frame_cap_set_capFMappedASID(cap, asid);
@@ -1587,7 +1599,6 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
 
         base = pptr_to_paddr((void *)cap_frame_cap_get_capFBasePtr(cap));
 
-        lookupPTSlot_ret_t lu_ret = lookupPTSlot(vspaceRoot, vaddr);
         if (unlikely(lu_ret.ptBitsLeft != pageBitsForSize(frameSize))) {
             current_lookup_fault = lookup_fault_missing_capability_new(lu_ret.ptBitsLeft);
             current_syscall_error.type = seL4_FailedLookup;
