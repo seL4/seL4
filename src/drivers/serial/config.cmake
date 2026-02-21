@@ -44,3 +44,8 @@ register_driver(
     PREFIX src/drivers/serial
     CFILES "meson-gx-uart.c"
 )
+register_driver(
+    compatibility_strings "st,stm32h7-uart"
+    PREFIX src/drivers/serial
+    CFILES "stm32h7-uart.c"
+)
