@@ -124,6 +124,16 @@ set(KernelHardwareDebugAPIUnsupported
     CACHE INTERNAL ""
 )
 
+if(NOT KernelVerificationBuild)
+    set(KernelDangerousCodeInjectionSupported
+        ON
+        CACHE INTERNAL "")
+else()
+    set(KernelDangerousCodeInjectionSupported
+        OFF
+        CACHE INTERNAL "")
+endif()
+
 add_sources(
     DEP "KernelArchRiscV"
     PREFIX src/arch/riscv

@@ -387,6 +387,16 @@ endif()
 if(KernelSel4ArchX86_64 AND NOT KernelFSGSBaseInst)
     set(KernelSetTLSBaseSelf ON)
 endif()
+if(NOT KernelSkimWindow AND NOT KernelVerificationBuild)
+    set(KernelDangerousCodeInjectionSupported
+        ON
+        CACHE INTERNAL "")
+else()
+    set(KernelDangerousCodeInjectionSupported
+        OFF
+        CACHE INTERNAL "")
+endif()
+
 
 add_sources(
     DEP "KernelArchX86"
