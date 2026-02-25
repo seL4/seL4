@@ -93,11 +93,11 @@ void restart(tcb_t *target)
         cancelIPC(target);
 #ifdef CONFIG_KERNEL_MCS
         setThreadState(target, ThreadState_Restart);
-        if (sc_sporadic(target->tcbSchedContext)
-            && target->tcbSchedContext != NODE_STATE(ksCurSC)) {
-            refill_unblock_check(target->tcbSchedContext);
+        sched_context_t *sc = target->tcbSchedContext;
+        if (sc_sporadic(sc) && sc != NODE_STATE(ksCurSC)) {
+            refill_unblock_check(sc);
         }
-        schedContext_resume(target->tcbSchedContext);
+        schedContext_resume(sc);
         if (isSchedulable(target)) {
             possibleSwitchTo(target);
         }
