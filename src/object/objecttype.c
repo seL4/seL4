@@ -438,6 +438,15 @@ cap_t CONST updateCapData(bool_t preserve, word_t newData, cap_t cap)
     }
 }
 
+cap_t CONST updateCapDataLong(bool_t preserve, word_t newData, word_t newData2, cap_t cap)
+{
+    if (isArchCap(cap)) {
+        return Arch_updateCapDataLong(preserve, newData, newData2, cap);
+    }
+
+    return cap;
+}
+
 cap_t CONST maskCapRights(seL4_CapRights_t cap_rights, cap_t cap)
 {
     if (isArchCap(cap)) {
