@@ -299,6 +299,21 @@ static bool_t BOOT_CODE init_vtx_fixed_values(bool_t useTrueMsrs)
     cr4_high = x86_rdmsr_low(IA32_VMX_CR4_FIXED0_MSR);
     cr4_low = x86_rdmsr_low(IA32_VMX_CR4_FIXED1_MSR);
 
+    /* "Unrestricted guest" is a userspace controlled setting that determines whether the VCPU
+     * may run in unpaged protected mode or in real-address mode. If the host CPU supports this feature, then
+     * CR0.PE and CR0.PG may be 0 while the VCPU is running: */
+
+    /* Intel SDM Combined Volumes
+     * Order Number: 325462-090US February 2026
+     * Chapter 26.8 "RESTRICTIONS ON VMX OPERATION"
+     * > Later processors support a VM-execution control called “unrestricted guest” (see Section 27.6.2).
+     * > If this control is 1, CR0.PE and CR0.PG may be 0 in VMX non-root operation (even if the capability
+     * > MSR IA32_VMX_CR0_FIXED0 reports otherwise). Such processors allow guest software to run in
+     * > unpaged protected mode or in real-address mode. */
+    if (secondary_control_low & BIT(7)) {
+        cr0_high &= ~(CR0_PE | CR0_PG);
+    }
+
     /* Check for VPID support */
     if (!(secondary_control_low & BIT(5))) {
         vmx_feature_vpid = 0;
@@ -400,6 +415,11 @@ static bool_t BOOT_CODE check_vtx_fixed_values(bool_t useTrueMsrs)
     uint32_t local_cr0_low = x86_rdmsr_low(IA32_VMX_CR0_FIXED1_MSR);
     uint32_t local_cr4_high = x86_rdmsr_low(IA32_VMX_CR4_FIXED0_MSR);
     uint32_t local_cr4_low = x86_rdmsr_low(IA32_VMX_CR4_FIXED1_MSR);
+
+    /* See "init_vtx_fixed_values" */
+    if (local_secondary_control_low & BIT(7)) {
+        local_cr0_high &= ~(CR0_PE | CR0_PG);
+    }
 
     /* We want to check that any bits that there are no bits that this core
      * requires to be high, that the BSP did not require to be high. This can
