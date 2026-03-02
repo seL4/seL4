@@ -902,6 +902,9 @@ static exception_t decodeWriteVMCS(cap_t cap, word_t length, bool_t call, word_t
     case VMX_CONTROL_SECONDARY_PROCESSOR_CONTROLS:
         value = applyFixedBits(value, secondary_control_high, secondary_control_low);
         break;
+    case VMX_CONTROL_ENTRY_CONTROLS:
+        value = applyFixedBits(value, entry_control_high, entry_control_low);
+        break;
     case VMX_CONTROL_EXIT_CONTROLS:
         value = applyFixedBits(value, exit_control_high, exit_control_low);
         break;
@@ -1038,6 +1041,7 @@ static exception_t decodeReadVMCS(cap_t cap, word_t length, bool_t call, word_t 
     case VMX_CONTROL_PIN_EXECUTION_CONTROLS:
     case VMX_CONTROL_PRIMARY_PROCESSOR_CONTROLS:
     case VMX_CONTROL_EXCEPTION_BITMAP:
+    case VMX_CONTROL_ENTRY_CONTROLS:
     case VMX_CONTROL_EXIT_CONTROLS:
     case VMX_GUEST_CR0:
     case VMX_GUEST_CR3:
