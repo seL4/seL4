@@ -6,11 +6,13 @@
 
 #pragma once
 
+#define CR0_PE              BIT(0)  /* Protected Mode Enable */
 #define CR0_MONITOR_COPROC  BIT(1)  /* Trap on FPU "WAIT" commands. */
 #define CR0_EMULATION       BIT(2)  /* Enable OS emulation of FPU. */
 #define CR0_TASK_SWITCH     BIT(3)  /* Trap on any FPU usage, for lazy FPU. */
 #define CR0_NUMERIC_ERROR   BIT(5)  /* Internally handle FPU problems. */
 #define CR0_WRITE_PROTECT   BIT(16) /* Write protection in supervisor mode. */
+#define CR0_PG              BIT(31) /* Paging On */
 #define CR4_PCE             BIT(8)  /* Performance-Monitoring Counter enable. */
 #define CR4_OSFXSR          BIT(9)  /* Enable SSE et. al. features. */
 #define CR4_OSXMMEXCPT      BIT(10) /* Enable SSE exceptions. */
