@@ -861,6 +861,24 @@ LIBSEL4_INLINE_FUNC void seL4_DebugRun(void (* userfn)(void *), void *userarg)
 }
 #endif
 
+#ifdef CONFIG_DEBUG_BUILD
+/** Debug syscall: kernel reads one word from user address; returns success and value. */
+LIBSEL4_INLINE_FUNC seL4_Bool seL4_RiscvDebugReadUserWord(seL4_Word user_addr, seL4_Word *out_val)
+{
+    seL4_Word ok = 0;
+    seL4_Word val = 0;
+    seL4_Word unused2 = 0;
+    seL4_Word unused3 = 0;
+    seL4_Word unused4 = 0;
+    seL4_Word unused5 = 0;
+
+    riscv_sys_send_recv(seL4_SysRiscvDebugReadUserWord, user_addr, &ok, 0, &val, &unused2, &unused3,
+                        &unused4, &unused5, 0);
+    *out_val = val;
+    return (seL4_Bool)ok;
+}
+#endif
+
 #ifdef CONFIG_ENABLE_BENCHMARKS
 /* set the log index back to 0 */
 LIBSEL4_INLINE_FUNC seL4_Error seL4_BenchmarkResetLog(void)

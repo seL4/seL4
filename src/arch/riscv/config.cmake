@@ -136,6 +136,7 @@ add_sources(
            kernel/vspace.c
            machine/capdl.c
            machine/hardware.c
+           machine/user_access.c
            machine/registerset.c
            machine/io.c
            machine/fpu.c

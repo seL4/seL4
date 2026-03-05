@@ -17,6 +17,10 @@
 /* The top level asid mapping table */
 asid_pool_t *riscvKSASIDTable[nASIDPools];
 
+/* Per-CPU state for safe user memory access. Maintained outside archNodeState
+ * to preserve fixed assembly offsets in ksSMP[].cpu. */
+riscv_user_access_state_t riscv_user_access_state[CONFIG_MAX_NUM_NODES];
+
 /* Kernel Page Tables */
 pte_t kernel_root_pageTable[BIT(PT_INDEX_BITS)] ALIGN_BSS(BIT(seL4_PageTableBits));
 

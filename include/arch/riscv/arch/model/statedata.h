@@ -14,7 +14,20 @@
 #include <model/statedata.h>
 #include <object/structures.h>
 #include <arch/types.h>
+typedef word_t jmp_buf[16]; /* ra, sp, gp, tp, s0-s11 for setjmp/longjmp */
 
+int setjmp(jmp_buf env);
+void longjmp(jmp_buf env, int val);
+
+/* Per-CPU state for safe user memory access. Maintained outside archNodeState
+ * to preserve fixed assembly offsets in ksSMP[].cpu. */
+typedef struct {
+    bool_t in_progress;
+    word_t saved_satp;
+    word_t saved_sstatus;
+    jmp_buf jmp_buf;
+} riscv_user_access_state_t;
+extern riscv_user_access_state_t riscv_user_access_state[CONFIG_MAX_NUM_NODES];
 
 NODE_STATE_BEGIN(archNodeState)
 /* TODO: add RISCV-dependent fields here */

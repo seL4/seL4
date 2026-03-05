@@ -152,9 +152,28 @@ static inline void clearMemory(void *ptr, unsigned int bits)
     memzero(ptr, BIT(bits));
 }
 
+static inline word_t read_satp(void)
+{
+    word_t temp;
+    asm volatile("csrr %0, satp" : "=r"(temp));
+    return temp;
+}
+
 static inline void write_satp(word_t value)
 {
     asm volatile("csrw satp, %0" :: "rK"(value));
+}
+
+static inline void write_sstatus(word_t value)
+{
+    asm volatile("csrw sstatus, %0" :: "rK"(value));
+}
+
+static inline word_t read_stvec(void)
+{
+    word_t temp;
+    asm volatile("csrr %0, stvec" : "=r"(temp));
+    return temp;
 }
 
 static inline void write_stvec(word_t value)

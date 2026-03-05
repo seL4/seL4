@@ -13,6 +13,7 @@
 #include <api/syscall.h>
 #include <util.h>
 #include <arch/machine/hardware.h>
+#include <arch/machine/user_access.h>
 #include <machine/fpu.h>
 
 #include <benchmark/benchmark_track.h>
@@ -107,11 +108,18 @@ void VISIBLE NORETURN c_handle_interrupt(void)
 
 void VISIBLE NORETURN c_handle_exception(void)
 {
+    word_t scause = read_scause();
+
+    /* Check for recoverable S-mode user-access fault. */
+    if ((read_sstatus() & SSTATUS_SPP) && riscv_user_access_handle_fault(scause)) {
+        UNREACHABLE();
+    }
+
 #ifdef CONFIG_DEBUG_BUILD
     if (read_sstatus() & SSTATUS_SPP) {
         printf("\n\nKERNEL ABORT (exception within s-mode)!\n");
         printf("scause: 0x%"SEL4_PRIx_word", stval: 0x%"SEL4_PRIx_word"\n",
-               read_scause(), read_stval());
+               scause, read_stval());
         halt();
     }
 #endif
@@ -120,7 +128,9 @@ void VISIBLE NORETURN c_handle_exception(void)
 
     c_entry_hook();
 
-    word_t scause = read_scause();
+    if (riscv_user_access_handle_fault(scause)) {
+        UNREACHABLE();
+    }
     switch (scause) {
     case RISCVInstructionAccessFault:
     case RISCVLoadAccessFault:

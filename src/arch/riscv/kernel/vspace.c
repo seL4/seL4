@@ -21,6 +21,7 @@
 #include <object/untyped.h>
 #include <arch/api/invocation.h>
 #include <arch/kernel/vspace.h>
+#include <arch/machine/user_access.h>
 #include <linker.h>
 #include <arch/machine.h>
 #include <plat/machine/hardware.h>
@@ -1173,13 +1174,14 @@ void Arch_userStackTrace(tcb_t *tptr)
     }
 
     pte_t *vspace_root = PTE_PTR(pptr_of_cap(threadRoot));
+    asid_t asid = cap_page_table_cap_get_capPTMappedASID(threadRoot);
+    paddr_t vspace_root_paddr = addrFromPPtr(vspace_root);
+
     for (int i = 0; i < CONFIG_USER_STACK_TRACE_LENGTH; i++) {
         word_t address = sp + (i * sizeof(word_t));
-        lookupPTSlot_ret_t ret = lookupPTSlot(vspace_root, address);
-        if (pte_ptr_get_valid(ret.ptSlot) && !isPTEPageTable(ret.ptSlot)) {
-            pptr_t pptr = (pptr_t)(getPPtrFromHWPTE(ret.ptSlot));
-            word_t *value = (word_t *)((word_t)pptr + (address & MASK(ret.ptBitsLeft)));
-            printf("0x%lx: 0x%lx\n", (long) address, (long) *value);
+        word_t value;
+        if (riscv_load_word_user(address, &value, vspace_root_paddr, asid)) {
+            printf("0x%lx: 0x%lx\n", (long) address, (long) value);
         } else {
             printf("0x%lx: INVALID\n", (long) address);
         }

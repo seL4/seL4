@@ -97,5 +97,9 @@
             <condition><config var="CONFIG_SET_TLS_BASE_SELF"/></condition>
             <syscall name="SetTLSBase"/>
         </config>
+        <config>
+            <condition><config var="CONFIG_DEBUG_BUILD"/></condition>
+            <syscall name="RiscvDebugReadUserWord"/>
+        </config>
     </debug>
 </syscalls>

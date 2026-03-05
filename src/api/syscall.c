@@ -33,6 +33,9 @@
 #ifdef CONFIG_HARDWARE_DEBUG_API
 #include <mode/machine/debug.h>
 #endif
+#ifdef CONFIG_ARCH_RISCV
+#include <arch/machine/user_access.h>
+#endif
 
 /**
  * FIXME: This is a temporary hack to prevent the printing of incorrect
@@ -162,6 +165,11 @@ exception_t handleUnknownSyscall(word_t w)
         return handle_SysDebugSendIPI();
     }
 #endif /* ENABLE_SMP_SUPPORT */
+#ifdef CONFIG_ARCH_RISCV
+    if (w == SysRiscvDebugReadUserWord) {
+        return handle_SysRiscvDebugReadUserWord();
+    }
+#endif /* CONFIG_ARCH_RISCV */
 #endif /* CONFIG_DEBUG_BUILD */
 
 #ifdef CONFIG_DANGEROUS_CODE_INJECTION
