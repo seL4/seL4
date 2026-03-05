@@ -6,14 +6,15 @@
 
 declare_platform(zynqmp KernelPlatformZynqmp PLAT_ZYNQMP KernelArchARM)
 
-set(c_configs PLAT_ZYNQMP_ZCU102 PLAT_ZYNQMP_ULTRA96 PLAT_ZYNQMP_ULTRA96V2)
+set(c_configs PLAT_ZYNQMP_ZCU102 PLAT_ZYNQMP_ULTRA96 PLAT_ZYNQMP_ULTRA96V2 PLAT_ZYNQMP_KRIA_K26)
 set(
     cmake_configs
     KernelPlatformZynqmpZcu102
     KernelPlatformZynqmpUltra96
     KernelPlatformZynqmpUltra96v2
+    KernelPlatformZynqmpKriaK26
 )
-set(plat_lists zcu102 ultra96 ultra96v2)
+set(plat_lists zcu102 ultra96 ultra96v2 kria_k26)
 foreach(config IN LISTS cmake_configs)
     unset(${config} CACHE)
 endforeach()
@@ -43,12 +44,16 @@ if(KernelPlatformZynqmp)
         list(APPEND KernelDTSList "tools/dts/ultra96.dts")
     elseif(KernelPlatformZynqmpZcu102)
         list(APPEND KernelDTSList "tools/dts/zynqmp.dts")
+    elseif(KernelPlatformZynqmpKriaK26)
+        list(APPEND KernelDTSList "tools/dts/zynqmp.dts")
     else()
         message(FATAL_ERROR "unknown platform")
     endif()
 
     if(KernelSel4ArchAarch32)
         list(APPEND KernelDTSList "src/plat/zynqmp/overlay-zynqmp32.dts")
+    elseif(KernelPlatformZynqmpKriaK26)
+        list(APPEND KernelDTSList "src/plat/zynqmp/overlay-zynqmp-kria-k26.dts")
     else()
         list(APPEND KernelDTSList "src/plat/zynqmp/overlay-zynqmp.dts")
     endif()
