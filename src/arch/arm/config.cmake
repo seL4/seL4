@@ -78,18 +78,10 @@ config_option(
     DEPENDS "KernelArchARM"
 )
 
-if(NOT DEFINED KernelSel4ArchArmHyp)
-    # the current CMake scripts ensure that KernelSel4ArchArmHyp is always set
-    # to either ON or OFF. If it is not set, something is either broken or the
-    # CMake files are used wrongly. Or support for KernelSel4ArchArmHyp has
-    # finally been removed - and then this check here should be removed and the
-    # KernelArmHypervisorSupport below can be OFF by default.
-    message(FATAL_ERROR "KernelSel4ArchArmHyp must be ON or OFF")
-endif()
 config_option(
     KernelArmHypervisorSupport ARM_HYPERVISOR_SUPPORT
     "Build as Hypervisor. Utilise ARM virtualisation extensions to build the kernel as a hypervisor"
-    DEFAULT ${KernelSel4ArchArmHyp}
+    DEFAULT OFF
     DEPENDS
         "KernelArmCortexA15 OR KernelArmCortexA35 OR KernelArmCortexA57 OR KernelArmCortexA53 OR KernelArmCortexA55 OR KernelArmCortexA72"
 )
@@ -111,7 +103,7 @@ config_option(
     and trap them instead, and have the VCPUs' accesses to CP14 \
     intercepted and delivered to the VM Monitor as fault messages"
     DEFAULT ON
-    DEPENDS "KernelSel4ArchArmHyp;NOT KernelVerificationBuild"
+    DEPENDS "KernelSel4ArchAarch32;KernelArmHypervisorSupport;NOT KernelVerificationBuild"
     DEFAULT_DISABLED OFF
 )
 

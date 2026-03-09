@@ -4,10 +4,10 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-declare_platform(tk1 KernelPlatformTK1 PLAT_TK1 "KernelSel4ArchAarch32 OR KernelSel4ArchArmHyp")
+declare_platform(tk1 KernelPlatformTK1 PLAT_TK1 "KernelSel4ArchAarch32")
 
 if(KernelPlatformTK1)
-    declare_seL4_arch(aarch32 arm_hyp)
+    declare_seL4_arch(aarch32)
     set(KernelArmCortexA15 ON)
     set(KernelArchArmV7a ON)
     set(KernelArchArmV7ve ON)

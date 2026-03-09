@@ -52,19 +52,11 @@ macro(declare_seL4_arch)
         "Architecture mode for building the kernel"
         "aarch32;KernelSel4ArchAarch32;ARCH_AARCH32"
         "aarch64;KernelSel4ArchAarch64;ARCH_AARCH64"
-        "arm_hyp;KernelSel4ArchArmHyp;ARCH_ARM_HYP"
         "riscv32;KernelSel4ArchRiscV32;ARCH_RISCV32"
         "riscv64;KernelSel4ArchRiscV64;ARCH_RISCV64"
         "x86_64;KernelSel4ArchX86_64;ARCH_X86_64"
         "ia32;KernelSel4ArchIA32;ARCH_IA32"
     )
-
-    if(KernelSel4ArchArmHyp)
-        # arm-hyp is basically aarch32. This should be cleaned up and aligned
-        # with other architectures, where hypervisor support is an additional
-        # flag. The main blocker here is updating the verification flow.
-        config_set(KernelSel4ArchAarch32 ARCH_AARCH32 ON)
-    endif()
 
     config_choice(
         KernelArch

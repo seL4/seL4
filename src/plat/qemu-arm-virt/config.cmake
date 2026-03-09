@@ -16,14 +16,10 @@ macro(setup_qemu_armv7)
     endif()
     set(QEMU_ARCH "arm")
     set(KernelArchArmV7a ON)
+    declare_seL4_arch(aarch32)
     if(ARMV7_OPTIONS_ve)
-        declare_seL4_arch(aarch32 arm_hyp)
         set(KernelArchArmV7ve ON)
-        if(KernelSel4ArchArmHyp)
-            set(qemu_user_top 0xe0000000)
-        endif()
-    else()
-        declare_seL4_arch(aarch32)
+        set(qemu_user_top 0xe0000000)
     endif()
 endmacro()
 
@@ -37,7 +33,7 @@ if(KernelPlatformQEMUArmVirt)
 
     if(NOT ARM_CPU)
         # Our default QEMU configuration is AARCH64/Cortex-a53. If
-        # KernelSel4Arch is set to aarch32/arm_hyp, the default is Cortex-a15.
+        # KernelSel4Arch is set to aarch32, the default is Cortex-a15.
         # If both ARM_CPU and KernelSel4Arch are set, conflicting values will be
         # detected eventually. Note that the KernelSel4Archxxx variables are not
         # set up here, because declare_seL4_arch() has not been called yet.
@@ -45,7 +41,6 @@ if(KernelPlatformQEMUArmVirt)
             arch_cpu_mapping # element format: "KernelSel4Arch:ARM_CPU"
             ":cortex-a53" # used if KernelSel4Arch is empty or not set
             "aarch64:cortex-a53"
-            "arm_hyp:cortex-a15"
             "aarch32:cortex-a15"
         )
         if(NOT ";${arch_cpu_mapping};" MATCHES ";${KernelSel4Arch}:([^;]*);")

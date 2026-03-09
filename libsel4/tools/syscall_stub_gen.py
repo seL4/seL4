@@ -53,7 +53,6 @@ WORD_SIZE_BITS_ARCH = {
     "aarch64": 64,
     "ia64": 64,
     "x86_64": 64,
-    "arm_hyp": 32,
     "riscv32": 32,
     "riscv64": 64,
 }
@@ -64,7 +63,6 @@ MESSAGE_REGISTERS_FOR_ARCH = {
     "ia32": 2,
     "ia32-mcs": 1,
     "x86_64": 4,
-    "arm_hyp": 4,
     "riscv32": 4,
     "riscv64": 4,
 }
@@ -296,20 +294,6 @@ def init_arch_types(wordsize, args):
             CapType("seL4_ARM_SMC", wordsize),
             StructType("seL4_UserContext", wordsize * 36, wordsize),
             StructType("seL4_ARM_SMCContext", wordsize * 8, wordsize),
-            Type("seL4_VCPUReg", wordsize, wordsize),
-        ] + arm_smmu,
-
-        "arm_hyp": [
-            Type("seL4_ARM_VMAttributes", wordsize, wordsize),
-            CapType("seL4_ARM_Page", wordsize),
-            CapType("seL4_ARM_PageTable", wordsize),
-            CapType("seL4_ARM_PageDirectory", wordsize),
-            CapType("seL4_ARM_ASIDControl", wordsize),
-            CapType("seL4_ARM_ASIDPool", wordsize),
-            CapType("seL4_ARM_VCPU", wordsize),
-            CapType("seL4_ARM_IOSpace", wordsize),
-            CapType("seL4_ARM_IOPageTable", wordsize),
-            StructType("seL4_UserContext", wordsize * 19, wordsize),
             Type("seL4_VCPUReg", wordsize, wordsize),
         ] + arm_smmu,
 
