@@ -21,6 +21,10 @@
 #include "syscalls_master.h"
 #endif
 
+#ifdef CONFIG_VTX
+#include <sel4/arch/vmenter.h>
+#endif
+
 /**
  * @defgroup DebuggingSystemCalls
  * This section documents debugging system calls available when the kernel is
