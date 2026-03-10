@@ -3,6 +3,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-only
 #
+cmake_minimum_required(VERSION 3.16.0)
 
 set(KERNEL_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}/..")
 

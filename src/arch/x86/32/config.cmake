@@ -4,8 +4,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-cmake_minimum_required(VERSION 3.16.0)
-
 add_sources(
     DEP "KernelSel4ArchIA32"
     PREFIX src/arch/x86/32

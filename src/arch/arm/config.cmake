@@ -4,8 +4,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-cmake_minimum_required(VERSION 3.16.0)
-
 if(KernelSel4ArchAarch32)
     set_property(
         TARGET kernel_config_target
