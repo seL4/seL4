@@ -54,7 +54,7 @@ endfunction(FindPrefixedGCC)
 
 if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
     if(("${arch}" STREQUAL "arm") OR ("${arch}" STREQUAL "x86") OR ("${arch}" STREQUAL "riscv"))
-        if(${sel4_arch} STREQUAL "aarch32" OR ${sel4_arch} STREQUAL "arm_hyp")
+        if(${sel4_arch} STREQUAL "aarch32")
             FindPrefixedGCC(
                 CROSS_COMPILER_PREFIX
                 "arm-linux-gnueabi-"

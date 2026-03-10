@@ -6,4 +6,7 @@
 
 include(${CMAKE_CURRENT_LIST_DIR}/ARM_verified_include.cmake)
 
-set(KernelSel4Arch "arm_hyp" CACHE STRING "" FORCE)
+set(KernelArmHypervisorSupport
+    ON
+    CACHE BOOL ""
+)
