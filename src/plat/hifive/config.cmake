@@ -8,17 +8,14 @@
 declare_platform(hifive KernelPlatformHifive PLAT_HIFIVE KernelSel4ArchRiscV64)
 
 if(KernelPlatformHifive)
-    declare_seL4_arch(riscv64)
-    config_set(KernelRiscVPlatform RISCV_PLAT "hifive")
-    config_set(KernelPlatformFirstHartID FIRST_HART_ID 1)
-    config_set(KernelOpenSBIPlatform OPENSBI_PLATFORM "generic")
-    list(APPEND KernelDTSList "tools/dts/hifive.dts")
-    list(APPEND KernelDTSList "src/plat/hifive/overlay-hifive.dts")
-    declare_default_headers(
-        TIMER_FREQUENCY 1000000
-        MAX_IRQ 53
-        INTERRUPT_CONTROLLER drivers/irq/riscv_plic0.h
-    )
+  declare_seL4_arch(riscv64)
+  config_set(KernelRiscVPlatform RISCV_PLAT "hifive")
+  config_set(KernelPlatformFirstHartID FIRST_HART_ID 1)
+  config_set(KernelOpenSBIPlatform OPENSBI_PLATFORM "generic")
+  list(APPEND KernelDTSList "tools/dts/hifive.dts")
+  list(APPEND KernelDTSList "src/plat/hifive/overlay-hifive.dts")
+  declare_default_headers(TIMER_FREQUENCY 1000000 MAX_IRQ 53
+                          INTERRUPT_CONTROLLER drivers/irq/riscv_plic0.h)
 else()
-    unset(KernelPlatformFirstHartID CACHE)
+  unset(KernelPlatformFirstHartID CACHE)
 endif()

@@ -7,18 +7,16 @@
 cmake_minimum_required(VERSION 3.16.0)
 
 add_sources(
-    DEP "KernelSel4ArchIA32"
-    PREFIX src/arch/x86/32
-    CFILES
-        c_traps.c
-        object/objecttype.c
-        kernel/thread.c
-        kernel/vspace.c
-        kernel/vspace_32paging.c
-        kernel/elf.c
-        model/statedata.c
-        machine/registerset.c
-        machine/capdl.c
-        smp/ipi.c
-    ASMFILES machine_asm.S traps.S head.S
-)
+  DEP "KernelSel4ArchIA32"
+  PREFIX src/arch/x86/32
+  CFILES c_traps.c
+         object/objecttype.c
+         kernel/thread.c
+         kernel/vspace.c
+         kernel/vspace_32paging.c
+         kernel/elf.c
+         model/statedata.c
+         machine/registerset.c
+         machine/capdl.c
+         smp/ipi.c
+  ASMFILES machine_asm.S traps.S head.S)

@@ -7,7 +7,4 @@
 
 include(${CMAKE_CURRENT_LIST_DIR}/include/ARM_verified_include.cmake)
 
-set(KernelPlatform
-    "omap3"
-    CACHE STRING ""
-)
+set(KernelPlatform "omap3" CACHE STRING "")
