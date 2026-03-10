@@ -4,8 +4,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-cmake_minimum_required(VERSION 3.16.0)
-
 add_sources(
     DEP "KernelArchArmV7a"
     PREFIX src/arch/arm/armv/armv7-a

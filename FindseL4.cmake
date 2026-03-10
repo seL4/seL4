@@ -3,6 +3,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-only
 #
+cmake_minimum_required(VERSION 3.16.0)
 
 set(KERNEL_PATH "${CMAKE_CURRENT_LIST_DIR}" CACHE STRING "")
 set(KERNEL_HELPERS_PATH "${CMAKE_CURRENT_LIST_DIR}/tools/helpers.cmake" CACHE STRING "")

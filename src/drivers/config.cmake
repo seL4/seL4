@@ -4,8 +4,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-cmake_minimum_required(VERSION 3.16.0)
-
 macro(register_driver compatibility_strings match_strings)
     foreach(match_string IN ITEMS ${match_strings})
         list(FIND ${compatibility_strings} ${match_string} res)
