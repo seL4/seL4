@@ -254,7 +254,7 @@ static inline void removeAndRestartNTFNQueuedThread(tcb_t *thread, notification_
     tcbNTFNDequeue(thread, ntfnPtr);
     setThreadState(thread, ThreadState_Restart);
     if (sc_sporadic(thread->tcbSchedContext)) {
-        /* We know that the thread can't have the current SC as its own SC as
+        /* We know that the thread can't have the current SC as its own SC at
          * this point as it should still be associated with the current thread,
          * or no thread. This check is added here to reduce the cost of proving
          * this to be true as a short-term stop-gap. */
@@ -390,7 +390,7 @@ void tcbNTFNAppend(tcb_t *thread, notification_t *ntfnPtr)
     tcb_queue_t new_queue;
 
     queue = ntfn_ptr_get_queue(ntfnPtr);
-    new_queue = tcbIPCAppend(thread, queue);
+    new_queue = tcbAppend(thread, queue);
     ntfn_ptr_set_queue(ntfnPtr, new_queue);
     notification_ptr_set_state(ntfnPtr, NtfnState_Waiting);
 }
@@ -413,7 +413,7 @@ void reorderNTFN(notification_t *ntfnPtr, tcb_t *thread)
 {
     tcb_queue_t queue = ntfn_ptr_get_queue(ntfnPtr);
     queue = tcb_queue_remove(queue, thread);
-    queue = tcbIPCAppend(thread, queue);
+    queue = tcbAppend(thread, queue);
     ntfn_ptr_set_queue(ntfnPtr, queue);
 }
 #endif

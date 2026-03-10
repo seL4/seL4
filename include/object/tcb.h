@@ -134,17 +134,17 @@ static inline bool_t PURE higher_than_tcb_prio(tcb_t *tcb, prio_t new_priority)
     return tcb != NULL && new_priority > tcb->tcbPriority;
 }
 
-/* Find the rightmost TCB in a queue that has a priority which is strictly
-   greater than the given priority */
-static tcb_t *find_tcb_with_higher_prio(tcb_t *tcb, prio_t new_priority)
+/* Find the rightmost TCB in the given queue that has a priority which is
+   strictly greater than the given priority */
+static tcb_t *find_tcb_with_higher_prio(tcb_queue_t queue, prio_t priority)
 {
-    tcb_t *before = tcb;
+    tcb_t *tcb = queue.end;
 
-    while (higher_than_tcb_prio(before, new_priority)) {
-        before = before->tcbSchedPrev;
+    while (higher_than_tcb_prio(tcb, priority)) {
+        tcb = tcb->tcbSchedPrev;
     }
 
-    return before;
+    return tcb;
 }
 
 /* Insert a TCB into a queue immediately after another item in the queue
@@ -165,22 +165,19 @@ static inline void tcb_queue_insert_after(tcb_t *tcb, tcb_t *before)
 }
 
 /* Add TCB into the priority ordered endpoint or notification queue */
-static inline tcb_queue_t tcbIPCAppend(tcb_t *tcb, tcb_queue_t queue)
+static inline tcb_queue_t tcbAppend(tcb_t *tcb, tcb_queue_t queue)
 {
-    prio_t new_priority;
-    tcb_queue_t new_queue;
+    prio_t priority = tcb->tcbPriority;
+    tcb_queue_t new_queue = queue;
 
-    new_priority = tcb->tcbPriority;
-    new_queue = queue;
-
-    if (tcb_queue_empty(queue) || new_priority > queue.head->tcbPriority) {
+    if (tcb_queue_empty(queue) || priority > queue.head->tcbPriority) {
         new_queue = tcb_queue_prepend(queue, tcb);
     } else {
-        if (queue.end->tcbPriority >= new_priority) {
+        if (queue.end->tcbPriority >= priority) {
             new_queue = tcb_queue_append(queue, tcb);
         } else {
             tcb_t *before;
-            before = find_tcb_with_higher_prio(queue.end, new_priority);
+            before = find_tcb_with_higher_prio(queue, priority);
             tcb_queue_insert_after(tcb, before);
         }
     }

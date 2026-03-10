@@ -541,7 +541,7 @@ void tcbEPAppend(tcb_t *thread, endpoint_t *epptr, bool_t isRecv)
     tcb_queue_t new_queue;
 
     queue = ep_ptr_get_queue(epptr);
-    new_queue = tcbIPCAppend(thread, queue);
+    new_queue = tcbAppend(thread, queue);
     ep_ptr_set_queue(epptr, new_queue);
 
     /* if the queue was originally empty, update the state of
@@ -573,7 +573,7 @@ void reorderEP(endpoint_t *epptr, tcb_t *thread)
 {
     tcb_queue_t queue = ep_ptr_get_queue(epptr);
     queue = tcb_queue_remove(queue, thread);
-    queue = tcbIPCAppend(thread, queue);
+    queue = tcbAppend(thread, queue);
     ep_ptr_set_queue(epptr, queue);
 }
 #endif
