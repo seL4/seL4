@@ -129,9 +129,9 @@ void remoteTCBStall(tcb_t *tcb);
 
 #ifdef CONFIG_KERNEL_MCS
 
-static inline bool_t PURE higher_than_tcb_prio(tcb_t *tcb, prio_t new_priority)
+static inline bool_t PURE higher_than_tcb_prio(tcb_t *tcb, prio_t priority)
 {
-    return tcb != NULL && new_priority > tcb->tcbPriority;
+    return tcb != NULL && priority > tcb->tcbPriority;
 }
 
 /* Find the rightmost TCB in the given queue that has a priority which is
