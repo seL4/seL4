@@ -345,6 +345,11 @@ static exception_t handleInvocation(bool_t isCall, bool_t isBlocking)
     /* Syscall error/Preemptible section */
     length = seL4_MessageInfo_get_length(info);
     if (unlikely(length > n_msgRegisters && !buffer)) {
+        /* If no IPC buffer is present the kernel truncates the maximum message length to n_msgRegisters.
+         * The kernel truncates rather than returns because not all message transfer points in the kernel
+         * are allowed to return an error.
+         */
+        userError("Warning: No IPC buffer for thread. Truncating message length to: %d.", n_msgRegisters);
         length = n_msgRegisters;
     }
 #ifdef CONFIG_KERNEL_MCS
