@@ -288,6 +288,16 @@ else()
     config_set(KernelArmHasTlbLock ARM_HAS_TLB_LOCK OFF)
 endif()
 
+if(NOT KernelArmHypervisorSupport AND NOT KernelVerificationBuild AND NOT KernelPlatformHikey)
+    set(KernelDangerousCodeInjectionSupported
+        ON
+        CACHE INTERNAL "")
+else()
+    set(KernelDangerousCodeInjectionSupported
+        OFF
+        CACHE INTERNAL "")
+endif()
+
 add_sources(
     DEP "KernelArchARM"
     PREFIX src/arch/arm
