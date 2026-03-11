@@ -16,13 +16,13 @@ mark_as_advanced(FORCE KERNEL_HELPERS_PATH)
 include(${KERNEL_HELPERS_PATH})
 
 function(RequireTool config file)
-    RequireFile("${config}" "${file}" PATHS tools)
+  RequireFile("${config}" "${file}" PATHS tools)
 endfunction(RequireTool)
 
 RequireTool(KERNEL_FLAGS_PATH flags.cmake)
 
 if(CCACHEFOUND)
-    set(ccache "ccache")
+  set(ccache "ccache")
 endif()
 
 include(tools/internal.cmake)
@@ -48,122 +48,111 @@ include(config.cmake)
 string(APPEND common_flags " -D__KERNEL_${KernelWordSize}__")
 
 if(KernelArchX86)
-    if(${KernelX86MicroArch} STREQUAL "generic")
-        string(APPEND common_flags " -mtune=generic")
-    else()
-        string(APPEND common_flags " -march=${KernelX86MicroArch}")
-    endif()
+  if(${KernelX86MicroArch} STREQUAL "generic")
+    string(APPEND common_flags " -mtune=generic")
+  else()
+    string(APPEND common_flags " -march=${KernelX86MicroArch}")
+  endif()
 
-    if(KernelSel4ArchX86_64)
-        string(APPEND common_exe_flags " -Wl,-m,elf_x86_64")
-    elseif(KernelSel4ArchIA32)
-        string(APPEND common_exe_flags " -Wl,-m,elf_i386")
-    else()
-        message(FATAL_ERROR "unknown x86 KernelSel4Arch '${KernelSel4Arch}'")
-    endif()
+  if(KernelSel4ArchX86_64)
+    string(APPEND common_exe_flags " -Wl,-m,elf_x86_64")
+  elseif(KernelSel4ArchIA32)
+    string(APPEND common_exe_flags " -Wl,-m,elf_i386")
+  else()
+    message(FATAL_ERROR "unknown x86 KernelSel4Arch '${KernelSel4Arch}'")
+  endif()
 
-    string(APPEND c_common_flags " -m${KernelWordSize}")
+  string(APPEND c_common_flags " -m${KernelWordSize}")
 
-    if(LLVM_TOOLCHAIN)
-        if(KernelSel4ArchIA32)
-            string(APPEND asm_common_flags " -m32")
-        endif()
-    else() # default is GCC toolchain
-        string(APPEND asm_common_flags " -Wa,--${KernelWordSize}")
+  if(LLVM_TOOLCHAIN)
+    if(KernelSel4ArchIA32)
+      string(APPEND asm_common_flags " -m32")
     endif()
+  else() # default is GCC toolchain
+    string(APPEND asm_common_flags " -Wa,--${KernelWordSize}")
+  endif()
 
 elseif(KernelArchARM)
-    set(arm_march "${KernelArmArmV}${KernelArmMachFeatureModifiers}")
-    string(APPEND c_common_flags " -march=${arm_march}")
-    string(APPEND asm_common_flags " -march=${arm_march}")
+  set(arm_march "${KernelArmArmV}${KernelArmMachFeatureModifiers}")
+  string(APPEND c_common_flags " -march=${arm_march}")
+  string(APPEND asm_common_flags " -march=${arm_march}")
 
-    if(KernelSel4ArchAarch64)
-        # nothing special
-    elseif(KernelSel4ArchAarch32)
-        # Explicitly request ARM instead of THUMB for compilation.
-        string(APPEND c_common_flags " -marm")
-    else()
-        message(FATAL_ERROR "unknown ARM KernelSel4Arch '${KernelSel4Arch}'")
-    endif()
+  if(KernelSel4ArchAarch64)
+    # nothing special
+  elseif(KernelSel4ArchAarch32)
+    # Explicitly request ARM instead of THUMB for compilation.
+    string(APPEND c_common_flags " -marm")
+  else()
+    message(FATAL_ERROR "unknown ARM KernelSel4Arch '${KernelSel4Arch}'")
+  endif()
 
 elseif(KernelArchRiscV)
-    # The "RISC-V Instruction Set Manual, Volume I: RISC-V User-Level ISA",
-    # chapter "ISA Extension Naming Conventions" describes the march string. Its
-    # form is roughly "rv(32|64)((im?a?f?d?)|g)q?c?b?...", where 'g' equals
-    # 'mafd_Zicsr_Zifencei'. Underscores are allowed as extension separator and
-    # even required between for all Z-extensions.
+  # The "RISC-V Instruction Set Manual, Volume I: RISC-V User-Level ISA",
+  # chapter "ISA Extension Naming Conventions" describes the march string. Its
+  # form is roughly "rv(32|64)((im?a?f?d?)|g)q?c?b?...", where 'g' equals
+  # 'mafd_Zicsr_Zifencei'. Underscores are allowed as extension separator and
+  # even required between for all Z-extensions.
 
-    if(KernelSel4ArchRiscV32)
-        set(_riscv_march "rv32i") # Currently we don't support "rv32e"
-        set(_riscv_mabi "ilp32")
-    elseif(KernelSel4ArchRiscV64)
-        set(_riscv_march "rv64i")
-        set(_riscv_mabi "lp64")
-    else()
-        message(FATAL_ERROR "unknown RISC-V KernelSel4Arch '${KernelSel4Arch}'")
-    endif()
+  if(KernelSel4ArchRiscV32)
+    set(_riscv_march "rv32i") # Currently we don't support "rv32e"
+    set(_riscv_mabi "ilp32")
+  elseif(KernelSel4ArchRiscV64)
+    set(_riscv_march "rv64i")
+    set(_riscv_mabi "lp64")
+  else()
+    message(FATAL_ERROR "unknown RISC-V KernelSel4Arch '${KernelSel4Arch}'")
+  endif()
 
-    # Currently there are no KernelRiscvExtM or KernelRiscvExtA, thus the
-    # M-extension and A-extension are always enabled.
-    string(APPEND _riscv_march "ma")
+  # Currently there are no KernelRiscvExtM or KernelRiscvExtA, thus the
+  # M-extension and A-extension are always enabled.
+  string(APPEND _riscv_march "ma")
 
-    # FPU support. The Q-extension implies the D-extension, which implies the
-    # F-extension, which implies the "Zicsr"-extension. Currently there is no
-    # KernelRiscvExtQ yet.
-    if(KernelRiscvExtD)
-        # Since the D-extension implies F-extension, specifying "d" would be
-        # sufficient. But it's common practice to say "fd"
-        string(APPEND _riscv_march "fd")
-        # Pass floating-point values up to 64 bits in F registers
-        string(APPEND _riscv_mabi "d")
-    elseif(KernelRiscvExtF)
-        string(APPEND _riscv_march "f")
-        # Pass floating-point values up to 32 bits in F registers
-        string(APPEND _riscv_mabi "f")
-    endif()
+  # FPU support. The Q-extension implies the D-extension, which implies the
+  # F-extension, which implies the "Zicsr"-extension. Currently there is no
+  # KernelRiscvExtQ yet.
+  if(KernelRiscvExtD)
+    # Since the D-extension implies F-extension, specifying "d" would be
+    # sufficient. But it's common practice to say "fd"
+    string(APPEND _riscv_march "fd")
+    # Pass floating-point values up to 64 bits in F registers
+    string(APPEND _riscv_mabi "d")
+  elseif(KernelRiscvExtF)
+    string(APPEND _riscv_march "f")
+    # Pass floating-point values up to 32 bits in F registers
+    string(APPEND _riscv_mabi "f")
+  endif()
 
-    # Currently there is no KernelRiscvExtC and thus the C-extension is always
-    # enabled
-    string(APPEND _riscv_march "c")
+  # Currently there is no KernelRiscvExtC and thus the C-extension is always
+  # enabled
+  string(APPEND _riscv_march "c")
 
-    # Determine if GNU toolchain is used and if yes, whether GCC version >= 11.3 (implies binutils version >= 2.38)
-    if(
-        CMAKE_ASM_COMPILER_ID STREQUAL "GNU"
-        AND CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL "11.3"
-    )
-        # Manually enable Zicsr and Zifencei extensions
-        # This became necessary due to a change in the default ISA version in GNU binutils 2.38 which is the
-        # default binutils version shipped with GCC 11.3
-        string(APPEND _riscv_march "_zicsr_zifencei")
-    endif()
+  # Determine if GNU toolchain is used and if yes, whether GCC version >= 11.3 (implies binutils version >= 2.38)
+  if(CMAKE_ASM_COMPILER_ID STREQUAL "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL "11.3")
+    # Manually enable Zicsr and Zifencei extensions
+    # This became necessary due to a change in the default ISA version in GNU binutils 2.38 which is the
+    # default binutils version shipped with GCC 11.3
+    string(APPEND _riscv_march "_zicsr_zifencei")
+  endif()
 
-    string(APPEND common_flags " -march=${_riscv_march} -mabi=${_riscv_mabi}")
+  string(APPEND common_flags " -march=${_riscv_march} -mabi=${_riscv_mabi}")
 
 else()
-    message(FATAL_ERROR "unknown KernelArch '${KernelArch}'")
+  message(FATAL_ERROR "unknown KernelArch '${KernelArch}'")
 endif()
 
-set(
-    BASE_ASM_FLAGS "${asm_common_flags} ${common_flags}"
+set(BASE_ASM_FLAGS "${asm_common_flags} ${common_flags}"
     CACHE INTERNAL "Default ASM flags for compilation \
-    (subset of flags used by the kernel build)"
-)
+    (subset of flags used by the kernel build)")
 
-set(
-    BASE_C_FLAGS "${c_common_flags} ${common_flags}"
+set(BASE_C_FLAGS "${c_common_flags} ${common_flags}"
     CACHE INTERNAL "Default C flags for compilation \
-    (subset of flags used by the kernel)"
-)
+    (subset of flags used by the kernel)")
 
-set(
-    BASE_CXX_FLAGS "${cxx_common_flags} ${c_common_flags} ${common_flags}"
-    CACHE INTERNAL "Default CXX flags for compilation"
-)
+set(BASE_CXX_FLAGS "${cxx_common_flags} ${c_common_flags} ${common_flags}"
+    CACHE INTERNAL "Default CXX flags for compilation")
 
-set(
-    BASE_EXE_LINKER_FLAGS "${common_flags} ${common_exe_flags} "
-    CACHE INTERNAL "Default flags for linker an elf binary application"
-)
+set(BASE_EXE_LINKER_FLAGS "${common_flags} ${common_exe_flags} "
+    CACHE INTERNAL "Default flags for linker an elf binary application")
 
 # Setup kernel specific flags. Initialize all flags them from the same base
 # flags that the users will use. The kernel is a stand-alone application with a
@@ -171,150 +160,144 @@ set(
 include(${KERNEL_FLAGS_PATH})
 
 add_compile_options(
-    -std=c99
-    #-----------------------------------
-    # Configure warnings
-    #-----------------------------------
-    -Wall
-    -Werror
-    -Wstrict-prototypes
-    -Wmissing-prototypes
-    -Wnested-externs
-    -Wmissing-declarations
-    -Wundef
-    -Wpointer-arith
-    -Wno-nonnull
-    #-----------------------------------
-    # Configure compiler settings.
-    #-----------------------------------
-    -nostdinc # Do not use any system include paths, only use those given
-              # explicitly by the "-I <path>" parameters.
-    -ffreestanding # implies "-fno-builtin". Execution will not start at main().
-                   # No assumptions about the meaning of function names from the
-                   # standard library are made, except for memcpy(), memmove(),
-                   # memset() and memcmp(). __builtin_trap() will call abort().
-    -fno-stack-protector
-    -fno-asynchronous-unwind-tables
-    # GCC < 10 and clang < 11 put uninitialized global variables into a 'COMMON'
-    # section unless '-fno-common' is specified. The linker will put anything
-    # from 'COMMON' as the end of the '.bss' if nothing else is specified in the
-    # linker script. Besides making the variable placement look odd, this also
-    # tends to waste a page because we puts large aligned block at the end.
-    # Eventually, GCC 10 and clang 11 made '-fno-common' the default, see
-    # - https://gcc.gnu.org/gcc-10/changes.html
-    # - https://releases.llvm.org/11.0.0/tools/clang/docs/ReleaseNotes.html
-    -fno-common
-)
+  -std=c99
+  #-----------------------------------
+  # Configure warnings
+  #-----------------------------------
+  -Wall
+  -Werror
+  -Wstrict-prototypes
+  -Wmissing-prototypes
+  -Wnested-externs
+  -Wmissing-declarations
+  -Wundef
+  -Wpointer-arith
+  -Wno-nonnull
+  #-----------------------------------
+  # Configure compiler settings.
+  #-----------------------------------
+  -nostdinc # Do not use any system include paths, only use those given
+            # explicitly by the "-I <path>" parameters.
+  -ffreestanding # implies "-fno-builtin". Execution will not start at main().
+                 # No assumptions about the meaning of function names from the
+                 # standard library are made, except for memcpy(), memmove(),
+                 # memset() and memcmp(). __builtin_trap() will call abort().
+  -fno-stack-protector
+  -fno-asynchronous-unwind-tables
+  # GCC < 10 and clang < 11 put uninitialized global variables into a 'COMMON'
+  # section unless '-fno-common' is specified. The linker will put anything
+  # from 'COMMON' as the end of the '.bss' if nothing else is specified in the
+  # linker script. Besides making the variable placement look odd, this also
+  # tends to waste a page because we puts large aligned block at the end.
+  # Eventually, GCC 10 and clang 11 made '-fno-common' the default, see
+  # - https://gcc.gnu.org/gcc-10/changes.html
+  # - https://releases.llvm.org/11.0.0/tools/clang/docs/ReleaseNotes.html
+  -fno-common)
 
 # Linker parameters. There are two kinds actually:
 #   - flags processed by GCC when invoking it as linker wrapper
 #   - flags passed by GCC to the actual linker invocation ("-Wl,<flag>").
 string(
-    APPEND CMAKE_EXE_LINKER_FLAGS
-    # KernelCommonFlags adds "-nostdlib", it's the GCC linker step counterpart
-    # for "-ffreestanding" and makes GCC not use the standard system startup
-    # files or libraries. This also excludes GCC's helper library libgcc. Any
-    # libraries that are to be linked must be specified explicitly. Tests have
-    # shown that this parameter doesn't prevent GCC from adding paths from a
-    # "-L <path>" argument to the linker invocation for the standard libs, and
-    # there seems no option that prevents this apart from providing an entirely
-    # different specs file via -specs=<file>. Note that "-Wl,-nostdlib" is not
-    # used here, because it is not needed. It makes the linker use library
-    # directories specified on the command line only and ignore any SEARCH_DIR
-    # set in a linker script. We provide our own linker scripts, and these
-    # don't set SEARCH_DIR.
-    " -static" # Implies "-no-pie" (and overrides "-pie"). The ld 2.37 docs say
-               # "-no-pie" is a linker option, but passing "-Wl,-no-pie" fails.
-    " -Wl,--build-id=none" # Ensure reproducible builds
-    " -Wl,-n" # Disable page alignment of sections
+  APPEND
+  CMAKE_EXE_LINKER_FLAGS
+  # KernelCommonFlags adds "-nostdlib", it's the GCC linker step counterpart
+  # for "-ffreestanding" and makes GCC not use the standard system startup
+  # files or libraries. This also excludes GCC's helper library libgcc. Any
+  # libraries that are to be linked must be specified explicitly. Tests have
+  # shown that this parameter doesn't prevent GCC from adding paths from a
+  # "-L <path>" argument to the linker invocation for the standard libs, and
+  # there seems no option that prevents this apart from providing an entirely
+  # different specs file via -specs=<file>. Note that "-Wl,-nostdlib" is not
+  # used here, because it is not needed. It makes the linker use library
+  # directories specified on the command line only and ignore any SEARCH_DIR
+  # set in a linker script. We provide our own linker scripts, and these
+  # don't set SEARCH_DIR.
+  " -static" # Implies "-no-pie" (and overrides "-pie"). The ld 2.37 docs say
+             # "-no-pie" is a linker option, but passing "-Wl,-no-pie" fails.
+  " -Wl,--build-id=none" # Ensure reproducible builds
+  " -Wl,-n" # Disable page alignment of sections
 )
 
 # Setup kernel specific flags used for both the compilation and linking step
 macro(KernelCommonFlags)
-    foreach(common_flag IN ITEMS ${ARGV})
-        add_compile_options(${common_flag})
-        string(APPEND CMAKE_EXE_LINKER_FLAGS " ${common_flag} ")
-    endforeach()
+  foreach(common_flag IN ITEMS ${ARGV})
+    add_compile_options(${common_flag})
+    string(APPEND CMAKE_EXE_LINKER_FLAGS " ${common_flag} ")
+  endforeach()
 endmacro(KernelCommonFlags)
 
 KernelCommonFlags(
-    ${KernelOptimisation}
-    # The following options are gcc options, it is unclear if ld options are
-    # generated automatically when gcc wraps the linking step and invokes ld.
-    -nostdlib -fno-pic -fno-pie
-)
+  ${KernelOptimisation}
+  # The following options are gcc options, it is unclear if ld options are
+  # generated automatically when gcc wraps the linking step and invokes ld.
+  -nostdlib
+  -fno-pic
+  -fno-pie)
 
 # Disable cloned functions. This is needed for binary verification at -O2.
 if(NOT KernelOptimisationCloneFunctions AND (CMAKE_C_COMPILER_ID STREQUAL "GNU"))
-    KernelCommonFlags(-fno-partial-inlining -fno-ipa-cp -fno-ipa-sra)
+  KernelCommonFlags(-fno-partial-inlining -fno-ipa-cp -fno-ipa-sra)
 endif()
 
 if(KernelFWholeProgram)
-    # KernelFWholeProgram is still an experimental feature and disabled by
-    # default. Clarify if the linker step via GCC actually cares about this
-    # parameter. There are also the options -flto and -fuse-linker-plugin that
-    # might be a more modern approach.
-    KernelCommonFlags(-fwhole-program)
+  # KernelFWholeProgram is still an experimental feature and disabled by
+  # default. Clarify if the linker step via GCC actually cares about this
+  # parameter. There are also the options -flto and -fuse-linker-plugin that
+  # might be a more modern approach.
+  KernelCommonFlags(-fwhole-program)
 endif()
 
 if(KernelDebugBuild)
-    KernelCommonFlags(-DDEBUG -g -ggdb)
-    # Pretend to CMake that we're a release build with debug info. This is because
-    # we do actually allow CMake to do the final link step, so we'd like it not to
-    # strip our binary
-    set(CMAKE_BUILD_TYPE "RelWithDebInfo")
+  KernelCommonFlags(-DDEBUG -g -ggdb)
+  # Pretend to CMake that we're a release build with debug info. This is because
+  # we do actually allow CMake to do the final link step, so we'd like it not to
+  # strip our binary
+  set(CMAKE_BUILD_TYPE "RelWithDebInfo")
 else()
-    set(CMAKE_BUILD_TYPE "Release")
+  set(CMAKE_BUILD_TYPE "Release")
 endif()
 
 if(KernelArchX86)
-    if(KernelSel4ArchX86_64)
-        KernelCommonFlags(-mcmodel=kernel)
-    elseif(KernelSel4ArchIA32)
-        # nothing special
-    else()
-        message(FATAL_ERROR "unknown x86 KernelSel4Arch '${KernelSel4Arch}'")
-    endif()
-    add_compile_options(-mno-mmx -mno-sse -mno-sse2 -mno-3dnow)
+  if(KernelSel4ArchX86_64)
+    KernelCommonFlags(-mcmodel=kernel)
+  elseif(KernelSel4ArchIA32)
+    # nothing special
+  else()
+    message(FATAL_ERROR "unknown x86 KernelSel4Arch '${KernelSel4Arch}'")
+  endif()
+  add_compile_options(-mno-mmx -mno-sse -mno-sse2 -mno-3dnow)
 
 elseif(KernelArchARM)
-    if(KernelSel4ArchAarch64)
-        KernelCommonFlags(-mgeneral-regs-only)
-        if(
-            ((CMAKE_C_COMPILER_ID STREQUAL "GNU")
-             AND (CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL "10.0.0")
-             )
-            OR
-                ((CMAKE_C_COMPILER_ID STREQUAL "Clang")
-                 AND (CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL "12.0.0")
-                 )
-        )
-            add_compile_options(-mno-outline-atomics)
-        endif()
-    elseif(KernelSel4ArchAarch32)
-        KernelCommonFlags(-mfloat-abi=soft)
-    else()
-        message(FATAL_ERROR "unknown ARM KernelSel4Arch '${KernelSel4Arch}'")
+  if(KernelSel4ArchAarch64)
+    KernelCommonFlags(-mgeneral-regs-only)
+    if(((CMAKE_C_COMPILER_ID STREQUAL "GNU") AND (CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL
+                                                  "10.0.0"))
+       OR ((CMAKE_C_COMPILER_ID STREQUAL "Clang") AND (CMAKE_C_COMPILER_VERSION
+                                                       VERSION_GREATER_EQUAL "12.0.0")))
+      add_compile_options(-mno-outline-atomics)
     endif()
+  elseif(KernelSel4ArchAarch32)
+    KernelCommonFlags(-mfloat-abi=soft)
+  else()
+    message(FATAL_ERROR "unknown ARM KernelSel4Arch '${KernelSel4Arch}'")
+  endif()
 
 elseif(KernelArchRiscV)
-    # Group "small" data objects together in a small-data section so they can
-    # be referenced using gp-relative addressing.  The exact value of
-    # small-data-limit is not crucial but it should be lowered if .small
-    # exceeds 4KiB.
-    #
-    KernelCommonFlags(-mcmodel=medany -msmall-data-limit=1024)
+  # Group "small" data objects together in a small-data section so they can
+  # be referenced using gp-relative addressing.  The exact value of
+  # small-data-limit is not crucial but it should be lowered if .small
+  # exceeds 4KiB.
+  #
+  KernelCommonFlags(-mcmodel=medany -msmall-data-limit=1024)
 
 else()
-    message(FATAL_ERROR "unknown KernelArch '${KernelArch}'")
+  message(FATAL_ERROR "unknown KernelArch '${KernelArch}'")
 endif()
 
-if(
-    (CMAKE_C_COMPILER_ID STREQUAL "Clang")
-    AND (CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL "20.0.0")
-)
-    # To avoid clang: error: argument unused during compilation: '-c'
-    add_compile_options(-Wno-unused-command-line-argument)
+if((CMAKE_C_COMPILER_ID STREQUAL "Clang") AND (CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL
+                                               "20.0.0"))
+  # To avoid clang: error: argument unused during compilation: '-c'
+  add_compile_options(-Wno-unused-command-line-argument)
 endif()
 
 # Sort the C sources to ensure a stable layout of the final C file
@@ -324,35 +307,26 @@ list(APPEND c_sources "${KernelDomainSchedule}")
 
 # Add static header includes
 include_directories(
-    "include"
-    "include/${KernelWordSize}"
-    "include/arch/${KernelArch}"
-    "include/arch/${KernelArch}/arch/${KernelWordSize}"
-    "include/plat/${KernelPlatform}"
-    "include/plat/${KernelPlatform}/plat/${KernelWordSize}"
-)
+  "include" "include/${KernelWordSize}" "include/arch/${KernelArch}"
+  "include/arch/${KernelArch}/arch/${KernelWordSize}" "include/plat/${KernelPlatform}"
+  "include/plat/${KernelPlatform}/plat/${KernelWordSize}")
 
 if(KernelArchARM)
-    include_directories(
-        "include/arch/arm/armv/${KernelArmArmV}"
-        "include/arch/arm/armv/${KernelArmArmV}/${KernelWordSize}"
-    )
+  include_directories("include/arch/arm/armv/${KernelArmArmV}"
+                      "include/arch/arm/armv/${KernelArmArmV}/${KernelWordSize}")
 endif()
 
 if(KernelArmMach STREQUAL "exynos")
-    include_directories("include/plat/exynos_common/")
+  include_directories("include/plat/exynos_common/")
 endif()
 
 # Add libsel4 include directories. These are explicitly added instead of calling
 # target_link_libraries(${target} sel4) because we don't want to inherit any
 # other build options from libsel4.
 include_directories(
-    "libsel4/include"
-    "libsel4/arch_include/${KernelArch}"
-    "libsel4/sel4_arch_include/${KernelSel4Arch}"
-    "libsel4/sel4_plat_include/${KernelPlatform}"
-    "libsel4/mode_include/${KernelWordSize}"
-)
+  "libsel4/include" "libsel4/arch_include/${KernelArch}"
+  "libsel4/sel4_arch_include/${KernelSel4Arch}" "libsel4/sel4_plat_include/${KernelPlatform}"
+  "libsel4/mode_include/${KernelWordSize}")
 
 #
 # Config generation
@@ -367,14 +341,8 @@ include_directories($<TARGET_PROPERTY:kernel_autoconf,INTERFACE_INCLUDE_DIRECTOR
 
 # Target for the config / autoconf headers. This is what all the other generated headers
 # can depend upon
-add_custom_target(
-    kernel_config_headers
-    DEPENDS
-        kernel_autoconf_Gen
-        kernel_autoconf
-        kernel_Config
-        kernel_Gen
-)
+add_custom_target(kernel_config_headers DEPENDS kernel_autoconf_Gen kernel_autoconf kernel_Config
+                                                kernel_Gen)
 
 # Target for all generated headers. We start with just all the config / autoconf headers
 add_custom_target(kernel_headers DEPENDS kernel_config_headers)
@@ -391,14 +359,8 @@ list(APPEND gen_files_list "${gen_files2}")
 # Kernel compiles all C sources as a single C file, this provides
 # rules for doing the concatenation
 
-add_custom_command(
-    OUTPUT kernel_all.c
-    COMMAND
-        "${CPP_GEN_PATH}" ${c_sources} > kernel_all.c
-    DEPENDS "${CPP_GEN_PATH}" ${c_sources}
-    COMMENT "Concatenating C files"
-    VERBATIM
-)
+add_custom_command(OUTPUT kernel_all.c COMMAND "${CPP_GEN_PATH}" ${c_sources} > kernel_all.c
+                   DEPENDS "${CPP_GEN_PATH}" ${c_sources} COMMENT "Concatenating C files" VERBATIM)
 
 add_custom_target(kernel_all_c_wrapper DEPENDS kernel_all.c)
 
@@ -413,88 +375,66 @@ add_custom_target(kernel_all_c_wrapper DEPENDS kernel_all.c)
 set(xml_headers "")
 set(header_dest "gen_headers/arch/api/invocation.h")
 gen_invocation_header(
-    OUTPUT ${header_dest}
-    XML
-        ${CMAKE_CURRENT_SOURCE_DIR}/libsel4/arch_include/${KernelArch}/interfaces/object-api-arch.xml
-    ARCH
-)
+  OUTPUT ${header_dest}
+  XML ${CMAKE_CURRENT_SOURCE_DIR}/libsel4/arch_include/${KernelArch}/interfaces/object-api-arch.xml
+  ARCH)
 list(APPEND xml_headers "${header_dest}")
 list(APPEND gen_files_list "${header_dest}")
 
 set(header_dest "gen_headers/arch/api/sel4_invocation.h")
 gen_invocation_header(
-    OUTPUT "${header_dest}"
-    XML
-        "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/sel4_arch_include/${KernelSel4Arch}/interfaces/object-api-sel4-arch.xml"
-    SEL4ARCH
-)
+  OUTPUT "${header_dest}"
+  XML "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/sel4_arch_include/${KernelSel4Arch}/interfaces/object-api-sel4-arch.xml"
+  SEL4ARCH)
 list(APPEND xml_headers "${header_dest}")
 list(APPEND gen_files_list "${header_dest}")
 
 set(header_dest "gen_headers/api/invocation.h")
-gen_invocation_header(
-    OUTPUT "${header_dest}"
-    XML "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/include/interfaces/object-api.xml"
-)
+gen_invocation_header(OUTPUT "${header_dest}"
+                      XML "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/include/interfaces/object-api.xml")
 list(APPEND xml_headers "${header_dest}")
 list(APPEND gen_files_list "${header_dest}")
 
 get_absolute_source_or_binary(
-    invocations_absolute "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/include/interfaces/object-api.xml"
-)
+  invocations_absolute "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/include/interfaces/object-api.xml")
 get_absolute_source_or_binary(
-    arch_invocations_absolute
-    "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/arch_include/${KernelArch}/interfaces/object-api-arch.xml"
-)
+  arch_invocations_absolute
+  "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/arch_include/${KernelArch}/interfaces/object-api-arch.xml")
 get_absolute_source_or_binary(
-    sel4_arch_invocations_absolute
-    "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/sel4_arch_include/${KernelSel4Arch}/interfaces/object-api-sel4-arch.xml"
+  sel4_arch_invocations_absolute
+  "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/sel4_arch_include/${KernelSel4Arch}/interfaces/object-api-sel4-arch.xml"
 )
 
 add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/generated/invocations_all.json
-    COMMAND rm -f ${CMAKE_CURRENT_BINARY_DIR}/generated/invocations_all.json
-    COMMAND
-        "${PYTHON3}" "${INVOCATION_JSON_GEN_PATH}"
-        --gen_config ${CMAKE_CURRENT_BINARY_DIR}/gen_config/kernel/gen_config.json
-        --invocations "${invocations_absolute}"
-        --arch_invocations "${arch_invocations_absolute}"
-        --sel4_arch_invocations "${sel4_arch_invocations_absolute}"
-        --dest ${CMAKE_CURRENT_BINARY_DIR}/generated/invocations_all.json
-    DEPENDS
-        "${CMAKE_CURRENT_BINARY_DIR}/gen_config/kernel/gen_config.json"
-        "${INVOCATION_JSON_GEN_PATH}"
-        "${invocations_absolute}"
-        "${arch_invocations_absolute}"
-        "${sel4_arch_invocations_absolute}"
-)
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/generated/invocations_all.json
+  COMMAND rm -f ${CMAKE_CURRENT_BINARY_DIR}/generated/invocations_all.json
+  COMMAND
+    "${PYTHON3}" "${INVOCATION_JSON_GEN_PATH}" --gen_config
+    ${CMAKE_CURRENT_BINARY_DIR}/gen_config/kernel/gen_config.json --invocations
+    "${invocations_absolute}" --arch_invocations "${arch_invocations_absolute}"
+    --sel4_arch_invocations "${sel4_arch_invocations_absolute}" --dest
+    ${CMAKE_CURRENT_BINARY_DIR}/generated/invocations_all.json
+  DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/gen_config/kernel/gen_config.json"
+          "${INVOCATION_JSON_GEN_PATH}" "${invocations_absolute}" "${arch_invocations_absolute}"
+          "${sel4_arch_invocations_absolute}")
 list(APPEND gen_files_list "generated/invocations_all.json")
 
 set(syscall_xml_base "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/include/api")
 set(syscall_dest "gen_headers/arch/api/syscall.h")
 if(KernelIsMCS)
-    set(mcs --mcs)
+  set(mcs --mcs)
 endif()
 add_custom_command(
-    OUTPUT ${syscall_dest}
-    COMMAND
-        "${XMLLINT_PATH}"
-        --noout
-        --schema "${syscall_xml_base}/syscall.xsd" "${syscall_xml_base}/syscall.xml"
-    COMMAND
-        ${CMAKE_COMMAND} -E remove -f "${syscall_dest}"
-    COMMAND
-        ${PYTHON3} "${SYSCALL_ID_GEN_PATH}"
-        --xml "${syscall_xml_base}/syscall.xml"
-        --kernel_header "${syscall_dest}" ${mcs}
-    DEPENDS
-        "${XMLLINT_PATH}"
-        "${SYSCALL_ID_GEN_PATH}"
-        "${syscall_xml_base}/syscall.xsd"
-        "${syscall_xml_base}/syscall.xml"
-    COMMENT "Generate syscall invocations"
-    VERBATIM
-)
+  OUTPUT ${syscall_dest}
+  COMMAND "${XMLLINT_PATH}" --noout --schema "${syscall_xml_base}/syscall.xsd"
+          "${syscall_xml_base}/syscall.xml"
+  COMMAND ${CMAKE_COMMAND} -E remove -f "${syscall_dest}"
+  COMMAND ${PYTHON3} "${SYSCALL_ID_GEN_PATH}" --xml "${syscall_xml_base}/syscall.xml"
+          --kernel_header "${syscall_dest}" ${mcs}
+  DEPENDS "${XMLLINT_PATH}" "${SYSCALL_ID_GEN_PATH}" "${syscall_xml_base}/syscall.xsd"
+          "${syscall_xml_base}/syscall.xml"
+  COMMENT "Generate syscall invocations"
+  VERBATIM)
 list(APPEND xml_headers "${syscall_dest}")
 list(APPEND gen_files_list "${syscall_dest}")
 # Construct target for just the xml headers
@@ -522,48 +462,25 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}/gen_headers")
 
 set(dummy_headers "")
 foreach(bf_dec ${bf_declarations})
-    string(
-        REPLACE
-            ":"
-            ";"
-            bf_dec
-            ${bf_dec}
-    )
-    list(GET bf_dec 0 bf_file)
-    list(GET bf_dec 1 bf_gen_dir)
-    get_filename_component(bf_name "${bf_file}" NAME)
-    string(
-        REPLACE
-            ".bf"
-            "_gen.h"
-            bf_target
-            "${bf_name}"
-    )
-    list(
-        APPEND
-            dummy_headers "${CMAKE_CURRENT_BINARY_DIR}/generated_prune/${bf_gen_dir}/${bf_target}"
-    )
+  string(REPLACE ":" ";" bf_dec ${bf_dec})
+  list(GET bf_dec 0 bf_file)
+  list(GET bf_dec 1 bf_gen_dir)
+  get_filename_component(bf_name "${bf_file}" NAME)
+  string(REPLACE ".bf" "_gen.h" bf_target "${bf_name}")
+  list(APPEND dummy_headers
+       "${CMAKE_CURRENT_BINARY_DIR}/generated_prune/${bf_gen_dir}/${bf_target}")
 endforeach()
 
-add_custom_command(
-    OUTPUT ${dummy_headers}
-    COMMAND
-        ${CMAKE_COMMAND} -E touch ${dummy_headers}
-    COMMENT "Generate dummy headers for prune compilation"
-)
+add_custom_command(OUTPUT ${dummy_headers} COMMAND ${CMAKE_COMMAND} -E touch ${dummy_headers}
+                   COMMENT "Generate dummy headers for prune compilation")
 
 add_custom_target(dummy_header_wrapper DEPENDS ${dummy_headers})
 
 cppfile(
-    kernel_all_pp_prune.c kernel_all_pp_prune_wrapper kernel_all.c
-    EXTRA_FLAGS -CC "-I${CMAKE_CURRENT_BINARY_DIR}/generated_prune"
-    EXTRA_DEPS
-        kernel_all_c_wrapper
-        dummy_header_wrapper
-        xml_headers_target
-        kernel_config_headers
-        ${gen_files_list}
-)
+  kernel_all_pp_prune.c kernel_all_pp_prune_wrapper kernel_all.c
+  EXTRA_FLAGS -CC "-I${CMAKE_CURRENT_BINARY_DIR}/generated_prune"
+  EXTRA_DEPS kernel_all_c_wrapper dummy_header_wrapper xml_headers_target kernel_config_headers
+             ${gen_files_list})
 
 #
 # Bitfield header generation
@@ -573,81 +490,38 @@ cppfile(
 set(bf_gen_target "kernel_bf_gen_target_1")
 
 foreach(bf_dec ${bf_declarations})
-    string(
-        REPLACE
-            ":"
-            ";"
-            bf_dec
-            ${bf_dec}
-    )
-    list(GET bf_dec 0 bf_file)
-    list(GET bf_dec 1 bf_gen_dir)
-    get_filename_component(bf_name "${bf_file}" NAME)
-    string(
-        REPLACE
-            ".bf"
-            "_gen.h"
-            bf_target
-            "${bf_name}"
-    )
-    string(
-        REPLACE
-            ".bf"
-            "_defs.thy"
-            defs_target
-            "${bf_name}"
-    )
-    string(
-        REPLACE
-            ".bf"
-            "_proofs.thy"
-            proofs_target
-            "${bf_name}"
-    )
-    set(pbf_name "generated/${bf_gen_dir}/${bf_name}.pbf")
-    set(pbf_target "${bf_gen_target}_pbf")
-    cppfile(
-        "${pbf_name}" "${pbf_target}" "${bf_file}"
-        EXTRA_FLAGS -P
-        EXTRA_DEPS kernel_config_headers ${gen_files_list}
-    )
-    GenHBFTarget(
-        ""
-        ${bf_gen_target}
-        "generated/${bf_gen_dir}/${bf_target}"
-        "${pbf_name}"
-        "${pbf_target}"
-        "kernel_all_pp_prune.c"
-        "kernel_all_pp_prune_wrapper"
-        "${bf_file}"
-    )
-    GenDefsBFTarget(
-        "${bf_gen_target}_def"
-        "generated/${bf_gen_dir}/${defs_target}"
-        "${pbf_name}"
-        "${pbf_target}"
-        "kernel_all_pp_prune.c"
-        "kernel_all_pp_prune_wrapper"
-    )
-    GenProofsBFTarget(
-        "${bf_gen_target}_proof"
-        "generated/${bf_gen_dir}/${proofs_target}"
-        "${pbf_name}"
-        "${pbf_target}"
-        "kernel_all_pp_prune.c"
-        "kernel_all_pp_prune_wrapper"
-    )
-    list(
-        APPEND
-            theories_deps
-            "${bf_gen_target}_def"
-            "${CMAKE_CURRENT_BINARY_DIR}/generated/${bf_gen_dir}/${defs_target}"
-            "${bf_gen_target}_proof"
-            "${CMAKE_CURRENT_BINARY_DIR}/generated/${bf_gen_dir}/${proofs_target}"
-    )
-    add_dependencies(kernel_headers "${bf_gen_target}")
-    list(APPEND gen_files_list "${CMAKE_CURRENT_BINARY_DIR}/generated/${bf_gen_dir}/${bf_target}")
-    set(bf_gen_target "${bf_gen_target}1")
+  string(REPLACE ":" ";" bf_dec ${bf_dec})
+  list(GET bf_dec 0 bf_file)
+  list(GET bf_dec 1 bf_gen_dir)
+  get_filename_component(bf_name "${bf_file}" NAME)
+  string(REPLACE ".bf" "_gen.h" bf_target "${bf_name}")
+  string(REPLACE ".bf" "_defs.thy" defs_target "${bf_name}")
+  string(REPLACE ".bf" "_proofs.thy" proofs_target "${bf_name}")
+  set(pbf_name "generated/${bf_gen_dir}/${bf_name}.pbf")
+  set(pbf_target "${bf_gen_target}_pbf")
+  cppfile("${pbf_name}" "${pbf_target}" "${bf_file}" EXTRA_FLAGS -P EXTRA_DEPS kernel_config_headers
+                                                                               ${gen_files_list})
+  GenHBFTarget(
+    ""
+    ${bf_gen_target}
+    "generated/${bf_gen_dir}/${bf_target}"
+    "${pbf_name}"
+    "${pbf_target}"
+    "kernel_all_pp_prune.c"
+    "kernel_all_pp_prune_wrapper"
+    "${bf_file}")
+  GenDefsBFTarget("${bf_gen_target}_def" "generated/${bf_gen_dir}/${defs_target}" "${pbf_name}"
+                  "${pbf_target}" "kernel_all_pp_prune.c" "kernel_all_pp_prune_wrapper")
+  GenProofsBFTarget(
+    "${bf_gen_target}_proof" "generated/${bf_gen_dir}/${proofs_target}" "${pbf_name}"
+    "${pbf_target}" "kernel_all_pp_prune.c" "kernel_all_pp_prune_wrapper")
+  list(
+    APPEND theories_deps "${bf_gen_target}_def"
+    "${CMAKE_CURRENT_BINARY_DIR}/generated/${bf_gen_dir}/${defs_target}" "${bf_gen_target}_proof"
+    "${CMAKE_CURRENT_BINARY_DIR}/generated/${bf_gen_dir}/${proofs_target}")
+  add_dependencies(kernel_headers "${bf_gen_target}")
+  list(APPEND gen_files_list "${CMAKE_CURRENT_BINARY_DIR}/generated/${bf_gen_dir}/${bf_target}")
+  set(bf_gen_target "${bf_gen_target}1")
 endforeach()
 # At this point we have generated a bunch of headers into ${CMAKE_CURRENT_BINARY_DIR}/generated
 # but we do not pass this to include_directories, as that will cause it to be an include directory
@@ -661,49 +535,41 @@ set(CPPExtraFlags "-I${CMAKE_CURRENT_BINARY_DIR}/generated")
 #
 
 cppfile(
-    kernel_all.i kernel_i_wrapper kernel_all.c
-    EXTRA_DEPS kernel_all_c_wrapper kernel_headers ${gen_files_list}
-    EXTRA_FLAGS
-        -CC "${CPPExtraFlags}"
-        # The circular_includes script relies upon parsing out exactly 'kernel_all_copy.c' as
-        # a special case so we must ask cppfile to use this input name
-    EXACT_NAME kernel_all_copy.c
-)
+  kernel_all.i kernel_i_wrapper kernel_all.c
+  EXTRA_DEPS kernel_all_c_wrapper kernel_headers ${gen_files_list}
+  EXTRA_FLAGS
+    -CC "${CPPExtraFlags}"
+    # The circular_includes script relies upon parsing out exactly 'kernel_all_copy.c' as
+    # a special case so we must ask cppfile to use this input name
+  EXACT_NAME kernel_all_copy.c)
 
 # Explain to cmake that our object file is actually a C input file
 set_property(SOURCE kernel_all.i PROPERTY LANGUAGE C)
 
 if(KernelArchARM)
-    set(linker_source "src/arch/arm/common_arm.lds")
+  set(linker_source "src/arch/arm/common_arm.lds")
 elseif(KernelArchRiscV)
-    set(linker_source "src/arch/riscv/common_riscv.lds")
+  set(linker_source "src/arch/riscv/common_riscv.lds")
 else()
-    set(linker_source "src/plat/${KernelPlatform}/linker.lds")
+  set(linker_source "src/plat/${KernelPlatform}/linker.lds")
 endif()
 set(linker_lds_path "${CMAKE_CURRENT_BINARY_DIR}/linker.lds_pp")
 
 # Preprocess the linker script
-cppfile(
-    "${linker_lds_path}" linker_ld_wrapper "${linker_source}"
-    EXTRA_DEPS kernel_headers ${gen_files_list}
-    EXTRA_FLAGS -CC -P "${CPPExtraFlags}"
-)
+cppfile("${linker_lds_path}" linker_ld_wrapper "${linker_source}" EXTRA_DEPS kernel_headers
+                                                                             ${gen_files_list}
+        EXTRA_FLAGS -CC -P "${CPPExtraFlags}")
 
 add_custom_command(
-    OUTPUT circular_includes_valid
-    COMMAND ${PYTHON3} ${CIRCULAR_INCLUDES} --ignore kernel_all_copy.c < kernel_all.i
-    COMMAND touch circular_includes_valid
-    DEPENDS kernel_i_wrapper kernel_all.i
-)
+  OUTPUT circular_includes_valid COMMAND ${PYTHON3} ${CIRCULAR_INCLUDES} --ignore kernel_all_copy.c
+                                         < kernel_all.i COMMAND touch circular_includes_valid
+  DEPENDS kernel_i_wrapper kernel_all.i)
 
 add_custom_target(circular_includes DEPENDS circular_includes_valid)
 
 add_custom_command(
-    OUTPUT kernel_all_pp.c
-    COMMAND
-        ${CMAKE_COMMAND} -E copy kernel_all.i kernel_all_pp.c
-    DEPENDS kernel_i_wrapper kernel_all.i
-)
+  OUTPUT kernel_all_pp.c COMMAND ${CMAKE_COMMAND} -E copy kernel_all.i kernel_all_pp.c
+  DEPENDS kernel_i_wrapper kernel_all.i)
 add_custom_target(kernel_all_pp_wrapper DEPENDS kernel_all_pp.c)
 
 add_custom_target(kernel_theories DEPENDS ${theories_deps})
@@ -732,56 +598,54 @@ add_dependencies(kernel.elf circular_includes)
 # imported in another project.
 if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
 
-    # Import libsel4 to get access to generation targets
-    add_subdirectory(libsel4)
-    # Add a default target that builds kernel.elf and generates all libsel4 headers
-    add_custom_target(single-project ALL DEPENDS sel4_generated kernel.elf)
-    # Disable the libsel4.a target as we don't intend to build the libsel4 sources
-    set_target_properties(sel4 PROPERTIES EXCLUDE_FROM_ALL ON)
-    # Install kernel.elf to bin/kernel.elf
-    install(TARGETS kernel.elf RUNTIME DESTINATION bin)
-    # Install all libsel4 headers to libsel4/include
-    # If building for aarch32,hyp explicitly use aarch32 for sel4arch path
-    # otherwise the install command tries to install the arm_hyp symlink file
-    # instead of its realpath.
-    set(realpath_sel4arch "${KernelSel4Arch}")
-    if(KernelSel4ArchArmHyp)
-        set(realpath_sel4arch "aarch32")
-    endif()
-    install(
-        DIRECTORY
-            "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/include/"
-            "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/arch_include/${KernelArch}/"
-            "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/sel4_arch_include/${realpath_sel4arch}/"
-            "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/sel4_plat_include/${KernelPlatform}/"
-            "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/mode_include/${KernelWordSize}/"
-            "${CMAKE_CURRENT_BINARY_DIR}/libsel4/include/"
-            "${CMAKE_CURRENT_BINARY_DIR}/libsel4/arch_include/${KernelArch}/"
-            "${CMAKE_CURRENT_BINARY_DIR}/libsel4/sel4_arch_include/${realpath_sel4arch}/"
-            # The following directories install the autoconf headers
-            "${CMAKE_CURRENT_BINARY_DIR}/gen_config/"
-            "${CMAKE_CURRENT_BINARY_DIR}/libsel4/gen_config/"
-            "${CMAKE_CURRENT_BINARY_DIR}/libsel4/autoconf/"
-        DESTINATION libsel4/include
-        FILES_MATCHING
-        PATTERN "*.h"
-        PATTERN "*.pbf"
-        PATTERN "api/syscall.xml"
-        PATTERN "api/syscall.xsd"
-        PATTERN "object-api*.xml"
-        PATTERN "gen_config.json"
-    )
-    # Install libsel4 sources to libsel4/src
-    install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/src/" DESTINATION libsel4/src)
-    # Install additional support files
-    if(DEFINED KernelDTBPath)
-        install(FILES ${KernelDTBPath} DESTINATION support)
-    endif()
-    if(DEFINED platform_yaml)
-        install(FILES ${platform_yaml} DESTINATION support)
-    endif()
-    if(DEFINED platform_json)
-        install(FILES ${platform_json} DESTINATION support)
-    endif()
+  # Import libsel4 to get access to generation targets
+  add_subdirectory(libsel4)
+  # Add a default target that builds kernel.elf and generates all libsel4 headers
+  add_custom_target(single-project ALL DEPENDS sel4_generated kernel.elf)
+  # Disable the libsel4.a target as we don't intend to build the libsel4 sources
+  set_target_properties(sel4 PROPERTIES EXCLUDE_FROM_ALL ON)
+  # Install kernel.elf to bin/kernel.elf
+  install(TARGETS kernel.elf RUNTIME DESTINATION bin)
+  # Install all libsel4 headers to libsel4/include
+  # If building for aarch32,hyp explicitly use aarch32 for sel4arch path
+  # otherwise the install command tries to install the arm_hyp symlink file
+  # instead of its realpath.
+  set(realpath_sel4arch "${KernelSel4Arch}")
+  if(KernelSel4ArchArmHyp)
+    set(realpath_sel4arch "aarch32")
+  endif()
+  install(
+    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/include/"
+              "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/arch_include/${KernelArch}/"
+              "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/sel4_arch_include/${realpath_sel4arch}/"
+              "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/sel4_plat_include/${KernelPlatform}/"
+              "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/mode_include/${KernelWordSize}/"
+              "${CMAKE_CURRENT_BINARY_DIR}/libsel4/include/"
+              "${CMAKE_CURRENT_BINARY_DIR}/libsel4/arch_include/${KernelArch}/"
+              "${CMAKE_CURRENT_BINARY_DIR}/libsel4/sel4_arch_include/${realpath_sel4arch}/"
+              # The following directories install the autoconf headers
+              "${CMAKE_CURRENT_BINARY_DIR}/gen_config/"
+              "${CMAKE_CURRENT_BINARY_DIR}/libsel4/gen_config/"
+              "${CMAKE_CURRENT_BINARY_DIR}/libsel4/autoconf/"
+    DESTINATION libsel4/include
+    FILES_MATCHING
+    PATTERN "*.h"
+    PATTERN "*.pbf"
+    PATTERN "api/syscall.xml"
+    PATTERN "api/syscall.xsd"
+    PATTERN "object-api*.xml"
+    PATTERN "gen_config.json")
+  # Install libsel4 sources to libsel4/src
+  install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/src/" DESTINATION libsel4/src)
+  # Install additional support files
+  if(DEFINED KernelDTBPath)
+    install(FILES ${KernelDTBPath} DESTINATION support)
+  endif()
+  if(DEFINED platform_yaml)
+    install(FILES ${platform_yaml} DESTINATION support)
+  endif()
+  if(DEFINED platform_json)
+    install(FILES ${platform_json} DESTINATION support)
+  endif()
 
 endif()
