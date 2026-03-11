@@ -92,12 +92,10 @@ deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
         ret.status = EXCEPTION_NONE;
         return ret;
 #endif
-#ifdef CONFIG_ALLOW_SMC_CALLS
     case cap_smc_cap:
         ret.cap = cap;
         ret.status = EXCEPTION_NONE;
         return ret;
-#endif
     default:
         /* This assert has no equivalent in haskell,
          * as the options are restricted by type */
@@ -107,7 +105,6 @@ deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
 
 cap_t CONST Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
 {
-#ifdef CONFIG_ALLOW_SMC_CALLS
     if (cap_get_capType(cap) == cap_smc_cap) {
         if (!preserve && cap_smc_cap_get_capSMCBadge(cap) == 0) {
             return cap_smc_cap_set_capSMCBadge(cap, data);
@@ -115,11 +112,8 @@ cap_t CONST Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
             return cap_null_cap_new();
         }
     } else {
-#endif
         return cap;
-#ifdef CONFIG_ALLOW_SMC_CALLS
     }
-#endif
 }
 
 cap_t CONST Arch_maskCapRights(seL4_CapRights_t cap_rights_mask, cap_t cap)
@@ -300,13 +294,11 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
         }
         break;
 #endif
-#ifdef CONFIG_ALLOW_SMC_CALLS
     case cap_smc_cap:
         if (cap_get_capType(cap_b) == cap_smc_cap) {
             return true;
         }
         break;
-#endif
     }
     return false;
 }
@@ -497,11 +489,6 @@ exception_t Arch_decodeInvocation(word_t label, word_t length, cptr_t cptr,
                                   cte_t *slot, cap_t cap,
                                   bool_t call, word_t *buffer)
 {
-
-    /* The C parser cannot handle a switch statement with only a default
-     * case. So we need to do some gymnastics to remove the switch if
-     * there are no other cases */
-#if defined(CONFIG_ARM_HYPERVISOR_SUPPORT) || defined(CONFIG_ARM_SMMU) || defined(CONFIG_ALLOW_SMC_CALLS) || !defined(CONFIG_ENABLE_SMP_SUPPORT)
     switch (cap_get_capType(cap)) {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case cap_vcpu_cap:
@@ -521,20 +508,15 @@ exception_t Arch_decodeInvocation(word_t label, word_t length, cptr_t cptr,
     case cap_cb_cap:
         return decodeARMCBInvocation(label, length, cptr, slot, cap, call, buffer);
 #endif /*CONFIG_ARM_SMMU*/
-#ifdef CONFIG_ALLOW_SMC_CALLS
     case cap_smc_cap:
         return decodeARMSMCInvocation(label, length, cap, call, buffer);
-#endif
     default:
-#else
-{
-#endif
-    return decodeARMMMUInvocation(label, length, cptr, slot, cap, call, buffer);
-}
+        return decodeARMMMUInvocation(label, length, cptr, slot, cap, call, buffer);
+    }
 }
 
-void
-Arch_prepareThreadDelete(tcb_t * thread) {
+void Arch_prepareThreadDelete(tcb_t *thread)
+{
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     if (thread->tcbArch.tcbVCPU) {
         dissociateVCPUTCB(thread->tcbArch.tcbVCPU, thread);

@@ -164,7 +164,7 @@ BOOT_CODE static void init_smmu(cap_t root_cnode_cap)
 
 #endif
 
-#ifdef CONFIG_ALLOW_SMC_CALLS
+#ifdef CONFIG_ARCH_AARCH64
 BOOT_CODE static void init_smc(cap_t root_cnode_cap)
 {
     /* Provide the SMC cap*/
@@ -451,7 +451,7 @@ static BOOT_CODE bool_t try_init_kernel(
     /* initialise the SMMU and provide the SMMU control caps*/
     init_smmu(root_cnode_cap);
 #endif
-#ifdef CONFIG_ALLOW_SMC_CALLS
+#ifdef CONFIG_ARCH_AARCH64
     init_smc(root_cnode_cap);
 #endif
 

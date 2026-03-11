@@ -10,6 +10,7 @@ add_sources(
     DEP "KernelSel4ArchAarch64"
     PREFIX src/arch/arm/64
     CFILES object/objecttype.c
+           object/smc.c
            machine/capdl.c
            machine/registerset.c
            machine/fpu.c
