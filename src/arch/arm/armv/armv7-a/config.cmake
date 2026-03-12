@@ -5,8 +5,5 @@
 #
 
 add_sources(
-    DEP "KernelArchArmV7a"
-    PREFIX src/arch/arm/armv/armv7-a
-    CFILES cache.c user_access.c tlb.c
-    ASMFILES machine_asm.S
-)
+  DEP "KernelArchArmV7a" PREFIX src/arch/arm/armv/armv7-a CFILES cache.c user_access.c tlb.c
+  ASMFILES machine_asm.S)
