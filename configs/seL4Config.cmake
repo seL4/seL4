@@ -3,6 +3,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-only
 #
+cmake_minimum_required(VERSION 3.16.0)
 
 set(KERNEL_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}/..")
 
@@ -21,8 +22,8 @@ include(${KERNEL_ROOT_DIR}/tools/helpers.cmake)
 # helper macro to unify messages printed output
 # Usage example: print_message_multiple_options_helper("architectures" aarch32)
 macro(print_message_multiple_options_helper str_type default_str)
-    message(STATUS "platform ${KernelPlatform} supports multiple ${str_type}, none was given")
-    message(STATUS "  defaulting to: ${default_str}")
+  message(STATUS "platform ${KernelPlatform} supports multiple ${str_type}, none was given")
+  message(STATUS "  defaulting to: ${default_str}")
 endmacro()
 
 # This macro is used by platforms to declare which seL4 architecture(s) they
@@ -31,81 +32,57 @@ endmacro()
 # element is used.
 # Usage example: declare_seL4_arch("aarch64" "aarch32")
 macro(declare_seL4_arch)
-    # Since this is a macro and not a function, ARGV is not a real variable. One
-    # must be created to be able iterate over it.
-    set(_arch_list "${ARGV}")
-    if(NOT KernelSel4Arch)
-        # Use first architecture from list as default.
-        list(GET _arch_list 0 _default_KernelSel4Arch)
-        print_message_multiple_options_helper("architectures" "${_default_KernelSel4Arch}")
-        set(KernelSel4Arch
-            "${_default_KernelSel4Arch}"
-            CACHE STRING "" FORCE
-        )
-    elseif(NOT "${KernelSel4Arch}" IN_LIST _arch_list)
-        message(FATAL_ERROR "KernelSel4Arch '${KernelSel4Arch}' not in '${_arch_list}'")
-    endif()
+  # Since this is a macro and not a function, ARGV is not a real variable. One
+  # must be created to be able iterate over it.
+  set(_arch_list "${ARGV}")
+  if(NOT KernelSel4Arch)
+    # Use first architecture from list as default.
+    list(GET _arch_list 0 _default_KernelSel4Arch)
+    print_message_multiple_options_helper("architectures" "${_default_KernelSel4Arch}")
+    set(KernelSel4Arch "${_default_KernelSel4Arch}" CACHE STRING "" FORCE)
+  elseif(NOT "${KernelSel4Arch}" IN_LIST _arch_list)
+    message(FATAL_ERROR "KernelSel4Arch '${KernelSel4Arch}' not in '${_arch_list}'")
+  endif()
 
-    config_choice(
-        KernelSel4Arch
-        SEL4_ARCH
-        "Architecture mode for building the kernel"
-        "aarch32;KernelSel4ArchAarch32;ARCH_AARCH32"
-        "aarch64;KernelSel4ArchAarch64;ARCH_AARCH64"
-        "arm_hyp;KernelSel4ArchArmHyp;ARCH_ARM_HYP"
-        "riscv32;KernelSel4ArchRiscV32;ARCH_RISCV32"
-        "riscv64;KernelSel4ArchRiscV64;ARCH_RISCV64"
-        "x86_64;KernelSel4ArchX86_64;ARCH_X86_64"
-        "ia32;KernelSel4ArchIA32;ARCH_IA32"
-    )
+  config_choice(
+    KernelSel4Arch
+    SEL4_ARCH
+    "Architecture mode for building the kernel"
+    "aarch32;KernelSel4ArchAarch32;ARCH_AARCH32"
+    "aarch64;KernelSel4ArchAarch64;ARCH_AARCH64"
+    "arm_hyp;KernelSel4ArchArmHyp;ARCH_ARM_HYP"
+    "riscv32;KernelSel4ArchRiscV32;ARCH_RISCV32"
+    "riscv64;KernelSel4ArchRiscV64;ARCH_RISCV64"
+    "x86_64;KernelSel4ArchX86_64;ARCH_X86_64"
+    "ia32;KernelSel4ArchIA32;ARCH_IA32")
 
-    if(KernelSel4ArchArmHyp)
-        # arm-hyp is basically aarch32. This should be cleaned up and aligned
-        # with other architectures, where hypervisor support is an additional
-        # flag. The main blocker here is updating the verification flow.
-        config_set(KernelSel4ArchAarch32 ARCH_AARCH32 ON)
-    endif()
+  if(KernelSel4ArchArmHyp)
+    # arm-hyp is basically aarch32. This should be cleaned up and aligned
+    # with other architectures, where hypervisor support is an additional
+    # flag. The main blocker here is updating the verification flow.
+    config_set(KernelSel4ArchAarch32 ARCH_AARCH32 ON)
+  endif()
 
-    config_choice(
-        KernelArch
-        ARCH
-        "Architecture to use when building the kernel"
-        "arm;KernelArchARM;ARCH_ARM;KernelSel4ArchAarch32 OR KernelSel4ArchAarch64"
-        "riscv;KernelArchRiscV;ARCH_RISCV;KernelSel4ArchRiscV32 OR KernelSel4ArchRiscV64"
-        "x86;KernelArchX86;ARCH_X86;KernelSel4ArchX86_64 OR KernelSel4ArchIA32"
-    )
+  config_choice(
+    KernelArch
+    ARCH
+    "Architecture to use when building the kernel"
+    "arm;KernelArchARM;ARCH_ARM;KernelSel4ArchAarch32 OR KernelSel4ArchAarch64"
+    "riscv;KernelArchRiscV;ARCH_RISCV;KernelSel4ArchRiscV32 OR KernelSel4ArchRiscV64"
+    "x86;KernelArchX86;ARCH_X86;KernelSel4ArchX86_64 OR KernelSel4ArchIA32")
 
-    # Set kernel mode options
-    if(KernelSel4ArchAarch32
-       OR KernelSel4ArchRiscV32
-       OR KernelSel4ArchIA32
-    )
-        config_set(KernelWordSize WORD_SIZE 32)
-        set(Kernel64
-            OFF
-            CACHE INTERNAL ""
-        )
-        set(Kernel32
-            ON
-            CACHE INTERNAL ""
-        )
-    elseif(
-        KernelSel4ArchAarch64
-        OR KernelSel4ArchRiscV64
-        OR KernelSel4ArchX86_64
-    )
-        config_set(KernelWordSize WORD_SIZE 64)
-        set(Kernel64
-            ON
-            CACHE INTERNAL ""
-        )
-        set(Kernel32
-            OFF
-            CACHE INTERNAL ""
-        )
-    else()
-        message(FATAL_ERROR "unsupported seL4 architecture: '${KernelSel4Arch}'")
-    endif()
+  # Set kernel mode options
+  if(KernelSel4ArchAarch32 OR KernelSel4ArchRiscV32 OR KernelSel4ArchIA32)
+    config_set(KernelWordSize WORD_SIZE 32)
+    set(Kernel64 OFF CACHE INTERNAL "")
+    set(Kernel32 ON CACHE INTERNAL "")
+  elseif(KernelSel4ArchAarch64 OR KernelSel4ArchRiscV64 OR KernelSel4ArchX86_64)
+    config_set(KernelWordSize WORD_SIZE 64)
+    set(Kernel64 ON CACHE INTERNAL "")
+    set(Kernel32 OFF CACHE INTERNAL "")
+  else()
+    message(FATAL_ERROR "unsupported seL4 architecture: '${KernelSel4Arch}'")
+  endif()
 endmacro()
 
 # Register a platform's config options to be set if it is selected.
@@ -118,33 +95,24 @@ endmacro()
 # enable_test: A CMake boolean formula that allows the option to be selected.
 #     e.g. "KernelSel4ArchAarch32", or "KernelSel4ArchX86_64 OR KernelSel4ArchIA32"
 macro(declare_platform name config1 config2 enable_test)
-    list(APPEND kernel_platforms "${name}\;${config1}\;${config2}\;${enable_test}")
-    if("${KernelPlatform}" STREQUAL ${name})
-        set(${config1}
-            ON
-            CACHE INTERNAL "" FORCE
-        )
-        # Write KernelPlatform into the cache in case it is only a local variable
-        set(KernelPlatform
-            ${KernelPlatform}
-            CACHE STRING ""
-        )
-    else()
-        set(${config1}
-            OFF
-            CACHE INTERNAL "" FORCE
-        )
-    endif()
+  list(APPEND kernel_platforms "${name}\;${config1}\;${config2}\;${enable_test}")
+  if("${KernelPlatform}" STREQUAL ${name})
+    set(${config1} ON CACHE INTERNAL "" FORCE)
+    # Write KernelPlatform into the cache in case it is only a local variable
+    set(KernelPlatform ${KernelPlatform} CACHE STRING "")
+  else()
+    set(${config1} OFF CACHE INTERNAL "" FORCE)
+  endif()
 endmacro()
 
 # helper macro that prints a message that no sub platform is specified and
 # the default sub platform will be used
 # Usage example: check_platform_and_fallback_to_default(KernelARMPlatform "sabre")
 macro(check_platform_and_fallback_to_default var_cmake_kernel_plat default_sub_plat)
-    if("${${var_cmake_kernel_plat}}" STREQUAL "")
-        print_message_multiple_options_helper("sub platforms" ${default_sub_plat})
-        set(${var_cmake_kernel_plat} ${default_sub_plat})
-    endif()
+  if("${${var_cmake_kernel_plat}}" STREQUAL "")
+    print_message_multiple_options_helper("sub platforms" ${default_sub_plat})
+    set(${var_cmake_kernel_plat} ${default_sub_plat})
+  endif()
 endmacro()
 
 # CLK_SHIFT and CLK_MAGIC are generated from tools/reciprocal.py
@@ -153,36 +121,34 @@ endmacro()
 # in future to build the values on the first build. Note the calculation
 # can take a long time though.
 macro(declare_default_headers)
-    cmake_parse_arguments(
-        CONFIGURE
-        ""
-        "TIMER_FREQUENCY;MAX_IRQ;NUM_PPI;INTERRUPT_CONTROLLER;TIMER;SMMU;CLK_SHIFT;CLK_MAGIC;KERNEL_WCET;TIMER_PRECISION;TIMER_OVERHEAD_TICKS;MAX_SID;MAX_CB"
-        ""
-        ${ARGN}
-    )
-    set(CALLED_declare_default_headers 1)
+  cmake_parse_arguments(
+    CONFIGURE
+    ""
+    "TIMER_FREQUENCY;MAX_IRQ;NUM_PPI;INTERRUPT_CONTROLLER;TIMER;SMMU;CLK_SHIFT;CLK_MAGIC;KERNEL_WCET;TIMER_PRECISION;TIMER_OVERHEAD_TICKS;MAX_SID;MAX_CB"
+    ""
+    ${ARGN})
+  set(CALLED_declare_default_headers 1)
 endmacro()
 
 # For all of the common variables we set a default value here if they haven't
 # been set by a platform.
 foreach(
-    var IN
-    ITEMS KernelArmCortexA7
-          KernelArmCortexA8
-          KernelArmCortexA9
-          KernelArmCortexA15
-          KernelArmCortexA35
-          KernelArmCortexA53
-          KernelArmCortexA55
-          KernelArmCortexA57
-          KernelArmCortexA72
-          KernelArchArmV7a
-          KernelArchArmV7ve
-          KernelArchArmV8a
-          KernelAArch64SErrorIgnore
-)
-    unset(${var} CACHE)
-    set(${var} OFF)
+  var IN
+  ITEMS KernelArmCortexA7
+        KernelArmCortexA8
+        KernelArmCortexA9
+        KernelArmCortexA15
+        KernelArmCortexA35
+        KernelArmCortexA53
+        KernelArmCortexA55
+        KernelArmCortexA57
+        KernelArmCortexA72
+        KernelArchArmV7a
+        KernelArchArmV7ve
+        KernelArchArmV8a
+        KernelAArch64SErrorIgnore)
+  unset(${var} CACHE)
+  set(${var} OFF)
 endforeach()
 unset(KernelArmMach CACHE)
 unset(KernelArmMachFeatureModifiers CACHE)
@@ -196,7 +162,7 @@ file(GLOB result ${KERNEL_ROOT_DIR}/src/plat/*/config.cmake)
 list(SORT result)
 
 foreach(file ${result})
-    include("${file}")
+  include("${file}")
 endforeach()
 
 config_choice(KernelPlatform PLAT "Select the platform" ${kernel_platforms})
@@ -206,17 +172,16 @@ config_choice(KernelPlatform PLAT "Select the platform" ${kernel_platforms})
 # point. This means at least: KernelPlatform KernelArch KernelWordSize
 
 if("${KernelPlatform}" STREQUAL "")
-    message(FATAL_ERROR "Variable 'KernelPlatform' is not set - is PLATFORM '${PLATFORM}' correct? \
-Valid platforms are '${KernelPlatform_all_strings}'"
-    )
+  message(FATAL_ERROR "Variable 'KernelPlatform' is not set - is PLATFORM '${PLATFORM}' correct? \
+Valid platforms are '${KernelPlatform_all_strings}'")
 endif()
 
 if("${KernelArch}" STREQUAL "")
-    message(FATAL_ERROR "Variable 'KernelArch' is not set.")
+  message(FATAL_ERROR "Variable 'KernelArch' is not set.")
 endif()
 
 if("${KernelWordSize}" STREQUAL "")
-    message(FATAL_ERROR "Variable 'KernelWordSize' is not set.")
+  message(FATAL_ERROR "Variable 'KernelWordSize' is not set.")
 endif()
 
 # Now enshrine all the common variables in the config
@@ -238,98 +203,57 @@ config_set(KernelAArch64SErrorIgnore AARCH64_SERROR_IGNORE "${KernelAArch64SErro
 # actual armv to that, but leave armv7a config enabled for anything that
 # checks directly against it
 if(KernelArchArmV7ve)
-    set(KernelArmArmV
-        "armv7ve"
-        CACHE INTERNAL ""
-    )
+  set(KernelArmArmV "armv7ve" CACHE INTERNAL "")
 elseif(KernelArchArmV7a)
-    set(KernelArmArmV
-        "armv7-a"
-        CACHE INTERNAL ""
-    )
+  set(KernelArmArmV "armv7-a" CACHE INTERNAL "")
 elseif(KernelArchArmV8a)
-    set(KernelArmArmV
-        "armv8-a"
-        CACHE INTERNAL ""
-    )
+  set(KernelArmArmV "armv8-a" CACHE INTERNAL "")
 endif()
 if(KernelArmCortexA7)
-    set(KernelArmCPU
-        "cortex-a7"
-        CACHE INTERNAL ""
-    )
+  set(KernelArmCPU "cortex-a7" CACHE INTERNAL "")
 elseif(KernelArmCortexA8)
-    set(KernelArmCPU
-        "cortex-a8"
-        CACHE INTERNAL ""
-    )
+  set(KernelArmCPU "cortex-a8" CACHE INTERNAL "")
 elseif(KernelArmCortexA9)
-    set(KernelArmCPU
-        "cortex-a9"
-        CACHE INTERNAL ""
-    )
+  set(KernelArmCPU "cortex-a9" CACHE INTERNAL "")
 elseif(KernelArmCortexA15)
-    set(KernelArmCPU
-        "cortex-a15"
-        CACHE INTERNAL ""
-    )
+  set(KernelArmCPU "cortex-a15" CACHE INTERNAL "")
 elseif(KernelArmCortexA35)
-    set(KernelArmCPU
-        "cortex-a35"
-        CACHE INTERNAL ""
-    )
+  set(KernelArmCPU "cortex-a35" CACHE INTERNAL "")
 elseif(KernelArmCortexA53)
-    set(KernelArmCPU
-        "cortex-a53"
-        CACHE INTERNAL ""
-    )
+  set(KernelArmCPU "cortex-a53" CACHE INTERNAL "")
 elseif(KernelArmCortexA55)
-    set(KernelArmCPU
-        "cortex-a55"
-        CACHE INTERNAL ""
-    )
+  set(KernelArmCPU "cortex-a55" CACHE INTERNAL "")
 elseif(KernelArmCortexA57)
-    set(KernelArmCPU
-        "cortex-a57"
-        CACHE INTERNAL ""
-    )
+  set(KernelArmCPU "cortex-a57" CACHE INTERNAL "")
 elseif(KernelArmCortexA72)
-    set(KernelArmCPU
-        "cortex-a72"
-        CACHE INTERNAL ""
-    )
+  set(KernelArmCPU "cortex-a72" CACHE INTERNAL "")
 endif()
 if(KernelArchARM)
-    config_set(KernelArmMach ARM_MACH "${KernelArmMach}")
+  config_set(KernelArmMach ARM_MACH "${KernelArmMach}")
 endif()
 
 if("${TRIPLE}" STREQUAL "")
-    set(toolchain_file gcc.cmake)
+  set(toolchain_file gcc.cmake)
 else()
-    set(toolchain_file llvm.cmake)
+  set(toolchain_file llvm.cmake)
 endif()
 set(toolchain_outputfile "${CMAKE_BINARY_DIR}/${toolchain_file}")
 if(("${CMAKE_TOOLCHAIN_FILE}" STREQUAL "") OR ("${CMAKE_TOOLCHAIN_FILE}" STREQUAL
-                                               "${toolchain_outputfile}")
-)
-    if(DEFINED CACHE{CROSS_COMPILER_PREFIX})
-        set(cross_prefix $CACHE{CROSS_COMPILER_PREFIX})
-    endif()
+                                               "${toolchain_outputfile}"))
+  if(DEFINED CACHE{CROSS_COMPILER_PREFIX})
+    set(cross_prefix $CACHE{CROSS_COMPILER_PREFIX})
+  endif()
 
-    configure_file("${KERNEL_ROOT_DIR}/${toolchain_file}" "${toolchain_outputfile}.temp" @ONLY)
-    if(EXISTS "${toolchain_outputfile}")
-        file(READ "${toolchain_outputfile}.temp" filea)
-        file(READ "${toolchain_outputfile}" fileb)
-        if(NOT "${filea}" STREQUAL "${fileb}")
-            message(
-                FATAL_ERROR
-                    "Config changes have resulted in a different toolchain file. This is not supported"
-            )
-        endif()
+  configure_file("${KERNEL_ROOT_DIR}/${toolchain_file}" "${toolchain_outputfile}.temp" @ONLY)
+  if(EXISTS "${toolchain_outputfile}")
+    file(READ "${toolchain_outputfile}.temp" filea)
+    file(READ "${toolchain_outputfile}" fileb)
+    if(NOT "${filea}" STREQUAL "${fileb}")
+      message(
+        FATAL_ERROR
+          "Config changes have resulted in a different toolchain file. This is not supported")
     endif()
-    file(RENAME "${toolchain_outputfile}.temp" "${toolchain_outputfile}")
-    set(CMAKE_TOOLCHAIN_FILE
-        "${toolchain_outputfile}"
-        CACHE PATH ""
-    )
+  endif()
+  file(RENAME "${toolchain_outputfile}.temp" "${toolchain_outputfile}")
+  set(CMAKE_TOOLCHAIN_FILE "${toolchain_outputfile}" CACHE PATH "")
 endif()
