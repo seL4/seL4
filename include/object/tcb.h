@@ -154,9 +154,6 @@ static inline void tcb_queue_insert_after(tcb_t *tcb, tcb_t *before)
     tcb_t *after;
     after = before->tcbSchedNext;
 
-    assert(after != NULL);
-    assert(after != before);
-
     tcb->tcbSchedPrev = before;
     tcb->tcbSchedNext = after;
 

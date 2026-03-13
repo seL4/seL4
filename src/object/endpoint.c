@@ -47,7 +47,7 @@ void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
 
             /* Place calling thread in endpoint queue */
 #ifdef CONFIG_KERNEL_MCS
-            tcbEPAppend(thread, epptr, false);
+            tcbEPAppend(thread, epptr, EPState_Send);
 #else
             tcb_queue_t queue;
             queue = ep_ptr_get_queue(epptr);
@@ -192,7 +192,7 @@ void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
 
                 /* Place calling thread in endpoint queue */
 #ifdef CONFIG_KERNEL_MCS
-                tcbEPAppend(thread, epptr, true);
+                tcbEPAppend(thread, epptr, EPState_Recv);
 #else
                 tcb_queue_t queue;
                 queue = ep_ptr_get_queue(epptr);
@@ -535,7 +535,7 @@ void cancelBadgedSends(endpoint_t *epptr, word_t badge)
 }
 
 #ifdef CONFIG_KERNEL_MCS
-void tcbEPAppend(tcb_t *thread, endpoint_t *epptr, bool_t isRecv)
+void tcbEPAppend(tcb_t *thread, endpoint_t *epptr, endpoint_state_t ep_state)
 {
     tcb_queue_t queue;
     tcb_queue_t new_queue;
@@ -544,15 +544,9 @@ void tcbEPAppend(tcb_t *thread, endpoint_t *epptr, bool_t isRecv)
     new_queue = tcbAppend(thread, queue);
     ep_ptr_set_queue(epptr, new_queue);
 
-    /* if the queue was originally empty, update the state of
-     * the endpoint according to the flag that was passed in */
-    if (tcb_queue_empty(queue)) {
-        if (isRecv) {
-            endpoint_ptr_set_state(epptr, EPState_Recv);
-        } else {
-            endpoint_ptr_set_state(epptr, EPState_Send);
-        }
-    }
+    /* Update the state of the endpoint with the state that was passed in. If the queue
+     * was previously non-empty this must be the same state the endpoint is currently in. */
+    endpoint_ptr_set_state(epptr, ep_state);
 }
 
 void tcbEPDequeue(tcb_t *thread, endpoint_t *epptr)
