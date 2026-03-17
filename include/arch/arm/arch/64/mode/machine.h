@@ -280,19 +280,19 @@ void lockTLBEntry(vptr_t vaddr);
 static inline void cleanByVA(vptr_t vaddr, paddr_t paddr)
 {
     asm volatile("dc cvac, %0" : : "r"(vaddr));
-    dmb();
+    dsb();
 }
 
 static inline void cleanByVA_PoU(vptr_t vaddr, paddr_t paddr)
 {
     asm volatile("dc cvau, %0" : : "r"(vaddr));
-    dmb();
+    dsb();
 }
 
 static inline void invalidateByVA(vptr_t vaddr, paddr_t paddr)
 {
     asm volatile("dc ivac, %0" : : "r"(vaddr));
-    dmb();
+    dsb();
 }
 
 static inline void invalidateByVA_I(vptr_t vaddr, paddr_t paddr)
