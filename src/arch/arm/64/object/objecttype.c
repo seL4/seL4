@@ -161,9 +161,9 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
         }
         if (final) {
             pte_t *base = VSPACE_PTR(cap_vspace_cap_get_capVSBasePtr(cap));
-            cleanCacheRange_PoU((word_t)base,
-                                (word_t)base + MASK(seL4_VSpaceBits),
-                                addrFromPPtr(base));
+            cleanInvalidateCacheRange_RAM((word_t)base,
+                                              (word_t)base + MASK(seL4_VSpaceBits),
+                                              addrFromPPtr(base));
         }
         break;
 
@@ -175,9 +175,9 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
         }
         if (final) {
             pte_t *base = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
-            cleanCacheRange_PoU((word_t)base,
-                                (word_t)base + MASK(seL4_PageTableBits),
-                                addrFromPPtr(base));
+            cleanInvalidateCacheRange_RAM((word_t)base,
+                                              (word_t)base + MASK(seL4_PageTableBits),
+                                              addrFromPPtr(base));
         }
         break;
 
@@ -461,9 +461,9 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
         /** AUXUPD: "(True, ptr_retyps 1
               (Ptr (ptr_val \<acute>regionBase) :: (pte_C[vs_array_len]) ptr))" */
         /** GHOSTUPD: "(True, gs_new_pt_t VSRootPT_T (ptr_val \<acute>regionBase))" */
-        cleanCacheRange_PoU((word_t)regionBase,
-                            (word_t)regionBase + MASK(seL4_VSpaceBits),
-                            addrFromPPtr(regionBase));
+        cleanInvalidateCacheRange_RAM((word_t)regionBase,
+                                      (word_t)regionBase + MASK(seL4_VSpaceBits),
+                                      addrFromPPtr(regionBase));
 #ifdef CONFIG_ARM_SMMU
         return cap_vspace_cap_new(
                    asidInvalid,           /* capVSMappedASID */
@@ -482,9 +482,9 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
         /** AUXUPD: "(True, ptr_retyps 1
               (Ptr (ptr_val \<acute>regionBase) :: (pte_C[pt_array_len]) ptr))" */
         /** GHOSTUPD: "(True, gs_new_pt_t NormalPT_T (ptr_val \<acute>regionBase))" */
-        cleanCacheRange_PoU((word_t)regionBase,
-                            (word_t)regionBase + MASK(seL4_PageTableBits),
-                            addrFromPPtr(regionBase));
+        cleanInvalidateCacheRange_RAM((word_t)regionBase,
+                                      (word_t)regionBase + MASK(seL4_PageTableBits),
+                                      addrFromPPtr(regionBase));
         return cap_page_table_cap_new(
                    asidInvalid,           /* capPTMappedASID    */
                    (word_t)regionBase,    /* capPTBasePtr       */

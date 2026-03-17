@@ -53,8 +53,8 @@ static inline void clearMemory(word_t *ptr, word_t bits)
 static inline void clearMemory_PT(word_t *ptr, word_t bits)
 {
     memzero(ptr, BIT(bits));
-    cleanCacheRange_PoU((word_t)ptr, (word_t)ptr + BIT(bits) - 1,
-                        addrFromPPtr(ptr));
+    cleanInvalidateCacheRange_RAM((word_t)ptr, (word_t)ptr + BIT(bits) - 1,
+                                  addrFromPPtr(ptr));
 }
 
 #ifdef ENABLE_SMP_SUPPORT
