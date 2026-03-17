@@ -159,6 +159,12 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
             deleteASID(cap_vspace_cap_get_capVSMappedASID(cap),
                        VSPACE_PTR(cap_vspace_cap_get_capVSBasePtr(cap)));
         }
+        if (final) {
+            pte_t *base = VSPACE_PTR(cap_vspace_cap_get_capVSBasePtr(cap));
+            cleanCacheRange_PoU((word_t)base,
+                                (word_t)base + MASK(seL4_VSpaceBits),
+                                addrFromPPtr(base));
+        }
         break;
 
     case cap_page_table_cap:
@@ -166,6 +172,12 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
             unmapPageTable(cap_page_table_cap_get_capPTMappedASID(cap),
                            cap_page_table_cap_get_capPTMappedAddress(cap),
                            PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap)));
+        }
+        if (final) {
+            pte_t *base = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
+            cleanCacheRange_PoU((word_t)base,
+                                (word_t)base + MASK(seL4_PageTableBits),
+                                addrFromPPtr(base));
         }
         break;
 
