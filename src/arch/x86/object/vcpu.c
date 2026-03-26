@@ -261,10 +261,6 @@ static bool_t BOOT_CODE init_vtx_fixed_values(bool_t useTrueMsrs)
         BIT(20) |   //Save guest IA32_EFER on exit
         BIT(21);    //Load host IA32_EFER
 #ifdef CONFIG_ARCH_X86_64
-#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
-    uint32_t entry_control_mask = 0;
-    entry_control_mask |= BIT(9); //Guest address-space size
-#endif
     exit_control_mask |= BIT(9); //Host address-space size
 #endif /* CONFIG_ARCH_X86_64 */
     /* Read out the fixed high and low bits from the MSRs */
@@ -298,6 +294,21 @@ static bool_t BOOT_CODE init_vtx_fixed_values(bool_t useTrueMsrs)
     cr0_low = x86_rdmsr_low(IA32_VMX_CR0_FIXED1_MSR);
     cr4_high = x86_rdmsr_low(IA32_VMX_CR4_FIXED0_MSR);
     cr4_low = x86_rdmsr_low(IA32_VMX_CR4_FIXED1_MSR);
+
+    /* "Unrestricted guest" is a userspace controlled setting that determines whether the VCPU
+     * may run in unpaged protected mode or in real-address mode. If the host CPU supports this feature, then
+     * CR0.PE and CR0.PG may be 0 while the VCPU is running: */
+
+    /* Intel SDM Combined Volumes
+     * Order Number: 325462-090US February 2026
+     * Chapter 26.8 "RESTRICTIONS ON VMX OPERATION"
+     * > Later processors support a VM-execution control called “unrestricted guest” (see Section 27.6.2).
+     * > If this control is 1, CR0.PE and CR0.PG may be 0 in VMX non-root operation (even if the capability
+     * > MSR IA32_VMX_CR0_FIXED0 reports otherwise). Such processors allow guest software to run in
+     * > unpaged protected mode or in real-address mode. */
+    if (secondary_control_low & BIT(7)) {
+        cr0_high &= ~(CR0_PE | CR0_PG);
+    }
 
     /* Check for VPID support */
     if (!(secondary_control_low & BIT(5))) {
@@ -349,9 +360,9 @@ static bool_t BOOT_CODE init_vtx_fixed_values(bool_t useTrueMsrs)
         return false;
     }
 #ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
-    missing = (~entry_control_low) & entry_control_mask;
+    missing = (~entry_control_low) & BIT(9);
     if (missing) {
-        printf("vt-x: Unsupported entry control features %lx\n", (long)missing);
+        printf("vt-x: CPU does not support 64-bit guests\n");
         return false;
     }
 #endif /* CONFIG_X86_64_VTX_64BIT_GUESTS */
@@ -361,9 +372,6 @@ static bool_t BOOT_CODE init_vtx_fixed_values(bool_t useTrueMsrs)
     primary_control_high |= primary_control_mask;
     secondary_control_high |= secondary_control_mask;
     exit_control_high |= exit_control_mask;
-#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
-    entry_control_high |= entry_control_mask;
-#endif /* CONFIG_X86_64_VTX_64BIT_GUESTS */
 
     return true;
 }
@@ -400,6 +408,11 @@ static bool_t BOOT_CODE check_vtx_fixed_values(bool_t useTrueMsrs)
     uint32_t local_cr0_low = x86_rdmsr_low(IA32_VMX_CR0_FIXED1_MSR);
     uint32_t local_cr4_high = x86_rdmsr_low(IA32_VMX_CR4_FIXED0_MSR);
     uint32_t local_cr4_low = x86_rdmsr_low(IA32_VMX_CR4_FIXED1_MSR);
+
+    /* See "init_vtx_fixed_values" */
+    if (local_secondary_control_low & BIT(7)) {
+        local_cr0_high &= ~(CR0_PE | CR0_PG);
+    }
 
     /* We want to check that any bits that there are no bits that this core
      * requires to be high, that the BSP did not require to be high. This can
@@ -495,7 +508,15 @@ void vcpu_init(vcpu_t *vcpu)
     vmwrite(VMX_CONTROL_PRIMARY_PROCESSOR_CONTROLS, primary_control_high & primary_control_low);
     vmwrite(VMX_CONTROL_SECONDARY_PROCESSOR_CONTROLS, secondary_control_high & secondary_control_low);
     vmwrite(VMX_CONTROL_EXIT_CONTROLS, exit_control_high & exit_control_low);
-    vmwrite(VMX_CONTROL_ENTRY_CONTROLS, entry_control_high & entry_control_low);
+
+    uint64_t entry_control = entry_control_high & entry_control_low;
+#ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
+    /* Put VCPU in IA-32e mode after VM entry for backward compatibility with previous versions of seL4.
+     * This bit can be zero'ed by userspace to enter in other modes. */
+    entry_control |= BIT(9);
+#endif /* CONFIG_X86_64_VTX_64BIT_GUESTS */
+    vmwrite(VMX_CONTROL_ENTRY_CONTROLS, entry_control);
+
     vmwrite(VMX_CONTROL_MSR_ADDRESS, (word_t)kpptr_to_paddr(&msr_bitmap_region));
     vmwrite(VMX_GUEST_CR0, vcpu->cr0);
     vmwrite(VMX_GUEST_CR4, cr4_high & cr4_low);
@@ -882,6 +903,9 @@ static exception_t decodeWriteVMCS(cap_t cap, word_t length, bool_t call, word_t
     case VMX_CONTROL_SECONDARY_PROCESSOR_CONTROLS:
         value = applyFixedBits(value, secondary_control_high, secondary_control_low);
         break;
+    case VMX_CONTROL_ENTRY_CONTROLS:
+        value = applyFixedBits(value, entry_control_high, entry_control_low);
+        break;
     case VMX_CONTROL_EXIT_CONTROLS:
         value = applyFixedBits(value, exit_control_high, exit_control_low);
         break;
@@ -1017,7 +1041,9 @@ static exception_t decodeReadVMCS(cap_t cap, word_t length, bool_t call, word_t 
     case VMX_CONTROL_ENTRY_INTERRUPTION_INFO:
     case VMX_CONTROL_PIN_EXECUTION_CONTROLS:
     case VMX_CONTROL_PRIMARY_PROCESSOR_CONTROLS:
+    case VMX_CONTROL_SECONDARY_PROCESSOR_CONTROLS:
     case VMX_CONTROL_EXCEPTION_BITMAP:
+    case VMX_CONTROL_ENTRY_CONTROLS:
     case VMX_CONTROL_EXIT_CONTROLS:
     case VMX_GUEST_CR0:
     case VMX_GUEST_CR3:
