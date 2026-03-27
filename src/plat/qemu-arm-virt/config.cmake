@@ -76,6 +76,13 @@ if(KernelPlatformQEMUArmVirt)
 
     config_set(KernelARMPlatform ARM_PLAT qemu-arm-virt)
 
+    if(NOT DEFINED QEMU_GIC_VERSION)
+        set(QEMU_GIC_VERSION 2)
+    endif()
+    if(QEMU_GIC_VERSION EQUAL 3)
+        set(KernelArmGicV3 ON)
+    endif()
+
     # If neither QEMU_DTS nor QEMU_DTB is set explicitly, the device tree is
     # extracted from QEMU. This keeps it nicely up to date with the the actual
     # QEMU versions that is used, and it's quite convenient for development.
@@ -129,6 +136,7 @@ if(KernelPlatformQEMUArmVirt)
                 if(Kernel32)
                     list(APPEND QEMU_MACHINE "highmem=off")
                 endif()
+                list(APPEND QEMU_MACHINE "gic-version=${QEMU_GIC_VERSION}")
                 list(APPEND QEMU_MACHINE "dumpdtb=${QEMU_DTB}")
 
                 # Lists are just strings with ";" as item separator, so we can
@@ -254,12 +262,18 @@ if(KernelPlatformQEMUArmVirt)
         list(APPEND KernelDTSList "${CMAKE_CURRENT_LIST_DIR}/overlay-reserve-vm-memory.dts")
     endif()
 
+    if(QEMU_GIC_VERSION EQUAL 3)
+        set(GicHeader arch/machine/gic_v3.h)
+    else()
+        set(GicHeader arch/machine/gic_v2.h)
+    endif()
+
     declare_default_headers(
         TIMER_FREQUENCY 62500000
         MAX_IRQ 159
         NUM_PPI 32
         TIMER drivers/timer/arm_generic.h
-        INTERRUPT_CONTROLLER arch/machine/gic_v2.h
+        INTERRUPT_CONTROLLER ${GicHeader}
         CLK_MAGIC 4611686019llu
         CLK_SHIFT 58u
         KERNEL_WCET 10u
@@ -267,9 +281,15 @@ if(KernelPlatformQEMUArmVirt)
 
 endif()
 
+if(QEMU_GIC_VERSION EQUAL 3)
+    set(GicSource src/arch/arm/machine/gic_v3.c)
+else()
+    set(GicSource src/arch/arm/machine/gic_v2.c)
+endif()
+
 add_sources(
     DEP "KernelPlatformQEMUArmVirt"
-    CFILES src/arch/arm/machine/gic_v2.c src/arch/arm/machine/l2c_nop.c
+    CFILES ${GicSource} src/arch/arm/machine/l2c_nop.c
 )
 
 config_string(
