@@ -558,7 +558,7 @@ static exception_t decodeConfigureSingleStepping(cap_t cap, bool_t call, word_t 
 
     tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
 
-    bp_num = getSyscallArg(0, buffer);
+    bp_num = (uint16_t)getSyscallArg(0, buffer);
     n_instrs = getSyscallArg(1, buffer);
 
     syserr = Arch_decodeConfigureSingleStepping(tcb, bp_num, n_instrs, false);
@@ -588,7 +588,7 @@ static exception_t decodeSetBreakpoint(cap_t cap, word_t *buffer)
     syscall_error_t error;
 
     tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
-    bp_num = getSyscallArg(0, buffer);
+    bp_num = (uint16_t)getSyscallArg(0, buffer);
     vaddr = getSyscallArg(1, buffer);
     type = getSyscallArg(2, buffer);
     size = getSyscallArg(3, buffer);
@@ -724,7 +724,7 @@ static exception_t decodeGetBreakpoint(cap_t cap, bool_t call, word_t *buffer)
     syscall_error_t error;
 
     tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
-    bp_num = getSyscallArg(0, buffer);
+    bp_num = (uint16_t)getSyscallArg(0, buffer);
 
     error = Arch_decodeGetBreakpoint(tcb, bp_num);
     if (error.type != seL4_NoError) {
@@ -751,7 +751,7 @@ static exception_t decodeUnsetBreakpoint(cap_t cap, word_t *buffer)
     syscall_error_t error;
 
     tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
-    bp_num = getSyscallArg(0, buffer);
+    bp_num = (uint16_t)getSyscallArg(0, buffer);
 
     error = Arch_decodeUnsetBreakpoint(tcb, bp_num);
     if (error.type != seL4_NoError) {

@@ -91,7 +91,7 @@ static inline void fastpath_copy_mrs(word_t length, tcb_t *src, tcb_t *dest)
     /* assuming that length < n_msgRegisters */
     for (i = 0; i < length; i ++) {
         /* assuming that the message registers simply increment */
-        reg = msgRegisters[0] + i;
+        reg = (register_t)(msgRegisters[0] + i);
         setRegister(dest, reg, getRegister(src, reg));
     }
 }

@@ -357,7 +357,7 @@ static inline void x86_load_fsgs_base(tcb_t *thread, cpu_id_t cpu)
 }
 
 /* Cleaning memory before user-level access. Does not flush cache. */
-static inline void clearMemory(void *ptr, unsigned int bits)
+static inline void clearMemory(void *ptr, word_t bits)
 {
     memzero(ptr, BIT(bits));
 }
