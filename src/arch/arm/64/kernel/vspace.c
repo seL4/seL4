@@ -220,7 +220,7 @@ BOOT_CODE void map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_righ
     word_t shareable;
     if (vm_attributes_get_armPageCacheable(attributes)) {
         attr_index = NORMAL;
-        shareable = SMP_TERNARY(SMP_SHARE, 0);
+        shareable = SMP_SHARE;
     } else {
         attr_index = DEVICE_nGnRnE;
         shareable = 0;
@@ -277,7 +277,7 @@ BOOT_CODE void map_kernel_window(void)
                                                                                                                         paddr,
                                                                                                                         0,                        /* global */
                                                                                                                         1,                        /* access flag */
-                                                                                                                        SMP_TERNARY(SMP_SHARE, 0),        /* Inner-shareable if SMP enabled, otherwise unshared */
+                                                                                                                        SMP_SHARE,        /* Inner-shareable if SMP enabled, otherwise unshared */
                                                                                                                         0,                        /* VMKernelOnly */
                                                                                                                         NORMAL
                                                                                                                     );
@@ -336,7 +336,7 @@ static BOOT_CODE void map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap, bool_t
                                                               1,                              /* not global */
 #endif
                                                               1,                              /* access flag */
-                                                              SMP_TERNARY(SMP_SHARE, 0),              /* Inner-shareable if SMP enabled, otherwise unshared */
+                                                              SMP_SHARE,              /* Inner-shareable if SMP enabled, otherwise unshared */
                                                               APFromVMRights(VMReadWrite),
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
                                                               S2_NORMAL
@@ -698,7 +698,7 @@ static pte_t makeUserPagePTE(paddr_t paddr, vm_rights_t vm_rights, vm_attributes
 #endif
 
     /* Inner-shareable if SMP enabled, otherwise unshared (ignored for devices) */
-    word_t shareable = cacheable ? SMP_TERNARY(SMP_SHARE, 0) : 0;
+    word_t shareable = cacheable ? SMP_SHARE : 0;
 
     if (page_size == ARMSmallPage) {
         return pte_pte_4k_page_new(nonexecutable, paddr, nG, 1 /* access flag */,
@@ -1987,7 +1987,7 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
                              ksUserLogBuffer,
                              0,                         /* global */
                              1,                         /* access flag */
-                             SMP_TERNARY(SMP_SHARE, 0), /* Inner-shareable if SMP enabled, otherwise unshared */
+                             SMP_SHARE, /* Inner-shareable if SMP enabled, otherwise unshared */
                              0,                         /* VMKernelOnly */
                              NORMAL_WT);
 
