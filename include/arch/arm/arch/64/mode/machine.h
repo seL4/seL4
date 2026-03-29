@@ -205,12 +205,15 @@ static inline void setKernelStack(word_t stack_address)
 
 static inline void setVtable(pptr_t addr)
 {
-    dsb();
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         MSR("vbar_el2", addr);
     } else {
         MSR("vbar_el1", addr);
     }
+    /* We just updated the vbar for our current EL, so require
+     * isb to trigger Context Synchronization event to prevent starting
+     * execution of future instructions until current system register
+     * updates are complete. */
     isb();
 }
 
