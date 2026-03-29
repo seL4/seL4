@@ -579,7 +579,7 @@ BOOT_CODE void activate_kernel_vspace(void)
         MSR("ttbr1_el1", ttbr_k.words[0]);
         MSR("ttbr0_el1", ttbr_u.words[0]);
         isb();
-        asm volatile("tlbi alle1");
+        asm volatile("tlbi vmalle1");
     }
     // dsb ish to barrier for tlb invalidation to complete, then synchronize instruction stream.
     dsb_ish();
