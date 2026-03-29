@@ -542,13 +542,48 @@ BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vpt
 
 BOOT_CODE void activate_kernel_vspace(void)
 {
-    cleanInvalidateL1Caches();
-    setCurrentKernelVSpaceRoot(ttbr_new(0, addrFromKPPtr(armKSGlobalKernelPGD)));
+    // This function updates the ttbr registers for the current executing program context.
+    // We assume that all mapping entries in use to execute the current function are
+    // have the same values in both sets of page tables. This is so that any translations
+    // used between setting the new ttbr value and invalidating the TLB are the same whether
+    // they are returned from the TLB cache or looked up in memory.
 
-    /* Prevent elf-loader address translation to fill up TLB */
-    setCurrentUserVSpaceRoot(ttbr_new(0, addrFromKPPtr(armKSGlobalUserVSpace)));
+    // When this function is called, there are recent writes to page tables that haven't been
+    // synchronized yet.
+    // Once this function returns, the updated mmu configuration for the current program should
+    // be active and all pending effects synchronized with the instruction stream.
+    // No dcache or icache clean/invalidate operations should be required under aarch64.
+    // tlb cache does need invalidation after the updates to registers that are permitted to be
+    // cached in the tlb.
+    // dsb ish is needed to ensure any cache maintenance operation completes.
+    // isb is needed to ensure that writes to system registers have completed before the next
+    // instructions start any part of their execution.
+    // See architecture requirements on Context Synchronization events for more information.
 
-    invalidateLocalTLB();
+    // Complete recent memory writes to new page tables to inner shareable domain.
+    dsb_ish();
+
+    // Construct ttbr value for kernel page tables
+    ttbr_t ttbr_k = ttbr_new(0, addrFromKPPtr(armKSGlobalKernelPGD));
+
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        // In hyp mode there is just 1 ttbr at EL2.
+        // Assign, then synchronize instruction stream, then invalidate all tlb for el2.
+        MSR("ttbr0_el2", ttbr_k.words[0]);
+        isb();
+        asm volatile("tlbi alle2");
+    } else {
+        // In el1 mode there are 2 ttbr at EL1.
+        // Assign both, then synchronize instruction stream, then invalidate all tlb for el1.
+        ttbr_t ttbr_u = ttbr_new(0, addrFromKPPtr(armKSGlobalUserVSpace));
+        MSR("ttbr1_el1", ttbr_k.words[0]);
+        MSR("ttbr0_el1", ttbr_u.words[0]);
+        isb();
+        asm volatile("tlbi alle1");
+    }
+    // dsb ish to barrier for tlb invalidation to complete, then synchronize instruction stream.
+    dsb_ish();
+    isb();
 }
 
 BOOT_CODE void write_it_asid_pool(cap_t it_ap_cap, cap_t it_vspace_cap)
