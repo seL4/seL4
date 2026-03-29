@@ -549,7 +549,6 @@ BOOT_CODE void activate_kernel_vspace(void)
     setCurrentUserVSpaceRoot(ttbr_new(0, addrFromKPPtr(armKSGlobalUserVSpace)));
 
     invalidateLocalTLB();
-    lockTLBEntry(KERNEL_ELF_BASE);
 }
 
 BOOT_CODE void write_it_asid_pool(cap_t it_ap_cap, cap_t it_vspace_cap)

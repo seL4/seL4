@@ -275,8 +275,6 @@ static inline void invalidateLocalTLB_IPA(word_t ipa)
     isb();
 }
 
-void lockTLBEntry(vptr_t vaddr);
-
 static inline void cleanByVA(vptr_t vaddr, paddr_t paddr)
 {
     asm volatile("dc cvac, %0" : : "r"(vaddr));
