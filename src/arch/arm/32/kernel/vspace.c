@@ -2457,6 +2457,20 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
         page_size = 1 << pageBitsForSize(generic_frame_cap_get_capFSize(cap));
         page_base = addrFromPPtr((void *)generic_frame_cap_get_capFBasePtr(cap));
 
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
+        /* When not in hypervisor mode, we flush via user virtual addresses and
+           need to make sure the mapping info in the cap is not stale. */
+        resolve_ret_t resolve_ret = resolveVAddr(pd.pd, vaddr);
+        if (unlikely(!resolve_ret.valid ||
+                     resolve_ret.frameSize != generic_frame_cap_get_capFSize(cap) ||
+                     resolve_ret.frameBase != page_base)) {
+            userError("Page Flush: Attempting to use cap with stale mapping information.");
+            current_syscall_error.type = seL4_InvalidCapability;
+            current_syscall_error.invalidCapNumber = 0;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+#endif
+
         if (start >= page_size || end > page_size) {
             userError("Page Flush: Requested range not inside page");
             current_syscall_error.type = seL4_InvalidArgument;

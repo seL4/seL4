@@ -287,7 +287,8 @@
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type or
+                    represents a stale mapping.
                 </description>
             </error>
         </method>
@@ -325,7 +326,8 @@
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type or
+                    represents a stale mapping.
                 </description>
             </error>
         </method>
@@ -362,7 +364,8 @@
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type or
+                    represents a stale mapping.
                 </description>
             </error>
         </method>
@@ -400,7 +403,8 @@
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type or
+                    represents a stale mapping.
                 </description>
             </error>
         </method>
