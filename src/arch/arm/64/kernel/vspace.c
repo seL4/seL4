@@ -1062,7 +1062,7 @@ void unmapPageTable(asid_t asid, vptr_t vptr, pte_t *target_pt)
     /* If we found a pt then ptSlot won't be null */
     assert(ptSlot != NULL);
     *ptSlot = pte_pte_invalid_new();
-    cleanByVA_PoU((vptr_t)ptSlot, pptr_to_paddr(ptSlot));
+    // dsb ish performed as part of invalidate
     invalidateTLBByASID(asid);
 }
 
@@ -1095,8 +1095,8 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr)
     }
 
     *(lu_ret.ptSlot) = pte_pte_invalid_new();
-    cleanByVA_PoU((vptr_t)lu_ret.ptSlot, pptr_to_paddr(lu_ret.ptSlot));
     assert(asid < BIT(16));
+    // dsb ish performed as part of invalidate
     invalidateTLBByASIDVA(asid, vptr);
 }
 
@@ -1209,8 +1209,7 @@ static exception_t performPageTableInvocationMap(cap_t cap, cte_t *ctSlot, pte_t
 {
     ctSlot->cap = cap;
     *ptSlot = pte;
-    cleanByVA_PoU((vptr_t)ptSlot, pptr_to_paddr(ptSlot));
-
+    dsb_ish();
     return EXCEPTION_NONE;
 }
 
@@ -1220,7 +1219,7 @@ static exception_t performPageTableInvocationUnmap(cap_t cap, cte_t *ctSlot)
         pte_t *pt = PT_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
         unmapPageTable(cap_page_table_cap_get_capPTMappedASID(cap),
                        cap_page_table_cap_get_capPTMappedAddress(cap), pt);
-        clearMemory_PT((void *)pt, cap_get_capSizeBits(cap));
+        clearMemory((void *)pt, cap_get_capSizeBits(cap));
     }
 
     cap_page_table_cap_ptr_set_capPTIsMapped(&(ctSlot->cap), 0);
@@ -1235,10 +1234,12 @@ static exception_t performPageInvocationMap(asid_t asid, cap_t cap, cte_t *ctSlo
     ctSlot->cap = cap;
     *ptSlot = pte;
 
-    cleanByVA_PoU((vptr_t)ptSlot, pptr_to_paddr(ptSlot));
     if (unlikely(tlbflush_required)) {
         assert(asid < BIT(16));
+        // dsb ish performed as part of invalidate
         invalidateTLBByASIDVA(asid, cap_frame_cap_get_capFMappedAddress(cap));
+    } else {
+        dsb_ish();
     }
 
     return EXCEPTION_NONE;

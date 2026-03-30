@@ -245,18 +245,14 @@ static inline void invalidateLocalTLB_ASID(asid_t asid)
 {
     assert(asid < BIT(16));
 
-    dsb();
     asm volatile("tlbi aside1, %0" : : "r"(asid << 48));
-    dsb();
-    isb();
+    dsb_ish();
 }
 
 static inline void invalidateLocalTLB_VAASID(word_t mva_plus_asid)
 {
-    dsb();
     asm volatile("tlbi vae1, %0" : : "r"(mva_plus_asid));
-    dsb();
-    isb();
+    dsb_ish();
 }
 
 /* Invalidate all stage 1 and stage 2 translations used at
