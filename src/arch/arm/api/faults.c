@@ -45,12 +45,10 @@ word_t Arch_setMRs_fault(tcb_t *sender, tcb_t *receiver, word_t *receiveIPCBuffe
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case seL4_Fault_VGICMaintenance:
-        if (seL4_Fault_VGICMaintenance_get_idxValid(sender->tcbFault)) {
-            return setMR(receiver, receiveIPCBuffer, seL4_VGICMaintenance_IDX,
-                         seL4_Fault_VGICMaintenance_get_idx(sender->tcbFault));
-        } else {
-            return setMR(receiver, receiveIPCBuffer, seL4_VGICMaintenance_IDX, -1);
-        }
+        setMR(receiver, receiveIPCBuffer, seL4_VGICMaintenance_EISR1,
+              seL4_Fault_VGICMaintenance_get_eisr1(sender->tcbFault));
+        return setMR(receiver, receiveIPCBuffer, seL4_VGICMaintenance_EISR0,
+                     seL4_Fault_VGICMaintenance_get_eisr0(sender->tcbFault));
     case seL4_Fault_VCPUFault:
         return setMR(receiver, receiveIPCBuffer, seL4_VCPUFault_HSR, seL4_Fault_VCPUFault_get_hsr(sender->tcbFault));
     case seL4_Fault_VPPIEvent:
