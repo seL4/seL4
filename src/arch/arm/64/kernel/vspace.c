@@ -220,7 +220,7 @@ BOOT_CODE void map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_righ
     word_t shareable;
     if (vm_attributes_get_armPageCacheable(attributes)) {
         attr_index = NORMAL;
-        shareable = SMP_TERNARY(SMP_SHARE, 0);
+        shareable = SMP_SHARE;
     } else {
         attr_index = DEVICE_nGnRnE;
         shareable = 0;
@@ -277,7 +277,7 @@ BOOT_CODE void map_kernel_window(void)
                                                                                                                         paddr,
                                                                                                                         0,                        /* global */
                                                                                                                         1,                        /* access flag */
-                                                                                                                        SMP_TERNARY(SMP_SHARE, 0),        /* Inner-shareable if SMP enabled, otherwise unshared */
+                                                                                                                        SMP_SHARE,        /* Inner-shareable if SMP enabled, otherwise unshared */
                                                                                                                         0,                        /* VMKernelOnly */
                                                                                                                         NORMAL
                                                                                                                     );
@@ -336,7 +336,7 @@ static BOOT_CODE void map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap, bool_t
                                                               1,                              /* not global */
 #endif
                                                               1,                              /* access flag */
-                                                              SMP_TERNARY(SMP_SHARE, 0),              /* Inner-shareable if SMP enabled, otherwise unshared */
+                                                              SMP_SHARE,              /* Inner-shareable if SMP enabled, otherwise unshared */
                                                               APFromVMRights(VMReadWrite),
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
                                                               S2_NORMAL
@@ -542,7 +542,6 @@ BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vpt
 
 BOOT_CODE void activate_kernel_vspace(void)
 {
-    cleanInvalidateL1Caches();
     setCurrentKernelVSpaceRoot(ttbr_new(0, addrFromKPPtr(armKSGlobalKernelPGD)));
 
     /* Prevent elf-loader address translation to fill up TLB */
@@ -699,7 +698,7 @@ static pte_t makeUserPagePTE(paddr_t paddr, vm_rights_t vm_rights, vm_attributes
 #endif
 
     /* Inner-shareable if SMP enabled, otherwise unshared (ignored for devices) */
-    word_t shareable = cacheable ? SMP_TERNARY(SMP_SHARE, 0) : 0;
+    word_t shareable = cacheable ? SMP_SHARE : 0;
 
     if (page_size == ARMSmallPage) {
         return pte_pte_4k_page_new(nonexecutable, paddr, nG, 1 /* access flag */,
@@ -1028,7 +1027,6 @@ void unmapPageTable(asid_t asid, vptr_t vptr, pte_t *target_pt)
     /* If we found a pt then ptSlot won't be null */
     assert(ptSlot != NULL);
     *ptSlot = pte_pte_invalid_new();
-    cleanByVA_PoU((vptr_t)ptSlot, pptr_to_paddr(ptSlot));
     invalidateTLBByASID(asid);
 }
 
@@ -1061,7 +1059,6 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr)
     }
 
     *(lu_ret.ptSlot) = pte_pte_invalid_new();
-    cleanByVA_PoU((vptr_t)lu_ret.ptSlot, pptr_to_paddr(lu_ret.ptSlot));
     assert(asid < BIT(16));
     invalidateTLBByASIDVA(asid, vptr);
 }
@@ -1175,7 +1172,6 @@ static exception_t performPageTableInvocationMap(cap_t cap, cte_t *ctSlot, pte_t
 {
     ctSlot->cap = cap;
     *ptSlot = pte;
-    cleanByVA_PoU((vptr_t)ptSlot, pptr_to_paddr(ptSlot));
 
     return EXCEPTION_NONE;
 }
@@ -1201,7 +1197,6 @@ static exception_t performPageInvocationMap(asid_t asid, cap_t cap, cte_t *ctSlo
     ctSlot->cap = cap;
     *ptSlot = pte;
 
-    cleanByVA_PoU((vptr_t)ptSlot, pptr_to_paddr(ptSlot));
     if (unlikely(tlbflush_required)) {
         assert(asid < BIT(16));
         invalidateTLBByASIDVA(asid, cap_frame_cap_get_capFMappedAddress(cap));
@@ -1992,11 +1987,10 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
                              ksUserLogBuffer,
                              0,                         /* global */
                              1,                         /* access flag */
-                             SMP_TERNARY(SMP_SHARE, 0), /* Inner-shareable if SMP enabled, otherwise unshared */
+                             SMP_SHARE, /* Inner-shareable if SMP enabled, otherwise unshared */
                              0,                         /* VMKernelOnly */
                              NORMAL_WT);
 
-    cleanByVA_PoU((vptr_t)armKSGlobalLogPTE, addrFromKPPtr(armKSGlobalLogPTE));
     invalidateTranslationSingle(KS_LOG_PPTR);
     return EXCEPTION_NONE;
 }
