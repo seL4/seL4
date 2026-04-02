@@ -21,12 +21,19 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 ---
 
-## Upcoming release: BINARY COMPATIBLE
+## Upcoming release: BREAKING
 
 ### Changes
 
+#### ARM
+
+* change default for `KernelArmHypEnableVCPUCP14SaveAndRestore` to `OFF` to provide equal defaults for
+  verification and release builds. This affects AArch32/hyp only.
 
 ### Upgrade Notes
+
+AArch32 with hypervisor mode enabled only: if the option `KernelArmHypEnableVCPUCP14SaveAndRestore` is required, manually set it to `ON` in the build.
+
 ---
 
 ## 15.0.0 2026-03-31: BREAKING
