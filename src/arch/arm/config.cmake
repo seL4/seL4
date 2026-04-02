@@ -97,7 +97,7 @@ config_option(
     context for performance (or other) reasons, we can just turn them off \
     and trap them instead, and have the VCPUs' accesses to CP14 \
     intercepted and delivered to the VM Monitor as fault messages"
-  DEFAULT ON
+  DEFAULT OFF
   DEPENDS "KernelSel4ArchArmHyp;NOT KernelVerificationBuild"
   DEFAULT_DISABLED OFF)
 
