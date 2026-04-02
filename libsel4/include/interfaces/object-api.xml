@@ -224,7 +224,7 @@
                 </description>
             </error>
         </method>
-        <method id="TCBConfigure" name="Configure" manual_name="Configure (MCS)" manual_label="tcb_configure_mcs">
+        <method id="TCBConfigureMCS" name="Configure" manual_name="Configure (MCS)" manual_label="tcb_configure_mcs">
             <condition><config var="CONFIG_KERNEL_MCS"/></condition>
             <brief>
                 Set the parameters of a TCB
@@ -359,7 +359,7 @@
                 </description>
             </error>
         </method>
-        <method id="TCBSetSchedParams" name="SetSchedParams" manual_name="Set Sched Params (MCS)" manual_label="tcb_setschedparams_mcs">
+        <method id="TCBSetSchedParamsMCS" name="SetSchedParams" manual_name="Set Sched Params (MCS)" manual_label="tcb_setschedparams_mcs">
             <condition><config var="CONFIG_KERNEL_MCS"/></condition>
             <brief>
                 Change a thread's priority, maximum controlled priority, scheduling context
@@ -496,7 +496,7 @@
             </error>
         </method>
 
-        <method id="TCBSetSpace" name="SetSpace" manual_name="Set Space (MCS)" manual_label="tcb_setspace_mcs">
+        <method id="TCBSetSpaceMCS" name="SetSpace" manual_name="Set Space (MCS)" manual_label="tcb_setspace_mcs">
             <condition><config var="CONFIG_KERNEL_MCS"/></condition>
             <brief>
                 Set the fault endpoint, CSpace and VSpace of a thread
