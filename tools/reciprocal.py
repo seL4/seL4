@@ -13,7 +13,6 @@
 
 # for details on how this script works,
 # see Hacker's delight, Chapter 10, unsigned division.
-from math import floor, ceil
 import argparse
 import sys
 from past.builtins import xrange
