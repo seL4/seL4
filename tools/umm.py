@@ -5,6 +5,8 @@
 # SPDX-License-Identifier: BSD-2-Clause
 #
 
+from __future__ import annotations
+
 import sys
 from functools import reduce
 from typing import Callable, Dict, IO, Iterable, Iterator, Tuple, TypeVar, Union
