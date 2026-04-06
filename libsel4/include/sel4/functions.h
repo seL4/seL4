@@ -10,10 +10,10 @@
 #include <sel4/types.h>
 #include <sel4/syscalls.h>
 
-extern __thread seL4_IPCBuffer *__sel4_ipc_buffer;
+extern LIBSEL4_THREAD_LOCAL seL4_IPCBuffer *__sel4_ipc_buffer;
 
 #ifdef CONFIG_KERNEL_INVOCATION_REPORT_ERROR_IPC
-extern __thread char __sel4_print_error;
+extern LIBSEL4_THREAD_LOCAL char __sel4_print_error;
 
 LIBSEL4_INLINE_FUNC char *seL4_GetDebugError(void)
 {

@@ -109,11 +109,11 @@ BOOT_CODE static void x86_cpuid_amd_identity_initialize(cpu_identity_t *ci,
         ci->display.model = original.model;
     } else {
         ci->display.family = original.family + ci->display.extended_family;
-        ci->display.family = (ci->display.extended_model << 4u) + original.model;
+        ci->display.model = (ci->display.extended_model << 4u) + original.model;
     }
 }
 
-bool_t x86_cpuid_initialize(void)
+BOOT_CODE bool_t x86_cpuid_initialize(void)
 {
     cpu_identity_t *ci = x86_cpuid_get_identity();
     struct family_model original;

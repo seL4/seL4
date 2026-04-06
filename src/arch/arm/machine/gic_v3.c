@@ -28,6 +28,9 @@
 
 #define ICC_SGI1R_INTID_SHIFT          (24)
 #define ICC_SGI1R_AFF1_SHIFT           (16)
+#define ICC_SGI1R_AFF2_SHIFT           (32)
+#define ICC_SGI1R_AFF3_SHIFT           (48)
+#define ICC_SGI1R_RS_SHIFT             (44)
 #define ICC_SGI1R_IRM_BIT              (40)
 #define ICC_SGI1R_CPUTARGETLIST_MASK   0xffff
 
@@ -72,6 +75,17 @@ static inline uint64_t mpidr_to_gic_affinity(void)
     affinity = (uint64_t)MPIDR_AFF3(mpidr) << 32 | MPIDR_AFF2(mpidr) << 16 |
                MPIDR_AFF1(mpidr) << 8  | MPIDR_AFF0(mpidr);
     return affinity;
+}
+
+static inline uint64_t sgir_word_from_args(word_t irq, word_t target)
+{
+    uint64_t t = target; /* make sure shifts below are on 64 bit */
+    return (uint64_t) irq << ICC_SGI1R_INTID_SHIFT
+           | (1llu << (t & 0xf)) // AFF0 base
+           | ((t >> 4)  & 0x0f) << ICC_SGI1R_RS_SHIFT // AFF0 Range select
+           | ((t >> 8)  & 0xff) << ICC_SGI1R_AFF1_SHIFT // AFF1
+           | ((t >> 16) & 0xff) << ICC_SGI1R_AFF2_SHIFT // AFF2
+           | ((t >> 24) & 0xff) << ICC_SGI1R_AFF2_SHIFT; // AFF3
 }
 
 /* Wait for completion of a distributor change */
@@ -167,7 +181,13 @@ BOOT_CODE static void dist_init(void)
         gic_dist->icpendrn[(i / 32)] = IRQ_SET_ALL;
     }
 
-    /* Turn on the distributor */
+    /* group 1 for non-secure */
+    if (config_set(CONFIG_PLAT_QEMU_ARM_VIRT)) {
+        for (i = SPI_START; i < nr_lines; i += 32) {
+            gic_dist->igrouprn[(i / 32)] = IRQ_SET_ALL;
+        }
+    }
+
     gic_dist->ctlr = GICD_CTLR_ARE_NS | GICD_CTLR_ENABLE_G1NS | GICD_CTLR_ENABLE_G0;
     gicv3_dist_wait_for_rwp();
 
@@ -176,6 +196,40 @@ BOOT_CODE static void dist_init(void)
     for (i = SPI_START; i < nr_lines; i++) {
         gic_dist->iroutern[i - SPI_START] = affinity;
     }
+
+}
+
+BOOT_CODE static uint32_t gicr_enable_rdist(int core_id)
+{
+    uint32_t deadline_ms =  GIC_DEADLINE_MS;
+    bool_t waiting = true;
+    uint32_t val;
+    uint64_t gpt_cnt_tval = 0;
+    uint64_t gpt_cnt_ciel;
+    uint32_t ret = 0;
+
+    val = gic_rdist_map[core_id]->waker;
+    val &= ~GICR_WAKER_ProcessorSleep;
+    gic_rdist_map[core_id]->waker = val;
+
+    SYSTEM_READ_64(CNT_CT, gpt_cnt_tval);
+    gpt_cnt_ciel = gpt_cnt_tval + (deadline_ms * TICKS_PER_MS);
+
+    while (waiting) {
+        SYSTEM_READ_64(CNT_CT, gpt_cnt_tval);
+        val = gic_rdist_map[core_id]->waker;
+
+        if (gpt_cnt_tval >= gpt_cnt_ciel) {
+            printf("GICv3: GICR_WAKER returned non-zero %x\n", val);
+            ret = 1;
+            waiting = false;
+
+        } else if (!(val & GICR_WAKER_ChildrenAsleep)) {
+            ret = 0;
+            waiting = false;
+        }
+    }
+    return ret;
 }
 
 BOOT_CODE static void gicr_locate_interface(void)
@@ -215,10 +269,13 @@ BOOT_CODE static void gicr_locate_interface(void)
              */
             val = gic_rdist_map[core_id]->waker;
             if (val & GICR_WAKER_ChildrenAsleep) {
-                printf("GICv3: GICR_WAKER returned non-zero %x\n", val);
-                halt();
+                /* On QEMU, the redistributor may not be woken by an earlier
+                 * loader, so we need to explicitly wake it here. */
+                int ret = gicr_enable_rdist(core_id);
+                if (ret == 1) {
+                    halt();
+                }
             }
-
             break;
         }
     }
@@ -256,6 +313,9 @@ BOOT_CODE static void gicr_init(void)
      */
     gic_rdist_sgi_ppi_map[CURRENT_CPU_INDEX()]->icenabler0 = 0xffff0000;
     gic_rdist_sgi_ppi_map[CURRENT_CPU_INDEX()]->isenabler0 = 0x0000ffff;
+    if (config_set(CONFIG_PLAT_QEMU_ARM_VIRT)) {
+        gic_rdist_sgi_ppi_map[CURRENT_CPU_INDEX()]->igroupr0 = IRQ_SET_ALL;
+    }
 
     /* Set ICFGR1 for PPIs as level-triggered */
     gic_rdist_sgi_ppi_map[CURRENT_CPU_INDEX()]->icfgr1 = 0x0;
@@ -341,6 +401,20 @@ BOOT_CODE void cpu_initLocalIRQController(void)
 
     gicr_init();
     cpu_iface_init();
+}
+
+bool_t plat_SGITargetValid(word_t target)
+{
+    /* Aff0+Aff1+Aff2+Aff3 values are not guaranteed to be contiguous
+     * and the first core may have a non-zero affinity value. */
+    return target <= UINT32_MAX;
+}
+
+void plat_sendSGI(word_t irq, word_t target)
+{
+    uint64_t sgi1r_base = sgir_word_from_args(irq, target);
+    SYSTEM_WRITE_64(ICC_SGI1R_EL1, sgi1r_base);
+    isb();
 }
 
 #ifdef ENABLE_SMP_SUPPORT

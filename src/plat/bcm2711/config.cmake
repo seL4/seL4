@@ -12,7 +12,10 @@ if(KernelPlatformRpi4)
     set(KernelArmCortexA72 ON)
     set(KernelArchArmV8a ON)
     config_set(KernelARMPlatform ARM_PLAT rpi4)
-    set(KernelArmMachFeatureModifiers "+crc" CACHE INTERNAL "")
+    set(KernelArmMachFeatureModifiers
+        "+crc"
+        CACHE INTERNAL ""
+    )
     list(APPEND KernelDTSList "tools/dts/rpi4.dts")
     list(APPEND KernelDTSList "src/plat/bcm2711/overlay-rpi4.dts")
     list(APPEND KernelDTSList "src/plat/bcm2711/overlay-rpi4-address-mapping.dts")
@@ -30,10 +33,16 @@ if(KernelPlatformRpi4)
         list(APPEND KernelDTSList "src/plat/bcm2711/overlay-rpi4-4gb.dts")
     elseif("${RPI4_MEMORY}" STREQUAL "8192")
         list(APPEND KernelDTSList "src/plat/bcm2711/overlay-rpi4-8gb.dts")
+        if(KernelSel4ArchAarch32)
+            list(APPEND KernelDTSList "src/plat/bcm2711/overlay-rpi4-32bit.dts")
+        endif()
     else()
-        message(FATAL_ERROR "Unsupported memory size given ${RPI4_MEMORY},
+        message(
+            FATAL_ERROR
+                "Unsupported memory size given ${RPI4_MEMORY},
                             supported memory sizes (in megabytes) are 1024,
-                            2048, 4096, and 8192.")
+                            2048, 4096, and 8192."
+        )
     endif()
 
     # - The clock frequency is 54 MHz as can be seen in bcm2711.dtsi in the
@@ -57,6 +66,5 @@ if(KernelPlatformRpi4)
 endif()
 
 add_sources(
-    DEP "KernelPlatformRpi4"
-    CFILES src/arch/arm/machine/gic_v2.c src/arch/arm/machine/l2c_nop.c
+    DEP "KernelPlatformRpi4" CFILES src/arch/arm/machine/gic_v2.c src/arch/arm/machine/l2c_nop.c
 )

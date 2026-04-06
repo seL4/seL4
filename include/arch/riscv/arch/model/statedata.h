@@ -22,7 +22,7 @@ NODE_STATE_BEGIN(archNodeState)
 NODE_STATE_DECLARE(word_t, ipiReschedulePending);
 NODE_STATE_END(archNodeState);
 
-extern asid_pool_t *riscvKSASIDTable[BIT(asidHighBits)];
+extern asid_pool_t *riscvKSASIDTable[nASIDPools];
 
 /* Kernel Page Tables */
 extern pte_t kernel_root_pageTable[BIT(PT_INDEX_BITS)] VISIBLE;

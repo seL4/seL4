@@ -42,11 +42,10 @@ UP_STATE_DEFINE(tcb_t *, ksIdleThread);
 UP_STATE_DEFINE(tcb_t *, ksSchedulerAction);
 
 #ifdef CONFIG_HAVE_FPU
-/* Currently active FPU state, or NULL if there is no active FPU state */
-UP_STATE_DEFINE(user_fpu_state_t *, ksActiveFPUState);
-
-UP_STATE_DEFINE(word_t, ksFPURestoresSinceSwitch);
+/* The thread using the FPU, or NULL if FPU state is invalid */
+UP_STATE_DEFINE(tcb_t *, ksCurFPUOwner);
 #endif /* CONFIG_HAVE_FPU */
+
 #ifdef CONFIG_KERNEL_MCS
 /* the amount of time passed since the kernel time was last updated */
 UP_STATE_DEFINE(ticks_t, ksConsumed);
@@ -85,14 +84,14 @@ compile_assert(irqCNodeSize, sizeof(intStateIRQNode) >= ((INT_STATE_ARRAY_SIZE) 
 dom_t ksCurDomain;
 
 /* Domain timeslice remaining */
-#ifdef CONFIG_KERNEL_MCS
 ticks_t ksDomainTime;
-#else
-word_t ksDomainTime;
-#endif
 
-/* An index into ksDomSchedule for active domain and length. */
+/* An index into ksDomSchedule for active domain and duration. */
 word_t ksDomScheduleIdx;
+
+/* The value ksDomScheduleIdx will be set to when reaching either the end of
+ * ksDomSchedule, or an end marker (entry with zero domain and duration). */
+word_t ksDomScheduleStart;
 
 /* Idle thread. */
 SECTION("._idle_thread") char ksIdleThreadTCB[CONFIG_MAX_NUM_NODES][BIT(seL4_TCBBits)] ALIGN(BIT(seL4_TCBBits));

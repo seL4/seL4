@@ -73,13 +73,12 @@ typedef pte_t pde_t;
 #define ASID_POOL_REF(p)    ((word_t)p)
 
 
-#define ASID_POOL_INDEX_BITS seL4_ASIDPoolIndexBits
 #define ASID_BITS (asidHighBits+asidLowBits)
 #define nASIDs     BIT(ASID_BITS)
 #define nASIDPools BIT(asidHighBits)
 
-#define ASID_LOW(a) (a & MASK(asidLowBits))
-#define ASID_HIGH(a) ((a >> asidLowBits) & MASK(asidHighBits))
+#define ASID_LOW(a) ((a) & MASK(asidLowBits))
+#define ASID_HIGH(a) ((a) >> asidLowBits)
 
 static inline word_t CONST cap_get_archCapSizeBits(cap_t cap)
 {
@@ -106,6 +105,10 @@ static inline word_t CONST cap_get_archCapSizeBits(cap_t cap)
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case cap_vcpu_cap:
         return seL4_VCPUBits;
+#endif
+#ifndef CONFIG_ENABLE_SMP_SUPPORT
+    case cap_sgi_signal_cap:
+        return 0;
 #endif
 
     default:
@@ -141,6 +144,14 @@ static inline bool_t CONST cap_get_archCapIsPhysical(cap_t cap)
     case cap_vcpu_cap:
         return true;
 #endif
+#ifndef CONFIG_ENABLE_SMP_SUPPORT
+    case cap_sgi_signal_cap:
+        return false;
+#endif
+#ifdef CONFIG_ALLOW_SMC_CALLS
+    case cap_smc_cap:
+        return false;
+#endif
 
     default:
         /* Unreachable, but GCC can't figure that out */
@@ -173,6 +184,14 @@ static inline void *CONST cap_get_archCapPtr(cap_t cap)
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case cap_vcpu_cap:
         return VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap));
+#endif
+#ifndef CONFIG_ENABLE_SMP_SUPPORT
+    case cap_sgi_signal_cap:
+        return NULL;
+#endif
+#ifdef CONFIG_ALLOW_SMC_CALLS
+    case cap_smc_cap:
+        return NULL;
 #endif
 
     default:

@@ -130,7 +130,8 @@ static inline void handleSpuriousIRQ(void);
  */
 static inline void handleReservedIRQ(irq_t irq);
 
-#ifndef CONFIG_ARM_GIC_V3_SUPPORT
+void setIRQTrigger(irq_t irq, bool_t trigger);
 
+#ifndef CONFIG_ARM_GIC_V3_SUPPORT
 static inline void deactivateInterrupt(irq_t irq) {}
 #endif

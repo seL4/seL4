@@ -68,6 +68,19 @@ typedef enum {
     seL4_GuardMismatch,
     SEL4_FORCE_LONG_ENUM(seL4_LookupFailureType),
 } seL4_LookupFailureType;
+
+/* Flags to be used with seL4_TCB_Set_Flags */
+typedef enum {
+    seL4_TCBFlag_NoFlag = 0x0,
+    seL4_TCBFlag_fpuDisabled = 0x1,
+
+    SEL4_FORCE_LONG_ENUM(seL4_TCBFlag),
+    seL4_TCBFlag_MASK = seL4_TCBFlag_NoFlag
+#ifdef CONFIG_HAVE_FPU
+                        | seL4_TCBFlag_fpuDisabled
+#endif
+} seL4_TCBFlag;
+
 #endif /* !__ASSEMBLER__ */
 
 #ifdef CONFIG_KERNEL_MCS

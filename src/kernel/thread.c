@@ -12,6 +12,7 @@
 #include <kernel/cspace.h>
 #include <kernel/thread.h>
 #include <kernel/vspace.h>
+#include <object/domain.h>
 #ifdef CONFIG_KERNEL_MCS
 #include <object/schedcontext.h>
 #endif
@@ -19,6 +20,7 @@
 #include <arch/machine.h>
 #include <arch/kernel/thread.h>
 #include <machine/registerset.h>
+#include <machine/fpu.h>
 #include <linker.h>
 
 static seL4_MessageInfo_t
@@ -28,6 +30,7 @@ transferCaps(seL4_MessageInfo_t info,
 
 BOOT_CODE void configureIdleThread(tcb_t *tcb)
 {
+    tcb->tcbFlags = seL4_TCBFlag_fpuDisabled;
     Arch_configureIdleThread(tcb);
     setThreadState(tcb, ThreadState_IdleThreadState);
 }
@@ -91,11 +94,11 @@ void restart(tcb_t *target)
         cancelIPC(target);
 #ifdef CONFIG_KERNEL_MCS
         setThreadState(target, ThreadState_Restart);
-        if (sc_sporadic(target->tcbSchedContext)
-            && target->tcbSchedContext != NODE_STATE(ksCurSC)) {
-            refill_unblock_check(target->tcbSchedContext);
+        sched_context_t *sc = target->tcbSchedContext;
+        if (sc_sporadic(sc) && sc != NODE_STATE(ksCurSC)) {
+            refill_unblock_check(sc);
         }
-        schedContext_resume(target->tcbSchedContext);
+        schedContext_resume(sc);
         if (isSchedulable(target)) {
             possibleSwitchTo(target);
         }
@@ -300,22 +303,38 @@ void doNBRecvFailedTransfer(tcb_t *thread)
     setRegister(thread, badgeRegister, 0);
 }
 
+void prepareSetDomain(tcb_t *tptr, dom_t dom)
+{
+    if (ksCurDomain != dom) {
+        Arch_prepareSetDomain(tptr, dom);
+#ifdef CONFIG_HAVE_FPU
+        /* Save FPU state now to avoid touching cross-domain state later */
+        fpuRelease(tptr);
+#endif
+    }
+}
+
+static void prepareNextDomain(void)
+{
+    Arch_prepareNextDomain();
+#ifdef CONFIG_HAVE_FPU
+    /* Save FPU state now to avoid touching cross-domain state later */
+    switchLocalFpuOwner(NULL);
+#endif
+}
+
 static void nextDomain(void)
 {
     ksDomScheduleIdx++;
-    if (ksDomScheduleIdx >= ksDomScheduleLength) {
-        ksDomScheduleIdx = 0;
+    if (dschedule_is_end_marker(ksDomScheduleIdx)) {
+        ksDomScheduleIdx = ksDomScheduleStart;
     }
 #ifdef CONFIG_KERNEL_MCS
     NODE_STATE(ksReprogram) = true;
 #endif
     ksWorkUnitsCompleted = 0;
-    ksCurDomain = ksDomSchedule[ksDomScheduleIdx].domain;
-#ifdef CONFIG_KERNEL_MCS
-    ksDomainTime = usToTicks(ksDomSchedule[ksDomScheduleIdx].length * US_IN_MS);
-#else
-    ksDomainTime = ksDomSchedule[ksDomScheduleIdx].length;
-#endif
+    ksCurDomain = dschedule_domain(ksDomSchedule[ksDomScheduleIdx]);
+    ksDomainTime = dschedule_duration(ksDomSchedule[ksDomScheduleIdx]);
 }
 
 #ifdef CONFIG_KERNEL_MCS
@@ -344,6 +363,7 @@ static void switchSchedContext(void)
 static void scheduleChooseNewThread(void)
 {
     if (ksDomainTime == 0) {
+        prepareNextDomain();
         nextDomain();
     }
     chooseThread();
@@ -452,6 +472,11 @@ void switchToThread(tcb_t *thread)
     benchmark_utilisation_switch(NODE_STATE(ksCurThread), thread);
 #endif
     Arch_switchToThread(thread);
+
+#ifdef CONFIG_HAVE_FPU
+    lazyFPURestore(thread);
+#endif /* CONFIG_HAVE_FPU */
+
     tcbSchedDequeue(thread);
     NODE_STATE(ksCurThread) = thread;
 }

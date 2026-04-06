@@ -8,8 +8,6 @@
 #include <arch/machine/fpu.h>
 #include <mode/model/statedata.h>
 
-bool_t isFPUEnabledCached[CONFIG_MAX_NUM_NODES];
-
 #ifdef CONFIG_HAVE_FPU
 /* Initialise the FP/SIMD for this machine. */
 BOOT_CODE bool_t fpsimd_init(void)
@@ -19,7 +17,8 @@ BOOT_CODE bool_t fpsimd_init(void)
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         enableFpuEL01();
     }
-
+    /* Non-HYP Kernel assumes FPU is always enabled for EL1: Make sure it is */
+    isb();
     return true;
 }
 #endif /* CONFIG_HAVE_FPU */

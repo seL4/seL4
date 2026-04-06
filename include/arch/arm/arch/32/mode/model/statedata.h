@@ -12,7 +12,7 @@
 #include <util.h>
 #include <object/structures.h>
 
-extern asid_pool_t *armKSASIDTable[BIT(asidHighBits)] VISIBLE;
+extern asid_pool_t *armKSASIDTable[nASIDPools] VISIBLE;
 extern asid_t armKSHWASIDTable[BIT(hwASIDBits)] VISIBLE;
 extern hw_asid_t armKSNextASID VISIBLE;
 

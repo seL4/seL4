@@ -10,6 +10,7 @@
 #include <machine/io.h>
 #include <machine/registerset.h>
 #include <model/statedata.h>
+#include <object/domain.h>
 #include <arch/machine.h>
 #include <arch/kernel/boot.h>
 #include <arch/kernel/vspace.h>
@@ -39,7 +40,7 @@ BOOT_CODE p_region_t get_p_reg_kernel_img(void)
 {
     return (p_region_t) {
         .start = kpptr_to_paddr((const void *)KERNEL_ELF_BASE),
-        .end   = kpptr_to_paddr(ki_end)
+        .end   = kpptr_to_paddr((const void *)KERNEL_ELF_TOP)
     };
 }
 
@@ -140,7 +141,7 @@ BOOT_CODE static bool_t insert_region(region_t reg)
      * don't stop the boot process here, but return an error. The caller should
      * decide how bad this is.
      */
-    printf("no free memory slot left for [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"],"
+    printf("no free memory slot left for [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"),"
            " consider increasing MAX_NUM_FREEMEM_REG (%u)\n",
            reg.start, reg.end, (unsigned int)MAX_NUM_FREEMEM_REG);
 
@@ -298,13 +299,6 @@ compile_assert(num_priorities_valid,
 BOOT_CODE void
 create_domain_cap(cap_t root_cnode_cap)
 {
-    /* Check domain scheduler assumptions. */
-    assert(ksDomScheduleLength > 0);
-    for (word_t i = 0; i < ksDomScheduleLength; i++) {
-        assert(ksDomSchedule[i].domain < CONFIG_NUM_DOMAINS);
-        assert(ksDomSchedule[i].length > 0);
-    }
-
     cap_t cap = cap_domain_cap_new();
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapDomain), cap);
 }
@@ -327,6 +321,15 @@ BOOT_CODE void create_bi_frame_cap(cap_t root_cnode_cap, cap_t pd_cap, vptr_t vp
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapBootInfoFrame), cap);
 }
 
+/**
+ * the size_bits we return is 0 for extra_size = 0
+ * and if it is non-zero the bits are always >= seL4_PageBits
+ * this is relied on in a few places, and gives us code of the form
+ *
+ *     extra_bi_size_bits > 0 ? BIT(extra_bi_size_bits) : 0
+ *
+ * which handles the 0-size case.
+ */
 BOOT_CODE word_t calculate_extra_bi_size_bits(word_t extra_size)
 {
     if (extra_size == 0) {
@@ -361,7 +364,7 @@ BOOT_CODE void populate_bi_frame(node_id_t node_id, word_t num_nodes,
     bi->numIOPTLevels = 0;
     bi->ipcBuffer = (seL4_IPCBuffer *)ipcbuf_vptr;
     bi->initThreadCNodeSizeBits = CONFIG_ROOT_CNODE_SIZE_BITS;
-    bi->initThreadDomain = ksDomSchedule[ksDomScheduleIdx].domain;
+    bi->initThreadDomain = 0;
     bi->extraLen = extra_bi_size;
 
     ndks_boot.bi_frame = bi;
@@ -423,7 +426,7 @@ BOOT_CODE create_frames_of_region_ret_t create_frames_of_region(
 
 BOOT_CODE cap_t create_it_asid_pool(cap_t root_cnode_cap)
 {
-    cap_t ap_cap = cap_asid_pool_cap_new(IT_ASID >> asidLowBits, rootserver.asid_pool);
+    cap_t ap_cap = cap_asid_pool_cap_new(ASID_HIGH(IT_ASID) << asidLowBits, rootserver.asid_pool);
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadASIDPool), ap_cap);
 
     /* create ASID control cap */
@@ -535,19 +538,11 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
 
     tcb->tcbPriority = seL4_MaxPrio;
     tcb->tcbMCP = seL4_MaxPrio;
-    tcb->tcbDomain = ksDomSchedule[ksDomScheduleIdx].domain;
+    tcb->tcbDomain = 0;
 #ifndef CONFIG_KERNEL_MCS
     setupReplyMaster(tcb);
 #endif
     setThreadState(tcb, ThreadState_Running);
-
-    ksCurDomain = ksDomSchedule[ksDomScheduleIdx].domain;
-#ifdef CONFIG_KERNEL_MCS
-    ksDomainTime = usToTicks(ksDomSchedule[ksDomScheduleIdx].length * US_IN_MS);
-#else
-    ksDomainTime = ksDomSchedule[ksDomScheduleIdx].length;
-#endif
-    assert(ksCurDomain < CONFIG_NUM_DOMAINS && ksDomainTime > 0);
 
 #ifndef CONFIG_KERNEL_MCS
     SMP_COND_STATEMENT(tcb->tcbAffinity = 0);
@@ -569,6 +564,21 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
 }
 
 #ifdef ENABLE_SMP_CLOCK_SYNC_TEST_ON_BOOT
+BOOT_CODE static bool_t hypervisor_present(void)
+{
+#ifdef CONFIG_ARCH_X86
+    uint32_t ebx = x86_cpuid_ebx(KVM_CPUID_SIGNATURE, 0);
+    uint32_t ecx = x86_cpuid_ecx(KVM_CPUID_SIGNATURE, 0);
+    uint32_t edx = x86_cpuid_edx(KVM_CPUID_SIGNATURE, 0);
+
+    if ((ebx == CPUID_KVM_EBX && ecx == CPUID_KVM_ECX && edx == CPUID_KVM_EDX)
+        || (ebx == CPUID_TCG_EBX && ecx == CPUID_TCG_ECX && edx == CPUID_TCG_EDX)) {
+        return true;
+    }
+#endif
+    return false;
+}
+
 BOOT_CODE void clock_sync_test(void)
 {
     ticks_t t, t0;
@@ -584,14 +594,23 @@ BOOT_CODE void clock_sync_test(void)
     t = getCurrentTime();
     printf("clock_sync_test[%d]: t0 = %"PRIu64", t = %"PRIu64", td = %"PRIi64"\n",
            (int)getCurrentCPUIndex(), t0, t, t - t0);
-    assert(t0 <= margin + t && t <= t0 + margin);
+    /*
+     * The test does not consistently work if we are in a virtual machine (e.g
+     * within QEMU) because the measurement cannot distinguish between
+     * interrupted clock reads and out-of-sync clocks.
+     */
+    if (hypervisor_present()) {
+        printf("clock_sync_test[%d]: disabled, detected running as VM\n", (int)getCurrentCPUIndex());
+    } else {
+        assert(t0 <= margin + t && t <= t0 + margin);
+    }
 }
 #endif
 
 BOOT_CODE void init_core_state(tcb_t *scheduler_action)
 {
 #ifdef CONFIG_HAVE_FPU
-    NODE_STATE(ksActiveFPUState) = NULL;
+    NODE_STATE(ksCurFPUOwner) = NULL;
 #endif
 #ifdef CONFIG_DEBUG_BUILD
     /* add initial threads to the debug queue */
@@ -612,6 +631,10 @@ BOOT_CODE void init_core_state(tcb_t *scheduler_action)
     NODE_STATE(ksReleaseQueue.end) = NULL;
     NODE_STATE(ksCurTime) = getCurrentTime();
 #endif
+    /* No need for NODE_STATE() as there is no SMP support for domains */
+    ksCurDomain = 0;
+    ksDomainTime = DSCHED_MAX_DURATION;
+    ksDomSchedule[0] = dschedule_make(0, DSCHED_MAX_DURATION);
 }
 
 /**
@@ -776,7 +799,7 @@ BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap)
             });
             if (!create_untypeds_for_region(root_cnode_cap, true, reg, first_untyped_slot)) {
                 printf("ERROR: creation of untypeds for device region #%u at"
-                       " [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] failed\n",
+                       " [%"SEL4_PRIx_word"..%"SEL4_PRIx_word") failed\n",
                        (unsigned int)i, reg.start, reg.end);
                 return false;
             }
@@ -792,7 +815,7 @@ BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap)
 
         if (!create_untypeds_for_region(root_cnode_cap, true, reg, first_untyped_slot)) {
             printf("ERROR: creation of untypeds for top device region"
-                   " [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] failed\n",
+                   " [%"SEL4_PRIx_word"..%"SEL4_PRIx_word") failed\n",
                    reg.start, reg.end);
             return false;
         }
@@ -816,7 +839,7 @@ BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap)
         ndks_boot.freemem[i] = REG_EMPTY;
         if (!create_untypeds_for_region(root_cnode_cap, false, reg, first_untyped_slot)) {
             printf("ERROR: creation of untypeds for free memory region #%u at"
-                   " [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"] failed\n",
+                   " [%"SEL4_PRIx_word"..%"SEL4_PRIx_word") failed\n",
                    (unsigned int)i, reg.start, reg.end);
             return false;
         }
@@ -868,7 +891,7 @@ BOOT_CODE static bool_t check_available_memory(word_t n_available,
     /* Force ordering and exclusivity of available regions. */
     for (word_t i = 0; i < n_available; i++) {
         const p_region_t *r = &available[i];
-        printf("  [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]\n", r->start, r->end);
+        printf("  [%"SEL4_PRIx_word"..%"SEL4_PRIx_word")\n", r->start, r->end);
 
         /* Available regions must be sane */
         if (r->start > r->end) {
@@ -902,7 +925,7 @@ BOOT_CODE static bool_t check_reserved_memory(word_t n_reserved,
     /* Force ordering and exclusivity of reserved regions. */
     for (word_t i = 0; i < n_reserved; i++) {
         const region_t *r = &reserved[i];
-        printf("  [%"SEL4_PRIx_word"..%"SEL4_PRIx_word"]\n", r->start, r->end);
+        printf("  [%"SEL4_PRIx_word"..%"SEL4_PRIx_word")\n", r->start, r->end);
 
         /* Reserved regions must be sane, the size is allowed to be zero. */
         if (r->start > r->end) {

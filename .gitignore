@@ -29,6 +29,7 @@ manual/manual.pdf
 manual/stage
 manual/doxygen-output
 manual/generated
+manual/generated_markdown
 
 # Emacs backups
 *~

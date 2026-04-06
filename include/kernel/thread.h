@@ -164,8 +164,10 @@ void Arch_switchToThread(tcb_t *tcb);
 void Arch_switchToIdleThread(void);
 void Arch_configureIdleThread(tcb_t *tcb);
 void Arch_activateIdleThread(tcb_t *tcb);
+void Arch_prepareNextDomain(void);
+void Arch_prepareSetDomain(tcb_t *tcb, dom_t dom);
 
-void idle_thread(void);
+void NORETURN idle_thread(void);
 
 void configureIdleThread(tcb_t *tcb);
 void activateThread(void);
@@ -189,6 +191,7 @@ void schedule(void);
 void chooseThread(void);
 void switchToThread(tcb_t *thread);
 void switchToIdleThread(void);
+void prepareSetDomain(tcb_t *tptr, dom_t dom);
 void setDomain(tcb_t *tptr, dom_t dom);
 void setPriority(tcb_t *tptr, prio_t prio);
 void setMCPriority(tcb_t *tptr, prio_t mcp);
@@ -315,4 +318,3 @@ static inline void setThreadStateBlockedOnReply(tcb_t *tptr, reply_t *reply)
     scheduleTCB(tptr);
 }
 #endif
-

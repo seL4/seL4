@@ -10,7 +10,6 @@
 ---- Default base size: uint64_t
 #if (CONFIG_PT_LEVELS == 3)
 base 64(39,1)
-#define BF_CANONICAL_RANGE 39
 #else
 #error "Only PT_LEVELS == 3 is currently supported on RISCV64"
 #endif

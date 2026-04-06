@@ -170,7 +170,8 @@ typedef enum {
 #define seL4_LargePageBits 21
 #define seL4_HugePageBits 30
 #define seL4_SlotBits 5
-#if defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYP_ENABLE_VCPU_CP14_SAVE_AND_RESTORE)
+#if defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYP_ENABLE_VCPU_CP14_SAVE_AND_RESTORE) || \
+    (defined(CONFIG_ARM_HYPERVISOR_SUPPORT) && defined(CONFIG_ENABLE_SMP_SUPPORT) && defined(CONFIG_BENCHMARK_TRACK_UTILISATION))
 #define seL4_TCBBits 12
 #else
 #define seL4_TCBBits 11

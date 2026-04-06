@@ -212,7 +212,7 @@ def run(tree: FdtParser, hw_yaml: HardwareYaml, config: Config, kernel_config_di
     if not args.header_out:
         raise ValueError('You need to specify a header-out to use c header output')
 
-    physical_memory, reserved, physBase = hardware.utils.memory.get_physical_memory(tree, config)
+    physical_memory, physBase = hardware.utils.memory.get_physical_memory(tree, config)
     kernel_regions, kernel_macros = get_kernel_devices(tree, hw_yaml, kernel_config_dict)
 
     create_c_header_file(

@@ -22,6 +22,7 @@
 /* CPU specific IRQ's */
 #define SGI_START         0u
 #define PPI_START         16u
+#define NUM_SGIS          16u
 
 /* Shared Peripheral Interrupts */
 #define SPI_START         32u
@@ -51,11 +52,11 @@
                         CORE_IRQ_TO_IRQT(0, (idx) - (CONFIG_MAX_NUM_NODES-1)*NUM_PPI))
 #define IRQT_TO_CORE(irqt) (irqt.target_core)
 #define IRQT_TO_IRQ(irqt) (irqt.irq)
-irq_t irqInvalid = CORE_IRQ_TO_IRQT(-1, -1);
+static const irq_t irqInvalid = CORE_IRQ_TO_IRQT(-1, -1);
 
 #else
 #define IRQ_IS_PPI(irq) HW_IRQ_IS_PPI(irq)
-irq_t irqInvalid = (uint16_t) -1;
+static const irq_t irqInvalid = (uint16_t) -1;
 #endif
 
 /* Setters/getters helpers for hardware irqs */

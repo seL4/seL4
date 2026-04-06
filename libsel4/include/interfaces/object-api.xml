@@ -197,8 +197,11 @@
                 description="The new VSpace root."/>
             <param dir="in" name="vspace_root_data" type="seL4_Word"
                 description="Has no effect on x86 or ARM processors."/>
-            <param dir="in" name="buffer" type="seL4_Word"
-                description="Location of the thread's IPC buffer. Must be 512-byte aligned. The IPC buffer may not cross a page boundary."/>
+            <param dir="in" name="buffer" type="seL4_Word">
+                <description>
+                    Location of the thread's IPC buffer. Must be aligned to <texttt text="seL4_IPCBufferSizeBits"/>. The IPC buffer may not cross a page boundary.
+                </description>
+            </param>
             <param dir="in" name="bufferFrame" type="seL4_CPtr"
                 description="Capability to a page containing the thread's IPC buffer."/>
             <error name="seL4_IllegalOperation">
@@ -237,8 +240,11 @@
                 description="The new VSpace root."/>
             <param dir="in" name="vspace_root_data" type="seL4_Word"
                 description="Has no effect on x86 or ARM processors."/>
-            <param dir="in" name="buffer" type="seL4_Word"
-                description="Location of the thread's IPC buffer. Must be 512-byte aligned. The IPC buffer may not cross a page boundary."/>
+            <param dir="in" name="buffer" type="seL4_Word">
+                <description>
+                    Location of the thread's IPC buffer. Must be aligned to <texttt text="seL4_IPCBufferSizeBits"/>. The IPC buffer may not cross a page boundary.
+                </description>
+            </param>
             <param dir="in" name="bufferFrame" type="seL4_CPtr"
                 description="Capability to a page containing the thread's IPC buffer."/>
             <error name="seL4_AlignmentError">
@@ -423,8 +429,11 @@
             <description>
                 See Sections <shortref sec="threads"/> and <shortref sec="messageinfo"/>
             </description>
-            <param dir="in" name="buffer" type="seL4_Word"
-                description="Location of the thread's IPC buffer. Must be 512-byte aligned. The IPC buffer may not cross a page boundary."/>
+            <param dir="in" name="buffer" type="seL4_Word">
+                <description>
+                    Location of the thread's IPC buffer. Must be aligned to <texttt text="seL4_IPCBufferSizeBits"/>. The IPC buffer may not cross a page boundary.
+                </description>
+            </param>
             <param dir="in" name="bufferFrame" type="seL4_CPtr"
                 description="Capability to a page containing the thread's IPC buffer."/>
             <error name="seL4_AlignmentError">
@@ -825,6 +834,28 @@
             </error>
          </method>
 
+        <method id="TCBSetFlags" name="SetFlags" manual_name="Set Feature Flags" manual_label="tcb_setflags">
+            <brief>
+                Set or clear <texttt text="seL4_TCBFlag"/> feature flags of the target TCB.
+            </brief>
+            <description>
+                A newly created TCB has all flags cleared.
+                Currently the only flag supported is <texttt text="seL4_TCBFlag_fpuDisabled"/>.
+                The flags are cleared and set in the given order, i.e. when a flag is both cleared and set, it will be set.
+                Unknown flags are ignored. Use zero for both clear and set to retrieve the current flags value.
+            </description>
+            <return>
+                The resulting TCB flags value is returned in the first message register.
+            </return>
+            <param dir="in" name="clear" type="seL4_Word" description="Bitwise OR'd set of seL4_TCBFlag to clear."/>
+            <param dir="in" name="set" type="seL4_Word" description="Bitwise OR'd set of seL4_TCBFlag to set."/>
+            <param dir="out" name="flags" type="seL4_Word" description="Returned value of the TCB flags"/>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+        </method>
     </interface>
 
     <interface name="seL4_CNode" manual_name="CNode">
@@ -1320,13 +1351,94 @@
             </error>
             <error name="seL4_InvalidArgument">
                 <description>
-                    The <texttt text="domain"/> is greater than <texttt text="CONFIG_NUM_DOMAINS"/>.
+                    The <texttt text="domain"/> is greater than <texttt text="KernelNumDomains"/>.
                     Or, <texttt text="thread"/> is a CPtr to a capability of the wrong type.
                 </description>
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+        </method>
+        <method id="DomainScheduleConfigure" name="ScheduleConfigure" manual_label="domain_schedule_configure">
+            <brief>
+                Modify a domain scheduling entry.
+            </brief>
+            <description>
+                Configure the domain and duration of a scheduling entry.
+                A zero domain and duration means it is an end marker.
+                The domain scheduler will go back to the starting index when reaching
+                an end marker.
+                This makes it possible to configure multiple independent domain schedules
+                and switch between them atomically.
+
+                The scheduling entry will be modified immediately. However, if the currently active
+                index is modified, the change will not apply until the next time this entry is reached
+                by the domain scheduler.
+
+                After boot the first scheduling entry has domain zero and maximum duration, all other
+                entries will be end markers.
+
+                Hence, after initial configuration a call to <texttt text="seL4_DomainSet_ScheduleSetStart"/>
+                is needed to update the current execution, even when there is no need to actually
+                change the starting index.
+
+                <docref>See <autoref label="sec:domains"/>.</docref>
+            </description>
+            <return><errorenumdesc/></return>
+            <param dir="in" name="index" type="seL4_Word" description="The scheduling entry to modify."/>
+            <param dir="in" name="domain" type="seL4_Uint8" description="The scheduling entry's new domain."/>
+            <param dir="in" name="duration" type="seL4_Time" description="Timeslice in ticks (kernel ticks for non-MCS, timer ticks for MCS)."/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="duration"/> is zero, but <texttt text="domain"/> is not.
+                    Or, <texttt text="index"/> points to the starting index, but <texttt text="duration"/> is zero.
+                    Or, <texttt text="duration"/> does not fit in 56 bits.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="index"/> is not less than <texttt text="KernelNumDomainSchedules"/>.
+                    Or, <texttt text="domain"/> is not less than <texttt text="KernelNumDomains"/>.
+                </description>
+            </error>
+        </method>
+        <method id="DomainScheduleSetStart" name="ScheduleSetStart" manual_label="domain_schedule_set_start">
+            <brief>
+                Change the starting index of the domain scheduler.
+            </brief>
+            <description>
+                The domain scheduler starts with the schedule entry indicated by the starting index.
+                When reaching an end marker or the end of the schedules, the scheduler will go back
+                to the starting entry again. The starting index is zero after boot.
+
+                The currently active scheduling index will be changed to the new starting index
+                immediately, before returning from this system call. This relinquishes all remaining
+                duration of the last schedule.
+
+                <docref>See <autoref label="sec:domains"/>.</docref>
+            </description>
+            <return><errorenumdesc/></return>
+            <param dir="in" name="index" type="seL4_Word" description="The new starting index."/>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="index"/> points to an end marker entry.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="index"/> is not less than <texttt text="KernelNumDomainSchedules"/>.
                 </description>
             </error>
         </method>

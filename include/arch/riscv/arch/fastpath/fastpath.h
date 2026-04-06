@@ -42,6 +42,14 @@ static inline void FORCE_INLINE switchToThread_fp(tcb_t *thread, pte_t *vroot, p
 
     setVSpaceRoot(addrFromPPtr(vroot), asid);
 
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+    benchmark_utilisation_switch(NODE_STATE(ksCurThread), thread);
+#endif
+
+#ifdef CONFIG_HAVE_FPU
+    lazyFPURestore(thread);
+#endif
+
     NODE_STATE(ksCurThread) = thread;
 }
 
@@ -96,7 +104,7 @@ static inline int fastpath_reply_cap_check(cap_t cap)
 /** DONT_TRANSLATE */
 static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 {
-    NODE_UNLOCK_IF_HELD;
+    c_exit_hook();
 
     word_t cur_thread_regs = (word_t)cur_thread->tcbArch.tcbContext.registers;
 
@@ -106,12 +114,11 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
     *((word_t *)sp) = cur_thread_regs;
 #endif
 
-    c_exit_hook();
-
 #ifdef CONFIG_HAVE_FPU
-    lazyFPURestore(cur_thread);
     set_tcb_fs_state(cur_thread, isFpuEnable());
 #endif
+
+    NODE_UNLOCK_IF_HELD;
 
     register word_t badge_reg asm("a0") = badge;
     register word_t msgInfo_reg asm("a1") = msgInfo;

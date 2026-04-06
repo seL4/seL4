@@ -171,8 +171,6 @@ BEGIN_FUNC(lower_el_sync)
     mov     x0, x25
     b       c_handle_vcpu_fault
 #else
-    cmp     x24, #ESR_EL1_EC_ENFP
-    b.eq    el0_enfp
     b       el0_user
 #endif
 
@@ -213,12 +211,6 @@ lel_syscall:
 
     mov     x2, x7
     b       c_handle_syscall
-
-el0_enfp:
-#ifdef CONFIG_HAVE_FPU
-    lsp_i   x19
-    b       c_handle_enfp
-#endif /* CONFIG_HAVE_FPU */
 
 el0_user:
     mrs     x20, ELR

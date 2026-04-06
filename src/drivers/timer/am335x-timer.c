@@ -45,11 +45,11 @@ static BOOT_CODE void disableWatchdog(void)
     // am335x ref man, sec 20.4.3.8
     *WDT_REG(wdt, WDT_REG_WSPR) = 0xaaaa;
     while ((*WDT_REG(wdt, WDT_REG_WWPS) & WDT_WWPS_PEND_WSPR)) {
-        continue;
+        ;
     }
     *WDT_REG(wdt, WDT_REG_WSPR) = 0x5555;
     while ((*WDT_REG(wdt, WDT_REG_WWPS) & WDT_WWPS_PEND_WSPR)) {
-        continue;
+        ;
     }
 }
 
@@ -65,25 +65,25 @@ static BOOT_CODE void enableTimers(void)
     /* select clock - Timer 3 */
     *CMPER_REG(cmper, CMPER_CLKSEL_TIMER3) = CMPER_CKLSEL_MOSC;
     while ((*CMPER_REG(cmper, CMPER_CLKSEL_TIMER3) & RESERVED) != CMPER_CKLSEL_MOSC) {
-        continue;
+        ;
     }
 
     /* enable clock */
     *CMPER_REG(cmper, CMPER_TIMER3_CLKCTRL) = CMPER_CLKCTRL_ENABLE;
     while ((*CMPER_REG(cmper, CMPER_TIMER3_CLKCTRL) & RESERVED) != CMPER_CLKCTRL_ENABLE) {
-        continue;
+        ;
     }
 
     /* select clock - Timer 4 */
     *CMPER_REG(cmper, CMPER_CLKSEL_TIMER4) = CMPER_CKLSEL_MOSC;
     while ((*CMPER_REG(cmper, CMPER_CLKSEL_TIMER4) & RESERVED) != CMPER_CKLSEL_MOSC) {
-        continue;
+        ;
     }
 
     /* enable clock */
     *CMPER_REG(cmper, CMPER_TIMER4_CLKCTRL) = CMPER_CLKCTRL_ENABLE;
     while ((*CMPER_REG(cmper, CMPER_TIMER4_CLKCTRL) & RESERVED) != CMPER_CLKCTRL_ENABLE) {
-        continue;
+        ;
     }
 }
 #ifdef CONFIG_KERNEL_MCS

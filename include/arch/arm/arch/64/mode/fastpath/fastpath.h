@@ -42,6 +42,10 @@ switchToThread_fp(tcb_t *thread, vspace_root_t *vroot, pde_t stored_hw_asid)
     benchmark_utilisation_switch(NODE_STATE(ksCurThread), thread);
 #endif
 
+#ifdef CONFIG_HAVE_FPU
+    lazyFPURestore(thread);
+#endif /* CONFIG_HAVE_FPU */
+
     NODE_STATE(ksCurThread) = thread;
 }
 
@@ -135,17 +139,13 @@ static inline int fastpath_reply_cap_check(cap_t cap)
 /** DONT_TRANSLATE */
 static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 {
-    NODE_UNLOCK;
-
     c_exit_hook();
 
 #ifdef ARM_CP14_SAVE_AND_RESTORE_NATIVE_THREADS
     restore_user_debug_context(cur_thread);
 #endif
 
-#ifdef CONFIG_HAVE_FPU
-    lazyFPURestore(cur_thread);
-#endif /* CONFIG_HAVE_FPU */
+    NODE_UNLOCK;
 
     register word_t badge_reg asm("x0") = badge;
     register word_t msgInfo_reg asm("x1") = msgInfo;

@@ -15,14 +15,17 @@ if(KernelPlatformMaaxboard)
     set(KernelArchArmV8a ON)
     set(KernelArmGicV3 ON)
     config_set(KernelARMPlatform ARM_PLAT ${KernelPlatform})
-    set(KernelArmMach "imx" CACHE INTERNAL "")
+    set(KernelArmMach
+        "imx"
+        CACHE INTERNAL ""
+    )
     list(APPEND KernelDTSList "tools/dts/${KernelPlatform}.dts")
     list(APPEND KernelDTSList "src/plat/maaxboard/overlay-${KernelPlatform}.dts")
     if(KernelSel4ArchAarch32)
         list(APPEND KernelDTSList "src/plat/maaxboard/overlay-${KernelPlatform}-32bit.dts")
     endif()
     declare_default_headers(
-        TIMER_FREQUENCY 8000000
+        TIMER_FREQUENCY 8333333
         MAX_IRQ 160
         TIMER drivers/timer/arm_generic.h
         INTERRUPT_CONTROLLER arch/machine/gic_v3.h
@@ -34,6 +37,6 @@ if(KernelPlatformMaaxboard)
 endif()
 
 add_sources(
-    DEP "KernelPlatformMaaxboard"
-    CFILES src/arch/arm/machine/gic_v3.c src/arch/arm/machine/l2c_nop.c
+    DEP "KernelPlatformMaaxboard" CFILES src/arch/arm/machine/gic_v3.c
+                                         src/arch/arm/machine/l2c_nop.c
 )

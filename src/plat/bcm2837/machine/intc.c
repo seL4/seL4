@@ -118,7 +118,7 @@ static inline void maskInterrupt(bool_t disable, irq_t irq)
         } else {
             intc_regs->bfEnableBasicIRQs = BIT(irq - BASIC_IRQ_OFFSET);
         }
-    } else if (irq < maxIRQ) {
+    } else if (irq <= maxIRQ) {
         int normal_irq = irq - NORMAL_IRQ_OFFSET;
         int index = normal_irq / 32;
         if (disable) {

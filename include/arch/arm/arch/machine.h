@@ -19,10 +19,11 @@ void initL2Cache(void);
 
 void initIRQController(void);
 void cpu_initLocalIRQController(void);
-void setIRQTrigger(irq_t irq, bool_t trigger);
 #ifdef ENABLE_SMP_SUPPORT
 void setIRQTarget(irq_t irq, seL4_Word target);
 #endif
+bool_t plat_SGITargetValid(word_t target);
+void plat_sendSGI(word_t irq, word_t target);
 
 static inline void plat_cleanL2Range(paddr_t start, paddr_t end);
 static inline void plat_invalidateL2Range(paddr_t start, paddr_t end);

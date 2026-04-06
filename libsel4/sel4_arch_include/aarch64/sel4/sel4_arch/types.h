@@ -8,10 +8,6 @@
 
 #include <sel4/simple_types.h>
 
-typedef seL4_CPtr seL4_ARM_PageUpperDirectory;
-typedef seL4_CPtr seL4_ARM_PageGlobalDirectory;
-/* whether the VSpace refers to a PageUpperDirectory or PageGlobalDirectory directly
- * depends on the physical address size */
 typedef seL4_CPtr seL4_ARM_VSpace;
 
 typedef struct seL4_UserContext_ {

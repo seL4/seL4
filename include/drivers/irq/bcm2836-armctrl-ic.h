@@ -10,6 +10,9 @@
 #include <machine/io.h>
 #include <machine/interrupt.h>
 
+/* SGI not supported on this platform. */
+#define NUM_SGIS 0
+
 #define BASIC_IRQ_OFFSET                32
 #define NORMAL_IRQ_OFFSET               (BASIC_IRQ_OFFSET + 32)
 
@@ -119,9 +122,7 @@ volatile struct core_regs {
 #define LOCAL_TIMER_CTRL_EN_BIT 28
 #define LOCAL_TIMER_CTRL_RL_MASK MASK(28)
 
-enum irqNumbers {
-    irqInvalid = 255
-};
+static const irq_t irqInvalid = 255;
 
 static inline bool_t isIRQPending(void)
 {
@@ -143,4 +144,20 @@ static inline void handleSpuriousIRQ(void)
     /* Nothing to do here */
 }
 
+void setIRQTrigger(irq_t irq, bool_t trigger)
+{
+    /* Unreachable; not supported on this platform. */
+    UNREACHABLE();
+}
 
+static inline void plat_sendSGI(word_t irq, word_t target)
+{
+    /* Unreachable; not supported on this platform. */
+    UNREACHABLE();
+}
+
+static inline bool_t plat_SGITargetValid(word_t target)
+{
+    /* no SGIs on this platform */
+    return false;
+}

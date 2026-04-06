@@ -192,7 +192,6 @@ exception_t decodeSetIPCBuffer(cap_t cap, word_t length,
                                cte_t *slot, word_t *buffer);
 exception_t decodeSetSpace(cap_t cap, word_t length,
                            cte_t *slot, word_t *buffer);
-exception_t decodeDomainInvocation(word_t invLabel, word_t length, word_t *buffer);
 exception_t decodeBindNotification(cap_t cap);
 exception_t decodeUnbindNotification(cap_t cap);
 #ifdef CONFIG_KERNEL_MCS
@@ -220,11 +219,6 @@ enum thread_control_flag {
     thread_control_update_ipc_buffer = 0x2,
     thread_control_update_space = 0x4,
     thread_control_update_mcp = 0x8,
-#ifdef CONFIG_KERNEL_MCS
-    thread_control_update_sc = 0x10,
-    thread_control_update_fault = 0x20,
-    thread_control_update_timeout = 0x40,
-#endif
 };
 #endif
 

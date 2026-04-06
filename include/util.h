@@ -91,6 +91,9 @@
 #define FORCE_O2     __attribute__((optimize("O2")))
 #endif
 /** MODIFIES: */
+/** FNSPEC
+      StrictC'__unreachable_spec: "\<Gamma> \<turnstile> {} Call StrictC'__unreachable_'proc UNIV"
+ */
 void __builtin_unreachable(void);
 #define UNREACHABLE()  __builtin_unreachable()
 #define MAY_ALIAS    __attribute__((may_alias))
