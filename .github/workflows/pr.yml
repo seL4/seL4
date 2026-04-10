@@ -33,3 +33,4 @@ jobs:
       with:
         L4V_ARCH: ${{ matrix.arch }}
         L4V_FEATURES: ${{ matrix.feature }}
+        BASE_REF: ${{ github.base_ref }}
