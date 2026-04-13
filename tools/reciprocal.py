@@ -13,15 +13,18 @@
 
 # for details on how this script works,
 # see Hacker's delight, Chapter 10, unsigned division.
-from math import floor, ceil
+
+# Note that you need an intermediate value that is 128 bits wide for the
+# multiplication if want to guarantee absence of overflow when you have a 64 bit
+# divisor.
+
+from __future__ import annotations
+
 import argparse
 import sys
-from past.builtins import xrange
-
-# now unsigned
 
 
-def magicgu(nmax, d):
+def magicgu(nmax: int, d: int) -> tuple[int, int]:
     nc = ((nmax + 1)//d)*d - 1
     nbits = len(bin(nmax)) - 2
     for p in range(0, 2*nbits + 1):
@@ -32,7 +35,7 @@ def magicgu(nmax, d):
     sys.exit(1)
 
 
-def do_div(n):
+def do_div(n: int) -> int:
     return ((n + add_ind) * magic) >> shift_amt
 
 
@@ -49,7 +52,7 @@ if __name__ == "__main__":
 
     print("Doing sanity check")
     # sanity check
-    for i in xrange(2**32-1):
+    for i in range(2**32-1):
         q1, q2 = (i / args.divisor, do_div(i))
         if int(q1) != q2:
             print("Combination failed %d %d %d" % i, q1, q2)
