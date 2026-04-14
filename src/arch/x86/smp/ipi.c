@@ -46,7 +46,12 @@ void handleRemoteCall(IpiRemoteCall_t call, word_t arg0, word_t arg1, word_t arg
             clearCurrentVCPU();
             break;
         case IpiRemoteCall_VMCheckBoundNotification:
-            VMCheckBoundNotification((tcb_t *)arg0);
+            tcb_t *tcb = (tcb_t *)arg0;
+
+            /* For a running VM notifications are already checked by handleVmexit */
+            if (tcb != NODE_STATE(ksCurThread)) {
+                VMCheckBoundNotification();
+            }
             break;
 #endif
         default:
