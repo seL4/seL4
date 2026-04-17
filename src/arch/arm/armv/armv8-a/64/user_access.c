@@ -26,6 +26,7 @@ static void check_export_pmu(void)
     uint32_t val = PMUSERENR_EL0_EN;
     MSR("PMUSERENR_EL0", val);
 #endif
+    /* No ISB because we rely on context switch for synchronisation */
 }
 
 static void check_export_arch_timer(void)
@@ -55,6 +56,7 @@ static void check_export_arch_timer(void)
 #endif /* CONFIG_EXPORT_PTMR_USER */
     MSR("CNTHCTL_EL2", val);
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
+    /* No ISB because we rely on context switch for synchronisation */
 }
 
 void armv_init_user_access(void)

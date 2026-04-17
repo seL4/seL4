@@ -565,11 +565,13 @@ static BOOT_CODE bool_t try_init_kernel(
     /* create the idle thread */
     create_idle_thread();
 
+#ifdef CONFIG_ARCH_AARCH32
     /* Before creating the initial thread (which also switches to it)
      * we clean the cache so that any page table information written
      * as a result of calling create_frames_of_region will be correctly
      * read by the hardware page table walker */
     cleanInvalidateL1Caches();
+#endif
 
     /* create the initial thread */
     tcb_t *initial = create_initial_thread(
@@ -600,6 +602,7 @@ static BOOT_CODE bool_t try_init_kernel(
     /* finalise the bootinfo frame */
     bi_finalise();
 
+#ifdef CONFIG_ARCH_AARCH32
     /* Flushing the L1 cache and invalidating the TLB is good enough here to
      * make sure everything written by the kernel is visible to userland. There
      * are no uncached userland frames at this stage that require enforcing
@@ -611,6 +614,19 @@ static BOOT_CODE bool_t try_init_kernel(
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         invalidateHypTLB();
     }
+
+#else
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        // Need to invalidate EL1/0 TLB entries in case there were any stale ones.
+        // For non-hyp kernel we already invalidated the EL1/0 entries when activating kernel
+        // vspace. And invalid entries are not permitted to be cached.
+        // dsb and isb for this operation are handled with following dsb and eret.
+        asm volatile("tlbi alle1");
+    }
+    // Barrier to ensure user space page table updates have completed before switching.
+    dsb_ish();
+    // Don't need ISB here because we are eret soon.
+#endif
 
     ksNumCPUs = 1;
 
