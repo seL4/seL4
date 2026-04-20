@@ -427,9 +427,8 @@
             <description>
                 <docref>See <autoref label="ch:vspace"/></docref>
             </description>
-            <param dir="in" name="vspace" type="seL4_X86_EPTPML4" description="Capability to the VSpace which will
-contain the mapping"/>
-            <param dir="in" name="vaddr" type="seL4_Word" description="Virtual address at which to map page."/>
+            <param dir="in" name="eptpml4" type="seL4_X86_EPTPML4" description="Capability to the EPT root which will contain the mapping."/>
+            <param dir="in" name="gpa" type="seL4_Word" description="Guest physical address to map the page into."/>
             <param dir="in" name="rights" type="seL4_CapRights_t">
                 <description>
                     Rights for the mapping. <docref>Possible values for this type are given in <autoref label='sec:cap_rights'/>.</docref>
@@ -442,18 +441,18 @@ contain the mapping"/>
             </param>
             <error name="seL4_AlignmentError">
                 <description>
-                    The <texttt text="vaddr"/> is not aligned to the page size of <texttt text="_service"/>.
+                    The <texttt text="gpa"/> is not aligned to the page size of <texttt text="_service"/>.
                 </description>
             </error>
             <error name="seL4_DeleteFirst">
                 <description>
-                    A mapping already exists in <texttt text="vspace"/> at <texttt text="vaddr"/>.
+                    A mapping already exists in <texttt text="eptpml4"/> at <texttt text="gpa"/>.
                 </description>
             </error>
             <error name="seL4_FailedLookup">
                 <description>
-                    The <texttt text="vspace"/> does not have a paging structure at the required level mapped at <texttt text="vaddr"/>.
-                    Or, <texttt text="vspace"/> is not assigned to an ASID pool.
+                    The <texttt text="eptpml4"/> does not have a paging structure at the required level mapped at <texttt text="gpa"/>.
+                    Or, <texttt text="eptpml4"/> is not assigned to an ASID pool.
                 </description>
             </error>
             <error name="seL4_IllegalOperation">
@@ -463,8 +462,8 @@ contain the mapping"/>
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> or <texttt text="vspace"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="vspace"/> is not assigned to an ASID pool.
+                    The <texttt text="_service"/> or <texttt text="eptpml4"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="eptpml4"/> is not assigned to an ASID pool.
                     Or, <texttt text="_service"/> is already mapped.
                     Or, <texttt text="_service"/> has an unsupported page size.
                 </description>
