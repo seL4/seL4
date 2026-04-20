@@ -29,12 +29,6 @@ hw_asid_t getHWASID(asid_t asid);
 
 asid_map_t findMapForASID(asid_t asid);
 
-#ifdef __clang__
-static const region_t BOOT_RODATA mode_reserved_region[] = {};
-#else
-static const region_t BOOT_RODATA *mode_reserved_region = NULL;
-#endif
-
 #define PAR_EL1_MASK 0x0000fffffffff000ul
 #define GET_PAR_ADDR(x) ((x) & PAR_EL1_MASK)
 
