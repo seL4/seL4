@@ -220,7 +220,7 @@ BOOT_CODE void map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_righ
     word_t shareable;
     if (vm_attributes_get_armPageCacheable(attributes)) {
         attr_index = NORMAL;
-        shareable = SMP_TERNARY(SMP_SHARE, 0);
+        shareable = SMP_SHARE;
     } else {
         attr_index = DEVICE_nGnRnE;
         shareable = 0;
@@ -277,7 +277,7 @@ BOOT_CODE void map_kernel_window(void)
                                                                                                                         paddr,
                                                                                                                         0,                        /* global */
                                                                                                                         1,                        /* access flag */
-                                                                                                                        SMP_TERNARY(SMP_SHARE, 0),        /* Inner-shareable if SMP enabled, otherwise unshared */
+                                                                                                                        SMP_SHARE,        /* Inner-shareable if SMP enabled, otherwise unshared */
                                                                                                                         0,                        /* VMKernelOnly */
                                                                                                                         NORMAL
                                                                                                                     );
@@ -336,7 +336,7 @@ static BOOT_CODE void map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap, bool_t
                                                               1,                              /* not global */
 #endif
                                                               1,                              /* access flag */
-                                                              SMP_TERNARY(SMP_SHARE, 0),              /* Inner-shareable if SMP enabled, otherwise unshared */
+                                                              SMP_SHARE,              /* Inner-shareable if SMP enabled, otherwise unshared */
                                                               APFromVMRights(VMReadWrite),
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
                                                               S2_NORMAL
@@ -542,14 +542,48 @@ BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vpt
 
 BOOT_CODE void activate_kernel_vspace(void)
 {
-    cleanInvalidateL1Caches();
-    setCurrentKernelVSpaceRoot(ttbr_new(0, addrFromKPPtr(armKSGlobalKernelPGD)));
+    // This function updates the ttbr registers for the current executing program context.
+    // We assume that all mapping entries in use to execute the current function are
+    // have the same values in both sets of page tables. This is so that any translations
+    // used between setting the new ttbr value and invalidating the TLB are the same whether
+    // they are returned from the TLB cache or looked up in memory.
 
-    /* Prevent elf-loader address translation to fill up TLB */
-    setCurrentUserVSpaceRoot(ttbr_new(0, addrFromKPPtr(armKSGlobalUserVSpace)));
+    // When this function is called, there are recent writes to page tables that haven't been
+    // synchronized yet.
+    // Once this function returns, the updated mmu configuration for the current program should
+    // be active and all pending effects synchronized with the instruction stream.
+    // No dcache or icache clean/invalidate operations should be required under aarch64.
+    // tlb cache does need invalidation after the updates to registers that are permitted to be
+    // cached in the tlb.
+    // dsb ish is needed to ensure any cache maintenance operation completes.
+    // isb is needed to ensure that writes to system registers have completed before the next
+    // instructions start any part of their execution.
+    // See architecture requirements on Context Synchronization events for more information.
 
-    invalidateLocalTLB();
-    lockTLBEntry(KERNEL_ELF_BASE);
+    // Complete recent memory writes to new page tables to inner shareable domain.
+    dsb_ish();
+
+    // Construct ttbr value for kernel page tables
+    ttbr_t ttbr_k = ttbr_new(0, addrFromKPPtr(armKSGlobalKernelPGD));
+
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        // In hyp mode there is just 1 ttbr at EL2.
+        // Assign, then synchronize instruction stream, then invalidate all tlb for el2.
+        MSR("ttbr0_el2", ttbr_k.words[0]);
+        isb();
+        asm volatile("tlbi alle2");
+    } else {
+        // In el1 mode there are 2 ttbr at EL1.
+        // Assign both, then synchronize instruction stream, then invalidate all tlb for el1.
+        ttbr_t ttbr_u = ttbr_new(0, addrFromKPPtr(armKSGlobalUserVSpace));
+        MSR("ttbr1_el1", ttbr_k.words[0]);
+        MSR("ttbr0_el1", ttbr_u.words[0]);
+        isb();
+        asm volatile("tlbi vmalle1");
+    }
+    // dsb ish to barrier for tlb invalidation to complete, then synchronize instruction stream.
+    dsb_ish();
+    isb();
 }
 
 BOOT_CODE void write_it_asid_pool(cap_t it_ap_cap, cap_t it_vspace_cap)
@@ -699,7 +733,7 @@ static pte_t makeUserPagePTE(paddr_t paddr, vm_rights_t vm_rights, vm_attributes
 #endif
 
     /* Inner-shareable if SMP enabled, otherwise unshared (ignored for devices) */
-    word_t shareable = cacheable ? SMP_TERNARY(SMP_SHARE, 0) : 0;
+    word_t shareable = cacheable ? SMP_SHARE : 0;
 
     if (page_size == ARMSmallPage) {
         return pte_pte_4k_page_new(nonexecutable, paddr, nG, 1 /* access flag */,
@@ -1028,7 +1062,7 @@ void unmapPageTable(asid_t asid, vptr_t vptr, pte_t *target_pt)
     /* If we found a pt then ptSlot won't be null */
     assert(ptSlot != NULL);
     *ptSlot = pte_pte_invalid_new();
-    cleanByVA_PoU((vptr_t)ptSlot, pptr_to_paddr(ptSlot));
+    // dsb ish performed as part of invalidate
     invalidateTLBByASID(asid);
 }
 
@@ -1061,8 +1095,8 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr)
     }
 
     *(lu_ret.ptSlot) = pte_pte_invalid_new();
-    cleanByVA_PoU((vptr_t)lu_ret.ptSlot, pptr_to_paddr(lu_ret.ptSlot));
     assert(asid < BIT(16));
+    // dsb ish performed as part of invalidate
     invalidateTLBByASIDVA(asid, vptr);
 }
 
@@ -1175,8 +1209,7 @@ static exception_t performPageTableInvocationMap(cap_t cap, cte_t *ctSlot, pte_t
 {
     ctSlot->cap = cap;
     *ptSlot = pte;
-    cleanByVA_PoU((vptr_t)ptSlot, pptr_to_paddr(ptSlot));
-
+    dsb_ish();
     return EXCEPTION_NONE;
 }
 
@@ -1186,7 +1219,7 @@ static exception_t performPageTableInvocationUnmap(cap_t cap, cte_t *ctSlot)
         pte_t *pt = PT_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
         unmapPageTable(cap_page_table_cap_get_capPTMappedASID(cap),
                        cap_page_table_cap_get_capPTMappedAddress(cap), pt);
-        clearMemory_PT((void *)pt, cap_get_capSizeBits(cap));
+        clearMemory((void *)pt, cap_get_capSizeBits(cap));
     }
 
     cap_page_table_cap_ptr_set_capPTIsMapped(&(ctSlot->cap), 0);
@@ -1201,10 +1234,12 @@ static exception_t performPageInvocationMap(asid_t asid, cap_t cap, cte_t *ctSlo
     ctSlot->cap = cap;
     *ptSlot = pte;
 
-    cleanByVA_PoU((vptr_t)ptSlot, pptr_to_paddr(ptSlot));
     if (unlikely(tlbflush_required)) {
         assert(asid < BIT(16));
+        // dsb ish performed as part of invalidate
         invalidateTLBByASIDVA(asid, cap_frame_cap_get_capFMappedAddress(cap));
+    } else {
+        dsb_ish();
     }
 
     return EXCEPTION_NONE;
@@ -1992,7 +2027,7 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
                              ksUserLogBuffer,
                              0,                         /* global */
                              1,                         /* access flag */
-                             SMP_TERNARY(SMP_SHARE, 0), /* Inner-shareable if SMP enabled, otherwise unshared */
+                             SMP_SHARE, /* Inner-shareable if SMP enabled, otherwise unshared */
                              0,                         /* VMKernelOnly */
                              NORMAL_WT);
 
