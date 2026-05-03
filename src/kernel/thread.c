@@ -80,12 +80,12 @@ void suspend(tcb_t *target)
          * running */
         updateRestartPC(target);
     }
-    setThreadState(target, ThreadState_Inactive);
     tcbSchedDequeue(target);
 #ifdef CONFIG_KERNEL_MCS
     tcbReleaseRemove(target);
     schedContext_cancelYieldTo(target);
 #endif
+    setThreadState(target, ThreadState_Inactive);
 }
 
 void restart(tcb_t *target)
@@ -586,7 +586,8 @@ void scheduleTCB(tcb_t *tptr)
     if (tptr == NODE_STATE(ksCurThread) &&
         NODE_STATE(ksSchedulerAction) == SchedulerAction_ResumeCurrentThread &&
         !isSchedulable(tptr)) {
-        rescheduleRequired();
+        /* short-cut rescheduleRequired(), because we know what the scheduler action is. */
+        NODE_STATE(ksSchedulerAction) = SchedulerAction_ChooseNewThread;
     }
 }
 

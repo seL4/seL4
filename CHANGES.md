@@ -25,13 +25,60 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 ### Changes
 
-* Runtime domain schedule configuration.
-  See [RFC-20](https://sel4.github.io/rfcs/implemented/0200-domain-schedules.html).
+#### ARM
+
+* change default for `KernelArmHypEnableVCPUCP14SaveAndRestore` to `OFF` to provide equal defaults for
+  verification and release builds. This affects AArch32/hyp only.
 
 ### Upgrade Notes
 
-If using domains, replace your custom schedule with initialisation code in user space.
-With MCS, the domain duration is now configured in timer ticks instead of microseconds.
+AArch32 with hypervisor mode enabled only: if the option `KernelArmHypEnableVCPUCP14SaveAndRestore` is required, manually set it to `ON` in the build.
+
+---
+
+## 15.0.0 2026-03-31: BREAKING
+
+### Changes
+
+* Add runtime domain schedule configuration.
+  See [RFC-20](https://sel4.github.io/rfcs/implemented/0200-domain-schedules.html).
+* libsel4: make thread-local IPC buffer optional (see `LibSel4UseThreadLocals`).
+* The `KernelAllowSMCCalls` option can now be used for verification builds
+* Update documentation on `seL4_X86_EPT_VMAttributes`
+* Update documentation for `seL4_VMEnter()`
+* Bitfield generator: support for simple arithmetic expressions and new `field_ptr` keyword for reducing the need for
+  `#ifdef` in bitfield definitions
+* Allow threads to enable FPU for their own TCB
+
+#### Platforms
+
+* Add support for Rock3b (AArch64)
+* Add support for Banana Pi BPI-F3 (RISC-V)
+
+#### X86
+
+* Allow user space reads from `VMX_CONTROL_SECONDARY_PROCESSOR_CONTROLS`. Previously only writes were allowed.
+* Do not force 64-bit VCPU mode for `X86_64_VTX_64BIT_GUESTS` to enable guests managing their own mode transition, e.g.
+  for UEFI firmware.
+* Allow user space reads and writes to `VMX_CONTROL_ENTRY_CONTROLS` field, e.g. for enabling long mode and loading of
+  certain MSRs on VM Entry.
+* Allow `CR0.PE` and `CR0.PG` to be cleared if "Unrestricted Guest" mode is supported by the host CPU. This mode allows
+  guest software to run in unpaged protected mode or in real-address mode.
+* Skip the boot time clock sync test on Qemu, because timing is too unreliable under simulation
+* Improve boot code error reporting on UART
+
+#### ARM
+
+* Support for choosing between GICv2 and GICv3 on Qemu
+* Avoid trapping CPACR_EL1 accesses in hypervisor mode
+* Performance improvements for FPU switching
+
+
+### Upgrade Notes
+
+If using domains, replace any custom `domain_schedule.c` file with initialisation code in user space, or use
+corresponding features in user-space frameworks such as Microkit and CAmkES. With MCS, the domain duration is now
+configured in timer ticks instead of microseconds.
 
 ---
 
