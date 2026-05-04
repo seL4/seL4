@@ -125,12 +125,9 @@ under a generic name. The table below shows the four-level configuration.
 \bottomrule
 \end{tabularx}
 
-\subsection{RISC-V}
-
-RISC-V provides the same paging structure for all levels, \obj{PageTable}. This means the VSpace
-object is here also implemented by the \obj{PageTable} object.
-
 \subsubsection{RISC-V 32-bit}
+
+On RISC-V the same structure is used for all levels thus VSpace is a \obj{PageTable} object.
 
 32-bit RISC-V \obj{PageTables} are indexed by 10 bits of virtual address.
 
@@ -142,6 +139,8 @@ object is here also implemented by the \obj{PageTable} object.
 \end{tabularx}
 
 \subsubsection{RISC-V 64-bit}
+
+On RISC-V the same structure is used for all levels thus VSpace is a \obj{PageTable} object.
 
 64-bit RISC-V follows the SV39 model, where \obj{PageTables} are indexed by 9 bits of virtual address.
 Although RISC-V allows
