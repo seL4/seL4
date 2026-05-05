@@ -13,6 +13,18 @@ jobs:
     name: Checks
     uses: seL4/ci-actions/.github/workflows/pr.yml@master
 
+  code:
+    name: Freeze Code
+    runs-on: ubuntu-latest
+    outputs:
+      xml: ${{ steps.repo.outputs.xml }}
+    steps:
+    - id: repo
+      uses: seL4/ci-actions/repo-checkout@branches
+      with:
+        manifest_repo: sel4test-manifest
+        manifest: master.xml
+
   preprocess:
     name: Preprocess
     runs-on: ubuntu-latest
