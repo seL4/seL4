@@ -666,6 +666,9 @@ static exception_t invokeReadMSR(vcpu_t *vcpu, word_t field, word_t *buffer)
     case IA32_FMASK_MSR:
         value = vcpu->syscall_registers[VCPU_SYSCALL_MASK];
         break;
+    case IA32_VMX_MISC_MSR:
+        value = x86_rdmsr(field);
+        break;
     }
 
     setMR(thread, buffer, 0, value);
@@ -688,6 +691,7 @@ static exception_t decodeVCPUReadMSR(cap_t cap, word_t length, word_t *buffer)
     case IA32_STAR_MSR:
     case IA32_CSTAR_MSR:
     case IA32_FMASK_MSR:
+    case IA32_VMX_MISC_MSR:
         break;
     default:
         userError("VCPU ReadMSR: Invalid field %lx.", (long)field);
