@@ -484,7 +484,7 @@ BOOT_CODE void create_idle_thread(void)
         SMP_COND_STATEMENT(NODE_STATE_ON_CORE(ksIdleThread, i)->tcbAffinity = i);
 #ifdef CONFIG_KERNEL_MCS
         configure_sched_context(NODE_STATE_ON_CORE(ksIdleThread, i), SC_PTR(&ksIdleThreadSC[SMP_TERNARY(i, 0)]),
-                                usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_IN_MS));
+                                MAX_PERIOD_TICKS);
         SMP_COND_STATEMENT(NODE_STATE_ON_CORE(ksIdleThread, i)->tcbSchedContext->scCore = i;)
         NODE_STATE_ON_CORE(ksIdleSC, i) = SC_PTR(&ksIdleThreadSC[SMP_TERNARY(i, 0)]);
 #endif
