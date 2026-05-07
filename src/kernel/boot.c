@@ -484,7 +484,7 @@ BOOT_CODE void create_idle_thread(void)
         SMP_COND_STATEMENT(NODE_STATE_ON_CORE(ksIdleThread, i)->tcbAffinity = i);
 #ifdef CONFIG_KERNEL_MCS
         configure_sched_context(NODE_STATE_ON_CORE(ksIdleThread, i), SC_PTR(&ksIdleThreadSC[SMP_TERNARY(i, 0)]),
-                                usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_IN_MS));
+                                getMaxTicksToUs());
         SMP_COND_STATEMENT(NODE_STATE_ON_CORE(ksIdleThread, i)->tcbSchedContext->scCore = i;)
         NODE_STATE_ON_CORE(ksIdleSC, i) = SC_PTR(&ksIdleThreadSC[SMP_TERNARY(i, 0)]);
 #endif
@@ -533,7 +533,7 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
 
     /* initialise TCB */
 #ifdef CONFIG_KERNEL_MCS
-    configure_sched_context(tcb, SC_PTR(rootserver.sc), usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_IN_MS));
+    configure_sched_context(tcb, SC_PTR(rootserver.sc), getMaxTicksToUs());
 #endif
 
     tcb->tcbPriority = seL4_MaxPrio;
