@@ -376,6 +376,11 @@ void schedule(void)
         debug_dumpScheduler();
     }
 
+#ifdef ENABLE_SMP_SUPPORT
+    /* Invariant: the current thread always belongs to the current core. */
+    assert(NODE_STATE(ksCurThread)->tcbAffinity == getCurrentCPUIndex());
+#endif
+
 #ifdef CONFIG_KERNEL_MCS
     awaken();
     checkDomainTime();
@@ -480,6 +485,11 @@ void switchToThread(tcb_t *thread)
 
     tcbSchedDequeue(thread);
     NODE_STATE(ksCurThread) = thread;
+
+#ifdef ENABLE_SMP_SUPPORT
+    /* Invariant: the current thread always belongs to the current core. */
+    assert(NODE_STATE(ksCurThread)->tcbAffinity == getCurrentCPUIndex());
+#endif
 }
 
 void switchToIdleThread(void)
