@@ -371,6 +371,11 @@ static void scheduleChooseNewThread(void)
 
 void schedule(void)
 {
+    if (NODE_STATE(ksCurThread) == NODE_STATE(ksIdleThread)) {
+        userError("schedule() from idle thread");
+        debug_dumpScheduler();
+    }
+
 #ifdef CONFIG_KERNEL_MCS
     awaken();
     checkDomainTime();
@@ -486,6 +491,8 @@ void switchToIdleThread(void)
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
     benchmark_utilisation_switch(NODE_STATE(ksCurThread), NODE_STATE(ksIdleThread));
 #endif
+    userError("switching to idle");
+    debug_dumpScheduler();
     Arch_switchToIdleThread();
     NODE_STATE(ksCurThread) = NODE_STATE(ksIdleThread);
 }

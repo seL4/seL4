@@ -30,9 +30,11 @@ void reply_push(tcb_t *tcb_caller, tcb_t *tcb_callee, reply_t *reply, bool_t can
 
     /* link caller and reply */
     reply->replyTCB = tcb_caller;
+    userError("setting caller %s to block on reply", TCB_PTR_DEBUG_PTR(tcb_caller)->tcbName);
     setThreadStateBlockedOnReply(tcb_caller, reply);
 
     if (sc_donated != NULL && tcb_callee->tcbSchedContext == NULL && canDonate) {
+        userError("doing SC stuff");
         reply_t *old_caller = sc_donated->scReply;
 
         /* check stack integrity */
@@ -41,6 +43,7 @@ void reply_push(tcb_t *tcb_caller, tcb_t *tcb_callee, reply_t *reply, bool_t can
 
         /* push on to stack */
         if (old_caller) {
+            userError("was an old caller");
             old_caller->replyNext = call_stack_new(REPLY_REF(reply), false);
         }
         reply->replyPrev = call_stack_new(REPLY_REF(old_caller), false);
@@ -48,6 +51,7 @@ void reply_push(tcb_t *tcb_caller, tcb_t *tcb_callee, reply_t *reply, bool_t can
         reply->replyNext = call_stack_new(SC_REF(sc_donated), true);
 
         /* now do the actual donation */
+        userError("SC donation to %s", TCB_PTR_DEBUG_PTR(tcb_callee)->tcbName);
         schedContext_donate(sc_donated, tcb_callee);
     }
 }

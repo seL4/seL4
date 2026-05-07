@@ -103,6 +103,7 @@ exception_t handleUnknownSyscall(word_t w)
     }
     if (w == SysDebugDumpScheduler) {
 #ifdef CONFIG_DEBUG_BUILD
+        userError("requested dump scheduler");
         debug_dumpScheduler();
 #endif
         return EXCEPTION_NONE;
@@ -554,6 +555,7 @@ static void handleYield(void)
 
 exception_t handleSyscall(syscall_t syscall)
 {
+    userError("handleSyscall");
     exception_t ret;
     MCS_DO_IF_BUDGET({
         switch (syscall)
@@ -605,10 +607,13 @@ exception_t handleSyscall(syscall_t syscall)
             handleRecv(false, false);
             break;
         case SysReplyRecv: {
+            userError("SysReplyRecv");
             cptr_t reply = getRegister(NODE_STATE(ksCurThread), replyRegister);
+            userError("handleInvocation");
             ret = handleInvocation(false, false, true, true, reply);
             /* reply cannot error and is not preemptible */
             assert(ret == EXCEPTION_NONE);
+            userError("handleRecv");
             handleRecv(true, true);
             break;
         }
