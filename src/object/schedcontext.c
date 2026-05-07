@@ -332,6 +332,11 @@ void schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb)
         // verification work, so the work around is to use rescheduleRequired()
         //possibleSwitchTo(tcb);
     }
+
+#ifdef ENABLE_SMP_SUPPORT
+    /* Invariant: the current thread always belongs to the current core. */
+    assert(NODE_STATE(ksCurThread)->tcbAffinity == getCurrentCPUIndex());
+#endif
 }
 
 void schedContext_unbindTCB(sched_context_t *sc)
@@ -379,6 +384,11 @@ void schedContext_donate(sched_context_t *sc, tcb_t *to)
     to->tcbSchedContext = sc;
 
     SMP_COND_STATEMENT(migrateTCB(to, sc->scCore));
+
+#ifdef ENABLE_SMP_SUPPORT
+    /* Invariant: the current thread always belongs to the current core. */
+    assert(NODE_STATE(ksCurThread)->tcbAffinity == getCurrentCPUIndex());
+#endif
 }
 
 void schedContext_bindNtfn(sched_context_t *sc, notification_t *ntfn)
