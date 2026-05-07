@@ -27,7 +27,6 @@ void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
     switch (endpoint_ptr_get_state(epptr)) {
     case EPState_Idle:
     case EPState_Send:
-        userError("send/idle");
         if (blocking) {
             tcb_queue_t queue;
 
@@ -47,7 +46,6 @@ void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
 
             scheduleTCB(thread);
 
-            userError("place in endpoint queue");
             /* Place calling thread in endpoint queue */
             queue = ep_ptr_get_queue(epptr);
             queue = tcbEPAppend(thread, queue);
@@ -57,7 +55,6 @@ void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
         break;
 
     case EPState_Recv: {
-        userError("recv");
         tcb_queue_t queue;
         tcb_t *dest;
 
@@ -162,14 +159,12 @@ void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
          * SC donations from client threads.
          */
         if (ntfnPtr && isBlocking) {
-            userError("receiveIPC::maybeReturnSchedContext");
             maybeReturnSchedContext(ntfnPtr, thread);
         }
 #endif
         switch (endpoint_ptr_get_state(epptr)) {
         case EPState_Idle:
         case EPState_Recv: {
-            userError("endpoint in idle/recv");
             tcb_queue_t queue;
 
             if (isBlocking) {
@@ -203,7 +198,6 @@ void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
         }
 
         case EPState_Send: {
-            userError("endpoint in send");
             tcb_queue_t queue;
             tcb_t *sender;
             word_t badge;
@@ -218,15 +212,11 @@ void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
             /* Haskell error "Send endpoint queue must not be empty" */
             assert(sender);
 
-            userError("receiveIPC:: sender in queue is %s", TCB_PTR_DEBUG_PTR(sender)->tcbName);
-            userError("receiveIPC:: receiver (invoker) %s", TCB_PTR_DEBUG_PTR(thread)->tcbName);
-
             /* Dequeue the first TCB */
             queue = tcbEPDequeue(sender, queue);
             ep_ptr_set_queue(epptr, queue);
 
             if (!queue.head) {
-                userError("endpoint now idle");
                 endpoint_ptr_set_state(epptr, EPState_Idle);
             }
 
@@ -245,7 +235,6 @@ void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
 
 #ifdef CONFIG_KERNEL_MCS
             if (sc_sporadic(sender->tcbSchedContext)) {
-                userError("sender was sporadic");
                 /* We know that the sender can't have the current SC as
                  * its own SC as this point as it should still be
                  * associated with the current thread, no thread, or a
@@ -260,18 +249,14 @@ void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
 
             if (do_call ||
                 seL4_Fault_get_seL4_FaultType(sender->tcbFault) != seL4_Fault_NullFault) {
-                userError("the other case");
                 if ((canGrant || canGrantReply) && replyPtr != NULL) {
                     bool_t canDonate = sender->tcbSchedContext != NULL
                                        && seL4_Fault_get_seL4_FaultType(sender->tcbFault) != seL4_Fault_Timeout;
-                    userError("reply_push");
                     reply_push(sender, thread, replyPtr, canDonate);
                 } else {
-                    userError("set inactive");
                     setThreadState(sender, ThreadState_Inactive);
                 }
             } else {
-                userError("thread state to running & possibleSwitchTo");
                 setThreadState(sender, ThreadState_Running);
                 possibleSwitchTo(sender);
                 assert(sender->tcbSchedContext == NULL || refill_sufficient(sender->tcbSchedContext, 0));

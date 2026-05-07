@@ -22,7 +22,7 @@ void reorderNTFN(notification_t *notification, tcb_t *thread);
 
 static inline void maybeReturnSchedContext(notification_t *ntfnPtr, tcb_t *tcb)
 {
-    userError("raw::maybeReturnSchedContext");
+
     sched_context_t *sc = SC_PTR(notification_ptr_get_ntfnSchedContext(ntfnPtr));
     if (sc != NULL && sc == tcb->tcbSchedContext) {
         tcb->tcbSchedContext = NULL;

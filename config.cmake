@@ -109,7 +109,7 @@ config_string(KernelTimeSlice TIME_SLICE "Number of timer ticks until a thread i
               DEFAULT 5 UNQUOTE DEPENDS "NOT KernelIsMCS" UNDEF_DISABLED)
 config_string(
   KernelBootThreadTimeSlice BOOT_THREAD_TIME_SLICE
-  "Number of milliseconds until the boot thread is preempted." DEFAULT 500 UNQUOTE
+  "Number of milliseconds until the boot thread is preempted." DEFAULT 5 UNQUOTE
   DEPENDS "KernelIsMCS" UNDEF_DISABLED)
 config_string(
   KernelRetypeFanOutLimit RETYPE_FAN_OUT_LIMIT
@@ -127,7 +127,7 @@ config_string(
   UNQUOTE)
 config_string(KernelMaxNumBootinfoUntypedCaps MAX_NUM_BOOTINFO_UNTYPED_CAPS
               "Max number of bootinfo untyped caps" DEFAULT 230 UNQUOTE)
-config_option(KernelFastpath FASTPATH "Enable IPC fastpath" DEFAULT OFF)
+config_option(KernelFastpath FASTPATH "Enable IPC fastpath" DEFAULT ON)
 
 config_option(KernelExceptionFastpath EXCEPTION_FASTPATH "Enable exception fastpath" DEFAULT OFF
               DEPENDS "NOT KernelVerificationBuild; KernelSel4ArchAarch64")

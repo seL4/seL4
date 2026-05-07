@@ -116,32 +116,19 @@ static inline void debug_printTCB(tcb_t *tcb)
     word_t core = SMP_TERNARY(tcb->tcbAffinity, 0);
     printf("%15s\t%p\t%20lu\t%lu", state, (void *) getRestartPC(tcb), tcb->tcbPriority, core);
 #ifdef CONFIG_KERNEL_MCS
-    printf("                %lu", (word_t) thread_state_get_tcbInReleaseQueue(tcb->tcbState));
+    printf("\t%lu", (word_t) thread_state_get_tcbInReleaseQueue(tcb->tcbState));
 #endif
     printf("\n");
 }
 
 static inline void debug_dumpScheduler(void)
 {
-    printf("Dumping all tcbs %ld!\n", getCurrentCPUIndex());
-    for (int core = 0; core < CONFIG_MAX_NUM_NODES; core++) {
-        tcb_t *action = NODE_STATE_ON_CORE(ksSchedulerAction, core);
-        // this can be NULL because sometimes we run dumpScheduler before the
-        // other cores have started. this should never happen after that point.
-        tcb_t *current = NODE_STATE_ON_CORE(ksCurThread, core);
-        char *current_name = current ? TCB_PTR_DEBUG_PTR(current)->tcbName : "<NUL unknown>";
-        printf("[CPU %d] current scheduler action: %s (cur: %s)\n", core,
-               action == SchedulerAction_ResumeCurrentThread ? "resume current"
-               : (action == SchedulerAction_ChooseNewThread ? "choose new"
-                  : (TCB_PTR_DEBUG_PTR(action)->tcbName)), current_name);
-    }
+    printf("Dumping all tcbs!\n");
     printf("Name                                    \tState          \tIP                  \t Prio \t Core%s\n",
            config_set(CONFIG_KERNEL_MCS) ?  "\t InReleaseQueue" : "");
     printf("--------------------------------------------------------------------------------------\n");
-    for (int core = 0; core < CONFIG_MAX_NUM_NODES; core++) {
-        for (tcb_t *curr = NODE_STATE_ON_CORE(ksDebugTCBs, core); curr != NULL; curr = TCB_PTR_DEBUG_PTR(curr)->tcbDebugNext) {
-            debug_printTCB(curr);
-        }
+    for (tcb_t *curr = NODE_STATE(ksDebugTCBs); curr != NULL; curr = TCB_PTR_DEBUG_PTR(curr)->tcbDebugNext) {
+        debug_printTCB(curr);
     }
 }
 #endif /* CONFIG_PRINTING */
