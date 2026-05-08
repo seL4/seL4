@@ -61,6 +61,8 @@ static exception_t invokeSchedControl_ConfigureFlags(sched_context_t *target, wo
         schedContext_resume(target);
         if (SMP_TERNARY(core == CURRENT_CPU_INDEX(), true)) {
             if (isRunnable(thread) && thread != NODE_STATE(ksCurThread)) {
+                // XX: guaranteed by assert sc_active(thread) and isRunnable.
+                assert(isSchedulable(thread));
                 possibleSwitchTo(thread);
             }
         } else if (isRunnable(thread)) {

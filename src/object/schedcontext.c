@@ -332,6 +332,7 @@ void schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb)
         rescheduleRequired();
         //possibleSwitchTo(tcb);
     }
+    // XX: what happens if not schedulable?
 
 #ifdef ENABLE_SMP_SUPPORT
     /* Invariant: the current thread always belongs to the current core. */

@@ -264,7 +264,10 @@ void cancelAllSignals(notification_t *ntfnPtr)
                     refill_unblock_check(thread->tcbSchedContext);
                 }
             }
-            possibleSwitchTo(thread);
+            // TODO: WHat happens if not schedulable?
+            if (isSchedulable(thread)) {
+                possibleSwitchTo(thread);
+            }
 #else
             SCHED_ENQUEUE(thread);
 #endif

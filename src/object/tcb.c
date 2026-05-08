@@ -117,6 +117,7 @@ void tcbSchedEnqueue(tcb_t *tcb)
 #ifdef CONFIG_KERNEL_MCS
     assert(isSchedulable(tcb));
     assert(refill_sufficient(tcb->tcbSchedContext, 0));
+    // XXX: refill_ready here?
 #endif
 
     if (!thread_state_get_tcbQueued(tcb->tcbState)) {
@@ -441,6 +442,7 @@ word_t copyMRs(tcb_t *sender, word_t *sendBuf, tcb_t *receiver,
 #ifdef ENABLE_SMP_SUPPORT
 /* This checks if the current updated to scheduler queue is changing the previous scheduling
  * decision made by the scheduler. If its a case, an `irq_reschedule_ipi` is sent */
+// XXX: Does this only need to happen if isSchedulable()?
 void remoteQueueUpdate(tcb_t *tcb)
 {
     /* only ipi if the target is for the current domain */
@@ -468,6 +470,7 @@ void remoteTCBStall(tcb_t *tcb)
 
     if (
 #ifdef CONFIG_KERNEL_MCS
+// XX: Why is this correct?
         tcb->tcbSchedContext &&
 #endif
         tcb->tcbAffinity != getCurrentCPUIndex() &&

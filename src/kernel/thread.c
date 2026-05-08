@@ -186,6 +186,11 @@ void doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, bool_t grant)
     if (receiver->tcbSchedContext && isRunnable(receiver)) {
         sched_context_t *sc = receiver->tcbSchedContext;
         if ((refill_ready(sc) && refill_sufficient(sc, 0))) {
+            // TODO: is (refill_ready(sc) && refill_sufficient(sc, 0)
+            //         <=> sc_active)?
+            // If not, add a test to sel4test for this (unless guaranteed
+            // otherwise by this function)
+            assert(isSchedulable(receiver));
             possibleSwitchTo(receiver);
         } else {
             if (validTimeoutHandler(receiver) && fault_type != seL4_Fault_Timeout) {
@@ -468,8 +473,17 @@ void chooseThread(void)
 void switchToThread(tcb_t *thread)
 {
 #ifdef CONFIG_KERNEL_MCS
-    assert(thread->tcbSchedContext != NULL);
-    assert(!thread_state_get_tcbInReleaseQueue(thread->tcbState));
+    // XX: Could these two just be isSchedulable? That adds an extra sc_active()
+    //     call, but it also seems like most uses of switchToThread either
+    //     have an if(isSchedulable())) check or assert that it is the case.
+    //     We have isSchedulable() and refill_sufficient and refill_ready from
+    //     the asserts at tcbSchedAppend() often as well.
+    //     This isn't captured by sel4test when I change it, it notices no
+    //     difference, so either it's OK or sel4test is missing behaviours.
+    // 470⋮ 472│#ifdef CONFIG_KERNEL_MCS
+    // 471⋮    │    assert(thread->tcbSchedContext != NULL);
+    // 472⋮    │    assert(!thread_state_get_tcbInReleaseQueue(thread->tcbState));
+    assert(isSchedulable(thread));
     assert(refill_sufficient(thread->tcbSchedContext, 0));
     assert(refill_ready(thread->tcbSchedContext));
 #endif
@@ -520,6 +534,7 @@ void setMCPriority(tcb_t *tptr, prio_t mcp)
 #ifdef CONFIG_KERNEL_MCS
 void setPriority(tcb_t *tptr, prio_t prio)
 {
+    // XX: We don't use the possibleSwitchTo here?
     switch (thread_state_get_tsType(tptr->tcbState)) {
     case ThreadState_Running:
     case ThreadState_Restart:
@@ -568,23 +583,26 @@ void setPriority(tcb_t *tptr, prio_t prio)
 void possibleSwitchTo(tcb_t *target)
 {
 #ifdef CONFIG_KERNEL_MCS
-    if (target->tcbSchedContext != NULL && !thread_state_get_tcbInReleaseQueue(target->tcbState)) {
+    // XXX: This seems very similar to the isSchedulable check here.
+    //      See also my comment on switchToThread; we usually will also see
+    //      an assert on the candidate in schedule() that it is schedulable,
+    //      so why does this one omit sc_active?
+    // if (target->tcbSchedContext != NULL && !thread_state_get_tcbInReleaseQueue(target->tcbState)) {
+    assert(isSchedulable(target));
 #endif
-        if (ksCurDomain != target->tcbDomain
-            SMP_COND_STATEMENT( || target->tcbAffinity != getCurrentCPUIndex())) {
-            SCHED_ENQUEUE(target);
-        } else if (NODE_STATE(ksSchedulerAction) != SchedulerAction_ResumeCurrentThread) {
-            /* Too many threads want special treatment, use regular queues. */
-            rescheduleRequired();
-            tcbSchedEnqueue(target);
-            /* We know that this thread must be on the current core */
-            SMP_COND_STATEMENT(assert(target->tcbAffinity == getCurrentCPUIndex()));
-        } else {
-            NODE_STATE(ksSchedulerAction) = target;
-        }
-#ifdef CONFIG_KERNEL_MCS
+
+    if (ksCurDomain != target->tcbDomain
+        SMP_COND_STATEMENT( || target->tcbAffinity != getCurrentCPUIndex())) {
+        SCHED_ENQUEUE(target);
+    } else if (NODE_STATE(ksSchedulerAction) != SchedulerAction_ResumeCurrentThread) {
+        /* Too many threads want special treatment, use regular queues. */
+        rescheduleRequired();
+        tcbSchedEnqueue(target);
+        /* We know that this thread must be on the current core */
+        SMP_COND_STATEMENT(assert(target->tcbAffinity == getCurrentCPUIndex()));
+    } else {
+        NODE_STATE(ksSchedulerAction) = target;
     }
-#endif
 
 #ifdef ENABLE_SMP_SUPPORT
     /* Invariant: if a thread, ksSchedulerAction belongs to the current core */
@@ -763,6 +781,10 @@ static void tcbReleaseDequeue(void)
     SMP_COND_STATEMENT(assert(awakened->tcbAffinity == getCurrentCPUIndex()));
     /* threads HEAD refill should always be >= MIN_BUDGET */
     assert(refill_sufficient(awakened->tcbSchedContext, 0));
+    // TODO: Why only refill_sufficient, and not refill_ready.
+    // TODO: Refill ready guaranteed by release_q_non_empty_and_ready()
+    // TODO: is ready + sufficient <=> sc_active? if not so, add sel4test.
+    assert(isSchedulable(awakened));
     possibleSwitchTo(awakened);
 }
 
