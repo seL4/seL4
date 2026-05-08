@@ -377,6 +377,8 @@ void schedule(void)
     /* Invariant: if a thread, ksSchedulerAction belongs to the current core */
     assert(!SchedulerAction_IsCandidateThread(NODE_STATE(ksSchedulerAction)) ||
            NODE_STATE(ksSchedulerAction)->tcbAffinity == getCurrentCPUIndex());
+    /* These invariants mean we don't need any remoteQueueUpdate calls, and
+       thus can call tcbSchedEnqueue/tcbSchedAppend directly. */
 #endif
 
 #ifdef CONFIG_KERNEL_MCS
@@ -388,7 +390,7 @@ void schedule(void)
         bool_t was_runnable;
         if (isSchedulable(NODE_STATE(ksCurThread))) {
             was_runnable = true;
-            SCHED_ENQUEUE_CURRENT_TCB;
+            tcbSchedEnqueue(NODE_STATE(ksCurThread));
         } else {
             was_runnable = false;
         }
@@ -407,7 +409,7 @@ void schedule(void)
                 || (candidate->tcbPriority < NODE_STATE(ksCurThread)->tcbPriority);
             if (fastfail &&
                 !isHighestPrio(ksCurDomain, candidate->tcbPriority)) {
-                SCHED_ENQUEUE(candidate);
+                tcbSchedEnqueue(candidate);
                 /* we can't, need to reschedule */
                 NODE_STATE(ksSchedulerAction) = SchedulerAction_ChooseNewThread;
                 scheduleChooseNewThread();
@@ -415,7 +417,7 @@ void schedule(void)
                 /* We append the candidate at the end of the scheduling queue, that way the
                  * current thread, that was enqueued at the start of the scheduling queue
                  * will get picked during chooseNewThread */
-                SCHED_APPEND(candidate);
+                tcbSchedAppend(candidate);
                 NODE_STATE(ksSchedulerAction) = SchedulerAction_ChooseNewThread;
                 scheduleChooseNewThread();
             } else {
@@ -574,7 +576,9 @@ void possibleSwitchTo(tcb_t *target)
         } else if (NODE_STATE(ksSchedulerAction) != SchedulerAction_ResumeCurrentThread) {
             /* Too many threads want special treatment, use regular queues. */
             rescheduleRequired();
-            SCHED_ENQUEUE(target);
+            tcbSchedEnqueue(target);
+            /* We know that this thread must be on the current core */
+            SMP_COND_STATEMENT(assert(target->tcbAffinity == getCurrentCPUIndex()));
         } else {
             NODE_STATE(ksSchedulerAction) = target;
         }
@@ -731,7 +735,7 @@ void rescheduleRequired(void)
         assert(refill_sufficient(NODE_STATE(ksSchedulerAction)->tcbSchedContext, 0));
         assert(refill_ready(NODE_STATE(ksSchedulerAction)->tcbSchedContext));
 #endif
-        SCHED_ENQUEUE(NODE_STATE(ksSchedulerAction));
+        tcbSchedEnqueue(NODE_STATE(ksSchedulerAction));
     }
     NODE_STATE(ksSchedulerAction) = SchedulerAction_ChooseNewThread;
 }
