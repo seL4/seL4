@@ -4,7 +4,6 @@ Upstream-Contact: seL4 team <support@sel4.systems>
 Source: http://sel4.systems
 
 Files:
-  CHANGES
   VERSION
   manual/VERSION
   manual/references.bib
