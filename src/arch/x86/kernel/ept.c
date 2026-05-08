@@ -190,6 +190,50 @@ static ept_cache_options_t eptCacheFromVmAttr(vm_attributes_t vmAttr)
     return option;
 }
 
+static inline ept_pte_t CONST makeEPTPTEInvalid(void)
+{
+    return ept_pte_new(0, 0, 0, 0, 0, 0, 0);
+}
+
+static inline ept_pte_t CONST makeEPTPTE(paddr_t paddr, vm_attributes_t vm_attr, vm_rights_t vm_rights)
+{
+    /* EPT has no user/supervisor distinction, so kernel-only means no guest access */
+    if (vm_rights == VMKernelOnly) {
+        return makeEPTPTEInvalid();
+    }
+    return ept_pte_new(
+               paddr,                                          /* page_base_address    */
+               0,                                              /* avl_cte_depth        */
+               0,                                              /* ignore_pat           */
+               eptCacheFromVmAttr(vm_attr),                    /* type                 */
+               1,                                              /* execute              */
+               WritableFromVMRights(vm_rights),                /* write                */
+               1                                               /* read                 */
+           );
+}
+
+static inline ept_pde_t CONST makeEPTPDEInvalid(void)
+{
+    return ept_pde_ept_pde_2m_new(0, 0, 0, 0, 0, 0, 0);
+}
+
+static inline ept_pde_t CONST makeEPTPDELargePage(paddr_t paddr, vm_attributes_t vm_attr, vm_rights_t vm_rights)
+{
+    /* EPT has no user/supervisor distinction, so kernel-only means no guest access */
+    if (vm_rights == VMKernelOnly) {
+        return makeEPTPDEInvalid();
+    }
+    return ept_pde_ept_pde_2m_new(
+               paddr,                                          /* page_base_address    */
+               0,                                              /* avl_cte_depth        */
+               0,                                              /* ignore_pat           */
+               eptCacheFromVmAttr(vm_attr),                    /* type                 */
+               1,                                              /* execute              */
+               WritableFromVMRights(vm_rights),                /* write                */
+               1                                               /* read                 */
+           );
+}
+
 EPTPDPTMapped_ret_t EPTPDPTMapped(asid_t asid, vptr_t vptr, ept_pdpte_t *pdpt)
 {
     EPTPDPTMapped_ret_t ret;
@@ -880,14 +924,7 @@ exception_t decodeX86EPTPageMap(
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        pte = ept_pte_new(
-                  paddr,
-                  0,
-                  0,
-                  eptCacheFromVmAttr(vmAttr),
-                  1,
-                  WritableFromVMRights(vmRights),
-                  1);
+        pte = makeEPTPTE(paddr, vmAttr, vmRights);
 
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performEPTPageMapPTE(cap, cte, lu_ret.ptSlot, pte, pml4);
@@ -927,23 +964,8 @@ exception_t decodeX86EPTPageMap(
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        ept_pde_t pde1 = ept_pde_ept_pde_2m_new(
-                             paddr,
-                             0,
-                             0,
-                             eptCacheFromVmAttr(vmAttr),
-                             1,
-                             WritableFromVMRights(vmRights),
-                             1);
-
-        ept_pde_t pde2 = ept_pde_ept_pde_2m_new(
-                             paddr + BIT(EPT_PD_INDEX_OFFSET),
-                             0,
-                             0,
-                             eptCacheFromVmAttr(vmAttr),
-                             1,
-                             WritableFromVMRights(vmRights),
-                             1);
+        ept_pde_t pde1 = makeEPTPDELargePage(paddr, vmAttr, vmRights);
+        ept_pde_t pde2 = makeEPTPDELargePage(paddr + BIT(EPT_PD_INDEX_OFFSET), vmAttr, vmRights);
 
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performEPTPageMapPDE(cap, cte, lu_ret.pdSlot, pde1, pde2, pml4);
@@ -984,7 +1006,7 @@ void unmapEPTPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr
             return;
         }
 
-        *lu_ret.ptSlot = ept_pte_new(0, 0, 0, 0, 0, 0, 0);
+        *lu_ret.ptSlot = makeEPTPTEInvalid();
         break;
     }
     case X86_LargePage: {
@@ -1004,14 +1026,14 @@ void unmapEPTPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr
             return;
         }
 
-        lu_ret.pdSlot[0] = ept_pde_ept_pde_2m_new(0, 0, 0, 0, 0, 0, 0);
+        lu_ret.pdSlot[0] = makeEPTPDEInvalid();
 
         if (LARGE_PAGE_BITS != EPT_PD_INDEX_OFFSET) {
             assert(ept_pde_ptr_get_page_size(lu_ret.pdSlot + 1) == ept_pde_ept_pde_2m);
             assert(ept_pde_ept_pde_2m_ptr_get_read(lu_ret.pdSlot + 1));
             assert(ept_pde_ept_pde_2m_ptr_get_page_base_address(lu_ret.pdSlot + 1) == addr + BIT(21));
 
-            lu_ret.pdSlot[1] = ept_pde_ept_pde_2m_new(0, 0, 0, 0, 0, 0, 0);
+            lu_ret.pdSlot[1] = makeEPTPDEInvalid();
         }
         break;
     }

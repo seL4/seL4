@@ -436,7 +436,10 @@
             <param dir="in" name="gpa" type="seL4_Word" description="Guest physical address to map the page into."/>
             <param dir="in" name="rights" type="seL4_CapRights_t">
                 <description>
-                    Rights for the mapping. <docref>Possible values for this type are given in <autoref label='sec:cap_rights'/>.</docref>
+                    Rights for the mapping. If these rights, masked with the rights of <texttt
+                    text="_service"/>, do not include read access, the mapping grants the guest no
+                    access to the page.
+                    <docref>Possible values for this type are given in <autoref label='sec:cap_rights'/>.</docref>
                 </description>
             </param>
             <param dir="in" name="attr" type="seL4_X86_EPT_VMAttributes">
