@@ -374,6 +374,9 @@ void schedule(void)
 #ifdef ENABLE_SMP_SUPPORT
     /* Invariant: the current thread always belongs to the current core. */
     assert(NODE_STATE(ksCurThread)->tcbAffinity == getCurrentCPUIndex());
+    /* Invariant: if a thread, ksSchedulerAction belongs to the current core */
+    assert(!SchedulerAction_IsCandidateThread(NODE_STATE(ksSchedulerAction)) ||
+           NODE_STATE(ksSchedulerAction)->tcbAffinity == getCurrentCPUIndex());
 #endif
 
 #ifdef CONFIG_KERNEL_MCS
@@ -579,6 +582,11 @@ void possibleSwitchTo(tcb_t *target)
     }
 #endif
 
+#ifdef ENABLE_SMP_SUPPORT
+    /* Invariant: if a thread, ksSchedulerAction belongs to the current core */
+    assert(!SchedulerAction_IsCandidateThread(NODE_STATE(ksSchedulerAction)) ||
+           NODE_STATE(ksSchedulerAction)->tcbAffinity == getCurrentCPUIndex());
+#endif
 }
 
 void setThreadState(tcb_t *tptr, _thread_state_t ts)
@@ -708,6 +716,12 @@ void timerTick(void)
 
 void rescheduleRequired(void)
 {
+#ifdef ENABLE_SMP_SUPPORT
+    /* Invariant: if a thread, ksSchedulerAction belongs to the current core */
+    assert(!SchedulerAction_IsCandidateThread(NODE_STATE(ksSchedulerAction)) ||
+           NODE_STATE(ksSchedulerAction)->tcbAffinity == getCurrentCPUIndex());
+#endif
+
     if (SchedulerAction_IsCandidateThread(NODE_STATE(ksSchedulerAction))
 #ifdef CONFIG_KERNEL_MCS
         && isSchedulable(NODE_STATE(ksSchedulerAction))
