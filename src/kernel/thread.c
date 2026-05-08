@@ -708,8 +708,7 @@ void timerTick(void)
 
 void rescheduleRequired(void)
 {
-    if (NODE_STATE(ksSchedulerAction) != SchedulerAction_ResumeCurrentThread
-        && NODE_STATE(ksSchedulerAction) != SchedulerAction_ChooseNewThread
+    if (SchedulerAction_IsCandidateThread(NODE_STATE(ksSchedulerAction))
 #ifdef CONFIG_KERNEL_MCS
         && isSchedulable(NODE_STATE(ksSchedulerAction))
 #endif
