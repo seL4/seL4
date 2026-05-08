@@ -16,6 +16,16 @@
 #include <object/endpoint.h>
 #include <object/tcb.h>
 
+/*
+ * This is called with thread == NODE_STATE(ksCurThread)) for *all*
+ * cases _except_ for handleTimeout(receiver); in which case receiver = a thread
+ * that is BlockedOnReply (of doReplyTransfer).
+ * ==> I think a reply from a server to a thread that should timeout is the cause
+ * ==> Either the EPState is idle/send, in which blocked on send => still OK
+ * => else in recv goes to reply_push with caller = receiver
+ * => then setThreadStateBlockedOnReply. So goes from blocked -> blocked, so
+ * no SMP queue updates are needed.
+ */
 #ifdef CONFIG_KERNEL_MCS
 void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
              bool_t canGrant, bool_t canGrantReply, bool_t canDonate, tcb_t *thread, endpoint_t *epptr)

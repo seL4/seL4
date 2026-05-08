@@ -611,12 +611,41 @@ void possibleSwitchTo(tcb_t *target)
 #endif
 }
 
+/*
+ * This is also once again called with the current thread only; except for:
+ * - reply_unlink
+ * - VMCheckBoundNotification (which does check it's on the same core)
+ * - suspend, setting inactive; relies on it for behaviour
+ * - restart, which never would use scheduleTCB as can't restart yourself.
+ * - doReplyTransfer but it is running so scheduleTCB not called (and so possibleSwitchTo)
+ * - sendIPC to set inactive (in what case: could be running?)
+ * - receiveIPC to inactive (was blocked)
+ * - cancelIPC to inactive (was blocked)
+ * - restart_thread_if_no_fault (TODO: who calls) either to restart with a switchTo or to inactive
+ * -     called by at least cancelAllIPC
+ * - cancelBadgedSends but it does a SCHED_ENQUEUE afterwards
+ * - sendSignal and it does a switchTo
+ * - cancelAllSignals, followed by SCHED_ENQUEUE (non-MCS) or possibleSwitchTo (in a loop?? lol wtf)
+ * - cancelSignal: to inactive (was blocked)
+ * - setupCallerCap: sender to blocked (todo: could sender be on the other core and running)
+ *
+ *
+ * TODO: Should we 'SMP_COND_STATEMENT(remoteTCBStall(tptr));'
+ *       (already done at start of decodeTCBInvocation)
+ */
 void setThreadState(tcb_t *tptr, _thread_state_t ts)
 {
     thread_state_ptr_set_tsType(&tptr->tcbState, ts);
     scheduleTCB(tptr);
 }
 
+/* scheduleTCB is almost always called from setThreadState with the current thread,
+ * except for two uses in sendIPC/receiveIPC that calls 'thread_state_ptr_set_tsType'
+ * directly; one use in receiveSignal that also calls 'thread_state_ptr_set_tsType'
+ * directly; (all on the current thread).
+ * There is a use in reply_push -> setThreadStateBlockedOnReply which also calls
+ * 'thread_state_ptr_set_tsType', this could be on another thread.
+ */
 void scheduleTCB(tcb_t *tptr)
 {
     if (tptr == NODE_STATE(ksCurThread) &&

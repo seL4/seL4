@@ -73,6 +73,7 @@ static exception_t invokeSchedControl_ConfigureFlags(sched_context_t *target, wo
         }
     }
 
+    // TODO: two cases, isRunnable and not isRunnable
 #ifdef ENABLE_SMP_SUPPORT
     /* Invariant: the current thread always belongs to the current core.
      * sel4test: SCHED0022 */
