@@ -211,6 +211,13 @@ static exception_t invokeSchedContext_YieldTo(sched_context_t *sc, bool_t call)
             tcbSchedEnqueue(tcb);
             rescheduleRequired();
 
+            /* We know that both the TCB is on the current core per earlier check,
+             * and that ksCurThread is on the current core by invariant.
+             * So neither of these needed a remoteQueueUpdate().
+             */
+            SMP_COND_STATEMENT(assert(tcb->tcbAffinity == getCurrentCPUIndex()));
+            SMP_COND_STATEMENT(assert(NODE_STATE(ksCurThread)->tcbAffinity == getCurrentCPUIndex()));
+
             /* we are scheduling the thread associated with sc,
              * so we don't need to write to the ipc buffer
              * until the caller is scheduled again */
