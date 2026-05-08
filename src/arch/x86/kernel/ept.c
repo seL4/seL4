@@ -848,6 +848,15 @@ exception_t decodeX86EPTPageMap(
 
     vmRights = maskVMRights(capVMRights, rightsFromWord(w_rightsMask));
 
+    /* There is no good implementation for VMKernelOnly EPT entries, so we reject
+     * these explicitly instead of silently downgrading as in other invocations. */
+    if (vmRights == VMKernelOnly) {
+        userError("X86EPTPageMap: Attempted to map a frame without read rights.");
+        current_syscall_error.type = seL4_InvalidArgument;
+        current_syscall_error.invalidArgumentNumber = 1;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
     if (!checkVPAlignment(frameSize, vaddr)) {
         current_syscall_error.type = seL4_AlignmentError;
 
