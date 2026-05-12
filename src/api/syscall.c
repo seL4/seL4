@@ -158,6 +158,19 @@ exception_t handleUnknownSyscall(word_t w)
         return EXCEPTION_NONE;
     }
 #ifdef ENABLE_SMP_SUPPORT
+    if (w == SysDebugGetThreadAffinity) {
+        word_t cptr = getRegister(NODE_STATE(ksCurThread), capRegister);
+        lookupCapAndSlot_ret_t lu_ret = lookupCapAndSlot(NODE_STATE(ksCurThread), cptr);
+        /* ensure we got a TCB cap */
+        word_t cap_type = cap_get_capType(lu_ret.cap);
+        if (cap_type != cap_thread_cap) {
+            userError("SysDebugGetThreadAffinity: cap is not a TCB, halting");
+            halt();
+        }
+        word_t affinity = TCB_PTR(cap_thread_cap_get_capTCBPtr(lu_ret.cap))->tcbAffinity;
+        setRegister(NODE_STATE(ksCurThread), capRegister, affinity);
+        return EXCEPTION_NONE;
+    }
     if (w == SysDebugSendIPI) {
         return handle_SysDebugSendIPI();
     }

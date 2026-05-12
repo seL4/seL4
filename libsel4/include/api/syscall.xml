@@ -57,6 +57,7 @@
                 </and>
             </condition>
             <syscall name="DebugSendIPI"/>
+            <syscall name="DebugGetThreadAffinity"/>
         </config>
         <config>
             <condition><config var="CONFIG_DANGEROUS_CODE_INJECTION"/></condition>
