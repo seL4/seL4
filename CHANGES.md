@@ -28,6 +28,9 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 ### Changes
 
+* Add `seL4_DebugGetThreadAffinity()` syscall to return the current affinity of a thread
+  in SMP configurations.
+
 ### Platforms
 
 * Add support for the stm32mp2 SoC family
