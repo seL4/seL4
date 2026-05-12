@@ -673,7 +673,24 @@ LIBSEL4_INLINE_FUNC void seL4_DebugNameThread(seL4_CPtr tcb, const char *name)
 
     x64_sys_send_recv(seL4_SysDebugNameThread, tcb, &unused0, 0, &unused1, &unused2, &unused3, &unused4, &unused5, 0);
 }
-#endif
+
+#if CONFIG_ENABLE_SMP_SUPPORT
+LIBSEL4_INLINE_FUNC seL4_Word seL4_DebugGetThreadAffinity(seL4_CPtr tcb)
+{
+    seL4_Word unused0 = 0;
+    seL4_Word unused1 = 0;
+    seL4_Word unused2 = 0;
+    seL4_Word unused3 = 0;
+    seL4_Word unused4 = 0;
+
+    seL4_Word affinity = 0;
+
+    x64_sys_send_recv(seL4_SysDebugGetThreadAffinity, tcb, &affinity, 0,
+                      &unused0, &unused1, &unused3, &unused4, &unused5, 0);
+    return affinity;
+}
+#endif /* CONFIG_ENABLE_SMP_SUPPORT */
+#endif /* CONFIG_DEBUG_BUILD */
 
 #if defined(CONFIG_DANGEROUS_CODE_INJECTION)
 LIBSEL4_INLINE_FUNC void seL4_DebugRun(void (*userfn)(void *), void *userarg)
