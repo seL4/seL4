@@ -50,7 +50,12 @@
             <syscall name="DebugNameThread"/>
         </config>
         <config>
-            <condition><config var="CONFIG_DEBUG_BUILD"/></condition>
+            <condition>
+                <and>
+                    <config var="CONFIG_DEBUG_BUILD"/>
+                    <config var="CONFIG_ENABLE_SMP_SUPPORT"/>
+                </and>
+            </condition>
             <syscall name="DebugSendIPI"/>
         </config>
         <config>
