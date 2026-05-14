@@ -670,6 +670,15 @@ void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
         crossnode = true;
     }
 
+#if defined(ENABLE_SMP_SUPPORT) || defined(CONFIG_KERNEL_MCS)
+    /* If we would cause our current thread to be migrated between cores,
+     * or between domains, go to the slowpath, as this would result in
+     * scheduling on our core/domain. */
+    if (crossnode && dest == NODE_STATE(ksCurThread)) {
+        slowpath(SysSend);
+    }
+#endif
+
     /*  Point of no return */
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
     ksKernelEntry.is_fastpath = true;
