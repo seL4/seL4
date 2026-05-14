@@ -56,6 +56,7 @@ static exception_t invokeSchedControl_ConfigureFlags(sched_context_t *target, wo
     }
 #endif /* ENABLE_SMP_SUPPORT */
 
+    // TODO: some of this might be redundant now.
     assert(sc_active(target));
     if (thread) {
         schedContext_resume(target);
