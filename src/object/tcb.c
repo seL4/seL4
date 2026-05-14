@@ -119,6 +119,7 @@ void tcbSchedEnqueue(tcb_t *tcb)
     assert(refill_sufficient(tcb->tcbSchedContext, 0));
     // XXX: refill_ready here?
 #endif
+    assert(tcb != NODE_STATE(ksIdleThread));
 
     if (!thread_state_get_tcbQueued(tcb->tcbState)) {
         tcb_queue_t queue;
