@@ -568,6 +568,11 @@ BEGIN_FUNC(kernel_exception)
     movq    24(%r8), %r8     # RFLAGS
     # handleKernelException(vector, errorcode, RIP, RSP, RFLAGS, CR0, CR2, CR3, CR4)
     movq    %cr0, %r9
+
+    # At this point the stack would be 16-bytes aligned, but we are only pushing 3x 8-byte
+    # values below, so we need to maintain stack alignment.
+    subq    $8, %rsp
+
     movq    %cr4, %r11
     push    %r11
     movq    %cr3, %r11
@@ -575,7 +580,7 @@ BEGIN_FUNC(kernel_exception)
     movq    %cr2, %r11
     push    %r11
     call    handleKernelException
-    addq    $24, %rsp
+    addq    $32, %rsp
     # Set RIP in the saved register context to the new IP returned from handleKernelException
     LOAD_IRQ_STACK(r8)
     movq    %rax, 8(%r8)
