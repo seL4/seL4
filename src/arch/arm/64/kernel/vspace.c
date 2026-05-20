@@ -219,10 +219,10 @@ BOOT_CODE void map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_righ
     word_t attr_index;
     word_t shareable;
     if (vm_attributes_get_armPageCacheable(attributes)) {
-        attr_index = NORMAL;
+        attr_index = config_set(CONFIG_ARM_HYPERVISOR_SUPPORT) ? S2_NORMAL : NORMAL;
         shareable = SMP_TERNARY(SMP_SHARE, 0);
     } else {
-        attr_index = DEVICE_nGnRnE;
+        attr_index = config_set(CONFIG_ARM_HYPERVISOR_SUPPORT) ? S2_DEVICE_nGnRnE : DEVICE_nGnRnE;
         shareable = 0;
     }
     armKSGlobalKernelPT[GET_KPT_INDEX(vaddr, KLVL_FRM_ARM_PT_LVL(3))] = pte_pte_4k_page_new(uxn, paddr,
@@ -279,7 +279,11 @@ BOOT_CODE void map_kernel_window(void)
                                                                                                                         1,                        /* access flag */
                                                                                                                         SMP_TERNARY(SMP_SHARE, 0),        /* Inner-shareable if SMP enabled, otherwise unshared */
                                                                                                                         0,                        /* VMKernelOnly */
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+                                                                                                                        S2_NORMAL
+#else
                                                                                                                         NORMAL
+#endif
                                                                                                                     );
         vaddr += BIT(seL4_LargePageBits);
     }
@@ -1994,7 +1998,11 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
                              1,                         /* access flag */
                              SMP_TERNARY(SMP_SHARE, 0), /* Inner-shareable if SMP enabled, otherwise unshared */
                              0,                         /* VMKernelOnly */
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+                             S2_NORMAL_INNER_WTC_OUTER_WTC);
+#else
                              NORMAL_WT);
+#endif
 
     cleanByVA_PoU((vptr_t)armKSGlobalLogPTE, addrFromKPPtr(armKSGlobalLogPTE));
     invalidateTranslationSingle(KS_LOG_PPTR);
