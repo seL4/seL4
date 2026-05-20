@@ -80,12 +80,12 @@ void suspend(tcb_t *target)
          * running */
         updateRestartPC(target);
     }
-    setThreadState(target, ThreadState_Inactive);
     tcbSchedDequeue(target);
 #ifdef CONFIG_KERNEL_MCS
     tcbReleaseRemove(target);
     schedContext_cancelYieldTo(target);
 #endif
+    setThreadState(target, ThreadState_Inactive);
 }
 
 void restart(tcb_t *target)

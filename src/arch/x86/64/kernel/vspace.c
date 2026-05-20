@@ -327,7 +327,7 @@ BOOT_CODE void init_tss(tss_t *tss)
            sizeof(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.io_map));
 }
 
-BOOT_CODE void init_syscall_msrs(void)
+void init_syscall_msrs(void)
 {
     x86_wrmsr(IA32_LSTAR_MSR, (uint64_t)&handle_fastsyscall);
     // mask bit 9 in the kernel (which is the interrupt enable bit)

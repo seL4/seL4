@@ -687,8 +687,8 @@ LIBSEL4_INLINE_FUNC seL4_MessageInfo_t seL4_NBSendWaitWithMRs(seL4_CPtr dest, se
 
 LIBSEL4_INLINE_FUNC void seL4_Yield(void)
 {
-    register seL4_Word scno asm("a7") = seL4_SysYield;
-    asm volatile("ecall" :: "r"(scno));
+    riscv_sys_null(seL4_SysYield);
+    asm volatile("" ::: "memory");
 }
 
 #ifdef CONFIG_KERNEL_MCS

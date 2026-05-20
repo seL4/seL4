@@ -698,10 +698,25 @@ def generate_stub(arch, wordsize, interface_name, method_name, method_id, input_
                 result.append("\tmr%d = %s;" % (i, input_expressions[i]))
             else:
                 result.append("\tmr%d = 0;" % i)
-        # Initialise buffered parameters
-        for i in range(num_mrs, len(input_expressions)):
-            result.append("\tseL4_SetMR(%d, %s);" % (i, input_expressions[i]))
-        result.append("")
+        TCB_writeRegister_can_loop = (
+            method_name == "WriteRegisters" and
+            interface_name == "seL4_TCB" and
+            num_mrs >= 2
+        )
+        if TCB_writeRegister_can_loop:
+            # First 2 registers are always passed by mrs, thus initialise buffered
+            # parameters only when requesting more than 2 registers
+            regs_by_mrs = num_mrs - 2
+            result.append("\tfor (seL4_Word i = %d; i < count; i++) {" % regs_by_mrs)
+            result.append("\t\tseL4_SetMR(i + 2, ((seL4_Word*)&%s)[i - %d]);" %
+                          (input_expressions[num_mrs], regs_by_mrs))
+            result.append("\t}")
+            result.append("")
+        else:
+            # Initialise buffered parameters
+            for i in range(num_mrs, len(input_expressions)):
+                result.append("\tseL4_SetMR(%d, %s);" % (i, input_expressions[i]))
+            result.append("")
 
     #
     # Generate the call.
@@ -747,15 +762,25 @@ def generate_stub(arch, wordsize, interface_name, method_name, method_id, input_
         for i in range(MAX_MESSAGE_LENGTH):
             if i < num_mrs:
                 source_words["w%d" % i] = "mr%d" % i
-            else:
+            elif method_name != "ReadRegisters" or num_mrs < 2:
                 source_words["w%d" % i] = "seL4_GetMR(%d)" % i
         unmashalled_params = generate_unmarshal_expressions(output_params, wordsize)
         for (param, words) in unmashalled_params:
             if param.type.pass_by_reference():
                 members = struct_members(param.type, structs)
-                for i in range(len(words)):
-                    result.append("\t%s->%s = %s;" %
-                                  (param.name, members[i], words[i] % source_words))
+                if method_name == "ReadRegisters" and num_mrs >= 2:
+                    for i in range(len(source_words)):
+                        result.append("\t%s->%s = %s;" %
+                                      (param.name, members[i], words[i] % source_words))
+                    result.append("\tfor (seL4_Word i = %d; i < count; i++) {" % num_mrs)
+                    result.append("\t\t((seL4_Word *) &%s->%s)[i - %d] = seL4_GetMR(i);" %
+                                  (param.name, members[num_mrs], num_mrs))
+                    result.append("\t}")
+
+                else:
+                    for i in range(len(words)):
+                        result.append("\t%s->%s = %s;" %
+                                      (param.name, members[i], words[i] % source_words))
             else:
                 if param.type.double_word:
                     result.append("\tresult.%s = ((%s)%s + ((%s)%s << 32));" %
@@ -764,10 +789,6 @@ def generate_stub(arch, wordsize, interface_name, method_name, method_id, input_
                 else:
                     for word in words:
                         result.append("\tresult.%s = %s;" % (param.name, word % source_words))
-
-    #
-    # }
-    #
     result.append("\treturn result;")
     result.append("}")
 
