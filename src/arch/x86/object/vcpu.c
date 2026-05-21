@@ -1329,7 +1329,7 @@ exception_t handleVmexit(void)
     /* the basic exit reason is the bottom 16 bits of the exit reason field */
     reason = vmread(VMX_DATA_EXIT_REASON) & MASK(16);
     if (reason == EXTERNAL_INTERRUPT) {
-        NODE_LOCK_IRQ();
+        NODE_LOCK_IRQ;
         if (vmx_feature_ack_on_exit) {
             interrupt = vmread(VMX_DATA_EXIT_INTERRUPT_INFO) & 0xff;
             ARCH_NODE_STATE(x86KScurInterrupt) = interrupt;
@@ -1339,7 +1339,9 @@ exception_t handleVmexit(void)
              * up to restore_user_context */
             receivePendingIRQ();
         }
+#ifdef ENABLE_SMP_SUPPORT
         VMCheckBoundNotification(NODE_STATE(ksCurThread));
+#endif
         return EXCEPTION_NONE;
     }
 
