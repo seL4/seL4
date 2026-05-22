@@ -680,7 +680,7 @@ void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
         cancelIPC_fp(dest);
     } else {
         /* Dequeue dest from the notification queue */
-        ntfn_queue_dequeue_fp(dest, ntfnPtr);
+        tcbNTFNDequeue(dest, ntfnPtr);
     }
 
     /* Wake up the signalled thread and transfer badge */
