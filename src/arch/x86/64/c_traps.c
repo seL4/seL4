@@ -14,7 +14,7 @@
 #include <api/syscall.h>
 
 #ifdef CONFIG_VTX
-static void NORETURN vmlaunch_failed(word_t failInvalid, word_t failValid)
+static void NORETURN USED vmlaunch_failed(word_t failInvalid, word_t failValid)
 {
     NODE_LOCK_SYS;
 
