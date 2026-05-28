@@ -36,10 +36,6 @@ static void NORETURN restore_vmx(tcb_t *cur_thread, vcpu_t *vcpu)
     /* Do not support breakpoints in VMs, so just disable all breakpoints */
     loadAllDisabledBreakpointState(cur_thread);
 #endif
-#ifdef ENABLE_SMP_SUPPORT
-    NODE_STATE(vcpu->kernelSP = ((word_t)kernel_stack_alloc[getCurrentCPUIndex()]) + BIT(
-                                    CONFIG_KERNEL_STACK_BITS) - 4;
-#endif /* ENABLE_SMP_SUPPORT */
     if (vcpu->launched) {
     /* attempt to do a vmresume */
     asm volatile(
