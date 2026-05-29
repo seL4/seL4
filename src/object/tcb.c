@@ -1082,19 +1082,15 @@ static bool_t validFaultHandler(cap_t cap)
 {
     switch (cap_get_capType(cap)) {
     case cap_endpoint_cap:
-        if (!cap_endpoint_cap_get_capCanSend(cap) ||
-            (!cap_endpoint_cap_get_capCanGrant(cap) &&
-             !cap_endpoint_cap_get_capCanGrantReply(cap))) {
-            return false;
-        }
-        break;
+        return (cap_endpoint_cap_get_capCanSend(cap) &&
+                (cap_endpoint_cap_get_capCanGrant(cap) ||
+                 cap_endpoint_cap_get_capCanGrantReply(cap)));
     case cap_null_cap:
         /* just has no fault endpoint */
-        break;
+        return true;
     default:
         return false;
     }
-    return true;
 }
 #endif
 
