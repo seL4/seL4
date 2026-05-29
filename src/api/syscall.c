@@ -596,8 +596,12 @@ exception_t handleSyscall(syscall_t syscall)
         case SysReplyRecv: {
             cptr_t reply = getRegister(NODE_STATE(ksCurThread), replyRegister);
             ret = handleInvocation(false, false, true, true, reply);
-            /* reply cannot error and is not preemptible */
-            assert(ret == EXCEPTION_NONE);
+            /* reply is not preemptible, but to ease verification we check explicitly */
+            if (unlikely(ret != EXCEPTION_NONE)) {
+                mcsPreemptionPoint();
+                checkInterrupt(/* was_interrupt_entry */ false);
+                break;
+            }
             handleRecv(true, true);
             break;
         }
