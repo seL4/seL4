@@ -374,15 +374,15 @@ static inline lookupCap_ret_t lookupReply(void)
     lookupCap_ret_t lu_ret = lookupCap(NODE_STATE(ksCurThread), replyCPtr);
     if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
         userError("Reply cap lookup failed");
+        /* current_lookup_fault has been set by lookupCap */
         current_fault = seL4_Fault_CapFault_new(replyCPtr, true);
-        handleFault(NODE_STATE(ksCurThread));
         return lu_ret;
     }
 
     if (unlikely(cap_get_capType(lu_ret.cap) != cap_reply_cap)) {
-        userError("Cap in reply slot is not a reply");
+        userError("Cap in reply slot is not a reply cap");
+        current_lookup_fault = lookup_fault_missing_capability_new(0);
         current_fault = seL4_Fault_CapFault_new(replyCPtr, true);
-        handleFault(NODE_STATE(ksCurThread));
         lu_ret.status = EXCEPTION_FAULT;
         return lu_ret;
     }
@@ -461,6 +461,8 @@ static void handleRecv(bool_t isBlocking)
         if (canReply) {
             lu_ret = lookupReply();
             if (lu_ret.status != EXCEPTION_NONE) {
+                /* lookup_fault has been set by lookupReply */
+                handleFault(NODE_STATE(ksCurThread));
                 return;
             } else {
                 reply_cap = lu_ret.cap;
