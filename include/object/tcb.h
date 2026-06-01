@@ -182,6 +182,8 @@ static inline tcb_queue_t tcbAppend(tcb_t *tcb, tcb_queue_t queue)
     return new_queue;
 }
 
+/* Check for NullCap or EndpointCap with sufficient access rights */
+bool_t validFaultHandler(cap_t cap);
 #else
 
 tcb_queue_t tcbEPAppend(tcb_t *tcb, tcb_queue_t queue);
