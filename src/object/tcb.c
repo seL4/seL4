@@ -1078,7 +1078,7 @@ exception_t decodeWriteRegisters(cap_t cap, word_t length, word_t *buffer)
 }
 
 #ifdef CONFIG_KERNEL_MCS
-static bool_t validFaultHandler(cap_t cap)
+bool_t validFaultHandler(cap_t cap)
 {
     switch (cap_get_capType(cap)) {
     case cap_endpoint_cap:
