@@ -6,6 +6,13 @@
 
 cmake_minimum_required(VERSION 3.16.0)
 
+# Set policy for potentially empty single arguments when that policy is supported. Both behaviours
+# (with and without policy) are safe for our uses. If no policy is set, we get a warning for
+# function config_option below when it is called with empty strings.
+if(POLICY CMP0174)
+    cmake_policy(SET CMP0174 NEW)
+endif()
+
 # Wrapper function around find_file that generates a fatal error if it isn't found
 # Is equivalent to find_file except that it adds CMAKE_CURRENT_SOURCE_DIR as a path and sets
 # CMAKE_FIND_ROOT_PATH_BOTH
