@@ -143,14 +143,13 @@ typedef struct acpi_madt_iso {
     acpi_madt_header_t header;
     uint8_t            bus; /* always 0 (ISA) */
     uint8_t            source;
-    uint32_t           gsi;
+    /* Split the u32 into 2x u16 to prevent the compiler from padding the struct. */
+    uint16_t           gsi_low;
+    uint16_t           gsi_high;
     uint16_t           flags;
 } acpi_madt_iso_t;
-/* We can't assert on the sizeof acpi_madt_iso because it contains trailing
- * padding.
- */
-unverified_compile_assert(acpi_madt_iso_packed,
-                          OFFSETOF(acpi_madt_iso_t, flags) == sizeof(acpi_madt_header_t) + 6)
+compile_assert(acpi_madt_iso_packed,
+               sizeof(acpi_madt_iso_t) == sizeof(acpi_madt_header_t) + 8)
 
 /* workaround because string literals are not supported by C parser */
 const char acpi_str_rsd[]  = {'R', 'S', 'D', ' ', 'P', 'T', 'R', ' ', 0};
@@ -358,13 +357,12 @@ BOOT_CODE uint32_t acpi_madt_scan(
                         (*num_ioapic)++;
                     }
                     break;
-                case MADT_ISO:
-                    printf("ACPI: MADT_ISO bus=%d source=%d gsi=%d flags=0x%x\n",
-                           ((acpi_madt_iso_t *)acpi_madt_header)->bus,
-                           ((acpi_madt_iso_t *)acpi_madt_header)->source,
-                           ((acpi_madt_iso_t *)acpi_madt_header)->gsi,
-                           ((acpi_madt_iso_t *)acpi_madt_header)->flags);
+                case MADT_ISO: {
+                    UNUSED acpi_madt_iso_t *iso = (acpi_madt_iso_t *)acpi_madt_header;
+                    printf("ACPI: MADT_ISO bus=%d source=%d gsi=0x%x%02x flags=0x%x\n",
+                           iso->bus, iso->source, iso->gsi_high, iso->gsi_low, iso->flags);
                     break;
+                }
                 default:
                     break;
                 }
