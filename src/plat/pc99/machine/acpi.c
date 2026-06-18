@@ -151,6 +151,12 @@ typedef struct acpi_madt_iso {
 compile_assert(acpi_madt_iso_packed,
                sizeof(acpi_madt_iso_t) == sizeof(acpi_madt_header_t) + 8)
 
+#define MADT_MAX_ENTRY_SIZE sizeof(acpi_madt_x2apic_t)
+
+compile_assert(acpi_madt_apic_entry_size, sizeof(acpi_madt_apic_t) <= MADT_MAX_ENTRY_SIZE)
+compile_assert(acpi_madt_ioapic_entry_size, sizeof(acpi_madt_ioapic_t) <= MADT_MAX_ENTRY_SIZE)
+compile_assert(acpi_madt_iso_entry_size, sizeof(acpi_madt_iso_t) <= MADT_MAX_ENTRY_SIZE)
+
 /* workaround because string literals are not supported by C parser */
 const char acpi_str_rsd[]  = {'R', 'S', 'D', ' ', 'P', 'T', 'R', ' ', 0};
 const char acpi_str_fadt[] = {'F', 'A', 'C', 'P', 0};
@@ -160,6 +166,10 @@ const char madt_str_apic[] = {'A', 'P', 'I', 'C', 0};
 const char madt_str_x2apic[] = {'x', '2', 'A', 'P', 'I', 'C', 0};
 const char madt_str_ioapic[] = {'I', 'O', 'A', 'P', 'I', 'C', 0};
 const char madt_str_iso[] = {'I', 'S', 'O', 0};
+
+/* aligned(4) so that we can copy the BIOS provided MADT entries into this buffer
+ * then cast it to it's proper type then dereference it in an aligned manner. */
+BOOT_DATA char madt_entry[MADT_MAX_ENTRY_SIZE] ALIGN(4);
 
 BOOT_CODE static uint8_t acpi_calc_checksum(char *start, uint32_t length)
 {
@@ -291,7 +301,8 @@ BOOT_CODE uint32_t acpi_madt_scan(
     paddr_t     *ioapic_paddrs
 )
 {
-    unsigned int entries;
+    unsigned int        entries;
+    unsigned int        entry_size;
     uint32_t            num_cpu;
     uint32_t            count;
     acpi_madt_t        *acpi_madt;
@@ -299,6 +310,7 @@ BOOT_CODE uint32_t acpi_madt_scan(
 
     acpi_rsdt_t *acpi_rsdt_mapped;
     acpi_madt_t *acpi_madt_mapped;
+
     acpi_rsdt_mapped = (acpi_rsdt_t *)acpi_table_init((acpi_rsdt_t *)(word_t)acpi_rsdp->rsdt_address, ACPI_RSDT);
 
     num_cpu = 0;
@@ -320,6 +332,9 @@ BOOT_CODE uint32_t acpi_madt_scan(
             acpi_madt_header = (acpi_madt_header_t *)(acpi_madt_mapped + 1);
 
             while ((char *)acpi_madt_header < (char *)acpi_madt_mapped + acpi_madt_mapped->header.length) {
+                entry_size = MIN(acpi_madt_header->length, MADT_MAX_ENTRY_SIZE);
+                memcpy(madt_entry, acpi_madt_header, entry_size);
+
                 switch (acpi_madt_header->type) {
                 /* ACPI specifies the following rules when listing APIC IDs:
                  *  - Boot processor is listed first
@@ -332,9 +347,11 @@ BOOT_CODE uint32_t acpi_madt_scan(
                     if (!acpi_madt_valid(acpi_madt_header, madt_str_apic, sizeof(acpi_madt_apic_t))) {
                         break;
                     }
+                    acpi_madt_apic_t *madt_apic = (acpi_madt_apic_t *) madt_entry;
+
                     /* what Intel calls apic_id is what is called cpu_id in seL4! */
-                    uint8_t  cpu_id = ((acpi_madt_apic_t *)acpi_madt_header)->apic_id;
-                    uint32_t flags  = ((acpi_madt_apic_t *)acpi_madt_header)->flags;
+                    uint8_t  cpu_id = madt_apic->apic_id;
+                    uint32_t flags  = madt_apic->flags;
                     if (flags == 1) {
                         printf("ACPI: MADT_APIC apic_id=0x%x\n", cpu_id);
                         if (num_cpu == CONFIG_MAX_NUM_NODES) {
@@ -350,8 +367,10 @@ BOOT_CODE uint32_t acpi_madt_scan(
                     if (!acpi_madt_valid(acpi_madt_header, madt_str_x2apic, sizeof(acpi_madt_x2apic_t))) {
                         break;
                     }
-                    uint32_t cpu_id = ((acpi_madt_x2apic_t *)acpi_madt_header)->x2apic_id;
-                    uint32_t flags  = ((acpi_madt_x2apic_t *)acpi_madt_header)->flags;
+                    acpi_madt_x2apic_t *madt_x2apic = (acpi_madt_x2apic_t *) madt_entry;
+
+                    uint32_t cpu_id = madt_x2apic->x2apic_id;
+                    uint32_t flags  = madt_x2apic->flags;
                     if (flags == 1) {
                         printf("ACPI: MADT_x2APIC apic_id=0x%x\n", cpu_id);
                         if (num_cpu == CONFIG_MAX_NUM_NODES) {
@@ -367,16 +386,18 @@ BOOT_CODE uint32_t acpi_madt_scan(
                     if (!acpi_madt_valid(acpi_madt_header, madt_str_ioapic, sizeof(acpi_madt_ioapic_t))) {
                         break;
                     }
+                    acpi_madt_ioapic_t *madt_ioapic = (acpi_madt_ioapic_t *) madt_entry;
+
                     printf(
                         "ACPI: MADT_IOAPIC ioapic_id=%d ioapic_addr=0x%x gsib=%d\n",
-                        ((acpi_madt_ioapic_t *)acpi_madt_header)->ioapic_id,
-                        ((acpi_madt_ioapic_t *)acpi_madt_header)->ioapic_addr,
-                        ((acpi_madt_ioapic_t *)acpi_madt_header)->gsib
+                        madt_ioapic->ioapic_id,
+                        madt_ioapic->ioapic_addr,
+                        madt_ioapic->gsib
                     );
                     if (*num_ioapic == CONFIG_MAX_NUM_IOAPIC) {
                         printf("ACPI: Not recording this IOAPIC, only support %d\n", CONFIG_MAX_NUM_IOAPIC);
                     } else {
-                        ioapic_paddrs[*num_ioapic] = ((acpi_madt_ioapic_t *)acpi_madt_header)->ioapic_addr;
+                        ioapic_paddrs[*num_ioapic] = madt_ioapic->ioapic_addr;
                         (*num_ioapic)++;
                     }
                     break;
@@ -384,7 +405,8 @@ BOOT_CODE uint32_t acpi_madt_scan(
                     if (!acpi_madt_valid(acpi_madt_header, madt_str_iso, sizeof(acpi_madt_iso_t))) {
                         break;
                     }
-                    UNUSED acpi_madt_iso_t *iso = (acpi_madt_iso_t *)acpi_madt_header;
+                    UNUSED acpi_madt_iso_t *iso = (acpi_madt_iso_t *) madt_entry;
+
                     printf("ACPI: MADT_ISO bus=%d source=%d gsi=0x%x%02x flags=0x%x\n",
                            iso->bus, iso->source, iso->gsi_high, iso->gsi_low, iso->flags);
                     break;
