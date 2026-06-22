@@ -862,7 +862,7 @@ LIBSEL4_INLINE_FUNC seL4_Word seL4_DebugGetThreadAffinity(seL4_CPtr tcb)
     seL4_Word affinity = 0;
 
     riscv_sys_send_recv(seL4_SysDebugGetThreadAffinity, tcb, &affinity, 0,
-                      &unused0, &unused1, &unused2, &unused3, &unused4, 0);
+                        &unused0, &unused1, &unused2, &unused3, &unused4, 0);
     return affinity;
 }
 #endif /* CONFIG_ENABLE_SMP_SUPPORT */

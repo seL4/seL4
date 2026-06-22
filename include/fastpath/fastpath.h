@@ -36,39 +36,15 @@ static inline void maybeDonateSchedContext_fp(tcb_t *dest, sched_context_t *sc)
 static inline void cancelIPC_fp(tcb_t *dest)
 {
     endpoint_t *ep_ptr;
-    tcb_queue_t queue;
     ep_ptr = EP_PTR(thread_state_get_blockingObject(dest->tcbState));
 
-    queue = ep_ptr_get_queue(ep_ptr);
-    queue = tcbEPDequeue(dest, queue);
-    ep_ptr_set_queue(ep_ptr, queue);
-
-    if (!queue.head) {
-        endpoint_ptr_set_state(ep_ptr, EPState_Idle);
-    }
+    tcbEPDequeue(dest, ep_ptr);
 
     /* we are in BlockedOnReceive, because fastpath_signal explicitly checks for it */
     assert(thread_state_get_tsType(dest->tcbState) == ThreadState_BlockedOnReceive);
     reply_t *reply = REPLY_PTR(thread_state_get_replyObject(dest->tcbState));
     if (reply != NULL) {
         reply_unlink(reply, dest);
-    }
-}
-
-/* Dequeue TCB from notification queue */
-static inline void ntfn_queue_dequeue_fp(tcb_t *dest, notification_t *ntfn_ptr)
-{
-    tcb_queue_t ntfn_queue;
-    ntfn_queue.head = (tcb_t *)notification_ptr_get_ntfnQueue_head(ntfn_ptr);
-    ntfn_queue.end = (tcb_t *)notification_ptr_get_ntfnQueue_tail(ntfn_ptr);
-
-    ntfn_queue = tcbEPDequeue(dest, ntfn_queue);
-
-    notification_ptr_set_ntfnQueue_head(ntfn_ptr, (word_t)ntfn_queue.head);
-    notification_ptr_set_ntfnQueue_tail(ntfn_ptr, (word_t)ntfn_queue.end);
-
-    if (!ntfn_queue.head) {
-        notification_ptr_set_state(ntfn_ptr, NtfnState_Idle);
     }
 }
 #endif

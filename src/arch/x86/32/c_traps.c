@@ -36,43 +36,39 @@ static void NORETURN restore_vmx(tcb_t *cur_thread, vcpu_t *vcpu)
     /* Do not support breakpoints in VMs, so just disable all breakpoints */
     loadAllDisabledBreakpointState(cur_thread);
 #endif
-#ifdef ENABLE_SMP_SUPPORT
-    NODE_STATE(vcpu->kernelSP = ((word_t)kernel_stack_alloc[getCurrentCPUIndex()]) + BIT(
-                                    CONFIG_KERNEL_STACK_BITS) - 4;
-#endif /* ENABLE_SMP_SUPPORT */
+    word_t *guest_regs_ptr = vcpu->gp_registers;
     if (vcpu->launched) {
-    /* attempt to do a vmresume */
-    asm volatile(
-        // Set our stack pointer to the top of the tcb so we can efficiently pop
-        "movl %0, %%esp\n"
-        "popl %%eax\n"
-        "popl %%ebx\n"
-        "popl %%ecx\n"
-        "popl %%edx\n"
-        "popl %%esi\n"
-        "popl %%edi\n"
-        "popl %%ebp\n"
-        // Now do the vmresume
-        "vmresume\n"
-        // if we get here we failed
+        /* attempt to do a vmresume */
+        asm volatile(
+            // Set our stack pointer to the top of the tcb so we can efficiently pop
+            "movl %[guest_regs], %%esp\n"
+            "popl %%eax\n"
+            "popl %%ebx\n"
+            "popl %%ecx\n"
+            "popl %%edx\n"
+            "popl %%esi\n"
+            "popl %%edi\n"
+            "popl %%ebp\n"
+            // Now do the vmresume
+            "vmresume\n"
+            // if we get here we failed
 #ifdef ENABLE_SMP_SUPPORT
-        "movl (%%esp), %%esp\n"
+            "movl (%%esp), %%esp\n"
 #else
-        "leal kernel_stack_alloc + %c1, %%esp\n"
+            "leal kernel_stack_alloc + %c1, %%esp\n"
 #endif
-        "call vmlaunch_failed\n"
-        :
-        : "r"(&vcpu->gp_registers[VCPU_EAX]),
-        "i"(BIT(CONFIG_KERNEL_STACK_BITS) - sizeof(word_t))
-        // Clobber memory so the compiler is forced to complete all stores
-        // before running this assembler
-        : "memory"
-    );
+            "call vmlaunch_failed\n"
+            : [guest_regs] "+a"(guest_regs_ptr)
+            : "i"(BIT(CONFIG_KERNEL_STACK_BITS) - sizeof(word_t))
+            // Clobber memory so the compiler is forced to complete all stores
+            // before running this assembler
+            : "ebx", "ecx", "edx", "esi", "edi", "ebp", "memory"
+        );
     } else {
         /* attempt to do a vmlaunch */
         asm volatile(
             // Set our stack pointer to the top of the tcb so we can efficiently pop
-            "movl %0, %%esp\n"
+            "movl %[guest_regs], %%esp\n"
             "popl %%eax\n"
             "popl %%ebx\n"
             "popl %%ecx\n"
@@ -89,12 +85,11 @@ static void NORETURN restore_vmx(tcb_t *cur_thread, vcpu_t *vcpu)
             "leal kernel_stack_alloc + %c1, %%esp\n"
 #endif
             "call vmlaunch_failed\n"
-            :
-            : "r"(&vcpu->gp_registers[VCPU_EAX]),
-            "i"(BIT(CONFIG_KERNEL_STACK_BITS) - sizeof(word_t))
+            : [guest_regs] "+a"(guest_regs_ptr)
+            : "i"(BIT(CONFIG_KERNEL_STACK_BITS) - sizeof(word_t))
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
-            : "memory"
+            : "ebx", "ecx", "edx", "esi", "edi", "ebp", "memory"
         );
     }
     UNREACHABLE();

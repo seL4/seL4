@@ -28,10 +28,19 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 ### Changes
 
+* Add `seL4_DebugGetThreadAffinity()` syscall to return the current affinity of a thread
+  in SMP configurations.
+
+### Platforms
+
+* Add support for the stm32mp2 SoC family
+
 #### ARM
 
 * change default for `KernelArmHypEnableVCPUCP14SaveAndRestore` to `OFF` to provide equal defaults for
   verification and release builds. This affects AArch32/hyp only.
+* change default for `KernelArmVtimerUpdateVOffset` to `OFF`, which is the setting supported in
+  verification builds and used in most projects.
 
 ### Upgrade Notes
 

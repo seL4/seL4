@@ -251,7 +251,6 @@ tcb_queue_t tcbEPAppend(tcb_t *tcb, tcb_queue_t queue)
 
     return queue;
 }
-#endif
 
 /* Remove TCB from an endpoint queue */
 tcb_queue_t tcbEPDequeue(tcb_t *tcb, tcb_queue_t queue)
@@ -270,6 +269,7 @@ tcb_queue_t tcbEPDequeue(tcb_t *tcb, tcb_queue_t queue)
 
     return queue;
 }
+#endif /* CONFIG_KERNEL_MCS */
 
 #ifdef CONFIG_KERNEL_MCS
 
@@ -1082,23 +1082,19 @@ exception_t decodeWriteRegisters(cap_t cap, word_t length, word_t *buffer)
 }
 
 #ifdef CONFIG_KERNEL_MCS
-static bool_t validFaultHandler(cap_t cap)
+bool_t validFaultHandler(cap_t cap)
 {
     switch (cap_get_capType(cap)) {
     case cap_endpoint_cap:
-        if (!cap_endpoint_cap_get_capCanSend(cap) ||
-            (!cap_endpoint_cap_get_capCanGrant(cap) &&
-             !cap_endpoint_cap_get_capCanGrantReply(cap))) {
-            return false;
-        }
-        break;
+        return (cap_endpoint_cap_get_capCanSend(cap) &&
+                (cap_endpoint_cap_get_capCanGrant(cap) ||
+                 cap_endpoint_cap_get_capCanGrantReply(cap)));
     case cap_null_cap:
         /* just has no fault endpoint */
-        break;
+        return true;
     default:
         return false;
     }
-    return true;
 }
 #endif
 
