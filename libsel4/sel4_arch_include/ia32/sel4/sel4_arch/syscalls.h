@@ -880,9 +880,7 @@ LIBSEL4_INLINE_FUNC seL4_Word seL4_DebugGetThreadAffinity(seL4_CPtr tcb)
 {
     seL4_Word unused0 = 0;
     seL4_Word unused1 = 0;
-    seL4_Word unused2 = 0;
-    seL4_Word unused3 = 0;
-    seL4_Word unused4 = 0;
+    LIBSEL4_UNUSED seL4_Word unused2 = 0;
 
     seL4_Word affinity = 0;
 
