@@ -497,8 +497,6 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
 
     /* create PD cap */
     copyGlobalMappings(PDE_PTR(rootserver.vspace));
-    cleanCacheRange_PoU(rootserver.vspace, rootserver.vspace + (1 << seL4_PageDirBits) - 1,
-                        addrFromPPtr((void *)rootserver.vspace));
     cap_t pd_cap =
         cap_page_directory_cap_new(
             true,    /* capPDIsMapped   */
@@ -544,10 +542,6 @@ BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vpt
 
 BOOT_CODE void activate_kernel_vspace(void)
 {
-    /* Ensure that there's nothing stale in newly-mapped regions, and
-       that everything we've written (particularly the kernel page tables)
-       is committed. */
-    cleanInvalidateL1Caches();
     setCurrentPD(addrFromKPPtr(armKSGlobalPD));
     invalidateLocalTLB();
     lockTLBEntry(PPTR_BASE);
@@ -559,10 +553,6 @@ BOOT_CODE void activate_kernel_vspace(void)
 BOOT_CODE void activate_kernel_vspace(void)
 {
     uint32_t r;
-    /* Ensure that there's nothing stale in newly-mapped regions, and
-       that everything we've written (particularly the kernel page tables)
-       is committed. */
-    cleanInvalidateL1Caches();
     /* Setup the memory attributes: We use 2 indices (cachable/non-cacheable) */
     setHMAIR((ATTRINDX_NONCACHEABLE << 0) | (ATTRINDX_CACHEABLE << 8), 0);
     setCurrentHypPD(addrFromKPPtr(armHSGlobalPGD));
@@ -1186,7 +1176,6 @@ void unmapPageTable(asid_t asid, vptr_t vaddr, pte_t *pt)
         pdSlot = pd + pdIndex;
 
         *pdSlot = pde_pde_invalid_new(0, 0);
-        cleanByVA_PoU((word_t)pdSlot, addrFromPPtr(pdSlot));
         flushTable(pd, asid, vaddr, pt);
     }
 }
@@ -1354,7 +1343,6 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
         }
 
         *(lu_ret.ptSlot) = pte_pte_invalid_new();
-        cleanByVA_PoU((word_t)lu_ret.ptSlot, addrFromPPtr(lu_ret.ptSlot));
 
         break;
     }
@@ -1389,9 +1377,6 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
         for (i = 0; i < PAGES_PER_LARGE_PAGE; i++) {
             lu_ret.ptSlot[i] = pte_pte_invalid_new();
         }
-        cleanCacheRange_PoU((word_t)&lu_ret.ptSlot[0],
-                            LAST_BYTE_PTE(lu_ret.ptSlot, PAGES_PER_LARGE_PAGE),
-                            addrFromPPtr(&lu_ret.ptSlot[0]));
 
         break;
     }
@@ -1416,7 +1401,6 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
         }
 
         *pd = pde_pde_invalid_new(0, 0);
-        cleanByVA_PoU((word_t)pd, addrFromPPtr(pd));
 
         break;
     }
@@ -1444,8 +1428,6 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
         for (i = 0; i < SECTIONS_PER_SUPER_SECTION; i++) {
             pd[i] = pde_pde_invalid_new(0, 0);
         }
-        cleanCacheRange_PoU((word_t)&pd[0], LAST_BYTE_PDE(pd, SECTIONS_PER_SUPER_SECTION),
-                            addrFromPPtr(&pd[0]));
 
         break;
     }
@@ -1457,18 +1439,16 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
 
     /* Flush the page now that the mapping has been updated */
     flushPage(page_size, find_ret.pd, asid, vptr);
+
 }
 
 void flushPage(vm_page_size_t page_size, pde_t *pd, asid_t asid, word_t vptr)
 {
     pde_t stored_hw_asid;
     word_t base_addr;
-    bool_t root_switched;
 
     assert((vptr & MASK(pageBitsForSize(page_size))) == 0);
 
-    /* Switch to the address space to allow a cache clean by VA */
-    root_switched = setVMRootForFlush(pd, asid);
     stored_hw_asid = loadHWASID(asid);
 
     if (pde_pde_invalid_get_stored_asid_valid(stored_hw_asid)) {
@@ -1476,29 +1456,19 @@ void flushPage(vm_page_size_t page_size, pde_t *pd, asid_t asid, word_t vptr)
 
         /* Do the TLB flush */
         invalidateTranslationSingle(base_addr | pde_pde_invalid_get_stored_hw_asid(stored_hw_asid));
-
-        if (root_switched) {
-            setVMRoot(NODE_STATE(ksCurThread));
-        }
     }
 }
 
 void flushTable(pde_t *pd, asid_t asid, word_t vptr, pte_t *pt)
 {
     pde_t stored_hw_asid;
-    bool_t root_switched;
 
     assert((vptr & MASK(PT_INDEX_BITS + ARMSmallPageBits)) == 0);
 
-    /* Switch to the address space to allow a cache clean by VA */
-    root_switched = setVMRootForFlush(pd, asid);
     stored_hw_asid = loadHWASID(asid);
 
     if (pde_pde_invalid_get_stored_asid_valid(stored_hw_asid)) {
         invalidateTranslationASID(pde_pde_invalid_get_stored_hw_asid(stored_hw_asid));
-        if (root_switched) {
-            setVMRoot(NODE_STATE(ksCurThread));
-        }
     }
 }
 
@@ -1507,11 +1477,6 @@ void flushSpace(asid_t asid)
     pde_t stored_hw_asid;
 
     stored_hw_asid = loadHWASID(asid);
-
-    /* Clean the entire data cache, to guarantee that any VAs mapped
-     * in the deleted space are clean (because we can't clean by VA after
-     * deleting the space) */
-    cleanCaches_PoU();
 
     /* If the given ASID doesn't have a hardware ASID
      * assigned, then it can't have any mappings in the TLB */
@@ -1824,7 +1789,6 @@ static exception_t performPageTableInvocationMap(cap_t cap, cte_t *ctSlot,
 {
     ctSlot->cap = cap;
     *pdSlot = pde;
-    cleanByVA_PoU((word_t)pdSlot, addrFromPPtr(pdSlot));
 
     return EXCEPTION_NONE;
 }
@@ -1868,9 +1832,6 @@ static exception_t performPageInvocationMapPTE(asid_t asid, cap_t cap, cte_t *ct
 #endif
         pte_entries.base[i] = pte;
     }
-    cleanCacheRange_PoU((word_t)pte_entries.base,
-                        LAST_BYTE_PTE(pte_entries.base, pte_entries.length),
-                        addrFromPPtr(pte_entries.base));
     if (unlikely(tlbflush_required)) {
         invalidateTLBByASID(asid);
     }
@@ -1902,9 +1863,6 @@ static exception_t performPageInvocationMapPDE(asid_t asid, cap_t cap, cte_t *ct
 #endif
         pde_entries.base[i] = pde;
     }
-    cleanCacheRange_PoU((word_t)pde_entries.base,
-                        LAST_BYTE_PDE(pde_entries.base, pde_entries.length),
-                        addrFromPPtr(pde_entries.base));
     if (unlikely(tlbflush_required)) {
         invalidateTLBByASID(asid);
     }
@@ -2719,7 +2677,6 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
                 0  /* executable */
             );
 
-        cleanByVA_PoU((vptr_t)&armKSGlobalLogPT[idx], addrFromKPPtr(&armKSGlobalLogPT[idx]));
         invalidateTranslationSingle(KS_LOG_PPTR + (idx * BIT(seL4_PageBits)));
     }
 
