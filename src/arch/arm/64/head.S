@@ -92,6 +92,11 @@ BEGIN_FUNC(_start)
     orr     x4, x4, x19
     bic     x4, x4, x20
     msr     SCTLR, x4
+    /* We just updated the SCTLR for our current EL, so require
+     * isb to trigger Context Synchronization event to prevent starting
+     * execution of future instructions until current system register
+     * updates are complete. */
+    isb
 
 #ifdef ENABLE_SMP_SUPPORT
     /* tpidr_el1 has the logic ID of the core, starting from 0 */
