@@ -48,6 +48,8 @@ enum multiboot2_tags {
     MULTIBOOT2_TAG_MODULE  = 3,
     MULTIBOOT2_TAG_MEMORY  = 6,
     MULTIBOOT2_TAG_FB      = 8,
+    MULTIBOOT2_TAG_EFI32   = 11, /* 32-bit EFI system table pointer */
+    MULTIBOOT2_TAG_EFI64   = 12, /* 64-bit EFI system table pointer */
     MULTIBOOT2_TAG_ACPI_1  = 14,
     MULTIBOOT2_TAG_ACPI_2  = 15,
 };
