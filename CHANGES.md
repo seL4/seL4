@@ -30,6 +30,10 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 * Add `seL4_DebugGetThreadAffinity()` syscall to return the current affinity of a thread
   in SMP configurations.
+* Add new libsel4 constant `seL4_UserVSpaceTop` which is a *inclusive* value representing
+  the highest available address available to user level. The existing constant
+  `seL4_UserTop` is a mix of inclusive and exclusive across existing platforms, however,
+  changing this to be consistent would break userspace and require proof updates.
 
 ### Platforms
 
