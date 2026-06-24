@@ -147,7 +147,7 @@ word_t PURE getRestartPC(tcb_t *thread);
 void setNextPC(tcb_t *thread, word_t v);
 
 /* Cleaning memory before user-level access. Does not flush cache. */
-static inline void clearMemory(void *ptr, unsigned int bits)
+static inline void clearMemory(void *ptr, word_t bits)
 {
     memzero(ptr, BIT(bits));
 }
