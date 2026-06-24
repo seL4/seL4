@@ -145,3 +145,6 @@ typedef enum {
 
 /* First address in the virtual address space that is not accessible to user level */
 #define seL4_UserTop 0xe0000000
+
+/* Last address in the virtual address space that is accessible to user level */
+#define seL4_UserVSpaceTop (seL4_UserTop - 1)

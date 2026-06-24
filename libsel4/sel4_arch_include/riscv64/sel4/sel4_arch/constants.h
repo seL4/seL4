@@ -128,6 +128,9 @@ typedef enum {
 /* First address in the virtual address space that is not accessible to user level */
 #define seL4_UserTop 0x0000003ffffff000
 
+/* Last address in the virtual address space that is accessible to user level */
+#define seL4_UserVSpaceTop (seL4_UserTop - 1)
+
 #ifdef CONFIG_ENABLE_BENCHMARKS
 /* size of kernel log buffer in bytes */
 #define seL4_LogBufferSize (LIBSEL4_BIT(20))
