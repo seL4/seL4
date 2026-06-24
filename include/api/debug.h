@@ -77,7 +77,7 @@ static inline void debug_printUserState(void)
 
 static inline void debug_printTCB(tcb_t *tcb)
 {
-    printf("%40s\t", TCB_PTR_DEBUG_PTR(tcb)->tcbName);
+    printf(" %40s", TCB_PTR_DEBUG_PTR(tcb)->tcbName);
     char *state;
     switch (thread_state_get_tsType(tcb->tcbState)) {
     case ThreadState_Inactive:
@@ -113,10 +113,21 @@ static inline void debug_printTCB(tcb_t *tcb)
         fail("Unknown thread state");
     }
 
-    word_t core = SMP_TERNARY(tcb->tcbAffinity, 0);
-    printf("%15s\t%p\t%20lu\t%lu", state, (void *) getRestartPC(tcb), tcb->tcbPriority, core);
+    // 16: max length of state
+    // 18: len(0x + max 64 bit length)
+    //  4: len(Prio) header (longer than 255 as well)
+    //  4: len(Core) header
+    //  4: consistent with core
+    // 14: len(InReleaseQueue)
+    printf("   %16s   %18p   %4lu", state, (void *) getRestartPC(tcb), tcb->tcbPriority);
+#ifdef CONFIG_ENABLE_SMP_SUPPORT
+    printf("   %4lu", tcb->tcbAffinity);
+#endif
+#if CONFIG_NUM_DOMAINS > 1
+    printf("   %4lu", tcb->tcbDomain);
+#endif
 #ifdef CONFIG_KERNEL_MCS
-    printf("\t%lu", (word_t) thread_state_get_tcbInReleaseQueue(tcb->tcbState));
+    printf("   %14s", thread_state_get_tcbInReleaseQueue(tcb->tcbState) ? "yes" : "no");
 #endif
     printf("\n");
 }
@@ -124,9 +135,14 @@ static inline void debug_printTCB(tcb_t *tcb)
 static inline void debug_dumpScheduler(void)
 {
     printf("Dumping all tcbs!\n");
-    printf("Name                                    \tState          \tIP                  \t Prio \t Core%s\n",
-           config_set(CONFIG_KERNEL_MCS) ?  "\t InReleaseQueue" : "");
-    printf("--------------------------------------------------------------------------------------\n");
+    printf("Name                                        State              IP                   Prio%s%s%s\n",
+           config_set(CONFIG_ENABLE_SMP_SUPPORT) ? "   Core" : "",
+           (CONFIG_NUM_DOMAINS > 1)              ? "    Dom"            : "",
+           config_set(CONFIG_KERNEL_MCS)         ? "   InReleaseQueue" : "");
+    printf("----------------------------------------------------------------------------------------%s%s%s\n",
+           config_set(CONFIG_ENABLE_SMP_SUPPORT) ? "-------" : "",
+           (CONFIG_NUM_DOMAINS > 1)              ? "-------" : "",
+           config_set(CONFIG_KERNEL_MCS)         ? "-----------------" : "");
     for (tcb_t *curr = NODE_STATE(ksDebugTCBs); curr != NULL; curr = TCB_PTR_DEBUG_PTR(curr)->tcbDebugNext) {
         debug_printTCB(curr);
     }
