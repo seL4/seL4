@@ -74,6 +74,10 @@ static inline void checkInterrupt(void)
 exception_t handleInterruptEntry(void)
 {
 #ifdef CONFIG_KERNEL_MCS
+    // If the lock isn't held then checkBudget() can't be called.
+    // The lock won't be held only if it's a remote_call IPI.
+    // Each remote_call IPI handler must ensure that it keeps kernel
+    // state consistent.
     if (SMP_TERNARY(clh_is_self_in_queue(), 1)) {
         updateTimestamp();
         checkBudget();
@@ -82,14 +86,12 @@ exception_t handleInterruptEntry(void)
 
     checkInterrupt(/* was_interrupt_entry */ true);
 
-#ifdef CONFIG_KERNEL_MCS
+    // If the lock isn't held then schedule() and activateThread()
+    // aren't safe to call.
     if (SMP_TERNARY(clh_is_self_in_queue(), 1)) {
-#endif
         schedule();
         activateThread();
-#ifdef CONFIG_KERNEL_MCS
     }
-#endif
 
     return EXCEPTION_NONE;
 }
