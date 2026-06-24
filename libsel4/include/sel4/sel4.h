@@ -27,4 +27,7 @@
 #include <sel4/arch/constants.h>
 #include <sel4/plat/api/constants.h>
 
+#ifdef CONFIG_VTX
+#include <sel4/arch/vmenter.h>
+#endif
 
