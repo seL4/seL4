@@ -34,6 +34,7 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
   the highest available address available to user level. The existing constant
   `seL4_UserTop` is a mix of inclusive and exclusive across existing platforms, however,
   changing this to be consistent would break userspace and require proof updates.
+  The existing `seL4_UserTop` define is deprecated.
 
 ### Platforms
 
