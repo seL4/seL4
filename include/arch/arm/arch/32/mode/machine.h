@@ -193,6 +193,18 @@ static inline void writeTTBCR(word_t val)
     asm volatile("mcr p15, 0, %0, c2, c0, 2":: "r"(val));
 }
 
+static inline word_t readPAR(void)
+{
+    word_t val = 0;
+    asm volatile("mrc p15, 0, %0, c7, c4, 0":"=r"(val):);
+    return val;
+}
+
+static inline void writePAR(word_t val)
+{
+    asm volatile("mcr p15, 0, %0, c7, c4, 0":: "r"(val));
+}
+
 static inline void writeTPIDRURW(word_t reg)
 {
     asm volatile("mcr p15, 0, %0, c13, c0, 2" :: "r"(reg));
