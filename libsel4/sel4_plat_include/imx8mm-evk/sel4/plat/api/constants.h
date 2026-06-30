@@ -10,7 +10,7 @@
 #include <sel4/arch/constants_cortex_a53.h>
 
 #if CONFIG_WORD_SIZE == 32
-/* First address in the virtual address space that is not accessible to user level */
+/* (Deprecated) First address in the virtual address space that is not accessible to user level */
 #define seL4_UserTop 0xe0000000
 
 /* Last address in the virtual address space that is accessible to user level */

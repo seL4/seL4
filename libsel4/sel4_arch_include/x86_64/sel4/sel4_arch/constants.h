@@ -153,7 +153,7 @@ typedef enum {
 /* IPC buffer is 1024 bytes, giving size bits of 10 */
 #define seL4_IPCBufferSizeBits 10
 
-/* First address in the virtual address space that is not accessible to user level */
+/* (Deprecated) First address in the virtual address space that is not accessible to user level */
 #define seL4_UserTop 0x00007ffffffff000
 
 /* Last address in the virtual address space that is accessible to user level */
