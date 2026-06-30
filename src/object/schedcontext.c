@@ -211,6 +211,14 @@ static exception_t invokeSchedContext_YieldTo(sched_context_t *sc, bool_t call)
             tcbSchedEnqueue(tcb);
             rescheduleRequired();
 
+            /* We know that both the TCB is on the current core per earlier check,
+             * and that ksCurThread is on the current core by invariant.
+             * So neither of these needed a remoteQueueUpdate().
+             * @TODO: Guarantee sc->scCore == tcb->tcbAffinity?
+             */
+            SMP_COND_STATEMENT(assert(tcb->tcbAffinity == getCurrentCPUIndex()));
+            SMP_COND_STATEMENT(assert(NODE_STATE(ksCurThread)->tcbAffinity == getCurrentCPUIndex()));
+
             /* we are scheduling the thread associated with sc,
              * so we don't need to write to the ipc buffer
              * until the caller is scheduled again */
@@ -324,14 +332,20 @@ void schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb)
     }
     schedContext_resume(sc);
     if (isSchedulable(tcb)) {
-        SCHED_ENQUEUE(tcb);
-        rescheduleRequired();
         // TODO -- at some stage we should take this call out of any TCB invocations that
         // alter capabilities, so that we can do a direct switch. The preference here is to
         // remove seL4_SetSchedParams from using ThreadControl. It's currently out of scope for
         // verification work, so the work around is to use rescheduleRequired()
+        SCHED_ENQUEUE(tcb);
+        rescheduleRequired();
         //possibleSwitchTo(tcb);
     }
+    // XX: what happens if not schedulable?
+
+#ifdef ENABLE_SMP_SUPPORT
+    /* Invariant: the current thread always belongs to the current core. */
+    assert(NODE_STATE(ksCurThread)->tcbAffinity == getCurrentCPUIndex());
+#endif
 }
 
 void schedContext_unbindTCB(sched_context_t *sc)
@@ -379,6 +393,11 @@ void schedContext_donate(sched_context_t *sc, tcb_t *to)
     to->tcbSchedContext = sc;
 
     SMP_COND_STATEMENT(migrateTCB(to, sc->scCore));
+
+#ifdef ENABLE_SMP_SUPPORT
+    /* Invariant: the current thread always belongs to the current core. */
+    assert(NODE_STATE(ksCurThread)->tcbAffinity == getCurrentCPUIndex());
+#endif
 }
 
 void schedContext_bindNtfn(sched_context_t *sc, notification_t *ntfn)

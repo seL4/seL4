@@ -16,6 +16,16 @@
 #include <object/endpoint.h>
 #include <object/tcb.h>
 
+/*
+ * This is called with thread == NODE_STATE(ksCurThread)) for *all*
+ * cases _except_ for handleTimeout(receiver); in which case receiver = a thread
+ * that is BlockedOnReply (of doReplyTransfer).
+ * ==> I think a reply from a server to a thread that should timeout is the cause
+ * ==> Either the EPState is idle/send, in which blocked on send => still OK
+ * => else in recv goes to reply_push with caller = receiver
+ * => then setThreadStateBlockedOnReply. So goes from blocked -> blocked, so
+ * no SMP queue updates are needed.
+ */
 #ifdef CONFIG_KERNEL_MCS
 void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
              bool_t canGrant, bool_t canGrantReply, bool_t canDonate, tcb_t *thread, endpoint_t *epptr)
@@ -110,7 +120,10 @@ void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
         if (sc_sporadic(dest_sc) && dest_sc != NODE_STATE(ksCurSC)) {
             refill_unblock_check(dest_sc);
         }
-        possibleSwitchTo(dest);
+        // XX: What happens if not isSchedulable()?
+        if (isSchedulable(dest)) {
+            possibleSwitchTo(dest);
+        }
 #else
         bool_t replyCanGrant = thread_state_ptr_get_blockingIPCCanGrant(&dest->tcbState);;
 
@@ -275,8 +288,14 @@ void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
                 }
             } else {
                 setThreadState(sender, ThreadState_Running);
-                possibleSwitchTo(sender);
+                // Why no refill_ready like in sendIPC?
                 assert(sender->tcbSchedContext == NULL || refill_sufficient(sender->tcbSchedContext, 0));
+                if (isSchedulable(sender)) {
+                    possibleSwitchTo(sender);
+                } else {
+                    // XXX:: was the refill_sufficient different to isSchedualble?
+                    assert(sender->tcbSchedContext == NULL);
+                }
             }
 #else
             if (do_call) {
@@ -287,6 +306,7 @@ void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
                 }
             } else {
                 setThreadState(sender, ThreadState_Running);
+                assert(isSchedulable(sender));
                 possibleSwitchTo(sender);
             }
 #endif
@@ -415,7 +435,11 @@ static inline void restart_thread_if_no_fault(tcb_t *thread)
                 refill_unblock_check(thread->tcbSchedContext);
             }
         }
-        possibleSwitchTo(thread);
+        // TODO: What if not schedulable?
+        if (isSchedulable(thread)) {
+            possibleSwitchTo(thread);
+        }
+
     } else {
         setThreadState(thread, ThreadState_Inactive);
     }

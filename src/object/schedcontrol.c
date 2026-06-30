@@ -56,11 +56,14 @@ static exception_t invokeSchedControl_ConfigureFlags(sched_context_t *target, wo
     }
 #endif /* ENABLE_SMP_SUPPORT */
 
+    // TODO: some of this might be redundant now.
     assert(sc_active(target));
     if (thread) {
         schedContext_resume(target);
         if (SMP_TERNARY(core == CURRENT_CPU_INDEX(), true)) {
             if (isRunnable(thread) && thread != NODE_STATE(ksCurThread)) {
+                // XX: guaranteed by assert sc_active(thread) and isRunnable.
+                assert(isSchedulable(thread));
                 possibleSwitchTo(thread);
             }
         } else if (isRunnable(thread)) {
@@ -70,6 +73,13 @@ static exception_t invokeSchedControl_ConfigureFlags(sched_context_t *target, wo
             rescheduleRequired();
         }
     }
+
+    // TODO: two cases, isRunnable and not isRunnable
+#ifdef ENABLE_SMP_SUPPORT
+    /* Invariant: the current thread always belongs to the current core.
+     * sel4test: SCHED0022 */
+    assert(NODE_STATE(ksCurThread)->tcbAffinity == getCurrentCPUIndex());
+#endif
 
     target->scBadge = badge;
     target->scSporadic = (flags & seL4_SchedContext_Sporadic) != 0;
