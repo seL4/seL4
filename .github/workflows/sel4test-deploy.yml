@@ -32,6 +32,17 @@ jobs:
         manifest_repo: sel4test-manifest
         manifest: master.xml
 
+  build-matrix:
+    name: Build Matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+    - id: matrix
+      uses: seL4/ci-actions/sel4test-hw-matrix@master
+      with:
+        matrix: build
+
   sim:
     name: Simulation
     needs: code
@@ -49,13 +60,10 @@ jobs:
 
   hw-build:
     name: HW Build
-    needs: code
+    needs: [code, build-matrix]
     runs-on: ubuntu-latest
     strategy:
-      matrix:
-        # There is no "rv32imac" hardware yet.
-        march: [armv7a, armv8a, nehalem, rv64imac]
-        compiler: [gcc, clang]
+      matrix: ${{ fromJson(needs.build-matrix.outputs.matrix) }}
     steps:
     - name: Build
       uses: seL4/ci-actions/sel4test-hw@master
@@ -63,10 +71,11 @@ jobs:
         xml: ${{ needs.code.outputs.xml }}
         march: ${{ matrix.march }}
         compiler: ${{ matrix.compiler }}
+        subgroup: ${{ matrix.subgroup }}
     - name: Upload images
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
-        name: images-${{ matrix.march }}-${{ matrix.compiler }}
+        name: images-${{ matrix.march }}-${{ matrix.compiler }}${{ matrix.subgroup && format('-{0}', matrix.subgroup) }}
         path: '*-images.tar.gz'
 
   the_matrix:
@@ -83,7 +92,7 @@ jobs:
     name: HW Run
     if: ${{ github.repository_owner == 'seL4' }}
     runs-on: ubuntu-latest
-    needs: [sim, the_matrix]
+    needs: [the_matrix]
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.the_matrix.outputs.matrix) }}
@@ -91,21 +100,21 @@ jobs:
     concurrency: hw-run-${{ strategy.job-index }}
     steps:
       - name: Get machine queue
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: seL4/machine_queue
           path: machine_queue
       - name: Download image
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
-          name: images-${{ matrix.march }}-${{ matrix.compiler }}
+          name: images-${{ matrix.march }}-${{ matrix.compiler }}${{ matrix.subgroup && format('-{0}', matrix.subgroup) }}
       - name: Run
         uses: seL4/ci-actions/sel4test-hw-run@master
         with:
           platform: ${{ matrix.platform }}
           compiler: ${{ matrix.compiler }}
           mode: ${{ matrix.mode }}
-          index: $${{ strategy.job-index }}
+          index: ${{ strategy.job-index }}
         env:
           HW_SSH: ${{ secrets.HW_SSH }}
 
