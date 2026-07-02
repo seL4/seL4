@@ -69,8 +69,9 @@ block UserException {
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 block VGICMaintenance {
-    padding 384
-    field IDX 32
+    padding 352
+    field EISR1 32
+    field EISR0 32
     padding 28
     field seL4_FaultType 4
 }
