@@ -27,12 +27,12 @@ def get_memory_regions(tree: FdtParser):
 
 def merge_memory_regions(regions: Set[Region]) -> Set[Region]:
     ''' Check all region and merge adjacent ones '''
-    all_regions = [dict(idx=idx, region=region, right_adj=None, left_adj=None)
-                   for (idx, region) in enumerate(regions)]
+    all_regions = [dict(region=region, right_adj=None, left_adj=None)
+                   for region in regions]
 
     # Find all right contiguous regions
-    for dreg in all_regions:
-        for dnreg in all_regions[dreg['idx']+1:]:
+    for idx, dreg in enumerate(all_regions):
+        for dnreg in all_regions[idx+1:]:
             if dreg['region'].owner == dnreg['region'].owner:
                 if dnreg['region'].base == dreg['region'].base + dreg['region'].size:
                     dreg['right_adj'] = dnreg
