@@ -40,28 +40,58 @@
     b       \label
 .endm
 
+#ifdef CONFIG_DEBUG_BUILD
+.macro ventry_invalid
+.align 7
+    /* compute vect_offset argument */
+    adr     x0, .
+    adr     x19, arm_vector_table
+    sub     x0, x0, x19
+    b       invalid_vector_entry
+.endm
+#else
+.macro ventry_invalid
+    ventry invalid_vector_entry
+.endm
+#endif
+
+#ifdef CONFIG_AARCH64_SERROR_IGNORE
+.macro ventry_serror
+.align 7
+    eret
+.endm
+#else
+.macro ventry_serror
+    ventry_invalid
+.endm
+#endif
+
 .section .vectors, "ax"
 
+/* The layout of this table are specified in Table D1-7, 'Vector offsets from
+ * vector table base address' of ARM DDI 0487B.b ID092517.
+ * Each vector entry has 128-byte alignment, and so supports 32 instructions.
+ */
 BEGIN_FUNC(arm_vector_table)
-    ventry  invalid_vector_entry           // Synchronous EL1t/EL2t
-    ventry  invalid_vector_entry           // IRQ EL1t/EL2t
-    ventry  invalid_vector_entry           // FIQ EL1t/EL2t
-    ventry  invalid_vector_entry           // SError EL1t/EL2t
+    ventry_invalid                         // Synchronous EL1t/EL2t
+    ventry_invalid                         // IRQ EL1t/EL2t
+    ventry_invalid                         // FIQ EL1t/EL2t
+    ventry_invalid                         // SError EL1t/EL2t
 
     ventry  cur_el_sync                    // Current EL Synchronous (EL1/2)
     ventry  cur_el_irq                     // IRQ
-    ventry  invalid_vector_entry           // FIQ
-    ventry  cur_el_serr                    // SError
+    ventry_invalid                         // FIQ
+    ventry_serror                          // SError
 
     ventry  lower_el_sync                  // Synchronous 64-bit EL0/EL1
     ventry  lower_el_irq                   // IRQ 64-bit EL0/EL1
-    ventry  invalid_vector_entry           // FIQ 64-bit EL0/EL1
-    ventry  lower_el_serr                  // SError 64-bit EL0/EL1
+    ventry_invalid                         // FIQ 64-bit EL0/EL1
+    ventry_serror                          // SError 64-bit EL0/EL1
 
-    ventry  invalid_vector_entry           // Synchronous 32-bit EL0/EL1
-    ventry  invalid_vector_entry           // IRQ 32-bit EL0/EL1
-    ventry  invalid_vector_entry           // FIQ 32-bit EL0/EL1
-    ventry  invalid_vector_entry           // SError 32-bit EL0/EL1
+    ventry_invalid                         // Synchronous 32-bit EL0/EL1
+    ventry_invalid                         // IRQ 32-bit EL0/EL1
+    ventry_invalid                         // FIQ 32-bit EL0/EL1
+    ventry_invalid                         // SError 32-bit EL0/EL1
 END_FUNC(arm_vector_table)
 
 .section .vectors.text, "ax"
@@ -92,8 +122,13 @@ END_FUNC(arm_vector_table)
     stp     x22, x23, [sp, #PT_ELR_EL1]
 .endm
 
+/* Takes argument x0: vect_offset (in debug builds) */
 BEGIN_FUNC(invalid_vector_entry)
     lsp_i   x19
+#ifdef CONFIG_DEBUG_BUILD
+    mrs     x1, ELR
+    bl      c_handle_invalid_vector_entry
+#endif
     b       halt
 END_FUNC(invalid_vector_entry)
 
@@ -123,6 +158,8 @@ cur_el_ia:
     b       halt
 
 cur_el_inv:
+    /* 0x200 corresponding to the offset in the vector table */
+    mov     x0, #0x200
     b       invalid_vector_entry
 END_FUNC(cur_el_sync)
 
@@ -136,14 +173,6 @@ BEGIN_FUNC(cur_el_irq)
     lsp_i   x19
     b       c_handle_interrupt
 END_FUNC(cur_el_irq)
-
-BEGIN_FUNC(cur_el_serr)
-#ifdef CONFIG_AARCH64_SERROR_IGNORE
-    eret
-#else
-    b       invalid_vector_entry
-#endif
-END_FUNC(cur_el_serr)
 
 BEGIN_FUNC(lower_el_sync)
     kernel_enter
@@ -225,11 +254,3 @@ BEGIN_FUNC(lower_el_irq)
     lsp_i   x19
     b       c_handle_interrupt
 END_FUNC(lower_el_irq)
-
-BEGIN_FUNC(lower_el_serr)
-#ifdef CONFIG_AARCH64_SERROR_IGNORE
-    eret
-#else
-    b       invalid_vector_entry
-#endif
-END_FUNC(lower_el_serr)
