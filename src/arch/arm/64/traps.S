@@ -10,9 +10,6 @@
 #include <arch/machine/hardware.h>
 #include <arch/machine/registerset.h>
 
-#define VM_EVENT_DATA_ABORT 0
-#define VM_EVENT_PREFETCH_ABORT 1
-
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 
 #define ELR     elr_el2
