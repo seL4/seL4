@@ -147,6 +147,16 @@ void VISIBLE NORETURN c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t sy
         x86_enable_ibrs();
     }
 
+    /* Must happen before NODE_LOCK_SYS so that lock exit via IPI stall restores
+       the correct program counter. */
+    if (config_set(CONFIG_SYSENTER)) {
+        /* increment NextIP to skip sysenter */
+        NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[NextIP] += 2;
+    } else {
+        /* set FaultIP */
+        setRegister(NODE_STATE(ksCurThread), FaultIP, getRegister(NODE_STATE(ksCurThread), NextIP) - 2);
+    }
+
     NODE_LOCK_SYS;
 
     c_entry_hook();
@@ -155,14 +165,6 @@ void VISIBLE NORETURN c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t sy
     benchmark_debug_syscall_start(cptr, msgInfo, syscall);
     ksKernelEntry.is_fastpath = 1;
 #endif /* TRACK_KERNEL_ENTRIES */
-
-    if (config_set(CONFIG_SYSENTER)) {
-        /* increment NextIP to skip sysenter */
-        NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[NextIP] += 2;
-    } else {
-        /* set FaultIP */
-        setRegister(NODE_STATE(ksCurThread), FaultIP, getRegister(NODE_STATE(ksCurThread), NextIP) - 2);
-    }
 
 #ifdef CONFIG_FASTPATH
     if (syscall == (syscall_t)SysCall) {
