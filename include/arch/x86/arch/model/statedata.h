@@ -76,6 +76,7 @@ extern vtd_rte_t *x86KSvtdRootTable;
 extern uint32_t x86KSnumIOPTLevels;
 extern uint32_t x86KSnumIODomainIDBits;
 extern uint32_t x86KSFirstValidIODomain;
+extern uint32_t x86KSSecondStageLargePageSupport;
 #endif
 
 #ifdef CONFIG_PRINTING

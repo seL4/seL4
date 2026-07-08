@@ -51,6 +51,7 @@ vtd_rte_t *x86KSvtdRootTable;
 uint32_t x86KSnumIOPTLevels;
 uint32_t x86KSnumIODomainIDBits;
 uint32_t x86KSFirstValidIODomain;
+uint32_t x86KSSecondStageLargePageSupport;
 #endif
 
 #ifdef CONFIG_VTX

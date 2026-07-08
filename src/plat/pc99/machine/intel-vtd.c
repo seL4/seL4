@@ -352,14 +352,14 @@ BOOT_CODE static void vtd_map_reserved_page(vtd_cte_t *vtd_context_table, int co
         vtd_pte_slot = iopt + iopt_index;
         if (i == 0) {
             /* Now put the mapping in */
-            *vtd_pte_slot = vtd_pte_new(addr, 1, 1);
+            *vtd_pte_slot = vtd_pte_new(addr, 0, 1, 1);
             flushCacheRange(vtd_pte_slot, VTD_PTE_SIZE_BITS);
         } else {
             if (!vtd_pte_ptr_get_write(vtd_pte_slot)) {
                 iopt = (vtd_pte_t *) it_alloc_paging();
                 flushCacheRange(iopt, seL4_IOPageTableBits);
 
-                *vtd_pte_slot = vtd_pte_new(pptr_to_paddr(iopt), 1, 1);
+                *vtd_pte_slot = vtd_pte_new(pptr_to_paddr(iopt), 0, 1, 1);
                 flushCacheRange(vtd_pte_slot, VTD_PTE_SIZE_BITS);
             } else {
                 iopt = (vtd_pte_t *)paddr_to_pptr(vtd_pte_ptr_get_addr(vtd_pte_slot));
@@ -461,10 +461,13 @@ BOOT_CODE bool_t vtd_init_num_iopts(uint32_t num_drhu)
 {
     x86KSnumDrhu = num_drhu;
     x86KSFirstValidIODomain = 0;
+    x86KSSecondStageLargePageSupport = 0;
 
     if (x86KSnumDrhu == 0) {
         return true;
     }
+
+    uint32_t sslps_bitmask = 0xf;
 
     uint32_t aw_bitmask = 0xffffffff;
     /* Start the number of domains at 16 bits */
@@ -476,7 +479,14 @@ BOOT_CODE bool_t vtd_init_num_iopts(uint32_t num_drhu)
         if (bits_supported < num_domain_id_bits) {
             num_domain_id_bits = bits_supported;
         }
+
+        /* Section 11.4.2 Capability Register: bits 37:34 are used to report 2MB and 1GB page support.*/
+        uint64_t second_stage_large_page_support = ((vtd_read64(i, CAP_REG) >> 34) & 0xf);
+        sslps_bitmask &= second_stage_large_page_support;
+        printf("IOMMU 0x%x: reports 0x%llx bitfield for large_page_support\n", i, second_stage_large_page_support);
     }
+    printf("IOMMU: sslps_bitmask = 0x%x: bit 0 & 1 indicate support for 2MB & 1GB pages.", sslps_bitmask);
+    x86KSSecondStageLargePageSupport = sslps_bitmask;
 
     x86KSnumIODomainIDBits = num_domain_id_bits;
     UNUSED uint32_t  max_num_iopt_levels;

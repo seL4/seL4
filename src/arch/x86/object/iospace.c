@@ -93,7 +93,7 @@ static lookupIOPTSlot_ret_t lookupIOPTSlot_resolve_levels(vtd_pte_t *iopt, word_
                  MASK(VTD_PT_INDEX_BITS);
     iopt_slot = iopt + iopt_index;
 
-    if (!vtd_pte_ptr_get_write(iopt_slot) || levels_remaining == 0) {
+    if (!vtd_pte_ptr_get_write(iopt_slot) || vtd_pte_ptr_get_large_page(iopt_slot) || levels_remaining == 0) {
         ret.ioptSlot = iopt_slot;
         ret.level = levels_remaining;
         ret.status = EXCEPTION_NONE;
@@ -104,9 +104,10 @@ static lookupIOPTSlot_ret_t lookupIOPTSlot_resolve_levels(vtd_pte_t *iopt, word_
 }
 
 
-static inline lookupIOPTSlot_ret_t lookupIOPTSlot(vtd_pte_t *iopt, word_t io_address)
+static inline lookupIOPTSlot_ret_t lookupIOPTSlot(vtd_pte_t *iopt, word_t io_address, bool_t large_page)
 {
     lookupIOPTSlot_ret_t ret;
+    word_t levels_to_resolve;
 
     if (iopt == 0) {
         ret.ioptSlot    = 0;
@@ -114,8 +115,13 @@ static inline lookupIOPTSlot_ret_t lookupIOPTSlot(vtd_pte_t *iopt, word_t io_add
         ret.status      = EXCEPTION_LOOKUP_FAULT;
         return ret;
     } else {
+        if (large_page) {
+            levels_to_resolve = x86KSnumIOPTLevels - 2;
+        } else {
+            levels_to_resolve = x86KSnumIOPTLevels - 1;
+        }
         return lookupIOPTSlot_resolve_levels(iopt, io_address >> PAGE_BITS,
-                                             x86KSnumIOPTLevels - 1, x86KSnumIOPTLevels - 1);
+                                             levels_to_resolve, levels_to_resolve);
     }
 }
 
@@ -252,7 +258,7 @@ exception_t decodeX86IOPTInvocation(
         vtd_pte_t   iopte;
 
         vtd_pte = (vtd_pte_t *)paddr_to_pptr(vtd_cte_ptr_get_asr(vtd_context_slot));
-        lu_ret  = lookupIOPTSlot(vtd_pte, io_address);
+        lu_ret  = lookupIOPTSlot(vtd_pte, io_address, 0);
 
         if (lu_ret.status != EXCEPTION_NONE) {
             current_syscall_error.type = seL4_FailedLookup;
@@ -268,9 +274,10 @@ exception_t decodeX86IOPTInvocation(
         }
 
         iopte = vtd_pte_new(
-                    paddr,      /* physical addr            */
-                    1,          /* write permission flag    */
-                    1           /* read  permission flag    */
+                    paddr,      /* Physical addr            */
+                    0,          /* Large Page               */
+                    1,          /* Write permission flag    */
+                    1           /* Read  permission flag    */
                 );
 
         cap = cap_io_page_table_cap_set_capIOPTIsMapped(cap, 1);
@@ -310,6 +317,8 @@ exception_t decodeX86IOMapInvocation(
     lookupIOPTSlot_ret_t lu_ret;
     vm_rights_t frame_cap_rights;
     seL4_CapRights_t dma_cap_rights_mask;
+    word_t     page_bits;
+    bool_t     large_page;
 
     if (current_extra_caps.excaprefs[0] == NULL || length < 2) {
         userError("X86PageMapIO: Truncated message.");
@@ -317,12 +326,17 @@ exception_t decodeX86IOMapInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (cap_frame_cap_get_capFSize(cap) != X86_SmallPage) {
+    if (cap_frame_cap_get_capFSize(cap) != X86_SmallPage &&
+        (cap_frame_cap_get_capFSize(cap) != X86_LargePage ||
+            x86KSSecondStageLargePageSupport == 0)) {
         userError("X86PageMapIO: Invalid page size.");
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 0;
         return EXCEPTION_SYSCALL_ERROR;
     }
+
+    large_page = cap_frame_cap_get_capFSize(cap) == X86_LargePage;
+    page_bits = pageBitsForSize(cap_frame_cap_get_capFSize(cap));
 
     if (cap_frame_cap_get_capFMappedASID(cap) != asidInvalid) {
         userError("X86PageMapIO: Page already mapped.");
@@ -332,7 +346,7 @@ exception_t decodeX86IOMapInvocation(
     }
 
     io_space    = current_extra_caps.excaprefs[0]->cap;
-    io_address  = getSyscallArg(1, buffer) & ~MASK(PAGE_BITS);
+    io_address  = getSyscallArg(1, buffer) & ~MASK(page_bits);
     paddr       = pptr_to_paddr((void *)cap_frame_cap_get_capFBasePtr(cap));
 
     if (cap_get_capType(io_space) != cap_io_space_cap) {
@@ -361,7 +375,7 @@ exception_t decodeX86IOMapInvocation(
     }
 
     vtd_pte = (vtd_pte_t *)paddr_to_pptr(vtd_cte_ptr_get_asr(vtd_context_slot));
-    lu_ret  = lookupIOPTSlot(vtd_pte, io_address);
+    lu_ret  = lookupIOPTSlot(vtd_pte, io_address, large_page);
     if (lu_ret.status != EXCEPTION_NONE || lu_ret.level != 0) {
         current_syscall_error.type = seL4_FailedLookup;
         current_syscall_error.failedLookupWasSource = false;
@@ -379,7 +393,7 @@ exception_t decodeX86IOMapInvocation(
     bool_t write = seL4_CapRights_get_capAllowWrite(dma_cap_rights_mask) && (frame_cap_rights == VMReadWrite);
     bool_t read = seL4_CapRights_get_capAllowRead(dma_cap_rights_mask) && (frame_cap_rights != VMKernelOnly);
     if (write || read) {
-        iopte = vtd_pte_new(paddr, !!write, !!read);
+        iopte = vtd_pte_new(paddr, large_page, !!write, !!read);
     } else {
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 0;
@@ -441,8 +455,9 @@ void deleteIOPageTable(cap_t io_pt_cap)
             }
             *lu_ret.ioptSlot = vtd_pte_new(
                                    0,  /* Physical Address */
-                                   0,  /* Read Permission  */
-                                   0   /* Write Permission */
+                                   0,  /* Large Page Bit   */
+                                   0,  /* Write Permission  */
+                                   0   /* Read Permission */
                                );
             flushCacheRange(lu_ret.ioptSlot, VTD_PTE_SIZE_BITS);
         }
@@ -456,8 +471,10 @@ void unmapIOPage(cap_t cap)
     word_t               io_address;
     vtd_cte_t           *vtd_context_slot;
     vtd_pte_t           *vtd_pte;
+    bool_t              large_page;
 
     io_address  = cap_frame_cap_get_capFMappedAddress(cap);
+    large_page = cap_frame_cap_get_capFSize(cap) == X86_LargePage;
     vtd_context_slot = lookup_vtd_context_slot(cap);
 
 
@@ -467,7 +484,7 @@ void unmapIOPage(cap_t cap)
 
     vtd_pte = (vtd_pte_t *)paddr_to_pptr(vtd_cte_ptr_get_asr(vtd_context_slot));
 
-    lu_ret  = lookupIOPTSlot(vtd_pte, io_address);
+    lu_ret  = lookupIOPTSlot(vtd_pte, io_address, large_page);
     if (lu_ret.status != EXCEPTION_NONE || lu_ret.level != 0) {
         return;
     }
@@ -478,8 +495,9 @@ void unmapIOPage(cap_t cap)
 
     *lu_ret.ioptSlot = vtd_pte_new(
                            0,  /* Physical Address */
-                           0,  /* Read Permission  */
-                           0   /* Write Permission */
+                           0,  /* Large Page Bit   */
+                           0,  /* Write Permission  */
+                           0   /* Read Permission */
                        );
 
     flushCacheRange(lu_ret.ioptSlot, VTD_PTE_SIZE_BITS);

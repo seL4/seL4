@@ -37,7 +37,9 @@ block vtd_cte {
 block vtd_pte {
     --- Assume AVAIL and TM as Reserved
     field_high  addr                52
-    padding                         10
+    padding                         4
+    field       large_page          1
+    padding                         5
     field       write               1
     field       read                1
 }

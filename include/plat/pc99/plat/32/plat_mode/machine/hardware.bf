@@ -40,7 +40,9 @@ block vtd_pte {
     padding                         32
 
     field_high  addr                20
-    padding                         10
+    padding                         4
+    field       large_page          1
+    padding                         5
     field       write               1
     field       read                1
 }
