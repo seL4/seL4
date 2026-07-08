@@ -16,6 +16,7 @@
 #include <arch/machine/hardware.h>
 #include <arch/machine/registerset.h>
 #include <sel4/arch/constants.h>
+#include <sel4/sel4_arch/constants.h>
 
 enum tcb_arch_cnode_index {
 #ifdef CONFIG_VTX
@@ -54,9 +55,9 @@ typedef struct arch_tcb {
 #define VTD_CT_BITS       8
 #define VTD_CT_SIZE_BITS  (VTD_CT_BITS + VTD_CTE_SIZE_BITS)
 
-#define VTD_PTE_SIZE_BITS 3
+#define VTD_PTE_SIZE_BITS seL4_IOPageTableEntryBits
 #define VTD_PTE_PTR(r)    ((vtd_pte_t*)(r))
-#define VTD_PT_INDEX_BITS       9
+#define VTD_PT_INDEX_BITS seL4_IOPageTableIndexBits
 
 compile_assert(vtd_pt_size_sane, VTD_PT_INDEX_BITS + VTD_PTE_SIZE_BITS == seL4_IOPageTableBits)
 
