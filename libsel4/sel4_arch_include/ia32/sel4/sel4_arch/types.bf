@@ -87,4 +87,5 @@ block Timeout {
     field seL4_FaultType 4
 }
 #endif
+
 #include <sel4/arch/shared_types.bf>
