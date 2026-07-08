@@ -144,9 +144,9 @@ cap_t CONST Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
 #ifdef CONFIG_IOMMU
     switch (cap_get_capType(cap)) {
     case cap_io_space_cap: {
-        io_space_capdata_t w = { { data } };
-        uint16_t PCIDevice = io_space_capdata_get_PCIDevice(w);
-        uint16_t domainID = io_space_capdata_get_domainID(w);
+        seL4_X86_IOSpace_CapData_t w = { { data } };
+        uint16_t PCIDevice = seL4_X86_IOSpace_CapData_get_PCIDevice(w);
+        uint16_t domainID = seL4_X86_IOSpace_CapData_get_domainID(w);
         if (!preserve && cap_io_space_cap_get_capPCIDevice(cap) == 0 &&
             domainID >= x86KSFirstValidIODomain &&
             domainID != 0                        &&

@@ -25,3 +25,15 @@ tagged_union seL4_Fault seL4_FaultType {
     tag VMFault 5
 #endif
 }
+
+#ifdef CONFIG_IOMMU
+
+block seL4_X86_IOSpace_CapData {
+#ifdef CONFIG_ARCH_X86_64
+    padding 32
+#endif
+    field domainID              16
+    field PCIDevice             16
+}
+
+#endif
