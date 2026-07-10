@@ -33,7 +33,9 @@ block seL4_X86_IOSpace_CapData {
     padding 32
 #endif
     field domainID              16
-    field PCIDevice             16
+    field pciBus                8
+    field pciDev                5
+    field pciFun                3
 }
 
 #endif

@@ -145,7 +145,11 @@ cap_t CONST Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
     switch (cap_get_capType(cap)) {
     case cap_io_space_cap: {
         seL4_X86_IOSpace_CapData_t w = { { data } };
-        uint16_t PCIDevice = seL4_X86_IOSpace_CapData_get_PCIDevice(w);
+        uint16_t PCIDevice = get_dev_id(
+                                 seL4_X86_IOSpace_CapData_get_pciBus(w),
+                                 seL4_X86_IOSpace_CapData_get_pciDev(w),
+                                 seL4_X86_IOSpace_CapData_get_pciFun(w)
+                             );
         uint16_t domainID = seL4_X86_IOSpace_CapData_get_domainID(w);
         if (!preserve && cap_io_space_cap_get_capPCIDevice(cap) == 0 &&
             domainID >= x86KSFirstValidIODomain &&
