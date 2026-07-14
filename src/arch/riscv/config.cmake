@@ -66,9 +66,8 @@ if(KernelSel4ArchRiscV32)
 endif()
 if(KernelPTLevels EQUAL 2)
   if(KernelSel4ArchRiscV32)
-    # seL4 on RISCV32 uses 32-bit ints for addresses,
-    # so limit the maximum paddr to 32-bits.
-    math(EXPR KernelPaddrUserTop "(1 << 32) - 1")
+    # Maximum paddr needs to be exclusive. Code is fine when it wraps to 0.
+    math(EXPR KernelPaddrUserTop "1 << 32")
   else()
     math(EXPR KernelPaddrUserTop "1 << 34")
   endif()

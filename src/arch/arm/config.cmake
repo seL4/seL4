@@ -39,9 +39,8 @@ config_set(KernelArmPASizeBits44 ARM_PA_SIZE_BITS_44 "${KernelArmPASizeBits44}")
 config_set(KernelArmICacheVIPT ARM_ICACHE_VIPT "${KernelArmICacheVIPT}")
 
 if(KernelSel4ArchAarch32)
-  # 64-bit targets may be building in 32-bit mode,
-  # so make sure maximum paddr is 32-bit.
-  math(EXPR KernelPaddrUserTop "(1 << 32) - 1")
+  # Maximum paddr needs to be exclusive. Code is fine when it wraps to 0.
+  math(EXPR KernelPaddrUserTop "1 << 32")
 endif()
 
 include(src/arch/arm/armv/armv7-a/config.cmake)
