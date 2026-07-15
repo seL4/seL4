@@ -1788,8 +1788,10 @@ static void doFlush(int invLabel, vptr_t start, vptr_t end, paddr_t pstart)
         /* ...then invalidate the corresponding instruction lines
            to point of unification... */
         invalidateCacheRange_I(start, end, pstart);
-        /* ...then invalidate branch predictors. */
+        /* ...then invalidate branch predictors... */
         branchFlushRange(start, end, pstart);
+        /* ... then wait for the completion of invalidations. */
+        dsb();
         /* Ensure new instructions come from fresh cache lines. */
         isb();
         break;
