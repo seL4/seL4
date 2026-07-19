@@ -202,7 +202,7 @@ config_set(KernelArchArmV8a ARCH_ARM_V8A "${KernelArchArmV8a}")
 config_set(KernelAArch64SErrorIgnore AARCH64_SERROR_IGNORE "${KernelAArch64SErrorIgnore}")
 
 # Export timer frequency to user space:
-if(KernelTimerFrequency)
+if(CONFIGURE_TIMER_FREQUENCY)
   config_set(KernelTimerFrequency TIMER_FREQUENCY "${CONFIGURE_TIMER_FREQUENCY}")
 endif()
 

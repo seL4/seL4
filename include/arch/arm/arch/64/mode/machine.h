@@ -380,5 +380,18 @@ void arch_clean_invalidate_L1_caches(word_t type);
 
 static inline paddr_t addressTranslateS1(vptr_t vaddr)
 {
-    return ats1e1r(vaddr);
+    word_t result;
+    UNUSED word_t saved_par;
+
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        MRS("par_el1", saved_par);
+    }
+
+    result = ats1e1r(vaddr);
+
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        MSR("par_el1", saved_par);
+    }
+
+    return result;
 }
