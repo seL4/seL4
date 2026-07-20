@@ -34,7 +34,8 @@ enum domainConstants {
     /* To analyse branches of control flow decisions based on the number of
      * domains without knowing their exact number, verification needs a C name
      * to relate to higher-level specs. */
-    numDomains = CONFIG_NUM_DOMAINS
+    numDomains = CONFIG_NUM_DOMAINS,
+    domScheduleLength = CONFIG_NUM_DOMAIN_SCHEDULES
 };
 
 struct cap_transfer {

@@ -90,7 +90,8 @@ static inline void disableTrapFpu(void)
 {
     word_t cptr;
     MRS("cptr_el2", cptr);
-    cptr &= ~(BIT(10) | BIT(31));
+    /* Clear the TFP bit */
+    cptr &= ~BIT(10);
     MSR("cptr_el2", cptr);
     isb();
 }
@@ -102,7 +103,11 @@ static inline void enableFpuEL01(void)
     MRS("cpacr_el1", cpacr);
     cpacr |= (3 << CPACR_EL1_FPEN);
     MSR("cpacr_el1", cpacr);
-    isb();
+    /*
+     * No ISB because we rely on context switch for synchronisation
+     * of the FPU enable for EL0 and disableFpuEL0() keeps the FPU
+     * enabled for the kernel itself, which runs in EL1.
+     */
 }
 
 /* Enable the FPU to be used without faulting.
@@ -124,9 +129,10 @@ static inline void enableTrapFpu(void)
 {
     word_t cptr;
     MRS("cptr_el2", cptr);
-    cptr |= (BIT(10) | BIT(31));
+    /* Set the TFP bit */
+    cptr |= BIT(10);
     MSR("cptr_el2", cptr);
-    isb();
+    /* No ISB because we rely on context switch for synchronisation */
 }
 
 /* Disable FPU access in EL0 */
@@ -135,9 +141,10 @@ static inline void disableFpuEL0(void)
     word_t cpacr;
     MRS("cpacr_el1", cpacr);
     cpacr &= ~(3 << CPACR_EL1_FPEN);
+    /* Keep FPU enabled for the kernel */
     cpacr |= (1 << CPACR_EL1_FPEN);
     MSR("cpacr_el1", cpacr);
-    isb();
+    /* No ISB because we rely on context switch for synchronisation */
 }
 
 /* Disable the FPU so that usage of it causes a fault */

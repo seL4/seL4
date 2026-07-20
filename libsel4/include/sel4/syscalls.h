@@ -118,7 +118,22 @@ seL4_DebugCapIdentify(seL4_CPtr cap);
  */
 LIBSEL4_INLINE_FUNC void
 seL4_DebugNameThread(seL4_CPtr tcb, const char *name);
-#if defined(CONFIG_ENABLE_SMP_SUPPORT) && defined(CONFIG_ARCH_ARM)
+#if defined(CONFIG_ENABLE_SMP_SUPPORT)
+/**
+ * @xmlonly <manual name="Get thread affinity" label="sel4_debugthreadgetaffinity"/> @endxmlonly
+ * @brief Get the current affinity of a thread.
+ *
+ * This gets the value of the kernel's tcb_t->tcbAffinity field, which corresponds
+ * to the core (affinity) of the thread. If the thread is not running (e.g. blocked)
+ * this is the last core it ran on.
+ *
+ * @param tcb A capability to the tcb object for the thread to query.
+ *
+ */
+LIBSEL4_INLINE_FUNC seL4_Word
+seL4_DebugGetThreadAffinity(seL4_CPtr tcb);
+
+#if defined(CONFIG_ARCH_ARM)
 /**
  * @xmlonly <manual name="Send SGI 0-15" label="sel4_debugsendipi"/> @endxmlonly
  * @brief Sends arbitrary SGI.
@@ -131,8 +146,9 @@ seL4_DebugNameThread(seL4_CPtr tcb, const char *name);
  */
 LIBSEL4_INLINE_FUNC void
 seL4_DebugSendIPI(seL4_Uint8 target, unsigned irq);
-#endif
-#endif
+#endif /* CONFIG_ARCH_ARM */
+#endif /* CONFIG_ENABLE_SMP_SUPPORT */
+#endif /* CONFIG_DEBUG_BUILD */
 
 #ifdef CONFIG_DANGEROUS_CODE_INJECTION
 /**
@@ -335,7 +351,7 @@ seL4_BenchmarkResetAllThreadsUtilisation(void);
  * The mapping of hardware register to message register is
  *      - `SEL4_VMENTER_CALL_EIP_MR` Address to start executing instructions at in the guest mode
  *      - `SEL4_VMENTER_CALL_CONTROL_PPC_MR` New value for the Primary Processor Based VM Execution Controls
- *      - `SEL4_VMENTER_CALL_CONTROL_ENTRY_MR` New value for the VM Entry Controls
+ *      - `SEL4_VMENTER_CALL_INTERRUPT_INFO_MR` New value for the VM Entry Interruption-Information
  *
  * On return these same three message registers will be filled with the values at the point
  * that the privileged mode ceased executing. If this function returns with `SEL4_VMENTER_RESULT_FAULT`

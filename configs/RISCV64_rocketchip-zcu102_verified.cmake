@@ -1,0 +1,11 @@
+#!/usr/bin/env -S cmake -P
+#
+# Copyright 2024, Proofcraft Pty Ltd
+#
+# SPDX-License-Identifier: GPL-2.0-only
+#
+
+include(${CMAKE_CURRENT_LIST_DIR}/include/RISCV64_verified_include.cmake)
+
+set(KernelPlatform "rocketchip" CACHE STRING "")
+set(KernelRiscVPlatform "rocketchip-zcu102" CACHE STRING "")

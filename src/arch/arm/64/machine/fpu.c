@@ -17,7 +17,8 @@ BOOT_CODE bool_t fpsimd_init(void)
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         enableFpuEL01();
     }
-
+    /* Non-HYP Kernel assumes FPU is always enabled for EL1: Make sure it is */
+    isb();
     return true;
 }
 #endif /* CONFIG_HAVE_FPU */

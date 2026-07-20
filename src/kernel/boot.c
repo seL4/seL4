@@ -10,6 +10,7 @@
 #include <machine/io.h>
 #include <machine/registerset.h>
 #include <model/statedata.h>
+#include <object/domain.h>
 #include <arch/machine.h>
 #include <arch/kernel/boot.h>
 #include <arch/kernel/vspace.h>
@@ -298,13 +299,6 @@ compile_assert(num_priorities_valid,
 BOOT_CODE void
 create_domain_cap(cap_t root_cnode_cap)
 {
-    /* Check domain scheduler assumptions. */
-    assert(ksDomScheduleLength > 0);
-    for (word_t i = 0; i < ksDomScheduleLength; i++) {
-        assert(ksDomSchedule[i].domain < CONFIG_NUM_DOMAINS);
-        assert(ksDomSchedule[i].length > 0);
-    }
-
     cap_t cap = cap_domain_cap_new();
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapDomain), cap);
 }
@@ -370,7 +364,7 @@ BOOT_CODE void populate_bi_frame(node_id_t node_id, word_t num_nodes,
     bi->numIOPTLevels = 0;
     bi->ipcBuffer = (seL4_IPCBuffer *)ipcbuf_vptr;
     bi->initThreadCNodeSizeBits = CONFIG_ROOT_CNODE_SIZE_BITS;
-    bi->initThreadDomain = ksDomSchedule[ksDomScheduleIdx].domain;
+    bi->initThreadDomain = 0;
     bi->extraLen = extra_bi_size;
 
     ndks_boot.bi_frame = bi;
@@ -544,19 +538,11 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
 
     tcb->tcbPriority = seL4_MaxPrio;
     tcb->tcbMCP = seL4_MaxPrio;
-    tcb->tcbDomain = ksDomSchedule[ksDomScheduleIdx].domain;
+    tcb->tcbDomain = 0;
 #ifndef CONFIG_KERNEL_MCS
     setupReplyMaster(tcb);
 #endif
     setThreadState(tcb, ThreadState_Running);
-
-    ksCurDomain = ksDomSchedule[ksDomScheduleIdx].domain;
-#ifdef CONFIG_KERNEL_MCS
-    ksDomainTime = usToTicks(ksDomSchedule[ksDomScheduleIdx].length * US_IN_MS);
-#else
-    ksDomainTime = ksDomSchedule[ksDomScheduleIdx].length;
-#endif
-    assert(ksCurDomain < CONFIG_NUM_DOMAINS && ksDomainTime > 0);
 
 #ifndef CONFIG_KERNEL_MCS
     SMP_COND_STATEMENT(tcb->tcbAffinity = 0);
@@ -578,6 +564,21 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
 }
 
 #ifdef ENABLE_SMP_CLOCK_SYNC_TEST_ON_BOOT
+BOOT_CODE static bool_t hypervisor_present(void)
+{
+#ifdef CONFIG_ARCH_X86
+    uint32_t ebx = x86_cpuid_ebx(KVM_CPUID_SIGNATURE, 0);
+    uint32_t ecx = x86_cpuid_ecx(KVM_CPUID_SIGNATURE, 0);
+    uint32_t edx = x86_cpuid_edx(KVM_CPUID_SIGNATURE, 0);
+
+    if ((ebx == CPUID_KVM_EBX && ecx == CPUID_KVM_ECX && edx == CPUID_KVM_EDX)
+        || (ebx == CPUID_TCG_EBX && ecx == CPUID_TCG_ECX && edx == CPUID_TCG_EDX)) {
+        return true;
+    }
+#endif
+    return false;
+}
+
 BOOT_CODE void clock_sync_test(void)
 {
     ticks_t t, t0;
@@ -593,7 +594,16 @@ BOOT_CODE void clock_sync_test(void)
     t = getCurrentTime();
     printf("clock_sync_test[%d]: t0 = %"PRIu64", t = %"PRIu64", td = %"PRIi64"\n",
            (int)getCurrentCPUIndex(), t0, t, t - t0);
-    assert(t0 <= margin + t && t <= t0 + margin);
+    /*
+     * The test does not consistently work if we are in a virtual machine (e.g
+     * within QEMU) because the measurement cannot distinguish between
+     * interrupted clock reads and out-of-sync clocks.
+     */
+    if (hypervisor_present()) {
+        printf("clock_sync_test[%d]: disabled, detected running as VM\n", (int)getCurrentCPUIndex());
+    } else {
+        assert(t0 <= margin + t && t <= t0 + margin);
+    }
 }
 #endif
 
@@ -621,6 +631,10 @@ BOOT_CODE void init_core_state(tcb_t *scheduler_action)
     NODE_STATE(ksReleaseQueue.end) = NULL;
     NODE_STATE(ksCurTime) = getCurrentTime();
 #endif
+    /* No need for NODE_STATE() as there is no SMP support for domains */
+    ksCurDomain = 0;
+    ksDomainTime = DSCHED_MAX_DURATION;
+    ksDomSchedule[0] = dschedule_make(0, DSCHED_MAX_DURATION);
 }
 
 /**
@@ -794,9 +808,11 @@ BOOT_CODE bool_t create_untypeds(cap_t root_cnode_cap)
         start = ndks_boot.reserved[i].end;
     }
 
-    if (start < CONFIG_PADDR_USER_DEVICE_TOP) {
+    if (start <= CONFIG_PADDR_USER_DEVICE_TOP - 1) {
         region_t reg = paddr_to_pptr_reg((p_region_t) {
-            start, CONFIG_PADDR_USER_DEVICE_TOP
+            /* CONFIG_PADDR_USER_DEVICE_TOP cast to paddr_t can be 0.
+             * create_untypeds_for_region() can deal with that correctly. */
+            start, (paddr_t) CONFIG_PADDR_USER_DEVICE_TOP
         });
 
         if (!create_untypeds_for_region(root_cnode_cap, true, reg, first_untyped_slot)) {

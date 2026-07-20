@@ -32,7 +32,7 @@ jobs:
       run: sudo apt-get update
     - name: install xmllint
       run: sudo apt-get install libxml2-utils
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: run xmllint
       run: |
         find libsel4 -name "object-api*.xml" | \

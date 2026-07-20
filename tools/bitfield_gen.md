@@ -158,6 +158,31 @@ means, not necessarily all of the combinations above will appear in the
 generated files for seL4, only the ones that are actually used in the rest of
 the code.
 
+### Expressions
+
+All positions in the specification that allow numbers also allow basic
+arithmetic integer expressions with `+`, `-`, `*`, `/`, and `%`. The commands
+`field`, `padding`, `field_high`, and `field_ptr` also allow the constants
+`word_size` and `canonical_size`. `word_size` stands for the number of bits in a
+word, and `canonical_size` for the number of canonical bits in a pointer, both
+according most recent `base` declaration (see also [Architecture Parameters][]).
+
+For example, the `VMFault` example from Section [Blocks](#blocks) could have
+been written as follows, assuming a `base 32` definition for `word_size.
+
+```bf_gen
+block VMFault {
+    field     address           word_size
+
+    field     FSR               5
+    padding                     7
+    field     instructionFault  1
+    padding                     word_size - (5 + 7 + 1) - 4
+    field     seL4_FaultType    4
+}
+```
+
+
 ### Field High
 
 The usual access patterns for fields is that if we provide e.g. a value of 5 to
@@ -226,6 +251,100 @@ would be taken up by a single pointer. For this it does not matter where in the
 that stores 36 bits (on a 64 bit base platform with 48 significant bits).
 
 [Architecture Parameters]: #architecture-parameters-and-canonical-pointers
+
+### Field Ptr
+
+Often we want to store a pointer with some known alignment (i.e. not all bits
+need to be stored), and pad out to a specific overall field size.
+The `field_ptr` abbreviation makes this convenient.
+
+```bf_gen
+block some_block {
+    ...
+    field_ptr(align) some_name size
+    ...
+}
+```
+
+stands for "a field `some_name` for a pointer with alignment `align` padded out
+to `size`". It is an abbreviation for
+
+```bf_gen
+block some_block {
+    ...
+    padding size - canonical_size + align
+    field_high some_name canonical_size - align
+    ...
+}
+```
+
+The `(align)` parameter can be left out and is equivalent to `field_ptr(0)`. The
+constant `canonical_size` in the expression above stands for the number of
+significant bits (the canonical size) of a pointer according to the most recent
+`base` definition. For example the long form
+
+```bf_gen
+base 64(48,1)
+
+block mdb_node {
+    padding 16
+    field_high mdbNext 46
+    field mdbRevocable 1
+    field mdbFirstBadged 1
+
+    field mdbPrev 64
+}
+```
+
+can be written more concisely as
+
+```bf_gen
+base 64(48,1)
+
+block mdb_node {
+    field_ptr(2) mdbNext 62
+    field mdbRevocable 1
+    field mdbFirstBadged 1
+
+    field mdbPrev 64
+}
+```
+
+The `field_ptr` abbreviation is especially useful for sharing the same block
+definition under different `base` declarations, e.g. for different
+architectures. For example, with a `base 64(39,1)` the `field_ptr` definition
+text remains the same, but expands to a different `field_high`/`padding`
+combination that achieves the same overall width:
+
+```bf_gen
+base 64(39,1)
+
+block mdb_node {
+    padding 25
+    field_high mdbNext 37
+    field mdbRevocable 1
+    field mdbFirstBadged 1
+
+    field mdbPrev 64
+}
+```
+
+can be also be written as
+
+```bf_gen
+base 64(39,1)
+
+block mdb_node {
+    field_ptr(2) mdbNext 62
+    field mdbRevocable 1
+    field mdbFirstBadged 1
+
+    field mdbPrev 64
+}
+```
+
+This means the same block definition can produce a constant field size while
+correctly accommodating multiple different `base` configurations.
 
 ### Visible Field Order
 
@@ -537,6 +656,11 @@ x64, one would declare `base 64(48,1)`, but if there is a specific block that
 wants to not store a pointer, but some other value as `field_high`, one could
 declare `base 64` just before and `base 64(48,1)` again just after that block.
 
+The `base` declaration sets the values of the constants `word_size` and
+`canonical_size` that can be used in size expressions. For example, after the
+declaration `base 64(48,1)`, `word_size` will be 64 and `canonical_size` 48.
+After `base 32`, `word_size` and `canonical_size` will both be 32.
+
 
 ## Syntax Reference
 
@@ -589,22 +713,34 @@ whitespace is ignored.
 spec :== ( base | block | tagged_union )*
 
 base ::= "base" ("32"|"64") canonical_spec?
-canonical_spec ::= "(" INTLIT "," ("0"|"1") ")"
+canonical_spec ::= "(" expr "," ("0"|"1") ")"
 
 block ::= "block" IDENT visible_order_spec_opt? "{" fields "}"
 visible_order_spec_opt ::= "(" visible_order_spec? ")"
 visible_order_spec ::= IDENT ("," IDENT)*
-fields ::= ( "field" IDENT INTLIT | "field_high" IDENT INTLIT | "padding" INTLIT )*
+fields ::= ( "field" IDENT expr |
+             "field_high" IDENT expr |
+             "field_ptr" ("(" expr ")")? IDENT expr |
+             "padding" expr )*
 
 tagged_union ::= "tagged_union" IDENT IDENT tag_slices? "{" masks tags "}"
 
-tag_slices ::= "(" IDENT ("," IDENT)* ")"
-masks ::= ( "mask" INTLIT INTLIT )*
+masks ::= ( "mask" expr expr )*
 tags ::= ( "tag" IDENT tag_value )*
-tag_value ::= INTLIT | "(" INTLIT ( "," INTLIT )* ")"
+tag_slices ::= "(" IDENT ("," IDENT)* ")"
+tag_value ::= expr | "(" expr ( "," expr )* ")"
+
+expr ::= expr ("+" | "-" | "*" | "/" | "%") expr
+       | "-" expr | "(" expr ")" | INTLIT
+       | "word_size" | "canonical_size"
 ```
 
 Forward references to names that are declared later in the file are allowed.
+Multiplicative operators "*", "/", "%" bind stronger than "+" and "-". Binary
+operators are left-associative. Unary minus binds stronger than all of the
+other operators. The constants "word_size" and "canonical_size" are only
+available in "field", "field_high", "field_ptr", and "padding" expressions and
+refer to the most recent corresponding "base" declaration.
 
 ### Restrictions
 
@@ -613,6 +749,8 @@ section, but will be checked by the generator.
 
 - the canonical bit must be smaller than the `base` size
 - field sizes must not be larger than the `base` size
+- all field sizes must be positive
+- all padding sizes must be non-negative
 - the field sizes in a block must add up to multiples of the `base` size
 - all identifiers mentioned as tags in a union must be blocks
 - all blocks in a tagged union must have the same size

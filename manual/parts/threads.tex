@@ -683,10 +683,12 @@ The contents of the IPC messages are given below.
 
 Domains are used to isolate independent subsystems, so as to limit
 information flow between them.
-The kernel switches between domains according to a fixed, time-triggered
-schedule.
-The fixed schedule is compiled into the kernel via the constant
-\texttt{CONFIG\_NUM\_DOMAINS} and the global variable \texttt{ksDomSchedule}.
+The kernel switches between domains according to a dynamically configurable,
+time-triggered schedule.
+
+Domain support is enabled by setting \texttt{KernelNumDomains} to a value greater than the
+default of one at compile time. The maximum number of domain schedule entries is fixed and
+equal to \texttt{KernelNumDomainSchedules}.
 
 A thread belongs to exactly one domain, and will only run when that domain
 is active.
@@ -694,7 +696,11 @@ The \apifunc{seL4\_DomainSet\_Set}{domainset_set} method changes the domain
 of a thread.
 The caller must possess a \obj{Domain} cap and the thread's \obj{TCB} cap.
 The initial thread starts with a \obj{Domain} cap (see
-\autoref{sec:messageinfo}).
+\autoref{ch:bootup:bootinfo}).
+
+The domain schedule is configured with
+\apifunc{seL4\_DomainSet\_ScheduleConfigure}{domain_schedule_configure} and
+\apifunc{seL4\_DomainSet\_ScheduleSetStart}{domain_schedule_set_start}.
 
 \section{Virtualisation}
 \label{sec:virt}

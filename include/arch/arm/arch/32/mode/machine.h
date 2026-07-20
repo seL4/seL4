@@ -193,6 +193,60 @@ static inline void writeTTBCR(word_t val)
     asm volatile("mcr p15, 0, %0, c2, c0, 2":: "r"(val));
 }
 
+/* PAR is always a 64-bit register and needs to be context switched, because it
+ * can be written to directly in EL1.
+ *
+ * Ignored for verification, because inline asm formalisation cannot deal
+ * with 64-bit asm block output on 32-bit architectures, nor with two
+ * outputs of the same asm block. Read op is side-effect free.
+ */
+/** MODIFIES: */
+/** DONT_TRANSLATE */
+static inline uint64_t readPAR_64(void)
+{
+    uint64_t val = 0;
+    asm volatile("mrrc p15, 0, %Q0, %R0, c7":"=r"(val):);
+    return val;
+}
+
+/* Ignored for verification, because inline asm formalisation cannot deal
+ * with 64-bit asm block output on 32-bit architectures, nor with two
+ * outputs of the same asm block.
+ */
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
+static inline void writePAR_64(uint64_t val)
+{
+    asm volatile("mcrr p15, 0, %Q0, %R0, c7":: "r"(val));
+}
+
+static inline word_t readPARhigh(void)
+{
+    uint64_t par = readPAR_64();
+    return (word_t)(par >> 32);
+}
+
+static inline word_t readPARlow(void)
+{
+    /* use 32-bit read to get only the low bits */
+    word_t val = 0;
+    asm volatile("mrc p15, 0, %0, c7, c4, 0":"=r"(val):);
+    return val;
+}
+
+static inline void writePARhigh(word_t val)
+{
+    uint64_t par_high = (uint64_t) val << 32;
+    uint64_t par_low = readPARlow();
+    writePAR_64(par_high | par_low);
+}
+
+static inline void writePARlow(word_t val)
+{
+    /* avoid read-modify-write by using 32-bit write directly */
+    asm volatile("mcr p15, 0, %0, c7, c4, 0":: "r"(val));
+}
+
 static inline void writeTPIDRURW(word_t reg)
 {
     asm volatile("mcr p15, 0, %0, c13, c0, 2" :: "r"(reg));
@@ -365,7 +419,7 @@ static inline void cleanByVA_PoU(vptr_t vaddr, paddr_t paddr)
     /* V6 doesn't distinguish PoU and PoC, so use the basic flush. */
     asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
 #elif defined(CONFIG_ARM_CORTEX_A7) || defined(CONFIG_ARM_CORTEX_A15) || \
-    defined(CONFIG_ARM_CORTEX_A53)
+    defined(CONFIG_ARM_CORTEX_A53) || defined(CONFIG_ARM_CORTEX_A72)
     /* Flush to coherency for table walks... Why? */
     asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
 #else

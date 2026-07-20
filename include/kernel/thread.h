@@ -164,6 +164,8 @@ void Arch_switchToThread(tcb_t *tcb);
 void Arch_switchToIdleThread(void);
 void Arch_configureIdleThread(tcb_t *tcb);
 void Arch_activateIdleThread(tcb_t *tcb);
+void Arch_prepareNextDomain(void);
+void Arch_prepareSetDomain(tcb_t *tcb, dom_t dom);
 
 void NORETURN idle_thread(void);
 

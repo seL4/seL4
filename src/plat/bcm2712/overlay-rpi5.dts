@@ -1,0 +1,30 @@
+/*
+ * Copyright 2025, UNSW
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+/ {
+	chosen {
+		seL4,elfloader-devices =
+		    "serial10",
+		    &{/psci},
+		    &{/timer};
+
+		seL4,kernel-devices =
+		    "serial10",
+		    &{/soc@107c000000/interrupt-controller@7fff9000},
+		    &{/timer};
+	};
+
+	soc@107c000000 {
+		interrupt-controller@7fff9000 {
+			/* vGIC maintenance IRQ necessary for hypervisor mode. */
+			interrupts = <0x01 0x09 0xf04>;
+		};
+	};
+
+    reserved-memory {
+        /delete-node/ linux,cma;
+    };
+};

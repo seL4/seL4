@@ -177,7 +177,8 @@ BOOT_CODE void cpu_initLocalIRQController(void)
 
 bool_t plat_SGITargetValid(word_t target)
 {
-    return target < GIC_SGI_NUM_TARGETS;
+    /* written as <= so that the term is the same as in gic_v3 for the proofs */
+    return target <= GIC_SGI_NUM_TARGETS - 1;
 }
 
 void plat_sendSGI(word_t irq, word_t target)

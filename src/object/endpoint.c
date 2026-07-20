@@ -28,7 +28,6 @@ void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
     case EPState_Idle:
     case EPState_Send:
         if (blocking) {
-            tcb_queue_t queue;
 
             /* Set thread state to BlockedOnSend */
             thread_state_ptr_set_tsType(&thread->tcbState,
@@ -47,10 +46,16 @@ void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
             scheduleTCB(thread);
 
             /* Place calling thread in endpoint queue */
+#ifdef CONFIG_KERNEL_MCS
+            tcbEPAppend(thread, epptr, EPState_Send);
+#else
+            tcb_queue_t queue;
             queue = ep_ptr_get_queue(epptr);
             queue = tcbEPAppend(thread, queue);
             endpoint_ptr_set_state(epptr, EPState_Send);
             ep_ptr_set_queue(epptr, queue);
+#endif /* CONFIG_KERNEL_MCS */
+
         }
         break;
 
@@ -66,12 +71,16 @@ void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
         assert(dest);
 
         /* Dequeue the first TCB */
+#ifdef CONFIG_KERNEL_MCS
+        tcbEPDequeue(dest, epptr);
+#else
         queue = tcbEPDequeue(dest, queue);
         ep_ptr_set_queue(epptr, queue);
 
         if (!queue.head) {
             endpoint_ptr_set_state(epptr, EPState_Idle);
         }
+#endif /* CONFIG_KERNEL_MCS */
 
         /* Do the transfer */
         doIPCTransfer(thread, epptr, badge, canGrant, dest);
@@ -93,12 +102,13 @@ void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
             schedContext_donate(thread->tcbSchedContext, dest);
         }
 
-        /* blocked threads should have enough budget to get out of the kernel */
-        assert(dest->tcbSchedContext == NULL || refill_sufficient(dest->tcbSchedContext, 0));
-        assert(dest->tcbSchedContext == NULL || refill_ready(dest->tcbSchedContext));
         setThreadState(dest, ThreadState_Running);
-        if (sc_sporadic(dest->tcbSchedContext) && dest->tcbSchedContext != NODE_STATE(ksCurSC)) {
-            refill_unblock_check(dest->tcbSchedContext);
+        sched_context_t *dest_sc = dest->tcbSchedContext;
+        /* blocked threads should have enough budget to get out of the kernel */
+        assert(dest_sc == NULL || refill_sufficient(dest_sc, 0));
+        assert(dest_sc == NULL || refill_ready(dest_sc));
+        if (sc_sporadic(dest_sc) && dest_sc != NODE_STATE(ksCurSC)) {
+            refill_unblock_check(dest_sc);
         }
         possibleSwitchTo(dest);
 #else
@@ -138,9 +148,10 @@ void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
     reply_t *replyPtr = NULL;
     if (cap_get_capType(replyCap) == cap_reply_cap) {
         replyPtr = REPLY_PTR(cap_reply_cap_get_capReplyPtr(replyCap));
-        if (unlikely(replyPtr->replyTCB != NULL && replyPtr->replyTCB != thread)) {
+        tcb_t *reply_tcb = replyPtr->replyTCB;
+        if (unlikely(reply_tcb != NULL && reply_tcb != thread)) {
             userError("Reply object already has unexecuted reply!");
-            cancelIPC(replyPtr->replyTCB);
+            cancelIPC(reply_tcb);
         }
     }
 #endif
@@ -163,7 +174,6 @@ void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
         switch (endpoint_ptr_get_state(epptr)) {
         case EPState_Idle:
         case EPState_Recv: {
-            tcb_queue_t queue;
 
             if (isBlocking) {
                 /* Set thread state to BlockedOnReceive */
@@ -173,20 +183,27 @@ void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
                     &thread->tcbState, EP_REF(epptr));
 #ifdef CONFIG_KERNEL_MCS
                 thread_state_ptr_set_replyObject(&thread->tcbState, REPLY_REF(replyPtr));
-                if (replyPtr) {
-                    replyPtr->replyTCB = thread;
-                }
 #else
                 thread_state_ptr_set_blockingIPCCanGrant(
                     &thread->tcbState, cap_endpoint_cap_get_capCanGrant(cap));
 #endif
                 scheduleTCB(thread);
+#ifdef CONFIG_KERNEL_MCS
+                if (replyPtr) {
+                    replyPtr->replyTCB = thread;
+                }
+#endif
 
                 /* Place calling thread in endpoint queue */
+#ifdef CONFIG_KERNEL_MCS
+                tcbEPAppend(thread, epptr, EPState_Recv);
+#else
+                tcb_queue_t queue;
                 queue = ep_ptr_get_queue(epptr);
                 queue = tcbEPAppend(thread, queue);
                 endpoint_ptr_set_state(epptr, EPState_Recv);
                 ep_ptr_set_queue(epptr, queue);
+#endif /* CONFIG_KERNEL_MCS */
             } else {
                 doNBRecvFailedTransfer(thread);
             }
@@ -209,12 +226,16 @@ void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
             assert(sender);
 
             /* Dequeue the first TCB */
+#ifdef CONFIG_KERNEL_MCS
+            tcbEPDequeue(sender, epptr);
+#else
             queue = tcbEPDequeue(sender, queue);
             ep_ptr_set_queue(epptr, queue);
 
             if (!queue.head) {
                 endpoint_ptr_set_state(epptr, EPState_Idle);
             }
+#endif /* CONFIG_KERNEL_MCS */
 
             /* Get sender IPC details */
             badge = thread_state_ptr_get_blockingIPCBadge(&sender->tcbState);
@@ -317,7 +338,6 @@ void cancelIPC(tcb_t *tptr)
     case ThreadState_BlockedOnReceive: {
         /* blockedIPCCancel state */
         endpoint_t *epptr;
-        tcb_queue_t queue;
 
         epptr = EP_PTR(thread_state_ptr_get_blockingObject(state));
 
@@ -325,6 +345,10 @@ void cancelIPC(tcb_t *tptr)
         assert(endpoint_ptr_get_state(epptr) != EPState_Idle);
 
         /* Dequeue TCB */
+#ifdef CONFIG_KERNEL_MCS
+        tcbEPDequeue(tptr, epptr);
+#else
+        tcb_queue_t queue;
         queue = ep_ptr_get_queue(epptr);
         queue = tcbEPDequeue(tptr, queue);
         ep_ptr_set_queue(epptr, queue);
@@ -332,6 +356,7 @@ void cancelIPC(tcb_t *tptr)
         if (!queue.head) {
             endpoint_ptr_set_state(epptr, EPState_Idle);
         }
+#endif /* CONFIG_KERNEL_MCS */
 
 #ifdef CONFIG_KERNEL_MCS
         if (thread_state_ptr_get_tsType(state) == ThreadState_BlockedOnReceive) {
@@ -395,6 +420,18 @@ static inline void restart_thread_if_no_fault(tcb_t *thread)
         setThreadState(thread, ThreadState_Inactive);
     }
 }
+
+static inline void removeAndRestartEPQueuedThread(tcb_t *thread, endpoint_t *epptr)
+{
+    tcbEPDequeue(thread, epptr);
+    if (thread_state_get_tsType(thread->tcbState) == ThreadState_BlockedOnReceive) {
+        reply_t *reply = REPLY_PTR(thread_state_get_replyObject(thread->tcbState));
+        if (reply != NULL) {
+            reply_unlink(reply, thread);
+        }
+    }
+    restart_thread_if_no_fault(thread);
+}
 #endif
 
 void cancelAllIPC(endpoint_t *epptr)
@@ -404,6 +441,18 @@ void cancelAllIPC(endpoint_t *epptr)
         break;
 
     default: {
+        /* Clear the queue and set all blocked threads to restart */
+#ifdef CONFIG_KERNEL_MCS
+        tcb_queue_t queue;
+        tcb_t *thread, *next;
+
+        queue = ep_ptr_get_queue(epptr);
+
+        for (thread = queue.head; thread; thread = next) {
+            next = thread->tcbSchedNext;
+            removeAndRestartEPQueuedThread(thread, epptr);
+        }
+#else
         tcb_t *thread = TCB_PTR(endpoint_ptr_get_epQueue_head(epptr));
 
         /* Make endpoint idle */
@@ -411,27 +460,31 @@ void cancelAllIPC(endpoint_t *epptr)
         endpoint_ptr_set_epQueue_head(epptr, 0);
         endpoint_ptr_set_epQueue_tail(epptr, 0);
 
-        /* Set all blocked threads to restart */
         for (; thread; thread = thread->tcbEPNext) {
-#ifdef CONFIG_KERNEL_MCS
-            if (thread_state_get_tsType(thread->tcbState) == ThreadState_BlockedOnReceive) {
-                reply_t *reply = REPLY_PTR(thread_state_get_replyObject(thread->tcbState));
-                if (reply != NULL) {
-                    reply_unlink(reply, thread);
-                }
-            }
-            restart_thread_if_no_fault(thread);
-#else
             setThreadState(thread, ThreadState_Restart);
             SCHED_ENQUEUE(thread);
-#endif
         }
+#endif
 
         rescheduleRequired();
         break;
     }
     }
 }
+
+#ifdef CONFIG_KERNEL_MCS
+static inline void removeAndRestartBadgedThread(tcb_t *thread, endpoint_t *epptr, word_t badge)
+{
+    word_t b = thread_state_ptr_get_blockingIPCBadge(&thread->tcbState);
+
+    /* senders do not have reply objects in their state, and we are only cancelling sends */
+    assert(thread_state_get_tsType(thread->tcbState) == ThreadState_BlockedOnSend);
+    if (b == badge) {
+        tcbEPDequeue(thread, epptr);
+        restart_thread_if_no_fault(thread);
+    }
+}
+#endif
 
 void cancelBadgedSends(endpoint_t *epptr, word_t badge)
 {
@@ -444,6 +497,12 @@ void cancelBadgedSends(endpoint_t *epptr, word_t badge)
         tcb_t *thread, *next;
         tcb_queue_t queue = ep_ptr_get_queue(epptr);
 
+#ifdef CONFIG_KERNEL_MCS
+        for (thread = queue.head; thread; thread = next) {
+            next = thread->tcbSchedNext;
+            removeAndRestartBadgedThread(thread, epptr, badge);
+        }
+#else
         /* this is a de-optimisation for verification
          * reasons. it allows the contents of the endpoint
          * queue to be ignored during the for loop. */
@@ -455,27 +514,20 @@ void cancelBadgedSends(endpoint_t *epptr, word_t badge)
             word_t b = thread_state_ptr_get_blockingIPCBadge(
                            &thread->tcbState);
             next = thread->tcbEPNext;
-#ifdef CONFIG_KERNEL_MCS
-            /* senders do not have reply objects in their state, and we are only cancelling sends */
-            assert(thread_state_get_tsType(thread->tcbState) == ThreadState_BlockedOnSend);
-            if (b == badge) {
-                restart_thread_if_no_fault(thread);
-                queue = tcbEPDequeue(thread, queue);
-            }
-#else
+
             if (b == badge) {
                 setThreadState(thread, ThreadState_Restart);
                 SCHED_ENQUEUE(thread);
                 queue = tcbEPDequeue(thread, queue);
             }
-#endif
+
         }
         ep_ptr_set_queue(epptr, queue);
 
         if (queue.head) {
             endpoint_ptr_set_state(epptr, EPState_Send);
         }
-
+#endif /* CONFIG_KERNEL_MCS */
         rescheduleRequired();
 
         break;
@@ -487,11 +539,39 @@ void cancelBadgedSends(endpoint_t *epptr, word_t badge)
 }
 
 #ifdef CONFIG_KERNEL_MCS
+void tcbEPAppend(tcb_t *thread, endpoint_t *epptr, endpoint_state_t ep_state)
+{
+    tcb_queue_t queue;
+    tcb_queue_t new_queue;
+
+    queue = ep_ptr_get_queue(epptr);
+    new_queue = tcbAppend(thread, queue);
+    ep_ptr_set_queue(epptr, new_queue);
+
+    /* Update the state of the endpoint with the state that was passed in. If the queue
+     * was previously non-empty this must be the same state the endpoint is currently in. */
+    endpoint_ptr_set_state(epptr, ep_state);
+}
+
+void tcbEPDequeue(tcb_t *thread, endpoint_t *epptr)
+{
+    tcb_queue_t queue;
+    tcb_queue_t new_queue;
+
+    queue = ep_ptr_get_queue(epptr);
+    new_queue = tcb_queue_remove(queue, thread);
+    ep_ptr_set_queue(epptr, new_queue);
+
+    if (tcb_queue_empty(new_queue)) {
+        endpoint_ptr_set_state(epptr, EPState_Idle);
+    }
+}
+
 void reorderEP(endpoint_t *epptr, tcb_t *thread)
 {
     tcb_queue_t queue = ep_ptr_get_queue(epptr);
-    queue = tcbEPDequeue(thread, queue);
-    queue = tcbEPAppend(thread, queue);
+    queue = tcb_queue_remove(queue, thread);
+    queue = tcbAppend(thread, queue);
     ep_ptr_set_queue(epptr, queue);
 }
 #endif

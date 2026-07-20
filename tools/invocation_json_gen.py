@@ -32,7 +32,7 @@ def xml_to_json_invocations(xml, gen_config, counter, invocations_dict, ):
     for method in xml.getElementsByTagName("method"):
         label = str(method.getAttribute("id"))
         exists = condition_to_bool(method.getElementsByTagName("condition"), gen_config)
-        if exists:
+        if exists and label not in invocations_dict:
             invocations_dict[label] = counter
             counter += 1
 

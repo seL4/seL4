@@ -249,7 +249,6 @@ tcb_queue_t tcbEPAppend(tcb_t *tcb, tcb_queue_t queue)
 
     return queue;
 }
-#endif
 
 /* Remove TCB from an endpoint queue */
 tcb_queue_t tcbEPDequeue(tcb_t *tcb, tcb_queue_t queue)
@@ -268,6 +267,7 @@ tcb_queue_t tcbEPDequeue(tcb_t *tcb, tcb_queue_t queue)
 
     return queue;
 }
+#endif /* CONFIG_KERNEL_MCS */
 
 #ifdef CONFIG_KERNEL_MCS
 
@@ -315,12 +315,11 @@ void tcbReleaseEnqueue(tcb_t *tcb)
     ticks_t new_time;
     tcb_queue_t queue;
 
-    new_time = tcbReadyTime(tcb);
     queue = NODE_STATE_ON_CORE(ksReleaseQueue, tcb->tcbAffinity);
+    new_time = tcbReadyTime(tcb);
 
     if (tcb_queue_empty(queue) || new_time < tcbReadyTime(queue.head)) {
         NODE_STATE_ON_CORE(ksReleaseQueue, tcb->tcbAffinity) = tcb_queue_prepend(queue, tcb);
-        NODE_STATE_ON_CORE(ksReprogram, tcb->tcbAffinity) = true;
     } else {
         if (tcbReadyTime(queue.end) <= new_time) {
             NODE_STATE_ON_CORE(ksReleaseQueue, tcb->tcbAffinity) = tcb_queue_append(queue, tcb);
@@ -332,6 +331,10 @@ void tcbReleaseEnqueue(tcb_t *tcb)
     }
 
     thread_state_ptr_set_tcbInReleaseQueue(&tcb->tcbState, true);
+
+    if (queue.head != NODE_STATE_ON_CORE(ksReleaseQueue, tcb->tcbAffinity).head) {
+        NODE_STATE_ON_CORE(ksReprogram, tcb->tcbAffinity) = true;
+    }
 }
 #endif
 
@@ -802,9 +805,12 @@ static void invokeSetFlags(tcb_t *thread, word_t clear, word_t set, bool_t call)
     thread->tcbFlags = flags;
 
 #ifdef CONFIG_HAVE_FPU
-    /* Save current FPU state before disabling FPU: */
     if (flags & seL4_TCBFlag_fpuDisabled) {
+        /* Save current FPU state before disabling FPU: */
         fpuRelease(thread);
+    } else if (thread == cur_thread) {
+        /* Restore FPU here as switchToThread() won't be called: */
+        lazyFPURestore(thread);
     }
 #endif
     if (call) {
@@ -1072,23 +1078,19 @@ exception_t decodeWriteRegisters(cap_t cap, word_t length, word_t *buffer)
 }
 
 #ifdef CONFIG_KERNEL_MCS
-static bool_t validFaultHandler(cap_t cap)
+bool_t validFaultHandler(cap_t cap)
 {
     switch (cap_get_capType(cap)) {
     case cap_endpoint_cap:
-        if (!cap_endpoint_cap_get_capCanSend(cap) ||
-            (!cap_endpoint_cap_get_capCanGrant(cap) &&
-             !cap_endpoint_cap_get_capCanGrantReply(cap))) {
-            return false;
-        }
-        break;
+        return (cap_endpoint_cap_get_capCanSend(cap) &&
+                (cap_endpoint_cap_get_capCanGrant(cap) ||
+                 cap_endpoint_cap_get_capCanGrantReply(cap)));
     case cap_null_cap:
         /* just has no fault endpoint */
-        break;
+        return true;
     default:
         return false;
     }
-    return true;
 }
 #endif
 
@@ -1617,55 +1619,6 @@ exception_t decodeSetSpace(cap_t cap, word_t length, cte_t *slot, word_t *buffer
                vRootCap, vRootSlot,
                0, cap_null_cap_new(), NULL, thread_control_update_space);
 #endif
-}
-
-exception_t decodeDomainInvocation(word_t invLabel, word_t length, word_t *buffer)
-{
-    dom_t domain;
-    cap_t tcap;
-
-    if (unlikely(invLabel != DomainSetSet)) {
-        current_syscall_error.type = seL4_IllegalOperation;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    if (unlikely(length == 0)) {
-        userError("Domain Configure: Truncated message.");
-        current_syscall_error.type = seL4_TruncatedMessage;
-        return EXCEPTION_SYSCALL_ERROR;
-    } else {
-        domain = getSyscallArg(0, buffer);
-        if (domain >= numDomains) {
-            userError("Domain Configure: invalid domain (%lu >= %u).",
-                      domain, numDomains);
-            current_syscall_error.type = seL4_InvalidArgument;
-            current_syscall_error.invalidArgumentNumber = 0;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-    }
-
-    if (unlikely(current_extra_caps.excaprefs[0] == NULL)) {
-        userError("Domain Configure: Truncated message.");
-        current_syscall_error.type = seL4_TruncatedMessage;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    tcap = current_extra_caps.excaprefs[0]->cap;
-    if (unlikely(cap_get_capType(tcap) != cap_thread_cap)) {
-        userError("Domain Configure: thread cap required.");
-        current_syscall_error.type = seL4_InvalidArgument;
-        current_syscall_error.invalidArgumentNumber = 1;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    invokeDomainSetSet(TCB_PTR(cap_thread_cap_get_capTCBPtr(tcap)), domain);
-    return EXCEPTION_NONE;
-}
-
-void invokeDomainSetSet(tcb_t *tcb, dom_t domain)
-{
-    prepareSetDomain(tcb, domain);
-    setDomain(tcb, domain);
 }
 
 exception_t decodeBindNotification(cap_t cap)

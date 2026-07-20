@@ -191,6 +191,7 @@ devices:
       - qcom,msm-uartdm
       - samsung,exynos4210-uart
       - snps,dw-apb-uart
+      - st,stm32h7-uart
       - ti,omap3-uart
       - xlnx,xuartps
       - ns16550a
@@ -217,6 +218,7 @@ devices:
   # supported platforms.
   - compatible:
       - riscv,cpu-intc
+      - riscv,clint0
     regions:
       - index: 0
         kernel: CLINT_PPTR

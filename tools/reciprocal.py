@@ -16,7 +16,6 @@
 from math import floor, ceil
 import argparse
 import sys
-from past.builtins import xrange
 
 # now unsigned
 
@@ -49,7 +48,7 @@ if __name__ == "__main__":
 
     print("Doing sanity check")
     # sanity check
-    for i in xrange(2**32-1):
+    for i in range(2**32-1):
         q1, q2 = (i / args.divisor, do_div(i))
         if int(q1) != q2:
             print("Combination failed %d %d %d" % i, q1, q2)

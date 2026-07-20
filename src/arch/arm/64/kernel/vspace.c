@@ -486,7 +486,7 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
                      rootserver.vspace, /* capVSBasePtr    */
                      1                  /* capVSIsMapped   */
 #ifdef CONFIG_ARM_SMMU
-                     , 0                /* capVSMappedCB   */
+                     , CB_INVALID       /* capVSMappedCB   */
 #endif
                  );
     slot_pos_before = ndks_boot.slot_pos_cur;
@@ -1134,6 +1134,8 @@ static void doFlush(word_t invLabel, vptr_t start, vptr_t end, paddr_t pstart)
         /* ...then invalidate the corresponding instruction lines
            to point of unification... */
         invalidateCacheRange_I(start, end, pstart);
+        /* ... then wait for the completion of invalidations... */
+        dsb();
         /* ... and ensure new instructions come from fresh cache lines. */
         isb();
         break;

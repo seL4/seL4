@@ -123,7 +123,7 @@ finaliseCap_ret_t finaliseCap(cap_t cap, bool_t final, bool_t exposed)
         if (final) {
             notification_t *ntfn = NTFN_PTR(cap_notification_cap_get_capNtfnPtr(cap));
 #ifdef CONFIG_KERNEL_MCS
-            schedContext_unbindNtfn(SC_PTR(notification_ptr_get_ntfnSchedContext(ntfn)));
+            schedContextMaybeUnbindNtfn(ntfn);
 #endif
             unbindMaybeNotification(ntfn);
             cancelAllSignals(ntfn);
@@ -137,12 +137,13 @@ finaliseCap_ret_t finaliseCap(cap_t cap, bool_t final, bool_t exposed)
         if (final) {
             reply_t *reply = REPLY_PTR(cap_reply_cap_get_capReplyPtr(cap));
             if (reply && reply->replyTCB) {
-                switch (thread_state_get_tsType(reply->replyTCB->tcbState)) {
+                tcb_t *tcb = reply->replyTCB;
+                switch (thread_state_get_tsType(tcb->tcbState)) {
                 case ThreadState_BlockedOnReply:
-                    reply_remove(reply, reply->replyTCB);
+                    reply_remove(reply, tcb);
                     break;
                 case ThreadState_BlockedOnReceive:
-                    cancelIPC(reply->replyTCB);
+                    cancelIPC(tcb);
                     break;
                 default:
                     fail("Invalid tcb state");
@@ -220,11 +221,7 @@ finaliseCap_ret_t finaliseCap(cap_t cap, bool_t final, bool_t exposed)
             sched_context_t *sc = SC_PTR(cap_sched_context_cap_get_capSCPtr(cap));
             schedContext_unbindAllTCBs(sc);
             schedContext_unbindNtfn(sc);
-            if (sc->scReply) {
-                assert(call_stack_get_isHead(sc->scReply->replyNext));
-                sc->scReply->replyNext = call_stack_new(0, false);
-                sc->scReply = NULL;
-            }
+            schedContext_unbindReply(sc);
             if (sc->scYieldFrom) {
                 schedContext_completeYieldTo(sc->scYieldFrom);
             }
