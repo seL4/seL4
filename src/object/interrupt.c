@@ -77,7 +77,6 @@ exception_t decodeIRQControlInvocation(word_t invLabel, word_t length,
 
 exception_t invokeIRQControl(irq_t irq, cte_t *handlerSlot, cte_t *controlSlot)
 {
-    setIRQState(IRQSignal, irq);
     cteInsert(cap_irq_handler_cap_new(IRQT_TO_IDX(irq)), controlSlot, handlerSlot);
 
     return EXCEPTION_NONE;
@@ -168,10 +167,15 @@ void invokeIRQHandler_SetIRQHandler(irq_t irq, cap_t cap, cte_t *slot)
 {
     cte_t *irqSlot;
 
+    setIRQState(IRQSignal, irq);
+
     irqSlot = intStateIRQNode + IRQT_TO_IDX(irq);
     /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (-1))" */
     cteDeleteOne(irqSlot);
     cteInsert(cap, slot, irqSlot);
+
+    /* Ack the interrupt in case there is a pending interrupt user space has missed. */
+    invokeIRQHandler_AckIRQ(irq);
 }
 
 void invokeIRQHandler_ClearIRQHandler(irq_t irq)
@@ -181,6 +185,8 @@ void invokeIRQHandler_ClearIRQHandler(irq_t irq)
     irqSlot = intStateIRQNode + IRQT_TO_IDX(irq);
     /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (-1))" */
     cteDeleteOne(irqSlot);
+
+    setIRQState(IRQInactive, irq);
 }
 
 void deletingIRQHandler(irq_t irq)
@@ -192,6 +198,7 @@ void deletingIRQHandler(irq_t irq)
     cteDeleteOne(slot);
 }
 
+/* This is needed in case there was a notification registered at the time of deletion */
 void deletedIRQHandler(irq_t irq)
 {
     setIRQState(IRQInactive, irq);
