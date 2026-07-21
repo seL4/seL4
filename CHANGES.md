@@ -26,6 +26,48 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 ## Upcoming release: BREAKING
 
+This release focusses on validating assumptions, improving checks in unverified code, and fixing known issues.
+
+The MCS configuration for 64-bit RISC-V now has a functional correctness proof, and the functional correctness proof for
+MCS on AArch64 is ongoing. A number of the issues fixed below were discovered in these proofs.
+
+### Security-relevant Changes
+
+* Fixed a potential kernel crash in cache maintenance operations on AArch32 (Armv7). When a stale frame capability was
+  used for cache maintenance operations, the kernel would previously not check whether the frame was still mapped or
+  not. Performing cache maintenance on unmapped frames would lead to a fault during kernel execution which would crash
+  the system. This also affects verified AArch32 configurations, because cache maintenance operations are a verification
+  assumption.
+  * Affected configurations: AArch32 configurations of seL4 with hypervisor extensions off (kernel runs in
+    EL1), including verified configurations. Configurations where seL4 runs in EL2 are not affected.
+  * Affected versions: all previous versions
+  * Exploitability: Any user-level thread with sufficient authority to perform all of the following operations can
+    create an unmapped stale frame cap and then trigger the issue by performing a cache maintenance operation on it: map
+    frame, map page table, unmap page table. Microkit and CAmkES systems do not give their component access to these
+    capabilities, but any component with Untyped capabilities could create threads with enough capabilities to trigger
+    the issue.
+  * Severity: Critical. This crashes the system.
+
+* Fixed a VM escape in `restore_vmx()` on x86-64. A malicious virtual machine monitor in cooperation with a malicious
+  guest could trigger the kernel to jump to a user-crafted address on VM entry failure, leading to arbitrary code
+  execution in kernel mode on VT-x for 64-bit guests.
+  * Affected configurations: unverified x86-64 configurations with VT-x and `KernelX86_64VTX64BitGuests`
+    enabled.
+  * Affected versions: 13.0.0, 14.0.0, 15.0.0
+  * Exploitability: any thread with a VCPU capability (usually the VMM) and cooperation from the VM guest can trigger
+    the failure path. A guest VM alone cannot trigger the entry failure, it requires a cooperating VMM.
+  * Severity: Critical. Arbitrary code execution in kernel mode.
+
+* Fixed context-switching leak for register `PAR_EL1` on AArch32 and AArch64 in hypervisor mode and potential
+  overwriting of `PAR_EL1` in VCPU fault handling on AArch64. This also affects verified Arm configurations, because
+  context switching is a verification assumption.
+  * Affected configurations: AArch32 in hypervisor mode and AArch64 in hypervisor mode
+  * Affected versions: all previous versions for AArch32, since 9.0.0 for AArch64
+  * Exploitability: in any EL1 thread, a specifically timed write to `PAR_EL1` or a specifically timed VCPU fault could
+    overwrite the value of `PAR_EL1` in another thread that was context switched after it wrote, but before it was
+    trying to read back the value. This does not affect EL0 threads.
+  * Severity: Medium. Limited compromise of integrity of `PAR_EL1` in EL1 threads.
+
 ### Changes
 
 * Add `seL4_DebugGetThreadAffinity()` syscall to return the current affinity of a thread
@@ -34,22 +76,64 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
   the highest available address available to user level. The existing constant
   `seL4_UserTop` is a mix of inclusive and exclusive across existing platforms, however,
   changing this to be consistent would break userspace and require proof updates.
-  The existing `seL4_UserTop` define is deprecated.
+* Deprecate the existing `seL4_UserTop` define.
+* Fix libsel4 TCB_Write/ReadRegister to respect `count`. Previously TCB_WriteRegisters/ReadRegisters
+  ignored the count parameter and unconditionally copied the entire seL4_UserContext.
+* Add support for GCC 14. In particular, fix a miscompilation of GCC 14.2 for seL4_Yield on RISC-V.
+* Decrease TCB_SIZE_BITS for configs that MCS + SMP + HYP + benchmarking enabled.
+* Make full physical address space available to Untypeds on 32-bit platforms. Affects Arm and RISC-V.
+  This means there should no longer be a cascade of smaller and smaller Untyped caps reaching up to
+  2^32 - 2^seL4_MinUntypedBits.
+* Add further checks and debug printing for memory regions provided at boot (Arm and RISC-V).
+* Add debug warning when IPC messages are truncated
+* MCS: fix missing cap fault info in `sendFaultIPC`
+* MCS: fix missing cap fault info in `lookupReply`
+* MCS: reliably export timer frequency to userspace in cmake
 
 ### Platforms
 
 * Add support for the stm32mp2 SoC family
+* Add support for the bcm2712 SoC (RPI5)
+
+#### X86
+
+* Expose VMX-preemption timer scale MSR via `seL4_X86_VCPU_ReadMSR`.
+* Manual: fix incorrect argument description for X86PageMapEPT.
+* Fix misaligned stack during exception printing in DEBUG configs.
+* Fix potential loss of IRQ notification events in VT-x + SMP configs.
+* Fix register clobber declarations for `restore_vmx()` for clang builds.
+* Fix interrupt source override padding in ACPI parsing
+* Fix PC corruption when exiting kernel lock via `ipiStallCoreCallback()`. When a thread was in the
+  process of entering the kernel lock and at the same time the core was being stalled, the restart
+  program counter of this thread was corrupted.
+* Add validation for BIOS provided MADT entry size, and ensure aligned access.
+* Remove unused trailing padding block in boot info.
+* libsel4: export `seL4_IOPageTableIndexBits` and `seL4_IOPageTableEntryBits`
+* libsel4: export `seL4_X86_IOSpace_CapData` type
 
 #### ARM
 
-* change default for `KernelArmHypEnableVCPUCP14SaveAndRestore` to `OFF` to provide equal defaults for
+* Add support for ARM Cortex-A76
+* Change default for `KernelArmHypEnableVCPUCP14SaveAndRestore` to `OFF` to provide equal defaults for
   verification and release builds. This affects AArch32/hyp only.
-* change default for `KernelArmVtimerUpdateVOffset` to `OFF`, which is the setting supported in
+* Change default for `KernelArmVtimerUpdateVOffset` to `OFF`, which is the setting supported in
   verification builds and used in most projects.
+* Add debug info printing for invalid vector entry
+* GICv3: enable the system register interface at EL2 in hypervisor configurations. Previously only
+  `ICC_SRE_EL1` was set, but not `ICC_SRE_EL2`. Guest accesses to `ICC_SRE_EL1` now always trap to
+  the kernel and are delivered to the VMM as a VCPU fault.
+* Remove read-only `ISR_EL1` from VCPU context. The register cannot be context-switched by the kernel.
+* Fix missing `dsb` in `seL4_ARM_Page_Unify_Instruction`.
+* MCS: fix missing queue check in MCS/Arm VCPU interaction
 
 ### Upgrade Notes
 
-AArch32 with hypervisor mode enabled only: if the option `KernelArmHypEnableVCPUCP14SaveAndRestore` is required, manually set it to `ON` in the build.
+* AArch32 with hypervisor mode enabled only: if the option `KernelArmHypEnableVCPUCP14SaveAndRestore` is required,
+  manually set it to `ON` in the build.
+* User-level allocation libraries for 32-bit platforms need to be robust for Untyped caps whose physical address range
+  reaches the end of the address space. If `base` and `size` are the physical address base of an Untyped cap and its
+  size, patterns such as `addr < base + BIT(size)` are not overflow safe. Change these into `addr <= base + MASK(size)`.
+  (`size` will always be < 32, in particular <= `seL4_MaxUntypedBits`).
 
 ---
 
