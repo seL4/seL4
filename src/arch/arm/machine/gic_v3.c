@@ -137,12 +137,21 @@ static void gicv3_redist_wait_for_rwp(void)
 
 static void gicv3_enable_sre(void)
 {
-    word_t val = 0;
+    word_t val;
 
-    /* ICC_SRE_EL1 */
-    SYSTEM_READ_WORD(ICC_SRE_EL1, val);
-    val |= GICC_SRE_EL1_SRE;
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    /* Set SRE to enable register interface for GICv3 in EL2. Disable IRQ/FIQ legacy bypass.
+     * Set ICC_SRE_EL2.Enable to 0, so EL1 accesses to ICC_SRE_EL1 will trap.
+     *
+     * SRE may be RAO/WI and DIB/DFB may be read-only aliases of ICC_SRE_EL3 on cores
+     * with EL3. Writing to them is harmless.
+     */
+    val = GICC_SRE_EL2_SRE | GICC_SRE_EL2_DIB | GICC_SRE_EL2_DFB;
+    SYSTEM_WRITE_WORD(ICC_SRE_EL2, val);
+#endif
 
+    /* Enable register interface for GICv3 in EL1. Disable IRQ/FIQ legacy bypass. */
+    val = GICC_SRE_EL1_SRE | GICC_SRE_EL1_DIB | GICC_SRE_EL1_DFB;
     SYSTEM_WRITE_WORD(ICC_SRE_EL1, val);
     isb();
 }
@@ -181,7 +190,13 @@ BOOT_CODE static void dist_init(void)
         gic_dist->icpendrn[(i / 32)] = IRQ_SET_ALL;
     }
 
-    /* Turn on the distributor */
+    /* group 1 for non-secure */
+    if (config_set(CONFIG_PLAT_QEMU_ARM_VIRT)) {
+        for (i = SPI_START; i < nr_lines; i += 32) {
+            gic_dist->igrouprn[(i / 32)] = IRQ_SET_ALL;
+        }
+    }
+
     gic_dist->ctlr = GICD_CTLR_ARE_NS | GICD_CTLR_ENABLE_G1NS | GICD_CTLR_ENABLE_G0;
     gicv3_dist_wait_for_rwp();
 
@@ -190,6 +205,40 @@ BOOT_CODE static void dist_init(void)
     for (i = SPI_START; i < nr_lines; i++) {
         gic_dist->iroutern[i - SPI_START] = affinity;
     }
+
+}
+
+BOOT_CODE static uint32_t gicr_enable_rdist(int core_id)
+{
+    uint32_t deadline_ms =  GIC_DEADLINE_MS;
+    bool_t waiting = true;
+    uint32_t val;
+    uint64_t gpt_cnt_tval = 0;
+    uint64_t gpt_cnt_ciel;
+    uint32_t ret = 0;
+
+    val = gic_rdist_map[core_id]->waker;
+    val &= ~GICR_WAKER_ProcessorSleep;
+    gic_rdist_map[core_id]->waker = val;
+
+    SYSTEM_READ_64(CNT_CT, gpt_cnt_tval);
+    gpt_cnt_ciel = gpt_cnt_tval + (deadline_ms * TICKS_PER_MS);
+
+    while (waiting) {
+        SYSTEM_READ_64(CNT_CT, gpt_cnt_tval);
+        val = gic_rdist_map[core_id]->waker;
+
+        if (gpt_cnt_tval >= gpt_cnt_ciel) {
+            printf("GICv3: GICR_WAKER returned non-zero %x\n", val);
+            ret = 1;
+            waiting = false;
+
+        } else if (!(val & GICR_WAKER_ChildrenAsleep)) {
+            ret = 0;
+            waiting = false;
+        }
+    }
+    return ret;
 }
 
 BOOT_CODE static void gicr_locate_interface(void)
@@ -229,10 +278,13 @@ BOOT_CODE static void gicr_locate_interface(void)
              */
             val = gic_rdist_map[core_id]->waker;
             if (val & GICR_WAKER_ChildrenAsleep) {
-                printf("GICv3: GICR_WAKER returned non-zero %x\n", val);
-                halt();
+                /* On QEMU, the redistributor may not be woken by an earlier
+                 * loader, so we need to explicitly wake it here. */
+                int ret = gicr_enable_rdist(core_id);
+                if (ret == 1) {
+                    halt();
+                }
             }
-
             break;
         }
     }
@@ -270,6 +322,9 @@ BOOT_CODE static void gicr_init(void)
      */
     gic_rdist_sgi_ppi_map[CURRENT_CPU_INDEX()]->icenabler0 = 0xffff0000;
     gic_rdist_sgi_ppi_map[CURRENT_CPU_INDEX()]->isenabler0 = 0x0000ffff;
+    if (config_set(CONFIG_PLAT_QEMU_ARM_VIRT)) {
+        gic_rdist_sgi_ppi_map[CURRENT_CPU_INDEX()]->igroupr0 = IRQ_SET_ALL;
+    }
 
     /* Set ICFGR1 for PPIs as level-triggered */
     gic_rdist_sgi_ppi_map[CURRENT_CPU_INDEX()]->icfgr1 = 0x0;

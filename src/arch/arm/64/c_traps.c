@@ -65,3 +65,54 @@ void VISIBLE NORETURN restore_user_context(void)
     );
     UNREACHABLE();
 }
+
+#if defined(CONFIG_DEBUG_BUILD)
+/* See 'arm_vector_table' for details on 'vect_offset' */
+static const char *vect_offset_to_name(word_t vect_offset)
+{
+    switch (vect_offset) {
+    case 0x000:
+        return "Synchronous EL1t/EL2t";
+    case 0x080:
+        return "IRQ EL1t/EL2t";
+    case 0x100:
+        return "FIQ EL1t/EL2t";
+    case 0x180:
+        return "SError EL1t/EL2t";
+    case 0x200:
+        return "Synchronous Current EL";
+    case 0x280:
+        return "IRQ Current EL";
+    case 0x300:
+        return "FIQ Current EL";
+    case 0x380:
+        return "SError Current EL";
+    case 0x400:
+        return "Synchronous 64-bit EL0/EL1";
+    case 0x480:
+        return "IRQ 64-bit EL0/EL1";
+    case 0x500:
+        return "FIQ 64-bit EL0/EL1";
+    case 0x580:
+        return "SError 64-bit EL0/EL1";
+    case 0x600:
+        return "Synchronous 32-bit EL0/EL1";
+    case 0x680:
+        return "IRQ 32-bit EL0/EL1";
+    case 0x700:
+        return "FIQ 32-bit EL0/EL1";
+    case 0x780:
+        return "SError 32-bit EL0/EL1";
+    default:
+        return "<Unknown>";
+    }
+}
+
+void VISIBLE c_handle_invalid_vector_entry(word_t vect_offset, word_t pc)
+{
+    printf("\n\nKERNEL INVALID VECTOR ENTRY!\n");
+    printf("Vector: 0x%"SEL4_PRIx_word" (%s)\n", vect_offset, vect_offset_to_name(vect_offset));
+    printf("Fault attributed to program counter: 0x%"SEL4_PRIx_word"\n", pc);
+    printf("ESR: 0x%"SEL4_PRIx_word" FAR: 0x%"SEL4_PRIx_word"\n", getESR(), getFAR());
+}
+#endif

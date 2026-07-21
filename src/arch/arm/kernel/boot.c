@@ -470,12 +470,7 @@ static BOOT_CODE bool_t try_init_kernel(
         extra_bi_offset += dtb_size;
     }
 
-    if (extra_bi_size > extra_bi_offset) {
-        /* provide a chunk for any leftover padding in the extended boot info */
-        header.id = SEL4_BOOTINFO_HEADER_PADDING;
-        header.len = (extra_bi_size - extra_bi_offset);
-        *(seL4_BootInfoHeader *)(rootserver.extra_bi + extra_bi_offset) = header;
-    }
+    assert(extra_bi_size == extra_bi_offset);
 
     if (config_set(CONFIG_TK1_SMMU)) {
         ndks_boot.bi_frame->ioSpaceCaps = create_iospace_caps(root_cnode_cap);

@@ -30,15 +30,17 @@ elseif(KernelArmCortexA72)
   # (https://developer.arm.com/documentation/100095/0001/memory-management-unit/about-the-mmu)
   set(KernelArmPASizeBits44 ON)
   math(EXPR KernelPaddrUserTop "(1 << 44)")
+elseif(KernelArmCortexA76)
+  set(KernelArmPASizeBits40 ON)
+  math(EXPR KernelPaddrUserTop "(1 << 40)")
 endif()
 config_set(KernelArmPASizeBits40 ARM_PA_SIZE_BITS_40 "${KernelArmPASizeBits40}")
 config_set(KernelArmPASizeBits44 ARM_PA_SIZE_BITS_44 "${KernelArmPASizeBits44}")
 config_set(KernelArmICacheVIPT ARM_ICACHE_VIPT "${KernelArmICacheVIPT}")
 
 if(KernelSel4ArchAarch32)
-  # 64-bit targets may be building in 32-bit mode,
-  # so make sure maximum paddr is 32-bit.
-  math(EXPR KernelPaddrUserTop "(1 << 32) - 1")
+  # Maximum paddr needs to be exclusive. Code is fine when it wraps to 0.
+  math(EXPR KernelPaddrUserTop "1 << 32")
 endif()
 
 include(src/arch/arm/armv/armv7-a/config.cmake)
@@ -78,7 +80,7 @@ config_option(
   "Build as Hypervisor. Utilise ARM virtualisation extensions to build the kernel as a hypervisor"
   DEFAULT ${KernelSel4ArchArmHyp}
   DEPENDS
-    "KernelArmCortexA15 OR KernelArmCortexA35 OR KernelArmCortexA57 OR KernelArmCortexA53 OR KernelArmCortexA55 OR KernelArmCortexA72"
+    "KernelArmCortexA15 OR KernelArmCortexA35 OR KernelArmCortexA57 OR KernelArmCortexA53 OR KernelArmCortexA55 OR KernelArmCortexA72 OR KernelArmCortexA76"
 )
 
 config_option(KernelArmGicV3 ARM_GIC_V3_SUPPORT "Build support for GICv3" DEFAULT OFF)
@@ -97,7 +99,7 @@ config_option(
     context for performance (or other) reasons, we can just turn them off \
     and trap them instead, and have the VCPUs' accesses to CP14 \
     intercepted and delivered to the VM Monitor as fault messages"
-  DEFAULT ON
+  DEFAULT OFF
   DEPENDS "KernelSel4ArchArmHyp;NOT KernelVerificationBuild"
   DEFAULT_DISABLED OFF)
 
@@ -234,7 +236,8 @@ if(KernelAArch32FPUEnableContextSwitch OR KernelSel4ArchAarch64)
 endif()
 
 if(KernelArmCortexA7 OR KernelArmCortexA8 OR KernelArmCortexA15 OR KernelArmCortexA35
-   OR KernelArmCortexA53 OR KernelArmCortexA55 OR KernelArmCortexA57 OR KernelArmCortexA72)
+   OR KernelArmCortexA53 OR KernelArmCortexA55 OR KernelArmCortexA57 OR KernelArmCortexA72
+   OR KernelArmCortexA76)
   # According to https://developer.arm.com/documentation/100095/0001/functional-description/about-the-cortex-a72-processor-functions/components-of-the-processor
   # the L1 instruction on the Cortex-A72 cache has a 64-byte cache line.
   # Thus, 6 bits are needed.

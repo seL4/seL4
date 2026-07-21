@@ -38,11 +38,14 @@
 #define seL4_PageDirIndexBits 10
 #define seL4_VSpaceBits seL4_PageDirBits
 
-#define seL4_IOPageTableBits 12
 #define seL4_NumASIDPoolsBits 2
 #define seL4_ASIDPoolBits    12
 #define seL4_ASIDPoolIndexBits 10
 #define seL4_WordSizeBits 2
+
+#define seL4_IOPageTableBits      12
+#define seL4_IOPageTableIndexBits 9
+#define seL4_IOPageTableEntryBits 3
 
 #define seL4_HugePageBits    30 /* 1GB */
 #define seL4_PDPTBits         0
@@ -52,6 +55,7 @@
 SEL4_SIZE_SANITY(seL4_PageTableEntryBits, seL4_PageTableIndexBits, seL4_PageTableBits);
 SEL4_SIZE_SANITY(seL4_PageDirEntryBits, seL4_PageDirIndexBits, seL4_PageDirBits);
 SEL4_SIZE_SANITY(seL4_WordSizeBits, seL4_ASIDPoolIndexBits, seL4_ASIDPoolBits);
+SEL4_SIZE_SANITY(seL4_IOPageTableEntryBits, seL4_IOPageTableIndexBits, seL4_IOPageTableBits);
 #endif
 
 /* Previously large frames were explicitly assumed to be 4M. If not using
@@ -143,5 +147,8 @@ typedef enum {
 /* IPC buffer is 512 bytes, giving size bits of 9 */
 #define seL4_IPCBufferSizeBits 9
 
-/* First address in the virtual address space that is not accessible to user level */
+/* (Deprecated) First address in the virtual address space that is not accessible to user level */
 #define seL4_UserTop 0xe0000000
+
+/* Last address in the virtual address space that is accessible to user level */
+#define seL4_UserVSpaceTop (seL4_UserTop - 1)

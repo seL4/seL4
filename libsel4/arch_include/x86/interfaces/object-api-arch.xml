@@ -422,14 +422,13 @@
         <method id="X86PageMapEPT" name="MapEPT" manual_name="Map EPT">
             <condition><config var="CONFIG_VTX"/></condition>
             <brief>
-                Map an extended page table.
+                Map a page into a VCPU Extended Page Table (EPT).
             </brief>
             <description>
                 <docref>See <autoref label="ch:vspace"/></docref>
             </description>
-            <param dir="in" name="vspace" type="seL4_X86_EPTPML4" description="Capability to the VSpace which will
-contain the mapping"/>
-            <param dir="in" name="vaddr" type="seL4_Word" description="Virtual address at which to map page."/>
+            <param dir="in" name="eptpml4" type="seL4_X86_EPTPML4" description="Capability to the EPT root which will contain the mapping."/>
+            <param dir="in" name="gpa" type="seL4_Word" description="Guest physical address to map the page into."/>
             <param dir="in" name="rights" type="seL4_CapRights_t">
                 <description>
                     Rights for the mapping. <docref>Possible values for this type are given in <autoref label='sec:cap_rights'/>.</docref>
@@ -442,18 +441,18 @@ contain the mapping"/>
             </param>
             <error name="seL4_AlignmentError">
                 <description>
-                    The <texttt text="vaddr"/> is not aligned to the page size of <texttt text="_service"/>.
+                    The <texttt text="gpa"/> is not aligned to the page size of <texttt text="_service"/>.
                 </description>
             </error>
             <error name="seL4_DeleteFirst">
                 <description>
-                    A mapping already exists in <texttt text="vspace"/> at <texttt text="vaddr"/>.
+                    A mapping already exists in <texttt text="eptpml4"/> at <texttt text="gpa"/>.
                 </description>
             </error>
             <error name="seL4_FailedLookup">
                 <description>
-                    The <texttt text="vspace"/> does not have a paging structure at the required level mapped at <texttt text="vaddr"/>.
-                    Or, <texttt text="vspace"/> is not assigned to an ASID pool.
+                    The <texttt text="eptpml4"/> does not have a paging structure at the required level mapped at <texttt text="gpa"/>.
+                    Or, <texttt text="eptpml4"/> is not assigned to an ASID pool.
                 </description>
             </error>
             <error name="seL4_IllegalOperation">
@@ -463,8 +462,8 @@ contain the mapping"/>
             </error>
             <error name="seL4_InvalidCapability">
                 <description>
-                    The <texttt text="_service"/> or <texttt text="vspace"/> is a CPtr to a capability of the wrong type.
-                    Or, <texttt text="vspace"/> is not assigned to an ASID pool.
+                    The <texttt text="_service"/> or <texttt text="eptpml4"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="eptpml4"/> is not assigned to an ASID pool.
                     Or, <texttt text="_service"/> is already mapped.
                     Or, <texttt text="_service"/> has an unsupported page size.
                 </description>
@@ -1058,12 +1057,12 @@ contain the mapping"/>
             </error>
         </method>
     </interface>
-    <interface name="seL4_X86_EPTPDPT" manual_name="Extended Page Table Page Directory Page Table"
+    <interface name="seL4_X86_EPTPDPT" manual_name="Extended Page Table Page-Directory Pointers Table"
         cap_description="Capability to the EPT PDPT being operated on.">
         <method id="X86EPTPDPTMap" name="Map">
             <condition><config var="CONFIG_VTX"/></condition>
             <brief>
-                Map an EPT page directory page table.
+                Map a Page-Directory Pointers Table (PDPT) into a VCPU Extended Page Table.
             </brief>
             <description>
                 <docref>See <autoref label="ch:vspace"/></docref>
@@ -1103,7 +1102,7 @@ contain the mapping"/>
         <method id="X86EPTPDPTUnmap" name="Unmap">
             <condition><config var="CONFIG_VTX"/></condition>
             <brief>
-                Unmap an EPT page directory page table.
+                Unmap a Page-Directory Pointer Table (PDPT) into a VCPU Extended Page Table.
             </brief>
             <description>
                 <docref>See <autoref label="ch:vspace"/></docref>
@@ -1130,7 +1129,7 @@ contain the mapping"/>
         <method id="X86EPTPDMap" name="Map">
             <condition><config var="CONFIG_VTX"/></condition>
             <brief>
-                Map an EPT page directory.
+                Map a Page Directory (PD) into a VCPU Extended Page Table.
             </brief>
             <description>
                 <docref>See <autoref label="ch:vspace"/></docref>
@@ -1171,7 +1170,7 @@ contain the mapping"/>
         <method id="X86EPTPDUnmap" name="Unmap">
             <condition><config var="CONFIG_VTX"/></condition>
             <brief>
-                Unmap an EPT page directory.
+                Unmap a Page Directory (PD) from a VCPU Extended Page Table.
             </brief>
             <description>
                 <docref>See <autoref label="ch:vspace"/></docref>
@@ -1198,7 +1197,7 @@ contain the mapping"/>
         <method id="X86EPTPTMap" name="Map">
             <condition><config var="CONFIG_VTX"/></condition>
             <brief>
-                Map an EPT page table.
+                Map a Page Table (PT) into a VCPU Extended Page Table.
             </brief>
             <description>
                 <docref>See <autoref label="ch:vspace"/></docref>
@@ -1239,7 +1238,7 @@ contain the mapping"/>
         <method id="X86EPTPTUnmap" name="Unmap">
             <condition><config var="CONFIG_VTX"/></condition>
             <brief>
-                Unmap an EPT page table.
+                Unmap a Page Table (PT) from a VCPU Extended Page Table.
             </brief>
             <description>
                 <docref>See <autoref label="ch:vspace"/></docref>

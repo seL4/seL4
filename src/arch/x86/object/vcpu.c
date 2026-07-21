@@ -666,6 +666,9 @@ static exception_t invokeReadMSR(vcpu_t *vcpu, word_t field, word_t *buffer)
     case IA32_FMASK_MSR:
         value = vcpu->syscall_registers[VCPU_SYSCALL_MASK];
         break;
+    case IA32_VMX_MISC_MSR:
+        value = x86_rdmsr(field);
+        break;
     }
 
     setMR(thread, buffer, 0, value);
@@ -688,6 +691,7 @@ static exception_t decodeVCPUReadMSR(cap_t cap, word_t length, word_t *buffer)
     case IA32_STAR_MSR:
     case IA32_CSTAR_MSR:
     case IA32_FMASK_MSR:
+    case IA32_VMX_MISC_MSR:
         break;
     default:
         userError("VCPU ReadMSR: Invalid field %lx.", (long)field);
@@ -1325,16 +1329,19 @@ exception_t handleVmexit(void)
     /* the basic exit reason is the bottom 16 bits of the exit reason field */
     reason = vmread(VMX_DATA_EXIT_REASON) & MASK(16);
     if (reason == EXTERNAL_INTERRUPT) {
+        NODE_LOCK_IRQ;
         if (vmx_feature_ack_on_exit) {
-            interrupt = vmread(VMX_DATA_EXIT_INTERRUPT_INFO);
-            ARCH_NODE_STATE(x86KScurInterrupt) = interrupt & 0xff;
-            NODE_LOCK_IRQ_IF(interrupt != int_remote_call_ipi);
+            interrupt = vmread(VMX_DATA_EXIT_INTERRUPT_INFO) & 0xff;
+            ARCH_NODE_STATE(x86KScurInterrupt) = interrupt;
             handleInterruptEntry();
         } else {
             /* poll for the pending irq. We will then handle it once we return back
              * up to restore_user_context */
             receivePendingIRQ();
         }
+#ifdef ENABLE_SMP_SUPPORT
+        VMCheckBoundNotification(NODE_STATE(ksCurThread));
+#endif
         return EXCEPTION_NONE;
     }
 

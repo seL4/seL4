@@ -158,6 +158,19 @@ exception_t handleUnknownSyscall(word_t w)
         return EXCEPTION_NONE;
     }
 #ifdef ENABLE_SMP_SUPPORT
+    if (w == SysDebugGetThreadAffinity) {
+        word_t cptr = getRegister(NODE_STATE(ksCurThread), capRegister);
+        lookupCapAndSlot_ret_t lu_ret = lookupCapAndSlot(NODE_STATE(ksCurThread), cptr);
+        /* ensure we got a TCB cap */
+        word_t cap_type = cap_get_capType(lu_ret.cap);
+        if (cap_type != cap_thread_cap) {
+            userError("SysDebugGetThreadAffinity: cap is not a TCB, halting");
+            halt();
+        }
+        word_t affinity = TCB_PTR(cap_thread_cap_get_capTCBPtr(lu_ret.cap))->tcbAffinity;
+        setRegister(NODE_STATE(ksCurThread), capRegister, affinity);
+        return EXCEPTION_NONE;
+    }
     if (w == SysDebugSendIPI) {
         return handle_SysDebugSendIPI();
     }
@@ -332,6 +345,11 @@ static exception_t handleInvocation(bool_t isCall, bool_t isBlocking)
     /* Syscall error/Preemptible section */
     length = seL4_MessageInfo_get_length(info);
     if (unlikely(length > n_msgRegisters && !buffer)) {
+        /* If no IPC buffer is present the kernel truncates the maximum message length to n_msgRegisters.
+         * The kernel truncates rather than returns because not all message transfer points in the kernel
+         * are allowed to return an error.
+         */
+        userError("Warning: No IPC buffer for thread. Truncating message length to: %d.", n_msgRegisters);
         length = n_msgRegisters;
     }
 #ifdef CONFIG_KERNEL_MCS
@@ -374,15 +392,15 @@ static inline lookupCap_ret_t lookupReply(void)
     lookupCap_ret_t lu_ret = lookupCap(NODE_STATE(ksCurThread), replyCPtr);
     if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
         userError("Reply cap lookup failed");
+        /* current_lookup_fault has been set by lookupCap */
         current_fault = seL4_Fault_CapFault_new(replyCPtr, true);
-        handleFault(NODE_STATE(ksCurThread));
         return lu_ret;
     }
 
     if (unlikely(cap_get_capType(lu_ret.cap) != cap_reply_cap)) {
-        userError("Cap in reply slot is not a reply");
+        userError("Cap in reply slot is not a reply cap");
+        current_lookup_fault = lookup_fault_missing_capability_new(0);
         current_fault = seL4_Fault_CapFault_new(replyCPtr, true);
-        handleFault(NODE_STATE(ksCurThread));
         lu_ret.status = EXCEPTION_FAULT;
         return lu_ret;
     }
@@ -461,6 +479,8 @@ static void handleRecv(bool_t isBlocking)
         if (canReply) {
             lu_ret = lookupReply();
             if (lu_ret.status != EXCEPTION_NONE) {
+                /* lookup_fault has been set by lookupReply */
+                handleFault(NODE_STATE(ksCurThread));
                 return;
             } else {
                 reply_cap = lu_ret.cap;
@@ -594,8 +614,12 @@ exception_t handleSyscall(syscall_t syscall)
         case SysReplyRecv: {
             cptr_t reply = getRegister(NODE_STATE(ksCurThread), replyRegister);
             ret = handleInvocation(false, false, true, true, reply);
-            /* reply cannot error and is not preemptible */
-            assert(ret == EXCEPTION_NONE);
+            /* reply is not preemptible, but to ease verification we check explicitly */
+            if (unlikely(ret != EXCEPTION_NONE)) {
+                mcsPreemptionPoint();
+                checkInterrupt(/* was_interrupt_entry */ false);
+                break;
+            }
             handleRecv(true, true);
             break;
         }

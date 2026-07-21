@@ -416,6 +416,10 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
         return getSCTLR();
     case seL4_VCPUReg_ACTLR:
         return getACTLR();
+    case seL4_VCPUReg_PARhigh:
+        return readPARhigh();
+    case seL4_VCPUReg_PARlow:
+        return readPARlow();
     case seL4_VCPUReg_TTBCR:
         return readTTBCR();
     case seL4_VCPUReg_TTBR0:
@@ -513,6 +517,12 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
         break;
     case seL4_VCPUReg_ACTLR:
         setACTLR(reg);
+        break;
+    case seL4_VCPUReg_PARhigh:
+        writePARhigh(reg);
+        break;
+    case seL4_VCPUReg_PARlow:
+        writePARlow(reg);
         break;
     case seL4_VCPUReg_TTBCR:
         writeTTBCR(reg);

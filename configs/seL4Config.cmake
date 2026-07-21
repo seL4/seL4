@@ -143,6 +143,7 @@ foreach(
         KernelArmCortexA55
         KernelArmCortexA57
         KernelArmCortexA72
+        KernelArmCortexA76
         KernelArchArmV7a
         KernelArchArmV7ve
         KernelArchArmV8a
@@ -194,13 +195,14 @@ config_set(KernelArmCortexA53 ARM_CORTEX_A53 "${KernelArmCortexA53}")
 config_set(KernelArmCortexA55 ARM_CORTEX_A55 "${KernelArmCortexA55}")
 config_set(KernelArmCortexA57 ARM_CORTEX_A57 "${KernelArmCortexA57}")
 config_set(KernelArmCortexA72 ARM_CORTEX_A72 "${KernelArmCortexA72}")
+config_set(KernelArmCortexA76 ARM_CORTEX_A76 "${KernelArmCortexA76}")
 config_set(KernelArchArmV7a ARCH_ARM_V7A "${KernelArchArmV7a}")
 config_set(KernelArchArmV7ve ARCH_ARM_V7VE "${KernelArchArmV7ve}")
 config_set(KernelArchArmV8a ARCH_ARM_V8A "${KernelArchArmV8a}")
 config_set(KernelAArch64SErrorIgnore AARCH64_SERROR_IGNORE "${KernelAArch64SErrorIgnore}")
 
 # Export timer frequency to user space:
-if(KernelTimerFrequency)
+if(CONFIGURE_TIMER_FREQUENCY)
   config_set(KernelTimerFrequency TIMER_FREQUENCY "${CONFIGURE_TIMER_FREQUENCY}")
 endif()
 
@@ -232,6 +234,8 @@ elseif(KernelArmCortexA57)
   set(KernelArmCPU "cortex-a57" CACHE INTERNAL "")
 elseif(KernelArmCortexA72)
   set(KernelArmCPU "cortex-a72" CACHE INTERNAL "")
+elseif(KernelArmCortexA76)
+  set(KernelArmCPU "cortex-a76" CACHE INTERNAL "")
 endif()
 if(KernelArchARM)
   config_set(KernelArmMach ARM_MACH "${KernelArmMach}")
