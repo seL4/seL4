@@ -24,7 +24,15 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 ---
 
-## Upcoming release: BREAKING
+## Upcoming release: BINARY COMPATIBLE
+
+### Changes
+
+
+### Upgrade Notes
+---
+
+## 16.0.0 2026-07-22: BREAKING
 
 This release focusses on validating assumptions, improving checks in unverified code, and fixing known issues.
 
