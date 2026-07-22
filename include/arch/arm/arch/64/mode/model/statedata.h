@@ -16,7 +16,9 @@
 #include <arch/object/smmu.h>
 #endif
 
-#include <mode/object/smc.h>
+#ifdef CONFIG_ALLOW_SMC_CALLS
+#include <arch/object/smc.h>
+#endif
 
 /* The top level asid mapping table */
 extern asid_pool_t *armKSASIDTable[nASIDPools] VISIBLE;

@@ -5,7 +5,8 @@
  */
 #include <config.h>
 
-#include <mode/object/smc.h>
+#ifdef CONFIG_ALLOW_SMC_CALLS
+#include <arch/object/smc.h>
 
 /** Wrapped in a struct for verification, so the array does not decay to a pointer. */
 typedef struct smc_args_t_ {
@@ -94,3 +95,5 @@ exception_t decodeARMSMCInvocation(word_t label, word_t length, cap_t cap, bool_
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeSMCCall(smc_args, call);
 }
+
+#endif
