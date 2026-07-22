@@ -270,6 +270,7 @@ add_sources(
          object/iospace.c
          object/vcpu.c
          object/smmu.c
+         object/smc.c
          smp/ipi.c)
 
 add_bf_source_old("KernelArchARM" "structures.bf" "include/arch/arm" "arch/object")
