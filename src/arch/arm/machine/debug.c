@@ -290,13 +290,17 @@ void setBreakpoint(tcb_t *t,
     } else {
         dbg_wcr_t wcr;
 
+        /* Address has to be aligned to 8 byte boundary */
+        word_t offset = vaddr & 0x7;
+        vaddr &= ~0x7;
+
         writeWvrContext(t, bp_num, vaddr);
 
         /* Preserve reserved bits */
         wcr.words[0] = readWcrContext(t, bp_num);
         wcr = dbg_wcr_set_enabled(wcr, 1);
         wcr = dbg_wcr_set_pac(wcr, DBGWCR_PRIV_USER);
-        wcr = dbg_wcr_set_bas(wcr, convertSizeToArch(size));
+        wcr = dbg_wcr_set_bas(wcr, convertSizeToArch(size) << offset);
         wcr = dbg_wcr_set_lsc(wcr, convertAccessToArch(rw));
         wcr = dbg_wcr_set_watchpointType(wcr, 0);
         wcr = dbg_wcr_set_lbn(wcr, 0);
@@ -444,15 +448,24 @@ int getAndResetActiveBreakpoint(word_t vaddr, word_t reason)
     }
 
     if (reason == seL4_DataBreakpoint) {
+        /* Align the fault address to the previous 8-byte boundary */
+        word_t offset = vaddr & 0x7;
+        vaddr &= ~0x7;
         for (i = 0; i < seL4_NumExclusiveWatchpoints; i++) {
             dbg_wcr_t wcr;
-            word_t wvr = readWvrCp(i);
-
             wcr.words[0] = readWcrCp(i);
-            align_mask = convertArchToSize(dbg_wcr_get_bas(wcr));
-            align_mask = ~(align_mask - 1);
+            if (!dbg_wcr_get_enabled(wcr)) {
+                continue;
+            }
 
-            if (wvr != (vaddr & align_mask) || !dbg_wcr_get_enabled(wcr)) {
+            word_t wvr = readWvrCp(i);
+            if (vaddr != wvr) {
+                continue;
+            }
+
+            /* Check if the BAS set for this watchpoint corresponds
+             * to the faulting vaddr */
+            if ((dbg_wcr_get_bas(wcr) & BIT(offset)) == 0) {
                 continue;
             }
 
