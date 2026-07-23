@@ -233,11 +233,31 @@ BOOT_CODE void map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_righ
                                                                                             attr_index);
 }
 
+static BOOT_CODE void map_kernel_window_range(paddr_t start, paddr_t end)
+{
+    pptr_t vaddr = (pptr_t)ptrFromPAddr(start);
+    for (paddr_t paddr = start; paddr < end; paddr += BIT(seL4_LargePageBits)) {
+        armKSGlobalKernelPDs[GET_KPT_INDEX(vaddr, KLVL_FRM_ARM_PT_LVL(1))][GET_KPT_INDEX(vaddr,
+                                                                                         KLVL_FRM_ARM_PT_LVL(2))] = pte_pte_page_new(
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+                                                                                                                        0, // XN
+#else
+                                                                                                                        1, // UXN
+#endif
+                                                                                                                        paddr,
+                                                                                                                        0,                        /* global */
+                                                                                                                        1,                        /* access flag */
+                                                                                                                        SMP_TERNARY(SMP_SHARE, 0),        /* Inner-shareable if SMP enabled, otherwise unshared */
+                                                                                                                        0,                        /* VMKernelOnly */
+                                                                                                                        NORMAL
+                                                                                                                    );
+        vaddr += BIT(seL4_LargePageBits);
+    }
+}
+
 BOOT_CODE void map_kernel_window(void)
 {
 
-    paddr_t paddr;
-    pptr_t vaddr;
     word_t idx;
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
@@ -265,23 +285,8 @@ BOOT_CODE void map_kernel_window(void)
     }
 
     /* map the kernel window using large pages */
-    vaddr = PPTR_BASE;
-    for (paddr = PADDR_BASE; paddr < PADDR_TOP; paddr += BIT(seL4_LargePageBits)) {
-        armKSGlobalKernelPDs[GET_KPT_INDEX(vaddr, KLVL_FRM_ARM_PT_LVL(1))][GET_KPT_INDEX(vaddr,
-                                                                                         KLVL_FRM_ARM_PT_LVL(2))] = pte_pte_page_new(
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-                                                                                                                        0, // XN
-#else
-                                                                                                                        1, // UXN
-#endif
-                                                                                                                        paddr,
-                                                                                                                        0,                        /* global */
-                                                                                                                        1,                        /* access flag */
-                                                                                                                        SMP_TERNARY(SMP_SHARE, 0),        /* Inner-shareable if SMP enabled, otherwise unshared */
-                                                                                                                        0,                        /* VMKernelOnly */
-                                                                                                                        NORMAL
-                                                                                                                    );
-        vaddr += BIT(seL4_LargePageBits);
+    for (idx = 0; idx < ARRAY_SIZE(avail_p_regs); idx++) {
+        map_kernel_window_range(avail_p_regs[idx].start, avail_p_regs[idx].end);
     }
 
     /* put the PD into the PUD for device window */
