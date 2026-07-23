@@ -205,12 +205,15 @@ static inline void setKernelStack(word_t stack_address)
 
 static inline void setVtable(pptr_t addr)
 {
-    dsb();
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         MSR("vbar_el2", addr);
     } else {
         MSR("vbar_el1", addr);
     }
+    /* We just updated the vbar for our current EL, so require
+     * isb to trigger Context Synchronization event to prevent starting
+     * execution of future instructions until current system register
+     * updates are complete. */
     isb();
 }
 
@@ -242,18 +245,14 @@ static inline void invalidateLocalTLB_ASID(asid_t asid)
 {
     assert(asid < BIT(16));
 
-    dsb();
     asm volatile("tlbi aside1, %0" : : "r"(asid << 48));
-    dsb();
-    isb();
+    dsb_ish();
 }
 
 static inline void invalidateLocalTLB_VAASID(word_t mva_plus_asid)
 {
-    dsb();
     asm volatile("tlbi vae1, %0" : : "r"(mva_plus_asid));
-    dsb();
-    isb();
+    dsb_ish();
 }
 
 /* Invalidate all stage 1 and stage 2 translations used at
@@ -274,8 +273,6 @@ static inline void invalidateLocalTLB_IPA(word_t ipa)
     dsb();
     isb();
 }
-
-void lockTLBEntry(vptr_t vaddr);
 
 static inline void cleanByVA(vptr_t vaddr, paddr_t paddr)
 {
