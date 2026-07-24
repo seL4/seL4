@@ -98,7 +98,11 @@ class KernelRegionGroup:
         return 'KernelRegion(reg={},labels={})'.format(self.regions, self.labels)
 
     def __eq__(self, other):
-        return other.base == self.base and other.size == self.size
+        if isinstance(other, type(self)):
+            return other.base == self.base and other.size == self.size
+        else:
+            # duck typing is not supported
+            return NotImplemented
 
 
 class KernelInterrupt:
