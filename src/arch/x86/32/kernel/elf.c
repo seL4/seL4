@@ -37,13 +37,6 @@ BOOT_CODE v_region_t elf_getMemoryBounds(Elf32_Header_t *elfFile)
             continue;
         }
 
-        if (phdr[i].p_memsz < phdr[i].p_filesz) {
-            printf("ELF segment has file size larger than memory size\n");
-            elf_reg.start = 0;
-            elf_reg.end = 0;
-            return elf_reg;
-        }
-
         sect_start = phdr[i].p_vaddr;
         sect_end = sect_start + phdr[i].p_memsz;
         if (sect_end < sect_start) {
