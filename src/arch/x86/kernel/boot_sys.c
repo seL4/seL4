@@ -136,7 +136,10 @@ BOOT_CODE static paddr_t load_boot_module(word_t boot_module_start, paddr_t load
         (void *)boot_state.ui_info.p_reg.start,
         boot_state.ui_info.p_reg.end - boot_state.ui_info.p_reg.start
     );
-    elf_load(elf_file, boot_state.ui_info.pv_offset);
+    if (!elf_load(elf_file, boot_state.ui_info.pv_offset)) {
+        printf("ELF image contains invalid segments\n");
+        return 0;
+    }
 
     return load_paddr;
 }

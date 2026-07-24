@@ -33,22 +33,31 @@ BOOT_CODE v_region_t elf_getMemoryBounds(Elf32_Header_t *elfFile)
 
     /* loop through all program headers (segments) and record start/end address */
     for (i = 0; i < elfFile->e_phnum; i++) {
-        if (phdr[i].p_memsz > 0) {
-            sect_start = phdr[i].p_vaddr;
-            sect_end = sect_start + phdr[i].p_memsz;
-            if (sect_start < elf_reg.start) {
-                elf_reg.start = sect_start;
-            }
-            if (sect_end > elf_reg.end) {
-                elf_reg.end = sect_end;
-            }
+        if (phdr[i].p_memsz == 0) {
+            continue;
+        }
+
+        sect_start = phdr[i].p_vaddr;
+        sect_end = sect_start + phdr[i].p_memsz;
+        if (sect_end < sect_start) {
+            printf("ELF segment extends beyond supported address space\n");
+            elf_reg.start = 0;
+            elf_reg.end = 0;
+            return elf_reg;
+        }
+
+        if (sect_start < elf_reg.start) {
+            elf_reg.start = sect_start;
+        }
+        if (sect_end > elf_reg.end) {
+            elf_reg.end = sect_end;
         }
     }
 
     return elf_reg;
 }
 
-BOOT_CODE void elf_load(Elf32_Header_t *elfFile, seL4_Word offset)
+BOOT_CODE bool_t elf_load(Elf32_Header_t *elfFile, seL4_Word offset)
 {
     Elf32_Phdr_t *phdr = (Elf32_Phdr_t *)((paddr_t)elfFile + elfFile->e_phoff);
     paddr_t       src;
@@ -58,11 +67,20 @@ BOOT_CODE void elf_load(Elf32_Header_t *elfFile, seL4_Word offset)
 
     /* loop through all program headers (segments) and load them */
     for (i = 0; i < elfFile->e_phnum; i++) {
+        if (phdr[i].p_memsz < phdr[i].p_filesz) {
+            printf("ELF segment has file size larger than memory size\n");
+            return false;
+        }
+
         src = (paddr_t)elfFile + phdr[i].p_offset;
         dst = phdr[i].p_vaddr + offset;
         len = phdr[i].p_filesz;
         memcpy((void *)dst, (char *)src, len);
-        dst += len;
-        memset((void *)dst, 0, phdr[i].p_memsz - len);
+        if (phdr[i].p_memsz > len) {
+            dst += len;
+            memset((void *)dst, 0, phdr[i].p_memsz - len);
+        }
     }
+
+    return true;
 }
