@@ -29,11 +29,11 @@
     }
 #endif
 
-exception_t handleSyscall(syscall_t syscall);
-exception_t handleInterruptEntry(void);
-exception_t handleUnknownSyscall(word_t w);
-exception_t handleUserLevelFault(word_t w_a, word_t w_b);
-exception_t handleVMFaultEvent(vm_fault_type_t vm_faultType);
+void handleSyscall(syscall_t syscall);
+void handleInterruptEntry(void);
+void handleUnknownSyscall(word_t w);
+void handleUserLevelFault(word_t w_a, word_t w_b);
+void handleVMFaultEvent(vm_fault_type_t vm_faultType);
 
 static inline word_t PURE getSyscallArg(word_t i, word_t *ipc_buffer)
 {

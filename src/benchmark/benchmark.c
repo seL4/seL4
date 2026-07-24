@@ -14,7 +14,7 @@
 #include <benchmark/benchmark_utilisation.h>
 
 
-exception_t handle_SysBenchmarkFlushCaches(void)
+void handle_SysBenchmarkFlushCaches(void)
 {
 #ifdef CONFIG_ARCH_ARM
     tcb_t *thread = NODE_STATE(ksCurThread);
@@ -26,17 +26,17 @@ exception_t handle_SysBenchmarkFlushCaches(void)
 #else
     arch_clean_invalidate_caches();
 #endif
-    return EXCEPTION_NONE;
+    return;
 }
 
-exception_t handle_SysBenchmarkResetLog(void)
+void handle_SysBenchmarkResetLog(void)
 {
 #ifdef CONFIG_KERNEL_LOG_BUFFER
     if (ksUserLogBuffer == 0) {
         userError("A user-level buffer has to be set before resetting benchmark.\
                 Use seL4_BenchmarkSetLogBuffer\n");
         setRegister(NODE_STATE(ksCurThread), capRegister, seL4_IllegalOperation);
-        return EXCEPTION_SYSCALL_ERROR;
+        return;
     }
 
     ksLogIndex = 0;
@@ -55,10 +55,10 @@ exception_t handle_SysBenchmarkResetLog(void)
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 
     setRegister(NODE_STATE(ksCurThread), capRegister, seL4_NoError);
-    return EXCEPTION_NONE;
+    return;
 }
 
-exception_t handle_SysBenchmarkFinalizeLog(void)
+void handle_SysBenchmarkFinalizeLog(void)
 {
 #ifdef CONFIG_KERNEL_LOG_BUFFER
     ksLogIndexFinalized = ksLogIndex;
@@ -69,32 +69,32 @@ exception_t handle_SysBenchmarkFinalizeLog(void)
     benchmark_utilisation_finalise();
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 
-    return EXCEPTION_NONE;
+    return;
 }
 
 #ifdef CONFIG_KERNEL_LOG_BUFFER
-exception_t handle_SysBenchmarkSetLogBuffer(void)
+void handle_SysBenchmarkSetLogBuffer(void)
 {
     word_t cptr_userFrame = getRegister(NODE_STATE(ksCurThread), capRegister);
     if (benchmark_arch_map_logBuffer(cptr_userFrame) != EXCEPTION_NONE) {
         setRegister(NODE_STATE(ksCurThread), capRegister, seL4_IllegalOperation);
-        return EXCEPTION_SYSCALL_ERROR;
+        return;
     }
 
     setRegister(NODE_STATE(ksCurThread), capRegister, seL4_NoError);
-    return EXCEPTION_NONE;
+    return;
 }
 #endif /* CONFIG_KERNEL_LOG_BUFFER */
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 
-exception_t handle_SysBenchmarkGetThreadUtilisation(void)
+void handle_SysBenchmarkGetThreadUtilisation(void)
 {
     benchmark_track_utilisation_dump();
-    return EXCEPTION_NONE;
+    return;
 }
 
-exception_t handle_SysBenchmarkResetThreadUtilisation(void)
+void handle_SysBenchmarkResetThreadUtilisation(void)
 {
     word_t tcb_cptr = getRegister(NODE_STATE(ksCurThread), capRegister);
     lookupCap_ret_t lu_ret;
@@ -105,18 +105,18 @@ exception_t handle_SysBenchmarkResetThreadUtilisation(void)
     cap_type = cap_get_capType(lu_ret.cap);
     if (cap_type != cap_thread_cap) {
         userError("SysBenchmarkResetThreadUtilisation: cap is not a TCB, halting");
-        return EXCEPTION_NONE;
+        return;
     }
 
     tcb_t *tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(lu_ret.cap));
 
     benchmark_track_reset_utilisation(tcb);
-    return EXCEPTION_NONE;
+    return;
 }
 
 #ifdef CONFIG_DEBUG_BUILD
 
-exception_t handle_SysBenchmarkDumpAllThreadsUtilisation(void)
+void handle_SysBenchmarkDumpAllThreadsUtilisation(void)
 {
     printf("{\n");
     printf("  \"BENCHMARK_TOTAL_UTILISATION\":%lu,\n",
@@ -140,15 +140,15 @@ exception_t handle_SysBenchmarkDumpAllThreadsUtilisation(void)
         }
     }
     printf("  ]\n}\n");
-    return EXCEPTION_NONE;
+    return;
 }
 
-exception_t handle_SysBenchmarkResetAllThreadsUtilisation(void)
+void handle_SysBenchmarkResetAllThreadsUtilisation(void)
 {
     for (tcb_t *curr = NODE_STATE(ksDebugTCBs); curr != NULL; curr = TCB_PTR_DEBUG_PTR(curr)->tcbDebugNext) {
         benchmark_track_reset_utilisation(curr);
     }
-    return EXCEPTION_NONE;
+    return;
 }
 
 #endif /* CONFIG_DEBUG_BUILD */
