@@ -46,7 +46,8 @@
  * than 2^62. */
 #define MAX_PERIOD_US (getMaxUsToTicks() / 8)
 #endif /* CONFIG_KERNEL_STATIC_MAX_PERIOD_US != 0 */
-#define MAX_RELEASE_TIME (UINT64_MAX - 5 * usToTicks(MAX_PERIOD_US))
+#define MAX_PERIOD_TICKS (usToTicks(MAX_PERIOD_US))
+#define MAX_RELEASE_TIME (UINT64_MAX - 5 * MAX_PERIOD_TICKS)
 
 /* Short hand for accessing refill queue items */
 static inline refill_t *refill_index(sched_context_t *sc, word_t index)
