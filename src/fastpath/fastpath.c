@@ -82,8 +82,19 @@ void NORETURN fastpath_call(word_t cptr, word_t msgInfo)
     }
 
 #ifdef CONFIG_ARCH_AARCH32
+     /* Need to test that the ASID is still valid */
+    asid_t asid = cap_page_directory_cap_get_capPDMappedASID(newVTable);
+    asid_map_t asid_map = findMapForASID(asid);
+    if (unlikely(asid_map_get_type(asid_map) != asid_map_asid_map_vspace ||
+                 PD_PTR(asid_map_asid_map_vspace_get_vspace_root(asid_map)) != cap_pd)) {
+        slowpath(SysCall);
+    }
+    /* Ensure the HW ASID is valid. */
+    if (unlikely(!asid_map_asid_map_vspace_get_hw_asid_valid(asid_map))) {
+        slowpath(SysCall);
+    }
     /* Get HW ASID */
-    stored_hw_asid = cap_pd[PD_ASID_SLOT];
+    stored_hw_asid.words[0] = asid_map_asid_map_vspace_get_hw_asid(asid_map);
 #endif
 
 #ifdef CONFIG_ARCH_X86_64
@@ -134,12 +145,6 @@ void NORETURN fastpath_call(word_t cptr, word_t msgInfo)
                  !cap_endpoint_cap_get_capCanGrantReply(ep_cap))) {
         slowpath(SysCall);
     }
-
-#ifdef CONFIG_ARCH_AARCH32
-    if (unlikely(!pde_pde_invalid_get_stored_asid_valid(stored_hw_asid))) {
-        slowpath(SysCall);
-    }
-#endif
 
     /* Ensure the original caller is in the current domain and can be scheduled directly. */
     if (unlikely(dest->tcbDomain != ksCurDomain && 0 < maxDom)) {
@@ -361,8 +366,19 @@ void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo)
     }
 
 #ifdef CONFIG_ARCH_AARCH32
-    /* Get HWASID. */
-    stored_hw_asid = cap_pd[PD_ASID_SLOT];
+    /* Need to test that the ASID is still valid */
+    asid_t asid = cap_page_directory_cap_get_capPDMappedASID(newVTable);
+    asid_map_t asid_map = findMapForASID(asid);
+    if (unlikely(asid_map_get_type(asid_map) != asid_map_asid_map_vspace ||
+                 PD_PTR(asid_map_asid_map_vspace_get_vspace_root(asid_map)) != cap_pd)) {
+        slowpath(SysCall);
+    }
+    /* Ensure the HW ASID is valid. */
+    if (unlikely(!asid_map_asid_map_vspace_get_hw_asid_valid(asid_map))) {
+        slowpath(SysCall);
+    }
+    /* Get HW ASID */
+    stored_hw_asid.words[0] = asid_map_asid_map_vspace_get_hw_asid(asid_map);
 #endif
 
 #ifdef CONFIG_ARCH_X86_64
@@ -403,12 +419,6 @@ void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo)
         slowpath(SysReplyRecv);
     }
 
-#ifdef CONFIG_ARCH_AARCH32
-    /* Ensure the HWASID is valid. */
-    if (unlikely(!pde_pde_invalid_get_stored_asid_valid(stored_hw_asid))) {
-        slowpath(SysReplyRecv);
-    }
-#endif
 
     /* Ensure the original caller is in the current domain and can be scheduled directly. */
     if (unlikely(caller->tcbDomain != ksCurDomain && 0 < maxDom)) {
