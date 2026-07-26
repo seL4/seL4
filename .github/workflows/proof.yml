@@ -36,7 +36,9 @@ jobs:
             features: MCS
             session: CRefine
     # test only most recent push to PR:
-    concurrency: seL4-PR-C-proofs-pr-${{ github.event.number }}-idx-${{ strategy.job-index }}
+    concurrency:
+      group: seL4-PR-C-proofs-pr-${{ github.event.number }}-${{ matrix.arch }}-${{ matrix.features }}
+      cancel-in-progress: true
     steps:
     - name: Proofs
       uses: seL4/ci-actions/aws-proofs@master

@@ -32,6 +32,7 @@ the roadmap and expected in 2026.
   - Platforms:
     - `tx2`
     - `bcm2711`
+    - `bcm2712`
     - `hikey`
     - `imx8mm`
     - `imx8mq`
@@ -40,6 +41,7 @@ the roadmap and expected in 2026.
     - `odroidc2`
     - `odroidc4`
     - `rockpro64`
+    - `stm32mp2`
     - `tqma`
     - `tx1`
     - `ultra96v2`
@@ -48,6 +50,8 @@ the roadmap and expected in 2026.
   - Platforms: `hifive`
 - x64: without VT-x and VT-d, with FPU, no fast path
   - Platforms: `pc99`
+- RISC-V MCS: 64-bit only, no FPU, no fast path, MCS configuration
+  - Platforms: `hifive`
 
 This proof covers the functional behaviour of the C code of the kernel. It does
 not cover machine code, compiler, linker, boot code, cache or TLB management.
@@ -107,10 +111,9 @@ avoided by careful system configuration if low latency is required.
 ## MCS
 
 The MCS configuration of the kernel addresses many of these real-time problems
-and provides principled access control for execution time, but its formal
-verification is currently still in progress. For RISC-V, design-level proofs
-have completed, and C-level proofs are in progress. Similar proofs for AArch64
-are planned.
+and provides principled access control for execution time. For RISC-V, a proof
+of functional correctness from abstract specification to C level has been
+completed. Functional correctness proofs for MCS on AArch64 are in progress.
 
 The MCS configuration is supported by the seL4 foundation and should generally
 be stable, with small API changes to be expected while verification is ongoing
