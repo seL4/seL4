@@ -32,7 +32,7 @@ jobs:
         compiler: [gcc, llvm]
     steps:
     - uses: actions/checkout@v6
-    - uses: seL4/ci-actions/standalone-kernel@master
+    - uses: seL4/ci-actions/standalone-kernel@julia/macos-testing
       with:
         ARCH: ${{ matrix.arch }}
         COMPILER: ${{ matrix.compiler }}

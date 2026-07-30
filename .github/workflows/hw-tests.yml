@@ -17,10 +17,10 @@ on:
 jobs:
   sel4test:
     name: seL4Test
-    uses: seL4/ci-actions/.github/workflows/sel4test-hw.yml@master
+    uses: seL4/ci-actions/.github/workflows/sel4test-hw.yml@julia/macos-testing
     secrets: inherit
 
   sel4bench:
     name: seL4Bench
-    uses: seL4/ci-actions/.github/workflows/sel4bench-hw.yml@master
+    uses: seL4/ci-actions/.github/workflows/sel4bench-hw.yml@julia/macos-testing
     secrets: inherit

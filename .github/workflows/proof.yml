@@ -41,7 +41,7 @@ jobs:
       cancel-in-progress: true
     steps:
     - name: Proofs
-      uses: seL4/ci-actions/aws-proofs@master
+      uses: seL4/ci-actions/aws-proofs@julia/macos-testing
       with:
         L4V_ARCH: ${{ matrix.arch }}
         L4V_FEATURES: ${{ matrix.features }}

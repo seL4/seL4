@@ -11,7 +11,7 @@ on: [pull_request, workflow_dispatch]
 jobs:
   pr-checks:
     name: Checks
-    uses: seL4/ci-actions/.github/workflows/pr.yml@master
+    uses: seL4/ci-actions/.github/workflows/pr.yml@julia/macos-testing
 
   preprocess:
     name: Preprocess
@@ -29,7 +29,7 @@ jobs:
           - arch: X64
             feature: MCS
     steps:
-    - uses: seL4/ci-actions/preprocess@master
+    - uses: seL4/ci-actions/preprocess@julia/macos-testing
       with:
         L4V_ARCH: ${{ matrix.arch }}
         L4V_FEATURES: ${{ matrix.feature }}

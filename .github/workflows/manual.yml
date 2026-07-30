@@ -17,7 +17,7 @@ jobs:
     name: Build PDF
     runs-on: ubuntu-latest
     steps:
-    - uses: seL4/ci-actions/seL4-manual@master
+    - uses: seL4/ci-actions/seL4-manual@julia/macos-testing
     - uses: actions/upload-artifact@v7
       with:
         name: PDF

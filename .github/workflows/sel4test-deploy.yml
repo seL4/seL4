@@ -27,7 +27,7 @@ jobs:
       xml: ${{ steps.repo.outputs.xml }}
     steps:
     - id: repo
-      uses: seL4/ci-actions/repo-checkout@master
+      uses: seL4/ci-actions/repo-checkout@julia/macos-testing
       with:
         manifest_repo: sel4test-manifest
         manifest: master.xml
@@ -39,7 +39,7 @@ jobs:
       matrix: ${{ steps.matrix.outputs.matrix }}
     steps:
     - id: matrix
-      uses: seL4/ci-actions/sel4test-hw-matrix@master
+      uses: seL4/ci-actions/sel4test-hw-matrix@julia/macos-testing
       with:
         matrix: build
 
@@ -52,7 +52,7 @@ jobs:
         march: [armv7a, armv8a, nehalem, rv32imac, rv64imac]
         compiler: [gcc, clang]
     steps:
-    - uses: seL4/ci-actions/sel4test-sim@master
+    - uses: seL4/ci-actions/sel4test-sim@julia/macos-testing
       with:
         xml: ${{ needs.code.outputs.xml }}
         march: ${{ matrix.march }}
@@ -66,7 +66,7 @@ jobs:
       matrix: ${{ fromJson(needs.build-matrix.outputs.matrix) }}
     steps:
     - name: Build
-      uses: seL4/ci-actions/sel4test-hw@master
+      uses: seL4/ci-actions/sel4test-hw@julia/macos-testing
       with:
         xml: ${{ needs.code.outputs.xml }}
         march: ${{ matrix.march }}
@@ -86,7 +86,7 @@ jobs:
       matrix: ${{ steps.matrix.outputs.matrix }}
     steps:
     - id: matrix
-      uses: seL4/ci-actions/sel4test-hw-matrix@master
+      uses: seL4/ci-actions/sel4test-hw-matrix@julia/macos-testing
 
   hw-run:
     name: HW Run
@@ -109,7 +109,7 @@ jobs:
         with:
           name: images-${{ matrix.march }}-${{ matrix.compiler }}${{ matrix.subgroup && format('-{0}', matrix.subgroup) }}
       - name: Run
-        uses: seL4/ci-actions/sel4test-hw-run@master
+        uses: seL4/ci-actions/sel4test-hw-run@julia/macos-testing
         with:
           platform: ${{ matrix.platform }}
           compiler: ${{ matrix.compiler }}
@@ -125,7 +125,7 @@ jobs:
     needs: [code, hw-run]
     steps:
     - name: Deploy
-      uses: seL4/ci-actions/manifest-deploy@master
+      uses: seL4/ci-actions/manifest-deploy@julia/macos-testing
       with:
         xml: ${{ needs.code.outputs.xml }}
         manifest_repo: sel4test-manifest

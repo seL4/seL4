@@ -19,4 +19,4 @@ on:
 jobs:
   sim:
     name: Sim
-    uses: seL4/ci-actions/.github/workflows/sel4test-sim.yml@master
+    uses: seL4/ci-actions/.github/workflows/sel4test-sim.yml@julia/macos-testing
