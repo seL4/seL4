@@ -3101,8 +3101,8 @@ if __name__ == '__main__':
         print("end", file=out_file)
     elif options.hol_proofs:
         def is_bit_type(tp):
-            return umm.is_base(tp) & (umm.base_name(tp) in
-                                      map(lambda e: e.name + '_C', det_values(blocks, unions)))
+            return umm.is_base(tp) and (umm.base_name(tp) in
+                                        map(lambda e: e.name + '_C', det_values(blocks, unions)))
 
         tps = umm.build_types(options.umm_types_file)
         type_map = {}
