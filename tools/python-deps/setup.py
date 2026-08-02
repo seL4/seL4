@@ -45,12 +45,15 @@ DEPS = [
     'autopep8==2.3.2',
     'libarchive-c',
     'typing_extensions',
-    'protobuf>=3.19',  # nanopb 0.4.9.1 has requires_dist protobuf>=3.19
+    # nanopb 0.4.9.1 has requires_dist protobuf>=3.19
+    # protoc on Ubuntu 22.04 requires protobuf<4; can be dropped after EOL of
+    # Ubuntu 22.04 in Apr 2027
+    'protobuf>=3.19,<4',
 ]
 
 setup(
     name='sel4-deps',
-    version='0.8.0',
+    version='0.9.0',
     description='Metapackage for downloading build dependencies for the seL4 microkernel',
     long_description="""
 This meta package depends on all python packages you need to build the seL4 microkernel and manual.
