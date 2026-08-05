@@ -123,6 +123,25 @@ void handleIPI(irq_t irq, bool_t irqPath)
 
     if (IRQT_TO_IRQ(irq) == irq_remote_call_ipi) {
         handleRemoteCall(ipi->remoteCall, ipi->args[0], ipi->args[1], ipi->args[2], irqPath);
+        if (irqPath) {
+#ifdef CONFIG_KERNEL_MCS
+            assert(!NODE_STATE(ksCurThread)->tcbYieldTo);
+            assert(NODE_STATE(ksReprogram) == false);
+#endif
+            assert(NODE_STATE(ksSchedulerAction) == SchedulerAction_ResumeCurrentThread);
+            assert(ARCH_NODE_STATE(ipiReschedulePending) == 0);
+            switch (thread_state_get_tsType(NODE_STATE(ksCurThread)->tcbState)) {
+                case ThreadState_Running:
+                case ThreadState_IdleThreadState:
+            #ifdef CONFIG_VTX
+                case ThreadState_RunningVM:
+            #endif
+            break;
+            default:
+                fail("Current thread is blocked");
+
+            }
+        }
     } else if (IRQT_TO_IRQ(irq) == irq_reschedule_ipi) {
         rescheduleRequired();
 #ifdef CONFIG_ARCH_RISCV
