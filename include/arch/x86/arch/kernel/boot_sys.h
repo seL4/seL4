@@ -22,6 +22,7 @@ typedef struct boot_state {
     acpi_rsdp_t  acpi_rsdp; /* copy of the rsdp */
     paddr_t      mods_end_paddr; /* physical address where boot modules end */
     paddr_t      boot_module_start; /* physical address of first boot module */
+    paddr_t      boot_module_end; /* physical address of end of first boot module */
     uint32_t     num_cpus;    /* number of detected cpus */
     uint32_t     mem_lower;   /* lower memory size for boot code of APs to run in real mode */
     cpu_id_t     cpus[CONFIG_MAX_NUM_NODES];
