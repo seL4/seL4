@@ -154,8 +154,10 @@ static inline void debug_dumpScheduler(void)
            config_set(CONFIG_ENABLE_SMP_SUPPORT) ? "-------" : "",
            (CONFIG_NUM_DOMAINS > 1)              ? "-------" : "",
            config_set(CONFIG_KERNEL_MCS)         ? "-----------------" : "");
-    for (tcb_t *curr = NODE_STATE(ksDebugTCBs); curr != NULL; curr = TCB_PTR_DEBUG_PTR(curr)->tcbDebugNext) {
-        debug_printTCB(curr);
+    for (word_t core = 0; core < CONFIG_MAX_NUM_NODES; core++) {
+        for (tcb_t *curr = NODE_STATE_ON_CORE(ksDebugTCBs, core); curr != NULL; curr = TCB_PTR_DEBUG_PTR(curr)->tcbDebugNext) {
+            debug_printTCB(curr);
+        }
     }
 }
 #endif /* CONFIG_PRINTING */
