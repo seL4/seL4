@@ -13,7 +13,7 @@ static inline void invalidateLocalTLB_VMID(word_t vmid)
 {
     word_t vttbr = getVTTBR();
     word_t v = (vttbr >> 48);
-    dsb();
+    dsb_ish();
     /* We need to switch to the target VMID for flushing
      * the TLB if necessary.
      * Note that an invalid address is used, and it seems
@@ -38,7 +38,7 @@ static inline void invalidateLocalTLB_IPA_VMID(word_t ipa_plus_vmid)
     word_t vmid = ipa_plus_vmid >> 48;
     /* The [0:35] bits are IPA, other bits are reserved as 0 */
     word_t ipa = ipa_plus_vmid & 0xfffffffff;
-    dsb();
+    dsb_ish();
     if (v != vmid) {
         setCurrentUserVSpaceRoot(ttbr_new(vmid, 0));
     }

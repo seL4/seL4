@@ -226,7 +226,7 @@ static inline void invalidateLocalTLB_EL1(void)
 
 static inline void invalidateLocalTLB(void)
 {
-    dsb();
+    dsb_ish();
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         invalidateLocalTLB_EL2();
         dsb();
@@ -234,7 +234,7 @@ static inline void invalidateLocalTLB(void)
     } else {
         asm volatile("tlbi vmalle1");
     }
-    dsb();
+    dsb_ish();
     isb();
 }
 
@@ -242,17 +242,17 @@ static inline void invalidateLocalTLB_ASID(asid_t asid)
 {
     assert(asid < BIT(16));
 
-    dsb();
+    dsb_ish();
     asm volatile("tlbi aside1, %0" : : "r"(asid << 48));
-    dsb();
+    dsb_ish();
     isb();
 }
 
 static inline void invalidateLocalTLB_VAASID(word_t mva_plus_asid)
 {
-    dsb();
+    dsb_ish();
     asm volatile("tlbi vae1, %0" : : "r"(mva_plus_asid));
-    dsb();
+    dsb_ish();
     isb();
 }
 
@@ -261,7 +261,7 @@ static inline void invalidateLocalTLB_VAASID(word_t mva_plus_asid)
 static inline void invalidateLocalTLB_VMALLS12E1(void)
 {
     asm volatile("tlbi vmalls12e1");
-    dsb();
+    dsb_ish();
     isb();
 }
 
@@ -269,9 +269,9 @@ static inline void invalidateLocalTLB_VMALLS12E1(void)
 static inline void invalidateLocalTLB_IPA(word_t ipa)
 {
     asm volatile("tlbi ipas2e1, %0" :: "r"(ipa));
-    dsb();
+    dsb_ish();
     asm volatile("tlbi vmalle1");
-    dsb();
+    dsb_ish();
     isb();
 }
 
