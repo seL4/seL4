@@ -5,4 +5,9 @@
 #
 
 add_sources(DEP "KernelArchArmV8a" PREFIX src/arch/arm/armv/armv8-a/${KernelWordSize}
-            CFILES cache.c user_access.c ASMFILES machine_asm.S)
+            CFILES cache.c user_access.c)
+
+if("${KernelWordSize}" STREQUAL "32")
+  add_sources(DEP "KernelArchArmV8a" PREFIX src/arch/arm/armv/armv8-a/${KernelWordSize}
+              ASMFILES machine_asm.S)
+endif()
