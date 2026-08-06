@@ -25,7 +25,30 @@ void migrateTCB(tcb_t *tcb, word_t new_core)
      */
     fpuRelease(tcb);
 #endif /* CONFIG_HAVE_FPU */
-    tcb->tcbAffinity = new_core;
+    if (tcb == NODE_STATE(ksCurThread)) {
+        /**
+         * Switch the current thread to the idle thread. This is necessary to
+         * preserve the invariant the the current thread (NODE_STATE(ksCurThread))
+         * variable is always running on the current core.
+         *
+         */
+        switchToIdleThread();
+
+        /* Like rescheduleRequired but specific.
+         * This is broadly similar to how invokeTCB_SetAffinity() behaves.
+         */
+        tcb_t *action = NODE_STATE(ksSchedulerAction);
+        if (action == tcb || action == SchedulerAction_ResumeCurrentThread) {
+            NODE_STATE(ksSchedulerAction) = SchedulerAction_ChooseNewThread;
+        }
+
+        tcb->tcbAffinity = new_core;
+        if (isSchedulable(tcb)) {
+            SCHED_ENQUEUE(tcb);
+        }
+    } else {
+        tcb->tcbAffinity = new_core;
+    }
 #ifdef CONFIG_DEBUG_BUILD
     tcbDebugAppend(tcb);
 #endif
