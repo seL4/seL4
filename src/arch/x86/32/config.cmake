@@ -12,7 +12,6 @@ add_sources(
          kernel/thread.c
          kernel/vspace.c
          kernel/vspace_32paging.c
-         kernel/elf.c
          model/statedata.c
          machine/registerset.c
          machine/capdl.c

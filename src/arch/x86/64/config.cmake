@@ -11,7 +11,6 @@ add_sources(
          object/objecttype.c
          kernel/thread.c
          kernel/vspace.c
-         kernel/elf.c
          model/statedata.c
          model/smp.c
          machine/capdl.c
