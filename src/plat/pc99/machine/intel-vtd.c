@@ -80,6 +80,9 @@
 #define SAGAW_5_LEVEL 0x08
 #define SAGAW_6_LEVEL 0x10
 
+#define CM          7   /* CAP_REG: Caching Mode */
+#define CM_MASK     0x1
+
 #define CONTEXT_GLOBAL_INVALIDATE 0x1
 #define IOTLB_GLOBAL_INVALIDATE   0x1
 
@@ -519,6 +522,18 @@ BOOT_CODE bool_t vtd_init(cpu_id_t  cpu_id, acpi_rmrr_list_t *rmrr_list)
 {
     if (x86KSnumDrhu == 0) {
         return true;
+    }
+
+    for (drhu_id_t i = 0; i < x86KSnumDrhu; i++) {
+        /* Do not support caching mode.
+        * Caching Mode can only be set when hardware is being emulated.
+        * By default QEMU doesn't set Caching Mode so we disallow it altogether.
+        */
+        uint64_t caching_mode = (vtd_read64(drhu_id, CAP_REG) >> CM) & CM_MASK;
+        if (caching_mode == 1) {
+            printf("IOMMU 0x%x: A Caching Mode of 1 is unsupported\n", i);
+            return false;
+        }
     }
 
     x86KSvtdRootTable = (vtd_rte_t *) it_alloc_paging();

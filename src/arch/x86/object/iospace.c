@@ -132,7 +132,9 @@ void unmapVTDContextEntry(cap_t cap)
                false
            );
 
+    /* Removal of a context-table entry */
     flushCacheRange(cte, VTD_CTE_SIZE_BITS);
+    invalidate_context_cache();
     invalidate_iotlb();
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return;
@@ -426,7 +428,10 @@ void deleteIOPageTable(cap_t io_pt_cap)
                                     0,      /* Translation Type   */
                                     0       /* Present            */
                                 );
+            /* Removal of a context-table entry */
             flushCacheRange(vtd_context_slot, VTD_CTE_SIZE_BITS);
+            invalidate_context_cache();
+            /* IOTLB is invalidated later */
         } else {
             io_address = cap_io_page_table_cap_get_capIOPTMappedAddress(io_pt_cap);
             lu_ret = lookupIOPTSlot_resolve_levels(vtd_pte, io_address >> PAGE_BITS, level - 1, level - 1);
@@ -444,7 +449,9 @@ void deleteIOPageTable(cap_t io_pt_cap)
                                    0,  /* Read Permission  */
                                    0   /* Write Permission */
                                );
+            /* Removal of a Second-stage page-table entry */
             flushCacheRange(lu_ret.ioptSlot, VTD_PTE_SIZE_BITS);
+            /* IOTLB is invalidated later */
         }
         invalidate_iotlb();
     }
@@ -482,6 +489,7 @@ void unmapIOPage(cap_t cap)
                            0   /* Write Permission */
                        );
 
+    /* Removal of a Second-stage page-table entry */
     flushCacheRange(lu_ret.ioptSlot, VTD_PTE_SIZE_BITS);
     invalidate_iotlb();
 }
