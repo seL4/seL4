@@ -132,7 +132,9 @@ void unmapVTDContextEntry(cap_t cap)
                false
            );
 
+    /* Changes to a context-table entry */
     flushCacheRange(cte, VTD_CTE_SIZE_BITS);
+    invalidate_context_cache();
     invalidate_iotlb();
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return;
@@ -151,7 +153,10 @@ static exception_t performX86IOPTInvocationMapContextRoot(cap_t cap, cte_t *ctSl
                                                           vtd_cte_t *vtd_context_slot)
 {
     *vtd_context_slot = vtd_cte;
+    /* Changes to a context-table entry */
     flushCacheRange(vtd_context_slot, VTD_CTE_SIZE_BITS);
+    invalidate_context_cache();
+    invalidate_iotlb();
     ctSlot->cap = cap;
 
     return EXCEPTION_NONE;
@@ -160,7 +165,9 @@ static exception_t performX86IOPTInvocationMapContextRoot(cap_t cap, cte_t *ctSl
 static exception_t performX86IOPTInvocationMapPT(cap_t cap, cte_t *ctSlot, vtd_pte_t iopte, vtd_pte_t *ioptSlot)
 {
     *ioptSlot = iopte;
+    /* Changes to Second-stage page-tables */
     flushCacheRange(ioptSlot, VTD_PTE_SIZE_BITS);
+    invalidate_iotlb();
     ctSlot->cap = cap;
 
     return EXCEPTION_NONE;
@@ -287,7 +294,9 @@ static exception_t performX86IOInvocationMap(cap_t cap, cte_t *ctSlot, vtd_pte_t
 {
     ctSlot->cap = cap;
     *ioptSlot = iopte;
+    /* changes to Second-stage page-tables */
     flushCacheRange(ioptSlot, VTD_PTE_SIZE_BITS);
+    invalidate_iotlb();
 
     return EXCEPTION_NONE;
 }
@@ -426,7 +435,10 @@ void deleteIOPageTable(cap_t io_pt_cap)
                                     0,      /* Translation Type   */
                                     0       /* Present            */
                                 );
+            /* Changes to a context-table entry */
             flushCacheRange(vtd_context_slot, VTD_CTE_SIZE_BITS);
+            invalidate_context_cache();
+            /* IOTLB is invalidated later */
         } else {
             io_address = cap_io_page_table_cap_get_capIOPTMappedAddress(io_pt_cap);
             lu_ret = lookupIOPTSlot_resolve_levels(vtd_pte, io_address >> PAGE_BITS, level - 1, level - 1);
@@ -444,7 +456,9 @@ void deleteIOPageTable(cap_t io_pt_cap)
                                    0,  /* Read Permission  */
                                    0   /* Write Permission */
                                );
+            /* Changes to Second-stage page-tables */
             flushCacheRange(lu_ret.ioptSlot, VTD_PTE_SIZE_BITS);
+            /* IOTLB is invalidated later */
         }
         invalidate_iotlb();
     }
@@ -482,6 +496,7 @@ void unmapIOPage(cap_t cap)
                            0   /* Write Permission */
                        );
 
+    /* Changes to Second-stage page-tables */
     flushCacheRange(lu_ret.ioptSlot, VTD_PTE_SIZE_BITS);
     invalidate_iotlb();
 }
