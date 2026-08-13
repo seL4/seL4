@@ -182,7 +182,7 @@ static void NORETURN restore_vmx(tcb_t *cur_thread, vcpu_t *vcpu)
 #ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
         [stack_size]"i"(BIT(CONFIG_KERNEL_STACK_BITS)),
         [guest_msr]"r"(vcpu->guest_msr_registers),
-        [host_msr]"r"(vcpu->host_msr_registers)
+        [host_msr]"r"(&vcpu->host_msr_registers[n_vcpu_msr_register])
 #else /* not CONFIG_X86_64_VTX_64BIT_GUESTS */
         [stack_size]"i"(BIT(CONFIG_KERNEL_STACK_BITS))
 #ifdef ENABLE_SMP_SUPPORT
