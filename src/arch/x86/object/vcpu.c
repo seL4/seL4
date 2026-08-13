@@ -54,7 +54,7 @@ static struct PACKED {
 
 static msr_bitmaps_t msr_bitmap_region ALIGN(BIT(seL4_PageBits));
 
-static char null_ept_space[seL4_PageBits] ALIGN(BIT(seL4_PageBits));
+static char null_ept_space[BIT(seL4_PageBits)] ALIGN(BIT(seL4_PageBits));
 
 /* Cached value of the hardware defined vmcs revision */
 static uint32_t vmcs_revision;
