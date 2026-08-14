@@ -47,21 +47,18 @@ BOOT_CODE p_region_t get_p_reg_kernel_img(void)
 BOOT_CODE static void merge_regions(void)
 {
     /* Walk through reserved regions and see if any can be merged */
-    for (word_t i = 1; i < ndks_boot.resv_count;) {
-        if (ndks_boot.reserved[i - 1].end == ndks_boot.reserved[i].start) {
+    word_t top = 0;
+    for (word_t i = 1; i < ndks_boot.resv_count; i++) {
+        if (ndks_boot.reserved[top].end == ndks_boot.reserved[i].start) {
             /* extend earlier region */
-            ndks_boot.reserved[i - 1].end = ndks_boot.reserved[i].end;
-            /* move everything else down */
-            for (word_t j = i + 1; j < ndks_boot.resv_count; j++) {
-                ndks_boot.reserved[j - 1] = ndks_boot.reserved[j];
-            }
-
-            ndks_boot.resv_count--;
-            /* don't increment i in case there are multiple adjacent regions */
+            ndks_boot.reserved[top].end = ndks_boot.reserved[i].end;
         } else {
-            i++;
+            /* add region */
+            top++;
+            ndks_boot.reserved[top] = ndks_boot.reserved[i];
         }
     }
+    ndks_boot.resv_count = ndks_boot.resv_count > 0 ? top + 1 : 0;
 }
 
 BOOT_CODE bool_t reserve_region(p_region_t reg)
