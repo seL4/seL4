@@ -15,11 +15,11 @@
 
 /* Note that the HCR_DC for ARMv8 disables S1 translation if enabled */
 /* Trap SMC and override CPSR.AIF */
-#define HCR_COMMON ( HCR_VM | HCR_RW | HCR_AMO | HCR_IMO | HCR_FMO | HCR_TSC)
+#define HCR_COMMON ( HCR_VM | HCR_SWIO | HCR_RW | HCR_AMO | HCR_IMO | HCR_FMO | HCR_TSC)
 
 /* Allow native tasks to run at EL0, but restrict access */
 #define HCR_NATIVE ( HCR_COMMON | HCR_TGE | HCR_TVM | HCR_TTLB | HCR_DC \
-                   | HCR_TAC | HCR_SWIO |  HCR_TSC )
+                   | HCR_TAC | HCR_TSC )
 
 #ifdef CONFIG_DISABLE_WFI_WFE_TRAPS
 #define HCR_VCPU   ( HCR_COMMON)
