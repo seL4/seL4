@@ -7,20 +7,20 @@
 #pragma once
 
 #include <config.h>
-#include <mode/machine.h>
+#include <machine.h>
+#include <mode/model/statedata.h>
 
 static inline void invalidateLocalTLB_VMID(word_t vmid)
 {
     word_t vttbr = getVTTBR();
     word_t v = (vttbr >> 48);
     dsb();
-    /* We need to switch to the target VMID for flushing
-     * the TLB if necessary.
-     * Note that an invalid address is used, and it seems
-     * fine. Otherwise, an ASID lookup is required.
+    /* We need to switch to the target VMID for flushing the TLB if necessary.
+     * Use the global empty user vspace as a valid intermediate table address
+     * that does not add any mappings.
      */
     if (v != vmid) {
-        setCurrentUserVSpaceRoot(ttbr_new(vmid, 0));
+        setCurrentUserVSpaceRoot(ttbr_new(vmid, addrFromKPPtr(armKSGlobalUserVSpace)));
     }
     invalidateLocalTLB_VMALLS12E1();
     if (v != vmid) {
@@ -39,8 +39,9 @@ static inline void invalidateLocalTLB_IPA_VMID(word_t ipa_plus_vmid)
     /* The [0:35] bits are IPA, other bits are reserved as 0 */
     word_t ipa = ipa_plus_vmid & 0xfffffffff;
     dsb();
+    /* Same mechanism as in invalidateLocalTLB_VMID() above. */
     if (v != vmid) {
-        setCurrentUserVSpaceRoot(ttbr_new(vmid, 0));
+        setCurrentUserVSpaceRoot(ttbr_new(vmid, addrFromKPPtr(armKSGlobalUserVSpace)));
     }
     invalidateLocalTLB_IPA(ipa);
     if (v != vmid) {
