@@ -25,8 +25,6 @@
 #define VMX_EXIT_QUAL_TYPE_CLTS 2
 #define VMX_EXIT_QUAL_TYPE_LMSW 3
 
-#define VMXON_REGION_SIZE 4096
-
 const vcpu_gp_register_t crExitRegs[] = {
     VCPU_EAX, VCPU_ECX, VCPU_EDX, VCPU_EBX, VCPU_ESP, VCPU_EBP, VCPU_ESI, VCPU_EDI,
 #ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
@@ -46,11 +44,6 @@ typedef struct msr_bitmaps {
     msr_bitmap_t low_msr_write;
     msr_bitmap_t high_msr_write;
 } msr_bitmaps_t;
-
-static struct PACKED {
-    uint32_t revision;
-    char data[VMXON_REGION_SIZE - sizeof(uint32_t)];
-} vmxon_region ALIGN(VMXON_REGION_SIZE);
 
 static msr_bitmaps_t msr_bitmap_region ALIGN(BIT(seL4_PageBits));
 
@@ -1217,13 +1210,14 @@ BOOT_CODE bool_t vtx_init(void)
     }
     write_cr4(read_cr4() | CR4_VMXE);
     /* we are required to set the VMCS region in the VMXON region */
-    vmxon_region.revision = vmcs_revision;
+    struct vmxon_region *vmxon_kptr = &ARCH_NODE_STATE(x86KSVMXOnRegion);
+    vmxon_kptr->revision = vmcs_revision;
     /* Before calling vmxon, we must check that CR0 and CR4 are not set to values
      * that are unsupported by vt-x */
     if (!vtx_check_fixed_values(read_cr0(), read_cr4())) {
         return false;
     }
-    if (vmxon(kpptr_to_paddr(&vmxon_region))) {
+    if (vmxon(kpptr_to_paddr(vmxon_kptr))) {
         printf("vt-x: vmxon failure\n");
         return false;
     }

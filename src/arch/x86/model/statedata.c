@@ -55,6 +55,7 @@ uint32_t x86KSFirstValidIODomain;
 
 #ifdef CONFIG_VTX
 UP_STATE_DEFINE(vcpu_t *, x86KSCurrentVCPU);
+UP_STATE_DEFINE(struct vmxon_region, x86KSVMXOnRegion);
 #endif
 
 #ifdef CONFIG_PRINTING
