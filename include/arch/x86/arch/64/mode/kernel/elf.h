@@ -37,4 +37,5 @@ typedef struct Elf64_Phdr {
     uint64_t            p_align;
 } Elf64_Phdr_t, Elf_Phdr_t;
 
-#define ELF_EXPECTED_CLASS ELFCLASS64
+#define ELF_EXPECTED_CLASS   ELFCLASS64
+#define ELF_EXPECTED_MACHINE EM_X86_64
