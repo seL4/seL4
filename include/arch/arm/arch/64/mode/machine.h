@@ -161,6 +161,26 @@ static inline bool_t checkTCR_EL2(void)
     return (tcr_el2 == TCR_EL2_DEFAULT);
 }
 
+/* Supported ASID size field of ID_AA64MMFR0_EL1 */
+#define ID_AA64MMFR0_EL1_ASIDBITS(x)  (((x) >> 4) & 0xf)
+#define ID_AA64MMFR0_EL1_ASIDBITS_16  2
+/* Selected ASID size in TCR_EL1 */
+#define TCR_EL1_AS                    BIT(36)
+
+/* For non-hyp AArch64 configs, check that 16-bit ASIDs are supported
+ * and enabled. */
+static inline bool_t check16BitASID(void)
+{
+    word_t id_aa64mmfr0_el1 = 0;
+    word_t tcr_el1 = 0;
+
+    MRS("id_aa64mmfr0_el1", id_aa64mmfr0_el1);
+    MRS("tcr_el1", tcr_el1);
+
+    return ID_AA64MMFR0_EL1_ASIDBITS(id_aa64mmfr0_el1) == ID_AA64MMFR0_EL1_ASIDBITS_16 &&
+           (tcr_el1 & TCR_EL1_AS);
+}
+
 static inline void setCurrentKernelVSpaceRoot(ttbr_t ttbr)
 {
     dsb();
