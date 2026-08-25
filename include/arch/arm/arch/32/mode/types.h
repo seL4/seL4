@@ -14,3 +14,5 @@ compile_assert(long_is_32bits, sizeof(unsigned long) == 4)
 #define wordBits (1 << wordRadix)
 
 typedef uint32_t timestamp_t;
+
+typedef uint8_t  hw_asid_t;
