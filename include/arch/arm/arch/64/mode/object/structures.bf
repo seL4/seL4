@@ -200,11 +200,9 @@ block VMFault {
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 block VGICMaintenance {
-    padding          64
-
-    field idx        6
-    field idxValid   1
-    padding         25
+    field eisr1     32
+    field eisr0     32
+    padding         32
     padding         28
     field seL4_FaultType  4
 }
