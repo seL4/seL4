@@ -39,3 +39,5 @@ typedef struct Elf32_Phdr {
     uint32_t      p_flags;     /* Flags: logical "or" of PF_ constants below */
     uint32_t      p_align;     /* Reqd alignment of segment in memory */
 } Elf32_Phdr_t, Elf_Phdr_t;
+
+#define ELF_EXPECTED_CLASS ELFCLASS32
