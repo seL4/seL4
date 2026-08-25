@@ -80,7 +80,9 @@ BOOT_CODE void elf_load(Elf_Header_t *elfFile, seL4_Word offset)
     word_t     len;
     uint32_t   i;
 
-    /* Loop through all segments and load them. */
+    /* Loop through all segments and load them. Relies on the caller
+     * having already zeroed the destination memory (load_boot_module()
+     * does, via memzero()). */
     for (i = 0; i < elfFile->e_phnum; i++) {
         if (phdr[i].p_type != PT_LOAD || phdr[i].p_memsz == 0) {
             continue;
@@ -89,7 +91,5 @@ BOOT_CODE void elf_load(Elf_Header_t *elfFile, seL4_Word offset)
         dst = phdr[i].p_vaddr + offset;
         len = phdr[i].p_filesz;
         memcpy((void *)dst, (char *)src, len);
-        dst += len;
-        memset((void *)dst, 0, phdr[i].p_memsz - len);
     }
 }
