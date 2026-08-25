@@ -75,13 +75,13 @@ BOOT_CODE static paddr_t find_load_paddr(paddr_t min_paddr, word_t image_size)
     return 0;
 }
 
-BOOT_CODE static paddr_t load_boot_module(word_t boot_module_start, paddr_t load_paddr)
+BOOT_CODE static paddr_t load_boot_module(word_t boot_module_start, word_t boot_module_end, paddr_t load_paddr)
 {
     v_region_t v_reg;
     word_t entry;
     Elf_Header_t *elf_file = (Elf_Header_t *)boot_module_start;
 
-    if (!elf_checkFile(elf_file)) {
+    if (!elf_checkFile(elf_file, boot_module_end - boot_module_start)) {
         printf("Boot module does not contain a valid ELF image\n");
         return 0;
     }
@@ -454,7 +454,7 @@ static BOOT_CODE bool_t try_boot_sys(void)
     printf("ELF-loading userland images from boot modules:\n");
     load_paddr = mods_end_paddr;
 
-    load_paddr = load_boot_module(boot_state.boot_module_start, load_paddr);
+    load_paddr = load_boot_module(boot_state.boot_module_start, boot_state.boot_module_end, load_paddr);
     if (!load_paddr) {
         return false;
     }
@@ -596,6 +596,7 @@ static BOOT_CODE bool_t try_boot_sys_mbi1(
 
     boot_state.mem_lower = mbi->part1.mem_lower;
     boot_state.boot_module_start = modules->start;
+    boot_state.boot_module_end = modules->end;
 
     /* Initialize ACPI */
     if (!acpi_init(&boot_state.acpi_rsdp)) {
@@ -649,6 +650,7 @@ static BOOT_CODE bool_t try_boot_sys_mbi2(
 
             if (mod_count == 0) {
                 boot_state.boot_module_start = module->start;
+                boot_state.boot_module_end = module->end;
             }
 
             mod_count ++;
