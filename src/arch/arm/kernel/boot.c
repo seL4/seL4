@@ -194,6 +194,14 @@ BOOT_CODE static bool_t init_cpu(void)
         vcpu_boot_init();
     }
 
+#ifdef CONFIG_ARCH_AARCH64
+    /* After activate_kernel_vspace(), so printf() is available. */
+    if (!config_set(CONFIG_ARM_HYPERVISOR_SUPPORT) && !check16BitASID()) {
+        printf("ERROR: kernel requires 16-bit ASIDs\n");
+        return false;
+    }
+#endif
+
 #ifdef CONFIG_HARDWARE_DEBUG_API
     if (!Arch_initHardwareBreakpoints()) {
         printf("Kernel built with CONFIG_HARDWARE_DEBUG_API, but this board doesn't "
