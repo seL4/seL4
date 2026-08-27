@@ -786,9 +786,10 @@ static lookupPTSlot_ret_t lookupPTSlot(vspace_root_t *vspace, vptr_t vptr)
 /* Note that if the hypervisor support is enabled, the user page tables use
  * stage-2 translation format. Otherwise, they follow the stage-1 translation format.
  */
-static pte_t makeUserPagePTE(paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t attributes, vm_page_size_t page_size)
+static pte_t makeUserPagePTE(paddr_t paddr, vm_rights_t vm_rights, bool_t cap_read, vm_attributes_t attributes,
+                             vm_page_size_t page_size)
 {
-    bool_t nonexecutable = vm_attributes_get_armExecuteNever(attributes);
+    bool_t nonexecutable = vm_attributes_get_armExecuteNever(attributes) || !cap_read;
     word_t cacheable = vm_attributes_get_armPageCacheable(attributes);
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
@@ -1616,7 +1617,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
         cap_t vspaceRootCap;
         vspace_root_t *vspaceRoot;
         asid_t asid, frame_asid;
-        vm_rights_t vmRights;
+        vm_rights_t vmRights, capRights;
         vm_page_size_t frameSize;
         vm_attributes_t attributes;
         findVSpaceForASID_ret_t find_ret;
@@ -1631,8 +1632,8 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
         vspaceRootCap = current_extra_caps.excaprefs[0]->cap;
 
         frameSize = cap_frame_cap_get_capFSize(cap);
-        vmRights = maskVMRights(cap_frame_cap_get_capFVMRights(cap),
-                                rightsFromWord(getSyscallArg(1, buffer)));
+        capRights = cap_frame_cap_get_capFVMRights(cap);
+        vmRights = maskVMRights(capRights, rightsFromWord(getSyscallArg(1, buffer)));
 
         if (unlikely(!isValidNativeRoot(vspaceRootCap))) {
             current_syscall_error.type = seL4_InvalidCapability;
@@ -1698,9 +1699,11 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
+        bool_t cap_read = (capRights == VMReadOnly || capRights == VMReadWrite);
+        pte_t pte = makeUserPagePTE(base, vmRights, cap_read, attributes, frameSize);
+
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        return performPageInvocationMap(asid, cap, cte,
-                                        makeUserPagePTE(base, vmRights, attributes, frameSize), lu_ret.ptSlot);
+        return performPageInvocationMap(asid, cap, cte, pte, lu_ret.ptSlot);
     }
 
     case ARMPageUnmap:
