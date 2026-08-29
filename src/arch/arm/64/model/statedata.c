@@ -106,7 +106,7 @@ UP_STATE_DEFINE(bool_t, armHSVCPUActive);
  * when the kernel runs in EL2.
  */
 asid_t armKSHWASIDTable[BIT(hwASIDBits)];
-hw_asid_t armKSNextASID;
+hw_asid_t armKSNextASID = hwASIDMin;
 #endif
 
 #ifdef CONFIG_ARM_SMMU
