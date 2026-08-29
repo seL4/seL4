@@ -1826,8 +1826,10 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
         lookupSlot_ret_t lu_ret;
         void *frame;
         exception_t status;
+        word_t slot = 0;
 
-        if (unlikely(invLabel != ARMASIDControlMakePool)) {
+        if (unlikely(invLabel != ARMASIDControlMakePool) &&
+            invLabel != ARMASIDControlMakePoolByIndex) {
             current_syscall_error.type = seL4_IllegalOperation;
 
             return EXCEPTION_SYSCALL_ERROR;
@@ -1840,15 +1842,34 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
 
             return EXCEPTION_SYSCALL_ERROR;
         }
+        if (invLabel == ARMASIDControlMakePoolByIndex && length < 3) {
+            return EXCEPTION_SYSCALL_ERROR;
+        }
 
         index = getSyscallArg(0, buffer);
         depth = getSyscallArg(1, buffer);
+        if (invLabel == ARMASIDControlMakePoolByIndex) {
+            slot = getSyscallArg(2, buffer);
+        }
         parentSlot = current_extra_caps.excaprefs[0];
         untyped = parentSlot->cap;
         root = current_extra_caps.excaprefs[1]->cap;
 
-        /* Find first free pool */
-        for (i = 0; i < nASIDPools && armKSASIDTable[i]; i++);
+        /* Assign the requested slot to i.
+         * if index is provided, use it if the slot is empty,
+         * otherwise search the table for an empty slot.
+         * Set i to nASIDPools if cannot find suitable slot
+         */
+        if (invLabel == ARMASIDControlMakePoolByIndex) {
+            if (slot < nASIDPools && armKSASIDTable[slot] == NULL) {
+                i = slot;
+            } else {
+                i = nASIDPools;
+            }
+        } else {
+            /* Find first free pool */
+            for (i = 0; i < nASIDPools && armKSASIDTable[i]; i++);
+        }
 
         if (unlikely(i == nASIDPools)) {
             userError("ASIDControlMakePool: No unallocated pools found.");
@@ -1896,11 +1917,19 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
         asid_pool_t *pool;
         word_t i;
         asid_t asid;
+        word_t slot = 0;
 
-        if (unlikely(invLabel != ARMASIDPoolAssign)) {
+        if (unlikely(invLabel != ARMASIDPoolAssign) &&
+            invLabel != ARMASIDPoolAssignByIndex) {
             current_syscall_error.type = seL4_IllegalOperation;
 
             return EXCEPTION_SYSCALL_ERROR;
+        }
+        if (invLabel == ARMASIDPoolAssignByIndex && length < 1) {
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+        if (invLabel == ARMASIDPoolAssignByIndex) {
+            slot = getSyscallArg(0, buffer);
         }
 
         if (unlikely(current_extra_caps.excaprefs[0] == NULL)) {
@@ -1936,10 +1965,23 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        /* Find first free ASID */
         asid = cap_asid_pool_cap_get_capASIDBase(cap);
-        for (i = 0; i < (1 << asidLowBits) && (asid + i == 0
-                                               || (asid_map_get_type(pool->array[i]) != asid_map_asid_map_none)); i++);
+        /* Assign the requested slot to i.
+         * if index is provided, use it if the slot is empty,
+         * otherwise search the table for an empty slot.
+         * Set i to (1 << asidLowBits) if cannot find suitable slot
+         */
+        if (invLabel == ARMASIDPoolAssignByIndex) {
+            if (slot < (1 << asidLowBits) && asid_map_get_type(pool->array[slot]) == asid_map_asid_map_none) {
+                i = slot;
+            } else {
+                i = (1 << asidLowBits);
+            }
+        } else {
+            /* Find first free ASID */
+            for (i = 0; i < (1 << asidLowBits) && (asid + i == 0
+                                                   || (asid_map_get_type(pool->array[i]) != asid_map_asid_map_none)); i++);
+        }
 
         if (unlikely(i == 1 << asidLowBits)) {
             current_syscall_error.type = seL4_DeleteFirst;
