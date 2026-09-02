@@ -324,19 +324,6 @@ static inline word_t readDACR(void)
     return reg;
 }
 
-static inline void setCurrentPD(paddr_t addr)
-{
-    /* Before changing the PD ensure all memory stores have completed */
-    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        setCurrentPDPL2(addr);
-    } else {
-        dsb();
-        writeTTBR0Ptr(addr);
-        /* Ensure the PD switch completes before we do anything else */
-        isb();
-    }
-}
-
 static inline void setKernelStack(word_t stack_address)
 {
     /* Setup kernel stack pointer.

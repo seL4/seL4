@@ -19,7 +19,7 @@ asid_pool_t *armKSASIDTable[nASIDPools];
 
 /* The hardware ASID to virtual ASID mapping table */
 asid_t armKSHWASIDTable[BIT(hwASIDBits)];
-hw_asid_t armKSNextASID;
+hw_asid_t armKSNextASID = hwASIDMin;
 
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
 /* The global, privileged, physically-mapped PD */

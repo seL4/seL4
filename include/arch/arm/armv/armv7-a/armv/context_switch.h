@@ -33,9 +33,8 @@ static inline void armv_contextSwitch_HWASID(pde_t *cap_pd, hw_asid_t hw_asid)
      * The reserved Page directory method has shown to perform better
      * than the reserved ASID method.
      *
-     * We do not call setCurrentPD here as we want to perform a
-     * minimal number of DSB and ISBs and the second PD switch we
-     * do does not need a DSB
+     * We want to perform a minimal number of DSB and ISBs and the
+     * second PD switch does not need a DSB.
      */
     dsb();
     writeTTBR0Ptr(addrFromKPPtr(armKSGlobalPD));
