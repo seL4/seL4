@@ -47,8 +47,7 @@ block reply_cap {
     field capReplyPtr       64
 
     field capType           5
-    field capReplyCanGrant  1
-    padding                 word_size - 5 - 1
+    padding                 word_size - 5
 }
 
 block call_stack(callStackPtr, isHead) {
