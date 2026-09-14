@@ -138,15 +138,6 @@ void handle_fastsyscall(void);
 
 void init_syscall_msrs(void);
 
-/* Get current stack pointer */
-static inline void *get_current_esp(void)
-{
-    word_t stack;
-    void *result;
-    asm volatile("movq %[stack_address], %[result]" : [result] "=r"(result) : [stack_address] "r"(&stack));
-    return result;
-}
-
 typedef struct invpcid_desc {
     uint64_t    asid;
     uint64_t    addr;
