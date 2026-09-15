@@ -191,6 +191,7 @@ void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
 #ifdef CONFIG_KERNEL_MCS
                 if (replyPtr) {
                     replyPtr->replyTCB = thread;
+                    replyPtr->canGrant = cap_endpoint_cap_get_capCanGrant(cap);
                 }
 #endif
 
@@ -269,6 +270,7 @@ void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
                 if ((canGrant || canGrantReply) && replyPtr != NULL) {
                     bool_t canDonate = sender->tcbSchedContext != NULL
                                        && seL4_Fault_get_seL4_FaultType(sender->tcbFault) != seL4_Fault_Timeout;
+                    replyPtr->canGrant = cap_endpoint_cap_get_capCanGrant(cap);
                     reply_push(sender, thread, replyPtr, canDonate);
                 } else {
                     setThreadState(sender, ThreadState_Inactive);
