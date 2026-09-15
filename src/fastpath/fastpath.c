@@ -706,7 +706,8 @@ void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
         if (NODE_STATE(ksCurThread)->tcbPriority > dest->tcbPriority || crossnode) {
             SCHED_ENQUEUE(dest);
         } else {
-            SCHED_APPEND(dest);
+            /* We know that this thread must be on the current core */
+            tcbSchedAppend(dest);
         }
     }
 
