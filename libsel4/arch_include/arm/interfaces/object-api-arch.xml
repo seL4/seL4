@@ -489,6 +489,61 @@
                 </description>
             </error>
         </method>
+        <method id="ARMASIDControlMakePoolByIndex" name="MakePoolByIndex" manual_name="Make Pool By Index">
+            <brief>
+                Create an ASID Pool at the requested index.
+            </brief>
+            <description>
+                Together with a capability to <texttt text="Untyped Memory"/>, which is passed as an argument,
+                create an <texttt text="ASID Pool"/>. The untyped capability must represent a
+                4K memory object. This will create an ASID pool with enough space for 1024 VSpaces.
+            </description>
+            <param dir="in" name="untyped" type="seL4_Untyped"
+            description="Capability to an untyped memory object that will become the pool. Must be 4K bytes."/>
+            <param dir="in" name="root" type="seL4_CNode"
+            description="CPtr to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
+            <param dir="in" name="index" type="seL4_Word"
+            description="CPtr to the destination slot. Resolved from the root of the destination CSpace."/>
+            <param dir="in" name="depth" type="seL4_Uint8"
+            description="Number of bits of index to resolve to find the destination slot."/>
+            <param dir="in" name="slot" type="seL4_Word"
+            description="Index of slot to use for the asid pool."/>
+            <error name="seL4_DeleteFirst">
+                <description>
+                    The destination slot contains a capability.
+                    Or, there are no more ASID pools available.
+                </description>
+            </error>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The <texttt text="index"/> or <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                    Or, <texttt text="root"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="untyped"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="untyped"/> is not the exact size of an ASID pool object.
+                    Or, <texttt text="untyped"/> is a device untyped <docref>(see <autoref label="sec:kernmemalloc"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_RangeError">
+                <description>
+                    The <texttt text="depth"/> is invalid <docref>(see <autoref label="s:cspace-addressing"/>)</docref>.
+                </description>
+            </error>
+            <error name="seL4_RevokeFirst">
+                <description>
+                    The <texttt text="untyped"/> has been used to retype an object.
+                    Or, a copy of the <texttt text="untyped"/> capability exists.
+                </description>
+            </error>
+        </method>
     </interface>
     <interface name="seL4_ARM_ASIDPool" manual_name="ASID Pool"
         cap_description="The ASID pool which is being assigned to. Must not be full. Each ASID pool can contain 1024 entries.">
@@ -505,6 +560,40 @@
             <error name="seL4_DeleteFirst">
                 <description>
                     There are no more ASIDs available in <texttt text="_service"/>.
+                </description>
+            </error>
+            <error name="seL4_FailedLookup">
+                <description>
+                    The ASID pool of <texttt text="_service"/> is no longer assigned.
+                </description>
+            </error>
+            <error name="seL4_IllegalOperation">
+                <description>
+                    The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
+                </description>
+            </error>
+            <error name="seL4_InvalidCapability">
+                <description>
+                    The <texttt text="_service"/> or <texttt text="vspace"/> is a CPtr to a capability of the wrong type.
+                    Or, <texttt text="vspace"/> is already assigned to an ASID pool.
+                </description>
+            </error>
+        </method>
+        <method id="ARMASIDPoolAssignByIndex" name="AssignByIndex" manual_label="asidpool_assign_by_index"
+            manual_name="ASID Pool Assign By Index">
+            <brief>
+                Assign an ASID Pool at the requested index.
+            </brief>
+            <description>
+                Assigns an ASID to the VSpace passed in as an argument.
+            </description>
+            <param dir="in" name="vspace" type="seL4_CPtr"
+            description="The VSpace that is being assigned to an ASID pool. Must not already be assigned to an ASID pool."/>
+            <param dir="in" name="slot" type="seL4_Word"
+            description="Index of slot to use for the asid."/>
+            <error name="seL4_DeleteFirst">
+                <description>
+                    The requested slot is full in <texttt text="_service"/>.
                 </description>
             </error>
             <error name="seL4_FailedLookup">
