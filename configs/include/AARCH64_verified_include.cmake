@@ -65,3 +65,7 @@ set(KernelAllowSMCCalls
     ON
     CACHE BOOL ""
 )
+set(KernelAArch64SErrorIgnore
+    ON
+    CACHE BOOL ""
+)
