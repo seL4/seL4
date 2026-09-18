@@ -264,7 +264,7 @@ void handleInterrupt(irq_t irq)
          */
         maskInterrupt(true, irq);
 #ifdef CONFIG_IRQ_REPORTING
-        printf("Received disabled IRQ: %d\n", (int)IRQT_TO_IRQ(irq));
+        printf("kernel %lx; Received disabled IRQ: %d\n", ksKernelElfPaddrBase, (int)IRQT_TO_IRQ(irq));
 #endif
         break;
 

@@ -5,6 +5,8 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
+#include "sel4/loader_info.h"
+#include "util.h"
 #include <config.h>
 #include <assert.h>
 #include <kernel/boot.h>
@@ -23,6 +25,7 @@
 #include <arch/machine/timer.h>
 #include <arch/machine/fpu.h>
 #include <arch/machine/tlb.h>
+#include "bootinfo.h"
 
 #ifdef CONFIG_ARM_SMMU
 #include <drivers/smmu/smmuv2.h>
@@ -38,36 +41,27 @@ BOOT_BSS static volatile _Atomic int node_boot_lock;
 #endif /* ENABLE_SMP_SUPPORT */
 
 BOOT_BSS static region_t reserved[NUM_RESERVED_REGIONS];
+BOOT_BSS static p_region_t avail_p_regs[MAX_NUM_FREEMEM_REG];
+
+#ifdef CONFIG_ARM_GIC_V3_SUPPORT
+extern word_t mpidr_map[CONFIG_MULTIKERNEL_NUM_CPUS];
+#endif
 
 BOOT_CODE static bool_t arch_init_freemem(p_region_t ui_p_reg,
-                                          p_region_t dtb_p_reg,
+                                          word_t avail_p_regs_count,
+                                          int reserved_index_start,
                                           v_region_t it_v_reg,
                                           word_t extra_bi_size_bits)
 {
-    /* reserve the kernel image region */
-    reserved[0] = paddr_to_pptr_reg(get_p_reg_kernel_img());
 
-    int index = 1;
-
-    /* add the dtb region, if it is not empty */
-    if (dtb_p_reg.start) {
-        if (index >= ARRAY_SIZE(reserved)) {
-            printf("ERROR: no slot to add DTB to reserved regions\n");
-            return false;
-        }
-        reserved[index].start = (pptr_t) paddr_to_pptr(dtb_p_reg.start);
-        reserved[index].end = (pptr_t) paddr_to_pptr(dtb_p_reg.end);
-        index++;
-    }
+    int index = reserved_index_start;
 
     /* Reserve the user image region and the mode-reserved regions. For now,
      * only one mode-reserved region is supported, because this is all that is
      * needed.
      */
-    if (MODE_RESERVED > 1) {
-        printf("ERROR: MODE_RESERVED > 1 unsupported!\n");
-        return false;
-    }
+    compile_assert(mode_reserved_gt_1_unsupported, MODE_RESERVED <= 1);
+
     if (ui_p_reg.start < PADDR_TOP) {
         region_t ui_reg = paddr_to_pptr_reg(ui_p_reg);
         if (MODE_RESERVED == 1) {
@@ -105,12 +99,16 @@ BOOT_CODE static bool_t arch_init_freemem(p_region_t ui_p_reg,
             index++;
         }
 
+        assert(false);
         /* Reserve the ui_p_reg region still so it doesn't get turned into device UT. */
         reserve_region(ui_p_reg);
     }
 
-    /* avail_p_regs comes from the auto-generated code */
-    return init_freemem(ARRAY_SIZE(avail_p_regs), avail_p_regs,
+    /* reserve the kernel image region */
+    reserved[index] = paddr_to_pptr_reg(get_p_reg_kernel_img());
+    index += 1;
+
+    return init_freemem(avail_p_regs_count, avail_p_regs,
                         index, reserved,
                         it_v_reg, extra_bi_size_bits);
 }
@@ -339,15 +337,143 @@ BOOT_CODE static void release_secondary_cpus(void)
 
 /* Main kernel initialisation function. */
 
-static BOOT_CODE bool_t try_init_kernel(
-    paddr_t ui_p_reg_start,
-    paddr_t ui_p_reg_end,
-    sword_t pv_offset,
-    vptr_t  v_entry,
-    paddr_t dtb_phys_addr,
-    word_t  dtb_size
-)
+static BOOT_CODE bool_t try_init_kernel(paddr_t loader_info_p)
 {
+    // see below note about boot_node_id mpidr_el1_get_Aff0
+    node_id_t boot_node_id;
+    asm volatile("mrs %0, tpidr_el1" : "=r"(boot_node_id));
+
+    NODE_STATE(boot_cpu_id) = boot_node_id;
+
+    for (volatile uint64_t c = 0; c < (boot_node_id * 0x80000000); c++) {
+        asm volatile("" ::: "memory");
+    }
+
+    printf("loader info addr: 0x%lx\n", loader_info_p);
+
+    seL4_LoaderInfo *loader_info = (void *)loader_info_p;
+    if (loader_info->magic != SEL4_LOADER_INFO_MAGIC) {
+        printf("boot info magic wrong\n");
+        return false;
+    }
+    if (loader_info->version != SEL4_LOADER_INFO_VERSION_0) {
+        printf("boot info magic wrong\n");
+        return false;
+    }
+
+    vptr_t v_entry = loader_info->root_task_entry;
+
+    printf("root task v_entry: 0x%lx\n", v_entry);
+    // printf("root task pv_offset: 0x%lx 0x%lx\n", pv_offset, -pv_offset);
+
+    printf("num_kernel_regions: %d\n", loader_info->num_kernel_regions);
+    printf("num_ram_regions: %d\n", loader_info->num_ram_regions);
+    printf("num_root_task_regions: %d\n", loader_info->num_root_task_regions);
+    printf("num_reserved_regions: %d\n", loader_info->num_reserved_regions);
+
+    bool_t failed_checks = false;
+    if (loader_info->num_kernel_regions != 1) {
+        printf("only 1 kernel regions allowed\n");
+        failed_checks = true;
+    }
+    if (loader_info->num_ram_regions == 0) {
+        printf("need at least one ram region\n");
+        failed_checks = true;
+    }
+    if (loader_info->num_ram_regions > ARRAY_SIZE(avail_p_regs)) {
+        printf("too many ram regions: %d exceeds %d\n", loader_info->num_ram_regions, MAX_NUM_FREEMEM_REG);
+        failed_checks = true;
+    }
+    if (loader_info->num_root_task_regions == 0) {
+        printf("need at least one root task region\n");
+        failed_checks = true;
+    }
+    if (loader_info->num_reserved_regions > ARRAY_SIZE(reserved)) {
+        printf("too many reserved regions: %d exceeds %d\n", loader_info->num_reserved_regions, MAX_NUM_USER_RESERVED_REGIONS);
+        failed_checks = true;
+    }
+#ifdef CONFIG_ARM_GIC_V3_SUPPORT
+    if (loader_info->num_mpidrs > ARRAY_SIZE(mpidr_map)) {
+        printf("too many MPIDR values: %d exceeds %lu\n", loader_info->num_mpidrs, ARRAY_SIZE(mpidr_map));
+        failed_checks = true;
+    }
+#endif
+
+    if (failed_checks) {
+        printf("failed validation\n");
+        return false;
+    }
+
+    seL4_Loader_KernelRegion *kernel_regions = (void *)(loader_info_p + sizeof(seL4_LoaderInfo));
+    seL4_Loader_RamRegion *ram_regions = (void *)((word_t)kernel_regions + (loader_info->num_kernel_regions * sizeof(seL4_Loader_KernelRegion)));
+    seL4_Loader_RootTaskRegion *root_task_regions = (void *)((word_t)ram_regions + (loader_info->num_ram_regions * sizeof(seL4_Loader_RamRegion)));
+    seL4_Loader_ReservedRegion *reserved_regions = (void *)((word_t)root_task_regions + (loader_info->num_root_task_regions * sizeof(seL4_Loader_RootTaskRegion)));
+    uint64_t *mpidr_values = (void *)((word_t)reserved_regions + (loader_info->num_reserved_regions * sizeof(seL4_Loader_ReservedRegion)));
+    paddr_t end_of_loader_info = ((word_t)mpidr_values + (loader_info->num_mpidrs * sizeof(uint64_t)));
+
+    printf("kernel_regions addr: %p\n", kernel_regions);
+    printf("ram_regions addr: %p\n", ram_regions);
+    printf("root_task_regions addr: %p\n", root_task_regions);
+    printf("reserved_regions addr: %p\n", reserved_regions);
+    printf("mpidr_values addr: %p\n", mpidr_values);
+    printf("end of loader info addr: %p\n", (void *)end_of_loader_info);
+
+    // === Debugging: dump all ====
+
+    for (int i = 0; i < loader_info->num_kernel_regions; i++) {
+        printf("kernel_regions[%d].base = 0x%llx\n", i, kernel_regions[i].base);
+        printf("kernel_regions[%d].end = 0x%llx\n", i, kernel_regions[i].end);
+    }
+    for (int i = 0; i < loader_info->num_ram_regions; i++) {
+        printf("ram_regions[%d].base = 0x%llx\n", i, ram_regions[i].base);
+        printf("ram_regions[%d].end = 0x%llx\n", i, ram_regions[i].end);
+    }
+    for (int i = 0; i < loader_info->num_root_task_regions; i++) {
+        printf("root_task_regions[%d].paddr_base = 0x%llx\n", i, root_task_regions[i].paddr_base);
+        printf("root_task_regions[%d].paddr_end = 0x%llx\n", i, root_task_regions[i].paddr_end);
+        printf("root_task_regions[%d].vaddr_base = 0x%llx\n", i, root_task_regions[i].vaddr_base);
+    }
+    for (int i = 0; i < loader_info->num_reserved_regions; i++) {
+        printf("reserved_regions[%d].base = 0x%llx\n", i, reserved_regions[i].base);
+        printf("reserved_regions[%d].end = 0x%llx\n", i, reserved_regions[i].end);
+    }
+    for (int i = 0; i < loader_info->num_mpidrs; i++) {
+        printf("mpidr_values[%d] = 0x%llx\n", i, mpidr_values[i]);
+    }
+    // === end dump all
+
+
+#ifdef CONFIG_ARM_GIC_V3_SUPPORT
+    // relying on len(mpidr_map) == len(mpidrs)
+    for (int i = 0; i < ARRAY_SIZE(mpidr_map); i++) {
+        mpidr_map[i] = mpidr_values[i];
+    }
+
+#endif
+
+    // // TODO: ???
+    word_t dtb_size = 0;
+    paddr_t dtb_phys_addr = 0;
+    sword_t pv_offset;
+    paddr_t extra_device_addr_start;
+    word_t extra_device_size;
+    paddr_t ui_p_reg_start;
+    paddr_t ui_p_reg_end;
+
+    // HACK: This assumes 1 region.
+    assert(loader_info->num_kernel_regions == 1);
+    // TODO: This is not true due to alignment.
+    ksKernelElfPaddrBase = kernel_regions[0].base;
+    /// XXX: End?
+
+    // HACK: This assumes 1 region.
+    assert(loader_info->num_root_task_regions == 1);
+    ui_p_reg_start = root_task_regions[0].paddr_base;
+    ui_p_reg_end = root_task_regions[0].paddr_end;
+    // HACK: remove pv_offset code
+    pv_offset = root_task_regions[0].paddr_base - root_task_regions[0].vaddr_base;
+
+    // =======================================================
     cap_t root_cnode_cap;
     cap_t it_ap_cap;
     cap_t it_pd_cap;
@@ -374,6 +500,20 @@ static BOOT_CODE bool_t try_init_kernel(
     bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
     extra_bi_frame_vptr = bi_frame_vptr + BIT(seL4_BootInfoFrameBits);
 
+    /* Get the CPU ID of the CPU we are booting on. */
+    mpidr_el1_t mpidr_el1;
+    asm volatile("mrs %0, mpidr_el1" : "=r"(mpidr_el1.words[0]));
+
+    // // TODO: This is somewhat arbitrary for now...
+    // // XXX: How is this different to getCurrentCPUIndex()
+    // // XXX: What is difference between node_id_t and cpu_id_t?
+    // node_id_t boot_node_id = mpidr_el1_get_Aff0(mpidr_el1);
+
+    if (!IS_ALIGNED(ksKernelElfPaddrBase, seL4_LargePageBits)) {
+        printf("kernel elf paddr base is not aligned\n");
+        return false;
+    }
+
     /* setup virtual memory for the kernel */
     map_kernel_window();
 
@@ -385,6 +525,13 @@ static BOOT_CODE bool_t try_init_kernel(
 
     /* debug output via serial port is only available from here */
     printf("Bootstrapping kernel\n");
+
+    /* Convert to virtual addresses */
+    loader_info = ptrFromPAddr((paddr_t)loader_info);
+    kernel_regions = ptrFromPAddr((paddr_t)kernel_regions);
+    ram_regions = ptrFromPAddr((paddr_t)ram_regions);
+    root_task_regions = ptrFromPAddr((paddr_t)root_task_regions);
+    reserved_regions = ptrFromPAddr((paddr_t)reserved_regions);
 
     /* initialise the platform */
     init_plat();
@@ -437,7 +584,23 @@ static BOOT_CODE bool_t try_init_kernel(
         return false;
     }
 
-    if (!arch_init_freemem(ui_p_reg, dtb_p_reg, it_v_reg, extra_bi_size_bits)) {
+    /* safe because size checked before */
+    word_t avail_p_regs_count = loader_info->num_ram_regions;
+    for (int i = 0; i < avail_p_regs_count; i++) {
+        avail_p_regs[i].start = ram_regions[i].base;
+        avail_p_regs[i].end = ram_regions[i].end;
+    }
+
+    /* safe because size checked before */
+    word_t reserved_count = loader_info->num_reserved_regions;
+    for (int i = 0; i < reserved_count; i++) {
+        reserved[i].start = (pptr_t)paddr_to_pptr(reserved_regions[i].base);
+        reserved[i].end = (pptr_t)paddr_to_pptr(reserved_regions[i].end);
+        printf("reserved[%d] = {%lx, %lx}\n", i, reserved[i].start, reserved[i].end);
+    }
+
+    // XX: Why does this function exist.
+    if (!arch_init_freemem(ui_p_reg, avail_p_regs_count, reserved_count, it_v_reg, extra_bi_size_bits)) {
         printf("ERROR: free memory management initialization failed\n");
         return false;
     }
@@ -463,7 +626,19 @@ static BOOT_CODE bool_t try_init_kernel(
     init_smc(root_cnode_cap);
 #endif
 
+#ifdef CONFIG_ENABLE_MULTIKERNEL_SUPPORT
+    printf("MPIDR_EL1: %llx\n", mpidr_el1.words[0]);
+    printf("MPIDR_EL1:U: %s\n", mpidr_el1_get_U(mpidr_el1) ? "uniprocessor" : "multiprocessor");
+    printf("MPIDR_EL1:MT: %s\n", mpidr_el1_get_MT(mpidr_el1) ? "SMT" : "no SMT");
+    printf("MPIDR_EL1:Aff0: %llx\n", mpidr_el1_get_Aff0(mpidr_el1));
+    printf("MPIDR_EL1:Aff1: %llx\n", mpidr_el1_get_Aff1(mpidr_el1));
+    printf("MPIDR_EL1:Aff2: %llx\n", mpidr_el1_get_Aff2(mpidr_el1));
+    printf("MPIDR_EL1:Aff3: %llx\n", mpidr_el1_get_Aff3(mpidr_el1));
+
+    populate_bi_frame(boot_node_id, CONFIG_MULTIKERNEL_NUM_CPUS, ipcbuf_vptr, extra_bi_size);
+#else
     populate_bi_frame(0, CONFIG_MAX_NUM_NODES, ipcbuf_vptr, extra_bi_size);
+#endif
 
     /* put DTB in the bootinfo block, if present. */
     seL4_BootInfoHeader header;
@@ -528,7 +703,8 @@ static BOOT_CODE bool_t try_init_kernel(
     }
 
 #ifdef CONFIG_KERNEL_MCS
-    init_sched_control(root_cnode_cap, CONFIG_MAX_NUM_NODES);
+    // for multikernel, only want 1 schedcontrol cap
+    init_sched_control(root_cnode_cap, SMP_TERNARY(CONFIG_MAX_NUM_NODES, 1));
 #endif
 
     /* create the initial thread's IPC buffer */
@@ -634,41 +810,31 @@ static BOOT_CODE bool_t try_init_kernel(
     return true;
 }
 
-BOOT_CODE VISIBLE void init_kernel(
-    paddr_t ui_p_reg_start,
-    paddr_t ui_p_reg_end,
-    sword_t pv_offset,
-    vptr_t  v_entry,
-    paddr_t dtb_addr_p,
-    uint32_t dtb_size
-)
+BOOT_CODE VISIBLE void init_kernel(paddr_t loader_info_p)
 {
     bool_t result;
+
+    printf("hi\n");
+
+    // TODO: getCurrentCPUIndex() for multikernel.
 
 #ifdef ENABLE_SMP_SUPPORT
     /* we assume there exists a cpu with id 0 and will use it for bootstrapping */
     if (getCurrentCPUIndex() == 0) {
-        result = try_init_kernel(ui_p_reg_start,
-                                 ui_p_reg_end,
-                                 pv_offset,
-                                 v_entry,
-                                 dtb_addr_p, dtb_size);
+        result = try_init_kernel(loader_info_p);
     } else {
         result = try_init_kernel_secondary_core();
     }
 
 #else
-    result = try_init_kernel(ui_p_reg_start,
-                             ui_p_reg_end,
-                             pv_offset,
-                             v_entry,
-                             dtb_addr_p, dtb_size);
+    result = try_init_kernel(loader_info_p);
 
 #endif /* ENABLE_SMP_SUPPORT */
 
     if (!result) {
-        fail("ERROR: kernel init failed");
-        UNREACHABLE();
+        return;
+        // fail("ERROR: kernel init failed");
+        // UNREACHABLE();
     }
 
 #ifdef CONFIG_KERNEL_MCS

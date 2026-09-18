@@ -81,6 +81,7 @@ typedef word_t __attribute__((__may_alias__)) word_t_may_alias;
 typedef uint8_t seL4_Uint8;
 typedef uint16_t seL4_Uint16;
 typedef uint32_t seL4_Uint32;
+typedef uint64_t seL4_Uint64;
 typedef word_t seL4_Word;
 typedef cptr_t seL4_CPtr;
 typedef node_id_t seL4_NodeId;

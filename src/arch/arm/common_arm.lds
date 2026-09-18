@@ -12,13 +12,11 @@
 
 ENTRY(_start)
 
-KERNEL_OFFSET = KERNEL_ELF_BASE_RAW - KERNEL_ELF_PADDR_BASE_RAW;
-
 SECTIONS
 {
-    . = KERNEL_ELF_BASE_RAW;
+    . = KERNEL_ELF_BASE;
 
-    .boot . : AT(ADDR(.boot) - KERNEL_OFFSET)
+    .boot . :
     {
         *(.boot.text)
         *(.boot.rodata)
@@ -28,7 +26,7 @@ SECTIONS
 
     ki_boot_end = .;
 
-    .text . : AT(ADDR(.text) - KERNEL_OFFSET)
+    .text . :
     {
         /* Sit inside a large frame */
         . = ALIGN(64K);
@@ -48,18 +46,18 @@ SECTIONS
         *(.text)
     }
 
-    .rodata . : AT(ADDR(.rodata) - KERNEL_OFFSET)
+    .rodata . :
     {
         *(.rodata)
         *(.rodata.*)
     }
 
-    .data . : AT(ADDR(.data) - KERNEL_OFFSET)
+    .data . :
     {
         *(.data)
     }
 
-    .bss . (NOLOAD): AT(ADDR(.bss) - KERNEL_OFFSET)
+    .bss . (NOLOAD) :
     {
         *(.bss)
         *(COMMON) /* fallback in case '-fno-common' is not used */

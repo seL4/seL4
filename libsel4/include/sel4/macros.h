@@ -17,6 +17,7 @@
 #endif
 
 #define SEL4_PACKED             __attribute__((packed))
+#define SEL4_ALIGNAS(ty)        __attribute__((aligned(_Alignof(ty))))
 #define SEL4_DEPRECATED(x)      __attribute__((deprecated(x)))
 #define SEL4_DEPRECATE_MACRO(x) _Pragma("deprecated") x
 
