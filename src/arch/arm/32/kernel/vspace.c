@@ -53,6 +53,8 @@
 #define ATTRINDX_NONCACHEABLE 0x0  /* strongly ordered or device memory */
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
+static void setGlobalPD(void);
+
 struct resolve_ret {
     paddr_t frameBase;
     vm_page_size_t frameSize;
@@ -548,7 +550,7 @@ BOOT_CODE void activate_kernel_vspace(void)
        that everything we've written (particularly the kernel page tables)
        is committed. */
     cleanInvalidateL1Caches();
-    setCurrentPD(addrFromKPPtr(armKSGlobalPD));
+    setGlobalPD();
     invalidateLocalTLB();
     lockTLBEntry(PPTR_BASE);
     lockTLBEntry(PPTR_VECTOR_TABLE);
@@ -997,6 +999,25 @@ bool_t CONST isIOSpaceFrameCap(cap_t cap)
 #endif
 }
 
+/** Switch to the empty PD on the reserved HW ASID */
+static void setGlobalPD(void)
+{
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    writeContextIDAndPD(hwASIDReserved, addrFromKPPtr(armUSGlobalPD));
+#else
+    /* Before changing the PD ensure all memory accesses have completed */
+    dsb();
+    /* First switch to global PD on old ASID. Stale TLB entries may exist
+       under the old ASID, but no new stale mappings can be added any more. */
+    writeTTBR0Ptr(addrFromKPPtr(armKSGlobalPD));
+    /* Ensure the PD switch completes before we do anything else */
+    isb();
+    /* Switch to reserved HW ASID. Only empty/global kernel mappings are
+       now available from the TLB. */
+    setHardwareASID(hwASIDReserved);
+#endif
+}
+
 void setVMRoot(tcb_t *tcb)
 {
     cap_t threadRoot;
@@ -1008,11 +1029,7 @@ void setVMRoot(tcb_t *tcb)
 
     if (cap_get_capType(threadRoot) != cap_page_directory_cap ||
         !cap_page_directory_cap_get_capPDIsMapped(threadRoot)) {
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-        setCurrentPD(addrFromKPPtr(armUSGlobalPD));
-#else
-        setCurrentPD(addrFromKPPtr(armKSGlobalPD));
-#endif
+        setGlobalPD();
         return;
     }
 
@@ -1020,11 +1037,7 @@ void setVMRoot(tcb_t *tcb)
     asid = cap_page_directory_cap_get_capPDMappedASID(threadRoot);
     find_ret = findPDForASID(asid);
     if (unlikely(find_ret.status != EXCEPTION_NONE || find_ret.pd != pd)) {
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-        setCurrentPD(addrFromKPPtr(armUSGlobalPD));
-#else
-        setCurrentPD(addrFromKPPtr(armKSGlobalPD));
-#endif
+        setGlobalPD();
         return;
     }
 
@@ -1126,23 +1139,24 @@ hw_asid_t findFreeHWASID(void)
          hw_asid_offset <= (word_t)((hw_asid_t) - 1);
          hw_asid_offset ++) {
         hw_asid = armKSNextASID + ((hw_asid_t)hw_asid_offset);
-        if (armKSHWASIDTable[hw_asid] == asidInvalid) {
+        if (hw_asid != hwASIDReserved && armKSHWASIDTable[hw_asid] == asidInvalid) {
             return hw_asid;
         }
     }
 
-    hw_asid = armKSNextASID;
-
     /* If we've scanned the table without finding a free ASID */
+    hw_asid = armKSNextASID;
     invalidateASID(armKSHWASIDTable[hw_asid]);
 
     /* Flush TLB */
     invalidateTranslationASID(hw_asid);
     armKSHWASIDTable[hw_asid] = asidInvalid;
 
-    /* Increment the NextASID index */
+    /* Increment the NextASID index, skipping the reserved ASID 0 on wrap */
     armKSNextASID++;
-
+    if (armKSNextASID == hwASIDReserved) {
+        armKSNextASID = hwASIDMin;
+    }
     return hw_asid;
 }
 
