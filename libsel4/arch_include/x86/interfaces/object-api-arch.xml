@@ -263,6 +263,11 @@
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
                 </description>
             </error>
+            <error name="seL4_RevokeFirst">
+                <description>
+                    A copy of the <texttt text="_service"/> capability exists.
+                </description>
+            </error>
         </method>
     </interface>
 
