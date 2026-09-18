@@ -31,7 +31,6 @@ static inline word_t readTPIDR_EL2(void)
 #endif /* End of CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 /* used in other files without guards */
-static inline void setCurrentPDPL2(paddr_t pa) {}
 static inline void invalidateHypTLB(void) {}
 static inline void writeContextIDPL2(word_t pd_val) {}
 static inline void writeContextIDAndPD(word_t id, word_t pd_val) {}
