@@ -183,7 +183,11 @@ exception_t decodeX86IOPTInvocation(
     vtd_pte_t *vtd_pte;
 
     if (invLabel == X86IOPageTableUnmap) {
-
+        if (!isFinalCapability(slot)) {
+            userError("X86IOPageTableUnmap: Cannot unmap if more than one cap exists.");
+            current_syscall_error.type = seL4_RevokeFirst;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performX86IOPTInvocationUnmap(cap, slot);
     }

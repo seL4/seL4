@@ -81,6 +81,8 @@ static bool_t vmx_feature_ack_on_exit;
 static vcpu_t *x86KSVPIDTable[VPID_LAST + 1];
 static vpid_t x86KSNextVPID = VPID_FIRST;
 
+static void releaseVPID(vpid_t vpid);
+
 static inline bool_t vmxon(paddr_t vmxon_region)
 {
     uint8_t error;
@@ -546,6 +548,9 @@ void vcpu_finalise(vcpu_t *vcpu)
     }
     if (vcpu->vcpuTCB) {
         dissociateVcpuTcb(vcpu->vcpuTCB, vcpu);
+    }
+    if (vcpu->vpid != VPID_INVALID) {
+        releaseVPID(vcpu->vpid);
     }
 }
 
@@ -1489,6 +1494,16 @@ static void invalidateVPID(vpid_t vpid)
     }
 }
 
+/** Disassociate a VPID from its VCPU */
+static void releaseVPID(vpid_t vpid)
+{
+    vcpu_t *vcpu = x86KSVPIDTable[vpid];
+
+    invalidateVPID(vpid);
+    vcpu->vpid = VPID_INVALID;
+    x86KSVPIDTable[vpid] = NULL;
+}
+
 static vpid_t findFreeVPID(void)
 {
     vpid_t vpid;
@@ -1501,12 +1516,9 @@ static vpid_t findFreeVPID(void)
         vpid = nextVPID(vpid);
     } while (vpid != x86KSNextVPID);
 
-    /* Forcively take the next VPID */
+    /* Forcibly take the next VPID */
     vpid = x86KSNextVPID;
-    invalidateVPID(vpid);
-
-    x86KSVPIDTable[vpid]->vpid = VPID_INVALID;
-    x86KSVPIDTable[vpid] = NULL;
+    releaseVPID(vpid);
 
     x86KSNextVPID = nextVPID(x86KSNextVPID);
     return vpid;
