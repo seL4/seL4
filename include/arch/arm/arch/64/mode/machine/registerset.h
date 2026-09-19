@@ -44,6 +44,7 @@
 /* ID_AA64PFR0_EL1 register */
 #define ID_AA64PFR0_EL1_FP      16     // HWCap for Floating Point
 #define ID_AA64PFR0_EL1_ASIMD   20     // HWCap for Advanced SIMD
+#define ID_AA64PFR0_EL1_RAS     28     // RAS extension
 
 /* CPACR_EL1 register */
 #define CPACR_EL1_FPEN          20     // FP registers access
