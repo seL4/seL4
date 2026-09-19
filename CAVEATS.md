@@ -9,8 +9,8 @@
 ## Implementation Correctness
 
 The following seL4 architectures have platforms with a C-level functional
-correctness proof. Proof support for further platforms for RISC-V is on
-the roadmap and expected in 2026.
+correctness proof. For the current seL4 release, these are all 64-bit platforms
+seL4 support, as well as all 32-bit Arm platforms that seL4 supports.
 
 - AArch32: Armv7-a with and without hypervisor extensions, no SMMU, no FPU, with
   fast path
@@ -47,7 +47,15 @@ the roadmap and expected in 2026.
     - `ultra96v2`
     - `zynqmp`
 - RISC-V: 64-bit only, no FPU, no fast path
-  - Platforms: `hifive`
+  - Platforms:
+    - `hifive`
+    - `ariane`
+    - `bananapi-f3`
+    - `cheshire`
+    - `hifive-p550`
+    - `polarfire`
+    - `rocketchip`
+    - `star64`
 - x64: without VT-x and VT-d, with FPU, no fast path
   - Platforms: `pc99`
 - RISC-V MCS: 64-bit only, no FPU, no fast path, MCS configuration
