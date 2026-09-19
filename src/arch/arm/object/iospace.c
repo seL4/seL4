@@ -156,6 +156,11 @@ exception_t decodeARMIOPTInvocation(
     lookupIOPDSlot_ret_t    lu_ret;
 
     if (invLabel == ARMIOPageTableUnmap) {
+        if (!isFinalCapability(slot)) {
+            userError("IOPTUnmap: Cannot unmap if more than one cap exists.");
+            current_syscall_error.type = seL4_RevokeFirst;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
         deleteIOPageTable(slot->cap);
         slot->cap = cap_io_page_table_cap_set_capIOPTIsMapped(slot->cap, 0);
 
