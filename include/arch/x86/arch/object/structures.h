@@ -310,6 +310,7 @@ static inline bool_t CONST Arch_isCapRevocable(cap_t derivedCap, cap_t srcCap)
         return cap_get_capType(srcCap) == cap_io_port_control_cap;
 
     default:
+        // @0aids: Intentionally non-exhaustive?
         return false;
     }
 }
