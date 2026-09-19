@@ -202,8 +202,8 @@ config_option(
   "By default any SError interrupt will halt the kernel. SErrors may \
     be caused by e.g. writes to read-only device registers or ECC errors. \
     When this option is enabled SErrors will be ignored."
-  DEFAULT OFF
-  DEPENDS "KernelSel4ArchAarch64;NOT KernelVerificationBuild")
+  DEFAULT ON
+  DEPENDS "KernelSel4ArchAarch64")
 mark_as_advanced(KernelAArch64SErrorIgnore)
 
 config_option(

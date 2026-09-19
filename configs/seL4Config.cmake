@@ -146,8 +146,7 @@ foreach(
         KernelArmCortexA76
         KernelArchArmV7a
         KernelArchArmV7ve
-        KernelArchArmV8a
-        KernelAArch64SErrorIgnore)
+        KernelArchArmV8a)
   unset(${var} CACHE)
   set(${var} OFF)
 endforeach()
@@ -199,7 +198,6 @@ config_set(KernelArmCortexA76 ARM_CORTEX_A76 "${KernelArmCortexA76}")
 config_set(KernelArchArmV7a ARCH_ARM_V7A "${KernelArchArmV7a}")
 config_set(KernelArchArmV7ve ARCH_ARM_V7VE "${KernelArchArmV7ve}")
 config_set(KernelArchArmV8a ARCH_ARM_V8A "${KernelArchArmV8a}")
-config_set(KernelAArch64SErrorIgnore AARCH64_SERROR_IGNORE "${KernelAArch64SErrorIgnore}")
 
 # Export timer frequency to user space:
 if(CONFIGURE_TIMER_FREQUENCY)
