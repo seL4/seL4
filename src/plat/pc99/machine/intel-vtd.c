@@ -335,7 +335,10 @@ BOOT_CODE static void vtd_map_reserved_page(vtd_cte_t *vtd_context_table, int co
                                 0,                        /* Translation Type                       */
                                 true);                    /* Present                                */
         x86KSFirstValidIODomain++;
+        /* Changes to a context-table entry */
         flushCacheRange(vtd_context_slot, VTD_CTE_SIZE_BITS);
+        invalidate_context_cache();
+        invalidate_iotlb();
     } else {
         iopt = (vtd_pte_t *)paddr_to_pptr(vtd_cte_ptr_get_asr(vtd_context_slot));
     }
@@ -353,14 +356,18 @@ BOOT_CODE static void vtd_map_reserved_page(vtd_cte_t *vtd_context_table, int co
         if (i == 0) {
             /* Now put the mapping in */
             *vtd_pte_slot = vtd_pte_new(addr, 1, 1);
+            /* Changes to Second-stage page-tables */
             flushCacheRange(vtd_pte_slot, VTD_PTE_SIZE_BITS);
+            invalidate_iotlb();
         } else {
             if (!vtd_pte_ptr_get_write(vtd_pte_slot)) {
                 iopt = (vtd_pte_t *) it_alloc_paging();
                 flushCacheRange(iopt, seL4_IOPageTableBits);
 
                 *vtd_pte_slot = vtd_pte_new(pptr_to_paddr(iopt), 1, 1);
+                /* Changes to Second-stage page-tables */
                 flushCacheRange(vtd_pte_slot, VTD_PTE_SIZE_BITS);
+                invalidate_iotlb();
             } else {
                 iopt = (vtd_pte_t *)paddr_to_pptr(vtd_pte_ptr_get_addr(vtd_pte_slot));
             }
