@@ -15,6 +15,7 @@
 #include <api/types.h>
 #include <smp/lock.h>
 #include <arch/machine/hardware.h>
+#include <arch/model/statedata.h>
 #include <machine/fpu.h>
 
 void slowpath(syscall_t syscall)
@@ -69,6 +70,16 @@ static inline bool_t isValidVTableRoot_fp(cap_t vspace_root_cap)
 {
     return cap_capType_equals(vspace_root_cap, cap_page_table_cap) &&
            cap_page_table_cap_get_capPTIsMapped(vspace_root_cap);
+}
+
+/* Fastpath version of findVSpaceForASID(). Returns NULL if the ASID does not resolve. */
+static inline pte_t *findVSpaceForASID_fp(asid_t asid)
+{
+    asid_pool_t *poolPtr = riscvKSASIDTable[ASID_HIGH(asid)];
+    if (unlikely(!poolPtr)) {
+        return NULL;
+    }
+    return poolPtr->array[ASID_LOW(asid)];
 }
 
 /* This is an accelerated check that msgLength, which appears
