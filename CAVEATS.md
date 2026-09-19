@@ -200,6 +200,32 @@ unmap operation for a mapping slot that now points to another frame, but cannot
 distinguish a cap with correct mapping information for the old VSpace from a cap
 with correct mapping information for the new VSpace.
 
+## Devices, DMA, and Device-Untypeds
+
+At startup the kernel passes device-untyped capabilities to the initial
+user-level task. These capabilities cover regions for memory-mapped IO for
+devices, including DMA capable devices.
+
+This is intentional, because in seL4 device drivers run at user level and
+therefore need access to these devices. Some devices, especially DMA-capable
+devices, can bypass kernel protection mechanisms, for instance by writing to
+memory directly, by causing system errors, or by producing excessive interrupts.
+
+The proofs mentioned above assume that these behaviours do not occur, that is,
+that no device causes unrecoverable system errors and that no device writes to
+memory the kernel interacts with, or to memory that user space depends on
+for anything other than input.
+
+This means drivers handling such devices must be trusted to configure them
+safely, and it is the responsibility of the initial user-level task to only hand
+out capabilities for such devices to sufficiently trusted driver components.
+
+Where available, the IOMMU (x64) or SMMU (Arm) may be used to restrict where
+DMA-capable devices can write, but note that IOMMU/SMMU is not supported by
+verified configurations in seL4 yet. For static systems, on hardware where
+IOMMU/SMMU support is not currently available in seL4, it may also be possible
+to configure the IOMMU/SMMU before seL4 runs and restrict DMA that way.
+
 ## Intel VT-d (IOMMU)
 
 ### Support
