@@ -14,7 +14,7 @@ typedef uint64_t dschedule_t;
 extern dschedule_t ksDomSchedule[CONFIG_NUM_DOMAIN_SCHEDULES];
 
 /* The domain is stored in the top 8 bits, duration in the bottom 56 bits. */
-#define DSCHED_DOMAIN_BITS 8 // Maximum of 255 domains supported
+#define DSCHED_DOMAIN_BITS 8 // Maximum of 256 domains supported
 #define DSCHED_DOMAIN_SHIFT (64 - DSCHED_DOMAIN_BITS)
 #define DSCHED_MAX_DURATION (UINT64_MAX >> DSCHED_DOMAIN_BITS)
 #define DSCHED_DURATION_MASK DSCHED_MAX_DURATION

@@ -1351,7 +1351,7 @@
             </error>
             <error name="seL4_InvalidArgument">
                 <description>
-                    The <texttt text="domain"/> is greater than <texttt text="KernelNumDomains"/>.
+                    The <texttt text="domain"/> is not less than <texttt text="KernelNumDomains"/>.
                     Or, <texttt text="thread"/> is a CPtr to a capability of the wrong type.
                 </description>
             </error>
