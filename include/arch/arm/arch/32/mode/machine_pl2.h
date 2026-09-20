@@ -74,6 +74,20 @@ static inline word_t PURE getHCPTR(void)
     return HCPTR;
 }
 
+static inline void setHSTR(word_t r)
+{
+    dsb();
+    asm volatile("mcr p15, 4, %0, c1, c1, 3" : : "r"(r));
+    isb();
+}
+
+static inline word_t PURE getHSTR(void)
+{
+    word_t HSTR;
+    asm volatile("mrc p15, 4, %0, c1, c1, 3" : "=r"(HSTR));
+    return HSTR;
+}
+
 static inline void setHMAIR(word_t hmair0, word_t hmair1)
 {
     asm volatile("mcr p15, 4, %0, c10, c2, 0" : : "r"(hmair0));
