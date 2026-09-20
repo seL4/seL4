@@ -63,8 +63,9 @@ seL4 support, as well as all 32-bit Arm platforms that seL4 supports.
 
 This proof covers the functional behaviour of the C code of the kernel. It does
 not cover machine code, compiler, linker, boot code, cache or TLB management.
-The compiler and linker can be removed from this list by additionally running the
-binary verification tool chain for seL4 for AArch32 or RISC-V.
+The compiler and linker can be removed from this list by additionally running
+the binary verification tool chain for seL4 for AArch32 or RISC-V. See the
+[verification assumptions] page for more details.
 
 Overall, the functional correctness proof shows that the seL4 C code implements
 the formal [abstract API specification][ASpec] of seL4 and is free from standard
@@ -226,6 +227,18 @@ verified configurations in seL4 yet. For static systems, on hardware where
 IOMMU/SMMU support is not currently available in seL4, it may also be possible
 to configure the IOMMU/SMMU before seL4 runs and restrict DMA that way.
 
+## Register Sets
+
+Note that the verification assumptions include that there are no more registers
+in the machine than the formal model contains and seL4 knows about. If one is
+missed that will usually mean it is not context-switched or otherwise protected.
+Especially the hypervisor configurations have large sets of system registers and
+newer architecture versions, e.g. Armv8.3 vs Armv8.1, often introduce new system
+registers. The strength and completeness of validation of these register set
+assumptions is not equal between all architectures seL4 supports, and a deeper
+survey for AArch64, which is the architecture that currently sees the most
+change, is in progress.
+
 ## Intel VT-d (IOMMU)
 
 ### Support
@@ -293,3 +306,5 @@ at crossing protection boundaries.
 [Zenbleed]: https://lock.cmpxchg8b.com/zenbleed.html
 [Inception]: https://comsec.ethz.ch/research/microarch/inception/
 [MSI remap]: http://theinvisiblethings.blogspot.com/2011/05/following-white-rabbit-software-attacks.html
+
+[verification assumptions]: https://sel4.systems/Verification/assumptions.html
