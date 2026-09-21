@@ -20,22 +20,37 @@
 
 #define ID_PFR1_GENERIC_TIMER BIT(16)
 
+#define ID_PFR0_JAZELLE_MASK (0xful << 8)  /* ID_PFR0.State2 */
 #define ID_PFR0_THUMBEE_MASK (0xful << 12) /* ID_PFR0.State3 */
 
+#define JOSCR_CD  BIT(1)
 #define TEECR_XED BIT(0)
-#define HSTR_TTEE BIT(16)
+#define HSTR_TTEE  BIT(16)
+#define HSTR_TJDBX BIT(17)
 
 
-static void disable_thumbee_user_access(void)
+static void disable_jazelle_user_access(void)
 {
     uint32_t v;
-    /* When TEECR.XED == 0, TEEHBR is readable and writable for user space.
-     * Clear, disable, and trap access. */
-    MCR(TEEHBR, 0);
-    MCR(TEECR, TEECR_XED);
+    word_t UNUSED hstr_bits = 0;  /* Only read in CONFIG_ARM_HYPERVISOR_SUPPORT */
+
+    MRC(ID_PFR0, v);
+    if (v & ID_PFR0_JAZELLE_MASK) {
+        /* When JOSCR.CD == 0, JMCR is readable and writable for user space.
+         * Clear, disable, and trap access. */
+        MCR(JMCR, 0);
+        MCR(JOSCR, JOSCR_CD);
+        hstr_bits |= HSTR_TJDBX;
+    }
+    if (v & ID_PFR0_THUMBEE_MASK) {
+        /* Same as above, but for TEECR.XED == 0 and TEEHBR */
+        MCR(TEEHBR, 0);
+        MCR(TEECR, TEECR_XED);
+        hstr_bits |= HSTR_TTEE;
+    }
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    /* Trap access to config register so guest cannot re-enable TEEHBR. */
-    setHSTR(getHSTR() | HSTR_TTEE);
+    /* Trap access to config registers so guest cannot re-enable them. */
+    setHSTR(getHSTR() | hstr_bits);
 #endif
 }
 
@@ -82,11 +97,8 @@ void armv_init_user_access(void)
 {
     uint32_t v;
 
-    /* Disable Jazelle RCT */
-    MRC(ID_PFR0, v);
-    if (v & ID_PFR0_THUMBEE_MASK) {
-        disable_thumbee_user_access();
-    }
+    /* Disable Jazelle DBX and Jazelle RCT (ThumbEE) */
+    disable_jazelle_user_access();
     /* Performance Monitoring Unit */
     MRC(ID_DFR0, v);
     if ((v & ID_DFR0_PMU_MASK) != ID_DFR0_PMU_NONE) {

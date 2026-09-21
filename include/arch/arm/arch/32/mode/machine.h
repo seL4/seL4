@@ -60,6 +60,8 @@
 #define ID_PFR1    " p15, 0,  %0,  c0,  c1, 1" /* 32-bit RO CPU feature register */
 #define TEECR      " p14, 6,  %0,  c0,  c0, 0" /* 32-bit RW ThumbEE configuration register */
 #define TEEHBR     " p14, 6,  %0,  c1,  c0, 0" /* 32-bit RW ThumbEE handler base register */
+#define JOSCR      " p14, 7,  %0,  c1,  c0, 0" /* 32-bit RW Jazelle OS control register */
+#define JMCR       " p14, 7,  %0,  c2,  c0, 0" /* 32-bit RW Jazelle main configuration register */
 #define CPACR      " p15, 0,  %0,  c1,  c0, 2" /* 32-bit Architectural Feature Access Control Register */
 #define VMPIDR     " p15, 4,  %0,  c0,  c0, 5" /* 32-bit RW Virtualization Multiprocessor ID Register */
 #define MPIDR      " p15, 0,  %0, c0,  c0, 5"
