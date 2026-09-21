@@ -86,15 +86,19 @@ void NORETURN fastpath_call(word_t cptr, word_t msgInfo)
     stored_hw_asid = cap_pd[PD_ASID_SLOT];
 #endif
 
-#ifdef CONFIG_ARCH_X86_64
-    /* borrow the stored_hw_asid for PCID */
-    stored_hw_asid.words[0] = cap_pml4_cap_get_capPML4MappedASID_fp(newVTable);
+#if defined(CONFIG_ARCH_X86_64) || defined(CONFIG_ARCH_IA32)
+    /* Need to test that the ASID is still valid */
+    asid_t asid = vspace_root_getMappedASID_fp(newVTable);
+    asid_map_t asid_map = findMapForASID(asid);
+    if (unlikely(asid_map_get_type(asid_map) != asid_map_asid_map_vspace ||
+                 (vspace_root_t *)asid_map_asid_map_vspace_get_vspace_root(asid_map) != cap_pd)) {
+        slowpath(SysCall);
+    }
+    /* Borrow the stored_hw_asid for PCID on x86_64. On ia32 this value will be ignored, but
+     * it is passed to a function below, so at least some value needs to be written. */
+    stored_hw_asid.words[0] = asid;
 #endif
 
-#ifdef CONFIG_ARCH_IA32
-    /* stored_hw_asid is unused on ia32 fastpath, but gets passed into a function below. */
-    stored_hw_asid.words[0] = 0;
-#endif
 #ifdef CONFIG_ARCH_AARCH64
     /* Need to test that the ASID is still valid */
     asid_t asid = cap_vspace_cap_get_capVSMappedASID(newVTable);
@@ -116,8 +120,13 @@ void NORETURN fastpath_call(word_t cptr, word_t msgInfo)
 #endif
 
 #ifdef CONFIG_ARCH_RISCV
+    /* Need to test that the ASID is still valid */
+    asid_t asid = cap_page_table_cap_get_capPTMappedASID(newVTable);
+    if (unlikely(findVSpaceForASID_fp(asid) != cap_pd)) {
+        slowpath(SysCall);
+    }
     /* Get HW ASID */
-    stored_hw_asid.words[0] = cap_page_table_cap_get_capPTMappedASID(newVTable);
+    stored_hw_asid.words[0] = asid;
 #endif
 
     /* let gcc optimise this out for 1 domain */
@@ -365,13 +374,19 @@ void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo)
     stored_hw_asid = cap_pd[PD_ASID_SLOT];
 #endif
 
-#ifdef CONFIG_ARCH_X86_64
-    stored_hw_asid.words[0] = cap_pml4_cap_get_capPML4MappedASID(newVTable);
+#if defined(CONFIG_ARCH_X86_64) || defined(CONFIG_ARCH_IA32)
+    /* Need to test that the ASID is still valid */
+    asid_t asid = vspace_root_getMappedASID_fp(newVTable);
+    asid_map_t asid_map = findMapForASID(asid);
+    if (unlikely(asid_map_get_type(asid_map) != asid_map_asid_map_vspace ||
+                 (vspace_root_t *)asid_map_asid_map_vspace_get_vspace_root(asid_map) != cap_pd)) {
+        slowpath(SysCall);
+    }
+    /* Borrow the stored_hw_asid for PCID on x86_64. On ia32 this value will be ignored, but
+     * it is passed to a function below, so at least some value needs to be written. */
+    stored_hw_asid.words[0] = asid;
 #endif
-#ifdef CONFIG_ARCH_IA32
-    /* stored_hw_asid is unused on ia32 fastpath, but gets passed into a function below. */
-    stored_hw_asid.words[0] = 0;
-#endif
+
 #ifdef CONFIG_ARCH_AARCH64
     /* Need to test that the ASID is still valid */
     asid_t asid = cap_vspace_cap_get_capVSMappedASID(newVTable);
@@ -394,7 +409,13 @@ void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo)
 #endif
 
 #ifdef CONFIG_ARCH_RISCV
-    stored_hw_asid.words[0] = cap_page_table_cap_get_capPTMappedASID(newVTable);
+    /* Need to test that the ASID is still valid */
+    asid_t asid = cap_page_table_cap_get_capPTMappedASID(newVTable);
+    if (unlikely(findVSpaceForASID_fp(asid) != cap_pd)) {
+        slowpath(SysReplyRecv);
+    }
+    /* Get HW ASID */
+    stored_hw_asid.words[0] = asid;
 #endif
 
     /* Ensure the original caller can be scheduled directly. */
