@@ -10,21 +10,22 @@
 #include <plat/machine/devices_gen.h>
 #include <kernel/vspace.h>
 
-/* The max number of free memory regions is:
- * +1 for each available physical memory region (elements in avail_p_regs)
- * +1 for each MODE_RESERVED region, there might be none
- * +1 to allow the kernel to release its own boot data region
- * +1 for a possible gap between ELF images and rootserver objects
+/* The value for the max number of free memory region is basically an arbitrary
+ * choice. We could calculate the exact number, but just picking 16 will also
+ * do for now. Increase this value if the boot fails.
  */
-#define MAX_NUM_FREEMEM_REG (ARRAY_SIZE(avail_p_regs) + MODE_RESERVED + 1 + 1)
+#define MAX_NUM_FREEMEM_REG 16
+#define MAX_NUM_USER_RESERVED_REGIONS 16
 
 /* The regions reserved by the boot code are:
  * +1 for kernel
  * +1 for device tree binary
  * +1 for user image.
  * +1 for each the MODE_RESERVED region, there might be none
+ *
+ * +16 arbitary for the other arguments passed.
  */
-#define NUM_RESERVED_REGIONS (3 + MODE_RESERVED)
+#define NUM_RESERVED_REGIONS (3 + MODE_RESERVED + MAX_NUM_USER_RESERVED_REGIONS)
 
 
 /* The maximum number of reserved regions is:

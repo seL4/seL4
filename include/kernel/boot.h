@@ -41,8 +41,8 @@ static inline bool_t is_reg_empty(region_t reg)
 
 p_region_t get_p_reg_kernel_img_boot(void);
 p_region_t get_p_reg_kernel_img(void);
-bool_t init_freemem(word_t n_available, const p_region_t *available,
-                    word_t n_reserved, const region_t *reserved,
+bool_t init_freemem(word_t n_available, p_region_t *available,
+                    word_t n_reserved, region_t *reserved,
                     v_region_t it_v_reg, word_t extra_bi_size_bits);
 bool_t reserve_region(p_region_t reg);
 void write_slot(slot_ptr_t slot_ptr, cap_t cap);
@@ -52,6 +52,7 @@ cap_t create_it_asid_pool(cap_t root_cnode_cap);
 void write_it_pd_pts(cap_t root_cnode_cap, cap_t it_pd_cap);
 void create_idle_thread(void);
 bool_t create_untypeds(cap_t root_cnode_cap);
+bool_t create_untypeds_for_region(cap_t root_cnode_cap, bool_t device_memory, region_t reg, seL4_SlotPos first_untyped_slot);
 void bi_finalise(void);
 void create_domain_cap(cap_t root_cnode_cap);
 

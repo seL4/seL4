@@ -347,6 +347,22 @@ block ttbr {
     field_high base_address         48
 }
 
+-- ARM ARM DDI 0478H.a ID020222
+-- D13.2.101 'MPIDR_EL1, Multiprocessor Affinity Register'
+-- In a multiprocessor system, provides an additional PE identification mechanism.
+-- Read Only
+block mpidr_el1 {
+    padding             24          -- RES0 [63:40]
+    field Aff3          8           -- Aff3 [39:32]
+    padding             1           -- RES1 [31]
+    field U             1           -- U    [30]
+    padding             5           -- RES0 [29:25]
+    field MT            1           -- MT   [24]
+    field Aff2          8           -- Aff2 [23:16]
+    field Aff1          8           -- Aff1 [15:8]
+    field Aff0          8           -- Aff0 [7:0]
+}
+
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 #ifdef CONFIG_ARM_GIC_V3_SUPPORT
 block virq_invalid {

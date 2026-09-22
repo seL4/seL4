@@ -25,7 +25,7 @@ def make_yaml_list_of_regions(regions) -> List:
     ]
 
 
-def create_yaml_file(dev_mem, phys_mem, outputStream):
+def create_yaml_file(dev_mem, kernel_devs, phys_mem, outputStream):
 
     yaml.add_representer(
         int,
@@ -33,6 +33,12 @@ def create_yaml_file(dev_mem, phys_mem, outputStream):
 
     yaml_obj = {
         'devices': make_yaml_list_of_regions(dev_mem),
+        'kernel_devs': [
+            { 'start': r.base,
+              'end':   r.base + r.size,
+              'userAvailable': r.user_ok,
+            } for r in kernel_devs if r.size > 0
+        ],
         'memory':  make_yaml_list_of_regions(phys_mem)
     }
 

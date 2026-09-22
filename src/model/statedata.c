@@ -70,6 +70,10 @@ UP_STATE_DEFINE(timestamp_t, benchmark_kernel_number_entries);
 UP_STATE_DEFINE(timestamp_t, benchmark_kernel_number_schedules);
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 
+#ifdef CONFIG_ENABLE_MULTIKERNEL_SUPPORT
+UP_STATE_DEFINE(node_id_t, boot_cpu_id);
+#endif
+
 /* Units of work we have completed since the last time we checked for
  * pending interrupts */
 word_t ksWorkUnitsCompleted;
@@ -108,3 +112,8 @@ kernel_entry_t ksKernelEntry;
 #ifdef CONFIG_KERNEL_LOG_BUFFER
 paddr_t ksUserLogBuffer;
 #endif /* CONFIG_KERNEL_LOG_BUFFER */
+
+#ifdef CONFIG_ARCH_AARCH64
+/* zero is a valid value; -1 is not */
+paddr_t ksKernelElfPaddrBase = -1;
+#endif

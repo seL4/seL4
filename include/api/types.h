@@ -138,7 +138,7 @@ extern struct debug_syscall_error current_debug_error;
     do {                                                                       \
         out_error(ANSI_BOLD "<<" ANSI_GREEN "seL4(CPU %" SEL4_PRIu_word ")"    \
                 ANSI_BOLD " [%s/%d T%p \"%s\" @%lx]: " M ">>" ANSI_RESET "\n", \
-                CURRENT_CPU_INDEX(),                                           \
+                NODE_STATE(boot_cpu_id),                                       \
                 __func__, __LINE__, NODE_STATE(ksCurThread),                   \
                 THREAD_NAME,                                                   \
                 (word_t)getRestartPC(NODE_STATE(ksCurThread)),                 \
