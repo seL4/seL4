@@ -13,6 +13,7 @@
 #include <api/failures.h>
 #include <linker.h>
 
+#define HCR_TERR     BIT(36)     /* Trap RAS error record access   */
 #define HCR_RW       BIT(31)     /* Execution state control        */
 #define HCR_TRVM     BIT(30)     /* trap reads of VM controls      */
 #define HCR_HCD      BIT(29)     /* Disable HVC                    */
