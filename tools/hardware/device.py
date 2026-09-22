@@ -135,12 +135,9 @@ class WrappedNode:
 
     def visit(self, visitor: Any):
         ''' Visit this node and all its children '''
-        ret = [visitor(self)]
-        if ret[0] is None:
-            ret = []
+        visitor(self)
         for child in self.children.values():
-            ret += child.visit(visitor)
-        return ret
+            child.visit(visitor)
 
     def __iter__(self) -> Generator['WrappedNode', None, None]:
         ''' Iterate over all immediate children of this node '''
