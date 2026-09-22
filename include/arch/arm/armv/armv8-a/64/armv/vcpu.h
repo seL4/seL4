@@ -21,10 +21,12 @@
 #define HCR_NATIVE ( HCR_COMMON | HCR_TGE | HCR_TVM | HCR_TTLB | HCR_DC \
                    | HCR_TAC | HCR_SWIO |  HCR_TSC )
 
+/* Trap guest access to the RAS error record registers (ERRIDR_EL1, ERRSELR_EL1,
+ * ERX*_EL1). Without FEAT_RAS, HCR_TERR is RES0. */
 #ifdef CONFIG_DISABLE_WFI_WFE_TRAPS
-#define HCR_VCPU   ( HCR_COMMON)
+#define HCR_VCPU   ( HCR_COMMON | HCR_TERR)
 #else
-#define HCR_VCPU   ( HCR_COMMON | HCR_TWE | HCR_TWI)
+#define HCR_VCPU   ( HCR_COMMON | HCR_TERR | HCR_TWE | HCR_TWI)
 #endif
 
 #define SCTLR_EL1_UCI       BIT(26)     /* Enable EL0 access to DC CVAU, DC CIVAC, DC CVAC,
@@ -123,6 +125,10 @@
 #define REG_HCR_EL2         "hcr_el2"
 #define REG_VTCR_EL2        "vtcr_el2"
 #define REG_VMPIDR_EL2      "vmpidr_el2"
+#define REG_CSSELR_EL1      "csselr_el1"
+/* Use generic encoding to avoid needing FEAT_RAS assembler feature */
+#define REG_VDISR_EL2       "s3_4_c12_c1_1"
+#define REG_ID_AA64PFR0_EL1 "id_aa64pfr0_el1"
 #define REG_MPIDR_EL1       "mpidr_el1"
 #define REG_ID_AA64MMFR0_EL1 "id_aa64mmfr0_el1"
 
@@ -429,6 +435,43 @@ static inline void writeVMPIDR_EL2(word_t reg)
     MSR(REG_VMPIDR_EL2, reg);
 }
 
+static inline word_t readCSSELR_EL1(void)
+{
+    word_t reg;
+    MRS(REG_CSSELR_EL1, reg);
+    return reg;
+}
+
+static inline void writeCSSELR_EL1(word_t reg)
+{
+    MSR(REG_CSSELR_EL1, reg);
+}
+
+static inline bool_t cpu_has_ras(void)
+{
+    word_t reg;
+    MRS(REG_ID_AA64PFR0_EL1, reg);
+    return ((reg >> ID_AA64PFR0_EL1_RAS) & MASK(4)) != 0;
+}
+
+/* VDISR_EL2 is undefined when FEAT_RAS is not supported. In this case, return 0 for read. */
+static inline word_t readVDISR_EL2(void)
+{
+    word_t reg = 0;
+    if (cpu_has_ras()) {
+        MRS(REG_VDISR_EL2, reg);
+    }
+    return reg;
+}
+
+/* VDISR_EL2 is undefined when FEAT_RAS is not supported. In this case, ignore writes. */
+static inline void writeVDISR_EL2(word_t reg)
+{
+    if (cpu_has_ras()) {
+        MSR(REG_VDISR_EL2, reg);
+    }
+}
+
 static inline void setHCR(word_t reg)
 {
     MSR(REG_HCR_EL2, reg);
@@ -476,6 +519,10 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
         return readELR_EL1();
     case seL4_VCPUReg_SPSR_EL1:
         return readSPSR_EL1();
+    case seL4_VCPUReg_CSSELR_EL1:
+        return readCSSELR_EL1();
+    case seL4_VCPUReg_VDISR_EL2:
+        return readVDISR_EL2();
     case seL4_VCPUReg_CNTV_CTL:
         return readCNTV_CTL_EL0();
     case seL4_VCPUReg_CNTV_CVAL:
@@ -552,6 +599,12 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
         break;
     case seL4_VCPUReg_SPSR_EL1:
         writeSPSR_EL1(reg);
+        break;
+    case seL4_VCPUReg_CSSELR_EL1:
+        writeCSSELR_EL1(reg);
+        break;
+    case seL4_VCPUReg_VDISR_EL2:
+        writeVDISR_EL2(reg);
         break;
     case seL4_VCPUReg_CNTV_CTL:
         writeCNTV_CTL_EL0(reg);

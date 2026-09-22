@@ -102,7 +102,13 @@ typedef enum {
     seL4_VCPUReg_SP_EL1,
     seL4_VCPUReg_ELR_EL1,
     seL4_VCPUReg_SPSR_EL1, // 32-bit
-    seL4_VCPURegSaveRange_end = seL4_VCPUReg_SPSR_EL1, /* end vcpu save/restore reg range */
+
+    /* cache size selection register EL1 */
+    seL4_VCPUReg_CSSELR_EL1,
+
+    /* virtual deferred interrupt status register EL2 */
+    seL4_VCPUReg_VDISR_EL2,
+    seL4_VCPURegSaveRange_end = seL4_VCPUReg_VDISR_EL2, /* end vcpu save/restore reg range */
 
     /* generic timer registers, to be completed */
     seL4_VCPUReg_CNTV_CTL,
