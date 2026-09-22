@@ -71,6 +71,12 @@ static exception_t invokeSchedControl_ConfigureFlags(sched_context_t *target, wo
         }
     }
 
+#ifdef ENABLE_SMP_SUPPORT
+    /* Invariant: the current thread always belongs to the current core.
+     * sel4test: SCHED0022 */
+    assert(NODE_STATE(ksCurThread)->tcbAffinity == getCurrentCPUIndex());
+#endif
+
     target->scBadge = badge;
     target->scSporadic = (flags & seL4_SchedContext_Sporadic) != 0;
 
