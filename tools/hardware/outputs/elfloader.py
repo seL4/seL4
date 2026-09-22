@@ -144,6 +144,12 @@ def run(tree: fdt.FdtParser, hardware: rule.HardwareYaml, config: config.Config,
     devices = tree.get_elfloader_devices()
     cpu_info = get_elfloader_cpus(tree, devices)
 
+    # On ARM/RISC-V platforms this is how many CPUs the kernel expects to boot.
+    kernel_num_nodes = int(kernel_config_dict["CONFIG_MAX_NUM_NODES"])
+    if len(cpu_info) < kernel_num_nodes:
+        raise ValueError("The kernel is configured with CONFIG_MAX_NUM_NODES ({}) but we only found {} cpus".format(
+            kernel_num_nodes, len(cpu_info)))
+
     max_reg = 1
     device_info = []
     for dev in devices:
