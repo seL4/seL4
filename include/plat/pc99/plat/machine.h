@@ -14,7 +14,7 @@
 /* interrupt vectors (corresponds to IDT entries) */
 
 #define IRQ_INT_OFFSET 0x20
-#define IRQ_CNODE_SLOT_BITS 8
+#define IRQ_CNODE_SLOT_BITS 7
 
 typedef enum _interrupt_t {
     int_invalid                 = -1,
@@ -73,4 +73,3 @@ typedef enum _platform_irq_t {
 /* The text mode framebuffer exists part way into the video ram region */
 #define BIOS_PADDR_VIDEO_RAM_TEXT_MODE_START 0x000B8000
 #define BIOS_PADDR_IVDEO_RAM_END 0x000C0000
-
