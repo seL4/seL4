@@ -40,11 +40,11 @@ enum invocation_label {
     InvalidInvocation,
     {%- for label, condition in invocations %}
     {%- if condition %}
-#if {{condition}}
+// if {{condition}}
     {%- endif %}
     {{label}},
     {%- if condition %}
-#endif
+// endif
     {%- endif %}
     {%- endfor %}
     nInvocationLabels
@@ -69,7 +69,7 @@ enum sel4_arch_invocation_label {
             {%- if loop.first %}
 #error "First sel4_arch invocation label cannot be conditional"
             {%- endif %}
-#if {{condition}}
+// if {{condition}}
         {%- endif %}
         {%- if loop.first %}
     {{label}} = nInvocationLabels,
@@ -77,7 +77,7 @@ enum sel4_arch_invocation_label {
     {{label}},
         {%- endif %}
         {%- if condition %}
-#endif
+// endif
         {%- endif %}
     {%- endfor %}
     {%- if invocations|length == 0 %}
@@ -101,7 +101,7 @@ enum arch_invocation_label {
     {%- if loop.first  %}
 #error "First arch invocation label cannot be conditional"
     {%- endif %}
-#if {{condition}}
+// if {{condition}}
     {%- endif %}
     {%- if loop.first %}
     {{label}} = nSeL4ArchInvocationLabels,
@@ -109,7 +109,7 @@ enum arch_invocation_label {
     {{label}},
     {%- endif %}
     {%- if condition %}
-#endif
+// endif
     {%- endif %}
     {%- endfor %}
     {%- if invocations|length == 0 %}
