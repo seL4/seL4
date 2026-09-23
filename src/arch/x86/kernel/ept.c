@@ -887,7 +887,7 @@ exception_t decodeX86EPTPageMap(
                   eptCacheFromVmAttr(vmAttr),
                   1,
                   WritableFromVMRights(vmRights),
-                  1);
+                  ReadableFromVMRights(vmRights));
 
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performEPTPageMapPTE(cap, cte, lu_ret.ptSlot, pte, pml4);
@@ -934,7 +934,7 @@ exception_t decodeX86EPTPageMap(
                              eptCacheFromVmAttr(vmAttr),
                              1,
                              WritableFromVMRights(vmRights),
-                             1);
+                             ReadableFromVMRights(vmRights));
 
         ept_pde_t pde2 = ept_pde_ept_pde_2m_new(
                              paddr + BIT(EPT_PD_INDEX_OFFSET),
@@ -943,7 +943,7 @@ exception_t decodeX86EPTPageMap(
                              eptCacheFromVmAttr(vmAttr),
                              1,
                              WritableFromVMRights(vmRights),
-                             1);
+                             ReadableFromVMRights(vmRights));
 
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performEPTPageMapPDE(cap, cte, lu_ret.pdSlot, pde1, pde2, pml4);
