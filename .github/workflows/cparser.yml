@@ -4,7 +4,7 @@
 
 # Run the verification C parser on the main kernel configurations
 #
-# See cparser-run/builds.yml in the repo seL4/ci-actions for configs.
+# See cparser-run/builds.yml in the repo au-ts/seL4-ci-actions for configs.
 
 name: C Parser
 
@@ -19,4 +19,4 @@ jobs:
     name: C Parser
     runs-on: ubuntu-latest
     steps:
-    - uses: seL4/ci-actions/cparser-run@master
+    - uses: au-ts/seL4-ci-actions/cparser-run@julia/fix-stm32-cpus

@@ -5,7 +5,7 @@
 # hardware builds and runs
 #
 # See sel4test-hw/builds.yml and sel4bench-hw/builds.yml in the repo
-# seL4/ci-actions for configs.
+# au-ts/seL4-ci-actions for configs.
 
 name: HW
 
@@ -17,10 +17,10 @@ on:
 jobs:
   sel4test:
     name: seL4Test
-    uses: seL4/ci-actions/.github/workflows/sel4test-hw.yml@master
+    uses: au-ts/seL4-ci-actions/.github/workflows/sel4test-hw.yml@julia/fix-stm32-cpus
     secrets: inherit
 
   sel4bench:
     name: seL4Bench
-    uses: seL4/ci-actions/.github/workflows/sel4bench-hw.yml@master
+    uses: au-ts/seL4-ci-actions/.github/workflows/sel4bench-hw.yml@julia/fix-stm32-cpus
     secrets: inherit

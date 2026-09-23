@@ -15,4 +15,4 @@ on:
 jobs:
   checks:
     name: Checks
-    uses: seL4/ci-actions/.github/workflows/push.yml@master
+    uses: au-ts/seL4-ci-actions/.github/workflows/push.yml@julia/fix-stm32-cpus

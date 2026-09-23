@@ -4,7 +4,7 @@
 
 # sel4test simulation runs
 #
-# See sel4test-sim/builds.yml in the repo seL4/ci-actions for configs.
+# See sel4test-sim/builds.yml in the repo au-ts/seL4-ci-actions for configs.
 
 name: seL4Test
 
@@ -19,4 +19,4 @@ on:
 jobs:
   sim:
     name: Sim
-    uses: seL4/ci-actions/.github/workflows/sel4test-sim.yml@master
+    uses: au-ts/seL4-ci-actions/.github/workflows/sel4test-sim.yml@julia/fix-stm32-cpus
