@@ -303,5 +303,6 @@
 compile_assert(ut_max_less_than_canonical, CONFIG_PADDR_USER_DEVICE_TOP <= BIT(47));
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 compile_assert(ut_max_is_canonical, (PPTR_BASE + CONFIG_PADDR_USER_DEVICE_TOP) <= BIT(48));
+compile_assert(ut_max_is_in_kernel_window, (PPTR_BASE + CONFIG_PADDR_USER_DEVICE_TOP) <= PPTR_TOP);
 #endif
 #endif
