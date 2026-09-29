@@ -141,6 +141,15 @@ if(KernelPlatformQEMURiscVVirt)
 
   endif()
 
+  # Replace plic@ node name used by older QEMU versions to match the
+  # newer interrupt-controller@ name in the overlay.
+  file(READ "${QEMU_DTS}" qemu_dts)
+  if(qemu_dts MATCHES "plic@c000000")
+    string(REPLACE "plic@c000000" "interrupt-controller@c000000" qemu_dts "${qemu_dts}")
+    set(QEMU_DTS "${CMAKE_BINARY_DIR}/qemu-riscv-virt.dts")
+    file(WRITE "${QEMU_DTS}" "${qemu_dts}")
+  endif()
+
   list(APPEND KernelDTSList "${QEMU_DTS}" "${CMAKE_CURRENT_LIST_DIR}/overlay-qemu-riscv-virt.dts")
 
   if(KernelSel4ArchRiscV32)
