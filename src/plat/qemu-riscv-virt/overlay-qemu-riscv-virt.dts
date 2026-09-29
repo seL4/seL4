@@ -16,7 +16,7 @@
          */
         seL4,kernel-devices =
             &{/soc/clint@2000000},
-            &{/soc/plic@c000000};
+            &{/soc/interrupt-controller@c000000};
     };
 
     /* The size and address of the CLINT is derived from QEMU source code. */
