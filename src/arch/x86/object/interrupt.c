@@ -51,6 +51,26 @@ exception_t Arch_checkIRQ(word_t irq_w)
     return EXCEPTION_SYSCALL_ERROR;
 }
 
+/* An IOAPIC redirection entry holds a single vector per pin. Issuing a second
+ * handler for a pin that is already wired would silently redirect the interrupt
+ * away from its first handler (seL4/seL4#1748). Mirror the vector check above:
+ * a pin counts as taken while an active IRQ still maps it, and is released when
+ * that IRQ becomes inactive, so no extra state is needed. */
+static bool_t isIOAPICPinActive(word_t ioapic, word_t pin)
+{
+    irq_t irq;
+    for (irq = irq_user_min; irq <= irq_user_max; irq++) {
+        x86_irq_state_t state = x86KSIRQState[irq];
+        if (isIRQActive(irq)
+            && x86_irq_state_get_irqType(state) == x86_irq_state_irq_ioapic
+            && x86_irq_state_irq_ioapic_get_id(state) == ioapic
+            && x86_irq_state_irq_ioapic_get_pin(state) == pin) {
+            return true;
+        }
+    }
+    return false;
+}
+
 static exception_t Arch_invokeIRQControl(irq_t irq, cte_t *handlerSlot, cte_t *controlSlot, x86_irq_state_t irqState)
 {
     updateIRQState(irq, irqState);
@@ -139,6 +159,12 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length, cte_
         status = ioapic_decode_map_pin_to_vector(ioapic, pin, level, polarity, vector);
         if (status != EXCEPTION_NONE) {
             return status;
+        }
+
+        if (isIOAPICPinActive(ioapic, pin)) {
+            userError("IRQControl: IOAPIC %ld pin %ld is already in use.", (long)ioapic, (long)pin);
+            current_syscall_error.type = seL4_RevokeFirst;
+            return EXCEPTION_SYSCALL_ERROR;
         }
 
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
