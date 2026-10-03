@@ -99,6 +99,14 @@ void VISIBLE NORETURN c_handle_interrupt(void)
 
     c_entry_hook();
 
+#ifdef TRACK_KERNEL_ENTRIES
+    ksKernelEntry.path = Entry_Interrupt;
+    /* getActiveIRQ() caches the IRQ it returns, so handleInterruptEntry()
+     * sees the same one. */
+    ksKernelEntry.word = getActiveIRQ();
+    ksKernelEntry.core = CURRENT_CPU_INDEX();
+#endif
+
     handleInterruptEntry();
 
     restore_user_context();
@@ -130,9 +138,17 @@ void VISIBLE NORETURN c_handle_exception(void)
     case RISCVLoadPageFault:
     case RISCVStorePageFault:
     case RISCVInstructionPageFault:
+#ifdef TRACK_KERNEL_ENTRIES
+        ksKernelEntry.path = Entry_VMFault;
+        ksKernelEntry.word = getRegister(NODE_STATE(ksCurThread), FaultIP);
+#endif
         handleVMFaultEvent(scause);
         break;
     default:
+#ifdef TRACK_KERNEL_ENTRIES
+        ksKernelEntry.path = Entry_UserLevelFault;
+        ksKernelEntry.word = getRegister(NODE_STATE(ksCurThread), FaultIP);
+#endif
         handleUserLevelFault(scause, 0);
         break;
     }

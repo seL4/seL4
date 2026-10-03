@@ -28,6 +28,8 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 ### Changes
 
+* RISC-V: label interrupt, VM fault and user-level fault entries in the kernel entry log (`track_kernel_entries`
+  benchmarks and debug builds). They were logged as `Entry_Unknown`, unlike on Arm and x86.
 
 ### Upgrade Notes
 ---
