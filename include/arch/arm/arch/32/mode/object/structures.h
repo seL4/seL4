@@ -304,6 +304,7 @@ static inline word_t CONST cap_get_archCapSizeBits(cap_t cap)
 
     default:
         /* Unreachable, but GCC can't figure that out */
+        assert(!"Unknown cap type");
         return 0;
     }
 }
@@ -350,6 +351,7 @@ static inline bool_t CONST cap_get_archCapIsPhysical(cap_t cap)
 
     default:
         /* Unreachable, but GCC can't figure that out */
+        assert(!"Unknown cap type");
         return false;
     }
 }
@@ -394,6 +396,7 @@ static inline void *CONST cap_get_archCapPtr(cap_t cap)
 
     default:
         /* Unreachable, but GCC can't figure that out */
+        assert(!"Unknown cap type");
         return NULL;
     }
 }
