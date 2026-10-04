@@ -79,6 +79,7 @@
 #define SAGAW_4_LEVEL 0x04
 #define SAGAW_5_LEVEL 0x08
 #define SAGAW_6_LEVEL 0x10
+#define MAX_IOPT_LEVELS 6
 
 #define CONTEXT_GLOBAL_INVALIDATE 0x1
 #define IOTLB_GLOBAL_INVALIDATE   0x1
@@ -87,6 +88,9 @@
 #define DMA_TLB_WRITE_DRAIN BIT(16)
 
 #define N_VTD_CONTEXTS 256
+
+#define ROUND_DOWN_PAGE_IDX(n, b) ((n) >> (b))
+#define ROUND_UP_PAGE_IDX(n, b)  (((n) >> (b)) + (((n) & MASK(b)) != 0))
 
 typedef uint32_t drhu_id_t;
 
@@ -274,39 +278,57 @@ BOOT_CODE word_t vtd_get_n_paging(acpi_rmrr_list_t *rmrr_list)
 
     word_t size = 1; /* one for the root table */
     size += N_VTD_CONTEXTS; /* one for each context */
-    size += rmrr_list->num; /* one for each device */
 
     if (rmrr_list->num == 0) {
         return size;
     }
 
-    /* filter the identical regions by pci bus id */
-    acpi_rmrr_list_t filtered;
-    filtered.entries[0] = rmrr_list->entries[0];
-    filtered.num = 1;
+    for (word_t i = 0; i < rmrr_list->num; i++) {
+        vptr_t paging_start_idx[MAX_IOPT_LEVELS];
+        vptr_t paging_end_idx[MAX_IOPT_LEVELS];
 
-    for (word_t i = 1; i < rmrr_list->num; i++) {
-        if (vtd_get_root_index(rmrr_list->entries[i].device) !=
-            vtd_get_root_index(filtered.entries[filtered.num - 1].device) &&
-            rmrr_list->entries[i].base != filtered.entries[filtered.num - 1].base &&
-            rmrr_list->entries[i].limit != filtered.entries[filtered.num - 1].limit) {
-            filtered.entries[filtered.num] = rmrr_list->entries[i];
-            filtered.num++;
+        for (word_t k = x86KSnumIOPTLevels; k > 0; k--) {
+            /* If we are still looking up bits beyond the 32bit of physical
+             * that we support then we select entry 0 in the current PT */
+            if ((VTD_PT_INDEX_BITS * k + seL4_PageBits) >= 32) {
+                paging_start_idx[k] = 0;
+                paging_end_idx[k] = 1;
+            } else {
+                paging_start_idx[k] = ROUND_DOWN_PAGE_IDX(rmrr_list->entries[i].base, VTD_PT_INDEX_BITS * k + seL4_PageBits);
+                paging_end_idx[k] = ROUND_UP_PAGE_IDX(rmrr_list->entries[i].limit, VTD_PT_INDEX_BITS * k + seL4_PageBits);
+            }
         }
-    }
 
-    for (word_t i = x86KSnumIOPTLevels - 1; i > 0; i--) {
-        /* If we are still looking up bits beyond the 32bit of physical
-         * that we support then we select entry 0 in the current PT */
-        if ((VTD_PT_INDEX_BITS * i + seL4_PageBits) >= 32) {
-            size++;
-        } else {
-            for (word_t j = 0; j < filtered.num; j++) {
-                v_region_t region = (v_region_t) {
-                    .start = filtered.entries[j].base,
-                    .end = filtered.entries[j].limit
-                };
-                size += get_n_paging(region, 32 - (VTD_PT_INDEX_BITS * i + seL4_PageBits));
+        for (word_t j = 0; j < i; j++) {
+            if (rmrr_list->entries[j].device == rmrr_list->entries[i].device) {
+                for (word_t k = x86KSnumIOPTLevels; k > 0; k--) {
+                    vptr_t start;
+                    vptr_t end;
+                    if ((VTD_PT_INDEX_BITS * k + seL4_PageBits) >= 32) {
+                        start = 0;
+                        end = 1;
+                    } else {
+                        start = ROUND_DOWN_PAGE_IDX(rmrr_list->entries[j].base, VTD_PT_INDEX_BITS * k + seL4_PageBits);
+                        end = ROUND_UP_PAGE_IDX(rmrr_list->entries[j].limit, VTD_PT_INDEX_BITS * k + seL4_PageBits);
+                    }
+
+                    if (paging_start_idx[k] >= start && paging_start_idx[k] < end) {
+                        paging_start_idx[k] = MAX(paging_start_idx[k], end);
+                    }
+                    if (paging_end_idx[k] > start && paging_end_idx[k] <= end) {
+                        paging_end_idx[k] = MIN(paging_end_idx[k], start);
+                    }
+                    if (paging_start_idx[k] >= paging_end_idx[k]) {
+                        paging_start_idx[k] = 0;
+                        paging_end_idx[k] = 0;
+                    }
+                }
+            }
+        }
+
+        for (word_t k = x86KSnumIOPTLevels; k > 0; k--) {
+            if (paging_start_idx[k] < paging_end_idx[k]) {
+                size += (paging_end_idx[k] - paging_start_idx[k]);
             }
         }
     }
