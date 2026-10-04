@@ -150,12 +150,25 @@ config_string(KernelNumPriorities NUM_PRIORITIES
 config_string(KernelMaxNumNodes MAX_NUM_NODES "Max number of CPU cores to boot" DEFAULT 1
               DEPENDS "${KernelNumDomains} EQUAL 1" UNQUOTE)
 
-# Set CONFIG_ENABLE_SMP_SUPPORT as an alias of CONFIG_MAX_NUM_NODES > 1
 if(KernelMaxNumNodes GREATER 1)
-  config_set(KernelEnableSMPSupport ENABLE_SMP_SUPPORT ON)
+    config_set(KernelEnableSMPSupport ENABLE_SMP_SUPPORT ON)
 else()
-  config_set(KernelEnableSMPSupport ENABLE_SMP_SUPPORT OFF)
+    config_set(KernelEnableSMPSupport ENABLE_SMP_SUPPORT OFF)
 endif()
+
+config_option(
+    KernelEnableMultikernelSupport ENABLE_MULTIKERNEL_SUPPORT
+    "Multikernel support"
+    DEFAULT OFF
+)
+
+# XXX: HACK.
+config_string(
+    KernelMultikernelNumCPUs MULTIKERNEL_NUM_CPUS
+    "Multikernel number of CPUs"
+    DEFAULT 1
+    UNQUOTE
+)
 
 config_string(
   KernelStackBits

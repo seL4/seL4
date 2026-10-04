@@ -19,9 +19,7 @@
  *  - PPTR_TOP: The first virtual address after the end of the kernel's
  *    physical memory window.
  *
- *  - KERNEL_ELF_PADDR_BASE: The first physical address used to map the
- *    initial kernel image. The kernel ELF is mapped contiguously
- *    starting at this address.
+ *  - ksKernelElfPaddrBase
  *  - KERNEL_ELF_BASE: The first virtual address used to map the initial
  *    kernel image.
  *
@@ -40,7 +38,7 @@
  * from virtual to physical. This translation must be a single offset
  * for for the entire segment (i.e. the kernel image must be contiguous
  * both virtually and physically) */
-#define KERNEL_ELF_BASE_OFFSET (KERNEL_ELF_BASE - KERNEL_ELF_PADDR_BASE)
+#define KERNEL_ELF_BASE_OFFSET (KERNEL_ELF_BASE - ksKernelElfPaddrBase)
 
 #ifndef __ASSEMBLER__
 

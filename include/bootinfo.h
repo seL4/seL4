@@ -9,6 +9,7 @@
 #include <config.h>
 #include <types.h>
 #include <sel4/bootinfo_types.h>
+#include <sel4/loader_info.h>
 
 /* declare object-specific macros to hide the casting */
 #define BI_PTR(r) ((seL4_BootInfo*)(r))

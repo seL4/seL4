@@ -55,7 +55,11 @@ volatile struct gic_rdist_sgi_ppi_map *gic_rdist_sgi_ppi_map[CONFIG_MAX_NUM_NODE
 #define MPIDR_MT(x)   (x & BIT(24))
 #define MPIDR_AFF_MASK(x) (x & 0xff00ffffff)
 
+#ifdef CONFIG_ENABLE_SMP_SUPPORT
 static word_t mpidr_map[CONFIG_MAX_NUM_NODES];
+#else
+word_t mpidr_map[CONFIG_MULTIKERNEL_NUM_CPUS];
+#endif
 
 static inline word_t get_mpidr(word_t core_id)
 {
@@ -64,8 +68,9 @@ static inline word_t get_mpidr(word_t core_id)
 
 static inline word_t get_current_mpidr(void)
 {
-    word_t core_id = CURRENT_CPU_INDEX();
-    return get_mpidr(core_id);
+    word_t mpidr_el1;
+    asm volatile("mrs %0, mpidr_el1" : "=r"(mpidr_el1));
+    return mpidr_el1;
 }
 
 static inline uint64_t mpidr_to_gic_affinity(void)
@@ -405,7 +410,8 @@ BOOT_CODE void cpu_initLocalIRQController(void)
     word_t mpidr = 0;
     SYSTEM_READ_WORD(MPIDR, mpidr);
 
-    mpidr_map[CURRENT_CPU_INDEX()] = mpidr;
+    // already init by boot code
+    // mpidr_map[CURRENT_CPU_INDEX()] = mpidr;
     active_irq[CURRENT_CPU_INDEX()] = IRQ_NONE;
 
     gicr_init();

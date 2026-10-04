@@ -8,6 +8,7 @@
 
 #include <sel4/types.h>
 #include <sel4/bootinfo_types.h>
+#include <sel4/loader_info.h>
 #include <sel4/macros.h>
 
 void seL4_InitBootInfo(seL4_BootInfo *bi)
