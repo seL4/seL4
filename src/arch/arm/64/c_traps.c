@@ -68,7 +68,7 @@ void VISIBLE NORETURN restore_user_context(void)
 
 #if defined(CONFIG_DEBUG_BUILD)
 /* See 'arm_vector_table' for details on 'vect_offset' */
-static const char *vect_offset_to_name(word_t vect_offset)
+UNUSED static const char *vect_offset_to_name(word_t vect_offset)
 {
     switch (vect_offset) {
     case 0x000:
