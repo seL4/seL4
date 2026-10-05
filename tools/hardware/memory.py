@@ -17,10 +17,6 @@ class Region:
         self.size = size
         self.owner = owner
 
-    @staticmethod
-    def clone(other):
-        return Region(other.base, other.size)
-
     def __repr__(self):
         ''' Returns a string representation that is a valid Python expression
         that eval() can parse. '''
@@ -34,14 +30,22 @@ class Region:
             self.size)
 
     def __eq__(self, other):
-        return self.base == other.base and self.size == other.size
+        if isinstance(other, type(self)):
+            return self.base == other.base and self.size == other.size
+        else:
+            # duck typing is not supported
+            return NotImplemented
 
     def __ne__(self, other):
         # Needed only for py2.
         return not self.__eq__(other)
 
     def __gt__(self, other):
-        return self.base > other.base
+        if isinstance(other, type(self)):
+            return self.base > other.base
+        else:
+            # duck typing is not supported
+            return NotImplemented
 
     def __hash__(self):
         return hash((self.base, self.size))
@@ -51,7 +55,7 @@ class Region:
         ''' create a region from a start/end rather than start/size '''
         if start > end:
             raise ValueError(
-                'invalid rage start (0x{:x}) > end (0x{:x})'.format(start > end))
+                'invalid rage start (0x{:x}) > end (0x{:x})'.format(start, end))
         return Region(start, end - start, owner)
 
     def overlaps(self, other):
