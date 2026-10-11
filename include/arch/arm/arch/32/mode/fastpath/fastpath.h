@@ -144,7 +144,7 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
             "msr elr_hyp, lr    \n"
             /* prepare the user status register */
             "ldr lr, [sp, #8]   \n"
-            "msr spsr, lr       \n"
+            "msr spsr_fsxc, lr  \n"
             /* Finally, pop our LR */
             "pop {lr}           \n"
             /* Return to user */
