@@ -250,6 +250,17 @@ static inline void set_gic_vcpu_ctrl_apr(uint32_t apr)
     gic_vcpu_ctrl->apr = apr;
 }
 
+/* There is no separate ap0r register on GICv2. Read 0/ignore write. */
+static inline uint32_t get_gic_vcpu_ctrl_ap0r(void)
+{
+    return 0;
+}
+
+/* There is no separate ap0r register on GICv2. Read 0/ignore write. */
+static inline void set_gic_vcpu_ctrl_ap0r(uint32_t ap0r)
+{
+}
+
 static inline uint32_t get_gic_vcpu_ctrl_vtr(void)
 {
     return gic_vcpu_ctrl->vtr;
