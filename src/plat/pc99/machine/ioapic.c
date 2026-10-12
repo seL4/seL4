@@ -64,7 +64,7 @@ static uint32_t ioapic_read(uint32_t ioapic, word_t reg)
     return *(volatile uint32_t *)((word_t)(PPTR_IOAPIC_START + ioapic * BIT(PAGE_BITS)) + reg);
 }
 
-static void single_ioapic_init(word_t ioapic, cpu_id_t delivery_cpu)
+static void single_ioapic_init(word_t ioapic)
 {
     uint32_t i;
     uint32_t nirqs;
@@ -89,16 +89,8 @@ static void single_ioapic_init(word_t ioapic, cpu_id_t delivery_cpu)
      * mask_interrupt to ensure a vector is assigned
      * before we unmask */
     for (i = 0; i < nirqs; i++) {
-        /* Send to desired cpu */
-        ioapic_write(ioapic, IOAPIC_REGSEL, IOREDTBL_HIGH(i));
-        ioapic_write(ioapic, IOAPIC_WINDOW, (ioapic_read(ioapic,
-                                                         IOAPIC_WINDOW) & MASK(IOREDTBL_HIGH_RESERVED_BITS)) | (delivery_cpu << IOREDTBL_HIGH_RESERVED_BITS));
-        /* mask and set 0 vector */
-        ioredtbl_state[i] = IOREDTBL_LOW_INTERRUPT_MASK;
-        ioapic_write(ioapic, IOAPIC_REGSEL, IOREDTBL_LOW(i));
-        /* The upper 16 bits are reserved, so we make sure to preserve them */
-        ioredtbl_state[i] |= ioapic_read(ioapic, IOAPIC_WINDOW) & ~MASK(16);
-        ioapic_write(ioapic, IOAPIC_WINDOW, ioredtbl_state[i]);
+        /* Send to ioapic_target_cpu, mask, and set 0 vector */
+        ioapic_map_pin_to_vector(ioapic, i, 0, 0, 0);
     }
 }
 
@@ -111,7 +103,7 @@ void ioapic_init(uint32_t num_nodes, cpu_id_t *cpu_list, uint32_t num_ioapic)
 
     for (ioapic = 0; ioapic < num_ioapic; ioapic++) {
         /* Init this ioapic */
-        single_ioapic_init(ioapic, cpu_list[0]);
+        single_ioapic_init(ioapic);
     }
 }
 
