@@ -12,19 +12,17 @@
 
 /* The max number of free memory regions is:
  * +1 for each available physical memory region (elements in avail_p_regs)
- * +1 for each MODE_RESERVED region, there might be none
  * +1 to allow the kernel to release its own boot data region
  * +1 for a possible gap between ELF images and rootserver objects
  */
-#define MAX_NUM_FREEMEM_REG (ARRAY_SIZE(avail_p_regs) + MODE_RESERVED + 1 + 1)
+#define MAX_NUM_FREEMEM_REG (ARRAY_SIZE(avail_p_regs) + 1 + 1)
 
 /* The regions reserved by the boot code are:
  * +1 for kernel
  * +1 for device tree binary
  * +1 for user image.
- * +1 for each the MODE_RESERVED region, there might be none
  */
-#define NUM_RESERVED_REGIONS (3 + MODE_RESERVED)
+#define NUM_RESERVED_REGIONS (3)
 
 
 /* The maximum number of reserved regions is:
