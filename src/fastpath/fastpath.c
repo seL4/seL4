@@ -187,6 +187,9 @@ void NORETURN fastpath_call(word_t cptr, word_t msgInfo)
     endpoint_ptr_set_epQueue_head_np(ep_ptr, TCB_REF(dest->tcbEPNext));
     if (unlikely(dest->tcbEPNext)) {
         dest->tcbEPNext->tcbEPPrev = NULL;
+#ifdef CONFIG_KERNEL_MCS
+        dest->tcbEPNext = NULL;
+#endif
     } else {
         endpoint_ptr_mset_epQueue_tail_state(ep_ptr, 0, EPState_Idle);
     }
@@ -865,6 +868,9 @@ void NORETURN fastpath_vm_fault(vm_fault_type_t type)
     endpoint_ptr_set_epQueue_head_np(ep_ptr, TCB_REF(dest->tcbEPNext));
     if (unlikely(dest->tcbEPNext)) {
         dest->tcbEPNext->tcbEPPrev = NULL;
+#ifdef CONFIG_KERNEL_MCS
+        dest->tcbEPNext = NULL;
+#endif
     } else {
         endpoint_ptr_mset_epQueue_tail_state(ep_ptr, 0, EPState_Idle);
     }
