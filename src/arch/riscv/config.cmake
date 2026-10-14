@@ -40,6 +40,29 @@ config_option(
   DEFAULT OFF
   DEPENDS "KernelArchRiscV")
 
+config_option(
+  KernelRiscvModernSbiTime
+  RISCV_MODERN_SBI_TIME
+  "Use standard SBI TIME extension (EID 0x54494D45) for timer programming \
+    instead of legacy SBI v0.1 EID 0 set_timer. Requires firmware that implements \
+    the TIME extension (not merely any generic SBI 0.2+ firmware). \
+    Disabled in verification builds."
+  DEFAULT OFF
+  DEPENDS "KernelArchRiscV;DEFINED KernelVerificationBuild;NOT KernelVerificationBuild"
+  DEFAULT_DISABLED OFF)
+
+config_option(
+  KernelRiscvModernSbiDbcn
+  RISCV_MODERN_SBI_DBCN
+  "Use standard SBI DBCN extension (EID 0x4442434E) write_byte for debug console \
+    character output only, instead of legacy SBI v0.1 EID 1 console_putchar. \
+    Requires firmware that implements the DBCN extension (SBI 2.0+). Console input, \
+    shutdown, and SMP IPI/fences remain legacy; this does not provide full modern SBI support. \
+    Disabled in verification builds."
+  DEFAULT OFF
+  DEPENDS "KernelArchRiscV;DEFINED KernelVerificationBuild;NOT KernelVerificationBuild"
+  DEFAULT_DISABLED OFF)
+
 # Until RISC-V has instructions to count leading/trailing zeros, we provide
 # library implementations. Platforms that implement the bit manipulation
 # extension can override these settings to remove the library functions from
