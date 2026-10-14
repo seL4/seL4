@@ -383,7 +383,7 @@ void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo)
     asid_map_t asid_map = findMapForASID(asid);
     if (unlikely(asid_map_get_type(asid_map) != asid_map_asid_map_vspace ||
                  (vspace_root_t *)asid_map_asid_map_vspace_get_vspace_root(asid_map) != cap_pd)) {
-        slowpath(SysCall);
+        slowpath(SysReplyRecv);
     }
     /* Borrow the stored_hw_asid for PCID on x86_64. On ia32 this value will be ignored, but
      * it is passed to a function below, so at least some value needs to be written. */
