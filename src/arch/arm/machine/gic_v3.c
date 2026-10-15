@@ -85,7 +85,7 @@ static inline uint64_t sgir_word_from_args(word_t irq, word_t target)
            | ((t >> 4)  & 0x0f) << ICC_SGI1R_RS_SHIFT // AFF0 Range select
            | ((t >> 8)  & 0xff) << ICC_SGI1R_AFF1_SHIFT // AFF1
            | ((t >> 16) & 0xff) << ICC_SGI1R_AFF2_SHIFT // AFF2
-           | ((t >> 24) & 0xff) << ICC_SGI1R_AFF2_SHIFT; // AFF3
+           | ((t >> 24) & 0xff) << ICC_SGI1R_AFF3_SHIFT; // AFF3
 }
 
 /* Wait for completion of a distributor change */
