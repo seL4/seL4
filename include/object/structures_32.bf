@@ -51,8 +51,7 @@ block notification_cap {
 block reply_cap {
     field capReplyPtr 32
 
-    padding 27
-    field capReplyCanGrant 1
+    padding 28
     field capType 4
 }
 
