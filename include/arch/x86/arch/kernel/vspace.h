@@ -111,6 +111,7 @@ exception_t decodeIA32PageDirectoryInvocation(word_t invLabel, word_t length, ct
 exception_t decodeX86FrameInvocation(word_t invLabel, word_t length, cte_t *cte, cap_t cap,
                                      bool_t call, word_t *buffer);
 
+uint32_t CONST ReadableFromVMRights(vm_rights_t vm_rights);
 uint32_t CONST WritableFromVMRights(vm_rights_t vm_rights);
 uint32_t CONST SuperUserFromVMRights(vm_rights_t vm_rights);
 

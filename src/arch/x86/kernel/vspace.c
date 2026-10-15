@@ -586,13 +586,28 @@ exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
     }
 }
 
+uint32_t CONST ReadableFromVMRights(vm_rights_t vm_rights)
+{
+    switch (vm_rights) {
+    case VMKernelOnly:
+        return 0;
+
+    case VMReadOnly:
+    case VMReadWrite:
+        return 1;
+
+    default:
+        fail("Invalid VM rights");
+    }
+}
+
 uint32_t CONST WritableFromVMRights(vm_rights_t vm_rights)
 {
     switch (vm_rights) {
+    case VMKernelOnly:
     case VMReadOnly:
         return 0;
 
-    case VMKernelOnly:
     case VMReadWrite:
         return 1;
 
