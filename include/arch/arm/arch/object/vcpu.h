@@ -53,9 +53,8 @@ struct gicVCpuIface {
     uint32_t hcr;
     uint32_t vmcr;
     uint32_t apr;
-    /* virq_t[] requires word-size alignment; add extra padding for
-     * 64-bit platforms to make this struct packed. */
-    uint32_t gicVCpuIface_padding;
+    /* Group 0 active priorities (ICH_AP0R0_EL2) on GICv3; unused on GICv2 */
+    uint32_t ap0r;
     virq_t lr[GIC_VCPU_MAX_NUM_LR];
 };
 

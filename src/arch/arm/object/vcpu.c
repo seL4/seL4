@@ -47,6 +47,7 @@ static void vcpu_save(vcpu_t *vcpu, bool_t active)
     /* Store GIC VCPU control state */
     vcpu->vgic.vmcr = get_gic_vcpu_ctrl_vmcr();
     vcpu->vgic.apr = get_gic_vcpu_ctrl_apr();
+    vcpu->vgic.ap0r = get_gic_vcpu_ctrl_ap0r();
     lr_num = gic_vcpu_num_list_regs;
     for (i = 0; i < lr_num; i++) {
         vcpu->vgic.lr[i] = get_gic_vcpu_ctrl_lr(i);
@@ -93,6 +94,7 @@ void vcpu_restore(vcpu_t *vcpu)
     /* Restore GIC VCPU control state */
     set_gic_vcpu_ctrl_vmcr(vcpu->vgic.vmcr);
     set_gic_vcpu_ctrl_apr(vcpu->vgic.apr);
+    set_gic_vcpu_ctrl_ap0r(vcpu->vgic.ap0r);
     lr_num = gic_vcpu_num_list_regs;
     for (i = 0; i < lr_num; i++) {
         set_gic_vcpu_ctrl_lr(i, vcpu->vgic.lr[i]);

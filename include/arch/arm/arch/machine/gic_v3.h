@@ -397,7 +397,9 @@ static inline void set_gic_vcpu_ctrl_vmcr(uint32_t vmcr)
 }
 
 /* Note: On the GICv3 there are potentially up to 128 preemption
- * levels, and as such up to 4 APR registers.
+ * levels, and as such up to 4 APR registers per group.
+ *
+ * apr is ICH_AP1R0_EL2 (group 1), ap0r is ICH_AP0R0_EL2 (group 0).
  *
  * At this point the code assumes a maximum of 32 preemption levels.
  */
@@ -412,6 +414,19 @@ static inline uint32_t get_gic_vcpu_ctrl_apr(void)
 static inline void set_gic_vcpu_ctrl_apr(uint32_t apr)
 {
     MSR(ICH_AP1R0_EL2, apr);
+}
+
+static inline uint32_t get_gic_vcpu_ctrl_ap0r(void)
+{
+    uint64_t reg;
+    MRS(ICH_AP0R0_EL2, reg);
+    /* 64 bit register read, top 32 bits reserved */
+    return (uint32_t) reg;
+}
+
+static inline void set_gic_vcpu_ctrl_ap0r(uint32_t ap0r)
+{
+    MSR(ICH_AP0R0_EL2, ap0r);
 }
 
 static inline uint32_t get_gic_vcpu_ctrl_vtr(void)
