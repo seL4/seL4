@@ -51,11 +51,6 @@ block reply_cap {
     padding                 word_size - 5 - 1
 }
 
-block call_stack(callStackPtr, isHead) {
-    padding                 word_size - 1 - 48
-    field isHead            1
-    field_ptr callStackPtr  48
-}
 #else
 block reply_cap(capReplyCanGrant, capReplyMaster, capTCBPtr, capType) {
     field capTCBPtr         64
