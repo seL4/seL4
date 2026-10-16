@@ -56,11 +56,6 @@ block reply_cap {
     field capType 4
 }
 
-block call_stack {
-    field_high callStackPtr 28
-    padding 3
-    field isHead 1
-}
 #else
 block reply_cap(capReplyCanGrant, capReplyMaster, capTCBPtr, capType) {
     padding 32
