@@ -2110,8 +2110,9 @@ static exception_t decodeARMPageDirectoryInvocation(word_t invLabel, word_t leng
                  + (start & MASK(pageBitsForSize(resolve_ret.frameSize)));
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-        /* Don't let applications flush outside of the kernel window */
-        if (pstart < physBase() || ((end - start) + pstart) > PADDR_TOP) {
+        /* Don't let applications flush outside of the kernel window.
+           pstart + (end - start) can overflow at the top of the address space. */
+        if (pstart < physBase() || pstart > PADDR_TOP || (end - start) > PADDR_TOP - pstart) {
             userError("PD Flush: Outside of kernel physical memory window");
             current_syscall_error.type = seL4_IllegalOperation;
             return EXCEPTION_SYSCALL_ERROR;
@@ -2506,8 +2507,9 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
         end += vaddr;
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-        /* Don't let applications flush outside of the kernel window */
-        if (pstart < physBase() || ((end - start) + pstart) > PADDR_TOP) {
+        /* Don't let applications flush outside of the kernel window.
+           pstart + (end - start) can overflow at the top of the address space. */
+        if (pstart < physBase() || pstart > PADDR_TOP || (end - start) > PADDR_TOP - pstart) {
             userError("Page Flush: Outside of kernel physical memory window");
             current_syscall_error.type = seL4_IllegalOperation;
             return EXCEPTION_SYSCALL_ERROR;
