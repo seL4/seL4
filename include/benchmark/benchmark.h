@@ -15,18 +15,18 @@
 #include <mode/hardware.h>
 
 #ifdef CONFIG_ENABLE_BENCHMARKS
-exception_t handle_SysBenchmarkFlushCaches(void);
-exception_t handle_SysBenchmarkResetLog(void);
-exception_t handle_SysBenchmarkFinalizeLog(void);
+void handle_SysBenchmarkFlushCaches(void);
+void handle_SysBenchmarkResetLog(void);
+void handle_SysBenchmarkFinalizeLog(void);
 #ifdef CONFIG_KERNEL_LOG_BUFFER
-exception_t handle_SysBenchmarkSetLogBuffer(void);
+void handle_SysBenchmarkSetLogBuffer(void);
 #endif /* CONFIG_KERNEL_LOG_BUFFER */
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
-exception_t handle_SysBenchmarkGetThreadUtilisation(void);
-exception_t handle_SysBenchmarkResetThreadUtilisation(void);
+void handle_SysBenchmarkGetThreadUtilisation(void);
+void handle_SysBenchmarkResetThreadUtilisation(void);
 #ifdef CONFIG_DEBUG_BUILD
-exception_t handle_SysBenchmarkDumpAllThreadsUtilisation(void);
-exception_t handle_SysBenchmarkResetAllThreadsUtilisation(void);
+void handle_SysBenchmarkDumpAllThreadsUtilisation(void);
+void handle_SysBenchmarkResetAllThreadsUtilisation(void);
 #endif /* CONFIG_DEBUG_BUILD */
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 #endif /* CONFIG_ENABLE_BENCHMARKS */
