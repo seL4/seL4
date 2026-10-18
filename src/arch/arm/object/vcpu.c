@@ -225,8 +225,8 @@ void VGICMaintenance(void)
 void vcpu_init(vcpu_t *vcpu)
 {
     armv_vcpu_init(vcpu);
-    /* GICH VCPU interface control */
-    vcpu->vgic.hcr = VGIC_HCR_EN;
+    /* GICH VCPU interface control. Trap VCPU access to Group 0 registers on GICv3. */
+    vcpu->vgic.hcr = VGIC_HCR_EN | VGIC_HCR_TALL0;
 #ifdef CONFIG_VTIMER_UPDATE_VOFFSET
     /* Virtual Timer interface */
     vcpu->virtTimer.last_pcount = 0;

@@ -27,6 +27,8 @@
 
 /* Helpers for VGIC */
 #define VGIC_HCR_EOI_INVALID_COUNT(hcr) (((hcr) >> 27) & 0x1f)
+/* GICv2 has no TALL0; GICH_APR covers both groups. */
+#define VGIC_HCR_TALL0                  0
 #define VGIC_HCR_VGRP1DIE               (1U << 7)
 #define VGIC_HCR_VGRP1EIE               (1U << 6)
 #define VGIC_HCR_VGRP0DIE               (1U << 5)
