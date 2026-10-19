@@ -1176,7 +1176,7 @@ void Arch_userStackTrace(tcb_t *tptr)
     for (int i = 0; i < CONFIG_USER_STACK_TRACE_LENGTH; i++) {
         word_t address = sp + (i * sizeof(word_t));
         lookupPTSlot_ret_t ret = lookupPTSlot(vspace_root, address);
-        if (pte_ptr_get_valid(ret.ptSlot) && !isPTEPageTable(ret.ptSlot)) {
+        if (address < USER_TOP && pte_ptr_get_valid(ret.ptSlot) && !isPTEPageTable(ret.ptSlot)) {
             pptr_t pptr = (pptr_t)(getPPtrFromHWPTE(ret.ptSlot));
             word_t *value = (word_t *)((word_t)pptr + (address & MASK(ret.ptBitsLeft)));
             printf("0x%lx: 0x%lx\n", (long) address, (long) *value);
