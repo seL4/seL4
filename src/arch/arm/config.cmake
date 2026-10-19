@@ -151,7 +151,9 @@ config_option(
   "PL0 access to PMU. \
     Grant user access to Performance Monitoring Unit. \
     WARNING: While useful for evaluating performance, \
-    this option opens timing and covert channels."
+    this option opens timing and covert channels. \
+    With hypervisor support, this also leaves the PMU untrapped for guests, \
+    so PMU state is shared between VMs and native threads."
   DEFAULT OFF
   DEPENDS "KernelArchArmV7a OR KernelArchArmV8a;NOT KernelArmCortexA8")
 

@@ -12,6 +12,7 @@
 
 #include <arch/object/vcpu.h>
 #include <drivers/timer/arm_generic.h>
+#include <arch/machine/debug.h>
 
 /* Trap SMC and override CPSR.AIF */
 #define HCR_COMMON ( HCR_TSC | HCR_AMO | HCR_IMO \
@@ -700,25 +701,7 @@ static inline void armv_vcpu_boot_init(void)
      * CONFIG_HAVE_FPU is set */
     setHCPTR(HCPTR_DEFAULT);
 
-#if defined(ARM_HYP_TRAP_CP14_IN_VCPU_THREADS) || defined(ARM_HYP_TRAP_CP14_IN_NATIVE_USER_THREADS)
-    /* On the verified build, we have implemented a workaround that ensures
-     * that we don't need to save and restore the debug coprocessor's state
-     * (and therefore don't have to expose the CP14 registers to verification).
-     *
-     * This workaround is simple: we just trap and intercept all Guest VM
-     * accesses to the debug coprocessor, and deliver them as VMFault
-     * messages to the VM Monitor. To that end, the VM Monitor can then
-     * choose to either kill the Guest VM, or it can also choose to silently
-     * step over the Guest VM's accesses to the debug coprocessor, thereby
-     * silently eliminating the communication channel between the Guest VMs
-     * (because the debug coprocessor acted as a communication channel
-     * unless we saved/restored its state between VM switches).
-     *
-     * This workaround delegates the communication channel responsibility
-     * from the kernel to the VM Monitor, essentially.
-     */
     initHDCR();
-#endif
 }
 static inline void armv_vcpu_save(vcpu_t *vcpu, bool_t active)
 {

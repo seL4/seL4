@@ -12,6 +12,7 @@
 
 #include <arch/object/vcpu.h>
 #include <drivers/timer/arm_generic.h>
+#include <arch/machine/debug.h>
 
 /* Note that the HCR_DC for ARMv8 disables S1 translation if enabled */
 /* Trap SMC and override CPSR.AIF */
@@ -680,9 +681,7 @@ static inline void armv_vcpu_boot_init(void)
     MSR(REG_SCTLR_EL1, SCTLR_EL1_NATIVE);
     isb();
 
-#if defined(ARM_HYP_TRAP_CP14_IN_VCPU_THREADS) || defined(ARM_HYP_TRAP_CP14_IN_NATIVE_USER_THREADS)
     initHDCR();
-#endif
 }
 
 static inline void armv_vcpu_save(vcpu_t *vcpu, bool_t active)

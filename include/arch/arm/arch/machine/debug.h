@@ -57,20 +57,93 @@ void Arch_debugAssociateVCPUTCB(tcb_t *t);
 void Arch_debugDissociateVCPUTCB(tcb_t *t);
 #endif
 
-#ifdef ARM_HYP_TRAP_CP14
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 /* Those of these that trap NS accesses trap all NS accesses; we can't cause the
  * processor to only trap NS-PL0 or NS-PL1, but if we want to trap the accesses,
  * we get both (PL0 and PL1) non-secure modes' accesses.
  */
 #define ARM_CP15_HDCR "p15, 4, %0, c1, c1, 1"
-#define HDCR_DEBUG_TDRA_SHIFT     (11) /* Trap debug ROM access from non-secure world */
-#define HDCR_DEBUG_TDOSA_SHIFT    (10) /* Trap debug OS related access from NS world */
-#define HDCR_DEBUG_TDA_SHIFT      (9)  /* Trap debug CP14 register access from NS world */
-#define HDCR_DEBUG_TDE_SHIFT      (8)  /* Trap debug exceptions taken from NS world */
-#define HDCR_PERFMON_HPME_SHIFT   (7)  /* Enable the hyp-mode perfmon counters. */
-#define HDCR_PERFMON_TPM_SHIFT    (6)  /* Trap NS PM accesses */
-#define HDCR_PERFMON_TPMCR_SHIFT  (5)  /* Trap NS PMCR reg access */
+#define HDCR_DEBUG_TDCC        BIT(27) /* Trap debug comms channel access (FEAT_FGT, Armv8-A) */
+#define HDCR_TRACE_TTRF        BIT(19) /* Trap trace filter control access (FEAT_TRF, Armv8-A) */
+#define HDCR_PROFILING_TPMS    BIT(14) /* Trap statistical profiling access (FEAT_SPE, AArch64) */
+#define HDCR_DEBUG_TDRA        BIT(11) /* Trap debug ROM access from non-secure world */
+#define HDCR_DEBUG_TDOSA       BIT(10) /* Trap debug OS related access from NS world */
+#define HDCR_DEBUG_TDA         BIT(9)  /* Trap debug CP14 register access from NS world */
+#define HDCR_DEBUG_TDE         BIT(8)  /* Trap debug exceptions taken from NS world */
+#define HDCR_PERFMON_HPME      BIT(7)  /* Enable the hyp-mode perfmon counters. */
+#define HDCR_PERFMON_TPM       BIT(6)  /* Trap NS PM accesses */
+#define HDCR_PERFMON_TPMCR     BIT(5)  /* Trap NS PMCR reg access */
+#define HDCR_PERFMON_HPMN_MASK MASK(5) /* Number of PMU counters visible to EL0/EL1 */
 
+static inline word_t getHDCR(void)
+{
+    word_t hdcr;
+#ifdef CONFIG_ARCH_AARCH64
+    MRS("mdcr_el2", hdcr);
+#else
+    MRC(ARM_CP15_HDCR, hdcr);
+#endif
+    return hdcr;
+}
+
+static inline void setHDCR(word_t hdcr)
+{
+#ifdef CONFIG_ARCH_AARCH64
+    MSR("mdcr_el2", hdcr);
+#else
+    MCR(ARM_CP15_HDCR, hdcr);
+#endif
+}
+
+/* Boot-time initialisation of HDCR (MDCR_EL2 on AArch64). */
+static inline void initHDCR(void)
+{
+    /* Start from 0, keep only HPMN (number of PMU counters visible to EL0/EL1), which
+     * can be CONSTRAINED UNPREDICTABLE if we write just 0.
+     * Starting from 0 means:
+     * - HPME = 0 (hypervisor-reserved counters disabled)
+     * - EnSPM = 0 (AArch64 MDCR_EL2, System PMU accesses trapped)
+     * - E2PB = E2TB = 0 (AArch64 MDCR_EL2, EL1 control registers for profiling and trace buffers trapped)
+     * - MTPME = 0 (Multi-threaded PMU not enabled) */
+    word_t hdcr = getHDCR() & HDCR_PERFMON_HPMN_MASK;
+
+#ifdef CONFIG_ARCH_ARM_V8A
+    /* Trap trace filter controls (TTRF), debug comms channel (TDCC), and
+     * statistical profiling extension (TPMS). They exist only on ARMv8-A and
+     * are RES0 when not implemented, but on ARMv8-A it is safe to write 1 to a
+     * RES0 field.
+     */
+    hdcr |= HDCR_TRACE_TTRF | HDCR_DEBUG_TDCC | HDCR_PROFILING_TPMS;
+#endif
+#if !defined(CONFIG_EXPORT_PMU_USER) && !defined(CONFIG_ENABLE_BENCHMARKS)
+    /* The kernel does not context switch the PMU, so trap EL0/EL1
+     * accesses to EL2 unless the PMU is explicitly exported to user level.
+     */
+    hdcr |= HDCR_PERFMON_TPM;
+#endif
+#ifdef ARM_HYP_TRAP_CP14
+    /* By default at boot, we SET HDCR.TDE to catch and redirect native threads'
+     * PL0 debug exceptions.
+     *
+     * Unfortunately, this is complicated a bit by ARM's strange requirement that
+     * if you set HDCR.TDE, you must also set TDA, TDOSA, and TDRA:
+     *  ARMv7 archref manual: section B1.8.9:
+     *      "When HDCR.TDE is set to 1, the HDCR.{TDRA, TDOSA, TDA} bits must all
+     *      be set to 1, otherwise behavior is UNPREDICTABLE"
+     *
+     * Subsequently on calls to vcpu_enable/disable, we will modify HDCR.TDE
+     * as needed, see setHDCRTrapDebugExceptionState().
+     */
+    hdcr |= (HDCR_DEBUG_TDE
+             | HDCR_DEBUG_TDA
+             | HDCR_DEBUG_TDRA
+             | HDCR_DEBUG_TDOSA);
+#endif
+    setHDCR(hdcr);
+}
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
+
+#ifdef ARM_HYP_TRAP_CP14
 /** When running seL4 as a hypervisor, if we're building with support for the
  * hardware debug API, we have a case of indirection that we need to handle.
  *
@@ -97,49 +170,24 @@ void Arch_debugDissociateVCPUTCB(tcb_t *t);
  */
 static inline void setHDCRTrapDebugExceptionState(bool_t enable_trapping)
 {
-    word_t hdcr;
-#ifdef CONFIG_ARCH_AARCH64
-    MRS("mdcr_el2", hdcr);
-#else
-    MRC(ARM_CP15_HDCR, hdcr);
-#endif
+    word_t hdcr = getHDCR();
+
     if (enable_trapping) {
         /* Trap and redirect debug faults that occur in PL0 native threads by
          * setting HDCR.TDE (trap debug exceptions).
          */
-        hdcr |= (BIT(HDCR_DEBUG_TDE_SHIFT)
-                 | BIT(HDCR_DEBUG_TDA_SHIFT)
-                 | BIT(HDCR_DEBUG_TDRA_SHIFT)
-                 | BIT(HDCR_DEBUG_TDOSA_SHIFT));
+        hdcr |= (HDCR_DEBUG_TDE
+                 | HDCR_DEBUG_TDA
+                 | HDCR_DEBUG_TDRA
+                 | HDCR_DEBUG_TDOSA);
     } else {
         /* Let the PL1 Guest VM handle debug events on its own */
-        hdcr &= ~(BIT(HDCR_DEBUG_TDE_SHIFT)
-                  | BIT(HDCR_DEBUG_TDA_SHIFT)
-                  | BIT(HDCR_DEBUG_TDRA_SHIFT)
-                  | BIT(HDCR_DEBUG_TDOSA_SHIFT));
+        hdcr &= ~(HDCR_DEBUG_TDE
+                  | HDCR_DEBUG_TDA
+                  | HDCR_DEBUG_TDRA
+                  | HDCR_DEBUG_TDOSA);
     }
-#ifdef CONFIG_ARCH_AARCH64
-    MSR("mdcr_el2", hdcr);
-#else
-    MCR(ARM_CP15_HDCR, hdcr);
-#endif
-}
-
-static inline void initHDCR(void)
-{
-    /* By default at boot, we SET HDCR.TDE to catch and redirect native threads'
-     * PL0 debug exceptions.
-     *
-     * Unfortunately, this is complicated a bit by ARM's strange requirement that
-     * if you set HDCR.TDE, you must also set TDA, TDOSA, and TDRA:
-     *  ARMv7 archref manual: section B1.8.9:
-     *      "When HDCR.TDE is set to 1, the HDCR.{TDRA, TDOSA, TDA} bits must all
-     *      be set to 1, otherwise behavior is UNPREDICTABLE"
-     *
-     * Subsequently on calls to vcpu_enable/disable, we will modify HDCR.TDE
-     * as needed.
-     */
-    setHDCRTrapDebugExceptionState(true);
+    setHDCR(hdcr);
 }
 #endif /* ARM_HYP_TRAP_CP14 */
 

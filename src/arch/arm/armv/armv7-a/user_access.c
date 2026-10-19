@@ -15,8 +15,14 @@
 #define CNTKCTL_PL0VTEN  BIT(8)
 #define CNTKCTL_PL0PTEN  BIT(9)
 
-#define ID_DFR0_PMU_MASK (0xful << 28)
-#define ID_DFR0_PMU_NONE (0xful << 28)
+#define ID_DFR0_PERFMON_MASK   (0xful << 24)
+/* On ARMv8-A this means No PMU, on ARMv7-A it means "PMUv2 not supported", but
+ * if a PMUv1 is supported it should return 0b0001 instead, so the effect is the
+ * same. */
+#define ID_DFR0_PERFMON_NONE   (0x0ul)
+/* On ARMv7-A this means No PMU, on ARMv8-A it means Implementation Defined
+ * (non-Arm) PMU. */
+#define ID_DFR0_PERFMON_IMPDEF (0xful << 24)
 
 #define ID_PFR1_GENERIC_TIMER BIT(16)
 
@@ -70,6 +76,8 @@ static void check_export_pmu(void)
         v |= DBGSDER_ENABLE_SECURE_USER_NON_INVASIVE_DEBUG;
         MCR(DBGSDER, v);
     }
+#else
+    MCR(PMUSERENR, 0);
 #endif
 }
 
@@ -93,6 +101,16 @@ static void check_export_arch_timer(void)
 }
 
 
+static inline bool_t pmu_present(void)
+{
+    uint32_t v;
+
+    MRC(ID_DFR0, v);
+    v &= ID_DFR0_PERFMON_MASK;
+    /* Count PMU as present if it is not None and not Implementation Defined */
+    return v != ID_DFR0_PERFMON_NONE && v != ID_DFR0_PERFMON_IMPDEF;
+}
+
 void armv_init_user_access(void)
 {
     uint32_t v;
@@ -100,8 +118,7 @@ void armv_init_user_access(void)
     /* Disable Jazelle DBX and Jazelle RCT (ThumbEE) */
     disable_jazelle_user_access();
     /* Performance Monitoring Unit */
-    MRC(ID_DFR0, v);
-    if ((v & ID_DFR0_PMU_MASK) != ID_DFR0_PMU_NONE) {
+    if (pmu_present()) {
         check_export_pmu();
     }
     /* Arch timers */
