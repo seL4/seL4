@@ -217,7 +217,10 @@ config_choice(
     track_kernel_entries -> Log kernel entries information including timing, number of invocations and arguments for \
     system calls, interrupts, user faults and VM faults. \
     tracepoints -> Enable manually inserted tracepoints that the kernel will track time consumed between. \
-    track_utilisation -> Enable the kernel to track each thread's utilisation time."
+    track_utilisation -> Enable the kernel to track each thread's utilisation time. \
+    On Arm, any setting other than none grants user access to the PMU like KernelArmExportPMUUser, \
+    and with hypervisor support leaves the PMU untrapped for guests, so PMU state is shared between \
+    VMs and native threads."
   "none;KernelBenchmarksNone;NO_BENCHMARKS"
   "generic;KernelBenchmarksGeneric;BENCHMARK_GENERIC;NOT KernelVerificationBuild"
   "track_kernel_entries;KernelBenchmarksTrackKernelEntries;BENCHMARK_TRACK_KERNEL_ENTRIES;NOT KernelVerificationBuild"
