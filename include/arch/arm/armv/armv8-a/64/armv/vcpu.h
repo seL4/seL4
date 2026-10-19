@@ -724,9 +724,6 @@ static inline void vcpu_enable(vcpu_t *vcpu)
     isb();
 
     set_gic_vcpu_ctrl_hcr(vcpu->vgic.hcr);
-#ifdef CONFIG_HARDWARE_DEBUG_API
-    setHDCRTrapDebugExceptionState(false);
-#endif
 
     vcpu_restore_reg(vcpu, seL4_VCPUReg_CPACR);
     /* Restore virtual timer state */
@@ -753,10 +750,6 @@ static inline void vcpu_disable(vcpu_t *vcpu)
     setSCTLR(SCTLR_DEFAULT);
     setHCR(HCR_NATIVE);
     isb();
-
-#ifdef CONFIG_HARDWARE_DEBUG_API
-    setHDCRTrapDebugExceptionState(true);
-#endif
 
     /* Allow FPU instructions in EL0 and EL1 for native
      * threads by setting the CPACR_EL1. The CPTR_EL2 is
