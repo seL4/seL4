@@ -725,6 +725,22 @@ static inline void armv_vcpu_save(vcpu_t *vcpu, bool_t active)
     vcpu_save_reg_range(vcpu, seL4_VCPURegSaveRange_start, seL4_VCPURegSaveRange_end);
 }
 
+#ifdef CONFIG_ARCH_ARM_V7A
+/* Set or unset HCR.TDE. TDE should be set on for native threads and off for
+ * VCPU threads on ARMv7-A. HDCR.{TDRA, TDOSA, TDA} are always set, so do not
+ * need to be toggled.
+ */
+static inline void trapDebugExceptions(bool_t trap)
+{
+    word_t hdcr = getHDCR();
+    if (trap) {
+        hdcr |= HDCR_DEBUG_TDE;
+    } else {
+        hdcr &= ~HDCR_DEBUG_TDE;
+    }
+    setHDCR(hdcr);
+}
+#endif /* CONFIG_ARCH_ARM_V7A */
 
 static inline void vcpu_enable(vcpu_t *vcpu)
 {
@@ -735,11 +751,10 @@ static inline void vcpu_enable(vcpu_t *vcpu)
     /* Turn on the VGIC */
     set_gic_vcpu_ctrl_hcr(vcpu->vgic.hcr);
 
-#ifdef CONFIG_HARDWARE_DEBUG_API
-    /* Disable debug exception trapping and let the PL1 Guest VM handle all
-     * of its own debug faults.
-     */
-    setHDCRTrapDebugExceptionState(false);
+#ifdef CONFIG_ARCH_ARM_V7A
+    /* Let PL1 guests handle debug exceptions (but not debug register access).
+     * No action needed on ARMv8-A, where we have TDE always off (see initHDCR). */
+    trapDebugExceptions(false);
 #endif
 #ifdef CONFIG_HAVE_FPU
     /* FPEXC is only accessible from PL1 and above and is VCPU state. */
@@ -780,11 +795,10 @@ static inline void vcpu_disable(vcpu_t *vcpu)
     writeFPEXC(BIT(FPEXC_EN_BIT));
 #endif
 
-#ifdef CONFIG_HARDWARE_DEBUG_API
-    /* Enable debug exception trapping and let seL4 trap all PL0 (user) native
-     * seL4 threads' debug exceptions, so it can deliver them as fault messages.
-     */
-    setHDCRTrapDebugExceptionState(true);
+#ifdef CONFIG_ARCH_ARM_V7A
+    /* Native threads always trap debug exceptions.
+     * No action needed on ARMv8-A, where HCR.TGE implies HDCR.TDE (see initHDCR). */
+    trapDebugExceptions(true);
 #endif
     isb();
     if (likely(vcpu)) {

@@ -110,74 +110,38 @@ static inline void initHDCR(void)
      */
     hdcr |= HDCR_PERFMON_TPM;
 #endif
-#ifdef CONFIG_HARDWARE_DEBUG_API
-    /* By default at boot, we SET HDCR.TDE to catch and redirect native threads'
-     * PL0 debug exceptions.
+    /*
+     * For debug register access we want the following effective values:
      *
-     * Unfortunately, this is complicated a bit by ARM's strange requirement that
-     * if you set HDCR.TDE, you must also set TDA, TDOSA, and TDRA:
-     *  ARMv7 archref manual: section B1.8.9:
-     *      "When HDCR.TDE is set to 1, the HDCR.{TDRA, TDOSA, TDA} bits must all
-     *      be set to 1, otherwise behavior is UNPREDICTABLE"
+     * - native threads have HCR.TGE=1, and we want HDCR.{TDE, TDRA, TDOSA,
+     *   TDA}=1. All debug access trapped to seL4, either going to the debug API
+     *   or fault handler.
      *
-     * Subsequently on calls to vcpu_enable/disable, we will modify HDCR.TDE
-     * as needed, see setHDCRTrapDebugExceptionState().
+     * - VCPU threads have HCR.TGE=0, and we want HDCR.{TDRA, TDOSA, TDA}=1 and
+     *   HDCR.TDE=0. All debug register access trapped, because they are not
+     *   context-switched, but allow software debug events and software
+     *   breakpoints in VMs with HDCR.TDE=0.
+     *
+     *  On ARMv7-A (see B1.8.9) requirements are:
+     *    - whenever HCR.TGE=1, HDCR.TDE must be 1, and
+     *    - whenever HDCR.TDE=1, HDCR.{TDRA, TDOSA, TDA} must be 1.
+     *
+     *  On ARMv8-A:
+     *    - no TGE/TDE/{TDRA, TDOSA, TDA} dependencies, but
+     *    - HCR.TGE=1 implies effective value of HDCR.{TDE, TDRA, TDOSA, TDA}=1
+     *
+     * This means, for ARMv7-A, we toggle TDE (1 for native, 0 for VCPU
+     * threads), and ARMv8-A, we can keep TDE=0 and rely on HCR.TGE to
+     * automatically toggle the effective value of HDCR.TDE. Setting {TDRA,
+     * TDOSA, TDA} on ARMv8-A is not necessary, but more uniform.
      */
-    hdcr |= (HDCR_DEBUG_TDE
-             | HDCR_DEBUG_TDA
-             | HDCR_DEBUG_TDRA
-             | HDCR_DEBUG_TDOSA);
+    hdcr |= HDCR_DEBUG_TDA | HDCR_DEBUG_TDRA | HDCR_DEBUG_TDOSA;
+#ifdef CONFIG_ARCH_ARM_V7A
+    /* See comment above. */
+    hdcr |= HDCR_DEBUG_TDE;
 #endif
     setHDCR(hdcr);
 }
-
-#ifdef CONFIG_HARDWARE_DEBUG_API
-/** When running seL4 as a hypervisor, if we're building with support for the
- * hardware debug API, we have a case of indirection that we need to handle.
- *
- * For native PL0 user threads in the hypervisor seL4 build, if a debug
- * exception is triggered in one of them, the CPU will raise the exception and
- * naturally, it will attempt to deliver it to a PL1 exception vector table --
- * but no such table exists for native hypervisor-seL4 threads, so the CPU will
- * end up encountering a VM fault while trying to vector into the vector table.
- *
- * For this reason, for native hypervisor-seL4 threads, we need to trap the
- * debug exception DIRECTLY into the hypervisor-seL4 instance, and handle it
- * directly. So we need to SET HDCR.TDE for this case.
- *
- * For the Guest VM, if it programs the CPU to trigger breakpoints, and a
- * debug exception gets triggered, we don't want to catch those debug exceptions
- * since we can let the Guest VM handle them on its own. So we need to UNSET
- * HDCR.TDE for this case.
- *
- * This function encapsulates the setting/unsetting, and it is called when we
- * are about to enable/disable a VCPU.
- *
- * If we are enabling a vcpu (vcpu_enable) we UNSET HDCR.TDE.
- * If we are disabling a vcpu (vcpu_disable) we SET HDCR.TDE.
- */
-static inline void setHDCRTrapDebugExceptionState(bool_t enable_trapping)
-{
-    word_t hdcr = getHDCR();
-
-    if (enable_trapping) {
-        /* Trap and redirect debug faults that occur in PL0 native threads by
-         * setting HDCR.TDE (trap debug exceptions).
-         */
-        hdcr |= (HDCR_DEBUG_TDE
-                 | HDCR_DEBUG_TDA
-                 | HDCR_DEBUG_TDRA
-                 | HDCR_DEBUG_TDOSA);
-    } else {
-        /* Let the PL1 Guest VM handle debug events on its own */
-        hdcr &= ~(HDCR_DEBUG_TDE
-                  | HDCR_DEBUG_TDA
-                  | HDCR_DEBUG_TDRA
-                  | HDCR_DEBUG_TDOSA);
-    }
-    setHDCR(hdcr);
-}
-#endif /* CONFIG_HARDWARE_DEBUG_API */
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
