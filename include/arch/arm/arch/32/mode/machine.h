@@ -160,9 +160,30 @@ static inline word_t readTTBR0(void)
     return val;
 }
 
+/* Ignored for verification, because of 64-bit asm block output on 32-bit
+ * architecture. Read op is side-effect free.
+ */
+/** MODIFIES: */
+/** DONT_TRANSLATE */
+static inline word_t readTTBR0high(void)
+{
+    uint64_t ttbr = 0;
+    asm volatile("mrrc p15, 0, %Q0, %R0, c2":"=r"(ttbr):);
+    return (word_t)(ttbr >> 32);
+}
+
 static inline void writeTTBR0(word_t val)
 {
     asm volatile("mcr p15, 0, %0, c2, c0, 0":: "r"(val));
+}
+
+/* Ignored for verification, because of 64-bit input on 32-bit architecture. */
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
+static inline void writeTTBR0high(word_t val)
+{
+    uint64_t ttbr = ((uint64_t) val << 32) | readTTBR0();
+    asm volatile("mcrr p15, 0, %Q0, %R0, c2":: "r"(ttbr));
 }
 
 static inline void writeTTBR0Ptr(paddr_t addr)
@@ -180,11 +201,29 @@ static inline word_t readTTBR1(void)
     return val;
 }
 
+/* See readTTBR0high() */
+/** MODIFIES: */
+/** DONT_TRANSLATE */
+static inline word_t readTTBR1high(void)
+{
+    uint64_t ttbr = 0;
+    asm volatile("mrrc p15, 1, %Q0, %R0, c2":"=r"(ttbr):);
+    return (word_t)(ttbr >> 32);
+}
+
 static inline void writeTTBR1(word_t val)
 {
     asm volatile("mcr p15, 0, %0, c2, c0, 1":: "r"(val));
 }
 
+/* See writeTTBR0high() */
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
+static inline void writeTTBR1high(word_t val)
+{
+    uint64_t ttbr = ((uint64_t) val << 32) | readTTBR1();
+    asm volatile("mcrr p15, 1, %Q0, %R0, c2":: "r"(ttbr));
+}
 
 static inline word_t readTTBCR(void)
 {
