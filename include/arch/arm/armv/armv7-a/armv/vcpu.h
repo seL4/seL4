@@ -774,46 +774,24 @@ static inline void vcpu_enable(vcpu_t *vcpu)
     setHDCRTrapDebugExceptionState(false);
 #endif
 #ifdef CONFIG_HAVE_FPU
-    /* We need to restore the FPEXC value early for the following reason:
+    /* FPEXC is part of the VCPU state and can be modified by the guest and the
+     * VMM. It is also part of the per-thread FPU context that is saved and
+     * restored in switchLocalFpuOwner(). The value in the VCPU object is the
+     * authoritative one, so it is installed as the FPU context of the VCPU
+     * thread here.
      *
-     * 1: When an application inside a VM is trying to execute an FPU
-     * instruction and the EN bit of FPEXC is disabled, an undefined
-     * instruction exception is sent to the guest Linux kernel instead of
-     * the seL4. Until the Linux kernel examines the EN bit of the FPEXC
-     * to determine if the exception FPU related, a VCPU trap is sent to
-     * the seL4 kernel. However, it can be too late to restore the value
-     * of saved FPEXC in the VCPU trap handler: if the EN bit of the saved
-     * FPEXC is enabled, the Linux kernel thinks the FPU is enabled and
-     * thus refuses to handle the exception. The result is the application
-     * is killed with the cause of illegal instruction.
-     *
-     * Note that we restore the FPEXC here, but the current FPU owner
-     * can be a different thread. Thus, it seems that we are modifying
-     * another thread's FPEXC. However, the modification is OK.
-     *
-     * 1: If the other thread is a native thread, even if the EN bit of
-     * the FPEXC is enabled, a trap th HYP mode will be triggered when
-     * the thread tries to use the FPU.
-     *
-     * 2: If the other thread has a VCPU, the FPEXC is already saved
-     * in the VCPU's vcpu->fpexc when the VCPU is saved or disabled.
-     *
-     * We also overwrite the fpuState.fpexc with the value saved in
-     * vcpu->fpexc. Since the following scenario can happen:
-     *
-     * VM0 (the FPU owner) -> VM1 (update the FPEXC in vcpu_enable) ->
-     * switchLocalFpuOwner (save VM0 with modified FPEXC) ->
-     * VM1 (the new FPU owner)
-     *
-     * In the case above, the fpuState.fpexc of VM0 saves the value written
-     * by the VM1, but the vcpu->fpexc of VM0 still contains the correct
-     * value when VM0 is disabled (vcpu_disable) or saved (vcpu_save).
-     *
-     *
+     * We write the hardware register only if the thread owns the FPU. In that
+     * case the FPU owner does not change in the switch, so this is the only
+     * place that loads the value. In all other cases the hardware FPEXC still
+     * belongs to the current FPU owner and must stay intact: lazyFPURestore(),
+     * which runs right after Arch_switchToThread(), saves FPEXC for that owner
+     * and then loads fpuState.fpexc for the thread here, or leaves the FPU
+     * disabled if the thread is not configured to use it.
      */
-
     vcpu->vcpuTCB->tcbArch.tcbContext.fpuState.fpexc = vcpu_read_reg(vcpu, seL4_VCPUReg_FPEXC);
-    access_fpexc(vcpu, true);
+    if (nativeThreadUsingFPU(vcpu->vcpuTCB)) {
+        access_fpexc(vcpu, true);
+    }
 #endif
     vcpu_restore_reg(vcpu, seL4_VCPUReg_CPACR);
     /* Restore virtual timer state */
