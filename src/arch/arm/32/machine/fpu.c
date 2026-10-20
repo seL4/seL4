@@ -53,13 +53,8 @@ BOOT_CODE static inline bool_t isFPUD32Supported(void)
 /* Initialise the FP/SIMD for this machine. */
 BOOT_CODE bool_t fpsimd_init(void)
 {
-    word_t cpacr;
-
-    MRC(CPACR, cpacr);
-    cpacr |= (CPACR_CP_ACCESS_PLX << CPACR_CP_10_SHIFT_POS |
-              CPACR_CP_ACCESS_PLX << CPACR_CP_11_SHIFT_POS);
-    MCR(CPACR, cpacr);
-
+    /* We are inside CONFIG_HAVE_FPU, so CPACR_DEFAULT enables CP10 and CP11 access. */
+    setCPACR(CPACR_DEFAULT);
     isb();
 
     if (supportsAsyncExceptions()) {
@@ -76,17 +71,10 @@ BOOT_CODE bool_t fpsimd_init(void)
 }
 #endif /* CONFIG_HAVE_FPU */
 
-BOOT_CODE bool_t fpsimd_HWCapTest(void)
+/* Probe the FPU hardware. Requires CP10 and CP11 access in CPACR. */
+BOOT_CODE static bool_t fpsimd_HWCapProbe(void)
 {
-    word_t cpacr, fpsid;
-
-    /* Change permissions of CP10 and CP11 to read control/status registers */
-    MRC(CPACR, cpacr);
-    cpacr |= (CPACR_CP_ACCESS_PLX << CPACR_CP_10_SHIFT_POS |
-              CPACR_CP_ACCESS_PLX << CPACR_CP_11_SHIFT_POS);
-    MCR(CPACR, cpacr);
-
-    isb();
+    word_t fpsid;
 
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         enableFpuInstInHyp();
@@ -138,4 +126,22 @@ BOOT_CODE bool_t fpsimd_HWCapTest(void)
         printf("Info: Not using supported FPU as FPU is disabled in the build configuration\n");
     }
     return true;
+}
+
+BOOT_CODE bool_t fpsimd_HWCapTest(void)
+{
+    bool_t result;
+
+    /* Enable CP10 and CP11 access to read the FPU control/status registers. */
+    setCPACR(CPACR_FPU_ENABLE);
+    isb();
+
+    result = fpsimd_HWCapProbe();
+
+    /* Restore the CPACR value for native threads. Without CONFIG_HAVE_FPU this
+     * disables CP10 and CP11 access again. */
+    setCPACR(CPACR_DEFAULT);
+    isb();
+
+    return result;
 }

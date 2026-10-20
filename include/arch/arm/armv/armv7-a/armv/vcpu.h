@@ -416,6 +416,8 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
         return getSCTLR();
     case seL4_VCPUReg_ACTLR:
         return getACTLR();
+    case seL4_VCPUReg_CPACR:
+        return getCPACR();
     case seL4_VCPUReg_PARhigh:
         return readPARhigh();
     case seL4_VCPUReg_PARlow:
@@ -521,6 +523,9 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
         break;
     case seL4_VCPUReg_ACTLR:
         setACTLR(reg);
+        break;
+    case seL4_VCPUReg_CPACR:
+        setCPACR(reg);
         break;
     case seL4_VCPUReg_PARhigh:
         writePARhigh(reg);
@@ -712,6 +717,10 @@ static inline void armv_vcpu_boot_init(void)
 }
 static inline void armv_vcpu_save(vcpu_t *vcpu, bool_t active)
 {
+    /* If we are not active then this state already was stored when we were disabled */
+    if (active) {
+        vcpu_save_reg(vcpu, seL4_VCPUReg_CPACR);
+    }
     /* save registers */
     vcpu_save_reg_range(vcpu, seL4_VCPURegSaveRange_start, seL4_VCPURegSaveRange_end);
 
@@ -806,6 +815,7 @@ static inline void vcpu_enable(vcpu_t *vcpu)
     vcpu->vcpuTCB->tcbArch.tcbContext.fpuState.fpexc = vcpu_read_reg(vcpu, seL4_VCPUReg_FPEXC);
     access_fpexc(vcpu, true);
 #endif
+    vcpu_restore_reg(vcpu, seL4_VCPUReg_CPACR);
     /* Restore virtual timer state */
     restore_virt_timer(vcpu);
 
@@ -819,6 +829,7 @@ static inline void vcpu_disable(vcpu_t *vcpu)
         hcr = get_gic_vcpu_ctrl_hcr();
         vcpu->vgic.hcr = hcr;
         vcpu_save_reg(vcpu, seL4_VCPUReg_SCTLR);
+        vcpu_save_reg(vcpu, seL4_VCPUReg_CPACR);
         isb();
 #ifdef CONFIG_HAVE_FPU
         if (nativeThreadUsingFPU(vcpu->vcpuTCB)) {
@@ -833,6 +844,10 @@ static inline void vcpu_disable(vcpu_t *vcpu)
     /* Stage 1 MMU off */
     setSCTLR(SCTLR_DEFAULT);
     setHCR(HCR_NATIVE);
+
+    /* Restore CPACR to seL4 default for native threads. It might have been
+     * changed by the guest VM */
+    setCPACR(CPACR_DEFAULT);
 
 #if defined(ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS)
     /* Disable all breakpoint registers from triggering their
@@ -861,6 +876,7 @@ static inline void armv_vcpu_init(vcpu_t *vcpu)
 {
     vcpu_write_reg(vcpu, seL4_VCPUReg_SCTLR, SCTLR_DEFAULT);
     vcpu_write_reg(vcpu, seL4_VCPUReg_ACTLR, ACTLR_DEFAULT);
+    vcpu_write_reg(vcpu, seL4_VCPUReg_CPACR, CPACR_DEFAULT);
 }
 
 #define HSR_FPU_FAULT   (0x1fe0000a)
@@ -881,6 +897,7 @@ static inline bool_t vcpu_reg_saved_when_disabled(word_t field)
     case seL4_VCPUReg_CNTVOFFhigh:
     case seL4_VCPUReg_CNTVOFFlow:
     case seL4_VCPUReg_CNTKCTL:
+    case seL4_VCPUReg_CPACR:
         return true;
     default:
         return false;
