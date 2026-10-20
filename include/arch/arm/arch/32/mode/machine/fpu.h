@@ -12,14 +12,32 @@
 #include <mode/machine.h>
 
 
-#define CPACR_CP_10_SHIFT_POS        20
-#define CPACR_CP_11_SHIFT_POS        22
-#define CPACR_CP_ACCESS_DISABLE      0x0
-#define CPACR_CP_ACCESS_PL1          0x1
-#define CPACR_CP_ACCESS_PLX          0x3
+/* cpN access is a 2-bit field at bits [2N+1:2N], 0b11 is full PL0/PL1 access */
+#define CPACR_CP10                   (BIT(20) | BIT(21))
+#define CPACR_CP11                   (BIT(22) | BIT(23))
+#define CPACR_TRCDIS                 BIT(28)
+#define CPACR_D32DIS                 BIT(30)
+#define CPACR_ASEDIS                 BIT(31)
 
-#define CPACR_D32DIS_BIT             30
-#define CPACR_ASEDIS_BIT             31
+/* Full PL0 and PL1 access to cp10 and cp11 (VFP/Advanced SIMD), with bits
+ * D32DIS and ASEDIS cleared (=enable both features). */
+#define CPACR_FPU_ENABLE (CPACR_CP10 | CPACR_CP11)
+
+/* CPACR value for native threads and initial value for VCPUs.
+ *
+ * - cp10, cp11, ASEDIS, D32DIS: with CONFIG_HAVE_FPU, VFP and Advanced SIMD are
+ *   fully enabled for PL0 and PL1, and the kernel context-switches the FPU
+ *   state. When CONFIG_HAVE_FPU is disabled, FPU state is not saved and
+ *   restored and PL0 and PL1 access to cp10 and cp11 is disabled.
+ * - TRCDIS: always set, so PL0 and PL1 accesses to CP14 trace registers are
+ *   UNDEFINED.
+ * - cp0-cp9 (ARMv7 only, IMPLEMENTATION DEFINED coprocessors): no access.
+ * - All other bits are reserved and set to 0. */
+#ifdef CONFIG_HAVE_FPU
+#define CPACR_DEFAULT (CPACR_FPU_ENABLE | CPACR_TRCDIS)
+#else
+#define CPACR_DEFAULT CPACR_TRCDIS
+#endif
 
 #define FPSID_SW_BIT                 23
 #define FPSID_SUBARCH_SHIFT_POS      16
