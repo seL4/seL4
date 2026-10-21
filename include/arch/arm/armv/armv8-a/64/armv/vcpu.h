@@ -730,15 +730,14 @@ static inline void vcpu_disable(vcpu_t *vcpu)
         vcpu->vgic.hcr = hcr;
         vcpu_save_reg(vcpu, seL4_VCPUReg_SCTLR);
         vcpu_save_reg(vcpu, seL4_VCPUReg_CPACR);
-        isb();
     }
     /* Turn off the VGIC */
     set_gic_vcpu_ctrl_hcr(0);
-    isb();
+    /* for GIC memory-mapped register */
+    dsb();
 
     /* Stage 1 MMU off */
     setSCTLR(SCTLR_DEFAULT);
-    isb();
     setHCR(HCR_NATIVE);
     isb();
 
