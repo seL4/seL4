@@ -747,7 +747,6 @@ static inline void armv_vcpu_save(vcpu_t *vcpu, bool_t active)
      */
     saveAllBreakpointState(vcpu->vcpuTCB);
 #endif
-    isb();
 }
 
 
@@ -804,11 +803,10 @@ static inline void vcpu_disable(vcpu_t *vcpu)
 #ifdef CONFIG_HAVE_FPU
         vcpu_save_reg(vcpu, seL4_VCPUReg_FPEXC);
 #endif
-        isb();
     }
     /* Turn off the VGIC */
     set_gic_vcpu_ctrl_hcr(0);
-    isb();
+    /* setHCR below does dsb, so can be left out here */
 
     /* Stage 1 MMU off */
     setSCTLR(SCTLR_DEFAULT);
