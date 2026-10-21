@@ -216,7 +216,6 @@ typedef struct user_breakpoint_state {
 #ifdef CONFIG_HAVE_FPU
 typedef struct user_fpu_state {
     uint64_t fpregs[32];
-    uint32_t fpexc;
     uint32_t fpscr;
 } user_fpu_state_t;
 #endif /* CONFIG_HAVE_FPU */
@@ -250,9 +249,6 @@ void Arch_initBreakpointContext(user_context_t *context);
 static inline void Arch_initContext(user_context_t *context)
 {
     context->registers[CPSR] = CPSR_USER;
-#ifdef CONFIG_HAVE_FPU
-    context->fpuState.fpexc = BIT(FPEXC_EN_BIT);
-#endif
 #ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
     Arch_initBreakpointContext(context);
 #endif
