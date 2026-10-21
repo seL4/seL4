@@ -12,6 +12,8 @@
 #define SID_INVALID      SMMU_MAX_SID
 #define CB_INVALID       SMMU_MAX_CB
 #define ASID_INVALID     nASIDs
+#define SMMU_SID_TABLE_SIZE (ROUND_UP(SMMU_MAX_SID, wordRadix) >> wordRadix)
+#define SMMU_CB_TABLE_SIZE  (ROUND_UP(SMMU_MAX_CB, wordRadix) >> wordRadix)
 
 
 exception_t decodeARMSIDControlInvocation(word_t label, word_t length, cptr_t cptr,
