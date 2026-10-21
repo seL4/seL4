@@ -60,6 +60,35 @@ static inline word_t getHCR(void)
     return HCR;
 }
 
+#define HCPTR_TCP10  BIT(10)
+#define HCPTR_TCP11  BIT(11)
+#define HCPTR_TASE   BIT(15)
+#define HCPTR_TTA    BIT(20)
+#define HCPTR_TAM    BIT(30)
+#define HCPTR_TCPAC  BIT(31)
+
+/* HCPTR value set at boot. PL0 and PL1 coprocessor accesses trap to Hyp mode
+ * unless enabled explicitly.
+ *
+ * - TCP0-TCP9, TCP12, TCP13: trap accesses to IMPLEMENTATION DEFINED and
+ *   reserved coprocessors. RAO/WI when not implemented.
+ * - TCP10, TCP11, TASE: trap VFP and Advanced SIMD. With CONFIG_HAVE_FPU,
+ *   enableFpuInstInHyp() clears these bits while the FPU is enabled. Without
+ *   CONFIG_HAVE_FPU, the FPU is not context switched and all accesses are
+ *   trapped.
+ * - TTA: trap PL0 and PL1 accesses to CP14 trace registers. These are not
+ *   context switched.
+ * - TCPAC: not set, CPACR is saved and restored per VCPU.
+ * - TAM: trap accesses to AMU registers. These are not context switched.
+ *   RES0 when not implemented, but writing 1 must not affect operation.
+ * - All other bits are RES0. */
+#define HCPTR_DEFAULT (MASK(14) | HCPTR_TASE | HCPTR_TTA | HCPTR_TAM)
+
+/* HCPTR trap bits for VFP and Advanced SIMD. When set, PL0 and PL1 accesses
+ * trap to Hyp mode and Hyp mode accesses are UNDEFINED, so the kernel must
+ * clear them before it executes VFP instructions. */
+#define HCPTR_FPU_TRAPS (HCPTR_TCP10 | HCPTR_TCP11 | HCPTR_TASE)
+
 static inline void setHCPTR(word_t r)
 {
     dsb();
