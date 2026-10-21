@@ -89,7 +89,6 @@ typedef enum {
     seL4_VCPUReg_NMRR,
     seL4_VCPUReg_CIDR,
     seL4_VCPUReg_TPIDRPRW,
-    seL4_VCPUReg_FPEXC,
     seL4_VCPUReg_LRsvc,
     seL4_VCPUReg_SPsvc,
     seL4_VCPUReg_LRabt,
@@ -123,6 +122,7 @@ typedef enum {
     seL4_VCPUReg_CNTVOFFlow,
     seL4_VCPUReg_CNTKCTL,
     seL4_VCPUReg_CPACR,
+    seL4_VCPUReg_FPEXC,
     seL4_VCPUReg_Num,
     SEL4_FORCE_LONG_ENUM(seL4_VCPUReg),
 } seL4_VCPUReg;

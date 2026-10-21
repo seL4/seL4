@@ -94,13 +94,10 @@ static inline void saveFpuState(tcb_t *thread)
     user_fpu_state_t *dest = &thread->tcbArch.tcbContext.fpuState;
     word_t fpexc;
 
-    /* Fetch FPEXC. */
-    VMRS(FPEXC, fpexc);
-
-    dest->fpexc = fpexc;
-
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        /* before touching the registers, we need to set the EN bit */
+        /* FPEXC belongs to the current VCPU and may have EN cleared by the
+         * guest. Save it, and set the EN bit before touching the registers. */
+        VMRS(FPEXC, fpexc);
         setEnFPEXC();
     }
 
@@ -134,14 +131,11 @@ static inline void saveFpuState(tcb_t *thread)
 /* Enable the FPU to be used without faulting.
  * Required even if the kernel attempts to use the FPU.
  *
- * The FPEXC_EN bit is not set immediately in HYP mode for
- * the following reason:
- *
- *    A VM can set/clear the EN bit in the FPEXC in order to
- *    trap FPU accesses, implementing its own save/restore
- *    functions. Thus, we need to save the FPEXC without modifying
- *    it.
- *
+ * In HYP mode, FPEXC is VCPU state: it is switched in vcpu_enable() and
+ * vcpu_disable(), and native threads always have EN set. While a VCPU is
+ * active, FPEXC belongs to the guest, which may clear EN to trap FPU accesses
+ * itself, so it is left alone here. saveFpuState() and loadFpuState() only set
+ * EN temporarily and leave FPEXC as it was.
  */
 /** MODIFIES: phantom_machine_state */
 /** DONT_TRANSLATE */
@@ -161,9 +155,13 @@ static inline void enableFpu(void)
 static inline void loadFpuState(const tcb_t *thread)
 {
     const user_fpu_state_t *src = &thread->tcbArch.tcbContext.fpuState;
+    word_t fpexc;
 
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        /* now we need to enable the EN bit in FPEXC */
+        /* FPEXC belongs to the current VCPU and may have EN cleared by the
+         * guest. Save it, and set the EN bit for kernel access before touching
+         * the registers. */
+        VMRS(FPEXC, fpexc);
         setEnFPEXC();
     }
     register word_t regs_d16_d31 asm("r2") = (word_t) &src->fpregs[16];
@@ -184,8 +182,10 @@ static inline void loadFpuState(const tcb_t *thread)
     /* Load FPSCR. */
     VMSR(FPSCR, src->fpscr);
 
-    /* Restore FPEXC. */
-    VMSR(FPEXC, src->fpexc);
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        /* Restore the FPEXC. */
+        VMSR(FPEXC, fpexc);
+    }
 }
 
 #endif /* CONFIG_HAVE_FPU */

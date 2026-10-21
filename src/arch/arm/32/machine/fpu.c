@@ -66,6 +66,12 @@ BOOT_CODE bool_t fpsimd_init(void)
     }
 
     isFPUD32SupportedCached = isFPUD32Supported();
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        /* FPEXC is VCPU state and native threads always have EN set. Setting EN
+         * must happen before disableFpu() traps hyp mode (kernel) FPU accesses
+         * again. */
+        setEnFPEXC();
+    }
     /* Set the FPU to lazy switch mode */
     disableFpu();
 
