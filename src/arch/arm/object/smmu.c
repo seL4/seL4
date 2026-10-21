@@ -8,6 +8,25 @@
 #ifdef CONFIG_ARM_SMMU
 #include <arch/object/smmu.h>
 
+/* A guard against invalid access is not used in these bitmap helpers
+ * since invalid sids and cbs are rejected prior to calling these
+ * functions.
+ */
+static inline bool_t smmu_bitmap_get(const word_t *bitmap, word_t idx)
+{
+    return !!(bitmap[idx >> wordRadix] & BIT(idx & MASK(wordRadix)));
+}
+
+static inline void smmu_bitmap_set(word_t *bitmap,  word_t idx)
+{
+    bitmap[idx >> wordRadix] |= BIT(idx & MASK(wordRadix));
+}
+
+static inline void smmu_bitmap_clear(word_t *bitmap,  word_t idx)
+{
+    bitmap[idx >> wordRadix] &= ~BIT(idx & MASK(wordRadix));
+}
+
 static exception_t checkARMCBVspace(cap_t cap)
 {
     word_t cb = cap_cb_cap_get_capCB(cap);
@@ -74,7 +93,7 @@ exception_t decodeARMSIDControlInvocation(word_t label, word_t length, cptr_t cp
         userError("Rejecting request for SID %u. SID is greater than or equal to SMMU_MAX_SID.", (int)sid);
         return EXCEPTION_SYSCALL_ERROR;
     }
-    if (smmuStateSIDTable[sid]) {
+    if (smmu_bitmap_get(smmuStateSIDTable, sid)) {
         current_syscall_error.type = seL4_RevokeFirst;
         userError("Rejecting request for SID %u. Already active.", (int)sid);
         return EXCEPTION_SYSCALL_ERROR;
@@ -94,7 +113,7 @@ exception_t decodeARMSIDControlInvocation(word_t label, word_t length, cptr_t cp
         return status;
     }
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    smmuStateSIDTable[sid] = true;
+    smmu_bitmap_set(smmuStateSIDTable, sid);
     cteInsert(cap_sid_cap_new(sid), srcSlot, destSlot);
     return EXCEPTION_NONE;
 }
@@ -181,7 +200,7 @@ exception_t smmu_delete_sid(cap_t cap)
     if (unlikely(cap_get_capType(cbAssignSlot->cap) == cap_cb_cap)) {
         status = cteDelete(cbAssignSlot, true);
     }
-    smmuStateSIDTable[sid] = false;
+    smmu_bitmap_clear(smmuStateSIDTable, sid);
     return status;
 }
 
@@ -223,7 +242,7 @@ exception_t decodeARMCBControlInvocation(word_t label, word_t length, cptr_t cpt
         userError("Rejecting request for CB %u. CB is greater than or equal to SMMU_MAX_CB.", (int)cb);
         return EXCEPTION_SYSCALL_ERROR;
     }
-    if (smmuStateCBTable[cb]) {
+    if (smmu_bitmap_get(smmuStateCBTable, cb)) {
         current_syscall_error.type = seL4_RevokeFirst;
         userError("Rejecting request for CB %u. Already active.", (int)cb);
         return EXCEPTION_SYSCALL_ERROR;
@@ -244,7 +263,7 @@ exception_t decodeARMCBControlInvocation(word_t label, word_t length, cptr_t cpt
     }
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    smmuStateCBTable[cb] = true;
+    smmu_bitmap_set(smmuStateCBTable, cb);
     cteInsert(cap_cb_cap_new(SID_INVALID, cb), srcSlot, destSlot);
     return EXCEPTION_NONE;
 }
@@ -367,7 +386,7 @@ exception_t smmu_delete_cb(cap_t cap)
         triggered by the cteDelete*/
         status = cteDelete(cbSlot, true);
     }
-    smmuStateCBTable[cb] = false;
+    smmu_bitmap_clear(smmuStateCBTable, cb);
     return status;
 }
 
