@@ -17,9 +17,6 @@ BOOT_CODE static inline bool_t supportsAsyncExceptions(void)
 {
     word_t fpexc;
 
-    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        enableFpuInstInHyp();
-    }
     /* Set FPEXC.EX=1 */
     VMRS(FPEXC, fpexc);
     fpexc |= BIT(FPEXC_EX_BIT);
@@ -57,6 +54,11 @@ BOOT_CODE bool_t fpsimd_init(void)
     setCPACR(CPACR_DEFAULT);
     isb();
 
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        /* Allow hyp mode FPU accesses for the rest of the initialisation. */
+        enableFpuInstInHyp();
+    }
+
     if (supportsAsyncExceptions()) {
         /* In the future, when we've targets that support asynchronous FPU exceptions, we've to support them */
         printf("Error: seL4 doesn't support FPU subarchitectures that support asynchronous exceptions\n");
@@ -71,14 +73,11 @@ BOOT_CODE bool_t fpsimd_init(void)
 }
 #endif /* CONFIG_HAVE_FPU */
 
-/* Probe the FPU hardware. Requires CP10 and CP11 access in CPACR. */
+/* Probe the FPU hardware. Requires CP10 and CP11 access in CPACR and, in hyp
+ * mode, no CP10 and CP11 traps in HCPTR. */
 BOOT_CODE static bool_t fpsimd_HWCapProbe(void)
 {
     word_t fpsid;
-
-    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        enableFpuInstInHyp();
-    }
 
     /* Check of this platform supports HW FP instructions */
     asm volatile(".word 0xeef00a10  \n"  /* vmrs    r0, fpsid */
@@ -136,7 +135,17 @@ BOOT_CODE bool_t fpsimd_HWCapTest(void)
     setCPACR(CPACR_FPU_ENABLE);
     isb();
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    /* Allow hyp mode (kernel) FPU accesses, then restore HCPTR afterwards. */
+    word_t hcptr = getHCPTR();
+    setHCPTR(hcptr & ~HCPTR_FPU_TRAPS);
+#endif
+
     result = fpsimd_HWCapProbe();
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    setHCPTR(hcptr);
+#endif
 
     /* Restore the CPACR value for native threads. Without CONFIG_HAVE_FPU this
      * disables CP10 and CP11 access again. */
