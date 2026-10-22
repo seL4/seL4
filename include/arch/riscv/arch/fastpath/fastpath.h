@@ -1,6 +1,7 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ * Copyright 2024-2026, Capabilities Limited
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -121,8 +122,8 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
 
 #ifdef ENABLE_SMP_SUPPORT
     word_t sp = read_sscratch();
-    sp -= sizeof(word_t);
-    *((word_t *)sp) = cur_thread_regs;
+    sp -= sizeof(rword_t);
+    *((rword_t *)sp) = cur_thread_regs;
 #endif
 
 #ifdef CONFIG_HAVE_FPU
@@ -136,6 +137,17 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
     register word_t cur_thread_reg asm("t0") = cur_thread_regs;
 
     asm volatile(
+#if defined(CONFIG_HAVE_CHERI)
+        /* Run the following assembly code in capability mode
+         * so that we avoid invalid user's DDC being written
+         * and faulting the hybrid kernel.
+         */
+        "ymodeswy                                         \n"
+        ".option push                                     \n"
+        ".option capmode                                  \n"
+        "auipc t1, 0                                      \n"
+        "yaddrw t0, t1, t0                                \n"
+#endif
         LOAD_S "  ra, (0*%[REGSIZE])(t0)  \n"
         LOAD_S "  sp, (1*%[REGSIZE])(t0)  \n"
         LOAD_S "  gp, (2*%[REGSIZE])(t0)  \n"
@@ -168,6 +180,11 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
         /* get sepc */
         LOAD_S "  t1, (34*%[REGSIZE])(t0)\n"
         "csrw sepc, t1  \n"
+#if defined(CONFIG_HAVE_CHERI)
+        /* get user's DDC */
+        LOAD_S " t1, (35*%[REGSIZE])(t0) \n"
+        "csrw    ddc, t1                 \n"
+#endif
 #ifndef ENABLE_SMP_SUPPORT
         /* Write back sscratch with cur_thread_reg to get it back on the next trap entry */
         "csrw sscratch, t0\n"
@@ -177,10 +194,13 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
 
         LOAD_S "  t1, (5*%[REGSIZE])(t0) \n"
         LOAD_S "  t0, (4*%[REGSIZE])(t0) \n"
-        "sret"
+        "sret\n"
+#if defined(CONFIG_HAVE_CHERI)
+        ".option pop                     \n"
+#endif
         : /* no output */
         : "r"(cur_thread_reg),
-        [REGSIZE] "i"(sizeof(word_t)),
+        [REGSIZE] "i"(sizeof(rword_t)),
         "r"(badge_reg),
         "r"(msgInfo_reg)
         : "memory"

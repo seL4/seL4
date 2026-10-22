@@ -24,5 +24,6 @@ typedef word_t cpu_id_t;
 typedef uint32_t logical_id_t;
 typedef word_t node_id_t;
 typedef word_t dom_t;
+typedef word_t rword_t;
 
 typedef uint64_t timestamp_t;
