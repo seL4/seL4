@@ -416,6 +416,8 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
         return getSCTLR();
     case seL4_VCPUReg_ACTLR:
         return getACTLR();
+    case seL4_VCPUReg_CPACR:
+        return getCPACR();
     case seL4_VCPUReg_PARhigh:
         return readPARhigh();
     case seL4_VCPUReg_PARlow:
@@ -521,6 +523,9 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
         break;
     case seL4_VCPUReg_ACTLR:
         setACTLR(reg);
+        break;
+    case seL4_VCPUReg_CPACR:
+        setCPACR(reg);
         break;
     case seL4_VCPUReg_PARhigh:
         writePARhigh(reg);
@@ -690,6 +695,11 @@ static inline void access_fpexc(vcpu_t *vcpu, bool_t write)
 
 static inline void armv_vcpu_boot_init(void)
 {
+    /* By default trap all PL0 and PL1 coprocessor accesses. FPU init later in
+     * init_cpu() enables VFP and Advanced SIMD access as needed if
+     * CONFIG_HAVE_FPU is set */
+    setHCPTR(HCPTR_DEFAULT);
+
 #if defined(ARM_HYP_TRAP_CP14_IN_VCPU_THREADS) || defined(ARM_HYP_TRAP_CP14_IN_NATIVE_USER_THREADS)
     /* On the verified build, we have implemented a workaround that ensures
      * that we don't need to save and restore the debug coprocessor's state
@@ -712,6 +722,10 @@ static inline void armv_vcpu_boot_init(void)
 }
 static inline void armv_vcpu_save(vcpu_t *vcpu, bool_t active)
 {
+    /* If we are not active then this state already was stored when we were disabled */
+    if (active) {
+        vcpu_save_reg(vcpu, seL4_VCPUReg_CPACR);
+    }
     /* save registers */
     vcpu_save_reg_range(vcpu, seL4_VCPURegSaveRange_start, seL4_VCPURegSaveRange_end);
 
@@ -765,47 +779,26 @@ static inline void vcpu_enable(vcpu_t *vcpu)
     setHDCRTrapDebugExceptionState(false);
 #endif
 #ifdef CONFIG_HAVE_FPU
-    /* We need to restore the FPEXC value early for the following reason:
+    /* FPEXC is part of the VCPU state and can be modified by the guest and the
+     * VMM. It is also part of the per-thread FPU context that is saved and
+     * restored in switchLocalFpuOwner(). The value in the VCPU object is the
+     * authoritative one, so it is installed as the FPU context of the VCPU
+     * thread here.
      *
-     * 1: When an application inside a VM is trying to execute an FPU
-     * instruction and the EN bit of FPEXC is disabled, an undefined
-     * instruction exception is sent to the guest Linux kernel instead of
-     * the seL4. Until the Linux kernel examines the EN bit of the FPEXC
-     * to determine if the exception FPU related, a VCPU trap is sent to
-     * the seL4 kernel. However, it can be too late to restore the value
-     * of saved FPEXC in the VCPU trap handler: if the EN bit of the saved
-     * FPEXC is enabled, the Linux kernel thinks the FPU is enabled and
-     * thus refuses to handle the exception. The result is the application
-     * is killed with the cause of illegal instruction.
-     *
-     * Note that we restore the FPEXC here, but the current FPU owner
-     * can be a different thread. Thus, it seems that we are modifying
-     * another thread's FPEXC. However, the modification is OK.
-     *
-     * 1: If the other thread is a native thread, even if the EN bit of
-     * the FPEXC is enabled, a trap th HYP mode will be triggered when
-     * the thread tries to use the FPU.
-     *
-     * 2: If the other thread has a VCPU, the FPEXC is already saved
-     * in the VCPU's vcpu->fpexc when the VCPU is saved or disabled.
-     *
-     * We also overwrite the fpuState.fpexc with the value saved in
-     * vcpu->fpexc. Since the following scenario can happen:
-     *
-     * VM0 (the FPU owner) -> VM1 (update the FPEXC in vcpu_enable) ->
-     * switchLocalFpuOwner (save VM0 with modified FPEXC) ->
-     * VM1 (the new FPU owner)
-     *
-     * In the case above, the fpuState.fpexc of VM0 saves the value written
-     * by the VM1, but the vcpu->fpexc of VM0 still contains the correct
-     * value when VM0 is disabled (vcpu_disable) or saved (vcpu_save).
-     *
-     *
+     * We write the hardware register only if the thread owns the FPU. In that
+     * case the FPU owner does not change in the switch, so this is the only
+     * place that loads the value. In all other cases the hardware FPEXC still
+     * belongs to the current FPU owner and must stay intact: lazyFPURestore(),
+     * which runs right after Arch_switchToThread(), saves FPEXC for that owner
+     * and then loads fpuState.fpexc for the thread here, or leaves the FPU
+     * disabled if the thread is not configured to use it.
      */
-
     vcpu->vcpuTCB->tcbArch.tcbContext.fpuState.fpexc = vcpu_read_reg(vcpu, seL4_VCPUReg_FPEXC);
-    access_fpexc(vcpu, true);
+    if (nativeThreadUsingFPU(vcpu->vcpuTCB)) {
+        access_fpexc(vcpu, true);
+    }
 #endif
+    vcpu_restore_reg(vcpu, seL4_VCPUReg_CPACR);
     /* Restore virtual timer state */
     restore_virt_timer(vcpu);
 
@@ -819,6 +812,7 @@ static inline void vcpu_disable(vcpu_t *vcpu)
         hcr = get_gic_vcpu_ctrl_hcr();
         vcpu->vgic.hcr = hcr;
         vcpu_save_reg(vcpu, seL4_VCPUReg_SCTLR);
+        vcpu_save_reg(vcpu, seL4_VCPUReg_CPACR);
         isb();
 #ifdef CONFIG_HAVE_FPU
         if (nativeThreadUsingFPU(vcpu->vcpuTCB)) {
@@ -833,6 +827,10 @@ static inline void vcpu_disable(vcpu_t *vcpu)
     /* Stage 1 MMU off */
     setSCTLR(SCTLR_DEFAULT);
     setHCR(HCR_NATIVE);
+
+    /* Restore CPACR to seL4 default for native threads. It might have been
+     * changed by the guest VM */
+    setCPACR(CPACR_DEFAULT);
 
 #if defined(ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS)
     /* Disable all breakpoint registers from triggering their
@@ -861,6 +859,7 @@ static inline void armv_vcpu_init(vcpu_t *vcpu)
 {
     vcpu_write_reg(vcpu, seL4_VCPUReg_SCTLR, SCTLR_DEFAULT);
     vcpu_write_reg(vcpu, seL4_VCPUReg_ACTLR, ACTLR_DEFAULT);
+    vcpu_write_reg(vcpu, seL4_VCPUReg_CPACR, CPACR_DEFAULT);
 }
 
 #define HSR_FPU_FAULT   (0x1fe0000a)
@@ -881,6 +880,7 @@ static inline bool_t vcpu_reg_saved_when_disabled(word_t field)
     case seL4_VCPUReg_CNTVOFFhigh:
     case seL4_VCPUReg_CNTVOFFlow:
     case seL4_VCPUReg_CNTKCTL:
+    case seL4_VCPUReg_CPACR:
         return true;
     default:
         return false;

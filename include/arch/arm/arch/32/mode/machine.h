@@ -642,5 +642,17 @@ static inline void setACTLR(word_t actlr)
     asm volatile("mcr p15, 0, %0, c1, c0, 1" :: "r"(actlr));
 }
 
+static inline word_t getCPACR(void)
+{
+    word_t cpacr;
+    MRC(CPACR, cpacr);
+    return cpacr;
+}
+
+static inline void setCPACR(word_t cpacr)
+{
+    MCR(CPACR, cpacr);
+}
+
 void arch_clean_invalidate_caches(void);
 void arch_clean_invalidate_L1_caches(word_t type);
