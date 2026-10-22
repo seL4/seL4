@@ -10,7 +10,6 @@
 
 #include <arch/object/vcpu.h>
 #include <armv/vcpu.h>
-#include <arch/machine/debug.h> /* Arch_debug[A/Di]ssociateVCPUTCB() */
 #include <arch/machine/debug_conf.h>
 #include <drivers/timer/arm_generic.h>
 #include <plat/platform_gen.h> /* Ensure correct GIC header is included */
@@ -245,9 +244,6 @@ void vcpu_switch(vcpu_t *new)
             ARCH_NODE_STATE(armHSVCPUActive) = true;
         } else if (unlikely(ARCH_NODE_STATE(armHSVCPUActive))) {
             /* leave the current VCPU state loaded, but disable vgic and mmu */
-#ifdef ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS
-            saveAllBreakpointState(ARCH_NODE_STATE(armHSCurVCPU)->vcpuTCB);
-#endif
             vcpu_disable(ARCH_NODE_STATE(armHSCurVCPU));
             ARCH_NODE_STATE(armHSVCPUActive) = false;
         }
@@ -315,9 +311,6 @@ void dissociateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
     }
     tcb->tcbArch.tcbVCPU = NULL;
     vcpu->vcpuTCB = NULL;
-#ifdef ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS
-    Arch_debugDissociateVCPUTCB(tcb);
-#endif
 
     /* sanitize the CPSR as without a VCPU a thread should only be in user mode */
 #ifdef CONFIG_ARCH_AARCH64

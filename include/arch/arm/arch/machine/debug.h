@@ -15,8 +15,6 @@
 
 #ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
 void restore_user_debug_context(tcb_t *target_thread);
-void saveAllBreakpointState(tcb_t *t);
-void loadAllDisabledBreakpointState(void);
 
 #define DBGBCR_ENABLE                 (BIT(0))
 #define DBGWCR_ENABLE                 (BIT(0))
@@ -51,11 +49,6 @@ int getAndResetActiveBreakpoint(word_t vaddr, word_t reason);
 BOOT_CODE void disableAllBpsAndWps(void);
 uint16_t getBpNumFromType(uint16_t bp_num, word_t type);
 #endif /* CONFIG_HARDWARE_DEBUG_API */
-
-#ifdef ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS
-void Arch_debugAssociateVCPUTCB(tcb_t *t);
-void Arch_debugDissociateVCPUTCB(tcb_t *t);
-#endif
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 /* Those of these that trap NS accesses trap all NS accesses; we can't cause the
@@ -121,7 +114,7 @@ static inline void initHDCR(void)
      */
     hdcr |= HDCR_PERFMON_TPM;
 #endif
-#ifdef ARM_HYP_TRAP_CP14
+#ifdef ARM_HYP_TRAP_CP14_IN_NATIVE_USER_THREADS
     /* By default at boot, we SET HDCR.TDE to catch and redirect native threads'
      * PL0 debug exceptions.
      *
@@ -143,7 +136,7 @@ static inline void initHDCR(void)
 }
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
-#ifdef ARM_HYP_TRAP_CP14
+#ifdef ARM_HYP_TRAP_CP14_IN_NATIVE_USER_THREADS
 /** When running seL4 as a hypervisor, if we're building with support for the
  * hardware debug API, we have a case of indirection that we need to handle.
  *
@@ -189,7 +182,7 @@ static inline void setHDCRTrapDebugExceptionState(bool_t enable_trapping)
     }
     setHDCR(hdcr);
 }
-#endif /* ARM_HYP_TRAP_CP14 */
+#endif /* ARM_HYP_TRAP_CP14_IN_NATIVE_USER_THREADS */
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
 

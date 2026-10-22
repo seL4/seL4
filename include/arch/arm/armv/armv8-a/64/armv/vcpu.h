@@ -715,13 +715,6 @@ static inline void armv_vcpu_save(vcpu_t *vcpu, bool_t active)
         vcpu_save_reg(vcpu, seL4_VCPUReg_CPACR);
     }
     vcpu_save_reg_range(vcpu, seL4_VCPURegSaveRange_start, seL4_VCPURegSaveRange_end);
-
-#ifdef ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS
-    /* This is done when we are asked to save and restore the CP14 debug context
-     * of VCPU threads; the register context is saved into the underlying TCB.
-     */
-    saveAllBreakpointState(vcpu->vcpuTCB);
-#endif
 }
 
 static inline void vcpu_enable(vcpu_t *vcpu)
@@ -731,9 +724,6 @@ static inline void vcpu_enable(vcpu_t *vcpu)
     isb();
 
     set_gic_vcpu_ctrl_hcr(vcpu->vgic.hcr);
-#if !defined(ARM_CP14_SAVE_AND_RESTORE_NATIVE_THREADS) && defined(ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS)
-    restore_user_debug_context(vcpu->vcpuTCB);
-#endif
 #if defined(ARM_HYP_TRAP_CP14_IN_NATIVE_USER_THREADS)
     setHDCRTrapDebugExceptionState(false);
 #endif
@@ -764,9 +754,6 @@ static inline void vcpu_disable(vcpu_t *vcpu)
     setHCR(HCR_NATIVE);
     isb();
 
-#if defined(ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS)
-    loadAllDisabledBreakpointState();
-#endif
 #if defined(ARM_HYP_TRAP_CP14_IN_NATIVE_USER_THREADS)
     setHDCRTrapDebugExceptionState(true);
 #endif
