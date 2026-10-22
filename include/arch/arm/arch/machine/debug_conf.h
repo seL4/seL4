@@ -9,8 +9,7 @@
 #include <config.h>
 
 /* These are used to force specific outcomes for various combinations of
- * settings for the state of CONFIG_ARM_HYPERVISOR_SUPPORT,
- * CONFIG_ARM_HYP_ENABLE_VCPU_CP14_SAVE_AND_RESTORE and
+ * settings for the state of CONFIG_ARM_HYPERVISOR_SUPPORT and
  * CONFIG_HARDWARE_DEBUG_API.
  */
 
@@ -21,16 +20,6 @@
  */
 #define ARM_HYP_TRAP_CP14_IN_NATIVE_USER_THREADS
 #endif
-
-#ifdef CONFIG_ARM_HYP_ENABLE_VCPU_CP14_SAVE_AND_RESTORE
-/* When this is enabled, the ARM-hyp kernel will enable
- * CP14 save and restore whenever it is running a VCPU thread. When it's
- * disabled, the hyp kernel will intercept accesses to the CP14
- * coprocessor and deliver them as fault messages to the VCPU's fault
- * handler.
- */
-#define ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS
-#endif
 #endif
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
@@ -38,10 +27,6 @@
 #define ARM_CP14_SAVE_AND_RESTORE_NATIVE_THREADS
 #endif
 
-#if defined(ARM_CP14_SAVE_AND_RESTORE_NATIVE_THREADS) || defined(ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS)
+#ifdef ARM_CP14_SAVE_AND_RESTORE_NATIVE_THREADS
 #define ARM_BASE_CP14_SAVE_AND_RESTORE
 #endif
-#if defined(ARM_HYP_TRAP_CP14_IN_NATIVE_USER_THREADS) || defined(ARM_HYP_TRAP_CP14_IN_VCPU_THREADS)
-#define ARM_HYP_TRAP_CP14
-#endif
-

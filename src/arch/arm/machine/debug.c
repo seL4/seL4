@@ -480,7 +480,7 @@ void Arch_initBreakpointContext(user_context_t *uc)
     uc->breakpointState = armKSNullBreakpointState;
 }
 
-void loadAllDisabledBreakpointState(void)
+static void loadAllDisabledBreakpointState(void)
 {
     int i;
 
@@ -501,59 +501,6 @@ void loadAllDisabledBreakpointState(void)
         writeWcrCp(i, readWcrCp(i) & ~DBGWCR_ENABLE);
     }
 }
-
-/* We only need to save the breakpoint state in the hypervisor
- * build, and only for threads that have an associated VCPU.
- *
- * When the normal kernel is running with the debug API, all
- * changes to the debug regs are done through the debug API.
- * In the hypervisor build, the guest VM has full access to the
- * debug regs in PL1, so we need to save its values on vmexit.
- *
- * When saving the debug regs we will always save all of them.
- * When restoring, we will restore only those that have been used
- * for native threads; and we will restore all of them
- * unconditionally for VCPUs (because we don't know which of
- * them have been changed by the guest).
- *
- * To ensure that all the debug regs are restored unconditionally,
- * we just set the "used_breakpoints_bf" bitfield to all 1s in
- * associateVcpu.
- */
-void saveAllBreakpointState(tcb_t *t)
-{
-    int i;
-
-    assert(t != NULL);
-
-    for (i = 0; i < seL4_NumExclusiveBreakpoints; i++) {
-        writeBvrContext(t, i, readBvrCp(i));
-        writeBcrContext(t, i, readBcrCp(i));
-    }
-
-    for (i = 0; i < seL4_NumExclusiveWatchpoints; i++) {
-        writeWvrContext(t, i, readWvrCp(i));
-        writeWcrContext(t, i, readWcrCp(i));
-    }
-}
-
-#ifdef ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS
-void Arch_debugAssociateVCPUTCB(tcb_t *t)
-{
-    /* Don't attempt to shift beyond end of word. */
-    assert(seL4_NumHWBreakpoints < sizeof(word_t) * 8);
-
-    /* Set all the bits to 1, so loadBreakpointState() will
-     * restore all the debug regs unconditionally.
-     */
-    t->tcbArch.tcbContext.breakpointState.used_breakpoints_bf = MASK(seL4_NumHWBreakpoints);
-}
-
-void Arch_debugDissociateVCPUTCB(tcb_t *t)
-{
-    t->tcbArch.tcbContext.breakpointState.used_breakpoints_bf = 0;
-}
-#endif
 
 static void loadBreakpointState(tcb_t *t)
 {

@@ -168,18 +168,9 @@ typedef enum {
 #define seL4_LargePageBits 16
 #define seL4_SlotBits 4
 
-#if ( \
-    defined(CONFIG_HAVE_FPU) && ( \
-        (defined(CONFIG_ARM_HYPERVISOR_SUPPORT) && defined(CONFIG_ARM_HYP_ENABLE_VCPU_CP14_SAVE_AND_RESTORE)) || \
-        defined(CONFIG_HARDWARE_DEBUG_API) \
-    ) \
-)
+#if defined(CONFIG_HAVE_FPU) && defined(CONFIG_HARDWARE_DEBUG_API)
 #define seL4_TCBBits 11
-#elif ( \
-    defined(CONFIG_HAVE_FPU) || \
-    (defined(CONFIG_ARM_HYPERVISOR_SUPPORT) && defined(CONFIG_ARM_HYP_ENABLE_VCPU_CP14_SAVE_AND_RESTORE)) || \
-    defined(CONFIG_HARDWARE_DEBUG_API) \
-)
+#elif defined(CONFIG_HAVE_FPU) || defined(CONFIG_HARDWARE_DEBUG_API)
 #define seL4_TCBBits 10
 #else
 #define seL4_TCBBits 9
