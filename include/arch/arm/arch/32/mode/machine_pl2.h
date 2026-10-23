@@ -11,6 +11,26 @@
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 
+/** Returns the full 64-bit VTTBR (stage 2 translation table base and VMID).
+ *
+ * Mark as ignored for the C parser, because of the two outputs of the same asm block.
+ */
+/** MODIFIES: */
+/** DONT_TRANSLATE */
+static inline uint64_t getVTTBR(void)
+{
+    word_t lo, hi;
+    asm volatile("mrrc p15, 6, %0, %1, c2" : "=r"(lo), "=r"(hi));
+    return ((uint64_t)hi << 32) | lo;
+}
+
+/** Sets the full 64-bit VTTBR (stage 2 translation table base and VMID). */
+static inline void setVTTBR(uint64_t vttbr)
+{
+    asm volatile("mcrr p15, 6, %0, %1, c2" : : "r"((word_t)vttbr), "r"((word_t)(vttbr >> 32)));
+    isb();
+}
+
 /** Sets the VMID for the current stage 2 address space.
  *
  * This will update the current VMID in VTTBR while preserving the
@@ -27,8 +47,7 @@ static inline void writeContextIDPL2(word_t id)
 /** Sets the stage 2 translation table base address and VMID. */
 static inline void writeContextIDAndPD(word_t id, word_t pd_val)
 {
-    asm volatile("mcrr p15, 6, %0, %1, c2"  : : "r"(pd_val), "r"(id << (48-32)));
-    isb();
+    setVTTBR(((uint64_t)id << 48) | pd_val);
 }
 
 static inline void setCurrentHypPD(paddr_t addr)
