@@ -156,7 +156,7 @@ config_option(
     so PMU state is shared between VMs and native threads. \
     Always enabled when KernelBenchmarks is not none."
   DEFAULT OFF
-  DEPENDS "KernelArchArmV7a OR KernelArchArmV8a;NOT KernelArmCortexA8;NOT KernelEnableBenchmarks"
+  DEPENDS "KernelArchArmV7a OR KernelArchArmV8a;NOT KernelEnableBenchmarks"
   DEFAULT_DISABLED "${KernelEnableBenchmarks}")
 
 config_option(
