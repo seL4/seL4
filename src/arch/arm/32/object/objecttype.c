@@ -427,6 +427,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
             cleanCacheRange_RAM((word_t)regionBase,
                                 (word_t)regionBase + MASK(pageBitsForSize(ARMSmallPage)),
                                 addrFromPPtr(regionBase));
+            invalidateCaches_I();
         }
         return cap_small_frame_cap_new(
                    ASID_LOW(asidInvalid), VMReadWrite,
@@ -453,6 +454,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
             cleanCacheRange_RAM((word_t)regionBase,
                                 (word_t)regionBase + MASK(pageBitsForSize(ARMLargePage)),
                                 addrFromPPtr(regionBase));
+            invalidateCaches_I();
         }
         return cap_frame_cap_new(
                    ARMLargePage, ASID_LOW(asidInvalid), VMReadWrite,
@@ -485,6 +487,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
             cleanCacheRange_RAM((word_t)regionBase,
                                 (word_t)regionBase + MASK(pageBitsForSize(ARMSection)),
                                 addrFromPPtr(regionBase));
+            invalidateCaches_I();
         }
         return cap_frame_cap_new(
                    ARMSection, ASID_LOW(asidInvalid), VMReadWrite,
@@ -517,6 +520,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
             cleanCacheRange_RAM((word_t)regionBase,
                                 (word_t)regionBase + MASK(pageBitsForSize(ARMSuperSection)),
                                 addrFromPPtr(regionBase));
+            invalidateCaches_I();
         }
         return cap_frame_cap_new(
                    ARMSuperSection, ASID_LOW(asidInvalid), VMReadWrite,

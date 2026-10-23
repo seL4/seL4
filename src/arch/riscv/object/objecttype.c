@@ -208,6 +208,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t
             /** GHOSTUPD: "(True, gs_new_frames vmpage_size.RISCVSmallPage
                                                     (ptr_val \<acute>regionBase)
                                                     (unat RISCVPageBits))" */
+            ifence_local();
         }
         return cap_frame_cap_new(
                    asidInvalid,                    /* capFMappedASID       */
@@ -231,6 +232,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t
             /** GHOSTUPD: "(True, gs_new_frames vmpage_size.RISCVLargePage
                                                     (ptr_val \<acute>regionBase)
                                                     (unat RISCVMegaPageBits))" */
+            ifence_local();
         }
         return cap_frame_cap_new(
                    asidInvalid,                    /* capFMappedASID       */
@@ -256,6 +258,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t
             /** GHOSTUPD: "(True, gs_new_frames vmpage_size.RISCVHugePage
                                                     (ptr_val \<acute>regionBase)
                                                     (unat RISCVGigaPageBits))" */
+            ifence_local();
         }
         return cap_frame_cap_new(
                    asidInvalid,                    /* capFMappedASID       */

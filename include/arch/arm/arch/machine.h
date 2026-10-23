@@ -41,6 +41,7 @@ void clean_D_PoU(void);
 void cleanInvalidate_D_PoC(void);
 void cleanInvalidate_L1D(void);
 void cleanCaches_PoU(void);
+void invalidateCaches_I(void);
 void cleanInvalidateL1Caches(void);
 
 /* Cleaning memory before user-level access. Does not flush cache. */
