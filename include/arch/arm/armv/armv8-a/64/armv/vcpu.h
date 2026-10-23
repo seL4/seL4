@@ -13,10 +13,107 @@
 #include <arch/object/vcpu.h>
 #include <drivers/timer/arm_generic.h>
 
+/* HCR_EL2 "Hypervisor Configuration Register" used at boot and runtime.
+ * Used to trap system register accesses to EL2, except those enabled
+ * explicitly. Also controls some virtualisation features.
+ *
+ * - VM: Virtualization Enable.
+ * - SWIO: Unnecessary: https://github.com/seL4/seL4/pull/1734 (TODO: we currently set for native?)
+ * - PTW: Not needed.
+ * - FMO/IMO/AMO: Override CPSR.AIF bits on.
+ * - VF/VI/VA: Used to 'software' pend interrupts, unneeded.
+ * - TODO: 'force broadcast'
+ * - TODO: 'barrier shareability upgrade'
+ * - DC: See HCR_NATIVE
+ * - TWE/TWI: Conditionally enabled for vCPUs
+ *      - TODO: TWI/TWE:  ; does this matter for EL0 native tasks? -> no, we always force off
+ * - TID0/TID1/TID3: Traps reads of RO registers, unneeded.
+ *         todo: hypervisors might find it useful to be able to return different
+ *               values for these.
+ * - TID2: Traps reads of RO registers, and writes to CSSELR_EL1 which seL4
+ *         context switches.
+
+ * - TSC: Trap SMC. Needed, to prevent unrestricted SMC calls by vCPUs.
+ * - TIDCP: Trap implementation defined functionality. Needed as seL4 cannot
+ *          context switch *all* IMPDEF system registers.
+ * - TACR: Trap ACTLR_EL1 which is RW to EL1, forming a side-channel.
+ * - TSW/TPCP/TPU: Safe to perform non-invalidating cache maintenance instructions
+ *                 for VMs. Cache maintenance ops can leave timing channels
+ *                 but without strict cache partitioning between security domains
+ *                 these can be exploited by standard loads/stores anyway.
+ * - TTLB: TLB maintenance is also safe for VMs. (TODO: currently set for native?)
+ * - TVM/TRVM: Traps writes/reads to virtual memory controls (e.g. TTBR0); seL4 context switches
+ *        these registers. OR the registers are for newer ARM versions
+ *        where they can be trapped via fine-grained trapping.
+                (TODO: we should force fine-grained trapping on now?)
+                TODO: we need to switch CONTEXTIDR_EL1, TCR2_EL1, and SCTLR2_EL1)
+ * - TGE: Routes exceptions to EL1 to EL2 instead. Used for EL0. (todo: VMM might
+          want to control this?)
+ * - TDZ: Equivalent to writing zeros, no need to trap (todo: vmm might want to, safe to)
+ * - HVC: HVC instruction disable (without EL3, RES0 with EL3); disabled.
+ * - RW: RAO/WI, or controls AArch64 vs AArch32 execution state in EL1. (1 = AArch64)
+ * - CD/ID: Disables caches for VMs. 0b0 is no effect.
+ * - E2H: RES0, unless FEAT_VHE then "EL2 Host", and without FEAT_E2H0 is RES1.
+ *      todo: uhhh? do we just assume no VHE? otherwise RES0+RES1 :)
+ * - TLOR: With FEAT_LOR (OPTIONAL Armv8.0, MANDATORY Armv8.1), traps more EL1
+ *         register accesses to EL2; otherwise RES0.
+ *         Need to enable as seL4 does not context switch these registers (TODO)>
+ * - TERR: RES0, or traps with FEAT_RAS for RAS registers (not context switched)
+ * - TEA: left at 0 as we synchronous external aborts can remain in VMs
+ * - APK: RES0 or 0 traps accesses to FEAT_PAuth key registers (safe as 0)
+ * - API: RES0 or traps if not already disabled by SCTLR_ELx fields
+ * - NV: Either:
+ *       + RES0
+ *       + FEAT_NV: "Traps functionality that is permitted at EL2 and would be UNDEFINED at EL1 if this field was 0"
+ *                  Safe? Seems like 1 is for enabling EL1 accesses to EL2 registers to trap-specially for NV
+ *       + FEAT_NV2: Same for NV2
+ *       -> Safe to leave as 0.
+ * - NV1: same as above, safe to be 0 (?)
+ * - AT: with FEAT_NV, traps certain AT instructions, else RES0. We context switch
+ *       PAR_EL1 (result register) so this is fine..
+ * - NV2: Affects behaviour of NV/NV1 to make registers -> write to memory; else RES0. Safe to 0.
+ * - FWB: Forced write-back, else 0. TODO: same as 'force broadcast', fine to leave as 0?
+ * - FIEN: RES0, or 0 traps these registers with FEAT_RASv1p1, 1 does not trap. Safe as 0.
+ * - TID4: Looks like a subset of traps as TID2, with FEAT_EV2. Everything but CTR_EL0
+ *         Fine for same reason as TID2.
+ * - TICAB: Not necessary as they become not-invalidate through other mechanisms
+ * - AMVOFFEN: Safe because we set CPTR_EL2.TAM (TODO: do we?), RES0 with FEAT_AMU
+ * - TOCU: With FEAT_EVT, traps cache maintenance to PoU. We're fine without this.
+ * - EnSCXT: RES0, or 0 traps, so safe to leave 0.
+ * - TTLBIS: With FEAT_EVT2. Not necessary to trap these. RES0.
+ * - TTLBOS: With FEAT_EVT2. Not necessary to trap these. RES0.
+ * - ATA: RES0 or traps of 0. Safe. (FEAT_MTE2)
+ * - DCT: FEAT_MTE2, attributes in S1 translations. Off is good unless we have.
+ * - TID5: GMID_EL1 is currently RO (but not always?) Maybe we should set this to be safe (TODO)
+ * - TWEDEn/TWEDEL: This is performance relevant, not security.
+ *
+ *                */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* Note that the HCR_DC for ARMv8 disables S1 translation if enabled */
 /* Trap SMC and override CPSR.AIF */
 #define HCR_COMMON ( HCR_VM | HCR_RW | HCR_AMO | HCR_IMO | HCR_FMO | HCR_TSC)
 
+/* For native tasks (not virtual machines), we additionally enable:
+ * - DC, Default cacheability: Contrary to its name, this makes the PE behave
+ *   as if SCTLR_EL1.M is 0, i.e. EL1&0 stage 1 address translation disabled.
+ *   Native tasks use stage 2 address translation only.
+ */
 /* Allow native tasks to run at EL0, but restrict access */
 #define HCR_NATIVE ( HCR_COMMON | HCR_TGE | HCR_TVM | HCR_TTLB | HCR_DC \
                    | HCR_TAC | HCR_SWIO |  HCR_TSC )
