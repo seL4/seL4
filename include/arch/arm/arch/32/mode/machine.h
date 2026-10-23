@@ -66,6 +66,11 @@
 #define VMPIDR     " p15, 4,  %0,  c0,  c0, 5" /* 32-bit RW Virtualization Multiprocessor ID Register */
 #define MPIDR      " p15, 0,  %0, c0,  c0, 5"
 
+/** TLB maintenance CP15 operations **/
+#define TLBIALL    " p15, 0,  %0,  c8,  c7, 0" /* Invalidate entire unified TLB */
+#define TLBIMVA    " p15, 0,  %0,  c8,  c7, 1" /* Invalidate unified TLB by MVA and ASID */
+#define TLBIASID   " p15, 0,  %0,  c8,  c7, 2" /* Invalidate unified TLB by ASID */
+
 /* Use Hypervisor Physical timer */
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 #define CNT_TVAL CNTHP_TVAL
@@ -395,34 +400,30 @@ static inline word_t getHWCPUID(void)
 static inline void invalidateLocalTLB(void)
 {
     dsb();
-    asm volatile("mcr p15, 0, %0, c8, c7, 0" : : "r"(0));
+    MCR(TLBIALL, 0);
     dsb();
     isb();
 }
 
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
+/* In hyp mode, hw_asid_t is a stage 2 VMID and these two operations are
+ * provided by armv/tlb.h instead. */
 static inline void invalidateLocalTLB_ASID(hw_asid_t hw_asid)
 {
-    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        invalidateLocalTLB();
-    } else {
-        dsb();
-        asm volatile("mcr p15, 0, %0, c8, c7, 2" : : "r"(hw_asid));
-        dsb();
-        isb();
-    }
+    dsb();
+    MCR(TLBIASID, hw_asid);
+    dsb();
+    isb();
 }
 
 static inline void invalidateLocalTLB_VAASID(word_t mva_plus_asid)
 {
-    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        invalidateLocalTLB();
-    } else {
-        dsb();
-        asm volatile("mcr p15, 0, %0, c8, c7, 1" : : "r"(mva_plus_asid));
-        dsb();
-        isb();
-    }
+    dsb();
+    MCR(TLBIMVA, mva_plus_asid);
+    dsb();
+    isb();
 }
+#endif /* !CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 void lockTLBEntry(vptr_t vaddr);
 

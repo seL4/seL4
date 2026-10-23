@@ -1898,6 +1898,8 @@ exception_t invokeTCB_CopyRegisters(tcb_t *dest, tcb_t *tcb_src,
                                     bool_t transferFrame, bool_t transferInteger,
                                     word_t transferArch)
 {
+    bool_t archInfo;
+
     if (suspendSource) {
         suspend(tcb_src);
     }
@@ -1906,14 +1908,20 @@ exception_t invokeTCB_CopyRegisters(tcb_t *dest, tcb_t *tcb_src,
         restart(dest);
     }
 
+    /* Sanitise copied values against the destination like in
+     * invokeTCB_WriteRegisters(). Whether a value is legal depends on the
+     * destination thread, e.g. whether it has a VCPU or not. */
+    archInfo = Arch_getSanitiseRegisterInfo(dest);
+
     if (transferFrame) {
         word_t i;
         word_t v;
         word_t pc;
 
         for (i = 0; i < n_frameRegisters; i++) {
-            v = getRegister(tcb_src, frameRegisters[i]);
-            setRegister(dest, frameRegisters[i], v);
+            register_t r = frameRegisters[i];
+            v = getRegister(tcb_src, r);
+            setRegister(dest, r, sanitiseRegister(r, v, archInfo));
         }
 
         pc = getRestartPC(dest);
@@ -1925,8 +1933,9 @@ exception_t invokeTCB_CopyRegisters(tcb_t *dest, tcb_t *tcb_src,
         word_t v;
 
         for (i = 0; i < n_gpRegisters; i++) {
-            v = getRegister(tcb_src, gpRegisters[i]);
-            setRegister(dest, gpRegisters[i], v);
+            register_t r = gpRegisters[i];
+            v = getRegister(tcb_src, r);
+            setRegister(dest, r, sanitiseRegister(r, v, archInfo));
         }
     }
 

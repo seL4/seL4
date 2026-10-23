@@ -90,8 +90,7 @@ static inline void disableTrapFpu(void)
 {
     word_t cptr;
     MRS("cptr_el2", cptr);
-    /* Clear the TFP bit */
-    cptr &= ~BIT(10);
+    cptr &= ~BIT(CPTR_EL2_TFP);
     MSR("cptr_el2", cptr);
     isb();
 }
@@ -129,8 +128,7 @@ static inline void enableTrapFpu(void)
 {
     word_t cptr;
     MRS("cptr_el2", cptr);
-    /* Set the TFP bit */
-    cptr |= BIT(10);
+    cptr |= BIT(CPTR_EL2_TFP);
     MSR("cptr_el2", cptr);
     /* No ISB because we rely on context switch for synchronisation */
 }

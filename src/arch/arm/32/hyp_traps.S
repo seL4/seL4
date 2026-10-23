@@ -180,6 +180,7 @@ BEGIN_FUNC(arm_hyp_prefetch_abort_exception)
 #ifdef CONFIG_DEBUG_BUILD
     mrc p15, 4, sp, c13, c0, 2
     mrs r0, elr_hyp
+    mov r1, lr
     blx kernelPrefetchAbort
 #endif
     mrc HSR(r9)    /* Get Hype Syndrome Register. */
@@ -202,6 +203,7 @@ BEGIN_FUNC(arm_hyp_undefined_inst_exception)
 #ifdef CONFIG_DEBUG_BUILD
     mrc p15, 4, sp, c13, c0, 2
     mrs r0, elr_hyp
+    mov r1, lr
     blx kernelUndefinedInstruction
 #endif
     mrc HSR(r9)    /* Get Hype Syndrome Register. */
