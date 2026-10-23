@@ -10,7 +10,6 @@
 
 #include <arch/object/vcpu.h>
 #include <armv/vcpu.h>
-#include <arch/machine/debug_conf.h>
 #include <drivers/timer/arm_generic.h>
 #include <plat/platform_gen.h> /* Ensure correct GIC header is included */
 

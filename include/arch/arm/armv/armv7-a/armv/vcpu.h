@@ -735,7 +735,7 @@ static inline void vcpu_enable(vcpu_t *vcpu)
     /* Turn on the VGIC */
     set_gic_vcpu_ctrl_hcr(vcpu->vgic.hcr);
 
-#if defined(ARM_HYP_TRAP_CP14_IN_NATIVE_USER_THREADS)
+#ifdef CONFIG_HARDWARE_DEBUG_API
     /* Disable debug exception trapping and let the PL1 Guest VM handle all
      * of its own debug faults.
      */
@@ -780,7 +780,7 @@ static inline void vcpu_disable(vcpu_t *vcpu)
     writeFPEXC(BIT(FPEXC_EN_BIT));
 #endif
 
-#if defined(ARM_HYP_TRAP_CP14_IN_NATIVE_USER_THREADS)
+#ifdef CONFIG_HARDWARE_DEBUG_API
     /* Enable debug exception trapping and let seL4 trap all PL0 (user) native
      * seL4 threads' debug exceptions, so it can deliver them as fault messages.
      */

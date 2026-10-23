@@ -11,7 +11,6 @@
 #include <util.h>
 #include <arch/model/statedata.h>
 #include <arch/machine/debug.h>
-#include <arch/machine/debug_conf.h>
 #include <arch/kernel/vspace.h>
 #include <arch/machine/registerset.h>
 #include <armv/debug.h>
@@ -43,10 +42,6 @@ enum watchpoint_access /* WCR[4:3] */ {
     DBGWCR_ACCESS_STORE = 2u,
     DBGWCR_ACCESS_EITHER = 3u
 };
-
-#endif /* CONFIG_HARDWARE_DEBUG_API */
-
-#ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
 
 /* These next few functions (read*Context()/write*Context()) read from TCB
  * context and not from the hardware registers.
@@ -98,10 +93,6 @@ static void writeWvrContext(tcb_t *t, uint16_t index, word_t val)
     assert(index < seL4_NumExclusiveWatchpoints);
     t->tcbArch.tcbContext.breakpointState.watchpoint[index].vr = val;
 }
-
-#endif /* ARM_BASE_CP14_SAVE_AND_RESTORE */
-
-#ifdef CONFIG_HARDWARE_DEBUG_API
 
 /** For debugging: prints out the debug register pair values as returned by the
  * coprocessor.
@@ -464,10 +455,6 @@ int getAndResetActiveBreakpoint(word_t vaddr, word_t reason)
     return ret;
 }
 
-#endif /* CONFIG_HARDWARE_DEBUG_API */
-
-#ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
-
 /** Mirrors Arch_initFpuContext.
  *
  * Zeroes out the BVR thread context and preloads reserved bit values from the
@@ -559,4 +546,4 @@ void restore_user_debug_context(tcb_t *target_thread)
 #endif /* CONFIG_ARCH_ARCH64 */
 }
 
-#endif /* ARM_BASE_CP14_SAVE_AND_RESTORE */
+#endif /* CONFIG_HARDWARE_DEBUG_API */

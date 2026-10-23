@@ -724,7 +724,7 @@ static inline void vcpu_enable(vcpu_t *vcpu)
     isb();
 
     set_gic_vcpu_ctrl_hcr(vcpu->vgic.hcr);
-#if defined(ARM_HYP_TRAP_CP14_IN_NATIVE_USER_THREADS)
+#ifdef CONFIG_HARDWARE_DEBUG_API
     setHDCRTrapDebugExceptionState(false);
 #endif
 
@@ -754,7 +754,7 @@ static inline void vcpu_disable(vcpu_t *vcpu)
     setHCR(HCR_NATIVE);
     isb();
 
-#if defined(ARM_HYP_TRAP_CP14_IN_NATIVE_USER_THREADS)
+#ifdef CONFIG_HARDWARE_DEBUG_API
     setHDCRTrapDebugExceptionState(true);
 #endif
 

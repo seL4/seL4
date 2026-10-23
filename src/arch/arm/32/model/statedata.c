@@ -10,7 +10,6 @@
 #include <arch/types.h>
 #include <arch/model/statedata.h>
 #include <arch/object/structures.h>
-#include <arch/machine/debug_conf.h>
 #include <linker.h>
 #include <plat/machine/hardware.h>
 
@@ -53,7 +52,7 @@ UP_STATE_DEFINE(bool_t, armHSFPUEnabled);
 
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
-#ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
+#ifdef CONFIG_HARDWARE_DEBUG_API
 /* Null state for the Debug coprocessor's break/watchpoint registers */
 user_breakpoint_state_t armKSNullBreakpointState;
 #endif

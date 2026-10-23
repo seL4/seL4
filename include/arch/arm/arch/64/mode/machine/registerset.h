@@ -7,7 +7,6 @@
 #pragma once
 
 #include <config.h>
-#include <arch/machine/debug_conf.h>
 
 /* CurrentEL register */
 #define PEXPL1                  (1 << 2)
@@ -247,7 +246,7 @@ extern const register_t msgRegisters[];
 extern const register_t frameRegisters[];
 extern const register_t gpRegisters[];
 
-#ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
+#ifdef CONFIG_HARDWARE_DEBUG_API
 typedef struct debug_register_pair {
     word_t cr, vr;
 } debug_register_pair_t;
@@ -260,7 +259,7 @@ typedef struct user_breakpoint_state {
     word_t n_instructions;
     bool_t single_step_enabled;
 } user_breakpoint_state_t;
-#endif /* ARM_BASE_CP14_SAVE_AND_RESTORE */
+#endif /* CONFIG_HARDWARE_DEBUG_API */
 
 #ifdef CONFIG_HAVE_FPU
 typedef struct user_fpu_state {
@@ -281,9 +280,9 @@ struct user_context {
     word_t _padding;
     user_fpu_state_t fpuState;
 #endif /* CONFIG_HAVE_FPU */
-#ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
+#ifdef CONFIG_HARDWARE_DEBUG_API
     user_breakpoint_state_t breakpointState;
-#endif /* ARM_BASE_CP14_SAVE_AND_RESTORE */
+#endif /* CONFIG_HARDWARE_DEBUG_API */
 };
 typedef struct user_context user_context_t;
 
@@ -296,14 +295,14 @@ unverified_compile_assert(vregs_are_16_bytes_aligned,
                           OFFSETOF(user_context_t, fpuState) % 16 == 0)
 #endif
 
-#ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
+#ifdef CONFIG_HARDWARE_DEBUG_API
 void Arch_initBreakpointContext(user_context_t *context);
 #endif
 
 static inline void Arch_initContext(user_context_t *context)
 {
     context->registers[SPSR_EL1] = PSTATE_USER;
-#ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
+#ifdef CONFIG_HARDWARE_DEBUG_API
     Arch_initBreakpointContext(context);
 #endif
 }

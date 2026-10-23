@@ -10,7 +10,6 @@
 #include <machine/debug.h>
 #include <arch/kernel/vspace.h>
 #include <arch/machine/debug.h>
-#include <arch/machine/debug_conf.h>
 #include <arch/machine/registerset.h>
 #include <arch/model/statedata.h>
 #include <armv/debug.h>
@@ -222,10 +221,6 @@ seL4_Fault_t handleUserLevelDebugException(word_t esr, word_t fault_vaddr)
     return seL4_Fault_DebugException_new(bp_vaddr, active_bp, bp_reason);
 }
 
-#endif /* CONFIG_HARDWARE_DEBUG_API */
-
-#ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
-
 /** Pops debug register context for a thread into the CPU.
  *
  * Mirrors the idea of restore_user_context.
@@ -251,4 +246,4 @@ void aarch64_restore_user_debug_context(tcb_t *target_thread)
     setRegister(target_thread, SPSR_EL1, spsr);
 }
 
-#endif /* ARM_BASE_CP14_SAVE_AND_RESTORE */
+#endif /* CONFIG_HARDWARE_DEBUG_API */

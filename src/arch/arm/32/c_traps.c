@@ -9,7 +9,6 @@
 #include <arch/fastpath/fastpath.h>
 #include <arch/kernel/traps.h>
 #include <arch/machine/debug.h>
-#include <arch/machine/debug_conf.h>
 #include <api/syscall.h>
 #include <linker.h>
 #include <machine/fpu.h>
@@ -24,7 +23,7 @@ void VISIBLE NORETURN restore_user_context(void)
 
     c_exit_hook();
 
-#ifdef ARM_CP14_SAVE_AND_RESTORE_NATIVE_THREADS
+#ifdef CONFIG_HARDWARE_DEBUG_API
     restore_user_debug_context(NODE_STATE(ksCurThread));
 #endif
 
