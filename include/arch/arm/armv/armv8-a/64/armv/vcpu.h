@@ -14,21 +14,110 @@
 #include <drivers/timer/arm_generic.h>
 #include <arch/machine/debug.h>
 
-/* Note that the HCR_DC for ARMv8 disables S1 translation if enabled */
-/* Trap SMC and override CPSR.AIF */
-#define HCR_COMMON ( HCR_VM | HCR_RW | HCR_AMO | HCR_IMO | HCR_FMO | HCR_TSC)
+/* HCR_EL2 values common to vCPUs and native tasks.
+ * Audited against ARM ARM DDI0487M.d, D24-8919.
+ *
+ * Set at 1:
+ * - VM, virtualization enable
+ * - FMO|IMO|AMO, force on CPSR.AIF
+ * - TSC, trap SMC calls to EL2
+ * - TIDCP, trap IMPDEF sysreg access - needed as we cannot context switch them
+ * - TACR, trap ACTLR_EL1 access - needed as we should not context switch CPU
+ *   IMPDEF 'chicken bits'.
+ * - RW, controls lower-EL AArch64 vs AArch32 execution state with FEAT_AA32EL1,
+ *   or RAO/WI otherwise.
+ * - TLOR, traps accesses to LOR registers with FEAT_LOR - we do not context
+ *   switch these registers, so we must trap them. (RES0 otherwise)
+ * - TERR, traps accesses to RAS registers - we do not context switch these
+ *   registers (RES0 otherwise).
+ * - TID5, traps access to GMID_EL1 with MTE2 - current fields are RO, but the
+ *   whole register is not RO, so newer ARM versions could make RW. Trap just
+ *   in case (we also don't support MTE2).
+ *
+ * Set at 0:
+ * - SWIO, set/way invalidation override - unneeded for VCPU (HCR_EL2.VM is set),
+ *   also not needed for native threads, because set/way instructions are not
+ *   available there.
+ * - PTW, protected table walk - unneeded
+ * - VF/VI/VA, virtual FIRQ/IRQ/async pending - unneeded
+ * - FB, force broadcast - unneeded
+ * - BSU, barrier shareability upgrade - unneeded
+ * - TID0/TID1/TID2/TID3/TID4, ID register traps - accesses to registers either RO or
+ *   context switched by seL4.
+ * - TSW/TPCP/TPU, traps cache maintenance ops by set/way, to PoC,PoP, and PoU -
+ *   unneeded as these will all be clean/clean&invalidate which cannot corrupt
+ *   data; and trapping these would not prevent cache timing channels.
+ * - TDZ, traps DC ZVA operations - equivalent to zeroing memory.
+ * - HCD, traps HVC execution - unneeded, only matters without EL3, is undef
+ *   at EL0 always, and EL1 would trap to EL2 anyway.
+ * - CD/ID, forces non-cacheable instruction and data cache EL1&0/stage-2
+ *   translations - unneeded
+ * - E2H, "EL2 Host" for VHE - seL4 implements the Armv8.0 non-VHE hyp extensions
+ *   so we set to 0 to disable. RES0 when hardware does not implement.
+ * - TEA, route synchronous external aborts to EL2 (FEAT_RAS), or RES0 - seL4
+ *   does not support the RAS extensions and it should be fine for these to
+ *   be trapped at EL1, as they are synchronous and VMs can handle them.
+ * - APK, trap Pointer authentication key registers (or RES0) - 0 enables the
+ *   traps, which is safe behaviour.
+ * - API, trap pointer authentication instructions (or RES0) - 0 enables the
+ *   traps, which is safe behaviour.
+ * - NV/NV1/AT/NV2, nested virtualisation features (or RES0) - seL4 does not
+ *   support nested virtualisation.
+ * - FWB, forced writeback (or RES0) - changes how memory/cacheability attrs
+ *   are combined in stage 2 translations. not necessary
+ * - FIEN, fault injection enable for RAS (or RES0) - 0 enables the traps, which
+ *   is the safe behaviour.
+ * - GPF, granule protection faults with RME (or RES0) - 0 allows these to
+ *   route to EL1
+ * - TICAB, traps instruction cache maintenance instructions (or RES0) - unneeded
+ * - AMVOFFEN, activity monitor virtual offsets (or RES0) - unneeded, we set
+ *   CPT_EL2.TAM to 0 to disable activity monitors.
+ * - TOCU, traps cache maintenance ops to PoU (or RES0) - unneeded
+ * - EnSCXT, software context number register access (or RES0) - 0 enables the
+ *   traps, which is safe behaviour.
+ * - TTLBIS/TTLBOS, traps TLB maintenance (or RES0) - unneeded
+ * - ATA, traps memory tagging registers - 0 enables the traps, which is safe
+ *   behaviour.
+ * - DCT, controls 'tagged attribute' in stage 1 translations (MTE2) - unneeded,
+ *   seL4 does not enable the MTE extensions.
+ * - TWEDEn/TWEDEL, controls WFE instruction trap delays - unneeded, was added
+ *   as a performant-relevant optimisation.
+ * - FWB (forced write-back, Arm-v8.3+) changes PTE format, does not change
+ *   isolation behavior, only changes cache maintanance.
+ * - GPF (Armv9+), not needed. EL0 is already routed to EL2 because of TGE, EL1
+ *   can go to EL1 to be handled there.
+ *
+ *
+ * Varies:
+ * - DC, default cacheable - contrary to name, this makes CPU act as if
+ *   SCTLR_EL1.M is 0, i.e. EL1&0 stage 1 address translation disabled. Set for
+ *   native tasks, but not for vCPUs.
+ * - TWI/TWE, trap WFI/WFE at EL0 and EL1. Set for vCPUs depending on
+ *   CONFIG_DISABLE_WFI_WFE_TRAPS. Not set for native tasks. SCTLR_EL1_NATIVE
+ *   sets nTWI/nTWE, so EL0 WFI/WFE execute and the core wakes on the next
+ *   interrupt (e.g. the kernel timer). Only affects the user-level thread
+ *   itself.
+ * - TTLB, trap TLB operations - unneeded (0) for vCPUs @ EL1, conservatively
+ *   trapped for EL0 native tasks (even though they are UNDEF).
+ * - TVM/TRVM, traps writes/reads to virtual memory sysregs - for vCPUs @ EL1,
+ *   unneeded (0) and would be slow if set; conservatively trapped for EL0
+ *   native tasks (even though UNDEF).
+ * - TGE, trap EL1 general exceptions (to EL2) - used (1) for EL0 native tasks
+ *   to trap exceptions to seL4, not used EL1, not used for vCPUs.
+ */
 
-/* Allow native tasks to run at EL0, but restrict access */
-#define HCR_NATIVE ( HCR_COMMON | HCR_TGE | HCR_TVM | HCR_TTLB | HCR_DC \
-                   | HCR_TAC | HCR_SWIO |  HCR_TSC )
-
-/* Trap guest access to the RAS error record registers (ERRIDR_EL1, ERRSELR_EL1,
- * ERX*_EL1). Without FEAT_RAS, HCR_TERR is RES0. */
 #ifdef CONFIG_DISABLE_WFI_WFE_TRAPS
-#define HCR_VCPU   ( HCR_COMMON | HCR_TERR)
+#define HCR_MAYBE_TWI_TWE ( 0 )
 #else
-#define HCR_VCPU   ( HCR_COMMON | HCR_TERR | HCR_TWE | HCR_TWI)
+#define HCR_MAYBE_TWI_TWE ( HCR_TWI | HCR_TWE )
 #endif
+
+#define HCR_COMMON ( HCR_VM | HCR_AMO | HCR_IMO | HCR_FMO | HCR_TSC | HCR_TIDCP \
+                   | HCR_TAC | HCR_RW | HCR_TLOR | HCR_TERR | HCR_TID5)
+
+#define HCR_NATIVE ( HCR_COMMON | HCR_DC | HCR_TTLB | HCR_TVM | HCR_TRVM | HCR_TGE )
+
+#define HCR_VCPU   ( HCR_COMMON | HCR_MAYBE_TWI_TWE )
 
 /* CPTR_EL2 value set at boot. EL0 and EL1 accesses to the following trap to EL2
  * unless enabled explicitly later.

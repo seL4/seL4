@@ -13,7 +13,9 @@
 #include <api/failures.h>
 #include <linker.h>
 
+#define HCR_TID5     BIT(58)     /* Trap ID group 5 (GMID_EL1)     */
 #define HCR_TERR     BIT(36)     /* Trap RAS error record access   */
+#define HCR_TLOR     BIT(35)     /* Trap LOR registers             */
 #define HCR_RW       BIT(31)     /* Execution state control        */
 #define HCR_TRVM     BIT(30)     /* trap reads of VM controls      */
 #define HCR_HCD      BIT(29)     /* Disable HVC                    */
