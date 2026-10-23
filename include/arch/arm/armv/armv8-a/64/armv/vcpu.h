@@ -113,7 +113,7 @@
 #endif
 
 #define HCR_COMMON ( HCR_VM | HCR_AMO | HCR_IMO | HCR_FMO | HCR_TSC | HCR_TIDCP \
-                   | HCR_TAC | HCR_RW | HCR_TLOR | HCR_TERR | HCR_TID5)
+                   | HCR_TACR | HCR_RW | HCR_TLOR | HCR_TERR | HCR_TID5)
 
 #define HCR_NATIVE ( HCR_COMMON | HCR_DC | HCR_TTLB | HCR_TVM | HCR_TRVM | HCR_TGE )
 
