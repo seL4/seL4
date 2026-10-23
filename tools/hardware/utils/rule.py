@@ -45,6 +45,11 @@ class KernelRegionGroup:
         self.labels = {}  # dict of label => offset within region.
         self.user_ok = user_ok
 
+        # The kernel only maps the first max_size bytes of the region, but
+        # reserves the entire region to not expose half a device to user level.
+        # self.reserved tracks the reservation (page aligned full region).
+        self.reserved = region.align_size(page_bits)
+
         region.size = min(max_size, region.size)
         aligned = region.align_size(page_bits)
         self.size = aligned.size
@@ -63,6 +68,11 @@ class KernelRegionGroup:
         for (k, v) in other_group.labels.items():
             self.labels[k] = v
         self.desc += ', ' + other_group.desc
+        # For reservation, take the full union.
+        start = min(self.reserved.base, other_group.reserved.base)
+        end = max(self.reserved.base + self.reserved.size,
+                  other_group.reserved.base + other_group.reserved.size)
+        self.reserved = Region.from_range(start, end)
 
     def get_macro(self):
         ''' Get the #ifdef line for this region group '''
@@ -94,11 +104,28 @@ class KernelRegionGroup:
         ''' Get this region group's description '''
         return self.desc
 
+    def get_reserved(self) -> Region:
+        ''' Get the full page-aligned physical extent of this device. This will
+            be reserved by the kernel and can be more than is mapped into the
+            kernel. '''
+        return self.reserved
+
     def __repr__(self):
         return 'KernelRegion(reg={},labels={})'.format(self.regions, self.labels)
 
     def __eq__(self, other):
         return other.base == self.base and other.size == self.size
+
+
+def get_reserved_regions(groups: List[KernelRegionGroup]) -> List[KernelRegionGroup]:
+    ''' Return the kernel device region groups whose device is reserved for the
+        kernel (not shared with user level), sorted by reserved address. '''
+    ret = sorted((g for g in groups if not g.user_ok), key=lambda g: g.get_reserved().base)
+    for prev, cur in zip(ret, ret[1:]):
+        if prev.get_reserved().overlaps(cur.get_reserved()):
+            raise ValueError('reserved kernel device regions {} ({}) and {} ({}) overlap'.format(
+                prev.get_reserved(), prev.get_desc(), cur.get_reserved(), cur.get_desc()))
+    return ret
 
 
 class KernelInterrupt:
