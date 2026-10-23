@@ -20,7 +20,7 @@
 
 /* Allow native tasks to run at PL1, but restrict access */
 #define HCR_NATIVE ( HCR_COMMON | HCR_TGE | HCR_TVM | HCR_TTLB | HCR_TCACHE \
-                   | HCR_TAC | HCR_SWIO)
+                   | HCR_TACR | HCR_SWIO)
 
 #ifdef CONFIG_DISABLE_WFI_WFE_TRAPS
 #define HCR_VCPU   (HCR_COMMON)
