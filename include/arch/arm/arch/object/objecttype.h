@@ -11,6 +11,7 @@
 #include <api/types.h>
 #include <object/structures.h>
 #include <object/cnode.h>
+#include <arch/machine.h>
 
 deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap);
 cap_t CONST Arch_updateCapData(bool_t preserve, word_t data, cap_t cap);
@@ -28,6 +29,24 @@ word_t Arch_getObjectSize(word_t t);
 
 static inline void Arch_postCapDeletion(cap_t cap)
 {
+}
+
+/* Flush the instruction cache for Untypeds that could be turned into
+ * non-device frames. On VIPT caches we need to flush the entire cache,
+ * on PIPT caches, we can flush by address. */
+static inline void Arch_postResetUntyped(bool_t deviceMemory, word_t sizeBits, void *regionBase)
+{
+    if (!deviceMemory && sizeBits >= seL4_PageBits) {
+        dsb();
+        if (config_set(CONFIG_ARM_ICACHE_VIPT)) {
+            invalidate_I_PoU();
+        } else {
+            invalidateCacheRange_I((word_t)regionBase, (word_t)regionBase + BIT(sizeBits) - 1,
+                                   addrFromPPtr(regionBase));
+        }
+        dsb();
+        isb();
+    }
 }
 
 /**

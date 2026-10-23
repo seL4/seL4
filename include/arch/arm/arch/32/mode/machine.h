@@ -486,14 +486,19 @@ static inline void invalidateByVA_I(vptr_t vaddr, paddr_t paddr)
     isb();
 }
 
-/* I-Cache invalidate all to PoU (L2 cache) (v6/v7 common) */
+/* I-Cache invalidate all to PoU (L2 cache) (v6/v7 common)
+ * On SMP, invalidate all cores in the Inner Shareable domain (ICIALLUIS). */
 static inline void invalidate_I_PoU(void)
 {
 #ifdef CONFIG_ARM_CORTEX_A8
     /* Erratum 586324 -- perform a dummy cached load before flushing. */
     asm volatile("ldr r0, [sp]" : : : "r0");
 #endif
+#ifdef CONFIG_ENABLE_SMP_SUPPORT
+    asm volatile("mcr p15, 0, %0, c7, c1, 0" : : "r"(0));
+#else
     asm volatile("mcr p15, 0, %0, c7, c5, 0" : : "r"(0));
+#endif
     isb();
 }
 
