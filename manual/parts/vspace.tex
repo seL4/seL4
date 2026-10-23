@@ -283,6 +283,14 @@ RISC-V               & \autoref{group__riscv__seL4__RISCV__ASIDPool} \\
 \bottomrule
 \end{tabularx}
 
+An seL4 ASID is unmapped automatically when the corresponding VSpace object is deleted and can then
+be reused. The VSpace object will be deleted when the last capability to it has been deleted. This
+happens, for instance, when the Untyped capability it was created from is revoked, or when the
+original VSpace capability is first revoked and then deleted.
+
+Note that seL4 ASIDs are not necessarily hardware ASIDs or VMIDs. How seL4 ASIDs map to hardware
+ASIDs or VMIDs is architecture-specific and controlled by the kernel.
+
 \section{Mapping Attributes}
 A parameter of type \texttt{seL4\_ARM\_VMAttributes}, \texttt{seL4\_X86\_VMAttributes},
 \texttt{seL4\_X86\_EPT\_VMAttributes}, or \texttt{seL4\_RISCV\_VMAttributes} is used to specify the
