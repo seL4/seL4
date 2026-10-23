@@ -16,13 +16,17 @@
 #define CNTKCTL_PL0PTEN  BIT(9)
 
 #define ID_DFR0_PERFMON_MASK   (0xful << 24)
-/* On ARMv8-A this means No PMU, on ARMv7-A it means "PMUv2 not supported", but
- * if a PMUv1 is supported it should return 0b0001 instead, so the effect is the
- * same. */
-#define ID_DFR0_PERFMON_NONE   (0x0ul)
-/* On ARMv7-A this means No PMU, on ARMv8-A it means Implementation Defined
- * (non-Arm) PMU. */
+/* On ARMv7-A, 0b1111 means "No PMU support" and 0b0000 means "PMUv2 not
+ * supported", which "gives no indication of whether PMUv1 monitors are
+ * supported" (ARM ARM DDI 0406C.d, B4.1.82). On ARMv8-A, 0b0000 means No PMU
+ * and 0b1111 means Implementation Defined (non-Arm) PMU. */
 #define ID_DFR0_PERFMON_IMPDEF (0xful << 24)
+#ifdef CONFIG_ARCH_ARM_V8A
+#define ID_DFR0_PERFMON_NONE   (0x0ul)
+#else
+/* Treat 0b0000 as a PMUv1 being present on ARMv7-A, so only 0b1111 means None. */
+#define ID_DFR0_PERFMON_NONE   ID_DFR0_PERFMON_IMPDEF
+#endif
 
 #define ID_PFR1_GENERIC_TIMER BIT(16)
 
