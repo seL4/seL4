@@ -8,7 +8,7 @@
 
 #include <mode/machine.h>
 #include <arch/smp/ipi_inline.h>
-#if defined(CONFIG_ARM_HYPERVISOR_SUPPORT) && defined(CONFIG_ARCH_AARCH64)
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 #include <armv/tlb.h>
 #endif
 

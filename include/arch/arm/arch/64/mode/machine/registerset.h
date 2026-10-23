@@ -49,6 +49,15 @@
 /* CPACR_EL1 register */
 #define CPACR_EL1_FPEN          20     // FP registers access
 
+/* CPTR_EL2 register, layout for HCR_EL2.E2H == 0 */
+#define CPTR_EL2_TCPAC          31     // Trap EL1 accesses to CPACR_EL1
+#define CPTR_EL2_TAM            30     // Trap activity monitor accesses (FEAT_AMUv1)
+#define CPTR_EL2_TTA            20     // Trap trace register accesses
+#define CPTR_EL2_TSM            12     // Trap SME accesses, RES1 without FEAT_SME
+#define CPTR_EL2_TFP            10     // Trap FP and Advanced SIMD accesses
+#define CPTR_EL2_TZ             8      // Trap SVE accesses, RES1 without FEAT_SVE
+#define CPTR_EL2_RES1           (BIT(13) | BIT(CPTR_EL2_TSM) | BIT(9) | BIT(CPTR_EL2_TZ) | 0xff)
+
 /*
  * We cannot allow async aborts in the verified kernel, but they are useful
  * in identifying invalid memory access bugs so we enable them in debug mode.

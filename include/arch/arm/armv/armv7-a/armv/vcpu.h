@@ -408,14 +408,42 @@ static inline word_t get_cntv_off_low(void)
     return (word_t) ret;
 }
 
+#ifdef CONFIG_HAVE_FPU
+/* HCPTR also traps hyp mode (kernel) FPU accesses, so temporarily allow them when needed */
+/** DONT_TRANSLATE */
+static inline word_t readFPEXC(void)
+{
+    word_t fpexc;
+    bool_t flag = ARCH_NODE_STATE(armHSFPUEnabled);
+    enableFpuInstInHyp(); /* already checks for !ARCH_NODE_STATE(armHSFPUEnabled) inside */
+    VMRS(FPEXC, fpexc);
+    if (!flag) {
+        trapFpuInstToHyp();
+    }
+    return fpexc;
+}
+
+/** DONT_TRANSLATE */
+static inline void writeFPEXC(word_t fpexc)
+{
+    bool_t flag = ARCH_NODE_STATE(armHSFPUEnabled);
+    enableFpuInstInHyp(); /* already checks for !ARCH_NODE_STATE(armHSFPUEnabled) inside */
+    VMSR(FPEXC, fpexc);
+    if (!flag) {
+        trapFpuInstToHyp();
+    }
+}
+#endif
+
 static word_t vcpu_hw_read_reg(word_t reg_index)
 {
-    word_t reg = 0;
     switch (reg_index) {
     case seL4_VCPUReg_SCTLR:
         return getSCTLR();
     case seL4_VCPUReg_ACTLR:
         return getACTLR();
+    case seL4_VCPUReg_CPACR:
+        return getCPACR();
     case seL4_VCPUReg_PARhigh:
         return readPARhigh();
     case seL4_VCPUReg_PARlow:
@@ -424,8 +452,12 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
         return readTTBCR();
     case seL4_VCPUReg_TTBR0:
         return readTTBR0();
+    case seL4_VCPUReg_TTBR0high:
+        return readTTBR0high();
     case seL4_VCPUReg_TTBR1:
         return readTTBR1();
+    case seL4_VCPUReg_TTBR1high:
+        return readTTBR1high();
     case seL4_VCPUReg_DACR:
         return readDACR();
     case seL4_VCPUReg_DFSR:
@@ -449,7 +481,11 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
     case seL4_VCPUReg_TPIDRPRW:
         return readTPIDRPRW();
     case seL4_VCPUReg_FPEXC:
-        return reg;
+#ifdef CONFIG_HAVE_FPU
+        return readFPEXC();
+#else
+        return 0;
+#endif
     case seL4_VCPUReg_LRsvc:
         return get_lr_svc();
     case seL4_VCPUReg_SPsvc:
@@ -518,6 +554,9 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
     case seL4_VCPUReg_ACTLR:
         setACTLR(reg);
         break;
+    case seL4_VCPUReg_CPACR:
+        setCPACR(reg);
+        break;
     case seL4_VCPUReg_PARhigh:
         writePARhigh(reg);
         break;
@@ -530,8 +569,14 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
     case seL4_VCPUReg_TTBR0:
         writeTTBR0(reg);
         break;
+    case seL4_VCPUReg_TTBR0high:
+        writeTTBR0high(reg);
+        break;
     case seL4_VCPUReg_TTBR1:
         writeTTBR1(reg);
+        break;
+    case seL4_VCPUReg_TTBR1high:
+        writeTTBR1high(reg);
         break;
     case seL4_VCPUReg_DACR:
         writeDACR(reg);
@@ -567,6 +612,9 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
         writeTPIDRPRW(reg);
         break;
     case seL4_VCPUReg_FPEXC:
+#ifdef CONFIG_HAVE_FPU
+        writeFPEXC(reg);
+#endif
         break;
     case seL4_VCPUReg_LRsvc:
         set_lr_svc(reg);
@@ -654,32 +702,13 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
     }
 }
 
-#ifdef CONFIG_HAVE_FPU
-static inline void access_fpexc(vcpu_t *vcpu, bool_t write)
-{
-    /* save a copy of the current status since
-     * the enableFpuHyp modifies the armHSFPUEnabled
-     */
-    bool_t flag = ARCH_NODE_STATE(armHSFPUEnabled);
-    if (!flag) {
-        enableFpuInstInHyp();
-    }
-    if (write) {
-        VMSR(FPEXC, vcpu_read_reg(vcpu, seL4_VCPUReg_FPEXC));
-    } else {
-        word_t fpexc;
-        VMRS(FPEXC, fpexc);
-        vcpu_write_reg(vcpu, seL4_VCPUReg_FPEXC, fpexc);
-    }
-    /* restore the status */
-    if (!flag) {
-        trapFpuInstToHyp();
-    }
-}
-#endif
-
 static inline void armv_vcpu_boot_init(void)
 {
+    /* By default trap all PL0 and PL1 coprocessor accesses. FPU init later in
+     * init_cpu() enables VFP and Advanced SIMD access as needed if
+     * CONFIG_HAVE_FPU is set */
+    setHCPTR(HCPTR_DEFAULT);
+
 #if defined(ARM_HYP_TRAP_CP14_IN_VCPU_THREADS) || defined(ARM_HYP_TRAP_CP14_IN_NATIVE_USER_THREADS)
     /* On the verified build, we have implemented a workaround that ensures
      * that we don't need to save and restore the debug coprocessor's state
@@ -702,6 +731,13 @@ static inline void armv_vcpu_boot_init(void)
 }
 static inline void armv_vcpu_save(vcpu_t *vcpu, bool_t active)
 {
+    /* If we are not active then this state already was stored when we were disabled */
+    if (active) {
+        vcpu_save_reg(vcpu, seL4_VCPUReg_CPACR);
+#ifdef CONFIG_HAVE_FPU
+        vcpu_save_reg(vcpu, seL4_VCPUReg_FPEXC);
+#endif
+    }
     /* save registers */
     vcpu_save_reg_range(vcpu, seL4_VCPURegSaveRange_start, seL4_VCPURegSaveRange_end);
 
@@ -710,15 +746,6 @@ static inline void armv_vcpu_save(vcpu_t *vcpu, bool_t active)
      * of VCPU threads; the register context is saved into the underlying TCB.
      */
     saveAllBreakpointState(vcpu->vcpuTCB);
-#endif
-    isb();
-#ifdef CONFIG_HAVE_FPU
-    /* Other FPU registers are still lazily saved and restored.
-     * See the comments in vcpu_enable for more information.
-     */
-    if (active && nativeThreadUsingFPU(vcpu->vcpuTCB)) {
-        access_fpexc(vcpu, false);
-    }
 #endif
 }
 
@@ -755,47 +782,10 @@ static inline void vcpu_enable(vcpu_t *vcpu)
     setHDCRTrapDebugExceptionState(false);
 #endif
 #ifdef CONFIG_HAVE_FPU
-    /* We need to restore the FPEXC value early for the following reason:
-     *
-     * 1: When an application inside a VM is trying to execute an FPU
-     * instruction and the EN bit of FPEXC is disabled, an undefined
-     * instruction exception is sent to the guest Linux kernel instead of
-     * the seL4. Until the Linux kernel examines the EN bit of the FPEXC
-     * to determine if the exception FPU related, a VCPU trap is sent to
-     * the seL4 kernel. However, it can be too late to restore the value
-     * of saved FPEXC in the VCPU trap handler: if the EN bit of the saved
-     * FPEXC is enabled, the Linux kernel thinks the FPU is enabled and
-     * thus refuses to handle the exception. The result is the application
-     * is killed with the cause of illegal instruction.
-     *
-     * Note that we restore the FPEXC here, but the current FPU owner
-     * can be a different thread. Thus, it seems that we are modifying
-     * another thread's FPEXC. However, the modification is OK.
-     *
-     * 1: If the other thread is a native thread, even if the EN bit of
-     * the FPEXC is enabled, a trap th HYP mode will be triggered when
-     * the thread tries to use the FPU.
-     *
-     * 2: If the other thread has a VCPU, the FPEXC is already saved
-     * in the VCPU's vcpu->fpexc when the VCPU is saved or disabled.
-     *
-     * We also overwrite the fpuState.fpexc with the value saved in
-     * vcpu->fpexc. Since the following scenario can happen:
-     *
-     * VM0 (the FPU owner) -> VM1 (update the FPEXC in vcpu_enable) ->
-     * switchLocalFpuOwner (save VM0 with modified FPEXC) ->
-     * VM1 (the new FPU owner)
-     *
-     * In the case above, the fpuState.fpexc of VM0 saves the value written
-     * by the VM1, but the vcpu->fpexc of VM0 still contains the correct
-     * value when VM0 is disabled (vcpu_disable) or saved (vcpu_save).
-     *
-     *
-     */
-
-    vcpu->vcpuTCB->tcbArch.tcbContext.fpuState.fpexc = vcpu_read_reg(vcpu, seL4_VCPUReg_FPEXC);
-    access_fpexc(vcpu, true);
+    /* FPEXC is only accessible from PL1 and above and is VCPU state. */
+    vcpu_restore_reg(vcpu, seL4_VCPUReg_FPEXC);
 #endif
+    vcpu_restore_reg(vcpu, seL4_VCPUReg_CPACR);
     /* Restore virtual timer state */
     restore_virt_timer(vcpu);
 
@@ -809,20 +799,26 @@ static inline void vcpu_disable(vcpu_t *vcpu)
         hcr = get_gic_vcpu_ctrl_hcr();
         vcpu->vgic.hcr = hcr;
         vcpu_save_reg(vcpu, seL4_VCPUReg_SCTLR);
-        isb();
+        vcpu_save_reg(vcpu, seL4_VCPUReg_CPACR);
 #ifdef CONFIG_HAVE_FPU
-        if (nativeThreadUsingFPU(vcpu->vcpuTCB)) {
-            access_fpexc(vcpu, false);
-        }
+        vcpu_save_reg(vcpu, seL4_VCPUReg_FPEXC);
 #endif
     }
     /* Turn off the VGIC */
     set_gic_vcpu_ctrl_hcr(0);
-    isb();
+    /* setHCR below does dsb, so can be left out here */
 
     /* Stage 1 MMU off */
     setSCTLR(SCTLR_DEFAULT);
     setHCR(HCR_NATIVE);
+
+    /* Restore CPACR to seL4 default for native threads. It might have been
+     * changed by the guest VM */
+    setCPACR(CPACR_DEFAULT);
+#ifdef CONFIG_HAVE_FPU
+    /* Same for FPEXC: in hyp mode, native threads always have EN set. */
+    writeFPEXC(BIT(FPEXC_EN_BIT));
+#endif
 
 #if defined(ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS)
     /* Disable all breakpoint registers from triggering their
@@ -851,6 +847,7 @@ static inline void armv_vcpu_init(vcpu_t *vcpu)
 {
     vcpu_write_reg(vcpu, seL4_VCPUReg_SCTLR, SCTLR_DEFAULT);
     vcpu_write_reg(vcpu, seL4_VCPUReg_ACTLR, ACTLR_DEFAULT);
+    vcpu_write_reg(vcpu, seL4_VCPUReg_CPACR, CPACR_DEFAULT);
 }
 
 #define HSR_FPU_FAULT   (0x1fe0000a)
@@ -871,6 +868,8 @@ static inline bool_t vcpu_reg_saved_when_disabled(word_t field)
     case seL4_VCPUReg_CNTVOFFhigh:
     case seL4_VCPUReg_CNTVOFFlow:
     case seL4_VCPUReg_CNTKCTL:
+    case seL4_VCPUReg_CPACR:
+    case seL4_VCPUReg_FPEXC:
         return true;
     default:
         return false;

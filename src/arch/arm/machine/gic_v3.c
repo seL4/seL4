@@ -197,7 +197,7 @@ BOOT_CODE static void dist_init(void)
         }
     }
 
-    gic_dist->ctlr = GICD_CTLR_ARE_NS | GICD_CTLR_ENABLE_G1NS | GICD_CTLR_ENABLE_G0;
+    gic_dist->ctlr = GICD_CTLR_ARE_NS | GICD_CTLR_ENABLE_G1NS;
     gicv3_dist_wait_for_rwp();
 
     /* Route all global IRQs to this CPU */

@@ -49,6 +49,8 @@
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="start"/> or <texttt text="end"/> is in the kernel virtual address range.
+                    Or, if hypervisor support is configured, the requested range is not entirely
+                    within the kernel physical memory window.
                 </description>
             </error>
             <error name="seL4_InvalidArgument">
@@ -88,6 +90,8 @@
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="start"/> or <texttt text="end"/> is in the kernel virtual address range.
+                    Or, if hypervisor support is configured, the requested range is not entirely
+                    within the kernel physical memory window.
                 </description>
             </error>
             <error name="seL4_InvalidArgument">
@@ -128,6 +132,8 @@
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="start"/> or <texttt text="end"/> is in the kernel virtual address range.
+                    Or, if hypervisor support is configured, the requested range is not entirely
+                    within the kernel physical memory window.
                 </description>
             </error>
             <error name="seL4_InvalidArgument">
@@ -167,6 +173,8 @@
                 <description>
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
                     Or, <texttt text="start"/> or <texttt text="end"/> is in the kernel virtual address range.
+                    Or, if hypervisor support is configured, the requested range is not entirely
+                    within the kernel physical memory window.
                 </description>
             </error>
             <error name="seL4_InvalidArgument">

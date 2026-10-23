@@ -39,20 +39,23 @@
 
 /**
  * The GICD_CTLR distributor control register (per IHI0069 Hb) has various
- * layouts depending on the security state configuration. seL4 assumes that
- * we are in:
+ * layouts depending on the security state configuration. seL4 assumes that we
+ * are in:
  *
  *   - "access is Non-secure, in a system that supports two Security states", or
  *   - "When in a system that supports only a single Security state".
  *
- * and not "When access is Secure, in a system that supports two Security states".
- * In both these cases GICD_CTLR_ARE_NS is bit 4. RWP, Enable_G1NS and EnableG0
- * bits do not move around depending on the layout.
+ * and not "When access is Secure, in a system that supports two Security
+ * states". In both these cases GICD_CTLR_ARE_NS is bit 4, RWP is bit 31, and,
+ * with ARE_NS set, bit 1 always enables Non-secure Group 1 interrupts.
+ *
+ * Bit 0 changes: In a single Security state system it is EnableGrp0. With
+ * Non-secure access it is EnableGrp1 when ARE_NS is clear and RES0 when ARE_NS
+ * is set. seL4 does not set bit 0 in either case and only uses Group 1.
  */
 #define GICD_CTLR_RWP                BIT(31)
 #define GICD_CTLR_ARE_NS             BIT(4)
 #define GICD_CTLR_ENABLE_G1NS        BIT(1)
-#define GICD_CTLR_ENABLE_G0          BIT(0)
 
 #define GICD_IROUTER_SPI_MODE_ANY    BIT(31)
 
@@ -137,6 +140,7 @@
 
 /* Helpers for VGIC */
 #define VGIC_HCR_EOI_INVALID_COUNT(hcr) (((hcr) >> 27) & 0x1f)
+#define VGIC_HCR_TALL0                  (1U << 11)
 #define VGIC_HCR_VGRP1DIE               (1U << 7)
 #define VGIC_HCR_VGRP1EIE               (1U << 6)
 #define VGIC_HCR_VGRP0DIE               (1U << 5)

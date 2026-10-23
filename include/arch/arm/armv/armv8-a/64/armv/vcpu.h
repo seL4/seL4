@@ -29,6 +29,24 @@
 #define HCR_VCPU   ( HCR_COMMON | HCR_TERR | HCR_TWE | HCR_TWI)
 #endif
 
+/* CPTR_EL2 value set at boot. EL0 and EL1 accesses to the following trap to EL2
+ * unless enabled explicitly later.
+ *
+ * CPTR_EL2 fields for E2H0 variant layout (HCR_EL2.E2H == 0):
+ *
+ * - TFP: trap FP and Advanced SIMD. disableTrapFpu() enables FPU later when
+ *   configured.
+ * - TZ, TSM: trap SVE and SME. The kernel does not context switch this state.
+ *   Both bits are RES1 when the feature is not implemented.
+ * - TTA: trap trace register accesses. These are not context switched.
+ * - TCPAC: not set, CPACR_EL1 is context-switched per VCPU.
+ * - TAM: trap access to the activity monitor registers. RES0 when the feature
+ *   is not present, but writing 1 cannot affect operation in that case.
+ * - All other bits are RES0 or part of CPTR_EL2_RES1.
+ * - E0POE, SMEN, FPEN, ZEN: exist only in the E2H1 variant.
+ */
+#define CPTR_EL2_DEFAULT    (CPTR_EL2_RES1 | BIT(CPTR_EL2_TTA) | BIT(CPTR_EL2_TFP) | BIT(CPTR_EL2_TAM))
+
 #define SCTLR_EL1_UCI       BIT(26)     /* Enable EL0 access to DC CVAU, DC CIVAC, DC CVAC,
                                            and IC IVAU in AArch64 state   */
 #define SCTLR_EL1_C         BIT(2)      /* Enable data and unified caches */
@@ -123,6 +141,7 @@
 #define REG_CNTVOFF_EL2     "cntvoff_el2"
 #define REG_CNTKCTL_EL1     "cntkctl_el1"
 #define REG_HCR_EL2         "hcr_el2"
+#define REG_CPTR_EL2        "cptr_el2"
 #define REG_VTCR_EL2        "vtcr_el2"
 #define REG_VMPIDR_EL2      "vmpidr_el2"
 #define REG_CSSELR_EL1      "csselr_el1"
@@ -676,6 +695,11 @@ static inline void armv_vcpu_boot_init(void)
     MSR(REG_HCR_EL2, hcr_el2);
     isb();
 
+    /* Trap EL0 and EL1 FPU, SVE, SME and trace accesses to EL2. FPU init later
+     * in init_cpu() enables FPU as needed. */
+    MSR(REG_CPTR_EL2, CPTR_EL2_DEFAULT);
+    /* isb() below is enough, we are not making a change that is relevant to EL2 access */
+
     /* set the SCTLR_EL1 for running native seL4 threads */
     MSR(REG_SCTLR_EL1, SCTLR_EL1_NATIVE);
     isb();
@@ -730,15 +754,14 @@ static inline void vcpu_disable(vcpu_t *vcpu)
         vcpu->vgic.hcr = hcr;
         vcpu_save_reg(vcpu, seL4_VCPUReg_SCTLR);
         vcpu_save_reg(vcpu, seL4_VCPUReg_CPACR);
-        isb();
     }
     /* Turn off the VGIC */
     set_gic_vcpu_ctrl_hcr(0);
-    isb();
+    /* for GIC memory-mapped register */
+    dsb();
 
     /* Stage 1 MMU off */
     setSCTLR(SCTLR_DEFAULT);
-    isb();
     setHCR(HCR_NATIVE);
     isb();
 

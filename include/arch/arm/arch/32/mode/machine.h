@@ -66,6 +66,11 @@
 #define VMPIDR     " p15, 4,  %0,  c0,  c0, 5" /* 32-bit RW Virtualization Multiprocessor ID Register */
 #define MPIDR      " p15, 0,  %0, c0,  c0, 5"
 
+/** TLB maintenance CP15 operations **/
+#define TLBIALL    " p15, 0,  %0,  c8,  c7, 0" /* Invalidate entire unified TLB */
+#define TLBIMVA    " p15, 0,  %0,  c8,  c7, 1" /* Invalidate unified TLB by MVA and ASID */
+#define TLBIASID   " p15, 0,  %0,  c8,  c7, 2" /* Invalidate unified TLB by ASID */
+
 /* Use Hypervisor Physical timer */
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 #define CNT_TVAL CNTHP_TVAL
@@ -160,9 +165,30 @@ static inline word_t readTTBR0(void)
     return val;
 }
 
+/* Ignored for verification, because of 64-bit asm block output on 32-bit
+ * architecture. Read op is side-effect free.
+ */
+/** MODIFIES: */
+/** DONT_TRANSLATE */
+static inline word_t readTTBR0high(void)
+{
+    uint64_t ttbr = 0;
+    asm volatile("mrrc p15, 0, %Q0, %R0, c2":"=r"(ttbr):);
+    return (word_t)(ttbr >> 32);
+}
+
 static inline void writeTTBR0(word_t val)
 {
     asm volatile("mcr p15, 0, %0, c2, c0, 0":: "r"(val));
+}
+
+/* Ignored for verification, because of 64-bit input on 32-bit architecture. */
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
+static inline void writeTTBR0high(word_t val)
+{
+    uint64_t ttbr = ((uint64_t) val << 32) | readTTBR0();
+    asm volatile("mcrr p15, 0, %Q0, %R0, c2":: "r"(ttbr));
 }
 
 static inline void writeTTBR0Ptr(paddr_t addr)
@@ -180,11 +206,29 @@ static inline word_t readTTBR1(void)
     return val;
 }
 
+/* See readTTBR0high() */
+/** MODIFIES: */
+/** DONT_TRANSLATE */
+static inline word_t readTTBR1high(void)
+{
+    uint64_t ttbr = 0;
+    asm volatile("mrrc p15, 1, %Q0, %R0, c2":"=r"(ttbr):);
+    return (word_t)(ttbr >> 32);
+}
+
 static inline void writeTTBR1(word_t val)
 {
     asm volatile("mcr p15, 0, %0, c2, c0, 1":: "r"(val));
 }
 
+/* See writeTTBR0high() */
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
+static inline void writeTTBR1high(word_t val)
+{
+    uint64_t ttbr = ((uint64_t) val << 32) | readTTBR1();
+    asm volatile("mcrr p15, 1, %Q0, %R0, c2":: "r"(ttbr));
+}
 
 static inline word_t readTTBCR(void)
 {
@@ -356,34 +400,30 @@ static inline word_t getHWCPUID(void)
 static inline void invalidateLocalTLB(void)
 {
     dsb();
-    asm volatile("mcr p15, 0, %0, c8, c7, 0" : : "r"(0));
+    MCR(TLBIALL, 0);
     dsb();
     isb();
 }
 
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
+/* In hyp mode, hw_asid_t is a stage 2 VMID and these two operations are
+ * provided by armv/tlb.h instead. */
 static inline void invalidateLocalTLB_ASID(hw_asid_t hw_asid)
 {
-    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        invalidateLocalTLB();
-    } else {
-        dsb();
-        asm volatile("mcr p15, 0, %0, c8, c7, 2" : : "r"(hw_asid));
-        dsb();
-        isb();
-    }
+    dsb();
+    MCR(TLBIASID, hw_asid);
+    dsb();
+    isb();
 }
 
 static inline void invalidateLocalTLB_VAASID(word_t mva_plus_asid)
 {
-    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        invalidateLocalTLB();
-    } else {
-        dsb();
-        asm volatile("mcr p15, 0, %0, c8, c7, 1" : : "r"(mva_plus_asid));
-        dsb();
-        isb();
-    }
+    dsb();
+    MCR(TLBIMVA, mva_plus_asid);
+    dsb();
+    isb();
 }
+#endif /* !CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 void lockTLBEntry(vptr_t vaddr);
 
@@ -601,6 +641,18 @@ static inline word_t getACTLR(void)
 static inline void setACTLR(word_t actlr)
 {
     asm volatile("mcr p15, 0, %0, c1, c0, 1" :: "r"(actlr));
+}
+
+static inline word_t getCPACR(void)
+{
+    word_t cpacr;
+    MRC(CPACR, cpacr);
+    return cpacr;
+}
+
+static inline void setCPACR(word_t cpacr)
+{
+    MCR(CPACR, cpacr);
 }
 
 void arch_clean_invalidate_caches(void);

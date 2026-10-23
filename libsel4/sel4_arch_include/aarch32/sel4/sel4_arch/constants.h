@@ -89,7 +89,6 @@ typedef enum {
     seL4_VCPUReg_NMRR,
     seL4_VCPUReg_CIDR,
     seL4_VCPUReg_TPIDRPRW,
-    seL4_VCPUReg_FPEXC,
     seL4_VCPUReg_LRsvc,
     seL4_VCPUReg_SPsvc,
     seL4_VCPUReg_LRabt,
@@ -113,13 +112,17 @@ typedef enum {
     seL4_VCPUReg_SPSRfiq,
     seL4_VCPUReg_PARhigh,
     seL4_VCPUReg_PARlow,
-    seL4_VCPURegSaveRange_end = seL4_VCPUReg_PARlow, /* end vcpu save/restore reg range */
+    seL4_VCPUReg_TTBR0high,
+    seL4_VCPUReg_TTBR1high,
+    seL4_VCPURegSaveRange_end = seL4_VCPUReg_TTBR1high, /* end vcpu save/restore reg range */
     seL4_VCPUReg_CNTV_CTL,
     seL4_VCPUReg_CNTV_CVALhigh,
     seL4_VCPUReg_CNTV_CVALlow,
     seL4_VCPUReg_CNTVOFFhigh,
     seL4_VCPUReg_CNTVOFFlow,
     seL4_VCPUReg_CNTKCTL,
+    seL4_VCPUReg_CPACR,
+    seL4_VCPUReg_FPEXC,
     seL4_VCPUReg_Num,
     SEL4_FORCE_LONG_ENUM(seL4_VCPUReg),
 } seL4_VCPUReg;
