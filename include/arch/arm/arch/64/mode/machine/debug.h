@@ -6,7 +6,7 @@
 
 #pragma once
 
-#ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
+#ifdef CONFIG_HARDWARE_DEBUG_API
 
 void aarch64_restore_user_debug_context(tcb_t *target_thread);
 
@@ -139,8 +139,6 @@ bool_t isDebugFault(word_t esr);
     }                                                                          \
   }
 
-#endif /* ARM_BASE_CP14_SAVE_AND_RESTORE */
-
-#ifdef CONFIG_HARDWARE_DEBUG_API
 exception_t handleDebugFaultEvent(word_t esr);
+
 #endif /* CONFIG_HARDWARE_DEBUG_API */

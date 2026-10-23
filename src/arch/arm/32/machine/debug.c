@@ -11,7 +11,6 @@
 #include <util.h>
 #include <arch/model/statedata.h>
 #include <arch/machine/debug.h>
-#include <arch/machine/debug_conf.h>
 #include <arch/kernel/vspace.h>
 #include <arch/machine/registerset.h>
 #include <armv/debug.h>
