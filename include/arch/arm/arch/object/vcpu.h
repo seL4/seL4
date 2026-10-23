@@ -25,7 +25,7 @@
 #define HCR_TPC      BIT(23)     /* Trap cache maintenance PoC     */
 #define HCR_TSW      BIT(22)     /* Trap cache maintenance set/way */
 #define HCR_TCACHE   (HCR_TPU | HCR_TPC | HCR_TSW)
-#define HCR_TAC      BIT(21)     /* Trap ACTLR access              */
+#define HCR_TACR     BIT(21)     /* Trap ACTLR access              */
 #define HCR_TIDCP    BIT(20)     /* Trap lockdown                  */
 #define HCR_TSC      BIT(19)     /* Trap SMC instructions          */
 #define HCR_TID3     BIT(18)     /* Trap ID register 3             */
