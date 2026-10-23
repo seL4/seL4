@@ -131,6 +131,11 @@ static inline void hwASIDFlush(asid_t asid)
 
 #else
 
+static inline void ifence(void)
+{
+    asm volatile("fence.i":::"memory");
+}
+
 static inline void sfence(void)
 {
     asm volatile("sfence.vma" ::: "memory");
