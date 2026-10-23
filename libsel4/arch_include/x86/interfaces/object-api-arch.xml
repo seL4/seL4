@@ -808,6 +808,7 @@
             <error name="seL4_RevokeFirst">
                 <description>
                     An IRQ handler capability for <texttt text="vector"/> has already been created.
+                    Or, an IRQ handler capability for <texttt text="pin"/> on <texttt text="ioapic"/> has already been created and is still active.
                 </description>
             </error>
         </method>
