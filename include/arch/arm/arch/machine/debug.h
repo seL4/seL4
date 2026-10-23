@@ -115,7 +115,7 @@ static inline void initHDCR(void)
      */
     hdcr |= HDCR_TRACE_TTRF | HDCR_DEBUG_TDCC | HDCR_PROFILING_TPMS;
 #endif
-#if !defined(CONFIG_EXPORT_PMU_USER) && !defined(CONFIG_ENABLE_BENCHMARKS)
+#ifndef CONFIG_EXPORT_PMU_USER
     /* The kernel does not context switch the PMU, so trap EL0/EL1
      * accesses to EL2 unless the PMU is explicitly exported to user level.
      */
