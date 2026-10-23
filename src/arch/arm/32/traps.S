@@ -40,11 +40,39 @@ BEGIN_FUNC(arm_undefined_inst_exception)
     srsia #PMODE_SUPERVISOR
     cps #PMODE_SUPERVISOR
     stmdb sp, {r0-lr}^
-    ldr r8, [sp]
+
+    /* Load PC and SPSR saved by the "srs" instruction above. */
+    ldmia   sp, {r8,r9}
+
+    /* Ensure the bottom 4 bits of SPSR are zero, which means we came from
+     * userspace. If not, this is a kernel fault. */
+    tst     r9, #0xf
+
+    /* Compute the faulting address. */
     sub r8, r8, #4
+
+    bne     kernel_undefined_inst
+
     str r8, [sp, #(PT_FaultIP - PT_NextIP)]
     mrc p15, 0, sp, c13, c0, 4
     b c_handle_undefined_instruction
+
+kernel_undefined_inst:
+#ifdef CONFIG_DEBUG_BUILD
+    mov r0, r8
+    mov r1, lr
+    mrc p15, 0, sp, c13, c0, 4
+    blx kernelUndefinedInstruction
+    /* Fallthrough to infinite loop should we foolishly return. */
+#endif
+    /* To aid finding faults in non-debug mode, catch kernel faults here.
+     * - r8 will contain the faulting address.
+     * - r9 will contain the SPSR.
+     * - lr might contain something useful too if we followed a function
+     *   call.
+     * - the original values of r8 and r9 will be obliterated.
+     */
+1:  b 1b /* Infinite loop. You'd better have a watchdog. */
 END_FUNC(arm_undefined_inst_exception)
 
 BEGIN_FUNC(arm_swi_syscall)
