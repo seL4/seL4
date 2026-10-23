@@ -153,9 +153,11 @@ config_option(
     WARNING: While useful for evaluating performance, \
     this option opens timing and covert channels. \
     With hypervisor support, this also leaves the PMU untrapped for guests, \
-    so PMU state is shared between VMs and native threads."
+    so PMU state is shared between VMs and native threads. \
+    Always enabled when KernelBenchmarks is not none."
   DEFAULT OFF
-  DEPENDS "KernelArchArmV7a OR KernelArchArmV8a;NOT KernelArmCortexA8")
+  DEPENDS "KernelArchArmV7a OR KernelArchArmV8a;NOT KernelArmCortexA8;NOT KernelEnableBenchmarks"
+  DEFAULT_DISABLED "${KernelEnableBenchmarks}")
 
 config_option(
   KernelArmDisableWFIWFETraps DISABLE_WFI_WFE_TRAPS "Disable the trapping of WFI \

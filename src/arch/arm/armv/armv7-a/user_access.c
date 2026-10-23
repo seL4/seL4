@@ -63,7 +63,7 @@ static void disable_jazelle_user_access(void)
 
 static void check_export_pmu(void)
 {
-#if defined CONFIG_EXPORT_PMU_USER || defined CONFIG_ENABLE_BENCHMARKS
+#ifdef CONFIG_EXPORT_PMU_USER
     /* Export performance counters */
     uint32_t v;
     MRC(PMUSERENR, v);
