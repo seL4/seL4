@@ -273,11 +273,13 @@ tagged_union lookup_fault lufType {
 
 -- Fault: size = 8 bytes
 block NullFault {
+    padding 32
     padding 60
     field seL4_FaultType 4
 }
 
 block CapFault {
+    padding 32
     field address 32
     field inReceivePhase 1
     padding 27
@@ -285,12 +287,14 @@ block CapFault {
 }
 
 block UnknownSyscall {
+    padding 32
     field syscallNumber 32
     padding 28
     field seL4_FaultType 4
 }
 
 block UserException {
+    padding 32
     field number 32
     field code 28
     field seL4_FaultType 4
@@ -298,6 +302,7 @@ block UserException {
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
 block DebugException {
+    padding 32
     field breakpointAddress 32
 
     padding 20
@@ -313,6 +318,7 @@ block DebugException {
 
 #ifdef CONFIG_KERNEL_MCS
 block Timeout {
+    padding 32
     field badge 32
     padding 28
     field seL4_FaultType 4
