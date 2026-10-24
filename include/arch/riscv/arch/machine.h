@@ -64,6 +64,11 @@ compile_assert(kernel_elf_no_overflow, KERNEL_ELF_BASE_RAW < KERNEL_ELF_BASE_RAW
 #define SIE_MEIE  11 /* M-Mode external interrupt enable (MIP only). */
 /* Bit 12 and above are reserved. */
 
+static inline void ifence_local(void)
+{
+    asm volatile("fence.i":::"memory");
+}
+
 #ifdef ENABLE_SMP_SUPPORT
 
 static inline void fence_rw_rw(void)
@@ -79,11 +84,6 @@ static inline void fence_w_rw(void)
 static inline void fence_r_rw(void)
 {
     asm volatile("fence r,rw" ::: "memory");
-}
-
-static inline void ifence_local(void)
-{
-    asm volatile("fence.i":::"memory");
 }
 
 static inline void sfence_local(void)

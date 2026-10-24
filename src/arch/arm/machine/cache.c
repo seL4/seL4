@@ -176,6 +176,16 @@ void cleanCaches_PoU(void)
     dsb();
 }
 
+/* Invalidate the whole instruction cache, for memory that may have been
+ * executed from before it was rewritten. */
+void invalidateCaches_I(void)
+{
+    dsb();
+    invalidate_I_PoU();
+    dsb();
+    isb();
+}
+
 void cleanInvalidateL1Caches(void)
 {
     dsb();

@@ -384,6 +384,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
             cleanCacheRange_RAM((word_t)regionBase,
                                 (word_t)regionBase + MASK(pageBitsForSize(ARMSmallPage)),
                                 addrFromPPtr(regionBase));
+            invalidateCaches_I();
         }
         return cap_frame_cap_new(
                    asidInvalid,           /* capFMappedASID */
@@ -410,6 +411,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
             cleanCacheRange_RAM((word_t)regionBase,
                                 (word_t)regionBase + MASK(pageBitsForSize(ARMLargePage)),
                                 addrFromPPtr(regionBase));
+            invalidateCaches_I();
         }
         return cap_frame_cap_new(
                    asidInvalid,           /* capFMappedASID */
@@ -436,6 +438,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
             cleanCacheRange_RAM((word_t)regionBase,
                                 (word_t)regionBase + MASK(pageBitsForSize(ARMHugePage)),
                                 addrFromPPtr(regionBase));
+            invalidateCaches_I();
         }
         return cap_frame_cap_new(
                    asidInvalid,           /* capFMappedASID */
