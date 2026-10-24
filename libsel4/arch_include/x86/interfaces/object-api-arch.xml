@@ -465,6 +465,11 @@
                     The <texttt text="_service"/> is a CPtr to a capability of the wrong type.
                 </description>
             </error>
+            <error name="seL4_InvalidArgument">
+                <description>
+                    The <texttt text="rights"/>, masked with the rights of <texttt text="_service"/>, do not include read access.
+                </description>
+            </error>
             <error name="seL4_InvalidCapability">
                 <description>
                     The <texttt text="_service"/> or <texttt text="eptpml4"/> is a CPtr to a capability of the wrong type.
