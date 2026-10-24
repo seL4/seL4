@@ -110,74 +110,31 @@ static inline void initHDCR(void)
      */
     hdcr |= HDCR_PERFMON_TPM;
 #endif
-#ifdef CONFIG_HARDWARE_DEBUG_API
-    /* By default at boot, we SET HDCR.TDE to catch and redirect native threads'
-     * PL0 debug exceptions.
-     *
-     * Unfortunately, this is complicated a bit by ARM's strange requirement that
-     * if you set HDCR.TDE, you must also set TDA, TDOSA, and TDRA:
+    /* The kernel does not context switch the self-hosted debug registers, so
+     * trap EL0/EL1 accesses. This also satisfies the requirement that
+     * TDRA, TDOSA, and TDA are all set whenever TDE is set:
      *  ARMv7 archref manual: section B1.8.9:
      *      "When HDCR.TDE is set to 1, the HDCR.{TDRA, TDOSA, TDA} bits must all
      *      be set to 1, otherwise behavior is UNPREDICTABLE"
-     *
-     * Subsequently on calls to vcpu_enable/disable, we will modify HDCR.TDE
-     * as needed, see setHDCRTrapDebugExceptionState().
+     * On ARMv8-A, this is no longer required, but we still want them on.
      */
-    hdcr |= (HDCR_DEBUG_TDE
-             | HDCR_DEBUG_TDA
-             | HDCR_DEBUG_TDRA
-             | HDCR_DEBUG_TDOSA);
+    hdcr |= HDCR_DEBUG_TDA | HDCR_DEBUG_TDRA | HDCR_DEBUG_TDOSA;
+#ifdef CONFIG_ARCH_ARM_V7A
+    /* On ARMv7-A, we set HDCR.TDE (trap debug events) on for native threads,
+     * because this is required when HCR.TGE is on (DDI 0406C.d B1.8.8, page
+     * B1-1191), and we set it to off when we switch to VCPU threads to allow
+     * software debug in the VM.
+     *
+     * On ARMv8-A, we do nothing and keep HDCR.TDE off, because HCR.TGE
+     * automatically implies TDE, which means native threads see TDE on, without
+     * us needing to do anything, and VCPU threads see TDE off, also without us
+     * needing to do anything. See DDI 0487M.d D24.3.17, MDCR_EL2, field TDE,
+     * page D24-10242.
+     */
+    hdcr |= HDCR_DEBUG_TDE;
 #endif
     setHDCR(hdcr);
 }
-
-#ifdef CONFIG_HARDWARE_DEBUG_API
-/** When running seL4 as a hypervisor, if we're building with support for the
- * hardware debug API, we have a case of indirection that we need to handle.
- *
- * For native PL0 user threads in the hypervisor seL4 build, if a debug
- * exception is triggered in one of them, the CPU will raise the exception and
- * naturally, it will attempt to deliver it to a PL1 exception vector table --
- * but no such table exists for native hypervisor-seL4 threads, so the CPU will
- * end up encountering a VM fault while trying to vector into the vector table.
- *
- * For this reason, for native hypervisor-seL4 threads, we need to trap the
- * debug exception DIRECTLY into the hypervisor-seL4 instance, and handle it
- * directly. So we need to SET HDCR.TDE for this case.
- *
- * For the Guest VM, if it programs the CPU to trigger breakpoints, and a
- * debug exception gets triggered, we don't want to catch those debug exceptions
- * since we can let the Guest VM handle them on its own. So we need to UNSET
- * HDCR.TDE for this case.
- *
- * This function encapsulates the setting/unsetting, and it is called when we
- * are about to enable/disable a VCPU.
- *
- * If we are enabling a vcpu (vcpu_enable) we UNSET HDCR.TDE.
- * If we are disabling a vcpu (vcpu_disable) we SET HDCR.TDE.
- */
-static inline void setHDCRTrapDebugExceptionState(bool_t enable_trapping)
-{
-    word_t hdcr = getHDCR();
-
-    if (enable_trapping) {
-        /* Trap and redirect debug faults that occur in PL0 native threads by
-         * setting HDCR.TDE (trap debug exceptions).
-         */
-        hdcr |= (HDCR_DEBUG_TDE
-                 | HDCR_DEBUG_TDA
-                 | HDCR_DEBUG_TDRA
-                 | HDCR_DEBUG_TDOSA);
-    } else {
-        /* Let the PL1 Guest VM handle debug events on its own */
-        hdcr &= ~(HDCR_DEBUG_TDE
-                  | HDCR_DEBUG_TDA
-                  | HDCR_DEBUG_TDRA
-                  | HDCR_DEBUG_TDOSA);
-    }
-    setHDCR(hdcr);
-}
-#endif /* CONFIG_HARDWARE_DEBUG_API */
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
