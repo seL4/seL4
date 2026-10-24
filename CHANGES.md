@@ -24,12 +24,21 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 ---
 
-## Upcoming release: BINARY COMPATIBLE
+## Upcoming release: BREAKING
 
 ### Changes
 
 
+### Platforms
+
+* Remove support for the Arndale (`exynos5250`) platform, deprecated since 2025, see also RFC-19.
+* Remove support for the Odroid-X (`exynos4`) platform, deprecated since 2025, see also RFC-19.
+* Remove support for the HiKey (`hikey`) platform, deprecated since 2025, see also RFC-19.
+* Remove support for the Inforce IFC6410 (`apq8064`) platform, deprecated since 2025, see also RFC-19.
+* Changed default for exynos5 `KernelARMPlatform` from `exynos5250` to `exynos5422`.
+
 ### Upgrade Notes
+
 ---
 
 ## 16.0.0 2026-07-22: BREAKING

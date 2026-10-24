@@ -182,7 +182,6 @@ CONTROLLERS = {
     'fsl,imx6sx-gpc': PassthroughIrqController,
     'fsl,imx7d-gpc': PassthroughIrqController,
     'nvidia,tegra124-ictlr': PassthroughIrqController,
-    'qcom,msm-qgic2': ArmGic,
     'ti,am33xx-intc': RawIrqController,
     'ti,omap3-intc': RawIrqController,
     'riscv,cpu-intc': RawIrqController,

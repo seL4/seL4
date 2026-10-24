@@ -6,12 +6,8 @@
 
 register_driver(compatibility_strings "ti,am335x-timer" PREFIX src/drivers/timer
                 CFILES "am335x-timer.c")
-register_driver(compatibility_strings "qcom,kpss-timer" PREFIX src/drivers/timer
-                CFILES "kpss-timer.c")
 register_driver(compatibility_strings "samsung,exynos4210-mct" PREFIX src/drivers/timer
                 CFILES "exynos4210-mct.c")
-register_driver(compatibility_strings "samsung,exynos4412-mct" PREFIX src/drivers/timer
-                CFILES "exynos4412-mct.c")
 register_driver(compatibility_strings "ti,omap3430-timer" PREFIX src/drivers/timer
                 CFILES "omap3430-timer.c")
 register_driver(compatibility_strings "arm,cortex-a9-twd-timer" PREFIX src/drivers/timer
