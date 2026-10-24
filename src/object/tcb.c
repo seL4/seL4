@@ -769,7 +769,8 @@ static exception_t decodeUnsetBreakpoint(cap_t cap, word_t *buffer)
 
 static exception_t invokeSetTLSBase(tcb_t *thread, word_t tls_base)
 {
-    setRegister(thread, TLS_BASE, tls_base);
+    bool_t archInfo = Arch_getSanitiseRegisterInfo(thread);
+    setRegister(thread, TLS_BASE, sanitiseRegister(TLS_BASE, tls_base, archInfo));
     if (thread == NODE_STATE(ksCurThread)) {
         /* If this is the current thread force a reschedule to ensure that any changes
          * to the TLS_BASE are realized */
