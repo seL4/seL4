@@ -26,7 +26,6 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 ## Upcoming release: BREAKING
 
-
 ### Changes
 
 - Improved debug printing in debug_dumpScheduler.
@@ -120,6 +119,14 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 - Fix QEMU PLIC node name compatibility, use interrupt-controller@c000000 instead of the old plic@c000000.
 - Debug/printing: check that all accessed addresses are in the kernel window when printing a user-level stack trace.
 - Treat all S-mode exceptions as kernel faults and halt (with debug print in debug mode).
+
+### Platforms
+
+* Remove support for the Arndale (`exynos5250`) platform, deprecated since 2025, see also RFC-19.
+* Remove support for the Odroid-X (`exynos4`) platform, deprecated since 2025, see also RFC-19.
+* Remove support for the HiKey (`hikey`) platform, deprecated since 2025, see also RFC-19.
+* Remove support for the Inforce IFC6410 (`apq8064`) platform, deprecated since 2025, see also RFC-19.
+* Changed default for exynos5 `KernelARMPlatform` from `exynos5250` to `exynos5422`.
 
 ### Upgrade Notes
 

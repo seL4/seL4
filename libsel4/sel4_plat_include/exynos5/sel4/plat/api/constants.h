@@ -8,7 +8,6 @@
 #include <sel4/config.h>
 
 /* This is used for multiple SOCs:
- * - Exynos5250 (A15)
  * - Exynos5410 (A7/A15)
  * - Exynos5422 (A7/A15)
  * Since the A7 was designed as big.LITTLE companion for the A15, their settings
