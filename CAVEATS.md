@@ -18,10 +18,8 @@ seL4 support, as well as all 32-bit Arm platforms that seL4 supports.
     - `sabre`
     - `am335x`
     - `bcm2837`
-    - `exynos4`
     - `exynos5410`
     - `exynos5422`
-    - `hikey`
     - `imx8mm`
     - `omap3`
     - `tk1`
@@ -33,7 +31,6 @@ seL4 support, as well as all 32-bit Arm platforms that seL4 supports.
     - `tx2`
     - `bcm2711`
     - `bcm2712`
-    - `hikey`
     - `imx8mm`
     - `imx8mq`
     - `imx93`

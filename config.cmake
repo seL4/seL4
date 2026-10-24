@@ -310,18 +310,14 @@ config_option(
   "Adds a system call that allows users to specify code to be run in kernel mode. \
     Useful for profiling."
   DEFAULT OFF
-  DEPENDS
-    "NOT KernelArmHypervisorSupport;NOT KernelVerificationBuild;NOT KernelPlatformHikey;NOT KernelSkimWindow"
-)
+  DEPENDS "NOT KernelArmHypervisorSupport;NOT KernelVerificationBuild;NOT KernelSkimWindow")
 
 config_option(
-  KernelDebugDisablePrefetchers
-  DEBUG_DISABLE_PREFETCHERS
+  KernelDebugDisablePrefetchers DEBUG_DISABLE_PREFETCHERS
   "On ia32 platforms, this option disables the L2 hardware prefetcher, the L2 adjacent \
-    cache line prefetcher, the DCU prefetcher and the DCU IP prefetcher. On the cortex \
-    a53 this disables the L1 Data prefetcher."
+    cache line prefetcher, the DCU prefetcher and the DCU IP prefetcher."
   DEFAULT OFF
-  DEPENDS "KernelArchX86 OR KernelPlatformHikey")
+  DEPENDS "KernelArchX86")
 
 # Builds the kernel with support for an invocation to set the TLS_BASE
 # of the currently running thread without a capability.
