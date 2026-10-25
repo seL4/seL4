@@ -79,6 +79,17 @@ static inline word_t getHCR(void)
     return HCR;
 }
 
+#ifdef CONFIG_ARCH_ARM_V8A
+/* HCR2 only exists on ARMv8-A (FEAT_AA32EL2); the encoding is unallocated on
+ * ARMv7-A. */
+static inline void setHCR2(word_t r)
+{
+    dsb();
+    asm volatile("mcr p15, 4, %0, c1, c1, 4" : : "r"(r));
+    isb();
+}
+#endif
+
 #define HCPTR_TCP10  BIT(10)
 #define HCPTR_TCP11  BIT(11)
 #define HCPTR_TASE   BIT(15)

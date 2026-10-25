@@ -33,11 +33,11 @@
  * - TID5, traps access to GMID_EL1 with MTE2 - current fields are RO, but the
  *   whole register is not RO, so newer ARM versions could make RW. Trap just
  *   in case (we also don't support MTE2).
+ * - SWIO, set/way invalidation override - redundant on ARMv8-A, where VM=1
+ *   already has this effect, but set for uniformity with ARMv7-A. Irrelevant
+ *   for native tasks, because set/way instructions are already UNDEFINED at EL0.
  *
  * Set at 0:
- * - SWIO, set/way invalidation override - unneeded for VCPU (HCR_EL2.VM is set),
- *   also not needed for native threads, because set/way instructions are not
- *   available there.
  * - PTW, protected table walk - unneeded
  * - VF/VI/VA, virtual FIRQ/IRQ/async pending - unneeded
  * - FB, force broadcast - unneeded
@@ -113,7 +113,7 @@
 #endif
 
 #define HCR_COMMON ( HCR_VM | HCR_AMO | HCR_IMO | HCR_FMO | HCR_TSC | HCR_TIDCP \
-                   | HCR_TACR | HCR_RW | HCR_TLOR | HCR_TERR | HCR_TID5)
+                   | HCR_TACR | HCR_SWIO | HCR_RW | HCR_TLOR | HCR_TERR | HCR_TID5)
 
 #define HCR_NATIVE ( HCR_COMMON | HCR_DC | HCR_TTLB | HCR_TVM | HCR_TRVM | HCR_TGE )
 
