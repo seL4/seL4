@@ -72,6 +72,11 @@
 #define SCTLR_EL1_VM       (SCTLR_EL1 | SCTLR_EL1_UCT | SCTLR_EL1_UCI)
 #define SCTLR_DEFAULT      SCTLR_EL1_NATIVE
 
+/* TCR_EL1 for native threads. Stage 1 translation is off, but fields like
+ * TBI0/TBI1 still apply to EL0. 0 is a safe EL0 value for all relevant fields.
+ */
+#define TCR_EL1_NATIVE     0
+
 #define UNKNOWN_FAULT       0x2000000
 #define ESR_EC_TFP          0x7         /* Trap instructions that access FPU registers */
 #define ESR_EC_CPACR        0x18        /* Trap access to CPACR                        */
@@ -701,8 +706,9 @@ static inline void armv_vcpu_boot_init(void)
     MSR(REG_CPTR_EL2, CPTR_EL2_DEFAULT);
     /* isb() below is enough, we are not making a change that is relevant to EL2 access */
 
-    /* set the SCTLR_EL1 for running native seL4 threads */
+    /* set the SCTLR_EL1 and TCR_EL1 for running native seL4 threads */
     MSR(REG_SCTLR_EL1, SCTLR_EL1_NATIVE);
+    MSR(REG_TCR_EL1, TCR_EL1_NATIVE);
     isb();
 
     initHDCR();
@@ -713,12 +719,14 @@ static inline void armv_vcpu_save(vcpu_t *vcpu, bool_t active)
     /* If we aren't active then this state already got stored when we were disabled */
     if (active) {
         vcpu_save_reg(vcpu, seL4_VCPUReg_CPACR);
+        vcpu_save_reg(vcpu, seL4_VCPUReg_TCR);
     }
     vcpu_save_reg_range(vcpu, seL4_VCPURegSaveRange_start, seL4_VCPURegSaveRange_end);
 }
 
 static inline void vcpu_enable(vcpu_t *vcpu)
 {
+    vcpu_restore_reg(vcpu, seL4_VCPUReg_TCR);
     vcpu_restore_reg(vcpu, seL4_VCPUReg_SCTLR);
     setHCR(HCR_VCPU);
     isb();
@@ -740,6 +748,7 @@ static inline void vcpu_disable(vcpu_t *vcpu)
         vcpu->vgic.hcr = hcr;
         vcpu_save_reg(vcpu, seL4_VCPUReg_SCTLR);
         vcpu_save_reg(vcpu, seL4_VCPUReg_CPACR);
+        vcpu_save_reg(vcpu, seL4_VCPUReg_TCR);
     }
     /* Turn off the VGIC */
     set_gic_vcpu_ctrl_hcr(0);
@@ -748,6 +757,8 @@ static inline void vcpu_disable(vcpu_t *vcpu)
 
     /* Stage 1 MMU off */
     setSCTLR(SCTLR_DEFAULT);
+    /* Guest TBI settings would otherwise apply to native threads */
+    writeTCR(TCR_EL1_NATIVE);
     setHCR(HCR_NATIVE);
     isb();
 
@@ -795,6 +806,7 @@ static inline bool_t vcpu_reg_saved_when_disabled(word_t field)
     case seL4_VCPUReg_CNTVOFF:
     case seL4_VCPUReg_CNTKCTL_EL1:
     case seL4_VCPUReg_CPACR:
+    case seL4_VCPUReg_TCR:
         return true;
     default:
         return false;

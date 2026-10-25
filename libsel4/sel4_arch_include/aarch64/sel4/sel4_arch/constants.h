@@ -75,10 +75,10 @@ typedef enum {
     /* System control registers EL1 */
     seL4_VCPUReg_SCTLR = 0,
     seL4_VCPUReg_CPACR,
+    seL4_VCPUReg_TCR,
     seL4_VCPURegSaveRange_start, /* begin vcpu save/restore reg range */
     seL4_VCPUReg_TTBR0 = seL4_VCPURegSaveRange_start,
     seL4_VCPUReg_TTBR1,
-    seL4_VCPUReg_TCR,
     seL4_VCPUReg_MAIR,
     seL4_VCPUReg_AMAIR,
     seL4_VCPUReg_CIDR,
