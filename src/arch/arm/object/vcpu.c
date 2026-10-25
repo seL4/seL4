@@ -27,27 +27,66 @@ BOOT_CODE void vcpu_boot_init(void)
 
 }
 
-static void vcpu_save(vcpu_t *vcpu, bool_t active)
+/* Save the VGIC CPU interface state (VMCR, APR, list registers) of the
+ * current VCPU from hardware into the VCPU object. */
+static void vgic_save(vcpu_t *vcpu)
 {
     word_t i;
     word_t lr_num;
 
-    assert(vcpu);
-    dsb();
-    /* If we aren't active then this state already got stored when
-     * we were disabled */
-    if (active) {
-        vcpu_save_reg(vcpu, seL4_VCPUReg_SCTLR);
-        vcpu->vgic.hcr = get_gic_vcpu_ctrl_hcr();
-        save_virt_timer(vcpu);
-    }
-
-    /* Store GIC VCPU control state */
     vcpu->vgic.vmcr = get_gic_vcpu_ctrl_vmcr();
     vcpu->vgic.apr = get_gic_vcpu_ctrl_apr();
     lr_num = gic_vcpu_num_list_regs;
     for (i = 0; i < lr_num; i++) {
         vcpu->vgic.lr[i] = get_gic_vcpu_ctrl_lr(i);
+    }
+}
+
+/* Load the VGIC CPU interface state of a VCPU from its object into hardware. */
+static void vgic_restore(vcpu_t *vcpu)
+{
+    word_t i;
+    word_t lr_num;
+
+    set_gic_vcpu_ctrl_vmcr(vcpu->vgic.vmcr);
+    set_gic_vcpu_ctrl_apr(vcpu->vgic.apr);
+    lr_num = gic_vcpu_num_list_regs;
+    for (i = 0; i < lr_num; i++) {
+        set_gic_vcpu_ctrl_lr(i, vcpu->vgic.lr[i]);
+    }
+}
+
+/* Clear the VGIC state in hardware. On GICv2 this state is also visible through
+ * the memory-mapped GICV frame, which user level maps into VMs, so it must not
+ * contain state of a VCPU that is not running. On GICv3, that state is not
+ * user-accessible, but we keep the same behaviour for uniformity in the proofs.
+ */
+static void vgic_clear(void)
+{
+    word_t i;
+    word_t lr_num;
+    virq_t virq;
+
+    virq.words[0] = 0;
+    set_gic_vcpu_ctrl_vmcr(0);
+    set_gic_vcpu_ctrl_apr(0);
+    lr_num = gic_vcpu_num_list_regs;
+    for (i = 0; i < lr_num; i++) {
+        set_gic_vcpu_ctrl_lr(i, virq);
+    }
+}
+
+static void vcpu_save(vcpu_t *vcpu, bool_t active)
+{
+    assert(vcpu);
+    dsb();
+    /* If we are not active then this state, including the VGIC state, already
+     * was stored when we were disabled */
+    if (active) {
+        vcpu_save_reg(vcpu, seL4_VCPUReg_SCTLR);
+        vcpu->vgic.hcr = get_gic_vcpu_ctrl_hcr();
+        save_virt_timer(vcpu);
+        vgic_save(vcpu);
     }
     armv_vcpu_save(vcpu, active);
 }
@@ -82,19 +121,11 @@ static void writeVCPUReg(vcpu_t *vcpu, word_t field, word_t value)
 void vcpu_restore(vcpu_t *vcpu)
 {
     assert(vcpu);
-    word_t i;
-    word_t lr_num;
     /* Turn off the VGIC */
     set_gic_vcpu_ctrl_hcr(0);
     isb();
 
-    /* Restore GIC VCPU control state */
-    set_gic_vcpu_ctrl_vmcr(vcpu->vgic.vmcr);
-    set_gic_vcpu_ctrl_apr(vcpu->vgic.apr);
-    lr_num = gic_vcpu_num_list_regs;
-    for (i = 0; i < lr_num; i++) {
-        set_gic_vcpu_ctrl_lr(i, vcpu->vgic.lr[i]);
-    }
+    vgic_restore(vcpu);
 
     /* restore registers */
     vcpu_restore_reg_range(vcpu, seL4_VCPURegSaveRange_start, seL4_VCPURegSaveRange_end);
@@ -242,12 +273,17 @@ void vcpu_switch(vcpu_t *new)
             ARCH_NODE_STATE(armHSCurVCPU) = new;
             ARCH_NODE_STATE(armHSVCPUActive) = true;
         } else if (unlikely(ARCH_NODE_STATE(armHSVCPUActive))) {
-            /* leave the current VCPU state loaded, but disable vgic and mmu */
+            /* leave the current VCPU system register state loaded, but
+             * disable the MMU, and save and clear the VGIC state so that it
+             * is not accessible through the GICV interface */
             vcpu_disable(ARCH_NODE_STATE(armHSCurVCPU));
+            vgic_save(ARCH_NODE_STATE(armHSCurVCPU));
+            vgic_clear();
             ARCH_NODE_STATE(armHSVCPUActive) = false;
         }
     } else if (likely(!ARCH_NODE_STATE(armHSVCPUActive) && new != NULL)) {
         isb();
+        vgic_restore(new);
         vcpu_enable(new);
         ARCH_NODE_STATE(armHSVCPUActive) = true;
     }
@@ -257,6 +293,7 @@ static void vcpu_invalidate_active(void)
 {
     if (ARCH_NODE_STATE(armHSVCPUActive)) {
         vcpu_disable(NULL);
+        vgic_clear();
         ARCH_NODE_STATE(armHSVCPUActive) = false;
     }
     ARCH_NODE_STATE(armHSCurVCPU) = NULL;
@@ -386,7 +423,7 @@ exception_t decodeVCPUReadReg(cap_t cap, word_t length, bool_t call, word_t *buf
 
 exception_t invokeVCPUInjectIRQ(vcpu_t *vcpu, unsigned long index, virq_t virq)
 {
-    if (likely(ARCH_NODE_STATE(armHSCurVCPU) == vcpu)) {
+    if (likely(ARCH_NODE_STATE(armHSCurVCPU) == vcpu && ARCH_NODE_STATE(armHSVCPUActive))) {
         set_gic_vcpu_ctrl_lr(index, virq);
 #ifdef ENABLE_SMP_SUPPORT
     } else if (vcpu->vcpuTCB != NULL && vcpu->vcpuTCB->tcbAffinity != getCurrentCPUIndex()) {
@@ -591,7 +628,7 @@ void handleVCPUFault(word_t hsr)
 #ifdef ENABLE_SMP_SUPPORT
 void handleVCPUInjectInterruptIPI(vcpu_t *vcpu, unsigned long index, virq_t virq)
 {
-    if (likely(ARCH_NODE_STATE(armHSCurVCPU) == vcpu)) {
+    if (likely(ARCH_NODE_STATE(armHSCurVCPU) == vcpu && ARCH_NODE_STATE(armHSVCPUActive))) {
         set_gic_vcpu_ctrl_lr(index, virq);
     } else {
         vcpu->vgic.lr[index] = virq;
