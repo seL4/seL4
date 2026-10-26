@@ -206,8 +206,10 @@ devices, including DMA capable devices.
 
 This is intentional, because in seL4 device drivers run at user level and
 therefore need access to these devices. Some devices, especially DMA-capable
-devices, can bypass kernel protection mechanisms, for instance by writing to
-memory directly, by causing system errors, or by producing excessive interrupts.
+devices like networking or graphics devices but also smaller devices like the
+x86 HPET (High Precision Event Timer), can bypass kernel protection mechanisms,
+for instance by writing to memory directly, by causing system errors, or by
+producing excessive interrupts.
 
 The proofs mentioned above assume that these behaviours do not occur, that is,
 that no device causes unrecoverable system errors and that no device writes to
