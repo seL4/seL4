@@ -838,12 +838,10 @@ static inline void vcpu_disable(vcpu_t *vcpu)
      * used to trap the FPU instructions to EL2.
      */
     enableFpuEL01();
-    if (likely(vcpu)) {
-        /* Save virtual timer state */
-        save_virt_timer(vcpu);
-        /* Mask the virtual timer interrupt */
-        maskInterrupt(true, CORE_IRQ_TO_IRQT(CURRENT_CPU_INDEX(), INTERRUPT_VTIMER_EVENT));
-    }
+    /* Save virtual timer state if there is a VCPU, and stop the timer */
+    disable_virt_timer(vcpu);
+    /* Mask the virtual timer interrupt */
+    maskInterrupt(true, CORE_IRQ_TO_IRQT(CURRENT_CPU_INDEX(), INTERRUPT_VTIMER_EVENT));
 }
 
 static inline void armv_vcpu_init(vcpu_t *vcpu)
