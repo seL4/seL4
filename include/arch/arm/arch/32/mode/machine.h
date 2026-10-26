@@ -65,6 +65,8 @@
 #define CPACR      " p15, 0,  %0,  c1,  c0, 2" /* 32-bit Architectural Feature Access Control Register */
 #define VMPIDR     " p15, 4,  %0,  c0,  c0, 5" /* 32-bit RW Virtualization Multiprocessor ID Register */
 #define MPIDR      " p15, 0,  %0, c0,  c0, 5"
+#define CSSELR     " p15, 2,  %0,  c0,  c0, 0" /* 32-bit RW Cache Size Selection Register */
+#define VDISR      " p15, 4,  %0, c12,  c1, 1" /* 32-bit RW Virtual Deferred Interrupt Status Register */
 
 /** TLB maintenance CP15 operations **/
 #define TLBIALL    " p15, 0,  %0,  c8,  c7, 0" /* Invalidate entire unified TLB */
