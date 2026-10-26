@@ -24,12 +24,113 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 ---
 
-## Upcoming release: BINARY COMPATIBLE
+## Upcoming release: BREAKING
+
 
 ### Changes
 
+- Improved debug printing in debug_dumpScheduler.
+- Improved docs for NUM_DOMAINS limit.
+- Improved docs for seL4 ASIDs and their reuse.
+- Improved caveats docs with more explicit explanation of what is the kernel's responsibility and what is the system
+  designer's responsibility.
+- CMake: fix evaluation of GCC_COLORS to support user-supplied colours.
+- SMMU/IOMMU: add check for final capability in the Page unmap operation like in other Page unmap operations in the
+  kernel. The corresponding capability first has to be revoked before it can be unmapped to not leave other capabilities
+  inconsistent.
+- elfloader: statically check that the CPU count is <= MaxNumNodes to turn boot failure into a compile-time failure.
+- Fix MCS fastpath dequeue case.
+- Change MCS idle thread to maximum period. Previously, the shorter idle thread period would mean a no-op timer IRQ
+  every 5ms.
+- Always sanitise register content in TCBCopyRegisters as already done in TCBWriteRegisters to prevent state that is
+  only legal in VCPU threads from arriving in native threads.
+
+### Platforms
+
+- stm32mp2: add missing timer to elfloader-devices.
+
+#### X86
+
+- Allow linking the kernel with LLD.
+- VT-d: properly invalidate IOMMU caches in unmap operations.
+- VT-d: check and fail if Caching Mode is set, because this would require more aggressive cache invalidation.
+- IOAPIC: correctly initialise ioredtbl_state. Previously only IOAPIC 0 was correctly initialised.
+- Fix missing fastpath ASID validity check.
+- VT-x: clean up VPID in finalise operation. Previously vcpu_finalise() only cleaned up the VCPU/TCB association,
+  but not the VPID/VCPU association.
+- ELF: remove redundant BSS clearing.
+- ELF: improved ELF validation before loading.
+- SMP: use correct alignment for SMP kernel state.
+- x64 VT-x SMP: fix issue where VMs are not starting on different cores.
+- x64 VT-x: fix size of null_ept_space to 4096 bytes.
+- x64 VT-x: fix broken VM exit under SMP and co-tenancy.
+
+#### ARM
+
+- Hyp: remove the ArmHypEnableVCPUCP14SaveAndRestore config option. The implementation of this config option was
+  unfinished and did not actually work.
+- CMake: KernelBenchmarks now depends on KernelArmExportPMUUser. No behaviour change, this models what C #defines did
+  before, but it is now visible at the config level.
+- Always trap PMU (Performance Monitoring Unit) access, unless explicitly exported to user space. Previously VCPU
+  threads could access the PMU.
+- AArch32 debug: halt the kernel on undefined instruction execution in kernel mode and print debug information.
+  Previously this path went to user-level fault handlers. This is useful for debugging and kernel development.
+- AArch32 Hyp: flush correct VMID in the TLB. Previously, the TLB flush went to the current VMID instead of the target
+  VMID.
+- AArch64 Hyp: set a defined value of CPTR_EL2 at boot. Previously seL4 was relying on reasonable values being set by
+  the boot loader. The following bits are set at boot: TFP, TZ, TSM, TTA, TAM.
+- AArch32 Hyp: improve FPU switching scheme and prevent FPEXC leakage. Previously a VCPU thread could modify the
+  FPU-enabled flag which stayed live for any native thread running directly after the VCPU thread.
+- AArch32 Hyp: set a default boot value for HCPTR. Previously seL4 was relying on reasonable values being set by the
+  boot loader.
+- AArch32 Hyp: context-switch the CPACR register for VCPUs and make sure native threads see the seL4-default CPACR for
+  correct FPU operation.
+- AArch32 Hyp: context-switch TTBR0 and TTBR1 as 64-bit registers for VCPUs. With LPAE enabled, these registers are
+  wider than 32 bit.
+- Hyp/GICv3: trap group 0 register access from VMs. seL4 only uses group 1, and allowing group 0 access to VMs would
+  constitute an information channel.
+- AArch32 Hyp: constrain cache flushes to physical kernel window. Flushing outside the kernel window would produce a
+  fault during kernel execution.
+- AArch32 Hyp: restore full SPSR register on return to user. Use spsr_fsxc instead of spsr (which is spsr_all, which is
+  spsr_fc instead of spsr_fsxc) to restore all currently known fields of SPSR.
+- AArch64: allow debug builds with KernelPrinting=OFF to compile.
+- AArch32: prevent TEEHBR access and Jazelle DBX. Neither is supported by seL4 and would constitute an information
+  channel.
+- Config: set SErrorIgnore default to ON. This is a safer default for release kernels. For debugging kernel and user
+  space it may be useful to set SErrorIgnore to OFF for making speculative execution or user code execution errors
+  observable.
+- iospace: clear only valid, owned slots in deleteIOPageTable. The new check now mirrors the code in all other delete
+  page table operations.
+- AArch64 Hyp: add context-switching for VDISR_EL2 and CSSELR_EL1 registers.
+- AArch32: reserve hardware ASID 0 for empty PD. Previously, the empty/global PD used the currently running ASID.
+- AArch64 Hyp: reserve VMID 0 for only the empty VSpace. Previously, VMID 0 was also used for other VSpaces.
+- AArch64: force XN for VMKernelOnly pages. When user-level pages are mapped without Read, make sure that XN is set, so
+  they also cannot execute code, because executing code can be equivalent to Read.
+- AArch64: check for 16-bit hardware ASID support and abort non-hyp boot if not supported.
+- AArch64: make the hw_asid_t type 16 bit for AArch64 non-hyp (previously 8).
+- AArch64: avoid using invalid PT in TLB flushing.
+- AArch64: the kernel window is now mapped XN.
+- AArch64: the kernel image is now mapped at a constant virtual address and the physical load address is now aligned to
+  2 MiB. On platforms whose RAM starts below a 2 MiB boundary (rpi3, rpi4, rpi5), up to 2 MiB at the start of RAM is now
+  provided as device untyped instead of RAM untyped.
+
+#### RISC-V
+
+- Fix missing fastpath ASID validity check.
+- Fix QEMU PLIC node name compatibility, use interrupt-controller@c000000 instead of the old plic@c000000.
+- Debug/printing: check that all accessed addresses are in the kernel window when printing a user-level stack trace.
+- Treat all S-mode exceptions as kernel faults and halt (with debug print in debug mode).
 
 ### Upgrade Notes
+
+- Several VCPU register enum values have changed. These changes are source compatible, but binary breaking.
+- seL4 now traps access to the PMU for guests. Linux touches PMU registers during boot, so Virtual Machine Monitors have
+  to emulate access. If no further PMU use is required, returning zero on read and ignoring writes is enough to run
+  Linux.
+- seL4 now traps access to ThumbEE and Jazelle DBX registers. Linux touches these registers during boot, so Virtual
+  Machine Monitors have to emulate access. Returning zero on read and ignoring writes is safe for running Linux, it only
+  clears these registers the same way seL4 does.
+
 ---
 
 ## 16.0.0 2026-07-22: BREAKING
