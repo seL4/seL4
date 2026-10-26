@@ -92,18 +92,6 @@ else()
 endif()
 
 config_option(
-  KernelArmHypEnableVCPUCP14SaveAndRestore
-  ARM_HYP_ENABLE_VCPU_CP14_SAVE_AND_RESTORE
-  "Trap, but don't save/restore VCPUs' CP14 accesses \
-    This allows us to turn off the save and restore of VCPU threads' CP14 \
-    context for performance (or other) reasons, we can just turn them off \
-    and trap them instead, and have the VCPUs' accesses to CP14 \
-    intercepted and delivered to the VM Monitor as fault messages"
-  DEFAULT OFF
-  DEPENDS "KernelSel4ArchArmHyp;NOT KernelVerificationBuild"
-  DEFAULT_DISABLED OFF)
-
-config_option(
   KernelArmErrata430973
   ARM_ERRATA_430973
   "Enable workaround for 430973 Cortex-A8 (r1p0..r1p2) erratum \
@@ -151,9 +139,13 @@ config_option(
   "PL0 access to PMU. \
     Grant user access to Performance Monitoring Unit. \
     WARNING: While useful for evaluating performance, \
-    this option opens timing and covert channels."
+    this option opens timing and covert channels. \
+    With hypervisor support, this also leaves the PMU untrapped for guests, \
+    so PMU state is shared between VMs and native threads. \
+    Always enabled when KernelBenchmarks is not none."
   DEFAULT OFF
-  DEPENDS "KernelArchArmV7a OR KernelArchArmV8a;NOT KernelArmCortexA8")
+  DEPENDS "KernelArchArmV7a OR KernelArchArmV8a;NOT KernelEnableBenchmarks"
+  DEFAULT_DISABLED "${KernelEnableBenchmarks}")
 
 config_option(
   KernelArmDisableWFIWFETraps DISABLE_WFI_WFE_TRAPS "Disable the trapping of WFI \

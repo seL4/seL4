@@ -33,5 +33,4 @@ typedef uint64_t timestamp_t;
 typedef struct kernel_frame {
     paddr_t paddr;
     pptr_t pptr;
-    int userAvailable;
 } kernel_frame_t;

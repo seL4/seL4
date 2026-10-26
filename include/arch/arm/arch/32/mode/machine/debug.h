@@ -173,7 +173,7 @@ seL4_Fault_t handleUserLevelDebugException(word_t fault_vaddr);
 
 #endif /* defined(CONFIG_DEBUG_BUILD) || defined (CONFIG_HARDWARE_DEBUG_API) */
 
-#ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
+#ifdef CONFIG_HARDWARE_DEBUG_API
 
 #define MAKE_P14(crn, crm, opc2) "p14, 0, %0, c" #crn ", c" #crm ", " #opc2
 #define MAKE_DBGBVR(num) MAKE_P14(0, num, 4)
@@ -302,4 +302,4 @@ _name(uint16_t bp_num, word_t val) \
     } \
 }
 
-#endif /* ARM_BASE_CP14_SAVE_AND_RESTORE */
+#endif /* CONFIG_HARDWARE_DEBUG_API */

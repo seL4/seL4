@@ -8,7 +8,7 @@
 
 #include <config.h>
 
-#if defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_EXPORT_PMU_USER) || defined(CONFIG_ENABLE_BENCHMARKS)
+#if defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_EXPORT_PMU_USER)
 
 #include <mode/machine/debug.h>
 #include <mode/machine.h> /* MRC/MCR */
@@ -34,7 +34,7 @@ static inline void writeDscrCp(word_t val)
 {
     MCR(DBGDSCR_ext, val);
 }
-#endif /* CONFIG_HARDWARE_DEBUG_API CONFIG_EXPORT_PMU_USER */
+#endif /* CONFIG_HARDWARE_DEBUG_API || CONFIG_EXPORT_PMU_USER */
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
 #define DBGVCR_RESERVED_BITS_MASK      \

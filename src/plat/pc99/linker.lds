@@ -58,7 +58,7 @@ SECTIONS
     } :phys
 
     . = ALIGN(4K) + KERNEL_OFFSET;
-    . = . + ((ADDR(.phys) + SIZEOF(.phys)) & (4K - 1));
+    . = . + (ABSOLUTE(ADDR(.phys) + SIZEOF(.phys)) & (4K - 1));
     .boot . : AT(ADDR(.boot) - KERNEL_OFFSET)
     {
         *(.boot.text)
@@ -84,7 +84,7 @@ SECTIONS
     ki_boot_end = .;
     ki_skim_start = .;
 
-    . = . + ((ADDR(.boot) + SIZEOF(.boot)) & (8K - 1));
+    . = . + (ABSOLUTE(ADDR(.boot) + SIZEOF(.boot)) & (8K - 1));
 
 
 

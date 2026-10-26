@@ -28,7 +28,7 @@
 #define IA32_APIC_BASE_MSR 0x01B
 #define APIC_ID_OFFSET 0x020
 
-.section .phys.text
+.section .phys.text, "ax", @progbits
 
 .code32
 
@@ -306,7 +306,7 @@ BEGIN_FUNC(_start64)
 END_FUNC(_start64)
 
 
-.section .phys.data
+.section .phys.data, "aw", @progbits
 .align 16
 _gdt64:
     .quad 0x0000000000000000
@@ -328,12 +328,12 @@ _gdt64_ptr:
     .word (3 * 8) - 1
     .long _gdt64
 
-.section .phys.bss
+.section .phys.bss, "aw", @nobits
 .align 4096
 _boot_pd:
     .fill 16384
 
-.section .boot.text
+.section .boot.text, "ax", @progbits
 
 BEGIN_FUNC(_entry_64)
     /* Update our stack pointer. */
@@ -353,7 +353,7 @@ BEGIN_FUNC(_entry_64)
     jmp boot_sys
 END_FUNC(_entry_64)
 
-.section .phys.text
+.section .phys.text, "ax", @progbits
 
 #ifdef ENABLE_SMP_SUPPORT
 
@@ -415,7 +415,7 @@ _boot_gdt:
 .global boot_cpu_end
 boot_cpu_end:
 
-.section .boot.text
+.section .boot.text, "ax", @progbits
 
 BEGIN_FUNC(_entry_ap64)
     /* Get the index of this cpu. */

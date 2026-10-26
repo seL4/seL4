@@ -55,8 +55,9 @@ definitions:
       kernel_size:
         description: >
           Maximum size of the region in the kernel.
-          This will map PAGE_ALIGN_UP(max(kernel_size, region_size)) bytes starting at the
-          device's base address into the kernel.
+          This will map PAGE_ALIGN_UP(min(kernel_size, region_size)) bytes starting at the
+          device's base address into the kernel. The whole region is still reserved for the
+          kernel and excluded from user space, unless user is true.
         type: integer
         default: 1 << PAGE_BITS
       macro:
