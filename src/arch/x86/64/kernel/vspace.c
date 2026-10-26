@@ -330,10 +330,8 @@ BOOT_CODE void init_tss(tss_t *tss)
 void init_syscall_msrs(void)
 {
     x86_wrmsr(IA32_LSTAR_MSR, (uint64_t)&handle_fastsyscall);
-    // mask bit 9 in the kernel (which is the interrupt enable bit)
-    // also mask bit 8, which is the Trap Flag, to prevent the kernel
-    // from single stepping
-    x86_wrmsr(IA32_FMASK_MSR, FLAGS_TF | FLAGS_IF);
+    /* Mask all user-controllable flags on kernel entry for well-defined kernel state. */
+    x86_wrmsr(IA32_FMASK_MSR, FLAGS_SYSCALL_MASK);
     x86_wrmsr(IA32_STAR_MSR, ((uint64_t)SEL_CS_0 << 32) | ((uint64_t)SEL_CS_3 << 48));
 }
 

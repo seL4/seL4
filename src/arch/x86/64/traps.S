@@ -446,6 +446,12 @@ INT_HANDLER_WITHOUT_ERR_CODE(fe,0)
 INT_HANDLER_WITHOUT_ERR_CODE(ff,0)
 
 BEGIN_FUNC(handle_interrupt)
+    # The flags TF, NT, RF, VM, and IF are cleared automatically on IRQ entry.
+    # DF is not cleared on IRQ entry, and kernel code needs DF to be off.
+    # The AC flag (under SMAP) is not relevant for seL4, the kernel does not
+    # access user pages outside debug configs and SMAP is turned off on debug.
+    # User RFLAGS are already saved by CPU at this point.
+    cld
     # push the rest of the registers
     INT_SAVE_STATE
 
@@ -660,6 +666,12 @@ BEGIN_FUNC(handle_syscall)
 
     # switch to kernel stack
     LOAD_KERNEL_STACK
+
+    # After SYSENTER the user flags NT and DF (and AC) are still present.
+    # DF and NT can affect kernel integrity, so must be clear. The are already
+    # saved above for user return.
+    pushq   $0x2
+    popfq
 
     # RSI, RDI are already correct for calling c_handle_syscall
     movq %rax, %rdx
