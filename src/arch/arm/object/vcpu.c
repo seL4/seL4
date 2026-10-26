@@ -39,7 +39,7 @@ static void vcpu_save(vcpu_t *vcpu, bool_t active)
     if (active) {
         vcpu_save_reg(vcpu, seL4_VCPUReg_SCTLR);
         vcpu->vgic.hcr = get_gic_vcpu_ctrl_hcr();
-        save_virt_timer(vcpu);
+        disable_virt_timer(vcpu);
     }
 
     /* Store GIC VCPU control state */
