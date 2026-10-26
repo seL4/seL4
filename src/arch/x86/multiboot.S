@@ -41,7 +41,7 @@
 #define CONFIG_MULTIBOOT_GRAPHICS_MODE_DEPTH 0
 #endif
 
-.section .mbh
+.section .mbh, "a", @progbits
 #ifdef CONFIG_MULTIBOOT1_HEADER
     /* MultiBoot header */
     .align  4

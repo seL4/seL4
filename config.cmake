@@ -72,6 +72,53 @@ endif()
 set(KernelHaveFPU OFF)
 set(KernelSetTLSBaseSelf OFF)
 
+# Benchmark options are declared before the architecture config files, because
+# some architecture options depend on KernelEnableBenchmarks.
+config_choice(
+  KernelBenchmarks
+  KERNEL_BENCHMARK
+  "Enable benchmarks including logging and tracing info. \
+    Setting this value > 1 enables a 1MB log buffer and functions for extracting data from it \
+    at user level. NOTE this is only tested on the sabre and will not work on platforms with < 512mb memory. \
+    This is not fully implemented for x86. \
+    none -> No Benchmarking features enabled. \
+    generic -> Enable global benchmarks config variable with no specific features. \
+    track_kernel_entries -> Log kernel entries information including timing, number of invocations and arguments for \
+    system calls, interrupts, user faults and VM faults. \
+    tracepoints -> Enable manually inserted tracepoints that the kernel will track time consumed between. \
+    track_utilisation -> Enable the kernel to track each thread's utilisation time. \
+    On Arm, any setting other than none enables KernelArmExportPMUUser, which grants user access to \
+    the PMU and with hypervisor support leaves the PMU untrapped for guests, so PMU state is shared \
+    between VMs and native threads."
+  "none;KernelBenchmarksNone;NO_BENCHMARKS"
+  "generic;KernelBenchmarksGeneric;BENCHMARK_GENERIC;NOT KernelVerificationBuild"
+  "track_kernel_entries;KernelBenchmarksTrackKernelEntries;BENCHMARK_TRACK_KERNEL_ENTRIES;NOT KernelVerificationBuild"
+  "tracepoints;KernelBenchmarksTracepoints;BENCHMARK_TRACEPOINTS;NOT KernelVerificationBuild"
+  "track_utilisation;KernelBenchmarksTrackUtilisation;BENCHMARK_TRACK_UTILISATION;NOT KernelVerificationBuild"
+)
+if(NOT (KernelBenchmarks STREQUAL "none"))
+  config_set(KernelEnableBenchmarks ENABLE_BENCHMARKS ON)
+else()
+  config_set(KernelEnableBenchmarks ENABLE_BENCHMARKS OFF)
+endif()
+
+# Reflect the existence of kernel Log buffer
+if(KernelBenchmarksTrackKernelEntries OR KernelBenchmarksTracepoints)
+  config_set(KernelLogBuffer KERNEL_LOG_BUFFER ON)
+else()
+  config_set(KernelLogBuffer KERNEL_LOG_BUFFER OFF)
+endif()
+
+config_string(
+  KernelMaxNumTracePoints
+  MAX_NUM_TRACE_POINTS
+  "Use TRACE_POINT_START(k) and TRACE_POINT_STOP(k) macros for recording data, \
+    where k is an integer between 0 and this value - 1. The maximum number of \
+    different trace point identifiers which can be used."
+  DEFAULT 1
+  DEPENDS "NOT KernelVerificationBuild;KernelBenchmarksTracepoints" DEFAULT_DISABLED 0
+  UNQUOTE)
+
 include(src/arch/${KernelArch}/config.cmake)
 include(include/${KernelWordSize}/mode/config.cmake)
 include(src/config.cmake)
@@ -204,48 +251,6 @@ config_option(
   KernelInvocationReportErrorIPC KERNEL_INVOCATION_REPORT_ERROR_IPC
   "Allows the kernel to write the userError to the IPC buffer" DEFAULT OFF DEPENDS "KernelPrinting"
   DEFAULT_DISABLED OFF)
-
-config_choice(
-  KernelBenchmarks
-  KERNEL_BENCHMARK
-  "Enable benchmarks including logging and tracing info. \
-    Setting this value > 1 enables a 1MB log buffer and functions for extracting data from it \
-    at user level. NOTE this is only tested on the sabre and will not work on platforms with < 512mb memory. \
-    This is not fully implemented for x86. \
-    none -> No Benchmarking features enabled. \
-    generic -> Enable global benchmarks config variable with no specific features. \
-    track_kernel_entries -> Log kernel entries information including timing, number of invocations and arguments for \
-    system calls, interrupts, user faults and VM faults. \
-    tracepoints -> Enable manually inserted tracepoints that the kernel will track time consumed between. \
-    track_utilisation -> Enable the kernel to track each thread's utilisation time."
-  "none;KernelBenchmarksNone;NO_BENCHMARKS"
-  "generic;KernelBenchmarksGeneric;BENCHMARK_GENERIC;NOT KernelVerificationBuild"
-  "track_kernel_entries;KernelBenchmarksTrackKernelEntries;BENCHMARK_TRACK_KERNEL_ENTRIES;NOT KernelVerificationBuild"
-  "tracepoints;KernelBenchmarksTracepoints;BENCHMARK_TRACEPOINTS;NOT KernelVerificationBuild"
-  "track_utilisation;KernelBenchmarksTrackUtilisation;BENCHMARK_TRACK_UTILISATION;NOT KernelVerificationBuild"
-)
-if(NOT (KernelBenchmarks STREQUAL "none"))
-  config_set(KernelEnableBenchmarks ENABLE_BENCHMARKS ON)
-else()
-  config_set(KernelEnableBenchmarks ENABLE_BENCHMARKS OFF)
-endif()
-
-# Reflect the existence of kernel Log buffer
-if(KernelBenchmarksTrackKernelEntries OR KernelBenchmarksTracepoints)
-  config_set(KernelLogBuffer KERNEL_LOG_BUFFER ON)
-else()
-  config_set(KernelLogBuffer KERNEL_LOG_BUFFER OFF)
-endif()
-
-config_string(
-  KernelMaxNumTracePoints
-  MAX_NUM_TRACE_POINTS
-  "Use TRACE_POINT_START(k) and TRACE_POINT_STOP(k) macros for recording data, \
-    where k is an integer between 0 and this value - 1. The maximum number of \
-    different trace point identifiers which can be used."
-  DEFAULT 1
-  DEPENDS "NOT KernelVerificationBuild;KernelBenchmarksTracepoints" DEFAULT_DISABLED 0
-  UNQUOTE)
 
 config_option(
   KernelIRQReporting

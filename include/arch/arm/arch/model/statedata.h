@@ -9,7 +9,6 @@
 #include <config.h>
 #include <arch/object/vcpu.h>
 #include <model/statedata.h>
-#include <arch/machine/debug_conf.h>
 #include <mode/machine/registerset.h>
 
 NODE_STATE_BEGIN(archNodeState)
@@ -28,6 +27,6 @@ NODE_STATE_DECLARE(uint64_t, ccnt_num_overflows);
 #endif /* defined(CONFIG_BENCHMARK_TRACK_UTILISATION) && defined(KERNEL_PMU_IRQ) */
 NODE_STATE_END(archNodeState);
 
-#ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
+#ifdef CONFIG_HARDWARE_DEBUG_API
 extern user_breakpoint_state_t armKSNullBreakpointState VISIBLE;
 #endif

@@ -141,7 +141,7 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
 {
     c_exit_hook();
 
-#ifdef ARM_CP14_SAVE_AND_RESTORE_NATIVE_THREADS
+#ifdef CONFIG_HARDWARE_DEBUG_API
     restore_user_debug_context(cur_thread);
 #endif
 
