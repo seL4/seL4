@@ -32,7 +32,6 @@
  * may cause problems when booting guests that expect caches to be
  * disabled */
 #define SCTLR_DEFAULT 0xc5187c
-#define ACTLR_DEFAULT 0x40
 
 static inline word_t get_lr_svc(void)
 {
@@ -483,8 +482,6 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
     switch (reg_index) {
     case seL4_VCPUReg_SCTLR:
         return getSCTLR();
-    case seL4_VCPUReg_ACTLR:
-        return getACTLR();
     case seL4_VCPUReg_CPACR:
         return getCPACR();
     case seL4_VCPUReg_PARhigh:
@@ -597,9 +594,6 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
     switch (reg_index) {
     case seL4_VCPUReg_SCTLR:
         setSCTLR(reg);
-        break;
-    case seL4_VCPUReg_ACTLR:
-        setACTLR(reg);
         break;
     case seL4_VCPUReg_CPACR:
         setCPACR(reg);
@@ -864,7 +858,6 @@ static inline void vcpu_disable(vcpu_t *vcpu)
 static inline void armv_vcpu_init(vcpu_t *vcpu)
 {
     vcpu_write_reg(vcpu, seL4_VCPUReg_SCTLR, SCTLR_DEFAULT);
-    vcpu_write_reg(vcpu, seL4_VCPUReg_ACTLR, ACTLR_DEFAULT);
     vcpu_write_reg(vcpu, seL4_VCPUReg_CPACR, CPACR_DEFAULT);
 }
 

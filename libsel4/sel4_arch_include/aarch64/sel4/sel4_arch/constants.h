@@ -82,7 +82,6 @@ typedef enum {
     seL4_VCPUReg_MAIR,
     seL4_VCPUReg_AMAIR,
     seL4_VCPUReg_CIDR,
-    seL4_VCPUReg_ACTLR,
 
     /* exception handling registers EL1 */
     seL4_VCPUReg_AFSR0,
