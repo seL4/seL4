@@ -129,7 +129,6 @@
 #define REG_MAIR_EL1        "mair_el1"
 #define REG_AMAIR_EL1       "amair_el1"
 #define REG_CONTEXTIDR_EL1  "contextidr_el1"
-#define REG_ACTLR_EL1       "actlr_el1"
 #define REG_AFSR0_EL1       "afsr0_el1"
 #define REG_AFSR1_EL1       "afsr1_el1"
 #define REG_ESR_EL1         "esr_el1"
@@ -242,18 +241,6 @@ static inline word_t readCIDR(void)
 static inline void writeCIDR(word_t reg)
 {
     MSR(REG_CONTEXTIDR_EL1, (uint32_t)reg);
-}
-
-static inline word_t readACTLR(void)
-{
-    word_t reg;
-    MRS(REG_ACTLR_EL1, reg);
-    return reg;
-}
-
-static inline void writeACTLR(word_t reg)
-{
-    MSR(REG_ACTLR_EL1, reg);
 }
 
 /** MODIFIES: */
@@ -520,8 +507,6 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
         return readAMAIR();
     case seL4_VCPUReg_CIDR:
         return readCIDR();
-    case seL4_VCPUReg_ACTLR:
-        return readACTLR();
     case seL4_VCPUReg_CPACR:
         return readCPACR_EL1();
     case seL4_VCPUReg_PAR:
@@ -588,9 +573,6 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
         break;
     case seL4_VCPUReg_CIDR:
         writeCIDR(reg);
-        break;
-    case seL4_VCPUReg_ACTLR:
-        writeACTLR(reg);
         break;
     case seL4_VCPUReg_CPACR:
         writeCPACR_EL1(reg);
