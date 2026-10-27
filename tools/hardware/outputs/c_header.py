@@ -12,7 +12,7 @@ from typing import Dict, List
 import hardware
 from hardware.config import Config
 from hardware.fdt import FdtParser
-from hardware.utils.rule import HardwareYaml
+from hardware.utils.rule import HardwareYaml, get_reserved_regions
 
 
 HEADER_TEMPLATE = '''/*
@@ -90,7 +90,6 @@ static const kernel_frame_t BOOT_RODATA kernel_device_frames[] = {
         {% if config.arch == 'arm' %}
         .armExecuteNever = true,
         {% endif %}
-        .userAvailable = {{ str(group.user_ok).lower() }}
     },
     {% endfor %}
     {% if group.has_macro() %}
@@ -113,6 +112,40 @@ static const kernel_frame_t BOOT_RODATA kernel_device_frames[] = {
  */
 static const kernel_frame_t BOOT_RODATA *const kernel_device_frames = NULL;
 #define NUM_KERNEL_DEVICE_FRAMES 0
+{% endif %}
+
+/* The physical address ranges of the kernel devices, as described by the device
+ * tree and rounded to page boundaries. The kernel maps only the first part of
+ * some devices, but it reserves the whole device, to not expose half of a device
+ * to user space. Devices that are shared with user level (user: true) are not
+ * listed. The ranges are sorted and do not overlap, but they may be adjacent.
+ */
+
+{% if len(kernel_reserved_regions) > 0 %}
+static const p_region_t BOOT_RODATA kernel_device_reserved_regions[] = {
+    {% for resv in kernel_reserved_regions %}
+    {% if resv.has_macro() %}
+    {{ resv.get_macro() }}
+    {% endif %}
+    /* {{ resv.get_desc() }} */
+    {
+        .start = {{ "0x{:x}".format(resv.get_reserved().base) }},
+        .end   = {{ "0x{:x}".format(resv.get_reserved().base + resv.get_reserved().size) }}
+    },
+    {% if resv.has_macro() %}
+    {{ resv.get_endif() }}
+    {% endif %}
+    {% endfor %}
+};
+
+/* See the comment on NUM_KERNEL_DEVICE_FRAMES about empty arrays. */
+#define NUM_KERNEL_DEVICE_RESERVED_REGIONS ARRAY_SIZE(kernel_device_reserved_regions)
+{% else %}
+/* The C parser used for formal verification process follows strict C rules,
+ * which do not allow empty arrays. Thus this is defined as NULL.
+ */
+static const p_region_t BOOT_RODATA *const kernel_device_reserved_regions = NULL;
+#define NUM_KERNEL_DEVICE_RESERVED_REGIONS 0
 {% endif %}
 
 /* PHYSICAL MEMORY */
@@ -186,8 +219,8 @@ def get_interrupts(tree: FdtParser, hw_yaml: HardwareYaml) -> List:
 
 
 def create_c_header_file(config, kernel_irqs: List, kernel_macros: Dict,
-                         kernel_regions: List, physBase: int, physical_memory,
-                         outputStream):
+                         kernel_regions: List, kernel_reserved_regions: List,
+                         physBase: int, physical_memory, outputStream):
 
     jinja_env = jinja2.Environment(loader=jinja2.BaseLoader, trim_blocks=True,
                                    lstrip_blocks=True)
@@ -200,6 +233,7 @@ def create_c_header_file(config, kernel_irqs: List, kernel_macros: Dict,
             'kernel_irqs': kernel_irqs,
             'kernel_macros': kernel_macros,
             'kernel_regions': kernel_regions,
+            'kernel_reserved_regions': kernel_reserved_regions,
             'physBase': physBase,
             'physical_memory': physical_memory})
     data = template.render(template_args)
@@ -220,6 +254,7 @@ def run(tree: FdtParser, hw_yaml: HardwareYaml, config: Config, kernel_config_di
         get_interrupts(tree, hw_yaml),
         kernel_macros,
         kernel_regions,
+        get_reserved_regions(kernel_regions),
         physBase,
         physical_memory,
         args.header_out)

@@ -117,6 +117,8 @@ def get_addrspace_exclude(regions: List[Region], config: Config):
         if type(reg) == KernelRegionGroup:
             if reg.user_ok:
                 continue
+            # For kernel regions, take what is being reserved, not what is being mapped
+            reg = reg.get_reserved()
         new_ret = set()
         for el in ret:
             new_ret.update(el.reserve(reg))
