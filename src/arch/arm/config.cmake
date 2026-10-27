@@ -10,6 +10,7 @@ endif()
 
 set(KernelArmPASizeBits40 OFF)
 set(KernelArmPASizeBits44 OFF)
+set(KernelArmICacheVIPT OFF)
 if(KernelArmCortexA35)
   set(KernelArmICacheVIPT ON)
   set(KernelArmPASizeBits40 ON)
