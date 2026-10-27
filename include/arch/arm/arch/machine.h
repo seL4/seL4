@@ -35,6 +35,15 @@ void cleanCacheRange_RAM(word_t start, word_t end, paddr_t pstart);
 void cleanCacheRange_PoU(word_t start, word_t end, paddr_t pstart);
 void invalidateCacheRange_RAM(word_t start, word_t end, paddr_t pstart);
 void invalidateCacheRange_I(word_t start, word_t end, paddr_t pstart);
+void invalidateCacheRange_I_Aliases(word_t start, word_t end, paddr_t pstart);
+void invalidateCacheRange_I_Mapping(word_t start, word_t end, paddr_t pstart);
+
+/* Whether the icache can be flushed directly by user VA in the current config */
+static inline bool_t CONST icacheInvalidateByUserVA(void)
+{
+    return config_set(CONFIG_ARM_ICACHE_VIPT) && !config_set(CONFIG_ARM_HYPERVISOR_SUPPORT);
+}
+
 void branchFlushRange(word_t start, word_t end, paddr_t pstart);
 
 void clean_D_PoU(void);

@@ -1300,6 +1300,37 @@ static exception_t performPageTableInvocationUnmap(cap_t cap, cte_t *ctSlot)
     return EXCEPTION_NONE;
 }
 
+static bool_t CONST pteExecute(pte_t pte)
+{
+    if (pte_get_pte_type(pte) == pte_pte_4k_page) {
+        return !pte_pte_4k_page_get_UXN(pte);
+    } else {
+        return !pte_pte_page_get_UXN(pte);
+    }
+}
+
+static void invalidateICacheForMapping(asid_t asid, cap_t cap)
+{
+    word_t base = cap_frame_cap_get_capFBasePtr(cap);
+    word_t size_bits = pageBitsForSize(cap_frame_cap_get_capFSize(cap));
+    paddr_t pbase = pptr_to_paddr((void *)base);
+
+    if (icacheInvalidateByUserVA()) {
+        word_t vaddr = cap_frame_cap_get_capFMappedAddress(cap);
+        findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
+        bool_t root_switched;
+
+        assert(find_ret.status == EXCEPTION_NONE);
+        root_switched = setVMRootForFlush(find_ret.vspace_root, asid);
+        invalidateCacheRange_I_Mapping(vaddr, vaddr + MASK(size_bits), pbase);
+        if (root_switched) {
+            setVMRoot(NODE_STATE(ksCurThread));
+        }
+    } else {
+        invalidateCacheRange_I_Aliases(base, base + MASK(size_bits), pbase);
+    }
+}
+
 static exception_t performPageInvocationMap(asid_t asid, cap_t cap, cte_t *ctSlot,
                                             pte_t pte, pte_t *ptSlot)
 {
@@ -1312,6 +1343,10 @@ static exception_t performPageInvocationMap(asid_t asid, cap_t cap, cte_t *ctSlo
     if (unlikely(tlbflush_required)) {
         assert(asid < BIT(16));
         invalidateTLBByASIDVA(asid, cap_frame_cap_get_capFMappedAddress(cap));
+    }
+
+    if (pteExecute(pte)) {
+        invalidateICacheForMapping(asid, cap);
     }
 
     return EXCEPTION_NONE;

@@ -1860,6 +1860,46 @@ static exception_t performPageTableInvocationUnmap(cap_t cap, cte_t *ctSlot)
     return EXCEPTION_NONE;
 }
 
+static bool_t CONST pteExecute(pte_t pte)
+{
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    return !pte_pte_small_get_XN(pte);
+#else
+    if (pte_get_pteType(pte) == pte_pte_large) {
+        return !pte_pte_large_get_XN(pte);
+    } else {
+        return !pte_pte_small_get_XN(pte);
+    }
+#endif
+}
+
+static bool_t CONST pdeExecute(pde_t pde)
+{
+    return !pde_pde_section_get_XN(pde);
+}
+
+static void invalidateICacheForMapping(asid_t asid, cap_t cap)
+{
+    word_t base = generic_frame_cap_get_capFBasePtr(cap);
+    word_t size_bits = pageBitsForSize(generic_frame_cap_get_capFSize(cap));
+    paddr_t pbase = addrFromPPtr((void *)base);
+
+    if (icacheInvalidateByUserVA()) {
+        word_t vaddr = generic_frame_cap_get_capFMappedAddress(cap);
+        findPDForASID_ret_t find_ret = findPDForASID(asid);
+        bool_t root_switched;
+
+        assert(find_ret.status == EXCEPTION_NONE);
+        root_switched = setVMRootForFlush(find_ret.pd, asid);
+        invalidateCacheRange_I_Mapping(vaddr, vaddr + MASK(size_bits), pbase);
+        if (root_switched) {
+            setVMRoot(NODE_STATE(ksCurThread));
+        }
+    } else {
+        invalidateCacheRange_I_Aliases(base, base + MASK(size_bits), pbase);
+    }
+}
+
 static exception_t performPageInvocationMapPTE(asid_t asid, cap_t cap, cte_t *ctSlot, pte_t pte,
                                                pte_range_t pte_entries)
 {
@@ -1889,6 +1929,10 @@ static exception_t performPageInvocationMapPTE(asid_t asid, cap_t cap, cte_t *ct
                         addrFromPPtr(pte_entries.base));
     if (unlikely(tlbflush_required)) {
         invalidateTLBByASID(asid);
+    }
+
+    if (pteExecute(pte)) {
+        invalidateICacheForMapping(asid, cap);
     }
 
     return EXCEPTION_NONE;
@@ -1923,6 +1967,10 @@ static exception_t performPageInvocationMapPDE(asid_t asid, cap_t cap, cte_t *ct
                         addrFromPPtr(pde_entries.base));
     if (unlikely(tlbflush_required)) {
         invalidateTLBByASID(asid);
+    }
+
+    if (pdeExecute(pde)) {
+        invalidateICacheForMapping(asid, cap);
     }
 
     return EXCEPTION_NONE;

@@ -1135,6 +1135,9 @@ static exception_t updatePTE(pte_t pte, pte_t *base)
 exception_t performPageInvocationMapPTE(cap_t cap, cte_t *ctSlot,
                                         pte_t pte, pte_t *base)
 {
+    if (pte_get_execute(pte)) {
+        ifence();
+    }
     ctSlot->cap = cap;
     return updatePTE(pte, base);
 }

@@ -176,6 +176,51 @@ void cleanCaches_PoU(void)
     dsb();
 }
 
+#define INVALIDATE_I_BY_LINE_LIMIT BIT(20)
+
+static void invalidateCacheRange_I_Lines(vptr_t start, vptr_t end, paddr_t pstart)
+{
+    /* For ranges larger than the limit, the loop would take longer than
+     * flushing the entire icache, so fall back to full cache flush. */
+    if (end - start + 1 >= INVALIDATE_I_BY_LINE_LIMIT) {
+        invalidate_I_PoU();
+    } else {
+        vptr_t line;
+        word_t index;
+
+        for (index = LINE_INDEX(start); index < LINE_INDEX(end) + 1; index++) {
+            line = index << L1_CACHE_LINE_SIZE_BITS;
+            invalidateByVA_I(line, pstart + (line - start));
+        }
+    }
+}
+
+/* Invalidate all instruction cache lines for the given the range, not matter
+ * what virtual address they were accessed under. The range is by kernel
+ * virtual address. On a VIPT icache, this means the whole cache. */
+void invalidateCacheRange_I_Aliases(vptr_t start, vptr_t end, paddr_t pstart)
+{
+    dsb();
+    if (config_set(CONFIG_ARM_ICACHE_VIPT)) {
+        invalidate_I_PoU();
+    } else {
+        invalidateCacheRange_I_Lines(start, end, pstart);
+    }
+    dsb();
+    isb();
+}
+
+/* Invalidate the instruction cache lines for the given user virtual address
+ * range and no aliases. The VSpace containing the mapping must be current, and
+ * the range must be mapped. */
+void invalidateCacheRange_I_Mapping(vptr_t start, vptr_t end, paddr_t pstart)
+{
+    dsb();
+    invalidateCacheRange_I_Lines(start, end, pstart);
+    dsb();
+    isb();
+}
+
 void cleanInvalidateL1Caches(void)
 {
     dsb();

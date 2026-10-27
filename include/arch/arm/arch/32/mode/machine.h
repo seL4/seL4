@@ -491,7 +491,13 @@ static inline void invalidate_I_PoU(void)
     /* Erratum 586324 -- perform a dummy cached load before flushing. */
     asm volatile("ldr r0, [sp]" : : : "r0");
 #endif
+#ifdef ENABLE_SMP_SUPPORT
+    /* ICIALLUIS: all cores in the inner shareable domain */
+    asm volatile("mcr p15, 0, %0, c7, c1, 0" : : "r"(0));
+#else
+    /* ICIALLU */
     asm volatile("mcr p15, 0, %0, c7, c5, 0" : : "r"(0));
+#endif
     isb();
 }
 
