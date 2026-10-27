@@ -472,12 +472,6 @@ exception_t decodeVCPUInjectIRQ(cap_t cap, word_t length, word_t *buffer)
         current_syscall_error.type = seL4_RangeError;
         return EXCEPTION_SYSCALL_ERROR;
     }
-    /* LR index is in use */
-    if (virq_get_virqType(vcpu->vgic.lr[index]) == virq_virq_active) {
-        userError("VGIC List register in use.");
-        current_syscall_error.type = seL4_DeleteFirst;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
     virq_t virq = virq_virq_pending_new(group, priority, 1, vid);
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
