@@ -273,13 +273,13 @@ BOOT_CODE void initL2Cache(void)
 
 #if defined(CONFIG_PLAT_IMX6SX)
     aux |= CTRL_AUX_WAYSIZE_16K;
-#elif defined(CONFIG_PLAT_EXYNOS4) || defined(CONFIG_PLAT_IMX6) || defined(CONFIG_PLAT_ZYNQ7000) || defined(CONFIG_PLAT_ALLWINNERA20)
+#elif defined(CONFIG_PLAT_IMX6) || defined(CONFIG_PLAT_ZYNQ7000) || defined(CONFIG_PLAT_ALLWINNERA20)
     aux |= CTRL_AUX_WAYSIZE_64K;
 #elif defined(OMAP4)
     aux |= CTRL_AUX_WAYSIZE_32K;
-#else /* ! (EXYNOS4 || OMAP4 || IMX6) */
+#else /* ! (OMAP4 || IMX6 || ZYNQ7000 || ALLWINNERA20) */
 #error Unknown platform for L2C-310
-#endif /* EXYNOS4 || OMAP4 || IMX6 */
+#endif /* OMAP4 || IMX6 || ZYNQ7000 || ALLWINNERA20 */
 
 #ifdef TI_MSHIELD
     /* Access secure registers through Security Middleware Call */

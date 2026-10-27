@@ -16,8 +16,6 @@ register_driver(compatibility_strings "fsl,imx8qxp-lpuart;fsl,imx7ulp-lpuart"
                 PREFIX src/drivers/serial CFILES "imx-lpuart.c")
 register_driver(compatibility_strings "samsung,exynos4210-uart" PREFIX src/drivers/serial
                 CFILES "exynos4210-uart.c")
-register_driver(compatibility_strings "qcom,msm-uartdm" PREFIX src/drivers/serial
-                CFILES "msm-uartdm.c")
 register_driver(compatibility_strings "xlnx,xuartps" PREFIX src/drivers/serial CFILES "xuartps.c")
 register_driver(compatibility_strings "amlogic,meson-gx-uart" PREFIX src/drivers/serial
                 CFILES "meson-gx-uart.c")

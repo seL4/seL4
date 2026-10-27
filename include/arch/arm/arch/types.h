@@ -40,5 +40,4 @@ typedef struct kernel_frame {
     paddr_t paddr;
     pptr_t pptr;
     int armExecuteNever;
-    int userAvailable;
 } kernel_frame_t;

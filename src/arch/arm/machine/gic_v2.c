@@ -111,7 +111,7 @@ BOOT_CODE static void cpu_iface_init(void)
 {
     uint32_t i;
 
-    /* For non-Exynos4, the registers are banked per CPU, need to clear them */
+    /* The registers are banked per CPU, need to clear them */
     gic_dist->enable_clr[0] = IRQ_SET_ALL;
     gic_dist->pending_clr[0] = IRQ_SET_ALL;
 

@@ -818,7 +818,7 @@
                 Set the TLS base of the target TCB.
              </brief>
              <description>
-                An invocation for setting the Thread Local Storage (TLS) base address. This ensures that across all platforms, the TLSBase register is viewed as being completely mutable, just like all of the general purpose registers, even on platforms where modification is a privileged operation.
+                An invocation for setting the Thread Local Storage (TLS) base address. This ensures that across all platforms, the TLSBase register is viewed as being completely mutable, just like all of the general purpose registers, even on platforms where modification is a privileged operation. The value is subject to the same architecture-specific sanitisation as <texttt text="seL4_TCB_WriteRegisters"/>. In particular, on x86_64 non-canonical addresses are replaced by 0.
              </description>
              <param dir="in" name="tls_base" type="seL4_Word"
                 description="The TLS base to set."/>

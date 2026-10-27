@@ -29,6 +29,9 @@ void setNextPC(tcb_t *thread, word_t v)
     setRegister(thread, NextIP, v);
 }
 
+/* Map and reserve device regions. The kernel may map only part of a device
+ * region, so mapped and reserved regions do not have to be equal.
+ */
 BOOT_CODE void map_kernel_devices(void)
 {
     /* If there are no kernel device frames at all, then kernel_device_frames is
@@ -38,11 +41,11 @@ BOOT_CODE void map_kernel_devices(void)
     for (int i = 0; i < NUM_KERNEL_DEVICE_FRAMES; i++) {
         const kernel_frame_t *frame = &kernel_device_frames[i];
         map_kernel_frame(frame->paddr, frame->pptr, VMKernelOnly);
-        if (!frame->userAvailable) {
-            reserve_region((p_region_t) {
-                .start = frame->paddr,
-                .end   = frame->paddr + BIT(seL4_LargePageBits)
-            });
+    }
+
+    for (int i = 0; i < NUM_KERNEL_DEVICE_RESERVED_REGIONS; i++) {
+        if (!reserve_region(kernel_device_reserved_regions[i])) {
+            fail("Failed to reserve kernel device region");
         }
     }
 }
