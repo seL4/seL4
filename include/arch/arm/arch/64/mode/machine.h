@@ -53,6 +53,13 @@ static inline word_t getProcessorID(void)
     return processor_id;
 }
 
+static inline word_t readCTR(void)
+{
+    word_t ctr;
+    MRS("ctr_el0", ctr);
+    return ctr;
+}
+
 static inline word_t readSystemControlRegister(void)
 {
     word_t scr;

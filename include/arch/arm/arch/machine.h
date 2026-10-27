@@ -43,6 +43,15 @@ void cleanInvalidate_L1D(void);
 void cleanCaches_PoU(void);
 void cleanInvalidateL1Caches(void);
 
+/* L1 instruction cache policy field of CTR/CTR_EL0 */
+#define CTR_L1IP(ctr)     (((ctr) >> 14) & MASK(2))
+#define CTR_L1IP_PIPT     3
+
+static inline bool_t isICachePIPT(void)
+{
+    return CTR_L1IP(readCTR()) == CTR_L1IP_PIPT;
+}
+
 /* Cleaning memory before user-level access. Does not flush cache. */
 static inline void clearMemory(word_t *ptr, word_t bits)
 {
