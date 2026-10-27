@@ -320,6 +320,48 @@ static inline void set_vmpidr(word_t val)
     MCR(VMPIDR, val);
 }
 
+static inline word_t getCSSELR(void)
+{
+    word_t csselr;
+    MRC(CSSELR, csselr);
+    return csselr;
+}
+
+static inline void setCSSELR(word_t csselr)
+{
+    MCR(CSSELR, csselr);
+}
+
+/* FEAT_RAS only exists on Armv8, so probe only then, otherwise return false. */
+static inline bool_t cpu_has_ras(void)
+{
+#ifdef CONFIG_ARCH_ARM_V8A
+    word_t reg;
+    MRC(ID_PFR0, reg);
+    return ((reg >> ID_PFR0_RAS) & MASK(4)) != 0;
+#else
+    return false;
+#endif
+}
+
+/* VDISR is undefined when FEAT_RAS is not supported. In this case, return 0 for read. */
+static inline word_t getVDISR(void)
+{
+    word_t vdisr = 0;
+    if (cpu_has_ras()) {
+        MRC(VDISR, vdisr);
+    }
+    return vdisr;
+}
+
+/* VDISR is undefined when FEAT_RAS is not supported. In this case, ignore writes. */
+static inline void setVDISR(word_t vdisr)
+{
+    if (cpu_has_ras()) {
+        MCR(VDISR, vdisr);
+    }
+}
+
 /** MODIFIES: phantom_machine_state */
 /** DONT_TRANSLATE */
 static inline void set_cntv_cval_64(uint64_t val)
@@ -456,6 +498,10 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
         return readTTBR1();
     case seL4_VCPUReg_TTBR1high:
         return readTTBR1high();
+    case seL4_VCPUReg_CSSELR:
+        return getCSSELR();
+    case seL4_VCPUReg_VDISR:
+        return getVDISR();
     case seL4_VCPUReg_DACR:
         return readDACR();
     case seL4_VCPUReg_DFSR:
@@ -572,6 +618,12 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
         break;
     case seL4_VCPUReg_TTBR1high:
         writeTTBR1high(reg);
+        break;
+    case seL4_VCPUReg_CSSELR:
+        setCSSELR(reg);
+        break;
+    case seL4_VCPUReg_VDISR:
+        setVDISR(reg);
         break;
     case seL4_VCPUReg_DACR:
         writeDACR(reg);

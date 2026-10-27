@@ -37,6 +37,9 @@
 #define FPEXC_DEX_BIT       29
 #define FPEXC_FP2V_BIT      28
 
+/* ID_PFR0 register */
+#define ID_PFR0_RAS         28     // RAS extension
+
 /* Offsets within the user context, these need to match the order in
  * register_t below */
 #define PT_SP               (13  * 4)
