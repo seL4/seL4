@@ -172,6 +172,15 @@ BOOT_CODE static void init_smc(cap_t root_cnode_cap)
 }
 #endif
 
+BOOT_CODE static bool_t checkICacheType(void)
+{
+    if (CTR_L1IP(readCTR()) == CTR_L1IP_AIVIVT) {
+        printf("ERROR: AIVIVT L1 instruction caches are not supported\n");
+        return false;
+    }
+    return true;
+}
+
 /** This and only this function initialises the CPU.
  *
  * It does NOT initialise any kernel state.
@@ -201,6 +210,10 @@ BOOT_CODE static bool_t init_cpu(void)
         return false;
     }
 #endif
+
+    if (!checkICacheType()) {
+        return false;
+    }
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
     if (!Arch_initHardwareBreakpoints()) {
