@@ -474,7 +474,8 @@ static inline void invalidateByVA(vptr_t vaddr, paddr_t paddr)
     dmb();
 }
 
-/* I-Cache invalidate to PoU (L2 cache) (v6/v7 common) */
+/* I-Cache invalidate to PoU (L2 cache) (v6/v7 common)
+ * Callers still need dsb() and isb() */
 static inline void invalidateByVA_I(vptr_t vaddr, paddr_t paddr)
 {
 #ifdef CONFIG_ARM_CORTEX_A8
@@ -483,7 +484,6 @@ static inline void invalidateByVA_I(vptr_t vaddr, paddr_t paddr)
 #else
     asm volatile("mcr p15, 0, %0, c7, c5, 1" : : "r"(vaddr));
 #endif
-    isb();
 }
 
 /* I-Cache invalidate all to PoU (L2 cache) (v6/v7 common)

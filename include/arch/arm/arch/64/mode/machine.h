@@ -315,11 +315,10 @@ static inline void invalidateByVA(vptr_t vaddr, paddr_t paddr)
     dmb();
 }
 
+/* Callers still need dsb() and isb() */
 static inline void invalidateByVA_I(vptr_t vaddr, paddr_t paddr)
 {
     asm volatile("ic ivau, %0" : : "r"(vaddr));
-    dsb();
-    isb();
 }
 
 static inline void invalidate_I_PoU(void)

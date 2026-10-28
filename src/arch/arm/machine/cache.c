@@ -132,6 +132,7 @@ void invalidateCacheRange_RAM(vptr_t start, vptr_t end, paddr_t pstart)
     dsb();
 }
 
+/* Callers still need dsb() and isb() */
 void invalidateCacheRange_I(vptr_t start, vptr_t end, paddr_t pstart)
 {
 #if defined(CONFIG_ARM_ICACHE_VIPT) && defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
