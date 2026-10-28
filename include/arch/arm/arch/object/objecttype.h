@@ -31,6 +31,13 @@ static inline void Arch_postCapDeletion(cap_t cap)
 {
 }
 
+/* Largest size to flush by address. Value measured for A15, A57, and A72 cores
+ * by comparing end-to-end reset untyped times from user-level for different
+ * limit values (incl SMP where available). The break-even point is different
+ * between them, the value below is roughly the median.
+ */
+#define ICACHE_FLUSH_RANGE_MAX_BITS 14
+
 /* Flush the instruction cache for Untypeds that could be turned into
  * non-device frames. On VIPT caches we need to flush the entire cache,
  * on PIPT caches, we can flush by address. */
@@ -38,7 +45,7 @@ static inline void Arch_postResetUntyped(bool_t deviceMemory, word_t sizeBits, v
 {
     if (!deviceMemory && sizeBits >= seL4_PageBits) {
         dsb();
-        if (config_set(CONFIG_ARM_ICACHE_VIPT)) {
+        if (config_set(CONFIG_ARM_ICACHE_VIPT) || sizeBits > ICACHE_FLUSH_RANGE_MAX_BITS) {
             invalidate_I_PoU();
         } else {
             invalidateCacheRange_I((word_t)regionBase, (word_t)regionBase + BIT(sizeBits) - 1,
