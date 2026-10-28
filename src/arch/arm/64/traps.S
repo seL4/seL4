@@ -120,6 +120,13 @@ END_FUNC(arm_vector_table)
     mrs     x23, SPSR
     stp     x30, x21, [sp, #PT_LR]
     stp     x22, x23, [sp, #PT_ELR_EL1]
+
+    /* Save TLS before acquiring the kernel lock. A remote stall can
+     * switch to idle and leave lock acquisition without reaching the
+     * C entry hook. In particular, EL0 can write TPIDR_EL0 directly. */
+    mrs     x21, tpidr_el0
+    mrs     x22, tpidrro_el0
+    stp     x21, x22, [sp, #PT_TPIDR_EL0]
 .endm
 
 /* Takes argument x0: vect_offset (in debug builds) */

@@ -113,12 +113,6 @@ static inline word_t readTPIDR_EL1(void)
     return reg;
 }
 
-static void arm_save_thread_id(tcb_t *thread)
-{
-    setRegister(thread, TPIDR_EL0, readTPIDR_EL0());
-    setRegister(thread, TPIDRRO_EL0, readTPIDRRO_EL0());
-}
-
 static void arm_load_thread_id(tcb_t *thread)
 {
     writeTPIDR_EL0(getRegister(thread, TPIDR_EL0));
