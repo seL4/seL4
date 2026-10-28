@@ -340,16 +340,6 @@ static inline word_t readTPIDRPRW(void)
 
 #endif
 
-static void arm_save_thread_id(tcb_t *thread)
-{
-    /* TPIDRURW is writeable from EL0 but not with globals frame. */
-    setRegister(thread, TPIDRURW, readTPIDRURW());
-    /* This register is read only from userlevel, but could still be updated
-     * if the thread is running in a higher privilege level with a VCPU attached.
-     */
-    setRegister(thread, TPIDRURO, readTPIDRURO());
-}
-
 static void arm_load_thread_id(tcb_t *thread)
 {
     writeTPIDRURW(getRegister(thread, TPIDRURW));

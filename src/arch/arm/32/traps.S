@@ -35,6 +35,14 @@ END_FUNC(arm_vector_table)
 #include <arch/machine/registerset.h>
 #include <sel4/sel4_arch/constants.h>
 
+/* Save TLS before acquiring the kernel lock. The user registers have
+ * already been saved, and sp still points at NextIP in the user context. */
+.macro SAVE_TLS
+    mrc p15, 0, r8, c13, c0, 2
+    mrc p15, 0, r9, c13, c0, 3
+    strd r8, r9, [sp, #(PT_TPIDRURW - PT_NextIP)]
+.endm
+
 BEGIN_FUNC(arm_undefined_inst_exception)
     /* Full save/restore, documented in arm_swi_syscall */
     srsia #PMODE_SUPERVISOR
@@ -54,6 +62,7 @@ BEGIN_FUNC(arm_undefined_inst_exception)
     bne     kernel_undefined_inst
 
     str r8, [sp, #(PT_FaultIP - PT_NextIP)]
+    SAVE_TLS
     mrc p15, 0, sp, c13, c0, 4
     b c_handle_undefined_instruction
 
@@ -90,6 +99,8 @@ BEGIN_FUNC(arm_swi_syscall)
 
     /* Stack all user registers */
     stmdb sp, {r0-lr}^
+
+    SAVE_TLS
 
     /* Load the kernel's real stack pointer */
     mrc p15, 0, sp, c13, c0, 4
@@ -135,6 +146,7 @@ BEGIN_FUNC(arm_prefetch_abort_exception)
     /* Store faulting address in TCB and call handleVMFaultEvent. */
     str r8, [sp, #(PT_FaultIP - PT_NextIP)]
 
+    SAVE_TLS
     mrc p15, 0, sp, c13, c0, 4
 
     b c_handle_instruction_fault
@@ -181,6 +193,7 @@ BEGIN_FUNC(arm_data_abort_exception)
 
     /* Store faulting address in TCB and call handleVMFaultEvent. */
     str r8, [sp, #(PT_FaultIP - PT_NextIP)]
+    SAVE_TLS
     mrc p15, 0, sp, c13, c0, 4
 
     b c_handle_data_fault
@@ -213,6 +226,7 @@ BEGIN_FUNC(arm_irq_exception)
     sub r8, r8, #4
     str r8, [sp]
     str r8, [sp, #(PT_FaultIP - PT_NextIP)]
+    SAVE_TLS
     mrc p15, 0, sp, c13, c0, 4
     b c_handle_interrupt
 END_FUNC(arm_irq_exception)
