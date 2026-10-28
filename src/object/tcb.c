@@ -521,7 +521,7 @@ static exception_t decodeSetAffinity(cap_t cap, word_t length, word_t *buffer)
 #endif /* ENABLE_SMP_SUPPORT */
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
-static exception_t invokeConfigureSingleStepping(bool_t call, word_t *buffer, tcb_t *t,
+static exception_t invokeConfigureSingleStepping(bool_t call, tcb_t *t,
                                                  uint16_t bp_num, word_t n_instrs)
 {
     bool_t bp_was_consumed;
@@ -543,8 +543,9 @@ static exception_t invokeConfigureSingleStepping(bool_t call, word_t *buffer, tc
     }
 
     if (call) {
+        word_t *ipcBuffer = lookupIPCBuffer(true, thread);
         setRegister(thread, badgeRegister, 0);
-        unsigned int length = setMR(thread, buffer, 0, value);
+        unsigned int length = setMR(thread, ipcBuffer, 0, value);
         setRegister(thread, msgInfoRegister, wordFromMessageInfo(
                         seL4_MessageInfo_new(0, 0, 0, length)));
     }
@@ -571,7 +572,7 @@ static exception_t decodeConfigureSingleStepping(cap_t cap, bool_t call, word_t 
     }
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    return invokeConfigureSingleStepping(call, buffer, tcb, bp_num, n_instrs);
+    return invokeConfigureSingleStepping(call, tcb, bp_num, n_instrs);
 }
 
 static exception_t invokeSetBreakpoint(tcb_t *tcb, uint16_t bp_num,
@@ -700,21 +701,22 @@ static exception_t decodeSetBreakpoint(cap_t cap, word_t *buffer)
                                vaddr, type, size, rw);
 }
 
-static exception_t invokeGetBreakpoint(bool_t call, word_t *buffer, tcb_t *tcb, uint16_t bp_num)
+static exception_t invokeGetBreakpoint(bool_t call, tcb_t *tcb, uint16_t bp_num)
 {
     tcb_t *thread;
     thread = NODE_STATE(ksCurThread);
     getBreakpoint_t res;
     res = getBreakpoint(tcb, bp_num);
     if (call) {
+        word_t *ipcBuffer = lookupIPCBuffer(true, thread);
         setRegister(thread, badgeRegister, 0);
-        setMR(NODE_STATE(ksCurThread), buffer, 0, res.vaddr);
-        setMR(NODE_STATE(ksCurThread), buffer, 1, res.type);
-        setMR(NODE_STATE(ksCurThread), buffer, 2, res.size);
-        setMR(NODE_STATE(ksCurThread), buffer, 3, res.rw);
-        setMR(NODE_STATE(ksCurThread), buffer, 4, res.is_enabled);
+        setMR(thread, ipcBuffer, 0, res.vaddr);
+        setMR(thread, ipcBuffer, 1, res.type);
+        setMR(thread, ipcBuffer, 2, res.size);
+        setMR(thread, ipcBuffer, 3, res.rw);
+        unsigned int length = setMR(thread, ipcBuffer, 4, res.is_enabled);
         setRegister(thread, msgInfoRegister, wordFromMessageInfo(
-                        seL4_MessageInfo_new(0, 0, 0, 5)));
+                        seL4_MessageInfo_new(0, 0, 0, length)));
     }
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
     return EXCEPTION_NONE;
@@ -736,7 +738,7 @@ static exception_t decodeGetBreakpoint(cap_t cap, bool_t call, word_t *buffer)
     }
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    return invokeGetBreakpoint(call, buffer, tcb, bp_num);
+    return invokeGetBreakpoint(call, tcb, bp_num);
 }
 
 static exception_t invokeUnsetBreakpoint(tcb_t *tcb, uint16_t bp_num)
