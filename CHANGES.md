@@ -26,7 +26,6 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 ## Upcoming release: BREAKING
 
-
 ### Changes
 
 - Improved debug printing in debug_dumpScheduler.
@@ -67,6 +66,8 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 #### ARM
 
+- Remove `seL4_VCPUReg_ACTLR` and VCPU access to the implementation defined ACTLR in general. This means only seL4, or
+  the boot chain before seL4, choose the value of this register and this value remains constant.
 - Hyp: remove the ArmHypEnableVCPUCP14SaveAndRestore config option. The implementation of this config option was
   unfinished and did not actually work.
 - CMake: KernelBenchmarks now depends on KernelArmExportPMUUser. No behaviour change, this models what C #defines did
@@ -121,9 +122,19 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 - Debug/printing: check that all accessed addresses are in the kernel window when printing a user-level stack trace.
 - Treat all S-mode exceptions as kernel faults and halt (with debug print in debug mode).
 
+### Platforms
+
+* Remove support for the Arndale (`exynos5250`) platform, deprecated since 2025, see also RFC-19.
+* Remove support for the Odroid-X (`exynos4`) platform, deprecated since 2025, see also RFC-19.
+* Remove support for the HiKey (`hikey`) platform, deprecated since 2025, see also RFC-19.
+* Remove support for the Inforce IFC6410 (`apq8064`) platform, deprecated since 2025, see also RFC-19.
+* Changed default for exynos5 `KernelARMPlatform` from `exynos5250` to `exynos5422`.
+
 ### Upgrade Notes
 
 - Several VCPU register enum values have changed. These changes are source compatible, but binary breaking.
+- `seL4_VCPUReg_ACTLR` no longer exists and access to the ACTLR register by VMs is trapped. Modifying the value is no
+  longer possible. If the real value of this register needs to be reported by a VMM to a VM, it can be determined statically by config from the seL4 source and/or the boot code that runs before it.
 - seL4 now traps access to the PMU for guests. Linux touches PMU registers during boot, so Virtual Machine Monitors have
   to emulate access. If no further PMU use is required, returning zero on read and ignoring writes is enough to run
   Linux.

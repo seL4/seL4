@@ -16,7 +16,6 @@ devices:
       - arm,cortex-a7-gic
       - arm,cortex-a9-gic
       - arm,gic-400
-      - qcom,msm-qgic2
     regions:
       # distributor
       - index: 0
@@ -79,15 +78,7 @@ devices:
       - index: 0
         kernel: L2CC_L2C310_PPTR
   # Exynos multi core timer (timer/samsung,exynos4210-mct.txt)
-  # Exynos4412 MCT is separate as we use it for the timer IRQ.
-  # Other Exynos platforms use the ARM architecture timer.
-  - compatible:
-      - samsung,exynos4412-mct
-    regions:
-      - index: 0
-        kernel: EXYNOS_MCT_PPTR
-    interrupts:
-      KERNEL_TIMER_IRQ: 0
+  # Exynos platforms use the ARM architecture timer for the timer IRQ.
   - compatible:
       - samsung,exynos4210-mct
     regions:
@@ -145,14 +136,6 @@ devices:
     interrupts:
       # IMX6 also has the imx31-gpt.
       KERNEL_TIMER_IRQ: 0
-  # QCOM Krait timer (timer/qcom,msm-timer.txt)
-  - compatible:
-      - qcom,kpss-timer
-    regions:
-      - index: 0
-        kernel: TIMER_PPTR
-    interrupts:
-      KERNEL_TIMER_IRQ: 0
   # TI AM335x/OMAP3430 timer
   - compatible:
       - ti,am335x-timer
@@ -188,7 +171,6 @@ devices:
       - fsl,imx6sx-uart
       - nvidia,tegra124-hsuart
       - nvidia,tegra20-uart
-      - qcom,msm-uartdm
       - samsung,exynos4210-uart
       - snps,dw-apb-uart
       - st,stm32h7-uart

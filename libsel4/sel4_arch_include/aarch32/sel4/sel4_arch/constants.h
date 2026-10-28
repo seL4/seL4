@@ -74,8 +74,7 @@ typedef enum {
 typedef enum {
     seL4_VCPUReg_SCTLR = 0,
     seL4_VCPURegSaveRange_start, /* begin vcpu save/restore reg range */
-    seL4_VCPUReg_ACTLR = seL4_VCPURegSaveRange_start,
-    seL4_VCPUReg_TTBCR,
+    seL4_VCPUReg_TTBCR = seL4_VCPURegSaveRange_start,
     seL4_VCPUReg_TTBR0,
     seL4_VCPUReg_TTBR1,
     seL4_VCPUReg_DACR,
@@ -114,7 +113,9 @@ typedef enum {
     seL4_VCPUReg_PARlow,
     seL4_VCPUReg_TTBR0high,
     seL4_VCPUReg_TTBR1high,
-    seL4_VCPURegSaveRange_end = seL4_VCPUReg_TTBR1high, /* end vcpu save/restore reg range */
+    seL4_VCPUReg_CSSELR,
+    seL4_VCPUReg_VDISR,
+    seL4_VCPURegSaveRange_end = seL4_VCPUReg_VDISR, /* end vcpu save/restore reg range */
     seL4_VCPUReg_CNTV_CTL,
     seL4_VCPUReg_CNTV_CVALhigh,
     seL4_VCPUReg_CNTV_CVALlow,
