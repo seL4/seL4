@@ -499,7 +499,6 @@ static inline void invalidate_I_PoU(void)
 #else
     asm volatile("mcr p15, 0, %0, c7, c5, 0" : : "r"(0));
 #endif
-    isb();
 }
 
 /* D-Cache clean & invalidate to PoC (v6/v7 common) */
