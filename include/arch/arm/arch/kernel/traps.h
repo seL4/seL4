@@ -12,7 +12,11 @@
 
 static inline void arch_c_entry_hook(void)
 {
+#ifdef CONFIG_ARCH_AARCH32
     arm_save_thread_id(NODE_STATE(ksCurThread));
+#endif
+    /* AArch64 saves TLS with the rest of the user context in assembly,
+     * before a remote stall can interrupt kernel lock acquisition. */
 }
 
 static inline void arch_c_exit_hook(void)
