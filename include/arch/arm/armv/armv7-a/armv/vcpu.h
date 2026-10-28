@@ -14,18 +14,66 @@
 #include <drivers/timer/arm_generic.h>
 #include <arch/machine/debug.h>
 
-/* Trap SMC and override CPSR.AIF */
-#define HCR_COMMON ( HCR_TSC | HCR_AMO | HCR_IMO \
-                   | HCR_FMO | HCR_DC  | HCR_VM)
-
-/* Allow native tasks to run at PL1, but restrict access */
-#define HCR_NATIVE ( HCR_COMMON | HCR_TGE | HCR_TVM | HCR_TTLB | HCR_TCACHE \
-                   | HCR_TAC | HCR_SWIO)
+/* HCR values for vCPUs and native tasks for ARMv7-A and (via the symlink) for
+ * AArch32 on ARMv8-A. Audited against DDI0406C.d, B4.1.65 (B4-1577) for ARMv7-A
+ * and DDI0487M.d, G8.2.65 (G8-14000) for AArch32 on ARMv8-A.
+ *
+ * AArch32 ARMv8-A additionally defines HCR.TRVM and HCR.HCD, as well as the
+ * HCR2 register. Their meaning is the same as in AArch64, but they must not be
+ * set under ARMv7-A, because they are UNK/SBZP.
+ *
+ * Any notable differences to AArch64 below. Any values not mentioned here are
+ * the same as on AArch64. Some are mentioned, because the reason they are set
+ * on AArch64 is uniformity with what is required here on ARMv7-A.
+ *
+ * Set at 1:
+ * - SWIO, set/way invalidation override - forces guest DCISW to be performed as
+ *   DCCISW, so a guest cannot discard dirty cache lines of other contexts. On
+ *   ARMv7-A this bit is the only mechanism for this (DDI0406C.d B2.2.7,
+ *   B2-1284). On ARMv8-A VM=1 already has this effect. Set on both for
+ *   uniformity. Irrelevant for native tasks, because set/way instructions are
+ *   UNDEFINED at PL0.
+ *
+ * Not present on ARMv7-A, present on AArch32 ARMv8-A:
+ * - TRVM, conservatively set to 1 on ARMv8-A like TVM for native threads.
+ * - HCD, set to 0.
+ *
+ * Varies:
+ * - DC, default cacheable - On ARMv7-A, necssary for native threads, because
+ *   they run with stage 1 translation off (SCTLR.M=0). Here also on for VCPU
+ *   threads, different to AArch64.
+ */
 
 #ifdef CONFIG_DISABLE_WFI_WFE_TRAPS
-#define HCR_VCPU   (HCR_COMMON)
+#define HCR_MAYBE_TWI_TWE 0
 #else
-#define HCR_VCPU   (HCR_COMMON | HCR_TWE | HCR_TWI)
+#define HCR_MAYBE_TWI_TWE (HCR_TWI | HCR_TWE)
+#endif
+
+/* TRVM only exists on ARMv8-A; UNK/SBZP on ARMv7-A. */
+#ifdef CONFIG_ARCH_ARM_V8A
+#define HCR_MAYBE_TRVM (HCR_TRVM)
+#else
+/* So we can still mention the name, but it sets no bit: */
+#define HCR_MAYBE_TRVM (0)
+#endif
+
+#define HCR_COMMON ( HCR_VM | HCR_AMO | HCR_IMO | HCR_FMO | HCR_TSC | HCR_TIDCP \
+                   | HCR_TACR | HCR_SWIO | HCR_DC )
+
+/* Native tasks run at PL0 (CPSR_USER) with address space in stage 2. */
+#define HCR_NATIVE (HCR_COMMON | HCR_TTLB | HCR_TVM | HCR_MAYBE_TRVM | HCR_TGE)
+
+#define HCR_VCPU   (HCR_COMMON | HCR_MAYBE_TWI_TWE)
+
+#ifdef CONFIG_ARCH_ARM_V8A
+/* HCR2 value set at boot for AArch32 ARMv8-A (DDI0487M.d G8.2.66). HCR2 is the
+ * AArch32 view of HCR_EL2[63:32]. These are the same choices as for AArch64.
+ * The value is the same for native tasks and VCPUs.
+ */
+#define HCR2_TERR    BIT(4)      /* Trap RAS error record access   */
+
+#define HCR2_DEFAULT (HCR2_TERR)
 #endif
 
 /* Amongst other things we set the caches to enabled by default. This
@@ -755,6 +803,11 @@ static inline void armv_vcpu_boot_init(void)
      * init_cpu() enables VFP and Advanced SIMD access as needed if
      * CONFIG_HAVE_FPU is set */
     setHCPTR(HCPTR_DEFAULT);
+
+#ifdef CONFIG_ARCH_ARM_V8A
+    /* HCR2 is globally static, HCR is set per thread in vcpu_enable/disable. */
+    setHCR2(HCR2_DEFAULT);
+#endif
 
     initHDCR();
 }

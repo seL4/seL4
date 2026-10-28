@@ -13,7 +13,9 @@
 #include <api/failures.h>
 #include <linker.h>
 
+#define HCR_TID5     BIT(58)     /* Trap ID group 5 (GMID_EL1)     */
 #define HCR_TERR     BIT(36)     /* Trap RAS error record access   */
+#define HCR_TLOR     BIT(35)     /* Trap LOR registers             */
 #define HCR_RW       BIT(31)     /* Execution state control        */
 #define HCR_TRVM     BIT(30)     /* trap reads of VM controls      */
 #define HCR_HCD      BIT(29)     /* Disable HVC                    */
@@ -25,7 +27,7 @@
 #define HCR_TPC      BIT(23)     /* Trap cache maintenance PoC     */
 #define HCR_TSW      BIT(22)     /* Trap cache maintenance set/way */
 #define HCR_TCACHE   (HCR_TPU | HCR_TPC | HCR_TSW)
-#define HCR_TAC      BIT(21)     /* Trap ACTLR access              */
+#define HCR_TACR     BIT(21)     /* Trap ACTLR access              */
 #define HCR_TIDCP    BIT(20)     /* Trap lockdown                  */
 #define HCR_TSC      BIT(19)     /* Trap SMC instructions          */
 #define HCR_TID3     BIT(18)     /* Trap ID register 3             */
