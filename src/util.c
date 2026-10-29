@@ -129,7 +129,7 @@ long PURE str_to_long(const char *str)
         if (res == -1 || res >= base) {
             return -1;
         }
-        val = val * base + res;
+        val = val * (long)base + res;
         str++;
         c = *str;
     }
@@ -300,7 +300,7 @@ static UNUSED CONST inline unsigned clz64(uint64_t x)
         count -= bits; // [1, 2, 3, ..., 64]
     }
 
-    return count - x;
+    return (unsigned)(count - x);
 }
 
 // Count trailing zeros.
@@ -426,27 +426,27 @@ static UNUSED CONST inline unsigned ctz64(uint64_t x)
 #ifdef CONFIG_CLZ_32
 CONST int __clzsi2(uint32_t x)
 {
-    return clz32(x);
+    return (int)clz32(x);
 }
 #endif
 
 #ifdef CONFIG_CLZ_64
 CONST int __clzdi2(uint64_t x)
 {
-    return clz64(x);
+    return (int)clz64(x);
 }
 #endif
 
 #ifdef CONFIG_CTZ_32
 CONST int __ctzsi2(uint32_t x)
 {
-    return ctz32(x);
+    return (int)ctz32(x);
 }
 #endif
 
 #ifdef CONFIG_CTZ_64
 CONST int __ctzdi2(uint64_t x)
 {
-    return ctz64(x);
+    return (int)ctz64(x);
 }
 #endif
