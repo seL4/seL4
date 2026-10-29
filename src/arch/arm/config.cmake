@@ -112,8 +112,8 @@ config_option(
   DEPENDS "KernelArchARM;KernelArmCortexA15"
   DEFAULT_DISABLED OFF)
 
-config_option(KernelArmSMMU ARM_SMMU "Enable SystemMMU" DEFAULT ON DEPENDS "KernelPlatformTx2"
-              DEFAULT_DISABLED OFF)
+config_option(KernelArmSMMU ARM_SMMU "Enable SystemMMU" DEFAULT ON
+              DEPENDS "KernelPlatformTx2 OR KernelPlatformZynqmp;KernelSel4ArchAarch64" DEFAULT_DISABLED OFF)
 
 config_option(KernelTk1SMMU TK1_SMMU "Enable SystemMMU for the Tegra TK1 SoC" DEFAULT OFF
               DEPENDS "KernelPlatformTK1")
