@@ -119,6 +119,7 @@ static inline int fastpath_reply_cap_check(cap_t cap)
 static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 {
     c_exit_hook();
+    arm_load_thread_id(cur_thread);
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
     restore_user_debug_context(cur_thread);

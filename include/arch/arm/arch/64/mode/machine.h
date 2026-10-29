@@ -82,23 +82,9 @@ static inline void writeTPIDR_EL0(word_t reg)
     MSR("tpidr_el0", reg);
 }
 
-static inline word_t readTPIDR_EL0(void)
-{
-    word_t reg;
-    MRS("tpidr_el0", reg);
-    return reg;
-}
-
 static inline void writeTPIDRRO_EL0(word_t reg)
 {
     MSR("tpidrro_el0", reg);
-}
-
-static inline word_t readTPIDRRO_EL0(void)
-{
-    word_t reg;
-    MRS("tpidrro_el0", reg);
-    return reg;
 }
 
 static inline void writeTPIDR_EL1(word_t reg)
