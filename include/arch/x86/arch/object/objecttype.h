@@ -37,6 +37,9 @@ word_t Mode_getObjectSize(word_t t);
 
 void Arch_postCapDeletion(cap_t cap);
 
+/* Nothing to do after reset on x86. */
+static inline void Arch_postResetUntyped(bool_t deviceMemory, word_t sizeBits) {}
+
 /**
  * Return true if the given arch cap can be a descendant of an IRQControlCap.
  */

@@ -11,6 +11,7 @@
 #include <api/types.h>
 #include <object/structures.h>
 #include <object/cnode.h>
+#include <arch/machine.h>
 
 deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap);
 cap_t CONST Arch_updateCapData(bool_t preserve, word_t data, cap_t cap);
@@ -28,6 +29,16 @@ bool_t Arch_isFrameType(word_t type);
 
 static inline void Arch_postCapDeletion(cap_t cap)
 {
+}
+
+/* Flush the instruction cache for Untypeds that could be turned into non-device
+ * frames. There are no mappings present when this is called, so we can defer
+ * the data flush to retype.*/
+static inline void Arch_postResetUntyped(bool_t deviceMemory, word_t sizeBits)
+{
+    if (!deviceMemory && sizeBits >= seL4_PageBits) {
+        ifence();
+    }
 }
 
 /**

@@ -266,6 +266,7 @@ static exception_t resetUntypedCap(cte_t *srcSlot)
             }
         }
     }
+    Arch_postResetUntyped(deviceMemory, block_size);
     return EXCEPTION_NONE;
 }
 
