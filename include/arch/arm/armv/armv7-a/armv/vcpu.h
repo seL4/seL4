@@ -903,7 +903,9 @@ static inline void vcpu_disable(vcpu_t *vcpu)
     /* Save virtual timer state if there is a VCPU, and stop the timer */
     disable_virt_timer(vcpu);
     /* Mask the virtual timer interrupt */
-    maskInterrupt(true, CORE_IRQ_TO_IRQT(CURRENT_CPU_INDEX(), INTERRUPT_VTIMER_EVENT));
+    if (likely(vcpu)) {
+        maskInterrupt(true, CORE_IRQ_TO_IRQT(CURRENT_CPU_INDEX(), INTERRUPT_VTIMER_EVENT));
+    }
 }
 
 static inline void armv_vcpu_init(vcpu_t *vcpu)
