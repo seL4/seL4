@@ -111,8 +111,7 @@ END_FUNC(arm_vector_table)
     str lr, [sp, #(PT_FaultIP - PT_SP)]
     /* Stack all user registers */
     push {r0-r12}
-    /* Save TLS before acquiring the kernel lock. The stack pointer now
-     * points at the start of the user context. */
+    /* Save TPIDRURW and TPIDRURO, sp now points at the start of the user context. */
     mrc p15, 0, r8, c13, c0, 2
     mrc p15, 0, r9, c13, c0, 3
     strd r8, r9, [sp, #PT_TPIDRURW]

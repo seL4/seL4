@@ -35,7 +35,7 @@ END_FUNC(arm_vector_table)
 #include <arch/machine/registerset.h>
 #include <sel4/sel4_arch/constants.h>
 
-/* Save TLS before acquiring the kernel lock. The user registers have
+/* Save TPIDRURW and TPIDRURO. The user registers have
  * already been saved, and sp still points at NextIP in the user context. */
 .macro SAVE_TLS
     mrc p15, 0, r8, c13, c0, 2
@@ -99,7 +99,6 @@ BEGIN_FUNC(arm_swi_syscall)
 
     /* Stack all user registers */
     stmdb sp, {r0-lr}^
-
     SAVE_TLS
 
     /* Load the kernel's real stack pointer */
@@ -145,7 +144,6 @@ BEGIN_FUNC(arm_prefetch_abort_exception)
 
     /* Store faulting address in TCB and call handleVMFaultEvent. */
     str r8, [sp, #(PT_FaultIP - PT_NextIP)]
-
     SAVE_TLS
     mrc p15, 0, sp, c13, c0, 4
 
