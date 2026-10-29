@@ -303,25 +303,10 @@ static inline void writeTPIDRURW(word_t reg)
     asm volatile("mcr p15, 0, %0, c13, c0, 2" :: "r"(reg));
 }
 
-static inline word_t readTPIDRURW(void)
-{
-    word_t reg;
-    asm volatile("mrc p15, 0, %0, c13, c0, 2" : "=r"(reg));
-    return reg;
-}
-
 static inline void writeTPIDRURO(word_t reg)
 {
     asm volatile("mcr p15, 0, %0, c13, c0, 3" :: "r"(reg));
 }
-
-static inline word_t readTPIDRURO(void)
-{
-    word_t reg;
-    asm volatile("mrc p15, 0, %0, c13, c0, 3" : "=r"(reg));
-    return reg;
-}
-
 
 static inline void writeTPIDRPRW(word_t reg)
 {
@@ -339,16 +324,6 @@ static inline word_t readTPIDRPRW(void)
 }
 
 #endif
-
-static void arm_save_thread_id(tcb_t *thread)
-{
-    /* TPIDRURW is writeable from EL0 but not with globals frame. */
-    setRegister(thread, TPIDRURW, readTPIDRURW());
-    /* This register is read only from userlevel, but could still be updated
-     * if the thread is running in a higher privilege level with a VCPU attached.
-     */
-    setRegister(thread, TPIDRURO, readTPIDRURO());
-}
 
 static void arm_load_thread_id(tcb_t *thread)
 {

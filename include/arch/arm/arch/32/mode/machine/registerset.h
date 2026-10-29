@@ -126,6 +126,9 @@ compile_assert(elr_hyp_offset_correct, ELR_hyp *sizeof(word_t) == PT_ELR_hyp)
 #endif
 compile_assert(faultinstruction_offset_correct, FaultIP *sizeof(word_t) == PT_FaultIP)
 compile_assert(r8_offset_correct, R8 *sizeof(word_t) == PT_R8)
+compile_assert(tpidrurw_offset_even, (PT_TPIDRURW & 1) == 0)
+compile_assert(tpidrurw_offset_correct, TPIDRURW *sizeof(word_t) == PT_TPIDRURW)
+compile_assert(tpidruro_offset_correct, TPIDRURO == TPIDRURW + 1)
 
 typedef word_t register_t;
 

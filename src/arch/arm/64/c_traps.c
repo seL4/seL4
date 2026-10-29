@@ -19,6 +19,7 @@
 void VISIBLE NORETURN restore_user_context(void)
 {
     c_exit_hook();
+    arm_load_thread_id(NODE_STATE(ksCurThread));
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
     restore_user_debug_context(NODE_STATE(ksCurThread));

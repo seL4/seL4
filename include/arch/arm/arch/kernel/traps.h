@@ -12,12 +12,10 @@
 
 static inline void arch_c_entry_hook(void)
 {
-    arm_save_thread_id(NODE_STATE(ksCurThread));
 }
 
 static inline void arch_c_exit_hook(void)
 {
-    arm_load_thread_id(NODE_STATE(ksCurThread));
 }
 
 void VISIBLE NORETURN restore_user_context(void);
