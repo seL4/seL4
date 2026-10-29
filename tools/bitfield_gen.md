@@ -907,7 +907,11 @@ There are the following main files in seL4:
   `libsel4/mode_include/*32*/sel4/shared_types.bf`.
 
 The generated C code contains a comment which `.bf` include hierarchy the
-definitions are coming from.
+definitions are coming from. By default, source paths are made relative
+to the seL4 source directory. Paths that are already relative are left
+unchanged. Configure CMake with `-DBitfieldAbsoluteSourcePaths=ON` to retain
+the absolute source paths. This option applies to both kernel and libsel4
+headers.
 
 The generated code can be found in a build directory under the `generated`
 directory, where e.g. `structures_gen.h` will have been generated from

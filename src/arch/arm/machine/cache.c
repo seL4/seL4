@@ -174,6 +174,7 @@ void cleanCaches_PoU(void)
     dsb();
     invalidate_I_PoU();
     dsb();
+    isb();
 }
 
 void cleanInvalidateL1Caches(void)
@@ -183,6 +184,7 @@ void cleanInvalidateL1Caches(void)
     dsb();
     invalidate_I_PoU();
     dsb();
+    isb();
 }
 
 void arch_clean_invalidate_caches(void)

@@ -190,9 +190,6 @@ BOOT_CODE static bool_t init_cpu(void)
 #endif
 
     activate_kernel_vspace();
-    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        vcpu_boot_init();
-    }
 
 #ifdef CONFIG_ARCH_AARCH64
     /* After activate_kernel_vspace(), so printf() is available. */
@@ -230,6 +227,14 @@ BOOT_CODE static bool_t init_cpu(void)
     setVtable((pptr_t)arm_vector_table);
 #endif /* CONFIG_ARCH_AARCH64 */
 
+    cpu_initLocalIRQController();
+
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        vcpu_boot_init();
+    }
+
+    /* FPU init must come after vcpu_boot_init(), which sets the default HYP
+     * FPU traps that the FPU init then adjusts. */
     haveHWFPU = fpsimd_HWCapTest();
 
     /* Disable FPU to avoid channels where a platform has an FPU but doesn't make use of it */
@@ -247,8 +252,6 @@ BOOT_CODE static bool_t init_cpu(void)
         return false;
     }
 #endif /* CONFIG_HAVE_FPU */
-
-    cpu_initLocalIRQController();
 
 #ifdef CONFIG_ENABLE_BENCHMARKS
     arm_init_ccnt();

@@ -43,6 +43,8 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
   every 5ms.
 - Always sanitise register content in TCBCopyRegisters as already done in TCBWriteRegisters to prevent state that is
   only legal in VCPU threads from arriving in native threads.
+- Debug API: check for and refuse writes to read-only IPC buffers
+- Build: produce only relative source paths in generated bitfield files to keep DAWRF checksums constant
 
 ### Platforms
 
@@ -50,6 +52,8 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 #### X86
 
+- VT-x/EPT: map pages without Read rights (VMKernelOnly) as invalid entries. Previously these entries remained
+  accessible to user space.
 - Allow linking the kernel with LLD.
 - VT-d: properly invalidate IOMMU caches in unmap operations.
 - VT-d: check and fail if Caching Mode is set, because this would require more aggressive cache invalidation.
@@ -66,6 +70,14 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 #### ARM
 
+- Invalidate the instruction cache on Untyped reset to prevent stale instructions from being
+  visible to new memory owners.
+- Hyp: stop the virtual timer when a VCPU is deleted. Previously the VM timer could fire after the
+  VCPU no longer existed, re-triggering an interrupt on every return to user level.
+- VCPU: remove unnecessary check in seL4_ARM_VCPU_InjectIRQ for target list register being marked in use.
+- AArch64 Hyp: trap further register access for VCPU threads, setting TIDCP, TLOR, TID5.
+- AArch32 Hyp: trap further register access for VCPU threads, setting SWIO (Arm-v7A) and TERR (Arm-v8A).
+- AArch32 Armv8-A: also trap reads to virtual memory registers, setting TRVM.
 - Remove `seL4_VCPUReg_ACTLR` and VCPU access to the implementation defined ACTLR in general. This means only seL4, or
   the boot chain before seL4, choose the value of this register and this value remains constant.
 - Hyp: remove the ArmHypEnableVCPUCP14SaveAndRestore config option. The implementation of this config option was
@@ -117,6 +129,7 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 #### RISC-V
 
+- Issue fence.i on Untyped reset to prevent stale instructions from being visible to new memory owners.
 - Fix missing fastpath ASID validity check.
 - Fix QEMU PLIC node name compatibility, use interrupt-controller@c000000 instead of the old plic@c000000.
 - Debug/printing: check that all accessed addresses are in the kernel window when printing a user-level stack trace.
@@ -128,10 +141,14 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 * Remove support for the Odroid-X (`exynos4`) platform, deprecated since 2025, see also RFC-19.
 * Remove support for the HiKey (`hikey`) platform, deprecated since 2025, see also RFC-19.
 * Remove support for the Inforce IFC6410 (`apq8064`) platform, deprecated since 2025, see also RFC-19.
-* Changed default for exynos5 `KernelARMPlatform` from `exynos5250` to `exynos5422`.
+* Change default for exynos5 `KernelARMPlatform` from `exynos5250` to `exynos5422`.
 
 ### Upgrade Notes
 
+- ARM Hyp: seL4_ARM_VCPU_InjectIRQ no longer reports seL4_DeleteFirst for list registers that are in use. VMMs need to
+  rely on their own bookkeeping for tracking the list register state.
+- ARM Hyp: VMs now trap on access to implementation-defined system registers and, on AArch64, LORegion and ID group 5
+  registers. VMMs may need to ignore or emulate these accesses or inject an exception into the guest.
 - Several VCPU register enum values have changed. These changes are source compatible, but binary breaking.
 - `seL4_VCPUReg_ACTLR` no longer exists and access to the ACTLR register by VMs is trapped. Modifying the value is no
   longer possible. If the real value of this register needs to be reported by a VMM to a VM, it can be determined statically by config from the seL4 source and/or the boot code that runs before it.

@@ -329,7 +329,6 @@ static inline void invalidate_I_PoU(void)
 #else
     asm volatile("ic iallu");
 #endif
-    isb();
 }
 
 static inline void cleanInvalByVA(vptr_t vaddr, paddr_t paddr)

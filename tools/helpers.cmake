@@ -123,6 +123,9 @@ function(
   add_custom_target(${target_name} DEPENDS "${target_file}")
 endfunction(GenBFTarget)
 
+option(BitfieldAbsoluteSourcePaths
+       "Use absolute source paths in generated bitfield header comments" OFF)
+
 # Wrapper around GenBFTarget for generating a C header file out of a bitfield specification
 # environment is empty for kernel generation and "libsel4" for generating non kernel headers
 # prunes is an optional list of files that will be passed as --prune options to the bitfield
@@ -145,6 +148,10 @@ function(
     get_absolute_source_or_binary(prune_absolute "${prune}")
     list(APPEND args "--prune" "${prune_absolute}")
   endforeach()
+  # Keep the source reference without embedding the checkout location in generated headers.
+  if(NOT BitfieldAbsoluteSourcePaths AND IS_ABSOLUTE "${orig_file}")
+    file(RELATIVE_PATH orig_file "${seL4_SOURCE_DIR}" "${orig_file}")
+  endif()
   list(APPEND args --from_file "${orig_file}")
   list(APPEND deps ${prunes})
   GenBFTarget("${args}" "${target_name}" "${target_file}" "${pbf_path}" "${pbf_target}" "${deps}")
