@@ -45,9 +45,6 @@ void ipiStallCoreCallback(bool_t irqPath)
 
         /* Let the cpu requesting this IPI continue while we wait on the lock */
         node->ipi = 0;
-#ifdef CONFIG_ARCH_RISCV
-        ipi_clear_irq(irq_remote_call_ipi);
-#endif
         ipi_wait();
 
         /* Continue waiting on lock */
