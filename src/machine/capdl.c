@@ -145,7 +145,7 @@ void obj_ut_print_attrs(cte_t *slot, tcb_t *tcb)
     always accompanied by null mdb pointers */
     for (cte_t *nextPtr = CTE_PTR(mdb_node_get_mdbNext(slot->cteMDBNode));
          nextPtr && isMDBParentOf(slot, nextPtr);
-         nextPtr = CTE_PTR(mdb_node_get_mdbNext(slot->cteMDBNode))) {
+         nextPtr = CTE_PTR(mdb_node_get_mdbNext(nextPtr->cteMDBNode))) {
         if (!sameRegionAs(slot->cap, nextPtr->cap)) {
             /* TBD:
              * - this will print out the attributes of the cap, which it shouldn't
