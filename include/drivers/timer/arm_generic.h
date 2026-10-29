@@ -54,7 +54,9 @@ BOOT_CODE void initGenericTimer(void);
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 static uint64_t read_cntpct(void) UNUSED;
-static void save_virt_timer(vcpu_t *vcpu);
+/* Save virtual timer state if there is a VCPU, and stop the timer */
+static void disable_virt_timer(vcpu_t *vcpu);
 static void restore_virt_timer(vcpu_t *vcpu);
+static void check_export_arch_timer(void);
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
