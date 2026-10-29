@@ -26,6 +26,170 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 ## Upcoming release: BREAKING
 
+### Security-relevant Changes
+
+As in previous releases, some of these security relevant changes affect verified configurations. In all of these cases,
+the issue is outside the scope of what the proofs guarantee. See the list of [verification assumptions] for what that
+scope includes. All issues we are currently aware of that affect verification assumptions have been fixed.
+
+[verification assumptions]: https://sel4.systems/Verification/assumptions.html
+
+* Fixed a kernel halt on Arm with hypervisor support that can be triggered by guest VMs, because EL1 debug registers
+  were not trapped or context switched. All EL1 debug register accesses now trap.
+  * Affected configurations: AArch64 and AArch32 with hypervisor support, including verified configurations.
+  * Affected versions: all previous versions
+  * Exploitability: any guest VM
+  * Severity: Critical. This crashes the system.
+
+* Fixed a kernel crash on x86 that can be triggered by any thread: the kernel kept running with user-controlled flags
+  after kernel entry. With `NT` set before a system call, the system triple-faulted on return to user level. `DF` was
+  not cleared on system call, interrupt and exception entry, although compiled kernel code assumes it is clear. The
+  kernel now clears all user-controllable flags on entry.
+  * Affected configurations: x86_64 and ia32, including verified configurations.
+  * Affected versions: all previous versions
+  * Exploitability: any thread, no capabilities required.
+  * Severity: Critical. This crashes the system.
+
+* Fixed VT-x on SMP and with multiple VMs per core: host GS/FS bases were not restored after VM exit, which crashed
+  SMP kernels and corrupted guest FPU state; all cores shared one VMXON region, causing unpredictable behaviour.
+  * Affected configurations: x86 with VT-x (unverified).
+  * Affected versions: 16.0.0 (GS/FS bases); all previous versions (VMXON region)
+  * Exploitability: triggered by normal VM operation.
+  * Severity: High. Kernel crash on SMP, guest state corruption.
+
+* Fixed missing trapping and context switching of system registers on AArch64 with hypervisor support, which formed
+  storage channels and interference paths between VMs, native threads and the kernel: PMU (Performance Measurement
+  Unit), `VDISR_EL2`, `CSSELR_EL1`, RAS error records, implementation-defined registers (`TIDCP`, and `ACTLR` with VCPU
+  access removed), LORegion and ID group 5 registers, SVE, SME, trace and activity monitor registers (`CPTR_EL2` is now
+  set at boot), GICv3 group 0 registers (`ICH_AP0R0_EL2` let a guest block interrupts for later VMs), and `TCR_EL1` for
+  native threads.
+  * Affected configurations: AArch64 with hypervisor support, including verified configurations. Some registers exist
+    only on cores with the corresponding feature (RAS, SVE, GICv3).
+  * Affected versions: all previous versions
+  * Exploitability: guest VM, no capabilities required.
+  * Severity: High, depending on threat model. Opens storage channels and guests can affect some system registers
+    visible to other VMs and native threads.
+
+* Fixed the same class of issues on AArch32 with hypervisor support: PMU, `CPACR` (a guest could disable the FPU for
+  native threads), `FPEXC`, upper halves of `TTBR0`/`TTBR1` (LPAE), `CSSELR`, `VDISR`, implementation-defined (including
+  `ACTLR`), RAS and set/way cache registers (`TIDCP`, `TACR`, `SWIO`, `TERR`, `TRVM`), and `HCPTR` is now set at boot.
+  The kernel also restored only part of `SPSR` (GE, IT, E, A bits leaked between threads).
+  * Affected configurations: AArch32 with hypervisor support, including verified configurations.
+  * Affected versions: all previous versions
+  * Exploitability: guest VM, no capabilities required; native thread for `SPSR`.
+  * Severity: High, depending on threat model. Opens storage channels and guests can affect some system registers
+    visible to other VMs and native threads.
+
+* Fixed kernel halts from unsanitised register values: `TCB_SetTLSBase` accepted non-canonical addresses on x86_64, and
+  `TCB_CopyRegisters` could copy VCPU-only register state to native threads on Arm hyp.
+  * Affected configurations: x86_64 (`TCB_SetTLSBase`) and Arm with hypervisor support (`TCB_CopyRegisters`), including
+    verified configurations.
+  * Affected versions: all previous versions
+  * Exploitability: a thread with a TCB capability for `TCB_SetTLSBase`; a thread with TCB capabilities to both a VCPU
+    thread and a native thread for `TCB_CopyRegisters`. Standard Microkit systems do not provide these capabilities.
+  * Severity: High. This crashes the system, but exploitability is constrained by capabilities.
+
+* Fixed a storage channel on AArch32: the user-writable ThumbEE register `TEEHBR` was neither trapped nor
+  context-switched.
+  * Affected configurations: AArch32 on cores with ThumbEE (e.g. Cortex-A8, A9, A15), with and without hypervisor
+    support, including verified configurations.
+  * Affected versions: all previous versions
+  * Exploitability: any thread, no capabilities required.
+  * Severity: Medium depending on threat model. 32-bit storage channel between threads.
+
+* Fixed a kernel data abort in VSpace cache maintenance on Arm hyp for frames outside the kernel's physical memory
+  window, and an incorrect corresponding check for page flushes on AArch32 hyp.
+  * Affected configurations: AArch64 and AArch32 with hypervisor support, including verified configurations.
+  * Affected versions: all previous versions
+  * Exploitability: a thread with a VSpace capability and a mapped frame outside the kernel window. Standard Microkit
+    and CAmkES systems do not provide these capabilities.
+  * Severity: Medium. This crashes the system, but exploitability is strongly constrained by capabilities.
+
+* Fixed a NULL pointer write in the MCS fastpath, triggered by deleting an endpoint that a passive server waits on.
+  * Affected configurations: MCS with fastpath (the fastpath is not verified for MCS).
+  * Affected versions: 16.0.0
+  * Exploitability: any thread that can delete such an endpoint. Microkit and CAmkES systems do not provide the ability
+    to delete endpoints.
+  * Severity: Medium. This crashes the system, but exploitability is strongly constrained by capabilities.
+
+* Fixed a core livelock on Arm hyp: dissociating or deleting the active VCPU left its virtual timer running, and the
+  timer interrupt can then re-trigger on every return to user level.
+  * Affected configurations: AArch64 and AArch32 with hypervisor support, including verified configurations.
+  * Affected versions: since 12.0.0
+  * Exploitability: a thread with VCPU and TCB capabilities. Microkit does not provide these capabilities. CAmkES VMMs
+    do have these capabilities, but would need to be exploited first.
+  * Severity: Medium. The core makes no further progress, but exploitability is strongly constrained by capabilities.
+
+* Fixed stale TLB entries after unmapping: on AArch32 hyp, TLB flushes always flushed the current VMID; on AArch64
+  without hyp, hardware ASIDs were truncated to 8 bit, so flushes for seL4 ASIDs above 255 hit the wrong ASID.
+  * Affected configurations: AArch32 with hypervisor support, including verified configurations; AArch64 without
+    hypervisor support (unverified).
+  * Affected versions: all previous versions
+  * Exploitability: a thread whose frame is unmapped while its VSpace is not current (AArch32 hyp), or whose VSpace has
+    an seL4 ASID above 255 (AArch64). The thread keeps access to the frame after it is reused. Unmapping a frame needs
+    the Frame capability or the ability to revoke the Frame capability. Unmapping can also be achieved via overmapping
+    with a new frame and new Frame capability, or via unmapping the page table that contains the original frame.
+    Standard Microkit and CAmkES systems do not provide access to these capabilities.
+  * Severity: Medium. Access to memory after it has been reallocated, but exploitability is strongly constrained by
+    capabilities.
+
+* Fixed VT-x memory isolation: EPT mappings of frames from capabilities without read rights were guest-readable,
+  writable and executable; deleting a VCPU did not release its VPID, after which the kernel wrote to the freed VCPU
+  memory.
+  * Affected configurations: x86 with VT-x (unverified).
+  * Affected versions: all previous versions
+  * Exploitability: a VMM with an EPT and a frame capability with reduced rights; a thread that can create and delete
+    VCPU objects. Standard Microkit and CAmkES systems cannot create and delete VCPU objects and cannot diminish their
+    frame capabilities to non-read.
+  * Severity: Medium. Write access to read-only memory, kernel memory corruption, but strongly constrained by
+    capabilities.
+
+* Fixed missing ASID validity check in the IPC fastpath on RISC-V and x86. The fastpath kept switching to a VSpace whose
+  ASID had been revoked, where the slowpath switches to the empty VSpace. This can give access to other VSpaces and to
+  unmapped frames through the TLB.
+  * Affected configurations: RISC-V and x86 with fastpath enabled, but not verified configurations (the fastpath is not
+    verified on RISC-V and x64).
+  * Affected versions: all previous versions
+  * Exploitability: requires authority to delete an ASID pool in use by a running thread and to create a new one.
+    Usually only the system initialiser or allocator components have access to ASID pool capabilities. Microkit and
+    CAmkES systems do not provide access to them.
+  * Severity: Medium. Breaks address space isolation, but strongly constrained by capabilities.
+
+* Fixed stale IOMMU/SMMU state: VT-d unmap operations did not invalidate the IOMMU caches correctly, IO page table
+  unmap on x86 and Arm did not require the IOPageTable capability to be final, and `deleteIOPageTable` on Arm could
+  clear unowned slots. Devices could keep DMA access to unmapped and reallocated memory.
+  * Affected configurations: x86 with `KernelIOMMU` and Arm with SMMU (unverified).
+  * Affected versions: all previous versions
+  * Exploitability: a thread with IOSpace or IO page table capabilities and a DMA-capable device. Microkit and CAmkES
+    systems do not provide user-level access to these capabilities.
+  * Severity: Medium. DMA access to reallocated memory, but strongly constrained by capabilities.
+
+* Fixed missing instruction cache flush on Arm and RISC-V. A new frame owner could potentially execute stale code on
+  that frame from the previous owner.
+  * Affected configurations: all Arm and RISC-V configurations, including verified configurations.
+  * Affected versions: all previous versions
+  * Exploitability: low. The new owner must execute from reused memory before writing it, and reuse of memory across
+    security boundaries is usually already excluded. Standard Microkit and CAmkES systems do not provide
+    the capabilities to do that.
+  * Severity: Low. Information leakage of instruction contents, strongly constrained by capabilities.
+
+* Fixed the empty VSpace sharing a hardware ASID/VMID with user VSpaces: on AArch32 it ran under the current ASID, on
+  AArch64 hyp VMID 0 was also allocated to user VSpaces.
+  * Affected configurations: AArch32 (with and without hypervisor support) and AArch64 with hypervisor support,
+    including verified configurations.
+  * Affected versions: all previous versions
+  * Exploitability: low. A thread without a valid VSpace can hit stale TLB entries of the previously running VSpace and
+    must force an empty VSpace to be scheduled at the correct time. Standard Microkit and CAmkES systems do not provide
+    the capabilities to do that.
+  * Severity: Low. Limited access to the mappings of another specific VSpace, strongly constrained by capabilities.
+
+* AArch64 now maps frames from capabilities without read rights as non-executable, because execution can reveal content.
+  * Affected configurations: AArch64, including verified configurations.
+  * Affected versions: all previous versions
+  * Exploitability: a thread with a frame capability without read rights. Standard Microkit and CAmkES systems do not
+    provide mechanisms to diminish frame rights.
+  * Severity: Low and strongly constrained by capabilities.
+
 ### Changes
 
 - Improved debug printing in debug_dumpScheduler.
@@ -43,8 +207,11 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
   every 5ms.
 - Always sanitise register content in TCBCopyRegisters as already done in TCBWriteRegisters to prevent state that is
   only legal in VCPU threads from arriving in native threads.
-- Debug API: check for and refuse writes to read-only IPC buffers
-- Build: produce only relative source paths in generated bitfield files to keep DAWRF checksums constant
+- Debug API: check for and refuse writes to read-only IPC buffers.
+- Build: produce only relative source paths in generated bitfield files to keep DAWRF checksums constant.
+- Sanitise the TLS_BASE register in TCBSetTLSBase. Previously non-canonical values were accepted on x86_64.
+- Arm, RISC-V: reserve the full device tree region of kernel devices, not only the part the kernel maps. Previously the
+  rest was provided to user level as device untyped.
 
 ### Platforms
 
@@ -67,6 +234,8 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 - x64 VT-x SMP: fix issue where VMs are not starting on different cores.
 - x64 VT-x: fix size of null_ept_space to 4096 bytes.
 - x64 VT-x: fix broken VM exit under SMP and co-tenancy.
+- Clear user-controllable flags on kernel entry for SYSCALL AND SYSENTER. Clear DF on interrupt and exception entry.
+  Previously NT and DF could remain set.
 
 #### ARM
 
@@ -102,8 +271,10 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
   wider than 32 bit.
 - Hyp/GICv3: trap group 0 register access from VMs. seL4 only uses group 1, and allowing group 0 access to VMs would
   constitute an information channel.
-- AArch32 Hyp: constrain cache flushes to physical kernel window. Flushing outside the kernel window would produce a
+- Hyp: constrain VSpace cache flushes to physical kernel window. Flushing outside the kernel window would produce a
   fault during kernel execution.
+- Hyp: trap EL1 debug register access for VCPU threads (TDA, TDOSA, TDRA).
+- AArch64 Hyp: reset TCR_EL1 for native threads and initialise it at boot.
 - AArch32 Hyp: restore full SPSR register on return to user. Use spsr_fsxc instead of spsr (which is spsr_all, which is
   spsr_fc instead of spsr_fsxc) to restore all currently known fields of SPSR.
 - AArch64: allow debug builds with KernelPrinting=OFF to compile.
@@ -126,6 +297,8 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 - AArch64: the kernel image is now mapped at a constant virtual address and the physical load address is now aligned to
   2 MiB. On platforms whose RAM starts below a 2 MiB boundary (rpi3, rpi4, rpi5), up to 2 MiB at the start of RAM is now
   provided as device untyped instead of RAM untyped.
+- SMP: save the user TLS registers before acquiring the kernel lock. Previously a remote stall while waiting for the
+  lock could produce stale TLS state.
 
 #### RISC-V
 
@@ -134,6 +307,7 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 - Fix QEMU PLIC node name compatibility, use interrupt-controller@c000000 instead of the old plic@c000000.
 - Debug/printing: check that all accessed addresses are in the kernel window when printing a user-level stack trace.
 - Treat all S-mode exceptions as kernel faults and halt (with debug print in debug mode).
+- SMP: don't lose reschedule IPIs. Previously a remote call IPI could overwrite a pending reschedule IPI.
 
 ### Platforms
 
@@ -151,7 +325,8 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
   registers. VMMs may need to ignore or emulate these accesses or inject an exception into the guest.
 - Several VCPU register enum values have changed. These changes are source compatible, but binary breaking.
 - `seL4_VCPUReg_ACTLR` no longer exists and access to the ACTLR register by VMs is trapped. Modifying the value is no
-  longer possible. If the real value of this register needs to be reported by a VMM to a VM, it can be determined statically by config from the seL4 source and/or the boot code that runs before it.
+  longer possible. If the real value of this register needs to be reported by a VMM to a VM, it can be determined
+  statically by config from the seL4 source and/or the boot code that runs before it.
 - seL4 now traps access to the PMU for guests. Linux touches PMU registers during boot, so Virtual Machine Monitors have
   to emulate access. If no further PMU use is required, returning zero on read and ignoring writes is enough to run
   Linux.
