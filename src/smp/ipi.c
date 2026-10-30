@@ -119,6 +119,16 @@ void handleIPI(irq_t irq, bool_t irqPath)
     ipi_state_t *ipi = &big_kernel_lock.ipi;
 
     if (IRQT_TO_IRQ(irq) == irq_remote_call_ipi) {
+        /* The call and its arguments belong to this core only while its
+         * ipi flag is set, and are only visible once the flag is (the
+         * sender sets it with a release store after writing them). The
+         * hardware IPI of a call already handled from the lock's wait loop
+         * can arrive while the next call is being set up: reading the
+         * arguments before the flag would run the previous call's
+         * operation, with possibly stale arguments, in the next round. */
+        if (!clh_is_ipi_pending(getCurrentCPUIndex())) {
+            return;
+        }
         handleRemoteCall(ipi->remoteCall, ipi->args[0], ipi->args[1], ipi->args[2], irqPath);
     } else if (IRQT_TO_IRQ(irq) == irq_reschedule_ipi) {
         rescheduleRequired();

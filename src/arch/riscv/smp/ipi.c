@@ -15,37 +15,35 @@ static volatile irq_t ipiIrq[CONFIG_MAX_NUM_NODES];
 
 /*
  * Set ipiIrq to irq_remote_call_ipi so handleInterrupts calls us again
- * instead of reporting a spurious interrupt, and ignore that extra call
- * by checking clh_is_ipi_pending().
+ * instead of reporting a spurious interrupt. That extra call is ignored,
+ * as handleIPI() only calls us while a call is pending.
  * If it's irq_reschedule_ipi, let handleInterrupts handle it as usual.
  */
 void handleRemoteCall(IpiRemoteCall_t call, word_t arg0, word_t arg1, word_t arg2, bool_t irqPath)
 {
     word_t core = getCurrentCPUIndex();
 
-    if (clh_is_ipi_pending(core)) {
-        if (ipiIrq[core] == irqInvalid) {
-            ipiIrq[core] = irq_remote_call_ipi;
-        }
-        switch (call) {
-        case IpiRemoteCall_Stall:
-            /* This never returns if irqPath is false: */
-            ipiStallCoreCallback(irqPath);
-            break;
+    if (ipiIrq[core] == irqInvalid) {
+        ipiIrq[core] = irq_remote_call_ipi;
+    }
+    switch (call) {
+    case IpiRemoteCall_Stall:
+        /* This never returns if irqPath is false: */
+        ipiStallCoreCallback(irqPath);
+        break;
 
 #ifdef CONFIG_HAVE_FPU
-        case IpiRemoteCall_switchFpuOwner:
-            switchLocalFpuOwner((tcb_t *)arg0);
-            break;
+    case IpiRemoteCall_switchFpuOwner:
+        switchLocalFpuOwner((tcb_t *)arg0);
+        break;
 #endif /* CONFIG_HAVE_FPU */
 
-        default:
-            fail("Invalid remote call");
-            break;
-        }
-        big_kernel_lock.node[core].ipi = 0;
-        ipi_wait();
+    default:
+        fail("Invalid remote call");
+        break;
     }
+    big_kernel_lock.node[core].ipi = 0;
+    ipi_wait();
 }
 
 void ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
