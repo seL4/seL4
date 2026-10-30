@@ -92,6 +92,7 @@ tagged_union cap capType {
 ---- Arch-independent object types
 
 block VMFault {
+    padding                     32
     field     address           32
 
     field     FSR               5
