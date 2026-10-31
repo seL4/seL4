@@ -60,7 +60,8 @@ static inline void clearMemory_PT(word_t *ptr, word_t bits)
 #ifdef ENABLE_SMP_SUPPORT
 static inline void arch_pause(void)
 {
-    /* TODO */
+    /* Slow down out-of-order CPUs so they don't waste energy doing nothing*/
+    isb();
 }
 #endif /* ENABLE_SMP_SUPPORT */
 
