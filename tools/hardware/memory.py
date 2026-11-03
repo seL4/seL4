@@ -101,8 +101,10 @@ class Region:
          will move the base address down and the region's size
          up '''
         new_base = hardware.utils.align_down(self.base, align_bits)
-        new_size = hardware.utils.align_up(self.size, align_bits)
-        return Region(new_base, new_size, self.owner)
+        if self.size == 0:
+            return Region(new_base, 0, self.owner)
+        new_end = hardware.utils.align_up(self.base + self.size, align_bits)
+        return Region(new_base, new_end - new_base, self.owner)
 
     def make_chunks(self, chunksz):
         base = self.base
