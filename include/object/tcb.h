@@ -107,7 +107,7 @@ void tcbReleaseEnqueue(tcb_t *tcb);
 
 #ifdef ENABLE_SMP_SUPPORT
 void remoteQueueUpdate(tcb_t *tcb);
-void remoteTCBStall(tcb_t *tcb);
+bool_t remoteTCBStall(tcb_t *tcb);
 
 #define SCHED_ENQUEUE(_t) do {      \
     tcbSchedEnqueue(_t);            \

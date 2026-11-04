@@ -74,23 +74,12 @@ static inline void checkInterrupt(void)
 exception_t handleInterruptEntry(void)
 {
 #ifdef CONFIG_KERNEL_MCS
-    if (SMP_TERNARY(clh_is_self_in_queue(), 1)) {
-        updateTimestamp();
-        checkBudget();
-    }
+    updateTimestamp();
+    checkBudget();
 #endif
-
-    checkInterrupt(/* was_interrupt_entry */ true);
-
-#ifdef CONFIG_KERNEL_MCS
-    if (SMP_TERNARY(clh_is_self_in_queue(), 1)) {
-#endif
-        schedule();
-        activateThread();
-#ifdef CONFIG_KERNEL_MCS
-    }
-#endif
-
+    checkInterrupt(true);
+    schedule();
+    activateThread();
     return EXCEPTION_NONE;
 }
 

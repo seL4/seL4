@@ -18,6 +18,7 @@
 #include <object/cnode.h>
 #include <object/interrupt.h>
 #ifdef CONFIG_KERNEL_MCS
+#include <object/reply.h>
 #include <object/schedcontext.h>
 #include <object/schedcontrol.h>
 #endif
@@ -140,6 +141,13 @@ finaliseCap_ret_t finaliseCap(cap_t cap, bool_t final, bool_t exposed)
                 tcb_t *tcb = reply->replyTCB;
                 switch (thread_state_get_tsType(tcb->tcbState)) {
                 case ThreadState_BlockedOnReply:
+#ifdef ENABLE_SMP_SUPPORT
+                    if (!reply_can_remove_smp(reply, tcb)) {
+                        fc_ret.remainder = cap_null_cap_new();
+                        fc_ret.cleanupInfo = Zombie_new(0, 0, 0);;
+                        return fc_ret;
+                    }
+#endif
                     reply_remove(reply, tcb);
                     break;
                 case ThreadState_BlockedOnReceive:
@@ -186,8 +194,14 @@ finaliseCap_ret_t finaliseCap(cap_t cap, bool_t final, bool_t exposed)
             cte_t *cte_ptr;
 
             tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
-            SMP_COND_STATEMENT(remoteTCBStall(tcb);)
             cte_ptr = TCB_PTR_CTE_PTR(tcb, tcbCTable);
+#ifdef ENABLE_SMP_SUPPORT
+            if (!remoteTCBStall(tcb)) {
+                fc_ret.remainder = cap_null_cap_new();
+                fc_ret.cleanupInfo = Zombie_new(0, 0, 0);
+                return fc_ret;
+            }
+#endif
             unbindNotification(tcb);
 #ifdef CONFIG_KERNEL_MCS
             sched_context_t *sc = SC_PTR(tcb->tcbSchedContext);
@@ -219,6 +233,13 @@ finaliseCap_ret_t finaliseCap(cap_t cap, bool_t final, bool_t exposed)
     case cap_sched_context_cap:
         if (final) {
             sched_context_t *sc = SC_PTR(cap_sched_context_cap_get_capSCPtr(cap));
+#ifdef ENABLE_SMP_SUPPORT
+            if (sc->scTcb && !remoteTCBStall(sc->scTcb)) {
+                fc_ret.remainder = cap_null_cap_new();
+                fc_ret.cleanupInfo = Zombie_new(0, 0, 0);
+                return fc_ret;
+            }
+#endif
             schedContext_unbindAllTCBs(sc);
             schedContext_unbindNtfn(sc);
             schedContext_unbindReply(sc);
@@ -812,6 +833,11 @@ exception_t performInvocation_Notification(notification_t *ntfn, word_t badge)
 #ifdef CONFIG_KERNEL_MCS
 exception_t performInvocation_Reply(tcb_t *thread, reply_t *reply, bool_t canGrant)
 {
+#ifdef ENABLE_SMP_SUPPORT
+    if (!reply_can_remove_smp(reply, reply->replyTCB)) {
+        return EXCEPTION_PREEMPTED;
+    }
+#endif
     doReplyTransfer(thread, reply, canGrant);
     return EXCEPTION_NONE;
 }

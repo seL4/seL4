@@ -18,9 +18,6 @@ void fpuRelease(tcb_t *thread);
 
 void switchLocalFpuOwner(tcb_t *new_owner);
 
-/* Switch the current owner of the FPU state on the core specified by 'cpu'. */
-void switchFpuOwner(tcb_t *new_owner, word_t cpu);
-
 /* Returns whether or not the passed thread is using the current active fpu state */
 static inline bool_t nativeThreadUsingFPU(tcb_t *thread)
 {

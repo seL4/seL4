@@ -86,7 +86,7 @@ void VISIBLE NORETURN c_handle_instruction_fault(void)
 
 void VISIBLE NORETURN c_handle_interrupt(void)
 {
-    NODE_LOCK_IRQ_IF(IRQT_TO_IRQ(getActiveIRQ()) != irq_remote_call_ipi);
+    NODE_LOCK_IRQ;
     c_entry_hook();
 
 #ifdef TRACK_KERNEL_ENTRIES
