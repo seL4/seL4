@@ -147,15 +147,6 @@ static exception_t invokeSchedContext_Unbind(sched_context_t *sc)
     return EXCEPTION_NONE;
 }
 
-#ifdef ENABLE_SMP_SUPPORT
-static inline void maybeStallSC(sched_context_t *sc)
-{
-    if (sc->scTcb) {
-        remoteTCBStall(sc->scTcb);
-    }
-}
-#endif
-
 static inline void replyFromKernel_consumed(tcb_t *thread, time_t consumed)
 {
     word_t *buffer = lookupIPCBuffer(true, thread);
@@ -269,8 +260,13 @@ static exception_t decodeSchedContext_YieldTo(sched_context_t *sc, bool_t call)
 
 exception_t decodeSchedContextInvocation(word_t label, sched_context_t *sc, bool_t call)
 {
-    SMP_COND_STATEMENT((maybeStallSC(sc));)
 
+#ifdef ENABLE_SMP_SUPPORT
+    if (sc->scTcb && !remoteTCBStall(sc->scTcb)) {
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+        return EXCEPTION_PREEMPTED;
+    }
+#endif
     switch (label) {
     case SchedContextConsumed:
         /* no decode */
@@ -354,7 +350,6 @@ void schedContext_unbindTCB(sched_context_t *sc)
 void schedContext_unbindAllTCBs(sched_context_t *sc)
 {
     if (sc->scTcb) {
-        SMP_COND_STATEMENT(remoteTCBStall(sc->scTcb));
         schedContext_unbindTCB(sc);
     }
 }
@@ -367,7 +362,6 @@ void schedContext_donate(sched_context_t *sc, tcb_t *to)
 
     tcb_t *from = sc->scTcb;
     if (from) {
-        SMP_COND_STATEMENT(remoteTCBStall(from));
         tcbSchedDequeue(from);
         tcbReleaseRemove(from);
         from->tcbSchedContext = NULL;

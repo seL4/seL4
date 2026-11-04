@@ -461,20 +461,19 @@ void remoteQueueUpdate(tcb_t *tcb)
 }
 
 /* This makes sure the the TCB is not being run on other core.
- * It would request 'IpiRemoteCall_Stall' to switch the core from this TCB
- * We also request the 'irq_reschedule_ipi' to restore the state of target core */
-void remoteTCBStall(tcb_t *tcb)
+ * It would request 'IpiRemoteCall_Stall' to switch the core from this TCB.
+ * Returns true when remote core is stalled, false otherwise. */
+bool_t remoteTCBStall(tcb_t *tcb)
 {
-
     if (
 #ifdef CONFIG_KERNEL_MCS
         tcb->tcbSchedContext &&
 #endif
         tcb->tcbAffinity != getCurrentCPUIndex() &&
         NODE_STATE_ON_CORE(ksCurThread, tcb->tcbAffinity) == tcb) {
-        doRemoteStall(tcb->tcbAffinity);
-        ARCH_NODE_STATE(ipiReschedulePending) |= BIT(tcb->tcbAffinity);
+        return doRemoteStall(tcb->tcbAffinity);
     }
+    return true;
 }
 
 #ifndef CONFIG_KERNEL_MCS
@@ -851,9 +850,15 @@ static exception_t decodeSetFlags(cap_t cap, word_t length, bool_t call, word_t 
 exception_t decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
                                 cte_t *slot, bool_t call, word_t *buffer)
 {
-    /* Stall the core if we are operating on a remote TCB that is currently running */
-    SMP_COND_STATEMENT(remoteTCBStall(TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)));)
+#ifdef ENABLE_SMP_SUPPORT
+    tcb_t *tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
 
+    /* Stall the core if we are operating on a remote TCB that is currently running */
+    if (tcb && !remoteTCBStall(tcb)) {
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+        return EXCEPTION_PREEMPTED;
+    }
+#endif
     switch (invLabel) {
     case TCBReadRegisters:
         /* Second level of decoding */

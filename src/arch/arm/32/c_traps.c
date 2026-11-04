@@ -28,7 +28,7 @@ void VISIBLE NORETURN restore_user_context(void)
     restore_user_debug_context(NODE_STATE(ksCurThread));
 #endif
 
-    NODE_UNLOCK_IF_HELD;
+    NODE_UNLOCK;
 
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         asm volatile(
