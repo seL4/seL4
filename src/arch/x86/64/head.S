@@ -236,8 +236,10 @@ BEGIN_FUNC(enable_x64_mode)
     rdmsr
     orl $0x100, %eax
     wrmsr
-    /* Set PG (bit 31) of cr0 to enable paging. */
     movl %cr0, %eax
+    /* Enable caches by clearing bits 29 and 30 of CR0. */
+    andl $0x9fffffff, %eax
+    /* Set PG (bit 31) of cr0 to enable paging. */
     orl $0x80000000, %eax
     movl %eax, %cr0
 #ifdef CONFIG_SUPPORT_PCID
@@ -273,7 +275,7 @@ END_FUNC(common_init)
 
 BEGIN_FUNC(_start)
     /* Assume we are MultiBooted, e.g. by GRUB.
-     * While not immediately checked, the magic number is checked prior to 
+     * While not immediately checked, the magic number is checked prior to
      * Multiboot dependent operations. */
     movl %eax, %edi /* multiboot_magic    */
     movl %ebx, %esi /* multiboot_info_ptr */
