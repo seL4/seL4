@@ -10,15 +10,6 @@
 #include <smp/ipi.h>
 
 #ifdef ENABLE_SMP_SUPPORT
-static inline void doRemoteStall(word_t cpu)
-{
-    doRemoteOp0Arg(IpiRemoteCall_Stall, cpu);
-}
-
-static inline void doRemoteswitchFpuOwner(tcb_t *new_owner, word_t cpu)
-{
-    doRemoteOp1Arg(IpiRemoteCall_switchFpuOwner, (word_t)new_owner, cpu);
-}
 
 static inline void doRemoteInvalidatePageStructureCacheASID(paddr_t root, asid_t asid, word_t mask)
 {

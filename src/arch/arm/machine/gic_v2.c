@@ -200,7 +200,7 @@ void plat_sendSGI(word_t irq, word_t target)
 * 3-0:   SGIINTID
 * software generated interrupt id, from 0 to 15...
 */
-void ipi_send_target(irq_t irq, word_t cpuTargetList)
+void arch_ipi_send_target(irq_t irq, word_t cpuTargetList)
 {
     if (config_set(CONFIG_PLAT_TX2)) {
         /* We need to swap the top 4 bits and the bottom 4 bits of the
