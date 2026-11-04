@@ -31,10 +31,10 @@ void generic_ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking);
  * its own arch_ipi_send_mask() or using the generic_ipi_send_mask() function
  * provided to be architecture agnostic.
  */
-void ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking);
+void arch_ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking);
 
 /* Hardware implementation for sending IPIs */
-void ipi_send_target(irq_t irq, word_t cpuTargetList);
+void arch_ipi_send_target(irq_t irq, word_t cpuTargetList);
 
 /* An architecture/platform should implement this function */
 void handleRemoteCall(IpiRemoteCall_t call, word_t arg0, word_t arg1, word_t arg2, bool_t irqPath);
@@ -130,8 +130,19 @@ static void inline doRemoteOp3Arg(IpiRemoteCall_t func, word_t data1, word_t dat
     doRemoteOp(func, data1, data2, data3, cpu);
 }
 
-/* This is asynchronous call and could be called outside the lock.
- * Returns immediately.
+#ifdef CONFIG_HAVE_FPU
+static inline void doRemoteswitchFpuOwner(tcb_t *new_owner, word_t cpu)
+{
+    doRemoteOp1Arg(IpiRemoteCall_switchFpuOwner, (word_t)new_owner, cpu);
+}
+#endif /* CONFIG_HAVE_FPU */
+
+static inline void doRemoteStall(word_t cpu)
+{
+    doRemoteOp0Arg(IpiRemoteCall_Stall, cpu);
+}
+
+/* This is an asynchronous call and returns immediately.
  *
  * @param mask cores to request rescheduling
  */

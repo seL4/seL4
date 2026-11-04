@@ -107,7 +107,7 @@ static void x86_ipi_send_mask(interrupt_t ipi, word_t mask, bool_t isBlocking)
 }
 #endif /* CONFIG_USE_LOGICAL_IDS */
 
-void ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
+void arch_ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
 {
     interrupt_t interrupt_ipi = ipi + IRQ_INT_OFFSET;
 
