@@ -21,10 +21,6 @@
 #include <util.h>
 #include <sel4/arch/vmenter.h>
 
-#define VMX_EXIT_QUAL_TYPE_MOV_CR 0
-#define VMX_EXIT_QUAL_TYPE_CLTS 2
-#define VMX_EXIT_QUAL_TYPE_LMSW 3
-
 const vcpu_gp_register_t crExitRegs[] = {
     VCPU_EAX, VCPU_ECX, VCPU_EDX, VCPU_EBX, VCPU_ESP, VCPU_EBP, VCPU_ESI, VCPU_EDI,
 #ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
