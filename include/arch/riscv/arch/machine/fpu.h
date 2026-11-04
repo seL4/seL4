@@ -9,7 +9,6 @@
 #include <util.h>
 #include <arch/machine/registerset.h>
 #include <arch/machine/hardware.h>
-#include <arch/smp/ipi_inline.h>
 
 static inline void set_fs_off(void)
 {
