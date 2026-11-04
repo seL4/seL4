@@ -236,9 +236,9 @@ static inline word_t read_sscratch(void)
 #ifdef CONFIG_HAVE_FPU
 static inline uint32_t read_fcsr(void)
 {
-    uint32_t fcsr;
+    word_t fcsr;
     asm volatile("csrr %0, fcsr" : "=r"(fcsr));
-    return fcsr;
+    return (uint32_t)fcsr;
 }
 
 static inline void write_fcsr(uint32_t value)

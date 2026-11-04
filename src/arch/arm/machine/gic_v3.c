@@ -208,6 +208,7 @@ BOOT_CODE static void dist_init(void)
 
 }
 
+/** DONT_TRANSLATE */
 BOOT_CODE static uint32_t gicr_enable_rdist(int core_id)
 {
     uint32_t deadline_ms =  GIC_DEADLINE_MS;
@@ -419,6 +420,11 @@ bool_t plat_SGITargetValid(word_t target)
     return target <= UINT32_MAX;
 }
 
+/* Ignored for verification, because of 64-bit asm block input on 32-bit
+ * architecture.
+ */
+/** MODIFIES: phantom_machine_state */
+/** DONT_TRANSLATE */
 void plat_sendSGI(word_t irq, word_t target)
 {
     uint64_t sgi1r_base = sgir_word_from_args(irq, target);
