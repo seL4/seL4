@@ -11,57 +11,44 @@
 
 #ifdef ENABLE_SMP_SUPPORT
 
-void handleRemoteCall(IpiRemoteCall_t call, word_t arg0, word_t arg1, word_t arg2, bool_t irqPath)
+void arch_handleRemoteCall(IpiRemoteCall_t call, word_t arg0, word_t arg1, word_t arg2)
 {
-    /* we gets spurious irq_remote_call_ipi calls, e.g. when handling IPI
-     * in lock while hardware IPI is pending. Guard against spurious IPIs! */
-    if (clh_is_ipi_pending(getCurrentCPUIndex())) {
-        switch (call) {
-        case IpiRemoteCall_Stall:
-            ipiStallCoreCallback(irqPath);
-            break;
-
-        case IpiRemoteCall_InvalidatePageStructureCacheASID:
-            invalidateLocalPageStructureCacheASID(arg0, arg1);
-            break;
-
-        case IpiRemoteCall_InvalidateTranslationSingle:
-            invalidateLocalTranslationSingle(arg0);
-            break;
-
-        case IpiRemoteCall_InvalidateTranslationSingleASID:
-            invalidateLocalTranslationSingleASID(arg0, arg1);
-            break;
-
-        case IpiRemoteCall_InvalidateTranslationAll:
-            invalidateLocalTranslationAll();
-            break;
-
-        case IpiRemoteCall_switchFpuOwner:
-            switchLocalFpuOwner((tcb_t *)arg0);
-            break;
-
+    switch (call) {
+    case IpiRemoteCall_Stall:
+        ipiStallCoreCallback();
+        break;
+    case IpiRemoteCall_InvalidatePageStructureCacheASID:
+        invalidateLocalPageStructureCacheASID(arg0, arg1);
+        break;
+    case IpiRemoteCall_InvalidateTranslationSingle:
+        invalidateLocalTranslationSingle(arg0);
+        break;
+    case IpiRemoteCall_InvalidateTranslationSingleASID:
+        invalidateLocalTranslationSingleASID(arg0, arg1);
+        break;
+    case IpiRemoteCall_InvalidateTranslationAll:
+        invalidateLocalTranslationAll();
+        break;
+    case IpiRemoteCall_switchFpuOwner:
+        switchLocalFpuOwner((tcb_t *)arg0);
+        break;
 #ifdef CONFIG_VTX
-        case IpiRemoteCall_ClearCurrentVCPU:
-            clearCurrentVCPU();
-            break;
-        case IpiRemoteCall_VMCheckBoundNotification: {
-            tcb_t *tcb = (tcb_t *)arg0;
+    case IpiRemoteCall_ClearCurrentVCPU:
+        clearCurrentVCPU();
+        break;
+    case IpiRemoteCall_VMCheckBoundNotification: {
+        tcb_t *tcb = (tcb_t *)arg0;
 
-            /* For a running VM notifications are already checked by handleVmexit */
-            if (tcb != NODE_STATE(ksCurThread)) {
-                VMCheckBoundNotification(tcb);
-            }
-            break;
+        /* For a running VM notifications are already checked by handleVmexit */
+        if (tcb != NODE_STATE(ksCurThread)) {
+            VMCheckBoundNotification(tcb);
         }
+        break;
+    }
 #endif
-        default:
-            Mode_handleRemoteCall((IpiModeRemoteCall_t)call, arg0, arg1, arg2);
-            break;
-        }
-
-        big_kernel_lock.node[getCurrentCPUIndex()].ipi = 0;
-        ipi_wait();
+    default:
+        Mode_handleRemoteCall((IpiModeRemoteCall_t)call, arg0, arg1, arg2);
+        break;
     }
 }
 

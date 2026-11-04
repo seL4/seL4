@@ -12,139 +12,140 @@
 #include <smp/ipi.h>
 #include <smp/lock.h>
 
-/* This function switches the core it is called on to the idle thread,
- * in order to avoid IPI storms. If the core is waiting on the lock, the actual
- * switch will not occur until the core attempts to obtain the lock, at which
- * point the core will capture the pending IPI, which is discarded.
+/*
+ * Async reschedule request IPIs are handled like any other interrupt with no
+ * special treatment.
+ *
+ * The blocking remote call IPI flow is:
+ * - The caller core setups remote call info, sends IPI(s) and blocks till all
+ *   targeted cores have handled the call, all while holding the global lock.
+ * - Remote core enters kernel mode for any reason, usually because of the IPI
+ *   interrupt, but it may race with a syscall, fault or other IRQ.
+ * - A woken up core tries to take the global lock, sees the pending IPI and
+ *   handles it.
+ * - Once done, it notifies the caller by decrementing a counter and continues
+ *   blocking on the kernel lock. At this point the IPI interrupt will still be
+ *   outstanding, but will be ignored later. It could be cleared earlier, but
+ *   that would lead to spurious interrupt warnings.
+ * - When all remote cores are done, the caller core finishes the syscall that
+ *   needed the remote call and unlocks the global lock.
+ * - Then the remote cores will unblock one by one and continue normally.
+ *
+ * remoteTCBStall() needs special attention: It does a 'IpiRemoteCall_Stall' which
+ * gets handled by ipiStallCoreCallback(). It is a request to stop running the
+ * current thread because the caller wants to do operations on it. The remote core
+ * switches to the idle task, but only if it entered the kernel via an interrupt:
+ *
+ * In case of a syscall or fault, if it switched to the idle task and continued
+ * normally, it would seem like the idle task did a syscall or faulted. We could
+ * check for this corner case in all kernel entry paths, or return to user space
+ * directly, but getting all details right is tricky.
+ *
+ * Instead, refuse to do a stall in these cases and let the caller retry later.
+ * As all remote core stall requests are triggered via syscalls, those syscalls
+ * can be restarted. This is done by returning EXCEPTION_PREEMPTED, because
+ * handleInvocation() doesn't honour ThreadState_Restart. The kernel lock is a
+ * queued lock, so forward progress is guaranteed.
+ */
+void ipiStallCoreCallback(void)
+{
+    assert(NODE_STATE(ksCurThread) != NODE_STATE(ksIdleThread));
+    assert(NODE_STATE(ksSchedulerAction) == SchedulerAction_ResumeCurrentThread ||
+           NODE_STATE(ksSchedulerAction) == SchedulerAction_ChooseNewThread);
 
- * The core who triggered the store is responsible for triggering a reschedule,
- * or this call will idle forever */
-void ipiStallCoreCallback(bool_t irqPath)
+    /* Put the current task at the head of the scheduling queue: */
+    SCHED_ENQUEUE_CURRENT_TCB;
+    /* Request a schedule, so that we switch away from the idle thread again:  */
+    NODE_STATE(ksSchedulerAction) = SchedulerAction_ChooseNewThread;
+#ifdef CONFIG_HAVE_FPU
+    /* Might save another remote call later: */
+    fpuRelease(NODE_STATE(ksCurThread));
+#endif
+#ifdef CONFIG_ARCH_X86
+    arch_c_entry_hook(); // TODO: Remove when x86 saves thread id registers in asm
+#endif
+    /*
+     * This only does a state switch, schedule() will be called before we return
+     * to user space.
+     */
+    switchToIdleThread();
+#ifdef CONFIG_KERNEL_MCS
+    NODE_STATE(ksCurSC) = NODE_STATE(ksIdleSC);
+#endif
+}
+
+NO_INLINE void ipi_remote_call(IpiRemoteCall_t func, word_t data1, word_t data2, word_t data3, word_t mask)
 {
     word_t cpu = getCurrentCPUIndex();
-    clh_node_t *node = &big_kernel_lock.node[cpu];
-
-    if (clh_is_self_in_queue() && !irqPath) {
-        /* The current thread is running as we would replace this thread with an idle thread
-         *
-         * The instruction should be re-executed if we are in kernel to handle syscalls.
-         * Also, thread in 'ThreadState_RunningVM' should remain in same state.
-         * Note that, 'ThreadState_Restart' does not always result in regenerating exception
-         * if we are in kernel to handle them, e.g. hardware single step exception. */
-        if (thread_state_ptr_get_tsType(&NODE_STATE(ksCurThread)->tcbState) == ThreadState_Running) {
-            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        }
-
-        SCHED_ENQUEUE_CURRENT_TCB;
-        switchToIdleThread();
-#ifdef CONFIG_KERNEL_MCS
-        commitTime();
-        NODE_STATE(ksCurSC) = NODE_STATE(ksIdleThread)->tcbSchedContext;
-#endif
-        NODE_STATE(ksSchedulerAction) = SchedulerAction_ResumeCurrentThread;
-
-        /* Let the cpu requesting this IPI continue while we wait on the lock */
-        node->ipi = 0;
-        ipi_wait();
-
-        /* Continue waiting on lock */
-        while (node->watch->state != CLHState_Granted) {
-            __atomic_thread_fence(__ATOMIC_ACQUIRE);
-            if (clh_is_ipi_pending(cpu)) {
-                /* Multiple calls for similar reason could result in stack overflow */
-                assert(big_kernel_lock.ipi.remoteCall != IpiRemoteCall_Stall);
-                handleIPI(CORE_IRQ_TO_IRQT(cpu, irq_remote_call_ipi), irqPath);
-            }
-            arch_pause();
-        }
-
-        /* make sure no resource access passes from this point */
-        asm volatile("" ::: "memory");
-
-        /* Start idle thread to capture the pending IPI */
-        activateThread();
-        restore_user_context();
-    } else {
-        /* We get here either without grabbing the lock from normal interrupt path or from
-         * inside the lock while waiting to grab the lock for handling pending interrupt.
-         * In latter case, we return to the 'clh_lock_acquire' to grab the lock and
-         * handle the pending interrupt. Its valid as interrupts are async events! */
-        SCHED_ENQUEUE_CURRENT_TCB;
-        switchToIdleThread();
-#ifdef CONFIG_KERNEL_MCS
-        commitTime();
-        NODE_STATE(ksCurSC) = NODE_STATE(ksIdleThread)->tcbSchedContext;
-#endif
-        NODE_STATE(ksSchedulerAction) = SchedulerAction_ResumeCurrentThread;
-    }
-}
-
-void ipi_wait(void)
-{
-    ipi_state_t *ipi = &big_kernel_lock.ipi;
-    word_t cores = ipi->totalCoreBarrier;
-    word_t localsense = ipi->globalsense;
-    word_t *count = &ipi->count;
-
-    if (__atomic_fetch_add(count, 1, __ATOMIC_ACQ_REL) == cores) {
-        *count = 0;
-        ipi->globalsense++;
-        __atomic_thread_fence(__ATOMIC_RELEASE);
-    }
-    /* Check globalsense instead of count to protect against a race where
-     * a new IPI started before this core saw that the old one finished. */
-    while (localsense == ipi->globalsense) {
-        __atomic_thread_fence(__ATOMIC_ACQUIRE);
-        arch_pause();
-    }
-}
-
-static inline void init_ipi_args(IpiRemoteCall_t func,
-                                 word_t data1, word_t data2, word_t data3,
-                                 word_t mask)
-{
     ipi_state_t *ipi = &big_kernel_lock.ipi;
 
-    ipi->remoteCall = func;
+    assert(!big_kernel_lock.node[cpu].ipi);
+    assert(ipi->call == IpiNumArchRemoteCall);
+
+    /* Make sure the current core is not set in the mask */
+    mask &= ~BIT(cpu);
+    /* This may happen, e.g. the caller tries to map a pagetable in
+     * newly created PD which has not been run yet. Guard against them! */
+    if (mask == 0) {
+        return;
+    }
+    /* Get number of cores involved in this IPI */
+    ipi->count = popcountl(mask);
+    ipi->call = func;
+    ipi->retry = false;
     ipi->args[0] = data1;
     ipi->args[1] = data2;
     ipi->args[2] = data3;
+    /* Make sure no resource access passes from this point */
+    __atomic_thread_fence(__ATOMIC_ACQ_REL);
 
-    /* get number of cores involved in this IPI */
-    ipi->totalCoreBarrier = popcountl(mask);
+    /* Send IPIs. This must set node[].ipi for all nodes being called: */
+    arch_ipi_send_mask(CORE_IRQ_TO_IRQT(0, irq_remote_call_ipi), mask, true);
+
+    /* Wait for all remote cores: */
+    while (__atomic_load_n(&ipi->count, __ATOMIC_ACQUIRE)) {
+        arch_pause();
+    }
+    ipi->call = IpiNumArchRemoteCall;
 }
 
-void handleIPI(irq_t irq, bool_t irqPath)
+void ipi_handle_call(bool_t irqPath)
 {
+    word_t cpu = getCurrentCPUIndex();
+    clh_node_t *node = &big_kernel_lock.node[cpu];
     ipi_state_t *ipi = &big_kernel_lock.ipi;
 
-    if (IRQT_TO_IRQ(irq) == irq_remote_call_ipi) {
-        handleRemoteCall(ipi->remoteCall, ipi->args[0], ipi->args[1], ipi->args[2], irqPath);
-    } else if (IRQT_TO_IRQ(irq) == irq_reschedule_ipi) {
-        rescheduleRequired();
-#ifdef CONFIG_ARCH_RISCV
-        ifence_local();
-#endif
+    node->ipi = 0;
+    /*
+     * If we entered the kernel to do a syscall or to handle a fault,
+     * we can't handle a stall IPI right now. Tell the remote core to
+     * retry later.
+     *
+     * TODO: On MCS, also retry on timeoutfault?
+     */
+    if (!irqPath && ipi->call == IpiRemoteCall_Stall) {
+        big_kernel_lock.ipi.retry = true;
     } else {
-        fail("Invalid IPI");
+        arch_handleRemoteCall(ipi->call, ipi->args[0], ipi->args[1], ipi->args[2]);
+    }
+    /* Tell caller core we are done: */
+    __atomic_sub_fetch(&ipi->count, 1, __ATOMIC_ACQ_REL);
+}
+
+void handleIPI(irq_t irq)
+{
+    if (IRQT_TO_IRQ(irq) == irq_reschedule_ipi) {
+        rescheduleRequired();
     }
 }
 
-void doRemoteMaskOp(IpiRemoteCall_t func, word_t data1, word_t data2, word_t data3, word_t mask)
+bool_t doRemoteStall(word_t cpu)
 {
-    /* make sure the current core is not set in the mask */
-    mask &= ~BIT(getCurrentCPUIndex());
-
-    /* this may happen, e.g. the caller tries to map a pagetable in
-     * newly created PD which has not been run yet. Guard against them! */
-    if (mask != 0) {
-        init_ipi_args(func, data1, data2, data3, mask);
-
-        /* make sure no resource access passes from this point */
-        asm volatile("" ::: "memory");
-        ipi_send_mask(CORE_IRQ_TO_IRQT(0, irq_remote_call_ipi), mask, true);
-        ipi_wait();
+    doRemoteOp0Arg(IpiRemoteCall_Stall, cpu);
+    if (big_kernel_lock.ipi.retry) {
+        return false;
     }
+    return true;
 }
 
 void doMaskReschedule(word_t mask)
@@ -152,41 +153,29 @@ void doMaskReschedule(word_t mask)
     /* make sure the current core is not set in the mask */
     mask &= ~BIT(getCurrentCPUIndex());
     if (mask != 0) {
-        ipi_send_mask(CORE_IRQ_TO_IRQT(0, irq_reschedule_ipi), mask, false);
+        arch_ipi_send_mask(CORE_IRQ_TO_IRQT(0, irq_reschedule_ipi), mask, false);
     }
 }
 
 void generic_ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
 {
-    word_t nr_target_cores = 0;
-    uint16_t target_cores[CONFIG_MAX_NUM_NODES];
-
     while (mask) {
-        int index = wordBits - 1 - clzl(mask);
+        unsigned int core = wordBits - 1 - clzl(mask);
+
         if (isBlocking) {
             /*
              * All writes before setting ipi to 1 must be observed,
              * as other cores may check the ipi flag at any moment.
-             * IPI_MEM_BARRIER is too late to prevent reordering
-             * between IPI data and flag reads.
              */
-            __atomic_store_n(&big_kernel_lock.node[index].ipi, 1, __ATOMIC_RELEASE);
-            target_cores[nr_target_cores] = index;
-            nr_target_cores++;
-        } else {
-            IPI_MEM_BARRIER;
-            ipi_send_target(ipi, cpuIndexToID(index));
+            assert(big_kernel_lock.node[core].ipi == 0);
+            __atomic_store_n(&big_kernel_lock.node[core].ipi, 1, __ATOMIC_RELEASE);
         }
-        mask &= ~BIT(index);
+        arch_ipi_send_target(ipi, cpuIndexToID(core));
+        mask &= ~BIT(core);
     }
-
-    if (nr_target_cores > 0) {
-        /* sending IPIs... */
-        IPI_MEM_BARRIER;
-        for (int i = 0; i < nr_target_cores; i++) {
-            ipi_send_target(ipi, cpuIndexToID(target_cores[i]));
-        }
-    }
+    //TODO: Remove, as we don't care if IRQ trigger write gets reorderd with the data writes or not.
+    //The IPI is only necessary to force the remote core to enter kernel mode.
+    IPI_MEM_BARRIER;
 }
 
 #ifdef CONFIG_DEBUG_BUILD
@@ -203,12 +192,12 @@ exception_t handle_SysDebugSendIPI(void)
         userError("SysDebugSendIPI: Invalid IRQ, not a SGI, halting");
         halt();
     }
-    ipi_send_target(CORE_IRQ_TO_IRQT(0, irq), BIT(target));
-    return EXCEPTION_NONE;
+    arch_ipi_send_target(CORE_IRQ_TO_IRQT(0, irq), BIT(target));
 #else /* not CONFIG_ARCH_ARM */
     userError("SysDebugSendIPI: not supported on this architecture");
     halt();
 #endif  /* [not] CONFIG_ARCH_ARM */
+    return EXCEPTION_NONE;
 }
 #endif /* CONFIG_DEBUG_BUILD */
 

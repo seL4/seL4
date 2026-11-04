@@ -90,11 +90,6 @@ static inline void FORCE_INLINE clh_lock_release(void)
     node->myreq->state = CLHState_Pending;
 }
 
-static inline bool_t FORCE_INLINE clh_is_self_in_queue(void)
-{
-    return big_kernel_lock.node[getCurrentCPUIndex()].myreq->state == CLHState_Pending;
-}
-
 #define NODE_LOCK(_irqPath) do {                         \
     clh_lock_acquire(_irqPath);                          \
 } while(0)
@@ -103,27 +98,11 @@ static inline bool_t FORCE_INLINE clh_is_self_in_queue(void)
     clh_lock_release();                                  \
 } while(0)
 
-#define NODE_LOCK_IF(_cond, _irqPath) do {               \
-    if((_cond)) {                                        \
-        NODE_LOCK(_irqPath);                             \
-    }                                                    \
-} while(0)
-
-#define NODE_UNLOCK_IF_HELD do {                         \
-    if(clh_is_self_in_queue()) {                         \
-        NODE_UNLOCK;                                     \
-    }                                                    \
-} while(0)
-
 #else
 #define NODE_LOCK(_irq) do {} while (0)
 #define NODE_UNLOCK do {} while (0)
-#define NODE_LOCK_IF(_cond, _irq) do {} while (0)
-#define NODE_UNLOCK_IF_HELD do {} while (0)
 #endif /* ENABLE_SMP_SUPPORT */
 
 #define NODE_LOCK_SYS NODE_LOCK(false)
 #define NODE_LOCK_IRQ NODE_LOCK(true)
-#define NODE_LOCK_SYS_IF(_cond) NODE_LOCK_IF(_cond, false)
-#define NODE_LOCK_IRQ_IF(_cond) NODE_LOCK_IF(_cond, true)
 

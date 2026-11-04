@@ -25,6 +25,7 @@ BOOT_CODE void clh_lock_init(void)
     /* Initialize the CLH tail */
     big_kernel_lock.request[CONFIG_MAX_NUM_NODES].state = CLHState_Granted;
     big_kernel_lock.tail = &big_kernel_lock.request[CONFIG_MAX_NUM_NODES];
+    big_kernel_lock.ipi.call = IpiNumArchRemoteCall;
 }
 
 NO_INLINE void clh_lock_acquire_slowpath(bool_t irqPath, word_t cpu, clh_req_t *watch)
@@ -35,10 +36,7 @@ NO_INLINE void clh_lock_acquire_slowpath(bool_t irqPath, word_t cpu, clh_req_t *
          * loop are performed after this one */
         __atomic_thread_fence(__ATOMIC_ACQUIRE);
         if (clh_is_ipi_pending(cpu)) {
-            /* we only handle irq_remote_call_ipi here as other type of IPIs
-             * are async and could be delayed. 'handleIPI' may not return
-             * based on value of the 'irqPath'. */
-            handleIPI(CORE_IRQ_TO_IRQT(cpu, irq_remote_call_ipi), irqPath);
+            ipi_handle_call(irqPath);
         }
         arch_pause();
     }
