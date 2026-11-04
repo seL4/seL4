@@ -282,6 +282,9 @@
                 to the given <texttt text="Page"/> in the lowest-level unmapped paging structure
                 corresponding to the given address, or updates the mapping attributes if the page is already mapped at this address. If the required paging structures are not present
                 this operation will fail, returning a seL4_FailedLookup error.
+                Overmapping is allowed: if a different page of the same size is already mapped at
+                this address, this mapping is replaced. The capability of the replaced page is not
+                updated.
             </description>
             <param dir="in" name="vspace" type="seL4_CPtr"
                 description='Capability to the VSpace which will contain the mapping'/>
@@ -304,7 +307,8 @@
             </error>
             <error name="seL4_DeleteFirst">
                 <description>
-                    A mapping already exists in <texttt text="vspace"/> at <texttt text="vaddr"/>.
+                    The <texttt text="_service"/> is a large page and a page table is already mapped at <texttt text="vaddr"/>.
+                    Or, <texttt text="_service"/> is a huge page and a page directory is already mapped.
                 </description>
             </error>
             <error name="seL4_FailedLookup">

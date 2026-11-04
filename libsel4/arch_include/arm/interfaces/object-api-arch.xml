@@ -147,7 +147,9 @@
                 corresponding to the given address, or updates the mapping attributes if the page is
                 already mapped at this address. The page must not already be mapped through this
                 capability in a different VSpace or at a different address; the page may be mapped
-                in multiple VSpaces by copying the capability.
+                in multiple VSpaces by copying the capability. Overmapping is allowed: if a different
+                page of the same size is already mapped at this address, this mapping is replaced.
+                The capability of the replaced page is not updated.
             </description>
             <param dir="in" name="vspace" type="seL4_CPtr"
             description="Capability to the VSpace which will contain the mapping.
@@ -171,13 +173,17 @@
             </error>
             <error name="seL4_DeleteFirst">
                 <description>
-                    A mapping already exists in <texttt text="vspace"/> at <texttt text="vaddr"/>.
+                    On AArch32, a page of a different size is already mapped at the same paging
+                    level in <texttt text="vspace"/> at <texttt text="vaddr"/>. Or, on AArch32,
+                    <texttt text="_service"/> is a section or super section and a page table is
+                    already mapped in <texttt text="vspace"/> at <texttt text="vaddr"/>.
                 </description>
             </error>
             <error name="seL4_FailedLookup">
                 <description>
                     The <texttt text="vspace"/> does not have a paging structure at the required level mapped at <texttt text="vaddr"/>.
                     Or, <texttt text="vspace"/> is not assigned to an ASID pool.
+                    Or, on AArch64, a page of a different size or a page table is already mapped at <texttt text="vaddr"/>.
                 </description>
             </error>
             <error name="seL4_IllegalOperation">
