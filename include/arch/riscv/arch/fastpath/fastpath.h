@@ -129,7 +129,7 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
     set_tcb_fs_state(cur_thread, isFpuEnable());
 #endif
 
-    NODE_UNLOCK_IF_HELD;
+    NODE_UNLOCK;
 
     register word_t badge_reg asm("a0") = badge;
     register word_t msgInfo_reg asm("a1") = msgInfo;
