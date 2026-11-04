@@ -21,6 +21,8 @@
 #include <util.h>
 #include <sel4/arch/vmenter.h>
 
+#define VMX_CR0_KERNEL_OWNED_BITS (CR0_CD | CR0_NW | CR0_RESERVED_BITS)
+
 const vcpu_gp_register_t crExitRegs[] = {
     VCPU_EAX, VCPU_ECX, VCPU_EDX, VCPU_EBX, VCPU_ESP, VCPU_EBP, VCPU_ESI, VCPU_EDI,
 #ifdef CONFIG_X86_64_VTX_64BIT_GUESTS
@@ -447,7 +449,14 @@ void vcpu_init(vcpu_t *vcpu)
 
     vcpu->cr0 = cr0_high & cr0_low;
     vcpu->cr0_shadow = 0;
-    vcpu->cr0_mask = 0;
+    /* Do not let the guest disable caching core-wide by setting CR0.CD and CR0.NW.
+     * The reserved bits are also set in case future CPUs unreserve them.
+     * This is important as these bits are not context switched by hardware.
+     * See section 29.3.2.1 "Loading Guest Control Registers, Debug Registers, and MSRs",
+     * and 30.5.1 "Loading Host Control Registers, Debug Registers, MSRs" of the Intel SDM
+     * for more details.
+     */
+    vcpu->cr0_mask = VMX_CR0_KERNEL_OWNED_BITS;
     vcpu->exception_bitmap = 0;
     vcpu->vpid = VPID_INVALID;
 #ifdef ENABLE_SMP_SUPPORT
@@ -510,6 +519,8 @@ void vcpu_init(vcpu_t *vcpu)
 
     vmwrite(VMX_CONTROL_MSR_ADDRESS, (word_t)kpptr_to_paddr(&msr_bitmap_region));
     vmwrite(VMX_GUEST_CR0, vcpu->cr0);
+    vmwrite(VMX_CONTROL_CR0_MASK, vcpu->cr0_mask);
+    vmwrite(VMX_CONTROL_CR0_READ_SHADOW, vcpu->cr0_shadow);
     vmwrite(VMX_GUEST_CR4, cr4_high & cr4_low);
 
     vmwrite(VMX_GUEST_VMCS_LINK_POINTER, ~(word_t)0);
@@ -883,7 +894,6 @@ static exception_t decodeWriteVMCS(cap_t cap, word_t length, bool_t call, word_t
     case VMX_GUEST_PENDING_DEBUG_EXCEPTIONS:
     case VMX_GUEST_SYSENTER_ESP:
     case VMX_GUEST_SYSENTER_EIP:
-    case VMX_CONTROL_CR0_MASK:
     case VMX_CONTROL_CR4_MASK:
     case VMX_CONTROL_CR0_READ_SHADOW:
     case VMX_CONTROL_CR4_READ_SHADOW:
@@ -891,6 +901,10 @@ static exception_t decodeWriteVMCS(cap_t cap, word_t length, bool_t call, word_t
     case VMX_CONTROL_EXCEPTION_BITMAP:
     case VMX_CONTROL_ENTRY_INTERRUPTION_INFO:
     case VMX_CONTROL_ENTRY_EXCEPTION_ERROR_CODE:
+        break;
+    case VMX_CONTROL_CR0_MASK:
+        /* CD, NW and reserved bits are always kernel-owned, see vcpu_init() */
+        value |= VMX_CR0_KERNEL_OWNED_BITS;
         break;
     case VMX_CONTROL_PIN_EXECUTION_CONTROLS:
         value = applyFixedBits(value, pin_control_high, pin_control_low);
