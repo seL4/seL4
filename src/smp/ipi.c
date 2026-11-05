@@ -173,9 +173,6 @@ void generic_ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
         arch_ipi_send_target(ipi, cpuIndexToID(core));
         mask &= ~BIT(core);
     }
-    //TODO: Remove, as we don't care if IRQ trigger write gets reorderd with the data writes or not.
-    //The IPI is only necessary to force the remote core to enter kernel mode.
-    IPI_MEM_BARRIER;
 }
 
 #ifdef CONFIG_DEBUG_BUILD
