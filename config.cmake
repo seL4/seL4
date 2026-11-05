@@ -168,10 +168,8 @@ config_string(
     pending interrupts (and preempts the currently running syscall if interrupts are pending)."
   DEFAULT 100
   UNQUOTE)
-config_string(
-  KernelResetChunkBits RESET_CHUNK_BITS
-  "Maximum size in bits of chunks of memory to zero before checking a preemption point." DEFAULT 8
-  UNQUOTE)
+config_string(KernelResetChunkBits RESET_CHUNK_BITS
+              "Maximum size in bits of memory to zero before preempting." DEFAULT 16 UNQUOTE)
 config_string(KernelMaxNumBootinfoUntypedCaps MAX_NUM_BOOTINFO_UNTYPED_CAPS
               "Max number of bootinfo untyped caps" DEFAULT 230 UNQUOTE)
 config_option(KernelFastpath FASTPATH "Enable IPC fastpath" DEFAULT ON)
