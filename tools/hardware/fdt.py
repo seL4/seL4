@@ -82,22 +82,26 @@ class FdtParser:
     def get_devices_list(self, prop) -> List[WrappedNode]:
         ''' Returns a list of devices that are used by the kernel '''
         chosen = self.get_path('/chosen')
-        if not chosen.has_prop(prop):
+        if (chosen is None) or (not chosen.has_prop(prop)):
             return []
 
         ret = []
         paths = chosen.get_prop(prop).strings
 
         for path in paths:
-            if path[0] != '/':
+            if not path.startswith('/'):
                 path = self.lookup_alias(path)
-            ret.append(self.get_path(path))
+            node = self.get_path(path)
+            if node is None:
+                raise KeyError(f"could not resolve path in chosen node: '{path}'")
+            ret.append(node)
+
         return ret
 
     def get_boot_cpu(self) -> int:
         ''' Returns phandle of the cpu node specified by the seL4,boot-cpu property '''
         chosen = self.get_path('/chosen')
-        if not chosen.has_prop('seL4,boot-cpu'):
+        if (chosen is None) or (not chosen.has_prop('seL4,boot-cpu')):
             raise KeyError('must specify seL4,boot-cpu in /chosen to get boot cpu')
 
         prop = chosen.get_prop('seL4,boot-cpu')
@@ -105,4 +109,4 @@ class FdtParser:
 
     def visit(self, visitor: Any):
         ''' Walk the tree, calling the given visitor function on each node '''
-        return self.wrapped_root.visit(visitor)
+        self.wrapped_root.visit(visitor)
