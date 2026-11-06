@@ -8,8 +8,12 @@
 
 #include <plat/machine/devices_gen.h>
 
+#if defined(CONFIG_PLAT_ZYNQMP)
+#define SMMU_PADDR               0xfd800000
+#elif defined(CONFIG_PLAT_TX2)
 /*the paddr address of the TX2 SMMU*/
-#define SMMU_TX2_PADDR                         0x12000000
+#define SMMU_PADDR               0x12000000
+#endif
 
 #define SMMU_PAGE_4KB            0x1000
 #define SMMU_PAGE_64KB           0x10000
@@ -17,10 +21,10 @@
 /*the high-level physical address layout according to SMMU definition*/
 #define SMMU_GLOBAL_SIZE(num_page, page_size)   ((num_page) * (page_size))
 #define SMMU_CB_SIZE(num_page, page_size)       ((num_page) * (page_size))
-#define SMMU_CB_BASE_PADDR(global_size)               (SMMU_TX2_PADDR + (global_size))
+#define SMMU_CB_BASE_PADDR(global_size)         (SMMU_PADDR + (global_size))
 
 /*SMMU's physical address space layout, defined by SMMU v2 standard*/
-#define SMMU_GR0_PADDR                          SMMU_TX2_PADDR
+#define SMMU_GR0_PADDR                          SMMU_PADDR
 #define SMMU_GR1_PADDR(page_size)               ((SMMU_GR0_PADDR) + 1 * (page_size))
 #define SMMU_GID_PADDR(page_size)               ((SMMU_GR0_PADDR) + 2 * (page_size))
 #define SMMU_PM_PADDR(page_size)                ((SMMU_GR0_PADDR) + 3 * (page_size))
