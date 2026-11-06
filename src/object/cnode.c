@@ -623,6 +623,16 @@ static finaliseSlot_ret_t finaliseSlot(cte_t *slot, bool_t immediate)
         final = isFinalCapability(slot);
         fc_ret = finaliseCap(slot->cap, final, false);
 
+#ifdef ENABLE_SMP_SUPPORT
+        /* Hack to detect failed TCB remote stalls. If the remote thread
+         * is busy, retry this syscall like with preemption: */
+        if (cap_get_capType(fc_ret.cleanupInfo) == cap_zombie_cap) {
+            ret.status = EXCEPTION_PREEMPTED;
+            ret.success = false;
+            ret.cleanupInfo = cap_null_cap_new();
+            return ret;
+        }
+#endif
         if (capRemovable(fc_ret.remainder, slot)) {
             ret.status = EXCEPTION_NONE;
             ret.success = true;

@@ -35,3 +35,7 @@ void reply_remove(reply_t *reply, tcb_t *tcb);
 /* Remove a specific tcb, and the reply it is blocking on, from the call stack */
 void reply_remove_tcb(tcb_t *tcb);
 
+#ifdef ENABLE_SMP_SUPPORT
+/* Do a remote TCB stall() if necessary and return false if that fails. */
+bool_t reply_can_remove_smp(reply_t *reply, tcb_t *tcb);
+#endif

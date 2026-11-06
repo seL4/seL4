@@ -202,7 +202,7 @@ void VISIBLE NORETURN restore_user_context(void)
 {
     c_exit_hook();
 
-    NODE_UNLOCK_IF_HELD;
+    NODE_UNLOCK;
 
     /* we've now 'exited' the kernel. If we have a pending interrupt
      * we should 'enter' it again */

@@ -435,7 +435,7 @@ void plat_sendSGI(word_t irq, word_t target)
 #ifdef ENABLE_SMP_SUPPORT
 #define MPIDR_MT(x)   (x & BIT(24))
 
-void ipi_send_target(irq_t irq, word_t cpuTargetList)
+void arch_ipi_send_target(irq_t irq, word_t cpuTargetList)
 {
     uint64_t sgi1r_base = ((word_t) IRQT_TO_IRQ(irq)) << ICC_SGI1R_INTID_SHIFT;
     word_t sgi1r[CONFIG_MAX_NUM_NODES];

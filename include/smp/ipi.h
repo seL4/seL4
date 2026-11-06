@@ -15,13 +15,13 @@
 #define MAX_IPI_ARGS    3   /* Maximum number of parameters to remote function */
 
 typedef struct {
-    word_t count;                   /* IPI barrier for remote call synchronization */
-    word_t globalsense;
-    word_t totalCoreBarrier;        /* number of cores involved in IPI 'in progress' */
-    IpiRemoteCall_t remoteCall;     /* the remote call being requested */
-    word_t args[MAX_IPI_ARGS];      /* data to be passed to the remote call function */
+    word_t count;               /* IPI barrier for remote call synchronisation. */
+    IpiRemoteCall_t call;       /* The remote call being requested. */
+    word_t args[MAX_IPI_ARGS];  /* Data to be passed to the remote call function. */
+    bool_t retry;               /* Set by remote core if it can't handle the call. */
 } ipi_state_t;
 
+/* Wait for all remote callee cores to finish: */
 void ipi_wait(void);
 
 /* Architecture independent function for sending handling pre-hardware-send IPIs */
@@ -31,29 +31,28 @@ void generic_ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking);
  * its own arch_ipi_send_mask() or using the generic_ipi_send_mask() function
  * provided to be architecture agnostic.
  */
-void ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking);
+void arch_ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking);
 
 /* Hardware implementation for sending IPIs */
-void ipi_send_target(irq_t irq, word_t cpuTargetList);
+void arch_ipi_send_target(irq_t irq, word_t cpuTargetList);
 
 /* An architecture/platform should implement this function */
-void handleRemoteCall(IpiRemoteCall_t call, word_t arg0, word_t arg1, word_t arg2, bool_t irqPath);
+void arch_handleRemoteCall(IpiRemoteCall_t call, word_t arg0, word_t arg1, word_t arg2);
 
-/* This function switches the core it is called on to the idle thread,
- * in order to avoid IPI storms. If the core is waiting on the lock, the actual
- * switch will not occur until the core attempts to obtain the lock, at which
- * point the core will capture the pending IPI, which is discarded.
+/*
+ * This function switches the current task to the idle thread, so that
+ * the remote core can read and modify that task's state safely.
+ */
+void ipiStallCoreCallback(void);
 
- * The core who triggered the store is responsible for triggering a reschedule,
- * or this call will idle forever */
-void ipiStallCoreCallback(bool_t irqPath);
+/*
+ * Handle blocking remote calls. `irqPath` tells whether the kernel
+ * entry was because of an IRQ or because of a syscall or fault.
+ */
+void ipi_handle_call(bool_t irqPath);
 
-/* IPIs could be handled, both using hardware interrupts and software flag
- * in CLH lock. 'irqPath' is used to differentiate the caller path, i.e.
- * if it is called while waiting on the lock to handle the IRQ or not. The
- * remote call handler, would decide if 'handleIPI' should return base
- * on this value, as IRQs could be re/triggered asynchronous */
-void handleIPI(irq_t irq, bool_t irqPath);
+/* Handle non-blocking remote reschedule requests. */
+void handleIPI(irq_t irq);
 
 /*
  * Run a synchronous function on all cores specified by mask. Return when target cores
@@ -62,9 +61,10 @@ void handleIPI(irq_t irq, bool_t irqPath);
  * @param func the function to run
  * @param data1 passed to the function as first parameter
  * @param data2 passed to the function as second parameter
+ * @param data3 passed to the function as third parameter
  * @param mask cores to run function on
  */
-void doRemoteMaskOp(IpiRemoteCall_t func, word_t data1, word_t data2, word_t data3, word_t mask);
+void ipi_remote_call(IpiRemoteCall_t func, word_t data1, word_t data2, word_t data3, word_t mask);
 
 /* Run a synchronous function on a core specified by cpu.
  *
@@ -75,7 +75,7 @@ void doRemoteMaskOp(IpiRemoteCall_t func, word_t data1, word_t data2, word_t dat
  */
 static void inline doRemoteOp(IpiRemoteCall_t func, word_t data1, word_t data2, word_t data3, word_t cpu)
 {
-    doRemoteMaskOp(func, data1, data2, data3, BIT(cpu));
+    ipi_remote_call(func, data1, data2, data3, BIT(cpu));
 }
 
 /* List of wrapper functions
@@ -92,22 +92,22 @@ static void inline doRemoteOp(IpiRemoteCall_t func, word_t data1, word_t data2, 
  */
 static void inline doRemoteMaskOp0Arg(IpiRemoteCall_t func, word_t mask)
 {
-    doRemoteMaskOp(func, 0, 0, 0, mask);
+    ipi_remote_call(func, 0, 0, 0, mask);
 }
 
 static void inline doRemoteMaskOp1Arg(IpiRemoteCall_t func, word_t data1, word_t mask)
 {
-    doRemoteMaskOp(func, data1, 0, 0, mask);
+    ipi_remote_call(func, data1, 0, 0, mask);
 }
 
 static void inline doRemoteMaskOp2Arg(IpiRemoteCall_t func, word_t data1, word_t data2, word_t mask)
 {
-    doRemoteMaskOp(func, data1, data2, 0, mask);
+    ipi_remote_call(func, data1, data2, 0, mask);
 }
 
 static void inline doRemoteMaskOp3Arg(IpiRemoteCall_t func, word_t data1, word_t data2, word_t data3, word_t mask)
 {
-    doRemoteMaskOp(func, data1, data2, data3, mask);
+    ipi_remote_call(func, data1, data2, data3, mask);
 }
 
 static void inline doRemoteOp0Arg(IpiRemoteCall_t func, word_t cpu)
@@ -130,8 +130,17 @@ static void inline doRemoteOp3Arg(IpiRemoteCall_t func, word_t data1, word_t dat
     doRemoteOp(func, data1, data2, data3, cpu);
 }
 
-/* This is asynchronous call and could be called outside the lock.
- * Returns immediately.
+#ifdef CONFIG_HAVE_FPU
+static inline void doRemoteswitchFpuOwner(word_t cpu)
+{
+    doRemoteOp0Arg(IpiRemoteCall_switchFpuOwner, cpu);
+}
+#endif /* CONFIG_HAVE_FPU */
+
+/* Returns false when the caller needs to retry the call later */
+bool_t doRemoteStall(word_t cpu);
+
+/* This is an asynchronous call and returns immediately.
  *
  * @param mask cores to request rescheduling
  */
