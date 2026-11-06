@@ -34,6 +34,7 @@
  * spinning until the primary core has initialized all kernel structures and
  * then set it to 1.
  */
+BOOT_BSS static volatile _Atomic int cpu_init_boot_lock;
 BOOT_BSS static volatile _Atomic int node_boot_lock;
 #endif /* ENABLE_SMP_SUPPORT */
 
@@ -280,10 +281,12 @@ BOOT_CODE static void init_plat(void)
 BOOT_CODE static bool_t try_init_kernel_secondary_core(void)
 {
     /* need to first wait until some kernel init has been done */
-    while (!node_boot_lock);
+    while (!cpu_init_boot_lock);
 
     /* Perform cpu init */
     init_cpu();
+
+    while (!node_boot_lock);
 
     for (unsigned int i = 0; i < NUM_PPI; i++) {
         maskInterrupt(true, CORE_IRQ_TO_IRQT(getCurrentCPUIndex(), i));
@@ -391,6 +394,14 @@ static BOOT_CODE bool_t try_init_kernel(
 
     /* initialise the platform */
     init_plat();
+
+#ifdef ENABLE_SMP_SUPPORT
+    cpu_init_boot_lock = true;
+#ifdef CONFIG_ARCH_AARCH32
+    cleanInvalidateL1Caches();
+    plat_cleanInvalidateL2Cache();
+#endif
+#endif
 
     /* If a DTB was provided, pass the data on as extra bootinfo */
     p_region_t dtb_p_reg = P_REG_EMPTY;
@@ -613,6 +624,9 @@ static BOOT_CODE bool_t try_init_kernel(
      * anyway.
      */
     cleanInvalidateL1Caches();
+#ifdef CONFIG_ARCH_AARCH32
+    plat_cleanInvalidateL2Cache();
+#endif
     invalidateLocalTLB();
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         invalidateHypTLB();
