@@ -12,7 +12,11 @@
 #define CR0_TASK_SWITCH     BIT(3)  /* Trap on any FPU usage, for lazy FPU. */
 #define CR0_NUMERIC_ERROR   BIT(5)  /* Internally handle FPU problems. */
 #define CR0_WRITE_PROTECT   BIT(16) /* Write protection in supervisor mode. */
+#define CR0_NW              BIT(29) /* Not write through */
+#define CR0_CD              BIT(30) /* Cache disable */
 #define CR0_PG              BIT(31) /* Paging On */
+#define CR0_RESERVED_BITS   ((MASK(10) << 19) | BIT(17) | (MASK(10) << 6)) /* Bits 28:19, 17 and 15:6 */
+
 #define CR4_PCE             BIT(8)  /* Performance-Monitoring Counter enable. */
 #define CR4_OSFXSR          BIT(9)  /* Enable SSE et. al. features. */
 #define CR4_OSXMMEXCPT      BIT(10) /* Enable SSE exceptions. */
