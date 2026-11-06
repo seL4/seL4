@@ -28,6 +28,12 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 ### Changes
 
+### Platforms
+
+#### X86
+
+- x64: clear CR0.CD and CR0.NW when enabling paging so caches are enabled on all cores, rather than relying on
+  firmware or the AP trampoline to leave them clear.
 
 ### Upgrade Notes
 ---
