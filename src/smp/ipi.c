@@ -162,12 +162,7 @@ void generic_ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
         unsigned int core = wordBits - 1 - clzl(mask);
 
         if (isBlocking) {
-            /*
-             * All writes before setting ipi to 1 must be observed,
-             * as other cores may check the ipi flag at any moment.
-             */
-            assert(big_kernel_lock.node[core].ipi == 0);
-            __atomic_store_n(&big_kernel_lock.node[core].ipi, 1, __ATOMIC_RELEASE);
+            clh_set_ipi_pending(core);
         }
         arch_ipi_send_target(ipi, cpuIndexToID(core));
         mask &= ~BIT(core);

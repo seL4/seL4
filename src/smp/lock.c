@@ -18,7 +18,7 @@ clh_lock_t big_kernel_lock;
 BOOT_CODE void clh_lock_init(void)
 {
     /* Check if linker honoured alignment */
-    assert(((seL4_Word)&big_kernel_lock) % EXCL_RES_GRANULE_SIZE == 0);
+    assert(((word_t)&big_kernel_lock) % EXCL_RES_GRANULE_SIZE == 0);
 
     for (int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
         big_kernel_lock.request[i].state = CLHState_Pending;
@@ -33,15 +33,12 @@ BOOT_CODE void clh_lock_init(void)
 NO_INLINE void clh_lock_acquire_slowpath(bool_t irqPath, word_t cpu, clh_req_t *watch)
 {
     /* Wait until predecessor finishes */
-    while (watch->state != CLHState_Granted) {
-        /* As we are in a loop we need to ensure that any loads of future iterations of the
-         * loop are performed after this one */
-        __atomic_thread_fence(__ATOMIC_ACQUIRE);
+    do {
         if (clh_is_ipi_pending(cpu)) {
             ipi_handle_call(irqPath);
         }
         arch_pause();
-    }
+    } while (__atomic_load_n(&watch->state, __ATOMIC_ACQUIRE) != CLHState_Granted);
 }
 
 #endif /* ENABLE_SMP_SUPPORT */

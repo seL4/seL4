@@ -69,7 +69,7 @@ static void x86_ipi_send_mask(interrupt_t ipi, word_t mask, bool_t isBlocking)
         word_t sub_mask = mask & cpu_mapping.other_indexes_in_cluster[core];
         target_clusters[nr_target_clusters] |= cpu_mapping.index_to_logical_id[core];
         if (isBlocking) {
-            big_kernel_lock.node[core].ipi = 1;
+            clh_set_ipi_pending(core);
         }
 
         /* check if there is any other core in this cluster */
@@ -77,7 +77,7 @@ static void x86_ipi_send_mask(interrupt_t ipi, word_t mask, bool_t isBlocking)
             int index = wordBits - 1 - clzl(sub_mask);
             target_clusters[nr_target_clusters] |= cpu_mapping.index_to_logical_id[index];
             if (isBlocking) {
-                big_kernel_lock.node[index].ipi = 1;
+                clh_set_ipi_pending(core);
             }
             sub_mask &= ~BIT(index);
         }

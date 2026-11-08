@@ -60,36 +60,49 @@ static inline bool_t FORCE_INLINE clh_is_ipi_pending(word_t cpu)
     return __atomic_load_n(&big_kernel_lock.node[cpu].ipi, __ATOMIC_ACQUIRE);
 }
 
+static inline void FORCE_INLINE clh_set_ipi_pending(word_t cpu)
+{
+    /*
+     * All writes before setting ipi to 1 must be observed,
+     * as other cores may check the ipi flag at any moment.
+     */
+    assert(big_kernel_lock.node[cpu].ipi == 0);
+    __atomic_store_n(&big_kernel_lock.node[cpu].ipi, 1, __ATOMIC_RELEASE);
+}
+
 static inline void FORCE_INLINE clh_lock_acquire(bool_t irqPath)
 {
     word_t cpu = getCurrentCPUIndex();
     clh_node_t *node = &big_kernel_lock.node[cpu];
     clh_req_t *watch;
 
-    /* Enqueue our request */
-    watch = __atomic_exchange_n(&big_kernel_lock.tail, node->myreq, __ATOMIC_ACQ_REL);
-
+    /* Queue up for the lock, by claiming the tail request
+     * and replacing it with our own for our successor. */
+    watch = __atomic_exchange_n(&big_kernel_lock.tail, node->myreq, __ATOMIC_ACQUIRE);
     node->watch = watch;
-    if (watch->state != CLHState_Granted) {
+    if (__atomic_load_n(&watch->state, __ATOMIC_ACQUIRE) != CLHState_Granted) {
         clh_lock_acquire_slowpath(irqPath, cpu, watch);
     }
-    /* make sure no resource access passes from this point */
-    __atomic_thread_fence(__ATOMIC_ACQUIRE);
+    assert(watch >= &big_kernel_lock.request[0] &&
+           watch <= &big_kernel_lock.request[CONFIG_MAX_NUM_NODES]);
 }
 
 static inline void FORCE_INLINE clh_lock_release(void)
 {
     clh_node_t *node = &big_kernel_lock.node[getCurrentCPUIndex()];
+    clh_req_state_t *lock = &node->myreq->state;
 
-    /* make sure no resource access passes from this point */
-    __atomic_thread_fence(__ATOMIC_RELEASE);
-
-    /* Pass lock to successor */
-    node->myreq->state = CLHState_Granted;
     /* Take ownership of watched request, to use next time we take the lock */
     node->myreq = node->watch;
     /* Tell future successor to wait */
-    node->myreq->state = CLHState_Pending;
+    __atomic_store_n(&node->watch->state, CLHState_Pending, __ATOMIC_RELAXED);
+    /*
+     * Make sure no previous memory accesses from this core pass this point.
+     * Optimise synchronisation with relaxed writes and only one fence here.
+     */
+    __atomic_thread_fence(__ATOMIC_RELEASE);
+    /* Pass lock to successor. */
+    __atomic_store_n(lock, CLHState_Granted, __ATOMIC_RELAXED);
 }
 
 #define NODE_LOCK(_irqPath) do {                         \
