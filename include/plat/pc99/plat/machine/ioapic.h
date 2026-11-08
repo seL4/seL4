@@ -19,4 +19,7 @@ exception_t ioapic_decode_map_pin_to_vector(word_t ioapic, word_t pin, word_t le
 /* The function maps a pin to an interrupt vector, does not perform
  * any checks, use ioapic_decode_map_pin_to_vector first */
 void ioapic_map_pin_to_vector(word_t ioapic, word_t pin, word_t level, word_t polarity, word_t vector);
+/* Returns the vector the pin was last mapped to, which is 0 if it was
+ * never mapped. The mapping may be stale. Reads ioredtbl_state. */
+word_t ioapic_get_vector(word_t ioapic, word_t pin);
 
