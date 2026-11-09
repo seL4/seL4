@@ -94,7 +94,7 @@ void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
         if (do_call ||
             seL4_Fault_ptr_get_seL4_FaultType(&thread->tcbFault) != seL4_Fault_NullFault) {
             if (reply != NULL && (canGrant || canGrantReply)) {
-                reply_push(thread, dest, reply, canDonate);
+                reply_link_caller(thread, dest, reply, canDonate);
             } else {
                 setThreadState(thread, ThreadState_Inactive);
             }
@@ -269,7 +269,7 @@ void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
                 if ((canGrant || canGrantReply) && replyPtr != NULL) {
                     bool_t canDonate = sender->tcbSchedContext != NULL
                                        && seL4_Fault_get_seL4_FaultType(sender->tcbFault) != seL4_Fault_Timeout;
-                    reply_push(sender, thread, replyPtr, canDonate);
+                    reply_link_caller(sender, thread, replyPtr, canDonate);
                 } else {
                     setThreadState(sender, ThreadState_Inactive);
                 }

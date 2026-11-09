@@ -26,34 +26,38 @@ static inline void reply_unlink(reply_t *reply, tcb_t *tcb)
     setThreadState(tcb, ThreadState_Inactive);
 }
 
-static inline void push_to_stack(sched_context_t *sc, reply_t *reply)
+static inline void reply_push(sched_context_t *sc, reply_t *reply)
 {
-    reply_t *old_caller = sc->scReply;
+    reply_t *last_caller = sc->scReply;
 
     /* check stack integrity */
-    assert(old_caller == NULL || old_caller->replySC == sc);
+    assert(last_caller == NULL || last_caller->replySC == sc);
+
+    /* Retain the order of the following updates for verification */
 
     /* if there was an old caller, first unlink it from the sc */
-    if (old_caller) {
-        old_caller->replySC = NULL;
+    if (last_caller) {
+        last_caller->replySC = NULL;
     }
     /* push reply onto the stack */
     reply->replyNext = NULL;
-    reply->replyPrev = old_caller;
-    if (old_caller) {
-        old_caller->replyNext = reply;
+    reply->replyPrev = last_caller;
+    if (last_caller) {
+        last_caller->replyNext = reply;
     }
     /* link the new head of the stack to the sc */
     sc->scReply = reply;
     reply->replySC = sc;
 }
 
-static inline void pop_from_stack(reply_t *reply)
+static inline void reply_pop(reply_t *reply)
 {
     sched_context_t *replySC = reply->replySC;
     assert(replySC != NULL);
 
     reply_t *prev = reply->replyPrev;
+
+    /* Retain the order of the following updates for verification */
 
     /* first unlink the head of the stack from the sc */
     reply->replySC = NULL;
@@ -70,8 +74,8 @@ static inline void pop_from_stack(reply_t *reply)
 }
 
 /* Push a reply object onto the call stack */
-void reply_push(tcb_t *tcb_caller, tcb_t *tcb_callee, reply_t *reply, bool_t canDonate);
-void break_chain_at(reply_t *reply);
+void reply_link_caller(tcb_t *tcb_caller, tcb_t *tcb_callee, reply_t *reply, bool_t canDonate);
+void break_reply_chain_at(reply_t *reply);
 /* Remove a reply from the call stack - replyTCB must be in ThreadState_BlockedOnReply */
 void reply_remove(reply_t *reply, tcb_t *tcb);
 /* Remove a specific tcb, and the reply it is blocking on, from the call stack */

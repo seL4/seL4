@@ -6,7 +6,7 @@
 
 #include <object/reply.h>
 
-void reply_push(tcb_t *tcb_caller, tcb_t *tcb_callee, reply_t *reply, bool_t canDonate)
+void reply_link_caller(tcb_t *tcb_caller, tcb_t *tcb_callee, reply_t *reply, bool_t canDonate)
 {
     sched_context_t *sc_donated = tcb_caller->tcbSchedContext;
 
@@ -33,14 +33,14 @@ void reply_push(tcb_t *tcb_caller, tcb_t *tcb_callee, reply_t *reply, bool_t can
     setThreadStateBlockedOnReply(tcb_caller, reply);
 
     if (sc_donated != NULL && tcb_callee->tcbSchedContext == NULL && canDonate) {
-        push_to_stack(sc_donated, reply);
+        reply_push(sc_donated, reply);
 
         /* now do the actual donation */
         schedContext_donate(sc_donated, tcb_callee);
     }
 }
 
-void break_chain_at(reply_t *reply)
+void break_reply_chain_at(reply_t *reply)
 {
     reply_t *prev = reply->replyPrev;
     reply_t *next = reply->replyNext;
@@ -72,7 +72,7 @@ void reply_remove(reply_t *reply, tcb_t *tcb)
     sched_context_t *replySC = reply->replySC;
 
     if (likely(replySC)) {
-        pop_from_stack(reply);
+        reply_pop(reply);
 
         /* give it back */
         if (tcb->tcbSchedContext == NULL) {
@@ -83,7 +83,7 @@ void reply_remove(reply_t *reply, tcb_t *tcb)
             schedContext_donate(replySC, tcb);
         }
     } else {
-        break_chain_at(reply);
+        break_reply_chain_at(reply);
     }
 
     reply_unlink(reply, tcb);
@@ -94,6 +94,6 @@ void reply_remove_tcb(tcb_t *tcb)
     assert(thread_state_get_tsType(tcb->tcbState) == ThreadState_BlockedOnReply);
     reply_t *reply = REPLY_PTR(thread_state_get_replyObject(tcb->tcbState));
 
-    break_chain_at(reply);
+    break_reply_chain_at(reply);
     reply_unlink(reply, tcb);
 }

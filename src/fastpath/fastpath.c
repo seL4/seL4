@@ -208,7 +208,7 @@ void NORETURN fastpath_call(word_t cptr, word_t msgInfo)
     sc->scTcb = dest;
     dest->tcbSchedContext = sc;
     NODE_STATE(ksCurThread)->tcbSchedContext = NULL;
-    push_to_stack(sc, reply);
+    reply_push(sc, reply);
 #else
     /* Get sender reply slot */
     cte_t *replySlot = TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbReply);
@@ -503,7 +503,7 @@ void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo)
     NODE_STATE(ksCurThread)->tcbSchedContext = NULL;
     caller->tcbSchedContext = sc;
     sc->scTcb = caller;
-    pop_from_stack(reply_ptr);
+    reply_pop(reply_ptr);
 #else
     /* Delete the reply cap. */
     mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(
@@ -873,7 +873,7 @@ void NORETURN fastpath_vm_fault(vm_fault_type_t type)
     sc->scTcb = dest;
     dest->tcbSchedContext = sc;
     NODE_STATE(ksCurThread)->tcbSchedContext = NULL;
-    push_to_stack(sc, reply);
+    reply_push(sc, reply);
 #else
     /* Get sender reply slot */
     cte_t *replySlot = TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbReply);
