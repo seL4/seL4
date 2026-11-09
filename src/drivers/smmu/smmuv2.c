@@ -131,6 +131,15 @@ static inline uint32_t smmu_ubs_size_to_bits(uint32_t size)
     }
 }
 
+static inline word_t smmu_stream_index(word_t sid, word_t cb)
+{
+#ifdef CONFIG_PLAT_ZYNQMP
+    return cb;
+#else
+    return sid;
+#endif
+}
+
 BOOT_CODE static void smmu_mapping_init(void)
 {
     /*Creating mapping for the rest of SMMU address space.
@@ -547,24 +556,17 @@ void smmu_sid_bind_cb(word_t sid, word_t cb)
 {
 
     uint32_t reg = 0;
+    word_t index = smmu_stream_index(sid, cb);
     reg = S2CR_PRIVCFG_SET(S2CR_PRIVCFG_DEFAULT);
     reg |= S2CR_TYPE_SET(S2CR_TYPE_CB);
     reg |= S2CR_CBNDX_SET(cb);
-#ifdef CONFIG_PLAT_ZYNQMP
-    smmu_write_reg32(SMMU_GR0_PPTR, SMMU_S2CRn(cb), reg);
-#else
-    smmu_write_reg32(SMMU_GR0_PPTR, SMMU_S2CRn(sid), reg);
-#endif
+    smmu_write_reg32(SMMU_GR0_PPTR, SMMU_S2CRn(index), reg);
     /* The number of stream-to-context mapping
      * is related to the stream indexing method.
      * We currently supports mapping one stream ID to one context bank.*/
     if (smmu_dev_knowledge.stream_match) {
         reg = SMR_VALID_SET(SMR_VALID_EN) | SMR_ID_SET(sid);
-#ifdef CONFIG_PLAT_ZYNQMP
-        smmu_write_reg32(SMMU_GR0_PPTR, SMMU_SMRn(cb), reg);
-#else
-        smmu_write_reg32(SMMU_GR0_PPTR, SMMU_SMRn(sid), reg);
-#endif
+        smmu_write_reg32(SMMU_GR0_PPTR, SMMU_SMRn(index), reg);
     }
 }
 
@@ -572,18 +574,11 @@ void smmu_sid_unbind(word_t sid, word_t cb)
 {
 
     uint32_t reg =  S2CR_TYPE_SET(S2CR_TYPE_FAULT);
-#ifdef CONFIG_PLAT_ZYNQMP
-    smmu_write_reg32(SMMU_GR0_PPTR, SMMU_S2CRn(cb), reg);
-#else
-    smmu_write_reg32(SMMU_GR0_PPTR, SMMU_S2CRn(sid), reg);
-#endif
+    word_t index = smmu_stream_index(sid, cb);
+    smmu_write_reg32(SMMU_GR0_PPTR, SMMU_S2CRn(index), reg);
     if (smmu_dev_knowledge.stream_match) {
         reg = SMR_VALID_SET(SMR_VALID_DIS);
-#ifdef CONFIG_PLAT_ZYNQMP
-        smmu_write_reg32(SMMU_GR0_PPTR, SMMU_SMRn(cb), reg);
-#else
-        smmu_write_reg32(SMMU_GR0_PPTR, SMMU_SMRn(sid), reg);
-#endif
+        smmu_write_reg32(SMMU_GR0_PPTR, SMMU_SMRn(index), reg);
     }
 }
 

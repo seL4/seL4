@@ -27,6 +27,15 @@ static inline void smmu_bitmap_clear(word_t *bitmap,  word_t idx)
     bitmap[idx >> wordRadix] &= ~BIT(idx & MASK(wordRadix));
 }
 
+static inline word_t smmu_sid_index(word_t sid)
+{
+#ifdef CONFIG_PLAT_ZYNQMP
+    return sid & MASK(SMMU_SID_CNODE_SLOT_BITS);
+#else
+    return sid;
+#endif
+}
+
 static exception_t checkARMCBVspace(cap_t cap)
 {
     word_t cb = cap_cb_cap_get_capCB(cap);
@@ -94,10 +103,10 @@ exception_t decodeARMSIDControlInvocation(word_t label, word_t length, cptr_t cp
         userError("Rejecting request for SID %u. SID is greater than or equal to SMMU_MAX_SID.", (int)sid);
         return EXCEPTION_SYSCALL_ERROR;
     }
+    word_t sid_index = smmu_sid_index(sid);
 #ifdef CONFIG_PLAT_ZYNQMP
-    word_t tbu_num, master_id;
+    word_t tbu_num;
     tbu_num = sid >> SMMU_SID_CNODE_SLOT_BITS;
-    master_id = sid & (BIT(SMMU_SID_CNODE_SLOT_BITS) - 1);
     if (tbu_num >= SMMU_NUM_TBUS) {
         current_syscall_error.type = seL4_RangeError;
         current_syscall_error.rangeErrorMin = 0;
@@ -105,18 +114,15 @@ exception_t decodeARMSIDControlInvocation(word_t label, word_t length, cptr_t cp
         userError("Rejecting request for SID %u. TBU number is greater than or equal to SMMU_NUM_TBUS.", (int)sid);
         return EXCEPTION_SYSCALL_ERROR;
     }
-    if (master_id >= BIT(SMMU_SID_CNODE_SLOT_BITS)) {
+    if (sid_index >= BIT(SMMU_SID_CNODE_SLOT_BITS)) {
         current_syscall_error.type = seL4_RangeError;
         current_syscall_error.rangeErrorMin = 0;
         current_syscall_error.rangeErrorMax = BIT(SMMU_SID_CNODE_SLOT_BITS) - 1;
         userError("Rejecting request for SID %u. Master ID is greater than or equal to SMMU_MAX_MID.", (int)sid);
         return EXCEPTION_SYSCALL_ERROR;
     }
-
-    sid_state = smmu_bitmap_get(smmuStateSIDTable, master_id);
-#else
-    sid_state = smmu_bitmap_get(smmuStateSIDTable, sid);
 #endif
+    sid_state = smmu_bitmap_get(smmuStateSIDTable, sid_index);
     if (sid_state) {
         current_syscall_error.type = seL4_RevokeFirst;
         userError("Rejecting request for SID %u. Already active.", (int)sid);
@@ -137,11 +143,7 @@ exception_t decodeARMSIDControlInvocation(word_t label, word_t length, cptr_t cp
         return status;
     }
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-#ifdef CONFIG_PLAT_ZYNQMP
-    smmu_bitmap_set(smmuStateSIDTable, master_id);
-#else
-    smmu_bitmap_set(smmuStateSIDTable, sid);
-#endif
+    smmu_bitmap_set(smmuStateSIDTable, sid_index);
     cteInsert(cap_sid_cap_new(sid), srcSlot, destSlot);
     return EXCEPTION_NONE;
 }
@@ -154,9 +156,6 @@ exception_t decodeARMSIDInvocation(word_t label, word_t length, cptr_t cptr,
     cte_t *cbAssignSlot;
     exception_t status;
     word_t sid;
-#ifdef CONFIG_PLAT_ZYNQMP
-    word_t master_id;
-#endif
 
     switch (label) {
     case ARMSIDBindCB:
@@ -180,13 +179,7 @@ exception_t decodeARMSIDInvocation(word_t label, word_t length, cptr_t cptr,
             return EXCEPTION_SYSCALL_ERROR;
         }
         sid = cap_sid_cap_get_capSID(cap);
-#ifdef CONFIG_PLAT_ZYNQMP
-        master_id = sid & (BIT(SMMU_SID_CNODE_SLOT_BITS) - 1);
-
-        cbAssignSlot = smmuStateSIDNode + master_id;
-#else
-        cbAssignSlot = smmuStateSIDNode + sid;
-#endif
+        cbAssignSlot = smmuStateSIDNode + smmu_sid_index(sid);
         status = ensureEmptySlot(cbAssignSlot);
         if (status != EXCEPTION_NONE) {
             userError("ARMSIDBindCB: The SID is already bound with a context bank.");
@@ -221,13 +214,7 @@ exception_t decodeARMSIDInvocation(word_t label, word_t length, cptr_t cptr,
 
     case ARMSIDUnbindCB:
         sid = cap_sid_cap_get_capSID(cap);
-#ifdef CONFIG_PLAT_ZYNQMP
-        master_id = sid & (BIT(SMMU_SID_CNODE_SLOT_BITS) - 1);
-
-        cbAssignSlot = smmuStateSIDNode + master_id;
-#else
-        cbAssignSlot = smmuStateSIDNode + sid;
-#endif
+        cbAssignSlot = smmuStateSIDNode + smmu_sid_index(sid);
         if (unlikely(cap_get_capType(cbAssignSlot->cap) != cap_cb_cap)) {
             userError("ARMSIDUnbindCB: The SID is not assigned with a context bank.");
             current_syscall_error.type = seL4_IllegalOperation;
@@ -250,24 +237,14 @@ exception_t decodeARMSIDInvocation(word_t label, word_t length, cptr_t cptr,
 exception_t smmu_delete_sid(cap_t cap)
 {
     word_t sid = cap_sid_cap_get_capSID(cap);
-#ifdef CONFIG_PLAT_ZYNQMP
-    word_t master_id;
-    master_id = sid & (BIT(SMMU_SID_CNODE_SLOT_BITS) - 1);
-
-    cte_t *cbAssignSlot = smmuStateSIDNode + master_id;
-#else
-    cte_t *cbAssignSlot = smmuStateSIDNode + sid;
-#endif
+    word_t sid_index = smmu_sid_index(sid);
+    cte_t *cbAssignSlot = smmuStateSIDNode + sid_index;
     exception_t status = EXCEPTION_NONE;
     /*deleting the assigned context bank cap if exsits*/
     if (unlikely(cap_get_capType(cbAssignSlot->cap) == cap_cb_cap)) {
         status = cteDelete(cbAssignSlot, true);
     }
-#ifdef CONFIG_PLAT_ZYNQMP
-    smmu_bitmap_clear(smmuStateSIDTable, master_id);
-#else
-    smmu_bitmap_clear(smmuStateSIDTable, sid);
-#endif
+    smmu_bitmap_clear(smmuStateSIDTable, sid_index);
     return status;
 }
 
