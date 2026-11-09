@@ -53,9 +53,10 @@ static inline void reply_push(sched_context_t *sc, reply_t *reply)
 static inline void reply_pop(reply_t *reply)
 {
     sched_context_t *replySC = reply->replySC;
-    assert(replySC != NULL);
 
     reply_t *prev = reply->replyPrev;
+
+    assert(replySC != NULL);
 
     /* Retain the order of the following updates for verification */
 
