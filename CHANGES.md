@@ -24,7 +24,7 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 ---
 
-## Upcoming release: BINARY COMPATIBLE
+## Upcoming release: BREAKING
 
 ### Changes
 
@@ -34,8 +34,15 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 
 - x64: clear CR0.CD and CR0.NW when enabling paging so caches are enabled on all cores, rather than relying on
   firmware or the AP trampoline to leave them clear.
+- VT-x: always intercept guest writes to CR0.CD, CR0.NW and the reserved CR0 bits.
 
 ### Upgrade Notes
+
+- x86 VT-x: CR0.CD, CR0.NW and the reserved CR0 bits (28:19, 17 and 15:6) are now always set in the CR0 guest/host
+  mask, and reading back `VMX_CONTROL_CR0_MASK` returns them set. A guest that tries to change any of these bits now
+  causes a control-register-access VM exit even if the VMM did not set them in the mask, and guest reads of these bits
+  return the CR0 read shadow.
+
 ---
 
 ## 17.0.0 2026-10-30: BREAKING
