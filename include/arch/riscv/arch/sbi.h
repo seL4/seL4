@@ -50,6 +50,13 @@
 #define SBI_SHUTDOWN 8
 /* The values 9 - 15 are reserved. */
 
+/* Standard SBI Extension IDs (EIDs) and Function IDs (FIDs) */
+#define SBI_EXT_TIME 0x54494D45
+#define SBI_EXT_TIME_SET_TIMER 0
+
+#define SBI_EXT_DBCN 0x4442434E
+#define SBI_EXT_DBCN_CONSOLE_WRITE_BYTE 2
+
 static inline word_t sbi_call(word_t cmd,
                               word_t arg_0,
                               word_t arg_1,
@@ -67,6 +74,34 @@ static inline word_t sbi_call(word_t cmd,
     return result;
 }
 
+#if defined(CONFIG_RISCV_MODERN_SBI_TIME) || defined(CONFIG_RISCV_MODERN_SBI_DBCN)
+struct sbiret {
+    word_t error;
+    word_t value;
+};
+
+static inline struct sbiret sbi_ecall(word_t eid,
+                                      word_t fid,
+                                      word_t arg0,
+                                      word_t arg1,
+                                      word_t arg2)
+{
+    register word_t a0 asm("a0") = arg0;
+    register word_t a1 asm("a1") = arg1;
+    register word_t a2 asm("a2") = arg2;
+    register word_t a6 asm("a6") = fid;
+    register word_t a7 asm("a7") = eid;
+    asm volatile("ecall"
+                 : "+r"(a0), "+r"(a1)
+                 : "r"(a2), "r"(a6), "r"(a7)
+                 : "memory");
+    struct sbiret ret;
+    ret.error = a0;
+    ret.value = a1;
+    return ret;
+}
+#endif
+
 /* Lazy implementations until SBI is finalized */
 #define SBI_CALL_0(which) sbi_call(which, 0, 0, 0)
 #define SBI_CALL_1(which, arg0) sbi_call(which, arg0, 0, 0)
@@ -74,7 +109,15 @@ static inline word_t sbi_call(word_t cmd,
 
 static inline void sbi_console_putchar(int ch)
 {
+#ifdef CONFIG_RISCV_MODERN_SBI_DBCN
+    /* Standard SBI DBCN write_byte (EID 0x4442434E, FID 2) for debug console character output only.
+     * Requires firmware that implements the DBCN extension (SBI 2.0+). Console input,
+     * shutdown, and SMP IPI/fences remain legacy; this does not provide full modern SBI support.
+     */
+    sbi_ecall(SBI_EXT_DBCN, SBI_EXT_DBCN_CONSOLE_WRITE_BYTE, (word_t)(uint8_t)ch, 0, 0);
+#else
     SBI_CALL_1(SBI_CONSOLE_PUTCHAR, ch);
+#endif
 }
 
 static inline int sbi_console_getchar(void)
@@ -84,10 +127,23 @@ static inline int sbi_console_getchar(void)
 
 static inline void sbi_set_timer(unsigned long long stime_value)
 {
+#ifdef CONFIG_RISCV_MODERN_SBI_TIME
+    /* Standard SBI TIME set_timer (EID 0x54494D45, FID 0).
+     * Requires firmware that implements the TIME extension (not merely any generic SBI 0.2+ firmware).
+     * On RV32, stime_value is passed across a0 (low 32) and a1 (high 32).
+     * On RV64, stime_value is passed in a0; a1 is unused on input but clobbered on return.
+     */
+#if __riscv_xlen == 32
+    sbi_ecall(SBI_EXT_TIME, SBI_EXT_TIME_SET_TIMER, (word_t)stime_value, (word_t)(stime_value >> 32), 0);
+#else
+    sbi_ecall(SBI_EXT_TIME, SBI_EXT_TIME_SET_TIMER, (word_t)stime_value, 0, 0);
+#endif
+#else
 #if __riscv_xlen == 32
     SBI_CALL_2(SBI_SET_TIMER, stime_value, stime_value >> 32);
 #else
     SBI_CALL_1(SBI_SET_TIMER, stime_value);
+#endif
 #endif
 }
 
