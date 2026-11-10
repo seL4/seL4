@@ -285,6 +285,16 @@ tasks in the system.
     allocated in a system.
 \end{description}
 
+On the Xilinx ZynqMP, the SMMU uses a 15-bit stream ID to perform address
+translations. This information is part of a transaction and indicates which
+master originated the request. Bits [9:0] of the stream ID are the master ID.
+Bits [14:10] are the TBU number the master transaction passes through. The
+kernel rejects StreamIDs with a TBU number that does not exist on the platform,
+and it tracks StreamIDs by master ID only. As a result, only one
+\obj{seL4\_ARM\_SID} capability can exist at a time for StreamIDs that share
+the same master ID. To create a capability for another StreamID with the same
+master ID, the existing one must be revoked first.
+
 The Arm SMMU 2.0 specification describes many ways of associating StreamIDs with
 context banks. Currently only direct mapping of a StreamID to a context bank is
 supported.
@@ -347,6 +357,15 @@ capability with:
         the stream ID. The kernel provides this API for the conveniences of
         sharing a stream ID among multiple VSpaces.
 \end{description}
+
+On most platforms, several stream IDs can be bound to the same context bank.
+However, on the Xilinx ZynqMP, the kernel programs the SMMU's
+stream-to-context mapping using the context bank number, so each context bank
+can be bound to at most one stream ID at a time. If the context bank is already
+bound, \apifunc{seL4\_ARM\_SID\_BindCB}{arm_sid_bindcb} fails with
+\texttt{seL4\_DeleteFirst}. The existing binding must be removed first, either
+with \apifunc{seL4\_ARM\_SID\_UnbindCB}{arm_sid_unbindcb} or by deleting the
+last capability to the stream ID.
 
 If there are any exceptions after the stream ID is enabled, the user-level
 software should use the fault handling mechanisms to resolve them.

@@ -48,4 +48,7 @@ extern word_t smmuStateSIDTable[SMMU_SID_TABLE_SIZE];
 extern cte_t smmuStateSIDNode[BIT(SMMU_SID_CNODE_SLOT_BITS)];
 extern word_t smmuStateCBTable[SMMU_CB_TABLE_SIZE];
 extern cte_t smmuStateCBNode[BIT(SMMU_CB_CNODE_SLOT_BITS)];
+#ifdef CONFIG_PLAT_ZYNQMP
+extern word_t smmuStateCBBindTable[SMMU_CB_TABLE_SIZE];
+#endif
 #endif
