@@ -6,10 +6,12 @@
 
 #pragma once
 
+#ifndef GENMC_TEST
 #include <config.h>
 #include <types.h>
 #include <plat/machine.h>
 #include <arch/smp/ipi.h>
+#endif
 
 #ifdef ENABLE_SMP_SUPPORT
 #define MAX_IPI_ARGS    3   /* Maximum number of parameters to remote function */

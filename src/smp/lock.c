@@ -4,9 +4,11 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
+#ifndef GENMC_TEST
 #include <config.h>
 #include <assert.h>
 #include <smp/lock.h>
+#endif
 
 #ifdef ENABLE_SMP_SUPPORT
 compile_assert(BKL_not_padded, sizeof(big_kernel_lock) % EXCL_RES_GRANULE_SIZE == 0);
