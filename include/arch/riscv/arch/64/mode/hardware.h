@@ -110,5 +110,17 @@
 #error Only PT_LEVELS == 3 is supported
 #endif
 
+#if defined(CONFIG_HAVE_CHERI)
+#define LOAD  ly
+#define STORE sy
+/* Integer-width register loads/stores */
+#define ILOAD  ld
+#define ISTORE sd
+#define REGBYTES 16
+#else
 #define LOAD  ld
 #define STORE sd
+#define ILOAD  LOAD
+#define ISTORE STORE
+#define REGBYTES 8
+#endif

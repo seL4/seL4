@@ -39,3 +39,4 @@ add_sources(
          src/smp/ipi.c)
 add_sources(DEP KernelIsMCS CFILES src/object/reply.c src/object/schedcontext.c
                                    src/object/schedcontrol.c src/kernel/sporadic.c)
+add_sources(DEP HaveCheri CFILES src/cheri/cheri.c)

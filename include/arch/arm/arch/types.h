@@ -22,6 +22,7 @@ typedef word_t cptr_t;
 typedef word_t node_id_t;
 typedef word_t cpu_id_t;
 typedef word_t dom_t;
+typedef word_t rword_t;
 
 /*
  * Hardware ASID/VMID 0 is reserved: setVMRoot() installs the empty global
