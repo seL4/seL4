@@ -6,6 +6,7 @@
 
 #pragma once
 
+#ifndef GENMC_TEST
 #include <config.h>
 #include <types.h>
 #include <util.h>
@@ -13,6 +14,7 @@
 #include <arch/model/statedata.h>
 #include <smp/ipi.h>
 #include <util.h>
+#endif
 
 #ifdef ENABLE_SMP_SUPPORT
 
