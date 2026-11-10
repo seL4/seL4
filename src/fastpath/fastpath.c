@@ -208,14 +208,7 @@ void NORETURN fastpath_call(word_t cptr, word_t msgInfo)
     sc->scTcb = dest;
     dest->tcbSchedContext = sc;
     NODE_STATE(ksCurThread)->tcbSchedContext = NULL;
-
-    reply_t *old_caller = sc->scReply;
-    reply->replyPrev = call_stack_new(REPLY_REF(sc->scReply), false);
-    if (unlikely(old_caller)) {
-        old_caller->replyNext = call_stack_new(REPLY_REF(reply), false);
-    }
-    reply->replyNext = call_stack_new(SC_REF(sc), true);
-    sc->scReply = reply;
+    reply_push(sc, reply);
 #else
     /* Get sender reply slot */
     cte_t *replySlot = TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbReply);
@@ -320,8 +313,8 @@ void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo)
     /* check that its valid and at the head of the call chain
        and that the current thread's SC is going to be donated. */
     if (unlikely(reply_ptr->replyTCB == NULL ||
-                 call_stack_get_isHead(reply_ptr->replyNext) == 0 ||
-                 SC_PTR(call_stack_get_callStackPtr(reply_ptr->replyNext)) != NODE_STATE(ksCurThread)->tcbSchedContext)) {
+                 reply_ptr->replySC == NULL ||
+                 reply_ptr->replySC != NODE_STATE(ksCurThread)->tcbSchedContext)) {
         slowpath(SysReplyRecv);
     }
 
@@ -506,20 +499,11 @@ void NORETURN fastpath_reply_recv(word_t cptr, word_t msgInfo)
 
 #ifdef CONFIG_KERNEL_MCS
     /* update call stack */
-    word_t prev_ptr = call_stack_get_callStackPtr(reply_ptr->replyPrev);
     sched_context_t *sc = NODE_STATE(ksCurThread)->tcbSchedContext;
     NODE_STATE(ksCurThread)->tcbSchedContext = NULL;
     caller->tcbSchedContext = sc;
     sc->scTcb = caller;
-
-    sc->scReply = REPLY_PTR(prev_ptr);
-    if (unlikely(REPLY_PTR(prev_ptr) != NULL)) {
-        sc->scReply->replyNext = reply_ptr->replyNext;
-    }
-
-    /* TODO neccessary? */
-    reply_ptr->replyPrev.words[0] = 0;
-    reply_ptr->replyNext.words[0] = 0;
+    reply_pop(reply_ptr);
 #else
     /* Delete the reply cap. */
     mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(
@@ -889,14 +873,7 @@ void NORETURN fastpath_vm_fault(vm_fault_type_t type)
     sc->scTcb = dest;
     dest->tcbSchedContext = sc;
     NODE_STATE(ksCurThread)->tcbSchedContext = NULL;
-
-    reply_t *old_caller = sc->scReply;
-    reply->replyPrev = call_stack_new(REPLY_REF(sc->scReply), false);
-    if (unlikely(old_caller)) {
-        old_caller->replyNext = call_stack_new(REPLY_REF(reply), false);
-    }
-    reply->replyNext = call_stack_new(SC_REF(sc), true);
-    sc->scReply = reply;
+    reply_push(sc, reply);
 #else
     /* Get sender reply slot */
     cte_t *replySlot = TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbReply);

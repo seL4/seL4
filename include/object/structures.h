@@ -392,17 +392,15 @@ struct reply {
      * The back pointer for this TCB is stored in the thread state.*/
     tcb_t *replyTCB;
 
-    /* 0 if this is the start of the call chain, or points to the
-     * previous reply object in a call chain */
-    call_stack_t replyPrev;
+    /* A scheduling context, if this reply object is the head of the call chain
+       (the last caller before the server) of that scheduling context, and NULL otherwise. */
+    sched_context_t *replySC;
 
-    /* Either a scheduling context if this reply object is the head of the call chain
-     * (the last caller before the server) or another reply object. 0 if no scheduling
-     * context was passed along the call chain */
-    call_stack_t replyNext;
+    /* NULL if this is the start of the call chain, or points to the previous reply object in a call chain */
+    reply_t *replyPrev;
 
-    /* Unused, explicit padding to make struct size the correct power of 2. */
-    word_t padding;
+    /* NULL if this is the end of the call chain, or points to the next reply object in a call chain. */
+    reply_t *replyNext;
 };
 #endif
 
