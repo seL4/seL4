@@ -36,13 +36,13 @@ static inline void reply_push(sched_context_t *sc, reply_t *reply)
     /* Retain the order of the following updates for verification */
 
     /* if there was an old caller, first unlink it from the sc */
-    if (last_caller) {
+    if (unlikely(last_caller)) {
         last_caller->replySC = NULL;
     }
     /* push reply onto the stack */
     reply->replyNext = NULL;
     reply->replyPrev = last_caller;
-    if (last_caller) {
+    if (unlikely(last_caller)) {
         last_caller->replyNext = reply;
     }
     /* link the new head of the stack to the sc */
@@ -64,12 +64,12 @@ static inline void reply_pop(reply_t *reply)
     reply->replySC = NULL;
     /* pop reply from the stack */
     reply->replyPrev = NULL;
-    if (prev) {
+    if (unlikely(prev)) {
         prev->replyNext = NULL;
     }
     /* link the new head (if any) of the stack to the sc */
     replySC->scReply = prev;
-    if (prev) {
+    if (unlikely(prev)) {
         prev->replySC = replySC;
     }
 }
