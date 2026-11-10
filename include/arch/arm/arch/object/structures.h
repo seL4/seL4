@@ -26,6 +26,7 @@ static inline bool_t CONST Arch_isCapRevocable(cap_t derivedCap, cap_t srcCap)
 #endif
 
     default:
+        // @0aids: intentionally non-exhaustive?
         return false;
     }
 }

@@ -145,6 +145,7 @@ static inline void *CONST cap_get_archCapPtr(cap_t cap)
 
 static inline bool_t CONST Arch_isCapRevocable(cap_t derivedCap, cap_t srcCap)
 {
+    // @0aids: intentionally non-exhaustive?
     return false;
 }
 
