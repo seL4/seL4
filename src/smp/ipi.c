@@ -3,15 +3,14 @@
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
-
+#ifndef GENMC_TEST
 #include <config.h>
-
-#ifdef ENABLE_SMP_SUPPORT
-
 #include <mode/smp/ipi.h>
 #include <smp/ipi.h>
 #include <smp/lock.h>
+#endif
 
+#ifdef ENABLE_SMP_SUPPORT
 /*
  * Async reschedule request IPIs are handled like any other interrupt with no
  * special treatment.
