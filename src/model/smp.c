@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <model/smp.h>
+#include <kernel/thread.h>
 #include <object/tcb.h>
 
 #ifdef ENABLE_SMP_SUPPORT
@@ -18,6 +19,9 @@ void migrateTCB(tcb_t *tcb, word_t new_core)
 #ifdef CONFIG_DEBUG_BUILD
     tcbDebugRemove(tcb);
 #endif
+    /* Release other per-core architecture state of the thread on the core it is
+     * migrating away from. */
+    Arch_prepareMigrateTCB(tcb);
 #ifdef CONFIG_HAVE_FPU
     /* If the thread owns the FPU of the core it is currently running on (which
      * is not necessarily the core, that we are now running on), then release
