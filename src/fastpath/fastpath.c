@@ -669,6 +669,12 @@ void NORETURN fastpath_signal(word_t cptr, word_t msgInfo)
             slowpath(SysSend);
         }
 #endif
+        /* Slowpath the case where dest has a VCPU and changes core */
+#if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
+        if (dest->tcbArch.tcbVCPU != NULL && dest->tcbAffinity != sc->scCore) {
+            slowpath(SysSend);
+        }
+#endif
     }
 
     /* Only fastpath signal to threads which will not become the new highest prio thread on the

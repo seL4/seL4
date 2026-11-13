@@ -21,3 +21,10 @@ void Arch_prepareSetDomain(tcb_t *tptr, dom_t dom)
 {
     /* Don't need to do anything */
 }
+
+#ifdef ENABLE_SMP_SUPPORT
+void Arch_prepareMigrateTCB(tcb_t *tptr)
+{
+    /* Don't need to do anything */
+}
+#endif /* ENABLE_SMP_SUPPORT */

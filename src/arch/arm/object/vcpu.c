@@ -270,11 +270,43 @@ void vcpu_flush(void)
     }
 }
 
+#ifdef ENABLE_SMP_SUPPORT
+/* If the VCPU is running on another core, flush it.
+ *
+ * This relies on (and helps to establish) the invariant that the VCPU only runs
+ * on the core that the associated TCB runs on.
+ */
+static void vcpu_flush_remote(vcpu_t *vcpu)
+{
+    tcb_t *tcb = vcpu->vcpuTCB;
+
+    if (tcb != NULL) {
+        word_t core = tcb->tcbAffinity;
+        if (core != getCurrentCPUIndex() && ARCH_NODE_STATE_ON_CORE(armHSCurVCPU, core) == vcpu) {
+            remoteTCBStall(tcb);
+            doRemoteOp1Arg(IpiRemoteCall_VCPUFlush, (word_t)vcpu, core);
+        }
+    }
+}
+
+void handleVCPUFlushIPI(vcpu_t *vcpu)
+{
+    if (ARCH_NODE_STATE(armHSCurVCPU) == vcpu) {
+        vcpu_flush();
+    }
+}
+#endif /* ENABLE_SMP_SUPPORT */
+
 void vcpu_flush_if_current(tcb_t *tptr)
 {
     if (tptr->tcbArch.tcbVCPU == ARCH_NODE_STATE(armHSCurVCPU)) {
         vcpu_flush();
     }
+#ifdef ENABLE_SMP_SUPPORT
+    else if (tptr->tcbArch.tcbVCPU != NULL) {
+        vcpu_flush_remote(tptr->tcbArch.tcbVCPU);
+    }
+#endif /* ENABLE_SMP_SUPPORT */
 }
 
 void vcpu_finalise(vcpu_t *vcpu)
@@ -298,6 +330,13 @@ void associateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
     if (tcb == NODE_STATE(ksCurThread)) {
         vcpu_switch(vcpu);
     }
+#ifdef ENABLE_SMP_SUPPORT
+    else {
+        /* If the TCB is running on another core, make sure that it is
+         * interrupted and picks up the VCPU. */
+        remoteTCBStall(tcb);
+    }
+#endif /* ENABLE_SMP_SUPPORT */
 }
 
 void dissociateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
@@ -308,6 +347,11 @@ void dissociateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
     if (vcpu == ARCH_NODE_STATE(armHSCurVCPU)) {
         vcpu_invalidate_active();
     }
+#ifdef ENABLE_SMP_SUPPORT
+    else {
+        vcpu_flush_remote(vcpu);
+    }
+#endif /* ENABLE_SMP_SUPPORT */
     tcb->tcbArch.tcbVCPU = NULL;
     vcpu->vcpuTCB = NULL;
 
@@ -321,6 +365,10 @@ void dissociateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
 
 exception_t invokeVCPUWriteReg(vcpu_t *vcpu, word_t field, word_t value)
 {
+#ifdef ENABLE_SMP_SUPPORT
+    /* If the VCPU is running on another core, stop it first, so that values are in memory. */
+    vcpu_flush_remote(vcpu);
+#endif /* ENABLE_SMP_SUPPORT */
     writeVCPUReg(vcpu, field, value);
     return EXCEPTION_NONE;
 }
@@ -350,6 +398,10 @@ exception_t invokeVCPUReadReg(vcpu_t *vcpu, word_t field, bool_t call)
 {
     tcb_t *thread;
     thread = NODE_STATE(ksCurThread);
+#ifdef ENABLE_SMP_SUPPORT
+    /* If the VCPU is running on another core, memory value are out of date, so flush first. */
+    vcpu_flush_remote(vcpu);
+#endif /* ENABLE_SMP_SUPPORT */
     word_t value = readVCPUReg(vcpu, field);
     if (call) {
         word_t *ipcBuffer = lookupIPCBuffer(true, thread);

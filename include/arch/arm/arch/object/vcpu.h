@@ -133,6 +133,7 @@ void vcpu_flush(void);
 void vcpu_flush_if_current(tcb_t *tptr);
 #ifdef ENABLE_SMP_SUPPORT
 void handleVCPUInjectInterruptIPI(vcpu_t *vcpu, unsigned long index, virq_t virq);
+void handleVCPUFlushIPI(vcpu_t *vcpu);
 #endif /* ENABLE_SMP_SUPPORT */
 
 exception_t decodeVCPUWriteReg(cap_t cap, word_t length, word_t *buffer);

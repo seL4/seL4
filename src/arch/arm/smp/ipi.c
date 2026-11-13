@@ -56,6 +56,10 @@ void handleRemoteCall(IpiRemoteCall_t call, word_t arg0, word_t arg1, word_t arg
             handleVCPUInjectInterruptIPI((vcpu_t *) arg0, arg1, virq);
             break;
         }
+
+        case IpiRemoteCall_VCPUFlush:
+            handleVCPUFlushIPI((vcpu_t *) arg0);
+            break;
 #endif
 
         default:

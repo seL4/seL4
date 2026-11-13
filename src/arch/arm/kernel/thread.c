@@ -24,3 +24,13 @@ void Arch_prepareSetDomain(tcb_t *tptr, dom_t dom)
         vcpu_flush_if_current(tptr);
     }
 }
+
+#ifdef ENABLE_SMP_SUPPORT
+void Arch_prepareMigrateTCB(tcb_t *tptr)
+{
+    /* Flush VCPU before thread migration to avoid inconsistent state */
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        vcpu_flush_if_current(tptr);
+    }
+}
+#endif /* ENABLE_SMP_SUPPORT */

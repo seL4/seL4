@@ -166,6 +166,9 @@ void Arch_configureIdleThread(tcb_t *tcb);
 void Arch_activateIdleThread(tcb_t *tcb);
 void Arch_prepareNextDomain(void);
 void Arch_prepareSetDomain(tcb_t *tcb, dom_t dom);
+#ifdef ENABLE_SMP_SUPPORT
+void Arch_prepareMigrateTCB(tcb_t *tcb);
+#endif /* ENABLE_SMP_SUPPORT */
 
 void NORETURN idle_thread(void);
 
