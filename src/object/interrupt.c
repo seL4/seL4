@@ -249,7 +249,7 @@ void handleInterrupt(irq_t irq)
 
 #ifdef ENABLE_SMP_SUPPORT
     case IRQIPI:
-        handleIPI(irq, true);
+        handleIPI(irq);
         break;
 #endif /* ENABLE_SMP_SUPPORT */
 

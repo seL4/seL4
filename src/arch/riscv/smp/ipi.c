@@ -13,42 +13,24 @@
 
 static volatile irq_t ipiIrq[CONFIG_MAX_NUM_NODES];
 
-/*
- * Set ipiIrq to irq_remote_call_ipi so handleInterrupts calls us again
- * instead of reporting a spurious interrupt, and ignore that extra call
- * by checking clh_is_ipi_pending().
- * If it's irq_reschedule_ipi, let handleInterrupts handle it as usual.
- */
-void handleRemoteCall(IpiRemoteCall_t call, word_t arg0, word_t arg1, word_t arg2, bool_t irqPath)
+void arch_handleRemoteCall(IpiRemoteCall_t call, word_t arg0, word_t arg1, word_t arg2)
 {
-    word_t core = getCurrentCPUIndex();
-
-    if (clh_is_ipi_pending(core)) {
-        if (ipiIrq[core] == irqInvalid) {
-            ipiIrq[core] = irq_remote_call_ipi;
-        }
-        switch (call) {
-        case IpiRemoteCall_Stall:
-            /* This never returns if irqPath is false: */
-            ipiStallCoreCallback(irqPath);
-            break;
-
+    switch (call) {
+    case IpiRemoteCall_Stall:
+        ipiStallCoreCallback();
+        break;
 #ifdef CONFIG_HAVE_FPU
-        case IpiRemoteCall_switchFpuOwner:
-            switchLocalFpuOwner((tcb_t *)arg0);
-            break;
+    case IpiRemoteCall_switchFpuOwner:
+        switchLocalFpuOwner(NULL);
+        break;
 #endif /* CONFIG_HAVE_FPU */
-
-        default:
-            fail("Invalid remote call");
-            break;
-        }
-        big_kernel_lock.node[core].ipi = 0;
-        ipi_wait();
+    default:
+        fail("Invalid remote call");
+        break;
     }
 }
 
-void ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
+void arch_ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
 {
     generic_ipi_send_mask(ipi, mask, isBlocking);
 }
@@ -66,20 +48,24 @@ void ipi_clear_irq(irq_t irq)
     word_t core = getCurrentCPUIndex();
 
     ipiIrq[core] = irqInvalid;
+    /* This should probably be a dedicated IPI instead of a side-effect. */
+    ifence_local();
 }
 
 /* this function is called with a single hart id. */
-void ipi_send_target(irq_t irq, word_t hart_id)
+void arch_ipi_send_target(irq_t irq, word_t hart_id)
 {
     word_t hart_mask = BIT(hart_id);
     word_t core = hartIDToCoreID(hart_id);
 
     assert(core < CONFIG_MAX_NUM_NODES);
-
-    /* Use clh_is_ipi_pending to check for pending call IPIs, ipiIrq
-     * is only used for reschedule and to avoid spurious IRQs. */
-    if (irq == irq_reschedule_ipi) {
-        ipiIrq[core] = irq_reschedule_ipi;
+    /*
+     * clh_is_ipi_pending() is used to check for pending call IPIs,
+     * ipiIrq is only used for reschedule and to avoid spurious IRQs.
+     * Don't overwrite reschedule IPIs, otherwise they will be lost.
+     */
+    if (ipiIrq[core] != irq_reschedule_ipi) {
+        ipiIrq[core] = irq;
     }
     fence_rw_rw();
     sbi_send_ipi(hart_mask);

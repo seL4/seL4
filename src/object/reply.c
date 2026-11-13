@@ -134,3 +134,26 @@ void reply_remove_tcb(tcb_t *tcb)
     reply->replyNext = call_stack_new(0, false);
     reply_unlink(reply, tcb);
 }
+
+#ifdef ENABLE_SMP_SUPPORT
+/*
+ * Handle the obscure corner case where someone on another core than
+ * the donated SC replies. This should match the call path:
+ * reply_remove() -> reply_pop() -> schedContext_donate() -> rescheduleRequired()
+ */
+bool_t reply_can_remove_smp(reply_t *reply, tcb_t *tcb)
+{
+    call_stack_t next = reply->replyNext;
+    word_t sc_ptr = call_stack_get_callStackPtr(next);
+
+    if (likely(sc_ptr && call_stack_get_isHead(next)) && tcb->tcbSchedContext == NULL) {
+        sched_context_t *sc = SC_PTR(sc_ptr);
+        tcb_t *from = sc->scTcb;
+
+        if (from) {
+            return remoteTCBStall(from);
+        }
+    }
+    return true;
+}
+#endif

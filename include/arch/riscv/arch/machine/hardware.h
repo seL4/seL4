@@ -134,9 +134,3 @@ static inline void arch_clean_invalidate_caches(void)
 
 #define LOAD_S STRINGIFY(LOAD)
 #define STORE_S STRINGIFY(STORE)
-
-#define IPI_MEM_BARRIER \
-    do { \
-        asm volatile("fence rw,rw" ::: "memory"); \
-    } while (0)
-

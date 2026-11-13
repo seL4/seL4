@@ -34,7 +34,7 @@ void VISIBLE NORETURN restore_user_context(void)
     set_tcb_fs_state(NODE_STATE(ksCurThread), isFpuEnable());
 #endif
 
-    NODE_UNLOCK_IF_HELD;
+    NODE_UNLOCK;
 
     asm volatile(
         "mv t0, %[cur_thread]       \n"
