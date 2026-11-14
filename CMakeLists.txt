@@ -166,6 +166,7 @@ add_compile_options(
   #-----------------------------------
   -Wall
   -Werror
+  -Wconversion
   -Wstrict-prototypes
   -Wmissing-prototypes
   -Wnested-externs
