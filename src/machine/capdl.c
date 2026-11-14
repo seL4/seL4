@@ -204,10 +204,18 @@ void cap_cnode_print_attrs(cap_t cnode)
 void cap_ep_print_attrs(cap_t ep)
 {
     printf("(");
-    cap_endpoint_cap_get_capCanReceive(ep) ? putchar('R') : 0;
-    cap_endpoint_cap_get_capCanSend(ep) ? putchar('W') : 0;
-    cap_endpoint_cap_get_capCanGrant(ep) ? putchar('G') : 0;
-    cap_endpoint_cap_get_capCanGrantReply(ep) ? putchar('P') : 0;
+    if (cap_endpoint_cap_get_capCanReceive(ep)) {
+        putchar('R');
+    }
+    if (cap_endpoint_cap_get_capCanSend(ep)) {
+        putchar('W');
+    }
+    if (cap_endpoint_cap_get_capCanGrant(ep)) {
+        putchar('G');
+    }
+    if (cap_endpoint_cap_get_capCanGrantReply(ep)) {
+        putchar('P');
+    }
     long unsigned int badge = cap_endpoint_cap_get_capEPBadge(ep);
     badge ? printf(", badge: %lu)\n", badge) : printf(")\n");
 }
@@ -215,8 +223,12 @@ void cap_ep_print_attrs(cap_t ep)
 void cap_ntfn_print_attrs(cap_t ntfn)
 {
     printf("(");
-    cap_notification_cap_get_capNtfnCanReceive(ntfn) ? putchar('R') : 0;
-    cap_notification_cap_get_capNtfnCanSend(ntfn) ? putchar('W') : 0;
+    if (cap_notification_cap_get_capNtfnCanReceive(ntfn)) {
+        putchar('R');
+    }
+    if (cap_notification_cap_get_capNtfnCanSend(ntfn)) {
+        putchar('W');
+    }
     long unsigned int badge = cap_notification_cap_get_capNtfnBadge(ntfn);
     badge ? printf(", badge: %lu)\n", badge) : printf(")\n");
 }
