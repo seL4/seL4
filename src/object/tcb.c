@@ -118,6 +118,7 @@ void tcbSchedEnqueue(tcb_t *tcb)
     assert(isSchedulable(tcb));
     assert(refill_sufficient(tcb->tcbSchedContext, 0));
 #endif
+    assert(tcb != NODE_STATE(ksIdleThread));
 
     if (!thread_state_get_tcbQueued(tcb->tcbState)) {
         tcb_queue_t queue;
@@ -468,6 +469,7 @@ void remoteTCBStall(tcb_t *tcb)
 
     if (
 #ifdef CONFIG_KERNEL_MCS
+// XX: Why is this correct?
         tcb->tcbSchedContext &&
 #endif
         tcb->tcbAffinity != getCurrentCPUIndex() &&

@@ -120,6 +120,10 @@ extern paddr_t ksUserLogBuffer;
 #define SchedulerAction_ResumeCurrentThread ((tcb_t*)0)
 #define SchedulerAction_ChooseNewThread ((tcb_t*) 1)
 
+#define SchedulerAction_IsCandidateThread(schedulerAction) \
+    ((schedulerAction) != SchedulerAction_ResumeCurrentThread && \
+     (schedulerAction) != SchedulerAction_ChooseNewThread)
+
 #define MODE_NODE_STATE(_state)    MODE_NODE_STATE_ON_CORE(_state, getCurrentCPUIndex())
 #define ARCH_NODE_STATE(_state)    ARCH_NODE_STATE_ON_CORE(_state, getCurrentCPUIndex())
 #define NODE_STATE(_state)         NODE_STATE_ON_CORE(_state, getCurrentCPUIndex())
