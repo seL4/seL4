@@ -194,6 +194,12 @@
 
 #define ID_AA64MMFR0_EL1_PARANGE(x) ((x) & 0xf)
 #define ID_AA64MMFR0_TGRAN4(x)      (((x) >> 28u) & 0xf)
+#define ID_AA64MMFR0_TGRAN4_2(x)    (((x) >> 40u) & 0xf)
+#define TGRAN4_4K                  0u
+#define TGRAN4_4K_LPA2             1u
+#define TGRAN4_2_USE_TGRAN4        0u
+#define TGRAN4_2_4K                2u
+#define TGRAN4_2_4K_LPA2           3u
 
 /* Shareability attributes */
 #define SH0_NONE            0
@@ -727,7 +733,7 @@ static inline void vcpu_init_vtcr(void)
 {
 
     /* check that the processor supports the configuration */
-    uint32_t val;
+    uint64_t val;
     MRS(REG_ID_AA64MMFR0_EL1, val);
     uint32_t pa_range = ID_AA64MMFR0_EL1_PARANGE(val);
     if (config_set(CONFIG_ARM_PA_SIZE_BITS_40) && pa_range < PS_1T) {
@@ -736,9 +742,14 @@ static inline void vcpu_init_vtcr(void)
     if (config_set(CONFIG_ARM_PA_SIZE_BITS_44) && pa_range < PS_16T) {
         fail("Processor does not support a 44 bit PA");
     }
-    uint32_t granule = ID_AA64MMFR0_TGRAN4(val);
-    if (granule) {
-        fail("Processor does not support 4KB");
+    uint32_t stage2_granule = ID_AA64MMFR0_TGRAN4_2(val);
+    bool_t stage2_4k = stage2_granule == TGRAN4_2_4K || stage2_granule == TGRAN4_2_4K_LPA2;
+    if (stage2_granule == TGRAN4_2_USE_TGRAN4) {
+        uint32_t granule = ID_AA64MMFR0_TGRAN4(val);
+        stage2_4k = granule == TGRAN4_4K || granule == TGRAN4_4K_LPA2;
+    }
+    if (!stage2_4k) {
+        fail("Processor does not support 4KB at stage 2");
     }
 
     /* Set up the stage-2 translation control register for cores supporting 44-bit PA */
