@@ -38,12 +38,9 @@
 #define PLIC_PPTR_BASE          PLIC_PPTR
 
 
-#define PLIC_HART_ID (CONFIG_FIRST_HART_ID)
-
 #define PLIC_PRIO               0x0
 #define PLIC_PRIO_PER_ID        0x4
 
-#define PLIC_PENDING            0x1000
 #define PLIC_EN                 0x2000
 #define PLIC_EN_PER_HART        0x100
 #define PLIC_EN_PER_CONTEXT     0x80
@@ -103,17 +100,6 @@ static inline word_t plic_claim_offset(word_t hart_id, word_t context_id)
 {
     word_t addr = plic_thres_offset(hart_id, context_id) + PLIC_THRES_CLAIM;
     return addr;
-}
-
-static inline bool_t plic_pending_interrupt(word_t interrupt)
-{
-    word_t addr = PLIC_PPTR_BASE + PLIC_PENDING + (interrupt / 32) * 4;
-    word_t bit = interrupt % 32;
-    if (readl(addr) & BIT(bit)) {
-        return true;
-    } else {
-        return false;
-    }
 }
 
 /* The PLIC has separate register sets for each hart and the hart's context.
@@ -176,20 +162,11 @@ static inline void plic_init_hart(void)
 
 static inline void plic_init_controller(void)
 {
-
-    for (int i = 1; i <= PLIC_NUM_INTERRUPTS; i++) {
-        /* Clear all pending bits */
-        if (plic_pending_interrupt(i)) {
-            readl(PLIC_PPTR_BASE + plic_claim_offset(PLIC_HART_ID, PLIC_SVC_CONTEXT));
-            writel(i, PLIC_PPTR_BASE + plic_claim_offset(PLIC_HART_ID, PLIC_SVC_CONTEXT));
-        }
-    }
-
-    /* Set the priorities of all interrupts to 1 */
+    /* The boot hart has already masked all sources. Pending interrupts are
+     * claimed normally once their sources are unmasked. */
     for (int i = 1; i <= PLIC_MAX_IRQ; i++) {
         writel(2, PLIC_PPTR_BASE + PLIC_PRIO + PLIC_PRIO_PER_ID * i);
     }
-
 }
 
 
