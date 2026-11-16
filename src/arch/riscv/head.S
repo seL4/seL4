@@ -24,8 +24,7 @@ _start:
   fence.i
 .option push
 .option norelax
-1:auipc gp, %pcrel_hi(__global_pointer$)
-  addi  gp, gp, %pcrel_lo(1b)
+  lla gp, __global_pointer$
 .option pop
   la sp, (kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS))
   csrw sscratch, x0 /* zero sscratch for the init task */
