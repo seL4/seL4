@@ -21,6 +21,7 @@ typedef enum {
 #endif
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     IpiRemoteCall_VCPUInjectInterrupt,
+    IpiRemoteCall_VCPUFlush,
 #endif
     /* Add relevant calls here upon required */
     IpiNumArchRemoteCall
