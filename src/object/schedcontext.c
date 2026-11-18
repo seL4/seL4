@@ -407,8 +407,7 @@ void schedContextMaybeUnbindNtfn(notification_t *ntfnPtr)
 void schedContext_unbindReply(sched_context_t *sc)
 {
     if (sc && sc->scReply) {
-        assert(call_stack_get_isHead(sc->scReply->replyNext));
-        sc->scReply->replyNext = call_stack_new(0, false);
+        sc->scReply->replySC = NULL;
         sc->scReply = NULL;
     }
 }
