@@ -35,6 +35,9 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
 - x64: clear CR0.CD and CR0.NW when enabling paging so caches are enabled on all cores, rather than relying on
   firmware or the AP trampoline to leave them clear.
 - VT-x: always intercept guest writes to CR0.CD, CR0.NW and the reserved CR0 bits.
+- x86: get the TSC frequency from CPUID leaves 0x15 and 0x16 when available, falling back to the existing
+  MSR_PLATFORM_INFO and PIT methods otherwise. This fixes the TSC frequency being measured too high on
+  recent Intel platforms with a broken PIT. The TSC frequency is now printed at boot for the user to check.
 
 ### Upgrade Notes
 
