@@ -231,7 +231,7 @@ SEL4_SIZE_SANITY(seL4_VSpaceEntryBits, seL4_VSpaceIndexBits, seL4_VSpaceBits);
 
 #ifdef CONFIG_ENABLE_BENCHMARKS
 /* size of kernel log buffer in bytes */
-#define seL4_LogBufferSize (LIBSEL4_BIT(20))
+#define seL4_LogBufferSize (LIBSEL4_BIT(ARMLargePage))
 #endif /* CONFIG_ENABLE_BENCHMARKS */
 
 #define seL4_FastMessageRegisters 4

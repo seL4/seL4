@@ -237,7 +237,7 @@ SEL4_SIZE_SANITY(seL4_PGDEntryBits, seL4_PGDIndexBits, seL4_PGDBits);
 
 #ifdef CONFIG_ENABLE_BENCHMARKS
 /* size of kernel log buffer in bytes */
-#define seL4_LogBufferSize (LIBSEL4_BIT(20))
+#define seL4_LogBufferSize (LIBSEL4_BIT(seL4_SectionBits))
 #endif /* CONFIG_ENABLE_BENCHMARKS */
 
 #define seL4_FastMessageRegisters 4
