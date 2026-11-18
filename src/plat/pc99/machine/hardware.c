@@ -73,12 +73,64 @@ BOOT_CODE static inline uint32_t measure_tsc_khz(void)
     return 0;
 }
 
+#define TSC_AND_CRYSTAL_CLK_LEAF 0x15
+#define CPUID_PROC_FREQ_LEAF 0x16
+
 BOOT_CODE uint32_t tsc_init(void)
 {
 
 #if CONFIG_PC99_TSC_FREQUENCY > 0
-    return CONFIG_PC99_TSC_FREQUENCY / 1000000;
+    uint32_t config_tsc_mhz = CONFIG_PC99_TSC_FREQUENCY / 1000000;
+    printf("tsc configured to %u MHz\n", config_tsc_mhz);
+    return config_tsc_mhz;
 #endif
+
+    cpu_identity_t *x86_cpuid_identity = x86_cpuid_get_identity();
+    if (x86_cpuid_identity->vendor == X86_VENDOR_INTEL) {
+        /*
+         * See Intel SDM (Sep 2026),
+         * section "CPUID.15H -- Time Stamp Counter and Nominal Core Crystal Clock",
+         * page "Vol. 1 21-59".
+         *
+         * > CPUID.15H returns information about the Time Stamp Counter and the Nominal Core Crystal Clock.
+         * > • This leaf is valid if MAX_LEAF ≥ 15H.
+         * > • This leaf does not contain sub-leaves and provides the same information regardless of the value of ECX. */
+
+        /*
+         * Get `MAX_LEAF`, see section "CPUID.00H -- Maximum Input for Basic CPUID and Vendor ID"
+         * Page "Vol. 1 21-7"
+         */
+        uint32_t max_leaf = x86_cpuid_eax(0, 0);
+        if (max_leaf >= TSC_AND_CRYSTAL_CLK_LEAF) {
+            /*
+             * Section "CPUID.15H"
+             * > Dividing EBX[31:0] by EAX[31:0] provides the ratio of the TSC frequency to the
+             * > core crystal clock frequency. The Timestamp Counter frequency is computed by
+             * > multiplying that ratio by ECX[31:0], such as TSC_frequency = ECX * EBX/EAX.
+             */
+            uint64_t denominator = x86_cpuid_eax(TSC_AND_CRYSTAL_CLK_LEAF, 0);
+            uint64_t numerator = x86_cpuid_ebx(TSC_AND_CRYSTAL_CLK_LEAF, 0);
+            uint64_t crystal_hz = x86_cpuid_ecx(TSC_AND_CRYSTAL_CLK_LEAF, 0);
+
+            /* See Table 21-53, `numerator` and `crystal_hz` may not be always enumerated by the silicon.
+             * Also check the `denominator` be safe. */
+            if (numerator && denominator) {
+                if (!crystal_hz && max_leaf >= CPUID_PROC_FREQ_LEAF) {
+                    /*
+                     * Some CPU models from the Skylake era don't report the crystal frequency,
+                     * but we can calculate it by considering the CPU base frequency.
+                     * From Linux: https://github.com/torvalds/linux/blob/666539eecdf4db623f5e3c3e55cf9f2dfad24aa4/arch/x86/kernel/tsc.c#L690-L702 */
+                    uint64_t proc_base_mhz = x86_cpuid_eax(CPUID_PROC_FREQ_LEAF, 0);
+                    crystal_hz = proc_base_mhz * 1000000ull * denominator / numerator;
+                }
+                if (crystal_hz) {
+                    uint64_t tsc_hz = crystal_hz * numerator / denominator;
+                    printf("tsc computed from method #1: %llu MHz\n", tsc_hz / 1000000ull);
+                    return tsc_hz / 1000000ull;
+                }
+            }
+        }
+    }
 
     x86_cpu_identity_t *model_info = x86_cpuid_get_model_info();
     uint32_t valid_models[] = {
@@ -104,15 +156,19 @@ BOOT_CODE uint32_t tsc_init(void)
                 if (info.success) {
                     uint32_t ratio = (((uint32_t) info.value) & 0xFF00) >> 8u;
                     /* Ignore hardware that claims a tsc frequency of zero */
+                    uint64_t tsc_mhz;
                     if (ratio != 0) {
                         /* Convert to MHz */
                         if (model_info->model == NEHALEM_1_MODEL_ID ||
                             model_info->model == NEHALEM_2_MODEL_ID ||
                             model_info->model == NEHALEM_3_MODEL_ID) {
-                            return ratio * 13333u / 100u;
+                            tsc_mhz = ratio * 13333u / 100u;
                         } else {
-                            return ratio * 100u;
+                            tsc_mhz = ratio * 100u;
                         }
+
+                        printf("tsc computed from method #2: %llu MHz\n", tsc_mhz);
+                        return tsc_mhz;
                     }
                 }
                 /* We just found the matching model, so no point continuing the search */
@@ -129,6 +185,8 @@ BOOT_CODE uint32_t tsc_init(void)
 
     /* count tsc ticks per ms */
     uint32_t tsc_khz = measure_tsc_khz();
+
+    printf("tsc measured with pit: %u MHz\n", tsc_khz / 1000u);
 
     /* finally, return mhz */
     return tsc_khz / 1000u;
