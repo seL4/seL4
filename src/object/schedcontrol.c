@@ -15,10 +15,13 @@ static exception_t invokeSchedControl_ConfigureFlags(sched_context_t *target, wo
 {
     tcb_t *thread = target->scTcb;
 
+#ifdef ENABLE_SMP_SUPPORT
+    if (thread && !remoteTCBStall(thread)) {
+        return EXCEPTION_PREEMPTED;
+    }
+#endif
     /* don't modify parameters of thread while it is in a sorted queue */
     if (thread) {
-        /* possibly stall a remote core */
-        SMP_COND_STATEMENT(remoteTCBStall(thread));
         /* remove from scheduler */
         tcbReleaseRemove(thread);
         tcbSchedDequeue(thread);
