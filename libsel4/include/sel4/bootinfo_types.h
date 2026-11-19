@@ -59,7 +59,24 @@ typedef struct seL4_BootInfo {
     seL4_NodeId       nodeID;          /* ID [0..numNodes-1] of the seL4 node (0 if uniprocessor) */
     seL4_Word         numNodes;        /* number of seL4 nodes (1 if uniprocessor) */
     seL4_Word         numIOPTLevels;   /* number of IOMMU PT levels (0 if no IOMMU support) */
-    seL4_IPCBuffer   *ipcBuffer;       /* pointer to initial thread's IPC buffer */
+    seL4_IPCBuffer   *__user ipcBuffer; /* pointer to initial thread's IPC buffer */
+#if defined(CONFIG_HAVE_CHERI) && !__has_feature(capabilities)
+    /* The CHERI-enabled kernel will always use this structure and build ipcBuffer pointer as a
+     * CHERI pointer of size (seL4_Word * 2). However, the user-level's root-task also uses this
+     * header, which may be compiled with or without CHERI support, different from how the kernel
+     * was built (eg different toolchain and/or ABI flags). The kernel doesn't restrict what
+     * the root task could be.
+     * There are 3 modes a root-task could be built in that decide the size of the ipcBuffer pointer:
+     * 1- Purecap: In which case it will be a CHERI pointer of size (seL4_Word*2).
+     * 2- Hybrid: In which case it will also be a CHERI pointer in case the user wants protected as a CHERI
+     * pointer, otherwise, it could just extract the integer address of it.
+     * 3- Legacy: Built without CHERI support (eg No CHERI ABI/Arch-extension), or with different a toolchain,
+     * or even in a different language like Rust. In which case, the ipcBuffer will be an integer pointer of
+     * size seL4_Word, but the kernel's would still be a CHERI pointer of (seL4_Word*2). So the following
+     * padding in necessary to make this configuration and struct fields match between the user and kernel.
+     */
+    seL4_Word         padding;
+#endif
     seL4_SlotRegion   empty;           /* empty slots (null caps) */
     seL4_SlotRegion   sharedFrames;    /* shared-frame caps (shared between seL4 nodes) */
     seL4_SlotRegion   userImageFrames; /* userland-image frame caps */

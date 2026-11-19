@@ -1,6 +1,7 @@
 /*
  * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+ * Copyright 2024-2026, Capabilities Limited
  *
  * SPDX-License-Identifier: GPL-2.0-only
  */
@@ -22,12 +23,13 @@
 void VISIBLE NORETURN restore_user_context(void)
 {
     word_t cur_thread_reg = (word_t) NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers;
+
     c_exit_hook();
 
 #ifdef ENABLE_SMP_SUPPORT
     word_t sp = read_sscratch();
-    sp -= sizeof(word_t);
-    *((word_t *)sp) = cur_thread_reg;
+    sp -= sizeof(rword_t);
+    *((rword_t *)sp) = cur_thread_reg;
 #endif
 
 #ifdef CONFIG_HAVE_FPU
@@ -37,7 +39,20 @@ void VISIBLE NORETURN restore_user_context(void)
     NODE_UNLOCK_IF_HELD;
 
     asm volatile(
+#if defined(CONFIG_HAVE_CHERI)
+        /* Run the following assembly code in capability mode
+         * so that we avoid invalid user's DDC being written
+         * and faulting the hybrid kernel.
+         */
+        "ymodeswy                                          \n"
+        ".option push                                      \n"
+        ".option capmode                                   \n"
+        "auipc t1, 0                                       \n"
+        MOVE   " t0, %[cur_thread]                         \n"
+        "yaddrw t0, t1, t0                                 \n"
+#else
         "mv t0, %[cur_thread]       \n"
+#endif
         LOAD_S " ra, (0*%[REGSIZE])(t0)  \n"
         LOAD_S "  sp, (1*%[REGSIZE])(t0)  \n"
         LOAD_S "  gp, (2*%[REGSIZE])(t0)  \n"
@@ -45,7 +60,11 @@ void VISIBLE NORETURN restore_user_context(void)
         /* skip t0/x5, t1/x6, they are restored later */
         /* no-op store conditional to clear monitor state */
         /* this may succeed in implementations with very large reservations, but the saved ra is dead */
+#if defined(CONFIG_HAVE_CHERI)
+        "sc.y zero, zero, (t0)\n"
+#else
         "sc.w zero, zero, (t0)\n"
+#endif
         LOAD_S "  t2, (6*%[REGSIZE])(t0)  \n"
         LOAD_S "  s0, (7*%[REGSIZE])(t0)  \n"
         LOAD_S "  s1, (8*%[REGSIZE])(t0)  \n"
@@ -74,6 +93,11 @@ void VISIBLE NORETURN restore_user_context(void)
         /* get sepc */
         LOAD_S "  t1, (34*%[REGSIZE])(t0)\n"
         "csrw sepc, t1  \n"
+#if defined(CONFIG_HAVE_CHERI)
+        /* get DDC */
+        LOAD_S " t1, (35*%[REGSIZE])(t0) \n"
+        "csrw    ddc, t1 \n"
+#endif
 #ifndef ENABLE_SMP_SUPPORT
         /* Write back sscratch with cur_thread_reg to get it back on the next trap entry */
         "csrw sscratch, t0         \n"
@@ -83,9 +107,12 @@ void VISIBLE NORETURN restore_user_context(void)
 
         LOAD_S "  t1, (5*%[REGSIZE])(t0) \n"
         LOAD_S "  t0, (4*%[REGSIZE])(t0) \n"
-        "sret"
+        "sret\n"
+#if defined(CONFIG_HAVE_CHERI)
+        ".option pop                     \n"
+#endif
         : /* no output */
-        : [REGSIZE] "i"(sizeof(word_t)),
+        : [REGSIZE] "i"(sizeof(rword_t)),
         [cur_thread] "r"(cur_thread_reg)
         : "memory"
     );
@@ -130,6 +157,13 @@ void VISIBLE NORETURN c_handle_exception(void)
     case RISCVLoadPageFault:
     case RISCVStorePageFault:
     case RISCVInstructionPageFault:
+#if defined(CONFIG_HAVE_CHERI)
+    case RISCVYInstructionAccessFault:
+    case RISCVYLoadAccessFault:
+    case RISCVYLoadCapabilityFault:
+    case RISCVYStorePageFault:
+    case RISCVYStoreAccessFault:
+#endif
         handleVMFaultEvent(scause);
         break;
     default:

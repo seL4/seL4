@@ -78,8 +78,15 @@ enum vm_fault_type {
     RISCVInstructionPageFault = 12,
     RISCVLoadPageFault = 13,
     /* 14 - reserved */
-    RISCVStorePageFault = 15
-                          /* >= 16 reserved */
+    RISCVStorePageFault = 15,
+#if defined(CONFIG_HAVE_CHERI)
+    RISCVYInstructionAccessFault = 32,
+    RISCVYLoadAccessFault = 33,
+    RISCVYStoreAccessFault = 34,
+    RISCVYLoadCapabilityFault = 35,
+    RISCVYStorePageFault = 36,
+#endif
+                      /* >= 16 reserved */
 };
 typedef word_t vm_fault_type_t;
 
