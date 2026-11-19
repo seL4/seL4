@@ -53,13 +53,19 @@
                         CR_USER_CACHE_OPS_SET | \
                         BIT(CONTROL_M))
 
+/* SA0 and E0E only exist in SCTLR_EL1; they are reserved in SCTLR_EL2. */
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+#define CR_BITS_CLEAR_EL1 0
+#else
+#define CR_BITS_CLEAR_EL1 (BIT(CONTROL_SA0) | BIT(CONTROL_E0E))
+#endif
+
 #define CR_BITS_CLEAR  (CR_ALIGN_CLEAR | \
                         CR_L1_ICACHE_CLEAR | \
                         CR_L1_DCACHE_CLEAR | \
                         CR_USER_CACHE_OPS_CLEAR | \
-                        BIT(CONTROL_SA0) | \
-                        BIT(CONTROL_EE) | \
-                        BIT(CONTROL_E0E))
+                        CR_BITS_CLEAR_EL1 | \
+                        BIT(CONTROL_EE))
 
 /*
  * Entry point of the kernel ELF image.
