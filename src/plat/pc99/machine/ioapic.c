@@ -189,3 +189,8 @@ void ioapic_map_pin_to_vector(word_t ioapic, word_t pin, word_t level,
     ioredtbl_state[index] |= ioapic_read(ioapic, IOAPIC_WINDOW) & ~MASK(16);
     ioapic_write(ioapic, IOAPIC_WINDOW, ioredtbl_state[index]);
 }
+
+word_t ioapic_get_vector(word_t ioapic, word_t pin)
+{
+    return ioredtbl_state[ioapic * IOAPIC_IRQ_LINES + pin] & 0xff;
+}
