@@ -36,6 +36,12 @@ description indicates whether it is SOURCE-COMPATIBLE, BINARY-COMPATIBLE, or BRE
   firmware or the AP trampoline to leave them clear.
 - VT-x: always intercept guest writes to CR0.CD, CR0.NW and the reserved CR0 bits.
 
+## MCS
+
+* To grant capabilities when replying to a call in MCS configurations, it is now necessary to have grant rights on both
+  the reply cap and the endpoint cap used to receive the call. Previously, the grant right on the endpoint cap was
+  ignored in MCS configurations.
+
 ### Upgrade Notes
 
 - x86 VT-x: CR0.CD, CR0.NW and the reserved CR0 bits (28:19, 17 and 15:6) are now always set in the CR0 guest/host

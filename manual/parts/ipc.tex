@@ -260,8 +260,10 @@ directly addressed with any CPtr as it is not part of any CSpace.
 A reply capability is invoked in the same way as a normal send on a
 \obj{Endpoint}. A reply capability has implicitly the Write right, so the
 message will always go through. Transferring caps in the reply can only happen
-if the reply capability has the Grant right and is done in exactly the same way
-as in a normal IPC transfer as described in \autoref{sec:cap-transfer}.
+if the receive endpoint capability had the Grant right at the time
+\apifunc{seL4\_Recv} was called, and if the Grant right on the reply capability
+has not since been removed. The capability transfer is performed as in normal
+IPC transfer as described in \autoref{sec:cap-transfer}.
 
 The main difference with a normal endpoint transfer is that the kernel guarantees
 that invoking a reply capability cannot block: If you own a reply capability,
