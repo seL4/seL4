@@ -7,12 +7,18 @@
 #pragma once
 
 
+#if defined(CONFIG_PLAT_ZYNQMP)
+#define SMMU_SID_CNODE_SLOT_BITS    10
+#define SMMU_CB_CNODE_SLOT_BITS     4
+#define SMMU_NUM_TBUS               6
+#elif defined(CONFIG_PLAT_TX2)
 #define SMMU_SID_CNODE_SLOT_BITS    8
 #define SMMU_CB_CNODE_SLOT_BITS     6
+#endif
 #define SID_INVALID      SMMU_MAX_SID
 #define CB_INVALID       SMMU_MAX_CB
 #define ASID_INVALID     nASIDs
-#define SMMU_SID_TABLE_SIZE (ROUND_UP(SMMU_MAX_SID, wordRadix) >> wordRadix)
+#define SMMU_SID_TABLE_SIZE (ROUND_UP(BIT(SMMU_SID_CNODE_SLOT_BITS), wordRadix) >> wordRadix)
 #define SMMU_CB_TABLE_SIZE  (ROUND_UP(SMMU_MAX_CB, wordRadix) >> wordRadix)
 
 
@@ -31,6 +37,7 @@ exception_t decodeARMCBInvocation(word_t label, word_t length, cptr_t cptr,
                                   cte_t *srcSlot, cap_t cap, bool_t call, word_t *buffer);
 exception_t smmu_delete_cb(cap_t cap);
 exception_t smmu_delete_sid(cap_t cap);
+void smmu_cb_unbind_sid(cap_t cap);
 void smmu_cb_delete_vspace(word_t cb, asid_t asid);
 void invalidateSMMUTLBByASID(asid_t asid, word_t bind_cb);
 void invalidateSMMUTLBByASIDVA(asid_t asid, vptr_t vaddr, word_t bind_cb);
