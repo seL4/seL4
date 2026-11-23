@@ -105,11 +105,11 @@ block x2apic_icr2 {
 block irq_ioapic {
     field   irqType         4
     field   id              5
-    field   pin             5
+    field   pin             8
     field   level           1
     field   polarity_low    1
     field   masked          1
-    padding                 15
+    padding                 12
     padding                 32
 }
 
