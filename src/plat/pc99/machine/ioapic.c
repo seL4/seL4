@@ -42,10 +42,10 @@
 /*
  * Cache what we believe is in the low word of the IOREDTBL. This
  * has all the state of trigger modes etc etc.
- * IOAPIC_IRQ_LINES is the upper bound on the number of lines
+ * ioapicIRQLines is the upper bound on the number of lines
  * per IOAPIC.
  */
-static uint32_t ioredtbl_state[IOAPIC_IRQ_LINES * MAX(1, CONFIG_MAX_NUM_IOAPIC)];
+static uint32_t ioredtbl_state[ioapicIRQLines * MAX(1, CONFIG_MAX_NUM_IOAPIC)];
 /*
  * The number of IRQ lines for each IOAPIC
  */
@@ -75,12 +75,12 @@ static void single_ioapic_init(word_t ioapic)
 
     /*
      * The MRE field of the IOAPICVER register is supposed to only be able to
-     * return a max value of 239, which means a max nirqs value of IOAPIC_IRQ_LINES.
+     * return a max value of 239, which means a max nirqs value of ioapicIRQLines.
      */
-    if (nirqs > IOAPIC_IRQ_LINES) {
+    if (nirqs > ioapicIRQLines) {
         userError("%s: ioapic %lu has %u IRQs,\n"
                   "which is greater than the max handled (%u)\n",
-                  __func__, ioapic, nirqs, IOAPIC_IRQ_LINES);
+                  __func__, ioapic, nirqs, ioapicIRQLines);
         halt();
     }
 
@@ -109,7 +109,7 @@ void ioapic_init(uint32_t num_nodes, cpu_id_t *cpu_list, uint32_t num_ioapic)
 
 void ioapic_mask(bool_t mask, uint32_t ioapic, uint32_t pin)
 {
-    int index = ioapic * IOAPIC_IRQ_LINES + pin;
+    int index = ioapic * ioapicIRQLines + pin;
     if (ioapic >= num_ioapics || pin >= ioapic_nirqs[ioapic]) {
         /* silently ignore requests to non existent parts of the interrupt space */
         return;
@@ -172,7 +172,7 @@ void ioapic_map_pin_to_vector(word_t ioapic, word_t pin, word_t level,
     uint32_t ioredtbl_high = 0;
     uint32_t index = 0;
 
-    index = ioapic * IOAPIC_IRQ_LINES + pin;
+    index = ioapic * ioapicIRQLines + pin;
     ioapic_write(ioapic, IOAPIC_REGSEL, IOREDTBL_HIGH(pin));
     ioredtbl_high = ioapic_read(ioapic, IOAPIC_WINDOW) & MASK(IOREDTBL_HIGH_RESERVED_BITS);
     /* delivery mode: physical mode only, using APIC ID */

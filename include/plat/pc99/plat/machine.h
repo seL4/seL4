@@ -9,7 +9,11 @@
 #include <machine/interrupt.h>
 
 #define PIC_IRQ_LINES 16
-#define IOAPIC_IRQ_LINES 240
+
+/* Use enum to make it visible to the proofs: */
+enum ioapicIRQLines_t {
+    ioapicIRQLines = 240
+};
 
 /* interrupt vectors (corresponds to IDT entries) */
 
