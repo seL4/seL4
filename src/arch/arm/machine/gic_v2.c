@@ -147,6 +147,8 @@ BOOT_CODE static void cpu_iface_init(void)
     gic_cpuiface->icontrol = 1;
 }
 
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 void setIRQTrigger(irq_t irq, bool_t trigger)
 {
     /* in the gic_config, there is a 2 bit field for each irq,
@@ -181,6 +183,8 @@ bool_t plat_SGITargetValid(word_t target)
     return target <= GIC_SGI_NUM_TARGETS - 1;
 }
 
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 void plat_sendSGI(word_t irq, word_t target)
 {
     gic_dist->sgi_control = (BIT(target) << (GICD_SGIR_CPUTARGETLIST_SHIFT)) | (irq << GICD_SGIR_SGIINTID_SHIFT);

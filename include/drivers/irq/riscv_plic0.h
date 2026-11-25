@@ -134,6 +134,8 @@ static inline irq_t plic_get_claim(void)
     return readl(PLIC_PPTR_BASE + plic_claim_offset(hart_id, PLIC_SVC_CONTEXT));
 }
 
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 static inline void plic_complete_claim(irq_t irq)
 {
     /* Complete the IRQ claim by writing back to the claim register. */

@@ -166,6 +166,8 @@ exception_t ioapic_decode_map_pin_to_vector(word_t ioapic, word_t pin, word_t le
     return EXCEPTION_NONE;
 }
 
+/** MODIFIES: [*] ioredtbl_state */
+/** DONT_TRANSLATE */
 void ioapic_map_pin_to_vector(word_t ioapic, word_t pin, word_t level,
                               word_t polarity, word_t vector)
 {

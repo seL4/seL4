@@ -84,6 +84,8 @@ static irq_t active_irq[CONFIG_MAX_NUM_NODES];
  *
  * @return     The active irq or irqInvalid.
  */
+/** MODIFIES: [*] active_irq */
+/** DONT_TRANSLATE */
 static inline irq_t getActiveIRQ(void)
 {
     irq_t *active_irq_slot = &active_irq[CURRENT_CPU_INDEX()];
@@ -180,6 +182,8 @@ static inline bool_t isIRQPending(void)
  * @param[in]  disable  The disable
  * @param[in]  irq      The irq
  */
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 static inline void maskInterrupt(bool_t disable, irq_t irq)
 {
     assert(IS_IRQ_VALID(irq));
