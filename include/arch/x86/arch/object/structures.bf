@@ -108,8 +108,7 @@ block irq_ioapic {
     field   pin             8
     field   level           1
     field   polarity_low    1
-    field   masked          1
-    padding                 12
+    padding                 13
     padding                 32
 }
 
