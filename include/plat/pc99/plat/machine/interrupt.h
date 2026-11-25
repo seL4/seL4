@@ -127,8 +127,6 @@ static inline void maskInterrupt(bool_t disable, irq_t irq)
             uint32_t ioapic = x86_irq_state_irq_ioapic_get_id(state);
             uint32_t pin = x86_irq_state_irq_ioapic_get_pin(state);
             ioapic_mask(disable, ioapic, pin);
-            state =  x86_irq_state_irq_ioapic_set_masked(state, disable);
-            updateIRQState(irq, state);
         }
         break;
         case x86_irq_state_irq_msi:

@@ -61,7 +61,7 @@ static exception_t invokeIssueIRQHandlerIOAPIC(irq_t irq, word_t ioapic, word_t 
                                                word_t vector,
                                                cte_t *handlerSlot, cte_t *controlSlot)
 {
-    x86_irq_state_t irqState = x86_irq_state_irq_ioapic_new(ioapic, pin, level, polarity, 1);
+    x86_irq_state_t irqState = x86_irq_state_irq_ioapic_new(ioapic, pin, level, polarity);
     ioapic_map_pin_to_vector(ioapic, pin, level, polarity, vector);
     return Arch_invokeIRQControl(irq, handlerSlot, controlSlot, irqState);
 }
