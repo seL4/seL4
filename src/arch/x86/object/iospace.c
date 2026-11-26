@@ -142,9 +142,13 @@ void unmapVTDContextEntry(cap_t cap)
 
 static exception_t performX86IOPTInvocationUnmap(cap_t cap, cte_t *ctSlot)
 {
-    deleteIOPageTable(cap);
-    cap = cap_io_page_table_cap_set_capIOPTIsMapped(cap, 0);
-    ctSlot->cap = cap;
+    if (cap_io_page_table_cap_get_capIOPTIsMapped(cap)) {
+        vtd_pte_t *pt = VTD_PTE_PTR(cap_io_page_table_cap_get_capIOPTBasePtr(cap));
+        deleteIOPageTable(cap);
+        clearMemory(pt, cap_get_capSizeBits(cap));
+        flushCacheRange((void *)pt, cap_get_capSizeBits(cap));
+    }
+    cap_io_page_table_cap_ptr_set_capIOPTIsMapped(&(ctSlot->cap), 0);
 
     return EXCEPTION_NONE;
 }

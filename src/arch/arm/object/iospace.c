@@ -161,7 +161,12 @@ exception_t decodeARMIOPTInvocation(
             current_syscall_error.type = seL4_RevokeFirst;
             return EXCEPTION_SYSCALL_ERROR;
         }
-        deleteIOPageTable(slot->cap);
+        if (cap_io_page_table_cap_get_capIOPTIsMapped(slot->cap)) {
+            iopte_t *pt = (iopte_t *)cap_io_page_table_cap_get_capIOPTBasePtr(slot->cap);
+            deleteIOPageTable(slot->cap);
+            clearMemory(pt, cap_get_capSizeBits(cap));
+            cleanCacheRange_RAM((word_t)pt, (word_t)pt + MASK(cap_get_capSizeBits(cap)), addrFromPPtr(pt));
+        }
         slot->cap = cap_io_page_table_cap_set_capIOPTIsMapped(slot->cap, 0);
 
         setThreadState(ksCurThread, ThreadState_Restart);
