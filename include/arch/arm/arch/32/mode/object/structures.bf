@@ -17,17 +17,28 @@ base 32
 
 -- 4k frame (these have a separate cap type as there is no room to
 -- store their size)
-block small_frame_cap {
-    field capFMappedASIDLow  10
+block small_frame_cap (
+    capFMappedASIDLow,
+    capFVMRights,
+    capFMappedAddress,
+    capFIsDevice,
+#ifdef CONFIG_ARM_SMMU
+    capFIsIOSpace,
+#endif
+    capFMappedASIDHigh,
+    capFBasePtr,
+    capType
+) {
+    field capFMappedASIDLow  9
     field capFVMRights       2
+    field capFIsDevice       1
     field_high capFMappedAddress 20
 
-    field capFIsDevice       1
 #ifdef CONFIG_TK1_SMMU
     field capFIsIOSpace      1
-    field capFMappedASIDHigh 6
-#else
     field capFMappedASIDHigh 7
+#else
+    field capFMappedASIDHigh 8
 #endif
     field_high capFBasePtr  20
     field capType            4
@@ -36,13 +47,14 @@ block small_frame_cap {
 -- 64k, 1M, 16M frames
 block frame_cap {
     field capFSize           2
-    field capFMappedASIDLow  10
+    field capFMappedASIDLow  9
     field capFVMRights       2
+    padding                  1
     field_high capFMappedAddress 18
 
-    padding                  2
+    padding                  1
     field capFIsDevice       1
-    field capFMappedASIDHigh 7
+    field capFMappedASIDHigh 8
     field_high capFBasePtr  18
     field capType            4
 }
@@ -249,9 +261,7 @@ block stored_hw_asid {
 
 -- Page directory entries
 block pde_invalid {
-    field stored_hw_asid 8
-    field stored_asid_valid 1
-    padding 21
+    padding 30
     field pdeType 2
 }
 
@@ -347,9 +357,7 @@ tagged_union pte pteSize {
 
 block pdeS2_invalid {
     padding 32
-    field stored_hw_asid 8
-    field stored_asid_valid 1
-    padding 21
+    padding 30
     field pdeS2Type 2
 }
 
@@ -590,5 +598,26 @@ block dbg_wcr {
     field enabled 1
 }
 #endif /* CONFIG_HARDWARE_DEBUG_API */
+
+block asid_map_none {
+    padding                         32
+
+    padding                         30
+    field type                      2
+}
+
+block asid_map_vspace {
+    field_high vspace_root          32
+
+    padding                         21
+    field hw_asid                   8
+    field hw_asid_valid             1
+    field type                      2
+}
+
+tagged_union asid_map type {
+    tag asid_map_none 0
+    tag asid_map_vspace 1
+}
 
 #include <sel4/arch/shared_types.bf>
