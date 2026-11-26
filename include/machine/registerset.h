@@ -26,12 +26,12 @@ typedef enum {
 #endif
 extern const register_t fault_messages[][MAX_MSG_SIZE] VISIBLE;
 
-static inline void setRegister(tcb_t *thread, register_t reg, word_t w)
+static inline void setRegister(tcb_t *thread, register_t reg, rword_t w)
 {
     thread->tcbArch.tcbContext.registers[reg] = w;
 }
 
-static inline word_t PURE getRegister(tcb_t *thread, register_t reg)
+static inline rword_t PURE getRegister(tcb_t *thread, register_t reg)
 {
     return thread->tcbArch.tcbContext.registers[reg];
 }

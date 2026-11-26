@@ -19,12 +19,12 @@
 
 #define IS_IRQ_VALID(X) (((X)) <= maxIRQ && (X) != irqInvalid)
 
-word_t PURE getRestartPC(tcb_t *thread)
+rword_t PURE getRestartPC(tcb_t *thread)
 {
     return getRegister(thread, FaultIP);
 }
 
-void setNextPC(tcb_t *thread, word_t v)
+void setNextPC(tcb_t *thread, rword_t v)
 {
     setRegister(thread, NextIP, v);
 }

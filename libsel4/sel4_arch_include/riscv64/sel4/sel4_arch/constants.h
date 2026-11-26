@@ -23,7 +23,7 @@
 #endif
 #define seL4_EndpointBits       4
 #define seL4_IPCBufferSizeBits  10
-#ifdef CONFIG_HAVE_FPU
+#if defined(CONFIG_HAVE_FPU) || defined(CONFIG_HAVE_CHERI)
 #define seL4_TCBBits            11
 #else
 #define seL4_TCBBits            10
