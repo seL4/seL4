@@ -24,7 +24,8 @@ static inline void maybeDonateSchedContext_fp(tcb_t *dest, sched_context_t *sc)
 #ifdef CONFIG_DEBUG_BUILD
     tcbDebugRemove(dest);
 #endif
-    /* The part of migrateTCB() that doesn't involve the slowpathed FPU save */
+    /* The part of migrateTCB() that doesn't involve the slowpathed FPU save or
+     * the switch to the idle thread. */
     dest->tcbAffinity = sc->scCore;
 #ifdef CONFIG_DEBUG_BUILD
     tcbDebugAppend(dest);
