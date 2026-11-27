@@ -132,5 +132,5 @@ typedef enum {
 
 #ifdef CONFIG_ENABLE_BENCHMARKS
 /* size of kernel log buffer in bytes */
-#define seL4_LogBufferSize (LIBSEL4_BIT(20))
+#define seL4_LogBufferSize (LIBSEL4_BIT(seL4_LargePageBits))
 #endif /* CONFIG_ENABLE_BENCHMARKS */
