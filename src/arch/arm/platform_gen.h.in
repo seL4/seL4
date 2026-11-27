@@ -35,6 +35,8 @@ enum IRQConstants {
 #define SMMU_MAX_SID  @CONFIGURE_MAX_SID@
 #define SMMU_MAX_CB  @CONFIGURE_MAX_CB@
 
+compile_assert(SMMU_MAX_SID_power_of_two, !(SMMU_MAX_SID & (SMMU_MAX_SID - 1)));
+
 #endif
 
 #ifdef CONFIG_KERNEL_MCS

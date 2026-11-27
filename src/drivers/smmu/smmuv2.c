@@ -28,6 +28,7 @@
 
 struct  smmu_feature {
     bool_t stream_match;              /*stream match register functionality included*/
+    bool_t exidenable;                /*Extended Stream Matching Extension */
     bool_t trans_op;                  /*address translation operations supported*/
     bool_t cotable_walk;              /*coherent translation table walk*/
     bool_t broadcast_tlb;             /*broadcast TLB maintenance*/
@@ -196,6 +197,7 @@ BOOT_CODE static void smmu_config_prob(void)
     /*stream matching register*/
     if (reg & IDR0_SMS) {
         smmu_dev_knowledge.stream_match = true;
+        smmu_dev_knowledge.exidenable = !!(reg & CR0_EXIDENABLE);
     }
     /*address translation operation*/
     if ((reg & IDR0_ATOSNS) == 0) {
@@ -274,7 +276,39 @@ BOOT_CODE static void smmu_config_prob(void)
     smmu_dev_knowledge.ipa_bits = smmu_obs_size_to_bits(reg & IDR2_IAS);
 }
 
+BOOT_CODE static void smmu_config_print(void)
+{
+    struct smmu_feature *f = &smmu_dev_knowledge;
 
+    printf("SMMUv2 detected features:\n"
+           "stream_match          %ld\n"
+           "exidenable            %ld\n"
+           "trans_op              %ld\n"
+           "cotable_walk          %ld\n"
+           "broadcast_tlb         %ld\n"
+           "vmid16                %ld\n"
+           "supported_trans       %d\n"
+           "supported_fmt         %d\n"
+           "num_cfault_ints       %d\n"
+           "num_stream_ids        %d\n"
+           "num_stream_map_groups %d\n"
+           "smmu_page_size        %d\n"
+           "smmu_num_pages        %d\n"
+           "num_s2_cbanks         %d\n"
+           "num_cbanks            %d\n"
+           "va_bits               %d\n"
+           "pa_bits               %d\n"
+           "ipa_bits              %d\n"
+           "cb_base               0x%lx\n",
+           f->stream_match, f->exidenable, f->trans_op, f->cotable_walk,
+           f->broadcast_tlb, f->vmid16, f->supported_trans, f->supported_fmt,
+           f->num_cfault_ints, f->num_stream_ids, f->num_stream_map_groups,
+           f->smmu_page_size, f->smmu_num_pages, f->num_s2_cbanks, f->num_cbanks,
+           f->va_bits, f->pa_bits, f->ipa_bits, f->cb_base);
+    if (f->exidenable) {
+        printf("WARNING: Extended Stream Matching Extension detected, but not used!\n");
+    }
+}
 
 BOOT_CODE  static void smmu_dev_reset(void)
 {
@@ -300,9 +334,8 @@ BOOT_CODE  static void smmu_dev_reset(void)
             smmu_write_reg32(SMMU_GR0_PPTR, SMMU_S2CRn(i), reg);
         }
         /*reset the stream match registers as invalid*/
-        reg = SMR_VALID_SET(SMR_VALID_DIS);
         for (int i = 0; i < smmu_dev_knowledge.num_stream_map_groups; i++) {
-            smmu_write_reg32(SMMU_GR0_PPTR, SMMU_SMRn(i), reg);
+            smmu_write_reg32(SMMU_GR0_PPTR, SMMU_SMRn(i), SMR_INVALID);
         }
     } else {
         /*stream ID*/
@@ -345,6 +378,9 @@ BOOT_CODE  static void smmu_dev_reset(void)
     smmu_write_reg32(SMMU_GR0_PPTR, SMMU_TLBIALLH, SMMU_TLB_INVALL_MASK);
     smmu_write_reg32(SMMU_GR0_PPTR, SMMU_TLBIALLNSNH, SMMU_TLB_INVALL_MASK);
 
+    /*sync above issued TLB operations*/
+    smmu_tlb_sync(SMMU_GR0_PPTR, SMMU_sTLBGSYNC, SMMU_sTLBGSTATUS);
+
     reg = smmu_read_reg32(SMMU_GR0_PPTR, SMMU_sCR0);
     /*enable global fault reporting*/
     reg |= CR0_GFRE | CR0_GFIE | CR0_GCFGFRE | CR0_GCFGFIE;
@@ -361,10 +397,7 @@ BOOT_CODE  static void smmu_dev_reset(void)
     reg |= CR0_FB;
     /*enable client access, ie transaction enforced by SMMU*/
     reg &= ~CR0_CLIENTPD;
-    /*upgrade barrier to full system*/
-    reg &= ~CR0_BSU(CR0_BSU_ALL);
-    /*syn above issued TLB operations*/
-    smmu_tlb_sync(SMMU_GR0_PPTR, SMMU_sTLBGSYNC, SMMU_sTLBGSTATUS);
+
     /*enable the SMMU*/
     smmu_write_reg32(SMMU_GR0_PPTR, SMMU_sCR0, reg);
 }
@@ -372,6 +405,7 @@ BOOT_CODE  static void smmu_dev_reset(void)
 BOOT_CODE void plat_smmu_init(void)
 {
     smmu_config_prob();
+    smmu_config_print();
     smmu_mapping_init();
     smmu_dev_reset();
 }
@@ -536,38 +570,79 @@ void smmu_cb_assign_vspace(word_t cb, vspace_root_t *vspace, asid_t asid)
 
 void smmu_cb_disable(word_t cb, asid_t asid)
 {
-
     uint32_t reg = smmu_read_reg32(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_SCTLR);
     reg &= ~CBn_SCTLR_M;
     smmu_write_reg32(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_SCTLR, reg);
     smmu_tlb_invalidate_cb(cb, asid);
 }
 
-void smmu_sid_bind_cb(word_t sid, word_t cb)
+/*
+ * Returns the 'n' of SMMU_SMRn/S2CRn to be used for the given stream ID.
+ * SMMUv2 supports multiple ways of stream mapping, but this is hardware configured:
+ * - StreamID Indexing: n equals SID and SMMU_SMRn is not used at all.
+ * - StreamID Matching: Scan all SMMU_SMRn registers for matching SID
+ *   and use the corresponding SMMU_S2CRn.
+ * - Compressed StreamID indexing: Obscure scheme no one uses.
+ *
+ * Return the index for the given sid: If new is true, it returns a free index.
+ * If new is false, the index used for sid is returned.
+ * In either case, -1 is returned when the requested index cannot be found.
+ */
+int smmu_sid_get_index(word_t sid, bool_t new)
 {
+    struct smmu_feature *f = &smmu_dev_knowledge;
+    int n_max = f->num_stream_map_groups;
 
+    /* Use 1:1 mapping for StreamID Indexing and Matching if we have enough SMRns: */
+    if (!f->stream_match || f->num_stream_ids <= n_max) {
+        return sid;
+    }
+    /* Find existing index for SID or a free index: */
+    for (int n = 0; n < n_max; ++n) {
+        uint32_t r = smmu_read_reg32(SMMU_GR0_PPTR, SMMU_SMRn(n));
+
+        if ((new && r == SMR_INVALID) || (!new && SMR_ID_GET(r) == sid)) {
+            return n;
+        }
+    }
+    return -1;
+}
+
+void smmu_sid_bind_cb(word_t sid, word_t cb, int index)
+{
     uint32_t reg = 0;
+    uint16_t mask = SMMU_MAX_SID - 1; // Guaranteed power-of-two
+
     reg = S2CR_PRIVCFG_SET(S2CR_PRIVCFG_DEFAULT);
     reg |= S2CR_TYPE_SET(S2CR_TYPE_CB);
     reg |= S2CR_CBNDX_SET(cb);
-    smmu_write_reg32(SMMU_GR0_PPTR, SMMU_S2CRn(sid), reg);
+    smmu_write_reg32(SMMU_GR0_PPTR, SMMU_S2CRn(index), reg);
     /* The number of stream-to-context mapping
      * is related to the stream indexing method.
      * We currently supports mapping one stream ID to one context bank.*/
     if (smmu_dev_knowledge.stream_match) {
-        reg = SMR_VALID_SET(SMR_VALID_EN) | SMR_ID_SET(sid);
-        smmu_write_reg32(SMMU_GR0_PPTR, SMMU_SMRn(sid), reg);
+        /*
+         * Set bits are ignored for SID matching. We set the top bits which don't
+         * fit in our SID range to ignore them. This is useful for e.g. ZynqMP
+         * which appends routing info to the top bits of the hw SID.
+         * The proper solution would be to let users set the mask directly,
+         * to manage the limited number of match registers efficiently, but
+         * that requires a totally different API.
+         */
+        reg = SMR_VALID_SET(SMR_VALID_EN) | SMR_ID_SET(sid) | SMR_MASK_SET(~mask);
+        smmu_write_reg32(SMMU_GR0_PPTR, SMMU_SMRn(index), reg);
     }
 }
 
 void smmu_sid_unbind(word_t sid)
 {
-
     uint32_t reg =  S2CR_TYPE_SET(S2CR_TYPE_FAULT);
-    smmu_write_reg32(SMMU_GR0_PPTR, SMMU_S2CRn(sid), reg);
+    int index = smmu_sid_get_index(sid, false);
+
+    assert(index != -1);
+    smmu_write_reg32(SMMU_GR0_PPTR, SMMU_S2CRn(index), reg);
     if (smmu_dev_knowledge.stream_match) {
-        reg = SMR_VALID_SET(SMR_VALID_DIS);
-        smmu_write_reg32(SMMU_GR0_PPTR, SMMU_SMRn(sid), reg);
+        smmu_write_reg32(SMMU_GR0_PPTR, SMMU_SMRn(index), SMR_INVALID);
     }
 }
 

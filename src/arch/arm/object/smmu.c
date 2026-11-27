@@ -126,6 +126,7 @@ exception_t decodeARMSIDInvocation(word_t label, word_t length, cptr_t cptr,
     cte_t *cbAssignSlot;
     exception_t status;
     word_t sid;
+    int index;
 
     switch (label) {
     case ARMSIDBindCB:
@@ -155,9 +156,15 @@ exception_t decodeARMSIDInvocation(word_t label, word_t length, cptr_t cptr,
             userError("ARMSIDBindCB: The SID is already bound with a context bank.");
             return status;
         }
+        index = smmu_sid_get_index(sid, true);
+        if (index == -1) {
+            userError("ARMSIDBindCB: No free SMRn/S2CRn registers.");
+            current_syscall_error.type = seL4_DeleteFirst;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         /*binding the sid to cb in SMMU*/
-        smmu_sid_bind_cb(sid, cap_cb_cap_get_capCB(cbCap));
+        smmu_sid_bind_cb(sid, cap_cb_cap_get_capCB(cbCap), index);
         /* Building the connection between SID and CB caps by placing a
          * copy of the given cb cap in sid's cnode*/
         cteInsert(cbCap, cbCapSlot, cbAssignSlot);
