@@ -1045,6 +1045,7 @@ bool_t CONST isCapRevocable(cap_t derivedCap, cap_t srcCap)
         return true;
 
     default:
+        // @0aids: intentionally non-exhaustive?
         return false;
     }
 }
