@@ -611,6 +611,7 @@ int smmu_sid_get_index(word_t sid, bool_t new)
 void smmu_sid_bind_cb(word_t sid, word_t cb, int index)
 {
     uint32_t reg = 0;
+    uint16_t mask = SMMU_MAX_SID - 1; // Guaranteed power-of-two
 
     reg = S2CR_PRIVCFG_SET(S2CR_PRIVCFG_DEFAULT);
     reg |= S2CR_TYPE_SET(S2CR_TYPE_CB);
@@ -620,7 +621,15 @@ void smmu_sid_bind_cb(word_t sid, word_t cb, int index)
      * is related to the stream indexing method.
      * We currently supports mapping one stream ID to one context bank.*/
     if (smmu_dev_knowledge.stream_match) {
-        reg = SMR_VALID_SET(SMR_VALID_EN) | SMR_ID_SET(sid);
+        /*
+         * Set bits are ignored for SID matching. We set the top bits which don't
+         * fit in our SID range to ignore them. This is useful for e.g. ZynqMP
+         * which appends routing info to the top bits of the hw SID.
+         * The proper solution would be to let users set the mask directly,
+         * to manage the limited number of match registers efficiently, but
+         * that requires a totally different API.
+         */
+        reg = SMR_VALID_SET(SMR_VALID_EN) | SMR_ID_SET(sid) | SMR_MASK_SET(~mask);
         smmu_write_reg32(SMMU_GR0_PPTR, SMMU_SMRn(index), reg);
     }
 }
