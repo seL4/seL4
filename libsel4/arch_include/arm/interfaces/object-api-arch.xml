@@ -980,6 +980,8 @@
             <error name="seL4_DeleteFirst">
                 <description>
                     The <texttt text="_service"/> is already bound to a context bank.
+                    Or, on platforms that support only one StreamID per context bank, <texttt text="cb"/>
+                    is already bound to a StreamID <docref>(see <autoref label="sec:smmuv2-configuring-streams-transactions"/>)</docref>.
                 </description>
             </error>
             <error name="seL4_IllegalOperation">
