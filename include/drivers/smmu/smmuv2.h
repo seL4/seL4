@@ -263,9 +263,11 @@
 #define SMR_VALID_SET(v)                    ((v) << 31)
 #define SMR_MASK_SET(v)                     (((v) & 0x7fff) << 16)
 #define SMR_ID_SET(v)                       ((v) & 0x7fff)
-/*valid /invalid*/
-#define SMR_VALID_EN                         0x1
-#define SMR_VALID_DIS                        0x0
+#define SMR_ID_GET(v)                       ((v) & 0x7fff)
+#define SMR_VALID_EN                        0x1
+
+/* Initial value for disabled SMMU_SMRn registers */
+#define SMR_INVALID                         0
 
 /*SMMU_ACR, SMMU-500*/
 #define ACR_CACHE_LOCK                       BIT(26)
@@ -424,7 +426,8 @@ this is the same as the MAIR in core*/
 #define CBn_TLBIIPAS2_SET(vaddr)               (((vaddr) >> 12) & 0xfffffffff)
 
 void smmu_cb_assign_vspace(word_t cb, vspace_root_t *vspace, asid_t asid);
-void smmu_sid_bind_cb(word_t sid, word_t cb);
+int smmu_sid_get_index(word_t sid, bool_t new);
+void smmu_sid_bind_cb(word_t sid, word_t cb, int index);
 void plat_smmu_init(void);
 void smmu_tlb_invalidate_all(void);
 void smmu_tlb_invalidate_cb(int cb, asid_t asid);

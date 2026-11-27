@@ -334,9 +334,8 @@ BOOT_CODE  static void smmu_dev_reset(void)
             smmu_write_reg32(SMMU_GR0_PPTR, SMMU_S2CRn(i), reg);
         }
         /*reset the stream match registers as invalid*/
-        reg = SMR_VALID_SET(SMR_VALID_DIS);
         for (int i = 0; i < smmu_dev_knowledge.num_stream_map_groups; i++) {
-            smmu_write_reg32(SMMU_GR0_PPTR, SMMU_SMRn(i), reg);
+            smmu_write_reg32(SMMU_GR0_PPTR, SMMU_SMRn(i), SMR_INVALID);
         }
     } else {
         /*stream ID*/
@@ -571,38 +570,70 @@ void smmu_cb_assign_vspace(word_t cb, vspace_root_t *vspace, asid_t asid)
 
 void smmu_cb_disable(word_t cb, asid_t asid)
 {
-
     uint32_t reg = smmu_read_reg32(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_SCTLR);
     reg &= ~CBn_SCTLR_M;
     smmu_write_reg32(SMMU_CBn_BASE_PPTR(cb), SMMU_CBn_SCTLR, reg);
     smmu_tlb_invalidate_cb(cb, asid);
 }
 
-void smmu_sid_bind_cb(word_t sid, word_t cb)
+/*
+ * Returns the 'n' of SMMU_SMRn/S2CRn to be used for the given stream ID.
+ * SMMUv2 supports multiple ways of stream mapping, but this is hardware configured:
+ * - StreamID Indexing: n equals SID and SMMU_SMRn is not used at all.
+ * - StreamID Matching: Scan all SMMU_SMRn registers for matching SID
+ *   and use the corresponding SMMU_S2CRn.
+ * - Compressed StreamID indexing: Obscure scheme no one uses.
+ *
+ * Return the index for the given sid: If new is true, it returns a free index.
+ * If new is false, the index used for sid is returned.
+ * In either case, -1 is returned when the requested index cannot be found.
+ */
+int smmu_sid_get_index(word_t sid, bool_t new)
 {
+    struct smmu_feature *f = &smmu_dev_knowledge;
+    int n_max = f->num_stream_map_groups;
 
+    /* Use 1:1 mapping for StreamID Indexing and Matching if we have enough SMRns: */
+    if (!f->stream_match || f->num_stream_ids <= n_max) {
+        return sid;
+    }
+    /* Find existing index for SID or a free index: */
+    for (int n = 0; n < n_max; ++n) {
+        uint32_t r = smmu_read_reg32(SMMU_GR0_PPTR, SMMU_SMRn(n));
+
+        if ((new && r == SMR_INVALID) || (!new && SMR_ID_GET(r) == sid)) {
+            return n;
+        }
+    }
+    return -1;
+}
+
+void smmu_sid_bind_cb(word_t sid, word_t cb, int index)
+{
     uint32_t reg = 0;
+
     reg = S2CR_PRIVCFG_SET(S2CR_PRIVCFG_DEFAULT);
     reg |= S2CR_TYPE_SET(S2CR_TYPE_CB);
     reg |= S2CR_CBNDX_SET(cb);
-    smmu_write_reg32(SMMU_GR0_PPTR, SMMU_S2CRn(sid), reg);
+    smmu_write_reg32(SMMU_GR0_PPTR, SMMU_S2CRn(index), reg);
     /* The number of stream-to-context mapping
      * is related to the stream indexing method.
      * We currently supports mapping one stream ID to one context bank.*/
     if (smmu_dev_knowledge.stream_match) {
         reg = SMR_VALID_SET(SMR_VALID_EN) | SMR_ID_SET(sid);
-        smmu_write_reg32(SMMU_GR0_PPTR, SMMU_SMRn(sid), reg);
+        smmu_write_reg32(SMMU_GR0_PPTR, SMMU_SMRn(index), reg);
     }
 }
 
 void smmu_sid_unbind(word_t sid)
 {
-
     uint32_t reg =  S2CR_TYPE_SET(S2CR_TYPE_FAULT);
-    smmu_write_reg32(SMMU_GR0_PPTR, SMMU_S2CRn(sid), reg);
+    int index = smmu_sid_get_index(sid, false);
+
+    assert(index != -1);
+    smmu_write_reg32(SMMU_GR0_PPTR, SMMU_S2CRn(index), reg);
     if (smmu_dev_knowledge.stream_match) {
-        reg = SMR_VALID_SET(SMR_VALID_DIS);
-        smmu_write_reg32(SMMU_GR0_PPTR, SMMU_SMRn(sid), reg);
+        smmu_write_reg32(SMMU_GR0_PPTR, SMMU_SMRn(index), SMR_INVALID);
     }
 }
 
