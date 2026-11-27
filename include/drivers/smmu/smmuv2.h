@@ -135,20 +135,20 @@
 /*SMMU_CR0 non-secure register 0 bit assignments*/
 #define CR0_VMID16EN                            BIT(31)
 #define CR0_HYPMODE                             BIT(30)
-#define CR0_WACFG(v)                            ((v) & 0x3 << 26)
-#define CR0_RACFG(v)                            ((v) & 0x3 << 24)
-#define CR0_SHCFG(v)                            ((v) & 0x3 << 22)
+#define CR0_WACFG(v)                            (((v) & 0x3) << 26)
+#define CR0_RACFG(v)                            (((v) & 0x3) << 24)
+#define CR0_SHCFG(v)                            (((v) & 0x3) << 22)
 #define CR0_SMCFCFG                             BIT(21)
 #define CR0_MTCFG                               BIT(20)
-#define CR0_MemAttr(v)                          ((v) & 0xf << 16)
-#define CR0_BSU(v)                              ((v) & 0x3 << 14)
+#define CR0_MemAttr(v)                          (((v) & 0xf) << 16)
+#define CR0_BSU(v)                              (((v) & 0x3) << 14)
 #define CR0_FB                                  BIT(13)
 #define CR0_PTM                                 BIT(12)
 #define CR0_VMIDPNE                             BIT(11)
 #define CR0_USFCFG                              BIT(10)
 #define CR0_GSE                                 BIT(9)
 #define CR0_STALLD                              BIT(8)
-#define CR0_TRANSIENTCFG(v)                     ((v) & 0x3 << 6)
+#define CR0_TRANSIENTCFG(v)                     (((v) & 0x3) << 6)
 #define CR0_GCFGFIE                             BIT(5)
 #define CR0_GCFGFRE                             BIT(4)
 #define CR0_EXIDENABLE                          BIT(3)
@@ -261,7 +261,7 @@
 
 /*SMMU_SMRn, r/w bit mask for stream match*/
 #define SMR_VALID_SET(v)                    ((v) << 31)
-#define SMR_MASK_SET(v)                     ((v) & 0x7fff << 16)
+#define SMR_MASK_SET(v)                     (((v) & 0x7fff) << 16)
 #define SMR_ID_SET(v)                       ((v) & 0x7fff)
 /*valid /invalid*/
 #define SMR_VALID_EN                         0x1
@@ -418,10 +418,10 @@ this is the same as the MAIR in core*/
 #define TLBIVMID_SET(v)                        ((v) & 0xffff)
 
 /*SMMU_CBn_TLBIVA*/
-#define CBn_TLBIVA_SET(asid, vaddr)            (((asid) & 0xffff) << 48 | ((vaddr) >> 12 & 0xfffffffffff))
+#define CBn_TLBIVA_SET(asid, vaddr)            ((((asid) & 0xffff) << 48) | (((vaddr) >> 12) & 0xfffffffffff))
 
 /*SMMU_CBn_TLBIIPAS2*/
-#define CBn_TLBIIPAS2_SET(vaddr)               ((vaddr) >> 12 & 0xfffffffff)
+#define CBn_TLBIIPAS2_SET(vaddr)               (((vaddr) >> 12) & 0xfffffffff)
 
 void smmu_cb_assign_vspace(word_t cb, vspace_root_t *vspace, asid_t asid);
 void smmu_sid_bind_cb(word_t sid, word_t cb);

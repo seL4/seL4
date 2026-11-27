@@ -345,6 +345,9 @@ BOOT_CODE  static void smmu_dev_reset(void)
     smmu_write_reg32(SMMU_GR0_PPTR, SMMU_TLBIALLH, SMMU_TLB_INVALL_MASK);
     smmu_write_reg32(SMMU_GR0_PPTR, SMMU_TLBIALLNSNH, SMMU_TLB_INVALL_MASK);
 
+    /*sync above issued TLB operations*/
+    smmu_tlb_sync(SMMU_GR0_PPTR, SMMU_sTLBGSYNC, SMMU_sTLBGSTATUS);
+
     reg = smmu_read_reg32(SMMU_GR0_PPTR, SMMU_sCR0);
     /*enable global fault reporting*/
     reg |= CR0_GFRE | CR0_GFIE | CR0_GCFGFRE | CR0_GCFGFIE;
@@ -361,10 +364,7 @@ BOOT_CODE  static void smmu_dev_reset(void)
     reg |= CR0_FB;
     /*enable client access, ie transaction enforced by SMMU*/
     reg &= ~CR0_CLIENTPD;
-    /*upgrade barrier to full system*/
-    reg &= ~CR0_BSU(CR0_BSU_ALL);
-    /*syn above issued TLB operations*/
-    smmu_tlb_sync(SMMU_GR0_PPTR, SMMU_sTLBGSYNC, SMMU_sTLBGSTATUS);
+
     /*enable the SMMU*/
     smmu_write_reg32(SMMU_GR0_PPTR, SMMU_sCR0, reg);
 }
