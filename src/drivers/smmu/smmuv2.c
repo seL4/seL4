@@ -28,6 +28,7 @@
 
 struct  smmu_feature {
     bool_t stream_match;              /*stream match register functionality included*/
+    bool_t exidenable;                /*Extended Stream Matching Extension */
     bool_t trans_op;                  /*address translation operations supported*/
     bool_t cotable_walk;              /*coherent translation table walk*/
     bool_t broadcast_tlb;             /*broadcast TLB maintenance*/
@@ -196,6 +197,7 @@ BOOT_CODE static void smmu_config_prob(void)
     /*stream matching register*/
     if (reg & IDR0_SMS) {
         smmu_dev_knowledge.stream_match = true;
+        smmu_dev_knowledge.exidenable = !!(reg & CR0_EXIDENABLE);
     }
     /*address translation operation*/
     if ((reg & IDR0_ATOSNS) == 0) {
@@ -274,7 +276,39 @@ BOOT_CODE static void smmu_config_prob(void)
     smmu_dev_knowledge.ipa_bits = smmu_obs_size_to_bits(reg & IDR2_IAS);
 }
 
+BOOT_CODE static void smmu_config_print(void)
+{
+    struct smmu_feature *f = &smmu_dev_knowledge;
 
+    printf("SMMUv2 detected features:\n"
+           "stream_match          %ld\n"
+           "exidenable            %ld\n"
+           "trans_op              %ld\n"
+           "cotable_walk          %ld\n"
+           "broadcast_tlb         %ld\n"
+           "vmid16                %ld\n"
+           "supported_trans       %d\n"
+           "supported_fmt         %d\n"
+           "num_cfault_ints       %d\n"
+           "num_stream_ids        %d\n"
+           "num_stream_map_groups %d\n"
+           "smmu_page_size        %d\n"
+           "smmu_num_pages        %d\n"
+           "num_s2_cbanks         %d\n"
+           "num_cbanks            %d\n"
+           "va_bits               %d\n"
+           "pa_bits               %d\n"
+           "ipa_bits              %d\n"
+           "cb_base               0x%lx\n",
+           f->stream_match, f->exidenable, f->trans_op, f->cotable_walk,
+           f->broadcast_tlb, f->vmid16, f->supported_trans, f->supported_fmt,
+           f->num_cfault_ints, f->num_stream_ids, f->num_stream_map_groups,
+           f->smmu_page_size, f->smmu_num_pages, f->num_s2_cbanks, f->num_cbanks,
+           f->va_bits, f->pa_bits, f->ipa_bits, f->cb_base);
+    if (f->exidenable) {
+        printf("WARNING: Extended Stream Matching Extension detected, but not used!\n");
+    }
+}
 
 BOOT_CODE  static void smmu_dev_reset(void)
 {
@@ -372,6 +406,7 @@ BOOT_CODE  static void smmu_dev_reset(void)
 BOOT_CODE void plat_smmu_init(void)
 {
     smmu_config_prob();
+    smmu_config_print();
     smmu_mapping_init();
     smmu_dev_reset();
 }
