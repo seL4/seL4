@@ -395,6 +395,8 @@ void plat_cleanCache(void)
 #endif /* !CONFIG_DEBUG_DISABLE_L2_CACHE */
 }
 
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 void plat_cleanL2Range(paddr_t start, paddr_t end)
 {
 #ifndef CONFIG_DEBUG_DISABLE_L2_CACHE
@@ -413,6 +415,8 @@ void plat_cleanL2Range(paddr_t start, paddr_t end)
 #endif /* !CONFIG_DEBUG_DISABLE_L2_CACHE */
 }
 
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 void plat_invalidateL2Range(paddr_t start, paddr_t end)
 {
 #ifndef CONFIG_DEBUG_DISABLE_L2_CACHE
@@ -433,6 +437,8 @@ void plat_invalidateL2Range(paddr_t start, paddr_t end)
 #endif /* !CONFIG_DEBUG_DISABLE_L2_CACHE */
 }
 
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 void plat_cleanInvalidateL2Range(paddr_t start, paddr_t end)
 {
 #ifndef CONFIG_DEBUG_DISABLE_L2_CACHE

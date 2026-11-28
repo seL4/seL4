@@ -52,6 +52,8 @@ static inline interrupt_t servicePendingIRQ(void)
 }
 
 /* Get the IRQ number currently working on. */
+/** MODIFIES: [*] x86KScurInterrupt x86KSPendingInterrupt */
+/** DONT_TRANSLATE */
 static inline irq_t getActiveIRQ(void)
 {
     if (ARCH_NODE_STATE(x86KScurInterrupt) == int_invalid) {
@@ -76,6 +78,8 @@ static inline irq_t getActiveIRQ(void)
 }
 
 /* Checks for pending IRQ */
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 static inline bool_t isIRQPending(void)
 {
     if (apic_is_interrupt_pending()) {
@@ -89,6 +93,8 @@ static inline bool_t isIRQPending(void)
     return false;
 }
 
+/** MODIFIES: [*] x86KScurInterrupt */
+/** DONT_TRANSLATE */
 static inline void ackInterrupt(irq_t irq)
 {
     if (config_set(CONFIG_IRQ_PIC) && irq <= irq_isa_max) {
@@ -111,6 +117,8 @@ static void inline updateIRQState(irq_t irq, x86_irq_state_t state)
     x86KSIRQState[irq] = state;
 }
 
+/** MODIFIES: [*] x86KSIRQState */
+/** DONT_TRANSLATE */
 static inline void maskInterrupt(bool_t disable, irq_t irq)
 {
     if (irq >= irq_isa_min && irq <= irq_isa_max) {

@@ -145,6 +145,8 @@ static inline void dist_enable_set(word_t irq)
     gic_dist->enable_set[word] = BIT(bit);
 }
 
+/** MODIFIES: [*] active_irq */
+/** DONT_TRANSLATE */
 static inline irq_t getActiveIRQ(void)
 {
     irq_t irq;
@@ -166,11 +168,15 @@ static inline irq_t getActiveIRQ(void)
  * seL4 expects two states: active->inactive.
  * We ignore the active state in GIC to conform
  */
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 static inline bool_t isIRQPending(void)
 {
     return IS_IRQ_VALID(gic_cpuiface->hi_pend);
 }
 
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 static inline void maskInterrupt(bool_t disable, irq_t irq)
 {
 #if defined ENABLE_SMP_SUPPORT && defined CONFIG_ARCH_ARM
@@ -183,6 +189,8 @@ static inline void maskInterrupt(bool_t disable, irq_t irq)
     }
 }
 
+/** MODIFIES: [*] active_irq */
+/** DONT_TRANSLATE */
 static inline void ackInterrupt(irq_t irq)
 {
     assert(IS_IRQ_VALID(active_irq[CURRENT_CPU_INDEX()])
@@ -222,56 +230,78 @@ struct gich_vcpu_ctrl_map {
 extern volatile struct gich_vcpu_ctrl_map *gic_vcpu_ctrl;
 extern word_t gic_vcpu_num_list_regs;
 
+/** MODIFIES: */
+/** DONT_TRANSLATE */
 static inline uint32_t get_gic_vcpu_ctrl_hcr(void)
 {
     return gic_vcpu_ctrl->hcr;
 }
 
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 static inline void set_gic_vcpu_ctrl_hcr(uint32_t hcr)
 {
     gic_vcpu_ctrl->hcr = hcr;
 }
 
+/** MODIFIES: */
+/** DONT_TRANSLATE */
 static inline uint32_t get_gic_vcpu_ctrl_vmcr(void)
 {
     return gic_vcpu_ctrl->vmcr;
 }
 
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 static inline void set_gic_vcpu_ctrl_vmcr(uint32_t vmcr)
 {
     gic_vcpu_ctrl->vmcr = vmcr;
 }
 
+/** MODIFIES: */
+/** DONT_TRANSLATE */
 static inline uint32_t get_gic_vcpu_ctrl_apr(void)
 {
     return gic_vcpu_ctrl->apr;
 }
 
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 static inline void set_gic_vcpu_ctrl_apr(uint32_t apr)
 {
     gic_vcpu_ctrl->apr = apr;
 }
 
+/** MODIFIES: */
+/** DONT_TRANSLATE */
 static inline uint32_t get_gic_vcpu_ctrl_vtr(void)
 {
     return gic_vcpu_ctrl->vtr;
 }
 
+/** MODIFIES: */
+/** DONT_TRANSLATE */
 static inline uint32_t get_gic_vcpu_ctrl_eisr0(void)
 {
     return gic_vcpu_ctrl->eisr0;
 }
 
+/** MODIFIES: */
+/** DONT_TRANSLATE */
 static inline uint32_t get_gic_vcpu_ctrl_eisr1(void)
 {
     return gic_vcpu_ctrl->eisr1;
 }
 
+/** MODIFIES: */
+/** DONT_TRANSLATE */
 static inline uint32_t get_gic_vcpu_ctrl_misr(void)
 {
     return gic_vcpu_ctrl->misr;
 }
 
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 static inline virq_t get_gic_vcpu_ctrl_lr(int num)
 {
     virq_t virq;
@@ -279,6 +309,8 @@ static inline virq_t get_gic_vcpu_ctrl_lr(int num)
     return virq;
 }
 
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 static inline void set_gic_vcpu_ctrl_lr(int num, virq_t lr)
 {
     gic_vcpu_ctrl->lr[num] = lr.words[0];

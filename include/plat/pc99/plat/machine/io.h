@@ -16,11 +16,11 @@ void out8(uint16_t port, uint8_t value);
 void out16(uint16_t port, uint16_t value);
 /** MODIFIES: phantom_machine_state */
 void out32(uint16_t port, uint32_t value);
-/** MODIFIES: */
+/** MODIFIES: [*] */
 uint8_t in8(uint16_t port);
-/** MODIFIES: */
+/** MODIFIES: [*] */
 uint16_t in16(uint16_t port);
-/** MODIFIES: */
+/** MODIFIES: [*] */
 uint32_t in32(uint16_t port);
 
 #if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
